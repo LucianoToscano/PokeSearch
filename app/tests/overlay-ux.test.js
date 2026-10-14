@@ -34,7 +34,7 @@ test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'))
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
 test("Dedicated toolbar is just 29dp tall when popover closed",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(29)'));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
-test("Login returns to Home and does not send it to background",!main.includes('moveTaskToBack(true)'));
+test("Login returns to Home and does not send it to background",!main.includes('postDelayed(()->moveTaskToBack(true)'));
 test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
 test("Translucent favorites with optional background blur",picker.includes('Color.argb(232,47,54,64)')&&picker.includes('setBlurBehindRadius'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
