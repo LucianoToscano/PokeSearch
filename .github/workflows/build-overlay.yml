@@ -29,6 +29,7 @@ jobs:
           node --check app/src/main/assets/probe.js
           node --check app/src/main/assets/presets.js
           node --check app/src/main/assets/shiny_login.js
+          node --check app/src/main/assets/login_entry.js
           grep -q 'if(action==="verifyShiny")' app/src/main/assets/probe.js
           grep -q 'if(action==="verifyFilters")' app/src/main/assets/probe.js
           node app/tests/probe-smoke.test.js
