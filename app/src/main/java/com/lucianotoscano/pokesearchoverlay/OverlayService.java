@@ -50,6 +50,30 @@ public class OverlayService extends Service {
     private String probeScriptCache;
     private boolean searchInProgress=false;
     private final Runnable queuedRefresh=()->refresh(false);
+    private int pageLoadGeneration=-1;
+    private int pendingPageRefreshGeneration=-1;
+    private int pendingLoginRefreshGeneration=-1;
+    private int pendingReloadGeneration=-1;
+    private final Runnable pageFinishedRefresh=()->{
+        if(!stopped&&!loginPaused&&pageLoadGeneration==requestGeneration&&
+            pendingPageRefreshGeneration==requestGeneration)refresh(false);
+    };
+    private final Runnable loginResumeRefresh=()->{
+        if(!stopped&&!loginPaused&&!pickerOpen&&
+            pendingLoginRefreshGeneration==requestGeneration)refresh(false);
+    };
+    private final Runnable deferredSessionReload=()->{
+        if(stopped||loginPaused||pendingReloadGeneration!=requestGeneration)return;
+        if(website!=null)website.loadUrl("https://pogocoordinates.com/search");
+    };
+    private void cancelSessionCallbacks(){
+        handler.removeCallbacks(queuedRefresh);
+        handler.removeCallbacks(periodic);
+        handler.removeCallbacks(expiryRefresh);
+        handler.removeCallbacks(pageFinishedRefresh);
+        handler.removeCallbacks(loginResumeRefresh);
+        handler.removeCallbacks(deferredSessionReload);
+    }
     private static final long MIN_SEARCH_GAP_MS=60_000L;
     private long lastSearchStartMs=0L;
     private boolean shinyVerified=false;
@@ -70,7 +94,7 @@ public class OverlayService extends Service {
     private final Runnable expiryRefresh=new Runnable(){
         @Override public void run(){
             armedDespawnMillis=0L;
-            if(stopped||!loaded)return;
+            if(stopped||loginPaused||!loaded)return;
             if(searchInProgress){
                 handler.postDelayed(this,2000L);
                 return;
@@ -122,12 +146,14 @@ public class OverlayService extends Service {
     private boolean dragged=false;
     private final Runnable periodic=new Runnable(){
         @Override public void run(){
-            if(!stopped){refresh();handler.postDelayed(this,intervalMinutes*60000L);}
+            if(stopped||loginPaused)return;
+            refresh();
+            if(!stopped&&!loginPaused)handler.postDelayed(this,intervalMinutes*60000L);
         }
     };
     private void schedulePeriodic(){
         handler.removeCallbacks(periodic);
-        if(!stopped)handler.postDelayed(periodic,intervalMinutes*60000L);
+        if(!stopped&&!loginPaused)handler.postDelayed(periodic,intervalMinutes*60000L);
     }
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
     private DisplayMetrics metrics(){
@@ -287,10 +313,22 @@ public class OverlayService extends Service {
         CookieManager.getInstance().setAcceptThirdPartyCookies(website,true);
         root.addView(website,new FrameLayout.LayoutParams(dp(390),dp(690),Gravity.TOP|Gravity.LEFT));
         website.setWebViewClient(new WebViewClient(){
+            @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap favicon){
+                if(view!=website||stopped)return;
+                if(loginPaused){pageLoadGeneration=-1;return;}
+                pageLoadGeneration=requestGeneration;
+                pendingPageRefreshGeneration=-1;
+                loaded=false;
+                handler.removeCallbacks(pageFinishedRefresh);
+            }
             @Override public void onPageFinished(WebView view,String url){
+                if(view!=website||stopped||loginPaused||
+                   pageLoadGeneration!=requestGeneration)return;
                 if(url!=null&&url.startsWith("https://pogocoordinates.com/")){
                     loaded=true;
-                    handler.postDelayed(()->{if(!stopped&&!loginPaused)refresh();},2500);
+                    handler.removeCallbacks(pageFinishedRefresh);
+                    pendingPageRefreshGeneration=pageLoadGeneration;
+                    handler.postDelayed(pageFinishedRefresh,2500L);
                 }
             }
             @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){
@@ -298,7 +336,7 @@ public class OverlayService extends Service {
                 loaded=false;
                 searchInProgress=false;
                 ++requestGeneration;
-                handler.removeCallbacks(queuedRefresh);
+                cancelSessionCallbacks();
                 BugReport.log(OverlayService.this,"NETWORK","Falha de navegação principal; código="+error.getErrorCode());
                 status("Não foi possível carregar PoGoCoordinates. Confira conexão e tente ↻.");
             }
@@ -441,9 +479,8 @@ public class OverlayService extends Service {
         try{wm.addView(detailRoot,detailParams);}catch(Exception e){recordFailure("abrir detalhes",e);detailRoot=null;}
         panel.loadUrl("file:///android_asset/dock.html");
         if(detailRoot!=null)detailPanel.loadUrl("file:///android_asset/detail.html");
-        website.loadUrl("https://pogocoordinates.com/search");
+        // Initial navigation is scheduled after cookie flush in onStartCommand.
         running=true;
-        schedulePeriodic();
     }
     private String script(){
         if(probeScriptCache!=null)return probeScriptCache;
@@ -456,6 +493,7 @@ public class OverlayService extends Service {
         }catch(Exception e){recordFailure("ler probe.js",e);return "null";}
     }
     private void execute(String action,Consumer<JSONObject> callback){
+        if(stopped||loginPaused)return;
         if(!loaded||website==null){
             if(callback!=null){
                 JSONObject failure=new JSONObject();
@@ -468,7 +506,7 @@ public class OverlayService extends Service {
                 .replace("__MODE__",JSONObject.quote(mode))
                 .replace("__SHINY__",shiny?"true":"false");
         try{website.evaluateJavascript(code,raw->{
-            if(stopped)return;
+            if(stopped||loginPaused)return;
             try{
                 String decoded=new JSONArray("["+raw+"]").getString(0);
                 JSONObject r=new JSONObject(decoded);
@@ -520,7 +558,7 @@ public class OverlayService extends Service {
         final int generation=++requestGeneration;
         status(manual?"Busca manual iniciada...":"Atualizando...");
         execute("session",session->{
-            if(stopped||generation!=requestGeneration)return;
+            if(stopped||loginPaused||generation!=requestGeneration)return;
             final String auth=session.optString("auth","não confirmado");
             getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
             // Only record a coarse authentication state, never cookies, codes or tokens.
@@ -532,31 +570,37 @@ public class OverlayService extends Service {
                 return;
             }
             execute("prepareSearch",prepared->{
-                if(stopped||generation!=requestGeneration)return;
+                if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!prepared.optBoolean("ok")){
                     searchInProgress=false;
                     diagnosticError("Não foi possível selecionar a aba de busca.");
                     return;
                 }
-                handler.postDelayed(()->execute("configureSearch",configured->{
-                    if(stopped||generation!=requestGeneration)return;
+                handler.postDelayed(()->{
+                    if(stopped||loginPaused||generation!=requestGeneration)return;
+                    execute("configureSearch",configured->{
+                    if(stopped||loginPaused||generation!=requestGeneration)return;
                     if(!configured.optBoolean("ok")||!configured.optBoolean("configured",false)){
                         searchInProgress=false;
                         diagnosticError("Falha nos controles IV/R1. Verifique se a página de busca carregou.");
                         return;
                     }
                     configureLocationAndVerify(generation,manual,0);
-                }),600L);
+                    });
+                },600L);
             });
         });
     }
     private void configureLocationAndVerify(int generation,boolean manual,int attempt){
         String data=locationPayload();
         execute("configureLocation:"+data,configured->{
-            if(stopped||generation!=requestGeneration)return;
+            if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!configured.optBoolean("ok")){
                 if(attempt<2){
-                    handler.postDelayed(()->configureLocationAndVerify(generation,manual,attempt+1),450L);
+                    handler.postDelayed(()->{
+                        if(stopped||loginPaused||generation!=requestGeneration)return;
+                        configureLocationAndVerify(generation,manual,attempt+1);
+                    },450L);
                     return;
                 }
                 searchInProgress=false;
@@ -564,8 +608,10 @@ public class OverlayService extends Service {
                     configured.optString("reason","verifique o formulário do site."));
                 return;
             }
-            handler.postDelayed(()->execute("verifyLocation:"+data,verified->{
-                if(stopped||generation!=requestGeneration)return;
+            handler.postDelayed(()->{
+                if(stopped||loginPaused||generation!=requestGeneration)return;
+                execute("verifyLocation:"+data,verified->{
+                if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!verified.optBoolean("ok")){
                     if(attempt<2){
                         configureLocationAndVerify(generation,manual,attempt+1);
@@ -576,7 +622,8 @@ public class OverlayService extends Service {
                     return;
                 }
                 verifyAndSubmit(generation,manual,0);
-            }),400L);
+                });
+            },400L);
         });
     }
     private void openShinyLogin(){
@@ -593,12 +640,14 @@ public class OverlayService extends Service {
         }
     }
     private void verifyAndSubmit(int generation,boolean manual,int attempt){
-        handler.postDelayed(()->execute("verifyShiny",verified->{
-            if(stopped||generation!=requestGeneration)return;
+        handler.postDelayed(()->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
+            execute("verifyShiny",verified->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!verified.optBoolean("ok")){
                 if(attempt<4){
                     execute("prepareSearch",preparedRetry->execute("configureSearch",ignored->{
-                        if(stopped||generation!=requestGeneration)return;
+                        if(stopped||loginPaused||generation!=requestGeneration)return;
                         verifyAndSubmit(generation,manual,attempt+1);
                     }));
                     return;
@@ -614,11 +663,11 @@ public class OverlayService extends Service {
                 return;
             }
             execute("verifyFilters",filters->{
-                if(stopped||generation!=requestGeneration)return;
+                if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!filters.optBoolean("ok")){
                     if(attempt<2){
                         execute("configureSearch",ignored->{
-                            if(stopped||generation!=requestGeneration)return;
+                            if(stopped||loginPaused||generation!=requestGeneration)return;
                             verifyAndSubmit(generation,manual,attempt+1);
                         });
                         return;
@@ -632,7 +681,7 @@ public class OverlayService extends Service {
                 shinyVerified=shiny;
                 update();
                 execute("submitSearch",submitted->{
-                    if(stopped||generation!=requestGeneration)return;
+                    if(stopped||loginPaused||generation!=requestGeneration)return;
                     if(!submitted.optBoolean("ok")){
                         searchInProgress=false;
                         shinyVerified=false;
@@ -647,11 +696,14 @@ public class OverlayService extends Service {
                     pollSearch(generation,0,manual);
                 });
             });
-        }),650L);
+            });
+        },650L);
     }
     private void pollSearch(int generation,int attempt,boolean manual){
-        handler.postDelayed(()->execute("collect",r->{
-            if(stopped||generation!=requestGeneration)return;
+        handler.postDelayed(()->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
+            execute("collect",r->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!r.optBoolean("ok")){
                 searchInProgress=false;
                 diagnosticError("Falha na leitura dos resultados do site.");
@@ -695,7 +747,8 @@ public class OverlayService extends Service {
                 return;
             }
             applyCollectedResults(r);
-        }), attempt==0?3000L:1300L);
+            });
+        }, attempt==0?3000L:1300L);
     }
     private long expiration(JSONObject item){
         if(item==null)return Long.MAX_VALUE;
@@ -912,6 +965,7 @@ public class OverlayService extends Service {
         }
     }
     private void pollCoordinates(JSONObject target,int attempt,boolean autoCopy){
+        if(stopped||loginPaused)return;
         JSONObject query=new JSONObject();
         try{
             query.put("name",target.optString("name",""));
@@ -935,7 +989,9 @@ public class OverlayService extends Service {
                 deliverCoords(coords,autoCopy?"Coordenadas copiadas":"Coordenadas obtidas");return;
             }
             if(attempt<8){
-                handler.postDelayed(()->pollCoordinates(target,attempt+1,autoCopy),450L);
+                handler.postDelayed(()->{
+                    if(!stopped&&!loginPaused)pollCoordinates(target,attempt+1,autoCopy);
+                },450L);
             }else{
                 deliverCoords("","O site não retornou coordenadas. Confira no navegador interno.");
             }
