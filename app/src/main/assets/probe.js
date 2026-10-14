@@ -375,7 +375,8 @@ if(action==="session"){
  // Mobile menus may hide Logout. The site's account-specific Shiny notice
  // confirms a session without exposing the account identifier to Android.
  const accountBadge=elements("p,small,span,div,label").some(e=>
-   vis(e)&&e.children.length<=2&&/^Shiny for your account\b/i.test(text(e))&&text(e).length<140);
+   vis(e)&&e.children.length<=2&&/^Shiny for your account\b/i.test(text(e))&&text(e).length<140)
+   ||/(?:^|\n)\s*Shiny for your account\b/i.test(String(document.body&&document.body.innerText||""));
  return JSON.stringify({ok:true,auth:loggedIn||accountBadge?"autenticada":login?"login necessário":"não confirmado",
    shinyAvailable:!!sw,site:location.hostname});
 }
