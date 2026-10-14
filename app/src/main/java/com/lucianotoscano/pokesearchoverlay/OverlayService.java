@@ -82,8 +82,10 @@ public class OverlayService extends Service {
                 if(active.length()!=old.length()){
                     results=active.toString();hideDetails();update();
                 }
+                // Expiration is a local UI event, never a reason to query the site.
+                // Re-arm the next remaining deadline without changing AUTO cadence.
+                armNextDespawn(active);
             }catch(Exception ignored){}
-            refresh(false);
         }
     };
     private void armNextDespawn(JSONArray cards){
@@ -446,7 +448,7 @@ public class OverlayService extends Service {
     private void refresh(boolean manual){
         if(stopped||loginPaused)return;
         if(searchInProgress){
-            if(manual)status("Busca em andamento. A atualização manual aguarda o término.");
+            if(manual)status("Busca em andamento. Toque ↻ novamente quando terminar.");
             return;
         }
         if(!loaded||website==null){
@@ -466,8 +468,7 @@ public class OverlayService extends Service {
         }
         handler.removeCallbacks(queuedRefresh);
         BugReport.log(this,"PREPARE","Filtros "+mode+" Shiny="+shiny+" manual="+manual);
-        handler.removeCallbacks(expiryRefresh);
-        armedDespawnMillis=0L;
+        // Preserve the despawn cleanup timer while the network search is pending.
         searchInProgress=true;
         if(shiny){shinyVerified=false;update();}
         final int generation=++requestGeneration;
@@ -476,6 +477,8 @@ public class OverlayService extends Service {
             if(stopped||generation!=requestGeneration)return;
             final String auth=session.optString("auth","não confirmado");
             getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
+            // Only record a coarse authentication state, never cookies, codes or tokens.
+            BugReport.log(this,"SESSION","Shiny="+shiny+" autenticação="+auth);
             if(shiny&&auth.equals("login necessário")){
                 searchInProgress=false;
                 diagnosticError("✨ Faça login e vincule seu código de amizade no PoGoCoordinates.");
@@ -557,7 +560,9 @@ public class OverlayService extends Service {
                 searchInProgress=false;
                 shinyVerified=false;
                 diagnosticError(shiny
-                    ?"✨ Shiny não confirmado no site. Entre/vincule seu treinador para habilitar."
+                    ?(verified.optBoolean("pending",false)
+                        ?"✨ Vinculação do treinador pendente no PoGoCoordinates. Confirme no site e tente novamente."
+                        :"✨ Shiny não foi confirmado pelo site. Verifique login e vínculo do treinador; IV100/GL/UL seguem disponíveis com ✨ desligado.")
                     :"Não foi possível confirmar Shiny desativado no site.");
                 if(shinyLoginPromptRequested)openShinyLogin();
                 return;
@@ -1134,6 +1139,11 @@ public class OverlayService extends Service {
         String action=i==null?"":i.getAction();
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN".equals(action)){
             loginPaused=true;
+            // Cancel callbacks from the old page so that no search is submitted
+            // while the user is authenticating.
+            ++requestGeneration;
+            searchInProgress=false;
+            handler.removeCallbacks(queuedRefresh);
             handler.removeCallbacks(periodic);
             if(root!=null)root.setVisibility(View.GONE);
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
@@ -1148,6 +1158,11 @@ public class OverlayService extends Service {
             if(detailRoot!=null&&selected>=0&&!pickerOpen)detailRoot.setVisibility(View.VISIBLE);
             schedulePeriodic();
             BugReport.log(this,"LOGIN","Página de autenticação fechada");
+            // The login screen may have refreshed cookies without triggering a
+            // page-finished callback in the search WebView.
+            handler.postDelayed(()->{
+                if(!stopped&&!loginPaused&&!pickerOpen)refresh(false);
+            },1600L);
             return START_STICKY;
         }
         boolean initialStart=firstStart;
