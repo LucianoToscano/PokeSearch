@@ -15,10 +15,10 @@ Base v0.49-beta main `890dbcbe6313eb5875e4de029f8764cdb087a7b3`. Escopo **PS-081
 A proteção contra concorrência de `LOGIN_BEGIN/LOGIN_END/REFRESH_LOGIN`, timers nomeados 350/1600/2500ms e ordem do `onDestroy` **permanecem como implementados e testados estaticamente na v0.49**. Nesta versão, houve apenas verificação de geração adicional na resposta do probe JS. **Validação física continua pendente**, especialmente autenticação OAuth real Google/Discord no Samsung SM-S928B Android16; não classificá-la como homologada em aparelho.
 
 ## Restrição de segurança e configuração
-Identidade `com.lucianotoscano.pokesearch`, JDK17, Gradle 8.11.1, AGP8.10.1, SDK 26/33/36, Manifest, ícones e PvPPokeGo preservados. Logs devem incluir somente etapa/nome da classe de exceção; nenhuma URL/cookie/token/código/coordenada privada. O sanitizador é mitigação e depende de revisão manual do relatório.
+Identidade `com.lucianotoscano.pokesearch`, JDK17, Gradle 8.11.1, AGP8.10.1, SDK 26/33/36, Manifest, ícones e identidade do PokeSearch preservados. Logs devem incluir somente etapa/nome da classe de exceção; nenhuma URL/cookie/token/código/coordenada privada. O sanitizador é mitigação e depende de revisão manual do relatório.
 
 ## Testes mínimos
-`node --check`, `node app/tests/probe-smoke.test.js`, `node app/tests/overlay-ux.test.js`, `javac` / `java DiagnosticSanitizerTest`, `gradle :app:testDebugUnitTest :app:assembleDebug :app:lintDebug`, `apksigner verify`, `aapt dump badging`, `sha256sum -c SHA256SUMS.txt` e inspeção do ZIP-fonte editável com Gradle Wrapper/settings e docs históricos. Execução real Android 16, OAuth, Shiny, overlay e bateria/memória continuam **não executadas**.
+`node --check`, `node app/tests/probe-smoke.test.js`, `node app/tests/overlay-ux.test.js`, `javac` / `java DiagnosticSanitizerTest`, `gradle :app:testDebugUnitTest :app:assembleDebug :app:lintDebug`, `apksigner verify`, `aapt dump badging`, `sha256sum -c SHA256SUMS.txt` e inspeção do ZIP-fonte editável com Gradle Wrapper/settings e docs históricos. Execução real Android 8–16, múltiplos OEMs, OAuth, Shiny, overlay e bateria/memória continuam **não executadas**.
 
 ## Feedback físico reportado — correções e pendências complementares
 | Item | Código alterado | Estado de verificação |
@@ -31,5 +31,14 @@ Identidade `com.lucianotoscano.pokesearch`, JDK17, Gradle 8.11.1, AGP8.10.1, SDK
 | Ícone 📍 desproporcional | SVG menor, sem alterar semântica do filtro | Teste visual pendente |
 | Sem Pokémon nos modos IV/GL/UL | Tratamento de action nula no serviço; scripts e retorno de dados permanecem sujeitos ao DOM da página | **Ainda não comprovado**; coletar ⚠ diagnóstico categórico real por modo |
 
-### Validação que depende exclusivamente do Samsung/conta real
+### Validação que depende de aparelhos Android e conta real
 Abrir a Home e overlay pela primeira vez, testar pesquisa IV100, GL#1, UL#1 sem Shiny e verificar o limite real do site; depois autenticar Google/Discord, confirmar vínculo e ativar ✨ por liga. Testar primeira consulta, AUTO OFF, cooldown da busca manual, ausência de alertas no modo silencioso, canal de favoritos, abrir menu nos quatro cantos, rolagem, seta e engrenagem sobre o jogo, sincronização de preferências com overlay ativo, notificações concedidas/negadas e fluxo de retorno do login. Diagnóstico deve conter etapas/categorias, nunca cookies, URLs completas nem coordenadas.
+
+## ADENDO: projeto independente, compatibilidade ampla e UX simétrica
+- **Escopo**: somente `LucianoToscano/PokeSearch`. Não criar integrações nem dependências para qualquer outro projeto.
+- **Defeito de layout identificado**: 12 botões em uma única fileira de 396dp distribuíam controles com células muito estreitas (especialmente em telefones 320–411dp). Solução: 6 colunas iguais × 2 linhas compactas, altura base do menu 66dp, popover abaixo da segunda linha e janela nativa dimensionada à barra real.
+- **Defeito de espaçamento evitado**: ao apresentar controles abaixo da engrenagem, calcular o deslocamento vertical pelo limite final da janela, subtraindo a altura visual do ícone (30dp). Não reservar novamente a altura de 34dp entre sprites e menu.
+- **Testes automatizados**: asserções estáticas de 12 ações únicas, seis colunas, resize da janela e ausência de margem duplicada. Não substituem screenshots/testes reais em 320/360/393/411/600dp.
+- **Critérios de aceitação**: visual minimalista cinza/branco, ícones simétricos e proporcionais, sem cortes, sem vazios arbitrários, fundo flutuante transparente e toques fora da área do overlay repassados corretamente.
+- **Matriz manual**: Android 8–16, diferentes OEMs, densidades, orientação, zoom de fonte, navegação por gestos/3 botões, restrições de bateria, permissões e OAuth. Detalhes no `docs/GUIA_COMPATIBILIDADE_ANDROID_v0.50.md`.
+- **Status**: suporte amplo é meta de engenharia, **não homologação concluída**. O Samsung SM-S928B/Android16 permanece somente um dispositivo de referência.
