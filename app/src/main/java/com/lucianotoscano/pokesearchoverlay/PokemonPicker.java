@@ -49,7 +49,7 @@ public final class PokemonPicker {
         final int id;final String name;final String normalized;
         Entry(int id,String name){this.id=id;this.name=name;this.normalized=WatchAlerts.normalized(name);}
     }
-    private static List<Entry> readCatalog(Activity activity){
+    private static List<Entry> readCatalog(Context activity){
         if(catalog!=null)return catalog;
         ArrayList<Entry> list=new ArrayList<>();
         try(InputStream in=activity.getAssets().open("pokemon_catalog.json")){
@@ -69,7 +69,7 @@ public final class PokemonPicker {
         ImageView picture;
         TextView dex,name,checked;
     }
-    private static void setImage(Activity activity,ImageView image,int id){
+    private static void setImage(Context activity,ImageView image,int id){
         image.setTag(id);
         Bitmap cached;
         synchronized(CACHE){cached=CACHE.get(id);}
@@ -90,7 +90,7 @@ public final class PokemonPicker {
             synchronized(LOADING){LOADING.remove(id);}
             if(bitmap!=null){synchronized(CACHE){CACHE.put(id,bitmap);}}
             final Bitmap finalBitmap=bitmap;
-            activity.runOnUiThread(()->{
+            image.post(()->{
                 ImageView view=reference.get();
                 if(view!=null && finalBitmap!=null && view.getTag() instanceof Integer && (int)view.getTag()==id)
                     view.setImageBitmap(finalBitmap);
@@ -98,11 +98,11 @@ public final class PokemonPicker {
         });
     }
     private static final class Adapter extends BaseAdapter{
-        private final Activity activity;
+        private final Context activity;
         private final List<Entry> full;
         private final List<Entry> visible=new ArrayList<>();
         private final boolean selectedOnly;
-        Adapter(Activity activity,List<Entry> full,boolean selectedOnly){
+        Adapter(Context activity,List<Entry> full,boolean selectedOnly){
             this.activity=activity;this.full=full;this.selectedOnly=selectedOnly;
             filter("");
         }
@@ -169,7 +169,11 @@ public final class PokemonPicker {
             return recycled;
         }
     }
-    public static void show(Activity activity,Runnable changed){
+    public static void show(Context activity,Runnable changed){
+        show(activity,changed,null);
+    }
+    /** Works from MainActivity and directly from OverlayService without changing apps. */
+    public static void show(Context activity,Runnable changed,Runnable dismissed){
         List<Entry> all=readCatalog(activity);
         if(all.isEmpty()){
             Toast.makeText(activity,"Catálogo de Pokémon indisponível",Toast.LENGTH_LONG).show();
@@ -280,10 +284,31 @@ public final class PokemonPicker {
             refresh.run();
         });
         refresh.run();
-        new AlertDialog.Builder(activity)
-            .setTitle("★ Pokémon favoritos")
+        // Dark, compact dialog matching the dock colors, with rounded corners.
+        android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable();
+        background.setColor(Color.rgb(18,22,31));
+        background.setCornerRadius(dp(activity,17));
+        root.setBackground(background);
+        Context dialogContext=(activity instanceof Activity) ? activity :
+            new android.view.ContextThemeWrapper(activity,android.R.style.Theme_Material_NoActionBar);
+        AlertDialog dialog=new AlertDialog.Builder(dialogContext)
+            .setTitle("★ Meus Pokémon favoritos")
             .setView(root)
             .setPositiveButton("Concluído",null)
-            .show();
+            .create();
+        if(!(activity instanceof Activity)){
+            if(dialog.getWindow()!=null){
+                dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
+                dialog.getWindow().setDimAmount(0f);
+            }
+        }
+        dialog.setOnDismissListener(d->{if(dismissed!=null)dismissed.run();});
+        dialog.show();
+        if(dialog.getWindow()!=null){
+            dialog.getWindow().setSoftInputMode(
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+            int width=Math.min(activity.getResources().getDisplayMetrics().widthPixels-dp(activity,20),dp(activity,430));
+            dialog.getWindow().setLayout(width,android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        }
     }
 }
