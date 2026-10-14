@@ -480,6 +480,17 @@ public class OverlayService extends Service {
                 return;
             }
             int found=r.optInt("found",0);
+            int onSite=r.optInt("siteCount",0);
+            if(r.optBoolean("parseFailure",false)&&!r.optBoolean("loading",false)){
+                searchInProgress=false;
+                diagnosticError("Leitura do site: "+onSite+" ocorrências exibidas, mas nenhum cartão foi reconhecido. Abra ⚠ para exportar o diagnóstico.");
+                return;
+            }
+            if(found>0&&r.optJSONArray("cards")!=null&&r.optJSONArray("cards").length()==0){
+                searchInProgress=false;
+                diagnosticError("Site retornou "+found+" Pokémon, mas nenhum comprovou os IVs/ranking esperados; confira os filtros com ⚠.");
+                return;
+            }
             boolean loading=r.optBoolean("loading",false);
             boolean empty=r.optBoolean("explicitEmpty",false);
             if((loading||(!empty&&found==0))&&attempt<8){
