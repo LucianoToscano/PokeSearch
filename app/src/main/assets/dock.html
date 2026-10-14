@@ -157,6 +157,12 @@ function closeChoices(){
 function toggleChoices(kind){
  if(!menuOpen)return;
  if(choiceOpen===kind){closeChoices();return;}
+ if(choiceOpen==="location"&&kind!=="location"){
+  // The location editor temporarily focuses the overlay for the keyboard.
+  // Release that focus before showing another mode or AUTO menu.
+  document.getElementById("choices").classList.remove("locationPanel");
+  if(controlsWindow)Native.locationEditor(false);
+ }
  choiceOpen=kind;
  if(kind==="location"){renderLocationChoices();return;}
  const current=kind==="mode"?mode:period;
