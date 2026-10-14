@@ -486,13 +486,19 @@ public class MainActivity extends Activity {
         catch(Exception e){Toast.makeText(this,"WhatsApp indisponível. Use Exportar TXT.",Toast.LENGTH_LONG).show();}
     }
     private int d(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
+    private void syncOverlayPreferences(){
+        if(OverlayService.isRunning())
+            serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS");
+    }
     private void showPreferencesDialog(){
         ScrollView view=buildPreferences();
-        new AlertDialog.Builder(this)
+        AlertDialog dialog=new AlertDialog.Builder(this)
             .setTitle("⚙ Preferências")
             .setView(view)
-            .setPositiveButton("Concluído",null)
-            .show();
+            .setPositiveButton("Concluído",(d,which)->syncOverlayPreferences())
+            .create();
+        dialog.setOnDismissListener(d->syncOverlayPreferences());
+        dialog.show();
     }
     private ScrollView buildPreferences(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
@@ -512,6 +518,7 @@ public class MainActivity extends Activity {
         sizes.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
             @Override public void onItemSelected(android.widget.AdapterView<?> p,android.view.View v,int pos,long id){
                 prefs.edit().putInt("spriteSize",new int[]{35,45,55}[pos]).apply();
+                syncOverlayPreferences();
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> p){}
         });
@@ -528,6 +535,7 @@ public class MainActivity extends Activity {
         order.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
             @Override public void onItemSelected(android.widget.AdapterView<?> p,android.view.View v,int index,long id){
                 prefs.edit().putString("sort",values[index]).apply();
+                syncOverlayPreferences();
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> p){}
         });
@@ -541,12 +549,15 @@ public class MainActivity extends Activity {
         testNotification.setAllCaps(false);
         testNotification.setTextSize(12);
         testNotification.setOnClickListener(v->{
-            boolean allowed=WatchAlerts.permissionGranted(this);
-            boolean sent=allowed&&WatchAlerts.test(this);
-            String message=!allowed
-                ?"Permissão de notificações pendente ou bloqueada no Android"
-                :sent?"Notificação de teste enviada":"Não foi possível enviar a notificação de teste";
-            Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+            if(!WatchAlerts.permissionGranted(this)){
+                if(Build.VERSION.SDK_INT>=33){
+                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},203);
+                }else Toast.makeText(this,"Ative notificações nas Configurações do Android",Toast.LENGTH_LONG).show();
+                return;
+            }
+            boolean sent=WatchAlerts.test(this);
+            Toast.makeText(this,sent?"Notificação de teste enviada":
+                "Não foi possível enviar a notificação de teste",Toast.LENGTH_LONG).show();
         });
         body.addView(testNotification,new LinearLayout.LayoutParams(-1,d(42)));
         return sc;
@@ -554,7 +565,10 @@ public class MainActivity extends Activity {
     private void settingCheckbox(LinearLayout root,SharedPreferences prefs,String key,String label,boolean def){
         CheckBox check=new CheckBox(this);check.setText(label);check.setTextColor(Color.WHITE);
         check.setChecked(prefs.getBoolean(key,def));
-        check.setOnCheckedChangeListener((button,enabled)->prefs.edit().putBoolean(key,enabled).apply());
+        check.setOnCheckedChangeListener((button,enabled)->{
+            prefs.edit().putBoolean(key,enabled).apply();
+            syncOverlayPreferences();
+        });
         root.addView(check);
     }
     private String readAsset(String path){
@@ -563,7 +577,12 @@ public class MainActivity extends Activity {
             byte[] b=new byte[4096];int n;
             while((n=in.read(b))!=-1)out.write(b,0,n);
             return out.toString("UTF-8");
-        }catch(Exception e){return "void 0";}
+        }catch(Exception e){
+            BugReport.log(this,"ASSET","ler "+("probe.js".equals(path)?"probe.js":
+                "shiny_login.js".equals(path)?"shiny_login.js":"recurso interno")+
+                " · "+e.getClass().getSimpleName());
+            return "void 0";
+        }
     }
     private void startOverlay(){
         CookieManager.getInstance().flush();
@@ -602,6 +621,16 @@ public class MainActivity extends Activity {
     @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
         super.onRequestPermissionsResult(requestCode,permissions,results);
         if(requestCode==202)startOverlay();
+        if(requestCode==203){
+            boolean granted=results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED;
+            if(granted&&WatchAlerts.permissionGranted(this)){
+                boolean sent=WatchAlerts.test(this);
+                Toast.makeText(this,sent?"Notificação de teste enviada":
+                    "Não foi possível enviar a notificação de teste",Toast.LENGTH_LONG).show();
+            }else{
+                Toast.makeText(this,"Permissão de notificações negada. Ative nas Configurações do Android.",Toast.LENGTH_LONG).show();
+            }
+        }
     }
     @Override public void onBackPressed(){
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
