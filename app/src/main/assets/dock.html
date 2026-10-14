@@ -98,17 +98,39 @@ body.controls-window #locBadge{display:none!important}
 #empty{display:block;width:var(--dock);height:18px;line-height:18px;text-align:center;color:#dce1e9b8;font-size:12px;overflow:hidden;background:transparent;border:0;padding:0}
 #bubble{display:none;width:45px;height:45px;border:0;background:transparent;box-shadow:none;border-radius:0;align-items:center;justify-content:center}
 #bubble svg{width:20px;height:20px;color:#e9ecf1;filter:drop-shadow(0 1px 1px #0009)}
+/* v0.50: floating transparent icons, neutral and unobtrusive colors. */
+#gear{width:35px;height:30px;background:transparent!important;border:0!important;border-radius:0;box-shadow:none!important;color:#f5f5f6}
+#gear svg{filter:drop-shadow(0 1px 2px #000c)}
+#collapse{width:34px;height:27px;margin:0 auto;padding:0;border:0!important;background:transparent!important;box-shadow:none!important;color:#fafafa}
+#collapse svg{width:19px;height:19px;filter:drop-shadow(0 1px 2px #000b)}
+#controls button{background:#28292cc6;border-color:#ffffff2d;color:#f2f2f3}
+#controls #close{background:#28292cc6}
+#choices{background:#252628ee;border-color:#ffffff38}
+#choices button.chosen{background:#494b4bdc;color:#fff}
+#choices .choiceHeader{color:#d6d7da}
+#choices .locText,#choices #locHint{color:#d3d4d6}
+#choices .locField{background:#17191bdc;border-color:#96999c88}
+#choices .locCoordsRow button[role=switch],#choices .locLine button{background:#37393dc9;border-color:#979a9d60}
+#controls #location svg{width:14px;height:14px}
+#controls #location.locOn{background:#454c48cf;border-color:#bfc9c1a6;color:#fff}
+#controls #location.locOn svg{width:12px;height:12px}
+#locBadge{background:#363b3ac4;border-color:#ffffff4a;color:#edf0ef}
+#controls #cycle.ivOn{background:#3a5040bd;border-color:#abc3ae;color:#fff}
+#controls #bell.generalOn{background:#414649d1;border-color:#b0b6b8;color:#fff}
+#controls #bell.generalSilent{background:#48484ac9;border-color:#d2d2d2;color:#e5e5e5}
+#controls #period.autoOff{opacity:.73;background:#333538ac}
+#spawns{margin-top:var(--top-space);gap:0}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
  <div id="menu"><div id="controls">
   <button id="cycle" title="Escolher IV100, Grande Liga #1 ou Ultra Liga #1" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('mode')">100%</button>
   <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()">✨</button>
-  <button id="period" title="Escolher intervalo automático" aria-label="Atualização automática, 5 minutos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">5m</span></button>
+  <button id="period" title="Atualização automática ou OFF" aria-label="Atualização automática, 5 minutos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">5m</span></button>
   <button id="manualRefresh" title="Atualizar resultados agora" aria-label="Atualizar resultados agora" onclick="manualRefreshTap()">↻</button>
   <button id="size" title="Tamanho P / M / G" onclick="Native.cycleSpriteSize()">M</button>
   <button id="clock" title="Mostrar ou ocultar tempo de despawn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
-  <button id="bell" title="Notificações de novos Pokémon · toque para ativar/desativar" aria-pressed="false" onclick="Native.toggleGeneralAlerts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
+  <button id="bell" title="Notificações: desligadas / ligadas / silenciosas" aria-pressed="false" onclick="Native.toggleGeneralAlerts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
   <button id="star" title="Meus favoritos · alertas específicos IV100 / GL#1 / UL#1" onclick="Native.openWatchList()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg></button>
   <button id="location" title="Configurar coordenadas e raio" aria-label="Localização desligada" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('location')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span id="locationRadiusText" class="locRadiusText" aria-hidden="true"></span></button>
   <button id="report" title="⚠ Reportar bugs, enviar sugestões e exportar diagnóstico TXT" aria-label="Reportar bugs e sugestões" onclick="Native.openReport()">⚠</button>
@@ -126,7 +148,7 @@ const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 document.body.classList.add(controlsWindow?"controls-window":"dock-window");
 document.documentElement.classList.toggle("controls-root",controlsWindow);
 let locationEnabled=false,locationCoords="",locationRadius=0;
-let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false;
+let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
  document.documentElement.style.setProperty("--top-space",menuOpen?(Math.max(0,Number(pad)||0)+"px"):"0px");
@@ -176,7 +198,7 @@ function toggleChoices(kind){
  const current=kind==="mode"?mode:period;
  const entries=kind==="mode"?
    [["iv","100% · IV perfeito"],["gl","GL#1 · Grande Liga"],["ul","UL#1 · Ultra Liga"]]:
-   [[5,"AUTO · 5 min"],[10,"AUTO · 10 min"],[15,"AUTO · 15 min"],[20,"AUTO · 20 min"]];
+   [[0,"AUTO · OFF (somente manual)"],[5,"AUTO · 5 min"],[10,"AUTO · 10 min"],[15,"AUTO · 15 min"],[20,"AUTO · 20 min"]];
  const panel=document.getElementById("choices");
  panel.replaceChildren();
  const title=document.createElement("div");
@@ -286,12 +308,14 @@ function draw(){
  if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status))document.getElementById("manualRefresh").classList.remove("requested");
  const bell=document.getElementById("bell");
  bell.classList.toggle("generalOn",generalAlerts);
+  bell.classList.toggle("generalSilent",alertMode==="silent");
  bell.setAttribute("aria-pressed",String(generalAlerts));
- bell.title=generalAlerts?"Novos Pokémon: notificações ativadas":"Novos Pokémon: notificações desativadas";
+ bell.title=alertMode==="silent"?"Notificações silenciosas · toque para desligar":generalAlerts?"Notificações ligadas · toque para silenciar":"Notificações desligadas · toque para ligar";
+  bell.setAttribute("aria-label",bell.title);
  const star=document.getElementById("star");
  star.classList.toggle("favoritesOn",hasFavorites);
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
- const p=document.getElementById("period");p.querySelector(".autoTime").textContent=String(period)+"m";p.title="Atualização automática a cada "+period+" minutos · toque para alterar";p.setAttribute("aria-label","Atualização automática a cada "+period+" minutos");
+ const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.title=period===0?"AUTO desligado · atualizar com ↻ ou mudar filtros":"Atualização automática a cada "+period+" minutos · toque para alterar";p.setAttribute("aria-label",p.title);
  const listKey=JSON.stringify([cards,row,spriteSize,showTimers]);
  if(listKey!==lastListKey){lastListKey=listKey;
  document.getElementById("spawns").innerHTML=cards.map((c,i)=>{
@@ -320,11 +344,11 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
- mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=Number(interval)||5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;
+ mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=Number(interval)||5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  if(active>=cards.length)active=-1;
  draw();
 };
