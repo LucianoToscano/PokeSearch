@@ -67,12 +67,16 @@ function run(action,mode,shinyOnly,opts={}){
   if(opts.pending||opts.pendingText){
     pending=[element(opts.pendingText||"Link a Pokémon GO account. Your trainer code: 12 digits")];
   }
+  const accountLabels=opts.accountBadge?[element("Shiny for your account TestAccount (123456789012).")]:[];
+  const sessionButtons=opts.loggedOut?[element("Log in")]:opts.logoutVisible?[element("Log out")]:[];
   function querySelectorAll(selector){
     if(selector==="label,span,strong,div")return labels;
     if(selector==="span,label,strong,small,dt,div,p")return all;
     if(selector==='[role="dialog"],[aria-modal="true"],form')return pending;
     if(selector==="label,span,div,p,strong")return all;
     if(selector==="button,[role=button]")return cardButtons;
+    if(selector==="a,button,[role=button]")return sessionButtons;
+    if(selector==="p,small,span,div,label")return accountLabels;
     return [];
   }
   const document={querySelectorAll,querySelector:()=>null,body:element(opts.spawn?"Showing 10 spawns":"")};
@@ -114,6 +118,19 @@ assert.equal(loginNeeded.controlFound,false,"Missing site control leads to login
 checked++;
 const publicOff=run("setShiny","iv",false,{});
 assert.equal(publicOff.ok,true,"Shiny OFF does not require login when switch is absent");
+checked++;
+const accountSession=run("session","iv",false,{accountBadge:true,switch:false});
+assert.equal(accountSession.auth,"autenticada","Hidden Logout must not block the known account session");
+assert.equal(JSON.stringify(accountSession).includes("TestAccount"),false,"No account identifier in session result");
+checked++;
+const noSession=run("session","iv",false,{loggedOut:true});
+assert.equal(noSession.auth,"login necessário","Login-required view remains unauthenticated");
+checked++;
+const uncertainSession=run("session","iv",false,{});
+assert.equal(uncertainSession.auth,"não confirmado","Missing login/logout is not automatically authenticated");
+checked++;
+const menuLogout=run("session","iv",false,{logoutVisible:true});
+assert.equal(menuLogout.auth,"autenticada","Visible Logout still marks a session");
 checked++;
 const spawn="Tangela\\n#114 Female M\\nInfestation / Solar Beam\\nCP\\n404\\nLVL\\n7\\nIV\\n67% (1/15/14)\\nLOCATION\\nBron, Rhone, France\\nDESPAWN\\n57:57\\nGet coords";
 const league=run("collect","gl",false,{switch:false,pvp:{rank:"1",league:"Great League",prior:"Yes"},spawn});
