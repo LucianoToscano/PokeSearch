@@ -7,8 +7,8 @@ android {
         applicationId = "com.lucianotoscano.pokesearch"
         minSdk = 26
         targetSdk = 33
-        versionCode = 46
-        versionName = "0.46-beta"
+        versionCode = 47
+        versionName = "0.47-beta"
     }
     // Sideloaded beta: keep tested overlay behavior on target 32. Play Store publishing needs a separate target SDK migration.
     lint { disable += "ExpiredTargetSdkVersion" }
@@ -31,7 +31,8 @@ val createRoundIcon by tasks.registering(Exec::class) {
     inputs.file(original)
     inputs.file("scripts/RoundIcon.java")
     outputs.file(output)
-    commandLine("java", file("scripts/RoundIcon.java").absolutePath,
+    // Explicit headless mode for CLI and CI build environments.
+    commandLine("java", "-Djava.awt.headless=true", file("scripts/RoundIcon.java").absolutePath,
         original.absolutePath, output.absolutePath)
 }
 tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(createRoundIcon) }
