@@ -27,6 +27,15 @@ public final class DiagnosticSanitizerTest {
         masks("1234 5678 9012","1234 5678 9012");
         masks("-23.5505,-46.6333","-23.5505,-46.6333");
         masks("+23.5505, -46.6333","+23.5505, -46.6333");
+        masks("?code=abcdef123456","abcdef123456");
+        masks("&state=xyz987654","xyz987654");
+        masks("session_id=qwerty098765","qwerty098765");
+        masks("discord_token=ABCDEFGHIJKLMNOP","ABCDEFGHIJKLMNOP");
+        masks("code: ghijk123456","ghijk123456");
+        masks("redirect?code=abc789&state=xyz456","abc789");
+        masks("redirect?code=abc789&state=xyz456","xyz456");
+        masks("session-id='a quoted value'","a quoted value");
+
         check(!DiagnosticSanitizer.clean("first\nsecond").contains("\n"),"actual newline removed");
         check(DiagnosticSanitizer.clean("texto \\n literal").contains("\\n"),"literal backslash-n preserved");
         check(DiagnosticSanitizer.clean("X".repeat(500)).length()==220,"field bounded");
