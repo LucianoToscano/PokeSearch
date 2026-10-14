@@ -111,6 +111,17 @@ public class MainActivity extends Activity {
         root.addView(watchRow,rowParams);
         watchRow.setOnClickListener(v->openPicker());
         refreshWatchCount();
+        TextView guide=new TextView(this);
+        guide.setText("ⓘ  Guia rápido · entenda os botões");
+        guide.setTextColor(Color.rgb(189,207,223));
+        guide.setTextSize(13);
+        guide.setGravity(Gravity.CENTER_VERTICAL);
+        guide.setPadding(d(14),0,d(12),0);
+        guide.setBackground(round(Color.rgb(24,29,38),10));
+        LinearLayout.LayoutParams guideParams=new LinearLayout.LayoutParams(-1,d(43));
+        guideParams.setMargins(d(2),0,d(2),d(9));
+        root.addView(guide,guideParams);
+        guide.setOnClickListener(v->showQuickGuide());
         // Home independente: a interface do site não faz parte da tela principal.
         TextView hint=new TextView(this);
         hint.setText("IV100  ·  GL#1  ·  UL#1\nToque em Ativar overlay para começar.");
@@ -120,6 +131,9 @@ public class MainActivity extends Activity {
         root.addView(hint,new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
         handleShinyLoginIntent(getIntent());
+        if(!getSharedPreferences("prefs",0).getBoolean("tutorialSeenV40",false)&&
+           !"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(getIntent().getAction()))
+            root.post(this::showQuickGuide);
         if("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST".equals(getIntent().getAction()))
             root.post(this::openPicker);
         if("com.lucianotoscano.pokesearchoverlay.OPEN_SETTINGS".equals(getIntent().getAction()))
@@ -128,6 +142,25 @@ public class MainActivity extends Activity {
             root.post(()->PixSupport.show(this));
         if("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT".equals(getIntent().getAction()))
             root.post(this::showBugReportDialog);
+    }
+    private void showQuickGuide(){
+        getSharedPreferences("prefs",0).edit().putBoolean("tutorialSeenV40",true).apply();
+        String guide=
+            "⚙  Toque para abrir as opções; arraste para mover.\\n"+
+            "100% / GL#1 / UL#1  Escolha o filtro de Pokémon.\\n"+
+            "✨  Liga ou desliga apenas o filtro Shiny; o modo é mantido.\\n"+
+            "AUTO 5m  Escolha atualização a cada 5, 10, 15 ou 20 minutos.\\n"+
+            "↻  Atualização manual (intervalo mínimo: 60s).\\n"+
+            "P/M/G  Tamanho dos sprites; ◷ mostra o despawn.\\n"+
+            "♧  Sino: alertas gerais; ☆: favoritos até 50, no próprio overlay.\\n"+
+            "⚠  Exportar bugs e sugestões; ♡: Pix voluntário.\\n"+
+            "×  Fecha tudo; botão de recolher deixa apenas a engrenagem.\\n\\n"+
+            "Toque nos sprites para ver detalhes. Sem ✨, a busca normal continua.";
+        new AlertDialog.Builder(this)
+            .setTitle("PokeSearch · Guia rápido")
+            .setMessage(guide)
+            .setPositiveButton("Entendi",null)
+            .show();
     }
     private ImageButton makeIcon(int drawable,String description){
         ImageButton button=new ImageButton(this);
