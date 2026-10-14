@@ -54,6 +54,7 @@ public class MainActivity extends Activity {
     private TextView loginWaitLabel,loginFallback;
     private int loginPageGeneration=0;
     private String pendingReportText="";
+    private boolean overlayPermissionPromptShown=false;
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         getWindow().setStatusBarColor(Color.rgb(11,13,18));
@@ -714,11 +715,33 @@ public class MainActivity extends Activity {
             return "void 0";
         }
     }
+    private void openOverlayPermissionSettings(){
+        try{
+            startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:"+getPackageName())),101);
+        }catch(android.content.ActivityNotFoundException e){
+            Toast.makeText(this,"Abra Configurações > Aplicativos > Acesso especial > Sobrepor a outros apps.",Toast.LENGTH_LONG).show();
+        }
+    }
+    private void showOverlayPermissionGuide(){
+        new AlertDialog.Builder(this)
+            .setTitle("Permitir painel flutuante")
+            .setMessage("O PokeSearch precisa da permissão 'Sobrepor a outros apps' para exibir os Pokémon sobre o jogo. O Android exige que você autorize manualmente.\n\nToque em Abrir configurações e habilite PokeSearch.")
+            .setPositiveButton("Abrir configurações",(dialog,which)->openOverlayPermissionSettings())
+            .setNegativeButton("Agora não",null).show();
+    }
+    private void showOverlayDeniedGuide(){
+        if(Settings.canDrawOverlays(this))return;
+        new AlertDialog.Builder(this)
+            .setTitle("Permissão ainda não liberada")
+            .setMessage("O Android não autorizou o painel flutuante. Se apareceu 'Acesso negado ao app', abra Configurações > Aplicativos > PokeSearch > menu de três pontos e procure 'Permitir configurações restritas', caso o seu Android ofereça essa opção.\n\nEssa liberação reduz uma proteção do sistema: faça somente se você confia na origem do APK. Depois volte e tente novamente. Em alguns celulares esse menu não existe.")
+            .setPositiveButton("Tentar novamente",(dialog,which)->openOverlayPermissionSettings())
+            .setNegativeButton("Fechar",null).show();
+    }
     private void startOverlay(){
         CookieManager.getInstance().flush();
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
-            startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                  Uri.parse("package:"+getPackageName())),101);
+            showOverlayPermissionGuide();
             return;
         }
         // Android 13+: alert channels need explicit runtime permission.
@@ -738,7 +761,10 @@ public class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
-        if(req==101&&Settings.canDrawOverlays(this))startOverlay();
+        if(req==101){
+            if(Settings.canDrawOverlays(this))startOverlay();
+            else showOverlayDeniedGuide();
+        }
         if(req==301 && result==RESULT_OK && data!=null && data.getData()!=null){
             try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){
                 if(out==null)throw new java.io.IOException("Documento indisponível");
