@@ -133,7 +133,6 @@ function check(){
   const pc=percentageIVInputs();
   if(pc.length===2&&pc.every(x=>x.value==="100"))return {ok:true};
   return {ok:false,reason:"IV100: Raw IV 15/15/15 ou % IV 100/100 não confirmados"};
-  return {ok:true};
  }
  const rank=inputNear("Top ranking");
  const league=readChoice("League"),prior=readChoice("Include previous evolutions");

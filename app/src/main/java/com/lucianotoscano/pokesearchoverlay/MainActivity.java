@@ -407,6 +407,15 @@ public class MainActivity extends Activity {
         loginDialog=new android.app.Dialog(this);
         loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         loginDialog.setContentView(loginRoot);
+        // Dialog consumes Android Back before Activity.onBackPressed().
+        // Navigate OAuth/WebView history instead of prematurely closing login.
+        loginDialog.setOnKeyListener((dialog,keyCode,event)->{
+            if(keyCode!=android.view.KeyEvent.KEYCODE_BACK||website==null||!website.canGoBack())
+                return false;
+            if(event.getAction()==android.view.KeyEvent.ACTION_UP)website.goBack();
+            return event.getAction()==android.view.KeyEvent.ACTION_DOWN||
+                   event.getAction()==android.view.KeyEvent.ACTION_UP;
+        });
         done.setOnClickListener(v->loginDialog.dismiss());
         loginDialog.setOnDismissListener(d->{
             if(website!=null){website.stopLoading();website.destroy();website=null;}
@@ -451,7 +460,7 @@ public class MainActivity extends Activity {
         description.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         new AlertDialog.Builder(this)
             .setTitle("⚠️ Reportar bug / sugestão")
-            .setMessage("O relatório reúne diagnóstico técnico sem senhas, cookies ou códigos de amizade. Confira antes de compartilhar.")
+            .setMessage("O relatório filtra formatos comuns de dados sensíveis. Revise o conteúdo antes de compartilhar.")
             .setView(description)
             .setNegativeButton("Fechar",null)
             .setNeutralButton("Exportar TXT",(dialog,which)->exportBugReport(description.getText().toString()))
@@ -524,6 +533,22 @@ public class MainActivity extends Activity {
         });
         body.addView(order);
         settingCheckbox(body,prefs,"showTimers","Mostrar tempo individual de despawn",false);
+        settingCheckbox(body,prefs,"alerts","Notificar novos Pokémon encontrados",false);
+        settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,
+            "Alertar com som ao encontrar favorito",true);
+        Button testNotification=new Button(this);
+        testNotification.setText("🔔 Testar notificação");
+        testNotification.setAllCaps(false);
+        testNotification.setTextSize(12);
+        testNotification.setOnClickListener(v->{
+            boolean allowed=WatchAlerts.permissionGranted(this);
+            boolean sent=allowed&&WatchAlerts.test(this);
+            String message=!allowed
+                ?"Permissão de notificações pendente ou bloqueada no Android"
+                :sent?"Notificação de teste enviada":"Não foi possível enviar a notificação de teste";
+            Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+        });
+        body.addView(testNotification,new LinearLayout.LayoutParams(-1,d(42)));
         return sc;
     }
     private void settingCheckbox(LinearLayout root,SharedPreferences prefs,String key,String label,boolean def){

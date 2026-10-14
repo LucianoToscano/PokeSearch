@@ -46,18 +46,43 @@ public class OverlayService extends Service {
     private WebView panel,detailPanel,website,menuPanel;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
     private int height=72,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
+    private boolean deferMenuSync=false;
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
     private String probeScriptCache;
     private boolean searchInProgress=false;
+    private boolean loginPaused=false;
+    private boolean pickerOpen=false;
     private final Runnable queuedRefresh=()->refresh(false);
+    private int pageLoadGeneration=-1;
+    private int pendingPageRefreshGeneration=-1;
+    private int pendingLoginRefreshGeneration=-1;
+    private int pendingReloadGeneration=-1;
+    private final Runnable pageFinishedRefresh=()->{
+        if(!stopped&&!loginPaused&&pageLoadGeneration==requestGeneration&&
+            pendingPageRefreshGeneration==requestGeneration)refresh(false);
+    };
+    private final Runnable loginEndRefresh=()->{
+        if(!stopped&&!loginPaused&&!pickerOpen&&
+            pendingLoginRefreshGeneration==requestGeneration)refresh(false);
+    };
+    private final Runnable deferredSessionReload=()->{
+        if(stopped||loginPaused||pendingReloadGeneration!=requestGeneration)return;
+        if(website!=null)website.loadUrl("https://pogocoordinates.com/search");
+    };
+    private void cancelSessionCallbacks(){
+        handler.removeCallbacks(queuedRefresh);
+        handler.removeCallbacks(periodic);
+        handler.removeCallbacks(expiryRefresh);
+        handler.removeCallbacks(pageFinishedRefresh);
+        handler.removeCallbacks(loginEndRefresh);
+        handler.removeCallbacks(deferredSessionReload);
+    }
     private static final long MIN_SEARCH_GAP_MS=60_000L;
     private long lastSearchStartMs=0L;
     private boolean shinyVerified=false;
     private boolean shinyLoginPromptRequested=false;
     private boolean shinyLoginWindowOpened=false;
     private boolean firstStart=true;
-    private boolean loginPaused=false;
-    private boolean pickerOpen=false;
     private boolean locationEnabled=false;
     private String locationCoords="";
     private int locationRadius=0;
@@ -70,7 +95,7 @@ public class OverlayService extends Service {
     private final Runnable expiryRefresh=new Runnable(){
         @Override public void run(){
             armedDespawnMillis=0L;
-            if(stopped||!loaded)return;
+            if(stopped||loginPaused||!loaded)return;
             if(searchInProgress){
                 handler.postDelayed(this,2000L);
                 return;
@@ -122,12 +147,14 @@ public class OverlayService extends Service {
     private boolean dragged=false;
     private final Runnable periodic=new Runnable(){
         @Override public void run(){
-            if(!stopped){refresh();handler.postDelayed(this,intervalMinutes*60000L);}
+            if(stopped||loginPaused)return;
+            refresh();
+            if(!stopped&&!loginPaused)handler.postDelayed(this,intervalMinutes*60000L);
         }
     };
     private void schedulePeriodic(){
         handler.removeCallbacks(periodic);
-        if(!stopped)handler.postDelayed(periodic,intervalMinutes*60000L);
+        if(!stopped&&!loginPaused)handler.postDelayed(periodic,intervalMinutes*60000L);
     }
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
     private DisplayMetrics metrics(){
@@ -211,7 +238,7 @@ public class OverlayService extends Service {
                 menuDrawHeight=menuParams.height;menuDrawWidth=menuParams.width;
             }catch(Exception e){recordFailure("posicionar menu",e);}
         }
-        if(priorPad!=menuPadDp||priorLeft!=menuLeft){
+        if((priorPad!=menuPadDp||priorLeft!=menuLeft)&&!deferMenuSync){
             String edge=JSONObject.quote(menuLeft?"left":"right");
             js(panel,panelLoaded,"window.syncMenu(true,"+edge+","+menuPadDp+")");
             js(menuPanel,menuLoaded,"window.syncMenu(true,"+edge+",0)");
@@ -287,10 +314,22 @@ public class OverlayService extends Service {
         CookieManager.getInstance().setAcceptThirdPartyCookies(website,true);
         root.addView(website,new FrameLayout.LayoutParams(dp(390),dp(690),Gravity.TOP|Gravity.LEFT));
         website.setWebViewClient(new WebViewClient(){
+            @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap favicon){
+                if(view!=website||stopped)return;
+                if(loginPaused){pageLoadGeneration=-1;return;}
+                pageLoadGeneration=requestGeneration;
+                pendingPageRefreshGeneration=-1;
+                loaded=false;
+                handler.removeCallbacks(pageFinishedRefresh);
+            }
             @Override public void onPageFinished(WebView view,String url){
+                if(view!=website||stopped||loginPaused||
+                   pageLoadGeneration!=requestGeneration)return;
                 if(url!=null&&url.startsWith("https://pogocoordinates.com/")){
                     loaded=true;
-                    handler.postDelayed(()->{if(!stopped&&!loginPaused)refresh();},2500);
+                    handler.removeCallbacks(pageFinishedRefresh);
+                    pendingPageRefreshGeneration=pageLoadGeneration;
+                    handler.postDelayed(pageFinishedRefresh,2500L);
                 }
             }
             @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){
@@ -298,7 +337,7 @@ public class OverlayService extends Service {
                 loaded=false;
                 searchInProgress=false;
                 ++requestGeneration;
-                handler.removeCallbacks(queuedRefresh);
+                cancelSessionCallbacks();
                 BugReport.log(OverlayService.this,"NETWORK","Falha de navegação principal; código="+error.getErrorCode());
                 status("Não foi possível carregar PoGoCoordinates. Confira conexão e tente ↻.");
             }
@@ -441,9 +480,8 @@ public class OverlayService extends Service {
         try{wm.addView(detailRoot,detailParams);}catch(Exception e){recordFailure("abrir detalhes",e);detailRoot=null;}
         panel.loadUrl("file:///android_asset/dock.html");
         if(detailRoot!=null)detailPanel.loadUrl("file:///android_asset/detail.html");
-        website.loadUrl("https://pogocoordinates.com/search");
+        // Initial navigation is scheduled after cookie flush in onStartCommand.
         running=true;
-        schedulePeriodic();
     }
     private String script(){
         if(probeScriptCache!=null)return probeScriptCache;
@@ -456,6 +494,7 @@ public class OverlayService extends Service {
         }catch(Exception e){recordFailure("ler probe.js",e);return "null";}
     }
     private void execute(String action,Consumer<JSONObject> callback){
+        if(stopped||loginPaused)return;
         if(!loaded||website==null){
             if(callback!=null){
                 JSONObject failure=new JSONObject();
@@ -468,7 +507,7 @@ public class OverlayService extends Service {
                 .replace("__MODE__",JSONObject.quote(mode))
                 .replace("__SHINY__",shiny?"true":"false");
         try{website.evaluateJavascript(code,raw->{
-            if(stopped)return;
+            if(stopped||loginPaused)return;
             try{
                 String decoded=new JSONArray("["+raw+"]").getString(0);
                 JSONObject r=new JSONObject(decoded);
@@ -520,7 +559,7 @@ public class OverlayService extends Service {
         final int generation=++requestGeneration;
         status(manual?"Busca manual iniciada...":"Atualizando...");
         execute("session",session->{
-            if(stopped||generation!=requestGeneration)return;
+            if(stopped||loginPaused||generation!=requestGeneration)return;
             final String auth=session.optString("auth","não confirmado");
             getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
             // Only record a coarse authentication state, never cookies, codes or tokens.
@@ -532,31 +571,37 @@ public class OverlayService extends Service {
                 return;
             }
             execute("prepareSearch",prepared->{
-                if(stopped||generation!=requestGeneration)return;
+                if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!prepared.optBoolean("ok")){
                     searchInProgress=false;
                     diagnosticError("Não foi possível selecionar a aba de busca.");
                     return;
                 }
-                handler.postDelayed(()->execute("configureSearch",configured->{
-                    if(stopped||generation!=requestGeneration)return;
+                handler.postDelayed(()->{
+                    if(stopped||loginPaused||generation!=requestGeneration)return;
+                    execute("configureSearch",configured->{
+                    if(stopped||loginPaused||generation!=requestGeneration)return;
                     if(!configured.optBoolean("ok")||!configured.optBoolean("configured",false)){
                         searchInProgress=false;
                         diagnosticError("Falha nos controles IV/R1. Verifique se a página de busca carregou.");
                         return;
                     }
                     configureLocationAndVerify(generation,manual,0);
-                }),600L);
+                    });
+                },600L);
             });
         });
     }
     private void configureLocationAndVerify(int generation,boolean manual,int attempt){
         String data=locationPayload();
         execute("configureLocation:"+data,configured->{
-            if(stopped||generation!=requestGeneration)return;
+            if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!configured.optBoolean("ok")){
                 if(attempt<2){
-                    handler.postDelayed(()->configureLocationAndVerify(generation,manual,attempt+1),450L);
+                    handler.postDelayed(()->{
+                        if(stopped||loginPaused||generation!=requestGeneration)return;
+                        configureLocationAndVerify(generation,manual,attempt+1);
+                    },450L);
                     return;
                 }
                 searchInProgress=false;
@@ -564,8 +609,10 @@ public class OverlayService extends Service {
                     configured.optString("reason","verifique o formulário do site."));
                 return;
             }
-            handler.postDelayed(()->execute("verifyLocation:"+data,verified->{
-                if(stopped||generation!=requestGeneration)return;
+            handler.postDelayed(()->{
+                if(stopped||loginPaused||generation!=requestGeneration)return;
+                execute("verifyLocation:"+data,verified->{
+                if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!verified.optBoolean("ok")){
                     if(attempt<2){
                         configureLocationAndVerify(generation,manual,attempt+1);
@@ -576,7 +623,8 @@ public class OverlayService extends Service {
                     return;
                 }
                 verifyAndSubmit(generation,manual,0);
-            }),400L);
+                });
+            },400L);
         });
     }
     private void openShinyLogin(){
@@ -593,12 +641,14 @@ public class OverlayService extends Service {
         }
     }
     private void verifyAndSubmit(int generation,boolean manual,int attempt){
-        handler.postDelayed(()->execute("verifyShiny",verified->{
-            if(stopped||generation!=requestGeneration)return;
+        handler.postDelayed(()->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
+            execute("verifyShiny",verified->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!verified.optBoolean("ok")){
                 if(attempt<4){
                     execute("prepareSearch",preparedRetry->execute("configureSearch",ignored->{
-                        if(stopped||generation!=requestGeneration)return;
+                        if(stopped||loginPaused||generation!=requestGeneration)return;
                         verifyAndSubmit(generation,manual,attempt+1);
                     }));
                     return;
@@ -614,11 +664,11 @@ public class OverlayService extends Service {
                 return;
             }
             execute("verifyFilters",filters->{
-                if(stopped||generation!=requestGeneration)return;
+                if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!filters.optBoolean("ok")){
                     if(attempt<2){
                         execute("configureSearch",ignored->{
-                            if(stopped||generation!=requestGeneration)return;
+                            if(stopped||loginPaused||generation!=requestGeneration)return;
                             verifyAndSubmit(generation,manual,attempt+1);
                         });
                         return;
@@ -632,7 +682,7 @@ public class OverlayService extends Service {
                 shinyVerified=shiny;
                 update();
                 execute("submitSearch",submitted->{
-                    if(stopped||generation!=requestGeneration)return;
+                    if(stopped||loginPaused||generation!=requestGeneration)return;
                     if(!submitted.optBoolean("ok")){
                         searchInProgress=false;
                         shinyVerified=false;
@@ -647,11 +697,14 @@ public class OverlayService extends Service {
                     pollSearch(generation,0,manual);
                 });
             });
-        }),650L);
+            });
+        },650L);
     }
     private void pollSearch(int generation,int attempt,boolean manual){
-        handler.postDelayed(()->execute("collect",r->{
-            if(stopped||generation!=requestGeneration)return;
+        handler.postDelayed(()->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
+            execute("collect",r->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!r.optBoolean("ok")){
                 searchInProgress=false;
                 diagnosticError("Falha na leitura dos resultados do site.");
@@ -695,7 +748,8 @@ public class OverlayService extends Service {
                 return;
             }
             applyCollectedResults(r);
-        }), attempt==0?3000L:1300L);
+            });
+        }, attempt==0?3000L:1300L);
     }
     private long expiration(JSONObject item){
         if(item==null)return Long.MAX_VALUE;
@@ -705,7 +759,8 @@ public class OverlayService extends Service {
             long secs=Long.parseLong(p[0])*60+Long.parseLong(p[1]);
             if(secs<=0||secs>86400)return Long.MAX_VALUE;
             return item.optLong("sampledAt",System.currentTimeMillis())+secs*1000L;
-        }catch(Exception e){return Long.MAX_VALUE;}
+        }catch(NumberFormatException ignored){return Long.MAX_VALUE;}
+        catch(Exception e){recordFailure("interpretar despawn",e);return Long.MAX_VALUE;}
     }
     private String spawnKey(JSONObject c){
         return mode+"|"+c.optString("name","")+"|"+c.optString("cp","")+"|"+
@@ -751,7 +806,7 @@ public class OverlayService extends Service {
         android.content.SharedPreferences preferences=getSharedPreferences("prefs",0);
         JSONArray history;
         try{history=new JSONArray(preferences.getString("history","[]"));}
-        catch(Exception ignored){history=new JSONArray();}
+        catch(Exception e){recordFailure("ler histórico",e);history=new JSONArray();}
         java.util.Set<String> current=new java.util.HashSet<>();
         String firstNew="";
         String firstWatched="";
@@ -788,7 +843,7 @@ public class OverlayService extends Service {
                 entry.put("rank",c.optString("rank",""));
                 entry.put("at",now);
                 history.put(entry);
-            }catch(Exception ignored){}
+            }catch(Exception e){recordFailure("gravar histórico",e);}
         }
         knownSpawns.clear();knownSpawns.addAll(current);
         JSONArray limited=new JSONArray();
@@ -859,20 +914,19 @@ public class OverlayService extends Service {
         menuPadDp=show?TOOLBAR_DP:0;
         if(show){
             menuDrawHeight=-1;menuDrawWidth=-1;
-            menuLeft=false; // Position recalculated after menu is shown.
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
             if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(TOOLBAR_DP);}
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
         }
-        // Main dock remains narrow and stationary. Only the Pokémon column
-        // drops 29dp below the expanded controls, so the remaining game area
-        // keeps receiving touches.
-        js(panel,panelLoaded,"window.syncMenu("+show+","+
-            JSONObject.quote(menuLeft?"left":"right")+","+menuPadDp+")");
-        js(menuPanel,menuLoaded,"window.syncMenu("+show+","+
-            JSONObject.quote(menuLeft?"left":"right")+",0)");
-        updateWindow();
+        // Position first and send one sync for this open/close transition.
+        // Future drags still synchronize from updateMenuPosition().
+        deferMenuSync=true;
+        try{updateWindow();}
+        finally{deferMenuSync=false;}
+        String edge=JSONObject.quote(menuLeft?"left":"right");
+        js(panel,panelLoaded,"window.syncMenu("+show+","+edge+","+menuPadDp+")");
+        js(menuPanel,menuLoaded,"window.syncMenu("+show+","+edge+",0)");
         moveDetail();
     }
     private void minimize(boolean yes){
@@ -898,7 +952,7 @@ public class OverlayService extends Service {
             detailRoot.setVisibility(View.VISIBLE);
             moveDetail();
             js(panel,panelLoaded,"window.highlight("+index+")");
-        }catch(Exception e){hideDetails();}
+        }catch(Exception e){recordFailure("mostrar detalhes",e);hideDetails();}
     }
     private void hideDetails(){
         selected=-1;
@@ -912,6 +966,7 @@ public class OverlayService extends Service {
         }
     }
     private void pollCoordinates(JSONObject target,int attempt,boolean autoCopy){
+        if(stopped||loginPaused)return;
         JSONObject query=new JSONObject();
         try{
             query.put("name",target.optString("name",""));
@@ -930,12 +985,14 @@ public class OverlayService extends Service {
                         }
                     }
                     results=existing.toString();
-                }catch(Exception ignored){}
+                }catch(Exception e){recordFailure("armazenar coordenadas",e);}
                 if(autoCopy)copyCoordinatesInternal(coords);
                 deliverCoords(coords,autoCopy?"Coordenadas copiadas":"Coordenadas obtidas");return;
             }
             if(attempt<8){
-                handler.postDelayed(()->pollCoordinates(target,attempt+1,autoCopy),450L);
+                handler.postDelayed(()->{
+                    if(!stopped&&!loginPaused)pollCoordinates(target,attempt+1,autoCopy);
+                },450L);
             }else{
                 deliverCoords("","O site não retornou coordenadas. Confira no navegador interno.");
             }
@@ -947,7 +1004,7 @@ public class OverlayService extends Service {
         if(cb!=null&&!coords.isEmpty())cb.setPrimaryClip(ClipData.newPlainText("Pokémon coordinates",coords));
     }
     private String extractCoordinates(String input){
-        java.util.regex.Matcher m=java.util.regex.Pattern.compile("^\\s*(-?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*(-?\\d{1,3}(?:\\.\\d+)?)\\s*$").matcher(input==null?"":input);
+        java.util.regex.Matcher m=java.util.regex.Pattern.compile("^\\s*([-+]?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*([-+]?\\d{1,3}(?:\\.\\d+)?)\\s*$").matcher(input==null?"":input);
         if(m.find()){
             try{
                 double lat=Double.parseDouble(m.group(1)),lon=Double.parseDouble(m.group(2));
@@ -1067,14 +1124,14 @@ public class OverlayService extends Service {
             intent.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_PIX");
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
                 Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            try{startActivity(intent);}catch(Exception ignored){}
+            try{startActivity(intent);}catch(Exception e){recordFailure("abrir atalho",e);}
         });}
         @JavascriptInterface public void openSettings(){handler.post(()->{
             Intent intent=new Intent(OverlayService.this,MainActivity.class);
             intent.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_SETTINGS");
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
                 Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            try{startActivity(intent);}catch(Exception ignored){}
+            try{startActivity(intent);}catch(Exception e){recordFailure("abrir preferências",e);}
         });}
         @JavascriptInterface public void showStatus(){handler.post(()->{
             android.widget.Toast.makeText(OverlayService.this,
@@ -1163,7 +1220,7 @@ public class OverlayService extends Service {
             try{
                 JSONArray a=new JSONArray(results);
                 if(i>=0&&i<a.length())requestCoordinates(a.getJSONObject(i).optInt("sourceIndex",-1),true);
-            }catch(Exception ignored){}
+            }catch(Exception e){recordFailure("detalhes coordenadas",e);}
         });}
         @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,false));}
     }
@@ -1175,7 +1232,7 @@ public class OverlayService extends Service {
                 JSONObject item=a.getJSONObject(i);
                 if(item.optInt("sourceIndex",-1)==sourceIndex){chosen=item;break;}
             }
-        }catch(Exception ignored){}
+        }catch(Exception e){recordFailure("ler cartão coordenadas",e);}
         if(chosen==null){deliverCoords("","Pokémon indisponível");return;}
         JSONObject target=chosen;
         execute("coords:"+sourceIndex,response->{
@@ -1189,12 +1246,14 @@ public class OverlayService extends Service {
         String action=i==null?"":i.getAction();
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN".equals(action)){
             loginPaused=true;
-            // Cancel callbacks from the old page so that no search is submitted
-            // while the user is authenticating.
             ++requestGeneration;
             searchInProgress=false;
-            handler.removeCallbacks(queuedRefresh);
-            handler.removeCallbacks(periodic);
+            pageLoadGeneration=-1;
+            pendingPageRefreshGeneration=-1;
+            pendingLoginRefreshGeneration=-1;
+            pendingReloadGeneration=-1;
+            // Cancels queued, periodic, expiration, page, login and reload timers.
+            cancelSessionCallbacks();
             if(root!=null)root.setVisibility(View.GONE);
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
             if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
@@ -1206,31 +1265,35 @@ public class OverlayService extends Service {
             if(root!=null&&!pickerOpen)root.setVisibility(View.VISIBLE);
             if(menuRoot!=null&&!pickerOpen&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
             if(detailRoot!=null&&selected>=0&&!pickerOpen)detailRoot.setVisibility(View.VISIBLE);
+            cancelSessionCallbacks();
+            pendingLoginRefreshGeneration=requestGeneration;
+            if(!stopped&&!loginPaused&&!pickerOpen)
+                handler.postDelayed(loginEndRefresh,1600L);
             schedulePeriodic();
             BugReport.log(this,"LOGIN","Página de autenticação fechada");
-            // The login screen may have refreshed cookies without triggering a
-            // page-finished callback in the search WebView.
-            handler.postDelayed(()->{
-                if(!stopped&&!loginPaused&&!pickerOpen)refresh(false);
-            },1600L);
             return START_STICKY;
         }
         boolean initialStart=firstStart;
         firstStart=false;
-        if(i!=null&&"com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN".equals(i.getAction())){
+        if("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN".equals(action)||
+           (initialStart&&action.isEmpty())){
             shinyLoginPromptRequested=false;
             shinyLoginWindowOpened=false;
-            if(!initialStart){
-                ++requestGeneration;
-                searchInProgress=false;
-                shinyVerified=false;
-                handler.removeCallbacks(expiryRefresh);
-                results="[]";hideDetails();loaded=false;
-                status("Atualizando sessão após login...");
-                CookieManager.getInstance().flush();
-                if(website!=null)website.loadUrl("https://pogocoordinates.com/search");
-                // Keep knownSpawns on session reload to prevent duplicate notifications.
-            }
+            ++requestGeneration;
+            searchInProgress=false;
+            shinyVerified=false;
+            loaded=false;
+            pageLoadGeneration=-1;
+            pendingPageRefreshGeneration=-1;
+            pendingLoginRefreshGeneration=-1;
+            cancelSessionCallbacks();
+            if(!initialStart){results="[]";hideDetails();status("Atualizando sessão após login...");}
+            try{CookieManager.getInstance().flush();}
+            catch(RuntimeException e){recordFailure("sincronizar cookies",e);}
+            pendingReloadGeneration=requestGeneration;
+            if(!stopped&&!loginPaused)
+                handler.postDelayed(deferredSessionReload,350L);
+            // Keep knownSpawns on session reload to prevent duplicate notifications.
         }
         // v0.20 saved 10 as the implicit default; only keep a rate the user explicitly chose.
         android.content.SharedPreferences pref=getSharedPreferences("prefs",0);
@@ -1272,16 +1335,34 @@ public class OverlayService extends Service {
         update();
         return START_STICKY;
     }
+    private void destroyWebView(WebView web,boolean hasBridge,String stage){
+        if(web==null)return;
+        try{web.stopLoading();}catch(RuntimeException e){recordFailure(stage+" stop",e);}
+        if(hasBridge){
+            try{web.removeJavascriptInterface("Native");}
+            catch(RuntimeException e){recordFailure(stage+" JS",e);}
+        }
+        try{
+            android.view.ViewParent parent=web.getParent();
+            if(parent instanceof android.view.ViewGroup)
+                ((android.view.ViewGroup)parent).removeView(web);
+        }catch(RuntimeException e){recordFailure(stage+" detach",e);}
+        try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
+    }
     @Override public void onDestroy(){
+        stopped=true;
         running=false;
-        stopped=true;handler.removeCallbacksAndMessages(null);
+        ++requestGeneration;
+        searchInProgress=false;
+        handler.removeCallbacksAndMessages(null);
         if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception e){recordFailure("remover dock",e);}}
         if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception e){recordFailure("remover menu",e);}}
         if(wm!=null&&detailRoot!=null){try{wm.removeView(detailRoot);}catch(Exception e){recordFailure("remover detalhes",e);}}
-        if(panel!=null){panel.removeJavascriptInterface("Native");panel.destroy();panel=null;}
-        if(menuPanel!=null){menuPanel.removeJavascriptInterface("Native");menuPanel.destroy();menuPanel=null;}
-        if(detailPanel!=null){detailPanel.removeJavascriptInterface("Native");detailPanel.destroy();detailPanel=null;}
-        if(website!=null){website.destroy();website=null;}
+        destroyWebView(panel,true,"painel");panel=null;
+        destroyWebView(menuPanel,true,"menu");menuPanel=null;
+        destroyWebView(detailPanel,true,"detalhes");detailPanel=null;
+        destroyWebView(website,false,"site");website=null;
+        root=null;menuRoot=null;detailRoot=null;
         super.onDestroy();
     }
     @Override public IBinder onBind(Intent intent){return null;}
