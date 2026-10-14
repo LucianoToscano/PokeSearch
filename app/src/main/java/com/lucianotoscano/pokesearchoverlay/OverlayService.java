@@ -47,6 +47,7 @@ public class OverlayService extends Service {
     private boolean shinyVerified=false;
     private boolean shinyLoginPromptRequested=false;
     private boolean shinyLoginWindowOpened=false;
+    private boolean firstStart=true;
     private boolean showTimers=false,alerts=false;
     private String sort="despawn";
     private long lastAlertAt=0L;
@@ -407,18 +408,35 @@ public class OverlayService extends Service {
                 if(shinyLoginPromptRequested)openShinyLogin();
                 return;
             }
-            shinyVerified=shiny;
-            update();
-            execute("submitSearch",submitted->{
+            execute("verifyFilters",filters->{
                 if(stopped||generation!=requestGeneration)return;
-                if(!submitted.optBoolean("ok")){
+                if(!filters.optBoolean("ok")){
+                    if(attempt<2){
+                        execute("configureSearch",ignored->{
+                            if(stopped||generation!=requestGeneration)return;
+                            verifyAndSubmit(generation,manual,attempt+1);
+                        });
+                        return;
+                    }
                     searchInProgress=false;
                     shinyVerified=false;
-                    diagnosticError(submitted.optString("reason","Falha ao pressionar Search."));
+                    diagnosticError("Filtros IV/ligas não confirmados: "
+                        +filters.optString("reason","verifique as opções no site."));
                     return;
                 }
-                status(manual?"Busca manual em andamento...":"Buscando...");
-                pollSearch(generation,0,manual);
+                shinyVerified=shiny;
+                update();
+                execute("submitSearch",submitted->{
+                    if(stopped||generation!=requestGeneration)return;
+                    if(!submitted.optBoolean("ok")){
+                        searchInProgress=false;
+                        shinyVerified=false;
+                        diagnosticError(submitted.optString("reason","Falha ao pressionar Search."));
+                        return;
+                    }
+                    status(manual?"Busca manual em andamento...":"Buscando...");
+                    pollSearch(generation,0,manual);
+                });
             });
         }),650L);
     }
@@ -430,11 +448,18 @@ public class OverlayService extends Service {
                 diagnosticError("Falha na leitura dos resultados do site.");
                 return;
             }
-            if(shiny && (!r.has("siteShiny")||r.isNull("siteShiny")||
-                !r.optBoolean("siteShiny",false))){
+            if((shiny && (!r.has("siteShiny")||r.isNull("siteShiny")||
+                !r.optBoolean("siteShiny",false))) ||
+                (!shiny&&r.has("siteShiny")&&!r.isNull("siteShiny")&&r.optBoolean("siteShiny",false))){
                 searchInProgress=false;
                 shinyVerified=false;
-                diagnosticError("✨ O site desligou Shiny. Resultados não confirmados.");
+                diagnosticError("Filtro Shiny mudou durante a busca. Resultados não confirmados.");
+                return;
+            }
+            if(!"iv".equals(mode)&&!r.optBoolean("leagueConfirmed",false)){
+                searchInProgress=false;
+                shinyVerified=false;
+                diagnosticError("Liga PvP/ranking 1 não confirmado. Resultados preservados.");
                 return;
             }
             int found=r.optInt("found",0);
@@ -872,16 +897,22 @@ public class OverlayService extends Service {
         });
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
+        boolean initialStart=firstStart;
+        firstStart=false;
         if(i!=null&&"com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN".equals(i.getAction())){
-            ++requestGeneration;searchInProgress=false;handler.removeCallbacks(expiryRefresh);
-            shinyVerified=false;
             shinyLoginPromptRequested=false;
             shinyLoginWindowOpened=false;
-            results="[]";hideDetails();loaded=false;
-            knownSpawns.clear();
-            status("Atualizando sessão após login...");
-            CookieManager.getInstance().flush();
-            if(website!=null)website.loadUrl("https://pogocoordinates.com/search");
+            if(!initialStart){
+                ++requestGeneration;
+                searchInProgress=false;
+                shinyVerified=false;
+                handler.removeCallbacks(expiryRefresh);
+                results="[]";hideDetails();loaded=false;
+                status("Atualizando sessão após login...");
+                CookieManager.getInstance().flush();
+                if(website!=null)website.loadUrl("https://pogocoordinates.com/search");
+                // Keep knownSpawns on session reload to prevent duplicate notifications.
+            }
         }
         // v0.20 saved 10 as the implicit default; only keep a rate the user explicitly chose.
         android.content.SharedPreferences pref=getSharedPreferences("prefs",0);
