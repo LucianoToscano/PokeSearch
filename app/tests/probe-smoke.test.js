@@ -79,7 +79,8 @@ function run(action,mode,shinyOnly,opts={}){
     if(selector==="p,small,span,div,label")return accountLabels;
     return [];
   }
-  const document={querySelectorAll,querySelector:()=>null,body:element(opts.spawn?"Showing 10 spawns":"")};
+  const document={querySelectorAll,querySelector:()=>null,
+    body:element(opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":"")};
   const code=source.replace("__ACTION__",JSON.stringify(action))
       .replace("__MODE__",JSON.stringify(mode))
       .replace("__SHINY__",String(shinyOnly));
@@ -122,6 +123,9 @@ checked++;
 const accountSession=run("session","iv",false,{accountBadge:true,switch:false});
 assert.equal(accountSession.auth,"autenticada","Hidden Logout must not block the known account session");
 assert.equal(JSON.stringify(accountSession).includes("TestAccount"),false,"No account identifier in session result");
+checked++;
+const textOnlyAccount=run("session","iv",false,{bodyBadge:true});
+assert.equal(textOnlyAccount.auth,"autenticada","Mobile markup without matching tag still authenticates");
 checked++;
 const noSession=run("session","iv",false,{loggedOut:true});
 assert.equal(noSession.auth,"login necessário","Login-required view remains unauthenticated");
