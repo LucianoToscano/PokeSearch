@@ -264,4 +264,12 @@ test("Gap between gear and first sprite is never a fabricated 34dp",
   service.includes('params.y=targetY;')&&
   service.includes('menuPadDp=0;')&&
   dock.includes('#spawns{margin-top:var(--top-space);gap:0}'));
+const directShiny=service.split('private void prepareImmediateShiny(int generation){')[1]?.split('private void verifyAndSubmit(')[0]||'';
+test("Shiny on visible Pokémon page never requires Stats/PvP tab",
+  directShiny.includes('applyShinyOnSite(generation,0);')&&!directShiny.includes('execute("prepareSearch"'));
+test("Shiny retries unhydrated site control without repeated login loops",
+  service.includes('handler.postDelayed(()->applyShinyOnSite(generation,attempt+1),300L)')&&
+  service.includes('Conta conectada; controle Shiny não encontrado no site.'));
+test("Mobile session probe has a text-node badge fallback",
+  read("assets/probe.js").includes('document.body&&document.body.innerText'));
 console.log("PokeSearch UX contract: "+count+" tests passed");
