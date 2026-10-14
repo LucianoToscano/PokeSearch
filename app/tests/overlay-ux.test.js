@@ -92,9 +92,13 @@ test("Favorites use translucent gradient without background dim",picker.includes
 test("Home has explicit login and logout",main.includes('signIn.setText("Entrar / vincular")')&&main.includes('signOut.setText("Sair")'));
 test("Login does not start overlay if none is running",main.includes("if(!OverlayService.isRunning())return;"));
 test("Logout clears local cookies and web storage only",main.includes("removeAllCookies")&&main.includes("WebStorage.getInstance().deleteAllData()"));
-test("Home login does not force Shiny",main.includes("openLoginDialog(false)")&&main.includes('view.evaluateJavascript(readAsset("shiny_login.js"),null)')&&main.includes('if("true".equals(value)&&loginStartedForShiny&&'));
+test("Home login does not force Shiny",main.includes("openLoginDialog(false)")&&
+    !main.includes('view.evaluateJavascript(readAsset("shiny_login.js"),null)')&&
+    main.includes('String probe=readAsset("probe.js")'));
 test("Verified Home login returns to PokeSearch",main.includes("loginAutoReturnQueued=true")&&main.includes("loginDialog.dismiss()"));
-test("Verified Shiny login checks site before leaving",main.includes('JSONObject.quote("verifyShiny")')&&main.includes("checkShinyReturn(view,10)"));
+test("Verified login returns regardless of Shiny switch state",main.includes('JSONObject.quote("session")')&&
+    main.includes('loginAutoReturnQueued=true;')&&main.includes('loginDialog.dismiss();')&&
+    !main.includes('checkShinyReturn('));
 test("Menu orientation sent to BOTH native WebViews",service.includes('js(menuPanel,menuLoaded,"window.syncMenu(true,"+edge+",0)")'));
 test("Near-right vertical dock still reverses order",service.includes("menuLeft=params.x+dp(dockDp())/2>screen/2"));
 test("Service lifecycle prevents spurious background site",service.includes("public static boolean isRunning()")&&service.includes("running=false;"));
@@ -231,8 +235,33 @@ test("Login retries the official control for delayed site hydration",
   main.includes('private void openOfficialLoginControl(WebView view,int remaining)')&&
   main.includes('view.postDelayed(()->openOfficialLoginControl(view,remaining-1),330L)')&&
   main.includes('openOfficialLoginControl(view,8);'));
-test("Login never opens a guessed OAuth endpoint or toggles Shiny before auth",
+test("Login uses official site and Shiny activation remains in background collector",
   main.includes('host.equalsIgnoreCase("pogocoordinates.com")')&&
-  main.includes('view.evaluateJavascript(readAsset("shiny_login.js"),null)')&&
-  main.includes('if("true".equals(value)&&loginStartedForShiny&&'));
+  !main.includes('view.evaluateJavascript(readAsset("shiny_login.js"),null)')&&
+  main.includes('website.loadUrl("https://pogocoordinates.com/search")')&&
+  service.includes('private void prepareImmediateShiny(int generation)'));
+test("Official account badge returns immediately to PokeSearch Home",
+  main.includes('private void checkLoginSession(WebView view,int attemptsLeft,int pageGeneration)')&&
+  main.includes('if("autenticada".equals(auth)){')&&
+  main.includes('loginDialog.dismiss();')&&
+  main.includes('checkLoginSession(view,14,generation);'));
+test("Login stays monitored during in-page OAuth without forcing navigation",
+  main.includes('view.postDelayed(()->checkLoginSession(view,next,pageGeneration)')&&
+  main.includes('attemptsLeft>1?400L:850L')&&
+  main.includes('++loginPageGeneration; // Invalidate pending WebView session probes.'));
+test("Login session detection reuses sanitized probe not a visible Logout alone",
+  main.includes('JSONObject.quote("session")')&&
+  read("assets/probe.js").includes('const accountBadge=elements("p,small,span,div,label")'));
+test("Shiny state sync starts on site load independently of Search cooldown",
+  service.includes('if(shiny&&!shinyVerified){')&&
+  service.includes('prepareImmediateShiny(generation);')&&
+  service.includes('},420L);'));
+test("After login, authenticated site missing switch never restarts login loop",
+  service.includes('"autenticada".equals(auth)')&&
+  service.includes('Conta conectada; controle Shiny não encontrado no site.'));
+test("Gap between gear and first sprite is never a fabricated 34dp",
+  service.includes('menuPadDp=0; // Only the measured overlap')&&
+  service.includes('params.y=targetY;')&&
+  service.includes('menuPadDp=0;')&&
+  dock.includes('#spawns{margin-top:var(--top-space);gap:0}'));
 console.log("PokeSearch UX contract: "+count+" tests passed");
