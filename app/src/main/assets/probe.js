@@ -98,16 +98,35 @@ function rawIVInputs(){
  for(const el of list){
   for(let p=el.parentElement,i=0;p&&i<6;p=p.parentElement,i++){
    const inputs=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
-   if(inputs.length===3)return inputs;
+   if(inputs.length===3||inputs.length===6)return inputs;
   }
  }
  return [];
 }
+function percentageIVInputs(){
+ const min=elements('input').find(x=>vis(x)&&/min\\s*%/i.test(x.getAttribute('placeholder')||''));
+ const max=elements('input').find(x=>vis(x)&&/max\\s*%/i.test(x.getAttribute('placeholder')||''));
+ if(min&&max)return [min,max];
+ const label=labels(document,/^IV$/i);
+ for(const el of label){
+  for(let p=el,i=0;p&&i<6;p=p.parentElement,i++){
+   const inputs=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
+   if(inputs.length===2)return inputs;
+  }
+ }
+ return [];
+}
+function set100Percent(){
+ tab("Stats");tab("% IV");
+ const fields=percentageIVInputs();
+ if(fields.length!==2)return false;
+ return fields.every(e=>valueInput(e,"100"));
+}
 function applyIv(){
  tab("Stats");tab("Raw IV");
- const ins=rawIVInputs();
- if(ins.length!==3)return false;
- return ins.every(x=>valueInput(x,"15"));
+ const raw=rawIVInputs();
+ if(raw.length===3||raw.length===6)return raw.every(x=>valueInput(x,"15"));
+ return set100Percent();
 }
 function applyGl(){
  const rank=inputNear("Top ranking");
@@ -118,7 +137,10 @@ function check(){
  if(currentShiny!==shinyOnly && !(shinyOnly===false&&currentShiny===null))return {ok:false,reason:"Shiny não confirmado",shiny:currentShiny};
  if(mode==="iv"){
   const ins=rawIVInputs();
-  if(ins.length!==3||ins.some(x=>x.value!=="15"))return {ok:false,reason:"Raw IV 15/15/15 não confirmado"};
+  if((ins.length===3||ins.length===6)&&ins.every(x=>x.value==="15"))return {ok:true};
+  const pc=percentageIVInputs();
+  if(pc.length===2&&pc.every(x=>x.value==="100"))return {ok:true};
+  return {ok:false,reason:"IV100: Raw IV 15/15/15 ou % IV 100/100 não confirmados"};
   return {ok:true};
  }
  const rank=inputNear("Top ranking");
@@ -275,10 +297,7 @@ if(action==="prepareSearch"){
 if(action==="configureSearch"){
  let configured=false;
  if(mode==="iv"){
-  tab("Raw IV");
-  const fields=rawIVInputs();
-  configured=fields.length===3;
-  if(configured)for(const e of fields)valueInput(e,"15");
+  configured=applyIv();
  }else{
   const rank=inputNear("Top ranking");
   if(rank)valueInput(rank,"1");
