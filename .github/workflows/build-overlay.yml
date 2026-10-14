@@ -1,7 +1,7 @@
 name: Build PokeSearch Android APK
 on:
   push:
-    branches: [main, fix/v047-audit-hardening]
+    branches: [main, fix/v048-notification-diagnostics]
   workflow_dispatch:
 permissions:
   contents: read
@@ -30,6 +30,11 @@ jobs:
           grep -q 'if(action==="verifyShiny")' app/src/main/assets/probe.js
           grep -q 'if(action==="verifyFilters")' app/src/main/assets/probe.js
           node app/tests/probe-smoke.test.js
+          mkdir -p /tmp/pokesearch-privacy-tests
+          javac -encoding UTF-8 -d /tmp/pokesearch-privacy-tests \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/DiagnosticSanitizer.java \
+            app/tests/DiagnosticSanitizerTest.java
+          java -cp /tmp/pokesearch-privacy-tests com.lucianotoscano.pokesearchoverlay.DiagnosticSanitizerTest
           node --check app/tests/overlay-ux.test.js
           grep -q 'id="location"' app/src/main/assets/dock.html
           grep -q 'renderLocationChoices' app/src/main/assets/dock.html
@@ -37,6 +42,8 @@ jobs:
           grep -q 'id="locBadge"' app/src/main/assets/dock.html
           grep -q 'id="close"' app/src/main/assets/dock.html
           grep -q 'id="collapse"' app/src/main/assets/dock.html
+          test -s app/src/main/res/drawable/ic_notification.xml
+          test -s docs/GUIA_TESTE_SAMSUNG_v0.48.md
           test -s app/src/main/assets/tutorial.html
           grep -q 'shinyPending' app/src/main/assets/dock.html
           python3 - <<'PY'
@@ -61,7 +68,7 @@ jobs:
           test -s app/build/outputs/apk/debug/app-debug.apk
           unzip -t app/build/outputs/apk/debug/app-debug.apk >/dev/null
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "^package: name='com.lucianotoscano.pokesearch' versionCode='47' versionName='0.47-beta'"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "^package: name='com.lucianotoscano.pokesearch' versionCode='48' versionName='0.48-beta'"
           test -s app/src/main/res/drawable-nodpi/ic_launcher.png
           test -s app/src/main/res/drawable-nodpi/pokesearch_round.png
           cp app/src/main/res/drawable-nodpi/pokesearch_round.png /tmp/pokesearch-generated-icon.png
@@ -77,24 +84,25 @@ jobs:
           unzip -t gradle/wrapper/gradle-wrapper.jar >/dev/null
           test -s settings.gradle.kts
           mkdir -p delivery
-          cp app/build/outputs/apk/debug/app-debug.apk delivery/PokeSearch-0.47-beta.apk
+          cp app/build/outputs/apk/debug/app-debug.apk delivery/PokeSearch-0.48-beta.apk
           git diff --exit-code -- .
-          git archive --format=zip HEAD -o delivery/PokeSearch-0.47-beta-source.zip
-          zip -q delivery/PokeSearch-0.47-beta-source.zip \
+          git archive --format=zip HEAD -o delivery/PokeSearch-0.48-beta-source.zip
+          zip -q delivery/PokeSearch-0.48-beta-source.zip \
              app/src/main/res/drawable-nodpi/pokesearch_round.png \
              gradlew gradlew.bat gradle/wrapper/gradle-wrapper.jar \
              gradle/wrapper/gradle-wrapper.properties
-          unzip -p delivery/PokeSearch-0.47-beta-source.zip settings.gradle.kts | grep -q 'include(":app")'
-          unzip -p delivery/PokeSearch-0.47-beta-source.zip gradle/wrapper/gradle-wrapper.properties | grep -q 'gradle-8.11.1-bin.zip'
+          unzip -p delivery/PokeSearch-0.48-beta-source.zip settings.gradle.kts | grep -q 'include(":app")'
+          unzip -p delivery/PokeSearch-0.48-beta-source.zip gradle/wrapper/gradle-wrapper.properties | grep -q 'gradle-8.11.1-bin.zip'
           printf 'Source commit: %s\nWorkflow: %s\nRun: %s\nBuild: Android debug\nAndroid Gradle Plugin: 8.10.1\nGradle: 8.11.1\n' \
              "$(git rev-parse HEAD)" "$GITHUB_WORKFLOW" "$GITHUB_RUN_ID" > delivery/BUILD_PROVENANCE.txt
-          cp docs/ARQUIVO_MESTRE_v0.47.md delivery/
-          cp docs/AUDITORIA_v0.47.md delivery/
-          (cd delivery && sha256sum PokeSearch-0.47-beta.apk PokeSearch-0.47-beta-source.zip > SHA256SUMS.txt)
-          (cd delivery && unzip -t PokeSearch-0.47-beta-source.zip >/dev/null)
+          cp docs/ARQUIVO_MESTRE_v0.48.md delivery/
+          cp docs/AUDITORIA_v0.48.md delivery/
+          cp docs/GUIA_TESTE_SAMSUNG_v0.48.md delivery/
+          (cd delivery && sha256sum PokeSearch-0.48-beta.apk PokeSearch-0.48-beta-source.zip > SHA256SUMS.txt)
+          (cd delivery && unzip -t PokeSearch-0.48-beta-source.zip >/dev/null)
           (cd delivery && sha256sum -c SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-0.47-beta-KIT
+          name: PokeSearch-0.48-beta-KIT
           path: delivery/
           retention-days: 30

@@ -92,10 +92,14 @@ public final class WatchAlerts {
         PendingIntent intent=PendingIntent.getActivity(context,11,open,
             PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
         Notification note=new Notification.Builder(context,CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_menu_search)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title).setContentText(info).setAutoCancel(true)
             .setStyle(new Notification.BigTextStyle().bigText(info)).setContentIntent(intent).build();
-        try{manager.notify(id,note);return true;}catch(Exception ignored){return false;}
+        try{manager.notify(id,note);return true;}
+        catch(Exception e){
+            BugReport.log(context,"NOTIFICATION","Alerta favorito · "+e.getClass().getSimpleName());
+            return false;
+        }
     }
     public static boolean test(Context context){
         return send(context,"🔔 Teste: Pokémon procurado",

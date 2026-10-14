@@ -312,7 +312,7 @@ public class OverlayService extends Service {
         PendingIntent pi=PendingIntent.getActivity(this,0,new Intent(this,MainActivity.class),
                 PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
         Notification note=new Notification.Builder(this,"pokesearch")
-                .setSmallIcon(android.R.drawable.ic_menu_search)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("PokeSearch ativo")
                 .setContentText("Toque para abrir PokeSearch")
                 .setContentIntent(pi).setOngoing(true).build();
@@ -808,11 +808,11 @@ public class OverlayService extends Service {
                 nm.createNotificationChannel(new NotificationChannel("pokesearch_alerts",
                     "Novos Pokémon encontrados",NotificationManager.IMPORTANCE_DEFAULT));
                 Notification note=new Notification.Builder(this,"pokesearch_alerts")
-                    .setSmallIcon(android.R.drawable.ic_menu_search)
+                    .setSmallIcon(R.drawable.ic_notification)
                     .setContentTitle("Novo Pokémon: "+firstNew)
                     .setContentText("Encontrado na busca "+mode.toUpperCase(java.util.Locale.ROOT))
                     .setAutoCancel(true).build();
-                try{nm.notify(74,note);}catch(Exception ignored){}
+                try{nm.notify(74,note);}catch(Exception e){recordFailure("notificação geral",e);}
             }
         }
     }
@@ -1275,9 +1275,9 @@ public class OverlayService extends Service {
     @Override public void onDestroy(){
         running=false;
         stopped=true;handler.removeCallbacksAndMessages(null);
-        if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception ignored){}}
-        if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception ignored){}}
-        if(wm!=null&&detailRoot!=null){try{wm.removeView(detailRoot);}catch(Exception ignored){}}
+        if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception e){recordFailure("remover dock",e);}}
+        if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception e){recordFailure("remover menu",e);}}
+        if(wm!=null&&detailRoot!=null){try{wm.removeView(detailRoot);}catch(Exception e){recordFailure("remover detalhes",e);}}
         if(panel!=null){panel.removeJavascriptInterface("Native");panel.destroy();panel=null;}
         if(menuPanel!=null){menuPanel.removeJavascriptInterface("Native");menuPanel.destroy();menuPanel=null;}
         if(detailPanel!=null){detailPanel.removeJavascriptInterface("Native");detailPanel.destroy();detailPanel=null;}

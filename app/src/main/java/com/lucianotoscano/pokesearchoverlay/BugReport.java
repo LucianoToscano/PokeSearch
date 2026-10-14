@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.Locale;
 import org.json.JSONArray;
 
-/** Privacy-conscious, bounded app diagnostics. Never records page HTML, cookies or credentials. */
+/** Bounded local diagnostics; redacts common sensitive formats. Reports require user review. */
 public final class BugReport {
     private static final String PREF = "diagnostics";
     private static final String EVENTS = "events_v1";
@@ -32,13 +32,7 @@ public final class BugReport {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.ROOT).format(new Date());
     }
     private static String clean(String value){
-        if(value==null)return "";
-        String cleaned=value.replaceAll("[\\r\\n]+"," ");
-        cleaned=cleaned.replaceAll("(?i)https?://\\S+","[link omitido]")
-             .replaceAll("[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}","[email omitido]")
-             .replaceAll("(?<!\\d)(?:\\d[ -]?){12}(?!\\d)","[código omitido]")
-             .replaceAll("(?<!\\d)-?\\d{1,2}\\.\\d+\\s*[,;]\\s*-?\\d{1,3}\\.\\d+","[coordenadas omitidas]");
-        return cleaned.substring(0,Math.min(cleaned.length(),220));
+        return DiagnosticSanitizer.clean(value);
     }
     public static String export(Context context,String suggestion){
         String version="?";
@@ -46,24 +40,24 @@ public final class BugReport {
             android.content.pm.PackageInfo pkg=context.getPackageManager().getPackageInfo(context.getPackageName(),0);
             version=pkg.versionName;
         }catch(Exception ignored){}
-        StringBuilder s=new StringBuilder("POKESEARCH - RELATÓRIO DE BUGS E SUGESTÕES\\n");
-        s.append("Criado: ").append(time()).append("\\n");
-        s.append("Versão: ").append(version).append("\\n");
-        s.append("Android: ").append(Build.VERSION.RELEASE).append(" (API ").append(Build.VERSION.SDK_INT).append(")\\n");
-        s.append("Aparelho: ").append(clean(Build.MANUFACTURER+" "+Build.MODEL)).append("\\n");
-        s.append("Nota: não inclui senhas, cookies, token, código de amizade nem coordenadas.\\n");
-        if(suggestion!=null&&!suggestion.trim().isEmpty())s.append("Descrição do usuário: ").append(clean(suggestion)).append("\\n");
+        StringBuilder s=new StringBuilder("POKESEARCH - RELATÓRIO DE BUGS E SUGESTÕES\n");
+        s.append("Criado: ").append(time()).append("\n");
+        s.append("Versão: ").append(version).append("\n");
+        s.append("Android: ").append(Build.VERSION.RELEASE).append(" (API ").append(Build.VERSION.SDK_INT).append(")\n");
+        s.append("Aparelho: ").append(clean(Build.MANUFACTURER+" "+Build.MODEL)).append("\n");
+        s.append("Nota: o relatório filtra formatos comuns de dados sensíveis. Revise o TXT antes de compartilhar.\n");
+        if(suggestion!=null&&!suggestion.trim().isEmpty())s.append("Descrição do usuário: ").append(clean(suggestion)).append("\n");
         SharedPreferences prefs=context.getSharedPreferences("prefs",Context.MODE_PRIVATE);
-        s.append("Modo: ").append(clean(prefs.getString("mode","iv"))).append("\\n");
-        s.append("Shiny solicitado: ").append(prefs.getBoolean("shiny",false)).append("\\n");
-        s.append("Busca automática: ").append(prefs.getInt("intervalMinutes",5)).append(" min\\n");
-        s.append("Último status: ").append(clean(prefs.getString("lastStatus",""))).append("\\n");
-        s.append("Último erro: ").append(clean(prefs.getString("lastError",""))).append("\\n");
-        s.append("Eventos recentes:\\n");
+        s.append("Modo: ").append(clean(prefs.getString("mode","iv"))).append("\n");
+        s.append("Shiny solicitado: ").append(prefs.getBoolean("shiny",false)).append("\n");
+        s.append("Busca automática: ").append(prefs.getInt("intervalMinutes",5)).append(" min\n");
+        s.append("Último status: ").append(clean(prefs.getString("lastStatus",""))).append("\n");
+        s.append("Último erro: ").append(clean(prefs.getString("lastError",""))).append("\n");
+        s.append("Eventos recentes:\n");
         JSONArray a;
         try{a=new JSONArray(context.getSharedPreferences(PREF,Context.MODE_PRIVATE).getString(EVENTS,"[]"));}
         catch(Exception ignored){a=new JSONArray();}
-        for(int i=0;i<a.length();i++)s.append("- ").append(clean(a.optString(i))).append("\\n");
-        return s.toString().replace("\\n","\n");
+        for(int i=0;i<a.length();i++)s.append("- ").append(clean(a.optString(i))).append("\n");
+        return s.toString();
     }
 }
