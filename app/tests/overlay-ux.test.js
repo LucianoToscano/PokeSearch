@@ -67,7 +67,7 @@ test("Switching from location editor to mode releases keyboard focus",
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
 test("Twelve proportional control columns",dock.includes("grid-template-columns:34fr 22fr 41fr"));
 test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
-test("Chevron has visible surface",dock.includes("width:40px;height:32px")&&dock.includes("background:#152338"));
+test("Chevron has visible artwork and no surface background",dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
 test("Coalesce resize events",dock.includes("if(fitPending)return"));
 test("Location validation refuses blank radius",read("assets/probe.js").includes('radiusInput!==""'));
@@ -86,7 +86,7 @@ test("Menus are never clipped by the HTML viewport",dock.includes("html.controls
 test("Mode AUTO and location work before delayed native menu sync",dock.includes("if(controlsWindow&&!menuOpen)setMenuOpen(true"));
 test("Mode and AUTO provide immediate visible feedback",dock.includes("mode=String(value);draw();Native.setMode(mode)")&&dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
-test("Gear has a visible touch target",dock.includes("background:#142133f5")&&dock.includes("width:35px;height:30px"));
+test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(396,screenWidthDp()-8)"));
 test("Favorites use translucent gradient without background dim",picker.includes("Color.argb(159,24,34,47)")&&picker.includes("window.setDimAmount(0.0f)"));
 test("Home has explicit login and logout",main.includes('signIn.setText("Entrar / vincular")')&&main.includes('signOut.setText("Sair")'));
@@ -136,7 +136,7 @@ test("B06 LOGIN_BEGIN pauses and invalidates active search",beginBlock.includes(
 test("B06 all six kinds of scheduled work are canceled",['queuedRefresh','periodic','expiryRefresh','pageFinishedRefresh','loginEndRefresh','deferredSessionReload'].every(n=>cancelBlock.includes('handler.removeCallbacks('+n+')')));
 test("B06 LOGIN_BEGIN cancels callbacks and hides all windows",beginBlock.includes('cancelSessionCallbacks();')&&['root','menuRoot','detailRoot'].every(v=>beginBlock.includes(v+'.setVisibility(View.GONE)')));
 test("B06 LOGIN_END cancels before 1600ms and periodic restarts after",endBlock.indexOf('cancelSessionCallbacks();')<endBlock.indexOf('handler.postDelayed(loginEndRefresh,1600L)')&&endBlock.indexOf('schedulePeriodic();')>endBlock.indexOf('handler.postDelayed(loginEndRefresh,1600L)'));
-test("B06 periodic suppressed during login",service.includes('if(stopped||loginPaused)return;\n            refresh();')&&service.includes('if(!stopped&&!loginPaused)handler.postDelayed(this,intervalMinutes*60000L)'));
+test("B06 periodic suppressed during login",service.includes('if(stopped||loginPaused||intervalMinutes<=0)return;')&&service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(this,intervalMinutes*60000L)'));
 test("B06 page generation captured at start and compared on finish",pageBlock.includes('onPageStarted')&&pageBlock.includes('pageLoadGeneration=requestGeneration;')&&pageBlock.includes('pageLoadGeneration!=requestGeneration'));
 test("B06 page finish 2500ms handler is cancelable",pageBlock.includes('handler.removeCallbacks(pageFinishedRefresh);')&&pageBlock.includes('handler.postDelayed(pageFinishedRefresh,2500L)')&&!pageBlock.includes('handler.postDelayed(()->{if(!stopped&&!loginPaused)refresh();}'));
 test("B06 REFRESH_LOGIN cancels callbacks before cookie flush",reloadBlock.includes('++requestGeneration;')&&reloadBlock.indexOf('cancelSessionCallbacks();')<reloadBlock.indexOf('CookieManager.getInstance().flush();'));
@@ -147,7 +147,7 @@ test("B06 privacy of errors unchanged",service.includes('error.getClass().getSim
 test("B06 Android SDK and manifest unchanged",manifest.includes('<service android:name=".OverlayService" android:exported="false" />')&&gradleBuild.includes('targetSdk = 33')&&gradleBuild.includes('compileSdk = 36'));
 // PS-075–PS-080 regression contracts
 test("PS-075 Favorites provides accessible test notification action",picker.includes('testNotification.setText("🔔 Testar notificação")')&&picker.includes('WatchAlerts.test(activity)')&&picker.includes('WatchAlerts.permissionGranted(activity)'));
-test("PS-075 Home Preferences provides both toggles and test action",main.includes('settingCheckbox(body,prefs,"alerts","Notificar novos Pokémon encontrados",false)')&&main.includes('settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,')&&main.includes('WatchAlerts.test(this)'));
+test("PS-075 Home Preferences provides both toggles and test action",main.includes("settingAlertMode(body,prefs);")&&main.includes('settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,')&&main.includes('WatchAlerts.test(this)'));
 test("PS-076 Android Back returns within OAuth dialog history",main.includes('loginDialog.setOnKeyListener(')&&main.includes('android.view.KeyEvent.KEYCODE_BACK')&&main.includes('website.canGoBack()')&&main.includes('website.goBack()'));
 test("PS-077 loginEndRefresh is cancelable across all transitions",service.includes('private final Runnable loginEndRefresh=')&&cancelBlock.includes('handler.removeCallbacks(loginEndRefresh)')&&beginBlock.includes('cancelSessionCallbacks();')&&endBlock.includes('cancelSessionCallbacks();')&&reloadBlock.includes('cancelSessionCallbacks();'));
 const javaSignedLat='[-+]?'+String.fromCharCode(92,92)+'d{1,2}';
@@ -174,4 +174,27 @@ test("Probe result is discarded across generation switches",service.includes('fi
 test("PS-084 catalogue asset failures log only class and stage",picker.includes('BugReport.log(activity,"ASSET","ler catálogo Pokémon · "+e.getClass().getSimpleName())'));
 test("PS-084 MainActivity asset failures log only stage and class",main.includes('BugReport.log(this,"ASSET"')&&main.includes('e.getClass().getSimpleName()')&&!main.includes('e.getMessage()'));
 test("PS-085 sanitizer masks OAuth code/state and discord_token",sanitizer.includes('discord[_-]?token')&&sanitizer.includes('code|state|secret'));
+// Additional physical feedback for the v0.50 stabilization pass.
+test("v0.50 no phantom gap when toolbar is beside dock",
+    service.includes("menuPadDp=0; // No spacer: side toolbar")&&dock.includes("#spawns{margin-top:var(--top-space);gap:0}"));
+test("v0.50 transparent floating collapse arrow",
+    dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
+test("v0.50 AUTO OFF in UI and service, with no periodic posts",
+    dock.includes('[[0,"AUTO · OFF')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
+    service.includes('if(minutes!=0&&minutes!=5')&&
+    service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(periodic,'));
+test("v0.50 notifications cycle off / on / silent",
+    service.includes('alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off"')&&
+    dock.includes('bell.classList.toggle("generalSilent",alertMode==="silent")'));
+test("v0.50 silent channels are actually without sound",
+    service.includes('pokesearch_alerts_silent_v1')&&
+    watch.includes('pokesearch_watch_silent_v1')&&watch.includes('channel.setSound(null,null)'));
+test("v0.50 direct login uses site's actual control, not guessed OAuth route",
+    main.includes('loginLinkAttempted=true;')&&main.includes('e.click();return true;')&&
+    main.includes('website.loadUrl("https://pogocoordinates.com/search")'));
+test("v0.50 service accepts missing action on initial start",
+    service.includes('i==null||i.getAction()==null?"":i.getAction()'));
+test("v0.50 neutral UI includes smaller location icon",
+    dock.includes('#controls #location svg{width:14px;height:14px}')&&
+    dock.includes('#choices{background:#252628ee'));
 console.log("PokeSearch UX contract: "+count+" tests passed");

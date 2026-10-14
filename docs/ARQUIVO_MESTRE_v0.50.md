@@ -26,3 +26,12 @@ IV100 (15/15/15), GL#1, UL#1, Shiny somente mediante confirmação no site, coor
 
 ## Validação e pendências
 CI deve validar JavaScript, probe-smoke, 127+ contratos UX, sanitizer Java, `gradle :app:testDebugUnitTest :app:assembleDebug :app:lintDebug`, apk signing, aapt e hashes. **Não afirmar teste real do Samsung**. Ainda requer validação manual no Samsung **SM-S928B / Android 16**: permissão API33+ concedida/negada e envio de notificações; sincronização de 4 preferências com overlay/menus abertos sem chamadas ao site; login real OAuth Google/Discord e retorno ao app; hidratação/cookies Shiny; corrida com rede lenta; localização positiva/0–1000km; transparência, arraste, UX e memória prolongada. Guia atualizado em `docs/GUIA_TESTE_SAMSUNG_v0.50.md`.
+
+## Revisão complementar de interface — teste relatado em 14/10/2026
+- Ícones ⚙ e ⌃: CSS do dock com **fundo e borda transparentes**; contraste pelo próprio traço e sombra discreta. Menu em cinza neutro sem predominância azul. Ícone de localização reduzido.
+- Barra ao lado dos sprites: retirado espaçamento vertical fictício de 34dp; reservas verticais permanecem somente quando o menu realmente está sobre/abaixo da coluna. O posicionamento em todos os cantos requer verificação física.
+- AUTO: opção **OFF (0 minutos)** persiste, cancela repetição e preserva busca manual, mudança explícita de filtro e primeira busca. Limites do site permanecem.
+- Avisos de novos Pokémon: **Desligadas / Ligadas (som) / Silenciosas** no menu do sino e nas Preferências. Android usa canal silencioso separado; canal normal mantém importância padrão. Favoritos preservam opt-in independente e acompanham modo silencioso.
+- Login: ao abrir o painel oficial, tenta acionar uma vez o controle de login realmente presente na página, sem presumir endpoints OAuth ou colher senha. Os redirecionamentos Google/Discord dependem do site/Android.
+- Boot: Intent de serviço sem action não causa NullPointerException; a consulta inicial só é marcada como funcional após retorno validado do site.
+- B06, onDestroy, permissões declaradas, targetSdk, package e projeto PvPPokeGo preservados. **Não se afirma que filtros IV100/GL#1/UL#1, integração Shiny e OAuth foram aprovados no Samsung**.

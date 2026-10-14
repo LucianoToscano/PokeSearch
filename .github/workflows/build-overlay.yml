@@ -1,7 +1,9 @@
 name: Build PokeSearch Android APK
 on:
   push:
-    branches: [main, fix/v050-pref-sync-safety]
+    branches: [main, fix/v050-pref-sync-safety, fix/v050-overlay-ui-20261014]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -103,6 +105,24 @@ jobs:
           (cd delivery && sha256sum PokeSearch-0.50-beta.apk PokeSearch-0.50-beta-source.zip > SHA256SUMS.txt)
           (cd delivery && unzip -t PokeSearch-0.50-beta-source.zip >/dev/null)
           (cd delivery && sha256sum -c SHA256SUMS.txt)
+          # Complete distributable ZIP. Current documents are isolated from historical docs.
+          # Historical v0.38-v0.50 documentation is preserved in PokeSearchOverlay/docs.
+          STAGE="$(mktemp -d)"
+          mkdir -p "$STAGE/PokeSearchOverlay" "$STAGE/Documentacao"
+          unzip -q delivery/PokeSearch-0.50-beta-source.zip -d "$STAGE/PokeSearchOverlay"
+          cp delivery/ARQUIVO_MESTRE_v0.50.md delivery/AUDITORIA_v0.50.md \
+             delivery/GUIA_TESTE_SAMSUNG_v0.50.md delivery/BUILD_PROVENANCE.txt \
+             delivery/PokeSearch-0.50-beta-source.zip "$STAGE/Documentacao/"
+          cp delivery/SHA256SUMS.txt "$STAGE/Documentacao/SHA256SUMS-KIT-ORIGINAL.txt"
+          cp delivery/PokeSearch-0.50-beta.apk "$STAGE/"
+          test "$(find "$STAGE/Documentacao" -maxdepth 1 -type f | wc -l)" -eq 6
+          test -s "$STAGE/PokeSearchOverlay/docs/ARQUIVO_MESTRE_v0.38.md"
+          test -s "$STAGE/PokeSearchOverlay/docs/ARQUIVO_MESTRE_v0.49.md"
+          test -s "$STAGE/PokeSearchOverlay/docs/ARQUIVO_MESTRE_v0.50.md"
+          (cd "$STAGE" && zip -qr "$GITHUB_WORKSPACE/delivery/PokeSearch-0.50-beta-PROJETO-COMPLETO.zip" PokeSearchOverlay Documentacao PokeSearch-0.50-beta.apk)
+          unzip -t delivery/PokeSearch-0.50-beta-PROJETO-COMPLETO.zip >/dev/null
+          (cd delivery && sha256sum PokeSearch-0.50-beta-PROJETO-COMPLETO.zip >> SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
+          rm -rf "$STAGE"
       - uses: actions/upload-artifact@v4
         with:
           name: PokeSearch-0.50-beta-KIT

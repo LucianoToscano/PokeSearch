@@ -26,3 +26,13 @@ Dispositivo-alvo Samsung SM-S928B / Android 16. **Roteiro de teste — ainda nã
 - [ ] Usar por 30 minutos e fechar serviço: sem views residuais ou travamentos.
 
 Resultado físico: ☐ aprovado ☐ reprovado ☐ não executado. **Até teste manual, permanece não executado.**
+
+## Verificação complementar de interface e coleta
+- [ ] Testar IV100, GL#1 e UL#1 com o site realmente carregado; observar a primeira busca.
+- [ ] Confirmar que a opção ✨ solicita autenticação quando necessário e funciona em cada liga após confirmação da sessão.
+- [ ] Confirmar que a opção de entrada aparece após abrir o login e que os provedores Google e Discord retornam ao app.
+- [ ] Conferir que engrenagem e seta são transparentes, com bom contraste, e que o menu funciona em todos os cantos.
+- [ ] Confirmar distância compacta entre menu e Pokémon e ícone de localização alinhado.
+- [ ] Selecionar AUTO OFF e observar ausência de atualização periódica; testar atualização manual separadamente.
+- [ ] Alternar notificações: desligadas, ligadas e silenciosas; conferir seus efeitos no Android e nos favoritos.
+- [ ] Exportar relatório por ⚠ após falhas dos filtros e revisar os dados antes do envio.
