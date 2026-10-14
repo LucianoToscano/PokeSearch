@@ -78,7 +78,7 @@ test("Despawn removes expired sprites without triggering an extra site search",e
 test("AUTO retains 5/10/15/20 minute scheduling",service.includes("handler.postDelayed(periodic,intervalMinutes*60000L)"));
 test("Manual refresh does not misleadingly claim queued work",service.includes("Toque ↻ novamente quando terminar."));
 test("Login pauses and invalidates pending site callbacks",service.includes("loginPaused=true;\n            ++requestGeneration;\n            searchInProgress=false;")&&service.includes("cancelSessionCallbacks();"));
-test("After login a fresh search is attempted safely",service.includes("if(!stopped&&!loginPaused&&!pickerOpen&&")&&service.includes("handler.postDelayed(loginResumeRefresh,1600L)"));
+test("After login a fresh search is attempted safely",service.includes("if(!stopped&&!loginPaused&&!pickerOpen&&")&&service.includes("handler.postDelayed(loginEndRefresh,1600L)"));
 test("Shiny verification distinguishes trainer linking",service.includes('verified.optBoolean("pending",false)'));
 test("Shiny failure does not imply confirmed trainer authentication",service.includes("Verifique login e vínculo do treinador"));
 test("Diagnostic logs only coarse authentication states",service.includes('BugReport.log(this,"SESSION","Shiny="'));
@@ -131,11 +131,11 @@ const endBlock=service.split('if("com.lucianotoscano.pokesearchoverlay.LOGIN_END
 const reloadBlock=service.split('if("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN".equals(action)||')[1]?.split('// v0.20')[0]||'';
 const pageBlock=service.split('private void newWebsite(){')[1]?.split('    @Override public void onCreate()')[0]||'';
 const destroyBlock=service.split('    @Override public void onDestroy(){')[1]?.split('    @Override public IBinder')[0]||'';
-test("B06 named page/login/reload timer callbacks",['pageFinishedRefresh','loginResumeRefresh','deferredSessionReload'].every(n=>service.includes('private final Runnable '+n+'=')));
+test("B06 named page/login/reload timer callbacks",['pageFinishedRefresh','loginEndRefresh','deferredSessionReload'].every(n=>service.includes('private final Runnable '+n+'=')));
 test("B06 LOGIN_BEGIN pauses and invalidates active search",beginBlock.includes('loginPaused=true;')&&beginBlock.includes('++requestGeneration;')&&beginBlock.includes('searchInProgress=false;'));
-test("B06 all six kinds of scheduled work are canceled",['queuedRefresh','periodic','expiryRefresh','pageFinishedRefresh','loginResumeRefresh','deferredSessionReload'].every(n=>cancelBlock.includes('handler.removeCallbacks('+n+')')));
+test("B06 all six kinds of scheduled work are canceled",['queuedRefresh','periodic','expiryRefresh','pageFinishedRefresh','loginEndRefresh','deferredSessionReload'].every(n=>cancelBlock.includes('handler.removeCallbacks('+n+')')));
 test("B06 LOGIN_BEGIN cancels callbacks and hides all windows",beginBlock.includes('cancelSessionCallbacks();')&&['root','menuRoot','detailRoot'].every(v=>beginBlock.includes(v+'.setVisibility(View.GONE)')));
-test("B06 LOGIN_END cancels before 1600ms and periodic restarts after",endBlock.indexOf('cancelSessionCallbacks();')<endBlock.indexOf('handler.postDelayed(loginResumeRefresh,1600L)')&&endBlock.indexOf('schedulePeriodic();')>endBlock.indexOf('handler.postDelayed(loginResumeRefresh,1600L)'));
+test("B06 LOGIN_END cancels before 1600ms and periodic restarts after",endBlock.indexOf('cancelSessionCallbacks();')<endBlock.indexOf('handler.postDelayed(loginEndRefresh,1600L)')&&endBlock.indexOf('schedulePeriodic();')>endBlock.indexOf('handler.postDelayed(loginEndRefresh,1600L)'));
 test("B06 periodic suppressed during login",service.includes('if(stopped||loginPaused)return;\n            refresh();')&&service.includes('if(!stopped&&!loginPaused)handler.postDelayed(this,intervalMinutes*60000L)'));
 test("B06 page generation captured at start and compared on finish",pageBlock.includes('onPageStarted')&&pageBlock.includes('pageLoadGeneration=requestGeneration;')&&pageBlock.includes('pageLoadGeneration!=requestGeneration'));
 test("B06 page finish 2500ms handler is cancelable",pageBlock.includes('handler.removeCallbacks(pageFinishedRefresh);')&&pageBlock.includes('handler.postDelayed(pageFinishedRefresh,2500L)')&&!pageBlock.includes('handler.postDelayed(()->{if(!stopped&&!loginPaused)refresh();}'));
@@ -145,4 +145,14 @@ test("B06 delayed search stages verify pause/generation",(service.match(/if\(sto
 test("B06 destruction cancels callbacks and removes windows before WebViews",destroyBlock.indexOf('stopped=true;')<destroyBlock.indexOf('handler.removeCallbacksAndMessages(null)')&&destroyBlock.indexOf('wm.removeView(detailRoot)')<destroyBlock.indexOf('destroyWebView(panel,true'));
 test("B06 privacy of errors unchanged",service.includes('error.getClass().getSimpleName()')&&!service.includes('error.getMessage()'));
 test("B06 Android SDK and manifest unchanged",manifest.includes('<service android:name=".OverlayService" android:exported="false" />')&&gradleBuild.includes('targetSdk = 33')&&gradleBuild.includes('compileSdk = 36'));
+// PS-075–PS-080 regression contracts
+test("PS-075 Favorites provides accessible test notification action",picker.includes('testNotification.setText("🔔 Testar notificação")')&&picker.includes('WatchAlerts.test(activity)')&&picker.includes('WatchAlerts.permissionGranted(activity)'));
+test("PS-075 Home Preferences provides both toggles and test action",main.includes('settingCheckbox(body,prefs,"alerts","Notificar novos Pokémon encontrados",false)')&&main.includes('settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,')&&main.includes('WatchAlerts.test(this)'));
+test("PS-076 Android Back returns within OAuth dialog history",main.includes('loginDialog.setOnKeyListener(')&&main.includes('android.view.KeyEvent.KEYCODE_BACK')&&main.includes('website.canGoBack()')&&main.includes('website.goBack()'));
+test("PS-077 loginEndRefresh is cancelable across all transitions",service.includes('private final Runnable loginEndRefresh=')&&cancelBlock.includes('handler.removeCallbacks(loginEndRefresh)')&&beginBlock.includes('cancelSessionCallbacks();')&&endBlock.includes('cancelSessionCallbacks();')&&reloadBlock.includes('cancelSessionCallbacks();'));
+test("PS-078 explicit positive signs allowed in Java and JS coordinates",service.includes(String.raw`([-+]?\\d{1,2}` )&&sanitizer.includes(String.raw`[-+]?\\d{1,2}` )&&dock.includes(String.raw`[-+]?\\d{1,2}`));
+test("PS-078 negative and positive longitude allow plus signs",service.includes(String.raw`([-+]?\\d{1,3}` )&&sanitizer.includes(String.raw`[-+]?\\d{1,3}` )&&dock.includes(String.raw`[-+]?\\d{1,3}`));
+test("PS-079 menu positions before a single sync",service.includes('deferMenuSync=true;')&&service.includes('finally{deferMenuSync=false;}')&&service.indexOf('try{updateWindow();}')<service.indexOf('js(panel,panelLoaded,"window.syncMenu("+show+')&&service.includes('&&!deferMenuSync'));
+test("PS-080 IV verification has no unreachable success",!read("assets/probe.js").includes('não confirmados"};\\n  return {ok:true};'));
+test("PS-080 bug report notice requires manual review",main.includes('O relatório filtra formatos comuns de dados sensíveis. Revise o conteúdo antes de compartilhar.'));
 console.log("PokeSearch UX contract: "+count+" tests passed");
