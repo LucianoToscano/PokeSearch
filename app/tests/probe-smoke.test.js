@@ -61,8 +61,8 @@ function run(action,mode,shinyOnly,opts={}){
     button.parentElement=box;
     cardButtons=[button];
   }
-  if(opts.pending){
-    pending=[element("Link a Pokémon GO account. Your trainer code: 12 digits")];
+  if(opts.pending||opts.pendingText){
+    pending=[element(opts.pendingText||"Link a Pokémon GO account. Your trainer code: 12 digits")];
   }
   function querySelectorAll(selector){
     if(selector==="label,span,strong,div")return labels;
@@ -87,6 +87,7 @@ function test(name,action,mode,shiny,options,predicate){
 test("Shiny authenticated and on","verifyShiny","iv",true,{switch:true},true);
 test("Shiny stays pending until enabled","verifyShiny","iv",true,{switch:false},false);
 test("Shiny linking dialog blocks confirmation","verifyShiny","iv",true,{switch:true,pending:true},false);
+test("English trainer link cannot confirm shiny","verifyShiny","iv",true,{switch:true,pendingText:"Link your Pokémon GO account"},false);
 test("Shiny off confirmed","verifyShiny","iv",false,{switch:false},true);
 test("Shiny unexpectedly on blocks standard search","verifyShiny","iv",false,{switch:true},false);
 test("Public search accepts missing Shiny control","verifyShiny","iv",false,{},true);
