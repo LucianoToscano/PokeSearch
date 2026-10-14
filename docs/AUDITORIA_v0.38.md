@@ -29,3 +29,11 @@ Chave de release estável de posse do proprietário; build assinado com assinatu
 - Commit final: ver `git rev-parse HEAD` no repositório.
 - Actions: `https://github.com/LucianoToscano/PokeSearch/actions`
 - SHA-256: gerado no kit `SHA256SUMS.txt`.
+
+## Adendo — problemas reproduzidos pelo usuário e correções de código
+- **IV100 ! sem ✨:** suspeita documentada de parser rígido que exigia exatamente 3 campos `Raw IV`, não observado em todos os layouts do fornecedor. Agora suporta 3 ou 6 campos Raw IV ou alternativa % IV min/max = 100, com verificação pré-envio. Requer teste real.
+- **Teclado do login:** WebView focável, janela com `ADJUST_RESIZE` e overlay temporariamente oculto. Requer teste real.
+- **Relatórios:** ⚠️ no dock; registro de eventos em armazenamento privado (máximo 80), mascaramento de dados sensíveis, exportação TXT e WhatsApp opcional. O usuário decide enviar.
+- **Proteção contra frequência:** automático mínimo 5 minutos, intervalos 5/10/15/20; 60 segundos mínimo para solicitações efetivamente submetidas. Login/configuração sem busca não consomem intervalo.
+- **Uso previsto:** teste restrito a amigos desenvolvedores; não declarar distribuição pública oficial. O proprietário declarou ter autorização de uso; guardar comprovação fora do repositório caso necessário.
+- **Critério de entrega técnica:** CI com smoke JS, lint, compile, ZIP, apksigner, versão e SHA-256. Emissão de APK não equivale a validação em telefone.
