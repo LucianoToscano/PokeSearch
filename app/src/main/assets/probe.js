@@ -69,7 +69,9 @@ function shinyControl(){
  const lab=elements("label,span,strong,div").filter(e=>vis(e)&&/^\s*(?:✨\s*)?Shiny only\s*$/i.test(text(e))).sort((a,b)=>a.querySelectorAll("*").length-b.querySelectorAll("*").length)[0];
  if(!lab)return null;
  for(let p=lab,i=0;p&&i<5;p=p.parentElement,i++){
-  const controls=Array.from(p.querySelectorAll('input[type=checkbox],[role=switch],[role=checkbox],button[aria-checked]'));
+  const controls=Array.from(p.querySelectorAll('input[type=checkbox],[role=switch],[role=checkbox],button[aria-checked],button[role=switch],button[data-state]'));
+  const named=controls.filter(x=>/shiny/i.test(x.getAttribute('aria-label')||'')||/shiny/i.test(x.id||''));
+  if(named.length===1)return named[0];
   if(controls.length===1)return controls[0];
   const toggle=p.querySelector('button[data-state],button[aria-pressed]');
   if(toggle)return toggle;
@@ -81,7 +83,7 @@ function readShiny(){
  if(sw.matches('input[type=checkbox]'))return sw.checked;
  if(sw.getAttribute("aria-checked")!==null)return sw.getAttribute("aria-checked")==="true";
  if(sw.getAttribute("aria-pressed")!==null)return sw.getAttribute("aria-pressed")==="true";
- if(sw.getAttribute("data-state")!==null)return sw.getAttribute("data-state")==="checked";
+ if(sw.getAttribute("data-state")!==null)return ["checked","on","true"].includes(sw.getAttribute("data-state"));
  return null;
 }
 function setShiny(want){
@@ -211,7 +213,7 @@ function collect(){
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
  const explicitEmpty=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i.test(t);
- return JSON.stringify({ok:true,cards:valid,found:found.length,uncertain,loading,explicitEmpty,leagueConfirmed});
+ return JSON.stringify({ok:true,cards:valid,found:found.length,uncertain,loading,explicitEmpty,leagueConfirmed,siteShiny:readShiny()});
 }
 if(action==="collect")return collect();
 if(action.startsWith("coords:")){
@@ -252,6 +254,10 @@ if(action.startsWith("readCoords:")){
   }
  }
  return JSON.stringify({ok:false,status:"O site ainda não exibiu coordenadas"});
+}
+if(action==="verifyShiny"){
+ const actual=readShiny();
+ return JSON.stringify({ok:actual===shinyOnly,siteShiny:actual,reason:actual===null?"Controle Shiny não encontrado ou estado desconhecido":"Filtro Shiny diferente do solicitado"});
 }
 if(action==="session"){
  const sw=shinyControl();
