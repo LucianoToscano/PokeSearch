@@ -23,4 +23,6 @@ test("Login has one top toolbar and no native footer buttons",main.includes('don
 test("Shiny never changes selected filter",service.includes('shiny=!shiny;')&&service.includes('mode.equals(s)'));
 test("Throttled refresh is queued",service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
 test("Quick guide remains accessible",main.includes("showQuickGuide()")&&main.includes("tutorialSeenV40"));
+test("Sprite rows must not overlap artwork",service.includes("return spriteSize+10;")&&!service.includes("Math.min(spriteSize-5"));
+test("Sprites remain vertically centered",dock.includes("align-items:center;justify-content:center")&&dock.includes("height:var(--row)"));
 console.log("PokeSearch UX contract: "+count+" tests passed");
