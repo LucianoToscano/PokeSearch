@@ -22,9 +22,21 @@ test("Favorites picker is service-safe and focusable",picker.includes("TYPE_APPL
 test("Login has one top toolbar and no native footer buttons",main.includes('done.setText("✓ Voltar")')&&!main.includes('.setNegativeButton("Cancelar",null)')&&main.includes('MATCH_PARENT,\n                android.view.WindowManager.LayoutParams.MATCH_PARENT'));
 test("Shiny never changes selected filter",service.includes('shiny=!shiny;')&&service.includes('mode.equals(s)'));
 test("Throttled refresh is queued",service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
-test("Quick guide remains accessible",main.includes("showQuickGuide()")&&main.includes("tutorialSeenV40"));
-test("Sprite rows must not overlap artwork",service.includes("return spriteSize+10;")&&!service.includes("Math.min(spriteSize-5"));
+test("Quick guide remains accessible",main.includes("showQuickGuide()")&&main.includes("tutorialSeenV41")&&main.includes("tutorial.html"));
+test("Sprite rows must not overlap artwork",service.includes("return Math.max(26,spriteSize-8);"));
 test("Sprites remain vertically centered",dock.includes("align-items:center;justify-content:center")&&dock.includes("height:var(--row)"));
 test("Sprite list uses scroll instead of clipping overflow",dock.includes("overflow-y:auto;overflow-x:hidden")&&dock.includes("--list-limit"));
-test("Long lists have list height supplied by native screen size",service.includes("Math.min(rowDp()*6,screenHeightDp()-185)"));
+test("Long lists have list height supplied by native screen size",service.includes("Math.min(rowDp()*8,screenHeightDp()-160)"));
+
+test("Chevron is at bottom of the sprites",dock.indexOf('id="collapse"')>dock.indexOf('id="spawns"')&&dock.includes('m5 15 7-7 7 7'));
+test("Red close is alongside heart with standard background",dock.indexOf('id="close"')>dock.indexOf('id="donate"')&&dock.includes("#controls #close{"));
+test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'));
+test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
+test("Dedicated toolbar is just 29dp tall when popover closed",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(29)'));
+test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
+test("Login returns to Home and does not send it to background",!main.includes('moveTaskToBack(true)'));
+test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
+test("Translucent favorites with optional background blur",picker.includes('Color.argb(232,47,54,64)')&&picker.includes('setBlurBehindRadius'));
+test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
+test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 console.log("PokeSearch UX contract: "+count+" tests passed");
