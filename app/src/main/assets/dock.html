@@ -1,15 +1,15 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>
-:root{--row:46px;--sprite:45px;--dock:53px;--top-space:0px;--list-limit:430px}
+:root{--row:41px;--sprite:45px;--dock:53px;--top-space:0px;--list-limit:430px}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:transparent!important;color:#fff;font:10px Roboto,Arial,sans-serif;overflow:hidden}
 button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-#shell{position:relative;width:var(--dock);padding-top:var(--top-space);background:transparent!important;border:0;border-radius:0;box-shadow:none;overflow:visible}
+#shell{position:relative;width:var(--dock);padding-top:0;background:transparent!important;border:0;border-radius:0;box-shadow:none;overflow:visible}
 #gear{width:28px;height:21px;margin:0 auto;padding:0;border:0;background:transparent;color:#e9ecf1;display:flex;align-items:center;justify-content:center}
 #gear svg{display:block;width:21px;height:21px;filter:drop-shadow(0 1px 1px #0007)}
 #gear.busy svg{animation:gearbusy 1.25s linear infinite}
 @keyframes gearbusy{to{transform:rotate(360deg)}}
-#menu{display:none;position:absolute;top:var(--top-space);left:var(--dock);width:283px;height:25px;z-index:3;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
+#menu{display:none;position:absolute;top:0;left:var(--dock);width:308px;height:25px;z-index:3;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
 #menu.open{display:block}
 #choices{display:none;position:absolute;top:29px;left:0;z-index:12;width:166px;padding:5px;background:#151c27f5;border:1px solid #ffffff38;border-radius:10px;box-shadow:0 4px 12px #0008}
 #choices.visible{display:block}
@@ -17,9 +17,9 @@ body.menu-left #choices{left:auto;right:0}
 #choices button{width:100%;display:block;text-align:left;padding:8px 9px;margin:1px 0;border-radius:7px;background:transparent;border:0;color:#e8ebef;font-size:12px;line-height:1.3;white-space:normal}
 #choices button.chosen{background:#263f39;color:#a2efd3;font-weight:700}
 #choices .choiceHeader{padding:3px 9px 6px;color:#9faabd;font-weight:bold;font-size:10px}
-body.menu-left #shell{margin-left:283px}
-body.menu-left #menu{left:-283px}
-#controls{width:279px;display:grid;grid-template-columns:36px 23px 43px 22px 22px 23px 23px 23px 23px 23px;gap:2px;padding:0;margin:0;align-items:center}
+body.menu-left #shell{margin-left:308px}
+body.menu-left #menu{left:-308px}
+#controls{width:304px;display:grid;grid-template-columns:36px 23px 43px 22px 22px 23px 23px 23px 23px 23px 23px;gap:2px;padding:0;margin:0;align-items:center}
 body.menu-left #controls{direction:rtl}
 #controls button{direction:ltr}
 #controls button{height:25px;width:100%;min-width:0;padding:0;background:#151b26e6;border:1px solid #ffffff23;border-radius:5px;font-size:10px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;white-space:nowrap}
@@ -27,12 +27,12 @@ body.menu-left #controls{direction:rtl}
 #controls #cycle.ivOn{background:#136b3bdf;border-color:#69df97a6;color:#e9fff2}
 #gear .gear-icon{display:block}
 #gear .close-icon{display:none}
-#topActions{position:absolute;top:0;left:calc((var(--dock) - 27px) / 2);width:27px;display:none;flex-direction:column;gap:1px;z-index:4}
-body.menu-open #topActions{display:flex}
-#topActions button{width:27px;height:16px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;filter:drop-shadow(0 1px 2px #000a)}
-#topActions button svg{width:16px;height:16px;display:block}
-#topActions #close{background:transparent;border:0;color:#ff566e;font-size:19px;font-weight:700}
-#topActions #collapse{color:#e5eef8}
+#controls #close{font-size:18px;font-weight:800;color:#ff596c;background:#151b26e6;border-color:#ff596c5c}
+#controls #close:active{background:#622735}
+#collapse{display:flex;align-items:center;justify-content:center;width:29px;height:22px;margin:2px auto 0;
+ padding:0;border-radius:8px;border:1px solid #ffffff32;background:#151b26d9;color:#e6eef9;
+ box-shadow:0 1px 3px #0006}
+#collapse svg{width:19px;height:19px;display:block;pointer-events:none}
 #controls #bell.generalOn{background:#1d5b49dc;border-color:#69dbab77;color:#ddfff1}
 #controls #star.favoritesOn{background:#70561de0;border-color:#ffe29a77;color:#ffdf74}
 #controls #star svg{width:17px;height:17px}
@@ -51,7 +51,7 @@ body.menu-open #topActions{display:flex}
 #period .autoLabel{font-size:8px;font-weight:800;letter-spacing:0.25px;opacity:.85}
 #period .autoTime{font-size:10px;font-weight:800}
 #clock.timerOn{background:#76601ccf;border-color:#ffe5a04d;color:#ffe5a0}
-#spawns{width:var(--dock);display:flex;flex-direction:column;align-items:center;gap:0;padding:3px 0;margin:0;max-height:var(--list-limit);overflow-y:auto;overflow-x:hidden;scrollbar-width:none;overscroll-behavior:contain}
+#spawns{width:var(--dock);display:flex;flex-direction:column;align-items:center;gap:0;padding:0;margin:var(--top-space) 0 0;max-height:var(--list-limit);overflow-y:auto;overflow-x:hidden;scrollbar-width:none;overscroll-behavior:contain}
 #spawns::-webkit-scrollbar{display:none}
 .spawn{width:var(--dock);height:var(--row);position:relative;min-height:var(--row);flex:0 0 var(--row);display:flex;align-items:center;justify-content:center;margin:0;padding:0;background:transparent;border:0;border-radius:4px}
 .spawn.active .sprite{filter:drop-shadow(0 0 3px #ffffff77)}
@@ -76,13 +76,11 @@ body.menu-open #topActions{display:flex}
   <button id="star" title="Meus favoritos · alertas específicos IV100 / GL#1 / UL#1" onclick="Native.openWatchList()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg></button>
   <button id="report" title="⚠ Reportar bugs, enviar sugestões e exportar diagnóstico TXT" aria-label="Reportar bugs e sugestões" onclick="Native.openReport()">⚠</button>
   <button id="donate" title="Gostou do PokeSearch? Apoie com um café · Pix voluntário" onclick="Native.openPix()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z"/></svg></button>
+  <button id="close" title="Encerrar PokeSearch" aria-label="Fechar todo o overlay" onclick="Native.close()">×</button>
  </div><div id="choices" role="group" aria-label="Escolher opção"></div></div>
- <div id="topActions">
-  <button id="close" title="Fechar todo o overlay" aria-label="Encerrar overlay" onclick="Native.close()">×</button>
-  <button id="collapse" title="Recolher tudo e deixar apenas a engrenagem" aria-label="Minimizar overlay" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="14" rx="2"/><path d="m9 11 3 3 3-3"/></svg></button>
- </div>
  <div id="spawns"></div>
  <button id="empty" title="Toque para saber o motivo" onclick="Native.showStatus()">Aguardando busca</button>
+ <button id="collapse" title="Recolher todos os Pokémon e as opções, deixando apenas a engrenagem" aria-label="Recolher todos os Pokémon" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button>
 </div>
 <div id="bubble" role="button" aria-label="Restaurar overlay"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></div>
 <script>
