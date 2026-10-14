@@ -272,4 +272,29 @@ test("Shiny retries unhydrated site control without repeated login loops",
   service.includes('Conta conectada; controle Shiny não encontrado no site.'));
 test("Mobile session probe has a text-node badge fallback",
   read("assets/probe.js").includes('document.body&&document.body.innerText'));
+test("Login initially masks the unrelated PoGoCoordinates search page",
+  main.includes("FrameLayout loginStage=new FrameLayout(this);")&&
+  main.includes("loginStage.addView(website,new FrameLayout.LayoutParams(-1,-1));")&&
+  main.includes("loginStage.addView(loginWaiting,new FrameLayout.LayoutParams(-1,-1));")&&
+  main.includes("loginCover=loginWaiting;"));
+test("Login reveals only after opening the official sign-in control",
+  main.includes("if(loginCover!=null)loginCover.setVisibility(View.GONE);")&&
+  main.includes('e.click();return \'opened\';')&&
+  main.includes('result.contains("\\\"opened\\\"")'));
+test("Login tests session before opening a fresh login link",
+  main.indexOf("checkLoginSession(view,14,generation);")>=0&&
+  main.includes("if(attemptsLeft<=13&&!loginDiscoveryStarted&&!loginLinkAttempted)")&&
+  main.includes("openOfficialLoginControl(view,8);"));
+test("Provider OAuth is visible and return to site is covered until session confirmed",
+  main.includes("loginCover.setVisibility(site?View.VISIBLE:View.GONE);")&&
+  main.includes('if("autenticada".equals(auth)){')&&
+  main.includes("loginDialog.dismiss();"));
+test("Unknown site login has an accessible explicit fallback, not infinite masking",
+  main.includes('loginFallback.setText("Mostrar o site para entrar");')&&
+  main.includes("loginFallback.setVisibility(View.VISIBLE);")&&
+  main.includes("if(loginCover!=null)loginCover.setVisibility(View.GONE);"));
+test("Minimal login surface is neutral and release clears native references",
+  main.includes('loginWaitLabel.setText("Preparando acesso ao PoGoCoordinates')&&
+  main.includes("loginWaiting.setBackgroundColor(Color.rgb(11,13,18));")&&
+  main.includes("loginCover=null;")&&main.includes("loginFallback=null;"));
 console.log("PokeSearch UX contract: "+count+" tests passed");

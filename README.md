@@ -73,3 +73,7 @@ PokeSearch possui código, documentação, namespace e distribuição **próprio
 
 ### Ajustes complementares PS-086–PS-088
 O retorno do login móvel agora detecta também o marcador de conta ativa próximo ao filtro Shiny, não apenas o botão Sair, que pode estar oculto. Após autenticação confirmada, o diálogo fecha e retorna ao PokeSearch mesmo se o Shiny ainda não estiver ativado; a ativação ocorre no serviço e precisa de confirmação pelo site. O toque em ✨ opera no switch da página atual, sem obrigar a selecionar antes Stats/PvP e sem aguardar cooldown da busca. Quando o menu abre próximo ao topo, engrenagem e sprites se movem juntos, minimizando buracos visuais.
+
+
+### Fluxo de login mínimo — revisão final da v0.50-beta
+A tela de login do PokeSearch oculta inicialmente a página extensa de pesquisa do PoGoCoordinates atrás de um indicador nativo discreto. Primeiro verifica a sessão; caso não esteja autenticado, tenta acionar o botão oficial de acesso e então revela a autenticação real do próprio site/provedor. Ao confirmar sessão, fecha automaticamente o diálogo e volta à Home do PokeSearch, **sem depender de Shiny ligado**. Caso o site mude e o controle de entrada não seja localizado, disponibiliza a opção **Mostrar o site para entrar**, sem prender o usuário em carregamento. Não inventar endereços OAuth, não copiar formulários, não coletar credenciais. A aparência/fluxo reais dependem de teste Android e do DOM do PoGoCoordinates.

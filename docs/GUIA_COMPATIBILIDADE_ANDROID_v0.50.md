@@ -56,3 +56,11 @@
 4. Forçar site lento: confirmar que resposta atrasada não abre um segundo login ao detectar sessão autenticada e que o estado ON só aparece após `verifyShiny`.
 5. Mostrar o menu no topo da tela e abrir popovers: conferir que a engrenagem continua próxima do **primeiro sprite**, sem espaço vertical arbitrário, e que o popover não cobre botões.
 6. Repetir em telas estreitas e largas, versões/fabricantes distintos. Não marcar um aparelho como aprovado sem teste manual real.
+
+
+### PS-089: mínimo site visível na autenticação
+- [ ] Ao tocar no login ou ✨ sem sessão, observar só a tela discreta do PokeSearch enquanto o app localiza o controle oficial; a pesquisa do site não deve aparecer durante essa preparação.
+- [ ] Caso login Google/Discord abra uma página própria, os controles reais do provedor precisam permanecer visíveis e utilizáveis.
+- [ ] Após o site confirmar sessão (inclusive conta no texto Shiny com Logout oculto), a interface externa fecha e retorna à Home sem esperar a ativação do Shiny.
+- [ ] Se o botão oficial não existir, aparecer a ação `Mostrar o site para entrar`. O usuário pode optar por visualizar o site integralmente.
+- [ ] Testar em WebViews, versões Android e fabricantes diferentes; registrar eventuais alterações do DOM sem dados pessoais.

@@ -32,6 +32,8 @@ import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import android.widget.LinearLayout;
+import android.widget.FrameLayout;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -47,6 +49,9 @@ public class MainActivity extends Activity {
     private android.app.Dialog loginDialog;
     private boolean loginSessionNotified=false;
     private boolean loginLinkAttempted=false;
+    private boolean loginDiscoveryStarted=false;
+    private View loginCover;
+    private TextView loginWaitLabel,loginFallback;
     private int loginPageGeneration=0;
     private String pendingReportText="";
     @Override public void onCreate(Bundle b){
@@ -344,6 +349,12 @@ public class MainActivity extends Activity {
                         loginDialog.dismiss();
                 });
             }else{
+                // Check actual session before opening Login. This also handles
+                // already-signed-in users with a hidden mobile Logout button.
+                if(attemptsLeft<=13&&!loginDiscoveryStarted&&!loginLinkAttempted){
+                    loginDiscoveryStarted=true;
+                    openOfficialLoginControl(view,8);
+                }
                 // Logins completed by an in-page modal can take longer than the
                 // first hydration window and may not navigate the WebView.
                 // Keep one bounded-frequency probe until dialog is dismissed.
@@ -357,7 +368,14 @@ public class MainActivity extends Activity {
     // of opening the full search page and leaving the user to locate Login.
     // Never invent a private OAuth endpoint or click on provider domains.
     private void openOfficialLoginControl(WebView view,int remaining){
-        if(remaining<=0||view!=website||loginLinkAttempted||
+        if(remaining<=0){
+            // Site DOM is not under our control. Do not trap users behind a mask.
+            // Only an explicit tap reveals the full site as a fallback.
+            if(loginWaitLabel!=null)loginWaitLabel.setText("Acesso não encontrado automaticamente");
+            if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+            return;
+        }
+        if(view!=website||loginLinkAttempted||
            loginDialog==null||!loginDialog.isShowing())return;
         Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
         String host=current.getHost();
@@ -367,12 +385,22 @@ public class MainActivity extends Activity {
             "var label=function(e){return (e.innerText||e.textContent||'').trim();};"+
             "if(a.some(function(e){return /^(?:log\\s*out|sign\\s*out|sair|desconectar)$/i.test(label(e));}))return 'authenticated';"+
             "var e=a.find(function(x){return /^(?:log\\s*in|sign\\s*in|entrar|fazer login)$/i.test(label(x));});"+
-            "if(e&&!e.disabled&&e.getClientRects().length){e.click();return 'opened';}return 'waiting';})()";
+            "if(e&&!e.disabled&&e.getClientRects().length){e.click();return 'opened';}"+
+            "var nav=a.find(function(x){return !x.disabled&&/^(?:open\\s*menu|menu|navigation|abrir\\s*menu)$/i.test("+
+            "((x.getAttribute('aria-label')||x.getAttribute('title')||'').trim()));});"+
+            "if(nav&&!window.__pokesearchLoginMenuAttempted){window.__pokesearchLoginMenuAttempted=true;"+
+            "nav.click();return 'menu-opened';}return 'waiting';})()";
         view.evaluateJavascript(script,result->{
             if(view!=website||loginLinkAttempted||loginDialog==null||
                !loginDialog.isShowing())return;
-            if(result!=null&&(result.contains("opened")||result.contains("authenticated"))){
+            if(result!=null&&result.contains("\"authenticated\"")){
+                // The existing account is being handled by the session probe;
+                // keep the search page covered until the dialog closes.
                 loginLinkAttempted=true;
+            }else if(result!=null&&result.contains("\"opened\"")&&
+                     !result.contains("menu-opened")){
+                loginLinkAttempted=true;
+                if(loginCover!=null)loginCover.setVisibility(View.GONE);
             }else{
                 view.postDelayed(()->openOfficialLoginControl(view,remaining-1),330L);
             }
@@ -385,6 +413,7 @@ public class MainActivity extends Activity {
         loginAutoReturnQueued=false;
         loginSessionNotified=false;
         loginLinkAttempted=false;
+        loginDiscoveryStarted=false;
         website=new WebView(this);
         website.setBackgroundColor(Color.rgb(11,13,18));
         website.getSettings().setJavaScriptEnabled(true);
@@ -402,6 +431,13 @@ public class MainActivity extends Activity {
         website.setWebViewClient(new WebViewClient(){
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){
                 ++loginPageGeneration;
+                loginLinkAttempted=false;
+                loginDiscoveryStarted=false;
+                Uri current=Uri.parse(url==null?"":url);
+                String host=current.getHost();
+                boolean site=host!=null&&(host.equalsIgnoreCase("pogocoordinates.com")||
+                    host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"));
+                if(loginCover!=null)loginCover.setVisibility(site?View.VISIBLE:View.GONE);
             }
             @Override public void onPageFinished(WebView view,String url){
                 if(url==null||view!=website)return;
@@ -412,8 +448,6 @@ public class MainActivity extends Activity {
                 // through the official Login control.
                 int generation=loginPageGeneration;
                 checkLoginSession(view,14,generation);
-                if(!loginSessionNotified&&!loginAutoReturnQueued)
-                    openOfficialLoginControl(view,8);
             }
         });
         // Single full-screen login surface. No Android alert footer competing
@@ -440,7 +474,42 @@ public class MainActivity extends Activity {
         done.setPadding(d(8),0,d(8),0);
         toolbar.addView(done,new LinearLayout.LayoutParams(d(95),d(48)));
         loginRoot.addView(toolbar);
-        loginRoot.addView(website,new LinearLayout.LayoutParams(-1,0,1));
+        // Keep the full search page invisible unless the official login
+        // control actually opens or the user explicitly requests fallback.
+        FrameLayout loginStage=new FrameLayout(this);
+        loginStage.addView(website,new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout loginWaiting=new LinearLayout(this);
+        loginWaiting.setOrientation(LinearLayout.VERTICAL);
+        loginWaiting.setGravity(Gravity.CENTER);
+        loginWaiting.setPadding(d(22),d(24),d(22),d(24));
+        loginWaiting.setBackgroundColor(Color.rgb(11,13,18));
+        android.widget.ProgressBar spinner=new android.widget.ProgressBar(this);
+        loginWaiting.addView(spinner,new LinearLayout.LayoutParams(d(32),d(32)));
+        loginWaitLabel=new TextView(this);
+        loginWaitLabel.setText("Preparando acesso ao PoGoCoordinates…");
+        loginWaitLabel.setTextColor(Color.rgb(224,226,228));
+        loginWaitLabel.setTextSize(14);
+        loginWaitLabel.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams msgLp=new LinearLayout.LayoutParams(-1,-2);
+        msgLp.topMargin=d(14);
+        loginWaiting.addView(loginWaitLabel,msgLp);
+        loginFallback=new TextView(this);
+        loginFallback.setText("Mostrar o site para entrar");
+        loginFallback.setTextColor(Color.WHITE);
+        loginFallback.setTextSize(13);
+        loginFallback.setGravity(Gravity.CENTER);
+        loginFallback.setPadding(d(16),d(12),d(16),d(12));
+        loginFallback.setBackground(round(Color.rgb(54,57,61),10));
+        loginFallback.setVisibility(View.GONE);
+        loginFallback.setOnClickListener(v->{
+            if(loginCover!=null)loginCover.setVisibility(View.GONE);
+        });
+        LinearLayout.LayoutParams fallbackLp=new LinearLayout.LayoutParams(-2,-2);
+        fallbackLp.topMargin=d(14);
+        loginWaiting.addView(loginFallback,fallbackLp);
+        loginStage.addView(loginWaiting,new FrameLayout.LayoutParams(-1,-1));
+        loginCover=loginWaiting;
+        loginRoot.addView(loginStage,new LinearLayout.LayoutParams(-1,0,1));
         loginDialog=new android.app.Dialog(this);
         loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         loginDialog.setContentView(loginRoot);
@@ -456,6 +525,9 @@ public class MainActivity extends Activity {
         done.setOnClickListener(v->loginDialog.dismiss());
         loginDialog.setOnDismissListener(d->{
             ++loginPageGeneration; // Invalidate pending WebView session probes.
+            loginCover=null;
+            loginWaitLabel=null;
+            loginFallback=null;
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginDialog=null;
             serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END");
