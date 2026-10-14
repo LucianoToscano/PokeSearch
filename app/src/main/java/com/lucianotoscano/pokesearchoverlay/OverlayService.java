@@ -51,6 +51,7 @@ public class OverlayService extends Service {
     private boolean shinyLoginWindowOpened=false;
     private boolean firstStart=true;
     private boolean loginPaused=false;
+    private boolean pickerOpen=false;
     private boolean showTimers=false,alerts=false;
     private String sort="despawn";
     private long lastAlertAt=0L;
@@ -874,12 +875,22 @@ public class OverlayService extends Service {
             }
         });}
         @JavascriptInterface public void openWatchList(){handler.post(()->{
-            Intent i=new Intent(OverlayService.this,MainActivity.class);
-            i.setAction("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST");
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            try{startActivity(i);}catch(Exception e){
-                android.widget.Toast.makeText(OverlayService.this,"Abra a lista no aplicativo",
-                    android.widget.Toast.LENGTH_SHORT).show();
+            if(root==null||loginPaused||pickerOpen)return;
+            pickerOpen=true;
+            hideDetails();
+            root.setVisibility(View.GONE);
+            try{
+                PokemonPicker.show(OverlayService.this,()->{
+                    if(!stopped)update();
+                },()->{
+                    pickerOpen=false;
+                    if(!stopped&&!loginPaused&&root!=null)root.setVisibility(View.VISIBLE);
+                    update();
+                });
+            }catch(Exception e){
+                pickerOpen=false;
+                if(root!=null&&!loginPaused)root.setVisibility(View.VISIBLE);
+                diagnosticError("Não foi possível abrir favoritos no overlay.");
             }
         });}
         @JavascriptInterface public void cycleInterval(){handler.post(()->{
@@ -952,8 +963,8 @@ public class OverlayService extends Service {
         }
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_END".equals(action)){
             loginPaused=false;
-            if(root!=null)root.setVisibility(View.VISIBLE);
-            if(detailRoot!=null&&selected>=0)detailRoot.setVisibility(View.VISIBLE);
+            if(root!=null&&!pickerOpen)root.setVisibility(View.VISIBLE);
+            if(detailRoot!=null&&selected>=0&&!pickerOpen)detailRoot.setVisibility(View.VISIBLE);
             schedulePeriodic();
             BugReport.log(this,"LOGIN","Página de autenticação fechada");
             return START_STICKY;
