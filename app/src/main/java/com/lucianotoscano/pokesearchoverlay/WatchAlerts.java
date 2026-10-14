@@ -20,6 +20,7 @@ import java.util.Set;
 
 public final class WatchAlerts {
     private static final String CHANNEL_ID="pokesearch_watch_sound_v1";
+    private static final String SILENT_CHANNEL_ID="pokesearch_watch_silent_v1";
     public static final String PREF_LIST="watchList";
     public static final String PREF_ENABLED="watchAlertsEnabled";
     private WatchAlerts(){}
@@ -83,15 +84,25 @@ public final class WatchAlerts {
             new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT).build());
         manager.createNotificationChannel(channel);
     }
+    private static void ensureSilentChannel(Context context){
+        NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if(manager==null)return;
+        NotificationChannel channel=new NotificationChannel(SILENT_CHANNEL_ID,
+            "PokeSearch · Favoritos silenciosos",NotificationManager.IMPORTANCE_LOW);
+        channel.setSound(null,null);
+        manager.createNotificationChannel(channel);
+    }
     private static boolean send(Context context,String title,String info,int id){
         if(!permissionGranted(context))return false;
-        ensureChannel(context);
+        boolean quiet="silent".equals(context.getSharedPreferences("prefs",0)
+            .getString("alertsMode","off"));
+        if(quiet)ensureSilentChannel(context);else ensureChannel(context);
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager==null)return false;
         Intent open=new Intent(context,MainActivity.class);
         PendingIntent intent=PendingIntent.getActivity(context,11,open,
             PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
-        Notification note=new Notification.Builder(context,CHANNEL_ID)
+        Notification note=new Notification.Builder(context,quiet?SILENT_CHANNEL_ID:CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title).setContentText(info).setAutoCancel(true)
             .setStyle(new Notification.BigTextStyle().bigText(info)).setContentIntent(intent).build();
@@ -103,7 +114,7 @@ public final class WatchAlerts {
     }
     public static boolean test(Context context){
         return send(context,"🔔 Teste: Pokémon procurado",
-            "Som de teste. Alertas reais exigem Pokémon cadastrado e IV100 ou ranking 1 confirmado.",11999);
+            "Teste de notificação. Alertas reais exigem Pokémon cadastrado e IV100 ou ranking 1 confirmado.",11999);
     }
     public static boolean match(Context context,String pokemon,String info){
         return send(context,"🔔 Encontrado: "+pokemon,info,
