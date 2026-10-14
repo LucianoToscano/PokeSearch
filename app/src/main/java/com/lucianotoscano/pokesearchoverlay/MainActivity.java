@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
     private boolean loginAutoReturnQueued=false;
     private android.app.Dialog loginDialog;
     private boolean loginSessionNotified=false;
+    private boolean loginLinkAttempted=false;
     private String pendingReportText="";
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
@@ -330,6 +331,7 @@ public class MainActivity extends Activity {
         loginStartedForShiny=shinyRequest;
         loginAutoReturnQueued=false;
         loginSessionNotified=false;
+        loginLinkAttempted=false;
         website=new WebView(this);
         website.setBackgroundColor(Color.rgb(11,13,18));
         website.getSettings().setJavaScriptEnabled(true);
@@ -351,6 +353,12 @@ public class MainActivity extends Activity {
                 if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
                      host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
                 // Home login must not silently turn on Shiny.
+                if(!loginLinkAttempted){
+                    // Follow the actual site's Login control once, without guessing an
+                    // OAuth URL or collecting credentials in a native app form.
+                    loginLinkAttempted=true;
+                    view.evaluateJavascript("(function(){var a=Array.from(document.querySelectorAll('a,button,[role=button]'));var e=a.find(function(x){return /^(?:log ?in|sign ?in|entrar|fazer login)$/i.test((x.innerText||x.textContent||'').trim());});if(e){e.click();return true;}return false;})()",null);
+                }
                 if(loginStartedForShiny)view.evaluateJavascript(readAsset("shiny_login.js"),null);
                 // OAuth may complete without dismissing the dialog. A successful
                 // return to the site refreshes the collector in-place.
@@ -541,7 +549,7 @@ public class MainActivity extends Activity {
         });
         body.addView(order);
         settingCheckbox(body,prefs,"showTimers","Mostrar tempo individual de despawn",false);
-        settingCheckbox(body,prefs,"alerts","Notificar novos Pokémon encontrados",false);
+        settingAlertMode(body,prefs);
         settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,
             "Alertar com som ao encontrar favorito",true);
         Button testNotification=new Button(this);
@@ -561,6 +569,32 @@ public class MainActivity extends Activity {
         });
         body.addView(testNotification,new LinearLayout.LayoutParams(-1,d(42)));
         return sc;
+    }
+    private void settingAlertMode(LinearLayout body,SharedPreferences prefs){
+        TextView label=new TextView(this);
+        label.setText("Notificações de novos Pokémon");
+        label.setTextColor(Color.LTGRAY);
+        body.addView(label);
+        Spinner alertSpinner=new Spinner(this);
+        String[] labels={"Desligadas","Ligadas (som)","Silenciosas"};
+        String[] values={"off","on","silent"};
+        alertSpinner.setAdapter(new ArrayAdapter<String>(this,
+            android.R.layout.simple_spinner_dropdown_item,labels));
+        String current=prefs.getString("alertsMode",
+            prefs.getBoolean("alerts",false)?"on":"off");
+        int selected="silent".equals(current)?2:"on".equals(current)?1:0;
+        alertSpinner.setSelection(selected);
+        alertSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent,
+                    android.view.View view,int index,long id){
+                String mode=values[index];
+                prefs.edit().putString("alertsMode",mode)
+                    .putBoolean("alerts",!"off".equals(mode)).apply();
+                syncOverlayPreferences();
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent){}
+        });
+        body.addView(alertSpinner);
     }
     private void settingCheckbox(LinearLayout root,SharedPreferences prefs,String key,String label,boolean def){
         CheckBox check=new CheckBox(this);check.setText(label);check.setTextColor(Color.WHITE);
