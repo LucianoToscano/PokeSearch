@@ -133,9 +133,10 @@ public class OverlayService extends Service {
         try{return new JSONArray(results).length();}catch(Exception e){return 0;}
     }
     private int rowDp(){
-        int n=Math.max(1,count());
-        int available=Math.max(170,screenHeightDp()-155);
-        return Math.max(27,Math.min(spriteSize-5,available/n));
+        // Never place a larger sprite inside a shorter row: the old
+        // spriteSize-5 rule overlapped sprites and made silhouettes
+        // look uneven. A constant 10dp breathing space is predictable.
+        return spriteSize+10;
     }
     private void update(){
         js(panel,panelLoaded,"window.onNativeData("+results+","+JSONObject.quote(status)+","+
