@@ -48,4 +48,20 @@ test("Location enforces valid latitude and longitude",dock.includes('Math.abs(Nu
 test("Location preference persisted without exposing secrets",service.includes('putBoolean("locationEnabled",locationEnabled)')&&service.includes('prefs.remove("locationCoords").remove("locationRadius")'));
 test("Location is verified before search submission",service.includes('configureLocationAndVerify(generation,manual,0)')&&service.includes('execute("verifyLocation:"+data'));
 test("Login, Shiny and league filters remain independent",service.includes('JSONObject.quote(mode)')&&service.includes('locationEnabled'));
+
+const toolbarCols=dock.match(/#controls\{[^}]*grid-template-columns:([^;]+);/);
+const toolbarButtons=dock.slice(dock.indexOf('<div id="menu"><div id="controls">'),dock.indexOf('</div><div id="choices"')).match(/<button\b/g)||[];
+test("Controls have exactly one grid column per button, no second-row X",
+  !!toolbarCols&&toolbarCols[1].trim().split(/\s+/).length===toolbarButtons.length&&toolbarButtons.length===12);
+test("Single pin shows active radius without a second settings button",
+  (dock.match(/id="location"/g)||[]).length===1&&dock.includes('id="locationRadiusText"')&&
+  dock.includes('textContent=locationEnabled?locationRadius+"km":""'));
+test("Active radius is readable even when toolbar is closed",
+  dock.includes('id="locBadge"')&&dock.includes('geoBadge.textContent=locationEnabled?"📍 "+locationRadius+" km":""')&&
+  dock.includes('pointer-events:none')&&dock.includes('body.controls-window #locBadge{display:none!important}'));
+test("When OFF, icon and badge never display outdated radius",
+  dock.includes('geoBadge.classList.toggle("active",locationEnabled)')&&
+  dock.includes('document.getElementById("locationRadiusText").textContent=locationEnabled?locationRadius+"km":""'));
+test("Switching from location editor to mode releases keyboard focus",
+  dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
 console.log("PokeSearch UX contract: "+count+" tests passed");
