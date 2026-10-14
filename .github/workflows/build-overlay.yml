@@ -76,7 +76,7 @@ jobs:
           test -s app/build/outputs/apk/debug/app-debug.apk
           unzip -t app/build/outputs/apk/debug/app-debug.apk >/dev/null
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "^package: name='com.lucianotoscano.pokesearch' versionCode='50' versionName='0.50-beta'"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "^package: name='com.lucianotoscano.pokesearch' versionCode='52' versionName='0.52-beta'"
           test -s app/src/main/res/drawable-nodpi/ic_launcher.png
           test -s app/src/main/res/drawable-nodpi/pokesearch_round.png
           cp app/src/main/res/drawable-nodpi/pokesearch_round.png /tmp/pokesearch-generated-icon.png
