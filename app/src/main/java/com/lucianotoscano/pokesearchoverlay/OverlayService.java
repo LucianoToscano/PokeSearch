@@ -49,6 +49,8 @@ public class OverlayService extends Service {
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
     private String probeScriptCache;
     private boolean searchInProgress=false;
+    private boolean loginPaused=false;
+    private boolean pickerOpen=false;
     private final Runnable queuedRefresh=()->refresh(false);
     private int pageLoadGeneration=-1;
     private int pendingPageRefreshGeneration=-1;
@@ -80,8 +82,6 @@ public class OverlayService extends Service {
     private boolean shinyLoginPromptRequested=false;
     private boolean shinyLoginWindowOpened=false;
     private boolean firstStart=true;
-    private boolean loginPaused=false;
-    private boolean pickerOpen=false;
     private boolean locationEnabled=false;
     private String locationCoords="";
     private int locationRadius=0;
@@ -758,7 +758,8 @@ public class OverlayService extends Service {
             long secs=Long.parseLong(p[0])*60+Long.parseLong(p[1]);
             if(secs<=0||secs>86400)return Long.MAX_VALUE;
             return item.optLong("sampledAt",System.currentTimeMillis())+secs*1000L;
-        }catch(Exception e){return Long.MAX_VALUE;}
+        }catch(NumberFormatException ignored){return Long.MAX_VALUE;}
+        catch(Exception e){recordFailure("interpretar despawn",e);return Long.MAX_VALUE;}
     }
     private String spawnKey(JSONObject c){
         return mode+"|"+c.optString("name","")+"|"+c.optString("cp","")+"|"+
