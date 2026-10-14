@@ -46,6 +46,7 @@ public class OverlayService extends Service {
     private WebView panel,detailPanel,website,menuPanel;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
     private int height=72,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
+    private boolean deferMenuSync=false;
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
     private String probeScriptCache;
     private boolean searchInProgress=false;
@@ -60,7 +61,7 @@ public class OverlayService extends Service {
         if(!stopped&&!loginPaused&&pageLoadGeneration==requestGeneration&&
             pendingPageRefreshGeneration==requestGeneration)refresh(false);
     };
-    private final Runnable loginResumeRefresh=()->{
+    private final Runnable loginEndRefresh=()->{
         if(!stopped&&!loginPaused&&!pickerOpen&&
             pendingLoginRefreshGeneration==requestGeneration)refresh(false);
     };
@@ -73,7 +74,7 @@ public class OverlayService extends Service {
         handler.removeCallbacks(periodic);
         handler.removeCallbacks(expiryRefresh);
         handler.removeCallbacks(pageFinishedRefresh);
-        handler.removeCallbacks(loginResumeRefresh);
+        handler.removeCallbacks(loginEndRefresh);
         handler.removeCallbacks(deferredSessionReload);
     }
     private static final long MIN_SEARCH_GAP_MS=60_000L;
@@ -237,7 +238,7 @@ public class OverlayService extends Service {
                 menuDrawHeight=menuParams.height;menuDrawWidth=menuParams.width;
             }catch(Exception e){recordFailure("posicionar menu",e);}
         }
-        if(priorPad!=menuPadDp||priorLeft!=menuLeft){
+        if((priorPad!=menuPadDp||priorLeft!=menuLeft)&&!deferMenuSync){
             String edge=JSONObject.quote(menuLeft?"left":"right");
             js(panel,panelLoaded,"window.syncMenu(true,"+edge+","+menuPadDp+")");
             js(menuPanel,menuLoaded,"window.syncMenu(true,"+edge+",0)");
@@ -913,20 +914,19 @@ public class OverlayService extends Service {
         menuPadDp=show?TOOLBAR_DP:0;
         if(show){
             menuDrawHeight=-1;menuDrawWidth=-1;
-            menuLeft=false; // Position recalculated after menu is shown.
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
             if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(TOOLBAR_DP);}
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
         }
-        // Main dock remains narrow and stationary. Only the Pokémon column
-        // drops 29dp below the expanded controls, so the remaining game area
-        // keeps receiving touches.
-        js(panel,panelLoaded,"window.syncMenu("+show+","+
-            JSONObject.quote(menuLeft?"left":"right")+","+menuPadDp+")");
-        js(menuPanel,menuLoaded,"window.syncMenu("+show+","+
-            JSONObject.quote(menuLeft?"left":"right")+",0)");
-        updateWindow();
+        // Position first and send one sync for this open/close transition.
+        // Future drags still synchronize from updateMenuPosition().
+        deferMenuSync=true;
+        try{updateWindow();}
+        finally{deferMenuSync=false;}
+        String edge=JSONObject.quote(menuLeft?"left":"right");
+        js(panel,panelLoaded,"window.syncMenu("+show+","+edge+","+menuPadDp+")");
+        js(menuPanel,menuLoaded,"window.syncMenu("+show+","+edge+",0)");
         moveDetail();
     }
     private void minimize(boolean yes){
@@ -1004,7 +1004,7 @@ public class OverlayService extends Service {
         if(cb!=null&&!coords.isEmpty())cb.setPrimaryClip(ClipData.newPlainText("Pokémon coordinates",coords));
     }
     private String extractCoordinates(String input){
-        java.util.regex.Matcher m=java.util.regex.Pattern.compile("^\\s*(-?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*(-?\\d{1,3}(?:\\.\\d+)?)\\s*$").matcher(input==null?"":input);
+        java.util.regex.Matcher m=java.util.regex.Pattern.compile("^\\s*([-+]?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*([-+]?\\d{1,3}(?:\\.\\d+)?)\\s*$").matcher(input==null?"":input);
         if(m.find()){
             try{
                 double lat=Double.parseDouble(m.group(1)),lon=Double.parseDouble(m.group(2));
@@ -1268,7 +1268,7 @@ public class OverlayService extends Service {
             cancelSessionCallbacks();
             pendingLoginRefreshGeneration=requestGeneration;
             if(!stopped&&!loginPaused&&!pickerOpen)
-                handler.postDelayed(loginResumeRefresh,1600L);
+                handler.postDelayed(loginEndRefresh,1600L);
             schedulePeriodic();
             BugReport.log(this,"LOGIN","Página de autenticação fechada");
             return START_STICKY;
