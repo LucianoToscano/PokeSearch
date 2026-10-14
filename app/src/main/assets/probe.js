@@ -230,8 +230,8 @@ function collect(){
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
- const explicitEmpty=/\\b(?:no results found|no results|nenhum resultado|sem resultados)\\b/i.test(t);
- const siteCount=Number((t.match(/\\bShowing\\s+(\\d+)\\s+spawns?\\b/i)||[])[1]||0);
+ const explicitEmpty=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i.test(t);
+ const siteCount=Number((t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1]||0);
  const parseFailure=siteCount>0&&found.length===0;
  return JSON.stringify({ok:true,cards:valid,found:found.length,siteCount,parseFailure,uncertain,loading,explicitEmpty,leagueConfirmed,siteShiny:readShiny()});
 }
