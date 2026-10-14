@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
         root.addView(hint,new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
         handleShinyLoginIntent(getIntent());
-        if(!getSharedPreferences("prefs",0).getBoolean("tutorialSeenV40",false)&&
+        if(!getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false)&&
            !"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(getIntent().getAction()))
             root.post(this::showQuickGuide);
         if("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST".equals(getIntent().getAction()))
@@ -144,23 +144,44 @@ public class MainActivity extends Activity {
             root.post(this::showBugReportDialog);
     }
     private void showQuickGuide(){
-        getSharedPreferences("prefs",0).edit().putBoolean("tutorialSeenV40",true).apply();
-        String guide=
-            "⚙  Toque para abrir as opções; arraste para mover.\n"+
-            "100% / GL#1 / UL#1  Escolha o filtro de Pokémon.\n"+
-            "✨  Liga ou desliga apenas o filtro Shiny; o modo é mantido.\n"+
-            "AUTO 5m  Escolha atualização a cada 5, 10, 15 ou 20 minutos.\n"+
-            "↻  Atualização manual (intervalo mínimo: 60s).\n"+
-            "P/M/G  Tamanho dos sprites; ◷ mostra o despawn.\n"+
-            "♧  Sino: alertas gerais; ☆: favoritos até 50, no próprio overlay.\n"+
-            "⚠  Exportar bugs e sugestões; ♡: Pix voluntário.\n"+
-            "×  Fecha tudo; botão de recolher deixa apenas a engrenagem.\n\n"+
-            "Toque nos sprites para ver detalhes. Sem ✨, a busca normal continua.";
-        new AlertDialog.Builder(this)
-            .setTitle("PokeSearch · Guia rápido")
-            .setMessage(guide)
-            .setPositiveButton("Entendi",null)
-            .show();
+        getSharedPreferences("prefs",0).edit().putBoolean("tutorialSeenV41",true).apply();
+        // A scrollable visual guide reuses the actual icons from dock.html.
+        // The action button belongs to the same charcoal translucent panel.
+        LinearLayout layout=new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable();
+        background.setColor(Color.argb(240,43,50,61));
+        background.setCornerRadius(d(16));
+        layout.setBackground(background);
+        WebView guide=new WebView(this);
+        guide.setBackgroundColor(Color.TRANSPARENT);
+        guide.getSettings().setJavaScriptEnabled(false);
+        layout.addView(guide,new LinearLayout.LayoutParams(-1,0,1));
+        TextView done=new TextView(this);
+        done.setText("✓  Entendi");
+        done.setGravity(Gravity.CENTER);
+        done.setTextColor(Color.rgb(173,245,219));
+        done.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        done.setTextSize(15);
+        android.graphics.drawable.GradientDrawable buttonBg=new android.graphics.drawable.GradientDrawable();
+        buttonBg.setColor(Color.argb(228,26,67,60));
+        buttonBg.setCornerRadius(d(10));
+        done.setBackground(buttonBg);
+        LinearLayout.LayoutParams doneParams=new LinearLayout.LayoutParams(-1,d(44));
+        doneParams.setMargins(d(13),d(5),d(13),d(13));
+        layout.addView(done,doneParams);
+        android.app.Dialog dialog=new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(layout);
+        done.setOnClickListener(v->dialog.dismiss());
+        dialog.show();
+        if(dialog.getWindow()!=null){
+            android.view.Window window=dialog.getWindow();
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+            window.setLayout(Math.min(getResources().getDisplayMetrics().widthPixels-d(22),d(450)),
+                Math.min(getResources().getDisplayMetrics().heightPixels-d(95),d(770)));
+        }
+        guide.loadUrl("file:///android_asset/tutorial.html");
     }
     private ImageButton makeIcon(int drawable,String description){
         ImageButton button=new ImageButton(this);
@@ -270,7 +291,7 @@ public class MainActivity extends Activity {
             loginDialog=null;
             serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END");
             notifyOverlaySessionReady();
-            getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),120L);
+            // Keep MainActivity visible after sign-in; user can launch the overlay from Home.
         });
         serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN");
         loginDialog.show();
