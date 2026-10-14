@@ -30,3 +30,10 @@ Os resultados dependem da página e da sessão autenticada do PoGoCoordinates e 
 Testar instalação/login/consulta Shiny em Android real; assinatura persistente para futuras atualizações; favoritos diretamente no overlay sem trocar de Activity; melhorar robustez da interface se o DOM do fornecedor mudar.
 
 Este projeto não altera o APK do Pokémon GO e não é afiliado à Niantic, à The Pokémon Company ou à Nintendo.
+
+## Revisão da interface e beta para amigos (14/10/2026)
+- ✨ Login é mostrado numa janela de autenticação com teclado redimensionável; enquanto o login estiver aberto, o overlay é ocultado para evitar interferência no toque/digitação.
+- ⚠️ Novo botão no menu abre cadastro de bug ou sugestão, com eventos limitados/mascarados e exportação TXT; envio voluntário para contato de suporte via WhatsApp, sem transmissão automática.
+- IV100 tem configuração alternativa verificável pelo filtro `% IV` de 100 a 100, além do filtro Raw IV de três/seis campos; não inventa resultados se a busca falhar.
+- Consultas automáticas permitidas somente em 5/10/15/20 minutos, com intervalo mínimo de 60 segundos entre buscas efetivamente submetidas. Tentativas de login e configuração sem envio ao servidor não contam contra o intervalo.
+- A versão gerada pelo CI continua **beta debug para testes privados entre amigos**, não uma release pública com assinatura persistente. O número de versão permanece 0.38-beta.
