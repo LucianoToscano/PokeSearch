@@ -93,29 +93,20 @@ function setShiny(want){
  if(before===null)return {ok:false,reason:"Estado do Shiny não identificável"};
  sw.click();return {ok:true,changed:true};
 }
-function rawIVInputs(){
- const list=labels(document,/^IV$/i);
- for(const el of list){
-  for(let p=el.parentElement,i=0;p&&i<6;p=p.parentElement,i++){
+function inputsByIvGroup(count){
+ const matches=labels(document,/^IV$/i);
+ for(const label of matches){
+  for(let p=label.parentElement,depth=0;p&&depth<5;p=p.parentElement,depth++){
    const inputs=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
-   if(inputs.length===3||inputs.length===6)return inputs;
+   // Stay inside the IV group: avoid accidentally setting CP and Level.
+   if(inputs.length===count)return inputs;
+   if(inputs.length>6)break;
   }
  }
  return [];
 }
-function percentageIVInputs(){
- const min=elements('input').find(x=>vis(x)&&/min\\s*%/i.test(x.getAttribute('placeholder')||''));
- const max=elements('input').find(x=>vis(x)&&/max\\s*%/i.test(x.getAttribute('placeholder')||''));
- if(min&&max)return [min,max];
- const label=labels(document,/^IV$/i);
- for(const el of label){
-  for(let p=el,i=0;p&&i<6;p=p.parentElement,i++){
-   const inputs=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
-   if(inputs.length===2)return inputs;
-  }
- }
- return [];
-}
+function rawIVInputs(){return inputsByIvGroup(3).length?inputsByIvGroup(3):inputsByIvGroup(6);}
+function percentageIVInputs(){return inputsByIvGroup(2);}
 function set100Percent(){
  tab("Stats");tab("% IV");
  const fields=percentageIVInputs();
@@ -123,10 +114,11 @@ function set100Percent(){
  return fields.every(e=>valueInput(e,"100"));
 }
 function applyIv(){
+ // The public website uses two % IV fields (min/max), both set to 100.
+ if(set100Percent())return true;
  tab("Stats");tab("Raw IV");
  const raw=rawIVInputs();
- if(raw.length===3||raw.length===6)return raw.every(x=>valueInput(x,"15"));
- return set100Percent();
+ return (raw.length===3||raw.length===6)&&raw.every(x=>valueInput(x,"15"));
 }
 function applyGl(){
  const rank=inputNear("Top ranking");
@@ -220,22 +212,28 @@ function parseCard(box,sourceIndex){
 }
 function collect(){
  const found=cardRoots().map(item=>parseCard(item.node,item.sourceIndex));
- const valid=mode==="iv"?
-  found.filter(x=>x.iv==="15/15/15"||x.ivPercent==="100"):
-  found.filter(x=>String(x.rank).trim()==="1");
- const uncertain=mode==="iv"?
-   found.some(x=>!(x.iv==="15/15/15"||x.ivPercent==="100")):
-   found.some(x=>String(x.rank).trim()!=="1");
  const targetLeague=mode==="ul"?"Ultra League":"Great League";
  const fieldRank=inputNear("Top ranking");
  const activeLeague=readChoice("League");
  const leagueConfirmed=mode==="iv" ||
-  (!!fieldRank&&fieldRank.value==="1"&&activeLeague===targetLeague&&readChoice("Include previous evolutions")==="Yes");
+   (!!fieldRank&&fieldRank.value==="1"&&activeLeague===targetLeague&&readChoice("Include previous evolutions")==="Yes");
+ // Rank is specified by the website's search form, not each result card.
+ // Only infer rank=1 from the verified filter; never from an unknown form.
+ const valid=mode==="iv"?
+   found.filter(x=>x.iv==="15/15/15"||x.ivPercent==="100"):
+   (leagueConfirmed?found.filter(x=>!x.rank||String(x.rank).trim()==="1").map(x=>({
+      ...x,rank:"1",rankSource:x.rank?"card":"verified-site-filter"
+   })):[]);
+ const uncertain=mode==="iv"?
+   found.some(x=>!(x.iv==="15/15/15"||x.ivPercent==="100")):
+   !leagueConfirmed||found.some(x=>x.rank&&String(x.rank).trim()!=="1");
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
- const explicitEmpty=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i.test(t);
- return JSON.stringify({ok:true,cards:valid,found:found.length,uncertain,loading,explicitEmpty,leagueConfirmed,siteShiny:readShiny()});
+ const explicitEmpty=/\\b(?:no results found|no results|nenhum resultado|sem resultados)\\b/i.test(t);
+ const siteCount=Number((t.match(/\\bShowing\\s+(\\d+)\\s+spawns?\\b/i)||[])[1]||0);
+ const parseFailure=siteCount>0&&found.length===0;
+ return JSON.stringify({ok:true,cards:valid,found:found.length,siteCount,parseFailure,uncertain,loading,explicitEmpty,leagueConfirmed,siteShiny:readShiny()});
 }
 if(action==="collect")return collect();
 if(action.startsWith("coords:")){
