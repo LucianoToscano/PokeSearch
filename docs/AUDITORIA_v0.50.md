@@ -19,3 +19,17 @@ Identidade `com.lucianotoscano.pokesearch`, JDK17, Gradle 8.11.1, AGP8.10.1, SDK
 
 ## Testes mínimos
 `node --check`, `node app/tests/probe-smoke.test.js`, `node app/tests/overlay-ux.test.js`, `javac` / `java DiagnosticSanitizerTest`, `gradle :app:testDebugUnitTest :app:assembleDebug :app:lintDebug`, `apksigner verify`, `aapt dump badging`, `sha256sum -c SHA256SUMS.txt` e inspeção do ZIP-fonte editável com Gradle Wrapper/settings e docs históricos. Execução real Android 16, OAuth, Shiny, overlay e bateria/memória continuam **não executadas**.
+
+## Feedback físico reportado — correções e pendências complementares
+| Item | Código alterado | Estado de verificação |
+|---|---|---|
+| Fundo da engrenagem/seta e tema azul | CSS de dock transparente, cinza/branco | Inspeção de CSS; aparência em jogo pendente |
+| Espaço exagerado entre menu e sprites | Sem spacer artificial em toolbar lateral | Contrato UX; testar quatro cantos |
+| AUTO sem desligamento | 0 = OFF em JS, serviço e persistência; sem timer periódico | Contrato UX; aparelho pendente |
+| Notificações sem modo silencioso | Modo off/on/silent e canais Android separados | Contrato e build; entrega visual/sonora pendente |
+| Login mostra página de busca em vez da tela de entrada | Tenta clicar no controle oficial uma única vez; OAuth continua no site | Requer login real com Google/Discord |
+| Ícone 📍 desproporcional | SVG menor, sem alterar semântica do filtro | Teste visual pendente |
+| Sem Pokémon nos modos IV/GL/UL | Tratamento de action nula no serviço; scripts e retorno de dados permanecem sujeitos ao DOM da página | **Ainda não comprovado**; coletar ⚠ diagnóstico categórico real por modo |
+
+### Validação que depende exclusivamente do Samsung/conta real
+Abrir a Home e overlay pela primeira vez, testar pesquisa IV100, GL#1, UL#1 sem Shiny e verificar o limite real do site; depois autenticar Google/Discord, confirmar vínculo e ativar ✨ por liga. Testar primeira consulta, AUTO OFF, cooldown da busca manual, ausência de alertas no modo silencioso, canal de favoritos, abrir menu nos quatro cantos, rolagem, seta e engrenagem sobre o jogo, sincronização de preferências com overlay ativo, notificações concedidas/negadas e fluxo de retorno do login. Diagnóstico deve conter etapas/categorias, nunca cookies, URLs completas nem coordenadas.
