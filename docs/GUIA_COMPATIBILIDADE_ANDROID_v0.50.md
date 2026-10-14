@@ -41,3 +41,10 @@
 8. Se falhar, exportar ⚠ relatório sanitizado e revisar antes de compartilhar. Registrar resultado individual como **aprovado/reprovado/não executado**.
 
 **Pendência atual:** esta matriz ainda necessita execução real. O roteiro específico Samsung está em `GUIA_TESTE_SAMSUNG_v0.50.md` apenas como um dos cenários; versões históricas permanecem intactas.
+
+## Verificação complementar — toque em ✨ sem espera
+- [ ] Com conta desconectada, tocar ✨: login oficial abre diretamente, sem aguardar 60 segundos nem concluir uma pesquisa.
+- [ ] Com conta conectada e página pronta, tocar ✨: filtro do site liga e recebe confirmação rápida, independentemente de AUTO OFF/ON ou do cooldown da última consulta.
+- [ ] Tocar novamente: Shiny desliga no site sem exigir novo login.
+- [ ] Rede lenta/página hidratando: acesso ao botão oficial é tentado brevemente sem redirecionar para URLs OAuth inventadas. Ausência de controle não equivale a ativação confirmada.
+- [ ] Alternar IV100/GL#1/UL#1 mantendo ✨: cada modalidade respeita a opção selecionada no site e não mostra resultados de modo antigo como se fossem confirmados.
