@@ -33,14 +33,14 @@ public class OverlayService extends Service {
     private static final int BUBBLE_DP=45, DETAIL_DP=226;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return dockDp()+308;}
+    private int menuDp(){return 308;}
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
-    private WindowManager.LayoutParams params,detailParams;
-    private FrameLayout root,detailRoot;
+    private WindowManager.LayoutParams params,detailParams,menuParams;
+    private FrameLayout root,detailRoot,menuRoot;
     private View grip;
-    private WebView panel,detailPanel,website;
-    private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,detailLoaded=false,stopped=false;
+    private WebView panel,detailPanel,website,menuPanel;
+    private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
     private int height=72,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
     private String probeScriptCache;
     private boolean searchInProgress=false;
@@ -136,11 +136,13 @@ public class OverlayService extends Service {
         // Compact vertical rhythm: real sprites have transparent margins.
         // The old +10dp gap was visually excessive; allow 4dp transparent
         // edge overlap without changing the sprite image dimensions.
-        return Math.max(31,spriteSize-4);
+        return Math.max(26,spriteSize-8);
     }
     private void update(){
-        js(panel,panelLoaded,"window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+")");
+        String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+")";
+        js(panel,panelLoaded,data);
+        js(menuPanel,menuLoaded,data);
         if(selected>=0)showDetails(selected);
     }
     private void status(String s){
@@ -157,11 +159,28 @@ public class OverlayService extends Service {
         if(wm!=null&&root!=null&&params!=null){
             try{wm.updateViewLayout(root,params);}catch(Exception ignored){}
         }
+        updateMenuPosition();
+    }
+    private void updateMenuPosition(){
+        if(!menuExpanded||menuRoot==null||menuParams==null||params==null||wm==null)return;
+        int screen=metrics().widthPixels;
+        int width=dp(menuDp());
+        menuLeft=params.x+dp(dockDp())+width>screen;
+        menuParams.x=menuLeft?Math.max(0,params.x-width):Math.min(screen-width,params.x+dp(dockDp()));
+        menuParams.y=params.y;
+        try{wm.updateViewLayout(menuRoot,menuParams);}catch(Exception ignored){}
+    }
+    private void resizeMenu(int desiredDp){
+        if(!menuExpanded||menuParams==null||menuRoot==null)return;
+        int target=dp(Math.max(29,Math.min(215,desiredDp)));
+        if(Math.abs(menuParams.height-target)<=dp(1))return;
+        menuParams.height=target;
+        updateMenuPosition();
     }
     private void moveDetail(){
         if(detailRoot==null||detailParams==null||params==null)return;
         int w=screenWidthDp(),h=screenHeightDp(),gap=5;
-        int dockPos=params.x/dp(1)+(menuExpanded&&menuLeft?menuDp()-dockDp():0);
+        int dockPos=params.x/dp(1);
         int right=dockPos+dockDp()+gap;
         int left=dockPos-DETAIL_DP-gap;
         int preferred=right+DETAIL_DP<=w-4?right:left;
@@ -242,7 +261,7 @@ public class OverlayService extends Service {
                     if(Math.abs(dx)+Math.abs(dy)>dp(4))dragged=true;
                     if(dragged){
                         DisplayMetrics d=metrics();
-                        int winWidth=dp(minimized?BUBBLE_DP:menuExpanded?menuDp():dockDp());
+                        int winWidth=dp(minimized?BUBBLE_DP:dockDp());
                         int winHeight=dp(minimized?BUBBLE_DP:height);
                         params.x=Math.max(0,Math.min(d.widthPixels-winWidth,startX+dx));
                         params.y=Math.max(0,Math.min(d.heightPixels-winHeight,startY+dy));
@@ -269,6 +288,40 @@ public class OverlayService extends Service {
         params.gravity=Gravity.TOP|Gravity.LEFT;
         params.x=dp(Math.max(0,screenWidthDp()-dockDp()-7));params.y=dp(120);
         try{wm.addView(root,params);}catch(Exception e){stopSelf();return;}
+
+        // Dedicated 308dp-by-29dp touchable window for the toolbar.
+        // Transparent regions outside this rectangle belong to Pokémon GO:
+        // a single expanded WebView used to intercept every tap underneath.
+        menuRoot=new FrameLayout(this);
+        menuRoot.setBackgroundColor(Color.TRANSPARENT);
+        menuPanel=new WebView(this);
+        menuPanel.setBackgroundColor(Color.TRANSPARENT);
+        menuPanel.getSettings().setJavaScriptEnabled(true);
+        menuPanel.getSettings().setAllowContentAccess(false);
+        menuPanel.getSettings().setAllowFileAccessFromFileURLs(false);
+        menuPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
+        menuPanel.addJavascriptInterface(new Bridge(),"Native");
+        menuRoot.addView(menuPanel,new FrameLayout.LayoutParams(-1,-1));
+        menuPanel.setWebViewClient(new WebViewClient(){
+            @Override public void onPageFinished(WebView view,String url){
+                if(url!=null&&url.startsWith("file:///android_asset/")){
+                    menuLoaded=true;
+                    update();
+                    if(menuExpanded)js(menuPanel,true,"window.syncMenu(true,"+
+                        JSONObject.quote(menuLeft?"left":"right")+",0)");
+                }
+            }
+        });
+        menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(29),
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                PixelFormat.TRANSLUCENT);
+        menuParams.gravity=Gravity.TOP|Gravity.LEFT;
+        menuParams.x=0;menuParams.y=params.y;
+        menuRoot.setVisibility(View.GONE);
+        try{wm.addView(menuRoot,menuParams);}catch(Exception e){menuRoot=null;menuPanel=null;}
+        if(menuPanel!=null)menuPanel.loadUrl("file:///android_asset/dock.html?controls=1");
 
         detailRoot=new FrameLayout(this);
         detailRoot.setBackgroundColor(Color.TRANSPARENT);
@@ -669,32 +722,24 @@ public class OverlayService extends Service {
     private void menu(boolean show){
         if(params==null||minimized)return;
         if(show==menuExpanded)return;
-        if(show){
-            int screen=metrics().widthPixels;
-            int extra=dp(menuDp()-dockDp());
-            menuLeft=params.x+dp(menuDp())>screen;
-            if(menuLeft)params.x=Math.max(0,params.x-extra);
-            params.width=dp(menuDp());
-            // Keep the gear stationary. Opening controls adds space BELOW
-            // the gear, lowering the Pokémon column without hiding it.
-            menuPadDp=30;
-            height+=menuPadDp;
-        }else{
-            if(menuLeft)params.x=Math.min(metrics().widthPixels-dp(dockDp()),params.x+dp(menuDp()-dockDp()));
-            params.width=dp(dockDp());
-            height=Math.max(46,height-menuPadDp);
-            menuPadDp=0;
-        }
         menuExpanded=show;
-        params.height=dp(height);
-        FrameLayout.LayoutParams gripParams=new FrameLayout.LayoutParams(
-            dp(dockDp()),dp(21),Gravity.TOP|Gravity.LEFT);
-        gripParams.leftMargin=show&&menuLeft?dp(menuDp()-dockDp()):0;
-        gripParams.topMargin=0;
-        grip.setLayoutParams(gripParams);
+        menuPadDp=show?29:0;
+        if(show){
+            menuLeft=params.x+dp(dockDp())+dp(menuDp())>metrics().widthPixels;
+            if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
+            if(menuParams!=null)menuParams.height=dp(29);
+        }else{
+            if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
+        }
+        // Main dock remains narrow and stationary. Only the Pokémon column
+        // drops 29dp below the expanded controls, so the remaining game area
+        // keeps receiving touches.
         js(panel,panelLoaded,"window.syncMenu("+show+","+
-            JSONObject.quote(show&&menuLeft?"left":"right")+","+menuPadDp+")");
-        updateWindow();moveDetail();
+            JSONObject.quote(menuLeft?"left":"right")+","+menuPadDp+")");
+        js(menuPanel,menuLoaded,"window.syncMenu("+show+","+
+            JSONObject.quote(menuLeft?"left":"right")+",0)");
+        updateWindow();
+        moveDetail();
     }
     private void minimize(boolean yes){
         if(params==null)return;
@@ -935,6 +980,7 @@ public class OverlayService extends Service {
         @JavascriptInterface public void restore(){handler.post(()->OverlayService.this.minimize(false));}
         @JavascriptInterface public void close(){handler.post(()->stopSelf());}
         @JavascriptInterface public void resize(int size){handler.post(()->OverlayService.this.resize(size));}
+        @JavascriptInterface public void resizeMenu(int size){handler.post(()->OverlayService.this.resizeMenu(size));}
         @JavascriptInterface public void resizeDetail(int size){handler.post(()->OverlayService.this.resizeDetail(size));}
         @JavascriptInterface public void toggleDetail(int index){handler.post(()->{
             if(selected==index)hideDetails();else showDetails(index);
@@ -1037,8 +1083,10 @@ public class OverlayService extends Service {
     @Override public void onDestroy(){
         stopped=true;handler.removeCallbacksAndMessages(null);
         if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception ignored){}}
+        if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception ignored){}}
         if(wm!=null&&detailRoot!=null){try{wm.removeView(detailRoot);}catch(Exception ignored){}}
         if(panel!=null){panel.removeJavascriptInterface("Native");panel.destroy();panel=null;}
+        if(menuPanel!=null){menuPanel.removeJavascriptInterface("Native");menuPanel.destroy();menuPanel=null;}
         if(detailPanel!=null){detailPanel.removeJavascriptInterface("Native");detailPanel.destroy();detailPanel=null;}
         if(website!=null){website.destroy();website=null;}
         super.onDestroy();
