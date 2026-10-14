@@ -849,6 +849,10 @@ public class OverlayService extends Service {
                 Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
             try{startActivity(intent);}catch(Exception ignored){}
         });}
+        @JavascriptInterface public void showStatus(){handler.post(()->{
+            android.widget.Toast.makeText(OverlayService.this,
+                status==null?"Aguardando busca":status,android.widget.Toast.LENGTH_LONG).show();
+        });}
         @JavascriptInterface public void openReport(){handler.post(()->{
             Intent intent=new Intent(OverlayService.this,MainActivity.class);
             intent.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT");
