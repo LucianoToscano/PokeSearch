@@ -343,8 +343,13 @@ public class MainActivity extends Activity {
                     if(view==website&&loginDialog!=null&&loginDialog.isShowing())
                         loginDialog.dismiss();
                 });
-            }else if(attemptsLeft>1){
-                view.postDelayed(()->checkLoginSession(view,attemptsLeft-1,pageGeneration),400L);
+            }else{
+                // Logins completed by an in-page modal can take longer than the
+                // first hydration window and may not navigate the WebView.
+                // Keep one bounded-frequency probe until dialog is dismissed.
+                final int next=Math.max(1,attemptsLeft-1);
+                view.postDelayed(()->checkLoginSession(view,next,pageGeneration),
+                    attemptsLeft>1?400L:850L);
             }
         });
     }
