@@ -281,8 +281,8 @@ public class OverlayService extends Service {
         schedulePeriodic();
     }
     private String script(){
+        if(probeScriptCache!=null)return probeScriptCache;
         try(InputStream in=getAssets().open("probe.js")){
-            if(probeScriptCache!=null)return probeScriptCache;
             ByteArrayOutputStream out=new ByteArrayOutputStream();
             byte[] buf=new byte[4096];int n;
             while((n=in.read(buf))!=-1)out.write(buf,0,n);
@@ -553,7 +553,7 @@ public class OverlayService extends Service {
             params.width=dp(menuDp());
             // Reserve vertical space for two actions ABOVE the gear, keeping
             // the gear and Pokémon at the original screen position when possible.
-            menuPadDp=41;
+            menuPadDp=35;
             params.y=Math.max(0,params.y-dp(menuPadDp));
             height+=menuPadDp;
         }else{
