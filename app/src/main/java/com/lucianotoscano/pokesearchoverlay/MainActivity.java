@@ -299,6 +299,16 @@ public class MainActivity extends Activity {
                   Uri.parse("package:"+getPackageName())),101);
             return;
         }
+        // Android 13+: alert channels need explicit runtime permission.
+        // Ask once, then continue launching the overlay even when denied.
+        SharedPreferences notifPrefs=getSharedPreferences("prefs",0);
+        if(Build.VERSION.SDK_INT>=33 &&
+           checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED &&
+           !notifPrefs.getBoolean("notificationPermissionAskedV38",false)){
+            notifPrefs.edit().putBoolean("notificationPermissionAskedV38",true).apply();
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},202);
+            return;
+        }
         Intent i=new Intent(this,OverlayService.class);
         i.setAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
         if(Build.VERSION.SDK_INT>=26)startForegroundService(i);else startService(i);
@@ -307,6 +317,10 @@ public class MainActivity extends Activity {
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
         if(req==101&&Settings.canDrawOverlays(this))startOverlay();
+    }
+    @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
+        super.onRequestPermissionsResult(requestCode,permissions,results);
+        if(requestCode==202)startOverlay();
     }
     @Override public void onBackPressed(){
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
