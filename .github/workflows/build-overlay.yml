@@ -31,6 +31,8 @@ jobs:
           grep -q 'if(action==="verifyFilters")' app/src/main/assets/probe.js
           node app/tests/probe-smoke.test.js
           node --check app/tests/overlay-ux.test.js
+          grep -q 'id="location"' app/src/main/assets/dock.html
+          grep -q 'renderLocationChoices' app/src/main/assets/dock.html
           node app/tests/overlay-ux.test.js
           grep -q 'id="close"' app/src/main/assets/dock.html
           grep -q 'id="collapse"' app/src/main/assets/dock.html
@@ -58,20 +60,20 @@ jobs:
           test -s app/build/outputs/apk/debug/app-debug.apk
           unzip -t app/build/outputs/apk/debug/app-debug.apk >/dev/null
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "^package: name='com.lucianotoscano.pokesearch' versionCode='41' versionName='0.41-beta'"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "^package: name='com.lucianotoscano.pokesearch' versionCode='42' versionName='0.42-beta'"
           test -s app/src/main/res/drawable-nodpi/ic_launcher.png
           test -s app/src/main/res/drawable-nodpi/pokesearch_round.png
           file app/src/main/res/drawable-nodpi/ic_launcher.png
           file app/src/main/res/drawable-nodpi/pokesearch_round.png
           mkdir -p delivery
-          cp app/build/outputs/apk/debug/app-debug.apk delivery/PokeSearch-0.41-beta.apk
-          git archive --format=zip HEAD -o delivery/PokeSearch-0.41-beta-source.zip
-          cp docs/ARQUIVO_MESTRE_v0.41.md delivery/
-          cp docs/AUDITORIA_v0.41.md delivery/
-          (cd delivery && sha256sum PokeSearch-0.41-beta.apk PokeSearch-0.41-beta-source.zip > SHA256SUMS.txt)
-          (cd delivery && unzip -t PokeSearch-0.41-beta-source.zip >/dev/null)
+          cp app/build/outputs/apk/debug/app-debug.apk delivery/PokeSearch-0.42-beta.apk
+          git archive --format=zip HEAD -o delivery/PokeSearch-0.42-beta-source.zip
+          cp docs/ARQUIVO_MESTRE_v0.42.md delivery/
+          cp docs/AUDITORIA_v0.42.md delivery/
+          (cd delivery && sha256sum PokeSearch-0.42-beta.apk PokeSearch-0.42-beta-source.zip > SHA256SUMS.txt)
+          (cd delivery && unzip -t PokeSearch-0.42-beta-source.zip >/dev/null)
       - uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-0.41-beta-KIT
+          name: PokeSearch-0.42-beta-KIT
           path: delivery/
           retention-days: 30
