@@ -1,6 +1,6 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>
-:root{--row:46px;--sprite:45px;--dock:53px;--top-space:0px}
+:root{--row:46px;--sprite:45px;--dock:53px;--top-space:0px;--list-limit:430px}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:transparent!important;color:#fff;font:10px Roboto,Arial,sans-serif;overflow:hidden}
 button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -51,8 +51,9 @@ body.menu-open #topActions{display:flex}
 #period .autoLabel{font-size:8px;font-weight:800;letter-spacing:0.25px;opacity:.85}
 #period .autoTime{font-size:10px;font-weight:800}
 #clock.timerOn{background:#76601ccf;border-color:#ffe5a04d;color:#ffe5a0}
-#spawns{width:var(--dock);display:flex;flex-direction:column;align-items:center;gap:0;padding:0;margin:-2px 0 0}
-.spawn{width:var(--dock);height:var(--row);position:relative;min-height:var(--row);display:flex;align-items:center;justify-content:center;margin:0;padding:0;background:transparent;border:0;border-radius:4px}
+#spawns{width:var(--dock);display:flex;flex-direction:column;align-items:center;gap:0;padding:3px 0;margin:0;max-height:var(--list-limit);overflow-y:auto;overflow-x:hidden;scrollbar-width:none;overscroll-behavior:contain}
+#spawns::-webkit-scrollbar{display:none}
+.spawn{width:var(--dock);height:var(--row);position:relative;min-height:var(--row);flex:0 0 var(--row);display:flex;align-items:center;justify-content:center;margin:0;padding:0;background:transparent;border:0;border-radius:4px}
 .spawn.active .sprite{filter:drop-shadow(0 0 3px #ffffff77)}
 .timer{position:absolute;right:0;bottom:0;padding:1px 2px;border-radius:3px;background:#111924c4;color:#fff;font-size:8px;line-height:10px;pointer-events:none;min-width:23px;text-align:center}
 .spawn.expired{opacity:.38}
@@ -213,8 +214,9 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
+ document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=Number(interval)||5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;
  if(active>=cards.length)active=-1;
  draw();
