@@ -146,15 +146,15 @@ public class MainActivity extends Activity {
     private void showQuickGuide(){
         getSharedPreferences("prefs",0).edit().putBoolean("tutorialSeenV40",true).apply();
         String guide=
-            "⚙  Toque para abrir as opções; arraste para mover.\\n"+
-            "100% / GL#1 / UL#1  Escolha o filtro de Pokémon.\\n"+
-            "✨  Liga ou desliga apenas o filtro Shiny; o modo é mantido.\\n"+
-            "AUTO 5m  Escolha atualização a cada 5, 10, 15 ou 20 minutos.\\n"+
-            "↻  Atualização manual (intervalo mínimo: 60s).\\n"+
-            "P/M/G  Tamanho dos sprites; ◷ mostra o despawn.\\n"+
-            "♧  Sino: alertas gerais; ☆: favoritos até 50, no próprio overlay.\\n"+
-            "⚠  Exportar bugs e sugestões; ♡: Pix voluntário.\\n"+
-            "×  Fecha tudo; botão de recolher deixa apenas a engrenagem.\\n\\n"+
+            "⚙  Toque para abrir as opções; arraste para mover.\n"+
+            "100% / GL#1 / UL#1  Escolha o filtro de Pokémon.\n"+
+            "✨  Liga ou desliga apenas o filtro Shiny; o modo é mantido.\n"+
+            "AUTO 5m  Escolha atualização a cada 5, 10, 15 ou 20 minutos.\n"+
+            "↻  Atualização manual (intervalo mínimo: 60s).\n"+
+            "P/M/G  Tamanho dos sprites; ◷ mostra o despawn.\n"+
+            "♧  Sino: alertas gerais; ☆: favoritos até 50, no próprio overlay.\n"+
+            "⚠  Exportar bugs e sugestões; ♡: Pix voluntário.\n"+
+            "×  Fecha tudo; botão de recolher deixa apenas a engrenagem.\n\n"+
             "Toque nos sprites para ver detalhes. Sem ✨, a busca normal continua.";
         new AlertDialog.Builder(this)
             .setTitle("PokeSearch · Guia rápido")
