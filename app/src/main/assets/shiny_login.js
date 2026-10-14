@@ -30,7 +30,7 @@ function findSwitch(){
  return null;
 }
 let timer=null;
-function finish(){if(timer)clearInterval(timer);timer=null;}
+function finish(){if(timer)clearInterval(timer);timer=null;window.__pokesearchShinyRequestStarted=false;}
 function run(){
  if(Date.now()-started>12000){finish();return;}
  if(!location.pathname.startsWith("/search"))return;
