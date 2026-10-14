@@ -182,13 +182,13 @@ public class OverlayService extends Service {
     @Override public void onCreate(){
         super.onCreate();
         NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        nm.createNotificationChannel(new NotificationChannel("pokesearch","Pokésearch Overlay",
+        nm.createNotificationChannel(new NotificationChannel("pokesearch","PokeSearch",
                 NotificationManager.IMPORTANCE_LOW));
         PendingIntent pi=PendingIntent.getActivity(this,0,new Intent(this,MainActivity.class),
                 PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
         Notification note=new Notification.Builder(this,"pokesearch")
                 .setSmallIcon(android.R.drawable.ic_menu_search)
-                .setContentTitle("Pokésearch Overlay ativo")
+                .setContentTitle("PokeSearch ativo")
                 .setContentText("Toque para abrir o PoGoCoordinates")
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(73,note);
