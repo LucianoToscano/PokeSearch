@@ -302,10 +302,36 @@ public class MainActivity extends Activity {
         intent.setAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
     }
-    private void openLoginDialog(){
+    private void checkShinyReturn(WebView view,int attemptsLeft){
+        if(attemptsLeft<=0||view!=website||loginDialog==null||!loginDialog.isShowing()||
+           !loginStartedForShiny||loginAutoReturnQueued)return;
+        String probe=readAsset("probe.js")
+            .replace("__ACTION__",JSONObject.quote("verifyShiny"))
+            .replace("__MODE__",JSONObject.quote("iv"))
+            .replace("__SHINY__","true");
+        view.postDelayed(()->{
+            if(view!=website||loginDialog==null||!loginDialog.isShowing())return;
+            view.evaluateJavascript(probe,raw->{
+                boolean verified=false;
+                try{
+                    String json=new JSONArray("["+raw+"]").getString(0);
+                    verified=new JSONObject(json).optBoolean("ok",false);
+                }catch(Exception ignored){}
+                if(verified&&!loginAutoReturnQueued){
+                    loginAutoReturnQueued=true;
+                    loginDialog.dismiss();
+                }else if(!verified)checkShinyReturn(view,attemptsLeft-1);
+            });
+        },1200L);
+    }
+    private void openLoginDialog(){openLoginDialog(true);}
+    private void openLoginDialog(boolean shinyRequest){
         if(loginDialog!=null&&loginDialog.isShowing())return;
+        loginStartedForShiny=shinyRequest;
+        loginAutoReturnQueued=false;
         loginSessionNotified=false;
         website=new WebView(this);
+        website.setBackgroundColor(Color.rgb(11,13,18));
         website.getSettings().setJavaScriptEnabled(true);
         website.getSettings().setDomStorageEnabled(true);
         website.getSettings().setDatabaseEnabled(true);
@@ -320,17 +346,35 @@ public class MainActivity extends Activity {
         website.setWebChromeClient(new WebChromeClient());
         website.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView view,String url){
-                if(url==null || !"pogocoordinates.com".equalsIgnoreCase(Uri.parse(url).getHost()))return;
-                // Trigger the native site's Shiny linking prompt when requested.
-                // The user enters their 12-digit trainer friend code on the real page.
-                view.evaluateJavascript(readAsset("shiny_login.js"),null);
+                if(url==null)return;
+                String host=Uri.parse(url).getHost();
+                if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
+                     host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
+                // Home login must not silently turn on Shiny.
+                if(loginStartedForShiny)view.evaluateJavascript(readAsset("shiny_login.js"),null);
                 // OAuth may complete without dismissing the dialog. A successful
                 // return to the site refreshes the collector in-place.
                 view.evaluateJavascript("(function(){return Array.from(document.querySelectorAll('a,button')).some(e=>/^(log\\s*out|sign\\s*out|sair|desconectar)$/i.test((e.innerText||e.textContent||'').trim()))})()",
                     value->{
                         if("true".equals(value)&&!loginSessionNotified){
                             loginSessionNotified=true;
-                            BugReport.log(MainActivity.this,"LOGIN","Login identificado; aguardando vinculação");
+                            getSharedPreferences("prefs",0).edit()
+                                .putString("sessionStatus","autenticada").apply();
+                            refreshSessionSummary();
+                            BugReport.log(MainActivity.this,"LOGIN","Sessão autenticada identificada no site");
+                        }
+                        if("true".equals(value)&&!loginStartedForShiny&&
+                           !loginAutoReturnQueued){
+                            loginAutoReturnQueued=true;
+                            view.postDelayed(()->{
+                                if(loginDialog!=null&&loginDialog.isShowing()&&
+                                   !loginStartedForShiny)loginDialog.dismiss();
+                            },900L);
+                        }
+                        if("true".equals(value)&&loginStartedForShiny&&
+                           !loginAutoReturnQueued){
+                            // For Shiny, wait for confirmed site filter and trainer linking.
+                            checkShinyReturn(view,10);
                         }
                     });
             }
@@ -352,7 +396,7 @@ public class MainActivity extends Activity {
         loginName.setTextSize(15);
         toolbar.addView(loginName,new LinearLayout.LayoutParams(0,d(48),1));
         TextView done=new TextView(this);
-        done.setText("✓ Voltar");
+        done.setText("✓ PokeSearch");
         done.setTextColor(Color.rgb(126,212,204));
         done.setTextSize(14);
         done.setGravity(Gravity.CENTER);
@@ -369,7 +413,8 @@ public class MainActivity extends Activity {
             loginDialog=null;
             serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END");
             notifyOverlaySessionReady();
-            // Keep MainActivity visible after sign-in; user can launch the overlay from Home.
+            refreshSessionSummary();
+            // Return to PokeSearch Home, not a permanent standalone site screen.
         });
         serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN");
         loginDialog.show();
