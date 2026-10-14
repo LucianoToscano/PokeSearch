@@ -9,7 +9,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulat
 #gear svg{display:block;width:21px;height:21px;filter:drop-shadow(0 1px 1px #0007)}
 #gear.busy svg{animation:gearbusy 1.25s linear infinite}
 @keyframes gearbusy{to{transform:rotate(360deg)}}
-#menu{display:none;position:absolute;top:0;left:var(--dock);width:308px;height:25px;z-index:3;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
+#menu{display:none;position:absolute;top:0;left:var(--dock);width:333px;height:25px;z-index:3;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
 #menu.open{display:block}
 #choices{display:none;position:absolute;top:29px;left:0;z-index:12;width:166px;padding:5px;background:#151c27f5;border:1px solid #ffffff38;border-radius:10px;box-shadow:0 4px 12px #0008}
 #choices.visible{display:block}
@@ -17,14 +17,14 @@ body.menu-left #choices{left:auto;right:0}
 #choices button{width:100%;display:block;text-align:left;padding:8px 9px;margin:1px 0;border-radius:7px;background:transparent;border:0;color:#e8ebef;font-size:12px;line-height:1.3;white-space:normal}
 #choices button.chosen{background:#263f39;color:#a2efd3;font-weight:700}
 #choices .choiceHeader{padding:3px 9px 6px;color:#9faabd;font-weight:bold;font-size:10px}
-body.menu-left #shell{margin-left:308px}
-body.menu-left #menu{left:-308px}
-#controls{width:304px;display:grid;grid-template-columns:36px 23px 43px 22px 22px 23px 23px 23px 23px 23px 23px;gap:2px;padding:0;margin:0;align-items:center}
+body.menu-left #shell{margin-left:333px}
+body.menu-left #menu{left:-333px}
+#controls{width:329px;display:grid;grid-template-columns:36px 23px 43px 22px 22px 23px 23px 23px 23px 23px 23px;gap:2px;padding:0;margin:0;align-items:center}
 body.menu-left #controls{direction:rtl}
 body.dock-window #menu{display:none!important}
 body.dock-window #shell{margin-left:0!important}
 body.controls-window #gear,body.controls-window #spawns,body.controls-window #empty,body.controls-window #collapse{display:none!important}
-body.controls-window #shell{width:308px!important;margin:0!important;padding:0!important}
+body.controls-window #shell{width:333px!important;margin:0!important;padding:0!important}
 body.controls-window #menu{position:relative!important;display:block!important;left:0!important;top:0!important}
 body.controls-window #choices{z-index:10}
 #controls button{direction:ltr}
@@ -44,6 +44,18 @@ body.controls-window #choices{z-index:10}
 #controls #star svg{width:17px;height:17px}
 #controls #donate{color:#fa94a7}
 #controls #report{color:#ffd674;font-size:16px;font-weight:700}
+#controls #location.locOn{background:#1e6150e8;color:#b2ffe0;border-color:#5de7b1a6}
+#choices.locationPanel{width:306px;max-width:calc(100vw - 12px)}
+#choices .locText{font-size:11px;color:#a9b7c9;padding:0 7px 8px;line-height:1.35}
+#choices .locField{box-sizing:border-box;width:calc(100% - 14px);margin:0 7px 8px;min-height:36px;background:#111722;border:1px solid #536174;border-radius:7px;padding:8px;color:#fff;font-size:13px}
+#choices input[type=range]{width:calc(100% - 14px);margin:4px 7px 8px;accent-color:#77e4c2;touch-action:pan-x}
+#choices .locLine{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:3px 7px;color:#dee6f2;font-size:12px}
+#choices .locLine button{width:auto;flex:none;padding:7px 9px;background:#223147;border:1px solid #51647b;border-radius:7px}
+#choices .locLine button.locActive{background:#1b674f;border-color:#55d7ac}
+#choices .locLine button.locOff{color:#ffcf99}
+#choices .locLine button.locSave{color:#a8efd4}
+#choices .locLine button.locHide{color:#aabbce}
+#choices #locHint{font-size:10px;color:#aec5d6;margin:0 7px 5px;line-height:1.3}
 #controls button svg{width:16px;height:16px;display:block;pointer-events:none}
 #controls #cycle{font-size:11px;font-weight:800}
 #controls #cycle .league{display:inline-flex;gap:2px;align-items:center;justify-content:center}
@@ -80,6 +92,7 @@ body.controls-window #choices{z-index:10}
   <button id="clock" title="Mostrar ou ocultar tempo de despawn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button id="bell" title="Notificações de novos Pokémon · toque para ativar/desativar" aria-pressed="false" onclick="Native.toggleGeneralAlerts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
   <button id="star" title="Meus favoritos · alertas específicos IV100 / GL#1 / UL#1" onclick="Native.openWatchList()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg></button>
+  <button id="location" title="Configurar coordenadas e raio" aria-label="Localização desligada" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('location')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></button>
   <button id="report" title="⚠ Reportar bugs, enviar sugestões e exportar diagnóstico TXT" aria-label="Reportar bugs e sugestões" onclick="Native.openReport()">⚠</button>
   <button id="donate" title="Gostou do PokeSearch? Apoie com um café · Pix voluntário" onclick="Native.openPix()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z"/></svg></button>
   <button id="close" title="Encerrar PokeSearch" aria-label="Fechar todo o overlay" onclick="Native.close()">×</button>
@@ -92,6 +105,7 @@ body.controls-window #choices{z-index:10}
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 document.body.classList.add(controlsWindow?"controls-window":"dock-window");
+let locationEnabled=false,locationCoords="",locationRadius=0;
 let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false;
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
@@ -120,12 +134,16 @@ function closeChoices(){
  document.getElementById("choices").classList.remove("visible");
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
+ document.getElementById("location").setAttribute("aria-expanded","false");
+ document.getElementById("choices").classList.remove("locationPanel");
+ if(controlsWindow)Native.locationEditor(false);
  fit();
 }
 function toggleChoices(kind){
  if(!menuOpen)return;
  if(choiceOpen===kind){closeChoices();return;}
  choiceOpen=kind;
+ if(kind==="location"){renderLocationChoices();return;}
  const current=kind==="mode"?mode:period;
  const entries=kind==="mode"?
    [["iv","100% · IV perfeito"],["gl","GL#1 · Grande Liga"],["ul","UL#1 · Ultra Liga"]]:
@@ -151,6 +169,41 @@ function toggleChoices(kind){
  panel.classList.add("visible");
  document.getElementById("cycle").setAttribute("aria-expanded",String(kind==="mode"));
  document.getElementById("period").setAttribute("aria-expanded",String(kind==="period"));
+ fit();
+}
+function renderLocationChoices(){
+ const panel=document.getElementById("choices");
+ panel.replaceChildren();panel.classList.add("locationPanel");
+ const make=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x;};
+ const title=make("div","choiceHeader","📍 LOCALIZAÇÃO");
+ const line=make("div","locLine");
+ const state=make("span","",locationEnabled?"Filtro ativado":"Filtro desligado");
+ const toggle=make("button",locationEnabled?"locActive":"locOff",locationEnabled?"✓ ON":"OFF");
+ const hint=make("p","locText","Cole latitude,longitude e ajuste o raio. Ocultar não desativa o filtro.");
+ const field=make("input","locField");field.type="text";field.inputMode="decimal";field.placeholder="-23.5505,-46.6333";field.setAttribute("aria-label","Coordenadas latitude e longitude");field.value=locationCoords;
+ const label=make("div","locLine");const labelName=make("span","","Raio da busca");const value=make("strong","",locationRadius+" km");label.append(labelName,value);
+ const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);slide.setAttribute("aria-label","Raio em quilômetros de 0 a 1000");
+ slide.oninput=()=>{value.textContent=slide.value+" km";};
+ const status=make("p","");status.id="locHint";status.textContent="Desligado: o site não recebe coordenadas definidas no app.";
+ const actions=make("div","locLine");const apply=make("button","locSave","Aplicar");const hide=make("button","locHide","Ocultar painel");
+ const disable=()=>{locationEnabled=false;locationCoords="";locationRadius=0;closeChoices();Native.setLocation(false,"",0);};
+ toggle.onclick=()=>{if(locationEnabled){disable();return;}submit();};
+ function submit(){
+  const raw=field.value.trim();
+  const match=raw.match(/^\\s*(-?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*(-?\\d{1,3}(?:\\.\\d+)?)\\s*$/);
+  if(!match||Math.abs(Number(match[1]))>90||Math.abs(Number(match[2]))>180){
+   status.textContent="⚠ Cole latitude,longitude válidas para ativar.";
+   status.style.color="#ffbf8f";return;
+  }
+  locationCoords=match[1]+","+match[2];locationRadius=Number(slide.value);
+  locationEnabled=true;closeChoices();Native.setLocation(true,locationCoords,locationRadius);
+ }
+ apply.onclick=submit;hide.onclick=closeChoices;
+ line.append(state,toggle);actions.append(apply,hide);
+ panel.append(title,line,hint,field,label,slide,status,actions);
+ panel.classList.add("visible");
+ document.getElementById("location").setAttribute("aria-expanded","true");
+ if(controlsWindow)Native.locationEditor(true);
  fit();
 }
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -182,6 +235,9 @@ function draw(){
  document.getElementById("size").textContent=spriteSize<=35?"P":spriteSize>=55?"G":"M";
  document.getElementById("sh").classList.toggle("shinyOn",shiny);
  document.getElementById("sh").classList.toggle("shinyPending",shinyPending);
+ document.getElementById("location").classList.toggle("locOn",locationEnabled);
+ document.getElementById("location").title=locationEnabled?"📍 Coordenadas ativas · tocar para mostrar ou ocultar painel":"📍 Localização desligada · tocar para configurar";
+ document.getElementById("location").setAttribute("aria-label",locationEnabled?"Localização ligada":"Localização desligada");
  document.getElementById("sh").setAttribute("aria-pressed",String(shiny));
  document.getElementById("sh").title=shiny?"✨ Shiny confirmado":shinyPending?"✨ Aguardando vínculo/confirmação no site":"Shiny desativado";
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
@@ -221,9 +277,10 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
+ locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=Number(interval)||5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;
  if(active>=cards.length)active=-1;
  draw();
