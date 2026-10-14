@@ -59,3 +59,9 @@ As buscas usam a página do PoGoCoordinates e a sessão do navegador integrado; 
 - Botões acima da engrenagem sem fundos, espaço superior reduzido para 35dp, apenas 1dp entre ações.
 - Evita reconstruir sprites e recarregar imagens a cada mensagem de status; script de busca em cache fora de I/O; reduz atualizações de janela repetidas.
 - Assinatura de distribuição Android v2/v3 com chave estável; incompatível com assinaturas alpha antigas, pacote novo instalado em paralelo.
+
+## v0.36-teste — APK normal
+- Retorna ao build **debug padrão**, sem R8, sem ofuscação ou criptografia adicional e sem espelhamento. Compilado diretamente de `LucianoToscano/PokeSearch` (main).
+- Ícone PokeSearch embutido, ajustes de espaçamento, estrela para favoritos e botões X/recolher sem fundo mantidos.
+- APK padrão assinado automaticamente pela compilação Android; assinatura debug é obrigatória para instalação, não é proteção anticópia.
+- Identidade de pacote `com.lucianotoscano.pokesearch`: instalada separadamente dos alphas antigos; os favoritos antigos não migram automaticamente.
