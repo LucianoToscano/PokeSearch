@@ -24,29 +24,14 @@ android {
     }
 }
 
-// Generate a real circular transparent PNG from the existing approved logo.
-// Runs before Android resources are merged; no new illustration or replacement artwork.
-val createRoundIcon by tasks.registering {
-    val source = file("src/main/res/drawable-nodpi/ic_launcher.png")
-    val target = file("src/main/res/drawable-nodpi/pokesearch_round.png")
-    inputs.file(source)
-    outputs.file(target)
-    doLast {
-        val original = javax.imageio.ImageIO.read(source)
-            ?: error("Original PokeSearch PNG was not found or could not be decoded")
-        val pixels = 192
-        val round = java.awt.image.BufferedImage(pixels, pixels, java.awt.image.BufferedImage.TYPE_INT_ARGB)
-        val g = round.createGraphics()
-        try {
-            g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION,
-                java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC)
-            g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
-                java.awt.RenderingHints.VALUE_ANTIALIAS_ON)
-            g.clip = java.awt.geom.Ellipse2D.Double(0.0, 0.0, pixels.toDouble(), pixels.toDouble())
-            g.drawImage(original, 0, 0, pixels, pixels, null)
-        } finally { g.dispose() }
-        target.parentFile.mkdirs()
-        check(javax.imageio.ImageIO.write(round, "png", target)) { "Unable to write round PNG" }
-    }
+// Generate the same official launcher artwork as a circular transparent PNG.
+val createRoundIcon by tasks.registering(Exec::class) {
+    val original = file("src/main/res/drawable-nodpi/ic_launcher.png")
+    val output = file("src/main/res/drawable-nodpi/pokesearch_round.png")
+    inputs.file(original)
+    inputs.file("scripts/RoundIcon.java")
+    outputs.file(output)
+    commandLine("java", file("scripts/RoundIcon.java").absolutePath,
+        original.absolutePath, output.absolutePath)
 }
 tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(createRoundIcon) }
