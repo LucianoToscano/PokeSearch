@@ -22,6 +22,8 @@ import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceError;
 import android.widget.FrameLayout;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -88,7 +90,7 @@ public class OverlayService extends Service {
                 // Expiration is a local UI event, never a reason to query the site.
                 // Re-arm the next remaining deadline without changing AUTO cadence.
                 armNextDespawn(active);
-            }catch(Exception ignored){}
+            }catch(Exception e){recordFailure("limpar vencidos",e);}
         }
     };
     private void armNextDespawn(JSONArray cards){
@@ -135,6 +137,10 @@ public class OverlayService extends Service {
     }
     private int screenWidthDp(){DisplayMetrics m=metrics();return Math.round(m.widthPixels/m.density);}
     private int screenHeightDp(){DisplayMetrics m=metrics();return Math.round(m.heightPixels/m.density);}
+    // Exception messages may contain account data or locations. Export only stage and class.
+    private void recordFailure(String stage,Exception error){
+        BugReport.log(this,"OVERLAY",stage+" · "+error.getClass().getSimpleName());
+    }
     private void js(WebView web,boolean ready,String code){
         if(web!=null&&ready)web.evaluateJavascript(code,null);
     }
@@ -166,7 +172,7 @@ public class OverlayService extends Service {
     }
     private void updateWindow(){
         if(wm!=null&&root!=null&&params!=null){
-            try{wm.updateViewLayout(root,params);}catch(Exception ignored){}
+            try{wm.updateViewLayout(root,params);}catch(Exception e){recordFailure("reposicionar dock",e);}
         }
         updateMenuPosition();
     }
@@ -203,7 +209,7 @@ public class OverlayService extends Service {
                 wm.updateViewLayout(menuRoot,menuParams);
                 menuDrawX=menuParams.x;menuDrawY=menuParams.y;
                 menuDrawHeight=menuParams.height;menuDrawWidth=menuParams.width;
-            }catch(Exception ignored){}
+            }catch(Exception e){recordFailure("posicionar menu",e);}
         }
         if(priorPad!=menuPadDp||priorLeft!=menuLeft){
             String edge=JSONObject.quote(menuLeft?"left":"right");
@@ -237,7 +243,7 @@ public class OverlayService extends Service {
                 menuPanel.clearFocus();
             }
         }
-        try{wm.updateViewLayout(menuRoot,menuParams);}catch(Exception ignored){}
+        try{wm.updateViewLayout(menuRoot,menuParams);}catch(Exception e){recordFailure("atualizar menu",e);}
         if(open&&menuPanel!=null){
             menuPanel.setFocusableInTouchMode(true);
             menuPanel.requestFocus();
@@ -262,7 +268,7 @@ public class OverlayService extends Service {
         detailParams.x=dp(Math.max(0,Math.min(w-DETAIL_DP,preferred)));
         int dockY=params.y/dp(1)+menuPadDp;
         detailParams.y=dp(Math.max(0,Math.min(h-detailHeight-45,dockY+18)));
-        try{wm.updateViewLayout(detailRoot,detailParams);}catch(Exception ignored){}
+        try{wm.updateViewLayout(detailRoot,detailParams);}catch(Exception e){recordFailure("reposicionar detalhes",e);}
     }
     private void newWebsite(){
         website=new WebView(this);
@@ -284,8 +290,17 @@ public class OverlayService extends Service {
             @Override public void onPageFinished(WebView view,String url){
                 if(url!=null&&url.startsWith("https://pogocoordinates.com/")){
                     loaded=true;
-                    handler.postDelayed(()->{if(!stopped)refresh();},2500);
+                    handler.postDelayed(()->{if(!stopped&&!loginPaused)refresh();},2500);
                 }
+            }
+            @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){
+                if(!request.isForMainFrame()||stopped)return;
+                loaded=false;
+                searchInProgress=false;
+                ++requestGeneration;
+                handler.removeCallbacks(queuedRefresh);
+                BugReport.log(OverlayService.this,"NETWORK","Falha de navegação principal; código="+error.getErrorCode());
+                status("Não foi possível carregar PoGoCoordinates. Confira conexão e tente ↻.");
             }
         });
     }
@@ -362,7 +377,7 @@ public class OverlayService extends Service {
                 PixelFormat.TRANSLUCENT);
         params.gravity=Gravity.TOP|Gravity.LEFT;
         params.x=dp(Math.max(0,screenWidthDp()-dockDp()-7));params.y=dp(120);
-        try{wm.addView(root,params);}catch(Exception e){stopSelf();return;}
+        try{wm.addView(root,params);}catch(Exception e){recordFailure("abrir dock",e);stopSelf();return;}
 
         // Dedicated 308dp-by-29dp touchable window for the toolbar.
         // Transparent regions outside this rectangle belong to Pokémon GO:
@@ -395,7 +410,7 @@ public class OverlayService extends Service {
         menuParams.gravity=Gravity.TOP|Gravity.LEFT;
         menuParams.x=0;menuParams.y=params.y;
         menuRoot.setVisibility(View.GONE);
-        try{wm.addView(menuRoot,menuParams);}catch(Exception e){menuRoot=null;menuPanel=null;}
+        try{wm.addView(menuRoot,menuParams);}catch(Exception e){recordFailure("abrir controles",e);menuRoot=null;menuPanel=null;}
         if(menuPanel!=null)menuPanel.loadUrl("file:///android_asset/dock.html?controls=1");
 
         detailRoot=new FrameLayout(this);
@@ -423,7 +438,7 @@ public class OverlayService extends Service {
         detailParams.gravity=Gravity.TOP|Gravity.LEFT;
         detailParams.x=dp(15);detailParams.y=dp(135);
         detailRoot.setVisibility(View.GONE);
-        try{wm.addView(detailRoot,detailParams);}catch(Exception e){detailRoot=null;}
+        try{wm.addView(detailRoot,detailParams);}catch(Exception e){recordFailure("abrir detalhes",e);detailRoot=null;}
         panel.loadUrl("file:///android_asset/dock.html");
         if(detailRoot!=null)detailPanel.loadUrl("file:///android_asset/detail.html");
         website.loadUrl("https://pogocoordinates.com/search");
@@ -438,7 +453,7 @@ public class OverlayService extends Service {
             while((n=in.read(buf))!=-1)out.write(buf,0,n);
             probeScriptCache=out.toString("UTF-8");
             return probeScriptCache;
-        }catch(Exception e){return "null";}
+        }catch(Exception e){recordFailure("ler probe.js",e);return "null";}
     }
     private void execute(String action,Consumer<JSONObject> callback){
         if(!loaded||website==null){
@@ -452,19 +467,27 @@ public class OverlayService extends Service {
         String code=script().replace("__ACTION__",JSONObject.quote(action))
                 .replace("__MODE__",JSONObject.quote(mode))
                 .replace("__SHINY__",shiny?"true":"false");
-        website.evaluateJavascript(code,raw->{
+        try{website.evaluateJavascript(code,raw->{
             if(stopped)return;
             try{
                 String decoded=new JSONArray("["+raw+"]").getString(0);
                 JSONObject r=new JSONObject(decoded);
                 if(callback!=null)callback.accept(r);
             }catch(Exception e){
+                recordFailure("interpretar resposta JS",e);
                 JSONObject failure=new JSONObject();
                 try{failure.put("ok",false);failure.put("reason","Resposta inválida do navegador interno");}catch(Exception ignored){}
                 if(callback!=null)callback.accept(failure);
                 else diagnosticError("Falha ao ler resultados no site.");
             }
-        });
+        });}catch(RuntimeException e){
+            recordFailure("executar JS site",e);
+            if(callback!=null){
+                JSONObject failure=new JSONObject();
+                try{failure.put("ok",false);failure.put("reason","Navegador indisponível");}catch(org.json.JSONException ignored){}
+                callback.accept(failure);
+            }else diagnosticError("Navegador indisponível. Tente atualizar.");
+        }
     }
     private void refresh(){refresh(false);}
     private void refresh(boolean manual){
