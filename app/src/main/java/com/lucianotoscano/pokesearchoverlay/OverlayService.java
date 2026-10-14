@@ -33,7 +33,7 @@ public class OverlayService extends Service {
     private static final int BUBBLE_DP=45, DETAIL_DP=226;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return dockDp()+283;}
+    private int menuDp(){return dockDp()+308;}
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams;
@@ -133,14 +133,14 @@ public class OverlayService extends Service {
         try{return new JSONArray(results).length();}catch(Exception e){return 0;}
     }
     private int rowDp(){
-        // Never place a larger sprite inside a shorter row: the old
-        // spriteSize-5 rule overlapped sprites and made silhouettes
-        // look uneven. A constant 10dp breathing space is predictable.
-        return spriteSize+10;
+        // Compact vertical rhythm: real sprites have transparent margins.
+        // The old +10dp gap was visually excessive; allow 4dp transparent
+        // edge overlap without changing the sprite image dimensions.
+        return Math.max(31,spriteSize-4);
     }
     private void update(){
         js(panel,panelLoaded,"window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*6,screenHeightDp()-185))+")");
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+")");
         if(selected>=0)showDetails(selected);
     }
     private void status(String s){
@@ -675,15 +675,13 @@ public class OverlayService extends Service {
             menuLeft=params.x+dp(menuDp())>screen;
             if(menuLeft)params.x=Math.max(0,params.x-extra);
             params.width=dp(menuDp());
-            // Reserve vertical space for two actions ABOVE the gear, keeping
-            // the gear and Pokémon at the original screen position when possible.
-            menuPadDp=35;
-            params.y=Math.max(0,params.y-dp(menuPadDp));
+            // Keep the gear stationary. Opening controls adds space BELOW
+            // the gear, lowering the Pokémon column without hiding it.
+            menuPadDp=30;
             height+=menuPadDp;
         }else{
             if(menuLeft)params.x=Math.min(metrics().widthPixels-dp(dockDp()),params.x+dp(menuDp()-dockDp()));
             params.width=dp(dockDp());
-            params.y=Math.min(metrics().heightPixels-dp(46),params.y+dp(menuPadDp));
             height=Math.max(46,height-menuPadDp);
             menuPadDp=0;
         }
@@ -692,7 +690,7 @@ public class OverlayService extends Service {
         FrameLayout.LayoutParams gripParams=new FrameLayout.LayoutParams(
             dp(dockDp()),dp(21),Gravity.TOP|Gravity.LEFT);
         gripParams.leftMargin=show&&menuLeft?dp(menuDp()-dockDp()):0;
-        gripParams.topMargin=dp(menuPadDp);
+        gripParams.topMargin=0;
         grip.setLayoutParams(gripParams);
         js(panel,panelLoaded,"window.syncMenu("+show+","+
             JSONObject.quote(show&&menuLeft?"left":"right")+","+menuPadDp+")");
