@@ -150,8 +150,12 @@ test("PS-075 Favorites provides accessible test notification action",picker.incl
 test("PS-075 Home Preferences provides both toggles and test action",main.includes('settingCheckbox(body,prefs,"alerts","Notificar novos Pokémon encontrados",false)')&&main.includes('settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,')&&main.includes('WatchAlerts.test(this)'));
 test("PS-076 Android Back returns within OAuth dialog history",main.includes('loginDialog.setOnKeyListener(')&&main.includes('android.view.KeyEvent.KEYCODE_BACK')&&main.includes('website.canGoBack()')&&main.includes('website.goBack()'));
 test("PS-077 loginEndRefresh is cancelable across all transitions",service.includes('private final Runnable loginEndRefresh=')&&cancelBlock.includes('handler.removeCallbacks(loginEndRefresh)')&&beginBlock.includes('cancelSessionCallbacks();')&&endBlock.includes('cancelSessionCallbacks();')&&reloadBlock.includes('cancelSessionCallbacks();'));
-test("PS-078 explicit positive signs allowed in Java and JS coordinates",service.includes(String.raw`([-+]?\\d{1,2}` )&&sanitizer.includes(String.raw`[-+]?\\d{1,2}` )&&dock.includes(String.raw`[-+]?\\d{1,2}`));
-test("PS-078 negative and positive longitude allow plus signs",service.includes(String.raw`([-+]?\\d{1,3}` )&&sanitizer.includes(String.raw`[-+]?\\d{1,3}` )&&dock.includes(String.raw`[-+]?\\d{1,3}`));
+const javaSignedLat='[-+]?'+String.fromCharCode(92,92)+'d{1,2}';
+const javaSignedLon='[-+]?'+String.fromCharCode(92,92)+'d{1,3}';
+const jsSignedLat='[-+]?'+String.fromCharCode(92)+'d{1,2}';
+const jsSignedLon='[-+]?'+String.fromCharCode(92)+'d{1,3}';
+test("PS-078 explicit positive signs allowed in Java and JS coordinates",service.includes('('+javaSignedLat)&&sanitizer.includes(javaSignedLat)&&dock.includes(jsSignedLat));
+test("PS-078 longitude explicitly accepts plus and minus signs",service.includes('('+javaSignedLon)&&sanitizer.includes(javaSignedLon)&&dock.includes(jsSignedLon));
 test("PS-079 menu positions before a single sync",service.includes('deferMenuSync=true;')&&service.includes('finally{deferMenuSync=false;}')&&service.indexOf('try{updateWindow();}')<service.indexOf('js(panel,panelLoaded,"window.syncMenu("+show+')&&service.includes('&&!deferMenuSync'));
 test("PS-080 IV verification has no unreachable success",!read("assets/probe.js").includes('não confirmados"};\\n  return {ok:true};'));
 test("PS-080 bug report notice requires manual review",main.includes('O relatório filtra formatos comuns de dados sensíveis. Revise o conteúdo antes de compartilhar.'));
