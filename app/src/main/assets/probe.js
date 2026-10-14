@@ -257,7 +257,8 @@ if(action.startsWith("readCoords:")){
 }
 if(action==="verifyShiny"){
  const actual=readShiny();
- return JSON.stringify({ok:actual===shinyOnly,siteShiny:actual,reason:actual===null?"Controle Shiny não encontrado ou estado desconhecido":"Filtro Shiny diferente do solicitado"});
+ const pending=elements('[role="dialog"],[aria-modal="true"],form').filter(vis).some(e=>/friend code|trainer code|12 digits|vincula/i.test(text(e)));
+ return JSON.stringify({ok:(actual===shinyOnly&&!pending)||(!shinyOnly&&actual===null),siteShiny:actual,pending,reason:pending?"Vinculação pendente":"Filtro não confirmado"});
 }
 if(action==="session"){
  const sw=shinyControl();
