@@ -685,6 +685,11 @@ public class OverlayService extends Service {
             if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!applied.optBoolean("ok",false)){
                 shinyVerified=false;
+                if(attempt<2){
+                    // Hydration may not have rendered the switch yet.
+                    handler.postDelayed(()->applyShinyOnSite(generation,attempt+1),300L);
+                    return;
+                }
                 if(shiny&&!applied.optBoolean("controlFound",true)){
                     // A missing control can mean an unfinished page, not logout.
                     execute("session",session->{
@@ -726,26 +731,12 @@ public class OverlayService extends Service {
             },240L);
         });
     }
-    private void prepareImmediateShiny(int generation){prepareImmediateShiny(generation,0);}
-    private void prepareImmediateShiny(int generation,int attempt){
+    private void prepareImmediateShiny(int generation){
         if(stopped||loginPaused||generation!=requestGeneration)return;
-        execute("prepareSearch",prepared->{
-            if(stopped||loginPaused||generation!=requestGeneration)return;
-            if(!prepared.optBoolean("ok",false)){
-                shinyVerified=false;
-                if(attempt<3){
-                    handler.postDelayed(()->prepareImmediateShiny(generation,attempt+1),350L);
-                }else if(shiny&&"autenticada".equals(getSharedPreferences("prefs",0)
-                        .getString("sessionStatus",""))){
-                    diagnosticError("✨ Sessão ativa, mas o controle Shiny não foi localizado.");
-                }else if(shiny){
-                    status("✨ Abra sua conta no site para habilitar o filtro.");
-                    openShinyLogin();
-                }else diagnosticError("✨ Não foi possível acessar o filtro Shiny no site.");
-                return;
-            }
-            handler.postDelayed(()->applyShinyOnSite(generation,0),220L);
-        });
+        // Shiny lives in the visible Pokémon filter card. The old
+        // prepareSearch ("Stats"/"PvP") could fail or switch tabs needlessly.
+        // Clicking ✨ should control the switch on the CURRENT page directly.
+        applyShinyOnSite(generation,0);
     }
     private void verifyAndSubmit(int generation,boolean manual,int attempt){
         handler.postDelayed(()->{
