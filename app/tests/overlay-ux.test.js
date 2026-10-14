@@ -1,0 +1,26 @@
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const path=require("node:path");
+const root=path.join(__dirname,"..","src","main");
+const read=(p)=>fs.readFileSync(path.join(root,p),"utf8");
+const dock=read("assets/dock.html");
+const service=read("java/com/lucianotoscano/pokesearchoverlay/OverlayService.java");
+const main=read("java/com/lucianotoscano/pokesearchoverlay/MainActivity.java");
+const picker=read("java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java");
+let count=0;
+function test(name,ok){assert.ok(ok,name);count++;}
+test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
+test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
+test("Three explicit filters",["100% · IV perfeito","GL#1 · Grande Liga","UL#1 · Ultra Liga"].every(v=>dock.includes(v)));
+test("Intervals minimum 5 minutes",["AUTO · 5 min","AUTO · 10 min","AUTO · 15 min","AUTO · 20 min"].every(v=>dock.includes(v)));
+test("Choice panel resizes native window",dock.includes('popup.getBoundingClientRect().bottom')&&dock.includes('Native.resize(h)'));
+test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
+test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
+test("Favorites remain in overlay",service.includes("PokemonPicker.show(OverlayService.this")&&!service.includes('intent.setAction("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST")'));
+test("Favorites picker is service-safe and focusable",picker.includes("TYPE_APPLICATION_OVERLAY")&&picker.includes("Runnable dismissed"));
+test("Login has one top toolbar and no native footer buttons",main.includes('done.setText("✓ Voltar")')&&!main.includes('.setNegativeButton("Cancelar",null)')&&main.includes('MATCH_PARENT,\n                android.view.WindowManager.LayoutParams.MATCH_PARENT'));
+test("Shiny never changes selected filter",service.includes('shiny=!shiny;')&&service.includes('mode.equals(s)'));
+test("Throttled refresh is queued",service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
+test("Quick guide remains accessible",main.includes("showQuickGuide()")&&main.includes("tutorialSeenV40"));
+console.log("PokeSearch UX contract: "+count+" tests passed");
