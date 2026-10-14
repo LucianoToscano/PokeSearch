@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 /** Offline build tool: preserve the approved logo, crop it to a transparent circle. */
 public class RoundIcon {
     public static void main(String[] args) throws Exception {
+        System.setProperty("java.awt.headless","true");
         if (args.length != 2) throw new IllegalArgumentException("Source and target PNG required");
         BufferedImage original = ImageIO.read(new File(args[0]));
         if (original == null) throw new IllegalArgumentException("Could not decode original PNG");
