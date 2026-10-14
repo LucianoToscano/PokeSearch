@@ -930,17 +930,20 @@ public class OverlayService extends Service {
             pickerOpen=true;
             hideDetails();
             root.setVisibility(View.GONE);
+            if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
             try{
                 PokemonPicker.show(OverlayService.this,()->{
                     if(!stopped)update();
                 },()->{
                     pickerOpen=false;
                     if(!stopped&&!loginPaused&&root!=null)root.setVisibility(View.VISIBLE);
+                    if(!stopped&&!loginPaused&&menuExpanded&&menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
                     update();
                 });
             }catch(Exception e){
                 pickerOpen=false;
                 if(root!=null&&!loginPaused)root.setVisibility(View.VISIBLE);
+                if(menuRoot!=null&&!loginPaused&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
                 diagnosticError("Não foi possível abrir favoritos no overlay.");
             }
         });}
@@ -1018,6 +1021,7 @@ public class OverlayService extends Service {
             loginPaused=true;
             handler.removeCallbacks(periodic);
             if(root!=null)root.setVisibility(View.GONE);
+            if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
             if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
             BugReport.log(this,"LOGIN","Página de autenticação aberta, overlay oculto");
             return START_STICKY;
@@ -1025,6 +1029,7 @@ public class OverlayService extends Service {
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_END".equals(action)){
             loginPaused=false;
             if(root!=null&&!pickerOpen)root.setVisibility(View.VISIBLE);
+            if(menuRoot!=null&&!pickerOpen&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
             if(detailRoot!=null&&selected>=0&&!pickerOpen)detailRoot.setVisibility(View.VISIBLE);
             schedulePeriodic();
             BugReport.log(this,"LOGIN","Página de autenticação fechada");
