@@ -61,8 +61,8 @@ jobs:
           mkdir -p delivery
           cp app/build/outputs/apk/debug/app-debug.apk delivery/PokeSearch-0.39-beta.apk
           git archive --format=zip HEAD -o delivery/PokeSearch-0.39-beta-source.zip
-          cp docs/ARQUIVO_MESTRE_v0.38.md delivery/
-          cp docs/AUDITORIA_v0.38.md delivery/
+          cp docs/ARQUIVO_MESTRE_v0.39.md delivery/
+          cp docs/AUDITORIA_v0.39.md delivery/
           (cd delivery && sha256sum PokeSearch-0.39-beta.apk PokeSearch-0.39-beta-source.zip > SHA256SUMS.txt)
           (cd delivery && unzip -t PokeSearch-0.39-beta-source.zip >/dev/null)
       - uses: actions/upload-artifact@v4
