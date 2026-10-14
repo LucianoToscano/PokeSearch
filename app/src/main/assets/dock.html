@@ -9,7 +9,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulat
 #gear svg{display:block;width:21px;height:21px;filter:drop-shadow(0 1px 1px #0007)}
 #gear.busy svg{animation:gearbusy 1.25s linear infinite}
 @keyframes gearbusy{to{transform:rotate(360deg)}}
-#menu{display:none;position:absolute;top:0;left:var(--dock);width:333px;height:25px;z-index:3;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
+#menu{display:none;position:absolute;top:0;left:var(--dock);width:333px;height:29px;z-index:3;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
 #menu.open{display:block}
 #choices{display:none;position:absolute;top:29px;left:0;z-index:12;width:166px;padding:5px;background:#151c27f5;border:1px solid #ffffff38;border-radius:10px;box-shadow:0 4px 12px #0008}
 #choices.visible{display:block}
@@ -19,13 +19,13 @@ body.menu-left #choices{left:auto;right:0}
 #choices .choiceHeader{padding:3px 9px 6px;color:#9faabd;font-weight:bold;font-size:10px}
 body.menu-left #shell{margin-left:333px}
 body.menu-left #menu{left:-333px}
-#controls{width:329px;display:grid;grid-template-columns:34px 22px 41px 20px 20px 22px 22px 22px 38px 22px 22px 22px;gap:2px;padding:0;margin:0;align-items:center}
-body.menu-left #controls{direction:rtl}
+#controls{width:calc(100% - 4px);display:grid;grid-template-columns:34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr;gap:2px;padding:0;margin:0;align-items:center}
+body.menu-left #controls{direction:ltr}
 body.dock-window #menu{display:none!important}
 body.dock-window #shell{margin-left:0!important}
 body.controls-window #gear,body.controls-window #spawns,body.controls-window #empty,body.controls-window #collapse{display:none!important}
-body.controls-window #shell{width:333px!important;margin:0!important;padding:0!important}
-body.controls-window #menu{position:relative!important;display:block!important;left:0!important;top:0!important}
+body.controls-window #shell{width:100%!important;margin:0!important;padding:0!important}
+body.controls-window #menu{position:relative!important;display:block!important;left:0!important;top:0!important;width:100%!important}
 body.controls-window #choices{z-index:10}
 #controls button{direction:ltr}
 #controls button{height:25px;width:100%;min-width:0;padding:0;background:#151b26e6;border:1px solid #ffffff23;border-radius:5px;font-size:10px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;white-space:nowrap}
@@ -35,9 +35,9 @@ body.controls-window #choices{z-index:10}
 #gear .close-icon{display:none}
 #controls #close{font-size:18px;font-weight:800;color:#ff596c;background:#151b26e6;border-color:#ff596c5c}
 #controls #close:active{background:#622735}
-#collapse{display:flex;align-items:center;justify-content:center;width:29px;height:22px;margin:2px auto 0;
- padding:0;border-radius:8px;border:1px solid #ffffff32;background:#151b26d9;color:#e6eef9;
- box-shadow:0 1px 3px #0006}
+#collapse{display:flex;align-items:center;justify-content:center;width:35px;height:29px;margin:4px auto 2px;
+ padding:0;border-radius:9px;border:1px solid #879db5aa;background:#162438f5;color:#eef6ff;
+ box-shadow:0 2px 7px #000a}
 #collapse svg{width:19px;height:19px;display:block;pointer-events:none}
 #controls #bell.generalOn{background:#1d5b49dc;border-color:#69dbab77;color:#ddfff1}
 #controls #star.favoritesOn{background:#70561de0;border-color:#ffe29a77;color:#ffdf74}
@@ -124,7 +124,7 @@ let locationEnabled=false,locationCoords="",locationRadius=0;
 let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false;
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
- document.documentElement.style.setProperty("--top-space",menuOpen?((Number(pad)||54)+"px"):"0px");
+ document.documentElement.style.setProperty("--top-space",menuOpen?(Math.max(0,Number(pad)||0)+"px"):"0px");
  document.body.classList.toggle("menu-open",menuOpen);
  document.getElementById("menu").classList.toggle("open",menuOpen);
  document.getElementById("gear").setAttribute("aria-expanded",String(menuOpen));
@@ -134,11 +134,12 @@ function setMenuOpen(open,side,pad){
 }
 window.syncMenu=(open,side,pad)=>{setMenuOpen(open,side,pad);fit();};
 let lastHeight=0;
-function fit(){requestAnimationFrame(()=>{
+let fitPending=false;
+function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{fitPending=false;
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
  if(controlsWindow)h=29;
- if(choiceOpen&&menuOpen){
+ if(controlsWindow&&choiceOpen&&menuOpen){
   const popup=document.getElementById("choices");
   h=Math.max(h,Math.ceil(popup.getBoundingClientRect().bottom-shell.getBoundingClientRect().top)+6);
  }
