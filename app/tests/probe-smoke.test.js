@@ -12,7 +12,7 @@ function element(text="",attrs={},extra={}){
     getClientRects:()=>[{}],querySelectorAll:()=>[],querySelector:()=>null,
     getAttribute:(name)=>Object.prototype.hasOwnProperty.call(attrs,name)?attrs[name]:null,
     hasAttribute:(name)=>Object.prototype.hasOwnProperty.call(attrs,name),
-    matches:(sel)=>sel==="input[type=checkbox]" && extra.checkbox===true,
+    matches:(sel)=>(sel==="input"&&extra.tagName==="INPUT") || (sel==="input[type=checkbox]"&&extra.checkbox===true),
     ...extra
   };
 }
@@ -39,6 +39,28 @@ function run(action,mode,shinyOnly,opts={}){
     parent.querySelectorAll=selector=>selector.includes("input:not")?fields:[];
     lab.parentElement=parent;all.push(lab);
   }
+  if(opts.pvp){
+    const rank=element("",{}, {tagName:"INPUT",value:String(opts.pvp.rank||"1")});
+    const league=element("Great League",{}, {tagName:"SELECT",selectedOptions:[element(opts.pvp.league||"Great League")]});
+    const prior=element("Yes",{}, {tagName:"SELECT",selectedOptions:[element(opts.pvp.prior||"Yes")]});
+    for(const [label,control] of [["Top ranking",rank],["League",league],["Include previous evolutions",prior]]){
+      const lab=element(label);
+      const wrap=element();
+      wrap.querySelectorAll=(selector)=>selector.includes("input:not")?[control]:[];
+      lab.parentElement=wrap;
+      all.push(lab);
+    }
+  }
+  let cardButtons=[];
+  if(opts.spawn){
+    const box=element(opts.spawn,{}, {
+      querySelector:()=>element("Tangela"),
+      querySelectorAll:()=>[],
+    });
+    const button=element("Get coords");
+    button.parentElement=box;
+    cardButtons=[button];
+  }
   if(opts.pending){
     pending=[element("Link a Pokémon GO account. Your trainer code: 12 digits")];
   }
@@ -47,9 +69,10 @@ function run(action,mode,shinyOnly,opts={}){
     if(selector==="span,label,strong,small,dt,div,p")return all;
     if(selector==='[role="dialog"],[aria-modal="true"],form')return pending;
     if(selector==="label,span,div,p,strong")return all;
+    if(selector==="button,[role=button]")return cardButtons;
     return [];
   }
-  const document={querySelectorAll};
+  const document={querySelectorAll,querySelector:()=>null,body:element(opts.spawn?"Showing 10 spawns":"")};
   const code=source.replace("__ACTION__",JSON.stringify(action))
       .replace("__MODE__",JSON.stringify(mode))
       .replace("__SHINY__",String(shinyOnly));
@@ -69,4 +92,16 @@ test("Shiny unexpectedly on blocks standard search","verifyShiny","iv",false,{sw
 test("Public search accepts missing Shiny control","verifyShiny","iv",false,{},true);
 test("Raw IV valid","verifyFilters","iv",false,{iv:["15","15","15"]},true);
 test("Raw IV invalid","verifyFilters","iv",false,{iv:["15","15","14"]},false);
+test("Shiny-off ignores trainer linking prompt","verifyShiny","iv",false,{switch:false,pending:true},true);
+test("Percent IV 100-100 valid without Shiny","verifyFilters","iv",false,{iv:["100","100"],switch:false},true);
+test("Percent IV different fails IV100","verifyFilters","iv",false,{iv:["100","98"],switch:false},false);
+const spawn="Tangela\\n#114 Female M\\nInfestation / Solar Beam\\nCP\\n404\\nLVL\\n7\\nIV\\n67% (1/15/14)\\nLOCATION\\nBron, Rhone, France\\nDESPAWN\\n57:57\\nGet coords";
+const league=run("collect","gl",false,{switch:false,pvp:{rank:"1",league:"Great League",prior:"Yes"},spawn});
+assert.equal(league.cards.length,1,"GL#1: card without a rank label must be accepted only when form confirms rank 1");
+assert.equal(league.cards[0].rank,"1");
+assert.equal(league.cards[0].rankSource,"verified-site-filter");
+checked++;
+const wrongLeague=run("collect","gl",false,{switch:false,pvp:{rank:"1",league:"Ultra League",prior:"Yes"},spawn});
+assert.equal(wrongLeague.cards.length,0,"GL results must not be labeled rank1 if wrong league selected");
+checked++;
 console.log("PokeSearch probe contract: "+checked+" tests passed");
