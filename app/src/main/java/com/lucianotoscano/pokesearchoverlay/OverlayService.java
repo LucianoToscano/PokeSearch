@@ -1089,7 +1089,11 @@ public class OverlayService extends Service {
             status(shiny?"✨ Confirmando Shiny no site...":"Desativando Shiny no site...");
             OverlayService.this.refresh(true);
         });}
-        @JavascriptInterface public void refresh(){handler.post(()->OverlayService.this.refresh(true));}
+        @JavascriptInterface public void refresh(){handler.post(()->{
+            android.widget.Toast.makeText(OverlayService.this,
+                "↻ Atualização solicitada",android.widget.Toast.LENGTH_SHORT).show();
+            OverlayService.this.refresh(true);
+        });}
         @JavascriptInterface public void minimize(){handler.post(()->OverlayService.this.minimize(true));}
         @JavascriptInterface public void restore(){handler.post(()->OverlayService.this.minimize(false));}
         @JavascriptInterface public void close(){handler.post(()->stopSelf());}
