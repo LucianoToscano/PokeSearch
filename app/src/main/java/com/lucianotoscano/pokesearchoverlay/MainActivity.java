@@ -42,7 +42,6 @@ public class MainActivity extends Activity {
     private TextView watchSummary;
     private AlertDialog loginDialog;
     private boolean loginSessionNotified=false;
-    private boolean loginCloseRefreshSent=false;
     private String pendingReportText="";
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
@@ -174,7 +173,6 @@ public class MainActivity extends Activity {
     private void openLoginDialog(){
         if(loginDialog!=null&&loginDialog.isShowing())return;
         loginSessionNotified=false;
-        loginCloseRefreshSent=false;
         website=new WebView(this);
         website.getSettings().setJavaScriptEnabled(true);
         website.getSettings().setDomStorageEnabled(true);
@@ -200,7 +198,7 @@ public class MainActivity extends Activity {
                     value->{
                         if("true".equals(value)&&!loginSessionNotified){
                             loginSessionNotified=true;
-                            notifyOverlaySessionReady();
+                            BugReport.log(MainActivity.this,"LOGIN","Login identificado; aguardando vinculação");
                         }
                     });
             }
@@ -212,19 +210,15 @@ public class MainActivity extends Activity {
             .setMessage("Entre com sua conta. Ao concluir, a busca do overlay será atualizada sem precisar fechá-lo.")
             .setView(holder)
             .setNegativeButton("Cancelar",null)
-            .setPositiveButton("Voltar ao overlay",(d,which)->{
-                loginCloseRefreshSent=true;
-                notifyOverlaySessionReady();
-                getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),160L);
-            })
+            .setPositiveButton("Voltar ao overlay",(d,which)->
+                getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),200L))
             .create();
         loginDialog.setOnDismissListener(d->{
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginDialog=null;
-            // Refresh after a dismissed login dialog only once; positive button
-            // refreshes before sending the app to background (Android 12+).
+            // Restore overlay first; then reload authenticated collector once.
             serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END");
-            if(!loginCloseRefreshSent)notifyOverlaySessionReady();
+            notifyOverlaySessionReady();
         });
         serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN");
         loginDialog.show();
