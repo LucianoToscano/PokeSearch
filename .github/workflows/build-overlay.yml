@@ -27,6 +27,8 @@ jobs:
           node --check app/src/main/assets/probe.js
           node --check app/src/main/assets/presets.js
           node --check app/src/main/assets/shiny_login.js
+          grep -q 'if(action==="verifyShiny")' app/src/main/assets/probe.js
+          grep -q 'shinyPending' app/src/main/assets/dock.html
           python3 - <<'PY'
           from pathlib import Path
           text = Path('app/src/main/assets/dock.html').read_text()
@@ -50,12 +52,14 @@ jobs:
           unzip -t app/build/outputs/apk/debug/app-debug.apk >/dev/null
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
           test -s app/src/main/res/drawable-nodpi/ic_launcher.png
+          test -s app/src/main/res/drawable-nodpi/pokesearch_round.png
           file app/src/main/res/drawable-nodpi/ic_launcher.png
+          file app/src/main/res/drawable-nodpi/pokesearch_round.png
           mkdir -p delivery
-          cp app/build/outputs/apk/debug/app-debug.apk delivery/PokeSearch-0.36-teste.apk
-          (cd delivery && sha256sum PokeSearch-0.36-teste.apk > SHA256SUMS.txt)
+          cp app/build/outputs/apk/debug/app-debug.apk delivery/PokeSearch-0.37-teste.apk
+          (cd delivery && sha256sum PokeSearch-0.37-teste.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-0.36-teste-APK
+          name: PokeSearch-0.37-teste-APK
           path: delivery/
           retention-days: 30
