@@ -48,6 +48,7 @@ jobs:
           test -s docs/GUIA_TESTE_SAMSUNG_v0.48.md
           test -s docs/GUIA_TESTE_SAMSUNG_v0.49.md
           test -s docs/GUIA_TESTE_SAMSUNG_v0.50.md
+          test -s docs/GUIA_COMPATIBILIDADE_ANDROID_v0.50.md
           test -s app/src/main/assets/tutorial.html
           grep -q 'shinyPending' app/src/main/assets/dock.html
           python3 - <<'PY'
