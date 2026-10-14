@@ -48,7 +48,7 @@ body.menu-open #topActions{display:flex}
 .spawn.active .sprite{filter:drop-shadow(0 0 3px #ffffff77)}
 .timer{position:absolute;right:0;bottom:0;padding:1px 2px;border-radius:3px;background:#111924c4;color:#fff;font-size:8px;line-height:10px;pointer-events:none;min-width:23px;text-align:center}
 .spawn.expired{opacity:.38}
-.sprite{display:block;width:min(var(--sprite),calc(var(--row) - 1px));height:min(var(--sprite),calc(var(--row) - 1px));object-fit:contain;flex-shrink:0;pointer-events:none;filter:drop-shadow(0 1px 1px #0006)}
+.sprite{display:block;width:var(--sprite);height:var(--sprite);object-fit:contain;flex-shrink:0;pointer-events:none;filter:drop-shadow(0 1px 1px #0006)}
 .fallback{font-size:20px}
 #empty{display:block;width:var(--dock);height:18px;line-height:18px;text-align:center;color:#dce1e9b8;font-size:12px;overflow:hidden}
 #bubble{display:none;width:45px;height:45px;border:0;background:transparent;box-shadow:none;border-radius:0;align-items:center;justify-content:center}
@@ -69,7 +69,7 @@ body.menu-open #topActions{display:flex}
  </div></div>
  <div id="topActions">
   <button id="close" title="Fechar todo o overlay" aria-label="Encerrar overlay" onclick="Native.close()">×</button>
-  <button id="collapse" title="Recolher tudo, deixar apenas a engrenagem" aria-label="Recolher tudo" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="6.5"/><path d="M9 12h6"/></svg></button>
+  <button id="collapse" title="Recolher tudo e deixar apenas a engrenagem" aria-label="Minimizar overlay" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="14" rx="2"/><path d="m9 11 3 3 3-3"/></svg></button>
  </div>
  <div id="spawns"></div>
  <div id="empty">Aguardando busca</div>

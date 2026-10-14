@@ -37,8 +37,8 @@ import java.util.concurrent.Executors;
 
 /** Offline species catalog + asynchronous official community sprite thumbnails. */
 public final class PokemonPicker {
-    private static final ExecutorService IMAGE_POOL=Executors.newFixedThreadPool(3);
-    private static final LruCache<Integer,Bitmap> CACHE=new LruCache<>(80);
+    private static final ExecutorService IMAGE_POOL=Executors.newFixedThreadPool(2);
+    private static final LruCache<Integer,Bitmap> CACHE=new LruCache<>(48);
     private static final Set<Integer> LOADING=new HashSet<>();
     private static List<Entry> catalog;
     private PokemonPicker(){}
