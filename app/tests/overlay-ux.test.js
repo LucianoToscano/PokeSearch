@@ -36,7 +36,7 @@ test("Dedicated toolbar is just 29dp tall when popover closed",service.includes(
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login returns to Home and does not send it to background",!main.includes('postDelayed(()->moveTaskToBack(true)'));
 test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
-test("Translucent favorites with optional background blur",picker.includes('Color.argb(232,47,54,64)')&&picker.includes('setBlurBehindRadius'));
+test("Translucent favorites with optional background blur",picker.includes('Color.argb(188,34,43,56)')&&picker.includes('setBlurBehindRadius'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
@@ -64,4 +64,13 @@ test("When OFF, icon and badge never display outdated radius",
   dock.includes('document.getElementById("locationRadiusText").textContent=locationEnabled?locationRadius+"km":""'));
 test("Switching from location editor to mode releases keyboard focus",
   dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
+test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(26)"));
+test("Twelve proportional control columns",dock.includes("grid-template-columns:34fr 22fr 41fr"));
+test("No reversed order near edges",dock.includes("body.menu-left #controls{direction:ltr}"));
+test("Chevron has visible surface",dock.includes("width:35px;height:29px")&&dock.includes("background:#162438f5"));
+test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
+test("Coalesce resize events",dock.includes("if(fitPending)return"));
+test("Location validation refuses blank radius",read("assets/probe.js").includes('radiusInput!==""'));
+test("Location selection requires state confirmation",read("assets/probe.js").includes("active===true"));
+test("AUTO provides feedback",service.includes("AUTO: "));
 console.log("PokeSearch UX contract: "+count+" tests passed");

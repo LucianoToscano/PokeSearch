@@ -267,6 +267,11 @@ if(action.startsWith("readCoords:")){
    if(!/\bLOCATION\b/i.test(t)||!/\bDESPAWN\b/i.test(t)||t.length>3500)continue;
    const name=String(query.name||"").toLowerCase();
    if(name&&!t.toLowerCase().includes(name))continue;
+   const cp=String(query.cp||"").trim();
+   if(cp){
+    const measured=nextLabelValue(card,"CP")||(t.match(/\bCP\s*:?\s*(\d{1,5})\b/i)||[])[1]||"";
+    if(!measured||Number((measured.match(/\d{1,5}/)||[])[0])!==Number(cp))continue;
+   }
    const m=coordinate(t);
    if(m)return JSON.stringify({ok:true,coords:m,status:"Coordenadas obtidas"});
    // Matching card reached, avoid reading another Pokémon's coords.
@@ -299,8 +304,8 @@ function coordsModeSelected(){
   /(?:^|\s)(?:active|selected|bg-red|bg-rose|bg-primary)(?:\s|$)/.test(e.className||""));
  if(active(coordButton))return true;
  if(active(areaButton))return false;
- const inputs=locationFields();
- return inputs.coords&&inputs.radius?true:null;
+ // Field presence alone is not proof that the site selected Coords.
+ return null;
 }
 function locationValue(field){return field?String(field.value||"").trim():"";}
 function configureLocation(req){
@@ -314,7 +319,9 @@ function configureLocation(req){
   return JSON.stringify({ok:true,stage:"location-off"});
  }
  if(typeof req.coords!=="string"||!/^[-+]?\d+(?:\.\d+)?,[-+]?\d+(?:\.\d+)?$/.test(req.coords)||
-    !Number.isInteger(req.radius)||req.radius<0||req.radius>1000)return JSON.stringify({ok:false,reason:"Parâmetros de localização inválidos"});
+    !Number.isInteger(req.radius)||req.radius<0||req.radius>1000||
+    Math.abs(Number(req.coords.split(",")[0]))>90||Math.abs(Number(req.coords.split(",")[1]))>180)
+    return JSON.stringify({ok:false,reason:"Parâmetros de localização inválidos"});
  const coords=oneButton("Coords");
  if(!coords)return JSON.stringify({ok:false,reason:"Opção Coords não localizada"});
  if(coordsModeSelected()!==true)coords.click();
@@ -328,12 +335,18 @@ function verifyLocation(req){
   const blank=(!fields.coords||!locationValue(fields.coords))&&(!fields.radius||!locationValue(fields.radius));
   return JSON.stringify({ok:active!==true&&blank,reason:"Coordenadas do site ainda ativas"});
  }
- const expected=String(req.coords||"").split(",").map(Number);
- const actual=locationValue(fields.coords).split(/[,;]/).map(Number);
- const same=fields.coords&&fields.radius&&actual.length===2&&expected.length===2&&
+ const coordInput=locationValue(fields.coords),radiusInput=locationValue(fields.radius);
+ const coordinatePattern=/^[-+]?\d+(?:\.\d+)?\s*[,;]\s*[-+]?\d+(?:\.\d+)?$/;
+ const requested=String(req.coords||"");
+ const validText=coordinatePattern.test(coordInput)&&coordinatePattern.test(requested);
+ const actual=coordInput.split(/[,;]/).map(Number),expected=requested.split(/[,;]/).map(Number);
+ const withinRange=p=>p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=90&&Math.abs(p[1])<=180;
+ const validRadius=radiusInput!==""&&/^\d+$/.test(radiusInput)&&Number.isInteger(req.radius)&&req.radius>=0&&req.radius<=1000;
+ const same=validText&&withinRange(actual)&&withinRange(expected)&&validRadius&&
    Math.abs(expected[0]-actual[0])<0.0000001&&Math.abs(expected[1]-actual[1])<0.0000001&&
-   Number(locationValue(fields.radius))===Number(req.radius);
- return JSON.stringify({ok:!!same&&active!==false,reason:"Campos do filtro de localização não confirmados"});
+   Number(radiusInput)===req.radius;
+ return JSON.stringify({ok:!!same&&active===true,reason:active===true?
+   "Campos do filtro de localização não confirmados":"Modo Coords não confirmado no site"});
 }
 
 if(action.startsWith("configureLocation:")){

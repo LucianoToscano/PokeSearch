@@ -33,7 +33,7 @@ public class OverlayService extends Service {
     private static final int BUBBLE_DP=45, DETAIL_DP=226;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return 333;}
+    private int menuDp(){return Math.max(1,Math.min(333,screenWidthDp()-8));}
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams,menuParams;
@@ -167,12 +167,37 @@ public class OverlayService extends Service {
     }
     private void updateMenuPosition(){
         if(!menuExpanded||menuRoot==null||menuParams==null||params==null||wm==null)return;
-        int screen=metrics().widthPixels;
-        int width=dp(menuDp());
-        menuLeft=params.x+dp(dockDp())+width>screen;
-        menuParams.x=menuLeft?Math.max(0,params.x-width):Math.min(screen-width,params.x+dp(dockDp()));
-        menuParams.y=params.y;
+        DisplayMetrics d=metrics();
+        int screen=d.widthPixels, bottom=d.heightPixels, width=dp(menuDp());
+        boolean right=params.x+dp(dockDp())+width<=screen;
+        boolean left=params.x-width>=0;
+        int priorPad=menuPadDp;
+        boolean priorLeft=menuLeft;
+        if(right||left){
+            menuLeft=!right;
+            menuParams.x=right?params.x+dp(dockDp()):params.x-width;
+            menuParams.y=Math.max(0,Math.min(params.y,bottom-menuParams.height-dp(8)));
+            menuPadDp=29;
+        }else{
+            // Narrow display: position toolbar above/below the gear instead of covering it.
+            menuLeft=false;
+            menuParams.x=Math.max(0,Math.min(screen-width,params.x+dp(dockDp())/2-width/2));
+            int below=params.y+dp(26);
+            int above=params.y-menuParams.height-dp(5);
+            if(below+menuParams.height+dp(8)<=bottom||above<0){
+                menuParams.y=Math.max(0,Math.min(below,bottom-menuParams.height));
+                menuPadDp=26+Math.round(menuParams.height/d.density)+3;
+            }else{
+                menuParams.y=Math.max(0,above);
+                menuPadDp=0;
+            }
+        }
         try{wm.updateViewLayout(menuRoot,menuParams);}catch(Exception ignored){}
+        if(priorPad!=menuPadDp||priorLeft!=menuLeft){
+            js(panel,panelLoaded,"window.syncMenu(true,"+
+                JSONObject.quote(menuLeft?"left":"right")+","+menuPadDp+")");
+            moveDetail();
+        }
     }
     private void resizeMenu(int desiredDp){
         if(!menuExpanded||menuParams==null||menuRoot==null)return;
@@ -421,7 +446,7 @@ public class OverlayService extends Service {
     private void refresh(boolean manual){
         if(stopped||loginPaused)return;
         if(searchInProgress){
-            if(manual)status("A busca atual ainda está em andamento.");
+            if(manual)status("Busca em andamento. A atualização manual aguarda o término.");
             return;
         }
         if(!loaded||website==null){
@@ -782,7 +807,7 @@ public class OverlayService extends Service {
         menuExpanded=show;
         menuPadDp=show?29:0;
         if(show){
-            menuLeft=params.x+dp(dockDp())+dp(menuDp())>metrics().widthPixels;
+            menuLeft=false; // Position recalculated after menu is shown.
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
             if(menuParams!=null)menuParams.height=dp(29);
         }else{
@@ -870,7 +895,7 @@ public class OverlayService extends Service {
         if(cb!=null&&!coords.isEmpty())cb.setPrimaryClip(ClipData.newPlainText("Pokémon coordinates",coords));
     }
     private String extractCoordinates(String input){
-        java.util.regex.Matcher m=java.util.regex.Pattern.compile("(-?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*(-?\\d{1,3}(?:\\.\\d+)?)").matcher(input);
+        java.util.regex.Matcher m=java.util.regex.Pattern.compile("^\\s*(-?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*(-?\\d{1,3}(?:\\.\\d+)?)\\s*$").matcher(input==null?"":input);
         if(m.find()){
             try{
                 double lat=Double.parseDouble(m.group(1)),lon=Double.parseDouble(m.group(2));
@@ -1039,6 +1064,8 @@ public class OverlayService extends Service {
                 .putInt("intervalMinutes",intervalMinutes).putBoolean("intervalExplicit",true).apply();
             schedulePeriodic();
             update();
+            android.widget.Toast.makeText(OverlayService.this,
+                "AUTO: "+intervalMinutes+" minutos",android.widget.Toast.LENGTH_SHORT).show();
         });}
         @JavascriptInterface public void cycleInterval(){handler.post(()->{
             int[] options={5,10,15,20};
@@ -1062,7 +1089,11 @@ public class OverlayService extends Service {
             status(shiny?"✨ Confirmando Shiny no site...":"Desativando Shiny no site...");
             OverlayService.this.refresh(true);
         });}
-        @JavascriptInterface public void refresh(){handler.post(()->OverlayService.this.refresh(true));}
+        @JavascriptInterface public void refresh(){handler.post(()->{
+            android.widget.Toast.makeText(OverlayService.this,
+                "↻ Atualização solicitada",android.widget.Toast.LENGTH_SHORT).show();
+            OverlayService.this.refresh(true);
+        });}
         @JavascriptInterface public void minimize(){handler.post(()->OverlayService.this.minimize(true));}
         @JavascriptInterface public void restore(){handler.post(()->OverlayService.this.minimize(false));}
         @JavascriptInterface public void close(){handler.post(()->stopSelf());}

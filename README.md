@@ -1,6 +1,6 @@
 # PokeSearch — Android Overlay
 
-**Versão de desenvolvimento: v0.43-beta (versionCode 43).** APK Android separado do PvPPokeGo para testes privados entre amigos desenvolvedores. Package ID: com.lucianotoscano.pokesearch; minSdk 26, compileSdk 36, Java 17, Gradle 8.11.1.
+**Versão de desenvolvimento: v0.44-beta (versionCode 44).** APK Android separado do PvPPokeGo para testes privados entre amigos desenvolvedores. Package ID: com.lucianotoscano.pokesearch; minSdk 26, compileSdk 36, Java 17, Gradle 8.11.1.
 
 ## Interface e funcionamento
 - Sobreposição compacta sobre Pokémon GO com engrenagem arrastável. Toque na engrenagem para expandir/recolher somente as opções; sprites permanecem visíveis e deslocam-se para baixo quando as opções estão abertas.
@@ -18,8 +18,8 @@ O GitHub Actions em [build-overlay.yml](.github/workflows/build-overlay.yml) exe
 **Importante:** a assinatura de debug do CI não é chave persistente de distribuição e pode mudar, impedindo instalação sobre builds anteriores. Este é um APK **beta de teste**; não alegar funcionamento real no aparelho sem testar. Para distribuição estável, usar keystore privada persistente, backups seguros e confirmação do proprietário. Atualizações do site podem mudar o DOM e causar falhas de busca. Respeitar os termos e a autorização aplicável ao PoGoCoordinates; não tentar contornar limites. Não registrar códigos de amizade, cookies ou credenciais nos relatórios.
 
 ## Arquivos mestres
-- [Arquivo mestre v0.43](docs/ARQUIVO_MESTRE_v0.43.md) — única referência prioritária para retomar o projeto em outro chat.
-- [Auditoria v0.43](docs/AUDITORIA_v0.43.md) — bugs, correções, matriz de testes e riscos.
+- [Arquivo mestre v0.44](docs/ARQUIVO_MESTRE_v0.44.md) — única referência prioritária para retomar o projeto em outro chat.
+- [Auditoria v0.44](docs/AUDITORIA_v0.44.md) — bugs, correções, matriz de testes e riscos.
 - Histórico v0.38–v0.40 preservado em docs; mestre mais antigo v0.36 no Google Drive.
 - [Catálogo de bugs e melhorias](https://docs.google.com/spreadsheets/d/1aam5N7DNnzMqJj5giZTdsAmzWkHTWPj-uKcUUVwreiI/edit).
 
@@ -36,3 +36,6 @@ Um **único ícone 📍** na barra de opções abre ou oculta o editor de locali
 - Corrigida a grade do menu: 12 botões em 12 colunas, com X vermelho na mesma linha e ao lado do coração Pix, sem que o X seja empurrado para uma segunda linha.
 - Ao trocar de localização para filtros ou AUTO, o painel de coordenadas libera o foco do teclado e volta ao tamanho normal. Ocultar o editor mantém o filtro ON; desligar limpa os valores do site conforme verificação.
 - Nenhum código de treinador, token de autenticação ou coordenadas completas é acrescentado à etiqueta. O app preserva limites mínimos de pesquisa.
+
+## v0.44-beta — correções de usabilidade
+Barra responsiva com posicionamento vertical quando não couber ao lado da engrenagem, sequência consistente dos 12 controles, seta contrastante, favoritos mais translúcidos, feedback de AUTO/atualização manual e validação mais rígida das coordenadas. Revisão em código e testes automatizados não substitui comprovação no celular.
