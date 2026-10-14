@@ -40,7 +40,7 @@ import android.graphics.Typeface;
 public class MainActivity extends Activity {
     private WebView website;
     private TextView watchSummary;
-    private AlertDialog loginDialog;
+    private android.app.Dialog loginDialog;
     private boolean loginSessionNotified=false;
     private String pendingReportText="";
     @Override public void onCreate(Bundle b){
@@ -203,32 +203,51 @@ public class MainActivity extends Activity {
                     });
             }
         });
-        android.widget.FrameLayout holder=new android.widget.FrameLayout(this);
-        holder.addView(website,new android.widget.FrameLayout.LayoutParams(-1,d(450)));
-        loginDialog=new AlertDialog.Builder(this)
-            .setTitle("Login • PoGoCoordinates")
-            .setMessage("Entre com sua conta. Ao concluir, a busca do overlay será atualizada sem precisar fechá-lo.")
-            .setView(holder)
-            .setNegativeButton("Cancelar",null)
-            .setPositiveButton("Voltar ao overlay",(d,which)->
-                getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),200L))
-            .create();
+        // Single full-screen login surface. No Android alert footer competing
+        // with Google/Discord or the trainer-code keyboard.
+        LinearLayout loginRoot=new LinearLayout(this);
+        loginRoot.setOrientation(LinearLayout.VERTICAL);
+        loginRoot.setBackgroundColor(Color.rgb(11,13,18));
+        LinearLayout toolbar=new LinearLayout(this);
+        toolbar.setOrientation(LinearLayout.HORIZONTAL);
+        toolbar.setGravity(Gravity.CENTER_VERTICAL);
+        toolbar.setPadding(d(12),0,d(12),0);
+        toolbar.setBackgroundColor(Color.rgb(20,24,31));
+        TextView loginName=new TextView(this);
+        loginName.setText("PoGoCoordinates · Login");
+        loginName.setTextColor(Color.WHITE);
+        loginName.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        loginName.setTextSize(15);
+        toolbar.addView(loginName,new LinearLayout.LayoutParams(0,d(48),1));
+        TextView done=new TextView(this);
+        done.setText("✓ Voltar");
+        done.setTextColor(Color.rgb(126,212,204));
+        done.setTextSize(14);
+        done.setGravity(Gravity.CENTER);
+        done.setPadding(d(8),0,d(8),0);
+        toolbar.addView(done,new LinearLayout.LayoutParams(d(95),d(48)));
+        loginRoot.addView(toolbar);
+        loginRoot.addView(website,new LinearLayout.LayoutParams(-1,0,1));
+        loginDialog=new android.app.Dialog(this);
+        loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        loginDialog.setContentView(loginRoot);
+        done.setOnClickListener(v->loginDialog.dismiss());
         loginDialog.setOnDismissListener(d->{
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginDialog=null;
-            // Restore overlay first; then reload authenticated collector once.
             serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END");
             notifyOverlaySessionReady();
+            getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),120L);
         });
         serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN");
         loginDialog.show();
         android.view.Window loginWindow=loginDialog.getWindow();
         if(loginWindow!=null){
-            loginWindow.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|
-                android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-            loginWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+            loginWindow.setBackgroundDrawableResource(android.R.color.transparent);
+            loginWindow.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
             loginWindow.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,
-                Math.min(getResources().getDisplayMetrics().heightPixels-d(88),d(680)));
+                android.view.WindowManager.LayoutParams.MATCH_PARENT);
+            loginWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
         }
         website.requestFocus();
         website.loadUrl("https://pogocoordinates.com/search");
