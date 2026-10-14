@@ -222,13 +222,16 @@ public class OverlayService extends Service {
             menuLeft=params.x+dp(dockDp())/2>screen/2;
             menuParams.x=Math.max(0,Math.min(screen-width,params.x+dp(dockDp())/2-width/2));
             int below=params.y+dp(TOOLBAR_DP);
-            int above=params.y-menuParams.height-dp(5);
-            if(below+menuParams.height+dp(8)<=bottom||above<0){
-                menuParams.y=Math.max(0,Math.min(below,bottom-menuParams.height));
-                menuPadDp=TOOLBAR_DP+Math.round(menuParams.height/d.density)+3;
-            }else{
-                menuParams.y=Math.max(0,above);
+            int above=params.y-menuParams.height;
+            // On phones the controls span the display: show them directly ABOVE
+            // the gear, so the gear and the Pokémon column stay close together.
+            if(above>=0){
+                menuParams.y=above;
                 menuPadDp=0;
+            }else{
+                menuParams.y=Math.max(0,Math.min(below,bottom-menuParams.height));
+                // Only shift sprites if the controls genuinely occupy this space.
+                menuPadDp=TOOLBAR_DP+Math.round(menuParams.height/d.density)+3;
             }
         }
         if(menuDrawX!=menuParams.x||menuDrawY!=menuParams.y||
