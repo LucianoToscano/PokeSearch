@@ -37,6 +37,7 @@ body.menu-open #topActions{display:flex}
 #controls #cycle .league svg{width:16px;height:16px}
 #controls #size{font-size:12px!important;font-weight:800}
 #controls button.shinyOn{color:#ffe5a0;background:#564627e9}
+#controls button.shinyPending{color:#ffe5a0;background:#201e1bc8;border:1px dashed #dbb65b;opacity:.85}
 #actions{display:contents}
 #actions button{font-size:16px;font-weight:500}
 #period{display:flex;flex-direction:column;gap:1px;line-height:1!important;padding:2px 0!important}
@@ -76,7 +77,7 @@ body.menu-open #topActions{display:flex}
 </div>
 <div id="bubble" role="button" aria-label="Restaurar overlay"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></div>
 <script>
-let cards=[],active=-1,mode="iv",shiny=false,status="",row=46,menuOpen=false,period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false;
+let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false;
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
  document.documentElement.style.setProperty("--top-space",menuOpen?((Number(pad)||54)+"px"):"0px");
@@ -117,8 +118,9 @@ function draw(){
  }
  document.getElementById("size").textContent=spriteSize<=35?"P":spriteSize>=55?"G":"M";
  document.getElementById("sh").classList.toggle("shinyOn",shiny);
+ document.getElementById("sh").classList.toggle("shinyPending",shinyPending);
  document.getElementById("sh").setAttribute("aria-pressed",String(shiny));
- document.getElementById("sh").title=shiny?"Shiny ativado · tocar para desativar":"Shiny desativado · tocar para ativar no site (pode solicitar login)";
+ document.getElementById("sh").title=shiny?"✨ Shiny confirmado":shinyPending?"✨ Aguardando vínculo/confirmação no site":"Shiny desativado";
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
  const bell=document.getElementById("bell");
  bell.classList.toggle("generalOn",generalAlerts);
@@ -156,9 +158,9 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
- mode=m;status=String(s||"");shiny=!!shi;row=Number(r)||46;period=Number(interval)||5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;
+ mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=Number(interval)||5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;
  if(active>=cards.length)active=-1;
  draw();
 };
