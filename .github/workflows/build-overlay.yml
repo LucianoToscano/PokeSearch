@@ -28,6 +28,8 @@ jobs:
           node --check app/src/main/assets/presets.js
           node --check app/src/main/assets/shiny_login.js
           grep -q 'if(action==="verifyShiny")' app/src/main/assets/probe.js
+          grep -q 'if(action==="verifyFilters")' app/src/main/assets/probe.js
+          node app/tests/probe-smoke.test.js
           grep -q 'shinyPending' app/src/main/assets/dock.html
           python3 - <<'PY'
           from pathlib import Path
@@ -44,22 +46,27 @@ jobs:
           print(f'Catálogo validado: {len(d)} espécies')
           PY
       - name: Assemble regular Android APK (debug, no obfuscation)
-        run: gradle --no-daemon --stacktrace :app:assembleDebug
+        run: gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
       - name: Verify APK, launcher and signature
         run: |
           set -e
           test -s app/build/outputs/apk/debug/app-debug.apk
           unzip -t app/build/outputs/apk/debug/app-debug.apk >/dev/null
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "^package: name='com.lucianotoscano.pokesearch' versionCode='38' versionName='0.38-beta'"
           test -s app/src/main/res/drawable-nodpi/ic_launcher.png
           test -s app/src/main/res/drawable-nodpi/pokesearch_round.png
           file app/src/main/res/drawable-nodpi/ic_launcher.png
           file app/src/main/res/drawable-nodpi/pokesearch_round.png
           mkdir -p delivery
-          cp app/build/outputs/apk/debug/app-debug.apk delivery/PokeSearch-0.37-teste.apk
-          (cd delivery && sha256sum PokeSearch-0.37-teste.apk > SHA256SUMS.txt)
+          cp app/build/outputs/apk/debug/app-debug.apk delivery/PokeSearch-0.38-beta.apk
+          git archive --format=zip HEAD -o delivery/PokeSearch-0.38-beta-source.zip
+          cp docs/ARQUIVO_MESTRE_v0.38.md delivery/
+          cp docs/AUDITORIA_v0.38.md delivery/
+          (cd delivery && sha256sum PokeSearch-0.38-beta.apk PokeSearch-0.38-beta-source.zip > SHA256SUMS.txt)
+          (cd delivery && unzip -t PokeSearch-0.38-beta-source.zip >/dev/null)
       - uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-0.37-teste-APK
+          name: PokeSearch-0.38-beta-KIT
           path: delivery/
           retention-days: 30
