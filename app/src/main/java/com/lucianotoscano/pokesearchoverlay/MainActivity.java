@@ -41,7 +41,7 @@ public class MainActivity extends Activity {
     private WebView website;
     private TextView watchSummary;
     private AlertDialog loginDialog;
-    private boolean loginFlow=false;
+    private boolean loginSessionNotified=false;
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         getWindow().setStatusBarColor(Color.rgb(11,13,18));
@@ -63,7 +63,7 @@ public class MainActivity extends Activity {
         ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Contribuir com um café via Pix");
         heart.setOnClickListener(v->PixSupport.show(this));
         header.addView(heart,new LinearLayout.LayoutParams(d(45),d(45)));
-        ImageButton gear=makeIcon(R.drawable.ic_settings_outline,"Preferências, histórico e diagnóstico");
+        ImageButton gear=makeIcon(R.drawable.ic_settings_outline,"Preferências");
         gear.setOnClickListener(v->showPreferencesDialog());
         header.addView(gear,new LinearLayout.LayoutParams(d(45),d(45)));
         root.addView(header);
@@ -112,7 +112,7 @@ public class MainActivity extends Activity {
         refreshWatchCount();
         // Home independente: a interface do site não faz parte da tela principal.
         TextView hint=new TextView(this);
-        hint.setText("Resultados reais no overlay • IV100 • GL#1 • UL#1\nO login do PoGoCoordinates abre apenas quando necessário.");
+        hint.setText("IV100  ·  GL#1  ·  UL#1\nToque em Ativar overlay para começar.");
         hint.setTextColor(Color.rgb(155,165,181));
         hint.setTextSize(12);
         hint.setGravity(Gravity.CENTER);
@@ -164,6 +164,7 @@ public class MainActivity extends Activity {
     }
     private void openLoginDialog(){
         if(loginDialog!=null&&loginDialog.isShowing())return;
+        loginSessionNotified=false;
         website=new WebView(this);
         website.getSettings().setJavaScriptEnabled(true);
         website.getSettings().setDomStorageEnabled(true);
@@ -176,30 +177,34 @@ public class MainActivity extends Activity {
         website.setWebChromeClient(new WebChromeClient());
         website.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView view,String url){
-                if(url==null || !url.startsWith("https://pogocoordinates.com/"))return;
+                if(url==null || !"pogocoordinates.com".equalsIgnoreCase(Uri.parse(url).getHost()))return;
                 // Trigger the native site's Shiny linking prompt when requested.
                 // The user enters their 12-digit trainer friend code on the real page.
                 view.evaluateJavascript(readAsset("shiny_login.js"),null);
                 // OAuth may complete without dismissing the dialog. A successful
                 // return to the site refreshes the collector in-place.
                 view.evaluateJavascript("(function(){return Array.from(document.querySelectorAll('a,button')).some(e=>/^(log\\s*out|sign\\s*out|sair|desconectar)$/i.test((e.innerText||e.textContent||'').trim()))})()",
-                    value->{if("true".equals(value))notifyOverlaySessionReady();});
+                    value->{
+                        if("true".equals(value)&&!loginSessionNotified){
+                            loginSessionNotified=true;
+                            notifyOverlaySessionReady();
+                        }
+                    });
             }
         });
-        loginFlow=true;
+        android.widget.FrameLayout holder=new android.widget.FrameLayout(this);
+        holder.addView(website,new android.widget.FrameLayout.LayoutParams(-1,d(450)));
         loginDialog=new AlertDialog.Builder(this)
             .setTitle("Login • PoGoCoordinates")
             .setMessage("Entre com sua conta. Ao concluir, a busca do overlay será atualizada sem precisar fechá-lo.")
-            .setView(website)
+            .setView(holder)
             .setNegativeButton("Cancelar",null)
-            .setPositiveButton("Voltar ao overlay",(d,which)->{
-                notifyOverlaySessionReady();
-                moveTaskToBack(true);
-            }).create();
+            .setPositiveButton("Voltar ao overlay",(d,which)->moveTaskToBack(true))
+            .create();
         loginDialog.setOnDismissListener(d->{
-            loginFlow=false;
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginDialog=null;
+            // Once more after closing to capture trainer-code linking performed after OAuth.
             notifyOverlaySessionReady();
         });
         loginDialog.show();
