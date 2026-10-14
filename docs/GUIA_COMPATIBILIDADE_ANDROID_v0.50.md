@@ -48,3 +48,11 @@
 - [ ] Tocar novamente: Shiny desliga no site sem exigir novo login.
 - [ ] Rede lenta/página hidratando: acesso ao botão oficial é tentado brevemente sem redirecionar para URLs OAuth inventadas. Ausência de controle não equivale a ativação confirmada.
 - [ ] Alternar IV100/GL#1/UL#1 mantendo ✨: cada modalidade respeita a opção selecionada no site e não mostra resultados de modo antigo como se fossem confirmados.
+
+## Regressões PS-086 a PS-088 — roteiro por fabricante
+1. Com sessão já ativa no site e botão Logout escondido no menu móvel, tocar ✨ e abrir a etapa de autenticação: o PokeSearch deve **reconhecer a indicação de conta** e voltar à Home, sem exigir Shiny previamente ligado.
+2. Fazer novo login no Google/Discord: ao retornar ao domínio PoGoCoordinates, conferir que o WebView fecha assim que a sessão é identificada; testar também login/modal SPA sem navegação (demora superior a 6 segundos).
+3. Alternar ✨ nos três modos IV100, GL#1, UL#1: confirmar alteração no controle visível da aba Pokémon mesmo que as abas Stats/PvP não estejam disponíveis; Shiny desligado não pede login.
+4. Forçar site lento: confirmar que resposta atrasada não abre um segundo login ao detectar sessão autenticada e que o estado ON só aparece após `verifyShiny`.
+5. Mostrar o menu no topo da tela e abrir popovers: conferir que a engrenagem continua próxima do **primeiro sprite**, sem espaço vertical arbitrário, e que o popover não cobre botões.
+6. Repetir em telas estreitas e largas, versões/fabricantes distintos. Não marcar um aparelho como aprovado sem teste manual real.
