@@ -1,6 +1,6 @@
 # PokeSearch — Android Overlay
 
-**Versão de desenvolvimento: v0.46-beta (versionCode 46).** APK Android separado do PvPPokeGo para testes privados entre amigos desenvolvedores. Package ID: com.lucianotoscano.pokesearch; minSdk 26, compileSdk 36, Java 17, Gradle 8.11.1.
+**Versão de desenvolvimento: v0.47-beta (versionCode 47).** APK Android separado do PvPPokeGo para testes privados entre amigos desenvolvedores. Package ID: com.lucianotoscano.pokesearch; minSdk 26, compileSdk 36, Java 17, Gradle 8.11.1.
 
 ## Interface e funcionamento
 - Sobreposição compacta sobre Pokémon GO com engrenagem arrastável. Toque na engrenagem para expandir/recolher somente as opções; sprites permanecem visíveis e deslocam-se para baixo quando as opções estão abertas.
@@ -18,8 +18,8 @@ O GitHub Actions em [build-overlay.yml](.github/workflows/build-overlay.yml) exe
 **Importante:** a assinatura de debug do CI não é chave persistente de distribuição e pode mudar, impedindo instalação sobre builds anteriores. Este é um APK **beta de teste**; não alegar funcionamento real no aparelho sem testar. Para distribuição estável, usar keystore privada persistente, backups seguros e confirmação do proprietário. Atualizações do site podem mudar o DOM e causar falhas de busca. Respeitar os termos e a autorização aplicável ao PoGoCoordinates; não tentar contornar limites. Não registrar códigos de amizade, cookies ou credenciais nos relatórios.
 
 ## Arquivos mestres
-- [Arquivo mestre v0.46](docs/ARQUIVO_MESTRE_v0.46.md) — única referência prioritária para retomar o projeto em outro chat.
-- [Auditoria v0.46](docs/AUDITORIA_v0.46.md) — bugs, correções, matriz de testes e riscos.
+- [Arquivo mestre v0.47](docs/ARQUIVO_MESTRE_v0.47.md) — única referência prioritária para retomar o projeto em outro chat.
+- [Auditoria v0.47](docs/AUDITORIA_v0.47.md) — bugs, correções, matriz de testes e riscos.
 - Histórico v0.38–v0.40 preservado em docs; mestre mais antigo v0.36 no Google Drive.
 - [Catálogo de bugs e melhorias](https://docs.google.com/spreadsheets/d/1aam5N7DNnzMqJj5giZTdsAmzWkHTWPj-uKcUUVwreiI/edit).
 
@@ -45,3 +45,8 @@ Vencimentos limpam a lista sem iniciar consultas extras; login cancela buscas an
 
 ## v0.46-beta — Menu e autenticação
 Abertura dos popovers IV100/GL/UL, AUTO e localização sem clipping, inversão direita/esquerda da barra e sincronização dos dois WebViews, área de toque ampliada, chevron visível, favoritos translúcidos, login/logout na Home com retorno após autenticação detectada. OAuth externo e interação Android ainda dependem de validação física.
+
+## v0.47-beta — auditoria e projeto editável
+O settings.gradle.kts já existia na v0.46; importar a pasta raiz no Android Studio. A entrega contém Gradle Wrapper 8.11.1 e PNG do ícone gerados no CI, scripts, testes e documentação. Gerador do ícone executa sem X11 e é testado quanto à consistência. Erros de WebView e parsing registram classe de exceção, nunca URL, credenciais ou mensagem bruta.
+
+Mantido targetSdk=33 neste beta: foregroundServiceType=specialUse não foi habilitado sem avaliação de permissões/políticas Android 14+. Migração planejada em etapa separada. Teste Samsung, OAuth e Shiny real ainda pendentes.
