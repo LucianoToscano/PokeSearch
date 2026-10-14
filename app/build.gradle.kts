@@ -6,7 +6,7 @@ android {
         // Separate distribution identity: avoids signature conflicts with previous alpha APKs.
         applicationId = "com.lucianotoscano.pokesearch"
         minSdk = 26
-        targetSdk = 32
+        targetSdk = 33
         versionCode = 35
         versionName = "0.35-beta"
     }
