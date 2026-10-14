@@ -177,6 +177,9 @@ public class MainActivity extends Activity {
         website.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView view,String url){
                 if(url==null || !url.startsWith("https://pogocoordinates.com/"))return;
+                // Trigger the native site's Shiny linking prompt when requested.
+                // The user enters their 12-digit trainer friend code on the real page.
+                view.evaluateJavascript(readAsset("shiny_login.js"),null);
                 // OAuth may complete without dismissing the dialog. A successful
                 // return to the site refreshes the collector in-place.
                 view.evaluateJavascript("(function(){return Array.from(document.querySelectorAll('a,button')).some(e=>/^(log\\s*out|sign\\s*out|sair|desconectar)$/i.test((e.innerText||e.textContent||'').trim()))})()",
