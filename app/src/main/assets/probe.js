@@ -87,11 +87,14 @@ function readShiny(){
  return null;
 }
 function setShiny(want){
- const sw=shinyControl();if(!sw)return {ok:false,reason:"Shiny switch não encontrado"};
+ const sw=shinyControl();
+ if(!sw)return want
+  ?{ok:false,controlFound:false,reason:"Shiny indisponível; autenticação ou vínculo necessário"}
+  :{ok:true,controlFound:false,changed:false,siteShiny:null};
  const before=readShiny();
- if(before===want)return {ok:true,changed:false};
- if(before===null)return {ok:false,reason:"Estado do Shiny não identificável"};
- sw.click();return {ok:true,changed:true};
+ if(before===want)return {ok:true,controlFound:true,changed:false,siteShiny:before};
+ if(before===null||sw.disabled)return {ok:false,controlFound:true,reason:"Estado do Shiny não identificável"};
+ sw.click();return {ok:true,controlFound:true,changed:true,siteShiny:readShiny()};
 }
 function inputsByIvGroup(count){
  const matches=labels(document,/^IV$/i);
@@ -356,6 +359,8 @@ if(action.startsWith("verifyLocation:")){
  try{return verifyLocation(JSON.parse(action.slice("verifyLocation:".length)));}
  catch(_){return JSON.stringify({ok:false,reason:"Verificação de localização inválida"});}
 }
+// Shiny activation is independent of Pokémon Search and its cooldown.
+if(action==="setShiny")return JSON.stringify(setShiny(shinyOnly));
 if(action==="verifyFilters")return JSON.stringify(check());
 if(action==="verifyShiny"){
  const actual=readShiny();
