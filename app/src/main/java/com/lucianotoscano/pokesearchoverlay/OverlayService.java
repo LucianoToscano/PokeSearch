@@ -33,7 +33,7 @@ public class OverlayService extends Service {
     private static final int BUBBLE_DP=45, DETAIL_DP=226;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return 308;}
+    private int menuDp(){return 333;}
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams,menuParams;
@@ -53,6 +53,10 @@ public class OverlayService extends Service {
     private boolean firstStart=true;
     private boolean loginPaused=false;
     private boolean pickerOpen=false;
+    private boolean locationEnabled=false;
+    private String locationCoords="";
+    private int locationRadius=0;
+    private boolean locationEditorOpen=false;
     private boolean showTimers=false,alerts=false;
     private String sort="despawn";
     private long lastAlertAt=0L;
@@ -140,7 +144,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         if(selected>=0)showDetails(selected);
@@ -172,10 +176,33 @@ public class OverlayService extends Service {
     }
     private void resizeMenu(int desiredDp){
         if(!menuExpanded||menuParams==null||menuRoot==null)return;
-        int target=dp(Math.max(29,Math.min(215,desiredDp)));
+        int target=dp(Math.max(29,Math.min(295,desiredDp)));
         if(Math.abs(menuParams.height-target)<=dp(1))return;
         menuParams.height=target;
         updateMenuPosition();
+    }
+    private void locationEditor(boolean open){
+        locationEditorOpen=open;
+        if(menuParams==null||menuRoot==null||wm==null)return;
+        final int base=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+        final int unfocusable=WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        if(open){
+            menuParams.flags=(menuParams.flags|base)&~unfocusable;
+            menuParams.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+        }else{
+            menuParams.flags|=unfocusable|base;
+            menuParams.softInputMode=0;
+        }
+        try{wm.updateViewLayout(menuRoot,menuParams);}catch(Exception ignored){}
+    }
+    private String locationPayload(){
+        JSONObject data=new JSONObject();
+        try{
+            data.put("enabled",locationEnabled);
+            data.put("coords",locationEnabled?locationCoords:"");
+            data.put("radius",locationEnabled?locationRadius:0);
+        }catch(Exception ignored){}
+        return data.toString();
     }
     private void moveDetail(){
         if(detailRoot==null||detailParams==null||params==null)return;
@@ -444,9 +471,38 @@ public class OverlayService extends Service {
                         diagnosticError("Falha nos controles IV/R1. Verifique se a página de busca carregou.");
                         return;
                     }
-                    verifyAndSubmit(generation,manual,0);
+                    configureLocationAndVerify(generation,manual,0);
                 }),600L);
             });
+        });
+    }
+    private void configureLocationAndVerify(int generation,boolean manual,int attempt){
+        String data=locationPayload();
+        execute("configureLocation:"+data,configured->{
+            if(stopped||generation!=requestGeneration)return;
+            if(!configured.optBoolean("ok")){
+                if(attempt<2){
+                    handler.postDelayed(()->configureLocationAndVerify(generation,manual,attempt+1),450L);
+                    return;
+                }
+                searchInProgress=false;
+                diagnosticError("📍 Não foi possível configurar a localização: "+
+                    configured.optString("reason","verifique o formulário do site."));
+                return;
+            }
+            handler.postDelayed(()->execute("verifyLocation:"+data,verified->{
+                if(stopped||generation!=requestGeneration)return;
+                if(!verified.optBoolean("ok")){
+                    if(attempt<2){
+                        configureLocationAndVerify(generation,manual,attempt+1);
+                        return;
+                    }
+                    searchInProgress=false;
+                    diagnosticError("📍 Filtro de localização não confirmado. Pesquisa não enviada.");
+                    return;
+                }
+                verifyAndSubmit(generation,manual,0);
+            }),400L);
         });
     }
     private void openShinyLogin(){
@@ -722,6 +778,7 @@ public class OverlayService extends Service {
     private void menu(boolean show){
         if(params==null||minimized)return;
         if(show==menuExpanded)return;
+        if(!show&&locationEditorOpen)locationEditor(false);
         menuExpanded=show;
         menuPadDp=show?29:0;
         if(show){
@@ -838,6 +895,33 @@ public class OverlayService extends Service {
             if(clipboard!=null){clipboard.setPrimaryClip(ClipData.newPlainText("Coordenadas Pokémon",valid));js(detailPanel,detailLoaded,"window.copyFeedback("+JSONObject.quote("✓ Copiado!")+ ")");}
         });}
 
+        @JavascriptInterface public void setLocation(boolean enabled,String coords,int radius){handler.post(()->{
+            if(enabled){
+                String valid=extractCoordinates(coords==null?"":coords);
+                if(valid.isEmpty()||radius<0||radius>1000){
+                    diagnosticError("📍 Cole latitude,longitude válidas e escolha raio de 0 a 1000km.");
+                    update();return;
+                }
+                locationEnabled=true;
+                locationCoords=valid;
+                locationRadius=radius;
+            }else{
+                locationEnabled=false;
+                locationCoords="";
+                locationRadius=0;
+            }
+            android.content.SharedPreferences.Editor prefs=getSharedPreferences("prefs",0).edit();
+            prefs.putBoolean("locationEnabled",locationEnabled);
+            if(locationEnabled)prefs.putString("locationCoords",locationCoords).putInt("locationRadius",locationRadius);
+            else prefs.remove("locationCoords").remove("locationRadius");
+            prefs.apply();
+            ++requestGeneration;searchInProgress=false;
+            results="[]";hideDetails();
+            BugReport.log(OverlayService.this,"LOCATION",locationEnabled?"Filtro de coordenadas ativado":"Filtro de coordenadas desativado");
+            status(locationEnabled?"📍 Localização ligada • "+locationRadius+"km":"📍 Localização desligada • busca geral");
+            OverlayService.this.refresh(true);
+        });}
+        @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
         @JavascriptInterface public void setMode(String s){select(s);}
         @JavascriptInterface public void select(String s){handler.post(()->{
             if(!s.equals("iv")&&!s.equals("gl")&&!s.equals("ul"))return;
@@ -1078,6 +1162,13 @@ public class OverlayService extends Service {
             grip.setLayoutParams(new FrameLayout.LayoutParams(
                 dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:21),Gravity.TOP|Gravity.LEFT));
             updateWindow();
+        }
+        locationEnabled=pref.getBoolean("locationEnabled",false);
+        locationCoords=locationEnabled?pref.getString("locationCoords",""):"";
+        locationRadius=locationEnabled?pref.getInt("locationRadius",0):0;
+        if(locationEnabled&&(extractCoordinates(locationCoords).isEmpty()||locationRadius<0||locationRadius>1000)){
+            locationEnabled=false;locationCoords="";locationRadius=0;
+            pref.edit().putBoolean("locationEnabled",false).remove("locationCoords").remove("locationRadius").apply();
         }
         mode=getSharedPreferences("prefs",0).getString("mode",mode);
         shiny=getSharedPreferences("prefs",0).getBoolean("shiny",false);
