@@ -9,11 +9,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulat
 #gear svg{display:block;width:21px;height:21px;filter:drop-shadow(0 1px 1px #0007)}
 #gear.busy svg{animation:gearbusy 1.25s linear infinite}
 @keyframes gearbusy{to{transform:rotate(360deg)}}
-#menu{display:none;position:absolute;top:var(--top-space);left:var(--dock);width:258px;height:25px;z-index:3;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
+#menu{display:none;position:absolute;top:var(--top-space);left:var(--dock);width:283px;height:25px;z-index:3;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
 #menu.open{display:block}
-body.menu-left #shell{margin-left:258px}
-body.menu-left #menu{left:-258px}
-#controls{width:254px;display:grid;grid-template-columns:36px 23px 43px 22px 22px 23px 23px 23px 23px;gap:2px;padding:0;margin:0;align-items:center}
+body.menu-left #shell{margin-left:283px}
+body.menu-left #menu{left:-283px}
+#controls{width:279px;display:grid;grid-template-columns:36px 23px 43px 22px 22px 23px 23px 23px 23px 23px;gap:2px;padding:0;margin:0;align-items:center}
 body.menu-left #controls{direction:rtl}
 #controls button{direction:ltr}
 #controls button{height:25px;width:100%;min-width:0;padding:0;background:#151b26e6;border:1px solid #ffffff23;border-radius:5px;font-size:10px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;white-space:nowrap}
@@ -31,6 +31,7 @@ body.menu-open #topActions{display:flex}
 #controls #star.favoritesOn{background:#70561de0;border-color:#ffe29a77;color:#ffdf74}
 #controls #star svg{width:17px;height:17px}
 #controls #donate{color:#fa94a7}
+#controls #report{color:#ffd674;font-size:16px;font-weight:700}
 #controls button svg{width:16px;height:16px;display:block;pointer-events:none}
 #controls #cycle{font-size:11px;font-weight:800}
 #controls #cycle .league{display:inline-flex;gap:2px;align-items:center;justify-content:center}
@@ -66,6 +67,7 @@ body.menu-open #topActions{display:flex}
   <button id="clock" title="Mostrar ou ocultar tempo de despawn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button id="bell" title="Notificações de novos Pokémon · toque para ativar/desativar" aria-pressed="false" onclick="Native.toggleGeneralAlerts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
   <button id="star" title="Meus favoritos · alertas específicos IV100 / GL#1 / UL#1" onclick="Native.openWatchList()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg></button>
+  <button id="report" title="⚠ Reportar bugs, enviar sugestões e exportar diagnóstico TXT" aria-label="Reportar bugs e sugestões" onclick="Native.openReport()">⚠</button>
   <button id="donate" title="Gostou do PokeSearch? Apoie com um café · Pix voluntário" onclick="Native.openPix()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z"/></svg></button>
  </div></div>
  <div id="topActions">
