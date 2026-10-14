@@ -38,3 +38,12 @@ APK Android separado do Pokémon GO, overlay transparente mínimo; coluna de spr
 4. Não anunciar testes físicos não realizados; preservar documentação histórica e versões anteriores.
 
 **Próximo marco:** validar uso real no Samsung e assinar release com chave estável; resolver favoritos dentro do overlay. 
+
+## Atualização operacional — relatos do teste no aparelho (14/10/2026)
+- O usuário relatou: busca IV100 sem Shiny terminava com símbolo ! e não retornava Pokémon; ✨ abria login sem teclado; overlay atrapalhava entrada de dados.
+- Correção: `probe.js` aceita Raw IV (3 ou 6 campos) e usa `% IV` min/max ambos 100 como alternativa verificada; a coleta só exibe resultados válidos.
+- O diálogo de login tem WebView explicitamente focável e com suporte ao redimensionamento do teclado. Enquanto aberto, o `OverlayService` oculta overlay e ficha; restaura depois. A funcionalidade deve ser testada no dispositivo.
+- Botão ⚠️ adicionado ao dock; `BugReport.java` grava até 80 eventos com máscaras para URLs, e-mails, códigos de 12 dígitos e coordenadas. `MainActivity` permite descrever sugestão, exportar texto via seletor do Android e compor mensagem no WhatsApp do desenvolvedor (sem envio automático).
+- Limites: `AUTO 5/10/15/20m`; mínimo de 60s entre buscas efetivamente enviadas. Proteção de frequência diminui risco, mas não garante suspensão inexistente nem substitui política do serviço.
+- Público desta fase: grupo privado de amigos desenvolvedores, conforme usuário; sem anúncio de licença pública ou release estável. Usuário informou que dispõe de autorização para o seu uso. Sem credenciais/código de amizade no GitHub ou Drive.
+- Verificar no Samsung (pendente): toque no campo de código e teclado, recolhimento e restauração do overlay, IV100 padrão, Shiny depois de login, exportar relatório, WhatsApp, intervalo mínimo e notificações.
