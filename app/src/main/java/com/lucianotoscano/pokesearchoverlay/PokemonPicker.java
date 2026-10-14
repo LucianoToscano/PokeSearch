@@ -86,12 +86,10 @@ public final class PokemonPicker {
                 connection=(HttpURLConnection)url.openConnection();
                 connection.setConnectTimeout(4500);connection.setReadTimeout(4500);
                 try(InputStream in=connection.getInputStream()){bitmap=BitmapFactory.decodeStream(in);}
+            }catch(java.io.IOException ignored){
+                // Expected CDN/network failures are routine; avoid log flooding.
             }catch(Exception e){
-                // Sprite CDN requests can fail per Pokémon; avoid sensitive URLs
-                // and bound reports to a single network-error category.
-                if(e instanceof java.io.IOException)
-                    BugReport.log(activity,"SPRITE","carregamento externo · IOException");
-                else BugReport.log(activity,"SPRITE","carregamento externo · "+e.getClass().getSimpleName());
+                BugReport.log(activity,"SPRITE","falha inesperada · "+e.getClass().getSimpleName());
             }finally{
                 if(connection!=null)connection.disconnect();
             }
