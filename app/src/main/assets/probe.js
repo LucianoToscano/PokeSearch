@@ -360,7 +360,7 @@ if(action.startsWith("verifyLocation:")){
 if(action==="verifyFilters")return JSON.stringify(check());
 if(action==="verifyShiny"){
  const actual=readShiny();
- const pending=elements('[role="dialog"],[aria-modal="true"],form').filter(vis).some(e=>/friend code|trainer code|12 digits|vincula/i.test(text(e)));
+ const pending=elements('[role="dialog"],[aria-modal="true"],form').filter(vis).some(e=>/friend code|trainer code|12 digits|vincula|link (?:a |your )?(?:pok[eé]mon go |trainer )?account|connect (?:your )?account/i.test(text(e)));
  return JSON.stringify({ok:shinyOnly?(actual===true&&!pending):(actual!==true),siteShiny:actual,pending:shinyOnly&&pending,
    reason:shinyOnly?(pending?"Vinculação pendente":"Shiny não confirmado"):"Shiny está ativo na página"});
 }
