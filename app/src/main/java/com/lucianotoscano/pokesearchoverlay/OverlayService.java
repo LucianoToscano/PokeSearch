@@ -88,6 +88,7 @@ public class OverlayService extends Service {
     private int locationRadius=0;
     private boolean locationEditorOpen=false;
     private boolean showTimers=false,alerts=false;
+    private String alertsMode="off"; // off / on / silent, separate from favorite opt-in
     private String sort="despawn";
     private long lastAlertAt=0L;
     private final java.util.Set<String> knownSpawns=new java.util.HashSet<>();
@@ -147,14 +148,14 @@ public class OverlayService extends Service {
     private boolean dragged=false;
     private final Runnable periodic=new Runnable(){
         @Override public void run(){
-            if(stopped||loginPaused)return;
+            if(stopped||loginPaused||intervalMinutes<=0)return;
             refresh();
-            if(!stopped&&!loginPaused)handler.postDelayed(this,intervalMinutes*60000L);
+            if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(this,intervalMinutes*60000L);
         }
     };
     private void schedulePeriodic(){
         handler.removeCallbacks(periodic);
-        if(!stopped&&!loginPaused)handler.postDelayed(periodic,intervalMinutes*60000L);
+        if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(periodic,intervalMinutes*60000L);
     }
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
     private DisplayMetrics metrics(){
@@ -172,7 +173,7 @@ public class OverlayService extends Service {
         if(web!=null&&ready)web.evaluateJavascript(code,null);
     }
     private int count(){
-        try{return new JSONArray(results).length();}catch(Exception e){return 0;}
+        try{return new JSONArray(results).length();}catch(Exception e){recordFailure("contar resultados",e);return 0;}
     }
     private int rowDp(){
         // Compact vertical rhythm: real sprites have transparent margins.
@@ -182,7 +183,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         if(selected>=0)showDetails(selected);
@@ -215,7 +216,7 @@ public class OverlayService extends Service {
             menuLeft=!right;
             menuParams.x=right?params.x+dp(dockDp()):params.x-width;
             menuParams.y=Math.max(0,Math.min(params.y,bottom-menuParams.height-dp(8)));
-            menuPadDp=TOOLBAR_DP;
+            menuPadDp=0; // No spacer: side toolbar does not cover the sprites.
         }else{
             // Narrow display: position toolbar above/below the gear instead of covering it.
             menuLeft=params.x+dp(dockDp())/2>screen/2;
@@ -794,7 +795,7 @@ public class OverlayService extends Service {
     }
     private int rankForSort(JSONObject card){
         try{return Integer.parseInt(card.optString("rank","999999"));}
-        catch(Exception ignored){return 999999;}
+        catch(NumberFormatException ignored){return 999999;}
     }
     private boolean verifiedTargetCriteria(JSONObject card){
         if(card==null)return false;
@@ -861,13 +862,18 @@ public class OverlayService extends Service {
                 preferences.edit().putString("lastWatchAlertError",
                     "Permissão de notificações não concedida").apply();
         }
-        if(alerts&&!firstNew.isEmpty()&&now-lastAlertAt>60000L){
+        if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()&&now-lastAlertAt>60000L){
             lastAlertAt=now;
             NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
             if(nm!=null){
-                nm.createNotificationChannel(new NotificationChannel("pokesearch_alerts",
-                    "Novos Pokémon encontrados",NotificationManager.IMPORTANCE_DEFAULT));
-                Notification note=new Notification.Builder(this,"pokesearch_alerts")
+                boolean quiet="silent".equals(alertsMode);
+                String channelId=quiet?"pokesearch_alerts_silent_v1":"pokesearch_alerts";
+                NotificationChannel alertChannel=new NotificationChannel(channelId,
+                    quiet?"Novos Pokémon · silencioso":"Novos Pokémon encontrados",
+                    quiet?NotificationManager.IMPORTANCE_LOW:NotificationManager.IMPORTANCE_DEFAULT);
+                if(quiet)alertChannel.setSound(null,null);
+                nm.createNotificationChannel(alertChannel);
+                Notification note=new Notification.Builder(this,channelId)
                     .setSmallIcon(R.drawable.ic_notification)
                     .setContentTitle("Novo Pokémon: "+firstNew)
                     .setContentText("Encontrado na busca "+mode.toUpperCase(java.util.Locale.ROOT))
@@ -890,7 +896,7 @@ public class OverlayService extends Service {
                 card.put("sampledAt",now);
                 long end=expiration(card);
                 if(end!=Long.MAX_VALUE)card.put("expiresAtMs",end);
-            }catch(Exception ignored){}
+            }catch(Exception e){recordFailure("marcar despawn",e);}
         }
         JSONArray sorted=sortItems(items);
         recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
@@ -1109,11 +1115,13 @@ public class OverlayService extends Service {
             update();
         });}
         @JavascriptInterface public void toggleGeneralAlerts(){handler.post(()->{
-            alerts=!alerts;
-            getSharedPreferences("prefs",0).edit().putBoolean("alerts",alerts).apply();
+            alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off";
+            alerts=!"off".equals(alertsMode);
+            getSharedPreferences("prefs",0).edit().putString("alertsMode",alertsMode)
+                .putBoolean("alerts",alerts).apply();
             update();
             android.widget.Toast.makeText(OverlayService.this,
-                alerts?"Novos Pokémon: notificações ativadas":"Novos Pokémon: notificações desligadas",
+                "Novos Pokémon: "+("on".equals(alertsMode)?"ligadas":"silent".equals(alertsMode)?"silenciosas":"desligadas"),
                 android.widget.Toast.LENGTH_SHORT).show();
         });}
         @JavascriptInterface public void toggleWatchAlerts(){handler.post(()->{
@@ -1175,7 +1183,7 @@ public class OverlayService extends Service {
             }
         });}
         @JavascriptInterface public void setIntervalMinutes(int minutes){handler.post(()->{
-            if(minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
+            if(minutes!=0&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
             if(intervalMinutes==minutes)return;
             intervalMinutes=minutes;
             getSharedPreferences("prefs",0).edit()
@@ -1183,10 +1191,10 @@ public class OverlayService extends Service {
             schedulePeriodic();
             update();
             android.widget.Toast.makeText(OverlayService.this,
-                "AUTO: "+intervalMinutes+" minutos",android.widget.Toast.LENGTH_SHORT).show();
+                intervalMinutes==0?"AUTO desligado":"AUTO: "+intervalMinutes+" minutos",android.widget.Toast.LENGTH_SHORT).show();
         });}
         @JavascriptInterface public void cycleInterval(){handler.post(()->{
-            int[] options={5,10,15,20};
+            int[] options={0,5,10,15,20};
             int next=0;
             for(int j=0;j<options.length;j++){
                 if(options[j]==intervalMinutes){next=(j+1)%options.length;break;}
@@ -1255,6 +1263,9 @@ public class OverlayService extends Service {
         spriteSize=(wanted==35||wanted==45||wanted==55)?wanted:45;
         showTimers=prefs.getBoolean("showTimers",false);
         alerts=prefs.getBoolean("alerts",false);
+        alertsMode=prefs.getString("alertsMode",alerts?"on":"off");
+        if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";
+        alerts=!"off".equals(alertsMode);
         String wantedSort=prefs.getString("sort","despawn");
         sort=("rank".equals(wantedSort)||"iv".equals(wantedSort)||
               "shiny".equals(wantedSort))?wantedSort:"despawn";
@@ -1276,7 +1287,7 @@ public class OverlayService extends Service {
         update(); // Local UI only; does not call refresh or navigate the website.
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
-        String action=i==null?"":i.getAction();
+        String action=i==null||i.getAction()==null?"":i.getAction();
         if("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS".equals(action)){
             syncPreferencesWithoutSearch();
             return START_STICKY;
@@ -1344,13 +1355,16 @@ public class OverlayService extends Service {
         }else{
             intervalMinutes=pref.getInt("intervalMinutes",5);
         }
-        if(intervalMinutes!=5&&intervalMinutes!=10&&
+        if(intervalMinutes!=0&&intervalMinutes!=5&&intervalMinutes!=10&&
            intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=5;
         schedulePeriodic();
         spriteSize=pref.getInt("spriteSize",45);
         if(spriteSize!=35&&spriteSize!=45&&spriteSize!=55)spriteSize=45;
         showTimers=pref.getBoolean("showTimers",false);
         alerts=pref.getBoolean("alerts",false);
+        alertsMode=pref.getString("alertsMode",alerts?"on":"off");
+        if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";
+        alerts=!"off".equals(alertsMode);
         sort=pref.getString("sort","despawn");
         if(params!=null&&!menuExpanded){
             params.width=dp(minimized?BUBBLE_DP:dockDp());
