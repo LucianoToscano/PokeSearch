@@ -275,6 +275,75 @@ if(action.startsWith("readCoords:")){
  }
  return JSON.stringify({ok:false,status:"O site ainda não exibiu coordenadas"});
 }
+
+function locationFields(){
+ const inputs=elements('input:not([type=hidden]):not([type=checkbox]):not([type=radio])').filter(vis);
+ const label=e=>(e.getAttribute("placeholder")||"")+" "+(e.getAttribute("aria-label")||"");
+ const radius=inputs.find(e=>/radius|raio/i.test(label(e)));
+ let coords=inputs.find(e=>e!==radius&&/coords|coordinates|latitude|longitude|lat[ ,/]+lng|40\.637/i.test(label(e)));
+ if(!coords&&radius){
+  for(let p=radius.parentElement,depth=0;p&&depth<5;p=p.parentElement,depth++){
+   const nearby=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
+   if(nearby.length===2&&nearby.includes(radius)){coords=nearby.find(e=>e!==radius);break;}
+   if(nearby.length>6)break;
+  }
+ }
+ return {coords,radius};
+}
+function coordsModeSelected(){
+ const coordButton=oneButton("Coords"),areaButton=oneButton("Area");
+ if(!coordButton&&!areaButton)return null;
+ const active=e=>e&&(e.getAttribute("aria-pressed")==="true"||
+  e.getAttribute("aria-selected")==="true"||
+  ["true","on","active","checked"].includes(e.getAttribute("data-state")||"")||
+  /(?:^|\s)(?:active|selected|bg-red|bg-rose|bg-primary)(?:\s|$)/.test(e.className||""));
+ if(active(coordButton))return true;
+ if(active(areaButton))return false;
+ const inputs=locationFields();
+ return inputs.coords&&inputs.radius?true:null;
+}
+function locationValue(field){return field?String(field.value||"").trim():"";}
+function configureLocation(req){
+ const use=!!req.enabled;
+ const fieldsBefore=locationFields();
+ if(!use){
+  if(fieldsBefore.coords)valueInput(fieldsBefore.coords,"");
+  if(fieldsBefore.radius)valueInput(fieldsBefore.radius,"");
+  const area=oneButton("Area");
+  if(area&&coordsModeSelected()!==false)area.click();
+  return JSON.stringify({ok:true,stage:"location-off"});
+ }
+ if(typeof req.coords!=="string"||!/^[-+]?\d+(?:\.\d+)?,[-+]?\d+(?:\.\d+)?$/.test(req.coords)||
+    !Number.isInteger(req.radius)||req.radius<0||req.radius>1000)return JSON.stringify({ok:false,reason:"Parâmetros de localização inválidos"});
+ const coords=oneButton("Coords");
+ if(!coords)return JSON.stringify({ok:false,reason:"Opção Coords não localizada"});
+ if(coordsModeSelected()!==true)coords.click();
+ const fields=locationFields();
+ if(!fields.coords||!fields.radius)return JSON.stringify({ok:false,reason:"Campos de coordenadas/raio não encontrados"});
+ return JSON.stringify({ok:valueInput(fields.coords,req.coords)&&valueInput(fields.radius,String(req.radius)),stage:"location-on"});
+}
+function verifyLocation(req){
+ const fields=locationFields(),active=coordsModeSelected();
+ if(!req.enabled){
+  const blank=(!fields.coords||!locationValue(fields.coords))&&(!fields.radius||!locationValue(fields.radius));
+  return JSON.stringify({ok:active!==true&&blank,reason:"Coordenadas do site ainda ativas"});
+ }
+ const expected=String(req.coords||"").split(",").map(Number);
+ const actual=locationValue(fields.coords).split(/[,;]/).map(Number);
+ const same=fields.coords&&fields.radius&&actual.length===2&&expected.length===2&&
+   Math.abs(expected[0]-actual[0])<0.0000001&&Math.abs(expected[1]-actual[1])<0.0000001&&
+   Number(locationValue(fields.radius))===Number(req.radius);
+ return JSON.stringify({ok:!!same&&active!==false,reason:"Campos do filtro de localização não confirmados"});
+}
+
+if(action.startsWith("configureLocation:")){
+ try{return configureLocation(JSON.parse(action.slice("configureLocation:".length)));}
+ catch(_){return JSON.stringify({ok:false,reason:"Filtro de localização inválido"});}
+}
+if(action.startsWith("verifyLocation:")){
+ try{return verifyLocation(JSON.parse(action.slice("verifyLocation:".length)));}
+ catch(_){return JSON.stringify({ok:false,reason:"Verificação de localização inválida"});}
+}
 if(action==="verifyFilters")return JSON.stringify(check());
 if(action==="verifyShiny"){
  const actual=readShiny();
