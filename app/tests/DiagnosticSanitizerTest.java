@@ -26,6 +26,7 @@ public final class DiagnosticSanitizerTest {
         masks("abc@example.com","abc@example.com");
         masks("1234 5678 9012","1234 5678 9012");
         masks("-23.5505,-46.6333","-23.5505,-46.6333");
+        masks("+23.5505, -46.6333","+23.5505, -46.6333");
         check(!DiagnosticSanitizer.clean("first\nsecond").contains("\n"),"actual newline removed");
         check(DiagnosticSanitizer.clean("texto \\n literal").contains("\\n"),"literal backslash-n preserved");
         check(DiagnosticSanitizer.clean("X".repeat(500)).length()==220,"field bounded");
