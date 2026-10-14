@@ -372,7 +372,11 @@ if(action==="session"){
  const sw=shinyControl();
  const login=elements("a,button,[role=button]").some(e=>vis(e)&&/^(?:Log ?in|Sign ?in|Entrar|Fazer login)$/i.test(text(e)));
  const loggedIn=elements("a,button,[role=button]").some(e=>vis(e)&&/^(?:Log ?out|Sign ?out|Sair|Desconectar)$/i.test(text(e)));
- return JSON.stringify({ok:true,auth:loggedIn?"autenticada":login?"login necessário":"não confirmado",
+ // Mobile menus may hide Logout. The site's account-specific Shiny notice
+ // confirms a session without exposing the account identifier to Android.
+ const accountBadge=elements("p,small,span,div,label").some(e=>
+   vis(e)&&e.children.length<=2&&/^Shiny for your account\b/i.test(text(e))&&text(e).length<140);
+ return JSON.stringify({ok:true,auth:loggedIn||accountBadge?"autenticada":login?"login necessário":"não confirmado",
    shinyAvailable:!!sw,site:location.hostname});
 }
 if(action==="prepareSearch"){
