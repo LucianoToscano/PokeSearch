@@ -266,6 +266,24 @@ public final class PokemonPicker {
                 .putBoolean(WatchAlerts.PREF_ENABLED,enabled).apply());
         root.addView(sound);
 
+        android.widget.Button testNotification=new android.widget.Button(activity);
+        testNotification.setText("🔔 Testar notificação");
+        testNotification.setAllCaps(false);
+        testNotification.setTextSize(12);
+        testNotification.setTextColor(Color.rgb(218,247,239));
+        testNotification.setBackgroundColor(Color.argb(174,36,77,68));
+        LinearLayout.LayoutParams testParams=new LinearLayout.LayoutParams(-1,dp(activity,38));
+        testParams.setMargins(0,0,0,dp(activity,5));
+        root.addView(testNotification,testParams);
+        testNotification.setOnClickListener(v->{
+            boolean allowed=WatchAlerts.permissionGranted(activity);
+            boolean sent=allowed&&WatchAlerts.test(activity);
+            String message=!allowed
+                ?"Permissão de notificações pendente ou bloqueada no Android"
+                :sent?"Notificação de teste enviada":"Não foi possível enviar a notificação de teste";
+            Toast.makeText(activity,message,Toast.LENGTH_LONG).show();
+        });
+
         TextView note=new TextView(activity);
         note.setText("Somente IV100, Grande Liga #1 ou Ultra Liga #1, no filtro ativo.");
         note.setTextColor(Color.rgb(161,171,184));
