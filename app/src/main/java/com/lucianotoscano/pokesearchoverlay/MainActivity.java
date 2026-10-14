@@ -325,6 +325,31 @@ public class MainActivity extends Activity {
             });
         },1200L);
     }
+    // Site controls may hydrate after onPageFinished. Retry briefly instead
+    // of opening the full search page and leaving the user to locate Login.
+    // Never invent a private OAuth endpoint or click on provider domains.
+    private void openOfficialLoginControl(WebView view,int remaining){
+        if(remaining<=0||view!=website||loginLinkAttempted||
+           loginDialog==null||!loginDialog.isShowing())return;
+        Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
+        String host=current.getHost();
+        if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
+           host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
+        String script="(function(){var a=Array.from(document.querySelectorAll('a,button,[role=button]'));"+
+            "var label=function(e){return (e.innerText||e.textContent||'').trim();};"+
+            "if(a.some(function(e){return /^(?:log\\s*out|sign\\s*out|sair|desconectar)$/i.test(label(e));}))return 'authenticated';"+
+            "var e=a.find(function(x){return /^(?:log\\s*in|sign\\s*in|entrar|fazer login)$/i.test(label(x));});"+
+            "if(e&&!e.disabled&&e.getClientRects().length){e.click();return 'opened';}return 'waiting';})()";
+        view.evaluateJavascript(script,result->{
+            if(view!=website||loginLinkAttempted||loginDialog==null||
+               !loginDialog.isShowing())return;
+            if(result!=null&&(result.contains("opened")||result.contains("authenticated"))){
+                loginLinkAttempted=true;
+            }else{
+                view.postDelayed(()->openOfficialLoginControl(view,remaining-1),330L);
+            }
+        });
+    }
     private void openLoginDialog(){openLoginDialog(true);}
     private void openLoginDialog(boolean shinyRequest){
         if(loginDialog!=null&&loginDialog.isShowing())return;
@@ -352,14 +377,8 @@ public class MainActivity extends Activity {
                 String host=Uri.parse(url).getHost();
                 if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
                      host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
-                // Home login must not silently turn on Shiny.
-                if(!loginLinkAttempted){
-                    // Follow the actual site's Login control once, without guessing an
-                    // OAuth URL or collecting credentials in a native app form.
-                    loginLinkAttempted=true;
-                    view.evaluateJavascript("(function(){var a=Array.from(document.querySelectorAll('a,button,[role=button]'));var e=a.find(function(x){return /^(?:log ?in|sign ?in|entrar|fazer login)$/i.test((x.innerText||x.textContent||'').trim());});if(e){e.click();return true;}return false;})()",null);
-                }
-                if(loginStartedForShiny)view.evaluateJavascript(readAsset("shiny_login.js"),null);
+                // Only the official site's login control is auto-opened.
+                openOfficialLoginControl(view,8);
                 // OAuth may complete without dismissing the dialog. A successful
                 // return to the site refreshes the collector in-place.
                 view.evaluateJavascript("(function(){return Array.from(document.querySelectorAll('a,button')).some(e=>/^(log\\s*out|sign\\s*out|sair|desconectar)$/i.test((e.innerText||e.textContent||'').trim()))})()",
@@ -381,6 +400,8 @@ public class MainActivity extends Activity {
                         }
                         if("true".equals(value)&&loginStartedForShiny&&
                            !loginAutoReturnQueued){
+                            // Never touch the Shiny switch until auth is detected.
+                            view.evaluateJavascript(readAsset("shiny_login.js"),null);
                             // For Shiny, wait for confirmed site filter and trainer linking.
                             checkShinyReturn(view,10);
                         }

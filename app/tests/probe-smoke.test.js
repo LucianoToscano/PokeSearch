@@ -24,6 +24,9 @@ function run(action,mode,shinyOnly,opts={}){
   if(opts.switch!==undefined){
     const lab=element("Shiny only");
     const sw=element("",{"aria-checked":String(opts.switch)},{tagName:"BUTTON"});
+    let switchState=!!opts.switch;
+    sw.getAttribute=name=>name==="aria-checked"?String(switchState):null;
+    sw.click=()=>{switchState=!switchState;};
     const parent=element();
     parent.querySelectorAll=(selector)=>{
       if(selector.includes("button[aria-checked]"))return [sw];
@@ -96,6 +99,22 @@ test("Raw IV invalid","verifyFilters","iv",false,{iv:["15","15","14"]},false);
 test("Shiny-off ignores trainer linking prompt","verifyShiny","iv",false,{switch:false,pending:true},true);
 test("Percent IV 100-100 valid without Shiny","verifyFilters","iv",false,{iv:["100","100"],switch:false},true);
 test("Percent IV different fails IV100","verifyFilters","iv",false,{iv:["100","98"],switch:false},false);
+const turnOn=run("setShiny","iv",true,{switch:false});
+assert.equal(turnOn.ok,true,"Direct Shiny activation works without submitting a search");
+assert.equal(turnOn.changed,true,"Direct activation clicks the control");
+assert.equal(turnOn.siteShiny,true,"Direct activation reads the verified switch");
+checked++;
+const turnOff=run("setShiny","gl",false,{switch:true});
+assert.equal(turnOff.ok,true,"Direct Shiny deactivation works in GL");
+assert.equal(turnOff.siteShiny,false,"Deactivation clears the site switch");
+checked++;
+const loginNeeded=run("setShiny","ul",true,{});
+assert.equal(loginNeeded.ok,false,"Shiny activation without site control is not fake success");
+assert.equal(loginNeeded.controlFound,false,"Missing site control leads to login prompt");
+checked++;
+const publicOff=run("setShiny","iv",false,{});
+assert.equal(publicOff.ok,true,"Shiny OFF does not require login when switch is absent");
+checked++;
 const spawn="Tangela\\n#114 Female M\\nInfestation / Solar Beam\\nCP\\n404\\nLVL\\n7\\nIV\\n67% (1/15/14)\\nLOCATION\\nBron, Rhone, France\\nDESPAWN\\n57:57\\nGet coords";
 const league=run("collect","gl",false,{switch:false,pvp:{rank:"1",league:"Great League",prior:"Yes"},spawn});
 assert.equal(league.cards.length,1,"GL#1: card without a rank label must be accepted only when form confirms rank 1");

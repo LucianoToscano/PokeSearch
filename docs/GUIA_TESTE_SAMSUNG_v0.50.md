@@ -1,6 +1,6 @@
-# GUIA DE TESTE SAMSUNG — PokeSearch v0.50-beta
+# CENÁRIO DE TESTE — Samsung SM-S928B / PokeSearch v0.50-beta
 
-Dispositivo-alvo Samsung SM-S928B / Android 16. **Roteiro de teste — ainda não executado no aparelho**. Preservar `GUIA_TESTE_SAMSUNG_v0.49.md` nos documentos históricos.
+Dispositivo deste cenário: Samsung SM-S928B / Android 16. **PokeSearch não é exclusivo deste fabricante ou modelo**; matriz geral em `GUIA_COMPATIBILIDADE_ANDROID_v0.50.md`. **Roteiro de teste — ainda não executado no aparelho**. Preservar `GUIA_TESTE_SAMSUNG_v0.49.md` nos documentos históricos.
 
 ## PS-081 — permissões
 - [ ] Na Home, sem POST_NOTIFICATIONS concedida, tocar "🔔 Testar notificação": confirmar diálogo nativo (requestCode203).
