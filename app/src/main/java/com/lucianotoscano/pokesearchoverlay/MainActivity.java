@@ -43,6 +43,7 @@ public class MainActivity extends Activity {
     private AlertDialog loginDialog;
     private boolean loginSessionNotified=false;
     private boolean loginCloseRefreshSent=false;
+    private String pendingReportText="";
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         getWindow().setStatusBarColor(Color.rgb(11,13,18));
@@ -126,6 +127,8 @@ public class MainActivity extends Activity {
             root.post(this::showPreferencesDialog);
         if("com.lucianotoscano.pokesearchoverlay.OPEN_PIX".equals(getIntent().getAction()))
             root.post(()->PixSupport.show(this));
+        if("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT".equals(getIntent().getAction()))
+            root.post(this::showBugReportDialog);
     }
     private ImageButton makeIcon(int drawable,String description){
         ImageButton button=new ImageButton(this);
@@ -157,6 +160,11 @@ public class MainActivity extends Activity {
         if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
             getWindow().getDecorView().post(this::openLoginDialog);
     }
+    private void serviceAction(String action){
+        Intent intent=new Intent(this,OverlayService.class);
+        intent.setAction(action);
+        if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
+    }
     private void notifyOverlaySessionReady(){
         CookieManager.getInstance().flush();
         Intent intent=new Intent(this,OverlayService.class);
@@ -171,6 +179,9 @@ public class MainActivity extends Activity {
         website.getSettings().setJavaScriptEnabled(true);
         website.getSettings().setDomStorageEnabled(true);
         website.getSettings().setDatabaseEnabled(true);
+        website.setFocusable(true);
+        website.setFocusableInTouchMode(true);
+        website.setImportantForAutofill(android.view.View.IMPORTANT_FOR_AUTOFILL_YES);
         website.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         website.getSettings().setAllowFileAccess(false);
         website.getSettings().setAllowContentAccess(false);
@@ -212,9 +223,20 @@ public class MainActivity extends Activity {
             loginDialog=null;
             // Refresh after a dismissed login dialog only once; positive button
             // refreshes before sending the app to background (Android 12+).
+            serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END");
             if(!loginCloseRefreshSent)notifyOverlaySessionReady();
         });
+        serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN");
         loginDialog.show();
+        android.view.Window loginWindow=loginDialog.getWindow();
+        if(loginWindow!=null){
+            loginWindow.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+            loginWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+            loginWindow.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,
+                Math.min(getResources().getDisplayMetrics().heightPixels-d(88),d(680)));
+        }
+        website.requestFocus();
         website.loadUrl("https://pogocoordinates.com/search");
     }
     @Override protected void onNewIntent(Intent intent){
@@ -227,6 +249,42 @@ public class MainActivity extends Activity {
             getWindow().getDecorView().post(this::showPreferencesDialog);
         if("com.lucianotoscano.pokesearchoverlay.OPEN_PIX".equals(intent.getAction()))
             getWindow().getDecorView().post(()->PixSupport.show(this));
+        if("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT".equals(intent.getAction()))
+            getWindow().getDecorView().post(this::showBugReportDialog);
+    }
+    private void showBugReportDialog(){
+        BugReport.log(this,"report","Relatório aberto manualmente");
+        EditText description=new EditText(this);
+        description.setHint("Descreva o erro ou sua sugestão (opcional)");
+        description.setMinLines(3);
+        description.setMaxLines(6);
+        description.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        new AlertDialog.Builder(this)
+            .setTitle("⚠️ Reportar bug / sugestão")
+            .setMessage("O relatório reúne diagnóstico técnico sem senhas, cookies ou códigos de amizade. Confira antes de compartilhar.")
+            .setView(description)
+            .setNegativeButton("Fechar",null)
+            .setNeutralButton("Exportar TXT",(dialog,which)->exportBugReport(description.getText().toString()))
+            .setPositiveButton("WhatsApp",(dialog,which)->reportWhatsApp(description.getText().toString()))
+            .show();
+    }
+    private void exportBugReport(String suggestion){
+        pendingReportText=BugReport.export(this,suggestion);
+        Intent create=new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        create.addCategory(Intent.CATEGORY_OPENABLE);
+        create.setType("text/plain");
+        create.putExtra(Intent.EXTRA_TITLE,"PokeSearch-relatorio-"+System.currentTimeMillis()+".txt");
+        try{startActivityForResult(create,301);}
+        catch(Exception e){Toast.makeText(this,"Não foi possível abrir o salvamento TXT",Toast.LENGTH_LONG).show();}
+    }
+    private void reportWhatsApp(String suggestion){
+        String report=BugReport.export(this,suggestion);
+        // No automatic upload. The user sees and sends the prepared WhatsApp message.
+        String sample=report.substring(0,Math.min(1300,report.length()));
+        Intent browser=new Intent(Intent.ACTION_VIEW,
+            Uri.parse("https://wa.me/5584991319021?text="+Uri.encode(sample)));
+        try{startActivity(browser);}
+        catch(Exception e){Toast.makeText(this,"WhatsApp indisponível. Use Exportar TXT.",Toast.LENGTH_LONG).show();}
     }
     private int d(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
     private void showPreferencesDialog(){
@@ -317,6 +375,14 @@ public class MainActivity extends Activity {
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
         if(req==101&&Settings.canDrawOverlays(this))startOverlay();
+        if(req==301 && result==RESULT_OK && data!=null && data.getData()!=null){
+            try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){
+                if(out==null)throw new java.io.IOException("Documento indisponível");
+                out.write(pendingReportText.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                Toast.makeText(this,"Relatório TXT salvo",Toast.LENGTH_LONG).show();
+            }catch(Exception e){Toast.makeText(this,"Não foi possível salvar o relatório",Toast.LENGTH_LONG).show();}
+            pendingReportText="";
+        }
     }
     @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
         super.onRequestPermissionsResult(requestCode,permissions,results);
