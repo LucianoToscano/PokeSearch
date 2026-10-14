@@ -34,3 +34,9 @@
 - GitHub Actions: `.github/workflows/build-overlay.yml` deve executar `node --check`, smoke do site, testes UI, `:app:testDebugUnitTest`, `:app:assembleDebug`, lint, ZIP, verificação `apksigner` v2, versão real do APK e SHA256SUMS.
 - Só declarar APK pronto após HEAD vigente e CI verde; gerar kit com APK, código-fonte, mestre, auditoria e hash.
 - Google Drive do projeto: `00_Documentacao_Atual`, `01_APKs_Teste`, `02_Relatorios_Bugs`, histórico preservado.
+
+## Ajuste adicional — distribuição visual de sprites (captura do usuário)
+- Problema comprovado no código: `rowDp()` usava `Math.min(spriteSize-5,...)`; com sprite de 45dp, a linha podia ter só 40dp e as imagens se sobrepunham.
+- Correção v0.40: `rowDp()=spriteSize+10` para centrar sprites em linhas uniformes, com folga de 10dp (não muda o tamanho do Pokémon).
+- `dock.html`: cada cartão ocupa uma linha inteira, margem vertical padronizada, rolagem discreta sem barra, e limite de altura da lista calculado no Android para não cortar os resultados. São exibidos até seis sprites antes da rolagem, dependendo do espaço disponível.
+- Teste estático em `app/tests/overlay-ux.test.js` para impedir regressões de espaçamento ou ausência de rolagem; verificar visualmente com sprites pequenos/grandes no aparelho antes de fechar.
