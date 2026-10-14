@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 public class OverlayService extends Service {
     private static volatile boolean running=false;
     public static boolean isRunning(){return running;}
-    private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=66;
+    private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
     private int menuDp(){return Math.max(1,Math.min(396,screenWidthDp()-8));}
@@ -223,7 +223,7 @@ public class OverlayService extends Service {
             menuParams.x=Math.max(0,Math.min(screen-width,params.x+dp(dockDp())/2-width/2));
             int below=params.y+dp(TOOLBAR_DP);
             int above=params.y-menuParams.height;
-            // On phones the controls span the display: show them directly ABOVE
+            // On phones the single compact row fits above/below the gear.
             // the gear, so the gear and the Pokémon column stay close together.
             if(above<0){
                 // Keep the gear and first sprite together. Reposition the

@@ -32,7 +32,7 @@ test("Chevron is at bottom of the sprites",dock.indexOf('id="collapse"')>dock.in
 test("Red close is alongside heart with standard background",dock.indexOf('id="close"')>dock.indexOf('id="donate"')&&dock.includes("#controls #close{"));
 test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'));
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
-test("Separate toolbar reserves exactly two compact icon rows",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP)')&&service.includes("MENU_BASE_DP=66"));
+test("Original compact toolbar is only one 34dp row",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP)')&&service.includes("MENU_BASE_DP=34"));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login returns to Home and does not send it to background",!main.includes('postDelayed(()->moveTaskToBack(true)'));
 test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
@@ -51,8 +51,9 @@ test("Login, Shiny and league filters remain independent",service.includes('JSON
 
 const toolbarCols=dock.match(/#controls\{[^}]*grid-template-columns:([^;]+);/);
 const toolbarButtons=dock.slice(dock.indexOf('<div id="menu"><div id="controls">'),dock.indexOf('</div><div id="choices"')).match(/<button\b/g)||[];
-test("All twelve toolbar actions use a symmetric six-by-two grid",
-  !!toolbarCols&&toolbarCols[1].trim()==="repeat(6,minmax(0,1fr))"&&toolbarButtons.length===12&&dock.includes("grid-auto-rows:30px;gap:2px"));
+test("All twelve toolbar actions fit compactly side by side on one row",
+  !!toolbarCols&&toolbarCols[1].trim()==="34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr"&&
+  toolbarButtons.length===12&&dock.includes("grid-auto-flow:column"));
 test("Single pin shows active radius without a second settings button",
   (dock.match(/id="location"/g)||[]).length===1&&dock.includes('id="locationRadiusText"')&&
   dock.includes('textContent=locationEnabled?locationRadius+"km":""'));
@@ -65,7 +66,7 @@ test("When OFF, icon and badge never display outdated radius",
 test("Switching from location editor to mode releases keyboard focus",
   dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
-test("Six equal-width columns fit narrow and wide Android screens",dock.includes("grid-template-columns:repeat(6,minmax(0,1fr))")&&service.includes("Math.min(396,screenWidthDp()-8)"));
+test("Compact twelve-column bar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(396,screenWidthDp()-8)"));
 test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
 test("Chevron has visible artwork and no surface background",dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
@@ -193,8 +194,9 @@ test("v0.50 notifications cycle off / on / silent",
 test("v0.50 silent channels are actually without sound",
     service.includes('pokesearch_alerts_silent_v1')&&
     watch.includes('pokesearch_watch_silent_v1')&&watch.includes('channel.setSound(null,null)'));
-test("v0.50 direct login uses site's actual control, not guessed OAuth route",
-    main.includes('loginLinkAttempted=true;')&&main.includes("e.click();return 'opened';")&&
+test("v0.50 direct login uses the real site switch without guessed OAuth routes",
+    main.includes('readAsset("login_entry.js")')&&
+    read("assets/login_entry.js").includes('candidate.click();')&&
     main.includes('website.loadUrl("https://pogocoordinates.com/search")'));
 test("v0.50 service accepts missing action on initial start",
     service.includes('i==null||i.getAction()==null?"":i.getAction()'));
@@ -204,9 +206,9 @@ test("v0.50 neutral UI includes smaller location icon",
 test("Android responsive controls have no phantom spacer below popup",
   service.includes('Math.round((menuParams.y+menuParams.height-params.y)/d.density)-30+2')&&
   service.includes('menuPadDp=0; // No spacer: side toolbar')&&
-  dock.includes('#choices{display:none;position:absolute;top:66px;'));
-test("Android responsive controls measure their actual two-row height",
-  dock.includes('if(controlsWindow)h=Math.max(66,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);')&&
+  dock.includes('#choices{display:none;position:absolute;top:34px;'));
+test("Android responsive controls measure actual one-row menu height",
+  dock.includes('if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);')&&
   service.includes('menuParams.height=dp(MENU_BASE_DP)')&&
   service.includes('Math.min(450,screenHeightDp()-72)'));
 test("Android responsive layout contains all 12 controls exactly once",
@@ -233,7 +235,7 @@ test("Shiny is only verified after reading site state",
   service.includes('if(stopped||loginPaused||generation!=requestGeneration)return;'));
 test("Login retries the official control for delayed site hydration",
   main.includes('private void openOfficialLoginControl(WebView view,int remaining)')&&
-  main.includes('view.postDelayed(()->openOfficialLoginControl(view,remaining-1),330L)')&&
+  main.includes('view.postDelayed(()->openOfficialLoginControl(view,remaining-1),260L)')&&
   main.includes('openOfficialLoginControl(view,8);'));
 test("Login uses official site and Shiny activation remains in background collector",
   main.includes('host.equalsIgnoreCase("pogocoordinates.com")')&&
@@ -277,10 +279,11 @@ test("Login initially masks the unrelated PoGoCoordinates search page",
   main.includes("loginStage.addView(website,new FrameLayout.LayoutParams(-1,-1));")&&
   main.includes("loginStage.addView(loginWaiting,new FrameLayout.LayoutParams(-1,-1));")&&
   main.includes("loginCover=loginWaiting;"));
-test("Login reveals only after opening the official sign-in control",
+test("Login only reveals official provider dialog and supports Shiny switch tap",
   main.includes("if(loginCover!=null)loginCover.setVisibility(View.GONE);")&&
-  main.includes('e.click();return \'opened\';')&&
-  main.includes('result.contains("\\\"opened\\\"")'));
+  main.includes('result.contains("\\\"ready\\\"")')&&
+  read("assets/login_entry.js").includes('return "ready";')&&
+  read("assets/login_entry.js").includes('candidate.click();'));
 test("Login tests session before opening a fresh login link",
   main.indexOf("checkLoginSession(view,14,generation);")>=0&&
   main.includes("if(attemptsLeft<=13&&!loginDiscoveryStarted&&!loginLinkAttempted)")&&
@@ -297,4 +300,16 @@ test("Minimal login surface is neutral and release clears native references",
   main.includes('loginWaitLabel.setText("Preparando acesso ao PoGoCoordinates')&&
   main.includes("loginWaiting.setBackgroundColor(Color.rgb(11,13,18));")&&
   main.includes("loginCover=null;")&&main.includes("loginFallback=null;"));
+test("Regression: a single line instead of two oversized icon rows",
+  dock.includes('#menu{display:none;position:absolute;top:0;left:var(--dock);width:396px;height:34px;')&&
+  dock.includes('#controls{grid-auto-flow:column}')&&
+  dock.includes('body.controls-window #menu{min-height:34px}')&&
+  !dock.includes('repeat(6,minmax(0,1fr))'));
+test("Official Shiny switch can initiate login without exposing search page",
+  read("assets/login_entry.js").includes('const fromShiny=__SHINY__;')&&
+  read("assets/login_entry.js").includes('window.__psShinyLoginTapped=true;')&&
+  main.includes('.replace("__SHINY__",loginStartedForShiny?"true":"false")'));
+test("The site is only exposed once sign-in content is actually ready",
+  read("assets/login_entry.js").includes('if(authDialog||providerChoices)return "ready";')&&
+  main.includes('result.contains("\\\"ready\\\"")'));
 console.log("PokeSearch UX contract: "+count+" tests passed");

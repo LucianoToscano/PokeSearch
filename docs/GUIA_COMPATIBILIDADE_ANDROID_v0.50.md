@@ -9,7 +9,7 @@
 
 ## Padrão visual de aceitação
 1. **Minimalismo funcional**: paleta neutra cinza/branco, fundos do dock transparentes, pequenos contrastes apenas em estados críticos.
-2. **Alinhamento/simetria**: barra com 12 ações organizadas em **6 colunas iguais × 2 linhas**; botões do mesmo tamanho e mesmo espaçamento (2 px CSS). Cada célula tem 30 px CSS de altura. Ícones centralizados; ícone 📍 proporcional.
+2. **Alinhamento/simetria**: barra com 12 ações organizadas em **uma única linha de ícones pequenos**, colunas proporcionais aos ícones e espaçamento de 2 px CSS. A altura da barra é 34dp. Ícones centralizados; ícone 📍 proporcional.
 3. **Sem espaços artificiais**: o dock reserva margem vertical **apenas** quando o menu realmente cobre a área dos Pokémon; não acrescentar espaço de 34 dp ao posicionamento lateral/por cima. Seta imediatamente após lista ou indicador de estado.
 4. **Controle compacto, porém legível**: textos curtos, símbolos reconhecíveis, descrição acessível via `aria-label` e `title`, foco perceptível e feedback imediato.
 5. **Sem obstrução indevida**: toques fora das janelas de ações e Pokémon devem seguir para o jogo; preferir janela pequena, não uma tela invisível por cima do jogo.
@@ -64,3 +64,6 @@
 - [ ] Após o site confirmar sessão (inclusive conta no texto Shiny com Logout oculto), a interface externa fecha e retorna à Home sem esperar a ativação do Shiny.
 - [ ] Se o botão oficial não existir, aparecer a ação `Mostrar o site para entrar`. O usuário pode optar por visualizar o site integralmente.
 - [ ] Testar em WebViews, versões Android e fabricantes diferentes; registrar eventuais alterações do DOM sem dados pessoais.
+
+## PS-090 — Correção do menu e do login acionado por ✨
+**Pedido confirmado por captura:** restaurar o menu original com **12 ícones pequenos lado a lado em UMA única linha** (34dp), cores cinza/branco e sem espaçamento artificial; retirar a grade 6×2 (66dp), que foi uma regressão de UX. Os filtros continuam ativos sem alteração funcional. Ao tocar ✨ deslogado, o fluxo de login deve tentar o botão oficial ou o próprio switch Shiny da aba Pokémon, sem mostrar primeiro a página de pesquisa. Após a autenticação, retorna automaticamente ao PokeSearch; o switch passa a ser gerenciado e confirmado no serviço. Uma máscara neutra só desaparece quando os controles reais de autenticação estão disponíveis. Se o DOM do site mudar, o fallback voluntário permite mostrar o site, nunca um bloqueio sem saída. Respeitar o Manifest/targetSdk/identidade do aplicativo independente. OAuth real e interface em diferentes Androids exigem validação física.
