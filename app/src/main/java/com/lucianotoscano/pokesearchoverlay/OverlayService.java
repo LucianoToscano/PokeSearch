@@ -140,7 +140,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         js(panel,panelLoaded,"window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+")");
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*6,screenHeightDp()-185))+")");
         if(selected>=0)showDetails(selected);
     }
     private void status(String s){
