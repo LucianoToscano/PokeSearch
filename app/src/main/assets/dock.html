@@ -11,6 +11,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulat
 @keyframes gearbusy{to{transform:rotate(360deg)}}
 #menu{display:none;position:absolute;top:var(--top-space);left:var(--dock);width:283px;height:25px;z-index:3;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
 #menu.open{display:block}
+#choices{display:none;position:absolute;top:29px;left:0;z-index:12;width:166px;padding:5px;background:#151c27f5;border:1px solid #ffffff38;border-radius:10px;box-shadow:0 4px 12px #0008}
+#choices.visible{display:block}
+body.menu-left #choices{left:auto;right:0}
+#choices button{width:100%;display:block;text-align:left;padding:8px 9px;margin:1px 0;border-radius:7px;background:transparent;border:0;color:#e8ebef;font-size:12px;line-height:1.3;white-space:normal}
+#choices button.chosen{background:#263f39;color:#a2efd3;font-weight:700}
+#choices .choiceHeader{padding:3px 9px 6px;color:#9faabd;font-weight:bold;font-size:10px}
 body.menu-left #shell{margin-left:283px}
 body.menu-left #menu{left:-283px}
 #controls{width:279px;display:grid;grid-template-columns:36px 23px 43px 22px 22px 23px 23px 23px 23px 23px;gap:2px;padding:0;margin:0;align-items:center}
@@ -59,9 +65,9 @@ body.menu-open #topActions{display:flex}
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
  <div id="menu"><div id="controls">
-  <button id="cycle" title="Alternar IV100, Grande Liga #1, Ultra Liga #1" onclick="Native.cycleMode()">100%</button>
+  <button id="cycle" title="Escolher IV100, Grande Liga #1 ou Ultra Liga #1" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('mode')">100%</button>
   <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()">✨</button>
-  <button id="period" title="Atualização automática" aria-label="Atualização automática, 5 minutos" onclick="Native.cycleInterval()"><span class="autoLabel">AUTO</span><span class="autoTime">5m</span></button>
+  <button id="period" title="Escolher intervalo automático" aria-label="Atualização automática, 5 minutos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">5m</span></button>
   <button id="manualRefresh" title="Atualizar resultados agora" onclick="Native.refresh()">↻</button>
   <button id="size" title="Tamanho P / M / G" onclick="Native.cycleSpriteSize()">M</button>
   <button id="clock" title="Mostrar ou ocultar tempo de despawn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
@@ -69,7 +75,7 @@ body.menu-open #topActions{display:flex}
   <button id="star" title="Meus favoritos · alertas específicos IV100 / GL#1 / UL#1" onclick="Native.openWatchList()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg></button>
   <button id="report" title="⚠ Reportar bugs, enviar sugestões e exportar diagnóstico TXT" aria-label="Reportar bugs e sugestões" onclick="Native.openReport()">⚠</button>
   <button id="donate" title="Gostou do PokeSearch? Apoie com um café · Pix voluntário" onclick="Native.openPix()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z"/></svg></button>
- </div></div>
+ </div><div id="choices" role="group" aria-label="Escolher opção"></div></div>
  <div id="topActions">
   <button id="close" title="Fechar todo o overlay" aria-label="Encerrar overlay" onclick="Native.close()">×</button>
   <button id="collapse" title="Recolher tudo e deixar apenas a engrenagem" aria-label="Minimizar overlay" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="14" rx="2"/><path d="m9 11 3 3 3-3"/></svg></button>
@@ -79,7 +85,7 @@ body.menu-open #topActions{display:flex}
 </div>
 <div id="bubble" role="button" aria-label="Restaurar overlay"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></div>
 <script>
-let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false;
+let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false;
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
  document.documentElement.style.setProperty("--top-space",menuOpen?((Number(pad)||54)+"px"):"0px");
@@ -87,7 +93,7 @@ function setMenuOpen(open,side,pad){
  document.getElementById("menu").classList.toggle("open",menuOpen);
  document.getElementById("gear").setAttribute("aria-expanded",String(menuOpen));
  document.getElementById("gear").setAttribute("aria-label",menuOpen?"Recolher opções":"Abrir opções");
- if(!menuOpen)document.body.classList.remove("menu-left");
+ if(!menuOpen){closeChoices();document.body.classList.remove("menu-left");}
  else if(side)document.body.classList.toggle("menu-left",side==="left");
 }
 window.syncMenu=(open,side,pad)=>setMenuOpen(open,side,pad);
