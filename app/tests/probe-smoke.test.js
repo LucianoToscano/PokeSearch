@@ -9,7 +9,7 @@ function element(text="",attrs={},extra={}){
   return {
     innerText:text,textContent:text,children:[],parentElement:null,tagName:"SPAN",
     value:"",disabled:false,
-    getClientRects:()=>[{}],querySelectorAll:()=>[],
+    getClientRects:()=>[{}],querySelectorAll:()=>[],querySelector:()=>null,
     getAttribute:(name)=>Object.prototype.hasOwnProperty.call(attrs,name)?attrs[name]:null,
     hasAttribute:(name)=>Object.prototype.hasOwnProperty.call(attrs,name),
     matches:(sel)=>sel==="input[type=checkbox]" && extra.checkbox===true,
