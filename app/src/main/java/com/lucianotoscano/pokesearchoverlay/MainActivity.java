@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebChromeClient;
 import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
 import android.widget.Button;
@@ -39,7 +40,8 @@ import android.graphics.Typeface;
 public class MainActivity extends Activity {
     private WebView website;
     private TextView watchSummary;
-    private boolean shinyLoginRequested=false;
+    private AlertDialog loginDialog;
+    private boolean loginFlow=false;
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         getWindow().setStatusBarColor(Color.rgb(11,13,18));
@@ -108,24 +110,14 @@ public class MainActivity extends Activity {
         root.addView(watchRow,rowParams);
         watchRow.setOnClickListener(v->openPicker());
         refreshWatchCount();
-        website=new WebView(this);
-        website.getSettings().setJavaScriptEnabled(true);
-        website.getSettings().setDomStorageEnabled(true);
-        website.getSettings().setDatabaseEnabled(true);
-        website.setBackgroundColor(Color.rgb(12,14,20));
-        CookieManager.getInstance().setAcceptCookie(true);
-        CookieManager.getInstance().setAcceptThirdPartyCookies(website,true);
-        website.setWebViewClient(new WebViewClient(){
-            @Override public void onPageFinished(WebView view,String url){
-                if(url!=null&&url.startsWith("https://pogocoordinates.com/")){
-                    view.evaluateJavascript(readAsset("presets.js"),null);
-                    if(shinyLoginRequested)runRequestedShinyLogin();
-                }
-            }
-        });
-        root.addView(website,new LinearLayout.LayoutParams(-1,0,1));
+        // Home independente: a interface do site não faz parte da tela principal.
+        TextView hint=new TextView(this);
+        hint.setText("Resultados reais no overlay • IV100 • GL#1 • UL#1\nO login do PoGoCoordinates abre apenas quando necessário.");
+        hint.setTextColor(Color.rgb(155,165,181));
+        hint.setTextSize(12);
+        hint.setGravity(Gravity.CENTER);
+        root.addView(hint,new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
-        website.loadUrl("https://pogocoordinates.com/search");
         handleShinyLoginIntent(getIntent());
         if("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST".equals(getIntent().getAction()))
             root.post(this::openPicker);
@@ -161,23 +153,54 @@ public class MainActivity extends Activity {
         refreshWatchCount();
     }
     private void handleShinyLoginIntent(Intent intent){
-        if(intent==null||!"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))return;
-        shinyLoginRequested=true;
-        if(website!=null){
-            String current=website.getUrl();
-            if(current!=null&&current.startsWith("https://pogocoordinates.com/search"))
-                runRequestedShinyLogin();
-            else if(current!=null&&!current.startsWith("https://pogocoordinates.com/"))
-                website.loadUrl("https://pogocoordinates.com/search");
-        }
+        if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
+            getWindow().getDecorView().post(this::openLoginDialog);
     }
-    private void runRequestedShinyLogin(){
-        if(!shinyLoginRequested||website==null)return;
-        shinyLoginRequested=false;
-        website.postDelayed(()->{
-            if(website!=null&&website.getUrl()!=null&&website.getUrl().startsWith("https://pogocoordinates.com/"))
-                website.evaluateJavascript(readAsset("shiny_login.js"),null);
-        },900);
+    private void notifyOverlaySessionReady(){
+        CookieManager.getInstance().flush();
+        Intent intent=new Intent(this,OverlayService.class);
+        intent.setAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
+        if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
+    }
+    private void openLoginDialog(){
+        if(loginDialog!=null&&loginDialog.isShowing())return;
+        website=new WebView(this);
+        website.getSettings().setJavaScriptEnabled(true);
+        website.getSettings().setDomStorageEnabled(true);
+        website.getSettings().setDatabaseEnabled(true);
+        website.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
+        website.getSettings().setAllowFileAccess(false);
+        website.getSettings().setAllowContentAccess(false);
+        CookieManager.getInstance().setAcceptCookie(true);
+        CookieManager.getInstance().setAcceptThirdPartyCookies(website,true);
+        website.setWebChromeClient(new WebChromeClient());
+        website.setWebViewClient(new WebViewClient(){
+            @Override public void onPageFinished(WebView view,String url){
+                if(url==null || !url.startsWith("https://pogocoordinates.com/"))return;
+                // OAuth may complete without dismissing the dialog. A successful
+                // return to the site refreshes the collector in-place.
+                view.evaluateJavascript("(function(){return Array.from(document.querySelectorAll('a,button')).some(e=>/^(log\\s*out|sign\\s*out|sair|desconectar)$/i.test((e.innerText||e.textContent||'').trim()))})()",
+                    value->{if("true".equals(value))notifyOverlaySessionReady();});
+            }
+        });
+        loginFlow=true;
+        loginDialog=new AlertDialog.Builder(this)
+            .setTitle("Login • PoGoCoordinates")
+            .setMessage("Entre com sua conta. Ao concluir, a busca do overlay será atualizada sem precisar fechá-lo.")
+            .setView(website)
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Voltar ao overlay",(d,which)->{
+                notifyOverlaySessionReady();
+                moveTaskToBack(true);
+            }).create();
+        loginDialog.setOnDismissListener(d->{
+            loginFlow=false;
+            if(website!=null){website.stopLoading();website.destroy();website=null;}
+            loginDialog=null;
+            notifyOverlaySessionReady();
+        });
+        loginDialog.show();
+        website.loadUrl("https://pogocoordinates.com/search");
     }
     @Override protected void onNewIntent(Intent intent){
         super.onNewIntent(intent);
@@ -274,6 +297,7 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        if(loginDialog!=null){loginDialog.setOnDismissListener(null);loginDialog.dismiss();loginDialog=null;}
         if(website!=null){website.stopLoading();website.destroy();website=null;}
         super.onDestroy();
     }
