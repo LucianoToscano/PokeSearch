@@ -54,7 +54,6 @@ public class MainActivity extends Activity {
     private TextView loginWaitLabel,loginFallback;
     private int loginPageGeneration=0;
     private String pendingReportText="";
-    private boolean overlayPermissionPromptShown=false;
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         getWindow().setStatusBarColor(Color.rgb(11,13,18));
