@@ -1,7 +1,7 @@
 package com.lucianotoscano.pokesearchoverlay;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -181,7 +181,28 @@ public final class PokemonPicker {
         }
         LinearLayout root=new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(activity,14),dp(activity,7),dp(activity,14),dp(activity,6));
+        root.setPadding(dp(activity,13),dp(activity,10),dp(activity,13),dp(activity,12));
+
+        LinearLayout header=new LinearLayout(activity);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        TextView title=new TextView(activity);
+        title.setText("★  Favoritos");
+        title.setTextColor(Color.rgb(244,247,250));
+        title.setTypeface(null,Typeface.BOLD);
+        title.setTextSize(17);
+        header.addView(title,new LinearLayout.LayoutParams(0,dp(activity,43),1));
+        TextView finish=new TextView(activity);
+        finish.setText("Concluir");
+        finish.setGravity(Gravity.CENTER);
+        finish.setTextColor(Color.rgb(169,239,219));
+        finish.setTextSize(14);
+        finish.setTypeface(null,Typeface.BOLD);
+        android.graphics.drawable.GradientDrawable finishBg=new android.graphics.drawable.GradientDrawable();
+        finishBg.setColor(Color.argb(200,28,69,62));
+        finishBg.setCornerRadius(dp(activity,9));
+        finish.setBackground(finishBg);
+        header.addView(finish,new LinearLayout.LayoutParams(dp(activity,87),dp(activity,34)));
+        root.addView(header);
 
         TextView selectedTitle=new TextView(activity);
         selectedTitle.setTextColor(Color.rgb(255,211,118));
@@ -254,7 +275,7 @@ public final class PokemonPicker {
 
         Runnable refresh=()->{
             int total=WatchAlerts.watched(activity).size();
-            selectedTitle.setText("★ Meus favoritos ("+total+"/50)");
+            selectedTitle.setText("Selecionados ("+total+"/50)");
             selectedAdapter.filter("");
             int listHeight=dp(activity,Math.min(total,3)*52);
             LinearLayout.LayoutParams lp=(LinearLayout.LayoutParams)selectedList.getLayoutParams();
@@ -284,31 +305,37 @@ public final class PokemonPicker {
             refresh.run();
         });
         refresh.run();
-        // Dark, compact dialog matching the dock colors, with rounded corners.
+        // Single translucent charcoal panel: no duplicate platform title,
+        // no separate grey footer, and Concluir belongs inside the panel.
         android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable();
-        background.setColor(Color.rgb(18,22,31));
+        background.setColor(Color.argb(232,47,54,64));
         background.setCornerRadius(dp(activity,17));
         root.setBackground(background);
-        Context dialogContext=(activity instanceof Activity) ? activity :
+        Context context=(activity instanceof Activity)?activity:
             new android.view.ContextThemeWrapper(activity,android.R.style.Theme_Material_NoActionBar);
-        AlertDialog dialog=new AlertDialog.Builder(dialogContext)
-            .setTitle("★ Meus Pokémon favoritos")
-            .setView(root)
-            .setPositiveButton("Concluído",null)
-            .create();
-        if(!(activity instanceof Activity)){
-            if(dialog.getWindow()!=null){
-                dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
-                dialog.getWindow().setDimAmount(0f);
-            }
-        }
+        Dialog dialog=new Dialog(context,android.R.style.Theme_Material_NoActionBar);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(root);
+        finish.setOnClickListener(v->dialog.dismiss());
+        if(!(activity instanceof Activity)&&dialog.getWindow()!=null)
+            dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
         dialog.setOnDismissListener(d->{if(dismissed!=null)dismissed.run();});
         dialog.show();
         if(dialog.getWindow()!=null){
-            dialog.getWindow().setSoftInputMode(
-                android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-            int width=Math.min(activity.getResources().getDisplayMetrics().widthPixels-dp(activity,20),dp(activity,430));
-            dialog.getWindow().setLayout(width,android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+            android.view.Window window=dialog.getWindow();
+            window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+            window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            window.setDimAmount(0.08f);
+            if(android.os.Build.VERSION.SDK_INT>=31){
+                window.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
+                android.view.WindowManager.LayoutParams params=window.getAttributes();
+                params.setBlurBehindRadius(dp(activity,20));
+                window.setAttributes(params);
+            }
+            int screen=activity.getResources().getDisplayMetrics().widthPixels;
+            window.setLayout(Math.min(screen-dp(activity,16),dp(activity,430)),
+                android.view.WindowManager.LayoutParams.WRAP_CONTENT);
         }
     }
 }
