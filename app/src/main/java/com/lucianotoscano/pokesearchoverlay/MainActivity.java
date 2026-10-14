@@ -48,7 +48,6 @@ public class MainActivity extends Activity {
     private boolean loginSessionNotified=false;
     private boolean loginLinkAttempted=false;
     private boolean loginDiscoveryStarted=false;
-    private boolean loginMenuAttempted=false;
     private View loginCover;
     private TextView loginWaitLabel,loginFallback;
     private int loginPageGeneration=0;
@@ -382,10 +381,10 @@ public class MainActivity extends Activity {
            host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
         String script="(function(){var a=Array.from(document.querySelectorAll('a,button,[role=button]'));"+
             "var label=function(e){return (e.innerText||e.textContent||'').trim();};"+
-            "if(a.some(function(e){return /^(?:log\\\\s*out|sign\\\\s*out|sair|desconectar)$/i.test(label(e));}))return 'authenticated';"+
-            "var e=a.find(function(x){return /^(?:log\\\\s*in|sign\\\\s*in|entrar|fazer login)$/i.test(label(x));});"+
+            "if(a.some(function(e){return /^(?:log\\s*out|sign\\s*out|sair|desconectar)$/i.test(label(e));}))return 'authenticated';"+
+            "var e=a.find(function(x){return /^(?:log\\s*in|sign\\s*in|entrar|fazer login)$/i.test(label(x));});"+
             "if(e&&!e.disabled&&e.getClientRects().length){e.click();return 'opened';}"+
-            "var nav=a.find(function(x){return !x.disabled&&/^(?:open\\\\s*menu|menu|navigation|abrir\\\\s*menu)$/i.test("+
+            "var nav=a.find(function(x){return !x.disabled&&/^(?:open\\s*menu|menu|navigation|abrir\\s*menu)$/i.test("+
             "((x.getAttribute('aria-label')||x.getAttribute('title')||'').trim()));});"+
             "if(nav&&!window.__pokesearchLoginMenuAttempted){window.__pokesearchLoginMenuAttempted=true;"+
             "nav.click();return 'menu-opened';}return 'waiting';})()";
@@ -413,7 +412,6 @@ public class MainActivity extends Activity {
         loginSessionNotified=false;
         loginLinkAttempted=false;
         loginDiscoveryStarted=false;
-        loginMenuAttempted=false;
         website=new WebView(this);
         website.setBackgroundColor(Color.rgb(11,13,18));
         website.getSettings().setJavaScriptEnabled(true);
