@@ -115,7 +115,7 @@ function applyGl(){
 }
 function check(){
  const currentShiny=readShiny();
- if(currentShiny!==shinyOnly)return {ok:false,reason:"Shiny não confirmado",shiny:currentShiny};
+ if(currentShiny!==shinyOnly && !(shinyOnly===false&&currentShiny===null))return {ok:false,reason:"Shiny não confirmado",shiny:currentShiny};
  if(mode==="iv"){
   const ins=rawIVInputs();
   if(ins.length!==3||ins.some(x=>x.value!=="15"))return {ok:false,reason:"Raw IV 15/15/15 não confirmado"};
@@ -208,7 +208,7 @@ function collect(){
  const fieldRank=inputNear("Top ranking");
  const activeLeague=readChoice("League");
  const leagueConfirmed=mode==="iv" ||
-  (!!fieldRank&&fieldRank.value==="1"&&activeLeague===targetLeague);
+  (!!fieldRank&&fieldRank.value==="1"&&activeLeague===targetLeague&&readChoice("Include previous evolutions")==="Yes");
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
@@ -255,6 +255,7 @@ if(action.startsWith("readCoords:")){
  }
  return JSON.stringify({ok:false,status:"O site ainda não exibiu coordenadas"});
 }
+if(action==="verifyFilters")return JSON.stringify(check());
 if(action==="verifyShiny"){
  const actual=readShiny();
  const pending=elements('[role="dialog"],[aria-modal="true"],form').filter(vis).some(e=>/friend code|trainer code|12 digits|vincula/i.test(text(e)));
@@ -283,7 +284,7 @@ if(action==="configureSearch"){
   if(rank)valueInput(rank,"1");
   choice("League",mode==="ul"?"Ultra League":"Great League");
   choice("Include previous evolutions","Yes");
-  configured=!!rank;
+  configured=!!rank && rank.value==="1" && readChoice("League")===(mode==="ul"?"Ultra League":"Great League") && readChoice("Include previous evolutions")==="Yes";
  }
  const existing=readShiny();
  if(existing!==null&&existing!==shinyOnly){
