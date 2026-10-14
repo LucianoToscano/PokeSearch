@@ -353,9 +353,7 @@ public class OverlayService extends Service {
             status("Proteção de consultas: aguarde "+remaining+"s para atualizar.");
             return;
         }
-        lastSearchStartMs=now;
-        getSharedPreferences("prefs",0).edit().putLong("lastNetworkSearchAt",now).apply();
-        BugReport.log(this,"SEARCH","Solicitação "+mode+" Shiny="+shiny+" manual="+manual);
+        BugReport.log(this,"PREPARE","Filtros "+mode+" Shiny="+shiny+" manual="+manual);
         handler.removeCallbacks(expiryRefresh);
         armedDespawnMillis=0L;
         searchInProgress=true;
@@ -449,6 +447,10 @@ public class OverlayService extends Service {
                         diagnosticError(submitted.optString("reason","Falha ao pressionar Search."));
                         return;
                     }
+                    long submittedAt=System.currentTimeMillis();
+                    lastSearchStartMs=submittedAt;
+                    getSharedPreferences("prefs",0).edit().putLong("lastNetworkSearchAt",submittedAt).apply();
+                    BugReport.log(this,"SUBMIT","Busca "+mode+" Shiny="+shiny);
                     status(manual?"Busca manual em andamento...":"Buscando...");
                     pollSearch(generation,0,manual);
                 });
