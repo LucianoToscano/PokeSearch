@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 public class OverlayService extends Service {
     private static volatile boolean running=false;
     public static boolean isRunning(){return running;}
-    private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34;
+    private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=66;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
     private int menuDp(){return Math.max(1,Math.min(396,screenWidthDp()-8));}
@@ -231,7 +231,10 @@ public class OverlayService extends Service {
             }else{
                 menuParams.y=Math.max(0,Math.min(below,bottom-menuParams.height));
                 // Only shift sprites if the controls genuinely occupy this space.
-                menuPadDp=TOOLBAR_DP+Math.round(menuParams.height/d.density)+3;
+                // Reserve only the space really covered below the 30dp gear.
+                // No 34dp phantom gap between menu and sprite column.
+                menuPadDp=Math.max(0,
+                    Math.round((menuParams.y+menuParams.height-params.y)/d.density)-30+2);
             }
         }
         if(menuDrawX!=menuParams.x||menuDrawY!=menuParams.y||
@@ -251,7 +254,8 @@ public class OverlayService extends Service {
     }
     private void resizeMenu(int desiredDp){
         if(!menuExpanded||menuParams==null||menuRoot==null)return;
-        int target=dp(Math.max(TOOLBAR_DP,Math.min(310,desiredDp)));
+        int maxMenuHeight=Math.max(MENU_BASE_DP,Math.min(450,screenHeightDp()-72));
+        int target=dp(Math.max(MENU_BASE_DP,Math.min(maxMenuHeight,desiredDp)));
         if(Math.abs(menuParams.height-target)<=dp(1))return;
         menuParams.height=target;
         updateMenuPosition();
@@ -445,7 +449,7 @@ public class OverlayService extends Service {
                 }
             }
         });
-        menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(TOOLBAR_DP),
+        menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP),
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
@@ -929,7 +933,7 @@ public class OverlayService extends Service {
         if(show){
             menuDrawHeight=-1;menuDrawWidth=-1;
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
-            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(TOOLBAR_DP);}
+            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(MENU_BASE_DP);}
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
         }
