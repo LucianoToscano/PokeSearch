@@ -19,7 +19,7 @@ test("Bridge supports explicit filter selection",service.includes("public void s
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
 test("Favorites remain in overlay",service.includes("PokemonPicker.show(OverlayService.this")&&!service.includes('intent.setAction("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST")'));
 test("Favorites picker is service-safe and focusable",picker.includes("TYPE_APPLICATION_OVERLAY")&&picker.includes("Runnable dismissed"));
-test("Login has one top toolbar and no native footer buttons",main.includes('done.setText("✓ Voltar")')&&!main.includes('.setNegativeButton("Cancelar",null)')&&main.includes('MATCH_PARENT,\n                android.view.WindowManager.LayoutParams.MATCH_PARENT'));
+test("Login has one top toolbar and no native footer buttons",main.includes('done.setText("✓ PokeSearch")')&&main.includes('loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)')&&main.includes('MATCH_PARENT,\n                android.view.WindowManager.LayoutParams.MATCH_PARENT'));
 test("Shiny never changes selected filter",service.includes('shiny=!shiny;')&&service.includes('mode.equals(s)'));
 test("Throttled refresh is queued",service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
 test("Quick guide remains accessible",main.includes("showQuickGuide()")&&main.includes("tutorialSeenV41")&&main.includes("tutorial.html"));
@@ -32,11 +32,11 @@ test("Chevron is at bottom of the sprites",dock.indexOf('id="collapse"')>dock.in
 test("Red close is alongside heart with standard background",dock.indexOf('id="close"')>dock.indexOf('id="donate"')&&dock.includes("#controls #close{"));
 test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'));
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
-test("Dedicated toolbar is just 29dp tall when popover closed",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(29)'));
+test("Dedicated toolbar is just 29dp tall when popover closed",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(TOOLBAR_DP)'));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login returns to Home and does not send it to background",!main.includes('postDelayed(()->moveTaskToBack(true)'));
 test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
-test("Translucent favorites with optional background blur",picker.includes('Color.argb(188,34,43,56)')&&picker.includes('setBlurBehindRadius'));
+test("Translucent favorites with optional background blur",picker.includes('Color.argb(187,30,42,58)')&&picker.includes('setBlurBehindRadius'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
@@ -64,10 +64,10 @@ test("When OFF, icon and badge never display outdated radius",
   dock.includes('document.getElementById("locationRadiusText").textContent=locationEnabled?locationRadius+"km":""'));
 test("Switching from location editor to mode releases keyboard focus",
   dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
-test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(26)"));
+test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
 test("Twelve proportional control columns",dock.includes("grid-template-columns:34fr 22fr 41fr"));
-test("No reversed order near edges",dock.includes("body.menu-left #controls{direction:ltr}"));
-test("Chevron has visible surface",dock.includes("width:35px;height:29px")&&dock.includes("background:#162438f5"));
+test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
+test("Chevron has visible surface",dock.includes("width:40px;height:32px")&&dock.includes("background:#152338"));
 test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
 test("Coalesce resize events",dock.includes("if(fitPending)return"));
 test("Location validation refuses blank radius",read("assets/probe.js").includes('radiusInput!==""'));
@@ -82,4 +82,20 @@ test("After login a fresh search is attempted safely",service.includes("if(!stop
 test("Shiny verification distinguishes trainer linking",service.includes('verified.optBoolean("pending",false)'));
 test("Shiny failure does not imply confirmed trainer authentication",service.includes("Verifique login e vínculo do treinador"));
 test("Diagnostic logs only coarse authentication states",service.includes('BugReport.log(this,"SESSION","Shiny="'));
+test("Menus are never clipped by the HTML viewport",dock.includes("html.controls-root,body.controls-window{overflow:visible!important"));
+test("Mode AUTO and location work before delayed native menu sync",dock.includes("if(controlsWindow&&!menuOpen)setMenuOpen(true"));
+test("Mode and AUTO provide immediate visible feedback",dock.includes("mode=String(value);draw();Native.setMode(mode)")&&dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
+test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
+test("Gear has a visible touch target",dock.includes("background:#142133f5")&&dock.includes("width:35px;height:30px"));
+test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(396,screenWidthDp()-8)"));
+test("Favorites use translucent gradient without background dim",picker.includes("Color.argb(159,24,34,47)")&&picker.includes("window.setDimAmount(0.0f)"));
+test("Home has explicit login and logout",main.includes('signIn.setText("Entrar / vincular")')&&main.includes('signOut.setText("Sair")'));
+test("Login does not start overlay if none is running",main.includes("if(!OverlayService.isRunning())return;"));
+test("Logout clears local cookies and web storage only",main.includes("removeAllCookies")&&main.includes("WebStorage.getInstance().deleteAllData()"));
+test("Home login does not force Shiny",main.includes("openLoginDialog(false)")&&main.includes("if(loginStartedForShiny)view.evaluateJavascript"));
+test("Verified Home login returns to PokeSearch",main.includes("loginAutoReturnQueued=true")&&main.includes("loginDialog.dismiss()"));
+test("Verified Shiny login checks site before leaving",main.includes('JSONObject.quote("verifyShiny")')&&main.includes("checkShinyReturn(view,10)"));
+test("Menu orientation sent to BOTH native WebViews",service.includes('js(menuPanel,menuLoaded,"window.syncMenu(true,"+edge+",0)")'));
+test("Near-right vertical dock still reverses order",service.includes("menuLeft=params.x+dp(dockDp())/2>screen/2"));
+test("Service lifecycle prevents spurious background site",service.includes("public static boolean isRunning()")&&service.includes("running=false;"));
 console.log("PokeSearch UX contract: "+count+" tests passed");
