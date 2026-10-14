@@ -1,16 +1,22 @@
-# PokeSearch — AUDITORIA incremental v0.49-beta
+# PokeSearch — AUDITORIA v0.49-beta
 
-14/10/2026. Base v0.48-beta, GitHub main 8d881baa51cf0442a39fe598e0ee242daaa538bd. Foco exclusivo: B06, alguns catches C01/PS-073 e ordem do onDestroy, sem alteração visual ou de Manifest.
+Base v0.48-beta commit `8d881baa51cf0442a39fe598e0ee242daaa538bd`; atualização 14/10/2026. Todos os documentos históricos preservados.
 
-## Matriz de correções
-- **B06 / PS-075 (P1)** — callbacks anônimos de 1600/2500 ms e cleanup expirado competiam com LOGIN_BEGIN. Agora seis categorias de callbacks são explicitamente canceláveis via cancelSessionCallbacks(); LOGIN_END agenda fallback sob guarda de sessão.
-- **B06 / PS-076 (P1)** — carregamento de página obsoleto era capaz de solicitar busca após autenticação. onPageStarted guarda geração; onPageFinished e runnable conferem a mesma geração e loginPaused.
-- **B06 / PS-077 (P1)** — REFRESH_LOGIN navegava imediatamente após cookie flush; recarga agora é uma tarefa nomeada de 350ms com geração e estado conferidos. Etapas JS atrasadas verificam sessão antes de tocar WebView.
-- **C01 / PS-073 (P2)** — catches selecionados de histórico, detalhes, coordenadas e inicialização de atividades registram apenas classe/etapa; não há gravação de exceções brutas, URLs, cookies ou coordenadas.
-- **PS-078 (P1)** — onDestroy agora define stopped, limpa todos os callbacks, remove três views e apenas depois desliga, desanexa e destrói WebViews e suas interfaces JavaScript.
+| ID | Prioridade | Causa | Alteração | Estado |
+| --- | --- | --- | --- | --- |
+| PS-075 | P1 | UI não oferecia botão para `WatchAlerts.test` | Botão no PokemonPicker e Preferências; toggles `alerts` e `WatchAlerts.PREF_ENABLED`; Toast por permissão/resultado | Implementado; teste Android pendente |
+| PS-076 | P1 | KEYCODE_BACK era consumido pelo Dialog, fechando OAuth | `loginDialog.setOnKeyListener` retorna histórico WebView com `website.goBack()`; sem histórico permite fechamento | Implementado; OAuth real pendente |
+| PS-077 / B06 | P1 | Timers órfãos de LOGIN_END, onPageFinished e reload disputavam cookies/sessão | Runnables nomeados canceláveis, grupo de cancelamento com 6 callbacks, geração no page start/finish, guards das etapas JS, espera 350ms após flush | Corrigido no código; teste de concorrência real pendente |
+| PS-078 | P1 | `+lat,+lon` rejeitado em UI/serviço e escapava do sanitizador | `[-+]?` em três arquivos, teste positivo e conservação das faixas de lat/lon | Implementado; teste navegador Android pendente |
+| PS-079 | P2 | `menu(boolean show)` enviava primeiro direita, depois esquerda | Calcula posição primeiro e envia uma sincronização por WebView na transição | Implementado; validar cantos no Samsung |
+| PS-080 | P2 | Retorno IV100 morto e aviso absoluto de privacidade | Remove código inalcançável e altera texto para recomendar revisão | Implementado; validação visual pendente |
+| C01 / PS-073 | P2 | Alguns catches relevantes ignorados | Logs mínimos etapa + classe nos caminhos revisados; outros catches opcionais preservados | Parcialmente ampliado |
+| onDestroy | P1 | Risco de destruir WebView antes de liberar as janelas | `stopped=true` → cancelar handler → remover 3 views → JS interface/detach/destroy | Corrigido no código; teste físico pendente |
 
-## Escopo não alterado
-**targetSdk 33, compileSdk 36, minSdk 26, Manifest SEM foregroundServiceType, ícones e UI não modificados.** Recursos de v0.48 (IV100, GL#1, UL#1, Shiny, localização, AUTO, favoritos, notificações) preservados. PvPPokeGo não alterado.
+## Restrições preservadas
+`applicationId=com.lucianotoscano.pokesearch`, namespace `com.lucianotoscano.pokesearchoverlay`, AGP 8.10.1, Java 17, Gradle 8.11.1, minSdk 26, targetSdk 33, compileSdk 36, Manifest sem foregroundServiceType. Ícones, filtros, aparência e PvPPokeGo não alterados além dos novos controles solicitados.
 
-## Qualidade e limitações
-A suíte B06 testa nomes/cancelamentos de Runnables, geração de WebView, 350/1600/2500 ms, prevenção de busca ao pausar e ordem de teardown. Compilar Java/Android, realizar lint e assinar APK no GitHub Actions, validar checksums. **CI não equivale à validação de OAuth Google/Discord real nem ao teste do Samsung SM-S928B Android 16**. Itens devem ser conferidos no dispositivo com docs/GUIA_TESTE_SAMSUNG_v0.48.md preservado. Nenhum relatório deverá conter senhas, tokens, cookies, códigos ou coordenadas privadas; revisar o TXT antes do envio.
+## Testes e segurança
+CI: node --check (probe e scripts), probe-smoke, overlay-ux (regressões PS-075–080 e B06), DiagnosticSanitizerTest incluindo sinal `+`, Gradle testDebugUnitTest/assembleDebug/lintDebug, aapt/apksigner e SHA256SUMS verificado. Logs usam apenas etapa + classe (nenhuma URL/cookie/token/código/coordenada). Privacidade por regex não é perfeita; usuário deve revisar relatório TXT.
+
+**Sem testes físicos executados** em Samsung SM-S928B Android 16 ou OAuth real Google/Discord; guia atualizado em `docs/GUIA_TESTE_SAMSUNG_v0.49.md`.
