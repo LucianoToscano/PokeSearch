@@ -24,3 +24,6 @@
 - Exportar bugs via ⚠; conferir que log não contém senhas ou cookies.
 
 **Não alegar teste físico ainda não feito.** CI verde e assinatura verificável não provam sucesso do fluxo de autenticação de terceiro. APK permanece beta para amigos testadores com possibilidade de certificado debug diferente.
+
+## PS-022 — Sprite overlap e espaçamento aparente irregular
+**Prioridade P1.** Cada sprite `M` tinha 45dp, mas o cálculo antigo permitia 40dp por linha; figuras grandes se sobrepunham e figuras com transparência interna pareciam distantes. `OverlayService.rowDp()` agora usa `spriteSize+10`; `dock.html` aplica `flex:0 0 var(--row)` e rolagem `overflow-y:auto` limitada à altura útil do display. **Status:** corrigido no código; teste visual Android real pendente.
