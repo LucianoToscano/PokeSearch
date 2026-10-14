@@ -308,8 +308,9 @@ public final class PokemonPicker {
         // Single translucent charcoal panel: no duplicate platform title,
         // no separate grey footer, and Concluir belongs inside the panel.
         android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable();
-        background.setColor(Color.argb(188,34,43,56));
-        background.setStroke(dp(activity,1),Color.argb(90,176,200,220));
+        background.setColors(new int[]{Color.argb(187,30,42,58),Color.argb(159,24,34,47)});
+        background.setOrientation(android.graphics.drawable.GradientDrawable.Orientation.TL_BR);
+        background.setStroke(dp(activity,1),Color.argb(114,193,218,240));
         background.setCornerRadius(dp(activity,17));
         root.setBackground(background);
         Context context=(activity instanceof Activity)?activity:
@@ -327,11 +328,11 @@ public final class PokemonPicker {
             window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
             window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
             window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-            window.setDimAmount(0.04f);
+            window.setDimAmount(0.0f);
             if(android.os.Build.VERSION.SDK_INT>=31){
                 window.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
                 android.view.WindowManager.LayoutParams params=window.getAttributes();
-                params.setBlurBehindRadius(dp(activity,20));
+                params.setBlurBehindRadius(dp(activity,12));
                 window.setAttributes(params);
             }
             int screen=activity.getResources().getDisplayMetrics().widthPixels;

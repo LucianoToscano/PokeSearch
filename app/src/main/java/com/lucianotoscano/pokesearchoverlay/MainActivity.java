@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.graphics.Color;
 import android.webkit.CookieManager;
+import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
@@ -40,6 +41,9 @@ import android.graphics.Typeface;
 public class MainActivity extends Activity {
     private WebView website;
     private TextView watchSummary;
+    private TextView sessionSummary;
+    private boolean loginStartedForShiny=false;
+    private boolean loginAutoReturnQueued=false;
     private android.app.Dialog loginDialog;
     private boolean loginSessionNotified=false;
     private String pendingReportText="";
@@ -79,6 +83,41 @@ public class MainActivity extends Activity {
         startParams.setMargins(d(2),d(3),d(2),d(9));
         root.addView(start,startParams);
         start.setOnClickListener(v->startOverlay());
+        // Account controls stay on the native Home; the site is a temporary login surface.
+        LinearLayout account=new LinearLayout(this);
+        account.setOrientation(LinearLayout.VERTICAL);
+        account.setPadding(d(12),d(9),d(12),d(10));
+        account.setBackground(round(Color.rgb(23,30,41),11));
+        sessionSummary=new TextView(this);
+        sessionSummary.setTextColor(Color.rgb(188,204,222));
+        sessionSummary.setTextSize(12);
+        sessionSummary.setPadding(0,0,0,d(8));
+        account.addView(sessionSummary);
+        LinearLayout buttons=new LinearLayout(this);
+        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        Button signIn=new Button(this);
+        signIn.setText("Entrar / vincular");
+        signIn.setAllCaps(false);
+        signIn.setTextSize(12);
+        signIn.setTextColor(Color.rgb(213,255,238));
+        signIn.setBackground(round(Color.rgb(30,91,73),9));
+        buttons.addView(signIn,new LinearLayout.LayoutParams(0,d(42),1));
+        signIn.setOnClickListener(v->openLoginDialog(false));
+        Button signOut=new Button(this);
+        signOut.setText("Sair");
+        signOut.setAllCaps(false);
+        signOut.setTextSize(12);
+        signOut.setTextColor(Color.rgb(255,204,213));
+        signOut.setBackground(round(Color.rgb(77,40,52),9));
+        LinearLayout.LayoutParams signOutParams=new LinearLayout.LayoutParams(d(91),d(42));
+        signOutParams.setMargins(d(8),0,0,0);
+        buttons.addView(signOut,signOutParams);
+        signOut.setOnClickListener(v->askLogout());
+        account.addView(buttons);
+        LinearLayout.LayoutParams accountParams=new LinearLayout.LayoutParams(-1,-2);
+        accountParams.setMargins(d(2),0,d(2),d(10));
+        root.addView(account,accountParams);
+        refreshSessionSummary();
         LinearLayout watchRow=new LinearLayout(this);
         watchRow.setOrientation(LinearLayout.HORIZONTAL);
         watchRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -196,6 +235,42 @@ public class MainActivity extends Activity {
         android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
         bg.setColor(color);bg.setCornerRadius(d(radius));return bg;
     }
+    private void refreshSessionSummary(){
+        if(sessionSummary==null)return;
+        String state=getSharedPreferences("prefs",0).getString("sessionStatus","não confirmado");
+        String text="autenticada".equals(state)?"● Sessão identificada · PoGoCoordinates":
+            "desconectado".equals(state)?"○ Sessão local desconectada":
+            "login necessário".equals(state)?"○ Login necessário para Shiny":
+            "○ Sessão ainda não confirmada";
+        sessionSummary.setText(text);
+    }
+    private void askLogout(){
+        new AlertDialog.Builder(this)
+            .setTitle("Desconectar PoGoCoordinates?")
+            .setMessage("Sair apagará a sessão local do site neste aplicativo e encerrará o overlay ativo. Favoritos e preferências gerais serão mantidos. Sua conta Google/Discord continuará intacta.")
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Desconectar",(dialog,which)->logoutLocalSession())
+            .show();
+    }
+    private void logoutLocalSession(){
+        // Do not start a service for sign-out. Stop the collector before revoking cookies.
+        stopService(new Intent(this,OverlayService.class));
+        if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
+        getSharedPreferences("prefs",0).edit()
+            .putString("sessionStatus","desconectado")
+            .putBoolean("shiny",false)
+            .putString("lastStatus","Sessão local desconectada")
+            .putString("lastError","Nenhum")
+            .apply();
+        refreshSessionSummary();
+        CookieManager.getInstance().removeAllCookies(cleared->{
+            CookieManager.getInstance().flush();
+            WebStorage.getInstance().deleteAllData();
+            runOnUiThread(()->Toast.makeText(this,
+                "Sessão do PokeSearch desconectada",Toast.LENGTH_SHORT).show());
+        });
+        BugReport.log(this,"SESSION","Desconexão local solicitada");
+    }
     private void refreshWatchCount(){
         if(watchSummary==null)return;
         int size=WatchAlerts.watched(this).size();
@@ -208,6 +283,7 @@ public class MainActivity extends Activity {
     @Override protected void onResume(){
         super.onResume();
         refreshWatchCount();
+        refreshSessionSummary();
     }
     private void handleShinyLoginIntent(Intent intent){
         if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
@@ -216,18 +292,46 @@ public class MainActivity extends Activity {
     private void serviceAction(String action){
         Intent intent=new Intent(this,OverlayService.class);
         intent.setAction(action);
+        if(!OverlayService.isRunning())return;
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
     }
     private void notifyOverlaySessionReady(){
         CookieManager.getInstance().flush();
+        if(!OverlayService.isRunning())return;
         Intent intent=new Intent(this,OverlayService.class);
         intent.setAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
     }
-    private void openLoginDialog(){
+    private void checkShinyReturn(WebView view,int attemptsLeft){
+        if(attemptsLeft<=0||view!=website||loginDialog==null||!loginDialog.isShowing()||
+           !loginStartedForShiny||loginAutoReturnQueued)return;
+        String probe=readAsset("probe.js")
+            .replace("__ACTION__",JSONObject.quote("verifyShiny"))
+            .replace("__MODE__",JSONObject.quote("iv"))
+            .replace("__SHINY__","true");
+        view.postDelayed(()->{
+            if(view!=website||loginDialog==null||!loginDialog.isShowing())return;
+            view.evaluateJavascript(probe,raw->{
+                boolean verified=false;
+                try{
+                    String json=new JSONArray("["+raw+"]").getString(0);
+                    verified=new JSONObject(json).optBoolean("ok",false);
+                }catch(Exception ignored){}
+                if(verified&&!loginAutoReturnQueued){
+                    loginAutoReturnQueued=true;
+                    loginDialog.dismiss();
+                }else if(!verified)checkShinyReturn(view,attemptsLeft-1);
+            });
+        },1200L);
+    }
+    private void openLoginDialog(){openLoginDialog(true);}
+    private void openLoginDialog(boolean shinyRequest){
         if(loginDialog!=null&&loginDialog.isShowing())return;
+        loginStartedForShiny=shinyRequest;
+        loginAutoReturnQueued=false;
         loginSessionNotified=false;
         website=new WebView(this);
+        website.setBackgroundColor(Color.rgb(11,13,18));
         website.getSettings().setJavaScriptEnabled(true);
         website.getSettings().setDomStorageEnabled(true);
         website.getSettings().setDatabaseEnabled(true);
@@ -242,17 +346,35 @@ public class MainActivity extends Activity {
         website.setWebChromeClient(new WebChromeClient());
         website.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView view,String url){
-                if(url==null || !"pogocoordinates.com".equalsIgnoreCase(Uri.parse(url).getHost()))return;
-                // Trigger the native site's Shiny linking prompt when requested.
-                // The user enters their 12-digit trainer friend code on the real page.
-                view.evaluateJavascript(readAsset("shiny_login.js"),null);
+                if(url==null)return;
+                String host=Uri.parse(url).getHost();
+                if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
+                     host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
+                // Home login must not silently turn on Shiny.
+                if(loginStartedForShiny)view.evaluateJavascript(readAsset("shiny_login.js"),null);
                 // OAuth may complete without dismissing the dialog. A successful
                 // return to the site refreshes the collector in-place.
                 view.evaluateJavascript("(function(){return Array.from(document.querySelectorAll('a,button')).some(e=>/^(log\\s*out|sign\\s*out|sair|desconectar)$/i.test((e.innerText||e.textContent||'').trim()))})()",
                     value->{
                         if("true".equals(value)&&!loginSessionNotified){
                             loginSessionNotified=true;
-                            BugReport.log(MainActivity.this,"LOGIN","Login identificado; aguardando vinculação");
+                            getSharedPreferences("prefs",0).edit()
+                                .putString("sessionStatus","autenticada").apply();
+                            refreshSessionSummary();
+                            BugReport.log(MainActivity.this,"LOGIN","Sessão autenticada identificada no site");
+                        }
+                        if("true".equals(value)&&!loginStartedForShiny&&
+                           !loginAutoReturnQueued){
+                            loginAutoReturnQueued=true;
+                            view.postDelayed(()->{
+                                if(loginDialog!=null&&loginDialog.isShowing()&&
+                                   !loginStartedForShiny)loginDialog.dismiss();
+                            },900L);
+                        }
+                        if("true".equals(value)&&loginStartedForShiny&&
+                           !loginAutoReturnQueued){
+                            // For Shiny, wait for confirmed site filter and trainer linking.
+                            checkShinyReturn(view,10);
                         }
                     });
             }
@@ -274,7 +396,7 @@ public class MainActivity extends Activity {
         loginName.setTextSize(15);
         toolbar.addView(loginName,new LinearLayout.LayoutParams(0,d(48),1));
         TextView done=new TextView(this);
-        done.setText("✓ Voltar");
+        done.setText("✓ PokeSearch");
         done.setTextColor(Color.rgb(126,212,204));
         done.setTextSize(14);
         done.setGravity(Gravity.CENTER);
@@ -291,7 +413,8 @@ public class MainActivity extends Activity {
             loginDialog=null;
             serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END");
             notifyOverlaySessionReady();
-            // Keep MainActivity visible after sign-in; user can launch the overlay from Home.
+            refreshSessionSummary();
+            // Return to PokeSearch Home, not a permanent standalone site screen.
         });
         serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN");
         loginDialog.show();

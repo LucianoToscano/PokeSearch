@@ -30,10 +30,12 @@ import java.io.InputStream;
 import java.util.function.Consumer;
 
 public class OverlayService extends Service {
-    private static final int BUBBLE_DP=45, DETAIL_DP=226;
+    private static volatile boolean running=false;
+    public static boolean isRunning(){return running;}
+    private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return Math.max(1,Math.min(333,screenWidthDp()-8));}
+    private int menuDp(){return Math.max(1,Math.min(396,screenWidthDp()-8));}
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams,menuParams;
@@ -42,6 +44,7 @@ public class OverlayService extends Service {
     private WebView panel,detailPanel,website,menuPanel;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
     private int height=72,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
+    private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
     private String probeScriptCache;
     private boolean searchInProgress=false;
     private final Runnable queuedRefresh=()->refresh(false);
@@ -179,31 +182,39 @@ public class OverlayService extends Service {
             menuLeft=!right;
             menuParams.x=right?params.x+dp(dockDp()):params.x-width;
             menuParams.y=Math.max(0,Math.min(params.y,bottom-menuParams.height-dp(8)));
-            menuPadDp=29;
+            menuPadDp=TOOLBAR_DP;
         }else{
             // Narrow display: position toolbar above/below the gear instead of covering it.
-            menuLeft=false;
+            menuLeft=params.x+dp(dockDp())/2>screen/2;
             menuParams.x=Math.max(0,Math.min(screen-width,params.x+dp(dockDp())/2-width/2));
-            int below=params.y+dp(26);
+            int below=params.y+dp(TOOLBAR_DP);
             int above=params.y-menuParams.height-dp(5);
             if(below+menuParams.height+dp(8)<=bottom||above<0){
                 menuParams.y=Math.max(0,Math.min(below,bottom-menuParams.height));
-                menuPadDp=26+Math.round(menuParams.height/d.density)+3;
+                menuPadDp=TOOLBAR_DP+Math.round(menuParams.height/d.density)+3;
             }else{
                 menuParams.y=Math.max(0,above);
                 menuPadDp=0;
             }
         }
-        try{wm.updateViewLayout(menuRoot,menuParams);}catch(Exception ignored){}
+        if(menuDrawX!=menuParams.x||menuDrawY!=menuParams.y||
+           menuDrawHeight!=menuParams.height||menuDrawWidth!=menuParams.width){
+            try{
+                wm.updateViewLayout(menuRoot,menuParams);
+                menuDrawX=menuParams.x;menuDrawY=menuParams.y;
+                menuDrawHeight=menuParams.height;menuDrawWidth=menuParams.width;
+            }catch(Exception ignored){}
+        }
         if(priorPad!=menuPadDp||priorLeft!=menuLeft){
-            js(panel,panelLoaded,"window.syncMenu(true,"+
-                JSONObject.quote(menuLeft?"left":"right")+","+menuPadDp+")");
+            String edge=JSONObject.quote(menuLeft?"left":"right");
+            js(panel,panelLoaded,"window.syncMenu(true,"+edge+","+menuPadDp+")");
+            js(menuPanel,menuLoaded,"window.syncMenu(true,"+edge+",0)");
             moveDetail();
         }
     }
     private void resizeMenu(int desiredDp){
         if(!menuExpanded||menuParams==null||menuRoot==null)return;
-        int target=dp(Math.max(29,Math.min(295,desiredDp)));
+        int target=dp(Math.max(TOOLBAR_DP,Math.min(310,desiredDp)));
         if(Math.abs(menuParams.height-target)<=dp(1))return;
         menuParams.height=target;
         updateMenuPosition();
@@ -219,8 +230,18 @@ public class OverlayService extends Service {
         }else{
             menuParams.flags|=unfocusable|base;
             menuParams.softInputMode=0;
+            if(menuPanel!=null){
+                android.view.inputmethod.InputMethodManager keyboard=
+                    (android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
+                if(keyboard!=null)keyboard.hideSoftInputFromWindow(menuPanel.getWindowToken(),0);
+                menuPanel.clearFocus();
+            }
         }
         try{wm.updateViewLayout(menuRoot,menuParams);}catch(Exception ignored){}
+        if(open&&menuPanel!=null){
+            menuPanel.setFocusableInTouchMode(true);
+            menuPanel.requestFocus();
+        }
     }
     private String locationPayload(){
         JSONObject data=new JSONObject();
@@ -333,7 +354,7 @@ public class OverlayService extends Service {
             }
             return true;
         });
-        root.addView(grip,new FrameLayout.LayoutParams(dp(dockDp()),dp(21),Gravity.TOP|Gravity.LEFT));
+        root.addView(grip,new FrameLayout.LayoutParams(dp(dockDp()),dp(30),Gravity.TOP|Gravity.LEFT));
 
         params=new WindowManager.LayoutParams(dp(dockDp()),dp(height),
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -366,7 +387,7 @@ public class OverlayService extends Service {
                 }
             }
         });
-        menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(29),
+        menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(TOOLBAR_DP),
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
@@ -406,6 +427,7 @@ public class OverlayService extends Service {
         panel.loadUrl("file:///android_asset/dock.html");
         if(detailRoot!=null)detailPanel.loadUrl("file:///android_asset/detail.html");
         website.loadUrl("https://pogocoordinates.com/search");
+        running=true;
         schedulePeriodic();
     }
     private String script(){
@@ -460,6 +482,7 @@ public class OverlayService extends Service {
         long previous=getSharedPreferences("prefs",0).getLong("lastNetworkSearchAt",0L);
         if(previous>0L&&now>=previous&&now-previous<MIN_SEARCH_GAP_MS){
             long remaining=(MIN_SEARCH_GAP_MS-(now-previous)+999L)/1000L;
+            if(manual)android.widget.Toast.makeText(this,"↻ Nova busca em "+remaining+"s",android.widget.Toast.LENGTH_SHORT).show();
             status("Próxima busca em "+remaining+"s · mantendo "+mode.toUpperCase(java.util.Locale.ROOT)
                 +(shiny?" com ✨":" sem ✨")+".");
             handler.removeCallbacks(queuedRefresh);
@@ -810,11 +833,12 @@ public class OverlayService extends Service {
         if(show==menuExpanded)return;
         if(!show&&locationEditorOpen)locationEditor(false);
         menuExpanded=show;
-        menuPadDp=show?29:0;
+        menuPadDp=show?TOOLBAR_DP:0;
         if(show){
+            menuDrawHeight=-1;menuDrawWidth=-1;
             menuLeft=false; // Position recalculated after menu is shown.
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
-            if(menuParams!=null)menuParams.height=dp(29);
+            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(TOOLBAR_DP);}
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
         }
@@ -836,7 +860,7 @@ public class OverlayService extends Service {
         params.width=dp(yes?BUBBLE_DP:dockDp());
         params.height=dp(yes?BUBBLE_DP:height);
         grip.setLayoutParams(new FrameLayout.LayoutParams(
-                dp(yes?BUBBLE_DP:dockDp()),dp(yes?BUBBLE_DP:21),Gravity.TOP|Gravity.LEFT));
+                dp(yes?BUBBLE_DP:dockDp()),dp(yes?BUBBLE_DP:30),Gravity.TOP|Gravity.LEFT));
         js(panel,panelLoaded,"window.setMinimized("+yes+")");
         updateWindow();
     }
@@ -957,6 +981,9 @@ public class OverlayService extends Service {
             if(!s.equals("iv")&&!s.equals("gl")&&!s.equals("ul"))return;
             if(mode.equals(s))return;
             mode=s;getSharedPreferences("prefs",0).edit().putString("mode",s).apply();
+            android.widget.Toast.makeText(OverlayService.this,
+                "Filtro selecionado: "+(s.equals("iv")?"IV100":s.equals("gl")?"Grande Liga #1":"Ultra Liga #1"),
+                android.widget.Toast.LENGTH_SHORT).show();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
             results="[]";hideDetails();update();refresh();
         });}
@@ -980,7 +1007,7 @@ public class OverlayService extends Service {
                 params.width=dp(minimized?BUBBLE_DP:dockDp());
                 params.x=Math.max(0,Math.min(metrics().widthPixels-params.width,params.x));
                 grip.setLayoutParams(new FrameLayout.LayoutParams(
-                    dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:21),
+                    dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:30),
                     Gravity.TOP|Gravity.LEFT));
                 updateWindow();
             }
@@ -1206,7 +1233,7 @@ public class OverlayService extends Service {
             params.width=dp(minimized?BUBBLE_DP:dockDp());
             params.x=Math.min(params.x,metrics().widthPixels-params.width);
             grip.setLayoutParams(new FrameLayout.LayoutParams(
-                dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:21),Gravity.TOP|Gravity.LEFT));
+                dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:30),Gravity.TOP|Gravity.LEFT));
             updateWindow();
         }
         locationEnabled=pref.getBoolean("locationEnabled",false);
@@ -1223,6 +1250,7 @@ public class OverlayService extends Service {
         return START_STICKY;
     }
     @Override public void onDestroy(){
+        running=false;
         stopped=true;handler.removeCallbacksAndMessages(null);
         if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception ignored){}}
         if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception ignored){}}
