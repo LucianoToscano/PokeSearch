@@ -44,6 +44,9 @@ public class OverlayService extends Service {
     private int height=72,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
     private String probeScriptCache;
     private boolean searchInProgress=false;
+    private boolean shinyVerified=false;
+    private boolean shinyLoginPromptRequested=false;
+    private boolean shinyLoginWindowOpened=false;
     private boolean showTimers=false,alerts=false;
     private String sort="despawn";
     private long lastAlertAt=0L;
@@ -130,7 +133,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         js(panel,panelLoaded,"window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+shiny+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+")");
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+")");
         if(selected>=0)showDetails(selected);
     }
     private void status(String s){
@@ -194,7 +197,7 @@ public class OverlayService extends Service {
         Notification note=new Notification.Builder(this,"pokesearch")
                 .setSmallIcon(android.R.drawable.ic_menu_search)
                 .setContentTitle("PokeSearch ativo")
-                .setContentText("Toque para abrir o PoGoCoordinates")
+                .setContentText("Toque para abrir PokeSearch")
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(73,note);
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
@@ -340,6 +343,7 @@ public class OverlayService extends Service {
         handler.removeCallbacks(expiryRefresh);
         armedDespawnMillis=0L;
         searchInProgress=true;
+        if(shiny){shinyVerified=false;update();}
         final int generation=++requestGeneration;
         status(manual?"Busca manual iniciada...":"Atualizando...");
         execute("session",session->{
@@ -348,7 +352,8 @@ public class OverlayService extends Service {
             getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
             if(shiny&&auth.equals("login necessário")){
                 searchInProgress=false;
-                diagnosticError("Login necessário. Abra o Pokésearch e autentique-se.");
+                diagnosticError("✨ Faça login e vincule seu código de amizade no PoGoCoordinates.");
+                if(shinyLoginPromptRequested)openShinyLogin();
                 return;
             }
             execute("prepareSearch",prepared->{
@@ -365,19 +370,57 @@ public class OverlayService extends Service {
                         diagnosticError("Falha ao configurar os filtros.");
                         return;
                     }
-                    handler.postDelayed(()->execute("submitSearch",submitted->{
-                        if(stopped||generation!=requestGeneration)return;
-                        if(!submitted.optBoolean("ok")){
-                            searchInProgress=false;
-                            diagnosticError(submitted.optString("reason","Falha ao pressionar Search."));
-                            return;
-                        }
-                        status(manual?"Busca manual em andamento...":"Buscando...");
-                        pollSearch(generation,0,manual);
-                    }),650L);
+                    verifyAndSubmit(generation,manual,0);
                 }),600L);
             });
         });
+    }
+    private void openShinyLogin(){
+        if(!shinyLoginPromptRequested||shinyLoginWindowOpened||stopped)return;
+        shinyLoginPromptRequested=false;
+        shinyLoginWindowOpened=true;
+        Intent intent=new Intent(this,MainActivity.class);
+        intent.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
+            Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        try{startActivity(intent);}catch(Exception e){
+            shinyLoginWindowOpened=false;
+            diagnosticError("Não foi possível abrir a etapa de login/vinculação.");
+        }
+    }
+    private void verifyAndSubmit(int generation,boolean manual,int attempt){
+        handler.postDelayed(()->execute("verifyShiny",verified->{
+            if(stopped||generation!=requestGeneration)return;
+            if(!verified.optBoolean("ok")){
+                if(attempt<2){
+                    execute("configureSearch",ignored->{
+                        if(stopped||generation!=requestGeneration)return;
+                        verifyAndSubmit(generation,manual,attempt+1);
+                    });
+                    return;
+                }
+                searchInProgress=false;
+                shinyVerified=false;
+                diagnosticError(shiny
+                    ?"✨ Shiny não confirmado no site. Entre/vincule seu treinador para habilitar."
+                    :"Não foi possível confirmar Shiny desativado no site.");
+                if(shinyLoginPromptRequested)openShinyLogin();
+                return;
+            }
+            shinyVerified=shiny;
+            update();
+            execute("submitSearch",submitted->{
+                if(stopped||generation!=requestGeneration)return;
+                if(!submitted.optBoolean("ok")){
+                    searchInProgress=false;
+                    shinyVerified=false;
+                    diagnosticError(submitted.optString("reason","Falha ao pressionar Search."));
+                    return;
+                }
+                status(manual?"Busca manual em andamento...":"Buscando...");
+                pollSearch(generation,0,manual);
+            });
+        }),650L);
     }
     private void pollSearch(int generation,int attempt,boolean manual){
         handler.postDelayed(()->execute("collect",r->{
@@ -385,6 +428,13 @@ public class OverlayService extends Service {
             if(!r.optBoolean("ok")){
                 searchInProgress=false;
                 diagnosticError("Falha na leitura dos resultados do site.");
+                return;
+            }
+            if(shiny && (!r.has("siteShiny")||r.isNull("siteShiny")||
+                !r.optBoolean("siteShiny",false))){
+                searchInProgress=false;
+                shinyVerified=false;
+                diagnosticError("✨ O site desligou Shiny. Resultados não confirmados.");
                 return;
             }
             int found=r.optInt("found",0);
@@ -685,12 +735,14 @@ public class OverlayService extends Service {
         @JavascriptInterface public void select(String s){handler.post(()->{
             if(!s.equals("iv")&&!s.equals("gl")&&!s.equals("ul"))return;
             mode=s;getSharedPreferences("prefs",0).edit().putString("mode",s).apply();
+            ++requestGeneration;searchInProgress=false;shinyVerified=false;
             results="[]";hideDetails();update();refresh();
         });}
         @JavascriptInterface public void menu(boolean open){handler.post(()->OverlayService.this.menu(open));}
         @JavascriptInterface public void cycleMode(){handler.post(()->{
             mode=mode.equals("iv")?"gl":mode.equals("gl")?"ul":"iv";
             getSharedPreferences("prefs",0).edit().putString("mode",mode).apply();
+            ++requestGeneration;searchInProgress=false;shinyVerified=false;
             results="[]";hideDetails();update();refresh();
         });}
         @JavascriptInterface public void cycleSpriteSize(){handler.post(()->{
@@ -776,26 +828,12 @@ public class OverlayService extends Service {
             getSharedPreferences("prefs",0).edit().putBoolean("shiny",shiny).apply();
             ++requestGeneration;
             searchInProgress=false;
+            shinyVerified=false;
+            shinyLoginWindowOpened=false;
+            shinyLoginPromptRequested=shiny;
             results="[]";hideDetails();update();
-            if(shiny){
-                // Open the real site switch and login in a visible WebView after explicit opt-in.
-                Intent intent=new Intent(OverlayService.this,MainActivity.class);
-                intent.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN");
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                try{
-                    startActivity(intent);
-                    status("✨ Shiny selecionado. O site pode solicitar login.");
-                }catch(Exception e){
-                    shiny=false;
-                    getSharedPreferences("prefs",0).edit().putBoolean("shiny",false).apply();
-                    diagnosticError("Não foi possível abrir a página de login.");
-                }
-                update();
-            }else{
-                status("Shiny desativado.");
-                refresh();
-            }
+            status(shiny?"✨ Confirmando Shiny no site...":"Desativando Shiny no site...");
+            refresh(true);
         });}
         @JavascriptInterface public void refresh(){handler.post(()->OverlayService.this.refresh(true));}
         @JavascriptInterface public void minimize(){handler.post(()->OverlayService.this.minimize(true));}
@@ -836,6 +874,9 @@ public class OverlayService extends Service {
     @Override public int onStartCommand(Intent i,int flags,int id){
         if(i!=null&&"com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN".equals(i.getAction())){
             ++requestGeneration;searchInProgress=false;handler.removeCallbacks(expiryRefresh);
+            shinyVerified=false;
+            shinyLoginPromptRequested=false;
+            shinyLoginWindowOpened=false;
             results="[]";hideDetails();loaded=false;
             knownSpawns.clear();
             status("Atualizando sessão após login...");
@@ -871,6 +912,7 @@ public class OverlayService extends Service {
         }
         mode=getSharedPreferences("prefs",0).getString("mode",mode);
         shiny=getSharedPreferences("prefs",0).getBoolean("shiny",false);
+        if(!shiny)shinyVerified=false;
         update();
         return START_STICKY;
     }
