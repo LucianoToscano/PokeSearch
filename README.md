@@ -1,67 +1,32 @@
-# PokeSearch
+# PokeSearch — Android Overlay
 
-Aplicativo Android independente para exibir um overlay compacto e transparente de Pokémon encontrados no PoGoCoordinates.
+Aplicativo Android independente para exibir um overlay compacto sobre Pokémon GO, com dados de busca provenientes do site PoGoCoordinates quando disponíveis. **Versão atual do código: 0.38-beta**.
 
-## Interface
-- **Tela inicial renovada:** marca PokeSearch, botão principal **Ativar overlay**, acesso aos **Pokémon procurados**, coração para contribuição Pix voluntária e engrenagem de configurações.
-- **Pokémon procurados:** busca visual de 1.025 espécies com nome e número da Pokédex, sprites quando há acesso à internet; catálogo incluído no APK para busca de nomes mesmo sem a página carregada.
-- **Overlay:** engrenagem arrastável para abrir/retrair o menu; filtros IV100 (100% verde), Grande Liga #1 e Ultra Liga #1, Shiny, intervalo periódico, atualização, tamanho P/M/G, cronômetro, sino, configurações, coração (Pix), minimizar e fechar. Os dois últimos controles ficam na extremidade exterior em ambos os lados.
-- Tamanhos: P 35, M 45 (padrão), G 55. Sprites sem borda e mínimo espaço.
-- **Alertas seletivos:** notificações sonoras apenas para novas ocorrências da lista de procurados cujos IV100 / GL#1 / UL#1 sejam confirmados no filtro atual. O sino no menu liga ou pausa; mantenha-o pressionado para abrir a lista.
-- **Pix:** contribuição opcional de qualquer valor via QR/copia-e-cola no diálogo. Confirme o destinatário no aplicativo bancário.
+## Recursos
+- Overlay flutuante transparente e retrátil: engrenagem arrastável, fechar (X) e minimizar.
+- Busca por IV100 (15/15/15), Grande Liga #1 e Ultra Liga #1, com verificação dos filtros da página antes de apresentar resultados.
+- ✨ Shiny desativado por padrão, ligado sob confirmação do controle real do site. Primeira ativação pode exigir login Discord/Google e vinculação do código de amizade do treinador.
+- Atualização manual e automática (5 minutos padrão), tempos de despawn, sprites P/M/G e fichas com CP/IV/rank/localização/coords quando disponíveis.
+- Catálogo local de 1.025 espécies e até 50 favoritos; alertas gerais e de favoritos; Pix voluntário.
 
-## Build
-Workflow do GitHub Actions em `main`: **Build PokeSearch Android APK**, gera APK debug instalável no artifact `PokeSearch-0.30-alpha-APK`.
+## Construir e testar
+Código-fonte oficial: [LucianoToscano/PokeSearch](https://github.com/LucianoToscano/PokeSearch) — `main`. Java 17, Android SDK 36, Gradle 8.11.1.
 
-O applicationId `com.lucianotoscano.pokesearchoverlay` foi preservado para manter o armazenamento local de versões anteriores.
+O GitHub Actions `.github/workflows/build-overlay.yml` verifica sintaxe JavaScript, smoke tests de filtro, compila o APK normal e verifica a assinatura e o ZIP. A execução bem-sucedida entrega um kit contendo APK beta, checksum SHA-256, fonte e documentos de auditoria.
 
-## Limitações
-As buscas usam a página do PoGoCoordinates e a sessão do navegador integrado; não há captura garantida de autenticação do Chrome. O DOM do site pode mudar, afetando pesquisa ou ranking. Não é possível garantir detecção de resultados, alarmes ou gestos até testes em aparelho Android autenticado. A lista de favoritos observa somente os resultados do modo de busca selecionado; não consulta simultaneamente os três modos.
+**Identificador Android:** `com.lucianotoscano.pokesearch` (namespace Java antigo mantido intencionalmente). **Versão:** `0.38-beta`, versionCode 38, minSdk 26/targetSdk 33.
 
-## Interface v0.31
-- A própria engrenagem vira **X** quando as opções estão abertas; toque no X para fechar apenas o menu, sem encerrar o serviço.
-- O botão **⌃**, na ponta oposta à engrenagem, recolhe toda a lista, mantendo somente a engrenagem; toque nela para restaurar.
-- **AUTO 5m** deixa claro o intervalo automático. **↻** continua sendo a atualização manual.
-- O sino abre a lista visual dos procurados; nela há uma caixa explícita para ativar ou pausar o som.
-- **Encerrar overlay** está nas configurações, mediante confirmação.
+## Atenção: distribuição
+O artefato produzido automaticamente atualmente é **debug**, com chave de assinatura que pode variar entre runners. Ele é indicado para **testes controlados**, não como release estável e atualizável. Substituir por assinatura de release permanente, protegida fora do repositório, antes de distribuir publicamente. Nunca remendar/reassinar APK depois da compilação.
 
-## Shiny opt-in v0.32
-- Shiny only desativado inicialmente. Migração de alpha anteriores restaura o estado desativado uma única vez; toques subsequentes são preservados.
-- Somente ao tocar em ✨ o aplicativo abre o PoGoCoordinates visível e seleciona o controle Shiny only na página. O próprio site poderá solicitar login por Discord ou Google; nenhuma autenticação automática foi adicionada.
-- Sem Shiny only a pesquisa IV100/GL#1/UL#1 não precisa ser bloqueada apenas pela existência de um botão de login na página.
-- Sessões do navegador externo (Chrome) não são copiadas. O login via Google pode ser recusado em WebView dependendo do provedor.
+Os resultados dependem da página e da sessão autenticada do PoGoCoordinates e não foram testados ponta a ponta num Android autenticado nesta auditoria. O login do Google pode rejeitar WebViews; dados Shiny exigem o vínculo exigido pelo fornecedor. Os termos do serviço restringem scraping e redistribuição em massa: [pogocoordinates.com/terms](https://pogocoordinates.com/terms). Verificar autorização de integração antes de divulgação pública.
 
-## v0.33 · Controles mais claros
-- Engrenagem abre e fecha apenas o menu; não vira mais um X. **X vermelho** na última posição encerra o serviço e o overlay imediatamente.
-- A seta lateral, **‹** ou **›**, aponta na direção da engrenagem conforme o lado em que o menu está aberto; recolhe Pokémon, deixando apenas a engrenagem para restaurar.
-- **Sino** liga/desliga apenas as notificações gerais de novos Pokémon válidos no filtro selecionado. **Estrela** abre favoritos com busca por sprite/número/nome; alertas exclusivos de favoritos ficam configuráveis dentro dessa lista. A lista antiga é mantida.
-- Retirados histórico, diagnóstico, confirmação de encerramento e edição manual dos nomes. Preferências incluem apenas tamanho P/M/G, ordenação e relógio individual.
-- Coração continua representando Pix voluntário, AUTO 5m e ↻ preservados.
+## Documentos atuais
+- [Arquivo mestre v0.38](docs/ARQUIVO_MESTRE_v0.38.md)
+- [Auditoria v0.38](docs/AUDITORIA_v0.38.md)
+- Arquivos anteriores preservados no Google Drive do projeto.
 
-## v0.34 · Ações acima da engrenagem e favoritos separados
-- **X** (vermelho) e **minimizar todas as janelas** aparecem verticalmente **acima da engrenagem** apenas quando o menu está aberto, separados da barra horizontal. O ícone de minimizar mostra uma janela e uma seta para baixo; deixa apenas a engrenagem para restaurar. O X encerra o serviço completamente.
-- A janela reserva 54 dp de espaço acima da engrenagem ao abrir as opções. Reposicionamento nativo preserva a posição dos sprites e evita interceptar o toque na engrenagem; menu à esquerda também foi corrigido para ficar realmente à esquerda.
-- Editor de favoritos com **duas seções**: "★ Meus favoritos (n/50)" em cima, sempre visível, com sprite, Pokédex, nome e estrela; "Adicionar Pokémon" embaixo, com pesquisa de 1.025 espécies. Selecionar move imediatamente para a lista de cima; tocar na área superior remove. A lista de procurados e os alertas existentes são preservados.
-- A lista superior ocupa até 3 linhas com rolagem, e a pesquisa inferior mostra até cinco sugestões por vez, separadas por divisória e títulos.
+## Próximos passos
+Testar instalação/login/consulta Shiny em Android real; assinatura persistente para futuras atualizações; favoritos diretamente no overlay sem trocar de Activity; melhorar robustez da interface se o DOM do fornecedor mudar.
 
-## v0.35-beta — build de distribuição
-- APK recompilado de fonte, assinado por Android APK Signature Scheme v2/v3 em vez de remendos com jarsigner.
-- Ícone PokeSearch no launcher, controle X e recolher sem fundo, menor distância vertical nas opções e Pokémon.
-- R8 minifica/ofusca código Java; os métodos @JavascriptInterface são preservados por regra ProGuard. Proibido confundir ofuscação com criptografia inviolável.
-- Busca manual ignora novas tentativas enquanto outra busca está rodando; retorno do site é checado com confirmação dos filtros.
-- Código da leitura do site é carregado de assets apenas uma vez por serviço, reduzindo I/O repetido.
-- Identidade de pacote para testers: com.lucianotoscano.pokesearch (não conflita com o APK antigo). Preferências antigas não migram para o novo pacote.
-- Para futuras atualizações assinadas, conservar cópia privada da chave de assinatura. Nunca incluí-la no repositório.
-- Ainda é necessário testar login, webview, overlay e filtros com usuário real; a auditoria não consegue executar o serviço no Samsung remoto.
-
-## Revisão final v0.35
-- Ícone PokeSearch adicionado ao launcher (PNG original otimizado para o Android).
-- Botões acima da engrenagem sem fundos, espaço superior reduzido para 35dp, apenas 1dp entre ações.
-- Evita reconstruir sprites e recarregar imagens a cada mensagem de status; script de busca em cache fora de I/O; reduz atualizações de janela repetidas.
-- Assinatura de distribuição Android v2/v3 com chave estável; incompatível com assinaturas alpha antigas, pacote novo instalado em paralelo.
-
-## v0.36-teste — APK normal
-- Retorna ao build **debug padrão**, sem R8, sem ofuscação ou criptografia adicional e sem espelhamento. Compilado diretamente de `LucianoToscano/PokeSearch` (main).
-- Ícone PokeSearch embutido, ajustes de espaçamento, estrela para favoritos e botões X/recolher sem fundo mantidos.
-- APK padrão assinado automaticamente pela compilação Android; assinatura debug é obrigatória para instalação, não é proteção anticópia.
-- Identidade de pacote `com.lucianotoscano.pokesearch`: instalada separadamente dos alphas antigos; os favoritos antigos não migram automaticamente.
+Este projeto não altera o APK do Pokémon GO e não é afiliado à Niantic, à The Pokémon Company ou à Nintendo.
