@@ -45,3 +45,11 @@ Abrir a Home e overlay pela primeira vez, testar pesquisa IV100, GL#1, UL#1 sem 
 
 ### Regressão adicional — Shiny parecia inoperante ao toque
 Causa no código anterior: `Bridge.shiny()` delegava imediatamente a `refresh(true)`, que podia aguardar 60 segundos por `MIN_SEARCH_GAP_MS`; autenticação e alteração de Shiny aconteciam apenas durante a busca subsequente. Ação: separar login/controle do botão ✨ da pesquisa, criar ação `setShiny` no probe, conferir com `verifyShiny` e usar a pesquisa normal **somente após** confirmação, mantendo o limite da rede. Ao faltar autenticação, abrir diretamente o login oficial sem cooldown; após entrar, acionar Shiny apenas quando a sessão for reconhecida, sem coletar credenciais. O botão não deve exibir ON confirmado quando a página não confirmar ON. Testes JS adicionados; validação física pendente.
+
+## Correção incremental baseada em evidência visual — PS-086 a PS-088
+| Item | Causa verificada no código | Correção | Validação |
+|---|---|---|---|
+| PS-086: login preso no site | `MainActivity` reconhecia sessão quase exclusivamente por Logout visível e esperava `verifyShiny` para fechar a tela | `session` também reconhece a indicação de conta conectada no layout móvel; polling cuidadoso; retorno automático ao PokeSearch logo após autenticação, independente de Shiny | Contratos JS; login real Android pendente |
+| PS-087: ✨ demora/não muda | `prepareImmediateShiny` dependia de `prepareSearch(Stats/PvP)`, embora o switch esteja no formulário atual | Alternância direta no switch da aba Pokémon, tentativa curta após hidratação, evita novo login quando sessão está autenticada | Contratos JS; DOM real pendente |
+| PS-088: primeiro sprite distante | Reserva vertical entre menu e sprites em telas pequenas podia exceder a distância física | Reposiciona dock como unidade quando popup precisa ficar acima; elimina margem artificial | Inspeção e contratos; captura real pendente |
+**Privacidade:** nenhuma captura de nome de conta, código, cookie, token ou coordenada é gravada pelo detector de sessão. Somente `autenticada`, `login necessário` ou `não confirmado`. A captura recebida é usada como evidência visual de layout, não como teste automatizado da sessão.
