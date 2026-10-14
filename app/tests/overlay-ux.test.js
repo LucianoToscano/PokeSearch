@@ -32,7 +32,7 @@ test("Chevron is at bottom of the sprites",dock.indexOf('id="collapse"')>dock.in
 test("Red close is alongside heart with standard background",dock.indexOf('id="close"')>dock.indexOf('id="donate"')&&dock.includes("#controls #close{"));
 test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'));
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
-test("Dedicated toolbar is just 29dp tall when popover closed",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(TOOLBAR_DP)'));
+test("Separate toolbar reserves exactly two compact icon rows",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP)')&&service.includes("MENU_BASE_DP=66"));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login returns to Home and does not send it to background",!main.includes('postDelayed(()->moveTaskToBack(true)'));
 test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
@@ -51,8 +51,8 @@ test("Login, Shiny and league filters remain independent",service.includes('JSON
 
 const toolbarCols=dock.match(/#controls\{[^}]*grid-template-columns:([^;]+);/);
 const toolbarButtons=dock.slice(dock.indexOf('<div id="menu"><div id="controls">'),dock.indexOf('</div><div id="choices"')).match(/<button\b/g)||[];
-test("Controls have exactly one grid column per button, no second-row X",
-  !!toolbarCols&&toolbarCols[1].trim().split(/\s+/).length===toolbarButtons.length&&toolbarButtons.length===12);
+test("All twelve toolbar actions use a symmetric six-by-two grid",
+  !!toolbarCols&&toolbarCols[1].trim()==="repeat(6,minmax(0,1fr))"&&toolbarButtons.length===12&&dock.includes("grid-auto-rows:30px;gap:2px"));
 test("Single pin shows active radius without a second settings button",
   (dock.match(/id="location"/g)||[]).length===1&&dock.includes('id="locationRadiusText"')&&
   dock.includes('textContent=locationEnabled?locationRadius+"km":""'));
@@ -65,7 +65,7 @@ test("When OFF, icon and badge never display outdated radius",
 test("Switching from location editor to mode releases keyboard focus",
   dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
-test("Twelve proportional control columns",dock.includes("grid-template-columns:34fr 22fr 41fr"));
+test("Six equal-width columns fit narrow and wide Android screens",dock.includes("grid-template-columns:repeat(6,minmax(0,1fr))")&&service.includes("Math.min(396,screenWidthDp()-8)"));
 test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
 test("Chevron has visible artwork and no surface background",dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
@@ -197,4 +197,16 @@ test("v0.50 service accepts missing action on initial start",
 test("v0.50 neutral UI includes smaller location icon",
     dock.includes('#controls #location svg{width:14px;height:14px}')&&
     dock.includes('#choices{background:#252628ee'));
+test("Android responsive controls have no phantom spacer below popup",
+  service.includes('Math.round((menuParams.y+menuParams.height-params.y)/d.density)-30+2')&&
+  service.includes('menuPadDp=0; // No spacer: side toolbar')&&
+  dock.includes('#choices{display:none;position:absolute;top:66px;'));
+test("Android responsive controls measure their actual two-row height",
+  dock.includes('if(controlsWindow)h=Math.max(66,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);')&&
+  service.includes('menuParams.height=dp(MENU_BASE_DP)')&&
+  service.includes('Math.min(450,screenHeightDp()-72)'));
+test("Android responsive layout contains all 12 controls exactly once",
+  toolbarButtons.length===12&&
+  ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','report','donate','close']
+  .every(id=>(dock.match(new RegExp('id="'+id+'"','g'))||[]).length===1));
 console.log("PokeSearch UX contract: "+count+" tests passed");
