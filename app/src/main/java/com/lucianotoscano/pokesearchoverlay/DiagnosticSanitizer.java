@@ -28,7 +28,7 @@ final class DiagnosticSanitizer {
             "[credencial omitida]");
         safe=safe.replaceAll("[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}","[email omitido]");
         safe=safe.replaceAll("(?<!\\d)(?:\\d[ -]?){12}(?!\\d)","[código omitido]");
-        safe=safe.replaceAll("(?<!\\d)-?\\d{1,2}\\.\\d+\\s*[,;]\\s*-?\\d{1,3}\\.\\d+",
+        safe=safe.replaceAll("(?<!\\d)[-+]?\\d{1,2}\\.\\d+\\s*[,;]\\s*[-+]?\\d{1,3}\\.\\d+",
             "[coordenadas omitidas]");
         return safe.substring(0,Math.min(safe.length(),MAX_FIELD_LENGTH));
     }
