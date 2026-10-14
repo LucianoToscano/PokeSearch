@@ -337,13 +337,13 @@ public class MainActivity extends Activity {
            host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
         String script="(function(){var a=Array.from(document.querySelectorAll('a,button,[role=button]'));"+
             "var label=function(e){return (e.innerText||e.textContent||'').trim();};"+
-            "if(a.some(function(e){return /^(?:log\\\\s*out|sign\\\\s*out|sair|desconectar)$/i.test(label(e));}))return 'authenticated';"+
-            "var e=a.find(function(x){return /^(?:log\\\\s*in|sign\\\\s*in|entrar|fazer login)$/i.test(label(x));});"+
+            "if(a.some(function(e){return /^(?:log\\s*out|sign\\s*out|sair|desconectar)$/i.test(label(e));}))return 'authenticated';"+
+            "var e=a.find(function(x){return /^(?:log\\s*in|sign\\s*in|entrar|fazer login)$/i.test(label(x));});"+
             "if(e&&!e.disabled&&e.getClientRects().length){e.click();return 'opened';}return 'waiting';})()";
         view.evaluateJavascript(script,result->{
             if(view!=website||loginLinkAttempted||loginDialog==null||
                !loginDialog.isShowing())return;
-            if("\\"opened\\"".equals(result)||"\\"authenticated\\"".equals(result)){
+            if(result!=null&&(result.contains("opened")||result.contains("authenticated"))){
                 loginLinkAttempted=true;
             }else{
                 view.postDelayed(()->openOfficialLoginControl(view,remaining-1),330L);
