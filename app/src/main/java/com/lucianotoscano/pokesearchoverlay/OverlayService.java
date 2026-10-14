@@ -653,6 +653,63 @@ public class OverlayService extends Service {
             diagnosticError("Não foi possível abrir a etapa de login/vinculação.");
         }
     }
+    // A ✨ tap must not wait for Pokémon search cooldown, polling or AUTO.
+    // Only the site control is changed here; a subsequent search still respects
+    // MIN_SEARCH_GAP_MS. All JS replies are guarded by requestGeneration.
+    private void applyShinyOnSite(int generation,int attempt){
+        if(stopped||loginPaused||generation!=requestGeneration)return;
+        execute("setShiny",applied->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
+            if(!applied.optBoolean("ok",false)){
+                shinyVerified=false;
+                if(shiny&&!applied.optBoolean("controlFound",true)){
+                    status("✨ Login necessário para habilitar Shiny no site.");
+                    openShinyLogin();
+                }else{
+                    diagnosticError("✨ Não foi possível alterar o filtro Shiny no site.");
+                }
+                return;
+            }
+            handler.postDelayed(()->{
+                if(stopped||loginPaused||generation!=requestGeneration)return;
+                execute("verifyShiny",verified->{
+                    if(stopped||loginPaused||generation!=requestGeneration)return;
+                    if(verified.optBoolean("ok",false)){
+                        shinyVerified=shiny;
+                        shinyLoginPromptRequested=false;
+                        status(shiny?"✨ Shiny ativado e confirmado no site.":
+                            "✨ Shiny desativado e confirmado no site.");
+                        // Existing network rate limit still applies to Search.
+                        refresh(false);
+                    }else if(attempt<2){
+                        handler.postDelayed(()->applyShinyOnSite(generation,attempt+1),260L);
+                    }else{
+                        shinyVerified=false;
+                        if(shiny&&verified.optBoolean("pending",false)){
+                            status("✨ Vinculação necessária para Shiny.");
+                            openShinyLogin();
+                        }else diagnosticError("✨ Alteração de Shiny não confirmada pelo site.");
+                    }
+                });
+            },240L);
+        });
+    }
+    private void prepareImmediateShiny(int generation){
+        if(stopped||loginPaused||generation!=requestGeneration)return;
+        execute("prepareSearch",prepared->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
+            if(!prepared.optBoolean("ok",false)){
+                shinyVerified=false;
+                if(shiny){
+                    status("✨ Abra sua conta no site para habilitar o filtro.");
+                    openShinyLogin();
+                }else diagnosticError("✨ Não foi possível acessar o filtro Shiny no site.");
+                return;
+            }
+            // Site tabs can re-render asynchronously; no 60-second waiting.
+            handler.postDelayed(()->applyShinyOnSite(generation,0),220L);
+        });
+    }
     private void verifyAndSubmit(int generation,boolean manual,int attempt){
         handler.postDelayed(()->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
@@ -1211,16 +1268,51 @@ public class OverlayService extends Service {
             schedulePeriodic();update();
         });}
         @JavascriptInterface public void shiny(){handler.post(()->{
+            if(stopped||loginPaused)return;
             shiny=!shiny;
-            getSharedPreferences("prefs",0).edit().putBoolean("shiny",shiny).apply();
-            ++requestGeneration;
+            android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+            prefs.edit().putBoolean("shiny",shiny).apply();
+            final int generation=++requestGeneration;
             searchInProgress=false;
+            handler.removeCallbacks(queuedRefresh);
             shinyVerified=false;
             shinyLoginWindowOpened=false;
             shinyLoginPromptRequested=shiny;
-            results="[]";hideDetails();update();
-            status(shiny?"✨ Confirmando Shiny no site...":"Desativando Shiny no site...");
-            OverlayService.this.refresh(true);
+            // Keep existing results visible while the new site state is pending.
+            status(shiny?"✨ Verificando acesso ao Shiny...":"✨ Desativando Shiny no site...");
+            if(shiny){
+                String cachedAuth=prefs.getString("sessionStatus","não confirmado");
+                if("login necessário".equals(cachedAuth)||"desconectado".equals(cachedAuth)){
+                    status("✨ Faça login para ativar Shiny.");
+                    openShinyLogin();
+                    return;
+                }
+            }
+            if(!loaded||website==null){
+                if(shiny){
+                    status("✨ Abrindo login; pesquisa ainda não carregada.");
+                    openShinyLogin();
+                }else status("✨ Shiny desligado; sincronização no próximo carregamento.");
+                return;
+            }
+            if(!shiny){
+                // OFF never requires signing in and never waits for Search cooldown.
+                prepareImmediateShiny(generation);
+                return;
+            }
+            execute("session",session->{
+                if(stopped||loginPaused||generation!=requestGeneration)return;
+                String auth=session.optString("auth","não confirmado");
+                prefs.edit().putString("sessionStatus",auth).apply();
+                if("login necessário".equals(auth)){
+                    status("✨ Faça login para ativar Shiny.");
+                    openShinyLogin();
+                    return;
+                }
+                // Auth can be 'não confirmado' on a partially hydrated page;
+                // attempt the switch, then prompt only if the control is absent.
+                prepareImmediateShiny(generation);
+            });
         });}
         @JavascriptInterface public void refresh(){handler.post(()->{
             android.widget.Toast.makeText(OverlayService.this,
