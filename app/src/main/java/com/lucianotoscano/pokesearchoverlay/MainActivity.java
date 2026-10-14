@@ -42,6 +42,7 @@ public class MainActivity extends Activity {
     private TextView watchSummary;
     private AlertDialog loginDialog;
     private boolean loginSessionNotified=false;
+    private boolean loginCloseRefreshSent=false;
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         getWindow().setStatusBarColor(Color.rgb(11,13,18));
@@ -165,6 +166,7 @@ public class MainActivity extends Activity {
     private void openLoginDialog(){
         if(loginDialog!=null&&loginDialog.isShowing())return;
         loginSessionNotified=false;
+        loginCloseRefreshSent=false;
         website=new WebView(this);
         website.getSettings().setJavaScriptEnabled(true);
         website.getSettings().setDomStorageEnabled(true);
@@ -199,13 +201,18 @@ public class MainActivity extends Activity {
             .setMessage("Entre com sua conta. Ao concluir, a busca do overlay será atualizada sem precisar fechá-lo.")
             .setView(holder)
             .setNegativeButton("Cancelar",null)
-            .setPositiveButton("Voltar ao overlay",(d,which)->moveTaskToBack(true))
+            .setPositiveButton("Voltar ao overlay",(d,which)->{
+                loginCloseRefreshSent=true;
+                notifyOverlaySessionReady();
+                getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),160L);
+            })
             .create();
         loginDialog.setOnDismissListener(d->{
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginDialog=null;
-            // Once more after closing to capture trainer-code linking performed after OAuth.
-            notifyOverlaySessionReady();
+            // Refresh after a dismissed login dialog only once; positive button
+            // refreshes before sending the app to background (Android 12+).
+            if(!loginCloseRefreshSent)notifyOverlaySessionReady();
         });
         loginDialog.show();
         website.loadUrl("https://pogocoordinates.com/search");
