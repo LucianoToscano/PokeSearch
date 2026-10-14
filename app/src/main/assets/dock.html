@@ -348,7 +348,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
- mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=Number(interval)||5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  if(active>=cards.length)active=-1;
  draw();
 };
