@@ -833,7 +833,7 @@ public class OverlayService extends Service {
             shinyLoginPromptRequested=shiny;
             results="[]";hideDetails();update();
             status(shiny?"✨ Confirmando Shiny no site...":"Desativando Shiny no site...");
-            refresh(true);
+            OverlayService.this.refresh(true);
         });}
         @JavascriptInterface public void refresh(){handler.post(()->OverlayService.this.refresh(true));}
         @JavascriptInterface public void minimize(){handler.post(()->OverlayService.this.minimize(true));}
