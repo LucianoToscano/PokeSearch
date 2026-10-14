@@ -67,7 +67,7 @@ test("Switching from location editor to mode releases keyboard focus",
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
 test("Twelve proportional control columns",dock.includes("grid-template-columns:34fr 22fr 41fr"));
 test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
-test("Chevron has visible surface",dock.includes("width:40px;height:32px")&&dock.includes("background:#152338"));
+test("Chevron has visible artwork and no surface background",dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
 test("Coalesce resize events",dock.includes("if(fitPending)return"));
 test("Location validation refuses blank radius",read("assets/probe.js").includes('radiusInput!==""'));
