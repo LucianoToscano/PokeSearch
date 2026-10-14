@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.graphics.Color;
 import android.webkit.CookieManager;
+import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
@@ -40,6 +41,9 @@ import android.graphics.Typeface;
 public class MainActivity extends Activity {
     private WebView website;
     private TextView watchSummary;
+    private TextView sessionSummary;
+    private boolean loginStartedForShiny=false;
+    private boolean loginAutoReturnQueued=false;
     private android.app.Dialog loginDialog;
     private boolean loginSessionNotified=false;
     private String pendingReportText="";
@@ -79,6 +83,41 @@ public class MainActivity extends Activity {
         startParams.setMargins(d(2),d(3),d(2),d(9));
         root.addView(start,startParams);
         start.setOnClickListener(v->startOverlay());
+        // Account controls stay on the native Home; the site is a temporary login surface.
+        LinearLayout account=new LinearLayout(this);
+        account.setOrientation(LinearLayout.VERTICAL);
+        account.setPadding(d(12),d(9),d(12),d(10));
+        account.setBackground(round(Color.rgb(23,30,41),11));
+        sessionSummary=new TextView(this);
+        sessionSummary.setTextColor(Color.rgb(188,204,222));
+        sessionSummary.setTextSize(12);
+        sessionSummary.setPadding(0,0,0,d(8));
+        account.addView(sessionSummary);
+        LinearLayout buttons=new LinearLayout(this);
+        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        Button signIn=new Button(this);
+        signIn.setText("Entrar / vincular");
+        signIn.setAllCaps(false);
+        signIn.setTextSize(12);
+        signIn.setTextColor(Color.rgb(213,255,238));
+        signIn.setBackground(round(Color.rgb(30,91,73),9));
+        buttons.addView(signIn,new LinearLayout.LayoutParams(0,d(42),1));
+        signIn.setOnClickListener(v->openLoginDialog(false));
+        Button signOut=new Button(this);
+        signOut.setText("Sair");
+        signOut.setAllCaps(false);
+        signOut.setTextSize(12);
+        signOut.setTextColor(Color.rgb(255,204,213));
+        signOut.setBackground(round(Color.rgb(77,40,52),9));
+        LinearLayout.LayoutParams signOutParams=new LinearLayout.LayoutParams(d(91),d(42));
+        signOutParams.setMargins(d(8),0,0,0);
+        buttons.addView(signOut,signOutParams);
+        signOut.setOnClickListener(v->askLogout());
+        account.addView(buttons);
+        LinearLayout.LayoutParams accountParams=new LinearLayout.LayoutParams(-1,-2);
+        accountParams.setMargins(d(2),0,d(2),d(10));
+        root.addView(account,accountParams);
+        refreshSessionSummary();
         LinearLayout watchRow=new LinearLayout(this);
         watchRow.setOrientation(LinearLayout.HORIZONTAL);
         watchRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -196,6 +235,42 @@ public class MainActivity extends Activity {
         android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
         bg.setColor(color);bg.setCornerRadius(d(radius));return bg;
     }
+    private void refreshSessionSummary(){
+        if(sessionSummary==null)return;
+        String state=getSharedPreferences("prefs",0).getString("sessionStatus","não confirmado");
+        String text="autenticada".equals(state)?"● Sessão identificada · PoGoCoordinates":
+            "desconectado".equals(state)?"○ Sessão local desconectada":
+            "login necessário".equals(state)?"○ Login necessário para Shiny":
+            "○ Sessão ainda não confirmada";
+        sessionSummary.setText(text);
+    }
+    private void askLogout(){
+        new AlertDialog.Builder(this)
+            .setTitle("Desconectar PoGoCoordinates?")
+            .setMessage("Sair apagará a sessão local do site neste aplicativo e encerrará o overlay ativo. Favoritos e preferências gerais serão mantidos. Sua conta Google/Discord continuará intacta.")
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Desconectar",(dialog,which)->logoutLocalSession())
+            .show();
+    }
+    private void logoutLocalSession(){
+        // Do not start a service for sign-out. Stop the collector before revoking cookies.
+        stopService(new Intent(this,OverlayService.class));
+        if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
+        getSharedPreferences("prefs",0).edit()
+            .putString("sessionStatus","desconectado")
+            .putBoolean("shiny",false)
+            .putString("lastStatus","Sessão local desconectada")
+            .putString("lastError","Nenhum")
+            .apply();
+        refreshSessionSummary();
+        CookieManager.getInstance().removeAllCookies(cleared->{
+            CookieManager.getInstance().flush();
+            WebStorage.getInstance().deleteAllData();
+            runOnUiThread(()->Toast.makeText(this,
+                "Sessão do PokeSearch desconectada",Toast.LENGTH_SHORT).show());
+        });
+        BugReport.log(this,"SESSION","Desconexão local solicitada");
+    }
     private void refreshWatchCount(){
         if(watchSummary==null)return;
         int size=WatchAlerts.watched(this).size();
@@ -208,6 +283,7 @@ public class MainActivity extends Activity {
     @Override protected void onResume(){
         super.onResume();
         refreshWatchCount();
+        refreshSessionSummary();
     }
     private void handleShinyLoginIntent(Intent intent){
         if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
@@ -216,10 +292,12 @@ public class MainActivity extends Activity {
     private void serviceAction(String action){
         Intent intent=new Intent(this,OverlayService.class);
         intent.setAction(action);
+        if(!OverlayService.isRunning())return;
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
     }
     private void notifyOverlaySessionReady(){
         CookieManager.getInstance().flush();
+        if(!OverlayService.isRunning())return;
         Intent intent=new Intent(this,OverlayService.class);
         intent.setAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
