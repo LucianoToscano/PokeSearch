@@ -25,4 +25,6 @@ test("Throttled refresh is queued",service.includes('handler.postDelayed(queuedR
 test("Quick guide remains accessible",main.includes("showQuickGuide()")&&main.includes("tutorialSeenV40"));
 test("Sprite rows must not overlap artwork",service.includes("return spriteSize+10;")&&!service.includes("Math.min(spriteSize-5"));
 test("Sprites remain vertically centered",dock.includes("align-items:center;justify-content:center")&&dock.includes("height:var(--row)"));
+test("Sprite list uses scroll instead of clipping overflow",dock.includes("overflow-y:auto;overflow-x:hidden")&&dock.includes("--list-limit"));
+test("Long lists have list height supplied by native screen size",service.includes("Math.min(rowDp()*6,screenHeightDp()-185)"));
 console.log("PokeSearch UX contract: "+count+" tests passed");
