@@ -3,15 +3,17 @@
 :root{--row:41px;--sprite:45px;--dock:53px;--top-space:0px;--list-limit:430px}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:transparent!important;color:#fff;font:10px Roboto,Arial,sans-serif;overflow:hidden}
+/* Menus must extend beyond the 34dp toolbar without being clipped. */
+html.controls-root,body.controls-window{overflow:visible!important;min-height:100%;}
 button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #shell{position:relative;width:var(--dock);padding-top:0;background:transparent!important;border:0;border-radius:0;box-shadow:none;overflow:visible}
-#gear{width:28px;height:21px;margin:0 auto;padding:0;border:0;background:transparent;color:#e9ecf1;display:flex;align-items:center;justify-content:center}
+#gear{width:35px;height:30px;margin:0 auto;padding:0;border:1px solid #ffffff42;border-radius:9px;background:#142133f5;color:#e9ecf1;display:flex;align-items:center;justify-content:center}
 #gear svg{display:block;width:21px;height:21px;filter:drop-shadow(0 1px 1px #0007)}
 #gear.busy svg{animation:gearbusy 1.25s linear infinite}
 @keyframes gearbusy{to{transform:rotate(360deg)}}
-#menu{display:none;position:absolute;top:0;left:var(--dock);width:333px;height:29px;z-index:3;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
+#menu{display:none;position:absolute;top:0;left:var(--dock);width:396px;height:34px;z-index:3;padding:0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
 #menu.open{display:block}
-#choices{display:none;position:absolute;top:29px;left:0;z-index:12;width:166px;padding:5px;background:#151c27f5;border:1px solid #ffffff38;border-radius:10px;box-shadow:0 4px 12px #0008}
+#choices{display:none;position:absolute;top:34px;left:0;z-index:12;width:166px;padding:5px;background:#151c27f5;border:1px solid #ffffff38;border-radius:10px;box-shadow:0 4px 12px #0008}
 #choices.visible{display:block}
 body.menu-left #choices{left:auto;right:0}
 #choices button{width:100%;display:block;text-align:left;padding:8px 9px;margin:1px 0;border-radius:7px;background:transparent;border:0;color:#e8ebef;font-size:12px;line-height:1.3;white-space:normal}
@@ -20,7 +22,7 @@ body.menu-left #choices{left:auto;right:0}
 body.menu-left #shell{margin-left:333px}
 body.menu-left #menu{left:-333px}
 #controls{width:calc(100% - 4px);display:grid;grid-template-columns:34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr;gap:2px;padding:0;margin:0;align-items:center}
-body.menu-left #controls{direction:ltr}
+body.menu-left #controls{direction:rtl}
 body.dock-window #menu{display:none!important}
 body.dock-window #shell{margin-left:0!important}
 body.controls-window #gear,body.controls-window #spawns,body.controls-window #empty,body.controls-window #collapse{display:none!important}
@@ -28,17 +30,19 @@ body.controls-window #shell{width:100%!important;margin:0!important;padding:0!im
 body.controls-window #menu{position:relative!important;display:block!important;left:0!important;top:0!important;width:100%!important}
 body.controls-window #choices{z-index:10}
 #controls button{direction:ltr}
-#controls button{height:25px;width:100%;min-width:0;padding:0;background:#151b26e6;border:1px solid #ffffff23;border-radius:5px;font-size:10px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;white-space:nowrap}
+#controls button{height:30px;width:100%;min-width:0;padding:0;background:#151b26e6;border:1px solid #ffffff23;border-radius:5px;font-size:10px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;white-space:nowrap}
 #controls button.active{background:#db2d4bdb}
+#manualRefresh.requested{background:#225446ee;border-color:#a4ecd4;animation:refreshpulse .8s ease-in-out 2}
+@keyframes refreshpulse{50%{opacity:.6}}
 #controls #cycle.ivOn{background:#136b3bdf;border-color:#69df97a6;color:#e9fff2}
 #gear .gear-icon{display:block}
 #gear .close-icon{display:none}
 #controls #close{font-size:18px;font-weight:800;color:#ff596c;background:#151b26e6;border-color:#ff596c5c}
 #controls #close:active{background:#622735}
-#collapse{display:flex;align-items:center;justify-content:center;width:35px;height:29px;margin:4px auto 2px;
- padding:0;border-radius:9px;border:1px solid #879db5aa;background:#162438f5;color:#eef6ff;
- box-shadow:0 2px 7px #000a}
-#collapse svg{width:19px;height:19px;display:block;pointer-events:none}
+#collapse{display:flex;align-items:center;justify-content:center;width:40px;height:32px;margin:5px auto 3px;
+ padding:0;border-radius:10px;border:1px solid #b4cbe5bf;background:#152338;color:#f2f8ff;
+ box-shadow:0 2px 9px #000c}
+#collapse svg{width:22px;height:22px;display:block;pointer-events:none}
 #controls #bell.generalOn{background:#1d5b49dc;border-color:#69dbab77;color:#ddfff1}
 #controls #star.favoritesOn{background:#70561de0;border-color:#ffe29a77;color:#ffdf74}
 #controls #star svg{width:17px;height:17px}
@@ -101,7 +105,7 @@ body.controls-window #locBadge{display:none!important}
   <button id="cycle" title="Escolher IV100, Grande Liga #1 ou Ultra Liga #1" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('mode')">100%</button>
   <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()">✨</button>
   <button id="period" title="Escolher intervalo automático" aria-label="Atualização automática, 5 minutos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">5m</span></button>
-  <button id="manualRefresh" title="Atualizar resultados agora" onclick="Native.refresh()">↻</button>
+  <button id="manualRefresh" title="Atualizar resultados agora" aria-label="Atualizar resultados agora" onclick="manualRefreshTap()">↻</button>
   <button id="size" title="Tamanho P / M / G" onclick="Native.cycleSpriteSize()">M</button>
   <button id="clock" title="Mostrar ou ocultar tempo de despawn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button id="bell" title="Notificações de novos Pokémon · toque para ativar/desativar" aria-pressed="false" onclick="Native.toggleGeneralAlerts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
@@ -120,6 +124,7 @@ body.controls-window #locBadge{display:none!important}
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 document.body.classList.add(controlsWindow?"controls-window":"dock-window");
+document.documentElement.classList.toggle("controls-root",controlsWindow);
 let locationEnabled=false,locationCoords="",locationRadius=0;
 let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false;
 function setMenuOpen(open,side,pad){
@@ -138,7 +143,7 @@ let fitPending=false;
 function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{fitPending=false;
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
- if(controlsWindow)h=29;
+ if(controlsWindow)h=34;
  if(controlsWindow&&choiceOpen&&menuOpen){
   const popup=document.getElementById("choices");
   h=Math.max(h,Math.ceil(popup.getBoundingClientRect().bottom-shell.getBoundingClientRect().top)+6);
@@ -156,6 +161,8 @@ function closeChoices(){
  fit();
 }
 function toggleChoices(kind){
+ // The separate toolbar WebView may be visible before syncMenu arrives.
+ if(controlsWindow&&!menuOpen)setMenuOpen(true,document.body.classList.contains('menu-left')?'left':'right',0);
  if(!menuOpen)return;
  if(choiceOpen===kind){closeChoices();return;}
  if(choiceOpen==="location"&&kind!=="location"){
@@ -183,8 +190,8 @@ function toggleChoices(kind){
   btn.textContent=(value===current?"✓ ":"")+label;
   btn.onclick=()=>{
    closeChoices();
-   if(kind==="mode")Native.setMode(String(value));
-   else Native.setIntervalMinutes(Number(value));
+   if(kind==="mode"){mode=String(value);draw();Native.setMode(mode);}
+   else{period=Number(value);draw();Native.setIntervalMinutes(period);}
   };
   panel.appendChild(btn);
  }
@@ -231,6 +238,12 @@ function renderLocationChoices(){
  if(controlsWindow)Native.locationEditor(true);
  fit();
 }
+function manualRefreshTap(){
+ const button=document.getElementById("manualRefresh");
+ button.classList.add("requested");
+ button.title="Atualização solicitada · respeita o limite de buscas";
+ Native.refresh();
+}
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let longTimer, longDone=false;
 function spriteClick(i){if(longDone){longDone=false;return;}Native.toggleDetail(i);}
@@ -270,6 +283,7 @@ function draw(){
  document.getElementById("sh").setAttribute("aria-pressed",String(shiny));
  document.getElementById("sh").title=shiny?"✨ Shiny confirmado":shinyPending?"✨ Aguardando vínculo/confirmação no site":"Shiny desativado";
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
+ if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status))document.getElementById("manualRefresh").classList.remove("requested");
  const bell=document.getElementById("bell");
  bell.classList.toggle("generalOn",generalAlerts);
  bell.setAttribute("aria-pressed",String(generalAlerts));
