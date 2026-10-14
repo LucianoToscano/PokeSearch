@@ -1,6 +1,6 @@
 # PokeSearch — Android Overlay
 
-**Versão de desenvolvimento: v0.42-beta (versionCode 42).** APK Android separado do PvPPokeGo para testes privados entre amigos desenvolvedores. Package ID: com.lucianotoscano.pokesearch; minSdk 26, compileSdk 36, Java 17, Gradle 8.11.1.
+**Versão de desenvolvimento: v0.43-beta (versionCode 43).** APK Android separado do PvPPokeGo para testes privados entre amigos desenvolvedores. Package ID: com.lucianotoscano.pokesearch; minSdk 26, compileSdk 36, Java 17, Gradle 8.11.1.
 
 ## Interface e funcionamento
 - Sobreposição compacta sobre Pokémon GO com engrenagem arrastável. Toque na engrenagem para expandir/recolher somente as opções; sprites permanecem visíveis e deslocam-se para baixo quando as opções estão abertas.
@@ -18,8 +18,8 @@ O GitHub Actions em [build-overlay.yml](.github/workflows/build-overlay.yml) exe
 **Importante:** a assinatura de debug do CI não é chave persistente de distribuição e pode mudar, impedindo instalação sobre builds anteriores. Este é um APK **beta de teste**; não alegar funcionamento real no aparelho sem testar. Para distribuição estável, usar keystore privada persistente, backups seguros e confirmação do proprietário. Atualizações do site podem mudar o DOM e causar falhas de busca. Respeitar os termos e a autorização aplicável ao PoGoCoordinates; não tentar contornar limites. Não registrar códigos de amizade, cookies ou credenciais nos relatórios.
 
 ## Arquivos mestres
-- [Arquivo mestre v0.42](docs/ARQUIVO_MESTRE_v0.42.md) — única referência prioritária para retomar o projeto em outro chat.
-- [Auditoria v0.42](docs/AUDITORIA_v0.42.md) — bugs, correções, matriz de testes e riscos.
+- [Arquivo mestre v0.43](docs/ARQUIVO_MESTRE_v0.43.md) — única referência prioritária para retomar o projeto em outro chat.
+- [Auditoria v0.43](docs/AUDITORIA_v0.43.md) — bugs, correções, matriz de testes e riscos.
 - Histórico v0.38–v0.40 preservado em docs; mestre mais antigo v0.36 no Google Drive.
 - [Catálogo de bugs e melhorias](https://docs.google.com/spreadsheets/d/1aam5N7DNnzMqJj5giZTdsAmzWkHTWPj-uKcUUVwreiI/edit).
 
@@ -30,3 +30,9 @@ Projeto não afiliado à Niantic, Nintendo ou The Pokémon Company.
 
 ## Localização opcional — v0.42
 Um **único ícone 📍** na barra de opções abre ou oculta o editor de localização. Dentro do editor, ao lado do campo de latitude/longitude, a chave ON/OFF ativa ou desativa o filtro; um slider permite raio entre **0 e 1.000 km**. Ocultar o painel não altera o estado do filtro. OFF remove coordenadas e raio aplicados pelo app e mantém o modo IV100/GL#1/UL#1 e Shiny que estavam selecionados. Antes de enviar a busca, o aplicativo confere os valores no formulário oficial. A proteção entre consultas permanece em vigor.
+
+## v0.43-beta — indicador permanente do raio + revisão da barra
+- Com o filtro 📍 **ON**, o botão de localização exibe o raio em km dentro do mesmo ícone e o dock mostra uma pequena etiqueta `📍 50 km`, inclusive quando as opções estão recolhidas, sem adicionar outro botão. Quando 📍 está OFF, a etiqueta desaparece.
+- Corrigida a grade do menu: 12 botões em 12 colunas, com X vermelho na mesma linha e ao lado do coração Pix, sem que o X seja empurrado para uma segunda linha.
+- Ao trocar de localização para filtros ou AUTO, o painel de coordenadas libera o foco do teclado e volta ao tamanho normal. Ocultar o editor mantém o filtro ON; desligar limpa os valores do site conforme verificação.
+- Nenhum código de treinador, token de autenticação ou coordenadas completas é acrescentado à etiqueta. O app preserva limites mínimos de pesquisa.
