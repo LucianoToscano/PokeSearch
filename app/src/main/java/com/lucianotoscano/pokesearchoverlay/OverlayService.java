@@ -33,7 +33,7 @@ public class OverlayService extends Service {
     private static final int BUBBLE_DP=45, DETAIL_DP=226;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return dockDp()+258;}
+    private int menuDp(){return dockDp()+283;}
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams;
@@ -44,10 +44,13 @@ public class OverlayService extends Service {
     private int height=72,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
     private String probeScriptCache;
     private boolean searchInProgress=false;
+    private static final long MIN_SEARCH_GAP_MS=60_000L;
+    private long lastSearchStartMs=0L;
     private boolean shinyVerified=false;
     private boolean shinyLoginPromptRequested=false;
     private boolean shinyLoginWindowOpened=false;
     private boolean firstStart=true;
+    private boolean loginPaused=false;
     private boolean showTimers=false,alerts=false;
     private String sort="despawn";
     private long lastAlertAt=0L;
@@ -144,6 +147,7 @@ public class OverlayService extends Service {
     }
     private void diagnosticError(String s){
         getSharedPreferences("prefs",0).edit().putString("lastError",s).apply();
+        BugReport.log(this,"ERROR",s);
         status(s);
     }
     private void updateWindow(){
@@ -332,15 +336,26 @@ public class OverlayService extends Service {
     }
     private void refresh(){refresh(false);}
     private void refresh(boolean manual){
-        if(stopped)return;
+        if(stopped||loginPaused)return;
         if(searchInProgress){
             if(manual)status("A busca atual ainda está em andamento.");
             return;
         }
         if(!loaded||website==null){
-            diagnosticError("Sessão do site ainda não carregada; abra o aplicativo para conferir o login.");
+            // onPageFinished will trigger the pending refresh automatically.
+            status("Carregando o site. Aguarde alguns segundos...");
             return;
         }
+        long now=System.currentTimeMillis();
+        long previous=getSharedPreferences("prefs",0).getLong("lastNetworkSearchAt",0L);
+        if(previous>0L&&now>=previous&&now-previous<MIN_SEARCH_GAP_MS){
+            long remaining=(MIN_SEARCH_GAP_MS-(now-previous)+999L)/1000L;
+            status("Proteção de consultas: aguarde "+remaining+"s para atualizar.");
+            return;
+        }
+        lastSearchStartMs=now;
+        getSharedPreferences("prefs",0).edit().putLong("lastNetworkSearchAt",now).apply();
+        BugReport.log(this,"SEARCH","Solicitação "+mode+" Shiny="+shiny+" manual="+manual);
         handler.removeCallbacks(expiryRefresh);
         armedDespawnMillis=0L;
         searchInProgress=true;
@@ -368,7 +383,7 @@ public class OverlayService extends Service {
                     if(stopped||generation!=requestGeneration)return;
                     if(!configured.optBoolean("ok")||!configured.optBoolean("configured",false)){
                         searchInProgress=false;
-                        diagnosticError("Falha ao configurar os filtros.");
+                        diagnosticError("Falha nos controles IV/R1. Verifique se a página de busca carregou.");
                         return;
                     }
                     verifyAndSubmit(generation,manual,0);
@@ -393,11 +408,11 @@ public class OverlayService extends Service {
         handler.postDelayed(()->execute("verifyShiny",verified->{
             if(stopped||generation!=requestGeneration)return;
             if(!verified.optBoolean("ok")){
-                if(attempt<2){
-                    execute("configureSearch",ignored->{
+                if(attempt<4){
+                    execute("prepareSearch",preparedRetry->execute("configureSearch",ignored->{
                         if(stopped||generation!=requestGeneration)return;
                         verifyAndSubmit(generation,manual,attempt+1);
-                    });
+                    }));
                     return;
                 }
                 searchInProgress=false;
@@ -597,6 +612,9 @@ public class OverlayService extends Service {
         }
     }
     private void applyCollectedResults(JSONObject r){
+        BugReport.log(this,"RESULTS","Modo "+mode+" • válidos "+
+            (r.optJSONArray("cards")==null?0:r.optJSONArray("cards").length())+
+            " • encontrados "+r.optInt("found",0));
         JSONArray items=r.optJSONArray("cards");
         if(items==null)items=new JSONArray();
         long now=System.currentTimeMillis();
@@ -829,6 +847,15 @@ public class OverlayService extends Service {
                 Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
             try{startActivity(intent);}catch(Exception ignored){}
         });}
+        @JavascriptInterface public void openReport(){handler.post(()->{
+            Intent intent=new Intent(OverlayService.this,MainActivity.class);
+            intent.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
+                Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            try{startActivity(intent);}catch(Exception e){
+                diagnosticError("Não foi possível abrir o relatório de bugs.");
+            }
+        });}
         @JavascriptInterface public void openWatchList(){handler.post(()->{
             Intent i=new Intent(OverlayService.this,MainActivity.class);
             i.setAction("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST");
@@ -839,7 +866,7 @@ public class OverlayService extends Service {
             }
         });}
         @JavascriptInterface public void cycleInterval(){handler.post(()->{
-            int[] options={1,3,5,10,15,20};
+            int[] options={5,10,15,20};
             int next=0;
             for(int j=0;j<options.length;j++){
                 if(options[j]==intervalMinutes){next=(j+1)%options.length;break;}
@@ -897,6 +924,23 @@ public class OverlayService extends Service {
         });
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
+        String action=i==null?"":i.getAction();
+        if("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN".equals(action)){
+            loginPaused=true;
+            handler.removeCallbacks(periodic);
+            if(root!=null)root.setVisibility(View.GONE);
+            if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
+            BugReport.log(this,"LOGIN","Página de autenticação aberta, overlay oculto");
+            return START_STICKY;
+        }
+        if("com.lucianotoscano.pokesearchoverlay.LOGIN_END".equals(action)){
+            loginPaused=false;
+            if(root!=null)root.setVisibility(View.VISIBLE);
+            if(detailRoot!=null&&selected>=0)detailRoot.setVisibility(View.VISIBLE);
+            schedulePeriodic();
+            BugReport.log(this,"LOGIN","Página de autenticação fechada");
+            return START_STICKY;
+        }
         boolean initialStart=firstStart;
         firstStart=false;
         if(i!=null&&"com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN".equals(i.getAction())){
@@ -926,8 +970,8 @@ public class OverlayService extends Service {
         }else{
             intervalMinutes=pref.getInt("intervalMinutes",5);
         }
-        if(intervalMinutes!=1&&intervalMinutes!=3&&intervalMinutes!=5&&
-           intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=5;
+        if(intervalMinutes!=5&&intervalMinutes!=10&&
+           intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=5;
         schedulePeriodic();
         spriteSize=pref.getInt("spriteSize",45);
         if(spriteSize!=35&&spriteSize!=45&&spriteSize!=55)spriteSize=45;
