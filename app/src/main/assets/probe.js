@@ -267,6 +267,11 @@ if(action.startsWith("readCoords:")){
    if(!/\bLOCATION\b/i.test(t)||!/\bDESPAWN\b/i.test(t)||t.length>3500)continue;
    const name=String(query.name||"").toLowerCase();
    if(name&&!t.toLowerCase().includes(name))continue;
+   const cp=String(query.cp||"").trim();
+   if(cp){
+    const measured=nextLabelValue(card,"CP")||(t.match(/\bCP\s*:?\s*(\d{1,5})\b/i)||[])[1]||"";
+    if(!measured||Number((measured.match(/\d{1,5}/)||[])[0])!==Number(cp))continue;
+   }
    const m=coordinate(t);
    if(m)return JSON.stringify({ok:true,coords:m,status:"Coordenadas obtidas"});
    // Matching card reached, avoid reading another Pokémon's coords.
@@ -299,8 +304,8 @@ function coordsModeSelected(){
   /(?:^|\s)(?:active|selected|bg-red|bg-rose|bg-primary)(?:\s|$)/.test(e.className||""));
  if(active(coordButton))return true;
  if(active(areaButton))return false;
- const inputs=locationFields();
- return inputs.coords&&inputs.radius?true:null;
+ // Field presence alone is not proof that the site selected Coords.
+ return null;
 }
 function locationValue(field){return field?String(field.value||"").trim():"";}
 function configureLocation(req){
