@@ -47,6 +47,11 @@ body.controls-window #choices{z-index:10}
 #controls #location.locOn{background:#1e6150e8;color:#b2ffe0;border-color:#5de7b1a6}
 #choices.locationPanel{width:306px;max-width:calc(100vw - 12px)}
 #choices .locText{font-size:11px;color:#a9b7c9;padding:0 7px 8px;line-height:1.35}
+#choices .locCoordsRow{display:flex;align-items:center;gap:7px;margin:0 7px 7px}
+#choices .locCoordsRow .locField{flex:1;min-width:0;margin:0;width:auto}
+#choices .locCoordsRow button[role=switch]{flex:none;width:48px;min-height:34px;border:1px solid #51647b;border-radius:9px;background:#283444;color:#c5d1dd;font-size:11px;font-weight:800}
+#choices .locCoordsRow button.locActive{background:#146d50;color:#dbffef;border-color:#5fe6ad}
+#choices .locCoordsRow button.locOff{background:#27313e;color:#ffd1a3;border-color:#7e6552}
 #choices .locField{box-sizing:border-box;width:calc(100% - 14px);margin:0 7px 8px;min-height:36px;background:#111722;border:1px solid #536174;border-radius:7px;padding:8px;color:#fff;font-size:13px}
 #choices input[type=range]{width:calc(100% - 14px);margin:4px 7px 8px;accent-color:#77e4c2;touch-action:pan-x}
 #choices .locLine{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:3px 7px;color:#dee6f2;font-size:12px}
@@ -176,16 +181,19 @@ function renderLocationChoices(){
  panel.replaceChildren();panel.classList.add("locationPanel");
  const make=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x;};
  const title=make("div","choiceHeader","📍 LOCALIZAÇÃO");
- const line=make("div","locLine");
- const state=make("span","",locationEnabled?"Filtro ativado":"Filtro desligado");
- const toggle=make("button",locationEnabled?"locActive":"locOff",locationEnabled?"✓ ON":"OFF");
- const hint=make("p","locText","Cole latitude,longitude e ajuste o raio. Ocultar não desativa o filtro.");
+ const hint=make("p","locText","Cole latitude,longitude. A chave ao lado ativa ou desativa; ocultar conserva o filtro atual.");
+ const fieldRow=make("div","locCoordsRow");
  const field=make("input","locField");field.type="text";field.inputMode="decimal";field.placeholder="-23.5505,-46.6333";field.setAttribute("aria-label","Coordenadas latitude e longitude");field.value=locationCoords;
+ const toggle=make("button",locationEnabled?"locActive":"locOff",locationEnabled?"ON":"OFF");
+ toggle.setAttribute("role","switch");
+ toggle.setAttribute("aria-checked",String(locationEnabled));
+ toggle.setAttribute("aria-label","Ativar ou desativar o filtro de coordenadas");
+ fieldRow.append(field,toggle);
  const label=make("div","locLine");const labelName=make("span","","Raio da busca");const value=make("strong","",locationRadius+" km");label.append(labelName,value);
  const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);slide.setAttribute("aria-label","Raio em quilômetros de 0 a 1000");
  slide.oninput=()=>{value.textContent=slide.value+" km";};
- const status=make("p","");status.id="locHint";status.textContent="Desligado: o site não recebe coordenadas definidas no app.";
- const actions=make("div","locLine");const apply=make("button","locSave","Aplicar");const hide=make("button","locHide","Ocultar painel");
+ const status=make("p","");status.id="locHint";status.textContent=locationEnabled?"📍 Ativo na pesquisa · "+locationRadius+" km":"OFF · busca geral, sem coordenadas do aplicativo.";
+ const actions=make("div","locLine");const apply=make("button","locSave","✓ Aplicar");const hide=make("button","locHide","Ocultar");
  const disable=()=>{locationEnabled=false;locationCoords="";locationRadius=0;closeChoices();Native.setLocation(false,"",0);};
  toggle.onclick=()=>{if(locationEnabled){disable();return;}submit();};
  function submit(){
@@ -199,8 +207,8 @@ function renderLocationChoices(){
   locationEnabled=true;closeChoices();Native.setLocation(true,locationCoords,locationRadius);
  }
  apply.onclick=submit;hide.onclick=closeChoices;
- line.append(state,toggle);actions.append(apply,hide);
- panel.append(title,line,hint,field,label,slide,status,actions);
+ actions.append(apply,hide);
+ panel.append(title,hint,fieldRow,label,slide,status,actions);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
  if(controlsWindow)Native.locationEditor(true);
