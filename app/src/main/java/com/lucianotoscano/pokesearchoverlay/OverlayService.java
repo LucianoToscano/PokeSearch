@@ -44,6 +44,7 @@ public class OverlayService extends Service {
     private int height=72,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
     private String probeScriptCache;
     private boolean searchInProgress=false;
+    private final Runnable queuedRefresh=()->refresh(false);
     private static final long MIN_SEARCH_GAP_MS=60_000L;
     private long lastSearchStartMs=0L;
     private boolean shinyVerified=false;
@@ -351,9 +352,13 @@ public class OverlayService extends Service {
         long previous=getSharedPreferences("prefs",0).getLong("lastNetworkSearchAt",0L);
         if(previous>0L&&now>=previous&&now-previous<MIN_SEARCH_GAP_MS){
             long remaining=(MIN_SEARCH_GAP_MS-(now-previous)+999L)/1000L;
-            status("Proteção de consultas: aguarde "+remaining+"s para atualizar.");
+            status("Próxima busca em "+remaining+"s · mantendo "+mode.toUpperCase(java.util.Locale.ROOT)
+                +(shiny?" com ✨":" sem ✨")+".");
+            handler.removeCallbacks(queuedRefresh);
+            handler.postDelayed(queuedRefresh,remaining*1000L+300L);
             return;
         }
+        handler.removeCallbacks(queuedRefresh);
         BugReport.log(this,"PREPARE","Filtros "+mode+" Shiny="+shiny+" manual="+manual);
         handler.removeCallbacks(expiryRefresh);
         armedDespawnMillis=0L;
@@ -789,8 +794,10 @@ public class OverlayService extends Service {
             if(clipboard!=null){clipboard.setPrimaryClip(ClipData.newPlainText("Coordenadas Pokémon",valid));js(detailPanel,detailLoaded,"window.copyFeedback("+JSONObject.quote("✓ Copiado!")+ ")");}
         });}
 
+        @JavascriptInterface public void setMode(String s){select(s);}
         @JavascriptInterface public void select(String s){handler.post(()->{
             if(!s.equals("iv")&&!s.equals("gl")&&!s.equals("ul"))return;
+            if(mode.equals(s))return;
             mode=s;getSharedPreferences("prefs",0).edit().putString("mode",s).apply();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
             results="[]";hideDetails();update();refresh();
@@ -892,6 +899,15 @@ public class OverlayService extends Service {
                 if(root!=null&&!loginPaused)root.setVisibility(View.VISIBLE);
                 diagnosticError("Não foi possível abrir favoritos no overlay.");
             }
+        });}
+        @JavascriptInterface public void setIntervalMinutes(int minutes){handler.post(()->{
+            if(minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
+            if(intervalMinutes==minutes)return;
+            intervalMinutes=minutes;
+            getSharedPreferences("prefs",0).edit()
+                .putInt("intervalMinutes",intervalMinutes).putBoolean("intervalExplicit",true).apply();
+            schedulePeriodic();
+            update();
         });}
         @JavascriptInterface public void cycleInterval(){handler.post(()->{
             int[] options={5,10,15,20};
