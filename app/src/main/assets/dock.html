@@ -96,8 +96,55 @@ function setMenuOpen(open,side,pad){
  if(!menuOpen){closeChoices();document.body.classList.remove("menu-left");}
  else if(side)document.body.classList.toggle("menu-left",side==="left");
 }
-window.syncMenu=(open,side,pad)=>setMenuOpen(open,side,pad);
-let lastHeight=0;function fit(){requestAnimationFrame(()=>{const h=Math.ceil(document.getElementById("shell").getBoundingClientRect().height)+1;if(Math.abs(h-lastHeight)>1){lastHeight=h;Native.resize(h);}});}
+window.syncMenu=(open,side,pad)=>{setMenuOpen(open,side,pad);fit();};
+let lastHeight=0;
+function fit(){requestAnimationFrame(()=>{
+ const shell=document.getElementById("shell");
+ let h=Math.ceil(shell.getBoundingClientRect().height)+1;
+ if(choiceOpen&&menuOpen){
+  const popup=document.getElementById("choices");
+  h=Math.max(h,Math.ceil(popup.getBoundingClientRect().bottom-shell.getBoundingClientRect().top)+6);
+ }
+ if(Math.abs(h-lastHeight)>1){lastHeight=h;Native.resize(h);}
+});}
+function closeChoices(){
+ choiceOpen="";
+ document.getElementById("choices").classList.remove("visible");
+ document.getElementById("cycle").setAttribute("aria-expanded","false");
+ document.getElementById("period").setAttribute("aria-expanded","false");
+ fit();
+}
+function toggleChoices(kind){
+ if(!menuOpen)return;
+ if(choiceOpen===kind){closeChoices();return;}
+ choiceOpen=kind;
+ const current=kind==="mode"?mode:period;
+ const entries=kind==="mode"?
+   [["iv","100% · IV perfeito"],["gl","GL#1 · Grande Liga"],["ul","UL#1 · Ultra Liga"]]:
+   [[5,"AUTO · 5 min"],[10,"AUTO · 10 min"],[15,"AUTO · 15 min"],[20,"AUTO · 20 min"]];
+ const panel=document.getElementById("choices");
+ panel.replaceChildren();
+ const title=document.createElement("div");
+ title.className="choiceHeader";
+ title.textContent=kind==="mode"?"MODO DE BUSCA":"INTERVALO AUTOMÁTICO";
+ panel.appendChild(title);
+ for(const [value,label] of entries){
+  const btn=document.createElement("button");
+  btn.type="button";
+  btn.className=value===current?"chosen":"";
+  btn.textContent=(value===current?"✓ ":"")+label;
+  btn.onclick=()=>{
+   closeChoices();
+   if(kind==="mode")Native.setMode(String(value));
+   else Native.setIntervalMinutes(Number(value));
+  };
+  panel.appendChild(btn);
+ }
+ panel.classList.add("visible");
+ document.getElementById("cycle").setAttribute("aria-expanded",String(kind==="mode"));
+ document.getElementById("period").setAttribute("aria-expanded",String(kind==="period"));
+ fit();
+}
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let longTimer, longDone=false;
 function spriteClick(i){if(longDone){longDone=false;return;}Native.toggleDetail(i);}
