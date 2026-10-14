@@ -33,7 +33,7 @@ public class OverlayService extends Service {
     private static final int BUBBLE_DP=45, DETAIL_DP=226;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return dockDp()+282;}
+    private int menuDp(){return dockDp()+301;}
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams;
@@ -693,6 +693,13 @@ public class OverlayService extends Service {
             android.widget.Toast.makeText(OverlayService.this,
                 enabled?"Alertas de procurados ativados":"Alertas de procurados pausados",
                 android.widget.Toast.LENGTH_SHORT).show();
+        });}
+        @JavascriptInterface public void openPix(){handler.post(()->{
+            Intent intent=new Intent(OverlayService.this,MainActivity.class);
+            intent.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_PIX");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
+                Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            try{startActivity(intent);}catch(Exception ignored){}
         });}
         @JavascriptInterface public void openSettings(){handler.post(()->{
             Intent intent=new Intent(OverlayService.this,MainActivity.class);
