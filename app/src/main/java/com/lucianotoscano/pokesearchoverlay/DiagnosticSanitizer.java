@@ -20,8 +20,9 @@ final class DiagnosticSanitizer {
         safe=safe.replaceAll("(?i)(?<![\\p{L}\\p{N}_])" +
             "((?:password|passwd|pwd|senha|passphrase|access[_-]?token|" +
             "refresh[_-]?token|id[_-]?token|auth[_-]?token|token|" +
-            "api[_-]?key|client[_-]?secret|session[_-]?id|secret))" +
-            "\\s*[:=]\\s*(?:\\\"[^\\\"]*\\\"|'[^']*'|[^\\s,;]+)",
+            "api[_-]?key|client[_-]?secret|session[_-]?id|discord[_-]?token|" +
+            "code|state|secret))" +
+            "\\s*[:=]\\s*(?:\\\"[^\\\"]*\\\"|'[^']*'|[^\\s,;&#]+)",
             "$1=[credencial omitida]");
         // JWTs can appear on their own, without a key/value label.
         safe=safe.replaceAll("(?i)\\beyJ[A-Za-z0-9_-]{8,}\\.eyJ[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}\\b",

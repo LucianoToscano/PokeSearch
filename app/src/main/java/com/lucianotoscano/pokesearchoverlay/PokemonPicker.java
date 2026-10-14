@@ -62,7 +62,9 @@ public final class PokemonPicker {
                 int id=item.getInt(0);String name=item.getString(1);
                 if(id>0&&!name.trim().isEmpty())list.add(new Entry(id,name));
             }
-        }catch(Exception ignored){}
+        }catch(Exception e){
+            BugReport.log(activity,"ASSET","ler catálogo Pokémon · "+e.getClass().getSimpleName());
+        }
         catalog=list;return catalog;
     }
     private static final class Holder {
@@ -84,7 +86,11 @@ public final class PokemonPicker {
                 connection=(HttpURLConnection)url.openConnection();
                 connection.setConnectTimeout(4500);connection.setReadTimeout(4500);
                 try(InputStream in=connection.getInputStream()){bitmap=BitmapFactory.decodeStream(in);}
-            }catch(Exception ignored){}finally{
+            }catch(java.io.IOException ignored){
+                // Expected CDN/network failures are routine; avoid log flooding.
+            }catch(Exception e){
+                BugReport.log(activity,"SPRITE","falha inesperada · "+e.getClass().getSimpleName());
+            }finally{
                 if(connection!=null)connection.disconnect();
             }
             synchronized(LOADING){LOADING.remove(id);}
@@ -279,7 +285,7 @@ public final class PokemonPicker {
             boolean allowed=WatchAlerts.permissionGranted(activity);
             boolean sent=allowed&&WatchAlerts.test(activity);
             String message=!allowed
-                ?"Permissão de notificações pendente ou bloqueada no Android"
+                ?"Conceda notificações na tela inicial do PokeSearch ou nas Configurações do Android"
                 :sent?"Notificação de teste enviada":"Não foi possível enviar a notificação de teste";
             Toast.makeText(activity,message,Toast.LENGTH_LONG).show();
         });

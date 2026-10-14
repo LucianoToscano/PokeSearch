@@ -282,7 +282,7 @@ public class OverlayService extends Service {
             data.put("enabled",locationEnabled);
             data.put("coords",locationEnabled?locationCoords:"");
             data.put("radius",locationEnabled?locationRadius:0);
-        }catch(Exception ignored){}
+        }catch(Exception e){recordFailure("preparar filtro de localização",e);}
         return data.toString();
     }
     private void moveDetail(){
@@ -495,6 +495,9 @@ public class OverlayService extends Service {
     }
     private void execute(String action,Consumer<JSONObject> callback){
         if(stopped||loginPaused)return;
+        // Each asynchronous JS response belongs to the session that launched it.
+        // A login, page reload or replacement search invalidates stale responses.
+        final int callbackGeneration=requestGeneration;
         if(!loaded||website==null){
             if(callback!=null){
                 JSONObject failure=new JSONObject();
@@ -507,7 +510,7 @@ public class OverlayService extends Service {
                 .replace("__MODE__",JSONObject.quote(mode))
                 .replace("__SHINY__",shiny?"true":"false");
         try{website.evaluateJavascript(code,raw->{
-            if(stopped||loginPaused)return;
+            if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;
             try{
                 String decoded=new JSONArray("["+raw+"]").getString(0);
                 JSONObject r=new JSONObject(decoded);
@@ -520,6 +523,7 @@ public class OverlayService extends Service {
                 else diagnosticError("Falha ao ler resultados no site.");
             }
         });}catch(RuntimeException e){
+            if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;
             recordFailure("executar JS site",e);
             if(callback!=null){
                 JSONObject failure=new JSONObject();
@@ -636,6 +640,7 @@ public class OverlayService extends Service {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
             Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
         try{startActivity(intent);}catch(Exception e){
+            recordFailure("abrir fluxo de login",e);
             shinyLoginWindowOpened=false;
             diagnosticError("Não foi possível abrir a etapa de login/vinculação.");
         }
@@ -971,7 +976,7 @@ public class OverlayService extends Service {
         try{
             query.put("name",target.optString("name",""));
             query.put("cp",target.optString("cp",""));
-        }catch(Exception ignored){}
+        }catch(Exception e){recordFailure("preparar consulta de coordenadas",e);}
         execute("readCoords:"+query.toString(),result->{
             String coords=result.optString("coords","");
             if(result.optBoolean("ok")&&!coords.isEmpty()){
@@ -1009,7 +1014,8 @@ public class OverlayService extends Service {
             try{
                 double lat=Double.parseDouble(m.group(1)),lon=Double.parseDouble(m.group(2));
                 if(Math.abs(lat)<=90&&Math.abs(lon)<=180)return m.group(1)+","+m.group(2);
-            }catch(Exception ignored){}
+            }catch(NumberFormatException ignored){}
+            catch(Exception e){recordFailure("interpretar coordenadas",e);}
         }
         return "";
     }
@@ -1242,8 +1248,39 @@ public class OverlayService extends Service {
             pollCoordinates(target,0,autoCopy);
         });
     }
+    private void syncPreferencesWithoutSearch(){
+        if(stopped)return;
+        android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+        int wanted=prefs.getInt("spriteSize",45);
+        spriteSize=(wanted==35||wanted==45||wanted==55)?wanted:45;
+        showTimers=prefs.getBoolean("showTimers",false);
+        alerts=prefs.getBoolean("alerts",false);
+        String wantedSort=prefs.getString("sort","despawn");
+        sort=("rank".equals(wantedSort)||"iv".equals(wantedSort)||
+              "shiny".equals(wantedSort))?wantedSort:"despawn";
+        try{
+            JSONArray items=new JSONArray(results);
+            results=sortItems(items).toString();
+            if(selected>=0)hideDetails(); // Row indices can change when sorting.
+            armNextDespawn(new JSONArray(results));
+        }catch(Exception e){recordFailure("sincronizar ordenação",e);}
+        if(params!=null){
+            params.width=dp(minimized?BUBBLE_DP:dockDp());
+            params.x=Math.max(0,Math.min(params.x,metrics().widthPixels-params.width));
+            if(grip!=null)grip.setLayoutParams(new FrameLayout.LayoutParams(
+                dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:30),
+                Gravity.TOP|Gravity.LEFT));
+            updateWindow();
+            moveDetail();
+        }
+        update(); // Local UI only; does not call refresh or navigate the website.
+    }
     @Override public int onStartCommand(Intent i,int flags,int id){
         String action=i==null?"":i.getAction();
+        if("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS".equals(action)){
+            syncPreferencesWithoutSearch();
+            return START_STICKY;
+        }
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN".equals(action)){
             loginPaused=true;
             ++requestGeneration;
