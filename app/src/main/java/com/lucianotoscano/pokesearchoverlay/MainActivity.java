@@ -505,6 +505,7 @@ public class MainActivity extends Activity {
         loginCover=loginWaiting;
         loginRoot.addView(loginStage,new LinearLayout.LayoutParams(-1,0,1));
         loginDialog=new android.app.Dialog(this);
+        if(loginDialog.getWindow()!=null)loginDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
         loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         loginDialog.setContentView(loginRoot);
         // Dialog consumes Android Back before Activity.onBackPressed().
