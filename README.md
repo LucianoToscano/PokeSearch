@@ -56,3 +56,6 @@ Mantido targetSdk=33 neste beta: foregroundServiceType=specialUse não foi habil
 
 ## v0.49-beta — B06 e ciclo de vida
 Runnables de login, página e recarga têm nome, cancelamento e guarda por requestGeneration. LOGIN_BEGIN cancela atualização automática, expirados e busca enfileirada; LOGIN_END reinicia em segurança; REFRESH_LOGIN aguarda 350 ms após sincronizar cookies. onDestroy cancela todos os timers, remove três janelas antes de destruir WebViews e as interfaces JS. Catches adicionais de média importância registram só etapa/classe. Manifest, targetSdk33, compileSdk36, ícones, UI e PvPPokeGo permanecem inalterados. Teste Samsung/OAuth real ainda pendente.
+
+## v0.49 — ajustes PS-075–PS-080
+Botões "🔔 Testar notificação" nos Favoritos e nas Preferências; Back do Android navega no WebView do login; elimina corrida LOGIN_END/REFRESH_LOGIN; coordenadas aceitam sinal explícito "+", preservando validação; abertura do menu sincronizada uma vez; retorno IV100 inacessível removido e aviso de privacidade atualizado. Consulte [Guia Samsung v0.49](docs/GUIA_TESTE_SAMSUNG_v0.49.md). OAuth e experiência Samsung ainda exigem teste físico.
