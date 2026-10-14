@@ -92,7 +92,7 @@ test("Favorites use translucent gradient without background dim",picker.includes
 test("Home has explicit login and logout",main.includes('signIn.setText("Entrar / vincular")')&&main.includes('signOut.setText("Sair")'));
 test("Login does not start overlay if none is running",main.includes("if(!OverlayService.isRunning())return;"));
 test("Logout clears local cookies and web storage only",main.includes("removeAllCookies")&&main.includes("WebStorage.getInstance().deleteAllData()"));
-test("Home login does not force Shiny",main.includes("openLoginDialog(false)")&&main.includes("if(loginStartedForShiny)view.evaluateJavascript"));
+test("Home login does not force Shiny",main.includes("openLoginDialog(false)")&&main.includes('view.evaluateJavascript(readAsset("shiny_login.js"),null)')&&main.includes('if("true".equals(value)&&loginStartedForShiny&&'));
 test("Verified Home login returns to PokeSearch",main.includes("loginAutoReturnQueued=true")&&main.includes("loginDialog.dismiss()"));
 test("Verified Shiny login checks site before leaving",main.includes('JSONObject.quote("verifyShiny")')&&main.includes("checkShinyReturn(view,10)"));
 test("Menu orientation sent to BOTH native WebViews",service.includes('js(menuPanel,menuLoaded,"window.syncMenu(true,"+edge+",0)")'));
@@ -190,7 +190,7 @@ test("v0.50 silent channels are actually without sound",
     service.includes('pokesearch_alerts_silent_v1')&&
     watch.includes('pokesearch_watch_silent_v1')&&watch.includes('channel.setSound(null,null)'));
 test("v0.50 direct login uses site's actual control, not guessed OAuth route",
-    main.includes('loginLinkAttempted=true;')&&main.includes('e.click();return true;')&&
+    main.includes('loginLinkAttempted=true;')&&main.includes("e.click();return 'opened';")&&
     main.includes('website.loadUrl("https://pogocoordinates.com/search")'));
 test("v0.50 service accepts missing action on initial start",
     service.includes('i==null||i.getAction()==null?"":i.getAction()'));
@@ -209,4 +209,30 @@ test("Android responsive layout contains all 12 controls exactly once",
   toolbarButtons.length===12&&
   ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','report','donate','close']
   .every(id=>(dock.match(new RegExp('id="'+id+'"','g'))||[]).length===1));
+test("Shiny tap skips Search cooldown to inspect site and auth",
+  service.includes('private void prepareImmediateShiny(int generation)')&&
+  service.includes('private void applyShinyOnSite(int generation,int attempt)')&&
+  service.includes('execute("setShiny",applied->')&&
+  service.includes('execute("session",session->')&&
+  service.includes('handler.removeCallbacks(queuedRefresh);'));
+test("Shiny tap launches login directly when not authenticated",
+  service.includes('"login necessário".equals(cachedAuth)||"desconectado".equals(cachedAuth)')&&
+  service.includes('openShinyLogin();')&&
+  service.includes('if(!loaded||website==null){'));
+test("Shiny off works without forced login",
+  service.includes('if(!shiny){')&&
+  service.includes('prepareImmediateShiny(generation);')&&
+  read("assets/probe.js").includes('if(action==="setShiny")return JSON.stringify(setShiny(shinyOnly))'));
+test("Shiny is only verified after reading site state",
+  service.includes('execute("verifyShiny",verified->')&&
+  service.includes('shinyVerified=shiny;')&&
+  service.includes('if(stopped||loginPaused||generation!=requestGeneration)return;'));
+test("Login retries the official control for delayed site hydration",
+  main.includes('private void openOfficialLoginControl(WebView view,int remaining)')&&
+  main.includes('view.postDelayed(()->openOfficialLoginControl(view,remaining-1),330L)')&&
+  main.includes('openOfficialLoginControl(view,8);'));
+test("Login never opens a guessed OAuth endpoint or toggles Shiny before auth",
+  main.includes('host.equalsIgnoreCase("pogocoordinates.com")')&&
+  main.includes('view.evaluateJavascript(readAsset("shiny_login.js"),null)')&&
+  main.includes('if("true".equals(value)&&loginStartedForShiny&&'));
 console.log("PokeSearch UX contract: "+count+" tests passed");
