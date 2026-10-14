@@ -381,28 +381,22 @@ public class MainActivity extends Activity {
         String host=current.getHost();
         if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
            host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
-        String script="(function(){var a=Array.from(document.querySelectorAll('a,button,[role=button]'));"+
-            "var label=function(e){return (e.innerText||e.textContent||'').trim();};"+
-            "if(a.some(function(e){return /^(?:log\\s*out|sign\\s*out|sair|desconectar)$/i.test(label(e));}))return 'authenticated';"+
-            "var e=a.find(function(x){return /^(?:log\\s*in|sign\\s*in|entrar|fazer login)$/i.test(label(x));});"+
-            "if(e&&!e.disabled&&e.getClientRects().length){e.click();return 'opened';}"+
-            "var nav=a.find(function(x){return !x.disabled&&/^(?:open\\s*menu|menu|navigation|abrir\\s*menu)$/i.test("+
-            "((x.getAttribute('aria-label')||x.getAttribute('title')||'').trim()));});"+
-            "if(nav&&!window.__pokesearchLoginMenuAttempted){window.__pokesearchLoginMenuAttempted=true;"+
-            "nav.click();return 'menu-opened';}return 'waiting';})()";
+        String script=readAsset("login_entry.js")
+            .replace("__SHINY__",loginStartedForShiny?"true":"false");
         view.evaluateJavascript(script,result->{
             if(view!=website||loginLinkAttempted||loginDialog==null||
                !loginDialog.isShowing())return;
             if(result!=null&&result.contains("\"authenticated\"")){
-                // The existing account is being handled by the session probe;
-                // keep the search page covered until the dialog closes.
+                // The independent session probe will return to PokeSearch.
                 loginLinkAttempted=true;
-            }else if(result!=null&&result.contains("\"opened\"")&&
-                     !result.contains("menu-opened")){
+            }else if(result!=null&&result.contains("\"ready\"")){
+                // Only the actual Google/Discord/sign-in choice becomes visible.
                 loginLinkAttempted=true;
                 if(loginCover!=null)loginCover.setVisibility(View.GONE);
             }else{
-                view.postDelayed(()->openOfficialLoginControl(view,remaining-1),330L);
+                // The official login / Shiny switch was triggered, but let the
+                // modal finish rendering before revealing the page.
+                view.postDelayed(()->openOfficialLoginControl(view,remaining-1),260L);
             }
         });
     }
