@@ -198,7 +198,7 @@ function renderLocationChoices(){
  toggle.onclick=()=>{if(locationEnabled){disable();return;}submit();};
  function submit(){
   const raw=field.value.trim();
-  const match=raw.match(/^\\s*(-?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*(-?\\d{1,3}(?:\\.\\d+)?)\\s*$/);
+  const match=raw.match(/^\s*(-?\d{1,2}(?:\.\d+)?)\s*[,;]\s*(-?\d{1,3}(?:\.\d+)?)\s*$/);
   if(!match||Math.abs(Number(match[1]))>90||Math.abs(Number(match[2]))>180){
    status.textContent="⚠ Cole latitude,longitude válidas para ativar.";
    status.style.color="#ffbf8f";return;
