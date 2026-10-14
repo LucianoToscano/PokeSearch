@@ -2,6 +2,8 @@ name: Build PokeSearch Android APK
 on:
   push:
     branches: [main, fix/v050-pref-sync-safety, fix/v050-overlay-ui-20261014]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
