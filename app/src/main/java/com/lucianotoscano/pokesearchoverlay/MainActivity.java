@@ -47,6 +47,7 @@ public class MainActivity extends Activity {
     private android.app.Dialog loginDialog;
     private boolean loginSessionNotified=false;
     private boolean loginLinkAttempted=false;
+    private int loginPageGeneration=0;
     private String pendingReportText="";
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
@@ -303,27 +304,54 @@ public class MainActivity extends Activity {
         intent.setAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
     }
-    private void checkShinyReturn(WebView view,int attemptsLeft){
-        if(attemptsLeft<=0||view!=website||loginDialog==null||!loginDialog.isShowing()||
-           !loginStartedForShiny||loginAutoReturnQueued)return;
+    // Checking only Logout fails on mobile where it sits inside the hamburger.
+    // Use the same sanitized session probe as the collector. Never read/log the
+    // account identifier itself. Login completion is independent from Shiny ON.
+    private void checkLoginSession(WebView view,int attemptsLeft,int pageGeneration){
+        if(attemptsLeft<=0||view!=website||loginPageGeneration!=pageGeneration||
+           loginDialog==null||!loginDialog.isShowing()||loginAutoReturnQueued)return;
+        Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
+        String host=current.getHost();
+        if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
+           host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
         String probe=readAsset("probe.js")
-            .replace("__ACTION__",JSONObject.quote("verifyShiny"))
+            .replace("__ACTION__",JSONObject.quote("session"))
             .replace("__MODE__",JSONObject.quote("iv"))
-            .replace("__SHINY__","true");
-        view.postDelayed(()->{
-            if(view!=website||loginDialog==null||!loginDialog.isShowing())return;
-            view.evaluateJavascript(probe,raw->{
-                boolean verified=false;
-                try{
-                    String json=new JSONArray("["+raw+"]").getString(0);
-                    verified=new JSONObject(json).optBoolean("ok",false);
-                }catch(Exception ignored){}
-                if(verified&&!loginAutoReturnQueued){
-                    loginAutoReturnQueued=true;
-                    loginDialog.dismiss();
-                }else if(!verified)checkShinyReturn(view,attemptsLeft-1);
-            });
-        },1200L);
+            .replace("__SHINY__","false");
+        view.evaluateJavascript(probe,raw->{
+            if(view!=website||loginPageGeneration!=pageGeneration||
+               loginDialog==null||!loginDialog.isShowing()||loginAutoReturnQueued)return;
+            String auth="não confirmado";
+            try{
+                String json=new JSONArray("["+raw+"]").getString(0);
+                auth=new JSONObject(json).optString("auth","não confirmado");
+            }catch(Exception e){
+                BugReport.log(MainActivity.this,"SESSION",
+                    "interpretar login · "+e.getClass().getSimpleName());
+            }
+            if("autenticada".equals(auth)){
+                loginSessionNotified=true;
+                loginAutoReturnQueued=true;
+                getSharedPreferences("prefs",0).edit()
+                    .putString("sessionStatus","autenticada").apply();
+                refreshSessionSummary();
+                BugReport.log(MainActivity.this,"LOGIN","Sessão confirmada; retornando ao aplicativo");
+                CookieManager.getInstance().flush();
+                // A confirmed session closes the WebView even when the switch
+                // still needs to be enabled by the background collector.
+                view.post(()->{
+                    if(view==website&&loginDialog!=null&&loginDialog.isShowing())
+                        loginDialog.dismiss();
+                });
+            }else{
+                // Logins completed by an in-page modal can take longer than the
+                // first hydration window and may not navigate the WebView.
+                // Keep one bounded-frequency probe until dialog is dismissed.
+                final int next=Math.max(1,attemptsLeft-1);
+                view.postDelayed(()->checkLoginSession(view,next,pageGeneration),
+                    attemptsLeft>1?400L:850L);
+            }
+        });
     }
     // Site controls may hydrate after onPageFinished. Retry briefly instead
     // of opening the full search page and leaving the user to locate Login.
@@ -372,40 +400,20 @@ public class MainActivity extends Activity {
         CookieManager.getInstance().setAcceptThirdPartyCookies(website,true);
         website.setWebChromeClient(new WebChromeClient());
         website.setWebViewClient(new WebViewClient(){
+            @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){
+                ++loginPageGeneration;
+            }
             @Override public void onPageFinished(WebView view,String url){
-                if(url==null)return;
+                if(url==null||view!=website)return;
                 String host=Uri.parse(url).getHost();
                 if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
                      host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
-                // Only the official site's login control is auto-opened.
-                openOfficialLoginControl(view,8);
-                // OAuth may complete without dismissing the dialog. A successful
-                // return to the site refreshes the collector in-place.
-                view.evaluateJavascript("(function(){return Array.from(document.querySelectorAll('a,button')).some(e=>/^(log\\s*out|sign\\s*out|sair|desconectar)$/i.test((e.innerText||e.textContent||'').trim()))})()",
-                    value->{
-                        if("true".equals(value)&&!loginSessionNotified){
-                            loginSessionNotified=true;
-                            getSharedPreferences("prefs",0).edit()
-                                .putString("sessionStatus","autenticada").apply();
-                            refreshSessionSummary();
-                            BugReport.log(MainActivity.this,"LOGIN","Sessão autenticada identificada no site");
-                        }
-                        if("true".equals(value)&&!loginStartedForShiny&&
-                           !loginAutoReturnQueued){
-                            loginAutoReturnQueued=true;
-                            view.postDelayed(()->{
-                                if(loginDialog!=null&&loginDialog.isShowing()&&
-                                   !loginStartedForShiny)loginDialog.dismiss();
-                            },900L);
-                        }
-                        if("true".equals(value)&&loginStartedForShiny&&
-                           !loginAutoReturnQueued){
-                            // Never touch the Shiny switch until auth is detected.
-                            view.evaluateJavascript(readAsset("shiny_login.js"),null);
-                            // For Shiny, wait for confirmed site filter and trainer linking.
-                            checkShinyReturn(view,10);
-                        }
-                    });
+                // First verify session. Only a logged-out user should be sent
+                // through the official Login control.
+                int generation=loginPageGeneration;
+                checkLoginSession(view,14,generation);
+                if(!loginSessionNotified&&!loginAutoReturnQueued)
+                    openOfficialLoginControl(view,8);
             }
         });
         // Single full-screen login surface. No Android alert footer competing
@@ -447,6 +455,7 @@ public class MainActivity extends Activity {
         });
         done.setOnClickListener(v->loginDialog.dismiss());
         loginDialog.setOnDismissListener(d->{
+            ++loginPageGeneration; // Invalidate pending WebView session probes.
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginDialog=null;
             serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END");

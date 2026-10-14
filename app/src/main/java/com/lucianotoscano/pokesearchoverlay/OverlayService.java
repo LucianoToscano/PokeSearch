@@ -225,6 +225,19 @@ public class OverlayService extends Service {
             int above=params.y-menuParams.height;
             // On phones the controls span the display: show them directly ABOVE
             // the gear, so the gear and the Pokémon column stay close together.
+            if(above<0){
+                // Keep the gear and first sprite together. Reposition the
+                // *whole* dock below the popover rather than inserting a huge
+                // empty margin between the gear and the first Pokémon.
+                int targetY=menuParams.height+dp(3);
+                int bottomBound=bottom-params.height-dp(8);
+                if(targetY<=bottomBound){
+                    params.y=targetY;
+                    try{wm.updateViewLayout(root,params);}
+                    catch(Exception e){recordFailure("aproximar dock do menu",e);}
+                    above=params.y-menuParams.height;
+                }
+            }
             if(above>=0){
                 menuParams.y=above;
                 menuPadDp=0;
@@ -338,6 +351,16 @@ public class OverlayService extends Service {
                     handler.removeCallbacks(pageFinishedRefresh);
                     pendingPageRefreshGeneration=pageLoadGeneration;
                     handler.postDelayed(pageFinishedRefresh,2500L);
+                    if(shiny&&!shinyVerified){
+                        // The site is visible to JS now. Confirm the Shiny state
+                        // as soon as the tab is hydrated, not after a new Search.
+                        final int generation=pageLoadGeneration;
+                        handler.postDelayed(()->{
+                            if(!stopped&&!loginPaused&&loaded&&!searchInProgress&&
+                               shiny&&!shinyVerified&&generation==requestGeneration)
+                                prepareImmediateShiny(generation);
+                        },420L);
+                    }
                 }
             }
             @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){
@@ -662,9 +685,23 @@ public class OverlayService extends Service {
             if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!applied.optBoolean("ok",false)){
                 shinyVerified=false;
+                if(attempt<2){
+                    // Hydration may not have rendered the switch yet.
+                    handler.postDelayed(()->applyShinyOnSite(generation,attempt+1),300L);
+                    return;
+                }
                 if(shiny&&!applied.optBoolean("controlFound",true)){
-                    status("✨ Login necessário para habilitar Shiny no site.");
-                    openShinyLogin();
+                    // A missing control can mean an unfinished page, not logout.
+                    execute("session",session->{
+                        if(stopped||loginPaused||generation!=requestGeneration)return;
+                        String auth=session.optString("auth","não confirmado");
+                        if("autenticada".equals(auth)){
+                            diagnosticError("✨ Conta conectada; controle Shiny não encontrado no site.");
+                        }else{
+                            status("✨ Login necessário para habilitar Shiny no site.");
+                            openShinyLogin();
+                        }
+                    });
                 }else{
                     diagnosticError("✨ Não foi possível alterar o filtro Shiny no site.");
                 }
@@ -696,19 +733,10 @@ public class OverlayService extends Service {
     }
     private void prepareImmediateShiny(int generation){
         if(stopped||loginPaused||generation!=requestGeneration)return;
-        execute("prepareSearch",prepared->{
-            if(stopped||loginPaused||generation!=requestGeneration)return;
-            if(!prepared.optBoolean("ok",false)){
-                shinyVerified=false;
-                if(shiny){
-                    status("✨ Abra sua conta no site para habilitar o filtro.");
-                    openShinyLogin();
-                }else diagnosticError("✨ Não foi possível acessar o filtro Shiny no site.");
-                return;
-            }
-            // Site tabs can re-render asynchronously; no 60-second waiting.
-            handler.postDelayed(()->applyShinyOnSite(generation,0),220L);
-        });
+        // Shiny lives in the visible Pokémon filter card. The old
+        // prepareSearch ("Stats"/"PvP") could fail or switch tabs needlessly.
+        // Clicking ✨ should control the switch on the CURRENT page directly.
+        applyShinyOnSite(generation,0);
     }
     private void verifyAndSubmit(int generation,boolean manual,int attempt){
         handler.postDelayed(()->{
@@ -986,7 +1014,7 @@ public class OverlayService extends Service {
         if(show==menuExpanded)return;
         if(!show&&locationEditorOpen)locationEditor(false);
         menuExpanded=show;
-        menuPadDp=show?TOOLBAR_DP:0;
+        menuPadDp=0; // Only the measured overlap may shift the sprite list.
         if(show){
             menuDrawHeight=-1;menuDrawWidth=-1;
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
@@ -1282,7 +1310,7 @@ public class OverlayService extends Service {
             status(shiny?"✨ Verificando acesso ao Shiny...":"✨ Desativando Shiny no site...");
             if(shiny){
                 String cachedAuth=prefs.getString("sessionStatus","não confirmado");
-                if("login necessário".equals(cachedAuth)||"desconectado".equals(cachedAuth)){
+                if(!loaded&&("login necessário".equals(cachedAuth)||"desconectado".equals(cachedAuth))){
                     status("✨ Faça login para ativar Shiny.");
                     openShinyLogin();
                     return;
