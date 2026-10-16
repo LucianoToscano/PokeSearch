@@ -256,8 +256,10 @@ body.controls-window.vertical.with-text #controls button{
  justify-content:flex-start!important;text-align:left!important}
 body.controls-window.vertical.with-text #controls button::after{font-size:11px}
 body.controls-window.vertical:not(.with-text) #controls{
- display:grid!important;width:max-content!important;grid-template-columns:var(--toolbar-item,32px);
- grid-auto-rows:var(--toolbar-item,32px);overflow-y:auto!important;gap:1px!important}
+ display:grid!important;width:max-content!important;min-width:0!important;
+ grid-auto-flow:row!important;grid-template-columns:var(--toolbar-item,32px);
+ grid-auto-rows:var(--toolbar-item,32px);overflow-y:auto!important;
+ overflow-x:hidden!important;gap:1px!important}
 body.controls-window.vertical:not(.with-text) #controls button{
  box-sizing:border-box;width:var(--toolbar-item,32px)!important;
  height:var(--toolbar-item,32px)!important;min-width:0!important;
@@ -849,8 +851,7 @@ function draw(){
  document.getElementById("size").textContent=spriteSize<=35?"P":spriteSize>=55?"G":"M";
  // Active values stay legible in the main menu and match actual search state.
  const cycleLabel=document.getElementById("cycle");
- cycleLabel.dataset.label=mode==="gl"?"Modos · GL #"+rankMax:
-   mode==="ul"?"Modos · UL #"+rankMax:"Modos · "+cycleLabel.textContent;
+ cycleLabel.dataset.label="Modos";
   document.getElementById("sh").classList.toggle("shinyOn",shiny);
  document.getElementById("sh").classList.toggle("shinyPending",shinyPending);
  document.getElementById("location").classList.toggle("locOn",locationEnabled);
@@ -864,7 +865,7 @@ function draw(){
  shyButton.dataset.state=shiny?"on":shinyPending?"pending":"off";
  shyButton.dataset.label="Shiny · "+(shiny?"ON":shinyPending?"aguardando":"OFF");
  document.getElementById("period").dataset.state=period===0?"off":"on";
- document.getElementById("period").dataset.label=period===0?"Atualização · OFF":"Atualização · "+period+"m";
+ document.getElementById("period").dataset.label="Atualização";
  document.getElementById("location").dataset.state=locationEnabled?"on":"off";
  document.getElementById("location").dataset.label=locationEnabled?
      "Localização · "+locationRadius+"km":"Localização";
