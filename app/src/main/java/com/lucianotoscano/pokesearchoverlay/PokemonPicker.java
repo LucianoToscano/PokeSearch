@@ -277,9 +277,13 @@ public final class PokemonPicker {
             selectedList.setVisibility(total>0?View.VISIBLE:View.GONE);
             // No forced scroll to bottom: preserve search position and keyboard focus.
             int position=results.getFirstVisiblePosition();
+            View firstSuggestion=results.getChildAt(0);
+            int top=firstSuggestion==null?0:firstSuggestion.getTop();
             suggestions.filter(search.getText().toString());
-            results.setSelection(Math.min(position,Math.max(0,suggestions.getCount()-1)));
-            if(changed!=null)changed.run();
+            results.setSelectionFromTop(Math.min(position,
+                Math.max(0,suggestions.getCount()-1)),top);
+            // Do not re-render the Android overlay every time a star is selected.
+            // The favorites window retains its scroll and selection state.
         };
         search.addTextChangedListener(new TextWatcher(){
             @Override public void beforeTextChanged(CharSequence txt,int start,int count,int after){}
@@ -316,7 +320,10 @@ public final class PokemonPicker {
         finish.setOnClickListener(v->dialog.dismiss());
         if(!(activity instanceof Activity)&&dialog.getWindow()!=null)
             dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
-        dialog.setOnDismissListener(d->{if(dismissed!=null)dismissed.run();});
+        dialog.setOnDismissListener(d->{
+            if(changed!=null)changed.run();
+            if(dismissed!=null)dismissed.run();
+        });
         dialog.show();
         if(dialog.getWindow()!=null){
             android.view.Window window=dialog.getWindow();
