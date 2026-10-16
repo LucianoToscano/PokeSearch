@@ -129,6 +129,19 @@ body.controls-window #choices{top:34px}
 #controls #bell.generalSilent{background:#48484ac9;border-color:#d2d2d2;color:#e5e5e5}
 #controls #period.autoOff{opacity:.73;background:#333538ac}
 #spawns{margin-top:var(--top-space);gap:0}
+/* v0.52: original compact palette, optionally one-column menu. */
+body.controls-window.vertical #menu{width:100%!important}
+body.controls-window.vertical #controls{display:flex;flex-direction:column;gap:2px;
+ width:42px;max-height:420px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;direction:ltr}
+body.controls-window.vertical #controls button{width:40px;flex:0 0 30px;min-height:30px}
+body.controls-window.vertical.menu-left #controls{margin-left:auto}
+body.controls-window.vertical #choices{position:absolute;top:0;left:44px;right:auto;max-height:380px;overflow-y:auto}
+body.controls-window.vertical.menu-left #choices{left:auto;right:44px}
+body.controls-window.vertical #choices.locationPanel{width:255px}
+#collapse svg{width:15px!important;height:15px!important}
+.rankBadge{position:absolute;top:0;left:0;pointer-events:none;color:#eef8ff;background:#171c23dc;
+ border:1px solid #ffffff50;border-radius:3px;font-size:8px;font-weight:800;line-height:11px;
+ padding:0 2px;white-space:nowrap}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -157,7 +170,7 @@ const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 document.body.classList.add(controlsWindow?"controls-window":"dock-window");
 document.documentElement.classList.toggle("controls-root",controlsWindow);
 let locationEnabled=false,locationCoords="",locationRadius=0;
-let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
+let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,showRanks=false,rankMax=1,hiddenControls='',menuOrientation='horizontal',generalAlerts=false,hasFavorites=false,alertMode="off";
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
  document.documentElement.style.setProperty("--top-space",menuOpen?(Math.max(0,Number(pad)||0)+"px"):"0px");
@@ -201,13 +214,15 @@ function toggleChoices(kind){
   // Release that focus before showing another mode or AUTO menu.
   document.getElementById("choices").classList.remove("locationPanel");
   if(controlsWindow)Native.locationEditor(false);
+  if(controlsWindow&&menuOrientation==="vertical")Native.setChoicesOpen(false);
  }
  choiceOpen=kind;
+ if(controlsWindow&&menuOrientation==="vertical")Native.setChoicesOpen(true);
  if(kind==="location"){renderLocationChoices();return;}
  const current=kind==="mode"?mode:period;
  const entries=kind==="mode"?
    [["iv","100% · IV perfeito"],["gl","GL#1 · Grande Liga"],["ul","UL#1 · Ultra Liga"]]:
-   [[0,"AUTO · OFF (somente manual)"],[5,"AUTO · 5 min"],[10,"AUTO · 10 min"],[15,"AUTO · 15 min"],[20,"AUTO · 20 min"]];
+   [[0,"AUTO · OFF (somente manual)"],[3,"AUTO · 3 min"],[5,"AUTO · 5 min"],[10,"AUTO · 10 min"],[15,"AUTO · 15 min"],[20,"AUTO · 20 min"]];
  const panel=document.getElementById("choices");
  panel.replaceChildren();
  const title=document.createElement("div");
@@ -297,9 +312,9 @@ function draw(){
    const gl=mode==="gl",color=gl?"#2f8ed8":"#d8ad43";
    cy.innerHTML='<span class="league"><svg viewBox="0 0 24 24" aria-hidden="true">'+
    '<circle cx="12" cy="12" r="10.5" fill="'+color+'" stroke="#fff" stroke-width="1.2"/>'+
-   '<path d="M3 12h18" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#fff" stroke="'+color+'" stroke-width="1.5"/></svg>#1</span>';
+   '<path d="M3 12h18" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#fff" stroke="'+color+'" stroke-width="1.5"/></svg>#'+rankMax+'</span>';
    cy.classList.remove("ivOn");
-   cy.title=gl?"Grande Liga · ranking #1":"Ultra Liga · ranking #1";
+   cy.title=(gl?"Grande Liga":"Ultra Liga")+" · Rank 1–"+rankMax;
  }
  document.getElementById("size").textContent=spriteSize<=35?"P":spriteSize>=55?"G":"M";
  document.getElementById("sh").classList.toggle("shinyOn",shiny);
@@ -325,14 +340,17 @@ function draw(){
  star.classList.toggle("favoritesOn",hasFavorites);
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
  const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.title=period===0?"AUTO desligado · atualizar com ↻ ou mudar filtros":"Atualização automática a cada "+period+" minutos · toque para alterar";p.setAttribute("aria-label",p.title);
- const listKey=JSON.stringify([cards,row,spriteSize,showTimers]);
+ const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showRanks,mode,rankMax]);
  if(listKey!==lastListKey){lastListKey=listKey;
  document.getElementById("spawns").innerHTML=cards.map((c,i)=>{
   const label=[c.name,c.ivPercent?c.ivPercent+"%":"IV não disponível",c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
   const icon=/^(https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(c.image||"")?'<img class="sprite" src="'+esc(c.image)+'" alt="" loading="eager">':'<span class="fallback">◉</span>';
   const kind=(c.shiny?"shiny":mode),deadline=Number(c.expiresAtMs)||0;
   const badge=showTimers&&deadline?'<span class="timer" data-deadline="'+deadline+'"></span>':"";
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+badge+'</button>';
+  const rv=Number(c.rank);
+  const rankBadge=showRanks&&(mode==="gl"||mode==="ul")&&Number.isInteger(rv)&&rv>=1&&rv<=4096?
+    '<span class="rankBadge">'+(mode==="gl"?"GL":"UL")+'#'+rv+'</span>':"";
+  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+badge+rankBadge+'</button>';
  }).join("");
  attachLongPress();
  updateTimers();
@@ -353,11 +371,19 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
- mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ showRanks=!!ranks;
+ rankMax=Number.isInteger(Number(maxRank))&&Number(maxRank)>=1&&Number(maxRank)<=50?Number(maxRank):1;
+ hiddenControls=String(hidden||"");
+ menuOrientation=orientation==="vertical"?"vertical":"horizontal";
+ document.body.classList.toggle("vertical",menuOrientation==="vertical");
+ document.querySelectorAll("#controls>button").forEach(b=>{
+   b.style.display=hiddenControls.includes("|"+b.id+"|")?"none":"";
+ });
  if(active>=cards.length)active=-1;
  draw();
 };
