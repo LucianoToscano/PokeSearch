@@ -585,11 +585,21 @@ public class OverlayService extends Service {
         if(detailRoot==null||detailParams==null||params==null)return;
         int w=screenWidthDp(),h=screenHeightDp(),gap=5;
         int dockPos=params.x/dp(1);
+        int dockY=params.y/dp(1)+menuPadDp;
+        if(multiEnabled()&&selected>=0){
+            try{
+                JSONObject item=new JSONArray(results).optJSONObject(selected);
+                int group=item==null?-1:item.optInt("profileIndex",-1);
+                if(group>=0&&group<3&&groupParams[group]!=null){
+                    dockPos=Math.round(groupParams[group].x/getResources().getDisplayMetrics().density);
+                    dockY=Math.round(groupParams[group].y/getResources().getDisplayMetrics().density);
+                }
+            }catch(Exception e){recordFailure("posicionar detalhes de perfil",e);}
+        }
         int right=dockPos+dockDp()+gap;
         int left=dockPos-DETAIL_DP-gap;
         int preferred=right+DETAIL_DP<=w-4?right:left;
         detailParams.x=dp(Math.max(0,Math.min(w-DETAIL_DP,preferred)));
-        int dockY=params.y/dp(1)+menuPadDp;
         detailParams.y=dp(Math.max(0,Math.min(h-detailHeight-45,dockY+18)));
         try{wm.updateViewLayout(detailRoot,detailParams);}catch(Exception e){recordFailure("reposicionar detalhes",e);}
     }
@@ -1372,12 +1382,16 @@ public class OverlayService extends Service {
             detailRoot.setVisibility(View.VISIBLE);
             moveDetail();
             js(panel,panelLoaded,"window.highlight("+index+")");
+        for(int group=0;group<groupPanels.length;group++)
+            js(groupPanels[group],groupLoaded[group],"window.highlight("+index+")");
         }catch(Exception e){recordFailure("mostrar detalhes",e);hideDetails();}
     }
     private void hideDetails(){
         selected=-1;
         if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
         js(panel,panelLoaded,"window.highlight(-1)");
+        for(int group=0;group<groupPanels.length;group++)
+            js(groupPanels[group],groupLoaded[group],"window.highlight(-1)");
     }
     private void resizeDetail(int heightDp){
         detailHeight=Math.max(90,Math.min(310,heightDp));
@@ -1477,6 +1491,25 @@ public class OverlayService extends Service {
             OverlayService.this.refresh(true);
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
+        @JavascriptInterface public void selectPreset(String choice){handler.post(()->{
+            String next;
+            if("gl".equals(choice)||"ul".equals(choice))next=choice;
+            else if("iv100".equals(choice)||"iv0".equals(choice)||"custom".equals(choice))next="iv";
+            else return;
+            mode=next;
+            android.content.SharedPreferences.Editor pref=getSharedPreferences("prefs",0)
+                .edit().putString("mode",mode);
+            if("iv100".equals(choice)){
+                pref.putBoolean("customIvEnabled",false);
+            }else if("iv0".equals(choice)){
+                pref.putBoolean("customIvEnabled",true)
+                    .putInt("customIvAttack",0).putInt("customIvDefense",0).putInt("customIvHp",0);
+            }else if("custom".equals(choice))pref.putBoolean("customIvEnabled",true);
+            pref.apply();
+            ++requestGeneration;searchInProgress=false;shinyVerified=false;
+            results="[]";hideDetails();update();
+            OverlayService.this.refresh(true);
+        });}
         @JavascriptInterface public void setMode(String s){select(s);}
         @JavascriptInterface public void select(String s){handler.post(()->{
             if(!s.equals("iv")&&!s.equals("gl")&&!s.equals("ul"))return;
@@ -1685,6 +1718,7 @@ public class OverlayService extends Service {
             pickerOpen=true;
             hideDetails();
             root.setVisibility(View.GONE);
+            updateGroupWindows();
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
             try{
                 PokemonPicker.show(OverlayService.this,()->{
@@ -1693,12 +1727,14 @@ public class OverlayService extends Service {
                     pickerOpen=false;
                     if(!stopped&&!loginPaused&&root!=null)root.setVisibility(View.VISIBLE);
                     if(!stopped&&!loginPaused&&menuExpanded&&menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
+                    updateGroupWindows();
                     update();
                 });
             }catch(Exception e){
                 pickerOpen=false;
                 if(root!=null&&!loginPaused)root.setVisibility(View.VISIBLE);
                 if(menuRoot!=null&&!loginPaused&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
+                updateGroupWindows();
                 diagnosticError("Não foi possível abrir favoritos no overlay.");
             }
         });}
@@ -1885,6 +1921,7 @@ public class OverlayService extends Service {
             // Cancels queued, periodic, expiration, page, login and reload timers.
             cancelSessionCallbacks();
             if(root!=null)root.setVisibility(View.GONE);
+            updateGroupWindows();
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
             if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
             BugReport.log(this,"LOGIN","Página de autenticação aberta, overlay oculto");
@@ -1895,6 +1932,7 @@ public class OverlayService extends Service {
             if(root!=null&&!pickerOpen)root.setVisibility(View.VISIBLE);
             if(menuRoot!=null&&!pickerOpen&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
             if(detailRoot!=null&&selected>=0&&!pickerOpen)detailRoot.setVisibility(View.VISIBLE);
+            updateGroupWindows();
             cancelSessionCallbacks();
             pendingLoginRefreshGeneration=requestGeneration;
             if(!stopped&&!loginPaused&&!pickerOpen)
