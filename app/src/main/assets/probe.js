@@ -1,6 +1,9 @@
 (function(){
 "use strict";
-const action=__ACTION__,mode=__MODE__,shinyOnly=__SHINY__;
+const action=__ACTION__,mode=__MODE__,shinyOnly=__SHINY__,options=__OPTIONS__;
+const maxRank=Number.isInteger(Number(options.rankMax))&&Number(options.rankMax)>=1&&Number(options.rankMax)<=50?Number(options.rankMax):1;
+const ivGoal=options.customIvEnabled?[Number(options.ivA),Number(options.ivD),Number(options.ivH)]:[15,15,15];
+const ivValid=ivGoal.every(x=>Number.isInteger(x)&&x>=0&&x<=15);
 const clean=s=>String(s??"").replace(/\u00a0/g," ").replace(/[ \t]+/g," ").trim();
 const text=e=>clean(e&&(e.innerText||e.textContent)||"");
 const elements=s=>Array.from(document.querySelectorAll(s));
@@ -117,30 +120,60 @@ function set100Percent(){
  return fields.every(e=>valueInput(e,"100"));
 }
 function applyIv(){
- // The public website uses two % IV fields (min/max), both set to 100.
- if(set100Percent())return true;
+ if(!ivValid)return false;
+ if(!options.customIvEnabled&&set100Percent())return true;
  tab("Stats");tab("Raw IV");
  const raw=rawIVInputs();
- return (raw.length===3||raw.length===6)&&raw.every(x=>valueInput(x,"15"));
+ if(raw.length!==3&&raw.length!==6)return false;
+ const values=raw.length===3?ivGoal:ivGoal.flatMap(v=>[v,v]);
+ return raw.every((el,i)=>valueInput(el,String(values[i])));
+}
+function rangeInputs(title){
+ const group=labels(document,new RegExp("^"+title+"$","i"));
+ for(const lab of group){
+  for(let p=lab.parentElement,depth=0;p&&depth<5;p=p.parentElement,depth++){
+   const inputs=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
+   if(inputs.length===2)return inputs;
+   if(inputs.length>5)break;
+  }
+ }
+ return [];
+}
+function filterRanges(apply){
+ for(const [title,min,max] of [["CP","cpMin","cpMax"],["Level","levelMin","levelMax"]]){
+  const vals=[String(options[min]||""),String(options[max]||"")];
+  if(vals.some(v=>v!==""&&!/^\d+(?:\.\d+)?$/.test(v)))return false;
+  const fields=rangeInputs(title);
+  if(!fields.length){if(vals.some(Boolean))return false;continue;}
+  for(let i=0;i<2;i++){
+   if(apply){if(!valueInput(fields[i],vals[i]))return false;}
+   else if(String(fields[i].value||"").trim()!==vals[i])return false;
+  }
+ }
+ return true;
 }
 function applyGl(){
  const rank=inputNear("Top ranking");
- return !!rank&&valueInput(rank,"1")&&choice("League",mode==="ul"?"Ultra League":"Great League")&&choice("Include previous evolutions","Yes");
+ return !!rank&&valueInput(rank,String(maxRank))&&choice("League",mode==="ul"?"Ultra League":"Great League")&&choice("Include previous evolutions","Yes");
 }
 function check(){
  const currentShiny=readShiny();
  if(currentShiny!==shinyOnly && !(shinyOnly===false&&currentShiny===null))return {ok:false,reason:"Shiny não confirmado",shiny:currentShiny};
  if(mode==="iv"){
   const ins=rawIVInputs();
-  if((ins.length===3||ins.length===6)&&ins.every(x=>x.value==="15"))return {ok:true};
+  const values=ins.length===3?ivGoal:ivGoal.flatMap(x=>[x,x]);
+  const rawOk=ivValid&&(ins.length===3||ins.length===6)&&
+    ins.every((el,i)=>String(el.value)===String(values[i]));
   const pc=percentageIVInputs();
-  if(pc.length===2&&pc.every(x=>x.value==="100"))return {ok:true};
-  return {ok:false,reason:"IV100: Raw IV 15/15/15 ou % IV 100/100 não confirmados"};
+  const percentageOk=!options.customIvEnabled&&pc.length===2&&pc.every(x=>x.value==="100");
+  if(!rawOk&&!percentageOk)return {ok:false,reason:"Raw IV / % IV não correspondem ao filtro solicitado"};
+ }else{
+  const rank=inputNear("Top ranking");
+  const league=readChoice("League"),prior=readChoice("Include previous evolutions");
+  if(!rank||Number(rank.value)!==maxRank||league!==(mode==="ul"?"Ultra League":"Great League")||prior!=="Yes")
+   return {ok:false,reason:"Ranking PvP não confirmado",rank:rank?rank.value:null,league,prior};
  }
- const rank=inputNear("Top ranking");
- const league=readChoice("League"),prior=readChoice("Include previous evolutions");
- if(!rank||rank.value!=="1"||league!==(mode==="ul"?"Ultra League":"Great League")||prior!=="Yes")
-  return {ok:false,reason:"Grande Liga R1 não confirmada",rank:rank?rank.value:null,league,prior};
+ if(!filterRanges(false))return {ok:false,reason:"CP/nível não confirmados"};
  return {ok:true};
 }
 function cardRoots(){
@@ -218,17 +251,17 @@ function collect(){
  const fieldRank=inputNear("Top ranking");
  const activeLeague=readChoice("League");
  const leagueConfirmed=mode==="iv" ||
-   (!!fieldRank&&fieldRank.value==="1"&&activeLeague===targetLeague&&readChoice("Include previous evolutions")==="Yes");
+   (!!fieldRank&&Number(fieldRank.value)===maxRank&&activeLeague===targetLeague&&readChoice("Include previous evolutions")==="Yes");
  // Rank is specified by the website's search form, not each result card.
  // Only infer rank=1 from the verified filter; never from an unknown form.
+ const expected=ivGoal.join("/");
  const valid=mode==="iv"?
-   found.filter(x=>x.iv==="15/15/15"||x.ivPercent==="100"):
-   (leagueConfirmed?found.filter(x=>!x.rank||String(x.rank).trim()==="1").map(x=>({
-      ...x,rank:"1",rankSource:x.rank?"card":"verified-site-filter"
-   })):[]);
+   found.filter(x=>x.iv===expected||(!options.customIvEnabled&&x.ivPercent==="100")):
+   (leagueConfirmed?found.filter(x=>!x.rank||(Number(x.rank)>=1&&Number(x.rank)<=maxRank))
+    .map(x=>(!x.rank&&maxRank===1?{...x,rank:"1",rankSource:"verified-site-filter"}:x)):[]);
  const uncertain=mode==="iv"?
-   found.some(x=>!(x.iv==="15/15/15"||x.ivPercent==="100")):
-   !leagueConfirmed||found.some(x=>x.rank&&String(x.rank).trim()!=="1");
+   found.some(x=>!(x.iv===expected||(!options.customIvEnabled&&x.ivPercent==="100"))):
+   !leagueConfirmed||found.some(x=>x.rank&&(Number(x.rank)<1||Number(x.rank)>maxRank));
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
@@ -390,15 +423,16 @@ if(action==="configureSearch"){
   configured=applyIv();
  }else{
   const rank=inputNear("Top ranking");
-  if(rank)valueInput(rank,"1");
+  if(rank)valueInput(rank,String(maxRank));
   choice("League",mode==="ul"?"Ultra League":"Great League");
   choice("Include previous evolutions","Yes");
-  configured=!!rank && rank.value==="1" && readChoice("League")===(mode==="ul"?"Ultra League":"Great League") && readChoice("Include previous evolutions")==="Yes";
+  configured=!!rank && Number(rank.value)===maxRank && readChoice("League")===(mode==="ul"?"Ultra League":"Great League") && readChoice("Include previous evolutions")==="Yes";
  }
  const existing=readShiny();
  if(existing!==null&&existing!==shinyOnly){
   const sw=shinyControl();if(sw)sw.click();
  }
+ configured=filterRanges(true)&&configured;
  return JSON.stringify({ok:true,configured,shinyKnown:existing!==null,stage:"configure"});
 }
 if(action==="submitSearch"){
@@ -416,7 +450,7 @@ if(action==="search"){
   if(mode==="iv"){
    tab("Raw IV");
    const fields=rawIVInputs();
-   fields.slice(0,3).forEach(e=>valueInput(e,"15"));
+   fields.slice(0,3).forEach((e,i)=>valueInput(e,String(ivGoal[i])));
   }else{
    const rank=inputNear("Top ranking");
    if(rank)valueInput(rank,"1");
