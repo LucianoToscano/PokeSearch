@@ -105,6 +105,9 @@ public class OverlayService extends Service {
                 if(card==null)continue;
                 try{
                     JSONObject copied=new JSONObject(card.toString());
+                    int siteIndex=copied.optInt("sourceIndex",-1);
+                    copied.put("siteSourceIndex",siteIndex);
+                    copied.put("sourceIndex",i*100+Math.max(0,siteIndex));
                     copied.put("profileIndex",i);
                     copied.put("searchMode",profile.optString("mode","iv"));
                     copied.put("profileRankMax",profile.optInt("rankMax",1));
@@ -349,7 +352,10 @@ public class OverlayService extends Service {
     private void diagnosticError(String s){
         getSharedPreferences("prefs",0).edit().putString("lastError",s).apply();
         BugReport.log(this,"ERROR",s);
-        status(s);
+        if(multiCycleActive){
+            multiCycleActive=false;profileQueue.clear();profileIndex=-1;mode=previousMode;
+            status("Pesquisa interrompida: "+s);
+        }else status(s);
     }
     private void updateWindow(){
         if(wm!=null&&root!=null&&params!=null){
@@ -726,10 +732,10 @@ public class OverlayService extends Service {
     }
     private void refresh(){refresh(false);}
     private void refresh(boolean manual){
-        if(multiEnabled()&&!multiCycleActive){
+        if(multiCycleActive)return; // Only the ordered profile scheduler advances this batch.
+        if(multiEnabled()){
             beginProfileCycle(manual);return;
         }
-        if(multiCycleActive&&profileIndex<0)return;
         refreshSingle(manual);
     }
     private void refreshSingle(boolean manual){
@@ -1478,6 +1484,7 @@ public class OverlayService extends Service {
                 edit.apply();
                 update();
                 // Only explicit confirmation requests the next site search.
+                multiCycleActive=false;profileQueue.clear();profileIndex=-1;
                 ++requestGeneration;searchInProgress=false;
                 results="[]";hideDetails();
                 OverlayService.this.refresh(true);
@@ -1593,6 +1600,8 @@ public class OverlayService extends Service {
         @JavascriptInterface public void shiny(){handler.post(()->{
             if(stopped||loginPaused)return;
             shiny=!shiny;
+            multiCycleActive=false;profileQueue.clear();profileIndex=-1;
+            mode=previousMode;
             android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
             prefs.edit().putBoolean("shiny",shiny).apply();
             final int generation=++requestGeneration;
@@ -1675,7 +1684,7 @@ public class OverlayService extends Service {
             return;
         }
         JSONObject target=chosen;
-        execute("coords:"+sourceIndex,response->{
+        execute("coords:"+target.optInt("siteSourceIndex",sourceIndex),response->{
             if(!response.optBoolean("ok")){
                 deliverCoords("",response.optString("status","Get coords indisponível"));return;
             }
