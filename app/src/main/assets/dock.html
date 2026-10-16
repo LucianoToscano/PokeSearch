@@ -826,7 +826,18 @@ function draw(){
  document.documentElement.style.setProperty("--sprite",spriteSize+"px");
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
  const cy=document.getElementById("cycle");
- if(mode==="iv"){cy.textContent=customIv?(customText==="0/0/0"?"0%":customText):"100%";cy.classList.add("ivOn");cy.title=customIv?"IV personalizado · "+customText:"IV100 · 15/15/15";}
+ if(mode==="iv"){
+   const selected=multiEnabled&&searchProfiles[0];
+   const isRaw=selected?!!selected.customIvEnabled:
+     (searchOptions.ivFilter==="raw"||customIv);
+   const raw=selected?[selected.ivA,selected.ivD,selected.ivH].join("/"):customText;
+   const min=selected?Number(selected.ivMin??100):Number(searchOptions.ivMin??100);
+   const max=selected?Number(selected.ivMax??100):Number(searchOptions.ivMax??100);
+   cy.textContent=isRaw?(raw==="0/0/0"?"0/0/0":raw==="15/15/15"?"15³":raw):
+     (min===max?min+"%":min+"–"+max+"%");
+   cy.classList.add("ivOn");
+   cy.title=isRaw?"Raw IV · "+raw:"IV% · "+min+"–"+max;
+ }
  else{
    const gl=mode==="gl",color=gl?"#2f8ed8":"#d8ad43";
    cy.innerHTML='<span class="league"><svg viewBox="0 0 24 24" aria-hidden="true">'+
@@ -836,7 +847,11 @@ function draw(){
    cy.title=(gl?"Grande Liga":"Ultra Liga")+" · Rank 1–"+rankMax;
  }
  document.getElementById("size").textContent=spriteSize<=35?"P":spriteSize>=55?"G":"M";
- document.getElementById("sh").classList.toggle("shinyOn",shiny);
+ // Active values stay legible in the main menu and match actual search state.
+ const cycleLabel=document.getElementById("cycle");
+ cycleLabel.dataset.label=mode==="gl"?"Modos · GL #"+rankMax:
+   mode==="ul"?"Modos · UL #"+rankMax:"Modos · "+cycleLabel.textContent;
+  document.getElementById("sh").classList.toggle("shinyOn",shiny);
  document.getElementById("sh").classList.toggle("shinyPending",shinyPending);
  document.getElementById("location").classList.toggle("locOn",locationEnabled);
  document.getElementById("locationRadiusText").textContent=locationEnabled?locationRadius+"km":"";
