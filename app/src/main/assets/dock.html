@@ -395,10 +395,11 @@ function renderFiltersPanel(){
   enabled.className="profileEnabled";enabled.style.cssText="flex:0 0 18px;width:18px";
   const title=document.createElement("strong");title.textContent="Busca "+(i+1);title.style.cssText="font-size:12px;min-width:58px";
   const kind=document.createElement("select");kind.className="profileMode";kind.style.flex="1";
-  for(const [value,label] of [["ivperfect","IV 100%"],["gl","Grande Liga"],["ul","Ultra Liga"],["ivcustom","IV escolhido"]]){
+  for(const [value,label] of [["ivperfect","100% · 15/15/15"],["ivzero","0% · 0/0/0"],["gl","GL · rank"],["ul","UL · rank"],["ivcustom","_/_/_ · IV 0–15"]]){
    const opt=document.createElement("option");opt.value=value;opt.textContent=label;kind.appendChild(opt);
   }
-  kind.value=p.mode==="iv"?(p.customIvEnabled?"ivcustom":"ivperfect"):p.mode||"ivperfect";
+  kind.value=p.mode==="iv"?(p.customIvEnabled?
+ ((p.ivA===0&&p.ivD===0&&p.ivH===0)?"ivzero":"ivcustom"):"ivperfect"):p.mode||"ivperfect";
   top.append(enabled,title,kind);container.appendChild(top);
   const fields=document.createElement("div");fields.className="profileRow";
   const rankLabel=document.createElement("span");rankLabel.textContent="Rank ≤";rankLabel.style.fontSize="10px";
@@ -430,10 +431,10 @@ function renderFiltersPanel(){
     const bound=Number(rank.value);
     if(!Number.isInteger(bound)||bound<1||bound>200)throw Error("Rank da busca "+(i+1)+" deve estar entre 1 e 200");
     return {enabled:enabled.checked,mode:val==="gl"?"gl":val==="ul"?"ul":"iv",
-      customIvEnabled:val==="ivcustom",rankMax:bound,
-      ivA:Number(ivRow.querySelector(".profileivA").value),
-      ivD:Number(ivRow.querySelector(".profileivD").value),
-      ivH:Number(ivRow.querySelector(".profileivH").value)};
+      customIvEnabled:val==="ivcustom"||val==="ivzero",rankMax:bound,
+      ivA:val==="ivzero"?0:Number(ivRow.querySelector(".profileivA").value),
+      ivD:val==="ivzero"?0:Number(ivRow.querySelector(".profileivD").value),
+      ivH:val==="ivzero"?0:Number(ivRow.querySelector(".profileivH").value)};
   };
   return container;
  };
@@ -620,7 +621,7 @@ function draw(){
  document.documentElement.style.setProperty("--sprite",spriteSize+"px");
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
  const cy=document.getElementById("cycle");
- if(mode==="iv"){cy.textContent=customIv?"IV":"100%";cy.classList.add("ivOn");cy.title=customIv?"IV personalizado · "+customText:"IV100 · 15/15/15";}
+ if(mode==="iv"){cy.textContent=customIv?(customText==="0/0/0"?"0%":customText):"100%";cy.classList.add("ivOn");cy.title=customIv?"IV personalizado · "+customText:"IV100 · 15/15/15";}
  else{
    const gl=mode==="gl",color=gl?"#2f8ed8":"#d8ad43";
    cy.innerHTML='<span class="league"><svg viewBox="0 0 24 24" aria-hidden="true">'+
