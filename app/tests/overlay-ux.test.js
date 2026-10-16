@@ -51,9 +51,9 @@ test("Login, Shiny and league filters remain independent",service.includes('JSON
 
 const toolbarCols=dock.match(/#controls\{[^}]*grid-template-columns:([^;]+);/);
 const toolbarButtons=dock.slice(dock.indexOf('<div id="menu"><div id="controls">'),dock.indexOf('</div><div id="choices"')).match(/<button\b/g)||[];
-test("All twelve toolbar actions fit compactly side by side on one row",
+test("All thirteen toolbar actions fit compactly side by side on one row",
   !!toolbarCols&&toolbarCols[1].trim()==="34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr"&&
-  toolbarButtons.length===12&&dock.includes("grid-auto-flow:column"));
+  toolbarButtons.length===13&&dock.includes("grid-auto-flow:column"));
 test("Single pin shows active radius without a second settings button",
   (dock.match(/id="location"/g)||[]).length===1&&dock.includes('id="locationRadiusText"')&&
   dock.includes('textContent=locationEnabled?locationRadius+"km":""'));
@@ -109,7 +109,7 @@ const iconGenerator=fs.readFileSync(path.join(__dirname,'../scripts/RoundIcon.ja
 const ci=fs.readFileSync(path.join(__dirname,'../../.github/workflows/build-overlay.yml'),'utf8');
 const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
-test("PokeSearch 0.52 source configured",gradleBuild.includes('versionCode = 52')&&gradleBuild.includes('versionName = "0.52-beta"'));
+test("PokeSearch 0.53 source configured",gradleBuild.includes('versionCode = 53')&&gradleBuild.includes('versionName = "0.53-beta"'));
 test("Round icon generator always uses headless mode",gradleBuild.includes('-Djava.awt.headless=true')&&iconGenerator.includes('System.setProperty("java.awt.headless","true")'));
 test("Network main-frame error is handled",service.includes('request.isForMainFrame()')&&service.includes('Falha de navegação principal'));
 test("Browser exception and parse failures recorded",service.includes('recordFailure("executar JS site",e)')&&service.includes('recordFailure("interpretar resposta JS",e)'));
@@ -211,9 +211,9 @@ test("Android responsive controls measure actual one-row menu height",
   dock.includes('if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);')&&
   service.includes('menuParams.height=dp(menuBaseHeight())')&&
   service.includes('Math.min(450,screenHeightDp()-72)'));
-test("Android responsive layout contains all 12 controls exactly once",
-  toolbarButtons.length===12&&
-  ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','report','donate','close']
+test("Android responsive layout contains all 13 controls exactly once",
+  toolbarButtons.length===13&&
+  ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','filters','report','donate','close']
   .every(id=>(dock.match(new RegExp('id="'+id+'"','g'))||[]).length===1));
 test("Shiny tap skips Search cooldown to inspect site and auth",
   service.includes('private void prepareImmediateShiny(int generation)')&&
@@ -325,5 +325,9 @@ test("Release minifies and shrinks",gradle.includes("isMinifyEnabled = true")&&g
 
 // v0.52 opt-in UI regression coverage
  test("v0.52 keeps vertical menu optional without changing original colors",dock.includes('body.controls-window.vertical #controls')&&dock.includes('#controls #cycle.ivOn{background:#3a5040bd'));
- test("v0.52 rank is optional and only shown with a numeric result",dock.includes('showRanks=!!ranks')&&dock.includes('Number.isInteger(rv)'));
+ test("v0.52 rank is optional and only shown with a numeric result",dock.includes('showRanks=ranks!==false')&&dock.includes('Number.isInteger(rv)'));
  test("v0.52 home preferences persist hidden icon choices",main.includes('prefs.getString("hiddenControls"')&&main.includes('prefs.edit().putString("hiddenControls"'));
+
+test("v0.53 floating filter action and popup are present",dock.includes('id="filters"')&&dock.includes("renderFiltersPanel()")&&dock.includes('Native.setSearchOptions(JSON.stringify(val))'));
+test("v0.53 rank badges show verified upper limit when exact rank is unknown",dock.includes('rankUpperBound')&&dock.includes('showRanks&&(mode==="gl"||mode==="ul")'));
+test("v0.53 Android validates floating search preference values",service.includes('public void setSearchOptions(String value)')&&service.includes('options.put("rankMax"'));
