@@ -64,7 +64,7 @@ test("When OFF, icon and badge never display outdated radius",
   dock.includes('geoBadge.classList.toggle("active",locationEnabled)')&&
   dock.includes('document.getElementById("locationRadiusText").textContent=locationEnabled?locationRadius+"km":""'));
 test("Switching from location editor to mode releases keyboard focus",
-  dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
+  dock.includes('if((choiceOpen==="location"||choiceOpen==="filters")&&kind!==choiceOpen)')&&dock.includes('Native.locationEditor(false)'));
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
 test("Compact toolbar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(wanted,screenWidthDp()-8)")&&service.includes("33*visibleControls"));
 test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
