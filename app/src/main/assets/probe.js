@@ -170,7 +170,7 @@ function setSizeFilter(apply){
  if(want.some(sz=>!["XXS","XS","S","M","L","XL","XXL"].includes(sz)))return false;
  const control=field("Size");
  if(!control)return want.length===0;
- if(apply)control.click();
+ control.click();
  const entries=sizeLabels();
  if(!entries.length)return want.length===0;
  const wanted=new Set(want);
@@ -181,7 +181,7 @@ function setSizeFilter(apply){
   if(apply&&sizeSelected(entry)!==wanted.has(sz))entry.click();
   if(sizeSelected(entry)!==wanted.has(sz))ok=false;
  }
- if(apply&&control&&typeof control.click==="function")control.click();
+ if(typeof control.click==="function")control.click();
  return ok;
 }
 function filterSelectFields(apply){
