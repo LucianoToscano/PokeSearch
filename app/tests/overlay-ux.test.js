@@ -109,7 +109,7 @@ const iconGenerator=fs.readFileSync(path.join(__dirname,'../scripts/RoundIcon.ja
 const ci=fs.readFileSync(path.join(__dirname,'../../.github/workflows/build-overlay.yml'),'utf8');
 const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
-test("PokeSearch 0.55 source configured",gradleBuild.includes('versionCode = 55')&&gradleBuild.includes('versionName = "0.55-beta"'));
+test("PokeSearch 0.56 source configured",gradleBuild.includes('versionCode = 56')&&gradleBuild.includes('versionName = "0.56-beta"'));
 test("Round icon generator always uses headless mode",gradleBuild.includes('-Djava.awt.headless=true')&&iconGenerator.includes('System.setProperty("java.awt.headless","true")'));
 test("Network main-frame error is handled",service.includes('request.isForMainFrame()')&&service.includes('Falha de navegação principal'));
 test("Browser exception and parse failures recorded",service.includes('recordFailure("executar JS site",e)')&&service.includes('recordFailure("interpretar resposta JS",e)'));
@@ -354,3 +354,11 @@ test("v0.55 external status indicators do not cover sprites",dock.includes('clas
 test("v0.55 favorites use a fixed scrolling list",picker.includes('selectedList.setSelectionFromTop')&&picker.includes('Color.argb(243,51,54,57)'));
 test("v0.55 login session probe supplies options",main.includes('.replace("__OPTIONS__","{}")'));
 test("v0.55 launcher icon minimizes transparent outer padding",require('fs').readFileSync('app/scripts/RoundIcon.java','utf8').includes('Detect excessive transparent/flat padding'));
+
+test("v0.56 gear never renders sprites in a single search",dock.includes('body.dock-window #spawns')&&dock.includes('document.getElementById("spawns").replaceChildren()'));
+test("v0.56 single search has its own draggable group window",service.includes('(multiEnabled()?(p!=null&&p.optBoolean("enabled",false)):i==0)')&&dock.includes('multiEnabled?Number(x.c.profileIndex)===groupId:groupId===0'));
+test("v0.56 menu width measured from longest visible label",service.includes('paint.measureText(names[i])')&&service.includes('if(!menuShowText)wanted=item+6'));
+test("v0.56 icons share one compact square size without text",dock.includes('body.controls-window.vertical:not(.with-text) #controls button')&&dock.includes('width:var(--toolbar-item,32px)!important'));
+test("v0.56 shows ON and OFF next to relevant actions",dock.includes('shyButton.dataset.label="Shiny · "')&&dock.includes('bell.dataset.label="Alertas · "')&&dock.includes('document.getElementById("period").dataset.label'));
+test("v0.56 preserves favorites scroll and avoids redraw on every change",picker.includes('results.setSelectionFromTop')&&picker.includes('Do not re-render the Android overlay every time a star is selected.'));
+test("v0.56 launcher increases artwork in circular icon",require('fs').readFileSync('app/scripts/RoundIcon.java','utf8').includes('Zoom its contents 12%'));
