@@ -2,6 +2,11 @@
 "use strict";
 const action=__ACTION__,mode=__MODE__,shinyOnly=__SHINY__,options=__OPTIONS__;
 const maxRank=Number.isInteger(Number(options.rankMax))&&Number(options.rankMax)>=1&&Number(options.rankMax)<=200?Number(options.rankMax):1;
+const percentMin=Number.isInteger(Number(options.ivMin))?Number(options.ivMin):100;
+const percentMax=Number.isInteger(Number(options.ivMax))?Number(options.ivMax):100;
+const percentValid=percentMin>=0&&percentMin<=percentMax&&percentMax<=100;
+const percentMode=mode==="iv"&&(options.ivFilter==="percent"||
+  (!options.customIvEnabled&&options.ivFilter!=="raw"));
 const ivGoal=options.customIvEnabled?[Number(options.ivA),Number(options.ivD),Number(options.ivH)]:[15,15,15];
 const ivValid=ivGoal.every(x=>Number.isInteger(x)&&x>=0&&x<=15);
 const clean=s=>String(s??"").replace(/\u00a0/g," ").replace(/[ \t]+/g," ").trim();
@@ -113,15 +118,15 @@ function inputsByIvGroup(count){
 }
 function rawIVInputs(){return inputsByIvGroup(3).length?inputsByIvGroup(3):inputsByIvGroup(6);}
 function percentageIVInputs(){return inputsByIvGroup(2);}
-function set100Percent(){
+function setPercentRange(){
  tab("Stats");tab("% IV");
  const fields=percentageIVInputs();
- if(fields.length!==2)return false;
- return fields.every(e=>valueInput(e,"100"));
+ return percentValid&&fields.length===2&&fields.every((e,i)=>
+  valueInput(e,String(i===0?percentMin:percentMax)));
 }
 function applyIv(){
  if(!ivValid)return false;
- if(!options.customIvEnabled&&set100Percent())return true;
+ if(percentMode)return setPercentRange();
  tab("Stats");tab("Raw IV");
  const raw=rawIVInputs();
  if(raw.length!==3&&raw.length!==6)return false;
@@ -210,7 +215,8 @@ function check(){
   const rawOk=ivValid&&(ins.length===3||ins.length===6)&&
     ins.every((el,i)=>String(el.value)===String(values[i]));
   const pc=percentageIVInputs();
-  const percentageOk=!options.customIvEnabled&&pc.length===2&&pc.every(x=>x.value==="100");
+  const percentageOk=percentMode&&percentValid&&pc.length===2&&
+    Number(pc[0].value)===percentMin&&Number(pc[1].value)===percentMax;
   if(!rawOk&&!percentageOk)return {ok:false,reason:"Raw IV / % IV não correspondem ao filtro solicitado"};
  }else{
   const rank=inputNear("Top ranking");
@@ -300,14 +306,24 @@ function collect(){
  // Rank is specified by the website's search form, not each result card.
  // Only infer rank=1 from the verified filter; never from an unknown form.
  const expected=ivGoal.join("/");
+ const inRange=x=>{
+   const n=Number(x.ivPercent);
+   if(Number.isFinite(n)&&x.ivPercent!==""&&n>=percentMin&&n<=percentMax)return true;
+   if(x.iv&&/^\d+\/\d+\/\d+$/.test(x.iv)){
+    const parts=x.iv.split("/").map(Number);
+    const percent=100*(parts[0]+parts[1]+parts[2])/45;
+    return percent>=percentMin&&percent<=percentMax;
+   }
+   return false;
+ };
  const valid=mode==="iv"?
-   found.filter(x=>x.iv===expected||(!options.customIvEnabled&&x.ivPercent==="100")):
+   found.filter(x=>percentMode?inRange(x):x.iv===expected):
    (leagueConfirmed?found.filter(x=>!x.rank||(Number(x.rank)>=1&&Number(x.rank)<=maxRank))
     .map(x=>!x.rank&&maxRank===1?
       {...x,rank:"1",rankSource:"verified-site-filter",rankUpperBound:1}:
       {...x,rankUpperBound:maxRank}):[]);
  const uncertain=mode==="iv"?
-   found.some(x=>!(x.iv===expected||(!options.customIvEnabled&&x.ivPercent==="100"))):
+   found.some(x=>!(percentMode?inRange(x):x.iv===expected)):
    !leagueConfirmed||found.some(x=>x.rank&&(Number(x.rank)<1||Number(x.rank)>maxRank));
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
