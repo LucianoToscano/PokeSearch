@@ -1,0 +1,6 @@
+# PokeSearch v0.56-beta — correção estrutural
+Versão base: v0.55-beta (SHA 489dd37d79d80c5a55e40251d55e763eac106c34); backup: backup/v0.55-before-layout-fixes-20261016; branch: feature/v0.56-compact-separated-panels-20261016.
+Causa confirmada por análise do código da v0.55: groupRoots[0] e groupRoots[1] eram visíveis apenas com multiEnabled=true. Na pesquisa única, os sprites eram renderizados dentro do mesmo WebView da engrenagem. Agora o dock da engrenagem nunca desenha sprites; resultado único vai à janela 0, e o resultado da segunda busca, quando habilitada, usa a janela 1.
+A largura do menu vertical com legenda passa a ser medida pela maior legenda visível usando android.graphics.Paint; sem texto, os ícones são iguais e compactos, e a janela cresce apenas para submenu aberto.
+Menu mostra estados Shiny ON/OFF, Auto temporizado/Off, Alertas som/silencioso/Off, Localização ativa/inativa e texto de Modo aplicado. Infos renderizadas fora do sprite. Favoritos não aciona atualização do overlay a cada seleção e retém o scroll. O ícone original ganha zoom para preencher melhor o launcher.
+Integração com PoGoCoordinates: filtro só é confirmado se o site responder; nenhuma prova automática substitui login e busca real. Ranking geral PvPoke não é assumido igual a ranking de IV nem Top N.
