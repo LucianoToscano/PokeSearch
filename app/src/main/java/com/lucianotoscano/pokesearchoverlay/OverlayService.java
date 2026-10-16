@@ -1600,8 +1600,10 @@ public class OverlayService extends Service {
         @JavascriptInterface public void shiny(){handler.post(()->{
             if(stopped||loginPaused)return;
             shiny=!shiny;
-            multiCycleActive=false;profileQueue.clear();profileIndex=-1;
-            mode=previousMode;
+            if(multiCycleActive){
+                multiCycleActive=false;profileQueue.clear();profileIndex=-1;
+                mode=previousMode;
+            }
             android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
             prefs.edit().putBoolean("shiny",shiny).apply();
             final int generation=++requestGeneration;
