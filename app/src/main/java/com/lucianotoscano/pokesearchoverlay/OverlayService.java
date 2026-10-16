@@ -114,7 +114,7 @@ public class OverlayService extends Service {
                     origin[0]+Math.round(event.getRawX()-touch[0])));
                 coords.y=Math.max(0,Math.min(metrics().heightPixels-coords.height,
                     origin[1]+Math.round(event.getRawY()-touch[1])));
-                try{wm.updateViewLayout(frame,coords);}
+                try{wm.updateViewLayout(frame,coords);moveDetail();}
                 catch(Exception e){recordFailure("mover camada "+i,e);}
                 return true;
               case MotionEvent.ACTION_UP:
@@ -1378,7 +1378,7 @@ public class OverlayService extends Service {
             if(index<0||index>=a.length()){hideDetails();return;}
             selected=index;
             JSONObject obj=a.getJSONObject(index);
-            js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
+            js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(obj.optString("searchMode",mode))+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
             detailRoot.setVisibility(View.VISIBLE);
             moveDetail();
             js(panel,panelLoaded,"window.highlight("+index+")");
