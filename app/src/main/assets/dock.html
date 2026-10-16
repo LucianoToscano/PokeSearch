@@ -289,7 +289,8 @@ function closeChoices(){
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
  document.getElementById("filters").setAttribute("aria-expanded","false");
- document.getElementById("choices").classList.remove("locationPanel","filtersPanel");
+ document.getElementById("eye").setAttribute("aria-expanded","false");
+ document.getElementById("choices").classList.remove("locationPanel","filtersPanel","infoPanel");
  if(controlsWindow){Native.locationEditor(false);Native.setChoicesOpen(false);}
  fit();
 }
@@ -309,9 +310,11 @@ function toggleChoices(kind){
  if(controlsWindow)Native.setChoicesOpen(true);
  if(kind==="location"){renderLocationChoices();return;}
  if(kind==="filters"){renderFiltersPanel();return;}
- const current=kind==="mode"?mode:period;
+ if(kind==="info"){renderInfoChoices();return;}
+ const current=kind==="mode"?(mode==="iv"?
+    (customIv?(customText==="0/0/0"?"iv0":"custom"):"iv100"):mode):period;
  const entries=kind==="mode"?
-   [["iv","100% · IV perfeito"],["gl","GL#1 · Grande Liga"],["ul","UL#1 · Ultra Liga"]]:
+   [["iv100","100% · 15/15/15"],["iv0","0% · 0/0/0"],["gl","GL · Escolher Rank"],["ul","UL · Escolher Rank"],["custom","_/_/_ · IV 0–15"]]:
    [[0,"AUTO · OFF (somente manual)"],[3,"AUTO · 3 min"],[5,"AUTO · 5 min"],[10,"AUTO · 10 min"],[15,"AUTO · 15 min"],[20,"AUTO · 20 min"]];
  const panel=document.getElementById("choices");
  panel.replaceChildren();
@@ -326,7 +329,17 @@ function toggleChoices(kind){
   btn.textContent=(value===current?"✓ ":"")+label;
   btn.onclick=()=>{
    closeChoices();
-   if(kind==="mode"){mode=String(value);draw();Native.setMode(mode);}
+   if(kind==="mode"){
+     if(value==="custom"){
+       Native.selectPreset("custom");toggleChoices("filters");
+     }else{
+       mode=value==="iv100"||value==="iv0"?"iv":String(value);
+       if(value==="iv0"){customIv=true;customText="0/0/0";}
+       if(value==="iv100"){customIv=false;customText="15/15/15";}
+       draw();Native.selectPreset(String(value));
+       if(value==="gl"||value==="ul")toggleChoices("filters");
+     }
+   }
    else{period=Number(value);draw();Native.setIntervalMinutes(period);}
   };
   panel.appendChild(btn);
@@ -566,9 +579,38 @@ function attachLongPress(){
 }
 const toolbarLabels={cycle:"Modo",sh:"Shiny",period:"Auto",manualRefresh:"Atualizar",
  size:"Tamanho",clock:"Relógio",bell:"Alertas",star:"Favoritos",location:"Localização",
- filters:"Filtros",report:"Reportar",donate:"Apoiar",close:"Fechar"};
+ filters:"Filtros",eye:"Olho",report:"Reportar",donate:"Apoiar",close:"Fechar"};
 for(const [id,label] of Object.entries(toolbarLabels)){
  const element=document.getElementById(id);if(element)element.dataset.label=label;
+}
+function renderInfoChoices(){
+ const panel=document.getElementById("choices");
+ panel.classList.remove("locationPanel","filtersPanel");
+ panel.classList.add("infoPanel");panel.replaceChildren();
+ const title=document.createElement("div");title.className="choiceHeader";title.textContent="◉ VISIBILIDADE NOS POKÉMON";
+ panel.appendChild(title);
+ const defs=[["showSpawnCount","Quantidade de spawns",showSpawnCount],
+  ["showTimers","Tempo até desaparecer",showTimers],
+  ["showLevel","Nível (Lv)",showLevel],["showCp","Poder de combate (PC)",showCp],
+  ["showIv","IV do Pokémon",showIv],["showRanks","Rank PvP (GL/UL)",showRanks]];
+ const inputs={};
+ for(const [key,labelText,enabled] of defs){
+  const row=document.createElement("label");const cb=document.createElement("input");
+  cb.type="checkbox";cb.checked=enabled;inputs[key]=cb;
+  row.append(cb,document.createTextNode(labelText));panel.appendChild(row);
+ }
+ const save=document.createElement("button");save.textContent="✓ Aplicar";
+ save.className="chosen";save.onclick=()=>{
+  const config={};for(const [key] of defs)config[key]=inputs[key].checked;
+  showTimers=config.showTimers;showRanks=config.showRanks;
+  showLevel=config.showLevel;showCp=config.showCp;showIv=config.showIv;
+  showSpawnCount=config.showSpawnCount;
+  Native.setDisplayOptions(JSON.stringify(config));lastListKey="";
+  closeChoices();draw();
+ };
+ panel.appendChild(save);panel.classList.add("visible");
+ document.getElementById("eye").setAttribute("aria-expanded","true");
+ if(controlsWindow)Native.setChoicesOpen(true);fit();
 }
 function toggleResultGroup(index){if(collapsedGroups.has(index))collapsedGroups.delete(index);
  else collapsedGroups.add(index);lastListKey="";draw();}
@@ -611,7 +653,7 @@ function draw(){
  star.classList.toggle("favoritesOn",hasFavorites);
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
  const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.title=period===0?"AUTO desligado · atualizar com ↻ ou mudar filtros":"Atualização automática a cada "+period+" minutos · toque para alterar";p.setAttribute("aria-label",p.title);
- const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showRanks,mode,rankMax,multiEnabled,searchProfiles,Array.from(collapsedGroups)]);
+ const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showRanks,showLevel,showCp,showIv,showSpawnCount,mode,rankMax,multiEnabled,searchProfiles,groupId,Array.from(collapsedGroups)]);
  if(listKey!==lastListKey){lastListKey=listKey;
  const makeSprite=(c,i)=>{
   const label=[c.name,c.ivPercent?c.ivPercent+"%":"IV não disponível",c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
