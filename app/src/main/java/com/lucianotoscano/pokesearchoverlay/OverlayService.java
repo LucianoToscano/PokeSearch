@@ -130,8 +130,16 @@ public class OverlayService extends Service {
                 if(active.length()!=old.length()){
                     results=active.toString();hideDetails();update();
                 }
-                // Expiration is a local UI event, never a reason to query the site.
-                // Re-arm the next remaining deadline without changing AUTO cadence.
+                // Refresh on the last despawn, never faster than three minutes.
+                // Keep OFF mode strictly manual and avoid duplicated pending callbacks.
+                if(active.length()==0&&old.length()>0&&intervalMinutes>0){
+                    long last=getSharedPreferences("prefs",0)
+                        .getLong("lastNetworkSearchAt",0L);
+                    long wait=Math.max(0L,180000L-(now-last));
+                    handler.removeCallbacks(queuedRefresh);
+                    handler.postDelayed(queuedRefresh,wait);
+                }
+                // Also re-arm the deadline of any remaining spawn.
                 armNextDespawn(active);
             }catch(Exception e){recordFailure("limpar vencidos",e);}
         }
@@ -203,7 +211,11 @@ public class OverlayService extends Service {
                 JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+
                 JSONObject.quote(hiddenControls)+","+JSONObject.quote(menuVertical?"vertical":"horizontal")+","+
                 getSharedPreferences("prefs",0).getBoolean("showRanks",false)+","+
-                Math.max(1,Math.min(50,getSharedPreferences("prefs",0).getInt("rankMax",1)))+")";
+                Math.max(1,Math.min(50,getSharedPreferences("prefs",0).getInt("rankMax",1)))+","+
+                getSharedPreferences("prefs",0).getBoolean("customIvEnabled",false)+","+
+                JSONObject.quote(getSharedPreferences("prefs",0).getInt("customIvAttack",0)+"/"+
+                    getSharedPreferences("prefs",0).getInt("customIvDefense",15)+"/"+
+                    getSharedPreferences("prefs",0).getInt("customIvHp",15))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         if(selected>=0)showDetails(selected);
@@ -1333,7 +1345,7 @@ public class OverlayService extends Service {
             }
         });}
         @JavascriptInterface public void setIntervalMinutes(int minutes){handler.post(()->{
-            if(minutes!=0&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
+            if(minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
             if(intervalMinutes==minutes)return;
             intervalMinutes=minutes;
             getSharedPreferences("prefs",0).edit()
