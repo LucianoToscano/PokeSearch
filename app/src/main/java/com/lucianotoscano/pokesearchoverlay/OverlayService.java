@@ -39,19 +39,20 @@ public class OverlayService extends Service {
     private int dockDp(){return spriteSize+8;}
     private boolean menuVertical=false,menuChoicesOpen=false;
     private String hiddenControls="";
-    private int visibleControls=12;
+    private int visibleControls=13;
     private int menuDp(){
-        int wanted=menuVertical?(menuChoicesOpen?306:44):Math.max(35,33*visibleControls);
+        int wanted=menuVertical?44:Math.max(35,30*visibleControls+4);
+        if(menuChoicesOpen)wanted=Math.max(wanted,316);
         return Math.max(1,Math.min(wanted,screenWidthDp()-8));
     }
-    private int menuBaseHeight(){return menuVertical?Math.min(420,Math.max(34,visibleControls*32)):MENU_BASE_DP;}
+    private int menuBaseHeight(){return menuVertical?Math.min(440,Math.max(34,visibleControls*32)):MENU_BASE_DP;}
     private void loadMenuPreferences(android.content.SharedPreferences pref){
         String orientation=pref.getString("menuOrientation","horizontal");
         menuVertical="vertical".equals(orientation);
         hiddenControls=pref.getString("hiddenControls","");
         int count=0;
         String[] ids={"cycle","sh","period","manualRefresh","size","clock",
-            "bell","star","location","report","donate","close"};
+            "bell","star","location","filters","report","donate","close"};
         for(String id:ids)if(!hiddenControls.contains("|"+id+"|"))count++;
         visibleControls=count;
     }
@@ -206,16 +207,33 @@ public class OverlayService extends Service {
         // edge overlap without changing the sprite image dimensions.
         return Math.max(26,spriteSize-8);
     }
+    private JSONObject searchOptionsJson(){
+        android.content.SharedPreferences pref=getSharedPreferences("prefs",0);
+        JSONObject options=new JSONObject();
+        try{
+            options.put("rankMax",Math.max(1,Math.min(200,pref.getInt("rankMax",1))));
+            options.put("customIvEnabled",pref.getBoolean("customIvEnabled",false));
+            options.put("ivA",pref.getInt("customIvAttack",0));
+            options.put("ivD",pref.getInt("customIvDefense",15));
+            options.put("ivH",pref.getInt("customIvHp",15));
+            options.put("showRanks",pref.getBoolean("showRanks",true));
+            for(String key:new String[]{"cpMin","cpMax","levelMin","levelMax",
+                    "weather","size","form","gender"})
+                options.put(key,pref.getString(key,""));
+        }catch(Exception e){recordFailure("serializar filtros",e);}
+        return options;
+    }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
                 JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+
                 JSONObject.quote(hiddenControls)+","+JSONObject.quote(menuVertical?"vertical":"horizontal")+","+
-                getSharedPreferences("prefs",0).getBoolean("showRanks",false)+","+
-                Math.max(1,Math.min(50,getSharedPreferences("prefs",0).getInt("rankMax",1)))+","+
+                getSharedPreferences("prefs",0).getBoolean("showRanks",true)+","+
+                Math.max(1,Math.min(200,getSharedPreferences("prefs",0).getInt("rankMax",1)))+","+
                 getSharedPreferences("prefs",0).getBoolean("customIvEnabled",false)+","+
-                JSONObject.quote(getSharedPreferences("prefs",0).getInt("customIvAttack",0)+"/"+
+                JSONObject.quote(getSharedPreferences("prefs",0).getInt("customIvAttack",0)+"/"
                     getSharedPreferences("prefs",0).getInt("customIvDefense",15)+"/"+
-                    getSharedPreferences("prefs",0).getInt("customIvHp",15))+")";
+                    getSharedPreferences("prefs",0).getInt("customIvHp",15))+","+
+                searchOptionsJson().toString()+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         if(selected>=0)showDetails(selected);
@@ -575,17 +593,7 @@ public class OverlayService extends Service {
             }else status("Abra o app e faça login.");
             return;
         }
-        android.content.SharedPreferences optionsPrefs=getSharedPreferences("prefs",0);
-        JSONObject searchOptions=new JSONObject();
-        try{
-            searchOptions.put("rankMax",Math.max(1,Math.min(50,optionsPrefs.getInt("rankMax",1))));
-            searchOptions.put("customIvEnabled",optionsPrefs.getBoolean("customIvEnabled",false));
-            searchOptions.put("ivA",optionsPrefs.getInt("customIvAttack",0));
-            searchOptions.put("ivD",optionsPrefs.getInt("customIvDefense",15));
-            searchOptions.put("ivH",optionsPrefs.getInt("customIvHp",15));
-            for(String key:new String[]{"cpMin","cpMax","levelMin","levelMax"})
-                searchOptions.put(key,optionsPrefs.getString(key,""));
-        }catch(Exception e){recordFailure("preparar opções de busca",e);}
+        JSONObject searchOptions=searchOptionsJson();
         String code=script().replace("__OPTIONS__",searchOptions.toString())
                 .replace("__ACTION__",JSONObject.quote(action))
                 .replace("__MODE__",JSONObject.quote(mode))
@@ -952,7 +960,7 @@ public class OverlayService extends Service {
                 "100".equals(card.optString("ivPercent",""));
         }
         if("gl".equals(mode)||"ul".equals(mode)){
-            int rank=rankForSort(card),limit=Math.max(1,Math.min(50,prefs.getInt("rankMax",1)));
+            int rank=rankForSort(card),limit=Math.max(1,Math.min(200,prefs.getInt("rankMax",1)));
             return rank<=limit||(rank==999999);
         }
         return false;
@@ -1067,7 +1075,7 @@ public class OverlayService extends Service {
         height=target;params.height=dp(height);updateWindow();moveDetail();
     }
     private void setChoicesOpen(boolean value){
-        if(!menuVertical||!menuExpanded||menuParams==null)return;
+        if(!menuExpanded||menuParams==null)return;
         if(menuChoicesOpen==value)return;
         menuChoicesOpen=value;
         menuParams.width=dp(menuDp());
@@ -1271,6 +1279,62 @@ public class OverlayService extends Service {
         @JavascriptInterface public void setChoicesOpen(boolean open){
             handler.post(()->OverlayService.this.setChoicesOpen(open));
         }
+        @JavascriptInterface public void setSearchOptions(String value){handler.post(()->{
+            if(value==null||value.length()>3500)return;
+            try{
+                JSONObject json=new JSONObject(value);
+                int max=json.optInt("rankMax",1);
+                int attack=json.optInt("ivA",-1),defense=json.optInt("ivD",-1),hp=json.optInt("ivH",-1);
+                if(max<1||max>200||attack<0||attack>15||defense<0||defense>15||hp<0||hp>15)
+                    throw new IllegalArgumentException("IV/rank fora do limite");
+                String[] numbers={"cpMin","cpMax","levelMin","levelMax"};
+                String[] contents=new String[numbers.length];
+                for(int i=0;i<numbers.length;i++){
+                    String val=json.optString(numbers[i],"").trim();
+                    if(!val.isEmpty()){
+                        if(!val.matches(i<2?"\\d{1,5}":"\\d{1,3}(?:\\.\\d)?"))
+                            throw new IllegalArgumentException("PC/Nível inválido");
+                        double num=Double.parseDouble(val);
+                        if(num<0||(i<2&&num>99999)||(i>=2&&num>100))
+                            throw new IllegalArgumentException("PC/Nível fora do limite");
+                    }
+                    contents[i]=val;
+                }
+                for(int i=0;i<4;i+=2){
+                    if(!contents[i].isEmpty()&&!contents[i+1].isEmpty()&&
+                       Double.parseDouble(contents[i])>Double.parseDouble(contents[i+1]))
+                        throw new IllegalArgumentException("Mínimo maior que máximo");
+                }
+                String[] keys={"weather","size","form","gender"};
+                String[] extras=new String[keys.length];
+                for(int i=0;i<keys.length;i++){
+                    String val=json.optString(keys[i],"").trim();
+                    if(val.length()>80||!val.matches("[A-Za-z0-9À-ÿ _/\\-]*"))
+                        throw new IllegalArgumentException("Filtro adicional inválido");
+                    extras[i]=val;
+                }
+                android.content.SharedPreferences.Editor edit=
+                    getSharedPreferences("prefs",0).edit()
+                    .putInt("rankMax",max)
+                    .putBoolean("customIvEnabled",json.optBoolean("customIvEnabled",false))
+                    .putInt("customIvAttack",attack).putInt("customIvDefense",defense)
+                    .putInt("customIvHp",hp)
+                    .putBoolean("showRanks",json.optBoolean("showRanks",true));
+                for(int i=0;i<numbers.length;i++)edit.putString(numbers[i],contents[i]);
+                for(int i=0;i<keys.length;i++)edit.putString(keys[i],extras[i]);
+                edit.apply();
+                update();
+                // Only explicit confirmation requests the next site search.
+                ++requestGeneration;searchInProgress=false;
+                results="[]";hideDetails();
+                OverlayService.this.refresh(true);
+                android.widget.Toast.makeText(OverlayService.this,
+                    "Filtros atualizados",android.widget.Toast.LENGTH_SHORT).show();
+            }catch(Exception e){
+                android.widget.Toast.makeText(OverlayService.this,
+                    "Confira valores de IV, Rank e demais filtros",android.widget.Toast.LENGTH_LONG).show();
+            }
+        });}
         @JavascriptInterface public void toggleTimers(){handler.post(()->{
             showTimers=!showTimers;
             getSharedPreferences("prefs",0).edit().putBoolean("showTimers",showTimers).apply();
