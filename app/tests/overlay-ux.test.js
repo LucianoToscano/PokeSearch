@@ -12,8 +12,8 @@ let count=0;
 function test(name,ok){assert.ok(ok,name);count++;}
 test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
 test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
-test("Five explicit search modes",["100% · 15/15/15","0% · 0/0/0","GL · Escolher Rank","UL · Escolher Rank","_/_/_ · IV 0–15"].every(v=>dock.includes(v)));
-test("Intervals include minimum 3 minutes",["AUTO · 3 min","AUTO · 5 min","AUTO · 10 min","AUTO · 15 min","AUTO · 20 min"].every(v=>dock.includes(v)));
+test("Four clean editable modes and presets",dock.includes('panelInput("IV %"')&&dock.includes('panelInput("Raw IV"')&&dock.includes('["gl","Great League"]')&&dock.includes('["ul","Ultra League"]')&&dock.includes('"Nundo"')&&dock.includes('"Hundo"'));
+test("Intervals include minimum 3 minutes",["Auto · 3 min","Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
 test("Choice panel resizes native window",dock.includes('popup.getBoundingClientRect().bottom')&&dock.includes('Native.resize(h)'));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
@@ -36,7 +36,7 @@ test("Original horizontal toolbar defaults to 34dp and vertical menu is optional
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login returns to Home and does not send it to background",!main.includes('postDelayed(()->moveTaskToBack(true)'));
 test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
-test("Translucent favorites with optional background blur",picker.includes('Color.argb(187,30,42,58)')&&picker.includes('setBlurBehindRadius'));
+test("Translucent favorites with optional background blur",picker.includes('Color.argb(243,51,54,57)')&&picker.includes('setBlurBehindRadius'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
@@ -51,7 +51,7 @@ test("Login, Shiny and league filters remain independent",service.includes('JSON
 
 const toolbarCols=dock.match(/#controls\{[^}]*grid-template-columns:([^;]+);/);
 const toolbarButtons=dock.slice(dock.indexOf('<div id="menu"><div id="controls">'),dock.indexOf('</div><div id="choices"')).match(/<button\b/g)||[];
-test("All thirteen toolbar actions fit compactly side by side on one row",
+test("Legacy DOM actions retained, clean toolbar with optional direction",
   !!toolbarCols&&toolbarCols[1].trim()==="34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr"&&
   toolbarButtons.length===15&&dock.includes("grid-auto-flow:column"));
 test("Single pin shows active radius without a second settings button",
@@ -89,7 +89,7 @@ test("Mode and AUTO provide immediate visible feedback",dock.includes("Native.se
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(wanted,screenWidthDp()-8)")&&service.includes("menuDp()"));
-test("Favorites use translucent gradient without background dim",picker.includes("Color.argb(159,24,34,47)")&&picker.includes("window.setDimAmount(0.0f)"));
+test("Favorites use translucent gradient without background dim",picker.includes('Color.argb(234,40,42,45)')&&picker.includes("window.setDimAmount(0.0f)"));
 test("Home has explicit login and logout",main.includes('signIn.setText("Entrar / vincular")')&&main.includes('signOut.setText("Sair")'));
 test("Login does not start overlay if none is running",main.includes("if(!OverlayService.isRunning())return;"));
 test("Logout clears local cookies and web storage only",main.includes("removeAllCookies")&&main.includes("WebStorage.getInstance().deleteAllData()"));
