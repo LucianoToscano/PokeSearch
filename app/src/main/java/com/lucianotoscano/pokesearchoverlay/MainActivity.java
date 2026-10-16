@@ -373,7 +373,10 @@ public class MainActivity extends Activity {
         String probe=readAsset("probe.js")
             .replace("__ACTION__",JSONObject.quote("session"))
             .replace("__MODE__",JSONObject.quote("iv"))
-            .replace("__SHINY__","false");
+            .replace("__SHINY__","false")
+            // A session probe must be executable independently from search filters.
+            // Leaving __OPTIONS__ unresolved causes ReferenceError before auth is checked.
+            .replace("__OPTIONS__","{}");
         view.evaluateJavascript(probe,raw->{
             if(view!=website||loginPageGeneration!=pageGeneration||
                loginDialog==null||!loginDialog.isShowing()||loginAutoReturnQueued)return;
