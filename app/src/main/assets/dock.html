@@ -122,6 +122,7 @@ body.controls-window #choices{top:34px}
 #choices .locCoordsRow button[role=switch],#choices .locLine button{background:#37393dc9;border-color:#979a9d60}
 #controls #location svg{width:14px;height:14px}
 #controls #location.locOn{background:#454c48cf;border-color:#bfc9c1a6;color:#fff}
+#controls #filters.activeFilter{background:#444b48ec;border-color:#aad8c39c;color:#dff9ed}
 #controls #location.locOn svg{width:12px;height:12px}
 #locBadge{background:#363b3ac4;border-color:#ffffff4a;color:#edf0ef}
 #controls #cycle.ivOn{background:#3a5040bd;border-color:#abc3ae;color:#fff}
@@ -142,6 +143,24 @@ body.controls-window.vertical #choices.locationPanel{width:255px}
 .rankBadge{position:absolute;top:0;left:0;pointer-events:none;color:#eef8ff;background:#171c23dc;
  border:1px solid #ffffff50;border-radius:3px;font-size:8px;font-weight:800;line-height:11px;
  padding:0 2px;white-space:nowrap}
+/* Inline filtering lives in the same compact floating menu as AUTO and Location. */
+#choices.filtersPanel{width:316px;max-width:calc(100vw - 10px);max-height:380px;overflow-y:auto;
+  overscroll-behavior:contain;scrollbar-width:thin;padding:9px;background:#242628f5}
+#choices.filtersPanel .filterLabel{font-size:11px;color:#d8dce1;line-height:20px;margin:5px 3px 2px}
+#choices.filtersPanel .filterHint{font-size:10px;line-height:1.35;color:#b6bfc9;margin:5px 3px 8px}
+#choices.filtersPanel .filterRow{display:flex;gap:6px;width:100%;align-items:center;margin:3px 0 8px}
+#choices.filtersPanel input,#choices.filtersPanel select{
+  background:#15191e;border:1px solid #737c866b;border-radius:7px;color:#fff;
+  font:12px Roboto,Arial,sans-serif;height:35px;padding:6px;min-width:0;flex:1;width:100%}
+#choices.filtersPanel input[type=checkbox]{flex:0 0 18px;width:18px;height:18px;accent-color:#75c3a7}
+#choices.filtersPanel input[type=range]{width:100%;height:17px;padding:0;accent-color:#75c3a7}
+#choices.filtersPanel .filterCheck{display:flex;align-items:center;gap:7px;margin:8px 1px;color:#eff2f3;font-size:11px}
+#choices.filtersPanel .filterQuick{display:flex;gap:4px;justify-content:space-between}
+#choices.filtersPanel .filterQuick button{padding:6px 4px;margin:0;text-align:center;
+ flex:1;background:#333b3e;border:1px solid #ffffff1c;font-size:10px}
+#choices.filtersPanel button.filterApply{background:#2a5d4a;color:#e2fff1;text-align:center;font-weight:800;
+ flex:1;border:1px solid #67c7a0}
+#choices.filtersPanel button.filterCancel{background:#383d43;color:#f4f5f7;text-align:center;flex:1}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -155,6 +174,7 @@ body.controls-window.vertical #choices.locationPanel{width:255px}
   <button id="bell" title="Notificações: desligadas / ligadas / silenciosas" aria-pressed="false" onclick="Native.toggleGeneralAlerts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
   <button id="star" title="Meus favoritos · alertas específicos IV100 / GL#1 / UL#1" onclick="Native.openWatchList()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg></button>
   <button id="location" title="Configurar coordenadas e raio" aria-label="Localização desligada" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('location')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span id="locationRadiusText" class="locRadiusText" aria-hidden="true"></span></button>
+  <button id="filters" title="Filtros de pesquisa · IV, Rank, PC, nível e outros" aria-label="Filtros de pesquisa" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('filters')">☷</button>
   <button id="report" title="⚠ Reportar bugs, enviar sugestões e exportar diagnóstico TXT" aria-label="Reportar bugs e sugestões" onclick="Native.openReport()">⚠</button>
   <button id="donate" title="Gostou do PokeSearch? Apoie com um café · Pix voluntário" onclick="Native.openPix()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z"/></svg></button>
   <button id="close" title="Encerrar PokeSearch" aria-label="Fechar todo o overlay" onclick="Native.close()">×</button>
@@ -170,7 +190,8 @@ const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 document.body.classList.add(controlsWindow?"controls-window":"dock-window");
 document.documentElement.classList.toggle("controls-root",controlsWindow);
 let locationEnabled=false,locationCoords="",locationRadius=0;
-let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,showRanks=false,rankMax=1,customIv=false,customText='',hiddenControls='',menuOrientation='horizontal',generalAlerts=false,hasFavorites=false,alertMode="off";
+let searchOptions={rankMax:1,customIvEnabled:false,ivA:0,ivD:15,ivH:15,showRanks:true,cpMin:"",cpMax:"",levelMin:"",levelMax:"",weather:"",size:"",form:"",gender:""};
+let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=true,showRanks=true,rankMax=1,customIv=false,customText='',hiddenControls='',menuOrientation='horizontal',generalAlerts=false,hasFavorites=false,alertMode="off";
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
  document.documentElement.style.setProperty("--top-space",menuOpen?(Math.max(0,Number(pad)||0)+"px"):"0px");
@@ -200,8 +221,9 @@ function closeChoices(){
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
- document.getElementById("choices").classList.remove("locationPanel");
- if(controlsWindow)Native.locationEditor(false);
+ document.getElementById("filters").setAttribute("aria-expanded","false");
+ document.getElementById("choices").classList.remove("locationPanel","filtersPanel");
+ if(controlsWindow){Native.locationEditor(false);Native.setChoicesOpen(false);}
  fit();
 }
 function toggleChoices(kind){
@@ -209,16 +231,17 @@ function toggleChoices(kind){
  if(controlsWindow&&!menuOpen)setMenuOpen(true,document.body.classList.contains('menu-left')?'left':'right',0);
  if(!menuOpen)return;
  if(choiceOpen===kind){closeChoices();return;}
- if(choiceOpen==="location"&&kind!=="location"){
+ if((choiceOpen==="location"||choiceOpen==="filters")&&kind!==choiceOpen){
   // The location editor temporarily focuses the overlay for the keyboard.
   // Release that focus before showing another mode or AUTO menu.
   document.getElementById("choices").classList.remove("locationPanel");
   if(controlsWindow)Native.locationEditor(false);
-  if(controlsWindow&&menuOrientation==="vertical")Native.setChoicesOpen(false);
+  if(controlsWindow)Native.setChoicesOpen(false);
  }
  choiceOpen=kind;
- if(controlsWindow&&menuOrientation==="vertical")Native.setChoicesOpen(true);
+ if(controlsWindow)Native.setChoicesOpen(true);
  if(kind==="location"){renderLocationChoices();return;}
+ if(kind==="filters"){renderFiltersPanel();return;}
  const current=kind==="mode"?mode:period;
  const entries=kind==="mode"?
    [["iv","100% · IV perfeito"],["gl","GL#1 · Grande Liga"],["ul","UL#1 · Ultra Liga"]]:
@@ -348,8 +371,11 @@ function draw(){
   const kind=(c.shiny?"shiny":mode),deadline=Number(c.expiresAtMs)||0;
   const badge=showTimers&&deadline?'<span class="timer" data-deadline="'+deadline+'"></span>':"";
   const rv=Number(c.rank);
-  const rankBadge=showRanks&&(mode==="gl"||mode==="ul")&&Number.isInteger(rv)&&rv>=1&&rv<=4096?
-    '<span class="rankBadge">'+(mode==="gl"?"GL":"UL")+'#'+rv+'</span>':"";
+  const known=Number.isInteger(rv)&&rv>=1&&rv<=4096;
+  const bound=Number(c.rankUpperBound);
+  const range=Number.isInteger(bound)&&bound>1&&bound<=200&&!known;
+  const rankBadge=showRanks&&(mode==="gl"||mode==="ul")&&(known||range)?
+    '<span class="rankBadge">'+(mode==="gl"?"GL":"UL")+(known?' #'+rv:' ≤'+bound)+'</span>':"";
   return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+badge+rankBadge+'</button>';
  }).join("");
  attachLongPress();
@@ -371,16 +397,20 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank,customEnabled,customRaw)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank,customEnabled,customRaw,filtersData)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
- showRanks=!!ranks;customIv=!!customEnabled;customText=String(customRaw||"");
- rankMax=Number.isInteger(Number(maxRank))&&Number(maxRank)>=1&&Number(maxRank)<=50?Number(maxRank):1;
+ showRanks=ranks!==false;customIv=!!customEnabled;customText=String(customRaw||"");
+ rankMax=Number.isInteger(Number(maxRank))&&Number(maxRank)>=1&&Number(maxRank)<=200?Number(maxRank):1;
+ if(filtersData&&typeof filtersData==="object")searchOptions=filtersData;
  hiddenControls=String(hidden||"");
  menuOrientation=orientation==="vertical"?"vertical":"horizontal";
  document.body.classList.toggle("vertical",menuOrientation==="vertical");
+ document.getElementById("filters").classList.toggle("activeFilter",
+   customIv||rankMax>1||["cpMin","cpMax","levelMin","levelMax","weather","size","form","gender"]
+     .some(key=>String(searchOptions[key]||"")!==""));
  const controls=document.getElementById("controls");
  document.querySelectorAll("#controls>button").forEach(b=>{
    b.style.display=hiddenControls.includes("|"+b.id+"|")?"none":"";
