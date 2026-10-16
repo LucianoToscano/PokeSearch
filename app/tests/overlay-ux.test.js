@@ -329,5 +329,9 @@ test("Release minifies and shrinks",gradle.includes("isMinifyEnabled = true")&&g
  test("v0.52 home preferences persist hidden icon choices",main.includes('prefs.getString("hiddenControls"')&&main.includes('prefs.edit().putString("hiddenControls"'));
 
 test("v0.53 floating filter action and popup are present",dock.includes('id="filters"')&&dock.includes("renderFiltersPanel()")&&dock.includes('Native.setSearchOptions(JSON.stringify(val))'));
-test("v0.53 rank badges show verified upper limit when exact rank is unknown",dock.includes('rankUpperBound')&&dock.includes('showRanks&&(mode==="gl"||mode==="ul")'));
+test("v0.53 rank badges show verified upper limit when exact rank is unknown",dock.includes('rankUpperBound')&&dock.includes('showRanks&&(league==="gl"||league==="ul")'));
 test("v0.53 Android validates floating search preference values",service.includes('public void setSearchOptions(String value)')&&service.includes('options.put("rankMax"'));
+
+test("Multi-search profiles have native persistence and sequential retrieval",service.includes('setSearchProfiles(String value)')&&service.includes('beginProfileCycle(boolean manual)')&&service.includes('finishProfileCycleStep(JSONObject r,JSONArray sorted)'));
+test("Three independent group headers and folding are implemented",dock.includes('toggleResultGroup(index)')&&dock.includes('groupBlock')&&dock.includes('profileIndex'));
+test("Toolbar can show text with horizontal and vertical layouts",dock.includes('body.controls-window.with-text #controls')&&dock.includes('body.controls-window.vertical.with-text #controls'));
