@@ -88,7 +88,7 @@ test("Mode AUTO and location work before delayed native menu sync",dock.includes
 test("Mode and AUTO provide immediate visible feedback",dock.includes("mode=String(value);draw();Native.setMode(mode)")&&dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
-test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(396,screenWidthDp()-8)"));
+test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(wanted,screenWidthDp()-8)")&&service.includes("menuDp()"));
 test("Favorites use translucent gradient without background dim",picker.includes("Color.argb(159,24,34,47)")&&picker.includes("window.setDimAmount(0.0f)"));
 test("Home has explicit login and logout",main.includes('signIn.setText("Entrar / vincular")')&&main.includes('signOut.setText("Sair")'));
 test("Login does not start overlay if none is running",main.includes("if(!OverlayService.isRunning())return;"));
