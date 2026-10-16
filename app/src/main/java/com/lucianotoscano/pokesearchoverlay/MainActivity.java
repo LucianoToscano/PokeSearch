@@ -872,6 +872,17 @@ public class MainActivity extends Activity {
                 (i>1?InputType.TYPE_NUMBER_FLAG_DECIMAL:0));
             body.addView(edit);extra[i]=edit;
         }
+        TextView sortTitle=new TextView(this);
+        sortTitle.setText("Ordenar resultados");sortTitle.setTextColor(Color.WHITE);body.addView(sortTitle);
+        Spinner sortChoice=new Spinner(this);
+        String[] sortingIds={"despawn","rank","cp","iv","level","shiny"};
+        String[] sortingLabels={"Despawn maior","Rank melhor","PC maior","IV maior",
+            "Nível maior","Shiny primeiro"};
+        sortChoice.setAdapter(new ArrayAdapter<String>(this,
+            android.R.layout.simple_spinner_dropdown_item,sortingLabels));
+        int sortIndex=java.util.Arrays.asList(sortingIds).indexOf(prefs.getString("sort","despawn"));
+        sortChoice.setSelection(Math.max(0,sortIndex));
+        body.addView(sortChoice);
         TextView additional=new TextView(this);
         additional.setText("Outros filtros do site (também disponíveis no menu flutuante)");
         additional.setTextColor(Color.LTGRAY);
@@ -905,7 +916,8 @@ public class MainActivity extends Activity {
             .setNegativeButton("Cancelar",null).setPositiveButton("Salvar",(d,w)->{
                 SharedPreferences.Editor e=prefs.edit()
                     .putInt("rankMax",rank.getSelectedItemPosition()+1)
-                    .putBoolean("customIvEnabled",custom.isChecked());
+                    .putBoolean("customIvEnabled",custom.isChecked())
+                    .putString("sort",sortingIds[sortChoice.getSelectedItemPosition()]);
                 for(int i=0;i<3;i++)e.putInt(keys[i],fields[i].getSelectedItemPosition());
                 for(int i=0;i<extra.length;i++)e.putString(extraKeys[i],
                     extra[i].getText().toString().trim());
