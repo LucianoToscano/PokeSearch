@@ -282,6 +282,7 @@ document.body.classList.add(groupWindow?"group-window":controlsWindow?"controls-
 document.documentElement.classList.toggle("controls-root",controlsWindow);
 let locationEnabled=false,locationCoords="",locationRadius=0;
 let multiEnabled=false,showToolbarText=true,collapsedGroups=new Set(),searchProfiles=[];
+let resultsOrientation="vertical",resultsBackground=12;
 let searchOptions={rankMax:1,customIvEnabled:false,ivA:0,ivD:15,ivH:15,showRanks:true,cpMin:"",cpMax:"",levelMin:"",levelMax:"",weather:"",size:"",form:"",gender:""};
 let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=true,showRanks=true,rankMax=1,customIv=false,customText='',hiddenControls='',menuOrientation='vertical',generalAlerts=false,hasFavorites=false,alertMode="off";
 function setMenuOpen(open,side,pad){
@@ -808,6 +809,7 @@ function draw(){
  if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status))document.getElementById("manualRefresh").classList.remove("requested");
  const bell=document.getElementById("bell");
  bell.classList.toggle("generalOn",generalAlerts);
+ bell.classList.toggle("mutedBell",!generalAlerts);
   bell.classList.toggle("generalSilent",alertMode==="silent");
  bell.setAttribute("aria-pressed",String(generalAlerts));
  bell.title=alertMode==="silent"?"Notificações silenciosas · toque para desligar":generalAlerts?"Notificações ligadas · toque para silenciar":"Notificações desligadas · toque para ligar";
@@ -831,7 +833,8 @@ function draw(){
   const levelBadge=showLevel&&c.level?'<span class="miniField">Lv'+esc(c.level)+'</span>':"";
   const cpBadge=showCp&&c.cp?'<span class="miniCp">PC '+esc(c.cp)+'</span>':"";
   const ivBadge=showIv&&c.iv?'<span class="miniIv">'+esc(c.iv)+'</span>':"";
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+badge+rankBadge+levelBadge+cpBadge+ivBadge+'</button>';
+  const info=badge+rankBadge+levelBadge+cpBadge+ivBadge;
+  return '<div class="resultUnit"><button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+'</button>'+(info?'<div class="resultInfo">'+info+'</div>':'')+'</div>';
  };
  if(groupWindow){
   const profile=searchProfiles[groupId];
@@ -840,6 +843,7 @@ function draw(){
     profile.mode==="ul"?"UL ≤"+profile.rankMax:
     profile.customIvEnabled?[profile.ivA,profile.ivD,profile.ivH].join("/"):"100%"):"Busca";
   document.querySelector("#groupHeader .groupName").textContent=
+    (profile&&profile.mode==="gl"?"◉ ":profile&&profile.mode==="ul"?"◈ ":"✦ ")+
     label+(showSpawnCount?" · "+present.length:"");
   document.getElementById("spawns").innerHTML=present.map(x=>makeSprite(x.c,x.i)).join("");
  }else if(multiEnabled){
@@ -867,7 +871,7 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank,customEnabled,customRaw,filtersData,enabledMulti,profilesData,withText,levelVisible,cpVisible,ivVisible,spawnVisible)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank,customEnabled,customRaw,filtersData,enabledMulti,profilesData,withText,levelVisible,cpVisible,ivVisible,spawnVisible,resultDirection,bgPercent,menuOrder)=>{
  cards=Array.isArray(a)?a.slice(0,150):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
@@ -878,6 +882,11 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  multiEnabled=!!enabledMulti;
  searchProfiles=Array.isArray(profilesData)?profilesData.slice(0,2):[];
  showToolbarText=!!withText;
+ resultsOrientation=resultDirection==="horizontal"?"horizontal":"vertical";
+ resultsBackground=Math.max(0,Math.min(100,Number(bgPercent)||0));
+ document.body.classList.toggle("results-horizontal",resultsOrientation==="horizontal");
+ document.body.classList.toggle("results-vertical",resultsOrientation==="vertical");
+ document.documentElement.style.setProperty("--results-alpha",(resultsBackground/100).toFixed(2));
  showLevel=!!levelVisible;showCp=!!cpVisible;showIv=!!ivVisible;showSpawnCount=spawnVisible!==false;
  document.body.classList.toggle("with-text",showToolbarText);
  document.body.classList.toggle("multi-live",multiEnabled);
@@ -888,6 +897,11 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
    customIv||rankMax>1||["cpMin","cpMax","levelMin","levelMax","weather","size","form","gender"]
      .some(key=>String(searchOptions[key]||"")!==""));
  const controls=document.getElementById("controls");
+ if(menuOrder){
+   const allowed=new Set(Array.from(controls.children).map(x=>x.id));
+   const sorted=String(menuOrder).split(",").filter(x=>allowed.has(x));
+   for(const id of sorted){const item=document.getElementById(id);if(item)controls.appendChild(item);}
+ }
  document.querySelectorAll("#controls>button").forEach(b=>{
    b.style.display=hiddenControls.includes("|"+b.id+"|")?"none":"";
  });
