@@ -184,6 +184,32 @@ body.controls-window.vertical.with-text #controls button::after{font-size:11px}
  margin:7px 0;border-radius:8px;background:#1a232b}
 #choices.filtersPanel .profileRow{display:flex;gap:5px;align-items:center;margin:4px 0}
 #choices.filtersPanel .profileRow select,#choices.filtersPanel .profileRow input{min-width:0;width:55px}
+body.group-window #menu,body.group-window #gear,body.group-window #locBadge,
+body.group-window #empty,body.group-window #collapse{display:none!important}
+body.group-window{width:85px!important;background:transparent}
+body.group-window #shell{width:85px!important;min-width:0!important;overflow:hidden}
+body.group-window #spawns{width:85px!important;margin:0;max-height:330px!important;overflow:auto;align-items:center}
+body.group-window .spawn{width:85px!important;height:var(--row);flex:0 0 var(--row)}
+#groupHeader{display:none}
+body.group-window #groupHeader{display:flex;height:29px;align-items:center;justify-content:flex-end;
+ border-radius:6px;background:#1b2a35e8;color:#e5f1f5;border:1px solid #ffffff4d;
+ font-size:10px;white-space:nowrap;width:85px;padding:0 3px 0 24px;gap:2px}
+body.group-window #groupHeader .dragLabel{position:absolute;top:4px;left:3px;color:#90bdd5;font-size:15px}
+body.group-window #groupHeader .groupName{flex:1;text-align:center;font-size:10px;font-weight:800}
+body.group-window #groupHeader .groupFold{font-size:13px;background:transparent;border:0;color:#fff;padding:0 2px;min-width:19px}
+body.group-window.group-folded #spawns{display:none!important}
+body.dock-window.multi-live #spawns,body.dock-window.multi-live #empty,
+body.dock-window.multi-live #collapse{display:none!important}
+.miniField{position:absolute;right:0;top:1px;color:#fff9ce;background:#121b22df;
+ font-size:8px;line-height:9px;padding:1px;border-radius:3px;pointer-events:none;max-width:100%}
+.miniIv{position:absolute;left:0;bottom:1px;color:#e4fae9;background:#142623c9;
+ font-size:8px;line-height:9px;padding:1px;border-radius:3px;pointer-events:none}
+.miniCp{position:absolute;right:0;bottom:12px;color:#e0e8f2;background:#14212ac9;
+ font-size:8px;line-height:9px;padding:1px;border-radius:3px;pointer-events:none}
+#choices.infoPanel{width:250px;max-height:400px;overflow-y:auto}
+#choices.infoPanel label{display:flex;align-items:center;gap:8px;color:#e9f1f2;
+ font-size:12px;line-height:25px;padding:3px 5px}
+#choices.infoPanel input{accent-color:#8bdbbd}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -198,11 +224,13 @@ body.controls-window.vertical.with-text #controls button::after{font-size:11px}
   <button id="star" title="Meus favoritos · alertas específicos IV100 / GL#1 / UL#1" onclick="Native.openWatchList()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg></button>
   <button id="location" title="Configurar coordenadas e raio" aria-label="Localização desligada" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('location')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span id="locationRadiusText" class="locRadiusText" aria-hidden="true"></span></button>
   <button id="filters" title="Filtros de pesquisa · IV, Rank, PC, nível e outros" aria-label="Filtros de pesquisa" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('filters')">☷</button>
+  <button id="eye" title="Olho · mostrar e ocultar dados dos Pokémon" aria-label="Personalizar indicadores" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('info')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3.2"/></svg></button>
   <button id="report" title="⚠ Reportar bugs, enviar sugestões e exportar diagnóstico TXT" aria-label="Reportar bugs e sugestões" onclick="Native.openReport()">⚠</button>
   <button id="donate" title="Gostou do PokeSearch? Apoie com um café · Pix voluntário" onclick="Native.openPix()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z"/></svg></button>
   <button id="close" title="Encerrar PokeSearch" aria-label="Fechar todo o overlay" onclick="Native.close()">×</button>
  </div><div id="choices" role="group" aria-label="Escolher opção"></div></div>
  <div id="locBadge" role="status" aria-live="polite"></div>
+ <div id="groupHeader"><span class="dragLabel" title="Arrastar camada">⠿</span><span class="groupName">Busca</span><button class="groupFold" onclick="toggleOwnGroup()" title="Recolher ou expandir esta lista">⌃</button></div>
  <div id="spawns"></div>
  <button id="empty" title="Toque para saber o motivo" onclick="Native.showStatus()">Aguardando busca</button>
  <button id="collapse" title="Recolher todos os Pokémon e as opções, deixando apenas a engrenagem" aria-label="Recolher todos os Pokémon" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button>
@@ -210,12 +238,23 @@ body.controls-window.vertical.with-text #controls button::after{font-size:11px}
 <div id="bubble" role="button" aria-label="Restaurar overlay"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></div>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
-document.body.classList.add(controlsWindow?"controls-window":"dock-window");
+const matchedGroup=window.location.search.match(/[?&]group=([0-2])(?:&|$)/);
+const groupWindow=!!matchedGroup;
+const groupId=groupWindow?Number(matchedGroup[1]):-1;
+let groupCollapsed=false,showLevel=false,showCp=false,showIv=false,showSpawnCount=true;
+function toggleOwnGroup(){
+ if(!groupWindow)return;
+ groupCollapsed=!groupCollapsed;
+ document.body.classList.toggle("group-folded",groupCollapsed);
+ document.querySelector("#groupHeader .groupFold").textContent=groupCollapsed?"⌄":"⌃";
+ fit();
+}
+document.body.classList.add(groupWindow?"group-window":controlsWindow?"controls-window":"dock-window");
 document.documentElement.classList.toggle("controls-root",controlsWindow);
 let locationEnabled=false,locationCoords="",locationRadius=0;
-let multiEnabled=false,showToolbarText=false,collapsedGroups=new Set(),searchProfiles=[];
+let multiEnabled=false,showToolbarText=true,collapsedGroups=new Set(),searchProfiles=[];
 let searchOptions={rankMax:1,customIvEnabled:false,ivA:0,ivD:15,ivH:15,showRanks:true,cpMin:"",cpMax:"",levelMin:"",levelMax:"",weather:"",size:"",form:"",gender:""};
-let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=true,showRanks=true,rankMax=1,customIv=false,customText='',hiddenControls='',menuOrientation='horizontal',generalAlerts=false,hasFavorites=false,alertMode="off";
+let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=true,showRanks=true,rankMax=1,customIv=false,customText='',hiddenControls='',menuOrientation='vertical',generalAlerts=false,hasFavorites=false,alertMode="off";
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
  document.documentElement.style.setProperty("--top-space",menuOpen?(Math.max(0,Number(pad)||0)+"px"):"0px");
@@ -233,11 +272,15 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
  if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);
+ if(groupWindow){
+  h=Math.ceil(document.getElementById("groupHeader").getBoundingClientRect().height)+2;
+  if(!groupCollapsed)h+=Math.ceil(document.getElementById("spawns").getBoundingClientRect().height);
+ }
  if(controlsWindow&&choiceOpen&&menuOpen){
   const popup=document.getElementById("choices");
   h=Math.max(h,Math.ceil(popup.getBoundingClientRect().bottom-shell.getBoundingClientRect().top)+6);
  }
- if(Math.abs(h-lastHeight)>1){lastHeight=h;if(controlsWindow)Native.resizeMenu(h);else Native.resize(h);}
+ if(Math.abs(h-lastHeight)>1){lastHeight=h;if(controlsWindow)Native.resizeMenu(h);else if(groupWindow)Native.resizeGroup(groupId,h);else Native.resize(h);}
 });}
 function closeChoices(){
  choiceOpen="";
