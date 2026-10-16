@@ -66,7 +66,7 @@ test("When OFF, icon and badge never display outdated radius",
 test("Switching from location editor to mode releases keyboard focus",
   dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
-test("Compact twelve-column bar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(396,screenWidthDp()-8)"));
+test("Compact toolbar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(wanted,screenWidthDp()-8)")&&service.includes("33*visibleControls"));
 test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
 test("Chevron has visible artwork and no surface background",dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
