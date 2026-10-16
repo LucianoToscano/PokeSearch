@@ -426,6 +426,9 @@ public class OverlayService extends Service {
             options.put("ivD",pref.getInt("customIvDefense",15));
             options.put("ivH",pref.getInt("customIvHp",15));
             options.put("showRanks",pref.getBoolean("showRanks",true));
+            options.put("ivFilter",pref.getString("ivFilter","raw"));
+            options.put("ivMin",pref.getInt("ivMin",100));
+            options.put("ivMax",pref.getInt("ivMax",100));
             options.put("sort",pref.getString("sort","despawn"));
             for(String key:new String[]{"cpMin","cpMax","levelMin","levelMax",
                     "weather","size","form","gender"})
@@ -437,6 +440,9 @@ public class OverlayService extends Service {
                 options.put("ivA",profile.optInt("ivA",15));
                 options.put("ivD",profile.optInt("ivD",15));
                 options.put("ivH",profile.optInt("ivH",15));
+                if(profile.has("ivFilter"))options.put("ivFilter",profile.optString("ivFilter","raw"));
+                if(profile.has("ivMin"))options.put("ivMin",profile.optInt("ivMin",100));
+                if(profile.has("ivMax"))options.put("ivMax",profile.optInt("ivMax",100));
             }
         }catch(Exception e){recordFailure("serializar filtros",e);}
         return options;
@@ -1537,6 +1543,50 @@ public class OverlayService extends Service {
             results="[]";hideDetails();update();refresh();
         });}
         @JavascriptInterface public void menu(boolean open){handler.post(()->OverlayService.this.menu(open));}
+        @JavascriptInterface public void setModeFilter(String input){handler.post(()->{
+            if(input==null||input.length()>450)return;
+            try{
+                JSONObject data=new JSONObject(input);
+                String kind=data.optString("kind","");
+                if(!"percent".equals(kind)&&!"raw".equals(kind)&&
+                   !"gl".equals(kind)&&!"ul".equals(kind))return;
+                int min=data.optInt("ivMin",0),max=data.optInt("ivMax",100);
+                int a=data.optInt("ivA",-1),d=data.optInt("ivD",-1),h=data.optInt("ivH",-1);
+                int rank=data.optInt("rankMax",1);
+                if(min<0||max>100||min>max||a<0||a>15||d<0||d>15||
+                    h<0||h>15||rank<1||rank>50)return;
+                String next="gl".equals(kind)||"ul".equals(kind)?kind:"iv";
+                android.content.SharedPreferences pref=getSharedPreferences("prefs",0);
+                android.content.SharedPreferences.Editor e=pref.edit()
+                    .putString("mode",next)
+                    .putString("ivFilter",kind)
+                    .putBoolean("customIvEnabled","raw".equals(kind))
+                    .putInt("ivMin",min).putInt("ivMax",max)
+                    .putInt("customIvAttack",a).putInt("customIvDefense",d)
+                    .putInt("customIvHp",h).putInt("rankMax",rank);
+                if(multiEnabled()){
+                    JSONArray arr=getSearchProfiles();
+                    JSONObject first=arr.optJSONObject(0);
+                    if(first==null)first=new JSONObject();
+                    first.put("enabled",true).put("mode",next).put("rankMax",rank)
+                        .put("customIvEnabled","raw".equals(kind))
+                        .put("ivA",a).put("ivD",d).put("ivH",h)
+                        .put("ivMin",min).put("ivMax",max).put("ivFilter",kind);
+                    arr.put(0,first);
+                    e.putString("searchProfiles",arr.toString());
+                }
+                e.apply();
+                mode=next;multiCycleActive=false;profileQueue.clear();profileIndex=-1;
+                ++requestGeneration;searchInProgress=false;
+                results="[]";hideDetails();update();OverlayService.this.refresh(true);
+            }catch(Exception e){recordFailure("filtro de modo",e);}
+        });}
+        @JavascriptInterface public void setAlertsMode(String value){handler.post(()->{
+            if(!"off".equals(value)&&!"silent".equals(value)&&!"on".equals(value))return;
+            alertsMode=value;alerts=!"off".equals(value);
+            getSharedPreferences("prefs",0).edit().putString("alertsMode",value)
+                .putBoolean("alerts",alerts).apply();update();
+        });}
         @JavascriptInterface public void cycleMode(){handler.post(()->{
             mode=mode.equals("iv")?"gl":mode.equals("gl")?"ul":"iv";
             getSharedPreferences("prefs",0).edit().putString("mode",mode).apply();
@@ -1593,6 +1643,10 @@ public class OverlayService extends Service {
                     cleaned.put("mode",kind);cleaned.put("rankMax",rank);
                     cleaned.put("customIvEnabled",p.optBoolean("customIvEnabled",false));
                     cleaned.put("ivA",a);cleaned.put("ivD",d);cleaned.put("ivH",h);
+                    int min=p.optInt("ivMin",100),percentMax=p.optInt("ivMax",100);
+                    if(min<0||percentMax>100||min>percentMax)throw new IllegalArgumentException("Porcentagem inválida");
+                    cleaned.put("ivMin",min);cleaned.put("ivMax",percentMax);
+                    cleaned.put("ivFilter",p.optString("ivFilter","raw"));
                     safe.put(cleaned);
                 }
                 getSharedPreferences("prefs",0).edit()
@@ -1604,7 +1658,7 @@ public class OverlayService extends Service {
                 if(enabled)beginProfileCycle(true);else OverlayService.this.refresh(true);
             }catch(Exception e){
                 android.widget.Toast.makeText(OverlayService.this,
-                   "Confira os três perfis e seus IVs",android.widget.Toast.LENGTH_LONG).show();
+                   "Confira as duas abas e seus IVs",android.widget.Toast.LENGTH_LONG).show();
             }
         });}
         @JavascriptInterface public void setSearchOptions(String value){handler.post(()->{
