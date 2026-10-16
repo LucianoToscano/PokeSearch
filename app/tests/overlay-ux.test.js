@@ -209,7 +209,7 @@ test("Android responsive controls have no phantom spacer below popup",
   dock.includes('#choices{display:none;position:absolute;top:34px;'));
 test("Android responsive controls measure actual one-row menu height",
   dock.includes('if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);')&&
-  service.includes('menuParams.height=dp(MENU_BASE_DP)')&&
+  service.includes('menuParams.height=dp(menuBaseHeight())')&&
   service.includes('Math.min(450,screenHeightDp()-72)'));
 test("Android responsive layout contains all 12 controls exactly once",
   toolbarButtons.length===12&&
