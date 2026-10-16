@@ -657,9 +657,9 @@ public class MainActivity extends Activity {
         dialog.show();
     }
     private static final String[] TOOL_IDS={"cycle","sh","period","manualRefresh","size",
-        "clock","bell","star","location","filters","report","donate","close"};
+        "clock","bell","star","location","filters","eye","report","donate","close"};
     private static final String[] TOOL_LABELS={"100%/GL/UL","✨ Shiny","AUTO","↻ Atualizar",
-        "P/M/G","◷ Relógio","♧ Sino","☆ Favoritos","⌖ Local","☷ Filtros","⚠ Bugs","♡ Apoiar","× Fechar"};
+        "P/M/G","◷ Relógio","♧ Sino","☆ Favoritos","⌖ Local","☷ Filtros","◉ Olho","⚠ Bugs","♡ Apoiar","× Fechar"};
     private LinearLayout buildMenuCustomization(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         LinearLayout body=new LinearLayout(this);
@@ -670,7 +670,7 @@ public class MainActivity extends Activity {
         direction.setAdapter(new ArrayAdapter<String>(this,
             android.R.layout.simple_spinner_dropdown_item,
             new String[]{"Horizontal · uma linha","Vertical · uma coluna"}));
-        direction.setSelection("vertical".equals(prefs.getString("menuOrientation","horizontal"))?1:0);
+        direction.setSelection("vertical".equals(prefs.getString("menuOrientation","vertical"))?1:0);
         direction.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
             @Override public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){
                 String orientation=pos==1?"vertical":"horizontal";
@@ -704,7 +704,7 @@ public class MainActivity extends Activity {
             body.addView(pair);
         }
         settingCheckbox(body,prefs,"showRanks","Mostrar Rank PvP nos Pokémon (também no menu)",true);
-        settingCheckbox(body,prefs,"menuShowText","Exibir texto junto aos ícones",false);
+        settingCheckbox(body,prefs,"menuShowText","Exibir texto junto aos ícones",true);
         return body;
     }
 
@@ -731,7 +731,7 @@ public class MainActivity extends Activity {
         Spinner[] modes=new Spinner[3];
         Spinner[] ranks=new Spinner[3];
         Spinner[][] ivs=new Spinner[3][3];
-        String[] modeLabels={"IV perfeito 15/15/15","Grande Liga","Ultra Liga","IV personalizado"};
+        String[] modeLabels={"IV 100% · 15/15/15","Grande Liga","Ultra Liga","IV personalizado","IV 0% · 0/0/0"};
         String[] rankValues=new String[200],ivValues=new String[16];
         for(int i=0;i<200;i++)rankValues[i]=String.valueOf(i+1);
         for(int i=0;i<16;i++)ivValues[i]=String.valueOf(i);
@@ -750,11 +750,15 @@ public class MainActivity extends Activity {
             modes[i]=new Spinner(this);
             modes[i].setAdapter(new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_dropdown_item,modeLabels));
-            int def=i==1?1:i==2?3:0;
+            int def=i==1?1:i==2?4:0;
             String kind=old==null?"":old.optString("mode","iv");
             if("gl".equals(kind))def=1;
             else if("ul".equals(kind))def=2;
-            else if("iv".equals(kind))def=old.optBoolean("customIvEnabled",false)?3:0;
+            else if("iv".equals(kind)){
+                boolean hasRaw=old.optBoolean("customIvEnabled",false);
+                boolean isZero=old.optInt("ivA",15)==0&&old.optInt("ivD",15)==0&&old.optInt("ivH",15)==0;
+                def=hasRaw?(isZero?4:3):0;
+            }
             modes[i].setSelection(def);group.addView(modes[i]);
             ranks[i]=new Spinner(this);
             ranks[i].setAdapter(new ArrayAdapter<String>(this,
@@ -804,11 +808,11 @@ public class MainActivity extends Activity {
                     try{
                         p.put("enabled",checked);
                         p.put("mode",m==1?"gl":m==2?"ul":"iv");
-                        p.put("customIvEnabled",m==3);
+                        p.put("customIvEnabled",m==3||m==4);
                         p.put("rankMax",ranks[i].getSelectedItemPosition()+1);
-                        p.put("ivA",ivs[i][0].getSelectedItemPosition());
-                        p.put("ivD",ivs[i][1].getSelectedItemPosition());
-                        p.put("ivH",ivs[i][2].getSelectedItemPosition());
+                        p.put("ivA",m==4?0:ivs[i][0].getSelectedItemPosition());
+                        p.put("ivD",m==4?0:ivs[i][1].getSelectedItemPosition());
+                        p.put("ivH",m==4?0:ivs[i][2].getSelectedItemPosition());
                         profiles.put(p);
                     }catch(Exception ignored){}
                 }
@@ -829,7 +833,11 @@ public class MainActivity extends Activity {
         TextView intro=new TextView(this);
         intro.setText("Top Rank 1–200 para GL/UL; IV exato para o modo 100%.");
         intro.setTextColor(Color.LTGRAY);intro.setTextSize(12);body.addView(intro);
-        TextView rankTitle=new TextView(this);
+        TextView modeHint=new TextView(this);
+        modeHint.setText("Modos disponíveis: 100% · 0% · GL · UL · _/_/_");
+        modeHint.setTextColor(Color.WHITE);modeHint.setTextSize(12);
+        body.addView(modeHint);
+                TextView rankTitle=new TextView(this);
         rankTitle.setText("Rank PvP máximo");rankTitle.setTextColor(Color.WHITE);body.addView(rankTitle);
         String[] rankOptions=new String[200];
         for(int i=0;i<200;i++)rankOptions[i]=String.valueOf(i+1);
