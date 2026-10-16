@@ -262,6 +262,19 @@ public class OverlayService extends Service {
                 String[] names={"Modos","Shiny","Atualização","Alertas","Favoritos",
                     "Localização","Filtros","Informações","Aparência","Reportar",
                     "Apoiar","Fechar"};
+                android.content.SharedPreferences pref=getSharedPreferences("prefs",0);
+                String raw=pref.getInt("customIvAttack",0)+"/"+
+                    pref.getInt("customIvDefense",15)+"/"+pref.getInt("customIvHp",15);
+                String currentMode="gl".equals(mode)?"GL #"+pref.getInt("rankMax",1):
+                    "ul".equals(mode)?"UL #"+pref.getInt("rankMax",1):
+                    pref.getBoolean("customIvEnabled",false)?raw:
+                    pref.getInt("ivMin",100)+"–"+pref.getInt("ivMax",100)+"%";
+                names[0]="Modos · "+currentMode;
+                names[1]=shiny?"Shiny · ON":"Shiny · OFF";
+                names[2]="Atualização · "+(intervalMinutes==0?"OFF":intervalMinutes+"m");
+                names[3]="Alertas · "+("silent".equals(alertsMode)?"silencioso":
+                    "off".equals(alertsMode)?"OFF":"som");
+                if(locationEnabled)names[5]="Localização · "+locationRadius+"km";
                 android.graphics.Paint paint=new android.graphics.Paint(1);
                 paint.setTextSize(getResources().getDisplayMetrics().scaledDensity*11f);
                 float max=0f;
@@ -495,6 +508,14 @@ public class OverlayService extends Service {
                 Math.max(27,Math.min(42,getSharedPreferences("prefs",0).getInt("menuItemSize",32)))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
+        if(menuExpanded&&menuParams!=null){
+            int width=dp(menuDp());
+            if(menuParams.width!=width){
+                menuParams.width=width;
+                menuDrawWidth=-1;
+                updateMenuPosition();
+            }
+        }
         for(int i=0;i<2;i++)js(groupPanels[i],groupLoaded[i],data);
         updateGroupWindows();
         if(selected>=0)showDetails(selected);
