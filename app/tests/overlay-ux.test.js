@@ -174,7 +174,10 @@ test("PS-082 sync action from Home requires running overlay",main.includes('Over
 test("PS-082 Home syncs on spinner, checkbox and dismiss",main.includes('syncOverlayPreferences();')&&main.includes('dialog.setOnDismissListener(d->syncOverlayPreferences())')&&main.includes('check.setOnCheckedChangeListener'));
 test("PS-082 Overlay handles SYNC_PREFS without network refresh",startCommand.includes('com.lucianotoscano.pokesearchoverlay.SYNC_PREFS')&&startCommand.includes('syncPreferencesWithoutSearch();')&&!prefSync.includes('refresh(')&&!prefSync.includes('execute(')&&!prefSync.includes('loadUrl('));
 test("PS-082 re-sorts current results and updates dock",prefSync.includes('sortItems(items)')&&prefSync.includes('params.width=dp(minimized?BUBBLE_DP:dockDp())')&&prefSync.includes('update();'));
-test("PS-082 preferences keys for sprite size, sort, timers, alerts",['spriteSize','alerts','sort'].every(k=>prefSync.includes('get'+(k==='spriteSize'?'Int':k==='sort'?'String':'Boolean')+'("'+k+'"')))&&prefSync.includes('loadDisplayPreferences(prefs)')&&service.includes('showTimers=pref.getBoolean("showTimers"'));
+test("PS-082 preferences keys for sprite size, sort, timers, alerts",
+  prefSync.includes('getInt("spriteSize"')&&prefSync.includes('getString("sort"')&&
+  prefSync.includes('getBoolean("alerts"')&&prefSync.includes('loadDisplayPreferences(prefs)')&&
+  service.includes('showTimers=pref.getBoolean("showTimers"'));
 test("Probe result is discarded across generation switches",service.includes('final int callbackGeneration=requestGeneration;')&&service.includes('if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;'));
 test("PS-084 catalogue asset failures log only class and stage",picker.includes('BugReport.log(activity,"ASSET","ler catálogo Pokémon · "+e.getClass().getSimpleName())'));
 test("PS-084 MainActivity asset failures log only stage and class",main.includes('BugReport.log(this,"ASSET"')&&main.includes('e.getClass().getSimpleName()')&&!main.includes('e.getMessage()'));
