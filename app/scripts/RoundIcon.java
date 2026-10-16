@@ -50,7 +50,12 @@ public class RoundIcon {
                     ex=sx+side;ey=sy+side;
                 }
             }
-            g.drawImage(original,2,2,n-2,n-2,sx,sy,ex,ey,null);
+            // The approved artwork has a dark outer band. Zoom its contents 12%
+            // so the launcher no longer looks smaller than neighboring icons.
+            int cropW=ex-sx,cropH=ey-sy;
+            int extraX=Math.round(cropW*0.085f),extraY=Math.round(cropH*0.085f);
+            sx+=extraX;sy+=extraY;ex-=extraX;ey-=extraY;
+            g.drawImage(original,0,0,n,n,sx,sy,ex,ey,null);
         } finally { g.dispose(); }
         File target=new File(args[1]);
         if(target.getParentFile()!=null)target.getParentFile().mkdirs();
