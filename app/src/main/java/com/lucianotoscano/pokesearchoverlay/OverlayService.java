@@ -247,7 +247,7 @@ public class OverlayService extends Service {
         }
     }
     private String hiddenControls="";
-    private int visibleControls=13;
+    private int visibleControls=12;
     private int menuDp(){
         int wanted=menuVertical?(menuShowText?154:44):(menuShowText?screenWidthDp()-8:Math.max(35,30*visibleControls+4));
         if(menuChoicesOpen)wanted=Math.max(wanted,316);
@@ -260,8 +260,8 @@ public class OverlayService extends Service {
         menuShowText=pref.getBoolean("menuShowText",true);
         hiddenControls=pref.getString("hiddenControls","");
         int count=0;
-        String[] ids={"cycle","sh","period","manualRefresh","size","clock",
-            "bell","star","location","filters","eye","report","donate","close"};
+        String[] ids={"cycle","sh","period","bell","star",
+            "location","filters","eye","appearance","report","donate","close"};
         for(String id:ids)if(!hiddenControls.contains("|"+id+"|"))count++;
         visibleControls=count;
     }
