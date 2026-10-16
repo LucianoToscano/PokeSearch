@@ -313,6 +313,7 @@ public class OverlayService extends Service {
             options.put("ivD",pref.getInt("customIvDefense",15));
             options.put("ivH",pref.getInt("customIvHp",15));
             options.put("showRanks",pref.getBoolean("showRanks",true));
+            options.put("sort",pref.getString("sort","despawn"));
             for(String key:new String[]{"cpMin","cpMax","levelMin","levelMax",
                     "weather","size","form","gender"})
                 options.put(key,pref.getString(key,""));
@@ -353,8 +354,20 @@ public class OverlayService extends Service {
         getSharedPreferences("prefs",0).edit().putString("lastError",s).apply();
         BugReport.log(this,"ERROR",s);
         if(multiCycleActive){
-            multiCycleActive=false;profileQueue.clear();profileIndex=-1;mode=previousMode;
-            status("Pesquisa interrompida: "+s);
+            final int failed=profileIndex;
+            if(profileQueue.isEmpty()||s.contains("login")||s.contains("Shiny")){
+                multiCycleActive=false;profileQueue.clear();profileIndex=-1;mode=previousMode;
+                status("Pesquisa "+(failed+1)+" interrompida: "+s);
+            }else{
+                long wait=Math.max(850L,MIN_SEARCH_GAP_MS-
+                    (System.currentTimeMillis()-getSharedPreferences("prefs",0)
+                        .getLong("lastNetworkSearchAt",0L))+300L);
+                status("Lista "+(failed+1)+" indisponível; próxima lista em "+
+                    Math.max(1,(wait+999L)/1000L)+"s. "+s);
+                handler.postDelayed(()->{
+                    if(multiCycleActive&&!stopped&&!loginPaused)runNextProfile(true);
+                },wait);
+            }
         }else status(s);
     }
     private void updateWindow(){
@@ -1049,6 +1062,10 @@ public class OverlayService extends Service {
                 comparator=(a1,a2)->Integer.compare(rankForSort(a1),rankForSort(a2));break;
             case "iv":
                 comparator=(a1,a2)->Double.compare(a2.optDouble("ivPercent",0),a1.optDouble("ivPercent",0));break;
+            case "cp":
+                comparator=(a1,a2)->Integer.compare(a2.optInt("cp",0),a1.optInt("cp",0));break;
+            case "level":
+                comparator=(a1,a2)->Double.compare(a2.optDouble("level",0),a1.optDouble("level",0));break;
             case "shiny":
                 comparator=(a1,a2)->Boolean.compare(a2.optBoolean("shiny"),a1.optBoolean("shiny"));break;
             default:
@@ -1472,8 +1489,13 @@ public class OverlayService extends Service {
                         throw new IllegalArgumentException("Filtro adicional inválido");
                     extras[i]=val;
                 }
+                String sorting=json.optString("sort","despawn");
+                if(!java.util.Arrays.asList("despawn","rank","iv","cp","level","shiny").contains(sorting))
+                    throw new IllegalArgumentException("Ordenação inválida");
+                sort=sorting;
                 android.content.SharedPreferences.Editor edit=
                     getSharedPreferences("prefs",0).edit()
+                    .putString("sort",sorting)
                     .putInt("rankMax",max)
                     .putBoolean("customIvEnabled",json.optBoolean("customIvEnabled",false))
                     .putInt("customIvAttack",attack).putInt("customIvDefense",defense)
