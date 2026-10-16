@@ -1309,7 +1309,7 @@ public class OverlayService extends Service {
                 String[] extras=new String[keys.length];
                 for(int i=0;i<keys.length;i++){
                     String val=json.optString(keys[i],"").trim();
-                    if(val.length()>80||!val.matches("[A-Za-z0-9À-ÿ _/\\-]*"))
+                    if(val.length()>80||!val.matches("[A-Za-z0-9À-ÿ _,/\\-]*"))
                         throw new IllegalArgumentException("Filtro adicional inválido");
                     extras[i]=val;
                 }
