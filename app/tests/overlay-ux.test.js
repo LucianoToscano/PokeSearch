@@ -53,7 +53,7 @@ const toolbarCols=dock.match(/#controls\{[^}]*grid-template-columns:([^;]+);/);
 const toolbarButtons=dock.slice(dock.indexOf('<div id="menu"><div id="controls">'),dock.indexOf('</div><div id="choices"')).match(/<button\b/g)||[];
 test("All thirteen toolbar actions fit compactly side by side on one row",
   !!toolbarCols&&toolbarCols[1].trim()==="34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr"&&
-  toolbarButtons.length===14&&dock.includes("grid-auto-flow:column"));
+  toolbarButtons.length===15&&dock.includes("grid-auto-flow:column"));
 test("Single pin shows active radius without a second settings button",
   (dock.match(/id="location"/g)||[]).length===1&&dock.includes('id="locationRadiusText"')&&
   dock.includes('textContent=locationEnabled?locationRadius+"km":""'));
@@ -85,7 +85,7 @@ test("Shiny failure does not imply confirmed trainer authentication",service.inc
 test("Diagnostic logs only coarse authentication states",service.includes('BugReport.log(this,"SESSION","Shiny="'));
 test("Menus are never clipped by the HTML viewport",dock.includes("html.controls-root,body.controls-window{overflow:visible!important"));
 test("Mode AUTO and location work before delayed native menu sync",dock.includes("if(controlsWindow&&!menuOpen)setMenuOpen(true"));
-test("Mode and AUTO provide immediate visible feedback",dock.includes("Native.selectPreset(String(value))")&&service.includes("public void selectPreset(String choice)")&&dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
+test("Mode and AUTO provide immediate visible feedback",dock.includes("Native.setModeFilter(JSON.stringify(p))")&&service.includes("public void setModeFilter(String input)")&&dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(wanted,screenWidthDp()-8)")&&service.includes("menuDp()"));
@@ -109,7 +109,7 @@ const iconGenerator=fs.readFileSync(path.join(__dirname,'../scripts/RoundIcon.ja
 const ci=fs.readFileSync(path.join(__dirname,'../../.github/workflows/build-overlay.yml'),'utf8');
 const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
-test("PokeSearch 0.54 source configured",gradleBuild.includes('versionCode = 54')&&gradleBuild.includes('versionName = "0.54-beta"'));
+test("PokeSearch 0.55 source configured",gradleBuild.includes('versionCode = 55')&&gradleBuild.includes('versionName = "0.55-beta"'));
 test("Round icon generator always uses headless mode",gradleBuild.includes('-Djava.awt.headless=true')&&iconGenerator.includes('System.setProperty("java.awt.headless","true")'));
 test("Network main-frame error is handled",service.includes('request.isForMainFrame()')&&service.includes('Falha de navegação principal'));
 test("Browser exception and parse failures recorded",service.includes('recordFailure("executar JS site",e)')&&service.includes('recordFailure("interpretar resposta JS",e)'));
@@ -214,9 +214,9 @@ test("Android responsive controls measure actual one-row menu height",
   dock.includes('if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);')&&
   service.includes('menuParams.height=dp(menuBaseHeight())')&&
   service.includes('Math.min(450,screenHeightDp()-72)'));
-test("Android responsive layout contains all 14 controls exactly once",
-  toolbarButtons.length===14&&
-  ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','filters','report','donate','close']
+test("Android responsive layout contains all 15 controls exactly once",
+  toolbarButtons.length===15&&
+  ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','filters','eye','appearance','report','donate','close']
   .every(id=>(dock.match(new RegExp('id="'+id+'"','g'))||[]).length===1));
 test("Shiny tap skips Search cooldown to inspect site and auth",
   service.includes('private void prepareImmediateShiny(int generation)')&&
@@ -331,18 +331,26 @@ test("Release minifies and shrinks",gradle.includes("isMinifyEnabled = true")&&g
  test("v0.52 rank is optional and only shown with a numeric result",dock.includes('showRanks=ranks!==false')&&dock.includes('Number.isInteger(rv)'));
  test("v0.52 home preferences persist hidden icon choices",main.includes('prefs.getString("hiddenControls"')&&main.includes('prefs.edit().putString("hiddenControls"'));
 
-test("v0.53 floating filter action and popup are present",dock.includes('id="filters"')&&dock.includes("renderFiltersPanel()")&&dock.includes('Native.setSearchOptions(JSON.stringify(val))'));
+test("v0.53 floating filter action and popup are present",dock.includes('id="filters"')&&dock.includes("renderAdvancedFilters()")&&dock.includes('Native.setSearchOptions(JSON.stringify(val))'));
 test("v0.53 rank badges show verified upper limit when exact rank is unknown",dock.includes('rankUpperBound')&&dock.includes('showRanks&&(league==="gl"||league==="ul")'));
 test("v0.53 Android validates floating search preference values",service.includes('public void setSearchOptions(String value)')&&service.includes('options.put("rankMax"'));
 
 test("Multi-search profiles have native persistence and sequential retrieval",service.includes('setSearchProfiles(String value)')&&service.includes('beginProfileCycle(boolean manual)')&&service.includes('finishProfileCycleStep(JSONObject r,JSONArray sorted)'));
-test("Three independent group headers and folding are implemented",dock.includes('toggleResultGroup(index)')&&dock.includes('groupBlock')&&dock.includes('profileIndex'));
+test("Two independent group headers and folding are implemented",dock.includes('toggleResultGroup(index)')&&dock.includes('groupBlock')&&dock.includes('profileIndex'));
 test("Toolbar can show text with horizontal and vertical layouts",dock.includes('body.controls-window.with-text #controls')&&dock.includes('body.controls-window.vertical.with-text #controls'));
 
-test("v0.54 three independent Android overlay windows",service.includes('private final FrameLayout[] groupRoots=new FrameLayout[3]')&&service.includes('createGroupWindows()')&&service.includes('wm.updateViewLayout(frame,coords)'));
+test("v0.55 two independent Android overlay windows",service.includes('private final FrameLayout[] groupRoots=new FrameLayout[2]')&&service.includes('createGroupWindows()')&&service.includes('wm.updateViewLayout(frame,coords)'));
 test("v0.54 layers remember positions separately",service.includes('putInt("layerX"+i')&&service.includes('putInt("layerY"+i'));
 test("v0.54 each group loads an isolated WebView",service.includes('dock.html?group=')&&dock.includes('const groupWindow=!!matchedGroup')&&dock.includes('Native.resizeGroup(groupId,h)'));
 test("v0.54 independent result windows only render their own profile",dock.includes('Number(x.c.profileIndex)===groupId')&&dock.includes('document.getElementById("spawns").replaceChildren()'));
 test("v0.54 eye toggles CP, level, timer, rank, spawn count and IV",dock.includes('id="eye"')&&dock.includes('renderInfoChoices()')&&service.includes('setDisplayOptions(String value)'));
-test("v0.54 mode selector includes 100, 0, GL, UL and custom",dock.includes('"iv100","100%')&&dock.includes('"iv0","0%')&&dock.includes('"gl","GL')&&dock.includes('"ul","UL')&&dock.includes('"custom","_/_/_'));
+test("v0.54 mode selector includes 100, 0, GL, UL and custom",dock.includes('panelInput("IV %"')&&dock.includes('panelInput("Raw IV"')&&dock.includes('"Great League"')&&dock.includes('"Ultra League"'));
 test("v0.54 preserves vertical text by default with icon-only option",service.includes('menuVertical=true')&&service.includes('menuShowText=true')&&main.includes('settingCheckbox(body,prefs,"menuShowText"'));
+
+test("v0.55 two tabs enforced in Java, home, and JS",service.includes('new FrameLayout[2]')&&service.includes('profiles.length()>2')&&main.includes('new CheckBox[2]')&&dock.includes('profilesData.slice(0,2)'));
+test("v0.55 numeric fields use dedicated input without nested mode menus",dock.includes('field.type="number"')&&dock.includes('renderModePanel()')&&service.includes('setModeFilter(String input)'));
+test("v0.55 alerts and update are grouped",dock.includes('renderAlertPanel()')&&dock.includes('renderAppearancePanel()')&&dock.includes('["now","↻ Atualizar agora"]'));
+test("v0.55 external status indicators do not cover sprites",dock.includes('class="resultUnit"')&&dock.includes('class="resultInfo"'));
+test("v0.55 favorites use a fixed scrolling list",picker.includes('selectedList.setSelectionFromTop')&&picker.includes('Color.argb(243,51,54,57)'));
+test("v0.55 login session probe supplies options",main.includes('.replace("__OPTIONS__","{}")'));
+test("v0.55 launcher icon minimizes transparent outer padding",require('fs').readFileSync('app/scripts/RoundIcon.java','utf8').includes('Detect excessive transparent/flat padding'));
