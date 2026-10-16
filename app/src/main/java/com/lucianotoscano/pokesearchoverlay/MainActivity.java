@@ -659,10 +659,11 @@ public class MainActivity extends Activity {
         dialog.setOnDismissListener(d->syncOverlayPreferences());
         dialog.show();
     }
-    private static final String[] TOOL_IDS={"cycle","sh","period","manualRefresh","size",
-        "clock","bell","star","location","filters","eye","report","donate","close"};
-    private static final String[] TOOL_LABELS={"100%/GL/UL","✨ Shiny","AUTO","↻ Atualizar",
-        "P/M/G","◷ Relógio","♧ Sino","☆ Favoritos","⌖ Local","☷ Filtros","◉ Olho","⚠ Bugs","♡ Apoiar","× Fechar"};
+    private static final String[] TOOL_IDS={"cycle","sh","period","bell","star",
+        "location","filters","eye","appearance","report","donate","close"};
+    private static final String[] TOOL_LABELS={"Modos","✨ Shiny","↻ Atualização",
+        "🔔 Alertas","☆ Favoritos","⌖ Localização","☷ Filtros","◉ Info",
+        "⚙ Aparência","⚠ Reportar","♡ Apoiar","× Fechar"};
     private LinearLayout buildMenuCustomization(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         LinearLayout body=new LinearLayout(this);
@@ -677,7 +678,7 @@ public class MainActivity extends Activity {
         direction.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
             @Override public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){
                 String orientation=pos==1?"vertical":"horizontal";
-                if(!orientation.equals(prefs.getString("menuOrientation","horizontal"))){
+                if(!orientation.equals(prefs.getString("menuOrientation","vertical"))){
                     prefs.edit().putString("menuOrientation",orientation).apply();syncOverlayPreferences();
                 }
             }
@@ -687,24 +688,66 @@ public class MainActivity extends Activity {
         TextView hint=new TextView(this);
         hint.setText("Mostrar/ocultar ícones — a engrenagem permanece visível");
         hint.setTextColor(Color.LTGRAY);hint.setTextSize(11);body.addView(hint);
-        for(int i=0;i<TOOL_IDS.length;i+=2){
-            LinearLayout pair=new LinearLayout(this);
-            pair.setOrientation(LinearLayout.HORIZONTAL);
-            for(int j=i;j<Math.min(i+2,TOOL_IDS.length);j++){
-                final String id=TOOL_IDS[j];
-                CheckBox cb=new CheckBox(this);
-                cb.setText(TOOL_LABELS[j]);cb.setTextColor(Color.WHITE);cb.setTextSize(11);
-                cb.setChecked(!prefs.getString("hiddenControls","").contains("|"+id+"|"));
-                cb.setOnCheckedChangeListener((v,show)->{
-                    String hidden=prefs.getString("hiddenControls","");
-                    String token="|"+id+"|";
-                    if(show)hidden=hidden.replace(token,"");
-                    else if(!hidden.contains(token))hidden+=token;
-                    prefs.edit().putString("hiddenControls",hidden).apply();syncOverlayPreferences();
-                });
-                pair.addView(cb,new LinearLayout.LayoutParams(0,d(41),1));
-            }
-            body.addView(pair);
+        TextView dragNote=new TextView(this);
+        dragNote.setText("Segure ⠿ e arraste para mudar a ordem. Use o switch para ocultar.");
+        dragNote.setTextColor(Color.LTGRAY);dragNote.setTextSize(11);body.addView(dragNote);
+        LinearLayout orderList=new LinearLayout(this);
+        orderList.setOrientation(LinearLayout.VERTICAL);body.addView(orderList);
+        String saved=prefs.getString("menuOrder","");
+        java.util.ArrayList<String> order=new java.util.ArrayList<>();
+        for(String part:saved.split(",")){
+            if(java.util.Arrays.asList(TOOL_IDS).contains(part)&&!order.contains(part))
+                order.add(part);
+        }
+        for(String id:TOOL_IDS)if(!order.contains(id))order.add(id);
+        for(String key:order){
+            int index=java.util.Arrays.asList(TOOL_IDS).indexOf(key);
+            LinearLayout line=new LinearLayout(this);
+            line.setOrientation(LinearLayout.HORIZONTAL);line.setGravity(Gravity.CENTER_VERTICAL);
+            line.setTag(key);
+            TextView handle=new TextView(this);handle.setText("⠿");
+            handle.setTextSize(23);handle.setTextColor(Color.LTGRAY);
+            handle.setGravity(Gravity.CENTER);
+            line.addView(handle,new LinearLayout.LayoutParams(d(45),d(44)));
+            handle.setOnLongClickListener(v->{
+                android.content.ClipData clip=android.content.ClipData.newPlainText("menu",key);
+                line.startDragAndDrop(clip,new View.DragShadowBuilder(line),line,0);
+                return true;
+            });
+            CheckBox show=new CheckBox(this);
+            show.setText(TOOL_LABELS[index]);show.setTextColor(Color.WHITE);show.setTextSize(12);
+            show.setChecked(!prefs.getString("hiddenControls","").contains("|"+key+"|"));
+            show.setOnCheckedChangeListener((v,visible)->{
+                String hidden=prefs.getString("hiddenControls","");
+                String token="|"+key+"|";
+                if(visible)hidden=hidden.replace(token,"");
+                else if(!hidden.contains(token))hidden+=token;
+                prefs.edit().putString("hiddenControls",hidden).apply();syncOverlayPreferences();
+            });
+            line.addView(show,new LinearLayout.LayoutParams(0,d(44),1));
+            line.setOnDragListener((view,event)->{
+                if(event.getAction()==android.view.DragEvent.ACTION_DRAG_STARTED)return true;
+                if(event.getAction()==android.view.DragEvent.ACTION_DROP){
+                    View dragged=(View)event.getLocalState();
+                    if(dragged==null||dragged==line)return true;
+                    orderList.removeView(dragged);
+                    int destination=orderList.indexOfChild(line);
+                    orderList.addView(dragged,Math.max(0,destination));
+                    StringBuilder out=new StringBuilder();
+                    for(int i=0;i<orderList.getChildCount();i++){
+                        Object tag=orderList.getChildAt(i).getTag();
+                        if(tag instanceof String){
+                            if(out.length()>0)out.append(",");
+                            out.append((String)tag);
+                        }
+                    }
+                    prefs.edit().putString("menuOrder",out.toString()).apply();
+                    syncOverlayPreferences();
+                    return true;
+                }
+                return true;
+            });
+            orderList.addView(line);
         }
         settingCheckbox(body,prefs,"showRanks","Mostrar Rank PvP nos Pokémon (também no menu)",true);
         settingCheckbox(body,prefs,"menuShowText","Exibir texto junto aos ícones",true);
