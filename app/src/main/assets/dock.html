@@ -214,7 +214,9 @@ body.dock-window.multi-live #collapse{display:none!important}
 /* v0.55 clean and consistent floating menus */
 body.controls-window #manualRefresh,body.controls-window #size,body.controls-window #clock{display:none!important}
 body.controls-window.vertical.with-text #controls{max-height:420px;scrollbar-width:thin}
-body.controls-window.vertical.with-text #controls button{background:#303234c8;border:0;border-bottom:1px solid #ffffff16;border-radius:6px;color:#f5f5f6}
+body.controls-window.vertical.with-text #controls button{
+ flex:0 0 var(--toolbar-item,32px);height:var(--toolbar-item,32px);
+ min-height:var(--toolbar-item,32px);background:#303234c8;border:0;border-bottom:1px solid #ffffff16;border-radius:6px;color:#f5f5f6}
 body.controls-window #choices{background:#343638f8;border:1px solid #e0e1e144;box-shadow:0 6px 15px #0005;border-radius:9px}
 #choices.modePanel,#choices.appearancePanel,#choices.advancedPanel{width:300px;max-width:calc(100vw - 12px);max-height:390px;overflow-y:auto;padding:9px}
 #choices .fieldRow{display:flex;gap:5px;align-items:center;margin:5px 0}
@@ -267,7 +269,7 @@ body.group-window #spawns{background:rgba(228,231,233,var(--results-alpha,0.12))
 <div id="bubble" role="button" aria-label="Restaurar overlay"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></div>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
-const matchedGroup=window.location.search.match(/[?&]group=([0-2])(?:&|$)/);
+const matchedGroup=window.location.search.match(/[?&]group=([0-1])(?:&|$)/);
 const groupWindow=!!matchedGroup;
 const groupId=groupWindow?Number(matchedGroup[1]):-1;
 let groupCollapsed=false,showLevel=false,showCp=false,showIv=false,showSpawnCount=true;
@@ -282,7 +284,7 @@ document.body.classList.add(groupWindow?"group-window":controlsWindow?"controls-
 document.documentElement.classList.toggle("controls-root",controlsWindow);
 let locationEnabled=false,locationCoords="",locationRadius=0;
 let multiEnabled=false,showToolbarText=true,collapsedGroups=new Set(),searchProfiles=[];
-let resultsOrientation="vertical",resultsBackground=12;
+let resultsOrientation="vertical",resultsBackground=12,menuItemSize=32;
 let searchOptions={rankMax:1,customIvEnabled:false,ivA:0,ivD:15,ivH:15,showRanks:true,cpMin:"",cpMax:"",levelMin:"",levelMax:"",weather:"",size:"",form:"",gender:""};
 let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=true,showRanks=true,rankMax=1,customIv=false,customText='',hiddenControls='',menuOrientation='vertical',generalAlerts=false,hasFavorites=false,alertMode="off";
 function setMenuOpen(open,side,pad){
@@ -464,6 +466,12 @@ function renderAppearancePanel(){
  const toolbar=addSelect("Menu",direction,menuOrientation);
  const results=addSelect("Pokémon",direction,resultsOrientation);
  const text=addSelect("Legendas",[["on","Ícone + texto"],["off","Só ícone"]],showToolbarText?"on":"off");
+ const menuSize=document.createElement("input");menuSize.type="range";
+ menuSize.min="27";menuSize.max="42";menuSize.step="1";menuSize.value=String(menuItemSize);
+ const menuSizeLabel=document.createElement("div");menuSizeLabel.className="filterLabel";
+ menuSizeLabel.textContent="Altura dos menus · "+menuSize.value+" dp";
+ menuSize.oninput=()=>{menuSizeLabel.textContent="Altura dos menus · "+menuSize.value+" dp";};
+ panel.append(menuSizeLabel,menuSize);
  const size=document.createElement("button");size.textContent="Ajustar tamanho dos sprites (P/M/G)";
  size.onclick=()=>Native.cycleSpriteSize();panel.appendChild(size);
  const label=document.createElement("div");label.className="filterLabel";
@@ -475,9 +483,9 @@ function renderAppearancePanel(){
  const save=document.createElement("button");save.textContent="✓ Salvar aparência";
  save.className="chosen";save.onclick=()=>{
   menuOrientation=toolbar.value;resultsOrientation=results.value;
-  showToolbarText=text.value==="on";resultsBackground=Number(alpha.value);
+  showToolbarText=text.value==="on";resultsBackground=Number(alpha.value);menuItemSize=Number(menuSize.value);
   Native.setAppearanceOptions(JSON.stringify({menuOrientation,resultsOrientation,
-    menuShowText:showToolbarText,resultsBackground}));
+    menuShowText:showToolbarText,resultsBackground,menuItemSize}));
   closeChoices();
  };
  panel.appendChild(save);
@@ -874,7 +882,7 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank,customEnabled,customRaw,filtersData,enabledMulti,profilesData,withText,levelVisible,cpVisible,ivVisible,spawnVisible,resultDirection,bgPercent,menuOrder)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank,customEnabled,customRaw,filtersData,enabledMulti,profilesData,withText,levelVisible,cpVisible,ivVisible,spawnVisible,resultDirection,bgPercent,menuOrder,menuSize)=>{
  cards=Array.isArray(a)?a.slice(0,150):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
@@ -887,6 +895,8 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  showToolbarText=!!withText;
  resultsOrientation=resultDirection==="horizontal"?"horizontal":"vertical";
  resultsBackground=Math.max(0,Math.min(100,Number(bgPercent)||0));
+ menuItemSize=Math.max(27,Math.min(42,Number(menuSize)||32));
+ document.documentElement.style.setProperty("--toolbar-item",menuItemSize+"px");
  document.body.classList.toggle("results-horizontal",resultsOrientation==="horizontal");
  document.body.classList.toggle("results-vertical",resultsOrientation==="vertical");
  document.documentElement.style.setProperty("--results-alpha",(resultsBackground/100).toFixed(2));
