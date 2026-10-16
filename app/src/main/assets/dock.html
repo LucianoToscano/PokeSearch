@@ -299,6 +299,10 @@ function renderFiltersPanel(){
  // Inputs are built from static markup; personal or site-provided data is never HTML-injected.
  panel.innerHTML=[
  '<div class="choiceHeader">☷ FILTROS DE BUSCA · '+(mode==="iv"?"IV":mode==="gl"?"GRANDE LIGA":"ULTRA LIGA")+'</div>',
+ '<label class="filterCheck"><input id="fMulti" type="checkbox"> Ativar até 3 pesquisas independentes</label>',
+ '<div id="fProfileRoot"></div>',
+ '<label class="filterCheck"><input id="fToolbarText" type="checkbox"> Mostrar texto ao lado dos ícones</label>',
+ '<div class="filterHint">Cada pesquisa cria uma lista própria de Pokémon. Todas usam o mesmo Shiny e localização; atualizam uma após a outra.</div>',
  '<div class="filterHint">As opções são aplicadas ao PoGoCoordinates. Para trocar IV / GL / UL, use o botão de modo.</div>',
  '<div class="filterLabel">PvP · Rank máximo (1–200)</div>',
  '<div class="filterRow"><input id="fRank" type="number" min="1" max="200" step="1" aria-label="Rank máximo"></div>',
@@ -325,6 +329,66 @@ function renderFiltersPanel(){
  ].join("");
  const el=id=>document.getElementById(id);
  const data=searchOptions||{};
+ const makeProfile=(p,i)=>{
+  const container=document.createElement("div");
+  container.className="profileCard";
+  const top=document.createElement("div");top.className="profileRow";
+  const enabled=document.createElement("input");enabled.type="checkbox";enabled.checked=p.enabled!==false;
+  enabled.className="profileEnabled";enabled.style.cssText="flex:0 0 18px;width:18px";
+  const title=document.createElement("strong");title.textContent="Busca "+(i+1);title.style.cssText="font-size:12px;min-width:58px";
+  const kind=document.createElement("select");kind.className="profileMode";kind.style.flex="1";
+  for(const [value,label] of [["ivperfect","IV 100%"],["gl","Grande Liga"],["ul","Ultra Liga"],["ivcustom","IV escolhido"]]){
+   const opt=document.createElement("option");opt.value=value;opt.textContent=label;kind.appendChild(opt);
+  }
+  kind.value=p.mode==="iv"?(p.customIvEnabled?"ivcustom":"ivperfect"):p.mode||"ivperfect";
+  top.append(enabled,title,kind);container.appendChild(top);
+  const fields=document.createElement("div");fields.className="profileRow";
+  const rankLabel=document.createElement("span");rankLabel.textContent="Rank ≤";rankLabel.style.fontSize="10px";
+  const rank=document.createElement("input");rank.type="number";rank.min="1";rank.max="200";
+  rank.value=String(p.rankMax||1);rank.className="profileRank";
+  fields.append(rankLabel,rank);
+  const ivRow=document.createElement("div");ivRow.className="profileRow";
+  for(const [key,name] of [["ivA","A"],["ivD","D"],["ivH","HP"]]){
+    const label=document.createElement("span");label.textContent=name;label.style.fontSize="10px";
+    const control=document.createElement("select");control.className="profile"+key;
+    for(let n=0;n<=15;n++){const o=document.createElement("option");o.value=String(n);o.textContent=String(n);control.appendChild(o);}
+    control.value=String(p[key]??(p.customIvEnabled?0:15));
+    ivRow.append(label,control);
+  }
+  container.append(fields,ivRow);
+  const sync=()=>{
+    const custom=kind.value==="ivcustom",pvp=kind.value==="gl"||kind.value==="ul";
+    rankLabel.style.display=pvp?"":"none";rank.style.display=pvp?"":"none";
+    ivRow.style.display=custom?"flex":"none";
+    const enabledNow=enabled.checked;
+    rank.disabled=!enabledNow;kind.disabled=!enabledNow;
+    for(const selector of ["profileivA","profileivD","profileivH"]){
+      const control=ivRow.querySelector("."+selector);if(control)control.disabled=!enabledNow;
+    }
+  };
+  kind.onchange=sync;enabled.onchange=sync;sync();
+  container._readProfile=()=>{
+    const val=kind.value;
+    const bound=Number(rank.value);
+    if(!Number.isInteger(bound)||bound<1||bound>200)throw Error("Rank da busca "+(i+1)+" deve estar entre 1 e 200");
+    return {enabled:enabled.checked,mode:val==="gl"?"gl":val==="ul"?"ul":"iv",
+      customIvEnabled:val==="ivcustom",rankMax:bound,
+      ivA:Number(ivRow.querySelector(".profileivA").value),
+      ivD:Number(ivRow.querySelector(".profileivD").value),
+      ivH:Number(ivRow.querySelector(".profileivH").value)};
+  };
+  return container;
+ };
+ const defaults=[
+  {enabled:true,mode:"iv",customIvEnabled:false,rankMax:1,ivA:15,ivD:15,ivH:15},
+  {enabled:true,mode:"gl",customIvEnabled:false,rankMax:1,ivA:15,ivD:15,ivH:15},
+  {enabled:true,mode:"iv",customIvEnabled:true,rankMax:1,ivA:0,ivD:0,ivH:0}
+ ];
+ const cards=Array.from({length:3},(_,i)=>makeProfile(searchProfiles[i]||defaults[i],i));
+ cards.forEach(c=>el("fProfileRoot").appendChild(c));
+ const syncProfiles=()=>{el("fProfileRoot").style.display=el("fMulti").checked?"block":"none";};
+ el("fMulti").checked=!!multiEnabled;el("fMulti").onchange=syncProfiles;syncProfiles();
+ el("fToolbarText").checked=showToolbarText;
  el("fRank").value=String(Math.max(1,Math.min(200,Number(data.rankMax)||rankMax||1)));
  const preset=el("fQuick");
  for(const n of [1,20,50,100,200]){
@@ -378,8 +442,20 @@ function renderFiltersPanel(){
   };
   searchOptions=val;showRanks=val.showRanks;rankMax=rank;customIv=val.customIvEnabled;
   customText=val.ivA+"/"+val.ivD+"/"+val.ivH;
+  let profiles;
+  try{profiles=cards.map(x=>x._readProfile());}
+  catch(error){el("fError").textContent="⚠ "+error.message;return;}
+  const enabled=el("fMulti").checked;
+  if(enabled&&!profiles.some(p=>p.enabled)){
+   el("fError").textContent="⚠ Ative pelo menos uma pesquisa.";return;
+  }
+  multiEnabled=enabled;searchProfiles=profiles;
+  showToolbarText=el("fToolbarText").checked;
   closeChoices();draw();
+  // Preferences are posted to the native main thread in this order.
   Native.setSearchOptions(JSON.stringify(val));
+  Native.setSearchProfiles(JSON.stringify({enabled,profiles}));
+  Native.setToolbarText(showToolbarText);
  };
  panel.classList.add("visible");
  document.getElementById("filters").setAttribute("aria-expanded","true");
