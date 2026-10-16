@@ -7,8 +7,8 @@ android {
         applicationId = "com.lucianotoscano.pokesearch"
         minSdk = 26
         targetSdk = 33
-        versionCode = 51
-        versionName = "0.51-beta"
+        versionCode = 52
+        versionName = "0.52-beta"
     }
     // Sideloaded beta: keep tested overlay behavior on target 32. Play Store publishing needs a separate target SDK migration.
     lint { disable += "ExpiredTargetSdkVersion" }
