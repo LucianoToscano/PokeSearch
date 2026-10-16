@@ -83,7 +83,7 @@ public class MainActivity extends Activity {
         header.addView(heart,new LinearLayout.LayoutParams(d(45),d(45)));
         ImageButton gear=makeIcon(R.drawable.ic_settings_outline,"Preferências");
         gear.setOnClickListener(v->showPreferencesDialog());
-        header.addView(gear,new LinearLayout.LayoutParams(d(45),d(45)));
+        // Home settings are consolidated in Personalizar; no duplicate gear button.
         root.addView(header);
         Button start=new Button(this);
         start.setText("Ativar overlay");
@@ -162,9 +162,9 @@ public class MainActivity extends Activity {
         searchFilters.setOnClickListener(v->showSearchFiltersDialog());
         LinearLayout.LayoutParams filterParams=new LinearLayout.LayoutParams(-1,d(44));
         filterParams.setMargins(d(2),0,d(2),d(9));
-        root.addView(searchFilters,filterParams);
+        // Advanced filters are edited from the floating menu, not duplicated on Home.
         Button multipleSearches=new Button(this);
-        multipleSearches.setText("▤  Até três pesquisas · listas separadas");
+        multipleSearches.setText("▤  Duas pesquisas · abas independentes");
         multipleSearches.setAllCaps(false);
         multipleSearches.setTextSize(12);
         multipleSearches.setTextColor(Color.WHITE);
@@ -711,6 +711,10 @@ public class MainActivity extends Activity {
         return body;
     }
 
+    private int parseRankInput(String text){
+        try{return Integer.parseInt(text.trim());}
+        catch(Exception ignored){return 1;}
+    }
     private void showSearchProfilesDialog(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         JSONArray saved;
@@ -722,7 +726,7 @@ public class MainActivity extends Activity {
         body.setPadding(d(15),d(8),d(15),d(15));
         scrolling.addView(body);
         CheckBox multiple=new CheckBox(this);
-        multiple.setText("Pesquisar até 3 filtros simultaneamente (em sequência)");
+        multiple.setText("Ativar até 2 abas de resultados independentes");
         multiple.setTextColor(Color.WHITE);
         multiple.setChecked(prefs.getBoolean("multiEnabled",false));
         body.addView(multiple);
@@ -730,15 +734,15 @@ public class MainActivity extends Activity {
         explanation.setText("As listas são independentes e aparecem no overlay. O site é consultado uma busca por vez, respeitando o intervalo mínimo.");
         explanation.setTextSize(12);explanation.setTextColor(Color.LTGRAY);
         body.addView(explanation);
-        CheckBox[] selected=new CheckBox[3];
-        Spinner[] modes=new Spinner[3];
-        Spinner[] ranks=new Spinner[3];
-        Spinner[][] ivs=new Spinner[3][3];
+        CheckBox[] selected=new CheckBox[2];
+        Spinner[] modes=new Spinner[2];
+        EditText[] ranks=new EditText[2];
+        Spinner[][] ivs=new Spinner[2][3];
         String[] modeLabels={"IV 100% · 15/15/15","Grande Liga","Ultra Liga","IV personalizado","IV 0% · 0/0/0"};
         String[] rankValues=new String[200],ivValues=new String[16];
         for(int i=0;i<200;i++)rankValues[i]=String.valueOf(i+1);
         for(int i=0;i<16;i++)ivValues[i]=String.valueOf(i);
-        for(int i=0;i<3;i++){
+        for(int i=0;i<2;i++){
             final int index=i;
             JSONObject old=saved.optJSONObject(i);
             LinearLayout group=new LinearLayout(this);
@@ -763,11 +767,14 @@ public class MainActivity extends Activity {
                 def=hasRaw?(isZero?4:3):0;
             }
             modes[i].setSelection(def);group.addView(modes[i]);
-            ranks[i]=new Spinner(this);
-            ranks[i].setAdapter(new ArrayAdapter<String>(this,
-                android.R.layout.simple_spinner_dropdown_item,rankValues));
-            ranks[i].setSelection(Math.max(0,Math.min(199,old==null?0:old.optInt("rankMax",1)-1)));
-            group.addView(ranks[i]);
+            EditText rankEdit=new EditText(this);
+            rankEdit.setSingleLine(true);
+            rankEdit.setTextColor(Color.WHITE);
+            rankEdit.setHint("Rank GL/UL (1–50)");
+            rankEdit.setInputType(InputType.TYPE_CLASS_NUMBER);
+            rankEdit.setText(String.valueOf(Math.max(1,Math.min(50,
+                old==null?1:old.optInt("rankMax",1)))));
+            ranks[i]=rankEdit;group.addView(rankEdit);
             LinearLayout ivRow=new LinearLayout(this);
             ivRow.setOrientation(LinearLayout.HORIZONTAL);
             for(int j=0;j<3;j++){
@@ -798,7 +805,7 @@ public class MainActivity extends Activity {
             params.setMargins(0,d(7),0,d(7));
             body.addView(group,params);
         }
-        new AlertDialog.Builder(this).setTitle("3 pesquisas separadas").setView(scrolling)
+        new AlertDialog.Builder(this).setTitle("Duas pesquisas separadas").setView(scrolling)
             .setNegativeButton("Cancelar",null)
             .setPositiveButton("Salvar",(d,w)->{
                 JSONArray profiles=new JSONArray();
@@ -812,7 +819,7 @@ public class MainActivity extends Activity {
                         p.put("enabled",checked);
                         p.put("mode",m==1?"gl":m==2?"ul":"iv");
                         p.put("customIvEnabled",m==3||m==4);
-                        p.put("rankMax",ranks[i].getSelectedItemPosition()+1);
+                        p.put("rankMax",Math.max(1,Math.min(50,parseRankInput(ranks[i].getText().toString()))));
                         p.put("ivA",m==4?0:ivs[i][0].getSelectedItemPosition());
                         p.put("ivD",m==4?0:ivs[i][1].getSelectedItemPosition());
                         p.put("ivH",m==4?0:ivs[i][2].getSelectedItemPosition());
