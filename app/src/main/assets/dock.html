@@ -443,6 +443,9 @@ function renderAlertPanel(){
     Native.setAlertsMode(value);closeChoices();draw();};
   panel.appendChild(b);
  }
+ const testButton=document.createElement("button");
+ testButton.textContent="🔔 Testar notificação";
+ testButton.onclick=()=>Native.testAlert();panel.appendChild(testButton);
  panel.classList.add("visible");document.getElementById("bell").setAttribute("aria-expanded","true");fit();
 }
 function renderAppearancePanel(){
