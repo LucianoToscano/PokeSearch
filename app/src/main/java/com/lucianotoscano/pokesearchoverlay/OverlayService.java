@@ -334,7 +334,7 @@ public class OverlayService extends Service {
                 getSharedPreferences("prefs",0).getBoolean("showRanks",true)+","+
                 Math.max(1,Math.min(200,getSharedPreferences("prefs",0).getInt("rankMax",1)))+","+
                 getSharedPreferences("prefs",0).getBoolean("customIvEnabled",false)+","+
-                JSONObject.quote(getSharedPreferences("prefs",0).getInt("customIvAttack",0)+"/"
+                JSONObject.quote(getSharedPreferences("prefs",0).getInt("customIvAttack",0)+"/"+
                     getSharedPreferences("prefs",0).getInt("customIvDefense",15)+"/"+
                     getSharedPreferences("prefs",0).getInt("customIvHp",15))+","+
                 searchOptionsJson().toString()+","+
