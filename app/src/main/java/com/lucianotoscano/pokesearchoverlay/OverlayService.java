@@ -37,11 +37,103 @@ public class OverlayService extends Service {
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private boolean menuVertical=false,menuChoicesOpen=false;
+    private boolean menuVertical=false,menuChoicesOpen=false,menuShowText=false;
+    private boolean multiCycleActive=false;
+    private int profileIndex=-1,lastProfileSearched=-1;
+    private String previousMode="iv";
+    private final java.util.ArrayList<Integer> profileQueue=new java.util.ArrayList<>();
+    private final java.util.HashMap<Integer,JSONArray> profileCache=new java.util.HashMap<>();
+    private JSONArray getSearchProfiles(){
+        try{return new JSONArray(getSharedPreferences("prefs",0).getString("searchProfiles","[]"));}
+        catch(Exception e){recordFailure("carregar pesquisas",e);return new JSONArray();}
+    }
+    private boolean multiEnabled(){
+        return getSharedPreferences("prefs",0).getBoolean("multiEnabled",false)
+            &&getSearchProfiles().length()>0;
+    }
+    private JSONObject currentProfile(){
+        return profileIndex<0?null:getSearchProfiles().optJSONObject(profileIndex);
+    }
+    private void beginProfileCycle(boolean manual){
+        if(multiCycleActive||searchInProgress)return;
+        JSONArray profiles=getSearchProfiles();
+        profileQueue.clear();
+        for(int i=0;i<Math.min(3,profiles.length());i++){
+            JSONObject p=profiles.optJSONObject(i);
+            if(p!=null&&p.optBoolean("enabled",false)){
+                String chosen=p.optString("mode","");
+                if("iv".equals(chosen)||"gl".equals(chosen)||"ul".equals(chosen))
+                    profileQueue.add(i);
+            }
+        }
+        if(profileQueue.isEmpty()){
+            status("Ative pelo menos uma das três pesquisas.");
+            return;
+        }
+        previousMode=mode;
+        multiCycleActive=true;
+        profileCache.clear();
+        runNextProfile(manual);
+    }
+    private void runNextProfile(boolean manual){
+        if(stopped||loginPaused){multiCycleActive=false;return;}
+        if(profileQueue.isEmpty()){
+            multiCycleActive=false;profileIndex=-1;mode=previousMode;
+            status("Três pesquisas concluídas · listas independentes.");
+            return;
+        }
+        profileIndex=profileQueue.remove(0);
+        JSONObject p=currentProfile();
+        if(p==null){runNextProfile(manual);return;}
+        mode=p.optString("mode","iv");
+        searchInProgress=false;
+        status("Pesquisando lista "+(profileIndex+1)+" de até 3 · "+mode.toUpperCase(java.util.Locale.ROOT));
+        refreshSingle(manual);
+    }
+    private void finishProfileCycleStep(JSONObject r,JSONArray sorted){
+        profileCache.put(profileIndex,sorted);
+        lastProfileSearched=profileIndex;
+        JSONArray merged=new JSONArray();
+        JSONArray allProfiles=getSearchProfiles();
+        for(int i=0;i<Math.min(3,allProfiles.length());i++){
+            JSONObject profile=allProfiles.optJSONObject(i);
+            if(profile==null||!profile.optBoolean("enabled",false))continue;
+            JSONArray stored=profileCache.get(i);
+            if(stored==null)continue;
+            for(int j=0;j<stored.length();j++){
+                JSONObject card=stored.optJSONObject(j);
+                if(card==null)continue;
+                try{
+                    JSONObject copied=new JSONObject(card.toString());
+                    copied.put("profileIndex",i);
+                    copied.put("searchMode",profile.optString("mode","iv"));
+                    copied.put("profileRankMax",profile.optInt("rankMax",1));
+                    merged.put(copied);
+                }catch(Exception e){recordFailure("identificar perfil",e);}
+            }
+        }
+        results=merged.toString();
+        armNextDespawn(merged);
+        if(selected>=0)hideDetails();
+        update();
+        if(!profileQueue.isEmpty()){
+            long wait=Math.max(850L,MIN_SEARCH_GAP_MS-
+                (System.currentTimeMillis()-getSharedPreferences("prefs",0)
+                    .getLong("lastNetworkSearchAt",0L))+300L);
+            status("Lista "+(profileIndex+1)+" pronta. Próxima pesquisa em "+
+                Math.max(1L,(wait+999L)/1000L)+"s.");
+            handler.postDelayed(()->{if(multiCycleActive&&!stopped)runNextProfile(true);},wait);
+        }else{
+            multiCycleActive=false;
+            profileIndex=-1;
+            mode=previousMode;
+            status("Buscas concluídas · "+merged.length()+" Pokémon em listas separadas");
+        }
+    }
     private String hiddenControls="";
     private int visibleControls=13;
     private int menuDp(){
-        int wanted=menuVertical?44:Math.max(35,30*visibleControls+4);
+        int wanted=menuVertical?(menuShowText?154:44):(menuShowText?screenWidthDp()-8:Math.max(35,30*visibleControls+4));
         if(menuChoicesOpen)wanted=Math.max(wanted,316);
         return Math.max(1,Math.min(wanted,screenWidthDp()-8));
     }
@@ -49,6 +141,7 @@ public class OverlayService extends Service {
     private void loadMenuPreferences(android.content.SharedPreferences pref){
         String orientation=pref.getString("menuOrientation","horizontal");
         menuVertical="vertical".equals(orientation);
+        menuShowText=pref.getBoolean("menuShowText",false);
         hiddenControls=pref.getString("hiddenControls","");
         int count=0;
         String[] ids={"cycle","sh","period","manualRefresh","size","clock",
@@ -220,6 +313,14 @@ public class OverlayService extends Service {
             for(String key:new String[]{"cpMin","cpMax","levelMin","levelMax",
                     "weather","size","form","gender"})
                 options.put(key,pref.getString(key,""));
+            JSONObject profile=currentProfile();
+            if(profile!=null){
+                options.put("rankMax",Math.max(1,Math.min(200,profile.optInt("rankMax",1))));
+                options.put("customIvEnabled",profile.optBoolean("customIvEnabled",false));
+                options.put("ivA",profile.optInt("ivA",15));
+                options.put("ivD",profile.optInt("ivD",15));
+                options.put("ivH",profile.optInt("ivH",15));
+            }
         }catch(Exception e){recordFailure("serializar filtros",e);}
         return options;
     }
@@ -233,7 +334,9 @@ public class OverlayService extends Service {
                 JSONObject.quote(getSharedPreferences("prefs",0).getInt("customIvAttack",0)+"/"
                     getSharedPreferences("prefs",0).getInt("customIvDefense",15)+"/"+
                     getSharedPreferences("prefs",0).getInt("customIvHp",15))+","+
-                searchOptionsJson().toString()+")";
+                searchOptionsJson().toString()+","+
+                multiEnabled()+","+getSearchProfiles().toString()+","+
+                menuShowText+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         if(selected>=0)showDetails(selected);
@@ -623,6 +726,13 @@ public class OverlayService extends Service {
     }
     private void refresh(){refresh(false);}
     private void refresh(boolean manual){
+        if(multiEnabled()&&!multiCycleActive){
+            beginProfileCycle(manual);return;
+        }
+        if(multiCycleActive&&profileIndex<0)return;
+        refreshSingle(manual);
+    }
+    private void refreshSingle(boolean manual){
         if(stopped||loginPaused)return;
         if(searchInProgress){
             if(manual)status("Busca em andamento. Toque ↻ novamente quando terminar.");
@@ -950,17 +1060,18 @@ public class OverlayService extends Service {
     private boolean verifiedTargetCriteria(JSONObject card){
         if(card==null)return false;
         android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+        JSONObject current=searchOptionsJson();
         if("iv".equals(mode)){
-            if(prefs.getBoolean("customIvEnabled",false)){
-                String target=prefs.getInt("customIvAttack",0)+"/"+
-                    prefs.getInt("customIvDefense",15)+"/"+prefs.getInt("customIvHp",15);
+            if(current.optBoolean("customIvEnabled",false)){
+                String target=current.optInt("ivA",0)+"/"+
+                    current.optInt("ivD",15)+"/"+current.optInt("ivH",15);
                 return target.equals(card.optString("iv",""));
             }
             return "15/15/15".equals(card.optString("iv","")) ||
                 "100".equals(card.optString("ivPercent",""));
         }
         if("gl".equals(mode)||"ul".equals(mode)){
-            int rank=rankForSort(card),limit=Math.max(1,Math.min(200,prefs.getInt("rankMax",1)));
+            int rank=rankForSort(card),limit=Math.max(1,Math.min(200,current.optInt("rankMax",1)));
             return rank<=limit||(rank==999999);
         }
         return false;
@@ -1008,7 +1119,7 @@ public class OverlayService extends Service {
                 history.put(entry);
             }catch(Exception e){recordFailure("gravar histórico",e);}
         }
-        knownSpawns.clear();knownSpawns.addAll(current);
+        if(!multiCycleActive)knownSpawns.clear();knownSpawns.addAll(current);
         JSONArray limited=new JSONArray();
         for(int i=Math.max(0,history.length()-40);i<history.length();i++)limited.put(history.opt(i));
         preferences.edit().putString("history",limited.toString()).apply();
@@ -1057,8 +1168,12 @@ public class OverlayService extends Service {
         }
         JSONArray sorted=sortItems(items);
         recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
-        results=sorted.toString();
         searchInProgress=false;
+        if(multiCycleActive&&profileIndex>=0){
+            finishProfileCycleStep(r,sorted);
+            return;
+        }
+        results=sorted.toString();
         armNextDespawn(sorted);
         if(selected>=0)hideDetails();
         getSharedPreferences("prefs",0).edit()
@@ -1279,6 +1394,44 @@ public class OverlayService extends Service {
         @JavascriptInterface public void setChoicesOpen(boolean open){
             handler.post(()->OverlayService.this.setChoicesOpen(open));
         }
+        @JavascriptInterface public void setSearchProfiles(String value){handler.post(()->{
+            if(value==null||value.length()>5200)return;
+            try{
+                JSONObject input=new JSONObject(value);
+                boolean enabled=input.optBoolean("enabled",false);
+                JSONArray profiles=input.optJSONArray("profiles");
+                if(profiles==null||profiles.length()>3||profiles.length()<1)
+                    throw new IllegalArgumentException("Quantidade de pesquisas");
+                JSONArray safe=new JSONArray();
+                for(int i=0;i<profiles.length();i++){
+                    JSONObject p=profiles.optJSONObject(i);
+                    if(p==null)throw new IllegalArgumentException("Perfil inválido");
+                    String kind=p.optString("mode","iv");
+                    if(!"iv".equals(kind)&&!"gl".equals(kind)&&!"ul".equals(kind))
+                        throw new IllegalArgumentException("Modo inválido");
+                    int rank=p.optInt("rankMax",1);
+                    int a=p.optInt("ivA",15),d=p.optInt("ivD",15),h=p.optInt("ivH",15);
+                    if(rank<1||rank>200||a<0||a>15||d<0||d>15||h<0||h>15)
+                        throw new IllegalArgumentException("Ranking/IV inválidos");
+                    JSONObject cleaned=new JSONObject();
+                    cleaned.put("enabled",p.optBoolean("enabled",true));
+                    cleaned.put("mode",kind);cleaned.put("rankMax",rank);
+                    cleaned.put("customIvEnabled",p.optBoolean("customIvEnabled",false));
+                    cleaned.put("ivA",a);cleaned.put("ivD",d);cleaned.put("ivH",h);
+                    safe.put(cleaned);
+                }
+                getSharedPreferences("prefs",0).edit()
+                    .putBoolean("multiEnabled",enabled)
+                    .putString("searchProfiles",safe.toString()).apply();
+                multiCycleActive=false;profileIndex=-1;profileQueue.clear();profileCache.clear();
+                ++requestGeneration;searchInProgress=false;
+                results="[]";hideDetails();update();
+                if(enabled)beginProfileCycle(true);else OverlayService.this.refresh(true);
+            }catch(Exception e){
+                android.widget.Toast.makeText(OverlayService.this,
+                   "Confira os três perfis e seus IVs",android.widget.Toast.LENGTH_LONG).show();
+            }
+        });}
         @JavascriptInterface public void setSearchOptions(String value){handler.post(()->{
             if(value==null||value.length()>3500)return;
             try{
@@ -1334,6 +1487,14 @@ public class OverlayService extends Service {
                 android.widget.Toast.makeText(OverlayService.this,
                     "Confira valores de IV, Rank e demais filtros",android.widget.Toast.LENGTH_LONG).show();
             }
+        });}
+        @JavascriptInterface public void setToolbarText(boolean shown){handler.post(()->{
+            boolean expanded=menuExpanded;
+            if(expanded)menu(false);
+            getSharedPreferences("prefs",0).edit().putBoolean("menuShowText",shown).apply();
+            loadMenuPreferences(getSharedPreferences("prefs",0));
+            update();
+            if(expanded)menu(true);
         });}
         @JavascriptInterface public void toggleTimers(){handler.post(()->{
             showTimers=!showTimers;
@@ -1509,6 +1670,10 @@ public class OverlayService extends Service {
             }
         }catch(Exception e){recordFailure("ler cartão coordenadas",e);}
         if(chosen==null){deliverCoords("","Pokémon indisponível");return;}
+        if(multiEnabled()&&chosen.optInt("profileIndex",-1)!=lastProfileSearched){
+            deliverCoords("","Coordenadas deste grupo exigem reabrir sua busca; não são lidas de outra lista.");
+            return;
+        }
         JSONObject target=chosen;
         execute("coords:"+sourceIndex,response->{
             if(!response.optBoolean("ok")){
