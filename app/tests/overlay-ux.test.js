@@ -32,7 +32,7 @@ test("Chevron is at bottom of the sprites",dock.indexOf('id="collapse"')>dock.in
 test("Red close is alongside heart with standard background",dock.indexOf('id="close"')>dock.indexOf('id="donate"')&&dock.includes("#controls #close{"));
 test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'));
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
-test("Original horizontal toolbar defaults to 34dp and vertical menu is optional",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(menuBaseHeight())')&&service.includes("MENU_BASE_DP=34")&&service.includes('return menuVertical?Math.min(420'));
+test("Original horizontal toolbar defaults to 34dp and vertical menu is optional",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(menuBaseHeight())')&&service.includes("MENU_BASE_DP=34")&&service.includes('return menuVertical?Math.min(440'));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login returns to Home and does not send it to background",!main.includes('postDelayed(()->moveTaskToBack(true)'));
 test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
