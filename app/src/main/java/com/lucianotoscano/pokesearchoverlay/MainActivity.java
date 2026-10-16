@@ -647,9 +647,9 @@ public class MainActivity extends Activity {
         dialog.show();
     }
     private static final String[] TOOL_IDS={"cycle","sh","period","manualRefresh","size",
-        "clock","bell","star","location","report","donate","close"};
+        "clock","bell","star","location","filters","report","donate","close"};
     private static final String[] TOOL_LABELS={"100%/GL/UL","✨ Shiny","AUTO","↻ Atualizar",
-        "P/M/G","◷ Relógio","♧ Sino","☆ Favoritos","⌖ Local","⚠ Bugs","♡ Apoiar","× Fechar"};
+        "P/M/G","◷ Relógio","♧ Sino","☆ Favoritos","⌖ Local","☷ Filtros","⚠ Bugs","♡ Apoiar","× Fechar"};
     private LinearLayout buildMenuCustomization(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         LinearLayout body=new LinearLayout(this);
@@ -693,7 +693,7 @@ public class MainActivity extends Activity {
             }
             body.addView(pair);
         }
-        settingCheckbox(body,prefs,"showRanks","Exibir rank sobre os sprites",false);
+        settingCheckbox(body,prefs,"showRanks","Mostrar Rank PvP nos Pokémon (também no menu)",true);
         return body;
     }
     private void showSearchFiltersDialog(){
@@ -704,16 +704,16 @@ public class MainActivity extends Activity {
         body.setPadding(d(16),d(8),d(16),d(12));
         scroll.addView(body);
         TextView intro=new TextView(this);
-        intro.setText("Top Rank 1–50 para GL/UL; IV exato para o modo 100%.");
+        intro.setText("Top Rank 1–200 para GL/UL; IV exato para o modo 100%.");
         intro.setTextColor(Color.LTGRAY);intro.setTextSize(12);body.addView(intro);
         TextView rankTitle=new TextView(this);
         rankTitle.setText("Rank PvP máximo");rankTitle.setTextColor(Color.WHITE);body.addView(rankTitle);
-        String[] rankOptions=new String[50];
-        for(int i=0;i<50;i++)rankOptions[i]=String.valueOf(i+1);
+        String[] rankOptions=new String[200];
+        for(int i=0;i<200;i++)rankOptions[i]=String.valueOf(i+1);
         Spinner rank=new Spinner(this);
         rank.setAdapter(new ArrayAdapter<String>(this,
             android.R.layout.simple_spinner_dropdown_item,rankOptions));
-        rank.setSelection(Math.max(0,Math.min(49,prefs.getInt("rankMax",1)-1)));
+        rank.setSelection(Math.max(0,Math.min(199,prefs.getInt("rankMax",1)-1)));
         body.addView(rank);
         CheckBox custom=new CheckBox(this);
         custom.setText("Usar IV personalizado (em vez de 15/15/15)");
@@ -749,6 +749,35 @@ public class MainActivity extends Activity {
                 (i>1?InputType.TYPE_NUMBER_FLAG_DECIMAL:0));
             body.addView(edit);extra[i]=edit;
         }
+        TextView additional=new TextView(this);
+        additional.setText("Outros filtros do site (também disponíveis no menu flutuante)");
+        additional.setTextColor(Color.LTGRAY);
+        additional.setTextSize(12);body.addView(additional);
+        String[][] additionalOptions={
+            {"weather","Qualquer","Sunny","Rainy","Cloudy","Partly Cloudy","Windy","Snowy","Fog"},
+            {"gender","Qualquer","Male","Female","Genderless"},
+            {"size","Qualquer","XXS","XS","S","M","L","XL","XXL"}
+        };
+        Spinner[] selectFilters=new Spinner[additionalOptions.length];
+        for(int i=0;i<additionalOptions.length;i++){
+            TextView title=new TextView(this);
+            title.setText(new String[]{"Clima","Sexo","Tamanho (um valor; multiseleção no menu flutuante)"}[i]);
+            title.setTextColor(Color.WHITE);body.addView(title);
+            Spinner sp=new Spinner(this);
+            String[] labels=java.util.Arrays.copyOfRange(additionalOptions[i],1,additionalOptions[i].length);
+            sp.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,labels));
+            String selected=prefs.getString(additionalOptions[i][0],"");
+            int selection=0;
+            for(int j=1;j<additionalOptions[i].length;j++)
+                if(additionalOptions[i][j].equals(selected))selection=j-1;
+            sp.setSelection(selection);selectFilters[i]=sp;body.addView(sp);
+        }
+        EditText form=new EditText(this);
+        form.setSingleLine(true);
+        form.setHint("Forma do Pokémon · opcional");
+        form.setTextColor(Color.WHITE);
+        form.setText(prefs.getString("form",""));
+        body.addView(form);
         new AlertDialog.Builder(this).setTitle("Filtros da pesquisa").setView(scroll)
             .setNegativeButton("Cancelar",null).setPositiveButton("Salvar",(d,w)->{
                 SharedPreferences.Editor e=prefs.edit()
@@ -757,6 +786,12 @@ public class MainActivity extends Activity {
                 for(int i=0;i<3;i++)e.putInt(keys[i],fields[i].getSelectedItemPosition());
                 for(int i=0;i<extra.length;i++)e.putString(extraKeys[i],
                     extra[i].getText().toString().trim());
+                for(int i=0;i<additionalOptions.length;i++){
+                    int index=selectFilters[i].getSelectedItemPosition();
+                    String selected=index<=0?"":additionalOptions[i][index+1];
+                    e.putString(additionalOptions[i][0],selected);
+                }
+                e.putString("form",form.getText().toString().trim());
                 e.apply();syncOverlayPreferences();
                 Toast.makeText(this,"Filtros salvos · toque ↻ para nova busca",Toast.LENGTH_LONG).show();
             }).show();
