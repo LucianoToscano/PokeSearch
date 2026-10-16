@@ -665,27 +665,31 @@ function draw(){
   const league=c.searchMode||mode;
   const rankBadge=showRanks&&(league==="gl"||league==="ul")&&(known||range)?
     '<span class="rankBadge">'+(league==="gl"?"GL":"UL")+(known?' #'+rv:' ≤'+bound)+'</span>':"";
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+badge+rankBadge+'</button>';
+  const levelBadge=showLevel&&c.level?'<span class="miniField">Lv'+esc(c.level)+'</span>':"";
+  const cpBadge=showCp&&c.cp?'<span class="miniCp">PC '+esc(c.cp)+'</span>':"";
+  const ivBadge=showIv&&c.iv?'<span class="miniIv">'+esc(c.iv)+'</span>':"";
+  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+badge+rankBadge+levelBadge+cpBadge+ivBadge+'</button>';
  };
- if(!multiEnabled)document.getElementById("spawns").innerHTML=cards.map(makeSprite).join("");
- else{
-  const groups=searchProfiles.filter(p=>p.enabled);
-  document.getElementById("spawns").innerHTML=searchProfiles.map((p,g)=>{
-   if(!p.enabled)return "";
-   const selected=cards.map((c,i)=>({c,i})).filter(x=>Number(x.c.profileIndex)===g);
-   const type=p.mode==="gl"?"GL":p.mode==="ul"?"UL":p.customIvEnabled?
-     [p.ivA,p.ivD,p.ivH].join("/"):"100%";
-   const collapsed=collapsedGroups.has(g);
-   const heading='<button class="groupTitle'+(collapsed?' closed':'')+'" title="Toque para recolher ou expandir" onclick="toggleResultGroup('+g+')">'+
-       (collapsed?'▸ ':'▾ ')+esc(type)+' <small>'+selected.length+'</small></button>';
-   return '<div class="groupBlock">'+heading+(collapsed?"":selected.map(x=>makeSprite(x.c,x.i)).join(""))+'</div>';
-  }).join("");
+ if(groupWindow){
+  const profile=searchProfiles[groupId];
+  const present=cards.map((c,i)=>({c,i})).filter(x=>Number(x.c.profileIndex)===groupId);
+  const label=profile?(profile.mode==="gl"?"GL ≤"+profile.rankMax:
+    profile.mode==="ul"?"UL ≤"+profile.rankMax:
+    profile.customIvEnabled?[profile.ivA,profile.ivD,profile.ivH].join("/"):"100%"):"Busca";
+  document.querySelector("#groupHeader .groupName").textContent=
+    label+(showSpawnCount?" · "+present.length:"");
+  document.getElementById("spawns").innerHTML=present.map(x=>makeSprite(x.c,x.i)).join("");
+ }else if(multiEnabled){
+  // Each group owns its results in a separate Android overlay.
+  document.getElementById("spawns").replaceChildren();
+ }else{
+  document.getElementById("spawns").innerHTML=cards.map(makeSprite).join("");
  }
  attachLongPress();
  updateTimers();
  }
  const empty=document.getElementById("empty");
- empty.style.display=cards.length?"none":"block";
+ empty.style.display=multiEnabled||groupWindow||cards.length?"none":"block";
  empty.textContent=/sem resultados/i.test(status)?"0":/falha|erro|não|login/i.test(status)?"!":"…";
  empty.title=status||"Aguardando busca";
  document.getElementById("gear").title=menuOpen?"Recolher menu · arrastar para mover":status?("Abrir menu · "+status):"Abrir menu · arrastar para mover";
@@ -700,8 +704,8 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank,customEnabled,customRaw,filtersData,enabledMulti,profilesData,withText)=>{
- cards=Array.isArray(a)?a.slice(0,10):[];
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank,customEnabled,customRaw,filtersData,enabledMulti,profilesData,withText,levelVisible,cpVisible,ivVisible,spawnVisible)=>{
+ cards=Array.isArray(a)?a.slice(0,150):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
@@ -711,7 +715,9 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  multiEnabled=!!enabledMulti;
  searchProfiles=Array.isArray(profilesData)?profilesData.slice(0,3):[];
  showToolbarText=!!withText;
+ showLevel=!!levelVisible;showCp=!!cpVisible;showIv=!!ivVisible;showSpawnCount=spawnVisible!==false;
  document.body.classList.toggle("with-text",showToolbarText);
+ document.body.classList.toggle("multi-live",multiEnabled);
  hiddenControls=String(hidden||"");
  menuOrientation=orientation==="vertical"?"vertical":"horizontal";
  document.body.classList.toggle("vertical",menuOrientation==="vertical");
