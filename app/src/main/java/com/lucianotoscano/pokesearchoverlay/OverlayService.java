@@ -1225,6 +1225,19 @@ public class OverlayService extends Service {
                     current.optInt("ivD",15)+"/"+current.optInt("ivH",15);
                 return target.equals(card.optString("iv",""));
             }
+            if("percent".equals(current.optString("ivFilter","raw"))){
+                int low=current.optInt("ivMin",100),high=current.optInt("ivMax",100);
+                double value=card.optDouble("ivPercent",-1);
+                if(value<0){
+                    String raw=card.optString("iv","");
+                    String[] n=raw.split("/");
+                    if(n.length==3)try{
+                        value=100.0*(Integer.parseInt(n[0])+Integer.parseInt(n[1])+
+                            Integer.parseInt(n[2]))/45.0;
+                    }catch(Exception ignored){}
+                }
+                return value>=low-0.001&&value<=high+0.001;
+            }
             return "15/15/15".equals(card.optString("iv","")) ||
                 "100".equals(card.optString("ivPercent",""));
         }
