@@ -38,12 +38,19 @@ public class OverlayService extends Service {
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
     private boolean menuVertical=true,menuChoicesOpen=false,menuShowText=true;
-    private final FrameLayout[] groupRoots=new FrameLayout[3];
-    private final WebView[] groupPanels=new WebView[3];
-    private final WindowManager.LayoutParams[] groupParams=new WindowManager.LayoutParams[3];
-    private final boolean[] groupLoaded=new boolean[3];
+    private final FrameLayout[] groupRoots=new FrameLayout[2];
+    private final WebView[] groupPanels=new WebView[2];
+    private final WindowManager.LayoutParams[] groupParams=new WindowManager.LayoutParams[2];
+    private final boolean[] groupLoaded=new boolean[2];
     private boolean showLevel=false,showCp=false,showIv=false,showSpawnCount=true;
     private static final int GROUP_WIDTH_DP=100;
+    private int resultWidthDp(){
+        int sprite=getSharedPreferences("prefs",0).getInt("spriteSize",45);
+        boolean horizontal="horizontal".equals(
+            getSharedPreferences("prefs",0).getString("resultsOrientation","vertical"));
+        int width=horizontal?Math.min(320,Math.max(130,sprite*3+40)):Math.max(82,sprite+44);
+        return Math.min(width,screenWidthDp()-12);
+    }
     private void loadDisplayPreferences(android.content.SharedPreferences pref){
         showTimers=pref.getBoolean("showTimers",true);
         showLevel=pref.getBoolean("showLevel",false);
@@ -53,7 +60,7 @@ public class OverlayService extends Service {
     }
     private void updateGroupWindows(){
         JSONArray profiles=getSearchProfiles();
-        for(int i=0;i<3;i++){
+        for(int i=0;i<2;i++){
             if(groupRoots[i]==null)continue;
             JSONObject p=profiles.optJSONObject(i);
             boolean enabled=!stopped&&!loginPaused&&!pickerOpen&&multiEnabled()
@@ -62,8 +69,13 @@ public class OverlayService extends Service {
         }
     }
     private void resizeGroup(int i,int heightDp){
-        if(i<0||i>=3||groupRoots[i]==null||groupParams[i]==null||wm==null)return;
+        if(i<0||i>=2||groupRoots[i]==null||groupParams[i]==null||wm==null)return;
         WindowManager.LayoutParams p=groupParams[i];
+        int width=dp(resultWidthDp());
+        if(p.width!=width){
+            p.width=width;
+            p.x=Math.max(0,Math.min(metrics().widthPixels-width,p.x));
+        }
         int next=dp(Math.max(37,Math.min(Math.min(440,screenHeightDp()-65),heightDp)));
         if(Math.abs(p.height-next)<=dp(1))return;
         p.height=next;
@@ -72,7 +84,7 @@ public class OverlayService extends Service {
         catch(Exception e){recordFailure("redimensionar camada "+i,e);}
     }
     private void createGroupWindows(){
-        for(int i=0;i<3;i++)createGroupWindow(i);
+        for(int i=0;i<2;i++)createGroupWindow(i);
         updateGroupWindows();
     }
     private void createGroupWindow(int i){
@@ -87,14 +99,14 @@ public class OverlayService extends Service {
         web.addJavascriptInterface(new Bridge(),"Native");
         frame.addView(web,new FrameLayout.LayoutParams(-1,-1));
         android.content.SharedPreferences pref=getSharedPreferences("prefs",0);
-        int defaultX=Math.max(0,screenWidthDp()-GROUP_WIDTH_DP-64-(i%2)*108);
+        int defaultX=Math.max(0,screenWidthDp()-resultWidthDp()-64-(i%2)*108);
         int defaultY=190+i*122;
         WindowManager.LayoutParams p=new WindowManager.LayoutParams(
-            dp(GROUP_WIDTH_DP),dp(56),WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            dp(resultWidthDp()),dp(56),WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT);
         p.gravity=Gravity.TOP|Gravity.LEFT;
-        p.x=dp(Math.max(0,Math.min(screenWidthDp()-GROUP_WIDTH_DP,
+        p.x=dp(Math.max(0,Math.min(screenWidthDp()-resultWidthDp(),
             pref.getInt("layerX"+i,defaultX))));
         p.y=dp(Math.max(0,Math.min(screenHeightDp()-60,
             pref.getInt("layerY"+i,defaultY))));
@@ -159,7 +171,7 @@ public class OverlayService extends Service {
         if(multiCycleActive||searchInProgress)return;
         JSONArray profiles=getSearchProfiles();
         profileQueue.clear();
-        for(int i=0;i<Math.min(3,profiles.length());i++){
+        for(int i=0;i<Math.min(2,profiles.length());i++){
             JSONObject p=profiles.optJSONObject(i);
             if(p!=null&&p.optBoolean("enabled",false)){
                 String chosen=p.optString("mode","");
@@ -168,7 +180,7 @@ public class OverlayService extends Service {
             }
         }
         if(profileQueue.isEmpty()){
-            status("Ative pelo menos uma das três pesquisas.");
+            status("Ative pelo menos uma das duas pesquisas.");
             return;
         }
         previousMode=mode;
@@ -180,7 +192,7 @@ public class OverlayService extends Service {
         if(stopped||loginPaused){multiCycleActive=false;return;}
         if(profileQueue.isEmpty()){
             multiCycleActive=false;profileIndex=-1;mode=previousMode;
-            status("Três pesquisas concluídas · listas independentes.");
+            status("Duas pesquisas concluídas · listas independentes.");
             return;
         }
         profileIndex=profileQueue.remove(0);
@@ -188,7 +200,7 @@ public class OverlayService extends Service {
         if(p==null){runNextProfile(manual);return;}
         mode=p.optString("mode","iv");
         searchInProgress=false;
-        status("Pesquisando lista "+(profileIndex+1)+" de até 3 · "+mode.toUpperCase(java.util.Locale.ROOT));
+        status("Pesquisando lista "+(profileIndex+1)+" de até 2 · "+mode.toUpperCase(java.util.Locale.ROOT));
         refreshSingle(manual);
     }
     private void finishProfileCycleStep(JSONObject r,JSONArray sorted){
@@ -196,7 +208,7 @@ public class OverlayService extends Service {
         lastProfileSearched=profileIndex;
         JSONArray merged=new JSONArray();
         JSONArray allProfiles=getSearchProfiles();
-        for(int i=0;i<Math.min(3,allProfiles.length());i++){
+        for(int i=0;i<Math.min(2,allProfiles.length());i++){
             JSONObject profile=allProfiles.optJSONObject(i);
             if(profile==null||!profile.optBoolean("enabled",false))continue;
             JSONArray stored=profileCache.get(i);
@@ -441,10 +453,13 @@ public class OverlayService extends Service {
                     getSharedPreferences("prefs",0).getInt("customIvHp",15))+","+
                 searchOptionsJson().toString()+","+
                 multiEnabled()+","+getSearchProfiles().toString()+","+
-                menuShowText+","+showLevel+","+showCp+","+showIv+","+showSpawnCount+")";
+                menuShowText+","+showLevel+","+showCp+","+showIv+","+showSpawnCount+","+
+                JSONObject.quote(getSharedPreferences("prefs",0).getString("resultsOrientation","vertical"))+","+
+                Math.max(0,Math.min(100,getSharedPreferences("prefs",0).getInt("resultsBackground",12)))+","+
+                JSONObject.quote(getSharedPreferences("prefs",0).getString("menuOrder",""))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
-        for(int i=0;i<3;i++)js(groupPanels[i],groupLoaded[i],data);
+        for(int i=0;i<2;i++)js(groupPanels[i],groupLoaded[i],data);
         updateGroupWindows();
         if(selected>=0)showDetails(selected);
     }
@@ -1560,7 +1575,7 @@ public class OverlayService extends Service {
                 JSONObject input=new JSONObject(value);
                 boolean enabled=input.optBoolean("enabled",false);
                 JSONArray profiles=input.optJSONArray("profiles");
-                if(profiles==null||profiles.length()>3||profiles.length()<1)
+                if(profiles==null||profiles.length()>2||profiles.length()<1)
                     throw new IllegalArgumentException("Quantidade de pesquisas");
                 JSONArray safe=new JSONArray();
                 for(int i=0;i<profiles.length();i++){
@@ -1821,6 +1836,29 @@ public class OverlayService extends Service {
         @JavascriptInterface public void resize(int size){handler.post(()->OverlayService.this.resize(size));}
         @JavascriptInterface public void resizeMenu(int size){handler.post(()->OverlayService.this.resizeMenu(size));}
         @JavascriptInterface public void resizeGroup(int i,int size){handler.post(()->OverlayService.this.resizeGroup(i,size));}
+        @JavascriptInterface public void setAppearanceOptions(String json){handler.post(()->{
+            try{
+                JSONObject o=new JSONObject(json);
+                String menu=o.optString("menuOrientation","vertical");
+                String results=o.optString("resultsOrientation","vertical");
+                if(!"vertical".equals(menu)&&!"horizontal".equals(menu))return;
+                if(!"vertical".equals(results)&&!"horizontal".equals(results))return;
+                int background=o.optInt("resultsBackground",12);
+                if(background<0||background>100)return;
+                android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+                prefs.edit().putString("menuOrientation",menu)
+                    .putString("resultsOrientation",results)
+                    .putBoolean("menuShowText",o.optBoolean("menuShowText",true))
+                    .putInt("resultsBackground",background).apply();
+                loadMenuPreferences(prefs);
+                boolean expanded=menuExpanded;
+                if(expanded)menu(false);
+                update();
+                if(expanded)menu(true);
+                for(int i=0;i<2;i++)if(groupRoots[i]!=null&&groupParams[i]!=null)
+                    resizeGroup(i,Math.round(groupParams[i].height/getResources().getDisplayMetrics().density));
+            }catch(Exception e){recordFailure("aparência",e);}
+        });}
         @JavascriptInterface public void setDisplayOptions(String value){handler.post(()->{
             try{
                 JSONObject obj=new JSONObject(value);
@@ -2030,10 +2068,10 @@ public class OverlayService extends Service {
         if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception e){recordFailure("remover dock",e);}}
         if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception e){recordFailure("remover menu",e);}}
         if(wm!=null&&detailRoot!=null){try{wm.removeView(detailRoot);}catch(Exception e){recordFailure("remover detalhes",e);}}
-        for(int i=0;i<3;i++)if(wm!=null&&groupRoots[i]!=null)
+        for(int i=0;i<2;i++)if(wm!=null&&groupRoots[i]!=null)
             try{wm.removeView(groupRoots[i]);}
             catch(Exception e){recordFailure("remover camada "+i,e);}
-        for(int i=0;i<3;i++){
+        for(int i=0;i<2;i++){
             destroyWebView(groupPanels[i],true,"camada "+i);
             groupPanels[i]=null;groupRoots[i]=null;groupParams[i]=null;
         }
