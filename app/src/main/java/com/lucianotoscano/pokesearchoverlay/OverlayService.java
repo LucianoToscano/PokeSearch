@@ -37,7 +37,24 @@ public class OverlayService extends Service {
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return Math.max(1,Math.min(396,screenWidthDp()-8));}
+    private boolean menuVertical=false,menuChoicesOpen=false;
+    private String hiddenControls="";
+    private int visibleControls=12;
+    private int menuDp(){
+        int wanted=menuVertical?(menuChoicesOpen?306:44):Math.max(35,33*visibleControls);
+        return Math.max(1,Math.min(wanted,screenWidthDp()-8));
+    }
+    private int menuBaseHeight(){return menuVertical?Math.min(420,Math.max(34,visibleControls*32)):MENU_BASE_DP;}
+    private void loadMenuPreferences(android.content.SharedPreferences pref){
+        String orientation=pref.getString("menuOrientation","horizontal");
+        menuVertical="vertical".equals(orientation);
+        hiddenControls=pref.getString("hiddenControls","");
+        int count=0;
+        String[] ids={"cycle","sh","period","manualRefresh","size","clock",
+            "bell","star","location","report","donate","close"};
+        for(String id:ids)if(!hiddenControls.contains("|"+id+"|"))count++;
+        visibleControls=count;
+    }
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams,menuParams;
@@ -183,7 +200,10 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+
+                JSONObject.quote(hiddenControls)+","+JSONObject.quote(menuVertical?"vertical":"horizontal")+","+
+                getSharedPreferences("prefs",0).getBoolean("showRanks",false)+","+
+                Math.max(1,Math.min(50,getSharedPreferences("prefs",0).getInt("rankMax",1)))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         if(selected>=0)showDetails(selected);
@@ -478,7 +498,7 @@ public class OverlayService extends Service {
                 }
             }
         });
-        menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP),
+        menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(menuBaseHeight()),
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
@@ -543,7 +563,19 @@ public class OverlayService extends Service {
             }else status("Abra o app e faça login.");
             return;
         }
-        String code=script().replace("__ACTION__",JSONObject.quote(action))
+        android.content.SharedPreferences optionsPrefs=getSharedPreferences("prefs",0);
+        JSONObject searchOptions=new JSONObject();
+        try{
+            searchOptions.put("rankMax",Math.max(1,Math.min(50,optionsPrefs.getInt("rankMax",1))));
+            searchOptions.put("customIvEnabled",optionsPrefs.getBoolean("customIvEnabled",false));
+            searchOptions.put("ivA",optionsPrefs.getInt("customIvAttack",0));
+            searchOptions.put("ivD",optionsPrefs.getInt("customIvDefense",15));
+            searchOptions.put("ivH",optionsPrefs.getInt("customIvHp",15));
+            for(String key:new String[]{"cpMin","cpMax","levelMin","levelMax"})
+                searchOptions.put(key,optionsPrefs.getString(key,""));
+        }catch(Exception e){recordFailure("preparar opções de busca",e);}
+        String code=script().replace("__OPTIONS__",searchOptions.toString())
+                .replace("__ACTION__",JSONObject.quote(action))
                 .replace("__MODE__",JSONObject.quote(mode))
                 .replace("__SHINY__",shiny?"true":"false");
         try{website.evaluateJavascript(code,raw->{
@@ -897,12 +929,19 @@ public class OverlayService extends Service {
     }
     private boolean verifiedTargetCriteria(JSONObject card){
         if(card==null)return false;
+        android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
         if("iv".equals(mode)){
+            if(prefs.getBoolean("customIvEnabled",false)){
+                String target=prefs.getInt("customIvAttack",0)+"/"+
+                    prefs.getInt("customIvDefense",15)+"/"+prefs.getInt("customIvHp",15);
+                return target.equals(card.optString("iv",""));
+            }
             return "15/15/15".equals(card.optString("iv","")) ||
                 "100".equals(card.optString("ivPercent",""));
         }
         if("gl".equals(mode)||"ul".equals(mode)){
-            return "1".equals(card.optString("rank","").trim());
+            int rank=rankForSort(card),limit=Math.max(1,Math.min(50,prefs.getInt("rankMax",1)));
+            return rank<=limit||(rank==999999);
         }
         return false;
     }
@@ -1015,16 +1054,26 @@ public class OverlayService extends Service {
         if(Math.abs(target-height)<2)return;
         height=target;params.height=dp(height);updateWindow();moveDetail();
     }
+    private void setChoicesOpen(boolean value){
+        if(!menuVertical||!menuExpanded||menuParams==null)return;
+        if(menuChoicesOpen==value)return;
+        menuChoicesOpen=value;
+        menuParams.width=dp(menuDp());
+        menuDrawWidth=-1;
+        updateWindow();
+        moveDetail();
+    }
     private void menu(boolean show){
         if(params==null||minimized)return;
         if(show==menuExpanded)return;
         if(!show&&locationEditorOpen)locationEditor(false);
+        if(!show)menuChoicesOpen=false;
         menuExpanded=show;
         menuPadDp=0; // Only the measured overlap may shift the sprite list.
         if(show){
             menuDrawHeight=-1;menuDrawWidth=-1;
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
-            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(MENU_BASE_DP);}
+            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(menuBaseHeight());}
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
         }
@@ -1207,6 +1256,9 @@ public class OverlayService extends Service {
                 new String[]{"P","M","G"}[(at+1)%sizes.length]+" · "+size+" × "+size,
                 android.widget.Toast.LENGTH_SHORT).show();
         });}
+        @JavascriptInterface public void setChoicesOpen(boolean open){
+            handler.post(()->OverlayService.this.setChoicesOpen(open));
+        }
         @JavascriptInterface public void toggleTimers(){handler.post(()->{
             showTimers=!showTimers;
             getSharedPreferences("prefs",0).edit().putBoolean("showTimers",showTimers).apply();
@@ -1392,6 +1444,12 @@ public class OverlayService extends Service {
     private void syncPreferencesWithoutSearch(){
         if(stopped)return;
         android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+        boolean oldVertical=menuVertical;
+        String oldHidden=hiddenControls;
+        boolean wasMenuOpen=menuExpanded;
+        if(wasMenuOpen)menu(false);
+        loadMenuPreferences(prefs);
+        menuChoicesOpen=false;
         int wanted=prefs.getInt("spriteSize",45);
         spriteSize=(wanted==35||wanted==45||wanted==55)?wanted:45;
         showTimers=prefs.getBoolean("showTimers",false);
@@ -1418,6 +1476,7 @@ public class OverlayService extends Service {
             moveDetail();
         }
         update(); // Local UI only; does not call refresh or navigate the website.
+        if(wasMenuOpen)menu(true);
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
         String action=i==null||i.getAction()==null?"":i.getAction();
@@ -1478,6 +1537,7 @@ public class OverlayService extends Service {
         }
         // v0.20 saved 10 as the implicit default; only keep a rate the user explicitly chose.
         android.content.SharedPreferences pref=getSharedPreferences("prefs",0);
+        loadMenuPreferences(pref);
         if(!pref.getBoolean("shinyOptInV32",false)){
             pref.edit().putBoolean("shiny",false).putBoolean("shinyOptInV32",true).apply();
             shiny=false;
@@ -1488,7 +1548,7 @@ public class OverlayService extends Service {
         }else{
             intervalMinutes=pref.getInt("intervalMinutes",5);
         }
-        if(intervalMinutes!=0&&intervalMinutes!=5&&intervalMinutes!=10&&
+        if(intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&intervalMinutes!=10&&
            intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=5;
         schedulePeriodic();
         spriteSize=pref.getInt("spriteSize",45);
