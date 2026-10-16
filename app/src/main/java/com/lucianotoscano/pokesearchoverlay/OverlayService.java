@@ -63,8 +63,9 @@ public class OverlayService extends Service {
         for(int i=0;i<2;i++){
             if(groupRoots[i]==null)continue;
             JSONObject p=profiles.optJSONObject(i);
-            boolean enabled=!stopped&&!loginPaused&&!pickerOpen&&multiEnabled()
-                &&p!=null&&p.optBoolean("enabled",false);
+            // One search gets its own independent window too. The gear never owns sprites.
+            boolean enabled=!stopped&&!loginPaused&&!pickerOpen&&
+                (multiEnabled()?(p!=null&&p.optBoolean("enabled",false)):i==0);
             groupRoots[i].setVisibility(enabled?View.VISIBLE:View.GONE);
         }
     }
@@ -72,12 +73,13 @@ public class OverlayService extends Service {
         if(i<0||i>=2||groupRoots[i]==null||groupParams[i]==null||wm==null)return;
         WindowManager.LayoutParams p=groupParams[i];
         int width=dp(resultWidthDp());
-        if(p.width!=width){
+        boolean widthChanged=p.width!=width;
+        if(widthChanged){
             p.width=width;
             p.x=Math.max(0,Math.min(metrics().widthPixels-width,p.x));
         }
         int next=dp(Math.max(37,Math.min(Math.min(440,screenHeightDp()-65),heightDp)));
-        if(Math.abs(p.height-next)<=dp(1))return;
+        if(Math.abs(p.height-next)<=dp(1)&&!widthChanged)return;
         p.height=next;
         p.y=Math.max(0,Math.min(metrics().heightPixels-next,p.y));
         try{wm.updateViewLayout(groupRoots[i],p);}
@@ -249,9 +251,32 @@ public class OverlayService extends Service {
     private String hiddenControls="";
     private int visibleControls=12;
     private int menuDp(){
-        int wanted=menuVertical?(menuShowText?154:44):(menuShowText?screenWidthDp()-8:Math.max(35,30*visibleControls+4));
-        if(menuChoicesOpen)wanted=Math.max(wanted,316);
-        return Math.max(1,Math.min(wanted,screenWidthDp()-8));
+        int item=getSharedPreferences("prefs",0).getInt("menuItemSize",32);
+        int wanted;
+        if(menuVertical){
+            if(!menuShowText)wanted=item+6;
+            else{
+                // Width is measured from the longest visible label, not a fixed blank column.
+                String[] ids={"cycle","sh","period","bell","star","location",
+                    "filters","eye","appearance","report","donate","close"};
+                String[] names={"Modos","Shiny","Atualização","Alertas","Favoritos",
+                    "Localização","Filtros","Informações","Aparência","Reportar",
+                    "Apoiar","Fechar"};
+                android.graphics.Paint paint=new android.graphics.Paint(1);
+                paint.setTextSize(getResources().getDisplayMetrics().scaledDensity*11f);
+                float max=0f;
+                for(int i=0;i<ids.length;i++){
+                    if(!hiddenControls.contains("|"+ids[i]+"|"))
+                        max=Math.max(max,paint.measureText(names[i]));
+                }
+                wanted=(int)Math.ceil(max/getResources().getDisplayMetrics().density)+34;
+            }
+        }else{
+            wanted=menuShowText?Math.min(screenWidthDp()-8,visibleControls*83+4):
+                Math.min(screenWidthDp()-8,visibleControls*(item+2)+4);
+        }
+        if(menuChoicesOpen)wanted=Math.max(wanted,320);
+        return Math.max(35,Math.min(wanted,screenWidthDp()-8));
     }
     private int menuBaseHeight(){
         int item=Math.max(27,Math.min(42,
@@ -616,13 +641,14 @@ public class OverlayService extends Service {
             try{
                 JSONObject item=new JSONArray(results).optJSONObject(selected);
                 int group=item==null?-1:item.optInt("profileIndex",-1);
-                if(group>=0&&group<3&&groupParams[group]!=null){
+                if(!multiEnabled())group=0;
+                if(group>=0&&group<2&&groupParams[group]!=null){
                     dockPos=Math.round(groupParams[group].x/getResources().getDisplayMetrics().density);
                     dockY=Math.round(groupParams[group].y/getResources().getDisplayMetrics().density);
                 }
             }catch(Exception e){recordFailure("posicionar detalhes de perfil",e);}
         }
-        int right=dockPos+dockDp()+gap;
+        int right=dockPos+(multiEnabled()?resultWidthDp():resultWidthDp())+gap;
         int left=dockPos-DETAIL_DP-gap;
         int preferred=right+DETAIL_DP<=w-4?right:left;
         detailParams.x=dp(Math.max(0,Math.min(w-DETAIL_DP,preferred)));
