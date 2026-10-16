@@ -253,7 +253,11 @@ public class OverlayService extends Service {
         if(menuChoicesOpen)wanted=Math.max(wanted,316);
         return Math.max(1,Math.min(wanted,screenWidthDp()-8));
     }
-    private int menuBaseHeight(){return menuVertical?Math.min(440,Math.max(34,visibleControls*32)):MENU_BASE_DP;}
+    private int menuBaseHeight(){
+        int item=Math.max(27,Math.min(42,
+            getSharedPreferences("prefs",0).getInt("menuItemSize",32)));
+        return menuVertical?Math.min(440,Math.max(34,visibleControls*(item+1))):MENU_BASE_DP;
+    }
     private void loadMenuPreferences(android.content.SharedPreferences pref){
         String orientation=pref.getString("menuOrientation","vertical");
         menuVertical="vertical".equals(orientation);
@@ -462,7 +466,8 @@ public class OverlayService extends Service {
                 menuShowText+","+showLevel+","+showCp+","+showIv+","+showSpawnCount+","+
                 JSONObject.quote(getSharedPreferences("prefs",0).getString("resultsOrientation","vertical"))+","+
                 Math.max(0,Math.min(100,getSharedPreferences("prefs",0).getInt("resultsBackground",12)))+","+
-                JSONObject.quote(getSharedPreferences("prefs",0).getString("menuOrder",""))+")";
+                JSONObject.quote(getSharedPreferences("prefs",0).getString("menuOrder",""))+","+
+                Math.max(27,Math.min(42,getSharedPreferences("prefs",0).getInt("menuItemSize",32)))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         for(int i=0;i<2;i++)js(groupPanels[i],groupLoaded[i],data);
@@ -1918,13 +1923,16 @@ public class OverlayService extends Service {
                 String results=o.optString("resultsOrientation","vertical");
                 if(!"vertical".equals(menu)&&!"horizontal".equals(menu))return;
                 if(!"vertical".equals(results)&&!"horizontal".equals(results))return;
+                int menuItemSize=o.optInt("menuItemSize",32);
+                if(menuItemSize<27||menuItemSize>42)return;
                 int background=o.optInt("resultsBackground",12);
                 if(background<0||background>100)return;
                 android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
                 prefs.edit().putString("menuOrientation",menu)
                     .putString("resultsOrientation",results)
                     .putBoolean("menuShowText",o.optBoolean("menuShowText",true))
-                    .putInt("resultsBackground",background).apply();
+                    .putInt("resultsBackground",background)
+                    .putInt("menuItemSize",menuItemSize).apply();
                 loadMenuPreferences(prefs);
                 boolean expanded=menuExpanded;
                 if(expanded)menu(false);
