@@ -12,7 +12,7 @@ let count=0;
 function test(name,ok){assert.ok(ok,name);count++;}
 test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
 test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
-test("Three explicit filters",["100% · IV perfeito","GL#1 · Grande Liga","UL#1 · Ultra Liga"].every(v=>dock.includes(v)));
+test("Five explicit search modes",["100% · 15/15/15","0% · 0/0/0","GL · Escolher Rank","UL · Escolher Rank","_/_/_ · IV 0–15"].every(v=>dock.includes(v)));
 test("Intervals include minimum 3 minutes",["AUTO · 3 min","AUTO · 5 min","AUTO · 10 min","AUTO · 15 min","AUTO · 20 min"].every(v=>dock.includes(v)));
 test("Choice panel resizes native window",dock.includes('popup.getBoundingClientRect().bottom')&&dock.includes('Native.resize(h)'));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
