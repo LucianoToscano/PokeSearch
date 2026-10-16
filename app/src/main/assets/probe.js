@@ -1,7 +1,7 @@
 (function(){
 "use strict";
 const action=__ACTION__,mode=__MODE__,shinyOnly=__SHINY__,options=__OPTIONS__;
-const maxRank=Number.isInteger(Number(options.rankMax))&&Number(options.rankMax)>=1&&Number(options.rankMax)<=50?Number(options.rankMax):1;
+const maxRank=Number.isInteger(Number(options.rankMax))&&Number(options.rankMax)>=1&&Number(options.rankMax)<=200?Number(options.rankMax):1;
 const ivGoal=options.customIvEnabled?[Number(options.ivA),Number(options.ivD),Number(options.ivH)]:[15,15,15];
 const ivValid=ivGoal.every(x=>Number.isInteger(x)&&x>=0&&x<=15);
 const clean=s=>String(s??"").replace(/\u00a0/g," ").replace(/[ \t]+/g," ").trim();
@@ -152,6 +152,51 @@ function filterRanges(apply){
  }
  return true;
 }
+
+function sizeLabels(){
+ return elements("label,[role=option],[role=checkbox],button").filter(vis)
+   .filter(el=>/^(XXS|XS|S|M|L|XL|XXL)$/.test(text(el)));
+}
+function sizeSelected(el){
+ const checkbox=el.matches('input[type=checkbox]')?el:el.querySelector('input[type=checkbox]');
+ const state=checkbox||el;
+ if(typeof state.checked==="boolean")return state.checked;
+ const aria=state.getAttribute("aria-checked");
+ if(aria!==null)return aria==="true";
+ return /\b(?:checked|selected|active)\b/.test(String(state.className||""));
+}
+function setSizeFilter(apply){
+ const want=String(options.size||"").split(",").filter(Boolean);
+ if(want.some(sz=>!["XXS","XS","S","M","L","XL","XXL"].includes(sz)))return false;
+ const control=field("Size");
+ if(!control)return want.length===0;
+ if(apply)control.click();
+ const entries=sizeLabels();
+ if(!entries.length)return want.length===0;
+ const wanted=new Set(want);
+ let ok=true;
+ for(const sz of ["XXS","XS","S","M","L","XL","XXL"]){
+  const entry=entries.find(x=>text(x)===sz);
+  if(!entry){if(wanted.has(sz))ok=false;continue;}
+  if(apply&&sizeSelected(entry)!==wanted.has(sz))entry.click();
+  if(sizeSelected(entry)!==wanted.has(sz))ok=false;
+ }
+ if(apply&&control&&typeof control.click==="function")control.click();
+ return ok;
+}
+function filterSelectFields(apply){
+ for(const [label,key] of [["Weather","weather"],["Gender","gender"],["Form","form"]]){
+  const target=String(options[key]||"").trim();
+  const available=field(label);
+  if(!available){if(target)return false;continue;}
+  const current=readChoice(label);
+  if(apply){
+   const desired=target||"Any";
+   if(current!==desired&&!choice(label,desired))return false;
+  }else if(target&&current!==target)return false;
+ }
+ return setSizeFilter(apply);
+}
 function applyGl(){
  const rank=inputNear("Top ranking");
  return !!rank&&valueInput(rank,String(maxRank))&&choice("League",mode==="ul"?"Ultra League":"Great League")&&choice("Include previous evolutions","Yes");
@@ -173,7 +218,7 @@ function check(){
   if(!rank||Number(rank.value)!==maxRank||league!==(mode==="ul"?"Ultra League":"Great League")||prior!=="Yes")
    return {ok:false,reason:"Ranking PvP não confirmado",rank:rank?rank.value:null,league,prior};
  }
- if(!filterRanges(false))return {ok:false,reason:"CP/nível não confirmados"};
+ if(!filterRanges(false)||!filterSelectFields(false))return {ok:false,reason:"Filtros adicionais não confirmados no site"};
  return {ok:true};
 }
 function cardRoots(){
@@ -258,7 +303,9 @@ function collect(){
  const valid=mode==="iv"?
    found.filter(x=>x.iv===expected||(!options.customIvEnabled&&x.ivPercent==="100")):
    (leagueConfirmed?found.filter(x=>!x.rank||(Number(x.rank)>=1&&Number(x.rank)<=maxRank))
-    .map(x=>(!x.rank&&maxRank===1?{...x,rank:"1",rankSource:"verified-site-filter"}:x)):[]);
+    .map(x=>!x.rank&&maxRank===1?
+      {...x,rank:"1",rankSource:"verified-site-filter",rankUpperBound:1}:
+      {...x,rankUpperBound:maxRank}):[]);
  const uncertain=mode==="iv"?
    found.some(x=>!(x.iv===expected||(!options.customIvEnabled&&x.ivPercent==="100"))):
    !leagueConfirmed||found.some(x=>x.rank&&(Number(x.rank)<1||Number(x.rank)>maxRank));
@@ -433,6 +480,7 @@ if(action==="configureSearch"){
   const sw=shinyControl();if(sw)sw.click();
  }
  configured=filterRanges(true)&&configured;
+ configured=filterSelectFields(true)&&configured;
  return JSON.stringify({ok:true,configured,shinyKnown:existing!==null,stage:"configure"});
 }
 if(action==="submitSearch"){
