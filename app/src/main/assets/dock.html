@@ -269,6 +269,99 @@ function toggleChoices(kind){
  document.getElementById("period").setAttribute("aria-expanded",String(kind==="period"));
  fit();
 }
+function renderFiltersPanel(){
+ const panel=document.getElementById("choices");
+ panel.classList.remove("locationPanel");panel.classList.add("filtersPanel");
+ // Inputs are built from static markup; personal or site-provided data is never HTML-injected.
+ panel.innerHTML=[
+ '<div class="choiceHeader">☷ FILTROS DE BUSCA · '+(mode==="iv"?"IV":mode==="gl"?"GRANDE LIGA":"ULTRA LIGA")+'</div>',
+ '<div class="filterHint">As opções são aplicadas ao PoGoCoordinates. Para trocar IV / GL / UL, use o botão de modo.</div>',
+ '<div class="filterLabel">PvP · Rank máximo (1–200)</div>',
+ '<div class="filterRow"><input id="fRank" type="number" min="1" max="200" step="1" aria-label="Rank máximo"></div>',
+ '<div class="filterQuick" id="fQuick"></div>',
+ '<label class="filterCheck"><input id="fShowRanks" type="checkbox"> Mostrar Rank nos Pokémon (como o relógio)</label>',
+ '<label class="filterCheck"><input id="fCustom" type="checkbox"> IV personalizado · Raw IV</label>',
+ '<div class="filterLabel">Ataque / Defesa / HP (0–15)</div>',
+ '<div class="filterRow" id="fIvRow"><select id="fIvA" aria-label="IV ataque"></select><select id="fIvD" aria-label="IV defesa"></select><select id="fIvH" aria-label="IV HP"></select></div>',
+ '<div class="filterLabel">PC mínimo / máximo</div>',
+ '<div class="filterRow"><input id="fCpMin" inputmode="numeric" type="number" min="0" max="99999" placeholder="PC min"><input id="fCpMax" inputmode="numeric" type="number" min="0" max="99999" placeholder="PC max"></div>',
+ '<div class="filterLabel">Nível mínimo / máximo</div>',
+ '<div class="filterRow"><input id="fLevelMin" type="number" min="0" max="100" step="0.5" placeholder="Nível min"><input id="fLevelMax" type="number" min="0" max="100" step="0.5" placeholder="Nível max"></div>',
+ '<div class="filterLabel">Tamanho</div>',
+ '<div id="fSizes" class="filterQuick" style="flex-wrap:wrap"></div>',
+ '<div class="filterLabel">Sexo</div>',
+ '<div class="filterRow"><select id="fGender"><option value="">Qualquer</option><option value="Male">Macho</option><option value="Female">Fêmea</option><option value="Genderless">Sem gênero</option></select></div>',
+ '<div class="filterLabel">Clima</div>',
+ '<div class="filterRow"><select id="fWeather"><option value="">Qualquer</option><option value="Sunny">Ensolarado</option><option value="Rainy">Chuvoso</option><option value="Cloudy">Nublado</option><option value="Partly Cloudy">Parcialmente nublado</option><option value="Windy">Ventoso</option><option value="Snowy">Neve</option><option value="Fog">Neblina</option></select></div>',
+ '<div class="filterLabel">Forma (opcional, nome exibido no site)</div>',
+ '<div class="filterRow"><input id="fForm" type="text" maxlength="80" placeholder="Qualquer forma"></div>',
+ '<div id="fError" class="filterHint" role="status"></div>',
+ '<div class="filterRow"><button class="filterCancel" id="fCancel">Fechar</button><button class="filterApply" id="fApply">✓ Aplicar filtros</button></div>',
+ '<div class="filterHint">Opções VIP avançadas dependem de uma conta autorizada. Rankings só são exibidos como exatos quando o site os confirma.</div>'
+ ].join("");
+ const el=id=>document.getElementById(id);
+ const data=searchOptions||{};
+ el("fRank").value=String(Math.max(1,Math.min(200,Number(data.rankMax)||rankMax||1)));
+ const preset=el("fQuick");
+ for(const n of [1,20,50,100,200]){
+  const b=document.createElement("button");b.textContent=String(n);
+  b.onclick=()=>{el("fRank").value=String(n);};
+  preset.appendChild(b);
+ }
+ el("fShowRanks").checked=data.showRanks!==false;
+ el("fCustom").checked=!!data.customIvEnabled;
+ for(const [name,key] of [["fIvA","ivA"],["fIvD","ivD"],["fIvH","ivH"]]){
+  const select=el(name);
+  for(let n=0;n<=15;n++){const opt=document.createElement("option");opt.value=String(n);opt.textContent=String(n);select.appendChild(opt);}
+  select.value=String(Number.isInteger(Number(data[key]))?data[key]:key==="ivA"?0:15);
+ }
+ const syncIv=()=>{for(const name of ["fIvA","fIvD","fIvH"])el(name).disabled=!el("fCustom").checked;};
+ el("fCustom").onchange=syncIv;syncIv();
+ for(const [id,key] of [["fCpMin","cpMin"],["fCpMax","cpMax"],["fLevelMin","levelMin"],["fLevelMax","levelMax"],["fForm","form"],["fGender","gender"],["fWeather","weather"]])
+  el(id).value=String(data[key]||"");
+ const chosenSizes=new Set(String(data.size||"").split(",").filter(Boolean));
+ const sizeSet=new Set(["XXS","XS","S","M","L","XL","XXL"]);
+ for(const sz of sizeSet){
+  const label=document.createElement("label");label.className="filterCheck";
+  label.style.cssText="margin:2px 2px;flex:0 0 22%;font-size:10px";
+  const box=document.createElement("input");box.type="checkbox";box.value=sz;box.checked=chosenSizes.has(sz);
+  box.className="fSizeCheck";label.append(box,document.createTextNode(sz));el("fSizes").appendChild(label);
+ }
+ el("fCancel").onclick=closeChoices;
+ el("fApply").onclick=()=>{
+  const rank=Number(el("fRank").value);
+  if(!Number.isInteger(rank)||rank<1||rank>200){
+   el("fError").textContent="⚠ Rank precisa estar entre 1 e 200.";return;
+  }
+  const keys=[["fCpMin","cpMin",99999],["fCpMax","cpMax",99999],["fLevelMin","levelMin",100],["fLevelMax","levelMax",100]];
+  const extra={};
+  for(const [id,key,max] of keys){
+   const value=el(id).value.trim();
+   if(value&&(Number(value)<0||Number(value)>max||!Number.isFinite(Number(value)))){
+    el("fError").textContent="⚠ Confira os limites de PC e nível.";return;
+   }
+   extra[key]=value;
+  }
+  if((extra.cpMin&&extra.cpMax&&Number(extra.cpMin)>Number(extra.cpMax))||
+     (extra.levelMin&&extra.levelMax&&Number(extra.levelMin)>Number(extra.levelMax))){
+   el("fError").textContent="⚠ O mínimo não pode superar o máximo.";return;
+  }
+  const val={
+   rankMax:rank,showRanks:el("fShowRanks").checked,customIvEnabled:el("fCustom").checked,
+   ivA:Number(el("fIvA").value),ivD:Number(el("fIvD").value),ivH:Number(el("fIvH").value),
+   ...extra,gender:el("fGender").value,weather:el("fWeather").value,form:el("fForm").value.trim(),
+   size:Array.from(panel.querySelectorAll(".fSizeCheck:checked")).map(box=>box.value).join(",")
+  };
+  searchOptions=val;showRanks=val.showRanks;rankMax=rank;customIv=val.customIvEnabled;
+  customText=val.ivA+"/"+val.ivD+"/"+val.ivH;
+  closeChoices();draw();
+  Native.setSearchOptions(JSON.stringify(val));
+ };
+ panel.classList.add("visible");
+ document.getElementById("filters").setAttribute("aria-expanded","true");
+ if(controlsWindow)Native.locationEditor(true);
+ fit();
+}
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();panel.classList.add("locationPanel");
