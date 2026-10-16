@@ -1,0 +1,57 @@
+name: Secure beta APK (private test)
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release-apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android SDK
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Run source checks
+        run: |
+          node --check app/src/main/assets/probe.js
+          node --check app/src/main/assets/shiny_login.js
+          node app/tests/probe-smoke.test.js
+          node app/tests/overlay-ux.test.js
+      - name: Generate isolated test-release signing key and build
+        shell: bash
+        run: |
+          set -euo pipefail
+          export POKE_RELEASE_KEYSTORE="$RUNNER_TEMP/pokesearch-test-release.jks"
+          export POKE_RELEASE_KEY_ALIAS="pokesearch-test"
+          export POKE_RELEASE_STORE_PASSWORD="$(openssl rand -hex 24)"
+          export POKE_RELEASE_KEY_PASSWORD="$POKE_RELEASE_STORE_PASSWORD"
+          keytool -genkeypair -noprompt -keystore "$POKE_RELEASE_KEYSTORE" -storetype PKCS12 \
+            -storepass "$POKE_RELEASE_STORE_PASSWORD" -keypass "$POKE_RELEASE_KEY_PASSWORD" \
+            -alias "$POKE_RELEASE_KEY_ALIAS" -keyalg RSA -keysize 3072 -validity 365 \
+            -dname "CN=PokeSearch Private Beta Test,O=PokeSearch,C=BR"
+          gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease
+          mkdir -p Aplicativo
+          cp app/build/outputs/apk/release/app-release.apk Aplicativo/PokeSearch-0.51-beta.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs Aplicativo/PokeSearch-0.51-beta.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging Aplicativo/PokeSearch-0.51-beta.apk | grep -E "^package: name='com.lucianotoscano.pokesearch' versionCode='51' versionName='0.51-beta'"
+          unzip -t Aplicativo/PokeSearch-0.51-beta.apk >/dev/null
+          ! unzip -Z1 Aplicativo/PokeSearch-0.51-beta.apk | grep -E '(^|/)(.*\\.java|.*\\.kt|.*\\.jks|mapping\\.txt)$'
+          sha256sum Aplicativo/PokeSearch-0.51-beta.apk > Aplicativo/SHA256SUMS.txt
+          rm -f "$POKE_RELEASE_KEYSTORE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-0.51-beta-APK-only
+          path: Aplicativo/PokeSearch-0.51-beta.apk
+          if-no-files-found: error
+          retention-days: 30

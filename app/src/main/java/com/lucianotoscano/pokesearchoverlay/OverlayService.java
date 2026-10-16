@@ -376,6 +376,12 @@ public class OverlayService extends Service {
     }
     @Override public void onCreate(){
         super.onCreate();
+        if (!IntegrityGuard.verify(this)) {
+            BugReport.log(this,"SECURITY","Falha de integridade do pacote");
+            android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
+            stopSelf();
+            return;
+        }
         NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel("pokesearch","PokeSearch",
                 NotificationManager.IMPORTANCE_LOW));

@@ -109,7 +109,7 @@ const iconGenerator=fs.readFileSync(path.join(__dirname,'../scripts/RoundIcon.ja
 const ci=fs.readFileSync(path.join(__dirname,'../../.github/workflows/build-overlay.yml'),'utf8');
 const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
-test("PokeSearch 0.50 source configured",gradleBuild.includes('versionCode = 50')&&gradleBuild.includes('versionName = "0.50-beta"'));
+test("PokeSearch 0.51 source configured",gradleBuild.includes('versionCode = 51')&&gradleBuild.includes('versionName = "0.51-beta"'));
 test("Round icon generator always uses headless mode",gradleBuild.includes('-Djava.awt.headless=true')&&iconGenerator.includes('System.setProperty("java.awt.headless","true")'));
 test("Network main-frame error is handled",service.includes('request.isForMainFrame()')&&service.includes('Falha de navegação principal'));
 test("Browser exception and parse failures recorded",service.includes('recordFailure("executar JS site",e)')&&service.includes('recordFailure("interpretar resposta JS",e)'));
@@ -313,3 +313,12 @@ test("The site is only exposed once sign-in content is actually ready",
   read("assets/login_entry.js").includes('if(authDialog||providerChoices)return "ready";')&&
   main.includes('result.contains("\\\"ready\\\"")'));
 console.log("PokeSearch UX contract: "+count+" tests passed");
+
+const guard=read("java/com/lucianotoscano/pokesearchoverlay/IntegrityGuard.java");
+const proguard=fs.readFileSync(path.join(__dirname,"..","proguard-rules.pro"),"utf8");
+const gradle=fs.readFileSync(path.join(__dirname,"..","build.gradle.kts"),"utf8");
+test("IntegrityGuard invoked in activity and service",main.includes("IntegrityGuard.verify(this)")&&service.includes("IntegrityGuard.verify(this)"));
+test("Pix digest checked with SHA-256 and constant-time compare",guard.includes("PixSupport.PAYLOAD")&&guard.includes("SHA-256")&&guard.includes("MessageDigest.isEqual"));
+test("Login protected from screenshots",main.includes("loginDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)"));
+test("R8 keeps JavascriptInterface",proguard.includes("@android.webkit.JavascriptInterface")&&proguard.includes("-keepattributes"));
+test("Release minifies and shrinks",gradle.includes("isMinifyEnabled = true")&&gradle.includes("isShrinkResources = true"));

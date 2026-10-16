@@ -7,15 +7,28 @@ android {
         applicationId = "com.lucianotoscano.pokesearch"
         minSdk = 26
         targetSdk = 33
-        versionCode = 50
-        versionName = "0.50-beta"
+        versionCode = 51
+        versionName = "0.51-beta"
     }
     // Sideloaded beta: keep tested overlay behavior on target 32. Play Store publishing needs a separate target SDK migration.
     lint { disable += "ExpiredTargetSdkVersion" }
+    val releaseStore = System.getenv("POKE_RELEASE_KEYSTORE")
+    if (!releaseStore.isNullOrBlank()) {
+        signingConfigs {
+            create("privateTestRelease") {
+                storeFile = file(releaseStore)
+                storePassword = System.getenv("POKE_RELEASE_STORE_PASSWORD")
+                keyAlias = System.getenv("POKE_RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("POKE_RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            if (!releaseStore.isNullOrBlank()) signingConfig = signingConfigs.getByName("privateTestRelease")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     compileOptions {

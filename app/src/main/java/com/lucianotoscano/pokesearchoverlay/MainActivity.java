@@ -56,6 +56,12 @@ public class MainActivity extends Activity {
     private String pendingReportText="";
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
+        if (!IntegrityGuard.verify(this)) {
+            BugReport.log(this,"SECURITY","Falha de integridade do pacote");
+            android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
         getWindow().setStatusBarColor(Color.rgb(11,13,18));
         getWindow().setNavigationBarColor(Color.rgb(11,13,18));
         LinearLayout root=new LinearLayout(this);
@@ -505,6 +511,7 @@ public class MainActivity extends Activity {
         loginCover=loginWaiting;
         loginRoot.addView(loginStage,new LinearLayout.LayoutParams(-1,0,1));
         loginDialog=new android.app.Dialog(this);
+        if(loginDialog.getWindow()!=null)loginDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
         loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         loginDialog.setContentView(loginRoot);
         // Dialog consumes Android Back before Activity.onBackPressed().
