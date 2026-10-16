@@ -739,7 +739,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  draw();
 };
 window.menuSide=side=>document.body.classList.toggle("menu-left",menuOpen&&side==="left");
-window.highlight=i=>{active=i;document.querySelectorAll(".spawn").forEach((e,index)=>e.classList.toggle("active",index===i));};
+window.highlight=i=>{active=i;document.querySelectorAll(".spawn").forEach(e=>e.classList.toggle("active",Number(e.dataset.index)===i));};
 window.setMinimized=value=>{
  document.getElementById("shell").style.display=value?"none":"block";
  if(value)setMenuOpen(false);
