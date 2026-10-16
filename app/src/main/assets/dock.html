@@ -311,6 +311,8 @@ function renderFiltersPanel(){
  '<label class="filterCheck"><input id="fCustom" type="checkbox"> IV personalizado · Raw IV</label>',
  '<div class="filterLabel">Ataque / Defesa / HP (0–15)</div>',
  '<div class="filterRow" id="fIvRow"><select id="fIvA" aria-label="IV ataque"></select><select id="fIvD" aria-label="IV defesa"></select><select id="fIvH" aria-label="IV HP"></select></div>',
+ '<div class="filterLabel">Ordenação dos resultados no PokeSearch</div>',
+ '<div class="filterRow"><select id="fSort"><option value="despawn">Tempo restante · maior</option><option value="rank">Rank · melhor primeiro</option><option value="cp">PC · maior</option><option value="iv">IV % · maior</option><option value="level">Nível · maior</option><option value="shiny">Shiny primeiro</option></select></div>',
  '<div class="filterLabel">PC mínimo / máximo</div>',
  '<div class="filterRow"><input id="fCpMin" inputmode="numeric" type="number" min="0" max="99999" placeholder="PC min"><input id="fCpMax" inputmode="numeric" type="number" min="0" max="99999" placeholder="PC max"></div>',
  '<div class="filterLabel">Nível mínimo / máximo</div>',
@@ -389,6 +391,7 @@ function renderFiltersPanel(){
  const syncProfiles=()=>{el("fProfileRoot").style.display=el("fMulti").checked?"block":"none";};
  el("fMulti").checked=!!multiEnabled;el("fMulti").onchange=syncProfiles;syncProfiles();
  el("fToolbarText").checked=showToolbarText;
+ el("fSort").value=String(data.sort||"despawn");
  el("fRank").value=String(Math.max(1,Math.min(200,Number(data.rankMax)||rankMax||1)));
  const preset=el("fQuick");
  for(const n of [1,20,50,100,200]){
@@ -435,6 +438,7 @@ function renderFiltersPanel(){
    el("fError").textContent="⚠ O mínimo não pode superar o máximo.";return;
   }
   const val={
+   sort:el("fSort").value,
    rankMax:rank,showRanks:el("fShowRanks").checked,customIvEnabled:el("fCustom").checked,
    ivA:Number(el("fIvA").value),ivD:Number(el("fIvD").value),ivH:Number(el("fIvH").value),
    ...extra,gender:el("fGender").value,weather:el("fWeather").value,form:el("fForm").value.trim(),
