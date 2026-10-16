@@ -131,6 +131,38 @@ public class MainActivity extends Activity {
         accountParams.setMargins(d(2),0,d(2),d(10));
         root.addView(account,accountParams);
         refreshSessionSummary();
+        LinearLayout customPanel=new LinearLayout(this);
+        customPanel.setOrientation(LinearLayout.VERTICAL);
+        customPanel.setPadding(d(10),d(5),d(10),d(8));
+        customPanel.setBackground(round(Color.rgb(24,28,36),11));
+        TextView customTitle=new TextView(this);
+        customTitle.setText("☷  Personalizar menu flutuante  ▾");
+        customTitle.setTextColor(Color.WHITE);
+        customTitle.setTextSize(13);
+        customTitle.setPadding(d(3),d(7),d(3),d(7));
+        customPanel.addView(customTitle);
+        LinearLayout customContents=buildMenuCustomization();
+        customContents.setVisibility(View.GONE);
+        customPanel.addView(customContents);
+        customTitle.setOnClickListener(v->{
+            boolean open=customContents.getVisibility()!=View.VISIBLE;
+            customContents.setVisibility(open?View.VISIBLE:View.GONE);
+            customTitle.setText(open?"☷  Personalizar menu flutuante  ▴":
+                "☷  Personalizar menu flutuante  ▾");
+        });
+        LinearLayout.LayoutParams cParams=new LinearLayout.LayoutParams(-1,-2);
+        cParams.setMargins(d(2),0,d(2),d(8));
+        root.addView(customPanel,cParams);
+        Button searchFilters=new Button(this);
+        searchFilters.setText("⌕  Filtros · Rank / IV personalizado / PC / Nível");
+        searchFilters.setTextSize(12);
+        searchFilters.setAllCaps(false);
+        searchFilters.setTextColor(Color.WHITE);
+        searchFilters.setBackground(round(Color.rgb(32,39,49),10));
+        searchFilters.setOnClickListener(v->showSearchFiltersDialog());
+        LinearLayout.LayoutParams filterParams=new LinearLayout.LayoutParams(-1,d(44));
+        filterParams.setMargins(d(2),0,d(2),d(9));
+        root.addView(searchFilters,filterParams);
         LinearLayout watchRow=new LinearLayout(this);
         watchRow.setOrientation(LinearLayout.HORIZONTAL);
         watchRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -180,8 +212,11 @@ public class MainActivity extends Activity {
         hint.setTextColor(Color.rgb(155,165,181));
         hint.setTextSize(12);
         hint.setGravity(Gravity.CENTER);
-        root.addView(hint,new LinearLayout.LayoutParams(-1,0,1));
-        setContentView(root);
+        root.addView(hint,new LinearLayout.LayoutParams(-1,d(50)));
+        ScrollView homeScroll=new ScrollView(this);
+        homeScroll.setFillViewport(true);
+        homeScroll.addView(root);
+        setContentView(homeScroll);
         handleShinyLoginIntent(getIntent());
         if(!getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false)&&
            !"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(getIntent().getAction()))
@@ -610,6 +645,121 @@ public class MainActivity extends Activity {
             .create();
         dialog.setOnDismissListener(d->syncOverlayPreferences());
         dialog.show();
+    }
+    private static final String[] TOOL_IDS={"cycle","sh","period","manualRefresh","size",
+        "clock","bell","star","location","report","donate","close"};
+    private static final String[] TOOL_LABELS={"100%/GL/UL","✨ Shiny","AUTO","↻ Atualizar",
+        "P/M/G","◷ Relógio","♧ Sino","☆ Favoritos","⌖ Local","⚠ Bugs","♡ Apoiar","× Fechar"};
+    private LinearLayout buildMenuCustomization(){
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        LinearLayout body=new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        TextView label=new TextView(this);
+        label.setText("Direção do menu");label.setTextColor(Color.LTGRAY);body.addView(label);
+        Spinner direction=new Spinner(this);
+        direction.setAdapter(new ArrayAdapter<String>(this,
+            android.R.layout.simple_spinner_dropdown_item,
+            new String[]{"Horizontal · uma linha","Vertical · uma coluna"}));
+        direction.setSelection("vertical".equals(prefs.getString("menuOrientation","horizontal"))?1:0);
+        direction.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
+            @Override public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){
+                String orientation=pos==1?"vertical":"horizontal";
+                if(!orientation.equals(prefs.getString("menuOrientation","horizontal"))){
+                    prefs.edit().putString("menuOrientation",orientation).apply();syncOverlayPreferences();
+                }
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> p){}
+        });
+        body.addView(direction);
+        TextView hint=new TextView(this);
+        hint.setText("Mostrar/ocultar ícones — a engrenagem permanece visível");
+        hint.setTextColor(Color.LTGRAY);hint.setTextSize(11);body.addView(hint);
+        for(int i=0;i<TOOL_IDS.length;i+=2){
+            LinearLayout pair=new LinearLayout(this);
+            pair.setOrientation(LinearLayout.HORIZONTAL);
+            for(int j=i;j<Math.min(i+2,TOOL_IDS.length);j++){
+                final String id=TOOL_IDS[j];
+                CheckBox cb=new CheckBox(this);
+                cb.setText(TOOL_LABELS[j]);cb.setTextColor(Color.WHITE);cb.setTextSize(11);
+                cb.setChecked(!prefs.getString("hiddenControls","").contains("|"+id+"|"));
+                cb.setOnCheckedChangeListener((v,show)->{
+                    String hidden=prefs.getString("hiddenControls","");
+                    String token="|"+id+"|";
+                    if(show)hidden=hidden.replace(token,"");
+                    else if(!hidden.contains(token))hidden+=token;
+                    prefs.edit().putString("hiddenControls",hidden).apply();syncOverlayPreferences();
+                });
+                pair.addView(cb,new LinearLayout.LayoutParams(0,d(41),1));
+            }
+            body.addView(pair);
+        }
+        settingCheckbox(body,prefs,"showRanks","Exibir rank sobre os sprites",false);
+        return body;
+    }
+    private void showSearchFiltersDialog(){
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        ScrollView scroll=new ScrollView(this);
+        LinearLayout body=new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setPadding(d(16),d(8),d(16),d(12));
+        scroll.addView(body);
+        TextView intro=new TextView(this);
+        intro.setText("Top Rank 1–50 para GL/UL; IV exato para o modo 100%.");
+        intro.setTextColor(Color.LTGRAY);intro.setTextSize(12);body.addView(intro);
+        TextView rankTitle=new TextView(this);
+        rankTitle.setText("Rank PvP máximo");rankTitle.setTextColor(Color.WHITE);body.addView(rankTitle);
+        String[] rankOptions=new String[50];
+        for(int i=0;i<50;i++)rankOptions[i]=String.valueOf(i+1);
+        Spinner rank=new Spinner(this);
+        rank.setAdapter(new ArrayAdapter<String>(this,
+            android.R.layout.simple_spinner_dropdown_item,rankOptions));
+        rank.setSelection(Math.max(0,Math.min(49,prefs.getInt("rankMax",1)-1)));
+        body.addView(rank);
+        CheckBox custom=new CheckBox(this);
+        custom.setText("Usar IV personalizado (em vez de 15/15/15)");
+        custom.setTextColor(Color.WHITE);
+        custom.setChecked(prefs.getBoolean("customIvEnabled",false));body.addView(custom);
+        String[] titles={"Ataque","Defesa","HP"};
+        String[] keys={"customIvAttack","customIvDefense","customIvHp"};
+        String[] ivOpts=new String[16];
+        for(int i=0;i<16;i++)ivOpts[i]=String.valueOf(i);
+        Spinner[] fields=new Spinner[3];
+        for(int i=0;i<3;i++){
+            TextView fieldLabel=new TextView(this);
+            fieldLabel.setText(titles[i]+" (0–15)");fieldLabel.setTextColor(Color.LTGRAY);
+            body.addView(fieldLabel);
+            Spinner sp=new Spinner(this);
+            sp.setAdapter(new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_dropdown_item,ivOpts));
+            sp.setSelection(Math.max(0,Math.min(15,prefs.getInt(keys[i],i==0?0:15))));
+            sp.setEnabled(custom.isChecked());body.addView(sp);fields[i]=sp;
+        }
+        custom.setOnCheckedChangeListener((v,enabled)->{
+            for(Spinner field:fields)field.setEnabled(enabled);
+        });
+        String[] extraKeys={"cpMin","cpMax","levelMin","levelMax"};
+        String[] extraLabels={"PC mínimo","PC máximo","Nível mínimo","Nível máximo"};
+        EditText[] extra=new EditText[extraKeys.length];
+        for(int i=0;i<extra.length;i++){
+            EditText edit=new EditText(this);
+            edit.setHint(extraLabels[i]);edit.setHintTextColor(Color.GRAY);
+            edit.setTextColor(Color.WHITE);
+            edit.setText(prefs.getString(extraKeys[i],""));
+            edit.setInputType(InputType.TYPE_CLASS_NUMBER|
+                (i>1?InputType.TYPE_NUMBER_FLAG_DECIMAL:0));
+            body.addView(edit);extra[i]=edit;
+        }
+        new AlertDialog.Builder(this).setTitle("Filtros da pesquisa").setView(scroll)
+            .setNegativeButton("Cancelar",null).setPositiveButton("Salvar",(d,w)->{
+                SharedPreferences.Editor e=prefs.edit()
+                    .putInt("rankMax",rank.getSelectedItemPosition()+1)
+                    .putBoolean("customIvEnabled",custom.isChecked());
+                for(int i=0;i<3;i++)e.putInt(keys[i],fields[i].getSelectedItemPosition());
+                for(int i=0;i<extra.length;i++)e.putString(extraKeys[i],
+                    extra[i].getText().toString().trim());
+                e.apply();syncOverlayPreferences();
+                Toast.makeText(this,"Filtros salvos · toque ↻ para nova busca",Toast.LENGTH_LONG).show();
+            }).show();
     }
     private ScrollView buildPreferences(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
