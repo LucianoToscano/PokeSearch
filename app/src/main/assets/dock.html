@@ -240,6 +240,37 @@ body.group-window.results-vertical .resultUnit{width:100%}
 body.group-window #spawns{background:rgba(228,231,233,var(--results-alpha,0.12));border-radius:7px}
 #controls #bell.mutedBell{opacity:.65}
 #controls #bell.mutedBell svg{opacity:.55}
+/* V0.56: gear and result layers are never in the same Android window. */
+body.dock-window #spawns,body.dock-window #empty,body.dock-window #collapse,
+body.dock-window #groupHeader{display:none!important}
+body.dock-window #shell{max-height:34px!important;overflow:hidden!important}
+body.controls-window.vertical.with-text #controls{
+ display:grid!important;grid-auto-flow:row!important;grid-template-columns:max-content;
+ grid-auto-rows:var(--toolbar-item,32px);width:max-content!important;
+ min-width:0!important;max-width:100%!important;gap:1px;overflow-x:hidden!important}
+body.controls-window.vertical.with-text #controls button{
+ box-sizing:border-box;width:100%!important;min-width:0!important;max-width:none!important;
+ height:var(--toolbar-item,32px)!important;min-height:var(--toolbar-item,32px)!important;
+ flex:none!important;white-space:nowrap!important;padding:0 7px!important;
+ background:#282a2cce;border:0;border-radius:5px!important;
+ justify-content:flex-start!important;text-align:left!important}
+body.controls-window.vertical.with-text #controls button::after{font-size:11px}
+body.controls-window.vertical:not(.with-text) #controls{
+ display:grid!important;width:max-content!important;grid-template-columns:var(--toolbar-item,32px);
+ grid-auto-rows:var(--toolbar-item,32px);overflow-y:auto!important;gap:1px!important}
+body.controls-window.vertical:not(.with-text) #controls button{
+ box-sizing:border-box;width:var(--toolbar-item,32px)!important;
+ height:var(--toolbar-item,32px)!important;min-width:0!important;
+ padding:0!important;border:0!important;background:#282a2cce!important}
+body.controls-window #controls button[data-state="on"]{
+ color:#ddf5e6!important;background:#31473ddf!important}
+body.controls-window #controls button[data-state="off"]{opacity:.72}
+body.controls-window #controls button[data-state="pending"]{color:#f4e1a0!important}
+body.group-window #spawns{margin:0!important;align-items:center}
+body.group-window #groupHeader{background:#36393cc9;border:1px solid #ffffff34}
+body.group-window #groupHeader .dragLabel{color:#f0f0f0}
+body.group-window .resultUnit{max-width:100%}
+body.group-window .resultInfo{padding:0 2px 2px}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -814,6 +845,17 @@ function draw(){
  geoBadge.textContent=locationEnabled?"📍 "+locationRadius+" km":"";
  document.getElementById("location").title=locationEnabled?"📍 "+locationRadius+" km · filtro ativo · toque para abrir/ocultar":"📍 Localização desligada · toque para configurar";
  document.getElementById("location").setAttribute("aria-label",locationEnabled?"Localização ligada, raio "+locationRadius+" quilômetros":"Localização desligada");
+ const shyButton=document.getElementById("sh");
+ shyButton.dataset.state=shiny?"on":shinyPending?"pending":"off";
+ shyButton.dataset.label="Shiny · "+(shiny?"ON":shinyPending?"aguardando":"OFF");
+ document.getElementById("period").dataset.state=period===0?"off":"on";
+ document.getElementById("period").dataset.label=period===0?"Atualização · OFF":"Atualização · "+period+"m";
+ bell.dataset.state=alertMode==="off"?"off":"on";
+ bell.dataset.label="Alertas · "+(alertMode==="silent"?"silencioso":
+     alertMode==="off"?"OFF":"som");
+ document.getElementById("location").dataset.state=locationEnabled?"on":"off";
+ document.getElementById("location").dataset.label=locationEnabled?
+     "Localização · "+locationRadius+"km":"Localização";
  document.getElementById("sh").setAttribute("aria-pressed",String(shiny));
  document.getElementById("sh").title=shiny?"✨ Shiny confirmado":shinyPending?"✨ Aguardando vínculo/confirmação no site":"Shiny desativado";
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
@@ -849,25 +891,28 @@ function draw(){
  };
  if(groupWindow){
   const profile=searchProfiles[groupId];
-  const present=cards.map((c,i)=>({c,i})).filter(x=>Number(x.c.profileIndex)===groupId);
-  const label=profile?(profile.mode==="gl"?"GL ≤"+profile.rankMax:
+  const present=cards.map((c,i)=>({c,i})).filter(x=>
+    multiEnabled?Number(x.c.profileIndex)===groupId:groupId===0);
+  const label=multiEnabled&&profile?
+    (profile.mode==="gl"?"GL ≤"+profile.rankMax:
     profile.mode==="ul"?"UL ≤"+profile.rankMax:
-    profile.customIvEnabled?[profile.ivA,profile.ivD,profile.ivH].join("/"):"100%"):"Busca";
+    profile.customIvEnabled?[profile.ivA,profile.ivD,profile.ivH].join("/"):"IV 100%"):
+    (mode==="gl"?"GL ≤"+rankMax:mode==="ul"?"UL ≤"+rankMax:
+    customIv?"IV "+customText:"IV 100%");
   document.querySelector("#groupHeader .groupName").textContent=
-    (profile&&profile.mode==="gl"?"◉ ":profile&&profile.mode==="ul"?"◈ ":"✦ ")+
+    ((multiEnabled?profile?.mode:mode)==="gl"?"◉ ":
+     (multiEnabled?profile?.mode:mode)==="ul"?"◈ ":"✦ ")+
     label+(showSpawnCount?" · "+present.length:"");
   document.getElementById("spawns").innerHTML=present.map(x=>makeSprite(x.c,x.i)).join("");
- }else if(multiEnabled){
-  // Each group owns its results in a separate Android overlay.
-  document.getElementById("spawns").replaceChildren();
  }else{
-  document.getElementById("spawns").innerHTML=cards.map(makeSprite).join("");
+  // No sprite can share the gear window in either one- or two-search mode.
+  document.getElementById("spawns").replaceChildren();
  }
  attachLongPress();
  updateTimers();
  }
  const empty=document.getElementById("empty");
- empty.style.display=multiEnabled||groupWindow||cards.length?"none":"block";
+ empty.style.display="none";
  empty.textContent=/sem resultados/i.test(status)?"0":/falha|erro|não|login/i.test(status)?"!":"…";
  empty.title=status||"Aguardando busca";
  document.getElementById("gear").title=menuOpen?"Recolher menu · arrastar para mover":status?("Abrir menu · "+status):"Abrir menu · arrastar para mover";
@@ -902,7 +947,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  document.documentElement.style.setProperty("--results-alpha",(resultsBackground/100).toFixed(2));
  showLevel=!!levelVisible;showCp=!!cpVisible;showIv=!!ivVisible;showSpawnCount=spawnVisible!==false;
  document.body.classList.toggle("with-text",showToolbarText);
- document.body.classList.toggle("multi-live",multiEnabled);
+ document.body.classList.toggle("multi-live",true);
  hiddenControls=String(hidden||"");
  menuOrientation=orientation==="vertical"?"vertical":"horizontal";
  document.body.classList.toggle("vertical",menuOrientation==="vertical");
