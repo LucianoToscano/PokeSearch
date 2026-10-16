@@ -1594,6 +1594,14 @@ public class OverlayService extends Service {
                 results="[]";hideDetails();update();OverlayService.this.refresh(true);
             }catch(Exception e){recordFailure("filtro de modo",e);}
         });}
+        @JavascriptInterface public void testAlert(){handler.post(()->{
+            boolean allowed=WatchAlerts.permissionGranted(OverlayService.this);
+            boolean sent=allowed&&WatchAlerts.test(OverlayService.this);
+            android.widget.Toast.makeText(OverlayService.this,
+                !allowed?"Conceda permissão de notificações no Android":
+                sent?"Notificação de teste enviada":"Não foi possível enviar a notificação",
+                android.widget.Toast.LENGTH_LONG).show();
+        });}
         @JavascriptInterface public void setAlertsMode(String value){handler.post(()->{
             if(!"off".equals(value)&&!"silent".equals(value)&&!"on".equals(value))return;
             alertsMode=value;alerts=!"off".equals(value);
