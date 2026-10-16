@@ -339,46 +339,177 @@ function toggleChoices(kind){
  }
  choiceOpen=kind;
  if(controlsWindow)Native.setChoicesOpen(true);
+ if(kind==="mode"){renderModePanel();return;}
+ if(kind==="alerts"){renderAlertPanel();return;}
+ if(kind==="appearance"){renderAppearancePanel();return;}
  if(kind==="location"){renderLocationChoices();return;}
- if(kind==="filters"){renderFiltersPanel();return;}
+ if(kind==="filters"){renderAdvancedFilters();return;}
  if(kind==="info"){renderInfoChoices();return;}
- const current=kind==="mode"?(mode==="iv"?
-    (customIv?(customText==="0/0/0"?"iv0":"custom"):"iv100"):mode):period;
- const entries=kind==="mode"?
-   [["iv100","100% · 15/15/15"],["iv0","0% · 0/0/0"],["gl","GL · Escolher Rank"],["ul","UL · Escolher Rank"],["custom","_/_/_ · IV 0–15"]]:
-   [[0,"AUTO · OFF (somente manual)"],[3,"AUTO · 3 min"],[5,"AUTO · 5 min"],[10,"AUTO · 10 min"],[15,"AUTO · 15 min"],[20,"AUTO · 20 min"]];
+ const entries=[["now","↻ Atualizar agora"],[0,"Auto · OFF"],[3,"Auto · 3 min"],
+ [5,"Auto · 5 min"],[10,"Auto · 10 min"],[15,"Auto · 15 min"],[20,"Auto · 20 min"]];
  const panel=document.getElementById("choices");
  panel.replaceChildren();
- const title=document.createElement("div");
- title.className="choiceHeader";
- title.textContent=kind==="mode"?"MODO DE BUSCA":"INTERVALO AUTOMÁTICO";
+ const title=document.createElement("div");title.className="choiceHeader";title.textContent="ATUALIZAÇÃO";
  panel.appendChild(title);
  for(const [value,label] of entries){
-  const btn=document.createElement("button");
-  btn.type="button";
-  btn.className=value===current?"chosen":"";
-  btn.textContent=(value===current?"✓ ":"")+label;
-  btn.onclick=()=>{
-   closeChoices();
-   if(kind==="mode"){
-     if(value==="custom"){
-       Native.selectPreset("custom");toggleChoices("filters");
-     }else{
-       mode=value==="iv100"||value==="iv0"?"iv":String(value);
-       if(value==="iv0"){customIv=true;customText="0/0/0";}
-       if(value==="iv100"){customIv=false;customText="15/15/15";}
-       draw();Native.selectPreset(String(value));
-       if(value==="gl"||value==="ul")toggleChoices("filters");
-     }
-   }
-   else{period=Number(value);draw();Native.setIntervalMinutes(period);}
+  const button=document.createElement("button");button.type="button";
+  button.className=value===period?"chosen":"";
+  button.textContent=label;
+  button.onclick=()=>{
+    closeChoices();
+    if(value==="now")manualRefreshTap();
+    else{period=Number(value);draw();Native.setIntervalMinutes(period);}
   };
-  panel.appendChild(btn);
+  panel.appendChild(button);
  }
  panel.classList.add("visible");
- document.getElementById("cycle").setAttribute("aria-expanded",String(kind==="mode"));
- document.getElementById("period").setAttribute("aria-expanded",String(kind==="period"));
+ document.getElementById("cycle").setAttribute("aria-expanded","false");
+ document.getElementById("period").setAttribute("aria-expanded","true");
  fit();
+}
+
+function panelInput(label,values,save){
+ const row=document.createElement("div");row.className="fieldRow";
+ const name=document.createElement("label");name.textContent=label;row.appendChild(name);
+ const fields=[];
+ for(const v of values){
+  const field=document.createElement("input");field.type="number";
+  field.inputMode="numeric";field.min=String(v.min);field.max=String(v.max);
+  field.value=String(v.value);field.placeholder=v.hint||"";
+  field.addEventListener("focus",()=>{if(controlsWindow)Native.locationEditor(true);});
+  fields.push(field);row.appendChild(field);
+ }
+ const apply=document.createElement("button");apply.textContent="✓";
+ apply.setAttribute("aria-label","Aplicar "+label);
+ apply.onclick=()=>{
+  const numbers=fields.map(e=>Number(e.value));
+  if(fields.some((e,i)=>e.value.trim()===""||!Number.isInteger(numbers[i])||
+     numbers[i]<Number(e.min)||numbers[i]>Number(e.max))){
+   fields.forEach(e=>e.style.borderColor="#ff9a9a");return;
+  }
+  save(numbers);
+  closeChoices();
+ };
+ row.appendChild(apply);
+ return row;
+}
+function renderModePanel(){
+ const panel=document.getElementById("choices");
+ panel.replaceChildren();panel.classList.add("modePanel");
+ const head=document.createElement("div");head.className="choiceHeader";
+ head.textContent="MODOS · ABA 1";panel.appendChild(head);
+ const description=document.createElement("div");description.className="hintSmall";
+ description.textContent="Edite diretamente os números. Toque em ✓ para aplicar à primeira aba.";
+ panel.appendChild(description);
+ const options=searchOptions||{};
+ const ivA=Number(options.ivA??0),ivD=Number(options.ivD??15),ivH=Number(options.ivH??15);
+ const rank=Number(options.rankMax||1);
+ const config=(kind,parts)=>{
+   const p={kind,ivMin:Number(options.ivMin??100),ivMax:Number(options.ivMax??100),
+     ivA,ivD,ivH,rankMax:Math.max(1,Math.min(50,rank)),...parts};
+   Native.setModeFilter(JSON.stringify(p));
+ };
+ panel.appendChild(panelInput("IV %",[
+  {min:0,max:100,value:options.ivFilter==="percent"?options.ivMin??0:0},
+  {min:0,max:100,value:options.ivFilter==="percent"?options.ivMax??100:100}
+ ],n=>{if(n[0]>n[1])return;config("percent",{ivMin:n[0],ivMax:n[1]});}));
+ panel.appendChild(panelInput("Raw IV",[
+  {min:0,max:15,value:ivA},{min:0,max:15,value:ivD},{min:0,max:15,value:ivH}
+ ],n=>config("raw",{ivA:n[0],ivD:n[1],ivH:n[2]})));
+ const presets=document.createElement("div");presets.className="fieldRow";
+ for(const [key,label,ivs] of [[0,shiny?"Shnundo":"Nundo",[0,0,0]],[1,shiny?"Shundo":"Hundo",[15,15,15]]]){
+  const button=document.createElement("button");button.textContent=label+" "+ivs.join("/");
+  button.style.cssText="flex:1;max-width:unset";
+  button.onclick=()=>{config("raw",{ivA:ivs[0],ivD:ivs[1],ivH:ivs[2]});closeChoices();};
+  presets.appendChild(button);
+ }
+ panel.appendChild(presets);
+ for(const [kind,title] of [["gl","Great League"],["ul","Ultra League"]])
+  panel.appendChild(panelInput(title,[{min:1,max:50,value:rank}],n=>config(kind,{rankMax:n[0]})));
+ panel.classList.add("visible");
+ document.getElementById("cycle").setAttribute("aria-expanded","true");
+ fit();
+}
+function renderAlertPanel(){
+ const panel=document.getElementById("choices");panel.replaceChildren();
+ const header=document.createElement("div");header.className="choiceHeader";
+ header.textContent="ALERTAS · SOM";panel.appendChild(header);
+ const entries=[["on","🔔 Som ligado"],["silent","🔕 Silencioso"],["off","🔕 Notificações desligadas"]];
+ for(const [value,label] of entries){
+  const b=document.createElement("button");b.textContent=label;
+  b.className=alertMode===value?"chosen":"";
+  b.onclick=()=>{alertMode=value;generalAlerts=value!=="off";
+    Native.setAlertsMode(value);closeChoices();draw();};
+  panel.appendChild(b);
+ }
+ panel.classList.add("visible");document.getElementById("bell").setAttribute("aria-expanded","true");fit();
+}
+function renderAppearancePanel(){
+ const panel=document.getElementById("choices");panel.replaceChildren();
+ panel.classList.add("appearancePanel");
+ const header=document.createElement("div");header.className="choiceHeader";
+ header.textContent="APARÊNCIA";panel.appendChild(header);
+ const addSelect=(title,items,value)=>{
+  const row=document.createElement("div");row.className="fieldRow";
+  const label=document.createElement("label");label.textContent=title;row.appendChild(label);
+  const select=document.createElement("select");
+  for(const [key,name] of items){const opt=document.createElement("option");opt.value=key;opt.textContent=name;select.appendChild(opt);}
+  select.value=value;row.appendChild(select);panel.appendChild(row);return select;
+ };
+ const direction=[["vertical","Vertical"],["horizontal","Horizontal"]];
+ const toolbar=addSelect("Menu",direction,menuOrientation);
+ const results=addSelect("Pokémon",direction,resultsOrientation);
+ const text=addSelect("Legendas",[["on","Ícone + texto"],["off","Só ícone"]],showToolbarText?"on":"off");
+ const size=document.createElement("button");size.textContent="Ajustar tamanho dos sprites (P/M/G)";
+ size.onclick=()=>Native.cycleSpriteSize();panel.appendChild(size);
+ const label=document.createElement("div");label.className="filterLabel";
+ label.textContent="Fundo das abas · "+resultsBackground+"%";panel.appendChild(label);
+ const alpha=document.createElement("input");alpha.type="range";alpha.min="0";alpha.max="100";
+ alpha.value=String(resultsBackground);alpha.style.width="98%";
+ alpha.oninput=()=>label.textContent="Fundo das abas · "+alpha.value+"%";
+ panel.appendChild(alpha);
+ const save=document.createElement("button");save.textContent="✓ Salvar aparência";
+ save.className="chosen";save.onclick=()=>{
+  menuOrientation=toolbar.value;resultsOrientation=results.value;
+  showToolbarText=text.value==="on";resultsBackground=Number(alpha.value);
+  Native.setAppearanceOptions(JSON.stringify({menuOrientation,resultsOrientation,
+    menuShowText:showToolbarText,resultsBackground}));
+  closeChoices();
+ };
+ panel.appendChild(save);
+ panel.classList.add("visible");document.getElementById("appearance").setAttribute("aria-expanded","true");fit();
+}
+function renderAdvancedFilters(){
+ const panel=document.getElementById("choices");
+ panel.classList.add("advancedPanel");panel.replaceChildren();
+ const header=document.createElement("div");header.className="choiceHeader";
+ header.textContent="FILTROS · POGOOCOORDINATES";panel.appendChild(header);
+ const settings=searchOptions||{};
+ const fields=[
+  ["sort","Sort by","select",[["despawn","Despawn"],["rank","Rank"],["iv","IV"],["cp","PC"],["level","Nível"],["shiny","Shiny"]]],
+  ["size","Tamanho","text"],["gender","Sexo","select",[["","Todos"],["Male","Macho"],["Female","Fêmea"],["Genderless","Sem gênero"]]],
+  ["levelMin","Nível mín.","number"],["levelMax","Nível máx.","number"],
+  ["weather","Clima","select",[["","Qualquer"],["Sunny","Ensolarado"],["Rainy","Chuvoso"],["Cloudy","Nublado"],["Windy","Ventoso"],["Snowy","Neve"],["Fog","Neblina"]]],
+  ["form","Forma","text"]];
+ const inputs={};
+ for(const [key,title,kind,options] of fields){
+  const row=document.createElement("div");row.className="fieldRow";
+  const lbl=document.createElement("label");lbl.textContent=title;row.appendChild(lbl);
+  const inp=document.createElement(kind==="select"?"select":"input");
+  if(kind==="select")for(const [v,t] of options){const o=document.createElement("option");o.value=v;o.textContent=t;inp.appendChild(o);}
+  if(kind!=="select"){inp.type=kind;inp.inputMode=kind==="number"?"decimal":"text";inp.placeholder=title;}
+  inp.value=String(settings[key]??"");inp.addEventListener("focus",()=>{if(controlsWindow)Native.locationEditor(true);});
+  row.appendChild(inp);inputs[key]=inp;panel.appendChild(row);
+ }
+ const note=document.createElement("div");note.className="hintSmall";
+ note.textContent="Os campos só são considerados aplicados após confirmação pelo site. Filtros VIP exigem autorização.";
+ panel.appendChild(note);
+ const save=document.createElement("button");save.className="chosen";save.textContent="✓ Aplicar filtros";
+ save.onclick=()=>{
+  const o={...searchOptions};for(const key of Object.keys(inputs))o[key]=inputs[key].value.trim();
+  searchOptions=o;Native.setSearchOptions(JSON.stringify(o));closeChoices();
+ };
+ panel.appendChild(save);panel.classList.add("visible");fit();
 }
 function renderFiltersPanel(){
  const panel=document.getElementById("choices");
