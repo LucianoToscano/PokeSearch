@@ -170,7 +170,7 @@ const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 document.body.classList.add(controlsWindow?"controls-window":"dock-window");
 document.documentElement.classList.toggle("controls-root",controlsWindow);
 let locationEnabled=false,locationCoords="",locationRadius=0;
-let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,showRanks=false,rankMax=1,hiddenControls='',menuOrientation='horizontal',generalAlerts=false,hasFavorites=false,alertMode="off";
+let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,showRanks=false,rankMax=1,customIv=false,customText='',hiddenControls='',menuOrientation='horizontal',generalAlerts=false,hasFavorites=false,alertMode="off";
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
  document.documentElement.style.setProperty("--top-space",menuOpen?(Math.max(0,Number(pad)||0)+"px"):"0px");
@@ -307,7 +307,7 @@ function draw(){
  document.documentElement.style.setProperty("--sprite",spriteSize+"px");
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
  const cy=document.getElementById("cycle");
- if(mode==="iv"){cy.textContent="100%";cy.classList.add("ivOn");cy.title="IV100 · 15/15/15";}
+ if(mode==="iv"){cy.textContent=customIv?"IV":"100%";cy.classList.add("ivOn");cy.title=customIv?"IV personalizado · "+customText:"IV100 · 15/15/15";}
  else{
    const gl=mode==="gl",color=gl?"#2f8ed8":"#d8ad43";
    cy.innerHTML='<span class="league"><svg viewBox="0 0 24 24" aria-hidden="true">'+
@@ -371,19 +371,26 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank,customEnabled,customRaw)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
- showRanks=!!ranks;
+ showRanks=!!ranks;customIv=!!customEnabled;customText=String(customRaw||"");
  rankMax=Number.isInteger(Number(maxRank))&&Number(maxRank)>=1&&Number(maxRank)<=50?Number(maxRank):1;
  hiddenControls=String(hidden||"");
  menuOrientation=orientation==="vertical"?"vertical":"horizontal";
  document.body.classList.toggle("vertical",menuOrientation==="vertical");
+ const controls=document.getElementById("controls");
  document.querySelectorAll("#controls>button").forEach(b=>{
    b.style.display=hiddenControls.includes("|"+b.id+"|")?"none":"";
  });
+ if(menuOrientation==="horizontal"){
+   const n=Array.from(controls.children).filter(b=>b.style.display!=="none").length;
+   controls.style.gridTemplateColumns="repeat("+Math.max(1,n)+",minmax(0,1fr))";
+ }else{
+   controls.style.gridTemplateColumns="";
+ }
  if(active>=cards.length)active=-1;
  draw();
 };
