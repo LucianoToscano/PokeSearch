@@ -850,9 +850,6 @@ function draw(){
  shyButton.dataset.label="Shiny · "+(shiny?"ON":shinyPending?"aguardando":"OFF");
  document.getElementById("period").dataset.state=period===0?"off":"on";
  document.getElementById("period").dataset.label=period===0?"Atualização · OFF":"Atualização · "+period+"m";
- bell.dataset.state=alertMode==="off"?"off":"on";
- bell.dataset.label="Alertas · "+(alertMode==="silent"?"silencioso":
-     alertMode==="off"?"OFF":"som");
  document.getElementById("location").dataset.state=locationEnabled?"on":"off";
  document.getElementById("location").dataset.label=locationEnabled?
      "Localização · "+locationRadius+"km":"Localização";
@@ -861,6 +858,10 @@ function draw(){
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
  if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status))document.getElementById("manualRefresh").classList.remove("requested");
  const bell=document.getElementById("bell");
+ bell.dataset.state=alertMode==="off"?"off":"on";
+ bell.dataset.label="Alertas · "+(alertMode==="silent"?"silencioso":
+     alertMode==="off"?"OFF":"som");
+
  bell.classList.toggle("generalOn",generalAlerts);
  bell.classList.toggle("mutedBell",!generalAlerts);
   bell.classList.toggle("generalSilent",alertMode==="silent");
