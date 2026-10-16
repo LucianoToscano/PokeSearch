@@ -37,7 +37,108 @@ public class OverlayService extends Service {
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private boolean menuVertical=false,menuChoicesOpen=false,menuShowText=false;
+    private boolean menuVertical=true,menuChoicesOpen=false,menuShowText=true;
+    private final FrameLayout[] groupRoots=new FrameLayout[3];
+    private final WebView[] groupPanels=new WebView[3];
+    private final WindowManager.LayoutParams[] groupParams=new WindowManager.LayoutParams[3];
+    private final boolean[] groupLoaded=new boolean[3];
+    private boolean showLevel=false,showCp=false,showIv=false,showSpawnCount=true;
+    private static final int GROUP_WIDTH_DP=100;
+    private void loadDisplayPreferences(android.content.SharedPreferences pref){
+        showTimers=pref.getBoolean("showTimers",true);
+        showLevel=pref.getBoolean("showLevel",false);
+        showCp=pref.getBoolean("showCp",false);
+        showIv=pref.getBoolean("showIv",false);
+        showSpawnCount=pref.getBoolean("showSpawnCount",true);
+    }
+    private void updateGroupWindows(){
+        JSONArray profiles=getSearchProfiles();
+        for(int i=0;i<3;i++){
+            if(groupRoots[i]==null)continue;
+            JSONObject p=profiles.optJSONObject(i);
+            boolean enabled=!stopped&&!loginPaused&&!pickerOpen&&multiEnabled()
+                &&p!=null&&p.optBoolean("enabled",false);
+            groupRoots[i].setVisibility(enabled?View.VISIBLE:View.GONE);
+        }
+    }
+    private void resizeGroup(int i,int heightDp){
+        if(i<0||i>=3||groupRoots[i]==null||groupParams[i]==null||wm==null)return;
+        WindowManager.LayoutParams p=groupParams[i];
+        int next=dp(Math.max(37,Math.min(Math.min(440,screenHeightDp()-65),heightDp)));
+        if(Math.abs(p.height-next)<=dp(1))return;
+        p.height=next;
+        p.y=Math.max(0,Math.min(metrics().heightPixels-next,p.y));
+        try{wm.updateViewLayout(groupRoots[i],p);}
+        catch(Exception e){recordFailure("redimensionar camada "+i,e);}
+    }
+    private void createGroupWindows(){
+        for(int i=0;i<3;i++)createGroupWindow(i);
+        updateGroupWindows();
+    }
+    private void createGroupWindow(int i){
+        FrameLayout frame=new FrameLayout(this);
+        frame.setBackgroundColor(Color.TRANSPARENT);
+        WebView web=new WebView(this);
+        web.setBackgroundColor(Color.TRANSPARENT);
+        web.getSettings().setJavaScriptEnabled(true);
+        web.getSettings().setAllowContentAccess(false);
+        web.getSettings().setAllowFileAccessFromFileURLs(false);
+        web.getSettings().setAllowUniversalAccessFromFileURLs(false);
+        web.addJavascriptInterface(new Bridge(),"Native");
+        frame.addView(web,new FrameLayout.LayoutParams(-1,-1));
+        android.content.SharedPreferences pref=getSharedPreferences("prefs",0);
+        int defaultX=Math.max(0,screenWidthDp()-GROUP_WIDTH_DP-64-(i%2)*108);
+        int defaultY=190+i*122;
+        WindowManager.LayoutParams p=new WindowManager.LayoutParams(
+            dp(GROUP_WIDTH_DP),dp(56),WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            PixelFormat.TRANSLUCENT);
+        p.gravity=Gravity.TOP|Gravity.LEFT;
+        p.x=dp(Math.max(0,Math.min(screenWidthDp()-GROUP_WIDTH_DP,
+            pref.getInt("layerX"+i,defaultX))));
+        p.y=dp(Math.max(0,Math.min(screenHeightDp()-60,
+            pref.getInt("layerY"+i,defaultY))));
+        groupRoots[i]=frame;groupPanels[i]=web;groupParams[i]=p;
+        View handle=new View(this);handle.setBackgroundColor(Color.TRANSPARENT);
+        final float[] touch={0,0};
+        final int[] origin={0,0};
+        handle.setOnTouchListener((v,event)->{
+            WindowManager.LayoutParams coords=groupParams[i];
+            if(coords==null)return true;
+            switch(event.getActionMasked()){
+              case MotionEvent.ACTION_DOWN:
+                touch[0]=event.getRawX();touch[1]=event.getRawY();
+                origin[0]=coords.x;origin[1]=coords.y;return true;
+              case MotionEvent.ACTION_MOVE:
+                coords.x=Math.max(0,Math.min(metrics().widthPixels-coords.width,
+                    origin[0]+Math.round(event.getRawX()-touch[0])));
+                coords.y=Math.max(0,Math.min(metrics().heightPixels-coords.height,
+                    origin[1]+Math.round(event.getRawY()-touch[1])));
+                try{wm.updateViewLayout(frame,coords);}
+                catch(Exception e){recordFailure("mover camada "+i,e);}
+                return true;
+              case MotionEvent.ACTION_UP:
+              case MotionEvent.ACTION_CANCEL:
+                getSharedPreferences("prefs",0).edit()
+                    .putInt("layerX"+i,Math.round(coords.x/getResources().getDisplayMetrics().density))
+                    .putInt("layerY"+i,Math.round(coords.y/getResources().getDisplayMetrics().density)).apply();
+                return true;
+            }
+            return true;
+        });
+        frame.addView(handle,new FrameLayout.LayoutParams(dp(24),dp(29),Gravity.TOP|Gravity.LEFT));
+        frame.setVisibility(View.GONE);
+        try{wm.addView(frame,p);}
+        catch(Exception e){recordFailure("abrir camada "+i,e);groupRoots[i]=null;groupPanels[i]=null;groupParams[i]=null;return;}
+        web.setWebViewClient(new WebViewClient(){
+            @Override public void onPageFinished(WebView view,String url){
+                if(url!=null&&url.startsWith("file:///android_asset/")){
+                    groupLoaded[i]=true;update();
+                }
+            }
+        });
+        web.loadUrl("file:///android_asset/dock.html?group="+i);
+    }
     private boolean multiCycleActive=false;
     private int profileIndex=-1,lastProfileSearched=-1;
     private String previousMode="iv";
@@ -142,13 +243,13 @@ public class OverlayService extends Service {
     }
     private int menuBaseHeight(){return menuVertical?Math.min(440,Math.max(34,visibleControls*32)):MENU_BASE_DP;}
     private void loadMenuPreferences(android.content.SharedPreferences pref){
-        String orientation=pref.getString("menuOrientation","horizontal");
+        String orientation=pref.getString("menuOrientation","vertical");
         menuVertical="vertical".equals(orientation);
-        menuShowText=pref.getBoolean("menuShowText",false);
+        menuShowText=pref.getBoolean("menuShowText",true);
         hiddenControls=pref.getString("hiddenControls","");
         int count=0;
         String[] ids={"cycle","sh","period","manualRefresh","size","clock",
-            "bell","star","location","filters","report","donate","close"};
+            "bell","star","location","filters","eye","report","donate","close"};
         for(String id:ids)if(!hiddenControls.contains("|"+id+"|"))count++;
         visibleControls=count;
     }
@@ -340,9 +441,11 @@ public class OverlayService extends Service {
                     getSharedPreferences("prefs",0).getInt("customIvHp",15))+","+
                 searchOptionsJson().toString()+","+
                 multiEnabled()+","+getSearchProfiles().toString()+","+
-                menuShowText+")";
+                menuShowText+","+showLevel+","+showCp+","+showIv+","+showSpawnCount+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
+        for(int i=0;i<3;i++)js(groupPanels[i],groupLoaded[i],data);
+        updateGroupWindows();
         if(selected>=0)showDetails(selected);
     }
     private void status(String s){
@@ -689,6 +792,7 @@ public class OverlayService extends Service {
         try{wm.addView(detailRoot,detailParams);}catch(Exception e){recordFailure("abrir detalhes",e);detailRoot=null;}
         panel.loadUrl("file:///android_asset/dock.html");
         if(detailRoot!=null)detailPanel.loadUrl("file:///android_asset/detail.html");
+        createGroupWindows();
         // Initial navigation is scheduled after cookie flush in onStartCommand.
         running=true;
     }
@@ -1680,6 +1784,18 @@ public class OverlayService extends Service {
         @JavascriptInterface public void close(){handler.post(()->stopSelf());}
         @JavascriptInterface public void resize(int size){handler.post(()->OverlayService.this.resize(size));}
         @JavascriptInterface public void resizeMenu(int size){handler.post(()->OverlayService.this.resizeMenu(size));}
+        @JavascriptInterface public void resizeGroup(int i,int size){handler.post(()->OverlayService.this.resizeGroup(i,size));}
+        @JavascriptInterface public void setDisplayOptions(String value){handler.post(()->{
+            try{
+                JSONObject obj=new JSONObject(value);
+                android.content.SharedPreferences.Editor edit=getSharedPreferences("prefs",0).edit();
+                for(String key:new String[]{"showTimers","showRanks","showLevel","showCp","showIv","showSpawnCount"})
+                    if(obj.has(key))edit.putBoolean(key,obj.getBoolean(key));
+                edit.apply();
+                loadDisplayPreferences(getSharedPreferences("prefs",0));
+                update();
+            }catch(Exception e){recordFailure("indicadores do olho",e);}
+        });}
         @JavascriptInterface public void resizeDetail(int size){handler.post(()->OverlayService.this.resizeDetail(size));}
         @JavascriptInterface public void toggleDetail(int index){handler.post(()->{
             if(selected==index)hideDetails();else showDetails(index);
@@ -1726,7 +1842,7 @@ public class OverlayService extends Service {
         menuChoicesOpen=false;
         int wanted=prefs.getInt("spriteSize",45);
         spriteSize=(wanted==35||wanted==45||wanted==55)?wanted:45;
-        showTimers=prefs.getBoolean("showTimers",false);
+        loadDisplayPreferences(prefs);
         alerts=prefs.getBoolean("alerts",false);
         alertsMode=prefs.getString("alertsMode",alerts?"on":"off");
         if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";
@@ -1827,7 +1943,7 @@ public class OverlayService extends Service {
         schedulePeriodic();
         spriteSize=pref.getInt("spriteSize",45);
         if(spriteSize!=35&&spriteSize!=45&&spriteSize!=55)spriteSize=45;
-        showTimers=pref.getBoolean("showTimers",false);
+        loadDisplayPreferences(pref);
         alerts=pref.getBoolean("alerts",false);
         alertsMode=pref.getString("alertsMode",alerts?"on":"off");
         if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";
@@ -1876,6 +1992,13 @@ public class OverlayService extends Service {
         if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception e){recordFailure("remover dock",e);}}
         if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception e){recordFailure("remover menu",e);}}
         if(wm!=null&&detailRoot!=null){try{wm.removeView(detailRoot);}catch(Exception e){recordFailure("remover detalhes",e);}}
+        for(int i=0;i<3;i++)if(wm!=null&&groupRoots[i]!=null)
+            try{wm.removeView(groupRoots[i]);}
+            catch(Exception e){recordFailure("remover camada "+i,e);}
+        for(int i=0;i<3;i++){
+            destroyWebView(groupPanels[i],true,"camada "+i);
+            groupPanels[i]=null;groupRoots[i]=null;groupParams[i]=null;
+        }
         destroyWebView(panel,true,"painel");panel=null;
         destroyWebView(menuPanel,true,"menu");menuPanel=null;
         destroyWebView(detailPanel,true,"detalhes");detailPanel=null;
