@@ -529,7 +529,7 @@ window.onFilterOptions=function(response){
  filterOptions=response.partial?{...filterOptions,...(response.options||{})}:(response.options||{});
  if(choiceOpen==="mode"&&modeDraft){
   const panel=document.getElementById("choices"),scroll=panel.scrollTop;
-  if(!document.activeElement||!document.activeElement.matches("input")){renderModeChoices();panel.scrollTop=scroll;}
+  if(panel.querySelector(".modeTitleRow")&&(!document.activeElement||!document.activeElement.matches("input"))){renderModeChoices();panel.scrollTop=scroll;}
  }
 };
 
