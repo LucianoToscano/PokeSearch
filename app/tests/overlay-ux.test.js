@@ -348,3 +348,27 @@ test("v0.51 original single search and toolbar remain unchanged",
     dock.includes('grid-template-columns:34fr 22fr 41fr')&&
     service.includes('private String mode="iv"')&&
     !service.includes('multiCycleActive'));
+
+test("v0.51 all 18 original result icons are present for 9 search types and Shiny pairs",(()=>{
+  const paths=[
+    "none.png","none-shiny.png","custom.png","custom-shiny.png",
+    "percent.png","percent-shiny.png","hundo.png","shundo.png",
+    "nundo.png","shnundo.png","great-league.png","great-league-shiny.png",
+    "ultra-league.png","ultra-league-shiny.png","master-league.png",
+    "master-league-shiny.png","cup-league.png","cup-league-shiny.png"
+  ];
+  return paths.every(name=>fs.existsSync(path.join(root,"assets/result-icons",name)))&&
+    paths.length===18;
+})());
+test("v0.51 header chooses a confirmed Shiny version of its exact search type",
+    dock.includes('function getResultIcon(searchMode,shinyActive)')&&
+    dock.includes('const selectedIcon=getResultIcon(mode,shiny)')&&
+    dock.includes('const pair=RESULT_ICONS[family]')&&
+    dock.includes('shining?pair.shiny:pair.normal'));
+test("v0.51 custom IV, IV percentage, Nundo, Master and Cup icons do not add unsupported filters",
+    dock.includes('custom:{normal:"custom.png"')&&
+    dock.includes('percent:{normal:"percent.png"')&&
+    dock.includes('nundo:{normal:"nundo.png"')&&
+    dock.includes('ml:{normal:"master-league.png"')&&
+    dock.includes('cup:{normal:"cup-league.png"')&&
+    !service.includes('multiCycleActive'));
