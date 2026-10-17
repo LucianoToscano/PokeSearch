@@ -83,7 +83,8 @@ function run(action,mode,shinyOnly,opts={}){
     body:element(opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":"")};
   const code=source.replace("__ACTION__",JSON.stringify(action))
       .replace("__MODE__",JSON.stringify(mode))
-      .replace("__SHINY__",String(shinyOnly));
+      .replace("__SHINY__",String(shinyOnly))
+      .replace("__OPTIONS__",JSON.stringify(opts.searchOptions||{}));
   return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:"/search",hostname:"pogocoordinates.com"},window:{}}));
 }
 let checked=0;

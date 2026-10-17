@@ -131,6 +131,48 @@ public class MainActivity extends Activity {
         accountParams.setMargins(d(2),0,d(2),d(10));
         root.addView(account,accountParams);
         refreshSessionSummary();
+        LinearLayout customPanel=new LinearLayout(this);
+        customPanel.setOrientation(LinearLayout.VERTICAL);
+        customPanel.setPadding(d(10),d(5),d(10),d(8));
+        customPanel.setBackground(round(Color.rgb(24,28,36),11));
+        TextView customTitle=new TextView(this);
+        customTitle.setText("☷  Personalizar menu flutuante  ▾");
+        customTitle.setTextColor(Color.WHITE);
+        customTitle.setTextSize(13);
+        customTitle.setPadding(d(3),d(7),d(3),d(7));
+        customPanel.addView(customTitle);
+        LinearLayout customContents=buildMenuCustomization();
+        customContents.setVisibility(View.GONE);
+        customPanel.addView(customContents);
+        customTitle.setOnClickListener(v->{
+            boolean open=customContents.getVisibility()!=View.VISIBLE;
+            customContents.setVisibility(open?View.VISIBLE:View.GONE);
+            customTitle.setText(open?"☷  Personalizar menu flutuante  ▴":
+                "☷  Personalizar menu flutuante  ▾");
+        });
+        LinearLayout.LayoutParams cParams=new LinearLayout.LayoutParams(-1,-2);
+        cParams.setMargins(d(2),0,d(2),d(8));
+        root.addView(customPanel,cParams);
+        Button searchFilters=new Button(this);
+        searchFilters.setText("⌕  Filtros · Rank / IV personalizado / PC / Nível");
+        searchFilters.setTextSize(12);
+        searchFilters.setAllCaps(false);
+        searchFilters.setTextColor(Color.WHITE);
+        searchFilters.setBackground(round(Color.rgb(32,39,49),10));
+        searchFilters.setOnClickListener(v->showSearchFiltersDialog());
+        LinearLayout.LayoutParams filterParams=new LinearLayout.LayoutParams(-1,d(44));
+        filterParams.setMargins(d(2),0,d(2),d(9));
+        root.addView(searchFilters,filterParams);
+        Button multipleSearches=new Button(this);
+        multipleSearches.setText("▤  Até três pesquisas · listas separadas");
+        multipleSearches.setAllCaps(false);
+        multipleSearches.setTextSize(12);
+        multipleSearches.setTextColor(Color.WHITE);
+        multipleSearches.setBackground(round(Color.rgb(32,39,49),10));
+        multipleSearches.setOnClickListener(v->showSearchProfilesDialog());
+        LinearLayout.LayoutParams multipleParams=new LinearLayout.LayoutParams(-1,d(44));
+        multipleParams.setMargins(d(2),0,d(2),d(10));
+        root.addView(multipleSearches,multipleParams);
         LinearLayout watchRow=new LinearLayout(this);
         watchRow.setOrientation(LinearLayout.HORIZONTAL);
         watchRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -180,8 +222,11 @@ public class MainActivity extends Activity {
         hint.setTextColor(Color.rgb(155,165,181));
         hint.setTextSize(12);
         hint.setGravity(Gravity.CENTER);
-        root.addView(hint,new LinearLayout.LayoutParams(-1,0,1));
-        setContentView(root);
+        root.addView(hint,new LinearLayout.LayoutParams(-1,d(50)));
+        ScrollView homeScroll=new ScrollView(this);
+        homeScroll.setFillViewport(true);
+        homeScroll.addView(root);
+        setContentView(homeScroll);
         handleShinyLoginIntent(getIntent());
         if(!getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false)&&
            !"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(getIntent().getAction()))
@@ -610,6 +655,289 @@ public class MainActivity extends Activity {
             .create();
         dialog.setOnDismissListener(d->syncOverlayPreferences());
         dialog.show();
+    }
+    private static final String[] TOOL_IDS={"cycle","sh","period","manualRefresh","size",
+        "clock","bell","star","location","filters","eye","report","donate","close"};
+    private static final String[] TOOL_LABELS={"100%/GL/UL","✨ Shiny","AUTO","↻ Atualizar",
+        "P/M/G","◷ Relógio","♧ Sino","☆ Favoritos","⌖ Local","☷ Filtros","◉ Olho","⚠ Bugs","♡ Apoiar","× Fechar"};
+    private LinearLayout buildMenuCustomization(){
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        LinearLayout body=new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        TextView label=new TextView(this);
+        label.setText("Direção do menu");label.setTextColor(Color.LTGRAY);body.addView(label);
+        Spinner direction=new Spinner(this);
+        direction.setAdapter(new ArrayAdapter<String>(this,
+            android.R.layout.simple_spinner_dropdown_item,
+            new String[]{"Horizontal · uma linha","Vertical · uma coluna"}));
+        direction.setSelection("vertical".equals(prefs.getString("menuOrientation","vertical"))?1:0);
+        direction.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
+            @Override public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){
+                String orientation=pos==1?"vertical":"horizontal";
+                if(!orientation.equals(prefs.getString("menuOrientation","horizontal"))){
+                    prefs.edit().putString("menuOrientation",orientation).apply();syncOverlayPreferences();
+                }
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> p){}
+        });
+        body.addView(direction);
+        TextView hint=new TextView(this);
+        hint.setText("Mostrar/ocultar ícones — a engrenagem permanece visível");
+        hint.setTextColor(Color.LTGRAY);hint.setTextSize(11);body.addView(hint);
+        for(int i=0;i<TOOL_IDS.length;i+=2){
+            LinearLayout pair=new LinearLayout(this);
+            pair.setOrientation(LinearLayout.HORIZONTAL);
+            for(int j=i;j<Math.min(i+2,TOOL_IDS.length);j++){
+                final String id=TOOL_IDS[j];
+                CheckBox cb=new CheckBox(this);
+                cb.setText(TOOL_LABELS[j]);cb.setTextColor(Color.WHITE);cb.setTextSize(11);
+                cb.setChecked(!prefs.getString("hiddenControls","").contains("|"+id+"|"));
+                cb.setOnCheckedChangeListener((v,show)->{
+                    String hidden=prefs.getString("hiddenControls","");
+                    String token="|"+id+"|";
+                    if(show)hidden=hidden.replace(token,"");
+                    else if(!hidden.contains(token))hidden+=token;
+                    prefs.edit().putString("hiddenControls",hidden).apply();syncOverlayPreferences();
+                });
+                pair.addView(cb,new LinearLayout.LayoutParams(0,d(41),1));
+            }
+            body.addView(pair);
+        }
+        settingCheckbox(body,prefs,"showRanks","Mostrar Rank PvP nos Pokémon (também no menu)",true);
+        settingCheckbox(body,prefs,"menuShowText","Exibir texto junto aos ícones",true);
+        return body;
+    }
+
+    private void showSearchProfilesDialog(){
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        JSONArray saved;
+        try{saved=new JSONArray(prefs.getString("searchProfiles","[]"));}
+        catch(Exception ignored){saved=new JSONArray();}
+        ScrollView scrolling=new ScrollView(this);
+        LinearLayout body=new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setPadding(d(15),d(8),d(15),d(15));
+        scrolling.addView(body);
+        CheckBox multiple=new CheckBox(this);
+        multiple.setText("Pesquisar até 3 filtros simultaneamente (em sequência)");
+        multiple.setTextColor(Color.WHITE);
+        multiple.setChecked(prefs.getBoolean("multiEnabled",false));
+        body.addView(multiple);
+        TextView explanation=new TextView(this);
+        explanation.setText("As listas são independentes e aparecem no overlay. O site é consultado uma busca por vez, respeitando o intervalo mínimo.");
+        explanation.setTextSize(12);explanation.setTextColor(Color.LTGRAY);
+        body.addView(explanation);
+        CheckBox[] selected=new CheckBox[3];
+        Spinner[] modes=new Spinner[3];
+        Spinner[] ranks=new Spinner[3];
+        Spinner[][] ivs=new Spinner[3][3];
+        String[] modeLabels={"IV 100% · 15/15/15","Grande Liga","Ultra Liga","IV personalizado","IV 0% · 0/0/0"};
+        String[] rankValues=new String[200],ivValues=new String[16];
+        for(int i=0;i<200;i++)rankValues[i]=String.valueOf(i+1);
+        for(int i=0;i<16;i++)ivValues[i]=String.valueOf(i);
+        for(int i=0;i<3;i++){
+            final int index=i;
+            JSONObject old=saved.optJSONObject(i);
+            LinearLayout group=new LinearLayout(this);
+            group.setOrientation(LinearLayout.VERTICAL);
+            group.setPadding(d(8),d(8),d(8),d(8));
+            group.setBackground(round(Color.rgb(26,32,41),9));
+            selected[i]=new CheckBox(this);
+            selected[i].setText("Pesquisa "+(i+1));
+            selected[i].setTextColor(Color.WHITE);
+            selected[i].setChecked(old==null||old.optBoolean("enabled",true));
+            group.addView(selected[i]);
+            modes[i]=new Spinner(this);
+            modes[i].setAdapter(new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_dropdown_item,modeLabels));
+            int def=i==1?1:i==2?4:0;
+            String kind=old==null?"":old.optString("mode","iv");
+            if("gl".equals(kind))def=1;
+            else if("ul".equals(kind))def=2;
+            else if("iv".equals(kind)){
+                boolean hasRaw=old.optBoolean("customIvEnabled",false);
+                boolean isZero=old.optInt("ivA",15)==0&&old.optInt("ivD",15)==0&&old.optInt("ivH",15)==0;
+                def=hasRaw?(isZero?4:3):0;
+            }
+            modes[i].setSelection(def);group.addView(modes[i]);
+            ranks[i]=new Spinner(this);
+            ranks[i].setAdapter(new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_dropdown_item,rankValues));
+            ranks[i].setSelection(Math.max(0,Math.min(199,old==null?0:old.optInt("rankMax",1)-1)));
+            group.addView(ranks[i]);
+            LinearLayout ivRow=new LinearLayout(this);
+            ivRow.setOrientation(LinearLayout.HORIZONTAL);
+            for(int j=0;j<3;j++){
+                Spinner sp=new Spinner(this);
+                sp.setAdapter(new ArrayAdapter<String>(this,
+                    android.R.layout.simple_spinner_dropdown_item,ivValues));
+                int defaultIv=i==2?0:15;
+                int iv=old==null?defaultIv:old.optInt(new String[]{"ivA","ivD","ivH"}[j],defaultIv);
+                sp.setSelection(Math.max(0,Math.min(15,iv)));
+                ivs[i][j]=sp;
+                ivRow.addView(sp,new LinearLayout.LayoutParams(0,d(40),1));
+            }
+            group.addView(ivRow);
+            Runnable configure=()->{
+                boolean enabled=selected[index].isChecked();
+                modes[index].setEnabled(enabled);
+                ranks[index].setVisibility(modes[index].getSelectedItemPosition()==1||
+                    modes[index].getSelectedItemPosition()==2?View.VISIBLE:View.GONE);
+                ivRow.setVisibility(modes[index].getSelectedItemPosition()==3?View.VISIBLE:View.GONE);
+            };
+            selected[i].setOnCheckedChangeListener((v,checked)->configure.run());
+            modes[i].setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
+                @Override public void onItemSelected(android.widget.AdapterView<?> a,View v,int pos,long id){configure.run();}
+                @Override public void onNothingSelected(android.widget.AdapterView<?> a){}
+            });
+            configure.run();
+            LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);
+            params.setMargins(0,d(7),0,d(7));
+            body.addView(group,params);
+        }
+        new AlertDialog.Builder(this).setTitle("3 pesquisas separadas").setView(scrolling)
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Salvar",(d,w)->{
+                JSONArray profiles=new JSONArray();
+                int active=0;
+                for(int i=0;i<3;i++){
+                    JSONObject p=new JSONObject();
+                    int m=modes[i].getSelectedItemPosition();
+                    boolean checked=selected[i].isChecked();
+                    if(checked)active++;
+                    try{
+                        p.put("enabled",checked);
+                        p.put("mode",m==1?"gl":m==2?"ul":"iv");
+                        p.put("customIvEnabled",m==3||m==4);
+                        p.put("rankMax",ranks[i].getSelectedItemPosition()+1);
+                        p.put("ivA",m==4?0:ivs[i][0].getSelectedItemPosition());
+                        p.put("ivD",m==4?0:ivs[i][1].getSelectedItemPosition());
+                        p.put("ivH",m==4?0:ivs[i][2].getSelectedItemPosition());
+                        profiles.put(p);
+                    }catch(Exception ignored){}
+                }
+                prefs.edit().putString("searchProfiles",profiles.toString())
+                    .putBoolean("multiEnabled",multiple.isChecked()&&active>0).apply();
+                syncOverlayPreferences();
+                Toast.makeText(this,"Pesquisas salvas. Toque ↻ para atualizar as listas.",
+                    Toast.LENGTH_LONG).show();
+            }).show();
+    }
+    private void showSearchFiltersDialog(){
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        ScrollView scroll=new ScrollView(this);
+        LinearLayout body=new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setPadding(d(16),d(8),d(16),d(12));
+        scroll.addView(body);
+        TextView intro=new TextView(this);
+        intro.setText("Top Rank 1–200 para GL/UL; IV exato para o modo 100%.");
+        intro.setTextColor(Color.LTGRAY);intro.setTextSize(12);body.addView(intro);
+        TextView modeHint=new TextView(this);
+        modeHint.setText("Modos disponíveis: 100% · 0% · GL · UL · _/_/_");
+        modeHint.setTextColor(Color.WHITE);modeHint.setTextSize(12);
+        body.addView(modeHint);
+                TextView rankTitle=new TextView(this);
+        rankTitle.setText("Rank PvP máximo");rankTitle.setTextColor(Color.WHITE);body.addView(rankTitle);
+        String[] rankOptions=new String[200];
+        for(int i=0;i<200;i++)rankOptions[i]=String.valueOf(i+1);
+        Spinner rank=new Spinner(this);
+        rank.setAdapter(new ArrayAdapter<String>(this,
+            android.R.layout.simple_spinner_dropdown_item,rankOptions));
+        rank.setSelection(Math.max(0,Math.min(199,prefs.getInt("rankMax",1)-1)));
+        body.addView(rank);
+        CheckBox custom=new CheckBox(this);
+        custom.setText("Usar IV personalizado (em vez de 15/15/15)");
+        custom.setTextColor(Color.WHITE);
+        custom.setChecked(prefs.getBoolean("customIvEnabled",false));body.addView(custom);
+        String[] titles={"Ataque","Defesa","HP"};
+        String[] keys={"customIvAttack","customIvDefense","customIvHp"};
+        String[] ivOpts=new String[16];
+        for(int i=0;i<16;i++)ivOpts[i]=String.valueOf(i);
+        Spinner[] fields=new Spinner[3];
+        for(int i=0;i<3;i++){
+            TextView fieldLabel=new TextView(this);
+            fieldLabel.setText(titles[i]+" (0–15)");fieldLabel.setTextColor(Color.LTGRAY);
+            body.addView(fieldLabel);
+            Spinner sp=new Spinner(this);
+            sp.setAdapter(new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_dropdown_item,ivOpts));
+            sp.setSelection(Math.max(0,Math.min(15,prefs.getInt(keys[i],i==0?0:15))));
+            sp.setEnabled(custom.isChecked());body.addView(sp);fields[i]=sp;
+        }
+        custom.setOnCheckedChangeListener((v,enabled)->{
+            for(Spinner field:fields)field.setEnabled(enabled);
+        });
+        String[] extraKeys={"cpMin","cpMax","levelMin","levelMax"};
+        String[] extraLabels={"PC mínimo","PC máximo","Nível mínimo","Nível máximo"};
+        EditText[] extra=new EditText[extraKeys.length];
+        for(int i=0;i<extra.length;i++){
+            EditText edit=new EditText(this);
+            edit.setHint(extraLabels[i]);edit.setHintTextColor(Color.GRAY);
+            edit.setTextColor(Color.WHITE);
+            edit.setText(prefs.getString(extraKeys[i],""));
+            edit.setInputType(InputType.TYPE_CLASS_NUMBER|
+                (i>1?InputType.TYPE_NUMBER_FLAG_DECIMAL:0));
+            body.addView(edit);extra[i]=edit;
+        }
+        TextView sortTitle=new TextView(this);
+        sortTitle.setText("Ordenar resultados");sortTitle.setTextColor(Color.WHITE);body.addView(sortTitle);
+        Spinner sortChoice=new Spinner(this);
+        String[] sortingIds={"despawn","rank","cp","iv","level","shiny"};
+        String[] sortingLabels={"Despawn maior","Rank melhor","PC maior","IV maior",
+            "Nível maior","Shiny primeiro"};
+        sortChoice.setAdapter(new ArrayAdapter<String>(this,
+            android.R.layout.simple_spinner_dropdown_item,sortingLabels));
+        int sortIndex=java.util.Arrays.asList(sortingIds).indexOf(prefs.getString("sort","despawn"));
+        sortChoice.setSelection(Math.max(0,sortIndex));
+        body.addView(sortChoice);
+        TextView additional=new TextView(this);
+        additional.setText("Outros filtros do site (também disponíveis no menu flutuante)");
+        additional.setTextColor(Color.LTGRAY);
+        additional.setTextSize(12);body.addView(additional);
+        String[][] additionalOptions={
+            {"weather","Qualquer","Sunny","Rainy","Cloudy","Partly Cloudy","Windy","Snowy","Fog"},
+            {"gender","Qualquer","Male","Female","Genderless"},
+            {"size","Qualquer","XXS","XS","S","M","L","XL","XXL"}
+        };
+        Spinner[] selectFilters=new Spinner[additionalOptions.length];
+        for(int i=0;i<additionalOptions.length;i++){
+            TextView title=new TextView(this);
+            title.setText(new String[]{"Clima","Sexo","Tamanho (um valor; multiseleção no menu flutuante)"}[i]);
+            title.setTextColor(Color.WHITE);body.addView(title);
+            Spinner sp=new Spinner(this);
+            String[] labels=java.util.Arrays.copyOfRange(additionalOptions[i],1,additionalOptions[i].length);
+            sp.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,labels));
+            String selected=prefs.getString(additionalOptions[i][0],"");
+            int selection=0;
+            for(int j=1;j<additionalOptions[i].length;j++)
+                if(additionalOptions[i][j].equals(selected))selection=j-1;
+            sp.setSelection(selection);selectFilters[i]=sp;body.addView(sp);
+        }
+        EditText form=new EditText(this);
+        form.setSingleLine(true);
+        form.setHint("Forma do Pokémon · opcional");
+        form.setTextColor(Color.WHITE);
+        form.setText(prefs.getString("form",""));
+        body.addView(form);
+        new AlertDialog.Builder(this).setTitle("Filtros da pesquisa").setView(scroll)
+            .setNegativeButton("Cancelar",null).setPositiveButton("Salvar",(d,w)->{
+                SharedPreferences.Editor e=prefs.edit()
+                    .putInt("rankMax",rank.getSelectedItemPosition()+1)
+                    .putBoolean("customIvEnabled",custom.isChecked())
+                    .putString("sort",sortingIds[sortChoice.getSelectedItemPosition()]);
+                for(int i=0;i<3;i++)e.putInt(keys[i],fields[i].getSelectedItemPosition());
+                for(int i=0;i<extra.length;i++)e.putString(extraKeys[i],
+                    extra[i].getText().toString().trim());
+                for(int i=0;i<additionalOptions.length;i++){
+                    int index=selectFilters[i].getSelectedItemPosition();
+                    String selected=index<=0?"":additionalOptions[i][index+1];
+                    e.putString(additionalOptions[i][0],selected);
+                }
+                e.putString("form",form.getText().toString().trim());
+                e.apply();syncOverlayPreferences();
+                Toast.makeText(this,"Filtros salvos · toque ↻ para nova busca",Toast.LENGTH_LONG).show();
+            }).show();
     }
     private ScrollView buildPreferences(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
