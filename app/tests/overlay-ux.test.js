@@ -322,7 +322,7 @@ test("Official Shiny switch can initiate login without exposing search page",
 test("The site is only exposed once sign-in content is actually ready",
   read("assets/login_entry.js").includes('if(authDialog||providerChoices)return "ready";')&&
   main.includes('result.contains("\\\"ready\\\"")'));
-console.log("PokeSearch UX contract: "+count+" tests passed");
+
 
 const guard=read("java/com/lucianotoscano/pokesearchoverlay/IntegrityGuard.java");
 const proguard=fs.readFileSync(path.join(__dirname,"..","proguard-rules.pro"),"utf8");
@@ -471,10 +471,11 @@ test("Site must reconfirm every search at collection time, even an empty respons
  service.includes('if(!r.optBoolean("criteriaConfirmed",false))')&&
  service.includes('searchFailure("⚠ Filtro não confirmado"')&&
  service.includes('execute("verifyFilters",filters->'));
-test("v0.51 Raw/percent enabled by request without adding unsupported Nundo, Master or Cup",
+test("v0.51 smart Nundo icon is not a separate unsupported search mode",
     dock.includes('custom:{normal:"custom.png"')&&
     dock.includes('percent:{normal:"percent.png"')&&
     dock.includes('nundo:{normal:"nundo.png"')&&
     dock.includes('ml:{normal:"master-league.png"')&&
     dock.includes('cup:{normal:"cup-league.png"')&&
     !service.includes('multiCycleActive'));
+console.log("PokeSearch UX contract: "+count+" tests passed");
