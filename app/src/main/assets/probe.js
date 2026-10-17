@@ -318,8 +318,9 @@ function extras(action){
   const want=String(filters[key]||"").trim();
   const ok=action==="apply"?extraSelect(key,want):extraMatches(key,want);
   if(!ok)failed.push(key);
+  if(transientPending)break; // one portal dropdown at a time
  }
- for(const key of extraNumberKeys()){
+ if(!transientPending)for(const key of extraNumberKeys()){
   const want=String(filters[key]||"").trim(),input=extraNumberField(key);
   if(want&&!input){failed.push(key);continue;}
   if(!input)continue;
