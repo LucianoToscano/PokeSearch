@@ -35,7 +35,7 @@ public class OverlayService extends Service {
     private static volatile boolean running=false;
     public static boolean isRunning(){return running;}
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
-    private static final int RESULTS_HEADER_DP=36;
+    private static final int RESULTS_HEADER_DP=30;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
     private int menuDp(){return Math.max(1,Math.min(396,screenWidthDp()-8));}
@@ -588,7 +588,7 @@ public class OverlayService extends Service {
             return true;
         });
         resultRoot.addView(resultGrip,new FrameLayout.LayoutParams(
-            dp(dockDp()),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT));
+            dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.CENTER_HORIZONTAL));
 
         int preferredX=Math.max(0,screenWidthDp()-2*dockDp()-35);
         int preferredY=165;
@@ -625,7 +625,7 @@ public class OverlayService extends Service {
         resultParams.width=dp(dockDp());
         resultParams.x=Math.max(0,Math.min(metrics().widthPixels-resultParams.width,resultParams.x));
         if(resultGrip!=null)resultGrip.setLayoutParams(new FrameLayout.LayoutParams(
-            dp(dockDp()),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT));
+            dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.CENTER_HORIZONTAL));
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar largura dos resultados",e);}
     }
