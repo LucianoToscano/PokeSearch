@@ -208,6 +208,29 @@ O usuário identificou corretamente a ausência de **Sort by**. A interface do P
 
 ---
 
+## 6.11. Correção do bug dos filtros da v0.51 — 17/10/2026
+
+**Relato do usuário:** após instalar o APK de teste gerado no run #39011424737, "Os filtros não estão funcionando". O build anterior só confirmou compilação e mocks básicos, **não o comportamento real das listas dinâmicas do PoGoCoordinates**.
+
+**Causas identificadas no código:**
+1. Em `probe.js`, a descoberta tentava abrir e ler os dropdowns **na mesma chamada síncrona**, antes de o React renderizar as opções; por isso `Form/Size/Gender/Weather` podiam ficar desativados.
+2. `extras("apply"/"verify")` tratava rótulos neutros além de "Any" como falhas; quando um site mostrava "Any Form"/"Any Size", uma consulta normal podia falhar sem o usuário ter ativado filtros.
+3. O botão de modos podia ser aberto **enquanto a busca automática estava em progresso**: `requestFilterOptions()` retornava sem consultar e nunca tentava novamente.
+4. Uma opção selecionada em dropdown React era tratada como aplicada antes de a página atualizar o estado. Em Form dependente do Pokémon isso podia produzir uma condição inconsistente.
+5. A falha apresentada ao usuário era genérica, e havia teste UX preso à implementação antiga de atualização do catálogo.
+
+**Correções aplicadas no mesmo PR #22 / branch de desenvolvimento:**
+- `probe.js`: ações separadas `openFilterOptions:key`, `readFilterOptions:key`, `closeFilterOptions:key`; leitura depois de 210 ms por campo, inspeção de itens reais de Radix/React com `role=option`; reconhecimento de valores neutros (`Any Form`, `Any Size`, etc.); configuração serializada, com `pending` e confirmação em busca subsequente antes de Search. Não afirmar sucesso quando opção não foi confirmada.
+- `OverlayService.java`: varredura sequencial assíncrona dos menus e **retries se a consulta automática ainda está em andamento**; tentativa de configuração reexecutada (até 22 vezes em operações pendentes) e mensagens que identificam o filtro problemático; manutenção da busca anterior em falhas.
+- `dock.html`: atualização **incremental** de opções descobertas, sem substituir opções de outros campos; não redirecionar submenus numéricos quando chegarem atualizações tardias.
+- `app/tests/probe-smoke.test.js`: reproduz valores "Any Form/Any Size" e simula dropdown React que só expõe as opções após abrir e concluir o render, exigindo nova verificação antes de sucesso. `overlay-ux.test.js`: contrato atualizado para a descoberta incremental.
+
+**Limitação importante:** as alterações tratam os defeitos identificados no código; **não equivalem a uma confirmação em sessão real do PoGoCoordinates**, que pode mudar seu DOM ou oferecer recursos VIP. Os controles que não puderem ser inspecionados **continuam bloqueados em vez de fingir que a busca funcionou**. Login, Shiny, 18 PNGs, os 12 ícones originais, filtros Raw/%/GL/UL, histórico e coordenadas preservados. A versão anterior (commit `a68d43b`) não deve ser usada para validar os novos filtros.
+
+**Entrega:** gerar novo artefato do workflow `.github/workflows/build-v051-filters-preview.yml` a partir de commit **posterior** às correções; registrar SHA e teste físico quando disponíveis.
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
