@@ -51,6 +51,8 @@ public class OverlayService extends Service {
     private boolean deferMenuSync=false;
     private boolean resultLoaded=false,resultCollapsed=false;
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
+    private boolean popupAbove=false;
+    private int popupOffsetDp=-1,popupRoomDp=-1;
     private String probeScriptCache;
     private boolean searchInProgress=false;
     private boolean loginPaused=false;
@@ -230,44 +232,38 @@ public class OverlayService extends Service {
         boolean left=params.x-width>=0;
         int priorPad=menuPadDp;
         boolean priorLeft=menuLeft;
+        int rowY;
         if(right||left){
             menuLeft=!right;
             menuParams.x=right?params.x+dp(dockDp()):params.x-width;
-            menuParams.y=Math.max(0,Math.min(params.y,bottom-menuParams.height-dp(8)));
-            menuPadDp=0; // No spacer: side toolbar does not cover the sprites.
+            rowY=params.y;
         }else{
-            // Narrow display: position toolbar above/below the gear instead of covering it.
+            // Keep the one-row toolbar next to, never ON TOP of, the gear.
             menuLeft=params.x+dp(dockDp())/2>screen/2;
-            menuParams.x=Math.max(0,Math.min(screen-width,params.x+dp(dockDp())/2-width/2));
+            menuParams.x=Math.max(0,Math.min(screen-width,
+                params.x+dp(dockDp())/2-width/2));
             int below=params.y+dp(TOOLBAR_DP);
-            int above=params.y-menuParams.height;
-            // On phones the single compact row fits above/below the gear.
-            // the gear, so the gear and the Pokémon column stay close together.
-            if(above<0){
-                // Keep the gear and first sprite together. Reposition the
-                // *whole* dock below the popover rather than inserting a huge
-                // empty margin between the gear and the first Pokémon.
-                int targetY=menuParams.height+dp(3);
-                int bottomBound=bottom-params.height-dp(8);
-                if(targetY<=bottomBound){
-                    params.y=targetY;
-                    try{wm.updateViewLayout(root,params);}
-                    catch(Exception e){recordFailure("aproximar dock do menu",e);}
-                    above=params.y-menuParams.height;
-                }
-            }
-            if(above>=0){
-                menuParams.y=above;
-                menuPadDp=0;
-            }else{
-                menuParams.y=Math.max(0,Math.min(below,bottom-menuParams.height));
-                // Only shift sprites if the controls genuinely occupy this space.
-                // Reserve only the space really covered below the 30dp gear.
-                // No 34dp phantom gap between menu and sprite column.
-                menuPadDp=Math.max(0,
-                    Math.round((menuParams.y+menuParams.height-params.y)/d.density)-30+2);
-            }
+            int above=params.y-dp(MENU_BASE_DP);
+            rowY=above>=0?above:below;
         }
+        menuPadDp=0; // Results remain in their own separate native overlay.
+
+        // The old resize/clamp moved the entire toolbar when a long numeric
+        // picker opened. Preserve rowY and expand the touchable window ABOVE
+        // or BELOW it without moving the row under the user's finger.
+        int rowHeight=dp(MENU_BASE_DP);
+        int requestedPopup=Math.max(0,menuParams.height-rowHeight);
+        int roomAbove=Math.max(0,rowY);
+        int roomBelow=Math.max(0,bottom-(rowY+rowHeight)-dp(5));
+        boolean abovePopup=requestedPopup>roomBelow&&roomAbove>roomBelow;
+        int available=abovePopup?roomAbove:roomBelow;
+        int actualPopup=Math.min(requestedPopup,available);
+        menuParams.height=rowHeight+actualPopup;
+        menuParams.y=Math.max(0,Math.min(bottom-menuParams.height,
+            rowY-(abovePopup?actualPopup:0)));
+
+        int offsetDp=abovePopup?Math.round(actualPopup/d.density):0;
+        int roomDp=Math.max(0,Math.round(actualPopup/d.density)-5);
         if(menuDrawX!=menuParams.x||menuDrawY!=menuParams.y||
            menuDrawHeight!=menuParams.height||menuDrawWidth!=menuParams.width){
             try{
@@ -275,6 +271,11 @@ public class OverlayService extends Service {
                 menuDrawX=menuParams.x;menuDrawY=menuParams.y;
                 menuDrawHeight=menuParams.height;menuDrawWidth=menuParams.width;
             }catch(Exception e){recordFailure("posicionar menu",e);}
+        }
+        if(popupAbove!=abovePopup||popupOffsetDp!=offsetDp||popupRoomDp!=roomDp){
+            popupAbove=abovePopup;popupOffsetDp=offsetDp;popupRoomDp=roomDp;
+            js(menuPanel,menuLoaded,"window.setMenuPopupPlacement("+
+                abovePopup+","+offsetDp+","+roomDp+")");
         }
         if((priorPad!=menuPadDp||priorLeft!=menuLeft)&&!deferMenuSync){
             String edge=JSONObject.quote(menuLeft?"left":"right");
@@ -285,7 +286,7 @@ public class OverlayService extends Service {
     }
     private void resizeMenu(int desiredDp){
         if(!menuExpanded||menuParams==null||menuRoot==null)return;
-        int maxMenuHeight=Math.max(MENU_BASE_DP,Math.min(450,screenHeightDp()-72));
+        int maxMenuHeight=Math.max(MENU_BASE_DP,Math.min(450,screenHeightDp()-24));
         int target=dp(Math.max(MENU_BASE_DP,Math.min(maxMenuHeight,desiredDp)));
         if(Math.abs(menuParams.height-target)<=dp(1))return;
         menuParams.height=target;
@@ -1185,7 +1186,7 @@ public class OverlayService extends Service {
         if(show){
             menuDrawHeight=-1;menuDrawWidth=-1;
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
-            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(MENU_BASE_DP);}
+            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(MENU_BASE_DP);popupOffsetDp=-1;popupRoomDp=-1;}
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
         }
