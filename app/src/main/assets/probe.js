@@ -330,6 +330,9 @@ function extras(action){
  return {ok:failed.length===0,pending:action==="apply"&&transientPending,reason:"Filtros adicionais: "+failed.join(", ")};
 }
 function check(){const base=checkCore();return base.ok?extras("verify"):base;}
+// Isolated diagnostics used by smoke tests; no Search is submitted.
+if(action==="configureExtras")return JSON.stringify(extras("apply"));
+if(action==="verifyExtras")return JSON.stringify(extras("verify"));
 if(action==="describeFilters"){
  const options={};
  for(const [key,label] of Object.entries(EXTRA_LABELS))options[key]=describeChoice(label);
