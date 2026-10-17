@@ -171,6 +171,18 @@
 
 ---
 
+## 6.8. Auditoria complementar — Sort by e ações esquecidas (17/10/2026)
+
+O usuário identificou corretamente a ausência de **Sort by**. A interface do PoGoCoordinates exibe **Sort by → Despawn (longest)**; o autor do serviço menciona ordenar por despawn, CP e distância, mas a lista real do dropdown precisa ser descoberta na sessão do site.
+
+**Bug/diferença identificado no código:** `OverlayService.java` tem `sort="despawn"`, porém o comparator padrão `Long.compare(expiration(a1),expiration(a2))` ordena por desaparecimento **mais cedo**; diverge da opção `Despawn (longest)` mostrada no site. O app ainda não oferece controle de Sort by nem configura o dropdown na `probe.js`; esta só lê até **10** cartões. **Correção planejada:** selecionar e confirmar Sort by no site **antes** de consultar e recortar os dez resultados; manter a mesma ordem no app, sem reordenação conflitante, respeitando cooldown. Não inventar valores de opções ainda não inspecionadas.
+
+**Itens faltantes no primeiro inventário:** `Use my location` (ação geográfica com consentimento), `Reset`, `Map`, `Notify Me` e `Search`, além da alternância `Filter by Stats/PvP` explicitamente registrada. Esses itens são ações/controles de navegação (não todos filtros); não duplicar os controles já existentes de localização 📍, sino/favoritos, atualização e busca. Link de até 100 contas VIP é recurso pago, não adicionar sem suporte.
+
+**Documento revisado no PR #22:** [PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md](PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md). A auditoria é **documental**: não houve código executável alterado, compilação, testes reais ou merge.
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
