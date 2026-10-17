@@ -128,6 +128,22 @@
 - **Pendência:** APK anterior não inclui estas melhorias. **Não compilar** até pedido expresso; não executar merge na `main`; preservar backups, os 18 PNGs oficiais e demais funções.
 
 ---
+## 6.5. Seis melhorias de UX aprovadas — 17/10/2026
+
+**Autorização do usuário:** "Sim. Pode aplicar todas as 6 sugestões". Trabalho somente no PR #21 da branch `feature/v0.51-launcher-icon-fill-20261016`; **não gerar APK nem fazer merge sem solicitação**.
+
+1. **Reconhecimento automático de IV especiais:** no único modo Raw IV, `15/15/15` usa `hundo.png`/ `shundo.png` e `0/0/0` usa `nundo.png`/`shnundo.png`; valores intermediários usam `custom.png`/`custom-shiny.png`. No modo % IV, intervalos exatos `100–100%` e `0–0%` reutilizam Hundo/Nundo; outros usam `percent.png`/`percent-shiny.png`. Shiny depende de confirmação da sessão/site, nunca é falsamente atribuído. Nenhum quinto modo foi acrescentado.
+2. **Seletor numérico mais ágil:** mantida grade precisa em listas 0–15, 1–50 e 0–100. Para % IV, adicionado **slider de salto rápido** 0–100 com leitura numérica e destaque do valor, mantendo toque exato na grade. `Min <= Max` continua garantido. O usuário só aplica ao tocar **✓ Aplicar**.
+3. **Interface compacta:** quatro linhas já estabelecidas em ordem Raw IV → % IV → Great League → Ultra League, painel 246px de largura, altura variável limitada a 216px, botões compactos, sem texto redundante. Toolbar original de **12 botões em uma linha**, popup inteligente acima/abaixo da engrenagem, 18 PNGs preservados.
+4. **Modo ativo inequívoco:** linha selecionada agora exibe ✓ com `aria-pressed` e destaque discreto; barra mostra `100%`, `0%` ou `RAW`, `IV%` ou as siglas das ligas com ranking #N. Ícone e tooltip da janela de Pokémon respeitam o **modo que realmente gerou os resultados**.
+5. **Preferências independentes e persistentes:** Raw A/D/S, % Min/Max e top ranking de GL/UL continuam salvos separadamente nas `SharedPreferences`, junto do modo ativo. Abrir/fechar menu, trocar modo e reiniciar serviço não apagam esses valores. O antigo modo interno `iv` migra para Raw 15/15/15.
+6. **Validação rigorosa sem apagar resultados úteis:** o `probe.js` já verifica os controles do PoGoCoordinates antes de Search. Agora `collect()` também devolve `criteriaConfirmed`; a camada Java rejeita **qualquer** lote não confirmado (inclusive aparente zero resultados) antes de substituir dados. Em falha, conserva as cartas antigas, mostra status curto `⚠ ... · resultados anteriores`, mantém diagnóstico detalhado para ⚠ e apresenta um pequeno ponto de alerta no cabeçalho da janela. O cabeçalho retém **configuração, ícone e Shiny da busca anterior**, evitando atribuir resultados antigos ao filtro novo. Somente respostas confirmadas atualizam cartas, histórico, notificações e o indicador de frescor.
+
+**Arquivos:** `app/src/main/assets/dock.html`, `probe.js`, `OverlayService.java`, `app/tests/overlay-ux.test.js`, `app/tests/probe-smoke.test.js`. Casos acrescentados cobrem auto Hundo/Nundo em Raw e %, Shiny nos ícones, slider e grade, seleção/persistência, cabeçalho de resultados anteriores e confirmação posterior inclusive para respostas vazias.
+
+**Verificações realizadas sem APK:** contratos JS de UX e smoke tests com dados simulados; sintaxe de JS; testes diretos do mapeamento entre seis combinações de modo/IV e pares de ícones. **Pendente:** teste manual em Android/PoGoCoordinates e compilação somente por pedido expresso. O APK da etapa 6.3 **não inclui** estas seis melhorias.
+
+---
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
