@@ -267,10 +267,10 @@ test("Shiny state sync starts on site load independently of Search cooldown",
 test("After login, authenticated site missing switch never restarts login loop",
   service.includes('"autenticada".equals(auth)')&&
   service.includes('Conta conectada; controle Shiny não encontrado no site.'));
-test("Gap between gear and first sprite is never a fabricated 34dp",
-  service.includes('menuPadDp=0; // Only the measured overlap')&&
-  service.includes('params.y=targetY;')&&
-  service.includes('menuPadDp=0;')&&
+test("Gap between gear and first sprite is never fabricated by changing mode popup size",
+  service.includes('menuPadDp=0; // Results remain in their own separate native overlay.')&&
+  service.includes('rowY-(abovePopup?actualPopup:0)')&&
+  !service.includes('params.y=targetY;')&&
   dock.includes('#spawns{margin-top:var(--top-space);gap:0}'));
 const directShiny=service.split('private void prepareImmediateShiny(int generation){')[1]?.split('private void verifyAndSubmit(')[0]||'';
 test("Shiny on visible Pokémon page never requires Stats/PvP tab",
