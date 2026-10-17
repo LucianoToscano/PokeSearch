@@ -1008,9 +1008,14 @@ public class OverlayService extends Service {
                 searchFailure("⚠ Falha na leitura","Falha na leitura dos resultados do site.");
                 return;
             }
-            if((shiny && (!r.has("siteShiny")||r.isNull("siteShiny")||
-                !r.optBoolean("siteShiny",false))) ||
-                (!shiny&&r.has("siteShiny")&&!r.isNull("siteShiny")&&r.optBoolean("siteShiny",false))){
+            // Shiny was verified before submission. A missing switch after navigation
+            // is not proof it was switched OFF; an explicit OFF state still fails.
+            boolean shinySwitchMissing=!r.has("siteShiny")||r.isNull("siteShiny");
+            boolean trustedShinyHidden=shiny&&shinyVerified&&
+                confirmedSubmittedFiltersGeneration==generation&&shinySwitchMissing;
+            if((shiny&&!trustedShinyHidden&&
+                   (shinySwitchMissing||!r.optBoolean("siteShiny",false))) ||
+                (!shiny&&!shinySwitchMissing&&r.optBoolean("siteShiny",false))){
                 searchInProgress=false;
                 shinyVerified=false;
                 searchFailure("⚠ Shiny não confirmado","Filtro Shiny mudou durante a busca. Resultados não confirmados.");
