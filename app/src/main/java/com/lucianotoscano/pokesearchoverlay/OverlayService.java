@@ -263,7 +263,7 @@ public class OverlayService extends Service {
             rowY-(abovePopup?actualPopup:0)));
 
         int offsetDp=abovePopup?Math.round(actualPopup/d.density):0;
-        int roomDp=Math.max(0,Math.round(actualPopup/d.density)-5);
+        int roomDp=requestedPopup==0?420:Math.max(50,Math.round(actualPopup/d.density)-5);
         if(menuDrawX!=menuParams.x||menuDrawY!=menuParams.y||
            menuDrawHeight!=menuParams.height||menuDrawWidth!=menuParams.width){
             try{
