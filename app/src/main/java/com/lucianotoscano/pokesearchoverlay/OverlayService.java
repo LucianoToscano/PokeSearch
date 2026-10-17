@@ -156,6 +156,8 @@ public class OverlayService extends Service {
     private int rawAttack=15,rawDefense=15,rawStamina=15,glRank=1,ulRank=1,ivPercentMin=0,ivPercentMax=100;
     // Additional optional search criteria belong to the active site session, not to the toolbar.
     private String extraFiltersJson="{}";
+    // Evidence of checked website filters belongs only to the active search.
+    private int confirmedSubmittedFiltersGeneration=-1;
     private String filterConfigJson(){
         JSONObject config=new JSONObject();
         try{
@@ -709,10 +711,18 @@ public class OverlayService extends Service {
             }else status("Abra o app e faça login.");
             return;
         }
+        String queryFilters=filterConfigJson();
+        if("collect".equals(action)&&confirmedSubmittedFiltersGeneration==callbackGeneration){
+            try{
+                JSONObject validated=new JSONObject(queryFilters);
+                validated.put("_preSubmitVerified",true);
+                queryFilters=validated.toString();
+            }catch(org.json.JSONException ignored){}
+        }
         String code=script().replace("__ACTION__",JSONObject.quote(action))
                 .replace("__MODE__",JSONObject.quote(mode))
                 .replace("__SHINY__",shiny?"true":"false")
-                .replace("__FILTERS__",filterConfigJson());
+                .replace("__FILTERS__",queryFilters);
         try{website.evaluateJavascript(code,raw->{
             if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;
             try{
@@ -766,6 +776,7 @@ public class OverlayService extends Service {
         if(count()>0)resultsStale=true;
         if(shiny){shinyVerified=false;update();}
         final int generation=++requestGeneration;
+        confirmedSubmittedFiltersGeneration=-1;
         status(manual?"Busca manual iniciada...":"Atualizando...");
         execute("session",session->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
@@ -965,10 +976,12 @@ public class OverlayService extends Service {
                     return;
                 }
                 shinyVerified=shiny;
+                confirmedSubmittedFiltersGeneration=generation;
                 update();
                 execute("submitSearch",submitted->{
                     if(stopped||loginPaused||generation!=requestGeneration)return;
                     if(!submitted.optBoolean("ok")){
+                        confirmedSubmittedFiltersGeneration=-1;
                         searchInProgress=false;
                         shinyVerified=false;
                         searchFailure("⚠ Busca não enviada",submitted.optString("reason","Falha ao pressionar Search."));
@@ -1009,7 +1022,8 @@ public class OverlayService extends Service {
             if(!r.optBoolean("criteriaConfirmed",false)){
                 searchInProgress=false;
                 searchFailure("⚠ Filtro não confirmado",
-                    "Busca ignorada: controles IV/ligas não confirmados ao ler resultados.");
+                    "Busca ignorada: "+r.optString("criteriaReason","controles não confirmados")+
+                    " · "+r.optString("confirmationSource","sem confirmação")+".");
                 return;
             }
             if(("gl".equals(mode)||"ul".equals(mode))&&!r.optBoolean("leagueConfirmed",false)){
@@ -1020,6 +1034,10 @@ public class OverlayService extends Service {
             }
             int found=r.optInt("found",0);
             int onSite=r.optInt("siteCount",0);
+            if(attempt==0)BugReport.log(this,"SEARCH_RESULT",
+                "Pokémon identificados="+found+" • site="+onSite+
+                " • validação="+r.optString("confirmationSource","desconhecida")+
+                " • modo="+mode);
             if(r.optBoolean("parseFailure",false)&&!r.optBoolean("loading",false)){
                 searchInProgress=false;
                 searchFailure("⚠ Leitura não confirmada","Leitura do site: "+onSite+" ocorrências exibidas, mas nenhum cartão foi reconhecido.");
