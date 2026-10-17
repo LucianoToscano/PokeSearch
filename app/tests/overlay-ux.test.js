@@ -393,7 +393,8 @@ test("Mode picker remembers scroll and centers selected values",
  dock.includes('overscroll-behavior:contain'));
 test("Four requested search modes with correct numeric bounds",()=>{
  const segment=dock.split("function renderNumberPicker(")[1].split("function renderLocationChoices()")[0];
- return segment.includes('const low=kind==="rank"?1:0,high=kind==="iv"?15:kind==="rank"?50:100')&&
+ return segment.includes('const choices=kind==="percent"?IV_PERCENT_VALUES:')&&
+  segment.includes('Array.from({length:kind==="iv"?16:50},(_,i)=>i+(kind==="rank"?1:0))')&&
   dock.includes('{key:"attack"')&&dock.includes('{key:"defense"')&&dock.includes('{key:"stamina"')&&
   dock.includes('{key:"glRank"')&&dock.includes('{key:"ulRank"')&&
   dock.includes('{key:"percentMin"')&&dock.includes('{key:"percentMax"');
@@ -418,7 +419,8 @@ test("Both IV% limits remain ordered when changed",
 test("Native bridge validates all requested IV, PvP ranking and percent bounds",
  service.includes("public void setSearchConfig(String payload)")&&
  service.includes("within(a,0,15)")&&service.includes("within(gl,1,50)")&&
- service.includes("within(min,0,100)")&&service.includes("min>max"));
+ service.includes("isAllowedIvPercent(min)")&&
+  service.includes("isAllowedIvPercent(max)")&&service.includes("min>max"));
 test("Native mode and filter options persist through service restarts",
  ["rawAttack","rawDefense","rawStamina","glRank","ulRank","ivPercentMin","ivPercentMax"].every(k=>
   service.includes('putInt("'+k+'"')&&service.includes('pref.getInt("'+k+'"')));
@@ -438,10 +440,11 @@ test("Raw zero and percentage extremes reuse all original Hundo/Nundo Shiny icon
   dock.includes('nundo:{normal:"nundo.png",shiny:"shnundo.png"')&&
   dock.includes('hundo:{normal:"hundo.png",shiny:"shundo.png"');
 })());
-test("Compact percent picker supports both exact button choice and a quick 0–100 slider",
+test("Compact percent slider and grid use the exact same 46 allowed values",
  dock.includes('slider.type="range"')&&
- dock.includes('slider.min=String(low);slider.max=String(high);slider.step="1"')&&
- dock.includes('slider.oninput=()=>')&&dock.includes('slider.onchange=()=>chooseNumber(')&&
+ dock.includes('slider.min="0";slider.max=String(IV_PERCENT_VALUES.length-1);slider.step="1"')&&
+ dock.includes('slider.oninput=()=>')&&
+ dock.includes('slider.onchange=()=>chooseNumber(IV_PERCENT_VALUES[Number(slider.value)])')&&
  dock.includes('btn.onclick=()=>chooseNumber(number)')&&
  dock.includes('max-height:148px'));
 test("Mode selection remains clearly highlighted and header shows automatic 0/100",
@@ -478,4 +481,33 @@ test("v0.51 smart Nundo icon is not a separate unsupported search mode",
     dock.includes('ml:{normal:"master-league.png"')&&
     dock.includes('cup:{normal:"cup-league.png"')&&
     !service.includes('multiCycleActive'));
+test("Exactly 46 attainable IV percentages are offered with 91 and 100 included",(()=>{
+ const match=dock.match(/const IV_PERCENT_VALUES=Object\.freeze\((\[[^\]]+\])\)/);
+ if(!match)return false;
+ const actual=JSON.parse(match[1]);
+ const expected=Array.from({length:46},(_,points)=>Math.round(points*100/45));
+ return actual.length===46&&new Set(actual).size===46&&
+  JSON.stringify(actual)===JSON.stringify(expected)&&
+  actual.includes(91)&&actual.includes(100)&&
+  !actual.includes(90)&&!actual.includes(92)&&!actual.includes(95);
+})());
+test("Percentage picker has only allowed numbers while league ranks stay independent",
+ dock.includes('const choices=kind==="percent"?IV_PERCENT_VALUES:')&&
+ dock.includes('kind==="iv"?16:50')&&
+ dock.includes('modeDraft[key]=number;')&&
+ dock.includes('if(!choices.includes(number))return;')&&
+ read("assets/probe.js").includes('ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMin)')&&
+ read("assets/probe.js").includes('ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMax)')&&
+ read("assets/probe.js").includes('function applyLeague()')&&
+ read("assets/probe.js").includes('configuredRank()'));
+test("Native validation prevents invalid IV percentages including on saved requests",
+ service.includes('private static boolean isAllowedIvPercent(int value)')&&
+ service.includes('if(ivPercentageForSum(total)==value)return true;')&&
+ service.includes('!isAllowedIvPercent(min)||!isAllowedIvPercent(max)||min>max')&&
+ service.includes('!within(gl,1,50)||!within(ul,1,50)'));
+test("Legacy IV percent migration expands only as necessary without trimming Pokémon",
+ service.includes('ivPercentMin=floorIvPercent(previousMin)')&&
+ service.includes('ivPercentMax=Math.max(ivPercentMin,ceilIvPercent(previousMax))')&&
+ service.includes('putInt("ivPercentMin",ivPercentMin)')&&
+ service.includes('putInt("ivPercentMax",ivPercentMax)'));
 console.log("PokeSearch UX contract: "+count+" tests passed");
