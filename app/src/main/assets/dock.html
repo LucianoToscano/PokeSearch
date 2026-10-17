@@ -79,6 +79,11 @@ body.controls-window #locBadge{display:none!important}
 #choices .numberGrid button{padding:5px 0;margin:0;text-align:center;background:#263345;border:1px solid #455367}
 #choices .numberGrid button.chosen{background:#21634e;border-color:#61d2a7}
 #choices .numberBack{border:1px solid #465b6a;background:#223144;text-align:center}
+#choices .numberJump{display:flex;align-items:center;gap:5px;padding:0 5px 1px}
+#choices .numberJump input{flex:1;min-width:0;height:24px;margin:0;accent-color:#72c7ae;touch-action:pan-x}
+#choices .numberJump output{font-size:11px;font-weight:700;min-width:25px;text-align:right;color:#dbffef}
+body.result-window.results-stale #resultHeader{position:relative}
+body.result-window.results-stale #resultHeader::after{content:"";position:absolute;right:2px;top:3px;width:5px;height:5px;border-radius:50%;background:#e6ba66;box-shadow:0 0 2px #0008}
 #choices .locText{font-size:11px;color:#a9b7c9;padding:0 7px 8px;line-height:1.35}
 #choices .locCoordsRow{display:flex;align-items:center;gap:7px;margin:0 7px 7px}
 #choices .locCoordsRow .locField{flex:1;min-width:0;margin:0;width:auto}
@@ -226,12 +231,19 @@ const RESULT_MODE_ALIASES=Object.freeze({
  ml:"ml",master:"ml",master_league:"ml",
  cup:"cup",cup_league:"cup",little_cup:"cup"
 });
-function getResultIcon(searchMode,shinyActive){
+function getResultIcon(searchMode,shinyActive,settings=searchSettings){
  const modeKey=String(searchMode==null?"":searchMode).trim().toLowerCase().replace(/[\s-]+/g,"_");
  let family=RESULT_MODE_ALIASES[modeKey]||"none";
  // Raw IV 15/15/15 automatically identifies IV100 while preserving one mode.
- if(modeKey==="raw"&&searchSettings.attack===15&&searchSettings.defense===15&&searchSettings.stamina===15)
-  family="hundo";
+ if(modeKey==="raw"){
+  const {attack,defense,stamina}=settings;
+  if(attack===15&&defense===15&&stamina===15)family="hundo";
+  else if(attack===0&&defense===0&&stamina===0)family="nundo";
+ }
+ if(modeKey==="percent"){
+  if(settings.percentMin===100&&settings.percentMax===100)family="hundo";
+  else if(settings.percentMin===0&&settings.percentMax===0)family="nundo";
+ }
  const pair=RESULT_ICONS[family];
  const shining=!!shinyActive;
  return {
@@ -244,6 +256,21 @@ let locationEnabled=false,locationCoords="",locationRadius=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100};
 let modeDraft=null,modeScrollTop=0;
+let shownMode="raw",shownShiny=false,shownSettings={...searchSettings},resultsStale=false;
+function specialIVLabel(selectedMode,settings){
+ if(selectedMode==="raw"){
+  const {attack,defense,stamina}=settings;
+  if(attack===15&&defense===15&&stamina===15)return "100%";
+  if(attack===0&&defense===0&&stamina===0)return "0%";
+  return "RAW";
+ }
+ if(selectedMode==="percent"){
+  if(settings.percentMin===100&&settings.percentMax===100)return "100%";
+  if(settings.percentMin===0&&settings.percentMax===0)return "0%";
+  return "IV%";
+ }
+ return selectedMode==="gl"?"GL#"+settings.glRank:selectedMode==="ul"?"UL#"+settings.ulRank:"RAW";
+}
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
  document.documentElement.style.setProperty("--top-space",menuOpen?(Math.max(0,Number(pad)||0)+"px"):"0px");
@@ -352,7 +379,10 @@ function renderModeChoices(){
  const row=(name,label,keys)=>{
   const line=make("div","modeRow"+(modeDraft.mode===name?" selected":""));
   const choose=make("button","modeSelect"+(modeDraft.mode===name?" chosen":""),label);
-  choose.type="button";choose.onclick=()=>{
+  choose.type="button";
+  choose.setAttribute("aria-pressed",String(modeDraft.mode===name));
+  choose.textContent=(modeDraft.mode===name?"✓ ":"")+label;
+  choose.onclick=()=>{
    modeScrollTop=panel.scrollTop;modeDraft.mode=name;renderModeChoices();
   };
   line.appendChild(choose);
@@ -396,23 +426,41 @@ function renderNumberPicker(key,kind,title){
  const heading=document.createElement("div");heading.className="choiceHeader";heading.textContent=title;
  const grid=document.createElement("div");grid.className="numberGrid";
  const low=kind==="rank"?1:0,high=kind==="iv"?15:kind==="rank"?50:100;
+ const chooseNumber=number=>{
+  modeDraft[key]=number;
+  if(key==="percentMin"&&modeDraft.percentMax<number)modeDraft.percentMax=number;
+  if(key==="percentMax"&&modeDraft.percentMin>number)modeDraft.percentMin=number;
+  renderModeChoices();
+ };
+ const highlight=value=>{
+  grid.querySelectorAll("button").forEach(btn=>{
+   btn.classList.toggle("chosen",Number(btn.dataset.number)===value);
+  });
+  grid.scrollTop=Math.max(0,(Math.floor((value-low)/5)-2)*30);
+ };
  for(let number=low;number<=high;number++){
   const btn=document.createElement("button");btn.type="button";
-  btn.textContent=String(number);btn.className=number===modeDraft[key]?"chosen":"";
+  btn.textContent=String(number);btn.dataset.number=String(number);
+  btn.className=number===modeDraft[key]?"chosen":"";
   btn.setAttribute("aria-label",title+" = "+number);
-  btn.onclick=()=>{
-   modeDraft[key]=number;
-   if(key==="percentMin"&&modeDraft.percentMax<number)modeDraft.percentMax=number;
-   if(key==="percentMax"&&modeDraft.percentMin>number)modeDraft.percentMin=number;
-   renderModeChoices();
-  };
+  btn.onclick=()=>chooseNumber(number);
   grid.appendChild(btn);
  }
- // Place the current value near the middle of the visible numerical grid.
+ // Swipe the compact slider to jump through 0-100; the grid also supports exact taps.
+ if(kind==="percent"){
+  const jump=document.createElement("div");jump.className="numberJump";
+  const slider=document.createElement("input");
+  slider.type="range";slider.min=String(low);slider.max=String(high);slider.step="1";
+  slider.value=String(modeDraft[key]);slider.setAttribute("aria-label","Escolha rápida: "+title);
+  const output=document.createElement("output");output.textContent=slider.value+"%";
+  slider.oninput=()=>{const val=Number(slider.value);output.textContent=val+"%";highlight(val);};
+  slider.onchange=()=>chooseNumber(Number(slider.value));
+  jump.append(slider,output);panel.append(heading,jump,grid);
+ }else panel.append(heading,grid);
  grid.scrollTop=Math.max(0,(Math.floor((modeDraft[key]-low)/5)-2)*30);
  const back=document.createElement("button");back.className="numberBack";back.textContent="‹ Voltar";
  back.onclick=renderModeChoices;
- panel.append(heading,grid,back);fit();
+ panel.appendChild(back);fit();
 }
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
@@ -475,14 +523,13 @@ function draw(){
  document.documentElement.style.setProperty("--sprite",spriteSize+"px");
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
  const cy=document.getElementById("cycle");
- if(mode==="raw"||mode==="iv"){
-  const perfect=mode==="iv"||(searchSettings.attack===15&&searchSettings.defense===15&&searchSettings.stamina===15);
-  cy.textContent=perfect?"100%":"RAW";
-  cy.classList.toggle("ivOn",perfect);
-  cy.title=perfect?"IV perfeito · Raw IV 15/15/15":
+ if(mode==="raw"||mode==="iv"||mode==="percent"){
+  const label=specialIVLabel(mode,searchSettings);
+  cy.textContent=label;
+  cy.classList.toggle("ivOn",label==="100%"||label==="0%");
+  cy.title=mode==="percent"?"% IV · "+searchSettings.percentMin+"–"+searchSettings.percentMax+"%":
    "Raw IV · "+searchSettings.attack+"/"+searchSettings.defense+"/"+searchSettings.stamina;
  }
- else if(mode==="percent"){cy.textContent="IV%";cy.classList.remove("ivOn");cy.title="IV% · "+searchSettings.percentMin+"–"+searchSettings.percentMax+"%";}
  else{
    const gl=mode==="gl",color=gl?"#2f8ed8":"#d8ad43";
    const rank=gl?searchSettings.glRank:searchSettings.ulRank;
@@ -537,13 +584,18 @@ function draw(){
  if(resultWindow){
   // Only show a Shiny badge after the site confirms that Shiny-only is active.
   // A pending toggle keeps its previous non-Shiny identification.
-  const selectedIcon=getResultIcon(mode,shiny);
+  const hasHistory=cards.length>0;
+  const iconMode=hasHistory?shownMode:mode;
+  const iconShiny=hasHistory?shownShiny:shiny;
+  const iconSettings=hasHistory?shownSettings:searchSettings;
+  const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings);
+  document.body.classList.toggle("results-stale",hasHistory&&resultsStale);
   const header=document.getElementById("resultHeader");
   const image=document.getElementById("resultModeIcon");
   if(image.src!==selectedIcon.path)image.src=selectedIcon.path;
-  const label=selectedIcon.title+
-      ((mode==="gl"||mode==="ul")?" · PvP top "+(mode==="gl"?searchSettings.glRank:searchSettings.ulRank):"")+
-      (shinyPending?" · Shiny aguardando confirmação":"");
+  const label=(hasHistory&&resultsStale?"⚠ Resultados anteriores · ":"")+selectedIcon.title+
+      ((iconMode==="gl"||iconMode==="ul")?" · PvP top "+(iconMode==="gl"?iconSettings.glRank:iconSettings.ulRank):"")+
+      (!hasHistory&&shinyPending?" · Shiny aguardando confirmação":"");
   header.title=label+" · toque para recolher/expandir · arraste para mover";
   header.setAttribute("aria-label",header.title);
  }
@@ -559,11 +611,15 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  if(config&&typeof config==="object")searchSettings={...searchSettings,...config};
+ shownMode=resultSourceMode==="iv"?"raw":(resultSourceMode||mode);
+ if(resultSourceConfig&&typeof resultSourceConfig==="object")
+  shownSettings={...searchSettings,...resultSourceConfig};
+ shownShiny=!!resultSourceShiny;resultsStale=!!stale;
  mode=m==="iv"?"raw":m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  if(active>=cards.length)active=-1;
  draw();
