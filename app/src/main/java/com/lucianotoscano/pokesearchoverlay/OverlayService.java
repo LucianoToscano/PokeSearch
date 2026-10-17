@@ -1653,6 +1653,8 @@ public class OverlayService extends Service {
                 dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:30),Gravity.TOP|Gravity.LEFT));
             updateWindow();
         }
+        // Apply saved P/M/G sizing to the independent Pokémon window on startup too.
+        updateResultsWidth();
         locationEnabled=pref.getBoolean("locationEnabled",false);
         locationCoords=locationEnabled?pref.getString("locationCoords",""):"";
         locationRadius=locationEnabled?pref.getInt("locationRadius",0):0;
