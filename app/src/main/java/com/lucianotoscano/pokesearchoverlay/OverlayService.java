@@ -146,6 +146,20 @@ public class OverlayService extends Service {
         handler.postDelayed(expiryRefresh,Math.max(250L,next-now+150L));
     }
     private String mode="iv",results="[]",status="Conectando...";
+    // Independent parameters remain intact when switching between search modes.
+    private int rawAttack=15,rawDefense=15,rawStamina=15,glRank=1,ulRank=1,ivPercentMin=0,ivPercentMax=100;
+    private String filterConfigJson(){
+        JSONObject config=new JSONObject();
+        try{
+            config.put("attack",rawAttack);config.put("defense",rawDefense);
+            config.put("stamina",rawStamina);config.put("glRank",glRank);
+            config.put("ulRank",ulRank);config.put("percentMin",ivPercentMin);
+            config.put("percentMax",ivPercentMax);
+        }catch(org.json.JSONException ignored){}
+        return config.toString();
+    }
+    private static boolean within(int value,int min,int max){return value>=min&&value<=max;}
+
     private float startRawX,startRawY;
     private int startX,startY;
     private boolean dragged=false;
@@ -186,7 +200,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -654,7 +668,8 @@ public class OverlayService extends Service {
         }
         String code=script().replace("__ACTION__",JSONObject.quote(action))
                 .replace("__MODE__",JSONObject.quote(mode))
-                .replace("__SHINY__",shiny?"true":"false");
+                .replace("__SHINY__",shiny?"true":"false")
+                .replace("__FILTERS__",filterConfigJson());
         try{website.evaluateJavascript(code,raw->{
             if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;
             try{
@@ -931,10 +946,10 @@ public class OverlayService extends Service {
                 diagnosticError("Filtro Shiny mudou durante a busca. Resultados não confirmados.");
                 return;
             }
-            if(!"iv".equals(mode)&&!r.optBoolean("leagueConfirmed",false)){
+            if(("gl".equals(mode)||"ul".equals(mode))&&!r.optBoolean("leagueConfirmed",false)){
                 searchInProgress=false;
                 shinyVerified=false;
-                diagnosticError("Liga PvP/ranking 1 não confirmado. Resultados preservados.");
+                diagnosticError("Liga PvP/ranking configurado não confirmado. Resultados preservados.");
                 return;
             }
             int found=r.optInt("found",0);
@@ -1006,12 +1021,24 @@ public class OverlayService extends Service {
     }
     private boolean verifiedTargetCriteria(JSONObject card){
         if(card==null)return false;
-        if("iv".equals(mode)){
+        if("iv".equals(mode))
             return "15/15/15".equals(card.optString("iv","")) ||
                 "100".equals(card.optString("ivPercent",""));
+        if("raw".equals(mode)){
+            String iv=card.optString("iv","");
+            return iv.isEmpty()||(rawAttack+"/"+rawDefense+"/"+rawStamina).equals(iv);
+        }
+        if("percent".equals(mode)){
+            String pct=card.optString("ivPercent","");
+            if(pct.isEmpty())return true; // Filter itself is verified in probe.js.
+            try{int v=Integer.parseInt(pct);return v>=ivPercentMin&&v<=ivPercentMax;}
+            catch(NumberFormatException ignored){return false;}
         }
         if("gl".equals(mode)||"ul".equals(mode)){
-            return "1".equals(card.optString("rank","").trim());
+            int max="ul".equals(mode)?ulRank:glRank;
+            int shown=rankForSort(card);
+            return (shown>=1&&shown<=max) ||
+                ("verified-site-filter".equals(card.optString("rankSource",""))&&shown==999999);
         }
         return false;
     }
@@ -1034,10 +1061,10 @@ public class OverlayService extends Service {
             current.add(key);
             if(knownSpawns.contains(key))continue;
             if(firstNew.isEmpty() &&
-                ("iv".equals(mode)||leagueConfirmed) && verifiedTargetCriteria(c))
+                ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) && verifiedTargetCriteria(c))
                 firstNew=c.optString("name","Pokémon");
             if(WatchAlerts.enabled(this) &&
-                ("iv".equals(mode)||leagueConfirmed) &&
+                ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
                 verifiedTargetCriteria(c) &&
                 WatchAlerts.matches(c.optString("name",""),wanted)){
                 watchedCount++;
@@ -1302,13 +1329,39 @@ public class OverlayService extends Service {
             OverlayService.this.refresh(true);
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
+        @JavascriptInterface public void setSearchConfig(String payload){handler.post(()->{
+            try{
+                JSONObject input=new JSONObject(payload);
+                String nextMode=input.getString("mode");
+                if(!nextMode.equals("iv")&&!nextMode.equals("raw")&&!nextMode.equals("percent")&&
+                    !nextMode.equals("gl")&&!nextMode.equals("ul"))return;
+                int a=input.getInt("attack"),d=input.getInt("defense"),st=input.getInt("stamina");
+                int gl=input.getInt("glRank"),ul=input.getInt("ulRank");
+                int min=input.getInt("percentMin"),max=input.getInt("percentMax");
+                if(!within(a,0,15)||!within(d,0,15)||!within(st,0,15)||
+                    !within(gl,1,50)||!within(ul,1,50)||
+                    !within(min,0,100)||!within(max,0,100)||min>max)return;
+                if(mode.equals(nextMode)&&rawAttack==a&&rawDefense==d&&rawStamina==st&&
+                    glRank==gl&&ulRank==ul&&ivPercentMin==min&&ivPercentMax==max)return;
+                mode=nextMode;rawAttack=a;rawDefense=d;rawStamina=st;
+                glRank=gl;ulRank=ul;ivPercentMin=min;ivPercentMax=max;
+                getSharedPreferences("prefs",0).edit()
+                    .putString("mode",mode).putInt("rawAttack",a).putInt("rawDefense",d)
+                    .putInt("rawStamina",st).putInt("glRank",gl).putInt("ulRank",ul)
+                    .putInt("ivPercentMin",min).putInt("ivPercentMax",max).apply();
+                ++requestGeneration;searchInProgress=false;shinyVerified=false;
+                results="[]";hideDetails();update();refresh();
+            }catch(org.json.JSONException ex){
+                status("Filtro inválido. Escolha os valores novamente.");
+            }
+        });}
         @JavascriptInterface public void setMode(String s){select(s);}
         @JavascriptInterface public void select(String s){handler.post(()->{
-            if(!s.equals("iv")&&!s.equals("gl")&&!s.equals("ul"))return;
+            if(!s.equals("iv")&&!s.equals("raw")&&!s.equals("percent")&&!s.equals("gl")&&!s.equals("ul"))return;
             if(mode.equals(s))return;
             mode=s;getSharedPreferences("prefs",0).edit().putString("mode",s).apply();
             android.widget.Toast.makeText(OverlayService.this,
-                "Filtro selecionado: "+(s.equals("iv")?"IV100":s.equals("gl")?"Grande Liga #1":"Ultra Liga #1"),
+                "Filtro selecionado: "+(s.equals("iv")?"IV100":s.equals("raw")?"Raw IV":s.equals("percent")?"IV%":s.equals("gl")?"Grande Liga":"Ultra Liga"),
                 android.widget.Toast.LENGTH_SHORT).show();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
             results="[]";hideDetails();update();refresh();
@@ -1662,7 +1715,16 @@ public class OverlayService extends Service {
             locationEnabled=false;locationCoords="";locationRadius=0;
             pref.edit().putBoolean("locationEnabled",false).remove("locationCoords").remove("locationRadius").apply();
         }
-        mode=getSharedPreferences("prefs",0).getString("mode",mode);
+        mode=pref.getString("mode",mode);
+        if(!mode.equals("iv")&&!mode.equals("raw")&&!mode.equals("percent")&&!mode.equals("gl")&&!mode.equals("ul"))
+            mode="iv";
+        rawAttack=Math.max(0,Math.min(15,pref.getInt("rawAttack",15)));
+        rawDefense=Math.max(0,Math.min(15,pref.getInt("rawDefense",15)));
+        rawStamina=Math.max(0,Math.min(15,pref.getInt("rawStamina",15)));
+        glRank=Math.max(1,Math.min(50,pref.getInt("glRank",1)));
+        ulRank=Math.max(1,Math.min(50,pref.getInt("ulRank",1)));
+        ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
+        ivPercentMax=Math.max(ivPercentMin,Math.min(100,pref.getInt("ivPercentMax",100)));
         shiny=getSharedPreferences("prefs",0).getBoolean("shiny",false);
         if(!shiny)shinyVerified=false;
         update();
