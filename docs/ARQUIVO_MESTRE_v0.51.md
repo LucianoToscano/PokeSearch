@@ -241,6 +241,22 @@ O usuário identificou corretamente a ausência de **Sort by**. A interface do P
 
 ---
 
+## 6.12. Resultados não apareciam depois de aplicar opções — correção do ciclo Search/Collect (17/10/2026)
+
+**Relato:** depois da v0.51 com menus novos, ao escolher filtros de busca os Pokémon não apareciam na janela independente.
+
+**Investigação do código (causa diretamente reproduzível em teste):** `probe.js` confirmava os critérios antes de enviar `Search`, mas `collect()` reexecutava `check()` sobre o formulário **após a busca** e jogava fora todos os cartões se o site escondesse/recriasse o formulário durante a apresentação dos resultados. `OverlayService.java` também exigia que o controle Shiny permanecesse visível depois da navegação, rejeitando Pokémon embora o Shiny já tivesse sido confirmado antes.
+
+**Correções aplicadas:** 
+- `OverlayService.java`: guarda `confirmedSubmittedFiltersGeneration` **somente para a geração de busca verificada imediatamente antes de Search**; reseta a prova no início de outra busca e em falha de envio. Passa `_preSubmitVerified` ao coletor apenas nessa geração. Informações do formulário nunca são aceitas de outra pesquisa. Identifica a causa específica nos erros, registra somente contagens + tipo de confirmação (sem coordenadas ou identificadores de conta).
+- `probe.js`: `resultCriteria()` mantém resultados se o formulário ficou oculto mas **a mesma geração** já teve Raw/%/GL/UL e adicionais confirmados antes de Search; controles **visíveis com valores divergentes** continuam invalidando; ausência de confirmação inicial continua rejeitando. `confirmationSource` distingue verificação ao vivo de prova anterior. A validação individual dos IVs/ranks disponíveis nos cartões continua ativa.
+- `OverlayService.java`: quando a chave Shiny some ao abrir resultados, pode usar somente a prova Shiny já confirmada nessa geração; Shiny explicitamente **OFF** continua inválido para busca Shiny ON.
+- `app/tests/probe-smoke.test.js`: acrescenta regressão para formulário oculto com resultados e confirmação anterior, ausência de prova, Size contraditório e Liga contraditória. `app/tests/overlay-ux.test.js`: atualizado para a nova injeção de configuração + prova da geração e o Shiny oculto.
+
+**Limites:** sem acesso ao DOM real da sessão logada do usuário, essa é uma correção de erros encontrados no código e reproduzidos em testes automatizados; não é confirmação de que todos os filtros são aceitos pelo site em Android real. Os controles em desacordo visível continuam produzindo ⚠ em vez de inventar resultados. **Preservar** PR #21 e branch original, 12 botões, 18 ícones, login, favoritos, coordenadas e PvPPokeGo separado.
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
