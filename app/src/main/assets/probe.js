@@ -34,6 +34,9 @@ function field(label){
  return null;
 }
 function inputNear(label){const e=field(label);return e&&e.matches("input")?e:null;}
+let transientPending=false;
+function optionElements(){return elements('[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item],option').filter(vis);}
+function findOption(want){return optionElements().find(o=>text(o).toLowerCase()===String(want).toLowerCase())||null;}
 function choice(label,want){
  const e=field(label);
  if(!e)return false;
@@ -44,10 +47,13 @@ function choice(label,want){
   return true;
  }
  if(text(e).toLowerCase()===want.toLowerCase())return true;
- e.click();
- const opt=elements('[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item],option')
-    .find(o=>vis(o)&&text(o).toLowerCase()===want.toLowerCase());
- if(!opt)return false;opt.click();return true;
+ // React/Radix menus render asynchronously: read an already-open option before toggling.
+ let opt=findOption(want);
+ if(opt){opt.click();return true;}
+ if(e.disabled)return false;
+ if(e.getAttribute("aria-expanded")!=="true")e.click();
+ transientPending=true;
+ return false;
 }
 function readChoice(label){
  const e=field(label);
@@ -219,35 +225,73 @@ function extraControl(label){
  return elements('input:not([type=hidden]),select,[role=combobox],button[aria-haspopup]')
   .find(x=>vis(x)&&rx.test((x.getAttribute("placeholder")||"")+" "+(x.getAttribute("aria-label")||"")))||null;
 }
+function siteOptions(){
+ return [...new Set(optionElements().map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80);
+}
 function describeChoice(label){
- const e=extraControl(label);if(!e)return {present:false,options:[]};
- let options=[];
- if(e.matches("select"))options=Array.from(e.options).map(text);
- else if(e.matches("button,[role=combobox]")&&!e.disabled){
-  try{
-   e.click();options=elements('[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item]').filter(vis).map(text);
-   e.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));
-   if(e.getAttribute("aria-expanded")==="true")e.click();
-  }catch(_){options=[];}
- }
- return {present:true,disabled:!!e.disabled,options:[...new Set(options.map(clean).filter(x=>x&&x.length<100))].slice(0,80)};
+ const e=extraControl(label);
+ if(!e)return {present:false,options:[],reason:"Campo indisponível no site"};
+ const options=e.matches("select")?Array.from(e.options).map(text):[];
+ return {present:true,disabled:!!e.disabled,
+   value:clean(e.matches("input")?e.value:e.matches("select")?text(e.selectedOptions[0]):text(e)),
+   options:[...new Set(options.map(clean).filter(Boolean))].slice(0,80)};
 }
 function extraValue(key){
  const e=extraControl(EXTRA_LABELS[key]);if(!e)return null;
  return clean(e.matches("input")?e.value:e.matches("select")?text(e.selectedOptions[0]):text(e));
 }
+function isNeutral(v){
+ return !v||/^(?:any(?:\s+[\p{L}\s]*)?|all(?:\s+[\p{L}\s]*)?|todos?|qualquer(?:\s+[\p{L}\s]*)?|select(?:\s+[\p{L}\s]*)?|choose(?:\s+[\p{L}\s]*)?)$/iu.test(v);
+}
 function extraSelect(key,want){
  const label=EXTRA_LABELS[key],e=extraControl(label);
  if(!e)return !want;
- if(e.matches("input"))return valueInput(e,want);
- if(!want)return /^(any(?:\s+pok[eé]mon)?|all|todos)$/i.test(extraValue(key))||choice(label,"Any");
+ const actual=extraValue(key);
+ if(!want){
+  if(isNeutral(actual))return true;
+  if(e.matches("input"))return valueInput(e,"");
+  // Reset prior active filter when user switches back to Any.
+  const opt=optionElements().find(o=>isNeutral(text(o)));
+  if(opt){opt.click();return true;}
+  if(e.disabled)return false;
+  if(e.getAttribute("aria-expanded")!=="true")e.click();
+  transientPending=true;
+  return false;
+ }
  if(e.disabled)return false;
- return choice(label,want);
+ if(actual&&actual.toLowerCase()===want.toLowerCase())return true;
+ if(e.matches("input"))return valueInput(e,want);
+ if(e.matches("select"))return choice(label,want);
+ const opt=findOption(want);
+ if(opt){opt.click();return true;}
+ if(e.getAttribute("aria-expanded")!=="true")e.click();
+ transientPending=true;
+ return false;
 }
 function extraMatches(key,want){
- const v=extraValue(key);if(v===null)return !want;
- if(!want)return v===""||/^(any(?:\s+pok[eé]mon)?|all|todos)$/i.test(v);
+ const v=extraValue(key);
+ if(v===null)return !want;
+ if(!want)return isNeutral(v);
  return v.toLowerCase()===clean(want).toLowerCase();
+}
+if(action.startsWith("openFilterOptions:")){
+ const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
+ if(!e||e.disabled||e.matches("input")||e.matches("select"))return JSON.stringify({ok:false,key});
+ if(e.getAttribute("aria-expanded")!=="true")e.click();
+ return JSON.stringify({ok:true,key});
+}
+if(action.startsWith("readFilterOptions:")){
+ const key=action.split(":")[1],label=EXTRA_LABELS[key];
+ return JSON.stringify({ok:!!label,key,options:label?siteOptions():[]});
+}
+if(action.startsWith("closeFilterOptions:")){
+ const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
+ if(e&&e.getAttribute("aria-expanded")==="true"){
+  try{e.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));}
+  catch(_){}
+  if(e.getAttribute("aria-expanded")==="true")e.click();
+ }
+ return JSON.stringify({ok:true,key});
 }
 function rangeInputs(label){
  const matching=labels(document,new RegExp("^"+label+"$","i"));
@@ -267,6 +311,7 @@ function extraNumberKeys(){
  return ["gl","ul"].includes(mode)?["minPvpCp"]:["cpMin","cpMax","levelMin","levelMax"];
 }
 function extras(action){
+ transientPending=false;
  const failed=[];
  for(const key of Object.keys(EXTRA_LABELS)){
   if(key==="sortBy"&&!filters.sortBy)continue;
@@ -281,7 +326,7 @@ function extras(action){
   const ok=action==="apply"?valueInput(input,want):String(input.value||"").trim()===want;
   if(!ok)failed.push(key);
  }
- return {ok:failed.length===0,reason:"Filtros adicionais não confirmados: "+failed.join(", ")};
+ return {ok:failed.length===0,pending:action==="apply"&&transientPending,reason:"Filtros adicionais: "+failed.join(", ")};
 }
 function check(){const base=checkCore();return base.ok?extras("verify"):base;}
 if(action==="describeFilters"){
@@ -544,13 +589,13 @@ if(action==="configureSearch"){
  else if(mode==="raw")configured=applyRaw();
  else if(mode==="percent")configured=applyPercent();
  else configured=applyLeague();
- const other=configured?extras("apply"):{ok:false,reason:"Filtro principal indisponível"};
+ const other=configured?extras("apply"):{ok:false,pending:transientPending,reason:"Filtro principal indisponível"};
  configured=configured&&other.ok;
  const existing=readShiny();
  if(existing!==null&&existing!==shinyOnly){
   const sw=shinyControl();if(sw)sw.click();
  }
- return JSON.stringify({ok:true,configured,reason:other.reason,shinyKnown:existing!==null,stage:"configure"});
+ return JSON.stringify({ok:true,configured,pending:other.pending||transientPending,reason:other.reason,shinyKnown:existing!==null,stage:"configure"});
 }
 if(action==="submitSearch"){
  const b=oneButton("Search");
