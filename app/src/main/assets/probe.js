@@ -45,7 +45,8 @@ function choice(label,want){
  }
  if(text(e).toLowerCase()===want.toLowerCase())return true;
  e.click();
- const opt=elements('[role=option],option').find(o=>vis(o)&&text(o).toLowerCase()===want.toLowerCase());
+ const opt=elements('[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item],option')
+    .find(o=>vis(o)&&text(o).toLowerCase()===want.toLowerCase());
  if(!opt)return false;opt.click();return true;
 }
 function readChoice(label){
@@ -224,7 +225,7 @@ function describeChoice(label){
  if(e.matches("select"))options=Array.from(e.options).map(text);
  else if(e.matches("button,[role=combobox]")&&!e.disabled){
   try{
-   e.click();options=elements("[role=option],[role=menuitemradio]").filter(vis).map(text);
+   e.click();options=elements('[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item]').filter(vis).map(text);
    e.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));
    if(e.getAttribute("aria-expanded")==="true")e.click();
   }catch(_){options=[];}
