@@ -12,7 +12,9 @@ let count=0;
 function test(name,ok){assert.ok(ok,name);count++;}
 test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
 test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
-test("Three explicit filters",["100% · IV perfeito","GL#1 · Grande Liga","UL#1 · Ultra Liga"].every(v=>dock.includes(v)));
+test("Original IV100 and league choices plus Raw IV and % IV in compact mode menu",
+  ["100% · IV perfeito","Raw IV","Great League","Ultra League","IV% Min / Max"].every(v=>dock.includes(v))&&
+  dock.includes('toggleChoices(\'mode\')'));
 test("Intervals minimum 5 minutes",["AUTO · 5 min","AUTO · 10 min","AUTO · 15 min","AUTO · 20 min"].every(v=>dock.includes(v)));
 test("Choice panel resizes native window",dock.includes('popup.getBoundingClientRect().bottom')&&dock.includes('Native.resize(h)'));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
@@ -85,7 +87,9 @@ test("Shiny failure does not imply confirmed trainer authentication",service.inc
 test("Diagnostic logs only coarse authentication states",service.includes('BugReport.log(this,"SESSION","Shiny="'));
 test("Menus are never clipped by the HTML viewport",dock.includes("html.controls-root,body.controls-window{overflow:visible!important"));
 test("Mode AUTO and location work before delayed native menu sync",dock.includes("if(controlsWindow&&!menuOpen)setMenuOpen(true"));
-test("Mode and AUTO provide immediate visible feedback",dock.includes("mode=String(value);draw();Native.setMode(mode)")&&dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
+test("Mode applies one atomic native configuration and AUTO retains direct selection",
+  dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
+  dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(396,screenWidthDp()-8)"));
@@ -365,7 +369,36 @@ test("v0.51 header chooses a confirmed Shiny version of its exact search type",
     dock.includes('const selectedIcon=getResultIcon(mode,shiny)')&&
     dock.includes('const pair=RESULT_ICONS[family]')&&
     dock.includes('shining?pair.shiny:pair.normal'));
-test("v0.51 custom IV, IV percentage, Nundo, Master and Cup icons do not add unsupported filters",
+
+test("Five requested filter modes with correct dropdown bounds",()=>{
+ const segment=dock.split("function renderNumberPicker(")[1].split("function renderLocationChoices()")[0];
+ return segment.includes('const low=kind==="rank"?1:0,high=kind==="iv"?15:kind==="rank"?50:100')&&
+  dock.includes('{key:"attack"')&&dock.includes('{key:"defense"')&&dock.includes('{key:"stamina"')&&
+  dock.includes('{key:"glRank"')&&dock.includes('{key:"ulRank"')&&
+  dock.includes('{key:"percentMin"')&&dock.includes('{key:"percentMax"');
+});
+test("Modes save only after applying and do not grow toolbar buttons",
+ dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
+ dock.includes('cancel.onclick=closeChoices')&&toolbarButtons.length===12);
+test("Both IV% limits remain ordered when changed",
+ dock.includes('if(key==="percentMin"&&modeDraft.percentMax<number)')&&
+ dock.includes('if(key==="percentMax"&&modeDraft.percentMin>number)'));
+test("Native bridge validates all requested IV, PvP ranking and percent bounds",
+ service.includes("public void setSearchConfig(String payload)")&&
+ service.includes("within(a,0,15)")&&service.includes("within(gl,1,50)")&&
+ service.includes("within(min,0,100)")&&service.includes("min>max"));
+test("Native mode and filter options persist through service restarts",
+ ["rawAttack","rawDefense","rawStamina","glRank","ulRank","ivPercentMin","ivPercentMax"].every(k=>
+  service.includes('putInt("'+k+'"')&&service.includes('pref.getInt("'+k+'"')));
+test("Site filters are configured and confirmed before search submission",(()=>{
+ const probe=read("assets/probe.js");
+ return probe.includes("mode===\"raw\"")&&probe.includes("mode===\"percent\"")&&
+  probe.includes("configuredRank()")&&probe.includes("verifyRaw()")&&
+  probe.includes("verifyPercent()")&&probe.includes("applyLeague()")&&
+  service.includes('.replace("__FILTERS__",filterConfigJson())')&&
+  service.includes('execute("verifyFilters",filters->');
+})());
+test("v0.51 Raw/percent enabled by request without adding unsupported Nundo, Master or Cup",
     dock.includes('custom:{normal:"custom.png"')&&
     dock.includes('percent:{normal:"percent.png"')&&
     dock.includes('nundo:{normal:"nundo.png"')&&
