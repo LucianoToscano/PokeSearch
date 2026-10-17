@@ -90,6 +90,19 @@
 **Riscos/pendências honestas:** nenhuma compilação **manual** foi solicitada nesta etapa. Porém os workflows legados iniciaram **automaticamente** após os primeiros pushes ao PR #21; os runs `39002374134` (Build PokeSearch Android APK) e `39002374083` (Secure beta APK), referentes ao commit `8510f341...`, foram concluídos com **success**. Para respeitar a regra daqui em diante, ambos os workflows ganharam uma guarda em nível de job **somente para esta branch**, com execução por `workflow_dispatch` explícito; não remover a guarda sem autorização. Não houve teste físico Android. O formulário do site é dinâmico; quando a aba Raw IV exibir **seis campos** sem rótulos por atributo, o script não deve adivinhar associações para valores A/D/S diferentes: deve falhar com diagnóstico até ser verificado no aparelho/site. Validar também o comportamento de abas, listas longas e rankings acima de 1, as notificações e o Shiny. Os testes de fonte passaram nos runs de CI citados, mas isso **não substitui** testes interativos em Android/PoGoCoordinates. Os artefatos desses builds automáticos **não devem ser distribuídos** sem pedido explícito.
 
 ---
+## 6.2. Correção do menu Modos — 17/10/2026, após teste em APK
+
+**Sintoma relatado:** "O menu modo tá bugado", sem imagem ou descrição específica do gesto. A inspeção do código identificou uma causa reproduzível na geometria: a janela Android de controles crescia ao abrir o seletor e sua posição Y era limitada pela nova altura, deslocando **também a barra de 12 botões**. Isso podia desalinhar os toques do usuário e colocar o menu longe da engrenagem. A tela numérica de 0–100 também redesenhava o painel perdendo a rolagem.
+
+**Alterações na mesma branch do PR #21:**
+- `OverlayService.updateMenuPosition()`: fixa a barra horizontal junto da engrenagem; o popup ocupa espaço acima ou abaixo conforme o espaço disponível. Não move mais a engrenagem ao expandir o popup, não cria folga fictícia entre resultados e menu; calcula a área interativa real e limites da tela. `setMenuPopupPlacement(above,offset,room)` sincroniza a posição do HTML com a janela nativa.
+- `dock.html`: altura estável do popup Modos (270px dentro do espaço disponível), rolagem interna, botões Aplicar/Cancelar em rodapé visível; lista numérica mantém o valor selecionado próximo da região visível e, ao voltar, restaura a rolagem do menu; `fit()` usa altura de popup independentemente da orientação acima/abaixo. Guarda `--popup-room` inicial para não bloquear a abertura.
+- `app/tests/overlay-ux.test.js`: expectativas antigas que exigiam deslocamento do dock foram substituídas por verificações para o novo posicionamento, dimensões, faixa, valores e persistência.
+- **Validação feita:** verificação de sintaxe em `dock.html` (JS embutido), `probe.js` e dois scripts de teste. **Não** é validação de dispositivo nem execução integral dos testes Android.
+
+**Restrições:** não compilar APK novo até solicitação explícita, não executar merge, não substituir os 18 ícones, não adotar UX v0.52–v0.56. Manter a branch `feature/v0.51-launcher-icon-fill-20261016` e o PR #21 em draft. O APK entregue no chat anteriormente **não inclui** esta correção; solicitar uma compilação somente quando o usuário quiser instalar a revisão.
+
+---
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
