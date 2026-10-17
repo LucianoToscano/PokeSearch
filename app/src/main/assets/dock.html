@@ -59,6 +59,22 @@ body.controls-window #choices{z-index:10}
 #locBadge.active{display:block}
 body.controls-window #locBadge{display:none!important}
 #choices.locationPanel{width:306px;max-width:calc(100vw - 12px)}
+#choices.modePanel{width:286px;max-width:calc(100vw - 12px);max-height:min(360px,calc(100vh - 120px));overflow-y:auto;overscroll-behavior:contain}
+#choices .modeRow{display:flex;align-items:center;gap:3px;padding:2px 4px;min-height:32px;border-radius:6px}
+#choices .modeRow.selected{background:#183b32aa}
+#choices .modeRow .modeSelect{flex:1;min-width:0;width:auto;font-size:11px;padding:7px 5px;margin:0}
+#choices .modeRow .modeValue{flex:none;min-width:35px;width:auto;padding:7px 4px;margin:0;text-align:center;
+ color:#dce9f9;background:#283544;border:1px solid #465a70;border-radius:6px;font-size:11px;white-space:nowrap}
+#choices .modeRow .modeValue:focus-visible{outline:1px solid #8de7c9}
+#choices .modeAction{display:flex;gap:5px;padding:7px 4px 3px}
+#choices .modeAction button{width:50%;margin:0;text-align:center;background:#223448;border:1px solid #415369}
+#choices .modeAction .modeApply{background:#17644c;border-color:#50bf94;color:#e0ffee}
+#choices .modeHint{padding:0 9px;color:#9ab0c5;font-size:10px;line-height:1.3}
+#choices .numberGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;max-height:208px;
+ overflow-y:auto;overscroll-behavior:contain;padding:4px}
+#choices .numberGrid button{padding:7px 0;margin:0;text-align:center;background:#263345;border:1px solid #455367}
+#choices .numberGrid button.chosen{background:#21634e;border-color:#61d2a7}
+#choices .numberBack{border:1px solid #465b6a;background:#223144;text-align:center}
 #choices .locText{font-size:11px;color:#a9b7c9;padding:0 7px 8px;line-height:1.35}
 #choices .locCoordsRow{display:flex;align-items:center;gap:7px;margin:0 7px 7px}
 #choices .locCoordsRow .locField{flex:1;min-width:0;margin:0;width:auto}
@@ -216,6 +232,8 @@ function getResultIcon(searchMode,shinyActive){
 }
 let locationEnabled=false,locationCoords="",locationRadius=0;
 let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
+let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100};
+let modeDraft=null;
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
  document.documentElement.style.setProperty("--top-space",menuOpen?(Math.max(0,Number(pad)||0)+"px"):"0px");
@@ -265,7 +283,7 @@ function closeChoices(){
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
- document.getElementById("choices").classList.remove("locationPanel");
+ document.getElementById("choices").classList.remove("locationPanel","modePanel");
  if(controlsWindow)Native.locationEditor(false);
  fit();
 }
@@ -275,43 +293,104 @@ function toggleChoices(kind){
  if(!menuOpen)return;
  if(choiceOpen===kind){closeChoices();return;}
  if(choiceOpen==="location"&&kind!=="location"){
-  // The location editor temporarily focuses the overlay for the keyboard.
-  // Release that focus before showing another mode or AUTO menu.
   document.getElementById("choices").classList.remove("locationPanel");
   if(controlsWindow)Native.locationEditor(false);
  }
  choiceOpen=kind;
  if(kind==="location"){renderLocationChoices();return;}
- const current=kind==="mode"?mode:period;
- const entries=kind==="mode"?
-   [["iv","100% · IV perfeito"],["gl","GL#1 · Grande Liga"],["ul","UL#1 · Ultra Liga"]]:
-   [[0,"AUTO · OFF (somente manual)"],[5,"AUTO · 5 min"],[10,"AUTO · 10 min"],[15,"AUTO · 15 min"],[20,"AUTO · 20 min"]];
+ if(kind==="mode"){
+  modeDraft={...searchSettings,mode};
+  renderModeChoices();
+  return;
+ }
+ const current=period;
+ const entries=[[0,"AUTO · OFF (somente manual)"],[5,"AUTO · 5 min"],[10,"AUTO · 10 min"],[15,"AUTO · 15 min"],[20,"AUTO · 20 min"]];
  const panel=document.getElementById("choices");
- panel.replaceChildren();
- const title=document.createElement("div");
- title.className="choiceHeader";
- title.textContent=kind==="mode"?"MODO DE BUSCA":"INTERVALO AUTOMÁTICO";
- panel.appendChild(title);
+ panel.replaceChildren();panel.classList.remove("modePanel");
+ const title=document.createElement("div");title.className="choiceHeader";
+ title.textContent="INTERVALO AUTOMÁTICO";panel.appendChild(title);
  for(const [value,label] of entries){
-  const btn=document.createElement("button");
-  btn.type="button";
+  const btn=document.createElement("button");btn.type="button";
   btn.className=value===current?"chosen":"";
   btn.textContent=(value===current?"✓ ":"")+label;
-  btn.onclick=()=>{
-   closeChoices();
-   if(kind==="mode"){mode=String(value);draw();Native.setMode(mode);}
-   else{period=Number(value);draw();Native.setIntervalMinutes(period);}
-  };
+  btn.onclick=()=>{closeChoices();period=Number(value);draw();Native.setIntervalMinutes(period);};
   panel.appendChild(btn);
  }
  panel.classList.add("visible");
- document.getElementById("cycle").setAttribute("aria-expanded",String(kind==="mode"));
- document.getElementById("period").setAttribute("aria-expanded",String(kind==="period"));
+ document.getElementById("cycle").setAttribute("aria-expanded","false");
+ document.getElementById("period").setAttribute("aria-expanded","true");
  fit();
+}
+function renderModeChoices(){
+ const panel=document.getElementById("choices");
+ panel.replaceChildren();panel.classList.remove("locationPanel");panel.classList.add("modePanel","visible");
+ const make=(tag,cls,label)=>{
+  const el=document.createElement(tag);if(cls)el.className=cls;if(label!==undefined)el.textContent=label;return el;
+ };
+ panel.appendChild(make("div","choiceHeader","MODO DE BUSCA"));
+ const row=(name,label,keys)=>{
+  const line=make("div","modeRow"+(modeDraft.mode===name?" selected":""));
+  const choose=make("button","modeSelect"+(modeDraft.mode===name?" chosen":""),label);
+  choose.type="button";choose.onclick=()=>{modeDraft.mode=name;renderModeChoices();};
+  line.appendChild(choose);
+  keys.forEach(({key,title,kind})=>{
+   const value=make("button","modeValue",modeDraft[key]+" ▾");
+   value.type="button";value.title=title;value.setAttribute("aria-label",title+": "+modeDraft[key]);
+   value.onclick=()=>{modeDraft.mode=name;renderNumberPicker(key,kind,title);};
+   line.appendChild(value);
+  });
+  panel.appendChild(line);
+ };
+ row("iv","100% · IV perfeito",[]);
+ row("raw","Raw IV",[
+  {key:"attack",title:"Ataque (0 a 15)",kind:"iv"},
+  {key:"defense",title:"Defesa (0 a 15)",kind:"iv"},
+  {key:"stamina",title:"HP (0 a 15)",kind:"iv"}
+ ]);
+ row("gl","Great League",[{key:"glRank",title:"Top ranking Grande Liga (1 a 50)",kind:"rank"}]);
+ row("ul","Ultra League",[{key:"ulRank",title:"Top ranking Ultra Liga (1 a 50)",kind:"rank"}]);
+ row("percent","IV% Min / Max",[
+  {key:"percentMin",title:"IV% Min (0 a 100)",kind:"percent"},
+  {key:"percentMax",title:"IV% Max (0 a 100)",kind:"percent"}
+ ]);
+ panel.appendChild(make("div","modeHint","Toque em ▾ para escolher. Os valores são guardados ao aplicar."));
+ const buttons=make("div","modeAction");
+ const apply=make("button","modeApply","✓ Aplicar");
+ const cancel=make("button","","Cancelar");
+ apply.onclick=()=>{
+  const next={...modeDraft};
+  closeChoices();
+  Native.setSearchConfig(JSON.stringify(next));
+ };
+ cancel.onclick=closeChoices;buttons.append(apply,cancel);panel.appendChild(buttons);
+ document.getElementById("cycle").setAttribute("aria-expanded","true");
+ fit();
+}
+function renderNumberPicker(key,kind,title){
+ const panel=document.getElementById("choices");
+ panel.replaceChildren();panel.classList.add("modePanel","visible");
+ const heading=document.createElement("div");heading.className="choiceHeader";heading.textContent=title;
+ const grid=document.createElement("div");grid.className="numberGrid";
+ const low=kind==="rank"?1:0,high=kind==="iv"?15:kind==="rank"?50:100;
+ for(let number=low;number<=high;number++){
+  const btn=document.createElement("button");btn.type="button";
+  btn.textContent=String(number);btn.className=number===modeDraft[key]?"chosen":"";
+  btn.setAttribute("aria-label",title+" = "+number);
+  btn.onclick=()=>{
+   modeDraft[key]=number;
+   if(key==="percentMin"&&modeDraft.percentMax<number)modeDraft.percentMax=number;
+   if(key==="percentMax"&&modeDraft.percentMin>number)modeDraft.percentMin=number;
+   renderModeChoices();
+  };
+  grid.appendChild(btn);
+ }
+ const back=document.createElement("button");back.className="numberBack";back.textContent="‹ Voltar";
+ back.onclick=renderModeChoices;
+ panel.append(heading,grid,back);fit();
 }
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
- panel.replaceChildren();panel.classList.add("locationPanel");
+ panel.replaceChildren();panel.classList.remove("modePanel");panel.classList.add("locationPanel");
  const make=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x;};
  const title=make("div","choiceHeader","📍 LOCALIZAÇÃO");
  const hint=make("p","locText","Cole latitude,longitude. A chave ao lado ativa ou desativa; ocultar conserva o filtro atual.");
@@ -371,13 +450,16 @@ function draw(){
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
  const cy=document.getElementById("cycle");
  if(mode==="iv"){cy.textContent="100%";cy.classList.add("ivOn");cy.title="IV100 · 15/15/15";}
+ else if(mode==="raw"){cy.textContent="RAW";cy.classList.remove("ivOn");cy.title="Raw IV · "+searchSettings.attack+"/"+searchSettings.defense+"/"+searchSettings.stamina;}
+ else if(mode==="percent"){cy.textContent="IV%";cy.classList.remove("ivOn");cy.title="IV% · "+searchSettings.percentMin+"–"+searchSettings.percentMax+"%";}
  else{
    const gl=mode==="gl",color=gl?"#2f8ed8":"#d8ad43";
+   const rank=gl?searchSettings.glRank:searchSettings.ulRank;
    cy.innerHTML='<span class="league"><svg viewBox="0 0 24 24" aria-hidden="true">'+
    '<circle cx="12" cy="12" r="10.5" fill="'+color+'" stroke="#fff" stroke-width="1.2"/>'+
-   '<path d="M3 12h18" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#fff" stroke="'+color+'" stroke-width="1.5"/></svg>#1</span>';
+   '<path d="M3 12h18" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#fff" stroke="'+color+'" stroke-width="1.5"/></svg>#'+rank+'</span>';
    cy.classList.remove("ivOn");
-   cy.title=gl?"Grande Liga · ranking #1":"Ultra Liga · ranking #1";
+   cy.title=(gl?"Grande Liga":"Ultra Liga")+" · top ranking "+rank;
  }
  document.getElementById("size").textContent=spriteSize<=35?"P":spriteSize>=55?"G":"M";
  document.getElementById("sh").classList.toggle("shinyOn",shiny);
@@ -429,7 +511,7 @@ function draw(){
   const image=document.getElementById("resultModeIcon");
   if(image.src!==selectedIcon.path)image.src=selectedIcon.path;
   const label=selectedIcon.title+
-      ((mode==="gl"||mode==="ul")?" · PvP #1":"")+
+      ((mode==="gl"||mode==="ul")?" · PvP top "+(mode==="gl"?searchSettings.glRank:searchSettings.ulRank):"")+
       (shinyPending?" · Shiny aguardando confirmação":"");
   header.title=label+" · toque para recolher/expandir · arraste para mover";
   header.setAttribute("aria-label",header.title);
@@ -446,10 +528,11 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
+ if(config&&typeof config==="object")searchSettings={...searchSettings,...config};
  mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  if(active>=cards.length)active=-1;
  draw();
