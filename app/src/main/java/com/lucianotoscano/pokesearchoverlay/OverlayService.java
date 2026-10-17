@@ -148,6 +148,10 @@ public class OverlayService extends Service {
         handler.postDelayed(expiryRefresh,Math.max(250L,next-now+150L));
     }
     private String mode="raw",results="[]",status="Conectando...";
+    // Provenance of the last site-confirmed result set, not the pending filter.
+    // Never relabel previous Pokémon with the new mode while validation fails.
+    private String shownMode="raw",shownConfigJson="{}";
+    private boolean shownShiny=false,resultsStale=false;
     // Independent parameters remain intact when switching between search modes.
     private int rawAttack=15,rawDefense=15,rawStamina=15,glRank=1,ulRank=1,ivPercentMin=0,ivPercentMax=100;
     private String filterConfigJson(){
@@ -202,7 +206,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -217,6 +221,13 @@ public class OverlayService extends Service {
         getSharedPreferences("prefs",0).edit().putString("lastError",s).apply();
         BugReport.log(this,"ERROR",s);
         status(s);
+    }
+    private void searchFailure(String shortReason,String detail){
+        // Show one concise message; keep the detailed diagnosis for the ⚠ report.
+        getSharedPreferences("prefs",0).edit().putString("lastError",detail).apply();
+        BugReport.log(this,"FILTER",detail);
+        if(count()>0)resultsStale=true;
+        status(shortReason+(count()>0?" · resultados anteriores":""));
     }
     private void updateWindow(){
         if(wm!=null&&root!=null&&params!=null){
@@ -721,6 +732,7 @@ public class OverlayService extends Service {
         BugReport.log(this,"PREPARE","Filtros "+mode+" Shiny="+shiny+" manual="+manual);
         // Preserve the despawn cleanup timer while the network search is pending.
         searchInProgress=true;
+        if(count()>0)resultsStale=true;
         if(shiny){shinyVerified=false;update();}
         final int generation=++requestGeneration;
         status(manual?"Busca manual iniciada...":"Atualizando...");
@@ -740,7 +752,7 @@ public class OverlayService extends Service {
                 if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!prepared.optBoolean("ok")){
                     searchInProgress=false;
-                    diagnosticError("Não foi possível selecionar a aba de busca.");
+                    searchFailure("⚠ Aba não confirmada","Não foi possível selecionar a aba de busca.");
                     return;
                 }
                 handler.postDelayed(()->{
@@ -749,7 +761,7 @@ public class OverlayService extends Service {
                     if(stopped||loginPaused||generation!=requestGeneration)return;
                     if(!configured.optBoolean("ok")||!configured.optBoolean("configured",false)){
                         searchInProgress=false;
-                        diagnosticError("Falha nos controles IV/R1. Verifique se a página de busca carregou.");
+                        searchFailure("⚠ Filtro não aplicado","Falha nos controles IV/ranking. Verifique se a página carregou.");
                         return;
                     }
                     configureLocationAndVerify(generation,manual,0);
@@ -771,7 +783,7 @@ public class OverlayService extends Service {
                     return;
                 }
                 searchInProgress=false;
-                diagnosticError("📍 Não foi possível configurar a localização: "+
+                searchFailure("⚠ Localização não aplicada","Não foi possível configurar localização: "+
                     configured.optString("reason","verifique o formulário do site."));
                 return;
             }
@@ -785,7 +797,7 @@ public class OverlayService extends Service {
                         return;
                     }
                     searchInProgress=false;
-                    diagnosticError("📍 Filtro de localização não confirmado. Pesquisa não enviada.");
+                    searchFailure("⚠ Localização não confirmada","Filtro de localização não confirmado. Pesquisa não enviada.");
                     return;
                 }
                 verifyAndSubmit(generation,manual,0);
@@ -904,7 +916,7 @@ public class OverlayService extends Service {
                     }
                     searchInProgress=false;
                     shinyVerified=false;
-                    diagnosticError("Filtros IV/ligas não confirmados: "
+                    searchFailure("⚠ Filtros não confirmados","Filtros IV/ligas não confirmados: "
                         +filters.optString("reason","verifique as opções no site."));
                     return;
                 }
@@ -915,7 +927,7 @@ public class OverlayService extends Service {
                     if(!submitted.optBoolean("ok")){
                         searchInProgress=false;
                         shinyVerified=false;
-                        diagnosticError(submitted.optString("reason","Falha ao pressionar Search."));
+                        searchFailure("⚠ Busca não enviada",submitted.optString("reason","Falha ao pressionar Search."));
                         return;
                     }
                     long submittedAt=System.currentTimeMillis();
@@ -936,7 +948,7 @@ public class OverlayService extends Service {
             if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!r.optBoolean("ok")){
                 searchInProgress=false;
-                diagnosticError("Falha na leitura dos resultados do site.");
+                searchFailure("⚠ Falha na leitura","Falha na leitura dos resultados do site.");
                 return;
             }
             if((shiny && (!r.has("siteShiny")||r.isNull("siteShiny")||
@@ -944,25 +956,25 @@ public class OverlayService extends Service {
                 (!shiny&&r.has("siteShiny")&&!r.isNull("siteShiny")&&r.optBoolean("siteShiny",false))){
                 searchInProgress=false;
                 shinyVerified=false;
-                diagnosticError("Filtro Shiny mudou durante a busca. Resultados não confirmados.");
+                searchFailure("⚠ Shiny não confirmado","Filtro Shiny mudou durante a busca. Resultados não confirmados.");
                 return;
             }
             if(("gl".equals(mode)||"ul".equals(mode))&&!r.optBoolean("leagueConfirmed",false)){
                 searchInProgress=false;
                 shinyVerified=false;
-                diagnosticError("Liga PvP/ranking configurado não confirmado. Resultados preservados.");
+                searchFailure("⚠ Ranking não confirmado","Liga PvP/ranking configurado não confirmado. Resultados preservados.");
                 return;
             }
             int found=r.optInt("found",0);
             int onSite=r.optInt("siteCount",0);
             if(r.optBoolean("parseFailure",false)&&!r.optBoolean("loading",false)){
                 searchInProgress=false;
-                diagnosticError("Leitura do site: "+onSite+" ocorrências exibidas, mas nenhum cartão foi reconhecido. Abra ⚠ para exportar o diagnóstico.");
+                searchFailure("⚠ Leitura não confirmada","Leitura do site: "+onSite+" ocorrências exibidas, mas nenhum cartão foi reconhecido.");
                 return;
             }
             if(found>0&&r.optJSONArray("cards")!=null&&r.optJSONArray("cards").length()==0){
                 searchInProgress=false;
-                diagnosticError("Site retornou "+found+" Pokémon, mas nenhum comprovou os IVs/ranking esperados; confira os filtros com ⚠.");
+                searchFailure("⚠ IV/ranking não confirmado","Site retornou "+found+" Pokémon, mas nenhum comprovou os IVs/ranking esperados.");
                 return;
             }
             boolean loading=r.optBoolean("loading",false);
@@ -973,7 +985,7 @@ public class OverlayService extends Service {
             }
             if(loading||(!empty&&found==0&&attempt>=8)){
                 searchInProgress=false;
-                diagnosticError("Busca não confirmada no site (tempo limite). Resultados anteriores mantidos.");
+                searchFailure("⚠ Site sem confirmação","Busca não confirmada no site (tempo limite). Resultados anteriores mantidos.");
                 return;
             }
             applyCollectedResults(r);
@@ -1136,6 +1148,8 @@ public class OverlayService extends Service {
         JSONArray sorted=sortItems(items);
         recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
         results=sorted.toString();
+        shownMode=mode;shownConfigJson=filterConfigJson();
+        shownShiny=shiny&&shinyVerified;resultsStale=false;
         searchInProgress=false;
         armNextDespawn(sorted);
         if(selected>=0)hideDetails();
@@ -1222,7 +1236,7 @@ public class OverlayService extends Service {
             if(index<0||index>=a.length()){hideDetails();return;}
             selected=index;
             JSONObject obj=a.getJSONObject(index);
-            js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
+            js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(count()>0?shownMode:mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
             detailRoot.setVisibility(View.VISIBLE);
             moveDetail();
             js(resultPanel,resultLoaded,"window.highlight("+index+")");
@@ -1352,7 +1366,9 @@ public class OverlayService extends Service {
                     .putInt("rawStamina",st).putInt("glRank",gl).putInt("ulRank",ul)
                     .putInt("ivPercentMin",min).putInt("ivPercentMax",max).apply();
                 ++requestGeneration;searchInProgress=false;shinyVerified=false;
-                results="[]";hideDetails();update();refresh();
+                // Keep site-confirmed cards with their original mode/icon
+                // until the new search passes all checks and returns valid cards.
+                resultsStale=count()>0;hideDetails();update();refresh();
             }catch(org.json.JSONException ex){
                 status("Filtro inválido. Escolha os valores novamente.");
             }
@@ -1372,14 +1388,14 @@ public class OverlayService extends Service {
                 "Filtro selecionado: "+(s.equals("iv")?"Raw IV 15/15/15":s.equals("raw")?"Raw IV":s.equals("percent")?"% IV":s.equals("gl")?"Grande Liga":"Ultra Liga"),
                 android.widget.Toast.LENGTH_SHORT).show();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
-            results="[]";hideDetails();update();refresh();
+            resultsStale=count()>0;hideDetails();update();refresh();
         });}
         @JavascriptInterface public void menu(boolean open){handler.post(()->OverlayService.this.menu(open));}
         @JavascriptInterface public void cycleMode(){handler.post(()->{
             mode=mode.equals("raw")?"percent":mode.equals("percent")?"gl":mode.equals("gl")?"ul":"raw";
             getSharedPreferences("prefs",0).edit().putString("mode",mode).apply();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
-            results="[]";hideDetails();update();refresh();
+            resultsStale=count()>0;hideDetails();update();refresh();
         });}
         @JavascriptInterface public void cycleSpriteSize(){handler.post(()->{
             int[] sizes={35,45,55};
