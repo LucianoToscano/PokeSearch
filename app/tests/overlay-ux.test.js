@@ -28,7 +28,7 @@ test("Sprites remain vertically centered",dock.includes("align-items:center;just
 test("Sprite list uses scroll instead of clipping overflow",dock.includes("overflow-y:auto;overflow-x:hidden")&&dock.includes("--list-limit"));
 test("Long lists have list height supplied by native screen size",service.includes("Math.min(rowDp()*8,screenHeightDp()-160)"));
 
-test("Chevron is at bottom of the sprites",dock.indexOf('id="collapse"')>dock.indexOf('id="spawns"')&&dock.includes('m5 15 7-7 7 7'));
+test("League badge replaces the bottom chevron as result collapse control",dock.includes('id="resultHeader"')&&dock.includes('class="results-collapsed"')===false&&dock.includes('body.result-window.results-collapsed #spawns'));
 test("Red close is alongside heart with standard background",dock.indexOf('id="close"')>dock.indexOf('id="donate"')&&dock.includes("#controls #close{"));
 test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'));
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
@@ -68,7 +68,7 @@ test("Switching from location editor to mode releases keyboard focus",
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
 test("Compact twelve-column bar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(396,screenWidthDp()-8)"));
 test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
-test("Chevron has visible artwork and no surface background",dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
+test("Result header icon has no opaque surface background",dock.includes("body.result-window #resultHeader")&&dock.includes("background:transparent;box-shadow:none"));
 test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
 test("Coalesce resize events",dock.includes("if(fitPending)return"));
 test("Location validation refuses blank radius",read("assets/probe.js").includes('radiusInput!==""'));
@@ -322,3 +322,29 @@ test("Pix digest checked with SHA-256 and constant-time compare",guard.includes(
 test("Login protected from screenshots",main.includes("loginDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)"));
 test("R8 keeps JavascriptInterface",proguard.includes("@android.webkit.JavascriptInterface")&&proguard.includes("-keepattributes"));
 test("Release minifies and shrinks",gradle.includes("isMinifyEnabled = true")&&gradle.includes("isShrinkResources = true"));
+
+test("v0.51 gear does not render Pokémon results",
+    dock.includes('body.dock-window #spawns')&&dock.includes('body.dock-window #empty'));
+test("v0.51 sprites and mode icon are loaded into an independent Android overlay",
+    service.includes('resultRoot=new FrameLayout(this)')&&
+    service.includes('wm.addView(resultRoot,resultParams)')&&
+    service.includes('dock.html?results=1')&&
+    dock.includes('const resultWindow='));
+test("v0.51 dragging only the results window keeps X/Y separately",
+    service.includes('resultParams.x=')&&
+    service.includes('wm.updateViewLayout(resultRoot,resultParams)')&&
+    service.includes('putInt("resultsX"')&&service.includes('putInt("resultsY"'));
+test("v0.51 league icon toggles collapse, never changes search mode",
+    service.includes('private void toggleResultsCollapsed()')&&
+    dock.includes('window.setResultsCollapsed=collapsed=>')&&
+    dock.includes('Native.toggleResultsCollapsed()'));
+test("v0.51 header selects exact bundled original league art",
+    ["hundo","shundo","great-league","ultra-league"].every(name=>
+        dock.includes(name))&&dock.includes('result-icons/'));
+test("v0.51 opening favorites or login hides independent results window",
+    service.includes('if(resultRoot!=null)resultRoot.setVisibility(View.GONE)')&&
+    service.includes('if(resultRoot!=null&&!pickerOpen&&!minimized)resultRoot.setVisibility(View.VISIBLE)'));
+test("v0.51 original single search and toolbar remain unchanged",
+    dock.includes('grid-template-columns:34fr 22fr 41fr')&&
+    service.includes('private String mode="iv"')&&
+    !service.includes('multiCycleActive'));
