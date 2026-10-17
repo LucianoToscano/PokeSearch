@@ -257,6 +257,20 @@ O usuário identificou corretamente a ausência de **Sort by**. A interface do P
 
 ---
 
+## 6.13. APK de testes com resultados corrigidos (17/10/2026)
+
+**Build bem-sucedido:** [workflow #39013998424](https://github.com/LucianoToscano/PokeSearch/actions/runs/39013998424), commit de código `40cdf0ccd0e013f432d2f9c803ab03f4d5b59d42`, PR #22, branch `plan/v051-pogocoordinates-filtros-20261017`.
+
+- **GitHub Actions:** testes JavaScript de sonda e UI passaram, `gradle :app:assembleDebug :app:testDebugUnitTest` passou, APK assinado pela chave de debug do workflow e verificações ZIP + assinatura bem-sucedidas.
+- **Artefato GitHub:** `PokeSearch-v0.51-Filtros-Teste-APK` ID `12094306734`.
+- **APK extraído entregue ao usuário:** `PokeSearch-v0.51-Resultados-Corrigidos.apk`, **1.135.982 bytes**, SHA256 `d3d28251484a70115812f3e9f8f7a2ee9dae3801488390e225fcff39f776326c`.
+- **Conteúdo conferido:** `probe.js` contém `resultCriteria()` com fonte de confirmação `pre-submit-confirmed`; `dock.html` e todos os **18 ícones PNG** preservados.
+- **Correção:** validação atrelada à geração de Search; se o formulário do site ficar oculto depois do envio, o coletor pode usar a confirmação prévia daquela mesma busca. Controles visíveis divergentes ou prova anterior inexistente continuam bloqueados. Filtro Shiny oculto no resultado também pode reutilizar **somente** a prova Shiny verificada naquela geração, sem ignorar OFF explícito.
+- **Testes acrescentados:** confirmação com formulário oculto, rejeição sem prova, rejeição de Size/Liga em desacordo, regressão do Shiny oculto.
+- **Atenção:** debug APK de testes; os resultados do site **ainda não foram testados no aparelho do usuário**. Instalar e validar Raw IV, IV%, GL/UL, Size/Form e Shiny. Se persistir erro, pedir relatório TXT via ⚠ sem divulgar dados da conta. O `main` permanece intacto.
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
