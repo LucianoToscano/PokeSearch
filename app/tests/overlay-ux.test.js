@@ -12,9 +12,13 @@ let count=0;
 function test(name,ok){assert.ok(ok,name);count++;}
 test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
 test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
-test("Original IV100 and league choices plus Raw IV and % IV in compact mode menu",
-  ["100% · IV perfeito","Raw IV","Great League","Ultra League","IV% Min / Max"].every(v=>dock.includes(v))&&
-  dock.includes('toggleChoices(\'mode\')'));
+test("Four compact modes in requested order without redundant IV100 row",(()=>{
+ const body=dock.split('function renderModeChoices()')[1].split('function renderNumberPicker(')[0];
+ const items=['row("raw"','row("percent"','row("gl"','row("ul"'];
+ return items.every(x=>body.includes(x))&&
+  items.every((x,i)=>i===0||body.indexOf(items[i-1])<body.indexOf(x))&&
+  !body.includes('row("iv"')&&dock.includes('toggleChoices(\'mode\')');
+})());
 test("Intervals minimum 5 minutes",["AUTO · 5 min","AUTO · 10 min","AUTO · 15 min","AUTO · 20 min"].every(v=>dock.includes(v)));
 test("Choice panel measures fixed popup height even when rendered above toolbar",
   dock.includes('34+Math.ceil(popup.getBoundingClientRect().height)+6')&&
@@ -352,7 +356,7 @@ test("v0.51 opening favorites or login hides independent results window",
     service.includes('if(resultRoot!=null&&!pickerOpen&&!minimized)resultRoot.setVisibility(View.VISIBLE)'));
 test("v0.51 original single search and toolbar remain unchanged",
     dock.includes('grid-template-columns:34fr 22fr 41fr')&&
-    service.includes('private String mode="iv"')&&
+    service.includes('private String mode="raw"')&&
     !service.includes('multiCycleActive'));
 
 test("v0.51 all 18 original result icons are present for 9 search types and Shiny pairs",(()=>{
@@ -379,7 +383,7 @@ test("Mode popup keeps one stable row while expanding upward or downward",
  dock.includes('body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}')&&
  dock.includes('body.controls-window.popup-above #menu{top:var(--popup-offset,0px)!important}'));
 test("Mode popup stays contained and its action row remains reachable",
- dock.includes('height:270px')&&dock.includes('var(--popup-room,400px)')&&
+ dock.includes('width:246px')&&dock.includes('max-height:min(216px')&&dock.includes('var(--popup-room,400px)')&&
  dock.includes('position:sticky;bottom:0;')&&
  service.includes('int roomDp=requestedPopup==0?420:'));
 test("Mode picker remembers scroll and centers selected values",
@@ -387,13 +391,24 @@ test("Mode picker remembers scroll and centers selected values",
  dock.includes('panel.scrollTop=modeScrollTop')&&
  dock.includes('grid.scrollTop=Math.max(0,')&&
  dock.includes('overscroll-behavior:contain'));
-test("Five requested filter modes with correct dropdown bounds",()=>{
+test("Four requested search modes with correct numeric bounds",()=>{
  const segment=dock.split("function renderNumberPicker(")[1].split("function renderLocationChoices()")[0];
  return segment.includes('const low=kind==="rank"?1:0,high=kind==="iv"?15:kind==="rank"?50:100')&&
   dock.includes('{key:"attack"')&&dock.includes('{key:"defense"')&&dock.includes('{key:"stamina"')&&
   dock.includes('{key:"glRank"')&&dock.includes('{key:"ulRank"')&&
   dock.includes('{key:"percentMin"')&&dock.includes('{key:"percentMax"');
 });
+test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy migration",
+ dock.includes('family="hundo";')&&
+ dock.includes('searchSettings.attack===15&&searchSettings.defense===15&&searchSettings.stamina===15')&&
+ service.includes('boolean migrateLegacyHundo="iv".equals(mode);')&&
+ service.includes('pref.edit().putString("mode","raw")')&&
+ read("assets/probe.js").includes('return rawIsHundo()&&set100Percent();'));
+test("Mode panel has no hint or fifth row and numbers retain a compact grid",
+ !dock.includes('panel.appendChild(make("div","modeHint"')&&
+ dock.includes('max-height:148px')&&
+ dock.includes('#choices .modeRow')&&
+ dock.includes('max-height:min(216px'));
 test("Modes save only after applying and do not grow toolbar buttons",
  dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
  dock.includes('cancel.onclick=closeChoices')&&toolbarButtons.length===12);
