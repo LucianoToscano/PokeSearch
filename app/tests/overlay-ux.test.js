@@ -545,4 +545,14 @@ test("New filter settings reject invalid CP/level intervals",
   service.includes('{"cpMin","cpMax"}')&&service.includes('{"levelMin","levelMax"}')&&
   service.includes('Double.parseDouble(low)>Double.parseDouble(high)'));
 
+test("After Search results use same-generation pre-submit proof when the filter form is hidden",
+ service.includes('confirmedSubmittedFiltersGeneration==callbackGeneration')&&
+ service.includes('validated.put("_preSubmitVerified",true)')&&
+ service.includes('confirmedSubmittedFiltersGeneration=-1')&&
+ read("assets/probe.js").includes('confirmationSource:confirmation.source'));
+test("Missing Shiny switch after navigation can use pre-submit proof, never explicit Shiny-off",
+ service.includes('boolean trustedShinyHidden=shiny&&shinyVerified')&&
+ service.includes('confirmedSubmittedFiltersGeneration==generation&&shinySwitchMissing')&&
+ service.includes('!r.optBoolean("siteShiny",false)'));
+
 console.log("PokeSearch UX contract: "+count+" tests passed");
