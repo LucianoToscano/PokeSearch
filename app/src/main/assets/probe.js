@@ -1,6 +1,14 @@
 (function(){
 "use strict";
-const action=__ACTION__,mode=__MODE__,shinyOnly=__SHINY__;
+const action=__ACTION__,mode=__MODE__,shinyOnly=__SHINY__,options=__OPTIONS__;
+const maxRank=Number.isInteger(Number(options.rankMax))&&Number(options.rankMax)>=1&&Number(options.rankMax)<=200?Number(options.rankMax):1;
+const percentMin=Number.isInteger(Number(options.ivMin))?Number(options.ivMin):100;
+const percentMax=Number.isInteger(Number(options.ivMax))?Number(options.ivMax):100;
+const percentValid=percentMin>=0&&percentMin<=percentMax&&percentMax<=100;
+const percentMode=mode==="iv"&&(options.ivFilter==="percent"||
+  (!options.customIvEnabled&&options.ivFilter!=="raw"));
+const ivGoal=options.customIvEnabled?[Number(options.ivA),Number(options.ivD),Number(options.ivH)]:[15,15,15];
+const ivValid=ivGoal.every(x=>Number.isInteger(x)&&x>=0&&x<=15);
 const clean=s=>String(s??"").replace(/\u00a0/g," ").replace(/[ \t]+/g," ").trim();
 const text=e=>clean(e&&(e.innerText||e.textContent)||"");
 const elements=s=>Array.from(document.querySelectorAll(s));
@@ -110,37 +118,113 @@ function inputsByIvGroup(count){
 }
 function rawIVInputs(){return inputsByIvGroup(3).length?inputsByIvGroup(3):inputsByIvGroup(6);}
 function percentageIVInputs(){return inputsByIvGroup(2);}
-function set100Percent(){
+function setPercentRange(){
  tab("Stats");tab("% IV");
  const fields=percentageIVInputs();
- if(fields.length!==2)return false;
- return fields.every(e=>valueInput(e,"100"));
+ return percentValid&&fields.length===2&&fields.every((e,i)=>
+  valueInput(e,String(i===0?percentMin:percentMax)));
 }
 function applyIv(){
- // The public website uses two % IV fields (min/max), both set to 100.
- if(set100Percent())return true;
+ if(!ivValid)return false;
+ if(percentMode)return setPercentRange();
  tab("Stats");tab("Raw IV");
  const raw=rawIVInputs();
- return (raw.length===3||raw.length===6)&&raw.every(x=>valueInput(x,"15"));
+ if(raw.length!==3&&raw.length!==6)return false;
+ const values=raw.length===3?ivGoal:ivGoal.flatMap(v=>[v,v]);
+ return raw.every((el,i)=>valueInput(el,String(values[i])));
+}
+function rangeInputs(title){
+ const group=labels(document,new RegExp("^"+title+"$","i"));
+ for(const lab of group){
+  for(let p=lab.parentElement,depth=0;p&&depth<5;p=p.parentElement,depth++){
+   const inputs=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
+   if(inputs.length===2)return inputs;
+   if(inputs.length>5)break;
+  }
+ }
+ return [];
+}
+function filterRanges(apply){
+ for(const [title,min,max] of [["CP","cpMin","cpMax"],["Level","levelMin","levelMax"]]){
+  const vals=[String(options[min]||""),String(options[max]||"")];
+  if(vals.some(v=>v!==""&&!/^\d+(?:\.\d+)?$/.test(v)))return false;
+  const fields=rangeInputs(title);
+  if(!fields.length){if(vals.some(Boolean))return false;continue;}
+  for(let i=0;i<2;i++){
+   if(apply){if(!valueInput(fields[i],vals[i]))return false;}
+   else if(String(fields[i].value||"").trim()!==vals[i])return false;
+  }
+ }
+ return true;
+}
+
+function sizeLabels(){
+ return elements("label,[role=option],[role=checkbox],button").filter(vis)
+   .filter(el=>/^(XXS|XS|S|M|L|XL|XXL)$/.test(text(el)));
+}
+function sizeSelected(el){
+ const checkbox=el.matches('input[type=checkbox]')?el:el.querySelector('input[type=checkbox]');
+ const state=checkbox||el;
+ if(typeof state.checked==="boolean")return state.checked;
+ const aria=state.getAttribute("aria-checked");
+ if(aria!==null)return aria==="true";
+ return /\b(?:checked|selected|active)\b/.test(String(state.className||""));
+}
+function setSizeFilter(apply){
+ const want=String(options.size||"").split(",").filter(Boolean);
+ if(want.some(sz=>!["XXS","XS","S","M","L","XL","XXL"].includes(sz)))return false;
+ const control=field("Size");
+ if(!control)return want.length===0;
+ control.click();
+ const entries=sizeLabels();
+ if(!entries.length)return want.length===0;
+ const wanted=new Set(want);
+ let ok=true;
+ for(const sz of ["XXS","XS","S","M","L","XL","XXL"]){
+  const entry=entries.find(x=>text(x)===sz);
+  if(!entry){if(wanted.has(sz))ok=false;continue;}
+  if(apply&&sizeSelected(entry)!==wanted.has(sz))entry.click();
+  if(sizeSelected(entry)!==wanted.has(sz))ok=false;
+ }
+ if(typeof control.click==="function")control.click();
+ return ok;
+}
+function filterSelectFields(apply){
+ for(const [label,key] of [["Weather","weather"],["Gender","gender"],["Form","form"]]){
+  const target=String(options[key]||"").trim();
+  const available=field(label);
+  if(!available){if(target)return false;continue;}
+  const current=readChoice(label);
+  if(apply){
+   const desired=target||"Any";
+   if(current!==desired&&!choice(label,desired))return false;
+  }else if(target&&current!==target)return false;
+ }
+ return setSizeFilter(apply);
 }
 function applyGl(){
  const rank=inputNear("Top ranking");
- return !!rank&&valueInput(rank,"1")&&choice("League",mode==="ul"?"Ultra League":"Great League")&&choice("Include previous evolutions","Yes");
+ return !!rank&&valueInput(rank,String(maxRank))&&choice("League",mode==="ul"?"Ultra League":"Great League")&&choice("Include previous evolutions","Yes");
 }
 function check(){
  const currentShiny=readShiny();
  if(currentShiny!==shinyOnly && !(shinyOnly===false&&currentShiny===null))return {ok:false,reason:"Shiny não confirmado",shiny:currentShiny};
  if(mode==="iv"){
   const ins=rawIVInputs();
-  if((ins.length===3||ins.length===6)&&ins.every(x=>x.value==="15"))return {ok:true};
+  const values=ins.length===3?ivGoal:ivGoal.flatMap(x=>[x,x]);
+  const rawOk=ivValid&&(ins.length===3||ins.length===6)&&
+    ins.every((el,i)=>String(el.value)===String(values[i]));
   const pc=percentageIVInputs();
-  if(pc.length===2&&pc.every(x=>x.value==="100"))return {ok:true};
-  return {ok:false,reason:"IV100: Raw IV 15/15/15 ou % IV 100/100 não confirmados"};
+  const percentageOk=percentMode&&percentValid&&pc.length===2&&
+    Number(pc[0].value)===percentMin&&Number(pc[1].value)===percentMax;
+  if(!rawOk&&!percentageOk)return {ok:false,reason:"Raw IV / % IV não correspondem ao filtro solicitado"};
+ }else{
+  const rank=inputNear("Top ranking");
+  const league=readChoice("League"),prior=readChoice("Include previous evolutions");
+  if(!rank||Number(rank.value)!==maxRank||league!==(mode==="ul"?"Ultra League":"Great League")||prior!=="Yes")
+   return {ok:false,reason:"Ranking PvP não confirmado",rank:rank?rank.value:null,league,prior};
  }
- const rank=inputNear("Top ranking");
- const league=readChoice("League"),prior=readChoice("Include previous evolutions");
- if(!rank||rank.value!=="1"||league!==(mode==="ul"?"Ultra League":"Great League")||prior!=="Yes")
-  return {ok:false,reason:"Grande Liga R1 não confirmada",rank:rank?rank.value:null,league,prior};
+ if(!filterRanges(false)||!filterSelectFields(false))return {ok:false,reason:"Filtros adicionais não confirmados no site"};
  return {ok:true};
 }
 function cardRoots(){
@@ -218,17 +302,29 @@ function collect(){
  const fieldRank=inputNear("Top ranking");
  const activeLeague=readChoice("League");
  const leagueConfirmed=mode==="iv" ||
-   (!!fieldRank&&fieldRank.value==="1"&&activeLeague===targetLeague&&readChoice("Include previous evolutions")==="Yes");
+   (!!fieldRank&&Number(fieldRank.value)===maxRank&&activeLeague===targetLeague&&readChoice("Include previous evolutions")==="Yes");
  // Rank is specified by the website's search form, not each result card.
  // Only infer rank=1 from the verified filter; never from an unknown form.
+ const expected=ivGoal.join("/");
+ const inRange=x=>{
+   const n=Number(x.ivPercent);
+   if(Number.isFinite(n)&&x.ivPercent!==""&&n>=percentMin&&n<=percentMax)return true;
+   if(x.iv&&/^\d+\/\d+\/\d+$/.test(x.iv)){
+    const parts=x.iv.split("/").map(Number);
+    const percent=100*(parts[0]+parts[1]+parts[2])/45;
+    return percent>=percentMin&&percent<=percentMax;
+   }
+   return false;
+ };
  const valid=mode==="iv"?
-   found.filter(x=>x.iv==="15/15/15"||x.ivPercent==="100"):
-   (leagueConfirmed?found.filter(x=>!x.rank||String(x.rank).trim()==="1").map(x=>({
-      ...x,rank:"1",rankSource:x.rank?"card":"verified-site-filter"
-   })):[]);
+   found.filter(x=>percentMode?inRange(x):x.iv===expected):
+   (leagueConfirmed?found.filter(x=>!x.rank||(Number(x.rank)>=1&&Number(x.rank)<=maxRank))
+    .map(x=>!x.rank&&maxRank===1?
+      {...x,rank:"1",rankSource:"verified-site-filter",rankUpperBound:1}:
+      {...x,rankUpperBound:maxRank}):[]);
  const uncertain=mode==="iv"?
-   found.some(x=>!(x.iv==="15/15/15"||x.ivPercent==="100")):
-   !leagueConfirmed||found.some(x=>x.rank&&String(x.rank).trim()!=="1");
+   found.some(x=>!(percentMode?inRange(x):x.iv===expected)):
+   !leagueConfirmed||found.some(x=>x.rank&&(Number(x.rank)<1||Number(x.rank)>maxRank));
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
@@ -390,15 +486,17 @@ if(action==="configureSearch"){
   configured=applyIv();
  }else{
   const rank=inputNear("Top ranking");
-  if(rank)valueInput(rank,"1");
+  if(rank)valueInput(rank,String(maxRank));
   choice("League",mode==="ul"?"Ultra League":"Great League");
   choice("Include previous evolutions","Yes");
-  configured=!!rank && rank.value==="1" && readChoice("League")===(mode==="ul"?"Ultra League":"Great League") && readChoice("Include previous evolutions")==="Yes";
+  configured=!!rank && Number(rank.value)===maxRank && readChoice("League")===(mode==="ul"?"Ultra League":"Great League") && readChoice("Include previous evolutions")==="Yes";
  }
  const existing=readShiny();
  if(existing!==null&&existing!==shinyOnly){
   const sw=shinyControl();if(sw)sw.click();
  }
+ configured=filterRanges(true)&&configured;
+ configured=filterSelectFields(true)&&configured;
  return JSON.stringify({ok:true,configured,shinyKnown:existing!==null,stage:"configure"});
 }
 if(action==="submitSearch"){
@@ -416,7 +514,7 @@ if(action==="search"){
   if(mode==="iv"){
    tab("Raw IV");
    const fields=rawIVInputs();
-   fields.slice(0,3).forEach(e=>valueInput(e,"15"));
+   fields.slice(0,3).forEach((e,i)=>valueInput(e,String(ivGoal[i])));
   }else{
    const rank=inputNear("Top ranking");
    if(rank)valueInput(rank,"1");

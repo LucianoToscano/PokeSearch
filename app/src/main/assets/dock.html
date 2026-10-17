@@ -122,6 +122,7 @@ body.controls-window #choices{top:34px}
 #choices .locCoordsRow button[role=switch],#choices .locLine button{background:#37393dc9;border-color:#979a9d60}
 #controls #location svg{width:14px;height:14px}
 #controls #location.locOn{background:#454c48cf;border-color:#bfc9c1a6;color:#fff}
+#controls #filters.activeFilter{background:#444b48ec;border-color:#aad8c39c;color:#dff9ed}
 #controls #location.locOn svg{width:12px;height:12px}
 #locBadge{background:#363b3ac4;border-color:#ffffff4a;color:#edf0ef}
 #controls #cycle.ivOn{background:#3a5040bd;border-color:#abc3ae;color:#fff}
@@ -129,6 +130,116 @@ body.controls-window #choices{top:34px}
 #controls #bell.generalSilent{background:#48484ac9;border-color:#d2d2d2;color:#e5e5e5}
 #controls #period.autoOff{opacity:.73;background:#333538ac}
 #spawns{margin-top:var(--top-space);gap:0}
+/* v0.52: original compact palette, optionally one-column menu. */
+body.controls-window.vertical #menu{width:100%!important}
+body.controls-window.vertical #controls{display:flex;flex-direction:column;gap:2px;
+ width:42px;max-height:420px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;direction:ltr}
+body.controls-window.vertical #controls button{width:40px;flex:0 0 30px;min-height:30px}
+body.controls-window.vertical.menu-left #controls{margin-left:auto}
+body.controls-window.vertical #choices{position:absolute;top:0;left:0;right:auto;max-height:380px;overflow-y:auto}
+body.controls-window.vertical.menu-left #choices{left:auto;right:0}
+body.controls-window.vertical #choices.locationPanel{width:255px}
+#collapse svg{width:15px!important;height:15px!important}
+.rankBadge{position:absolute;top:0;left:0;pointer-events:none;color:#eef8ff;background:#171c23dc;
+ border:1px solid #ffffff50;border-radius:3px;font-size:8px;font-weight:800;line-height:11px;
+ padding:0 2px;white-space:nowrap}
+/* Inline filtering lives in the same compact floating menu as AUTO and Location. */
+#choices.filtersPanel{width:316px;max-width:calc(100vw - 10px);max-height:380px;overflow-y:auto;
+  overscroll-behavior:contain;scrollbar-width:thin;padding:9px;background:#242628f5}
+#choices.filtersPanel .filterLabel{font-size:11px;color:#d8dce1;line-height:20px;margin:5px 3px 2px}
+#choices.filtersPanel .filterHint{font-size:10px;line-height:1.35;color:#b6bfc9;margin:5px 3px 8px}
+#choices.filtersPanel .filterRow{display:flex;gap:6px;width:100%;align-items:center;margin:3px 0 8px}
+#choices.filtersPanel input,#choices.filtersPanel select{
+  background:#15191e;border:1px solid #737c866b;border-radius:7px;color:#fff;
+  font:12px Roboto,Arial,sans-serif;height:35px;padding:6px;min-width:0;flex:1;width:100%}
+#choices.filtersPanel input[type=checkbox]{flex:0 0 18px;width:18px;height:18px;accent-color:#75c3a7}
+#choices.filtersPanel input[type=range]{width:100%;height:17px;padding:0;accent-color:#75c3a7}
+#choices.filtersPanel .filterCheck{display:flex;align-items:center;gap:7px;margin:8px 1px;color:#eff2f3;font-size:11px}
+#choices.filtersPanel .filterQuick{display:flex;gap:4px;justify-content:space-between}
+#choices.filtersPanel .filterQuick button{padding:6px 4px;margin:0;text-align:center;
+ flex:1;background:#333b3e;border:1px solid #ffffff1c;font-size:10px}
+#choices.filtersPanel button.filterApply{background:#2a5d4a;color:#e2fff1;text-align:center;font-weight:800;
+ flex:1;border:1px solid #67c7a0}
+#choices.filtersPanel button.filterCancel{background:#383d43;color:#f4f5f7;text-align:center;flex:1}
+/* Multi-search keeps the classic compact sprite rail; each list folds separately. */
+.groupBlock{width:var(--dock);display:flex;flex-direction:column;align-items:center;gap:0}
+.groupTitle{width:calc(var(--dock) - 2px);display:block;text-align:center;background:#1c2735e8;
+ border:1px solid #96a8bd55;border-radius:5px;color:#e2f8ed;
+ font-size:9px;line-height:12px;padding:1px;margin:2px 0 1px;cursor:pointer;overflow-wrap:anywhere}
+.groupTitle.closed{opacity:.76}
+.groupTitle small{font-size:7px;color:#a9bec3}
+body.controls-window.with-text #controls{display:flex;flex-direction:row;overflow-x:auto;
+ width:100%;gap:3px;scrollbar-width:thin;max-height:38px}
+body.controls-window.with-text #controls button{flex:0 0 auto;width:79px!important;
+ padding:0 3px;min-width:67px;gap:3px;flex-direction:column;height:36px}
+body.controls-window.with-text #controls button::after{content:attr(data-label);
+ font-size:9px;font-weight:500;line-height:10px;color:#ecedf0}
+body.controls-window.vertical.with-text #controls{flex-direction:column;
+ overflow-y:auto;overflow-x:hidden;width:154px!important;max-height:440px}
+body.controls-window.vertical.with-text #controls button{width:150px!important;
+ flex:0 0 32px;height:32px;flex-direction:row;justify-content:flex-start;
+ padding-left:8px;gap:8px}
+body.controls-window.vertical.with-text #controls button::after{font-size:11px}
+#choices.filtersPanel .profileCard{border:1px solid #8597a13d;padding:7px;
+ margin:7px 0;border-radius:8px;background:#1a232b}
+#choices.filtersPanel .profileRow{display:flex;gap:5px;align-items:center;margin:4px 0}
+#choices.filtersPanel .profileRow select,#choices.filtersPanel .profileRow input{min-width:0;width:55px}
+body.group-window #menu,body.group-window #gear,body.group-window #locBadge,
+body.group-window #empty,body.group-window #collapse{display:none!important}
+body.group-window{width:85px!important;background:transparent}
+body.group-window #shell{width:85px!important;min-width:0!important;overflow:hidden}
+body.group-window #spawns{width:85px!important;margin:0;max-height:330px!important;overflow:auto;align-items:center}
+body.group-window .spawn{width:85px!important;height:var(--row);flex:0 0 var(--row)}
+#groupHeader{display:none}
+body.group-window #groupHeader{display:flex;height:29px;align-items:center;justify-content:flex-end;
+ border-radius:6px;background:#1b2a35e8;color:#e5f1f5;border:1px solid #ffffff4d;
+ font-size:10px;white-space:nowrap;width:85px;padding:0 3px 0 24px;gap:2px}
+body.group-window #groupHeader .dragLabel{position:absolute;top:4px;left:3px;color:#90bdd5;font-size:15px}
+body.group-window #groupHeader .groupName{flex:1;text-align:center;font-size:10px;font-weight:800}
+body.group-window #groupHeader .groupFold{font-size:13px;background:transparent;border:0;color:#fff;padding:0 2px;min-width:19px}
+body.group-window.group-folded #spawns{display:none!important}
+body.dock-window.multi-live #spawns,body.dock-window.multi-live #empty,
+body.dock-window.multi-live #collapse{display:none!important}
+.miniField{position:absolute;right:0;top:1px;color:#fff9ce;background:#121b22df;
+ font-size:8px;line-height:9px;padding:1px;border-radius:3px;pointer-events:none;max-width:100%}
+.miniIv{position:absolute;left:0;bottom:1px;color:#e4fae9;background:#142623c9;
+ font-size:8px;line-height:9px;padding:1px;border-radius:3px;pointer-events:none}
+.miniCp{position:absolute;right:0;bottom:12px;color:#e0e8f2;background:#14212ac9;
+ font-size:8px;line-height:9px;padding:1px;border-radius:3px;pointer-events:none}
+#choices.infoPanel{width:250px;max-height:400px;overflow-y:auto}
+#choices.infoPanel label{display:flex;align-items:center;gap:8px;color:#e9f1f2;
+ font-size:12px;line-height:25px;padding:3px 5px}
+#choices.infoPanel input{accent-color:#8bdbbd}
+
+/* v0.55 clean and consistent floating menus */
+body.controls-window #manualRefresh,body.controls-window #size,body.controls-window #clock{display:none!important}
+body.controls-window.vertical.with-text #controls{max-height:420px;scrollbar-width:thin}
+body.controls-window.vertical.with-text #controls button{
+ flex:0 0 var(--toolbar-item,32px);height:var(--toolbar-item,32px);
+ min-height:var(--toolbar-item,32px);background:#303234c8;border:0;border-bottom:1px solid #ffffff16;border-radius:6px;color:#f5f5f6}
+body.controls-window #choices{background:#343638f8;border:1px solid #e0e1e144;box-shadow:0 6px 15px #0005;border-radius:9px}
+#choices.modePanel,#choices.appearancePanel,#choices.advancedPanel{width:300px;max-width:calc(100vw - 12px);max-height:390px;overflow-y:auto;padding:9px}
+#choices .fieldRow{display:flex;gap:5px;align-items:center;margin:5px 0}
+#choices .fieldRow label{min-width:84px;max-width:95px;font-size:11px;color:#e7e8e9}
+#choices .fieldRow input,#choices .fieldRow select,#choices .fieldRow button{box-sizing:border-box;min-width:0;flex:1;height:34px;border:1px solid #ffffff35;background:#242629;border-radius:6px;padding:4px;color:#fff;font-size:12px}
+#choices .fieldRow input{width:40px;text-align:center;appearance:textfield}
+#choices .fieldRow input::-webkit-inner-spin-button{display:none}
+#choices .fieldRow button{flex:0 0 44px;text-align:center;background:#3d6558}
+#choices .hintSmall{font-size:10px;color:#c8cccf;line-height:1.3;margin:8px 1px}
+body.group-window{width:100%!important}
+body.group-window #shell,body.group-window #spawns{width:100%!important}
+body.group-window #groupHeader{width:100%;box-sizing:border-box;background:#45494d55}
+body.group-window.results-horizontal #spawns{flex-direction:row;flex-wrap:wrap;justify-content:flex-start}
+body.group-window.results-horizontal .resultUnit{flex:0 0 64px}
+body.group-window.results-vertical .resultUnit{width:100%}
+.resultUnit{display:flex;flex-direction:column;align-items:center;position:relative;min-height:var(--row);margin:1px 0}
+.resultUnit .spawn{height:var(--sprite)!important;min-height:var(--sprite)!important;width:var(--sprite)!important;flex:0 0 var(--sprite)}
+.resultInfo{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:100%;font-size:8px;color:#f6f7f7;line-height:11px;pointer-events:none}
+.resultInfo span{background:#4a4d50b9;padding:0px 2px;border-radius:3px}
+.resultUnit .timer,.resultUnit .rankBadge,.resultUnit .miniField,.resultUnit .miniIv,.resultUnit .miniCp{position:static;background:transparent;color:inherit;border:0;padding:0;font-size:8px}
+body.group-window #spawns{background:rgba(228,231,233,var(--results-alpha,0.12));border-radius:7px}
+#controls #bell.mutedBell{opacity:.65}
+#controls #bell.mutedBell svg{opacity:.55}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -139,14 +250,18 @@ body.controls-window #choices{top:34px}
   <button id="manualRefresh" title="Atualizar resultados agora" aria-label="Atualizar resultados agora" onclick="manualRefreshTap()">↻</button>
   <button id="size" title="Tamanho P / M / G" onclick="Native.cycleSpriteSize()">M</button>
   <button id="clock" title="Mostrar ou ocultar tempo de despawn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
-  <button id="bell" title="Notificações: desligadas / ligadas / silenciosas" aria-pressed="false" onclick="Native.toggleGeneralAlerts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
+  <button id="bell" title="Notificações: desligadas / ligadas / silenciosas" aria-pressed="false" onclick="toggleChoices(&#39;alerts&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
   <button id="star" title="Meus favoritos · alertas específicos IV100 / GL#1 / UL#1" onclick="Native.openWatchList()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg></button>
   <button id="location" title="Configurar coordenadas e raio" aria-label="Localização desligada" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('location')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span id="locationRadiusText" class="locRadiusText" aria-hidden="true"></span></button>
+  <button id="filters" title="Filtros de pesquisa · IV, Rank, PC, nível e outros" aria-label="Filtros de pesquisa" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('filters')">☷</button>
+  <button id="eye" title="Olho · mostrar e ocultar dados dos Pokémon" aria-label="Personalizar indicadores" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('info')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3.2"/></svg></button>
+  <button id="appearance" title="Personalizar aparência" onclick="toggleChoices(&#39;appearance&#39;)">⚙</button>
   <button id="report" title="⚠ Reportar bugs, enviar sugestões e exportar diagnóstico TXT" aria-label="Reportar bugs e sugestões" onclick="Native.openReport()">⚠</button>
   <button id="donate" title="Gostou do PokeSearch? Apoie com um café · Pix voluntário" onclick="Native.openPix()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z"/></svg></button>
   <button id="close" title="Encerrar PokeSearch" aria-label="Fechar todo o overlay" onclick="Native.close()">×</button>
  </div><div id="choices" role="group" aria-label="Escolher opção"></div></div>
  <div id="locBadge" role="status" aria-live="polite"></div>
+ <div id="groupHeader"><span class="dragLabel" title="Arrastar camada">⠿</span><span class="groupName">Busca</span><button class="groupFold" onclick="toggleOwnGroup()" title="Recolher ou expandir esta lista">⌃</button></div>
  <div id="spawns"></div>
  <button id="empty" title="Toque para saber o motivo" onclick="Native.showStatus()">Aguardando busca</button>
  <button id="collapse" title="Recolher todos os Pokémon e as opções, deixando apenas a engrenagem" aria-label="Recolher todos os Pokémon" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button>
@@ -154,10 +269,24 @@ body.controls-window #choices{top:34px}
 <div id="bubble" role="button" aria-label="Restaurar overlay"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></div>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
-document.body.classList.add(controlsWindow?"controls-window":"dock-window");
+const matchedGroup=window.location.search.match(/[?&]group=([0-1])(?:&|$)/);
+const groupWindow=!!matchedGroup;
+const groupId=groupWindow?Number(matchedGroup[1]):-1;
+let groupCollapsed=false,showLevel=false,showCp=false,showIv=false,showSpawnCount=true;
+function toggleOwnGroup(){
+ if(!groupWindow)return;
+ groupCollapsed=!groupCollapsed;
+ document.body.classList.toggle("group-folded",groupCollapsed);
+ document.querySelector("#groupHeader .groupFold").textContent=groupCollapsed?"⌄":"⌃";
+ fit();
+}
+document.body.classList.add(groupWindow?"group-window":controlsWindow?"controls-window":"dock-window");
 document.documentElement.classList.toggle("controls-root",controlsWindow);
 let locationEnabled=false,locationCoords="",locationRadius=0;
-let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
+let multiEnabled=false,showToolbarText=true,collapsedGroups=new Set(),searchProfiles=[];
+let resultsOrientation="vertical",resultsBackground=12,menuItemSize=32;
+let searchOptions={rankMax:1,customIvEnabled:false,ivA:0,ivD:15,ivH:15,showRanks:true,cpMin:"",cpMax:"",levelMin:"",levelMax:"",weather:"",size:"",form:"",gender:""};
+let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=true,showRanks=true,rankMax=1,customIv=false,customText='',hiddenControls='',menuOrientation='vertical',generalAlerts=false,hasFavorites=false,alertMode="off";
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
  document.documentElement.style.setProperty("--top-space",menuOpen?(Math.max(0,Number(pad)||0)+"px"):"0px");
@@ -175,11 +304,15 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
  if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);
+ if(groupWindow){
+  h=Math.ceil(document.getElementById("groupHeader").getBoundingClientRect().height)+2;
+  if(!groupCollapsed)h+=Math.ceil(document.getElementById("spawns").getBoundingClientRect().height);
+ }
  if(controlsWindow&&choiceOpen&&menuOpen){
   const popup=document.getElementById("choices");
   h=Math.max(h,Math.ceil(popup.getBoundingClientRect().bottom-shell.getBoundingClientRect().top)+6);
  }
- if(Math.abs(h-lastHeight)>1){lastHeight=h;if(controlsWindow)Native.resizeMenu(h);else Native.resize(h);}
+ if(Math.abs(h-lastHeight)>1){lastHeight=h;if(controlsWindow)Native.resizeMenu(h);else if(groupWindow)Native.resizeGroup(groupId,h);else Native.resize(h);}
 });}
 function closeChoices(){
  choiceOpen="";
@@ -187,8 +320,12 @@ function closeChoices(){
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
- document.getElementById("choices").classList.remove("locationPanel");
- if(controlsWindow)Native.locationEditor(false);
+ document.getElementById("filters").setAttribute("aria-expanded","false");
+ document.getElementById("eye").setAttribute("aria-expanded","false");
+ document.getElementById("bell").setAttribute("aria-expanded","false");
+ document.getElementById("appearance").setAttribute("aria-expanded","false");
+ document.getElementById("choices").classList.remove("locationPanel","filtersPanel","infoPanel","modePanel","appearancePanel","advancedPanel");
+ if(controlsWindow){Native.locationEditor(false);Native.setChoicesOpen(false);}
  fit();
 }
 function toggleChoices(kind){
@@ -196,39 +333,368 @@ function toggleChoices(kind){
  if(controlsWindow&&!menuOpen)setMenuOpen(true,document.body.classList.contains('menu-left')?'left':'right',0);
  if(!menuOpen)return;
  if(choiceOpen===kind){closeChoices();return;}
- if(choiceOpen==="location"&&kind!=="location"){
+ if((choiceOpen==="location"||choiceOpen==="filters")&&kind!==choiceOpen){
   // The location editor temporarily focuses the overlay for the keyboard.
   // Release that focus before showing another mode or AUTO menu.
   document.getElementById("choices").classList.remove("locationPanel");
   if(controlsWindow)Native.locationEditor(false);
+  if(controlsWindow)Native.setChoicesOpen(false);
  }
  choiceOpen=kind;
+ if(controlsWindow)Native.setChoicesOpen(true);
+ if(kind==="mode"){renderModePanel();return;}
+ if(kind==="alerts"){renderAlertPanel();return;}
+ if(kind==="appearance"){renderAppearancePanel();return;}
  if(kind==="location"){renderLocationChoices();return;}
- const current=kind==="mode"?mode:period;
- const entries=kind==="mode"?
-   [["iv","100% · IV perfeito"],["gl","GL#1 · Grande Liga"],["ul","UL#1 · Ultra Liga"]]:
-   [[0,"AUTO · OFF (somente manual)"],[5,"AUTO · 5 min"],[10,"AUTO · 10 min"],[15,"AUTO · 15 min"],[20,"AUTO · 20 min"]];
+ if(kind==="filters"){renderAdvancedFilters();return;}
+ if(kind==="info"){renderInfoChoices();return;}
+ const entries=[["now","↻ Atualizar agora"],[0,"Auto · OFF"],[3,"Auto · 3 min"],
+ [5,"Auto · 5 min"],[10,"Auto · 10 min"],[15,"Auto · 15 min"],[20,"Auto · 20 min"]];
  const panel=document.getElementById("choices");
  panel.replaceChildren();
- const title=document.createElement("div");
- title.className="choiceHeader";
- title.textContent=kind==="mode"?"MODO DE BUSCA":"INTERVALO AUTOMÁTICO";
+ const title=document.createElement("div");title.className="choiceHeader";title.textContent="ATUALIZAÇÃO";
  panel.appendChild(title);
  for(const [value,label] of entries){
-  const btn=document.createElement("button");
-  btn.type="button";
-  btn.className=value===current?"chosen":"";
-  btn.textContent=(value===current?"✓ ":"")+label;
-  btn.onclick=()=>{
-   closeChoices();
-   if(kind==="mode"){mode=String(value);draw();Native.setMode(mode);}
-   else{period=Number(value);draw();Native.setIntervalMinutes(period);}
+  const button=document.createElement("button");button.type="button";
+  button.className=value===period?"chosen":"";
+  button.textContent=label;
+  button.onclick=()=>{
+    closeChoices();
+    if(value==="now")manualRefreshTap();
+    else{period=Number(value);draw();Native.setIntervalMinutes(period);}
   };
-  panel.appendChild(btn);
+  panel.appendChild(button);
  }
  panel.classList.add("visible");
- document.getElementById("cycle").setAttribute("aria-expanded",String(kind==="mode"));
- document.getElementById("period").setAttribute("aria-expanded",String(kind==="period"));
+ document.getElementById("cycle").setAttribute("aria-expanded","false");
+ document.getElementById("period").setAttribute("aria-expanded","true");
+ fit();
+}
+
+function panelInput(label,values,save){
+ const row=document.createElement("div");row.className="fieldRow";
+ const name=document.createElement("label");name.textContent=label;row.appendChild(name);
+ const fields=[];
+ for(const v of values){
+  const field=document.createElement("input");field.type="number";
+  field.inputMode="numeric";field.min=String(v.min);field.max=String(v.max);
+  field.value=String(v.value);field.placeholder=v.hint||"";
+  field.addEventListener("focus",()=>{if(controlsWindow)Native.locationEditor(true);});
+  fields.push(field);row.appendChild(field);
+ }
+ const apply=document.createElement("button");apply.textContent="✓";
+ apply.setAttribute("aria-label","Aplicar "+label);
+ apply.onclick=()=>{
+  const numbers=fields.map(e=>Number(e.value));
+  if(fields.some((e,i)=>e.value.trim()===""||!Number.isInteger(numbers[i])||
+     numbers[i]<Number(e.min)||numbers[i]>Number(e.max))){
+   fields.forEach(e=>e.style.borderColor="#ff9a9a");return;
+  }
+  save(numbers);
+  closeChoices();
+ };
+ row.appendChild(apply);
+ return row;
+}
+function renderModePanel(){
+ const panel=document.getElementById("choices");
+ panel.replaceChildren();panel.classList.add("modePanel");
+ const head=document.createElement("div");head.className="choiceHeader";
+ head.textContent="MODOS · ABA 1";panel.appendChild(head);
+ const description=document.createElement("div");description.className="hintSmall";
+ description.textContent="Edite diretamente os números. Toque em ✓ para aplicar à primeira aba.";
+ panel.appendChild(description);
+ const options=searchOptions||{};
+ const ivA=Number(options.ivA??0),ivD=Number(options.ivD??15),ivH=Number(options.ivH??15);
+ const rank=Number(options.rankMax||1);
+ const config=(kind,parts)=>{
+   const p={kind,ivMin:Number(options.ivMin??100),ivMax:Number(options.ivMax??100),
+     ivA,ivD,ivH,rankMax:Math.max(1,Math.min(50,rank)),...parts};
+   Native.setModeFilter(JSON.stringify(p));
+ };
+ panel.appendChild(panelInput("IV %",[
+  {min:0,max:100,value:options.ivFilter==="percent"?options.ivMin??0:0},
+  {min:0,max:100,value:options.ivFilter==="percent"?options.ivMax??100:100}
+ ],n=>{if(n[0]>n[1])return;config("percent",{ivMin:n[0],ivMax:n[1]});}));
+ panel.appendChild(panelInput("Raw IV",[
+  {min:0,max:15,value:ivA},{min:0,max:15,value:ivD},{min:0,max:15,value:ivH}
+ ],n=>config("raw",{ivA:n[0],ivD:n[1],ivH:n[2]})));
+ const presets=document.createElement("div");presets.className="fieldRow";
+ for(const [key,label,ivs] of [[0,shiny?"Shnundo":"Nundo",[0,0,0]],[1,shiny?"Shundo":"Hundo",[15,15,15]]]){
+  const button=document.createElement("button");button.textContent=label+" "+ivs.join("/");
+  button.style.cssText="flex:1;max-width:unset";
+  button.onclick=()=>{config("raw",{ivA:ivs[0],ivD:ivs[1],ivH:ivs[2]});closeChoices();};
+  presets.appendChild(button);
+ }
+ panel.appendChild(presets);
+ for(const [kind,title] of [["gl","Great League"],["ul","Ultra League"]])
+  panel.appendChild(panelInput(title,[{min:1,max:50,value:rank}],n=>config(kind,{rankMax:n[0]})));
+ panel.classList.add("visible");
+ document.getElementById("cycle").setAttribute("aria-expanded","true");
+ fit();
+}
+function renderAlertPanel(){
+ const panel=document.getElementById("choices");panel.replaceChildren();
+ const header=document.createElement("div");header.className="choiceHeader";
+ header.textContent="ALERTAS · SOM";panel.appendChild(header);
+ const entries=[["on","🔔 Som ligado"],["silent","🔕 Silencioso"],["off","🔕 Notificações desligadas"]];
+ for(const [value,label] of entries){
+  const b=document.createElement("button");b.textContent=label;
+  b.className=alertMode===value?"chosen":"";
+  b.onclick=()=>{alertMode=value;generalAlerts=value!=="off";
+    Native.setAlertsMode(value);closeChoices();draw();};
+  panel.appendChild(b);
+ }
+ const testButton=document.createElement("button");
+ testButton.textContent="🔔 Testar notificação";
+ testButton.onclick=()=>Native.testAlert();panel.appendChild(testButton);
+ panel.classList.add("visible");document.getElementById("bell").setAttribute("aria-expanded","true");fit();
+}
+function renderAppearancePanel(){
+ const panel=document.getElementById("choices");panel.replaceChildren();
+ panel.classList.add("appearancePanel");
+ const header=document.createElement("div");header.className="choiceHeader";
+ header.textContent="APARÊNCIA";panel.appendChild(header);
+ const addSelect=(title,items,value)=>{
+  const row=document.createElement("div");row.className="fieldRow";
+  const label=document.createElement("label");label.textContent=title;row.appendChild(label);
+  const select=document.createElement("select");
+  for(const [key,name] of items){const opt=document.createElement("option");opt.value=key;opt.textContent=name;select.appendChild(opt);}
+  select.value=value;row.appendChild(select);panel.appendChild(row);return select;
+ };
+ const direction=[["vertical","Vertical"],["horizontal","Horizontal"]];
+ const toolbar=addSelect("Menu",direction,menuOrientation);
+ const results=addSelect("Pokémon",direction,resultsOrientation);
+ const text=addSelect("Legendas",[["on","Ícone + texto"],["off","Só ícone"]],showToolbarText?"on":"off");
+ const menuSize=document.createElement("input");menuSize.type="range";
+ menuSize.min="27";menuSize.max="42";menuSize.step="1";menuSize.value=String(menuItemSize);
+ const menuSizeLabel=document.createElement("div");menuSizeLabel.className="filterLabel";
+ menuSizeLabel.textContent="Altura dos menus · "+menuSize.value+" dp";
+ menuSize.oninput=()=>{menuSizeLabel.textContent="Altura dos menus · "+menuSize.value+" dp";};
+ panel.append(menuSizeLabel,menuSize);
+ const size=document.createElement("button");size.textContent="Ajustar tamanho dos sprites (P/M/G)";
+ size.onclick=()=>Native.cycleSpriteSize();panel.appendChild(size);
+ const label=document.createElement("div");label.className="filterLabel";
+ label.textContent="Fundo das abas · "+resultsBackground+"%";panel.appendChild(label);
+ const alpha=document.createElement("input");alpha.type="range";alpha.min="0";alpha.max="100";
+ alpha.value=String(resultsBackground);alpha.style.width="98%";
+ alpha.oninput=()=>label.textContent="Fundo das abas · "+alpha.value+"%";
+ panel.appendChild(alpha);
+ const save=document.createElement("button");save.textContent="✓ Salvar aparência";
+ save.className="chosen";save.onclick=()=>{
+  menuOrientation=toolbar.value;resultsOrientation=results.value;
+  showToolbarText=text.value==="on";resultsBackground=Number(alpha.value);menuItemSize=Number(menuSize.value);
+  Native.setAppearanceOptions(JSON.stringify({menuOrientation,resultsOrientation,
+    menuShowText:showToolbarText,resultsBackground,menuItemSize}));
+  closeChoices();
+ };
+ panel.appendChild(save);
+ panel.classList.add("visible");document.getElementById("appearance").setAttribute("aria-expanded","true");fit();
+}
+function renderAdvancedFilters(){
+ const panel=document.getElementById("choices");
+ panel.classList.add("advancedPanel");panel.replaceChildren();
+ const header=document.createElement("div");header.className="choiceHeader";
+ header.textContent="FILTROS · POGOOCOORDINATES";panel.appendChild(header);
+ const settings=searchOptions||{};
+ const fields=[
+  ["sort","Sort by","select",[["despawn","Despawn"],["rank","Rank"],["iv","IV"],["cp","PC"],["level","Nível"],["shiny","Shiny"]]],
+  ["size","Tamanho","text"],["gender","Sexo","select",[["","Todos"],["Male","Macho"],["Female","Fêmea"],["Genderless","Sem gênero"]]],
+  ["levelMin","Nível mín.","number"],["levelMax","Nível máx.","number"],
+  ["weather","Clima","select",[["","Qualquer"],["Sunny","Ensolarado"],["Rainy","Chuvoso"],["Cloudy","Nublado"],["Windy","Ventoso"],["Snowy","Neve"],["Fog","Neblina"]]],
+  ["form","Forma","text"]];
+ const inputs={};
+ for(const [key,title,kind,options] of fields){
+  const row=document.createElement("div");row.className="fieldRow";
+  const lbl=document.createElement("label");lbl.textContent=title;row.appendChild(lbl);
+  const inp=document.createElement(kind==="select"?"select":"input");
+  if(kind==="select")for(const [v,t] of options){const o=document.createElement("option");o.value=v;o.textContent=t;inp.appendChild(o);}
+  if(kind!=="select"){inp.type=kind;inp.inputMode=kind==="number"?"decimal":"text";inp.placeholder=title;}
+  inp.value=String(settings[key]??"");inp.addEventListener("focus",()=>{if(controlsWindow)Native.locationEditor(true);});
+  row.appendChild(inp);inputs[key]=inp;panel.appendChild(row);
+ }
+ const note=document.createElement("div");note.className="hintSmall";
+ note.textContent="Os campos só são considerados aplicados após confirmação pelo site. Filtros VIP exigem autorização.";
+ panel.appendChild(note);
+ const save=document.createElement("button");save.className="chosen";save.textContent="✓ Aplicar filtros";
+ save.onclick=()=>{
+  const o={...searchOptions};for(const key of Object.keys(inputs))o[key]=inputs[key].value.trim();
+  searchOptions=o;Native.setSearchOptions(JSON.stringify(o));closeChoices();
+ };
+ panel.appendChild(save);panel.classList.add("visible");fit();
+}
+function renderFiltersPanel(){
+ const panel=document.getElementById("choices");
+ panel.classList.remove("locationPanel");panel.classList.add("filtersPanel");
+ // Inputs are built from static markup; personal or site-provided data is never HTML-injected.
+ panel.innerHTML=[
+ '<div class="choiceHeader">☷ FILTROS DE BUSCA · '+(mode==="iv"?"IV":mode==="gl"?"GRANDE LIGA":"ULTRA LIGA")+'</div>',
+ '<label class="filterCheck"><input id="fMulti" type="checkbox"> Ativar até 3 pesquisas independentes</label>',
+ '<div id="fProfileRoot"></div>',
+ '<label class="filterCheck"><input id="fToolbarText" type="checkbox"> Mostrar texto ao lado dos ícones</label>',
+ '<div class="filterHint">Cada pesquisa cria uma lista própria de Pokémon. Todas usam o mesmo Shiny e localização; atualizam uma após a outra.</div>',
+ '<div class="filterHint">As opções são aplicadas ao PoGoCoordinates. Para trocar IV / GL / UL, use o botão de modo.</div>',
+ '<div class="filterLabel">PvP · Rank máximo (1–200)</div>',
+ '<div class="filterRow"><input id="fRank" type="number" min="1" max="200" step="1" aria-label="Rank máximo"></div>',
+ '<div class="filterQuick" id="fQuick"></div>',
+ '<label class="filterCheck"><input id="fShowRanks" type="checkbox"> Mostrar Rank nos Pokémon (como o relógio)</label>',
+ '<label class="filterCheck"><input id="fCustom" type="checkbox"> IV personalizado · Raw IV</label>',
+ '<div class="filterLabel">Ataque / Defesa / HP (0–15)</div>',
+ '<div class="filterRow" id="fIvRow"><select id="fIvA" aria-label="IV ataque"></select><select id="fIvD" aria-label="IV defesa"></select><select id="fIvH" aria-label="IV HP"></select></div>',
+ '<div class="filterLabel">Ordenação dos resultados no PokeSearch</div>',
+ '<div class="filterRow"><select id="fSort"><option value="despawn">Tempo restante · maior</option><option value="rank">Rank · melhor primeiro</option><option value="cp">PC · maior</option><option value="iv">IV % · maior</option><option value="level">Nível · maior</option><option value="shiny">Shiny primeiro</option></select></div>',
+ '<div class="filterLabel">PC mínimo / máximo</div>',
+ '<div class="filterRow"><input id="fCpMin" inputmode="numeric" type="number" min="0" max="99999" placeholder="PC min"><input id="fCpMax" inputmode="numeric" type="number" min="0" max="99999" placeholder="PC max"></div>',
+ '<div class="filterLabel">Nível mínimo / máximo</div>',
+ '<div class="filterRow"><input id="fLevelMin" type="number" min="0" max="100" step="0.5" placeholder="Nível min"><input id="fLevelMax" type="number" min="0" max="100" step="0.5" placeholder="Nível max"></div>',
+ '<div class="filterLabel">Tamanho</div>',
+ '<div id="fSizes" class="filterQuick" style="flex-wrap:wrap"></div>',
+ '<div class="filterLabel">Sexo</div>',
+ '<div class="filterRow"><select id="fGender"><option value="">Qualquer</option><option value="Male">Macho</option><option value="Female">Fêmea</option><option value="Genderless">Sem gênero</option></select></div>',
+ '<div class="filterLabel">Clima</div>',
+ '<div class="filterRow"><select id="fWeather"><option value="">Qualquer</option><option value="Sunny">Ensolarado</option><option value="Rainy">Chuvoso</option><option value="Cloudy">Nublado</option><option value="Partly Cloudy">Parcialmente nublado</option><option value="Windy">Ventoso</option><option value="Snowy">Neve</option><option value="Fog">Neblina</option></select></div>',
+ '<div class="filterLabel">Forma (opcional, nome exibido no site)</div>',
+ '<div class="filterRow"><input id="fForm" type="text" maxlength="80" placeholder="Qualquer forma"></div>',
+ '<div id="fError" class="filterHint" role="status"></div>',
+ '<div class="filterRow"><button class="filterCancel" id="fCancel">Fechar</button><button class="filterApply" id="fApply">✓ Aplicar filtros</button></div>',
+ '<div class="filterHint">Opções VIP avançadas dependem de uma conta autorizada. Rankings só são exibidos como exatos quando o site os confirma.</div>'
+ ].join("");
+ const el=id=>document.getElementById(id);
+ const data=searchOptions||{};
+ const makeProfile=(p,i)=>{
+  const container=document.createElement("div");
+  container.className="profileCard";
+  const top=document.createElement("div");top.className="profileRow";
+  const enabled=document.createElement("input");enabled.type="checkbox";enabled.checked=p.enabled!==false;
+  enabled.className="profileEnabled";enabled.style.cssText="flex:0 0 18px;width:18px";
+  const title=document.createElement("strong");title.textContent="Busca "+(i+1);title.style.cssText="font-size:12px;min-width:58px";
+  const kind=document.createElement("select");kind.className="profileMode";kind.style.flex="1";
+  for(const [value,label] of [["ivperfect","100% · 15/15/15"],["ivzero","0% · 0/0/0"],["gl","GL · rank"],["ul","UL · rank"],["ivcustom","_/_/_ · IV 0–15"]]){
+   const opt=document.createElement("option");opt.value=value;opt.textContent=label;kind.appendChild(opt);
+  }
+  kind.value=p.mode==="iv"?(p.customIvEnabled?
+ ((p.ivA===0&&p.ivD===0&&p.ivH===0)?"ivzero":"ivcustom"):"ivperfect"):p.mode||"ivperfect";
+  top.append(enabled,title,kind);container.appendChild(top);
+  const fields=document.createElement("div");fields.className="profileRow";
+  const rankLabel=document.createElement("span");rankLabel.textContent="Rank ≤";rankLabel.style.fontSize="10px";
+  const rank=document.createElement("input");rank.type="number";rank.min="1";rank.max="200";
+  rank.value=String(p.rankMax||1);rank.className="profileRank";
+  fields.append(rankLabel,rank);
+  const ivRow=document.createElement("div");ivRow.className="profileRow";
+  for(const [key,name] of [["ivA","A"],["ivD","D"],["ivH","HP"]]){
+    const label=document.createElement("span");label.textContent=name;label.style.fontSize="10px";
+    const control=document.createElement("select");control.className="profile"+key;
+    for(let n=0;n<=15;n++){const o=document.createElement("option");o.value=String(n);o.textContent=String(n);control.appendChild(o);}
+    control.value=String(p[key]??(p.customIvEnabled?0:15));
+    ivRow.append(label,control);
+  }
+  container.append(fields,ivRow);
+  const sync=()=>{
+    const custom=kind.value==="ivcustom",pvp=kind.value==="gl"||kind.value==="ul";
+    rankLabel.style.display=pvp?"":"none";rank.style.display=pvp?"":"none";
+    ivRow.style.display=custom?"flex":"none";
+    const enabledNow=enabled.checked;
+    rank.disabled=!enabledNow;kind.disabled=!enabledNow;
+    for(const selector of ["profileivA","profileivD","profileivH"]){
+      const control=ivRow.querySelector("."+selector);if(control)control.disabled=!enabledNow;
+    }
+  };
+  kind.onchange=sync;enabled.onchange=sync;sync();
+  container._readProfile=()=>{
+    const val=kind.value;
+    const bound=Number(rank.value);
+    if(!Number.isInteger(bound)||bound<1||bound>200)throw Error("Rank da busca "+(i+1)+" deve estar entre 1 e 200");
+    return {enabled:enabled.checked,mode:val==="gl"?"gl":val==="ul"?"ul":"iv",
+      customIvEnabled:val==="ivcustom"||val==="ivzero",rankMax:bound,
+      ivA:val==="ivzero"?0:Number(ivRow.querySelector(".profileivA").value),
+      ivD:val==="ivzero"?0:Number(ivRow.querySelector(".profileivD").value),
+      ivH:val==="ivzero"?0:Number(ivRow.querySelector(".profileivH").value)};
+  };
+  return container;
+ };
+ const defaults=[
+  {enabled:true,mode:"iv",customIvEnabled:false,rankMax:1,ivA:15,ivD:15,ivH:15},
+  {enabled:true,mode:"gl",customIvEnabled:false,rankMax:1,ivA:15,ivD:15,ivH:15},
+  {enabled:true,mode:"iv",customIvEnabled:true,rankMax:1,ivA:0,ivD:0,ivH:0}
+ ];
+ const cards=Array.from({length:3},(_,i)=>makeProfile(searchProfiles[i]||defaults[i],i));
+ cards.forEach(c=>el("fProfileRoot").appendChild(c));
+ const syncProfiles=()=>{el("fProfileRoot").style.display=el("fMulti").checked?"block":"none";};
+ el("fMulti").checked=!!multiEnabled;el("fMulti").onchange=syncProfiles;syncProfiles();
+ el("fToolbarText").checked=showToolbarText;
+ el("fSort").value=String(data.sort||"despawn");
+ el("fRank").value=String(Math.max(1,Math.min(200,Number(data.rankMax)||rankMax||1)));
+ const preset=el("fQuick");
+ for(const n of [1,20,50,100,200]){
+  const b=document.createElement("button");b.textContent=String(n);
+  b.onclick=()=>{el("fRank").value=String(n);};
+  preset.appendChild(b);
+ }
+ el("fShowRanks").checked=data.showRanks!==false;
+ el("fCustom").checked=!!data.customIvEnabled;
+ for(const [name,key] of [["fIvA","ivA"],["fIvD","ivD"],["fIvH","ivH"]]){
+  const select=el(name);
+  for(let n=0;n<=15;n++){const opt=document.createElement("option");opt.value=String(n);opt.textContent=String(n);select.appendChild(opt);}
+  select.value=String(Number.isInteger(Number(data[key]))?data[key]:key==="ivA"?0:15);
+ }
+ const syncIv=()=>{for(const name of ["fIvA","fIvD","fIvH"])el(name).disabled=!el("fCustom").checked;};
+ el("fCustom").onchange=syncIv;syncIv();
+ for(const [id,key] of [["fCpMin","cpMin"],["fCpMax","cpMax"],["fLevelMin","levelMin"],["fLevelMax","levelMax"],["fForm","form"],["fGender","gender"],["fWeather","weather"]])
+  el(id).value=String(data[key]||"");
+ const chosenSizes=new Set(String(data.size||"").split(",").filter(Boolean));
+ const sizeSet=new Set(["XXS","XS","S","M","L","XL","XXL"]);
+ for(const sz of sizeSet){
+  const label=document.createElement("label");label.className="filterCheck";
+  label.style.cssText="margin:2px 2px;flex:0 0 22%;font-size:10px";
+  const box=document.createElement("input");box.type="checkbox";box.value=sz;box.checked=chosenSizes.has(sz);
+  box.className="fSizeCheck";label.append(box,document.createTextNode(sz));el("fSizes").appendChild(label);
+ }
+ el("fCancel").onclick=closeChoices;
+ el("fApply").onclick=()=>{
+  const rank=Number(el("fRank").value);
+  if(!Number.isInteger(rank)||rank<1||rank>200){
+   el("fError").textContent="⚠ Rank precisa estar entre 1 e 200.";return;
+  }
+  const keys=[["fCpMin","cpMin",99999],["fCpMax","cpMax",99999],["fLevelMin","levelMin",100],["fLevelMax","levelMax",100]];
+  const extra={};
+  for(const [id,key,max] of keys){
+   const value=el(id).value.trim();
+   if(value&&(Number(value)<0||Number(value)>max||!Number.isFinite(Number(value)))){
+    el("fError").textContent="⚠ Confira os limites de PC e nível.";return;
+   }
+   extra[key]=value;
+  }
+  if((extra.cpMin&&extra.cpMax&&Number(extra.cpMin)>Number(extra.cpMax))||
+     (extra.levelMin&&extra.levelMax&&Number(extra.levelMin)>Number(extra.levelMax))){
+   el("fError").textContent="⚠ O mínimo não pode superar o máximo.";return;
+  }
+  const val={
+   sort:el("fSort").value,
+   rankMax:rank,showRanks:el("fShowRanks").checked,customIvEnabled:el("fCustom").checked,
+   ivA:Number(el("fIvA").value),ivD:Number(el("fIvD").value),ivH:Number(el("fIvH").value),
+   ...extra,gender:el("fGender").value,weather:el("fWeather").value,form:el("fForm").value.trim(),
+   size:Array.from(panel.querySelectorAll(".fSizeCheck:checked")).map(box=>box.value).join(",")
+  };
+  searchOptions=val;showRanks=val.showRanks;rankMax=rank;customIv=val.customIvEnabled;
+  customText=val.ivA+"/"+val.ivD+"/"+val.ivH;
+  let profiles;
+  try{profiles=cards.map(x=>x._readProfile());}
+  catch(error){el("fError").textContent="⚠ "+error.message;return;}
+  const enabled=el("fMulti").checked;
+  if(enabled&&!profiles.some(p=>p.enabled)){
+   el("fError").textContent="⚠ Ative pelo menos uma pesquisa.";return;
+  }
+  multiEnabled=enabled;searchProfiles=profiles;
+  showToolbarText=el("fToolbarText").checked;
+  closeChoices();draw();
+  // Preferences are posted to the native main thread in this order.
+  Native.setSearchOptions(JSON.stringify(val));
+  Native.setSearchProfiles(JSON.stringify({enabled,profiles}));
+  Native.setToolbarText(showToolbarText);
+ };
+ panel.classList.add("visible");
+ document.getElementById("filters").setAttribute("aria-expanded","true");
+ if(controlsWindow)Native.locationEditor(true);
  fit();
 }
 function renderLocationChoices(){
@@ -286,20 +752,57 @@ function attachLongPress(){
   el.addEventListener('contextmenu',e=>{e.preventDefault();longDone=true;Native.longPressCoords(i)});
  });
 }
+const toolbarLabels={cycle:"Modo",sh:"Shiny",period:"Auto",manualRefresh:"Atualizar",
+ size:"Tamanho",clock:"Relógio",bell:"Alertas",star:"Favoritos",location:"Localização",
+ filters:"Filtros",eye:"Info",appearance:"Aparência",report:"Reportar",donate:"Apoiar",close:"Fechar"};
+for(const [id,label] of Object.entries(toolbarLabels)){
+ const element=document.getElementById(id);if(element)element.dataset.label=label;
+}
+function renderInfoChoices(){
+ const panel=document.getElementById("choices");
+ panel.classList.remove("locationPanel","filtersPanel");
+ panel.classList.add("infoPanel");panel.replaceChildren();
+ const title=document.createElement("div");title.className="choiceHeader";title.textContent="◉ VISIBILIDADE NOS POKÉMON";
+ panel.appendChild(title);
+ const defs=[["showSpawnCount","Quantidade de spawns",showSpawnCount],
+  ["showTimers","Tempo até desaparecer",showTimers],
+  ["showLevel","Nível (Lv)",showLevel],["showCp","Poder de combate (PC)",showCp],
+  ["showIv","IV do Pokémon",showIv],["showRanks","Rank PvP (GL/UL)",showRanks]];
+ const inputs={};
+ for(const [key,labelText,enabled] of defs){
+  const row=document.createElement("label");const cb=document.createElement("input");
+  cb.type="checkbox";cb.checked=enabled;inputs[key]=cb;
+  row.append(cb,document.createTextNode(labelText));panel.appendChild(row);
+ }
+ const save=document.createElement("button");save.textContent="✓ Aplicar";
+ save.className="chosen";save.onclick=()=>{
+  const config={};for(const [key] of defs)config[key]=inputs[key].checked;
+  showTimers=config.showTimers;showRanks=config.showRanks;
+  showLevel=config.showLevel;showCp=config.showCp;showIv=config.showIv;
+  showSpawnCount=config.showSpawnCount;
+  Native.setDisplayOptions(JSON.stringify(config));lastListKey="";
+  closeChoices();draw();
+ };
+ panel.appendChild(save);panel.classList.add("visible");
+ document.getElementById("eye").setAttribute("aria-expanded","true");
+ if(controlsWindow)Native.setChoicesOpen(true);fit();
+}
+function toggleResultGroup(index){if(collapsedGroups.has(index))collapsedGroups.delete(index);
+ else collapsedGroups.add(index);lastListKey="";draw();}
 let lastListKey="";
 function draw(){
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",spriteSize+"px");
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
  const cy=document.getElementById("cycle");
- if(mode==="iv"){cy.textContent="100%";cy.classList.add("ivOn");cy.title="IV100 · 15/15/15";}
+ if(mode==="iv"){cy.textContent=customIv?(customText==="0/0/0"?"0%":customText):"100%";cy.classList.add("ivOn");cy.title=customIv?"IV personalizado · "+customText:"IV100 · 15/15/15";}
  else{
    const gl=mode==="gl",color=gl?"#2f8ed8":"#d8ad43";
    cy.innerHTML='<span class="league"><svg viewBox="0 0 24 24" aria-hidden="true">'+
    '<circle cx="12" cy="12" r="10.5" fill="'+color+'" stroke="#fff" stroke-width="1.2"/>'+
-   '<path d="M3 12h18" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#fff" stroke="'+color+'" stroke-width="1.5"/></svg>#1</span>';
+   '<path d="M3 12h18" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#fff" stroke="'+color+'" stroke-width="1.5"/></svg>#'+rankMax+'</span>';
    cy.classList.remove("ivOn");
-   cy.title=gl?"Grande Liga · ranking #1":"Ultra Liga · ranking #1";
+   cy.title=(gl?"Grande Liga":"Ultra Liga")+" · Rank 1–"+rankMax;
  }
  document.getElementById("size").textContent=spriteSize<=35?"P":spriteSize>=55?"G":"M";
  document.getElementById("sh").classList.toggle("shinyOn",shiny);
@@ -317,6 +820,7 @@ function draw(){
  if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status))document.getElementById("manualRefresh").classList.remove("requested");
  const bell=document.getElementById("bell");
  bell.classList.toggle("generalOn",generalAlerts);
+ bell.classList.toggle("mutedBell",!generalAlerts);
   bell.classList.toggle("generalSilent",alertMode==="silent");
  bell.setAttribute("aria-pressed",String(generalAlerts));
  bell.title=alertMode==="silent"?"Notificações silenciosas · toque para desligar":generalAlerts?"Notificações ligadas · toque para silenciar":"Notificações desligadas · toque para ligar";
@@ -325,20 +829,45 @@ function draw(){
  star.classList.toggle("favoritesOn",hasFavorites);
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
  const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.title=period===0?"AUTO desligado · atualizar com ↻ ou mudar filtros":"Atualização automática a cada "+period+" minutos · toque para alterar";p.setAttribute("aria-label",p.title);
- const listKey=JSON.stringify([cards,row,spriteSize,showTimers]);
+ const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showRanks,showLevel,showCp,showIv,showSpawnCount,mode,rankMax,multiEnabled,searchProfiles,groupId,Array.from(collapsedGroups)]);
  if(listKey!==lastListKey){lastListKey=listKey;
- document.getElementById("spawns").innerHTML=cards.map((c,i)=>{
+ const makeSprite=(c,i)=>{
   const label=[c.name,c.ivPercent?c.ivPercent+"%":"IV não disponível",c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
   const icon=/^(https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(c.image||"")?'<img class="sprite" src="'+esc(c.image)+'" alt="" loading="eager">':'<span class="fallback">◉</span>';
-  const kind=(c.shiny?"shiny":mode),deadline=Number(c.expiresAtMs)||0;
+  const kind=(c.shiny?"shiny":(c.searchMode||mode)),deadline=Number(c.expiresAtMs)||0;
   const badge=showTimers&&deadline?'<span class="timer" data-deadline="'+deadline+'"></span>':"";
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+badge+'</button>';
- }).join("");
+  const rv=Number(c.rank),known=!!c.rank&&Number.isInteger(rv)&&rv>=1&&rv<=4096;
+  const bound=Number(c.rankUpperBound),range=!known&&Number.isInteger(bound)&&bound>=1&&bound<=200;
+  const league=c.searchMode||mode;
+  const rankBadge=showRanks&&(league==="gl"||league==="ul")&&(known||range)?
+    '<span class="rankBadge">'+(league==="gl"?"GL":"UL")+(known?' #'+rv:' ≤'+bound)+'</span>':"";
+  const levelBadge=showLevel&&c.level?'<span class="miniField">Lv'+esc(c.level)+'</span>':"";
+  const cpBadge=showCp&&c.cp?'<span class="miniCp">PC '+esc(c.cp)+'</span>':"";
+  const ivBadge=showIv&&c.iv?'<span class="miniIv">'+esc(c.iv)+'</span>':"";
+  const info=badge+rankBadge+levelBadge+cpBadge+ivBadge;
+  return '<div class="resultUnit"><button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+'</button>'+(info?'<div class="resultInfo">'+info+'</div>':'')+'</div>';
+ };
+ if(groupWindow){
+  const profile=searchProfiles[groupId];
+  const present=cards.map((c,i)=>({c,i})).filter(x=>Number(x.c.profileIndex)===groupId);
+  const label=profile?(profile.mode==="gl"?"GL ≤"+profile.rankMax:
+    profile.mode==="ul"?"UL ≤"+profile.rankMax:
+    profile.customIvEnabled?[profile.ivA,profile.ivD,profile.ivH].join("/"):"100%"):"Busca";
+  document.querySelector("#groupHeader .groupName").textContent=
+    (profile&&profile.mode==="gl"?"◉ ":profile&&profile.mode==="ul"?"◈ ":"✦ ")+
+    label+(showSpawnCount?" · "+present.length:"");
+  document.getElementById("spawns").innerHTML=present.map(x=>makeSprite(x.c,x.i)).join("");
+ }else if(multiEnabled){
+  // Each group owns its results in a separate Android overlay.
+  document.getElementById("spawns").replaceChildren();
+ }else{
+  document.getElementById("spawns").innerHTML=cards.map(makeSprite).join("");
+ }
  attachLongPress();
  updateTimers();
  }
  const empty=document.getElementById("empty");
- empty.style.display=cards.length?"none":"block";
+ empty.style.display=multiEnabled||groupWindow||cards.length?"none":"block";
  empty.textContent=/sem resultados/i.test(status)?"0":/falha|erro|não|login/i.test(status)?"!":"…";
  empty.title=status||"Aguardando busca";
  document.getElementById("gear").title=menuOpen?"Recolher menu · arrastar para mover":status?("Abrir menu · "+status):"Abrir menu · arrastar para mover";
@@ -353,16 +882,53 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode)=>{
- cards=Array.isArray(a)?a.slice(0,10):[];
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,hidden,orientation,ranks,maxRank,customEnabled,customRaw,filtersData,enabledMulti,profilesData,withText,levelVisible,cpVisible,ivVisible,spawnVisible,resultDirection,bgPercent,menuOrder,menuSize)=>{
+ cards=Array.isArray(a)?a.slice(0,150):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
- mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ mode=m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ showRanks=ranks!==false;customIv=!!customEnabled;customText=String(customRaw||"");
+ rankMax=Number.isInteger(Number(maxRank))&&Number(maxRank)>=1&&Number(maxRank)<=200?Number(maxRank):1;
+ if(filtersData&&typeof filtersData==="object")searchOptions=filtersData;
+ multiEnabled=!!enabledMulti;
+ searchProfiles=Array.isArray(profilesData)?profilesData.slice(0,2):[];
+ showToolbarText=!!withText;
+ resultsOrientation=resultDirection==="horizontal"?"horizontal":"vertical";
+ resultsBackground=Math.max(0,Math.min(100,Number(bgPercent)||0));
+ menuItemSize=Math.max(27,Math.min(42,Number(menuSize)||32));
+ document.documentElement.style.setProperty("--toolbar-item",menuItemSize+"px");
+ document.body.classList.toggle("results-horizontal",resultsOrientation==="horizontal");
+ document.body.classList.toggle("results-vertical",resultsOrientation==="vertical");
+ document.documentElement.style.setProperty("--results-alpha",(resultsBackground/100).toFixed(2));
+ showLevel=!!levelVisible;showCp=!!cpVisible;showIv=!!ivVisible;showSpawnCount=spawnVisible!==false;
+ document.body.classList.toggle("with-text",showToolbarText);
+ document.body.classList.toggle("multi-live",multiEnabled);
+ hiddenControls=String(hidden||"");
+ menuOrientation=orientation==="vertical"?"vertical":"horizontal";
+ document.body.classList.toggle("vertical",menuOrientation==="vertical");
+ document.getElementById("filters").classList.toggle("activeFilter",
+   customIv||rankMax>1||["cpMin","cpMax","levelMin","levelMax","weather","size","form","gender"]
+     .some(key=>String(searchOptions[key]||"")!==""));
+ const controls=document.getElementById("controls");
+ if(menuOrder){
+   const allowed=new Set(Array.from(controls.children).map(x=>x.id));
+   const sorted=String(menuOrder).split(",").filter(x=>allowed.has(x));
+   for(const id of sorted){const item=document.getElementById(id);if(item)controls.appendChild(item);}
+ }
+ document.querySelectorAll("#controls>button").forEach(b=>{
+   b.style.display=hiddenControls.includes("|"+b.id+"|")?"none":"";
+ });
+ if(menuOrientation==="horizontal"&&!showToolbarText){
+   const n=Array.from(controls.children).filter(b=>b.style.display!=="none").length;
+   controls.style.gridTemplateColumns="repeat("+Math.max(1,n)+",minmax(0,1fr))";
+ }else{
+   controls.style.gridTemplateColumns="";
+ }
  if(active>=cards.length)active=-1;
  draw();
 };
 window.menuSide=side=>document.body.classList.toggle("menu-left",menuOpen&&side==="left");
-window.highlight=i=>{active=i;document.querySelectorAll(".spawn").forEach((e,index)=>e.classList.toggle("active",index===i));};
+window.highlight=i=>{active=i;document.querySelectorAll(".spawn").forEach(e=>e.classList.toggle("active",Number(e.dataset.index)===i));};
 window.setMinimized=value=>{
  document.getElementById("shell").style.display=value?"none":"block";
  if(value)setMenuOpen(false);

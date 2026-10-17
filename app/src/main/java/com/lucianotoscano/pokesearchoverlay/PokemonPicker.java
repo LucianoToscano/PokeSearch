@@ -228,15 +228,17 @@ public final class PokemonPicker {
         // even when the user types a different species into the search.
         ListView selectedList=new ListView(activity);
         selectedList.setDividerHeight(0);
+        selectedList.setVerticalScrollBarEnabled(true);
+        selectedList.setFadingEdgeLength(0);
         selectedList.setCacheColorHint(Color.TRANSPARENT);
-        root.addView(selectedList,new LinearLayout.LayoutParams(-1,0));
+        root.addView(selectedList,new LinearLayout.LayoutParams(-1,dp(activity,104)));
         Adapter selectedAdapter=new Adapter(activity,all,true);
         selectedList.setAdapter(selectedAdapter);
 
         View divider=new View(activity);
         divider.setBackgroundColor(Color.rgb(55,61,73));
         LinearLayout.LayoutParams dividerParams=new LinearLayout.LayoutParams(-1,dp(activity,1));
-        dividerParams.setMargins(0,dp(activity,4),0,dp(activity,12));
+        dividerParams.setMargins(0,dp(activity,3),0,dp(activity,6));
         root.addView(divider,dividerParams);
 
         TextView searchTitle=new TextView(activity);
@@ -258,56 +260,25 @@ public final class PokemonPicker {
         ListView results=new ListView(activity);
         results.setDividerHeight(0);
         results.setCacheColorHint(Color.TRANSPARENT);
-        root.addView(results,new LinearLayout.LayoutParams(-1,dp(activity,243)));
+        root.addView(results,new LinearLayout.LayoutParams(-1,dp(activity,218)));
         Adapter suggestions=new Adapter(activity,all,false);
         results.setAdapter(suggestions);
 
-        android.widget.CheckBox sound=new android.widget.CheckBox(activity);
-        sound.setText("Alertar com som ao encontrar um favorito válido");
-        sound.setTextColor(Color.WHITE);
-        sound.setTextSize(12);
-        sound.setChecked(WatchAlerts.enabled(activity));
-        sound.setOnCheckedChangeListener((button,enabled)->
-            activity.getSharedPreferences("prefs",0).edit()
-                .putBoolean(WatchAlerts.PREF_ENABLED,enabled).apply());
-        root.addView(sound);
-
-        android.widget.Button testNotification=new android.widget.Button(activity);
-        testNotification.setText("🔔 Testar notificação");
-        testNotification.setAllCaps(false);
-        testNotification.setTextSize(12);
-        testNotification.setTextColor(Color.rgb(218,247,239));
-        testNotification.setBackgroundColor(Color.argb(174,36,77,68));
-        LinearLayout.LayoutParams testParams=new LinearLayout.LayoutParams(-1,dp(activity,38));
-        testParams.setMargins(0,0,0,dp(activity,5));
-        root.addView(testNotification,testParams);
-        testNotification.setOnClickListener(v->{
-            boolean allowed=WatchAlerts.permissionGranted(activity);
-            boolean sent=allowed&&WatchAlerts.test(activity);
-            String message=!allowed
-                ?"Conceda notificações na tela inicial do PokeSearch ou nas Configurações do Android"
-                :sent?"Notificação de teste enviada":"Não foi possível enviar a notificação de teste";
-            Toast.makeText(activity,message,Toast.LENGTH_LONG).show();
-        });
-
-        TextView note=new TextView(activity);
-        note.setText("Somente IV100, Grande Liga #1 ou Ultra Liga #1, no filtro ativo.");
-        note.setTextColor(Color.rgb(161,171,184));
-        note.setTextSize(11);
-        note.setPadding(dp(activity,4),0,0,dp(activity,4));
-        root.addView(note);
-
         Runnable refresh=()->{
             int total=WatchAlerts.watched(activity).size();
-            selectedTitle.setText("Selecionados ("+total+"/50)");
+            selectedTitle.setText("Selecionados · "+total+"/50");
+            int oldPosition=selectedList.getFirstVisiblePosition();
+            View first=selectedList.getChildAt(0);
+            int oldOffset=first==null?0:first.getTop();
             selectedAdapter.filter("");
-            int listHeight=dp(activity,Math.min(total,3)*52);
-            LinearLayout.LayoutParams lp=(LinearLayout.LayoutParams)selectedList.getLayoutParams();
-            lp.height=listHeight;
-            selectedList.setLayoutParams(lp);
+            selectedList.setSelectionFromTop(
+                Math.min(oldPosition,Math.max(0,selectedAdapter.getCount()-1)),oldOffset);
             selectedEmpty.setVisibility(total==0?View.VISIBLE:View.GONE);
             selectedList.setVisibility(total>0?View.VISIBLE:View.GONE);
+            // No forced scroll to bottom: preserve search position and keyboard focus.
+            int position=results.getFirstVisiblePosition();
             suggestions.filter(search.getText().toString());
+            results.setSelection(Math.min(position,Math.max(0,suggestions.getCount()-1)));
             if(changed!=null)changed.run();
         };
         search.addTextChangedListener(new TextWatcher(){
@@ -332,9 +303,9 @@ public final class PokemonPicker {
         // Single translucent charcoal panel: no duplicate platform title,
         // no separate grey footer, and Concluir belongs inside the panel.
         android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable();
-        background.setColors(new int[]{Color.argb(187,30,42,58),Color.argb(159,24,34,47)});
+        background.setColors(new int[]{Color.argb(243,51,54,57),Color.argb(234,40,42,45)});
         background.setOrientation(android.graphics.drawable.GradientDrawable.Orientation.TL_BR);
-        background.setStroke(dp(activity,1),Color.argb(114,193,218,240));
+        background.setStroke(dp(activity,1),Color.argb(95,210,214,217));
         background.setCornerRadius(dp(activity,17));
         root.setBackground(background);
         Context context=(activity instanceof Activity)?activity:

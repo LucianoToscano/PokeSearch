@@ -12,8 +12,8 @@ let count=0;
 function test(name,ok){assert.ok(ok,name);count++;}
 test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
 test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
-test("Three explicit filters",["100% · IV perfeito","GL#1 · Grande Liga","UL#1 · Ultra Liga"].every(v=>dock.includes(v)));
-test("Intervals minimum 5 minutes",["AUTO · 5 min","AUTO · 10 min","AUTO · 15 min","AUTO · 20 min"].every(v=>dock.includes(v)));
+test("Four clean editable modes and presets",dock.includes('panelInput("IV %"')&&dock.includes('panelInput("Raw IV"')&&dock.includes('["gl","Great League"]')&&dock.includes('["ul","Ultra League"]')&&dock.includes('"Nundo"')&&dock.includes('"Hundo"'));
+test("Intervals include minimum 3 minutes",["Auto · 3 min","Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
 test("Choice panel resizes native window",dock.includes('popup.getBoundingClientRect().bottom')&&dock.includes('Native.resize(h)'));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
@@ -32,11 +32,11 @@ test("Chevron is at bottom of the sprites",dock.indexOf('id="collapse"')>dock.in
 test("Red close is alongside heart with standard background",dock.indexOf('id="close"')>dock.indexOf('id="donate"')&&dock.includes("#controls #close{"));
 test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'));
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
-test("Original compact toolbar is only one 34dp row",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP)')&&service.includes("MENU_BASE_DP=34"));
+test("Original horizontal toolbar defaults to 34dp and vertical menu is optional",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(menuBaseHeight())')&&service.includes("MENU_BASE_DP=34")&&service.includes('return menuVertical?Math.min(440'));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login returns to Home and does not send it to background",!main.includes('postDelayed(()->moveTaskToBack(true)'));
 test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
-test("Translucent favorites with optional background blur",picker.includes('Color.argb(187,30,42,58)')&&picker.includes('setBlurBehindRadius'));
+test("Translucent favorites with optional background blur",picker.includes('Color.argb(243,51,54,57)')&&picker.includes('setBlurBehindRadius'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
@@ -51,9 +51,9 @@ test("Login, Shiny and league filters remain independent",service.includes('JSON
 
 const toolbarCols=dock.match(/#controls\{[^}]*grid-template-columns:([^;]+);/);
 const toolbarButtons=dock.slice(dock.indexOf('<div id="menu"><div id="controls">'),dock.indexOf('</div><div id="choices"')).match(/<button\b/g)||[];
-test("All twelve toolbar actions fit compactly side by side on one row",
+test("Legacy DOM actions retained, clean toolbar with optional direction",
   !!toolbarCols&&toolbarCols[1].trim()==="34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr"&&
-  toolbarButtons.length===12&&dock.includes("grid-auto-flow:column"));
+  toolbarButtons.length===15&&dock.includes("grid-auto-flow:column"));
 test("Single pin shows active radius without a second settings button",
   (dock.match(/id="location"/g)||[]).length===1&&dock.includes('id="locationRadiusText"')&&
   dock.includes('textContent=locationEnabled?locationRadius+"km":""'));
@@ -64,9 +64,9 @@ test("When OFF, icon and badge never display outdated radius",
   dock.includes('geoBadge.classList.toggle("active",locationEnabled)')&&
   dock.includes('document.getElementById("locationRadiusText").textContent=locationEnabled?locationRadius+"km":""'));
 test("Switching from location editor to mode releases keyboard focus",
-  dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
+  dock.includes('if((choiceOpen==="location"||choiceOpen==="filters")&&kind!==choiceOpen)')&&dock.includes('Native.locationEditor(false)'));
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
-test("Compact twelve-column bar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(396,screenWidthDp()-8)"));
+test("Compact toolbar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(wanted,screenWidthDp()-8)")&&service.includes("30*visibleControls"));
 test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
 test("Chevron has visible artwork and no surface background",dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
@@ -85,11 +85,11 @@ test("Shiny failure does not imply confirmed trainer authentication",service.inc
 test("Diagnostic logs only coarse authentication states",service.includes('BugReport.log(this,"SESSION","Shiny="'));
 test("Menus are never clipped by the HTML viewport",dock.includes("html.controls-root,body.controls-window{overflow:visible!important"));
 test("Mode AUTO and location work before delayed native menu sync",dock.includes("if(controlsWindow&&!menuOpen)setMenuOpen(true"));
-test("Mode and AUTO provide immediate visible feedback",dock.includes("mode=String(value);draw();Native.setMode(mode)")&&dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
+test("Mode and AUTO provide immediate visible feedback",dock.includes("Native.setModeFilter(JSON.stringify(p))")&&service.includes("public void setModeFilter(String input)")&&dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
-test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(396,screenWidthDp()-8)"));
-test("Favorites use translucent gradient without background dim",picker.includes("Color.argb(159,24,34,47)")&&picker.includes("window.setDimAmount(0.0f)"));
+test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(wanted,screenWidthDp()-8)")&&service.includes("menuDp()"));
+test("Favorites use translucent gradient without background dim",picker.includes('Color.argb(234,40,42,45)')&&picker.includes("window.setDimAmount(0.0f)"));
 test("Home has explicit login and logout",main.includes('signIn.setText("Entrar / vincular")')&&main.includes('signOut.setText("Sair")'));
 test("Login does not start overlay if none is running",main.includes("if(!OverlayService.isRunning())return;"));
 test("Logout clears local cookies and web storage only",main.includes("removeAllCookies")&&main.includes("WebStorage.getInstance().deleteAllData()"));
@@ -109,7 +109,7 @@ const iconGenerator=fs.readFileSync(path.join(__dirname,'../scripts/RoundIcon.ja
 const ci=fs.readFileSync(path.join(__dirname,'../../.github/workflows/build-overlay.yml'),'utf8');
 const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
-test("PokeSearch 0.51 source configured",gradleBuild.includes('versionCode = 51')&&gradleBuild.includes('versionName = "0.51-beta"'));
+test("PokeSearch 0.55 source configured",gradleBuild.includes('versionCode = 55')&&gradleBuild.includes('versionName = "0.55-beta"'));
 test("Round icon generator always uses headless mode",gradleBuild.includes('-Djava.awt.headless=true')&&iconGenerator.includes('System.setProperty("java.awt.headless","true")'));
 test("Network main-frame error is handled",service.includes('request.isForMainFrame()')&&service.includes('Falha de navegação principal'));
 test("Browser exception and parse failures recorded",service.includes('recordFailure("executar JS site",e)')&&service.includes('recordFailure("interpretar resposta JS",e)'));
@@ -151,7 +151,7 @@ test("B06 destruction cancels callbacks and removes windows before WebViews",des
 test("B06 privacy of errors unchanged",service.includes('error.getClass().getSimpleName()')&&!service.includes('error.getMessage()'));
 test("B06 Android SDK and manifest unchanged",manifest.includes('<service android:name=".OverlayService" android:exported="false" />')&&gradleBuild.includes('targetSdk = 33')&&gradleBuild.includes('compileSdk = 36'));
 // PS-075–PS-080 regression contracts
-test("PS-075 Favorites provides accessible test notification action",picker.includes('testNotification.setText("🔔 Testar notificação")')&&picker.includes('WatchAlerts.test(activity)')&&picker.includes('WatchAlerts.permissionGranted(activity)'));
+test("PS-075 Alertas provides accessible test notification action",dock.includes('testButton.textContent="🔔 Testar notificação"')&&service.includes('public void testAlert()')&&service.includes('WatchAlerts.test(OverlayService.this)'));
 test("PS-075 Home Preferences provides both toggles and test action",main.includes("settingAlertMode(body,prefs);")&&main.includes('settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,')&&main.includes('WatchAlerts.test(this)'));
 test("PS-076 Android Back returns within OAuth dialog history",main.includes('loginDialog.setOnKeyListener(')&&main.includes('android.view.KeyEvent.KEYCODE_BACK')&&main.includes('website.canGoBack()')&&main.includes('website.goBack()'));
 test("PS-077 loginEndRefresh is cancelable across all transitions",service.includes('private final Runnable loginEndRefresh=')&&cancelBlock.includes('handler.removeCallbacks(loginEndRefresh)')&&beginBlock.includes('cancelSessionCallbacks();')&&endBlock.includes('cancelSessionCallbacks();')&&reloadBlock.includes('cancelSessionCallbacks();'));
@@ -169,12 +169,15 @@ const prefSync=service.split('private void syncPreferencesWithoutSearch(){')[1]?
 const startCommand=service.split('    @Override public int onStartCommand(')[1]?.split('    private void destroyWebView(')[0]||'';
 test("PS-081 home requests POST_NOTIFICATIONS from test action",main.includes('requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},203)'));
 test("PS-081 callback runs notification test only after permission granted",main.includes('if(requestCode==203)')&&main.includes('results[0]==PackageManager.PERMISSION_GRANTED')&&main.includes('granted&&WatchAlerts.permissionGranted(this)')&&main.includes('WatchAlerts.test(this)'));
-test("PS-081 picker provides permission directions without requesting service permission",picker.includes('Conceda notificações na tela inicial do PokeSearch ou nas Configurações do Android')&&!picker.includes('requestPermissions('));
+test("PS-081 alerts submenu provides permission directions without requesting service permission",service.includes('Conceda permissão de notificações no Android')&&!picker.includes('requestPermissions('));
 test("PS-082 sync action from Home requires running overlay",main.includes('OverlayService.isRunning()')&&main.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS")'));
 test("PS-082 Home syncs on spinner, checkbox and dismiss",main.includes('syncOverlayPreferences();')&&main.includes('dialog.setOnDismissListener(d->syncOverlayPreferences())')&&main.includes('check.setOnCheckedChangeListener'));
 test("PS-082 Overlay handles SYNC_PREFS without network refresh",startCommand.includes('com.lucianotoscano.pokesearchoverlay.SYNC_PREFS')&&startCommand.includes('syncPreferencesWithoutSearch();')&&!prefSync.includes('refresh(')&&!prefSync.includes('execute(')&&!prefSync.includes('loadUrl('));
 test("PS-082 re-sorts current results and updates dock",prefSync.includes('sortItems(items)')&&prefSync.includes('params.width=dp(minimized?BUBBLE_DP:dockDp())')&&prefSync.includes('update();'));
-test("PS-082 preferences keys for sprite size, sort, timers, alerts",['spriteSize','showTimers','alerts','sort'].every(k=>prefSync.includes('get'+(k==='spriteSize'?'Int':k==='sort'?'String':'Boolean')+'("'+k+'"')));
+test("PS-082 preferences keys for sprite size, sort, timers, alerts",
+  prefSync.includes('getInt("spriteSize"')&&prefSync.includes('getString("sort"')&&
+  prefSync.includes('getBoolean("alerts"')&&prefSync.includes('loadDisplayPreferences(prefs)')&&
+  service.includes('showTimers=pref.getBoolean("showTimers"'));
 test("Probe result is discarded across generation switches",service.includes('final int callbackGeneration=requestGeneration;')&&service.includes('if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;'));
 test("PS-084 catalogue asset failures log only class and stage",picker.includes('BugReport.log(activity,"ASSET","ler catálogo Pokémon · "+e.getClass().getSimpleName())'));
 test("PS-084 MainActivity asset failures log only stage and class",main.includes('BugReport.log(this,"ASSET"')&&main.includes('e.getClass().getSimpleName()')&&!main.includes('e.getMessage()'));
@@ -185,8 +188,8 @@ test("v0.50 no phantom gap when toolbar is beside dock",
 test("v0.50 transparent floating collapse arrow",
     dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("v0.50 AUTO OFF in UI and service, with no periodic posts",
-    dock.includes('[[0,"AUTO · OFF')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
-    service.includes('if(minutes!=0&&minutes!=5')&&
+    dock.includes('[0,"Auto · OFF"]')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
+    service.includes('if(minutes!=0&&minutes!=3&&minutes!=5')&&
     service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(periodic,'));
 test("v0.50 notifications cycle off / on / silent",
     service.includes('alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off"')&&
@@ -209,11 +212,11 @@ test("Android responsive controls have no phantom spacer below popup",
   dock.includes('#choices{display:none;position:absolute;top:34px;'));
 test("Android responsive controls measure actual one-row menu height",
   dock.includes('if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);')&&
-  service.includes('menuParams.height=dp(MENU_BASE_DP)')&&
+  service.includes('menuParams.height=dp(menuBaseHeight())')&&
   service.includes('Math.min(450,screenHeightDp()-72)'));
-test("Android responsive layout contains all 12 controls exactly once",
-  toolbarButtons.length===12&&
-  ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','report','donate','close']
+test("Android responsive layout contains all 15 controls exactly once",
+  toolbarButtons.length===15&&
+  ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','filters','eye','appearance','report','donate','close']
   .every(id=>(dock.match(new RegExp('id="'+id+'"','g'))||[]).length===1));
 test("Shiny tap skips Search cooldown to inspect site and auth",
   service.includes('private void prepareImmediateShiny(int generation)')&&
@@ -322,3 +325,32 @@ test("Pix digest checked with SHA-256 and constant-time compare",guard.includes(
 test("Login protected from screenshots",main.includes("loginDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)"));
 test("R8 keeps JavascriptInterface",proguard.includes("@android.webkit.JavascriptInterface")&&proguard.includes("-keepattributes"));
 test("Release minifies and shrinks",gradle.includes("isMinifyEnabled = true")&&gradle.includes("isShrinkResources = true"));
+
+// v0.52 opt-in UI regression coverage
+ test("v0.52 keeps vertical menu optional without changing original colors",dock.includes('body.controls-window.vertical #controls')&&dock.includes('#controls #cycle.ivOn{background:#3a5040bd'));
+ test("v0.52 rank is optional and only shown with a numeric result",dock.includes('showRanks=ranks!==false')&&dock.includes('Number.isInteger(rv)'));
+ test("v0.52 home preferences persist hidden icon choices",main.includes('prefs.getString("hiddenControls"')&&main.includes('prefs.edit().putString("hiddenControls"'));
+
+test("v0.53 floating filter action and popup are present",dock.includes('id="filters"')&&dock.includes("renderAdvancedFilters()")&&dock.includes('Native.setSearchOptions(JSON.stringify(val))'));
+test("v0.53 rank badges show verified upper limit when exact rank is unknown",dock.includes('rankUpperBound')&&dock.includes('showRanks&&(league==="gl"||league==="ul")'));
+test("v0.53 Android validates floating search preference values",service.includes('public void setSearchOptions(String value)')&&service.includes('options.put("rankMax"'));
+
+test("Multi-search profiles have native persistence and sequential retrieval",service.includes('setSearchProfiles(String value)')&&service.includes('beginProfileCycle(boolean manual)')&&service.includes('finishProfileCycleStep(JSONObject r,JSONArray sorted)'));
+test("Two independent group headers and folding are implemented",dock.includes('toggleResultGroup(index)')&&dock.includes('groupBlock')&&dock.includes('profileIndex'));
+test("Toolbar can show text with horizontal and vertical layouts",dock.includes('body.controls-window.with-text #controls')&&dock.includes('body.controls-window.vertical.with-text #controls'));
+
+test("v0.55 two independent Android overlay windows",service.includes('private final FrameLayout[] groupRoots=new FrameLayout[2]')&&service.includes('createGroupWindows()')&&service.includes('wm.updateViewLayout(frame,coords)'));
+test("v0.54 layers remember positions separately",service.includes('putInt("layerX"+i')&&service.includes('putInt("layerY"+i'));
+test("v0.54 each group loads an isolated WebView",service.includes('dock.html?group=')&&dock.includes('const groupWindow=!!matchedGroup')&&dock.includes('Native.resizeGroup(groupId,h)'));
+test("v0.54 independent result windows only render their own profile",dock.includes('Number(x.c.profileIndex)===groupId')&&dock.includes('document.getElementById("spawns").replaceChildren()'));
+test("v0.54 eye toggles CP, level, timer, rank, spawn count and IV",dock.includes('id="eye"')&&dock.includes('renderInfoChoices()')&&service.includes('setDisplayOptions(String value)'));
+test("v0.54 mode selector includes 100, 0, GL, UL and custom",dock.includes('panelInput("IV %"')&&dock.includes('panelInput("Raw IV"')&&dock.includes('"Great League"')&&dock.includes('"Ultra League"'));
+test("v0.54 preserves vertical text by default with icon-only option",service.includes('menuVertical=true')&&service.includes('menuShowText=true')&&main.includes('settingCheckbox(body,prefs,"menuShowText"'));
+
+test("v0.55 two tabs enforced in Java, home, and JS",service.includes('new FrameLayout[2]')&&service.includes('profiles.length()>2')&&main.includes('new CheckBox[2]')&&dock.includes('profilesData.slice(0,2)'));
+test("v0.55 numeric fields use dedicated input without nested mode menus",dock.includes('field.type="number"')&&dock.includes('renderModePanel()')&&service.includes('setModeFilter(String input)'));
+test("v0.55 alerts and update are grouped",dock.includes('renderAlertPanel()')&&dock.includes('renderAppearancePanel()')&&dock.includes('["now","↻ Atualizar agora"]'));
+test("v0.55 external status indicators do not cover sprites",dock.includes('class="resultUnit"')&&dock.includes('class="resultInfo"'));
+test("v0.55 favorites use a fixed scrolling list",picker.includes('selectedList.setSelectionFromTop')&&picker.includes('Color.argb(243,51,54,57)'));
+test("v0.55 login session probe supplies options",main.includes('.replace("__OPTIONS__","{}")'));
+test("v0.55 launcher icon minimizes transparent outer padding",require('fs').readFileSync('app/scripts/RoundIcon.java','utf8').includes('Detect excessive transparent/flat padding'));
