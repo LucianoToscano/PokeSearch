@@ -527,7 +527,7 @@ test("General and advanced filter sections are foldable inside mode popup",
   dock.includes('section("Filtros gerais"')&&dock.includes('section("Filtros avançados"')&&
   dock.includes('#choices.modePanel{width:246px'));
 test("Site dropdown options are discovered instead of inventing weather/form values",
-  dock.includes('filterOptions=response.options||{}')&&
+  dock.includes('filterOptions=response.partial?')&&
   dock.includes('Native.requestFilterOptions()')&&
   !dock.includes('option("weather","Sunny")'));
 test("Mode popup allows keyboard focus for optional numeric and Pokémon inputs",
