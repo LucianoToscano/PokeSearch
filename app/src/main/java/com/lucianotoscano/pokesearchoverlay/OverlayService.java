@@ -788,17 +788,28 @@ public class OverlayService extends Service {
                 }
                 handler.postDelayed(()->{
                     if(stopped||loginPaused||generation!=requestGeneration)return;
-                    execute("configureSearch",configured->{
-                    if(stopped||loginPaused||generation!=requestGeneration)return;
-                    if(!configured.optBoolean("ok")||!configured.optBoolean("configured",false)){
-                        searchInProgress=false;
-                        searchFailure("⚠ Filtro não aplicado","Falha nos controles IV/ranking. Verifique se a página carregou.");
-                        return;
-                    }
-                    configureLocationAndVerify(generation,manual,0);
-                    });
+                    configureSearchWithRetry(generation,manual,0);
                 },600L);
             });
+        });
+    }
+    // React dropdowns are asynchronous: opening and selecting an option cannot
+    // reliably happen in a single evaluateJavascript() call.
+    private void configureSearchWithRetry(int generation,boolean manual,int attempt){
+        if(stopped||loginPaused||generation!=requestGeneration)return;
+        execute("configureSearch",configured->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
+            if(configured.optBoolean("ok")&&configured.optBoolean("configured",false)){
+                configureLocationAndVerify(generation,manual,0);return;
+            }
+            if(configured.optBoolean("pending",false)&&attempt<11){
+                handler.postDelayed(()->configureSearchWithRetry(generation,manual,attempt+1),230L);
+                return;
+            }
+            searchInProgress=false;
+            String reason=configured.optString("reason","Controle do site indisponível");
+            // Show concrete filter name; no account data or coordinates from the DOM.
+            searchFailure("⚠ Filtro não aplicado","Falha na configuração: "+reason);
         });
     }
     private void configureLocationAndVerify(int generation,boolean manual,int attempt){
@@ -1393,11 +1404,43 @@ public class OverlayService extends Service {
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
         @JavascriptInterface public void requestFilterOptions(){handler.post(()->{
             if(stopped||loginPaused||searchInProgress)return;
+            final int generation=requestGeneration;
             execute("describeFilters",found->{
-                if(stopped||menuPanel==null||!menuLoaded)return;
+                if(stopped||generation!=requestGeneration||menuPanel==null||!menuLoaded)return;
                 js(menuPanel,true,"window.onFilterOptions("+found.toString()+")");
+                discoverFilterMenu(0,generation);
             });
         });}
+        private void discoverFilterMenu(int position,int generation){
+            if(stopped||loginPaused||searchInProgress||generation!=requestGeneration||!menuExpanded)return;
+            final String[] keys={"sortBy","size","form","gender","weather"};
+            if(position>=keys.length)return;
+            String key=keys[position];
+            execute("openFilterOptions:"+key,opened->{
+                if(stopped||generation!=requestGeneration)return;
+                if(!opened.optBoolean("ok")){
+                    discoverFilterMenu(position+1,generation);return;
+                }
+                handler.postDelayed(()->execute("readFilterOptions:"+key,options->{
+                    if(stopped||generation!=requestGeneration)return;
+                    if(options.optBoolean("ok")&&menuPanel!=null&&menuLoaded){
+                        JSONObject message=new JSONObject();
+                        try{
+                            message.put("ok",true);
+                            JSONObject fields=new JSONObject();
+                            JSONObject field=new JSONObject();
+                            field.put("present",true);
+                            field.put("options",options.optJSONArray("options"));
+                            fields.put(key,field);
+                            message.put("options",fields);
+                            message.put("partial",true);
+                        }catch(org.json.JSONException ignored){}
+                        js(menuPanel,true,"window.onFilterOptions("+message.toString()+")");
+                    }
+                    execute("closeFilterOptions:"+key,closed->discoverFilterMenu(position+1,generation));
+                }),210L);
+            });
+        }
         @JavascriptInterface public void setSearchConfig(String payload){handler.post(()->{
             try{
                 JSONObject input=new JSONObject(payload);
