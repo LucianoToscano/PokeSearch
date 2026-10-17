@@ -329,7 +329,36 @@ function extras(action){
  }
  return {ok:failed.length===0,pending:action==="apply"&&transientPending,reason:"Filtros adicionais: "+failed.join(", ")};
 }
+function currentCoreControlsVisible(){
+ if(mode==="percent")return percentageIVInputs().length===2;
+ if(mode==="raw"||mode==="iv")return rawIVInputs().length>0||percentageIVInputs().length===2;
+ return !!inputNear("Top ranking")||!!field("League");
+}
+// A result page can collapse the form after Search. A visible disagreement
+// must still invalidate results, but an absent control is not a disagreement.
+function visibleExtrasMismatch(){
+ for(const key of Object.keys(EXTRA_LABELS)){
+  if(key==="sortBy"&&!filters.sortBy)continue;
+  const control=extraControl(EXTRA_LABELS[key]);
+  if(control&&!extraMatches(key,String(filters[key]||"").trim()))return key;
+ }
+ for(const key of extraNumberKeys()){
+  const input=extraNumberField(key);
+  if(input&&String(input.value||"").trim()!==String(filters[key]||"").trim())return key;
+ }
+ return "";
+}
 function check(){const base=checkCore();return base.ok?extras("verify"):base;}
+function resultCriteria(){
+ const base=checkCore(),ext=base.ok?extras("verify"):{ok:false,reason:base.reason};
+ if(base.ok&&ext.ok)return {ok:true,source:"live-form",reason:"Filtros confirmados no formulário"};
+ const coreVisible=currentCoreControlsVisible(),mismatch=visibleExtrasMismatch();
+ if(filters._preSubmitVerified&&!mismatch&&(!coreVisible||base.ok)){
+  return {ok:true,source:"pre-submit-confirmed",reason:"Formulário oculto após envio; filtros confirmados antes da busca"};
+ }
+ return {ok:false,source:"not-confirmed",
+  reason:mismatch?"Campo divergente: "+mismatch:coreVisible?(ext.reason||base.reason):"Formulário ausente sem confirmação prévia"};
+}
 // Isolated diagnostics used by smoke tests; no Search is submitted.
 if(action==="configureExtras")return JSON.stringify(extras("apply"));
 if(action==="verifyExtras")return JSON.stringify(extras("verify"));
@@ -410,7 +439,8 @@ function parseCard(box,sourceIndex){
 }
 function collect(){
  const found=cardRoots().map(item=>parseCard(item.node,item.sourceIndex));
- const siteCriteria=check().ok;
+ const confirmation=resultCriteria();
+ const siteCriteria=confirmation.ok;
  const rankLimit=configuredRank();
  const isLeague=mode==="gl"||mode==="ul";
  const matches=x=>{
@@ -438,7 +468,9 @@ function collect(){
  const explicitEmpty=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i.test(t);
  const siteCount=Number((t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1]||0);
  const parseFailure=siteCount>0&&found.length===0;
- return JSON.stringify({ok:true,cards:valid,found:found.length,siteCount,parseFailure,uncertain,loading,explicitEmpty,criteriaConfirmed:siteCriteria,leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
+ return JSON.stringify({ok:true,cards:valid,found:found.length,siteCount,parseFailure,uncertain,loading,explicitEmpty,
+  criteriaConfirmed:siteCriteria,criteriaReason:confirmation.reason,confirmationSource:confirmation.source,
+  leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }
 if(action==="collect")return collect();
 if(action.startsWith("coords:")){
