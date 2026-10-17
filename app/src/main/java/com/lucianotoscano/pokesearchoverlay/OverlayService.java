@@ -94,7 +94,7 @@ public class OverlayService extends Service {
     private boolean locationEditorOpen=false;
     private boolean showTimers=false,alerts=false;
     private String alertsMode="off"; // off / on / silent, separate from favorite opt-in
-    private String sort="despawn";
+    private String sort="site"; // Follow the ten results returned by the site, not an inverted local despawn sort.
     private long lastAlertAt=0L;
     private final java.util.Set<String> knownSpawns=new java.util.HashSet<>();
     private long armedDespawnMillis=0L;
@@ -154,6 +154,8 @@ public class OverlayService extends Service {
     private boolean shownShiny=false,resultsStale=false;
     // Independent parameters remain intact when switching between search modes.
     private int rawAttack=15,rawDefense=15,rawStamina=15,glRank=1,ulRank=1,ivPercentMin=0,ivPercentMax=100;
+    // Additional optional search criteria belong to the active site session, not to the toolbar.
+    private String extraFiltersJson="{}";
     private String filterConfigJson(){
         JSONObject config=new JSONObject();
         try{
@@ -161,6 +163,9 @@ public class OverlayService extends Service {
             config.put("stamina",rawStamina);config.put("glRank",glRank);
             config.put("ulRank",ulRank);config.put("percentMin",ivPercentMin);
             config.put("percentMax",ivPercentMax);
+            JSONObject extra=new JSONObject(extraFiltersJson);
+            java.util.Iterator<String> keys=extra.keys();
+            while(keys.hasNext()){String key=keys.next();config.put(key,extra.get(key));}
         }catch(org.json.JSONException ignored){}
         return config.toString();
     }
@@ -1047,6 +1052,12 @@ public class OverlayService extends Service {
         if(source!=null)for(int i=0;i<source.length();i++){
             JSONObject c=source.optJSONObject(i);if(c!=null)a.add(c);
         }
+        // The site sorts before we read the first ten cards. Preserve that order.
+        if("site".equals(sort)){
+            JSONArray inSiteOrder=new JSONArray();
+            for(JSONObject card:a)inSiteOrder.put(card);
+            return inSiteOrder;
+        }
         java.util.Comparator<JSONObject> comparator;
         switch(sort){
             case "rank":
@@ -1380,6 +1391,13 @@ public class OverlayService extends Service {
             OverlayService.this.refresh(true);
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
+        @JavascriptInterface public void requestFilterOptions(){handler.post(()->{
+            if(stopped||loginPaused||searchInProgress)return;
+            execute("describeFilters",found->{
+                if(stopped||menuPanel==null||!menuLoaded)return;
+                js(menuPanel,true,"window.onFilterOptions("+found.toString()+")");
+            });
+        });}
         @JavascriptInterface public void setSearchConfig(String payload){handler.post(()->{
             try{
                 JSONObject input=new JSONObject(payload);
@@ -1392,14 +1410,34 @@ public class OverlayService extends Service {
                 if(!within(a,0,15)||!within(d,0,15)||!within(st,0,15)||
                     !within(gl,1,50)||!within(ul,1,50)||
                     !isAllowedIvPercent(min)||!isAllowedIvPercent(max)||min>max)return;
+                JSONObject extra=new JSONObject();
+                String[] strings={"sortBy","pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","minPvpCp"};
+                for(String key:strings){
+                    String value=input.optString(key,"").trim();
+                    if(value.length()>100)return;
+                    if((key.equals("cpMin")||key.equals("cpMax")||key.equals("minPvpCp"))&&
+                       !value.isEmpty()&&!value.matches("[0-9]{1,5}"))return;
+                    if((key.equals("levelMin")||key.equals("levelMax"))&&
+                       !value.isEmpty()&&!value.matches("[0-9]{1,2}(\\\\.[0-9])?"))return;
+                    extra.put(key,value);
+                }
+                for(String[] pair:new String[][]{{"cpMin","cpMax"},{"levelMin","levelMax"}}){
+                    String low=extra.optString(pair[0]),high=extra.optString(pair[1]);
+                    if(!low.isEmpty()&&!high.isEmpty()&&Double.parseDouble(low)>Double.parseDouble(high))return;
+                }
+                extra.put("includePreviousEvolutions",input.optBoolean("includePreviousEvolutions",true));
+                String updatedExtras=extra.toString();
                 if(mode.equals(nextMode)&&rawAttack==a&&rawDefense==d&&rawStamina==st&&
-                    glRank==gl&&ulRank==ul&&ivPercentMin==min&&ivPercentMax==max)return;
+                    glRank==gl&&ulRank==ul&&ivPercentMin==min&&ivPercentMax==max&&
+                    extraFiltersJson.equals(updatedExtras))return;
                 mode=nextMode;rawAttack=a;rawDefense=d;rawStamina=st;
                 glRank=gl;ulRank=ul;ivPercentMin=min;ivPercentMax=max;
+                extraFiltersJson=updatedExtras;
                 getSharedPreferences("prefs",0).edit()
                     .putString("mode",mode).putInt("rawAttack",a).putInt("rawDefense",d)
                     .putInt("rawStamina",st).putInt("glRank",gl).putInt("ulRank",ul)
-                    .putInt("ivPercentMin",min).putInt("ivPercentMax",max).apply();
+                    .putInt("ivPercentMin",min).putInt("ivPercentMax",max)
+                    .putString("extraFiltersJson",extraFiltersJson).apply();
                 ++requestGeneration;searchInProgress=false;shinyVerified=false;
                 // Keep site-confirmed cards with their original mode/icon
                 // until the new search passes all checks and returns valid cards.
@@ -1757,7 +1795,7 @@ public class OverlayService extends Service {
         alertsMode=pref.getString("alertsMode",alerts?"on":"off");
         if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";
         alerts=!"off".equals(alertsMode);
-        sort=pref.getString("sort","despawn");
+        sort="site"; // Sort remotely before the ten-result cutoff; preserve its returned order.
         if(params!=null&&!menuExpanded){
             params.width=dp(minimized?BUBBLE_DP:dockDp());
             params.x=Math.min(params.x,metrics().widthPixels-params.width);
@@ -1774,6 +1812,8 @@ public class OverlayService extends Service {
             locationEnabled=false;locationCoords="";locationRadius=0;
             pref.edit().putBoolean("locationEnabled",false).remove("locationCoords").remove("locationRadius").apply();
         }
+        extraFiltersJson=pref.getString("extraFiltersJson","{}");
+        try{new JSONObject(extraFiltersJson);}catch(org.json.JSONException ignored){extraFiltersJson="{}";}
         mode=pref.getString("mode",mode);
         boolean migrateLegacyHundo="iv".equals(mode);
         if(migrateLegacyHundo)mode="raw";
