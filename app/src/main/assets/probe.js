@@ -298,7 +298,7 @@ function collect(){
  const explicitEmpty=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i.test(t);
  const siteCount=Number((t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1]||0);
  const parseFailure=siteCount>0&&found.length===0;
- return JSON.stringify({ok:true,cards:valid,found:found.length,siteCount,parseFailure,uncertain,loading,explicitEmpty,leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
+ return JSON.stringify({ok:true,cards:valid,found:found.length,siteCount,parseFailure,uncertain,loading,explicitEmpty,criteriaConfirmed:siteCriteria,leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }
 if(action==="collect")return collect();
 if(action.startsWith("coords:")){
