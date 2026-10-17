@@ -250,4 +250,28 @@ const confirmedSize=run("verifyExtras","iv",false,{config:{size:"XXL"},extra:{Si
 assert.equal(confirmedSize.ok,true,"XXL is confirmed by reading control");
 checked+=4;
 
+
+const beforeSubmitOnly=run("collect","gl",false,{switch:false,spawn,
+  config:{glRank:1,_preSubmitVerified:true,size:"XXL"}});
+assert.equal(beforeSubmitOnly.criteriaConfirmed,true,"Form hidden after Search uses same-generation pre-submit proof");
+assert.equal(beforeSubmitOnly.cards.length,1,"The result cards should not disappear when the form collapses");
+assert.equal(beforeSubmitOnly.confirmationSource,"pre-submit-confirmed");
+checked++;
+const missingProof=run("collect","gl",false,{switch:false,spawn,
+  config:{glRank:1,size:"XXL"}});
+assert.equal(missingProof.criteriaConfirmed,false,"Missing form without pre-submit proof must fail");
+assert.equal(missingProof.cards.length,0,"Unknown results are not shown as verified");
+checked++;
+const visibleWrong=run("collect","gl",false,{switch:false,spawn,
+  config:{glRank:1,size:"XXL",_preSubmitVerified:true},
+  extra:{Size:{value:"Any",options:["Any","XXL"]}}});
+assert.equal(visibleWrong.criteriaConfirmed,false,"Visible contradictory Size control defeats older proof");
+assert.equal(visibleWrong.cards.length,0);
+checked++;
+const wrongLeagueWithProof=run("collect","gl",false,{switch:false,spawn,
+ pvp:{rank:"1",league:"Ultra League",prior:"Yes"},
+ config:{_preSubmitVerified:true,glRank:1}});
+assert.equal(wrongLeagueWithProof.criteriaConfirmed,false,"Pre-submit proof cannot override live mismatch in PvP league");
+checked++;
+
 console.log("PokeSearch probe contract: "+checked+" tests passed");
