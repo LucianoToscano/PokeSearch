@@ -41,11 +41,13 @@ android {
 val createRoundIcon by tasks.registering(Exec::class) {
     val original = file("src/main/res/drawable-nodpi/ic_launcher.png")
     val output = file("src/main/res/drawable-nodpi/pokesearch_round.png")
+    val adaptive = file("src/main/res/drawable-nodpi/pokesearch_adaptive_foreground.png")
     inputs.file(original)
     inputs.file("scripts/RoundIcon.java")
-    outputs.file(output)
-    // Explicit headless mode for CLI and CI build environments.
+    outputs.files(output, adaptive)
+    // Generate both Android adaptive and legacy fallback icons only on a future build.
+    // Do not run Gradle or generate APKs until the user explicitly authorizes it.
     commandLine("java", "-Djava.awt.headless=true", file("scripts/RoundIcon.java").absolutePath,
-        original.absolutePath, output.absolutePath)
+        original.absolutePath, output.absolutePath, adaptive.absolutePath)
 }
 tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(createRoundIcon) }

@@ -35,19 +35,24 @@ public class OverlayService extends Service {
     private static volatile boolean running=false;
     public static boolean isRunning(){return running;}
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
+    private static final int RESULTS_HEADER_DP=30;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
     private int menuDp(){return Math.max(1,Math.min(396,screenWidthDp()-8));}
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
-    private WindowManager.LayoutParams params,detailParams,menuParams;
-    private FrameLayout root,detailRoot,menuRoot;
+    private WindowManager.LayoutParams params,detailParams,menuParams,resultParams;
+    private FrameLayout root,detailRoot,menuRoot,resultRoot;
     private View grip;
-    private WebView panel,detailPanel,website,menuPanel;
+    private WebView panel,detailPanel,website,menuPanel,resultPanel;
+    private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
-    private int height=72,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
+    private int height=32,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
     private boolean deferMenuSync=false;
+    private boolean resultLoaded=false,resultCollapsed=false;
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
+    private boolean popupAbove=false;
+    private int popupOffsetDp=-1,popupRoomDp=-1;
     private String probeScriptCache;
     private boolean searchInProgress=false;
     private boolean loginPaused=false;
@@ -142,7 +147,51 @@ public class OverlayService extends Service {
         armedDespawnMillis=next;
         handler.postDelayed(expiryRefresh,Math.max(250L,next-now+150L));
     }
-    private String mode="iv",results="[]",status="Conectando...";
+    private String mode="raw",results="[]",status="Conectando...";
+    // Provenance of the last site-confirmed result set, not the pending filter.
+    // Never relabel previous Pokémon with the new mode while validation fails.
+    private String shownMode="raw",shownConfigJson="{}";
+    private boolean shownShiny=false,resultsStale=false;
+    // Independent parameters remain intact when switching between search modes.
+    private int rawAttack=15,rawDefense=15,rawStamina=15,glRank=1,ulRank=1,ivPercentMin=0,ivPercentMax=100;
+    private String filterConfigJson(){
+        JSONObject config=new JSONObject();
+        try{
+            config.put("attack",rawAttack);config.put("defense",rawDefense);
+            config.put("stamina",rawStamina);config.put("glRank",glRank);
+            config.put("ulRank",ulRank);config.put("percentMin",ivPercentMin);
+            config.put("percentMax",ivPercentMax);
+        }catch(org.json.JSONException ignored){}
+        return config.toString();
+    }
+    // The three raw IV stats each span 0–15, so the displayed IV% can take
+    // only these 46 rounded values from an integer sum of 0..45.
+    private static int ivPercentageForSum(int sum){
+        return Math.round(sum*100f/45f);
+    }
+    private static boolean isAllowedIvPercent(int value){
+        for(int total=0;total<=45;total++)
+            if(ivPercentageForSum(total)==value)return true;
+        return false;
+    }
+    private static int floorIvPercent(int value){
+        int candidate=0;
+        for(int total=0;total<=45;total++){
+            int percent=ivPercentageForSum(total);
+            if(percent>value)break;
+            candidate=percent;
+        }
+        return candidate;
+    }
+    private static int ceilIvPercent(int value){
+        for(int total=0;total<=45;total++){
+            int percent=ivPercentageForSum(total);
+            if(percent>=value)return percent;
+        }
+        return 100;
+    }
+    private static boolean within(int value,int min,int max){return value>=min&&value<=max;}
+
     private float startRawX,startRawY;
     private int startX,startY;
     private boolean dragged=false;
@@ -183,9 +232,10 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
+        js(resultPanel,resultLoaded,data);
         if(selected>=0)showDetails(selected);
     }
     private void status(String s){
@@ -197,6 +247,13 @@ public class OverlayService extends Service {
         getSharedPreferences("prefs",0).edit().putString("lastError",s).apply();
         BugReport.log(this,"ERROR",s);
         status(s);
+    }
+    private void searchFailure(String shortReason,String detail){
+        // Show one concise message; keep the detailed diagnosis for the ⚠ report.
+        getSharedPreferences("prefs",0).edit().putString("lastError",detail).apply();
+        BugReport.log(this,"FILTER",detail);
+        if(count()>0)resultsStale=true;
+        status(shortReason+(count()>0?" · resultados anteriores":""));
     }
     private void updateWindow(){
         if(wm!=null&&root!=null&&params!=null){
@@ -212,44 +269,38 @@ public class OverlayService extends Service {
         boolean left=params.x-width>=0;
         int priorPad=menuPadDp;
         boolean priorLeft=menuLeft;
+        int rowY;
         if(right||left){
             menuLeft=!right;
             menuParams.x=right?params.x+dp(dockDp()):params.x-width;
-            menuParams.y=Math.max(0,Math.min(params.y,bottom-menuParams.height-dp(8)));
-            menuPadDp=0; // No spacer: side toolbar does not cover the sprites.
+            rowY=params.y;
         }else{
-            // Narrow display: position toolbar above/below the gear instead of covering it.
+            // Keep the one-row toolbar next to, never ON TOP of, the gear.
             menuLeft=params.x+dp(dockDp())/2>screen/2;
-            menuParams.x=Math.max(0,Math.min(screen-width,params.x+dp(dockDp())/2-width/2));
+            menuParams.x=Math.max(0,Math.min(screen-width,
+                params.x+dp(dockDp())/2-width/2));
             int below=params.y+dp(TOOLBAR_DP);
-            int above=params.y-menuParams.height;
-            // On phones the single compact row fits above/below the gear.
-            // the gear, so the gear and the Pokémon column stay close together.
-            if(above<0){
-                // Keep the gear and first sprite together. Reposition the
-                // *whole* dock below the popover rather than inserting a huge
-                // empty margin between the gear and the first Pokémon.
-                int targetY=menuParams.height+dp(3);
-                int bottomBound=bottom-params.height-dp(8);
-                if(targetY<=bottomBound){
-                    params.y=targetY;
-                    try{wm.updateViewLayout(root,params);}
-                    catch(Exception e){recordFailure("aproximar dock do menu",e);}
-                    above=params.y-menuParams.height;
-                }
-            }
-            if(above>=0){
-                menuParams.y=above;
-                menuPadDp=0;
-            }else{
-                menuParams.y=Math.max(0,Math.min(below,bottom-menuParams.height));
-                // Only shift sprites if the controls genuinely occupy this space.
-                // Reserve only the space really covered below the 30dp gear.
-                // No 34dp phantom gap between menu and sprite column.
-                menuPadDp=Math.max(0,
-                    Math.round((menuParams.y+menuParams.height-params.y)/d.density)-30+2);
-            }
+            int above=params.y-dp(MENU_BASE_DP);
+            rowY=above>=0?above:below;
         }
+        menuPadDp=0; // Results remain in their own separate native overlay.
+
+        // The old resize/clamp moved the entire toolbar when a long numeric
+        // picker opened. Preserve rowY and expand the touchable window ABOVE
+        // or BELOW it without moving the row under the user's finger.
+        int rowHeight=dp(MENU_BASE_DP);
+        int requestedPopup=Math.max(0,menuParams.height-rowHeight);
+        int roomAbove=Math.max(0,rowY);
+        int roomBelow=Math.max(0,bottom-(rowY+rowHeight)-dp(5));
+        boolean abovePopup=requestedPopup>roomBelow&&roomAbove>roomBelow;
+        int available=abovePopup?roomAbove:roomBelow;
+        int actualPopup=Math.min(requestedPopup,available);
+        menuParams.height=rowHeight+actualPopup;
+        menuParams.y=Math.max(0,Math.min(bottom-menuParams.height,
+            rowY-(abovePopup?actualPopup:0)));
+
+        int offsetDp=abovePopup?Math.round(actualPopup/d.density):0;
+        int roomDp=requestedPopup==0?420:Math.max(50,Math.round(actualPopup/d.density)-5);
         if(menuDrawX!=menuParams.x||menuDrawY!=menuParams.y||
            menuDrawHeight!=menuParams.height||menuDrawWidth!=menuParams.width){
             try{
@@ -257,6 +308,11 @@ public class OverlayService extends Service {
                 menuDrawX=menuParams.x;menuDrawY=menuParams.y;
                 menuDrawHeight=menuParams.height;menuDrawWidth=menuParams.width;
             }catch(Exception e){recordFailure("posicionar menu",e);}
+        }
+        if(popupAbove!=abovePopup||popupOffsetDp!=offsetDp||popupRoomDp!=roomDp){
+            popupAbove=abovePopup;popupOffsetDp=offsetDp;popupRoomDp=roomDp;
+            js(menuPanel,menuLoaded,"window.setMenuPopupPlacement("+
+                abovePopup+","+offsetDp+","+roomDp+")");
         }
         if((priorPad!=menuPadDp||priorLeft!=menuLeft)&&!deferMenuSync){
             String edge=JSONObject.quote(menuLeft?"left":"right");
@@ -267,7 +323,7 @@ public class OverlayService extends Service {
     }
     private void resizeMenu(int desiredDp){
         if(!menuExpanded||menuParams==null||menuRoot==null)return;
-        int maxMenuHeight=Math.max(MENU_BASE_DP,Math.min(450,screenHeightDp()-72));
+        int maxMenuHeight=Math.max(MENU_BASE_DP,Math.min(450,screenHeightDp()-24));
         int target=dp(Math.max(MENU_BASE_DP,Math.min(maxMenuHeight,desiredDp)));
         if(Math.abs(menuParams.height-target)<=dp(1))return;
         menuParams.height=target;
@@ -309,12 +365,13 @@ public class OverlayService extends Service {
     private void moveDetail(){
         if(detailRoot==null||detailParams==null||params==null)return;
         int w=screenWidthDp(),h=screenHeightDp(),gap=5;
-        int dockPos=params.x/dp(1);
+        // The details card follows the independently positioned result layer.
+        int dockPos=(resultParams!=null?resultParams.x:params.x)/dp(1);
         int right=dockPos+dockDp()+gap;
         int left=dockPos-DETAIL_DP-gap;
         int preferred=right+DETAIL_DP<=w-4?right:left;
         detailParams.x=dp(Math.max(0,Math.min(w-DETAIL_DP,preferred)));
-        int dockY=params.y/dp(1)+menuPadDp;
+        int dockY=(resultParams!=null?resultParams.y:params.y)/dp(1)+RESULTS_HEADER_DP;
         detailParams.y=dp(Math.max(0,Math.min(h-detailHeight-45,dockY+18)));
         try{wm.updateViewLayout(detailRoot,detailParams);}catch(Exception e){recordFailure("reposicionar detalhes",e);}
     }
@@ -489,6 +546,10 @@ public class OverlayService extends Service {
         try{wm.addView(menuRoot,menuParams);}catch(Exception e){recordFailure("abrir controles",e);menuRoot=null;menuPanel=null;}
         if(menuPanel!=null)menuPanel.loadUrl("file:///android_asset/dock.html?controls=1");
 
+        // The Pokémon list is always its OWN Android overlay. The gear remains
+        // a small independent control even if there is only one active search.
+        createResultsWindow();
+
         detailRoot=new FrameLayout(this);
         detailRoot.setBackgroundColor(Color.TRANSPARENT);
         detailPanel=new WebView(this);
@@ -520,6 +581,106 @@ public class OverlayService extends Service {
         // Initial navigation is scheduled after cookie flush in onStartCommand.
         running=true;
     }
+    private void createResultsWindow(){
+        android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+        resultCollapsed=prefs.getBoolean("resultsCollapsed",false);
+        resultRoot=new FrameLayout(this);
+        resultRoot.setBackgroundColor(Color.TRANSPARENT);
+        resultRoot.setClipChildren(true);
+        resultPanel=new WebView(this);
+        resultPanel.setBackgroundColor(Color.TRANSPARENT);
+        resultPanel.getSettings().setJavaScriptEnabled(true);
+        resultPanel.getSettings().setAllowContentAccess(false);
+        resultPanel.getSettings().setAllowFileAccessFromFileURLs(false);
+        resultPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
+        resultPanel.addJavascriptInterface(new Bridge(),"Native");
+        resultRoot.addView(resultPanel,new FrameLayout.LayoutParams(-1,-1));
+
+        // Transparent native hit area over the league icon:
+        // short tap collapses/expands; drag moves ONLY the results window.
+        final float[] touchStart=new float[2];
+        final int[] positionStart=new int[2];
+        final boolean[] hasDragged={false};
+        resultGrip=new View(this);
+        resultGrip.setBackgroundColor(Color.TRANSPARENT);
+        resultGrip.setOnTouchListener((view,event)->{
+            if(resultParams==null||resultRoot==null||wm==null)return true;
+            switch(event.getActionMasked()){
+                case MotionEvent.ACTION_DOWN:
+                    touchStart[0]=event.getRawX();touchStart[1]=event.getRawY();
+                    positionStart[0]=resultParams.x;positionStart[1]=resultParams.y;
+                    hasDragged[0]=false;
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                    int xMove=Math.round(event.getRawX()-touchStart[0]);
+                    int yMove=Math.round(event.getRawY()-touchStart[1]);
+                    if(Math.abs(xMove)+Math.abs(yMove)>dp(5))hasDragged[0]=true;
+                    if(hasDragged[0]){
+                        DisplayMetrics m=metrics();
+                        resultParams.x=Math.max(0,Math.min(m.widthPixels-resultParams.width,
+                            positionStart[0]+xMove));
+                        resultParams.y=Math.max(0,Math.min(m.heightPixels-resultParams.height,
+                            positionStart[1]+yMove));
+                        try{wm.updateViewLayout(resultRoot,resultParams);}
+                        catch(Exception e){recordFailure("arrastar resultados",e);}
+                        moveDetail();
+                    }
+                    return true;
+                case MotionEvent.ACTION_UP:
+                    if(!hasDragged[0])toggleResultsCollapsed();
+                    else{
+                        float density=getResources().getDisplayMetrics().density;
+                        getSharedPreferences("prefs",0).edit()
+                            .putInt("resultsX",Math.round(resultParams.x/density))
+                            .putInt("resultsY",Math.round(resultParams.y/density)).apply();
+                    }
+                    return true;
+                case MotionEvent.ACTION_CANCEL:return true;
+            }
+            return true;
+        });
+        resultRoot.addView(resultGrip,new FrameLayout.LayoutParams(
+            dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.CENTER_HORIZONTAL));
+
+        int preferredX=Math.max(0,screenWidthDp()-2*dockDp()-35);
+        int preferredY=165;
+        int savedX=prefs.getInt("resultsX",preferredX);
+        int savedY=prefs.getInt("resultsY",preferredY);
+        resultParams=new WindowManager.LayoutParams(dp(dockDp()),dp(RESULTS_HEADER_DP),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            PixelFormat.TRANSLUCENT);
+        resultParams.gravity=Gravity.TOP|Gravity.LEFT;
+        resultParams.x=dp(Math.max(0,Math.min(screenWidthDp()-dockDp(),savedX)));
+        resultParams.y=dp(Math.max(0,Math.min(screenHeightDp()-72,savedY)));
+        try{wm.addView(resultRoot,resultParams);}
+        catch(Exception e){
+            recordFailure("criar janela independente de resultados",e);
+            resultRoot=null;resultParams=null;resultLoaded=false;
+            destroyWebView(resultPanel,true,"resultados indisponíveis");
+            resultPanel=null;resultGrip=null;return;
+        }
+        resultPanel.setWebViewClient(new WebViewClient(){
+            @Override public void onPageFinished(WebView web,String url){
+                if(url!=null&&url.startsWith("file:///android_asset/")){
+                    resultLoaded=true;
+                    js(resultPanel,true,"window.setResultsCollapsed("+resultCollapsed+")");
+                    update();
+                }
+            }
+        });
+        resultPanel.loadUrl("file:///android_asset/dock.html?results=1");
+    }
+    private void updateResultsWidth(){
+        if(resultParams==null||resultRoot==null)return;
+        resultParams.width=dp(dockDp());
+        resultParams.x=Math.max(0,Math.min(metrics().widthPixels-resultParams.width,resultParams.x));
+        if(resultGrip!=null)resultGrip.setLayoutParams(new FrameLayout.LayoutParams(
+            dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.CENTER_HORIZONTAL));
+        try{wm.updateViewLayout(resultRoot,resultParams);}
+        catch(Exception e){recordFailure("redimensionar largura dos resultados",e);}
+    }
     private String script(){
         if(probeScriptCache!=null)return probeScriptCache;
         try(InputStream in=getAssets().open("probe.js")){
@@ -545,7 +706,8 @@ public class OverlayService extends Service {
         }
         String code=script().replace("__ACTION__",JSONObject.quote(action))
                 .replace("__MODE__",JSONObject.quote(mode))
-                .replace("__SHINY__",shiny?"true":"false");
+                .replace("__SHINY__",shiny?"true":"false")
+                .replace("__FILTERS__",filterConfigJson());
         try{website.evaluateJavascript(code,raw->{
             if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;
             try{
@@ -596,6 +758,7 @@ public class OverlayService extends Service {
         BugReport.log(this,"PREPARE","Filtros "+mode+" Shiny="+shiny+" manual="+manual);
         // Preserve the despawn cleanup timer while the network search is pending.
         searchInProgress=true;
+        if(count()>0)resultsStale=true;
         if(shiny){shinyVerified=false;update();}
         final int generation=++requestGeneration;
         status(manual?"Busca manual iniciada...":"Atualizando...");
@@ -615,7 +778,7 @@ public class OverlayService extends Service {
                 if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!prepared.optBoolean("ok")){
                     searchInProgress=false;
-                    diagnosticError("Não foi possível selecionar a aba de busca.");
+                    searchFailure("⚠ Aba não confirmada","Não foi possível selecionar a aba de busca.");
                     return;
                 }
                 handler.postDelayed(()->{
@@ -624,7 +787,7 @@ public class OverlayService extends Service {
                     if(stopped||loginPaused||generation!=requestGeneration)return;
                     if(!configured.optBoolean("ok")||!configured.optBoolean("configured",false)){
                         searchInProgress=false;
-                        diagnosticError("Falha nos controles IV/R1. Verifique se a página de busca carregou.");
+                        searchFailure("⚠ Filtro não aplicado","Falha nos controles IV/ranking. Verifique se a página carregou.");
                         return;
                     }
                     configureLocationAndVerify(generation,manual,0);
@@ -646,7 +809,7 @@ public class OverlayService extends Service {
                     return;
                 }
                 searchInProgress=false;
-                diagnosticError("📍 Não foi possível configurar a localização: "+
+                searchFailure("⚠ Localização não aplicada","Não foi possível configurar localização: "+
                     configured.optString("reason","verifique o formulário do site."));
                 return;
             }
@@ -660,7 +823,7 @@ public class OverlayService extends Service {
                         return;
                     }
                     searchInProgress=false;
-                    diagnosticError("📍 Filtro de localização não confirmado. Pesquisa não enviada.");
+                    searchFailure("⚠ Localização não confirmada","Filtro de localização não confirmado. Pesquisa não enviada.");
                     return;
                 }
                 verifyAndSubmit(generation,manual,0);
@@ -779,7 +942,7 @@ public class OverlayService extends Service {
                     }
                     searchInProgress=false;
                     shinyVerified=false;
-                    diagnosticError("Filtros IV/ligas não confirmados: "
+                    searchFailure("⚠ Filtros não confirmados","Filtros IV/ligas não confirmados: "
                         +filters.optString("reason","verifique as opções no site."));
                     return;
                 }
@@ -790,7 +953,7 @@ public class OverlayService extends Service {
                     if(!submitted.optBoolean("ok")){
                         searchInProgress=false;
                         shinyVerified=false;
-                        diagnosticError(submitted.optString("reason","Falha ao pressionar Search."));
+                        searchFailure("⚠ Busca não enviada",submitted.optString("reason","Falha ao pressionar Search."));
                         return;
                     }
                     long submittedAt=System.currentTimeMillis();
@@ -811,7 +974,7 @@ public class OverlayService extends Service {
             if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!r.optBoolean("ok")){
                 searchInProgress=false;
-                diagnosticError("Falha na leitura dos resultados do site.");
+                searchFailure("⚠ Falha na leitura","Falha na leitura dos resultados do site.");
                 return;
             }
             if((shiny && (!r.has("siteShiny")||r.isNull("siteShiny")||
@@ -819,25 +982,34 @@ public class OverlayService extends Service {
                 (!shiny&&r.has("siteShiny")&&!r.isNull("siteShiny")&&r.optBoolean("siteShiny",false))){
                 searchInProgress=false;
                 shinyVerified=false;
-                diagnosticError("Filtro Shiny mudou durante a busca. Resultados não confirmados.");
+                searchFailure("⚠ Shiny não confirmado","Filtro Shiny mudou durante a busca. Resultados não confirmados.");
                 return;
             }
-            if(!"iv".equals(mode)&&!r.optBoolean("leagueConfirmed",false)){
+            // A result page may have changed the site's filters after Search.
+            // An explicitly empty response is NOT trustworthy unless the requested
+            // site settings are still confirmed; keep old cards instead.
+            if(!r.optBoolean("criteriaConfirmed",false)){
+                searchInProgress=false;
+                searchFailure("⚠ Filtro não confirmado",
+                    "Busca ignorada: controles IV/ligas não confirmados ao ler resultados.");
+                return;
+            }
+            if(("gl".equals(mode)||"ul".equals(mode))&&!r.optBoolean("leagueConfirmed",false)){
                 searchInProgress=false;
                 shinyVerified=false;
-                diagnosticError("Liga PvP/ranking 1 não confirmado. Resultados preservados.");
+                searchFailure("⚠ Ranking não confirmado","Liga PvP/ranking configurado não confirmado. Resultados preservados.");
                 return;
             }
             int found=r.optInt("found",0);
             int onSite=r.optInt("siteCount",0);
             if(r.optBoolean("parseFailure",false)&&!r.optBoolean("loading",false)){
                 searchInProgress=false;
-                diagnosticError("Leitura do site: "+onSite+" ocorrências exibidas, mas nenhum cartão foi reconhecido. Abra ⚠ para exportar o diagnóstico.");
+                searchFailure("⚠ Leitura não confirmada","Leitura do site: "+onSite+" ocorrências exibidas, mas nenhum cartão foi reconhecido.");
                 return;
             }
             if(found>0&&r.optJSONArray("cards")!=null&&r.optJSONArray("cards").length()==0){
                 searchInProgress=false;
-                diagnosticError("Site retornou "+found+" Pokémon, mas nenhum comprovou os IVs/ranking esperados; confira os filtros com ⚠.");
+                searchFailure("⚠ IV/ranking não confirmado","Site retornou "+found+" Pokémon, mas nenhum comprovou os IVs/ranking esperados.");
                 return;
             }
             boolean loading=r.optBoolean("loading",false);
@@ -848,7 +1020,7 @@ public class OverlayService extends Service {
             }
             if(loading||(!empty&&found==0&&attempt>=8)){
                 searchInProgress=false;
-                diagnosticError("Busca não confirmada no site (tempo limite). Resultados anteriores mantidos.");
+                searchFailure("⚠ Site sem confirmação","Busca não confirmada no site (tempo limite). Resultados anteriores mantidos.");
                 return;
             }
             applyCollectedResults(r);
@@ -897,12 +1069,24 @@ public class OverlayService extends Service {
     }
     private boolean verifiedTargetCriteria(JSONObject card){
         if(card==null)return false;
-        if("iv".equals(mode)){
+        if("iv".equals(mode))
             return "15/15/15".equals(card.optString("iv","")) ||
                 "100".equals(card.optString("ivPercent",""));
+        if("raw".equals(mode)){
+            String iv=card.optString("iv","");
+            return iv.isEmpty()||(rawAttack+"/"+rawDefense+"/"+rawStamina).equals(iv);
+        }
+        if("percent".equals(mode)){
+            String pct=card.optString("ivPercent","");
+            if(pct.isEmpty())return true; // Filter itself is verified in probe.js.
+            try{int v=Integer.parseInt(pct);return v>=ivPercentMin&&v<=ivPercentMax;}
+            catch(NumberFormatException ignored){return false;}
         }
         if("gl".equals(mode)||"ul".equals(mode)){
-            return "1".equals(card.optString("rank","").trim());
+            int max="ul".equals(mode)?ulRank:glRank;
+            int shown=rankForSort(card);
+            return (shown>=1&&shown<=max) ||
+                ("verified-site-filter".equals(card.optString("rankSource",""))&&shown==999999);
         }
         return false;
     }
@@ -925,10 +1109,10 @@ public class OverlayService extends Service {
             current.add(key);
             if(knownSpawns.contains(key))continue;
             if(firstNew.isEmpty() &&
-                ("iv".equals(mode)||leagueConfirmed) && verifiedTargetCriteria(c))
+                ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) && verifiedTargetCriteria(c))
                 firstNew=c.optString("name","Pokémon");
             if(WatchAlerts.enabled(this) &&
-                ("iv".equals(mode)||leagueConfirmed) &&
+                ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
                 verifiedTargetCriteria(c) &&
                 WatchAlerts.matches(c.optString("name",""),wanted)){
                 watchedCount++;
@@ -999,21 +1183,49 @@ public class OverlayService extends Service {
         JSONArray sorted=sortItems(items);
         recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
         results=sorted.toString();
+        shownMode=mode;shownConfigJson=filterConfigJson();
+        shownShiny=shiny&&shinyVerified;resultsStale=false;
         searchInProgress=false;
         armNextDespawn(sorted);
         if(selected>=0)hideDetails();
         getSharedPreferences("prefs",0).edit()
             .putLong("lastSearchAt",now).putString("lastError","Nenhum").apply();
         if(r.optBoolean("uncertain"))
-            status("iv".equals(mode)?"Alguns IVs não confirmados.":"Alguns rankings PvP não confirmados.");
+            status(("raw".equals(mode)||"percent".equals(mode)||"iv".equals(mode))
+                ?"Alguns IVs não confirmados.":"Alguns rankings PvP não confirmados.");
         else if(sorted.length()==0)status("Sem resultados confirmados");
         else status(sorted.length()+" Pokémon atualizados");
     }
     private void resize(int h){
+        // The gear window never expands with the Pokémon results.
         if(minimized||params==null)return;
-        int target=Math.max(46,Math.min(screenHeightDp()-95,h));
+        int target=Math.max(30,Math.min(36,h));
         if(Math.abs(target-height)<2)return;
-        height=target;params.height=dp(height);updateWindow();moveDetail();
+        height=target;params.height=dp(height);updateWindow();
+    }
+    private void resizeResults(int desiredDp){
+        if(resultParams==null||resultRoot==null||minimized)return;
+        int max=Math.max(RESULTS_HEADER_DP,screenHeightDp()-72);
+        int desired=resultCollapsed?RESULTS_HEADER_DP:
+            Math.max(RESULTS_HEADER_DP,Math.min(max,desiredDp));
+        int pixels=dp(desired);
+        if(Math.abs(resultParams.height-pixels)<dp(2))return;
+        resultParams.height=pixels;
+        resultParams.y=Math.max(0,Math.min(metrics().heightPixels-pixels,resultParams.y));
+        try{wm.updateViewLayout(resultRoot,resultParams);}
+        catch(Exception e){recordFailure("redimensionar resultados",e);}
+        moveDetail();
+    }
+    private void toggleResultsCollapsed(){
+        if(minimized||resultRoot==null)return;
+        resultCollapsed=!resultCollapsed;
+        getSharedPreferences("prefs",0).edit()
+            .putBoolean("resultsCollapsed",resultCollapsed).apply();
+        js(resultPanel,resultLoaded,"window.setResultsCollapsed("+resultCollapsed+")");
+        if(resultCollapsed){
+            hideDetails();
+            resizeResults(RESULTS_HEADER_DP);
+        }
     }
     private void menu(boolean show){
         if(params==null||minimized)return;
@@ -1024,7 +1236,7 @@ public class OverlayService extends Service {
         if(show){
             menuDrawHeight=-1;menuDrawWidth=-1;
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
-            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(MENU_BASE_DP);}
+            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(MENU_BASE_DP);popupOffsetDp=-1;popupRoomDp=-1;}
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
         }
@@ -1048,6 +1260,8 @@ public class OverlayService extends Service {
         grip.setLayoutParams(new FrameLayout.LayoutParams(
                 dp(yes?BUBBLE_DP:dockDp()),dp(yes?BUBBLE_DP:30),Gravity.TOP|Gravity.LEFT));
         js(panel,panelLoaded,"window.setMinimized("+yes+")");
+        if(resultRoot!=null)resultRoot.setVisibility(
+            yes||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
         updateWindow();
     }
     private void showDetails(int index){
@@ -1057,16 +1271,16 @@ public class OverlayService extends Service {
             if(index<0||index>=a.length()){hideDetails();return;}
             selected=index;
             JSONObject obj=a.getJSONObject(index);
-            js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
+            js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(count()>0?shownMode:mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
             detailRoot.setVisibility(View.VISIBLE);
             moveDetail();
-            js(panel,panelLoaded,"window.highlight("+index+")");
+            js(resultPanel,resultLoaded,"window.highlight("+index+")");
         }catch(Exception e){recordFailure("mostrar detalhes",e);hideDetails();}
     }
     private void hideDetails(){
         selected=-1;
         if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
-        js(panel,panelLoaded,"window.highlight(-1)");
+        js(resultPanel,resultLoaded,"window.highlight(-1)");
     }
     private void resizeDetail(int heightDp){
         detailHeight=Math.max(90,Math.min(310,heightDp));
@@ -1166,23 +1380,57 @@ public class OverlayService extends Service {
             OverlayService.this.refresh(true);
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
+        @JavascriptInterface public void setSearchConfig(String payload){handler.post(()->{
+            try{
+                JSONObject input=new JSONObject(payload);
+                String nextMode=input.getString("mode");
+                if(!nextMode.equals("raw")&&!nextMode.equals("percent")&&
+                    !nextMode.equals("gl")&&!nextMode.equals("ul"))return;
+                int a=input.getInt("attack"),d=input.getInt("defense"),st=input.getInt("stamina");
+                int gl=input.getInt("glRank"),ul=input.getInt("ulRank");
+                int min=input.getInt("percentMin"),max=input.getInt("percentMax");
+                if(!within(a,0,15)||!within(d,0,15)||!within(st,0,15)||
+                    !within(gl,1,50)||!within(ul,1,50)||
+                    !isAllowedIvPercent(min)||!isAllowedIvPercent(max)||min>max)return;
+                if(mode.equals(nextMode)&&rawAttack==a&&rawDefense==d&&rawStamina==st&&
+                    glRank==gl&&ulRank==ul&&ivPercentMin==min&&ivPercentMax==max)return;
+                mode=nextMode;rawAttack=a;rawDefense=d;rawStamina=st;
+                glRank=gl;ulRank=ul;ivPercentMin=min;ivPercentMax=max;
+                getSharedPreferences("prefs",0).edit()
+                    .putString("mode",mode).putInt("rawAttack",a).putInt("rawDefense",d)
+                    .putInt("rawStamina",st).putInt("glRank",gl).putInt("ulRank",ul)
+                    .putInt("ivPercentMin",min).putInt("ivPercentMax",max).apply();
+                ++requestGeneration;searchInProgress=false;shinyVerified=false;
+                // Keep site-confirmed cards with their original mode/icon
+                // until the new search passes all checks and returns valid cards.
+                resultsStale=count()>0;hideDetails();update();refresh();
+            }catch(org.json.JSONException ex){
+                status("Filtro inválido. Escolha os valores novamente.");
+            }
+        });}
         @JavascriptInterface public void setMode(String s){select(s);}
         @JavascriptInterface public void select(String s){handler.post(()->{
-            if(!s.equals("iv")&&!s.equals("gl")&&!s.equals("ul"))return;
-            if(mode.equals(s))return;
-            mode=s;getSharedPreferences("prefs",0).edit().putString("mode",s).apply();
+            if(!s.equals("iv")&&!s.equals("raw")&&!s.equals("percent")&&!s.equals("gl")&&!s.equals("ul"))return;
+            String selected=s.equals("iv")?"raw":s;
+            if(mode.equals(selected))return;
+            mode=selected;
+            // Legacy IV100 calls mean Raw IV 15/15/15; no separate selector is exposed.
+            if(s.equals("iv")){rawAttack=15;rawDefense=15;rawStamina=15;}
+            android.content.SharedPreferences.Editor changed=getSharedPreferences("prefs",0).edit().putString("mode",selected);
+            if(s.equals("iv"))changed.putInt("rawAttack",15).putInt("rawDefense",15).putInt("rawStamina",15);
+            changed.apply();
             android.widget.Toast.makeText(OverlayService.this,
-                "Filtro selecionado: "+(s.equals("iv")?"IV100":s.equals("gl")?"Grande Liga #1":"Ultra Liga #1"),
+                "Filtro selecionado: "+(s.equals("iv")?"Raw IV 15/15/15":s.equals("raw")?"Raw IV":s.equals("percent")?"% IV":s.equals("gl")?"Grande Liga":"Ultra Liga"),
                 android.widget.Toast.LENGTH_SHORT).show();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
-            results="[]";hideDetails();update();refresh();
+            resultsStale=count()>0;hideDetails();update();refresh();
         });}
         @JavascriptInterface public void menu(boolean open){handler.post(()->OverlayService.this.menu(open));}
         @JavascriptInterface public void cycleMode(){handler.post(()->{
-            mode=mode.equals("iv")?"gl":mode.equals("gl")?"ul":"iv";
+            mode=mode.equals("raw")?"percent":mode.equals("percent")?"gl":mode.equals("gl")?"ul":"raw";
             getSharedPreferences("prefs",0).edit().putString("mode",mode).apply();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
-            results="[]";hideDetails();update();refresh();
+            resultsStale=count()>0;hideDetails();update();refresh();
         });}
         @JavascriptInterface public void cycleSpriteSize(){handler.post(()->{
             int[] sizes={35,45,55};
@@ -1200,6 +1448,7 @@ public class OverlayService extends Service {
                     dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:30),
                     Gravity.TOP|Gravity.LEFT));
                 updateWindow();
+                updateResultsWidth();
             }
             update();
             if(wasExpanded)menu(true);
@@ -1263,6 +1512,7 @@ public class OverlayService extends Service {
             pickerOpen=true;
             hideDetails();
             root.setVisibility(View.GONE);
+            if(resultRoot!=null)resultRoot.setVisibility(View.GONE);
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
             try{
                 PokemonPicker.show(OverlayService.this,()->{
@@ -1270,12 +1520,16 @@ public class OverlayService extends Service {
                 },()->{
                     pickerOpen=false;
                     if(!stopped&&!loginPaused&&root!=null)root.setVisibility(View.VISIBLE);
+                    if(!stopped&&!loginPaused&&!minimized&&resultRoot!=null)
+                        resultRoot.setVisibility(View.VISIBLE);
                     if(!stopped&&!loginPaused&&menuExpanded&&menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
                     update();
                 });
             }catch(Exception e){
                 pickerOpen=false;
                 if(root!=null&&!loginPaused)root.setVisibility(View.VISIBLE);
+                if(resultRoot!=null&&!loginPaused&&!minimized)
+                    resultRoot.setVisibility(View.VISIBLE);
                 if(menuRoot!=null&&!loginPaused&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
                 diagnosticError("Não foi possível abrir favoritos no overlay.");
             }
@@ -1357,6 +1611,8 @@ public class OverlayService extends Service {
         @JavascriptInterface public void restore(){handler.post(()->OverlayService.this.minimize(false));}
         @JavascriptInterface public void close(){handler.post(()->stopSelf());}
         @JavascriptInterface public void resize(int size){handler.post(()->OverlayService.this.resize(size));}
+        @JavascriptInterface public void resizeResults(int size){handler.post(()->OverlayService.this.resizeResults(size));}
+        @JavascriptInterface public void toggleResultsCollapsed(){handler.post(OverlayService.this::toggleResultsCollapsed);}
         @JavascriptInterface public void resizeMenu(int size){handler.post(()->OverlayService.this.resizeMenu(size));}
         @JavascriptInterface public void resizeDetail(int size){handler.post(()->OverlayService.this.resizeDetail(size));}
         @JavascriptInterface public void toggleDetail(int index){handler.post(()->{
@@ -1415,6 +1671,7 @@ public class OverlayService extends Service {
                 dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:30),
                 Gravity.TOP|Gravity.LEFT));
             updateWindow();
+            updateResultsWidth();
             moveDetail();
         }
         update(); // Local UI only; does not call refresh or navigate the website.
@@ -1436,6 +1693,7 @@ public class OverlayService extends Service {
             // Cancels queued, periodic, expiration, page, login and reload timers.
             cancelSessionCallbacks();
             if(root!=null)root.setVisibility(View.GONE);
+            if(resultRoot!=null)resultRoot.setVisibility(View.GONE);
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
             if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
             BugReport.log(this,"LOGIN","Página de autenticação aberta, overlay oculto");
@@ -1444,6 +1702,7 @@ public class OverlayService extends Service {
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_END".equals(action)){
             loginPaused=false;
             if(root!=null&&!pickerOpen)root.setVisibility(View.VISIBLE);
+            if(resultRoot!=null&&!pickerOpen&&!minimized)resultRoot.setVisibility(View.VISIBLE);
             if(menuRoot!=null&&!pickerOpen&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
             if(detailRoot!=null&&selected>=0&&!pickerOpen)detailRoot.setVisibility(View.VISIBLE);
             cancelSessionCallbacks();
@@ -1506,6 +1765,8 @@ public class OverlayService extends Service {
                 dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:30),Gravity.TOP|Gravity.LEFT));
             updateWindow();
         }
+        // Apply saved P/M/G sizing to the independent Pokémon window on startup too.
+        updateResultsWidth();
         locationEnabled=pref.getBoolean("locationEnabled",false);
         locationCoords=locationEnabled?pref.getString("locationCoords",""):"";
         locationRadius=locationEnabled?pref.getInt("locationRadius",0):0;
@@ -1513,7 +1774,30 @@ public class OverlayService extends Service {
             locationEnabled=false;locationCoords="";locationRadius=0;
             pref.edit().putBoolean("locationEnabled",false).remove("locationCoords").remove("locationRadius").apply();
         }
-        mode=getSharedPreferences("prefs",0).getString("mode",mode);
+        mode=pref.getString("mode",mode);
+        boolean migrateLegacyHundo="iv".equals(mode);
+        if(migrateLegacyHundo)mode="raw";
+        if(!mode.equals("raw")&&!mode.equals("percent")&&!mode.equals("gl")&&!mode.equals("ul"))
+            mode="raw";
+        rawAttack=Math.max(0,Math.min(15,pref.getInt("rawAttack",15)));
+        rawDefense=Math.max(0,Math.min(15,pref.getInt("rawDefense",15)));
+        rawStamina=Math.max(0,Math.min(15,pref.getInt("rawStamina",15)));
+        if(migrateLegacyHundo){
+            rawAttack=15;rawDefense=15;rawStamina=15;
+            pref.edit().putString("mode","raw").putInt("rawAttack",15)
+                .putInt("rawDefense",15).putInt("rawStamina",15).apply();
+        }
+        glRank=Math.max(1,Math.min(50,pref.getInt("glRank",1)));
+        ulRank=Math.max(1,Math.min(50,pref.getInt("ulRank",1)));
+        // Existing installations may have saved unattainable values such as 90%.
+        // Round Min DOWN and Max UP, preserving the intended inclusive range.
+        int previousMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
+        int previousMax=Math.max(previousMin,Math.min(100,pref.getInt("ivPercentMax",100)));
+        ivPercentMin=floorIvPercent(previousMin);
+        ivPercentMax=Math.max(ivPercentMin,ceilIvPercent(previousMax));
+        if(ivPercentMin!=previousMin||ivPercentMax!=previousMax)
+            pref.edit().putInt("ivPercentMin",ivPercentMin)
+                .putInt("ivPercentMax",ivPercentMax).apply();
         shiny=getSharedPreferences("prefs",0).getBoolean("shiny",false);
         if(!shiny)shinyVerified=false;
         update();
@@ -1541,12 +1825,14 @@ public class OverlayService extends Service {
         handler.removeCallbacksAndMessages(null);
         if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception e){recordFailure("remover dock",e);}}
         if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception e){recordFailure("remover menu",e);}}
+        if(wm!=null&&resultRoot!=null){try{wm.removeView(resultRoot);}catch(Exception e){recordFailure("remover resultados",e);}}
         if(wm!=null&&detailRoot!=null){try{wm.removeView(detailRoot);}catch(Exception e){recordFailure("remover detalhes",e);}}
         destroyWebView(panel,true,"painel");panel=null;
         destroyWebView(menuPanel,true,"menu");menuPanel=null;
+        destroyWebView(resultPanel,true,"resultados");resultPanel=null;
         destroyWebView(detailPanel,true,"detalhes");detailPanel=null;
         destroyWebView(website,false,"site");website=null;
-        root=null;menuRoot=null;detailRoot=null;
+        root=null;menuRoot=null;detailRoot=null;resultRoot=null;resultGrip=null;resultParams=null;
         super.onDestroy();
     }
     @Override public IBinder onBind(Intent intent){return null;}

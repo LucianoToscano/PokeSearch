@@ -12,15 +12,23 @@ let count=0;
 function test(name,ok){assert.ok(ok,name);count++;}
 test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
 test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
-test("Three explicit filters",["100% · IV perfeito","GL#1 · Grande Liga","UL#1 · Ultra Liga"].every(v=>dock.includes(v)));
+test("Four compact modes in requested order without redundant IV100 row",(()=>{
+ const body=dock.split('function renderModeChoices()')[1].split('function renderNumberPicker(')[0];
+ const items=['row("raw"','row("percent"','row("gl"','row("ul"'];
+ return items.every(x=>body.includes(x))&&
+  items.every((x,i)=>i===0||body.indexOf(items[i-1])<body.indexOf(x))&&
+  !body.includes('row("iv"')&&dock.includes('toggleChoices(\'mode\')');
+})());
 test("Intervals minimum 5 minutes",["AUTO · 5 min","AUTO · 10 min","AUTO · 15 min","AUTO · 20 min"].every(v=>dock.includes(v)));
-test("Choice panel resizes native window",dock.includes('popup.getBoundingClientRect().bottom')&&dock.includes('Native.resize(h)'));
+test("Choice panel measures fixed popup height even when rendered above toolbar",
+  dock.includes('34+Math.ceil(popup.getBoundingClientRect().height)+6')&&
+  dock.includes('Native.resizeMenu(h)'));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
 test("Favorites remain in overlay",service.includes("PokemonPicker.show(OverlayService.this")&&!service.includes('intent.setAction("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST")'));
 test("Favorites picker is service-safe and focusable",picker.includes("TYPE_APPLICATION_OVERLAY")&&picker.includes("Runnable dismissed"));
 test("Login has one top toolbar and no native footer buttons",main.includes('done.setText("✓ PokeSearch")')&&main.includes('loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)')&&main.includes('MATCH_PARENT,\n                android.view.WindowManager.LayoutParams.MATCH_PARENT'));
-test("Shiny never changes selected filter",service.includes('shiny=!shiny;')&&service.includes('mode.equals(s)'));
+test("Shiny remains separate from the chosen filter",service.includes('shiny=!shiny;')&&dock.includes('onclick="Native.shiny()"')&&service.includes('mode.equals(selected)'));
 test("Throttled refresh is queued",service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
 test("Quick guide remains accessible",main.includes("showQuickGuide()")&&main.includes("tutorialSeenV41")&&main.includes("tutorial.html"));
 test("Sprite rows must not overlap artwork",service.includes("return Math.max(26,spriteSize-8);"));
@@ -28,7 +36,7 @@ test("Sprites remain vertically centered",dock.includes("align-items:center;just
 test("Sprite list uses scroll instead of clipping overflow",dock.includes("overflow-y:auto;overflow-x:hidden")&&dock.includes("--list-limit"));
 test("Long lists have list height supplied by native screen size",service.includes("Math.min(rowDp()*8,screenHeightDp()-160)"));
 
-test("Chevron is at bottom of the sprites",dock.indexOf('id="collapse"')>dock.indexOf('id="spawns"')&&dock.includes('m5 15 7-7 7 7'));
+test("League badge replaces the bottom chevron as result collapse control",dock.includes('id="resultHeader"')&&dock.includes('class="results-collapsed"')===false&&dock.includes('body.result-window.results-collapsed #spawns'));
 test("Red close is alongside heart with standard background",dock.indexOf('id="close"')>dock.indexOf('id="donate"')&&dock.includes("#controls #close{"));
 test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'));
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
@@ -68,7 +76,7 @@ test("Switching from location editor to mode releases keyboard focus",
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
 test("Compact twelve-column bar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(396,screenWidthDp()-8)"));
 test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
-test("Chevron has visible artwork and no surface background",dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
+test("Result header icon has no opaque surface background",dock.includes("body.result-window #resultHeader")&&dock.includes("background:transparent;box-shadow:none"));
 test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
 test("Coalesce resize events",dock.includes("if(fitPending)return"));
 test("Location validation refuses blank radius",read("assets/probe.js").includes('radiusInput!==""'));
@@ -85,7 +93,9 @@ test("Shiny failure does not imply confirmed trainer authentication",service.inc
 test("Diagnostic logs only coarse authentication states",service.includes('BugReport.log(this,"SESSION","Shiny="'));
 test("Menus are never clipped by the HTML viewport",dock.includes("html.controls-root,body.controls-window{overflow:visible!important"));
 test("Mode AUTO and location work before delayed native menu sync",dock.includes("if(controlsWindow&&!menuOpen)setMenuOpen(true"));
-test("Mode and AUTO provide immediate visible feedback",dock.includes("mode=String(value);draw();Native.setMode(mode)")&&dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
+test("Mode applies one atomic native configuration and AUTO retains direct selection",
+  dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
+  dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(396,screenWidthDp()-8)"));
@@ -181,7 +191,7 @@ test("PS-084 MainActivity asset failures log only stage and class",main.includes
 test("PS-085 sanitizer masks OAuth code/state and discord_token",sanitizer.includes('discord[_-]?token')&&sanitizer.includes('code|state|secret'));
 // Additional physical feedback for the v0.50 stabilization pass.
 test("v0.50 no phantom gap when toolbar is beside dock",
-    service.includes("menuPadDp=0; // No spacer: side toolbar")&&dock.includes("#spawns{margin-top:var(--top-space);gap:0}"));
+    service.includes("menuPadDp=0; // Results remain in their own separate native overlay.")&&dock.includes("#spawns{margin-top:var(--top-space);gap:0}"));
 test("v0.50 transparent floating collapse arrow",
     dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("v0.50 AUTO OFF in UI and service, with no periodic posts",
@@ -204,13 +214,13 @@ test("v0.50 neutral UI includes smaller location icon",
     dock.includes('#controls #location svg{width:14px;height:14px}')&&
     dock.includes('#choices{background:#252628ee'));
 test("Android responsive controls have no phantom spacer below popup",
-  service.includes('Math.round((menuParams.y+menuParams.height-params.y)/d.density)-30+2')&&
-  service.includes('menuPadDp=0; // No spacer: side toolbar')&&
+  service.includes('menuPadDp=0; // Results remain in their own separate native overlay.')&&
+  service.includes('menuParams.y=Math.max(0,Math.min(bottom-menuParams.height,')&&
   dock.includes('#choices{display:none;position:absolute;top:34px;'));
 test("Android responsive controls measure actual one-row menu height",
   dock.includes('if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);')&&
   service.includes('menuParams.height=dp(MENU_BASE_DP)')&&
-  service.includes('Math.min(450,screenHeightDp()-72)'));
+  service.includes('Math.min(450,screenHeightDp()-24)'));
 test("Android responsive layout contains all 12 controls exactly once",
   toolbarButtons.length===12&&
   ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','report','donate','close']
@@ -261,10 +271,10 @@ test("Shiny state sync starts on site load independently of Search cooldown",
 test("After login, authenticated site missing switch never restarts login loop",
   service.includes('"autenticada".equals(auth)')&&
   service.includes('Conta conectada; controle Shiny não encontrado no site.'));
-test("Gap between gear and first sprite is never a fabricated 34dp",
-  service.includes('menuPadDp=0; // Only the measured overlap')&&
-  service.includes('params.y=targetY;')&&
-  service.includes('menuPadDp=0;')&&
+test("Gap between gear and first sprite is never fabricated by changing mode popup size",
+  service.includes('menuPadDp=0; // Results remain in their own separate native overlay.')&&
+  service.includes('rowY-(abovePopup?actualPopup:0)')&&
+  !service.includes('params.y=targetY;')&&
   dock.includes('#spawns{margin-top:var(--top-space);gap:0}'));
 const directShiny=service.split('private void prepareImmediateShiny(int generation){')[1]?.split('private void verifyAndSubmit(')[0]||'';
 test("Shiny on visible Pokémon page never requires Stats/PvP tab",
@@ -312,7 +322,7 @@ test("Official Shiny switch can initiate login without exposing search page",
 test("The site is only exposed once sign-in content is actually ready",
   read("assets/login_entry.js").includes('if(authDialog||providerChoices)return "ready";')&&
   main.includes('result.contains("\\\"ready\\\"")'));
-console.log("PokeSearch UX contract: "+count+" tests passed");
+
 
 const guard=read("java/com/lucianotoscano/pokesearchoverlay/IntegrityGuard.java");
 const proguard=fs.readFileSync(path.join(__dirname,"..","proguard-rules.pro"),"utf8");
@@ -322,3 +332,182 @@ test("Pix digest checked with SHA-256 and constant-time compare",guard.includes(
 test("Login protected from screenshots",main.includes("loginDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)"));
 test("R8 keeps JavascriptInterface",proguard.includes("@android.webkit.JavascriptInterface")&&proguard.includes("-keepattributes"));
 test("Release minifies and shrinks",gradle.includes("isMinifyEnabled = true")&&gradle.includes("isShrinkResources = true"));
+
+test("v0.51 gear does not render Pokémon results",
+    dock.includes('body.dock-window #spawns')&&dock.includes('body.dock-window #empty'));
+test("v0.51 sprites and mode icon are loaded into an independent Android overlay",
+    service.includes('resultRoot=new FrameLayout(this)')&&
+    service.includes('wm.addView(resultRoot,resultParams)')&&
+    service.includes('dock.html?results=1')&&
+    dock.includes('const resultWindow='));
+test("v0.51 dragging only the results window keeps X/Y separately",
+    service.includes('resultParams.x=')&&
+    service.includes('wm.updateViewLayout(resultRoot,resultParams)')&&
+    service.includes('putInt("resultsX"')&&service.includes('putInt("resultsY"'));
+test("v0.51 league icon toggles collapse, never changes search mode",
+    service.includes('private void toggleResultsCollapsed()')&&
+    dock.includes('window.setResultsCollapsed=collapsed=>')&&
+    dock.includes('Native.toggleResultsCollapsed()'));
+test("v0.51 header selects exact bundled original league art",
+    ["hundo","shundo","great-league","ultra-league"].every(name=>
+        dock.includes(name))&&dock.includes('result-icons/'));
+test("v0.51 opening favorites or login hides independent results window",
+    service.includes('if(resultRoot!=null)resultRoot.setVisibility(View.GONE)')&&
+    service.includes('if(resultRoot!=null&&!pickerOpen&&!minimized)resultRoot.setVisibility(View.VISIBLE)'));
+test("v0.51 original single search and toolbar remain unchanged",
+    dock.includes('grid-template-columns:34fr 22fr 41fr')&&
+    service.includes('private String mode="raw"')&&
+    !service.includes('multiCycleActive'));
+
+test("v0.51 all 18 original result icons are present for 9 search types and Shiny pairs",(()=>{
+  const paths=[
+    "none.png","none-shiny.png","custom.png","custom-shiny.png",
+    "percent.png","percent-shiny.png","hundo.png","shundo.png",
+    "nundo.png","shnundo.png","great-league.png","great-league-shiny.png",
+    "ultra-league.png","ultra-league-shiny.png","master-league.png",
+    "master-league-shiny.png","cup-league.png","cup-league-shiny.png"
+  ];
+  return paths.every(name=>fs.existsSync(path.join(root,"assets/result-icons",name)))&&
+    paths.length===18;
+})());
+test("v0.51 header chooses a confirmed Shiny version of its exact search type",
+    dock.includes('function getResultIcon(searchMode,shinyActive,settings=searchSettings)')&&
+    dock.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
+    dock.includes('const pair=RESULT_ICONS[family]')&&
+    dock.includes('shining?pair.shiny:pair.normal'));
+
+test("Mode popup keeps one stable row while expanding upward or downward",
+ service.includes('boolean abovePopup=requestedPopup>roomBelow&&roomAbove>roomBelow;')&&
+ service.includes('rowY-(abovePopup?actualPopup:0)')&&
+ service.includes('window.setMenuPopupPlacement(')&&
+ dock.includes('body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}')&&
+ dock.includes('body.controls-window.popup-above #menu{top:var(--popup-offset,0px)!important}'));
+test("Mode popup stays contained and its action row remains reachable",
+ dock.includes('width:246px')&&dock.includes('max-height:min(216px')&&dock.includes('var(--popup-room,400px)')&&
+ dock.includes('position:sticky;bottom:0;')&&
+ service.includes('int roomDp=requestedPopup==0?420:'));
+test("Mode picker remembers scroll and centers selected values",
+ dock.includes('modeScrollTop=panel.scrollTop')&&
+ dock.includes('panel.scrollTop=modeScrollTop')&&
+ dock.includes('grid.scrollTop=Math.max(0,')&&
+ dock.includes('overscroll-behavior:contain'));
+test("Four requested search modes with correct numeric bounds",()=>{
+ const segment=dock.split("function renderNumberPicker(")[1].split("function renderLocationChoices()")[0];
+ return segment.includes('const choices=kind==="percent"?IV_PERCENT_VALUES:')&&
+  segment.includes('Array.from({length:kind==="iv"?16:50},(_,i)=>i+(kind==="rank"?1:0))')&&
+  dock.includes('{key:"attack"')&&dock.includes('{key:"defense"')&&dock.includes('{key:"stamina"')&&
+  dock.includes('{key:"glRank"')&&dock.includes('{key:"ulRank"')&&
+  dock.includes('{key:"percentMin"')&&dock.includes('{key:"percentMax"');
+});
+test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy migration",
+ dock.includes('if(attack===15&&defense===15&&stamina===15)family="hundo"')&&
+ dock.includes('if(settings.percentMin===100&&settings.percentMax===100)family="hundo"')&&
+ service.includes('boolean migrateLegacyHundo="iv".equals(mode);')&&
+ service.includes('pref.edit().putString("mode","raw")')&&
+ read("assets/probe.js").includes('return rawIsHundo()&&set100Percent();'));
+test("Mode panel has no hint or fifth row and numbers retain a compact grid",
+ !dock.includes('panel.appendChild(make("div","modeHint"')&&
+ dock.includes('max-height:148px')&&
+ dock.includes('#choices .modeRow')&&
+ dock.includes('max-height:min(216px'));
+test("Modes save only after applying and do not grow toolbar buttons",
+ dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
+ dock.includes('cancel.onclick=closeChoices')&&toolbarButtons.length===12);
+test("Both IV% limits remain ordered when changed",
+ dock.includes('if(key==="percentMin"&&modeDraft.percentMax<number)')&&
+ dock.includes('if(key==="percentMax"&&modeDraft.percentMin>number)'));
+test("Native bridge validates all requested IV, PvP ranking and percent bounds",
+ service.includes("public void setSearchConfig(String payload)")&&
+ service.includes("within(a,0,15)")&&service.includes("within(gl,1,50)")&&
+ service.includes("isAllowedIvPercent(min)")&&
+  service.includes("isAllowedIvPercent(max)")&&service.includes("min>max"));
+test("Native mode and filter options persist through service restarts",
+ ["rawAttack","rawDefense","rawStamina","glRank","ulRank","ivPercentMin","ivPercentMax"].every(k=>
+  service.includes('putInt("'+k+'"')&&service.includes('pref.getInt("'+k+'"')));
+test("Site filters are configured and confirmed before search submission",(()=>{
+ const probe=read("assets/probe.js");
+ return probe.includes("mode===\"raw\"")&&probe.includes("mode===\"percent\"")&&
+  probe.includes("configuredRank()")&&probe.includes("verifyRaw()")&&
+  probe.includes("verifyPercent()")&&probe.includes("applyLeague()")&&
+  service.includes('.replace("__FILTERS__",filterConfigJson())')&&
+  service.includes('execute("verifyFilters",filters->');
+})());
+test("Raw zero and percentage extremes reuse all original Hundo/Nundo Shiny icons",(()=>{
+ const code=dock.split('function getResultIcon(')[1].split('let locationEnabled=')[0];
+ return code.includes('if(attack===0&&defense===0&&stamina===0)family="nundo"')&&
+  code.includes('if(settings.percentMin===0&&settings.percentMax===0)family="nundo"')&&
+  code.includes('if(settings.percentMin===100&&settings.percentMax===100)family="hundo"')&&
+  dock.includes('nundo:{normal:"nundo.png",shiny:"shnundo.png"')&&
+  dock.includes('hundo:{normal:"hundo.png",shiny:"shundo.png"');
+})());
+test("Compact percent slider and grid use the exact same 46 allowed values",
+ dock.includes('slider.type="range"')&&
+ dock.includes('slider.min="0";slider.max=String(IV_PERCENT_VALUES.length-1);slider.step="1"')&&
+ dock.includes('slider.oninput=()=>')&&
+ dock.includes('slider.onchange=()=>chooseNumber(IV_PERCENT_VALUES[Number(slider.value)])')&&
+ dock.includes('btn.onclick=()=>chooseNumber(number)')&&
+ dock.includes('max-height:148px'));
+test("Mode selection remains clearly highlighted and header shows automatic 0/100",
+ dock.includes('choose.setAttribute("aria-pressed",String(modeDraft.mode===name))')&&
+ dock.includes('choose.textContent=(modeDraft.mode===name?"✓ ":"")+label')&&
+ dock.includes('cy.textContent=label')&&
+ dock.includes('specialIVLabel(mode,searchSettings)'));
+test("Filter switching preserves old results and their original icon until confirmed",
+ service.includes('resultsStale=count()>0;hideDetails();update();refresh();')&&
+ service.includes('shownMode=mode;shownConfigJson=filterConfigJson();')&&
+ service.includes('shownShiny=shiny&&shinyVerified;resultsStale=false;')&&
+ dock.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
+ dock.includes('document.body.classList.toggle("results-stale",hasHistory&&resultsStale)'));
+test("Filter failures retain previous cards with a compact status and full diagnostics",
+ service.includes('private void searchFailure(String shortReason,String detail)')&&
+ service.includes('lastError",detail')&&
+ service.includes('status(shortReason+(count()>0?" · resultados anteriores":""))')&&
+ service.includes('searchFailure("⚠ Filtros não confirmados"')&&
+ service.includes('searchFailure("⚠ Ranking não confirmado"')&&
+ service.includes('execute("verifyFilters",filters->'));
+test("Each search mode remembers its independent saved fields across app restarts",
+ ['rawAttack','rawDefense','rawStamina','glRank','ulRank','ivPercentMin','ivPercentMax'].every(k=>
+   service.includes('putInt("'+k+'"')&&service.includes('pref.getInt("'+k+'"'))&&
+ service.includes('putString("mode",mode)')&&service.includes('mode=pref.getString("mode",mode)'));
+test("Site must reconfirm every search at collection time, even an empty response",
+ read("assets/probe.js").includes('criteriaConfirmed:siteCriteria')&&
+ service.includes('if(!r.optBoolean("criteriaConfirmed",false))')&&
+ service.includes('searchFailure("⚠ Filtro não confirmado"')&&
+ service.includes('execute("verifyFilters",filters->'));
+test("v0.51 smart Nundo icon is not a separate unsupported search mode",
+    dock.includes('custom:{normal:"custom.png"')&&
+    dock.includes('percent:{normal:"percent.png"')&&
+    dock.includes('nundo:{normal:"nundo.png"')&&
+    dock.includes('ml:{normal:"master-league.png"')&&
+    dock.includes('cup:{normal:"cup-league.png"')&&
+    !service.includes('multiCycleActive'));
+test("Exactly 46 attainable IV percentages are offered with 91 and 100 included",(()=>{
+ const match=dock.match(/const IV_PERCENT_VALUES=Object\.freeze\((\[[^\]]+\])\)/);
+ if(!match)return false;
+ const actual=JSON.parse(match[1]);
+ const expected=Array.from({length:46},(_,points)=>Math.round(points*100/45));
+ return actual.length===46&&new Set(actual).size===46&&
+  JSON.stringify(actual)===JSON.stringify(expected)&&
+  actual.includes(91)&&actual.includes(100)&&
+  !actual.includes(90)&&!actual.includes(92)&&!actual.includes(95);
+})());
+test("Percentage picker has only allowed numbers while league ranks stay independent",
+ dock.includes('const choices=kind==="percent"?IV_PERCENT_VALUES:')&&
+ dock.includes('kind==="iv"?16:50')&&
+ dock.includes('modeDraft[key]=number;')&&
+ dock.includes('if(!choices.includes(number))return;')&&
+ read("assets/probe.js").includes('ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMin)')&&
+ read("assets/probe.js").includes('ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMax)')&&
+ read("assets/probe.js").includes('function applyLeague()')&&
+ read("assets/probe.js").includes('configuredRank()'));
+test("Native validation prevents invalid IV percentages including on saved requests",
+ service.includes('private static boolean isAllowedIvPercent(int value)')&&
+ service.includes('if(ivPercentageForSum(total)==value)return true;')&&
+ service.includes('!isAllowedIvPercent(min)||!isAllowedIvPercent(max)||min>max')&&
+ service.includes('!within(gl,1,50)||!within(ul,1,50)'));
+test("Legacy IV percent migration expands only as necessary without trimming Pokémon",
+ service.includes('ivPercentMin=floorIvPercent(previousMin)')&&
+ service.includes('ivPercentMax=Math.max(ivPercentMin,ceilIvPercent(previousMax))')&&
+ service.includes('putInt("ivPercentMin",ivPercentMin)')&&
+ service.includes('putInt("ivPercentMax",ivPercentMax)'));
+console.log("PokeSearch UX contract: "+count+" tests passed");
