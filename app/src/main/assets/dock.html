@@ -62,6 +62,23 @@ body.controls-window #locBadge{display:none!important}
 #choices.modePanel{width:246px;max-width:calc(100vw - 12px);height:auto;padding:3px;
  max-height:min(216px,var(--popup-room,400px));overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
 #choices.modePanel .choiceHeader{padding:2px 5px 3px}
+#choices .modeTitleRow{display:flex;align-items:center;justify-content:space-between;gap:4px}
+#choices .modeTitleRow #modeShiny{width:auto;flex:none;margin:1px 3px 2px;padding:4px 7px;font-size:10px;
+ border:1px solid #a68c506f;border-radius:6px;color:#f6d88b;background:#55492b77}
+#choices .modeTitleRow #modeShiny.on{background:#6b592cbd;color:#ffe49d}
+#choices .extraDivider{height:1px;margin:5px 3px;background:#ffffff32}
+#choices .extraHead{display:flex;align-items:center;justify-content:space-between;width:100%;padding:6px 5px;
+ font-weight:700;font-size:11px;border-radius:6px;background:#ffffff0a}
+#choices .extraHead .down{font-size:11px;opacity:.8}
+#choices .extraField{display:flex;align-items:center;gap:5px;margin:3px 2px;min-height:28px}
+#choices .extraField label{min-width:68px;font-size:10px;color:#d6dce4;flex:none}
+#choices .extraField button.extraValue{margin:0;flex:1;min-width:0;padding:6px 6px;background:#303743;border:1px solid #ffffff25;
+ border-radius:6px;text-align:left;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#choices .extraField input{flex:1;width:100%;min-width:0;height:26px;padding:4px 6px;font-size:11px;color:#fff;
+ border:1px solid #ffffff3d;border-radius:5px;background:#151c25}
+#choices .extraField input[type=checkbox]{flex:none;width:17px;height:17px;accent-color:#5bba96}
+#choices .extraNote{margin:2px 5px 5px;font-size:9px;color:#b7c3d1;line-height:1.25}
+#choices .extraValue:disabled{opacity:.5;cursor:default}
 #choices .modeRow{display:flex;align-items:center;gap:2px;padding:1px 2px;min-height:29px;border-radius:5px}
 #choices .modeRow.selected{background:#183b32aa}
 #choices .modeRow .modeSelect{flex:1;min-width:0;width:auto;font-size:11px;padding:5px 3px;margin:0}
@@ -254,7 +271,9 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
 }
 let locationEnabled=false,locationCoords="",locationRadius=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
-let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100};
+let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
+ sortBy:"",pokemon:"",form:"",size:"",gender:"",weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
+let filterOptions={},generalExpanded=false,advancedExpanded=false;
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
 // Math.round(total / 45 * 100) produces exactly 46 possible shown percentages.
 const IV_PERCENT_VALUES=Object.freeze([0,2,4,7,9,11,13,16,18,20,22,24,27,29,31,33,36,38,40,42,44,47,49,51,53,56,58,60,62,64,67,69,71,73,76,78,80,82,84,87,89,91,93,96,98,100]);
@@ -352,6 +371,7 @@ function toggleChoices(kind){
   modeScrollTop=0;
   modeDraft={...searchSettings,mode};
   renderModeChoices();
+  if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();
   return;
  }
  const current=period;
@@ -378,7 +398,13 @@ function renderModeChoices(){
  const make=(tag,cls,label)=>{
   const el=document.createElement(tag);if(cls)el.className=cls;if(label!==undefined)el.textContent=label;return el;
  };
- panel.appendChild(make("div","choiceHeader","MODO DE BUSCA"));
+ const heading=make("div","modeTitleRow");
+ heading.appendChild(make("div","choiceHeader","MODO DE BUSCA"));
+ const shinyButton=make("button",shiny?"on":"","✨ "+(shiny?"ON":"OFF"));
+ shinyButton.id="modeShiny";shinyButton.type="button";shinyButton.title="Shiny Only · alternar pelo controle original";
+ shinyButton.setAttribute("aria-pressed",String(shiny));
+ shinyButton.onclick=()=>Native.shiny();
+ heading.appendChild(shinyButton);panel.appendChild(heading);
  const row=(name,label,keys)=>{
   const line=make("div","modeRow"+(modeDraft.mode===name?" selected":""));
   const choose=make("button","modeSelect"+(modeDraft.mode===name?" chosen":""),label);
@@ -410,6 +436,7 @@ function renderModeChoices(){
  ]);
  row("gl","Great League",[{key:"glRank",title:"Top ranking Grande Liga (1 a 50)",kind:"rank"}]);
  row("ul","Ultra League",[{key:"ulRank",title:"Top ranking Ultra Liga (1 a 50)",kind:"rank"}]);
+ renderExtraFilters(panel,make);
  const buttons=make("div","modeAction");
  const apply=make("button","modeApply","✓ Aplicar");
  const cancel=make("button","","Cancelar");
@@ -423,6 +450,86 @@ function renderModeChoices(){
  panel.scrollTop=modeScrollTop;
  fit();
 }
+
+function renderExtraFilters(panel,make){
+ const divider=()=>panel.appendChild(make("div","extraDivider"));
+ const field=(label,control)=>{
+  const line=make("div","extraField"),name=make("label","",label);
+  line.append(name,control);panel.appendChild(line);
+ };
+ const option=(key,label)=>{
+  const data=filterOptions[key]||{},choices=(data.options||[]).filter(Boolean);
+  const current=String(modeDraft[key]||""),button=make("button","extraValue",current||"Any / padrão");
+  button.type="button";button.disabled=!choices.length;
+  button.title=choices.length?"Escolher "+label:"Aguardando opções reais do site";
+  button.onclick=()=>{modeScrollTop=panel.scrollTop;renderFilterPicker(key,label,choices);};
+  field(label,button);
+ };
+ const number=(key,label)=>{
+  const input=make("input");input.type="number";input.inputMode="decimal";input.min="0";
+  input.placeholder="Any";input.value=modeDraft[key]||"";input.setAttribute("aria-label",label);
+  input.oninput=()=>{modeDraft[key]=input.value;};
+  field(label,input);
+ };
+ const section=(label,open,onClick)=>{
+  divider();
+  const button=make("button","extraHead");
+  button.type="button";button.textContent=label+(open?" ▴":" ▾");
+  button.setAttribute("aria-expanded",String(open));
+  button.onclick=()=>{modeScrollTop=panel.scrollTop;onClick();renderModeChoices();};
+  panel.appendChild(button);
+ };
+ // Sort is an ordering control, not a fifth search mode.
+ divider();option("sortBy","Sort by");
+ section("Filtros gerais",generalExpanded,()=>{generalExpanded=!generalExpanded;});
+ if(generalExpanded){
+  const input=make("input");input.type="text";input.placeholder="Qualquer Pokémon";
+  input.value=modeDraft.pokemon||"";input.maxLength=80;
+  input.oninput=()=>{modeDraft.pokemon=input.value.trim();if(!modeDraft.pokemon)modeDraft.form="";};
+  field("Pokémon",input);
+  option("form","Form");option("size","Size");
+  panel.appendChild(make("p","extraNote","Form depende das variantes disponíveis; os menus usam opções lidas do site."));
+ }
+ section("Filtros avançados",advancedExpanded,()=>{advancedExpanded=!advancedExpanded;});
+ if(advancedExpanded){
+  if(["raw","percent","iv"].includes(modeDraft.mode)){
+   number("cpMin","CP mínimo");number("cpMax","CP máximo");
+   number("levelMin","Nível mínimo");number("levelMax","Nível máximo");
+   option("weather","Weather");
+  }else{
+   number("minPvpCp","Min CP PvP");
+   const input=make("input");input.type="checkbox";input.checked=modeDraft.includePreviousEvolutions!==false;
+   input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;};
+   field("Evol. anteriores",input);
+  }
+  option("gender","Gender");
+ }
+}
+function renderFilterPicker(key,label,options){
+ const panel=document.getElementById("choices");panel.replaceChildren();panel.classList.add("modePanel","visible");
+ const heading=document.createElement("div");heading.className="choiceHeader";heading.textContent=label;
+ panel.appendChild(heading);
+ // A neutral option is a UI state; site changes will be verified before submitting.
+ const neutral=document.createElement("button");neutral.textContent="Any / padrão";
+ neutral.onclick=()=>{modeDraft[key]="";renderModeChoices();};panel.appendChild(neutral);
+ for(const value of options){
+  const btn=document.createElement("button");btn.type="button";
+  btn.textContent=(modeDraft[key]===value?"✓ ":"")+value;btn.className=modeDraft[key]===value?"chosen":"";
+  btn.onclick=()=>{modeDraft[key]=value;renderModeChoices();};
+  panel.appendChild(btn);
+ }
+ const back=document.createElement("button");back.textContent="‹ Voltar";back.onclick=renderModeChoices;panel.appendChild(back);
+ fit();
+}
+window.onFilterOptions=function(response){
+ if(!response||!response.ok)return;
+ filterOptions=response.options||{};
+ if(choiceOpen==="mode"&&modeDraft){
+  const panel=document.getElementById("choices"),scroll=panel.scrollTop;
+  if(!document.activeElement||!document.activeElement.matches("input")){renderModeChoices();panel.scrollTop=scroll;}
+ }
+};
+
 function renderNumberPicker(key,kind,title){
  const panel=document.getElementById("choices");
  panel.replaceChildren();panel.classList.add("modePanel","visible");
@@ -554,6 +661,9 @@ function draw(){
  }
  document.getElementById("size").textContent=spriteSize<=35?"P":spriteSize>=55?"G":"M";
  document.getElementById("sh").classList.toggle("shinyOn",shiny);
+ const menuShiny=document.getElementById("modeShiny");
+ if(menuShiny){menuShiny.textContent="✨ "+(shiny?"ON":"OFF");menuShiny.classList.toggle("on",shiny);
+  menuShiny.setAttribute("aria-pressed",String(shiny));}
  document.getElementById("sh").classList.toggle("shinyPending",shinyPending);
  document.getElementById("location").classList.toggle("locOn",locationEnabled);
  document.getElementById("locationRadiusText").textContent=locationEnabled?locationRadius+"km":"";
