@@ -54,6 +54,25 @@ function run(action,mode,shinyOnly,opts={}){
       all.push(lab);
     }
   }
+  // A React select menu opens now; its options become visible on the next render.
+  const dynamicOptions=[];
+  if(opts.extra){
+    for(const [key,state] of Object.entries(opts.extra)){
+      const lab=element(state.label||key);
+      const ctrl=element(state.value||"Any",{}, {tagName:"BUTTON",disabled:!!state.disabled});
+      ctrl.getAttribute=name=>name==="aria-expanded"?String(!!state.open):null;
+      ctrl.click=()=>{state.open=!state.open;};
+      const wrap=element();
+      wrap.querySelectorAll=selector=>selector.includes("[role=combobox]")?[ctrl]:[];
+      lab.parentElement=wrap;all.push(lab);
+      if(state.options)for(const label of state.options){
+        const opt=element(label);
+        opt.click=()=>{state.value=label;state.open=false;};
+        opt.getClientRects=()=>state.open&&state.ready?[{}]:[];
+        dynamicOptions.push(opt);
+      }
+    }
+  }
   let cardButtons=[];
   if(opts.spawn){
     const box=element(opts.spawn,{}, {
@@ -74,6 +93,7 @@ function run(action,mode,shinyOnly,opts={}){
     if(selector==="span,label,strong,small,dt,div,p")return all;
     if(selector==='[role="dialog"],[aria-modal="true"],form')return pending;
     if(selector==="label,span,div,p,strong")return all;
+    if(selector.includes("[role=option]"))return dynamicOptions;
     if(selector==="button,[role=button]")return cardButtons;
     if(selector==="a,button,[role=button]")return sessionButtons;
     if(selector==="p,small,span,div,label")return accountLabels;
@@ -206,5 +226,25 @@ assert.equal(discoveredFilters.ok,true,"Capability inspection must be read-only 
 assert.equal(discoveredFilters.options.sortBy.present,false,"Missing Sort by cannot be invented");
 assert.equal(discoveredFilters.options.form.present,false,"Missing Form cannot be invented");
 checked+=3;
+
+
+test("Site neutral values must not block an ordinary IV100 search",
+  "verifyFilters","iv",false,{iv:["15","15","15"],extra:{
+    Form:{value:"Any Form"},Size:{value:"Any Size"},
+    Gender:{value:"Any Gender"},Weather:{value:"Any Weather"},
+    Pokemon:{value:"Any Pokemon"}
+  }},true);
+const delayedSize={value:"Any",options:["Any","XXL"],open:false,ready:false};
+const firstSize=run("configureExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
+assert.equal(firstSize.ok,false,"A menu not yet rendered must not claim applied");
+assert.equal(firstSize.pending,true,"An unrendered popup should request a retry");
+assert.equal(delayedSize.open,true,"Select menu opens first without changing value");
+delayedSize.ready=true;
+const secondSize=run("configureExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
+assert.equal(secondSize.ok,true,"Second attempt selects once menu renders");
+assert.equal(delayedSize.value,"XXL","The site control changes to XXL");
+const confirmedSize=run("verifyExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
+assert.equal(confirmedSize.ok,true,"XXL is confirmed by reading control");
+checked+=4;
 
 console.log("PokeSearch probe contract: "+checked+" tests passed");
