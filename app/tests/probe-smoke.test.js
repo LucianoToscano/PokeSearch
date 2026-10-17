@@ -194,4 +194,17 @@ checked++;
 const wrongLeague=run("collect","gl",false,{switch:false,pvp:{rank:"1",league:"Ultra League",prior:"Yes"},spawn});
 assert.equal(wrongLeague.cards.length,0,"GL results must not be labeled rank1 if wrong league selected");
 checked++;
+
+test("Explicit Sort by never reports success when site's dropdown is missing",
+  "verifyFilters","iv",false,{iv:["15","15","15"],config:{sortBy:"Despawn (longest)"}},false);
+test("CP minimum filter never reports success when site's field is missing",
+  "verifyFilters","iv",false,{iv:["15","15","15"],config:{cpMin:"100"}},false);
+test("Size selection never reports success without a matching site control",
+  "verifyFilters","iv",false,{iv:["15","15","15"],config:{size:"XXL"}},false);
+const discoveredFilters=run("describeFilters","iv",false);
+assert.equal(discoveredFilters.ok,true,"Capability inspection must be read-only and work without optional filters");
+assert.equal(discoveredFilters.options.sortBy.present,false,"Missing Sort by cannot be invented");
+assert.equal(discoveredFilters.options.form.present,false,"Missing Form cannot be invented");
+checked+=3;
+
 console.log("PokeSearch probe contract: "+checked+" tests passed");
