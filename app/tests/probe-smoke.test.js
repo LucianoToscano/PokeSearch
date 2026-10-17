@@ -123,10 +123,20 @@ test("Percent hundo 100-100 confirms exact boundaries","verifyFilters","percent"
   {iv:["100","100"],config:{percentMin:100,percentMax:100}},true);
 test("Configurable percentage range passes","verifyFilters","percent",false,
   {iv:["20","80"],config:{percentMin:20,percentMax:80}},true);
+test("Actual IV interval 91–100 passes","verifyFilters","percent",false,
+  {iv:["91","100"],config:{percentMin:91,percentMax:100}},true);
+test("Unattainable 90 percent minimum must fail even if form displays 90","verifyFilters","percent",false,
+  {iv:["90","100"],config:{percentMin:90,percentMax:100}},false);
+test("Unattainable 95 percent maximum must fail even if form displays 95","verifyFilters","percent",false,
+  {iv:["91","95"],config:{percentMin:91,percentMax:95}},false);
 test("Configurable percentage range mismatch fails","verifyFilters","percent",false,
-  {iv:["20","80"],config:{percentMin:30,percentMax:80}},false);
+  {iv:["20","80"],config:{percentMin:31,percentMax:80}},false);
 test("Great League top 50 confirmed","verifyFilters","gl",false,
   {pvp:{rank:"50",league:"Great League",prior:"Yes"},config:{glRank:50}},true);
+test("Great League Top 50 is independent of general IV% 91–100","verifyFilters","gl",false,
+  {pvp:{rank:"50",league:"Great League",prior:"Yes"},config:{glRank:50,percentMin:91,percentMax:100}},true);
+test("Ultra League Top 17 is independent of general IV% 91–100","verifyFilters","ul",false,
+  {pvp:{rank:"17",league:"Ultra League",prior:"Yes"},config:{ulRank:17,percentMin:91,percentMax:100}},true);
 test("Great League ranking must match selection","verifyFilters","gl",false,
   {pvp:{rank:"49",league:"Great League",prior:"Yes"},config:{glRank:50}},false);
 test("Raw IV invalid","verifyFilters","iv",false,{iv:["15","15","14"]},false);
