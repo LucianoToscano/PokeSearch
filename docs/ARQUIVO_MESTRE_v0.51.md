@@ -271,6 +271,22 @@ O usuário identificou corretamente a ausência de **Sort by**. A interface do P
 
 ---
 
+## 6.13. Bug real nas capturas — «⚠ Filtro: pokemon» bloqueia resultados (17/10/2026)
+
+**Relato/capturas no Android:** home screen às 04:35/04:36, interface original e 18 PNGs presentes, modo Raw IV 100% e modo GL #1. **Ambos não exibiam Pokémon**; toast indicava literalmente `⚠ Filtro: pokemon`, mostrando bloqueio **antes de enviar a busca** por validação de um filtro de espécie que **não foi solicitado** (padrão Qualquer Pokémon).
+
+**Causa no código:** `probe.js → extras("apply")` iterava obrigatoriamente sobre todos os campos extras (pokemon, form, size, gender, weather), mesmo quando `filters[key]` era vazio, interpretando o texto/controle não padronizado do site como divergência de `Any` e abortando o modo Raw/GL/UL. `visibleExtrasMismatch()` reaplicava esse erro ao coletar resultados. O diagnóstico anterior de formulário oculto e prova da mesma geração **não resolvia o bloqueio pré-envio**.
+
+**Correção na branch `plan/v051-pogocoordinates-filtros-20261017` / PR #22:**
+- `probe.js`: filtro extra vazio **não impõe restrição** nem requer localizar o dropdown, independentemente de como o site rotula `Any Pokémon`; `extras()` e `visibleExtrasMismatch()` validam apenas seleções **explícitas**. Atributos IV, PvP, Shiny e localização continuam sendo confirmados. Caso usuário escolha realmente `Pikachu`, o campo deve ser aplicado/confirmado antes de enviar Search.
+- Para preservar a remoção de filtro previamente ativo, `OverlayService.java` mantém `clearExtraKeys` para campos que passam de valor explícito para vazio; eles continuam exigindo restauração real ao estado neutro no site. Assim o conserto não transforma `Limpar Pokémon` em uma falsa limpeza.
+- `probe-smoke.test.js`: regressão com valores de seleção customizados/decorativos `Pokémon · Any Pokémon ▾`, Raw IV e GL Top 1, confirmação na leitura de resultados, e validação de filtro ativo/remoção explícita.
+- Nenhuma alteração aos PNGs, barra de ícones, classe de janelas, tempos, controle Shiny, gestos, notificações ou `main`.
+
+**Evidência:** erro `⚠ Filtro: pokemon` nas capturas 1792222585354.jpeg e 1792222583404.jpeg. **Limite de verificação:** testes automatizados e GitHub Actions não substituem teste no aparelho com sessão real do PoGoCoordinates. Compilar novo APK do commit posterior às correções, não reutilizar as versões beta anteriores.
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
