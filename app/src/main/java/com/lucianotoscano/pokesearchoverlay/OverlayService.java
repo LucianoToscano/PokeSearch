@@ -147,7 +147,7 @@ public class OverlayService extends Service {
         armedDespawnMillis=next;
         handler.postDelayed(expiryRefresh,Math.max(250L,next-now+150L));
     }
-    private String mode="iv",results="[]",status="Conectando...";
+    private String mode="raw",results="[]",status="Conectando...";
     // Independent parameters remain intact when switching between search modes.
     private int rawAttack=15,rawDefense=15,rawStamina=15,glRank=1,ulRank=1,ivPercentMin=0,ivPercentMax=100;
     private String filterConfigJson(){
@@ -1142,7 +1142,8 @@ public class OverlayService extends Service {
         getSharedPreferences("prefs",0).edit()
             .putLong("lastSearchAt",now).putString("lastError","Nenhum").apply();
         if(r.optBoolean("uncertain"))
-            status("iv".equals(mode)?"Alguns IVs não confirmados.":"Alguns rankings PvP não confirmados.");
+            status(("raw".equals(mode)||"percent".equals(mode)||"iv".equals(mode))
+                ?"Alguns IVs não confirmados.":"Alguns rankings PvP não confirmados.");
         else if(sorted.length()==0)status("Sem resultados confirmados");
         else status(sorted.length()+" Pokémon atualizados");
     }
@@ -1334,7 +1335,7 @@ public class OverlayService extends Service {
             try{
                 JSONObject input=new JSONObject(payload);
                 String nextMode=input.getString("mode");
-                if(!nextMode.equals("iv")&&!nextMode.equals("raw")&&!nextMode.equals("percent")&&
+                if(!nextMode.equals("raw")&&!nextMode.equals("percent")&&
                     !nextMode.equals("gl")&&!nextMode.equals("ul"))return;
                 int a=input.getInt("attack"),d=input.getInt("defense"),st=input.getInt("stamina");
                 int gl=input.getInt("glRank"),ul=input.getInt("ulRank");
@@ -1359,17 +1360,23 @@ public class OverlayService extends Service {
         @JavascriptInterface public void setMode(String s){select(s);}
         @JavascriptInterface public void select(String s){handler.post(()->{
             if(!s.equals("iv")&&!s.equals("raw")&&!s.equals("percent")&&!s.equals("gl")&&!s.equals("ul"))return;
-            if(mode.equals(s))return;
-            mode=s;getSharedPreferences("prefs",0).edit().putString("mode",s).apply();
+            String selected=s.equals("iv")?"raw":s;
+            if(mode.equals(selected))return;
+            mode=selected;
+            // Legacy IV100 calls mean Raw IV 15/15/15; no separate selector is exposed.
+            if(s.equals("iv")){rawAttack=15;rawDefense=15;rawStamina=15;}
+            android.content.SharedPreferences.Editor changed=getSharedPreferences("prefs",0).edit().putString("mode",selected);
+            if(s.equals("iv"))changed.putInt("rawAttack",15).putInt("rawDefense",15).putInt("rawStamina",15);
+            changed.apply();
             android.widget.Toast.makeText(OverlayService.this,
-                "Filtro selecionado: "+(s.equals("iv")?"IV100":s.equals("raw")?"Raw IV":s.equals("percent")?"IV%":s.equals("gl")?"Grande Liga":"Ultra Liga"),
+                "Filtro selecionado: "+(s.equals("iv")?"Raw IV 15/15/15":s.equals("raw")?"Raw IV":s.equals("percent")?"% IV":s.equals("gl")?"Grande Liga":"Ultra Liga"),
                 android.widget.Toast.LENGTH_SHORT).show();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
             results="[]";hideDetails();update();refresh();
         });}
         @JavascriptInterface public void menu(boolean open){handler.post(()->OverlayService.this.menu(open));}
         @JavascriptInterface public void cycleMode(){handler.post(()->{
-            mode=mode.equals("iv")?"gl":mode.equals("gl")?"ul":"iv";
+            mode=mode.equals("raw")?"percent":mode.equals("percent")?"gl":mode.equals("gl")?"ul":"raw";
             getSharedPreferences("prefs",0).edit().putString("mode",mode).apply();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
             results="[]";hideDetails();update();refresh();
@@ -1717,11 +1724,18 @@ public class OverlayService extends Service {
             pref.edit().putBoolean("locationEnabled",false).remove("locationCoords").remove("locationRadius").apply();
         }
         mode=pref.getString("mode",mode);
-        if(!mode.equals("iv")&&!mode.equals("raw")&&!mode.equals("percent")&&!mode.equals("gl")&&!mode.equals("ul"))
-            mode="iv";
+        boolean migrateLegacyHundo="iv".equals(mode);
+        if(migrateLegacyHundo)mode="raw";
+        if(!mode.equals("raw")&&!mode.equals("percent")&&!mode.equals("gl")&&!mode.equals("ul"))
+            mode="raw";
         rawAttack=Math.max(0,Math.min(15,pref.getInt("rawAttack",15)));
         rawDefense=Math.max(0,Math.min(15,pref.getInt("rawDefense",15)));
         rawStamina=Math.max(0,Math.min(15,pref.getInt("rawStamina",15)));
+        if(migrateLegacyHundo){
+            rawAttack=15;rawDefense=15;rawStamina=15;
+            pref.edit().putString("mode","raw").putInt("rawAttack",15)
+                .putInt("rawDefense",15).putInt("rawStamina",15).apply();
+        }
         glRank=Math.max(1,Math.min(50,pref.getInt("glRank",1)));
         ulRank=Math.max(1,Math.min(50,pref.getInt("ulRank",1)));
         ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
