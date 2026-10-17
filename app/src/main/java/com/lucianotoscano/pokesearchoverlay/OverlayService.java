@@ -164,6 +164,32 @@ public class OverlayService extends Service {
         }catch(org.json.JSONException ignored){}
         return config.toString();
     }
+    // The three raw IV stats each span 0–15, so the displayed IV% can take
+    // only these 46 rounded values from an integer sum of 0..45.
+    private static int ivPercentageForSum(int sum){
+        return Math.round(sum*100f/45f);
+    }
+    private static boolean isAllowedIvPercent(int value){
+        for(int total=0;total<=45;total++)
+            if(ivPercentageForSum(total)==value)return true;
+        return false;
+    }
+    private static int floorIvPercent(int value){
+        int candidate=0;
+        for(int total=0;total<=45;total++){
+            int percent=ivPercentageForSum(total);
+            if(percent>value)break;
+            candidate=percent;
+        }
+        return candidate;
+    }
+    private static int ceilIvPercent(int value){
+        for(int total=0;total<=45;total++){
+            int percent=ivPercentageForSum(total);
+            if(percent>=value)return percent;
+        }
+        return 100;
+    }
     private static boolean within(int value,int min,int max){return value>=min&&value<=max;}
 
     private float startRawX,startRawY;
@@ -1365,7 +1391,7 @@ public class OverlayService extends Service {
                 int min=input.getInt("percentMin"),max=input.getInt("percentMax");
                 if(!within(a,0,15)||!within(d,0,15)||!within(st,0,15)||
                     !within(gl,1,50)||!within(ul,1,50)||
-                    !within(min,0,100)||!within(max,0,100)||min>max)return;
+                    !isAllowedIvPercent(min)||!isAllowedIvPercent(max)||min>max)return;
                 if(mode.equals(nextMode)&&rawAttack==a&&rawDefense==d&&rawStamina==st&&
                     glRank==gl&&ulRank==ul&&ivPercentMin==min&&ivPercentMax==max)return;
                 mode=nextMode;rawAttack=a;rawDefense=d;rawStamina=st;
@@ -1763,8 +1789,15 @@ public class OverlayService extends Service {
         }
         glRank=Math.max(1,Math.min(50,pref.getInt("glRank",1)));
         ulRank=Math.max(1,Math.min(50,pref.getInt("ulRank",1)));
-        ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
-        ivPercentMax=Math.max(ivPercentMin,Math.min(100,pref.getInt("ivPercentMax",100)));
+        // Existing installations may have saved unattainable values such as 90%.
+        // Round Min DOWN and Max UP, preserving the intended inclusive range.
+        int previousMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
+        int previousMax=Math.max(previousMin,Math.min(100,pref.getInt("ivPercentMax",100)));
+        ivPercentMin=floorIvPercent(previousMin);
+        ivPercentMax=Math.max(ivPercentMin,ceilIvPercent(previousMax));
+        if(ivPercentMin!=previousMin||ivPercentMax!=previousMax)
+            pref.edit().putInt("ivPercentMin",ivPercentMin)
+                .putInt("ivPercentMax",ivPercentMax).apply();
         shiny=getSharedPreferences("prefs",0).getBoolean("shiny",false);
         if(!shiny)shinyVerified=false;
         update();
