@@ -1402,15 +1402,22 @@ public class OverlayService extends Service {
             OverlayService.this.refresh(true);
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
-        @JavascriptInterface public void requestFilterOptions(){handler.post(()->{
-            if(stopped||loginPaused||searchInProgress)return;
+        @JavascriptInterface public void requestFilterOptions(){handler.post(()->requestFilterOptionsLater(0));}
+        private void requestFilterOptionsLater(int attempt){
+            if(stopped||loginPaused||!menuExpanded)return;
+            if(searchInProgress||!loaded){
+                // Opening the menu during an automatic refresh must not permanently
+                // disable its filter selectors. Re-check without touching the site.
+                if(attempt<36)handler.postDelayed(()->requestFilterOptionsLater(attempt+1),500L);
+                return;
+            }
             final int generation=requestGeneration;
             execute("describeFilters",found->{
                 if(stopped||generation!=requestGeneration||menuPanel==null||!menuLoaded)return;
                 js(menuPanel,true,"window.onFilterOptions("+found.toString()+")");
                 discoverFilterMenu(0,generation);
             });
-        });}
+        }
         private void discoverFilterMenu(int position,int generation){
             if(stopped||loginPaused||searchInProgress||generation!=requestGeneration||!menuExpanded)return;
             final String[] keys={"sortBy","size","form","gender","weather"};
