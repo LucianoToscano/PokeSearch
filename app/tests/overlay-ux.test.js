@@ -429,7 +429,8 @@ test("Site filters are configured and confirmed before search submission",(()=>{
  return probe.includes("mode===\"raw\"")&&probe.includes("mode===\"percent\"")&&
   probe.includes("configuredRank()")&&probe.includes("verifyRaw()")&&
   probe.includes("verifyPercent()")&&probe.includes("applyLeague()")&&
-  service.includes('.replace("__FILTERS__",filterConfigJson())')&&
+  service.includes('.replace("__FILTERS__",queryFilters)')&&
+  service.includes('confirmedSubmittedFiltersGeneration==callbackGeneration')&&
   service.includes('execute("verifyFilters",filters->');
 })());
 test("Raw zero and percentage extremes reuse all original Hundo/Nundo Shiny icons",(()=>{
