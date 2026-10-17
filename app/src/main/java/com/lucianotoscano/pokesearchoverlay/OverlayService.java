@@ -1418,7 +1418,7 @@ public class OverlayService extends Service {
                     if((key.equals("cpMin")||key.equals("cpMax")||key.equals("minPvpCp"))&&
                        !value.isEmpty()&&!value.matches("[0-9]{1,5}"))return;
                     if((key.equals("levelMin")||key.equals("levelMax"))&&
-                       !value.isEmpty()&&!value.matches("[0-9]{1,2}(\\\\.[0-9])?"))return;
+                       !value.isEmpty()&&!value.matches("[0-9]{1,2}(\\.[0-9])?"))return;
                     extra.put(key,value);
                 }
                 for(String[] pair:new String[][]{{"cpMin","cpMax"},{"levelMin","levelMax"}}){
