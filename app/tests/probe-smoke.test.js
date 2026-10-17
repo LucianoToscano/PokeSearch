@@ -115,6 +115,12 @@ test("Hundo Raw IV recognizes site's percent 100–100 fallback","verifyFilters"
 test("Non-Hundo Raw IV must not accept 100–100 percent fallback","verifyFilters","raw",false,
   {iv:["100","100"],config:{attack:14,defense:15,stamina:15}},false);
 
+test("Raw zero confirms all three exact IV fields","verifyFilters","raw",false,
+  {iv:["0","0","0"],config:{attack:0,defense:0,stamina:0}},true);
+test("Percent zero-zero confirms exact boundaries","verifyFilters","percent",false,
+  {iv:["0","0"],config:{percentMin:0,percentMax:0}},true);
+test("Percent hundo 100-100 confirms exact boundaries","verifyFilters","percent",false,
+  {iv:["100","100"],config:{percentMin:100,percentMax:100}},true);
 test("Configurable percentage range passes","verifyFilters","percent",false,
   {iv:["20","80"],config:{percentMin:20,percentMax:80}},true);
 test("Configurable percentage range mismatch fails","verifyFilters","percent",false,
@@ -170,6 +176,11 @@ const top50=run("collect","gl",false,
 assert.equal(top50.cards.length,1,"Top 50 search retains a result from a verified search");
 assert.equal(top50.cards[0].rank,"","Rank 50 threshold is not an invented exact rank");
 assert.equal(top50.cards[0].rankLimit,50,"Site-verified ranking ceiling is tracked separately");
+const confirmedZero=run("collect","percent",false,{iv:["0","0"],config:{percentMin:0,percentMax:0}});
+assert.equal(confirmedZero.criteriaConfirmed,true,"Valid empty site response still reports verified filters");
+const invalidZero=run("collect","percent",false,{iv:["0","100"],config:{percentMin:0,percentMax:0}});
+assert.equal(invalidZero.criteriaConfirmed,false,"Invalid empty response must never be presented as a confirmed zero");
+checked++;
 const wrongLeague=run("collect","gl",false,{switch:false,pvp:{rank:"1",league:"Ultra League",prior:"Yes"},spawn});
 assert.equal(wrongLeague.cards.length,0,"GL results must not be labeled rank1 if wrong league selected");
 checked++;
