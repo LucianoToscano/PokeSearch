@@ -310,18 +310,24 @@ function extraNumberField(key){
 function extraNumberKeys(){
  return ["gl","ul"].includes(mode)?["minPvpCp"]:["cpMin","cpMax","levelMin","levelMax"];
 }
+// Only EXPLICITLY REQUESTED optional criteria may block a search. A site
+// title, generic Pokemon picker or decorated "Any" must not become mandatory.
 function extras(action){
  transientPending=false;
  const failed=[];
+ const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
  for(const key of Object.keys(EXTRA_LABELS)){
-  if(key==="sortBy"&&!filters.sortBy)continue;
   const want=String(filters[key]||"").trim();
+  // Blank means no optional restriction; it is not a request to discover a
+  // dropdown. Only a tracked transition from a prior filter needs clearing.
+  if(!want&&!resetKeys.includes(key))continue;
   const ok=action==="apply"?extraSelect(key,want):extraMatches(key,want);
   if(!ok)failed.push(key);
   if(transientPending)break; // one portal dropdown at a time
  }
  if(!transientPending)for(const key of extraNumberKeys()){
   const want=String(filters[key]||"").trim(),input=extraNumberField(key);
+  if(!want&&!resetKeys.includes(key))continue;
   if(want&&!input){failed.push(key);continue;}
   if(!input)continue;
   const ok=action==="apply"?valueInput(input,want):String(input.value||"").trim()===want;
@@ -337,14 +343,18 @@ function currentCoreControlsVisible(){
 // A result page can collapse the form after Search. A visible disagreement
 // must still invalidate results, but an absent control is not a disagreement.
 function visibleExtrasMismatch(){
+ const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
  for(const key of Object.keys(EXTRA_LABELS)){
-  if(key==="sortBy"&&!filters.sortBy)continue;
+  const want=String(filters[key]||"").trim();
+  if(!want&&!resetKeys.includes(key))continue;
   const control=extraControl(EXTRA_LABELS[key]);
-  if(control&&!extraMatches(key,String(filters[key]||"").trim()))return key;
+  if(control&&!extraMatches(key,want))return key;
  }
  for(const key of extraNumberKeys()){
+  const want=String(filters[key]||"").trim();
+  if(!want&&!resetKeys.includes(key))continue;
   const input=extraNumberField(key);
-  if(input&&String(input.value||"").trim()!==String(filters[key]||"").trim())return key;
+  if(input&&String(input.value||"").trim()!==want)return key;
  }
  return "";
 }
