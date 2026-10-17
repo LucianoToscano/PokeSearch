@@ -464,7 +464,7 @@ test("Filter failures retain previous cards with a compact status and full diagn
  service.includes('execute("verifyFilters",filters->'));
 test("Each search mode remembers its independent saved fields across app restarts",
  ['rawAttack','rawDefense','rawStamina','glRank','ulRank','ivPercentMin','ivPercentMax'].every(k=>
-   service.includes('putInt("'+k+'"')&&service.includes('pref.getInt("'+k+'"')))&&
+   service.includes('putInt("'+k+'"')&&service.includes('pref.getInt("'+k+'"'))&&
  service.includes('putString("mode",mode)')&&service.includes('mode=pref.getString("mode",mode)'));
 test("v0.51 Raw/percent enabled by request without adding unsupported Nundo, Master or Cup",
     dock.includes('custom:{normal:"custom.png"')&&
