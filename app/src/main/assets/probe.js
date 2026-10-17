@@ -139,14 +139,23 @@ function rawValues(){
  if(values.every(v=>v===values[0]))return {inputs,values:inputs.map(()=>values[0])};
  return null;
 }
+function rawIsHundo(){
+ return filters.attack===15&&filters.defense===15&&filters.stamina===15;
+}
 function applyRaw(){
  tab("Stats");tab("Raw IV");
  const group=rawValues();
- return !!group&&group.inputs.every((input,i)=>valueInput(input,group.values[i]));
+ if(group&&group.inputs.every((input,i)=>valueInput(input,group.values[i])))return true;
+ // A 15/15/15 selection is IV100 even on the site's % IV form.
+ // Fallback only for this exact combination, never for mixed IV values.
+ return rawIsHundo()&&set100Percent();
 }
 function verifyRaw(){
  const group=rawValues();
- return !!group&&group.inputs.every((input,i)=>Number(input.value)===group.values[i]);
+ if(group&&group.inputs.every((input,i)=>Number(input.value)===group.values[i]))return true;
+ if(!rawIsHundo())return false;
+ const percent=percentageIVInputs();
+ return percent.length===2&&percent.every(input=>Number(input.value)===100);
 }
 function applyPercent(){
  tab("Stats");tab("% IV");
