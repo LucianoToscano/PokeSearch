@@ -103,6 +103,17 @@
 **Restrições:** não compilar APK novo até solicitação explícita, não executar merge, não substituir os 18 ícones, não adotar UX v0.52–v0.56. Manter a branch `feature/v0.51-launcher-icon-fill-20261016` e o PR #21 em draft. O APK entregue no chat anteriormente **não inclui** esta correção; solicitar uma compilação somente quando o usuário quiser instalar a revisão.
 
 ---
+## 6.3. APK do menu Modos corrigido — compilação autorizada em 17/10/2026
+
+- **Pedido expresso:** "Gere" após a correção do bug do menu.
+- O build seguro da v0.51-beta foi acionado temporariamente na branch de desenvolvimento; workflow **Secure beta APK (private test)** run **39003347655**, resultado **success**.
+- **Código exato do APK:** commit `94200831124928c493621993838a5583b7ba037c`, que contém as correções de popup/scroll e testes. Os commits posteriores apenas restauraram a regra de CI, sem alterar o código do APK.
+- APK extraído do artefato GitHub **12089714003**, `PokeSearch-0.51-beta.apk`, tamanho **938953 bytes**, SHA-256 **`def8b11c1002f4444c47940f4c3fcc795a2bab3bc082fa1ed33af3b38e331958`**.
+- O ZIP contém um APK cuja integridade foi verificada e que inclui os **18 result-icons PNG**.
+- **Proteção de CI restaurada** após o build: novos pushes ao PR #21 não devem compilar APK sem novo pedido. `main` não sofreu merge.
+- **Pendente:** testar menu no Android. O build de teste usa assinatura temporária de CI: instalar sobre APK anterior pode falhar caso as assinaturas sejam diferentes; desinstalar remove configurações locais.
+
+---
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
