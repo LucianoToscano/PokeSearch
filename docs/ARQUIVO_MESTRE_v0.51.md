@@ -144,6 +144,21 @@
 **Verificações realizadas sem APK:** contratos JS de UX e smoke tests com dados simulados; sintaxe de JS; testes diretos do mapeamento entre seis combinações de modo/IV e pares de ícones. **Pendente:** teste manual em Android/PoGoCoordinates e compilação somente por pedido expresso. O APK da etapa 6.3 **não inclui** estas seis melhorias.
 
 ---
+## 6.6. IV% restrito às 46 porcentagens possíveis — pedido de 17/10/2026
+
+**Pedido do usuário:** os seletores **IV% Min** e **IV% Max** devem oferecer somente as 46 porcentagens matematicamente atingíveis pelos IVs inteiros de Pokémon GO, mantendo ranking **Great League/Ultra League de 1 a 50 independente** do filtro IV% geral.
+
+**Porcentagens válidas, exatamente como fornecidas:** 0%, 2%, 4%, 7%, 9%, 11%, 13%, 16%, 18%, 20%, 22%, 24%, 27%, 29%, 31%, 33%, 36%, 38%, 40%, 42%, 44%, 47%, 49%, 51%, 53%, 56%, 58%, 60%, 62%, 64%, 67%, 69%, 71%, 73%, 76%, 78%, 80%, 82%, 84%, 87%, 89%, 91%, 93%, 96%, 98%, 100%.
+
+**Implementação no PR #21 — branch `feature/v0.51-launcher-icon-fill-20261016`, sem merge:**
+1. `app/src/main/assets/dock.html`: `IV_PERCENT_VALUES` com os 46 valores; somente esses são mostrados na grade de seleção. O slider de % usa **índices de 0 a 45** e a cada passo mostra o valor correspondente, sem parar em números impossíveis. Botões exibem o sufixo **%**. Selecionar por exemplo **Min 91% / Max 100%** é permitido; Min ≤ Max é preservado. Raw IV 0–15 e GL/UL top 1–50 permanecem contínuos e separados.
+2. `OverlayService.java`: `isAllowedIvPercent()` valida ambos os extremos antes de salvar qualquer `setSearchConfig`; valor fora da lista é rejeitado. O conjunto é derivado do cálculo `Math.round(total * 100 / 45)` para os 46 totais inteiros de 0 a 45, sem erro de percentuais intermediários. Instalações com antigos extremos inválidos sofrem migração conservadora: **Min arredondado para baixo** e **Max arredondado para cima** para valores próximos válidos (exemplo `90–95%` vira `89–96%`), preservando a faixa inclusiva. Preferências migradas são persistidas.
+3. `app/src/main/assets/probe.js`: reforço de validação no navegador antes de aplicar/confirmar o filtro % IV; não aceitar intervalos inválidos, mesmo se o formulário remoto permitir números impossíveis. Rotina de `applyLeague()` e `configuredRank()` **não alteradas**; GL e UL continuam avaliando seus rankings próprios, sem aplicar o intervalo geral IV%.
+4. `app/tests/overlay-ux.test.js` e `app/tests/probe-smoke.test.js`: regressões de lista exata (46 opções), controles Min/Max e slider, valor 91–100 aceito, 90 e 95 rejeitados, persistência/migração e GL/UL independentes. **Validação simulada de código nesta etapa:** 199 verificações de interface e 41 smoke tests de busca aprovados; verificação de sintaxe JavaScript e paridade entre a lista e os arredondamentos matemáticos.
+
+**Não foi compilado APK** nem executado teste físico em Android. Conservar 18 PNGs, UI compacta, filtros de ranking independentes, códigos de segurança e fluxos existentes. Continuar com build somente após solicitação expressa do usuário.
+
+---
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
