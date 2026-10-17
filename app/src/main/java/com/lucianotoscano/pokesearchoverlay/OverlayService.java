@@ -1336,6 +1336,7 @@ public class OverlayService extends Service {
                     dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:30),
                     Gravity.TOP|Gravity.LEFT));
                 updateWindow();
+                updateResultsWidth();
             }
             update();
             if(wasExpanded)menu(true);
@@ -1399,6 +1400,7 @@ public class OverlayService extends Service {
             pickerOpen=true;
             hideDetails();
             root.setVisibility(View.GONE);
+            if(resultRoot!=null)resultRoot.setVisibility(View.GONE);
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
             try{
                 PokemonPicker.show(OverlayService.this,()->{
@@ -1406,12 +1408,16 @@ public class OverlayService extends Service {
                 },()->{
                     pickerOpen=false;
                     if(!stopped&&!loginPaused&&root!=null)root.setVisibility(View.VISIBLE);
+                    if(!stopped&&!loginPaused&&!minimized&&resultRoot!=null)
+                        resultRoot.setVisibility(View.VISIBLE);
                     if(!stopped&&!loginPaused&&menuExpanded&&menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
                     update();
                 });
             }catch(Exception e){
                 pickerOpen=false;
                 if(root!=null&&!loginPaused)root.setVisibility(View.VISIBLE);
+                if(resultRoot!=null&&!loginPaused&&!minimized)
+                    resultRoot.setVisibility(View.VISIBLE);
                 if(menuRoot!=null&&!loginPaused&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
                 diagnosticError("Não foi possível abrir favoritos no overlay.");
             }
@@ -1553,6 +1559,7 @@ public class OverlayService extends Service {
                 dp(minimized?BUBBLE_DP:dockDp()),dp(minimized?BUBBLE_DP:30),
                 Gravity.TOP|Gravity.LEFT));
             updateWindow();
+            updateResultsWidth();
             moveDetail();
         }
         update(); // Local UI only; does not call refresh or navigate the website.
@@ -1574,6 +1581,7 @@ public class OverlayService extends Service {
             // Cancels queued, periodic, expiration, page, login and reload timers.
             cancelSessionCallbacks();
             if(root!=null)root.setVisibility(View.GONE);
+            if(resultRoot!=null)resultRoot.setVisibility(View.GONE);
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
             if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
             BugReport.log(this,"LOGIN","Página de autenticação aberta, overlay oculto");
@@ -1582,6 +1590,7 @@ public class OverlayService extends Service {
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_END".equals(action)){
             loginPaused=false;
             if(root!=null&&!pickerOpen)root.setVisibility(View.VISIBLE);
+            if(resultRoot!=null&&!pickerOpen&&!minimized)resultRoot.setVisibility(View.VISIBLE);
             if(menuRoot!=null&&!pickerOpen&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
             if(detailRoot!=null&&selected>=0&&!pickerOpen)detailRoot.setVisibility(View.VISIBLE);
             cancelSessionCallbacks();
@@ -1679,12 +1688,14 @@ public class OverlayService extends Service {
         handler.removeCallbacksAndMessages(null);
         if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception e){recordFailure("remover dock",e);}}
         if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception e){recordFailure("remover menu",e);}}
+        if(wm!=null&&resultRoot!=null){try{wm.removeView(resultRoot);}catch(Exception e){recordFailure("remover resultados",e);}}
         if(wm!=null&&detailRoot!=null){try{wm.removeView(detailRoot);}catch(Exception e){recordFailure("remover detalhes",e);}}
         destroyWebView(panel,true,"painel");panel=null;
         destroyWebView(menuPanel,true,"menu");menuPanel=null;
+        destroyWebView(resultPanel,true,"resultados");resultPanel=null;
         destroyWebView(detailPanel,true,"detalhes");detailPanel=null;
         destroyWebView(website,false,"site");website=null;
-        root=null;menuRoot=null;detailRoot=null;
+        root=null;menuRoot=null;detailRoot=null;resultRoot=null;resultGrip=null;resultParams=null;
         super.onDestroy();
     }
     @Override public IBinder onBind(Intent intent){return null;}
