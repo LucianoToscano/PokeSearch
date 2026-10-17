@@ -83,7 +83,11 @@ function run(action,mode,shinyOnly,opts={}){
     body:element(opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":"")};
   const code=source.replace("__ACTION__",JSON.stringify(action))
       .replace("__MODE__",JSON.stringify(mode))
-      .replace("__SHINY__",String(shinyOnly));
+      .replace("__SHINY__",String(shinyOnly))
+       .replace("__FILTERS__",JSON.stringify({
+         attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
+         ...(opts.config||{})
+       }));
   return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:"/search",hostname:"pogocoordinates.com"},window:{}}));
 }
 let checked=0;
@@ -100,6 +104,18 @@ test("Shiny off confirmed","verifyShiny","iv",false,{switch:false},true);
 test("Shiny unexpectedly on blocks standard search","verifyShiny","iv",false,{switch:true},false);
 test("Public search accepts missing Shiny control","verifyShiny","iv",false,{},true);
 test("Raw IV valid","verifyFilters","iv",false,{iv:["15","15","15"]},true);
+test("Configurable Raw IV exact 0–15 passes","verifyFilters","raw",false,
+  {iv:["0","7","15"],config:{attack:0,defense:7,stamina:15}},true);
+test("Configurable Raw IV mismatch fails","verifyFilters","raw",false,
+  {iv:["0","7","14"],config:{attack:0,defense:7,stamina:15}},false);
+test("Configurable percentage range passes","verifyFilters","percent",false,
+  {iv:["20","80"],config:{percentMin:20,percentMax:80}},true);
+test("Configurable percentage range mismatch fails","verifyFilters","percent",false,
+  {iv:["20","80"],config:{percentMin:30,percentMax:80}},false);
+test("Great League top 50 confirmed","verifyFilters","gl",false,
+  {pvp:{rank:"50",league:"Great League",prior:"Yes"},config:{glRank:50}},true);
+test("Great League ranking must match selection","verifyFilters","gl",false,
+  {pvp:{rank:"49",league:"Great League",prior:"Yes"},config:{glRank:50}},false);
 test("Raw IV invalid","verifyFilters","iv",false,{iv:["15","15","14"]},false);
 test("Shiny-off ignores trainer linking prompt","verifyShiny","iv",false,{switch:false,pending:true},true);
 test("Percent IV 100-100 valid without Shiny","verifyFilters","iv",false,{iv:["100","100"],switch:false},true);
@@ -142,6 +158,11 @@ assert.equal(league.cards.length,1,"GL#1: card without a rank label must be acce
 assert.equal(league.cards[0].rank,"1");
 assert.equal(league.cards[0].rankSource,"verified-site-filter");
 checked++;
+const top50=run("collect","gl",false,
+  {switch:false,pvp:{rank:"50",league:"Great League",prior:"Yes"},config:{glRank:50},spawn});
+assert.equal(top50.cards.length,1,"Top 50 search retains a result from a verified search");
+assert.equal(top50.cards[0].rank,"","Rank 50 threshold is not an invented exact rank");
+assert.equal(top50.cards[0].rankLimit,50,"Site-verified ranking ceiling is tracked separately");
 const wrongLeague=run("collect","gl",false,{switch:false,pvp:{rank:"1",league:"Ultra League",prior:"Yes"},spawn});
 assert.equal(wrongLeague.cards.length,0,"GL results must not be labeled rank1 if wrong league selected");
 checked++;
