@@ -802,14 +802,16 @@ public class OverlayService extends Service {
             if(configured.optBoolean("ok")&&configured.optBoolean("configured",false)){
                 configureLocationAndVerify(generation,manual,0);return;
             }
-            if(configured.optBoolean("pending",false)&&attempt<11){
+            if(configured.optBoolean("pending",false)&&attempt<22){
                 handler.postDelayed(()->configureSearchWithRetry(generation,manual,attempt+1),230L);
                 return;
             }
             searchInProgress=false;
             String reason=configured.optString("reason","Controle do site indisponível");
             // Show concrete filter name; no account data or coordinates from the DOM.
-            searchFailure("⚠ Filtro não aplicado","Falha na configuração: "+reason);
+            String summary=reason.replace("Filtros adicionais: ","").trim();
+            if(summary.length()>38)summary=summary.substring(0,38);
+            searchFailure("⚠ Filtro: "+summary,"Falha na configuração: "+reason);
         });
     }
     private void configureLocationAndVerify(int generation,boolean manual,int attempt){
