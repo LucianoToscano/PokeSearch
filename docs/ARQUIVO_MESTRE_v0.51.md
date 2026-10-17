@@ -183,6 +183,19 @@ O usuário identificou corretamente a ausência de **Sort by**. A interface do P
 
 ---
 
+## 6.9. Implementação beta do menu de filtros + Shiny no topo (17/10/2026)
+
+**Autorização:** usuário pediu aplicar a proposta e posicionar **✨ Shiny ao lado de MODO DE BUSCA**. **A branch `plan/v051-pogocoordinates-filtros-20261017` evoluiu de plano documental para implementação experimental**, com PR #22 em draft contra `feature/v0.51-launcher-icon-fill-20261016`. A seção 6.7/6.8 descreve a fase anterior: o código *já foi alterado* após a autorização.
+
+- `dock.html`: título `MODO DE BUSCA` + botão `✨ ON/OFF` imediatamente ao lado (mesma ação `Native.shiny()` já disponível na barra); preservação dos 12 botões existentes; linhas Raw IV / IV% / Great League / Ultra League; seção `Sort by`, `Filtros gerais` (espécie/Form/Size) e `Filtros avançados` (CP/Level/Weather/Gender ou PvP Min CP/evoluções anteriores/Gender), recolhíveis, rolagem e campo de texto com teclado. As opções das listas são lidas do formulário remoto; só `Despawn (longest)` possui fallback baseado na captura original.
+- `OverlayService.java`: preferências extras em `extraFiltersJson`, validação dos campos/faixas, descoberta dinâmica via `requestFilterOptions()`, preservação **da ordem do site nos primeiros 10 resultados** em vez de classificação local contraditória. Sem alteração de login, limites de frequência, gestos ou ícones.
+- `probe.js`: `describeFilters` para descobrir opções reais, aplicação opcional e confirmação extra por `check()` antes de enviar `Search` e antes de aceitar resultados. Filtro escolhido sem controle acessível -> erro curto e **preservação de resultados anteriores**; não presumir valores não documentados. Shiny no cabeçalho é ação imediata independente do rascunho Aplicar/Cancelar.
+- `app/tests/overlay-ux.test.js` / `probe-smoke.test.js`: incrementos de regressão. Execução in-memory em V8 dos testes Node com mocks, usando arquivos da branch: **208 UX e 47 probe aprovados**; sintaxe JS aprovada. **Não equivale a build Android nem teste real no site**.
+
+**Pendente:** APK, Gradle, verificação em aparelho e seleção real de menus do PoGoCoordinates na WebView. As opções só aparecem se o site efetivamente as expuser; interface VIP não é contornada. Guardar compatibilidade original e não mudar `main` sem testes e autorização. Detalhes: [Plano/implementação filtros 17-10](PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md).
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
