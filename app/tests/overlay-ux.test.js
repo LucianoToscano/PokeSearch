@@ -429,7 +429,8 @@ test("Site filters are configured and confirmed before search submission",(()=>{
  return probe.includes("mode===\"raw\"")&&probe.includes("mode===\"percent\"")&&
   probe.includes("configuredRank()")&&probe.includes("verifyRaw()")&&
   probe.includes("verifyPercent()")&&probe.includes("applyLeague()")&&
-  service.includes('.replace("__FILTERS__",filterConfigJson())')&&
+  service.includes('.replace("__FILTERS__",queryFilters)')&&
+  service.includes('confirmedSubmittedFiltersGeneration==callbackGeneration')&&
   service.includes('execute("verifyFilters",filters->');
 })());
 test("Raw zero and percentage extremes reuse all original Hundo/Nundo Shiny icons",(()=>{
@@ -510,4 +511,48 @@ test("Legacy IV percent migration expands only as necessary without trimming Pok
  service.includes('ivPercentMax=Math.max(ivPercentMin,ceilIvPercent(previousMax))')&&
  service.includes('putInt("ivPercentMin",ivPercentMin)')&&
  service.includes('putInt("ivPercentMax",ivPercentMax)'));
+
+// v0.51 additional filters: do not add toolbar actions or replace artwork.
+test("Shiny shortcut sits next to Modos de busca heading",
+  dock.includes('heading.appendChild(shinyButton);panel.appendChild(heading);')&&
+  dock.includes('shinyButton.id="modeShiny"')&&
+  dock.includes('shinyButton.onclick=()=>Native.shiny()'));
+test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
+  dock.indexOf('id="sh"')>dock.indexOf('id="cycle"')&&
+  (dock.match(/<button id="(?:cycle|sh|period|manualRefresh|size|clock|bell|star|location|report|donate|close)"/g)||[]).length===12);
+test("Sort by is under the four existing modes; no redundant fifth filter mode",
+  dock.includes('renderExtraFilters(panel,make)')&&
+  dock.includes('option("sortBy","Sort by")')&&
+  dock.includes('const RESULT_ICONS=Object.freeze'));
+test("General and advanced filter sections are foldable inside mode popup",
+  dock.includes('section("Filtros gerais"')&&dock.includes('section("Filtros avançados"')&&
+  dock.includes('#choices.modePanel{width:246px'));
+test("Site dropdown options are discovered instead of inventing weather/form values",
+  dock.includes('filterOptions=response.partial?')&&
+  dock.includes('Native.requestFilterOptions()')&&
+  !dock.includes('option("weather","Sunny")'));
+test("Mode popup allows keyboard focus for optional numeric and Pokémon inputs",
+  dock.includes('Native.locationEditor(true);if(Native.requestFilterOptions)'));
+test("Extra search filters are saved and transported to the site probe",
+  service.includes('private String extraFiltersJson="{}"')&&
+  service.includes('putString("extraFiltersJson",extraFiltersJson)')&&
+  service.includes('while(keys.hasNext())'));
+test("Site Sort by is applied before collecting ten cards; original site order is retained",
+  service.includes('if("site".equals(sort))')&&
+  service.includes('for(JSONObject card:a)inSiteOrder.put(card)')&&
+  service.includes('public void requestFilterOptions()'));
+test("New filter settings reject invalid CP/level intervals",
+  service.includes('{"cpMin","cpMax"}')&&service.includes('{"levelMin","levelMax"}')&&
+  service.includes('Double.parseDouble(low)>Double.parseDouble(high)'));
+
+test("After Search results use same-generation pre-submit proof when the filter form is hidden",
+ service.includes('confirmedSubmittedFiltersGeneration==callbackGeneration')&&
+ service.includes('validated.put("_preSubmitVerified",true)')&&
+ service.includes('confirmedSubmittedFiltersGeneration=-1')&&
+ read("assets/probe.js").includes('confirmationSource:confirmation.source'));
+test("Missing Shiny switch after navigation can use pre-submit proof, never explicit Shiny-off",
+ service.includes('boolean trustedShinyHidden=shiny&&shinyVerified')&&
+ service.includes('confirmedSubmittedFiltersGeneration==generation&&shinySwitchMissing')&&
+ service.includes('!r.optBoolean("siteShiny",false)'));
+
 console.log("PokeSearch UX contract: "+count+" tests passed");

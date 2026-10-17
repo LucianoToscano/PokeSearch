@@ -54,6 +54,25 @@ function run(action,mode,shinyOnly,opts={}){
       all.push(lab);
     }
   }
+  // A React select menu opens now; its options become visible on the next render.
+  const dynamicOptions=[];
+  if(opts.extra){
+    for(const [key,state] of Object.entries(opts.extra)){
+      const lab=element(state.label||key);
+      const ctrl=element(state.value||"Any",{}, {tagName:"BUTTON",disabled:!!state.disabled});
+      ctrl.getAttribute=name=>name==="aria-expanded"?String(!!state.open):null;
+      ctrl.click=()=>{state.open=!state.open;};
+      const wrap=element();
+      wrap.querySelectorAll=selector=>selector.includes("[role=combobox]")?[ctrl]:[];
+      lab.parentElement=wrap;all.push(lab);
+      if(state.options)for(const label of state.options){
+        const opt=element(label);
+        opt.click=()=>{state.value=label;state.open=false;};
+        opt.getClientRects=()=>state.open&&state.ready?[{}]:[];
+        dynamicOptions.push(opt);
+      }
+    }
+  }
   let cardButtons=[];
   if(opts.spawn){
     const box=element(opts.spawn,{}, {
@@ -74,6 +93,7 @@ function run(action,mode,shinyOnly,opts={}){
     if(selector==="span,label,strong,small,dt,div,p")return all;
     if(selector==='[role="dialog"],[aria-modal="true"],form')return pending;
     if(selector==="label,span,div,p,strong")return all;
+    if(selector.includes("[role=option]"))return dynamicOptions;
     if(selector==="button,[role=button]")return cardButtons;
     if(selector==="a,button,[role=button]")return sessionButtons;
     if(selector==="p,small,span,div,label")return accountLabels;
@@ -194,4 +214,89 @@ checked++;
 const wrongLeague=run("collect","gl",false,{switch:false,pvp:{rank:"1",league:"Ultra League",prior:"Yes"},spawn});
 assert.equal(wrongLeague.cards.length,0,"GL results must not be labeled rank1 if wrong league selected");
 checked++;
+
+test("Explicit Sort by never reports success when site's dropdown is missing",
+  "verifyFilters","iv",false,{iv:["15","15","15"],config:{sortBy:"Despawn (longest)"}},false);
+test("CP minimum filter never reports success when site's field is missing",
+  "verifyFilters","iv",false,{iv:["15","15","15"],config:{cpMin:"100"}},false);
+test("Size selection never reports success without a matching site control",
+  "verifyFilters","iv",false,{iv:["15","15","15"],config:{size:"XXL"}},false);
+const discoveredFilters=run("describeFilters","iv",false);
+assert.equal(discoveredFilters.ok,true,"Capability inspection must be read-only and work without optional filters");
+assert.equal(discoveredFilters.options.sortBy.present,false,"Missing Sort by cannot be invented");
+assert.equal(discoveredFilters.options.form.present,false,"Missing Form cannot be invented");
+checked+=3;
+
+
+test("Site neutral values must not block an ordinary IV100 search",
+  "verifyFilters","iv",false,{iv:["15","15","15"],extra:{
+    Form:{value:"Any Form"},Size:{value:"Any Size"},
+    Gender:{value:"Any Gender"},Weather:{value:"Any Weather"},
+    Pokemon:{value:"Any Pokemon"}
+  }},true);
+const delayedSize={value:"Any",options:["Any","XXL"],open:false,ready:false};
+const firstSize=run("configureExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
+assert.equal(firstSize.ok,false,"A menu not yet rendered must not claim applied");
+assert.equal(firstSize.pending,true,"An unrendered popup should request a retry");
+assert.equal(delayedSize.open,true,"Select menu opens first without changing value");
+delayedSize.ready=true;
+const secondSize=run("configureExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
+assert.equal(secondSize.ok,false,"React needs one more render to commit the selection");
+assert.equal(secondSize.pending,true,"Selection commit must be verified on retry");
+assert.equal(delayedSize.value,"XXL","The site control changes to XXL");
+const settledSize=run("configureExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
+assert.equal(settledSize.ok,true,"Committed menu selection is accepted after rerender");
+const confirmedSize=run("verifyExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
+assert.equal(confirmedSize.ok,true,"XXL is confirmed by reading control");
+checked+=4;
+
+
+const beforeSubmitOnly=run("collect","gl",false,{switch:false,spawn,
+  config:{glRank:1,_preSubmitVerified:true,size:"XXL"}});
+assert.equal(beforeSubmitOnly.criteriaConfirmed,true,"Form hidden after Search uses same-generation pre-submit proof");
+assert.equal(beforeSubmitOnly.cards.length,1,"The result cards should not disappear when the form collapses");
+assert.equal(beforeSubmitOnly.confirmationSource,"pre-submit-confirmed");
+checked++;
+const missingProof=run("collect","gl",false,{switch:false,spawn,
+  config:{glRank:1,size:"XXL"}});
+assert.equal(missingProof.criteriaConfirmed,false,"Missing form without pre-submit proof must fail");
+assert.equal(missingProof.cards.length,0,"Unknown results are not shown as verified");
+checked++;
+const visibleWrong=run("collect","gl",false,{switch:false,spawn,
+  config:{glRank:1,size:"XXL",_preSubmitVerified:true},
+  extra:{Size:{value:"Any",options:["Any","XXL"]}}});
+assert.equal(visibleWrong.criteriaConfirmed,false,"Visible contradictory Size control defeats older proof");
+assert.equal(visibleWrong.cards.length,0);
+checked++;
+const wrongLeagueWithProof=run("collect","gl",false,{switch:false,spawn,
+ pvp:{rank:"1",league:"Ultra League",prior:"Yes"},
+ config:{_preSubmitVerified:true,glRank:1}});
+assert.equal(wrongLeagueWithProof.criteriaConfirmed,false,"Pre-submit proof cannot override live mismatch in PvP league");
+checked++;
+
+
+ // Regression from the user's 04:35/04:36 screenshots: "⚠ Filtro: pokemon"
+ // The optional site picker may render arbitrary labels or decorations.
+const decoratedPokemon={Pokemon:{value:"Pokémon · Any Pokémon ▾"}};
+test("Raw 15/15/15 search does not block on optional site Pokémon picker",
+  "configureExtras","raw",false,{extra:decoratedPokemon},true);
+test("Great League Top 1 does not block on optional site Pokémon picker",
+  "configureExtras","gl",false,{extra:decoratedPokemon},true);
+test("Optional Pokémon picker cannot fail verification when no species was selected",
+  "verifyExtras","gl",false,{extra:decoratedPokemon},true);
+test("Explicit selected Pokémon still fails when matching control is unavailable",
+  "verifyExtras","gl",false,{config:{pokemon:"Pikachu"}},false);
+const decoratedSearch=run("collect","gl",false,{switch:false,
+  config:{glRank:1,_preSubmitVerified:true},
+  extra:decoratedPokemon,spawn});
+assert.equal(decoratedSearch.criteriaConfirmed,true,"Decorative Pokemon picker cannot discard verified GL results");
+assert.equal(decoratedSearch.cards.length,1,"Pokémon sprites remain available after Search");
+checked++;
+const previousSpecies={Pokemon:{value:"Pikachu",options:["Any","Pikachu"],ready:false}};
+const explicitClear=run("configureExtras","gl",false,{extra:previousSpecies,
+  config:{clearExtraKeys:["pokemon"],pokemon:""}});
+assert.equal(explicitClear.ok,false,"An explicitly cleared species must actually be reset on the site");
+assert.equal(explicitClear.pending,true,"Reset opens the remote chooser and waits");
+checked++;
+
 console.log("PokeSearch probe contract: "+checked+" tests passed");

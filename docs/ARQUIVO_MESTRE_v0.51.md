@@ -159,6 +159,134 @@
 **Não foi compilado APK** nem executado teste físico em Android. Conservar 18 PNGs, UI compacta, filtros de ranking independentes, códigos de segurança e fluxos existentes. Continuar com build somente após solicitação expressa do usuário.
 
 ---
+## 6.7. Planejamento dos filtros adicionais do PoGoCoordinates — 17/10/2026
+
+**Documento técnico registrado:** [PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md](PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md) em branch independente `plan/v051-pogocoordinates-filtros-20261017`, derivada da branch do PR #21, sem modificação do APK ou fontes.
+
+**Verificado:** site apresenta Stats (CP, nível, IV% e Raw IV), PvP (liga, Top ranking, evoluções anteriores, CP mínimo), filtros gerais (espécie, tamanho, forma, sexo), Weather, Shiny, localização e seção Advanced VIP. **Não verificados:** valores internos de dropdowns, significado exato de Weather, opções VIP e mudanças dinâmicas por espécie. Nunca presumir que Weather equivale a Com/Sem bônus.
+
+**Próxima implementação:** descobrir opções reais do formulário sem dados de conta; expor Form/Size e campos avançados no popup do menu existente, sem adicionar ícones; confirmar cada filtro antes de Search; limpar filtros ocultos sem apagar Shiny/📍; manter 18 imagens, 12 ações, janela de resultados, limite de consultas, validação IV% 46 valores, GL/UL 1–50 e histórico confirmado. Modos Sem Filtro/Mestre/Copinha ainda não habilitados.
+
+**Situação:** planejamento concluído; filtros adicionais ainda **não implementados** nem testados em Android. Preservar PR #21, main e backups.
+
+---
+
+## 6.8. Auditoria complementar — Sort by e ações esquecidas (17/10/2026)
+
+O usuário identificou corretamente a ausência de **Sort by**. A interface do PoGoCoordinates exibe **Sort by → Despawn (longest)**; o autor do serviço menciona ordenar por despawn, CP e distância, mas a lista real do dropdown precisa ser descoberta na sessão do site.
+
+**Bug/diferença identificado no código:** `OverlayService.java` tem `sort="despawn"`, porém o comparator padrão `Long.compare(expiration(a1),expiration(a2))` ordena por desaparecimento **mais cedo**; diverge da opção `Despawn (longest)` mostrada no site. O app ainda não oferece controle de Sort by nem configura o dropdown na `probe.js`; esta só lê até **10** cartões. **Correção planejada:** selecionar e confirmar Sort by no site **antes** de consultar e recortar os dez resultados; manter a mesma ordem no app, sem reordenação conflitante, respeitando cooldown. Não inventar valores de opções ainda não inspecionadas.
+
+**Itens faltantes no primeiro inventário:** `Use my location` (ação geográfica com consentimento), `Reset`, `Map`, `Notify Me` e `Search`, além da alternância `Filter by Stats/PvP` explicitamente registrada. Esses itens são ações/controles de navegação (não todos filtros); não duplicar os controles já existentes de localização 📍, sino/favoritos, atualização e busca. Link de até 100 contas VIP é recurso pago, não adicionar sem suporte.
+
+**Documento revisado no PR #22:** [PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md](PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md). A auditoria é **documental**: não houve código executável alterado, compilação, testes reais ou merge.
+
+---
+
+## 6.9. Implementação beta do menu de filtros + Shiny no topo (17/10/2026)
+
+**Autorização:** usuário pediu aplicar a proposta e posicionar **✨ Shiny ao lado de MODO DE BUSCA**. **A branch `plan/v051-pogocoordinates-filtros-20261017` evoluiu de plano documental para implementação experimental**, com PR #22 em draft contra `feature/v0.51-launcher-icon-fill-20261016`. A seção 6.7/6.8 descreve a fase anterior: o código *já foi alterado* após a autorização.
+
+- `dock.html`: título `MODO DE BUSCA` + botão `✨ ON/OFF` imediatamente ao lado (mesma ação `Native.shiny()` já disponível na barra); preservação dos 12 botões existentes; linhas Raw IV / IV% / Great League / Ultra League; seção `Sort by`, `Filtros gerais` (espécie/Form/Size) e `Filtros avançados` (CP/Level/Weather/Gender ou PvP Min CP/evoluções anteriores/Gender), recolhíveis, rolagem e campo de texto com teclado. As opções das listas são lidas do formulário remoto; só `Despawn (longest)` possui fallback baseado na captura original.
+- `OverlayService.java`: preferências extras em `extraFiltersJson`, validação dos campos/faixas, descoberta dinâmica via `requestFilterOptions()`, preservação **da ordem do site nos primeiros 10 resultados** em vez de classificação local contraditória. Sem alteração de login, limites de frequência, gestos ou ícones.
+- `probe.js`: `describeFilters` para descobrir opções reais, aplicação opcional e confirmação extra por `check()` antes de enviar `Search` e antes de aceitar resultados. Filtro escolhido sem controle acessível -> erro curto e **preservação de resultados anteriores**; não presumir valores não documentados. Shiny no cabeçalho é ação imediata independente do rascunho Aplicar/Cancelar.
+- `app/tests/overlay-ux.test.js` / `probe-smoke.test.js`: incrementos de regressão. Execução in-memory em V8 dos testes Node com mocks, usando arquivos da branch: **208 UX e 47 probe aprovados**; sintaxe JS aprovada. **Não equivale a build Android nem teste real no site**.
+
+**Pendente:** APK, Gradle, verificação em aparelho e seleção real de menus do PoGoCoordinates na WebView. As opções só aparecem se o site efetivamente as expuser; interface VIP não é contornada. Guardar compatibilidade original e não mudar `main` sem testes e autorização. Detalhes: [Plano/implementação filtros 17-10](PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md).
+
+---
+
+## 6.10. APK de teste dos filtros gerado no GitHub Actions — 17/10/2026
+
+**Autorização expressa do usuário para compilar.** Build de teste no workflow específico da branch `plan/v051-pogocoordinates-filtros-20261017`, commit `a68d43b0213b4421a9dae3fdf52819fefadf814b`.
+
+- **Workflow:** [PokeSearch v0.51 filter preview APK — run #39011424737](https://github.com/LucianoToscano/PokeSearch/actions/runs/39011424737) — `success` em testes de JS, `:app:assembleDebug`, testes unitários Gradle, verificação `unzip -t` e assinatura pelo Android SDK.
+- **Artefato:** `PokeSearch-v0.51-Filtros-Teste-APK`, GitHub Actions artifact ID `12092468443`, ZIP de 1.113.015 bytes com APK e `SHA256SUMS.txt`. APK extraído `PokeSearch-v0.51-Filtros-Teste.apk` com **1.132.150 bytes** e SHA256 `1ea1a035f04091f6fe807e3baab625c7548c28284700464ddb39fd80664da65f`. ZIP e checksum conferidos localmente.
+- **Conteúdo APK conferido:** `dock.html`, `probe.js`, `classes.dex/classes2.dex`, AndroidManifest e **18 PNGs** de resultados existentes.
+- **Aviso:** debug APK de teste; assinatura de debug CI pode mudar entre builds e impedir atualização por cima de instalação anterior. Não é validação física dos controles de filtro no PoGoCoordinates. Testar no Android antes de liberar como final.
+- **Não houve merge para main; PR #22 permanece draft.**
+
+---
+
+## 6.11. Correção do bug dos filtros da v0.51 — 17/10/2026
+
+**Relato do usuário:** após instalar o APK de teste gerado no run #39011424737, "Os filtros não estão funcionando". O build anterior só confirmou compilação e mocks básicos, **não o comportamento real das listas dinâmicas do PoGoCoordinates**.
+
+**Causas identificadas no código:**
+1. Em `probe.js`, a descoberta tentava abrir e ler os dropdowns **na mesma chamada síncrona**, antes de o React renderizar as opções; por isso `Form/Size/Gender/Weather` podiam ficar desativados.
+2. `extras("apply"/"verify")` tratava rótulos neutros além de "Any" como falhas; quando um site mostrava "Any Form"/"Any Size", uma consulta normal podia falhar sem o usuário ter ativado filtros.
+3. O botão de modos podia ser aberto **enquanto a busca automática estava em progresso**: `requestFilterOptions()` retornava sem consultar e nunca tentava novamente.
+4. Uma opção selecionada em dropdown React era tratada como aplicada antes de a página atualizar o estado. Em Form dependente do Pokémon isso podia produzir uma condição inconsistente.
+5. A falha apresentada ao usuário era genérica, e havia teste UX preso à implementação antiga de atualização do catálogo.
+
+**Correções aplicadas no mesmo PR #22 / branch de desenvolvimento:**
+- `probe.js`: ações separadas `openFilterOptions:key`, `readFilterOptions:key`, `closeFilterOptions:key`; leitura depois de 210 ms por campo, inspeção de itens reais de Radix/React com `role=option`; reconhecimento de valores neutros (`Any Form`, `Any Size`, etc.); configuração serializada, com `pending` e confirmação em busca subsequente antes de Search. Não afirmar sucesso quando opção não foi confirmada.
+- `OverlayService.java`: varredura sequencial assíncrona dos menus e **retries se a consulta automática ainda está em andamento**; tentativa de configuração reexecutada (até 22 vezes em operações pendentes) e mensagens que identificam o filtro problemático; manutenção da busca anterior em falhas.
+- `dock.html`: atualização **incremental** de opções descobertas, sem substituir opções de outros campos; não redirecionar submenus numéricos quando chegarem atualizações tardias.
+- `app/tests/probe-smoke.test.js`: reproduz valores "Any Form/Any Size" e simula dropdown React que só expõe as opções após abrir e concluir o render, exigindo nova verificação antes de sucesso. `overlay-ux.test.js`: contrato atualizado para a descoberta incremental.
+
+**Limitação importante:** as alterações tratam os defeitos identificados no código; **não equivalem a uma confirmação em sessão real do PoGoCoordinates**, que pode mudar seu DOM ou oferecer recursos VIP. Os controles que não puderem ser inspecionados **continuam bloqueados em vez de fingir que a busca funcionou**. Login, Shiny, 18 PNGs, os 12 ícones originais, filtros Raw/%/GL/UL, histórico e coordenadas preservados. A versão anterior (commit `a68d43b`) não deve ser usada para validar os novos filtros.
+
+**Entrega:** gerar novo artefato do workflow `.github/workflows/build-v051-filters-preview.yml` a partir de commit **posterior** às correções; registrar SHA e teste físico quando disponíveis.
+
+---
+
+## 6.12. APK corrigido dos filtros — build aprovado (17/10/2026)
+
+- **Build GitHub Actions:** [run 39012668303](https://github.com/LucianoToscano/PokeSearch/actions/runs/39012668303), commit Android `a695984008fb69498650c0a61a0a49d8f3ed26d5`, resultado `success`.
+- **Testes:** validação sintática JS, smoke tests de busca (inclusive React dropdown tardio e opções Any), regressões UX, `:app:assembleDebug`, `:app:testDebugUnitTest`, integridade ZIP e assinatura Android verificadas pelo CI.
+- **Artefato GitHub Actions:** `PokeSearch-v0.51-Filtros-Teste-APK`, id `12093019941`, arquivo baixado `PokeSearch-v0.51-Filtros-Corrigidos.zip`.
+- **APK extraído e validado localmente:** `PokeSearch-v0.51-Filtros-Corrigidos.apk`, **1.134.918 bytes**, SHA-256 `c32be9aab7161424d82e409a57a90d2a7fa7a422146f3bb10b6530a8a5a663d2`; contém `assets/dock.html`, `assets/probe.js` e 18 PNGs do resultado.
+- **Estado:** novo APK pronto para **teste no aparelho**, ainda **sem comprovação em site real autenticado**, sem merge em main. Em caso de erro após instalação pedir captura ou TXT do botão ⚠, sem códigos pessoais. Build debug pode precisar desinstalar o APK anterior caso assinaturas não coincidam.
+
+---
+
+## 6.12. Resultados não apareciam depois de aplicar opções — correção do ciclo Search/Collect (17/10/2026)
+
+**Relato:** depois da v0.51 com menus novos, ao escolher filtros de busca os Pokémon não apareciam na janela independente.
+
+**Investigação do código (causa diretamente reproduzível em teste):** `probe.js` confirmava os critérios antes de enviar `Search`, mas `collect()` reexecutava `check()` sobre o formulário **após a busca** e jogava fora todos os cartões se o site escondesse/recriasse o formulário durante a apresentação dos resultados. `OverlayService.java` também exigia que o controle Shiny permanecesse visível depois da navegação, rejeitando Pokémon embora o Shiny já tivesse sido confirmado antes.
+
+**Correções aplicadas:** 
+- `OverlayService.java`: guarda `confirmedSubmittedFiltersGeneration` **somente para a geração de busca verificada imediatamente antes de Search**; reseta a prova no início de outra busca e em falha de envio. Passa `_preSubmitVerified` ao coletor apenas nessa geração. Informações do formulário nunca são aceitas de outra pesquisa. Identifica a causa específica nos erros, registra somente contagens + tipo de confirmação (sem coordenadas ou identificadores de conta).
+- `probe.js`: `resultCriteria()` mantém resultados se o formulário ficou oculto mas **a mesma geração** já teve Raw/%/GL/UL e adicionais confirmados antes de Search; controles **visíveis com valores divergentes** continuam invalidando; ausência de confirmação inicial continua rejeitando. `confirmationSource` distingue verificação ao vivo de prova anterior. A validação individual dos IVs/ranks disponíveis nos cartões continua ativa.
+- `OverlayService.java`: quando a chave Shiny some ao abrir resultados, pode usar somente a prova Shiny já confirmada nessa geração; Shiny explicitamente **OFF** continua inválido para busca Shiny ON.
+- `app/tests/probe-smoke.test.js`: acrescenta regressão para formulário oculto com resultados e confirmação anterior, ausência de prova, Size contraditório e Liga contraditória. `app/tests/overlay-ux.test.js`: atualizado para a nova injeção de configuração + prova da geração e o Shiny oculto.
+
+**Limites:** sem acesso ao DOM real da sessão logada do usuário, essa é uma correção de erros encontrados no código e reproduzidos em testes automatizados; não é confirmação de que todos os filtros são aceitos pelo site em Android real. Os controles em desacordo visível continuam produzindo ⚠ em vez de inventar resultados. **Preservar** PR #21 e branch original, 12 botões, 18 ícones, login, favoritos, coordenadas e PvPPokeGo separado.
+
+---
+
+## 6.13. APK de testes com resultados corrigidos (17/10/2026)
+
+**Build bem-sucedido:** [workflow #39013998424](https://github.com/LucianoToscano/PokeSearch/actions/runs/39013998424), commit de código `40cdf0ccd0e013f432d2f9c803ab03f4d5b59d42`, PR #22, branch `plan/v051-pogocoordinates-filtros-20261017`.
+
+- **GitHub Actions:** testes JavaScript de sonda e UI passaram, `gradle :app:assembleDebug :app:testDebugUnitTest` passou, APK assinado pela chave de debug do workflow e verificações ZIP + assinatura bem-sucedidas.
+- **Artefato GitHub:** `PokeSearch-v0.51-Filtros-Teste-APK` ID `12094306734`.
+- **APK extraído entregue ao usuário:** `PokeSearch-v0.51-Resultados-Corrigidos.apk`, **1.135.982 bytes**, SHA256 `d3d28251484a70115812f3e9f8f7a2ee9dae3801488390e225fcff39f776326c`.
+- **Conteúdo conferido:** `probe.js` contém `resultCriteria()` com fonte de confirmação `pre-submit-confirmed`; `dock.html` e todos os **18 ícones PNG** preservados.
+- **Correção:** validação atrelada à geração de Search; se o formulário do site ficar oculto depois do envio, o coletor pode usar a confirmação prévia daquela mesma busca. Controles visíveis divergentes ou prova anterior inexistente continuam bloqueados. Filtro Shiny oculto no resultado também pode reutilizar **somente** a prova Shiny verificada naquela geração, sem ignorar OFF explícito.
+- **Testes acrescentados:** confirmação com formulário oculto, rejeição sem prova, rejeição de Size/Liga em desacordo, regressão do Shiny oculto.
+- **Atenção:** debug APK de testes; os resultados do site **ainda não foram testados no aparelho do usuário**. Instalar e validar Raw IV, IV%, GL/UL, Size/Form e Shiny. Se persistir erro, pedir relatório TXT via ⚠ sem divulgar dados da conta. O `main` permanece intacto.
+
+---
+
+## 6.13. Bug real nas capturas — «⚠ Filtro: pokemon» bloqueia resultados (17/10/2026)
+
+**Relato/capturas no Android:** home screen às 04:35/04:36, interface original e 18 PNGs presentes, modo Raw IV 100% e modo GL #1. **Ambos não exibiam Pokémon**; toast indicava literalmente `⚠ Filtro: pokemon`, mostrando bloqueio **antes de enviar a busca** por validação de um filtro de espécie que **não foi solicitado** (padrão Qualquer Pokémon).
+
+**Causa no código:** `probe.js → extras("apply")` iterava obrigatoriamente sobre todos os campos extras (pokemon, form, size, gender, weather), mesmo quando `filters[key]` era vazio, interpretando o texto/controle não padronizado do site como divergência de `Any` e abortando o modo Raw/GL/UL. `visibleExtrasMismatch()` reaplicava esse erro ao coletar resultados. O diagnóstico anterior de formulário oculto e prova da mesma geração **não resolvia o bloqueio pré-envio**.
+
+**Correção na branch `plan/v051-pogocoordinates-filtros-20261017` / PR #22:**
+- `probe.js`: filtro extra vazio **não impõe restrição** nem requer localizar o dropdown, independentemente de como o site rotula `Any Pokémon`; `extras()` e `visibleExtrasMismatch()` validam apenas seleções **explícitas**. Atributos IV, PvP, Shiny e localização continuam sendo confirmados. Caso usuário escolha realmente `Pikachu`, o campo deve ser aplicado/confirmado antes de enviar Search.
+- Para preservar a remoção de filtro previamente ativo, `OverlayService.java` mantém `clearExtraKeys` para campos que passam de valor explícito para vazio; eles continuam exigindo restauração real ao estado neutro no site. Assim o conserto não transforma `Limpar Pokémon` em uma falsa limpeza.
+- `probe-smoke.test.js`: regressão com valores de seleção customizados/decorativos `Pokémon · Any Pokémon ▾`, Raw IV e GL Top 1, confirmação na leitura de resultados, e validação de filtro ativo/remoção explícita.
+- Nenhuma alteração aos PNGs, barra de ícones, classe de janelas, tempos, controle Shiny, gestos, notificações ou `main`.
+
+**Evidência:** erro `⚠ Filtro: pokemon` nas capturas 1792222585354.jpeg e 1792222583404.jpeg. **Limite de verificação:** testes automatizados e GitHub Actions não substituem teste no aparelho com sessão real do PoGoCoordinates. Compilar novo APK do commit posterior às correções, não reutilizar as versões beta anteriores.
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
