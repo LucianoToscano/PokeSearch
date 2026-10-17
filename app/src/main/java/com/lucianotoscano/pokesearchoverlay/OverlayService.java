@@ -494,6 +494,10 @@ public class OverlayService extends Service {
         try{wm.addView(menuRoot,menuParams);}catch(Exception e){recordFailure("abrir controles",e);menuRoot=null;menuPanel=null;}
         if(menuPanel!=null)menuPanel.loadUrl("file:///android_asset/dock.html?controls=1");
 
+        // The Pokémon list is always its OWN Android overlay. The gear remains
+        // a small independent control even if there is only one active search.
+        createResultsWindow();
+
         detailRoot=new FrameLayout(this);
         detailRoot.setBackgroundColor(Color.TRANSPARENT);
         detailPanel=new WebView(this);
@@ -524,6 +528,106 @@ public class OverlayService extends Service {
         if(detailRoot!=null)detailPanel.loadUrl("file:///android_asset/detail.html");
         // Initial navigation is scheduled after cookie flush in onStartCommand.
         running=true;
+    }
+    private void createResultsWindow(){
+        android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+        resultCollapsed=prefs.getBoolean("resultsCollapsed",false);
+        resultRoot=new FrameLayout(this);
+        resultRoot.setBackgroundColor(Color.TRANSPARENT);
+        resultRoot.setClipChildren(true);
+        resultPanel=new WebView(this);
+        resultPanel.setBackgroundColor(Color.TRANSPARENT);
+        resultPanel.getSettings().setJavaScriptEnabled(true);
+        resultPanel.getSettings().setAllowContentAccess(false);
+        resultPanel.getSettings().setAllowFileAccessFromFileURLs(false);
+        resultPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
+        resultPanel.addJavascriptInterface(new Bridge(),"Native");
+        resultRoot.addView(resultPanel,new FrameLayout.LayoutParams(-1,-1));
+
+        // Transparent native hit area over the league icon:
+        // short tap collapses/expands; drag moves ONLY the results window.
+        final float[] touchStart=new float[2];
+        final int[] positionStart=new int[2];
+        final boolean[] hasDragged={false};
+        resultGrip=new View(this);
+        resultGrip.setBackgroundColor(Color.TRANSPARENT);
+        resultGrip.setOnTouchListener((view,event)->{
+            if(resultParams==null||resultRoot==null||wm==null)return true;
+            switch(event.getActionMasked()){
+                case MotionEvent.ACTION_DOWN:
+                    touchStart[0]=event.getRawX();touchStart[1]=event.getRawY();
+                    positionStart[0]=resultParams.x;positionStart[1]=resultParams.y;
+                    hasDragged[0]=false;
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                    int xMove=Math.round(event.getRawX()-touchStart[0]);
+                    int yMove=Math.round(event.getRawY()-touchStart[1]);
+                    if(Math.abs(xMove)+Math.abs(yMove)>dp(5))hasDragged[0]=true;
+                    if(hasDragged[0]){
+                        DisplayMetrics m=metrics();
+                        resultParams.x=Math.max(0,Math.min(m.widthPixels-resultParams.width,
+                            positionStart[0]+xMove));
+                        resultParams.y=Math.max(0,Math.min(m.heightPixels-resultParams.height,
+                            positionStart[1]+yMove));
+                        try{wm.updateViewLayout(resultRoot,resultParams);}
+                        catch(Exception e){recordFailure("arrastar resultados",e);}
+                        moveDetail();
+                    }
+                    return true;
+                case MotionEvent.ACTION_UP:
+                    if(!hasDragged[0])toggleResultsCollapsed();
+                    else{
+                        float density=getResources().getDisplayMetrics().density;
+                        getSharedPreferences("prefs",0).edit()
+                            .putInt("resultsX",Math.round(resultParams.x/density))
+                            .putInt("resultsY",Math.round(resultParams.y/density)).apply();
+                    }
+                    return true;
+                case MotionEvent.ACTION_CANCEL:return true;
+            }
+            return true;
+        });
+        resultRoot.addView(resultGrip,new FrameLayout.LayoutParams(
+            dp(dockDp()),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT));
+
+        int preferredX=Math.max(0,screenWidthDp()-2*dockDp()-35);
+        int preferredY=165;
+        int savedX=prefs.getInt("resultsX",preferredX);
+        int savedY=prefs.getInt("resultsY",preferredY);
+        resultParams=new WindowManager.LayoutParams(dp(dockDp()),dp(RESULTS_HEADER_DP),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            PixelFormat.TRANSLUCENT);
+        resultParams.gravity=Gravity.TOP|Gravity.LEFT;
+        resultParams.x=dp(Math.max(0,Math.min(screenWidthDp()-dockDp(),savedX)));
+        resultParams.y=dp(Math.max(0,Math.min(screenHeightDp()-72,savedY)));
+        try{wm.addView(resultRoot,resultParams);}
+        catch(Exception e){
+            recordFailure("criar janela independente de resultados",e);
+            resultRoot=null;resultParams=null;resultLoaded=false;
+            destroyWebView(resultPanel,true,"resultados indisponíveis");
+            resultPanel=null;resultGrip=null;return;
+        }
+        resultPanel.setWebViewClient(new WebViewClient(){
+            @Override public void onPageFinished(WebView web,String url){
+                if(url!=null&&url.startsWith("file:///android_asset/")){
+                    resultLoaded=true;
+                    js(resultPanel,true,"window.setResultsCollapsed("+resultCollapsed+")");
+                    update();
+                }
+            }
+        });
+        resultPanel.loadUrl("file:///android_asset/dock.html?results=1");
+    }
+    private void updateResultsWidth(){
+        if(resultParams==null||resultRoot==null)return;
+        resultParams.width=dp(dockDp());
+        resultParams.x=Math.max(0,Math.min(metrics().widthPixels-resultParams.width,resultParams.x));
+        if(resultGrip!=null)resultGrip.setLayoutParams(new FrameLayout.LayoutParams(
+            dp(dockDp()),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT));
+        try{wm.updateViewLayout(resultRoot,resultParams);}
+        catch(Exception e){recordFailure("redimensionar largura dos resultados",e);}
     }
     private String script(){
         if(probeScriptCache!=null)return probeScriptCache;
