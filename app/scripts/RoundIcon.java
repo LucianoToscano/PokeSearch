@@ -52,9 +52,9 @@ public final class RoundIcon {
 
     public static void main(String[] args) throws Exception {
         System.setProperty("java.awt.headless","true");
-        if (args.length != 3) {
+        if (args.length != 2 && args.length != 3) {
             throw new IllegalArgumentException(
-                "Usage: RoundIcon <original.png> <legacy_round.png> <adaptive_foreground.png>");
+                "Usage: RoundIcon <original.png> <legacy_round.png> [adaptive_foreground.png]");
         }
 
         BufferedImage original = ImageIO.read(new File(args[0]));
@@ -73,6 +73,10 @@ public final class RoundIcon {
             legacyG.dispose();
         }
         save(legacy, args[1]);
+
+        // Backward-compatible two-argument invocation used by the original
+        // debug verification workflow only regenerates the legacy icon.
+        if (args.length == 2) return;
 
         // Android adaptive icons have a 108dp canvas. The launcher displays
         // the central 72dp area; drawing the artwork there avoids the tiny,
