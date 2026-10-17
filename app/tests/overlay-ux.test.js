@@ -372,7 +372,7 @@ test("v0.51 all 18 original result icons are present for 9 search types and Shin
 })());
 test("v0.51 header chooses a confirmed Shiny version of its exact search type",
     dock.includes('function getResultIcon(searchMode,shinyActive)')&&
-    dock.includes('const selectedIcon=getResultIcon(mode,shiny)')&&
+    dock.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
     dock.includes('const pair=RESULT_ICONS[family]')&&
     dock.includes('shining?pair.shiny:pair.normal'));
 
@@ -399,8 +399,8 @@ test("Four requested search modes with correct numeric bounds",()=>{
   dock.includes('{key:"percentMin"')&&dock.includes('{key:"percentMax"');
 });
 test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy migration",
- dock.includes('family="hundo";')&&
- dock.includes('searchSettings.attack===15&&searchSettings.defense===15&&searchSettings.stamina===15')&&
+ dock.includes('if(attack===15&&defense===15&&stamina===15)family="hundo"')&&
+ dock.includes('if(settings.percentMin===100&&settings.percentMax===100)family="hundo"')&&
  service.includes('boolean migrateLegacyHundo="iv".equals(mode);')&&
  service.includes('pref.edit().putString("mode","raw")')&&
  read("assets/probe.js").includes('return rawIsHundo()&&set100Percent();'));
@@ -430,6 +430,42 @@ test("Site filters are configured and confirmed before search submission",(()=>{
   service.includes('.replace("__FILTERS__",filterConfigJson())')&&
   service.includes('execute("verifyFilters",filters->');
 })());
+test("Raw zero and percentage extremes reuse all original Hundo/Nundo Shiny icons",(()=>{
+ const code=dock.split('function getResultIcon(')[1].split('let locationEnabled=')[0];
+ return code.includes('if(attack===0&&defense===0&&stamina===0)family="nundo"')&&
+  code.includes('if(settings.percentMin===0&&settings.percentMax===0)family="nundo"')&&
+  code.includes('if(settings.percentMin===100&&settings.percentMax===100)family="hundo"')&&
+  dock.includes('nundo:{normal:"nundo.png",shiny:"shnundo.png"')&&
+  dock.includes('hundo:{normal:"hundo.png",shiny:"shundo.png"');
+})());
+test("Compact percent picker supports both exact button choice and a quick 0–100 slider",
+ dock.includes('slider.type="range"')&&
+ dock.includes('slider.min=String(low);slider.max=String(high);slider.step="1"')&&
+ dock.includes('slider.oninput=()=>')&&dock.includes('slider.onchange=()=>chooseNumber(')&&
+ dock.includes('btn.onclick=()=>chooseNumber(number)')&&
+ dock.includes('max-height:148px'));
+test("Mode selection remains clearly highlighted and header shows automatic 0/100",
+ dock.includes('choose.setAttribute("aria-pressed",String(modeDraft.mode===name))')&&
+ dock.includes('choose.textContent=(modeDraft.mode===name?"✓ ":"")+label')&&
+ dock.includes('cy.textContent=label')&&
+ dock.includes('specialIVLabel(mode,searchSettings)'));
+test("Filter switching preserves old results and their original icon until confirmed",
+ service.includes('resultsStale=count()>0;hideDetails();update();refresh();')&&
+ service.includes('shownMode=mode;shownConfigJson=filterConfigJson();')&&
+ service.includes('shownShiny=shiny&&shinyVerified;resultsStale=false;')&&
+ dock.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
+ dock.includes('document.body.classList.toggle("results-stale",hasHistory&&resultsStale)'));
+test("Filter failures retain previous cards with a compact status and full diagnostics",
+ service.includes('private void searchFailure(String shortReason,String detail)')&&
+ service.includes('lastError",detail')&&
+ service.includes('status(shortReason+(count()>0?" · resultados anteriores":""))')&&
+ service.includes('searchFailure("⚠ Filtros não confirmados"')&&
+ service.includes('searchFailure("⚠ Ranking não confirmado"')&&
+ service.includes('execute("verifyFilters",filters->'));
+test("Each search mode remembers its independent saved fields across app restarts",
+ ['rawAttack','rawDefense','rawStamina','glRank','ulRank','ivPercentMin','ivPercentMax'].every(k=>
+   service.includes('putInt("'+k+'"')&&service.includes('pref.getInt("'+k+'"')))&&
+ service.includes('putString("mode",mode)')&&service.includes('mode=pref.getString("mode",mode)'));
 test("v0.51 Raw/percent enabled by request without adding unsupported Nundo, Master or Cup",
     dock.includes('custom:{normal:"custom.png"')&&
     dock.includes('percent:{normal:"percent.png"')&&
