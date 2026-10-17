@@ -148,3 +148,26 @@ Na janela atual `#choices` do botão de modos:
 
 Fonte pública: https://pogocoordinates.com/search  
 Base GitHub: https://github.com/LucianoToscano/PokeSearch/pull/21
+
+---
+
+## 8. Implementação experimental autorizada — 17/10/2026
+
+**Autorização posterior do usuário:** aplicar o desenho do menu e manter **✨ Shiny junto ao título MODO DE BUSCA**, acima dos demais campos. Mudanças realizadas na **mesma branch experimental** do PR #22. Essa seção substitui o status de *somente planejamento* da seção 7.
+
+### Código alterado
+- **`dock.html`:** botão de ação Shiny duplicado funcionalmente no cabeçalho do menu, ligado ao **mesmo método `Native.shiny()` original** (o botão da barra continua existindo); quatro linhas originais Raw/%/GL/UL; seção **Sort by**, duas seções expansíveis **Filtros gerais** e **Filtros avançados**, com altura/rolagem limitada pela janela; rascunho/cancelamento, persistência por Aplicar, indicação de Shiny pendente; opções dos dropdowns carregadas a partir do site quando acessíveis.
+- **`OverlayService.java`:** `extraFiltersJson` salvo em `SharedPreferences`, injetado no `filterConfigJson()`, validação de CP/Level e faixas, `requestFilterOptions()` em ponte Android → navegador; saída dos dez resultados agora **preserva a ordem do site**, em vez de inverter `Despawn (longest)` localmente.
+- **`probe.js`:** ação de leitura `describeFilters` para opções reais do DOM, tentativa de configurar adicionais somente na sessão oficial, `extras("verify")` dentro da validação antes do Search e da aceitação dos resultados. Se um filtro opcional requisitado não é localizado ou não confere, falha fechada e mantém resultados antigos.
+- **Testes:** casos adicionais em `overlay-ux.test.js` e `probe-smoke.test.js`. Execução em isolamento V8 com leitura dos arquivos da branch e simulação do módulo Node/DOM: **208 verificações de UX e 47 testes de busca passaram**. Testes de sintaxe JS também passaram. **Não é compilação Android** e não confirma integração real com o formulário remoto.
+
+### Limitações deliberadas
+1. O site dinâmico não forneceu nesta sessão o catálogo completo de opções de Form, Size, Gender, Weather e Sort by. O menu mostra opções reais identificadas no DOM; quando não houver leitura, os controles de opções indisponíveis ficam desativados. A única opção de ordenação oferecida como fallback é **Despawn (longest)**, reproduzida da captura do usuário; a seleção ainda deve ser confirmada pelo site.
+2. A busca por espécie e as opções customizadas são **experimentais** até teste físico na WebView com conta autorizada. Não afirmar que valores selecionados foram aplicados sem confirmação real da página.
+3. Shiny no título chama imediatamente o mesmo toggle da barra, de modo independente de Salvar/Cancelar dos demais filtros; o login/vínculo e a confirmação já existentes continuam obrigatórios.
+4. O agrupamento expandido ocupa a **mesma janela** de 246 px com rolagem, evitando novo controle no dock. Form é esvaziado quando se altera a espécie. O modo e os outros filtros salvos permanecem ao alternar abas.
+5. Recursos **Reset/Map/Notify Me/Use my location** do site não foram copiados para a barra ou ativados automaticamente; usam-se os controles nativos já existentes quando aplicáveis. Recursos VIP não são contornados.
+6. **Ainda pendentes:** compilação/lint Android, teste de tela e toque (incluindo teclado), descobertas de opções em formulário autenticado, confirmação de alterações de Sort by antes dos dez resultados, casos de DOM dinâmico, funcionamento de cada filtro em todos os modos, permissões no Android 15/16. **Nenhum APK gerado nesta etapa.**
+
+**Compatibilidade:** Nenhuma alteração nos 18 PNGs, `main`, branch original do PR #21, applicationId, login, alertas, favoritos, temporizador, coordenadas, gestos, limitação de consultas ou estrutura da janela independente.
+
