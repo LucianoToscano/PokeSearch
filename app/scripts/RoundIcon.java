@@ -51,7 +51,7 @@ public final class RoundIcon {
     }
 
     public static void main(String[] args) throws Exception {
-        System.setProperty("java.awt.headless", "true");
+        System.setProperty("java.awt.headless","true");
         if (args.length != 3) {
             throw new IllegalArgumentException(
                 "Usage: RoundIcon <original.png> <legacy_round.png> <adaptive_foreground.png>");
