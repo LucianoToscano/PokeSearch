@@ -9,7 +9,7 @@ jobs:
   release-apk:
     # v0.51 work branch: build only via an explicit workflow_dispatch request.
     # Draft PR pushes must never build an APK without the owner's request.
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.head_ref != 'feature/v0.51-launcher-icon-fill-20261016' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
