@@ -108,6 +108,13 @@ test("Configurable Raw IV exact 0–15 passes","verifyFilters","raw",false,
   {iv:["0","7","15"],config:{attack:0,defense:7,stamina:15}},true);
 test("Configurable Raw IV mismatch fails","verifyFilters","raw",false,
   {iv:["0","7","14"],config:{attack:0,defense:7,stamina:15}},false);
+test("Hundo automatically recognized via Raw IV 15/15/15","verifyFilters","raw",false,
+  {iv:["15","15","15"],config:{attack:15,defense:15,stamina:15}},true);
+test("Hundo Raw IV recognizes site's percent 100–100 fallback","verifyFilters","raw",false,
+  {iv:["100","100"],config:{attack:15,defense:15,stamina:15}},true);
+test("Non-Hundo Raw IV must not accept 100–100 percent fallback","verifyFilters","raw",false,
+  {iv:["100","100"],config:{attack:14,defense:15,stamina:15}},false);
+
 test("Configurable percentage range passes","verifyFilters","percent",false,
   {iv:["20","80"],config:{percentMin:20,percentMax:80}},true);
 test("Configurable percentage range mismatch fails","verifyFilters","percent",false,
