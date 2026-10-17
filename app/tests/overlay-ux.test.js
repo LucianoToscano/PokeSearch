@@ -371,7 +371,7 @@ test("v0.51 all 18 original result icons are present for 9 search types and Shin
     paths.length===18;
 })());
 test("v0.51 header chooses a confirmed Shiny version of its exact search type",
-    dock.includes('function getResultIcon(searchMode,shinyActive)')&&
+    dock.includes('function getResultIcon(searchMode,shinyActive,settings=searchSettings)')&&
     dock.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
     dock.includes('const pair=RESULT_ICONS[family]')&&
     dock.includes('shining?pair.shiny:pair.normal'));
@@ -466,6 +466,11 @@ test("Each search mode remembers its independent saved fields across app restart
  ['rawAttack','rawDefense','rawStamina','glRank','ulRank','ivPercentMin','ivPercentMax'].every(k=>
    service.includes('putInt("'+k+'"')&&service.includes('pref.getInt("'+k+'"'))&&
  service.includes('putString("mode",mode)')&&service.includes('mode=pref.getString("mode",mode)'));
+test("Site must reconfirm every search at collection time, even an empty response",
+ read("assets/probe.js").includes('criteriaConfirmed:siteCriteria')&&
+ service.includes('if(!r.optBoolean("criteriaConfirmed",false))')&&
+ service.includes('searchFailure("⚠ Filtro não confirmado"')&&
+ service.includes('execute("verifyFilters",filters->'));
 test("v0.51 Raw/percent enabled by request without adding unsupported Nundo, Master or Cup",
     dock.includes('custom:{normal:"custom.png"')&&
     dock.includes('percent:{normal:"percent.png"')&&
