@@ -274,4 +274,29 @@ const wrongLeagueWithProof=run("collect","gl",false,{switch:false,spawn,
 assert.equal(wrongLeagueWithProof.criteriaConfirmed,false,"Pre-submit proof cannot override live mismatch in PvP league");
 checked++;
 
+
+ // Regression from the user's 04:35/04:36 screenshots: "⚠ Filtro: pokemon"
+ // The optional site picker may render arbitrary labels or decorations.
+const decoratedPokemon={Pokemon:{value:"Pokémon · Any Pokémon ▾"}};
+test("Raw 15/15/15 search does not block on optional site Pokémon picker",
+  "configureExtras","raw",false,{extra:decoratedPokemon},true);
+test("Great League Top 1 does not block on optional site Pokémon picker",
+  "configureExtras","gl",false,{extra:decoratedPokemon},true);
+test("Optional Pokémon picker cannot fail verification when no species was selected",
+  "verifyExtras","gl",false,{extra:decoratedPokemon},true);
+test("Explicit selected Pokémon still fails when matching control is unavailable",
+  "verifyExtras","gl",false,{config:{pokemon:"Pikachu"}},false);
+const decoratedSearch=run("collect","gl",false,{switch:false,
+  config:{glRank:1,_preSubmitVerified:true},
+  extra:decoratedPokemon,spawn});
+assert.equal(decoratedSearch.criteriaConfirmed,true,"Decorative Pokemon picker cannot discard verified GL results");
+assert.equal(decoratedSearch.cards.length,1,"Pokémon sprites remain available after Search");
+checked++;
+const previousSpecies={Pokemon:{value:"Pikachu",options:["Any","Pikachu"],ready:false}};
+const explicitClear=run("configureExtras","gl",false,{extra:previousSpecies,
+  config:{clearExtraKeys:["pokemon"],pokemon:""}});
+assert.equal(explicitClear.ok,false,"An explicitly cleared species must actually be reset on the site");
+assert.equal(explicitClear.pending,true,"Reset opens the remote chooser and waits");
+checked++;
+
 console.log("PokeSearch probe contract: "+checked+" tests passed");
