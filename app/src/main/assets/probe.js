@@ -188,9 +188,9 @@ function applyLeague(){
  const rank=inputNear("Top ranking");
  return !!rank&&valueInput(rank,configuredRank())&&
   choice("League",mode==="ul"?"Ultra League":"Great League")&&
-  choice("Include previous evolutions","Yes");
+  choice("Include previous evolutions",filters.includePreviousEvolutions===false?"No":"Yes");
 }
-function check(){
+function checkCore(){
  const currentShiny=readShiny();
  if(currentShiny!==shinyOnly && !(shinyOnly===false&&currentShiny===null))
   return {ok:false,reason:"Shiny não confirmado",shiny:currentShiny};
@@ -206,10 +206,89 @@ function check(){
  const rank=inputNear("Top ranking");
  const league=readChoice("League"),prior=readChoice("Include previous evolutions");
  if(!rank||Number(rank.value)!==configuredRank()||
-    league!==(mode==="ul"?"Ultra League":"Great League")||prior!=="Yes")
+    league!==(mode==="ul"?"Ultra League":"Great League")||prior!==(filters.includePreviousEvolutions===false?"No":"Yes"))
   return {ok:false,reason:"Filtro da liga e Top ranking não confirmados",rank:rank?rank.value:null,league,prior};
  return {ok:true};
 }
+
+const EXTRA_LABELS={sortBy:"Sort by",pokemon:"Pokemon",form:"Form",size:"Size",gender:"Gender",weather:"Weather"};
+function extraControl(label){
+ const e=field(label);if(e)return e;
+ const rx=label==="Pokemon"?/pok[eé]mon/i:new RegExp(label,"i");
+ return elements('input:not([type=hidden]),select,[role=combobox],button[aria-haspopup]')
+  .find(x=>vis(x)&&rx.test((x.getAttribute("placeholder")||"")+" "+(x.getAttribute("aria-label")||"")))||null;
+}
+function describeChoice(label){
+ const e=extraControl(label);if(!e)return {present:false,options:[]};
+ let options=[];
+ if(e.matches("select"))options=Array.from(e.options).map(text);
+ else if(e.matches("button,[role=combobox]")&&!e.disabled){
+  try{
+   e.click();options=elements("[role=option],[role=menuitemradio]").filter(vis).map(text);
+   e.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));
+   if(e.getAttribute("aria-expanded")==="true")e.click();
+  }catch(_){options=[];}
+ }
+ return {present:true,disabled:!!e.disabled,options:[...new Set(options.map(clean).filter(x=>x&&x.length<100))].slice(0,80)};
+}
+function extraValue(key){
+ const e=extraControl(EXTRA_LABELS[key]);if(!e)return null;
+ return clean(e.matches("input")?e.value:e.matches("select")?text(e.selectedOptions[0]):text(e));
+}
+function extraSelect(key,want){
+ const label=EXTRA_LABELS[key],e=extraControl(label);
+ if(!e)return !want;
+ if(e.matches("input"))return valueInput(e,want);
+ if(!want)return /^(any(?:\s+pok[eé]mon)?|all|todos)$/i.test(extraValue(key))||choice(label,"Any");
+ if(e.disabled)return false;
+ return choice(label,want);
+}
+function extraMatches(key,want){
+ const v=extraValue(key);if(v===null)return !want;
+ if(!want)return v===""||/^(any(?:\s+pok[eé]mon)?|all|todos)$/i.test(v);
+ return v.toLowerCase()===clean(want).toLowerCase();
+}
+function rangeInputs(label){
+ const matching=labels(document,new RegExp("^"+label+"$","i"));
+ for(const node of matching)for(let p=node.parentElement,depth=0;p&&depth<4;p=p.parentElement,depth++){
+  const ins=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
+  if(ins.length===2)return ins;
+  if(ins.length>6)break;
+ }
+ return [];
+}
+function extraNumberField(key){
+ if(key==="minPvpCp")return inputNear("Min CP");
+ const cp=key==="cpMin"||key==="cpMax",pair=rangeInputs(cp?"CP":"Level");
+ return pair.length===2?pair[key.endsWith("Min")?0:1]:null;
+}
+function extraNumberKeys(){
+ return ["gl","ul"].includes(mode)?["minPvpCp"]:["cpMin","cpMax","levelMin","levelMax"];
+}
+function extras(action){
+ const failed=[];
+ for(const key of Object.keys(EXTRA_LABELS)){
+  if(key==="sortBy"&&!filters.sortBy)continue;
+  const want=String(filters[key]||"").trim();
+  const ok=action==="apply"?extraSelect(key,want):extraMatches(key,want);
+  if(!ok)failed.push(key);
+ }
+ for(const key of extraNumberKeys()){
+  const want=String(filters[key]||"").trim(),input=extraNumberField(key);
+  if(want&&!input){failed.push(key);continue;}
+  if(!input)continue;
+  const ok=action==="apply"?valueInput(input,want):String(input.value||"").trim()===want;
+  if(!ok)failed.push(key);
+ }
+ return {ok:failed.length===0,reason:"Filtros adicionais não confirmados: "+failed.join(", ")};
+}
+function check(){const base=checkCore();return base.ok?extras("verify"):base;}
+if(action==="describeFilters"){
+ const options={};
+ for(const [key,label] of Object.entries(EXTRA_LABELS))options[key]=describeChoice(label);
+ return JSON.stringify({ok:true,options});
+}
+
 function cardRoots(){
  const btns=elements("button,[role=button]").filter(e=>vis(e)&&/^(?:Get coords|Open in Maps)$/i.test(text(e)));
  return btns.slice(0,10).map((b,i)=>{
@@ -464,11 +543,13 @@ if(action==="configureSearch"){
  else if(mode==="raw")configured=applyRaw();
  else if(mode==="percent")configured=applyPercent();
  else configured=applyLeague();
+ const other=configured?extras("apply"):{ok:false,reason:"Filtro principal indisponível"};
+ configured=configured&&other.ok;
  const existing=readShiny();
  if(existing!==null&&existing!==shinyOnly){
   const sw=shinyControl();if(sw)sw.click();
  }
- return JSON.stringify({ok:true,configured,shinyKnown:existing!==null,stage:"configure"});
+ return JSON.stringify({ok:true,configured,reason:other.reason,shinyKnown:existing!==null,stage:"configure"});
 }
 if(action==="submitSearch"){
  const b=oneButton("Search");
@@ -486,6 +567,7 @@ if(action==="search"){
   else if(mode==="raw")applyRaw();
   else if(mode==="percent")applyPercent();
   else applyLeague();
+  extras("apply");
   const sw=shinyControl(),current=readShiny();
   if(sw&&current!==null&&current!==shinyOnly)sw.click();
   setTimeout(()=>click("Search"),750);
