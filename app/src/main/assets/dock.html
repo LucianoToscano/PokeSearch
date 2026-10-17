@@ -255,6 +255,9 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
 let locationEnabled=false,locationCoords="",locationRadius=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100};
+// Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
+// Math.round(total / 45 * 100) produces exactly 46 possible shown percentages.
+const IV_PERCENT_VALUES=Object.freeze([0,2,4,7,9,11,13,16,18,20,22,24,27,29,31,33,36,38,40,42,44,47,49,51,53,56,58,60,62,64,67,69,71,73,76,78,80,82,84,87,89,91,93,96,98,100]);
 let modeDraft=null,modeScrollTop=0;
 let shownMode="raw",shownShiny=false,shownSettings={...searchSettings},resultsStale=false;
 function specialIVLabel(selectedMode,settings){
@@ -387,7 +390,7 @@ function renderModeChoices(){
   };
   line.appendChild(choose);
   keys.forEach(({key,title,kind})=>{
-   const value=make("button","modeValue",modeDraft[key]+" ▾");
+   const value=make("button","modeValue",kind==="percent"?modeDraft[key]+"% ▾":modeDraft[key]+" ▾");
    value.type="button";value.title=title;value.setAttribute("aria-label",title+": "+modeDraft[key]);
    value.onclick=()=>{
     modeScrollTop=panel.scrollTop;modeDraft.mode=name;renderNumberPicker(key,kind,title);
@@ -425,8 +428,12 @@ function renderNumberPicker(key,kind,title){
  panel.replaceChildren();panel.classList.add("modePanel","visible");
  const heading=document.createElement("div");heading.className="choiceHeader";heading.textContent=title;
  const grid=document.createElement("div");grid.className="numberGrid";
- const low=kind==="rank"?1:0,high=kind==="iv"?15:kind==="rank"?50:100;
+ // Only the 46 attainable Pokémon GO IV percentages; PvP Top 1–50 is separate.
+ const choices=kind==="percent"?IV_PERCENT_VALUES:
+   Array.from({length:kind==="iv"?16:50},(_,i)=>i+(kind==="rank"?1:0));
+ const selected=Number(modeDraft[key]);
  const chooseNumber=number=>{
+  if(!choices.includes(number))return;
   modeDraft[key]=number;
   if(key==="percentMin"&&modeDraft.percentMax<number)modeDraft.percentMax=number;
   if(key==="percentMax"&&modeDraft.percentMin>number)modeDraft.percentMin=number;
@@ -436,28 +443,34 @@ function renderNumberPicker(key,kind,title){
   grid.querySelectorAll("button").forEach(btn=>{
    btn.classList.toggle("chosen",Number(btn.dataset.number)===value);
   });
-  grid.scrollTop=Math.max(0,(Math.floor((value-low)/5)-2)*30);
+  const index=choices.indexOf(value);
+  grid.scrollTop=Math.max(0,(Math.floor(index/5)-2)*30);
  };
- for(let number=low;number<=high;number++){
+ choices.forEach(number=>{
   const btn=document.createElement("button");btn.type="button";
-  btn.textContent=String(number);btn.dataset.number=String(number);
-  btn.className=number===modeDraft[key]?"chosen":"";
-  btn.setAttribute("aria-label",title+" = "+number);
+  btn.textContent=kind==="percent"?number+"%":String(number);
+  btn.dataset.number=String(number);btn.className=number===selected?"chosen":"";
+  btn.setAttribute("aria-label",title+" = "+number+(kind==="percent"?"%":""));
   btn.onclick=()=>chooseNumber(number);
   grid.appendChild(btn);
- }
- // Swipe the compact slider to jump through 0-100; the grid also supports exact taps.
+ });
+ // The slider advances by valid IV percentage INDEX (0–45), not 1% increments.
  if(kind==="percent"){
   const jump=document.createElement("div");jump.className="numberJump";
   const slider=document.createElement("input");
-  slider.type="range";slider.min=String(low);slider.max=String(high);slider.step="1";
-  slider.value=String(modeDraft[key]);slider.setAttribute("aria-label","Escolha rápida: "+title);
-  const output=document.createElement("output");output.textContent=slider.value+"%";
-  slider.oninput=()=>{const val=Number(slider.value);output.textContent=val+"%";highlight(val);};
-  slider.onchange=()=>chooseNumber(Number(slider.value));
+  slider.type="range";slider.min="0";slider.max=String(IV_PERCENT_VALUES.length-1);slider.step="1";
+  slider.value=String(Math.max(0,IV_PERCENT_VALUES.indexOf(selected)));
+  slider.setAttribute("aria-label","Escolha rápida: "+title);
+  const output=document.createElement("output");output.textContent=IV_PERCENT_VALUES[Number(slider.value)]+"%";
+  slider.oninput=()=>{
+   const value=IV_PERCENT_VALUES[Number(slider.value)];
+   output.textContent=value+"%";highlight(value);
+  };
+  slider.onchange=()=>chooseNumber(IV_PERCENT_VALUES[Number(slider.value)]);
   jump.append(slider,output);panel.append(heading,jump,grid);
  }else panel.append(heading,grid);
- grid.scrollTop=Math.max(0,(Math.floor((modeDraft[key]-low)/5)-2)*30);
+ const selectedIndex=Math.max(0,choices.indexOf(selected));
+ grid.scrollTop=Math.max(0,(Math.floor(selectedIndex/5)-2)*30);
  const back=document.createElement("button");back.className="numberBack";back.textContent="‹ Voltar";
  back.onclick=renderModeChoices;
  panel.appendChild(back);fit();
