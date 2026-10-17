@@ -6,7 +6,7 @@
 
 - Repositório: **LucianoToscano/PokeSearch** (não confundir nem misturar com o app/repositório **PvPPokeGo**).
 - Base original RESTAURADA na branch **`main`**: commit `493a333186eb7b012d883b4766609830cd828eb0`; árvore de código equivalente ao backup `backup/v0.51-beta-before-customization-20261015` (commit `d2eb0262a1d2418aa7cc958bf6a6c47149300767`).
-- Branch ativa das melhorias por etapas: **`feature/v0.51-launcher-icon-fill-20261016`**. Última versão examinada em 17/10: **`4e159d9dccc23d7b0d482e49c3973b73e0be16d3`** (confira a branch antes de novas gravações).
+- Branch ativa das melhorias por etapas: **`feature/v0.51-launcher-icon-fill-20261016`**. Ponto de referência anterior dos 18 PNGs: `4e159d9dccc23d7b0d482e49c3973b73e0be16d3`. Em 17/10 foram adicionados filtros configuráveis mediante pedido (commits posteriores); **sempre consultar o HEAD antes de novas gravações**.
 - Pull request em **draft**: [PR #21](https://github.com/LucianoToscano/PokeSearch/pull/21), **sem merge na main**.
 - `applicationId`: `com.lucianotoscano.pokesearch`; `namespace`: `com.lucianotoscano.pokesearchoverlay`.
 - Versão ainda **`versionCode 51` / `versionName "0.51-beta"`**. minSdk 26; targetSdk 33; compileSdk 36; JDK 17; Gradle 8.11.1; AGP 8.10.1.
@@ -44,7 +44,7 @@
 | Cup League | `cup-league.png` | `cup-league-shiny.png` |
 
 - Mapeamento implementado em `app/src/main/assets/dock.html`, objetos `RESULT_ICONS`, `RESULT_MODE_ALIASES`, função `getResultIcon(searchMode,shinyActive)`. Escolher pela **busca realmente aplicada**, com a variante Shiny somente quando o site confirmar `Shiny only`.
-- **Crítico:** a v0.51 tem, por enquanto, apenas as consultas existentes **IV100, GL#1 e UL#1**, com Shiny opcional. Os outros 12 PNGs estão incluídos e mapeados para uso futuro, mas **não significam que as seis outras buscas já funcionem**.
+- **Evolução de 17/10 por pedido explícito:** a v0.51 preserva IV100 e passa a oferecer **Raw IV A/D/S (0–15 cada), Great League Top ranking (1–50), Ultra League Top ranking (1–50) e IV% Min/Max (0–100)**. Os demais ícones **não** habilitam buscas adicionais (Sem filtro, IV0, Mestre ou Cup permanecem não implementados).
 - Alterar o tipo de busca deve substituir somente o ícone superior. Recolher/expandir não deve alterar os filtros nem o estado do Shiny.
 - A atualização dos ícones **não** autoriza implementar todos os modos na mesma etapa. Um recurso novo só entra com pedido explícito, código real, validação e respeito à UX original.
 
@@ -69,9 +69,27 @@
 1. **Testar no dispositivo Android** a aparência e o toque do ícone superior de **21px**, a separação real entre engrenagem e lista, arraste, salvar posição, recolher/expandir, P/M/G, sprites, login, favoritos e toque longo de coordenadas. Compilação não prova essas ações.
 2. Confirmar que o APK que for apresentado para download contém o **commit `4e159d9d...` ou posterior**, com os 18 ícones atualizados. Não reaproveitar links de APK anterior como se contivessem a nova arte.
 3. Verificar a seleção Hundo/Shundo e GL/UL normal/Shiny **a partir do estado confirmado do site**, não apenas do toque no botão de brilho.
-4. **Não inventar filtros** apenas porque seus ícones existem. Raw IV personalizado, IV0, porcentagem, sem filtro, Master e Cup continuam preparados visualmente, não implementados na base v0.51.
+4. **Não inventar filtros** apenas porque seus ícones existem. Raw IV e IV% foram autorizados e conectados ao probe na nova etapa; IV0, Sem filtro, Master e Cup continuam apenas com ícones, não implementados na base v0.51.
 5. Próximas mudanças de UX somente uma por vez, com aprovação; preservar design compacto original e testar antes de concluir. Recursos planejados e rejeitados das versões v0.52–v0.56 não devem ser mesclados involuntariamente.
 
+## 6.1. Etapa de Modos configuráveis — pedido de 17/10/2026 (somente código-fonte)
+
+**Escopo exato solicitado:** dentro do menu original `Modos`, sem uma nova barra ou janela de resultados, acrescentar seletores de:
+- **Raw IV:** Ataque ▾, Defesa ▾ e HP/Stamina ▾, cada um de **0 a 15**.
+- **Great League:** campo **Top ranking ▾ de 1 a 50** (limite máximo, não rank exato obrigatório).
+- **Ultra League:** mesmo seletor independente de **1 a 50**.
+- **IV% Min e IV% Max:** cada um de **0 a 100%**, obrigatoriamente Min ≤ Max.
+- **IV100 original** permanece acessível. **Shiny** permanece controle independente e requer confirmação do site.
+
+**Implementado na branch de trabalho e PR #21, sem merge manual:**
+1. `app/src/main/assets/dock.html`: submenu de Modos compacto, com seleção numérica e confirmação em **Aplicar**; sem aumentar os 12 botões da barra. Valores em edição não alteram a pesquisa até Aplicar. O ícone dos resultados para Raw IV utiliza `custom.png`/`custom-shiny.png`, e % utiliza `percent.png`/`percent-shiny.png`.
+2. `OverlayService.java`: `setSearchConfig` valida limites e modo de maneira atômica; valores separados para GL e UL, parâmetros preservados por preferências e enviados com a busca. Mudanças respeitam o intervalo mínimo de rede original. **Nenhum novo modo simultâneo**.
+3. `probe.js`: configura Raw IV, IV percentual e Top ranking no formulário do PoGoCoordinates, verifica valores antes de enviar `Search` e filtra resultados conforme o modo aplicado. Nos PvP Top N, não inventa um rank individual quando o cartão não o exibe; registra limite verificado à parte.
+4. `app/tests/overlay-ux.test.js` e `app/tests/probe-smoke.test.js`: código de regressão atualizado para faixas 0–15, 1–50 e 0–100, persistência, verificações e alertas.
+
+**Riscos/pendências honestas:** nenhuma compilação nem teste físico Android foi solicitada nesta etapa. O formulário do site é dinâmico; quando a aba Raw IV exibir **seis campos** sem rótulos por atributo, o script não deve adivinhar associações para valores A/D/S diferentes: deve falhar com diagnóstico até ser verificado no aparelho/site. Validar também o comportamento de abas, listas longas e rankings acima de 1, as notificações e o Shiny. A revisão do código e testes gravados não substituem testes executados.
+
+---
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
