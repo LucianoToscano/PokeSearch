@@ -231,6 +231,16 @@ O usuário identificou corretamente a ausência de **Sort by**. A interface do P
 
 ---
 
+## 6.12. APK corrigido dos filtros — build aprovado (17/10/2026)
+
+- **Build GitHub Actions:** [run 39012668303](https://github.com/LucianoToscano/PokeSearch/actions/runs/39012668303), commit Android `a695984008fb69498650c0a61a0a49d8f3ed26d5`, resultado `success`.
+- **Testes:** validação sintática JS, smoke tests de busca (inclusive React dropdown tardio e opções Any), regressões UX, `:app:assembleDebug`, `:app:testDebugUnitTest`, integridade ZIP e assinatura Android verificadas pelo CI.
+- **Artefato GitHub Actions:** `PokeSearch-v0.51-Filtros-Teste-APK`, id `12093019941`, arquivo baixado `PokeSearch-v0.51-Filtros-Corrigidos.zip`.
+- **APK extraído e validado localmente:** `PokeSearch-v0.51-Filtros-Corrigidos.apk`, **1.134.918 bytes**, SHA-256 `c32be9aab7161424d82e409a57a90d2a7fa7a422146f3bb10b6530a8a5a663d2`; contém `assets/dock.html`, `assets/probe.js` e 18 PNGs do resultado.
+- **Estado:** novo APK pronto para **teste no aparelho**, ainda **sem comprovação em site real autenticado**, sem merge em main. Em caso de erro após instalação pedir captura ou TXT do botão ⚠, sem códigos pessoais. Build debug pode precisar desinstalar o APK anterior caso assinaturas não coincidam.
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
