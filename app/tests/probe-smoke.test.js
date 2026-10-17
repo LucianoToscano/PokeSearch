@@ -241,8 +241,11 @@ assert.equal(firstSize.pending,true,"An unrendered popup should request a retry"
 assert.equal(delayedSize.open,true,"Select menu opens first without changing value");
 delayedSize.ready=true;
 const secondSize=run("configureExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
-assert.equal(secondSize.ok,true,"Second attempt selects once menu renders");
+assert.equal(secondSize.ok,false,"React needs one more render to commit the selection");
+assert.equal(secondSize.pending,true,"Selection commit must be verified on retry");
 assert.equal(delayedSize.value,"XXL","The site control changes to XXL");
+const settledSize=run("configureExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
+assert.equal(settledSize.ok,true,"Committed menu selection is accepted after rerender");
 const confirmedSize=run("verifyExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
 assert.equal(confirmedSize.ok,true,"XXL is confirmed by reading control");
 checked+=4;
