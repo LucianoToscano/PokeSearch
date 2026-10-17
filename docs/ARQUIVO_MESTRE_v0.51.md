@@ -196,6 +196,18 @@ O usuário identificou corretamente a ausência de **Sort by**. A interface do P
 
 ---
 
+## 6.10. APK de teste dos filtros gerado no GitHub Actions — 17/10/2026
+
+**Autorização expressa do usuário para compilar.** Build de teste no workflow específico da branch `plan/v051-pogocoordinates-filtros-20261017`, commit `a68d43b0213b4421a9dae3fdf52819fefadf814b`.
+
+- **Workflow:** [PokeSearch v0.51 filter preview APK — run #39011424737](https://github.com/LucianoToscano/PokeSearch/actions/runs/39011424737) — `success` em testes de JS, `:app:assembleDebug`, testes unitários Gradle, verificação `unzip -t` e assinatura pelo Android SDK.
+- **Artefato:** `PokeSearch-v0.51-Filtros-Teste-APK`, GitHub Actions artifact ID `12092468443`, ZIP de 1.113.015 bytes com APK e `SHA256SUMS.txt`. APK extraído `PokeSearch-v0.51-Filtros-Teste.apk` com **1.132.150 bytes** e SHA256 `1ea1a035f04091f6fe807e3baab625c7548c28284700464ddb39fd80664da65f`. ZIP e checksum conferidos localmente.
+- **Conteúdo APK conferido:** `dock.html`, `probe.js`, `classes.dex/classes2.dex`, AndroidManifest e **18 PNGs** de resultados existentes.
+- **Aviso:** debug APK de teste; assinatura de debug CI pode mudar entre builds e impedir atualização por cima de instalação anterior. Não é validação física dos controles de filtro no PoGoCoordinates. Testar no Android antes de liberar como final.
+- **Não houve merge para main; PR #22 permanece draft.**
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
