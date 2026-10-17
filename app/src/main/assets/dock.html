@@ -400,7 +400,7 @@ function renderModeChoices(){
  };
  const heading=make("div","modeTitleRow");
  heading.appendChild(make("div","choiceHeader","MODO DE BUSCA"));
- const shinyButton=make("button",shiny?"on":"","✨ "+(shiny?"ON":"OFF"));
+ const shinyButton=make("button",shiny?"on":"","✨ "+(shinyPending?"…":shiny?"ON":"OFF"));
  shinyButton.id="modeShiny";shinyButton.type="button";shinyButton.title="Shiny Only · alternar pelo controle original";
  shinyButton.setAttribute("aria-pressed",String(shiny));
  shinyButton.onclick=()=>Native.shiny();
@@ -458,7 +458,10 @@ function renderExtraFilters(panel,make){
   line.append(name,control);panel.appendChild(line);
  };
  const option=(key,label)=>{
-  const data=filterOptions[key]||{},choices=(data.options||[]).filter(Boolean);
+  const data=filterOptions[key]||{};
+  // This exact option was observed in the supplied PoGoCoordinates screenshot.
+  // If the current site no longer supports it, probe verification blocks Search.
+  const choices=(data.options&&data.options.length?data.options:(key==="sortBy"?["Despawn (longest)"]:[])).filter(Boolean);
   const current=String(modeDraft[key]||""),button=make("button","extraValue",current||"Any / padrão");
   button.type="button";button.disabled=!choices.length;
   button.title=choices.length?"Escolher "+label:"Aguardando opções reais do site";
@@ -662,7 +665,7 @@ function draw(){
  document.getElementById("size").textContent=spriteSize<=35?"P":spriteSize>=55?"G":"M";
  document.getElementById("sh").classList.toggle("shinyOn",shiny);
  const menuShiny=document.getElementById("modeShiny");
- if(menuShiny){menuShiny.textContent="✨ "+(shiny?"ON":"OFF");menuShiny.classList.toggle("on",shiny);
+ if(menuShiny){menuShiny.textContent="✨ "+(shinyPending?"…":shiny?"ON":"OFF");menuShiny.classList.toggle("on",shiny);
   menuShiny.setAttribute("aria-pressed",String(shiny));}
  document.getElementById("sh").classList.toggle("shinyPending",shinyPending);
  document.getElementById("location").classList.toggle("locOn",locationEnabled);
