@@ -13,7 +13,7 @@ function test(name,ok){assert.ok(ok,name);count++;}
 test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
 test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
 test("Three explicit filters",["100% · IV perfeito","GL#1 · Grande Liga","UL#1 · Ultra Liga"].every(v=>dock.includes(v)));
-test("Intervals minimum 5 minutes",["AUTO · 5 min","AUTO · 10 min","AUTO · 15 min","AUTO · 20 min"].every(v=>dock.includes(v)));
+test("Intervals include minimum 3 minutes",["AUTO · 3 min","AUTO · 5 min","AUTO · 10 min","AUTO · 15 min","AUTO · 20 min"].every(v=>dock.includes(v)));
 test("Choice panel resizes native window",dock.includes('popup.getBoundingClientRect().bottom')&&dock.includes('Native.resize(h)'));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
@@ -32,7 +32,7 @@ test("Chevron is at bottom of the sprites",dock.indexOf('id="collapse"')>dock.in
 test("Red close is alongside heart with standard background",dock.indexOf('id="close"')>dock.indexOf('id="donate"')&&dock.includes("#controls #close{"));
 test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'));
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
-test("Original compact toolbar is only one 34dp row",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP)')&&service.includes("MENU_BASE_DP=34"));
+test("Original horizontal toolbar defaults to 34dp and vertical menu is optional",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(menuBaseHeight())')&&service.includes("MENU_BASE_DP=34")&&service.includes('return menuVertical?Math.min(440'));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login returns to Home and does not send it to background",!main.includes('postDelayed(()->moveTaskToBack(true)'));
 test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
@@ -51,9 +51,9 @@ test("Login, Shiny and league filters remain independent",service.includes('JSON
 
 const toolbarCols=dock.match(/#controls\{[^}]*grid-template-columns:([^;]+);/);
 const toolbarButtons=dock.slice(dock.indexOf('<div id="menu"><div id="controls">'),dock.indexOf('</div><div id="choices"')).match(/<button\b/g)||[];
-test("All twelve toolbar actions fit compactly side by side on one row",
+test("All thirteen toolbar actions fit compactly side by side on one row",
   !!toolbarCols&&toolbarCols[1].trim()==="34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr"&&
-  toolbarButtons.length===12&&dock.includes("grid-auto-flow:column"));
+  toolbarButtons.length===13&&dock.includes("grid-auto-flow:column"));
 test("Single pin shows active radius without a second settings button",
   (dock.match(/id="location"/g)||[]).length===1&&dock.includes('id="locationRadiusText"')&&
   dock.includes('textContent=locationEnabled?locationRadius+"km":""'));
@@ -64,9 +64,9 @@ test("When OFF, icon and badge never display outdated radius",
   dock.includes('geoBadge.classList.toggle("active",locationEnabled)')&&
   dock.includes('document.getElementById("locationRadiusText").textContent=locationEnabled?locationRadius+"km":""'));
 test("Switching from location editor to mode releases keyboard focus",
-  dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
+  dock.includes('if((choiceOpen==="location"||choiceOpen==="filters")&&kind!==choiceOpen)')&&dock.includes('Native.locationEditor(false)'));
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
-test("Compact twelve-column bar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(396,screenWidthDp()-8)"));
+test("Compact toolbar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(wanted,screenWidthDp()-8)")&&service.includes("30*visibleControls"));
 test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
 test("Chevron has visible artwork and no surface background",dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
@@ -88,7 +88,7 @@ test("Mode AUTO and location work before delayed native menu sync",dock.includes
 test("Mode and AUTO provide immediate visible feedback",dock.includes("mode=String(value);draw();Native.setMode(mode)")&&dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
-test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(396,screenWidthDp()-8)"));
+test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(wanted,screenWidthDp()-8)")&&service.includes("menuDp()"));
 test("Favorites use translucent gradient without background dim",picker.includes("Color.argb(159,24,34,47)")&&picker.includes("window.setDimAmount(0.0f)"));
 test("Home has explicit login and logout",main.includes('signIn.setText("Entrar / vincular")')&&main.includes('signOut.setText("Sair")'));
 test("Login does not start overlay if none is running",main.includes("if(!OverlayService.isRunning())return;"));
@@ -109,7 +109,7 @@ const iconGenerator=fs.readFileSync(path.join(__dirname,'../scripts/RoundIcon.ja
 const ci=fs.readFileSync(path.join(__dirname,'../../.github/workflows/build-overlay.yml'),'utf8');
 const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
-test("PokeSearch 0.51 source configured",gradleBuild.includes('versionCode = 51')&&gradleBuild.includes('versionName = "0.51-beta"'));
+test("PokeSearch 0.53 source configured",gradleBuild.includes('versionCode = 53')&&gradleBuild.includes('versionName = "0.53-beta"'));
 test("Round icon generator always uses headless mode",gradleBuild.includes('-Djava.awt.headless=true')&&iconGenerator.includes('System.setProperty("java.awt.headless","true")'));
 test("Network main-frame error is handled",service.includes('request.isForMainFrame()')&&service.includes('Falha de navegação principal'));
 test("Browser exception and parse failures recorded",service.includes('recordFailure("executar JS site",e)')&&service.includes('recordFailure("interpretar resposta JS",e)'));
@@ -185,8 +185,8 @@ test("v0.50 no phantom gap when toolbar is beside dock",
 test("v0.50 transparent floating collapse arrow",
     dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("v0.50 AUTO OFF in UI and service, with no periodic posts",
-    dock.includes('[[0,"AUTO · OFF')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
-    service.includes('if(minutes!=0&&minutes!=5')&&
+    dock.includes('[[0,"AUTO · OFF')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
+    service.includes('if(minutes!=0&&minutes!=3&&minutes!=5')&&
     service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(periodic,'));
 test("v0.50 notifications cycle off / on / silent",
     service.includes('alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off"')&&
@@ -209,11 +209,11 @@ test("Android responsive controls have no phantom spacer below popup",
   dock.includes('#choices{display:none;position:absolute;top:34px;'));
 test("Android responsive controls measure actual one-row menu height",
   dock.includes('if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);')&&
-  service.includes('menuParams.height=dp(MENU_BASE_DP)')&&
+  service.includes('menuParams.height=dp(menuBaseHeight())')&&
   service.includes('Math.min(450,screenHeightDp()-72)'));
-test("Android responsive layout contains all 12 controls exactly once",
-  toolbarButtons.length===12&&
-  ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','report','donate','close']
+test("Android responsive layout contains all 13 controls exactly once",
+  toolbarButtons.length===13&&
+  ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','filters','report','donate','close']
   .every(id=>(dock.match(new RegExp('id="'+id+'"','g'))||[]).length===1));
 test("Shiny tap skips Search cooldown to inspect site and auth",
   service.includes('private void prepareImmediateShiny(int generation)')&&
@@ -322,3 +322,16 @@ test("Pix digest checked with SHA-256 and constant-time compare",guard.includes(
 test("Login protected from screenshots",main.includes("loginDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)"));
 test("R8 keeps JavascriptInterface",proguard.includes("@android.webkit.JavascriptInterface")&&proguard.includes("-keepattributes"));
 test("Release minifies and shrinks",gradle.includes("isMinifyEnabled = true")&&gradle.includes("isShrinkResources = true"));
+
+// v0.52 opt-in UI regression coverage
+ test("v0.52 keeps vertical menu optional without changing original colors",dock.includes('body.controls-window.vertical #controls')&&dock.includes('#controls #cycle.ivOn{background:#3a5040bd'));
+ test("v0.52 rank is optional and only shown with a numeric result",dock.includes('showRanks=ranks!==false')&&dock.includes('Number.isInteger(rv)'));
+ test("v0.52 home preferences persist hidden icon choices",main.includes('prefs.getString("hiddenControls"')&&main.includes('prefs.edit().putString("hiddenControls"'));
+
+test("v0.53 floating filter action and popup are present",dock.includes('id="filters"')&&dock.includes("renderFiltersPanel()")&&dock.includes('Native.setSearchOptions(JSON.stringify(val))'));
+test("v0.53 rank badges show verified upper limit when exact rank is unknown",dock.includes('rankUpperBound')&&dock.includes('showRanks&&(league==="gl"||league==="ul")'));
+test("v0.53 Android validates floating search preference values",service.includes('public void setSearchOptions(String value)')&&service.includes('options.put("rankMax"'));
+
+test("Multi-search profiles have native persistence and sequential retrieval",service.includes('setSearchProfiles(String value)')&&service.includes('beginProfileCycle(boolean manual)')&&service.includes('finishProfileCycleStep(JSONObject r,JSONArray sorted)'));
+test("Three independent group headers and folding are implemented",dock.includes('toggleResultGroup(index)')&&dock.includes('groupBlock')&&dock.includes('profileIndex'));
+test("Toolbar can show text with horizontal and vertical layouts",dock.includes('body.controls-window.with-text #controls')&&dock.includes('body.controls-window.vertical.with-text #controls'));

@@ -42,16 +42,16 @@ jobs:
             -dname "CN=PokeSearch Private Beta Test,O=PokeSearch,C=BR"
           gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease
           mkdir -p Aplicativo
-          cp app/build/outputs/apk/release/app-release.apk Aplicativo/PokeSearch-0.51-beta.apk
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs Aplicativo/PokeSearch-0.51-beta.apk
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging Aplicativo/PokeSearch-0.51-beta.apk | grep -E "^package: name='com.lucianotoscano.pokesearch' versionCode='51' versionName='0.51-beta'"
-          unzip -t Aplicativo/PokeSearch-0.51-beta.apk >/dev/null
-          ! unzip -Z1 Aplicativo/PokeSearch-0.51-beta.apk | grep -E '(^|/)(.*\\.java|.*\\.kt|.*\\.jks|mapping\\.txt)$'
-          sha256sum Aplicativo/PokeSearch-0.51-beta.apk > Aplicativo/SHA256SUMS.txt
+          cp app/build/outputs/apk/release/app-release.apk Aplicativo/PokeSearch-0.53-beta.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs Aplicativo/PokeSearch-0.53-beta.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging Aplicativo/PokeSearch-0.53-beta.apk | grep -E "^package: name='com.lucianotoscano.pokesearch' versionCode='53' versionName='0.53-beta'"
+          unzip -t Aplicativo/PokeSearch-0.53-beta.apk >/dev/null
+          ! unzip -Z1 Aplicativo/PokeSearch-0.53-beta.apk | grep -E '(^|/)(.*\\.java|.*\\.kt|.*\\.jks|mapping\\.txt)$'
+          sha256sum Aplicativo/PokeSearch-0.53-beta.apk > Aplicativo/SHA256SUMS.txt
           rm -f "$POKE_RELEASE_KEYSTORE"
       - uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-0.51-beta-APK-only
-          path: Aplicativo/PokeSearch-0.51-beta.apk
+          name: PokeSearch-0.53-beta-APK-only
+          path: Aplicativo/PokeSearch-0.53-beta.apk
           if-no-files-found: error
           retention-days: 30

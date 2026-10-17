@@ -37,7 +37,121 @@ public class OverlayService extends Service {
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return Math.max(1,Math.min(396,screenWidthDp()-8));}
+    private boolean menuVertical=false,menuChoicesOpen=false,menuShowText=false;
+    private boolean multiCycleActive=false;
+    private int profileIndex=-1,lastProfileSearched=-1;
+    private String previousMode="iv";
+    private final java.util.ArrayList<Integer> profileQueue=new java.util.ArrayList<>();
+    private final java.util.HashMap<Integer,JSONArray> profileCache=new java.util.HashMap<>();
+    private JSONArray getSearchProfiles(){
+        try{return new JSONArray(getSharedPreferences("prefs",0).getString("searchProfiles","[]"));}
+        catch(Exception e){recordFailure("carregar pesquisas",e);return new JSONArray();}
+    }
+    private boolean multiEnabled(){
+        return getSharedPreferences("prefs",0).getBoolean("multiEnabled",false)
+            &&getSearchProfiles().length()>0;
+    }
+    private JSONObject currentProfile(){
+        return profileIndex<0?null:getSearchProfiles().optJSONObject(profileIndex);
+    }
+    private void beginProfileCycle(boolean manual){
+        if(multiCycleActive||searchInProgress)return;
+        JSONArray profiles=getSearchProfiles();
+        profileQueue.clear();
+        for(int i=0;i<Math.min(3,profiles.length());i++){
+            JSONObject p=profiles.optJSONObject(i);
+            if(p!=null&&p.optBoolean("enabled",false)){
+                String chosen=p.optString("mode","");
+                if("iv".equals(chosen)||"gl".equals(chosen)||"ul".equals(chosen))
+                    profileQueue.add(i);
+            }
+        }
+        if(profileQueue.isEmpty()){
+            status("Ative pelo menos uma das três pesquisas.");
+            return;
+        }
+        previousMode=mode;
+        multiCycleActive=true;
+        profileCache.clear();
+        runNextProfile(manual);
+    }
+    private void runNextProfile(boolean manual){
+        if(stopped||loginPaused){multiCycleActive=false;return;}
+        if(profileQueue.isEmpty()){
+            multiCycleActive=false;profileIndex=-1;mode=previousMode;
+            status("Três pesquisas concluídas · listas independentes.");
+            return;
+        }
+        profileIndex=profileQueue.remove(0);
+        JSONObject p=currentProfile();
+        if(p==null){runNextProfile(manual);return;}
+        mode=p.optString("mode","iv");
+        searchInProgress=false;
+        status("Pesquisando lista "+(profileIndex+1)+" de até 3 · "+mode.toUpperCase(java.util.Locale.ROOT));
+        refreshSingle(manual);
+    }
+    private void finishProfileCycleStep(JSONObject r,JSONArray sorted){
+        profileCache.put(profileIndex,sorted);
+        lastProfileSearched=profileIndex;
+        JSONArray merged=new JSONArray();
+        JSONArray allProfiles=getSearchProfiles();
+        for(int i=0;i<Math.min(3,allProfiles.length());i++){
+            JSONObject profile=allProfiles.optJSONObject(i);
+            if(profile==null||!profile.optBoolean("enabled",false))continue;
+            JSONArray stored=profileCache.get(i);
+            if(stored==null)continue;
+            for(int j=0;j<stored.length();j++){
+                JSONObject card=stored.optJSONObject(j);
+                if(card==null)continue;
+                try{
+                    JSONObject copied=new JSONObject(card.toString());
+                    int siteIndex=copied.optInt("sourceIndex",-1);
+                    copied.put("siteSourceIndex",siteIndex);
+                    copied.put("sourceIndex",i*100+Math.max(0,siteIndex));
+                    copied.put("profileIndex",i);
+                    copied.put("searchMode",profile.optString("mode","iv"));
+                    copied.put("profileRankMax",profile.optInt("rankMax",1));
+                    merged.put(copied);
+                }catch(Exception e){recordFailure("identificar perfil",e);}
+            }
+        }
+        results=merged.toString();
+        armNextDespawn(merged);
+        if(selected>=0)hideDetails();
+        update();
+        if(!profileQueue.isEmpty()){
+            long wait=Math.max(850L,MIN_SEARCH_GAP_MS-
+                (System.currentTimeMillis()-getSharedPreferences("prefs",0)
+                    .getLong("lastNetworkSearchAt",0L))+300L);
+            status("Lista "+(profileIndex+1)+" pronta. Próxima pesquisa em "+
+                Math.max(1L,(wait+999L)/1000L)+"s.");
+            handler.postDelayed(()->{if(multiCycleActive&&!stopped)runNextProfile(true);},wait);
+        }else{
+            multiCycleActive=false;
+            profileIndex=-1;
+            mode=previousMode;
+            status("Buscas concluídas · "+merged.length()+" Pokémon em listas separadas");
+        }
+    }
+    private String hiddenControls="";
+    private int visibleControls=13;
+    private int menuDp(){
+        int wanted=menuVertical?(menuShowText?154:44):(menuShowText?screenWidthDp()-8:Math.max(35,30*visibleControls+4));
+        if(menuChoicesOpen)wanted=Math.max(wanted,316);
+        return Math.max(1,Math.min(wanted,screenWidthDp()-8));
+    }
+    private int menuBaseHeight(){return menuVertical?Math.min(440,Math.max(34,visibleControls*32)):MENU_BASE_DP;}
+    private void loadMenuPreferences(android.content.SharedPreferences pref){
+        String orientation=pref.getString("menuOrientation","horizontal");
+        menuVertical="vertical".equals(orientation);
+        menuShowText=pref.getBoolean("menuShowText",false);
+        hiddenControls=pref.getString("hiddenControls","");
+        int count=0;
+        String[] ids={"cycle","sh","period","manualRefresh","size","clock",
+            "bell","star","location","filters","report","donate","close"};
+        for(String id:ids)if(!hiddenControls.contains("|"+id+"|"))count++;
+        visibleControls=count;
+    }
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams,menuParams;
@@ -113,8 +227,16 @@ public class OverlayService extends Service {
                 if(active.length()!=old.length()){
                     results=active.toString();hideDetails();update();
                 }
-                // Expiration is a local UI event, never a reason to query the site.
-                // Re-arm the next remaining deadline without changing AUTO cadence.
+                // Refresh on the last despawn, never faster than three minutes.
+                // Keep OFF mode strictly manual and avoid duplicated pending callbacks.
+                if(active.length()==0&&old.length()>0&&intervalMinutes>0){
+                    long last=getSharedPreferences("prefs",0)
+                        .getLong("lastNetworkSearchAt",0L);
+                    long wait=Math.max(0L,180000L-(now-last));
+                    handler.removeCallbacks(queuedRefresh);
+                    handler.postDelayed(queuedRefresh,wait);
+                }
+                // Also re-arm the deadline of any remaining spawn.
                 armNextDespawn(active);
             }catch(Exception e){recordFailure("limpar vencidos",e);}
         }
@@ -181,9 +303,44 @@ public class OverlayService extends Service {
         // edge overlap without changing the sprite image dimensions.
         return Math.max(26,spriteSize-8);
     }
+    private JSONObject searchOptionsJson(){
+        android.content.SharedPreferences pref=getSharedPreferences("prefs",0);
+        JSONObject options=new JSONObject();
+        try{
+            options.put("rankMax",Math.max(1,Math.min(200,pref.getInt("rankMax",1))));
+            options.put("customIvEnabled",pref.getBoolean("customIvEnabled",false));
+            options.put("ivA",pref.getInt("customIvAttack",0));
+            options.put("ivD",pref.getInt("customIvDefense",15));
+            options.put("ivH",pref.getInt("customIvHp",15));
+            options.put("showRanks",pref.getBoolean("showRanks",true));
+            options.put("sort",pref.getString("sort","despawn"));
+            for(String key:new String[]{"cpMin","cpMax","levelMin","levelMax",
+                    "weather","size","form","gender"})
+                options.put(key,pref.getString(key,""));
+            JSONObject profile=currentProfile();
+            if(profile!=null){
+                options.put("rankMax",Math.max(1,Math.min(200,profile.optInt("rankMax",1))));
+                options.put("customIvEnabled",profile.optBoolean("customIvEnabled",false));
+                options.put("ivA",profile.optInt("ivA",15));
+                options.put("ivD",profile.optInt("ivD",15));
+                options.put("ivH",profile.optInt("ivH",15));
+            }
+        }catch(Exception e){recordFailure("serializar filtros",e);}
+        return options;
+    }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+
+                JSONObject.quote(hiddenControls)+","+JSONObject.quote(menuVertical?"vertical":"horizontal")+","+
+                getSharedPreferences("prefs",0).getBoolean("showRanks",true)+","+
+                Math.max(1,Math.min(200,getSharedPreferences("prefs",0).getInt("rankMax",1)))+","+
+                getSharedPreferences("prefs",0).getBoolean("customIvEnabled",false)+","+
+                JSONObject.quote(getSharedPreferences("prefs",0).getInt("customIvAttack",0)+"/"+
+                    getSharedPreferences("prefs",0).getInt("customIvDefense",15)+"/"+
+                    getSharedPreferences("prefs",0).getInt("customIvHp",15))+","+
+                searchOptionsJson().toString()+","+
+                multiEnabled()+","+getSearchProfiles().toString()+","+
+                menuShowText+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         if(selected>=0)showDetails(selected);
@@ -196,7 +353,22 @@ public class OverlayService extends Service {
     private void diagnosticError(String s){
         getSharedPreferences("prefs",0).edit().putString("lastError",s).apply();
         BugReport.log(this,"ERROR",s);
-        status(s);
+        if(multiCycleActive){
+            final int failed=profileIndex;
+            if(profileQueue.isEmpty()||s.contains("login")||s.contains("Shiny")){
+                multiCycleActive=false;profileQueue.clear();profileIndex=-1;mode=previousMode;
+                status("Pesquisa "+(failed+1)+" interrompida: "+s);
+            }else{
+                long wait=Math.max(850L,MIN_SEARCH_GAP_MS-
+                    (System.currentTimeMillis()-getSharedPreferences("prefs",0)
+                        .getLong("lastNetworkSearchAt",0L))+300L);
+                status("Lista "+(failed+1)+" indisponível; próxima lista em "+
+                    Math.max(1,(wait+999L)/1000L)+"s. "+s);
+                handler.postDelayed(()->{
+                    if(multiCycleActive&&!stopped&&!loginPaused)runNextProfile(true);
+                },wait);
+            }
+        }else status(s);
     }
     private void updateWindow(){
         if(wm!=null&&root!=null&&params!=null){
@@ -478,7 +650,7 @@ public class OverlayService extends Service {
                 }
             }
         });
-        menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP),
+        menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(menuBaseHeight()),
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
@@ -543,7 +715,9 @@ public class OverlayService extends Service {
             }else status("Abra o app e faça login.");
             return;
         }
-        String code=script().replace("__ACTION__",JSONObject.quote(action))
+        JSONObject searchOptions=searchOptionsJson();
+        String code=script().replace("__OPTIONS__",searchOptions.toString())
+                .replace("__ACTION__",JSONObject.quote(action))
                 .replace("__MODE__",JSONObject.quote(mode))
                 .replace("__SHINY__",shiny?"true":"false");
         try{website.evaluateJavascript(code,raw->{
@@ -571,6 +745,13 @@ public class OverlayService extends Service {
     }
     private void refresh(){refresh(false);}
     private void refresh(boolean manual){
+        if(multiCycleActive)return; // Only the ordered profile scheduler advances this batch.
+        if(multiEnabled()){
+            beginProfileCycle(manual);return;
+        }
+        refreshSingle(manual);
+    }
+    private void refreshSingle(boolean manual){
         if(stopped||loginPaused)return;
         if(searchInProgress){
             if(manual)status("Busca em andamento. Toque ↻ novamente quando terminar.");
@@ -881,6 +1062,10 @@ public class OverlayService extends Service {
                 comparator=(a1,a2)->Integer.compare(rankForSort(a1),rankForSort(a2));break;
             case "iv":
                 comparator=(a1,a2)->Double.compare(a2.optDouble("ivPercent",0),a1.optDouble("ivPercent",0));break;
+            case "cp":
+                comparator=(a1,a2)->Integer.compare(a2.optInt("cp",0),a1.optInt("cp",0));break;
+            case "level":
+                comparator=(a1,a2)->Double.compare(a2.optDouble("level",0),a1.optDouble("level",0));break;
             case "shiny":
                 comparator=(a1,a2)->Boolean.compare(a2.optBoolean("shiny"),a1.optBoolean("shiny"));break;
             default:
@@ -897,12 +1082,20 @@ public class OverlayService extends Service {
     }
     private boolean verifiedTargetCriteria(JSONObject card){
         if(card==null)return false;
+        android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+        JSONObject current=searchOptionsJson();
         if("iv".equals(mode)){
+            if(current.optBoolean("customIvEnabled",false)){
+                String target=current.optInt("ivA",0)+"/"+
+                    current.optInt("ivD",15)+"/"+current.optInt("ivH",15);
+                return target.equals(card.optString("iv",""));
+            }
             return "15/15/15".equals(card.optString("iv","")) ||
                 "100".equals(card.optString("ivPercent",""));
         }
         if("gl".equals(mode)||"ul".equals(mode)){
-            return "1".equals(card.optString("rank","").trim());
+            int rank=rankForSort(card),limit=Math.max(1,Math.min(200,current.optInt("rankMax",1)));
+            return rank<=limit||(rank==999999);
         }
         return false;
     }
@@ -949,7 +1142,7 @@ public class OverlayService extends Service {
                 history.put(entry);
             }catch(Exception e){recordFailure("gravar histórico",e);}
         }
-        knownSpawns.clear();knownSpawns.addAll(current);
+        if(!multiCycleActive)knownSpawns.clear();knownSpawns.addAll(current);
         JSONArray limited=new JSONArray();
         for(int i=Math.max(0,history.length()-40);i<history.length();i++)limited.put(history.opt(i));
         preferences.edit().putString("history",limited.toString()).apply();
@@ -998,8 +1191,12 @@ public class OverlayService extends Service {
         }
         JSONArray sorted=sortItems(items);
         recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
-        results=sorted.toString();
         searchInProgress=false;
+        if(multiCycleActive&&profileIndex>=0){
+            finishProfileCycleStep(r,sorted);
+            return;
+        }
+        results=sorted.toString();
         armNextDespawn(sorted);
         if(selected>=0)hideDetails();
         getSharedPreferences("prefs",0).edit()
@@ -1015,16 +1212,26 @@ public class OverlayService extends Service {
         if(Math.abs(target-height)<2)return;
         height=target;params.height=dp(height);updateWindow();moveDetail();
     }
+    private void setChoicesOpen(boolean value){
+        if(!menuExpanded||menuParams==null)return;
+        if(menuChoicesOpen==value)return;
+        menuChoicesOpen=value;
+        menuParams.width=dp(menuDp());
+        menuDrawWidth=-1;
+        updateWindow();
+        moveDetail();
+    }
     private void menu(boolean show){
         if(params==null||minimized)return;
         if(show==menuExpanded)return;
         if(!show&&locationEditorOpen)locationEditor(false);
+        if(!show)menuChoicesOpen=false;
         menuExpanded=show;
         menuPadDp=0; // Only the measured overlap may shift the sprite list.
         if(show){
             menuDrawHeight=-1;menuDrawWidth=-1;
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
-            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(MENU_BASE_DP);}
+            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(menuBaseHeight());}
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
         }
@@ -1207,6 +1414,117 @@ public class OverlayService extends Service {
                 new String[]{"P","M","G"}[(at+1)%sizes.length]+" · "+size+" × "+size,
                 android.widget.Toast.LENGTH_SHORT).show();
         });}
+        @JavascriptInterface public void setChoicesOpen(boolean open){
+            handler.post(()->OverlayService.this.setChoicesOpen(open));
+        }
+        @JavascriptInterface public void setSearchProfiles(String value){handler.post(()->{
+            if(value==null||value.length()>5200)return;
+            try{
+                JSONObject input=new JSONObject(value);
+                boolean enabled=input.optBoolean("enabled",false);
+                JSONArray profiles=input.optJSONArray("profiles");
+                if(profiles==null||profiles.length()>3||profiles.length()<1)
+                    throw new IllegalArgumentException("Quantidade de pesquisas");
+                JSONArray safe=new JSONArray();
+                for(int i=0;i<profiles.length();i++){
+                    JSONObject p=profiles.optJSONObject(i);
+                    if(p==null)throw new IllegalArgumentException("Perfil inválido");
+                    String kind=p.optString("mode","iv");
+                    if(!"iv".equals(kind)&&!"gl".equals(kind)&&!"ul".equals(kind))
+                        throw new IllegalArgumentException("Modo inválido");
+                    int rank=p.optInt("rankMax",1);
+                    int a=p.optInt("ivA",15),d=p.optInt("ivD",15),h=p.optInt("ivH",15);
+                    if(rank<1||rank>200||a<0||a>15||d<0||d>15||h<0||h>15)
+                        throw new IllegalArgumentException("Ranking/IV inválidos");
+                    JSONObject cleaned=new JSONObject();
+                    cleaned.put("enabled",p.optBoolean("enabled",true));
+                    cleaned.put("mode",kind);cleaned.put("rankMax",rank);
+                    cleaned.put("customIvEnabled",p.optBoolean("customIvEnabled",false));
+                    cleaned.put("ivA",a);cleaned.put("ivD",d);cleaned.put("ivH",h);
+                    safe.put(cleaned);
+                }
+                getSharedPreferences("prefs",0).edit()
+                    .putBoolean("multiEnabled",enabled)
+                    .putString("searchProfiles",safe.toString()).apply();
+                multiCycleActive=false;profileIndex=-1;profileQueue.clear();profileCache.clear();
+                ++requestGeneration;searchInProgress=false;
+                results="[]";hideDetails();update();
+                if(enabled)beginProfileCycle(true);else OverlayService.this.refresh(true);
+            }catch(Exception e){
+                android.widget.Toast.makeText(OverlayService.this,
+                   "Confira os três perfis e seus IVs",android.widget.Toast.LENGTH_LONG).show();
+            }
+        });}
+        @JavascriptInterface public void setSearchOptions(String value){handler.post(()->{
+            if(value==null||value.length()>3500)return;
+            try{
+                JSONObject json=new JSONObject(value);
+                int max=json.optInt("rankMax",1);
+                int attack=json.optInt("ivA",-1),defense=json.optInt("ivD",-1),hp=json.optInt("ivH",-1);
+                if(max<1||max>200||attack<0||attack>15||defense<0||defense>15||hp<0||hp>15)
+                    throw new IllegalArgumentException("IV/rank fora do limite");
+                String[] numbers={"cpMin","cpMax","levelMin","levelMax"};
+                String[] contents=new String[numbers.length];
+                for(int i=0;i<numbers.length;i++){
+                    String val=json.optString(numbers[i],"").trim();
+                    if(!val.isEmpty()){
+                        if(!val.matches(i<2?"\\d{1,5}":"\\d{1,3}(?:\\.\\d)?"))
+                            throw new IllegalArgumentException("PC/Nível inválido");
+                        double num=Double.parseDouble(val);
+                        if(num<0||(i<2&&num>99999)||(i>=2&&num>100))
+                            throw new IllegalArgumentException("PC/Nível fora do limite");
+                    }
+                    contents[i]=val;
+                }
+                for(int i=0;i<4;i+=2){
+                    if(!contents[i].isEmpty()&&!contents[i+1].isEmpty()&&
+                       Double.parseDouble(contents[i])>Double.parseDouble(contents[i+1]))
+                        throw new IllegalArgumentException("Mínimo maior que máximo");
+                }
+                String[] keys={"weather","size","form","gender"};
+                String[] extras=new String[keys.length];
+                for(int i=0;i<keys.length;i++){
+                    String val=json.optString(keys[i],"").trim();
+                    if(val.length()>80||!val.matches("[A-Za-z0-9À-ÿ _,/\\-]*"))
+                        throw new IllegalArgumentException("Filtro adicional inválido");
+                    extras[i]=val;
+                }
+                String sorting=json.optString("sort","despawn");
+                if(!java.util.Arrays.asList("despawn","rank","iv","cp","level","shiny").contains(sorting))
+                    throw new IllegalArgumentException("Ordenação inválida");
+                sort=sorting;
+                android.content.SharedPreferences.Editor edit=
+                    getSharedPreferences("prefs",0).edit()
+                    .putString("sort",sorting)
+                    .putInt("rankMax",max)
+                    .putBoolean("customIvEnabled",json.optBoolean("customIvEnabled",false))
+                    .putInt("customIvAttack",attack).putInt("customIvDefense",defense)
+                    .putInt("customIvHp",hp)
+                    .putBoolean("showRanks",json.optBoolean("showRanks",true));
+                for(int i=0;i<numbers.length;i++)edit.putString(numbers[i],contents[i]);
+                for(int i=0;i<keys.length;i++)edit.putString(keys[i],extras[i]);
+                edit.apply();
+                update();
+                // Only explicit confirmation requests the next site search.
+                multiCycleActive=false;profileQueue.clear();profileIndex=-1;
+                ++requestGeneration;searchInProgress=false;
+                results="[]";hideDetails();
+                OverlayService.this.refresh(true);
+                android.widget.Toast.makeText(OverlayService.this,
+                    "Filtros atualizados",android.widget.Toast.LENGTH_SHORT).show();
+            }catch(Exception e){
+                android.widget.Toast.makeText(OverlayService.this,
+                    "Confira valores de IV, Rank e demais filtros",android.widget.Toast.LENGTH_LONG).show();
+            }
+        });}
+        @JavascriptInterface public void setToolbarText(boolean shown){handler.post(()->{
+            boolean expanded=menuExpanded;
+            if(expanded)menu(false);
+            getSharedPreferences("prefs",0).edit().putBoolean("menuShowText",shown).apply();
+            loadMenuPreferences(getSharedPreferences("prefs",0));
+            update();
+            if(expanded)menu(true);
+        });}
         @JavascriptInterface public void toggleTimers(){handler.post(()->{
             showTimers=!showTimers;
             getSharedPreferences("prefs",0).edit().putBoolean("showTimers",showTimers).apply();
@@ -1281,7 +1599,7 @@ public class OverlayService extends Service {
             }
         });}
         @JavascriptInterface public void setIntervalMinutes(int minutes){handler.post(()->{
-            if(minutes!=0&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
+            if(minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
             if(intervalMinutes==minutes)return;
             intervalMinutes=minutes;
             getSharedPreferences("prefs",0).edit()
@@ -1304,6 +1622,10 @@ public class OverlayService extends Service {
         @JavascriptInterface public void shiny(){handler.post(()->{
             if(stopped||loginPaused)return;
             shiny=!shiny;
+            if(multiCycleActive){
+                multiCycleActive=false;profileQueue.clear();profileIndex=-1;
+                mode=previousMode;
+            }
             android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
             prefs.edit().putBoolean("shiny",shiny).apply();
             final int generation=++requestGeneration;
@@ -1381,8 +1703,12 @@ public class OverlayService extends Service {
             }
         }catch(Exception e){recordFailure("ler cartão coordenadas",e);}
         if(chosen==null){deliverCoords("","Pokémon indisponível");return;}
+        if(multiEnabled()&&chosen.optInt("profileIndex",-1)!=lastProfileSearched){
+            deliverCoords("","Coordenadas deste grupo exigem reabrir sua busca; não são lidas de outra lista.");
+            return;
+        }
         JSONObject target=chosen;
-        execute("coords:"+sourceIndex,response->{
+        execute("coords:"+target.optInt("siteSourceIndex",sourceIndex),response->{
             if(!response.optBoolean("ok")){
                 deliverCoords("",response.optString("status","Get coords indisponível"));return;
             }
@@ -1392,6 +1718,12 @@ public class OverlayService extends Service {
     private void syncPreferencesWithoutSearch(){
         if(stopped)return;
         android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+        boolean oldVertical=menuVertical;
+        String oldHidden=hiddenControls;
+        boolean wasMenuOpen=menuExpanded;
+        if(wasMenuOpen)menu(false);
+        loadMenuPreferences(prefs);
+        menuChoicesOpen=false;
         int wanted=prefs.getInt("spriteSize",45);
         spriteSize=(wanted==35||wanted==45||wanted==55)?wanted:45;
         showTimers=prefs.getBoolean("showTimers",false);
@@ -1418,6 +1750,7 @@ public class OverlayService extends Service {
             moveDetail();
         }
         update(); // Local UI only; does not call refresh or navigate the website.
+        if(wasMenuOpen)menu(true);
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
         String action=i==null||i.getAction()==null?"":i.getAction();
@@ -1478,6 +1811,7 @@ public class OverlayService extends Service {
         }
         // v0.20 saved 10 as the implicit default; only keep a rate the user explicitly chose.
         android.content.SharedPreferences pref=getSharedPreferences("prefs",0);
+        loadMenuPreferences(pref);
         if(!pref.getBoolean("shinyOptInV32",false)){
             pref.edit().putBoolean("shiny",false).putBoolean("shinyOptInV32",true).apply();
             shiny=false;
@@ -1488,7 +1822,7 @@ public class OverlayService extends Service {
         }else{
             intervalMinutes=pref.getInt("intervalMinutes",5);
         }
-        if(intervalMinutes!=0&&intervalMinutes!=5&&intervalMinutes!=10&&
+        if(intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&intervalMinutes!=10&&
            intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=5;
         schedulePeriodic();
         spriteSize=pref.getInt("spriteSize",45);
