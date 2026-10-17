@@ -179,6 +179,41 @@ const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 const resultWindow=window.location.search.indexOf("results=1")!==-1;
 document.body.classList.add(resultWindow?"result-window":controlsWindow?"controls-window":"dock-window");
 document.documentElement.classList.toggle("controls-root",controlsWindow);
+// All 18 original artworks from Google Drive/03_Icones_Ligas.
+// These describe the CURRENT search; they do not activate unavailable filters.
+const RESULT_ICONS=Object.freeze({
+ none:{normal:"none.png",shiny:"none-shiny.png",title:"Sem filtro"},
+ custom:{normal:"custom.png",shiny:"custom-shiny.png",title:"IV personalizado"},
+ percent:{normal:"percent.png",shiny:"percent-shiny.png",title:"IV por porcentagem"},
+ hundo:{normal:"hundo.png",shiny:"shundo.png",title:"IV 100%"},
+ nundo:{normal:"nundo.png",shiny:"shnundo.png",title:"IV 0%"},
+ gl:{normal:"great-league.png",shiny:"great-league-shiny.png",title:"Grande Liga"},
+ ul:{normal:"ultra-league.png",shiny:"ultra-league-shiny.png",title:"Ultra Liga"},
+ ml:{normal:"master-league.png",shiny:"master-league-shiny.png",title:"Liga Mestra"},
+ cup:{normal:"cup-league.png",shiny:"cup-league-shiny.png",title:"Liga Copa"}
+});
+const RESULT_MODE_ALIASES=Object.freeze({
+ iv:"hundo",iv100:"hundo",hundo:"hundo",shundo:"hundo",
+ iv0:"nundo",nundo:"nundo",shnundo:"nundo",
+ raw:"custom",custom:"custom",personalizado:"custom",
+ percent:"percent",percentage:"percent",porcentagem:"percent",
+ nofilter:"none",none:"none",all:"none",sem_filtro:"none",
+ gl:"gl",great:"gl",great_league:"gl",
+ ul:"ul",ultra:"ul",ultra_league:"ul",
+ ml:"ml",master:"ml",master_league:"ml",
+ cup:"cup",cup_league:"cup",little_cup:"cup"
+});
+function getResultIcon(searchMode,shinyActive){
+ const modeKey=String(searchMode==null?"":searchMode).trim().toLowerCase().replace(/[\s-]+/g,"_");
+ const family=RESULT_MODE_ALIASES[modeKey]||"none";
+ const pair=RESULT_ICONS[family];
+ const shining=!!shinyActive;
+ return {
+  path:"file:///android_asset/result-icons/"+(shining?pair.shiny:pair.normal),
+  title:pair.title+(shining?" · Shiny only":""),
+  family
+ };
+}
 let locationEnabled=false,locationCoords="",locationRadius=0;
 let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 function setMenuOpen(open,side,pad){
@@ -387,14 +422,15 @@ function draw(){
  empty.textContent=/sem resultados/i.test(status)?"0":/falha|erro|não|login/i.test(status)?"!":"…";
  empty.title=status||"Aguardando busca";
  if(resultWindow){
-  const iconName=mode==="gl"?"great-league":mode==="ul"?"ultra-league":
-     shiny?"shundo":"hundo";
+  // Only show a Shiny badge after the site confirms that Shiny-only is active.
+  // A pending toggle keeps its previous non-Shiny identification.
+  const selectedIcon=getResultIcon(mode,shiny);
   const header=document.getElementById("resultHeader");
-  const source="file:///android_asset/result-icons/"+iconName+".png";
   const image=document.getElementById("resultModeIcon");
-  if(image.getAttribute("src")!==source)image.setAttribute("src",source);
-  const label=mode==="gl"?"Grande Liga #1":mode==="ul"?"Ultra Liga #1":
-    shiny?"Shundo · IV100 ✨":"Hundo · IV100";
+  if(image.src!==selectedIcon.path)image.src=selectedIcon.path;
+  const label=selectedIcon.title+
+      ((mode==="gl"||mode==="ul")?" · PvP #1":"")+
+      (shinyPending?" · Shiny aguardando confirmação":"");
   header.title=label+" · toque para recolher/expandir · arraste para mover";
   header.setAttribute("aria-label",header.title);
  }
