@@ -371,7 +371,7 @@ function toggleChoices(kind){
   modeScrollTop=0;
   modeDraft={...searchSettings,mode};
   renderModeChoices();
-  if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();
+  if(controlsWindow){Native.locationEditor(true);if(Native.requestFilterOptions)Native.requestFilterOptions();}
   return;
  }
  const current=period;
