@@ -159,6 +159,18 @@
 **Não foi compilado APK** nem executado teste físico em Android. Conservar 18 PNGs, UI compacta, filtros de ranking independentes, códigos de segurança e fluxos existentes. Continuar com build somente após solicitação expressa do usuário.
 
 ---
+## 6.7. Planejamento dos filtros adicionais do PoGoCoordinates — 17/10/2026
+
+**Documento técnico registrado:** [PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md](PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md) em branch independente `plan/v051-pogocoordinates-filtros-20261017`, derivada da branch do PR #21, sem modificação do APK ou fontes.
+
+**Verificado:** site apresenta Stats (CP, nível, IV% e Raw IV), PvP (liga, Top ranking, evoluções anteriores, CP mínimo), filtros gerais (espécie, tamanho, forma, sexo), Weather, Shiny, localização e seção Advanced VIP. **Não verificados:** valores internos de dropdowns, significado exato de Weather, opções VIP e mudanças dinâmicas por espécie. Nunca presumir que Weather equivale a Com/Sem bônus.
+
+**Próxima implementação:** descobrir opções reais do formulário sem dados de conta; expor Form/Size e campos avançados no popup do menu existente, sem adicionar ícones; confirmar cada filtro antes de Search; limpar filtros ocultos sem apagar Shiny/📍; manter 18 imagens, 12 ações, janela de resultados, limite de consultas, validação IV% 46 valores, GL/UL 1–50 e histórico confirmado. Modos Sem Filtro/Mestre/Copinha ainda não habilitados.
+
+**Situação:** planejamento concluído; filtros adicionais ainda **não implementados** nem testados em Android. Preservar PR #21, main e backups.
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
