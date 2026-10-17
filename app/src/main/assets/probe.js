@@ -263,7 +263,7 @@ function extraSelect(key,want){
  if(e.matches("input"))return valueInput(e,want);
  if(e.matches("select"))return choice(label,want);
  const opt=findOption(want);
- if(opt){opt.click();return true;}
+ if(opt){opt.click();transientPending=true;return false;} // React state must settle before later filters
  if(e.getAttribute("aria-expanded")!=="true")e.click();
  transientPending=true;
  return false;
