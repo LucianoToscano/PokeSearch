@@ -157,12 +157,23 @@ function verifyRaw(){
  const percent=percentageIVInputs();
  return percent.length===2&&percent.every(input=>Number(input.value)===100);
 }
+// Defense-in-depth: the UI and Android bridge reject unattainable IV values,
+// and the site automation independently verifies the same 46-value domain.
+const ATTAINABLE_IV_PERCENTAGES=Array.from({length:46},(_,sum)=>Math.round(sum*100/45));
+function validPercentRange(){
+ return Number.isInteger(filters.percentMin)&&Number.isInteger(filters.percentMax)&&
+  ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMin)&&
+  ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMax)&&
+  filters.percentMin<=filters.percentMax;
+}
 function applyPercent(){
+ if(!validPercentRange())return false;
  tab("Stats");tab("% IV");
  const inputs=percentageIVInputs();
  return inputs.length===2&&valueInput(inputs[0],filters.percentMin)&&valueInput(inputs[1],filters.percentMax);
 }
 function verifyPercent(){
+ if(!validPercentRange())return false;
  const inputs=percentageIVInputs();
  return inputs.length===2&&Number(inputs[0].value)===filters.percentMin&&Number(inputs[1].value)===filters.percentMax;
 }
