@@ -59,18 +59,20 @@ body.controls-window #choices{z-index:10}
 #locBadge.active{display:block}
 body.controls-window #locBadge{display:none!important}
 #choices.locationPanel{width:306px;max-width:calc(100vw - 12px)}
-#choices.modePanel{width:286px;max-width:calc(100vw - 12px);max-height:min(360px,calc(100vh - 120px));overflow-y:auto;overscroll-behavior:contain}
+#choices.modePanel{width:286px;max-width:calc(100vw - 12px);height:270px;
+ max-height:min(270px,var(--popup-room,400px));overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
 #choices .modeRow{display:flex;align-items:center;gap:3px;padding:2px 4px;min-height:32px;border-radius:6px}
 #choices .modeRow.selected{background:#183b32aa}
 #choices .modeRow .modeSelect{flex:1;min-width:0;width:auto;font-size:11px;padding:7px 5px;margin:0}
 #choices .modeRow .modeValue{flex:none;min-width:35px;width:auto;padding:7px 4px;margin:0;text-align:center;
  color:#dce9f9;background:#283544;border:1px solid #465a70;border-radius:6px;font-size:11px;white-space:nowrap}
 #choices .modeRow .modeValue:focus-visible{outline:1px solid #8de7c9}
-#choices .modeAction{display:flex;gap:5px;padding:7px 4px 3px}
+#choices .modeAction{display:flex;gap:5px;padding:7px 4px 3px;position:sticky;bottom:0;
+ background:#252628f5;z-index:1}
 #choices .modeAction button{width:50%;margin:0;text-align:center;background:#223448;border:1px solid #415369}
 #choices .modeAction .modeApply{background:#17644c;border-color:#50bf94;color:#e0ffee}
 #choices .modeHint{padding:0 9px;color:#9ab0c5;font-size:10px;line-height:1.3}
-#choices .numberGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;max-height:208px;
+#choices .numberGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;max-height:195px;
  overflow-y:auto;overscroll-behavior:contain;padding:4px}
 #choices .numberGrid button{padding:7px 0;margin:0;text-align:center;background:#263345;border:1px solid #455367}
 #choices .numberGrid button.chosen{background:#21634e;border-color:#61d2a7}
@@ -122,7 +124,10 @@ body.controls-window #locBadge{display:none!important}
 #choices{max-width:calc(100vw - 12px);overflow-x:hidden}
 #choices.locationPanel{overflow-y:auto}
 body.controls-window #menu{min-height:34px}
-body.controls-window #choices{top:34px}
+body.controls-window #choices{top:34px;max-height:var(--popup-room,400px);overflow-y:auto}
+body.controls-window #choices.modePanel{max-height:min(270px,var(--popup-room,400px))}
+body.controls-window.popup-above #menu{top:var(--popup-offset,0px)!important}
+body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}
 /* v0.50: floating transparent icons, neutral and unobtrusive colors. */
 #gear{width:35px;height:30px;background:transparent!important;border:0!important;border-radius:0;box-shadow:none!important;color:#f5f5f6}
 #gear svg{filter:drop-shadow(0 1px 2px #000c)}
@@ -233,7 +238,7 @@ function getResultIcon(searchMode,shinyActive){
 let locationEnabled=false,locationCoords="",locationRadius=0;
 let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100};
-let modeDraft=null;
+let modeDraft=null,modeScrollTop=0;
 function setMenuOpen(open,side,pad){
  menuOpen=!!open;
  document.documentElement.style.setProperty("--top-space",menuOpen?(Math.max(0,Number(pad)||0)+"px"):"0px");
@@ -245,6 +250,14 @@ function setMenuOpen(open,side,pad){
  else if(side)document.body.classList.toggle("menu-left",side==="left");
 }
 window.syncMenu=(open,side,pad)=>{setMenuOpen(open,side,pad);fit();};
+window.setMenuPopupPlacement=(above,offset,room)=>{
+ if(!controlsWindow)return;
+ const top=Math.max(0,Number(offset)||0),available=Math.max(60,Number(room)||420);
+ document.documentElement.style.setProperty("--popup-offset",top+"px");
+ document.documentElement.style.setProperty("--popup-room",available+"px");
+ document.body.classList.toggle("popup-above",!!above);
+ fit();
+};
 window.setResultsCollapsed=collapsed=>{
  document.body.classList.toggle("results-collapsed",!!collapsed);
  document.getElementById("resultHeader").setAttribute("aria-expanded",String(!collapsed));
@@ -268,7 +281,8 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  }
  if(controlsWindow&&choiceOpen&&menuOpen){
   const popup=document.getElementById("choices");
-  h=Math.max(h,Math.ceil(popup.getBoundingClientRect().bottom-shell.getBoundingClientRect().top)+6);
+  // Stable measured height regardless of whether native positions it above or below.
+  h=Math.max(h,34+Math.ceil(popup.getBoundingClientRect().height)+6);
  }
  if(Math.abs(h-lastHeight)>1){
   lastHeight=h;
@@ -279,6 +293,7 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
 });}
 function closeChoices(){
  choiceOpen="";
+ modeScrollTop=0;
  document.getElementById("choices").classList.remove("visible");
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
@@ -299,6 +314,7 @@ function toggleChoices(kind){
  choiceOpen=kind;
  if(kind==="location"){renderLocationChoices();return;}
  if(kind==="mode"){
+  modeScrollTop=0;
   modeDraft={...searchSettings,mode};
   renderModeChoices();
   return;
@@ -331,12 +347,16 @@ function renderModeChoices(){
  const row=(name,label,keys)=>{
   const line=make("div","modeRow"+(modeDraft.mode===name?" selected":""));
   const choose=make("button","modeSelect"+(modeDraft.mode===name?" chosen":""),label);
-  choose.type="button";choose.onclick=()=>{modeDraft.mode=name;renderModeChoices();};
+  choose.type="button";choose.onclick=()=>{
+   modeScrollTop=panel.scrollTop;modeDraft.mode=name;renderModeChoices();
+  };
   line.appendChild(choose);
   keys.forEach(({key,title,kind})=>{
    const value=make("button","modeValue",modeDraft[key]+" ▾");
    value.type="button";value.title=title;value.setAttribute("aria-label",title+": "+modeDraft[key]);
-   value.onclick=()=>{modeDraft.mode=name;renderNumberPicker(key,kind,title);};
+   value.onclick=()=>{
+    modeScrollTop=panel.scrollTop;modeDraft.mode=name;renderNumberPicker(key,kind,title);
+   };
    line.appendChild(value);
   });
   panel.appendChild(line);
@@ -364,6 +384,7 @@ function renderModeChoices(){
  };
  cancel.onclick=closeChoices;buttons.append(apply,cancel);panel.appendChild(buttons);
  document.getElementById("cycle").setAttribute("aria-expanded","true");
+ panel.scrollTop=modeScrollTop;
  fit();
 }
 function renderNumberPicker(key,kind,title){
@@ -384,6 +405,8 @@ function renderNumberPicker(key,kind,title){
   };
   grid.appendChild(btn);
  }
+ // Place the current value near the middle of the visible numerical grid.
+ grid.scrollTop=Math.max(0,(Math.floor((modeDraft[key]-low)/5)-2)*38);
  const back=document.createElement("button");back.className="numberBack";back.textContent="‹ Voltar";
  back.onclick=renderModeChoices;
  panel.append(heading,grid,back);fit();
