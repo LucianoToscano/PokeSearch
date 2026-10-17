@@ -129,6 +129,27 @@ body.controls-window #choices{top:34px}
 #controls #bell.generalSilent{background:#48484ac9;border-color:#d2d2d2;color:#e5e5e5}
 #controls #period.autoOff{opacity:.73;background:#333538ac}
 #spawns{margin-top:var(--top-space);gap:0}
+/* One search -> one independent overlay. Preserve the original compact toolbar. */
+#resultHeader{display:none}
+body.dock-window #spawns,body.dock-window #empty,
+body.dock-window #collapse,body.dock-window #locBadge{display:none!important}
+body.dock-window #shell{height:30px;overflow:hidden!important}
+body.dock-window #bubble{position:absolute;top:0}
+body.controls-window #resultHeader{display:none!important}
+body.result-window #gear,body.result-window #menu,body.result-window #locBadge,
+body.result-window #collapse,body.result-window #bubble{display:none!important}
+body.result-window #shell{width:var(--dock);margin:0!important;overflow:hidden}
+body.result-window #resultHeader{width:var(--dock);height:36px;display:flex;
+ align-items:center;justify-content:center;padding:0;margin:0;border:0;
+ border-radius:8px;background:transparent;box-shadow:none}
+body.result-window #resultHeader img{display:block;width:34px;height:34px;
+ object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 2px #0009)}
+body.result-window #resultHeader:focus-visible{outline:1px solid #fff8}
+body.result-window #spawns{margin:0!important;max-height:var(--list-limit);
+ width:var(--dock);padding:0;gap:0}
+body.result-window #empty{margin:0 auto;max-height:18px}
+body.result-window.results-collapsed #spawns,
+body.result-window.results-collapsed #empty{display:none!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -147,6 +168,7 @@ body.controls-window #choices{top:34px}
   <button id="close" title="Encerrar PokeSearch" aria-label="Fechar todo o overlay" onclick="Native.close()">×</button>
  </div><div id="choices" role="group" aria-label="Escolher opção"></div></div>
  <div id="locBadge" role="status" aria-live="polite"></div>
+ <button id="resultHeader" title="Recolher ou expandir os Pokémon · arraste para mover" aria-label="Recolher ou expandir resultados" aria-expanded="true" onclick="Native.toggleResultsCollapsed()"><img id="resultModeIcon" alt="" src="file:///android_asset/result-icons/hundo.png"></button>
  <div id="spawns"></div>
  <button id="empty" title="Toque para saber o motivo" onclick="Native.showStatus()">Aguardando busca</button>
  <button id="collapse" title="Recolher todos os Pokémon e as opções, deixando apenas a engrenagem" aria-label="Recolher todos os Pokémon" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button>
@@ -154,7 +176,8 @@ body.controls-window #choices{top:34px}
 <div id="bubble" role="button" aria-label="Restaurar overlay"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></div>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
-document.body.classList.add(controlsWindow?"controls-window":"dock-window");
+const resultWindow=window.location.search.indexOf("results=1")!==-1;
+document.body.classList.add(resultWindow?"result-window":controlsWindow?"controls-window":"dock-window");
 document.documentElement.classList.toggle("controls-root",controlsWindow);
 let locationEnabled=false,locationCoords="",locationRadius=0;
 let cards=[],active=-1,mode="iv",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
@@ -169,17 +192,37 @@ function setMenuOpen(open,side,pad){
  else if(side)document.body.classList.toggle("menu-left",side==="left");
 }
 window.syncMenu=(open,side,pad)=>{setMenuOpen(open,side,pad);fit();};
+window.setResultsCollapsed=collapsed=>{
+ document.body.classList.toggle("results-collapsed",!!collapsed);
+ document.getElementById("resultHeader").setAttribute("aria-expanded",String(!collapsed));
+ lastHeight=0;fit();
+};
 let lastHeight=0;
 let fitPending=false;
 function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{fitPending=false;
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
  if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);
+ if(resultWindow){
+  const header=document.getElementById("resultHeader");
+  const spawns=document.getElementById("spawns");
+  const empty=document.getElementById("empty");
+  h=Math.ceil(header.getBoundingClientRect().height)+1;
+  if(!document.body.classList.contains("results-collapsed")){
+    h+=Math.ceil(spawns.getBoundingClientRect().height);
+    if(!cards.length)h+=Math.ceil(empty.getBoundingClientRect().height);
+  }
+ }
  if(controlsWindow&&choiceOpen&&menuOpen){
   const popup=document.getElementById("choices");
   h=Math.max(h,Math.ceil(popup.getBoundingClientRect().bottom-shell.getBoundingClientRect().top)+6);
  }
- if(Math.abs(h-lastHeight)>1){lastHeight=h;if(controlsWindow)Native.resizeMenu(h);else Native.resize(h);}
+ if(Math.abs(h-lastHeight)>1){
+  lastHeight=h;
+  if(resultWindow)Native.resizeResults(h);
+  else if(controlsWindow)Native.resizeMenu(h);
+  else Native.resize(h);
+ }
 });}
 function closeChoices(){
  choiceOpen="";
@@ -341,6 +384,18 @@ function draw(){
  empty.style.display=cards.length?"none":"block";
  empty.textContent=/sem resultados/i.test(status)?"0":/falha|erro|não|login/i.test(status)?"!":"…";
  empty.title=status||"Aguardando busca";
+ if(resultWindow){
+  const iconName=mode==="gl"?"great-league":mode==="ul"?"ultra-league":
+     shiny?"shundo":"hundo";
+  const header=document.getElementById("resultHeader");
+  const source="file:///android_asset/result-icons/"+iconName+".png";
+  const image=document.getElementById("resultModeIcon");
+  if(image.getAttribute("src")!==source)image.setAttribute("src",source);
+  const label=mode==="gl"?"Grande Liga #1":mode==="ul"?"Ultra Liga #1":
+    shiny?"Shundo · IV100 ✨":"Hundo · IV100";
+  header.title=label+" · toque para recolher/expandir · arraste para mover";
+  header.setAttribute("aria-label",header.title);
+ }
  document.getElementById("gear").title=menuOpen?"Recolher menu · arrastar para mover":status?("Abrir menu · "+status):"Abrir menu · arrastar para mover";
  document.getElementById("gear").classList.toggle("busy",/(atualizando|buscando|busca manual|pesquisa)/i.test(status));
  fit();
