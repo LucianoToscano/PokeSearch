@@ -114,6 +114,20 @@
 - **Pendente:** testar menu no Android. O build de teste usa assinatura temporária de CI: instalar sobre APK anterior pode falhar caso as assinaturas sejam diferentes; desinstalar remove configurações locais.
 
 ---
+## 6.4. Compactação do menu Modos e IV100 automático — 17/10/2026
+
+**Pedido:** remover a linha "100% · IV perfeito" por ser redundante com Raw IV 15/15/15; reposicionar **% IV imediatamente abaixo de Raw IV**; deixar o menu **bem mais compacto**.
+
+**Implementado no PR #21, somente branch `feature/v0.51-launcher-icon-fill-20261016`:**
+- `dock.html`: quatro linhas de modo e ordem fixa: **Raw IV (A/D/S 0–15)** → **% IV (Min/Max 0–100)** → **Great League (ranking 1–50)** → **Ultra League (ranking 1–50)**. Removida a opção separada "100%". Menus com seletores continuam aplicados mediante **Aplicar**, sem alterar barra principal de 12 botões.
+- Compactação: painel Modos passou de **286px para 246px** de largura; altura fixa anterior **270px** substituída por altura automática com teto **216px**; linhas, margens, botões e grade numérica menores; eliminada frase explicativa redundante. Botões Aplicar/Cancelar preservados e popup pode ficar acima/abaixo da barra conforme espaço.
+- Identificação automática de perfeito: `Raw IV 15/15/15` continua modo **raw**, porém usa o PNG **hundo.png** (ou **shundo.png** se Shiny realmente confirmado), com indicador 100% na barra. Qualquer outro Raw IV mantém ícone **custom**. Sem recriar botão de modo 100%.
+- `OverlayService.java`: modo novo padrão **raw**; configurações antigas com modo interno `iv` são migradas de maneira persistente para Raw 15/15/15. Os controles de ligas, preferências, favoritos, localização, Shiny e demais funções foram mantidos.
+- `probe.js`: quando Raw IV for exatamente 15/15/15, a busca também aceita fallback verificado por % IV 100–100 se o formulário do site não conseguir aplicar os campos Raw; isso **não** ocorre para IVs mistos.
+- Testes: atualizados `overlay-ux.test.js` e `probe-smoke.test.js`. Em revisão sem compilar APK, **32 smoke tests do probe** e **162 testes do contrato UX** passaram em execução JavaScript com arquivos lidos da branch (sem Android físico).
+- **Pendência:** APK anterior não inclui estas melhorias. **Não compilar** até pedido expresso; não executar merge na `main`; preservar backups, os 18 PNGs oficiais e demais funções.
+
+---
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
