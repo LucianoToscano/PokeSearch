@@ -1500,6 +1500,22 @@ public class OverlayService extends Service {
                     String low=extra.optString(pair[0]),high=extra.optString(pair[1]);
                     if(!low.isEmpty()&&!high.isEmpty()&&Double.parseDouble(low)>Double.parseDouble(high))return;
                 }
+                // Clear a previously selected site restriction only when the
+                // user explicitly switches it back to Any. Ordinary blank
+                // options must never block Raw IV or GL/UL searches.
+                JSONObject previousExtra=new JSONObject(extraFiltersJson);
+                org.json.JSONArray previouslyCleared=previousExtra.optJSONArray("clearExtraKeys");
+                org.json.JSONArray clearKeys=new org.json.JSONArray();
+                for(String key:strings){
+                    String before=previousExtra.optString(key,"").trim();
+                    String after=extra.optString(key,"").trim();
+                    boolean stillNeedsClear=false;
+                    if(previouslyCleared!=null)for(int i=0;i<previouslyCleared.length();i++)
+                        if(key.equals(previouslyCleared.optString(i)))stillNeedsClear=true;
+                    if(after.isEmpty()&&(!before.isEmpty()||stillNeedsClear))
+                        clearKeys.put(key);
+                }
+                extra.put("clearExtraKeys",clearKeys);
                 extra.put("includePreviousEvolutions",input.optBoolean("includePreviousEvolutions",true));
                 String updatedExtras=extra.toString();
                 if(mode.equals(nextMode)&&rawAttack==a&&rawDefense==d&&rawStamina==st&&
