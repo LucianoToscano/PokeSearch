@@ -35,18 +35,21 @@ public class OverlayService extends Service {
     private static volatile boolean running=false;
     public static boolean isRunning(){return running;}
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
+    private static final int RESULTS_HEADER_DP=36;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
     private int menuDp(){return Math.max(1,Math.min(396,screenWidthDp()-8));}
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
-    private WindowManager.LayoutParams params,detailParams,menuParams;
-    private FrameLayout root,detailRoot,menuRoot;
+    private WindowManager.LayoutParams params,detailParams,menuParams,resultParams;
+    private FrameLayout root,detailRoot,menuRoot,resultRoot;
     private View grip;
-    private WebView panel,detailPanel,website,menuPanel;
+    private WebView panel,detailPanel,website,menuPanel,resultPanel;
+    private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
-    private int height=72,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
+    private int height=32,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
     private boolean deferMenuSync=false;
+    private boolean resultLoaded=false,resultCollapsed=false;
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
     private String probeScriptCache;
     private boolean searchInProgress=false;
@@ -186,6 +189,7 @@ public class OverlayService extends Service {
                 JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
+        js(resultPanel,resultLoaded,data);
         if(selected>=0)showDetails(selected);
     }
     private void status(String s){
@@ -309,12 +313,13 @@ public class OverlayService extends Service {
     private void moveDetail(){
         if(detailRoot==null||detailParams==null||params==null)return;
         int w=screenWidthDp(),h=screenHeightDp(),gap=5;
-        int dockPos=params.x/dp(1);
+        // The details card follows the independently positioned result layer.
+        int dockPos=(resultParams!=null?resultParams.x:params.x)/dp(1);
         int right=dockPos+dockDp()+gap;
         int left=dockPos-DETAIL_DP-gap;
         int preferred=right+DETAIL_DP<=w-4?right:left;
         detailParams.x=dp(Math.max(0,Math.min(w-DETAIL_DP,preferred)));
-        int dockY=params.y/dp(1)+menuPadDp;
+        int dockY=(resultParams!=null?resultParams.y:params.y)/dp(1)+RESULTS_HEADER_DP;
         detailParams.y=dp(Math.max(0,Math.min(h-detailHeight-45,dockY+18)));
         try{wm.updateViewLayout(detailRoot,detailParams);}catch(Exception e){recordFailure("reposicionar detalhes",e);}
     }
@@ -1010,10 +1015,35 @@ public class OverlayService extends Service {
         else status(sorted.length()+" Pokémon atualizados");
     }
     private void resize(int h){
+        // The gear window never expands with the Pokémon results.
         if(minimized||params==null)return;
-        int target=Math.max(46,Math.min(screenHeightDp()-95,h));
+        int target=Math.max(30,Math.min(36,h));
         if(Math.abs(target-height)<2)return;
-        height=target;params.height=dp(height);updateWindow();moveDetail();
+        height=target;params.height=dp(height);updateWindow();
+    }
+    private void resizeResults(int desiredDp){
+        if(resultParams==null||resultRoot==null||minimized)return;
+        int max=Math.max(RESULTS_HEADER_DP,screenHeightDp()-72);
+        int desired=resultCollapsed?RESULTS_HEADER_DP:
+            Math.max(RESULTS_HEADER_DP,Math.min(max,desiredDp));
+        int pixels=dp(desired);
+        if(Math.abs(resultParams.height-pixels)<dp(2))return;
+        resultParams.height=pixels;
+        resultParams.y=Math.max(0,Math.min(metrics().heightPixels-pixels,resultParams.y));
+        try{wm.updateViewLayout(resultRoot,resultParams);}
+        catch(Exception e){recordFailure("redimensionar resultados",e);}
+        moveDetail();
+    }
+    private void toggleResultsCollapsed(){
+        if(minimized||resultRoot==null)return;
+        resultCollapsed=!resultCollapsed;
+        getSharedPreferences("prefs",0).edit()
+            .putBoolean("resultsCollapsed",resultCollapsed).apply();
+        js(resultPanel,resultLoaded,"window.setResultsCollapsed("+resultCollapsed+")");
+        if(resultCollapsed){
+            hideDetails();
+            resizeResults(RESULTS_HEADER_DP);
+        }
     }
     private void menu(boolean show){
         if(params==null||minimized)return;
@@ -1048,6 +1078,8 @@ public class OverlayService extends Service {
         grip.setLayoutParams(new FrameLayout.LayoutParams(
                 dp(yes?BUBBLE_DP:dockDp()),dp(yes?BUBBLE_DP:30),Gravity.TOP|Gravity.LEFT));
         js(panel,panelLoaded,"window.setMinimized("+yes+")");
+        if(resultRoot!=null)resultRoot.setVisibility(
+            yes||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
         updateWindow();
     }
     private void showDetails(int index){
@@ -1060,13 +1092,13 @@ public class OverlayService extends Service {
             js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
             detailRoot.setVisibility(View.VISIBLE);
             moveDetail();
-            js(panel,panelLoaded,"window.highlight("+index+")");
+            js(resultPanel,resultLoaded,"window.highlight("+index+")");
         }catch(Exception e){recordFailure("mostrar detalhes",e);hideDetails();}
     }
     private void hideDetails(){
         selected=-1;
         if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
-        js(panel,panelLoaded,"window.highlight(-1)");
+        js(resultPanel,resultLoaded,"window.highlight(-1)");
     }
     private void resizeDetail(int heightDp){
         detailHeight=Math.max(90,Math.min(310,heightDp));
@@ -1357,6 +1389,8 @@ public class OverlayService extends Service {
         @JavascriptInterface public void restore(){handler.post(()->OverlayService.this.minimize(false));}
         @JavascriptInterface public void close(){handler.post(()->stopSelf());}
         @JavascriptInterface public void resize(int size){handler.post(()->OverlayService.this.resize(size));}
+        @JavascriptInterface public void resizeResults(int size){handler.post(()->OverlayService.this.resizeResults(size));}
+        @JavascriptInterface public void toggleResultsCollapsed(){handler.post(OverlayService.this::toggleResultsCollapsed);}
         @JavascriptInterface public void resizeMenu(int size){handler.post(()->OverlayService.this.resizeMenu(size));}
         @JavascriptInterface public void resizeDetail(int size){handler.post(()->OverlayService.this.resizeDetail(size));}
         @JavascriptInterface public void toggleDetail(int index){handler.post(()->{
