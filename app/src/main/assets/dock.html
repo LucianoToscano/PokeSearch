@@ -488,7 +488,7 @@ function renderExtraFilters(panel,make){
  if(generalExpanded){
   const input=make("input");input.type="text";input.placeholder="Qualquer Pokémon";
   input.value=modeDraft.pokemon||"";input.maxLength=80;
-  input.oninput=()=>{modeDraft.pokemon=input.value.trim();if(!modeDraft.pokemon)modeDraft.form="";};
+  input.oninput=()=>{if(modeDraft.pokemon!==input.value.trim())modeDraft.form="";modeDraft.pokemon=input.value.trim();};
   field("Pokémon",input);
   option("form","Form");option("size","Size");
   panel.appendChild(make("p","extraNote","Form depende das variantes disponíveis; os menus usam opções lidas do site."));
