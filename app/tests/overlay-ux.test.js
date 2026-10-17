@@ -16,7 +16,9 @@ test("Original IV100 and league choices plus Raw IV and % IV in compact mode men
   ["100% · IV perfeito","Raw IV","Great League","Ultra League","IV% Min / Max"].every(v=>dock.includes(v))&&
   dock.includes('toggleChoices(\'mode\')'));
 test("Intervals minimum 5 minutes",["AUTO · 5 min","AUTO · 10 min","AUTO · 15 min","AUTO · 20 min"].every(v=>dock.includes(v)));
-test("Choice panel resizes native window",dock.includes('popup.getBoundingClientRect().bottom')&&dock.includes('Native.resize(h)'));
+test("Choice panel measures fixed popup height even when rendered above toolbar",
+  dock.includes('34+Math.ceil(popup.getBoundingClientRect().height)+6')&&
+  dock.includes('Native.resizeMenu(h)'));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
 test("Favorites remain in overlay",service.includes("PokemonPicker.show(OverlayService.this")&&!service.includes('intent.setAction("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST")'));
@@ -185,7 +187,7 @@ test("PS-084 MainActivity asset failures log only stage and class",main.includes
 test("PS-085 sanitizer masks OAuth code/state and discord_token",sanitizer.includes('discord[_-]?token')&&sanitizer.includes('code|state|secret'));
 // Additional physical feedback for the v0.50 stabilization pass.
 test("v0.50 no phantom gap when toolbar is beside dock",
-    service.includes("menuPadDp=0; // No spacer: side toolbar")&&dock.includes("#spawns{margin-top:var(--top-space);gap:0}"));
+    service.includes("menuPadDp=0; // Results remain in their own separate native overlay.")&&dock.includes("#spawns{margin-top:var(--top-space);gap:0}"));
 test("v0.50 transparent floating collapse arrow",
     dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("v0.50 AUTO OFF in UI and service, with no periodic posts",
@@ -208,13 +210,13 @@ test("v0.50 neutral UI includes smaller location icon",
     dock.includes('#controls #location svg{width:14px;height:14px}')&&
     dock.includes('#choices{background:#252628ee'));
 test("Android responsive controls have no phantom spacer below popup",
-  service.includes('Math.round((menuParams.y+menuParams.height-params.y)/d.density)-30+2')&&
-  service.includes('menuPadDp=0; // No spacer: side toolbar')&&
+  service.includes('menuPadDp=0; // Results remain in their own separate native overlay.')&&
+  service.includes('menuParams.y=Math.max(0,Math.min(bottom-menuParams.height,')&&
   dock.includes('#choices{display:none;position:absolute;top:34px;'));
 test("Android responsive controls measure actual one-row menu height",
   dock.includes('if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);')&&
   service.includes('menuParams.height=dp(MENU_BASE_DP)')&&
-  service.includes('Math.min(450,screenHeightDp()-72)'));
+  service.includes('Math.min(450,screenHeightDp()-24)'));
 test("Android responsive layout contains all 12 controls exactly once",
   toolbarButtons.length===12&&
   ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','report','donate','close']
@@ -370,6 +372,21 @@ test("v0.51 header chooses a confirmed Shiny version of its exact search type",
     dock.includes('const pair=RESULT_ICONS[family]')&&
     dock.includes('shining?pair.shiny:pair.normal'));
 
+test("Mode popup keeps one stable row while expanding upward or downward",
+ service.includes('boolean abovePopup=requestedPopup>roomBelow&&roomAbove>roomBelow;')&&
+ service.includes('rowY-(abovePopup?actualPopup:0)')&&
+ service.includes('window.setMenuPopupPlacement(')&&
+ dock.includes('body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}')&&
+ dock.includes('body.controls-window.popup-above #menu{top:var(--popup-offset,0px)!important}'));
+test("Mode popup stays contained and its action row remains reachable",
+ dock.includes('height:270px')&&dock.includes('var(--popup-room,400px)')&&
+ dock.includes('position:sticky;bottom:0;')&&
+ service.includes('int roomDp=requestedPopup==0?420:'));
+test("Mode picker remembers scroll and centers selected values",
+ dock.includes('modeScrollTop=panel.scrollTop')&&
+ dock.includes('panel.scrollTop=modeScrollTop')&&
+ dock.includes('grid.scrollTop=Math.max(0,')&&
+ dock.includes('overscroll-behavior:contain'));
 test("Five requested filter modes with correct dropdown bounds",()=>{
  const segment=dock.split("function renderNumberPicker(")[1].split("function renderLocationChoices()")[0];
  return segment.includes('const low=kind==="rank"?1:0,high=kind==="iv"?15:kind==="rank"?50:100')&&
