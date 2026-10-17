@@ -959,6 +959,15 @@ public class OverlayService extends Service {
                 searchFailure("⚠ Shiny não confirmado","Filtro Shiny mudou durante a busca. Resultados não confirmados.");
                 return;
             }
+            // A result page may have changed the site's filters after Search.
+            // An explicitly empty response is NOT trustworthy unless the requested
+            // site settings are still confirmed; keep old cards instead.
+            if(!r.optBoolean("criteriaConfirmed",false)){
+                searchInProgress=false;
+                searchFailure("⚠ Filtro não confirmado",
+                    "Busca ignorada: controles IV/ligas não confirmados ao ler resultados.");
+                return;
+            }
             if(("gl".equals(mode)||"ul".equals(mode))&&!r.optBoolean("leagueConfirmed",false)){
                 searchInProgress=false;
                 shinyVerified=false;
