@@ -67,6 +67,47 @@ function tab(label){
  if(b.getAttribute("aria-selected")==="true"||b.getAttribute("data-state")==="active")return true;
  b.click();return true;
 }
+// React mounts a different field group AFTER the tab click. Only return
+// configured once its selected state and the requested inputs are available.
+function ensureModeTab(label,controlsReady){
+ const b=oneButton(label);
+ if(!b)return {ok:false,pending:true,reason:"Aguardando aba "+label};
+ const selected=b.getAttribute("aria-selected"),state=b.getAttribute("data-state"),pressed=b.getAttribute("aria-pressed");
+ if(selected==="true"||state==="active"||pressed==="true")
+  return controlsReady?{ok:true}:{ok:false,pending:true,reason:"Aguardando campos "+label};
+ if(selected!==null||state!==null||pressed!==null){
+  if(!b.disabled)b.click();
+  return {ok:false,pending:true,reason:"Alternando para "+label};
+ }
+ // Older site widgets have no aria state. Visible, mode-specific fields
+ // are the only safe readiness signal; otherwise request a render cycle.
+ if(controlsReady)return {ok:true};
+ if(!b.disabled)b.click();
+ return {ok:false,pending:true,reason:"Aguardando campos "+label};
+}
+function prepareCoreFilters(){
+ const league=mode==="gl"||mode==="ul";
+ const main=league?"PvP":"Stats",mainButton=oneButton(main);
+ if(!mainButton)return {ok:false,pending:true,reason:"Aguardando aba "+main};
+ const selected=mainButton.getAttribute("aria-selected"),state=mainButton.getAttribute("data-state");
+ if((selected!==null||state!==null)&&selected!=="true"&&state!=="active"){
+  if(!mainButton.disabled)mainButton.click();
+  return {ok:false,pending:true,reason:"Alternando para "+main};
+ }
+ if(league){
+  if(!inputNear("Top ranking")||!field("League"))
+   return {ok:false,pending:true,reason:"Aguardando filtros PvP"};
+  return {ok:true};
+ }
+ const isRaw=mode==="raw"||mode==="iv";
+ if(isRaw){
+  const rawTab=oneButton("Raw IV");
+  if(rawTab)return ensureModeTab("Raw IV",rawIVInputs().length===3||rawIVInputs().length===6);
+  if(rawIsHundo())return ensureModeTab("% IV",percentageIVInputs().length===2);
+  return {ok:false,pending:true,reason:"Aba Raw IV indisponível para IV personalizado"};
+ }
+ return ensureModeTab("% IV",percentageIVInputs().length===2);
+}
 function currentMode(){
  if(field("Top ranking"))return "gl";
  if(elements("input").some(e=>e.value==="15")&&labels(document,/^Raw IV$/i).length)return "iv";
@@ -129,20 +170,30 @@ function rawValues(){
  const inputs=rawIVInputs();
  if(inputs.length===3)return {inputs,values};
  if(inputs.length!==6)return null;
- // Raw IV forms may expose a min/max field for each stat.
- // Use nearby stat labels rather than guessing the 6-field DOM order.
+ // Six-input min/max forms have TWO fields for every stat. Never guess
+ // their order for mixed triples; labels and attributes must prove the map.
+ const names=[/\b(?:attack|atk|ataque)\b/i,/\b(?:defense|defence|def|defesa)\b/i,/\b(?:stamina|sta|hp|vida)\b/i];
  const mapped=inputs.map(input=>{
-  for(let node=input.parentElement,depth=0;node&&depth<3;node=node.parentElement,depth++){
-   const own=clean(node.innerText||"").toLowerCase();
-   const names=[/\b(?:attack|atk|ataque)\b/,/\b(?:defense|defence|def|defesa)\b/,/\b(?:stamina|sta|hp|vida)\b/];
-   const matching=names.map((re,i)=>re.test(own)?i:-1).filter(i=>i>=0);
-   if(matching.length===1)return matching[0];
+  const attributes=["aria-label","name","id","placeholder"].map(key=>input.getAttribute(key)||"").join(" ");
+  const statFor=value=>{
+   const matches=names.map((re,i)=>re.test(value)?i:-1).filter(i=>i>=0);
+   return matches.length===1?matches[0]:-1;
+  };
+  const fromAttributes=statFor(attributes.replace(/[_-]/g," "));
+  if(fromAttributes>=0)return fromAttributes;
+  // Use only a local wrapper that contains at most two inputs. An outer
+  // IV section lists all three stat names and is NOT valid mapping evidence.
+  for(let node=input.parentElement,depth=0;node&&depth<4;node=node.parentElement,depth++){
+   const nearby=Array.from(node.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
+   if(nearby.length>2)break;
+   const identified=statFor(clean(node.innerText||""));
+   if(identified>=0)return identified;
   }
   return -1;
  });
  if(mapped.every(i=>i>=0)&&[0,1,2].every(i=>mapped.filter(x=>x===i).length===2))
   return {inputs,values:mapped.map(i=>values[i])};
- // Equal IVs are unambiguous even without labels; unequal ones must not be misapplied.
+ // All-equal triples are safe even when labels cannot be disambiguated.
  if(values.every(v=>v===values[0]))return {inputs,values:inputs.map(()=>values[0])};
  return null;
 }
@@ -207,6 +258,14 @@ function checkCore(){
   const pc=percentageIVInputs();
   if(pc.length===2&&pc.every(x=>x.value==="100"))return {ok:true};
   return {ok:false,reason:"IV100: Raw IV 15/15/15 ou % IV 100/100 não confirmados"};
+ }
+ // A verified input in a different tab is not proof of the selected mode.
+ const target=mode==="raw"?"Raw IV":mode==="percent"?"% IV":null;
+ if(target){
+  const button=oneButton(target);
+  if(button&&(button.getAttribute("aria-selected")!==null||button.getAttribute("data-state")!==null)&&
+    button.getAttribute("aria-selected")!=="true"&&button.getAttribute("data-state")!=="active")
+   return {ok:false,reason:"Aba "+target+" não selecionada"};
  }
  if(mode==="raw")return {ok:verifyRaw(),reason:"Raw IV A/D/S não confirmado no site"};
  if(mode==="percent")return {ok:verifyPercent(),reason:"IV% Min/Max não confirmados no site"};
@@ -650,12 +709,16 @@ if(action==="prepareSearch"){
  return JSON.stringify({ok:tab(target),stage:"prepare"});
 }
 if(action==="configureSearch"){
+ const ready=prepareCoreFilters();
+ if(!ready.ok)
+  return JSON.stringify({ok:true,configured:false,pending:ready.pending,reason:ready.reason,stage:"wait-form"});
  let configured=false;
  if(mode==="iv")configured=applyIv();
  else if(mode==="raw")configured=applyRaw();
  else if(mode==="percent")configured=applyPercent();
  else configured=applyLeague();
- const other=configured?extras("apply"):{ok:false,pending:transientPending,reason:"Filtro principal indisponível"};
+ const other=configured?extras("apply"):{ok:false,pending:true,
+  reason:mode==="raw"?"Raw IV: campos A/D/HP não identificáveis":mode==="percent"?"IV%: campos mínimo/máximo indisponíveis":"Filtro principal indisponível"};
  configured=configured&&other.ok;
  const existing=readShiny();
  if(existing!==null&&existing!==shinyOnly){
