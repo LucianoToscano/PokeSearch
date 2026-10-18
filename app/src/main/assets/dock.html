@@ -99,8 +99,8 @@ body.controls-window #locBadge{display:none!important}
 #choices .numberJump{display:flex;align-items:center;gap:5px;padding:0 5px 1px}
 #choices .numberJump input{flex:1;min-width:0;height:24px;margin:0;accent-color:#72c7ae;touch-action:pan-x}
 #choices .numberJump output{font-size:11px;font-weight:700;min-width:25px;text-align:right;color:#dbffef}
-body.result-window.results-stale #resultHeader{position:relative}
-body.result-window.results-stale #resultHeader::after{content:"";position:absolute;right:2px;top:3px;width:5px;height:5px;border-radius:50%;background:#e6ba66;box-shadow:0 0 2px #0008}
+/* The orange stale-result dot is intentionally hidden. Source provenance and
+   accessible stale status remain intact; old cards never become new results. */
 #choices .locText{font-size:11px;color:#a9b7c9;padding:0 7px 8px;line-height:1.35}
 #choices .locCoordsRow{display:flex;align-items:center;gap:7px;margin:0 7px 7px}
 #choices .locCoordsRow .locField{flex:1;min-width:0;margin:0;width:auto}
@@ -199,7 +199,7 @@ body.result-window #resultHeader .resultModeStack{position:relative;display:bloc
 body.result-window #resultHeader .resultModeStack img{position:absolute;inset:0;display:block;width:100%;height:100%;aspect-ratio:1/1;object-fit:contain;object-position:center;max-width:none;max-height:none;pointer-events:none;filter:drop-shadow(0 1px 1px #0007)}
 body.result-window #resultHeader .modeIndicator{position:absolute;z-index:1;display:none;align-items:center;justify-content:center;box-sizing:border-box;pointer-events:none;font-family:Arial,Roboto,sans-serif;font-weight:900;line-height:1;text-shadow:0 1px 1px #000}
 body.result-window #resultHeader .modeIndicator.visible{display:flex}
-body.result-window #resultHeader .modeIndicator.value{left:50%;bottom:-2px;max-width:31px;min-width:0;height:8px;padding:0;border-radius:0;background:transparent;color:#f5f7fa;font-size:8px;white-space:nowrap;letter-spacing:-.2px;text-shadow:0 1px 2px #000,0 0 3px #000;transform:translateX(-50%) scale(var(--mode-indicator-scale,1));transform-origin:bottom center}
+body.result-window #resultHeader .modeIndicator.value{left:50%;bottom:-2px;max-width:33px;min-width:0;height:10px;padding:0;border-radius:0;background:transparent;color:#16191c;font-size:9px;white-space:nowrap;letter-spacing:-.2px;-webkit-text-stroke:.25px #fff;text-shadow:0 1px 1px #fff,0 0 2px #fff,0 0 3px #fff;transform:translateX(-50%) scale(var(--mode-indicator-scale,1));transform-origin:bottom center}
 body.result-window #resultHeader .modeIndicator.value.zero{color:#00cfe8}
 body.result-window #resultHeader .modeIndicator.value.perfect{color:#f04b70}
 body.result-window #resultHeader .modeIndicator.shiny{right:-3px;top:-3px;width:11px;height:11px;border-radius:0;background:transparent;color:inherit;font-size:10px;text-shadow:0 1px 2px #000;transform:scale(var(--mode-indicator-scale,1));transform-origin:top right}
