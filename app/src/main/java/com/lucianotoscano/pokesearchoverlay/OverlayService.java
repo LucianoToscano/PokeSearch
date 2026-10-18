@@ -860,6 +860,7 @@ public class OverlayService extends Service {
                     searchFailure("⚠ Aba não confirmada","Não foi possível selecionar a aba de busca.");
                     return;
                 }
+                status("Preparando "+("raw".equals(mode)?"Raw IV":"percent".equals(mode)?"IV%":"gl".equals(mode)?"Grande Liga":"Ultra Liga")+"...");
                 handler.postDelayed(()->{
                     if(stopped||loginPaused||generation!=requestGeneration)return;
                     configureSearchWithRetry(generation,manual,0);
@@ -874,10 +875,12 @@ public class OverlayService extends Service {
         execute("configureSearch",configured->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
             if(configured.optBoolean("ok")&&configured.optBoolean("configured",false)){
+                status("Conferindo os filtros aplicados...");
                 configureLocationAndVerify(generation,manual,0);return;
             }
-            if(configured.optBoolean("pending",false)&&attempt<22){
-                handler.postDelayed(()->configureSearchWithRetry(generation,manual,attempt+1),230L);
+            if(configured.optBoolean("pending",false)&&attempt<32){
+                if(attempt==0)status("Preparando filtros no site...");
+                handler.postDelayed(()->configureSearchWithRetry(generation,manual,attempt+1),300L);
                 return;
             }
             searchInProgress=false;
@@ -1620,7 +1623,13 @@ public class OverlayService extends Service {
                 String updatedExtras=extra.toString();
                 if(mode.equals(nextMode)&&rawAttack==a&&rawDefense==d&&rawStamina==st&&
                     glRank==gl&&ulRank==ul&&ivPercentMin==min&&ivPercentMax==max&&
-                    extraFiltersJson.equals(updatedExtras))return;
+                    extraFiltersJson.equals(updatedExtras)){
+                    // Applying the same values must retry a previously failed
+                    // site submission instead of silently doing nothing.
+                    status("Repetindo busca com o filtro atual...");
+                    refresh(true);
+                    return;
+                }
                 mode=nextMode;rawAttack=a;rawDefense=d;rawStamina=st;
                 glRank=gl;ulRank=ul;ivPercentMin=min;ivPercentMax=max;
                 extraFiltersJson=updatedExtras;
@@ -1636,7 +1645,7 @@ public class OverlayService extends Service {
                 if(!preview)resultsStale=count()>0;
                 hideDetails();
                 status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
-                refresh();
+                refresh(true);
             }catch(org.json.JSONException ex){
                 status("Filtro inválido. Escolha os valores novamente.");
             }
