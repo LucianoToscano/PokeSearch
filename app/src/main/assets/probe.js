@@ -159,61 +159,105 @@ function inputsByIvGroup(count){
 function rawIVInputs(){return inputsByIvGroup(3).length?inputsByIvGroup(3):inputsByIvGroup(6);}
 function percentageIVInputs(){return inputsByIvGroup(2);}
 function set100Percent(){
- tab("Stats");tab("% IV");
  const fields=percentageIVInputs();
- if(fields.length!==2)return false;
- return fields.every(e=>valueInput(e,"100"));
+ return fields.length===2&&applyNumbersOneAtATime(fields,[100,100],0,100);
 }
 function configuredRank(){return mode==="ul"?filters.ulRank:filters.glRank;}
+// IV form shown by PoGoCoordinates: A / D / S in three adjacent inputs.
+// Attribute labels (A,D,S or full stat names) take precedence if available.
+function ivStatFor(value){
+ const v=clean(value).replace(/[_-]/g," ");
+ if(!v)return -1;
+ const rx=[/^(?:a|attack|atk|ataque)$/i,/^(?:d|defense|defence|def|defesa)$/i,/^(?:s|stamina|sta|hp|vida)$/i];
+ const names=[/\\b(?:attack|atk|ataque)\\b/i,/\\b(?:defense|defence|def|defesa)\\b/i,/\\b(?:stamina|sta|hp|vida)\\b/i];
+ const m=names.map((re,i)=>re.test(v)||rx[i].test(v)?i:-1).filter(i=>i>=0);
+ return m.length===1?m[0]:-1;
+}
+function ivInputStat(input){
+ const attrs=["aria-label","name","id","placeholder"].map(k=>input.getAttribute(k)||"").filter(Boolean);
+ for(const a of attrs){const stat=ivStatFor(a);if(stat>=0)return stat;}
+ const id=input.getAttribute("id")||"";
+ if(id){
+  const lab=elements("label[for]").find(e=>e.getAttribute("for")===id);
+  if(lab){const stat=ivStatFor(text(lab));if(stat>=0)return stat;}
+ }
+ const labelled=input.getAttribute("aria-labelledby")||"";
+ if(labelled){
+  const ids=labelled.split(/\\s+/);
+  for(const id of ids){
+   const label=elements("[id]").find(e=>e.getAttribute("id")===id);
+   if(label){const stat=ivStatFor(text(label));if(stat>=0)return stat;}
+  }
+ }
+ // The narrow wrapper of one/two controls can label the stat. Do not
+ // promote ancestor groups that include CP, Level or all three IV stats.
+ for(let p=input.parentElement,d=0;p&&d<4;p=p.parentElement,d++){
+  const local=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
+  if(local.length>2)break;
+  const stat=ivStatFor(text(p));if(stat>=0)return stat;
+ }
+ return -1;
+}
 function rawValues(){
  const values=[filters.attack,filters.defense,filters.stamina];
+ if(!values.every(v=>Number.isInteger(v)&&v>=0&&v<=15))return null;
  const inputs=rawIVInputs();
- if(inputs.length===3)return {inputs,values};
- if(inputs.length!==6)return null;
- // Six-input min/max forms have TWO fields for every stat. Never guess
- // their order for mixed triples; labels and attributes must prove the map.
- const names=[/\b(?:attack|atk|ataque)\b/i,/\b(?:defense|defence|def|defesa)\b/i,/\b(?:stamina|sta|hp|vida)\b/i];
- const mapped=inputs.map(input=>{
-  const attributes=["aria-label","name","id","placeholder"].map(key=>input.getAttribute(key)||"").join(" ");
-  const statFor=value=>{
-   const matches=names.map((re,i)=>re.test(value)?i:-1).filter(i=>i>=0);
-   return matches.length===1?matches[0]:-1;
-  };
-  const fromAttributes=statFor(attributes.replace(/[_-]/g," "));
-  if(fromAttributes>=0)return fromAttributes;
-  // Use only a local wrapper that contains at most two inputs. An outer
-  // IV section lists all three stat names and is NOT valid mapping evidence.
-  for(let node=input.parentElement,depth=0;node&&depth<4;node=node.parentElement,depth++){
-   const nearby=Array.from(node.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
-   if(nearby.length>2)break;
-   const identified=statFor(clean(node.innerText||""));
-   if(identified>=0)return identified;
-  }
-  return -1;
- });
- if(mapped.every(i=>i>=0)&&[0,1,2].every(i=>mapped.filter(x=>x===i).length===2))
-  return {inputs,values:mapped.map(i=>values[i])};
- // All-equal triples are safe even when labels cannot be disambiguated.
- if(values.every(v=>v===values[0]))return {inputs,values:inputs.map(()=>values[0])};
+ if(inputs.length!==3&&inputs.length!==6)return null;
+ const mapped=inputs.map(ivInputStat);
+ if(inputs.length===3){
+  // Site's three-input Raw IV card is ordered A/D/S, proven by screenshots.
+  // Use that order only when *none* of its controls claims another label.
+  if(mapped.every(v=>v<0))return {inputs,values};
+  if(mapped.every(v=>v>=0)&&[0,1,2].every(v=>mapped.filter(x=>x===v).length===1))
+   return {inputs,values:mapped.map(v=>values[v])};
+  return null;
+ }
+ if(mapped.every(v=>v>=0)&&[0,1,2].every(v=>mapped.filter(x=>x===v).length===2))
+  return {inputs,values:mapped.map(v=>values[v])};
+ // Six anonymous min/max fields are safe only for all-equal triples.
+ if(mapped.every(v=>v<0)&&values.every(v=>v===values[0]))
+  return {inputs,values:inputs.map(()=>values[0])};
  return null;
+}
+function confirmedNumber(input,want,min,max){
+ if(!input)return false;
+ const val=String(input.value??"").trim();
+ // Number("") equals 0; that must NEVER verify a blank Raw IV input.
+ if(!/^(?:0|[1-9]\\d*)$/.test(val))return false;
+ const number=Number(val);
+ return Number.isInteger(number)&&number>=min&&number<=max&&number===want;
+}
+function applyNumbersOneAtATime(inputs,values,min,max){
+ if(inputs.length!==values.length)return false;
+ for(let i=0;i<inputs.length;i++){
+  const target=values[i],input=inputs[i];
+  if(!Number.isInteger(target)||target<min||target>max)return false;
+  if(confirmedNumber(input,target,min,max))continue;
+  if(!vis(input)||input.disabled||input.readOnly)return false;
+  // Native value setter + input/change events mirrors an actual typed value.
+  // React may re-render after each event: advance ONE field per JS roundtrip.
+  if(!valueInput(input,target))return false;
+  transientPending=true;
+  return false;
+ }
+ return true;
 }
 function rawIsHundo(){
  return filters.attack===15&&filters.defense===15&&filters.stamina===15;
 }
 function applyRaw(){
- tab("Stats");tab("Raw IV");
  const group=rawValues();
- if(group&&group.inputs.every((input,i)=>valueInput(input,group.values[i])))return true;
- // A 15/15/15 selection is IV100 even on the site's % IV form.
- // Fallback only for this exact combination, never for mixed IV values.
- return rawIsHundo()&&set100Percent();
+ if(group)return applyNumbersOneAtATime(group.inputs,group.values,0,15);
+ // Only a Hundo can safely fall back to % IV 100/100, and only if
+ // the site's Raw IV tab is missing. Never change tabs mid-configuration.
+ return rawIsHundo()&&!oneButton("Raw IV")&&set100Percent();
 }
 function verifyRaw(){
  const group=rawValues();
- if(group&&group.inputs.every((input,i)=>Number(input.value)===group.values[i]))return true;
- if(!rawIsHundo())return false;
+ if(group&&group.inputs.every((input,i)=>confirmedNumber(input,group.values[i],0,15)))return true;
+ if(!rawIsHundo()||oneButton("Raw IV"))return false;
  const percent=percentageIVInputs();
- return percent.length===2&&percent.every(input=>Number(input.value)===100);
+ return percent.length===2&&percent.every(input=>confirmedNumber(input,100,0,100));
 }
 // Defense-in-depth: the UI and Android bridge reject unattainable IV values,
 // and the site automation independently verifies the same 46-value domain.
@@ -226,21 +270,19 @@ function validPercentRange(){
 }
 function applyPercent(){
  if(!validPercentRange())return false;
- tab("Stats");tab("% IV");
  const inputs=percentageIVInputs();
- return inputs.length===2&&valueInput(inputs[0],filters.percentMin)&&valueInput(inputs[1],filters.percentMax);
+ return inputs.length===2&&applyNumbersOneAtATime(inputs,[filters.percentMin,filters.percentMax],0,100);
 }
 function verifyPercent(){
  if(!validPercentRange())return false;
  const inputs=percentageIVInputs();
- return inputs.length===2&&Number(inputs[0].value)===filters.percentMin&&Number(inputs[1].value)===filters.percentMax;
+ return inputs.length===2&&confirmedNumber(inputs[0],filters.percentMin,0,100)&&confirmedNumber(inputs[1],filters.percentMax,0,100);
 }
 function applyIv(){
- // Preserve the original Hundo compatibility (% IV 100/100 or exact Raw IV).
- if(set100Percent())return true;
- tab("Stats");tab("Raw IV");
- const raw=rawIVInputs();
- return (raw.length===3||raw.length===6)&&raw.every(x=>valueInput(x,"15"));
+ // Legacy perfect-IV option, kept for compatibility with older saved modes.
+ const group=rawValues();
+ if(group)return applyNumbersOneAtATime(group.inputs,group.inputs.map(()=>15),0,15);
+ return !oneButton("Raw IV")&&set100Percent();
 }
 function applyLeague(){
  const rank=inputNear("Top ranking");
@@ -254,9 +296,9 @@ function checkCore(){
   return {ok:false,reason:"Shiny não confirmado",shiny:currentShiny};
  if(mode==="iv"){
   const ins=rawIVInputs();
-  if((ins.length===3||ins.length===6)&&ins.every(x=>x.value==="15"))return {ok:true};
+  if((ins.length===3||ins.length===6)&&ins.every(x=>confirmedNumber(x,15,0,15)))return {ok:true};
   const pc=percentageIVInputs();
-  if(pc.length===2&&pc.every(x=>x.value==="100"))return {ok:true};
+  if(pc.length===2&&pc.every(x=>confirmedNumber(x,100,0,100)))return {ok:true};
   return {ok:false,reason:"IV100: Raw IV 15/15/15 ou % IV 100/100 não confirmados"};
  }
  // A verified input in a different tab is not proof of the selected mode.
@@ -718,7 +760,7 @@ if(action==="configureSearch"){
  else if(mode==="percent")configured=applyPercent();
  else configured=applyLeague();
  const other=configured?extras("apply"):{ok:false,pending:true,
-  reason:mode==="raw"?"Raw IV: campos A/D/HP não identificáveis":mode==="percent"?"IV%: campos mínimo/máximo indisponíveis":"Filtro principal indisponível"};
+  reason:transientPending?"Aguardando confirmar os números digitados no site":mode==="raw"?"Raw IV: não foi possível identificar ou preencher A/D/S":mode==="percent"?"IV%: mínimo/máximo indisponíveis":"Filtro principal indisponível"};
  configured=configured&&other.ok;
  const existing=readShiny();
  if(existing!==null&&existing!==shinyOnly){
