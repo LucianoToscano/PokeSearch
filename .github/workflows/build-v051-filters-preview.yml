@@ -7,21 +7,11 @@ on:
     paths:
       - 'app/**'
       - '.github/workflows/build-v051-filters-preview.yml'
-  # Explicitly requested APK build for this same-repository PR, without merging.
-  pull_request:
-    types: [synchronize]
-    branches:
-      - fix/ux-icon-layout-overlay-20261018
-    paths:
-      - 'app/**'
-      - '.github/workflows/build-v051-filters-preview.yml'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   build:
-    # Only PR #27 on its known branch may use the protected stable test secrets.
-    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.number == 27 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/ps009-stable-test-signing-20261018') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     # Fail closed: no downloadable APK from an ephemeral debug key.
