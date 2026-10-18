@@ -313,10 +313,9 @@ public class OverlayService extends Service {
         try{return new JSONArray(results).length();}catch(Exception e){recordFailure("contar resultados",e);return 0;}
     }
     private int rowDp(){
-        // Compact vertical rhythm: real sprites have transparent margins.
-        // The old +10dp gap was visually excessive; allow 4dp transparent
-        // edge overlap without changing the sprite image dimensions.
-        return Math.max(26,spriteSize-8);
+        // UX-SPRITE-01: one equal-height, nonoverlapping slot per Pokemon.
+        // Keep a minimal 3dp breathing room in P/M/G without cropping sprites.
+        return spriteSize+3;
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
