@@ -849,7 +849,10 @@ public class OverlayService extends Service {
     private void refresh(boolean manual){
         if(stopped||loginPaused)return;
         if(searchInProgress){
-            if(manual)status("Busca em andamento. Toque ↻ novamente quando terminar.");
+            if(manual){
+                queuedManualRefresh=true;
+                status("↻ Nova busca agendada após a atual.");
+            }
             return;
         }
         if(!loaded||website==null){
@@ -859,8 +862,11 @@ public class OverlayService extends Service {
         }
         long now=System.currentTimeMillis();
         long previous=getSharedPreferences("prefs",0).getLong("lastNetworkSearchAt",0L);
-        if(!skipLocalGapInDebug()&&previous>0L&&now>=previous&&now-previous<MIN_SEARCH_GAP_MS){
-            long remaining=(MIN_SEARCH_GAP_MS-(now-previous)+999L)/1000L;
+        long earliest=skipLocalGapInDebug()?0L:previous+MIN_SEARCH_GAP_MS;
+        // Even a debug build cannot overlap a superseded upstream request.
+        earliest=Math.max(earliest,remoteDrainUntilMs);
+        if(now<earliest){
+            long remaining=(earliest-now+999L)/1000L;
             // No intrusive countdown Toast; status remains available in the menu.
             nextScheduledSearchAtMs=now+remaining*1000L+300L;
             status("Filtro "+mode.toUpperCase(java.util.Locale.ROOT)+" selecionado · próxima consulta em "+remaining+"s"
@@ -878,6 +884,10 @@ public class OverlayService extends Service {
         if(shiny){shinyVerified=false;update();}
         final int generation=++requestGeneration;
         confirmedSubmittedFiltersGeneration=-1;
+        submittedSearchGeneration=-1;
+        watchdogGeneration=generation;
+        handler.removeCallbacks(searchWatchdog);
+        handler.postDelayed(searchWatchdog,SEARCH_WATCHDOG_MS);
         status(manual?"Busca manual iniciada...":"Atualizando...");
         execute("session",session->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
@@ -1114,6 +1124,7 @@ public class OverlayService extends Service {
                     }
                     long submittedAt=System.currentTimeMillis();
                     lastSearchStartMs=submittedAt;
+                    submittedSearchGeneration=generation;
                     getSharedPreferences("prefs",0).edit().putLong("lastNetworkSearchAt",submittedAt).apply();
                     BugReport.log(this,"SUBMIT","Busca "+mode+" Shiny="+shiny);
                     status(manual?"Busca manual em andamento...":"Buscando...");
@@ -1697,7 +1708,7 @@ public class OverlayService extends Service {
                     .putInt("rawStamina",st).putInt("glRank",gl).putInt("ulRank",ul)
                     .putInt("ivPercentMin",min).putInt("ivPercentMax",max)
                     .putString("extraFiltersJson",extraFiltersJson).apply();
-                ++requestGeneration;searchInProgress=false;shinyVerified=false;
+                replaceActiveFilterSearch();shinyVerified=false;
                 // Keep site-confirmed cards with their original mode/icon
                 // until the new search passes all checks and returns valid cards.
                 boolean preview=restoreFilterPreview();
@@ -1723,7 +1734,7 @@ public class OverlayService extends Service {
             android.widget.Toast.makeText(OverlayService.this,
                 "Filtro selecionado: "+(s.equals("iv")?"Raw IV 15/15/15":s.equals("raw")?"Raw IV":s.equals("percent")?"% IV":s.equals("gl")?"Grande Liga":"Ultra Liga"),
                 android.widget.Toast.LENGTH_SHORT).show();
-            ++requestGeneration;searchInProgress=false;shinyVerified=false;
+            replaceActiveFilterSearch();shinyVerified=false;
             boolean preview=restoreFilterPreview();
             if(!preview)resultsStale=count()>0;
             hideDetails();
@@ -1734,7 +1745,7 @@ public class OverlayService extends Service {
         @JavascriptInterface public void cycleMode(){handler.post(()->{
             mode=mode.equals("raw")?"percent":mode.equals("percent")?"gl":mode.equals("gl")?"ul":"raw";
             getSharedPreferences("prefs",0).edit().putString("mode",mode).apply();
-            ++requestGeneration;searchInProgress=false;shinyVerified=false;
+            replaceActiveFilterSearch();shinyVerified=false;
             boolean preview=restoreFilterPreview();
             if(!preview)resultsStale=count()>0;
             hideDetails();
@@ -1869,9 +1880,8 @@ public class OverlayService extends Service {
             shiny=!shiny;
             android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
             prefs.edit().putBoolean("shiny",shiny).apply();
-            final int generation=++requestGeneration;
-            searchInProgress=false;
-            handler.removeCallbacks(queuedRefresh);
+            replaceActiveFilterSearch();
+            final int generation=requestGeneration;
             shinyVerified=false;
             shinyLoginWindowOpened=false;
             shinyLoginPromptRequested=shiny;
