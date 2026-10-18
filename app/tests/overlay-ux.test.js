@@ -597,7 +597,6 @@ test("Canceled dialog does not force session refresh or discard sprites",
  service.includes('if(!"não confirmado".equals(auth))')&&
  service.includes('resultsStale=count()>0;'));
 
-console.log("PokeSearch UX contract: "+count+" tests passed");
 
 test("UX-ICON-01 uses five base PNGs and keeps 18 historical resources",()=>{
  const dir=path.join(root,"assets/result-icons/base"), names=["none","custom","gl","ul","ml"];
@@ -610,7 +609,7 @@ test("UX-ICON-01 uses five base PNGs and keeps 18 historical resources",()=>{
 });
 test("UX-ICON-01 keeps 35x30 touch area and badges strictly within 21px",
  dock.includes("#resultHeader{width:35px;height:30px")&&
- dock.includes("max-width:21px;max-height:21px;pointer-events:none")&&
+ dock.includes("max-width:21px;max-height:21px;aspect-ratio:1/1;overflow:visible;pointer-events:none")&&
  dock.includes("Math.max(17,Math.min(21,Math.round(spriteSize*0.45)))")&&
  ["modeIndicatorValue","modeIndicatorShiny","modeIndicatorBackground"].every(x=>dock.includes('id="'+x+'"')));
 test("UX-ICON-01 badges remain independent and background requires site proof",
@@ -750,3 +749,4 @@ test("UX-FIX-01 brighter capture pulse uses confirmed searching status",()=>{
  pulse.includes("background:#f5ffff")&&dock.includes("searchActive=!!isSearching;")&&
  dock.includes("@keyframes psCapturePulse")&&dock.includes("prefers-reduced-motion:reduce");
 });
+console.log("PokeSearch UX contract: "+count+" tests passed");
