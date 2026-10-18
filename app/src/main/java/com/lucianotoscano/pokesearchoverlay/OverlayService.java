@@ -1644,7 +1644,7 @@ public class OverlayService extends Service {
                     // Applying the same values must retry a previously failed
                     // site submission instead of silently doing nothing.
                     status("Repetindo busca com o filtro atual...");
-                    refresh(true);
+                    OverlayService.this.refresh(true);
                     return;
                 }
                 mode=nextMode;rawAttack=a;rawDefense=d;rawStamina=st;
@@ -1662,7 +1662,7 @@ public class OverlayService extends Service {
                 if(!preview)resultsStale=count()>0;
                 hideDetails();
                 status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
-                refresh(true);
+                OverlayService.this.refresh(true);
             }catch(org.json.JSONException ex){
                 status("Filtro inválido. Escolha os valores novamente.");
             }
