@@ -55,6 +55,7 @@ public class OverlayService extends Service {
     private int popupOffsetDp=-1,popupRoomDp=-1;
     private String probeScriptCache;
     private boolean searchInProgress=false;
+    private boolean loginPaused=false;
     // PL-02: a UI selection and an already submitted query are distinct.
     private boolean queuedManualRefresh=false;
     private int submittedSearchGeneration=-1,submittingSearchGeneration=-1,watchdogGeneration=-1;
@@ -70,7 +71,6 @@ public class OverlayService extends Service {
         confirmedSubmittedFiltersGeneration=-1;
         searchFailure("⚠ Tempo limite","O navegador não concluiu a consulta. Tente atualizar.");
     };
-    private boolean loginPaused=false;
     private boolean pickerOpen=false;
     private final Runnable queuedRefresh=()->refresh(false);
     private final Runnable filterChangeRefresh=()->refresh(true);
