@@ -82,6 +82,11 @@ public class OverlayService extends Service {
         handler.removeCallbacks(loginEndRefresh);
         handler.removeCallbacks(deferredSessionReload);
     }
+    // Temporary QA bypass: only debug APK skips the local 60s wait.
+    // Release still enforces it; upstream service limits are not bypassed.
+    private boolean skipLocalGapInDebug(){
+        return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0;
+    }
     private static final long MIN_SEARCH_GAP_MS=60_000L;
     private static final long RESULT_PREVIEW_CACHE_TTL_MS=120_000L;
     private long nextScheduledSearchAtMs=0L;
@@ -812,9 +817,9 @@ public class OverlayService extends Service {
         }
         long now=System.currentTimeMillis();
         long previous=getSharedPreferences("prefs",0).getLong("lastNetworkSearchAt",0L);
-        if(previous>0L&&now>=previous&&now-previous<MIN_SEARCH_GAP_MS){
+        if(!skipLocalGapInDebug()&&previous>0L&&now>=previous&&now-previous<MIN_SEARCH_GAP_MS){
             long remaining=(MIN_SEARCH_GAP_MS-(now-previous)+999L)/1000L;
-            if(manual)android.widget.Toast.makeText(this,"↻ Nova busca em "+remaining+"s",android.widget.Toast.LENGTH_SHORT).show();
+            // No intrusive countdown Toast; status remains available in the menu.
             nextScheduledSearchAtMs=now+remaining*1000L+300L;
             status("Filtro "+mode.toUpperCase(java.util.Locale.ROOT)+" selecionado · próxima consulta em "+remaining+"s"
                 +(count()>0?" · prévia anterior":"")+".");

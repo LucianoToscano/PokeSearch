@@ -674,13 +674,13 @@ test("Contradictory, non-attainable or malformed IV never receives a palette col
 test("Compact IV label stays inside existing row, clear of the despawn timer",(()=>{
  const css=dock.match(/\.spawn \.ivPct\{[^}]+\}/)?.[0]||"";
  return css.includes("position:absolute")&&css.includes("left:0;bottom:0")&&
-        css.includes("max-width:25px")&&css.includes("pointer-events:none")&&
+        css.includes("max-width:29px")&&css.includes("background:transparent")&&css.includes("pointer-events:none")&&
         dock.includes(".timer{position:absolute;right:0;bottom:0")&&
         dock.includes("#resultHeader{width:35px;height:30px");
 })());
 test("Shiny sparkle is independent neutral, header extremes match the IV palette",(()=>{
  const css=dock.match(/\.modeIndicator\.shiny\{[^}]+\}/)?.[0]||"";
- return css.includes("color:#f5f7fa")&&!css.includes("color:#ffe77c")&&
+ return css.includes("background:transparent")&&css.includes("color:inherit")&&dock.includes('id="modeIndicatorShiny" class="modeIndicator shiny">✨</span>')&&
         dock.includes('primaryBadge.classList.toggle("zero",selectedIcon.family==="nundo")')&&
         dock.includes('primaryBadge.classList.toggle("perfect",selectedIcon.family==="hundo")')&&
         dock.includes(".modeIndicator.value.zero{color:#00cfe8}")&&
@@ -708,6 +708,45 @@ test("UX-ICON-02 capture animation reacts to native search state",()=>{
 test("UX-ICON-02 sizes, static click control and timers remain intact",()=>{
  return dock.includes('#resultHeader{width:35px;height:30px')&&
  dock.includes('max-width:21px;max-height:21px')&&
- dock.includes('width:23%;height:23%')&&dock.includes('pointer-events:none')&&
- dock.includes('data-wait')&&dock.includes("Native.toggleResultsCollapsed()");
+ dock.includes('width:29%;height:29%')&&dock.includes('pointer-events:none')&&
+ !dock.includes('setAttribute("data-wait"')&&dock.includes("Native.toggleResultsCollapsed()");
+});
+
+test("UX-FIX-01 keeps Pokéballs square without cropping or resizing badge area",()=>{
+ const base=dock.match(/\.resultModeStack\{[^}]+\}/)?.[0]||"";
+ const img=dock.match(/\.resultModeStack img\{[^}]+\}/)?.[0]||"";
+ const label=dock.match(/\.modeIndicator\.value\{[^}]+\}/)?.[0]||"";
+ return base.includes("aspect-ratio:1/1")&&base.includes("overflow:visible")&&
+ img.includes("object-fit:contain")&&img.includes("aspect-ratio:1/1")&&
+ label.includes("background:transparent")&&label.includes("bottom:-2px");
+});
+test("UX-FIX-01 Shiny emoji is plain and independent of IV color",()=>{
+ const css=dock.match(/\.modeIndicator\.shiny\{[^}]+\}/)?.[0]||"";
+ return dock.includes('id="modeIndicatorShiny" class="modeIndicator shiny">✨</span>')&&
+ css.includes("background:transparent")&&css.includes("color:inherit");
+});
+test("UX-FIX-01 per-spawn IV is hidden by default, but accessibility remains",()=>{
+ return dock.includes("let showResultText=false;")&&
+ dock.includes('!showResultText||verifiedPercent===null?"":')&&
+ dock.includes('verifiedPercent===null?"IV não comprovado"')&&
+ dock.includes('aria-label="'+esc(label)');
+});
+test("UX-FIX-01 no floating cooldown or Toast, despawn switch remains",()=>{
+ return !dock.includes('setAttribute("data-wait"')&&
+ !dock.includes('#resultHeader[data-wait]')&&
+ dock.includes('showTimers&&deadline')&&
+ !service.includes('Toast.makeText(this,"↻ Nova busca em');
+});
+test("UX-FIX-01 60s local cooldown bypass is debug-only",()=>{
+ return service.includes('private boolean skipLocalGapInDebug()')&&
+ service.includes('android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE')&&
+ service.includes('if(!skipLocalGapInDebug()&&previous>0L')&&
+ service.includes('private static final long MIN_SEARCH_GAP_MS=60_000L;')&&
+ service.includes('if(searchInProgress){');
+});
+test("UX-FIX-01 brighter capture pulse uses confirmed searching status",()=>{
+ const pulse=dock.match(/\.capturePulse\{[^}]+\}/)?.[0]||"";
+ return pulse.includes("left:50%;top:50%")&&pulse.includes("width:29%;height:29%")&&
+ pulse.includes("background:#f5ffff")&&dock.includes("searchActive=!!isSearching;")&&
+ dock.includes("@keyframes psCapturePulse")&&dock.includes("prefers-reduced-motion:reduce");
 });
