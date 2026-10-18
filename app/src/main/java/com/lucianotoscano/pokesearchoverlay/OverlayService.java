@@ -57,8 +57,8 @@ public class OverlayService extends Service {
     private boolean searchInProgress=false;
     // PL-02: a UI selection and an already submitted query are distinct.
     private boolean queuedManualRefresh=false;
-    private int submittedSearchGeneration=-1,watchdogGeneration=-1;
-    private long remoteDrainUntilMs=0L;
+    private int submittedSearchGeneration=-1,submittingSearchGeneration=-1,watchdogGeneration=-1;
+    private long submitAttemptAtMs=0L,remoteDrainUntilMs=0L;
     private static final long SEARCH_WATCHDOG_MS=45_000L;
     private final Runnable searchWatchdog=()->{
         if(stopped||loginPaused||!searchInProgress||watchdogGeneration!=requestGeneration)return;
@@ -343,8 +343,14 @@ public class OverlayService extends Service {
         }
     }
     private void guardSubmittedSearchBeforeReplacement(){
-        if(searchInProgress&&submittedSearchGeneration==requestGeneration&&lastSearchStartMs>0L)
-            remoteDrainUntilMs=Math.max(remoteDrainUntilMs,lastSearchStartMs+MIN_SEARCH_GAP_MS);
+        if(!searchInProgress)return;
+        // The site may navigate before the submitSearch JS callback arrives.
+        // Treat that narrow interval as potentially submitted, never as
+        // permission to dispatch a second query.
+        long started=submittedSearchGeneration==requestGeneration?lastSearchStartMs:
+            submittingSearchGeneration==requestGeneration?submitAttemptAtMs:0L;
+        if(started>0L)
+            remoteDrainUntilMs=Math.max(remoteDrainUntilMs,started+MIN_SEARCH_GAP_MS);
     }
     private void replaceActiveFilterSearch(){
         // Logical cancel only; a previously submitted HTTP request may still
@@ -517,7 +523,8 @@ public class OverlayService extends Service {
                 handler.removeCallbacks(pageFinishedRefresh);
                 // React document replacement invalidates partially configured
                 // form fields. Submitted searches instead retain their polling.
-                if(searchInProgress&&submittedSearchGeneration!=requestGeneration)
+                if(searchInProgress&&submittedSearchGeneration!=requestGeneration&&
+                   submittingSearchGeneration!=requestGeneration)
                     replaceActiveFilterSearch();
             }
             @Override public void onPageFinished(WebView view,String url){
@@ -904,6 +911,7 @@ public class OverlayService extends Service {
         final int generation=++requestGeneration;
         confirmedSubmittedFiltersGeneration=-1;
         submittedSearchGeneration=-1;
+        submittingSearchGeneration=-1;
         watchdogGeneration=generation;
         handler.removeCallbacks(searchWatchdog);
         handler.postDelayed(searchWatchdog,SEARCH_WATCHDOG_MS);
@@ -1132,9 +1140,14 @@ public class OverlayService extends Service {
                 shinyVerified=shiny;
                 confirmedSubmittedFiltersGeneration=generation;
                 update();
+                // Mark the submission boundary before JS clicks Search. A site
+                // navigation can beat the Android evaluateJavascript callback.
+                submittingSearchGeneration=generation;
+                submitAttemptAtMs=System.currentTimeMillis();
                 execute("submitSearch",submitted->{
                     if(stopped||loginPaused||generation!=requestGeneration)return;
                     if(!submitted.optBoolean("ok")){
+                        submittingSearchGeneration=-1;
                         confirmedSubmittedFiltersGeneration=-1;
                         searchInProgress=false;
                         shinyVerified=false;
@@ -1143,6 +1156,7 @@ public class OverlayService extends Service {
                     }
                     long submittedAt=System.currentTimeMillis();
                     lastSearchStartMs=submittedAt;
+                    submittingSearchGeneration=-1;
                     submittedSearchGeneration=generation;
                     getSharedPreferences("prefs",0).edit().putLong("lastNetworkSearchAt",submittedAt).apply();
                     BugReport.log(this,"SUBMIT","Busca "+mode+" Shiny="+shiny);
@@ -1156,6 +1170,14 @@ public class OverlayService extends Service {
     private void pollSearch(int generation,int attempt,boolean manual){
         handler.postDelayed(()->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
+            if(!loaded||website==null){
+                // Search can navigate to a result document. A temporarily
+                // unavailable WebView is not an empty or failed search.
+                if(attempt<8){pollSearch(generation,attempt+1,manual);return;}
+                searchInProgress=false;
+                searchFailure("⚠ Site não carregado","A página não terminou de carregar após Search.");
+                return;
+            }
             execute("collect",r->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!r.optBoolean("ok")){
