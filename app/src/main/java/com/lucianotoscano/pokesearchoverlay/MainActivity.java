@@ -302,9 +302,11 @@ public class MainActivity extends Activity {
         if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
             getWindow().getDecorView().post(this::openLoginDialog);
     }
-    private void serviceAction(String action){
+    private void serviceAction(String action){serviceAction(action,false);}
+    private void serviceAction(String action,boolean authConfirmed){
         Intent intent=new Intent(this,OverlayService.class);
         intent.setAction(action);
+        intent.putExtra("authConfirmed",authConfirmed);
         if(!OverlayService.isRunning())return;
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
     }
@@ -534,7 +536,7 @@ public class MainActivity extends Activity {
             loginFallback=null;
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginDialog=null;
-            serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END");
+            serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
             // Closing without a confirmed login must not reload the session.
             if(authenticatedNow)notifyOverlaySessionReady();
             refreshSessionSummary();
