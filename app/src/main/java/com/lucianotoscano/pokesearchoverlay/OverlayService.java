@@ -835,7 +835,11 @@ public class OverlayService extends Service {
         execute("session",session->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
             final String auth=session.optString("auth","não confirmado");
-            getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
+            // A partially hydrated mobile page is not proof that the stored
+            // authentication expired. Do not turn a verified session into
+            // "login necessary" merely because the DOM is temporarily empty.
+            if(!"não confirmado".equals(auth))
+                getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
             // Only record a coarse authentication state, never cookies, codes or tokens.
             BugReport.log(this,"SESSION","Shiny="+shiny+" autenticação="+auth);
             if(shiny&&auth.equals("login necessário")){
@@ -1903,7 +1907,11 @@ public class OverlayService extends Service {
             if(detailRoot!=null&&selected>=0&&!pickerOpen)detailRoot.setVisibility(View.VISIBLE);
             cancelSessionCallbacks();
             pendingLoginRefreshGeneration=requestGeneration;
-            if(!stopped&&!loginPaused&&!pickerOpen)
+            // A canceled dialog only resumes the overlay; it never starts an
+            // unnecessary network request. Successful login is handled by
+            // REFRESH_LOGIN, which reloads the collector exactly once.
+            boolean authConfirmed=i!=null&&i.getBooleanExtra("authConfirmed",false);
+            if(authConfirmed&&!stopped&&!loginPaused&&!pickerOpen)
                 handler.postDelayed(loginEndRefresh,1600L);
             schedulePeriodic();
             BugReport.log(this,"LOGIN","Página de autenticação fechada");
@@ -1923,7 +1931,13 @@ public class OverlayService extends Service {
             pendingPageRefreshGeneration=-1;
             pendingLoginRefreshGeneration=-1;
             cancelSessionCallbacks();
-            if(!initialStart){results="[]";hideDetails();status("Atualizando sessão após login...");}
+            if(!initialStart){
+                // Keep previously verified Pokémon visible until the collector
+                // confirms the newly shared login session.
+                resultsStale=count()>0;
+                hideDetails();
+                status("Sincronizando sessão após login...");
+            }
             try{CookieManager.getInstance().flush();}
             catch(RuntimeException e){recordFailure("sincronizar cookies",e);}
             pendingReloadGeneration=requestGeneration;
