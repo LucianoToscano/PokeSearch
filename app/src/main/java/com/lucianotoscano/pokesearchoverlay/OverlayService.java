@@ -83,6 +83,8 @@ public class OverlayService extends Service {
         handler.removeCallbacks(deferredSessionReload);
     }
     private static final long MIN_SEARCH_GAP_MS=60_000L;
+    private static final long RESULT_PREVIEW_CACHE_TTL_MS=120_000L;
+    private long nextScheduledSearchAtMs=0L;
     private long lastSearchStartMs=0L;
     private boolean shinyVerified=false;
     private boolean shinyLoginPromptRequested=false;
@@ -152,6 +154,56 @@ public class OverlayService extends Service {
     // Never relabel previous Pokémon with the new mode while validation fails.
     private String shownMode="raw",shownConfigJson="{}";
     private boolean shownShiny=false,resultsStale=false;
+    // In-memory only: previews are from confirmed searches, never fresh results.
+    private static final class FilterPreview{
+        final String results,sourceMode,sourceConfig;
+        final boolean sourceShiny;
+        final long confirmedAtMs;
+        FilterPreview(String cards,String mode,String config,boolean shiny,long at){
+            results=cards;sourceMode=mode;sourceConfig=config;sourceShiny=shiny;confirmedAtMs=at;
+        }
+    }
+    private final java.util.LinkedHashMap<String,FilterPreview> recentFilterPreviews=
+        new java.util.LinkedHashMap<String,FilterPreview>(8,0.75f,true){
+            @Override protected boolean removeEldestEntry(java.util.Map.Entry<String,FilterPreview> eldest){
+                return size()>8;
+            }
+        };
+    private String filterPreviewKey(){
+        return mode+"|"+shiny+"|"+locationEnabled+"|"+locationCoords+"|"+
+            locationRadius+"|"+filterConfigJson();
+    }
+    private void rememberConfirmedPreview(JSONArray cards,long now){
+        if(cards==null)return;
+        recentFilterPreviews.put(filterPreviewKey(),
+            new FilterPreview(cards.toString(),shownMode,shownConfigJson,shownShiny,now));
+    }
+    // Only show still-existing Pokémon from earlier confirmed results.
+    // Never trigger alerts or claim that this preview is a new site search.
+    private boolean restoreFilterPreview(){
+        FilterPreview cached=recentFilterPreviews.get(filterPreviewKey());
+        if(cached==null)return false;
+        long now=System.currentTimeMillis();
+        if(now<cached.confirmedAtMs||now-cached.confirmedAtMs>RESULT_PREVIEW_CACHE_TTL_MS){
+            recentFilterPreviews.remove(filterPreviewKey());return false;
+        }
+        try{
+            JSONArray previous=new JSONArray(cached.results),alive=new JSONArray();
+            for(int i=0;i<previous.length();i++){
+                JSONObject card=previous.optJSONObject(i);
+                if(card==null)continue;
+                long expiry=card.optLong("expiresAtMs",Long.MAX_VALUE);
+                if(expiry>now)alive.put(card);
+            }
+            results=alive.toString();
+            shownMode=cached.sourceMode;shownConfigJson=cached.sourceConfig;
+            shownShiny=cached.sourceShiny;resultsStale=true;
+            armNextDespawn(alive);
+            return true;
+        }catch(org.json.JSONException ignored){
+            recentFilterPreviews.remove(filterPreviewKey());return false;
+        }
+    }
     // Independent parameters remain intact when switching between search modes.
     private int rawAttack=15,rawDefense=15,rawStamina=15,glRank=1,ulRank=1,ivPercentMin=0,ivPercentMax=100;
     // Additional optional search criteria belong to the active site session, not to the toolbar.
@@ -239,7 +291,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -763,13 +815,15 @@ public class OverlayService extends Service {
         if(previous>0L&&now>=previous&&now-previous<MIN_SEARCH_GAP_MS){
             long remaining=(MIN_SEARCH_GAP_MS-(now-previous)+999L)/1000L;
             if(manual)android.widget.Toast.makeText(this,"↻ Nova busca em "+remaining+"s",android.widget.Toast.LENGTH_SHORT).show();
-            status("Próxima busca em "+remaining+"s · mantendo "+mode.toUpperCase(java.util.Locale.ROOT)
-                +(shiny?" com ✨":" sem ✨")+".");
+            nextScheduledSearchAtMs=now+remaining*1000L+300L;
+            status("Filtro "+mode.toUpperCase(java.util.Locale.ROOT)+" selecionado · próxima consulta em "+remaining+"s"
+                +(count()>0?" · prévia anterior":"")+".");
             handler.removeCallbacks(queuedRefresh);
             handler.postDelayed(queuedRefresh,remaining*1000L+300L);
             return;
         }
         handler.removeCallbacks(queuedRefresh);
+        nextScheduledSearchAtMs=0L;
         BugReport.log(this,"PREPARE","Filtros "+mode+" Shiny="+shiny+" manual="+manual);
         // Preserve the despawn cleanup timer while the network search is pending.
         searchInProgress=true;
@@ -1232,6 +1286,7 @@ public class OverlayService extends Service {
         results=sorted.toString();
         shownMode=mode;shownConfigJson=filterConfigJson();
         shownShiny=shiny&&shinyVerified;resultsStale=false;
+        rememberConfirmedPreview(sorted,now);
         searchInProgress=false;
         armNextDespawn(sorted);
         if(selected>=0)hideDetails();
@@ -1532,7 +1587,11 @@ public class OverlayService extends Service {
                 ++requestGeneration;searchInProgress=false;shinyVerified=false;
                 // Keep site-confirmed cards with their original mode/icon
                 // until the new search passes all checks and returns valid cards.
-                resultsStale=count()>0;hideDetails();update();refresh();
+                boolean preview=restoreFilterPreview();
+                if(!preview)resultsStale=count()>0;
+                hideDetails();
+                status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
+                refresh();
             }catch(org.json.JSONException ex){
                 status("Filtro inválido. Escolha os valores novamente.");
             }
@@ -1552,14 +1611,22 @@ public class OverlayService extends Service {
                 "Filtro selecionado: "+(s.equals("iv")?"Raw IV 15/15/15":s.equals("raw")?"Raw IV":s.equals("percent")?"% IV":s.equals("gl")?"Grande Liga":"Ultra Liga"),
                 android.widget.Toast.LENGTH_SHORT).show();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
-            resultsStale=count()>0;hideDetails();update();refresh();
+            boolean preview=restoreFilterPreview();
+            if(!preview)resultsStale=count()>0;
+            hideDetails();
+            status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
+            refresh();
         });}
         @JavascriptInterface public void menu(boolean open){handler.post(()->OverlayService.this.menu(open));}
         @JavascriptInterface public void cycleMode(){handler.post(()->{
             mode=mode.equals("raw")?"percent":mode.equals("percent")?"gl":mode.equals("gl")?"ul":"raw";
             getSharedPreferences("prefs",0).edit().putString("mode",mode).apply();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
-            resultsStale=count()>0;hideDetails();update();refresh();
+            boolean preview=restoreFilterPreview();
+            if(!preview)resultsStale=count()>0;
+            hideDetails();
+            status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
+            refresh();
         });}
         @JavascriptInterface public void cycleSpriteSize(){handler.post(()->{
             int[] sizes={35,45,55};
