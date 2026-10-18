@@ -351,7 +351,7 @@ O escopo completo de cada PL consta da **auditoria**. Os IDs não serão renumer
 |---|---|---|
 | PL-01 P0 | Diagnóstico do contrato de busca/lookup, IV%/PvP, filtros e erros de zero | Existem 'probe.js', 'presets.js', 'OverlayService.java' e correções em 6.11–6.13. Confirmar os contratos reais, sem assumir os parâmetros do proxy PokeLocation, e cobrir cada modo com teste; esta é a **primeira etapa a apresentar para aprovação**. |
 | PL-02 P0 | Troca reativa, cancelamento de geração e resultados antigos | Já existem requestGeneration, confirmação por geração, prévia de cache até 120 s e limite global de 60 s (6.14); auditar condições de corrida e transições reais antes de editar. |
-| PL-03 P0 | Login, retorno, sessão e segurança OAuth | A variável '__FILTERS__' no diagnóstico de login, cookies e retorno automático foram corrigidos (6.15). Falta validar em aparelho, expiração e Google/Discord; nunca contornar OAuth. |
+| PL-03 P0 | Login, retorno, sessão e segurança OAuth | A variável '__FILTERS__' no diagnóstico de login, cookies e retorno automático foram corrigidos (6.15). Falta validar em aparelho, expiração e Google/Discord; nunca contornar OAuth. **Nova dependência PS-009/PL-11:** a sessão só atravessa atualização do APK quando os dados locais são preservados; planejar assinatura fixa para atualizações sem desinstalação (12.21). |
 | PL-04 P1 | Distinguir zero resultados, 401, 403, 429, timeout e rede | Mensagens curtas e relatório já existem; validar tipagem, retry seguro e ausência de mensagens enganosas. |
 | PL-05 P1 | Cache por filtro/sessão/local, sprites, catálogo/ETag | Cache temporário de resultados já existe; avaliar catálogo, sprites, vazamentos entre contas e TTL real. |
 | PL-06 P1 | Sort by e presets | Sort by integrado de forma experimental em 6.9, com opções descobertas no site; perfis salvos por nome continuam PROPOSTA. Não misturar ordenação local contraditória com a remota. |
@@ -359,7 +359,7 @@ O escopo completo de cada PL consta da **auditoria**. Os IDs não serão renumer
 | PL-08 P2 | Histórico local opcional dos alertas | Relatório técnico não equivale a histórico de notificações navegável. Definir retenção/limpeza e pedir aprovação. |
 | PL-09 P2 | Renderização incremental, temporizador e uso de recursos | Timer e janelas independentes já existem; medir CPU/RAM e não refazer desnecessariamente os sprites a cada segundo. |
 | PL-10 P2 | Diagnóstico privado | ⚠, relatório TXT e envio voluntário já existem; examinar sanitização para dados sensíveis em todos os caminhos. |
-| PL-11 P2 | Android 15/16, permissões/App Links e release | Não alterar SDK/assinaturas sem análise; testar instalação, serviços exportados, overlay e certificado persistente. |
+| PL-11 P2 | Android 15/16, permissões/App Links e release | Não alterar SDK/assinaturas sem análise; testar instalação, serviços exportados, overlay e certificado persistente. **Priorizar PS-009**: atualização por cima com chave estável, versionCode incremental, preservação de sessão e teste Android real (12.21). |
 | PL-12 P3 | Avaliação eventual de backend próprio | Somente estudo após confirmação de necessidade; não introduzir servidor externo, credenciais compartilhadas ou tokens de terceiros. |
 
 **Regras da auditoria:** app externo Android AGPL-3.0-only, servidor MIT; não copiar código sem revisar licença. Não trazer GPS falso, joystick, clonador, chat, permissões especiais, credenciais/tokens, endpoints do proxy de terceiros ou frequência agressiva. A política atual do PokeSearch é consulta global mínima de 60 segundos. O contrato do proxy PokéLocation NÃO comprova o contrato público PoGoCoordinates.
@@ -554,7 +554,7 @@ Na árvore consultada havia **95 arquivos versionados**, **36 documentos em docs
 | PS-006 | Bug report | P1 | Falta suporte à exportação de erros e sugestões | Botão ⚠, log rotativo de 80 eventos, exportação TXT e WhatsApp | Corrigido no código | Testar salvar TXT/abrir WhatsApp |
 | PS-007 | Diagnóstico | P2 | ! não explica o motivo | Toque em ! exibe mensagem detalhada do status | Corrigido no código | Testar toast no aparelho |
 | PS-008 | Favoritos | P2 | Estrela abre Activity e interrompe Pokémon GO | Planejar seletor sobreposto dentro do overlay | Pendente | Implementação futura |
-| PS-009 | Assinatura | P0 | Debug do CI pode usar certificado diferente | Planejar chave release permanente fora do GitHub | Pendente distribuição pública | Definir chave estável e testes de atualização |
+| PS-009 | Assinatura / sessão após atualização | P0 | APK DEBUG é assinado no CI temporário e pode mudar certificado; reinstalação após desinstalação elimina cookies/sessão do PoGoCoordinates (allowBackup=false) | Planejar assinatura fixa privada para **APKs de teste** usando keystore protegida e GitHub Actions Secrets; manter applicationId e incrementar versionCode. Proposta 12.21; não exportar cookies, tokens ou senhas. | Diagnóstico de código confirmado; implementação **aguardando autorização** | Validar instalação por cima em duas versões consecutivas e persistência da sessão. |
 | PS-010 | Permissões | P1 | Notificações não autorizadas em Android 13+ | Solicitação runtime uma vez antes de iniciar overlay | Corrigido no código | Testar autorização e som |
 | PS-011 | Ligação GL/UL | P1 | Ranks anunciados sem confirmar todos os filtros | Verificação de liga e pré-evoluções antes da busca | Corrigido no código | Testar DOM real do site |
 | PS-012 | UI | P2 | Alinhamento do menu precisa teste em telas pequenas | Menu ajustado para novo ícone ⚠ | Corrigido no código | Testar à esquerda/direita e em landscape |
@@ -1057,3 +1057,24 @@ São faixas expressas apenas pelos 46 percentuais matematicamente possíveis par
 **Observação importante para QA:** a dispensa do piso local de 60 s **é limitada a DEBUG**, não deve ser usada em versão distribuída publicamente; mantém o processamento de limites impostos pelo PoGoCoordinates. Se o servidor negar consultas rápidas, respeitar erro 429/rate limit e restaurar o valor normal. Para o próximo teste no Android conferir a proporcionalidade real da arte enviada (P/M/G), indicador sem fundo no centro inferior, brilho ✨ sem fundo e sem cortar, ocultação do IV% dos sprites por padrão, halo central enquanto consulta ativa, ausência do toast flutuante “Nova busca em Xs”, e favoritados/alertas/PSC-02 intactos.
 
 **Estado:** implementação em branch e testes isolados aprovados; **aguardando compilação solicitada e teste Android**, sem merge. Futuro ajuste Mostrar/Ocultar texto por preferências ainda em backlog, não implementado neste passo.
+
+
+### 12.21 PS-009 / PL-03 / PL-11 — resolver relogin após atualizações de APK (18/10/2026)
+
+**Relato:** a cada reinstalação de uma nova versão de teste do PokeSearch o usuário precisa autenticar novamente no PoGoCoordinates com Gmail. Solicitou investigação e proposta, NÃO autorizou mudança de assinatura/código neste turno. Registrar apenas no Guia Mestre do PokeSearch.
+
+**Evidências do repositório no PR #26:**
+- app/build.gradle.kts define applicationId com.lucianotoscano.pokesearch, versionCode 51 e versionName 0.51-beta. Configuração privada via POKE_RELEASE_KEYSTORE existe somente em release e apenas quando disponibilizada externamente; debug não está ligado a uma chave fixa.
+- .github/workflows/build-v051-filters-preview.yml usa runner efêmero ubuntu-24.04 e comando assembleDebug, sem configurar keystore persistente. O certificado DEBUG pode variar de build para build; o Android impede atualizar um pacote com certificado incompatível. Desinstalar o APK anterior para instalar outro apaga os dados privados e a sessão do WebView.
+- AndroidManifest.xml declara android:allowBackup=false, ou seja, dados de sessão não têm restauração automática. Manter essa escolha até uma revisão de segurança específica.
+- MainActivity e OverlayService permitem cookies, cookies de terceiros para a WebView e DOM storage. Após autenticação, MainActivity usa CookieManager.flush(); só o logout explícito remove cookies e WebStorage. A persistência do site já foi programada: problema prioritário parece ser a desinstalação, não a falta de CookieManager.
+- O usuário ainda não forneceu mensagem exata do instalador nem teste de atualização sobreposta. Diagnóstico da causa é PROVÁVEL, não confirmação em aparelho. A sessão oficial também pode expirar ou ser revogada pelo servidor independentemente do APK.
+
+**Plano proposto, AINDA NÃO autorizado:**
+1. Gerar ou reutilizar uma **keystore de teste estável** controlada pelo proprietário, armazenada em cofre seguro/segredos do CI e com backup offline protegido. Nunca colocar arquivos de chave, senhas, JWT, cookies ou sua codificação base64 no repositório, Guia Mestre, anexos públicos ou conversa.
+2. Ajustar Gradle + workflow de artefatos para assinar toda atualização de teste do mesmo applicationId com a mesma chave; distinguir chave de teste da futura release pública, mantendo canais de distribuição separados quando necessário.
+3. Incrementar versionCode em novas versões testáveis; orientar instalação por cima (Atualizar), jamais desinstalar se quiser preservar dados. Se a chave antiga for incompatível e irrecuperável, pode ser inevitável UMA ÚLTIMA reinstalação ao migrar para a nova chave fixa. Depois manter atualização in-place.
+4. Não copiar/importar cookies do Google/PoGoCoordinates manualmente e não contornar autenticação/expiração do site. Se o relogin ocorrer mesmo após upgrade assinado corretamente, investigar TTL e site OAuth, página carregada, perfil de WebView e status de sessão em Android real.
+5. Homologar: build A → login oficial → builds B e C por cima mantendo package name, assinatura, favoritos, preferências e sessão enquanto válida; conferir ainda login/logout, Android 15/16, mudanças de versão, falha de assinatura, Shiny, 12 controles e alertas.
+
+**Governança:** dependências PS-009 (P0), PL-03 (P0), PL-11 (P2); sem nova numeração PL/UX/PSC. Nenhum arquivo de código/CI foi modificado neste registro; PR #26 draft e main intocados. Solicitar autorização para implementação específica antes de criar/alterar chave ou produzir APK. Não prometer login eterno, apenas persistência durante upgrades compatíveis. Não misturar PvPPokeGo.
