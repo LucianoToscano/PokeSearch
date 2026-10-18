@@ -9,7 +9,7 @@ function element(text="",attrs={},extra={}){
   return {
     innerText:text,textContent:text,children:[],parentElement:null,tagName:"SPAN",
     value:"",disabled:false,
-    getClientRects:()=>[{}],querySelectorAll:()=>[],querySelector:()=>null,
+    getClientRects:()=>[{}],querySelectorAll:()=>[],querySelector:()=>null,dispatchEvent:()=>true,
     getAttribute:(name)=>Object.prototype.hasOwnProperty.call(attrs,name)?attrs[name]:null,
     hasAttribute:(name)=>Object.prototype.hasOwnProperty.call(attrs,name),
     matches:(sel)=>(sel==="input"&&extra.tagName==="INPUT") || (sel==="input[type=checkbox]"&&extra.checkbox===true),
@@ -37,7 +37,8 @@ function run(action,mode,shinyOnly,opts={}){
   }
   if(opts.iv!==undefined){
     const lab=element("IV");
-    const fields=opts.iv.map(v=>element("",{}, {tagName:"INPUT",value:v}));
+    const fields=opts.iv.map((v,i)=>element("",{name:(opts.ivNames||[])[i]||""}, {tagName:"INPUT",value:v}));
+    opts.ivFields=fields;
     const parent=element();
     parent.querySelectorAll=selector=>selector.includes("input:not")?fields:[];
     lab.parentElement=parent;all.push(lab);
@@ -74,6 +75,18 @@ function run(action,mode,shinyOnly,opts={}){
     }
   }
   let cardButtons=[];
+  if(opts.tabs){
+    for(const label of ["Stats","PvP","Raw IV","% IV"]){
+      const button=element(label,{}, {tagName:"BUTTON"});
+      button.getAttribute=name=>name==="aria-selected"?String(
+        ["Stats","PvP"].includes(label)?opts.tabs.top===label:opts.tabs.sub===label):null;
+      button.click=()=>{
+        if(["Stats","PvP"].includes(label)){opts.tabs.top=label;opts.tabs.sub="";}
+        else opts.tabs.sub=label;
+      };
+      cardButtons.push(button);
+    }
+  }
   if(opts.spawn){
     const box=element(opts.spawn,{}, {
       querySelector:()=>element("Tangela"),
@@ -108,7 +121,12 @@ function run(action,mode,shinyOnly,opts={}){
          attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
          ...(opts.config||{})
        }));
-  return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:"/search",hostname:"pogocoordinates.com"},window:{}}));
+  const HTMLInputElement={prototype:{}};
+  Object.defineProperty(HTMLInputElement.prototype,"value",{set(v){this.value=String(v);}});
+  const HTMLTextAreaElement={prototype:{}};
+  Object.defineProperty(HTMLTextAreaElement.prototype,"value",{set(v){this.value=String(v);}});
+  class Event{constructor(type){this.type=type;}}
+  return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:"/search",hostname:"pogocoordinates.com"},window:{},HTMLInputElement,HTMLTextAreaElement,Event}));
 }
 let checked=0;
 function test(name,action,mode,shiny,options,predicate){
@@ -344,5 +362,56 @@ checked++;
 const invalidStat=run("collect","raw",false,
  {iv:["15","15","15"],spawn:ivEvidenceSpawn("100% (16/15/15)")});
 assert.equal(invalidStat.cards.length,0,"Out-of-range IV stats must never prove a match");
+checked++;
+
+// Form switching is asynchronous: clicking a new React tab is not proof
+// that its fields have mounted. This reproduces the reported stuck filters.
+const rawTabs={top:"Stats",sub:"% IV"};
+const lateRaw={tabs:rawTabs,iv:["100","100"],config:{attack:0,defense:0,stamina:0}};
+const beforeRaw=run("configureSearch","raw",false,lateRaw);
+assert.equal(beforeRaw.configured,false,"Raw 0/0/0 must wait for the Raw IV tab");
+assert.equal(beforeRaw.pending,true,"New tab must schedule a retry rather than fail forever");
+assert.equal(rawTabs.sub,"Raw IV","The desired Raw IV tab is requested");
+lateRaw.iv=["15","15","15"]; // The site now mounts Raw fields on the next rendering pass.
+const appliedZero=run("configureSearch","raw",false,lateRaw);
+assert.equal(appliedZero.configured,true,"Raw 0/0/0 is actually applied after React settles");
+assert.deepEqual(lateRaw.ivFields.map(x=>x.value),["0","0","0"]);
+checked+=2;
+const hundoOpts={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0"],config:{attack:15,defense:15,stamina:15}};
+const appliedHundo=run("configureSearch","raw",false,hundoOpts);
+assert.equal(appliedHundo.configured,true,"Raw 15/15/15 must update actual site fields");
+assert.deepEqual(hundoOpts.ivFields.map(x=>x.value),["15","15","15"]);
+checked++;
+const customOpts={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0"],config:{attack:3,defense:15,stamina:12}};
+const appliedCustom=run("configureSearch","raw",false,customOpts);
+assert.equal(appliedCustom.configured,true,"Mixed Raw 3/15/12 must be applied");
+assert.deepEqual(customOpts.ivFields.map(x=>x.value),["3","15","12"]);
+checked++;
+const sixOpts={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0","0","0","0"],
+ ivNames:["defense-min","attack-max","stamina-min","attack-min","stamina-max","defense-max"],
+ config:{attack:3,defense:15,stamina:12}};
+const sixResponse=run("configureSearch","raw",false,sixOpts);
+assert.equal(sixResponse.configured,true,"Six Raw min/max fields use identified stat names");
+assert.deepEqual(sixOpts.ivFields.map(x=>x.value),["15","3","12","3","12","15"]);
+checked++;
+const unknownSix={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0","0","0","0"],
+ config:{attack:3,defense:15,stamina:12}};
+const unknownResponse=run("configureSearch","raw",false,unknownSix);
+assert.equal(unknownResponse.configured,false,"Ambiguous six-field Raw IV must never fake a custom result");
+assert.equal(unknownResponse.pending,true,"Ambiguous six-field Raw IV requires controlled retries");
+checked++;
+const percentTabs={top:"Stats",sub:"Raw IV"};
+const pctOpts={tabs:percentTabs,iv:["0","0","0"],config:{percentMin:91,percentMax:100}};
+const pctWaiting=run("configureSearch","percent",false,pctOpts);
+assert.equal(pctWaiting.configured,false,"Percent mode must wait for the % IV tab");
+assert.equal(pctWaiting.pending,true,"Percent tab hydration requests another attempt");
+pctOpts.iv=["0","100"];
+const pctReady=run("configureSearch","percent",false,pctOpts);
+assert.equal(pctReady.configured,true,"91–100% values applied only once the form exists");
+assert.deepEqual(pctOpts.ivFields.map(x=>x.value),["91","100"]);
+checked+=2;
+const invalidPct={tabs:{top:"Stats",sub:"% IV"},iv:["0","100"],config:{percentMin:90,percentMax:100}};
+const invalidApply=run("configureSearch","percent",false,invalidPct);
+assert.equal(invalidApply.configured,false,"Unattainable IV% cannot be silently applied");
 checked++;
 console.log("PokeSearch probe contract: "+checked+" tests passed");
