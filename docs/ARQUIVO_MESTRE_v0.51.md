@@ -304,6 +304,22 @@ O usuário identificou corretamente a ausência de **Sort by**. A interface do P
 
 ---
 
+## 6.15. Sessão persistente e retorno automático após login — 18/10/2026
+
+**Relato real:** às vezes o usuário precisava relogar e, após autenticar, o PoGoCoordinates continuava aberto em vez de devolver o controle ao PokeSearch.
+
+**Causa confirmada no código:** `MainActivity.checkLoginSession()` injetava `probe.js` substituindo somente `__ACTION__`, `__MODE__` e `__SHINY__`, mas **esquecia `__FILTERS__`**, variável obrigatória no início do script. Isso causava exceção JavaScript e impossibilitava confirmar o login automaticamente; o site ficava aberto.
+
+**Correções implementadas** na branch `plan/v051-pogocoordinates-filtros-20261017` / PR #22:
+- `MainActivity.java`: substituir todos os **quatro** parâmetros no script de verificação (`__FILTERS__ = {}` no diagnóstico de sessão). Em sucesso, confirmar estado, sincronizar cookies com `CookieManager.flush()`, fechar login, retornar para o app. Login iniciado do overlay devolve foco ao aplicativo anterior com overlay visível; iniciado pela Home permanece na Home. Cancelar/sair sem sessão confirmada NÃO reinicia toda a busca nem declara sucesso.
+- `probe.js`: reconhecer `Shiny for your account` no texto do `document.body` mesmo que as estruturas do DOM móvel não exponham elementos `p/span/div` correspondentes, sem coletar código ou nome da conta.
+- `MainActivity.java` → `LOGIN_END` contém flag `authConfirmed`; `OverlayService.java` só agenda a consulta pós-login quando autenticação realmente terminou, preserva últimos resultados verificados em uma atualização de sessão e evita sobrescrever sessão conhecida como autenticada com estado transitório `não confirmado` durante a hidratação do site.
+- `app/tests/overlay-ux.test.js`: regressões específicas para script corretamente interpolado, retorno automático, cancelamento sem reload e preservação de dados; **sem alterações aos PNGs, 12 botões, filtros IV/PvP, cooldown ou login oficial**.
+
+**Limites e segurança:** cookies do site são persistidos pela WebView compartilhada do aplicativo enquanto forem válidos; o aplicativo não pode impedir expiração/revogação pelo servidor, política de login do Google/Discord ou limpeza de dados no Android. Nunca armazenar senhas, tokens ou cookies em preferências nem contornar bloqueio do provedor. O logout explícito continua sendo a única rotina que remove cookies e dados web. Testes de GitHub Actions não substituem confirmação real no dispositivo.
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
