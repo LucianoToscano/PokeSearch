@@ -1,4 +1,6 @@
-# PokeSearch — ARQUIVO MESTRE v0.51-beta (estado atualizado em 17/10/2026)
+# PokeSearch — ARQUIVO MESTRE v0.51-beta (registro central consolidado em 18/10/2026)
+
+> **DOCUMENTO CENTRAL 18/10/2026:** A seção 11 reúne estado verificado, documentação, histórico, diário, metas, bugs e PL/UX. As seções 1–10 foram preservadas como cronologia; algumas afirmações antigas são superadas pelos registros posteriores. **Não alterar código, APK ou fazer merge sem confirmação expressa.**
 
 > **Documento oficial para continuidade do desenvolvimento.** Neste projeto, preservar sempre a última base estável, trabalhar por etapas e não misturar mudanças das branches de v0.52–v0.56, que foram descartadas como direção de UX. A regra de design é: **melhorar e organizar, nunca empobrecer**.
 
@@ -393,3 +395,245 @@ O escopo completo de cada PL consta da **auditoria**. Os IDs não serão renumer
 6. Após cada etapa, registrar o resultado aqui, pedir aceitação e solicitar confirmação separada antes de avançar. A PL-02 não começa automaticamente ao finalizar PL-01.
 
 **Saída de 18/10/2026:** apenas documentação consolidada. **PL-01 ainda AGUARDANDO APROVAÇÃO**, PL-02 a PL-12 e UX-01 a UX-08 também. Nenhuma mudança de código, UX efetiva, PNG, AndroidManifest, APK, workflow de build ou 'main' autorizada neste registro.
+
+---
+
+## 11. PAINEL CENTRAL DE GOVERNANÇA — consolidação de 18/10/2026
+
+**ESTE É O REGISTRO ÚNICO DE CONTINUIDADE:** inventário, histórico, diário, decisões, metas, pendências, aprovações, testes, backlogs técnicos (PL-01 a PL-12) e de interface (UX-01 a UX-08). Os demais documentos permanecem preservados como arquivos de evidências e versões antigas, mas não precisam ser usados para descobrir a etapa atual. **Leia esta seção primeiro em outro chat.**
+
+**Regra temporal:** as seções 1–7 foram redigidas em etapas anteriores. Onde o início diz que a branch ativa é a do PR #21, prevalece o estado de 18/10 descrito nesta seção. Onde uma etapa diz "não implementado", conferir se as seções 6.9–6.15 registraram depois implementação beta. Conservar tais registros, sem adulterar a cronologia. O README ainda menciona v0.50 e não define a versão de build. Os subtítulos 6.12 e 6.13 foram repetidos na cronologia; são eventos diferentes, não duplicações de código.
+
+### 11.1 Estado e identidade verificados
+
+| Dado | Estado antes desta consolidação documental |
+|---|---|
+| Produto | **PokeSearch** Android overlay — independente de PvPPokeGo e de PokéLocation |
+| Repositório | https://github.com/LucianoToscano/PokeSearch |
+| Fonte única para histórico e decisões | **docs/ARQUIVO_MESTRE_v0.51.md**, nesta branch |
+| Branch de trabalho | **plan/v051-pogocoordinates-filtros-20261017** |
+| HEAD verificado | **47540cbdce5d539001244c7c861930a835e615f0**, commit de documentação de PL/UX (18/10), antes desta edição |
+| Último HEAD anterior às atualizações documentais | **fe68af33615c74649bd2b0fd265af50148aab2ad** |
+| PR #22 | https://github.com/LucianoToscano/PokeSearch/pull/22 — **aberto / draft / não mesclado**, base feature/v0.51-launcher-icon-fill-20261016 |
+| PR #21 | https://github.com/LucianoToscano/PokeSearch/pull/21 — **aberto / draft / não mesclado**, base main |
+| Main/backups | main é base restaurada; preservar backup/v0.51-beta-before-customization-20261015, backup/main-before-v051-restore-20261016 e arquivos das versões v0.52–v0.56 para referência, sem misturar suas direções descartadas |
+| Android | applicationId com.lucianotoscano.pokesearch; namespace com.lucianotoscano.pokesearchoverlay; versionCode 51 / versionName 0.51-beta; minSdk 26; targetSdk 33; compileSdk 36; JDK 17; Gradle 8.11.1 |
+| Manifest consultado | Permissões INTERNET, SYSTEM_ALERT_WINDOW, FOREGROUND_SERVICE, POST_NOTIFICATIONS; MainActivity exportada como launcher; OverlayService não exportado |
+| Validação | Existem testes JS/CI e APKs beta anteriores; **não existe homologação comprovada de todos os filtros/login/UX em Android real** |
+| Aprovação presente | **Somente documentação. NÃO autorizado modificar Java, JS, layout, ícones, permissões, APK, assinatura, workflow, backend ou fazer merge.** |
+
+**Hierarquia em caso de conflito:** (1) HEAD e código real para comportamento implementado; (2) decisões e estado mais recentes desta seção 11; (3) backlogs das seções 8–10; (4) diário cronológico 1–7; (5) planos/auditorias/arquivos anteriores como histórico. Não alegar que testes simulados equivalem a testes físicos.
+
+### 11.2 Produto e preservações inegociáveis
+
+- Regra de UX: **melhorar e organizar, nunca empobrecer**. Overlay compactíssimo, simétrico, elegante, transparente, sem bordas/margens desnecessárias; preservar **barra original de 12 controles em uma linha**, engrenagem arrastável, minimizar, fechar e recolher.
+- **Janela de resultados independente da janela dos controles**: cabeçalho PNG de 21×21 em alvo de 35×30, arrastar/recolher individualmente, posições persistidas, máximo **dez Pokémon** por consulta; sprites P/M/G próximos, toque curto abre detalhes, toque longo copia coordenadas reais, despawn de segundos em tempo real.
+- **18 PNGs oficiais e imutáveis sem pedido**: nove famílias com pares normal/Shiny, conforme tabela completa da seção 3, no diretório app/src/main/assets/result-icons/. As **quatro linhas de busca reais** são Raw IV A/D/S (0–15), IV% Min/Max (46 valores válidos), GL Top 1–50 e UL Top 1–50. Hundo/Nundo correspondem a configurações especiais. Os PNGs Sem filtro, Master e Cup **não** significam que tais modos estejam implementados.
+- Shiny ✨ ao lado de **MODO DE BUSCA**, além da ação original da barra, e somente confirmado quando o site efetivamente habilitar; Google/Discord pela via oficial. Login deve usar mínimo de site possível e devolver o controle ao PokeSearch com sessão preservada enquanto válida.
+- Filtros experimentais do PR #22: Sort by e grupos gerais/avançados (Pokémon, Form, Size, CP, Level, Gender, Weather, PvP Min CP, pré-evoluções). Mostrar somente opções comprovadamente existentes no PoGoCoordinates; não inventar VIP, mestre/copa, opções climáticas ou contratos do proxy privado de outro projeto.
+- Busca AUTO OFF/5/10/15/20 minutos, botão manual, **limite mínimo global de 60 segundos** entre buscas submetidas; resultado antigo de cache até 120s somente como prévia stale, nunca como novo e nunca gerando alerta falso. Atualizar despawn localmente sem nova consulta indevida.
+- Favoritos até 50, sino/notificações gerais e especiais, opções som/silencioso/OFF, teste de notificação, localização/raio opcional 0–1000 km com controles ON/OFF e ocultar separados, relatório ⚠ exportável e sanitizado, Pix de apoio voluntário, tutorial, teclado, popup posicionável e toque passando ao jogo fora das janelas.
+- Não copiar GPS falso, joystick, clone de APK, chat, rastreamento, token compartilhado, servidor privado, endpoints, permissões ou chaves de PokéLocation. Referência Android externa AGPL-3.0-only, servidor MIT: observar licenças. Nunca misturar PvPPokeGo.
+- APK debug pode mudar de certificado entre execuções do CI; não prometer atualização in-place. Keystore release persistente, privacidade e testes de Android 15/16 são **metas ainda pendentes**.
+
+### 11.3 Inventário completo de documentos no GitHub
+
+Na árvore consultada havia **95 arquivos versionados**, **36 documentos em docs/**, dos quais **14 Mestres v0.38–v0.51** e **14 auditorias v0.38–v0.51**. Eles não serão excluídos, renomeados nem sobrescritos. **Não criar outro Arquivo Mestre concorrente**, apenas acrescentar entradas neste documento.
+
+- docs/ARQUIVO_MESTRE_v0.38.md (6443 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.39.md (3849 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.40.md (5476 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.41.md (6164 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.42.md (8102 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.43.md (7338 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.44.md (3091 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.45.md (3928 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.46.md (4305 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.47.md (3172 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.48.md (3306 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.49.md (4398 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.50.md (11972 bytes) — histórico/referência preservada
+- docs/ARQUIVO_MESTRE_v0.51.md (60336 bytes) — **único Mestre ativo**
+- docs/AUDITORIA_v0.38.md (4563 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.39.md (2075 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.40.md (2809 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.41.md (3201 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.42.md (4360 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.43.md (5154 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.44.md (2184 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.45.md (2491 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.46.md (2859 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.47.md (2585 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.48.md (2648 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.49.md (2921 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.50.md (10534 bytes) — histórico/referência preservada
+- docs/AUDITORIA_v0.51.md (1187 bytes) — histórico/referência preservada
+- docs/ETAPA_02_RESULTADOS_INDEPENDENTES_SEM_COMPILAR.md (4027 bytes) — histórico/referência preservada
+- docs/GUIA_COMPATIBILIDADE_ANDROID_v0.50.md (8520 bytes) — histórico/referência preservada
+- docs/GUIA_TESTE_SAMSUNG_v0.48.md (3076 bytes) — histórico/referência preservada
+- docs/GUIA_TESTE_SAMSUNG_v0.49.md (2882 bytes) — histórico/referência preservada
+- docs/GUIA_TESTE_SAMSUNG_v0.50.md (3320 bytes) — histórico/referência preservada
+- docs/GUIA_TESTE_SAMSUNG_v0.51.md (1043 bytes) — histórico/referência preservada
+- docs/PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md (22127 bytes) — histórico/referência preservada
+- docs/REFERENCIA_POKELOCATION_2026-10-18.md (16760 bytes) — histórico/referência preservada
+
+**Outros arquivos essenciais inventariados:** README.md (descrição antiga); .github/workflows/build-overlay.yml, build-v051-filters-preview.yml e secure-release.yml (CI); app/build.gradle.kts, app/proguard-rules.pro, AndroidManifest.xml; assets dock.html, overlay.html, detail.html, tutorial.html, probe.js, presets.js, shiny_login.js, login_entry.js, pokemon_catalog.json; 18 ícones da pasta result-icons; Java OverlayService, MainActivity, PokemonPicker, WatchAlerts, BugReport, DiagnosticSanitizer, IntegrityGuard, PixSupport; app/tests/probe-smoke.test.js, overlay-ux.test.js, login-entry.test.js, DiagnosticSanitizerTest.java. Arquivos de build/assets permanecem fora da consolidação e não foram editados.
+
+**Complementos externos verificados:**
+- [Drive — Complemento ao Arquivo Mestre v0.51 e auditoria PokéLocation](https://docs.google.com/document/d/1p6gK1HueyN5DTdKQk2LsSCZvlKc1pphvzVroGpUr9nQ/edit) — é referência, não fonte de decisões mais nova que este Mestre.
+- [Planilha histórica PS-001…PS-080](https://docs.google.com/spreadsheets/d/1aam5N7DNnzMqJj5giZTdsAmzWkHTWPj-uKcUUVwreiI/edit) — transcrita integralmente como snapshot na seção 11.7 abaixo.
+- [APK externo PokéLocation v1.2 no Drive](https://drive.google.com/file/d/1uSuww0uFIqQRyGnpYXRwJqnDsqdm76Kx/view) — 2.555.264 bytes, SHA-256 d4aba3d0a813c114a0f45a9718fdaf506198d9156655c970d18cbd2e036ac5a3, **não é APK PokeSearch**.
+- Fonte oficial dos 18 PNGs: Google Drive folder ID 1YkY3WQIirk1m9Ko8c2rLBuye6agnTbI7, pasta 03_Icones_Ligas.
+- Repositórios da auditoria: https://github.com/ayranoliveira1/pokelocation (AGPL-3.0-only) e https://github.com/ayranoliveira1/pokelocation-server (MIT); termos, segurança, OAuth e contrato próprios precisam de análise independente.
+- Demais mestres e auditorias no Google Drive e documentos antigos são arquivo de evidência, não devem ser apagados nem tratados como branch ativa.
+
+### 11.4 Linha do tempo única: histórico e diário
+
+| Data/fase | Fatos e situação |
+|---|---|
+| 14/10, v0.38–v0.40 | Primeiras correções de IV100, Shiny, login/teclado, favoritos, relatório; PS-001…PS-022; CI não equivalente a teste Android. |
+| 14/10, v0.41–v0.44 | Janelas separadas, sprites e recolhimento, UI/popup/cantos, coordenadas+raio 0–1000km, transparência; várias validações físicas pendentes. |
+| 14/10, v0.45–v0.49 | Ajustes AUTO/despawn sem buscas extras, autenticação/race/cookies, diagnósticos privados, ícones de notificação, testes Samsung, fluxo de atualização/relatório. |
+| 14–16/10, v0.50–v0.51 | UI limpa, autenticação com retorno, base restaurada em main, PR #21 em draft, 18 PNGs reais em resultado independente e status do launcher. |
+| 17/10, PR #22 | Modos Raw/IV%/GL/UL e 46 porcentagens; Shiny no topo; Sort by/filtros gerais e avançados. Correções nos dropdowns dinâmicos e coletores. |
+| 17/10, builds aprovados | GitHub Actions runs 39011424737, 39012668303 e 39013998424. **Compilação/JS success não garante filtros funcionando no dispositivo.** |
+| 17/10, relato físico | Resultado vazio com ⚠ Filtro: pokemon, embora Pokémon não tenha sido escolhido; extras neutros deixaram de bloquear, limpeza explícita manteve confirmação. Regressão ainda exige reteste. |
+| 18/10, PL prévia | Troca de filtros e limite de 60s: cache por contexto até 120s e contador do próximo Search, sem declarar preview atual nem emitir novos alertas; seção 6.14. |
+| 18/10, login | Placeholder __FILTERS__ faltava no probe de sessão; correção e retorno automático/cookies registrados; seção 6.15, OAuth real pendente. |
+| 18/10, referência | Auditoria documental PokéLocation Android/servidor, backlogs PL-01–PL-12 e UX-01–UX-08, sem autorização de implementação dessas novas etapas. |
+| 18/10, **CENTRAL-001** | Proprietário ordenou **centralização de toda documentação/histórico/diário/metas/planos neste Mestre**. Operação exclusivamente editorial; arquivos históricos intocados, código/APK/merge não autorizados. |
+
+### 11.5 Backlogs, dependências, metas e estados
+
+**Backlog PL — ver definições técnicas integrais na seção 8.2 deste mesmo Mestre e no documento de auditoria indexado em 11.3.** Todos estão **AGUARDANDO APROVAÇÃO INDIVIDUAL** para nova alteração, mesmo que contenham código antigo relacionado.
+
+| Ordem | ID | Prioridade | Próxima decisão |
+|---|---|---|---|
+| 1 | PL-01 | P0 | Contrato real de pesquisa, filtros e zero resultados; **apresentar diagnóstico, riscos, plano e testes, aguardar confirmação** |
+| 2 | PL-02 | P0 | Troca reativa e geração/cancelamento/cooldown |
+| 3 | PL-03 | P0 | Login/retorno/sessão e OAuth seguros |
+| 4 | PL-04 | P1 | Diferenciar 0 Pokémon de 401/403/429/rede/timeout/5xx |
+| 5 | PL-05 | P1 | Cache por contexto, sprites, catálogo, TTL |
+| 6 | PL-06 | P1 | Sort by real e presets persistentes |
+| 7 | PL-07 | P1 | Deduplicação de notificações/favoritos por encontro |
+| 8 | PL-08 | P2 | Histórico **local** opcional de alertas |
+| 9 | PL-09 | P2 | Renderização incremental, despawn, CPU/bateria/RAM |
+| 10 | PL-10 | P2 | Diagnóstico sanitizado local |
+| 11 | PL-11 | P2 | Android 15/16, permissões, App Links, assinatura |
+| 12 | PL-12 | P3 | Somente estudo de backend independente |
+
+**Backlog UX — definições e dependências integrais na seção 9 deste Mestre:** UX-01 organização de Modos/Sort/gerais/avançados (parcial existente); UX-02 transparência e aparência (parte existente); UX-03 visibilidade dos dados nos sprites; UX-04 duas pesquisas opcionais (NÃO implementadas, OFF padrão e dependentes de PL-01/02/05); UX-05 favoritos e alertas (em grande parte existentes); UX-06 info/diagnóstico sob demanda; UX-07 AUTO e localização (parcial); UX-08 presets rápidos (dependente da PL-06). **TODOS PENDENTES DE AUTORIZAÇÃO INDIVIDUAL.**
+
+**Metas de aceite:** (M1) filtros sempre batem com resultados realmente confirmados; (M2) zero resultados legítimos não se confundem com erro de rede/site/login; (M3) login retorna ao app e sessão persiste enquanto válida; (M4) 12 botões e 18 PNGs continuam íntegros sem regressão; (M5) consulta global mínima 60s respeitada; (M6) alertas, sprites, despawn, favoritos e toque longo preservados; (M7) validação Android 15 e 16 com relatórios sanitizados; (M8) build/assinatura verificados só quando autorizados; (M9) teste real aceito e merge apenas por confirmação.
+
+**Máquina de estados obrigatória:** PROPOSTO → DIAGNOSTICADO → APROVADO PELO PROPRIETÁRIO → IMPLEMENTADO EM BRANCH ISOLADA → TESTADO EM CI → TESTADO NO APARELHO (quando cabível) → ACEITO → MERGE AUTORIZADO. Estado nunca avança automaticamente; PL-02 não começa por concluir PL-01.
+
+### 11.6 Diagnóstico preliminar PL-01, sem modificar código
+
+**Problema prioritário:** depois de escolher modos/filtros, alguns testes físicos mostraram lista vazia e o aviso ⚠ Filtro: pokemon. Outros casos, descritos nas seções 6.11–6.15, incluem Form/Size não carregados em React, formulário desaparecido após Search, espera por cooldown, cabeçalho aparentemente IV100 com dados não perfeitos e login sem retorno. Algumas correções já foram registradas na branch, mas **não foi comprovado fim a fim** que o site aceita todas as combinações de filtros no aparelho real.
+
+**Arquivos a inspecionar primeiro:** app/src/main/assets/probe.js (apply/check/collect, filtro extra neutro, geração, Shiny, resposta); presets.js (hidratação React); dock.html (seleção e apresentação de status); OverlayService.java (requestGeneration, refresh, cache, throttle 60s, extraFiltersJson); MainActivity.java apenas quando necessário para entender sessão. Testes app/tests/probe-smoke.test.js e overlay-ux.test.js; bug report sanitizado.
+
+**Hipóteses / riscos:** valores do formulário remoto e do Java podem divergir; alguns dropdowns só aparecem após render React; formulário pode sumir ao abrir resultados; filtros ocultos não devem impor seleção fantasma; resposta antiga pode passar por atual; campos de sort têm semântica própria; site pode retornar 401/403/429/timeout. Não assumir que endpoints privados do PokéLocation equivalem ao PoGoCoordinates público. Não reduzir a trava de 60s. Não alterar estado Shiny sem confirmação. Teste que apenas passou em mock não significa filtro funcionando no site.
+
+**Plano proposto — AINDA NÃO APROVADO:** mapear ações reais do site e critérios verificados; reproduzir com testes isolados (Raw 15/15/15, Raw 0/0/0, IV% 91–100, GL#1, UL#1, Shiny ON/OFF), opcionais Pokémon/Form/Size, limpeza de campo, Sort by, distância e trocas durante consulta; distinguir vazio, falha, consulta pendente e prévia stale; confrontar cabeçalho/ícone com Pokémon mostrados; simular 401/403/429/5xx/timeout DOM alterado e cache. Após aprovação, mudanças mínimas em branch própria, testes e retorno para nova confirmação. **Nenhuma implementação de PL-01 autorizada neste registro.**
+
+### 11.7 Catálogo histórico de bugs importado do Google Drive
+
+**Snapshot de 18/10/2026, não homologação:** transcrição do catálogo original. O status "corrigido no código" se refere ao momento da planilha; evidências Android ainda devem ser executadas. IDs não contíguos NÃO devem ser reaproveitados.
+
+| ID | Área | Prioridade | Problema relatado | Ação / correção registrada | Estado da planilha | Validação pendente |
+|---|---|---|---|---|---|---|
+| PS-001 | IV100 | P0 | ! no overlay sem Shiny; nenhum resultado | Raw IV 3/6 campos; alternativa % IV 100–100 com confirmação | Corrigido no código | Testar busca real sem shiny |
+| PS-002 | Login | P0 | Teclado não aparece para código do treinador | WebView focável; ADJUST_RESIZE; overlay invisível durante login | Corrigido no código | Testar teclado e login Google/Discord no Samsung |
+| PS-003 | Sessão | P1 | Precisava fechar/reabrir overlay após login | Restaurar overlay e recarregar sessão autenticada ao fechar login | Corrigido no código | Confirmar após vínculo do treinador |
+| PS-004 | Shiny | P0 | Botão ✨ ligado mas filtro do site desligado | Exigir confirmação no site e estado pendente | Corrigido no código | Testar shiny real com código vinculado |
+| PS-005 | Frequência | P1 | Consultas excessivas em atualizações manuais/automáticas | Intervalos auto >=5min; 60s entre buscas efetivamente enviadas | Corrigido no código | Testar bloqueio de repetição |
+| PS-006 | Bug report | P1 | Falta suporte à exportação de erros e sugestões | Botão ⚠, log rotativo de 80 eventos, exportação TXT e WhatsApp | Corrigido no código | Testar salvar TXT/abrir WhatsApp |
+| PS-007 | Diagnóstico | P2 | ! não explica o motivo | Toque em ! exibe mensagem detalhada do status | Corrigido no código | Testar toast no aparelho |
+| PS-008 | Favoritos | P2 | Estrela abre Activity e interrompe Pokémon GO | Planejar seletor sobreposto dentro do overlay | Pendente | Implementação futura |
+| PS-009 | Assinatura | P0 | Debug do CI pode usar certificado diferente | Planejar chave release permanente fora do GitHub | Pendente distribuição pública | Definir chave estável e testes de atualização |
+| PS-010 | Permissões | P1 | Notificações não autorizadas em Android 13+ | Solicitação runtime uma vez antes de iniciar overlay | Corrigido no código | Testar autorização e som |
+| PS-011 | Ligação GL/UL | P1 | Ranks anunciados sem confirmar todos os filtros | Verificação de liga e pré-evoluções antes da busca | Corrigido no código | Testar DOM real do site |
+| PS-012 | UI | P2 | Alinhamento do menu precisa teste em telas pequenas | Menu ajustado para novo ícone ⚠ | Corrigido no código | Testar à esquerda/direita e em landscape |
+| PS-013 | Busca sem Shiny | P0 | Website oferece 100% IV e GL#1 com ✨ OFF; overlay exibe ! | Selecionar % IV min/max=100 no grupo correto; não exigir vínculo Shiny OFF | Corrigido v0.39 no código | Testar no Samsung e exportar ⚠ caso ! persista |
+| PS-014 | Rank GL/UL | P0 | Cartões exibidos não repetem Rank 1 apesar do filtro da pesquisa | Inferir rank1 apenas se formulário comprovar liga/rank/evoluções | Corrigido v0.39 no código | Verificar resultados reais da liga |
+| PS-015 | Coletor | P1 | Site mostra Showing N spawns; overlay não reconhece cartões | Comparar total do site e leitor; reportar motivo do erro | Corrigido v0.39 no código | Testar com DOM real |
+| PS-016 | Shiny opcional | P1 | Dialog de vínculo Shiny bloqueava busca com Shiny OFF | Checar vínculo só se usuário pediu ✨ ON | Corrigido v0.39 no código | Validar primeira abertura sem login |
+| PS-017 | Login | P0 | Rodapé nativo CANCELAR/VOLTAR AO OVERLAY bloqueava a página e a digitação | Dialog fullscreen com ✓ Voltar discreto no topo e WebView redimensionável | Corrigido v0.40 no código | Testar login Google/Discord e código de amizade |
+| PS-018 | Favoritos | P0 | Ao tocar ★ retornava à tela inicial do app e saía do jogo | Picker no próprio TYPE_APPLICATION_OVERLAY com busca e sprites | Corrigido v0.40 no código | Testar teclado, pesquisa e retorno ao Pokémon GO |
+| PS-019 | Menu de modos | P1 | Toque mudava modo e AUTO sem oferecer opções visíveis | Popovers sob 100%/GL#1/UL#1 e AUTO 5/10/15/20m | Corrigido v0.40 no código | Testar escolha em bordas direita/esquerda |
+| PS-020 | Shiny OFF | P1 | Desligar brilhante não devia alterar modo e refresh podia ficar bloqueado | Preserva modo; agenda pesquisa assim que terminar intervalo mínimo 60s | Corrigido v0.40 no código | Testar filtro e restrição de consultas |
+| PS-021 | Tutorial | P2 | Falta legenda inicial para os botões | Guia na primeira abertura com atalho permanente ⓘ | Corrigido v0.40 no código | Testar aparecimento uma vez |
+| PS-022 | Sprites | P1 | Linhas de 40dp continham imagens de 45dp gerando sobreposição | Linha tamanho do sprite + 10dp; scroll sem barra para muitos resultados | Corrigido v0.40 no código | Testar espaçamento real e rolagem |
+| PS-031 | Localização | P1 | Filtro de coordenadas e raio opcional | Ícone 📍 único; input + chave ON/OFF e slider 0–1000km | Corrigido no código v0.42 | Testar no Android |
+| PS-032 | Filtro OFF | P1 | Desligar filtro deve retirar valores | Limpa inputs do site e prefs antes de pesquisar | Corrigido no código v0.42 | Validar no site |
+| PS-033 | Expressões | P1 | Regex incorreta no leitor de resultados e coord. | Escape corrigido; CI passou | Corrigido no código v0.42 | Teste físico pendente |
+| PS-034 | Painel | P2 | Ocultar não deve desativar o filtro | Ação Ocultar independente da chave ON/OFF | Corrigido no código v0.42 | Verificar interação |
+| PS-035 | 📍 Raio ativo | P2 | Raio aplicado não era visível com menu de opções fechado | Botão 📍 com pequeno valor em km + etiqueta no dock quando ON, sem um segundo botão | Corrigido no código v0.43 | Testar 0, 50 e 1000km e estado OFF |
+| PS-036 | Barra de opções | P1 | 12 controles distribuídos em 11 colunas; X podia cair para outra linha | Grade de 12 colunas; X continua ao lado do coração | Corrigido no código v0.43 | Conferir alinhamento em telas pequenas |
+| PS-037 | Editor de localização | P1 | Trocar de painel 📍 para AUTO/ligas mantinha foco de teclado | Liberar foco e remover largura especial ao alternar opções | Corrigido no código v0.43 | Testar digitação e alternância em Android |
+| PS-038 | Menu overlay | P0 | Menu fica por cima da engrenagem perto das bordas | Reposicionamento adaptativo horizontal/vertical para deixar engrenagem acessível | Corrigido no código v0.44 | Testar nos quatro cantos do Android |
+| PS-039 | Barra UI | P1 | 12 ícones ficam invertidos ou desalinhados | Grid proporcional de 12 colunas e ordem LTR preservada | Corrigido no código v0.44 | Conferir em diferentes larguras |
+| PS-040 | Recolher | P1 | Seta para recolher não apresenta fundo visível | Fundo escuro opaco, borda e área de toque ampliada | Corrigido no código v0.44 | Verificar visual e toque no telefone |
+| PS-041 | AUTO | P1 | Botão de intervalo parece não funcionar | Menu reposicionado e confirmação Toast ao alterar frequência | Corrigido no código v0.44 | Testar escolha 5/10/15/20m |
+| PS-042 | Atualização | P1 | Botão ↻ aparentemente sem resposta | Feedback imediato de toque e status de busca em andamento, mantendo limite de 60s | Corrigido no código v0.44 | Testar consulta real e limite mínimo |
+| PS-043 | Favoritos UX | P2 | Painel de favoritos muito opaco | Fundo translúcido alpha 188/255, borda sutil e dim reduzido | Corrigido no código v0.44 | Validar transparência e teclado Android |
+| PS-044 | Localização | P1 | Raio vazio pode ser interpretado como 0 km | Exigir texto de raio presente e modo Coords confirmado antes de buscar | Corrigido no código v0.44 | Testar 0, 50 e 1000km no site |
+| PS-045 | Coordenadas | P1 | Validação de coordenadas Java aceitava substring | Validação do campo inteiro com intervalo permitido | Corrigido no código v0.44 | Testar entradas malformadas |
+| PS-046 | Coordenadas Pokémon | P1 | Mesmo nome pode ter coordenadas de outro spawn | Comparação adicional de CP ao extrair coordenadas | Corrigido no código v0.44 | Validar com DOM e spawns duplicados |
+| PS-047 | Desempenho | P2 | Redimensionamento pode ser chamado várias vezes no mesmo frame | Coalescência do fit em requestAnimationFrame | Corrigido no código v0.44 | Medir resposta em Android físico |
+| PS-048 | AUTO/Expiração | P1 | Vencimento de Pokémon provocava consultas extras a cada ~60 segundos | Remover refresh da limpeza local e rearmar apenas deadlines; manter AUTO a cada 5/10/15/20 min | Corrigido no código v0.45 | Verificar temporização no Android e no site |
+| PS-049 | Login | P1 | Busca antiga podia terminar/submeter durante autenticação | Invalidar geração, cancelar atualização atrasada e retomar com verificação após login | Corrigido no código v0.45 | Testar login Google/Discord e volta segura |
+| PS-050 | Shiny | P1 | Relatórios 0.42/0.43 mostram Shiny não confirmado após abrir login | Distinguir vínculo pendente de Shiny não comprovado e manter Shiny OFF disponível | Corrigido no código v0.45 | Validar sessão e vínculo do treinador no site |
+| PS-051 | Relatórios | P2 | Faltava estado categórico de sessão nos logs | Registrar somente autenticação: autenticada/login necessário/não confirmado e Shiny solicitado | Corrigido no código v0.45 | Verificar exportação sem dados pessoais |
+| PS-052 | Atualizar manual | P2 | Mensagem dizia aguardar quando a busca não estava agendada | Informar tocar novamente após pesquisa atual; manter feedback Toast | Corrigido no código v0.45 | Testar toque e resposta no Android |
+| PS-053 | Shiny | P2 | Diálogo de vínculo pode aparecer em inglês | Reconhecer link/connect account sem extrair conteúdo sensível | Corrigido no código v0.45 | Validar DOM do site em inglês |
+| PS-054 | Popup menus | P0 | 100%/GL/UL, AUTO e 📍 visíveis, mas painel recortado e sem toque | Permitir overflow visível no WebView separado e redimensionamento da janela nativa | Código corrigido · CI verde v0.46 · Android pendente | Abrir todos os popovers em tela real |
+| PS-055 | Engrenagem | P1 | Engrenagem encoberta ou com toque pequeno perto das bordas | Fundo escuro e alvo 35×30dp, posicionamento não sobreposto | Código corrigido · CI verde v0.46 · Android pendente | Teste de drag e clique nos cantos |
+| PS-056 | Recolhimento | P1 | Seta pequena e fundo invisível | Seta 40×32dp, fundo escuro sólido, contorno | Código corrigido · CI verde v0.46 · Android pendente | Testar recolher/restaurar com sprites |
+| PS-057 | Menu invertido | P1 | Botões não invertem quando menu muda de lado | CSS RTL à esquerda + syncMenu nas duas WebViews e fallback por lado da tela | Código corrigido · CI verde v0.46 · Android pendente | Testar em ambos os lados e extremidades |
+| PS-058 | Resposta | P1 | Mode/AUTO/refresh sem confirmação perceptível | Feedback visual imediato e toast/contador de cooldown | Código corrigido · CI verde v0.46 · Android pendente | Testar IV100 GL UL AUTO e atualizar |
+| PS-059 | Favoritos | P2 | Janela de favoritos parece sólida | Gradiente translúcido alpha 187→159, borda, sem escurecimento do jogo | Código corrigido · CI verde v0.46 · Android pendente | Testar Android com Pokémon GO atrás |
+| PS-060 | Autenticação | P0 | Ao logar aparece página do site no fundo | Não iniciar OverlayService a partir de login da Home; verificar isRunning | Código corrigido · CI verde v0.46 · Android pendente | Login sem overlay e com overlay ativo |
+| PS-061 | Volta após login | P1 | Após autenticar continua em PoGoCoordinates em vez de Home | Fechar tela de login quando sessão detectada; Shiny somente após confirmação do filtro; manter ✓ PokeSearch | Código corrigido · CI verde v0.46 · Android pendente | OAuth real Google/Discord e vínculo |
+| PS-062 | Home | P1 | Sem controles login e logoff na tela inicial | Adicionar Entrar/vincular, Sair e status da sessão | Código corrigido · CI verde v0.46 · Android pendente | Validar toque e acessibilidade |
+| PS-063 | Logout | P1 | Sem opção de desconectar sessão local | Parar overlay, remover cookies e WebStorage, manter favoritos | Código corrigido · CI verde v0.46 · Android pendente | Testar logout e novo login real |
+| PS-064 | Latência UI | P2 | Redimensionamentos redundantes deixam interface lenta | Cache de geometria native, fit limitado a requestAnimationFrame | Código corrigido · CI verde v0.46 · Android pendente | Medir performance Android real |
+| PS-070 | Notificações | P1 | Ícone genérico nas notificações do serviço e favoritos | Criar vetor monocromático e substituir os três setSmallIcon | Corrigido no código v0.48; Android pendente | Conferir visibilidade e contraste no Samsung |
+| PS-071 | Privacidade relatório | P1 | Exportador não filtrava password/token e outros formatos comuns | DiagnosticSanitizer, limpeza antes de armazenar e ao exportar, 29 asserções | Corrigido no código v0.48; Android pendente | Revisão manual do TXT continua necessária |
+| PS-072 | Exportação TXT | P1 | Substituição global de barra+n podia criar linhas artificiais | Gerar delimitadores reais diretamente no StringBuilder | Corrigido no código v0.48; Android pendente | Testar descrição com barra+n literal |
+| PS-073 | Diagnóstico | P2 | Exceções de notificações e remoção de janelas eram ignoradas | Registrar somente etapa e nome da classe da falha | Corrigido nos caminhos listados; demais em revisão | Exportar relatório após falha de notificação |
+| PS-074 | Testes Samsung | P2 | Faltava roteiro reproduzível de testes físicos | Criar GUIA_TESTE_SAMSUNG_v0.48.md | Roteiro criado; execução física pendente | Testar corners, OAuth, Shiny e 30 minutos |
+| PS-075 | Notificações | P1 | Botão WatchAlerts.test inexistente na UI | Botões Favoritos e Preferências; toggles alerts/som e feedback de permissão | Corrigido em v0.49 / CI verde | Testar no Samsung, permissões habilitadas e negadas |
+| PS-076 | Login / OAuth | P1 | Voltar Android fechava diálogo mesmo com histórico | Dialog OnKeyListener com KEYCODE_BACK e website.goBack | Corrigido em v0.49 / CI verde | Validar Google/Discord/PoGoCoordinates real |
+| PS-077 / B06 | Login / refresh | P1 | Refresh LOGIN_END e onPageFinished competiam com cookies | Runnables nomeados canceláveis, geração, reload 350ms e limpeza onDestroy | Corrigido em v0.49 / CI verde | Validar login/logout em busca pendente e rede lenta |
+| PS-078 | Coordenadas | P1 | Sinal + rejeitado ou não sanitizado | Regex [-+]? no Sanitizer, OverlayService e dock; teste Java | Corrigido em v0.49 / CI verde | Validar coordenadas com sinal + no Android |
+| PS-079 | Menu | P2 | Flicker LTR/RTL ao abrir menu à esquerda | Calcular posição antes de syncMenu; uma sincronização de abertura por WebView | Corrigido em v0.49 / CI verde | Abrir menu em ambos lados/cantos Samsung |
+| PS-080 | Código e privacidade | P2 | Retorno IV100 morto e texto relatório prometia proteção total | Retorno inalcançável removido, aviso orienta revisão | Corrigido em v0.49 / CI verde | Verificar UI e relatório TXT no Samsung |
+
+**Complementos de bugs posteriores à planilha (17–18/10):**
+- PS-V051-01: dropdown React/valores neutros não reconhecidos, tentativa antes de render; correções de open/read/close e retry (6.11), teste real pendente.
+- PS-V051-02: Search/Collect descartava Pokémon porque formulário sumia após Search; confirmação anterior estritamente na mesma geração (6.12 e 6.13), reteste pendente.
+- PS-V051-03: ⚠ Filtro: pokemon com opção padrão neutra; somente seleções explícitas devem restringir, mantendo limpeza explícita segura (6.13), reteste pendente.
+- PS-V051-04: mudança de modo parece lenta; cache stale e contador de 60s já registrados (6.14), validar troca rápida e expiração.
+- PS-V051-05: login não voltava; __FILTERS__ faltante na verificação e fluxos de retorno/cookies registrados (6.15), teste real OAuth pendente.
+- PS-V051-06: captura mostra cabeçalho IV100 com IVs 4/4/11, 2/14/2 e 0/13/13; é hipótese de associação incorreta, não defeito comprovado no HEAD. Investigar em PL-01/02.
+
+### 11.8 Diário e protocolo para novos chats
+
+**ENTRADA CENTRAL-001 — 18/10/2026 — DOCUMENTAÇÃO:** Reunidos fatos das versões v0.38–v0.51, auditorias, guias Samsung/compatibilidade, plano de filtros, referência PokéLocation, PR #21/#22, Manifest/Gradle, árvore completa e planilha histórica de bugs; atualizado **somente este arquivo**. PL-01 aguarda apresentação e autorização; nenhuma alteração executável nem APK por esta entrada.
+
+**Template para registrar cada próxima decisão, obrigatoriamente aqui:**
+1. Data/hora, número do diário, pedido e etapa PL/UX/PS; objetivo e motivo.
+2. Estado ANTES, proposta, arquivos, riscos, preservações e testes planejados.
+3. **Citação da aprovação expressa** ou SEM AUTORIZAÇÃO; não converter intenção em autorização.
+4. Branch e SHA antes; diff/arquivos alterados e SHA após; backups/PR preservados.
+5. Resultado real de testes JS/CI (com run), de APK e de Android/site (dispositivo/evidência ou NÃO TESTADO).
+6. Bugs abertos/reabertos, decisões, rollback, aceitação, próxima etapa **AGUARDANDO CONFIRMAÇÃO**.
+
+**Prompt único para começar outro chat:**
+
+> Continue PokeSearch v0.51 na branch plan/v051-pogocoordinates-filtros-20261017. Leia o único docs/ARQUIVO_MESTRE_v0.51.md (principalmente seção 11, histórico, metas, diário e PL/UX); confira HEAD e PR #21/#22. Preserve interface original, 18 PNGs, 12 controles, backups, main e PvPPokeGo separado. Comece pelo diagnóstico/proposta da PL-01; não altere código, não gere APK e não faça merge sem minha confirmação expressa. Registre cada decisão, teste e resultado nesse mesmo Mestre.
+
+**REGRA DE RETENÇÃO:** centralizar a consulta e as decisões em um só Mestre **não autoriza excluir documentos antigos**. O histórico completo do Git e os arquivos de referência continuam disponíveis para verificação e recuperação.
