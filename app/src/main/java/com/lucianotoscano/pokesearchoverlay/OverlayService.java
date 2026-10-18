@@ -63,6 +63,9 @@ public class OverlayService extends Service {
     private final Runnable searchWatchdog=()->{
         if(stopped||loginPaused||!searchInProgress||watchdogGeneration!=requestGeneration)return;
         guardSubmittedSearchBeforeReplacement();
+        // Invalidate every callback still held by WebView. A late collect
+        // after the timeout must never publish cards or trigger alerts.
+        ++requestGeneration;
         searchInProgress=false;
         confirmedSubmittedFiltersGeneration=-1;
         searchFailure("⚠ Tempo limite","O navegador não concluiu a consulta. Tente atualizar.");
@@ -521,7 +524,8 @@ public class OverlayService extends Service {
                 // A navigation epoch is independent of filter requestGeneration.
                 // Ignore redirects from older pages and foreign origins.
                 if(url!=null&&url.startsWith("https://pogocoordinates.com/")&&
-                   (view.getUrl()==null||url.equals(view.getUrl()))){
+                   (view.getUrl()==null||url.equals(view.getUrl())||
+                    (view.getProgress()==100&&view.getUrl().startsWith("https://pogocoordinates.com/")))){
                     loaded=true;
                     handler.removeCallbacks(pageFinishedRefresh);
                     pendingPageRefreshGeneration=searchInProgress?-1:requestGeneration;
@@ -2017,6 +2021,7 @@ public class OverlayService extends Service {
         }
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN".equals(action)){
             loginPaused=true;
+            guardSubmittedSearchBeforeReplacement();
             ++requestGeneration;
             searchInProgress=false;
             pageLoadGeneration=-1;
@@ -2056,6 +2061,7 @@ public class OverlayService extends Service {
            (initialStart&&action.isEmpty())){
             shinyLoginPromptRequested=false;
             shinyLoginWindowOpened=false;
+            guardSubmittedSearchBeforeReplacement();
             ++requestGeneration;
             searchInProgress=false;
             shinyVerified=false;
