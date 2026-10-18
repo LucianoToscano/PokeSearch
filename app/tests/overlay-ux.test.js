@@ -88,7 +88,10 @@ test("AUTO provides feedback",service.includes("AUTO: "));
 const expiry=service.split("private final Runnable expiryRefresh=new Runnable(){")[1]?.split("private void armNextDespawn")[0]||"";
 test("Despawn removes expired sprites without triggering an extra site search",expiry.includes("armNextDespawn(active);")&&!expiry.includes("refresh(false);"));
 test("AUTO retains 5/10/15/20 minute scheduling",service.includes("handler.postDelayed(periodic,intervalMinutes*60000L)"));
-test("Manual refresh does not misleadingly claim queued work",service.includes("Toque ↻ novamente quando terminar."));
+test("PL-02 manual refresh queues one follow-up only while busy",
+  service.includes('queuedManualRefresh=true;')&&
+  service.includes('status("↻ Nova busca agendada após a atual.")')&&
+  service.includes('queuedManualRefresh=false;'));
 test("Login pauses and invalidates pending site callbacks",service.includes("loginPaused=true;\n            ++requestGeneration;\n            searchInProgress=false;")&&service.includes("cancelSessionCallbacks();"));
 test("A completed login resumes searching, while canceling does not",
  service.includes('boolean authConfirmed=i!=null&&i.getBooleanExtra("authConfirmed",false)')&&
@@ -161,7 +164,11 @@ test("B06 all six kinds of scheduled work are canceled",['queuedRefresh','period
 test("B06 LOGIN_BEGIN cancels callbacks and hides all windows",beginBlock.includes('cancelSessionCallbacks();')&&['root','menuRoot','detailRoot'].every(v=>beginBlock.includes(v+'.setVisibility(View.GONE)')));
 test("B06 LOGIN_END cancels before 1600ms and periodic restarts after",endBlock.indexOf('cancelSessionCallbacks();')<endBlock.indexOf('handler.postDelayed(loginEndRefresh,1600L)')&&endBlock.indexOf('schedulePeriodic();')>endBlock.indexOf('handler.postDelayed(loginEndRefresh,1600L)'));
 test("B06 periodic suppressed during login",service.includes('if(stopped||loginPaused||intervalMinutes<=0)return;')&&service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(this,intervalMinutes*60000L)'));
-test("B06 page generation captured at start and compared on finish",pageBlock.includes('onPageStarted')&&pageBlock.includes('pageLoadGeneration=requestGeneration;')&&pageBlock.includes('pageLoadGeneration!=requestGeneration'));
+test("PL-02 page navigation independent of mutable filter generation",
+ pageBlock.includes('onPageStarted')&&pageBlock.includes('pageLoadGeneration++;')&&
+ pageBlock.includes('pendingPageRefreshGeneration=searchInProgress?-1:requestGeneration;')&&
+ !pageBlock.includes('pageLoadGeneration!=requestGeneration')&&
+ service.includes('pendingPageRefreshGeneration==requestGeneration)refresh(false)'));
 test("B06 page finish 2500ms handler is cancelable",pageBlock.includes('handler.removeCallbacks(pageFinishedRefresh);')&&pageBlock.includes('handler.postDelayed(pageFinishedRefresh,2500L)')&&!pageBlock.includes('handler.postDelayed(()->{if(!stopped&&!loginPaused)refresh();}'));
 test("B06 REFRESH_LOGIN cancels callbacks before cookie flush",reloadBlock.includes('++requestGeneration;')&&reloadBlock.indexOf('cancelSessionCallbacks();')<reloadBlock.indexOf('CookieManager.getInstance().flush();'));
 test("B06 reload occurs after 350ms with generation guard",reloadBlock.includes('handler.postDelayed(deferredSessionReload,350L)')&&service.includes('pendingReloadGeneration!=requestGeneration'));
@@ -790,6 +797,50 @@ test("Test-Android: reapplying the same filter can retry failed Search",()=>{
 test("PS-009 Android Java inner Bridge invokes outer refresh(boolean) explicitly",()=>{
  const bridge=service.split("private class Bridge")[1]||service.split("class Bridge")[1]||"";
  return bridge.includes('status("Repetindo busca com o filtro atual...");\n                    OverlayService.this.refresh(true);')&&
-  bridge.includes('status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");\n                OverlayService.this.refresh(true);');
+  service.includes('status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");\n                scheduleFilterChangeRefresh();')&&
+  service.includes('private void scheduleFilterChangeRefresh()');
+});
+test("PL-02 navigation recovery survives a filter change while loading",()=>{
+ const nav=service.split("website.setWebViewClient(new WebViewClient(){")[1]?.split("    @Override public void onCreate()")[0]||"";
+ return nav.includes("pageLoadGeneration++")&&
+  !nav.includes("pageLoadGeneration!=requestGeneration")&&
+  nav.includes("url.equals(view.getUrl())")&&
+  nav.includes("if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,2500L);");
+});
+test("PL-02 only the newest selection starts after debounce",()=>{
+ return service.includes("private final Runnable filterChangeRefresh=()->refresh(true);")&&
+  service.includes("handler.removeCallbacks(filterChangeRefresh);")&&
+  service.includes("handler.postDelayed(filterChangeRefresh,240L);")&&
+  service.includes("replaceActiveFilterSearch();shinyVerified=false;");
+});
+test("PL-02 logical cancellation protects remote submission against overlap",()=>{
+ return service.includes("private void guardSubmittedSearchBeforeReplacement()")&&
+  service.includes("submittedSearchGeneration==requestGeneration")&&
+  service.includes("remoteDrainUntilMs=Math.max(remoteDrainUntilMs,lastSearchStartMs+MIN_SEARCH_GAP_MS)")&&
+  service.includes("earliest=Math.max(earliest,remoteDrainUntilMs);")&&
+  service.includes("handler.postDelayed(queuedRefresh,remaining*1000L+300L)");
+});
+test("PL-02 pending manual retry is guarded against subsequent filter switches",()=>{
+ return service.includes("queuedManualRefresh=true;")&&
+  service.includes("final int queuedGeneration=requestGeneration;")&&
+  service.includes("queuedGeneration==requestGeneration)refresh(true);")&&
+  service.includes("queuedManualRefresh=false;")&&
+  service.includes("handler.removeCallbacks(filterChangeRefresh);");
+});
+test("PL-02 watchdog can release stalled generation without false success",()=>{
+ const watchdog=service.split("private final Runnable searchWatchdog=()->{")[1]?.split("    };")[0]||"";
+ return service.includes("SEARCH_WATCHDOG_MS=45_000L")&&
+  service.includes("handler.postDelayed(searchWatchdog,SEARCH_WATCHDOG_MS);")&&
+  watchdog.includes("watchdogGeneration!=requestGeneration")&&
+  watchdog.includes("guardSubmittedSearchBeforeReplacement();")&&
+  watchdog.includes('searchFailure("⚠ Tempo limite"')&&
+  service.includes("handler.removeCallbacks(searchWatchdog);");
+});
+test("PL-02 stale previews keep their confirmed source and never fire new alerts",()=>{
+ const cache=service.split("private boolean restoreFilterPreview(){")[1]?.split("    private int rawAttack")[0]||"";
+ return cache.includes("shownMode=cached.sourceMode;")&&
+  cache.includes("resultsStale=true;")&&
+  !cache.includes("recordNewResults(")&&
+  service.includes("if(count()>0)resultsStale=true;");
 });
 console.log("PokeSearch UX contract: "+count+" tests passed");
