@@ -287,6 +287,23 @@ O usuário identificou corretamente a ausência de **Sort by**. A interface do P
 
 ---
 
+## 6.14. Troca rápida de filtros sem violar cooldown — 18/10/2026
+
+**Relato do usuário:** ao alternar entre filtros IV100/Raw, IV%, GL e UL, os resultados demoram a atualizar.
+
+**Causa real identificada:** `OverlayService.refresh()` possui `MIN_SEARCH_GAP_MS=60_000L`, aplicado também após a seleção de um novo filtro. Esse intervalo protege o serviço remoto contra consultas frequentes. Além dele, os estágios de sincronização e verificação do formulário exigem tempo de WebView/React. O modo e seus parâmetros já mudavam imediatamente, mas os cartões precisavam aguardar a consulta, sem contagem visível.
+
+**Melhoria de UX implementada no PR #22, em desenvolvimento isolado:**
+- Mantido o limite de **60 s** e o agendamento de **apenas a última seleção**. Não fingir que a nova busca foi executada imediatamente.
+- `OverlayService.java`: cache **somente em memória** dos últimos 8 conjuntos de resultados confirmados (até **120 s** de idade), com chave incluindo **modo, Shiny, localização/coordenadas/raio, parâmetros completos**. Ao retornar a um filtro já consultado, restaurar de imediato apenas Pokémon cujo `expiresAtMs` ainda não venceu. Prévia é **explicitamente marcada como anterior/stale**; não aciona novos alertas, não inventa novos resultados nem concede confirmação ao filtro recém-selecionado. Uma consulta real subsequente substitui a prévia.
+- `OverlayService.java`: controlar `nextScheduledSearchAtMs`; no cooldown, status `Filtro ... selecionado · próxima consulta em Ns`. Ao iniciar a chamada de rede zerar o indicador.
+- `dock.html`: exibir contagem regressiva em segundos no pequeno cabeçalho dos resultados e no estado vazio (usando o `setInterval(updateTimers,1000)` já existente). **Nenhum ícone/botão extra**; preservar 18 PNGs e barra de 12 botões, menu e janelas separadas.
+- `app/tests/overlay-ux.test.js`: contratos verificando cache por filtro/contexto, expiração e indicador sem quebra de interface; sem atalho indevido para o limite de consulta.
+
+**Limitações:** quando o filtro não possui cache válido (primeira vez selecionado ou consulta antiga/expirada), a listagem terá de esperar a próxima busca permitida; a UI responde e avisa o tempo. Preview não significa resultado atual. O limite de 60 s e eventual lentidão do site remoto continuam existindo. Testar em aparelho, especialmente transições rápidas, dados vencidos e alternância Shiny/localização.
+
+---
+
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
