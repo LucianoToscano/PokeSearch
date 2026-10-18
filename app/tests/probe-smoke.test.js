@@ -299,7 +299,6 @@ assert.equal(explicitClear.ok,false,"An explicitly cleared species must actually
 assert.equal(explicitClear.pending,true,"Reset opens the remote chooser and waits");
 checked++;
 
-console.log("PokeSearch probe contract: "+checked+" tests passed");
 
 
  // PL-01 / PSC-02 — the remote form being configured is not proof of every card's IV.
@@ -346,3 +345,4 @@ const invalidStat=run("collect","raw",false,
  {iv:["15","15","15"],spawn:ivEvidenceSpawn("100% (16/15/15)")});
 assert.equal(invalidStat.cards.length,0,"Out-of-range IV stats must never prove a match");
 checked++;
+console.log("PokeSearch probe contract: "+checked+" tests passed");
