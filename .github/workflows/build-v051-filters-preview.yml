@@ -82,7 +82,7 @@ jobs:
             echo "::error::Invalid signed test versionCode."
             exit 1
           fi
-          PACKAGE_LINE="$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -m1 '^package: ')"
+          PACKAGE_LINE="$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package: ')"
           for expected in \
             "name='com.lucianotoscano.pokesearch'" \
             "versionCode='${EXPECTED_CODE}'" \
