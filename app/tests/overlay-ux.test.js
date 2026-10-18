@@ -31,7 +31,11 @@ test("Login has one top toolbar and no native footer buttons",main.includes('don
 test("Shiny remains separate from the chosen filter",service.includes('shiny=!shiny;')&&dock.includes('onclick="Native.shiny()"')&&service.includes('mode.equals(selected)'));
 test("Throttled refresh is queued",service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
 test("Quick guide remains accessible",main.includes("showQuickGuide()")&&main.includes("tutorialSeenV41")&&main.includes("tutorial.html"));
-test("Sprite rows must not overlap artwork",service.includes("return Math.max(26,spriteSize-8);"));
+test("UX-SPRITE-01 rows fit the full sprite plus a minimal 3dp gap in P/M/G",()=>{
+ const row=service.match(/private int rowDp\(\)\{([\s\S]*?)\}/)?.[1]||"";
+ return row.includes("return spriteSize+3;")&&[35,45,55].every(s=>s+3>s)&&
+  service.includes('Math.min(rowDp()*8,screenHeightDp()-160)');
+});
 test("Sprites remain vertically centered",dock.includes("align-items:center;justify-content:center")&&dock.includes("height:var(--row)"));
 test("Sprite list uses scroll instead of clipping overflow",dock.includes("overflow-y:auto;overflow-x:hidden")&&dock.includes("--list-limit"));
 test("Long lists have list height supplied by native screen size",service.includes("Math.min(rowDp()*8,screenHeightDp()-160)"));
@@ -884,3 +888,48 @@ test("Blank zero is never treated as a filled Raw IV or percentage",()=>{
   probe.includes('confirmedNumber(inputs[0],filters.percentMin,0,100)');
 });
 console.log("PokeSearch UX contract: "+count+" tests passed");
+
+test("UX-SPRITE-01 uses equal square image slots with no cropping or opaque panels",()=>{
+ const stage=dock.match(/\.spriteStage\{[^}]+\}/)?.[0]||"";
+ const image=dock.match(/\.spriteStage \.sprite\{[^}]+\}/)?.[0]||"";
+ const row=dock.match(/\.spawn\{[^}]+\}/)?.[0]||"";
+ return stage.includes("width:var(--sprite);height:var(--sprite)")&&
+  stage.includes("align-items:center;justify-content:center")&&
+  image.includes("aspect-ratio:1/1")&&image.includes("object-fit:contain")&&
+  image.includes("object-position:center")&&
+  !image.includes("object-fit:cover")&&!stage.includes("background:")&&
+  row.includes("height:var(--row)")&&row.includes("flex:0 0 var(--row)");
+});
+test("UX-SPRITE-01 missing images remain visible without inventing Pokémon or breaking taps",()=>{
+ return dock.includes('class="spriteStage"')&&
+  dock.includes('class="spriteFallback fallback" aria-hidden="true"')&&
+  dock.includes('.spriteStage.loaded .spriteFallback{display:none}')&&
+  dock.includes('.spriteStage.failed .sprite{display:none}')&&
+  dock.includes('alt="" loading="eager" decoding="async"')&&
+  dock.includes('onclick="spriteClick(')&&dock.includes("Native.toggleDetail(i)")&&
+  dock.includes("Native.longPressCoords(i)")&&dock.includes("showTimers&&deadline")&&
+  dock.includes("attachLongPress();attachSpriteFeedback();updateTimers()");
+});
+test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image sources",()=>{
+ const source=dock.split("function attachSpriteFeedback(){")[1]?.split("function attachLongPress(){")[0]||"";
+ if(!source.includes("if(img.complete)confirmLoaded()"))return false;
+ function makeStage(image){
+  const classes=new Set(),listeners={};
+  if(image)image.addEventListener=(name,fn)=>{listeners[name]=fn;};
+  return {image,classes,listeners,classList:{add:name=>classes.add(name)},
+   querySelector:()=>image};
+ }
+ const cached=makeStage({naturalWidth:128,naturalHeight:128,complete:true});
+ const waiting=makeStage({naturalWidth:128,naturalHeight:128,complete:false});
+ const broken=makeStage({naturalWidth:0,naturalHeight:0,complete:true});
+ const tiny=makeStage({naturalWidth:1,naturalHeight:1,complete:true});
+ const absent=makeStage(null);
+ const stages=[cached,waiting,broken,tiny,absent];
+ const mockDoc={querySelectorAll:(sel)=>sel===".spawn .spriteStage"?stages:[]};
+ const attach=(new Function("document","return function attachSpriteFeedback(){"+source))(mockDoc);
+ attach();
+ if(waiting.classes.has("loaded")||waiting.classes.has("failed"))return false;
+ waiting.listeners.load();
+ return cached.classes.has("loaded")&&waiting.classes.has("loaded")&&
+  broken.classes.has("failed")&&tiny.classes.has("failed")&&absent.classes.has("failed");
+});
