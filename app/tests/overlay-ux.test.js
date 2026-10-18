@@ -822,7 +822,7 @@ test("PL-02 only the newest selection starts after debounce",()=>{
 test("PL-02 logical cancellation protects remote submission against overlap",()=>{
  return service.includes("private void guardSubmittedSearchBeforeReplacement()")&&
   service.includes("submittedSearchGeneration==requestGeneration")&&
-  service.includes("remoteDrainUntilMs=Math.max(remoteDrainUntilMs,lastSearchStartMs+MIN_SEARCH_GAP_MS)")&&
+  service.includes("remoteDrainUntilMs=Math.max(remoteDrainUntilMs,started+MIN_SEARCH_GAP_MS)")&&
   service.includes("earliest=Math.max(earliest,remoteDrainUntilMs);")&&
   service.includes("handler.postDelayed(queuedRefresh,remaining*1000L+300L)");
 });
@@ -849,5 +849,21 @@ test("PL-02 stale previews keep their confirmed source and never fire new alerts
   cache.includes("resultsStale=true;")&&
   !cache.includes("recordNewResults(")&&
   service.includes("if(count()>0)resultsStale=true;");
+});
+test("PL-02 marks submit boundary before Search can navigate",()=>{
+ const start=service.indexOf("submittingSearchGeneration=generation;"),
+       call=service.indexOf('execute("submitSearch",submitted=>{',start);
+ const onPage=service.split("onPageStarted(WebView view,")[1]?.split("onPageFinished(WebView")[0]||"";
+ return start>0&&call>start&&
+  onPage.includes("submittingSearchGeneration!=requestGeneration")&&
+  service.includes("submittingSearchGeneration=-1;")&&
+  service.includes("submitAttemptAtMs=System.currentTimeMillis();");
+});
+test("PL-02 waits for WebView after submit navigation without treating missing DOM as zero",()=>{
+ const poll=service.split("private void pollSearch(")[1]?.split("private long expiration(")[0]||"";
+ return poll.includes("if(!loaded||website==null){")&&
+  poll.includes("if(attempt<8){pollSearch(generation,attempt+1,manual);return;}")&&
+  poll.indexOf("if(!loaded||website==null){")<poll.indexOf('execute("collect",r=>{')&&
+  poll.includes('searchFailure("⚠ Site não carregado"');
 });
 console.log("PokeSearch UX contract: "+count+" tests passed");
