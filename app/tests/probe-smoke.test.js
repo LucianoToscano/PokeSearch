@@ -414,4 +414,19 @@ const invalidPct={tabs:{top:"Stats",sub:"% IV"},iv:["0","100"],config:{percentMi
 const invalidApply=run("configureSearch","percent",false,invalidPct);
 assert.equal(invalidApply.configured,false,"Unattainable IV% cannot be silently applied");
 checked++;
+
+for(const [value,fields] of [[0,["100","100"]],[100,["0","0"]]]){
+ const pctCase={tabs:{top:"Stats",sub:"% IV"},iv:fields,
+   config:{percentMin:value,percentMax:value}};
+ const pctApplied=run("configureSearch","percent",false,pctCase);
+ assert.equal(pctApplied.configured,true,"Exact IV% "+value+"–"+value+" must apply");
+ assert.deepEqual(pctCase.ivFields.map(x=>x.value),[String(value),String(value)]);
+ checked++;
+}
+const equalSix={tabs:{top:"Stats",sub:"Raw IV"},iv:["15","15","15","15","15","15"],
+ config:{attack:0,defense:0,stamina:0}};
+const zeroSix=run("configureSearch","raw",false,equalSix);
+assert.equal(zeroSix.configured,true,"Six indistinguishable fields can safely apply the equal 0/0/0 triple");
+assert.deepEqual(equalSix.ivFields.map(x=>x.value),["0","0","0","0","0","0"]);
+checked++;
 console.log("PokeSearch probe contract: "+checked+" tests passed");
