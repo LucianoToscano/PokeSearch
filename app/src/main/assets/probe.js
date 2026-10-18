@@ -7,7 +7,7 @@ const elements=s=>Array.from(document.querySelectorAll(s));
 const vis=e=>!!(e&&e.getClientRects().length);
 const labels=(root,pattern)=>Array.from(root.querySelectorAll("span,label,strong,small,dt,div,p")).filter(e=>vis(e)&&pattern.test(text(e))&&text(e).length<50).sort((a,b)=>text(a).length-text(b).length);
 function oneButton(label){
- const re=new RegExp("^\s*"+label+"\s*$","i");
+ const re=new RegExp("^\\s*"+label+"\\s*$","i");
  return elements("button,[role=button]").find(b=>vis(b)&&re.test(text(b)))||null;
 }
 function click(label){let e=oneButton(label);if(e){e.click();return true;}return false;}
@@ -500,7 +500,7 @@ function nextLabelValue(root,label){
   }
   const p=x.parentElement;
   if(p&&p.children.length<8){
-   const s=text(p).replace(new RegExp("^"+label+"\s*:?\s*","i"),"");
+   const s=text(p).replace(new RegExp("^"+label+"\\s*:?\\s*","i"),"");
    if(s&&s!==text(p)&&s.length<80)return s;
   }
  }
@@ -514,7 +514,7 @@ function parseCard(box,sourceIndex){
  const labeledPct=(body.match(/(?:^|\n)\s*IV\s*:?\s*(\d{1,3})\s*%/i)||[])[1]||"";
  const percent=ivMatch?ivMatch[1]:(raw?String(Math.round(raw.split("/").map(Number).reduce((a,b)=>a+b,0)/45*100)):labeledPct);
  const val=(label,re)=>{let candidate=nextLabelValue(box,label);let m=candidate.match(re);if(m)return m[1];
-     m=body.match(new RegExp("(?:^|\\n)\s*"+label+"\s*:?\s*([0-9.]+)","im"));return m?m[1]:"";};
+     m=body.match(new RegExp("(?:^|\\n)\\s*"+label+"\\s*:?\\s*([0-9.]+)","im"));return m?m[1]:"";};
  const heading=box.querySelector("h2,h3,h4,h5,[class*=font-semibold],[class*=font-bold]");
  let title=heading?text(heading):"";
  if(!title||title.length>85||/^(?:CP|IV|LVL)$/i.test(title)){
