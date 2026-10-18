@@ -1,5 +1,7 @@
 # PokeSearch — GUIA MESTRE
 
+> **RETOMADA MAIS RECENTE:** leia primeiro a **seção 12** (CENTRAL-002, comparação PokeSearch / PoGoCoordinates / PokéLocation, caminhos e banco de dados, PSC e próximo passo PL-01); depois a governança da seção 11 e o histórico 1–10. **Somente documentação foi autorizada; não alterar código nem APK sem aprovação expressa.**
+
 > **DOCUMENTO CENTRAL PERMANENTE:** Guia Mestre de todo o projeto PokeSearch, independente da versão atual do aplicativo. Cada versão, decisão, teste e meta é registrada dentro deste documento. Registro central iniciado em 18/10/2026. A seção 11 reúne estado verificado, documentação, histórico, diário, metas, bugs e PL/UX. As seções 1–10 foram preservadas como cronologia; algumas afirmações antigas são superadas pelos registros posteriores. **Não alterar código, APK ou fazer merge sem confirmação expressa.**
 
 > **Documento oficial para continuidade do desenvolvimento.** Neste projeto, preservar sempre a última base estável, trabalhar por etapas e não misturar mudanças das branches de v0.52–v0.56, que foram descartadas como direção de UX. A regra de design é: **melhorar e organizar, nunca empobrecer**.
@@ -640,3 +642,216 @@ Na árvore consultada havia **95 arquivos versionados**, **36 documentos em docs
 > Continue PokeSearch v0.51 na branch plan/v051-pogocoordinates-filtros-20261017. Leia o único docs/GUIA_MESTRE.md (principalmente seção 11, histórico, metas, diário e PL/UX); confira HEAD e PR #21/#22. Preserve interface original, 18 PNGs, 12 controles, backups, main e PvPPokeGo separado. Comece pelo diagnóstico/proposta da PL-01; não altere código, não gere APK e não faça merge sem minha confirmação expressa. Registre cada decisão, teste e resultado nesse mesmo Mestre.
 
 **REGRA DE RETENÇÃO:** centralizar a consulta e as decisões em um só Mestre **não autoriza excluir documentos antigos**. O histórico completo do Git e os arquivos de referência continuam disponíveis para verificação e recuperação.
+
+---
+
+## 12. CONSOLIDAÇÃO INTEGRADA — PoGoCoordinates + exportações JSON + PokéLocation + banco de dados (18/10/2026)
+
+**CENTRAL-002 / REGISTRO DOCUMENTAL APROVADO NESTE CHAT.** O proprietário solicitou ler e confrontar o Guia Mestre completo, a implementação atual do PokeSearch, as capturas do PoGoCoordinates, duas exportações JSON e o APK original PokéLocation; planejar melhorias, correções, caminhos e banco de dados; e **registrar TUDO aqui para continuidade em novo chat**. Esta autorização abrange exclusivamente este registro no **mesmo** `docs/GUIA_MESTRE.md`. **Não autoriza** alterar app, assets, banco de dados físico, filtros executáveis, sessão, permissões, GitHub Actions, release/APK, branches de produção ou merge. As seções 1–11 preservam cronologia e governança; a presente seção 12 é o **checkpoint mais recente** e prevalece sobre dados antigos quando houver divergência temporal. Não criar um segundo mestre nem renomear este com número de versão; preservar documentos antigos como referências, sem duplicar autoridade.
+
+### 12.1 Fontes, evidências, integridade e fronteiras da verificação
+
+| Fonte | Evidência verificada nesta rodada | Limite |
+|---|---|---|
+| PokeSearch em `plan/v051-pogocoordinates-filtros-20261017` | HEAD de leitura `96e365a53c278f4a42b05751c7e6e109796f070e`, PR #22 aberto/draft (base `feature/v0.51-launcher-icon-fill-20261016`), árvore de 113 entradas; `docs/GUIA_MESTRE.md` lido integralmente (643 linhas antes deste anexo) | HEAD muda com o commit exclusivamente documental; reconsultar antes de editar |
+| Código e configuração Android | `app/build.gradle.kts`, Manifest, `probe.js`, `dock.html`, `presets.js`, `pokemon_catalog.json`, `OverlayService.java` e `MainActivity.java` identificados; fluxo e riscos confrontados com seções 6 e 11 | Não houve build ou teste físico nesta rodada; detalhes dinâmicos de `OverlayService` conforme auditoria prévia |
+| Capturas PoGoCoordinates 18/10 | Formulários Search/Stats/PvP, seletores múltiplos, Sort by, Weather, VIP, Search results/Get coords, Global Pokemap e seus filtros, perfil/sessão/exportação | Captura comprova opções de tela, **não** protocolo de rede, direitos da conta nem sucesso da busca ao selecionar todas as combinações |
+| Exportação original `saved-filters-2026-10-18.json` | 7.814 bytes, SHA-256 `eb8aaf872794ef56a50f7fa70a284b59fad18ac8c99709f185c21f900af0468d`, 5 registros | Formato de exportação, **não** contrato garantido de POST /search nem autorização para API |
+| Segunda exportação `saved-filters-2026-10-18 (1).json` | 9.073 bytes, SHA-256 `d3fafa26321063f85c93c87e931e22afcb7e459fb9855234b63c4e6820cf4a7b`, 5 registros | Trata-se de um snapshot diferente; preservar ambos |
+| APK PokéLocation recuperado do Drive | `pokelocation-v1.2-release.apk` 2.555.264 bytes; SHA-256 `d4aba3d0a813c114a0f45a9718fdaf506198d9156655c970d18cbd2e036ac5a3`; ZIP válido, 924 entradas, 2 DEX, 170 PNG, 683 XML, classes de PoGo e strings de /lookup e /search | Conferência estática, não execução, homologação, autorização de uso de imagens nem auditoria completa de segurança |
+| Código-fonte externo | `ayranoliveira1/pokelocation`: `Pogo.java`, `PogoFilter.java`; `pokelocation-server`: `internal/pogo/upstream.go`; confrontados com `docs/REFERENCIA_POKELOCATION_2026-10-18.md` | APK original fornecido e binário público do GitHub podem divergir em SHA; não considerá-los idênticos sem comparar |
+| Banco de imagens Google Drive | Pastas reais verificadas abaixo; `catalogo_imagens.json` tem esquema 1.0, data 18/10, `total_unique_files=3065`, `unique_sha256=2843`, `duplicates_dropped=0` | Os nomes dos contadores exigem reconciliação: **3065 arquivos catalogados != 2843 hashes diferentes**. Não apagar ou deduplicar sem inventário/decisão |
+
+**Privacidade:** os arquivos e capturas contêm dados identificadores de conta/treinador e possíveis coordenadas. Não replicar e-mail, código de treinador, cookies, senhas, tokens, ou dados pessoais no mestre, nos relatórios ou exemplos de código. Guardar no mestre apenas nome dos arquivos, hashes, paths de referências e fatos técnicos. Os exemplos de busca nunca devem transportar códigos secretos nos logs.
+
+### 12.2 Baseline do NOSSO aplicativo — preservar integralmente
+
+- Identidade: PokeSearch, repositório `LucianoToscano/PokeSearch` (NUNCA misturar com `LucianoToscano/PvPPokeGo`, PokéLocation ou projetos PokeLOT/PGSharp). `applicationId=com.lucianotoscano.pokesearch`, `namespace=com.lucianotoscano.pokesearchoverlay`; Gradle identifica `versionCode=51`, `versionName=0.51-beta`, JDK17, `compileSdk=36`, `targetSdk=33`, `minSdk=26`.
+- Manifest Android conferido: INTERNET, SYSTEM_ALERT_WINDOW, FOREGROUND_SERVICE, POST_NOTIFICATIONS; launcher MainActivity exportado, OverlayService não exportado; `android:allowBackup=false`; não introduzir localização GPS simulada ou permissões extras pelo fato de outro APK usá-las.
+- **Interface NÃO substituível:** 12 controles originais, engrenagem arrastável, overlay translúcido/compacto, janelas controles/resultados separadas, P/M/G, menu lateral/recolhimento, sprites lado a lado, 10 Pokémon, imagem de modo 21×21, 18 PNGs oficiais (9 famílias normal/Shiny), toque em sprite abre detalhes, toque longo copia coordenadas **confirmadas**, temporizador dinâmico, AUTO OFF/5/10/15/20, toque ↻, alerta sino, favoritos/estrela, Pix, relatório ⚠, tutorial, localização 0–1000 km, posições e preferências persistentes.
+- **Modos reais da branch:** Raw IV A/D/S 0–15; IV% Min/Max limitado às 46 porcentagens possíveis; GL Top 1–50; UL Top 1–50. Raw 15/15/15 e 0/0/0 e percentuais exatos escolhem ícones Hundo/Nundo; Shiny é dimensão independente, efetiva só após confirmação. `none/master/cup` existem como ícones **não significando três buscas implementadas**.
+- O PR #22 tem filtros experimentais em `dock.html`/`probe.js` e correções históricas: interação assíncrona dos dropdowns React; campos extras neutros; confirmação imediatamente antes do Search/mesma geração; cache de no máximo 8 contextos até 120 segundos como **prévia stale**; contador da consulta agendada; correção de substituição `__FILTERS__` no diagnóstico de login. Nada disso foi homologado em Android real nesta rodada.
+- Política de consulta: **piso global de 60 segundos entre buscas efetivamente submetidas**; fila coalescida pela última escolha, sem tocar em endpoints clandestinos, redistribuir tokens de terceiros, aumentar quota ou contornar limite VIP. Mudança visual imediata não garante busca remota imediata.
+
+### 12.3 Inventário fiel do PoGoCoordinates: Search versus Global Pokemap
+
+| Recurso | Busca tradicional /search, observado nas capturas | Mapa Global, observado nas capturas | Implicação |
+|---|---|---|---|
+| Pokémon | Vários Pokémon/formas com etiquetas, busca por nome/form/dex, seleção/remover individual e contador | Whitelist/Blacklist com vários Pokémon e etiquetas | **Arrays/identidades canônicas**, não texto único |
+| Ordenação | 5 valores: `Despawn (longest)`, `CP (highest)`, `IV % (highest)`, `Level (highest)`, `Distance (nearest)` | 4: `Highest IV`, `Most time left`, `Highest CP`, `Highest level` | Ordenação ANTES de cortar os resultados; dropdowns são contratos de UI diferentes |
+| IV | % Min/Max ou Raw A/D/S; CP e Level Min/Max | IV%, CP, Level com controles Min/Max | Não presumir Raw IV no mapa |
+| PvP | Great League, Ultra League, Top ranking 1–50, incluir pré-evoluções Yes/No, Min CP | Não confirmado como filtro do mapa | GL/UL ficam isolados do percentual IV tradicional |
+| Weather | Any, Boosted, Sunny, Rainy, Partly Cloudy, Cloudy, Windy, Snow, Fog | Any ou Boosted only | Não copiar a lista climática completa de Search para o mapa |
+| Size | Multiseleção comprovada; capturas exibem XXS, XS, S, M, L, XL (fim da lista não mostrado) | Multiseleção XXS, XS, M, L, XXL observada | XXL confirmado no **mapa**; validar opções em Search separadamente |
+| Form | Multiseleção incluindo 01, 02, Apex, Normal, 00, 03, 04 (catálogo possivelmente maior) | Form não mostrado como dropdown separado | Opções e IDs dependem da espécie/catálogo; não assumir equivalência universal entre 01 e outra forma |
+| Gender | Any, Male, Female, Genderless | Mesma família vista | Um valor, não multiseleção |
+| Location | Area textual `Location contains` OU Coords + raio máx. 1000 km; `Use my location`, `Clear` | Navegação por mapa, busca cidade/lat,lng, mapa se atualiza depois de mover | Dois métodos geográficos não equivalem à permissão Android de localização |
+| Advanced | VIP: Min TTL, Exclude Pokémon, Exclude Forms | Advanced recolhível (opções ainda não capturadas) | **Não contornar VIP**, não presumir mesmas opções |
+| Results | Conta Free logada: `Showing 10 spawns`; cartões com sprite, #dex, sexo, tamanho, CP, LVL, IV% e A/D/S, golpes, local, distância, despawn | 99 marcadores com seletor Results 100 na captura | **100 no mapa ≠ direito a 100 resultados /search** |
+| Coordinates | Cartão pode exibir coordenadas + `Open in Maps`, ou botão `Get coords` sem coordenadas visíveis | Marcadores/tile não são necessariamente coordenadas exatas | Estados obrigatórios `unavailable`, `reveal_required`, `confirmed`, `error` |
+| Login/profile | Google vinculado, Discord não; conta Pokémon GO vinculada 1/1 no plano Free; associar provedores pode mesclar identidades; desvinculação conta GO limitada | Shiny vinculado à conta também no mapa | Não automatizar vínculo/desvínculo nem salvar códigos de treinador |
+| Backup do serviço | Saved filters e exportação JSON; outros exports próprios (Custom feeds/Notification rules, alguns VIP) | Filtros salvos no popup do mapa | Modelo de backup LOCAL do PokeSearch deve ser seu próprio schema e validar conversão |
+
+**Limite de certeza:** as capturas permitem afirmar opções VISÍVEIS; a exportação permite afirmar nomes de CAMPOS exportados; apenas um teste real autorizado da página e seus resultados confirma efetividade da busca e semântica de rede. A tela do mapa mostra aviso de cobertura condicionada aos scanners do próprio serviço; baixa densidade não é prova de inexistência de spawns.
+
+### 12.4 Exportações reais dos filtros salvos — diff e schema
+
+**As duas exportações possuem 5 registros; 4 registros mantêm mesmo ID e conteúdo e 1 foi substituído no conjunto exportado.** Não afirmar que o registro anterior foi necessariamente excluído do servidor. Cada `spec` possui **34 campos**, mantendo chaves inativas com `null`, `[]` ou booleanos. Especificação de dados **não é protocolo de request**.
+
+| Nome | Snapshot original | Snapshot novo | Núcleo |
+|---|---|---|---|
+| LOT | sim | sim | 46 IDs de espécies, 5 `species_forms`, `pvp_mode=true`, GL#1, `sort=DSP` |
+| LOT1 | sim | sim | 27 IDs, 3 formas, `sort=LEVEL`, GL#1 |
+| PvpGL | sim | sim | 15 IDs, 2 formas, GL#1, `sort=DSP` |
+| shi | sim | sim | 12 IDs, Shiny=true, Raw IV 15/15/15, **também `pvp_mode=true`**; validar qual modo ativo prevalece no carregamento |
+| shi2 | sim | não | 7 IDs, Shiny=true, Raw 15/15/15, `pvp_mode=false` |
+| testeee22222 | não | sim | 46 IDs, 5 formas, Shiny=true, `iv_mode=percent`, `iv_percent_min=max=100`, `pvp_mode=false`, gênero Genderless, 6 tamanhos e 6 nomes de forma |
+
+No novo `testeee22222`, `sizes=["XXS","XS","M","S","L","XL"]`; `forms=["00","Artisan","Archipelago","Aria","Dragon","Alola"]`. Não inferir que XXL é proibido; apenas **não aparece no filtro salvo**. Os 46 IDs e 5 `species_forms` de `testeee22222` coincidem com LOT. `pvp_mode=false` embora `pvp_league="great"`, `pvp_top_rank=1` persistam: **campos inativos não devem disparar o modo PvP**. No filtro `shi`, Raw IV e `pvp_mode=true` coexistem: investigar precedência SEM alterá-la por palpite. `shiny_account=null` nos filtros Shiny não significa comprovadamente conta desvinculada; o vínculo pode estar na sessão/perfil.
+
+**Mapa de campos exportados (não nomes garantidos do endpoint):**
+
+- Identidade de espécies: `pokemon_ids: number[]`; `species_forms: {pokemon_id,form_id,costume_id|null}[]`.
+- Exclusões: `blacklist_pokemon_ids: number[]`, `blacklist_species_forms: []`, `blacklist_forms: string[]`.
+- Modos e IVs: `iv_mode`, `iv_percent_min/max`, `raw_iv_atk/def/sta`, `pvp_mode`, `pvp_league`, `pvp_top_rank`, `pvp_include_pre_evolutions`, `pvp_min_cp`.
+- Stats: `cp_min/max`, `level_min/max`, `sizes: string[]`, `forms: string[]`, `gender`, `boosted`, `weather_id`, `min_ttl`.
+- Contexto: `location`, `center_lat/lng`, `radius_km`, `sort` (`DSP` e `LEVEL` **confirmados no export**, demais códigos desconhecidos), `shiny_only`, `shiny_account`, `background_only`.
+
+**Conseqüência arquitetural:** distinguir o estado `draft` (ainda editando), o `requested` (submetido), o `verified` (site confirmou), o `resultOrigin` (geração/conta/filtro/local/ordenação) e o `displayed` (novo ou prévia antiga). `null`, lista vazia e `false` não devem ser confundidos, e filtros de Stats/PvP não podem vazar uns para os outros.
+
+### 12.5 Matriz de integração: risco atual → correção proposta → teste de aceitação
+
+| ID (sem reutilizar PL/UX/PS históricos) | Evidência/código atual | Correção **A PROPOR E APROVAR** | Teste obrigatório |
+|---|---|---|---|
+| PSC-01 P0 | `dock.html` tem `searchSettings.pokemon/form/size` como `string`, e `probe.js:EXTRA_LABELS/extras/extraSelect/extraMatches` compara campo como **uma string**; site e JSON aceitam múltiplas espécies, formas e tamanhos | Converter para arrays tipados com IDs, migração de preferências antigas, editor multiseleção compacto, seleção/aplicação atômicas, confirmação de cada chip; não limpar filtro não solicitado | 2+ Pokémon inclusive variantes, 2+ Size, 3+ Forms, remover um item, limpar último, reiniciar app e conferir ambos os lados |
+| PSC-02 P0 | `probe.js:collect().matches` permite **`!x.iv`** no Raw e **`x.ivPercent===""`** no % como compatíveis; é possibilidade de resultado sem IV comprovado | Distinguir `IV desconhecido` de `IV correspondente`; bloquear atribuição enganosa de Hundo/Nundo ou % e separar cartão inconclusivo; nenhuma classificação IV100 se informação real divergir | Raw 15/15/15 com cartão sem IV ou 4/4/11; IV% 100–100 e 91–100 com campos ausentes; rollback seguro |
+| PSC-03 P0 | Seleção opcional de Pokémon genérica gerou historicamente `⚠ Filtro: pokemon`; portal React requer abrir e aguardar menu | Nunca exigir `Any` não selecionado; limpar valores anteriores quando solicitado; descobrir portal DOM depois de render, sem capturar popup errado | Sem espécie funciona; alternar Pikachu→Any; Forma depende de espécie; sem truncar listas |
+| PSC-04 P0 | `siteOptions()` limita opções descobertas a 80 textos sem identidade; seletor site tem múltiplas espécies/formas pesquisáveis | Paginar/pesquisar catálogo de modo incremental, guardar `dex/form/costume`, evitar colidir IDs ou nomes; preferir catálogo verificável, não colher todo DOM indiscriminadamente | Entrada por #dex/nome/form; Pokémon homônimos e variantes; resultado após scroll em lista longa |
+| PSC-05 P0 | Cartão da pesquisa mostra `Get coords` ou coordenadas + `Open in Maps`; `parseCard` separa dados visuais e coordenadas podem não vir no primeiro resultado | Estados por encontro: `no_coord/reveal_needed/reveal_pending/confirmed/reveal_failed`; revelar por ação autorizada, sem duplicar ou gastar limite desnecessário; long press só copia dado confirmado | Dois cartões mesmo nome/CP; revelar, reabrir, 403/429/rede, evitar atribuição de coord. a ocorrência diferente |
+| PSC-06 P0 | Troca de Raw/%/GL/UL e cache até 120s por filtros da branch; Shiny associado a uma conta do site | Chave de geração com espécie/forma/tamanho **listas canônicas**, modo, sort, coords, raio, Shiny e sessão; prévia antiga rotulada; nunca notificar a partir dela | Alternar 5 vezes antes de 60s, voltar ao cache, mudar login, excluir expired, mostrar contagem até próximo Search |
+| PSC-07 P1 | Ordem do site determina seleção dos 10; Search tem 5 sorts, mapa 4; export `DSP/LEVEL` só documenta armazenamento | Selecionar + ler opção real do formulário ANTES do Search; preservar ordenação remota dos primeiros 10; fallback/erro sem fingir sort aplicado | Despawn longest, IV%, CP, nível, distância; empate estável; troca com resultados antigos |
+| PSC-08 P1 | Weather Search tem 9 opções, Map só Any/Boosted; `sizes` e `forms` exportados arrays | Detectar capacidade **por página/conta/plano**, validação tipada (seleção única vs múltipla), não inventar `Not Boosted`; VIP indisponível fica bloqueado e explicado | Boosted, clima individual; XXS/XXL, não confundir map/search; Advanced VIP bloqueado no Free |
+| PSC-09 P1 | `pvp_mode` e modo Raw coexistem nos snapshots; GL/UL apenas; ranque individual nem sempre consta nos cartões | Resolver precedência **somente com prova da UI/site**, não inferir IV/Rank como certeza a partir do título do ícone; distinguir `rank observado` de `Top N verificado` | GL#1 e UL#1, pré-evoluções Yes/No, Min CP, filtro Shiny, combinação Raw inativa |
+| PSC-10 P1 | Login Google/Discord, conta GO vinculada, Shiny por identidade; correção `__FILTERS__` já existente | Testar retorno após OAuth, CookieManager/flush seguro, expiração; sem armazenar tokens/códigos; não vincular nem excluir conta automaticamente | Login/logout, volta com overlay, app fechado/reaberto, 401/403, troca conta/sem Shiny |
+| PSC-11 P1 | Respostas do serviço podem vir como sucesso, 0 resultados, campo ausente, 401/403/429, 504, timeout; audit PokéLocation tipa erro e respeita Retry-After | Máquina de estados clara `idle/configuring/searching/results/empty/queued/stale/auth_required/rate_limited/error`; nunca usar lista vazia em substituição silenciosa | Todos os códigos e rede lenta, retry sem violar 60s, relatório sanitizado |
+| PSC-12 P2 | O catálogo/imagens Drive existem e `pokemon_catalog.json` do APK contém nomes por dex; sprites podem ficar sem imagem/custo de rede | Catálogo versionado, mapeamento sprite por número+forma+traje, fallback e cache de imagens com licença/proveniência e hash, sem bundle desnecessariamente enorme | Visual do overlay P/M/G sem flicker; sprite ausente; forma errada; performance/memória e offline |
+| PSC-13 P2 | Filtros exportáveis têm IDs, nomes, `created_at`, `spec` de 34 campos | Perfis locais importáveis/exportáveis **com schema próprio e migração**, nunca importar credenciais/trainerCode; não sobrescrever filtros atuais silenciosamente | Cópia/backup, preview/diff, rejeitar duplicados e JSON inválido, restauração pós-reinstalação |
+| PSC-14 P3 | Mapa tem 99 shown/Results 100 na captura, com whitelist/blacklist; páginas de Search/Map diferem | Estudar módulo de mapa só como produto separado/opcional, sem refazer overlay e sem assumir quotas de Search nem endpoints públicos | Somente pesquisa/documentação; não implementar backend/mapa sem aprovação individual |
+
+**Ordem rígida de dependências:** primeiro **PL-01 + PSC-01/02/03/05/09** para integridade dos resultados; depois PL-02/04/03 e PSC-06/10/11; depois PL-06/05 e PSC-07/08/12/13. Features de mapa e backend (PL-12/PSC-14) ficam por último e desligadas. Não propor 14 novas PL independentes nem renumerar PL-01…12/UX-01…08; PSC são **subitens de evidência e aceitação vinculados às PL existentes**.
+
+### 12.6 O que aproveitar do PokéLocation — somente ideias compatíveis
+
+**APK binário inspecionado:** 924 entradas, 2 DEX, 170 arquivos PNG e código PoGo detectável; nenhum motivo para substituir o APK, os PNGs ou a identidade do PokeSearch. Referência de código via `ayranoliveira1/pokelocation` é **AGPL-3.0-only** (conferir LICENSE antes de qualquer cópia literal); backend `pokelocation-server` é MIT com obrigações próprias de licença/créditos. A arquitetura do proxy privado de terceiros **NÃO** é contrato oficial da origem.
+
+| Conceito observado na referência | Aplicação desejada no PokeSearch (proposta) | O que fica proibido/fora do escopo |
+|---|---|---|
+| `Pogo.java`: erros tipados, catalog cache/ETag, corpo com limites, status 429/retry, parser, enriquecimento da ocorrência | Validar parser, cache de catálogo, feedback e estado de `Get coords` sem inventar coordenada | Reutilizar token/JWT de outro serviço, descobrir endpoint secreto ou usar proxy não contratado |
+| `PogoFilter.java`: lista de tamanhos e filtros, valores neutros, perfis locais | Datastructures tipadas, validação, perfis locais, migração | Copiar implementação AGPL sem revisão de licença |
+| `PogoBubbles/PogoPanel`: atualização de bolhas, timer separado, placeholders/UX durante rede | UI incremental, timer local, sprites/fallback/cooldown claro | Importar overlay inteiro, aumentar permissões ou retirar 12 controles |
+| Servidor Go: `upstream.go` protege redirect autenticado e limita tamanho de resposta; `rules/worker` têm deduplicação/lease | Traduzir **ideias** em deduplicação local por encounter e backoff, logs mínimos | Banco PostgreSQL/Redis/FCM/cloud, contas no servidor, pool de tokens, cargas agressivas, notificações remotas sem propósito |
+| Referência Android tem GPS fake, joystick, GPX, chat, clone e permissões privilegiadas | **Não aproveitável** para escopo atual | Não integrar mesmo se funcionar em Android |
+| Segurança | Manter credenciais da origem fora dos relatórios, preservar sessão oficial e isolamento do app | OAuth `state` fixo, bibliotecas baixadas sem necessidade, assinatura/copiar dados do PokéLocation |
+
+**Distinção crítica:** a referência faz `/lookup` com `filters` aninhado e `/search` com `iv_percent_min/max` no corpo do **seu proxy**; **não** enviar esses formatos automaticamente ao PoGoCoordinates pela WebView do PokeSearch. A rota de descoberta de capacidades deve usar a UI oficial com autorização e sem ultrapassar taxas.
+
+### 12.7 Caminhos REAIS: única biblioteca de dados/imagens + caminhos previstos
+
+**Drive existente — hierarquia verificada e reutilizada (não criar banco paralelo):**
+
+```text
+Google Drive / Projetos/
+├── PokemonGo/   [id 180wu9mqDYttMwYFP3XxXEUmOShLyvTJv]
+│   └── Banco de Dados Pokémon/ [id 1vzp-YNwvMpa7MCRvjeKR45sbDbnC7T1W]
+│       └── Banco de Imagens Pokémon/ [id 1Bb18NZQUSY2ID06yBkWeW144mR4tIaex]
+│           ├── 00_Catalogo_e_Fonte/ (catalogo_imagens.json; _diretorios_extracao.json; _lote_upload_00..15.json)
+│           ├── 01_Sprites_Pokemon/2D_PNG_A_Z/{A..Z}/
+│           ├── 01_Sprites_Pokemon/3D_WebP_Numero_Pokedex/
+│           ├── 02_Icones_Ligas_e_Filtros/PokeSearch/{Originais,Padronizados,Bandeiras}/
+│           ├── 03_Interfaces_Logos_e_Recursos/{PokeSearch,PokeLOT,PvPPokeGo}/
+│           ├── 04_Extraidos_de_APKs/{PokeSearch_0.56,PGSharp_1.272.0,PvPPokeGo_0.5.37}/
+│           └── 05_Pacotes_Originais/{Pacotes_Consolidados,ZIPs existentes}/
+└── PokeSearch/ [id 1pHnwNFYlDxxt9g5PtdYWWFAylBkvVyRU]
+    ├── 00_Documentacao_Atual/
+    ├── 01_APKs_Teste/
+    ├── 02_Relatorios_Bugs/
+    ├── 03_Icones_Ligas/ [id 1YkY3WQIirk1m9Ko8c2rLBuye6agnTbI7]
+    ├── 03_Icones_Ligas_Padronizados/
+    ├── 05_Referencias_Externas/PokeLocation/
+    └── PokeSearch - Backup 2026-10-14 - 602757a/
+```
+
+**URLs canônicas:** banco raiz `https://drive.google.com/drive/folders/1vzp-YNwvMpa7MCRvjeKR45sbDbnC7T1W`; imagens `https://drive.google.com/drive/folders/1Bb18NZQUSY2ID06yBkWeW144mR4tIaex`; PokeSearch `https://drive.google.com/drive/folders/1pHnwNFYlDxxt9g5PtdYWWFAylBkvVyRU`; PokeLocation APK `https://drive.google.com/file/d/1uSuww0uFIqQRyGnpYXRwJqnDsqdm76Kx/view`. **Os nomes de diretórios vistos acima existem; não foram criados nem reorganizados nesta etapa.**
+
+**Catálogo já existente:** `00_Catalogo_e_Fonte/catalogo_imagens.json` declara 3.065 entradas e 2.843 hashes distintos. **Não** confundir esses números nem deletar supostas duplicatas: conferir chaves `relative`, `sha256`, `source`, `bytes`, `omitted_duplicate_files` em auditoria própria. Campos `local=/mnt/data/pokemon_import/...` nesse índice são caminhos temporários da máquina que montou o catálogo; **NÃO** são URLs permanentes ou caminhos Android. Identidade estável = `relative` dentro do banco + hash + ID Drive e origem. Não publicar arquivos de outros projetos/ZIPs como se fossem sprites licenciados do PokeSearch.
+
+**Fonte de verdade do executável PokeSearch no GitHub (já existente):**
+
+```text
+LucianoToscano/PokeSearch/
+├── docs/GUIA_MESTRE.md                  ← ÚNICO DOCUMENTO MESTRE, SEM VERSÃO
+├── docs/REFERENCIA_POKELOCATION_2026-10-18.md    ← evidência histórica preservada
+├── docs/PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md ← referência histórica
+├── app/src/main/assets/
+│   ├── pokemon_catalog.json             ← catálogo básico existente [dex,nome]
+│   ├── result-icons/                     ← 18 PNGs oficiais em uso, NÃO sobrescrever
+│   ├── dock.html                         ← barra e menu flutuantes
+│   ├── probe.js                          ← interação/verificação da página de busca
+│   ├── presets.js                        ← acionamento de opções da UI
+│   ├── detail.html, login_entry.js, shiny_login.js, tutorial.html, overlay.html
+├── app/src/main/java/com/lucianotoscano/pokesearchoverlay/
+│   ├── OverlayService.java, MainActivity.java, PokemonPicker.java
+│   ├── WatchAlerts.java, BugReport.java, DiagnosticSanitizer.java
+│   └── IntegrityGuard.java, PixSupport.java
+└── app/tests/{probe-smoke.test.js,overlay-ux.test.js,login-entry.test.js}
+```
+
+**Destinos PROPOSTOS, NÃO CRIADOS (evitam múltiplos mestres ou migração prematura):**
+
+```text
+Drive / Projetos/PokemonGo/Banco de Dados Pokémon/
+  Dados_Estruturados/          → especies.json, variantes.json, formas.json, catalogo_fontes.json (planejar)
+  Manifestos_e_Checksums/     → sha256, origem/licença, relatório de duplicatas (planejar)
+  Importacoes_e_Snapshots/    → exportações JSON anonimizada/por data, sem tokens (planejar)
+  Validacao_e_Testes/         → fixtures sintéticas de modos/presets/resultados (planejar)
+GitHub / PokeSearch/
+  app/src/main/assets/data/  → snapshots estáticos VERSIONADOS mínimos quando necessários (planejar)
+  app/src/main/java/.../data/→ camada de persistência tipada quando aprovada (planejar)
+Android runtime privado do app:
+  Context.getDatabasePath("pokesearch.db") → SQLite/Room opcional para perfis, cache e alertas, apenas quando aprovado
+  SharedPreferences atual → preservar/migrar atomicamente; cookies de autenticação ficam com mecanismo WebView oficial
+```
+
+**Não criar agora servidor, PostgreSQL, Redis, HTTP próprio, banco em nuvem ou repositório de fontes cruzadas.** Começar com catálogo JSON estático + preferências Android existentes; adotar SQLite/Room apenas se escalabilidade, múltiplos presets, filtros/snapshots ou histórico local o justificarem. Não embutir 3.065 imagens no APK: escolher e otimizar assets, indexar metadados, cachear sprites autorizados com fallback leve e medir armazenamento/RAM. Não copiar imagens sem verificar licença, procedência, deduplicação e termos; 18 PNGs oficiais vêm da fonte vigente e não podem ser trocados por variantes de banco sem aprovação.
+
+### 12.8 Modelo de dados lógico PROPOSTO, com responsabilidades e proteção
+
+**Camadas (sem backend):** (1) `SourceCatalog` metadados de espécies e variantes; (2) `FilterProfile` versões de filtros com arrays separados, schemas e preferências; (3) `SearchSession` geração, modo, sort, contexto e confirmação do site; (4) `Encounter` ocorrência com `encounter_id` quando disponível, espécie/forma, IV/rank quando observado, CP, LVL, gênero, tamanho, coordenada aproximada/confirmada e expiração; (5) `ImageIndex` (dex, forma, traje, source, hash, licença, caminho relativo, fallback); (6) `AlertWatch` e `SeenEncounter` para favoritos e deduplicação; (7) `LocalEventLog` opcional sanitizado.
+
+**Chaves e regras:**
+- `speciesKey = pokemon_id`; `variantKey = pokemon_id + form_id? + costume_id?`; etiqueta humana é atributo de apresentação e pode mudar; `form_label` geral sem espécie NÃO substitui `species_forms`.
+- `filterKey` deriva de JSON canonizado (arrays ordenados/deduplicados por identidade, modo efetivo, Shiny/conta por identificador local **não sensível**, ordenação, localização, raio, Stats/PvP ativos). Não persistir e-mail/código de treinador no índice; mudança de identidade invalida cache.
+- `searchGeneration` monotônica; resultado só aceita `generation` e configurações verificadas; `verified` separado de `requested`; `no_results` somente quando confirmação de busca válida tiver retornado explicitamente vazio. Distância/tempo não devem inventar GPS ou timestamp.
+- `encounterKey` usa ID estável quando oferecido pela origem; fallback de chave composta só se fundamentada. Dedupe sem mostrar dados de outro spawn.
+- `coordStatus` e `coordinatePrecision` separados: `unknown/approximate/reveal_pending/exact/failed`. Não copiar lat/lng ausente ou posição de ícone de mapa como coordenada exata.
+- Retenção a definir antes de implementação: resultados nunca após expiração, cache de prévia máximo 120s conforme versão atual, tamanho e prazo de alertas/histórico explícitos; limpeza de dados sob controle do usuário, preservando backup local/exportado.
+- **Proteção:** não armazenar OAuth/JWT/refresh token/cookies em JSON, SQLite de perfis, GitHub, backup, logs ou Drive. Dados de sessão apenas no mecanismo autorizado do navegador; sanitização antes de exportar; sem compartilhamento automático de coordenadas.
+
+**Evolução de schema (proposta):** `schemaVersion=1` para modelo próprio do PokeSearch, com `mode:{raw,percent,gl,ul}`, `pokemon_ids:number[]`, `species_forms:object[]`, `sizes:string[]`, `forms:string[]`, `excluded_pokemon_ids:number[]`, `gender`, `weather`, `stats`, `pvp`, `sortBy`, `shiny`, `location`, `profileName`, `createdAt`; preservação de campos desconhecidos em cópia de importação, sem aplicá-los ao serviço. Evitar alias falso entre `DSP` exportado e texto do dropdown sem teste de aplicação.
+
+### 12.9 Critérios de aceite, resultados pendentes e governança
+
+**Plano por confirmação individual:**
+1. **PL-01 P0, diagnóstico primeiro (sem implementação automática):** confrontar cinco filtros reais (LOT, LOT1, PvpGL, shi, testeee22222) e também o snapshot shi2 como regressão; mapear DOM real e campos exportados; aplicar filtros simples, observar resultados Search/Coords/PvP; separar IV desconhecido de IV inválido, menu multiseleção e empty/erro. Produzir matriz `solicitado → confirmado → resultado`, com capturas sanitizadas.
+2. **Após aprovação separada:** PSC-01/02/03/05/09 e testes específicos; não alterar layout/perfis/ícones sem prévia de alteração proposta. CI/mocks mais teste físico Android 15/16, rede lenta, login e popup.
+3. **PL-02 + PL-03 + PL-04:** geração, cooldown, login/identidade e erros; medir sem contornar políticas.
+4. **PL-06 + PL-05:** Sort by, presets, cache/catálogo e, somente se demonstrar necessidade, banco local; planejar migração com rollback e backups.
+5. **PL-07…11/UX:** alertas, UX compacta, desempenho e release por etapas aprovadas; mapa/backend opcionais só estudo futuro.
+
+**Não aprovados para código nesta entrada:** todos os PSC como implementação, banco físico/SQLite, novas pastas, migração de imagens, troca de ícones, aumento de consultas/resultados, mapa, VIP, servidor, GPS simulado, APK/assinatura ou merges. Um teste automatizado sem aparelho NÃO homologa filtros. Registrar toda futura decisão neste mesmo mestre segundo protocolo da seção 11.8: data, ID, antes/depois, aprovação explícita, SHA, testes reais, regressões, status e próxima decisão. **Histórico e antigos backups continuam intactos.**
+
+**Próximo passo exato ao retornar:** conferir HEAD do PR #22; reler seção 12 e seções 11/6; **apresentar o escopo testável de PL-01 e pedir confirmação** antes de qualquer modificação executável. Não começar do zero.
+
+**PROMPT CURTO DO PRÓXIMO CHAT (substitui operacionalmente o prompt histórico de 11.8 sem apagar a história):**
+
+> Continue o PokeSearch de onde paramos. Acesse `LucianoToscano/PokeSearch`, branch `plan/v051-pogocoordinates-filtros-20261017`, e leia **integralmente** o único `docs/GUIA_MESTRE.md`, sobretudo as seções 12 e 11, os backlogs PL/UX/PSC e o diário; confira PR #21/#22 e HEAD. Compare com os JSONs PoGoCoordinates e a auditoria APK PokéLocation já catalogados. Preserve código, 18 PNGs, 12 controles, interface, bancos de imagens, backups e PvPPokeGo separado. **Comece pela PL-01, proponha a próxima correção e aguarde minha confirmação antes de alterar código, APK ou fazer merge. Registre toda decisão no MESMO Guia Mestre.**
