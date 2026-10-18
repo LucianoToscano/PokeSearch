@@ -303,7 +303,7 @@ console.log("PokeSearch probe contract: "+checked+" tests passed");
 
 
  // PL-01 / PSC-02 — the remote form being configured is not proof of every card's IV.
-const ivEvidenceSpawn=value=>"Tangela\\n#114 Female M\\nInfestation / Solar Beam\\nCP\\n404\\nLVL\\n7\\nIV\\n"+value+"\\nLOCATION\\nBron, Rhone, France\\nDESPAWN\\n57:57\\nGet coords";
+const ivEvidenceSpawn=value=>"Tangela\n#114 Female M\nInfestation / Solar Beam\nCP\n404\nLVL\n7\nIV\n"+value+"\nLOCATION\nBron, Rhone, France\nDESPAWN\n57:57\nGet coords";
 const rawProof=run("collect","raw",false,
  {iv:["15","15","15"],spawn:ivEvidenceSpawn("100% (15/15/15)")});
 assert.equal(rawProof.cards.length,1,"Raw hundo with exact observed triple remains visible");
