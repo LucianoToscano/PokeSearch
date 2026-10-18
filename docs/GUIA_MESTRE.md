@@ -944,3 +944,30 @@ Android runtime privado do app:
 **Testes executados com evidência na retomada:** coletor **72 testes aprovados**, executando o arquivo real `probe-smoke.test.js` contra o `probe.js` do branch em V8 com emulação de `node:fs`, `node:vm`, `assert` e `path`; inclui as dez novas regressões Raw/IV%, casos positivos/negativos, percent-only marcado IV, Hundo/Nundo e contradições. O primeiro ensaio revelou fixture recém-criado com sequências de barra-n literais, corrigido antes da aprovação final; execução seguinte 72/72 passou. Contratos UX **216 testes aprovados**, executando o `overlay-ux.test.js` e 19 fontes textuais obtidas do GitHub, também por V8 com `fs/path/assert` simulados; **as leituras de bytes PNG foram simuladas nesta execução, não há validação de conteúdo binário nem renderização física**. Os novos checks de ordem confirmaram defesa nativa ANTES de histórico/cache/avisos. A execução isolada NÃO é equivalente a `node` no GitHub Actions, Gradle, `assembleDebug`, `testDebugUnitTest`, APK ou Android WebView real. **CI e teste físico pendentes**, não declarar PL-01 completamente concluída nem aprovada para merge antes de revisão do usuário.
 
 **Estado da lista:** PL-01/PSC-02 = **IMPLEMENTADA EM BRANCH / TESTADA EM V8 ISOLADO / PR #24 DRAFT / AGUARDANDO CI E ACEITE NO APARELHO**. PL-01/PSC-01/03/05/09 e PL-02–12 seguem como pendências sem aprovação automática. Próxima ação: usuário revisar patch; se solicitar, rodar workflow de build/testes e fornecer APK para homologação; sem merge automático, sem alterar os controles/ícones, sem misturar PvPPokeGo.
+
+
+### 12.15 UX-IV-COLOR-01 — cores dos IVs verificadas e Shiny separado (18/10/2026)
+
+**Autorização expressa:** proprietário aprovou a proposta de diferenciar visualmente o IV% por cores e esclareceu: “O shiny nao precisa ficar amarelo porque o brilho vai aparecer junto”; depois solicitou “Certo. Faça isto”. Esta autorização limita-se ao visual dos valores IV e à independência de Shiny — não aprova outros filtros, backend, PL/PSC adicionais, merge ou entrega de APK.
+
+**Paleta de design própria do PokeSearch, não oficial do Pokémon GO nem cópia exata de app de terceiro:**
+- **0%:** ciano `#00CFE8`, Nundo;
+- **2–49%:** cinza `#B8BEC8`, IV baixo;
+- **51–78%:** verde `#28C76F`, IV intermediário;
+- **80–89%:** azul `#388BFF`, IV alto;
+- **91–98%:** roxo `#C084FC`, IV muito alto;
+- **100%:** rosa/vermelho `#F04B70`, Hundo.
+São faixas expressas apenas pelos 46 percentuais matematicamente possíveis para três stats de 0–15, sem criar percentuais inexistentes. Critérios de GL/UL continuam independentes de IV geral; ranking PvP baixo/alto não determina a cor.
+
+**Implementação isolada:** branch `ux/iv-color-shiny-separate-20261018`, derivada do HEAD do PR #24 `d309a94945cb72797a0ed95d09e527913ee9de17`, com PR [#25](https://github.com/LucianoToscano/PokeSearch/pull/25) **DRAFT**, base `fix/pl01-psc02-verified-iv-20261018`. Cadeia de revisão: PR #22 → #23 → #24 → **#25**; nenhuma das branches anteriores ou `main` foi mesclada por esta etapa.
+
+**Alterações concretas:**
+1. `app/src/main/assets/dock.html`: helper visual `verifiedSpawnIvPercent(card)` exige tripla A/D/S válida (0–15), percentual válido em `IV_PERCENT_VALUES` e coerência entre os dois quando ambos existem. O rótulo `IV% ` é emitido apenas quando há prova individual; se ausente, malformada, contraditória ou matemática impossível, **não renderizar porcentagem nem cor**, com descrição acessível “IV não comprovado”. Isso se aplica inclusive em GL/UL, sem alterar o filtro/rank de pesquisa.
+2. `ivPaletteClass(percent)`: mapeia exclusivamente as faixas acima para classes CSS estáticas (sem cores derivadas de dados livres ou do estado Shiny). Etiqueta sobreposta dentro de cada botão do sprite (`max-width:25px`, `font-size:8px`, `line-height:10px`, `left:0;bottom:0`), sem modificar `--row`, `--sprite`, o número máximo de 10 sprites ou o timer de despawn (mantido `right:0`). Evita poluição e respeita os tamanhos P/M/G.
+3. Cabeçalho existente: 0 e 100% recebem respectivamente ciano e rosa/vermelho; o símbolo `%` genérico não recebe cor de porcentagem desconhecida. Ícone-base segue limitado a 21×21 dentro da área 35×30. O ✦ de Shiny é branco/neutro com base discreta, adicionado somente quando confirmada a condição Shiny — **não torna IV, imagem-base ou porcentagem amarela**. Background permanece separado e só identificado com comprovação.
+4. `app/tests/overlay-ux.test.js`: seis testes de contrato/regressão para a paleta e extremos, validação de IV zero, 100 e valor Raw derivado, rejeição de dados desconhecidos/contraditórios, dimensões compactas e brilho independente.
+
+**Escopo preservado:** nenhuma edição aos 18 PNGs oficiais históricos, seis PNGs-base, 12 botões, arquivos `probe.js` / `OverlayService.java`, login, filtros, busca, intervalos, favoritos, notificações, coordenadas, cache, gestos, posição, tamanhos ou histórico. A validação adicional desta etapa é **apenas de apresentação** e reforça (não substitui) a defesa de dados da PL-01/PSC-02.
+
+**Verificação realizada:** validação sintática do conteúdo JS de `dock.html` em V8 via compilação de função = sem erro; dez cenários isolados contra as funções reais de IV/paleta no código atualizado = 10/10, incluindo Hundo, Nundo, classes intermediárias, ausentes, divergentes e percentual impossível. A suíte `overlay-ux.test.js` foi estendida, mas **NÃO foi executada integralmente**, tampouco houve Gradle, APK, screenshot nem teste com a WebView autenticada no Android nesta etapa. **Revisão física de legibilidade em P/M/G e sobreposição IV/timer ainda necessária.** Não fazer merge de PR #25 sem aprovação posterior.
+
