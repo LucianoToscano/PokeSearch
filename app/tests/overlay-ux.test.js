@@ -752,4 +752,39 @@ test("UX-FIX-01 brighter capture pulse uses confirmed searching status",()=>{
  pulse.includes("background:#f5ffff")&&dock.includes("searchActive=!!isSearching;")&&
  dock.includes("@keyframes psCapturePulse")&&dock.includes("prefers-reduced-motion:reduce");
 });
+test("Test-Android: orange stale-results dot is hidden but source provenance survives",()=>{
+ return !dock.includes("body.result-window.results-stale #resultHeader::after")&&
+  dock.includes('document.body.classList.toggle("results-stale",hasHistory&&resultsStale)')&&
+  service.includes('if(!preview)resultsStale=count()>0;')&&
+  dock.includes("⚠ Resultados anteriores");
+});
+test("Test-Android: small IV/rank badges use dark high-contrast letters and no background",()=>{
+ const label=dock.match(/\.modeIndicator\.value\{[^}]+\}/)?.[0]||"";
+ return label.includes("color:#16191c")&&label.includes("font-size:9px")&&
+  label.includes("-webkit-text-stroke:.25px #fff")&&
+  label.includes("background:transparent")&&
+  dock.includes(".modeIndicator.value.perfect{color:#f04b70}")&&
+  dock.includes(".modeIndicator.value.zero{color:#00cfe8}");
+});
+test("Test-Android: async site form awaits selected Raw and percent tabs",()=>{
+ const probe=read("assets/probe.js");
+ return probe.includes("function ensureModeTab(")&&
+  probe.includes("function prepareCoreFilters()")&&
+  probe.includes('if(!ready.ok)')&&probe.includes('stage:"wait-form"')&&
+  probe.includes('pending:ready.pending');
+});
+test("Test-Android: six-field mixed IV mapping requires stat proof",()=>{
+ const probe=read("assets/probe.js");
+ return probe.includes('const fromAttributes=statFor(')&&
+  probe.includes('if(nearby.length>2)break;')&&
+  probe.includes('values:mapped.map(i=>values[i])')&&
+  probe.includes('if(values.every(v=>v===values[0]))');
+});
+test("Test-Android: reapplying the same filter can retry failed Search",()=>{
+ return service.includes('status("Repetindo busca com o filtro atual...")')&&
+  service.includes('refresh(true);')&&
+  service.includes('private void reconfigureBeforeSubmit(')&&
+  service.includes('reconfigureBeforeSubmit(generation,manual,attempt+1,0)')&&
+  service.includes("attempt<32");
+});
 console.log("PokeSearch UX contract: "+count+" tests passed");
