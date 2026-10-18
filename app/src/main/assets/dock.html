@@ -134,6 +134,13 @@ body.result-window.results-stale #resultHeader::after{content:"";position:absolu
 .spawn{width:var(--dock);height:var(--row);position:relative;min-height:var(--row);flex:0 0 var(--row);display:flex;align-items:center;justify-content:center;margin:0;padding:0;background:transparent;border:0;border-radius:4px}
 .spawn.active .sprite{filter:drop-shadow(0 0 3px #ffffff77)}
 .timer{position:absolute;right:0;bottom:0;padding:1px 2px;border-radius:3px;background:#111924c4;color:#fff;font-size:8px;line-height:10px;pointer-events:none;min-width:23px;text-align:center}
+.spawn .ivPct{position:absolute;left:0;bottom:0;z-index:1;max-width:25px;min-width:16px;padding:1px 2px;border-radius:3px;background:#111924d9;font:800 8px/10px Roboto,Arial,sans-serif;text-align:center;white-space:nowrap;pointer-events:none;text-shadow:0 1px 1px #000c}
+.spawn .ivPct.zero{color:#00cfe8}
+.spawn .ivPct.low{color:#b8bec8}
+.spawn .ivPct.medium{color:#28c76f}
+.spawn .ivPct.high{color:#388bff}
+.spawn .ivPct.excellent{color:#c084fc}
+.spawn .ivPct.perfect{color:#f04b70}
 .spawn.expired{opacity:.38}
 .sprite{display:block;width:var(--sprite);height:var(--sprite);object-fit:contain;flex-shrink:0;pointer-events:none;filter:drop-shadow(0 1px 1px #0006)}
 .fallback{font-size:20px}
@@ -192,8 +199,10 @@ body.result-window #resultHeader .resultModeStack{position:relative;display:bloc
 body.result-window #resultHeader .resultModeStack img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 1px #0007)}
 body.result-window #resultHeader .modeIndicator{position:absolute;z-index:1;display:none;align-items:center;justify-content:center;box-sizing:border-box;pointer-events:none;font-family:Arial,Roboto,sans-serif;font-weight:900;line-height:1;text-shadow:0 1px 1px #000}
 body.result-window #resultHeader .modeIndicator.visible{display:flex}
-body.result-window #resultHeader .modeIndicator.value{left:50%;bottom:0;max-width:21px;min-width:7px;height:8px;padding:0 1px;border-radius:2px;background:#101927dc;color:#fff;font-size:7px;transform:translateX(-50%) scale(var(--mode-indicator-scale,1));transform-origin:bottom center}
-body.result-window #resultHeader .modeIndicator.shiny{right:0;top:0;width:8px;height:8px;border-radius:2px;background:#282012cc;color:#ffe77c;font-size:10px;transform:scale(var(--mode-indicator-scale,1));transform-origin:top right}
+body.result-window #resultHeader .modeIndicator.value{left:50%;bottom:0;max-width:21px;min-width:7px;height:8px;padding:0 1px;border-radius:2px;background:#101927dc;color:#f5f7fa;font-size:7px;transform:translateX(-50%) scale(var(--mode-indicator-scale,1));transform-origin:bottom center}
+body.result-window #resultHeader .modeIndicator.value.zero{color:#00cfe8}
+body.result-window #resultHeader .modeIndicator.value.perfect{color:#f04b70}
+body.result-window #resultHeader .modeIndicator.shiny{right:0;top:0;width:8px;height:8px;border-radius:2px;background:#151b26c9;color:#f5f7fa;font-size:10px;transform:scale(var(--mode-indicator-scale,1));transform-origin:top right}
 body.result-window #resultHeader .modeIndicator.background{left:0;top:0;width:8px;height:8px;border-radius:2px;background:#113b50d9;color:#adf1ee;transform:scale(var(--mode-indicator-scale,1));transform-origin:top left}
 body.result-window #resultHeader .modeIndicator.background svg{display:block;width:7px;height:7px}
 body.result-window #resultHeader:focus-visible{outline:1px solid #fff8}
@@ -299,6 +308,34 @@ let filterOptions={},generalExpanded=false,advancedExpanded=false;
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
 // Math.round(total / 45 * 100) produces exactly 46 possible shown percentages.
 const IV_PERCENT_VALUES=Object.freeze([0,2,4,7,9,11,13,16,18,20,22,24,27,29,31,33,36,38,40,42,44,47,49,51,53,56,58,60,62,64,67,69,71,73,76,78,80,82,84,87,89,91,93,96,98,100]);
+// Display-only evidence: an IV must be attainable and internally consistent.
+// Unknown, malformed or contradictory data never gets an IV label.
+function verifiedSpawnIvPercent(card){
+ if(!card||typeof card!=="object")return null;
+ const raw=String(card.iv==null?"":card.iv).trim();
+ const pct=String(card.ivPercent==null?"":card.ivPercent).trim();
+ let computed=null;
+ if(raw){
+  if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw))return null;
+  computed=Math.round(raw.split("/").map(Number).reduce((sum,n)=>sum+n,0)*100/45);
+ }
+ if(pct){
+  if(!/^(?:0|[1-9][0-9]?|100)$/.test(pct))return null;
+  const observed=Number(pct);
+  if(!IV_PERCENT_VALUES.includes(observed)||(computed!==null&&computed!==observed))return null;
+  return observed;
+ }
+ return computed;
+}
+function ivPaletteClass(percent){
+ if(percent===null||!IV_PERCENT_VALUES.includes(percent))return "unknown";
+ if(percent===0)return "zero";
+ if(percent===100)return "perfect";
+ if(percent<=49)return "low";
+ if(percent<=78)return "medium";
+ if(percent<=89)return "high";
+ return "excellent";
+}
 let modeDraft=null,modeScrollTop=0;
 let shownMode="raw",shownShiny=false,shownSettings={...searchSettings},resultsStale=false,nextQueryAt=0;
 function specialIVLabel(selectedMode,settings){
@@ -720,11 +757,13 @@ function draw(){
  // The gear and menu WebViews never create hidden sprite buttons.
  // Only the independent results WebView owns the Pokémon list and its taps.
  if(resultWindow)document.getElementById("spawns").innerHTML=cards.map((c,i)=>{
-  const label=[c.name,c.ivPercent?c.ivPercent+"%":"IV não disponível",c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
+  const verifiedPercent=verifiedSpawnIvPercent(c);
+  const label=[c.name,verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
   const icon=/^(https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(c.image||"")?'<img class="sprite" src="'+esc(c.image)+'" alt="" loading="eager">':'<span class="fallback">◉</span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const badge=showTimers&&deadline?'<span class="timer" data-deadline="'+deadline+'"></span>':"";
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+badge+'</button>';
+  const ivBadge=verifiedPercent===null?"":'<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>';
+  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
  if(resultWindow){attachLongPress();updateTimers();}
@@ -753,6 +792,8 @@ function draw(){
   const primaryBadge=document.getElementById("modeIndicatorValue");
   primaryBadge.textContent=selectedIcon.ivBadge;
   primaryBadge.classList.toggle("visible",!!selectedIcon.ivBadge);
+  primaryBadge.classList.toggle("zero",selectedIcon.family==="nundo");
+  primaryBadge.classList.toggle("perfect",selectedIcon.family==="hundo");
   document.getElementById("modeIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge);
   document.getElementById("modeIndicatorBackground").classList.toggle("visible",selectedIcon.backgroundBadge);
   const label=(hasHistory&&resultsStale?"⚠ Resultados anteriores · ":"")+selectedIcon.title+
