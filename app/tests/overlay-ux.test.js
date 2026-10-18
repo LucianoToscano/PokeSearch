@@ -787,4 +787,9 @@ test("Test-Android: reapplying the same filter can retry failed Search",()=>{
   service.includes('reconfigureBeforeSubmit(generation,manual,attempt+1,0)')&&
   service.includes("attempt<32");
 });
+test("PS-009 Android Java inner Bridge invokes outer refresh(boolean) explicitly",()=>{
+ const bridge=service.split("private class Bridge")[1]||service.split("class Bridge")[1]||"";
+ return bridge.includes('status("Repetindo busca com o filtro atual...");\n                    OverlayService.this.refresh(true);')&&
+  bridge.includes('status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");\n                OverlayService.this.refresh(true);');
+});
 console.log("PokeSearch UX contract: "+count+" tests passed");
