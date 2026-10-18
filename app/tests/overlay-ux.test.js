@@ -638,3 +638,50 @@ test("PL-01 PSC-02 native IV gate runs before display, cache and alerts",()=>{
   !service.includes('return iv.isEmpty()||')&&!service.includes('if(pct.isEmpty())return true;')&&
   service.includes('searchFailure("⚠ IV não comprovado"');
 });
+
+
+// UI-PAL-01: IV evidence and palette are presentation-only; Shiny never recolors IV.
+const ivScriptStart=dock.indexOf("const IV_PERCENT_VALUES=Object.freeze(");
+const ivScriptEnd=dock.indexOf("let modeDraft=",ivScriptStart);
+const ivScript=dock.slice(ivScriptStart,ivScriptEnd);
+const [verifiedSpawnIvPercent,ivPaletteClass]=require("node:vm").runInNewContext(
+ ivScript+"\n[verifiedSpawnIvPercent,ivPaletteClass]",{});
+test("IV palette follows 46 attainable percentages including both extremes",(()=>{
+ const pairs=[[0,"zero"],[2,"low"],[49,"low"],[51,"medium"],[78,"medium"],
+              [80,"high"],[89,"high"],[91,"excellent"],[98,"excellent"],[100,"perfect"]];
+ return pairs.every(([pct,name])=>ivPaletteClass(pct)===name)&&
+        ivPaletteClass(null)==="unknown"&&ivPaletteClass(50)==="unknown";
+})());
+test("Shiny and ordinary IV badges use a single evidence-driven function",
+ dock.includes('const verifiedPercent=verifiedSpawnIvPercent(c);')&&
+ dock.includes("ivPaletteClass(verifiedPercent)")&&
+ dock.includes('"+icon+ivBadge+badge+"')&&
+ !dock.includes("shiny?ivPaletteClass")&&
+ dock.includes('verifiedPercent===null?"IV não comprovado"'));
+test("Verified IV includes 0%, 100% and raw-derived values but never assumes a missing value",(()=>{
+ const percent=(iv,ivPercent)=>verifiedSpawnIvPercent({iv,ivPercent});
+ return percent("0/0/0","0")===0&&percent("15/15/15","100")===100&&
+        percent("11/15/15","")===91&&percent("","51")===51&&
+        percent("","")===null&&percent("2/3/99","")===null;
+})());
+test("Contradictory, non-attainable or malformed IV never receives a palette color",(()=>{
+ const wrong=[{iv:"4/4/11",ivPercent:"100"},{iv:"",ivPercent:"50"},
+              {iv:"",ivPercent:"101"},{iv:"0/0/0",ivPercent:"2"},
+              {iv:"16/15/15",ivPercent:""},{iv:"3/3/3",ivPercent:"5"}];
+ return wrong.every(card=>verifiedSpawnIvPercent(card)===null);
+})());
+test("Compact IV label stays inside existing row, clear of the despawn timer",(()=>{
+ const css=dock.match(/\.spawn \.ivPct\{[^}]+\}/)?.[0]||"";
+ return css.includes("position:absolute")&&css.includes("left:0;bottom:0")&&
+        css.includes("max-width:25px")&&css.includes("pointer-events:none")&&
+        dock.includes(".timer{position:absolute;right:0;bottom:0")&&
+        dock.includes("#resultHeader{width:35px;height:30px");
+})());
+test("Shiny sparkle is independent neutral, header extremes match the IV palette",(()=>{
+ const css=dock.match(/\.modeIndicator\.shiny\{[^}]+\}/)?.[0]||"";
+ return css.includes("color:#f5f7fa")&&!css.includes("color:#ffe77c")&&
+        dock.includes('primaryBadge.classList.toggle("zero",selectedIcon.family==="nundo")')&&
+        dock.includes('primaryBadge.classList.toggle("perfect",selectedIcon.family==="hundo")')&&
+        dock.includes(".modeIndicator.value.zero{color:#00cfe8}")&&
+        dock.includes(".modeIndicator.value.perfect{color:#f04b70}");
+})());
