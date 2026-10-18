@@ -92,7 +92,12 @@ test("PL-02 manual refresh queues one follow-up only while busy",
   service.includes('queuedManualRefresh=true;')&&
   service.includes('status("↻ Nova busca agendada após a atual.")')&&
   service.includes('queuedManualRefresh=false;'));
-test("Login pauses and invalidates pending site callbacks",service.includes("loginPaused=true;\n            ++requestGeneration;\n            searchInProgress=false;")&&service.includes("cancelSessionCallbacks();"));
+test("Login pauses, drains already submitted search and invalidates pending callbacks",()=>{
+ const begin=service.split('if("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN".equals(action)){')[1]?.split("return START_STICKY;")[0]||"";
+ return begin.includes("loginPaused=true;")&&begin.includes("guardSubmittedSearchBeforeReplacement();")&&
+  begin.includes("++requestGeneration;")&&begin.includes("searchInProgress=false;")&&
+  begin.includes("cancelSessionCallbacks();");
+});
 test("A completed login resumes searching, while canceling does not",
  service.includes('boolean authConfirmed=i!=null&&i.getBooleanExtra("authConfirmed",false)')&&
  service.includes('if(authConfirmed&&!stopped&&!loginPaused&&!pickerOpen)')&&
@@ -805,6 +810,7 @@ test("PL-02 navigation recovery survives a filter change while loading",()=>{
  return nav.includes("pageLoadGeneration++")&&
   !nav.includes("pageLoadGeneration!=requestGeneration")&&
   nav.includes("url.equals(view.getUrl())")&&
+  nav.includes("view.getProgress()==100")&&
   nav.includes("if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,2500L);");
 });
 test("PL-02 only the newest selection starts after debounce",()=>{
@@ -833,6 +839,7 @@ test("PL-02 watchdog can release stalled generation without false success",()=>{
   service.includes("handler.postDelayed(searchWatchdog,SEARCH_WATCHDOG_MS);")&&
   watchdog.includes("watchdogGeneration!=requestGeneration")&&
   watchdog.includes("guardSubmittedSearchBeforeReplacement();")&&
+  watchdog.includes("++requestGeneration;")&&
   watchdog.includes('searchFailure("⚠ Tempo limite"')&&
   service.includes("handler.removeCallbacks(searchWatchdog);");
 });
