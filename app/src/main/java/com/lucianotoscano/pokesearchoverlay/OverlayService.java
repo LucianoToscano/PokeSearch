@@ -354,6 +354,7 @@ public class OverlayService extends Service {
         searchInProgress=false;
         queuedManualRefresh=false;
         confirmedSubmittedFiltersGeneration=-1;
+        nextScheduledSearchAtMs=0L;
         handler.removeCallbacks(searchWatchdog);
         handler.removeCallbacks(queuedRefresh);
         handler.removeCallbacks(filterChangeRefresh);
