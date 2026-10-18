@@ -55,6 +55,18 @@ public class OverlayService extends Service {
     private int popupOffsetDp=-1,popupRoomDp=-1;
     private String probeScriptCache;
     private boolean searchInProgress=false;
+    // PL-02: a UI selection and an already submitted query are distinct.
+    private boolean queuedManualRefresh=false;
+    private int submittedSearchGeneration=-1,watchdogGeneration=-1;
+    private long remoteDrainUntilMs=0L;
+    private static final long SEARCH_WATCHDOG_MS=45_000L;
+    private final Runnable searchWatchdog=()->{
+        if(stopped||loginPaused||!searchInProgress||watchdogGeneration!=requestGeneration)return;
+        guardSubmittedSearchBeforeReplacement();
+        searchInProgress=false;
+        confirmedSubmittedFiltersGeneration=-1;
+        searchFailure("⚠ Tempo limite","O navegador não concluiu a consulta. Tente atualizar.");
+    };
     private boolean loginPaused=false;
     private boolean pickerOpen=false;
     private final Runnable queuedRefresh=()->refresh(false);
@@ -63,7 +75,7 @@ public class OverlayService extends Service {
     private int pendingLoginRefreshGeneration=-1;
     private int pendingReloadGeneration=-1;
     private final Runnable pageFinishedRefresh=()->{
-        if(!stopped&&!loginPaused&&pageLoadGeneration==requestGeneration&&
+        if(!stopped&&!loginPaused&&loaded&&!searchInProgress&&
             pendingPageRefreshGeneration==requestGeneration)refresh(false);
     };
     private final Runnable loginEndRefresh=()->{
@@ -76,6 +88,7 @@ public class OverlayService extends Service {
     };
     private void cancelSessionCallbacks(){
         handler.removeCallbacks(queuedRefresh);
+        handler.removeCallbacks(searchWatchdog);
         handler.removeCallbacks(periodic);
         handler.removeCallbacks(expiryRefresh);
         handler.removeCallbacks(pageFinishedRefresh);
@@ -306,6 +319,29 @@ public class OverlayService extends Service {
         status=s;
         getSharedPreferences("prefs",0).edit().putString("lastStatus",s).apply();
         update();
+        // Only one manual retry survives an in-progress search. Dispatch it
+        // after the search ends, never concurrently with remote submission.
+        if(!searchInProgress&&queuedManualRefresh&&!stopped&&!loginPaused){
+            queuedManualRefresh=false;
+            if(submittedSearchGeneration==requestGeneration)
+                remoteDrainUntilMs=Math.max(remoteDrainUntilMs,lastSearchStartMs+MIN_SEARCH_GAP_MS);
+            handler.postDelayed(()->refresh(true),250L);
+        }
+    }
+    private void guardSubmittedSearchBeforeReplacement(){
+        if(searchInProgress&&submittedSearchGeneration==requestGeneration&&lastSearchStartMs>0L)
+            remoteDrainUntilMs=Math.max(remoteDrainUntilMs,lastSearchStartMs+MIN_SEARCH_GAP_MS);
+    }
+    private void replaceActiveFilterSearch(){
+        // Logical cancel only; a previously submitted HTTP request may still
+        // finish upstream, so keep a conservative remote drain guard.
+        guardSubmittedSearchBeforeReplacement();
+        ++requestGeneration;
+        searchInProgress=false;
+        queuedManualRefresh=false;
+        confirmedSubmittedFiltersGeneration=-1;
+        handler.removeCallbacks(searchWatchdog);
+        handler.removeCallbacks(queuedRefresh);
     }
     private void diagnosticError(String s){
         getSharedPreferences("prefs",0).edit().putString("lastError",s).apply();
@@ -459,23 +495,29 @@ public class OverlayService extends Service {
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap favicon){
                 if(view!=website||stopped)return;
                 if(loginPaused){pageLoadGeneration=-1;return;}
-                pageLoadGeneration=requestGeneration;
+                pageLoadGeneration++;
                 pendingPageRefreshGeneration=-1;
                 loaded=false;
                 handler.removeCallbacks(pageFinishedRefresh);
+                // React document replacement invalidates partially configured
+                // form fields. Submitted searches instead retain their polling.
+                if(searchInProgress&&submittedSearchGeneration!=requestGeneration)
+                    replaceActiveFilterSearch();
             }
             @Override public void onPageFinished(WebView view,String url){
-                if(view!=website||stopped||loginPaused||
-                   pageLoadGeneration!=requestGeneration)return;
-                if(url!=null&&url.startsWith("https://pogocoordinates.com/")){
+                if(view!=website||stopped||loginPaused)return;
+                // A navigation epoch is independent of filter requestGeneration.
+                // Ignore redirects from older pages and foreign origins.
+                if(url!=null&&url.startsWith("https://pogocoordinates.com/")&&
+                   (view.getUrl()==null||url.equals(view.getUrl()))){
                     loaded=true;
                     handler.removeCallbacks(pageFinishedRefresh);
-                    pendingPageRefreshGeneration=pageLoadGeneration;
-                    handler.postDelayed(pageFinishedRefresh,2500L);
+                    pendingPageRefreshGeneration=searchInProgress?-1:requestGeneration;
+                    if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,2500L);
                     if(shiny&&!shinyVerified){
                         // The site is visible to JS now. Confirm the Shiny state
                         // as soon as the tab is hydrated, not after a new Search.
-                        final int generation=pageLoadGeneration;
+                        final int generation=requestGeneration;
                         handler.postDelayed(()->{
                             if(!stopped&&!loginPaused&&loaded&&!searchInProgress&&
                                shiny&&!shinyVerified&&generation==requestGeneration)
