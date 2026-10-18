@@ -1,4 +1,28 @@
 plugins { id("com.android.application") }
+
+// Stable internal-test signing is optional for local development, but mandatory
+// for the CI distribution workflow. Never store the keystore or passwords in Git.
+val testVersionCode = System.getenv("POKE_TEST_VERSION_CODE")?.let { value ->
+    val parsed = value.toIntOrNull()
+        ?: throw org.gradle.api.GradleException("POKE_TEST_VERSION_CODE must be numeric")
+    if (parsed !in 52..2_100_000_000)
+        throw org.gradle.api.GradleException("POKE_TEST_VERSION_CODE is outside the allowed upgrade range")
+    parsed
+}
+val testKeyFile = System.getenv("POKE_TEST_KEYSTORE")
+val testStorePassword = System.getenv("POKE_TEST_STORE_PASSWORD")
+val testKeyAlias = System.getenv("POKE_TEST_KEY_ALIAS")
+val testKeyPassword = System.getenv("POKE_TEST_KEY_PASSWORD")
+val testSigningFields = listOf(testKeyFile, testStorePassword, testKeyAlias, testKeyPassword)
+val testSigningComplete = testSigningFields.all { !it.isNullOrBlank() }
+val testSigningRequired = System.getenv("POKE_TEST_SIGNING_REQUIRED") == "true"
+if ((testSigningRequired || testSigningFields.any { !it.isNullOrBlank() }) && !testSigningComplete)
+    throw org.gradle.api.GradleException("Stable test signing is incomplete; configure the protected CI secrets")
+if (testSigningRequired && testVersionCode == null)
+    throw org.gradle.api.GradleException("Signed test builds require a monotonically increasing versionCode")
+if (testSigningComplete && !file(testKeyFile!!).isFile)
+    throw org.gradle.api.GradleException("The protected test keystore was not restored")
+
 android {
     namespace = "com.lucianotoscano.pokesearchoverlay"
     compileSdk = 36
@@ -7,8 +31,8 @@ android {
         applicationId = "com.lucianotoscano.pokesearch"
         minSdk = 26
         targetSdk = 33
-        versionCode = 51
-        versionName = "0.51-beta"
+        versionCode = testVersionCode ?: 51
+        versionName = if (testVersionCode != null) "0.51-beta.test.$testVersionCode" else "0.51-beta"
     }
     // Sideloaded beta: keep tested overlay behavior on target 32. Play Store publishing needs a separate target SDK migration.
     lint { disable += "ExpiredTargetSdkVersion" }
@@ -23,7 +47,21 @@ android {
             }
         }
     }
+    if (testSigningComplete) {
+        signingConfigs {
+            create("persistentTestDebug") {
+                storeFile = file(testKeyFile!!)
+                storePassword = testStorePassword
+                keyAlias = testKeyAlias
+                keyPassword = testKeyPassword
+            }
+        }
+    }
     buildTypes {
+        getByName("debug") {
+            if (testSigningComplete)
+                signingConfig = signingConfigs.getByName("persistentTestDebug")
+        }
         getByName("release") {
             if (!releaseStore.isNullOrBlank()) signingConfig = signingConfigs.getByName("privateTestRelease")
             isMinifyEnabled = true
