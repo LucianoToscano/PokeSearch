@@ -70,6 +70,13 @@ public class OverlayService extends Service {
     private boolean loginPaused=false;
     private boolean pickerOpen=false;
     private final Runnable queuedRefresh=()->refresh(false);
+    private final Runnable filterChangeRefresh=()->refresh(true);
+    private void scheduleFilterChangeRefresh(){
+        // Debounce UI-only changes. The latest selection always wins; never
+        // submit one Search per tap during fast Raw/IV%/GL/UL transitions.
+        handler.removeCallbacks(filterChangeRefresh);
+        handler.postDelayed(filterChangeRefresh,240L);
+    }
     private int pageLoadGeneration=-1;
     private int pendingPageRefreshGeneration=-1;
     private int pendingLoginRefreshGeneration=-1;
@@ -88,6 +95,7 @@ public class OverlayService extends Service {
     };
     private void cancelSessionCallbacks(){
         handler.removeCallbacks(queuedRefresh);
+        handler.removeCallbacks(filterChangeRefresh);
         handler.removeCallbacks(searchWatchdog);
         handler.removeCallbacks(periodic);
         handler.removeCallbacks(expiryRefresh);
@@ -325,7 +333,10 @@ public class OverlayService extends Service {
             queuedManualRefresh=false;
             if(submittedSearchGeneration==requestGeneration)
                 remoteDrainUntilMs=Math.max(remoteDrainUntilMs,lastSearchStartMs+MIN_SEARCH_GAP_MS);
-            handler.postDelayed(()->refresh(true),250L);
+            final int queuedGeneration=requestGeneration;
+            handler.postDelayed(()->{
+                if(!stopped&&!loginPaused&&queuedGeneration==requestGeneration)refresh(true);
+            },250L);
         }
     }
     private void guardSubmittedSearchBeforeReplacement(){
@@ -342,6 +353,7 @@ public class OverlayService extends Service {
         confirmedSubmittedFiltersGeneration=-1;
         handler.removeCallbacks(searchWatchdog);
         handler.removeCallbacks(queuedRefresh);
+        handler.removeCallbacks(filterChangeRefresh);
     }
     private void diagnosticError(String s){
         getSharedPreferences("prefs",0).edit().putString("lastError",s).apply();
@@ -529,7 +541,9 @@ public class OverlayService extends Service {
             @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){
                 if(!request.isForMainFrame()||stopped)return;
                 loaded=false;
+                guardSubmittedSearchBeforeReplacement();
                 searchInProgress=false;
+                queuedManualRefresh=false;
                 ++requestGeneration;
                 cancelSessionCallbacks();
                 BugReport.log(OverlayService.this,"NETWORK","Falha de navegação principal; código="+error.getErrorCode());
@@ -1715,7 +1729,7 @@ public class OverlayService extends Service {
                 if(!preview)resultsStale=count()>0;
                 hideDetails();
                 status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
-                OverlayService.this.refresh(true);
+                scheduleFilterChangeRefresh();
             }catch(org.json.JSONException ex){
                 status("Filtro inválido. Escolha os valores novamente.");
             }
@@ -1739,7 +1753,7 @@ public class OverlayService extends Service {
             if(!preview)resultsStale=count()>0;
             hideDetails();
             status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
-            refresh();
+            scheduleFilterChangeRefresh();
         });}
         @JavascriptInterface public void menu(boolean open){handler.post(()->OverlayService.this.menu(open));}
         @JavascriptInterface public void cycleMode(){handler.post(()->{
@@ -1750,7 +1764,7 @@ public class OverlayService extends Service {
             if(!preview)resultsStale=count()>0;
             hideDetails();
             status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
-            refresh();
+            scheduleFilterChangeRefresh();
         });}
         @JavascriptInterface public void cycleSpriteSize(){handler.post(()->{
             int[] sizes={35,45,55};
