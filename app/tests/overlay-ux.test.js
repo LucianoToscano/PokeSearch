@@ -578,11 +578,11 @@ test("Next search stays on the existing 60-second safety interval",
  service.includes('MIN_SEARCH_GAP_MS=60_000L')&&
  service.includes('nextScheduledSearchAtMs=now+remaining*1000L+300L')&&
  service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
-test("Countdown uses original overlay without adding toolbar icons",
- dock.includes('header.setAttribute("data-wait"')&&
+test("Cooldown remains accessible but not drawn over the original compact icon",
+ dock.includes('header.title=label+(waiting?')&&
  dock.includes('nextQueryAt=Number(nextDue)||0')&&
  dock.includes('setInterval(updateTimers,1000)')&&
- dock.includes('content:attr(data-wait)')&&
+ !dock.includes('content:attr(data-wait)')&&
  (dock.match(/<button id="(?:cycle|sh|period|manualRefresh|size|clock|bell|star|location|report|donate|close)"/g)||[]).length===12);
 
 test("Session probe executable contains all four template substitutions",
