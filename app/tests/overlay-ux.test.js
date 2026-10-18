@@ -427,7 +427,7 @@ test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy 
  dock.includes('if(settings.percentMin===100&&settings.percentMax===100)family="hundo"')&&
  service.includes('boolean migrateLegacyHundo="iv".equals(mode);')&&
  service.includes('pref.edit().putString("mode","raw")')&&
- read("assets/probe.js").includes('return rawIsHundo()&&set100Percent();'));
+ read("assets/probe.js").includes('return rawIsHundo()&&!oneButton("Raw IV")&&set100Percent();'));
 test("Mode panel has no hint or fifth row and numbers retain a compact grid",
  !dock.includes('panel.appendChild(make("div","modeHint"')&&
  dock.includes('max-height:148px')&&
@@ -787,10 +787,10 @@ test("Test-Android: async site form awaits selected Raw and percent tabs",()=>{
 });
 test("Test-Android: six-field mixed IV mapping requires stat proof",()=>{
  const probe=read("assets/probe.js");
- return probe.includes('const fromAttributes=statFor(')&&
-  probe.includes('if(nearby.length>2)break;')&&
-  probe.includes('values:mapped.map(i=>values[i])')&&
-  probe.includes('if(values.every(v=>v===values[0]))');
+ return probe.includes('function ivInputStat(input)')&&
+  probe.includes('if(local.length>2)break;')&&
+  probe.includes('values:mapped.map(v=>values[v])')&&
+  probe.includes('if(mapped.every(v=>v<0)&&values.every(v=>v===values[0]))');
 });
 test("Test-Android: reapplying the same filter can retry failed Search",()=>{
  return service.includes('status("Repetindo busca com o filtro atual...")')&&
@@ -865,5 +865,22 @@ test("PL-02 waits for WebView after submit navigation without treating missing D
   poll.includes("if(attempt<8){pollSearch(generation,attempt+1,manual);return;}")&&
   poll.indexOf("if(!loaded||website==null){")<poll.indexOf('execute("collect",r=>{')&&
   poll.includes('searchFailure("⚠ Site não carregado"');
+});
+test("Raw IV A/D/S are applied one field per React evaluation",()=>{
+ const probe=read("assets/probe.js");
+ return probe.includes("function applyNumbersOneAtATime(")&&
+  probe.includes("transientPending=true;")&&
+  probe.includes("function ivInputStat(input)")&&
+  probe.includes('["aria-label","name","id","placeholder"]')&&
+  probe.includes('elements("label[for]")')&&
+  probe.includes('elements("[id]")')&&
+  probe.includes('const inputs=rawIVInputs();');
+});
+test("Blank zero is never treated as a filled Raw IV or percentage",()=>{
+ const probe=read("assets/probe.js");
+ return probe.includes('const val=String(input.value??"").trim();')&&
+  probe.includes('if(!/^(?:0|[1-9]\\d*)$/.test(val))return false;')&&
+  probe.includes('confirmedNumber(input,group.values[i],0,15)')&&
+  probe.includes('confirmedNumber(inputs[0],filters.percentMin,0,100)');
 });
 console.log("PokeSearch UX contract: "+count+" tests passed");
