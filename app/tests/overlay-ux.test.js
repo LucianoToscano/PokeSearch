@@ -597,3 +597,25 @@ test("Canceled dialog does not force session refresh or discard sprites",
  service.includes('resultsStale=count()>0;'));
 
 console.log("PokeSearch UX contract: "+count+" tests passed");
+
+test("UX-ICON-01 retains original 18 artworks and adds six efficient base resources",()=>{
+ const dir=path.join(root,"assets/result-icons/base");
+ const names=["none","custom","gl","ul","ml","cup"];
+ return names.every(n=>{
+  const p=path.join(dir,"base-"+n+".png");if(!fs.existsSync(p))return false;
+  const buf=fs.readFileSync(p);
+  return buf.subarray(0,8).equals(Buffer.from("89504e470d0a1a0a","hex"))&&buf.readUInt32BE(16)===64&&buf.readUInt32BE(20)===64;
+ })&&dock.includes("const RESULT_BASE_ICONS=Object.freeze(")&&dock.includes('cup:"base-cup.png"');
+});
+test("UX-ICON-01 keeps 35x30 touch area and badges strictly within 21px",
+ dock.includes("#resultHeader{width:35px;height:30px")&&
+ dock.includes("max-width:21px;max-height:21px;pointer-events:none")&&
+ dock.includes("Math.max(17,Math.min(21,Math.round(spriteSize*0.45)))")&&
+ ["modeIndicatorValue","modeIndicatorShiny","modeIndicatorBackground"].every(x=>dock.includes('id="'+x+'"')));
+test("UX-ICON-01 badges remain independent and background requires site proof",
+ dock.includes('family==="hundo"?"100%"')&&dock.includes('family==="nundo"?"0"')&&
+ dock.includes('family==="percent"?"%"')&&dock.includes("shinyBadge:shining")&&
+ dock.includes("backgroundOnly===true&&settings.backgroundVerified===true"));
+test("UX-ICON-01 does not silently introduce unimplemented searches",
+ dock.includes('baseFamily==="cup"?"CUP"')&&
+ !dock.includes('row("none"')&&!dock.includes('row("ml"')&&!dock.includes('row("cup"'));

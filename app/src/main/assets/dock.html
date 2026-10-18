@@ -187,8 +187,15 @@ body.result-window #shell{width:var(--dock);margin:0!important;overflow:hidden}
 body.result-window #resultHeader{width:35px;height:30px;display:flex;
  align-items:center;justify-content:center;padding:0;margin:0 auto;border:0;
  border-radius:8px;background:transparent;box-shadow:none}
-body.result-window #resultHeader img{display:block;width:21px;height:21px;
- object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 1px #0007)}
+/* Composition stays inside the original 35x30px touch area and 21px max art. */
+body.result-window #resultHeader .resultModeStack{position:relative;display:block;flex:none;width:var(--mode-icon-size,21px);height:var(--mode-icon-size,21px);max-width:21px;max-height:21px;pointer-events:none}
+body.result-window #resultHeader .resultModeStack img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 1px #0007)}
+body.result-window #resultHeader .modeIndicator{position:absolute;z-index:1;display:none;align-items:center;justify-content:center;box-sizing:border-box;pointer-events:none;font-family:Arial,Roboto,sans-serif;font-weight:900;line-height:1;text-shadow:0 1px 1px #000}
+body.result-window #resultHeader .modeIndicator.visible{display:flex}
+body.result-window #resultHeader .modeIndicator.value{left:50%;bottom:0;max-width:21px;min-width:7px;height:8px;padding:0 1px;border-radius:2px;background:#101927dc;color:#fff;font-size:7px;transform:translateX(-50%) scale(var(--mode-indicator-scale,1));transform-origin:bottom center}
+body.result-window #resultHeader .modeIndicator.shiny{right:0;top:0;width:8px;height:8px;border-radius:2px;background:#282012cc;color:#ffe77c;font-size:10px;transform:scale(var(--mode-indicator-scale,1));transform-origin:top right}
+body.result-window #resultHeader .modeIndicator.background{left:0;top:0;width:8px;height:8px;border-radius:2px;background:#113b50d9;color:#adf1ee;transform:scale(var(--mode-indicator-scale,1));transform-origin:top left}
+body.result-window #resultHeader .modeIndicator.background svg{display:block;width:7px;height:7px}
 body.result-window #resultHeader:focus-visible{outline:1px solid #fff8}
 body.result-window #resultHeader[data-wait]{position:relative}
 body.result-window #resultHeader[data-wait]::before{content:attr(data-wait);position:absolute;bottom:-2px;
@@ -216,7 +223,7 @@ body.result-window.results-collapsed #empty{display:none!important}
   <button id="close" title="Encerrar PokeSearch" aria-label="Fechar todo o overlay" onclick="Native.close()">×</button>
  </div><div id="choices" role="group" aria-label="Escolher opção"></div></div>
  <div id="locBadge" role="status" aria-live="polite"></div>
- <button id="resultHeader" title="Recolher ou expandir os Pokémon · arraste para mover" aria-label="Recolher ou expandir resultados" aria-expanded="true" onclick="Native.toggleResultsCollapsed()"><img id="resultModeIcon" alt="" src="file:///android_asset/result-icons/hundo.png"></button>
+ <button id="resultHeader" title="Recolher ou expandir os Pokémon · arraste para mover" aria-label="Recolher ou expandir resultados" aria-expanded="true" onclick="Native.toggleResultsCollapsed()"><span id="resultIconStack" class="resultModeStack" aria-hidden="true"><img id="resultModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="modeIndicatorValue" class="modeIndicator value"></span><span id="modeIndicatorShiny" class="modeIndicator shiny">✦</span><span id="modeIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span></button>
  <div id="spawns"></div>
  <button id="empty" title="Toque para saber o motivo" onclick="Native.showStatus()">Aguardando busca</button>
  <button id="collapse" title="Recolher todos os Pokémon e as opções, deixando apenas a engrenagem" aria-label="Recolher todos os Pokémon" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button>
@@ -239,6 +246,12 @@ const RESULT_ICONS=Object.freeze({
  ul:{normal:"ultra-league.png",shiny:"ultra-league-shiny.png",title:"Ultra Liga"},
  ml:{normal:"master-league.png",shiny:"master-league-shiny.png",title:"Liga Mestra"},
  cup:{normal:"cup-league.png",shiny:"cup-league-shiny.png",title:"Liga Copa"}
+});
+// Six bases, five submitted arts. Cup uses the neutral base + distinct CUP badge.
+// The 18 historic PNGs above remain unchanged as rollback/fallback assets.
+const RESULT_BASE_ICONS=Object.freeze({
+ none:"base-none.png",custom:"base-custom.png",
+ gl:"base-gl.png",ul:"base-ul.png",ml:"base-ml.png",cup:"base-cup.png"
 });
 const RESULT_MODE_ALIASES=Object.freeze({
  iv:"hundo",iv100:"hundo",hundo:"hundo",shundo:"hundo",
@@ -266,10 +279,16 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
  }
  const pair=RESULT_ICONS[family];
  const shining=!!shinyActive;
+ const baseFamily=["hundo","nundo","percent"].includes(family)?"custom":family;
+ const baseName=RESULT_BASE_ICONS[baseFamily]||RESULT_BASE_ICONS.none;
+ const badge=family==="hundo"?"100%":family==="nundo"?"0":family==="percent"?"%":baseFamily==="cup"?"CUP":"";
+ // Only confirmed site Background can be represented; not an activation shortcut.
+ const backgroundConfirmed=!!(settings&&settings.backgroundOnly===true&&settings.backgroundVerified===true);
  return {
-  path:"file:///android_asset/result-icons/"+(shining?pair.shiny:pair.normal),
-  title:pair.title+(shining?" · Shiny only":""),
-  family
+  path:"file:///android_asset/result-icons/base/"+baseName,
+  fallbackPath:"file:///android_asset/result-icons/"+(shining?pair.shiny:pair.normal),
+  title:pair.title+(shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
+  family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
  };
 }
 let locationEnabled=false,locationCoords="",locationRadius=0;
@@ -648,6 +667,10 @@ function draw(){
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",spriteSize+"px");
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
+ // P/M/G scales the header DOWN, never above its original 21px.
+ const headerIconSize=Math.max(17,Math.min(21,Math.round(spriteSize*0.45)));
+ document.documentElement.style.setProperty("--mode-icon-size",headerIconSize+"px");
+ document.documentElement.style.setProperty("--mode-indicator-scale",String(headerIconSize/21));
  const cy=document.getElementById("cycle");
  if(mode==="raw"||mode==="iv"||mode==="percent"){
   const label=specialIVLabel(mode,searchSettings);
@@ -723,7 +746,15 @@ function draw(){
   document.body.classList.toggle("results-stale",hasHistory&&resultsStale);
   const header=document.getElementById("resultHeader");
   const image=document.getElementById("resultModeIcon");
-  if(image.src!==selectedIcon.path)image.src=selectedIcon.path;
+  if(image.getAttribute("src")!==selectedIcon.path){
+   image.onerror=()=>{image.onerror=null;image.src=selectedIcon.fallbackPath;};
+   image.src=selectedIcon.path;
+  }
+  const primaryBadge=document.getElementById("modeIndicatorValue");
+  primaryBadge.textContent=selectedIcon.ivBadge;
+  primaryBadge.classList.toggle("visible",!!selectedIcon.ivBadge);
+  document.getElementById("modeIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge);
+  document.getElementById("modeIndicatorBackground").classList.toggle("visible",selectedIcon.backgroundBadge);
   const label=(hasHistory&&resultsStale?"⚠ Resultados anteriores · ":"")+selectedIcon.title+
       ((iconMode==="gl"||iconMode==="ul")?" · PvP top "+(iconMode==="gl"?iconSettings.glRank:iconSettings.ulRank):"")+
       (!hasHistory&&shinyPending?" · Shiny aguardando confirmação":"");
