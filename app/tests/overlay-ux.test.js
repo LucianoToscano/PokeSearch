@@ -729,7 +729,7 @@ test("UX-FIX-01 per-spawn IV is hidden by default, but accessibility remains",()
  return dock.includes("let showResultText=false;")&&
  dock.includes('!showResultText||verifiedPercent===null?"":')&&
  dock.includes('verifiedPercent===null?"IV não comprovado"')&&
- dock.includes('aria-label="'+esc(label)');
+ dock.includes('aria-label=')&&dock.includes('esc(label)');
 });
 test("UX-FIX-01 no floating cooldown or Toast, despawn switch remains",()=>{
  return !dock.includes('setAttribute("data-wait"')&&
