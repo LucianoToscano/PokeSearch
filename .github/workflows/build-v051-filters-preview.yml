@@ -7,6 +7,7 @@ on:
     paths:
       - 'app/**'
       - '.github/workflows/build-v051-filters-preview.yml'
+  # Authorized build retry: resolve inner Bridge.refresh(boolean) Java compile scope.
   # One authorized signed test build for PR #27, no merge.
   pull_request:
     types: [synchronize]
