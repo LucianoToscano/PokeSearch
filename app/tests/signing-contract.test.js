@@ -28,15 +28,27 @@ check("secrets come only from Actions secrets", () => {
   assert.match(workflow, /chmod 600/);
   assert.match(workflow, /Remove restored keystore/);
 });
-check("versionCode monotonically increases for this workflow", () => {
+check("versionCode derives from the workflow run number", () => {
   assert.ok(workflow.includes("POKE_TEST_VERSION_CODE=$((51000 + GITHUB_RUN_NUMBER))"));
   assert.match(gradle, /versionCode = testVersionCode \?: 51/);
 });
 check("publish only a signed and verified APK", () => {
   assert.match(workflow, /apksigner" verify --verbose --print-certs/);
-  assert.match(workflow, /Verified using v2 scheme/);
+  assert.ok(workflow.includes("grep -Eq '^Verified using v2 scheme.*: true$'"));
+  assert.ok(!workflow.includes("grep -q 'Verified using v2 scheme'"));
   assert.match(workflow, /Publish only stable-signed test APK/);
   assert.match(workflow, /SIGNING_CERT_SHA256\.txt/);
+});
+check("actual APK package, code and name are inspected before publication", () => {
+  assert.ok(workflow.includes('aapt" dump badging "$APK"'));
+  assert.ok(workflow.includes('"name=\'com.lucianotoscano.pokesearch\'"'));
+  assert.ok(workflow.includes('"versionCode=\'${EXPECTED_CODE}\'"'));
+  assert.ok(workflow.includes('"versionName=\'0.51-beta.test.${EXPECTED_CODE}\'"'));
+  assert.ok(workflow.includes('grep -Fq -- "$expected"'));
+});
+check("v2 scheme check rejects false and avoids permissive substring grep", () => {
+  assert.ok(workflow.includes("grep -Eq '^Verified using v2 scheme.*: true$'"));
+  assert.ok(!workflow.includes("grep -q 'Verified using v2 scheme'"));
 });
 check("optional certificate pin rejects unintended rotation", () =>
   assert.match(workflow, /Unexpected signing certificate; refusing to distribute/));
