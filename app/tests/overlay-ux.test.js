@@ -42,7 +42,10 @@ test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'))
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
 test("Original compact toolbar is only one 34dp row",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP)')&&service.includes("MENU_BASE_DP=34"));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
-test("Login returns to Home and does not send it to background",!main.includes('postDelayed(()->moveTaskToBack(true)'));
+test("Login launched from overlay returns to gameplay with PokeSearch only on successful authentication",
+ main.includes('if(authenticatedNow&&fromOverlay&&OverlayService.isRunning())')&&
+ main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
+ main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
 test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
 test("Translucent favorites with optional background blur",picker.includes('Color.argb(187,30,42,58)')&&picker.includes('setBlurBehindRadius'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
@@ -87,7 +90,10 @@ test("Despawn removes expired sprites without triggering an extra site search",e
 test("AUTO retains 5/10/15/20 minute scheduling",service.includes("handler.postDelayed(periodic,intervalMinutes*60000L)"));
 test("Manual refresh does not misleadingly claim queued work",service.includes("Toque ↻ novamente quando terminar."));
 test("Login pauses and invalidates pending site callbacks",service.includes("loginPaused=true;\n            ++requestGeneration;\n            searchInProgress=false;")&&service.includes("cancelSessionCallbacks();"));
-test("After login a fresh search is attempted safely",service.includes("if(!stopped&&!loginPaused&&!pickerOpen&&")&&service.includes("handler.postDelayed(loginEndRefresh,1600L)"));
+test("A completed login resumes searching, while canceling does not",
+ service.includes('boolean authConfirmed=i!=null&&i.getBooleanExtra("authConfirmed",false)')&&
+ service.includes('if(authConfirmed&&!stopped&&!loginPaused&&!pickerOpen)')&&
+ service.includes('handler.postDelayed(loginEndRefresh,1600L)'));
 test("Shiny verification distinguishes trainer linking",service.includes('verified.optBoolean("pending",false)'));
 test("Shiny failure does not imply confirmed trainer authentication",service.includes("Verifique login e vínculo do treinador"));
 test("Diagnostic logs only coarse authentication states",service.includes('BugReport.log(this,"SESSION","Shiny="'));
@@ -261,9 +267,10 @@ test("Login stays monitored during in-page OAuth without forcing navigation",
   main.includes('view.postDelayed(()->checkLoginSession(view,next,pageGeneration)')&&
   main.includes('attemptsLeft>1?400L:850L')&&
   main.includes('++loginPageGeneration; // Invalidate pending WebView session probes.'));
-test("Login session detection reuses sanitized probe not a visible Logout alone",
-  main.includes('JSONObject.quote("session")')&&
-  read("assets/probe.js").includes('const accountBadge=elements("p,small,span,div,label")'));
+test("Login session detection substitutes all probe placeholders and reads mobile account text",
+ main.includes('JSONObject.quote("session")')&&
+ main.includes('.replace("__FILTERS__","{}")')&&
+ read("assets/probe.js").includes('const accountBadge=badgeText.test('));
 test("Shiny state sync starts on site load independently of Search cooldown",
   service.includes('if(shiny&&!shinyVerified){')&&
   service.includes('prepareImmediateShiny(generation);')&&
@@ -576,5 +583,17 @@ test("Countdown uses original overlay without adding toolbar icons",
  dock.includes('setInterval(updateTimers,1000)')&&
  dock.includes('content:attr(data-wait)')&&
  (dock.match(/<button id="(?:cycle|sh|period|manualRefresh|size|clock|bell|star|location|report|donate|close)"/g)||[]).length===12);
+
+test("Session probe executable contains all four template substitutions",
+ main.includes('.replace("__ACTION__",JSONObject.quote("session"))')&&
+ main.includes('.replace("__MODE__",JSONObject.quote("iv"))')&&
+ main.includes('.replace("__SHINY__","false")')&&
+ main.includes('.replace("__FILTERS__","{}")')&&
+ main.includes('view.evaluateJavascript(probe,raw->'));
+test("Canceled dialog does not force session refresh or discard sprites",
+ main.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow)')&&
+ main.includes('if(authenticatedNow)notifyOverlaySessionReady();')&&
+ service.includes('if(!"não confirmado".equals(auth))')&&
+ service.includes('resultsStale=count()>0;'));
 
 console.log("PokeSearch UX contract: "+count+" tests passed");
