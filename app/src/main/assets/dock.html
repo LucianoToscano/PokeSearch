@@ -134,6 +134,13 @@ body.result-window.results-stale #resultHeader::after{content:"";position:absolu
 .spawn{width:var(--dock);height:var(--row);position:relative;min-height:var(--row);flex:0 0 var(--row);display:flex;align-items:center;justify-content:center;margin:0;padding:0;background:transparent;border:0;border-radius:4px}
 .spawn.active .sprite{filter:drop-shadow(0 0 3px #ffffff77)}
 .timer{position:absolute;right:0;bottom:0;padding:1px 2px;border-radius:3px;background:#111924c4;color:#fff;font-size:8px;line-height:10px;pointer-events:none;min-width:23px;text-align:center}
+.spawn .ivPct{position:absolute;left:0;bottom:0;z-index:1;max-width:25px;min-width:16px;padding:1px 2px;border-radius:3px;background:#111924d9;font:800 8px/10px Roboto,Arial,sans-serif;text-align:center;white-space:nowrap;pointer-events:none;text-shadow:0 1px 1px #000c}
+.spawn .ivPct.zero{color:#00cfe8}
+.spawn .ivPct.low{color:#b8bec8}
+.spawn .ivPct.medium{color:#28c76f}
+.spawn .ivPct.high{color:#388bff}
+.spawn .ivPct.excellent{color:#c084fc}
+.spawn .ivPct.perfect{color:#f04b70}
 .spawn.expired{opacity:.38}
 .sprite{display:block;width:var(--sprite);height:var(--sprite);object-fit:contain;flex-shrink:0;pointer-events:none;filter:drop-shadow(0 1px 1px #0006)}
 .fallback{font-size:20px}
@@ -192,10 +199,30 @@ body.result-window #resultHeader .resultModeStack{position:relative;display:bloc
 body.result-window #resultHeader .resultModeStack img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 1px #0007)}
 body.result-window #resultHeader .modeIndicator{position:absolute;z-index:1;display:none;align-items:center;justify-content:center;box-sizing:border-box;pointer-events:none;font-family:Arial,Roboto,sans-serif;font-weight:900;line-height:1;text-shadow:0 1px 1px #000}
 body.result-window #resultHeader .modeIndicator.visible{display:flex}
-body.result-window #resultHeader .modeIndicator.value{left:50%;bottom:0;max-width:21px;min-width:7px;height:8px;padding:0 1px;border-radius:2px;background:#101927dc;color:#fff;font-size:7px;transform:translateX(-50%) scale(var(--mode-indicator-scale,1));transform-origin:bottom center}
-body.result-window #resultHeader .modeIndicator.shiny{right:0;top:0;width:8px;height:8px;border-radius:2px;background:#282012cc;color:#ffe77c;font-size:10px;transform:scale(var(--mode-indicator-scale,1));transform-origin:top right}
+body.result-window #resultHeader .modeIndicator.value{left:50%;bottom:0;max-width:21px;min-width:7px;height:8px;padding:0 1px;border-radius:2px;background:#101927dc;color:#f5f7fa;font-size:7px;transform:translateX(-50%) scale(var(--mode-indicator-scale,1));transform-origin:bottom center}
+body.result-window #resultHeader .modeIndicator.value.zero{color:#00cfe8}
+body.result-window #resultHeader .modeIndicator.value.perfect{color:#f04b70}
+body.result-window #resultHeader .modeIndicator.shiny{right:0;top:0;width:8px;height:8px;border-radius:2px;background:#151b26c9;color:#f5f7fa;font-size:10px;transform:scale(var(--mode-indicator-scale,1));transform-origin:top right}
 body.result-window #resultHeader .modeIndicator.background{left:0;top:0;width:8px;height:8px;border-radius:2px;background:#113b50d9;color:#adf1ee;transform:scale(var(--mode-indicator-scale,1));transform-origin:top left}
 body.result-window #resultHeader .modeIndicator.background svg{display:block;width:7px;height:7px}
+body.result-window #resultHeader .capturePulse{
+ position:absolute;z-index:1;left:50%;top:50%;width:23%;height:23%;
+ border-radius:50%;box-sizing:border-box;pointer-events:none;
+ background:#eafaff;box-shadow:0 0 2px 1px #80eafc;opacity:0;
+ transform:translate(-50%,-50%) scale(.65)
+}
+body.result-window.search-active:not(.results-collapsed) #resultHeader .capturePulse{
+ animation:psCapturePulse 1.25s ease-in-out infinite
+}
+@keyframes psCapturePulse{
+ 0%,100%{opacity:.12;transform:translate(-50%,-50%) scale(.65)}
+ 50%{opacity:.92;transform:translate(-50%,-50%) scale(1)}
+}
+@media (prefers-reduced-motion:reduce){
+ body.result-window.search-active #resultHeader .capturePulse{
+ animation:none;opacity:.45;transform:translate(-50%,-50%) scale(.75)
+ }
+}
 body.result-window #resultHeader:focus-visible{outline:1px solid #fff8}
 body.result-window #resultHeader[data-wait]{position:relative}
 body.result-window #resultHeader[data-wait]::before{content:attr(data-wait);position:absolute;bottom:-2px;
@@ -223,7 +250,7 @@ body.result-window.results-collapsed #empty{display:none!important}
   <button id="close" title="Encerrar PokeSearch" aria-label="Fechar todo o overlay" onclick="Native.close()">×</button>
  </div><div id="choices" role="group" aria-label="Escolher opção"></div></div>
  <div id="locBadge" role="status" aria-live="polite"></div>
- <button id="resultHeader" title="Recolher ou expandir os Pokémon · arraste para mover" aria-label="Recolher ou expandir resultados" aria-expanded="true" onclick="Native.toggleResultsCollapsed()"><span id="resultIconStack" class="resultModeStack" aria-hidden="true"><img id="resultModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="modeIndicatorValue" class="modeIndicator value"></span><span id="modeIndicatorShiny" class="modeIndicator shiny">✦</span><span id="modeIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span></button>
+ <button id="resultHeader" title="Recolher ou expandir os Pokémon · arraste para mover" aria-label="Recolher ou expandir resultados" aria-expanded="true" onclick="Native.toggleResultsCollapsed()"><span id="resultIconStack" class="resultModeStack" aria-hidden="true"><img id="resultModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="capturePulse" class="capturePulse" aria-hidden="true"></span><span id="modeIndicatorValue" class="modeIndicator value"></span><span id="modeIndicatorShiny" class="modeIndicator shiny">✦</span><span id="modeIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span></button>
  <div id="spawns"></div>
  <button id="empty" title="Toque para saber o motivo" onclick="Native.showStatus()">Aguardando busca</button>
  <button id="collapse" title="Recolher todos os Pokémon e as opções, deixando apenas a engrenagem" aria-label="Recolher todos os Pokémon" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button>
@@ -251,7 +278,7 @@ const RESULT_ICONS=Object.freeze({
 // The 18 historic PNGs above remain unchanged as rollback/fallback assets.
 const RESULT_BASE_ICONS=Object.freeze({
  none:"base-none.png",custom:"base-custom.png",
- gl:"base-gl.png",ul:"base-ul.png",ml:"base-ml.png",cup:"base-cup.png"
+ gl:"base-gl.png",ul:"base-ul.png",ml:"base-ml.png"
 });
 const RESULT_MODE_ALIASES=Object.freeze({
  iv:"hundo",iv100:"hundo",hundo:"hundo",shundo:"hundo",
@@ -281,12 +308,15 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
  const shining=!!shinyActive;
  const baseFamily=["hundo","nundo","percent"].includes(family)?"custom":family;
  const baseName=RESULT_BASE_ICONS[baseFamily]||RESULT_BASE_ICONS.none;
- const badge=family==="hundo"?"100%":family==="nundo"?"0":family==="percent"?"%":baseFamily==="cup"?"CUP":"";
+ const topN=baseFamily==="gl"?Number(settings.glRank):baseFamily==="ul"?Number(settings.ulRank):0;
+ // #N is the confirmed search threshold (Top N), NOT an individual Pokémon rank.
+ const rankLabel=Number.isInteger(topN)&&topN>=1&&topN<=50?"#"+topN:"";
+ const badge=family==="hundo"?"100%":family==="nundo"?"0":family==="percent"?"%":rankLabel||(baseFamily==="cup"?"CUP":"");
  // Only confirmed site Background can be represented; not an activation shortcut.
  const backgroundConfirmed=!!(settings&&settings.backgroundOnly===true&&settings.backgroundVerified===true);
  return {
   path:"file:///android_asset/result-icons/base/"+baseName,
-  fallbackPath:"file:///android_asset/result-icons/"+(shining?pair.shiny:pair.normal),
+  fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none,
   title:pair.title+(shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
   family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
  };
@@ -299,8 +329,36 @@ let filterOptions={},generalExpanded=false,advancedExpanded=false;
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
 // Math.round(total / 45 * 100) produces exactly 46 possible shown percentages.
 const IV_PERCENT_VALUES=Object.freeze([0,2,4,7,9,11,13,16,18,20,22,24,27,29,31,33,36,38,40,42,44,47,49,51,53,56,58,60,62,64,67,69,71,73,76,78,80,82,84,87,89,91,93,96,98,100]);
+// Display-only evidence: an IV must be attainable and internally consistent.
+// Unknown, malformed or contradictory data never gets an IV label.
+function verifiedSpawnIvPercent(card){
+ if(!card||typeof card!=="object")return null;
+ const raw=String(card.iv==null?"":card.iv).trim();
+ const pct=String(card.ivPercent==null?"":card.ivPercent).trim();
+ let computed=null;
+ if(raw){
+  if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw))return null;
+  computed=Math.round(raw.split("/").map(Number).reduce((sum,n)=>sum+n,0)*100/45);
+ }
+ if(pct){
+  if(!/^(?:0|[1-9][0-9]?|100)$/.test(pct))return null;
+  const observed=Number(pct);
+  if(!IV_PERCENT_VALUES.includes(observed)||(computed!==null&&computed!==observed))return null;
+  return observed;
+ }
+ return computed;
+}
+function ivPaletteClass(percent){
+ if(percent===null||!IV_PERCENT_VALUES.includes(percent))return "unknown";
+ if(percent===0)return "zero";
+ if(percent===100)return "perfect";
+ if(percent<=49)return "low";
+ if(percent<=78)return "medium";
+ if(percent<=89)return "high";
+ return "excellent";
+}
 let modeDraft=null,modeScrollTop=0;
-let shownMode="raw",shownShiny=false,shownSettings={...searchSettings},resultsStale=false,nextQueryAt=0;
+let shownMode="raw",shownShiny=false,shownSettings={...searchSettings},resultsStale=false,nextQueryAt=0,searchActive=false;
 function specialIVLabel(selectedMode,settings){
  if(selectedMode==="raw"){
   const {attack,defense,stamina}=settings;
@@ -720,11 +778,13 @@ function draw(){
  // The gear and menu WebViews never create hidden sprite buttons.
  // Only the independent results WebView owns the Pokémon list and its taps.
  if(resultWindow)document.getElementById("spawns").innerHTML=cards.map((c,i)=>{
-  const label=[c.name,c.ivPercent?c.ivPercent+"%":"IV não disponível",c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
+  const verifiedPercent=verifiedSpawnIvPercent(c);
+  const label=[c.name,verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
   const icon=/^(https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(c.image||"")?'<img class="sprite" src="'+esc(c.image)+'" alt="" loading="eager">':'<span class="fallback">◉</span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const badge=showTimers&&deadline?'<span class="timer" data-deadline="'+deadline+'"></span>':"";
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+badge+'</button>';
+  const ivBadge=verifiedPercent===null?"":'<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>';
+  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
  if(resultWindow){attachLongPress();updateTimers();}
@@ -744,15 +804,18 @@ function draw(){
   const iconSettings=hasHistory?shownSettings:searchSettings;
   const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings);
   document.body.classList.toggle("results-stale",hasHistory&&resultsStale);
+  document.body.classList.toggle("search-active",searchActive&&!shinyPending&&nextQueryAt<=Date.now());
   const header=document.getElementById("resultHeader");
   const image=document.getElementById("resultModeIcon");
   if(image.getAttribute("src")!==selectedIcon.path){
-   image.onerror=()=>{image.onerror=null;image.src=selectedIcon.fallbackPath;};
+   image.onerror=()=>{image.onerror=null;if(image.getAttribute("src")!==selectedIcon.fallbackPath)image.src=selectedIcon.fallbackPath;};
    image.src=selectedIcon.path;
   }
   const primaryBadge=document.getElementById("modeIndicatorValue");
   primaryBadge.textContent=selectedIcon.ivBadge;
   primaryBadge.classList.toggle("visible",!!selectedIcon.ivBadge);
+  primaryBadge.classList.toggle("zero",selectedIcon.family==="nundo");
+  primaryBadge.classList.toggle("perfect",selectedIcon.family==="hundo");
   document.getElementById("modeIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge);
   document.getElementById("modeIndicatorBackground").classList.toggle("visible",selectedIcon.backgroundBadge);
   const label=(hasHistory&&resultsStale?"⚠ Resultados anteriores · ":"")+selectedIcon.title+
@@ -786,7 +849,7 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
@@ -796,6 +859,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
   shownSettings={...searchSettings,...resultSourceConfig};
  shownShiny=!!resultSourceShiny;resultsStale=!!stale;
  nextQueryAt=Number(nextDue)||0;
+ searchActive=!!isSearching;
  mode=m==="iv"?"raw":m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  if(active>=cards.length)active=-1;
  draw();

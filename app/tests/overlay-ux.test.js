@@ -381,7 +381,8 @@ test("v0.51 header chooses a confirmed Shiny version of its exact search type",
     dock.includes('function getResultIcon(searchMode,shinyActive,settings=searchSettings)')&&
     dock.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
     dock.includes('const pair=RESULT_ICONS[family]')&&
-    dock.includes('shining?pair.shiny:pair.normal'));
+    dock.includes('shinyBadge:shining')&&
+    dock.includes('const baseName=RESULT_BASE_ICONS[baseFamily]||RESULT_BASE_ICONS.none'));
 
 test("Mode popup keeps one stable row while expanding upward or downward",
  service.includes('boolean abovePopup=requestedPopup>roomBelow&&roomAbove>roomBelow;')&&
@@ -598,14 +599,14 @@ test("Canceled dialog does not force session refresh or discard sprites",
 
 console.log("PokeSearch UX contract: "+count+" tests passed");
 
-test("UX-ICON-01 retains original 18 artworks and adds six efficient base resources",()=>{
- const dir=path.join(root,"assets/result-icons/base");
- const names=["none","custom","gl","ul","ml","cup"];
+test("UX-ICON-01 uses five base PNGs and keeps 18 historical resources",()=>{
+ const dir=path.join(root,"assets/result-icons/base"), names=["none","custom","gl","ul","ml"];
  return names.every(n=>{
   const p=path.join(dir,"base-"+n+".png");if(!fs.existsSync(p))return false;
   const buf=fs.readFileSync(p);
   return buf.subarray(0,8).equals(Buffer.from("89504e470d0a1a0a","hex"))&&buf.readUInt32BE(16)===64&&buf.readUInt32BE(20)===64;
- })&&dock.includes("const RESULT_BASE_ICONS=Object.freeze(")&&dock.includes('cup:"base-cup.png"');
+ })&&!fs.existsSync(path.join(dir,"base-cup.png"))&&
+ dock.includes('const RESULT_BASE_ICONS=Object.freeze(');
 });
 test("UX-ICON-01 keeps 35x30 touch area and badges strictly within 21px",
  dock.includes("#resultHeader{width:35px;height:30px")&&
@@ -637,4 +638,76 @@ test("PL-01 PSC-02 native IV gate runs before display, cache and alerts",()=>{
   service.includes("if(!isAllowedIvPercent(actual)||(computed>=0&&actual!=computed))return false;")&&
   !service.includes('return iv.isEmpty()||')&&!service.includes('if(pct.isEmpty())return true;')&&
   service.includes('searchFailure("⚠ IV não comprovado"');
+});
+
+
+// UI-PAL-01: IV evidence and palette are presentation-only; Shiny never recolors IV.
+const ivScriptStart=dock.indexOf("const IV_PERCENT_VALUES=Object.freeze(");
+const ivScriptEnd=dock.indexOf("let modeDraft=",ivScriptStart);
+const ivScript=dock.slice(ivScriptStart,ivScriptEnd);
+const [verifiedSpawnIvPercent,ivPaletteClass]=require("node:vm").runInNewContext(
+ ivScript+"\n[verifiedSpawnIvPercent,ivPaletteClass]",{});
+test("IV palette follows 46 attainable percentages including both extremes",(()=>{
+ const pairs=[[0,"zero"],[2,"low"],[49,"low"],[51,"medium"],[78,"medium"],
+              [80,"high"],[89,"high"],[91,"excellent"],[98,"excellent"],[100,"perfect"]];
+ return pairs.every(([pct,name])=>ivPaletteClass(pct)===name)&&
+        ivPaletteClass(null)==="unknown"&&ivPaletteClass(50)==="unknown";
+})());
+test("Shiny and ordinary IV badges use a single evidence-driven function",
+ dock.includes('const verifiedPercent=verifiedSpawnIvPercent(c);')&&
+ dock.includes("ivPaletteClass(verifiedPercent)")&&
+ dock.includes("'+icon+ivBadge+badge+'</button>'")&&
+ !dock.includes("shiny?ivPaletteClass")&&
+ dock.includes('verifiedPercent===null?"IV não comprovado"'));
+test("Verified IV includes 0%, 100% and raw-derived values but never assumes a missing value",(()=>{
+ const percent=(iv,ivPercent)=>verifiedSpawnIvPercent({iv,ivPercent});
+ return percent("0/0/0","0")===0&&percent("15/15/15","100")===100&&
+        percent("11/15/15","")===91&&percent("","51")===51&&
+        percent("","")===null&&percent("2/3/99","")===null;
+})());
+test("Contradictory, non-attainable or malformed IV never receives a palette color",(()=>{
+ const wrong=[{iv:"4/4/11",ivPercent:"100"},{iv:"",ivPercent:"50"},
+              {iv:"",ivPercent:"101"},{iv:"0/0/0",ivPercent:"2"},
+              {iv:"16/15/15",ivPercent:""},{iv:"3/3/3",ivPercent:"5"}];
+ return wrong.every(card=>verifiedSpawnIvPercent(card)===null);
+})());
+test("Compact IV label stays inside existing row, clear of the despawn timer",(()=>{
+ const css=dock.match(/\.spawn \.ivPct\{[^}]+\}/)?.[0]||"";
+ return css.includes("position:absolute")&&css.includes("left:0;bottom:0")&&
+        css.includes("max-width:25px")&&css.includes("pointer-events:none")&&
+        dock.includes(".timer{position:absolute;right:0;bottom:0")&&
+        dock.includes("#resultHeader{width:35px;height:30px");
+})());
+test("Shiny sparkle is independent neutral, header extremes match the IV palette",(()=>{
+ const css=dock.match(/\.modeIndicator\.shiny\{[^}]+\}/)?.[0]||"";
+ return css.includes("color:#f5f7fa")&&!css.includes("color:#ffe77c")&&
+        dock.includes('primaryBadge.classList.toggle("zero",selectedIcon.family==="nundo")')&&
+        dock.includes('primaryBadge.classList.toggle("perfect",selectedIcon.family==="hundo")')&&
+        dock.includes(".modeIndicator.value.zero{color:#00cfe8}")&&
+        dock.includes(".modeIndicator.value.perfect{color:#f04b70}");
+})());
+
+test("UX-ICON-02 selected GL/UL threshold is displayed as a #N badge",()=>{
+ const block=dock.split("function getResultIcon(")[1].split("let locationEnabled=")[0];
+ return block.includes('baseFamily==="gl"?Number(settings.glRank)')&&
+ block.includes('baseFamily==="ul"?Number(settings.ulRank)')&&
+ block.includes('topN>=1&&topN<=50?"#"+topN')&&block.includes('ivBadge:badge');
+});
+test("UX-ICON-02 fallback never revives legacy effect-embedded PNG",()=>{
+ return dock.includes('fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none')&&
+ !dock.includes('fallbackPath:"file:///android_asset/result-icons/"+')&&
+ !dock.split("const RESULT_BASE_ICONS=Object.freeze(")[1].split("const RESULT_MODE_ALIASES")[0].includes("base-cup.png");
+});
+test("UX-ICON-02 capture animation reacts to native search state",()=>{
+ return service.includes('","+searchInProgress+")"')&&
+ dock.includes("isSearching=false)=>")&&dock.includes("searchActive=!!isSearching;")&&
+ dock.includes('searchActive&&!shinyPending&&nextQueryAt<=Date.now()')&&
+ dock.includes('id="capturePulse"')&&dock.includes('@keyframes psCapturePulse')&&
+ dock.includes('prefers-reduced-motion:reduce');
+});
+test("UX-ICON-02 sizes, static click control and timers remain intact",()=>{
+ return dock.includes('#resultHeader{width:35px;height:30px')&&
+ dock.includes('max-width:21px;max-height:21px')&&
+ dock.includes('width:23%;height:23%')&&dock.includes('pointer-events:none')&&
+ dock.includes('data-wait')&&dock.includes("Native.toggleResultsCollapsed()");
 });
