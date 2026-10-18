@@ -460,7 +460,7 @@ for(const [triple,site] of [
  assert.ok(result.waits>=2,"React fields must commit through distinct JS rounds");
  checked++;
 }
-const blankZero={iv:["","",""],config:{attack:0,defense:0,stamina:0}};
+const blankZero={tabs:{top:"Stats",sub:"Raw IV"},iv:["","",""],config:{attack:0,defense:0,stamina:0}};
 assert.equal(run("verifyFilters","raw",false,blankZero).ok,false,
  "Blank Raw input must never be mistaken for IV 0");
 assert.equal(configureSettled("raw",blankZero).result.configured,true);
