@@ -453,8 +453,9 @@ test("Mode selection remains clearly highlighted and header shows automatic 0/10
  dock.includes('choose.textContent=(modeDraft.mode===name?"✓ ":"")+label')&&
  dock.includes('cy.textContent=label')&&
  dock.includes('specialIVLabel(mode,searchSettings)'));
-test("Filter switching preserves old results and their original icon until confirmed",
- service.includes('resultsStale=count()>0;hideDetails();update();refresh();')&&
+test("Filter switching shows matching cached results, else keeps older results clearly identified",
+ service.includes('boolean preview=restoreFilterPreview();')&&
+ service.includes('if(!preview)resultsStale=count()>0;')&&
  service.includes('shownMode=mode;shownConfigJson=filterConfigJson();')&&
  service.includes('shownShiny=shiny&&shinyVerified;resultsStale=false;')&&
  dock.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
@@ -554,5 +555,26 @@ test("Missing Shiny switch after navigation can use pre-submit proof, never expl
  service.includes('boolean trustedShinyHidden=shiny&&shinyVerified')&&
  service.includes('confirmedSubmittedFiltersGeneration==generation&&shinySwitchMissing')&&
  service.includes('!r.optBoolean("siteShiny",false)'));
+
+test("Result previews use confirmed site data, not new alerts, and prune expired Pokémon",
+ service.includes('rememberConfirmedPreview(sorted,now);')&&
+ service.includes('recentFilterPreviews.put(filterPreviewKey()')&&
+ service.includes('resultsStale=true;')&&
+ service.includes('if(expiry>now)alive.put(card)'));
+test("Filter cache is memory-only, two minutes, and separated by mode, shiny, location and criteria",
+ service.includes('RESULT_PREVIEW_CACHE_TTL_MS=120_000L')&&
+ service.includes('locationEnabled+"|"+locationCoords+"|"')&&
+ service.includes('locationRadius+"|"+filterConfigJson()')&&
+ service.includes('now-cached.confirmedAtMs>RESULT_PREVIEW_CACHE_TTL_MS'));
+test("Next search stays on the existing 60-second safety interval",
+ service.includes('MIN_SEARCH_GAP_MS=60_000L')&&
+ service.includes('nextScheduledSearchAtMs=now+remaining*1000L+300L')&&
+ service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
+test("Countdown uses original overlay without adding toolbar icons",
+ dock.includes('header.setAttribute("data-wait"')&&
+ dock.includes('nextQueryAt=Number(nextDue)||0')&&
+ dock.includes('setInterval(updateTimers,1000)')&&
+ dock.includes('content:attr(data-wait)')&&
+ (dock.match(/<button id="(?:cycle|sh|period|manualRefresh|size|clock|bell|star|location|report|donate|close)"/g)||[]).length===12);
 
 console.log("PokeSearch UX contract: "+count+" tests passed");
