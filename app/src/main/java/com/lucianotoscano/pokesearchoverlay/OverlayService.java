@@ -1002,6 +1002,24 @@ public class OverlayService extends Service {
         // Clicking ✨ should control the switch on the CURRENT page directly.
         applyShinyOnSite(generation,0);
     }
+    private void reconfigureBeforeSubmit(int generation,boolean manual,int verifyAttempt,int retry){
+        if(stopped||loginPaused||generation!=requestGeneration)return;
+        execute("configureSearch",configured->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
+            if(configured.optBoolean("ok")&&configured.optBoolean("configured",false)){
+                handler.postDelayed(()->verifyAndSubmit(generation,manual,verifyAttempt),300L);
+                return;
+            }
+            if(configured.optBoolean("pending",false)&&retry<20){
+                handler.postDelayed(()->reconfigureBeforeSubmit(generation,manual,verifyAttempt,retry+1),300L);
+                return;
+            }
+            searchInProgress=false;
+            shinyVerified=false;
+            searchFailure("⚠ Filtros não aplicados",
+                configured.optString("reason","Os campos do site não ficaram prontos após a troca de aba."));
+        });
+    }
     private void verifyAndSubmit(int generation,boolean manual,int attempt){
         handler.postDelayed(()->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
@@ -1029,10 +1047,9 @@ public class OverlayService extends Service {
                 if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!filters.optBoolean("ok")){
                     if(attempt<2){
-                        execute("configureSearch",ignored->{
-                            if(stopped||loginPaused||generation!=requestGeneration)return;
-                            verifyAndSubmit(generation,manual,attempt+1);
-                        });
+                        // Reconfiguration may switch asynchronous React tabs. Do
+                        // not verify until the requested fields are ready again.
+                        reconfigureBeforeSubmit(generation,manual,attempt+1,0);
                         return;
                     }
                     searchInProgress=false;
