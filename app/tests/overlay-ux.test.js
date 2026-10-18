@@ -619,3 +619,22 @@ test("UX-ICON-01 badges remain independent and background requires site proof",
 test("UX-ICON-01 does not silently introduce unimplemented searches",
  dock.includes('baseFamily==="cup"?"CUP"')&&
  !dock.includes('row("none"')&&!dock.includes('row("ml"')&&!dock.includes('row("cup"'));
+
+test("PL-01 PSC-02 JS collector refuses unknown raw and percent IV",()=>{
+ const probe=read("assets/probe.js");
+ return probe.includes("function verifiedCardIv(card)")&&
+  probe.includes('return evidence.raw!==""&&evidence.raw===target;')&&
+  probe.includes('if(!evidence||evidence.percent===null)return false;')&&
+  !probe.includes('return !x.iv||x.iv===target')&&
+  !probe.includes('return x.ivPercent===""||');
+});
+test("PL-01 PSC-02 native IV gate runs before display, cache and alerts",()=>{
+ const verify=service.indexOf("private boolean verifiedTargetCriteria(JSONObject card)");
+ const apply=service.indexOf("private void applyCollectedResults(JSONObject r)");
+ const nativeGate=service.indexOf("if(card!=null&&verifiedTargetCriteria(card))verified.put(card)",apply);
+ const newResults=service.indexOf("recordNewResults(sorted,",apply);
+ return verify>=0&&nativeGate>apply&&newResults>nativeGate&&
+  service.includes("if(!isAllowedIvPercent(actual)||(computed>=0&&actual!=computed))return false;")&&
+  !service.includes('return iv.isEmpty()||')&&!service.includes('if(pct.isEmpty())return true;')&&
+  service.includes('searchFailure("⚠ IV não comprovado"');
+});

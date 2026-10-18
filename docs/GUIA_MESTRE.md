@@ -917,3 +917,23 @@ Android runtime privado do app:
 
 
 **Checkpoint após a gravação da branch e criação do PR #23:** o commit de implementação `cc9ad0afc17bd385368ab9a1174a23e1e9f46a75` alterou `dock.html`, `overlay-ux.test.js`, ESTE Guia e seis novos PNGs `base-*.png`. PR [#23](https://github.com/LucianoToscano/PokeSearch/pull/23) aberto **em draft**, base `plan/v051-pogocoordinates-filtros-20261017`, head `ux/compact-base-icons-20261018`; não mesclado. Comparação GitHub confirma que **nenhum** dos 18 arquivos PNG oficiais anteriores foi modificado. Verificação textual pós-commit: 12 contratos estruturais confirmados em leitura do código (12 controles, teto 21px, alvo 35x30, escala P/M/G, seis mapeamentos, camadas separadas, condições IV e Background, fallback e único script). **Esses checks de leitura não executaram a suíte JS/Gradle e não são homologação Android.** Nenhum workflow ou APK disparado pela intervenção. Aguardar aceite visual e pedido separado de build, sem avançar PL-01 automaticamente.
+
+
+
+### 12.14 PL-01 / PSC-02 — correção aprovada de IV não comprovados (18/10/2026)
+
+**Autorização expressa do proprietário:** “Ok vamos continuar.. qual a próxima coisa da lista? essa primeira correção da PL-01 (PSC-02), para impedir resultados e alertas de IV não comprovados, preservando todas as funcionalidades atuais? Corrija.” Apenas primeira intervenção **PSC-02**, sem autorizar os demais PL/PSC/UX nem merge.
+
+**Estratégia de continuidade:** branch isolada `fix/pl01-psc02-verified-iv-20261018` derivada do último SHA do PR #23 (`43af49da1ca20814b7fdf018a489b84f313cf89f`), mantendo as seis bases gráficas e camadas do ícone já aprovadas para implementação. PR #23, PR #22 e `main` não foram editados; futuro PR de PSC-02 direcionado à branch UX #23 enquanto não houver merge autorizado (dependência explícita). Histórico e arquivos originais preservados.
+
+**Defeito real confirmado no código pré-correção:** `probe.js:collect().matches` retornava verdadeiro para `!x.iv` em Raw e `x.ivPercent===""` na busca percentual; a verificação Java `verifiedTargetCriteria` repetia `return iv.isEmpty()||...` e `if(pct.isEmpty())return true;`. Portanto cartão sem IV individual legível podia virar Hundo/Nundo/faixa percentual e ativar avisos; configurar o formulário no site não basta para validar cada Pokémon.
+
+**Mudanças implementadas (PR em revisão, sem APK):**
+- `app/src/main/assets/probe.js`: `verifiedCardIv(card)` confirma IV raw rigoroso (três estatísticas 0–15) e/ou percentual explícito entre 46 percentuais possíveis; recusa IVs desconhecidos, inválidos e contradição entre a porcentagem e soma de ataque/defesa/stamina. Percentual isolado só é extraído quando a etiqueta do cartão diz IV; valores inferidos de textos alheios não são tomados como prova. `collect()` rejeita falta de prova individual em Raw/IV%, mantém a lógica separada de GL/UL, retorna `unverifiedIv` apenas como contagem agregada.
+- `OverlayService.java`: `verifiedTargetCriteria` reforça validação nativa de dado individual antes de qualquer alerta. `applyCollectedResults` reaplica verificação Raw/IV% para cartões vindos do JavaScript ANTES da apresentação, histórico, cache e notificações. Todos rejeitados = erro claro com preservação da última listagem confirmada (prévia stale); alguns inválidos = só os válidos seguem, sem alarmes para descartados. Não classificar filtros não comprovados como “0 Pokémon”.
+- `app/tests/probe-smoke.test.js`: casos positivos/negativos Hundo, Nundo, 91–100, IV desconhecido, percent-only explicitamente rotulado IV, porcentagem impossível, IV incoerente, IV fora de 0–15; manter regressões de GL/UL e formulário oculto.
+- `app/tests/overlay-ux.test.js`: contratos da defesa JS/Java e ordem da validação antes de cache/histórico/notificações.
+
+**Invariantes:** 18 PNGs originais, seis novas bases visualmente compactas, barra 12 controles, tamanhos P/M/G, controles de 21×21/35×30px, Shiny, Background planejado, login oficial, localização, long press, despawn, cache stale, 60s de intervalo, Raw/IV%/GL/UL, favoritos, alertas confirmados. Sem novas APIs, cookies, permissões, APK, refatoração da interface ou ativação de modos não implementados. **Não misturar com PvPPokeGo.**
+
+**Estado:** implementação de código em branch isolada; verificar resultados de regressão V8/CI e atualizar este mesmo Guia. PL-01 PSC-02 só fica “testado em Android” depois de prova física; outros itens PL/PSC continuam pendentes de aprovação. Não fazer merge automaticamente.
