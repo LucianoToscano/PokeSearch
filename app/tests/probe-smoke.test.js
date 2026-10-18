@@ -299,4 +299,50 @@ assert.equal(explicitClear.ok,false,"An explicitly cleared species must actually
 assert.equal(explicitClear.pending,true,"Reset opens the remote chooser and waits");
 checked++;
 
+
+
+ // PL-01 / PSC-02 — the remote form being configured is not proof of every card's IV.
+const ivEvidenceSpawn=value=>"Tangela\n#114 Female M\nInfestation / Solar Beam\nCP\n404\nLVL\n7\nIV\n"+value+"\nLOCATION\nBron, Rhone, France\nDESPAWN\n57:57\nGet coords";
+const rawProof=run("collect","raw",false,
+ {iv:["15","15","15"],spawn:ivEvidenceSpawn("100% (15/15/15)")});
+assert.equal(rawProof.cards.length,1,"Raw hundo with exact observed triple remains visible");
+checked++;
+const rawMissing=run("collect","raw",false,
+ {iv:["15","15","15"],spawn:ivEvidenceSpawn("Unknown")});
+assert.equal(rawMissing.criteriaConfirmed,true,"Raw mode has a confirmed site filter");
+assert.equal(rawMissing.cards.length,0,"A confirmed form must not turn an unknown card into Hundo");
+assert.equal(rawMissing.unverifiedIv,1,"Unverified IV cards are counted distinctly");
+checked++;
+const rawWrong=run("collect","raw",false,
+ {iv:["15","15","15"],spawn:ivEvidenceSpawn("98% (15/15/14)")});
+assert.equal(rawWrong.cards.length,0,"Raw 15/15/15 rejects observed non-Hundo");
+checked++;
+const rawZero=run("collect","raw",false,
+ {iv:["0","0","0"],config:{attack:0,defense:0,stamina:0},spawn:ivEvidenceSpawn("0% (0/0/0)")});
+assert.equal(rawZero.cards.length,1,"Raw nundo 0/0/0 is preserved");
+checked++;
+const percentProof=run("collect","percent",false,
+ {iv:["91","100"],config:{percentMin:91,percentMax:100},spawn:ivEvidenceSpawn("93% (15/14/13)")});
+assert.equal(percentProof.cards.length,1,"Observed 93% is accepted within 91–100%");
+checked++;
+const percentMissing=run("collect","percent",false,
+ {iv:["91","100"],config:{percentMin:91,percentMax:100},spawn:ivEvidenceSpawn("Unknown")});
+assert.equal(percentMissing.cards.length,0,"An unknown percentage no longer passes 91–100");
+checked++;
+const percentOnly=run("collect","percent",false,
+ {iv:["91","100"],config:{percentMin:91,percentMax:100},spawn:ivEvidenceSpawn("91%")});
+assert.equal(percentOnly.cards.length,1,"A percent explicitly labeled IV may independently prove the requested range");
+checked++;
+const impossiblePercentage=run("collect","percent",false,
+ {iv:["91","100"],config:{percentMin:91,percentMax:100},spawn:ivEvidenceSpawn("95%")});
+assert.equal(impossiblePercentage.cards.length,0,"Impossible IV percentages cannot be accepted as evidence");
+checked++;
+const disagreeingData=run("collect","raw",false,
+ {iv:["15","15","15"],spawn:ivEvidenceSpawn("100% (15/15/14)")});
+assert.equal(disagreeingData.cards.length,0,"Contradictory IV percentage/triple does not produce a false Hundo");
+checked++;
+const invalidStat=run("collect","raw",false,
+ {iv:["15","15","15"],spawn:ivEvidenceSpawn("100% (16/15/15)")});
+assert.equal(invalidStat.cards.length,0,"Out-of-range IV stats must never prove a match");
+checked++;
 console.log("PokeSearch probe contract: "+checked+" tests passed");

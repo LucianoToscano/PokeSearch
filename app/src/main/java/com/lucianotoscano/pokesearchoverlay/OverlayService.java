@@ -1108,7 +1108,10 @@ public class OverlayService extends Service {
             }
             if(found>0&&r.optJSONArray("cards")!=null&&r.optJSONArray("cards").length()==0){
                 searchInProgress=false;
-                searchFailure("⚠ IV/ranking não confirmado","Site retornou "+found+" Pokémon, mas nenhum comprovou os IVs/ranking esperados.");
+                boolean pvp="gl".equals(mode)||"ul".equals(mode);
+                searchFailure(pvp?"⚠ Ranking não confirmado":"⚠ IV não comprovado",
+                    "Site retornou "+found+" Pokémon, mas nenhum cartão comprovou os IVs/ranking solicitados."+
+                    (pvp?"":" IVs ausentes ou divergentes: "+r.optInt("unverifiedIv",0))+".");
                 return;
             }
             boolean loading=r.optBoolean("loading",false);
@@ -1174,18 +1177,30 @@ public class OverlayService extends Service {
     }
     private boolean verifiedTargetCriteria(JSONObject card){
         if(card==null)return false;
-        if("iv".equals(mode))
-            return "15/15/15".equals(card.optString("iv","")) ||
-                "100".equals(card.optString("ivPercent",""));
-        if("raw".equals(mode)){
-            String iv=card.optString("iv","");
-            return iv.isEmpty()||(rawAttack+"/"+rawDefense+"/"+rawStamina).equals(iv);
-        }
-        if("percent".equals(mode)){
-            String pct=card.optString("ivPercent","");
-            if(pct.isEmpty())return true; // Filter itself is verified in probe.js.
-            try{int v=Integer.parseInt(pct);return v>=ivPercentMin&&v<=ivPercentMax;}
-            catch(NumberFormatException ignored){return false;}
+        // A configured site filter never proves the IV of an individual spawn.
+        // Independently validate site value(s) before showing or notifying.
+        if("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)){
+            String raw=card.optString("iv","").trim();
+            String pct=card.optString("ivPercent","").trim();
+            boolean hasRaw=!raw.isEmpty();
+            int computed=-1;
+            if(hasRaw){
+                if(!raw.matches("(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])"))
+                    return false;
+                String[] stats=raw.split("/");
+                int sum=Integer.parseInt(stats[0])+Integer.parseInt(stats[1])+Integer.parseInt(stats[2]);
+                computed=ivPercentageForSum(sum);
+            }
+            int actual=computed;
+            if(!pct.isEmpty()){
+                if(!pct.matches("(?:0|[1-9][0-9]?|100)"))return false;
+                actual=Integer.parseInt(pct);
+                if(!isAllowedIvPercent(actual)||(computed>=0&&actual!=computed))return false;
+            }
+            if("iv".equals(mode))return actual==100;
+            if("raw".equals(mode))
+                return hasRaw&&(rawAttack+"/"+rawDefense+"/"+rawStamina).equals(raw);
+            return actual>=0&&within(actual,ivPercentMin,ivPercentMax);
         }
         if("gl".equals(mode)||"ul".equals(mode)){
             int max="ul".equals(mode)?ulRank:glRank;
@@ -1275,6 +1290,27 @@ public class OverlayService extends Service {
             " • encontrados "+r.optInt("found",0));
         JSONArray items=r.optJSONArray("cards");
         if(items==null)items=new JSONArray();
+        // Defence in depth: JS collection can never be the sole IV gate.
+        // Filter BEFORE cache, display, history and any general/watch alert.
+        if("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)){
+            JSONArray verified=new JSONArray();
+            int rejected=0;
+            for(int i=0;i<items.length();i++){
+                JSONObject card=items.optJSONObject(i);
+                if(card!=null&&verifiedTargetCriteria(card))verified.put(card);
+                else rejected++;
+            }
+            if(rejected>0){
+                BugReport.log(this,"IV_EVIDENCE","Cartões não comprovados="+rejected+" modo="+mode);
+                if(verified.length()==0){
+                    searchInProgress=false;
+                    searchFailure("⚠ IV não comprovado",
+                        "Todos os "+rejected+" cartões foram rejeitados pela verificação nativa; resultados anteriores preservados.");
+                    return;
+                }
+            }
+            items=verified;
+        }
         long now=System.currentTimeMillis();
         for(int i=0;i<items.length();i++){
             JSONObject card=items.optJSONObject(i);
@@ -1298,7 +1334,7 @@ public class OverlayService extends Service {
             .putLong("lastSearchAt",now).putString("lastError","Nenhum").apply();
         if(r.optBoolean("uncertain"))
             status(("raw".equals(mode)||"percent".equals(mode)||"iv".equals(mode))
-                ?"Alguns IVs não confirmados.":"Alguns rankings PvP não confirmados.");
+                ?"Alguns IVs não comprovados foram ignorados.":"Alguns rankings PvP não confirmados.");
         else if(sorted.length()==0)status("Sem resultados confirmados");
         else status(sorted.length()+" Pokémon atualizados");
     }

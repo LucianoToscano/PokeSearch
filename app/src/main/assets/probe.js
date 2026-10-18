@@ -410,7 +410,8 @@ function parseCard(box,sourceIndex){
  const ivMatch=body.match(/(\d{1,3})\s*%\s*[\(（]\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*[\)）]/);
  const raw=ivMatch?[ivMatch[2],ivMatch[3],ivMatch[4]].join("/"):
     ((body.match(/(?:^|[^\d])(\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{1,2})(?:[^\d]|$)/)||[])[1]||"").replace(/\s/g,"");
- const percent=ivMatch?ivMatch[1]:(raw?String(Math.round(raw.split("/").map(Number).reduce((a,b)=>a+b,0)/45*100)):"");
+ const labeledPct=(body.match(/(?:^|\n)\s*IV\s*:?\s*(\d{1,3})\s*%/i)||[])[1]||"";
+ const percent=ivMatch?ivMatch[1]:(raw?String(Math.round(raw.split("/").map(Number).reduce((a,b)=>a+b,0)/45*100)):labeledPct);
  const val=(label,re)=>{let candidate=nextLabelValue(box,label);let m=candidate.match(re);if(m)return m[1];
      m=body.match(new RegExp("(?:^|\\n)\\s*"+label+"\\s*:?\\s*([0-9.]+)","im"));return m?m[1]:"";};
  const heading=box.querySelector("h2,h3,h4,h5,[class*=font-semibold],[class*=font-bold]");
@@ -447,6 +448,23 @@ function parseCard(box,sourceIndex){
   shiny:isShiny,form:(title.match(/\(([^)]+)\)/)||[])[1]||""
  };
 }
+// IV is evidence about THIS card, not merely proof that Search had a filter.
+const POSSIBLE_IV_PERCENT=new Set(Array.from({length:46},(_,sum)=>Math.round(sum*100/45)));
+function verifiedCardIv(card){
+ const raw=String(card.iv||"").trim(),pct=String(card.ivPercent||"").trim();
+ let computed=null;
+ if(raw){
+  if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw))return null;
+  computed=Math.round(raw.split("/").map(Number).reduce((sum,n)=>sum+n,0)*100/45);
+ }
+ if(pct){
+  if(!/^(?:0|[1-9][0-9]?|100)$/.test(pct))return null;
+  const observed=Number(pct);
+  if(!POSSIBLE_IV_PERCENT.has(observed)||(computed!==null&&computed!==observed))return null;
+  computed=observed;
+ }
+ return {raw,percent:computed};
+}
 function collect(){
  const found=cardRoots().map(item=>parseCard(item.node,item.sourceIndex));
  const confirmation=resultCriteria();
@@ -454,16 +472,16 @@ function collect(){
  const rankLimit=configuredRank();
  const isLeague=mode==="gl"||mode==="ul";
  const matches=x=>{
-  if(mode==="iv")return x.iv==="15/15/15"||x.ivPercent==="100";
+  if(isLeague)return !x.rank||(Number(x.rank)>=1&&Number(x.rank)<=rankLimit);
+  const evidence=verifiedCardIv(x);
+  if(!evidence||evidence.percent===null)return false;
+  if(mode==="iv")return evidence.percent===100;
   if(mode==="raw"){
    const target=[filters.attack,filters.defense,filters.stamina].join("/");
-   return !x.iv||x.iv===target;
+   return evidence.raw!==""&&evidence.raw===target;
   }
-  if(mode==="percent"){
-   const pct=Number(x.ivPercent);
-   return x.ivPercent===""||(Number.isFinite(pct)&&pct>=filters.percentMin&&pct<=filters.percentMax);
-  }
-  if(isLeague)return !x.rank||(Number(x.rank)>=1&&Number(x.rank)<=rankLimit);
+  if(mode==="percent")
+   return evidence.percent>=filters.percentMin&&evidence.percent<=filters.percentMax;
   return false;
  };
  const valid=siteCriteria?found.filter(matches).map(x=>{
@@ -472,13 +490,14 @@ function collect(){
   return x;
  }):[];
  const uncertain=!siteCriteria||found.some(x=>!matches(x));
+ const unverifiedIv=isLeague?0:found.filter(x=>{const evidence=verifiedCardIv(x);return !evidence||evidence.percent===null;}).length;
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
  const explicitEmpty=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i.test(t);
  const siteCount=Number((t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1]||0);
  const parseFailure=siteCount>0&&found.length===0;
- return JSON.stringify({ok:true,cards:valid,found:found.length,siteCount,parseFailure,uncertain,loading,explicitEmpty,
+ return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,siteCount,parseFailure,uncertain,loading,explicitEmpty,
   criteriaConfirmed:siteCriteria,criteriaReason:confirmation.reason,confirmationSource:confirmation.source,
   leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }
