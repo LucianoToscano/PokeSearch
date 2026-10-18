@@ -205,6 +205,24 @@ body.result-window #resultHeader .modeIndicator.value.perfect{color:#f04b70}
 body.result-window #resultHeader .modeIndicator.shiny{right:0;top:0;width:8px;height:8px;border-radius:2px;background:#151b26c9;color:#f5f7fa;font-size:10px;transform:scale(var(--mode-indicator-scale,1));transform-origin:top right}
 body.result-window #resultHeader .modeIndicator.background{left:0;top:0;width:8px;height:8px;border-radius:2px;background:#113b50d9;color:#adf1ee;transform:scale(var(--mode-indicator-scale,1));transform-origin:top left}
 body.result-window #resultHeader .modeIndicator.background svg{display:block;width:7px;height:7px}
+body.result-window #resultHeader .capturePulse{
+ position:absolute;z-index:1;left:50%;top:50%;width:23%;height:23%;
+ border-radius:50%;box-sizing:border-box;pointer-events:none;
+ background:#eafaff;box-shadow:0 0 2px 1px #80eafc;opacity:0;
+ transform:translate(-50%,-50%) scale(.65)
+}
+body.result-window.search-active:not(.results-collapsed) #resultHeader .capturePulse{
+ animation:psCapturePulse 1.25s ease-in-out infinite
+}
+@keyframes psCapturePulse{
+ 0%,100%{opacity:.12;transform:translate(-50%,-50%) scale(.65)}
+ 50%{opacity:.92;transform:translate(-50%,-50%) scale(1)}
+}
+@media (prefers-reduced-motion:reduce){
+ body.result-window.search-active #resultHeader .capturePulse{
+ animation:none;opacity:.45;transform:translate(-50%,-50%) scale(.75)
+ }
+}
 body.result-window #resultHeader:focus-visible{outline:1px solid #fff8}
 body.result-window #resultHeader[data-wait]{position:relative}
 body.result-window #resultHeader[data-wait]::before{content:attr(data-wait);position:absolute;bottom:-2px;
@@ -232,7 +250,7 @@ body.result-window.results-collapsed #empty{display:none!important}
   <button id="close" title="Encerrar PokeSearch" aria-label="Fechar todo o overlay" onclick="Native.close()">×</button>
  </div><div id="choices" role="group" aria-label="Escolher opção"></div></div>
  <div id="locBadge" role="status" aria-live="polite"></div>
- <button id="resultHeader" title="Recolher ou expandir os Pokémon · arraste para mover" aria-label="Recolher ou expandir resultados" aria-expanded="true" onclick="Native.toggleResultsCollapsed()"><span id="resultIconStack" class="resultModeStack" aria-hidden="true"><img id="resultModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="modeIndicatorValue" class="modeIndicator value"></span><span id="modeIndicatorShiny" class="modeIndicator shiny">✦</span><span id="modeIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span></button>
+ <button id="resultHeader" title="Recolher ou expandir os Pokémon · arraste para mover" aria-label="Recolher ou expandir resultados" aria-expanded="true" onclick="Native.toggleResultsCollapsed()"><span id="resultIconStack" class="resultModeStack" aria-hidden="true"><img id="resultModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="capturePulse" class="capturePulse" aria-hidden="true"></span><span id="modeIndicatorValue" class="modeIndicator value"></span><span id="modeIndicatorShiny" class="modeIndicator shiny">✦</span><span id="modeIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span></button>
  <div id="spawns"></div>
  <button id="empty" title="Toque para saber o motivo" onclick="Native.showStatus()">Aguardando busca</button>
  <button id="collapse" title="Recolher todos os Pokémon e as opções, deixando apenas a engrenagem" aria-label="Recolher todos os Pokémon" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button>
@@ -260,7 +278,7 @@ const RESULT_ICONS=Object.freeze({
 // The 18 historic PNGs above remain unchanged as rollback/fallback assets.
 const RESULT_BASE_ICONS=Object.freeze({
  none:"base-none.png",custom:"base-custom.png",
- gl:"base-gl.png",ul:"base-ul.png",ml:"base-ml.png",cup:"base-cup.png"
+ gl:"base-gl.png",ul:"base-ul.png",ml:"base-ml.png"
 });
 const RESULT_MODE_ALIASES=Object.freeze({
  iv:"hundo",iv100:"hundo",hundo:"hundo",shundo:"hundo",
@@ -290,12 +308,15 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
  const shining=!!shinyActive;
  const baseFamily=["hundo","nundo","percent"].includes(family)?"custom":family;
  const baseName=RESULT_BASE_ICONS[baseFamily]||RESULT_BASE_ICONS.none;
- const badge=family==="hundo"?"100%":family==="nundo"?"0":family==="percent"?"%":baseFamily==="cup"?"CUP":"";
+ const topN=baseFamily==="gl"?Number(settings.glRank):baseFamily==="ul"?Number(settings.ulRank):0;
+ // #N is the confirmed search threshold (Top N), NOT an individual Pokémon rank.
+ const rankLabel=Number.isInteger(topN)&&topN>=1&&topN<=50?"#"+topN:"";
+ const badge=family==="hundo"?"100%":family==="nundo"?"0":family==="percent"?"%":rankLabel||(baseFamily==="cup"?"CUP":"");
  // Only confirmed site Background can be represented; not an activation shortcut.
  const backgroundConfirmed=!!(settings&&settings.backgroundOnly===true&&settings.backgroundVerified===true);
  return {
   path:"file:///android_asset/result-icons/base/"+baseName,
-  fallbackPath:"file:///android_asset/result-icons/"+(shining?pair.shiny:pair.normal),
+  fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none,
   title:pair.title+(shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
   family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
  };
@@ -337,7 +358,7 @@ function ivPaletteClass(percent){
  return "excellent";
 }
 let modeDraft=null,modeScrollTop=0;
-let shownMode="raw",shownShiny=false,shownSettings={...searchSettings},resultsStale=false,nextQueryAt=0;
+let shownMode="raw",shownShiny=false,shownSettings={...searchSettings},resultsStale=false,nextQueryAt=0,searchActive=false;
 function specialIVLabel(selectedMode,settings){
  if(selectedMode==="raw"){
   const {attack,defense,stamina}=settings;
@@ -783,10 +804,11 @@ function draw(){
   const iconSettings=hasHistory?shownSettings:searchSettings;
   const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings);
   document.body.classList.toggle("results-stale",hasHistory&&resultsStale);
+  document.body.classList.toggle("search-active",searchActive&&!shinyPending&&nextQueryAt<=Date.now());
   const header=document.getElementById("resultHeader");
   const image=document.getElementById("resultModeIcon");
   if(image.getAttribute("src")!==selectedIcon.path){
-   image.onerror=()=>{image.onerror=null;image.src=selectedIcon.fallbackPath;};
+   image.onerror=()=>{image.onerror=null;if(image.getAttribute("src")!==selectedIcon.fallbackPath)image.src=selectedIcon.fallbackPath;};
    image.src=selectedIcon.path;
   }
   const primaryBadge=document.getElementById("modeIndicatorValue");
@@ -827,7 +849,7 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
@@ -837,6 +859,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
   shownSettings={...searchSettings,...resultSourceConfig};
  shownShiny=!!resultSourceShiny;resultsStale=!!stale;
  nextQueryAt=Number(nextDue)||0;
+ searchActive=!!isSearching;
  mode=m==="iv"?"raw":m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  if(active>=cards.length)active=-1;
  draw();

@@ -381,7 +381,8 @@ test("v0.51 header chooses a confirmed Shiny version of its exact search type",
     dock.includes('function getResultIcon(searchMode,shinyActive,settings=searchSettings)')&&
     dock.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
     dock.includes('const pair=RESULT_ICONS[family]')&&
-    dock.includes('shining?pair.shiny:pair.normal'));
+    dock.includes('shinyBadge:shining')&&
+    dock.includes('const baseName=RESULT_BASE_ICONS[baseFamily]||RESULT_BASE_ICONS.none'));
 
 test("Mode popup keeps one stable row while expanding upward or downward",
  service.includes('boolean abovePopup=requestedPopup>roomBelow&&roomAbove>roomBelow;')&&
@@ -598,14 +599,14 @@ test("Canceled dialog does not force session refresh or discard sprites",
 
 console.log("PokeSearch UX contract: "+count+" tests passed");
 
-test("UX-ICON-01 retains original 18 artworks and adds six efficient base resources",()=>{
- const dir=path.join(root,"assets/result-icons/base");
- const names=["none","custom","gl","ul","ml","cup"];
+test("UX-ICON-01 uses five base PNGs and keeps 18 historical resources",()=>{
+ const dir=path.join(root,"assets/result-icons/base"), names=["none","custom","gl","ul","ml"];
  return names.every(n=>{
   const p=path.join(dir,"base-"+n+".png");if(!fs.existsSync(p))return false;
   const buf=fs.readFileSync(p);
   return buf.subarray(0,8).equals(Buffer.from("89504e470d0a1a0a","hex"))&&buf.readUInt32BE(16)===64&&buf.readUInt32BE(20)===64;
- })&&dock.includes("const RESULT_BASE_ICONS=Object.freeze(")&&dock.includes('cup:"base-cup.png"');
+ })&&!fs.existsSync(path.join(dir,"base-cup.png"))&&
+ dock.includes('const RESULT_BASE_ICONS=Object.freeze(');
 });
 test("UX-ICON-01 keeps 35x30 touch area and badges strictly within 21px",
  dock.includes("#resultHeader{width:35px;height:30px")&&
@@ -685,3 +686,28 @@ test("Shiny sparkle is independent neutral, header extremes match the IV palette
         dock.includes(".modeIndicator.value.zero{color:#00cfe8}")&&
         dock.includes(".modeIndicator.value.perfect{color:#f04b70}");
 })());
+
+test("UX-ICON-02 selected GL/UL threshold is displayed as a #N badge",()=>{
+ const block=dock.split("function getResultIcon(")[1].split("let locationEnabled=")[0];
+ return block.includes('baseFamily==="gl"?Number(settings.glRank)')&&
+ block.includes('baseFamily==="ul"?Number(settings.ulRank)')&&
+ block.includes('topN>=1&&topN<=50?"#"+topN')&&block.includes('ivBadge:badge');
+});
+test("UX-ICON-02 fallback never revives legacy effect-embedded PNG",()=>{
+ return dock.includes('fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none')&&
+ !dock.includes('fallbackPath:"file:///android_asset/result-icons/"+')&&
+ !dock.split("const RESULT_BASE_ICONS=Object.freeze(")[1].split("const RESULT_MODE_ALIASES")[0].includes("base-cup.png");
+});
+test("UX-ICON-02 capture animation reacts to native search state",()=>{
+ return service.includes('","+searchInProgress+")"')&&
+ dock.includes("isSearching=false)=>")&&dock.includes("searchActive=!!isSearching;")&&
+ dock.includes('searchActive&&!shinyPending&&nextQueryAt<=Date.now()')&&
+ dock.includes('id="capturePulse"')&&dock.includes('@keyframes psCapturePulse')&&
+ dock.includes('prefers-reduced-motion:reduce');
+});
+test("UX-ICON-02 sizes, static click control and timers remain intact",()=>{
+ return dock.includes('#resultHeader{width:35px;height:30px')&&
+ dock.includes('max-width:21px;max-height:21px')&&
+ dock.includes('width:23%;height:23%')&&dock.includes('pointer-events:none')&&
+ dock.includes('data-wait')&&dock.includes("Native.toggleResultsCollapsed()");
+});
