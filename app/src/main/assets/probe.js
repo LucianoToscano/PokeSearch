@@ -34,6 +34,9 @@ function field(label){
  return null;
 }
 function inputNear(label){const e=field(label);return e&&e.matches("input")?e:null;}
+let transientPending=false;
+function optionElements(){return elements('[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item],option').filter(vis);}
+function findOption(want){return optionElements().find(o=>text(o).toLowerCase()===String(want).toLowerCase())||null;}
 function choice(label,want){
  const e=field(label);
  if(!e)return false;
@@ -44,9 +47,13 @@ function choice(label,want){
   return true;
  }
  if(text(e).toLowerCase()===want.toLowerCase())return true;
- e.click();
- const opt=elements('[role=option],option').find(o=>vis(o)&&text(o).toLowerCase()===want.toLowerCase());
- if(!opt)return false;opt.click();return true;
+ // React/Radix menus render asynchronously: read an already-open option before toggling.
+ let opt=findOption(want);
+ if(opt){opt.click();return true;}
+ if(e.disabled)return false;
+ if(e.getAttribute("aria-expanded")!=="true")e.click();
+ transientPending=true;
+ return false;
 }
 function readChoice(label){
  const e=field(label);
@@ -188,9 +195,9 @@ function applyLeague(){
  const rank=inputNear("Top ranking");
  return !!rank&&valueInput(rank,configuredRank())&&
   choice("League",mode==="ul"?"Ultra League":"Great League")&&
-  choice("Include previous evolutions","Yes");
+  choice("Include previous evolutions",filters.includePreviousEvolutions===false?"No":"Yes");
 }
-function check(){
+function checkCore(){
  const currentShiny=readShiny();
  if(currentShiny!==shinyOnly && !(shinyOnly===false&&currentShiny===null))
   return {ok:false,reason:"Shiny não confirmado",shiny:currentShiny};
@@ -206,10 +213,171 @@ function check(){
  const rank=inputNear("Top ranking");
  const league=readChoice("League"),prior=readChoice("Include previous evolutions");
  if(!rank||Number(rank.value)!==configuredRank()||
-    league!==(mode==="ul"?"Ultra League":"Great League")||prior!=="Yes")
+    league!==(mode==="ul"?"Ultra League":"Great League")||prior!==(filters.includePreviousEvolutions===false?"No":"Yes"))
   return {ok:false,reason:"Filtro da liga e Top ranking não confirmados",rank:rank?rank.value:null,league,prior};
  return {ok:true};
 }
+
+const EXTRA_LABELS={sortBy:"Sort by",pokemon:"Pokemon",form:"Form",size:"Size",gender:"Gender",weather:"Weather"};
+function extraControl(label){
+ const e=field(label);if(e)return e;
+ const rx=label==="Pokemon"?/pok[eé]mon/i:new RegExp(label,"i");
+ return elements('input:not([type=hidden]),select,[role=combobox],button[aria-haspopup]')
+  .find(x=>vis(x)&&rx.test((x.getAttribute("placeholder")||"")+" "+(x.getAttribute("aria-label")||"")))||null;
+}
+function siteOptions(){
+ return [...new Set(optionElements().map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80);
+}
+function describeChoice(label){
+ const e=extraControl(label);
+ if(!e)return {present:false,options:[],reason:"Campo indisponível no site"};
+ const options=e.matches("select")?Array.from(e.options).map(text):[];
+ return {present:true,disabled:!!e.disabled,
+   value:clean(e.matches("input")?e.value:e.matches("select")?text(e.selectedOptions[0]):text(e)),
+   options:[...new Set(options.map(clean).filter(Boolean))].slice(0,80)};
+}
+function extraValue(key){
+ const e=extraControl(EXTRA_LABELS[key]);if(!e)return null;
+ return clean(e.matches("input")?e.value:e.matches("select")?text(e.selectedOptions[0]):text(e));
+}
+function isNeutral(v){
+ return !v||/^(?:any(?:\s+[\p{L}\s]*)?|all(?:\s+[\p{L}\s]*)?|todos?|qualquer(?:\s+[\p{L}\s]*)?|select(?:\s+[\p{L}\s]*)?|choose(?:\s+[\p{L}\s]*)?)$/iu.test(v);
+}
+function extraSelect(key,want){
+ const label=EXTRA_LABELS[key],e=extraControl(label);
+ if(!e)return !want;
+ const actual=extraValue(key);
+ if(!want){
+  if(isNeutral(actual))return true;
+  if(e.matches("input"))return valueInput(e,"");
+  // Reset prior active filter when user switches back to Any.
+  const opt=optionElements().find(o=>isNeutral(text(o)));
+  if(opt){opt.click();return true;}
+  if(e.disabled)return false;
+  if(e.getAttribute("aria-expanded")!=="true")e.click();
+  transientPending=true;
+  return false;
+ }
+ if(e.disabled)return false;
+ if(actual&&actual.toLowerCase()===want.toLowerCase())return true;
+ if(e.matches("input"))return valueInput(e,want);
+ if(e.matches("select"))return choice(label,want);
+ const opt=findOption(want);
+ if(opt){opt.click();transientPending=true;return false;} // React state must settle before later filters
+ if(e.getAttribute("aria-expanded")!=="true")e.click();
+ transientPending=true;
+ return false;
+}
+function extraMatches(key,want){
+ const v=extraValue(key);
+ if(v===null)return !want;
+ if(!want)return isNeutral(v);
+ return v.toLowerCase()===clean(want).toLowerCase();
+}
+if(action.startsWith("openFilterOptions:")){
+ const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
+ if(!e||e.disabled||e.matches("input")||e.matches("select"))return JSON.stringify({ok:false,key});
+ if(e.getAttribute("aria-expanded")!=="true")e.click();
+ return JSON.stringify({ok:true,key});
+}
+if(action.startsWith("readFilterOptions:")){
+ const key=action.split(":")[1],label=EXTRA_LABELS[key];
+ return JSON.stringify({ok:!!label,key,options:label?siteOptions():[]});
+}
+if(action.startsWith("closeFilterOptions:")){
+ const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
+ if(e&&e.getAttribute("aria-expanded")==="true"){
+  try{e.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));}
+  catch(_){}
+  if(e.getAttribute("aria-expanded")==="true")e.click();
+ }
+ return JSON.stringify({ok:true,key});
+}
+function rangeInputs(label){
+ const matching=labels(document,new RegExp("^"+label+"$","i"));
+ for(const node of matching)for(let p=node.parentElement,depth=0;p&&depth<4;p=p.parentElement,depth++){
+  const ins=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
+  if(ins.length===2)return ins;
+  if(ins.length>6)break;
+ }
+ return [];
+}
+function extraNumberField(key){
+ if(key==="minPvpCp")return inputNear("Min CP");
+ const cp=key==="cpMin"||key==="cpMax",pair=rangeInputs(cp?"CP":"Level");
+ return pair.length===2?pair[key.endsWith("Min")?0:1]:null;
+}
+function extraNumberKeys(){
+ return ["gl","ul"].includes(mode)?["minPvpCp"]:["cpMin","cpMax","levelMin","levelMax"];
+}
+// Only EXPLICITLY REQUESTED optional criteria may block a search. A site
+// title, generic Pokemon picker or decorated "Any" must not become mandatory.
+function extras(action){
+ transientPending=false;
+ const failed=[];
+ const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
+ for(const key of Object.keys(EXTRA_LABELS)){
+  const want=String(filters[key]||"").trim();
+  // Blank means no optional restriction; it is not a request to discover a
+  // dropdown. Only a tracked transition from a prior filter needs clearing.
+  if(!want&&!resetKeys.includes(key))continue;
+  const ok=action==="apply"?extraSelect(key,want):extraMatches(key,want);
+  if(!ok)failed.push(key);
+  if(transientPending)break; // one portal dropdown at a time
+ }
+ if(!transientPending)for(const key of extraNumberKeys()){
+  const want=String(filters[key]||"").trim(),input=extraNumberField(key);
+  if(!want&&!resetKeys.includes(key))continue;
+  if(want&&!input){failed.push(key);continue;}
+  if(!input)continue;
+  const ok=action==="apply"?valueInput(input,want):String(input.value||"").trim()===want;
+  if(!ok)failed.push(key);
+ }
+ return {ok:failed.length===0,pending:action==="apply"&&transientPending,reason:"Filtros adicionais: "+failed.join(", ")};
+}
+function currentCoreControlsVisible(){
+ if(mode==="percent")return percentageIVInputs().length===2;
+ if(mode==="raw"||mode==="iv")return rawIVInputs().length>0||percentageIVInputs().length===2;
+ return !!inputNear("Top ranking")||!!field("League");
+}
+// A result page can collapse the form after Search. A visible disagreement
+// must still invalidate results, but an absent control is not a disagreement.
+function visibleExtrasMismatch(){
+ const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
+ for(const key of Object.keys(EXTRA_LABELS)){
+  const want=String(filters[key]||"").trim();
+  if(!want&&!resetKeys.includes(key))continue;
+  const control=extraControl(EXTRA_LABELS[key]);
+  if(control&&!extraMatches(key,want))return key;
+ }
+ for(const key of extraNumberKeys()){
+  const want=String(filters[key]||"").trim();
+  if(!want&&!resetKeys.includes(key))continue;
+  const input=extraNumberField(key);
+  if(input&&String(input.value||"").trim()!==want)return key;
+ }
+ return "";
+}
+function check(){const base=checkCore();return base.ok?extras("verify"):base;}
+function resultCriteria(){
+ const base=checkCore(),ext=base.ok?extras("verify"):{ok:false,reason:base.reason};
+ if(base.ok&&ext.ok)return {ok:true,source:"live-form",reason:"Filtros confirmados no formulário"};
+ const coreVisible=currentCoreControlsVisible(),mismatch=visibleExtrasMismatch();
+ if(filters._preSubmitVerified&&!mismatch&&(!coreVisible||base.ok)){
+  return {ok:true,source:"pre-submit-confirmed",reason:"Formulário oculto após envio; filtros confirmados antes da busca"};
+ }
+ return {ok:false,source:"not-confirmed",
+  reason:mismatch?"Campo divergente: "+mismatch:coreVisible?(ext.reason||base.reason):"Formulário ausente sem confirmação prévia"};
+}
+// Isolated diagnostics used by smoke tests; no Search is submitted.
+if(action==="configureExtras")return JSON.stringify(extras("apply"));
+if(action==="verifyExtras")return JSON.stringify(extras("verify"));
+if(action==="describeFilters"){
+ const options={};
+ for(const [key,label] of Object.entries(EXTRA_LABELS))options[key]=describeChoice(label);
+ return JSON.stringify({ok:true,options});
+}
+
 function cardRoots(){
  const btns=elements("button,[role=button]").filter(e=>vis(e)&&/^(?:Get coords|Open in Maps)$/i.test(text(e)));
  return btns.slice(0,10).map((b,i)=>{
@@ -281,7 +449,8 @@ function parseCard(box,sourceIndex){
 }
 function collect(){
  const found=cardRoots().map(item=>parseCard(item.node,item.sourceIndex));
- const siteCriteria=check().ok;
+ const confirmation=resultCriteria();
+ const siteCriteria=confirmation.ok;
  const rankLimit=configuredRank();
  const isLeague=mode==="gl"||mode==="ul";
  const matches=x=>{
@@ -309,7 +478,9 @@ function collect(){
  const explicitEmpty=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i.test(t);
  const siteCount=Number((t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1]||0);
  const parseFailure=siteCount>0&&found.length===0;
- return JSON.stringify({ok:true,cards:valid,found:found.length,siteCount,parseFailure,uncertain,loading,explicitEmpty,criteriaConfirmed:siteCriteria,leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
+ return JSON.stringify({ok:true,cards:valid,found:found.length,siteCount,parseFailure,uncertain,loading,explicitEmpty,
+  criteriaConfirmed:siteCriteria,criteriaReason:confirmation.reason,confirmationSource:confirmation.source,
+  leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }
 if(action==="collect")return collect();
 if(action.startsWith("coords:")){
@@ -448,9 +619,10 @@ if(action==="session"){
  const loggedIn=elements("a,button,[role=button]").some(e=>vis(e)&&/^(?:Log ?out|Sign ?out|Sair|Desconectar)$/i.test(text(e)));
  // Mobile menus may hide Logout. The site's account-specific Shiny notice
  // confirms a session without exposing the account identifier to Android.
- const accountBadge=elements("p,small,span,div,label").some(e=>
-   vis(e)&&e.children.length<=2&&/^Shiny for your account\b/i.test(text(e))&&text(e).length<140)
-   ||/(?:^|\n)\s*Shiny for your account\b/i.test(String(document.body&&document.body.innerText||""));
+ const badgeText=/(?:^|\n)\s*Shiny for your account\b/i;
+ const accountBadge=badgeText.test(String(document.body&&document.body.innerText||"")) ||
+   elements("p,small,span,div,label").some(e=>
+     vis(e)&&e.children.length<=2&&badgeText.test(text(e))&&text(e).length<140);
  return JSON.stringify({ok:true,auth:loggedIn||accountBadge?"autenticada":login?"login necessário":"não confirmado",
    shinyAvailable:!!sw,site:location.hostname});
 }
@@ -464,11 +636,13 @@ if(action==="configureSearch"){
  else if(mode==="raw")configured=applyRaw();
  else if(mode==="percent")configured=applyPercent();
  else configured=applyLeague();
+ const other=configured?extras("apply"):{ok:false,pending:transientPending,reason:"Filtro principal indisponível"};
+ configured=configured&&other.ok;
  const existing=readShiny();
  if(existing!==null&&existing!==shinyOnly){
   const sw=shinyControl();if(sw)sw.click();
  }
- return JSON.stringify({ok:true,configured,shinyKnown:existing!==null,stage:"configure"});
+ return JSON.stringify({ok:true,configured,pending:other.pending||transientPending,reason:other.reason,shinyKnown:existing!==null,stage:"configure"});
 }
 if(action==="submitSearch"){
  const b=oneButton("Search");
@@ -486,6 +660,7 @@ if(action==="search"){
   else if(mode==="raw")applyRaw();
   else if(mode==="percent")applyPercent();
   else applyLeague();
+  extras("apply");
   const sw=shinyControl(),current=readShiny();
   if(sw&&current!==null&&current!==shinyOnly)sw.click();
   setTimeout(()=>click("Search"),750);

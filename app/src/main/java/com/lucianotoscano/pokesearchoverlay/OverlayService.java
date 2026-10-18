@@ -83,6 +83,8 @@ public class OverlayService extends Service {
         handler.removeCallbacks(deferredSessionReload);
     }
     private static final long MIN_SEARCH_GAP_MS=60_000L;
+    private static final long RESULT_PREVIEW_CACHE_TTL_MS=120_000L;
+    private long nextScheduledSearchAtMs=0L;
     private long lastSearchStartMs=0L;
     private boolean shinyVerified=false;
     private boolean shinyLoginPromptRequested=false;
@@ -94,7 +96,7 @@ public class OverlayService extends Service {
     private boolean locationEditorOpen=false;
     private boolean showTimers=false,alerts=false;
     private String alertsMode="off"; // off / on / silent, separate from favorite opt-in
-    private String sort="despawn";
+    private String sort="site"; // Follow the ten results returned by the site, not an inverted local despawn sort.
     private long lastAlertAt=0L;
     private final java.util.Set<String> knownSpawns=new java.util.HashSet<>();
     private long armedDespawnMillis=0L;
@@ -152,8 +154,62 @@ public class OverlayService extends Service {
     // Never relabel previous Pokémon with the new mode while validation fails.
     private String shownMode="raw",shownConfigJson="{}";
     private boolean shownShiny=false,resultsStale=false;
+    // In-memory only: previews are from confirmed searches, never fresh results.
+    private static final class FilterPreview{
+        final String results,sourceMode,sourceConfig;
+        final boolean sourceShiny;
+        final long confirmedAtMs;
+        FilterPreview(String cards,String mode,String config,boolean shiny,long at){
+            results=cards;sourceMode=mode;sourceConfig=config;sourceShiny=shiny;confirmedAtMs=at;
+        }
+    }
+    private final java.util.LinkedHashMap<String,FilterPreview> recentFilterPreviews=
+        new java.util.LinkedHashMap<String,FilterPreview>(8,0.75f,true){
+            @Override protected boolean removeEldestEntry(java.util.Map.Entry<String,FilterPreview> eldest){
+                return size()>8;
+            }
+        };
+    private String filterPreviewKey(){
+        return mode+"|"+shiny+"|"+locationEnabled+"|"+locationCoords+"|"+
+            locationRadius+"|"+filterConfigJson();
+    }
+    private void rememberConfirmedPreview(JSONArray cards,long now){
+        if(cards==null)return;
+        recentFilterPreviews.put(filterPreviewKey(),
+            new FilterPreview(cards.toString(),shownMode,shownConfigJson,shownShiny,now));
+    }
+    // Only show still-existing Pokémon from earlier confirmed results.
+    // Never trigger alerts or claim that this preview is a new site search.
+    private boolean restoreFilterPreview(){
+        FilterPreview cached=recentFilterPreviews.get(filterPreviewKey());
+        if(cached==null)return false;
+        long now=System.currentTimeMillis();
+        if(now<cached.confirmedAtMs||now-cached.confirmedAtMs>RESULT_PREVIEW_CACHE_TTL_MS){
+            recentFilterPreviews.remove(filterPreviewKey());return false;
+        }
+        try{
+            JSONArray previous=new JSONArray(cached.results),alive=new JSONArray();
+            for(int i=0;i<previous.length();i++){
+                JSONObject card=previous.optJSONObject(i);
+                if(card==null)continue;
+                long expiry=card.optLong("expiresAtMs",Long.MAX_VALUE);
+                if(expiry>now)alive.put(card);
+            }
+            results=alive.toString();
+            shownMode=cached.sourceMode;shownConfigJson=cached.sourceConfig;
+            shownShiny=cached.sourceShiny;resultsStale=true;
+            armNextDespawn(alive);
+            return true;
+        }catch(org.json.JSONException ignored){
+            recentFilterPreviews.remove(filterPreviewKey());return false;
+        }
+    }
     // Independent parameters remain intact when switching between search modes.
     private int rawAttack=15,rawDefense=15,rawStamina=15,glRank=1,ulRank=1,ivPercentMin=0,ivPercentMax=100;
+    // Additional optional search criteria belong to the active site session, not to the toolbar.
+    private String extraFiltersJson="{}";
+    // Evidence of checked website filters belongs only to the active search.
+    private int confirmedSubmittedFiltersGeneration=-1;
     private String filterConfigJson(){
         JSONObject config=new JSONObject();
         try{
@@ -161,6 +217,9 @@ public class OverlayService extends Service {
             config.put("stamina",rawStamina);config.put("glRank",glRank);
             config.put("ulRank",ulRank);config.put("percentMin",ivPercentMin);
             config.put("percentMax",ivPercentMax);
+            JSONObject extra=new JSONObject(extraFiltersJson);
+            java.util.Iterator<String> keys=extra.keys();
+            while(keys.hasNext()){String key=keys.next();config.put(key,extra.get(key));}
         }catch(org.json.JSONException ignored){}
         return config.toString();
     }
@@ -232,7 +291,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -704,10 +763,18 @@ public class OverlayService extends Service {
             }else status("Abra o app e faça login.");
             return;
         }
+        String queryFilters=filterConfigJson();
+        if("collect".equals(action)&&confirmedSubmittedFiltersGeneration==callbackGeneration){
+            try{
+                JSONObject validated=new JSONObject(queryFilters);
+                validated.put("_preSubmitVerified",true);
+                queryFilters=validated.toString();
+            }catch(org.json.JSONException ignored){}
+        }
         String code=script().replace("__ACTION__",JSONObject.quote(action))
                 .replace("__MODE__",JSONObject.quote(mode))
                 .replace("__SHINY__",shiny?"true":"false")
-                .replace("__FILTERS__",filterConfigJson());
+                .replace("__FILTERS__",queryFilters);
         try{website.evaluateJavascript(code,raw->{
             if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;
             try{
@@ -748,24 +815,31 @@ public class OverlayService extends Service {
         if(previous>0L&&now>=previous&&now-previous<MIN_SEARCH_GAP_MS){
             long remaining=(MIN_SEARCH_GAP_MS-(now-previous)+999L)/1000L;
             if(manual)android.widget.Toast.makeText(this,"↻ Nova busca em "+remaining+"s",android.widget.Toast.LENGTH_SHORT).show();
-            status("Próxima busca em "+remaining+"s · mantendo "+mode.toUpperCase(java.util.Locale.ROOT)
-                +(shiny?" com ✨":" sem ✨")+".");
+            nextScheduledSearchAtMs=now+remaining*1000L+300L;
+            status("Filtro "+mode.toUpperCase(java.util.Locale.ROOT)+" selecionado · próxima consulta em "+remaining+"s"
+                +(count()>0?" · prévia anterior":"")+".");
             handler.removeCallbacks(queuedRefresh);
             handler.postDelayed(queuedRefresh,remaining*1000L+300L);
             return;
         }
         handler.removeCallbacks(queuedRefresh);
+        nextScheduledSearchAtMs=0L;
         BugReport.log(this,"PREPARE","Filtros "+mode+" Shiny="+shiny+" manual="+manual);
         // Preserve the despawn cleanup timer while the network search is pending.
         searchInProgress=true;
         if(count()>0)resultsStale=true;
         if(shiny){shinyVerified=false;update();}
         final int generation=++requestGeneration;
+        confirmedSubmittedFiltersGeneration=-1;
         status(manual?"Busca manual iniciada...":"Atualizando...");
         execute("session",session->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
             final String auth=session.optString("auth","não confirmado");
-            getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
+            // A partially hydrated mobile page is not proof that the stored
+            // authentication expired. Do not turn a verified session into
+            // "login necessary" merely because the DOM is temporarily empty.
+            if(!"não confirmado".equals(auth))
+                getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
             // Only record a coarse authentication state, never cookies, codes or tokens.
             BugReport.log(this,"SESSION","Shiny="+shiny+" autenticação="+auth);
             if(shiny&&auth.equals("login necessário")){
@@ -783,17 +857,30 @@ public class OverlayService extends Service {
                 }
                 handler.postDelayed(()->{
                     if(stopped||loginPaused||generation!=requestGeneration)return;
-                    execute("configureSearch",configured->{
-                    if(stopped||loginPaused||generation!=requestGeneration)return;
-                    if(!configured.optBoolean("ok")||!configured.optBoolean("configured",false)){
-                        searchInProgress=false;
-                        searchFailure("⚠ Filtro não aplicado","Falha nos controles IV/ranking. Verifique se a página carregou.");
-                        return;
-                    }
-                    configureLocationAndVerify(generation,manual,0);
-                    });
+                    configureSearchWithRetry(generation,manual,0);
                 },600L);
             });
+        });
+    }
+    // React dropdowns are asynchronous: opening and selecting an option cannot
+    // reliably happen in a single evaluateJavascript() call.
+    private void configureSearchWithRetry(int generation,boolean manual,int attempt){
+        if(stopped||loginPaused||generation!=requestGeneration)return;
+        execute("configureSearch",configured->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
+            if(configured.optBoolean("ok")&&configured.optBoolean("configured",false)){
+                configureLocationAndVerify(generation,manual,0);return;
+            }
+            if(configured.optBoolean("pending",false)&&attempt<22){
+                handler.postDelayed(()->configureSearchWithRetry(generation,manual,attempt+1),230L);
+                return;
+            }
+            searchInProgress=false;
+            String reason=configured.optString("reason","Controle do site indisponível");
+            // Show concrete filter name; no account data or coordinates from the DOM.
+            String summary=reason.replace("Filtros adicionais: ","").trim();
+            if(summary.length()>38)summary=summary.substring(0,38);
+            searchFailure("⚠ Filtro: "+summary,"Falha na configuração: "+reason);
         });
     }
     private void configureLocationAndVerify(int generation,boolean manual,int attempt){
@@ -947,10 +1034,12 @@ public class OverlayService extends Service {
                     return;
                 }
                 shinyVerified=shiny;
+                confirmedSubmittedFiltersGeneration=generation;
                 update();
                 execute("submitSearch",submitted->{
                     if(stopped||loginPaused||generation!=requestGeneration)return;
                     if(!submitted.optBoolean("ok")){
+                        confirmedSubmittedFiltersGeneration=-1;
                         searchInProgress=false;
                         shinyVerified=false;
                         searchFailure("⚠ Busca não enviada",submitted.optString("reason","Falha ao pressionar Search."));
@@ -977,9 +1066,14 @@ public class OverlayService extends Service {
                 searchFailure("⚠ Falha na leitura","Falha na leitura dos resultados do site.");
                 return;
             }
-            if((shiny && (!r.has("siteShiny")||r.isNull("siteShiny")||
-                !r.optBoolean("siteShiny",false))) ||
-                (!shiny&&r.has("siteShiny")&&!r.isNull("siteShiny")&&r.optBoolean("siteShiny",false))){
+            // Shiny was verified before submission. A missing switch after navigation
+            // is not proof it was switched OFF; an explicit OFF state still fails.
+            boolean shinySwitchMissing=!r.has("siteShiny")||r.isNull("siteShiny");
+            boolean trustedShinyHidden=shiny&&shinyVerified&&
+                confirmedSubmittedFiltersGeneration==generation&&shinySwitchMissing;
+            if((shiny&&!trustedShinyHidden&&
+                   (shinySwitchMissing||!r.optBoolean("siteShiny",false))) ||
+                (!shiny&&!shinySwitchMissing&&r.optBoolean("siteShiny",false))){
                 searchInProgress=false;
                 shinyVerified=false;
                 searchFailure("⚠ Shiny não confirmado","Filtro Shiny mudou durante a busca. Resultados não confirmados.");
@@ -991,7 +1085,8 @@ public class OverlayService extends Service {
             if(!r.optBoolean("criteriaConfirmed",false)){
                 searchInProgress=false;
                 searchFailure("⚠ Filtro não confirmado",
-                    "Busca ignorada: controles IV/ligas não confirmados ao ler resultados.");
+                    "Busca ignorada: "+r.optString("criteriaReason","controles não confirmados")+
+                    " · "+r.optString("confirmationSource","sem confirmação")+".");
                 return;
             }
             if(("gl".equals(mode)||"ul".equals(mode))&&!r.optBoolean("leagueConfirmed",false)){
@@ -1002,6 +1097,10 @@ public class OverlayService extends Service {
             }
             int found=r.optInt("found",0);
             int onSite=r.optInt("siteCount",0);
+            if(attempt==0)BugReport.log(this,"SEARCH_RESULT",
+                "Pokémon identificados="+found+" • site="+onSite+
+                " • validação="+r.optString("confirmationSource","desconhecida")+
+                " • modo="+mode);
             if(r.optBoolean("parseFailure",false)&&!r.optBoolean("loading",false)){
                 searchInProgress=false;
                 searchFailure("⚠ Leitura não confirmada","Leitura do site: "+onSite+" ocorrências exibidas, mas nenhum cartão foi reconhecido.");
@@ -1046,6 +1145,12 @@ public class OverlayService extends Service {
         java.util.ArrayList<JSONObject> a=new java.util.ArrayList<>();
         if(source!=null)for(int i=0;i<source.length();i++){
             JSONObject c=source.optJSONObject(i);if(c!=null)a.add(c);
+        }
+        // The site sorts before we read the first ten cards. Preserve that order.
+        if("site".equals(sort)){
+            JSONArray inSiteOrder=new JSONArray();
+            for(JSONObject card:a)inSiteOrder.put(card);
+            return inSiteOrder;
         }
         java.util.Comparator<JSONObject> comparator;
         switch(sort){
@@ -1185,6 +1290,7 @@ public class OverlayService extends Service {
         results=sorted.toString();
         shownMode=mode;shownConfigJson=filterConfigJson();
         shownShiny=shiny&&shinyVerified;resultsStale=false;
+        rememberConfirmedPreview(sorted,now);
         searchInProgress=false;
         armNextDespawn(sorted);
         if(selected>=0)hideDetails();
@@ -1380,6 +1486,52 @@ public class OverlayService extends Service {
             OverlayService.this.refresh(true);
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
+        @JavascriptInterface public void requestFilterOptions(){handler.post(()->requestFilterOptionsLater(0));}
+        private void requestFilterOptionsLater(int attempt){
+            if(stopped||loginPaused||!menuExpanded)return;
+            if(searchInProgress||!loaded){
+                // Opening the menu during an automatic refresh must not permanently
+                // disable its filter selectors. Re-check without touching the site.
+                if(attempt<36)handler.postDelayed(()->requestFilterOptionsLater(attempt+1),500L);
+                return;
+            }
+            final int generation=requestGeneration;
+            execute("describeFilters",found->{
+                if(stopped||generation!=requestGeneration||menuPanel==null||!menuLoaded)return;
+                js(menuPanel,true,"window.onFilterOptions("+found.toString()+")");
+                discoverFilterMenu(0,generation);
+            });
+        }
+        private void discoverFilterMenu(int position,int generation){
+            if(stopped||loginPaused||searchInProgress||generation!=requestGeneration||!menuExpanded)return;
+            final String[] keys={"sortBy","size","form","gender","weather"};
+            if(position>=keys.length)return;
+            String key=keys[position];
+            execute("openFilterOptions:"+key,opened->{
+                if(stopped||generation!=requestGeneration)return;
+                if(!opened.optBoolean("ok")){
+                    discoverFilterMenu(position+1,generation);return;
+                }
+                handler.postDelayed(()->execute("readFilterOptions:"+key,options->{
+                    if(stopped||generation!=requestGeneration)return;
+                    if(options.optBoolean("ok")&&menuPanel!=null&&menuLoaded){
+                        JSONObject message=new JSONObject();
+                        try{
+                            message.put("ok",true);
+                            JSONObject fields=new JSONObject();
+                            JSONObject field=new JSONObject();
+                            field.put("present",true);
+                            field.put("options",options.optJSONArray("options"));
+                            fields.put(key,field);
+                            message.put("options",fields);
+                            message.put("partial",true);
+                        }catch(org.json.JSONException ignored){}
+                        js(menuPanel,true,"window.onFilterOptions("+message.toString()+")");
+                    }
+                    execute("closeFilterOptions:"+key,closed->discoverFilterMenu(position+1,generation));
+                }),210L);
+            });
+        }
         @JavascriptInterface public void setSearchConfig(String payload){handler.post(()->{
             try{
                 JSONObject input=new JSONObject(payload);
@@ -1392,18 +1544,58 @@ public class OverlayService extends Service {
                 if(!within(a,0,15)||!within(d,0,15)||!within(st,0,15)||
                     !within(gl,1,50)||!within(ul,1,50)||
                     !isAllowedIvPercent(min)||!isAllowedIvPercent(max)||min>max)return;
+                JSONObject extra=new JSONObject();
+                String[] strings={"sortBy","pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","minPvpCp"};
+                for(String key:strings){
+                    String value=input.optString(key,"").trim();
+                    if(value.length()>100)return;
+                    if((key.equals("cpMin")||key.equals("cpMax")||key.equals("minPvpCp"))&&
+                       !value.isEmpty()&&!value.matches("[0-9]{1,5}"))return;
+                    if((key.equals("levelMin")||key.equals("levelMax"))&&
+                       !value.isEmpty()&&!value.matches("[0-9]{1,2}(\\.[0-9])?"))return;
+                    extra.put(key,value);
+                }
+                for(String[] pair:new String[][]{{"cpMin","cpMax"},{"levelMin","levelMax"}}){
+                    String low=extra.optString(pair[0]),high=extra.optString(pair[1]);
+                    if(!low.isEmpty()&&!high.isEmpty()&&Double.parseDouble(low)>Double.parseDouble(high))return;
+                }
+                // Clear a previously selected site restriction only when the
+                // user explicitly switches it back to Any. Ordinary blank
+                // options must never block Raw IV or GL/UL searches.
+                JSONObject previousExtra=new JSONObject(extraFiltersJson);
+                org.json.JSONArray previouslyCleared=previousExtra.optJSONArray("clearExtraKeys");
+                org.json.JSONArray clearKeys=new org.json.JSONArray();
+                for(String key:strings){
+                    String before=previousExtra.optString(key,"").trim();
+                    String after=extra.optString(key,"").trim();
+                    boolean stillNeedsClear=false;
+                    if(previouslyCleared!=null)for(int i=0;i<previouslyCleared.length();i++)
+                        if(key.equals(previouslyCleared.optString(i)))stillNeedsClear=true;
+                    if(after.isEmpty()&&(!before.isEmpty()||stillNeedsClear))
+                        clearKeys.put(key);
+                }
+                extra.put("clearExtraKeys",clearKeys);
+                extra.put("includePreviousEvolutions",input.optBoolean("includePreviousEvolutions",true));
+                String updatedExtras=extra.toString();
                 if(mode.equals(nextMode)&&rawAttack==a&&rawDefense==d&&rawStamina==st&&
-                    glRank==gl&&ulRank==ul&&ivPercentMin==min&&ivPercentMax==max)return;
+                    glRank==gl&&ulRank==ul&&ivPercentMin==min&&ivPercentMax==max&&
+                    extraFiltersJson.equals(updatedExtras))return;
                 mode=nextMode;rawAttack=a;rawDefense=d;rawStamina=st;
                 glRank=gl;ulRank=ul;ivPercentMin=min;ivPercentMax=max;
+                extraFiltersJson=updatedExtras;
                 getSharedPreferences("prefs",0).edit()
                     .putString("mode",mode).putInt("rawAttack",a).putInt("rawDefense",d)
                     .putInt("rawStamina",st).putInt("glRank",gl).putInt("ulRank",ul)
-                    .putInt("ivPercentMin",min).putInt("ivPercentMax",max).apply();
+                    .putInt("ivPercentMin",min).putInt("ivPercentMax",max)
+                    .putString("extraFiltersJson",extraFiltersJson).apply();
                 ++requestGeneration;searchInProgress=false;shinyVerified=false;
                 // Keep site-confirmed cards with their original mode/icon
                 // until the new search passes all checks and returns valid cards.
-                resultsStale=count()>0;hideDetails();update();refresh();
+                boolean preview=restoreFilterPreview();
+                if(!preview)resultsStale=count()>0;
+                hideDetails();
+                status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
+                refresh();
             }catch(org.json.JSONException ex){
                 status("Filtro inválido. Escolha os valores novamente.");
             }
@@ -1423,14 +1615,22 @@ public class OverlayService extends Service {
                 "Filtro selecionado: "+(s.equals("iv")?"Raw IV 15/15/15":s.equals("raw")?"Raw IV":s.equals("percent")?"% IV":s.equals("gl")?"Grande Liga":"Ultra Liga"),
                 android.widget.Toast.LENGTH_SHORT).show();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
-            resultsStale=count()>0;hideDetails();update();refresh();
+            boolean preview=restoreFilterPreview();
+            if(!preview)resultsStale=count()>0;
+            hideDetails();
+            status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
+            refresh();
         });}
         @JavascriptInterface public void menu(boolean open){handler.post(()->OverlayService.this.menu(open));}
         @JavascriptInterface public void cycleMode(){handler.post(()->{
             mode=mode.equals("raw")?"percent":mode.equals("percent")?"gl":mode.equals("gl")?"ul":"raw";
             getSharedPreferences("prefs",0).edit().putString("mode",mode).apply();
             ++requestGeneration;searchInProgress=false;shinyVerified=false;
-            resultsStale=count()>0;hideDetails();update();refresh();
+            boolean preview=restoreFilterPreview();
+            if(!preview)resultsStale=count()>0;
+            hideDetails();
+            status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
+            refresh();
         });}
         @JavascriptInterface public void cycleSpriteSize(){handler.post(()->{
             int[] sizes={35,45,55};
@@ -1707,7 +1907,11 @@ public class OverlayService extends Service {
             if(detailRoot!=null&&selected>=0&&!pickerOpen)detailRoot.setVisibility(View.VISIBLE);
             cancelSessionCallbacks();
             pendingLoginRefreshGeneration=requestGeneration;
-            if(!stopped&&!loginPaused&&!pickerOpen)
+            // A canceled dialog only resumes the overlay; it never starts an
+            // unnecessary network request. Successful login is handled by
+            // REFRESH_LOGIN, which reloads the collector exactly once.
+            boolean authConfirmed=i!=null&&i.getBooleanExtra("authConfirmed",false);
+            if(authConfirmed&&!stopped&&!loginPaused&&!pickerOpen)
                 handler.postDelayed(loginEndRefresh,1600L);
             schedulePeriodic();
             BugReport.log(this,"LOGIN","Página de autenticação fechada");
@@ -1727,7 +1931,13 @@ public class OverlayService extends Service {
             pendingPageRefreshGeneration=-1;
             pendingLoginRefreshGeneration=-1;
             cancelSessionCallbacks();
-            if(!initialStart){results="[]";hideDetails();status("Atualizando sessão após login...");}
+            if(!initialStart){
+                // Keep previously verified Pokémon visible until the collector
+                // confirms the newly shared login session.
+                resultsStale=count()>0;
+                hideDetails();
+                status("Sincronizando sessão após login...");
+            }
             try{CookieManager.getInstance().flush();}
             catch(RuntimeException e){recordFailure("sincronizar cookies",e);}
             pendingReloadGeneration=requestGeneration;
@@ -1757,7 +1967,7 @@ public class OverlayService extends Service {
         alertsMode=pref.getString("alertsMode",alerts?"on":"off");
         if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";
         alerts=!"off".equals(alertsMode);
-        sort=pref.getString("sort","despawn");
+        sort="site"; // Sort remotely before the ten-result cutoff; preserve its returned order.
         if(params!=null&&!menuExpanded){
             params.width=dp(minimized?BUBBLE_DP:dockDp());
             params.x=Math.min(params.x,metrics().widthPixels-params.width);
@@ -1774,6 +1984,8 @@ public class OverlayService extends Service {
             locationEnabled=false;locationCoords="";locationRadius=0;
             pref.edit().putBoolean("locationEnabled",false).remove("locationCoords").remove("locationRadius").apply();
         }
+        extraFiltersJson=pref.getString("extraFiltersJson","{}");
+        try{new JSONObject(extraFiltersJson);}catch(org.json.JSONException ignored){extraFiltersJson="{}";}
         mode=pref.getString("mode",mode);
         boolean migrateLegacyHundo="iv".equals(mode);
         if(migrateLegacyHundo)mode="raw";

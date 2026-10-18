@@ -42,7 +42,10 @@ test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'))
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
 test("Original compact toolbar is only one 34dp row",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP)')&&service.includes("MENU_BASE_DP=34"));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
-test("Login returns to Home and does not send it to background",!main.includes('postDelayed(()->moveTaskToBack(true)'));
+test("Login launched from overlay returns to gameplay with PokeSearch only on successful authentication",
+ main.includes('if(authenticatedNow&&fromOverlay&&OverlayService.isRunning())')&&
+ main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
+ main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
 test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
 test("Translucent favorites with optional background blur",picker.includes('Color.argb(187,30,42,58)')&&picker.includes('setBlurBehindRadius'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
@@ -87,7 +90,10 @@ test("Despawn removes expired sprites without triggering an extra site search",e
 test("AUTO retains 5/10/15/20 minute scheduling",service.includes("handler.postDelayed(periodic,intervalMinutes*60000L)"));
 test("Manual refresh does not misleadingly claim queued work",service.includes("Toque ↻ novamente quando terminar."));
 test("Login pauses and invalidates pending site callbacks",service.includes("loginPaused=true;\n            ++requestGeneration;\n            searchInProgress=false;")&&service.includes("cancelSessionCallbacks();"));
-test("After login a fresh search is attempted safely",service.includes("if(!stopped&&!loginPaused&&!pickerOpen&&")&&service.includes("handler.postDelayed(loginEndRefresh,1600L)"));
+test("A completed login resumes searching, while canceling does not",
+ service.includes('boolean authConfirmed=i!=null&&i.getBooleanExtra("authConfirmed",false)')&&
+ service.includes('if(authConfirmed&&!stopped&&!loginPaused&&!pickerOpen)')&&
+ service.includes('handler.postDelayed(loginEndRefresh,1600L)'));
 test("Shiny verification distinguishes trainer linking",service.includes('verified.optBoolean("pending",false)'));
 test("Shiny failure does not imply confirmed trainer authentication",service.includes("Verifique login e vínculo do treinador"));
 test("Diagnostic logs only coarse authentication states",service.includes('BugReport.log(this,"SESSION","Shiny="'));
@@ -261,9 +267,10 @@ test("Login stays monitored during in-page OAuth without forcing navigation",
   main.includes('view.postDelayed(()->checkLoginSession(view,next,pageGeneration)')&&
   main.includes('attemptsLeft>1?400L:850L')&&
   main.includes('++loginPageGeneration; // Invalidate pending WebView session probes.'));
-test("Login session detection reuses sanitized probe not a visible Logout alone",
-  main.includes('JSONObject.quote("session")')&&
-  read("assets/probe.js").includes('const accountBadge=elements("p,small,span,div,label")'));
+test("Login session detection substitutes all probe placeholders and reads mobile account text",
+ main.includes('JSONObject.quote("session")')&&
+ main.includes('.replace("__FILTERS__","{}")')&&
+ read("assets/probe.js").includes('const accountBadge=badgeText.test('));
 test("Shiny state sync starts on site load independently of Search cooldown",
   service.includes('if(shiny&&!shinyVerified){')&&
   service.includes('prepareImmediateShiny(generation);')&&
@@ -429,7 +436,8 @@ test("Site filters are configured and confirmed before search submission",(()=>{
  return probe.includes("mode===\"raw\"")&&probe.includes("mode===\"percent\"")&&
   probe.includes("configuredRank()")&&probe.includes("verifyRaw()")&&
   probe.includes("verifyPercent()")&&probe.includes("applyLeague()")&&
-  service.includes('.replace("__FILTERS__",filterConfigJson())')&&
+  service.includes('.replace("__FILTERS__",queryFilters)')&&
+  service.includes('confirmedSubmittedFiltersGeneration==callbackGeneration')&&
   service.includes('execute("verifyFilters",filters->');
 })());
 test("Raw zero and percentage extremes reuse all original Hundo/Nundo Shiny icons",(()=>{
@@ -452,8 +460,9 @@ test("Mode selection remains clearly highlighted and header shows automatic 0/10
  dock.includes('choose.textContent=(modeDraft.mode===name?"✓ ":"")+label')&&
  dock.includes('cy.textContent=label')&&
  dock.includes('specialIVLabel(mode,searchSettings)'));
-test("Filter switching preserves old results and their original icon until confirmed",
- service.includes('resultsStale=count()>0;hideDetails();update();refresh();')&&
+test("Filter switching shows matching cached results, else keeps older results clearly identified",
+ service.includes('boolean preview=restoreFilterPreview();')&&
+ service.includes('if(!preview)resultsStale=count()>0;')&&
  service.includes('shownMode=mode;shownConfigJson=filterConfigJson();')&&
  service.includes('shownShiny=shiny&&shinyVerified;resultsStale=false;')&&
  dock.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
@@ -510,4 +519,81 @@ test("Legacy IV percent migration expands only as necessary without trimming Pok
  service.includes('ivPercentMax=Math.max(ivPercentMin,ceilIvPercent(previousMax))')&&
  service.includes('putInt("ivPercentMin",ivPercentMin)')&&
  service.includes('putInt("ivPercentMax",ivPercentMax)'));
+
+// v0.51 additional filters: do not add toolbar actions or replace artwork.
+test("Shiny shortcut sits next to Modos de busca heading",
+  dock.includes('heading.appendChild(shinyButton);panel.appendChild(heading);')&&
+  dock.includes('shinyButton.id="modeShiny"')&&
+  dock.includes('shinyButton.onclick=()=>Native.shiny()'));
+test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
+  dock.indexOf('id="sh"')>dock.indexOf('id="cycle"')&&
+  (dock.match(/<button id="(?:cycle|sh|period|manualRefresh|size|clock|bell|star|location|report|donate|close)"/g)||[]).length===12);
+test("Sort by is under the four existing modes; no redundant fifth filter mode",
+  dock.includes('renderExtraFilters(panel,make)')&&
+  dock.includes('option("sortBy","Sort by")')&&
+  dock.includes('const RESULT_ICONS=Object.freeze'));
+test("General and advanced filter sections are foldable inside mode popup",
+  dock.includes('section("Filtros gerais"')&&dock.includes('section("Filtros avançados"')&&
+  dock.includes('#choices.modePanel{width:246px'));
+test("Site dropdown options are discovered instead of inventing weather/form values",
+  dock.includes('filterOptions=response.partial?')&&
+  dock.includes('Native.requestFilterOptions()')&&
+  !dock.includes('option("weather","Sunny")'));
+test("Mode popup allows keyboard focus for optional numeric and Pokémon inputs",
+  dock.includes('Native.locationEditor(true);if(Native.requestFilterOptions)'));
+test("Extra search filters are saved and transported to the site probe",
+  service.includes('private String extraFiltersJson="{}"')&&
+  service.includes('putString("extraFiltersJson",extraFiltersJson)')&&
+  service.includes('while(keys.hasNext())'));
+test("Site Sort by is applied before collecting ten cards; original site order is retained",
+  service.includes('if("site".equals(sort))')&&
+  service.includes('for(JSONObject card:a)inSiteOrder.put(card)')&&
+  service.includes('public void requestFilterOptions()'));
+test("New filter settings reject invalid CP/level intervals",
+  service.includes('{"cpMin","cpMax"}')&&service.includes('{"levelMin","levelMax"}')&&
+  service.includes('Double.parseDouble(low)>Double.parseDouble(high)'));
+
+test("After Search results use same-generation pre-submit proof when the filter form is hidden",
+ service.includes('confirmedSubmittedFiltersGeneration==callbackGeneration')&&
+ service.includes('validated.put("_preSubmitVerified",true)')&&
+ service.includes('confirmedSubmittedFiltersGeneration=-1')&&
+ read("assets/probe.js").includes('confirmationSource:confirmation.source'));
+test("Missing Shiny switch after navigation can use pre-submit proof, never explicit Shiny-off",
+ service.includes('boolean trustedShinyHidden=shiny&&shinyVerified')&&
+ service.includes('confirmedSubmittedFiltersGeneration==generation&&shinySwitchMissing')&&
+ service.includes('!r.optBoolean("siteShiny",false)'));
+
+test("Result previews use confirmed site data, not new alerts, and prune expired Pokémon",
+ service.includes('rememberConfirmedPreview(sorted,now);')&&
+ service.includes('recentFilterPreviews.put(filterPreviewKey()')&&
+ service.includes('resultsStale=true;')&&
+ service.includes('if(expiry>now)alive.put(card)'));
+test("Filter cache is memory-only, two minutes, and separated by mode, shiny, location and criteria",
+ service.includes('RESULT_PREVIEW_CACHE_TTL_MS=120_000L')&&
+ service.includes('locationEnabled+"|"+locationCoords+"|"')&&
+ service.includes('locationRadius+"|"+filterConfigJson()')&&
+ service.includes('now-cached.confirmedAtMs>RESULT_PREVIEW_CACHE_TTL_MS'));
+test("Next search stays on the existing 60-second safety interval",
+ service.includes('MIN_SEARCH_GAP_MS=60_000L')&&
+ service.includes('nextScheduledSearchAtMs=now+remaining*1000L+300L')&&
+ service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
+test("Countdown uses original overlay without adding toolbar icons",
+ dock.includes('header.setAttribute("data-wait"')&&
+ dock.includes('nextQueryAt=Number(nextDue)||0')&&
+ dock.includes('setInterval(updateTimers,1000)')&&
+ dock.includes('content:attr(data-wait)')&&
+ (dock.match(/<button id="(?:cycle|sh|period|manualRefresh|size|clock|bell|star|location|report|donate|close)"/g)||[]).length===12);
+
+test("Session probe executable contains all four template substitutions",
+ main.includes('.replace("__ACTION__",JSONObject.quote("session"))')&&
+ main.includes('.replace("__MODE__",JSONObject.quote("iv"))')&&
+ main.includes('.replace("__SHINY__","false")')&&
+ main.includes('.replace("__FILTERS__","{}")')&&
+ main.includes('view.evaluateJavascript(probe,raw->'));
+test("Canceled dialog does not force session refresh or discard sprites",
+ main.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow)')&&
+ main.includes('if(authenticatedNow)notifyOverlaySessionReady();')&&
+ service.includes('if(!"não confirmado".equals(auth))')&&
+ service.includes('resultsStale=count()>0;'));
+
 console.log("PokeSearch UX contract: "+count+" tests passed");

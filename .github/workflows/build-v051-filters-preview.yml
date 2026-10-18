@@ -1,0 +1,55 @@
+name: PokeSearch v0.51 filter preview APK
+on:
+  push:
+    branches:
+      - plan/v051-pogocoordinates-filtros-20261017
+    paths:
+      - 'app/**'
+      - '.github/workflows/build-v051-filters-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Android SDK platform
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Syntax and search tests
+        run: |
+          node --check app/src/main/assets/probe.js
+          node app/tests/probe-smoke.test.js
+          node app/tests/overlay-ux.test.js
+          python3 - <<'PY'
+          from pathlib import Path
+          t=Path('app/src/main/assets/dock.html').read_text()
+          Path('/tmp/pokesearch-dock-preview.js').write_text(t.split('<script>')[1].split('</script>')[0])
+          PY
+          node --check /tmp/pokesearch-dock-preview.js
+      - name: Build debug APK
+        run: gradle --no-daemon :app:assembleDebug :app:testDebugUnitTest
+      - name: Verify APK
+        run: |
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          unzip -t app/build/outputs/apk/debug/app-debug.apk > /dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          cp app/build/outputs/apk/debug/app-debug.apk PokeSearch-v0.51-Filtros-Teste.apk
+          sha256sum PokeSearch-v0.51-Filtros-Teste.apk > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-v0.51-Filtros-Teste-APK
+          path: |
+            PokeSearch-v0.51-Filtros-Teste.apk
+            SHA256SUMS.txt
+          retention-days: 30

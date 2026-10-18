@@ -302,9 +302,11 @@ public class MainActivity extends Activity {
         if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
             getWindow().getDecorView().post(this::openLoginDialog);
     }
-    private void serviceAction(String action){
+    private void serviceAction(String action){serviceAction(action,false);}
+    private void serviceAction(String action,boolean authConfirmed){
         Intent intent=new Intent(this,OverlayService.class);
         intent.setAction(action);
+        intent.putExtra("authConfirmed",authConfirmed);
         if(!OverlayService.isRunning())return;
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
     }
@@ -328,7 +330,8 @@ public class MainActivity extends Activity {
         String probe=readAsset("probe.js")
             .replace("__ACTION__",JSONObject.quote("session"))
             .replace("__MODE__",JSONObject.quote("iv"))
-            .replace("__SHINY__","false");
+            .replace("__SHINY__","false")
+            .replace("__FILTERS__","{}");
         view.evaluateJavascript(probe,raw->{
             if(view!=website||loginPageGeneration!=pageGeneration||
                loginDialog==null||!loginDialog.isShowing()||loginAutoReturnQueued)return;
@@ -525,16 +528,22 @@ public class MainActivity extends Activity {
         });
         done.setOnClickListener(v->loginDialog.dismiss());
         loginDialog.setOnDismissListener(d->{
+            boolean authenticatedNow=loginSessionNotified;
+            boolean fromOverlay=loginStartedForShiny;
             ++loginPageGeneration; // Invalidate pending WebView session probes.
             loginCover=null;
             loginWaitLabel=null;
             loginFallback=null;
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginDialog=null;
-            serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END");
-            notifyOverlaySessionReady();
+            serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
+            // Closing without a confirmed login must not reload the session.
+            if(authenticatedNow)notifyOverlaySessionReady();
             refreshSessionSummary();
-            // Return to PokeSearch Home, not a permanent standalone site screen.
+            if(authenticatedNow&&fromOverlay&&OverlayService.isRunning()){
+                // Return to Pokémon GO with the PokeSearch overlay visible.
+                getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),220L);
+            }
         });
         serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN");
         loginDialog.show();
