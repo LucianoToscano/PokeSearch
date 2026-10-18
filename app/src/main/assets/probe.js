@@ -490,7 +490,7 @@ function collect(){
   return x;
  }):[];
  const uncertain=!siteCriteria||found.some(x=>!matches(x));
- const unverifiedIv=isLeague?0:found.filter(x=>verifiedCardIv(x)?.percent===null||verifiedCardIv(x)===null).length;
+ const unverifiedIv=isLeague?0:found.filter(x=>{const evidence=verifiedCardIv(x);return !evidence||evidence.percent===null;}).length;
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
