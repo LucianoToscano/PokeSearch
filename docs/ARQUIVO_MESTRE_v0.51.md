@@ -323,3 +323,73 @@ O usuário identificou corretamente a ausência de **Sort by**. A interface do P
 ## 7. Continuidade em outro chat
 
 Antes de qualquer modificação: abrir este arquivo, conferir estado atual da branch e PR #21, preservar `main` e backups, e continuar exclusivamente em `feature/v0.51-launcher-icon-fill-20261016` (ou nova branch derivada dela). Não recomeçar do zero, não confundir ícone do launcher com ícone do resultado, não confundir PNG importado com filtro funcional. Descrever o que foi realmente implementado e o que aguarda teste físico.
+
+---
+
+## 8. Continuidade consolidada — 18/10/2026: auditoria PokéLocation e propostas de menus
+
+**Natureza:** registro DOCUMENTAL a pedido do proprietário. NÃO autoriza editar código, APK, ícones, assinatura, permissões, backend, UI em produção ou fazer merge. As seções 1–7 acima ficam preservadas como histórico. Declarações antigas como "pendente" precisam ser confrontadas com as atualizações 6.9–6.15 e o HEAD atual.
+
+### 8.1 Fontes e versão de trabalho
+
+- **Arquivo Mestre mais detalhado da v0.51:** este arquivo na branch 'plan/v051-pogocoordinates-filtros-20261017'; PR [#22](https://github.com/LucianoToscano/PokeSearch/pull/22) contra 'feature/v0.51-launcher-icon-fill-20261016' (PR #21). Ambos devem continuar em draft e SEM merge até ordem explícita.
+- **Auditoria externa PokeLocation de 18/10/2026:** [REFERENCIA_POKELOCATION_2026-10-18.md](REFERENCIA_POKELOCATION_2026-10-18.md), cópia documental nesta branch. Original preservado em [main](https://github.com/LucianoToscano/PokeSearch/blob/main/docs/REFERENCIA_POKELOCATION_2026-10-18.md).
+- **Complemento no Drive:** [PokeSearch — Complemento ao Arquivo Mestre v0.51 — Auditoria PokéLocation](https://docs.google.com/document/d/1p6gK1HueyN5DTdKQk2LsSCZvlKc1pphvzVroGpUr9nQ/edit). O APK PokéLocation está referenciado nesses documentos e é referência externa, NÃO o APK PokeSearch.
+- **Plano dos filtros PoGoCoordinates:** [PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md](PLANO_INTEGRACAO_FILTROS_POGOCOORDINATES_20261017.md). Conferir as decisões posteriores do Arquivo Mestre para evitar duplicação.
+- **HEAD de código da branch antes desta atualização documental:** fe68af33615c74649bd2b0fd265af50148aab2ad. Os commits documentais posteriores mudam o HEAD da branch, não as fontes Android. Em cada novo chat reconsultar o HEAD, PRs e arquivos reais.
+- O mestre localizado na 'main' é um resumo antigo da v0.51; não substituir este mestre expandido por ele. Manter a base restaurada e os backups de outras versões intocados.
+
+### 8.2 Estado da auditoria PL-01 a PL-12
+
+O escopo completo de cada PL consta da **auditoria**. Os IDs não serão renumerados, nem consideradas aprovadas etapas apenas porque houve código anterior relacionado. **Todas continuam AGUARDANDO APROVAÇÃO INDIVIDUAL** para a próxima alteração.
+
+| Etapa | Tema | Código/registro preexistente e checagem pendente |
+|---|---|---|
+| PL-01 P0 | Diagnóstico do contrato de busca/lookup, IV%/PvP, filtros e erros de zero | Existem 'probe.js', 'presets.js', 'OverlayService.java' e correções em 6.11–6.13. Confirmar os contratos reais, sem assumir os parâmetros do proxy PokeLocation, e cobrir cada modo com teste; esta é a **primeira etapa a apresentar para aprovação**. |
+| PL-02 P0 | Troca reativa, cancelamento de geração e resultados antigos | Já existem requestGeneration, confirmação por geração, prévia de cache até 120 s e limite global de 60 s (6.14); auditar condições de corrida e transições reais antes de editar. |
+| PL-03 P0 | Login, retorno, sessão e segurança OAuth | A variável '__FILTERS__' no diagnóstico de login, cookies e retorno automático foram corrigidos (6.15). Falta validar em aparelho, expiração e Google/Discord; nunca contornar OAuth. |
+| PL-04 P1 | Distinguir zero resultados, 401, 403, 429, timeout e rede | Mensagens curtas e relatório já existem; validar tipagem, retry seguro e ausência de mensagens enganosas. |
+| PL-05 P1 | Cache por filtro/sessão/local, sprites, catálogo/ETag | Cache temporário de resultados já existe; avaliar catálogo, sprites, vazamentos entre contas e TTL real. |
+| PL-06 P1 | Sort by e presets | Sort by integrado de forma experimental em 6.9, com opções descobertas no site; perfis salvos por nome continuam PROPOSTA. Não misturar ordenação local contraditória com a remota. |
+| PL-07 P1 | Favoritos e alertas sem repetição | Picker, WatchAlerts, sino e modos de som existem. Ainda exigir deduplicação confirmada por encontro e testes de permissões. |
+| PL-08 P2 | Histórico local opcional dos alertas | Relatório técnico não equivale a histórico de notificações navegável. Definir retenção/limpeza e pedir aprovação. |
+| PL-09 P2 | Renderização incremental, temporizador e uso de recursos | Timer e janelas independentes já existem; medir CPU/RAM e não refazer desnecessariamente os sprites a cada segundo. |
+| PL-10 P2 | Diagnóstico privado | ⚠, relatório TXT e envio voluntário já existem; examinar sanitização para dados sensíveis em todos os caminhos. |
+| PL-11 P2 | Android 15/16, permissões/App Links e release | Não alterar SDK/assinaturas sem análise; testar instalação, serviços exportados, overlay e certificado persistente. |
+| PL-12 P3 | Avaliação eventual de backend próprio | Somente estudo após confirmação de necessidade; não introduzir servidor externo, credenciais compartilhadas ou tokens de terceiros. |
+
+**Regras da auditoria:** app externo Android AGPL-3.0-only, servidor MIT; não copiar código sem revisar licença. Não trazer GPS falso, joystick, clonador, chat, permissões especiais, credenciais/tokens, endpoints do proxy de terceiros ou frequência agressiva. A política atual do PokeSearch é consulta global mínima de 60 segundos. O contrato do proxy PokéLocation NÃO comprova o contrato público PoGoCoordinates.
+
+## 9. Backlog UX separado: ideias das capturas de 18/10/2026
+
+**Status de TODOS os itens abaixo: PROPOSTO / AGUARDANDO APROVAÇÃO.** Capturas de outro menu ou versão são referências, não evidência de que a branch atual já tenha esses recursos. Implementar uma melhoria por vez, somente após confirmação.
+
+**Preservação obrigatória:** barra de 12 ações original, engrenagem arrastável, estética compacta/transparente, 18 PNGs oficiais (9 famílias normal/shiny, e NÃO 18 modos funcionais), janelas de menu e resultados independentes, busca única com máximo 10 sprites, P/M/G, timers, arraste/colapso, detalhes por toque, copiar coordenadas por toque longo, login, auto refresh, favoritos, alertas, Pix, report, localização 0–1000 km. Shiny continua verificado pelo site; IV% só nas 46 porcentagens válidas; GL/UL mantêm seus rankings 1–50 independentemente de IV%.
+
+| ID | Prioridade | Proposta e escopo | Dependência / critérios de aceitação | Situação |
+|---|---|---|---|---|
+| UX-01 | P1 | Melhorar a organização de **Modos** (Raw IV, IV%, GL, UL, botão ✨ próximo do título), **Sort by**, **Filtros gerais** e **Filtros avançados** recolhíveis, sem acrescentar botão permanente. | Já parcialmente implementado em dock.html (6.9). Garantir menus compactos, teclado, foco, Aplicar/Cancelar, rolagem e opção real verificada no site. PL-01/PL-06. | Parcial existente; melhoria proposta |
+| UX-02 | P1 | **Aparência**: controle de transparência/fundo, espaçamento, altura do menu, P/M/G; estudar orientação horizontal/vertical para menu e sprites, e legendas só ícones / ícone+texto. | P/M/G já existe nas preferências. Padrão permanece o layout original; configurações persistidas, nenhuma área de toque bloqueada ou painel grande imposto. | Novo/parte existente |
+| UX-03 | P1 | **Visibilidade dos Pokémon**: toggles de contagem, despawn, nível, PC, IV A/D/S e rank GL/UL; modo compacto vs completo. | Timer já existe. Mostrar apenas dados reais confirmados; não inventar rank individual quando só Top N foi confirmado. Manter lista de até 10, sem afastar sprites. | Novo/parte existente |
+| UX-04 | P2 | **Duas pesquisas separadas opcionais**: Pesquisa 1 obrigatória, Pesquisa 2 OFF por padrão; modos/filtros/shiny/ícone/posição/colapso/resultados confirmados próprios. | Consultas sequenciais e limite **global** de 60 s, isolamento por geração/contexto; não misturar IV100 com IVs divergentes, resultados velhos e alertas. Não aumentar automaticamente o limite de 10 por pesquisa sem autorização adicional. Somente após PL-01/PL-02/PL-05 e aprovação própria. | Novo, não implementado |
+| UX-05 | P2 | **Favoritos e alertas mais intuitivos**: picker por nome/Pokédex, estrela, modos Som/Silencioso/OFF e testar notificação no menu adequado. | Picker por nome/número, WatchAlerts e teste de notificação nas preferências já existem. Melhorar apenas UX sem duplicar mecanismos; deduplicação técnica fica em PL-07. | Em grande parte existente; reorganização proposta |
+| UX-06 | P2 | **Info/diagnóstico compacto** sob demanda: sessão confirmada, filtros realmente aplicados, última consulta, cooldown, contagem de resultados, erros e indicador de prévia antiga. | Aproveitar status existente e PL-04/PL-10; privacidade: sem tokens, contas, cookies ou coordenadas pessoais. Não criar painel permanente no jogo. | Novo/parte existente |
+| UX-07 | P2 | Polimento de **Atualização e Localização**: preservar AUTO OFF/5/10/15/20 + manual; avaliar opção 3 min das imagens, apenas após aprovação; ON/OFF e raio 0–1000 km, separar ações **ocultar/desligar/limpar** coordenadas. | Controles já existem; piso de 60 s não muda, não criar botões duplicados, evitar perder dados ao fechar um popup. | Controles existentes; polimento proposto |
+| UX-08 | P2 | **Perfis rápidos/presets** de busca como IV100, GL Top 1 e Shiny IV100, persistentes e nomeáveis. | Extensão da PL-06, não um novo modo/endpoint. Ao alternar perfis, aguardar prova da nova geração e não atribuir cache de outra pesquisa ao filtro atual. | Novo, dependente de PL-06 |
+
+### 9.1 Atenção a regressões sugeridas pelas imagens
+
+- Uma captura mostra cabeçalho **IV100** com Pokémon contendo IVs 4/4/11, 2/14/2 e 0/13/13. Isso é **risco a investigar** quanto à associação de busca, cabeçalho e resultados, não prova isolada de defeito no HEAD atual. Registrar casos de teste PL-01/PL-02: IV100 confirmado não pode rotular esses Pokémon como 100%; prévia antiga deve trazer seu modo original e indicação de desatualizado.
+- Na branch examinada, há **quatro linhas de busca reais** (Raw IV, IV%, GL, UL); 18 imagens correspondem a nove famílias visuais com e sem shiny. Não habilitar modos Mestre/Copa/Sem filtro apenas porque seus PNGs existem.
+- O menu maior e vertical das imagens não substitui a barra original: pode inspirar uma visualização alternativa nas preferências, somente se aprovada e com tamanho/posição seguros.
+
+## 10. Protocolo de aprovação e início de outro chat
+
+1. **Reler** este mestre, a auditoria PL e o plano de filtros; conferir branch, HEAD atual, PR #21/#22, arquivos e estado real. Não misturar PvPPokeGo nem branches v0.52–v0.56 descartadas.
+2. **Apresentar apenas a PL-01**, com diagnóstico proposto do contrato real de filtros, código existente, arquivos precisos ('probe.js', 'presets.js', 'OverlayService.java' e testes), riscos, preservações e critérios de sucesso. **Aguardar autorização explícita antes da primeira alteração de código.**
+3. Executar cada etapa aprovada em branch isolada; jamais modificar 'main', ícones oficiais, UX original, backend, autenticação, fluxos e assinaturas fora do escopo aprovado.
+4. Antes de marcar progresso, validar testes estáticos/unitários e, onde aplicável, APK no Android e sessão real; CI/mocks não equivalem a teste físico. Gerar APK somente mediante pedido/autorização expressa. Registrar hashes, branch, arquivos e resultados.
+5. Estados separados: **PROPOSTO → APROVADO → IMPLEMENTADO EM BRANCH → TESTADO EM APARELHO → ACEITO → MERGE AUTORIZADO**. Nenhum item PL/UX passa de estado sem evidência/confirmacão correspondente.
+6. Após cada etapa, registrar o resultado aqui, pedir aceitação e solicitar confirmação separada antes de avançar. A PL-02 não começa automaticamente ao finalizar PL-01.
+
+**Saída de 18/10/2026:** apenas documentação consolidada. **PL-01 ainda AGUARDANDO APROVAÇÃO**, PL-02 a PL-12 e UX-01 a UX-08 também. Nenhuma mudança de código, UX efetiva, PNG, AndroidManifest, APK, workflow de build ou 'main' autorizada neste registro.
