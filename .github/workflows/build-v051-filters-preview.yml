@@ -8,19 +8,10 @@ on:
       - 'app/**'
       - '.github/workflows/build-v051-filters-preview.yml'
   workflow_dispatch:
-  # One-time, owner-approved APK build for PR 27. Retry after javac field-order fix. REMOVE after run.
-  pull_request:
-    types: [synchronize]
-    branches:
-      - fix/ux-icon-layout-overlay-20261018
-    paths:
-      - '.github/workflows/build-v051-filters-preview.yml'
 permissions:
   contents: read
 jobs:
   build:
-    # Never expose signing material to unrelated PRs or forked pull requests.
-    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.number == 27 && github.event.pull_request.head.ref == 'fix/ps009-stable-test-signing-20261018' && github.event.pull_request.head.repo.full_name == 'LucianoToscano/PokeSearch' && github.event.pull_request.base.ref == 'fix/ux-icon-layout-overlay-20261018') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     # Fail closed: no downloadable APK from an ephemeral debug key.
