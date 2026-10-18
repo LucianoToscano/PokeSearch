@@ -41,6 +41,8 @@ check("publish only a signed and verified APK", () => {
 });
 check("actual APK package, code and name are inspected before publication", () => {
   assert.ok(workflow.includes('aapt" dump badging "$APK"'));
+  assert.ok(workflow.includes("grep '^package: '"));
+  assert.ok(!workflow.includes("grep -m1 '^package: '"));
   assert.ok(workflow.includes('"name=\'com.lucianotoscano.pokesearch\'"'));
   assert.ok(workflow.includes('"versionCode=\'${EXPECTED_CODE}\'"'));
   assert.ok(workflow.includes('"versionName=\'0.51-beta.test.${EXPECTED_CODE}\'"'));
