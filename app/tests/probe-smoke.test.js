@@ -37,7 +37,11 @@ function run(action,mode,shinyOnly,opts={}){
   }
   if(opts.iv!==undefined){
     const lab=element("IV");
-    const fields=opts.iv.map((v,i)=>element("",{name:(opts.ivNames||[])[i]||""}, {tagName:"INPUT",value:v}));
+    const fields=opts.ivFields&&opts.ivFields.length===opts.iv.length?opts.ivFields:
+      opts.iv.map((v,i)=>element("",{
+        name:(opts.ivNames||[])[i]||"",placeholder:(opts.ivPlaceholders||[])[i]||"",
+        id:(opts.ivIds||[])[i]||"","aria-label":(opts.ivAria||[])[i]||""
+      }, {tagName:"INPUT",value:v}));
     opts.ivFields=fields;
     const parent=element();
     parent.querySelectorAll=selector=>selector.includes("input:not")?fields:[];
@@ -127,6 +131,16 @@ function run(action,mode,shinyOnly,opts={}){
   Object.defineProperty(HTMLTextAreaElement.prototype,"value",{set(v){this.value=String(v);}});
   class Event{constructor(type){this.type=type;}}
   return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:"/search",hostname:"pogocoordinates.com"},window:{},HTMLInputElement,HTMLTextAreaElement,Event}));
+}
+function configureSettled(mode,opts,max=14){
+ let last=null,waits=0;
+ for(let i=0;i<max;i++){
+  last=run("configureSearch",mode,false,opts);
+  if(last.configured)return {result:last,waits};
+  assert.equal(last.pending,true,"React form not ready should request retry");
+  waits++;
+ }
+ return {result:last,waits};
 }
 let checked=0;
 function test(name,action,mode,shiny,options,predicate){
@@ -373,25 +387,25 @@ assert.equal(beforeRaw.configured,false,"Raw 0/0/0 must wait for the Raw IV tab"
 assert.equal(beforeRaw.pending,true,"New tab must schedule a retry rather than fail forever");
 assert.equal(rawTabs.sub,"Raw IV","The desired Raw IV tab is requested");
 lateRaw.iv=["15","15","15"]; // The site now mounts Raw fields on the next rendering pass.
-const appliedZero=run("configureSearch","raw",false,lateRaw);
-assert.equal(appliedZero.configured,true,"Raw 0/0/0 is actually applied after React settles");
+const appliedZero=configureSettled("raw",lateRaw);
+assert.equal(appliedZero.result.configured,true,"Raw 0/0/0 is actually applied after React settles");
 assert.deepEqual(lateRaw.ivFields.map(x=>x.value),["0","0","0"]);
 checked+=2;
 const hundoOpts={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0"],config:{attack:15,defense:15,stamina:15}};
-const appliedHundo=run("configureSearch","raw",false,hundoOpts);
-assert.equal(appliedHundo.configured,true,"Raw 15/15/15 must update actual site fields");
+const appliedHundo=configureSettled("raw",hundoOpts);
+assert.equal(appliedHundo.result.configured,true,"Raw 15/15/15 must update actual site fields");
 assert.deepEqual(hundoOpts.ivFields.map(x=>x.value),["15","15","15"]);
 checked++;
 const customOpts={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0"],config:{attack:3,defense:15,stamina:12}};
-const appliedCustom=run("configureSearch","raw",false,customOpts);
-assert.equal(appliedCustom.configured,true,"Mixed Raw 3/15/12 must be applied");
+const appliedCustom=configureSettled("raw",customOpts);
+assert.equal(appliedCustom.result.configured,true,"Mixed Raw 3/15/12 must be applied");
 assert.deepEqual(customOpts.ivFields.map(x=>x.value),["3","15","12"]);
 checked++;
 const sixOpts={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0","0","0","0"],
  ivNames:["defense-min","attack-max","stamina-min","attack-min","stamina-max","defense-max"],
  config:{attack:3,defense:15,stamina:12}};
-const sixResponse=run("configureSearch","raw",false,sixOpts);
-assert.equal(sixResponse.configured,true,"Six Raw min/max fields use identified stat names");
+const sixResponse=configureSettled("raw",sixOpts);
+assert.equal(sixResponse.result.configured,true,"Six Raw min/max fields use identified stat names");
 assert.deepEqual(sixOpts.ivFields.map(x=>x.value),["15","3","12","3","12","15"]);
 checked++;
 const unknownSix={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0","0","0","0"],
@@ -406,8 +420,8 @@ const pctWaiting=run("configureSearch","percent",false,pctOpts);
 assert.equal(pctWaiting.configured,false,"Percent mode must wait for the % IV tab");
 assert.equal(pctWaiting.pending,true,"Percent tab hydration requests another attempt");
 pctOpts.iv=["0","100"];
-const pctReady=run("configureSearch","percent",false,pctOpts);
-assert.equal(pctReady.configured,true,"91–100% values applied only once the form exists");
+const pctReady=configureSettled("percent",pctOpts);
+assert.equal(pctReady.result.configured,true,"91–100% values applied only once the form exists");
 assert.deepEqual(pctOpts.ivFields.map(x=>x.value),["91","100"]);
 checked+=2;
 const invalidPct={tabs:{top:"Stats",sub:"% IV"},iv:["0","100"],config:{percentMin:90,percentMax:100}};
@@ -418,15 +432,57 @@ checked++;
 for(const [value,fields] of [[0,["100","100"]],[100,["0","0"]]]){
  const pctCase={tabs:{top:"Stats",sub:"% IV"},iv:fields,
    config:{percentMin:value,percentMax:value}};
- const pctApplied=run("configureSearch","percent",false,pctCase);
- assert.equal(pctApplied.configured,true,"Exact IV% "+value+"–"+value+" must apply");
+ const pctApplied=configureSettled("percent",pctCase);
+ assert.equal(pctApplied.result.configured,true,"Exact IV% "+value+"–"+value+" must apply");
  assert.deepEqual(pctCase.ivFields.map(x=>x.value),[String(value),String(value)]);
  checked++;
 }
 const equalSix={tabs:{top:"Stats",sub:"Raw IV"},iv:["15","15","15","15","15","15"],
  config:{attack:0,defense:0,stamina:0}};
-const zeroSix=run("configureSearch","raw",false,equalSix);
-assert.equal(zeroSix.configured,true,"Six indistinguishable fields can safely apply the equal 0/0/0 triple");
+const zeroSix=configureSettled("raw",equalSix);
+assert.equal(zeroSix.result.configured,true,"Six indistinguishable fields can safely apply the equal 0/0/0 triple");
 assert.deepEqual(equalSix.ivFields.map(x=>x.value),["0","0","0","0","0","0"]);
+checked++;
+// The real PoGoCoordinates form in the screenshots shows three A/D/S inputs.
+for(const [triple,site] of [
+  [[0,15,15],["","",""]],
+  [[3,15,12],["0","0","0"]],
+  [[0,0,0],["15","15","15"]],
+  [[15,15,15],["0","0","0"]]
+]){
+ const opts={tabs:{top:"Stats",sub:"Raw IV"},iv:site,
+  ivPlaceholders:["A","D","S"],
+  config:{attack:triple[0],defense:triple[1],stamina:triple[2]}};
+ const result=configureSettled("raw",opts);
+ assert.equal(result.result.configured,true,"Screenshot A/D/S triple must be configured");
+ assert.deepEqual(opts.ivFields.map(x=>x.value),triple.map(String));
+ assert.equal(run("verifyFilters","raw",false,opts).ok,true,"Site must retain exact IVs");
+ assert.ok(result.waits>=2,"React fields must commit through distinct JS rounds");
+ checked++;
+}
+const blankZero={iv:["","",""],config:{attack:0,defense:0,stamina:0}};
+assert.equal(run("verifyFilters","raw",false,blankZero).ok,false,
+ "Blank Raw input must never be mistaken for IV 0");
+assert.equal(configureSettled("raw",blankZero).result.configured,true);
+assert.deepEqual(blankZero.ivFields.map(x=>x.value),["0","0","0"]);
+assert.equal(run("verifyFilters","raw",false,blankZero).ok,true);
+checked++;
+const reordered={tabs:{top:"Stats",sub:"Raw IV"},iv:["","",""],
+ ivPlaceholders:["D","A","S"],config:{attack:0,defense:15,stamina:12}};
+assert.equal(configureSettled("raw",reordered).result.configured,true);
+assert.deepEqual(reordered.ivFields.map(x=>x.value),["15","0","12"]);
+checked++;
+const ambiguous={tabs:{top:"Stats",sub:"Raw IV"},iv:["","",""],
+ ivPlaceholders:["A","","S"],config:{attack:0,defense:15,stamina:12}};
+assert.equal(run("configureSearch","raw",false,ambiguous).configured,false,
+ "Partially identified fields must not be guessed");
+assert.deepEqual(ambiguous.ivFields.map(x=>x.value),["","",""]);
+checked++;
+const percentEmpty={tabs:{top:"Stats",sub:"% IV"},iv:["",""],
+ config:{percentMin:0,percentMax:100}};
+assert.equal(run("verifyFilters","percent",false,percentEmpty).ok,false,
+ "Blank percent minimum must not count as 0");
+assert.equal(configureSettled("percent",percentEmpty).result.configured,true);
+assert.equal(run("verifyFilters","percent",false,percentEmpty).ok,true);
 checked++;
 console.log("PokeSearch probe contract: "+checked+" tests passed");
