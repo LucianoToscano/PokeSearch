@@ -190,6 +190,9 @@ body.result-window #resultHeader{width:35px;height:30px;display:flex;
 body.result-window #resultHeader img{display:block;width:21px;height:21px;
  object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 1px #0007)}
 body.result-window #resultHeader:focus-visible{outline:1px solid #fff8}
+body.result-window #resultHeader[data-wait]{position:relative}
+body.result-window #resultHeader[data-wait]::before{content:attr(data-wait);position:absolute;bottom:-2px;
+ font-size:8px;font-weight:700;color:#ebd69d;text-shadow:0 1px 2px #000;pointer-events:none}
 body.result-window #spawns{margin:0!important;max-height:var(--list-limit);
  width:var(--dock);padding:0;gap:0}
 body.result-window #empty{margin:0 auto;max-height:18px}
@@ -278,7 +281,7 @@ let filterOptions={},generalExpanded=false,advancedExpanded=false;
 // Math.round(total / 45 * 100) produces exactly 46 possible shown percentages.
 const IV_PERCENT_VALUES=Object.freeze([0,2,4,7,9,11,13,16,18,20,22,24,27,29,31,33,36,38,40,42,44,47,49,51,53,56,58,60,62,64,67,69,71,73,76,78,80,82,84,87,89,91,93,96,98,100]);
 let modeDraft=null,modeScrollTop=0;
-let shownMode="raw",shownShiny=false,shownSettings={...searchSettings},resultsStale=false;
+let shownMode="raw",shownShiny=false,shownSettings={...searchSettings},resultsStale=false,nextQueryAt=0;
 function specialIVLabel(selectedMode,settings){
  if(selectedMode==="raw"){
   const {attack,defense,stamina}=settings;
@@ -705,7 +708,9 @@ function draw(){
  }
  const empty=document.getElementById("empty");
  empty.style.display=cards.length?"none":"block";
- empty.textContent=/sem resultados/i.test(status)?"0":/falha|erro|não|login/i.test(status)?"!":"…";
+ const waiting=nextQueryAt>Date.now();
+ empty.textContent=waiting?Math.ceil((nextQueryAt-Date.now())/1000)+"s":
+    /sem resultados/i.test(status)?"0":/falha|erro|não|login/i.test(status)?"!":"…";
  empty.title=status||"Aguardando busca";
  if(resultWindow){
   // Only show a Shiny badge after the site confirms that Shiny-only is active.
@@ -722,7 +727,10 @@ function draw(){
   const label=(hasHistory&&resultsStale?"⚠ Resultados anteriores · ":"")+selectedIcon.title+
       ((iconMode==="gl"||iconMode==="ul")?" · PvP top "+(iconMode==="gl"?iconSettings.glRank:iconSettings.ulRank):"")+
       (!hasHistory&&shinyPending?" · Shiny aguardando confirmação":"");
-  header.title=label+" · toque para recolher/expandir · arraste para mover";
+  header.title=label+(waiting?" · próxima consulta em "+Math.ceil((nextQueryAt-Date.now())/1000)+"s":"")+
+       " · toque para recolher/expandir · arraste para mover";
+   if(waiting)header.setAttribute("data-wait",Math.ceil((nextQueryAt-Date.now())/1000)+"s");
+   else header.removeAttribute("data-wait");
   header.setAttribute("aria-label",header.title);
  }
  document.getElementById("gear").title=menuOpen?"Recolher menu · arrastar para mover":status?("Abrir menu · "+status):"Abrir menu · arrastar para mover";
@@ -730,6 +738,16 @@ function draw(){
  fit();
 }
 function updateTimers(){
+ if(resultWindow&&nextQueryAt>Date.now()){
+   const seconds=Math.max(1,Math.ceil((nextQueryAt-Date.now())/1000));
+   const waitingLabel=seconds+"s",header=document.getElementById("resultHeader");
+   header.setAttribute("data-wait",waitingLabel);
+   const empty=document.getElementById("empty");
+   if(!cards.length)empty.textContent=waitingLabel;
+ }else if(resultWindow&&nextQueryAt!==0){
+   nextQueryAt=0;document.getElementById("resultHeader").removeAttribute("data-wait");
+   if(!cards.length)document.getElementById("empty").textContent="…";
+ }
  document.querySelectorAll(".timer").forEach(e=>{
   const deadline=Number(e.dataset.deadline),seconds=Math.max(0,Math.ceil((deadline-Date.now())/1000));
   e.textContent=Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");
@@ -737,7 +755,7 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
@@ -746,6 +764,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  if(resultSourceConfig&&typeof resultSourceConfig==="object")
   shownSettings={...searchSettings,...resultSourceConfig};
  shownShiny=!!resultSourceShiny;resultsStale=!!stale;
+ nextQueryAt=Number(nextDue)||0;
  mode=m==="iv"?"raw":m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  if(active>=cards.length)active=-1;
  draw();
