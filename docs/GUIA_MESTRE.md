@@ -1143,3 +1143,4 @@ São faixas expressas apenas pelos 46 percentuais matematicamente possíveis par
 
 **Próximo passo:** corrigir os contratos/verificações acima em escopo de código autorizado, sem trocar a chave já criada; então aguardar pedido explícito de APK. O único arquivo versionado alterado nesta retomada é este Guia; o commit documental fica no histórico do PR #27. Main, PRs #21–#26, backups e PvPPokeGo intocados.
 
+**Commit documental desta execução:** `ecd1bf86761110437de0fb2459741cd64a204cd9` registrou a seção 12.24; checkpoint posterior somente documental registra este SHA e normaliza o fim do arquivo. Nenhum arquivo executável foi alterado.
