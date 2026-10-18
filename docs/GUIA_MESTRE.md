@@ -1316,3 +1316,78 @@ São faixas expressas apenas pelos 46 percentuais matematicamente possíveis par
 
 **Homologação indispensável:** após autorização expressa para gerar APK com **mesma keystore permanente e versionCode maior**, instalar por cima da 51037; escolher 0/15/15, 3/15/12, 0/0/0, 15/15/15 e IV% 0–0 / 91–100; comprovar que o PoGoCoordinates recebeu os valores A/D/S e o Search foi realmente enviado (não apenas visualmente preenchido); observar resultados, ausência de false alerts, GL/UL, Shiny, sessão e limites de consulta. Solicitar relato sanitizado via botão ⚠ se houver falha persistente, sem capturar tokens ou dados pessoais. PR #27 continua draft, sem merge; PL-02 da seção 12.31 segue não compilada no APK anterior. **Estado: IMPLEMENTADO EM BRANCH / TESTES V8 APROVADOS / AGUARDANDO APK E TESTE EM APARELHO.**
 
+### 12.34 CHECKPOINT DE NOVO CHAT — roadmap integral, pendências, ordem e estado real (18/10/2026)
+
+**Decisão do proprietário:** pediu “Registre tudo e vamos começar um novo chat. Me envie o prompt pequeno para o novo chat.” Esta seção é o **resumo operacional mais recente** e prevalece sobre estados históricos divergentes nas seções 6–11, sem apagar/reescrever histórico. É documentação de continuidade, **não autorização para executar nova PL/PSC/UX, compilar ou mesclar**.
+
+**Repositório/estado a retomar:**
+- Projeto exclusivamente **PokeSearch**, `LucianoToscano/PokeSearch`; **NÃO misturar com PvPPokeGo**. Um só guia oficial: `docs/GUIA_MESTRE.md` (sem sufixo de versão). PR #27 `https://github.com/LucianoToscano/PokeSearch/pull/27`, branch `fix/ps009-stable-test-signing-20261018`, base `fix/ux-icon-layout-overlay-20261018` (PR #26), ainda **OPEN / DRAFT / NÃO MERGED** na verificação. HEAD **antes deste registro documental**: `99de8168fc905ddfb99e45356ece0be1213f2fb9`. Conferir o novo SHA via GitHub no chat seguinte; não usar o SHA anterior como HEAD vigente. Nunca alterar `main` nem PRs anteriores sem aprovação.
+- **Último APK efetivamente gerado e entregue:** `0.51-beta.test.51037`, GitHub Actions run `39171419994` (success), artifact `12151818920`, mesma keystore permanente PKCS12 alias `pokesearch_test`, certificado SHA-256 público `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. SHA-256 do APK `da90d9aa89123cc38ad5da167862c6b2b71ca2da95c61c2d2ae1168653ca4074`. **Esse APK NÃO contém as mudanças de PL-02 (12.31) nem o preenchimento sequencial de Raw IV (12.33)**. Não apresentar esse APK como build atual nem reciclar link de outra conversa.
+- Código da branch mais recente: PL-01/PSC-02 (validação de IV/rank não inventados) parcial implementada; PL-02 (gerações de busca, fila de atualizações, WebView, debounce, timeout) implementada em branch e **não compilada**; correção Raw IV baseada nas capturas do formulário real A/D/S (12.33) implementada em branch e **não compilada**. V8 em memória com shims: `probe-smoke.test.js` **92/92**, `overlay-ux.test.js` **254/254**, total **346 contratos simulados**. Não equivale a CI/Gradle/PoGoCoordinates autenticado/teste físico. 18 PNGs históricos, cinco artes-base vigentes, 12 controles, overlay compacto, limite de 10 spawns, ✨ separado do IV, janelas independentes, login, favoritos e notificações preservados. Nada foi compilado nem modificado em código nesta solicitação de documentação.
+- Workflow GitHub de APK tem assinatura fixa configurada e valida package name/versionCode/v2/fingerprint; o gatilho temporário de PR usado para build anterior **foi removido**. Política: **compilar apenas mediante pedido expresso**, preservando certificado e elevando versionCode; verificar .apk real/sha antes de informar download; testar instalação sobre o 51037 sem desinstalar para preservar dados/sessão quando válida. Nunca inserir chave/senha/cookie/token no guia/chat/repo.
+- Próximo passo mais importante: **a pedido do proprietário, gerar APK atualizado e HOMOLOGAR no aparelho**, com conta/sessão legítima no PoGoCoordinates: Raw IV 0/15/15, 3/15/12, 0/0/0, 15/15/15 e outros A/D/S 0–15; % IV 0–0, 91–100, 100–100 (46 porcentagens válidas); GL/UL Top 1/10/50, brilho Shiny e login; selecionar rapidamente, tocar ↻ durante busca, checar resultados com origem/prova correta, nenhum falso alerta nem cache stale confundido, ausência de travamentos; 401/403/429/timeout e limites da origem; conferir atualização sem novo OAuth salvo expiração pelo servidor. Documentar evidências reais e corrigir problemas comprovados antes de recursos novos. Sem compilar só porque este roadmap é lido.
+
+**PL — backlog técnico integral (IDs e prioridades antigos preservados, situação mais recente no código):**
+
+| ID | Pri. | Escopo resumido | Estado de continuidade |
+|---|---|---|---|
+| PL-01 | P0 | Formulários e contrato de busca: Raw IV, %, GL/UL, prova individual, zero real versus falso, opcionais | **PARCIAL EM BRANCH** (PSC-02 e Raw A/D/S tratados); integração real precisa aceite |
+| PL-02 | P0 | Troca reativa, requestGeneration, navegação WebView, debounce, consulta em andamento, callbacks antigos e timeout | **IMPLEMENTADA EM BRANCH, NÃO COMPILADA** |
+| PL-03 | P0 | OAuth Google/Discord, vínculo da conta GO, retorno ao overlay, persistência segura dos cookies/sessão | **PARCIAL**, implementação existente; atualização/teste Android pendente |
+| PL-04 | P1 | Estados distinguíveis: nenhum Pokémon, 401/403, 429, 5xx, timeout, offline, retry seguro | **PENDENTE** de auditoria/implementação adicional |
+| PL-05 | P1 | Cache isolado por filtro/conta/localização, expiração, catálogo/sprites/ETag | **PARCIAL**, cache prévio de 8 contextos/TTL 120 s; restante proposto |
+| PL-06 | P1 | `Sort by` real confirmado e presets locais persistentes | **PARCIAL**, Sort by experimental; presets pendentes |
+| PL-07 | P1 | Favoritos, alertas e deduplicação por ocorrência, prova de IV/rank, canais e sons | **PARCIAL**, precisa critérios/QA |
+| PL-08 | P2 | Histórico local opcional de alertas com retenção/limpeza | **PENDENTE** |
+| PL-09 | P2 | Renderização e timers eficientes, bateria/CPU/RAM, sprites e janelas | **PARCIAL**, exige medidas físicas |
+| PL-10 | P2 | Diagnóstico local sanitizado, bug report sem credenciais e exportação segura | **PARCIAL**, sanitizador existente; auditoria pendente |
+| PL-11 | P2 | Android 15/16, permissões, App Links, serviços, instalação/assinatura/testes | **PARCIAL**, PS-009 assinado; QA pendente |
+| PL-12 | P3 | Avaliar eventual backend próprio, sem implementar sem necessidade e aprovação | **SOMENTE ESTUDO FUTURO** |
+
+**PSC — backlog de segurança/consistência do contrato PoGoCoordinates (subitens vinculados a PL, não renumerar):**
+
+| ID | Pri. | Verificação/correção | Estado |
+|---|---|---|---|
+| PSC-01 | P0 | Multiseleção tipada e confiável de espécie/forma/Size em listas | PENDENTE |
+| PSC-02 | P0 | Bloquear resultados/alertas de Hundo, Nundo, IV% e PvP não comprovados | IMPLEMENTADO EM CÓDIGO / TESTE REAL PENDENTE |
+| PSC-03 | P0 | Formulário React opcional, seleção/limpeza neutra sem `⚠ Filtro: pokemon` | PARCIAL / PRÓXIMA CORREÇÃO PROPOSTA |
+| PSC-04 | P0 | Catálogo de espécies/variantes pesquisável por ID com identidade única | PENDENTE |
+| PSC-05 | P0 | Associar `Get coords` à ocorrência certa; revelar/confirmar antes de copiar | PARCIAL / QA PENDENTE |
+| PSC-06 | P0 | Isolar geração/cache por modo, IV, shiny, localização e sessão; nunca notificar stale | PARCIAL, PL-02 EM BRANCH |
+| PSC-07 | P1 | Sort by só se leitura do formulário comprovar opção; não inventar ordenação | PENDENTE |
+| PSC-08 | P1 | Weather, Size, Form e **Background 🌄** apenas conforme capacidade real/evento/plano do site | PARCIAL / BACKGROUND PROPOSTO |
+| PSC-09 | P1 | Diferenciar rank individual observado de `Top N` verificado e pré-evoluções | PARCIAL / QA PENDENTE |
+| PSC-10 | P1 | OAuth, conta vinculada, cookies, expirou/relógou, sessão cruzada | PARCIAL / QA PENDENTE |
+| PSC-11 | P1 | Tipar erro/status: configuring, queued, searching, empty, stale, auth/429/error | PENDENTE |
+| PSC-12 | P2 | Catálogo/sprite por dex+forma+traje, cache/licença/proveniência | PENDENTE |
+| PSC-13 | P2 | Exportação/importação de perfis de filtros com esquema próprio, validação e migração | PENDENTE |
+| PSC-14 | P3 | Estudo de módulo de mapa opcional, sem assumir API pública nem criar backend | ESTUDO FUTURO |
+
+**UX — backlog de interface e experiência (sem remover design original):**
+
+| ID | Pri. | Melhorias | Estado |
+|---|---|---|---|
+| UX-01 | P1 | Reorganização compacta de Modos/Sort by/filtros gerais/avançados; ✨ em destaque sem adicionar botões fixos | PARCIAL / RESTANTE PENDENTE |
+| UX-02 | P1 | Transparência, espaçamento, layout, tamanho P/M/G e preferências de aparência | PARCIAL / RESTANTE PENDENTE |
+| UX-03 | P1 | Mostrar/ocultar PC, nível, IV A/D/S, IV%, rank, despawn por preferência; OFF por padrão | PENDENTE |
+| UX-04 | P2 | **Até duas pesquisas independentes**, segunda OFF por padrão, filtro/shiny/resultados próprios, cooldown **global** | PENDENTE, após PL-01/02/05 e aprovação |
+| UX-05 | P2 | Melhorar favoritos/canais/sons e escolher regra A (favoritos nos filtros atuais), B (IV100/rank #1 provados) ou ambas independentes | PARCIAL; DECISÃO A/B PENDENTE |
+| UX-06 | P2 | Painel informativo sob demanda (login, filtro efetivo, última consulta, causa de erro/stale) | PENDENTE |
+| UX-07 | P2 | AUTO e localização: esconder ≠ desligar ≠ limpar, intervalos e raio 0–1000 km | PARCIAL |
+| UX-08 | P2 | Perfis rápidos nomeados, favoritos de pesquisa Hundo/GL#1/Shiny etc., persistentes | PENDENTE, PL-06 |
+
+**Bugs históricos PS-001…PS-080:** tabela da seção 11.7 reúne **66 registros** não contíguos; seus status datados (“corrigido no código”, “CI verde”) são marcos históricos, não 66 erros confirmados neste HEAD. Agrupamentos a inspecionar no teste físico: IV/shiny (PS-001/004/011/013–016/032/033/050), login/OAuth (PS-002/003/017/049/060–063/076), menus/drag/UI (PS-012/019/021/022/034/036/038–040/043/054–059/064/079), refresh/latência (PS-005/020/041/042/047/048/052), localização/coords (PS-031/035/037/044–046/078), favoritos/permissões (PS-008/010/018/070/075), relatórios (PS-006/007/051/053/071–074/080), assinatura/upgrade (PS-009). Ver detalhes e testes pendentes no quadro original; **não reiniciar do zero nem reabrir regressões já demonstradas sem razão**.
+
+**Sequência acordada como recomendação, não aprovação automática:**
+1. Gerar APK novo **somente se solicitado** e homologar PL-01/PL-02/PSC-02 + Raw A/D/S 0/15/15 no PoGoCoordinates real; corrigir regressões caso observadas; upgrade com keystore fixa e preservação de dados.
+2. **Próxima correção de código sugerida:** **PSC-03 + PL-04**, assegurando opcionais React, limpeza de valores e erros significativos, depois do aceite do pacote anterior.
+3. **Completar filtros:** PSC-01/04/08 + PL-06/PSC-07, incluindo multiseleção, `Sort by`, `Background` quando houver, Weather/Size/Form, com confirmação real e respeito ao plano da conta; não inventar suporte ou burlar VIP.
+4. **Alertas confiáveis:** PL-07 + UX-05 + PSC-09/05: regra favorita A/B definida pelo proprietário, dedupe por encontro, privacidade/localização exata, canais e som.
+5. **Visual e dual-search:** UX-03, UX-01/02/06/07, depois UX-04 (até duas abas, off padrão, serialização global), UX-08/presets em estágio posterior.
+6. **Infraestrutura/reliability:** PL-03/05/08/09/10/11, PSC-10/11/12/13 e testes Android 15/16; backend PL-12 e mapa PSC-14 somente em estudo autorizado.
+
+**Não esquecer:** 12 controles originais, até 10 spawns por lista, 18 PNGs históricos/5 bases, IV% somente nas 46 possibilidades, Raw A/D/S 0–15, GL/UL Top 1–50 independentes, ✨ não muda cor IV, ícone stale removido mas provenance mantida, resultados textuais ocultos por padrão, overlay retrátil independente da engrenagem, transparência/layout compacto sem fundos poluídos, sessão oficial PoGoCoordinates enquanto válida, sem credenciais em repositório e sem alterar `main`. Os contratos V8 **não** homologam interação no Android nem garantem dados de spawn. Protocolo: diagnóstico → proposta/risco/testes → aprovação para cada PL/PSC/UX → implementação isolada → testes → APK **só se pedido** → aceite em aparelho → merge **só com autorização**. Registrar cada checkpoint **neste mesmo arquivo**, sem criar outro Guia/Arquivo Mestre.
+
+**Prompt curto para o próximo chat (modelo informativo, não alterar este arquivo ao copiar):**
+“Continue o PokeSearch no GitHub `LucianoToscano/PokeSearch`, PR #27, branch `fix/ps009-stable-test-signing-20261018`. Leia integralmente `docs/GUIA_MESTRE.md`, principalmente 12.31–12.34, e verifique HEAD/PR reais. Raw IV A/D/S e PL-02 estão no código, mas ainda sem APK atualizado/teste real; último APK é 51037. Siga o backlog por prioridade, apresente diagnóstico e aguarde minha aprovação antes de alterar cada etapa. Não compile, não faça merge nem altere a main sem eu pedir. Preserve tudo e não misture com PvPPokeGo.”
+
