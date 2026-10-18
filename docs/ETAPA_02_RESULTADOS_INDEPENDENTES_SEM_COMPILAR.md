@@ -1,6 +1,6 @@
 # PokeSearch v0.51 — Etapa 02: resultados separados (sem compilar)
 
-> **Aviso de histórico (17/10/2026):** este documento descreve a etapa antes da autorização de compilação. Depois, os 18 PNGs foram atualizados no Drive e reintegrados; o cabeçalho do resultado passou a usar imagem 21×21 px em área de 35×30 px; as duas rotinas de CI concluíram com sucesso para o commit `4e159d9d...`. O estado atual e as pendências devem ser consultados em [`ARQUIVO_MESTRE_v0.51.md`](ARQUIVO_MESTRE_v0.51.md), que prevalece sobre este registro histórico. Nenhum teste físico foi comprovado.
+> **Aviso de histórico (17/10/2026):** este documento descreve a etapa antes da autorização de compilação. Depois, os 18 PNGs foram atualizados no Drive e reintegrados; o cabeçalho do resultado passou a usar imagem 21×21 px em área de 35×30 px; as duas rotinas de CI concluíram com sucesso para o commit `4e159d9d...`. O estado atual e as pendências devem ser consultados em [`GUIA_MESTRE.md`](GUIA_MESTRE.md), que prevalece sobre este registro histórico. Nenhum teste físico foi comprovado.
 
 
 Base original restaurada: `main` v0.51-beta. Desenvolvimento não mesclado em `feature/v0.51-launcher-icon-fill-20261016`.

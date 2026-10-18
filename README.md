@@ -1,5 +1,7 @@
 # PokeSearch — Android Overlay
 
+> **Guia Mestre oficial e permanente:** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md). Documento central de todas as versões, histórico, diário, metas, decisões, bugs e backlogs. O README é uma apresentação resumida; para continuidade do desenvolvimento, consultar o Guia Mestre e o HEAD da branch ativa.
+
 **Versão de desenvolvimento: v0.50-beta (versionCode 50).** Aplicativo Android independente, dedicado exclusivamente à pesquisa e visualização flutuante de Pokémon, para testes privados de desenvolvimento. Package ID: com.lucianotoscano.pokesearch; minSdk 26, compileSdk 36, Java 17, Gradle 8.11.1.
 
 ## Interface e funcionamento

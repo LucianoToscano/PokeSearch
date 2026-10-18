@@ -1,6 +1,6 @@
-# PokeSearch — ARQUIVO MESTRE v0.51-beta (registro central consolidado em 18/10/2026)
+# PokeSearch — GUIA MESTRE
 
-> **DOCUMENTO CENTRAL 18/10/2026:** A seção 11 reúne estado verificado, documentação, histórico, diário, metas, bugs e PL/UX. As seções 1–10 foram preservadas como cronologia; algumas afirmações antigas são superadas pelos registros posteriores. **Não alterar código, APK ou fazer merge sem confirmação expressa.**
+> **DOCUMENTO CENTRAL PERMANENTE:** Guia Mestre de todo o projeto PokeSearch, independente da versão atual do aplicativo. Cada versão, decisão, teste e meta é registrada dentro deste documento. Registro central iniciado em 18/10/2026. A seção 11 reúne estado verificado, documentação, histórico, diário, metas, bugs e PL/UX. As seções 1–10 foram preservadas como cronologia; algumas afirmações antigas são superadas pelos registros posteriores. **Não alterar código, APK ou fazer merge sem confirmação expressa.**
 
 > **Documento oficial para continuidade do desenvolvimento.** Neste projeto, preservar sempre a última base estável, trabalhar por etapas e não misturar mudanças das branches de v0.52–v0.56, que foram descartadas como direção de UX. A regra de design é: **melhorar e organizar, nunca empobrecer**.
 
@@ -410,7 +410,7 @@ O escopo completo de cada PL consta da **auditoria**. Os IDs não serão renumer
 |---|---|
 | Produto | **PokeSearch** Android overlay — independente de PvPPokeGo e de PokéLocation |
 | Repositório | https://github.com/LucianoToscano/PokeSearch |
-| Fonte única para histórico e decisões | **docs/ARQUIVO_MESTRE_v0.51.md**, nesta branch |
+| Fonte única para histórico e decisões | **docs/GUIA_MESTRE.md**, sem versão no nome, nesta branch |
 | Branch de trabalho | **plan/v051-pogocoordinates-filtros-20261017** |
 | HEAD verificado | **47540cbdce5d539001244c7c861930a835e615f0**, commit de documentação de PL/UX (18/10), antes desta edição |
 | Último HEAD anterior às atualizações documentais | **fe68af33615c74649bd2b0fd265af50148aab2ad** |
@@ -438,7 +438,7 @@ O escopo completo de cada PL consta da **auditoria**. Os IDs não serão renumer
 
 ### 11.3 Inventário completo de documentos no GitHub
 
-Na árvore consultada havia **95 arquivos versionados**, **36 documentos em docs/**, dos quais **14 Mestres v0.38–v0.51** e **14 auditorias v0.38–v0.51**. Eles não serão excluídos, renomeados nem sobrescritos. **Não criar outro Arquivo Mestre concorrente**, apenas acrescentar entradas neste documento.
+Na árvore consultada havia **95 arquivos versionados**, **36 documentos em docs/**, dos quais **13 mestres históricos v0.38–v0.50**, **este Guia Mestre sem versão** e **14 auditorias v0.38–v0.51**. O antigo arquivo central v0.51 foi renomeado para o nome neutro; seu histórico permanece recuperável no Git. Os arquivos históricos não foram alterados. **Não criar outro Guia Mestre concorrente**, apenas acrescentar entradas neste documento.
 
 - docs/ARQUIVO_MESTRE_v0.38.md (6443 bytes) — histórico/referência preservada
 - docs/ARQUIVO_MESTRE_v0.39.md (3849 bytes) — histórico/referência preservada
@@ -453,7 +453,7 @@ Na árvore consultada havia **95 arquivos versionados**, **36 documentos em docs
 - docs/ARQUIVO_MESTRE_v0.48.md (3306 bytes) — histórico/referência preservada
 - docs/ARQUIVO_MESTRE_v0.49.md (4398 bytes) — histórico/referência preservada
 - docs/ARQUIVO_MESTRE_v0.50.md (11972 bytes) — histórico/referência preservada
-- docs/ARQUIVO_MESTRE_v0.51.md (60336 bytes) — **único Mestre ativo**
+- docs/GUIA_MESTRE.md — **Guia Mestre canônico, sem número de versão, atualizado continuamente**
 - docs/AUDITORIA_v0.38.md (4563 bytes) — histórico/referência preservada
 - docs/AUDITORIA_v0.39.md (2075 bytes) — histórico/referência preservada
 - docs/AUDITORIA_v0.40.md (2809 bytes) — histórico/referência preservada
@@ -622,6 +622,9 @@ Na árvore consultada havia **95 arquivos versionados**, **36 documentos em docs
 
 ### 11.8 Diário e protocolo para novos chats
 
+
+**ENTRADA CENTRAL-002 — 18/10/2026 — PADRONIZAÇÃO DO GUIA (DOCUMENTAÇÃO):** por decisão expressa do proprietário, este arquivo deixa de levar `v0.51` no nome ou no título: agora chama-se exclusivamente `docs/GUIA_MESTRE.md`, cobrindo todas as versões passadas e futuras do PokeSearch. O antigo caminho da v0.51 foi renomeado no Git (recuperável pelo histórico), referências atuais atualizadas em README e documentos de apoio. Versões antigas continuam como arquivos históricos, não como guias ativos. Nenhum código, PNG, build, APK, workflow, backup, branch principal ou merge do aplicativo foi alterado. PL-01 e demais etapas continuam aguardando autorização.
+
 **ENTRADA CENTRAL-001 — 18/10/2026 — DOCUMENTAÇÃO:** Reunidos fatos das versões v0.38–v0.51, auditorias, guias Samsung/compatibilidade, plano de filtros, referência PokéLocation, PR #21/#22, Manifest/Gradle, árvore completa e planilha histórica de bugs; atualizado **somente este arquivo**. PL-01 aguarda apresentação e autorização; nenhuma alteração executável nem APK por esta entrada.
 
 **Template para registrar cada próxima decisão, obrigatoriamente aqui:**
@@ -634,6 +637,6 @@ Na árvore consultada havia **95 arquivos versionados**, **36 documentos em docs
 
 **Prompt único para começar outro chat:**
 
-> Continue PokeSearch v0.51 na branch plan/v051-pogocoordinates-filtros-20261017. Leia o único docs/ARQUIVO_MESTRE_v0.51.md (principalmente seção 11, histórico, metas, diário e PL/UX); confira HEAD e PR #21/#22. Preserve interface original, 18 PNGs, 12 controles, backups, main e PvPPokeGo separado. Comece pelo diagnóstico/proposta da PL-01; não altere código, não gere APK e não faça merge sem minha confirmação expressa. Registre cada decisão, teste e resultado nesse mesmo Mestre.
+> Continue PokeSearch v0.51 na branch plan/v051-pogocoordinates-filtros-20261017. Leia o único docs/GUIA_MESTRE.md (principalmente seção 11, histórico, metas, diário e PL/UX); confira HEAD e PR #21/#22. Preserve interface original, 18 PNGs, 12 controles, backups, main e PvPPokeGo separado. Comece pelo diagnóstico/proposta da PL-01; não altere código, não gere APK e não faça merge sem minha confirmação expressa. Registre cada decisão, teste e resultado nesse mesmo Mestre.
 
 **REGRA DE RETENÇÃO:** centralizar a consulta e as decisões em um só Mestre **não autoriza excluir documentos antigos**. O histórico completo do Git e os arquivos de referência continuam disponíveis para verificação e recuperação.
