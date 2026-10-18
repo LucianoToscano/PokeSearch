@@ -8,7 +8,7 @@ on:
       - 'app/**'
       - '.github/workflows/build-v051-filters-preview.yml'
   workflow_dispatch:
-  # One-time, owner-approved APK build for PR 27. REMOVE after run.
+  # One-time, owner-approved APK build for PR 27. Retry after javac field-order fix. REMOVE after run.
   pull_request:
     types: [synchronize]
     branches:
