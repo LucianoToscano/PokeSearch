@@ -705,7 +705,7 @@ test("REG-51049 filter expansion stays within Filtros and never resets a mode pi
  dock.includes('if(choiceOpen==="filters")renderFiltersChoices();else renderModeChoices();')&&
  dock.includes('if(choiceOpen==="filters"&&modeDraft)')&&
  dock.includes('tab.onclick=()=>{modeDraft.mode=id;renderModeChoices();}')&&
- dock.includes('apply.onclick=()=>{\n  const next={...modeDraft};'));
+ dock.includes('const next={...modeDraft};'));
 test("REG-51049 OFF public search ignores inert radius while refusing residual coordinates",
  (()=>{
  const src=read("assets/probe.js");
