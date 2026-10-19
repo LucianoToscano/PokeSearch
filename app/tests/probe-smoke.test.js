@@ -104,7 +104,7 @@ function run(action,mode,shinyOnly,opts={}){
     pending=[element(opts.pendingText||"Link a Pokémon GO account. Your trainer code: 12 digits")];
   }
   const accountLabels=opts.accountBadge?[element("Shiny for your account TestAccount (123456789012).")]:[];
-  const sessionButtons=opts.loggedOut?[element("Log in")]:opts.logoutVisible?[element("Log out")]:[];
+  const sessionButtons=opts.loggedOut?[element(opts.loginLabel||"Log in")]:opts.logoutVisible?[element("Log out")]:[];
   function querySelectorAll(selector){
     if(selector==="label,span,strong,div")return labels;
     if(selector==="span,label,strong,small,dt,div,p")return all;
@@ -117,7 +117,7 @@ function run(action,mode,shinyOnly,opts={}){
     return [];
   }
   const document={querySelectorAll,querySelector:()=>null,
-    body:element(opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":"")};
+    body:element(opts.profileBody|| (opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":""))};
   const code=source.replace("__ACTION__",JSON.stringify(action))
       .replace("__MODE__",JSON.stringify(mode))
       .replace("__SHINY__",String(shinyOnly))
@@ -130,7 +130,7 @@ function run(action,mode,shinyOnly,opts={}){
   const HTMLTextAreaElement={prototype:{}};
   Object.defineProperty(HTMLTextAreaElement.prototype,"value",{set(v){this.value=String(v);}});
   class Event{constructor(type){this.type=type;}}
-  return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:"/search",hostname:"pogocoordinates.com"},window:{},HTMLInputElement,HTMLTextAreaElement,Event}));
+  return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:opts.pathname||"/search",hostname:"pogocoordinates.com"},window:{},HTMLInputElement,HTMLTextAreaElement,Event}));
 }
 function configureSettled(mode,opts,max=14){
  let last=null,waits=0;
@@ -220,6 +220,20 @@ assert.equal(textOnlyAccount.auth,"autenticada","Mobile markup without matching 
 checked++;
 const noSession=run("session","iv",false,{loggedOut:true});
 assert.equal(noSession.auth,"login necessário","Login-required view remains unauthenticated");
+checked++;
+const officialGoogleGuest=run("session","iv",false,{loggedOut:true,loginLabel:"Login with Google"});
+assert.equal(officialGoogleGuest.auth,"login necessário","Exact provider-button Login with Google is recognized");
+checked++;
+const officialDiscordGuest=run("session","iv",false,{loggedOut:true,loginLabel:"Login with Discord"});
+assert.equal(officialDiscordGuest.auth,"login necessário","Exact provider-button Login with Discord is recognized");
+checked++;
+const noTrainerProfile=run("session","iv",false,{
+ pathname:"/profile",profileBody:"Linked accounts\nGoogle\nPokemon GO accounts 0/1\nLink my account"
+});
+assert.equal(noTrainerProfile.auth,"autenticada","Logged-in without trainer must be recognized on official profile");
+checked++;
+const stillLoadingProfile=run("session","iv",false,{pathname:"/profile",profileBody:"Danger zone"});
+assert.equal(stillLoadingProfile.auth,"não confirmado","Incomplete profile is not trusted as proof of login");
 checked++;
 const uncertainSession=run("session","iv",false,{});
 assert.equal(uncertainSession.auth,"não confirmado","Missing login/logout is not automatically authenticated");
