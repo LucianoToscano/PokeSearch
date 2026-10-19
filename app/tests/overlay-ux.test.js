@@ -66,8 +66,8 @@ test("Location is verified before search submission",service.includes('configure
 test("Login, Shiny and league filters remain independent",service.includes('JSONObject.quote(mode)')&&service.includes('locationEnabled'));
 
 const toolbarCols=dock.match(/#controls\{[^}]*grid-template-columns:([^;]+);/);
-const toolbarButtons=dock.slice(dock.indexOf('<div id="menu"><div id="controls">'),dock.indexOf('</div><div id="choices"')).match(/<button\b/g)||[];
-test("All twelve toolbar actions fit compactly side by side on one row",
+const toolbarButtons=dock.slice(dock.indexOf('<div id="controls">'),dock.indexOf('</div><div id="choices"')).match(/<button\b/g)||[];
+test("Legacy twelve toolbar handlers remain available for rollback",
   !!toolbarCols&&toolbarCols[1].trim()==="34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr"&&
   toolbarButtons.length===12&&dock.includes("grid-auto-flow:column"));
 test("Single pin shows active radius without a second settings button",
@@ -254,7 +254,7 @@ test("UX-MENU-01 measures the compact menu or single submenu",
   dock.includes('if(menuOpen&&!choiceOpen)h=Math.max(34,34+Math.ceil(document.getElementById("quickMenuList").getBoundingClientRect().height)+6)')&&
   service.includes('menuParams.height=dp(MENU_BASE_DP)')&&
   service.includes('Math.min(450,screenHeightDp()-24)'));
-test("Android responsive layout contains all 12 controls exactly once",
+test("All legacy twelve bridge buttons remain unique in HTML",
   toolbarButtons.length===12&&
   ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','report','donate','close']
   .every(id=>(dock.match(new RegExp('id="'+id+'"','g'))||[]).length===1));
@@ -447,7 +447,7 @@ test("Mode panel has no hint or fifth row and numbers retain a compact grid",
  dock.includes('max-height:148px')&&
  dock.includes('#choices .modeRow')&&
  dock.includes('max-height:min(216px'));
-test("Modes save only after applying and do not grow toolbar buttons",
+test("Modes save only after applying and keep original bridge actions",
  dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
  dock.includes('cancel.onclick=closeChoices')&&toolbarButtons.length===12);
 test("Both IV% limits remain ordered when changed",
