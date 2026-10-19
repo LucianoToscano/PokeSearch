@@ -686,6 +686,35 @@ test("Authenticated profile cannot inherit previous trainer link",
  main.includes('"unlinked".equals(state)?"unlinked":"unknown"')&&
  main.includes('Buscas comuns sem login · Shiny exige treinador vinculado'));
 
+
+test("REG-51049 UL header uses dedicated Ultra League PNG, never Cup",
+ dock.includes('family==="ul"?"ultra-league.png":"great-league.png"')&&
+ dock.includes('fallbackPath:"file:///android_asset/result-icons/base/"+baseName')&&
+ dock.includes('ul:{normal:"ultra-league.png",shiny:"ultra-league-shiny.png"')&&
+ dock.includes('cup:{normal:"cup-league.png"')&&
+ dock.includes('baseFamily==="ul"?Number(settings.ulRank)')&&
+ dock.includes('rankLabel||(baseFamily==="cup"?"CUP":"")'));
+test("REG-51049 opening Modos never starts background filter-option discovery",
+ (()=>{
+ const block=dock.split('if(kind==="mode"){')[1]?.split('const current=period;')[0]||"";
+ return block.includes('renderModeChoices()')&&!block.includes("requestFilterOptions")&&
+  !block.includes('Native.locationEditor(true)')&&
+  dock.includes('if(choiceOpen==="filters"&&modeDraft)');
+ })());
+test("REG-51049 filter expansion stays within Filtros and never resets a mode picker",
+ dock.includes('if(choiceOpen==="filters")renderFiltersChoices();else renderModeChoices();')&&
+ dock.includes('if(choiceOpen==="filters"&&modeDraft)')&&
+ dock.includes('tab.onclick=()=>{modeDraft.mode=id;renderModeChoices();}')&&
+ dock.includes('apply.onclick=()=>{\n  const next={...modeDraft};'));
+test("REG-51049 OFF public search ignores inert radius while refusing residual coordinates",
+ (()=>{
+ const src=read("assets/probe.js");
+ return src.includes('The radius')||(
+  src.includes('A prefilled radius is an INERT site default')&&
+  src.includes('const blank=!locationValue(fields.coords);')&&
+  src.includes('const previousCoords=locationValue(fieldsBefore.coords);'));
+ })());
+
 // v0.51 additional filters: do not add toolbar actions or replace artwork.
 test("Shiny shortcut sits next to Modos de busca heading",
   dock.includes('heading.appendChild(shinyButton);panel.appendChild(heading);')&&
