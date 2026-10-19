@@ -756,7 +756,7 @@ test("Mode PNGs retain legacy vector fallback and 17px display only",()=>{
   const f=path.join(dir,name);return fs.existsSync(f)&&fs.readFileSync(f,"utf8").startsWith("<svg");
  })&&dock.includes("body.controls-window #quickMenuList .quickModeImage")&&
  dock.includes("width:17px!important;height:17px!important")&&
- dock.includes('position:absolute!important;top:-6px!important;left:50%!important')&&
+ dock.includes('position:absolute!important;top:50%!important;left:50%!important')&&
  dock.includes('background:transparent!important;border:0!important;box-shadow:none!important');
 });
 test("Modos chooses exact Drive PNGs across 0–3 stars and GL/UL",()=>{
@@ -1045,7 +1045,21 @@ test("RESULT-RESTORE all historical effects intact with only corrected UL base",
  draw.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
  draw.includes('selectedIcon.shinyBadge')&&draw.includes('selectedIcon.backgroundBadge')&&
  dock.includes('animation:psCapturePulse');})());
-test("RESULT-RESTORE GL/UL/base Pokémon badges exactly as before",()=>{
+test("UX-CASCADE window resizing retains full requested size after temporary clipping",
+ service.includes('private int menuRequestedHeightDp=MENU_BASE_DP;')&&
+ service.includes('Math.max(0,dp(menuRequestedHeightDp)-rowHeight)')&&
+ service.includes('menuRequestedHeightDp=Math.max(MENU_BASE_DP,Math.min(maxMenuHeight,desiredDp))')&&
+ !service.includes('int requestedPopup=Math.max(0,menuParams.height-rowHeight)')&&
+ dock.includes('choiceOpen==="mode"?34+190+6')&&
+ dock.includes('function positionCascadeEditor()')&&
+ dock.includes('rail.scrollTop=Math.max(0,requested+36-visible)')&&
+ dock.includes('if(choiceOpen==="mode")positionCascadeEditor()'));
+test("RESULT UL correct historic black-yellow icon, preserving other base artwork",
+ dock.includes('baseFamily==="ul"?"file:///android_asset/result-icons/ultra-league.png"')&&
+ dock.includes('gl:"base-gl.png",ul:"base-ul.png",ml:"base-ml.png"')&&
+ dock.includes('cup:{normal:"cup-league.png",shiny:"cup-league-shiny.png"')&&
+ dock.includes('fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none'));
+test("RESULT-RESTORE GL/UL still preserve result effects; UL now uses correct Ultra League PNG",()=>{
  const vm=require("node:vm");
  const start=dock.indexOf("const RESULT_ICONS=Object.freeze("),end=dock.indexOf("let locationEnabled=",start);
  const fn=dock.slice(start,end);
@@ -1054,7 +1068,7 @@ test("RESULT-RESTORE GL/UL/base Pokémon badges exactly as before",()=>{
  const gl=get("gl",false),ul=get("ul",false),perfect=get("raw",false),zero=get("raw",false,{attack:0,defense:0,stamina:0});
  const range=get("percent",false),all=get("percent",false,{percentMin:0,percentMax:100});
  return gl.path.endsWith("/base-gl.png")&&gl.ivBadge==="#1"&&
-  ul.path.endsWith("/base-ul.png")&&ul.ivBadge==="#12"&&
+  ul.path.endsWith("/ultra-league.png")&&ul.ivBadge==="#12"&&
   perfect.path.endsWith("/base-custom.png")&&perfect.ivBadge==="100%"&&
   zero.path.endsWith("/base-custom.png")&&zero.ivBadge==="0"&&
   range.path.endsWith("/base-custom.png")&&range.ivBadge==="%"&&all.ivBadge==="%"&&
