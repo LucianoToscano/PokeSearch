@@ -140,6 +140,52 @@ test("UX-INFO-05 verified metadata never creates results or a scrollable list",
  dock.includes('Native.resizeResultsMetadata(metaWidth)')&&
  dock.includes('showTimers=!!timers')&&
  !dock.includes('cards=Array.isArray(a)?a.slice(0,8):[]'));
+test("UX-INFO-07 per-species PvP IV rank calculates real 4096 spreads at L50",()=>{
+ const win={};
+ new Function("window",read("assets/pvpoke-overall-ranks.js"))(win);
+ new Function("window",read("assets/pvpoke-iv-gamemaster.js"))(win);
+ const begin=dock.indexOf("const PVPOKE_OVERALL=");
+ const end=dock.indexOf('let lastListKey=""',begin);
+ if(begin<0||end<begin)return false;
+ const verified=c=>{
+  const raw=String(c?.iv||"");
+  if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw))return null;
+  const pct=Math.round(raw.split("/").map(Number).reduce((a,b)=>a+b,0)*100/45);
+  return c.ivPercent!=null&&String(c.ivPercent)!==String(pct)?null:pct;
+ };
+ const funcs=new Function("window","verifiedSpawnIvPercent",dock.slice(begin,end)+
+  "return {calculatedSpeciesIvRank,verifiedSpeciesIvRank,verifiedOverallRank,computeResultLayout,speciesIvRanksCache};"
+ )(win,verified);
+ const alt={name:"Altaria",iv:"0/14/15",ivPercent:64,cp:1499};
+ const invalid={...alt,ivPercent:100};
+ const missing={...alt,iv:"",ivPercent:64};
+ const other={...alt,name:"Altaria (unknown form)"};
+ const opts={count:true,cp:true,level:true,iv:true,despawn:true,overallRank:true,speciesIvRank:true};
+ const ranks=Array.from({length:10},(_,i)=>({...alt,iv:i%2?"0/15/15":"0/14/15",ivPercent:i%2?67:64}));
+ const layout=funcs.computeResultLayout(ranks,55,385,false,true,opts,"gl");
+ return win.POKESEARCH_PVP_IV_DATA.cpms.length===99&&
+  win.POKESEARCH_PVP_IV_DATA.pokemon.length>=1500&&
+  funcs.calculatedSpeciesIvRank(alt,"gl")===1&&
+  funcs.calculatedSpeciesIvRank({...alt,iv:"0/15/15",ivPercent:67},"gl")===285&&
+  funcs.verifiedSpeciesIvRank(alt,"gl")===1&&
+  funcs.verifiedSpeciesIvRank(alt,"ul")!==1&&
+  funcs.verifiedOverallRank(alt,"gl")===2&&
+  funcs.calculatedSpeciesIvRank(invalid,"gl")===null&&
+  funcs.calculatedSpeciesIvRank(missing,"gl")===null&&
+  funcs.calculatedSpeciesIvRank(other,"gl")===null&&
+  funcs.speciesIvRanksCache.size===2&&
+  layout.visibleCount===10&&layout.total<385&&layout.infoScale>=.86;
+});
+test("UX-INFO-08 bundled PvPoke data includes MIT attribution and stays display-only",
+ read("assets/licenses/PvPoke-MIT.txt").includes("MIT License")&&
+ read("assets/licenses/PvPoke-MIT.txt").includes("Copyright (c) 2019 pvpoke")&&
+ dock.includes('src="file:///android_asset/pvpoke-iv-gamemaster.js"')&&
+ dock.includes('src="file:///android_asset/pvpoke-overall-ranks.js"')&&
+ dock.includes("const PVP_IV_GAME_MASTER=window.POKESEARCH_PVP_IV_DATA||null")&&
+ dock.includes('const key=league+":"+species[0]')&&
+ !service.includes("pvpoke-overall-ranks.js")&&
+ !service.includes("pvpoke-iv-gamemaster.js")&&
+ probe.includes('ivRankSource:ivRankValid?"explicit-species-iv":""'));
 test("UX-INFO-06 generic site rank is never treated as IV rank without evidence",
  read("assets/probe.js").includes('ivRankSource:ivRankValid?"explicit-species-iv":""')&&
  read("assets/probe.js").includes('ivRankLeague:ivRankValid?mode:""')&&
