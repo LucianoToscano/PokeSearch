@@ -907,7 +907,7 @@ test("Sort by remains among existing verified advanced filters",
   dock.includes('const RESULT_ICONS=Object.freeze'));
 test("General and advanced filters are foldable in contextual panel",
   dock.includes('section("Filtros gerais"')&&dock.includes('section("Filtros avançados"')&&
-  dock.includes('#choices.modePanel{width:198px'));
+  dock.includes('#choices.modePanel{width:232px'));
 test("Site dropdown options are discovered instead of inventing weather/form values",
   dock.includes('filterOptions=response.partial?')&&
   dock.includes('Native.requestFilterOptions()')&&
