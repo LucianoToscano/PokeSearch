@@ -946,6 +946,168 @@ window.setMinimized=value=>{
  document.getElementById("bubble").style.display=value?"flex":"none";
  if(!value)draw();
 };
+
+/* UX-MENU-01: contextual menu reuses native actions and verified filters. */
+const QUICK_ACTIONS=[
+ ["mode","☷","Modos","mode"],["sh","✨","Shiny","sh"],
+ ["period","↻","Atualização","period"],["bell","♧","Alertas","alerts"],
+ ["star","☆","Favoritos","star"],["location","⌾","Localização","location"],
+ ["filters","≡","Filtros","filters"],["info","◉","Informações","info"],
+ ["appearance","⚙","Aparência","appearance"],["report","⚠","Reportar","report"],
+ ["donate","♡","Apoiar","donate"],["close","×","Fechar","close"]
+];
+let quickPrefs={direction:"vertical",labels:true,order:QUICK_ACTIONS.map(a=>a[0]),hidden:[]};
+function normalizedQuickPrefs(p){
+ const ids=QUICK_ACTIONS.map(a=>a[0]);
+ const order=Array.isArray(p.order)?p.order.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i):[];
+ const hidden=Array.isArray(p.hidden)?p.hidden.filter(x=>ids.includes(x)&&x!=="close"):[];
+ return {direction:p.direction==="horizontal"?"horizontal":"vertical",labels:p.labels!==false,
+  order:[...order,...ids.filter(x=>!order.includes(x))],hidden};
+}
+function saveQuickPrefs(){
+ quickPrefs=normalizedQuickPrefs(quickPrefs);renderQuickMenu();
+ if(controlsWindow&&Native.saveMenuPrefs)Native.saveMenuPrefs(JSON.stringify(quickPrefs));
+}
+function quickState(id){
+ switch(id){
+  case "mode":return specialIVLabel(mode,searchSettings);
+  case "sh":return shinyPending?"Pendente":shiny?"ON":"OFF";
+  case "period":return period?"Auto · "+period+" min":"Auto · OFF";
+  case "bell":return alertMode==="silent"?"Silencioso":generalAlerts?"Som":"OFF";
+  case "star":return hasFavorites?"Ativos":"";
+  case "location":return locationEnabled?locationRadius+" km":"OFF";
+  case "filters":return ["pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","sortBy"].some(k=>searchSettings[k])?"Ativos":"Nenhum";
+  case "info":return showResultText?"Textos ON":"";
+  case "appearance":return quickPrefs.direction==="horizontal"?"Horizontal":"Vertical";
+  default:return "";
+ }
+}
+function quickClick(id){
+ if(["mode","period","alerts","location","filters","info","appearance"].includes(id)){toggleChoices(id);return;}
+ switch(id){
+  case "sh":Native.shiny();break;
+  case "star":Native.openWatchList();break;
+  case "report":Native.openReport();break;
+  case "donate":Native.openPix();break;
+  case "close":Native.close();break;
+ }
+}
+function renderQuickMenu(){
+ if(!controlsWindow)return;
+ const outer=document.getElementById("quickMenuList"),rows=document.getElementById("quickRows"),footer=document.getElementById("quickFooter");
+ if(!rows||!footer)return;
+ outer.classList.toggle("quick-horizontal",quickPrefs.direction==="horizontal");
+ outer.classList.toggle("quick-no-labels",!quickPrefs.labels);
+ rows.replaceChildren();footer.replaceChildren();
+ for(const id of quickPrefs.order){
+  const a=QUICK_ACTIONS.find(x=>x[0]===id);
+  if(!a||quickPrefs.hidden.includes(id))continue;
+  const button=document.createElement("button");button.type="button";button.dataset.key=id;
+  const isFooter=["report","donate","close"].includes(id);
+  button.className=isFooter?"":"quickRow";button.title=a[2];
+  button.setAttribute("aria-label",a[2]);
+  if(isFooter){button.textContent=a[1]+" "+a[2];footer.appendChild(button);}
+  else{
+   const glyph=document.createElement("span");glyph.className="quickGlyph";glyph.textContent=a[1];
+   const label=document.createElement("span");label.className="quickName";label.textContent=a[2];
+   const state=document.createElement("span");state.className="quickState";state.textContent=quickState(id);
+   const arrow=document.createElement("span");arrow.className="quickArrow";arrow.textContent="›";
+   button.append(glyph,label,state);
+   if(a[3]!=="sh")button.appendChild(arrow);
+   rows.appendChild(button);
+  }
+  button.onclick=()=>quickClick(id);
+ }
+ fit();
+}
+function refreshQuickMenuStates(){
+ if(!controlsWindow)return;
+ document.querySelectorAll("#quickRows .quickRow").forEach(button=>{
+  const state=button.querySelector(".quickState");if(state)state.textContent=quickState(button.dataset.key);
+ });
+}
+function uxPanel(title){
+ const panel=document.getElementById("choices");panel.replaceChildren();
+ panel.classList.remove("locationPanel");panel.classList.add("visible","modePanel");
+ const heading=document.createElement("div");heading.className="choiceHeader";heading.textContent=title;panel.appendChild(heading);
+ return panel;
+}
+function uxOption(panel,label,value,callback){
+ const line=document.createElement("div");line.className="uxSetting";
+ const name=document.createElement("span");name.textContent=label;
+ const button=document.createElement("button");button.type="button";button.textContent=value;button.onclick=callback;
+ line.append(name,button);panel.appendChild(line);return button;
+}
+function renderAlertsChoices(){
+ const panel=uxPanel("ALERTAS · NOTIFICAÇÕES");
+ for(const [id,name] of [["on","🔔 Som ligado"],["silent","🔕 Silencioso"],["off","Notificações desligadas"]]){
+  const button=document.createElement("button");button.textContent=(alertMode===id?"✓ ":"")+name;
+  button.className=alertMode===id?"chosen":"";
+  button.onclick=()=>{closeChoices();Native.setAlertMode(id);};panel.appendChild(button);
+ }
+ const test=document.createElement("button");test.textContent="🔔 Testar notificação";
+ test.onclick=()=>Native.testNotification();panel.appendChild(test);fit();
+}
+function renderFiltersChoices(){
+ if(!modeDraft)modeDraft={...searchSettings,mode};
+ const panel=uxPanel("FILTROS DA PESQUISA");
+ const make=(tag,cls,value)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e;};
+ renderExtraFilters(panel,make);
+ panel.appendChild(make("div","uxNote","As opções e os resultados dependem da confirmação no site; não são inventados."));
+ const actions=make("div","modeAction");const apply=make("button","modeApply","✓ Aplicar");
+ const cancel=make("button","","Cancelar");
+ apply.onclick=()=>{const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));};
+ cancel.onclick=closeChoices;actions.append(apply,cancel);panel.appendChild(actions);fit();
+}
+function renderInfoChoices(){
+ const panel=uxPanel("INFORMAÇÕES DOS POKÉMON");
+ uxOption(panel,"Tempo de despawn",showTimers?"ON":"OFF",()=>Native.toggleTimers());
+ uxOption(panel,"IV% comprovado",showResultText?"ON":"OFF",()=>Native.setResultTextVisible(!showResultText));
+ const hint=document.createElement("div");hint.className="uxNote";
+ hint.textContent="Informações de IV, PC, nível e rank não verificadas nunca são exibidas como fatos.";
+ panel.appendChild(hint);fit();
+}
+function renderAppearanceChoices(){
+ const panel=uxPanel("APARÊNCIA E PERSONALIZAÇÃO");
+ uxOption(panel,"Direção do menu",quickPrefs.direction==="vertical"?"Vertical":"Horizontal",()=>{
+  quickPrefs.direction=quickPrefs.direction==="vertical"?"horizontal":"vertical";saveQuickPrefs();renderAppearanceChoices();
+ });
+ uxOption(panel,"Legendas",quickPrefs.labels?"Ícone + texto":"Só ícone",()=>{
+  quickPrefs.labels=!quickPrefs.labels;saveQuickPrefs();renderAppearanceChoices();
+ });
+ uxOption(panel,"Próximo tamanho do sprite",spriteSize<=35?"P":spriteSize>=55?"G":"M",()=>{
+  Native.cycleSpriteSize();renderAppearanceChoices();
+ });
+ const title=document.createElement("div");title.className="uxSubheading";
+ title.textContent="Comandos · mostrar / ocultar / ordenar";panel.appendChild(title);
+ const note=document.createElement("div");note.className="uxNote";
+ note.textContent="A engrenagem sempre permanece visível. Use as setas para reordenar os comandos.";
+ panel.appendChild(note);
+ for(const id of quickPrefs.order){
+  const a=QUICK_ACTIONS.find(x=>x[0]===id);if(!a||id==="close")continue;
+  const line=document.createElement("div");line.className="uxAdjust";
+  const name=document.createElement("span");name.textContent=a[1]+" "+a[2];line.appendChild(name);
+  const eye=document.createElement("button");eye.textContent=quickPrefs.hidden.includes(id)?"□":"☑";
+  eye.setAttribute("aria-label",(quickPrefs.hidden.includes(id)?"Mostrar ":"Ocultar ")+a[2]);
+  eye.onclick=()=>{quickPrefs.hidden=quickPrefs.hidden.includes(id)?
+   quickPrefs.hidden.filter(x=>x!==id):[...quickPrefs.hidden,id];saveQuickPrefs();renderAppearanceChoices();};
+  const up=document.createElement("button");up.textContent="↑";up.setAttribute("aria-label","Mover "+a[2]+" para cima");
+  up.onclick=()=>{const i=quickPrefs.order.indexOf(id);if(i>0){
+   [quickPrefs.order[i-1],quickPrefs.order[i]]=[quickPrefs.order[i],quickPrefs.order[i-1]];
+   saveQuickPrefs();renderAppearanceChoices();}};
+  const down=document.createElement("button");down.textContent="↓";down.setAttribute("aria-label","Mover "+a[2]+" para baixo");
+  down.onclick=()=>{const i=quickPrefs.order.indexOf(id);if(i>=0&&i<quickPrefs.order.length-1){
+   [quickPrefs.order[i+1],quickPrefs.order[i]]=[quickPrefs.order[i],quickPrefs.order[i+1]];
+   saveQuickPrefs();renderAppearanceChoices();}};
+  line.append(eye,up,down);panel.appendChild(line);
+ }
+ fit();
+}
+if(controlsWindow){
+ document.getElementById("quickBack").onclick=()=>choiceOpen?closeChoices():Native.menu(false);
+ renderQuickMenu();
+}
+
 document.getElementById("clock").addEventListener("click",()=>Native.toggleTimers());
 draw();
 </script></body></html>
