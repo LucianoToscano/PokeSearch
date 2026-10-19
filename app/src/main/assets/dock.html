@@ -1257,9 +1257,20 @@ if(PVPOKE_OVERALL){
   }
  }
 }
+function safePvpSpeciesKey(card){
+ if(!card||!card.name)return null;
+ const key=speciesKey(String(card.name).replace(/✨/g,""));
+ const form=speciesKey(card.form);
+ // The site may expose form separately: never give a generic form the
+ // regular species' rank when there is an unrepresented regional/Shadow form.
+ if(form&&!key.includes(form))return null;
+ return key||null;
+}
 function verifiedOverallRank(card,league){
  if(!card||!["gl","ul"].includes(league))return null;
- const value=overallRankByLeague[league].get(speciesKey(card.name));
+ const key=safePvpSpeciesKey(card);
+ if(!key)return null;
+ const value=overallRankByLeague[league].get(key);
  return Number.isInteger(value)&&value>0?value:null;
 }
 
@@ -1316,7 +1327,9 @@ function calculatedSpeciesIvRank(card,league){
  const iv=String(card?.iv??"").trim();
  if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(iv))return null;
  if(verifiedSpawnIvPercent(card)===null)return null;
- const species=ivSpeciesByName.get(speciesKey(card.name));
+ const keyName=safePvpSpeciesKey(card);
+ if(!keyName)return null;
+ const species=ivSpeciesByName.get(keyName);
  if(!species)return null;
  const key=league+":"+species[0];
  if(!speciesIvRanksCache.has(key))
@@ -1371,7 +1384,7 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
   const lines=opts?resultLines(card,opts,league):[];
   if(lines.length)return Math.max(size+3,lines.length*11+6);
   return resultHasVisibleInfo(card,timersEnabled,textEnabled)?
-   size+3:Math.max(18,Math.round(size*0.73));
+   size+3:size+1; // 1px gap when no metadata; do not overlap full-size sprites
  });
  const desired=natural.reduce((a,b)=>a+b,0);
  const room=Math.max(120,(Number(displayHeight)||700)-30-24);
