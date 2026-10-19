@@ -715,6 +715,52 @@ test("REG-51049 OFF public search ignores inert radius while refusing residual c
   src.includes('const previousCoords=locationValue(fieldsBefore.coords);'));
  })());
 
+
+// UX-MODE-ICONS: use approved uploaded assets, keep the 10-button ribbon.
+test("Approved IV medals and GL/UL triangles are 48px transparent PNG assets",()=>{
+ const names=["iv-zero-stars.png","iv-three-stars.png","gl-triangle.png","ul-triangle.png"];
+ return names.every(name=>{
+  const asset=path.join(root,"assets/result-icons/modes",name);
+  if(!fs.existsSync(asset))return false;
+  const b=fs.readFileSync(asset);
+  return b.subarray(0,8).equals(Buffer.from("89504e470d0a1a0a","hex"))&&
+   b.readUInt32BE(16)===48&&b.readUInt32BE(20)===48;
+ });
+});
+test("Small percentage, Raw IV and unrestricted icons are transparent bundled SVGs",()=>{
+ const dir=path.join(root,"assets/result-icons/modes");
+ return ["iv-custom.svg","iv-percent.svg","iv-unfiltered.svg"].every(name=>{
+  const f=path.join(dir,name);return fs.existsSync(f)&&fs.readFileSync(f,"utf8").startsWith("<svg");
+ })&&dock.includes("body.controls-window #quickMenuList .quickModeImage")&&
+ dock.includes("width:17px!important;height:17px!important");
+});
+test("IV mode artwork picks exact extremes, custom, percentage interval and unrestricted",()=>{
+ const vm=require("node:vm");
+ const start=dock.indexOf("const RESULT_ICONS=Object.freeze("),end=dock.indexOf("let locationEnabled=",start);
+ if(start<0||end<start)return false;
+ const definitions=dock.slice(start,end),base={attack:0,defense:15,stamina:15,glRank:1,ulRank:12,percentMin:0,percentMax:100};
+ const get=(m,cfg)=>vm.runInNewContext(definitions+"\ngetResultIcon("+JSON.stringify(m)+",false,"+
+  JSON.stringify({...base,...cfg})+")",{}, {timeout:2000});
+ const zero=get("raw",{attack:0,defense:0,stamina:0}),perfect=get("raw",{attack:15,defense:15,stamina:15});
+ const zeroPct=get("percent",{percentMin:0,percentMax:0}),perfectPct=get("percent",{percentMin:100,percentMax:100});
+ const custom=get("raw",{attack:2,defense:15,stamina:9}),range=get("percent",{percentMin:2,percentMax:98});
+ const full=get("percent",{percentMin:0,percentMax:100}),gl=get("gl",{glRank:1}),ul=get("ul",{ulRank:12});
+ return zero.path.endsWith("/iv-zero-stars.png")&&perfect.path.endsWith("/iv-three-stars.png")&&
+  zeroPct.path===zero.path&&perfectPct.path===perfect.path&&
+  custom.path.endsWith("/iv-custom.svg")&&range.path.endsWith("/iv-percent.svg")&&
+  full.path.endsWith("/iv-unfiltered.svg")&&full.family==="none"&&
+  gl.path.endsWith("/gl-triangle.png")&&gl.ivBadge==="#1"&&
+  ul.path.endsWith("/ul-triangle.png")&&ul.ivBadge==="#12"&&
+  !zero.ivBadge&&!perfect.ivBadge&&!range.ivBadge&&!custom.ivBadge;
+});
+test("Thin bar Modos icon redraws on filter/rank change and does not add buttons",()=>{
+ const block=dock.split('function refreshQuickMenuStates()')[1]?.split('function uxPanel(')[0]||"";
+ return dock.includes('button.dataset.modeArtKey=art.path+"|"+art.ivBadge')&&
+   block.includes('previous.replaceWith(iconForQuick("mode","☷"))')&&
+   dock.includes('rank.textContent=art.ivBadge')&&
+   dock.includes('grid-template-columns:repeat(10,minmax(0,1fr))!important');
+});
+
 // v0.51 additional filters: do not add toolbar actions or replace artwork.
 test("Shiny shortcut sits next to Modos de busca heading",
   dock.includes('heading.appendChild(shinyButton);panel.appendChild(heading);')&&
