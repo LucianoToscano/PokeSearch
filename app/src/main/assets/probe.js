@@ -538,6 +538,13 @@ function parseCard(box,sourceIndex){
   return score(b)-score(a);
  })[0];
  const rankMatch=body.match(/\b(?:PvP\s*)?(?:Rank|Ranking|Rk)\s*#?\s*(\d+)\b/i);
+ // Species-specific IV rank is NOT the Top-N search filter and is not
+ // PvPoke's cross-species performance rank. Require a labeled card value.
+ const explicitSpeciesIvRank=body.match(/(?:^|\n)\s*(?:(?:PvP|GL|UL)\s+)?(?:IV\s+Rank|Rank\s+(?:de\s+)?IV|Stat\s+Product\s+Rank)\s*[:#]?\s*(\d{1,4})\b/im);
+ const hasVerifiedIv=Boolean(raw||percent);
+ const ivRankValue=explicitSpeciesIvRank&&hasVerifiedIv?Number(explicitSpeciesIvRank[1]):0;
+ const ivRankValid=Number.isInteger(ivRankValue)&&ivRankValue>=1&&ivRankValue<=4096&&
+  (mode==="gl"||mode==="ul");
  const isShiny=/✨/.test(title);
  return {
   sourceIndex,name:title.replace(/✨/g,"").trim(),image:image?image.src:"",
@@ -546,6 +553,9 @@ function parseCard(box,sourceIndex){
   size:size,moves:move,location:clean(loc),despawn:(desp.match(/\d{1,2}:\d{2}/)||[])[0]||"",
   cp:val("CP",/(\d{1,5})/),level:val("(?:LVL|Level)",/([\d.]+)/),
   iv:raw,ivPercent:percent,rank:rankMatch?rankMatch[1]:"",
+  ivRank:ivRankValid?ivRankValue:null,
+  ivRankSource:ivRankValid?"explicit-species-iv":"",
+  ivRankLeague:ivRankValid?mode:"",
   shiny:isShiny,form:(title.match(/\(([^)]+)\)/)||[])[1]||""
  };
 }
