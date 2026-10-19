@@ -68,9 +68,9 @@ test("UX-RESULT-10 only expands spacing for actual visible timers or verified IV
  const both=functions.computeResultLayout(withInfo,55,380,true,true);
  const fewer=functions.computeResultLayout(short.slice(0,4),35,800,false,false);
  const none=functions.computeResultLayout([],45,800,false,false);
- return base.visibleCount===10&&base.rows.every(x=>x===33)&&base.total===330&&
-  iv.rows[0]===48&&iv.rows[1]===33&&
-  timers.rows[0]===48&&timers.rows[1]===33&&
+ return base.visibleCount===10&&base.rows.every(x=>x===46)&&base.total===460&&
+  iv.rows[0]===48&&iv.rows[1]===46&&
+  timers.rows[0]===48&&timers.rows[1]===46&&
   both.visibleCount===10&&both.total+30+6<=380-16&&
   fewer.visibleCount===4&&none.visibleCount===0&&
   functions.resultHasVisibleInfo(withInfo[0],false,true)===true&&
@@ -160,6 +160,7 @@ test("UX-INFO-07 per-species PvP IV rank calculates real 4096 spreads at L50",()
  const invalid={...alt,ivPercent:100};
  const missing={...alt,iv:"",ivPercent:64};
  const other={...alt,name:"Altaria (unknown form)"};
+ const shadowForm={...alt,form:"Shadow"};
  const opts={count:true,cp:true,level:true,iv:true,despawn:true,overallRank:true,speciesIvRank:true};
  const ranks=Array.from({length:10},(_,i)=>({...alt,iv:i%2?"0/15/15":"0/14/15",ivPercent:i%2?67:64}));
  const layout=funcs.computeResultLayout(ranks,55,385,false,true,opts,"gl");
@@ -173,6 +174,8 @@ test("UX-INFO-07 per-species PvP IV rank calculates real 4096 spreads at L50",()
   funcs.calculatedSpeciesIvRank(invalid,"gl")===null&&
   funcs.calculatedSpeciesIvRank(missing,"gl")===null&&
   funcs.calculatedSpeciesIvRank(other,"gl")===null&&
+  funcs.calculatedSpeciesIvRank(shadowForm,"gl")===null&&
+  funcs.verifiedOverallRank(shadowForm,"gl")===null&&
   funcs.speciesIvRanksCache.size===2&&
   layout.visibleCount===10&&layout.total<385&&layout.infoScale>=.86;
 });
@@ -182,6 +185,20 @@ test("UX-INFO-09 despawn expiry still marks entire Pokémon when timer is inline
  dock.includes('class="timer" data-deadline=')&&
  dock.includes('.spawn.expired{opacity:.38}')&&
  dock.includes('infoScale:Math.max(0.86,Math.min(1,factor))'));
+test("UX-RESULT-10 no-data rows have a minimal gap and never overlap full sprite size",()=>{
+ const from=dock.indexOf("const PVPOKE_OVERALL="),until=dock.indexOf('let lastListKey=""',from);
+ const helpers=new Function("window","verifiedSpawnIvPercent",dock.slice(from,until)+
+  "return {computeResultLayout}")( {},()=>null);
+ const ten=Array.from({length:10},(_,i)=>({name:"Pokémon "+i,expiresAtMs:0}));
+ for(const size of [35,45,55]){
+  const unscaled=helpers.computeResultLayout(ten,size,900,false,false);
+  if(unscaled.sprite!==size||unscaled.rows.some(row=>row<size)||unscaled.visibleCount!==10)return false;
+  const short=helpers.computeResultLayout(ten,size,330,false,false);
+  if(short.visibleCount!==10||short.total+54>330)return false;
+  if(short.rows.some(row=>row<short.sprite))return false;
+ }
+ return dock.includes("size+3:size+1; // 1px gap when no metadata;");
+});
 test("UX-INFO-08 bundled PvPoke data includes MIT attribution and stays display-only",
  read("assets/licenses/PvPoke-MIT.txt").includes("MIT License")&&
  read("assets/licenses/PvPoke-MIT.txt").includes("Copyright (c) 2019 pvpoke")&&
