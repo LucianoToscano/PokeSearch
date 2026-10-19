@@ -982,6 +982,7 @@ const QUICK_ACTIONS=[
  ["info","◉","Informações","info"],["report","⚠","Reportar","report"],
  ["donate","♡","Apoiar","donate"],["close","×","Fechar","close"]
 ];
+// Three adjacent search entry points: Modos, Filtros and Localização.
 const QUICK_PRIMARY_IDS=["mode","filters","location","pokemon","star","appearance"];
 const QUICK_UTILITY_IDS=["period","bell","info"];
 const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0]);
@@ -1019,7 +1020,11 @@ function quickClick(id){
  if(["mode","period","alerts","location","filters","info","appearance"].includes(id)){toggleChoices(id);return;}
  switch(id){
   case "star":Native.openWatchList();break;
-  case "pokemon":renderPokemonPlaceholder();break;
+  case "pokemon":
+   choiceOpen="pokemon";
+   document.getElementById("menu").classList.add("subview");
+   renderPokemonPlaceholder();
+   break;
   case "report":Native.openReport();break;
   case "donate":Native.openPix();break;
   case "close":Native.close();break;
@@ -1049,7 +1054,7 @@ function iconForQuick(id, fallback){
  glyph.textContent=fallback;return glyph;
 }
 function renderPokemonPlaceholder(){
- const panel=uxPanel("POKÉMON · POG OCOORDINATES".replace("POG O","POGO"));
+ const panel=uxPanel("POKÉMON · POG OCOORDINATES".replace("POG OCOORDINATES","POGOCOORDINATES"));
  const note=document.createElement("p");note.className="uxNote";
  note.textContent="Ícone Pokémon preparado. A busca por espécie/forma será integrada em uma próxima etapa, após a validação dos menus.";
  panel.appendChild(note);fit();
