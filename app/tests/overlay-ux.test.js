@@ -939,15 +939,27 @@ test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image source
   broken.classes.has("failed")&&tiny.classes.has("failed")&&absent.classes.has("failed");
 })());
 
-test("HOME-01 keeps three compact controls on left and real wordmark on right",(()=>{
+test("HOME-02 keeps only app icon on left, actions on right and undistorted map",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
- return home.includes("overlayControl=homeMiniButton")&&
+ return home.includes("R.drawable.pokesearch_icon")&&
+  home.includes("Gravity.RIGHT|Gravity.CENTER_VERTICAL")&&
+  home.includes("overlayControl=makeIcon(R.drawable.ic_overlay_off")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
-  home.includes("R.drawable.ps_home_wordmark")&&
-  home.includes("new LinearLayout.LayoutParams(d(142),d(52))")&&
+  !home.includes("R.drawable.ps_home_wordmark")&&
   home.includes("R.drawable.ps_home_background")&&
   home.includes("ImageView.ScaleType.CENTER_CROP");
+})());
+test("HOME-02 has visible ON/OFF resources and drawer with safe export",(()=>{
+ const status=main.split("private void refreshHomeOverlay(){")[1]?.split("private void openProviderLogin(")[0]||"";
+ const menu=main.split("private void showHomeMenu(){")[1]?.split("private void toggleHomeOverlay(){")[0]||"";
+ const exportCode=main.split("private void exportHomeData(){")[1]?.split("private void toggleHomeOverlay(){")[0]||"";
+ return status.includes("R.drawable.ic_overlay_on")&&status.includes("R.drawable.ic_overlay_off")&&
+  menu.includes("homeRoot.addView(layer")&&menu.includes("Exportar dados")&&
+  exportCode.includes("Intent.ACTION_CREATE_DOCUMENT")&&
+  exportCode.includes("WatchAlerts.watched(this)")&&
+  !exportCode.includes('prefs.getAll().toString()')&&
+  !exportCode.includes('"locationCoords"');
 })());
 test("HOME-01 keeps centered body empty and PoGoCoordinates panel compact",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
@@ -967,9 +979,9 @@ test("HOME-01 overlay button toggles service while retaining old startup permiss
   main.includes("Settings.ACTION_MANAGE_OVERLAY_PERMISSION")&&
   main.includes("notificationPermissionAskedV38");
 })());
-test("HOME-01 keeps original favorites, settings, reports and OAuth WebView",(()=>{
+test("HOME-02 keeps original favorites, settings, reports and official OAuth WebView",(()=>{
  const menu=main.split("private void showHomeMenu(){")[1]?.split("private void toggleHomeOverlay(){")[0]||"";
- return ["openPicker()","showPreferencesDialog()","showQuickGuide()","showBugReportDialog()"]
+ return ["this::openPicker","this::showPreferencesDialog","this::showQuickGuide","this::showBugReportDialog"]
    .every(x=>menu.includes(x))&&
    main.includes('openLoginDialog(false)')&&
    main.includes('readAsset("login_entry.js")')&&
