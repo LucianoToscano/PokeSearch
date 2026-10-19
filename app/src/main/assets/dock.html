@@ -1389,8 +1389,10 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  const desired=natural.reduce((a,b)=>a+b,0);
  const room=Math.max(120,(Number(displayHeight)||700)-30-24);
  const factor=desired>0?Math.min(1,room/desired):1;
- const sprite=Math.max(14,Math.floor(Math.min(size*factor,...(natural.length?natural.map(n=>n*factor):[size]))));
  const rows=natural.map(n=>Math.max(12,Math.floor(n*factor)));
+ // A very short display can reduce a row to 12px: never draw a
+ // larger sprite inside it, even when ten results must remain visible.
+ const sprite=Math.max(10,Math.min(Math.floor(size*factor),...(rows.length?rows:[size])));
  return {rows,sprite,total:rows.reduce((a,b)=>a+b,0),visibleCount:rows.length,
   infoScale:Math.max(0.86,Math.min(1,factor))};
 }
