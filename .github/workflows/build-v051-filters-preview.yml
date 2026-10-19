@@ -4,13 +4,12 @@ on:
     branches:
       - plan/v051-pogocoordinates-filtros-20261017
       - ux/iv-color-shiny-separate-20261018
-      - fix/ps009-stable-test-signing-20261018
     paths:
       - 'app/**'
       - '.github/workflows/build-v051-filters-preview.yml'
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -23,28 +22,6 @@ jobs:
       POKE_TEST_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-      - name: Reencode seven authorized mode icons and commit only these assets
-        if: github.ref_name == 'fix/ps009-stable-test-signing-20261018'
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m venv "$RUNNER_TEMP/pokesearch-icons-venv"
-          "$RUNNER_TEMP/pokesearch-icons-venv/bin/python" -m pip -q install pillow
-          "$RUNNER_TEMP/pokesearch-icons-venv/bin/python" scripts/optimize_result_icons.py
-          python3 - <<'PY'
-          from pathlib import Path
-          from shutil import copyfile
-          names=("0Star.png","1Star.png","2Star.png","3Star.png","StarGL.png","StarUL.png","StarIVRaw.png")
-          for name in names:
-              copyfile(Path("staging-result-icons/modes")/name,Path("app/src/main/assets/result-icons/modes")/name)
-          PY
-          git config user.name "PokeSearch CI"
-          git config user.email "103388355+LucianoToscano@users.noreply.github.com"
-          git add -- app/src/main/assets/result-icons/modes/0Star.png app/src/main/assets/result-icons/modes/1Star.png app/src/main/assets/result-icons/modes/2Star.png app/src/main/assets/result-icons/modes/3Star.png app/src/main/assets/result-icons/modes/StarGL.png app/src/main/assets/result-icons/modes/StarUL.png app/src/main/assets/result-icons/modes/StarIVRaw.png
-          if ! git diff --cached --quiet; then
-            git commit -m "perf(assets): apply seven approved RGBA 128px Mode PNGs"
-            git push origin HEAD:fix/ps009-stable-test-signing-20261018
-          fi
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
