@@ -312,6 +312,69 @@ body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow .quickState
 body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow .quickArrow{
  display:inline!important}
 
+
+/* UX-MENU-03: restore v0.51 old ONE-ROW, SMALL, ICON-ONLY ribbon.
+   All legacy actions stay available; only their visual presentation changes. */
+body.controls-window #menu{height:34px!important;min-height:34px!important}
+body.controls-window #quickHead{display:none!important}
+body.controls-window #quickMenuList,
+body.controls-window #menu.subview #quickMenuList,
+body.controls-window.popup-above #quickMenuList{
+ display:grid!important;position:absolute!important;top:0!important;bottom:auto!important;
+ left:0!important;width:100%!important;height:34px!important;min-height:34px!important;
+ max-height:34px!important;overflow:hidden!important;overscroll-behavior:none;
+ background:transparent!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;padding:0 2px!important;margin:0!important;
+ grid-template-columns:repeat(12,minmax(0,1fr))!important;grid-template-rows:30px!important;
+ grid-auto-flow:column!important;gap:2px!important;align-items:start!important;
+}
+body.controls-window #quickRows,
+body.controls-window #quickUtilities,
+body.controls-window #quickFooter{
+ display:contents!important;margin:0!important;padding:0!important;
+ border:0!important;background:transparent!important;
+}
+body.controls-window #quickMenuList .quickRow,
+body.controls-window #quickMenuList .quickFooterAction,
+body.controls-window #quickMenuList.quick-horizontal .quickRow,
+body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow{
+ display:flex!important;flex-direction:row!important;justify-content:center!important;
+ align-items:center!important;min-width:0!important;width:100%!important;
+ height:30px!important;min-height:30px!important;max-height:30px!important;
+ margin:0!important;padding:0!important;gap:0!important;
+ background:#28292cce!important;border:1px solid #ffffff2d!important;
+ border-radius:5px!important;color:#f2f2f3!important;box-shadow:none!important;
+}
+body.controls-window #quickMenuList button:active{background:#46504c!important}
+body.controls-window #quickMenuList button.selected{background:#3a5040dc!important;border-color:#85c5ad80!important}
+body.controls-window #quickMenuList [data-key=location].selected{background:#1e6150e8!important;color:#dcffed!important}
+body.controls-window #quickMenuList [data-key=star].selected{background:#70561de0!important;color:#ffdf74!important}
+body.controls-window #quickMenuList .quickGlyph{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:17px!important;min-width:17px!important;height:18px!important;
+ font-size:16px!important;line-height:1!important;color:inherit!important;
+}
+body.controls-window #quickMenuList .quickGlyph svg{
+ display:block!important;width:16px!important;height:16px!important;
+ max-height:16px!important;max-width:16px!important;
+}
+body.controls-window #quickMenuList .quickName,
+body.controls-window #quickMenuList .quickState,
+body.controls-window #quickMenuList .quickArrow{
+ display:none!important;width:0!important;height:0!important;overflow:hidden!important;
+}
+body.controls-window #quickMenuList [data-key=report] .quickGlyph{color:#ffd674!important}
+body.controls-window #quickMenuList [data-key=donate] .quickGlyph{color:#fa94a7!important}
+body.controls-window #quickMenuList [data-key=close] .quickGlyph{color:#ff596c!important}
+body.controls-window #quickMenuList [data-key=pokemon] .quickGlyph{color:#94ded2!important}
+/* Submenus regain their ORIGINAL narrow popup widths instead of the 276/396dp panel. */
+body.controls-window #choices{top:34px!important;width:220px!important;
+ max-width:calc(100vw - 12px)!important;max-height:var(--popup-room,400px)!important;
+ overflow-y:auto!important;border:1px solid #ffffff38!important;border-radius:9px!important;
+ box-shadow:0 4px 12px #0008!important;padding:5px!important;}
+body.controls-window #choices.modePanel{width:246px!important;max-height:min(310px,var(--popup-room,400px))!important}
+body.controls-window #choices.locationPanel{width:306px!important;max-height:var(--popup-room,400px)!important}
+body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -485,7 +548,7 @@ let fitPending=false;
 function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{fitPending=false;
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
- if(controlsWindow){h=34;if(menuOpen&&!choiceOpen)h=Math.max(34,34+Math.ceil(document.getElementById("quickMenuList").getBoundingClientRect().height)+6);}
+ if(controlsWindow)h=34; // UX-MENU-03: the thin toolbar is always exactly one row.
  if(resultWindow){
   const header=document.getElementById("resultHeader");
   const spawns=document.getElementById("spawns");
@@ -1001,7 +1064,7 @@ const QUICK_ACTIONS=[
 const QUICK_PRIMARY_IDS=["mode","filters","location","pokemon","star","appearance"];
 const QUICK_UTILITY_IDS=["period","bell","info"];
 const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0]);
-let quickPrefs={direction:"horizontal",labels:true,order:[...QUICK_DEFAULT_ORDER],hidden:[]};
+let quickPrefs={direction:"horizontal",labels:false,order:[...QUICK_DEFAULT_ORDER],hidden:[]};
 function normalizedQuickPrefs(p){
  const ids=QUICK_DEFAULT_ORDER;
  // Previous 51047 saved nine icons with Shiny in the main grid.
@@ -1009,8 +1072,8 @@ function normalizedQuickPrefs(p){
  const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon");
  const order=legacy?[]:p.order.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i);
  const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter(x=>ids.includes(x)&&x!=="close"&&x!=="appearance"):[];
- return {direction:legacy?"horizontal":p.direction==="horizontal"?"horizontal":"vertical",
-  labels:legacy?true:p.labels!==false,
+ return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.
+  labels:false,
   order:[...order,...ids.filter(x=>!order.includes(x))],hidden};
 }
 function saveQuickPrefs(){
@@ -1079,20 +1142,20 @@ function renderQuickMenu(){
  const outer=document.getElementById("quickMenuList"),rows=document.getElementById("quickRows"),
    util=document.getElementById("quickUtilities"),footer=document.getElementById("quickFooter");
  if(!rows||!util||!footer)return;
- outer.classList.toggle("quick-horizontal",quickPrefs.direction==="horizontal");
- outer.classList.toggle("quick-no-labels",!quickPrefs.labels);
+ outer.classList.add("quick-horizontal","quick-no-labels"); // Icons only, always.
  rows.replaceChildren();util.replaceChildren();footer.replaceChildren();
  for(const id of quickPrefs.order){
   const a=QUICK_ACTIONS.find(x=>x[0]===id);
   if(!a||quickPrefs.hidden.includes(id))continue;
   const button=document.createElement("button");button.type="button";button.dataset.key=id;
   const isFooter=["report","donate","close"].includes(id);
-  button.className=isFooter?"quickFooterAction":"quickRow";button.title=a[2];
+  button.className=isFooter?"quickFooterAction":"quickRow";
+  button.title=a[2]+(quickState(id)?" · "+quickState(id):"");
   button.setAttribute("aria-label",a[2]);
   const glyph=iconForQuick(id,a[1]);
   const label=document.createElement("span");label.className="quickName";label.textContent=a[2];
   const state=document.createElement("span");state.className="quickState";state.textContent=quickState(id);
-  button.append(glyph,label);
+  button.append(glyph,label); // Keep hidden text for accessibility and preferences.
   if(!isFooter){
    button.append(state);
    const arrow=document.createElement("span");arrow.className="quickArrow";arrow.textContent="›";
@@ -1105,8 +1168,13 @@ function renderQuickMenu(){
 }
 function refreshQuickMenuStates(){
  if(!controlsWindow)return;
- document.querySelectorAll("#quickRows .quickRow,#quickUtilities .quickRow").forEach(button=>{
-  const state=button.querySelector(".quickState");if(state)state.textContent=quickState(button.dataset.key);
+ document.querySelectorAll("#quickMenuList button[data-key]").forEach(button=>{
+  const id=button.dataset.key, current=quickState(id), state=button.querySelector(".quickState");
+  if(state)state.textContent=current;
+  button.title=button.getAttribute("aria-label")+(current?" · "+current:"");
+  button.classList.toggle("selected",id==="location"?locationEnabled:
+   id==="bell"?generalAlerts:id==="period"?period>0:
+   id==="star"?hasFavorites:id==="mode"?(mode==="gl"||mode==="ul"):false);
  });
 }
 function uxPanel(title){
@@ -1152,12 +1220,9 @@ function renderInfoChoices(){
 }
 function renderAppearanceChoices(){
  const panel=uxPanel("APARÊNCIA E PERSONALIZAÇÃO");
- uxOption(panel,"Direção do menu",quickPrefs.direction==="vertical"?"Vertical":"Horizontal",()=>{
-  quickPrefs.direction=quickPrefs.direction==="vertical"?"horizontal":"vertical";saveQuickPrefs();renderAppearanceChoices();
- });
- uxOption(panel,"Legendas",quickPrefs.labels?"Ícone + texto":"Só ícone",()=>{
-  quickPrefs.labels=!quickPrefs.labels;saveQuickPrefs();renderAppearanceChoices();
- });
+ const ribbonNote=document.createElement("div");ribbonNote.className="uxNote";
+ ribbonNote.textContent="Menu principal fino e horizontal, somente ícones. A engrenagem continua móvel.";
+ panel.appendChild(ribbonNote);
  uxOption(panel,"Próximo tamanho do sprite",spriteSize<=35?"P":spriteSize>=55?"G":"M",()=>{
   Native.cycleSpriteSize();renderAppearanceChoices();
  });
