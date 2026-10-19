@@ -340,7 +340,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -1429,6 +1429,33 @@ public class OverlayService extends Service {
         }
         return false;
     }
+    private boolean sendGeneralNotification(String title,String info,int id){
+        // This is a confirmed-result notice or an explicit manual test.
+        if(!WatchAlerts.permissionGranted(this))return false;
+        NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        if(nm==null)return false;
+        boolean quiet="silent".equals(alertsMode);
+        String channelId=quiet?"pokesearch_alerts_silent_v1":"pokesearch_alerts";
+        NotificationChannel channel=new NotificationChannel(channelId,
+            quiet?"Novos Pokémon · silencioso":"Novos Pokémon encontrados",
+            quiet?NotificationManager.IMPORTANCE_LOW:NotificationManager.IMPORTANCE_DEFAULT);
+        if(quiet)channel.setSound(null,null);
+        nm.createNotificationChannel(channel);
+        // The user owns channel sound/importance after first creation.
+        if(nm.getNotificationChannel(channelId)==null||
+            nm.getNotificationChannel(channelId).getImportance()==NotificationManager.IMPORTANCE_NONE)
+            return false;
+        Intent open=new Intent(this,MainActivity.class);
+        PendingIntent pending=PendingIntent.getActivity(this,74,open,
+            PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
+        Notification note=new Notification.Builder(this,channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title).setContentText(info).setAutoCancel(true)
+            .setContentIntent(pending)
+            .setStyle(new Notification.BigTextStyle().bigText(info)).build();
+        try{nm.notify(id,note);return true;}
+        catch(Exception e){recordFailure("notificação geral",e);return false;}
+    }
     private void recordNewResults(JSONArray cards,boolean leagueConfirmed){
         android.content.SharedPreferences preferences=getSharedPreferences("prefs",0);
         JSONArray history;
@@ -1484,23 +1511,9 @@ public class OverlayService extends Service {
                     "Permissão de notificações não concedida").apply();
         }
         if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()&&now-lastAlertAt>60000L){
-            lastAlertAt=now;
-            NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-            if(nm!=null){
-                boolean quiet="silent".equals(alertsMode);
-                String channelId=quiet?"pokesearch_alerts_silent_v1":"pokesearch_alerts";
-                NotificationChannel alertChannel=new NotificationChannel(channelId,
-                    quiet?"Novos Pokémon · silencioso":"Novos Pokémon encontrados",
-                    quiet?NotificationManager.IMPORTANCE_LOW:NotificationManager.IMPORTANCE_DEFAULT);
-                if(quiet)alertChannel.setSound(null,null);
-                nm.createNotificationChannel(alertChannel);
-                Notification note=new Notification.Builder(this,channelId)
-                    .setSmallIcon(R.drawable.ic_notification)
-                    .setContentTitle("Novo Pokémon: "+firstNew)
-                    .setContentText("Encontrado na busca "+mode.toUpperCase(java.util.Locale.ROOT))
-                    .setAutoCancel(true).build();
-                try{nm.notify(74,note);}catch(Exception e){recordFailure("notificação geral",e);}
-            }
+            if(sendGeneralNotification("Novo Pokémon: "+firstNew,
+                "Encontrado nos filtros confirmados · "+mode.toUpperCase(java.util.Locale.ROOT),74))
+                lastAlertAt=now;
         }
     }
     private void applyCollectedResults(JSONObject r){
@@ -1968,8 +1981,37 @@ public class OverlayService extends Service {
         @JavascriptInterface public void testNotification(){handler.post(()->{
             boolean sent=WatchAlerts.test(OverlayService.this);
             android.widget.Toast.makeText(OverlayService.this,
-                sent?"Notificação de teste enviada":"Não foi possível enviar teste",
+                sent?"Teste do canal Favoritos enviado":"Aviso favorito bloqueado. Confira permissão e canal.",
                 android.widget.Toast.LENGTH_SHORT).show();
+            update();
+        });}
+        @JavascriptInterface public void testGeneralNotification(){handler.post(()->{
+            boolean sent=sendGeneralNotification("🔔 Teste de aviso geral",
+                "Teste do canal de novos Pokémon · nenhuma captura real foi detectada.",75);
+            android.widget.Toast.makeText(OverlayService.this,
+                sent?"Teste de aviso geral enviado":"Aviso geral bloqueado. Confira permissão e canal.",
+                android.widget.Toast.LENGTH_SHORT).show();
+            update();
+        });}
+        @JavascriptInterface public void refreshNotificationStatus(){handler.post(()->update());}
+        @JavascriptInterface public void requestNotificationPermission(){handler.post(()->{
+            Intent intent=new Intent(OverlayService.this,MainActivity.class);
+            intent.setAction("com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP|
+                Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            try{startActivity(intent);}catch(Exception e){recordFailure("pedir permissão de alertas",e);}
+        });}
+        @JavascriptInterface public void openNotificationSettings(){handler.post(()->{
+            Intent intent=new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+            intent.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName());
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try{startActivity(intent);}
+            catch(Exception e){
+                Intent fallback=new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    android.net.Uri.parse("package:"+getPackageName()));
+                fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                try{startActivity(fallback);}catch(Exception failed){recordFailure("ajustes de notificações",failed);}
+            }
         });}
         @JavascriptInterface public void saveMenuPrefs(String json){handler.post(()->{
             if(json==null||json.length()>1600)return;
