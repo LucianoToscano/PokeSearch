@@ -1735,21 +1735,23 @@ public class OverlayService extends Service {
         });}
 
         @JavascriptInterface public void setLocation(boolean enabled,String coords,int radius){handler.post(()->{
-            locationVerified=false;
-            if(enabled){
-                String valid=extractCoordinates(coords==null?"":coords);
-                if(valid.isEmpty()||radius<0||radius>1000){
-                    diagnosticError("📍 Cole latitude,longitude válidas e escolha raio de 0 a 1000km.");
-                    update();return;
-                }
-                locationEnabled=true;
-                locationCoords=valid;
-                locationRadius=radius;
-            }else{
-                locationEnabled=false;
-                locationCoords="";
-                locationRadius=0;
+            // Validate BEFORE mutating even the confirmed-state flag. An invalid
+            // clipboard or hand-typed coordinate must not discard a proven filter.
+            String valid=enabled?extractCoordinates(coords==null?"":coords):"";
+            if(enabled&&(valid.isEmpty()||radius<0||radius>1000)){
+                diagnosticError("📍 Cole latitude,longitude válidas e escolha raio de 0 a 1000km.");
+                update();return;
             }
+            if(locationEnabled==enabled&&
+                (!enabled||(locationCoords.equals(valid)&&locationRadius==radius))){
+                // Repeated Apply/ON taps are not a new search and cannot turn
+                // an already verified location into a pending one.
+                update();return;
+            }
+            locationVerified=false;
+            locationEnabled=enabled;
+            locationCoords=enabled?valid:"";
+            locationRadius=enabled?radius:0;
             android.content.SharedPreferences.Editor prefs=getSharedPreferences("prefs",0).edit();
             prefs.putBoolean("locationEnabled",locationEnabled);
             if(locationEnabled)prefs.putString("locationCoords",locationCoords).putInt("locationRadius",locationRadius);
@@ -1764,6 +1766,23 @@ public class OverlayService extends Service {
                 locationEnabled?"Coordenadas solicitadas, ainda não confirmadas":"Filtro geográfico desligado");
             status(locationEnabled?"📍 Localização solicitada • aguardando confirmação no site":"📍 Localização desligada • busca geral");
             OverlayService.this.refresh(true);
+        });}
+        @JavascriptInterface public void pasteLocationCoords(){handler.post(()->{
+            // Clipboard is read ONLY after a user tap. Never log or persist a
+            // clipboard value that was not explicitly applied as a filter.
+            String parsed="";
+            try{
+                ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                if(cb!=null&&cb.hasPrimaryClip()){
+                    android.content.ClipData clip=cb.getPrimaryClip();
+                    if(clip!=null&&clip.getItemCount()>0){
+                        CharSequence value=clip.getItemAt(0).coerceToText(OverlayService.this);
+                        if(value!=null&&value.length()<=128)
+                            parsed=extractCoordinates(value.toString());
+                    }
+                }
+            }catch(Exception e){recordFailure("colar coordenadas",e);}
+            js(menuPanel,menuLoaded,"window.onLocationPaste("+JSONObject.quote(parsed)+")");
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
         @JavascriptInterface public void requestFilterOptions(){handler.post(()->requestFilterOptionsLater(0));}
