@@ -75,16 +75,33 @@
  };
  let avatarUrl="";
  if(provider==="Google"||!provider){
-  const candidates=Array.from(document.querySelectorAll("img")).filter(visible);
-  for(const img of candidates){
+  const images=Array.from(document.querySelectorAll("img")).filter(visible);
+  const trusted=[];
+  for(const img of images){
    const label=(img.getAttribute("alt")||"")+" "+(img.getAttribute("aria-label")||"");
    const parent=img.parentElement?.parentElement;
    const context=String(parent?text(parent):"").slice(0,240);
-   const candidate=trustedGoogleUrl(img.currentSrc||img.getAttribute("src")||"");
-   if(candidate&&(/avatar|profile|account|foto|photo/i.test(label)||
-      (displayName&&context.includes(displayName))||/Member since/i.test(context))){
-    avatarUrl=candidate;break;
+   // An unloaded/lazy profile picture may not have currentSrc yet.
+   // Read only the official visible DOM, never cookies or OAuth metadata.
+   const possible=[img.currentSrc,img.getAttribute("src"),img.getAttribute("data-src")];
+   const srcset=img.getAttribute("srcset")||"";
+   if(srcset)possible.push(srcset.split(",")[0].trim().split(/\s+/)[0]);
+   for(const rawUrl of possible){
+    const candidate=trustedGoogleUrl(rawUrl||"");
+    if(!candidate)continue;
+    trusted.push(candidate);
+    if(/avatar|profile|account|foto|photo/i.test(label)||
+       (displayName&&context.includes(displayName))||/Member since/i.test(context))
+      avatarUrl=candidate;
+    if(avatarUrl)break;
    }
+   if(avatarUrl)break;
+  }
+  // The official profile sometimes shows an unlabeled Google avatar.
+  // Only a single distinct visible allowlisted source is unambiguous.
+  if(!avatarUrl){
+   const unique=[...new Set(trusted)];
+   if(unique.length===1)avatarUrl=unique[0];
   }
  }
  return JSON.stringify({ok:true,page:"profile",displayName,provider,trainerState,
