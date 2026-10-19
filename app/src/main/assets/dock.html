@@ -59,13 +59,10 @@ body.controls-window #choices{z-index:10}
 #locBadge.active{display:block}
 body.controls-window #locBadge{display:none!important}
 #choices.locationPanel{width:306px;max-width:calc(100vw - 12px)}
-#choices.modePanel{width:246px;max-width:calc(100vw - 12px);height:auto;padding:3px;
+#choices.modePanel{width:232px;max-width:calc(100vw - 12px);height:auto;padding:3px;
  max-height:min(216px,var(--popup-room,400px));overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
 #choices.modePanel .choiceHeader{padding:2px 5px 3px}
-#choices .modeTitleRow{display:flex;align-items:center;justify-content:space-between;gap:4px}
-#choices .modeTitleRow #modeShiny{width:auto;flex:none;margin:1px 3px 2px;padding:4px 7px;font-size:10px;
- border:1px solid #a68c506f;border-radius:6px;color:#f6d88b;background:#55492b77}
-#choices .modeTitleRow #modeShiny.on{background:#6b592cbd;color:#ffe49d}
+/* Shiny lives independently as the second icon in the horizontal toolbar. */
 #choices .extraDivider{height:1px;margin:5px 3px;background:#ffffff32}
 #choices .extraHead{display:flex;align-items:center;justify-content:space-between;width:100%;padding:6px 5px;
  font-weight:700;font-size:11px;border-radius:6px;background:#ffffff0a}
@@ -91,14 +88,6 @@ body.controls-window #locBadge{display:none!important}
 #choices .modeAction button{width:50%;margin:0;text-align:center;background:#223448;border:1px solid #415369}
 #choices .modeAction .modeApply{background:#17644c;border-color:#50bf94;color:#e0ffee}
 #choices .modeHint{display:none}
-#choices .numberGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;max-height:148px;
- overflow-y:auto;overscroll-behavior:contain;padding:4px}
-#choices .numberGrid button{padding:5px 0;margin:0;text-align:center;background:#263345;border:1px solid #455367}
-#choices .numberGrid button.chosen{background:#21634e;border-color:#61d2a7}
-#choices .numberBack{border:1px solid #465b6a;background:#223144;text-align:center}
-#choices .numberJump{display:flex;align-items:center;gap:5px;padding:0 5px 1px}
-#choices .numberJump input{flex:1;min-width:0;height:24px;margin:0;accent-color:#72c7ae;touch-action:pan-x}
-#choices .numberJump output{font-size:11px;font-weight:700;min-width:25px;text-align:right;color:#dbffef}
 /* The orange stale-result dot is intentionally hidden. Source provenance and
    accessible stale status remain intact; old cards never become new results. */
 #choices .locText{font-size:11px;color:#a9b7c9;padding:0 7px 8px;line-height:1.35}
@@ -230,6 +219,30 @@ body.result-window #spawns{margin:0!important;max-height:var(--list-limit);
 body.result-window #empty{margin:0 auto;max-height:18px}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
+
+/* Compact Modos number wheels: swipe, mousewheel, tap or arrow keys. */
+#choices.modePanel .uxSegment{gap:2px;padding:2px 1px 5px}
+#choices.modePanel .uxSegment button{height:28px;min-height:28px;padding:3px 1px;font-size:11px}
+#choices.modePanel .modeWheels{display:flex;justify-content:center;align-items:flex-start;gap:5px;padding:1px 2px 2px}
+#choices.modePanel .modeWheelField{display:flex;flex:1;flex-direction:column;align-items:stretch;min-width:0;max-width:73px;gap:2px}
+#choices.modePanel .modeWheelLabel{font:600 9px/12px Roboto,Arial,sans-serif;text-align:center;color:#a9b9c7}
+#choices.modePanel .modeWheel{height:96px;width:100%;padding:32px 0;overflow-y:auto;overflow-x:hidden;
+ scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain;touch-action:pan-y;
+ background:linear-gradient(180deg,#17222cba,#1d303a90 45%,#1d303a90 55%,#17222cba);
+ border:0;border-radius:5px;outline-offset:1px}
+#choices.modePanel .modeWheel::-webkit-scrollbar{display:none}
+#choices.modePanel .modeWheelItem{display:block;height:32px;min-height:32px;line-height:32px;width:100%;
+ margin:0;padding:0;background:transparent;border:0;border-radius:4px;
+ color:#8a99a8;font-size:11px;text-align:center;scroll-snap-align:center}
+#choices.modePanel .modeWheelItem.chosen{color:#f1fff8;background:#285449b8;font-size:16px;
+ font-weight:800;text-shadow:0 0 4px #79eac46b}
+#choices.modePanel .modeWheelItem:focus-visible{outline:1px solid #96dfc6}
+#choices.modePanel .modeAction{position:relative;bottom:auto;justify-content:flex-end;gap:5px;
+ padding:4px 3px 1px;background:transparent;border:0}
+#choices.modePanel .modeAction button{flex:none;width:38px;height:32px;min-height:32px;margin:0;padding:0;
+ display:flex;align-items:center;justify-content:center;font:700 19px/1 Roboto,Arial,sans-serif;
+ border:1px solid #ffffff2e;border-radius:6px;background:#25313c;color:#c6d4df}
+#choices.modePanel .modeAction .modeApply{background:#17644c;border-color:#50bf94;color:#e0ffee}
 
 /* UX-MENU-01: compact navigation; historical 12 original buttons remain intact. */
 #quickHead,#quickMenuList{display:none}
@@ -379,7 +392,7 @@ body.controls-window #choices{top:34px!important;width:220px!important;
  max-width:calc(100vw - 12px)!important;max-height:var(--popup-room,400px)!important;
  overflow-y:auto!important;border:1px solid #ffffff38!important;border-radius:9px!important;
  box-shadow:0 4px 12px #0008!important;padding:5px!important;}
-body.controls-window #choices.modePanel{width:246px!important;max-height:min(310px,var(--popup-room,400px))!important}
+body.controls-window #choices.modePanel{width:232px!important;max-height:min(216px,var(--popup-room,400px))!important}
 body.controls-window #choices.locationPanel{width:306px!important;max-height:var(--popup-room,400px)!important}
 body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}
 /* Tiny Modos artwork only. GL/UL #N floats centered ABOVE the PNG,
@@ -735,62 +748,102 @@ function renderModeChoices(){
  const make=(tag,cls,label)=>{
   const el=document.createElement(tag);if(cls)el.className=cls;if(label!==undefined)el.textContent=label;return el;
  };
- const heading=make("div","modeTitleRow");
- heading.appendChild(make("div","choiceHeader","MODO DE BUSCA"));
- const shinyButton=make("button",shiny?"on":"","✨ "+(shinyPending?"…":shiny?"ON":"OFF"));
- shinyButton.id="modeShiny";shinyButton.type="button";shinyButton.title="Shiny Only · alternar pelo controle original";
- shinyButton.setAttribute("aria-pressed",String(shiny));
- shinyButton.onclick=()=>Native.shiny();
- heading.appendChild(shinyButton);panel.appendChild(heading);
+ // The standalone ✨ beside Modos handles Shiny; do not duplicate it here.
  const tabs=make("div","uxSegment");
- for(const [id,title] of [["raw","Raw IV"],["percent","IV%"],["gl","GL"],["ul","UL"]]){
-  const tab=make("button",modeDraft.mode===id?"chosen":"",title);
-  tab.setAttribute("aria-pressed",String(modeDraft.mode===id));
-  tab.onclick=()=>{modeDraft.mode=id;renderModeChoices();};tabs.appendChild(tab);
+ tabs.setAttribute("role","tablist");tabs.setAttribute("aria-label","Modo de busca");
+ for(const [id,label] of [["raw","IV"],["percent","IV%"],["gl","GL"],["ul","UL"]]){
+  const tab=make("button",modeDraft.mode===id?"chosen":"",label);
+  tab.type="button";tab.setAttribute("role","tab");
+  tab.setAttribute("aria-selected",String(modeDraft.mode===id));
+  tab.onclick=()=>{modeDraft.mode=id;renderModeChoices();};
+  tabs.appendChild(tab);
  }
  panel.appendChild(tabs);
- const row=(name,label,keys)=>{if(modeDraft.mode!==name)return;
-  const line=make("div","modeRow"+(modeDraft.mode===name?" selected":""));
-  const choose=make("button","modeSelect"+(modeDraft.mode===name?" chosen":""),label);
-  choose.type="button";
-  choose.setAttribute("aria-pressed",String(modeDraft.mode===name));
-  choose.textContent=(modeDraft.mode===name?"✓ ":"")+label;
-  choose.onclick=()=>{
-   modeScrollTop=panel.scrollTop;modeDraft.mode=name;renderModeChoices();
+ const wheels=make("div","modeWheels");
+ const fields=modeDraft.mode==="raw"?[
+  ["attack","A","iv","Ataque"],["defense","D","iv","Defesa"],["stamina","HP","iv","HP"]
+ ]:modeDraft.mode==="percent"?[
+  ["percentMin","MIN","percent","IV percentual mínimo"],
+  ["percentMax","MAX","percent","IV percentual máximo"]
+ ]:modeDraft.mode==="gl"?[["glRank","#","rank","Ranking GL"]]:
+   [["ulRank","#","rank","Ranking UL"]];
+ const wheelByKey={};
+ const adjustWheel=(key,number)=>{
+  const entry=wheelByKey[key];if(!entry)return;
+  const index=entry.values.indexOf(Number(number));if(index<0)return;
+  entry.wheel.scrollTop=index*32;entry.paint(index);
+ };
+ fields.forEach(([key,label,kind,description])=>{
+  const choices=kind==="percent"?IV_PERCENT_VALUES:
+   Array.from({length:kind==="iv"?16:50},(_,i)=>i+(kind==="rank"?1:0));
+  const field=make("div","modeWheelField");
+  const caption=make("span","modeWheelLabel",label);
+  const wheel=make("div","modeWheel");
+  wheel.setAttribute("role","listbox");wheel.tabIndex=0;
+  wheel.setAttribute("aria-label",description);
+  wheel.setAttribute("aria-orientation","vertical");
+  const display=n=>kind==="percent"?n+"%":kind==="rank"?"#"+n:String(n);
+  const items=[];
+  const paint=index=>{
+   if(index<0||index>=choices.length)return;
+   items.forEach((item,i)=>{
+    const selected=i===index;
+    item.classList.toggle("chosen",selected);
+    item.setAttribute("aria-selected",String(selected));
+    item.tabIndex=selected?0:-1;
+   });
+   wheel.setAttribute("aria-valuetext",display(choices[index]));
   };
-  line.appendChild(choose);
-  keys.forEach(({key,title,kind})=>{
-   const value=make("button","modeValue",kind==="percent"?modeDraft[key]+"% ▾":modeDraft[key]+" ▾");
-   value.type="button";value.title=title;value.setAttribute("aria-label",title+": "+modeDraft[key]);
-   value.onclick=()=>{
-    modeScrollTop=panel.scrollTop;modeDraft.mode=name;renderNumberPicker(key,kind,title);
-   };
-   line.appendChild(value);
+  const choose=number=>{
+   const index=choices.indexOf(Number(number));if(index<0)return;
+   modeDraft[key]=choices[index];paint(index);
+   // Min and Max are automatically kept in a valid order in the draft.
+   if(key==="percentMin"&&modeDraft.percentMax<number){
+    modeDraft.percentMax=number;adjustWheel("percentMax",number);
+   }else if(key==="percentMax"&&modeDraft.percentMin>number){
+    modeDraft.percentMin=number;adjustWheel("percentMin",number);
+   }
+  };
+  choices.forEach((number,index)=>{
+   const option=make("button","modeWheelItem",display(number));
+   option.type="button";option.setAttribute("role","option");
+   option.setAttribute("aria-label",description+": "+display(number));
+   option.setAttribute("aria-selected","false");
+   option.onclick=()=>{choose(number);wheel.scrollTo({top:index*32,behavior:"smooth"});};
+   wheel.appendChild(option);items.push(option);
   });
-  panel.appendChild(line);
- };
- row("raw","Raw IV",[
-  {key:"attack",title:"Ataque (0 a 15)",kind:"iv"},
-  {key:"defense",title:"Defesa (0 a 15)",kind:"iv"},
-  {key:"stamina",title:"HP (0 a 15)",kind:"iv"}
- ]);
- row("percent","% IV Min/Max",[
-  {key:"percentMin",title:"IV% Min (0 a 100)",kind:"percent"},
-  {key:"percentMax",title:"IV% Max (0 a 100)",kind:"percent"}
- ]);
- row("gl","Great League",[{key:"glRank",title:"Top ranking Grande Liga (1 a 50)",kind:"rank"}]);
- row("ul","Ultra League",[{key:"ulRank",title:"Top ranking Ultra Liga (1 a 50)",kind:"rank"}]);
- const buttons=make("div","modeAction");
- const apply=make("button","modeApply","✓ Aplicar");
- const cancel=make("button","","Cancelar");
+  wheelByKey[key]={wheel,values:choices,paint};
+  wheel.onscroll=()=>{
+   const index=Math.max(0,Math.min(choices.length-1,Math.round(wheel.scrollTop/32)));
+   if(modeDraft[key]!==choices[index])choose(choices[index]);
+  };
+  wheel.onkeydown=event=>{
+   const index=choices.indexOf(Number(modeDraft[key]));
+   const target=event.key==="ArrowUp"?index-1:event.key==="ArrowDown"?index+1:
+    event.key==="Home"?0:event.key==="End"?choices.length-1:-1;
+   if(target<0||target>=choices.length)return;
+   event.preventDefault();choose(choices[target]);wheel.scrollTop=target*32;
+  };
+  field.append(caption,wheel);wheels.appendChild(field);
+ });
+ panel.appendChild(wheels);
+ // Position each selected number in the centre once this popup is attached.
+ requestAnimationFrame(()=>{
+  if(choiceOpen!=="mode"||!panel.isConnected)return;
+  fields.forEach(([key])=>adjustWheel(key,modeDraft[key]));
+ });
+ const actions=make("div","modeAction");
+ const apply=make("button","modeApply","✓");
+ const cancel=make("button","modeCancel","×");
+ apply.type="button";cancel.type="button";
+ apply.title="Aplicar filtro";cancel.title="Cancelar alterações";
+ apply.setAttribute("aria-label","Aplicar modo de busca");
+ cancel.setAttribute("aria-label","Cancelar sem aplicar");
  apply.onclick=()=>{
-  const next={...modeDraft};
-  closeChoices();
-  Native.setSearchConfig(JSON.stringify(next));
+  const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));
  };
- cancel.onclick=closeChoices;buttons.append(apply,cancel);panel.appendChild(buttons);
+ cancel.onclick=closeChoices;actions.append(apply,cancel);panel.appendChild(actions);
  document.getElementById("cycle").setAttribute("aria-expanded","true");
- panel.scrollTop=modeScrollTop;
  fit();
 }
 
@@ -879,58 +932,6 @@ window.onFilterOptions=function(response){
  }
 };
 
-function renderNumberPicker(key,kind,title){
- const panel=document.getElementById("choices");
- panel.replaceChildren();panel.classList.add("modePanel","visible");
- const heading=document.createElement("div");heading.className="choiceHeader";heading.textContent=title;
- const grid=document.createElement("div");grid.className="numberGrid";
- // Only the 46 attainable Pokémon GO IV percentages; PvP Top 1–50 is separate.
- const choices=kind==="percent"?IV_PERCENT_VALUES:
-   Array.from({length:kind==="iv"?16:50},(_,i)=>i+(kind==="rank"?1:0));
- const selected=Number(modeDraft[key]);
- const chooseNumber=number=>{
-  if(!choices.includes(number))return;
-  modeDraft[key]=number;
-  if(key==="percentMin"&&modeDraft.percentMax<number)modeDraft.percentMax=number;
-  if(key==="percentMax"&&modeDraft.percentMin>number)modeDraft.percentMin=number;
-  renderModeChoices();
- };
- const highlight=value=>{
-  grid.querySelectorAll("button").forEach(btn=>{
-   btn.classList.toggle("chosen",Number(btn.dataset.number)===value);
-  });
-  const index=choices.indexOf(value);
-  grid.scrollTop=Math.max(0,(Math.floor(index/5)-2)*30);
- };
- choices.forEach(number=>{
-  const btn=document.createElement("button");btn.type="button";
-  btn.textContent=kind==="percent"?number+"%":String(number);
-  btn.dataset.number=String(number);btn.className=number===selected?"chosen":"";
-  btn.setAttribute("aria-label",title+" = "+number+(kind==="percent"?"%":""));
-  btn.onclick=()=>chooseNumber(number);
-  grid.appendChild(btn);
- });
- // The slider advances by valid IV percentage INDEX (0–45), not 1% increments.
- if(kind==="percent"){
-  const jump=document.createElement("div");jump.className="numberJump";
-  const slider=document.createElement("input");
-  slider.type="range";slider.min="0";slider.max=String(IV_PERCENT_VALUES.length-1);slider.step="1";
-  slider.value=String(Math.max(0,IV_PERCENT_VALUES.indexOf(selected)));
-  slider.setAttribute("aria-label","Escolha rápida: "+title);
-  const output=document.createElement("output");output.textContent=IV_PERCENT_VALUES[Number(slider.value)]+"%";
-  slider.oninput=()=>{
-   const value=IV_PERCENT_VALUES[Number(slider.value)];
-   output.textContent=value+"%";highlight(value);
-  };
-  slider.onchange=()=>chooseNumber(IV_PERCENT_VALUES[Number(slider.value)]);
-  jump.append(slider,output);panel.append(heading,jump,grid);
- }else panel.append(heading,grid);
- const selectedIndex=Math.max(0,choices.indexOf(selected));
- grid.scrollTop=Math.max(0,(Math.floor(selectedIndex/5)-2)*30);
- const back=document.createElement("button");back.className="numberBack";back.textContent="‹ Voltar";
- back.onclick=renderModeChoices;
- panel.appendChild(back);fit();
-}
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();panel.classList.remove("modePanel");panel.classList.add("locationPanel");
@@ -1033,9 +1034,6 @@ function draw(){
  }
  document.getElementById("size").textContent=spriteSize<=35?"P":spriteSize>=55?"G":"M";
  document.getElementById("sh").classList.toggle("shinyOn",shiny);
- const menuShiny=document.getElementById("modeShiny");
- if(menuShiny){menuShiny.textContent="✨ "+(shinyPending?"…":shiny?"ON":"OFF");menuShiny.classList.toggle("on",shiny);
-  menuShiny.setAttribute("aria-pressed",String(shiny));}
  document.getElementById("sh").classList.toggle("shinyPending",shinyPending);
  // An ON request is not an applied filter until the live Coords fields
  // match AND the site's Search was actually submitted.
