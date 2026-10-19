@@ -4,7 +4,6 @@ on:
     branches:
       - plan/v051-pogocoordinates-filtros-20261017
       - ux/iv-color-shiny-separate-20261018
-      - fix/ps009-stable-test-signing-20261018
     paths:
       - 'app/**'
       - '.github/workflows/build-v051-filters-preview.yml'
@@ -59,6 +58,8 @@ jobs:
         run: |
           node --check app/src/main/assets/probe.js
           node app/tests/location-probe.test.js
+          node app/tests/login-entry.test.js
+          node app/tests/pokemon-picker.test.js
           node app/tests/probe-smoke.test.js
           node app/tests/overlay-ux.test.js
           node app/tests/signing-contract.test.js
