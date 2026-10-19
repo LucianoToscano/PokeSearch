@@ -314,7 +314,7 @@ body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow .quickArrow
 
 
 /* UX-MENU-03: restore v0.51 old ONE-ROW, SMALL, ICON-ONLY ribbon.
-    Eleven compact controls fit the original narrow 330dp native window.
+    Twelve compact controls fit the original narrow 330dp native window.
    All legacy actions stay available; only their visual presentation changes. */
 body.controls-window #menu{height:34px!important;min-height:34px!important}
 body.controls-window #quickHead{display:none!important}
@@ -326,7 +326,7 @@ body.controls-window.popup-above #quickMenuList{
  max-height:34px!important;overflow:hidden!important;overscroll-behavior:none;
  background:transparent!important;border:0!important;border-radius:0!important;
  box-shadow:none!important;padding:0 2px!important;margin:0!important;
- grid-template-columns:repeat(11,minmax(0,1fr))!important;grid-template-rows:30px!important;
+ grid-template-columns:repeat(12,minmax(0,1fr))!important;grid-template-rows:30px!important;
  grid-auto-flow:column!important;gap:2px!important;align-items:start!important;
 }
 body.controls-window #quickRows,
@@ -350,6 +350,10 @@ body.controls-window #quickMenuList button:active{background:#46504c!important}
 body.controls-window #quickMenuList button.selected{background:#3a5040dc!important;border-color:#85c5ad80!important}
 body.controls-window #quickMenuList [data-key=location].selected{background:#1e6150e8!important;color:#dcffed!important}
 body.controls-window #quickMenuList [data-key=star].selected{background:#70561de0!important;color:#ffdf74!important}
+/* Shiny has its own quick switch; do not change result imagery or IV colors. */
+body.controls-window #quickMenuList [data-key=sh] .quickGlyph{filter:drop-shadow(0 0 2px #fff9)}
+body.controls-window #quickMenuList [data-key=sh].selected{background:#285449dc!important;border-color:#a9e5c8a0!important}
+body.controls-window #quickMenuList [data-key=sh].pending{border-style:dashed!important;border-color:#ffffffa0!important}
 body.controls-window #quickMenuList .quickGlyph{
  display:flex!important;align-items:center!important;justify-content:center!important;
  width:17px!important;min-width:17px!important;height:18px!important;
@@ -1167,31 +1171,32 @@ window.setMinimized=value=>{
 
 /* UX-MENU-01: contextual menu reuses native actions and verified filters. */
 const QUICK_ACTIONS=[
- ["mode","☷","Modos","mode"],["filters","≡","Filtros","filters"],
+ ["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"],
  ["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"],
  ["star","☆","Favoritos","star"],["bell","♧","Alertas","alerts"],
  ["period","↻","Atualização","period"],["appearance","⚙","Personalização","appearance"],
  ["report","⚠","Reportar","report"],
  ["donate","♡","Apoiar","donate"],["close","×","Fechar","close"]
 ];
-// Three adjacent search entry points: Modos, Filtros and Localização.
-const QUICK_PRIMARY_IDS=["mode","filters","location","pokemon","star","bell","period","appearance"];
+// Shiny Only is the independent second switch next to Modos; search entries follow.
+const QUICK_PRIMARY_IDS=["mode","sh","filters","location","pokemon","star","bell","period","appearance"];
 const QUICK_UTILITY_IDS=[]; // All non-footer buttons share the same DOM list.
 const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0]);
 let quickPrefs={direction:"horizontal",labels:false,order:[...QUICK_DEFAULT_ORDER],hidden:[]};
 function normalizedQuickPrefs(p){
  const ids=QUICK_DEFAULT_ORDER;
- // Previous APKs saved nine or ten icons in the main grid.
- // Reset only that obsolete menu-layout schema; preserve all search preferences.
+ // Preserve the other buttons and saved order when upgrading from the 51053 menu.
  const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon")||
   p.order.some(id=>!ids.includes(id));
- // Migrate old 10-button layouts once so refresh sits beside Alertas
- // and Personalização directly before Reportar.
  const needsRefreshMigration=!legacy&&!p.order.includes("period");
- const order=(legacy||needsRefreshMigration)?[...ids]:
+ const previous=(legacy||needsRefreshMigration)?[...ids]:
   p.order.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i);
+ // Shiny stays immediately AFTER Modos even with saved custom menu preferences.
+ const order=previous.filter(id=>id!=="sh");
+ const modeIndex=order.indexOf("mode");
+ if(modeIndex>=0)order.splice(modeIndex+1,0,"sh");
  const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter(x=>
-  ids.includes(x)&&x!=="close"&&x!=="appearance"&&x!=="period"):[];
+  ids.includes(x)&&!["close","appearance","period","sh"].includes(x)):[];
  return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.
   labels:false,
   order:[...order,...ids.filter(x=>!order.includes(x))],hidden};
@@ -1216,6 +1221,7 @@ function quickState(id){
 function quickClick(id){
  if(["mode","alerts","location","filters","period","appearance"].includes(id)){toggleChoices(id);return;}
  switch(id){
+  case "sh":Native.shiny();break; // Reuse native, login-verified Shiny toggle.
   case "star":Native.openWatchList();break;
   case "pokemon":
    choiceOpen="pokemon";
@@ -1292,6 +1298,7 @@ function renderQuickMenu(){
    const art=getModeMenuIcon(mode,false,searchSettings);
    button.dataset.modeArtKey=art.path+"|"+art.ivBadge;
   }
+  if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
   const label=document.createElement("span");label.className="quickName";label.textContent=a[2];
   const state=document.createElement("span");state.className="quickState";state.textContent=quickState(id);
   button.append(glyph,label); // Keep hidden text for accessibility and preferences.
@@ -1321,7 +1328,10 @@ function refreshQuickMenuStates(){
     button.dataset.modeArtKey=key;
    }
   }
+  if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
+  button.classList.toggle("pending",id==="sh"&&shinyPending);
   button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
+   id==="sh"?(shiny&&!shinyPending):
    id==="bell"?generalAlerts:id==="period"?period>0:
    id==="star"?hasFavorites:id==="mode"?(mode==="gl"||mode==="ul"):false);
  });
@@ -1386,7 +1396,7 @@ function renderAppearanceChoices(){
  note.textContent="A engrenagem sempre permanece visível. Use as setas para reordenar os comandos.";
  panel.appendChild(note);
  for(const id of quickPrefs.order){
-  const a=QUICK_ACTIONS.find(x=>x[0]===id);if(!a||id==="close"||id==="appearance")continue;
+  const a=QUICK_ACTIONS.find(x=>x[0]===id);if(!a||id==="close"||id==="appearance"||id==="sh")continue;
   const line=document.createElement("div");line.className="uxAdjust";
   const name=document.createElement("span");name.textContent=a[1]+" "+a[2];line.appendChild(name);
   const eye=document.createElement("button");eye.textContent=quickPrefs.hidden.includes(id)?"□":"☑";
