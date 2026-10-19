@@ -1512,8 +1512,8 @@ function draw(){
   document.body.classList.toggle("search-active",searchActive&&!shinyPending&&nextQueryAt<=Date.now());
   const header=document.getElementById("resultHeader");
   const count=document.getElementById("resultSpawnCount");
-  count.textContent=resultDisplayOptions.count&&cards.length?String(cards.length):"";
-  count.style.display=resultDisplayOptions.count&&cards.length?"inline":"none";
+  count.textContent=resultDisplayOptions.count?String(cards.length):"";
+  count.style.display=resultDisplayOptions.count?"inline":"none";
   const image=document.getElementById("resultModeIcon");
   if(image.getAttribute("src")!==selectedIcon.path){
    image.style.visibility="visible";
