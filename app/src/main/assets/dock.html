@@ -1390,7 +1390,14 @@ function resultLines(card,opts,league){
   if(opts["speciesIvRank"+suffix]){
    const rank=verifiedSpeciesIvRank(card,leagueKey);if(rank!==null)ranks.push("IV#"+rank);
   }
-  if(ranks.length)lines.push(short+" "+ranks.join(" · "));
+  if(ranks.length){
+   const text=short+" "+ranks.join(" · ");
+   // Preserve the 96px strip: never hide a long IV# at the right edge.
+   if(ranks.length===2&&text.length>16){
+    lines.push(short+" "+ranks[0]);
+    lines.push(ranks[1]);
+   }else lines.push(text);
+  }
  }
  if(opts.despawn&&Number(card?.expiresAtMs)>0){
   const last=lines[lines.length-1]||"";
