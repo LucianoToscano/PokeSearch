@@ -717,7 +717,7 @@ function ivPaletteClass(percent){
  if(percent<=89)return "high";
  return "excellent";
 }
-let modeDraft=null,modeScrollTop=0,cascadeMode=null;
+let modeDraft=null,modeScrollTop=0,cascadeMode=null,appearanceScrollTop=0;
 let shownMode="raw",shownShiny=false,shownSettings={...searchSettings},resultsStale=false,nextQueryAt=0,searchActive=false;
 function specialIVLabel(selectedMode,settings){
  if(selectedMode==="raw"){
@@ -793,7 +793,7 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
 function closeChoices(){
  choiceOpen="";cascadeMode=null;
  document.getElementById("menu").classList.remove("subview");
- modeScrollTop=0;
+ modeScrollTop=0;appearanceScrollTop=0;
  document.getElementById("choices").classList.remove("visible");
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
@@ -826,7 +826,7 @@ function toggleChoices(kind){
  if(kind==="filters"){
   modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
   renderFiltersChoices();
-  if(controlsWindow){Native.locationEditor(true);if(Native.requestFilterOptions)Native.requestFilterOptions();}
+  if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();
   return;
  }
  if(kind==="location"){renderLocationChoices();return;}
@@ -1033,6 +1033,8 @@ function renderExtraFilters(panel,make){
  };
  const number=(key,label)=>{
   const input=make("input");input.type="number";input.inputMode="decimal";input.min="0";
+  input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
+  input.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
   input.placeholder="Any";input.value=modeDraft[key]||"";input.setAttribute("aria-label",label);
   input.oninput=()=>{modeDraft[key]=input.value;};
   field(label,input);
@@ -1051,6 +1053,8 @@ function renderExtraFilters(panel,make){
  section("Filtros gerais",generalExpanded,()=>{generalExpanded=!generalExpanded;});
  if(generalExpanded){
   const input=make("input");input.type="text";input.placeholder="Qualquer Pokémon";
+  input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
+  input.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
   input.value=modeDraft.pokemon||"";input.maxLength=80;
   input.oninput=()=>{if(modeDraft.pokemon!==input.value.trim())modeDraft.form="";modeDraft.pokemon=input.value.trim();};
   field("Pokémon",input);
@@ -1107,7 +1111,9 @@ function renderLocationChoices(){
  close.onclick=closeChoices;title.appendChild(close);
  const hint=make("p","locText","Cole latitude,longitude. A chave ao lado ativa ou desativa; ocultar conserva o filtro atual.");
  const fieldRow=make("div","locCoordsRow");
- const field=make("input","locField");field.type="text";field.inputMode="decimal";field.placeholder="-23.5505,-46.6333";field.setAttribute("aria-label","Coordenadas latitude e longitude");field.value=locationCoords;
+ const field=make("input","locField");field.type="text";field.inputMode="decimal";
+ field.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
+ field.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};field.placeholder="-23.5505,-46.6333";field.setAttribute("aria-label","Coordenadas latitude e longitude");field.value=locationCoords;
  const toggle=make("button",locationEnabled?"locActive":"locOff",locationEnabled?"ON":"OFF");
  toggle.setAttribute("role","switch");
  toggle.setAttribute("aria-checked",String(locationEnabled));
@@ -1139,7 +1145,6 @@ function renderLocationChoices(){
  panel.append(title,hint,fieldRow,label,slide,status,actions);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
- if(controlsWindow)Native.locationEditor(true);
  fit();
 }
 function manualRefreshTap(){
@@ -1441,7 +1446,7 @@ function iconForQuick(id, fallback){
 function renderPokemonPlaceholder(){
  const panel=uxPanel("POKÉMON");
  const note=document.createElement("p");note.className="uxNote";
- note.textContent="Ícone Pokémon preparado. A busca por espécie/forma será integrada em uma próxima etapa, após a validação dos menus.";
+ note.textContent="Busca por espécie em preparação. Nenhuma pesquisa será simulada.";
  panel.appendChild(note);fit();
 }
 function renderQuickMenu(){
@@ -1534,17 +1539,20 @@ function renderAlertsChoices(){
 function renderFiltersChoices(){
  if(!modeDraft)modeDraft={...searchSettings,mode};
  const panel=uxPanel("FILTROS");
+ const scrollRestoration=modeScrollTop;
  const make=(tag,cls,value)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e;};
  renderExtraFilters(panel,make);
  panel.appendChild(make("div","uxNote","As opções e os resultados dependem da confirmação no site; não são inventados."));
  const actions=make("div","modeAction");const apply=make("button","modeApply","✓ Aplicar");
  const cancel=make("button","","Cancelar");
  apply.onclick=()=>{const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));};
- cancel.onclick=closeChoices;actions.append(apply,cancel);panel.appendChild(actions);fit();
+ cancel.onclick=closeChoices;actions.append(apply,cancel);panel.appendChild(actions);
+ requestAnimationFrame(()=>{if(choiceOpen==="filters"&&panel.isConnected)panel.scrollTop=scrollRestoration;});
+ fit();
 }
 function renderInfoChoices(){
  const panel=uxPanel("INFORMAÇÕES");
- const back=document.createElement("button");back.type="button";back.textContent="‹ Ajustes";
+ const back=document.createElement("button");back.type="button";back.textContent="‹ Personalização";
  back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();};panel.appendChild(back);
  uxOption(panel,"Tempo de despawn",showTimers?"ON":"OFF",()=>Native.toggleTimers());
  uxOption(panel,"IV% comprovado",showResultText?"ON":"OFF",()=>Native.setResultTextVisible(!showResultText));
@@ -1554,38 +1562,36 @@ function renderInfoChoices(){
 }
 function renderAppearanceChoices(){
  const panel=uxPanel("PERSONALIZAÇÃO");
+ const scrollRestoration=appearanceScrollTop;
  const info=document.createElement("div");info.className="uxSubheading";info.textContent="Painéis";panel.appendChild(info);
  uxOption(panel,"Informações dos Pokémon","Configurar ›",()=>toggleChoices("info"));
  // Atualização has its own toolbar icon beside Alertas.
- const ribbonNote=document.createElement("div");ribbonNote.className="uxNote";
- ribbonNote.textContent="Menu principal fino e horizontal, somente ícones. A engrenagem continua móvel.";
- panel.appendChild(ribbonNote);
+ // The unchanged horizontal ribbon needs no paragraph in this compact panel.
  uxOption(panel,"Próximo tamanho do sprite",spriteSize<=35?"P":spriteSize>=55?"G":"M",()=>{
   Native.cycleSpriteSize();renderAppearanceChoices();
  });
  const title=document.createElement("div");title.className="uxSubheading";
  title.textContent="Comandos · mostrar / ocultar / ordenar";panel.appendChild(title);
- const note=document.createElement("div");note.className="uxNote";
- note.textContent="A engrenagem sempre permanece visível. Use as setas para reordenar os comandos.";
- panel.appendChild(note);
+ // Button accessibility labels explain show/hide and ordering without a second paragraph.
  for(const id of quickPrefs.order){
   const a=QUICK_ACTIONS.find(x=>x[0]===id);if(!a||id==="close"||id==="appearance"||id==="sh")continue;
   const line=document.createElement("div");line.className="uxAdjust";
   const name=document.createElement("span");name.textContent=a[1]+" "+a[2];line.appendChild(name);
   const eye=document.createElement("button");eye.textContent=quickPrefs.hidden.includes(id)?"□":"☑";
   eye.setAttribute("aria-label",(quickPrefs.hidden.includes(id)?"Mostrar ":"Ocultar ")+a[2]);
-  eye.onclick=()=>{quickPrefs.hidden=quickPrefs.hidden.includes(id)?
+  eye.onclick=()=>{appearanceScrollTop=panel.scrollTop;quickPrefs.hidden=quickPrefs.hidden.includes(id)?
    quickPrefs.hidden.filter(x=>x!==id):[...quickPrefs.hidden,id];saveQuickPrefs();renderAppearanceChoices();};
   const up=document.createElement("button");up.textContent="↑";up.setAttribute("aria-label","Mover "+a[2]+" para cima");
-  up.onclick=()=>{const i=quickPrefs.order.indexOf(id);if(i>0){
+  up.onclick=()=>{appearanceScrollTop=panel.scrollTop;const i=quickPrefs.order.indexOf(id);if(i>0){
    [quickPrefs.order[i-1],quickPrefs.order[i]]=[quickPrefs.order[i],quickPrefs.order[i-1]];
    saveQuickPrefs();renderAppearanceChoices();}};
   const down=document.createElement("button");down.textContent="↓";down.setAttribute("aria-label","Mover "+a[2]+" para baixo");
-  down.onclick=()=>{const i=quickPrefs.order.indexOf(id);if(i>=0&&i<quickPrefs.order.length-1){
+  down.onclick=()=>{appearanceScrollTop=panel.scrollTop;const i=quickPrefs.order.indexOf(id);if(i>=0&&i<quickPrefs.order.length-1){
    [quickPrefs.order[i+1],quickPrefs.order[i]]=[quickPrefs.order[i],quickPrefs.order[i+1]];
    saveQuickPrefs();renderAppearanceChoices();}};
   line.append(eye,up,down);panel.appendChild(line);
  }
+ requestAnimationFrame(()=>{if(choiceOpen==="appearance"&&panel.isConnected)panel.scrollTop=scrollRestoration;});
  fit();
 }
 if(controlsWindow){
