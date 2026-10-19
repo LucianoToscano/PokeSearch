@@ -54,6 +54,11 @@ public class MainActivity extends Activity {
     private TextView loginWaitLabel,loginFallback;
     private int loginPageGeneration=0;
     private String pendingReportText="";
+    private FrameLayout homeRoot;
+    private LinearLayout guestPanel, connectedPanel, trainerPanel;
+    private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
+    private TextView overlayControl, sessionHint;
+    private String preferredLoginProvider="";
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         if (!IntegrityGuard.verify(this)) {
@@ -62,126 +67,13 @@ public class MainActivity extends Activity {
             finish();
             return;
         }
-        getWindow().setStatusBarColor(Color.rgb(11,13,18));
-        getWindow().setNavigationBarColor(Color.rgb(11,13,18));
-        LinearLayout root=new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.rgb(11,13,18));
-        root.setPadding(d(12),d(3),d(12),0);
-        LinearLayout header=new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setOrientation(LinearLayout.HORIZONTAL);
-        TextView brand=new TextView(this);
-        brand.setText("PokeSearch");
-        brand.setTextColor(Color.WHITE);
-        brand.setTextSize(22);
-        brand.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
-        brand.setPadding(d(7),0,0,0);
-        header.addView(brand,new LinearLayout.LayoutParams(0,d(51),1));
-        ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Contribuir com um café via Pix");
-        heart.setOnClickListener(v->PixSupport.show(this));
-        header.addView(heart,new LinearLayout.LayoutParams(d(45),d(45)));
-        ImageButton gear=makeIcon(R.drawable.ic_settings_outline,"Preferências");
-        gear.setOnClickListener(v->showPreferencesDialog());
-        header.addView(gear,new LinearLayout.LayoutParams(d(45),d(45)));
-        root.addView(header);
-        Button start=new Button(this);
-        start.setText("Ativar overlay");
-        start.setTextColor(Color.WHITE);
-        start.setTextSize(15);
-        start.setAllCaps(false);
-        start.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
-        start.setBackground(round(Color.rgb(213,45,79),12));
-        LinearLayout.LayoutParams startParams=new LinearLayout.LayoutParams(-1,d(49));
-        startParams.setMargins(d(2),d(3),d(2),d(9));
-        root.addView(start,startParams);
-        start.setOnClickListener(v->startOverlay());
-        // Account controls stay on the native Home; the site is a temporary login surface.
-        LinearLayout account=new LinearLayout(this);
-        account.setOrientation(LinearLayout.VERTICAL);
-        account.setPadding(d(12),d(9),d(12),d(10));
-        account.setBackground(round(Color.rgb(23,30,41),11));
-        sessionSummary=new TextView(this);
-        sessionSummary.setTextColor(Color.rgb(188,204,222));
-        sessionSummary.setTextSize(12);
-        sessionSummary.setPadding(0,0,0,d(8));
-        account.addView(sessionSummary);
-        LinearLayout buttons=new LinearLayout(this);
-        buttons.setOrientation(LinearLayout.HORIZONTAL);
-        Button signIn=new Button(this);
-        signIn.setText("Entrar / vincular");
-        signIn.setAllCaps(false);
-        signIn.setTextSize(12);
-        signIn.setTextColor(Color.rgb(213,255,238));
-        signIn.setBackground(round(Color.rgb(30,91,73),9));
-        buttons.addView(signIn,new LinearLayout.LayoutParams(0,d(42),1));
-        signIn.setOnClickListener(v->openLoginDialog(false));
-        Button signOut=new Button(this);
-        signOut.setText("Sair");
-        signOut.setAllCaps(false);
-        signOut.setTextSize(12);
-        signOut.setTextColor(Color.rgb(255,204,213));
-        signOut.setBackground(round(Color.rgb(77,40,52),9));
-        LinearLayout.LayoutParams signOutParams=new LinearLayout.LayoutParams(d(91),d(42));
-        signOutParams.setMargins(d(8),0,0,0);
-        buttons.addView(signOut,signOutParams);
-        signOut.setOnClickListener(v->askLogout());
-        account.addView(buttons);
-        LinearLayout.LayoutParams accountParams=new LinearLayout.LayoutParams(-1,-2);
-        accountParams.setMargins(d(2),0,d(2),d(10));
-        root.addView(account,accountParams);
-        refreshSessionSummary();
-        LinearLayout watchRow=new LinearLayout(this);
-        watchRow.setOrientation(LinearLayout.HORIZONTAL);
-        watchRow.setGravity(Gravity.CENTER_VERTICAL);
-        watchRow.setPadding(d(11),d(5),d(10),d(5));
-        watchRow.setBackground(round(Color.rgb(24,28,36),11));
-        ImageView bell=new ImageView(this);
-        bell.setImageResource(R.drawable.ic_star_outline);
-        watchRow.addView(bell,new LinearLayout.LayoutParams(d(27),d(27)));
-        LinearLayout watchTexts=new LinearLayout(this);
-        watchTexts.setOrientation(LinearLayout.VERTICAL);
-        watchTexts.setPadding(d(9),0,0,0);
-        TextView watchTitle=new TextView(this);
-        watchTitle.setText("Pokémon favoritos");
-        watchTitle.setTextColor(Color.WHITE);
-        watchTitle.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
-        watchTitle.setTextSize(13);
-        watchTexts.addView(watchTitle);
-        watchSummary=new TextView(this);
-        watchSummary.setTextSize(11);
-        watchSummary.setTextColor(Color.rgb(159,169,183));
-        watchTexts.addView(watchSummary);
-        watchRow.addView(watchTexts,new LinearLayout.LayoutParams(0,-2,1));
-        TextView arrow=new TextView(this);
-        arrow.setText("›");
-        arrow.setTextColor(Color.rgb(175,184,195));
-        arrow.setTextSize(23);
-        watchRow.addView(arrow);
-        LinearLayout.LayoutParams rowParams=new LinearLayout.LayoutParams(-1,d(60));
-        rowParams.setMargins(d(2),0,d(2),d(10));
-        root.addView(watchRow,rowParams);
-        watchRow.setOnClickListener(v->openPicker());
-        refreshWatchCount();
-        TextView guide=new TextView(this);
-        guide.setText("ⓘ  Guia rápido · entenda os botões");
-        guide.setTextColor(Color.rgb(189,207,223));
-        guide.setTextSize(13);
-        guide.setGravity(Gravity.CENTER_VERTICAL);
-        guide.setPadding(d(14),0,d(12),0);
-        guide.setBackground(round(Color.rgb(24,29,38),10));
-        LinearLayout.LayoutParams guideParams=new LinearLayout.LayoutParams(-1,d(43));
-        guideParams.setMargins(d(2),0,d(2),d(9));
-        root.addView(guide,guideParams);
-        guide.setOnClickListener(v->showQuickGuide());
-        // Home independente: a interface do site não faz parte da tela principal.
-        TextView hint=new TextView(this);
-        hint.setText("IV100  ·  GL#1  ·  UL#1\nToque em Ativar overlay para começar.");
-        hint.setTextColor(Color.rgb(155,165,181));
-        hint.setTextSize(12);
-        hint.setGravity(Gravity.CENTER);
-        root.addView(hint,new LinearLayout.LayoutParams(-1,0,1));
+        // HOME-01: rebuild only the presentation, never discard existing features.
+        getWindow().setStatusBarColor(Color.rgb(12,33,67));
+        getWindow().setNavigationBarColor(Color.rgb(9,20,37));
+        FrameLayout root=buildHome();
         setContentView(root);
+        refreshSessionSummary();
+        refreshHomeOverlay();
         handleShinyLoginIntent(getIntent());
         if(!getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false)&&
            !"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(getIntent().getAction()))
@@ -195,6 +87,215 @@ public class MainActivity extends Activity {
         if("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT".equals(getIntent().getAction()))
             root.post(this::showBugReportDialog);
     }
+
+    private TextView homeText(String value,int sp,int color,boolean bold){
+        TextView t=new TextView(this);
+        t.setText(value);t.setTextColor(color);t.setTextSize(sp);
+        if(bold)t.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        t.setGravity(Gravity.CENTER_VERTICAL);
+        return t;
+    }
+    private android.graphics.drawable.GradientDrawable homeSurface(int color,int radius,int stroke){
+        android.graphics.drawable.GradientDrawable bg=round(color,radius);
+        if(stroke!=0)bg.setStroke(d(1),stroke);
+        return bg;
+    }
+    private TextView homeMiniButton(String glyph,String description){
+        TextView t=homeText(glyph,21,Color.WHITE,true);
+        t.setGravity(Gravity.CENTER);
+        t.setContentDescription(description);
+        t.setBackground(homeSurface(Color.argb(130,9,25,49),11,Color.argb(90,180,221,255)));
+        return t;
+    }
+    private FrameLayout buildHome(){
+        FrameLayout frame=new FrameLayout(this);
+        homeRoot=frame;
+        ImageView sky=new ImageView(this);
+        sky.setImageResource(R.drawable.ps_home_background);
+        sky.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        sky.setContentDescription("Mapa azul estilizado do PokeSearch");
+        frame.addView(sky,new FrameLayout.LayoutParams(-1,-1));
+        View gradient=new View(this);
+        gradient.setBackground(new android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+            new int[]{Color.argb(96,8,28,58),Color.TRANSPARENT,Color.argb(88,11,33,62)}));
+        frame.addView(gradient,new FrameLayout.LayoutParams(-1,-1));
+
+        LinearLayout screen=new LinearLayout(this);
+        screen.setOrientation(LinearLayout.VERTICAL);
+        screen.setPadding(d(12),d(6),d(12),d(12));
+        frame.addView(screen,new FrameLayout.LayoutParams(-1,-1));
+
+        LinearLayout header=new LinearLayout(this);
+        header.setGravity(Gravity.TOP|Gravity.CENTER_VERTICAL);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        screen.addView(header,new LinearLayout.LayoutParams(-1,d(56)));
+
+        LinearLayout controls=new LinearLayout(this);
+        controls.setGravity(Gravity.CENTER_VERTICAL);
+        controls.setOrientation(LinearLayout.HORIZONTAL);
+        header.addView(controls,new LinearLayout.LayoutParams(0,d(48),1));
+
+        overlayControl=homeMiniButton("⏻","Ativar ou desativar overlay");
+        controls.addView(overlayControl,new LinearLayout.LayoutParams(d(36),d(36)));
+        overlayControl.setOnClickListener(v->toggleHomeOverlay());
+
+        ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
+        heart.setPadding(d(6),d(6),d(6),d(6));
+        heart.setBackground(homeSurface(Color.argb(130,9,25,49),11,Color.argb(90,180,221,255)));
+        LinearLayout.LayoutParams heartLp=new LinearLayout.LayoutParams(d(36),d(36));
+        heartLp.leftMargin=d(5);
+        controls.addView(heart,heartLp);
+        heart.setOnClickListener(v->PixSupport.show(this));
+
+        TextView menu=homeMiniButton("☰","Abrir menu do PokeSearch");
+        menu.setTextSize(19);
+        LinearLayout.LayoutParams menuLp=new LinearLayout.LayoutParams(d(36),d(36));
+        menuLp.leftMargin=d(5);
+        controls.addView(menu,menuLp);
+        menu.setOnClickListener(v->showHomeMenu());
+
+        ImageView wordmark=new ImageView(this);
+        wordmark.setImageResource(R.drawable.ps_home_wordmark);
+        wordmark.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        wordmark.setAdjustViewBounds(false);
+        wordmark.setContentDescription("PokeSearch");
+        header.addView(wordmark,new LinearLayout.LayoutParams(d(142),d(52)));
+
+        // Deliberately leave the center open for future features.
+        screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
+
+        LinearLayout auth=new LinearLayout(this);
+        auth.setOrientation(LinearLayout.VERTICAL);
+        auth.setPadding(d(12),d(10),d(12),d(12));
+        auth.setBackground(homeSurface(Color.argb(225,11,22,40),15,Color.argb(88,133,174,225)));
+        screen.addView(auth,new LinearLayout.LayoutParams(-1,-2));
+
+        TextView title=homeText("PoGoCoordinates",15,Color.WHITE,true);
+        auth.addView(title,new LinearLayout.LayoutParams(-1,-2));
+        sessionHint=homeText("Acesse coordenadas Pokémon em tempo real",11,Color.rgb(190,209,236),false);
+        LinearLayout.LayoutParams sub=new LinearLayout.LayoutParams(-1,-2);
+        sub.topMargin=d(2);sub.bottomMargin=d(9);
+        auth.addView(sessionHint,sub);
+
+        guestPanel=new LinearLayout(this);
+        guestPanel.setOrientation(LinearLayout.HORIZONTAL);
+        auth.addView(guestPanel,new LinearLayout.LayoutParams(-1,d(40)));
+        Button discord=homeAuthButton("Discord",Color.rgb(72,93,239),Color.WHITE);
+        Button google=homeAuthButton("Google",Color.WHITE,Color.rgb(30,36,49));
+        guestPanel.addView(discord,new LinearLayout.LayoutParams(0,-1,1));
+        LinearLayout.LayoutParams googleLp=new LinearLayout.LayoutParams(0,-1,1);
+        googleLp.leftMargin=d(8);
+        guestPanel.addView(google,googleLp);
+        discord.setOnClickListener(v->openProviderLogin("discord"));
+        google.setOnClickListener(v->openProviderLogin("google"));
+
+        connectedPanel=new LinearLayout(this);
+        connectedPanel.setOrientation(LinearLayout.VERTICAL);
+        auth.addView(connectedPanel,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout accountRow=new LinearLayout(this);
+        accountRow.setGravity(Gravity.CENTER_VERTICAL);
+        connectedPanel.addView(accountRow,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout identity=new LinearLayout(this);
+        identity.setOrientation(LinearLayout.VERTICAL);
+        accountRow.addView(identity,new LinearLayout.LayoutParams(0,-2,1));
+        accountDisplay=homeText("Conta conectada",13,Color.WHITE,true);
+        accountProvider=homeText("PoGoCoordinates",11,Color.rgb(188,212,240),false);
+        identity.addView(accountDisplay);
+        identity.addView(accountProvider);
+        Button logout=homeAuthButton("Logout",Color.argb(215,37,48,67),Color.WHITE);
+        accountRow.addView(logout,new LinearLayout.LayoutParams(d(83),d(34)));
+        logout.setOnClickListener(v->askLogout());
+
+        trainerPanel=new LinearLayout(this);
+        trainerPanel.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams trainLp=new LinearLayout.LayoutParams(-1,-2);
+        trainLp.topMargin=d(9);
+        connectedPanel.addView(trainerPanel,trainLp);
+        View rule=new View(this);rule.setBackgroundColor(Color.argb(90,172,193,220));
+        trainerPanel.addView(rule,new LinearLayout.LayoutParams(-1,d(1)));
+        TextView section=homeText("Treinador vinculado",11,Color.rgb(185,205,232),false);
+        LinearLayout.LayoutParams sectionLp=new LinearLayout.LayoutParams(-1,-2);
+        sectionLp.topMargin=d(7);
+        trainerPanel.addView(section,sectionLp);
+        LinearLayout trainerRow=new LinearLayout(this);
+        trainerRow.setGravity(Gravity.CENTER_VERTICAL);
+        trainerPanel.addView(trainerRow,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout labels=new LinearLayout(this);
+        labels.setOrientation(LinearLayout.VERTICAL);
+        trainerRow.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
+        trainerDisplay=homeText("",13,Color.WHITE,true);
+        trainerDetails=homeText("",10,Color.rgb(169,203,238),false);
+        trainerCode=homeText("",11,Color.rgb(222,233,250),false);
+        labels.addView(trainerDisplay);
+        labels.addView(trainerDetails);
+        labels.addView(trainerCode);
+        TextView copy=homeMiniButton("⧉","Copiar código do treinador");
+        copy.setTextSize(17);
+        trainerRow.addView(copy,new LinearLayout.LayoutParams(d(34),d(34)));
+        copy.setOnClickListener(v->copyTrainerCode());
+        Button remove=homeAuthButton("Remover",Color.argb(175,75,33,43),Color.rgb(255,171,181));
+        LinearLayout.LayoutParams removeLp=new LinearLayout.LayoutParams(d(84),d(34));
+        removeLp.leftMargin=d(5);
+        trainerRow.addView(remove,removeLp);
+        remove.setOnClickListener(v->new AlertDialog.Builder(this)
+            .setTitle("Remover treinador vinculado")
+            .setMessage("A remoção deve ser confirmada na conta oficial do PoGoCoordinates. Deseja abrir o site para gerenciar o vínculo?")
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Abrir site",(dialog,which)->openLoginDialog(false)).show());
+        return frame;
+    }
+    private Button homeAuthButton(String name,int bg,int fg){
+        Button button=new Button(this);
+        button.setText(name);button.setAllCaps(false);button.setTextSize(12);
+        button.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        button.setTextColor(fg);button.setMinWidth(0);button.setMinimumWidth(0);
+        button.setMinHeight(0);button.setMinimumHeight(0);
+        button.setPadding(d(7),0,d(7),0);
+        button.setBackground(homeSurface(bg,10,0));
+        return button;
+    }
+    private void showHomeMenu(){
+        String[] options={"Favoritos","Preferências","Guia rápido","Reportar problema"};
+        new AlertDialog.Builder(this).setTitle("PokeSearch")
+            .setItems(options,(dialog,which)->{
+                if(which==0)openPicker();
+                else if(which==1)showPreferencesDialog();
+                else if(which==2)showQuickGuide();
+                else showBugReportDialog();
+            }).show();
+    }
+    private void toggleHomeOverlay(){
+        if(OverlayService.isRunning()){
+            stopService(new Intent(this,OverlayService.class));
+            Toast.makeText(this,"Overlay desativado",Toast.LENGTH_SHORT).show();
+            refreshHomeOverlay();
+            return;
+        }
+        startOverlay();
+        if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,750);
+    }
+    private void refreshHomeOverlay(){
+        if(overlayControl==null)return;
+        boolean on=OverlayService.isRunning();
+        overlayControl.setTextColor(on?Color.rgb(117,254,203):Color.WHITE);
+        overlayControl.setContentDescription(on?"Desativar overlay":"Ativar overlay");
+        overlayControl.setBackground(homeSurface(on?Color.argb(186,9,70,68):Color.argb(130,9,25,49),
+            11,on?Color.rgb(105,222,189):Color.argb(90,180,221,255)));
+    }
+    private void openProviderLogin(String provider){
+        preferredLoginProvider=provider;
+        openLoginDialog(false);
+    }
+    private void copyTrainerCode(){
+        String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
+        if(!code.matches("[0-9]{12}"))return;
+        android.content.ClipboardManager manager=
+            (android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+        manager.setPrimaryClip(android.content.ClipData.newPlainText("Código de treinador",code));
+        Toast.makeText(this,"Código copiado",Toast.LENGTH_SHORT).show();
+    }
+
     private void showQuickGuide(){
         getSharedPreferences("prefs",0).edit().putBoolean("tutorialSeenV41",true).apply();
         // A scrollable visual guide reuses the actual icons from dock.html.
@@ -249,13 +350,30 @@ public class MainActivity extends Activity {
         bg.setColor(color);bg.setCornerRadius(d(radius));return bg;
     }
     private void refreshSessionSummary(){
-        if(sessionSummary==null)return;
-        String state=getSharedPreferences("prefs",0).getString("sessionStatus","não confirmado");
-        String text="autenticada".equals(state)?"● Sessão identificada · PoGoCoordinates":
-            "desconectado".equals(state)?"○ Sessão local desconectada":
-            "login necessário".equals(state)?"○ Login necessário para Shiny":
-            "○ Sessão ainda não confirmada";
-        sessionSummary.setText(text);
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        String state=prefs.getString("sessionStatus","não confirmado");
+        boolean logged="autenticada".equals(state);
+        if(guestPanel!=null)guestPanel.setVisibility(logged?View.GONE:View.VISIBLE);
+        if(connectedPanel!=null)connectedPanel.setVisibility(logged?View.VISIBLE:View.GONE);
+        if(sessionHint!=null)sessionHint.setText(logged?
+            "Sessão oficial identificada":"Faça login para acessar coordenadas em tempo real");
+        if(accountDisplay!=null)accountDisplay.setText(
+            prefs.getString("profileDisplayName","Conta conectada"));
+        if(accountProvider!=null){
+            String provider=prefs.getString("profileProvider","");
+            accountProvider.setText(provider.isEmpty()?"Conectado ao PoGoCoordinates":"Logado via "+provider);
+        }
+        String trainer=prefs.getString("profileTrainerName",""),
+               code=prefs.getString("profileTrainerCode","");
+        boolean linked=logged&&!trainer.isEmpty()&&code.matches("[0-9]{12}");
+        if(trainerPanel!=null)trainerPanel.setVisibility(linked?View.VISIBLE:View.GONE);
+        if(linked){
+            trainerDisplay.setText(trainer);
+            trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
+            trainerDetails.setText(prefs.getString("profileTrainerDetails",""));
+        }
+        if(sessionSummary!=null)sessionSummary.setText(logged?
+            "● Sessão identificada · PoGoCoordinates":"○ Login necessário");
     }
     private void askLogout(){
         new AlertDialog.Builder(this)
@@ -271,6 +389,9 @@ public class MainActivity extends Activity {
         if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
         getSharedPreferences("prefs",0).edit()
             .putString("sessionStatus","desconectado")
+            .remove("profileDisplayName").remove("profileProvider")
+            .remove("profileTrainerName").remove("profileTrainerCode")
+            .remove("profileTrainerDetails")
             .putBoolean("shiny",false)
             .putString("lastStatus","Sessão local desconectada")
             .putString("lastError","Nenhum")
@@ -297,6 +418,7 @@ public class MainActivity extends Activity {
         super.onResume();
         refreshWatchCount();
         refreshSessionSummary();
+        refreshHomeOverlay();
     }
     private void handleShinyLoginIntent(Intent intent){
         if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
