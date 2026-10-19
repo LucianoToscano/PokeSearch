@@ -669,7 +669,7 @@ function ivPaletteClass(percent){
  if(percent<=89)return "high";
  return "excellent";
 }
-let modeDraft=null,modeScrollTop=0;
+let modeDraft=null,modeScrollTop=0,cascadeMode=null;
 let shownMode="raw",shownShiny=false,shownSettings={...searchSettings},resultsStale=false,nextQueryAt=0,searchActive=false;
 function specialIVLabel(selectedMode,settings){
  if(selectedMode==="raw"){
@@ -739,7 +739,7 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  }
 });}
 function closeChoices(){
- choiceOpen="";
+ choiceOpen="";cascadeMode=null;
  document.getElementById("menu").classList.remove("subview");
  modeScrollTop=0;
  document.getElementById("choices").classList.remove("visible");
@@ -747,7 +747,7 @@ function closeChoices(){
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
  document.getElementById("choices").classList.remove("locationPanel","modePanel",
-  "modeCompact-raw","modeCompact-percent","modeCompact-league");
+  "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
  if(controlsWindow)Native.locationEditor(false);
  refreshQuickMenuStates();fit();
 }
@@ -756,13 +756,16 @@ function toggleChoices(kind){
  if(controlsWindow&&!menuOpen)setMenuOpen(true,document.body.classList.contains('menu-left')?'left':'right',0);
  if(!menuOpen)return;
  if(choiceOpen===kind){closeChoices();return;}
+ if(["location","filters"].includes(choiceOpen)&&!["location","filters"].includes(kind)){
+  if(controlsWindow)Native.locationEditor(false);
+ }
  if(choiceOpen==="location"&&kind!=="location"){
   document.getElementById("choices").classList.remove("locationPanel");
   if(controlsWindow)Native.locationEditor(false);
  }
  choiceOpen=kind;
  if(kind!=="mode")document.getElementById("choices").classList.remove(
-  "modeCompact-raw","modeCompact-percent","modeCompact-league");
+  "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
  document.getElementById("menu").classList.add("subview");
  if(kind==="alerts"){renderAlertsChoices();return;}
  if(kind==="info"){renderInfoChoices();return;}
@@ -775,7 +778,7 @@ function toggleChoices(kind){
  }
  if(kind==="location"){renderLocationChoices();return;}
  if(kind==="mode"){
-  modeScrollTop=0;
+  cascadeMode=null;modeScrollTop=0;
   modeDraft={...searchSettings,mode};
   // No filter-options discovery in Modos: callbacks replaced numeric picker mid-tap.
   renderModeChoices();
@@ -805,108 +808,133 @@ function renderModeChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();
  panel.classList.remove("locationPanel","modeCompact-raw","modeCompact-percent","modeCompact-league");
- panel.classList.add("modePanel","visible","modeCompact-"+(["gl","ul"].includes(modeDraft.mode)?"league":modeDraft.mode));
- const make=(tag,cls,label)=>{
-  const el=document.createElement(tag);if(cls)el.className=cls;if(label!==undefined)el.textContent=label;return el;
+ panel.classList.add("modePanel","modeCascade","visible");
+ panel.classList.toggle("modeCascadeOpen",!!cascadeMode);
+ // Six short options: 100/0 apply immediately; IV, IV%, GL, UL have lateral editors.
+ const rail=document.createElement("div");rail.className="modeCascadeRail";
+ rail.setAttribute("role","menu");
+ const head=document.createElement("div");head.className="modeCascadeHead";head.textContent="Modo";
+ rail.appendChild(head);
+ const applyExact=value=>{
+  const next={...searchSettings,mode:"raw",attack:value,defense:value,stamina:value};
+  closeChoices();Native.setSearchConfig(JSON.stringify(next));
  };
- // The standalone ✨ beside Modos handles Shiny; do not duplicate it here.
- const tabs=make("div","uxSegment");
- tabs.setAttribute("role","tablist");tabs.setAttribute("aria-label","Modo de busca");
- for(const [id,label] of [["raw","IV"],["percent","IV%"],["gl","GL"],["ul","UL"]]){
-  const tab=make("button",modeDraft.mode===id?"chosen":"",label);
-  tab.type="button";tab.setAttribute("role","tab");
-  tab.setAttribute("aria-selected",String(modeDraft.mode===id));
-  tab.onclick=()=>{modeDraft.mode=id;renderModeChoices();};
-  tabs.appendChild(tab);
- }
- panel.appendChild(tabs);
- const wheels=make("div","modeWheels");
- const fields=modeDraft.mode==="raw"?[
-  ["attack","A","iv","Ataque"],["defense","D","iv","Defesa"],["stamina","HP","iv","HP"]
- ]:modeDraft.mode==="percent"?[
-  ["percentMin","MIN","percent","IV percentual mínimo"],
-  ["percentMax","MAX","percent","IV percentual máximo"]
- ]:modeDraft.mode==="gl"?[["glRank","#","rank","Ranking GL"]]:
+ const entries=[["hundo","100%"],["nundo","0%"],["raw","IV"],
+  ["percent","IV%"],["gl","GL"],["ul","UL"]];
+ entries.forEach(([id,label],idx)=>{
+  const button=document.createElement("button");button.type="button";
+  button.className="modeCascadeEntry";button.textContent=label;
+  button.classList.toggle("chosen",cascadeMode===id);
+  button.setAttribute("role","menuitem");
+  button.setAttribute("aria-haspopup",String(idx>=2));
+  button.setAttribute("aria-expanded",String(cascadeMode===id));
+  button.title=idx<2?"Aplicar agora "+label:label+" · abrir ajuste";
+  if(idx>=2){
+   const arrow=document.createElement("span");arrow.className="modeCascadeArrow";
+   arrow.textContent="›";button.appendChild(arrow);
+  }
+  button.onclick=()=>{
+   if(id==="hundo"){applyExact(15);return;}
+   if(id==="nundo"){applyExact(0);return;}
+   // Editing a different mode never applies a filter without ✓.
+   modeDraft.mode=id;
+   cascadeMode=cascadeMode===id?null:id;
+   renderModeChoices();
+  };
+  rail.appendChild(button);
+ });
+ panel.appendChild(rail);
+ if(cascadeMode){
+  const editor=document.createElement("div");editor.className="modeCascadeEditor";
+  const offsets={raw:76,percent:103,gl:130,ul:154};
+  editor.style.top=offsets[cascadeMode]+"px";
+  editor.setAttribute("role","group");editor.setAttribute("aria-label","Ajustar "+cascadeMode);
+  const fields=cascadeMode==="raw"?[
+   ["attack","A","iv","Ataque"],["defense","D","iv","Defesa"],["stamina","HP","iv","HP"]
+  ]:cascadeMode==="percent"?[
+   ["percentMin","MIN","percent","IV mínimo"],["percentMax","MAX","percent","IV máximo"]
+  ]:cascadeMode==="gl"?[["glRank","#","rank","Ranking GL"]]:
    [["ulRank","#","rank","Ranking UL"]];
- const WHEEL_STEP=20;
- const wheelByKey={};
- const adjustWheel=(key,number)=>{
-  const entry=wheelByKey[key];if(!entry)return;
-  const index=entry.values.indexOf(Number(number));if(index<0)return;
-  entry.wheel.scrollTop=index*WHEEL_STEP;entry.paint(index);
- };
- fields.forEach(([key,label,kind,description])=>{
-  const choices=kind==="percent"?IV_PERCENT_VALUES:
-   Array.from({length:kind==="iv"?16:50},(_,i)=>i+(kind==="rank"?1:0));
-  const field=make("div","modeWheelField");
-  const caption=make("span","modeWheelLabel",label);
-  const wheel=make("div","modeWheel");
-  wheel.setAttribute("role","listbox");wheel.tabIndex=0;
-  wheel.setAttribute("aria-label",description);
-  wheel.setAttribute("aria-orientation","vertical");
-  const display=n=>kind==="percent"?n+"%":kind==="rank"?"#"+n:String(n);
-  const items=[];
-  const paint=index=>{
-   if(index<0||index>=choices.length)return;
-   items.forEach((item,i)=>{
-    const selected=i===index;
-    item.classList.toggle("chosen",selected);
-    item.setAttribute("aria-selected",String(selected));
-    item.tabIndex=selected?0:-1;
+  const inputs=[];
+  const allowedFor=kind=>kind==="percent"?IV_PERCENT_VALUES:
+   Array.from({length:kind==="iv"?16:50},(_,k)=>k+(kind==="rank"?1:0));
+  fields.forEach(([key,label,kind,description])=>{
+   const allowed=allowedFor(kind);
+   const group=document.createElement("label");group.className="modeCascadeField";
+   const tag=document.createElement("span");tag.className="modeCascadeLabel";tag.textContent=label;
+   const input=document.createElement("input");input.type="number";input.inputMode="numeric";
+   input.className="modeCascadeInput";input.min=String(allowed[0]);
+   input.max=String(allowed[allowed.length-1]);input.step="1";
+   input.value=String(modeDraft[key]);
+   input.setAttribute("aria-label",description);
+   input.title=description+" · deslize para alterar ou toque para digitar";
+   const commit=value=>{
+    if(!allowed.includes(value))return false;
+    modeDraft[key]=value;input.setCustomValidity("");
+    if(key==="percentMin"&&modeDraft.percentMax<value){
+     modeDraft.percentMax=value;
+     const related=inputs.find(x=>x.key==="percentMax");
+     if(related)related.input.value=String(value);
+    }
+    if(key==="percentMax"&&modeDraft.percentMin>value){
+     modeDraft.percentMin=value;
+     const related=inputs.find(x=>x.key==="percentMin");
+     if(related)related.input.value=String(value);
+    }
+    return true;
+   };
+   const step=direction=>{
+    const value=Number(input.value);
+    let index=allowed.indexOf(value);
+    if(index<0)index=allowed.reduce((best,n,k)=>Math.abs(n-value)<Math.abs(allowed[best]-value)?k:best,0);
+    const next=allowed[Math.max(0,Math.min(allowed.length-1,index+direction))];
+    input.value=String(next);commit(next);
+   };
+   let gesture=null,swiped=false;
+   input.addEventListener("touchstart",e=>{gesture=e.touches[0]?.clientY??null;swiped=false;},{passive:true});
+   input.addEventListener("touchend",e=>{
+    if(gesture===null)return;
+    const delta=gesture-(e.changedTouches[0]?.clientY??gesture);gesture=null;
+    if(Math.abs(delta)<11)return;
+    swiped=true;e.preventDefault();step((delta>0?1:-1)*Math.max(1,Math.round(Math.abs(delta)/20)));
+   },{passive:false});
+   input.addEventListener("click",e=>{if(swiped){e.preventDefault();swiped=false;}});
+   input.addEventListener("wheel",e=>{e.preventDefault();step(e.deltaY>0?-1:1);},{passive:false});
+   input.addEventListener("change",()=>{
+    const value=Number(input.value);
+    if(!Number.isInteger(value)||!commit(value))
+     input.setCustomValidity("Escolha um valor permitido");
    });
-   wheel.setAttribute("aria-valuetext",display(choices[index]));
-  };
-  const choose=number=>{
-   const index=choices.indexOf(Number(number));if(index<0)return;
-   modeDraft[key]=choices[index];paint(index);
-   // Min and Max are automatically kept in a valid order in the draft.
-   if(key==="percentMin"&&modeDraft.percentMax<number){
-    modeDraft.percentMax=number;adjustWheel("percentMax",number);
-   }else if(key==="percentMax"&&modeDraft.percentMin>number){
-    modeDraft.percentMin=number;adjustWheel("percentMin",number);
-   }
-  };
-  choices.forEach((number,index)=>{
-   const option=make("button","modeWheelItem",display(number));
-   option.type="button";option.setAttribute("role","option");
-   option.setAttribute("aria-label",description+": "+display(number));
-   option.setAttribute("aria-selected","false");
-   option.onclick=()=>{choose(number);wheel.scrollTo({top:index*WHEEL_STEP,behavior:"smooth"});};
-   wheel.appendChild(option);items.push(option);
+   input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
+   input.onblur=()=>requestAnimationFrame(()=>{
+    if(choiceOpen==="mode"&&!document.activeElement?.matches(".modeCascadeInput")&&controlsWindow)
+     Native.locationEditor(false);
+   });
+   inputs.push({key,input,allowed});group.append(tag,input);editor.appendChild(group);
   });
-  wheelByKey[key]={wheel,values:choices,paint};
-  wheel.onscroll=()=>{
-   const index=Math.max(0,Math.min(choices.length-1,Math.round(wheel.scrollTop/WHEEL_STEP)));
-   if(modeDraft[key]!==choices[index])choose(choices[index]);
+  const confirm=document.createElement("button"),cancel=document.createElement("button");
+  confirm.className="modeCascadeConfirm";confirm.textContent="✓";confirm.type="button";
+  cancel.className="modeCascadeCancel";cancel.textContent="×";cancel.type="button";
+  confirm.title="Aplicar filtro";cancel.title="Cancelar ajuste";
+  confirm.setAttribute("aria-label","Aplicar filtro");cancel.setAttribute("aria-label","Cancelar ajuste");
+  confirm.onclick=()=>{
+   for(const entry of inputs){
+    const value=Number(entry.input.value);
+    if(entry.input.value.trim()===""||!Number.isInteger(value)||!entry.allowed.includes(value)){
+     entry.input.setCustomValidity("Escolha um valor permitido");
+     entry.input.reportValidity();return;
+    }
+    modeDraft[entry.key]=value;entry.input.setCustomValidity("");
+   }
+   if(cascadeMode==="percent"&&modeDraft.percentMin>modeDraft.percentMax){
+    inputs[0].input.setCustomValidity("O mínimo não pode ser maior que o máximo");
+    inputs[0].input.reportValidity();return;
+   }
+   const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));
   };
-  wheel.onkeydown=event=>{
-   const index=choices.indexOf(Number(modeDraft[key]));
-   const target=event.key==="ArrowUp"?index-1:event.key==="ArrowDown"?index+1:
-    event.key==="Home"?0:event.key==="End"?choices.length-1:-1;
-   if(target<0||target>=choices.length)return;
-   event.preventDefault();choose(choices[target]);wheel.scrollTop=target*WHEEL_STEP;
-  };
-  field.append(caption,wheel);wheels.appendChild(field);
- });
- panel.appendChild(wheels);
- // Position each selected number in the centre once this popup is attached.
- requestAnimationFrame(()=>{
-  if(choiceOpen!=="mode"||!panel.isConnected)return;
-  fields.forEach(([key])=>adjustWheel(key,modeDraft[key]));
- });
- const actions=make("div","modeAction");
- const apply=make("button","modeApply","✓");
- const cancel=make("button","modeCancel","×");
- apply.type="button";cancel.type="button";
- apply.title="Aplicar filtro";cancel.title="Cancelar alterações";
- apply.setAttribute("aria-label","Aplicar modo de busca");
- cancel.setAttribute("aria-label","Cancelar sem aplicar");
- apply.onclick=()=>{
-  const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));
- };
- cancel.onclick=closeChoices;actions.append(apply,cancel);
- if(["gl","ul"].includes(modeDraft.mode))wheels.appendChild(actions);
- else panel.appendChild(actions);
+  cancel.onclick=()=>{cascadeMode=null;modeDraft={...searchSettings,mode};renderModeChoices();};
+  editor.append(confirm,cancel);panel.appendChild(editor);
+ }
  document.getElementById("cycle").setAttribute("aria-expanded","true");
  fit();
 }
