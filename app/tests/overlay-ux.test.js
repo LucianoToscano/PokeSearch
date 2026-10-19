@@ -1663,7 +1663,7 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
  if([ivStart,ivEnd,start,end].some(x=>x<0))return false;
  const api=new Function("window","esc",dock.slice(ivStart,ivEnd)+dock.slice(start,end)+
  "return {verifiedSpawnRawIv,verifiedSpawnIvPercent,verifiedOverallRank,"+
- "verifiedSpeciesIvRank,resultLines,resultInfoHtml,computeResultLayout};"
+ "verifiedSpeciesIvRank,pvpIvClassPercent,resultLines,resultInfoHtml,computeResultLayout};"
  )(win,s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"));
  const alt={name:"Altaria",iv:"0/14/15",ivPercent:"64"};
  const origin={name:"Palkia (Origin)",iv:"15/15/15",ivPercent:"100"};
@@ -1679,9 +1679,10 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
   api.verifiedSpeciesIvRank(origin,"ml")===1&&
   api.verifiedSpawnRawIv(alt)==="0/14/15"&&
   lines.includes("IV 0/14/15")&&lines.includes("IV% 64%")&&
-  lines.includes("GL RG#2 · IV#1")&&
-  lines.includes("UL RG#275 · IV#1460")&&
-  master.includes("ML RG#1 · IV#1")&&
+  lines.includes("GL RG#2")&&lines.includes("IV#1 100,00%")&&
+  lines.includes("UL RG#275")&&lines.includes("IV#1460 64,37%")&&
+  master.includes("ML RG#1")&&master.includes("IV#1 100,00%")&&
+  api.pvpIvClassPercent(14)==="99,68"&&
   unknown.includes("IV ?/?/?")&&
   !unknown.some(v=>v.includes("RG#")||v.includes("IV#"))&&
   api.verifiedSpawnRawIv({...alt,ivPercent:"100"})===null&&
