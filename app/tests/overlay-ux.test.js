@@ -56,7 +56,7 @@ test("Result list is always non-scrollable and has no eight-row height cap",
  !service.includes("rowDp()*8"));
 test("Native passes full display height and preserves up to ten card slots",
  service.includes("Math.min(rowDp()*10,screenHeightDp()-52)")&&
- service.includes('screenHeightDp()+","+resultDisplayOptionsJson()+")"')&&
+ service.includes('screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)')&&
  service.includes("screenHeightDp()-16")&&
  service.includes("resultParams.y=fittedY;")&&
  dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
@@ -1322,14 +1322,15 @@ test("RESULT-RESTORE GL/UL still preserve result effects; UL now uses correct Ul
   get("ul",false,{backgroundOnly:true,backgroundVerified:true}).backgroundBadge===true;
 });
 test("Mode emblems preserve historical fallback artwork without Cup alias",()=>{
- return dock.includes('fallbackPath:(family==="gl"||family==="ul")?')&&
-  dock.includes('family==="gl"?"great-league.png":"ultra-league.png"')&&
-  dock.includes('"file:///android_asset/result-icons/base/"+baseName')&&
-  !dock.split('const RESULT_BASE_ICONS=Object.freeze(')[1].split('const RESULT_MODE_ALIASES')[0].includes('base-cup.png');
+ const fn=dock.split("function getModeMenuIcon(")[1]?.split("function getResultIcon(")[0]||"";
+ return fn.includes('gl:"StarGL.png",ul:"StarUL.png"')&&
+  fn.includes('fallbackPath:legacyFallback[family]')&&
+  fn.includes('"file:///android_asset/result-icons/base/"+baseName')&&
+  !fn.includes('base-cup.png');
 });
 test("UX-ICON-02 capture animation reacts to native search state",()=>{
- return service.includes('","+searchInProgress+")"')&&
- dock.includes("isSearching=false)=>")&&dock.includes("searchActive=!!isSearching;")&&
+ return service.includes('","+searchInProgress+","+showResultText+')&&
+ dock.includes("isSearching=false,textVisible=false")&&dock.includes("searchActive=!!isSearching;")&&
  dock.includes('searchActive&&!shinyPending&&nextQueryAt<=Date.now()')&&
  dock.includes('id="capturePulse"')&&dock.includes('@keyframes psCapturePulse')&&
  dock.includes('prefers-reduced-motion:reduce');
@@ -1369,7 +1370,8 @@ test("UX-FIX-01 no floating cooldown or Toast, despawn switch remains",()=>{
 test("UX-FIX-01 60s local cooldown bypass is debug-only",()=>{
  return service.includes('private boolean skipLocalGapInDebug()')&&
  service.includes('android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE')&&
- service.includes('if(!skipLocalGapInDebug()&&previous>0L')&&
+ service.includes('long earliest=skipLocalGapInDebug()?0L:previous+MIN_SEARCH_GAP_MS;')&&
+ service.includes('earliest=Math.max(earliest,remoteDrainUntilMs);')&&
  service.includes('private static final long MIN_SEARCH_GAP_MS=60_000L;')&&
  service.includes('if(searchInProgress){');
 });
@@ -1467,7 +1469,7 @@ test("PL-02 stale previews keep their confirmed source and never fire new alerts
 });
 test("PL-02 marks submit boundary before Search can navigate",()=>{
  const start=service.indexOf("submittingSearchGeneration=generation;"),
-       call=service.indexOf('execute("submitSearch",submitted=>{',start);
+       call=service.indexOf('execute("submitSearch",submitted->{',start);
  const onPage=service.split("onPageStarted(WebView view,")[1]?.split("onPageFinished(WebView")[0]||"";
  return start>0&&call>start&&
   onPage.includes("submittingSearchGeneration!=requestGeneration")&&
@@ -1478,7 +1480,7 @@ test("PL-02 waits for WebView after submit navigation without treating missing D
  const poll=service.split("private void pollSearch(")[1]?.split("private long expiration(")[0]||"";
  return poll.includes("if(!loaded||website==null){")&&
   poll.includes("if(attempt<8){pollSearch(generation,attempt+1,manual);return;}")&&
-  poll.indexOf("if(!loaded||website==null){")<poll.indexOf('execute("collect",r=>{')&&
+  poll.indexOf("if(!loaded||website==null){")<poll.indexOf('execute("collect",r->{')&&
   poll.includes('searchFailure("⚠ Site não carregado"');
 });
 test("Raw IV A/D/S are applied one field per React evaluation",()=>{
