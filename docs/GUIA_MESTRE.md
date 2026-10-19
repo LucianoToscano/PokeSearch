@@ -1704,3 +1704,21 @@ D. Ganhos esperados mediante integração válida: exibir perfil sem abrir o sit
 - Duplicações observadas em CSS, iconografia e rotinas de atualização: classificadas para futura limpeza controlada, **nenhuma remoção sem teste e autorização**. Auditoria estática não certifica segurança total nem ausência de bugs.
 
 **Checklist de entrega:** adicionar `node --check` para `probe.js`, `profile_summary.js`, `login_entry.js` e `node app/tests/location-probe.test.js` ao CI, preservar testes de UI/login/search/assinatura, compilar **apenas** APK com assinatura permanente, validar `applicationId`, `versionCode` crescente, certificado igual à 51042, pacote ZIP e SHA256. Restaurar gatilho temporário do workflow após sucesso/falha. Registrar IDs SHA/Actions e pendências neste Guia na próxima subseção. Não realizar merge.
+
+
+### 12.45 APK 51043 — PL-04, auditoria AUD-01 e GitHub Actions #43 aprovado (19/10/2026)
+
+**Compilação expressamente autorizada** pelo proprietário após PL-03/HOME-03 e PL-04, sobre `fix/ps009-stable-test-signing-20261018`, PR #27 permanece aberto/draft. Não realizar merge.
+
+**GitHub Actions:** https://github.com/LucianoToscano/PokeSearch/actions/runs/39193653428, execução nº **43**, id `39193653428`, job `117871626903`, head do build `aa44d2449fde1bb65cb726d12140f2a0746d84e8`. **SUCCESS**. Testes Node executados no runner: `login-entry` **38/38**, `location-probe` **17/17**, `probe-smoke` **96/96**, `overlay-ux` **266/266**, `signing-contract` **11/11**, total **428/428** contratos JavaScript; checagens de sintaxe JS passaram. Gradle `:app:assembleDebug :app:testDebugUnitTest` **BUILD SUCCESSFUL**; o runner informou `:app:testDebugUnitTest NO-SOURCE`, portanto não alegar existência de testes instrumentados Android. Recursos gráficos, overlay, Raw IV e assinatura mantidos.
+
+**Artefatos e integridade verificadas após baixar do CI:**
+- APK `PokeSearch-v0.51-beta-51043.apk`, **2.524.351 bytes**, SHA-256 **`97e35ed82f88f677ea997248df78b29650a7685880a138bca93b2755927bed84`**, ZIP interno íntegro; pacote `com.lucianotoscano.pokesearch`, `versionCode=51043`, `versionName=0.51-beta.test.51043` confirmados pelo workflow.
+- ZIP de distribuição `PokeSearch-v0.51-beta-51043-assinado.zip`, SHA-256 **`5141679fbb12633341b781a4892700a777a159eaa9f01b7f1606a3c972621126`**, extração íntegra e `sha256sum -c SHA256SUMS.txt` OK.
+- Certificado público SHA-256 **`34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`**, **igual à 51042**, assinatura v2 verificada no GitHub Actions. Usar atualização in-place sem desinstalar para conservar dados, desde que Android aceite a instalação e sessão local continue válida.
+- Artefato Actions `12161310653`, `PokeSearch-v0.51-APK-TESTE-ATUALIZAVEL`, válido por 30 dias até 18/11/2026. Build sem keystore no repositório; segredo do runner limpo após execução.
+- Workflow de teste recebeu evento temporário `pull_request synchronize` estritamente para PR #27 e testes adicionais. Restaurado **exatamente** ao arquivo protegido anterior, blob `2a12b0f7b34e892a6d3abc42c9c58240520988bc`, commit `8f8a15e20adce5c33cb4d212184f850dca7cc661`. Não ficou gatilho automático ligado para futuras alterações na branch.
+
+**Limites obrigatórios:** correção de localização testada contra DOMs simulados; ainda **não homologada** no site real PoGoCoordinates/aparelho Android, especialmente Coords/Area e raio em versões móveis. Servidor próprio NÃO foi implementado e depende de contrato autorizado para sincronizar perfil/dados externos. Login Google em WebView continua com risco de bloqueio OAuth; não prometer que perfil completo automaticamente aparece na Home. Não transferir cookies/códigos/token do navegador para o aplicativo. Não alterar credenciais nem tentar contornar cotas VIP. Regressoes de UI e esportes exigem captura do novo APK.
+
+**Próximo passo:** instalar 51043 sobre 51042, testar login e logout no fluxo oficial, perfil com/sem treinador, botão Remover/gerenciar, menu direito, logo transparente e filtro localização com coordenadas de teste e raios 0/1/10/1000 km. Confirmar visualmente no site se Coords foi selecionado e se a busca retornou resultados compatíveis; erro de confirmação implica não submissão. Só após evidência do aparelho considerar PL-04 resolvida. Preservar arquivos/PR/backup/assinatura e um único Guia Mestre; não misturar PvPPokeGo.
