@@ -42,7 +42,7 @@
  // Verify linked state by the Pokemon GO section only, never a count elsewhere.
  const accounts=nodes.map(e=>({s:text(e),e})).filter(x=>
    x.s.includes("Pokemon GO accounts")&&x.s.length<1800&&
-   (/Pokemon GO accounts\\s*\\d+\\s*\\/\\s*\\d+/i.test(x.s)||/Link my account/i.test(x.s)))
+   (/Pokemon GO accounts\s*\d+\s*\/\s*\d+/i.test(x.s)||/Link my account/i.test(x.s)))
    .sort((a,b)=>a.s.length-b.s.length);
  const section=accounts[0]?accounts[0].s:"";
  const explicitZero=/Pokemon GO accounts\s*0\s*\/\s*\d+/i.test(section)||
