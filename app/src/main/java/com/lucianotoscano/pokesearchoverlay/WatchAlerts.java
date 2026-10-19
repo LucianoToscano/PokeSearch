@@ -102,10 +102,14 @@ public final class WatchAlerts {
         if(quiet)ensureSilentChannel(context);else ensureChannel(context);
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager==null)return false;
+        String channelId=quiet?SILENT_CHANNEL_ID:CHANNEL_ID;
+        NotificationChannel current=manager.getNotificationChannel(channelId);
+        if(current==null||current.getImportance()==NotificationManager.IMPORTANCE_NONE)
+            return false;
         Intent open=new Intent(context,MainActivity.class);
         PendingIntent intent=PendingIntent.getActivity(context,11,open,
             PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
-        Notification note=new Notification.Builder(context,quiet?SILENT_CHANNEL_ID:CHANNEL_ID)
+        Notification note=new Notification.Builder(context,channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title).setContentText(info).setAutoCancel(true)
             .setStyle(new Notification.BigTextStyle().bigText(info)).setContentIntent(intent).build();
