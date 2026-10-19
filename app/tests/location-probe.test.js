@@ -123,4 +123,24 @@ repopulated.run("configureLocation",disabled);
 repopulated.coord.value="1,2";
 check("Site rehydration restoring prior coords does not pass OFF verification",
  repopulated.run("verifyLocation",disabled).ok,false);
+// Zero and 1000km are both allowed by the existing documented filter.
+let zeroRadius=fixture();
+const reqZero={...req,radius:0};
+zeroRadius.run("configureLocation",reqZero);
+check("Zero-radius Coords form applies after React tab changes",
+ zeroRadius.run("configureLocation",reqZero).ok,true);
+check("Zero radius remains 0 instead of being treated as an empty string",
+ zeroRadius.radius.value,"0");
+check("Zero radius is verified as exactly the requested filter",
+ zeroRadius.run("verifyLocation",reqZero).ok,true);
+let worldRadius=fixture();
+const reqMax={...req,radius:1000};
+worldRadius.run("configureLocation",reqMax);
+check("Maximum documented radius 1000 is applied",
+ worldRadius.run("configureLocation",reqMax).ok,true);
+check("Maximum radius passes exact site verification",
+ worldRadius.run("verifyLocation",reqMax).ok,true);
+worldRadius.radius.value="1001";
+check("Site never silently expands maximum radius after hydration",
+ worldRadius.run("verifyLocation",reqMax).ok,false);
 console.log("PokeSearch location contract: "+passed+" tests passed");
