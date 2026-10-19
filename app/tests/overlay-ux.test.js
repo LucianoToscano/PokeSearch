@@ -190,8 +190,9 @@ test("UX-INFO-06 generic site rank is never treated as IV rank without evidence"
  read("assets/probe.js").includes('ivRankSource:ivRankValid?"explicit-species-iv":""')&&
  read("assets/probe.js").includes('ivRankLeague:ivRankValid?mode:""')&&
  read("assets/probe.js").includes('verifiedCardIv({iv:raw,ivPercent:percent})')&&
- dock.includes('card.ivRankSource!=="explicit-species-iv"')&&
- dock.includes('card.ivRankLeague!==league')&&
+ dock.includes('card.ivRankSource==="explicit-species-iv"&&card.ivRankLeague===league')&&
+ dock.includes('return calculatedSpeciesIvRank(card,league);')&&
+ dock.includes('if(verifiedSpawnIvPercent(card)===null)return null;')&&
  !dock.includes('card.rank===1?"IV#1"'));
 test("UX-RESULT-10 updates all actual cards when metadata visibility or device height changes",
  dock.includes("JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp,")&&
