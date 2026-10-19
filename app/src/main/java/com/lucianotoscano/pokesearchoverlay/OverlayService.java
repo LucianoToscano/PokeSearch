@@ -389,6 +389,9 @@ public class OverlayService extends Service {
         if(!menuExpanded||menuRoot==null||menuParams==null||params==null||wm==null)return;
         DisplayMetrics d=metrics();
         int screen=d.widthPixels, bottom=d.heightPixels, width=dp(menuDp());
+        // Rotation and window switching can change the available screen width.
+        // Keep the native hit area aligned with the 12 visible toolbar buttons.
+        if(menuParams.width!=width)menuParams.width=width;
         boolean right=params.x+dp(dockDp())+width<=screen;
         boolean left=params.x-width>=0;
         int priorPad=menuPadDp;
@@ -407,6 +410,10 @@ public class OverlayService extends Service {
             int above=params.y-dp(MENU_BASE_DP);
             rowY=above>=0?above:below;
         }
+        // Never let the toolbar or its touch targets drift outside the display
+        // after dragging, returning from the keyboard, or rotating the device.
+        menuParams.x=Math.max(0,Math.min(Math.max(0,screen-width),menuParams.x));
+        rowY=Math.max(0,Math.min(Math.max(0,bottom-dp(MENU_BASE_DP)),rowY));
         menuPadDp=0; // Results remain in their own separate native overlay.
 
         // The old resize/clamp moved the entire toolbar when a long numeric
