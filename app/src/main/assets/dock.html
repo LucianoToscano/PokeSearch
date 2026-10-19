@@ -1181,7 +1181,7 @@ function locationPanelFeedback(){
  toggle.textContent=locationEnabled?"ON":"OFF";
  toggle.className=locationEnabled?"locActive":"locOff";
  toggle.setAttribute("aria-checked",String(locationEnabled));
- radius.textContent=locationRadius+" km";
+ radius.textContent=(panel.querySelector('input[type="range"]')?.value??locationRadius)+" km";
  const error=/localiza(?:ção|cao) (?:não|nao) (?:aplicada|confirmada)|localiza(?:ção|cao) residual/i.test(status);
  hint.textContent=error?"⚠ "+status:
   locationEnabled?(locationVerified?"✓ Localização confirmada na busca · "+locationRadius+" km":
@@ -1673,7 +1673,6 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  if(!resultWindow)document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  locationVerified=!!verifiedLocation&&locationEnabled;
- if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();
  if(config&&typeof config==="object")searchSettings={...searchSettings,...config};
  shownMode=resultSourceMode==="iv"?"raw":(resultSourceMode||mode);
  if(resultSourceConfig&&typeof resultSourceConfig==="object")
@@ -1681,7 +1680,8 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  shownShiny=!!resultSourceShiny;resultsStale=!!stale;
  nextQueryAt=Number(nextDue)||0;
  searchActive=!!isSearching;
- mode=m==="iv"?"raw":m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ mode=m==="iv"?"raw":m;status=String(s||"");
+ if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  showResultText=!!textVisible;
  notificationPermissionGranted=!!permissionGranted;
  watchAlertsEnabled=!!favoriteAlertsEnabled;
