@@ -729,7 +729,10 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  if(controlsWindow&&choiceOpen&&menuOpen){
   const popup=document.getElementById("choices");
   // Stable measured height regardless of whether native positions it above or below.
-  h=Math.max(h,34+Math.ceil(popup.getBoundingClientRect().height)+6);
+  // The intended cascade is always 190px tall even if CSS temporarily clamps
+  // its visible height to a short screen. Repositioning must be able to expand it.
+  h=Math.max(h,choiceOpen==="mode"?34+190+6:
+   34+Math.ceil(popup.getBoundingClientRect().height)+6);
  }
  if(Math.abs(h-lastHeight)>1){
   lastHeight=h;
