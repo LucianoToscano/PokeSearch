@@ -1033,7 +1033,7 @@ public class OverlayService extends Service {
     private void revertUnverifiedShiny(String reason){
         shiny=false;
         shinyVerified=false;
-        shinyLoginPromptRequested=false;
+        // Keep a user-initiated login prompt pending until it is opened.
         getSharedPreferences("prefs",0).edit().putBoolean("shiny",false).apply();
         status(reason);
     }
