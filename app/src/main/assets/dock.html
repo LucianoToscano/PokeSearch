@@ -220,37 +220,6 @@ body.result-window #empty{margin:0 auto;max-height:18px}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
 
-/* UX-MODOS-MICRO: small panel by mode; league picker with inline actions. */
-#choices.modePanel .uxSegment{gap:2px;padding:1px 0 3px}
-#choices.modePanel .uxSegment button{height:23px;min-height:23px;padding:1px;font-size:10px;border-radius:5px}
-#choices.modePanel .modeWheels{display:flex;justify-content:center;align-items:center;gap:3px;padding:0;margin:0}
-#choices.modePanel .modeWheelField{display:flex;flex:1;flex-direction:column;align-items:stretch;
- min-width:0;max-width:62px;gap:1px}
-#choices.modePanel.modeCompact-percent .modeWheelField{max-width:74px}
-#choices.modePanel .modeWheelLabel{font:600 9px/10px Roboto,Arial,sans-serif;text-align:center;color:#a9b9c7}
-#choices.modePanel .modeWheel{height:60px;width:100%;padding:20px 0;overflow-y:auto;overflow-x:hidden;
- scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain;touch-action:pan-y;
- background:linear-gradient(180deg,#17222cbe,#1d303a90 50%,#17222cbe);
- border:0;border-radius:5px;outline-offset:1px}
-#choices.modePanel .modeWheel::-webkit-scrollbar{display:none}
-#choices.modePanel .modeWheelItem{display:block;width:100%;height:20px;min-height:20px;line-height:20px;
- margin:0;padding:0;background:transparent;border:0;border-radius:4px;color:#9ba9b6;
- font-size:10px;font-weight:500;text-align:center;white-space:nowrap;scroll-snap-align:center}
-#choices.modePanel .modeWheelItem.chosen{color:#f1fff8;background:#285449c2;
- font-size:14px;font-weight:800;text-shadow:0 0 3px #79eac46b}
-#choices.modePanel .modeWheelItem:focus-visible{outline:1px solid #96dfc6}
-#choices.modePanel .modeAction{position:relative;bottom:auto;display:flex;justify-content:flex-end;
- gap:4px;margin:2px 1px 0;padding:0;background:transparent;border:0}
-#choices.modePanel .modeAction button{flex:none;width:30px;height:26px;min-height:26px;margin:0;padding:0;
- display:flex;align-items:center;justify-content:center;font:700 17px/1 Roboto,Arial,sans-serif;
- border:1px solid #ffffff2e;border-radius:5px;background:#25313c;color:#c6d4df}
-#choices.modePanel .modeAction .modeApply{background:#17644c;border-color:#50bf94;color:#e0ffee}
-#choices.modePanel.modeCompact-league .modeWheels{gap:5px;justify-content:center;align-items:center;padding:1px 0}
-#choices.modePanel.modeCompact-league .modeWheelField{flex:none;width:58px;max-width:58px}
-#choices.modePanel.modeCompact-league .modeWheelLabel{display:none}
-#choices.modePanel.modeCompact-league .modeAction{margin:0;padding:0;align-self:center;gap:4px}
-#choices.modePanel.modeCompact-league .modeAction button{width:29px;height:30px;min-height:30px}
-
 /* UX-MENU-01: compact navigation; historical 12 original buttons remain intact. */
 #quickHead,#quickMenuList{display:none}
 body.controls-window #controls{display:none!important}
@@ -400,21 +369,6 @@ body.controls-window #choices{top:34px!important;width:220px!important;
  overflow-y:auto!important;border:1px solid #ffffff38!important;border-radius:9px!important;
  box-shadow:0 4px 12px #0008!important;padding:5px!important;}
 body.controls-window #choices.modePanel{width:232px!important;max-height:min(216px,var(--popup-room,400px))!important}
-#choices.modePanel.modeCompact-league,
-body.controls-window #choices.modePanel.modeCompact-league{
- width:162px!important;max-height:min(99px,var(--popup-room,400px))!important;
- height:auto!important;min-height:0!important;padding:2px!important;border-radius:7px!important;
-}
-#choices.modePanel.modeCompact-percent,
-body.controls-window #choices.modePanel.modeCompact-percent{
- width:177px!important;max-height:min(143px,var(--popup-room,400px))!important;
- height:auto!important;min-height:0!important;padding:2px!important;border-radius:7px!important;
-}
-#choices.modePanel.modeCompact-raw,
-body.controls-window #choices.modePanel.modeCompact-raw{
- width:198px!important;max-height:min(143px,var(--popup-room,400px))!important;
- height:auto!important;min-height:0!important;padding:2px!important;border-radius:7px!important;
-}
 body.controls-window #choices.locationPanel{width:306px!important;max-height:var(--popup-room,400px)!important}
 body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}
 /* Tiny Modos artwork only. GL/UL #N is centered ON the PNG,
@@ -438,6 +392,85 @@ body.controls-window #quickMenuList .quickRank{
  padding:0!important;margin:0!important;
  text-shadow:0 1px 2px #000,0 0 3px #000,0 0 4px #d5e7ff!important;
 }
+/* UX-MODOS-CASCADE: the 6 items stay one small native-popup-width menu;
+   only the chosen item opens its right/left settings strip. */
+body.controls-window #choices.modePanel.modeCascade{
+ position:absolute!important;box-sizing:border-box!important;
+ left:0!important;right:auto!important;top:34px!important;
+ width:88px!important;height:190px!important;min-height:0!important;
+ max-width:calc(100vw - 12px)!important;max-height:min(190px,var(--popup-room,400px))!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ padding:0!important;margin:0!important;overflow:visible!important;
+}
+body.controls-window #choices.modePanel.modeCascade.modeCascadeOpen{
+ width:min(316px,calc(100vw - 12px))!important;
+}
+body.menu-left.controls-window #choices.modePanel.modeCascade{left:auto!important;right:0!important}
+body.controls-window #choices.modeCascade .modeCascadeRail{
+ position:absolute;top:0;left:0;width:86px;
+ background:#252b34f5;border:1px solid #ffffff40;border-radius:6px;
+ box-shadow:0 3px 10px #0008;padding:2px;
+ max-height:min(190px,var(--popup-room,400px));overflow-y:auto;scrollbar-width:none;
+}
+body.controls-window #choices.modeCascade .modeCascadeRail::-webkit-scrollbar{display:none}
+body.menu-left.controls-window #choices.modeCascade .modeCascadeRail{left:auto;right:0}
+body.controls-window #choices.modeCascade .modeCascadeHead{
+ font:700 10px/22px Roboto,Arial,sans-serif;height:22px;text-align:center;color:#b9cad8;
+}
+body.controls-window #choices.modeCascade button.modeCascadeEntry{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ width:100%!important;min-width:0!important;height:27px!important;min-height:27px!important;
+ padding:0 7px!important;margin:0!important;line-height:27px!important;
+ background:transparent!important;border:0!important;border-radius:4px!important;
+ font-size:11px!important;color:#e9f2ff!important;white-space:nowrap!important;
+}
+body.controls-window #choices.modeCascade button.modeCascadeEntry.chosen,
+body.controls-window #choices.modeCascade button.modeCascadeEntry:active{
+ background:#285449e8!important;color:#e0fff1!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeArrow{font:700 14px/1 Roboto,Arial,sans-serif;opacity:.75}
+body.controls-window #choices.modeCascade .modeCascadeEditor{
+ display:flex;align-items:center;gap:3px;box-sizing:border-box;
+ position:absolute;left:88px;height:36px;width:max-content;max-width:calc(100% - 88px);
+ padding:3px 4px;background:#252b34f7;border:1px solid #ffffff44;
+ border-radius:6px;box-shadow:0 3px 10px #0009;
+}
+body.menu-left.controls-window #choices.modeCascade .modeCascadeEditor{left:auto;right:88px}
+body.controls-window #choices.modeCascade .modeCascadeField{
+ display:flex;align-items:center;gap:2px;min-width:0;
+}
+body.controls-window #choices.modeCascade .modeCascadeLabel{
+ font:700 9px/14px Roboto,Arial,sans-serif;color:#cfdeed;
+}
+body.controls-window #choices.modeCascade input.modeCascadeInput{
+ box-sizing:border-box;width:33px;min-width:27px;height:28px;
+ margin:0;padding:1px 2px;color:#f5fff8;background:#253c3a;
+ border:1px solid #667f7d;border-radius:4px;
+ text-align:center;font:700 12px/25px Roboto,Arial,sans-serif;
+ appearance:textfield;touch-action:pan-y;
+}
+body.controls-window #choices.modeCascade input.modeCascadeInput::-webkit-inner-spin-button,
+body.controls-window #choices.modeCascade input.modeCascadeInput::-webkit-outer-spin-button{
+ -webkit-appearance:none;margin:0;
+}
+body.controls-window #choices.modeCascade button.modeCascadeConfirm,
+body.controls-window #choices.modeCascade button.modeCascadeCancel{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;width:27px!important;min-width:27px!important;
+ height:28px!important;min-height:28px!important;margin:0!important;padding:0!important;
+ font:800 15px/1 Roboto,Arial,sans-serif!important;
+ background:#246b55ea!important;color:#ebfff5!important;
+ border:1px solid #6abb9a88!important;border-radius:5px!important;
+}
+body.controls-window #choices.modeCascade button.modeCascadeCancel{
+ color:#d8e4ee!important;background:#303746e8!important;
+ border-color:#ffffff44!important;
+}
+body.controls-window.popup-above #choices.modePanel.modeCascade{
+ top:auto!important;bottom:34px!important;
+}
+/* Popup can scroll if the screen is extremely short; horizontal controls stay in view. */
+body.controls-window #choices.modeCascade .modeCascadeEditor:focus-within{z-index:3}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
