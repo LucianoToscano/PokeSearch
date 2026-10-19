@@ -1908,14 +1908,14 @@ public class OverlayService extends Service {
                 clean.put("direction","horizontal".equals(direction)?"horizontal":"vertical");
                 clean.put("labels",incoming.optBoolean("labels",true));
                 String[] allowed={"mode","filters","location","pokemon","star",
-                    "appearance","bell","report","donate","close"};
+                    "bell","period","appearance","report","donate","close"};
                 java.util.Set<String> valid=new java.util.HashSet<>(java.util.Arrays.asList(allowed));
                 for(String key:new String[]{"order","hidden"}){
                     org.json.JSONArray items=incoming.optJSONArray(key),safe=new org.json.JSONArray();
                     java.util.Set<String> seen=new java.util.HashSet<>();
                     if(items!=null)for(int i=0;i<items.length()&&i<12;i++){
                         String id=items.optString(i,"");
-                        if(valid.contains(id)&&seen.add(id)&&(!"hidden".equals(key)||(!"close".equals(id)&&!"appearance".equals(id))))
+                        if(valid.contains(id)&&seen.add(id)&&(!"hidden".equals(key)||(!"close".equals(id)&&!"appearance".equals(id)&&!"period".equals(id))))
                             safe.put(id);
                     }
                     clean.put(key,safe);
