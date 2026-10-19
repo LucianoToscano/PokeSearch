@@ -84,6 +84,14 @@ test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten
  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
  service.includes('case "count":resultShowCount=value;pref="resultShowCount"')&&
  !service.includes('setSpawnLimit'));
+test("UX-INFO-10 visibility toggles report confirmed Android state without scrolling to top",
+ dock.includes('const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);')&&
+ dock.includes('JSON.stringify(resultDisplayOptions)!==previousDisplayPrefs)renderInfoChoices();')&&
+ dock.includes('const scroll=previous.dataset.panelKind==="info"?previous.scrollTop:0;')&&
+ dock.includes('if(choiceOpen==="info"&&panel.isConnected)panel.scrollTop=scroll;')&&
+ dock.includes('resultDisplayOptions[key]?"✓":"–"')&&
+ dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
+ !dock.includes('resultDisplayOptions[key]=!resultDisplayOptions[key];'));
 test("UX-INFO-02 all seven visibility options are independent and persist on device",()=>{
  const labels=["Quantidade de spawns","Tempo de despawn","Nível (Lv)",
   "Poder de Combate (PC)","IV do Pokémon","Rank Geral · PvPoke","Rank IV da espécie"];
