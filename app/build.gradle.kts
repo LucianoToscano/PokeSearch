@@ -1,3 +1,4 @@
+import java.security.MessageDigest
 plugins { id("com.android.application") }
 
 // Stable internal-test signing is optional for local development, but mandatory
@@ -18,7 +19,7 @@ val checkedAssetNames = listOf("dock.html", "overlay.html", "detail.html",
     "probe.js", "login_entry.js", "shiny_login.js")
 val assetChecksums = checkedAssetNames.joinToString(";") { name ->
     val bytes = file("src/main/assets/$name").readBytes()
-    val hash = java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
+    val hash = MessageDigest.getInstance("SHA-256").digest(bytes)
         .joinToString("") { "%02x".format(it.toInt() and 0xff) }
     "$name=$hash"
 }
@@ -101,7 +102,7 @@ android {
 
 tasks.matching { it.name == "preReleaseBuild" }.configureEach {
     doFirst {
-        if (releaseStore.isNullOrBlank() || releaseCertificateSha256.isEmpty())
+        if (System.getenv("POKE_RELEASE_KEYSTORE").isNullOrBlank() || releaseCertificateSha256.isEmpty())
             throw org.gradle.api.GradleException("Release signing and POKE_RELEASE_CERT_SHA256 are required")
     }
 }
