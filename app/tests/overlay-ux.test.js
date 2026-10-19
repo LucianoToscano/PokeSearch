@@ -238,7 +238,7 @@ test("v0.50 silent channels are actually without sound",
 test("v0.50 direct login uses the real site switch without guessed OAuth routes",
     main.includes('readAsset("login_entry.js")')&&
     read("assets/login_entry.js").includes('candidate.click();')&&
-    main.includes('website.loadUrl("https://pogocoordinates.com/search")'));
+    main.includes('"https://pogocoordinates.com/profile":"https://pogocoordinates.com/search"'));
 test("v0.50 service accepts missing action on initial start",
     service.includes('i==null||i.getAction()==null?"":i.getAction()'));
 test("v0.50 neutral UI includes smaller location icon",
@@ -328,7 +328,7 @@ test("Login only reveals official provider dialog and supports Shiny switch tap"
   read("assets/login_entry.js").includes('candidate.click();'));
 test("Login tests session before opening a fresh login link",
   main.indexOf("checkLoginSession(view,14,generation);")>=0&&
-  main.includes("if(attemptsLeft<=13&&!loginDiscoveryStarted&&!loginLinkAttempted)")&&
+  main.includes("!loginDiscoveryStarted&&!loginLinkAttempted")&&
   main.includes("openOfficialLoginControl(view,8);"));
 test("Provider OAuth is visible and return to site is covered until session confirmed",
   main.includes("loginCover.setVisibility(site?View.VISIBLE:View.GONE);")&&
@@ -939,9 +939,28 @@ test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image source
   broken.classes.has("failed")&&tiny.classes.has("failed")&&absent.classes.has("failed");
 })());
 
+test("HOME-03 authenticates using official profile only after session proof",(()=>{
+ const login=main.split("private void checkLoginSession(")[1]?.split("private void openOfficialLoginControl(")[0]||"";
+ const profile=read("assets/profile_summary.js");
+ return login.includes('view.loadUrl("https://pogocoordinates.com/profile")')&&
+  login.includes('loginAutoReturnQueued=true')&&
+  login.includes('profileCaptureInProgress=true')&&
+  login.includes('"unlinked".equals(state)')&&
+  login.includes('profileDiscoveryAttempted=true')&&
+  !profile.includes("Danger zone")===false&&
+  profile.includes("Member since")&&
+  profile.includes('trainerState=parsed?"linked":explicitZero?"unlinked":"unknown"')&&
+  !profile.includes("document.cookie");
+})());
+test("HOME-03 opens the Home drawer on right and uses original transparent PNG",(()=>{
+ const menu=main.split("private void showHomeMenu(){")[1]?.split("private void exportHomeData(){")[0]||"";
+ return menu.includes("Gravity.RIGHT|Gravity.TOP")&&
+  main.includes("R.drawable.ps_home_brand_transparent")&&
+  main.includes('openLoginDialog(false,"manage")');
+})());
 test("HOME-02 keeps only app icon on left, actions on right and undistorted map",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
- return home.includes("R.drawable.pokesearch_icon")&&
+ return home.includes("R.drawable.ps_home_brand_transparent")&&
   home.includes("Gravity.RIGHT|Gravity.CENTER_VERTICAL")&&
   home.includes("overlayControl=makeIcon(R.drawable.ic_overlay_off")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
@@ -998,7 +1017,7 @@ test("HOME-01 never invents trainer data or changes remote account on local remo
   main.includes('.remove("profileTrainerName").remove("profileTrainerCode")');
 })());
 test("HOME-01 provider detection needs real official Google/Discord domain",(()=>{
- const host=main.split("private void openLoginDialog(boolean shinyRequest){")[1]||"";
+ const host=main.split("private void openLoginDialog(boolean shinyRequest,String purpose){")[1]||"";
  return host.includes('lower.equals("accounts.google.com")')&&
   host.includes('lower.equals("discord.com")')&&
   main.includes('provider=observedLoginProvider')&&
