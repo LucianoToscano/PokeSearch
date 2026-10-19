@@ -1364,27 +1364,46 @@ function verifiedSpeciesIvRank(card,league){
 }
 function resultLines(card,opts,league){
  const lines=[],compact=[];
- const cp=String(card?.cp??"").trim();
- const lvl=String(card?.level??"").trim();
+ const cp=String(card?.cp??"").trim(),lvl=String(card?.level??"").trim();
  if(opts.cp&&/^[0-9]{1,5}$/.test(cp)&&Number(cp)>0&&Number(cp)<=10000)compact.push("PC"+cp);
- if(opts.level&&/^\d{1,2}(?:\.5)?$/.test(lvl)&&Number(lvl)>=1&&Number(lvl)<=55)
-  compact.push("Nv"+lvl);
+ if(opts.level&&/^\d{1,2}(?:\.5)?$/.test(lvl)&&Number(lvl)>=1&&Number(lvl)<=55)compact.push("Nv"+lvl);
  if(compact.length)lines.push(compact.join(" · "));
- const combat=[];
- const iv=opts.iv?verifiedSpawnIvPercent(card):null;
- if(iv!==null&&iv!==undefined)combat.push("IV"+iv+"%");
- if(opts.overallRank){const rank=verifiedOverallRank(card,league);if(rank!==null)combat.push("RG#"+rank);}
+ if(opts.rawIv)lines.push("IV "+(verifiedSpawnRawIv(card)||"?/?/?"));
+ const leagues=[["gl","Gl","GL"],["ul","Ul","UL"],["ml","Ml","ML"]];
+ const hasLeaguePrefs=leagues.some(([,suffix])=>
+  Object.prototype.hasOwnProperty.call(opts,"overallRank"+suffix)||
+  Object.prototype.hasOwnProperty.call(opts,"speciesIvRank"+suffix));
+ const combat=[],pct=opts.iv?verifiedSpawnIvPercent(card):null;
+ if(pct!==null&&pct!==undefined)combat.push((hasLeaguePrefs?"IV% ":"IV")+pct+"%");
+ if(!hasLeaguePrefs&&opts.overallRank){
+  const rank=verifiedOverallRank(card,league);if(rank!==null)combat.push("RG#"+rank);
+ }
  if(combat.length)lines.push(combat.join(" · "));
- if(opts.speciesIvRank){
+ if(!hasLeaguePrefs&&opts.speciesIvRank){
   const rank=verifiedSpeciesIvRank(card,league);if(rank!==null)lines.push("IV#"+rank);
+ }
+ if(hasLeaguePrefs)for(const [leagueKey,suffix,short] of leagues){
+  const ranks=[];
+  if(opts["overallRank"+suffix]){
+   const rank=verifiedOverallRank(card,leagueKey);if(rank!==null)ranks.push("RG#"+rank);
+  }
+  if(opts["speciesIvRank"+suffix]){
+   const rank=verifiedSpeciesIvRank(card,leagueKey);if(rank!==null)ranks.push("IV#"+rank);
+  }
+  if(ranks.length)lines.push(short+" "+ranks.join(" · "));
  }
  if(opts.despawn&&Number(card?.expiresAtMs)>0){
   const last=lines[lines.length-1]||"";
-  // Reuse the third line when possible, instead of creating tall extra rows.
   if(last.startsWith("IV#"))lines[lines.length-1]=last+" · TIMER";
   else lines.push("TIMER");
- } // An actual .timer element is built by render, updated live.
+ }
  return lines;
+}
+function resultInfoHtml(text,card){
+ const valid=verifiedSpawnIvPercent(card),safe=esc(text);
+ if(valid===null)return safe;
+ return safe.replace(/(IV%\s*\d{1,3}%|IV\d{1,3}%|IV\s*\d{1,2}\/\d{1,2}\/\d{1,2})/g,
+  '<span class="ivInfo '+ivPaletteClass(valid)+'">$1</span>');
 }
 function resultHasVisibleInfo(card,timersEnabled,textEnabled,opts=null,league=""){
  if(opts)return resultLines(card,opts,league).length>0;
@@ -1498,7 +1517,7 @@ function draw(){
    '<span class="timer" data-deadline="'+deadline+'"></span>':"";
   const info=infoLines.length?'<span class="spawnInfo" aria-hidden="true">'+infoLines.map(text=>
    '<span class="spawnInfoLine">'+(text.includes("TIMER")?
-    text.split("TIMER").map(esc).join(inlineTimer):esc(text))+'</span>').join("")+'</span>':"";
+    text.split("TIMER").map(line=>resultInfoHtml(line,c)).join(inlineTimer):resultInfoHtml(text,c))+'</span>').join("")+'</span>':"";
   // When the optional side strip is closed, retain historical timer/IV badges.
   const badge=!metadataVisible&&showTimers&&deadline?
    '<span class="timer" data-deadline="'+deadline+'"></span>':"";
