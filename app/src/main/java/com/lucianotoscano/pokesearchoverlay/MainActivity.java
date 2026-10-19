@@ -57,7 +57,10 @@ public class MainActivity extends Activity {
     private FrameLayout homeRoot;
     private LinearLayout guestPanel, connectedPanel, trainerPanel;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
-    private TextView overlayControl, sessionHint;
+    private ImageView overlayControl;
+    private TextView sessionHint;
+    private View homeDrawerLayer;
+    private String pendingExportText="";
     private String preferredLoginProvider="";
     private String observedLoginProvider="";
     @Override public void onCreate(Bundle b){
@@ -132,40 +135,42 @@ public class MainActivity extends Activity {
         header.setOrientation(LinearLayout.HORIZONTAL);
         screen.addView(header,new LinearLayout.LayoutParams(-1,d(56)));
 
-        LinearLayout controls=new LinearLayout(this);
-        controls.setGravity(Gravity.CENTER_VERTICAL);
-        controls.setOrientation(LinearLayout.HORIZONTAL);
-        header.addView(controls,new LinearLayout.LayoutParams(0,d(48),1));
+        // HOME-02: icon only at top left; compact actions on the right.
+        ImageView brand=new ImageView(this);
+        brand.setImageResource(R.drawable.pokesearch_icon);
+        brand.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        brand.setContentDescription("Ícone PokeSearch");
+        header.addView(brand,new LinearLayout.LayoutParams(d(38),d(38)));
 
-        overlayControl=homeMiniButton("⏻","Ativar ou desativar overlay");
-        controls.addView(overlayControl,new LinearLayout.LayoutParams(d(36),d(36)));
+        header.addView(new View(this),new LinearLayout.LayoutParams(0,d(1),1));
+        LinearLayout controls=new LinearLayout(this);
+        controls.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        controls.setOrientation(LinearLayout.HORIZONTAL);
+        header.addView(controls,new LinearLayout.LayoutParams(-2,d(46)));
+
+        overlayControl=makeIcon(R.drawable.ic_overlay_off,"Ativar overlay");
+        overlayControl.setPadding(d(5),d(5),d(5),d(5));
+        overlayControl.setBackground(homeSurface(Color.argb(125,9,25,49),10,0));
+        controls.addView(overlayControl,new LinearLayout.LayoutParams(d(34),d(34)));
         overlayControl.setOnClickListener(v->toggleHomeOverlay());
 
         ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
         heart.setPadding(d(6),d(6),d(6),d(6));
-        heart.setBackground(homeSurface(Color.argb(130,9,25,49),11,Color.argb(90,180,221,255)));
-        LinearLayout.LayoutParams heartLp=new LinearLayout.LayoutParams(d(36),d(36));
+        heart.setBackground(homeSurface(Color.argb(125,9,25,49),10,0));
+        LinearLayout.LayoutParams heartLp=new LinearLayout.LayoutParams(d(34),d(34));
         heartLp.leftMargin=d(5);
         controls.addView(heart,heartLp);
         heart.setOnClickListener(v->PixSupport.show(this));
 
-        TextView menu=homeMiniButton("☰","Abrir menu do PokeSearch");
-        menu.setTextSize(19);
-        LinearLayout.LayoutParams menuLp=new LinearLayout.LayoutParams(d(36),d(36));
+        TextView menu=homeMiniButton("☰","Abrir menu lateral");
+        menu.setTextSize(18);
+        menu.setBackground(homeSurface(Color.argb(125,9,25,49),10,0));
+        LinearLayout.LayoutParams menuLp=new LinearLayout.LayoutParams(d(34),d(34));
         menuLp.leftMargin=d(5);
         controls.addView(menu,menuLp);
         menu.setOnClickListener(v->showHomeMenu());
 
-        ImageView wordmark=new ImageView(this);
-        wordmark.setImageResource(R.drawable.ps_home_wordmark);
-        wordmark.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        wordmark.setAdjustViewBounds(false);
-        wordmark.setContentDescription("PokeSearch");
-        header.addView(wordmark,new LinearLayout.LayoutParams(d(142),d(52)));
-
-        // Deliberately leave the center open for future features.
-        screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
-
+        // Keep the official PoGoCoordinates access at the top, not at the footer.
         LinearLayout auth=new LinearLayout(this);
         auth.setOrientation(LinearLayout.VERTICAL);
         auth.setPadding(d(12),d(10),d(12),d(12));
@@ -257,6 +262,8 @@ public class MainActivity extends Activity {
             .setMessage("A remoção deve ser confirmada na conta oficial do PoGoCoordinates. Deseja abrir o site para gerenciar o vínculo?")
             .setNegativeButton("Cancelar",null)
             .setPositiveButton("Abrir site",(dialog,which)->openLoginDialog(false)).show());
+        // Future Home features can occupy the remaining center without affecting login.
+        screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
         return frame;
     }
     private Button homeAuthButton(String name,int bg,int fg){
@@ -269,15 +276,80 @@ public class MainActivity extends Activity {
         button.setBackground(homeSurface(bg,10,0));
         return button;
     }
+    private void closeHomeMenu(){
+        if(homeDrawerLayer!=null&&homeRoot!=null){
+            homeRoot.removeView(homeDrawerLayer);
+            homeDrawerLayer=null;
+        }
+    }
+    private void addHomeDrawerItem(LinearLayout panel,String icon,String name,Runnable callback){
+        TextView item=homeText(icon+"     "+name,15,Color.WHITE,false);
+        item.setPadding(d(18),0,d(12),0);
+        panel.addView(item,new LinearLayout.LayoutParams(-1,d(48)));
+        item.setOnClickListener(v->{closeHomeMenu();callback.run();});
+    }
     private void showHomeMenu(){
-        String[] options={"Favoritos","Preferências","Guia rápido","Reportar problema"};
-        new AlertDialog.Builder(this).setTitle("PokeSearch")
-            .setItems(options,(dialog,which)->{
-                if(which==0)openPicker();
-                else if(which==1)showPreferencesDialog();
-                else if(which==2)showQuickGuide();
-                else showBugReportDialog();
-            }).show();
+        if(homeRoot==null)return;
+        if(homeDrawerLayer!=null){closeHomeMenu();return;}
+        FrameLayout layer=new FrameLayout(this);
+        View scrim=new View(this);
+        scrim.setBackgroundColor(Color.argb(160,0,5,14));
+        scrim.setOnClickListener(v->closeHomeMenu());
+        layer.addView(scrim,new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout drawer=new LinearLayout(this);
+        drawer.setOrientation(LinearLayout.VERTICAL);
+        drawer.setPadding(0,d(14),0,d(10));
+        drawer.setBackgroundColor(Color.rgb(25,42,60));
+        int width=Math.min(d(286),getResources().getDisplayMetrics().widthPixels-d(48));
+        FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(width,-1,Gravity.LEFT|Gravity.TOP);
+        layer.addView(drawer,lp);
+        drawer.setOnClickListener(v->{});
+        TextView label=homeText("  PokeSearch",19,Color.WHITE,true);
+        drawer.addView(label,new LinearLayout.LayoutParams(-1,d(60)));
+        View rule=new View(this);rule.setBackgroundColor(Color.argb(90,174,199,235));
+        drawer.addView(rule,new LinearLayout.LayoutParams(-1,d(1)));
+        addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
+        addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
+        addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
+        addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
+        addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
+        homeRoot.addView(layer,new FrameLayout.LayoutParams(-1,-1));
+        homeDrawerLayer=layer;
+    }
+    private void exportHomeData(){
+        // Export a fixed whitelist. No cookies, OAuth state, coordinates, trainer
+        // codes, private identifiers, account profile or diagnostic logs.
+        try{
+            SharedPreferences prefs=getSharedPreferences("prefs",0);
+            JSONObject out=new JSONObject();
+            out.put("schema","pokesearch-home-export-v1");
+            out.put("createdAt",new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ",Locale.US)
+                .format(new Date()));
+            JSONObject settings=new JSONObject();
+            String[] keys={"mode","rawAttack","rawDefense","rawStamina",
+                "ivPercentMin","ivPercentMax","glRank","ulRank","shiny",
+                "sort","intervalMinutes","spriteSize","showTimers",
+                "alertsMode","alerts","locationEnabled","locationRadius"};
+            for(String key:keys){
+                Object value=prefs.getAll().get(key);
+                if(value instanceof String||value instanceof Number||value instanceof Boolean)
+                    settings.put(key,value);
+            }
+            out.put("filtersAndPreferences",settings);
+            JSONArray favorites=new JSONArray();
+            for(String name:WatchAlerts.watched(this))favorites.put(name);
+            out.put("favorites",favorites);
+            pendingExportText=out.toString(2);
+            Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/json");
+            intent.putExtra(Intent.EXTRA_TITLE,"PokeSearch-dados-"+
+                new SimpleDateFormat("yyyyMMdd-HHmm",Locale.US).format(new Date())+".json");
+            startActivityForResult(intent,302);
+        }catch(Exception e){
+            pendingExportText="";
+            Toast.makeText(this,"Não foi possível preparar os dados",Toast.LENGTH_SHORT).show();
+        }
     }
     private void toggleHomeOverlay(){
         if(OverlayService.isRunning()){
@@ -292,10 +364,10 @@ public class MainActivity extends Activity {
     private void refreshHomeOverlay(){
         if(overlayControl==null)return;
         boolean on=OverlayService.isRunning();
-        overlayControl.setTextColor(on?Color.rgb(117,254,203):Color.WHITE);
+        overlayControl.setImageResource(on?R.drawable.ic_overlay_on:R.drawable.ic_overlay_off);
         overlayControl.setContentDescription(on?"Desativar overlay":"Ativar overlay");
-        overlayControl.setBackground(homeSurface(on?Color.argb(186,9,70,68):Color.argb(130,9,25,49),
-            11,on?Color.rgb(105,222,189):Color.argb(90,180,221,255)));
+        overlayControl.setBackground(homeSurface(on?Color.argb(180,9,70,68):
+            Color.argb(125,9,25,49),10,0));
     }
     private void openProviderLogin(String provider){
         preferredLoginProvider=provider;
@@ -954,6 +1026,18 @@ public class MainActivity extends Activity {
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
         if(req==101&&Settings.canDrawOverlays(this))startOverlay();
+        if(req==302){
+            if(result==RESULT_OK&&data!=null&&data.getData()!=null&&!pendingExportText.isEmpty()){
+                try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){
+                    if(out==null)throw new java.io.IOException("Arquivo indisponível");
+                    out.write(pendingExportText.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    Toast.makeText(this,"Dados exportados em JSON",Toast.LENGTH_SHORT).show();
+                }catch(Exception e){
+                    Toast.makeText(this,"Falha ao salvar os dados",Toast.LENGTH_SHORT).show();
+                }
+            }
+            pendingExportText="";
+        }
         if(req==301 && result==RESULT_OK && data!=null && data.getData()!=null){
             try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){
                 if(out==null)throw new java.io.IOException("Documento indisponível");
@@ -978,6 +1062,7 @@ public class MainActivity extends Activity {
         }
     }
     @Override public void onBackPressed(){
+        if(homeDrawerLayer!=null){closeHomeMenu();return;}
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
