@@ -540,11 +540,14 @@ function parseCard(box,sourceIndex){
  const rankMatch=body.match(/\b(?:PvP\s*)?(?:Rank|Ranking|Rk)\s*#?\s*(\d+)\b/i);
  // Species-specific IV rank is NOT the Top-N search filter and is not
  // PvPoke's cross-species performance rank. Require a labeled card value.
- const explicitSpeciesIvRank=body.match(/(?:^|\n)\s*(?:(?:PvP|GL|UL)\s+)?(?:IV\s+Rank|Rank\s+(?:de\s+)?IV|Stat\s+Product\s+Rank)\s*[:#]?\s*(\d{1,4})\b/im);
- const hasVerifiedIv=Boolean(raw||percent);
- const ivRankValue=explicitSpeciesIvRank&&hasVerifiedIv?Number(explicitSpeciesIvRank[1]):0;
+ const explicitSpeciesIvRank=body.match(/(?:^|\n)\s*(?:(PvP|GL|UL)\s+)?(?:IV\s+Rank|Rank\s+(?:de\s+)?IV|Stat\s+Product\s+Rank)\s*[:#]?\s*(\d{1,4})\b/im);
+ const rankLeagueHint=String(explicitSpeciesIvRank?.[1]||"").toLowerCase();
+ const evidence=verifiedCardIv({iv:raw,ivPercent:percent});
+ const ivRankValue=explicitSpeciesIvRank?Number(explicitSpeciesIvRank[2]):0;
  const ivRankValid=Number.isInteger(ivRankValue)&&ivRankValue>=1&&ivRankValue<=4096&&
-  (mode==="gl"||mode==="ul");
+  evidence?.percent!==null&&evidence?.percent!==undefined&&
+  (mode==="gl"||mode==="ul")&&
+  (rankLeagueHint!=="gl"&&rankLeagueHint!=="ul"||rankLeagueHint===mode);
  const isShiny=/✨/.test(title);
  return {
   sourceIndex,name:title.replace(/✨/g,"").trim(),image:image?image.src:"",
