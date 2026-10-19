@@ -33,7 +33,8 @@ function run(config,keepWindow){
      return [];
    }
  };
- const output=vm.runInNewContext(script.replace("__SHINY__",String(!!config.shiny)),{document,window});
+ const output=vm.runInNewContext(script.replace("__SHINY__",String(!!config.shiny))
+   .replace("__PROVIDER__",JSON.stringify(config.provider||"")),{document,window});
  return {output,window,calls};
 }
 function t(name,actual,expected){
@@ -67,4 +68,20 @@ const menu=el("",{"aria-label":"Menu"});
 t("Mobile hamburger can reveal Login option",run({clickable:[menu]}).output,"triggered");
 t("Hamburger click happens once",menu.clicks,1);
 t("Unknown login remains waiting for manual fallback",run({}).output,"waiting");
+const officialGoogle=el("Continue with Google");
+const googleState={};
+t("Google home button clicks only actual official provider control",
+ run({provider:"google",clickable:[officialGoogle]},googleState).output,"triggered");
+t("Official Google button clicked once",officialGoogle.clicks,1);
+t("Repeated provider probe does not click again",
+ run({provider:"google",clickable:[officialGoogle]},googleState).output,"ready");
+t("Official Google did not receive a second click",officialGoogle.clicks,1);
+const officialDiscord=el("Login with Discord");
+t("Discord home button clicks the visible Discord provider",
+ run({provider:"discord",clickable:[officialDiscord]}).output,"triggered");
+t("Discord provider clicked",officialDiscord.clicks,1);
+const unavailable=el("Continue with Google");
+t("Unavailable provider never redirected to a constructed OAuth URL",
+ run({provider:"discord",clickable:[unavailable]}).output,"ready");
+t("Missing Discord option does not click Google",unavailable.clicks,0);
 console.log("PokeSearch login-entry contract: "+passed+" tests passed");
