@@ -717,9 +717,16 @@ function coordsModeSelected(){
   e.getAttribute("aria-checked")==="true"||e.getAttribute("aria-pressed")==="true"||
   e.getAttribute("aria-selected")==="true"||
   ["true","on","active","checked"].includes(e.getAttribute("data-state")||"")||
-  /(?:^|\s)(?:active|selected|bg-red|bg-rose|bg-primary)(?:\s|$)/i.test(String(e.className||"")));
+  /(?:^|\s)(?:active|selected|bg-red(?:-\\d+)?|bg-rose(?:-\\d+)?|bg-primary(?:-\\d+)?)(?:\s|$)/i.test(String(e.className||"")));
  if(active(coordButton)&&!active(areaButton))return true;
  if(active(areaButton)&&!active(coordButton))return false;
+ // Actual mobile Coords form may have no readable state attribute. Confirm
+ // its visible site-specific hint and both editable inputs after switching.
+ const fields=locationFields();
+ const visibleText=String(document.body&&document.body.innerText||"");
+ if(coordButton&&fields.coords&&fields.radius&&
+    /paste coordinates\\s*\\(\\s*lat\\s*[,;]\\s*lng\\s*\\)\\s*and\\s*a\\s*radius/i.test(visibleText))
+   return true;
  return null;
 }
 function locationValue(field){return field?String(field.value||"").trim():"";}
