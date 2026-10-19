@@ -210,6 +210,11 @@ test("UX-RESULT-10 no-data rows have a minimal gap and never overlap full sprite
   const short=helpers.computeResultLayout(ten,size,330,false,false);
   if(short.visibleCount!==10||short.total+54>330)return false;
   if(short.rows.some(row=>row<short.sprite))return false;
+  // Tiny split-screen overlay heights must not overlap sprite drawings.
+  for(const veryShortHeight of [190,160]){
+   const tight=helpers.computeResultLayout(ten,size,veryShortHeight,false,false);
+   if(tight.visibleCount!==10||tight.rows.some(row=>row<tight.sprite))return false;
+  }
  }
  return dock.includes("size+3:size+1; // 1px gap when no metadata;");
 });
