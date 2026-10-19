@@ -590,6 +590,7 @@ body.result-window .spawnInfo .timer{
 </div>
 <div id="bubble" role="button" aria-label="Restaurar overlay"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></div>
 <script src="file:///android_asset/pvpoke-overall-ranks.js"></script>
+<script src="file:///android_asset/pvpoke-iv-gamemaster.js"></script>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 const resultWindow=window.location.search.indexOf("results=1")!==-1;
@@ -1261,13 +1262,79 @@ function verifiedOverallRank(card,league){
  const value=overallRankByLeague[league].get(speciesKey(card.name));
  return Number.isInteger(value)&&value>0?value:null;
 }
+
+/* Species-specific IV stat-product ranking: CP 1500/2500, max level 50,
+   no best buddy. Based on PvPoke game master species stats and CPMs.
+   Distinct from PvPoke's overall species-performance ranking. */
+const PVP_IV_GAME_MASTER=window.POKESEARCH_PVP_IV_DATA||null;
+const ivSpeciesByName=new Map(),speciesIvRanksCache=new Map();
+if(PVP_IV_GAME_MASTER&&Array.isArray(PVP_IV_GAME_MASTER.pokemon)){
+ for(const data of PVP_IV_GAME_MASTER.pokemon){
+  const [id,name,atk,def,hp]=data;
+  if(!id||!name||![atk,def,hp].every(v=>Number.isInteger(v)&&v>0))continue;
+  const key=speciesKey(name);
+  if(ivSpeciesByName.has(key))ivSpeciesByName.set(key,null);
+  else ivSpeciesByName.set(key,[id,atk,def,hp]);
+ }
+}
+function computeSpeciesIvRanks(species,league){
+ const cpms=PVP_IV_GAME_MASTER?.cpms||[];
+ if(cpms.length<99)return null;
+ const cpCap=league==="gl"?1500:league==="ul"?2500:0;
+ if(!cpCap)return null;
+ const [,atk0,def0,hp0]=species;
+ const cpmSquared=cpms.map(c=>c*c),scores=[];
+ // Enumerate all 4096 IV spreads, finding the best permitted half-level.
+ for(let a=0;a<16;a++){
+  const atk=atk0+a;
+  for(let d=0;d<16;d++){
+   const def=def0+d;
+   for(let h=0;h<16;h++){
+    const hp=hp0+h,cpScale=atk*Math.sqrt(def*hp)/10;
+    let low=0,high=cpms.length-1,best=-1;
+    while(low<=high){
+     const mid=(low+high)>>1;
+     const cp=Math.max(10,Math.floor(cpScale*cpmSquared[mid]));
+     if(cp<=cpCap){best=mid;low=mid+1;}else high=mid-1;
+    }
+    if(best<0)continue;
+    const cpm=cpms[best],hpBattle=Math.max(10,Math.floor(hp*cpm));
+    const product=atk*def*hpBattle*cpmSquared[best];
+    scores.push([a*256+d*16+h,product]);
+   }
+  }
+ }
+ if(!scores.length)return null;
+ scores.sort((a,b)=>b[1]-a[1]||a[0]-b[0]);
+ const order=new Uint16Array(4096);
+ scores.forEach(([index],position)=>{order[index]=position+1;});
+ return order;
+}
+function calculatedSpeciesIvRank(card,league){
+ if(!PVP_IV_GAME_MASTER||!["gl","ul"].includes(league))return null;
+ // A percentage without raw A/D/HP is not enough to rank an IV spread.
+ const iv=String(card?.iv??"").trim();
+ if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(iv))return null;
+ if(verifiedSpawnIvPercent(card)===null)return null;
+ const species=ivSpeciesByName.get(speciesKey(card.name));
+ if(!species)return null;
+ const key=league+":"+species[0];
+ if(!speciesIvRanksCache.has(key))
+  speciesIvRanksCache.set(key,computeSpeciesIvRanks(species,league));
+ const ranking=speciesIvRanksCache.get(key);
+ const [attack,defense,stamina]=iv.split("/").map(Number);
+ const position=ranking?.[attack*256+defense*16+stamina]||0;
+ return position>=1&&position<=4096?position:null;
+}
 function verifiedSpeciesIvRank(card,league){
  if(!card||!["gl","ul"].includes(league))return null;
- // A verified Top N search threshold is NOT the Pokémon's individual IV rank.
- if(card.ivRankSource!=="explicit-species-iv"||card.ivRankLeague!==league)return null;
- if(verifiedSpawnIvPercent(card)===null)return null;
- const value=Number(card.ivRank);
- return Number.isInteger(value)&&value>=1&&value<=4096?value:null;
+ // Site Top-N search threshold is not the IV rank of this Pokémon.
+ if(card.ivRankSource==="explicit-species-iv"&&card.ivRankLeague===league&&
+    verifiedSpawnIvPercent(card)!==null){
+  const value=Number(card.ivRank);
+  if(Number.isInteger(value)&&value>=1&&value<=4096)return value;
+ }
+ return calculatedSpeciesIvRank(card,league);
 }
 function resultLines(card,opts,league){
  const lines=[],compact=[];
