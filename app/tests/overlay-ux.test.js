@@ -281,7 +281,7 @@ test("Login retries the official control for delayed site hydration",
 test("Login uses official site and Shiny activation remains in background collector",
   main.includes('host.equalsIgnoreCase("pogocoordinates.com")')&&
   !main.includes('view.evaluateJavascript(readAsset("shiny_login.js"),null)')&&
-  main.includes('website.loadUrl("https://pogocoordinates.com/search")')&&
+  main.includes('"https://pogocoordinates.com/profile":"https://pogocoordinates.com/search"')&&
   service.includes('private void prepareImmediateShiny(int generation)'));
 test("Official account badge returns immediately to PokeSearch Home",
   main.includes('private void checkLoginSession(WebView view,int attemptsLeft,int pageGeneration)')&&
