@@ -43,7 +43,12 @@ public class OverlayService extends Service {
         return "{\"count\":"+resultShowCount+",\"cp\":"+resultShowCp+
             ",\"level\":"+resultShowLevel+",\"despawn\":"+showTimers+
             ",\"iv\":"+showResultText+",\"overallRank\":"+resultShowOverallRank+
-            ",\"speciesIvRank\":"+resultShowSpeciesIvRank+"}";
+            ",\"speciesIvRank\":"+resultShowSpeciesIvRank+
+            ",\"rawIv\":"+resultShowRawIv+
+            ",\"overallRankGl\":"+resultShowOverallRankGl+",\"overallRankUl\":"+resultShowOverallRankUl+
+            ",\"overallRankMl\":"+resultShowOverallRankMl+
+            ",\"speciesIvRankGl\":"+resultShowSpeciesIvRankGl+",\"speciesIvRankUl\":"+resultShowSpeciesIvRankUl+
+            ",\"speciesIvRankMl\":"+resultShowSpeciesIvRankMl+"}";
     }
     private int menuDp(){return Math.max(1,Math.min(330,screenWidthDp()-8));} // twelve compact icons, single-row thin menu
     private final Handler handler=new Handler(Looper.getMainLooper());
@@ -136,7 +141,9 @@ public class OverlayService extends Service {
     private boolean showTimers=false,alerts=false,showResultText=false;
     // Display-only preferences: they must never change remote search filters.
     private boolean resultShowCount=false,resultShowCp=false,resultShowLevel=false,
-        resultShowOverallRank=false,resultShowSpeciesIvRank=false;
+        resultShowOverallRank=false,resultShowSpeciesIvRank=false,resultShowRawIv=false,
+        resultShowOverallRankGl=false,resultShowOverallRankUl=false,resultShowOverallRankMl=false,
+        resultShowSpeciesIvRankGl=false,resultShowSpeciesIvRankUl=false,resultShowSpeciesIvRankMl=false;
     private int resultMetadataWidthDp=0;
     private String alertsMode="off"; // off / on / silent, separate from favorite opt-in
     private String sort="site"; // Follow the ten results returned by the site, not an inverted local despawn sort.
@@ -1934,6 +1941,13 @@ public class OverlayService extends Service {
                 String pref;
                 switch(key){
                     case "count":resultShowCount=value;pref="resultShowCount";break;
+                    case "rawIv":resultShowRawIv=value;pref="resultShowRawIv";break;
+                    case "overallRankGl":resultShowOverallRankGl=value;pref="resultShowOverallRankGl";break;
+                    case "overallRankUl":resultShowOverallRankUl=value;pref="resultShowOverallRankUl";break;
+                    case "overallRankMl":resultShowOverallRankMl=value;pref="resultShowOverallRankMl";break;
+                    case "speciesIvRankGl":resultShowSpeciesIvRankGl=value;pref="resultShowSpeciesIvRankGl";break;
+                    case "speciesIvRankUl":resultShowSpeciesIvRankUl=value;pref="resultShowSpeciesIvRankUl";break;
+                    case "speciesIvRankMl":resultShowSpeciesIvRankMl=value;pref="resultShowSpeciesIvRankMl";break;
                     case "cp":resultShowCp=value;pref="resultShowCp";break;
                     case "level":resultShowLevel=value;pref="resultShowLevel";break;
                     case "overallRank":resultShowOverallRank=value;pref="resultShowOverallRank";break;
@@ -2176,11 +2190,26 @@ public class OverlayService extends Service {
         spriteSize=(wanted==35||wanted==45||wanted==55)?wanted:45;
         showTimers=prefs.getBoolean("showTimers",false);
         showResultText=prefs.getBoolean("showResultText",false);
+        // One-time migration: the visible spawn count is ON after the requested UX fix.
+        // Subsequent explicit user OFF selections remain respected on upgrades.
+        if(!prefs.getBoolean("resultCountUxV2",false)){
+            prefs.edit().putBoolean("resultShowCount",true)
+                .putBoolean("resultCountUxV2",true).apply();
+        }
         resultShowCount=prefs.getBoolean("resultShowCount",false);
         resultShowCp=prefs.getBoolean("resultShowCp",false);
         resultShowLevel=prefs.getBoolean("resultShowLevel",false);
         resultShowOverallRank=prefs.getBoolean("resultShowOverallRank",false);
         resultShowSpeciesIvRank=prefs.getBoolean("resultShowSpeciesIvRank",false);
+        resultShowRawIv=prefs.getBoolean("resultShowRawIv",false);
+        // Migrate the former single rank switch to GL without guessing a league
+        // for newly selected displays; UL/ML remain independently opt-in.
+        resultShowOverallRankGl=prefs.getBoolean("resultShowOverallRankGl",resultShowOverallRank);
+        resultShowOverallRankUl=prefs.getBoolean("resultShowOverallRankUl",false);
+        resultShowOverallRankMl=prefs.getBoolean("resultShowOverallRankMl",false);
+        resultShowSpeciesIvRankGl=prefs.getBoolean("resultShowSpeciesIvRankGl",resultShowSpeciesIvRank);
+        resultShowSpeciesIvRankUl=prefs.getBoolean("resultShowSpeciesIvRankUl",false);
+        resultShowSpeciesIvRankMl=prefs.getBoolean("resultShowSpeciesIvRankMl",false);
         alerts=prefs.getBoolean("alerts",false);
         alertsMode=prefs.getString("alertsMode",alerts?"on":"off");
         if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";
