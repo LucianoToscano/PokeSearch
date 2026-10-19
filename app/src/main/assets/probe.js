@@ -731,14 +731,18 @@ function configureLocation(req){
   // application never enabled location. An empty Coords form is still
   // an unrestricted search: do not require the unrelated Area tab.
   // However, never silently accept stale coordinate or radius values.
-  if(fieldsBefore.coords&&locationValue(fieldsBefore.coords))
+  // A prefilled radius is an INERT site default without a coordinate.
+  // Clearing it on every public search can alter an unrelated field and
+  // cause a false "location not applied" block.
+  const previousCoords=locationValue(fieldsBefore.coords);
+  if(previousCoords){
    valueInput(fieldsBefore.coords,"");
-  if(fieldsBefore.radius&&locationValue(fieldsBefore.radius))
-   valueInput(fieldsBefore.radius,"");
-  const blank=(!fieldsBefore.coords||!locationValue(fieldsBefore.coords))&&
-   (!fieldsBefore.radius||!locationValue(fieldsBefore.radius));
+   if(fieldsBefore.radius&&locationValue(fieldsBefore.radius))
+    valueInput(fieldsBefore.radius,"");
+  }
+  const blank=!locationValue(fieldsBefore.coords);
   return JSON.stringify({ok:blank,pending:!blank,stage:"location-off",
-   reason:blank?"":"Aguardando limpeza das coordenadas antigas do site"});
+   reason:blank?"":"Coordenadas antigas ainda presentes no site"});
  }
  if(typeof req.coords!=="string"||!/^[-+]?\d+(?:\.\d+)?,[-+]?\d+(?:\.\d+)?$/.test(req.coords)||
     !Number.isInteger(req.radius)||req.radius<0||req.radius>1000||
@@ -757,9 +761,9 @@ function configureLocation(req){
 function verifyLocation(req){
  const fields=locationFields(),active=coordsModeSelected();
  if(!req.enabled){
-  const blank=(!fields.coords||!locationValue(fields.coords))&&(!fields.radius||!locationValue(fields.radius));
-  // No app coordinates were requested: active Coords with blank values
-  // does not establish an active geographic restriction.
+  // Without coordinates the radius is only a dormant form default.
+  // Never block a guest/non-Shiny search for an unrelated default radius.
+  const blank=!locationValue(fields.coords);
   return JSON.stringify({ok:blank,reason:blank?"":"Coordenadas antigas permanecem no site"});
  }
  const coordInput=locationValue(fields.coords),radiusInput=locationValue(fields.radius);
