@@ -1005,7 +1005,9 @@ public class OverlayService extends Service {
                 }
                 // Only confirm after the actual fields and active Coords form
                 // match exactly, never merely on a user ON tap.
-                locationVerified=locationEnabled;
+                // Fields were verified in the live site's DOM, but Search was
+                // not submitted yet. Do not display 'applied' prematurely.
+                locationVerified=false;
                 update();
                 verifyAndSubmit(generation,manual,0);
                 });
@@ -1192,6 +1194,9 @@ public class OverlayService extends Service {
                     lastSearchStartMs=submittedAt;
                     submittingSearchGeneration=-1;
                     submittedSearchGeneration=generation;
+                    // Applied means exact Coords values were verified and the
+                    // site accepted Search, never just a green local switch.
+                    locationVerified=locationEnabled;
                     getSharedPreferences("prefs",0).edit().putLong("lastNetworkSearchAt",submittedAt).apply();
                     BugReport.log(this,"SUBMIT","Busca "+mode+" Shiny="+shiny);
                     status(manual?"Busca manual em andamento...":"Buscando...");
@@ -1669,9 +1674,13 @@ public class OverlayService extends Service {
             if(locationEnabled)prefs.putString("locationCoords",locationCoords).putInt("locationRadius",locationRadius);
             else prefs.remove("locationCoords").remove("locationRadius");
             prefs.apply();
-            ++requestGeneration;searchInProgress=false;
-            results="[]";hideDetails();
-            BugReport.log(OverlayService.this,"LOCATION",locationEnabled?"Filtro de coordenadas ativado":"Filtro de coordenadas desativado");
+            // Do not erase valid previously confirmed cards just because the
+            // next location request may fail or be rate-limited.
+            replaceActiveFilterSearch();
+            resultsStale=count()>0;
+            hideDetails();
+            BugReport.log(OverlayService.this,"LOCATION",
+                locationEnabled?"Coordenadas solicitadas, ainda não confirmadas":"Filtro geográfico desligado");
             status(locationEnabled?"📍 Localização solicitada • aguardando confirmação no site":"📍 Localização desligada • busca geral");
             OverlayService.this.refresh(true);
         });}
