@@ -423,6 +423,7 @@ function setMenuOpen(open,side,pad){
  document.getElementById("gear").setAttribute("aria-label",menuOpen?"Recolher opções":"Abrir opções");
  if(!menuOpen){closeChoices();document.body.classList.remove("menu-left");}
  else if(side)document.body.classList.toggle("menu-left",side==="left");
+ if(menuOpen&&controlsWindow)renderQuickMenu();
 }
 window.syncMenu=(open,side,pad)=>{setMenuOpen(open,side,pad);fit();};
 window.setMenuPopupPlacement=(above,offset,room)=>{
@@ -443,7 +444,7 @@ let fitPending=false;
 function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{fitPending=false;
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
- if(controlsWindow)h=Math.max(34,Math.ceil(document.getElementById("controls").getBoundingClientRect().height)+4);
+ if(controlsWindow){h=34;if(menuOpen&&!choiceOpen)h=Math.max(34,34+Math.ceil(document.getElementById("quickMenuList").getBoundingClientRect().height)+6);}
  if(resultWindow){
   const header=document.getElementById("resultHeader");
   const spawns=document.getElementById("spawns");
@@ -468,6 +469,7 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
 });}
 function closeChoices(){
  choiceOpen="";
+ document.getElementById("menu").classList.remove("subview");
  modeScrollTop=0;
  document.getElementById("choices").classList.remove("visible");
  document.getElementById("cycle").setAttribute("aria-expanded","false");
@@ -475,7 +477,7 @@ function closeChoices(){
  document.getElementById("location").setAttribute("aria-expanded","false");
  document.getElementById("choices").classList.remove("locationPanel","modePanel");
  if(controlsWindow)Native.locationEditor(false);
- fit();
+ refreshQuickMenuStates();fit();
 }
 function toggleChoices(kind){
  // The separate toolbar WebView may be visible before syncMenu arrives.
@@ -487,6 +489,16 @@ function toggleChoices(kind){
   if(controlsWindow)Native.locationEditor(false);
  }
  choiceOpen=kind;
+ document.getElementById("menu").classList.add("subview");
+ if(kind==="alerts"){renderAlertsChoices();return;}
+ if(kind==="info"){renderInfoChoices();return;}
+ if(kind==="appearance"){renderAppearanceChoices();return;}
+ if(kind==="filters"){
+  modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
+  renderFiltersChoices();
+  if(controlsWindow){Native.locationEditor(true);if(Native.requestFilterOptions)Native.requestFilterOptions();}
+  return;
+ }
  if(kind==="location"){renderLocationChoices();return;}
  if(kind==="mode"){
   modeScrollTop=0;
@@ -496,11 +508,13 @@ function toggleChoices(kind){
   return;
  }
  const current=period;
- const entries=[[0,"AUTO · OFF (somente manual)"],[5,"AUTO · 5 min"],[10,"AUTO · 10 min"],[15,"AUTO · 15 min"],[20,"AUTO · 20 min"]];
+ const entries=[[0,"Auto · OFF"],[5,"Auto · 5 min"],[10,"Auto · 10 min"],[15,"Auto · 15 min"],[20,"Auto · 20 min"]];
  const panel=document.getElementById("choices");
  panel.replaceChildren();panel.classList.remove("modePanel");
  const title=document.createElement("div");title.className="choiceHeader";
- title.textContent="INTERVALO AUTOMÁTICO";panel.appendChild(title);
+ title.textContent="ATUALIZAÇÃO";panel.appendChild(title);
+ const now=document.createElement("button");now.type="button";now.textContent="↻ Atualizar agora";
+ now.onclick=()=>{closeChoices();manualRefreshTap();};panel.appendChild(now);
  for(const [value,label] of entries){
   const btn=document.createElement("button");btn.type="button";
   btn.className=value===current?"chosen":"";
@@ -526,7 +540,14 @@ function renderModeChoices(){
  shinyButton.setAttribute("aria-pressed",String(shiny));
  shinyButton.onclick=()=>Native.shiny();
  heading.appendChild(shinyButton);panel.appendChild(heading);
- const row=(name,label,keys)=>{
+ const tabs=make("div","uxSegment");
+ for(const [id,title] of [["raw","Raw IV"],["percent","IV%"],["gl","GL"],["ul","UL"]]){
+  const tab=make("button",modeDraft.mode===id?"chosen":"",title);
+  tab.setAttribute("aria-pressed",String(modeDraft.mode===id));
+  tab.onclick=()=>{modeDraft.mode=id;renderModeChoices();};tabs.appendChild(tab);
+ }
+ panel.appendChild(tabs);
+ const row=(name,label,keys)=>{if(modeDraft.mode!==name)return;
   const line=make("div","modeRow"+(modeDraft.mode===name?" selected":""));
   const choose=make("button","modeSelect"+(modeDraft.mode===name?" chosen":""),label);
   choose.type="button";
@@ -557,7 +578,6 @@ function renderModeChoices(){
  ]);
  row("gl","Great League",[{key:"glRank",title:"Top ranking Grande Liga (1 a 50)",kind:"rank"}]);
  row("ul","Ultra League",[{key:"ulRank",title:"Top ranking Ultra Liga (1 a 50)",kind:"rank"}]);
- renderExtraFilters(panel,make);
  const buttons=make("div","modeAction");
  const apply=make("button","modeApply","✓ Aplicar");
  const cancel=make("button","","Cancelar");
@@ -635,22 +655,22 @@ function renderFilterPicker(key,label,options){
  panel.appendChild(heading);
  // A neutral option is a UI state; site changes will be verified before submitting.
  const neutral=document.createElement("button");neutral.textContent="Any / padrão";
- neutral.onclick=()=>{modeDraft[key]="";renderModeChoices();};panel.appendChild(neutral);
+ neutral.onclick=()=>{modeDraft[key]="";choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};panel.appendChild(neutral);
  for(const value of options){
   const btn=document.createElement("button");btn.type="button";
   btn.textContent=(modeDraft[key]===value?"✓ ":"")+value;btn.className=modeDraft[key]===value?"chosen":"";
-  btn.onclick=()=>{modeDraft[key]=value;renderModeChoices();};
+  btn.onclick=()=>{modeDraft[key]=value;choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
   panel.appendChild(btn);
  }
- const back=document.createElement("button");back.textContent="‹ Voltar";back.onclick=renderModeChoices;panel.appendChild(back);
+ const back=document.createElement("button");back.textContent="‹ Voltar";back.onclick=()=>choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();panel.appendChild(back);
  fit();
 }
 window.onFilterOptions=function(response){
  if(!response||!response.ok)return;
  filterOptions=response.partial?{...filterOptions,...(response.options||{})}:(response.options||{});
- if(choiceOpen==="mode"&&modeDraft){
+ if((choiceOpen==="mode"||choiceOpen==="filters")&&modeDraft){
   const panel=document.getElementById("choices"),scroll=panel.scrollTop;
-  if(panel.querySelector(".modeTitleRow")&&(!document.activeElement||!document.activeElement.matches("input"))){renderModeChoices();panel.scrollTop=scroll;}
+  if(!document.activeElement||!document.activeElement.matches("input")){choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();panel.scrollTop=scroll;}
  }
 };
 
@@ -887,7 +907,7 @@ function draw(){
  }
  document.getElementById("gear").title=menuOpen?"Recolher menu · arrastar para mover":status?("Abrir menu · "+status):"Abrir menu · arrastar para mover";
  document.getElementById("gear").classList.toggle("busy",/(atualizando|buscando|busca manual|pesquisa)/i.test(status));
- fit();
+ refreshQuickMenuStates();fit();
 }
 function updateTimers(){
  // Only opt-in despawn clocks; no floating wait count below the Pokéball.
@@ -898,7 +918,7 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={})=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
@@ -910,6 +930,11 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  nextQueryAt=Number(nextDue)||0;
  searchActive=!!isSearching;
  mode=m==="iv"?"raw":m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ showResultText=!!textVisible;
+ if(controlsWindow&&menuPreferences&&typeof menuPreferences==="object"){
+  const p=normalizedQuickPrefs(menuPreferences);
+  if(JSON.stringify(quickPrefs)!==JSON.stringify(p)){quickPrefs=p;renderQuickMenu();}
+ }
  if(active>=cards.length)active=-1;
  draw();
 };
