@@ -120,7 +120,7 @@ test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min
 test("Favorites use translucent gradient without background dim",picker.includes("Color.argb(159,24,34,47)")&&picker.includes("window.setDimAmount(0.0f)"));
 test("HOME-01 has explicit official Google/Discord login and sign-out",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
- return home.includes('homeAuthButton("Discord"')&&home.includes('homeAuthButton("Google"')&&
+ return home.includes('homeAuthButton("◉  Discord"')&&home.includes('homeAuthButton("G  Google"')&&
   home.includes('discord.setOnClickListener(v->openProviderLogin("discord"))')&&
   home.includes('google.setOnClickListener(v->openProviderLogin("google"))')&&
   home.includes('logout.setOnClickListener(v->askLogout())');
@@ -960,7 +960,7 @@ test("HOME-03 opens the Home drawer on right and uses original transparent PNG",
   main.includes("R.drawable.ps_home_brand_transparent")&&
   main.includes('openLoginDialog(false,"manage")');
 })());
-test("HOME-02 keeps only app icon on left, actions on right and undistorted map",(()=>{
+test("HOME-04 keeps transparent brand left, controls right and plain outside background",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return home.includes("R.drawable.ps_home_brand_transparent")&&
   home.includes("Gravity.RIGHT|Gravity.CENTER_VERTICAL")&&
@@ -968,8 +968,34 @@ test("HOME-02 keeps only app icon on left, actions on right and undistorted map"
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
   !home.includes("R.drawable.ps_home_wordmark")&&
-  home.includes("R.drawable.ps_home_background")&&
-  home.includes("ImageView.ScaleType.CENTER_CROP");
+  home.includes("frame.setBackgroundColor(Color.rgb(10,14,23))")&&
+  !home.includes("sky.setImageResource(")&&
+  home.includes("auth.setBackground(homeSurface(");
+})());
+test("HOME-04 shows genuine trainer data and the four transparent team assets",(()=>{
+ const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
+ const state=main.split("private void refreshSessionSummary(){")[1]?.split("private void askLogout(){")[0]||"";
+ const icons=["mystic","valor","instinct","neutral"];
+ const pngs=icons.every(name=>{
+  const png=fs.readFileSync(path.join(root,"res/drawable-nodpi/ps_team_"+name+".png"));
+  return png.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
+   png.readUInt32BE(16)===512&&png.readUInt32BE(20)===512&&png[25]===6;
+ });
+ return pngs&&home.includes("teamBadge.setBackgroundColor(Color.TRANSPARENT)")&&
+  home.includes('teamBadge.setImageResource(R.drawable.ps_team_neutral)')&&
+  home.includes('trainerAction.setOnClickListener(v->openTrainerManagement())')&&
+  state.includes('homeTeamIcon(linked?team:"")')&&
+  state.includes('trainerCodeGroup.setVisibility(logged?View.VISIBLE:View.GONE)')&&
+  state.includes('trainerCopyButton.setVisibility(linked?View.VISIBLE:View.GONE)')&&
+  main.includes('avatar.setImageResource(android.R.drawable.ic_menu_myplaces)')&&
+  !home.includes('Luciano Toscano');
+})());
+test("HOME-04 keeps the official link and a management option without a linked trainer",(()=>{
+ const r=main.split("private void openTrainerManagement(){")[1]?.split("private int homeTeamIcon(")[0]||"";
+ return r.includes('if(!code.matches("[0-9]{12}"))')&&
+  r.includes('openLoginDialog(false,"manage")')&&
+  main.includes('edit.putString("profileTrainerState","unlinked")')&&
+  main.includes('.remove("profileTrainerTeam").remove("profileTrainerLevel")');
 })());
 test("HOME-02 has visible ON/OFF resources and drawer with safe export",(()=>{
  const status=main.split("private void refreshHomeOverlay(){")[1]?.split("private void openProviderLogin(")[0]||"";
@@ -1013,9 +1039,9 @@ test("HOME-01 never invents trainer data or changes remote account on local remo
  const update=main.split("private void refreshSessionSummary(){")[1]?.split("private void askLogout(){")[0]||"";
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return update.includes('code.matches("[0-9]{12}")')&&
-  update.includes('trainerPanel.setVisibility(linked?View.VISIBLE:View.GONE)')&&
+  update.includes('trainerPanel.setVisibility(logged?View.VISIBLE:View.GONE)')&&
   update.includes('prefs.getString("profileDisplayName","Conta conectada")')&&
-  home.includes("A remoção deve ser confirmada na conta oficial")&&
+  main.includes("A remoção precisa ser confirmada no perfil oficial")&&
   main.includes('readAsset("profile_summary.js")')&&
   main.includes('.remove("profileTrainerName").remove("profileTrainerCode")');
 })());
