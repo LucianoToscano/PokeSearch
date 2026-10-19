@@ -527,6 +527,43 @@ body.controls-window #choices.locationPanel .locCoordsRow button[role=switch]{mi
 body.controls-window #choices.locationPanel input[type=range]{margin:2px 5px 4px}
 body.controls-window #choices.locationPanel .locLine{padding:2px 5px;font-size:10px}
 body.controls-window #choices.locationPanel .locLine button{padding:4px 7px;min-height:28px}
+/* UX-RESULT-INFO: fixed left sprite column, optionally slim verified metadata right.
+   The image stays directly centred under the original Pokéball/header icon. */
+body.result-window #shell{width:var(--results-width,var(--dock))!important}
+body.result-window #resultHeader{
+ margin:0 0 0 calc((var(--dock) - 35px)/2)!important;position:relative!important;
+}
+body.result-window #resultSpawnCount{
+ position:absolute;right:-9px;top:0;font:800 9px/10px Roboto,Arial,sans-serif;
+ color:#e2f7fd;text-shadow:0 1px 2px #000,0 0 3px #000;pointer-events:none;
+}
+body.result-window #spawns{width:var(--results-width,var(--dock))!important}
+body.result-window .spawn{
+ width:var(--results-width,var(--dock))!important;justify-content:flex-start!important;
+ padding:0!important;overflow:visible!important;
+}
+body.result-window .spriteStage{
+ width:var(--dock)!important;height:var(--spawn-row,var(--row))!important;
+ flex:0 0 var(--dock)!important;display:flex!important;align-items:center;justify-content:center;
+}
+body.result-window .spriteStage .sprite{
+ flex:none!important;width:var(--sprite)!important;height:var(--sprite)!important;
+ max-width:var(--sprite)!important;max-height:var(--sprite)!important;
+}
+body.result-window .spriteStage .spriteFallback{inset:auto}
+body.result-window .spawnInfo{
+ display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+ box-sizing:border-box;flex:0 0 96px;width:96px;min-width:0;max-width:96px;
+ padding:1px 2px;margin:0;gap:0;overflow:hidden;
+ text-align:left;font:700 9px/11px Roboto,Arial,sans-serif;
+ color:#e6eefa;text-shadow:0 1px 2px #000b;pointer-events:none;
+}
+body.result-window .spawnInfoLine{display:block;white-space:nowrap;overflow:hidden;
+ text-overflow:ellipsis;max-width:100%;min-height:11px}
+body.result-window .spawnInfo .timer{
+ position:static;display:inline;padding:0;margin:0;min-width:0;
+ font:700 9px/11px Roboto,Arial,sans-serif;text-align:left;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -545,12 +582,13 @@ body.controls-window #choices.locationPanel .locLine button{padding:4px 7px;min-
   <button id="close" title="Encerrar PokeSearch" aria-label="Fechar todo o overlay" onclick="Native.close()">×</button>
  </div><div id="choices" role="group" aria-label="Escolher opção"></div></div>
  <div id="locBadge" role="status" aria-live="polite"></div>
- <button id="resultHeader" title="Recolher ou expandir os Pokémon · arraste para mover" aria-label="Recolher ou expandir resultados" aria-expanded="true" onclick="Native.toggleResultsCollapsed()"><span id="resultIconStack" class="resultModeStack" aria-hidden="true"><img id="resultModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="capturePulse" class="capturePulse" aria-hidden="true"></span><span id="modeIndicatorValue" class="modeIndicator value"></span><span id="modeIndicatorShiny" class="modeIndicator shiny">✨</span><span id="modeIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span></button>
+ <button id="resultHeader" title="Recolher ou expandir os Pokémon · arraste para mover" aria-label="Recolher ou expandir resultados" aria-expanded="true" onclick="Native.toggleResultsCollapsed()"><span id="resultIconStack" class="resultModeStack" aria-hidden="true"><img id="resultModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="capturePulse" class="capturePulse" aria-hidden="true"></span><span id="modeIndicatorValue" class="modeIndicator value"></span><span id="modeIndicatorShiny" class="modeIndicator shiny">✨</span><span id="modeIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="resultSpawnCount" aria-hidden="true"></span></button>
  <div id="spawns"></div>
  <button id="empty" title="Toque para saber o motivo" onclick="Native.showStatus()">Aguardando busca</button>
  <button id="collapse" title="Recolher todos os Pokémon e as opções, deixando apenas a engrenagem" aria-label="Recolher todos os Pokémon" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button>
 </div>
 <div id="bubble" role="button" aria-label="Restaurar overlay"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></div>
+<script src="file:///android_asset/pvpoke-overall-ranks.js"></script>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 const resultWindow=window.location.search.indexOf("results=1")!==-1;
@@ -691,6 +729,9 @@ let locationEnabled=false,locationCoords="",locationRadius=0,locationVerified=fa
 // Future preference may expose Show/Hide results text; default is OFF.
 let showResultText=false;
 let resultDisplayHeightDp=0;
+let resultDisplayOptions={count:false,cp:false,level:false,despawn:false,iv:false,
+ overallRank:false,speciesIvRank:false};
+let displayedMetadataWidth=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"",pokemon:"",form:"",size:"",gender:"",weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
@@ -1193,30 +1234,97 @@ function attachLongPress(){
 /* UX-RESULT-10: visible rows are based on actual visible metadata, not title/
    alt text or invisible properties. The height budget is screen-wide, so moving
    the independent native window never introduces an internal scrollbar. */
-function resultHasVisibleInfo(card,timersEnabled,textEnabled){
+/* PvPoke overall is a snapshot of species-performance ranks, never IV ranks.
+   An ambiguous species, Shadow, regional form or missing league has no number. */
+const PVPOKE_OVERALL=window.POKESEARCH_PVPOKE_OVERALL||null;
+function speciesKey(value){
+ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  .replace(/[♀]/g," female ").replace(/[♂]/g," male ")
+  .replace(/\s+/g," ").trim().toLowerCase();
+}
+const overallRankByLeague={gl:new Map(),ul:new Map()};
+if(PVPOKE_OVERALL){
+ for(const league of ["gl","ul"]){
+  for(const entry of PVPOKE_OVERALL[league]||[]){
+   const [id,name,rank]=entry;
+   if(!id||!name||!Number.isInteger(rank)||rank<1)continue;
+   const key=speciesKey(name);
+   // Exact name and form only. A collision is ambiguous and stays hidden.
+   if(overallRankByLeague[league].has(key))overallRankByLeague[league].set(key,null);
+   else overallRankByLeague[league].set(key,rank);
+  }
+ }
+}
+function verifiedOverallRank(card,league){
+ if(!card||!["gl","ul"].includes(league))return null;
+ const value=overallRankByLeague[league].get(speciesKey(card.name));
+ return Number.isInteger(value)&&value>0?value:null;
+}
+function verifiedSpeciesIvRank(card,league){
+ if(!card||!["gl","ul"].includes(league))return null;
+ // A verified Top N search threshold is NOT the Pokémon's individual IV rank.
+ if(card.ivRankSource!=="explicit-species-iv"||card.ivRankLeague!==league)return null;
+ if(verifiedSpawnIvPercent(card)===null)return null;
+ const value=Number(card.ivRank);
+ return Number.isInteger(value)&&value>=1&&value<=4096?value:null;
+}
+function resultLines(card,opts,league){
+ const lines=[],compact=[];
+ const cp=String(card?.cp??"").trim();
+ const lvl=String(card?.level??"").trim();
+ if(opts.cp&&/^[0-9]{1,5}$/.test(cp)&&Number(cp)>0&&Number(cp)<=10000)compact.push("PC"+cp);
+ if(opts.level&&/^\d{1,2}(?:\.5)?$/.test(lvl)&&Number(lvl)>=1&&Number(lvl)<=55)
+  compact.push("Nv"+lvl);
+ if(compact.length)lines.push(compact.join(" · "));
+ const combat=[];
+ const iv=opts.iv?verifiedSpawnIvPercent(card):null;
+ if(iv!==null&&iv!==undefined)combat.push("IV"+iv+"%");
+ if(opts.overallRank){const rank=verifiedOverallRank(card,league);if(rank!==null)combat.push("RG#"+rank);}
+ if(combat.length)lines.push(combat.join(" · "));
+ if(opts.speciesIvRank){
+  const rank=verifiedSpeciesIvRank(card,league);if(rank!==null)lines.push("IV#"+rank);
+ }
+ if(opts.despawn&&Number(card?.expiresAtMs)>0)
+  lines.push("TIMER"); // An actual .timer element is built by render, updated live.
+ return lines;
+}
+function resultHasVisibleInfo(card,timersEnabled,textEnabled,opts=null,league=""){
+ if(opts)return resultLines(card,opts,league).length>0;
  return (timersEnabled&&Number(card.expiresAtMs)>0)||
   (textEnabled&&verifiedSpawnIvPercent(card)!==null);
 }
-function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,textEnabled){
+function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,textEnabled,opts=null,league=""){
  const size=Math.max(18,Number(chosenSprite)||45);
- const natural=items.slice(0,10).map(card=>resultHasVisibleInfo(card,timersEnabled,textEnabled)?
-  size+3:Math.max(18,Math.round(size*0.73)));
+ const natural=items.slice(0,10).map(card=>{
+  const lines=opts?resultLines(card,opts,league):[];
+  if(lines.length)return Math.max(size+3,lines.length*11+6);
+  return resultHasVisibleInfo(card,timersEnabled,textEnabled)?
+   size+3:Math.max(18,Math.round(size*0.73));
+ });
  const desired=natural.reduce((a,b)=>a+b,0);
  const room=Math.max(120,(Number(displayHeight)||700)-30-24);
  const factor=desired>0?Math.min(1,room/desired):1;
- // On a shorter screen, scale the image *and* its row, never hide row 9/10.
- const sprite=Math.max(14,Math.floor(size*factor));
+ const sprite=Math.max(14,Math.floor(Math.min(size*factor,...(natural.length?natural.map(n=>n*factor):[size]))));
  const rows=natural.map(n=>Math.max(12,Math.floor(n*factor)));
  return {rows,sprite,total:rows.reduce((a,b)=>a+b,0),visibleCount:rows.length};
 }
 let lastListKey="";
 function draw(){
  const resultLayout=resultWindow?
-  computeResultLayout(cards,spriteSize,resultDisplayHeightDp,showTimers,showResultText):null;
+  computeResultLayout(cards,spriteSize,resultDisplayHeightDp,showTimers,showResultText,
+   resultDisplayOptions,shownMode):null;
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",(resultLayout?resultLayout.sprite:spriteSize)+"px");
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
  // P/M/G scales the header DOWN, never above its original 21px.
+ const metadataVisible=resultWindow&&cards.some(card=>
+  resultLines(card,resultDisplayOptions,shownMode).length>0);
+ const metaWidth=metadataVisible?96:0;
+ document.documentElement.style.setProperty("--results-width",(spriteSize+8+metaWidth)+"px");
+ if(resultWindow&&displayedMetadataWidth!==metaWidth){
+  displayedMetadataWidth=metaWidth;
+  Native.resizeResultsMetadata(metaWidth);
+ }
  const headerIconSize=Math.max(17,Math.min(21,Math.round(spriteSize*0.45)));
  document.documentElement.style.setProperty("--mode-icon-size",headerIconSize+"px");
  document.documentElement.style.setProperty("--mode-indicator-scale",String(headerIconSize/21));
@@ -1269,7 +1377,8 @@ function draw(){
  star.classList.toggle("favoritesOn",hasFavorites);
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
  const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.title=period===0?"AUTO desligado · atualizar com ↻ ou mudar filtros":"Atualização automática a cada "+period+" minutos · toque para alterar";p.setAttribute("aria-label",p.title);
- const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp]);
+ const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp,
+  shownMode,resultDisplayOptions]);
  if(listKey!==lastListKey){lastListKey=listKey;
  // The gear and menu WebViews never create hidden sprite buttons.
  // Only the independent results WebView owns the Pokémon list and its taps.
@@ -1282,10 +1391,18 @@ function draw(){
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" aria-hidden="true">◉</span></span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
-  const badge=showTimers&&deadline?'<span class="timer" data-deadline="'+deadline+'"></span>':"";
-  const ivBadge=!showResultText||verifiedPercent===null?"":'<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>';
+  const infoLines=resultLines(c,resultDisplayOptions,shownMode);
+  const inlineTimer=resultDisplayOptions.despawn&&deadline?
+   '<span class="timer" data-deadline="'+deadline+'"></span>':"";
+  const info=infoLines.length?'<span class="spawnInfo" aria-hidden="true">'+infoLines.map(text=>
+   '<span class="spawnInfoLine">'+(text==="TIMER"?inlineTimer:esc(text))+'</span>').join("")+'</span>':"";
+  // When the optional side strip is closed, retain historical timer/IV badges.
+  const badge=!metadataVisible&&showTimers&&deadline?
+   '<span class="timer" data-deadline="'+deadline+'"></span>':"";
+  const ivBadge=!metadataVisible&&showResultText&&verifiedPercent!==null?
+   '<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>':"";
   const measuredRow=resultLayout?.rows[i]||row;
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+'</button>';
+  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+info+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
  if(resultWindow){attachLongPress();attachSpriteFeedback();updateTimers();}
@@ -1306,6 +1423,9 @@ function draw(){
   document.body.classList.toggle("results-stale",hasHistory&&resultsStale);
   document.body.classList.toggle("search-active",searchActive&&!shinyPending&&nextQueryAt<=Date.now());
   const header=document.getElementById("resultHeader");
+  const count=document.getElementById("resultSpawnCount");
+  count.textContent=resultDisplayOptions.count&&cards.length?String(cards.length):"";
+  count.style.display=resultDisplayOptions.count&&cards.length?"inline":"none";
   const image=document.getElementById("resultModeIcon");
   if(image.getAttribute("src")!==selectedIcon.path){
    image.style.visibility="visible";
@@ -1343,9 +1463,14 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
+ resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
+  {count:!!displayPrefs.count,cp:!!displayPrefs.cp,level:!!displayPrefs.level,
+   despawn:!!displayPrefs.despawn,iv:!!displayPrefs.iv,overallRank:!!displayPrefs.overallRank,
+   speciesIvRank:!!displayPrefs.speciesIvRank}:
+  {...resultDisplayOptions,despawn:!!timers,iv:!!textVisible};
  // Legacy listLimit is ignored by RESULT window: it capped results at 8 rows.
  if(!resultWindow)document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
@@ -1589,10 +1714,21 @@ function renderInfoChoices(){
  const panel=uxPanel("INFORMAÇÕES");
  const back=document.createElement("button");back.type="button";back.textContent="‹ Personalização";
  back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();};panel.appendChild(back);
- uxOption(panel,"Tempo de despawn",showTimers?"ON":"OFF",()=>Native.toggleTimers());
- uxOption(panel,"IV% comprovado",showResultText?"ON":"OFF",()=>Native.setResultTextVisible(!showResultText));
+ const options=[
+  ["count","Quantidade de spawns"],["despawn","Tempo de despawn"],
+  ["level","Nível (Lv)"],["cp","Poder de Combate (PC)"],
+  ["iv","IV do Pokémon"],["overallRank","Rank Geral · PvPoke"],
+  ["speciesIvRank","Rank IV da espécie"]
+ ];
+ for(const [key,title] of options){
+  uxOption(panel,title,resultDisplayOptions[key]?"✓":"–",()=>{
+   if(key==="despawn")Native.toggleTimers();
+   else if(key==="iv")Native.setResultTextVisible(!showResultText);
+   else Native.setResultDisplayOption(key,!resultDisplayOptions[key]);
+  });
+ }
  const hint=document.createElement("div");hint.className="uxNote";
- hint.textContent="Informações de IV, PC, nível e rank não verificadas nunca são exibidas como fatos.";
+ hint.textContent="Só exibe dados confirmados. RG = desempenho da espécie na liga; IV# = posição dos atributos dentro da espécie.";
  panel.appendChild(hint);fit();
 }
 function renderAppearanceChoices(){
