@@ -174,6 +174,7 @@ body.controls-window.popup-above #choices{top:auto!important;bottom:34px!importa
 #controls #cycle.ivOn{background:#3a5040bd;border-color:#abc3ae;color:#fff}
 #controls #bell.generalOn{background:#414649d1;border-color:#b0b6b8;color:#fff}
 #controls #bell.generalSilent{background:#48484ac9;border-color:#d2d2d2;color:#e5e5e5}
+#controls #bell.permissionMissing{border-color:#ffb25788;color:#ffd2a3}
 #controls #period.autoOff{opacity:.73;background:#333538ac}
 #spawns{margin-top:var(--top-space);gap:0}
 /* One search -> one independent overlay. Preserve the original compact toolbar. */
@@ -582,7 +583,7 @@ body.result-window .spawnInfo .timer{
   <button id="manualRefresh" title="Atualizar resultados agora" aria-label="Atualizar resultados agora" onclick="manualRefreshTap()">↻</button>
   <button id="size" title="Tamanho P / M / G" onclick="Native.cycleSpriteSize()">M</button>
   <button id="clock" title="Mostrar ou ocultar tempo de despawn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
-  <button id="bell" title="Notificações: desligadas / ligadas / silenciosas" aria-pressed="false" onclick="Native.toggleGeneralAlerts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
+  <button id="bell" title="Notificações: desligadas / ligadas / silenciosas" aria-pressed="false" onclick="toggleChoices('alerts')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
   <button id="star" title="Meus favoritos · alertas específicos IV100 / GL#1 / UL#1" onclick="Native.openWatchList()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg></button>
   <button id="location" title="Configurar coordenadas e raio" aria-label="Localização desligada" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('location')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span id="locationRadiusText" class="locRadiusText" aria-hidden="true"></span></button>
   <button id="report" title="⚠ Reportar bugs, enviar sugestões e exportar diagnóstico TXT" aria-label="Reportar bugs e sugestões" onclick="Native.openReport()">⚠</button>
@@ -737,6 +738,7 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
 let locationEnabled=false,locationCoords="",locationRadius=0,locationVerified=false;
 // Future preference may expose Show/Hide results text; default is OFF.
 let showResultText=false;
+let notificationPermissionGranted=false,watchAlertsEnabled=true;
 let resultDisplayHeightDp=0;
 let resultDisplayOptions={count:true,cp:false,level:false,despawn:false,iv:false,rawIv:true,
  overallRank:false,speciesIvRank:false,overallRankGl:false,overallRankUl:false,overallRankMl:false,
@@ -1509,8 +1511,9 @@ function draw(){
  const bell=document.getElementById("bell");
  bell.classList.toggle("generalOn",generalAlerts);
   bell.classList.toggle("generalSilent",alertMode==="silent");
- bell.setAttribute("aria-pressed",String(generalAlerts));
- bell.title=alertMode==="silent"?"Notificações silenciosas · toque para desligar":generalAlerts?"Notificações ligadas · toque para silenciar":"Notificações desligadas · toque para ligar";
+ bell.classList.toggle("permissionMissing",!notificationPermissionGranted);
+ bell.setAttribute("aria-pressed",String(generalAlerts&&notificationPermissionGranted));
+ bell.title=!notificationPermissionGranted?"Alertas bloqueados no Android · toque para configurar":alertMode==="silent"?"Alertas silenciosos · toque para configurar":generalAlerts?"Alertas sonoros · toque para configurar":"Alertas desligados · toque para configurar";
   bell.setAttribute("aria-label",bell.title);
  const star=document.getElementById("star");
  star.classList.toggle("favoritesOn",hasFavorites);
@@ -1604,8 +1607,9 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
+ const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled]);
  cards=Array.isArray(a)?a.slice(0,10):[];
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
@@ -1630,6 +1634,8 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  searchActive=!!isSearching;
  mode=m==="iv"?"raw":m;status=String(s||"");shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  showResultText=!!textVisible;
+ notificationPermissionGranted=!!permissionGranted;
+ watchAlertsEnabled=!!favoriteAlertsEnabled;
  if(controlsWindow&&menuPreferences&&typeof menuPreferences==="object"){
   const p=normalizedQuickPrefs(menuPreferences);
   if(JSON.stringify(quickPrefs)!==JSON.stringify(p)){quickPrefs=p;renderQuickMenu();}
@@ -1639,6 +1645,9 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  // Refresh checkmarks only after the Android bridge reports applied settings.
  if(controlsWindow&&choiceOpen==="info"&&
     JSON.stringify(resultDisplayOptions)!==previousDisplayPrefs)renderInfoChoices();
+ if(controlsWindow&&choiceOpen==="alerts"&&
+    JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled])!==previousAlertsState)
+  renderAlertsChoices();
 };
 window.menuSide=side=>document.body.classList.toggle("menu-left",menuOpen&&side==="left");
 window.highlight=i=>{active=i;document.querySelectorAll(".spawn").forEach((e,index)=>e.classList.toggle("active",index===i));};
@@ -1689,7 +1698,7 @@ function quickState(id){
  switch(id){
   case "mode":return specialIVLabel(mode,searchSettings);
   case "sh":return shinyPending?"Pendente":shiny?"ON":"OFF";
-  case "bell":return alertMode==="silent"?"Silencioso":generalAlerts?"Som":"OFF";
+  case "bell":return !notificationPermissionGranted?"Permissão":alertMode==="silent"?"Silencioso":generalAlerts?"Som":"OFF";
   case "star":return hasFavorites?"Ativos":"";
   case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF";
   case "filters":return ["pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","sortBy"].some(k=>searchSettings[k])?"Ativos":"Nenhum";
@@ -1699,9 +1708,10 @@ function quickState(id){
  }
 }
 function quickClick(id){
- if(["mode","alerts","location","filters","period","appearance"].includes(id)){toggleChoices(id);return;}
+ if(["mode","location","filters","period","appearance"].includes(id)){toggleChoices(id);return;}
  switch(id){
   case "sh":Native.shiny();break; // Reuse native, login-verified Shiny toggle.
+  case "bell":toggleChoices("alerts");break;
   case "star":Native.openWatchList();break;
   case "pokemon":
    choiceOpen="pokemon";
@@ -1812,7 +1822,7 @@ function refreshQuickMenuStates(){
   button.classList.toggle("pending",id==="sh"&&shinyPending);
   button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
    id==="sh"?(shiny&&!shinyPending):
-   id==="bell"?generalAlerts:id==="period"?period>0:
+   id==="bell"?(generalAlerts&&notificationPermissionGranted):id==="period"?period>0:
    id==="star"?hasFavorites:id==="mode"?(mode==="gl"||mode==="ul"):false);
  });
 }
@@ -1836,15 +1846,36 @@ function uxOption(panel,label,value,callback){
  line.append(name,button);panel.appendChild(line);return button;
 }
 function renderAlertsChoices(){
- const panel=uxPanel("ALERTAS");
- for(const [id,name] of [["on","🔔 Som ligado"],["silent","🔕 Silencioso"],["off","Notificações desligadas"]]){
-  const button=document.createElement("button");button.textContent=(alertMode===id?"✓ ":"")+name;
-  button.className=alertMode===id?"chosen":"";
-  button.onclick=()=>{closeChoices();Native.setAlertMode(id);};panel.appendChild(button);
+ const panel=uxPanel("NOTIFICAÇÕES");
+ const permission=document.createElement("div");permission.className="uxNote";
+ permission.textContent=notificationPermissionGranted?
+  "✓ Android permite notificações":"⚠ Android bloqueia notificações; habilite a permissão.";
+ panel.appendChild(permission);
+ const head=document.createElement("div");head.className="uxSubheading";
+ head.textContent="Novos Pokémon (filtros confirmados)";panel.appendChild(head);
+ for(const [id,name] of [["on","🔔 Som"],["silent","🔕 Silencioso"],["off","Desligado"]]){
+  uxOption(panel,name,alertMode===id?"✓":"–",()=>Native.setAlertMode(id));
  }
- const test=document.createElement("button");test.textContent="🔔 Testar notificação";
- test.onclick=()=>Native.testNotification();panel.appendChild(test);fit();
+ const favTitle=document.createElement("div");favTitle.className="uxSubheading";
+ favTitle.textContent="Favoritos cadastrados";panel.appendChild(favTitle);
+ uxOption(panel,"Alertar ao encontrar favorito nos filtros",
+  watchAlertsEnabled?"✓":"–",()=>Native.toggleWatchAlerts());
+ const note=document.createElement("div");note.className="uxNote";
+ note.textContent="Favoritos funcionam independentemente dos avisos gerais. Top N não comprova IV100 nem Rank IV #1. O toque de cada canal é configurado no Android.";
+ panel.appendChild(note);
+ for(const [label,action] of [
+  ["🔔 Testar aviso geral","testGeneralNotification"],
+  ["☆ Testar aviso favorito","testNotification"],
+  [notificationPermissionGranted?"✓ Permissão concedida":"Permitir notificações","requestNotificationPermission"],
+  ["⚙ Sons e canais no Android","openNotificationSettings"],
+  ["↻ Verificar permissão","refreshNotificationStatus"]
+ ]){
+  const button=document.createElement("button");button.type="button";
+  button.textContent=label;button.onclick=()=>Native[action]();panel.appendChild(button);
+ }
+ fit();
 }
+
 function renderFiltersChoices(){
  if(!modeDraft)modeDraft={...searchSettings,mode};
  const panel=uxPanel("FILTROS");
