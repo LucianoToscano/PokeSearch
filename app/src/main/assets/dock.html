@@ -973,13 +973,21 @@ function draw(){
  if(menuShiny){menuShiny.textContent="✨ "+(shinyPending?"…":shiny?"ON":"OFF");menuShiny.classList.toggle("on",shiny);
   menuShiny.setAttribute("aria-pressed",String(shiny));}
  document.getElementById("sh").classList.toggle("shinyPending",shinyPending);
- document.getElementById("location").classList.toggle("locOn",locationEnabled);
- document.getElementById("locationRadiusText").textContent=locationEnabled?locationRadius+"km":"";
+ // An ON request is not an applied filter until the live Coords fields
+ // match AND the site's Search was actually submitted.
+ const geoConfirmed=locationEnabled&&locationVerified;
+ const geoControl=document.getElementById("location");
+ geoControl.classList.toggle("locOn",geoConfirmed);
+ geoControl.classList.toggle("locPending",locationEnabled&&!locationVerified);
+ document.getElementById("locationRadiusText").textContent=geoConfirmed?locationRadius+"km":"";
  const geoBadge=document.getElementById("locBadge");
- geoBadge.classList.toggle("active",locationEnabled);
- geoBadge.textContent=locationEnabled?"📍 "+locationRadius+" km":"";
- document.getElementById("location").title=locationEnabled?"📍 "+locationRadius+" km · filtro ativo · toque para abrir/ocultar":"📍 Localização desligada · toque para configurar";
- document.getElementById("location").setAttribute("aria-label",locationEnabled?"Localização ligada, raio "+locationRadius+" quilômetros":"Localização desligada");
+ geoBadge.classList.toggle("active",geoConfirmed);
+ geoBadge.textContent=geoConfirmed?"📍 "+locationRadius+" km":
+   locationEnabled?"⌛ localização pendente":"";
+ geoControl.title=geoConfirmed?"📍 "+locationRadius+" km · confirmada no site":
+   locationEnabled?"⌛ Localização solicitada, ainda não aplicada":
+   "📍 Localização desligada · busca geral";
+ geoControl.setAttribute("aria-label",geoControl.title);
  document.getElementById("sh").setAttribute("aria-pressed",String(shiny));
  document.getElementById("sh").title=shiny?"✨ Shiny confirmado":shinyPending?"✨ Aguardando vínculo/confirmação no site":"Shiny desativado";
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
@@ -1245,7 +1253,7 @@ function refreshQuickMenuStates(){
     button.dataset.modeArtKey=key;
    }
   }
-  button.classList.toggle("selected",id==="location"?locationEnabled:
+  button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
    id==="bell"?generalAlerts:id==="period"?period>0:
    id==="star"?hasFavorites:id==="mode"?(mode==="gl"||mode==="ul"):false);
  });
