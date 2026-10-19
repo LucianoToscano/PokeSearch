@@ -534,7 +534,7 @@ body.result-window #resultHeader{
  margin:0 0 0 calc((var(--dock) - 35px)/2)!important;position:relative!important;
 }
 body.result-window #resultSpawnCount{
- position:absolute;right:-9px;top:0;font:800 9px/10px Roboto,Arial,sans-serif;
+ position:absolute;right:-9px;top:11px;font:800 9px/10px Roboto,Arial,sans-serif;
  color:#e2f7fd;text-shadow:0 1px 2px #000,0 0 3px #000;pointer-events:none;
 }
 body.result-window #spawns{width:var(--results-width,var(--dock))!important}
@@ -554,12 +554,13 @@ body.result-window .spriteStage .spriteFallback{inset:auto}
 body.result-window .spawnInfo{
  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
  box-sizing:border-box;flex:0 0 96px;width:96px;min-width:0;max-width:96px;
- padding:1px 2px;margin:0;gap:0;overflow:hidden;
- text-align:left;font:700 9px/11px Roboto,Arial,sans-serif;
+ padding:1px 2px;margin:0;gap:0;height:100%;max-height:100%;overflow:hidden;
+ text-align:left;font:700 calc(9px * var(--result-info-scale,1))/
+  calc(11px * var(--result-info-scale,1)) Roboto,Arial,sans-serif;
  color:#e6eefa;text-shadow:0 1px 2px #000b;pointer-events:none;
 }
 body.result-window .spawnInfoLine{display:block;white-space:nowrap;overflow:hidden;
- text-overflow:ellipsis;max-width:100%;min-height:11px}
+ text-overflow:ellipsis;max-width:100%;min-height:calc(11px * var(--result-info-scale,1))}
 body.result-window .spawnInfo .timer{
  position:static;display:inline;padding:0;margin:0;min-width:0;
  font:700 9px/11px Roboto,Arial,sans-serif;text-align:left;
@@ -1284,8 +1285,12 @@ function resultLines(card,opts,league){
  if(opts.speciesIvRank){
   const rank=verifiedSpeciesIvRank(card,league);if(rank!==null)lines.push("IV#"+rank);
  }
- if(opts.despawn&&Number(card?.expiresAtMs)>0)
-  lines.push("TIMER"); // An actual .timer element is built by render, updated live.
+ if(opts.despawn&&Number(card?.expiresAtMs)>0){
+  const last=lines[lines.length-1]||"";
+  // Reuse the third line when possible, instead of creating tall extra rows.
+  if(last.startsWith("IV#"))lines[lines.length-1]=last+" · TIMER";
+  else lines.push("TIMER");
+ } // An actual .timer element is built by render, updated live.
  return lines;
 }
 function resultHasVisibleInfo(card,timersEnabled,textEnabled,opts=null,league=""){
@@ -1306,7 +1311,8 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  const factor=desired>0?Math.min(1,room/desired):1;
  const sprite=Math.max(14,Math.floor(Math.min(size*factor,...(natural.length?natural.map(n=>n*factor):[size]))));
  const rows=natural.map(n=>Math.max(12,Math.floor(n*factor)));
- return {rows,sprite,total:rows.reduce((a,b)=>a+b,0),visibleCount:rows.length};
+ return {rows,sprite,total:rows.reduce((a,b)=>a+b,0),visibleCount:rows.length,
+  infoScale:Math.max(0.58,Math.min(1,factor))};
 }
 let lastListKey="";
 function draw(){
@@ -1315,6 +1321,7 @@ function draw(){
    resultDisplayOptions,shownMode):null;
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",(resultLayout?resultLayout.sprite:spriteSize)+"px");
+ document.documentElement.style.setProperty("--result-info-scale",String(resultLayout?.infoScale||1));
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
  // P/M/G scales the header DOWN, never above its original 21px.
  const metadataVisible=resultWindow&&cards.some(card=>
@@ -1395,7 +1402,8 @@ function draw(){
   const inlineTimer=resultDisplayOptions.despawn&&deadline?
    '<span class="timer" data-deadline="'+deadline+'"></span>':"";
   const info=infoLines.length?'<span class="spawnInfo" aria-hidden="true">'+infoLines.map(text=>
-   '<span class="spawnInfoLine">'+(text==="TIMER"?inlineTimer:esc(text))+'</span>').join("")+'</span>':"";
+   '<span class="spawnInfoLine">'+(text.includes("TIMER")?
+    text.split("TIMER").map(esc).join(inlineTimer):esc(text))+'</span>').join("")+'</span>':"";
   // When the optional side strip is closed, retain historical timer/IV badges.
   const badge=!metadataVisible&&showTimers&&deadline?
    '<span class="timer" data-deadline="'+deadline+'"></span>':"";
