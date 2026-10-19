@@ -109,6 +109,15 @@ check("Unselected app location and empty default Coords never block Search",
  emptyCoords.run("configureLocation",disabled).ok,true);
 check("Unrestricted Coords mode is verified as off",
  emptyCoords.run("verifyLocation",disabled).ok,true);
+// The website may prefill Radius (e.g. 10 km) before any coordinates.
+// Radius alone cannot activate a location filter or block a public search.
+let siteDefaultRadius=fixture({active:"coords",currentRadius:"10"});
+check("Location OFF with empty coords and site default radius still allows general searches",
+ siteDefaultRadius.run("configureLocation",disabled).ok,true);
+check("OFF preserves the inert site default radius instead of mutating filters",
+ siteDefaultRadius.radius.value,"10");
+check("OFF verification does not mistake the default radius for active coordinates",
+ siteDefaultRadius.run("verifyLocation",disabled).ok,true);
 let repopulated=fixture({active:"coords",currentCoords:"1,2",currentRadius:"10"});
 repopulated.run("configureLocation",disabled);
 repopulated.coord.value="1,2";
