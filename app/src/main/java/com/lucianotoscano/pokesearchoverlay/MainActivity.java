@@ -99,6 +99,8 @@ public class MainActivity extends Activity {
             root.post(()->PixSupport.show(this));
         if("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT".equals(getIntent().getAction()))
             root.post(this::showBugReportDialog);
+        if("com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(getIntent().getAction()))
+            root.post(this::requestOverlayNotificationPermission);
     }
 
     private TextView homeText(String value,int sp,int color,boolean bold){
@@ -1131,6 +1133,8 @@ public class MainActivity extends Activity {
             getWindow().getDecorView().post(()->PixSupport.show(this));
         if("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT".equals(intent.getAction()))
             getWindow().getDecorView().post(this::showBugReportDialog);
+        if("com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(intent.getAction()))
+            getWindow().getDecorView().post(this::requestOverlayNotificationPermission);
     }
     private void showBugReportDialog(){
         BugReport.log(this,"report","Relatório aberto manualmente");
@@ -1337,9 +1341,28 @@ public class MainActivity extends Activity {
             pendingReportText="";
         }
     }
+    private void requestOverlayNotificationPermission(){
+        // A Service/WebView cannot present the Android 13+ runtime permission
+        // dialog. Only the foreground Activity requests it after a real tap.
+        if(Build.VERSION.SDK_INT>=33&&!WatchAlerts.permissionGranted(this)){
+            if(checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){
+                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},204);
+                return;
+            }
+        }
+        Toast.makeText(this,WatchAlerts.permissionGranted(this)?
+            "Notificações permitidas":"Notificações bloqueadas. Abra os canais nas Configurações do Android.",
+            Toast.LENGTH_LONG).show();
+    }
     @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
         super.onRequestPermissionsResult(requestCode,permissions,results);
         if(requestCode==202)startOverlay();
+        if(requestCode==204){
+            boolean granted=results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED;
+            Toast.makeText(this,granted&&WatchAlerts.permissionGranted(this)?
+                "Permissão de notificações concedida":"Permissão negada. Configure as notificações no Android.",
+                Toast.LENGTH_LONG).show();
+        }
         if(requestCode==203){
             boolean granted=results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED;
             if(granted&&WatchAlerts.permissionGranted(this)){
