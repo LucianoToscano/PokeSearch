@@ -735,16 +735,23 @@ if(action==="verifyShiny"){
 }
 if(action==="session"){
  const sw=shinyControl();
- const login=elements("a,button,[role=button]").some(e=>vis(e)&&/^(?:Log ?in|Sign ?in|Entrar|Fazer login)$/i.test(text(e)));
- const loggedIn=elements("a,button,[role=button]").some(e=>vis(e)&&/^(?:Log ?out|Sign ?out|Sair|Desconectar)$/i.test(text(e)));
- // Mobile menus may hide Logout. The site's account-specific Shiny notice
- // confirms a session without exposing the account identifier to Android.
+ const clickable=elements("a,button,[role=button]").filter(vis);
+ const login=clickable.some(e=>/^(?:(?:log\s*in|sign\s*in|login|entrar|fazer login)(?:\s+(?:with|com)\s+(?:google|discord))?)$/i.test(text(e)));
+ const loggedIn=clickable.some(e=>/^(?:log\s*out|sign\s*out|sair|desconectar)$/i.test(text(e)));
+ const body=String(document.body&&document.body.innerText||"");
  const badgeText=/(?:^|\n)\s*Shiny for your account\b/i;
- const accountBadge=badgeText.test(String(document.body&&document.body.innerText||"")) ||
+ const accountBadge=badgeText.test(body)||
    elements("p,small,span,div,label").some(e=>
      vis(e)&&e.children.length<=2&&badgeText.test(text(e))&&text(e).length<140);
- return JSON.stringify({ok:true,auth:loggedIn||accountBadge?"autenticada":login?"login necessário":"não confirmado",
-   shinyAvailable:!!sw,site:location.hostname});
+ // On the official profile page, the section pair is only present for an
+ // authenticated account. A linked Pokemon trainer is NOT required.
+ const profileProof=location.pathname==="/profile"&&
+   /\bLinked accounts\b/i.test(body)&&/\bPokemon GO accounts\b/i.test(body);
+ // Do not infer "authenticated" merely from an absent login button:
+ // hidden mobile menus and partially hydrated React can be ambiguous.
+ const auth=loggedIn||profileProof||accountBadge?"autenticada":
+   login?"login necessário":"não confirmado";
+ return JSON.stringify({ok:true,auth,shinyAvailable:!!sw,site:location.hostname});
 }
 if(action==="prepareSearch"){
  const target=["iv","raw","percent"].includes(mode)?"Stats":"PvP";
