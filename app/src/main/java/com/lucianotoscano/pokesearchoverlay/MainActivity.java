@@ -172,12 +172,25 @@ public class MainActivity extends Activity {
         auth.setBackground(homeSurface(Color.argb(225,11,22,40),15,Color.argb(88,133,174,225)));
         screen.addView(auth,new LinearLayout.LayoutParams(-1,-2));
 
+        LinearLayout accountHeading=new LinearLayout(this);
+        accountHeading.setGravity(Gravity.CENTER_VERTICAL);
+        ImageView pogocoordinatesIcon=new ImageView(this);
+        pogocoordinatesIcon.setImageResource(R.drawable.ps_pogocoordinates);
+        pogocoordinatesIcon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        pogocoordinatesIcon.setContentDescription("PoGoCoordinates");
+        LinearLayout.LayoutParams logoLp=new LinearLayout.LayoutParams(d(40),d(40));
+        logoLp.rightMargin=d(8);
+        accountHeading.addView(pogocoordinatesIcon,logoLp);
+        LinearLayout headingTexts=new LinearLayout(this);
+        headingTexts.setOrientation(LinearLayout.VERTICAL);
+        accountHeading.addView(headingTexts,new LinearLayout.LayoutParams(0,-2,1));
         TextView title=homeText("PoGoCoordinates",15,Color.WHITE,true);
-        auth.addView(title,new LinearLayout.LayoutParams(-1,-2));
+        headingTexts.addView(title);
         sessionHint=homeText("Acesse coordenadas Pokémon em tempo real",11,Color.rgb(190,209,236),false);
-        LinearLayout.LayoutParams sub=new LinearLayout.LayoutParams(-1,-2);
-        sub.topMargin=d(2);sub.bottomMargin=d(9);
-        auth.addView(sessionHint,sub);
+        headingTexts.addView(sessionHint);
+        LinearLayout.LayoutParams headingLp=new LinearLayout.LayoutParams(-1,-2);
+        headingLp.bottomMargin=d(9);
+        auth.addView(accountHeading,headingLp);
 
         guestPanel=new LinearLayout(this);
         guestPanel.setOrientation(LinearLayout.HORIZONTAL);
