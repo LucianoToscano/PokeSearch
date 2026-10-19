@@ -9,7 +9,8 @@ const service=read("java/com/lucianotoscano/pokesearchoverlay/OverlayService.jav
 const main=read("java/com/lucianotoscano/pokesearchoverlay/MainActivity.java");
 const picker=read("java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java");
 let count=0;
-function test(name,ok){assert.ok(ok,name);count++;}
+const failures=[];
+function test(name,ok){if(!ok)failures.push(name);count++;}
 test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
 test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
 test("Four compact modes in requested order without redundant IV100 row",(()=>{
@@ -19,7 +20,7 @@ test("Four compact modes in requested order without redundant IV100 row",(()=>{
   items.every((x,i)=>i===0||body.indexOf(items[i-1])<body.indexOf(x))&&
   !body.includes('row("iv"')&&dock.includes('toggleChoices(\'mode\')');
 })());
-test("Intervals minimum 5 minutes",["AUTO · 5 min","AUTO · 10 min","AUTO · 15 min","AUTO · 20 min"].every(v=>dock.includes(v)));
+test("Intervals minimum 5 minutes",["Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
 test("Choice panel measures fixed popup height even when rendered above toolbar",
   dock.includes('34+Math.ceil(popup.getBoundingClientRect().height)+6')&&
   dock.includes('Native.resizeMenu(h)'));
@@ -1078,5 +1079,6 @@ test("HOME-01 provider detection needs real official Google/Discord domain",(()=
   !read("assets/profile_summary.js").includes("localStorage.getItem(");
 })());
 
-console.log("PokeSearch UX contract: "+count+" tests passed");
+if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
+else console.log("PokeSearch UX contract: "+count+" tests passed");
 
