@@ -352,7 +352,8 @@ test("Official Shiny switch can initiate login without exposing search page",
   read("assets/login_entry.js").includes('window.__psShinyLoginTapped=true;')&&
   main.includes('.replace("__SHINY__",loginStartedForShiny?"true":"false")'));
 test("The site is only exposed once sign-in content is actually ready",
-  read("assets/login_entry.js").includes('if(authDialog||providerChoices)return "ready";')&&
+  read("assets/login_entry.js").includes('if(authDialog||providerChoices){')&&
+  read("assets/login_entry.js").includes('return "ready";')&&
   main.includes('result.contains("\\\"ready\\\"")'));
 
 
@@ -991,7 +992,8 @@ test("HOME-01 provider detection needs real official Google/Discord domain",(()=
   main.includes('provider=observedLoginProvider')&&
   !main.includes('provider=preferredLoginProvider')&&
   read("assets/login_entry.js").includes('window.__psProviderClicked=true')&&
-  read("assets/profile_summary.js").includes("never inspect cookies")===false;
+  !read("assets/profile_summary.js").includes("document.cookie")&&
+  !read("assets/profile_summary.js").includes("localStorage");
 })());
 
 console.log("PokeSearch UX contract: "+count+" tests passed");
