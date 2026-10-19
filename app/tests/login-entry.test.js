@@ -84,4 +84,45 @@ const unavailable=el("Continue with Google");
 t("Unavailable provider never redirected to a constructed OAuth URL",
  run({provider:"discord",clickable:[unavailable]}).output,"ready");
 t("Missing Discord option does not click Google",unavailable.clicks,0);
+// HOME-03: the authenticated profile must not be guessed from the Search
+// page, arbitrary headings, linked OAuth provider buttons or cached trainer.
+const profileScript=fs.readFileSync(path.join(__dirname,"../src/main/assets/profile_summary.js"),"utf8");
+function profileNode(label){
+ const node=el(label);
+ node.previousElementSibling=null;
+ return node;
+}
+function inspectProfile(pathname,parts,bodyText){
+ const document={
+  body:{innerText:bodyText||parts.map(x=>x.innerText).join("\n")},
+  querySelectorAll:()=>parts
+ };
+ return JSON.parse(vm.runInNewContext(profileScript,{document,location:{pathname}}));
+}
+const guestProfile=inspectProfile("/profile",[],"Login with Google\nLogin with Discord");
+t("Guest is never a profile",guestProfile.ok,false);
+const wrongPage=inspectProfile("/search",[],"Linked accounts\nPokemon GO accounts 0/1");
+t("Search page never supplies profile identity",wrongPage.ok,false);
+const member=profileNode("Member since 24/09/2026");
+member.previousElementSibling=profileNode("Example Trainer");
+const profileSection=profileNode("Pokemon GO accounts 1/1");
+const trainerCard=profileNode("TrainerExample Mystic · Level 61 Trainer code 0000 0000 0000 Remove");
+const memberProfile=inspectProfile("/profile",[member,profileSection,trainerCard],
+ "Linked accounts\nGoogle\nPokemon GO accounts 1/1\nTrainerExample Mystic · Level 61 Trainer code 0000 0000 0000 Remove\nDanger zone");
+t("Authenticated profile section parsed",memberProfile.ok,true);
+t("Name comes from Member since context",memberProfile.displayName,"Example Trainer");
+t("Trainer name comes only from complete card",memberProfile.trainerName,"TrainerExample");
+t("Pokemon GO account correctly linked",memberProfile.trainerState,"linked");
+t("Complete card team read",memberProfile.team,"Mystic");
+t("Complete card level read",memberProfile.level,"61");
+t("No fabricated current provider",memberProfile.provider,"");
+const unlinked=inspectProfile("/profile",[profileNode("Pokemon GO accounts 0/1 Link my account")],
+ "Linked accounts\nPokemon GO accounts 0/1 Link my account\nDanger zone");
+t("Site-confirmed 0/1 is unlinked",unlinked.trainerState,"unlinked");
+t("Unlinked account has no fabricated name",unlinked.displayName,"");
+t("Unlinked account has no cached trainer",unlinked.trainerName,"");
+const uncertain=inspectProfile("/profile",[profileNode("Pokemon GO accounts")],
+ "Linked accounts\nPokemon GO accounts\nDanger zone");
+t("Unhydrated trainer stays unknown",uncertain.trainerState,"unknown");
+t("Danger zone is never a user name",uncertain.displayName,"");
 console.log("PokeSearch login-entry contract: "+passed+" tests passed");
