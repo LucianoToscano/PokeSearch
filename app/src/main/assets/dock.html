@@ -1379,7 +1379,7 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  const sprite=Math.max(14,Math.floor(Math.min(size*factor,...(natural.length?natural.map(n=>n*factor):[size]))));
  const rows=natural.map(n=>Math.max(12,Math.floor(n*factor)));
  return {rows,sprite,total:rows.reduce((a,b)=>a+b,0),visibleCount:rows.length,
-  infoScale:Math.max(0.58,Math.min(1,factor))};
+  infoScale:Math.max(0.86,Math.min(1,factor))};
 }
 let lastListKey="";
 function draw(){
@@ -1803,7 +1803,7 @@ function renderInfoChoices(){
   });
  }
  const hint=document.createElement("div");hint.className="uxNote";
- hint.textContent="Só exibe dados confirmados. RG = desempenho da espécie na liga; IV# = posição dos atributos dentro da espécie.";
+ hint.textContent="Até 10 Pokémon, com sprites alinhados. RG = posição da espécie no PvPoke; IV# = classificação dos atributos (GL/UL, até nível 50, sem bônus de melhor companheiro). Dados ausentes ficam ocultos.";
  panel.appendChild(hint);fit();
 }
 function renderAppearanceChoices(){
