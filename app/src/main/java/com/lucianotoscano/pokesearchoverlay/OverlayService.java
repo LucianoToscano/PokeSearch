@@ -120,6 +120,7 @@ public class OverlayService extends Service {
     private boolean shinyLoginWindowOpened=false;
     private boolean firstStart=true;
     private boolean locationEnabled=false;
+    private boolean locationVerified=false; // true only after DOM verification for current search
     private String locationCoords="";
     private int locationRadius=0;
     private boolean locationEditorOpen=false;
@@ -319,7 +320,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -1002,6 +1003,10 @@ public class OverlayService extends Service {
                     searchFailure("⚠ Localização não confirmada","Filtro de localização não confirmado. Pesquisa não enviada.");
                     return;
                 }
+                // Only confirm after the actual fields and active Coords form
+                // match exactly, never merely on a user ON tap.
+                locationVerified=locationEnabled;
+                update();
                 verifyAndSubmit(generation,manual,0);
                 });
             },400L);
@@ -1644,6 +1649,7 @@ public class OverlayService extends Service {
         });}
 
         @JavascriptInterface public void setLocation(boolean enabled,String coords,int radius){handler.post(()->{
+            locationVerified=false;
             if(enabled){
                 String valid=extractCoordinates(coords==null?"":coords);
                 if(valid.isEmpty()||radius<0||radius>1000){
@@ -1666,7 +1672,7 @@ public class OverlayService extends Service {
             ++requestGeneration;searchInProgress=false;
             results="[]";hideDetails();
             BugReport.log(OverlayService.this,"LOCATION",locationEnabled?"Filtro de coordenadas ativado":"Filtro de coordenadas desativado");
-            status(locationEnabled?"📍 Localização ligada • "+locationRadius+"km":"📍 Localização desligada • busca geral");
+            status(locationEnabled?"📍 Localização solicitada • aguardando confirmação no site":"📍 Localização desligada • busca geral");
             OverlayService.this.refresh(true);
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
