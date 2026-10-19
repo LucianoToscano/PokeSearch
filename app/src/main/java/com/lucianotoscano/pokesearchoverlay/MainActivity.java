@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
     private boolean loginAutoReturnQueued=false;
     private String loginPurpose="login"; // login | manage
     private boolean profileCaptureInProgress=false;
+    private int avatarReadRetryCount=0; // bounded retry for lazy official Google image
     private boolean profileDiscoveryAttempted=false;
     private android.app.Dialog loginDialog;
     private boolean loginSessionNotified=false;
@@ -783,6 +784,7 @@ public class MainActivity extends Activity {
                 // The site returns to /search after OAuth. Public account
                 // metadata is at /profile, not the search view.
                 profileCaptureInProgress=true;
+                avatarReadRetryCount=0;
                 if("/profile".equals(current.getPath())){
                     captureOfficialProfile(view,pageGeneration);
                 }else{
@@ -834,6 +836,7 @@ public class MainActivity extends Activity {
                loginDialog==null||!loginDialog.isShowing()||
                !profileCaptureInProgress)return;
             boolean parsed=false;
+            boolean avatarAwaitingHydration=false;
             try{
                 String payload=new JSONArray("["+raw+"]").getString(0);
                 JSONObject profile=new JSONObject(payload);
@@ -853,7 +856,12 @@ public class MainActivity extends Activity {
                     String avatar=profile.optString("avatarUrl","");
                     if("Google".equals(provider)&&allowedGoogleAvatar(avatar))
                         edit.putString("profileAvatarUrl",avatar);
-                    else edit.remove("profileAvatarUrl");
+                    else {
+                        edit.remove("profileAvatarUrl");
+                        // The official React profile can show the name before
+                        // its public Google avatar has finished loading.
+                        avatarAwaitingHydration="Google".equals(provider);
+                    }
                     String state=profile.optString("trainerState","unknown");
                     String trainer=profile.optString("trainerName","");
                     String code=profile.optString("trainerCode","");
@@ -889,6 +897,13 @@ public class MainActivity extends Activity {
             if(!parsed){
                 // A returned 200 is not proof that React rendered the cards.
                 view.postDelayed(()->captureOfficialProfile(view,generation),600L);
+                return;
+            }
+            if(avatarAwaitingHydration&&avatarReadRetryCount<2){
+                avatarReadRetryCount++;
+                // Preserve the already confirmed trainer data, wait briefly for
+                // the public picture; do not attempt OAuth or access cookies.
+                view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                 return;
             }
             profileCaptureInProgress=false;
