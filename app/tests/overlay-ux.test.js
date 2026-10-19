@@ -799,6 +799,8 @@ test("HOME real Google photo is retried and extracted only from trusted profile"
   main.includes('shownAvatarUrl=""')&&
   main.includes('if(bitmap==null)runOnUiThread')&&
   main.includes('allowedGoogleAvatar(redirected)')&&
+  main.includes('avatarReadRetryCount<2')&&
+  main.includes('view.postDelayed(()->captureOfficialProfile(view,generation),700L)')&&
   !p.includes('document.cookie')&&!p.includes('localStorage');
 });
 
