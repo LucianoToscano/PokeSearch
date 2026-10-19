@@ -534,7 +534,7 @@ body.result-window #resultHeader{
  margin:0 0 0 calc((var(--dock) - 35px)/2)!important;position:relative!important;
 }
 body.result-window #resultSpawnCount{
- position:absolute;right:-9px;top:11px;font:800 9px/10px Roboto,Arial,sans-serif;
+ position:absolute;right:-14px;top:3px;font:800 10px/11px Roboto,Arial,sans-serif;
  color:#e2f7fd;text-shadow:0 1px 2px #000,0 0 3px #000;pointer-events:none;
 }
 body.result-window #spawns{width:var(--results-width,var(--dock))!important}
@@ -559,6 +559,13 @@ body.result-window .spawnInfo{
   calc(11px * var(--result-info-scale,1)) Roboto,Arial,sans-serif;
  color:#e6eefa;text-shadow:0 1px 2px #000b;pointer-events:none;
 }
+body.result-window .ivInfo{font-weight:900}
+body.result-window .ivInfo.zero{color:#00cfe8}
+body.result-window .ivInfo.low{color:#b8bec8}
+body.result-window .ivInfo.medium{color:#28c76f}
+body.result-window .ivInfo.high{color:#388bff}
+body.result-window .ivInfo.excellent{color:#c084fc}
+body.result-window .ivInfo.perfect{color:#f04b70}
 body.result-window .spawnInfoLine{display:block;white-space:nowrap;overflow:hidden;
  text-overflow:ellipsis;max-width:100%;min-height:calc(11px * var(--result-info-scale,1))}
 body.result-window .spawnInfo .timer{
@@ -731,8 +738,9 @@ let locationEnabled=false,locationCoords="",locationRadius=0,locationVerified=fa
 // Future preference may expose Show/Hide results text; default is OFF.
 let showResultText=false;
 let resultDisplayHeightDp=0;
-let resultDisplayOptions={count:false,cp:false,level:false,despawn:false,iv:false,
- overallRank:false,speciesIvRank:false};
+let resultDisplayOptions={count:true,cp:false,level:false,despawn:false,iv:false,rawIv:true,
+ overallRank:false,speciesIvRank:false,overallRankGl:false,overallRankUl:false,overallRankMl:false,
+ speciesIvRankGl:false,speciesIvRankUl:false,speciesIvRankMl:false};
 let displayedMetadataWidth=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
@@ -759,6 +767,11 @@ function verifiedSpawnIvPercent(card){
   return observed;
  }
  return computed;
+}
+function verifiedSpawnRawIv(card){
+ const raw=String(card?.iv??"").trim();
+ if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw))return null;
+ return verifiedSpawnIvPercent(card)!==null?raw:null;
 }
 function ivPaletteClass(percent){
  if(percent===null||!IV_PERCENT_VALUES.includes(percent))return "unknown";
@@ -977,7 +990,7 @@ function renderModeChoices(){
   editor.style.top=offsets[cascadeMode]+"px";
   editor.setAttribute("role","group");editor.setAttribute("aria-label","Ajustar "+cascadeMode);
   const fields=cascadeMode==="raw"?[
-   ["attack","A","iv","Ataque"],["defense","D","iv","Defesa"],["stamina","HP","iv","HP"]
+   ["attack","A","iv","Ataque"],["defense","D","iv","Defesa"],["stamina","H","iv","HP"]
   ]:cascadeMode==="percent"?[
    ["percentMin","MIN","percent","IV mínimo"],["percentMax","MAX","percent","IV máximo"]
   ]:cascadeMode==="gl"?[["glRank","#","rank","Ranking GL"]]:
@@ -1244,9 +1257,9 @@ function speciesKey(value){
   .replace(/[♀]/g," female ").replace(/[♂]/g," male ")
   .replace(/\s+/g," ").trim().toLowerCase();
 }
-const overallRankByLeague={gl:new Map(),ul:new Map()};
+const overallRankByLeague={gl:new Map(),ul:new Map(),ml:new Map()};
 if(PVPOKE_OVERALL){
- for(const league of ["gl","ul"]){
+ for(const league of ["gl","ul","ml"]){
   for(const entry of PVPOKE_OVERALL[league]||[]){
    const [id,name,rank]=entry;
    if(!id||!name||!Number.isInteger(rank)||rank<1)continue;
@@ -1267,7 +1280,7 @@ function safePvpSpeciesKey(card){
  return key||null;
 }
 function verifiedOverallRank(card,league){
- if(!card||!["gl","ul"].includes(league))return null;
+ if(!card||!["gl","ul","ml"].includes(league))return null;
  const key=safePvpSpeciesKey(card);
  if(!key)return null;
  const value=overallRankByLeague[league].get(key);
@@ -1291,7 +1304,7 @@ if(PVP_IV_GAME_MASTER&&Array.isArray(PVP_IV_GAME_MASTER.pokemon)){
 function computeSpeciesIvRanks(species,league){
  const cpms=PVP_IV_GAME_MASTER?.cpms||[];
  if(cpms.length<99)return null;
- const cpCap=league==="gl"?1500:league==="ul"?2500:0;
+ const cpCap=league==="gl"?1500:league==="ul"?2500:league==="ml"?Infinity:0;
  if(!cpCap)return null;
  const [,atk0,def0,hp0]=species;
  const cpmSquared=cpms.map(c=>c*c),scores=[];
@@ -1322,7 +1335,7 @@ function computeSpeciesIvRanks(species,league){
  return order;
 }
 function calculatedSpeciesIvRank(card,league){
- if(!PVP_IV_GAME_MASTER||!["gl","ul"].includes(league))return null;
+ if(!PVP_IV_GAME_MASTER||!["gl","ul","ml"].includes(league))return null;
  // A percentage without raw A/D/HP is not enough to rank an IV spread.
  const iv=String(card?.iv??"").trim();
  if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(iv))return null;
@@ -1340,7 +1353,7 @@ function calculatedSpeciesIvRank(card,league){
  return position>=1&&position<=4096?position:null;
 }
 function verifiedSpeciesIvRank(card,league){
- if(!card||!["gl","ul"].includes(league))return null;
+ if(!card||!["gl","ul","ml"].includes(league))return null;
  // Site Top-N search threshold is not the IV rank of this Pokémon.
  if(card.ivRankSource==="explicit-species-iv"&&card.ivRankLeague===league&&
     verifiedSpawnIvPercent(card)!==null){
@@ -1560,8 +1573,12 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
   {count:!!displayPrefs.count,cp:!!displayPrefs.cp,level:!!displayPrefs.level,
-   despawn:!!displayPrefs.despawn,iv:!!displayPrefs.iv,overallRank:!!displayPrefs.overallRank,
-   speciesIvRank:!!displayPrefs.speciesIvRank}:
+   despawn:!!displayPrefs.despawn,iv:!!displayPrefs.iv,rawIv:!!displayPrefs.rawIv,
+   overallRank:!!displayPrefs.overallRank,speciesIvRank:!!displayPrefs.speciesIvRank,
+   overallRankGl:!!displayPrefs.overallRankGl,overallRankUl:!!displayPrefs.overallRankUl,
+   overallRankMl:!!displayPrefs.overallRankMl,
+   speciesIvRankGl:!!displayPrefs.speciesIvRankGl,speciesIvRankUl:!!displayPrefs.speciesIvRankUl,
+   speciesIvRankMl:!!displayPrefs.speciesIvRankMl}:
   {...resultDisplayOptions,despawn:!!timers,iv:!!textVisible};
  // Legacy listLimit is ignored by RESULT window: it capped results at 8 rows.
  if(!resultWindow)document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
@@ -1814,8 +1831,11 @@ function renderInfoChoices(){
  const options=[
   ["count","Quantidade de spawns"],["despawn","Tempo de despawn"],
   ["level","Nível (Lv)"],["cp","Poder de Combate (PC)"],
-  ["iv","IV do Pokémon"],["overallRank","Rank Geral · PvPoke"],
-  ["speciesIvRank","Rank IV da espécie"]
+  ["rawIv","IV do Pokémon · A/D/H"],["iv","IV% do Pokémon"],
+  ["overallRankGl","Rank Geral · Grande Liga"],["overallRankUl","Rank Geral · Ultra Liga"],
+  ["overallRankMl","Rank Geral · Liga Mestre"],
+  ["speciesIvRankGl","Rank IV · Grande Liga"],["speciesIvRankUl","Rank IV · Ultra Liga"],
+  ["speciesIvRankMl","Rank IV · Liga Mestre"]
  ];
  for(const [key,title] of options){
   uxOption(panel,title,resultDisplayOptions[key]?"✓":"–",()=>{
@@ -1825,7 +1845,7 @@ function renderInfoChoices(){
   });
  }
  const hint=document.createElement("div");hint.className="uxNote";
- hint.textContent="Até 10 Pokémon, com sprites alinhados. RG = posição da espécie no PvPoke; IV# = classificação dos atributos (GL/UL, até nível 50, sem bônus de melhor companheiro). Dados ausentes ficam ocultos.";
+ hint.textContent="Até 10 spawns. IV A/D/H e IV% têm cores por IV; RG = rank geral PvPoke; IV# = ranking de atributos dentro da espécie, por GL/UL/ML (nível 50). Dados não comprovados ficam ocultos.";
  panel.appendChild(hint);
  requestAnimationFrame(()=>{if(choiceOpen==="info"&&panel.isConnected)panel.scrollTop=scroll;});
  fit();
