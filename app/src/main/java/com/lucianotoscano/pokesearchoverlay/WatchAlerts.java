@@ -55,7 +55,7 @@ public final class WatchAlerts {
     public static boolean isWatched(Context context,String name){
         return matches(name,watched(context));
     }
-    public static boolean toggle(Context context,String name){
+    public static synchronized boolean toggle(Context context,String name){
         SharedPreferences p=context.getSharedPreferences("prefs",0);
         LinkedHashMap<String,String> list=names(p.getString(PREF_LIST,""));
         String key=normalized(name);

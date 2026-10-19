@@ -9,6 +9,19 @@ val testVersionCode = System.getenv("POKE_TEST_VERSION_CODE")?.let { value ->
         throw org.gradle.api.GradleException("POKE_TEST_VERSION_CODE is outside the allowed upgrade range")
     parsed
 }
+// Public fingerprint of permanent test-signing certificate (not a secret).
+val officialTestCertificateSha256 = "34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"
+val releaseCertificateSha256 = System.getenv("POKE_RELEASE_CERT_SHA256")?.trim()?.lowercase() ?: ""
+if (releaseCertificateSha256.isNotEmpty() && !Regex("[0-9a-f]{64}").matches(releaseCertificateSha256))
+    throw org.gradle.api.GradleException("POKE_RELEASE_CERT_SHA256 must contain 64 hexadecimal characters")
+val checkedAssetNames = listOf("dock.html", "overlay.html", "detail.html",
+    "probe.js", "login_entry.js", "shiny_login.js")
+val assetChecksums = checkedAssetNames.joinToString(";") { name ->
+    val bytes = file("src/main/assets/$name").readBytes()
+    val hash = java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
+        .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+    "$name=$hash"
+}
 val testKeyFile = System.getenv("POKE_TEST_KEYSTORE")
 val testStorePassword = System.getenv("POKE_TEST_STORE_PASSWORD")
 val testKeyAlias = System.getenv("POKE_TEST_KEY_ALIAS")
@@ -24,6 +37,7 @@ if (testSigningComplete && !file(testKeyFile!!).isFile)
     throw org.gradle.api.GradleException("The protected test keystore was not restored")
 
 android {
+    buildFeatures { buildConfig = true }
     namespace = "com.lucianotoscano.pokesearchoverlay"
     compileSdk = 36
     defaultConfig {
@@ -31,6 +45,8 @@ android {
         applicationId = "com.lucianotoscano.pokesearch"
         minSdk = 26
         targetSdk = 33
+        buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256", "\"\"")
+        buildConfigField("String", "EXPECTED_ASSET_SHA256", "\"$assetChecksums\"")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) "0.51-beta.test.$testVersionCode" else "0.51-beta"
     }
@@ -59,10 +75,18 @@ android {
     }
     buildTypes {
         getByName("debug") {
-            if (testSigningComplete)
+            if (testSigningComplete) {
                 signingConfig = signingConfigs.getByName("persistentTestDebug")
+                isMinifyEnabled = true
+                isShrinkResources = true
+                proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+                buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256",
+                    "\"$officialTestCertificateSha256\"")
+            }
         }
         getByName("release") {
+            buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256",
+                "\"$releaseCertificateSha256\"")
             if (!releaseStore.isNullOrBlank()) signingConfig = signingConfigs.getByName("privateTestRelease")
             isMinifyEnabled = true
             isShrinkResources = true
@@ -75,6 +99,12 @@ android {
     }
 }
 
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    doFirst {
+        if (releaseStore.isNullOrBlank() || releaseCertificateSha256.isEmpty())
+            throw org.gradle.api.GradleException("Release signing and POKE_RELEASE_CERT_SHA256 are required")
+    }
+}
 // Generate the same official launcher artwork as a circular transparent PNG.
 val createRoundIcon by tasks.registering(Exec::class) {
     val original = file("src/main/res/drawable-nodpi/ic_launcher.png")

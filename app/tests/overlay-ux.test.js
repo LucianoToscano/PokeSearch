@@ -955,14 +955,14 @@ test("UX-MENU-06 refresh directly after Alertas and personalization before Repor
   service.includes('"bell","period","appearance","report","donate","close"');
 });
 // UX-MODE-ICONS: use approved uploaded assets, keep the 11-button ribbon.
-test("Approved ORIGINAL seven transparent Mode PNGs were copied from Drive",()=>{
+test("Seven approved Mode PNGs optimized to 128px RGBA and backed up",()=>{
  const names=["0Star.png","1Star.png","2Star.png","3Star.png","StarIVRaw.png","StarGL.png","StarUL.png"];
  return names.every(name=>{
   const asset=path.join(root,"assets/result-icons/modes",name);
   if(!fs.existsSync(asset))return false;
   const b=fs.readFileSync(asset);
   return b.subarray(0,8).equals(Buffer.from("89504e470d0a1a0a","hex"))&&
-   b.readUInt32BE(16)===1254&&b.readUInt32BE(20)===1254;
+   b.readUInt32BE(16)===128&&b.readUInt32BE(20)===128&&b.length<100000;
  });
 });
 test("Mode PNGs retain legacy vector fallback and 17px display only",()=>{
@@ -1798,6 +1798,36 @@ test("UX-LOCATION-FIX-04 retains 12 toolbar controls, stale protection and site 
   service.includes('prefs.remove("locationCoords").remove("locationRadius")');
 });
 
+test("UX-PERF-01 PvPoke scripts load only in results WebView",()=>{
+ const marker='<script>\n// UX-PERF-01: synchronous PvPoke scripts only';
+ const begin=dock.indexOf(marker),end=dock.indexOf('</script>',begin);
+ if(begin<0||end<begin)return false;
+ const source=dock.slice(begin+'<script>'.length,end);
+ const invoke=new Function('window','document',source);
+ const load=query=>{const tags=[];invoke({location:{search:query}},{write:html=>tags.push(html)});return tags;};
+ const r=load('?results=1');
+ return r.length===2&&r[0].includes('pvpoke-overall-ranks.js"></script>')&&r[1].includes('pvpoke-iv-gamemaster.js"></script>')&&load('?controls=1').length===0&&load('').length===0;
+});
+test("UX-PERF-02 countdown interval only in results window",()=>
+ dock.includes('if(resultWindow)setInterval(updateTimers,1000);')&&!dock.includes('\nsetInterval(updateTimers,1000);'));
+test("UX-DETAIL-TIMER-01 hidden detail pauses interval",()=>{
+ const d=read("assets/detail.html");
+ return d.includes('window.pauseDetailTimer=()=>{')&&d.includes('window.pauseDetailTimer();')&&d.includes('if(expiresAt)ticking=setInterval(updateCountdown,1000);')&&service.includes('js(detailPanel,detailLoaded,"window.pauseDetailTimer()")');
+});
+test("UX-DETAIL-TIMER-02 timer cleanup executes clearInterval",()=>{
+ const d=read("assets/detail.html");
+ const code=d.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+ if(!code)return false;
+ const cleared=[];
+ const v=new Function("window","clearInterval",code+"\nticking=37;window.pauseDetailTimer();return ticking;")({},id=>cleared.push(id));
+ return v===null&&cleared.length===1&&cleared[0]===37;
+});
+test("UX-WATCHDOG-45S late requests discarded",()=>{
+ const body=service.split('private final Runnable searchWatchdog=()->{')[1]?.split('private boolean pickerOpen=')[0]||'';
+ return body.includes('++requestGeneration;')&&body.includes('confirmedSubmittedFiltersGeneration=-1;')&&
+  service.includes('private static final long SEARCH_WATCHDOG_MS=45_000L;')&&
+  service.includes('if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;');
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 

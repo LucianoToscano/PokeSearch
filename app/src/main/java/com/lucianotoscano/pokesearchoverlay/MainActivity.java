@@ -1112,6 +1112,7 @@ public class MainActivity extends Activity {
         loginDialog.show();
         android.view.Window loginWindow=loginDialog.getWindow();
         if(loginWindow!=null){
+            loginWindow.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
             loginWindow.setBackgroundDrawableResource(android.R.color.transparent);
             loginWindow.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
             loginWindow.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,

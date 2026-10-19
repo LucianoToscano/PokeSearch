@@ -1660,6 +1660,8 @@ public class OverlayService extends Service {
     }
     private void hideDetails(){
         selected=-1;
+        // UX-DETAIL-TIMER-01: pause JS countdown while detail WebView is hidden.
+        js(detailPanel,detailLoaded,"window.pauseDetailTimer()");
         if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
         js(resultPanel,resultLoaded,"window.highlight(-1)");
     }

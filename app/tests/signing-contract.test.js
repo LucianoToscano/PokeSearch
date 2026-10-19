@@ -62,4 +62,22 @@ check("test keystores and exports are ignored", () => {
   for(const ext of ["*.jks","*.keystore","*.p12","*.pfx","*.keystore.b64"]) 
     assert.ok(ignore.includes(ext), ext);
 });
+check("runtime signer pin uses current certificate",()=>{
+ const guard=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/IntegrityGuard.java");
+ assert.match(guard,/getApkContentsSigners\(\)/);
+ assert.doesNotMatch(guard,/getSigningCertificateHistory\(\)/);
+ assert.match(guard,/EXPECTED_SIGNING_CERT_SHA256/);
+});
+check("six critical assets checked at runtime",()=>{
+ const guard=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/IntegrityGuard.java");
+ assert.match(gradle,/assetChecksums/);
+ assert.match(guard,/MessageDigest\.isEqual\(hash\.digest\(\),expected\)/);
+});
+check("stable signed debug enables R8",()=>{
+ const rules=read("app/proguard-rules.pro");
+ assert.match(gradle,/if \(testSigningComplete\) \{/);
+ assert.match(gradle,/isShrinkResources = true/);
+ assert.match(rules,/@android\.webkit\.JavascriptInterface/);
+ assert.doesNotMatch(rules,/-keep class com\.lucianotoscano\.pokesearchoverlay\.MainActivity \{ \*; \}/);
+});
 console.log("PokeSearch stable signing contract: "+tests+" tests passed");
