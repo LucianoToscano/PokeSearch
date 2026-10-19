@@ -38,6 +38,13 @@ public class OverlayService extends Service {
     private static final int RESULTS_HEADER_DP=30;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
+    private int resultWidthDp(){return dockDp()+resultMetadataWidthDp;}
+    private String resultDisplayOptionsJson(){
+        return "{\"count\":"+resultShowCount+",\"cp\":"+resultShowCp+
+            ",\"level\":"+resultShowLevel+",\"despawn\":"+showTimers+
+            ",\"iv\":"+showResultText+",\"overallRank\":"+resultShowOverallRank+
+            ",\"speciesIvRank\":"+resultShowSpeciesIvRank+"}";
+    }
     private int menuDp(){return Math.max(1,Math.min(330,screenWidthDp()-8));} // twelve compact icons, single-row thin menu
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
@@ -127,6 +134,10 @@ public class OverlayService extends Service {
     private int locationRadius=0;
     private boolean locationEditorOpen=false;
     private boolean showTimers=false,alerts=false,showResultText=false;
+    // Display-only preferences: they must never change remote search filters.
+    private boolean resultShowCount=false,resultShowCp=false,resultShowLevel=false,
+        resultShowOverallRank=false,resultShowSpeciesIvRank=false;
+    private int resultMetadataWidthDp=0;
     private String alertsMode="off"; // off / on / silent, separate from favorite opt-in
     private String sort="site"; // Follow the ten results returned by the site, not an inverted local despawn sort.
     private long lastAlertAt=0L;
@@ -322,7 +333,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -781,14 +792,16 @@ public class OverlayService extends Service {
             }
             return true;
         });
-        resultRoot.addView(resultGrip,new FrameLayout.LayoutParams(
-            dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.CENTER_HORIZONTAL));
+        FrameLayout.LayoutParams gripParams=new FrameLayout.LayoutParams(
+            dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT);
+        gripParams.leftMargin=dp(Math.max(0,(dockDp()-35)/2));
+        resultRoot.addView(resultGrip,gripParams);
 
         int preferredX=Math.max(0,screenWidthDp()-2*dockDp()-35);
         int preferredY=165;
         int savedX=prefs.getInt("resultsX",preferredX);
         int savedY=prefs.getInt("resultsY",preferredY);
-        resultParams=new WindowManager.LayoutParams(dp(dockDp()),dp(RESULTS_HEADER_DP),
+        resultParams=new WindowManager.LayoutParams(dp(resultWidthDp()),dp(RESULTS_HEADER_DP),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
@@ -816,12 +829,25 @@ public class OverlayService extends Service {
     }
     private void updateResultsWidth(){
         if(resultParams==null||resultRoot==null)return;
-        resultParams.width=dp(dockDp());
+        resultParams.width=dp(resultWidthDp());
         resultParams.x=Math.max(0,Math.min(metrics().widthPixels-resultParams.width,resultParams.x));
-        if(resultGrip!=null)resultGrip.setLayoutParams(new FrameLayout.LayoutParams(
-            dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.CENTER_HORIZONTAL));
+        if(resultGrip!=null){
+            FrameLayout.LayoutParams gripParams=new FrameLayout.LayoutParams(
+                dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT);
+            gripParams.leftMargin=dp(Math.max(0,(dockDp()-35)/2));
+            resultGrip.setLayoutParams(gripParams);
+        }
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar largura dos resultados",e);}
+    }
+    private void resizeResultsMetadata(int widthDp){
+        // Data column is an optional 0–100dp beside the original sprite column.
+        // Preserve the Pokéball anchor at the centre of the left sprite column.
+        int safe=Math.max(0,Math.min(100,widthDp));
+        if(safe==resultMetadataWidthDp)return;
+        resultMetadataWidthDp=safe;
+        updateResultsWidth();
+        moveDetail();
     }
     private String script(){
         if(probeScriptCache!=null)return probeScriptCache;
@@ -1903,6 +1929,21 @@ public class OverlayService extends Service {
             getSharedPreferences("prefs",0).edit().putBoolean("showResultText",value).apply();
             update();
         });}
+        @JavascriptInterface public void setResultDisplayOption(String key,boolean value){
+            handler.post(()->{
+                String pref;
+                switch(key){
+                    case "count":resultShowCount=value;pref="resultShowCount";break;
+                    case "cp":resultShowCp=value;pref="resultShowCp";break;
+                    case "level":resultShowLevel=value;pref="resultShowLevel";break;
+                    case "overallRank":resultShowOverallRank=value;pref="resultShowOverallRank";break;
+                    case "speciesIvRank":resultShowSpeciesIvRank=value;pref="resultShowSpeciesIvRank";break;
+                    default:return; // Timers/IV keep their original separate controls.
+                }
+                getSharedPreferences("prefs",0).edit().putBoolean(pref,value).apply();
+                update();
+            });
+        }
         @JavascriptInterface public void setAlertMode(String value){handler.post(()->{
             if(!"on".equals(value)&&!"silent".equals(value)&&!"off".equals(value))return;
             alertsMode=value;alerts=!"off".equals(value);
@@ -2092,6 +2133,9 @@ public class OverlayService extends Service {
         @JavascriptInterface public void close(){handler.post(()->stopSelf());}
         @JavascriptInterface public void resize(int size){handler.post(()->OverlayService.this.resize(size));}
         @JavascriptInterface public void resizeResults(int size){handler.post(()->OverlayService.this.resizeResults(size));}
+        @JavascriptInterface public void resizeResultsMetadata(int widthDp){
+            handler.post(()->OverlayService.this.resizeResultsMetadata(widthDp));
+        }
         @JavascriptInterface public void toggleResultsCollapsed(){handler.post(OverlayService.this::toggleResultsCollapsed);}
         @JavascriptInterface public void resizeMenu(int size){handler.post(()->OverlayService.this.resizeMenu(size));}
         @JavascriptInterface public void resizeDetail(int size){handler.post(()->OverlayService.this.resizeDetail(size));}
@@ -2132,6 +2176,11 @@ public class OverlayService extends Service {
         spriteSize=(wanted==35||wanted==45||wanted==55)?wanted:45;
         showTimers=prefs.getBoolean("showTimers",false);
         showResultText=prefs.getBoolean("showResultText",false);
+        resultShowCount=prefs.getBoolean("resultShowCount",false);
+        resultShowCp=prefs.getBoolean("resultShowCp",false);
+        resultShowLevel=prefs.getBoolean("resultShowLevel",false);
+        resultShowOverallRank=prefs.getBoolean("resultShowOverallRank",false);
+        resultShowSpeciesIvRank=prefs.getBoolean("resultShowSpeciesIvRank",false);
         alerts=prefs.getBoolean("alerts",false);
         alertsMode=prefs.getString("alertsMode",alerts?"on":"off");
         if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";
