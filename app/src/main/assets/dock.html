@@ -59,8 +59,8 @@ body.controls-window #choices{z-index:10}
 #locBadge.active{display:block}
 body.controls-window #locBadge{display:none!important}
 #choices.locationPanel{width:306px;max-width:calc(100vw - 12px)}
-#choices.modePanel{width:198px;max-width:calc(100vw - 12px);height:auto;min-height:0;padding:2px;
- max-height:min(154px,var(--popup-room,400px));overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
+#choices.modePanel{width:232px;max-width:calc(100vw - 12px);height:auto;padding:3px;
+ max-height:min(216px,var(--popup-room,400px));overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
 #choices.modePanel .choiceHeader{padding:2px 5px 3px}
 /* Shiny lives independently as the second icon in the horizontal toolbar. */
 #choices .extraDivider{height:1px;margin:5px 3px;background:#ffffff32}
@@ -399,22 +399,21 @@ body.controls-window #choices{top:34px!important;width:220px!important;
  max-width:calc(100vw - 12px)!important;max-height:var(--popup-room,400px)!important;
  overflow-y:auto!important;border:1px solid #ffffff38!important;border-radius:9px!important;
  box-shadow:0 4px 12px #0008!important;padding:5px!important;}
-body.controls-window #choices.modePanel{
- width:198px!important;min-height:0!important;height:auto!important;
- max-height:min(154px,var(--popup-room,400px))!important;padding:2px!important;
- border-radius:7px!important;
-}
+body.controls-window #choices.modePanel{width:232px!important;max-height:min(216px,var(--popup-room,400px))!important}
 #choices.modePanel.modeCompact-league,
 body.controls-window #choices.modePanel.modeCompact-league{
  width:162px!important;max-height:min(99px,var(--popup-room,400px))!important;
+ height:auto!important;min-height:0!important;padding:2px!important;border-radius:7px!important;
 }
 #choices.modePanel.modeCompact-percent,
 body.controls-window #choices.modePanel.modeCompact-percent{
  width:177px!important;max-height:min(143px,var(--popup-room,400px))!important;
+ height:auto!important;min-height:0!important;padding:2px!important;border-radius:7px!important;
 }
 #choices.modePanel.modeCompact-raw,
 body.controls-window #choices.modePanel.modeCompact-raw{
  width:198px!important;max-height:min(143px,var(--popup-room,400px))!important;
+ height:auto!important;min-height:0!important;padding:2px!important;border-radius:7px!important;
 }
 body.controls-window #choices.locationPanel{width:306px!important;max-height:var(--popup-room,400px)!important}
 body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}
@@ -713,7 +712,8 @@ function closeChoices(){
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
- document.getElementById("choices").classList.remove("locationPanel","modePanel");
+ document.getElementById("choices").classList.remove("locationPanel","modePanel",
+  "modeCompact-raw","modeCompact-percent","modeCompact-league");
  if(controlsWindow)Native.locationEditor(false);
  refreshQuickMenuStates();fit();
 }
@@ -727,6 +727,8 @@ function toggleChoices(kind){
   if(controlsWindow)Native.locationEditor(false);
  }
  choiceOpen=kind;
+ if(kind!=="mode")document.getElementById("choices").classList.remove(
+  "modeCompact-raw","modeCompact-percent","modeCompact-league");
  document.getElementById("menu").classList.add("subview");
  if(kind==="alerts"){renderAlertsChoices();return;}
  if(kind==="info"){renderInfoChoices();return;}
