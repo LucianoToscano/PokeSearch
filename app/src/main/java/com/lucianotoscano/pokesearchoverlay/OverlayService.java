@@ -983,7 +983,9 @@ public class OverlayService extends Service {
                     return;
                 }
                 searchInProgress=false;
-                searchFailure("⚠ Localização não aplicada","Não foi possível configurar localização: "+
+                searchFailure(locationEnabled?"⚠ Localização não aplicada":"⚠ Pesquisa não confirmada",
+                    (locationEnabled?"Não foi possível configurar localização: ":
+                    "Filtro geográfico do site não pôde ser neutralizado: ")+
                     configured.optString("reason","verifique o formulário do site."));
                 return;
             }
@@ -1845,7 +1847,7 @@ public class OverlayService extends Service {
                 String direction=incoming.optString("direction","vertical");
                 clean.put("direction","horizontal".equals(direction)?"horizontal":"vertical");
                 clean.put("labels",incoming.optBoolean("labels",true));
-                String[] allowed={"mode","sh","period","bell","star","location",
+                String[] allowed={"mode","sh","period","bell","star","location","pokemon",
                     "filters","info","appearance","report","donate","close"};
                 java.util.Set<String> valid=new java.util.HashSet<>(java.util.Arrays.asList(allowed));
                 for(String key:new String[]{"order","hidden"}){
