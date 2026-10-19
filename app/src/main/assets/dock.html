@@ -440,12 +440,14 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
  // Raw IV 15/15/15 automatically identifies IV100 while preserving one mode.
  if(modeKey==="raw"){
   const {attack,defense,stamina}=settings;
-  if(attack===15&&defense===15&&stamina===15)family="hundo";
-  else if(attack===0&&defense===0&&stamina===0)family="nundo";
+  if([attack,defense,stamina].every(v=>Number(v)===15))family="hundo";
+  else if([attack,defense,stamina].every(v=>Number(v)===0))family="nundo";
  }
  if(modeKey==="percent"){
-  if(settings.percentMin===100&&settings.percentMax===100)family="hundo";
-  else if(settings.percentMin===0&&settings.percentMax===0)family="nundo";
+  const min=Number(settings.percentMin),max=Number(settings.percentMax);
+  if(min===100&&max===100)family="hundo";
+  else if(min===0&&max===0)family="nundo";
+  else if(min===0&&max===100)family="none"; // visually unrestricted IV interval
  }
  const pair=RESULT_ICONS[family];
  const shining=!!shinyActive;
@@ -454,15 +456,26 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
  const topN=baseFamily==="gl"?Number(settings.glRank):baseFamily==="ul"?Number(settings.ulRank):0;
  // #N is the confirmed search threshold (Top N), NOT an individual Pokémon rank.
  const rankLabel=Number.isInteger(topN)&&topN>=1&&topN<=50?"#"+topN:"";
- const badge=family==="hundo"?"100%":family==="nundo"?"0":family==="percent"?"%":rankLabel||(baseFamily==="cup"?"CUP":"");
+ // Medal already describes zero or three stars; rank #N only for league filters.
+ const badge=(family==="gl"||family==="ul")?rankLabel:
+   baseFamily==="cup"?"CUP":"";
  // Only confirmed site Background can be represented; not an activation shortcut.
  const backgroundConfirmed=!!(settings&&settings.backgroundOnly===true&&settings.backgroundVerified===true);
+ const modePath={
+  hundo:"iv-three-stars.png",nundo:"iv-zero-stars.png",
+  gl:"gl-triangle.png",ul:"ul-triangle.png",
+  custom:"iv-custom.svg",percent:"iv-percent.svg",none:"iv-unfiltered.svg"
+ };
  return {
-  path:(family==="ul"||family==="gl")
-     ? "file:///android_asset/result-icons/"+(family==="ul"?"ultra-league.png":"great-league.png")
-     : "file:///android_asset/result-icons/base/"+baseName,
-  fallbackPath:"file:///android_asset/result-icons/base/"+baseName,
-  title:pair.title+(shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
+  path:modePath[family]?"file:///android_asset/result-icons/modes/"+modePath[family]:
+     "file:///android_asset/result-icons/base/"+baseName,
+  fallbackPath:(family==="gl"||family==="ul")?
+    "file:///android_asset/result-icons/"+(family==="gl"?"great-league.png":"ultra-league.png"):
+    "file:///android_asset/result-icons/base/"+baseName,
+  title:pair.title+(modeKey==="percent"&&family==="none"?" · 0–100%, sem limite":
+    modeKey==="percent"&&family==="percent"?" · "+settings.percentMin+"–"+settings.percentMax+"%":
+    modeKey==="raw"?" · "+settings.attack+"/"+settings.defense+"/"+settings.stamina:"")+
+    (shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
   family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
  };
 }
