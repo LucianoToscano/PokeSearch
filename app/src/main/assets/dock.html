@@ -798,7 +798,7 @@ function closeChoices(){
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
- document.getElementById("choices").classList.remove("locationPanel","modePanel","standardPanel",
+ document.getElementById("choices").classList.remove("locationPanel","modePanel","standardPanel","filterPicker",
   "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
  delete document.getElementById("choices").dataset.panelKind;
  if(controlsWindow)Native.locationEditor(false);
@@ -840,7 +840,7 @@ function toggleChoices(kind){
  const current=period;
  const entries=[[0,"Auto · OFF"],[5,"Auto · 5 min"],[10,"Auto · 10 min"],[15,"Auto · 15 min"],[20,"Auto · 20 min"]];
  const panel=document.getElementById("choices");
- panel.replaceChildren();panel.classList.remove("modePanel","locationPanel","modeCascade","modeCascadeOpen");
+ panel.replaceChildren();panel.classList.remove("modePanel","locationPanel","modeCascade","modeCascadeOpen","filterPicker");
  panel.classList.add("standardPanel","visible");panel.dataset.panelKind="period";
  const title=document.createElement("div");title.className="choiceHeader";
  title.textContent="ATUALIZAÇÃO";
@@ -878,7 +878,9 @@ function positionCascadeEditor(){
 function renderModeChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();
- panel.classList.remove("locationPanel","modeCompact-raw","modeCompact-percent","modeCompact-league");
+ panel.classList.remove("locationPanel","standardPanel","filterPicker",
+  "modeCompact-raw","modeCompact-percent","modeCompact-league");
+ delete panel.dataset.panelKind;
  panel.classList.add("modePanel","modeCascade","visible");
  panel.classList.toggle("modeCascadeOpen",!!cascadeMode);
  // Six short options: 100/0 apply immediately; IV, IV%, GL, UL have lateral editors.
@@ -1103,7 +1105,7 @@ window.onFilterOptions=function(response){
 
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
- panel.replaceChildren();panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen");
+ panel.replaceChildren();panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen","filterPicker");
  panel.classList.add("locationPanel","visible");delete panel.dataset.panelKind;
  const make=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x;};
  const title=make("div","choiceHeader","📍 LOCALIZAÇÃO");
@@ -1509,7 +1511,7 @@ function refreshQuickMenuStates(){
 }
 function uxPanel(title){
  const panel=document.getElementById("choices");panel.replaceChildren();
- panel.classList.remove("locationPanel","modeCascade","modeCascadeOpen",
+ panel.classList.remove("locationPanel","modeCascade","modeCascadeOpen","filterPicker",
   "modeCompact-raw","modeCompact-percent","modeCompact-league");
  panel.classList.add("visible","modePanel","standardPanel");panel.dataset.panelKind=choiceOpen;
  const heading=document.createElement("div");heading.className="choiceHeader";
