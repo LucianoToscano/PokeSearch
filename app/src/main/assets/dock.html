@@ -451,7 +451,7 @@ const RESULT_MODE_ALIASES=Object.freeze({
  ml:"ml",master:"ml",master_league:"ml",
  cup:"cup",cup_league:"cup",little_cup:"cup"
 });
-function getResultIcon(searchMode,shinyActive,settings=searchSettings){
+function getModeMenuIcon(searchMode,shinyActive,settings=searchSettings){
  const modeKey=String(searchMode==null?"":searchMode).trim().toLowerCase().replace(/[\s-]+/g,"_");
  let family=RESULT_MODE_ALIASES[modeKey]||"none";
  // Raw IV 15/15/15 automatically identifies IV100 while preserving one mode.
@@ -493,6 +493,39 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
     modeKey==="percent"&&family==="percent"?" · "+settings.percentMin+"–"+settings.percentMax+"%":
     modeKey==="raw"?" · "+settings.attack+"/"+settings.defense+"/"+settings.stamina:"")+
     (shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
+  family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
+ };
+}
+// Historical result icons are independent from the newer Modos toolbar.
+// Preserve the approved Pokéball bases, rank/IV badges, Shiny/background
+// overlays and capture-pulse animation. Never point results at /modes/.
+function getResultIcon(searchMode,shinyActive,settings=searchSettings){
+ const modeKey=String(searchMode==null?"":searchMode).trim().toLowerCase().replace(/[\s-]+/g,"_");
+ let family=RESULT_MODE_ALIASES[modeKey]||"none";
+ // Raw IV 15/15/15 automatically identifies IV100 while preserving one mode.
+ if(modeKey==="raw"){
+  const {attack,defense,stamina}=settings;
+  if(attack===15&&defense===15&&stamina===15)family="hundo";
+  else if(attack===0&&defense===0&&stamina===0)family="nundo";
+ }
+ if(modeKey==="percent"){
+  if(settings.percentMin===100&&settings.percentMax===100)family="hundo";
+  else if(settings.percentMin===0&&settings.percentMax===0)family="nundo";
+ }
+ const pair=RESULT_ICONS[family];
+ const shining=!!shinyActive;
+ const baseFamily=["hundo","nundo","percent"].includes(family)?"custom":family;
+ const baseName=RESULT_BASE_ICONS[baseFamily]||RESULT_BASE_ICONS.none;
+ const topN=baseFamily==="gl"?Number(settings.glRank):baseFamily==="ul"?Number(settings.ulRank):0;
+ // #N is the confirmed search threshold (Top N), NOT an individual Pokémon rank.
+ const rankLabel=Number.isInteger(topN)&&topN>=1&&topN<=50?"#"+topN:"";
+ const badge=family==="hundo"?"100%":family==="nundo"?"0":family==="percent"?"%":rankLabel||(baseFamily==="cup"?"CUP":"");
+ // Only confirmed site Background can be represented; not an activation shortcut.
+ const backgroundConfirmed=!!(settings&&settings.backgroundOnly===true&&settings.backgroundVerified===true);
+ return {
+  path:"file:///android_asset/result-icons/base/"+baseName,
+  fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none,
+  title:pair.title+(shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
   family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
  };
 }
@@ -946,9 +979,8 @@ function draw(){
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",spriteSize+"px");
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
- // Icon in the result header matches the original thin toolbar exactly.
- // P/M/G changes sprites, not the search-type symbol.
- const headerIconSize=17;
+ // P/M/G scales the header DOWN, never above its original 21px.
+ const headerIconSize=Math.max(17,Math.min(21,Math.round(spriteSize*0.45)));
  document.documentElement.style.setProperty("--mode-icon-size",headerIconSize+"px");
  document.documentElement.style.setProperty("--mode-indicator-scale",String(headerIconSize/21));
  const cy=document.getElementById("cycle");
@@ -1183,7 +1215,7 @@ const QUICK_SOURCE_ICONS={location:"location",bell:"bell",star:"star",donate:"do
 function iconForQuick(id, fallback){
  const glyph=document.createElement("span");glyph.className="quickGlyph";
  if(id==="mode"){
-  const art=getResultIcon(mode,false,searchSettings);
+  const art=getModeMenuIcon(mode,false,searchSettings);
   const image=document.createElement("img");image.className="quickModeImage";
   image.src=art.path;image.alt="";image.setAttribute("aria-hidden","true");
   image.onerror=()=>{image.onerror=null;image.src=art.fallbackPath;};
@@ -1230,7 +1262,7 @@ function renderQuickMenu(){
   button.setAttribute("aria-label",a[2]);
   const glyph=iconForQuick(id,a[1]);
   if(id==="mode"){
-   const art=getResultIcon(mode,false,searchSettings);
+   const art=getModeMenuIcon(mode,false,searchSettings);
    button.dataset.modeArtKey=art.path+"|"+art.ivBadge;
   }
   const label=document.createElement("span");label.className="quickName";label.textContent=a[2];
@@ -1254,7 +1286,7 @@ function refreshQuickMenuStates(){
   if(state)state.textContent=current;
   button.title=button.getAttribute("aria-label")+(current?" · "+current:"");
   if(id==="mode"){
-   const art=getResultIcon(mode,false,searchSettings);
+   const art=getModeMenuIcon(mode,false,searchSettings);
    const key=art.path+"|"+art.ivBadge;
    if(button.dataset.modeArtKey!==key){
     const previous=button.querySelector(".quickGlyph");
