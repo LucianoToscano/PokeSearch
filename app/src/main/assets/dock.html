@@ -120,7 +120,7 @@ body.controls-window #locBadge{display:none!important}
 #clock.timerOn{background:#76601ccf;border-color:#ffe5a04d;color:#ffe5a0}
 #spawns{width:var(--dock);display:flex;flex-direction:column;align-items:center;gap:0;padding:0;margin:var(--top-space) 0 0;max-height:var(--list-limit);overflow-y:auto;overflow-x:hidden;scrollbar-width:none;overscroll-behavior:contain}
 #spawns::-webkit-scrollbar{display:none}
-.spawn{width:var(--dock);height:var(--row);position:relative;min-height:var(--row);flex:0 0 var(--row);display:flex;align-items:center;justify-content:center;margin:0;padding:0;background:transparent;border:0;border-radius:4px}
+.spawn{width:var(--dock);height:var(--spawn-row,var(--row));position:relative;min-height:var(--spawn-row,var(--row));flex:0 0 var(--spawn-row,var(--row));display:flex;align-items:center;justify-content:center;margin:0;padding:0;background:transparent;border:0;border-radius:4px}
 .spawn.active .sprite{filter:drop-shadow(0 0 3px #ffffff77)}
 .timer{position:absolute;right:0;bottom:0;padding:1px 2px;border-radius:0;background:transparent;color:#fff;font-size:8px;line-height:10px;pointer-events:none;min-width:23px;text-align:center;text-shadow:0 1px 2px #000,0 0 3px #000}
 .spawn .ivPct{position:absolute;left:0;bottom:0;z-index:1;max-width:29px;min-width:16px;padding:0;border-radius:0;background:transparent;font:800 8px/10px Roboto,Arial,sans-serif;text-align:center;white-space:nowrap;pointer-events:none;text-shadow:0 1px 2px #000,0 0 3px #000}
@@ -214,8 +214,14 @@ body.result-window.search-active:not(.results-collapsed) #resultHeader .captureP
  }
 }
 body.result-window #resultHeader:focus-visible{outline:1px solid #fff8}
-body.result-window #spawns{margin:0!important;max-height:var(--list-limit);
- width:var(--dock);padding:0;gap:0}
+/* Results never scroll: the 0–10 validated entries all fit in this independent
+   window. Each row reserves extra space ONLY when it displays verified metadata. */
+body.result-window #spawns{
+ margin:0!important;max-height:none!important;height:auto!important;
+ width:var(--dock);padding:0!important;gap:0!important;
+ overflow-y:visible!important;overflow-x:visible!important;
+ scrollbar-width:none!important;touch-action:manipulation!important
+}
 body.result-window #empty{margin:0 auto;max-height:18px}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
@@ -682,6 +688,7 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
 let locationEnabled=false,locationCoords="",locationRadius=0,locationVerified=false;
 // Future preference may expose Show/Hide results text; default is OFF.
 let showResultText=false;
+let resultDisplayHeightDp=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"",pokemon:"",form:"",size:"",gender:"",weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
@@ -1181,10 +1188,31 @@ function attachLongPress(){
   el.addEventListener('contextmenu',e=>{e.preventDefault();longDone=true;Native.longPressCoords(i)});
  });
 }
+/* UX-RESULT-10: visible rows are based on actual visible metadata, not title/
+   alt text or invisible properties. The height budget is screen-wide, so moving
+   the independent native window never introduces an internal scrollbar. */
+function resultHasVisibleInfo(card,timersEnabled,textEnabled){
+ return (timersEnabled&&Number(card.expiresAtMs)>0)||
+  (textEnabled&&verifiedSpawnIvPercent(card)!==null);
+}
+function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,textEnabled){
+ const size=Math.max(18,Number(chosenSprite)||45);
+ const natural=items.slice(0,10).map(card=>resultHasVisibleInfo(card,timersEnabled,textEnabled)?
+  size+3:Math.max(18,Math.round(size*0.73)));
+ const desired=natural.reduce((a,b)=>a+b,0);
+ const room=Math.max(120,(Number(displayHeight)||700)-30-24);
+ const factor=desired>0?Math.min(1,room/desired):1;
+ // On a shorter screen, scale the image *and* its row, never hide row 9/10.
+ const sprite=Math.max(14,Math.floor(size*factor));
+ const rows=natural.map(n=>Math.max(12,Math.floor(n*factor)));
+ return {rows,sprite,total:rows.reduce((a,b)=>a+b,0),visibleCount:rows.length};
+}
 let lastListKey="";
 function draw(){
+ const resultLayout=resultWindow?
+  computeResultLayout(cards,spriteSize,resultDisplayHeightDp,showTimers,showResultText):null;
  document.documentElement.style.setProperty("--row",row+"px");
- document.documentElement.style.setProperty("--sprite",spriteSize+"px");
+ document.documentElement.style.setProperty("--sprite",(resultLayout?resultLayout.sprite:spriteSize)+"px");
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
  // P/M/G scales the header DOWN, never above its original 21px.
  const headerIconSize=Math.max(17,Math.min(21,Math.round(spriteSize*0.45)));
@@ -1239,7 +1267,7 @@ function draw(){
  star.classList.toggle("favoritesOn",hasFavorites);
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
  const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.title=period===0?"AUTO desligado · atualizar com ↻ ou mudar filtros":"Atualização automática a cada "+period+" minutos · toque para alterar";p.setAttribute("aria-label",p.title);
- const listKey=JSON.stringify([cards,row,spriteSize,showTimers]);
+ const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp]);
  if(listKey!==lastListKey){lastListKey=listKey;
  // The gear and menu WebViews never create hidden sprite buttons.
  // Only the independent results WebView owns the Pokémon list and its taps.
@@ -1254,7 +1282,8 @@ function draw(){
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const badge=showTimers&&deadline?'<span class="timer" data-deadline="'+deadline+'"></span>':"";
   const ivBadge=!showResultText||verifiedPercent===null?"":'<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>';
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+'</button>';
+  const measuredRow=resultLayout?.rows[i]||row;
+  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
  if(resultWindow){attachLongPress();attachSpriteFeedback();updateTimers();}
@@ -1312,9 +1341,11 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
- document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
+ resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
+ // Legacy listLimit is ignored by RESULT window: it capped results at 8 rows.
+ if(!resultWindow)document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  locationVerified=!!verifiedLocation&&locationEnabled;
  if(config&&typeof config==="object")searchSettings={...searchSettings,...config};
