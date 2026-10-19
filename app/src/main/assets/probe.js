@@ -319,6 +319,109 @@ function checkCore(){
  return {ok:true};
 }
 
+// SITE-POKEMON-01: PoGoCoordinates uses a multiple-species/form token picker.
+// A Pokemon's exact form label is NOT a free-text single-species search.
+function normalizePokemonLabel(value){
+ return clean(value).replace(/^#\s*\d{1,4}\s+/,'').replace(/[\s×✕✓✔]+$/,'').trim();
+}
+function pokemonPickerRoot(){
+ const heads=labels(document,/^Pok[eé]mon$/i);
+ for(const head of heads){
+  for(let p=head.parentElement,depth=0;p&&depth<6;p=p.parentElement,depth++){
+   const all=text(p);
+   if(all.length>2800||/\b(?:Sort by|Filter by|Despawn|Weather)\b/i.test(all))break;
+   const btns=p.querySelectorAll('button,[role=combobox],input:not([type=hidden])');
+   if(btns.length&&p!==document.body)return p;
+  }
+ }
+ return null;
+}
+function pokemonPickerInput(){
+ return elements('input:not([type=hidden])').find(e=>vis(e)&&
+  /search by name, form, or dex|search.*(?:pok[eé]mon|form|dex)/i.test(
+   (e.getAttribute('placeholder')||'')+' '+(e.getAttribute('aria-label')||'')))||null;
+}
+function pokemonPickerButton(root){
+ if(!root)return null;
+ return Array.from(root.querySelectorAll('button,[role=combobox],[aria-haspopup]'))
+  .find(e=>vis(e)&&(/pok[eé]mon/i.test(String(e.getAttribute('aria-label')||''))||
+    e.getAttribute('aria-haspopup')||e.getAttribute('role')==='combobox'||
+    /(?:any pok[eé]mon|\b\d+\b)/i.test(text(e))))||null;
+}
+function pokemonSelectedChips(){
+ const root=pokemonPickerRoot();if(!root)return null;
+ const selected=[];
+ const buttons=Array.from(root.querySelectorAll('button,[role=button]')).filter(vis);
+ for(const b of buttons){
+  const aria=String(b.getAttribute('aria-label')||'');
+  const isRemove=/\b(?:remove|remover|delete)\b/i.test(aria)||/^[×✕x]$/.test(text(b));
+  if(!isRemove||!b.parentElement)continue;
+  const raw=aria.match(/(?:remove|remover|delete)\s+(.+)/i)?.[1]||text(b.parentElement);
+  const label=normalizePokemonLabel(raw);
+  if(!label||label.length>100||!/\p{L}/u.test(label)||
+   /^(?:pok[eé]mon|any|clear|remove|limpar|search)$/i.test(label))continue;
+  if(!selected.some(v=>v.label.toLowerCase()===label.toLowerCase()))selected.push({label,remove:b});
+ }
+ return selected;
+}
+function pokemonPickerOptions(){
+ const input=pokemonPickerInput();if(!input)return [];
+ const candidates=elements('[role=option],[role=listbox] [role=checkbox],[cmdk-item],[data-radix-collection-item],[role=listbox] button,[role=listbox] li,li').filter(vis);
+ return candidates.map(e=>{
+  const raw=text(e),label=normalizePokemonLabel(raw);
+  const dex=(raw.match(/#\s*(\d{1,4})/)||[])[1]||'';
+  const img=e.querySelector('img[src]'),image=img?String(img.src||''):'';
+  return {label,dex,image:/^https:\/\//.test(image)?image:'',node:e};
+ }).filter(item=>item.label&&item.label.length<=90&&
+  !/^(?:any pok[eé]mon|clear|search|close|no results|loading)$/i.test(item.label))
+  .filter((item,i,all)=>all.findIndex(v=>v.label.toLowerCase()===item.label.toLowerCase())===i)
+  .slice(0,35);
+}
+function pokemonSuggestion(query){
+ const root=pokemonPickerRoot();
+ if(!root)return {ok:false,reason:'Filtro Pokémon não localizado no site'};
+ let input=pokemonPickerInput();
+ if(!input){
+  const button=pokemonPickerButton(root);
+  if(!button)return {ok:false,reason:'Seletor Pokémon não disponível no site'};
+  button.click();
+  return {ok:false,pending:true,reason:'Abrindo opções oficiais'};
+ }
+ const wanted=String(query||'').slice(0,65);
+ if(String(input.value||'')!==wanted){
+  if(!valueInput(input,wanted))return {ok:false,reason:'Busca Pokémon indisponível'};
+  return {ok:false,pending:true,reason:'Aguardando opções do site'};
+ }
+ const chips=pokemonSelectedChips();
+ return {ok:true,query:wanted,options:pokemonPickerOptions().map(({label,dex,image})=>({label,dex,image})),
+  selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
+}
+if(action.startsWith('pokemonSuggest:')){
+ try{return JSON.stringify(pokemonSuggestion(JSON.parse(action.slice('pokemonSuggest:'.length))));}
+ catch(_){return JSON.stringify({ok:false,reason:'Consulta de Pokémon inválida'});}
+}
+function pokemonListSelection(verb){
+ const raw=filters.pokemonSelections;
+ if(!Array.isArray(raw))return {ok:true,pending:false};
+ const wanted=[...new Set(raw.map(normalizePokemonLabel).filter(Boolean))];
+ const needClear=Array.isArray(filters.clearExtraKeys)&&
+  (filters.clearExtraKeys.includes('pokemonSelections')||filters.clearExtraKeys.includes('pokemon'));
+ if(wanted.length===0&&!needClear)return {ok:true,pending:false};
+ const selected=pokemonSelectedChips();
+ if(!selected)return {ok:false,pending:false,reason:'Cartões selecionados do site não encontrados'};
+ const missing=wanted.filter(name=>!selected.some(x=>x.label.toLowerCase()===name.toLowerCase()));
+ const extra=selected.filter(x=>!wanted.some(name=>name.toLowerCase()===x.label.toLowerCase()));
+ if(!missing.length&&!extra.length)return {ok:true,pending:false};
+ if(verb!=='apply')return {ok:false,pending:false,reason:'Seleção de espécies ou formas diferente da solicitada'};
+ if(extra.length){extra[0].remove.click();return {ok:false,pending:true,reason:'Removendo outra espécie ou forma'};}
+ const result=pokemonSuggestion(missing[0]);
+ if(!result.ok)return {ok:false,pending:!!result.pending,reason:result.reason||'Filtro Pokémon indisponível'};
+ const candidate=pokemonPickerOptions().find(x=>x.label.toLowerCase()===missing[0].toLowerCase());
+ if(!candidate)return {ok:false,pending:true,reason:'Aguardando espécie/forma no seletor oficial: '+missing[0]};
+ candidate.node.click();
+ return {ok:false,pending:true,reason:'Aplicando espécie/forma no site'};
+}
+
 const EXTRA_LABELS={sortBy:"Sort by",pokemon:"Pokemon",form:"Form",size:"Size",gender:"Gender",weather:"Weather"};
 function extraControl(label){
  const e=field(label);if(e)return e;
@@ -417,7 +520,10 @@ function extras(action){
  transientPending=false;
  const failed=[];
  const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
+ const pokemon=pokemonListSelection(action);
+ if(!pokemon.ok)return {ok:false,pending:!!pokemon.pending,reason:pokemon.reason||'Seleção Pokémon não confirmada'};
  for(const key of Object.keys(EXTRA_LABELS)){
+  if(key==="pokemon"&&Array.isArray(filters.pokemonSelections))continue;
   const want=String(filters[key]||"").trim();
   // Blank means no optional restriction; it is not a request to discover a
   // dropdown. Only a tracked transition from a prior filter needs clearing.
@@ -446,6 +552,7 @@ function currentCoreControlsVisible(){
 function visibleExtrasMismatch(){
  const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
  for(const key of Object.keys(EXTRA_LABELS)){
+  if(key==="pokemon"&&Array.isArray(filters.pokemonSelections))continue;
   const want=String(filters[key]||"").trim();
   if(!want&&!resetKeys.includes(key))continue;
   const control=extraControl(EXTRA_LABELS[key]);
@@ -525,6 +632,13 @@ function parseCard(box,sourceIndex){
  const move=lines.find(s=>/\s\/\s/.test(s)&&!/\d+\s*\/\s*\d+\s*\/\s*\d+/.test(s))||"";
  const loc=nextLabelValue(box,"LOCATION")||(body.match(/\bLOCATION\s*\n?\s*([^\n]+?)(?=\n|DESPAWN|$)/i)||[])[1]||"";
  const desp=nextLabelValue(box,"DESPAWN")||(body.match(/\bDESPAWN\s*(\d{1,2}:\d{2})/i)||[])[1]||"";
+ // PL-LOC-INFO: only use the distance explicitly printed inside this card.
+ // Never derive distance from device GPS or the user's saved coordinates.
+ const distanceMatch=body.match(/(?:^|\n)\s*(\d+(?:[.,]\d+)?)\s*(km|m|mi)\s+(?:away|de\s+dist[âa]ncia)\b/im);
+ const distance=distanceMatch?distanceMatch[1]+" "+distanceMatch[2]:"";
+ // The site's LOCATION container can include its own separate distance line.
+ // Strip it from the place name so Location and Distance can be toggled independently.
+ const place=clean(loc).replace(/\s*\d+(?:[.,]\d+)?\s*(?:km|m|mi)\s+(?:away|de\s+dist[âa]ncia)\s*$/i,"").trim();
  const candidates=Array.from(box.querySelectorAll("img[src]")).filter(e=>/^https?:/.test(e.src)||e.src.startsWith("data:image/"));
  const image=candidates.sort((a,b)=>{
   const score=e=>{
@@ -553,7 +667,7 @@ function parseCard(box,sourceIndex){
   sourceIndex,name:title.replace(/✨/g,"").trim(),image:image?image.src:"",
   number:(meta.match(/#\d{1,4}/)||[])[0]||"",
   gender:/\bFemale\b|♀/i.test(meta)?"♀":/\bMale\b|♂/i.test(meta)?"♂":"",
-  size:size,moves:move,location:clean(loc),despawn:(desp.match(/\d{1,2}:\d{2}/)||[])[0]||"",
+  size:size,moves:move,location:place,distance,despawn:(desp.match(/\d{1,2}:\d{2}/)||[])[0]||"",
   cp:val("CP",/(\d{1,5})/),level:val("(?:LVL|Level)",/([\d.]+)/),
   iv:raw,ivPercent:percent,rank:rankMatch?rankMatch[1]:"",
   ivRank:ivRankValid?ivRankValue:null,
@@ -598,7 +712,17 @@ function collect(){
    return evidence.percent>=filters.percentMin&&evidence.percent<=filters.percentMax;
   return false;
  };
- const valid=siteCriteria?found.filter(matches).map(x=>{
+  const wantedSpecies=Array.isArray(filters.pokemonSelections)?filters.pokemonSelections.map(normalizePokemonLabel):[];
+  const requestedSpecies=x=>{
+   if(!wantedSpecies.length)return true;
+   const name=normalizePokemonLabel(x.name),form=clean(x.form);
+   const observed=form&&!name.toLowerCase().includes('('+form.toLowerCase()+')')?name+' ('+form+')':name;
+   return wantedSpecies.some(label=>{
+    const query=label.toLowerCase(),seen=observed.toLowerCase();
+    return seen===query||(seen.endsWith(' (normal)')&&seen.slice(0,-9)===query);
+   });
+  };
+  const valid=siteCriteria?found.filter(x=>matches(x)&&requestedSpecies(x)).map(x=>{
   if(isLeague&&rankLimit===1&&!x.rank)return {...x,rank:"1",rankSource:"verified-site-filter"};
   if(isLeague&&!x.rank)return {...x,rankLimit,rankSource:"verified-site-filter"};
   return x;
@@ -835,7 +959,9 @@ if(action==="session"){
  // hidden mobile menus and partially hydrated React can be ambiguous.
  const auth=loggedIn||profileProof||accountBadge?"autenticada":
    login?"login necessário":"não confirmado";
- return JSON.stringify({ok:true,auth,shinyAvailable:!!sw,site:location.hostname});
+ // The official account-specific Shiny badge is live linkage evidence.
+ // Report only a boolean; never expose trainer codes or account details to Java.
+ return JSON.stringify({ok:true,auth,trainerLinked:!!accountBadge,shinyAvailable:!!sw,site:location.hostname});
 }
 if(action==="prepareSearch"){
  const target=["iv","raw","percent"].includes(mode)?"Stats":"PvP";

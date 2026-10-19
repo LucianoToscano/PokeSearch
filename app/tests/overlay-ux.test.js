@@ -477,9 +477,10 @@ test("Shiny tap skips Search cooldown to inspect site and auth",
   service.includes('execute("setShiny",applied->')&&
   service.includes('execute("session",session->')&&
   service.includes('handler.removeCallbacks(queuedRefresh);'));
-test("Shiny tap opens official login only when account+trainer requirement fails",
-  service.includes('if(shiny&&!hasConfirmedTrainerLink())')&&
-  service.includes('revertUnverifiedShiny("✨ Shiny exige login PoGoCoordinates e treinador vinculado.")')&&
+test("Shiny tap waits for LIVE authenticated trainer proof instead of stale local prefs",
+  service.includes('private boolean siteConfirmsShinyAccount(JSONObject session)')&&
+  service.includes('execute("session",session->')&&
+  service.includes('if(!siteConfirmsShinyAccount(session)){')&&
   service.includes('openShinyLogin();')&&
   service.includes('if(!loaded||website==null){'));
 test("Shiny off works without forced login",
@@ -795,11 +796,13 @@ test("UX-MENU-02 uses earlier SVG icons for location, alerts, favorites, appeara
  dock.includes('source.cloneNode(true)')&&
  dock.includes('["report","⚠","Reportar","report"]')&&
  dock.includes('["donate","♡","Apoiar","donate"]'));
-test("UX-MENU-02 builds a unique Pokémon silhouette but does not fake site integration",
+test("UX-MENU-02 Pokémon silhouette opens the official multi-species/form picker",
  dock.includes('pokemon:\'<path')&&
- dock.includes('renderPokemonPlaceholder()')&&
- dock.includes('Busca por espécie em preparação. Nenhuma pesquisa será simulada.')&&
- !dock.includes('case "pokemon":Native.'));
+ dock.includes('case "pokemon":toggleChoices("pokemon")')&&
+ dock.includes('function renderPokemonChoices()')&&
+ dock.includes('function requestPokemonSuggestions(query)')&&
+ dock.includes('Native.setSearchConfig(JSON.stringify(next))')&&
+ !dock.includes('renderPokemonPlaceholder()'));
 test("UX-SHINY-01 restores Shiny ✨ next to Modos using the existing native toggle",
  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"]')&&
  dock.includes('case "sh":Native.shiny();break;')&&
@@ -884,7 +887,7 @@ test("UX-SHINY-02 keeps Shiny beside Modos through saved preferences and native 
   state.includes('id==="sh"?(shiny&&!shinyPending)')&&
   dock.includes('[data-key=sh].selected')&&dock.includes('[data-key=sh].pending')&&
   service.includes('!"sh".equals(id)')&&
-  service.includes('if(shiny&&!hasConfirmedTrainerLink())')&&
+  service.includes('siteConfirmsShinyAccount(session)')&&
   !dock.split("function getResultIcon(")[1].split("let locationEnabled=")[0].includes('result-icons/modes/');
 })());
 test("PSC-Shiny requires official linked trainer card plus valid 12-digit code",
@@ -892,12 +895,12 @@ test("PSC-Shiny requires official linked trainer card plus valid 12-digit code",
  service.includes('"linked".equals(p.getString("profileTrainerState","unknown"))')&&
  service.includes('p.getString("profileTrainerCode","").matches("[0-9]{12}")')&&
  service.includes('!p.getString("profileTrainerName","").trim().isEmpty()'));
-test("Shiny switch checks live authentication AND linked trainer",
- service.includes('!"autenticada".equals(auth)||!hasConfirmedTrainerLink()')&&
- service.includes('!"autenticada".equals(session.optString("auth","não confirmado"))||')&&
+test("Shiny switch checks live authentication AND confirmed official badge",
+ service.includes('"autenticada".equals(session.optString("auth",""))')&&
+ service.includes('session.optBoolean("trainerLinked",false)||hasConfirmedTrainerLink()')&&
  service.includes('revertUnverifiedShiny("✨ Conta logada e treinador confirmado são obrigatórios para Shiny.")'));
 test("Guest public search continues even if stale Shiny preference was ON",
- service.includes('if(shiny&&(!"autenticada".equals(auth)||!hasConfirmedTrainerLink()))')&&
+ service.includes('if(shiny&&!siteConfirmsShinyAccount(session))')&&
  service.includes('revertUnverifiedShiny("✨ Shiny exige login e treinador vinculado · busca comum liberada")')&&
  service.includes('execute("prepareSearch",prepared->{')&&
  service.includes('private void refresh(boolean manual)'));
@@ -1828,6 +1831,95 @@ test("UX-WATCHDOG-45S late requests discarded",()=>{
   service.includes('private static final long SEARCH_WATCHDOG_MS=45_000L;')&&
   service.includes('if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;');
 });
+
+// UI-INFO-ALL and UX-LOC-SHINY regression tests: all visibility switches are
+// presentation only; do not change the source query or the original sprite gap.
+test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown",()=>{
+ const keys=["name","number","gender","size","form","moves","location","distance","shiny"];
+ return keys.every(key=>
+   dock.includes('"'+key+'":!!displayPrefs.'+key)||
+   dock.includes(key+':!!displayPrefs.'+key))&&
+  keys.every(key=>service.includes('case "'+key+'":')&&
+    service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",false)'))&&
+  keys.every(key=>dock.includes('opts.'+key+'&&'))&&
+  dock.includes('const metaWidth=metadataVisible?96:0;')&&
+  dock.includes('if(lines.length)return size+3;')&&
+  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
+});
+test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
+ const source=read("assets/probe.js"),detail=read("assets/detail.html");
+ return source.includes('const distanceMatch=body.match(')&&
+  source.includes('location:place,distance,despawn:')&&
+  detail.includes('item("Distância",c.distance)')&&
+  !source.includes('navigator.geolocation')&&
+  dock.includes('"Distância do local informado"');
+});
+test("UX-INFO-ALL-03 optional metadata respects the compact row dimensions",()=>{
+ const win={};new Function("window",read("assets/pvpoke-overall-ranks.js"))(win);
+ const start=dock.indexOf('const PVPOKE_OVERALL='),end=dock.indexOf('let lastListKey=""',start);
+ if(start<0||end<start)return false;
+ const f=new Function('window','verifiedSpawnIvPercent','esc',
+   dock.slice(start,end)+'return {resultLines,computeResultLayout};')(
+     win,()=>null,s=>String(s));
+ const card={name:'Machop',number:'#066',gender:'♀',size:'M',form:'',
+   moves:'Karate Chop / Brick Break',location:'Shibuya, Tokyo, Japan',
+   distance:'0.3 km',shiny:true};
+ const opts={name:true,number:true,gender:true,size:true,form:true,moves:true,
+   location:true,distance:true,shiny:true,rawIv:false};
+ const lines=f.resultLines(card,opts,'gl'),hidden=f.resultLines(card,{},'gl');
+ const layout=f.computeResultLayout([card,card],45,700,false,false,opts,'gl');
+ return lines.includes('Nome Machop')&&lines.includes('Local Shibuya, Tokyo, Japan')&&
+   lines.includes('Dist 0.3 km')&&lines.includes('Sexo ♀')&&
+   lines.includes('Tam M')&&lines.includes('✨ Shiny')&&
+   hidden.length===0&&layout.rows.every(r=>r===48)&&layout.visibleCount===2;
+});
+test("UX-LOC-SHINY-01 reasserts shiny after site Coords switch and before Search",()=>{
+ const begin=service.indexOf('private void verifyShinyAfterLocation(');
+ const end=service.indexOf('private void openShinyLogin()',begin);
+ const fragment=service.slice(begin,end);
+ return begin>=0&&end>begin&&
+  service.includes('verifyShinyAfterLocation(generation,manual,0);')&&
+  fragment.includes('execute("setShiny",applied->')&&
+  fragment.includes('execute("verifyShiny",verified->')&&
+  fragment.includes('verifyAndSubmit(generation,manual,0)')&&
+  fragment.includes('searchFailure("⚠ Shiny não aplicado"')&&
+  fragment.includes('generation!=requestGeneration')&&
+  service.includes('execute("verifyLocation:"+locationPayload(),lastLocation->');
+});
+test("UX-LOC-SHINY-02 live account badge can prove linked trainer without exposing code",()=>{
+ const source=read("assets/probe.js");
+ return source.includes('trainerLinked:!!accountBadge')&&
+  source.includes('return JSON.stringify({ok:true,auth,trainerLinked:')&&
+  service.includes('session.optBoolean("trainerLinked",false)||hasConfirmedTrainerLink()')&&
+  !service.includes('if(shiny&&!hasConfirmedTrainerLink())');
+});
+test("SITE-POKEMON-01 picker exposes selected chips and exact official suggestions",()=>
+ dock.includes('function renderPokemonChoices()')&&
+ dock.includes('pokemonDraft.length+" selecionados"')&&
+ dock.includes('input.placeholder="Nome, forma ou número #"')&&
+ dock.includes('pokemonSelections:[...pokemonDraft]')&&
+ dock.includes('pokemonDraft.length<50'));
+test("SITE-POKEMON-02 bridge performs nonblocking live suggestions",()=>
+ service.includes('@JavascriptInterface public void requestPokemonSuggestions(String query)')&&
+ service.includes('execute("pokemonSuggest:"+JSONObject.quote(query),response->')&&
+ service.includes('generation!=requestGeneration')&&
+ service.includes('window.onPokemonSuggestions('));
+test("SITE-POKEMON-03 native validates names, caps 50, and preserves forms",()=>
+ service.includes('org.json.JSONArray species=input.optJSONArray("pokemonSelections")')&&
+ service.includes('if(species.length()>50)return;')&&
+ service.includes('extra.put("pokemonSelections",cleaned)')&&
+ service.includes('clearKeys.put("pokemonSelections")'));
+test("SITE-POKEMON-04 site filter uses selected chips and exact official options",()=>
+ probe.includes('function pokemonSelectedChips()')&&
+ probe.includes('function pokemonPickerOptions()')&&
+ probe.includes('const pokemon=pokemonListSelection(action)')&&
+ probe.includes('return {ok:false,pending:false,reason:')&&
+ probe.includes('found.filter(x=>matches(x)&&requestedSpecies(x))'));
+test("SITE-POKEMON-05 12-icon toolbar & no personal GPS remain intact",()=>
+ dock.includes('grid-template-columns:34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr')&&
+ !probe.includes('navigator.geolocation')&&
+ dock.includes('items.slice(0,10)')&&
+ service.includes('"locationCoords"'));
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 

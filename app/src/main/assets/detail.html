@@ -69,7 +69,7 @@ window.showDetails=(c,mode,watched)=>{
   stat("PC",c.cp)+stat("Nv.",c.level)+stat("IV",c.ivPercent?c.ivPercent+"%"+(c.iv?" ("+c.iv+")":""):c.iv,"red")+
   stat("Rank",c.rank);
  document.getElementById("info").innerHTML=
-  item("Golpes",c.moves)+item("Local",c.location)+(expiresAt?'<div><em>Despawn:</em> <span id="timer"></span></div>':item("Despawn",c.despawn))+'<div><em>Coordenadas:</em> <span id="coordsValue">'+h(c.coords||"Toque em Get coords")+'</span></div>';
+  item("Golpes",c.moves)+item("Local",c.location)+item("Distância",c.distance)+(expiresAt?'<div><em>Despawn:</em> <span id="timer"></span></div>':item("Despawn",c.despawn))+'<div><em>Coordenadas:</em> <span id="coordsValue">'+h(c.coords||"Toque em Get coords")+'</span></div>';
  updateCountdown();
  requestAnimationFrame(()=>Native.resizeDetail(Math.ceil(document.getElementById("panel").getBoundingClientRect().height)+2));
 };

@@ -499,4 +499,35 @@ assert.equal(run("verifyFilters","percent",false,percentEmpty).ok,false,
 assert.equal(configureSettled("percent",percentEmpty).result.configured,true);
 assert.equal(run("verifyFilters","percent",false,percentEmpty).ok,true);
 checked++;
+// Live account-specific site badge is an authoritative boolean, not a stored code.
+{
+ const yes=run("session","raw",false,{accountBadge:true});
+ assert.equal(yes.auth,"autenticada");
+ assert.equal(yes.trainerLinked,true);
+ assert.ok(!JSON.stringify(yes).includes("123456789012"));
+ const no=run("session","raw",false,{loggedOut:true});
+ assert.equal(no.trainerLinked,false);
+ checked+=2;
+}
+// Parse the card DOM in isolation: never guess a distance from coordinates.
+{
+ const from=source.indexOf('function nextLabelValue(');
+ const to=source.indexOf('// IV is evidence about THIS card,',from);
+ assert.ok(from>0&&to>from);
+ const parse=new Function('clean','text','verifiedCardIv','mode',
+   source.slice(from,to)+'return parseCard;')(
+   s=>String(s||'').trim(),e=>String(e?.innerText||e?.textContent||''),
+   ()=>({percent:36}),'raw');
+ const card={innerText:'Machop ✨\n#066 · Female · M\nKarate Chop / Brick Break\nCP\n274\nLVL\n9\nIV\n36% (2/0/14)\nLOCATION\nShibuya, Tokyo, Japan\n0.3 km away\nDESPAWN\n19:16',
+  querySelector:()=>({innerText:'Machop ✨'}),querySelectorAll:()=>[]};
+ const parsed=parse(card,0);
+ assert.equal(parsed.distance,'0.3 km');
+ assert.equal(parsed.location,'Shibuya, Tokyo, Japan');
+ assert.equal(parsed.gender,'♀');
+ assert.equal(parsed.size,'M');
+ assert.equal(parsed.name,'Machop');
+ card.innerText=card.innerText.replace('0.3 km away','');
+ assert.equal(parse(card,0).distance,'');
+ checked+=6;
+}
 console.log("PokeSearch probe contract: "+checked+" tests passed");

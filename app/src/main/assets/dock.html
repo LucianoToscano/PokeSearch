@@ -493,7 +493,24 @@ body.controls-window #choices.standardPanel[data-panel-kind="period"]{width:190p
 body.controls-window #choices.standardPanel[data-panel-kind="appearance"]{width:240px!important}
 body.controls-window #choices.standardPanel[data-panel-kind="info"]{width:225px!important;max-height:min(235px,var(--popup-room,400px))!important}
 body.controls-window #choices.standardPanel[data-panel-kind="filters"]{width:246px!important;max-height:min(355px,var(--popup-room,400px))!important}
-body.controls-window #choices.standardPanel[data-panel-kind="pokemon"]{width:216px!important;max-height:min(135px,var(--popup-room,400px))!important}
+body.controls-window #choices.standardPanel[data-panel-kind="pokemon"]{
+ width:270px!important;max-width:calc(100vw - 12px)!important;
+ max-height:min(350px,var(--popup-room,400px))!important;
+}
+#choices #pokemonFind{display:block;width:calc(100% - 8px);height:30px;margin:4px;
+ padding:4px 7px;font-size:11px;color:#fff;background:#131b24;
+ border:1px solid #596879;border-radius:6px}
+#choices .pokemonSelected{display:flex;flex-wrap:wrap;gap:3px;padding:3px;max-height:70px;overflow-y:auto}
+#choices .pokemonSelected .pokemonChip{width:auto!important;max-width:100%;min-height:24px!important;
+ padding:3px 6px!important;margin:0!important;background:#421923;color:#ffc4cd;
+ border:1px solid #7b3442;border-radius:14px;font-size:10px!important}
+#choices .pokemonCandidates{max-height:145px;overflow-y:auto;overscroll-behavior:contain}
+#choices .pokemonCandidates .pokemonCandidate{width:100%;min-height:30px;margin:1px 0;padding:4px 5px;
+ display:flex;align-items:center;gap:5px;text-align:left;background:transparent;
+ color:#e9edf2;font-size:11px;white-space:normal}
+#choices .pokemonCandidate img{width:22px;height:22px;object-fit:contain;flex:none}
+#choices .pokemonCandidate span:nth-child(1),#choices .pokemonCandidate span:nth-child(2){flex:1}
+#choices .pokemonCandidates .pokemonCandidate.chosen{color:#ff929f;background:#411824}
 body.controls-window #choices.standardPanel .choiceHeader{
  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5;
  min-height:26px;margin:0 0 2px;padding:3px 5px!important;
@@ -576,6 +593,7 @@ body.result-window .ivInfo.excellent{color:#c084fc}
 body.result-window .ivInfo.perfect{color:#f04b70}
 body.result-window .spawnInfoLine{display:block;white-space:nowrap;overflow:hidden;
  text-overflow:ellipsis;max-width:100%;min-height:calc(11px * var(--result-info-scale,1))}
+body.result-window .spawnInfoLine.wrap{white-space:normal;overflow:visible;overflow-wrap:anywhere;word-break:break-word;}
 body.result-window .spawnInfo .timer{
  position:static;display:inline;padding:0;margin:0;min-width:0;
  font:700 9px/11px Roboto,Arial,sans-serif;text-align:left;
@@ -752,13 +770,15 @@ let locationEnabled=false,locationCoords="",locationRadius=0,locationVerified=fa
 let showResultText=false;
 let notificationPermissionGranted=false,watchAlertsEnabled=true;
 let resultDisplayHeightDp=0;
-let resultDisplayOptions={count:true,cp:false,level:false,despawn:false,iv:false,rawIv:true,
+let resultDisplayOptions={count:true,name:false,number:false,gender:false,size:false,
+ form:false,moves:false,location:false,distance:false,shiny:false,
+ cp:false,level:false,despawn:false,iv:false,rawIv:true,
  overallRank:false,speciesIvRank:false,overallRankGl:false,overallRankUl:false,overallRankMl:false,
  speciesIvRankGl:false,speciesIvRankUl:false,speciesIvRankMl:false};
 let displayedMetadataWidth=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
- sortBy:"",pokemon:"",form:"",size:"",gender:"",weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
+ sortBy:"",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=false,advancedExpanded=false;
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
 // Math.round(total / 45 * 100) produces exactly 46 possible shown percentages.
@@ -884,6 +904,7 @@ function closeChoices(){
  refreshQuickMenuStates();fit();
 }
 function toggleChoices(kind){
+ const pokemonFromFilters=kind==="pokemon"&&choiceOpen==="filters";
  // The separate toolbar WebView may be visible before syncMenu arrives.
  if(controlsWindow&&!menuOpen)setMenuOpen(true,document.body.classList.contains('menu-left')?'left':'right',0);
  if(!menuOpen)return;
@@ -908,8 +929,15 @@ function toggleChoices(kind){
   if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();
   return;
  }
- if(kind==="location"){renderLocationChoices();return;}
- if(kind==="mode"){
+  if(kind==="location"){renderLocationChoices();return;}
+  if(kind==="pokemon"){
+   pokemonPickerBase=pokemonFromFilters&&modeDraft?{...modeDraft}:{...searchSettings,mode};
+   pokemonDraft=Array.isArray(pokemonPickerBase.pokemonSelections)?[...pokemonPickerBase.pokemonSelections]:
+    pokemonPickerBase.pokemon?[pokemonPickerBase.pokemon]:[];
+   pokemonForceClear=false;pokemonQuery="";pokemonSuggestions=[];pokemonSuggestionStatus="Carregando opções do site...";
+   renderPokemonChoices();requestPokemonSuggestions("");return;
+  }
+  if(kind==="mode"){
   cascadeMode=null;modeScrollTop=0;
   modeDraft={...searchSettings,mode};
   // No filter-options discovery in Modos: callbacks replaced numeric picker mid-tap.
@@ -1136,9 +1164,10 @@ function renderExtraFilters(panel,make){
   const input=make("input");input.type="text";input.placeholder="Qualquer Pokémon";
   input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
   input.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
-  input.value=modeDraft.pokemon||"";input.maxLength=80;
-  input.oninput=()=>{if(modeDraft.pokemon!==input.value.trim())modeDraft.form="";modeDraft.pokemon=input.value.trim();};
-  field("Pokémon",input);
+  const pick=make("button","extraValue",Array.isArray(modeDraft.pokemonSelections)&&modeDraft.pokemonSelections.length?
+   modeDraft.pokemonSelections.length+" escolhidos ›":"Escolher Pokémon ›");
+  pick.onclick=()=>toggleChoices("pokemon");
+  field("Pokémon",pick);
   option("form","Form");option("size","Size");
   panel.appendChild(make("p","extraNote","Form depende das variantes disponíveis; os menus usam opções lidas do site."));
  }
@@ -1430,6 +1459,17 @@ function pvpIvClassPercent(rank){
 }
 function resultLines(card,opts,league){
  const lines=[],compact=[];
+ // Every card data field is opt-in and display-only; never affects search.
+ const safeText=(value,max=90)=>String(value??"").replace(/[\r\n\t]+/g," ").trim().slice(0,max);
+ if(opts.name&&safeText(card?.name))lines.push("Nome "+safeText(card.name,65));
+ if(opts.number&&safeText(card?.number))lines.push("Nº "+safeText(card.number,12));
+ if(opts.gender&&["♀","♂"].includes(card?.gender))lines.push("Sexo "+card.gender);
+ if(opts.size&&["XXS","XS","M","XL","XXL"].includes(String(card?.size||"").toUpperCase()))lines.push("Tam "+String(card.size).toUpperCase());
+ if(opts.form&&safeText(card?.form))lines.push("Forma "+safeText(card.form,48));
+ if(opts.moves&&safeText(card?.moves))lines.push("Golpes "+safeText(card.moves,65));
+ if(opts.location&&safeText(card?.location))lines.push("Local "+safeText(card.location,90));
+ if(opts.distance&&/^(?:\d+(?:[.,]\d+)?)\s*(?:km|m|mi)$/i.test(safeText(card?.distance)))lines.push("Dist "+safeText(card.distance,20));
+ if(opts.shiny&&card?.shiny===true)lines.push("✨ Shiny");
  const cp=String(card?.cp??"").trim(),lvl=String(card?.level??"").trim();
  if(opts.cp&&/^[0-9]{1,5}$/.test(cp)&&Number(cp)>0&&Number(cp)<=10000)compact.push("PC"+cp);
  if(opts.level&&/^\d{1,2}(?:\.5)?$/.test(lvl)&&Number(lvl)>=1&&Number(lvl)<=55)compact.push("Nv"+lvl);
@@ -1596,8 +1636,8 @@ function draw(){
   const infoLines=resultLines(c,resultDisplayOptions,shownMode);
   const inlineTimer=resultDisplayOptions.despawn&&deadline?
    '<span class="timer" data-deadline="'+deadline+'"></span>':"";
-  const info=infoLines.length?'<span class="spawnInfo" aria-hidden="true">'+infoLines.map(text=>
-   '<span class="spawnInfoLine">'+(text.includes("TIMER")?
+  const info=infoLines.length?'<span class="spawnInfo" aria-label="Dados opcionais do Pokémon">'+infoLines.map(text=>
+   '<span class="spawnInfoLine'+(/^(?:Nome |Local |Golpes |Forma )/.test(text)?" wrap":"")+'" title="'+esc(text)+'">'+(text.includes("TIMER")?
     text.split("TIMER").map(line=>resultInfoHtml(line,c)).join(inlineTimer):resultInfoHtml(text,c))+'</span>').join("")+'</span>':"";
   // When the optional side strip is closed, retain historical timer/IV badges.
   const badge=!metadataVisible&&showTimers&&deadline?
@@ -1673,7 +1713,11 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  cards=Array.isArray(a)?a.slice(0,10):[];
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
-  {count:!!displayPrefs.count,cp:!!displayPrefs.cp,level:!!displayPrefs.level,
+  {count:!!displayPrefs.count,name:!!displayPrefs.name,number:!!displayPrefs.number,
+   gender:!!displayPrefs.gender,size:!!displayPrefs.size,form:!!displayPrefs.form,
+   moves:!!displayPrefs.moves,location:!!displayPrefs.location,
+   distance:!!displayPrefs.distance,shiny:!!displayPrefs.shiny,
+   cp:!!displayPrefs.cp,level:!!displayPrefs.level,
    despawn:!!displayPrefs.despawn,iv:!!displayPrefs.iv,rawIv:!!displayPrefs.rawIv,
    overallRank:!!displayPrefs.overallRank,speciesIvRank:!!displayPrefs.speciesIvRank,
    overallRankGl:!!displayPrefs.overallRankGl,overallRankUl:!!displayPrefs.overallRankUl,
@@ -1686,6 +1730,9 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  locationVerified=!!verifiedLocation&&locationEnabled;
  if(config&&typeof config==="object")searchSettings={...searchSettings,...config};
+ // Compatibility with the original single-Pokémon filter stored before SITE-POKEMON-01.
+ if(config&&!Array.isArray(config.pokemonSelections)&&typeof config.pokemon==="string"&&config.pokemon.trim())
+  searchSettings.pokemonSelections=[config.pokemon.trim()];
  shownMode=resultSourceMode==="iv"?"raw":(resultSourceMode||mode);
  if(resultSourceConfig&&typeof resultSourceConfig==="object")
   shownSettings={...searchSettings,...resultSourceConfig};
@@ -1762,7 +1809,10 @@ function quickState(id){
   case "bell":return !notificationPermissionGranted?"Permissão":alertMode==="silent"?"Silencioso":generalAlerts?"Som":"OFF";
   case "star":return hasFavorites?"Ativos":"";
   case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF";
-  case "filters":return ["pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","sortBy"].some(k=>searchSettings[k])?"Ativos":"Nenhum";
+  case "filters":return (Array.isArray(searchSettings.pokemonSelections)&&searchSettings.pokemonSelections.length>0)||
+   ["pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","sortBy"].some(k=>searchSettings[k])?"Ativos":"Nenhum";
+  case "pokemon":return Array.isArray(searchSettings.pokemonSelections)&&searchSettings.pokemonSelections.length?
+   searchSettings.pokemonSelections.length+" escolhidos":"Todos";
   case "period":return period>0?"Auto "+period+"m":"Auto OFF";
   case "appearance":return "Personalização";
   default:return "";
@@ -1774,11 +1824,7 @@ function quickClick(id){
   case "sh":Native.shiny();break; // Reuse native, login-verified Shiny toggle.
   case "bell":toggleChoices("alerts");break;
   case "star":Native.openWatchList();break;
-  case "pokemon":
-   choiceOpen="pokemon";
-   document.getElementById("menu").classList.add("subview");
-   renderPokemonPlaceholder();
-   break;
+  case "pokemon":toggleChoices("pokemon");break;
   case "report":Native.openReport();break;
   case "donate":Native.openPix();break;
   case "close":Native.close();break;
@@ -1823,11 +1869,98 @@ function iconForQuick(id, fallback){
  }
  glyph.textContent=fallback;return glyph;
 }
-function renderPokemonPlaceholder(){
- const panel=uxPanel("POKÉMON");
- const note=document.createElement("p");note.className="uxNote";
- note.textContent="Busca por espécie em preparação. Nenhuma pesquisa será simulada.";
- panel.appendChild(note);fit();
+// SITE-POKEMON-01: Match the website's multi-species + form picker, without
+// inventing unreleased costumes, IDs, event forms, or site-only selections.
+let pokemonDraft=[],pokemonSuggestions=[],pokemonQuery="",pokemonSuggestionStatus="",pokemonPickerBase=null,pokemonForceClear=false;
+let pokemonSuggestTimer=null;
+function requestPokemonSuggestions(query){
+ if(!controlsWindow||choiceOpen!=="pokemon"||!Native.requestPokemonSuggestions)return;
+ clearTimeout(pokemonSuggestTimer);
+ pokemonSuggestTimer=setTimeout(()=>Native.requestPokemonSuggestions(String(query||"").slice(0,65)),180);
+}
+window.onPokemonSuggestions=response=>{
+ if(choiceOpen!=="pokemon"||!response)return;
+ if(response.query!==undefined&&response.query!==pokemonQuery)return; // stale suggestion response
+ pokemonSuggestions=response.ok&&Array.isArray(response.options)?response.options:[];
+ pokemonSuggestionStatus=response.ok?pokemonSuggestions.length?"":"Nenhuma opção oficial encontrada":
+  String(response.reason||"Aguardando filtro Pokémon do PoGoCoordinates");
+ drawPokemonSuggestions();
+};
+function drawPokemonSuggestions(){
+ const panel=document.getElementById("choices"),box=panel.querySelector("#pokemonCandidates");
+ if(!box||choiceOpen!=="pokemon")return;
+ box.replaceChildren();
+ if(!pokemonSuggestions.length){
+  const hint=document.createElement("p");hint.className="uxNote";hint.textContent=pokemonSuggestionStatus;
+  box.appendChild(hint);return;
+ }
+ pokemonSuggestions.forEach(item=>{
+  if(!item||!item.label)return;
+  const label=String(item.label),exists=pokemonDraft.some(x=>x.toLowerCase()===label.toLowerCase());
+  const button=document.createElement("button");button.type="button";
+  button.className="pokemonCandidate"+(exists?" chosen":"");
+  button.title=label;button.setAttribute("aria-pressed",String(exists));
+  if(/^https:\/\//.test(String(item.image||""))){
+   const img=document.createElement("img");img.src=item.image;img.alt="";
+   img.loading="lazy";button.appendChild(img);
+  }
+  const text=document.createElement("span");text.textContent=(item.dex?"#"+item.dex+"  ":"")+label;
+  button.appendChild(text);
+  if(exists){const mark=document.createElement("span");mark.textContent="✓";button.appendChild(mark);}
+  button.onclick=()=>{
+   if(exists)pokemonDraft=pokemonDraft.filter(x=>x.toLowerCase()!==label.toLowerCase());
+   else if(pokemonDraft.length<50)pokemonDraft.push(label);
+   renderPokemonTags();drawPokemonSuggestions();
+  };
+  box.appendChild(button);
+ });
+ fit();
+}
+function renderPokemonTags(){
+ const target=document.getElementById("pokemonSelected");if(!target)return;
+ target.replaceChildren();
+ const counter=document.getElementById("pokemonCount");
+ if(counter)counter.textContent=pokemonDraft.length+" selecionados";
+ pokemonDraft.forEach(name=>{
+  const chip=document.createElement("button");chip.type="button";chip.className="pokemonChip";
+  chip.textContent=name+"  ×";chip.setAttribute("aria-label","Remover "+name);
+  chip.onclick=()=>{pokemonDraft=pokemonDraft.filter(x=>x!==name);renderPokemonTags();drawPokemonSuggestions();};
+  target.appendChild(chip);
+ });
+ if(!pokemonDraft.length){
+  const hint=document.createElement("span");hint.className="uxNote";hint.textContent="Nenhum = todos os Pokémon";
+  target.appendChild(hint);
+ }
+}
+function renderPokemonChoices(){
+ const panel=uxPanel("POKÉMON · espécies e formas");
+ const count=document.createElement("div");count.id="pokemonCount";count.className="uxSubheading";
+ const chips=document.createElement("div");chips.id="pokemonSelected";
+ chips.className="pokemonSelected";panel.append(count,chips);
+ const input=document.createElement("input");input.id="pokemonFind";
+ input.type="search";input.autocomplete="off";input.placeholder="Nome, forma ou número #";
+ input.value=pokemonQuery;input.maxLength=65;input.setAttribute("aria-label","Pesquisar espécies e formas oficiais");
+ input.oninput=()=>{pokemonQuery=input.value.trim();pokemonSuggestions=[];
+  pokemonSuggestionStatus="Pesquisando no PoGoCoordinates...";
+  drawPokemonSuggestions();requestPokemonSuggestions(pokemonQuery);};
+ input.onfocus=()=>{if(Native.locationEditor)Native.locationEditor(true);};
+ input.onblur=()=>{if(Native.locationEditor)Native.locationEditor(false);};
+ const matches=document.createElement("div");matches.id="pokemonCandidates";
+ matches.className="pokemonCandidates";panel.append(input,matches);
+ const actions=document.createElement("div");actions.className="modeAction";
+ const apply=document.createElement("button");apply.type="button";apply.className="modeApply";
+ apply.textContent="✓ Aplicar";apply.onclick=()=>{
+  const next={...(pokemonPickerBase||searchSettings),mode,pokemon:"",
+   pokemonSelections:[...pokemonDraft],clearPokemonSelection:pokemonForceClear};
+  closeChoices();Native.setSearchConfig(JSON.stringify(next));
+ };
+ const clear=document.createElement("button");clear.type="button";clear.textContent="Limpar todos";
+ clear.onclick=()=>{pokemonDraft=[];pokemonForceClear=true;renderPokemonTags();drawPokemonSuggestions();};
+ actions.append(apply,clear);panel.appendChild(actions);
+ const hint=document.createElement("p");hint.className="uxNote";
+ hint.textContent="Selecione várias espécies e formas EXATAS. Só serão buscadas as escolhidas após ✓ Aplicar. As opções vêm do PoGoCoordinates.";
+ panel.appendChild(hint);
+ renderPokemonTags();drawPokemonSuggestions();fit();
 }
 function renderQuickMenu(){
  if(!controlsWindow)return;
@@ -1959,7 +2092,11 @@ function renderInfoChoices(){
  const back=document.createElement("button");back.type="button";back.textContent="‹ Personalização";
  back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();};panel.appendChild(back);
  const options=[
-  ["count","Quantidade de spawns"],["despawn","Tempo de despawn"],
+  ["count","Quantidade de spawns"],["name","Nome do Pokémon"],
+  ["number","Número da Pokédex"],["gender","Sexo"],["size","Tamanho"],
+  ["form","Forma"],["moves","Ataques"],["location","Localização"],
+  ["distance","Distância do local informado"],["shiny","Indicador ✨ Shiny"],
+  ["despawn","Tempo de despawn"],
   ["level","Nível (Lv)"],["cp","Poder de Combate (PC)"],
   ["rawIv","IV do Pokémon · A/D/H"],["iv","IV% do Pokémon"],
   ["overallRankGl","Rank Geral · Grande Liga"],["overallRankUl","Rank Geral · Ultra Liga"],
@@ -1975,7 +2112,7 @@ function renderInfoChoices(){
   });
  }
  const hint=document.createElement("div");hint.className="uxNote";
- hint.textContent="Até 10 spawns. IV A/D/H e IV% têm cores por IV; RG = rank geral PvPoke; IV# = ranking de atributos dentro da espécie, por GL/UL/ML (nível 50). Dados não comprovados ficam ocultos.";
+ hint.textContent="Até 10 spawns. Nome, distância, localização, tamanho, sexo e todos os demais campos podem aparecer ou ficar ocultos. A distância só vem do cartão do PoGoCoordinates, sem GPS. O espaço dos sprites não aumenta; arraste a coluna lateral para ler informações longas. Dados não comprovados não são inventados.";
  panel.appendChild(hint);
  requestAnimationFrame(()=>{if(choiceOpen==="info"&&panel.isConnected)panel.scrollTop=scroll;});
  fit();
