@@ -38,7 +38,7 @@ public class OverlayService extends Service {
     private static final int RESULTS_HEADER_DP=30;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return Math.max(1,Math.min(396,screenWidthDp()-8));}
+    private int menuDp(){return Math.max(1,Math.min(276,screenWidthDp()-8));}
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams,menuParams,resultParams;
@@ -123,7 +123,7 @@ public class OverlayService extends Service {
     private String locationCoords="";
     private int locationRadius=0;
     private boolean locationEditorOpen=false;
-    private boolean showTimers=false,alerts=false;
+    private boolean showTimers=false,alerts=false,showResultText=false;
     private String alertsMode="off"; // off / on / silent, separate from favorite opt-in
     private String sort="site"; // Follow the ten results returned by the site, not an inverted local despawn sort.
     private long lastAlertAt=0L;
@@ -319,7 +319,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -1817,6 +1817,52 @@ public class OverlayService extends Service {
                 new String[]{"P","M","G"}[(at+1)%sizes.length]+" · "+size+" × "+size,
                 android.widget.Toast.LENGTH_SHORT).show();
         });}
+        // UX-MENU-01: presentation choices are private to this device;
+        // never alter search criteria or the official PoGoCoordinates session.
+        @JavascriptInterface public void setResultTextVisible(boolean value){handler.post(()->{
+            showResultText=value;
+            getSharedPreferences("prefs",0).edit().putBoolean("showResultText",value).apply();
+            update();
+        });}
+        @JavascriptInterface public void setAlertMode(String value){handler.post(()->{
+            if(!"on".equals(value)&&!"silent".equals(value)&&!"off".equals(value))return;
+            alertsMode=value;alerts=!"off".equals(value);
+            getSharedPreferences("prefs",0).edit().putString("alertsMode",value)
+                .putBoolean("alerts",alerts).apply();
+            update();
+        });}
+        @JavascriptInterface public void testNotification(){handler.post(()->{
+            boolean sent=WatchAlerts.test(OverlayService.this);
+            android.widget.Toast.makeText(OverlayService.this,
+                sent?"Notificação de teste enviada":"Não foi possível enviar teste",
+                android.widget.Toast.LENGTH_SHORT).show();
+        });}
+        @JavascriptInterface public void saveMenuPrefs(String json){handler.post(()->{
+            if(json==null||json.length()>1600)return;
+            try{
+                JSONObject incoming=new JSONObject(json);
+                JSONObject clean=new JSONObject();
+                String direction=incoming.optString("direction","vertical");
+                clean.put("direction","horizontal".equals(direction)?"horizontal":"vertical");
+                clean.put("labels",incoming.optBoolean("labels",true));
+                String[] allowed={"mode","sh","period","bell","star","location",
+                    "filters","info","appearance","report","donate","close"};
+                java.util.Set<String> valid=new java.util.HashSet<>(java.util.Arrays.asList(allowed));
+                for(String key:new String[]{"order","hidden"}){
+                    org.json.JSONArray items=incoming.optJSONArray(key),safe=new org.json.JSONArray();
+                    java.util.Set<String> seen=new java.util.HashSet<>();
+                    if(items!=null)for(int i=0;i<items.length()&&i<12;i++){
+                        String id=items.optString(i,"");
+                        if(valid.contains(id)&&seen.add(id)&&(!"hidden".equals(key)||!"close".equals(id)))
+                            safe.put(id);
+                    }
+                    clean.put(key,safe);
+                }
+                getSharedPreferences("prefs",0).edit()
+                    .putString("menuUiPrefs",clean.toString()).apply();
+                update();
+            }catch(Exception ignored){}
+        });}
         @JavascriptInterface public void toggleTimers(){handler.post(()->{
             showTimers=!showTimers;
             getSharedPreferences("prefs",0).edit().putBoolean("showTimers",showTimers).apply();
@@ -2011,6 +2057,7 @@ public class OverlayService extends Service {
         int wanted=prefs.getInt("spriteSize",45);
         spriteSize=(wanted==35||wanted==45||wanted==55)?wanted:45;
         showTimers=prefs.getBoolean("showTimers",false);
+        showResultText=prefs.getBoolean("showResultText",false);
         alerts=prefs.getBoolean("alerts",false);
         alertsMode=prefs.getString("alertsMode",alerts?"on":"off");
         if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";
@@ -2125,6 +2172,7 @@ public class OverlayService extends Service {
         spriteSize=pref.getInt("spriteSize",45);
         if(spriteSize!=35&&spriteSize!=45&&spriteSize!=55)spriteSize=45;
         showTimers=pref.getBoolean("showTimers",false);
+        showResultText=pref.getBoolean("showResultText",false);
         alerts=pref.getBoolean("alerts",false);
         alertsMode=pref.getString("alertsMode",alerts?"on":"off");
         if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";
