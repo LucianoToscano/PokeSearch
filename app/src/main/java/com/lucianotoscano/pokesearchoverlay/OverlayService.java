@@ -51,6 +51,8 @@ public class OverlayService extends Service {
     private boolean deferMenuSync=false;
     private boolean resultLoaded=false,resultCollapsed=false;
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
+    // Keep the requested popup height independent from the clipped current window height.
+    private int menuRequestedHeightDp=MENU_BASE_DP;
     private boolean popupAbove=false;
     private int popupOffsetDp=-1,popupRoomDp=-1;
     private String probeScriptCache;
@@ -411,7 +413,7 @@ public class OverlayService extends Service {
         // picker opened. Preserve rowY and expand the touchable window ABOVE
         // or BELOW it without moving the row under the user's finger.
         int rowHeight=dp(MENU_BASE_DP);
-        int requestedPopup=Math.max(0,menuParams.height-rowHeight);
+        int requestedPopup=Math.max(0,dp(menuRequestedHeightDp)-rowHeight);
         int roomAbove=Math.max(0,rowY);
         int roomBelow=Math.max(0,bottom-(rowY+rowHeight)-dp(5));
         boolean abovePopup=requestedPopup>roomBelow&&roomAbove>roomBelow;
@@ -422,7 +424,7 @@ public class OverlayService extends Service {
             rowY-(abovePopup?actualPopup:0)));
 
         int offsetDp=abovePopup?Math.round(actualPopup/d.density):0;
-        int roomDp=requestedPopup==0?420:Math.max(50,Math.round(actualPopup/d.density)-5);
+        int roomDp=requestedPopup==0?420:Math.max(0,Math.round(actualPopup/d.density)-5);
         if(menuDrawX!=menuParams.x||menuDrawY!=menuParams.y||
            menuDrawHeight!=menuParams.height||menuDrawWidth!=menuParams.width){
             try{
@@ -446,9 +448,9 @@ public class OverlayService extends Service {
     private void resizeMenu(int desiredDp){
         if(!menuExpanded||menuParams==null||menuRoot==null)return;
         int maxMenuHeight=Math.max(MENU_BASE_DP,Math.min(450,screenHeightDp()-24));
-        int target=dp(Math.max(MENU_BASE_DP,Math.min(maxMenuHeight,desiredDp)));
-        if(Math.abs(menuParams.height-target)<=dp(1))return;
-        menuParams.height=target;
+        menuRequestedHeightDp=Math.max(MENU_BASE_DP,Math.min(maxMenuHeight,desiredDp));
+        // Always recompute placement from the untruncated size, including after a drag
+        // or switching between a tall cascade and a short settings strip.
         updateMenuPosition();
     }
     private void locationEditor(boolean open){
@@ -470,6 +472,7 @@ public class OverlayService extends Service {
             }
         }
         try{wm.updateViewLayout(menuRoot,menuParams);}catch(Exception e){recordFailure("atualizar menu",e);}
+        updateMenuPosition(); // a keyboard/focus transition must not leave controls clipped
         if(open&&menuPanel!=null){
             menuPanel.setFocusableInTouchMode(true);
             menuPanel.requestFocus();
@@ -1554,7 +1557,9 @@ public class OverlayService extends Service {
         if(show){
             menuDrawHeight=-1;menuDrawWidth=-1;
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
-            if(menuParams!=null){menuParams.width=dp(menuDp());menuParams.height=dp(MENU_BASE_DP);popupOffsetDp=-1;popupRoomDp=-1;}
+            if(menuParams!=null){menuRequestedHeightDp=MENU_BASE_DP;
+                menuParams.width=dp(menuDp());menuParams.height=dp(MENU_BASE_DP);
+                popupOffsetDp=-1;popupRoomDp=-1;}
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
         }
