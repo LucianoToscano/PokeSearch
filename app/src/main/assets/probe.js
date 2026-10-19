@@ -727,11 +727,18 @@ function configureLocation(req){
  const use=!!req.enabled;
  const fieldsBefore=locationFields();
  if(!use){
-  if(fieldsBefore.coords)valueInput(fieldsBefore.coords,"");
-  if(fieldsBefore.radius)valueInput(fieldsBefore.radius,"");
-  const area=locationModeControl("Area");
-  if(area&&coordsModeSelected()!==false){if(!area.disabled)area.click();return JSON.stringify({ok:false,pending:true,reason:"Aguardando modo Area"});}
-  return JSON.stringify({ok:true,stage:"location-off"});
+  // PL-04: Site defaults to Coords on some mobile layouts even when the
+  // application never enabled location. An empty Coords form is still
+  // an unrestricted search: do not require the unrelated Area tab.
+  // However, never silently accept stale coordinate or radius values.
+  if(fieldsBefore.coords&&locationValue(fieldsBefore.coords))
+   valueInput(fieldsBefore.coords,"");
+  if(fieldsBefore.radius&&locationValue(fieldsBefore.radius))
+   valueInput(fieldsBefore.radius,"");
+  const blank=(!fieldsBefore.coords||!locationValue(fieldsBefore.coords))&&
+   (!fieldsBefore.radius||!locationValue(fieldsBefore.radius));
+  return JSON.stringify({ok:blank,pending:!blank,stage:"location-off",
+   reason:blank?"":"Aguardando limpeza das coordenadas antigas do site"});
  }
  if(typeof req.coords!=="string"||!/^[-+]?\d+(?:\.\d+)?,[-+]?\d+(?:\.\d+)?$/.test(req.coords)||
     !Number.isInteger(req.radius)||req.radius<0||req.radius>1000||
@@ -751,7 +758,9 @@ function verifyLocation(req){
  const fields=locationFields(),active=coordsModeSelected();
  if(!req.enabled){
   const blank=(!fields.coords||!locationValue(fields.coords))&&(!fields.radius||!locationValue(fields.radius));
-  return JSON.stringify({ok:active!==true&&blank,reason:"Coordenadas do site ainda ativas"});
+  // No app coordinates were requested: active Coords with blank values
+  // does not establish an active geographic restriction.
+  return JSON.stringify({ok:blank,reason:blank?"":"Coordenadas antigas permanecem no site"});
  }
  const coordInput=locationValue(fields.coords),radiusInput=locationValue(fields.radius);
  const coordinatePattern=/^[-+]?\d+(?:\.\d+)?\s*[,;]\s*[-+]?\d+(?:\.\d+)?$/;
