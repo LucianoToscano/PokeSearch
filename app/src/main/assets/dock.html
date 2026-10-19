@@ -960,7 +960,7 @@ let quickPrefs={direction:"vertical",labels:true,order:QUICK_ACTIONS.map(a=>a[0]
 function normalizedQuickPrefs(p){
  const ids=QUICK_ACTIONS.map(a=>a[0]);
  const order=Array.isArray(p.order)?p.order.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i):[];
- const hidden=Array.isArray(p.hidden)?p.hidden.filter(x=>ids.includes(x)&&x!=="close"):[];
+ const hidden=Array.isArray(p.hidden)?p.hidden.filter(x=>ids.includes(x)&&x!=="close"&&x!=="appearance"):[];
  return {direction:p.direction==="horizontal"?"horizontal":"vertical",labels:p.labels!==false,
   order:[...order,...ids.filter(x=>!order.includes(x))],hidden};
 }
@@ -1084,7 +1084,7 @@ function renderAppearanceChoices(){
  note.textContent="A engrenagem sempre permanece visível. Use as setas para reordenar os comandos.";
  panel.appendChild(note);
  for(const id of quickPrefs.order){
-  const a=QUICK_ACTIONS.find(x=>x[0]===id);if(!a||id==="close")continue;
+  const a=QUICK_ACTIONS.find(x=>x[0]===id);if(!a||id==="close"||id==="appearance")continue;
   const line=document.createElement("div");line.className="uxAdjust";
   const name=document.createElement("span");name.textContent=a[1]+" "+a[2];line.appendChild(name);
   const eye=document.createElement("button");eye.textContent=quickPrefs.hidden.includes(id)?"□":"☑";
