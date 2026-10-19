@@ -126,10 +126,13 @@ public class MainActivity extends Activity {
         frame.setBackgroundColor(Color.rgb(10,14,23));
         ImageView pageBackground=new ImageView(this);
         pageBackground.setImageResource(R.drawable.ps_home_background_dark);
-        pageBackground.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        // The dark wallpaper supplied for the Home was being cropped into its
+        // nearly-black center on portrait phones. Fill the whole surface.
+        pageBackground.setScaleType(ImageView.ScaleType.FIT_XY);
+        pageBackground.setAlpha(1.0f);
         frame.addView(pageBackground,new FrameLayout.LayoutParams(-1,-1));
         View dim=new View(this);
-        dim.setBackgroundColor(Color.argb(55,6,12,24));
+        dim.setBackgroundColor(Color.argb(16,6,12,24)); // Keep artwork visible.
         frame.addView(dim,new FrameLayout.LayoutParams(-1,-1));
 
         LinearLayout screen=new LinearLayout(this);
@@ -227,6 +230,9 @@ public class MainActivity extends Activity {
         connectedPanel.addView(accountRow,new LinearLayout.LayoutParams(-1,-2));
         ImageView avatar=new ImageView(this);
         accountAvatar=avatar;
+        // A rebuilt Home owns a new ImageView; do not suppress reloading an
+        // already-known URL just because the old view had shown that URL.
+        shownAvatarUrl="";
         // A neutral fallback is used until the official profile provides
         // an allowlisted Google-hosted image (never a guessed portrait).
         avatar.setImageResource(android.R.drawable.ic_menu_myplaces);
@@ -550,12 +556,28 @@ public class MainActivity extends Activity {
             android.graphics.Bitmap bitmap=null;
             java.net.HttpURLConnection connection=null;
             try{
-                java.net.URL u=new java.net.URL(next);
-                connection=(java.net.HttpURLConnection)u.openConnection();
-                connection.setInstanceFollowRedirects(false);
-                connection.setConnectTimeout(5000);
-                connection.setReadTimeout(6000);
-                if(connection.getResponseCode()!=200)return;
+                // Google public avatar CDN occasionally redirects between
+                // googleusercontent hosts. Follow only a short allowlisted chain,
+                // never forward WebView cookies or bearer credentials.
+                String current=next;
+                boolean ready=false;
+                for(int redirect=0;redirect<4;redirect++){
+                    if(!allowedGoogleAvatar(current))break;
+                    if(connection!=null)connection.disconnect();
+                    connection=(java.net.HttpURLConnection)new java.net.URL(current).openConnection();
+                    connection.setInstanceFollowRedirects(false);
+                    connection.setConnectTimeout(5000);
+                    connection.setReadTimeout(6000);
+                    int code=connection.getResponseCode();
+                    if(code==200){ready=true;break;}
+                    if(code!=301&&code!=302&&code!=303&&code!=307&&code!=308)break;
+                    String location=connection.getHeaderField("Location");
+                    if(location==null)break;
+                    String redirected=new java.net.URL(new java.net.URL(current),location).toExternalForm();
+                    if(!allowedGoogleAvatar(redirected))break;
+                    current=redirected;
+                }
+                if(!ready)return;
                 if(!String.valueOf(connection.getContentType()).startsWith("image/"))return;
                 if(connection.getContentLengthLong()>2_500_000L)return;
                 try(InputStream stream=new java.io.BufferedInputStream(connection.getInputStream())){
@@ -572,6 +594,13 @@ public class MainActivity extends Activity {
                 // Network or an unavailable avatar keeps the neutral icon.
             }finally{if(connection!=null)connection.disconnect();}
             final android.graphics.Bitmap photo=bitmap;
+            if(photo==null){
+                runOnUiThread(()->{
+                    // A failed request may succeed later (Google CDN or network
+                    // hydration); allow the next Home refresh to retry.
+                    if(next.equals(shownAvatarUrl))shownAvatarUrl="";
+                });
+            }
             if(photo!=null)runOnUiThread(()->{
                 if(accountAvatar==null||!shownAvatarUrl.equals(next)||
                     !"autenticada".equals(getSharedPreferences("prefs",0)
