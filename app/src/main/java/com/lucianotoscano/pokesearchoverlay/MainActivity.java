@@ -1229,7 +1229,7 @@ public class MainActivity extends Activity {
         settingCheckbox(body,prefs,"showTimers","Mostrar tempo individual de despawn",false);
         settingAlertMode(body,prefs);
         settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,
-            "Alertar com som ao encontrar favorito",true);
+            "Alertar ao encontrar favorito nos filtros confirmados",true);
         Button testNotification=new Button(this);
         testNotification.setText("🔔 Testar notificação");
         testNotification.setAllCaps(false);
