@@ -270,7 +270,7 @@ test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&requ
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
 test("Single pin control expands the location editor",dock.includes('onclick="toggleChoices(\'location\')"'));
-test("Coords control has inline ON/OFF switch",dock.includes('fieldRow.append(field,toggle)')&&dock.includes('toggle.setAttribute("role","switch")'));
+test("Coords control has inline ON/OFF switch",dock.includes('fieldRow.append(field,paste,toggle)')&&dock.includes('toggle.setAttribute("role","switch")'));
 test("Location supports independent hide and disable",dock.includes('hide.onclick=closeChoices')&&dock.includes('Native.setLocation(false,"",0)'));
 test("Slider covers inclusive range 0 to 1000",dock.includes('slide.min="0"')&&dock.includes('slide.max="1000"'));
 test("Location enforces valid latitude and longitude",dock.includes('Math.abs(Number(match[1]))>90')&&dock.includes('Math.abs(Number(match[2]))>180'));
@@ -1743,6 +1743,58 @@ test("UX-NOTIFY-03 keep native Android channel sound and explicitly separate two
  watch.includes('Teste do canal Favoritos')&&
  watch.includes('RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)')&&
  service.includes('nm.getNotificationChannel(channelId).getImportance()==NotificationManager.IMPORTANCE_NONE'));
+
+
+test("UX-LOCATION-FIX-01 invalid location never clears native confirmation or starts new search",()=>{
+ const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
+  ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";
+ const validation=block.indexOf('if(enabled&&(valid.isEmpty()||radius<0||radius>1000))');
+ const reset=block.indexOf('locationVerified=false;');
+ return validation>=0&&reset>validation&&
+  block.includes('locationEnabled==enabled&&')&&
+  block.includes('locationCoords.equals(valid)&&locationRadius==radius')&&
+  block.indexOf('update();return;')<reset&&
+  block.includes('replaceActiveFilterSearch();')&&
+  block.includes('OverlayService.this.refresh(true);');
+});
+test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
+ const body=dock.split('function renderLocationChoices(){')[1]?.split('function manualRefreshTap(){')[0]||"";
+ return body.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&
+  !body.includes('locationEnabled=true;closeChoices()')&&
+  !body.includes('locationCoords=match[1]')&&
+  body.includes('message.textContent="⌛ Aplicando coordenadas')&&
+  body.includes('hide.onclick=closeChoices')&&
+  body.includes('Native.setLocation(false,"",0)')&&
+  dock.includes('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
+  dock.includes('locationEnabled?(locationVerified?"✓ Localização confirmada');
+});
+test("UX-LOCATION-FIX-03 explicit clipboard paste is validated and never enables filters",()=>{
+ const handler=service.split('@JavascriptInterface public void pasteLocationCoords()')[1]?.split(
+ '@JavascriptInterface public void locationEditor(boolean open)')[0]||"";
+ const render=dock.split('window.onLocationPaste=coords=>{')[1]?.split('function renderLocationChoices(){')[0]||"";
+ return handler.includes('cb.hasPrimaryClip()')&&
+  handler.includes('value.length()<=128')&&
+  handler.includes('parsed=extractCoordinates(value.toString())')&&
+  handler.includes('window.onLocationPaste(')&&
+  render.includes('field.value=String(coords);')&&
+  !render.includes('Native.setLocation(')&&
+  !handler.includes('locationEnabled=true')&&
+  !handler.includes('putString("locationCoords"')&&
+  dock.includes('paste.onclick=()=>Native.pasteLocationCoords()')&&
+  dock.includes('aria-label",paste.title');
+});
+test("UX-LOCATION-FIX-04 retains 12 toolbar controls, stale protection and site verification",()=>{
+ const serviceMethod=service.split('private void configureLocationAndVerify(')[1]
+  ?.split('private void openShinyLogin(){')[0]||"";
+ return serviceMethod.includes('execute("verifyLocation:"+data')&&
+  service.includes('execute("verifyLocation:"+locationPayload(),lastLocation->')&&
+  service.includes('locationVerified=locationEnabled;')&&
+  service.includes('resultsStale=count()>0;')&&
+  (dock.match(/id="location"/g)||[]).length===1&&
+  dock.includes('toggleChoices(\'location\')')&&
+  !service.includes('requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}')&&
+  service.includes('prefs.remove("locationCoords").remove("locationRadius")');
+});
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
