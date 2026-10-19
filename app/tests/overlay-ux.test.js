@@ -11,7 +11,16 @@ const main=read("java/com/lucianotoscano/pokesearchoverlay/MainActivity.java");
 const picker=read("java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java");
 let count=0;
 const failures=[];
-function test(name,ok){if(!ok)failures.push(name);count++;}
+function test(name,ok){
+ count++;
+ try{
+  // A callback is a test body, not an already-passing truthy value.
+  const passed=typeof ok==="function"?ok():ok;
+  if(!passed)failures.push(name);
+ }catch(error){
+  failures.push(name+": "+String(error?.message||error));
+ }
+}
 test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
 test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
 test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=>{const b=dock.split('function renderModeChoices(){')[1]?.split('function renderExtraFilters(')[0]||"";
