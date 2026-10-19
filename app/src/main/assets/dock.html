@@ -939,8 +939,9 @@ function draw(){
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",spriteSize+"px");
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
- // P/M/G scales the header DOWN, never above its original 21px.
- const headerIconSize=Math.max(17,Math.min(21,Math.round(spriteSize*0.45)));
+ // Icon in the result header matches the original thin toolbar exactly.
+ // P/M/G changes sprites, not the search-type symbol.
+ const headerIconSize=17;
  document.documentElement.style.setProperty("--mode-icon-size",headerIconSize+"px");
  document.documentElement.style.setProperty("--mode-indicator-scale",String(headerIconSize/21));
  const cy=document.getElementById("cycle");
