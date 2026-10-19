@@ -30,15 +30,57 @@ test("Login has one top toolbar and no native footer buttons",main.includes('don
 test("Shiny remains separate from the chosen filter",service.includes('shiny=!shiny;')&&dock.includes('onclick="Native.shiny()"')&&service.includes('mode.equals(selected)'));
 test("Throttled refresh is queued",service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
 test("Quick guide remains accessible",main.includes("showQuickGuide()")&&main.includes("tutorialSeenV41")&&main.includes("tutorial.html"));
-test("UX-SPRITE-01 rows fit the full sprite plus a minimal 3dp gap in P/M/G",(()=>{
+test("UX-RESULT-10 keeps P/M/G sprite stages centred with compact per-card touch rows",(()=>{
  const row=service.match(/private int rowDp\(\)\{([\s\S]*?)\}/)?.[1]||"";
- return row.includes("return spriteSize+3;")&&[35,45,55].every(s=>s+3>s)&&
-  service.includes('Math.min(rowDp()*8,screenHeightDp()-160)');
+ return row.includes("return spriteSize+3;")&&
+  dock.includes("height:var(--spawn-row,var(--row))")&&
+  dock.includes("min-height:var(--spawn-row,var(--row))")&&
+  dock.includes('style="--spawn-row:')&&
+  dock.includes("align-items:center;justify-content:center");
 })());
-test("Sprites remain vertically centered",dock.includes("align-items:center;justify-content:center")&&dock.includes("height:var(--row)"));
-test("Sprite list uses scroll instead of clipping overflow",dock.includes("overflow-y:auto;overflow-x:hidden")&&dock.includes("--list-limit"));
-test("Long lists have list height supplied by native screen size",service.includes("Math.min(rowDp()*8,screenHeightDp()-160)"));
+test("Result list is always non-scrollable and has no eight-row height cap",
+ dock.includes("body.result-window #spawns{")&&
+ dock.includes("max-height:none!important;height:auto!important")&&
+ dock.includes("overflow-y:visible!important;overflow-x:visible!important")&&
+ dock.includes("#spawns:not(:empty){padding-bottom:6px!important}")&&
+ !service.includes("rowDp()*8"));
+test("Native passes full display height and preserves up to ten card slots",
+ service.includes("Math.min(rowDp()*10,screenHeightDp()-52)")&&
+ service.includes('screenHeightDp()+")"')&&
+ service.includes("screenHeightDp()-16")&&
+ service.includes("resultParams.y=fittedY;")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
+test("UX-RESULT-10 only expands spacing for actual visible timers or verified IV",()=>{
+ const from=dock.indexOf("function resultHasVisibleInfo(");
+ const until=dock.indexOf('let lastListKey=""',from);
+ if(from<0||until<from)return false;
+ const source=dock.slice(from,until);
+ const functions=new Function("verifiedSpawnIvPercent",source+"return {resultHasVisibleInfo,computeResultLayout}")(c=>c.verified?98:null);
+ const short=Array.from({length:10},(_,i)=>({name:"Pokémon "+i,verified:false,expiresAtMs:0}));
+ const withInfo=short.map((x,i)=>({...x,verified:i%2===0,expiresAtMs:i%3===0?12345:0}));
+ const base=functions.computeResultLayout(short,45,800,false,false);
+ const iv=functions.computeResultLayout(withInfo,45,800,false,true);
+ const timers=functions.computeResultLayout(withInfo,45,800,true,false);
+ const both=functions.computeResultLayout(withInfo,55,380,true,true);
+ const fewer=functions.computeResultLayout(short.slice(0,4),35,800,false,false);
+ const none=functions.computeResultLayout([],45,800,false,false);
+ return base.visibleCount===10&&base.rows.every(x=>x===33)&&base.total===330&&
+  iv.rows[0]===48&&iv.rows[1]===33&&
+  timers.rows[0]===48&&timers.rows[1]===33&&
+  both.visibleCount===10&&both.total+30+6<=380-16&&
+  fewer.visibleCount===4&&none.visibleCount===0&&
+  functions.resultHasVisibleInfo(withInfo[0],false,true)===true&&
+  functions.resultHasVisibleInfo(withInfo[1],false,true)===false&&
+  !dock.includes('if(resultWindow)document.getElementById("spawns").innerHTML=cards.slice(0,8)');
+});
+test("UX-RESULT-10 updates all actual cards when metadata visibility or device height changes",
+ dock.includes("JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp])")&&
+ dock.includes("computeResultLayout(cards,spriteSize,resultDisplayHeightDp,showTimers,showResultText)")&&
+ dock.includes("const measuredRow=resultLayout?.rows[i]||row;")&&
+ dock.includes('if(!resultWindow)document.documentElement.style.setProperty("--list-limit"')&&
+ dock.includes('Native.resizeResults(h)')); 
 test("League badge replaces the bottom chevron as result collapse control",dock.includes('id="resultHeader"')&&dock.includes('class="results-collapsed"')===false&&dock.includes('body.result-window.results-collapsed #spawns'));
 test("Red close is alongside heart with standard background",dock.indexOf('id="close"')>dock.indexOf('id="donate"')&&dock.includes("#controls #close{"));
 test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'));
