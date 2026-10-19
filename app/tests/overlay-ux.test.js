@@ -1006,7 +1006,8 @@ test("HOME-02 keeps original favorites, settings, reports and official OAuth Web
    .every(x=>menu.includes(x))&&
    main.includes('openLoginDialog(false)')&&
    main.includes('readAsset("login_entry.js")')&&
-   main.includes('website.loadUrl("https://pogocoordinates.com/search")');
+   main.includes('"https://pogocoordinates.com/profile"')&&
+   main.includes('"https://pogocoordinates.com/search"');
 })());
 test("HOME-01 never invents trainer data or changes remote account on local removal",(()=>{
  const update=main.split("private void refreshSessionSummary(){")[1]?.split("private void askLogout(){")[0]||"";
