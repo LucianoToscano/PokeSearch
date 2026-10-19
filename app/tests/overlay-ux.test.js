@@ -572,6 +572,39 @@ test("UX-MENU-01 visibility toggles cannot invent unverified data",
  service.includes('void setAlertMode(String value)')&&
  service.includes('void testNotification()'));
 
+// UX-MENU-02 · explicit visual checkpoint, no APK build or site claim.
+test("UX-MENU-02 orders Modos, Filtros, Localização and Pokémon consecutively",
+ dock.includes('["mode","☷","Modos","mode"],["filters","≡","Filtros","filters"]')&&
+ dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
+ dock.includes('["star","☆","Favoritos","star"],["appearance","⚙","Aparência","appearance"]'));
+test("UX-MENU-02 uses earlier SVG icons for location, alerts, favorites, appearance and support",
+ dock.includes('location:"location",bell:"bell",star:"star",appearance:"gear",donate:"donate"')&&
+ dock.includes('source.cloneNode(true)')&&
+ dock.includes('["report","⚠","Reportar","report"]')&&
+ dock.includes('["donate","♡","Apoiar","donate"]'));
+test("UX-MENU-02 builds a unique Pokémon silhouette but does not fake site integration",
+ dock.includes('pokemon:\'<path')&&
+ dock.includes('renderPokemonPlaceholder()')&&
+ dock.includes('A busca por espécie/forma será integrada em uma próxima etapa')&&
+ !dock.includes('case "pokemon":Native.'));
+test("UX-MENU-02 does not duplicate Shiny outside Modos",
+ !dock.includes('["sh","✨","Shiny","sh"]')&&
+ dock.includes('shinyButton.id="modeShiny"')&&
+ dock.includes('shinyButton.onclick=()=>Native.shiny()'));
+test("UX-MENU-02 keeps compact 3-column layout and working one-column alternative",
+ dock.includes('id="quickUtilities"')&&
+ dock.includes('grid-template-columns:repeat(3,minmax(0,1fr))')&&
+ dock.includes('#quickMenuList:not(.quick-horizontal) #quickRows')&&
+ dock.includes('const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon")'));
+test("UX-MENU-02 preserves independent Reportar and Apoiar actions",
+ dock.includes('case "report":Native.openReport();break;')&&
+ dock.includes('case "donate":Native.openPix();break;')&&
+ dock.includes('["appearance","⚙","Aparência","appearance"]'));
+test("PL-04 OFF does not force Area when default Coords are blank",
+ read("assets/probe.js").includes('An empty Coords form is still')&&
+ read("assets/probe.js").includes('return JSON.stringify({ok:blank,reason:blank?')&&
+ service.includes('locationEnabled?"⚠ Localização não aplicada":"⚠ Pesquisa não confirmada"'));
+
 // v0.51 additional filters: do not add toolbar actions or replace artwork.
 test("Shiny shortcut sits next to Modos de busca heading",
   dock.includes('heading.appendChild(shinyButton);panel.appendChild(heading);')&&
