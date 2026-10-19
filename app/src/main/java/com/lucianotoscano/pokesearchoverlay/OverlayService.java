@@ -1173,34 +1173,52 @@ public class OverlayService extends Service {
                         +filters.optString("reason","verifique as opções no site."));
                     return;
                 }
-                shinyVerified=shiny;
-                confirmedSubmittedFiltersGeneration=generation;
-                update();
-                // Mark the submission boundary before JS clicks Search. A site
-                // navigation can beat the Android evaluateJavascript callback.
-                submittingSearchGeneration=generation;
-                submitAttemptAtMs=System.currentTimeMillis();
-                execute("submitSearch",submitted->{
+                // React may re-render Coords after the first confirmation
+                // while configuring IV/GL/UL. Re-verify the exact coordinate
+                // pair and radius at the LAST boundary, just before Search.
+                // In OFF mode this also catches rehydrated stale coordinates.
+                execute("verifyLocation:"+locationPayload(),lastLocation->{
                     if(stopped||loginPaused||generation!=requestGeneration)return;
-                    if(!submitted.optBoolean("ok")){
-                        submittingSearchGeneration=-1;
-                        confirmedSubmittedFiltersGeneration=-1;
+                    if(!lastLocation.optBoolean("ok")){
+                        locationVerified=false;
                         searchInProgress=false;
-                        shinyVerified=false;
-                        searchFailure("⚠ Busca não enviada",submitted.optString("reason","Falha ao pressionar Search."));
+                        searchFailure(locationEnabled?"⚠ Localização não aplicada":"⚠ Localização residual",
+                            "Busca não enviada: último formulário de localização divergente. "+
+                            lastLocation.optString("reason","reabra Localização, confirme os dados e tente novamente."));
                         return;
                     }
-                    long submittedAt=System.currentTimeMillis();
-                    lastSearchStartMs=submittedAt;
-                    submittingSearchGeneration=-1;
-                    submittedSearchGeneration=generation;
-                    // Applied means exact Coords values were verified and the
-                    // site accepted Search, never just a green local switch.
-                    locationVerified=locationEnabled;
-                    getSharedPreferences("prefs",0).edit().putLong("lastNetworkSearchAt",submittedAt).apply();
-                    BugReport.log(this,"SUBMIT","Busca "+mode+" Shiny="+shiny);
-                    status(manual?"Busca manual em andamento...":"Buscando...");
-                    pollSearch(generation,0,manual);
+                    shinyVerified=shiny;
+                    confirmedSubmittedFiltersGeneration=generation;
+                    update();
+                    // Mark the submission boundary before JS clicks Search.
+                    submittingSearchGeneration=generation;
+                    submitAttemptAtMs=System.currentTimeMillis();
+                    execute("submitSearch",submitted->{
+                        if(stopped||loginPaused||generation!=requestGeneration)return;
+                        if(!submitted.optBoolean("ok")){
+                            submittingSearchGeneration=-1;
+                            confirmedSubmittedFiltersGeneration=-1;
+                            searchInProgress=false;
+                            shinyVerified=false;
+                            locationVerified=false;
+                            searchFailure("⚠ Busca não enviada",
+                                submitted.optString("reason","Falha ao pressionar Search."));
+                            return;
+                        }
+                        long submittedAt=System.currentTimeMillis();
+                        lastSearchStartMs=submittedAt;
+                        submittingSearchGeneration=-1;
+                        submittedSearchGeneration=generation;
+                        // This means the exact values were still present when
+                        // Search was pressed, not merely selected in our UI.
+                        locationVerified=locationEnabled;
+                        getSharedPreferences("prefs",0).edit()
+                            .putLong("lastNetworkSearchAt",submittedAt).apply();
+                        BugReport.log(this,"SUBMIT","Busca "+mode+" Shiny="+shiny+
+                            " geofiltro="+(locationEnabled?"confirmado":"OFF"));
+                        status(manual?"Busca manual em andamento...":"Buscando...");
+                        pollSearch(generation,0,manual);
+                    });
                 });
             });
             });
