@@ -53,11 +53,13 @@ test("Native passes full display height and preserves up to ten card slots",
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
 test("UX-RESULT-10 only expands spacing for actual visible timers or verified IV",()=>{
- const from=dock.indexOf("function resultHasVisibleInfo(");
+ const from=dock.indexOf("const PVPOKE_OVERALL=");
  const until=dock.indexOf('let lastListKey=""',from);
  if(from<0||until<from)return false;
  const source=dock.slice(from,until);
- const functions=new Function("verifiedSpawnIvPercent",source+"return {resultHasVisibleInfo,computeResultLayout}")(c=>c.verified?98:null);
+ const functions=new Function("window","verifiedSpawnIvPercent",source+
+  "return {resultHasVisibleInfo,computeResultLayout}")(
+  {POKESEARCH_PVPOKE_OVERALL:{gl:[],ul:[]}},c=>c.verified?98:null);
  const short=Array.from({length:10},(_,i)=>({name:"Pokémon "+i,verified:false,expiresAtMs:0}));
  const withInfo=short.map((x,i)=>({...x,verified:i%2===0,expiresAtMs:i%3===0?12345:0}));
  const base=functions.computeResultLayout(short,45,800,false,false);
@@ -75,9 +77,79 @@ test("UX-RESULT-10 only expands spacing for actual visible timers or verified IV
   functions.resultHasVisibleInfo(withInfo[1],false,true)===false&&
   !dock.includes('if(resultWindow)document.getElementById("spawns").innerHTML=cards.slice(0,8)');
 });
+test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten-card limit",
+ dock.includes('["count","Quantidade de spawns"]')&&
+ dock.includes('id="resultSpawnCount"')&&
+ dock.includes('count.textContent=resultDisplayOptions.count&&cards.length?String(cards.length):""')&&
+ dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
+ service.includes('case "count":resultShowCount=value;pref="resultShowCount"')&&
+ !service.includes('setSpawnLimit'));
+test("UX-INFO-02 all seven visibility options are independent and persist on device",()=>{
+ const labels=["Quantidade de spawns","Tempo de despawn","Nível (Lv)",
+  "Poder de Combate (PC)","IV do Pokémon","Rank Geral · PvPoke","Rank IV da espécie"];
+ return labels.every(label=>dock.includes('"'+label+'"'))&&
+  dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
+  dock.includes('Native.toggleTimers()')&&
+  dock.includes('Native.setResultTextVisible(!showResultText)')&&
+  ['count','cp','level','overallRank','speciesIvRank'].every(key=>
+   service.includes('case "'+key+'":'))&&
+  service.includes('resultShowSpeciesIvRank=prefs.getBoolean("resultShowSpeciesIvRank",false)')&&
+  service.includes('resultDisplayOptionsJson()')&&
+  service.includes('void setResultDisplayOption(String key,boolean value)');
+});
+test("UX-INFO-03 PvPoke species overall rank and within-species IV rank never conflate",()=>{
+ const file=read("assets/pvpoke-overall-ranks.js");
+ const win={};new Function("window",file)(win);
+ const list=win.POKESEARCH_PVPOKE_OVERALL||{};
+ const start=dock.indexOf("const PVPOKE_OVERALL=");
+ const end=dock.indexOf('let lastListKey=""',start);
+ if(start<0||end<start)return false;
+ const functions=new Function("window","verifiedSpawnIvPercent",
+  dock.slice(start,end)+"return {verifiedOverallRank,verifiedSpeciesIvRank,resultLines}")(
+  win,c=>c.iv==="0/15/15"?67:null);
+ const alt={name:"Altaria",iv:"0/15/15",ivPercent:67,ivRank:1,
+  ivRankSource:"explicit-species-iv",ivRankLeague:"gl",cp:1499,level:35};
+ const wrong={...alt,ivRank:1,ivRankSource:"verified-site-filter"};
+ const choice={cp:true,level:true,iv:true,overallRank:true,speciesIvRank:true,despawn:false};
+ const lines=functions.resultLines(alt,choice,"gl");
+ return list.gl.length>1000&&list.ul.length>700&&
+  functions.verifiedOverallRank(alt,"gl")===2&&
+  functions.verifiedOverallRank(alt,"ul")===275&&
+  functions.verifiedSpeciesIvRank(alt,"gl")===1&&
+  functions.verifiedSpeciesIvRank(alt,"ul")===null&&
+  functions.verifiedSpeciesIvRank(wrong,"gl")===null&&
+  functions.verifiedOverallRank({name:"Pokémon inexistente"},"gl")===null&&
+  lines.includes("IV67% · RG#2")&&lines.includes("IV#1");
+});
+test("UX-INFO-04 PokeSearch keeps the sprite column centered exactly below the Pokéball",
+ dock.includes('body.result-window #resultHeader{')&&
+ dock.includes('margin:0 0 0 calc((var(--dock) - 35px)/2)!important')&&
+ dock.includes('body.result-window .spriteStage{')&&
+ dock.includes('width:var(--dock)!important')&&
+ dock.includes('max-width:96px')&&
+ dock.includes('metadataVisible?96:0')&&
+ service.includes('gripParams.leftMargin=dp(Math.max(0,(dockDp()-35)/2))')&&
+ service.includes('int right=dockPos+resultWidthDp()+gap;')&&
+ service.includes('int safe=Math.max(0,Math.min(100,widthDp))'));
+test("UX-INFO-05 verified metadata never creates results or a scrollable list",
+ dock.includes('function resultLines(card,opts,league)')&&
+ dock.includes('resultDisplayOptions,shownMode):null;')&&
+ dock.includes('overflow-y:visible!important;overflow-x:visible!important')&&
+ dock.includes("const metadataVisible=resultWindow&&cards.some(card=>")&&
+ dock.includes('esc(text)')&&
+ dock.includes('Native.resizeResultsMetadata(metaWidth)')&&
+ dock.includes('showTimers=!!timers')&&
+ !dock.includes('cards=Array.isArray(a)?a.slice(0,8):[]'));
+test("UX-INFO-06 generic site rank is never treated as IV rank without evidence",
+ read("assets/probe.js").includes('ivRankSource:ivRankValid?"explicit-species-iv":""')&&
+ read("assets/probe.js").includes('ivRankLeague:ivRankValid?mode:""')&&
+ read("assets/probe.js").includes('verifiedCardIv({iv:raw,ivPercent:percent})')&&
+ dock.includes('card.ivRankSource!=="explicit-species-iv"')&&
+ dock.includes('card.ivRankLeague!==league')&&
+ !dock.includes('card.rank===1?"IV#1"'));
 test("UX-RESULT-10 updates all actual cards when metadata visibility or device height changes",
- dock.includes("JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp])")&&
- dock.includes("computeResultLayout(cards,spriteSize,resultDisplayHeightDp,showTimers,showResultText)")&&
+ dock.includes("JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp,")&&
+ dock.includes("computeResultLayout(cards,spriteSize,resultDisplayHeightDp,showTimers,showResultText,")&&
  dock.includes("const measuredRow=resultLayout?.rows[i]||row;")&&
  dock.includes('if(!resultWindow)document.documentElement.style.setProperty("--list-limit"')&&
  dock.includes('Native.resizeResults(h)')); 
@@ -607,7 +679,7 @@ test("UX-MENU-01 persists ordered and hidden commands without hiding close",
 test("UX-MENU-01 visibility toggles cannot invent unverified data",
  service.includes('void setResultTextVisible(boolean value)')&&
  dock.includes('showResultText=!!textVisible;')&&
- dock.includes('verifiedPercent===null?"":')&&
+ dock.includes('verifiedPercent!==null?')&&
  service.includes('void setAlertMode(String value)')&&
  service.includes('void testNotification()'));
 
@@ -1183,7 +1255,7 @@ test("UX-FIX-01 Shiny emoji is plain and independent of IV color",()=>{
 });
 test("UX-FIX-01 per-spawn IV is hidden by default, but accessibility remains",()=>{
  return dock.includes("let showResultText=false;")&&
- dock.includes('!showResultText||verifiedPercent===null?"":')&&
+ dock.includes('!metadataVisible&&showResultText&&verifiedPercent!==null?')&&
  dock.includes('verifiedPercent===null?"IV não comprovado"')&&
  dock.includes('aria-label=')&&dock.includes('esc(label)');
 });
@@ -1334,7 +1406,8 @@ test("UX-SPRITE-01 uses equal square image slots with no cropping or opaque pane
   image.includes("aspect-ratio:1/1")&&image.includes("object-fit:contain")&&
   image.includes("object-position:center")&&
   !image.includes("object-fit:cover")&&!stage.includes("background:")&&
-  row.includes("height:var(--row)")&&row.includes("flex:0 0 var(--row)");
+  row.includes("height:var(--spawn-row,var(--row))")&&
+   row.includes("flex:0 0 var(--spawn-row,var(--row))");
 })());
 test("UX-SPRITE-01 missing images remain visible without inventing Pokémon or breaking taps",(()=>{
  return dock.includes('class="spriteStage"')&&
