@@ -59,8 +59,8 @@ body.controls-window #choices{z-index:10}
 #locBadge.active{display:block}
 body.controls-window #locBadge{display:none!important}
 #choices.locationPanel{width:306px;max-width:calc(100vw - 12px)}
-#choices.modePanel{width:232px;max-width:calc(100vw - 12px);height:auto;padding:3px;
- max-height:min(216px,var(--popup-room,400px));overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
+#choices.modePanel{width:198px;max-width:calc(100vw - 12px);height:auto;min-height:0;padding:2px;
+ max-height:min(154px,var(--popup-room,400px));overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
 #choices.modePanel .choiceHeader{padding:2px 5px 3px}
 /* Shiny lives independently as the second icon in the horizontal toolbar. */
 #choices .extraDivider{height:1px;margin:5px 3px;background:#ffffff32}
@@ -220,29 +220,36 @@ body.result-window #empty{margin:0 auto;max-height:18px}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
 
-/* Compact Modos number wheels: swipe, mousewheel, tap or arrow keys. */
-#choices.modePanel .uxSegment{gap:2px;padding:2px 1px 5px}
-#choices.modePanel .uxSegment button{height:28px;min-height:28px;padding:3px 1px;font-size:11px}
-#choices.modePanel .modeWheels{display:flex;justify-content:center;align-items:flex-start;gap:5px;padding:1px 2px 2px}
-#choices.modePanel .modeWheelField{display:flex;flex:1;flex-direction:column;align-items:stretch;min-width:0;max-width:73px;gap:2px}
-#choices.modePanel .modeWheelLabel{font:600 9px/12px Roboto,Arial,sans-serif;text-align:center;color:#a9b9c7}
-#choices.modePanel .modeWheel{height:96px;width:100%;padding:32px 0;overflow-y:auto;overflow-x:hidden;
+/* UX-MODOS-MICRO: small panel by mode; league picker with inline actions. */
+#choices.modePanel .uxSegment{gap:2px;padding:1px 0 3px}
+#choices.modePanel .uxSegment button{height:23px;min-height:23px;padding:1px;font-size:10px;border-radius:5px}
+#choices.modePanel .modeWheels{display:flex;justify-content:center;align-items:center;gap:3px;padding:0;margin:0}
+#choices.modePanel .modeWheelField{display:flex;flex:1;flex-direction:column;align-items:stretch;
+ min-width:0;max-width:62px;gap:1px}
+#choices.modePanel.modeCompact-percent .modeWheelField{max-width:74px}
+#choices.modePanel .modeWheelLabel{font:600 9px/10px Roboto,Arial,sans-serif;text-align:center;color:#a9b9c7}
+#choices.modePanel .modeWheel{height:60px;width:100%;padding:20px 0;overflow-y:auto;overflow-x:hidden;
  scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain;touch-action:pan-y;
- background:linear-gradient(180deg,#17222cba,#1d303a90 45%,#1d303a90 55%,#17222cba);
+ background:linear-gradient(180deg,#17222cbe,#1d303a90 50%,#17222cbe);
  border:0;border-radius:5px;outline-offset:1px}
 #choices.modePanel .modeWheel::-webkit-scrollbar{display:none}
-#choices.modePanel .modeWheelItem{display:block;height:32px;min-height:32px;line-height:32px;width:100%;
- margin:0;padding:0;background:transparent;border:0;border-radius:4px;
- color:#8a99a8;font-size:11px;text-align:center;scroll-snap-align:center}
-#choices.modePanel .modeWheelItem.chosen{color:#f1fff8;background:#285449b8;font-size:16px;
- font-weight:800;text-shadow:0 0 4px #79eac46b}
+#choices.modePanel .modeWheelItem{display:block;width:100%;height:20px;min-height:20px;line-height:20px;
+ margin:0;padding:0;background:transparent;border:0;border-radius:4px;color:#9ba9b6;
+ font-size:10px;font-weight:500;text-align:center;white-space:nowrap;scroll-snap-align:center}
+#choices.modePanel .modeWheelItem.chosen{color:#f1fff8;background:#285449c2;
+ font-size:14px;font-weight:800;text-shadow:0 0 3px #79eac46b}
 #choices.modePanel .modeWheelItem:focus-visible{outline:1px solid #96dfc6}
-#choices.modePanel .modeAction{position:relative;bottom:auto;justify-content:flex-end;gap:5px;
- padding:4px 3px 1px;background:transparent;border:0}
-#choices.modePanel .modeAction button{flex:none;width:38px;height:32px;min-height:32px;margin:0;padding:0;
- display:flex;align-items:center;justify-content:center;font:700 19px/1 Roboto,Arial,sans-serif;
- border:1px solid #ffffff2e;border-radius:6px;background:#25313c;color:#c6d4df}
+#choices.modePanel .modeAction{position:relative;bottom:auto;display:flex;justify-content:flex-end;
+ gap:4px;margin:2px 1px 0;padding:0;background:transparent;border:0}
+#choices.modePanel .modeAction button{flex:none;width:30px;height:26px;min-height:26px;margin:0;padding:0;
+ display:flex;align-items:center;justify-content:center;font:700 17px/1 Roboto,Arial,sans-serif;
+ border:1px solid #ffffff2e;border-radius:5px;background:#25313c;color:#c6d4df}
 #choices.modePanel .modeAction .modeApply{background:#17644c;border-color:#50bf94;color:#e0ffee}
+#choices.modePanel.modeCompact-league .modeWheels{gap:5px;justify-content:center;align-items:center;padding:1px 0}
+#choices.modePanel.modeCompact-league .modeWheelField{flex:none;width:58px;max-width:58px}
+#choices.modePanel.modeCompact-league .modeWheelLabel{display:none}
+#choices.modePanel.modeCompact-league .modeAction{margin:0;padding:0;align-self:center;gap:4px}
+#choices.modePanel.modeCompact-league .modeAction button{width:29px;height:30px;min-height:30px}
 
 /* UX-MENU-01: compact navigation; historical 12 original buttons remain intact. */
 #quickHead,#quickMenuList{display:none}
@@ -392,7 +399,23 @@ body.controls-window #choices{top:34px!important;width:220px!important;
  max-width:calc(100vw - 12px)!important;max-height:var(--popup-room,400px)!important;
  overflow-y:auto!important;border:1px solid #ffffff38!important;border-radius:9px!important;
  box-shadow:0 4px 12px #0008!important;padding:5px!important;}
-body.controls-window #choices.modePanel{width:232px!important;max-height:min(216px,var(--popup-room,400px))!important}
+body.controls-window #choices.modePanel{
+ width:198px!important;min-height:0!important;height:auto!important;
+ max-height:min(154px,var(--popup-room,400px))!important;padding:2px!important;
+ border-radius:7px!important;
+}
+#choices.modePanel.modeCompact-league,
+body.controls-window #choices.modePanel.modeCompact-league{
+ width:162px!important;max-height:min(99px,var(--popup-room,400px))!important;
+}
+#choices.modePanel.modeCompact-percent,
+body.controls-window #choices.modePanel.modeCompact-percent{
+ width:177px!important;max-height:min(143px,var(--popup-room,400px))!important;
+}
+#choices.modePanel.modeCompact-raw,
+body.controls-window #choices.modePanel.modeCompact-raw{
+ width:198px!important;max-height:min(143px,var(--popup-room,400px))!important;
+}
 body.controls-window #choices.locationPanel{width:306px!important;max-height:var(--popup-room,400px)!important}
 body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}
 /* Tiny Modos artwork only. GL/UL #N floats centered ABOVE the PNG,
@@ -744,7 +767,9 @@ function toggleChoices(kind){
 }
 function renderModeChoices(){
  const panel=document.getElementById("choices");
- panel.replaceChildren();panel.classList.remove("locationPanel");panel.classList.add("modePanel","visible");
+ panel.replaceChildren();
+ panel.classList.remove("locationPanel","modeCompact-raw","modeCompact-percent","modeCompact-league");
+ panel.classList.add("modePanel","visible","modeCompact-"+(["gl","ul"].includes(modeDraft.mode)?"league":modeDraft.mode));
  const make=(tag,cls,label)=>{
   const el=document.createElement(tag);if(cls)el.className=cls;if(label!==undefined)el.textContent=label;return el;
  };
@@ -767,11 +792,12 @@ function renderModeChoices(){
   ["percentMax","MAX","percent","IV percentual máximo"]
  ]:modeDraft.mode==="gl"?[["glRank","#","rank","Ranking GL"]]:
    [["ulRank","#","rank","Ranking UL"]];
+ const WHEEL_STEP=20;
  const wheelByKey={};
  const adjustWheel=(key,number)=>{
   const entry=wheelByKey[key];if(!entry)return;
   const index=entry.values.indexOf(Number(number));if(index<0)return;
-  entry.wheel.scrollTop=index*32;entry.paint(index);
+  entry.wheel.scrollTop=index*WHEEL_STEP;entry.paint(index);
  };
  fields.forEach(([key,label,kind,description])=>{
   const choices=kind==="percent"?IV_PERCENT_VALUES:
@@ -809,12 +835,12 @@ function renderModeChoices(){
    option.type="button";option.setAttribute("role","option");
    option.setAttribute("aria-label",description+": "+display(number));
    option.setAttribute("aria-selected","false");
-   option.onclick=()=>{choose(number);wheel.scrollTo({top:index*32,behavior:"smooth"});};
+   option.onclick=()=>{choose(number);wheel.scrollTo({top:index*WHEEL_STEP,behavior:"smooth"});};
    wheel.appendChild(option);items.push(option);
   });
   wheelByKey[key]={wheel,values:choices,paint};
   wheel.onscroll=()=>{
-   const index=Math.max(0,Math.min(choices.length-1,Math.round(wheel.scrollTop/32)));
+   const index=Math.max(0,Math.min(choices.length-1,Math.round(wheel.scrollTop/WHEEL_STEP)));
    if(modeDraft[key]!==choices[index])choose(choices[index]);
   };
   wheel.onkeydown=event=>{
@@ -822,7 +848,7 @@ function renderModeChoices(){
    const target=event.key==="ArrowUp"?index-1:event.key==="ArrowDown"?index+1:
     event.key==="Home"?0:event.key==="End"?choices.length-1:-1;
    if(target<0||target>=choices.length)return;
-   event.preventDefault();choose(choices[target]);wheel.scrollTop=target*32;
+   event.preventDefault();choose(choices[target]);wheel.scrollTop=target*WHEEL_STEP;
   };
   field.append(caption,wheel);wheels.appendChild(field);
  });
@@ -842,7 +868,9 @@ function renderModeChoices(){
  apply.onclick=()=>{
   const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));
  };
- cancel.onclick=closeChoices;actions.append(apply,cancel);panel.appendChild(actions);
+ cancel.onclick=closeChoices;actions.append(apply,cancel);
+ if(["gl","ul"].includes(modeDraft.mode))wheels.appendChild(actions);
+ else panel.appendChild(actions);
  document.getElementById("cycle").setAttribute("aria-expanded","true");
  fit();
 }
