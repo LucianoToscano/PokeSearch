@@ -471,6 +471,54 @@ body.controls-window.popup-above #choices.modePanel.modeCascade{
 }
 /* Popup can scroll if the screen is extremely short; horizontal controls stay in view. */
 body.controls-window #choices.modeCascade .modeCascadeEditor:focus-within{z-index:3}
+/* UX-OTHER-MENUS: compact, independent, scrollable popups. */
+body.controls-window #choices.standardPanel{
+ height:auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+ max-height:min(350px,var(--popup-room,400px))!important;padding:3px!important;
+ border-radius:7px!important;overscroll-behavior:contain;scrollbar-width:thin;
+}
+body.controls-window #choices.standardPanel[data-panel-kind="alerts"]{width:204px!important;max-height:min(230px,var(--popup-room,400px))!important}
+body.controls-window #choices.standardPanel[data-panel-kind="period"]{width:190px!important;max-height:min(245px,var(--popup-room,400px))!important}
+body.controls-window #choices.standardPanel[data-panel-kind="appearance"]{width:240px!important}
+body.controls-window #choices.standardPanel[data-panel-kind="info"]{width:225px!important;max-height:min(235px,var(--popup-room,400px))!important}
+body.controls-window #choices.standardPanel[data-panel-kind="filters"]{width:246px!important;max-height:min(355px,var(--popup-room,400px))!important}
+body.controls-window #choices.standardPanel[data-panel-kind="pokemon"]{width:216px!important;max-height:min(135px,var(--popup-room,400px))!important}
+body.controls-window #choices.standardPanel .choiceHeader{
+ display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5;
+ min-height:26px;margin:0 0 2px;padding:3px 5px!important;
+ background:#252b34f8;border-bottom:1px solid #ffffff27;font:700 10px/15px Roboto,Arial,sans-serif;
+}
+body.controls-window #choices.standardPanel .choiceClose,body.controls-window #choices.locationPanel .choiceClose{
+ display:inline-flex!important;justify-content:center!important;align-items:center!important;
+ flex:none!important;width:25px!important;height:23px!important;margin:0!important;padding:0!important;
+ font-size:17px!important;background:#303842e9!important;color:#e6edf6!important;
+ border:1px solid #ffffff2a!important;border-radius:5px!important;
+}
+body.controls-window #choices.standardPanel > button{min-height:29px!important;margin:1px 0!important;
+ padding:4px 7px!important;font-size:11px!important;line-height:17px!important}
+body.controls-window #choices.standardPanel .uxSetting{min-height:29px;padding:2px 4px;font-size:11px}
+body.controls-window #choices.standardPanel .uxSetting button{padding:4px 5px;font-size:10px;min-width:40px}
+body.controls-window #choices.standardPanel .uxAdjust{min-height:27px;margin:1px 0;gap:3px}
+body.controls-window #choices.standardPanel .uxAdjust span{font-size:10px}
+body.controls-window #choices.standardPanel .uxAdjust button{min-width:26px;width:26px;min-height:25px;padding:1px 0}
+body.controls-window #choices.standardPanel .uxSubheading{margin:4px 4px 2px;font-size:9px}
+body.controls-window #choices.standardPanel .uxNote{font-size:9px;line-height:1.2;padding:2px 4px;margin:1px 0}
+body.controls-window #choices.standardPanel .extraField{min-height:26px;margin:2px}
+body.controls-window #choices.standardPanel .extraField label{font-size:10px;min-width:62px}
+body.controls-window #choices.standardPanel .modeAction{position:sticky;bottom:0;z-index:5;
+ padding:3px 2px;background:#252b34f9;border-top:1px solid #ffffff26}
+body.controls-window #choices.locationPanel:not(.modeCascade){
+ width:min(274px,calc(100vw - 12px))!important;height:auto!important;
+ max-height:min(290px,var(--popup-room,400px))!important;overflow-y:auto!important;padding:4px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader{display:flex;justify-content:space-between;align-items:center;padding:3px 5px!important}
+body.controls-window #choices.locationPanel .locText{margin:2px 0;padding:2px 5px 4px;font-size:10px;line-height:1.2}
+body.controls-window #choices.locationPanel .locCoordsRow{margin:1px 5px 3px;gap:4px}
+body.controls-window #choices.locationPanel .locField{min-height:30px;font-size:11px;padding:4px 6px}
+body.controls-window #choices.locationPanel .locCoordsRow button[role=switch]{min-height:30px;width:41px}
+body.controls-window #choices.locationPanel input[type=range]{margin:2px 5px 4px}
+body.controls-window #choices.locationPanel .locLine{padding:2px 5px;font-size:10px}
+body.controls-window #choices.locationPanel .locLine button{padding:4px 7px;min-height:28px}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -750,8 +798,9 @@ function closeChoices(){
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
- document.getElementById("choices").classList.remove("locationPanel","modePanel",
+ document.getElementById("choices").classList.remove("locationPanel","modePanel","standardPanel",
   "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
+ delete document.getElementById("choices").dataset.panelKind;
  if(controlsWindow)Native.locationEditor(false);
  refreshQuickMenuStates();fit();
 }
@@ -791,9 +840,13 @@ function toggleChoices(kind){
  const current=period;
  const entries=[[0,"Auto · OFF"],[5,"Auto · 5 min"],[10,"Auto · 10 min"],[15,"Auto · 15 min"],[20,"Auto · 20 min"]];
  const panel=document.getElementById("choices");
- panel.replaceChildren();panel.classList.remove("modePanel");
+ panel.replaceChildren();panel.classList.remove("modePanel","locationPanel","modeCascade","modeCascadeOpen");
+ panel.classList.add("standardPanel","visible");panel.dataset.panelKind="period";
  const title=document.createElement("div");title.className="choiceHeader";
- title.textContent="ATUALIZAÇÃO";panel.appendChild(title);
+ title.textContent="ATUALIZAÇÃO";
+ const close=document.createElement("button");close.type="button";close.className="choiceClose";
+ close.textContent="×";close.title="Fechar";close.onclick=closeChoices;title.appendChild(close);
+ panel.appendChild(title);
  const now=document.createElement("button");now.type="button";now.textContent="↻ Atualizar agora";
  now.onclick=()=>{closeChoices();manualRefreshTap();};panel.appendChild(now);
  for(const [value,label] of entries){
@@ -1020,9 +1073,7 @@ function renderExtraFilters(panel,make){
  }
 }
 function renderFilterPicker(key,label,options){
- const panel=document.getElementById("choices");panel.replaceChildren();panel.classList.add("modePanel","visible");
- const heading=document.createElement("div");heading.className="choiceHeader";heading.textContent=label;
- panel.appendChild(heading);
+ const panel=uxPanel(label);panel.dataset.panelKind="filters";panel.classList.add("filterPicker");
  // A neutral option is a UI state; site changes will be verified before submitting.
  const neutral=document.createElement("button");neutral.textContent="Any / padrão";
  neutral.onclick=()=>{modeDraft[key]="";choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};panel.appendChild(neutral);
@@ -1048,9 +1099,12 @@ window.onFilterOptions=function(response){
 
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
- panel.replaceChildren();panel.classList.remove("modePanel");panel.classList.add("locationPanel");
+ panel.replaceChildren();panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen");
+ panel.classList.add("locationPanel","visible");delete panel.dataset.panelKind;
  const make=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x;};
  const title=make("div","choiceHeader","📍 LOCALIZAÇÃO");
+ const close=make("button","choiceClose","×");close.type="button";close.title="Fechar";
+ close.onclick=closeChoices;title.appendChild(close);
  const hint=make("p","locText","Cole latitude,longitude. A chave ao lado ativa ou desativa; ocultar conserva o filtro atual.");
  const fieldRow=make("div","locCoordsRow");
  const field=make("input","locField");field.type="text";field.inputMode="decimal";field.placeholder="-23.5505,-46.6333";field.setAttribute("aria-label","Coordenadas latitude e longitude");field.value=locationCoords;
@@ -1385,7 +1439,7 @@ function iconForQuick(id, fallback){
  glyph.textContent=fallback;return glyph;
 }
 function renderPokemonPlaceholder(){
- const panel=uxPanel("POKÉMON · POG OCOORDINATES".replace("POG OCOORDINATES","POGOCOORDINATES"));
+ const panel=uxPanel("POKÉMON");
  const note=document.createElement("p");note.className="uxNote";
  note.textContent="Ícone Pokémon preparado. A busca por espécie/forma será integrada em uma próxima etapa, após a validação dos menus.";
  panel.appendChild(note);fit();
@@ -1450,8 +1504,15 @@ function refreshQuickMenuStates(){
 }
 function uxPanel(title){
  const panel=document.getElementById("choices");panel.replaceChildren();
- panel.classList.remove("locationPanel");panel.classList.add("visible","modePanel");
- const heading=document.createElement("div");heading.className="choiceHeader";heading.textContent=title;panel.appendChild(heading);
+ panel.classList.remove("locationPanel","modeCascade","modeCascadeOpen",
+  "modeCompact-raw","modeCompact-percent","modeCompact-league");
+ panel.classList.add("visible","modePanel","standardPanel");panel.dataset.panelKind=choiceOpen;
+ const heading=document.createElement("div");heading.className="choiceHeader";
+ const text=document.createElement("span");text.textContent=title;
+ const close=document.createElement("button");close.type="button";
+ close.className="choiceClose";close.textContent="×";close.title="Fechar";
+ close.setAttribute("aria-label","Fechar "+title);close.onclick=closeChoices;
+ heading.append(text,close);panel.appendChild(heading);
  return panel;
 }
 function uxOption(panel,label,value,callback){
@@ -1461,7 +1522,7 @@ function uxOption(panel,label,value,callback){
  line.append(name,button);panel.appendChild(line);return button;
 }
 function renderAlertsChoices(){
- const panel=uxPanel("ALERTAS · NOTIFICAÇÕES");
+ const panel=uxPanel("ALERTAS");
  for(const [id,name] of [["on","🔔 Som ligado"],["silent","🔕 Silencioso"],["off","Notificações desligadas"]]){
   const button=document.createElement("button");button.textContent=(alertMode===id?"✓ ":"")+name;
   button.className=alertMode===id?"chosen":"";
@@ -1472,7 +1533,7 @@ function renderAlertsChoices(){
 }
 function renderFiltersChoices(){
  if(!modeDraft)modeDraft={...searchSettings,mode};
- const panel=uxPanel("FILTROS DA PESQUISA");
+ const panel=uxPanel("FILTROS");
  const make=(tag,cls,value)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e;};
  renderExtraFilters(panel,make);
  panel.appendChild(make("div","uxNote","As opções e os resultados dependem da confirmação no site; não são inventados."));
@@ -1482,7 +1543,7 @@ function renderFiltersChoices(){
  cancel.onclick=closeChoices;actions.append(apply,cancel);panel.appendChild(actions);fit();
 }
 function renderInfoChoices(){
- const panel=uxPanel("INFORMAÇÕES DOS POKÉMON");
+ const panel=uxPanel("INFORMAÇÕES");
  const back=document.createElement("button");back.type="button";back.textContent="‹ Ajustes";
  back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();};panel.appendChild(back);
  uxOption(panel,"Tempo de despawn",showTimers?"ON":"OFF",()=>Native.toggleTimers());
@@ -1492,7 +1553,7 @@ function renderInfoChoices(){
  panel.appendChild(hint);fit();
 }
 function renderAppearanceChoices(){
- const panel=uxPanel("AJUSTES · PERSONALIZAÇÃO");
+ const panel=uxPanel("PERSONALIZAÇÃO");
  const info=document.createElement("div");info.className="uxSubheading";info.textContent="Painéis";panel.appendChild(info);
  uxOption(panel,"Informações dos Pokémon","Configurar ›",()=>toggleChoices("info"));
  // Atualização has its own toolbar icon beside Alertas.
