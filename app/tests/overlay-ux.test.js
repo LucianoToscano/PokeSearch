@@ -577,7 +577,7 @@ test("UX-MENU-01 visibility toggles cannot invent unverified data",
 
 // UX-MENU-02 · explicit visual checkpoint, no APK build or site claim.
 test("UX-MENU-02 orders Modos, Filtros, Localização and Pokémon consecutively",
- dock.includes('["mode","☷","Modos","mode"],["filters","≡","Filtros","filters"]')&&
+ dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"]')&&
  dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
  dock.includes('["star","☆","Favoritos","star"],["bell","♧","Alertas","alerts"]'));
 test("UX-MENU-02 uses earlier SVG icons for location, alerts, favorites, appearance and support",
@@ -591,13 +591,14 @@ test("UX-MENU-02 builds a unique Pokémon silhouette but does not fake site inte
  dock.includes('renderPokemonPlaceholder()')&&
  dock.includes('A busca por espécie/forma será integrada em uma próxima etapa')&&
  !dock.includes('case "pokemon":Native.'));
-test("UX-MENU-02 does not duplicate Shiny outside Modos",
- !dock.includes('["sh","✨","Shiny","sh"]')&&
+test("UX-SHINY-01 restores Shiny ✨ next to Modos using the existing native toggle",
+ dock.includes('["sh","✨","Shiny Only","sh"]')&&
  dock.includes('shinyButton.id="modeShiny"')&&
- dock.includes('shinyButton.onclick=()=>Native.shiny()'));
-test("UX-MENU-04 restores eleven small icons in the old thin row while migrating saved menu",
+ dock.includes('shinyButton.onclick=()=>Native.shiny()')&&
+ dock.includes('case "sh":Native.shiny();break;'));
+test("UX-MENU-04 restores twelve small icons in the old thin row while migrating saved menu",
  dock.includes('id="quickUtilities"')&&
- dock.includes('grid-template-columns:repeat(11,minmax(0,1fr))!important')&&
+ dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important')&&
  dock.includes('body.controls-window #quickRows,')&&
  dock.includes('display:contents!important')&&
  dock.includes('const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon")'));
@@ -620,9 +621,9 @@ test("UX-MENU-03 never shows a wide menu, header, tiles or labels",
   dock.includes('width:220px!important')&&
   dock.includes('width:246px!important')&&
   dock.includes('width:306px!important'));
-test("UX-MENU-04 keeps eleven icon-first entry points in one thin row",
+test("UX-MENU-04 keeps twelve icon-first entry points in one thin row",
   dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])')&&
-  dock.includes('["mode","☷","Modos","mode"],["filters","≡","Filtros","filters"]')&&
+  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"]')&&
   dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
   dock.includes('["report","⚠","Reportar","report"]')&&
   dock.includes('["donate","♡","Apoiar","donate"]')&&
@@ -635,13 +636,13 @@ test("UX-MENU-03 highlights active states by icon without visible labels",
   dock.includes('button.title=button.getAttribute("aria-label")+(current?" · "+current:"")'));
 
 
-test("UX-MENU-04 exposes exactly the approved eleven icons in order",(()=>{
+test("UX-MENU-04 exposes exactly the approved twelve icons in order",(()=>{
  const chunk=dock.split('const QUICK_ACTIONS=[')[1]?.split('];')[0]||"";
  const keys=[...chunk.matchAll(/\["([a-z]+)","[^"]+","[^"]+","[^"]+"\]/g)].map(m=>m[1]);
- return JSON.stringify(keys)===JSON.stringify(["mode","filters","location","pokemon","star",
+ return JSON.stringify(keys)===JSON.stringify(["mode","sh","filters","location","pokemon","star",
    "bell","period","appearance","report","donate","close"])&&
    chunk.includes('"period"')&&!chunk.includes('"info"')&&
-   !chunk.includes('"sh"')&&
+   chunk.includes('["sh","✨","Shiny Only","sh"]')&&
    service.includes('Math.min(330,screenWidthDp()-8)');
 })());
 test("UX-MENU-04 keeps Informações in Ajustes and restores Atualização beside Alertas",(()=>{
@@ -659,12 +660,28 @@ test("UX-MENU-04 preserves all old Android feature bridges and migrates 12-icon 
  return bridge.every(name=>service.includes('void '+name+'('))&&
  dock.includes('p.order.some(id=>!ids.includes(id))')&&
  dock.includes('const QUICK_UTILITY_IDS=[];')&&
+ service.includes('String[] allowed={"mode","sh","filters","location","pokemon","star",')&&
  service.includes('"bell","period","appearance","report","donate","close"')&&
  dock.includes('shinyButton.id="modeShiny"')&&
- dock.includes('grid-template-columns:repeat(11,minmax(0,1fr))!important');
+ dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important');
 })());
 
 
+test("UX-SHINY-02 keeps Shiny beside Modos through saved preferences and native gating",(()=>{
+ const prefs=dock.split("function normalizedQuickPrefs(p){")[1]?.split("function saveQuickPrefs()")[0]||"";
+ const state=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(")[0]||"";
+ const click=dock.split("function quickClick(id){")[1]?.split("const QUICK_SVG=")[0]||"";
+ return prefs.includes('order.splice(modeIndex+1,0,"sh")')&&
+  prefs.includes('"period","sh"')&&
+  click.includes('case "sh":Native.shiny();break;')&&
+  dock.includes('if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending))')&&
+  state.includes('button.classList.toggle("pending",id==="sh"&&shinyPending)')&&
+  state.includes('id==="sh"?(shiny&&!shinyPending)')&&
+  dock.includes('[data-key=sh].selected')&&dock.includes('[data-key=sh].pending')&&
+  service.includes('!"sh".equals(id)')&&
+  service.includes('if(shiny&&!hasConfirmedTrainerLink())')&&
+  !dock.split("function getResultIcon(")[1].split("let locationEnabled=")[0].includes('result-icons/modes/');
+})());
 test("PSC-Shiny requires official linked trainer card plus valid 12-digit code",
  service.includes('private boolean hasConfirmedTrainerLink()')&&
  service.includes('"linked".equals(p.getString("profileTrainerState","unknown"))')&&
@@ -723,7 +740,8 @@ test("REG-51049 OFF public search ignores inert radius while refusing residual c
 test("UX-MENU-06 refresh directly after Alertas and personalization before Reportar",()=>{
  const raw=dock.split("const QUICK_ACTIONS=[")[1]?.split("];")[0]||"";
  const ids=[...raw.matchAll(/\["([a-z]+)","[^"]+","[^"]+","[^"]+"\]/g)].map(x=>x[1]);
- return ids.length===11&&ids.indexOf("period")===ids.indexOf("bell")+1&&
+ return ids.length===12&&ids.indexOf("sh")===ids.indexOf("mode")+1&&
+  ids.indexOf("period")===ids.indexOf("bell")+1&&
   ids.indexOf("appearance")===ids.indexOf("report")-1&&
   dock.includes('if(["mode","alerts","location","filters","period","appearance"].includes(id))')&&
   dock.includes('now.textContent="↻ Atualizar agora"')&&
@@ -797,7 +815,7 @@ test("Thin bar Modos icon redraws on filter/rank change and does not add buttons
  return dock.includes('button.dataset.modeArtKey=art.path+"|"+art.ivBadge')&&
    block.includes('previous.replaceWith(iconForQuick("mode","☷"))')&&
    dock.includes('rank.textContent=art.ivBadge')&&
-   dock.includes('grid-template-columns:repeat(11,minmax(0,1fr))!important');
+   dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important');
 });
 
 
@@ -817,7 +835,7 @@ test("VIS tiny white Pokemon and pencil-gear are independent SVG toolbar icons",
   !source.includes('appearance:"gear"')&&
   dock.includes('[data-key=pokemon] .quickGlyph')&&
   dock.includes('[data-key=appearance] .quickGlyph{color:#f4f6fa!important}')&&
-  dock.includes('grid-template-columns:repeat(11,minmax(0,1fr))!important');
+  dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important');
 });
 test("PL-04 final site verification happens after IV filters and before Search",()=>{
  const verified=service.indexOf('execute("verifyFilters",filters->');
