@@ -13,18 +13,15 @@ const failures=[];
 function test(name,ok){if(!ok)failures.push(name);count++;}
 test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
 test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
-test("Four compact modes in requested order without redundant IV100 row",(()=>{
- const body=dock.split('function renderModeChoices()')[1].split('function renderExtraFilters(')[0];
- const items=['["raw","IV"]','["percent","IV%"]','["gl","GL"]','["ul","UL"]'];
- return items.every(x=>body.includes(x))&&
-  items.every((x,i)=>i===0||body.indexOf(items[i-1])<body.indexOf(x))&&
-  !body.includes('row("raw"')&&
-  !body.includes('modeShiny')&&dock.includes('toggleChoices(\'mode\')');
-})());
+test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=>{const b=dock.split('function renderModeChoices(){')[1]?.split('function renderExtraFilters(')[0]||"";
+ return b.includes('["hundo","100%"],["nundo","0%"],["raw","IV"]')&&
+ b.includes('["percent","IV%"],["gl","GL"],["ul","UL"]')&&
+ b.includes('applyExact(15)')&&b.includes('applyExact(0)')&&
+ !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
 test("Intervals minimum 5 minutes",["Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
-test("Choice panel measures fixed popup height even when rendered above toolbar",
-  dock.includes('34+Math.ceil(popup.getBoundingClientRect().height)+6')&&
-  dock.includes('Native.resizeMenu(h)'));
+test("Cascade measures full height even after native clip, restoring space after drag",
+ dock.includes('choiceOpen==="mode"?34+190+6')&&
+ dock.includes('Native.resizeMenu(h)')&&service.includes('menuRequestedHeightDp=MENU_BASE_DP'));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
 test("Favorites remain in overlay",service.includes("PokemonPicker.show(OverlayService.this")&&!service.includes('intent.setAction("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST")'));
@@ -421,43 +418,41 @@ test("Mode popup keeps one stable row while expanding upward or downward",
  service.includes('window.setMenuPopupPlacement(')&&
  dock.includes('body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}')&&
  dock.includes('body.controls-window.popup-above #menu{top:var(--popup-offset,0px)!important}'));
-test("Mode popup stays contained and its action row remains reachable",
- dock.includes('width:162px!important')&&dock.includes('width:198px!important')&&
- dock.includes('width:177px!important')&&dock.includes('max-height:min(99px')&&
- dock.includes('max-height:min(143px')&&dock.includes('var(--popup-room,400px)')&&
+test("Cascade popup uses 27px rail rows and small lateral settings",
+ dock.includes('width:88px!important;height:190px!important')&&
+ dock.includes('height:27px!important;min-height:27px!important')&&
+ dock.includes('modeCascadeEditor')&&
+ dock.includes('max-width:calc(100% - 88px)')&&
  service.includes('int roomDp=requestedPopup==0?420:'));
-test("Mode wheels center selection, scroll directly and support keyboard without a second screen",
- dock.includes('scroll-snap-type:y mandatory')&&
- dock.includes('entry.wheel.scrollTop=index*WHEEL_STEP;entry.paint(index);')&&
- dock.includes('wheel.onscroll=()=>')&&
- dock.includes('wheel.onkeydown=event=>')&&
- dock.includes('overscroll-behavior:contain'));
-test("Four requested modes keep direct wheels with raw, percent and league bounds",()=>{
- const segment=dock.split("function renderModeChoices()")[1]?.split("function renderExtraFilters(")[0]||"";
- return segment.includes('const choices=kind==="percent"?IV_PERCENT_VALUES:')&&
-  segment.includes('Array.from({length:kind==="iv"?16:50},(_,i)=>i+(kind==="rank"?1:0))')&&
-  ["attack","defense","stamina","percentMin","percentMax","glRank","ulRank"].every(k=>segment.includes('"'+k+'"'))&&
-  segment.includes('wheel.scrollTo({top:index*WHEEL_STEP,behavior:"smooth"})');
-});
+test("Cascade numeric input supports touch swipe, keyboard typing and percentage stepping",
+ dock.includes('input.type="number";input.inputMode="numeric"')&&
+ dock.includes('input.addEventListener("touchend"')&&
+ dock.includes('input.addEventListener("wheel"')&&
+ dock.includes('input.addEventListener("change"')&&
+ dock.includes('kind==="percent"?IV_PERCENT_VALUES'));
+test("Four editable cascade modes keep raw, percent and rank numeric bounds",(()=>{const b=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
+ return b.includes('kind==="iv"?16:50')&&b.includes('kind==="rank"?1:0')&&
+ ["attack","defense","stamina","percentMin","percentMax","glRank","ulRank"].every(k=>b.includes('"'+k+'"'))&&
+ b.includes('input.min=String(allowed[0])')&&b.includes('input.max=String(allowed[allowed.length-1])');})());
 test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy migration",
  dock.includes('if([attack,defense,stamina].every(v=>Number(v)===15))family="hundo"')&&
  dock.includes('if(min===100&&max===100)family="hundo"')&&
  service.includes('boolean migrateLegacyHundo="iv".equals(mode);')&&
  service.includes('pref.edit().putString("mode","raw")')&&
  read("assets/probe.js").includes('return rawIsHundo()&&!oneButton("Raw IV")&&set100Percent();'));
-test("Compact Modos removes duplicate Shiny, number grid, and excessive fields",
- !dock.includes('modeShiny')&&
- !dock.includes('function renderNumberPicker(')&&
- !dock.includes('numberGrid')&&
- dock.includes('#choices.modePanel .modeWheels')&&
- dock.includes('height:60px;width:100%;padding:20px 0')&&
- dock.includes('max-height:min(99px'));
-test("Modes save only after applying and keep original bridge actions",
- dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
- dock.includes('cancel.onclick=closeChoices')&&toolbarButtons.length===12);
-test("Both IV% limits remain ordered when changed",
- dock.includes('if(key==="percentMin"&&modeDraft.percentMax<number)')&&
- dock.includes('if(key==="percentMax"&&modeDraft.percentMin>number)'));
+test("Cascade replaces wheels and popup Shiny without losing the independent ✨",
+ !dock.includes('modeShiny')&&!dock.includes('modeWheels')&&
+ dock.includes('modeCascadeRail')&&
+ dock.includes('modeCascadeEditor')&&
+ dock.includes('["sh","✨","Shiny Only","sh"]'));
+test("Direct extremes and explicit ✓ are the only cascade save paths",
+ dock.includes('const next={...searchSettings,mode:"raw",attack:value,defense:value,stamina:value}')&&
+ dock.includes('const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));')&&
+ dock.includes('cancel.onclick=()=>{cascadeMode=null;')&&toolbarButtons.length===12);
+test("Cascade percent MIN/MAX are kept in valid order on edit",
+ dock.includes('key==="percentMin"&&modeDraft.percentMax<value')&&
+ dock.includes('key==="percentMax"&&modeDraft.percentMin>value')&&
+ dock.includes('modeDraft.percentMin>modeDraft.percentMax'));
 test("Native bridge validates all requested IV, PvP ranking and percent bounds",
  service.includes("public void setSearchConfig(String payload)")&&
  service.includes("within(a,0,15)")&&service.includes("within(gl,1,50)")&&
@@ -485,14 +480,14 @@ test("Raw zero/percent extremes retain the historical result badges and menu med
   dock.includes('nundo:{normal:"nundo.png",shiny:"shnundo.png"')&&
   dock.includes('hundo:{normal:"hundo.png",shiny:"shundo.png"');
 })());
-test("Both percent wheels reuse the exact same attainable IV percentage list",
- dock.includes('const choices=kind==="percent"?IV_PERCENT_VALUES:')&&
- dock.includes('const display=n=>kind==="percent"?n+"%"')&&
- dock.includes('modeDraft[key]=choices[index];')&&
- dock.includes('scroll-snap-align:center'));
-test("Compact mode tabs and wheel values indicate selection without a duplicate header",
- dock.includes('tab.setAttribute("aria-selected",String(modeDraft.mode===id))')&&
- dock.includes('item.classList.toggle("chosen",selected)')&&
+test("Cascade IV% accepts only 46 attainable percentages",
+ dock.includes('const allowed=allowedFor(kind);')&&
+ dock.includes('kind==="percent"?IV_PERCENT_VALUES')&&
+ dock.includes('entry.allowed.includes(value)')&&
+ dock.includes('input.reportValidity()'));
+test("Cascade rows highlight the open submenu and preserve the 0/100 header badge",
+ dock.includes('button.classList.toggle("chosen",cascadeMode===id)')&&
+ dock.includes('button.setAttribute("aria-expanded",String(cascadeMode===id))')&&
  dock.includes('cy.textContent=label')&&dock.includes('specialIVLabel(mode,searchSettings)'));
 test("Filter switching shows matching cached results, else keeps older results clearly identified",
  service.includes('boolean preview=restoreFilterPreview();')&&
@@ -534,17 +529,12 @@ test("Exactly 46 attainable IV percentages are offered with 91 and 100 included"
   actual.includes(91)&&actual.includes(100)&&
   !actual.includes(90)&&!actual.includes(92)&&!actual.includes(95);
 })());
-test("Percentage wheel values and league ranks remain independently site-validated",()=>{
- const block=dock.split('function renderModeChoices()')[1]?.split('function renderExtraFilters(')[0]||"";
- return block.includes('kind==="percent"?IV_PERCENT_VALUES')&&
- block.includes('kind==="iv"?16:50')&&
- block.includes('modeDraft[key]=choices[index]')&&
- block.includes('if(index<0)return;')&&
+test("Cascade IV% and league rank limits stay independent and site validated",(()=>{const b=dock.split('function renderModeChoices()')[1]?.split('function renderExtraFilters(')[0]||"";
+ return b.includes('kind==="percent"?IV_PERCENT_VALUES')&&
+ b.includes('kind==="iv"?16:50')&&
+ b.includes('modeDraft[key]=value')&&
  read("assets/probe.js").includes('ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMin)')&&
- read("assets/probe.js").includes('ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMax)')&&
- read("assets/probe.js").includes('function applyLeague()')&&
- read("assets/probe.js").includes('configuredRank()');
-});
+ read("assets/probe.js").includes('configuredRank()');})());
 test("Native validation prevents invalid IV percentages including on saved requests",
  service.includes('private static boolean isAllowedIvPercent(int value)')&&
  service.includes('if(ivPercentageForSum(total)==value)return true;')&&
@@ -562,10 +552,11 @@ test("UX-MENU-01 keeps original 12 commands but navigates with compact contextua
  dock.includes('body.controls-window #controls{display:none!important}')&&
  dock.includes('case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF"')&&
  dock.includes('function renderQuickMenu()')&&service.includes('Math.min(330,screenWidthDp()-8)'));
-test("UX-MENU-01 has independent mode, filters, alerts, info and appearance panels",
+test("UX-MENU-01 keeps independent cascade, filters, alerts, info and appearance panels",
+ dock.includes('function renderModeChoices()')&&dock.includes('modeCascadeRail')&&
  dock.includes('function renderFiltersChoices()')&&dock.includes('function renderAlertsChoices()')&&
  dock.includes('function renderInfoChoices()')&&dock.includes('function renderAppearanceChoices()')&&
- dock.includes('const fields=modeDraft.mode==="raw"?[')&&dock.includes('renderExtraFilters(panel,make)'));
+ dock.includes('renderExtraFilters(panel,make)'));
 test("UX-MENU-01 persists ordered and hidden commands without hiding close",
  service.includes('void saveMenuPrefs(String json)')&&
  service.includes('!"close".equals(id)')&&
@@ -615,15 +606,11 @@ test("PL-04 OFF does not force Area when default Coords are blank",
  service.includes('locationEnabled?"⚠ Localização não aplicada":"⚠ Pesquisa não confirmada"'));
 
 
-test("UX-MENU-03 never shows a wide menu, header, tiles or labels",
-  dock.includes('body.controls-window #quickHead{display:none!important}')&&
-  dock.includes('body.controls-window #menu{height:34px!important;min-height:34px!important}')&&
-  dock.includes('body.controls-window #quickMenuList .quickName,')&&
-  dock.includes('display:none!important;width:0!important;height:0!important')&&
-  dock.includes('max-height:34px!important;overflow:hidden!important')&&
-  dock.includes('width:220px!important')&&
-  dock.includes('width:162px!important')&&
-  dock.includes('width:306px!important'));
+test("UX-MENU-03 keeps one tiny toolbar, cascade and independent other menus",
+ dock.includes('body.controls-window #quickHead{display:none!important}')&&
+ dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important')&&
+ dock.includes('width:88px!important;height:190px!important')&&
+ dock.includes('width:220px!important')&&dock.includes('width:306px!important'));
 test("UX-MENU-04 keeps twelve icon-first entry points in one thin row",
   dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])')&&
   dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"]')&&
@@ -724,11 +711,11 @@ test("REG-51049 opening Modos never starts background filter-option discovery",
   !block.includes('Native.locationEditor(true)')&&
   dock.includes('if(choiceOpen==="filters"&&modeDraft)');
  })());
-test("REG-51049 filter expansion stays within Filtros and never resets a mode picker",
+test("REG-51049 filters cannot replace a cascade editing session",
  dock.includes('if(choiceOpen==="filters")renderFiltersChoices();else renderModeChoices();')&&
  dock.includes('if(choiceOpen==="filters"&&modeDraft)')&&
- dock.includes('tab.onclick=()=>{modeDraft.mode=id;renderModeChoices();}')&&
- dock.includes('const next={...modeDraft};'));
+ dock.includes('cascadeMode=cascadeMode===id?null:id')&&
+ dock.includes('const next={...modeDraft}'));
 test("REG-51049 OFF public search ignores inert radius while refusing residual coordinates",
  (()=>{
  const src=read("assets/probe.js");
@@ -804,15 +791,13 @@ test("Only refresh actions appear in Atualização: no path to Ajustes",()=>{
  return !code.includes("‹ Ajustes")&&!code.includes('choiceOpen="appearance"')&&
   code.includes('manualRefreshTap()')&&code.includes('Native.setIntervalMinutes(period)');
 });
-test("Modos never changes historical RESULTS, rank label centered over glyph",()=>{
- const menu=dock.split("function getModeMenuIcon(")[1]?.split("// Historical result icons")[0]||"";
+test("Modos changes UL result base only; menu rank overlays centered",(()=>{const menu=dock.split("function getModeMenuIcon(")[1]?.split("// Historical result icons")[0]||"";
  const result=dock.split("function getResultIcon(")[1]?.split("let locationEnabled=")[0]||"";
- return menu.includes('modePercentStarCount(')&&menu.includes('result-icons/modes/')&&
-  !result.includes('result-icons/modes/')&&result.includes('result-icons/base/')&&
-  dock.includes('rank.textContent=art.ivBadge')&&
-  dock.includes('transform:translateX(-50%)!important')&&
-  dock.includes('text-shadow:0 1px 2px #000,0 0 3px #000,0 0 4px #d5e7ff!important');
-});
+ return menu.includes('result-icons/modes/')&&
+ !result.includes('result-icons/modes/')&&
+ result.includes('baseFamily==="ul"?"file:///android_asset/result-icons/ultra-league.png"')&&
+ dock.includes('rank.textContent=art.ivBadge')&&
+ dock.includes('transform:translate(-50%,-50%)!important');})());
 test("Thin bar Modos icon redraws on filter/rank change and does not add buttons",()=>{
  const block=dock.split('function refreshQuickMenuStates()')[1]?.split('function uxPanel(')[0]||"";
  return dock.includes('button.dataset.modeArtKey=art.path+"|"+art.ivBadge')&&
@@ -868,36 +853,22 @@ test("Duplicate popup Shiny removed: only independent toolbar ✨ remains",
  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"]')&&
  dock.includes('case "sh":Native.shiny();break;')&&
  !dock.includes('modeShiny')&&!dock.includes('heading.appendChild(shinyButton)'));
-test("UX-MODOS-MICRO-02 uses genuinely smaller league popups with inline buttons",()=>{
- const m=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
- return dock.includes("width:162px!important;max-height:min(99px")&&
-  dock.includes("width:177px!important;max-height:min(143px")&&
-  dock.includes("width:198px!important;max-height:min(143px")&&
-  dock.includes("height:60px;width:100%;padding:20px 0")&&
-  dock.includes("height:20px;min-height:20px;line-height:20px")&&
-  m.includes('panel.classList.add("modePanel","visible","modeCompact-"+')&&
-  m.includes('const WHEEL_STEP=20;')&&
-  m.includes('Math.round(wheel.scrollTop/WHEEL_STEP)')&&
-  m.includes('if(["gl","ul"].includes(modeDraft.mode))wheels.appendChild(actions)')&&
-  m.includes('else panel.appendChild(actions)')&&
-  dock.includes("#choices.modePanel.modeCompact-league .modeWheelLabel{display:none}")&&
-  !m.includes("Native.shiny()")&&
-  dock.includes('function getResultIcon(');
-});
-test("UX-MODOS-WHEEL-01 keeps controls inside one small panel with ✓ and ×",()=>{
- const block=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
- return block.includes('["raw","IV"],["percent","IV%"],["gl","GL"],["ul","UL"]')&&
- block.includes('const apply=make("button","modeApply","✓")')&&
- block.includes('const cancel=make("button","modeCancel","×")')&&
- block.includes('cancel.onclick=closeChoices')&&
- block.includes('Native.setSearchConfig(JSON.stringify(next))')&&
- block.includes('wheel.setAttribute("role","listbox")')&&
- block.includes('if(key==="percentMin"&&modeDraft.percentMax<number)')&&
- block.includes('if(key==="percentMax"&&modeDraft.percentMin>number)')&&
- !block.includes('Native.shiny()')&&
- dock.includes('body.controls-window #choices.modePanel{')&&
-  dock.includes('modeCompact-league');
-});
+test("UX-MODOS-CASCADE-03 uses classic 6-row menu, no oversized wheels",(()=>{const b=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
+ return dock.includes('modeCascadeRail')&&
+ dock.includes('modeCascadeEditor')&&
+ dock.includes('width:88px!important;height:190px!important')&&
+ dock.includes('height:27px!important;min-height:27px!important')&&
+ b.includes('const offsets={raw:76,percent:103,gl:130,ul:154}')&&
+ b.includes('editor.append(confirm,cancel)')&&
+ !b.includes('modeWheel')&&
+ !b.includes('Native.shiny()');})());
+test("UX-MODOS-CASCADE-04 confirms or cancels only the chosen lateral editor",
+ dock.includes('confirm.className="modeCascadeConfirm"')&&
+ dock.includes('cancel.className="modeCascadeCancel"')&&
+ dock.includes('confirm.onclick=()=>')&&
+ dock.includes('cancel.onclick=()=>{cascadeMode=null;')&&
+ dock.includes('input.setCustomValidity("Escolha um valor permitido")')&&
+ dock.includes('Native.setSearchConfig(JSON.stringify(next))'));
 test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
   dock.indexOf('id="sh"')>dock.indexOf('id="cycle"')&&
   (dock.match(/<button id="(?:cycle|sh|period|manualRefresh|size|clock|bell|star|location|report|donate|close)"/g)||[]).length===12);
@@ -905,9 +876,9 @@ test("Sort by remains among existing verified advanced filters",
   dock.includes('renderExtraFilters(panel,make)')&&
   dock.includes('option("sortBy","Sort by")')&&
   dock.includes('const RESULT_ICONS=Object.freeze'));
-test("General and advanced filters are foldable in contextual panel",
-  dock.includes('section("Filtros gerais"')&&dock.includes('section("Filtros avançados"')&&
-  dock.includes('#choices.modePanel{width:232px'));
+test("Filters remain independent of cascade and retain their popup dimensions",
+ dock.includes('section("Filtros gerais"')&&dock.includes('section("Filtros avançados"')&&
+ dock.includes('#choices.modePanel{width:232px')&&dock.includes('function renderExtraFilters('));
 test("Site dropdown options are discovered instead of inventing weather/form values",
   dock.includes('filterOptions=response.partial?')&&
   dock.includes('Native.requestFilterOptions()')&&
@@ -1065,22 +1036,15 @@ test("UX-ICON-02 selected GL/UL threshold is displayed as a #N badge",()=>{
  block.includes('baseFamily==="ul"?Number(settings.ulRank)')&&
  block.includes('topN>=1&&topN<=50?"#"+topN')&&block.includes('ivBadge:badge');
 });
-test("RESULT-RESTORE old icons and all effects independent of new Modos art",()=>{
- const result=dock.split('function getResultIcon(')[1].split('let locationEnabled=')[0];
+test("RESULT-RESTORE all historical effects intact with only corrected UL base",(()=>{const result=dock.split('function getResultIcon(')[1].split('let locationEnabled=')[0];
  const toolbar=dock.split('function getModeMenuIcon(')[1].split('function getResultIcon(')[0];
  const draw=dock.split('function draw(){')[1].split('function updateTimers(){')[0];
- return result.includes('path:"file:///android_asset/result-icons/base/"+baseName')&&
-  result.includes('fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none')&&
-  !result.includes('result-icons/modes/')&&
-  toolbar.includes('result-icons/modes/')&&
-  dock.includes('const art=getModeMenuIcon(mode,false,searchSettings);')&&
-  draw.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
-  draw.includes('document.getElementById("modeIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge)')&&
-  draw.includes('document.getElementById("modeIndicatorBackground").classList.toggle("visible",selectedIcon.backgroundBadge)')&&
-  dock.includes('animation:psCapturePulse .85s ease-in-out infinite')&&
-  dock.includes('Native.toggleResultsCollapsed()')&&
-  dock.includes('const headerIconSize=Math.max(17,Math.min(21,Math.round(spriteSize*0.45)));');
-});
+ return result.includes('baseFamily==="ul"?"file:///android_asset/result-icons/ultra-league.png"')&&
+ result.includes('fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none')&&
+ !result.includes('result-icons/modes/')&&toolbar.includes('result-icons/modes/')&&
+ draw.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
+ draw.includes('selectedIcon.shinyBadge')&&draw.includes('selectedIcon.backgroundBadge')&&
+ dock.includes('animation:psCapturePulse');})());
 test("RESULT-RESTORE GL/UL/base Pokémon badges exactly as before",()=>{
  const vm=require("node:vm");
  const start=dock.indexOf("const RESULT_ICONS=Object.freeze("),end=dock.indexOf("let locationEnabled=",start);
