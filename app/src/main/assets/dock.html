@@ -609,8 +609,8 @@ function toggleChoices(kind){
  if(kind==="mode"){
   modeScrollTop=0;
   modeDraft={...searchSettings,mode};
+  // No filter-options discovery in Modos: callbacks replaced numeric picker mid-tap.
   renderModeChoices();
-  if(controlsWindow){Native.locationEditor(true);if(Native.requestFilterOptions)Native.requestFilterOptions();}
   return;
  }
  const current=period;
@@ -777,9 +777,11 @@ function renderFilterPicker(key,label,options){
 window.onFilterOptions=function(response){
  if(!response||!response.ok)return;
  filterOptions=response.partial?{...filterOptions,...(response.options||{})}:(response.options||{});
- if((choiceOpen==="mode"||choiceOpen==="filters")&&modeDraft){
+ if(choiceOpen==="filters"&&modeDraft){
   const panel=document.getElementById("choices"),scroll=panel.scrollTop;
-  if(!document.activeElement||!document.activeElement.matches("input")){choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();panel.scrollTop=scroll;}
+  if(!document.activeElement||!document.activeElement.matches("input")){
+   renderFiltersChoices();panel.scrollTop=scroll;
+  }
  }
 };
 
