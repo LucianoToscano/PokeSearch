@@ -448,7 +448,7 @@ test("Cascade replaces wheels and popup Shiny without losing the independent ✨
 test("Direct extremes and explicit ✓ are the only cascade save paths",
  dock.includes('const next={...searchSettings,mode:"raw",attack:value,defense:value,stamina:value}')&&
  dock.includes('const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));')&&
- dock.includes('cancel.onclick=()=>{cascadeMode=null;')&&toolbarButtons.length===12);
+ dock.includes('cancel.onclick=()=>{if(controlsWindow)Native.locationEditor(false);')&&toolbarButtons.length===12);
 test("Cascade percent MIN/MAX are kept in valid order on edit",
  dock.includes('key==="percentMin"&&modeDraft.percentMax<value')&&
  dock.includes('key==="percentMax"&&modeDraft.percentMin>value')&&
@@ -866,7 +866,7 @@ test("UX-MODOS-CASCADE-04 confirms or cancels only the chosen lateral editor",
  dock.includes('confirm.className="modeCascadeConfirm"')&&
  dock.includes('cancel.className="modeCascadeCancel"')&&
  dock.includes('confirm.onclick=()=>')&&
- dock.includes('cancel.onclick=()=>{cascadeMode=null;')&&
+ dock.includes('cancel.onclick=()=>{if(controlsWindow)Native.locationEditor(false);')&&
  dock.includes('input.setCustomValidity("Escolha um valor permitido")')&&
  dock.includes('Native.setSearchConfig(JSON.stringify(next))'));
 test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
@@ -1053,7 +1053,10 @@ test("UX-CASCADE window resizing retains full requested size after temporary cli
  dock.includes('choiceOpen==="mode"?34+190+6')&&
  dock.includes('function positionCascadeEditor()')&&
  dock.includes('rail.scrollTop=Math.max(0,requested+36-visible)')&&
- dock.includes('if(choiceOpen==="mode")positionCascadeEditor()'));
+ dock.includes('if(choiceOpen==="mode")positionCascadeEditor()')&&
+ service.includes('if(menuParams.width!=width)menuParams.width=width;')&&
+ service.includes('menuParams.x=Math.max(0,Math.min(Math.max(0,screen-width),menuParams.x))')&&
+ dock.includes('if(controlsWindow)Native.locationEditor(false);'));
 test("RESULT UL correct historic black-yellow icon, preserving other base artwork",
  dock.includes('baseFamily==="ul"?"file:///android_asset/result-icons/ultra-league.png"')&&
  dock.includes('gl:"base-gl.png",ul:"base-ul.png",ml:"base-ml.png"')&&
