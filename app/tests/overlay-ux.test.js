@@ -14,11 +14,12 @@ function test(name,ok){if(!ok)failures.push(name);count++;}
 test("Mode button opens options instead of cycling",dock.includes("toggleChoices('mode')")&&!dock.includes('onclick="Native.cycleMode()"'));
 test("Auto button opens interval options",dock.includes("toggleChoices('period')"));
 test("Four compact modes in requested order without redundant IV100 row",(()=>{
- const body=dock.split('function renderModeChoices()')[1].split('function renderNumberPicker(')[0];
- const items=['row("raw"','row("percent"','row("gl"','row("ul"'];
+ const body=dock.split('function renderModeChoices()')[1].split('function renderExtraFilters(')[0];
+ const items=['["raw","IV"]','["percent","IV%"]','["gl","GL"]','["ul","UL"]'];
  return items.every(x=>body.includes(x))&&
   items.every((x,i)=>i===0||body.indexOf(items[i-1])<body.indexOf(x))&&
-  !body.includes('row("iv"')&&dock.includes('toggleChoices(\'mode\')');
+  !body.includes('row("raw"')&&
+  !body.includes('modeShiny')&&dock.includes('toggleChoices(\'mode\')');
 })());
 test("Intervals minimum 5 minutes",["Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
 test("Choice panel measures fixed popup height even when rendered above toolbar",
@@ -421,21 +422,21 @@ test("Mode popup keeps one stable row while expanding upward or downward",
  dock.includes('body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}')&&
  dock.includes('body.controls-window.popup-above #menu{top:var(--popup-offset,0px)!important}'));
 test("Mode popup stays contained and its action row remains reachable",
- dock.includes('width:246px')&&dock.includes('max-height:min(216px')&&dock.includes('var(--popup-room,400px)')&&
+ dock.includes('width:232px')&&dock.includes('max-height:min(216px')&&dock.includes('var(--popup-room,400px)')&&
  dock.includes('position:sticky;bottom:0;')&&
  service.includes('int roomDp=requestedPopup==0?420:'));
-test("Mode picker remembers scroll and centers selected values",
- dock.includes('modeScrollTop=panel.scrollTop')&&
- dock.includes('panel.scrollTop=modeScrollTop')&&
- dock.includes('grid.scrollTop=Math.max(0,')&&
+test("Mode wheels center selection, scroll directly and support keyboard without a second screen",
+ dock.includes('scroll-snap-type:y mandatory')&&
+ dock.includes('entry.wheel.scrollTop=index*32;entry.paint(index);')&&
+ dock.includes('wheel.onscroll=()=>')&&
+ dock.includes('wheel.onkeydown=event=>')&&
  dock.includes('overscroll-behavior:contain'));
-test("Four requested search modes with correct numeric bounds",()=>{
- const segment=dock.split("function renderNumberPicker(")[1].split("function renderLocationChoices()")[0];
+test("Four requested modes keep direct wheels with raw, percent and league bounds",()=>{
+ const segment=dock.split("function renderModeChoices()")[1]?.split("function renderExtraFilters(")[0]||"";
  return segment.includes('const choices=kind==="percent"?IV_PERCENT_VALUES:')&&
   segment.includes('Array.from({length:kind==="iv"?16:50},(_,i)=>i+(kind==="rank"?1:0))')&&
-  dock.includes('{key:"attack"')&&dock.includes('{key:"defense"')&&dock.includes('{key:"stamina"')&&
-  dock.includes('{key:"glRank"')&&dock.includes('{key:"ulRank"')&&
-  dock.includes('{key:"percentMin"')&&dock.includes('{key:"percentMax"');
+  ["attack","defense","stamina","percentMin","percentMax","glRank","ulRank"].every(k=>segment.includes('"'+k+'"'))&&
+  segment.includes('wheel.scrollTo({top:index*32,behavior:"smooth"})');
 });
 test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy migration",
  dock.includes('if([attack,defense,stamina].every(v=>Number(v)===15))family="hundo"')&&
@@ -443,10 +444,12 @@ test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy 
  service.includes('boolean migrateLegacyHundo="iv".equals(mode);')&&
  service.includes('pref.edit().putString("mode","raw")')&&
  read("assets/probe.js").includes('return rawIsHundo()&&!oneButton("Raw IV")&&set100Percent();'));
-test("Mode panel has no hint or fifth row and numbers retain a compact grid",
- !dock.includes('panel.appendChild(make("div","modeHint"')&&
- dock.includes('max-height:148px')&&
- dock.includes('#choices .modeRow')&&
+test("Compact Modos removes duplicate Shiny, number grid, and excessive fields",
+ !dock.includes('modeShiny')&&
+ !dock.includes('function renderNumberPicker(')&&
+ !dock.includes('numberGrid')&&
+ dock.includes('#choices.modePanel .modeWheels')&&
+ dock.includes('height:96px;width:100%')&&
  dock.includes('max-height:min(216px'));
 test("Modes save only after applying and keep original bridge actions",
  dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
@@ -481,18 +484,15 @@ test("Raw zero/percent extremes retain the historical result badges and menu med
   dock.includes('nundo:{normal:"nundo.png",shiny:"shnundo.png"')&&
   dock.includes('hundo:{normal:"hundo.png",shiny:"shundo.png"');
 })());
-test("Compact percent slider and grid use the exact same 46 allowed values",
- dock.includes('slider.type="range"')&&
- dock.includes('slider.min="0";slider.max=String(IV_PERCENT_VALUES.length-1);slider.step="1"')&&
- dock.includes('slider.oninput=()=>')&&
- dock.includes('slider.onchange=()=>chooseNumber(IV_PERCENT_VALUES[Number(slider.value)])')&&
- dock.includes('btn.onclick=()=>chooseNumber(number)')&&
- dock.includes('max-height:148px'));
-test("Mode selection remains clearly highlighted and header shows automatic 0/100",
- dock.includes('choose.setAttribute("aria-pressed",String(modeDraft.mode===name))')&&
- dock.includes('choose.textContent=(modeDraft.mode===name?"✓ ":"")+label')&&
- dock.includes('cy.textContent=label')&&
- dock.includes('specialIVLabel(mode,searchSettings)'));
+test("Both percent wheels reuse the exact same attainable IV percentage list",
+ dock.includes('const choices=kind==="percent"?IV_PERCENT_VALUES:')&&
+ dock.includes('const display=n=>kind==="percent"?n+"%"')&&
+ dock.includes('modeDraft[key]=choices[index];')&&
+ dock.includes('scroll-snap-align:center'));
+test("Compact mode tabs and wheel values indicate selection without a duplicate header",
+ dock.includes('tab.setAttribute("aria-selected",String(modeDraft.mode===id))')&&
+ dock.includes('item.classList.toggle("chosen",selected)')&&
+ dock.includes('cy.textContent=label')&&dock.includes('specialIVLabel(mode,searchSettings)'));
 test("Filter switching shows matching cached results, else keeps older results clearly identified",
  service.includes('boolean preview=restoreFilterPreview();')&&
  service.includes('if(!preview)resultsStale=count()>0;')&&
@@ -533,15 +533,17 @@ test("Exactly 46 attainable IV percentages are offered with 91 and 100 included"
   actual.includes(91)&&actual.includes(100)&&
   !actual.includes(90)&&!actual.includes(92)&&!actual.includes(95);
 })());
-test("Percentage picker has only allowed numbers while league ranks stay independent",
- dock.includes('const choices=kind==="percent"?IV_PERCENT_VALUES:')&&
- dock.includes('kind==="iv"?16:50')&&
- dock.includes('modeDraft[key]=number;')&&
- dock.includes('if(!choices.includes(number))return;')&&
+test("Percentage wheel values and league ranks remain independently site-validated",()=>{
+ const block=dock.split('function renderModeChoices()')[1]?.split('function renderExtraFilters(')[0]||"";
+ return block.includes('kind==="percent"?IV_PERCENT_VALUES')&&
+ block.includes('kind==="iv"?16:50')&&
+ block.includes('modeDraft[key]=choices[index]')&&
+ block.includes('if(index<0)return;')&&
  read("assets/probe.js").includes('ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMin)')&&
  read("assets/probe.js").includes('ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMax)')&&
  read("assets/probe.js").includes('function applyLeague()')&&
- read("assets/probe.js").includes('configuredRank()'));
+ read("assets/probe.js").includes('configuredRank()');
+});
 test("Native validation prevents invalid IV percentages including on saved requests",
  service.includes('private static boolean isAllowedIvPercent(int value)')&&
  service.includes('if(ivPercentageForSum(total)==value)return true;')&&
@@ -562,7 +564,7 @@ test("UX-MENU-01 keeps original 12 commands but navigates with compact contextua
 test("UX-MENU-01 has independent mode, filters, alerts, info and appearance panels",
  dock.includes('function renderFiltersChoices()')&&dock.includes('function renderAlertsChoices()')&&
  dock.includes('function renderInfoChoices()')&&dock.includes('function renderAppearanceChoices()')&&
- dock.includes('if(modeDraft.mode!==name)return;')&&dock.includes('renderExtraFilters(panel,make)'));
+ dock.includes('const fields=modeDraft.mode==="raw"?[')&&dock.includes('renderExtraFilters(panel,make)'));
 test("UX-MENU-01 persists ordered and hidden commands without hiding close",
  service.includes('void saveMenuPrefs(String json)')&&
  service.includes('!"close".equals(id)')&&
@@ -593,7 +595,7 @@ test("UX-MENU-02 builds a unique Pokémon silhouette but does not fake site inte
  !dock.includes('case "pokemon":Native.'));
 test("UX-SHINY-01 restores Shiny ✨ next to Modos using the existing native toggle",
  dock.includes('["sh","✨","Shiny Only","sh"]')&&
- dock.includes('shinyButton.id="modeShiny"')&&
+ dock.includes('["sh","✨","Shiny Only","sh"]')&&
  dock.includes('shinyButton.onclick=()=>Native.shiny()')&&
  dock.includes('case "sh":Native.shiny();break;'));
 test("UX-MENU-04 restores twelve small icons in the old thin row while migrating saved menu",
@@ -662,7 +664,7 @@ test("UX-MENU-04 preserves all old Android feature bridges and migrates 12-icon 
  dock.includes('const QUICK_UTILITY_IDS=[];')&&
  service.includes('String[] allowed={"mode","sh","filters","location","pokemon","star",')&&
  service.includes('"bell","period","appearance","report","donate","close"')&&
- dock.includes('shinyButton.id="modeShiny"')&&
+ dock.includes('["sh","✨","Shiny Only","sh"]')&&
  dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important');
 })());
 
@@ -861,10 +863,23 @@ test("HOME real Google photo is retried and extracted only from trusted profile"
 });
 
 // v0.51 additional filters: do not add toolbar actions or replace artwork.
-test("Shiny shortcut sits next to Modos de busca heading",
-  dock.includes('heading.appendChild(shinyButton);panel.appendChild(heading);')&&
-  dock.includes('shinyButton.id="modeShiny"')&&
-  dock.includes('shinyButton.onclick=()=>Native.shiny()'));
+test("Duplicate popup Shiny removed: only independent toolbar ✨ remains",
+ dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"]')&&
+ dock.includes('case "sh":Native.shiny();break;')&&
+ !dock.includes('modeShiny')&&!dock.includes('heading.appendChild(shinyButton)'));
+test("UX-MODOS-WHEEL-01 keeps controls inside one small panel with ✓ and ×",()=>{
+ const block=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
+ return block.includes('["raw","IV"],["percent","IV%"],["gl","GL"],["ul","UL"]')&&
+ block.includes('const apply=make("button","modeApply","✓")')&&
+ block.includes('const cancel=make("button","modeCancel","×")')&&
+ block.includes('cancel.onclick=closeChoices')&&
+ block.includes('Native.setSearchConfig(JSON.stringify(next))')&&
+ block.includes('wheel.setAttribute("role","listbox")')&&
+ block.includes('if(key==="percentMin"&&modeDraft.percentMax<number)')&&
+ block.includes('if(key==="percentMax"&&modeDraft.percentMin>number)')&&
+ !block.includes('Native.shiny()')&&
+ dock.includes('body.controls-window #choices.modePanel{width:232px!important;');
+});
 test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
   dock.indexOf('id="sh"')>dock.indexOf('id="cycle"')&&
   (dock.match(/<button id="(?:cycle|sh|period|manualRefresh|size|clock|bell|star|location|report|donate|close)"/g)||[]).length===12);
@@ -874,7 +889,7 @@ test("Sort by remains among existing verified advanced filters",
   dock.includes('const RESULT_ICONS=Object.freeze'));
 test("General and advanced filters are foldable in contextual panel",
   dock.includes('section("Filtros gerais"')&&dock.includes('section("Filtros avançados"')&&
-  dock.includes('#choices.modePanel{width:246px'));
+  dock.includes('#choices.modePanel{width:232px'));
 test("Site dropdown options are discovered instead of inventing weather/form values",
   dock.includes('filterOptions=response.partial?')&&
   dock.includes('Native.requestFilterOptions()')&&
