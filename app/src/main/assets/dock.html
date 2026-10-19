@@ -375,6 +375,20 @@ body.controls-window #choices{top:34px!important;width:220px!important;
 body.controls-window #choices.modePanel{width:246px!important;max-height:min(310px,var(--popup-room,400px))!important}
 body.controls-window #choices.locationPanel{width:306px!important;max-height:var(--popup-room,400px)!important}
 body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}
+/* Mode badge uses the original 10-button thin row; no new text label. */
+body.controls-window #quickMenuList .quickGlyph.modeArt{
+ width:27px!important;min-width:0!important;height:18px!important;
+ display:flex!important;gap:1px!important;align-items:center!important;justify-content:center!important;
+}
+body.controls-window #quickMenuList .quickModeImage{
+ width:17px!important;height:17px!important;object-fit:contain!important;
+ pointer-events:none!important;flex:none!important;
+}
+body.controls-window #quickMenuList .quickRank{
+ display:inline!important;width:auto!important;height:auto!important;
+ font:800 8px/10px Roboto,Arial,sans-serif!important;color:#fff!important;
+ letter-spacing:-.4px!important;text-shadow:0 1px 2px #000!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -1138,6 +1152,18 @@ const QUICK_SVG=Object.freeze({
 const QUICK_SOURCE_ICONS={location:"location",bell:"bell",star:"star",appearance:"gear",donate:"donate"};
 function iconForQuick(id, fallback){
  const glyph=document.createElement("span");glyph.className="quickGlyph";
+ if(id==="mode"){
+  const art=getResultIcon(mode,false,searchSettings);
+  const image=document.createElement("img");image.className="quickModeImage";
+  image.src=art.path;image.alt="";image.setAttribute("aria-hidden","true");
+  image.onerror=()=>{image.onerror=null;image.src=art.fallbackPath;};
+  glyph.classList.add("modeArt");glyph.appendChild(image);
+  if((mode==="gl"||mode==="ul")&&art.ivBadge){
+   const rank=document.createElement("span");rank.className="quickRank";
+   rank.textContent=art.ivBadge;glyph.appendChild(rank);
+  }
+  return glyph;
+ }
  const sourceId=QUICK_SOURCE_ICONS[id];
  const source=sourceId?document.querySelector("#"+sourceId+" svg"):null;
  if(source){glyph.appendChild(source.cloneNode(true));return glyph;}
@@ -1173,6 +1199,10 @@ function renderQuickMenu(){
   button.title=a[2]+(quickState(id)?" · "+quickState(id):"");
   button.setAttribute("aria-label",a[2]);
   const glyph=iconForQuick(id,a[1]);
+  if(id==="mode"){
+   const art=getResultIcon(mode,false,searchSettings);
+   button.dataset.modeArtKey=art.path+"|"+art.ivBadge;
+  }
   const label=document.createElement("span");label.className="quickName";label.textContent=a[2];
   const state=document.createElement("span");state.className="quickState";state.textContent=quickState(id);
   button.append(glyph,label); // Keep hidden text for accessibility and preferences.
@@ -1192,6 +1222,15 @@ function refreshQuickMenuStates(){
   const id=button.dataset.key, current=quickState(id), state=button.querySelector(".quickState");
   if(state)state.textContent=current;
   button.title=button.getAttribute("aria-label")+(current?" · "+current:"");
+  if(id==="mode"){
+   const art=getResultIcon(mode,false,searchSettings);
+   const key=art.path+"|"+art.ivBadge;
+   if(button.dataset.modeArtKey!==key){
+    const previous=button.querySelector(".quickGlyph");
+    if(previous)previous.replaceWith(iconForQuick("mode","☷"));
+    button.dataset.modeArtKey=key;
+   }
+  }
   button.classList.toggle("selected",id==="location"?locationEnabled:
    id==="bell"?generalAlerts:id==="period"?period>0:
    id==="star"?hasFavorites:id==="mode"?(mode==="gl"||mode==="ul"):false);
