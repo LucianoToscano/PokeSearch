@@ -970,15 +970,16 @@ public class OverlayService extends Service {
         });
     }
     private void configureLocationAndVerify(int generation,boolean manual,int attempt){
+        if(stopped||loginPaused||generation!=requestGeneration)return;
         String data=locationPayload();
         execute("configureLocation:"+data,configured->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!configured.optBoolean("ok")){
-                if(attempt<2){
+                if(configured.optBoolean("pending",false)&&attempt<8){
                     handler.postDelayed(()->{
                         if(stopped||loginPaused||generation!=requestGeneration)return;
                         configureLocationAndVerify(generation,manual,attempt+1);
-                    },450L);
+                    },350L);
                     return;
                 }
                 searchInProgress=false;
@@ -991,8 +992,8 @@ public class OverlayService extends Service {
                 execute("verifyLocation:"+data,verified->{
                 if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!verified.optBoolean("ok")){
-                    if(attempt<2){
-                        configureLocationAndVerify(generation,manual,attempt+1);
+                    if(attempt<6){
+                        handler.postDelayed(()->configureLocationAndVerify(generation,manual,attempt+1),350L);
                         return;
                     }
                     searchInProgress=false;
