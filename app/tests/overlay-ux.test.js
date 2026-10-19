@@ -947,7 +947,7 @@ test("HOME-03 authenticates using official profile only after session proof",(()
   login.includes('profileCaptureInProgress=true')&&
   login.includes('"unlinked".equals(state)')&&
   login.includes('profileDiscoveryAttempted=true')&&
-  !profile.includes("Danger zone")===false&&
+  profile.includes("danger zone")&&
   profile.includes("Member since")&&
   profile.includes('trainerState=parsed?"linked":explicitZero?"unlinked":"unknown"')&&
   !profile.includes("document.cookie");
