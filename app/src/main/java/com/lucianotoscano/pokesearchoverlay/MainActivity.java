@@ -61,7 +61,7 @@ public class MainActivity extends Activity {
     private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
     private View trainerCopyButton;
     private View guestHeading;
-    private ImageView teamBadge;
+    private ImageView teamBadge, accountAvatar;
     private Button trainerAction;
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
@@ -122,9 +122,15 @@ public class MainActivity extends Activity {
     private FrameLayout buildHome(){
         FrameLayout frame=new FrameLayout(this);
         homeRoot=frame;
-        // HOME-04: no decorative map or outside artwork behind the profile card.
-        // The card alone supplies the appearance from the owner's reference.
+        // HOME: restore owner's actual wallpaper across the entire page.
         frame.setBackgroundColor(Color.rgb(10,14,23));
+        ImageView pageBackground=new ImageView(this);
+        pageBackground.setImageResource(R.drawable.ps_home_background_dark);
+        pageBackground.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        frame.addView(pageBackground,new FrameLayout.LayoutParams(-1,-1));
+        View dim=new View(this);
+        dim.setBackgroundColor(Color.argb(55,6,12,24));
+        frame.addView(dim,new FrameLayout.LayoutParams(-1,-1));
 
         LinearLayout screen=new LinearLayout(this);
         screen.setOrientation(LinearLayout.VERTICAL);
@@ -220,8 +226,9 @@ public class MainActivity extends Activity {
         accountRow.setGravity(Gravity.CENTER_VERTICAL);
         connectedPanel.addView(accountRow,new LinearLayout.LayoutParams(-1,-2));
         ImageView avatar=new ImageView(this);
-        // No hardcoded portrait: use a neutral avatar until an authorized
-        // identity provider supplies a verified picture URL.
+        accountAvatar=avatar;
+        // A neutral fallback is used until the official profile provides
+        // an allowlisted Google-hosted image (never a guessed portrait).
         avatar.setImageResource(android.R.drawable.ic_menu_myplaces);
         avatar.setColorFilter(Color.rgb(183,201,229));
         avatar.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
@@ -515,15 +522,79 @@ public class MainActivity extends Activity {
         android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
         bg.setColor(color);bg.setCornerRadius(d(radius));return bg;
     }
+
+    // Fetch only a public Google avatar URL explicitly present in the
+    // authenticated /profile DOM. Never forward cookies or OAuth secrets.
+    private static boolean allowedGoogleAvatar(String url){
+        if(url==null||url.length()>1600)return false;
+        try{
+            Uri uri=Uri.parse(url);
+            String host=uri.getHost(),scheme=uri.getScheme();
+            return "https".equalsIgnoreCase(scheme)&&host!=null&&
+                (host.equalsIgnoreCase("googleusercontent.com")||
+                 host.toLowerCase(Locale.ROOT).endsWith(".googleusercontent.com"))&&
+                uri.getUserInfo()==null;
+        }catch(Exception ignored){return false;}
+    }
+    private String shownAvatarUrl="";
+    private void refreshGoogleAvatar(String url){
+        if(accountAvatar==null)return;
+        final String next=allowedGoogleAvatar(url)?url:"";
+        if(shownAvatarUrl.equals(next))return;
+        shownAvatarUrl=next;
+        accountAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+        accountAvatar.setColorFilter(Color.rgb(183,201,229));
+        accountAvatar.setPadding(d(11),d(11),d(11),d(11));
+        if(next.isEmpty())return;
+        new Thread(()->{
+            android.graphics.Bitmap bitmap=null;
+            java.net.HttpURLConnection connection=null;
+            try{
+                java.net.URL u=new java.net.URL(next);
+                connection=(java.net.HttpURLConnection)u.openConnection();
+                connection.setInstanceFollowRedirects(false);
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(6000);
+                if(connection.getResponseCode()!=200)return;
+                if(!String.valueOf(connection.getContentType()).startsWith("image/"))return;
+                if(connection.getContentLengthLong()>2_500_000L)return;
+                try(InputStream stream=new java.io.BufferedInputStream(connection.getInputStream())){
+                    ByteArrayOutputStream data=new ByteArrayOutputStream();
+                    byte[] buf=new byte[8192];int n;
+                    while((n=stream.read(buf))!=-1){
+                        if(data.size()+n>2_500_000)return;
+                        data.write(buf,0,n);
+                    }
+                    byte[] bytes=data.toByteArray();
+                    bitmap=android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+                }
+            }catch(Exception ignored){
+                // Network or an unavailable avatar keeps the neutral icon.
+            }finally{if(connection!=null)connection.disconnect();}
+            final android.graphics.Bitmap photo=bitmap;
+            if(photo!=null)runOnUiThread(()->{
+                if(accountAvatar==null||!shownAvatarUrl.equals(next)||
+                    !"autenticada".equals(getSharedPreferences("prefs",0)
+                        .getString("sessionStatus","")))return;
+                accountAvatar.clearColorFilter();
+                accountAvatar.setPadding(0,0,0,0);
+                accountAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                accountAvatar.setImageBitmap(photo);
+            });
+        },"PokeSearch-Google-Avatar").start();
+    }
+
     private void refreshSessionSummary(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         boolean logged="autenticada".equals(prefs.getString("sessionStatus","não confirmado"));
         if(guestHeading!=null)guestHeading.setVisibility(logged?View.GONE:View.VISIBLE);
         if(guestPanel!=null)guestPanel.setVisibility(logged?View.GONE:View.VISIBLE);
         if(connectedPanel!=null)connectedPanel.setVisibility(logged?View.VISIBLE:View.GONE);
-        if(sessionHint!=null)sessionHint.setText("Faça login para acessar coordenadas em tempo real");
+        if(sessionHint!=null)sessionHint.setText(
+            "Buscas comuns sem login · Shiny exige treinador vinculado");
         if(accountDisplay!=null)accountDisplay.setText(
             prefs.getString("profileDisplayName","Conta conectada"));
+        refreshGoogleAvatar(logged?prefs.getString("profileAvatarUrl",""):"");
         if(accountProvider!=null){
             String provider=prefs.getString("profileProvider","");
             accountProvider.setText("Google".equals(provider)?"G  Logado via Google":
@@ -584,7 +655,7 @@ public class MainActivity extends Activity {
         if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
         getSharedPreferences("prefs",0).edit()
             .putString("sessionStatus","desconectado")
-            .remove("profileDisplayName").remove("profileProvider")
+            .remove("profileDisplayName").remove("profileProvider").remove("profileAvatarUrl")
             .remove("profileTrainerName").remove("profileTrainerCode")
             .remove("profileTrainerDetails").remove("profileTrainerState")
             .remove("profileTrainerTeam").remove("profileTrainerLevel")
@@ -668,6 +739,7 @@ public class MainActivity extends Activity {
                 getSharedPreferences("prefs",0).edit()
                     .putString("sessionStatus","autenticada")
                     .putString("profileTrainerState","unknown")
+                    .remove("profileAvatarUrl")
                     .remove("profileTrainerName").remove("profileTrainerCode")
                     .remove("profileTrainerDetails").remove("profileTrainerTeam")
                     .remove("profileTrainerLevel").apply();
@@ -749,6 +821,10 @@ public class MainActivity extends Activity {
                         edit.putString("profileDisplayName",name);
                     if(provider.equals("Google")||provider.equals("Discord"))
                         edit.putString("profileProvider",provider);
+                    String avatar=profile.optString("avatarUrl","");
+                    if("Google".equals(provider)&&allowedGoogleAvatar(avatar))
+                        edit.putString("profileAvatarUrl",avatar);
+                    else edit.remove("profileAvatarUrl");
                     String state=profile.optString("trainerState","unknown");
                     String trainer=profile.optString("trainerName","");
                     String code=profile.optString("trainerCode","");
