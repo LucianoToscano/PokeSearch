@@ -38,7 +38,7 @@ public class OverlayService extends Service {
     private static final int RESULTS_HEADER_DP=30;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return Math.max(1,Math.min(276,screenWidthDp()-8));}
+    private int menuDp(){return Math.max(1,Math.min(396,screenWidthDp()-8));} // old single-row toolbar width
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams,menuParams,resultParams;
