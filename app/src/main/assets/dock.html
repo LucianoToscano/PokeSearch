@@ -703,6 +703,7 @@ window.setMenuPopupPlacement=(above,offset,room)=>{
  document.documentElement.style.setProperty("--popup-offset",top+"px");
  document.documentElement.style.setProperty("--popup-room",available+"px");
  document.body.classList.toggle("popup-above",!!above);
+ if(choiceOpen==="mode")positionCascadeEditor();
  fit();
 };
 window.setResultsCollapsed=collapsed=>{
@@ -806,6 +807,20 @@ function toggleChoices(kind){
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","true");
  fit();
+}
+/* Reposition the cascading editor after a drag, rotation or keyboard resize.
+   The native window may have room for fewer than six rows. */
+function positionCascadeEditor(){
+ const rail=document.querySelector("#choices .modeCascadeRail");
+ const editor=document.querySelector("#choices .modeCascadeEditor");
+ if(!rail||!editor||!cascadeMode)return;
+ const tops={raw:76,percent:103,gl:130,ul:154};
+ const requested=tops[cascadeMode]||76;
+ const room=Number.parseFloat(getComputedStyle(document.documentElement)
+  .getPropertyValue("--popup-room"))||190;
+ const visible=Math.max(40,Math.min(190,room));
+ rail.scrollTop=Math.max(0,requested+36-visible);
+ editor.style.top=Math.max(0,Math.min(visible-36,requested-rail.scrollTop))+"px";
 }
 function renderModeChoices(){
  const panel=document.getElementById("choices");
@@ -937,6 +952,7 @@ function renderModeChoices(){
   };
   cancel.onclick=()=>{cascadeMode=null;modeDraft={...searchSettings,mode};renderModeChoices();};
   editor.append(confirm,cancel);panel.appendChild(editor);
+  requestAnimationFrame(positionCascadeEditor);
  }
  document.getElementById("cycle").setAttribute("aria-expanded","true");
  fit();
