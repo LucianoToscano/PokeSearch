@@ -264,8 +264,9 @@ test("Shiny tap skips Search cooldown to inspect site and auth",
   service.includes('execute("setShiny",applied->')&&
   service.includes('execute("session",session->')&&
   service.includes('handler.removeCallbacks(queuedRefresh);'));
-test("Shiny tap launches login directly when not authenticated",
-  service.includes('"login necessário".equals(cachedAuth)||"desconectado".equals(cachedAuth)')&&
+test("Shiny tap opens official login only when account+trainer requirement fails",
+  service.includes('if(shiny&&!hasConfirmedTrainerLink())')&&
+  service.includes('revertUnverifiedShiny("✨ Shiny exige login PoGoCoordinates e treinador vinculado.")')&&
   service.includes('openShinyLogin();')&&
   service.includes('if(!loaded||website==null){'));
 test("Shiny off works without forced login",
@@ -576,7 +577,7 @@ test("UX-MENU-01 visibility toggles cannot invent unverified data",
 test("UX-MENU-02 orders Modos, Filtros, Localização and Pokémon consecutively",
  dock.includes('["mode","☷","Modos","mode"],["filters","≡","Filtros","filters"]')&&
  dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
- dock.includes('["star","☆","Favoritos","star"],["appearance","⚙","Aparência","appearance"]'));
+ dock.includes('["star","☆","Favoritos","star"],["appearance","⚙","Ajustes","appearance"]'));
 test("UX-MENU-02 uses earlier SVG icons for location, alerts, favorites, appearance and support",
  dock.includes('location:"location",bell:"bell",star:"star",appearance:"gear",donate:"donate"')&&
  dock.includes('source.cloneNode(true)')&&
@@ -1130,7 +1131,7 @@ test("HOME-04 keeps the official link and a management option without a linked t
  const r=main.split("private void openTrainerManagement(){")[1]?.split("private int homeTeamIcon(")[0]||"";
  return r.includes('if(!code.matches("[0-9]{12}"))')&&
   r.includes('openLoginDialog(false,"manage")')&&
-  main.includes('edit.putString("profileTrainerState","unlinked")')&&
+  main.includes('"unlinked".equals(state)?"unlinked":"unknown"')&&
   main.includes('.remove("profileTrainerTeam").remove("profileTrainerLevel")');
 })());
 test("HOME-02 has visible ON/OFF resources and drawer with safe export",(()=>{
