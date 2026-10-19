@@ -271,10 +271,36 @@ body.controls-window.popup-above #quickHead{border-radius:0 0 11px 11px}
 #choices .uxAdjust span{flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #choices .uxAdjust button{width:30px;padding:4px 0;margin:0;text-align:center}
 #choices .uxNote{font-size:10px;line-height:1.4;color:#b0bfca;padding:4px}
+
+/* UX-MENU-02 visual checkpoint: 3 small symbols across, no oversized tiles. */
+body.controls-window #quickRows,
+body.controls-window #quickUtilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:5px}
+body.controls-window #quickUtilities{border-top:1px solid #ffffff21;padding-top:4px}
+body.controls-window #quickMenuList.quick-horizontal .quickRow,
+body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow{display:flex;flex-direction:column;justify-content:center;gap:2px;
+ height:47px;min-height:47px;margin:0;padding:3px 2px;border:0;border-radius:6px;background:transparent}
+body.controls-window .quickGlyph{display:flex;align-items:center;justify-content:center;width:19px;height:19px;min-width:19px;
+ color:#d5e0e7;font-size:16px;flex:none;line-height:1}
+body.controls-window .quickGlyph svg{display:block;width:18px;height:18px;stroke-width:1.9}
+body.controls-window .quickName{flex:none;max-width:100%;font-size:10px;font-weight:500;line-height:12px;
+ text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.controls-window #quickMenuList .quickState,
+body.controls-window #quickMenuList .quickArrow{display:none!important}
+body.controls-window #quickFooter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:4px}
+body.controls-window #quickFooter .quickFooterAction{height:33px;min-width:0;padding:2px;display:flex;
+ align-items:center;justify-content:center;gap:5px;background:transparent;color:#d5dfe8}
+body.controls-window #quickFooter .quickFooterAction .quickName{font-size:10px}
+body.controls-window #quickFooter .quickFooterAction .quickGlyph{width:17px;height:17px;min-width:17px;font-size:15px}
+body.controls-window #quickFooter .quickFooterAction .quickGlyph svg{width:17px;height:17px}
+body.controls-window #quickFooter [data-key=report] .quickGlyph{color:#ffd074}
+body.controls-window #quickFooter [data-key=donate] .quickGlyph{color:#fa94a7}
+body.controls-window #quickRows [data-key=pokemon] .quickGlyph{color:#8ad9cc}
+body.controls-window .quick-no-labels .quickName{display:block!important} /* do not lose identities */
+body.controls-window #quickMenuList{max-height:min(350px,var(--popup-room,420px))}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
- <div id="menu"><div id="quickHead"><strong>⚙ PokeSearch</strong><button id="quickBack" type="button" aria-label="Voltar ou recolher">✕</button></div><div id="quickMenuList"><div id="quickRows"></div><div id="quickFooter"></div></div><div id="controls">
+ <div id="menu"><div id="quickHead"><strong>⚙ PokeSearch</strong><button id="quickBack" type="button" aria-label="Voltar ou recolher">✕</button></div><div id="quickMenuList"><div id="quickRows"></div><div id="quickUtilities"></div><div id="quickFooter"></div></div><div id="controls">
   <button id="cycle" title="Modos · Raw IV, % IV, Grande Liga e Ultra Liga" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('mode')">100%</button>
   <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()">✨</button>
   <button id="period" title="Atualização automática ou OFF" aria-label="Atualização automática, 5 minutos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">5m</span></button>
@@ -949,19 +975,26 @@ window.setMinimized=value=>{
 
 /* UX-MENU-01: contextual menu reuses native actions and verified filters. */
 const QUICK_ACTIONS=[
- ["mode","☷","Modos","mode"],["sh","✨","Shiny","sh"],
+ ["mode","☷","Modos","mode"],["filters","≡","Filtros","filters"],
+ ["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"],
+ ["star","☆","Favoritos","star"],["appearance","⚙","Aparência","appearance"],
  ["period","↻","Atualização","period"],["bell","♧","Alertas","alerts"],
- ["star","☆","Favoritos","star"],["location","⌾","Localização","location"],
- ["filters","≡","Filtros","filters"],["info","◉","Informações","info"],
- ["appearance","⚙","Aparência","appearance"],["report","⚠","Reportar","report"],
+ ["info","◉","Informações","info"],["report","⚠","Reportar","report"],
  ["donate","♡","Apoiar","donate"],["close","×","Fechar","close"]
 ];
-let quickPrefs={direction:"vertical",labels:true,order:QUICK_ACTIONS.map(a=>a[0]),hidden:[]};
+const QUICK_PRIMARY_IDS=["mode","filters","location","pokemon","star","appearance"];
+const QUICK_UTILITY_IDS=["period","bell","info"];
+const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0]);
+let quickPrefs={direction:"horizontal",labels:true,order:[...QUICK_DEFAULT_ORDER],hidden:[]};
 function normalizedQuickPrefs(p){
- const ids=QUICK_ACTIONS.map(a=>a[0]);
- const order=Array.isArray(p.order)?p.order.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i):[];
- const hidden=Array.isArray(p.hidden)?p.hidden.filter(x=>ids.includes(x)&&x!=="close"&&x!=="appearance"):[];
- return {direction:p.direction==="horizontal"?"horizontal":"vertical",labels:p.labels!==false,
+ const ids=QUICK_DEFAULT_ORDER;
+ // Previous 51047 saved nine icons with Shiny in the main grid.
+ // Reset only that obsolete menu-layout schema; preserve all search preferences.
+ const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon");
+ const order=legacy?[]:p.order.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i);
+ const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter(x=>ids.includes(x)&&x!=="close"&&x!=="appearance"):[];
+ return {direction:legacy?"horizontal":p.direction==="horizontal"?"horizontal":"vertical",
+  labels:legacy?true:p.labels!==false,
   order:[...order,...ids.filter(x=>!order.includes(x))],hidden};
 }
 function saveQuickPrefs(){
@@ -985,44 +1018,74 @@ function quickState(id){
 function quickClick(id){
  if(["mode","period","alerts","location","filters","info","appearance"].includes(id)){toggleChoices(id);return;}
  switch(id){
-  case "sh":Native.shiny();break;
   case "star":Native.openWatchList();break;
+  case "pokemon":renderPokemonPlaceholder();break;
   case "report":Native.openReport();break;
   case "donate":Native.openPix();break;
   case "close":Native.close();break;
  }
 }
+/* Use the ORIGINAL illustrated toolbar symbols instead of arbitrary
+   Unicode glyphs. The Pokémon silhouette is a new custom outline. */
+const QUICK_SVG=Object.freeze({
+ mode:'<path d="M4 7h16M4 12h16M4 17h16"/><path d="M9 4v6m6-1v6m-6-1v6" stroke-width="2.8"/>',
+ filters:'<path d="M3 4h18l-7 8v7l-4 2v-9z"/>',
+ pokemon:'<path d="M9 12 6 3Q5 1 7 2l6 7q3-3 7 1l5-5q3-2 3 1v8l-7 4 3 3-3 4v4q-2 2-5 0h-4q-3 3-7 0V17z"/>'
+});
+const QUICK_SOURCE_ICONS={location:"location",bell:"bell",star:"star",appearance:"gear",donate:"donate"};
+function iconForQuick(id, fallback){
+ const glyph=document.createElement("span");glyph.className="quickGlyph";
+ const sourceId=QUICK_SOURCE_ICONS[id];
+ const source=sourceId?document.querySelector("#"+sourceId+" svg"):null;
+ if(source){glyph.appendChild(source.cloneNode(true));return glyph;}
+ if(QUICK_SVG[id]){
+  const ns="http://www.w3.org/2000/svg";
+  const svg=document.createElementNS(ns,"svg");
+  svg.setAttribute("viewBox","0 0 32 32");svg.setAttribute("fill","none");
+  svg.setAttribute("stroke","currentColor");svg.setAttribute("stroke-width","2");
+  svg.setAttribute("stroke-linecap","round");svg.setAttribute("stroke-linejoin","round");
+  svg.innerHTML=QUICK_SVG[id];glyph.appendChild(svg);return glyph;
+ }
+ glyph.textContent=fallback;return glyph;
+}
+function renderPokemonPlaceholder(){
+ const panel=uxPanel("POKÉMON · POG OCOORDINATES".replace("POG O","POGO"));
+ const note=document.createElement("p");note.className="uxNote";
+ note.textContent="Ícone Pokémon preparado. A busca por espécie/forma será integrada em uma próxima etapa, após a validação dos menus.";
+ panel.appendChild(note);fit();
+}
 function renderQuickMenu(){
  if(!controlsWindow)return;
- const outer=document.getElementById("quickMenuList"),rows=document.getElementById("quickRows"),footer=document.getElementById("quickFooter");
- if(!rows||!footer)return;
+ const outer=document.getElementById("quickMenuList"),rows=document.getElementById("quickRows"),
+   util=document.getElementById("quickUtilities"),footer=document.getElementById("quickFooter");
+ if(!rows||!util||!footer)return;
  outer.classList.toggle("quick-horizontal",quickPrefs.direction==="horizontal");
  outer.classList.toggle("quick-no-labels",!quickPrefs.labels);
- rows.replaceChildren();footer.replaceChildren();
+ rows.replaceChildren();util.replaceChildren();footer.replaceChildren();
  for(const id of quickPrefs.order){
   const a=QUICK_ACTIONS.find(x=>x[0]===id);
   if(!a||quickPrefs.hidden.includes(id))continue;
   const button=document.createElement("button");button.type="button";button.dataset.key=id;
   const isFooter=["report","donate","close"].includes(id);
-  button.className=isFooter?"":"quickRow";button.title=a[2];
+  button.className=isFooter?"quickFooterAction":"quickRow";button.title=a[2];
   button.setAttribute("aria-label",a[2]);
-  if(isFooter){button.textContent=a[1]+" "+a[2];footer.appendChild(button);}
-  else{
-   const glyph=document.createElement("span");glyph.className="quickGlyph";glyph.textContent=a[1];
-   const label=document.createElement("span");label.className="quickName";label.textContent=a[2];
-   const state=document.createElement("span");state.className="quickState";state.textContent=quickState(id);
+  const glyph=iconForQuick(id,a[1]);
+  const label=document.createElement("span");label.className="quickName";label.textContent=a[2];
+  const state=document.createElement("span");state.className="quickState";state.textContent=quickState(id);
+  button.append(glyph,label);
+  if(!isFooter){
+   button.append(state);
    const arrow=document.createElement("span");arrow.className="quickArrow";arrow.textContent="›";
-   button.append(glyph,label,state);
-   if(a[3]!=="sh")button.appendChild(arrow);
-   rows.appendChild(button);
-  }
+   if(!["star"].includes(id))button.appendChild(arrow);
+   (QUICK_UTILITY_IDS.includes(id)?util:rows).appendChild(button);
+  }else footer.appendChild(button);
   button.onclick=()=>quickClick(id);
  }
  fit();
 }
 function refreshQuickMenuStates(){
  if(!controlsWindow)return;
- document.querySelectorAll("#quickRows .quickRow").forEach(button=>{
+ document.querySelectorAll("#quickRows .quickRow,#quickUtilities .quickRow").forEach(button=>{
   const state=button.querySelector(".quickState");if(state)state.textContent=quickState(button.dataset.key);
  });
 }
