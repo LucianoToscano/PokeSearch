@@ -46,7 +46,7 @@ test("Result list is always non-scrollable and has no eight-row height cap",
  !service.includes("rowDp()*8"));
 test("Native passes full display height and preserves up to ten card slots",
  service.includes("Math.min(rowDp()*10,screenHeightDp()-52)")&&
- service.includes('screenHeightDp()+")"')&&
+ service.includes('screenHeightDp()+","+resultDisplayOptionsJson()+")"')&&
  service.includes("screenHeightDp()-16")&&
  service.includes("resultParams.y=fittedY;")&&
  dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
@@ -80,7 +80,7 @@ test("UX-RESULT-10 only expands spacing for actual visible timers or verified IV
 test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten-card limit",
  dock.includes('["count","Quantidade de spawns"]')&&
  dock.includes('id="resultSpawnCount"')&&
- dock.includes('count.textContent=resultDisplayOptions.count&&cards.length?String(cards.length):""')&&
+ dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
  service.includes('case "count":resultShowCount=value;pref="resultShowCount"')&&
  !service.includes('setSpawnLimit'));
@@ -92,6 +92,12 @@ test("UX-INFO-10 visibility toggles report confirmed Android state without scrol
  dock.includes('resultDisplayOptions[key]?"✓":"–"')&&
  dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
  !dock.includes('resultDisplayOptions[key]=!resultDisplayOptions[key];'));
+test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
+ dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
+ dock.includes('count.style.display=resultDisplayOptions.count?"inline":"none"')&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ !dock.includes("count.textContent=resultDisplayOptions.count&&cards.length")&&
+ !service.includes("setSpawnLimit"));
 test("UX-INFO-02 all seven visibility options are independent and persist on device",()=>{
  const labels=["Quantidade de spawns","Tempo de despawn","Nível (Lv)",
   "Poder de Combate (PC)","IV do Pokémon","Rank Geral · PvPoke","Rank IV da espécie"];
@@ -1219,7 +1225,7 @@ test("IV palette follows 46 attainable percentages including both extremes",(()=
 test("Shiny and ordinary IV badges use a single evidence-driven function",
  dock.includes('const verifiedPercent=verifiedSpawnIvPercent(c);')&&
  dock.includes("ivPaletteClass(verifiedPercent)")&&
- dock.includes("'+icon+ivBadge+badge+'</button>'")&&
+ dock.includes("'+icon+ivBadge+badge+info+'</button>'")&&
  !dock.includes("shiny?ivPaletteClass")&&
  dock.includes('verifiedPercent===null?"IV não comprovado"'));
 test("Verified IV includes 0%, 100% and raw-derived values but never assumes a missing value",(()=>{
