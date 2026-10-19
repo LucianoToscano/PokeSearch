@@ -294,7 +294,7 @@ body.controls-window #quickFooter .quickFooterAction .quickGlyph{width:17px;heig
 body.controls-window #quickFooter .quickFooterAction .quickGlyph svg{width:17px;height:17px}
 body.controls-window #quickFooter [data-key=report] .quickGlyph{color:#ffd074}
 body.controls-window #quickFooter [data-key=donate] .quickGlyph{color:#fa94a7}
-body.controls-window #quickRows [data-key=pokemon] .quickGlyph{color:#8ad9cc}
+body.controls-window #quickRows [data-key=pokemon] .quickGlyph{color:#fff}
 body.controls-window .quick-no-labels .quickName{display:block!important} /* do not lose identities */
 body.controls-window #quickMenuList{max-height:min(350px,var(--popup-room,420px))}
 /* The saved direction switch still works: horizontal is the compact default,
@@ -366,7 +366,7 @@ body.controls-window #quickMenuList .quickArrow{
 body.controls-window #quickMenuList [data-key=report] .quickGlyph{color:#ffd674!important}
 body.controls-window #quickMenuList [data-key=donate] .quickGlyph{color:#fa94a7!important}
 body.controls-window #quickMenuList [data-key=close] .quickGlyph{color:#ff596c!important}
-body.controls-window #quickMenuList [data-key=pokemon] .quickGlyph{color:#94ded2!important}
+body.controls-window #quickMenuList [data-key=pokemon] .quickGlyph{color:#fff!important}
 /* Submenus regain their ORIGINAL narrow popup widths instead of the 276/396dp panel. */
 body.controls-window #choices{top:34px!important;width:220px!important;
  max-width:calc(100vw - 12px)!important;max-height:var(--popup-room,400px)!important;
@@ -1026,7 +1026,11 @@ function draw(){
   const header=document.getElementById("resultHeader");
   const image=document.getElementById("resultModeIcon");
   if(image.getAttribute("src")!==selectedIcon.path){
-   image.onerror=()=>{image.onerror=null;if(image.getAttribute("src")!==selectedIcon.fallbackPath)image.src=selectedIcon.fallbackPath;};
+   image.style.visibility="visible";
+   image.onerror=()=>{
+    if(image.getAttribute("src")!==selectedIcon.fallbackPath)image.src=selectedIcon.fallbackPath;
+    else{image.onerror=null;image.removeAttribute("src");image.style.visibility="hidden";}
+   };
    image.src=selectedIcon.path;
   }
   const primaryBadge=document.getElementById("modeIndicatorValue");
@@ -1148,9 +1152,10 @@ const QUICK_SVG=Object.freeze({
  filters:'<path d="M6 8h20M6 16h20M6 24h20"/>',
  pokemon:'<path d="M7.8 12.2 4.5 2.5Q4.2 1.5 5.4 1.6Q6.1 1.7 6.6 2.5L10.7 9.4Q14 7.8 17.2 9.5L22.4 2.2Q23.4 1.1 24.3 2.4Q25.1 3.5 24.5 4.9L20.4 12.2 28.2 7.2Q29.9 6.7 29.6 8.6V14.9Q29.6 16.1 28.4 16.5L23.7 18.1 26.2 20.6Q26.8 21.4 25.8 22.2L23.3 24Q22.9 24.5 23.3 25.7L24.1 28.4Q24.3 30 22.9 30H19.8Q18.8 30 18 29.2L15.2 28.4 11.9 29.5Q11.3 30.2 10.1 30.1H7.2Q5.7 30.1 5.6 28.5L6 26.2V17Q6 14 7.8 12.2Z"/>',
  info:'<path d="M2 16s5-9 14-9 14 9 14 9-5 9-14 9S2 16 2 16Z"/><circle cx="16" cy="16" r="4"/>',
- period:'<path d="M25 15a9 9 0 1 1-3.5-7"/><path d="M22 3v7h-7"/>'
+ period:'<path d="M25 15a9 9 0 1 1-3.5-7"/><path d="M22 3v7h-7"/>',
+ appearance:'<path d="M13 3.5 14.4 5l2.4.5 2.5-1.2 2.6 2.5-1.2 2.5.6 2.3 1.5 1.5v1.8l-1.5 1.5"/><path d="m9 4-2.1.5L4.2 7l1.2 2.5-.6 2.4L3 13v3l1.8 1.2.7 2.5L4.2 22l2.5 2.5 2.5-1.2 2.1.5"/><circle cx="12.6" cy="14.1" r="4.1"/><path d="m12.7 25 13.1-13.1 3.4 3.4-13.1 13.1-5 1.7z"/><path d="m23.7 14 3.4 3.3"/>'
 });
-const QUICK_SOURCE_ICONS={location:"location",bell:"bell",star:"star",appearance:"gear",donate:"donate"};
+const QUICK_SOURCE_ICONS={location:"location",bell:"bell",star:"star",donate:"donate"};
 function iconForQuick(id, fallback){
  const glyph=document.createElement("span");glyph.className="quickGlyph";
  if(id==="mode"){
