@@ -95,6 +95,8 @@ body.controls-window #locBadge{display:none!important}
 #choices .locCoordsRow .locField{flex:1;min-width:0;margin:0;width:auto}
 #choices .locCoordsRow button[role=switch]{flex:none;width:48px;min-height:34px;border:1px solid #51647b;border-radius:9px;background:#283444;color:#c5d1dd;font-size:11px;font-weight:800}
 #choices .locCoordsRow button.locActive{background:#146d50;color:#dbffef;border-color:#5fe6ad}
+#choices .locCoordsRow button.locPaste{width:29px;min-width:29px;flex:0 0 29px;height:30px;
+ padding:2px 0;border:1px solid #ffffff35;border-radius:6px;color:#e3ecf7;background:#343b49e0;font-size:13px}
 #choices .locCoordsRow button.locOff{background:#27313e;color:#ffd1a3;border-color:#7e6552}
 #choices .locField{box-sizing:border-box;width:calc(100% - 14px);margin:0 7px 8px;min-height:36px;background:#111722;border:1px solid #536174;border-radius:7px;padding:8px;color:#fff;font-size:13px}
 #choices input[type=range]{width:calc(100% - 14px);margin:4px 7px 8px;accent-color:#77e4c2;touch-action:pan-x}
@@ -1170,50 +1172,96 @@ window.onFilterOptions=function(response){
  }
 };
 
+function locationPanelFeedback(){
+ if(!controlsWindow||choiceOpen!=="location")return;
+ const panel=document.getElementById("choices"),hint=panel.querySelector("#locHint");
+ const toggle=panel.querySelector("#locActiveSwitch");
+ const radius=panel.querySelector("#locRadiusValue");
+ if(!hint||!toggle||!radius)return;
+ toggle.textContent=locationEnabled?"ON":"OFF";
+ toggle.className=locationEnabled?"locActive":"locOff";
+ toggle.setAttribute("aria-checked",String(locationEnabled));
+ radius.textContent=locationRadius+" km";
+ const error=/localiza(?:ção|cao) (?:não|nao) (?:aplicada|confirmada)|localiza(?:ção|cao) residual/i.test(status);
+ hint.textContent=error?"⚠ "+status:
+  locationEnabled?(locationVerified?"✓ Localização confirmada na busca · "+locationRadius+" km":
+    "⌛ Coordenadas solicitadas · aguardando confirmação no PoGoCoordinates"):
+  "OFF · busca geral, sem coordenadas do aplicativo.";
+ hint.style.color=error?"#ffbf8f":"";
+}
+window.onLocationPaste=coords=>{
+ if(!controlsWindow||choiceOpen!=="location")return;
+ const field=document.getElementById("locCoordinateInput");
+ const hint=document.getElementById("locHint");
+ if(!field||!hint)return;
+ if(!coords){
+  hint.textContent="⚠ A área de transferência não tem coordenadas válidas.";
+  hint.style.color="#ffbf8f";
+  return;
+ }
+ // Paste only into the editor; no activation, network call or background read.
+ field.value=String(coords);
+ hint.textContent="📋 Coordenadas coladas. Escolha o raio e toque em Aplicar.";
+ hint.style.color="";
+};
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen","filterPicker");
- panel.classList.add("locationPanel","visible");delete panel.dataset.panelKind;
+ panel.classList.add("locationPanel","visible");panel.dataset.panelKind="location";
  const make=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x;};
  const title=make("div","choiceHeader","📍 LOCALIZAÇÃO");
  const close=make("button","choiceClose","×");close.type="button";close.title="Fechar";
  close.onclick=closeChoices;title.appendChild(close);
- const hint=make("p","locText","Cole latitude,longitude. A chave ao lado ativa ou desativa; ocultar conserva o filtro atual.");
+ const hint=make("p","locText","Cole latitude,longitude. ON ativa o filtro; OFF mantém a busca geral. Ocultar conserva o estado.");
  const fieldRow=make("div","locCoordsRow");
- const field=make("input","locField");field.type="text";field.inputMode="decimal";
+ const field=make("input","locField");field.id="locCoordinateInput";field.type="text";field.inputMode="decimal";
  field.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
- field.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};field.placeholder="-23.5505,-46.6333";field.setAttribute("aria-label","Coordenadas latitude e longitude");field.value=locationCoords;
+ field.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
+ field.placeholder="-23.5505,-46.6333";field.setAttribute("aria-label","Coordenadas latitude e longitude");
+ field.value=locationCoords;
+ const paste=make("button","locPaste","📋");paste.type="button";paste.title="Colar coordenadas da área de transferência";
+ paste.setAttribute("aria-label",paste.title);
+ paste.onclick=()=>Native.pasteLocationCoords();
  const toggle=make("button",locationEnabled?"locActive":"locOff",locationEnabled?"ON":"OFF");
- toggle.setAttribute("role","switch");
+ toggle.id="locActiveSwitch";toggle.type="button";toggle.setAttribute("role","switch");
  toggle.setAttribute("aria-checked",String(locationEnabled));
  toggle.setAttribute("aria-label","Ativar ou desativar o filtro de coordenadas");
- fieldRow.append(field,toggle);
- const label=make("div","locLine");const labelName=make("span","","Raio da busca");const value=make("strong","",locationRadius+" km");label.append(labelName,value);
- const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);slide.setAttribute("aria-label","Raio em quilômetros de 0 a 1000");
+ fieldRow.append(field,paste,toggle);
+ const label=make("div","locLine");const labelName=make("span","","Raio da busca");
+ const value=make("strong","",locationRadius+" km");value.id="locRadiusValue";label.append(labelName,value);
+ const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);
+ slide.setAttribute("aria-label","Raio em quilômetros de 0 a 1000");
  slide.oninput=()=>{value.textContent=slide.value+" km";};
- const status=make("p","");status.id="locHint";
- status.textContent=locationEnabled?(locationVerified?
-  "✓ Filtro confirmado no site · "+locationRadius+" km":
-  "⌛ Localização solicitada · aguardando confirmação no site"):
-  "OFF · busca geral, sem coordenadas do aplicativo.";
- const actions=make("div","locLine");const apply=make("button","locSave","✓ Aplicar");const hide=make("button","locHide","Ocultar");
- const disable=()=>{locationEnabled=false;locationCoords="";locationRadius=0;closeChoices();Native.setLocation(false,"",0);};
+ const message=make("p","");message.id="locHint";
+ const actions=make("div","locLine");const apply=make("button","locSave","✓ Aplicar");
+ const hide=make("button","locHide","Ocultar");
+ const disable=()=>{
+  message.textContent="⌛ Desativando filtro geográfico...";
+  Native.setLocation(false,"",0);
+ };
  toggle.onclick=()=>{if(locationEnabled){disable();return;}submit();};
  function submit(){
   const raw=field.value.trim();
   const match=raw.match(/^\s*([-+]?\d{1,2}(?:\.\d+)?)\s*[,;]\s*([-+]?\d{1,3}(?:\.\d+)?)\s*$/);
   if(!match||Math.abs(Number(match[1]))>90||Math.abs(Number(match[2]))>180){
-   status.textContent="⚠ Cole latitude,longitude válidas para ativar.";
-   status.style.color="#ffbf8f";return;
+   message.textContent="⚠ Cole latitude,longitude válidas para ativar.";
+   message.style.color="#ffbf8f";return;
   }
-  locationCoords=match[1]+","+match[2];locationRadius=Number(slide.value);
-  locationEnabled=true;closeChoices();Native.setLocation(true,locationCoords,locationRadius);
+  const wantedCoords=match[1]+","+match[2],wantedRadius=Number(slide.value);
+  if(!Number.isInteger(wantedRadius)||wantedRadius<0||wantedRadius>1000){
+   message.textContent="⚠ Escolha raio de 0 a 1000 km.";message.style.color="#ffbf8f";return;
+  }
+  // No optimistic global state change or premature "filter applied" label.
+  message.style.color="";
+  message.textContent="⌛ Aplicando coordenadas · aguardando confirmação...";
+  Native.setLocation(true,wantedCoords,wantedRadius);
  }
  apply.onclick=submit;hide.onclick=closeChoices;
  actions.append(apply,hide);
- panel.append(title,hint,fieldRow,label,slide,status,actions);
+ panel.append(title,hint,fieldRow,label,slide,message,actions);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
+ locationPanelFeedback();
  fit();
 }
 function manualRefreshTap(){
@@ -1625,6 +1673,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  if(!resultWindow)document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  locationVerified=!!verifiedLocation&&locationEnabled;
+ if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();
  if(config&&typeof config==="object")searchSettings={...searchSettings,...config};
  shownMode=resultSourceMode==="iv"?"raw":(resultSourceMode||mode);
  if(resultSourceConfig&&typeof resultSourceConfig==="object")
