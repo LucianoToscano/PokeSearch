@@ -850,7 +850,7 @@ test("UX-ICON-01 uses five base PNGs and keeps 18 historical resources",()=>{
 test("UX-ICON-01 keeps 35x30 touch area and badges strictly within 21px",
  dock.includes("#resultHeader{width:35px;height:30px")&&
  dock.includes("max-width:21px;max-height:21px;aspect-ratio:1/1;overflow:visible;pointer-events:none")&&
- dock.includes("Math.max(17,Math.min(21,Math.round(spriteSize*0.45)))")&&
+ dock.includes("const headerIconSize=17;")&&
  ["modeIndicatorValue","modeIndicatorShiny","modeIndicatorBackground"].every(x=>dock.includes('id="'+x+'"')));
 test("IV medal glyph conveys 0/100; Shiny and background badges remain independent",
   dock.includes('const badge=(family==="gl"||family==="ul")?rankLabel:')&&
