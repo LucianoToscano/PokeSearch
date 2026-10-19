@@ -59,6 +59,7 @@ public class MainActivity extends Activity {
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
     private TextView overlayControl, sessionHint;
     private String preferredLoginProvider="";
+    private String observedLoginProvider="";
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         if (!IntegrityGuard.verify(this)) {
@@ -473,12 +474,9 @@ public class MainActivity extends Activity {
                 refreshSessionSummary();
                 BugReport.log(MainActivity.this,"LOGIN","Sessão confirmada; retornando ao aplicativo");
                 CookieManager.getInstance().flush();
-                // A confirmed session closes the WebView even when the switch
-                // still needs to be enabled by the background collector.
-                view.post(()->{
-                    if(view==website&&loginDialog!=null&&loginDialog.isShowing())
-                        loginDialog.dismiss();
-                });
+                // Read optional public profile labels before closing the official
+                // WebView. Missing attributes never fabricate an identity.
+                captureOfficialProfile(view,pageGeneration);
             }else{
                 // Check actual session before opening Login. This also handles
                 // already-signed-in users with a hidden mobile Logout button.
@@ -494,6 +492,63 @@ public class MainActivity extends Activity {
                     attemptsLeft>1?400L:850L);
             }
         });
+    }
+    private void captureOfficialProfile(WebView view,int generation){
+        if(view!=website||loginDialog==null||!loginDialog.isShowing())return;
+        Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
+        String host=current.getHost();
+        if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
+            host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"))){
+            if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
+            return;
+        }
+        // Remove cached labels before a possible account change.
+        SharedPreferences.Editor clear=getSharedPreferences("prefs",0).edit();
+        clear.remove("profileDisplayName").remove("profileProvider")
+            .remove("profileTrainerName").remove("profileTrainerCode")
+            .remove("profileTrainerDetails").apply();
+        view.evaluateJavascript(readAsset("profile_summary.js"),raw->{
+            if(view!=website||generation!=loginPageGeneration||
+               loginDialog==null||!loginDialog.isShowing())return;
+            try{
+                String payload=new JSONArray("["+raw+"]").getString(0);
+                JSONObject publicProfile=new JSONObject(payload);
+                if(publicProfile.optBoolean("ok",false)){
+                    SharedPreferences.Editor edit=getSharedPreferences("prefs",0).edit();
+                    String display=publicProfile.optString("displayName","").trim();
+                    String provider=publicProfile.optString("provider","");
+                    if(!provider.equals("Google")&&!provider.equals("Discord"))
+                        provider=observedLoginProvider;
+                    String trainer=publicProfile.optString("trainerName","").trim();
+                    String code=publicProfile.optString("trainerCode","");
+                    if(display.length()>0&&display.length()<=65)
+                        edit.putString("profileDisplayName",display);
+                    if(provider.equals("Google")||provider.equals("Discord"))
+                        edit.putString("profileProvider",provider);
+                    if(trainer.length()>0&&trainer.length()<=40&&code.matches("[0-9]{12}")){
+                        edit.putString("profileTrainerName",trainer)
+                            .putString("profileTrainerCode",code);
+                        String level=publicProfile.optString("level","");
+                        String team=publicProfile.optString("team","");
+                        String details=(level.matches("[0-9]{1,2}")?"Nível "+level:"")+
+                            (team.matches("Mystic|Valor|Instinct")?
+                                (level.isEmpty()?"":" · ")+team:"");
+                        edit.putString("profileTrainerDetails",details);
+                    }
+                    edit.apply();
+                }
+            }catch(Exception e){
+                BugReport.log(MainActivity.this,"HOME",
+                    "Metadados do perfil indisponíveis · "+e.getClass().getSimpleName());
+            }
+            refreshSessionSummary();
+            if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
+        });
+        // Never leave a completed login dialog hanging if DOM evaluation stalls.
+        view.postDelayed(()->{
+            if(view==website&&generation==loginPageGeneration&&
+               loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
+        },1800L);
     }
     // Site controls may hydrate after onPageFinished. Retry briefly instead
     // of opening the full search page and leaving the user to locate Login.
@@ -513,7 +568,8 @@ public class MainActivity extends Activity {
         if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
            host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
         String script=readAsset("login_entry.js")
-            .replace("__SHINY__",loginStartedForShiny?"true":"false");
+            .replace("__SHINY__",loginStartedForShiny?"true":"false")
+            .replace("__PROVIDER__",JSONObject.quote(preferredLoginProvider));
         view.evaluateJavascript(script,result->{
             if(view!=website||loginLinkAttempted||loginDialog==null||
                !loginDialog.isShowing())return;
@@ -535,6 +591,8 @@ public class MainActivity extends Activity {
     private void openLoginDialog(boolean shinyRequest){
         if(loginDialog!=null&&loginDialog.isShowing())return;
         loginStartedForShiny=shinyRequest;
+        if(shinyRequest)preferredLoginProvider="";
+        observedLoginProvider="";
         loginAutoReturnQueued=false;
         loginSessionNotified=false;
         loginLinkAttempted=false;
@@ -560,6 +618,12 @@ public class MainActivity extends Activity {
                 loginDiscoveryStarted=false;
                 Uri current=Uri.parse(url==null?"":url);
                 String host=current.getHost();
+                if(host!=null){
+                    String lower=host.toLowerCase(Locale.ROOT);
+                    if(lower.equals("accounts.google.com"))observedLoginProvider="Google";
+                    else if(lower.equals("discord.com")||lower.endsWith(".discord.com"))
+                        observedLoginProvider="Discord";
+                }
                 boolean site=host!=null&&(host.equalsIgnoreCase("pogocoordinates.com")||
                     host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"));
                 if(loginCover!=null)loginCover.setVisibility(site?View.VISIBLE:View.GONE);
