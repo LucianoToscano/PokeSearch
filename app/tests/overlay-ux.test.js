@@ -471,11 +471,13 @@ test("Site filters are configured and confirmed before search submission",(()=>{
   service.includes('confirmedSubmittedFiltersGeneration==callbackGeneration')&&
   service.includes('execute("verifyFilters",filters->');
 })());
-test("Raw zero and percentage extremes reuse all original Hundo/Nundo Shiny icons",(()=>{
- const code=dock.split('function getResultIcon(')[1].split('let locationEnabled=')[0];
- return code.includes('if([attack,defense,stamina].every(v=>Number(v)===0))family="nundo"')&&
-  code.includes('if(min===0&&max===0)family="nundo"')&&
-  code.includes('if(min===100&&max===100)family="hundo"')&&
+test("Raw zero/percent extremes retain the historical result badges and menu medals",(()=>{
+ const result=dock.split('function getResultIcon(')[1].split('let locationEnabled=')[0];
+ const menu=dock.split('function getModeMenuIcon(')[1].split('function getResultIcon(')[0];
+ return result.includes('if(attack===0&&defense===0&&stamina===0)family="nundo"')&&
+  result.includes('if(settings.percentMin===0&&settings.percentMax===0)family="nundo"')&&
+  result.includes('if(settings.percentMin===100&&settings.percentMax===100)family="hundo"')&&
+  menu.includes('if(min===0&&max===0)family="nundo"')&&
   dock.includes('nundo:{normal:"nundo.png",shiny:"shnundo.png"')&&
   dock.includes('hundo:{normal:"hundo.png",shiny:"shundo.png"');
 })());
@@ -752,7 +754,7 @@ test("IV mode artwork picks exact extremes, custom, percentage interval and unre
  const start=dock.indexOf("const RESULT_ICONS=Object.freeze("),end=dock.indexOf("let locationEnabled=",start);
  if(start<0||end<start)return false;
  const definitions=dock.slice(start,end),base={attack:0,defense:15,stamina:15,glRank:1,ulRank:12,percentMin:0,percentMax:100};
- const get=(m,cfg)=>vm.runInNewContext(definitions+"\ngetResultIcon("+JSON.stringify(m)+",false,"+
+ const get=(m,cfg)=>vm.runInNewContext(definitions+"\ngetModeMenuIcon("+JSON.stringify(m)+",false,"+
   JSON.stringify({...base,...cfg})+")",{}, {timeout:2000});
  const zero=get("raw",{attack:0,defense:0,stamina:0}),perfect=get("raw",{attack:15,defense:15,stamina:15});
  const zeroPct=get("percent",{percentMin:0,percentMax:0}),perfectPct=get("percent",{percentMin:100,percentMax:100});
@@ -905,13 +907,13 @@ test("UX-ICON-01 uses five base PNGs and keeps 18 historical resources",()=>{
 test("UX-ICON-01 keeps 35x30 touch area and badges strictly within 21px",
  dock.includes("#resultHeader{width:35px;height:30px")&&
  dock.includes("max-width:21px;max-height:21px;aspect-ratio:1/1;overflow:visible;pointer-events:none")&&
- dock.includes("const headerIconSize=17;")&&
+ dock.includes("const headerIconSize=Math.max(17,Math.min(21,Math.round(spriteSize*0.45)));")&&
  ["modeIndicatorValue","modeIndicatorShiny","modeIndicatorBackground"].every(x=>dock.includes('id="'+x+'"')));
-test("IV medal glyph conveys 0/100; Shiny and background badges remain independent",
-  dock.includes('const badge=(family==="gl"||family==="ul")?rankLabel:')&&
-  dock.includes('baseFamily==="cup"?"CUP":""')&&
-  dock.includes('shinyBadge:shining')&&
-  dock.includes('backgroundOnly===true&&settings.backgroundVerified===true'));
+test("Results preserve original IV badges, with Shiny and Background as separate effects",
+ dock.includes('function getResultIcon(searchMode,shinyActive,settings=searchSettings)')&&
+ dock.includes('const badge=family==="hundo"?"100%":family==="nundo"?"0":family==="percent"?"%":rankLabel||(baseFamily==="cup"?"CUP":"");')&&
+ dock.includes('shinyBadge:shining')&&
+ dock.includes('backgroundOnly===true&&settings.backgroundVerified===true'));
 test("UX-ICON-01 does not silently introduce unimplemented searches",
  dock.includes('baseFamily==="cup"?"CUP"')&&
  !dock.includes('row("none"')&&!dock.includes('row("ml"')&&!dock.includes('row("cup"'));
@@ -987,6 +989,38 @@ test("UX-ICON-02 selected GL/UL threshold is displayed as a #N badge",()=>{
  return block.includes('baseFamily==="gl"?Number(settings.glRank)')&&
  block.includes('baseFamily==="ul"?Number(settings.ulRank)')&&
  block.includes('topN>=1&&topN<=50?"#"+topN')&&block.includes('ivBadge:badge');
+});
+test("RESULT-RESTORE old icons and all effects independent of new Modos art",()=>{
+ const result=dock.split('function getResultIcon(')[1].split('let locationEnabled=')[0];
+ const toolbar=dock.split('function getModeMenuIcon(')[1].split('function getResultIcon(')[0];
+ const draw=dock.split('function draw(){')[1].split('function updateTimers(){')[0];
+ return result.includes('path:"file:///android_asset/result-icons/base/"+baseName')&&
+  result.includes('fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none')&&
+  !result.includes('result-icons/modes/')&&
+  toolbar.includes('result-icons/modes/')&&
+  dock.includes('const art=getModeMenuIcon(mode,false,searchSettings);')&&
+  draw.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
+  draw.includes('document.getElementById("modeIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge)')&&
+  draw.includes('document.getElementById("modeIndicatorBackground").classList.toggle("visible",selectedIcon.backgroundBadge)')&&
+  dock.includes('animation:psCapturePulse .85s ease-in-out infinite')&&
+  dock.includes('Native.toggleResultsCollapsed()')&&
+  dock.includes('const headerIconSize=Math.max(17,Math.min(21,Math.round(spriteSize*0.45)));');
+});
+test("RESULT-RESTORE GL/UL/base Pokémon badges exactly as before",()=>{
+ const vm=require("node:vm");
+ const start=dock.indexOf("const RESULT_ICONS=Object.freeze("),end=dock.indexOf("let locationEnabled=",start);
+ const fn=dock.slice(start,end);
+ const base={attack:15,defense:15,stamina:15,percentMin:2,percentMax:98,glRank:1,ulRank:12};
+ const get=(m,shiny,extra={})=>vm.runInNewContext(fn+"\ngetResultIcon("+JSON.stringify(m)+","+shiny+","+JSON.stringify({...base,...extra})+")",{}, {timeout:2000});
+ const gl=get("gl",false),ul=get("ul",false),perfect=get("raw",false),zero=get("raw",false,{attack:0,defense:0,stamina:0});
+ const range=get("percent",false),all=get("percent",false,{percentMin:0,percentMax:100});
+ return gl.path.endsWith("/base-gl.png")&&gl.ivBadge==="#1"&&
+  ul.path.endsWith("/base-ul.png")&&ul.ivBadge==="#12"&&
+  perfect.path.endsWith("/base-custom.png")&&perfect.ivBadge==="100%"&&
+  zero.path.endsWith("/base-custom.png")&&zero.ivBadge==="0"&&
+  range.path.endsWith("/base-custom.png")&&range.ivBadge==="%"&&all.ivBadge==="%"&&
+  get("ul",true).shinyBadge===true&&
+  get("ul",false,{backgroundOnly:true,backgroundVerified:true}).backgroundBadge===true;
 });
 test("Mode emblems preserve historical fallback artwork without Cup alias",()=>{
  return dock.includes('fallbackPath:(family==="gl"||family==="ul")?')&&
