@@ -680,10 +680,10 @@ test("Shiny OFF and normal search never depend on login or trainer linkage",
  service.includes('if(!shiny){\n                // OFF never requires signing in')&&
  !service.includes('if(!hasConfirmedTrainerLink())return;\n        execute("session"'));
 test("Authenticated profile cannot inherit previous trainer link",
- activity.includes('.putString("profileTrainerState","unknown")')&&
- activity.includes('a newly confirmed OAuth session may belong to another account'.replace(/^a/,"A"))&&
- activity.includes('"unlinked".equals(state)?"unlinked":"unknown"')&&
- activity.includes('Buscas comuns sem login · Shiny exige treinador vinculado'));
+ main.includes('.putString("profileTrainerState","unknown")')&&
+ main.includes('a newly confirmed OAuth session may belong to another account'.replace(/^a/,"A"))&&
+ main.includes('"unlinked".equals(state)?"unlinked":"unknown"')&&
+ main.includes('Buscas comuns sem login · Shiny exige treinador vinculado'));
 
 // v0.51 additional filters: do not add toolbar actions or replace artwork.
 test("Shiny shortcut sits next to Modos de busca heading",
