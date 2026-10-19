@@ -78,7 +78,7 @@ test("Active radius is readable even when toolbar is closed",
   dock.includes('pointer-events:none')&&dock.includes('body.controls-window #locBadge{display:none!important}'));
 test("When OFF, icon and badge never display outdated radius",
   dock.includes('geoBadge.classList.toggle("active",geoConfirmed)')&&
-  dock.includes('document.getElementById("locationRadiusText").textContent=locationEnabled?locationRadius+"km":""'));
+  dock.includes('document.getElementById("locationRadiusText").textContent=geoConfirmed?locationRadius+"km":""'));
 test("Switching from location editor to mode releases keyboard focus",
   dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
