@@ -560,8 +560,13 @@ body.result-window .spawnInfo{
  padding:1px 2px;margin:0;gap:0;height:100%;max-height:100%;overflow:hidden;
  text-align:left;font:700 calc(9px * var(--result-info-scale,1))/
   calc(11px * var(--result-info-scale,1)) Roboto,Arial,sans-serif;
- color:#e6eefa;text-shadow:0 1px 2px #000b;pointer-events:none;
+ color:#e6eefa;text-shadow:0 1px 2px #000b;
+  /* Scroll only this metadata strip when many GL/UL/ML values are selected;
+     do not scroll, stretch, distort or hide any Pokemon sprite. */
+  pointer-events:auto;overflow-x:hidden;overflow-y:auto;
+  scrollbar-width:none;overscroll-behavior:contain;touch-action:pan-y;
 }
+body.result-window .spawnInfo::-webkit-scrollbar{display:none}
 body.result-window .ivInfo{font-weight:900}
 body.result-window .ivInfo.zero{color:#00cfe8}
 body.result-window .ivInfo.low{color:#b8bec8}
@@ -1482,7 +1487,9 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  const size=Math.max(18,Number(chosenSprite)||45);
  const natural=items.slice(0,10).map(card=>{
   const lines=opts?resultLines(card,opts,league):[];
-  if(lines.length)return Math.max(size+3,lines.length*11+6);
+  // UX-SPRITE-GAP-02: metadata is independently scrollable inside the side strip.
+  // Never stretch the Pokemon's vertical slot to fit all enabled rank lines.
+  if(lines.length)return size+3;
   return resultHasVisibleInfo(card,timersEnabled,textEnabled)?
    size+3:size+1; // 1px gap when no metadata; do not overlap full-size sprites
  });
