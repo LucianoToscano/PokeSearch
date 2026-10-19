@@ -2070,3 +2070,22 @@ Foi conferido localmente que PNGs têm canal alfa e pixels transparentes nos qua
 
 **Governança restaurada:** após sucesso, o gatilho especial da branch foi **removido**, restituindo o workflow original com blob SHA `2a12b0f7b34e892a6d3abc42c9c58240520988bc`, commit `80bc9eb19ff4577826d98c9e2bfa4175af243b2d`. Próximas compilações apenas após autorização expressa. PR #27 continua em Draft, sem merge. **Pendente a validação visual em Android real** para gesto dos rolos, centro ao soltar, comportamento Min/Max, alvos de ✓/×, 12 botões e login Shiny; CI aprovado não substitui teste manual no dispositivo.
 
+### 12.62 UX-MODOS-MICRO-02 — correção visual de popup Modos ainda gigante (19/10/2026)
+
+**Origem:** usuário testou APK `0.51-beta.test.51055` no Android e enviou screenshot da tela Home com popup **GL `#50`** demasiado grande (aba IV/IV%/GL/UL, um único seletor de ranking no centro, ampla área vazia entre número e ✓/×). Feedback explícito: “Ficou gigante do mesmo jeito.. ate pior na verdade..”. Diagnóstico confirmado no código: o popup Modos mantinha **largura fixa de 232 CSS px para todos os quatro modos**, roda vertical de **96px** com 32px por valor, ações em uma linha separada inclusive para GL/UL e teto de altura de até **216px**. Reduzir textos antes não havia reduzido o bloco real.
+
+**Correção executada no PR #27 Draft, branch `fix/ps009-stable-test-signing-20261018`, SEM merge e SEM compilar APK:**
+- `app/src/main/assets/dock.html`: Modos passa a usar classes de layout específicas:
+  - **GL e UL:** `modeCompact-league`, **162px** de largura, **até 99px** de altura; uma roda de rank **1–50** e ações **✓/× na MESMA linha** do rolo; removido o rótulo `#` redundante acima de valores como `#50`.
+  - **IV%:** `modeCompact-percent`, **177px** de largura, **até 143px** de altura, somente rodas MIN/MAX válidas.
+  - **IV:** `modeCompact-raw`, **198px** de largura, **até 143px** de altura, três rodas A/D/HP.
+  - Todas as rodas reduzidas de **96px a 60px** de altura; valores com **20px** de passo, com padding de 20px para manter o valor escolhido centralizado; `WHEEL_STEP=20` unifica clique, rolagem, teclado e posicionamento inicial. Seletor de quatro abas reduzido a **23px** e ✓/× a botões discretos.
+- **Isolamento dos outros menus:** as dimensões genéricas compartilhadas `#choices.modePanel` e `body.controls-window #choices.modePanel` foram **RESTABELECIDAS em 232px e até 216px**, pois Filtros, Ajustes e outros também reutilizam `modePanel`. Somente as classes `modeCompact-*` encolhem o popup. As classes são removidas ao fechar ou trocar para menu diferente para impedir vazamento do tamanho de GL/UL para Filtros/Alertas/etc.
+- Os 12 botões da barra e ✨ Shiny independente, autenticação e filtros PoGoCoordinates, preferências existentes, os 46 IV% permitidos, GL/UL 1–50, consulta disparada somente no ✓, botão × de cancelamento, sprites e a função `getResultIcon()` com ícones históricos foram mantidos.
+
+**Commits:** `bcbf25fbee3c368192cee0848ef2a6e531ad0a67` (encolher dimensão real e ações inline), `b0639014dd002ef306cde8dafc049df534fa50ce` (teste de regressão), `76f8188eb538984116dcfba5e62ca026c5ed9422` (escopo exclusivo do Modos / não afetar outros submenus), `90224d10b9f78222ee42cdb685a228c942ac7296` (teste para tamanho original dos demais submenus).
+
+**Verificações concluídas:** sintaxe do JS embutido no `dock.html` e do arquivo `overlay-ux.test.js` verificada; **13 contratos de interface específicos executados e 13 aprovados** usando o código real lido do GitHub. A suíte contém 310 contratos, porém **não houve execução integral dos 310 nesta etapa**, nem Android físico, nem Gradle ou APK; a versão 51055 fornecida anteriormente AINDA exibe o popup antigo até que um novo APK seja solicitado e gerado. PR #27 mantém estado Draft, sem merge; workflow de compilação continua protegido para não rodar na branch sem solicitação expressa.
+
+**Próxima validação com autorização de novo build:** screenshot GL/UL menor sem área vazia, gestos de deslocamento até #1/#50 e centragem, IV% MIN/MAX, RAW 0–15, ✓/×, Filtros e Ajustes mantidos com layout anterior, resultados inalterados.
+
