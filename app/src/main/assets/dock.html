@@ -314,6 +314,7 @@ body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow .quickArrow
 
 
 /* UX-MENU-03: restore v0.51 old ONE-ROW, SMALL, ICON-ONLY ribbon.
+    Eleven compact controls fit the original narrow 330dp native window.
    All legacy actions stay available; only their visual presentation changes. */
 body.controls-window #menu{height:34px!important;min-height:34px!important}
 body.controls-window #quickHead{display:none!important}
@@ -325,7 +326,7 @@ body.controls-window.popup-above #quickMenuList{
  max-height:34px!important;overflow:hidden!important;overscroll-behavior:none;
  background:transparent!important;border:0!important;border-radius:0!important;
  box-shadow:none!important;padding:0 2px!important;margin:0!important;
- grid-template-columns:repeat(10,minmax(0,1fr))!important;grid-template-rows:30px!important;
+ grid-template-columns:repeat(11,minmax(0,1fr))!important;grid-template-rows:30px!important;
  grid-auto-flow:column!important;gap:2px!important;align-items:start!important;
 }
 body.controls-window #quickRows,
@@ -377,7 +378,7 @@ body.controls-window #choices{top:34px!important;width:220px!important;
 body.controls-window #choices.modePanel{width:246px!important;max-height:min(310px,var(--popup-room,400px))!important}
 body.controls-window #choices.locationPanel{width:306px!important;max-height:var(--popup-room,400px)!important}
 body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}
-/* Mode badge uses the original 10-button thin row; no new text label. */
+/* Mode badge uses the original thin row; no new text label. */
 body.controls-window #quickMenuList .quickGlyph.modeArt{
  width:27px!important;min-width:0!important;height:18px!important;
  display:flex!important;gap:1px!important;align-items:center!important;justify-content:center!important;
@@ -1109,23 +1110,29 @@ window.setMinimized=value=>{
 const QUICK_ACTIONS=[
  ["mode","☷","Modos","mode"],["filters","≡","Filtros","filters"],
  ["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"],
- ["star","☆","Favoritos","star"],["appearance","⚙","Ajustes","appearance"],
- ["bell","♧","Alertas","alerts"],["report","⚠","Reportar","report"],
+ ["star","☆","Favoritos","star"],["bell","♧","Alertas","alerts"],
+ ["period","↻","Atualização","period"],["appearance","⚙","Personalização","appearance"],
+ ["report","⚠","Reportar","report"],
  ["donate","♡","Apoiar","donate"],["close","×","Fechar","close"]
 ];
 // Three adjacent search entry points: Modos, Filtros and Localização.
-const QUICK_PRIMARY_IDS=["mode","filters","location","pokemon","star","appearance"];
-const QUICK_UTILITY_IDS=["bell"];
+const QUICK_PRIMARY_IDS=["mode","filters","location","pokemon","star","bell","period","appearance"];
+const QUICK_UTILITY_IDS=[]; // All non-footer buttons share the same DOM list.
 const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0]);
 let quickPrefs={direction:"horizontal",labels:false,order:[...QUICK_DEFAULT_ORDER],hidden:[]};
 function normalizedQuickPrefs(p){
  const ids=QUICK_DEFAULT_ORDER;
- // Previous 51047 saved nine icons with Shiny in the main grid.
+ // Previous APKs saved nine or ten icons in the main grid.
  // Reset only that obsolete menu-layout schema; preserve all search preferences.
  const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon")||
-  p.order.some(id=>!ids.includes(id)); // migrate old 12-icon menu into approved 10
- const order=legacy?[]:p.order.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i);
- const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter(x=>ids.includes(x)&&x!=="close"&&x!=="appearance"):[];
+  p.order.some(id=>!ids.includes(id));
+ // Migrate old 10-button layouts once so refresh sits beside Alertas
+ // and Personalização directly before Reportar.
+ const needsRefreshMigration=!legacy&&!p.order.includes("period");
+ const order=(legacy||needsRefreshMigration)?[...ids]:
+  p.order.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i);
+ const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter(x=>
+  ids.includes(x)&&x!=="close"&&x!=="appearance"&&x!=="period"):[];
  return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.
   labels:false,
   order:[...order,...ids.filter(x=>!order.includes(x))],hidden};
@@ -1142,12 +1149,13 @@ function quickState(id){
   case "star":return hasFavorites?"Ativos":"";
   case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF";
   case "filters":return ["pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","sortBy"].some(k=>searchSettings[k])?"Ativos":"Nenhum";
-  case "appearance":return "Ajustes";
+  case "period":return period>0?"Auto "+period+"m":"Auto OFF";
+  case "appearance":return "Personalização";
   default:return "";
  }
 }
 function quickClick(id){
- if(["mode","alerts","location","filters","appearance"].includes(id)){toggleChoices(id);return;}
+ if(["mode","alerts","location","filters","period","appearance"].includes(id)){toggleChoices(id);return;}
  switch(id){
   case "star":Native.openWatchList();break;
   case "pokemon":
@@ -1232,7 +1240,8 @@ function renderQuickMenu(){
    button.append(state);
    const arrow=document.createElement("span");arrow.className="quickArrow";arrow.textContent="›";
    if(!["star"].includes(id))button.appendChild(arrow);
-   (QUICK_UTILITY_IDS.includes(id)?util:rows).appendChild(button);
+   // display:contents preserves order only within a single DOM container.
+   rows.appendChild(button);
   }else footer.appendChild(button);
   button.onclick=()=>quickClick(id);
  }
@@ -1305,7 +1314,7 @@ function renderAppearanceChoices(){
  const panel=uxPanel("AJUSTES · PERSONALIZAÇÃO");
  const info=document.createElement("div");info.className="uxSubheading";info.textContent="Painéis";panel.appendChild(info);
  uxOption(panel,"Informações dos Pokémon","Configurar ›",()=>toggleChoices("info"));
- uxOption(panel,"Atualização",period?"Auto · "+period+" min ›":"Auto · OFF ›",()=>toggleChoices("period"));
+ // Atualização has its own toolbar icon beside Alertas.
  const ribbonNote=document.createElement("div");ribbonNote.className="uxNote";
  ribbonNote.textContent="Menu principal fino e horizontal, somente ícones. A engrenagem continua móvel.";
  panel.appendChild(ribbonNote);
