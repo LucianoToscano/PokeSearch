@@ -58,7 +58,8 @@ public class MainActivity extends Activity {
     private int loginPageGeneration=0;
     private String pendingReportText="";
     private FrameLayout homeRoot;
-    private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup;
+    private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
+    private View trainerCopyButton;
     private View guestHeading;
     private ImageView teamBadge;
     private Button trainerAction;
@@ -295,6 +296,7 @@ public class MainActivity extends Activity {
         codeRowLp.topMargin=d(5);
         trainerPanel.addView(trainerCodeGroup,codeRowLp);
         LinearLayout codeTexts=new LinearLayout(this);
+        trainerCodeTexts=codeTexts;
         codeTexts.setOrientation(LinearLayout.VERTICAL);
         trainerCodeGroup.addView(codeTexts,new LinearLayout.LayoutParams(0,-2,1));
         TextView codeHeading=homeText("Código de Treinador",10,
@@ -304,6 +306,7 @@ public class MainActivity extends Activity {
         codeTexts.addView(codeHeading);
         codeTexts.addView(trainerCode);
         TextView copy=homeMiniButton("⧉","Copiar código do treinador");
+        trainerCopyButton=copy;
         copy.setTextSize(18);
         copy.setBackgroundColor(Color.TRANSPARENT);
         LinearLayout.LayoutParams copyLp=new LinearLayout.LayoutParams(d(34),d(38));
@@ -532,7 +535,9 @@ public class MainActivity extends Activity {
         boolean linked=logged&&!trainer.isEmpty()&&code.matches("[0-9]{12}")&&
             "linked".equals(prefs.getString("profileTrainerState","unknown"));
         if(trainerPanel!=null)trainerPanel.setVisibility(logged?View.VISIBLE:View.GONE);
-        if(trainerCodeGroup!=null)trainerCodeGroup.setVisibility(linked?View.VISIBLE:View.GONE);
+        if(trainerCodeGroup!=null)trainerCodeGroup.setVisibility(logged?View.VISIBLE:View.GONE);
+        if(trainerCodeTexts!=null)trainerCodeTexts.setVisibility(linked?View.VISIBLE:View.INVISIBLE);
+        if(trainerCopyButton!=null)trainerCopyButton.setVisibility(linked?View.VISIBLE:View.GONE);
         if(trainerSectionTitle!=null)trainerSectionTitle.setText(linked?
             "Treinador vinculado":"Conta Pokémon GO");
         String team=prefs.getString("profileTrainerTeam","");
@@ -582,6 +587,7 @@ public class MainActivity extends Activity {
             .remove("profileDisplayName").remove("profileProvider")
             .remove("profileTrainerName").remove("profileTrainerCode")
             .remove("profileTrainerDetails").remove("profileTrainerState")
+            .remove("profileTrainerTeam").remove("profileTrainerLevel")
             .putBoolean("shiny",false)
             .putString("lastStatus","Sessão local desconectada")
             .putString("lastError","Nenhum")
@@ -750,13 +756,16 @@ public class MainActivity extends Activity {
                         edit.putString("profileTrainerState","linked")
                             .putString("profileTrainerName",trainer)
                             .putString("profileTrainerCode",code)
-                            .putString("profileTrainerDetails",details);
+                            .putString("profileTrainerDetails",details)
+                            .putString("profileTrainerTeam",team.matches("Mystic|Valor|Instinct")?team:"")
+                            .putString("profileTrainerLevel",level.matches("[0-9]{1,2}")?level:"");
                     }else if("unlinked".equals(state)){
                         // Only confirmed 0/N or the official Link my account
                         // presentation can clear the old trainer snapshot.
                         edit.putString("profileTrainerState","unlinked")
                             .remove("profileTrainerName").remove("profileTrainerCode")
-                            .remove("profileTrainerDetails");
+                            .remove("profileTrainerDetails")
+                            .remove("profileTrainerTeam").remove("profileTrainerLevel");
                     }
                     edit.apply();
                     parsed=true;
