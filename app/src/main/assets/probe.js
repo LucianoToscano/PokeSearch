@@ -676,9 +676,12 @@ function locationFields(){
     const near=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
     if(near.length!==2||!near.includes(e))continue;
     const title=text(p).slice(0,140);
-    const evidence=near.some(v=>radiusPattern.test(name(v))||coordsPattern.test(name(v)))||
-      /\b(?:coords?|coordinates?|coordenadas?|radius|raio)\b/i.test(title);
-    if(evidence)roots.push({near,depth});
+    const coordsEvidence=near.some(v=>coordsPattern.test(name(v)))||
+      /\b(?:coords?|coordinates?|coordenadas?)\b/i.test(title);
+    const radiusEvidence=near.some(v=>radiusPattern.test(name(v)))||
+      /\b(?:radius|raio|distance|dist[aâ]ncia)\b/i.test(title);
+    // Never mistake a nearby IV/CP field for the radius of a location search.
+    if(coordsEvidence&&radiusEvidence)roots.push({near,depth});
    }
   }
   roots.sort((a,b)=>a.depth-b.depth);
