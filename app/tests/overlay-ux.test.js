@@ -583,7 +583,7 @@ test("UX-MENU-02 uses earlier SVG icons for location, alerts, favorites, appeara
 test("UX-MENU-02 builds a unique Pokémon silhouette but does not fake site integration",
  dock.includes('pokemon:\'<path')&&
  dock.includes('renderPokemonPlaceholder()')&&
- dock.includes('A busca por espécie/forma será integrada em uma próxima etapa')&&
+ dock.includes('Busca por espécie em preparação. Nenhuma pesquisa será simulada.')&&
  !dock.includes('case "pokemon":Native.'));
 test("UX-SHINY-01 restores Shiny ✨ next to Modos using the existing native toggle",
  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"]')&&
