@@ -637,7 +637,7 @@ test("UX-MENU-04 exposes exactly the approved twelve icons in order",(()=>{
 })());
 test("UX-MENU-04 keeps Informações in Ajustes and restores Atualização beside Alertas",(()=>{
  const body=dock.split('function renderAppearanceChoices()')[1]?.split('if(controlsWindow){')[0]||"";
- return body.includes('uxPanel("AJUSTES · PERSONALIZAÇÃO")')&&
+ return body.includes('uxPanel("PERSONALIZAÇÃO")')&&
   body.includes('uxOption(panel,"Informações dos Pokémon","Configurar ›",()=>toggleChoices("info"))')&&
   dock.includes('["period","↻","Atualização","period"]')&&
   dock.includes('back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();}')&&
@@ -876,6 +876,33 @@ test("Sort by remains among existing verified advanced filters",
   dock.includes('renderExtraFilters(panel,make)')&&
   dock.includes('option("sortBy","Sort by")')&&
   dock.includes('const RESULT_ICONS=Object.freeze'));
+test("UX-OTHER-01 isolates compact secondary popups from the cascading Modos layout",
+ dock.includes('panel.classList.remove("locationPanel","modeCascade","modeCascadeOpen"')&&
+ dock.includes('panel.classList.add("visible","modePanel","standardPanel")')&&
+ dock.includes('panel.dataset.panelKind=choiceOpen')&&
+ dock.includes('data-panel-kind="filters"')&&dock.includes('data-panel-kind="appearance"')&&
+ dock.includes('data-panel-kind="alerts"')&&dock.includes('data-panel-kind="info"')&&
+ dock.includes('data-panel-kind="period"')&&dock.includes('max-height:min(350px,var(--popup-room,400px))')&&
+ dock.includes('overflow-y:auto!important;overflow-x:hidden!important'));
+test("UX-OTHER-02 all submenus close explicitly without changing their saved settings",
+ dock.includes('close.className="choiceClose";close.textContent="×"')&&
+ dock.includes('close.setAttribute("aria-label","Fechar "+title)')&&
+ dock.includes('close.onclick=closeChoices')&&
+ dock.includes('const panel=uxPanel(label);panel.dataset.panelKind="filters";panel.classList.add("filterPicker")')&&
+ dock.includes('panel.classList.add("standardPanel","visible");panel.dataset.panelKind="period"')&&
+ dock.includes('close.onclick=closeChoices;title.appendChild(close);')&&
+ dock.includes('delete document.getElementById("choices").dataset.panelKind'));
+test("UX-OTHER-03 neither Filters nor Location force keyboard without field focus",
+ dock.includes('if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();')&&
+ dock.includes('field.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);}')&&
+ dock.includes('input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);}')&&
+ !dock.includes('if(controlsWindow){Native.locationEditor(true);if(Native.requestFilterOptions)'));
+test("UX-OTHER-04 scroll position remains reachable on toggles and popup switching",
+ dock.includes('appearanceScrollTop=panel.scrollTop')&&
+ dock.includes('panel.scrollTop=scrollRestoration')&&
+ dock.includes('modeScrollTop=panel.scrollTop')&&
+ dock.includes('position:sticky;top:0;z-index:5')&&
+ dock.includes('position:sticky;bottom:0;z-index:5'));
 test("Filters remain independent of cascade and retain their popup dimensions",
  dock.includes('section("Filtros gerais"')&&dock.includes('section("Filtros avançados"')&&
  dock.includes('#choices.modePanel{width:232px')&&dock.includes('function renderExtraFilters('));
@@ -884,7 +911,8 @@ test("Site dropdown options are discovered instead of inventing weather/form val
   dock.includes('Native.requestFilterOptions()')&&
   !dock.includes('option("weather","Sunny")'));
 test("Mode popup allows keyboard focus for optional numeric and Pokémon inputs",
-  dock.includes('Native.locationEditor(true);if(Native.requestFilterOptions)'));
+  dock.includes('if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();')&&
+   dock.includes('input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);}'));
 test("Extra search filters are saved and transported to the site probe",
   service.includes('private String extraFiltersJson="{}"')&&
   service.includes('putString("extraFiltersJson",extraFiltersJson)')&&
