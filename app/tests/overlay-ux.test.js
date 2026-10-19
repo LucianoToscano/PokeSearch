@@ -238,7 +238,8 @@ test("v0.50 silent channels are actually without sound",
 test("v0.50 direct login uses the real site switch without guessed OAuth routes",
     main.includes('readAsset("login_entry.js")')&&
     read("assets/login_entry.js").includes('candidate.click();')&&
-    main.includes('"https://pogocoordinates.com/profile":"https://pogocoordinates.com/search"'));
+    main.includes('"https://pogocoordinates.com/profile"')&&
+   main.includes('"https://pogocoordinates.com/search"'));
 test("v0.50 service accepts missing action on initial start",
     service.includes('i==null||i.getAction()==null?"":i.getAction()'));
 test("v0.50 neutral UI includes smaller location icon",
