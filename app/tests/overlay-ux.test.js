@@ -422,12 +422,13 @@ test("Mode popup keeps one stable row while expanding upward or downward",
  dock.includes('body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}')&&
  dock.includes('body.controls-window.popup-above #menu{top:var(--popup-offset,0px)!important}'));
 test("Mode popup stays contained and its action row remains reachable",
- dock.includes('width:232px')&&dock.includes('max-height:min(216px')&&dock.includes('var(--popup-room,400px)')&&
- dock.includes('position:sticky;bottom:0;')&&
+ dock.includes('width:162px!important')&&dock.includes('width:198px!important')&&
+ dock.includes('width:177px!important')&&dock.includes('max-height:min(99px')&&
+ dock.includes('max-height:min(143px')&&dock.includes('var(--popup-room,400px)')&&
  service.includes('int roomDp=requestedPopup==0?420:'));
 test("Mode wheels center selection, scroll directly and support keyboard without a second screen",
  dock.includes('scroll-snap-type:y mandatory')&&
- dock.includes('entry.wheel.scrollTop=index*32;entry.paint(index);')&&
+ dock.includes('entry.wheel.scrollTop=index*WHEEL_STEP;entry.paint(index);')&&
  dock.includes('wheel.onscroll=()=>')&&
  dock.includes('wheel.onkeydown=event=>')&&
  dock.includes('overscroll-behavior:contain'));
@@ -436,7 +437,7 @@ test("Four requested modes keep direct wheels with raw, percent and league bound
  return segment.includes('const choices=kind==="percent"?IV_PERCENT_VALUES:')&&
   segment.includes('Array.from({length:kind==="iv"?16:50},(_,i)=>i+(kind==="rank"?1:0))')&&
   ["attack","defense","stamina","percentMin","percentMax","glRank","ulRank"].every(k=>segment.includes('"'+k+'"'))&&
-  segment.includes('wheel.scrollTo({top:index*32,behavior:"smooth"})');
+  segment.includes('wheel.scrollTo({top:index*WHEEL_STEP,behavior:"smooth"})');
 });
 test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy migration",
  dock.includes('if([attack,defense,stamina].every(v=>Number(v)===15))family="hundo"')&&
@@ -449,8 +450,8 @@ test("Compact Modos removes duplicate Shiny, number grid, and excessive fields",
  !dock.includes('function renderNumberPicker(')&&
  !dock.includes('numberGrid')&&
  dock.includes('#choices.modePanel .modeWheels')&&
- dock.includes('height:96px;width:100%')&&
- dock.includes('max-height:min(216px'));
+ dock.includes('height:60px;width:100%;padding:20px 0')&&
+ dock.includes('max-height:min(99px'));
 test("Modes save only after applying and keep original bridge actions",
  dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
  dock.includes('cancel.onclick=closeChoices')&&toolbarButtons.length===12);
@@ -621,7 +622,7 @@ test("UX-MENU-03 never shows a wide menu, header, tiles or labels",
   dock.includes('display:none!important;width:0!important;height:0!important')&&
   dock.includes('max-height:34px!important;overflow:hidden!important')&&
   dock.includes('width:220px!important')&&
-  dock.includes('width:232px!important')&&
+  dock.includes('width:162px!important')&&
   dock.includes('width:306px!important'));
 test("UX-MENU-04 keeps twelve icon-first entry points in one thin row",
   dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])')&&
@@ -867,6 +868,22 @@ test("Duplicate popup Shiny removed: only independent toolbar ✨ remains",
  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"]')&&
  dock.includes('case "sh":Native.shiny();break;')&&
  !dock.includes('modeShiny')&&!dock.includes('heading.appendChild(shinyButton)'));
+test("UX-MODOS-MICRO-02 uses genuinely smaller league popups with inline buttons",()=>{
+ const m=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
+ return dock.includes("width:162px!important;max-height:min(99px")&&
+  dock.includes("width:177px!important;max-height:min(143px")&&
+  dock.includes("width:198px!important;max-height:min(143px")&&
+  dock.includes("height:60px;width:100%;padding:20px 0")&&
+  dock.includes("height:20px;min-height:20px;line-height:20px")&&
+  m.includes('panel.classList.add("modePanel","visible","modeCompact-"+')&&
+  m.includes('const WHEEL_STEP=20;')&&
+  m.includes('Math.round(wheel.scrollTop/WHEEL_STEP)')&&
+  m.includes('if(["gl","ul"].includes(modeDraft.mode))wheels.appendChild(actions)')&&
+  m.includes('else panel.appendChild(actions)')&&
+  dock.includes("#choices.modePanel.modeCompact-league .modeWheelLabel{display:none}")&&
+  !m.includes("Native.shiny()")&&
+  dock.includes('function getResultIcon(');
+});
 test("UX-MODOS-WHEEL-01 keeps controls inside one small panel with ✓ and ×",()=>{
  const block=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
  return block.includes('["raw","IV"],["percent","IV%"],["gl","GL"],["ul","UL"]')&&
@@ -878,7 +895,8 @@ test("UX-MODOS-WHEEL-01 keeps controls inside one small panel with ✓ and ×",(
  block.includes('if(key==="percentMin"&&modeDraft.percentMax<number)')&&
  block.includes('if(key==="percentMax"&&modeDraft.percentMin>number)')&&
  !block.includes('Native.shiny()')&&
- dock.includes('body.controls-window #choices.modePanel{width:232px!important;');
+ dock.includes('body.controls-window #choices.modePanel{')&&
+  dock.includes('modeCompact-league');
 });
 test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
   dock.indexOf('id="sh"')>dock.indexOf('id="cycle"')&&
@@ -889,7 +907,7 @@ test("Sort by remains among existing verified advanced filters",
   dock.includes('const RESULT_ICONS=Object.freeze'));
 test("General and advanced filters are foldable in contextual panel",
   dock.includes('section("Filtros gerais"')&&dock.includes('section("Filtros avançados"')&&
-  dock.includes('#choices.modePanel{width:232px'));
+  dock.includes('#choices.modePanel{width:198px'));
 test("Site dropdown options are discovered instead of inventing weather/form values",
   dock.includes('filterOptions=response.partial?')&&
   dock.includes('Native.requestFilterOptions()')&&
