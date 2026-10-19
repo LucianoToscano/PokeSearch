@@ -72,12 +72,12 @@ test("Legacy twelve toolbar handlers remain available for rollback",
   toolbarButtons.length===12&&dock.includes("grid-auto-flow:column"));
 test("Single pin shows active radius without a second settings button",
   (dock.match(/id="location"/g)||[]).length===1&&dock.includes('id="locationRadiusText"')&&
-  dock.includes('textContent=locationEnabled?locationRadius+"km":""'));
+  dock.includes('textContent=geoConfirmed?locationRadius+"km":""'));
 test("Active radius is readable even when toolbar is closed",
-  dock.includes('id="locBadge"')&&dock.includes('geoBadge.textContent=locationEnabled?"📍 "+locationRadius+" km":""')&&
+  dock.includes('id="locBadge"')&&dock.includes('geoBadge.textContent=geoConfirmed?"📍 "+locationRadius+" km":')&&
   dock.includes('pointer-events:none')&&dock.includes('body.controls-window #locBadge{display:none!important}'));
 test("When OFF, icon and badge never display outdated radius",
-  dock.includes('geoBadge.classList.toggle("active",locationEnabled)')&&
+  dock.includes('geoBadge.classList.toggle("active",geoConfirmed)')&&
   dock.includes('document.getElementById("locationRadiusText").textContent=locationEnabled?locationRadius+"km":""'));
 test("Switching from location editor to mode releases keyboard focus",
   dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
@@ -555,7 +555,7 @@ test("Legacy IV percent migration expands only as necessary without trimming Pok
 test("UX-MENU-01 keeps original 12 commands but navigates with compact contextual menu",
  dock.includes('id="quickMenuList"')&&dock.includes('id="quickRows"')&&
  dock.includes('body.controls-window #controls{display:none!important}')&&
- dock.includes('case "location":return locationEnabled?locationRadius+" km":"OFF"')&&
+ dock.includes('case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF"')&&
  dock.includes('function renderQuickMenu()')&&service.includes('Math.min(330,screenWidthDp()-8)'));
 test("UX-MENU-01 has independent mode, filters, alerts, info and appearance panels",
  dock.includes('function renderFiltersChoices()')&&dock.includes('function renderAlertsChoices()')&&
@@ -1248,7 +1248,7 @@ test("HOME-04 shows genuine trainer data and the four transparent team assets",(
  const pngs=icons.every(name=>{
   const png=fs.readFileSync(path.join(root,"res/drawable-nodpi/ps_team_"+name+".png"));
   return png.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
-   png.readUInt32BE(16)===512&&png.readUInt32BE(20)===512&&png[25]===6;
+   png.readUInt32BE(16)===1254&&png.readUInt32BE(20)===1254&&png[25]===6;
  });
  return pngs&&home.includes("teamBadge.setBackgroundColor(Color.TRANSPARENT)")&&
   home.includes('teamBadge.setImageResource(R.drawable.ps_team_neutral)')&&
