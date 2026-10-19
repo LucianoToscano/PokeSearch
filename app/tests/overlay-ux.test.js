@@ -118,7 +118,13 @@ test("Manual refresh button has touch feedback",dock.includes('onclick="manualRe
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(396,screenWidthDp()-8)"));
 test("Favorites use translucent gradient without background dim",picker.includes("Color.argb(159,24,34,47)")&&picker.includes("window.setDimAmount(0.0f)"));
-test("Home has explicit login and logout",main.includes('signIn.setText("Entrar / vincular")')&&main.includes('signOut.setText("Sair")'));
+test("HOME-01 has explicit official Google/Discord login and sign-out",(()=>{
+ const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
+ return home.includes('homeAuthButton("Discord"')&&home.includes('homeAuthButton("Google"')&&
+  home.includes('discord.setOnClickListener(v->openProviderLogin("discord"))')&&
+  home.includes('google.setOnClickListener(v->openProviderLogin("google"))')&&
+  home.includes('logout.setOnClickListener(v->askLogout())');
+})());
 test("Login does not start overlay if none is running",main.includes("if(!OverlayService.isRunning())return;"));
 test("Logout clears local cookies and web storage only",main.includes("removeAllCookies")&&main.includes("WebStorage.getInstance().deleteAllData()"));
 test("Home login does not force Shiny",main.includes("openLoginDialog(false)")&&
@@ -931,5 +937,62 @@ test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image source
  return cached.classes.has("loaded")&&waiting.classes.has("loaded")&&
   broken.classes.has("failed")&&tiny.classes.has("failed")&&absent.classes.has("failed");
 })());
+
+test("HOME-01 keeps three compact controls on left and real wordmark on right",(()=>{
+ const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
+ return home.includes("overlayControl=homeMiniButton")&&
+  home.includes('makeIcon(R.drawable.ic_heart_outline')&&
+  home.includes('homeMiniButton("☰"')&&
+  home.includes("R.drawable.ps_home_wordmark")&&
+  home.includes("new LinearLayout.LayoutParams(d(142),d(52))")&&
+  home.includes("R.drawable.ps_home_background")&&
+  home.includes("ImageView.ScaleType.CENTER_CROP");
+})());
+test("HOME-01 keeps centered body empty and PoGoCoordinates panel compact",(()=>{
+ const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
+ return home.includes("screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1))")&&
+  home.includes("R.drawable.ps_pogocoordinates")&&
+  home.includes('homeText("PoGoCoordinates"')&&
+  home.includes("guestPanel=new LinearLayout(this)")&&
+  home.includes("connectedPanel=new LinearLayout(this)")&&
+  home.includes("trainerPanel=new LinearLayout(this)")&&
+  !home.includes("root.addView(hint");
+})());
+test("HOME-01 overlay button toggles service while retaining old startup permissions",(()=>{
+ const block=main.split("private void toggleHomeOverlay(){")[1]?.split("private void refreshHomeOverlay(){")[0]||"";
+ return block.includes("OverlayService.isRunning()")&&
+  block.includes("stopService(new Intent(this,OverlayService.class))")&&
+  block.includes("startOverlay()")&&
+  main.includes("Settings.ACTION_MANAGE_OVERLAY_PERMISSION")&&
+  main.includes("notificationPermissionAskedV38");
+})());
+test("HOME-01 keeps original favorites, settings, reports and OAuth WebView",(()=>{
+ const menu=main.split("private void showHomeMenu(){")[1]?.split("private void toggleHomeOverlay(){")[0]||"";
+ return ["openPicker()","showPreferencesDialog()","showQuickGuide()","showBugReportDialog()"]
+   .every(x=>menu.includes(x))&&
+   main.includes('openLoginDialog(false)')&&
+   main.includes('readAsset("login_entry.js")')&&
+   main.includes('website.loadUrl("https://pogocoordinates.com/search")');
+})());
+test("HOME-01 never invents trainer data or changes remote account on local removal",(()=>{
+ const update=main.split("private void refreshSessionSummary(){")[1]?.split("private void askLogout(){")[0]||"";
+ const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
+ return update.includes('code.matches("[0-9]{12}")')&&
+  update.includes('trainerPanel.setVisibility(linked?View.VISIBLE:View.GONE)')&&
+  update.includes('prefs.getString("profileDisplayName","Conta conectada")')&&
+  home.includes("A remoção deve ser confirmada na conta oficial")&&
+  main.includes('readAsset("profile_summary.js")')&&
+  main.includes('.remove("profileTrainerName").remove("profileTrainerCode")');
+})());
+test("HOME-01 provider detection needs real official Google/Discord domain",(()=>{
+ const host=main.split("private void openLoginDialog(boolean shinyRequest){")[1]||"";
+ return host.includes('lower.equals("accounts.google.com")')&&
+  host.includes('lower.equals("discord.com")')&&
+  main.includes('provider=observedLoginProvider')&&
+  !main.includes('provider=preferredLoginProvider')&&
+  read("assets/login_entry.js").includes('window.__psProviderClicked=true')&&
+  read("assets/profile_summary.js").includes("never inspect cookies")===false;
+})());
+
 console.log("PokeSearch UX contract: "+count+" tests passed");
 
