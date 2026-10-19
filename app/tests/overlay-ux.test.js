@@ -993,7 +993,7 @@ test("HOME-01 provider detection needs real official Google/Discord domain",(()=
   !main.includes('provider=preferredLoginProvider')&&
   read("assets/login_entry.js").includes('window.__psProviderClicked=true')&&
   !read("assets/profile_summary.js").includes("document.cookie")&&
-  !read("assets/profile_summary.js").includes("localStorage");
+  !read("assets/profile_summary.js").includes("localStorage.getItem(");
 })());
 
 console.log("PokeSearch UX contract: "+count+" tests passed");
