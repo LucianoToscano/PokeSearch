@@ -61,7 +61,33 @@
   }
  }
  const trainerState=parsed?"linked":explicitZero?"unlinked":"unknown";
+ // Only use a provider picture actually rendered on the official profile.
+ // Exclude team/GO images, do not read cookies or OAuth user metadata.
+ const trustedGoogleUrl=value=>{
+  try{
+   const parsed=new URL(value,location.href);
+   return parsed.protocol==="https:"&&
+    (parsed.hostname==="googleusercontent.com"||
+     parsed.hostname.endsWith(".googleusercontent.com"))&&
+     !parsed.username&&!parsed.password&&parsed.href.length<=1600?
+      parsed.href:"";
+  }catch(_){return "";}
+ };
+ let avatarUrl="";
+ if(provider==="Google"||!provider){
+  const candidates=Array.from(document.querySelectorAll("img")).filter(visible);
+  for(const img of candidates){
+   const label=(img.getAttribute("alt")||"")+" "+(img.getAttribute("aria-label")||"");
+   const parent=img.parentElement?.parentElement;
+   const context=String(parent?text(parent):"").slice(0,240);
+   const candidate=trustedGoogleUrl(img.currentSrc||img.getAttribute("src")||"");
+   if(candidate&&(/avatar|profile|account|foto|photo/i.test(label)||
+      (displayName&&context.includes(displayName))||/Member since/i.test(context))){
+    avatarUrl=candidate;break;
+   }
+  }
+ }
  return JSON.stringify({ok:true,page:"profile",displayName,provider,trainerState,
    trainerName:parsed?parsed.name:"",trainerCode:parsed?parsed.code:"",
-   team:parsed?parsed.team:"",level:parsed?parsed.level:""});
+   team:parsed?parsed.team:"",level:parsed?parsed.level:"",avatarUrl});
 })()
