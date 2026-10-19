@@ -222,6 +222,8 @@ body.result-window #spawns{
  overflow-y:visible!important;overflow-x:visible!important;
  scrollbar-width:none!important;touch-action:manipulation!important
 }
+/* Preserve the final sprite's overhang without adding gaps between entries. */
+body.result-window #spawns:not(:empty){padding-bottom:6px!important}
 body.result-window #empty{margin:0 auto;max-height:18px}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
