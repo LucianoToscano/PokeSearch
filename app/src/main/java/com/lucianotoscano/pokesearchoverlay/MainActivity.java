@@ -193,7 +193,7 @@ public class MainActivity extends Activity {
         accountHeading.addView(headingTexts,new LinearLayout.LayoutParams(0,-2,1));
         TextView heading=homeText("PoGoCoordinates",17,Color.WHITE,true);
         headingTexts.addView(heading);
-        sessionHint=homeText("Faça login para acessar coordenadas em tempo real",11,
+        sessionHint=homeText("Buscas comuns sem login · Shiny exige treinador vinculado",11,
             Color.rgb(156,174,205),false);
         headingTexts.addView(sessionHint);
         LinearLayout.LayoutParams headingLp=new LinearLayout.LayoutParams(-1,-2);
@@ -663,8 +663,14 @@ public class MainActivity extends Activity {
             }
             if("autenticada".equals(auth)){
                 loginSessionNotified=true;
+                // A newly confirmed OAuth session may belong to another account.
+                // Never reuse the prior trainer proof while /profile hydrates.
                 getSharedPreferences("prefs",0).edit()
-                    .putString("sessionStatus","autenticada").apply();
+                    .putString("sessionStatus","autenticada")
+                    .putString("profileTrainerState","unknown")
+                    .remove("profileTrainerName").remove("profileTrainerCode")
+                    .remove("profileTrainerDetails").remove("profileTrainerTeam")
+                    .remove("profileTrainerLevel").apply();
                 CookieManager.getInstance().flush();
                 if("manage".equals(loginPurpose)){
                     // Management must stay open until the user explicitly leaves.
@@ -759,10 +765,11 @@ public class MainActivity extends Activity {
                             .putString("profileTrainerDetails",details)
                             .putString("profileTrainerTeam",team.matches("Mystic|Valor|Instinct")?team:"")
                             .putString("profileTrainerLevel",level.matches("[0-9]{1,2}")?level:"");
-                    }else if("unlinked".equals(state)){
-                        // Only confirmed 0/N or the official Link my account
-                        // presentation can clear the old trainer snapshot.
-                        edit.putString("profileTrainerState","unlinked")
+                    }else{
+                        // Unlinked or unverified current account never inherits
+                        // a linked trainer from the previous login.
+                        edit.putString("profileTrainerState",
+                                "unlinked".equals(state)?"unlinked":"unknown")
                             .remove("profileTrainerName").remove("profileTrainerCode")
                             .remove("profileTrainerDetails")
                             .remove("profileTrainerTeam").remove("profileTrainerLevel");
