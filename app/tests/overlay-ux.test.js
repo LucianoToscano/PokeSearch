@@ -594,10 +594,10 @@ test("UX-MENU-02 builds a unique Pokémon silhouette but does not fake site inte
  dock.includes('A busca por espécie/forma será integrada em uma próxima etapa')&&
  !dock.includes('case "pokemon":Native.'));
 test("UX-SHINY-01 restores Shiny ✨ next to Modos using the existing native toggle",
- dock.includes('["sh","✨","Shiny Only","sh"]')&&
- dock.includes('["sh","✨","Shiny Only","sh"]')&&
- dock.includes('shinyButton.onclick=()=>Native.shiny()')&&
- dock.includes('case "sh":Native.shiny();break;'));
+ dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"]')&&
+ dock.includes('case "sh":Native.shiny();break;')&&
+ dock.includes('id==="sh"?(shiny&&!shinyPending)')&&
+ !dock.includes('shinyButton.onclick=()=>Native.shiny()'));
 test("UX-MENU-04 restores twelve small icons in the old thin row while migrating saved menu",
  dock.includes('id="quickUtilities"')&&
  dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important')&&
