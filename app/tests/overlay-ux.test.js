@@ -288,10 +288,11 @@ test("Official account badge returns immediately to PokeSearch Home",
   main.includes('if("autenticada".equals(auth)){')&&
   main.includes('loginDialog.dismiss();')&&
   main.includes('checkLoginSession(view,14,generation);'));
-test("Login stays monitored during in-page OAuth without forcing navigation",
-  main.includes('view.postDelayed(()->checkLoginSession(view,next,pageGeneration)')&&
-  main.includes('attemptsLeft>1?400L:850L')&&
-  main.includes('++loginPageGeneration; // Invalidate pending WebView session probes.'));
+test("Login retries boundedly and rechecks official page after OAuth navigation",
+  main.includes('if(attemptsLeft>1)view.postDelayed(')&&
+  main.includes('checkLoginSession(view,attemptsLeft-1,pageGeneration),450L')&&
+  main.includes('++loginPageGeneration;')&&
+  main.includes('profileCaptureInProgress=true;'));
 test("Login session detection substitutes all probe placeholders and reads mobile account text",
  main.includes('JSONObject.quote("session")')&&
  main.includes('.replace("__FILTERS__","{}")')&&
