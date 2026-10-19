@@ -577,7 +577,7 @@ test("UX-MENU-01 visibility toggles cannot invent unverified data",
 test("UX-MENU-02 orders Modos, Filtros, Localização and Pokémon consecutively",
  dock.includes('["mode","☷","Modos","mode"],["filters","≡","Filtros","filters"]')&&
  dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
- dock.includes('["star","☆","Favoritos","star"],["appearance","⚙","Ajustes","appearance"]'));
+ dock.includes('["star","☆","Favoritos","star"],["bell","♧","Alertas","alerts"]'));
 test("UX-MENU-02 uses earlier SVG icons for location, alerts, favorites, appearance and support",
  dock.includes('location:"location",bell:"bell",star:"star",donate:"donate"')&&
   dock.includes("appearance:'<path")&&
@@ -593,16 +593,16 @@ test("UX-MENU-02 does not duplicate Shiny outside Modos",
  !dock.includes('["sh","✨","Shiny","sh"]')&&
  dock.includes('shinyButton.id="modeShiny"')&&
  dock.includes('shinyButton.onclick=()=>Native.shiny()'));
-test("UX-MENU-04 restores ten small icons in the old thin row while migrating saved menu",
+test("UX-MENU-04 restores eleven small icons in the old thin row while migrating saved menu",
  dock.includes('id="quickUtilities"')&&
- dock.includes('grid-template-columns:repeat(10,minmax(0,1fr))!important')&&
+ dock.includes('grid-template-columns:repeat(11,minmax(0,1fr))!important')&&
  dock.includes('body.controls-window #quickRows,')&&
  dock.includes('display:contents!important')&&
  dock.includes('const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon")'));
 test("UX-MENU-02 preserves independent Reportar and Apoiar actions",
  dock.includes('case "report":Native.openReport();break;')&&
  dock.includes('case "donate":Native.openPix();break;')&&
- dock.includes('["appearance","⚙","Ajustes","appearance"]'));
+ dock.includes('["appearance","⚙","Personalização","appearance"]'));
 test("PL-04 OFF does not force Area when default Coords are blank",
  read("assets/probe.js").includes('An empty Coords form is still')&&
  read("assets/probe.js").includes('return JSON.stringify({ok:blank,reason:blank?')&&
@@ -618,7 +618,7 @@ test("UX-MENU-03 never shows a wide menu, header, tiles or labels",
   dock.includes('width:220px!important')&&
   dock.includes('width:246px!important')&&
   dock.includes('width:306px!important'));
-test("UX-MENU-04 keeps ten icon-first entry points in one thin row",
+test("UX-MENU-04 keeps eleven icon-first entry points in one thin row",
   dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])')&&
   dock.includes('["mode","☷","Modos","mode"],["filters","≡","Filtros","filters"]')&&
   dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
@@ -627,26 +627,26 @@ test("UX-MENU-04 keeps ten icon-first entry points in one thin row",
   dock.includes('["close","×","Fechar","close"]')&&
   service.includes('Math.min(330,screenWidthDp()-8)'));
 test("UX-MENU-03 highlights active states by icon without visible labels",
-  dock.includes('button.classList.toggle("selected",id==="location"?locationEnabled:')&&
+  dock.includes('button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):')&&
   dock.includes('#quickMenuList [data-key=location].selected')&&
   dock.includes('#quickMenuList [data-key=star].selected')&&
   dock.includes('button.title=button.getAttribute("aria-label")+(current?" · "+current:"")'));
 
 
-test("UX-MENU-04 exposes exactly the approved ten icons in order",(()=>{
+test("UX-MENU-04 exposes exactly the approved eleven icons in order",(()=>{
  const chunk=dock.split('const QUICK_ACTIONS=[')[1]?.split('];')[0]||"";
  const keys=[...chunk.matchAll(/\["([a-z]+)","[^"]+","[^"]+","[^"]+"\]/g)].map(m=>m[1]);
  return JSON.stringify(keys)===JSON.stringify(["mode","filters","location","pokemon","star",
-   "appearance","bell","report","donate","close"])&&
-   !chunk.includes('"period"')&&!chunk.includes('"info"')&&
+   "bell","period","appearance","report","donate","close"])&&
+   chunk.includes('"period"')&&!chunk.includes('"info"')&&
    !chunk.includes('"sh"')&&
    service.includes('Math.min(330,screenWidthDp()-8)');
 })());
-test("UX-MENU-04 moves Informações and Atualização inside Ajustes",(()=>{
+test("UX-MENU-04 keeps Informações in Ajustes and restores Atualização beside Alertas",(()=>{
  const body=dock.split('function renderAppearanceChoices()')[1]?.split('if(controlsWindow){')[0]||"";
  return body.includes('uxPanel("AJUSTES · PERSONALIZAÇÃO")')&&
   body.includes('uxOption(panel,"Informações dos Pokémon","Configurar ›",()=>toggleChoices("info"))')&&
-  body.includes('uxOption(panel,"Atualização",period?')&&
+  dock.includes('["period","↻","Atualização","period"]')&&
   dock.includes('back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();}')&&
   dock.includes('function renderInfoChoices()')&&
   service.includes('void setIntervalMinutes(int minutes)');
@@ -656,10 +656,10 @@ test("UX-MENU-04 preserves all old Android feature bridges and migrates 12-icon 
   "openWatchList","openReport","openPix"];
  return bridge.every(name=>service.includes('void '+name+'('))&&
  dock.includes('p.order.some(id=>!ids.includes(id))')&&
- dock.includes('const QUICK_UTILITY_IDS=["bell"]')&&
- service.includes('"appearance","bell","report","donate","close"')&&
+ dock.includes('const QUICK_UTILITY_IDS=[];')&&
+ service.includes('"bell","period","appearance","report","donate","close"')&&
  dock.includes('shinyButton.id="modeShiny"')&&
- dock.includes('grid-template-columns:repeat(10,minmax(0,1fr))!important');
+ dock.includes('grid-template-columns:repeat(11,minmax(0,1fr))!important');
 })());
 
 
@@ -717,7 +717,19 @@ test("REG-51049 OFF public search ignores inert radius while refusing residual c
  })());
 
 
-// UX-MODE-ICONS: use approved uploaded assets, keep the 10-button ribbon.
+
+test("UX-MENU-06 refresh directly after Alertas and personalization before Reportar",()=>{
+ const raw=dock.split("const QUICK_ACTIONS=[")[1]?.split("];")[0]||"";
+ const ids=[...raw.matchAll(/\["([a-z]+)","[^"]+","[^"]+","[^"]+"\]/g)].map(x=>x[1]);
+ return ids.length===11&&ids.indexOf("period")===ids.indexOf("bell")+1&&
+  ids.indexOf("appearance")===ids.indexOf("report")-1&&
+  dock.includes('if(["mode","alerts","location","filters","period","appearance"].includes(id))')&&
+  dock.includes('now.textContent="↻ Atualizar agora"')&&
+  dock.includes('btn.className=value===current?"chosen":""')&&
+  dock.includes('rows.appendChild(button)')&&
+  service.includes('"bell","period","appearance","report","donate","close"');
+});
+// UX-MODE-ICONS: use approved uploaded assets, keep the 11-button ribbon.
 test("Approved IV medals and GL/UL triangles are 48px transparent PNG assets",()=>{
  const names=["iv-zero-stars.png","iv-three-stars.png","gl-triangle.png","ul-triangle.png"];
  return names.every(name=>{
@@ -759,7 +771,7 @@ test("Thin bar Modos icon redraws on filter/rank change and does not add buttons
  return dock.includes('button.dataset.modeArtKey=art.path+"|"+art.ivBadge')&&
    block.includes('previous.replaceWith(iconForQuick("mode","☷"))')&&
    dock.includes('rank.textContent=art.ivBadge')&&
-   dock.includes('grid-template-columns:repeat(10,minmax(0,1fr))!important');
+   dock.includes('grid-template-columns:repeat(11,minmax(0,1fr))!important');
 });
 
 
@@ -779,7 +791,7 @@ test("VIS tiny white Pokemon and pencil-gear are independent SVG toolbar icons",
   !source.includes('appearance:"gear"')&&
   dock.includes('[data-key=pokemon] .quickGlyph')&&
   dock.includes('[data-key=appearance] .quickGlyph{color:#f4f6fa!important}')&&
-  dock.includes('grid-template-columns:repeat(10,minmax(0,1fr))!important');
+  dock.includes('grid-template-columns:repeat(11,minmax(0,1fr))!important');
 });
 test("PL-04 final site verification happens after IV filters and before Search",()=>{
  const verified=service.indexOf('execute("verifyFilters",filters->');
