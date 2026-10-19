@@ -495,7 +495,7 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
   family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
  };
 }
-let locationEnabled=false,locationCoords="",locationRadius=0;
+let locationEnabled=false,locationCoords="",locationRadius=0,locationVerified=false;
 // Future preference may expose Show/Hide results text; default is OFF.
 let showResultText=false;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
@@ -882,7 +882,11 @@ function renderLocationChoices(){
  const label=make("div","locLine");const labelName=make("span","","Raio da busca");const value=make("strong","",locationRadius+" km");label.append(labelName,value);
  const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);slide.setAttribute("aria-label","Raio em quilômetros de 0 a 1000");
  slide.oninput=()=>{value.textContent=slide.value+" km";};
- const status=make("p","");status.id="locHint";status.textContent=locationEnabled?"📍 Ativo na pesquisa · "+locationRadius+" km":"OFF · busca geral, sem coordenadas do aplicativo.";
+ const status=make("p","");status.id="locHint";
+ status.textContent=locationEnabled?(locationVerified?
+  "✓ Filtro confirmado no site · "+locationRadius+" km":
+  "⌛ Localização solicitada · aguardando confirmação no site"):
+  "OFF · busca geral, sem coordenadas do aplicativo.";
  const actions=make("div","locLine");const apply=make("button","locSave","✓ Aplicar");const hide=make("button","locHide","Ocultar");
  const disable=()=>{locationEnabled=false;locationCoords="";locationRadius=0;closeChoices();Native.setLocation(false,"",0);};
  toggle.onclick=()=>{if(locationEnabled){disable();return;}submit();};
@@ -1063,10 +1067,11 @@ function updateTimers(){
  });
 }
 setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={})=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false)=>{
  cards=Array.isArray(a)?a.slice(0,10):[];
  document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
+ locationVerified=!!verifiedLocation&&locationEnabled;
  if(config&&typeof config==="object")searchSettings={...searchSettings,...config};
  shownMode=resultSourceMode==="iv"?"raw":(resultSourceMode||mode);
  if(resultSourceConfig&&typeof resultSourceConfig==="object")
@@ -1127,7 +1132,7 @@ function quickState(id){
   case "sh":return shinyPending?"Pendente":shiny?"ON":"OFF";
   case "bell":return alertMode==="silent"?"Silencioso":generalAlerts?"Som":"OFF";
   case "star":return hasFavorites?"Ativos":"";
-  case "location":return locationEnabled?locationRadius+" km":"OFF";
+  case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF";
   case "filters":return ["pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","sortBy"].some(k=>searchSettings[k])?"Ativos":"Nenhum";
   case "appearance":return "Ajustes";
   default:return "";
