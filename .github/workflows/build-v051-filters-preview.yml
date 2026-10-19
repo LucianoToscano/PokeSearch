@@ -4,6 +4,7 @@ on:
     branches:
       - plan/v051-pogocoordinates-filtros-20261017
       - ux/iv-color-shiny-separate-20261018
+      - fix/ps009-stable-test-signing-20261018
     paths:
       - 'app/**'
       - '.github/workflows/build-v051-filters-preview.yml'
@@ -57,6 +58,7 @@ jobs:
       - name: Syntax and search tests
         run: |
           node --check app/src/main/assets/probe.js
+          node app/tests/location-probe.test.js
           node app/tests/probe-smoke.test.js
           node app/tests/overlay-ux.test.js
           node app/tests/signing-contract.test.js
@@ -117,6 +119,41 @@ jobs:
             PokeSearch-v0.51-Teste-Atualizavel.apk
             SHA256SUMS.txt
             SIGNING_CERT_SHA256.txt
+          retention-days: 30
+      - name: Package complete editable source and extracted APK (no secrets)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s PokeSearch-v0.51-Teste-Atualizavel.apk
+          mkdir -p "$RUNNER_TEMP/pokesearch-source" "$RUNNER_TEMP/pokesearch-unpacked" "$RUNNER_TEMP/pokesearch-package"
+          # Every committed source, asset, image, script, document and config:
+          git archive --format=zip --output="$RUNNER_TEMP/pokesearch-package/PokeSearch-Codigo-Fonte-Completo.zip" HEAD
+          # Every byte-identifiable member from the signed APK, including DEX and resources:
+          unzip -q PokeSearch-v0.51-Teste-Atualizavel.apk -d "$RUNNER_TEMP/pokesearch-unpacked"
+          (cd "$RUNNER_TEMP/pokesearch-unpacked" && zip -q -r "$RUNNER_TEMP/pokesearch-package/PokeSearch-Conteudo-Extraido-APK.zip" .)
+          cp PokeSearch-v0.51-Teste-Atualizavel.apk SHA256SUMS.txt SIGNING_CERT_SHA256.txt "$RUNNER_TEMP/pokesearch-package/"
+          git rev-parse HEAD > "$RUNNER_TEMP/pokesearch-package/SOURCE_COMMIT.txt"
+          git ls-tree -r --name-only HEAD > "$RUNNER_TEMP/pokesearch-package/LISTA-ARQUIVOS-FONTE.txt"
+          (cd "$RUNNER_TEMP/pokesearch-unpacked" && find . -type f | sort) > "$RUNNER_TEMP/pokesearch-package/LISTA-ARQUIVOS-APK.txt"
+          cat > "$RUNNER_TEMP/pokesearch-package/LEIA-ME-EDICAO.txt" <<'TXT'
+          PokeSearch — pacote completo para inspecao e edicao
+          1. PokeSearch-Codigo-Fonte-Completo.zip: todos os arquivos versionados do repositorio no commit de compilacao (Android Java, recursos, imagens, JS, testes, docs, Gradle, workflows).
+          2. PokeSearch-Conteudo-Extraido-APK.zip: todos os arquivos internos do APK como distribuidos (inclui recursos binarios, DEX, manifest compilado, assinatura publica).
+          3. PokeSearch-v0.51-Teste-Atualizavel.apk: APK assinado completo.
+          4. SHA256SUMS.txt, SIGNING_CERT_SHA256.txt, SOURCE_COMMIT.txt e listas dos arquivos.
+          PARA EDITAR E RECOMPILAR: use o ZIP de codigo-fonte com Android Studio/JDK 17/Gradle e Android SDK.
+          Arquivos .dex / resource.arsc / AndroidManifest.xml no ZIP do APK sao formatos compilados e nao substituem o codigo-fonte editavel.
+          Arquivos de assinatura privada, passwords, tokens, caches temporarios do runner e diretorio .git nao fazem parte deste pacote.
+          Uma compilacao modificada exige sua propria chave ou o processo seguro de assinatura persistente do projeto.
+          TXT
+          (cd "$RUNNER_TEMP/pokesearch-package" && sha256sum PokeSearch-Codigo-Fonte-Completo.zip PokeSearch-Conteudo-Extraido-APK.zip >> SHA256SUMS-PACOTE.txt)
+          (cd "$RUNNER_TEMP/pokesearch-package" && zip -q -r "$GITHUB_WORKSPACE/PokeSearch-Pacote-Completo-Edicao.zip" .)
+          unzip -t PokeSearch-Pacote-Completo-Edicao.zip >/dev/null
+      - name: Publish complete source and APK-analysis package
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-PACOTE-COMPLETO-EDICAO
+          path: PokeSearch-Pacote-Completo-Edicao.zip
           retention-days: 30
       - name: Remove restored keystore
         if: always()
