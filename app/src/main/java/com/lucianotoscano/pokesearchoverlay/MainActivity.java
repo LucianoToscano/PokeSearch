@@ -592,15 +592,15 @@ public class MainActivity extends Activity {
                 }
             }catch(Exception ignored){
                 // Network or an unavailable avatar keeps the neutral icon.
-            }finally{if(connection!=null)connection.disconnect();}
-            final android.graphics.Bitmap photo=bitmap;
-            if(photo==null){
-                runOnUiThread(()->{
-                    // A failed request may succeed later (Google CDN or network
-                    // hydration); allow the next Home refresh to retry.
+            }finally{
+                if(connection!=null)connection.disconnect();
+                if(bitmap==null)runOnUiThread(()->{
+                    // Includes early returns on HTTP failure/redirect/size.
+                    // Do not permanently cache a failed URL on the new Home.
                     if(next.equals(shownAvatarUrl))shownAvatarUrl="";
                 });
             }
+            final android.graphics.Bitmap photo=bitmap;
             if(photo!=null)runOnUiThread(()->{
                 if(accountAvatar==null||!shownAvatarUrl.equals(next)||
                     !"autenticada".equals(getSharedPreferences("prefs",0)
