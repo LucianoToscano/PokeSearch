@@ -438,8 +438,8 @@ test("Four requested search modes with correct numeric bounds",()=>{
   dock.includes('{key:"percentMin"')&&dock.includes('{key:"percentMax"');
 });
 test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy migration",
- dock.includes('if(attack===15&&defense===15&&stamina===15)family="hundo"')&&
- dock.includes('if(settings.percentMin===100&&settings.percentMax===100)family="hundo"')&&
+ dock.includes('if([attack,defense,stamina].every(v=>Number(v)===15))family="hundo"')&&
+ dock.includes('if(min===100&&max===100)family="hundo"')&&
  service.includes('boolean migrateLegacyHundo="iv".equals(mode);')&&
  service.includes('pref.edit().putString("mode","raw")')&&
  read("assets/probe.js").includes('return rawIsHundo()&&!oneButton("Raw IV")&&set100Percent();'));
@@ -473,9 +473,9 @@ test("Site filters are configured and confirmed before search submission",(()=>{
 })());
 test("Raw zero and percentage extremes reuse all original Hundo/Nundo Shiny icons",(()=>{
  const code=dock.split('function getResultIcon(')[1].split('let locationEnabled=')[0];
- return code.includes('if(attack===0&&defense===0&&stamina===0)family="nundo"')&&
-  code.includes('if(settings.percentMin===0&&settings.percentMax===0)family="nundo"')&&
-  code.includes('if(settings.percentMin===100&&settings.percentMax===100)family="hundo"')&&
+ return code.includes('if([attack,defense,stamina].every(v=>Number(v)===0))family="nundo"')&&
+  code.includes('if(min===0&&max===0)family="nundo"')&&
+  code.includes('if(min===100&&max===100)family="hundo"')&&
   dock.includes('nundo:{normal:"nundo.png",shiny:"shnundo.png"')&&
   dock.includes('hundo:{normal:"hundo.png",shiny:"shundo.png"');
 })());
@@ -687,13 +687,13 @@ test("Authenticated profile cannot inherit previous trainer link",
  main.includes('Buscas comuns sem login · Shiny exige treinador vinculado'));
 
 
-test("REG-51049 UL header uses dedicated Ultra League PNG, never Cup",
- dock.includes('family==="ul"?"ultra-league.png":"great-league.png"')&&
- dock.includes('fallbackPath:"file:///android_asset/result-icons/base/"+baseName')&&
+test("UL uses original user-provided triangle and cannot become Cup",
+ dock.includes('gl:"gl-triangle.png",ul:"ul-triangle.png"')&&
+ dock.includes('family==="gl"?"great-league.png":"ultra-league.png"')&&
  dock.includes('ul:{normal:"ultra-league.png",shiny:"ultra-league-shiny.png"')&&
  dock.includes('cup:{normal:"cup-league.png"')&&
  dock.includes('baseFamily==="ul"?Number(settings.ulRank)')&&
- dock.includes('rankLabel||(baseFamily==="cup"?"CUP":"")'));
+ dock.includes('baseFamily==="cup"?"CUP"'));
 test("REG-51049 opening Modos never starts background filter-option discovery",
  (()=>{
  const block=dock.split('if(kind==="mode"){')[1]?.split('const current=period;')[0]||"";
@@ -806,10 +806,11 @@ test("UX-ICON-01 keeps 35x30 touch area and badges strictly within 21px",
  dock.includes("max-width:21px;max-height:21px;aspect-ratio:1/1;overflow:visible;pointer-events:none")&&
  dock.includes("Math.max(17,Math.min(21,Math.round(spriteSize*0.45)))")&&
  ["modeIndicatorValue","modeIndicatorShiny","modeIndicatorBackground"].every(x=>dock.includes('id="'+x+'"')));
-test("UX-ICON-01 badges remain independent and background requires site proof",
- dock.includes('family==="hundo"?"100%"')&&dock.includes('family==="nundo"?"0"')&&
- dock.includes('family==="percent"?"%"')&&dock.includes("shinyBadge:shining")&&
- dock.includes("backgroundOnly===true&&settings.backgroundVerified===true"));
+test("IV medal glyph conveys 0/100; Shiny and background badges remain independent",
+  dock.includes('const badge=(family==="gl"||family==="ul")?rankLabel:')&&
+  dock.includes('baseFamily==="cup"?"CUP":""')&&
+  dock.includes('shinyBadge:shining')&&
+  dock.includes('backgroundOnly===true&&settings.backgroundVerified===true'));
 test("UX-ICON-01 does not silently introduce unimplemented searches",
  dock.includes('baseFamily==="cup"?"CUP"')&&
  !dock.includes('row("none"')&&!dock.includes('row("ml"')&&!dock.includes('row("cup"'));
@@ -886,10 +887,11 @@ test("UX-ICON-02 selected GL/UL threshold is displayed as a #N badge",()=>{
  block.includes('baseFamily==="ul"?Number(settings.ulRank)')&&
  block.includes('topN>=1&&topN<=50?"#"+topN')&&block.includes('ivBadge:badge');
 });
-test("UX-ICON-02 fallback never revives legacy effect-embedded PNG",()=>{
- return dock.includes('fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none')&&
- !dock.includes('fallbackPath:"file:///android_asset/result-icons/"+')&&
- !dock.split("const RESULT_BASE_ICONS=Object.freeze(")[1].split("const RESULT_MODE_ALIASES")[0].includes("base-cup.png");
+test("Mode emblems preserve historical fallback artwork without Cup alias",()=>{
+ return dock.includes('fallbackPath:(family==="gl"||family==="ul")?')&&
+  dock.includes('family==="gl"?"great-league.png":"ultra-league.png"')&&
+  dock.includes('"file:///android_asset/result-icons/base/"+baseName')&&
+  !dock.split('const RESULT_BASE_ICONS=Object.freeze(')[1].split('const RESULT_MODE_ALIASES')[0].includes('base-cup.png');
 });
 test("UX-ICON-02 capture animation reacts to native search state",()=>{
  return service.includes('","+searchInProgress+")"')&&
