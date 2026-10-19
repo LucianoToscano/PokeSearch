@@ -1,58 +1,66 @@
 (function(){
  "use strict";
- // HOME-01: read only visible public profile labels on the authenticated
- // PoGoCoordinates page. Never inspect cookies, localStorage, tokens or HTML.
+ // Public visible DOM only; do not read cookies, storage, response headers,
+ // OAuth query parameters or hidden controls. Incomplete page => unknown.
  const visible=e=>!!(e&&e.getClientRects&&e.getClientRects().length);
- const text=e=>String(e&&(e.innerText||e.textContent)||"").replace(/\s+/g," ").trim();
- const nodes=Array.from(document.querySelectorAll("span,small,strong,p,label,dt,dd,h1,h2,h3,button"))
-   .filter(e=>visible(e)&&e.children.length<=3&&text(e).length<=95);
- function bounded(value,max){
-   const s=String(value||"").replace(/[\u0000-\u001f<>]/g,"").trim();
-   return s.length<=max?s:"";
+ const raw=e=>String(e&&(e.innerText||e.textContent)||"");
+ const text=e=>raw(e).replace(/\s+/g," ").trim();
+ const clean=(s,max)=>{
+  s=String(s||"").replace(/[\u0000-\u001f<>]/g," ").replace(/\s+/g," ").trim();
+  return s.length<=max?s:"";
+ };
+ const isProfile=location.pathname==="/profile";
+ if(!isProfile)return JSON.stringify({ok:false,page:"not-profile"});
+ const body=String(document.body&&document.body.innerText||"");
+ const proof=/\bLinked accounts\b/i.test(body)&&/\bPokemon GO accounts\b/i.test(body);
+ if(!proof)return JSON.stringify({ok:false,page:"unhydrated"});
+ const nodes=Array.from(document.querySelectorAll("p,span,small,strong,div,section,article"))
+   .filter(visible);
+ const banned=/^(?:profile|member since|upgrade|danger zone|linked accounts|pokemon go accounts|export|search|logout|log out|link|google|discord|pokemon go|settings|account|home)$/i;
+ const nameOk=s=>s.length>=3&&s.length<=65&&/^[\p{L}][\p{L} .'-]*[\p{L}]$/u.test(s)&&!banned.test(s)&&!s.includes("@");
+ // Profile heading: visible name sits immediately above "Member since".
+ // Never fall back to the first arbitrary h1/h2 (e.g. "Danger zone").
+ let displayName="";
+ const members=nodes.filter(e=>/^Member since\b/i.test(text(e))&&text(e).length<110);
+ for(const member of members){
+  let e=member;
+  for(let depth=0;e&&depth<4&&!displayName;e=e.parentElement,depth++){
+   const previous=e.previousElementSibling;
+   const candidate=clean(previous?text(previous):"",65);
+   if(nameOk(candidate)){displayName=candidate;break;}
+   const parent=e.parentElement;
+   if(!parent)continue;
+   const value=raw(parent).replace(/\r/g,"");
+   const pre=value.split(/Member since/i)[0].trim().split(/\n+/).map(x=>clean(x,65)).filter(Boolean);
+   const last=pre[pre.length-1]||"";
+   if(nameOk(last))displayName=last;
+  }
+  if(displayName)break;
  }
- function readField(labels,max){
-   const pattern=new RegExp("^(?:"+labels+")(?:\\s*[:：-]\\s*|\\s+)(.+)$","i");
-   for(const n of nodes){
-     const m=text(n).match(pattern);
-     if(m){const result=bounded(m[1],max);if(result)return result;}
+ const explicitVia=body.match(/\b(?:Logged in via|Logado via)\s+(Google|Discord)\b/i);
+ const provider=explicitVia?explicitVia[1].replace(/^./,x=>x.toUpperCase()):"";
+ // Verify linked state by the Pokemon GO section only, never a count elsewhere.
+ const accounts=nodes.map(e=>({s:text(e),e})).filter(x=>
+   x.s.includes("Pokemon GO accounts")&&x.s.length<1800)
+   .sort((a,b)=>a.s.length-b.s.length);
+ const section=accounts[0]?accounts[0].s:"";
+ const explicitZero=/Pokemon GO accounts\s*0\s*\/\s*\d+/i.test(section)||
+   /Pokemon GO accounts.*?\bLink my account\b/i.test(section);
+ const trainerCards=nodes.map(e=>text(e)).filter(t=>t.length<1300&&
+   /\bTrainer code\s*[\d\s]{12,24}/i.test(t)).sort((a,b)=>a.length-b.length);
+ let parsed=null;
+ for(const card of trainerCards){
+  // A name + team + level + numeric code must all belong to one bounded card.
+  const m=card.match(/(?:^|\s)([A-Za-z][A-Za-z0-9_.-]{2,39})\s+(Mystic|Valor|Instinct)\s*[·•-]\s*Level\s*(\d{1,2})\s+Trainer\s*code\s*([\d ]{12,22})\b/i);
+  if(m){
+   const code=m[4].replace(/\D/g,"");
+   if(/^\d{12}$/.test(code)&&+m[3]>=1&&+m[3]<=80){
+    parsed={name:m[1],team:m[2],level:m[3],code};break;
    }
-   for(const n of nodes){
-     if(new RegExp("^(?:"+labels+")\\s*:?$","i").test(text(n))){
-       const sibling=n.nextElementSibling;
-       const value=bounded(sibling?text(sibling):"",max);
-       if(value)return value;
-     }
-   }
-   return "";
+  }
  }
- // HOME-02: React cards can contain unlabelled account and trainer data.
- // Restrict inspection to visible labels and bounded on-page cards.
- const headings=Array.from(document.querySelectorAll("h1,h2,h3,[role=heading]"))
-   .filter(visible).map(text).filter(t=>t.length>=3&&t.length<=65);
- const explicitName=readField("logged\\s*in\\s*as|signed\\s*in\\s*as|account\\s*name|display\\s*name|nome\\s*da\\s*conta",65);
- const displayName=explicitName||headings.find(t=>/^[\p{L}][\p{L} .'-]+[\p{L}]$/u.test(t)&&
-   !/^(linked accounts|pokemon go accounts|export|search|settings|pokedex|profile|perfil|pokecoordinates)$/i.test(t))||"";
- const providerRaw=readField("logged\\s*in\\s*via|sign(?:ed)?\\s*in\\s*with|conectado\\s*via|logado\\s*via",30);
- const provider=/\bgoogle\b/i.test(providerRaw)?"Google":/\bdiscord\b/i.test(providerRaw)?"Discord":"";
- const cards=Array.from(document.querySelectorAll("article,section,div"))
-   .filter(e=>visible(e)&&/trainer\s*code|c[oó]digo\s*de\s*treinador/i.test(text(e).slice(0,700)))
-   .map(e=>text(e).slice(0,700)).filter(t=>t.length<700)
-   .sort((a,b)=>a.length-b.length);
- const block=cards[0]||"";
- const legacyName=readField("trainer\\s*(?:name|nickname)|nome\\s*(?:do\\s*)?treinador|in.game\\s*name",40);
- const candidate=block.match(/([A-Za-z0-9_.-]{3,40})\s+(?:(?:Mystic|Valor|Instinct)\s*[·•-]\s*Level\s*\d{1,2})?\s*Trainer\s*code\s*([\d\s]{12,22})/i);
- const trainerName=legacyName||(candidate?candidate[1]:"");
- const codeRaw=readField("trainer\\s*code|friend\\s*code|c[oó]digo\\s*(?:de\\s*)?treinador",24)||
-   (candidate?candidate[2]:"")||(block.match(/Trainer\s*code\s*([0-9 ]{12,22})/i)||[])[1]||"";
- const trainerCode=codeRaw.replace(/\D/g,"");
- const validCode=/^\d{12}$/.test(trainerCode);
- const teamRaw=readField("team|equipe|time",18)||block;
- const team=/\bmystic\b/i.test(teamRaw)?"Mystic":/\bvalor\b/i.test(teamRaw)?"Valor":
-   /\binstinct\b/i.test(teamRaw)?"Instinct":"";
- const levelRaw=readField("trainer\\s*level|n[ií]vel(?:\\s*do\\s*treinador)?|level",3)||
-   ((block.match(/\bLevel\s*(\d{1,2})\b/i)||[])[1]||"");
- const level=/^(?:[1-9]|[1-7][0-9]|80)$/.test(levelRaw)?levelRaw:"";
- return JSON.stringify({ok:true,displayName,provider,
-   trainerName:validCode?trainerName:"",trainerCode:validCode?trainerCode:"",
-   team:validCode?team:"",level:validCode?level:""});
+ const trainerState=parsed?"linked":explicitZero?"unlinked":"unknown";
+ return JSON.stringify({ok:true,page:"profile",displayName,provider,trainerState,
+   trainerName:parsed?parsed.name:"",trainerCode:parsed?parsed.code:"",
+   team:parsed?parsed.team:"",level:parsed?parsed.level:""});
 })()
