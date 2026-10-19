@@ -378,19 +378,26 @@ body.controls-window #choices{top:34px!important;width:220px!important;
 body.controls-window #choices.modePanel{width:246px!important;max-height:min(310px,var(--popup-room,400px))!important}
 body.controls-window #choices.locationPanel{width:306px!important;max-height:var(--popup-room,400px)!important}
 body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}
-/* Mode badge uses the original thin row; no new text label. */
+/* Tiny Modos artwork only. GL/UL #N floats centered ABOVE the PNG,
+   with text glow but no pill, tile, border, or filled background. */
 body.controls-window #quickMenuList .quickGlyph.modeArt{
  width:27px!important;min-width:0!important;height:18px!important;
- display:flex!important;gap:1px!important;align-items:center!important;justify-content:center!important;
+ position:relative!important;overflow:visible!important;
+ display:flex!important;gap:0!important;align-items:center!important;justify-content:center!important;
 }
 body.controls-window #quickMenuList .quickModeImage{
  width:17px!important;height:17px!important;object-fit:contain!important;
  pointer-events:none!important;flex:none!important;
 }
 body.controls-window #quickMenuList .quickRank{
- display:inline!important;width:auto!important;height:auto!important;
+ display:inline!important;position:absolute!important;top:-6px!important;left:50%!important;
+ transform:translateX(-50%)!important;z-index:1!important;
+ width:auto!important;height:auto!important;min-width:0!important;
  font:800 8px/10px Roboto,Arial,sans-serif!important;color:#fff!important;
- letter-spacing:-.4px!important;text-shadow:0 1px 2px #000!important;
+ text-align:center!important;white-space:nowrap!important;letter-spacing:-.25px!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ padding:0!important;margin:0!important;
+ text-shadow:0 1px 2px #000,0 0 3px #000,0 0 4px #d5e7ff!important;
 }
 </style></head><body>
 <div id="shell">
@@ -451,10 +458,31 @@ const RESULT_MODE_ALIASES=Object.freeze({
  ml:"ml",master:"ml",master_league:"ml",
  cup:"cup",cup_league:"cup",little_cup:"cup"
 });
+// Purely a tiny menu glyph for IV% SEARCH RANGES, not a Pokémon appraisal.
+// Official appraisals by total IV points: 0*=0–22, 1*=23–29,
+// 2*=30–36, 3*=37–45 (45/45 has a special perfect style).
+// A mixed range spans multiple appraisal bands; the broad-range glyph
+// is a search shorthand, not a claim that every result has N stars.
+function modePercentStarCount(minValue,maxValue){
+ const min=Number(minValue),max=Number(maxValue);
+ if(!Number.isFinite(min)||!Number.isFinite(max)||min<0||max>100||min>max)return 2;
+ if(min===max){
+  if(min===0)return 0;
+  if(min===100)return 3;
+  if(min<=50)return 0; // 1 star first occurs at 23/45 = 51.1%.
+  if(min<66)return 1;
+  if(min<82)return 2;
+  return 3;
+ }
+ // Mixed ranges: compact menu categories explicitly requested by owner.
+ if(max<=50)return 1; // e.g. 0–50% displays one-star RANGE artwork.
+ if(min>=82)return 3; // all values are in the 3-star appraisal band.
+ if(min>=51&&max<=65)return 1;
+ return 2; // broad/mixed searches: 0–98, 2–100, 2–98, 0–100.
+}
 function getModeMenuIcon(searchMode,shinyActive,settings=searchSettings){
  const modeKey=String(searchMode==null?"":searchMode).trim().toLowerCase().replace(/[\s-]+/g,"_");
  let family=RESULT_MODE_ALIASES[modeKey]||"none";
- // Raw IV 15/15/15 automatically identifies IV100 while preserving one mode.
  if(modeKey==="raw"){
   const {attack,defense,stamina}=settings;
   if([attack,defense,stamina].every(v=>Number(v)===15))family="hundo";
@@ -462,23 +490,25 @@ function getModeMenuIcon(searchMode,shinyActive,settings=searchSettings){
  }
  if(modeKey==="percent"){
   const min=Number(settings.percentMin),max=Number(settings.percentMax);
-  if(min===100&&max===100)family="hundo";
-  else if(min===0&&max===0)family="nundo";
-  else if(min===0&&max===100)family="none"; // visually unrestricted IV interval
+  if(min===0&&max===0)family="nundo";
+  else if(min===100&&max===100)family="hundo";
  }
  const pair=RESULT_ICONS[family];
  const shining=!!shinyActive;
  const baseFamily=["hundo","nundo","percent"].includes(family)?"custom":family;
  const baseName=RESULT_BASE_ICONS[baseFamily]||RESULT_BASE_ICONS.none;
  const topN=baseFamily==="gl"?Number(settings.glRank):baseFamily==="ul"?Number(settings.ulRank):0;
- // #N is the confirmed search threshold (Top N), NOT an individual Pokémon rank.
  const rankLabel=Number.isInteger(topN)&&topN>=1&&topN<=50?"#"+topN:"";
- // Medal already describes zero or three stars; rank #N only for league filters.
- const badge=(family==="gl"||family==="ul")?rankLabel:
-   baseFamily==="cup"?"CUP":"";
- // Only confirmed site Background can be represented; not an activation shortcut.
+ const badge=(family==="gl"||family==="ul")?rankLabel:baseFamily==="cup"?"CUP":"";
  const backgroundConfirmed=!!(settings&&settings.backgroundOnly===true&&settings.backgroundVerified===true);
+ // These seven ORIGINAL transparent PNGs are ONLY for the Modos toolbar.
+ const starCount=modePercentStarCount(settings.percentMin,settings.percentMax);
  const modePath={
+  hundo:"3Star.png",nundo:"0Star.png",
+  gl:"StarGL.png",ul:"StarUL.png",
+  custom:"StarIVRaw.png",percent:starCount+"Star.png",none:"iv-unfiltered.svg"
+ };
+ const legacyFallback={
   hundo:"iv-three-stars.png",nundo:"iv-zero-stars.png",
   gl:"gl-triangle.png",ul:"ul-triangle.png",
   custom:"iv-custom.svg",percent:"iv-percent.svg",none:"iv-unfiltered.svg"
@@ -486,12 +516,11 @@ function getModeMenuIcon(searchMode,shinyActive,settings=searchSettings){
  return {
   path:modePath[family]?"file:///android_asset/result-icons/modes/"+modePath[family]:
      "file:///android_asset/result-icons/base/"+baseName,
-  fallbackPath:(family==="gl"||family==="ul")?
-    "file:///android_asset/result-icons/"+(family==="gl"?"great-league.png":"ultra-league.png"):
+  fallbackPath:legacyFallback[family]?"file:///android_asset/result-icons/modes/"+legacyFallback[family]:
     "file:///android_asset/result-icons/base/"+baseName,
-  title:pair.title+(modeKey==="percent"&&family==="none"?" · 0–100%, sem limite":
-    modeKey==="percent"&&family==="percent"?" · "+settings.percentMin+"–"+settings.percentMax+"%":
-    modeKey==="raw"?" · "+settings.attack+"/"+settings.defense+"/"+settings.stamina:"")+
+  title:pair.title+
+    (modeKey==="percent"?" · "+settings.percentMin+"–"+settings.percentMax+"%":
+     modeKey==="raw"?" · "+settings.attack+"/"+settings.defense+"/"+settings.stamina:"")+
     (shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
   family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
  };
@@ -682,8 +711,6 @@ function toggleChoices(kind){
  panel.replaceChildren();panel.classList.remove("modePanel");
  const title=document.createElement("div");title.className="choiceHeader";
  title.textContent="ATUALIZAÇÃO";panel.appendChild(title);
- const back=document.createElement("button");back.type="button";back.textContent="‹ Ajustes";
- back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();};panel.appendChild(back);
  const now=document.createElement("button");now.type="button";now.textContent="↻ Atualizar agora";
  now.onclick=()=>{closeChoices();manualRefreshTap();};panel.appendChild(now);
  for(const [value,label] of entries){

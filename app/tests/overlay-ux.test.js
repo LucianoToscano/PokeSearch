@@ -690,9 +690,9 @@ test("Authenticated profile cannot inherit previous trainer link",
  main.includes('Buscas comuns sem login · Shiny exige treinador vinculado'));
 
 
-test("UL uses original user-provided triangle and cannot become Cup",
+test("UL uses user's StarUL art only in Modos, never Cup or result sprites",
+ dock.includes('gl:"StarGL.png",ul:"StarUL.png"')&&
  dock.includes('gl:"gl-triangle.png",ul:"ul-triangle.png"')&&
- dock.includes('family==="gl"?"great-league.png":"ultra-league.png"')&&
  dock.includes('ul:{normal:"ultra-league.png",shiny:"ultra-league-shiny.png"')&&
  dock.includes('cup:{normal:"cup-league.png"')&&
  dock.includes('baseFamily==="ul"?Number(settings.ulRank)')&&
@@ -732,41 +732,65 @@ test("UX-MENU-06 refresh directly after Alertas and personalization before Repor
   service.includes('"bell","period","appearance","report","donate","close"');
 });
 // UX-MODE-ICONS: use approved uploaded assets, keep the 11-button ribbon.
-test("Approved IV medals and GL/UL triangles are 48px transparent PNG assets",()=>{
- const names=["iv-zero-stars.png","iv-three-stars.png","gl-triangle.png","ul-triangle.png"];
+test("Approved ORIGINAL seven transparent Mode PNGs were copied from Drive",()=>{
+ const names=["0Star.png","1Star.png","2Star.png","3Star.png","StarIVRaw.png","StarGL.png","StarUL.png"];
  return names.every(name=>{
   const asset=path.join(root,"assets/result-icons/modes",name);
   if(!fs.existsSync(asset))return false;
   const b=fs.readFileSync(asset);
   return b.subarray(0,8).equals(Buffer.from("89504e470d0a1a0a","hex"))&&
-   b.readUInt32BE(16)===48&&b.readUInt32BE(20)===48;
+   b.readUInt32BE(16)===1254&&b.readUInt32BE(20)===1254;
  });
 });
-test("Small percentage, Raw IV and unrestricted icons are transparent bundled SVGs",()=>{
+test("Mode PNGs retain legacy vector fallback and 17px display only",()=>{
  const dir=path.join(root,"assets/result-icons/modes");
  return ["iv-custom.svg","iv-percent.svg","iv-unfiltered.svg"].every(name=>{
   const f=path.join(dir,name);return fs.existsSync(f)&&fs.readFileSync(f,"utf8").startsWith("<svg");
  })&&dock.includes("body.controls-window #quickMenuList .quickModeImage")&&
- dock.includes("width:17px!important;height:17px!important");
+ dock.includes("width:17px!important;height:17px!important")&&
+ dock.includes('position:absolute!important;top:-6px!important;left:50%!important')&&
+ dock.includes('background:transparent!important;border:0!important;box-shadow:none!important');
 });
-test("IV mode artwork picks exact extremes, custom, percentage interval and unrestricted",()=>{
+test("Modos chooses exact Drive PNGs across 0–3 stars and GL/UL",()=>{
  const vm=require("node:vm");
  const start=dock.indexOf("const RESULT_ICONS=Object.freeze("),end=dock.indexOf("let locationEnabled=",start);
  if(start<0||end<start)return false;
  const definitions=dock.slice(start,end),base={attack:0,defense:15,stamina:15,glRank:1,ulRank:12,percentMin:0,percentMax:100};
  const get=(m,cfg)=>vm.runInNewContext(definitions+"\ngetModeMenuIcon("+JSON.stringify(m)+",false,"+
   JSON.stringify({...base,...cfg})+")",{}, {timeout:2000});
- const zero=get("raw",{attack:0,defense:0,stamina:0}),perfect=get("raw",{attack:15,defense:15,stamina:15});
- const zeroPct=get("percent",{percentMin:0,percentMax:0}),perfectPct=get("percent",{percentMin:100,percentMax:100});
- const custom=get("raw",{attack:2,defense:15,stamina:9}),range=get("percent",{percentMin:2,percentMax:98});
- const full=get("percent",{percentMin:0,percentMax:100}),gl=get("gl",{glRank:1}),ul=get("ul",{ulRank:12});
- return zero.path.endsWith("/iv-zero-stars.png")&&perfect.path.endsWith("/iv-three-stars.png")&&
-  zeroPct.path===zero.path&&perfectPct.path===perfect.path&&
-  custom.path.endsWith("/iv-custom.svg")&&range.path.endsWith("/iv-percent.svg")&&
-  full.path.endsWith("/iv-unfiltered.svg")&&full.family==="none"&&
-  gl.path.endsWith("/gl-triangle.png")&&gl.ivBadge==="#1"&&
-  ul.path.endsWith("/ul-triangle.png")&&ul.ivBadge==="#12"&&
-  !zero.ivBadge&&!perfect.ivBadge&&!range.ivBadge&&!custom.ivBadge;
+ const raw0=get("raw",{attack:0,defense:0,stamina:0});
+ const raw100=get("raw",{attack:15,defense:15,stamina:15});
+ const rawOther=get("raw",{attack:2,defense:15,stamina:9});
+ const gl=get("gl",{glRank:1}),ul=get("ul",{ulRank:12});
+ const cases=[
+  [0,0,"0Star.png"],[100,100,"3Star.png"],
+  [0,98,"2Star.png"],[2,100,"2Star.png"],[2,98,"2Star.png"],[0,100,"2Star.png"],
+  [0,50,"1Star.png"],[0,49,"1Star.png"],
+  [49,49,"0Star.png"],[51,51,"1Star.png"],[64,64,"1Star.png"],
+  [67,67,"2Star.png"],[80,80,"2Star.png"],[82,82,"3Star.png"],
+  [51,64,"1Star.png"],[67,80,"2Star.png"],[82,98,"3Star.png"],[82,100,"3Star.png"]
+ ];
+ return raw0.path.endsWith("/0Star.png")&&raw100.path.endsWith("/3Star.png")&&
+   rawOther.path.endsWith("/StarIVRaw.png")&&gl.path.endsWith("/StarGL.png")&&gl.ivBadge==="#1"&&
+   ul.path.endsWith("/StarUL.png")&&ul.ivBadge==="#12"&&
+   cases.every(([min,max,file])=>{
+     const icon=get("percent",{percentMin:min,percentMax:max});
+     return icon.path.endsWith("/"+file)&&icon.family!=="none"&&!icon.ivBadge;
+   });
+});
+test("Only refresh actions appear in Atualização: no path to Ajustes",()=>{
+ const code=dock.split('title.textContent="ATUALIZAÇÃO"')[1]?.split("function renderModeChoices()")[0]||"";
+ return !code.includes("‹ Ajustes")&&!code.includes('choiceOpen="appearance"')&&
+  code.includes('manualRefreshTap()')&&code.includes('Native.setIntervalMinutes(period)');
+});
+test("Modos never changes historical RESULTS, rank label centered over glyph",()=>{
+ const menu=dock.split("function getModeMenuIcon(")[1]?.split("// Historical result icons")[0]||"";
+ const result=dock.split("function getResultIcon(")[1]?.split("let locationEnabled=")[0]||"";
+ return menu.includes('modePercentStarCount(')&&menu.includes('result-icons/modes/')&&
+  !result.includes('result-icons/modes/')&&result.includes('result-icons/base/')&&
+  dock.includes('rank.textContent=art.ivBadge')&&
+  dock.includes('transform:translateX(-50%)!important')&&
+  dock.includes('text-shadow:0 1px 2px #000,0 0 3px #000,0 0 4px #d5e7ff!important');
 });
 test("Thin bar Modos icon redraws on filter/rank change and does not add buttons",()=>{
  const block=dock.split('function refreshQuickMenuStates()')[1]?.split('function uxPanel(')[0]||"";
