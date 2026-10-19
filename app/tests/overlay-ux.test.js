@@ -5,6 +5,7 @@ const path=require("node:path");
 const root=path.join(__dirname,"..","src","main");
 const read=(p)=>fs.readFileSync(path.join(root,p),"utf8");
 const dock=read("assets/dock.html");
+const probe=read("assets/probe.js");
 const service=read("java/com/lucianotoscano/pokesearchoverlay/OverlayService.java");
 const main=read("java/com/lucianotoscano/pokesearchoverlay/MainActivity.java");
 const picker=read("java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java");
