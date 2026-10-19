@@ -96,7 +96,7 @@
    if(/avatar|profile|account|foto|photo/i.test(label)||
       (displayName&&context.includes(displayName))||/Member since/i.test(context)){
     const css=(img.style&&img.style.backgroundImage)||"";
-    const match=css.match(/url\\(\\s*["']?([^)"']+)/i);
+    const match=css.match(/url\(\s*["']?([^)"']+)/i);
     if(match)possible.push(match[1]);
    }
    const srcset=img.getAttribute("srcset")||"";
