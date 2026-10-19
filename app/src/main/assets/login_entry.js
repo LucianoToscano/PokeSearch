@@ -1,7 +1,7 @@
 (function(){
  "use strict";
  const fromShiny=__SHINY__;
- const preferredProvider=String(__PROVIDER__||"").toLowerCase();
+ const preferredProvider=typeof __PROVIDER__==="undefined"?"":String(__PROVIDER__||"").toLowerCase();
  const visible=e=>!!(e&&e.getClientRects&&e.getClientRects().length);
  const txt=e=>String(e&&(e.innerText||e.textContent)||"").replace(/\s+/g," ").trim();
  const clickable=Array.from(document.querySelectorAll("a,button,[role=button]")).filter(visible);
