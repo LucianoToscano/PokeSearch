@@ -1534,7 +1534,8 @@ function updateTimers(){
  document.querySelectorAll(".timer").forEach(e=>{
   const deadline=Number(e.dataset.deadline),seconds=Math.max(0,Math.ceil((deadline-Date.now())/1000));
   e.textContent=Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");
-  e.parentElement.classList.toggle("expired",seconds===0);
+  // Timer can be inside the narrow metadata column; expire the whole sprite row.
+  e.closest(".spawn")?.classList.toggle("expired",seconds===0);
  });
 }
 setInterval(updateTimers,1000);
