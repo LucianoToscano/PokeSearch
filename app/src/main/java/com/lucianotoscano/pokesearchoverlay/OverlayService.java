@@ -925,11 +925,11 @@ public class OverlayService extends Service {
                 getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
             // Only record a coarse authentication state, never cookies, codes or tokens.
             BugReport.log(this,"SESSION","Shiny="+shiny+" autenticação="+auth);
-            if(shiny&&auth.equals("login necessário")){
-                searchInProgress=false;
-                diagnosticError("✨ Faça login e vincule seu código de amizade no PoGoCoordinates.");
-                if(shinyLoginPromptRequested)openShinyLogin();
-                return;
+            if(shiny&&(!"autenticada".equals(auth)||!hasConfirmedTrainerLink())){
+                // Public searches remain accessible without login: turn OFF
+                // Shiny and continue the same requested search, never discard it.
+                revertUnverifiedShiny("✨ Shiny exige login e treinador vinculado · busca comum liberada");
+                update();
             }
             execute("prepareSearch",prepared->{
                 if(stopped||loginPaused||generation!=requestGeneration)return;
@@ -1021,6 +1021,22 @@ public class OverlayService extends Service {
             diagnosticError("Não foi possível abrir a etapa de login/vinculação.");
         }
     }
+    // Shiny is an account-specific result type: never infer linkage from a
+    // cookie, Shiny switch or stored login status alone. The trainer fields
+    // originate only from the verified official /profile card (HOME-04).
+    private boolean hasConfirmedTrainerLink(){
+        android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+        return "linked".equals(p.getString("profileTrainerState","unknown"))&&
+            !p.getString("profileTrainerName","").trim().isEmpty()&&
+            p.getString("profileTrainerCode","").matches("[0-9]{12}");
+    }
+    private void revertUnverifiedShiny(String reason){
+        shiny=false;
+        shinyVerified=false;
+        shinyLoginPromptRequested=false;
+        getSharedPreferences("prefs",0).edit().putBoolean("shiny",false).apply();
+        status(reason);
+    }
     // A ✨ tap must not wait for Pokémon search cooldown, polling or AUTO.
     // Only the site control is changed here; a subsequent search still respects
     // MIN_SEARCH_GAP_MS. All JS replies are guarded by requestGeneration.
@@ -1078,10 +1094,21 @@ public class OverlayService extends Service {
     }
     private void prepareImmediateShiny(int generation){
         if(stopped||loginPaused||generation!=requestGeneration)return;
-        // Shiny lives in the visible Pokémon filter card. The old
-        // prepareSearch ("Stats"/"PvP") could fail or switch tabs needlessly.
-        // Clicking ✨ should control the switch on the CURRENT page directly.
-        applyShinyOnSite(generation,0);
+        // OFF never requires login or a linked trainer.
+        if(!shiny){applyShinyOnSite(generation,0);return;}
+        // Also gate the page-finished path: do not trust a stale "Shiny ON"
+        // preference after account changes, logout or WebView navigation.
+        execute("session",session->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
+            if(!"autenticada".equals(session.optString("auth","não confirmado"))||
+                !hasConfirmedTrainerLink()){
+                revertUnverifiedShiny("✨ Vincule o treinador no perfil PoGoCoordinates para Shiny.");
+                openShinyLogin();
+                refresh(false); // Revert to guest-safe ordinary results.
+                return;
+            }
+            applyShinyOnSite(generation,0);
+        });
     }
     private void reconfigureBeforeSubmit(int generation,boolean manual,int verifyAttempt,int retry){
         if(stopped||loginPaused||generation!=requestGeneration)return;
@@ -1976,13 +2003,10 @@ public class OverlayService extends Service {
             shinyLoginPromptRequested=shiny;
             // Keep existing results visible while the new site state is pending.
             status(shiny?"✨ Verificando acesso ao Shiny...":"✨ Desativando Shiny no site...");
-            if(shiny){
-                String cachedAuth=prefs.getString("sessionStatus","não confirmado");
-                if(!loaded&&("login necessário".equals(cachedAuth)||"desconectado".equals(cachedAuth))){
-                    status("✨ Faça login para ativar Shiny.");
-                    openShinyLogin();
-                    return;
-                }
+            if(shiny&&!hasConfirmedTrainerLink()){
+                revertUnverifiedShiny("✨ Shiny exige login PoGoCoordinates e treinador vinculado.");
+                openShinyLogin();
+                return;
             }
             if(!loaded||website==null){
                 if(shiny){
@@ -2000,13 +2024,11 @@ public class OverlayService extends Service {
                 if(stopped||loginPaused||generation!=requestGeneration)return;
                 String auth=session.optString("auth","não confirmado");
                 prefs.edit().putString("sessionStatus",auth).apply();
-                if("login necessário".equals(auth)){
-                    status("✨ Faça login para ativar Shiny.");
+                if(!"autenticada".equals(auth)||!hasConfirmedTrainerLink()){
+                    revertUnverifiedShiny("✨ Conta logada e treinador confirmado são obrigatórios para Shiny.");
                     openShinyLogin();
                     return;
                 }
-                // Auth can be 'não confirmado' on a partially hydrated page;
-                // attempt the switch, then prompt only if the control is absent.
                 prepareImmediateShiny(generation);
             });
         });}
