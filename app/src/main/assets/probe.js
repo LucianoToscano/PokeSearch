@@ -648,30 +648,75 @@ if(action.startsWith("readCoords:")){
  return JSON.stringify({ok:false,status:"O site ainda não exibiu coordenadas"});
 }
 
+// PL-04: resolve the actual Coords form after React hydration. Avoid picking
+// unrelated IV/CP fields from the search form by using a small shared group.
 function locationFields(){
  const inputs=elements('input:not([type=hidden]):not([type=checkbox]):not([type=radio])').filter(vis);
- const label=e=>(e.getAttribute("placeholder")||"")+" "+(e.getAttribute("aria-label")||"");
- const radius=inputs.find(e=>/radius|raio/i.test(label(e)));
- let coords=inputs.find(e=>e!==radius&&/coords|coordinates|latitude|longitude|lat[ ,/]+lng|40\.637/i.test(label(e)));
- if(!coords&&radius){
-  for(let p=radius.parentElement,depth=0;p&&depth<5;p=p.parentElement,depth++){
-   const nearby=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
-   if(nearby.length===2&&nearby.includes(radius)){coords=nearby.find(e=>e!==radius);break;}
-   if(nearby.length>6)break;
+ const words=e=>{
+  let parts=["placeholder","aria-label","name","id"].map(k=>e.getAttribute(k)||"");
+  if(e.labels)for(const label of Array.from(e.labels).slice(0,3))parts.push(text(label).slice(0,90));
+  let node=e;
+  for(let depth=0;node&&depth<3;depth++,node=node.parentElement){
+   const prev=node.previousElementSibling;
+   if(prev&&vis(prev)&&text(prev).length<=85)parts.push(text(prev));
+   if(node.tagName==="LABEL"&&text(node).length<=100)parts.push(text(node));
+  }
+  return parts.join(" ").toLowerCase();
+ };
+ const name=e=>words(e);
+ const radiusPattern=/\b(?:radius|raio|distance|dist[aâ]ncia)\b/i;
+ const coordsPattern=/\b(?:coords?|coordinates?|coordenadas?|latitude|longitude|lat[\s,\/+-]*lng|lat[\s,\/+-]*lon)\b/i;
+ let radius=inputs.find(e=>radiusPattern.test(name(e)))||null;
+ let coords=inputs.find(e=>e!==radius&&coordsPattern.test(name(e)))||null;
+ if((!radius||!coords)&&inputs.length){
+  const roots=[];
+  for(const e of inputs){
+   for(let p=e.parentElement,depth=0;p&&depth<5;p=p.parentElement,depth++){
+    if(!p.querySelectorAll)continue;
+    const near=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
+    if(near.length!==2||!near.includes(e))continue;
+    const title=text(p).slice(0,140);
+    const evidence=near.some(v=>radiusPattern.test(name(v))||coordsPattern.test(name(v)))||
+      /\b(?:coords?|coordinates?|coordenadas?|radius|raio)\b/i.test(title);
+    if(evidence)roots.push({near,depth});
+   }
+  }
+  roots.sort((a,b)=>a.depth-b.depth);
+  if(roots.length){
+   const pair=roots[0].near;
+   if(radius&&!pair.includes(radius))return {coords:null,radius:null};
+   if(coords&&!pair.includes(coords))return {coords:null,radius:null};
+   if(radius&&!coords)coords=pair.find(e=>e!==radius)||null;
+   if(coords&&!radius)radius=pair.find(e=>e!==coords)||null;
   }
  }
+ // A radio or select named "Radius" is not an editable numeric field.
+ // Fail closed if React hasn't exposed a unique text/number control.
+ if(radius&&coords&&radius===coords)return {coords:null,radius:null};
  return {coords,radius};
 }
+function locationModeControl(label){
+ const re=new RegExp("^\\s*"+label+"\\s*$","i");
+ const candidates=elements('button,[role=button],[role=tab],[role=radio],input[type=radio],label');
+ for(const e of candidates){
+  if(!vis(e))continue;
+  const t=text(e)||e.getAttribute("aria-label")||"";
+  if(!re.test(t))continue;
+  if(e.tagName==="LABEL"&&e.control)return e.control;
+  return e;
+ }
+ return null;
+}
 function coordsModeSelected(){
- const coordButton=oneButton("Coords"),areaButton=oneButton("Area");
+ const coordButton=locationModeControl("Coords"),areaButton=locationModeControl("Area");
  if(!coordButton&&!areaButton)return null;
- const active=e=>e&&(e.getAttribute("aria-pressed")==="true"||
+ const active=e=>e&&(e.checked===true||
+  e.getAttribute("aria-checked")==="true"||e.getAttribute("aria-pressed")==="true"||
   e.getAttribute("aria-selected")==="true"||
   ["true","on","active","checked"].includes(e.getAttribute("data-state")||"")||
-  /(?:^|\s)(?:active|selected|bg-red|bg-rose|bg-primary)(?:\s|$)/.test(e.className||""));
- if(active(coordButton))return true;
- if(active(areaButton))return false;
- // Field presence alone is not proof that the site selected Coords.
+  /(?:^|\s)(?:active|selected|bg-red|bg-rose|bg-primary)(?:\s|$)/i.test(String(e.className||"")));
+ if(active(coordButton)&&!active(areaButton))return true;
+ if(active(areaButton)&&!active(coordButton))return false;
  return null;
 }
 function locationValue(field){return field?String(field.value||"").trim():"";}
@@ -681,19 +726,22 @@ function configureLocation(req){
  if(!use){
   if(fieldsBefore.coords)valueInput(fieldsBefore.coords,"");
   if(fieldsBefore.radius)valueInput(fieldsBefore.radius,"");
-  const area=oneButton("Area");
-  if(area&&coordsModeSelected()!==false)area.click();
+  const area=locationModeControl("Area");
+  if(area&&coordsModeSelected()!==false){if(!area.disabled)area.click();return JSON.stringify({ok:false,pending:true,reason:"Aguardando modo Area"});}
   return JSON.stringify({ok:true,stage:"location-off"});
  }
  if(typeof req.coords!=="string"||!/^[-+]?\d+(?:\.\d+)?,[-+]?\d+(?:\.\d+)?$/.test(req.coords)||
     !Number.isInteger(req.radius)||req.radius<0||req.radius>1000||
     Math.abs(Number(req.coords.split(",")[0]))>90||Math.abs(Number(req.coords.split(",")[1]))>180)
     return JSON.stringify({ok:false,reason:"Parâmetros de localização inválidos"});
- const coords=oneButton("Coords");
- if(!coords)return JSON.stringify({ok:false,reason:"Opção Coords não localizada"});
- if(coordsModeSelected()!==true)coords.click();
+ const coords=locationModeControl("Coords");
+ if(!coords)return JSON.stringify({ok:false,pending:true,reason:"Aguardando opção Coords"});
+ if(coordsModeSelected()!==true){
+  if(!coords.disabled)coords.click();
+  return JSON.stringify({ok:false,pending:true,reason:"Aguardando confirmação do modo Coords"});
+ }
  const fields=locationFields();
- if(!fields.coords||!fields.radius)return JSON.stringify({ok:false,reason:"Campos de coordenadas/raio não encontrados"});
+ if(!fields.coords||!fields.radius)return JSON.stringify({ok:false,pending:true,reason:"Aguardando campos de coordenadas/raio"});
  return JSON.stringify({ok:valueInput(fields.coords,req.coords)&&valueInput(fields.radius,String(req.radius)),stage:"location-on"});
 }
 function verifyLocation(req){
