@@ -65,7 +65,14 @@
  // Exclude team/GO images, do not read cookies or OAuth user metadata.
  const trustedGoogleUrl=value=>{
   try{
-   const parsed=new URL(value,location.href);
+   let parsed=new URL(value,location.href);
+   // The public profile may display its Google photo through Next.js
+   // image optimization. Resolve only the embedded public image URL,
+   // never use private API, profile cookies or OAuth metadata.
+   if(parsed.origin===location.origin&&parsed.pathname==="/_next/image"){
+    const candidate=parsed.searchParams.get("url")||"";
+    parsed=new URL(candidate,location.href);
+   }
    return parsed.protocol==="https:"&&
     (parsed.hostname==="googleusercontent.com"||
      parsed.hostname.endsWith(".googleusercontent.com"))&&
@@ -84,6 +91,14 @@
    // An unloaded/lazy profile picture may not have currentSrc yet.
    // Read only the official visible DOM, never cookies or OAuth metadata.
    const possible=[img.currentSrc,img.getAttribute("src"),img.getAttribute("data-src")];
+   // Site variants sometimes render a CSS background instead of a <picture>.
+   // Only consider a visible official profile node with identifying context.
+   if(/avatar|profile|account|foto|photo/i.test(label)||
+      (displayName&&context.includes(displayName))||/Member since/i.test(context)){
+    const css=(img.style&&img.style.backgroundImage)||"";
+    const match=css.match(/url\\(\\s*["']?([^)"']+)/i);
+    if(match)possible.push(match[1]);
+   }
    const srcset=img.getAttribute("srcset")||"";
    if(srcset)possible.push(srcset.split(",")[0].trim().split(/\s+/)[0]);
    for(const rawUrl of possible){
