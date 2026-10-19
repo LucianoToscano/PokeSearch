@@ -1553,6 +1553,7 @@ function updateTimers(){
 }
 setInterval(updateTimers,1000);
 window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null)=>{
+ const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  cards=Array.isArray(a)?a.slice(0,10):[];
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
@@ -1579,6 +1580,9 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  }
  if(active>=cards.length)active=-1;
  draw();
+ // Refresh checkmarks only after the Android bridge reports applied settings.
+ if(controlsWindow&&choiceOpen==="info"&&
+    JSON.stringify(resultDisplayOptions)!==previousDisplayPrefs)renderInfoChoices();
 };
 window.menuSide=side=>document.body.classList.toggle("menu-left",menuOpen&&side==="left");
 window.highlight=i=>{active=i;document.querySelectorAll(".spawn").forEach((e,index)=>e.classList.toggle("active",index===i));};
@@ -1800,6 +1804,8 @@ function renderFiltersChoices(){
  fit();
 }
 function renderInfoChoices(){
+ const previous=document.getElementById("choices");
+ const scroll=previous.dataset.panelKind==="info"?previous.scrollTop:0;
  const panel=uxPanel("INFORMAÇÕES");
  const back=document.createElement("button");back.type="button";back.textContent="‹ Personalização";
  back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();};panel.appendChild(back);
@@ -1818,7 +1824,9 @@ function renderInfoChoices(){
  }
  const hint=document.createElement("div");hint.className="uxNote";
  hint.textContent="Até 10 Pokémon, com sprites alinhados. RG = posição da espécie no PvPoke; IV# = classificação dos atributos (GL/UL, até nível 50, sem bônus de melhor companheiro). Dados ausentes ficam ocultos.";
- panel.appendChild(hint);fit();
+ panel.appendChild(hint);
+ requestAnimationFrame(()=>{if(choiceOpen==="info"&&panel.isConnected)panel.scrollTop=scroll;});
+ fit();
 }
 function renderAppearanceChoices(){
  const panel=uxPanel("PERSONALIZAÇÃO");
