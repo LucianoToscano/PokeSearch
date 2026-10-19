@@ -1688,7 +1688,7 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
   api.verifiedSpawnRawIv({...alt,ivPercent:"100"})===null&&
   api.verifiedSpeciesIvRank(falseForm,"gl")===null&&
   api.resultInfoHtml("IV 0/14/15",alt).includes("ivInfo medium")&&
-  dock.includes('["stamina","H","iv","HP"]')&&
+  dock.includes('["stamina","H","iv","H"]')&&
   countFromNative&&
   service.includes('case "speciesIvRankMl":resultShowSpeciesIvRankMl=value')&&
   service.includes('case "overallRankMl":resultShowOverallRankMl=value')&&
