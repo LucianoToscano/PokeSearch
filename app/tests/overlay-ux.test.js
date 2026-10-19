@@ -621,7 +621,7 @@ test("UX-MENU-03 never shows a wide menu, header, tiles or labels",
   dock.includes('display:none!important;width:0!important;height:0!important')&&
   dock.includes('max-height:34px!important;overflow:hidden!important')&&
   dock.includes('width:220px!important')&&
-  dock.includes('width:246px!important')&&
+  dock.includes('width:232px!important')&&
   dock.includes('width:306px!important'));
 test("UX-MENU-04 keeps twelve icon-first entry points in one thin row",
   dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])')&&
