@@ -6,6 +6,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #panel{border:1px solid #ffffff50;border-radius:13px;background:rgba(9,13,20,.73);box-shadow:0 5px 18px #0007;padding:9px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
 #header{display:flex;align-items:center;gap:5px;min-width:0}
 #img{width:35px;height:35px;object-fit:contain}
+#imageFallback{display:flex;align-items:center;justify-content:center;
+ width:35px;height:35px;font-size:23px;color:#d5e3ef;opacity:.75}
 #names{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 #names b{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:12px}
 #names small{color:#bfc8d4;font-size:9px}
@@ -21,7 +23,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #copy{margin-top:5px;width:100%;border:1px solid #ffffff35;background:#ffffff22;border-radius:7px;padding:7px;font-weight:bold}#coords{margin-top:7px;width:100%;border-radius:7px;padding:7px;background:#eb2850ce;font-weight:bold}
 </style></head><body><div id="panel">
  <div id="header">
-  <img id="img" alt="" style="display:none">
+  <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
   <div id="names"><b id="name">Pokémon</b><small id="sub"></small></div>
   <button id="x" onclick="Native.hideDetail()">×</button>
  </div>
@@ -49,8 +51,18 @@ window.showDetails=(c,mode,watched)=>{
  ticking=setInterval(updateCountdown,1000);
  document.getElementById("name").textContent=String(c.name||"Pokémon")+(c.shiny?" ✨":"");
  document.getElementById("sub").textContent=[c.number,c.gender,c.size,c.form].filter(Boolean).join(" · ");
- const img=document.getElementById("img");
- if(/^https:\/\//.test(c.image||"")){img.src=c.image;img.style.display="block"}else{img.style.display="none"}
+ const img=document.getElementById("img"),fallback=document.getElementById("imageFallback");
+ const src=String(c.image||"");
+ img.style.display="none";fallback.style.display="flex";img.removeAttribute("src");
+ if(/^https:\/\//.test(src)){
+  img.onload=()=>{
+   if(img.src===src&&img.naturalWidth>=8&&img.naturalHeight>=8){
+    img.style.display="block";fallback.style.display="none";
+   }
+  };
+  img.onerror=()=>{if(img.src===src){img.style.display="none";fallback.style.display="flex";}};
+  img.src=src;
+ }
  const stat=(label,value,css="")=>value?'<span class="'+css+'">'+h(label)+" "+h(value)+"</span>":"";
  document.getElementById("major").innerHTML=
   stat("PC",c.cp)+stat("Nv.",c.level)+stat("IV",c.ivPercent?c.ivPercent+"%"+(c.iv?" ("+c.iv+")":""):c.iv,"red")+
