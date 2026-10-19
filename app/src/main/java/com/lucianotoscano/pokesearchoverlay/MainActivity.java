@@ -58,7 +58,11 @@ public class MainActivity extends Activity {
     private int loginPageGeneration=0;
     private String pendingReportText="";
     private FrameLayout homeRoot;
-    private LinearLayout guestPanel, connectedPanel, trainerPanel;
+    private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup;
+    private View guestHeading;
+    private ImageView teamBadge;
+    private Button trainerAction;
+    private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
     private ImageView overlayControl;
     private TextView sessionHint;
@@ -117,20 +121,13 @@ public class MainActivity extends Activity {
     private FrameLayout buildHome(){
         FrameLayout frame=new FrameLayout(this);
         homeRoot=frame;
-        ImageView sky=new ImageView(this);
-        sky.setImageResource(R.drawable.ps_home_background);
-        sky.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        sky.setContentDescription("Mapa azul estilizado do PokeSearch");
-        frame.addView(sky,new FrameLayout.LayoutParams(-1,-1));
-        View gradient=new View(this);
-        gradient.setBackground(new android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-            new int[]{Color.argb(96,8,28,58),Color.TRANSPARENT,Color.argb(88,11,33,62)}));
-        frame.addView(gradient,new FrameLayout.LayoutParams(-1,-1));
+        // HOME-04: no decorative map or outside artwork behind the profile card.
+        // The card alone supplies the appearance from the owner's reference.
+        frame.setBackgroundColor(Color.rgb(10,14,23));
 
         LinearLayout screen=new LinearLayout(this);
         screen.setOrientation(LinearLayout.VERTICAL);
-        screen.setPadding(d(12),d(6),d(12),d(12));
+        screen.setPadding(d(14),d(6),d(14),d(12));
         frame.addView(screen,new FrameLayout.LayoutParams(-1,-1));
 
         LinearLayout header=new LinearLayout(this);
@@ -173,38 +170,41 @@ public class MainActivity extends Activity {
         controls.addView(menu,menuLp);
         menu.setOnClickListener(v->showHomeMenu());
 
-        // Keep the official PoGoCoordinates access at the top, not at the footer.
+        // HOME-04: compact reference card, fed only by verified profile fields.
         LinearLayout auth=new LinearLayout(this);
         auth.setOrientation(LinearLayout.VERTICAL);
-        auth.setPadding(d(12),d(10),d(12),d(12));
-        auth.setBackground(homeSurface(Color.argb(225,11,22,40),15,Color.argb(88,133,174,225)));
+        auth.setPadding(d(15),d(15),d(15),d(16));
+        auth.setBackground(homeSurface(Color.rgb(16,22,34),20,Color.rgb(43,60,91)));
         screen.addView(auth,new LinearLayout.LayoutParams(-1,-2));
 
         LinearLayout accountHeading=new LinearLayout(this);
+        guestHeading=accountHeading;
         accountHeading.setGravity(Gravity.CENTER_VERTICAL);
-        ImageView pogocoordinatesIcon=new ImageView(this);
-        pogocoordinatesIcon.setImageResource(R.drawable.ps_pogocoordinates);
-        pogocoordinatesIcon.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        pogocoordinatesIcon.setContentDescription("PoGoCoordinates");
-        LinearLayout.LayoutParams logoLp=new LinearLayout.LayoutParams(d(40),d(40));
-        logoLp.rightMargin=d(8);
-        accountHeading.addView(pogocoordinatesIcon,logoLp);
+        ImageView providerIcon=new ImageView(this);
+        providerIcon.setImageResource(R.drawable.ps_pogocoordinates);
+        providerIcon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        providerIcon.setContentDescription("PoGoCoordinates");
+        LinearLayout.LayoutParams providerIconLp=new LinearLayout.LayoutParams(d(42),d(42));
+        providerIconLp.rightMargin=d(9);
+        accountHeading.addView(providerIcon,providerIconLp);
         LinearLayout headingTexts=new LinearLayout(this);
         headingTexts.setOrientation(LinearLayout.VERTICAL);
         accountHeading.addView(headingTexts,new LinearLayout.LayoutParams(0,-2,1));
-        TextView title=homeText("PoGoCoordinates",15,Color.WHITE,true);
-        headingTexts.addView(title);
-        sessionHint=homeText("Acesse coordenadas Pokémon em tempo real",11,Color.rgb(190,209,236),false);
+        TextView heading=homeText("PoGoCoordinates",17,Color.WHITE,true);
+        headingTexts.addView(heading);
+        sessionHint=homeText("Faça login para acessar coordenadas em tempo real",11,
+            Color.rgb(156,174,205),false);
         headingTexts.addView(sessionHint);
         LinearLayout.LayoutParams headingLp=new LinearLayout.LayoutParams(-1,-2);
-        headingLp.bottomMargin=d(9);
+        headingLp.bottomMargin=d(12);
         auth.addView(accountHeading,headingLp);
 
         guestPanel=new LinearLayout(this);
+        guestPanel.setGravity(Gravity.CENTER_VERTICAL);
         guestPanel.setOrientation(LinearLayout.HORIZONTAL);
-        auth.addView(guestPanel,new LinearLayout.LayoutParams(-1,d(40)));
-        Button discord=homeAuthButton("Discord",Color.rgb(72,93,239),Color.WHITE);
-        Button google=homeAuthButton("Google",Color.WHITE,Color.rgb(30,36,49));
+        auth.addView(guestPanel,new LinearLayout.LayoutParams(-1,d(42)));
+        Button discord=homeAuthButton("◉  Discord",Color.rgb(80,95,246),Color.WHITE);
+        Button google=homeAuthButton("G  Google",Color.WHITE,Color.rgb(27,32,42));
         guestPanel.addView(discord,new LinearLayout.LayoutParams(0,-1,1));
         LinearLayout.LayoutParams googleLp=new LinearLayout.LayoutParams(0,-1,1);
         googleLp.leftMargin=d(8);
@@ -218,56 +218,130 @@ public class MainActivity extends Activity {
         LinearLayout accountRow=new LinearLayout(this);
         accountRow.setGravity(Gravity.CENTER_VERTICAL);
         connectedPanel.addView(accountRow,new LinearLayout.LayoutParams(-1,-2));
+        ImageView avatar=new ImageView(this);
+        // No hardcoded portrait: use a neutral avatar until an authorized
+        // identity provider supplies a verified picture URL.
+        avatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+        avatar.setColorFilter(Color.rgb(183,201,229));
+        avatar.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        avatar.setPadding(d(11),d(11),d(11),d(11));
+        android.graphics.drawable.GradientDrawable avatarBg=homeSurface(
+            Color.rgb(34,46,69),30,Color.rgb(85,113,153));
+        avatarBg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        avatar.setBackground(avatarBg);
+        LinearLayout.LayoutParams avatarLp=new LinearLayout.LayoutParams(d(52),d(52));
+        avatarLp.rightMargin=d(10);
+        accountRow.addView(avatar,avatarLp);
+
         LinearLayout identity=new LinearLayout(this);
         identity.setOrientation(LinearLayout.VERTICAL);
         accountRow.addView(identity,new LinearLayout.LayoutParams(0,-2,1));
-        accountDisplay=homeText("Conta conectada",13,Color.WHITE,true);
-        accountProvider=homeText("PoGoCoordinates",11,Color.rgb(188,212,240),false);
+        accountDisplay=homeText("Conta conectada",17,Color.WHITE,true);
+        accountDisplay.setSingleLine(true);
+        accountDisplay.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        accountProvider=homeText("Conectado ao PoGoCoordinates",11,
+            Color.rgb(175,191,224),false);
+        accountProvider.setSingleLine(true);
+        accountProvider.setEllipsize(android.text.TextUtils.TruncateAt.END);
         identity.addView(accountDisplay);
         identity.addView(accountProvider);
-        Button logout=homeAuthButton("Logout",Color.argb(215,37,48,67),Color.WHITE);
-        accountRow.addView(logout,new LinearLayout.LayoutParams(d(83),d(34)));
+        Button logout=homeAuthButton("⇥  Logout",Color.rgb(28,37,54),Color.WHITE);
+        logout.setBackground(homeSurface(Color.rgb(27,36,52),13,Color.rgb(51,67,92)));
+        LinearLayout.LayoutParams logoutLp=new LinearLayout.LayoutParams(d(88),d(37));
+        logoutLp.leftMargin=d(7);
+        accountRow.addView(logout,logoutLp);
         logout.setOnClickListener(v->askLogout());
 
         trainerPanel=new LinearLayout(this);
         trainerPanel.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams trainLp=new LinearLayout.LayoutParams(-1,-2);
-        trainLp.topMargin=d(9);
+        trainLp.topMargin=d(13);
         connectedPanel.addView(trainerPanel,trainLp);
-        View rule=new View(this);rule.setBackgroundColor(Color.argb(90,172,193,220));
-        trainerPanel.addView(rule,new LinearLayout.LayoutParams(-1,d(1)));
-        TextView section=homeText("Treinador vinculado",11,Color.rgb(185,205,232),false);
+        View rule=new View(this);
+        rule.setBackgroundColor(Color.rgb(39,53,74));
+        LinearLayout.LayoutParams ruleLp=new LinearLayout.LayoutParams(-1,d(1));
+        ruleLp.bottomMargin=d(10);
+        trainerPanel.addView(rule,ruleLp);
+        trainerSectionTitle=homeText("Treinador vinculado",12,Color.rgb(171,188,215),false);
         LinearLayout.LayoutParams sectionLp=new LinearLayout.LayoutParams(-1,-2);
-        sectionLp.topMargin=d(7);
-        trainerPanel.addView(section,sectionLp);
+        sectionLp.bottomMargin=d(7);
+        trainerPanel.addView(trainerSectionTitle,sectionLp);
+
         LinearLayout trainerRow=new LinearLayout(this);
         trainerRow.setGravity(Gravity.CENTER_VERTICAL);
         trainerPanel.addView(trainerRow,new LinearLayout.LayoutParams(-1,-2));
-        LinearLayout labels=new LinearLayout(this);
-        labels.setOrientation(LinearLayout.VERTICAL);
-        trainerRow.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
-        trainerDisplay=homeText("",13,Color.WHITE,true);
-        trainerDetails=homeText("",10,Color.rgb(169,203,238),false);
-        trainerCode=homeText("",11,Color.rgb(222,233,250),false);
-        labels.addView(trainerDisplay);
-        labels.addView(trainerDetails);
-        labels.addView(trainerCode);
+        teamBadge=new ImageView(this);
+        teamBadge.setImageResource(R.drawable.ps_team_neutral);
+        teamBadge.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        teamBadge.setContentDescription("Sem equipe");
+        // Individual team PNGs have transparent alpha; never put a tile behind them.
+        teamBadge.setBackgroundColor(Color.TRANSPARENT);
+        LinearLayout.LayoutParams badgeLp=new LinearLayout.LayoutParams(d(53),d(53));
+        badgeLp.rightMargin=d(10);
+        trainerRow.addView(teamBadge,badgeLp);
+        LinearLayout trainerIdentity=new LinearLayout(this);
+        trainerIdentity.setOrientation(LinearLayout.VERTICAL);
+        trainerRow.addView(trainerIdentity,new LinearLayout.LayoutParams(0,-2,1));
+        trainerDisplay=homeText("Treinador não confirmado",15,Color.WHITE,true);
+        trainerDisplay.setSingleLine(true);
+        trainerDisplay.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        trainerDetails=homeText("",11,Color.rgb(177,205,244),false);
+        trainerIdentity.addView(trainerDisplay);
+        trainerIdentity.addView(trainerDetails);
+
+        trainerCodeGroup=new LinearLayout(this);
+        trainerCodeGroup.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams codeRowLp=new LinearLayout.LayoutParams(-1,-2);
+        codeRowLp.topMargin=d(5);
+        trainerPanel.addView(trainerCodeGroup,codeRowLp);
+        LinearLayout codeTexts=new LinearLayout(this);
+        codeTexts.setOrientation(LinearLayout.VERTICAL);
+        trainerCodeGroup.addView(codeTexts,new LinearLayout.LayoutParams(0,-2,1));
+        TextView codeHeading=homeText("Código de Treinador",10,
+            Color.rgb(158,178,207),false);
+        trainerCode=homeText("",15,Color.WHITE,true);
+        trainerCode.setLetterSpacing(.025f);
+        codeTexts.addView(codeHeading);
+        codeTexts.addView(trainerCode);
         TextView copy=homeMiniButton("⧉","Copiar código do treinador");
-        copy.setTextSize(17);
-        trainerRow.addView(copy,new LinearLayout.LayoutParams(d(34),d(34)));
+        copy.setTextSize(18);
+        copy.setBackgroundColor(Color.TRANSPARENT);
+        LinearLayout.LayoutParams copyLp=new LinearLayout.LayoutParams(d(34),d(38));
+        copyLp.leftMargin=d(3);
+        trainerCodeGroup.addView(copy,copyLp);
         copy.setOnClickListener(v->copyTrainerCode());
-        Button remove=homeAuthButton("Remover",Color.argb(175,75,33,43),Color.rgb(255,171,181));
-        LinearLayout.LayoutParams removeLp=new LinearLayout.LayoutParams(d(84),d(34));
-        removeLp.leftMargin=d(5);
-        trainerRow.addView(remove,removeLp);
-        remove.setOnClickListener(v->new AlertDialog.Builder(this)
-            .setTitle("Remover treinador vinculado")
-            .setMessage("A remoção deve ser confirmada na conta oficial do PoGoCoordinates. Deseja abrir o site para gerenciar o vínculo?")
-            .setNegativeButton("Cancelar",null)
-            .setPositiveButton("Abrir perfil oficial",(dialog,which)->openLoginDialog(false,"manage")).show());
+        trainerAction=homeAuthButton("Remover",Color.rgb(54,28,39),
+            Color.rgb(255,145,158));
+        trainerAction.setBackground(homeSurface(Color.rgb(52,29,40),12,
+            Color.rgb(94,50,61)));
+        LinearLayout.LayoutParams actionLp=new LinearLayout.LayoutParams(d(90),d(38));
+        actionLp.leftMargin=d(7);
+        trainerCodeGroup.addView(trainerAction,actionLp);
+        trainerAction.setOnClickListener(v->openTrainerManagement());
+
         // Future Home features can occupy the remaining center without affecting login.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
         return frame;
+    }
+    private void openTrainerManagement(){
+        String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
+        if(!code.matches("[0-9]{12}")){
+            openLoginDialog(false,"manage");
+            return;
+        }
+        new AlertDialog.Builder(this)
+            .setTitle("Remover treinador vinculado")
+            .setMessage("A remoção precisa ser confirmada no perfil oficial do PoGoCoordinates. Deseja abrir o gerenciamento?")
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Abrir perfil oficial",(dialog,which)->
+                openLoginDialog(false,"manage"))
+            .show();
+    }
+    private int homeTeamIcon(String team){
+        if("Mystic".equalsIgnoreCase(team))return R.drawable.ps_team_mystic;
+        if("Valor".equalsIgnoreCase(team))return R.drawable.ps_team_valor;
+        if("Instinct".equalsIgnoreCase(team))return R.drawable.ps_team_instinct;
+        return R.drawable.ps_team_neutral;
     }
     private Button homeAuthButton(String name,int bg,int fg){
         Button button=new Button(this);
@@ -440,29 +514,54 @@ public class MainActivity extends Activity {
     }
     private void refreshSessionSummary(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
-        String state=prefs.getString("sessionStatus","não confirmado");
-        boolean logged="autenticada".equals(state);
+        boolean logged="autenticada".equals(prefs.getString("sessionStatus","não confirmado"));
+        if(guestHeading!=null)guestHeading.setVisibility(logged?View.GONE:View.VISIBLE);
         if(guestPanel!=null)guestPanel.setVisibility(logged?View.GONE:View.VISIBLE);
         if(connectedPanel!=null)connectedPanel.setVisibility(logged?View.VISIBLE:View.GONE);
-        if(sessionHint!=null)sessionHint.setText(logged?
-            ("unlinked".equals(prefs.getString("profileTrainerState","unknown"))?
-            "Conta conectada · nenhum treinador vinculado":"Sessão oficial identificada"):
-            "Faça login para acessar coordenadas em tempo real");
+        if(sessionHint!=null)sessionHint.setText("Faça login para acessar coordenadas em tempo real");
         if(accountDisplay!=null)accountDisplay.setText(
             prefs.getString("profileDisplayName","Conta conectada"));
         if(accountProvider!=null){
             String provider=prefs.getString("profileProvider","");
-            accountProvider.setText(provider.isEmpty()?"Conectado ao PoGoCoordinates":"Logado via "+provider);
+            accountProvider.setText("Google".equals(provider)?"G  Logado via Google":
+                "Discord".equals(provider)?"◉  Logado via Discord":
+                "Conectado ao PoGoCoordinates");
         }
         String trainer=prefs.getString("profileTrainerName",""),
-               code=prefs.getString("profileTrainerCode","");
-        boolean linked=logged&&!trainer.isEmpty()&&code.matches("[0-9]{12}");
-        if(trainerPanel!=null)trainerPanel.setVisibility(linked?View.VISIBLE:View.GONE);
-        if(linked){
-            trainerDisplay.setText(trainer);
-            trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
-            trainerDetails.setText(prefs.getString("profileTrainerDetails",""));
+            code=prefs.getString("profileTrainerCode","");
+        boolean linked=logged&&!trainer.isEmpty()&&code.matches("[0-9]{12}")&&
+            "linked".equals(prefs.getString("profileTrainerState","unknown"));
+        if(trainerPanel!=null)trainerPanel.setVisibility(logged?View.VISIBLE:View.GONE);
+        if(trainerCodeGroup!=null)trainerCodeGroup.setVisibility(linked?View.VISIBLE:View.GONE);
+        if(trainerSectionTitle!=null)trainerSectionTitle.setText(linked?
+            "Treinador vinculado":"Conta Pokémon GO");
+        String team=prefs.getString("profileTrainerTeam","");
+        String details=prefs.getString("profileTrainerDetails","");
+        if(team.isEmpty()){
+            if(details.contains("Mystic"))team="Mystic";
+            else if(details.contains("Valor"))team="Valor";
+            else if(details.contains("Instinct"))team="Instinct";
         }
+        if(teamBadge!=null){
+            teamBadge.setImageResource(homeTeamIcon(linked?team:""));
+            teamBadge.setContentDescription(linked&&team.length()>0?
+                "Equipe "+team:"Sem equipe");
+        }
+        if(trainerDisplay!=null)trainerDisplay.setText(linked?trainer:
+            "unlinked".equals(prefs.getString("profileTrainerState","unknown"))?
+                "Nenhum treinador vinculado":"Treinador não confirmado");
+        if(trainerDetails!=null){
+            trainerDetails.setText(linked?(details.isEmpty()?
+                (team.isEmpty()?"Sem equipe":team):"★ "+details):
+                "Gerencie seu vínculo no PoGoCoordinates");
+            trainerDetails.setTextColor("Mystic".equals(team)?Color.rgb(104,183,255):
+                "Valor".equals(team)?Color.rgb(255,130,134):
+                "Instinct".equals(team)?Color.rgb(255,211,99):
+                Color.rgb(165,185,214));
+        }
+        if(linked&&trainerCode!=null)
+            trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
+        if(trainerAction!=null)trainerAction.setText(linked?"Remover":"Gerenciar");
         if(sessionSummary!=null)sessionSummary.setText(logged?
             "● Sessão identificada · PoGoCoordinates":"○ Login necessário");
     }
