@@ -82,7 +82,7 @@ test("When OFF, icon and badge never display outdated radius",
 test("Switching from location editor to mode releases keyboard focus",
   dock.includes('if(choiceOpen==="location"&&kind!=="location")')&&dock.includes('Native.locationEditor(false)'));
 test("Responsive toolbar avoids the gear",service.includes("boolean right=")&&service.includes("boolean left=")&&service.includes("int below=params.y+dp(TOOLBAR_DP)"));
-test("Compact twelve-column bar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(276,screenWidthDp()-8)"));
+test("Compact twelve-column bar resizes to narrow and wide Android screens",dock.includes("grid-template-columns:34fr 22fr 41fr")&&service.includes("Math.min(396,screenWidthDp()-8)"));
 test("Menu reverses order on left edge",dock.includes("body.menu-left #controls{direction:rtl}"));
 test("Result header icon has no opaque surface background",dock.includes("body.result-window #resultHeader")&&dock.includes("background:transparent;box-shadow:none"));
 test("No extra gap when popup padding zero",dock.includes("Math.max(0,Number(pad)||0)"));
@@ -117,7 +117,7 @@ test("Mode applies one atomic native configuration and AUTO retains direct selec
   dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
-test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(276,screenWidthDp()-8)"));
+test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(396,screenWidthDp()-8)"));
 test("Favorites use translucent gradient without background dim",picker.includes("Color.argb(159,24,34,47)")&&picker.includes("window.setDimAmount(0.0f)"));
 test("HOME-01 has explicit official Google/Discord login and sign-out",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
@@ -251,7 +251,7 @@ test("Android responsive controls have no phantom spacer below popup",
   service.includes('menuParams.y=Math.max(0,Math.min(bottom-menuParams.height,')&&
   dock.includes('#choices{display:none;position:absolute;top:34px;'));
 test("UX-MENU-01 measures the compact menu or single submenu",
-  dock.includes('if(menuOpen&&!choiceOpen)h=Math.max(34,34+Math.ceil(document.getElementById("quickMenuList").getBoundingClientRect().height)+6)')&&
+  dock.includes('if(controlsWindow)h=34; // UX-MENU-03: the thin toolbar is always exactly one row.')&&
   service.includes('menuParams.height=dp(MENU_BASE_DP)')&&
   service.includes('Math.min(450,screenHeightDp()-24)'));
 test("All legacy twelve bridge buttons remain unique in HTML",
@@ -555,7 +555,7 @@ test("UX-MENU-01 keeps original 12 commands but navigates with compact contextua
  dock.includes('id="quickMenuList"')&&dock.includes('id="quickRows"')&&
  dock.includes('body.controls-window #controls{display:none!important}')&&
  dock.includes('case "location":return locationEnabled?locationRadius+" km":"OFF"')&&
- dock.includes('function renderQuickMenu()')&&service.includes('Math.min(276,screenWidthDp()-8)'));
+ dock.includes('function renderQuickMenu()')&&service.includes('Math.min(396,screenWidthDp()-8)'));
 test("UX-MENU-01 has independent mode, filters, alerts, info and appearance panels",
  dock.includes('function renderFiltersChoices()')&&dock.includes('function renderAlertsChoices()')&&
  dock.includes('function renderInfoChoices()')&&dock.includes('function renderAppearanceChoices()')&&
@@ -564,7 +564,7 @@ test("UX-MENU-01 persists ordered and hidden commands without hiding close",
  service.includes('void saveMenuPrefs(String json)')&&
  service.includes('!"close".equals(id)')&&
  dock.includes('quickPrefs.hidden.filter(x=>x!==id)')&&
- dock.includes('quickPrefs.direction==="vertical"?"horizontal":"vertical"'));
+ dock.includes('return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.'));
 test("UX-MENU-01 visibility toggles cannot invent unverified data",
  service.includes('void setResultTextVisible(boolean value)')&&
  dock.includes('showResultText=!!textVisible;')&&
@@ -591,10 +591,11 @@ test("UX-MENU-02 does not duplicate Shiny outside Modos",
  !dock.includes('["sh","✨","Shiny","sh"]')&&
  dock.includes('shinyButton.id="modeShiny"')&&
  dock.includes('shinyButton.onclick=()=>Native.shiny()'));
-test("UX-MENU-02 keeps compact 3-column layout and working one-column alternative",
+test("UX-MENU-03 restores old thin one-line layout while migrating previous saved menu",
  dock.includes('id="quickUtilities"')&&
- dock.includes('grid-template-columns:repeat(3,minmax(0,1fr))')&&
- dock.includes('#quickMenuList:not(.quick-horizontal) #quickRows')&&
+ dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important')&&
+ dock.includes('body.controls-window #quickRows,')&&
+ dock.includes('display:contents!important')&&
  dock.includes('const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon")'));
 test("UX-MENU-02 preserves independent Reportar and Apoiar actions",
  dock.includes('case "report":Native.openReport();break;')&&
@@ -604,6 +605,30 @@ test("PL-04 OFF does not force Area when default Coords are blank",
  read("assets/probe.js").includes('An empty Coords form is still')&&
  read("assets/probe.js").includes('return JSON.stringify({ok:blank,reason:blank?')&&
  service.includes('locationEnabled?"⚠ Localização não aplicada":"⚠ Pesquisa não confirmada"'));
+
+
+test("UX-MENU-03 never shows a wide menu, header, tiles or labels",
+  dock.includes('body.controls-window #quickHead{display:none!important}')&&
+  dock.includes('body.controls-window #menu{height:34px!important;min-height:34px!important}')&&
+  dock.includes('body.controls-window #quickMenuList .quickName,')&&
+  dock.includes('display:none!important;width:0!important;height:0!important')&&
+  dock.includes('max-height:34px!important;overflow:hidden!important')&&
+  dock.includes('width:220px!important')&&
+  dock.includes('width:246px!important')&&
+  dock.includes('width:306px!important'));
+test("UX-MENU-03 keeps original icon-first entry points and a single row of twelve",
+  dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])')&&
+  dock.includes('["mode","☷","Modos","mode"],["filters","≡","Filtros","filters"]')&&
+  dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
+  dock.includes('["report","⚠","Reportar","report"]')&&
+  dock.includes('["donate","♡","Apoiar","donate"]')&&
+  dock.includes('["close","×","Fechar","close"]')&&
+  service.includes('Math.min(396,screenWidthDp()-8)'));
+test("UX-MENU-03 highlights active states by icon without visible labels",
+  dock.includes('button.classList.toggle("selected",id==="location"?locationEnabled:')&&
+  dock.includes('#quickMenuList [data-key=location].selected')&&
+  dock.includes('#quickMenuList [data-key=star].selected')&&
+  dock.includes('button.title=button.getAttribute("aria-label")+(current?" · "+current:"")'));
 
 // v0.51 additional filters: do not add toolbar actions or replace artwork.
 test("Shiny shortcut sits next to Modos de busca heading",
