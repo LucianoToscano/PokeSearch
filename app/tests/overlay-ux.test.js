@@ -99,14 +99,16 @@ test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
  !dock.includes("count.textContent=resultDisplayOptions.count&&cards.length")&&
  !service.includes("setSpawnLimit"));
-test("UX-INFO-02 all seven visibility options are independent and persist on device",()=>{
+test("UX-INFO-02 legacy and new IV/rank display choices persist independently",()=>{
  const labels=["Quantidade de spawns","Tempo de despawn","Nível (Lv)",
-  "Poder de Combate (PC)","IV do Pokémon","Rank Geral · PvPoke","Rank IV da espécie"];
+  "Poder de Combate (PC)","IV do Pokémon · A/D/H","IV% do Pokémon",
+  "Rank Geral · Grande Liga","Rank Geral · Ultra Liga","Rank Geral · Liga Mestre",
+  "Rank IV · Grande Liga","Rank IV · Ultra Liga","Rank IV · Liga Mestre"];
  return labels.every(label=>dock.includes('"'+label+'"'))&&
   dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
   dock.includes('Native.toggleTimers()')&&
   dock.includes('Native.setResultTextVisible(!showResultText)')&&
-  ['count','cp','level','overallRank','speciesIvRank'].every(key=>
+  ['count','cp','level','overallRank','speciesIvRank','rawIv','overallRankGl','overallRankUl','overallRankMl','speciesIvRankGl','speciesIvRankUl','speciesIvRankMl'].every(key=>
    service.includes('case "'+key+'":'))&&
   service.includes('resultShowSpeciesIvRank=prefs.getBoolean("resultShowSpeciesIvRank",false)')&&
   service.includes('resultDisplayOptionsJson()')&&
@@ -151,7 +153,7 @@ test("UX-INFO-05 verified metadata never creates results or a scrollable list",
  dock.includes('resultDisplayOptions,shownMode):null;')&&
  dock.includes('overflow-y:visible!important;overflow-x:visible!important')&&
  dock.includes("const metadataVisible=resultWindow&&cards.some(card=>")&&
- dock.includes('esc(text)')&&
+ dock.includes('resultInfoHtml(text,c)')&&
  dock.includes('Native.resizeResultsMetadata(metaWidth)')&&
  dock.includes('showTimers=!!timers')&&
  !dock.includes('cards=Array.isArray(a)?a.slice(0,8):[]'));
@@ -196,7 +198,7 @@ test("UX-INFO-07 per-species PvP IV rank calculates real 4096 spreads at L50",()
 });
 test("UX-INFO-09 despawn expiry still marks entire Pokémon when timer is inline",
  dock.includes('e.closest(".spawn")?.classList.toggle("expired",seconds===0)')&&
- dock.includes('text.split("TIMER").map(esc).join(inlineTimer)')&&
+ dock.includes('text.split("TIMER").map(line=>resultInfoHtml(line,c)).join(inlineTimer)')&&
  dock.includes('class="timer" data-deadline=')&&
  dock.includes('.spawn.expired{opacity:.38}')&&
  dock.includes('infoScale:Math.max(0.86,Math.min(1,factor))'));
@@ -1647,6 +1649,50 @@ test("HOME-01 provider detection needs real official Google/Discord domain",(()=
   !read("assets/profile_summary.js").includes("document.cookie")&&
   !read("assets/profile_summary.js").includes("localStorage.getItem(");
 })());
+
+
+// UX-INFO-LEAGUES: inspect the real PvPoke assets and execute the code, not
+// placeholder ranks based on a search Top-N or guessed IV percentages.
+test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search modes",()=>{
+ const win={};
+ new Function("window",read("assets/pvpoke-overall-ranks.js"))(win);
+ new Function("window",read("assets/pvpoke-iv-gamemaster.js"))(win);
+ const ivStart=dock.indexOf("const IV_PERCENT_VALUES=Object.freeze(");
+ const ivEnd=dock.indexOf("let modeDraft=",ivStart);
+ const start=dock.indexOf("const PVPOKE_OVERALL="),end=dock.indexOf('let lastListKey=""',start);
+ if([ivStart,ivEnd,start,end].some(x=>x<0))return false;
+ const api=new Function("window","esc",dock.slice(ivStart,ivEnd)+dock.slice(start,end)+
+ "return {verifiedSpawnRawIv,verifiedSpawnIvPercent,verifiedOverallRank,"+
+ "verifiedSpeciesIvRank,resultLines,resultInfoHtml,computeResultLayout};"
+ )(win,s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"));
+ const alt={name:"Altaria",iv:"0/14/15",ivPercent:"64"};
+ const origin={name:"Palkia (Origin)",iv:"15/15/15",ivPercent:"100"};
+ const opts={rawIv:true,iv:true,overallRankGl:true,overallRankUl:true,overallRankMl:true,
+  speciesIvRankGl:true,speciesIvRankUl:true,speciesIvRankMl:true};
+ const lines=api.resultLines(alt,opts,"raw");
+ const master=api.resultLines(origin,opts,"raw");
+ const unknown=api.resultLines({name:"Unknown",iv:"",ivPercent:""},opts,"raw");
+ const falseForm={...alt,form:"Shadow"};
+ const countFromNative=service.includes('putBoolean("resultCountUxV2",true)');
+ return win.POKESEARCH_PVPOKE_OVERALL.ml.length>=350&&
+  api.verifiedOverallRank(origin,"ml")===1&&
+  api.verifiedSpeciesIvRank(origin,"ml")===1&&
+  api.verifiedSpawnRawIv(alt)==="0/14/15"&&
+  lines.includes("IV 0/14/15")&&lines.includes("IV% 64%")&&
+  lines.includes("GL RG#2 · IV#1")&&
+  lines.includes("UL RG#275 · IV#1460")&&
+  master.includes("ML RG#1 · IV#1")&&
+  unknown.includes("IV ?/?/?")&&
+  !unknown.some(v=>v.includes("RG#")||v.includes("IV#"))&&
+  api.verifiedSpawnRawIv({...alt,ivPercent:"100"})===null&&
+  api.verifiedSpeciesIvRank(falseForm,"gl")===null&&
+  api.resultInfoHtml("IV 0/14/15",alt).includes("ivInfo medium")&&
+  dock.includes('["stamina","H","iv","HP"]')&&
+  countFromNative&&
+  service.includes('case "speciesIvRankMl":resultShowSpeciesIvRankMl=value')&&
+  service.includes('case "overallRankMl":resultShowOverallRankMl=value')&&
+  api.computeResultLayout(Array.from({length:10},()=>alt),45,330,false,false,opts,"gl").visibleCount===10;
+});
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
