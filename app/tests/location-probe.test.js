@@ -98,9 +98,20 @@ check("Negative radius never submits",
  invalid.run("configureLocation",{...req,radius:-1}).ok,false);
 let off=fixture({active:"coords",currentCoords:"1,2",currentRadius:"10"});
 let disabled={enabled:false,coords:"",radius:0};
-check("Switching OFF waits for Area",off.run("configureLocation",disabled).pending,true);
-check("OFF confirmation clears previous radius",
+check("OFF clears stale values without forcing Area mode",
  off.run("configureLocation",disabled).ok,true);
-check("OFF verifies no residual Coords values",
- off.run("verifyLocation",disabled).ok,true);
+check("OFF keeps the site's existing Coords tab without enabling location",off.selected(),"coords");
+check("OFF confirmation clears previous radius",off.radius.value,"");
+check("OFF confirmation clears previous coordinates",off.coord.value,"");
+check("OFF verifies empty Coords as unrestricted search",off.run("verifyLocation",disabled).ok,true);
+let emptyCoords=fixture({active:"coords"});
+check("Unselected app location and empty default Coords never block Search",
+ emptyCoords.run("configureLocation",disabled).ok,true);
+check("Unrestricted Coords mode is verified as off",
+ emptyCoords.run("verifyLocation",disabled).ok,true);
+let repopulated=fixture({active:"coords",currentCoords:"1,2",currentRadius:"10"});
+repopulated.run("configureLocation",disabled);
+repopulated.coord.value="1,2";
+check("Site rehydration restoring prior coords does not pass OFF verification",
+ repopulated.run("verifyLocation",disabled).ok,false);
 console.log("PokeSearch location contract: "+passed+" tests passed");
