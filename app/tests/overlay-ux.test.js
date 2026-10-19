@@ -948,7 +948,7 @@ test("UX-MENU-06 refresh directly after Alertas and personalization before Repor
  return ids.length===12&&ids.indexOf("sh")===ids.indexOf("mode")+1&&
   ids.indexOf("period")===ids.indexOf("bell")+1&&
   ids.indexOf("appearance")===ids.indexOf("report")-1&&
-  dock.includes('if(["mode","alerts","location","filters","period","appearance"].includes(id))')&&
+  dock.includes('case "bell":toggleChoices("alerts")')&&
   dock.includes('now.textContent="↻ Atualizar agora"')&&
   dock.includes('btn.className=value===current?"chosen":""')&&
   dock.includes('rows.appendChild(button)')&&
@@ -1703,6 +1703,46 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
   service.includes('case "overallRankMl":resultShowOverallRankMl=value')&&
   api.computeResultLayout(Array.from({length:10},()=>alt),45,330,false,false,opts,"gl").visibleCount===10;
 });
+
+
+// UX-NOTIFY-01: the bell in the compact ribbon opens the real alert panel.
+// Notification permission and sound preferences are never a fake visual toggle.
+test("UX-NOTIFY-01 bell opens live notification panel with full controls",()=>{
+ const block=dock.split("function quickClick(id){")[1]?.split("const QUICK_SVG=")[0]||"";
+ const panel=dock.split("function renderAlertsChoices(){")[1]?.split("function renderFiltersChoices(){")[0]||"";
+ return block.includes('case "bell":toggleChoices("alerts")')&&
+  dock.includes('onclick="toggleChoices(\'alerts\')"')&&
+  !block.includes('case "bell":Native.toggleGeneralAlerts()')&&
+  panel.includes('Native.setAlertMode(id)')&&
+  panel.includes('Native.toggleWatchAlerts()')&&
+  panel.includes('"testGeneralNotification"')&&
+  panel.includes('"testNotification"')&&
+  panel.includes('"requestNotificationPermission"')&&
+  panel.includes('"openNotificationSettings"')&&
+  panel.includes('"refreshNotificationStatus"')&&
+  service.includes('void testGeneralNotification()')&&
+  service.includes('void requestNotificationPermission()')&&
+  service.includes('void openNotificationSettings()')&&
+  main.includes('REQUEST_NOTIFICATION_PERMISSION');
+});
+test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay independent",
+ dock.includes('notificationPermissionGranted=!!permissionGranted')&&
+ dock.includes('watchAlertsEnabled=!!favoriteAlertsEnabled')&&
+ dock.includes('bell.classList.toggle("permissionMissing",!notificationPermissionGranted)')&&
+ service.includes('","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+")"')&&
+ service.includes('if(!WatchAlerts.permissionGranted(this))return false;')&&
+ service.includes('if(sendGeneralNotification("Novo Pokémon: "+firstNew,')&&
+ service.includes('lastAlertAt=now;')&&
+ watch.includes('manager.areNotificationsEnabled()')&&
+ !watch.includes('com IV100 ou ranking #1')&&
+ main.includes('requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},204)'));
+test("UX-NOTIFY-03 keep native Android channel sound and explicitly separate two tests",
+ service.includes('pokesearch_alerts_silent_v1')&&
+ watch.includes('pokesearch_watch_silent_v1')&&
+ service.includes('sendGeneralNotification("🔔 Teste de aviso geral"')&&
+ watch.includes('Teste do canal Favoritos')&&
+ watch.includes('RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)')&&
+ service.includes('nm.getNotificationChannel(channelId).getImportance()==NotificationManager.IMPORTANCE_NONE'));
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
