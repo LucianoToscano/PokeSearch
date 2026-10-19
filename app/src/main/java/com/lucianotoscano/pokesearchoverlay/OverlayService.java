@@ -38,7 +38,7 @@ public class OverlayService extends Service {
     private static final int RESULTS_HEADER_DP=30;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
-    private int menuDp(){return Math.max(1,Math.min(396,screenWidthDp()-8));} // old single-row toolbar width
+    private int menuDp(){return Math.max(1,Math.min(330,screenWidthDp()-8));} // ten 33dp icons, single-row thin menu
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams,menuParams,resultParams;
@@ -1847,8 +1847,8 @@ public class OverlayService extends Service {
                 String direction=incoming.optString("direction","vertical");
                 clean.put("direction","horizontal".equals(direction)?"horizontal":"vertical");
                 clean.put("labels",incoming.optBoolean("labels",true));
-                String[] allowed={"mode","sh","period","bell","star","location","pokemon",
-                    "filters","info","appearance","report","donate","close"};
+                String[] allowed={"mode","filters","location","pokemon","star",
+                    "appearance","bell","report","donate","close"};
                 java.util.Set<String> valid=new java.util.HashSet<>(java.util.Arrays.asList(allowed));
                 for(String key:new String[]{"order","hidden"}){
                     org.json.JSONArray items=incoming.optJSONArray(key),safe=new org.json.JSONArray();
