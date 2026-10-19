@@ -458,8 +458,10 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
  // Only confirmed site Background can be represented; not an activation shortcut.
  const backgroundConfirmed=!!(settings&&settings.backgroundOnly===true&&settings.backgroundVerified===true);
  return {
-  path:"file:///android_asset/result-icons/base/"+baseName,
-  fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none,
+  path:(family==="ul"||family==="gl")
+     ? "file:///android_asset/result-icons/"+(family==="ul"?"ultra-league.png":"great-league.png")
+     : "file:///android_asset/result-icons/base/"+baseName,
+  fallbackPath:"file:///android_asset/result-icons/base/"+baseName,
   title:pair.title+(shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
   family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
  };
@@ -726,7 +728,8 @@ function renderExtraFilters(panel,make){
   const button=make("button","extraHead");
   button.type="button";button.textContent=label+(open?" ▴":" ▾");
   button.setAttribute("aria-expanded",String(open));
-  button.onclick=()=>{modeScrollTop=panel.scrollTop;onClick();renderModeChoices();};
+  button.onclick=()=>{modeScrollTop=panel.scrollTop;onClick();
+    if(choiceOpen==="filters")renderFiltersChoices();else renderModeChoices();};
   panel.appendChild(button);
  };
  // Sort is an ordering control, not a fifth search mode.
