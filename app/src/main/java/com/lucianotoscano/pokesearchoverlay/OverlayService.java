@@ -510,7 +510,7 @@ public class OverlayService extends Service {
         int w=screenWidthDp(),h=screenHeightDp(),gap=5;
         // The details card follows the independently positioned result layer.
         int dockPos=(resultParams!=null?resultParams.x:params.x)/dp(1);
-        int right=dockPos+dockDp()+gap;
+        int right=dockPos+resultWidthDp()+gap;
         int left=dockPos-DETAIL_DP-gap;
         int preferred=right+DETAIL_DP<=w-4?right:left;
         detailParams.x=dp(Math.max(0,Math.min(w-DETAIL_DP,preferred)));
