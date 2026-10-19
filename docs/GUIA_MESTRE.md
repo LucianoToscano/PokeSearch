@@ -2241,3 +2241,13 @@ Foi conferido localmente que PNGs têm canal alfa e pixels transparentes nos qua
 
 **Dependência pendente do usuário:** pedido explícito futuro para gerar APK assinado atualizável com as seções 12.66–12.70; último APK entregue, `0.51-beta.test.51058`, segue anterior a essas alterações. Após build autorizado, validar de forma visual em Android real o contador 0–10, Rank Geral e Rank IV separados, toggles de Informações, alinhamento/encaixe lateral, resultados sem scroll com até dez sprites e ausência de distorção da arte.
 
+### 12.71 BUILD-51059 — execução autorizada, aguardando runner (19/10/2026)
+
+**Solicitação expressa:** “Gere o apk.” Autorização para gerar a próxima versão teste assinada com o mesmo certificado da 51058, incluindo os resultados compactos até 10, quantidade de spawns 0–10, Rank Geral do PvPoke, Rank IV da espécie calculado (4.096 IVs, CP 1500/2500, nível 50), as sete opções de Informações e sprite alinhado com a Pokébola.
+
+**Estado verificado em 19/10/2026 15:51 UTC:** run #59 `39280302128` [GitHub Actions](https://github.com/LucianoToscano/PokeSearch/actions/runs/39280302128), SHA `ab3eb632836ee3a4930c39fe46bf6a1fb05ec2b4`, criado às 15:44:49 UTC via push para a branch `fix/ps009-stable-test-signing-20261018`. **Job build continua `queued`, sem `runner_name`; GitHub Actions NÃO iniciou testes, Gradle ou assinatura. Nenhum APK 51059 foi gerado/verificado/distribuído.** Não inventar arquivo nem download, não afirmar aprovação de testes antes do job concluir.
+
+**Proteção de CI restaurada antes de esperar:** commit `546b637318f1452b716f9fff5701add1cfe028b9` removeu a branch da lista temporária do workflow, blob original `2a12b0f7b34e892a6d3abc42c9c58240520988bc`, sem cancelar a execução #59 já agendada. Novos pushes não devem iniciar builds automáticos. PR #27 continua Draft, sem merge. Não criar outro trigger enquanto run #59 está pendente.
+
+**Próxima ação obrigatória:** verificar o status do run #59. Se iniciar e falhar, baixar seus logs e corrigir especificamente os testes/código responsáveis; somente então solicitar nova execução manual/autorizada preservando assinatura. Se concluir com sucesso, consultar seus artefatos GitHub Actions, baixar o artefato ZIP, extrair APK, confirmar `versionName/versionCode`, certificado persistente, checksum SHA256, conteúdo de `assets/dock.html`, `pvpoke-iv-gamemaster.js`, `pvpoke-overall-ranks.js`, LICENSE, atualizar esta seção com o status final e entregar link sandbox **somente se a sessão materializar o arquivo**. Último APK já entregue continua `0.51-beta.test.51058` até verificação da #59.
+
