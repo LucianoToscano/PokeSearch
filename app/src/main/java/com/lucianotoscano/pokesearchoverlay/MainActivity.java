@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
     private boolean loginAutoReturnQueued=false;
     private String loginPurpose="login"; // login | manage
     private boolean profileCaptureInProgress=false;
+    private boolean profileDiscoveryAttempted=false;
     private android.app.Dialog loginDialog;
     private boolean loginSessionNotified=false;
     private boolean loginLinkAttempted=false;
@@ -584,6 +585,14 @@ public class MainActivity extends Activity {
                         loginDialog.dismiss();
                 },6500L);
             }else{
+                // Search does not expose a Shiny badge for unlinked trainers.
+                // On an ambiguous, hydrated page, visit the official profile once.
+                if("não confirmado".equals(auth)&&!profileDiscoveryAttempted&&
+                   !"/profile".equals(current.getPath())&&attemptsLeft<=12){
+                    profileDiscoveryAttempted=true;
+                    view.loadUrl("https://pogocoordinates.com/profile");
+                    return;
+                }
                 if(!"manage".equals(loginPurpose)&&attemptsLeft<=13&&
                    !loginDiscoveryStarted&&!loginLinkAttempted){
                     loginDiscoveryStarted=true;
@@ -711,6 +720,7 @@ public class MainActivity extends Activity {
         loginPurpose="manage".equals(purpose)?"manage":"login";
         loginStartedForShiny=shinyRequest;
         profileCaptureInProgress=false;
+        profileDiscoveryAttempted=false;
         if(shinyRequest)preferredLoginProvider="";
         observedLoginProvider="";
         loginAutoReturnQueued=false;
