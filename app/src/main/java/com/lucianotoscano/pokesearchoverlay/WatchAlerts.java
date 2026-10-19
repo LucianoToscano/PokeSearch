@@ -71,15 +71,18 @@ public final class WatchAlerts {
         return context.getSharedPreferences("prefs",0).getBoolean(PREF_ENABLED,true);
     }
     public static boolean permissionGranted(Context context){
-        return Build.VERSION.SDK_INT<33 ||
-            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED;
+        if(Build.VERSION.SDK_INT>=33 &&
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)
+            return false;
+        NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        return manager!=null&&manager.areNotificationsEnabled();
     }
     public static void ensureChannel(Context context){
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager==null)return;
         NotificationChannel channel=new NotificationChannel(CHANNEL_ID,
             "PokeSearch · Favoritos",NotificationManager.IMPORTANCE_HIGH);
-        channel.setDescription("Aviso sonoro ao encontrar um favorito com IV100 ou ranking #1");
+        channel.setDescription("Aviso de favorito cadastrado encontrado nos filtros de busca comprovados");
         channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
             new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT).build());
         manager.createNotificationChannel(channel);
@@ -114,7 +117,7 @@ public final class WatchAlerts {
     }
     public static boolean test(Context context){
         return send(context,"🔔 Teste: Pokémon procurado",
-            "Teste de notificação. Alertas reais exigem Pokémon cadastrado e IV100 ou ranking 1 confirmado.",11999);
+            "Teste do canal Favoritos. Alertas reais exigem favorito cadastrado e resultado confirmado nos filtros.",11999);
     }
     public static boolean match(Context context,String pokemon,String info){
         return send(context,"🔔 Encontrado: "+pokemon,info,
