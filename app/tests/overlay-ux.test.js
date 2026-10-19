@@ -579,7 +579,8 @@ test("UX-MENU-02 orders Modos, Filtros, Localização and Pokémon consecutively
  dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
  dock.includes('["star","☆","Favoritos","star"],["appearance","⚙","Ajustes","appearance"]'));
 test("UX-MENU-02 uses earlier SVG icons for location, alerts, favorites, appearance and support",
- dock.includes('location:"location",bell:"bell",star:"star",appearance:"gear",donate:"donate"')&&
+ dock.includes('location:"location",bell:"bell",star:"star",donate:"donate"')&&
+  dock.includes("appearance:'<path")&&
  dock.includes('source.cloneNode(true)')&&
  dock.includes('["report","⚠","Reportar","report"]')&&
  dock.includes('["donate","♡","Apoiar","donate"]'));
@@ -759,6 +760,46 @@ test("Thin bar Modos icon redraws on filter/rank change and does not add buttons
    block.includes('previous.replaceWith(iconForQuick("mode","☷"))')&&
    dock.includes('rank.textContent=art.ivBadge')&&
    dock.includes('grid-template-columns:repeat(10,minmax(0,1fr))!important');
+});
+
+
+test("VIS team artworks are mapped to existing verified Home assets",()=>{
+ const items=["ps_team_mystic.png","ps_team_valor.png","ps_team_instinct.png","ps_team_neutral.png",
+   "ps_home_background_dark.png"];
+ return items.every(n=>fs.existsSync(path.join(root,"res/drawable-nodpi",n)))&&
+  main.includes('teamBadge.setImageResource(homeTeamIcon(linked?team:""))')&&
+  main.includes('return R.drawable.ps_team_neutral;')&&
+  main.includes('pageBackground.setScaleType(ImageView.ScaleType.FIT_XY)')&&
+  main.includes('dim.setBackgroundColor(Color.argb(16,6,12,24))');
+});
+test("VIS tiny white Pokemon and pencil-gear are independent SVG toolbar icons",()=>{
+ const source=dock.split('const QUICK_SOURCE_ICONS=')[1]?.split('function iconForQuick')[0]||"";
+ return dock.includes('appearance:\'<path')&&
+  dock.includes('pokemon:\'<path')&&
+  !source.includes('appearance:"gear"')&&
+  dock.includes('[data-key=pokemon] .quickGlyph')&&
+  dock.includes('[data-key=appearance] .quickGlyph{color:#f4f6fa!important}')&&
+  dock.includes('grid-template-columns:repeat(10,minmax(0,1fr))!important');
+});
+test("PL-04 final site verification happens after IV filters and before Search",()=>{
+ const verified=service.indexOf('execute("verifyFilters",filters->');
+ const finalVerify=service.indexOf('execute("verifyLocation:"+locationPayload(),lastLocation->',verified);
+ const submit=service.indexOf('execute("submitSearch",submitted->',verified);
+ return verified>=0&&finalVerify>verified&&submit>finalVerify&&
+  service.includes('locationVerified=locationEnabled;')&&
+  service.includes('searchFailure(locationEnabled?"⚠ Localização não aplicada":"⚠ Localização residual"')&&
+  dock.includes('locationVerified=!!verifiedLocation&&locationEnabled;')&&
+  dock.includes('geoControl.classList.toggle("locOn",geoConfirmed)')&&
+  dock.includes('id==="location"?(locationEnabled&&locationVerified)');
+});
+test("HOME real Google photo is retried and extracted only from trusted profile",()=>{
+ const p=read("assets/profile_summary.js");
+ return p.includes('parsed.origin===location.origin&&parsed.pathname==="/_next/image"')&&
+  p.includes('parsed.hostname.endsWith(".googleusercontent.com")')&&
+  main.includes('shownAvatarUrl=""')&&
+  main.includes('if(bitmap==null)runOnUiThread')&&
+  main.includes('allowedGoogleAvatar(redirected)')&&
+  !p.includes('document.cookie')&&!p.includes('localStorage');
 });
 
 // v0.51 additional filters: do not add toolbar actions or replace artwork.
