@@ -325,7 +325,7 @@ body.controls-window.popup-above #quickMenuList{
  max-height:34px!important;overflow:hidden!important;overscroll-behavior:none;
  background:transparent!important;border:0!important;border-radius:0!important;
  box-shadow:none!important;padding:0 2px!important;margin:0!important;
- grid-template-columns:repeat(12,minmax(0,1fr))!important;grid-template-rows:30px!important;
+ grid-template-columns:repeat(10,minmax(0,1fr))!important;grid-template-rows:30px!important;
  grid-auto-flow:column!important;gap:2px!important;align-items:start!important;
 }
 body.controls-window #quickRows,
@@ -617,6 +617,8 @@ function toggleChoices(kind){
  panel.replaceChildren();panel.classList.remove("modePanel");
  const title=document.createElement("div");title.className="choiceHeader";
  title.textContent="ATUALIZAÇÃO";panel.appendChild(title);
+ const back=document.createElement("button");back.type="button";back.textContent="‹ Ajustes";
+ back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();};panel.appendChild(back);
  const now=document.createElement("button");now.type="button";now.textContent="↻ Atualizar agora";
  now.onclick=()=>{closeChoices();manualRefreshTap();};panel.appendChild(now);
  for(const [value,label] of entries){
@@ -1055,21 +1057,21 @@ window.setMinimized=value=>{
 const QUICK_ACTIONS=[
  ["mode","☷","Modos","mode"],["filters","≡","Filtros","filters"],
  ["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"],
- ["star","☆","Favoritos","star"],["appearance","⚙","Aparência","appearance"],
- ["period","↻","Atualização","period"],["bell","♧","Alertas","alerts"],
- ["info","◉","Informações","info"],["report","⚠","Reportar","report"],
+ ["star","☆","Favoritos","star"],["appearance","⚙","Ajustes","appearance"],
+ ["bell","♧","Alertas","alerts"],["report","⚠","Reportar","report"],
  ["donate","♡","Apoiar","donate"],["close","×","Fechar","close"]
 ];
 // Three adjacent search entry points: Modos, Filtros and Localização.
 const QUICK_PRIMARY_IDS=["mode","filters","location","pokemon","star","appearance"];
-const QUICK_UTILITY_IDS=["period","bell","info"];
+const QUICK_UTILITY_IDS=["bell"];
 const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0]);
 let quickPrefs={direction:"horizontal",labels:false,order:[...QUICK_DEFAULT_ORDER],hidden:[]};
 function normalizedQuickPrefs(p){
  const ids=QUICK_DEFAULT_ORDER;
  // Previous 51047 saved nine icons with Shiny in the main grid.
  // Reset only that obsolete menu-layout schema; preserve all search preferences.
- const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon");
+ const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon")||
+  p.order.some(id=>!ids.includes(id)); // migrate old 12-icon menu into approved 10
  const order=legacy?[]:p.order.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i);
  const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter(x=>ids.includes(x)&&x!=="close"&&x!=="appearance"):[];
  return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.
@@ -1084,18 +1086,16 @@ function quickState(id){
  switch(id){
   case "mode":return specialIVLabel(mode,searchSettings);
   case "sh":return shinyPending?"Pendente":shiny?"ON":"OFF";
-  case "period":return period?"Auto · "+period+" min":"Auto · OFF";
   case "bell":return alertMode==="silent"?"Silencioso":generalAlerts?"Som":"OFF";
   case "star":return hasFavorites?"Ativos":"";
   case "location":return locationEnabled?locationRadius+" km":"OFF";
   case "filters":return ["pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","sortBy"].some(k=>searchSettings[k])?"Ativos":"Nenhum";
-  case "info":return showResultText?"Textos ON":"";
-  case "appearance":return quickPrefs.direction==="horizontal"?"Horizontal":"Vertical";
+  case "appearance":return "Ajustes";
   default:return "";
  }
 }
 function quickClick(id){
- if(["mode","period","alerts","location","filters","info","appearance"].includes(id)){toggleChoices(id);return;}
+ if(["mode","alerts","location","filters","appearance"].includes(id)){toggleChoices(id);return;}
  switch(id){
   case "star":Native.openWatchList();break;
   case "pokemon":
@@ -1214,6 +1214,8 @@ function renderFiltersChoices(){
 }
 function renderInfoChoices(){
  const panel=uxPanel("INFORMAÇÕES DOS POKÉMON");
+ const back=document.createElement("button");back.type="button";back.textContent="‹ Ajustes";
+ back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();};panel.appendChild(back);
  uxOption(panel,"Tempo de despawn",showTimers?"ON":"OFF",()=>Native.toggleTimers());
  uxOption(panel,"IV% comprovado",showResultText?"ON":"OFF",()=>Native.setResultTextVisible(!showResultText));
  const hint=document.createElement("div");hint.className="uxNote";
@@ -1221,7 +1223,10 @@ function renderInfoChoices(){
  panel.appendChild(hint);fit();
 }
 function renderAppearanceChoices(){
- const panel=uxPanel("APARÊNCIA E PERSONALIZAÇÃO");
+ const panel=uxPanel("AJUSTES · PERSONALIZAÇÃO");
+ const info=document.createElement("div");info.className="uxSubheading";info.textContent="Painéis";panel.appendChild(info);
+ uxOption(panel,"Informações dos Pokémon","Configurar ›",()=>toggleChoices("info"));
+ uxOption(panel,"Atualização",period?"Auto · "+period+" min ›":"Auto · OFF ›",()=>toggleChoices("period"));
  const ribbonNote=document.createElement("div");ribbonNote.className="uxNote";
  ribbonNote.textContent="Menu principal fino e horizontal, somente ícones. A engrenagem continua móvel.";
  panel.appendChild(ribbonNote);
