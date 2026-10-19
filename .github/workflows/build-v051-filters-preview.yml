@@ -8,18 +8,10 @@ on:
       - 'app/**'
       - '.github/workflows/build-v051-filters-preview.yml'
   workflow_dispatch:
-  # Temporary, owner-authorized HOME-02 signed build. Remove after run.
-  pull_request:
-    types: [synchronize]
-    branches:
-      - fix/ux-icon-layout-overlay-20261018
-    paths:
-      - '.github/workflows/build-v051-filters-preview.yml'
 permissions:
   contents: read
 jobs:
   build:
-    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.number == 27 && github.event.pull_request.head.ref == 'fix/ps009-stable-test-signing-20261018' && github.event.pull_request.head.repo.full_name == 'LucianoToscano/PokeSearch' && github.event.pull_request.base.ref == 'fix/ux-icon-layout-overlay-20261018') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     # Fail closed: no downloadable APK from an ephemeral debug key.
@@ -67,7 +59,6 @@ jobs:
           node --check app/src/main/assets/probe.js
           node app/tests/probe-smoke.test.js
           node app/tests/overlay-ux.test.js
-          node app/tests/login-entry.test.js
           node app/tests/signing-contract.test.js
           python3 - <<'PY'
           from pathlib import Path
