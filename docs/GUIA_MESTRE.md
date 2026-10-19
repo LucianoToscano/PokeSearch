@@ -1722,3 +1722,31 @@ D. Ganhos esperados mediante integração válida: exibir perfil sem abrir o sit
 **Limites obrigatórios:** correção de localização testada contra DOMs simulados; ainda **não homologada** no site real PoGoCoordinates/aparelho Android, especialmente Coords/Area e raio em versões móveis. Servidor próprio NÃO foi implementado e depende de contrato autorizado para sincronizar perfil/dados externos. Login Google em WebView continua com risco de bloqueio OAuth; não prometer que perfil completo automaticamente aparece na Home. Não transferir cookies/códigos/token do navegador para o aplicativo. Não alterar credenciais nem tentar contornar cotas VIP. Regressoes de UI e esportes exigem captura do novo APK.
 
 **Próximo passo:** instalar 51043 sobre 51042, testar login e logout no fluxo oficial, perfil com/sem treinador, botão Remover/gerenciar, menu direito, logo transparente e filtro localização com coordenadas de teste e raios 0/1/10/1000 km. Confirmar visualmente no site se Coords foi selecionado e se a busca retornou resultados compatíveis; erro de confirmação implica não submissão. Só após evidência do aparelho considerar PL-04 resolvida. Preservar arquivos/PR/backup/assinatura e um único Guia Mestre; não misturar PvPPokeGo.
+
+
+### 12.46 HOME-04 — card de perfil fiel à referência e quatro emblemas transparentes (19/10/2026)
+
+**Solicitação aprovada:** refazer o card de perfil da página inicial conforme a imagem fornecida pelo proprietário, removendo o **fundo decorativo externo**, mantendo o painel escuro/azulado com borda fina, avatar circular, nome, provedor, Logout, divisão horizontal, treinador vinculado, equipe, nível, código, copiar e Remover. Em telas estreitas os elementos devem se distribuir em duas linhas sem sobreposição. O proprietário pediu explicitamente **quatro ícones SEM FUNDO**, PNG RGBA transparente: Sem equipe (neutro), Mystic, Valor e Instinct. **Não gerar APK sem novo pedido explícito; não fazer merge.**
+
+**Branch e histórico preservados:** `fix/ps009-stable-test-signing-20261018`, PR #27 draft, sem merge; último APK assinado distribuído ainda é **51043**. Não tocar em assinatura persistente, workflows, PL-04, Raw IV, PSC-02, filtros, 12 botões, 18 ícones legados e até 2 janelas flutuantes; não misturar PvPPokeGo.
+
+**Artes realmente integradas ao repositório:** gerados quatro ícones isolados por imagem, divididos e normalizados em PNG RGBA de 512×512, bordas/cantos transparentes, sem quadrado de fundo, sem moldura, sem texto:
+- `app/src/main/res/drawable-nodpi/ps_team_neutral.png` — símbolo neutro (Sem equipe).
+- `app/src/main/res/drawable-nodpi/ps_team_mystic.png` — ave azul da equipe Mystic.
+- `app/src/main/res/drawable-nodpi/ps_team_valor.png` — ave vermelha da equipe Valor.
+- `app/src/main/res/drawable-nodpi/ps_team_instinct.png` — ave amarela da equipe Instinct.
+Foi conferido localmente que PNGs têm canal alfa e pixels transparentes nos quatro cantos; um ZIP dos 4 ícones foi preparado para referência. Commit binário `e57be6c7d847c7c9d9e888887783ffcecdc4a0f8`.
+
+**Alterações funcionais limitadas à Home:** `MainActivity.java`:
+1. fundo externo do frame agora é uma cor escura lisa; removida a apresentação da imagem de mapa e gradiente da Home (arquivos de fundo continuam preservados no repositório, sem exclusão).
+2. card PoGoCoordinates permanece perto do topo, fundo próprio `#101622`, borda azulada, cantos grandes, padding compacto. Layout visitante mostra ícone/descrição e dois botões de login oficiais (Google/Discord) através do fluxo já existente.
+3. layout autenticado: avatar circular **neutro**, nome real quando o parser homologado estiver disponível, provedor observado quando confirmado e botão Logout. Não colocar rosto fixo oriundo do mock: avatar remoto/foto real ainda precisa de origem validada e autorização; não fabricar foto ou sessão.
+4. uma linha fina divide identificação do treinador; emblema dinâmico usa exclusivamente `ps_team_mystic`, `ps_team_valor`, `ps_team_instinct` ou `ps_team_neutral` conforme dados verificados (fallback legível de texto histórico); sem qualquer background no `ImageView`. Código em segunda linha no celular, ação copiar, botão Remover se houver treinador confirmado; caso contrário, botão Gerenciar para abrir o site oficial.
+5. nenhum nome/código/foto do proprietário foi embutido como constante. Se não houver treinador, mostrar estado não confirmado ou nenhum vinculado com ícone Sem equipe; não inventar IV, equipe, nível ou código. Manter verificações de validade do código (12 dígitos), estado `linked/unlinked/unknown`, e exclusão local de dados ao Logout.
+6. na captura autenticada, salvar adicionalmente `profileTrainerTeam` e `profileTrainerLevel` **somente** se validados no DOM, limpando-os em desvinculação/logout. Continuar respeitando PoGoCoordinates como fonte oficial.
+
+**Verificações sem APK:** contratos em `app/tests/overlay-ux.test.js` ajustados para a Home sem fundo de mapa e novo layout; acrescentadas verificações dos quatro recursos PNG RGBA 512×512, da ausência de avatar com nome inventado, fallback neutro, botão Gerenciar sem treinador e link oficial de remoção. Execução de verificação estática V8 com arquivos reais lidos do GitHub e simulação limitada de Node: **268/268** contratos de interface aprovados. Os PNGs reais foram inspecionados localmente; nenhuma compilação Gradle, GitHub Actions ou homologação visual Android nesta etapa. Os testes estáticos não provam ausência de erros Android.
+
+**Pontos de homologação no próximo APK autorizado:** verificar alinhamento em telas 360–430dp e tablet, texto longo/truncamento, imagem transparente nas quatro equipes, área de toque nos botões, badge neutro para treinador inexistente, código/cópia/remover somente para dados reais, Logout sem remover vínculo remoto, primeira instalação deslogada com botões, integração PoGo real, e inexistência de regressão no overlay. Se a pessoa desejar foto autêntica do Google/Discord, estudar e autorizar uma fonte oficial com escopos específicos; não copiar a imagem de referência como se fosse o avatar da conta.
+
+**Checkpoint:** alterações de UI e PNGs na branch PR #27, sem merge, sem APK novo. Compilar somente mediante solicitação posterior do proprietário.
