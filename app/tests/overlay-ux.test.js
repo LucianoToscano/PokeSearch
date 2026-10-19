@@ -176,6 +176,12 @@ test("UX-INFO-07 per-species PvP IV rank calculates real 4096 spreads at L50",()
   funcs.speciesIvRanksCache.size===2&&
   layout.visibleCount===10&&layout.total<385&&layout.infoScale>=.86;
 });
+test("UX-INFO-09 despawn expiry still marks entire Pokémon when timer is inline",
+ dock.includes('e.closest(".spawn")?.classList.toggle("expired",seconds===0)')&&
+ dock.includes('text.split("TIMER").map(esc).join(inlineTimer)')&&
+ dock.includes('class="timer" data-deadline=')&&
+ dock.includes('.spawn.expired{opacity:.38}')&&
+ dock.includes('infoScale:Math.max(0.86,Math.min(1,factor))'));
 test("UX-INFO-08 bundled PvPoke data includes MIT attribution and stays display-only",
  read("assets/licenses/PvPoke-MIT.txt").includes("MIT License")&&
  read("assets/licenses/PvPoke-MIT.txt").includes("Copyright (c) 2019 pvpoke")&&
