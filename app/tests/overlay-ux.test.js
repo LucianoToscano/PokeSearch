@@ -660,6 +660,31 @@ test("UX-MENU-04 preserves all old Android feature bridges and migrates 12-icon 
  dock.includes('grid-template-columns:repeat(10,minmax(0,1fr))!important');
 })());
 
+
+test("PSC-Shiny requires official linked trainer card plus valid 12-digit code",
+ service.includes('private boolean hasConfirmedTrainerLink()')&&
+ service.includes('"linked".equals(p.getString("profileTrainerState","unknown"))')&&
+ service.includes('p.getString("profileTrainerCode","").matches("[0-9]{12}")')&&
+ service.includes('!p.getString("profileTrainerName","").trim().isEmpty()'));
+test("Shiny switch checks live authentication AND linked trainer",
+ service.includes('!"autenticada".equals(auth)||!hasConfirmedTrainerLink()')&&
+ service.includes('!"autenticada".equals(session.optString("auth","não confirmado"))||')&&
+ service.includes('revertUnverifiedShiny("✨ Conta logada e treinador confirmado são obrigatórios para Shiny.")'));
+test("Guest public search continues even if stale Shiny preference was ON",
+ service.includes('if(shiny&&(!"autenticada".equals(auth)||!hasConfirmedTrainerLink()))')&&
+ service.includes('revertUnverifiedShiny("✨ Shiny exige login e treinador vinculado · busca comum liberada")')&&
+ service.includes('execute("prepareSearch",prepared->{')&&
+ service.includes('private void refresh(boolean manual)'));
+test("Shiny OFF and normal search never depend on login or trainer linkage",
+ service.includes('if(!shiny){applyShinyOnSite(generation,0);return;}')&&
+ service.includes('if(!shiny){\n                // OFF never requires signing in')&&
+ !service.includes('if(!hasConfirmedTrainerLink())return;\n        execute("session"'));
+test("Authenticated profile cannot inherit previous trainer link",
+ activity.includes('.putString("profileTrainerState","unknown")')&&
+ activity.includes('a newly confirmed OAuth session may belong to another account'.replace(/^a/,"A"))&&
+ activity.includes('"unlinked".equals(state)?"unlinked":"unknown"')&&
+ activity.includes('Buscas comuns sem login · Shiny exige treinador vinculado'));
+
 // v0.51 additional filters: do not add toolbar actions or replace artwork.
 test("Shiny shortcut sits next to Modos de busca heading",
   dock.includes('heading.appendChild(shinyButton);panel.appendChild(heading);')&&
