@@ -990,7 +990,7 @@ function renderModeChoices(){
   editor.style.top=offsets[cascadeMode]+"px";
   editor.setAttribute("role","group");editor.setAttribute("aria-label","Ajustar "+cascadeMode);
   const fields=cascadeMode==="raw"?[
-   ["attack","A","iv","Ataque"],["defense","D","iv","Defesa"],["stamina","H","iv","HP"]
+   ["attack","A","iv","Ataque"],["defense","D","iv","Defesa"],["stamina","H","iv","H"]
   ]:cascadeMode==="percent"?[
    ["percentMin","MIN","percent","IV mínimo"],["percentMax","MAX","percent","IV máximo"]
   ]:cascadeMode==="gl"?[["glRank","#","rank","Ranking GL"]]:
@@ -1336,7 +1336,7 @@ function computeSpeciesIvRanks(species,league){
 }
 function calculatedSpeciesIvRank(card,league){
  if(!PVP_IV_GAME_MASTER||!["gl","ul","ml"].includes(league))return null;
- // A percentage without raw A/D/HP is not enough to rank an IV spread.
+ // A percentage without raw A/D/H is not enough to rank an IV spread.
  const iv=String(card?.iv??"").trim();
  if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(iv))return null;
  if(verifiedSpawnIvPercent(card)===null)return null;
