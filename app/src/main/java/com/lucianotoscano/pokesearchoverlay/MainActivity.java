@@ -46,6 +46,8 @@ public class MainActivity extends Activity {
     private TextView sessionSummary;
     private boolean loginStartedForShiny=false;
     private boolean loginAutoReturnQueued=false;
+    private String loginPurpose="login"; // login | manage
+    private boolean profileCaptureInProgress=false;
     private android.app.Dialog loginDialog;
     private boolean loginSessionNotified=false;
     private boolean loginLinkAttempted=false;
@@ -137,7 +139,7 @@ public class MainActivity extends Activity {
 
         // HOME-02: icon only at top left; compact actions on the right.
         ImageView brand=new ImageView(this);
-        brand.setImageResource(R.drawable.pokesearch_icon);
+        brand.setImageResource(R.drawable.ps_home_brand_transparent);
         brand.setScaleType(ImageView.ScaleType.FIT_CENTER);
         brand.setContentDescription("Ícone PokeSearch");
         header.addView(brand,new LinearLayout.LayoutParams(d(38),d(38)));
@@ -261,7 +263,7 @@ public class MainActivity extends Activity {
             .setTitle("Remover treinador vinculado")
             .setMessage("A remoção deve ser confirmada na conta oficial do PoGoCoordinates. Deseja abrir o site para gerenciar o vínculo?")
             .setNegativeButton("Cancelar",null)
-            .setPositiveButton("Abrir site",(dialog,which)->openLoginDialog(false)).show());
+            .setPositiveButton("Abrir perfil oficial",(dialog,which)->openLoginDialog(false,"manage")).show());
         // Future Home features can occupy the remaining center without affecting login.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
         return frame;
@@ -301,7 +303,7 @@ public class MainActivity extends Activity {
         drawer.setPadding(0,d(14),0,d(10));
         drawer.setBackgroundColor(Color.rgb(25,42,60));
         int width=Math.min(d(286),getResources().getDisplayMetrics().widthPixels-d(48));
-        FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(width,-1,Gravity.LEFT|Gravity.TOP);
+        FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(width,-1,Gravity.RIGHT|Gravity.TOP);
         layer.addView(drawer,lp);
         drawer.setOnClickListener(v->{});
         TextView label=homeText("  PokeSearch",19,Color.WHITE,true);
@@ -442,7 +444,9 @@ public class MainActivity extends Activity {
         if(guestPanel!=null)guestPanel.setVisibility(logged?View.GONE:View.VISIBLE);
         if(connectedPanel!=null)connectedPanel.setVisibility(logged?View.VISIBLE:View.GONE);
         if(sessionHint!=null)sessionHint.setText(logged?
-            "Sessão oficial identificada":"Faça login para acessar coordenadas em tempo real");
+            ("unlinked".equals(prefs.getString("profileTrainerState","unknown"))?
+            "Conta conectada · nenhum treinador vinculado":"Sessão oficial identificada"):
+            "Faça login para acessar coordenadas em tempo real");
         if(accountDisplay!=null)accountDisplay.setText(
             prefs.getString("profileDisplayName","Conta conectada"));
         if(accountProvider!=null){
@@ -477,7 +481,7 @@ public class MainActivity extends Activity {
             .putString("sessionStatus","desconectado")
             .remove("profileDisplayName").remove("profileProvider")
             .remove("profileTrainerName").remove("profileTrainerCode")
-            .remove("profileTrainerDetails")
+            .remove("profileTrainerDetails").remove("profileTrainerState")
             .putBoolean("shiny",false)
             .putString("lastStatus","Sessão local desconectada")
             .putString("lastError","Nenhum")
@@ -553,87 +557,115 @@ public class MainActivity extends Activity {
             }
             if("autenticada".equals(auth)){
                 loginSessionNotified=true;
-                loginAutoReturnQueued=true;
                 getSharedPreferences("prefs",0).edit()
                     .putString("sessionStatus","autenticada").apply();
-                refreshSessionSummary();
-                BugReport.log(MainActivity.this,"LOGIN","Sessão confirmada; retornando ao aplicativo");
                 CookieManager.getInstance().flush();
-                // Read optional public profile labels before closing the official
-                // WebView. Missing attributes never fabricate an identity.
-                captureOfficialProfile(view,pageGeneration);
+                if("manage".equals(loginPurpose)){
+                    // Management must stay open until the user explicitly leaves.
+                    refreshSessionSummary();
+                    return;
+                }
+                loginAutoReturnQueued=true;
+                refreshSessionSummary();
+                // The site returns to /search after OAuth. Public account
+                // metadata is at /profile, not the search view.
+                profileCaptureInProgress=true;
+                if("/profile".equals(current.getPath())){
+                    captureOfficialProfile(view,pageGeneration);
+                }else{
+                    if(loginWaitLabel!=null)loginWaitLabel.setText("Sincronizando perfil…");
+                    if(loginCover!=null)loginCover.setVisibility(View.VISIBLE);
+                    view.loadUrl("https://pogocoordinates.com/profile");
+                }
+                // Site-origin failures must never trap the user in a page.
+                view.postDelayed(()->{
+                    if(view==website&&loginAutoReturnQueued&&
+                       loginDialog!=null&&loginDialog.isShowing())
+                        loginDialog.dismiss();
+                },6500L);
             }else{
-                // Check actual session before opening Login. This also handles
-                // already-signed-in users with a hidden mobile Logout button.
-                if(attemptsLeft<=13&&!loginDiscoveryStarted&&!loginLinkAttempted){
+                if(!"manage".equals(loginPurpose)&&attemptsLeft<=13&&
+                   !loginDiscoveryStarted&&!loginLinkAttempted){
                     loginDiscoveryStarted=true;
                     openOfficialLoginControl(view,8);
                 }
-                // Logins completed by an in-page modal can take longer than the
-                // first hydration window and may not navigate the WebView.
-                // Keep one bounded-frequency probe until dialog is dismissed.
-                final int next=Math.max(1,attemptsLeft-1);
-                view.postDelayed(()->checkLoginSession(view,next,pageGeneration),
-                    attemptsLeft>1?400L:850L);
+                // Do not infinitely retry an unauthenticated or unhydrated page.
+                if(attemptsLeft>1)view.postDelayed(
+                    ()->checkLoginSession(view,attemptsLeft-1,pageGeneration),450L);
+                else if(loginWaitLabel!=null){
+                    loginWaitLabel.setText("Login não confirmado. Você pode voltar ou abrir o site.");
+                    if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+                }
             }
         });
     }
     private void captureOfficialProfile(WebView view,int generation){
-        if(view!=website||loginDialog==null||!loginDialog.isShowing())return;
+        if(view!=website||loginDialog==null||!loginDialog.isShowing()||
+           !loginAutoReturnQueued||!profileCaptureInProgress)return;
         Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
         String host=current.getHost();
         if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
-            host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"))){
-            if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
-            return;
-        }
-        // Remove cached labels before a possible account change.
-        SharedPreferences.Editor clear=getSharedPreferences("prefs",0).edit();
-        clear.remove("profileDisplayName").remove("profileProvider")
-            .remove("profileTrainerName").remove("profileTrainerCode")
-            .remove("profileTrainerDetails").apply();
+            host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"))||
+            !"/profile".equals(current.getPath()))return;
+        // Allow the React profile cards to hydrate after onPageFinished.
         view.evaluateJavascript(readAsset("profile_summary.js"),raw->{
             if(view!=website||generation!=loginPageGeneration||
-               loginDialog==null||!loginDialog.isShowing())return;
+               loginDialog==null||!loginDialog.isShowing()||
+               !profileCaptureInProgress)return;
+            boolean parsed=false;
             try{
                 String payload=new JSONArray("["+raw+"]").getString(0);
-                JSONObject publicProfile=new JSONObject(payload);
-                if(publicProfile.optBoolean("ok",false)){
+                JSONObject profile=new JSONObject(payload);
+                if(profile.optBoolean("ok",false)&&
+                   "profile".equals(profile.optString("page"))){
                     SharedPreferences.Editor edit=getSharedPreferences("prefs",0).edit();
-                    String display=publicProfile.optString("displayName","").trim();
-                    String provider=publicProfile.optString("provider","");
+                    String name=profile.optString("displayName","").trim();
+                    String provider=profile.optString("provider","");
+                    // Linked Google/Discord provider is NOT proof of the
+                    // provider used this time. Only observed OAuth is.
                     if(!provider.equals("Google")&&!provider.equals("Discord"))
                         provider=observedLoginProvider;
-                    String trainer=publicProfile.optString("trainerName","").trim();
-                    String code=publicProfile.optString("trainerCode","");
-                    if(display.length()>0&&display.length()<=65)
-                        edit.putString("profileDisplayName",display);
+                    if(name.length()>0&&name.length()<=65)
+                        edit.putString("profileDisplayName",name);
                     if(provider.equals("Google")||provider.equals("Discord"))
                         edit.putString("profileProvider",provider);
-                    if(trainer.length()>0&&trainer.length()<=40&&code.matches("[0-9]{12}")){
-                        edit.putString("profileTrainerName",trainer)
-                            .putString("profileTrainerCode",code);
-                        String level=publicProfile.optString("level","");
-                        String team=publicProfile.optString("team","");
+                    String state=profile.optString("trainerState","unknown");
+                    String trainer=profile.optString("trainerName","");
+                    String code=profile.optString("trainerCode","");
+                    if("linked".equals(state)&&trainer.length()>0&&
+                       trainer.length()<=40&&code.matches("[0-9]{12}")){
+                        String level=profile.optString("level","");
+                        String team=profile.optString("team","");
                         String details=(level.matches("[0-9]{1,2}")?"Nível "+level:"")+
                             (team.matches("Mystic|Valor|Instinct")?
-                                (level.isEmpty()?"":" · ")+team:"");
-                        edit.putString("profileTrainerDetails",details);
+                             (level.isEmpty()?"":" · ")+team:"");
+                        edit.putString("profileTrainerState","linked")
+                            .putString("profileTrainerName",trainer)
+                            .putString("profileTrainerCode",code)
+                            .putString("profileTrainerDetails",details);
+                    }else if("unlinked".equals(state)){
+                        // Only confirmed 0/N or the official Link my account
+                        // presentation can clear the old trainer snapshot.
+                        edit.putString("profileTrainerState","unlinked")
+                            .remove("profileTrainerName").remove("profileTrainerCode")
+                            .remove("profileTrainerDetails");
                     }
                     edit.apply();
+                    parsed=true;
                 }
             }catch(Exception e){
                 BugReport.log(MainActivity.this,"HOME",
-                    "Metadados do perfil indisponíveis · "+e.getClass().getSimpleName());
+                    "Perfil não confirmado · "+e.getClass().getSimpleName());
             }
+            if(!parsed){
+                // A returned 200 is not proof that React rendered the cards.
+                view.postDelayed(()->captureOfficialProfile(view,generation),600L);
+                return;
+            }
+            profileCaptureInProgress=false;
             refreshSessionSummary();
             if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
         });
-        // Never leave a completed login dialog hanging if DOM evaluation stalls.
-        view.postDelayed(()->{
-            if(view==website&&generation==loginPageGeneration&&
-               loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
-        },1800L);
     }
     // Site controls may hydrate after onPageFinished. Retry briefly instead
     // of opening the full search page and leaving the user to locate Login.
@@ -672,10 +704,13 @@ public class MainActivity extends Activity {
             }
         });
     }
-    private void openLoginDialog(){openLoginDialog(true);}
-    private void openLoginDialog(boolean shinyRequest){
+    private void openLoginDialog(){openLoginDialog(true,"login");}
+    private void openLoginDialog(boolean shinyRequest){openLoginDialog(shinyRequest,"login");}
+    private void openLoginDialog(boolean shinyRequest,String purpose){
         if(loginDialog!=null&&loginDialog.isShowing())return;
+        loginPurpose="manage".equals(purpose)?"manage":"login";
         loginStartedForShiny=shinyRequest;
+        profileCaptureInProgress=false;
         if(shinyRequest)preferredLoginProvider="";
         observedLoginProvider="";
         loginAutoReturnQueued=false;
@@ -718,9 +753,17 @@ public class MainActivity extends Activity {
                 String host=Uri.parse(url).getHost();
                 if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
                      host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
-                // First verify session. Only a logged-out user should be sent
-                // through the official Login control.
                 int generation=loginPageGeneration;
+                if(loginAutoReturnQueued){
+                    if("/profile".equals(Uri.parse(url).getPath()))
+                        view.postDelayed(()->captureOfficialProfile(view,generation),700L);
+                    return;
+                }
+                if("manage".equals(loginPurpose)){
+                    // Profile management is an intentional official-site view.
+                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    return;
+                }
                 checkLoginSession(view,14,generation);
             }
         });
@@ -735,7 +778,7 @@ public class MainActivity extends Activity {
         toolbar.setPadding(d(12),0,d(12),0);
         toolbar.setBackgroundColor(Color.rgb(20,24,31));
         TextView loginName=new TextView(this);
-        loginName.setText("PoGoCoordinates · Login");
+        loginName.setText("manage".equals(loginPurpose)?"PoGoCoordinates · Perfil":"PoGoCoordinates · Login");
         loginName.setTextColor(Color.WHITE);
         loginName.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         loginName.setTextSize(15);
@@ -803,6 +846,7 @@ public class MainActivity extends Activity {
             boolean fromOverlay=loginStartedForShiny;
             ++loginPageGeneration; // Invalidate pending WebView session probes.
             loginCover=null;
+            profileCaptureInProgress=false;
             loginWaitLabel=null;
             loginFallback=null;
             if(website!=null){website.stopLoading();website.destroy();website=null;}
@@ -827,7 +871,8 @@ public class MainActivity extends Activity {
             loginWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
         }
         website.requestFocus();
-        website.loadUrl("https://pogocoordinates.com/search");
+        website.loadUrl("manage".equals(loginPurpose)?
+            "https://pogocoordinates.com/profile":"https://pogocoordinates.com/search");
     }
     @Override protected void onNewIntent(Intent intent){
         super.onNewIntent(intent);
