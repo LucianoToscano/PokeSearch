@@ -417,7 +417,7 @@ body.controls-window #choices.modePanel.modeCompact-raw{
 }
 body.controls-window #choices.locationPanel{width:306px!important;max-height:var(--popup-room,400px)!important}
 body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}
-/* Tiny Modos artwork only. GL/UL #N floats centered ABOVE the PNG,
+/* Tiny Modos artwork only. GL/UL #N is centered ON the PNG,
    with text glow but no pill, tile, border, or filled background. */
 body.controls-window #quickMenuList .quickGlyph.modeArt{
  width:27px!important;min-width:0!important;height:18px!important;
@@ -429,8 +429,8 @@ body.controls-window #quickMenuList .quickModeImage{
  pointer-events:none!important;flex:none!important;
 }
 body.controls-window #quickMenuList .quickRank{
- display:inline!important;position:absolute!important;top:-6px!important;left:50%!important;
- transform:translateX(-50%)!important;z-index:1!important;
+ display:inline!important;position:absolute!important;top:50%!important;left:50%!important;
+ transform:translate(-50%,-50%)!important;z-index:1!important;
  width:auto!important;height:auto!important;min-width:0!important;
  font:800 8px/10px Roboto,Arial,sans-serif!important;color:#fff!important;
  text-align:center!important;white-space:nowrap!important;letter-spacing:-.25px!important;
@@ -591,7 +591,8 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
  // Only confirmed site Background can be represented; not an activation shortcut.
  const backgroundConfirmed=!!(settings&&settings.backgroundOnly===true&&settings.backgroundVerified===true);
  return {
-  path:"file:///android_asset/result-icons/base/"+baseName,
+  path:baseFamily==="ul"?"file:///android_asset/result-icons/ultra-league.png":
+   "file:///android_asset/result-icons/base/"+baseName,
   fallbackPath:"file:///android_asset/result-icons/base/"+RESULT_BASE_ICONS.none,
   title:pair.title+(shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
   family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
