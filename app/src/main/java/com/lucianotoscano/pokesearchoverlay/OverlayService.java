@@ -322,7 +322,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*8,screenHeightDp()-160))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -1533,13 +1533,18 @@ public class OverlayService extends Service {
     }
     private void resizeResults(int desiredDp){
         if(resultParams==null||resultRoot==null||minimized)return;
-        int max=Math.max(RESULTS_HEADER_DP,screenHeightDp()-72);
+        // The WebView already budgets all up to ten cards against the full display.
+        // Resize the native touch window to that exact measured height; never
+        // force an 8-row scroll or clip the bottom when dragged near an edge.
+        int max=Math.max(RESULTS_HEADER_DP,screenHeightDp()-16);
         int desired=resultCollapsed?RESULTS_HEADER_DP:
             Math.max(RESULTS_HEADER_DP,Math.min(max,desiredDp));
         int pixels=dp(desired);
-        if(Math.abs(resultParams.height-pixels)<dp(2))return;
+        int screenPixels=metrics().heightPixels;
+        int fittedY=Math.max(0,Math.min(Math.max(0,screenPixels-pixels),resultParams.y));
+        if(Math.abs(resultParams.height-pixels)<dp(2)&&resultParams.y==fittedY)return;
         resultParams.height=pixels;
-        resultParams.y=Math.max(0,Math.min(metrics().heightPixels-pixels,resultParams.y));
+        resultParams.y=fittedY;
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar resultados",e);}
         moveDetail();
