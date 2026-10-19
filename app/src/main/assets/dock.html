@@ -854,6 +854,8 @@ function renderModeChoices(){
   button.onclick=()=>{
    if(id==="hundo"){applyExact(15);return;}
    if(id==="nundo"){applyExact(0);return;}
+   // Leaving a numeric field must release keyboard focus before the next pane.
+   if(controlsWindow)Native.locationEditor(false);
    // Editing a different mode never applies a filter without ✓.
    modeDraft.mode=id;
    cascadeMode=cascadeMode===id?null:id;
@@ -950,7 +952,8 @@ function renderModeChoices(){
    }
    const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));
   };
-  cancel.onclick=()=>{cascadeMode=null;modeDraft={...searchSettings,mode};renderModeChoices();};
+  cancel.onclick=()=>{if(controlsWindow)Native.locationEditor(false);
+   cascadeMode=null;modeDraft={...searchSettings,mode};renderModeChoices();};
   editor.append(confirm,cancel);panel.appendChild(editor);
   requestAnimationFrame(positionCascadeEditor);
  }
