@@ -2544,3 +2544,17 @@ Correção de confirmação pós-busca de espécies e formas foi preparada no ZI
 **Ajustes visuais de Saved Filters:** nome do preset recolhido inicialmente, sendo solicitado após tocar em Save filter; Excluir só visível para preset selecionado. Presets seguem locais, **não confundir com Saved Filters na conta do site**. Não alterar overlay, lógica PSC-02, assinatura, GPS, cookies, resultados ou regras de seleção de espécies do site nesta rodada.
 
 **QA:** ampliar `app/tests/home-v200.test.js` com contratos de seletor único, catálogo local/offline, sugestões oficiais opcionais, seleção/remover/sincronização. Preservar CSS compacto da HOME e os demais 566 contratos. **Sem pedido de novo APK neste turno, não compilar nem habilitar gatilho automático no GitHub.** Testar no aparelho após autorização de build; registrar sucesso somente com prova real.
+
+### 12.98 BUILD-52073 — seletor Pokémon da HOME, APK assinado e CI restaurado (20/10/2026)
+
+**Autorização expressa:** o usuário solicitou “Gere o apk” após o commit de correção da HOME v2.00. Backup pré-build independente `backup/pokesearch-52073-pre-build-20261020` preserva o commit funcional `1c610e04e2c6b477f9e7f62f9d85f0f8c46d62c3`. PR #27 permanece aberto/Draft e sem merge na main.
+
+**Código compilado:** commit `9377053392c789fce871c2f7813a89d0332e8923`, derivado da HOME-POKEMON-02, alterando apenas temporariamente a whitelist de branch do workflow para compilar com assinatura persistente. Ações: https://github.com/LucianoToscano/PokeSearch/actions/runs/39491397107, execução **#73**, conclusão **success**. App `com.lucianotoscano.pokesearch`, `versionCode=52073`, `versionName=2.00-beta.test.52073`; certificado fixado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` idêntico ao da v52072, Signature v2 verificada.
+
+**APK:** `PokeSearch-v2.00-Teste-Atualizavel.apk` extraído do artifact `PokeSearch-v2.00-APK-TESTE-ATUALIZAVEL`, 10.843.089 bytes, SHA-256 `04ff14e76c6cb21c0ab850acfad80db1b11d2bf3bb0bfad353dff565ee8bee86`; ZIP e conteúdo do APK íntegros, checksum confrontado ao `SHA256SUMS.txt` oficial. Segundo artifact `PokeSearch-PACOTE-COMPLETO-EDICAO` preserva projeto-fonte editável e APK para auditoria.
+
+**CI:** `location-probe` 31, `login-entry` 38, `pokemon-picker` 7, `home-v200` 26, `probe-smoke` 104, `overlay-ux` 352, `signing-contract` 14: **572 testes JS aprovados**. Gradle `:app:assembleDebug :app:testDebugUnitTest` concluiu `BUILD SUCCESSFUL in 33s`, pacote, assinatura e checksums passaram.
+
+**Escopo e limites:** Pokémon selecionados ficam juntos ao campo de busca, chips podem ser removidos, o catálogo local de 1025 espécies funciona com o overlay desligado. Formas especiais permanecem restritas às opções reais que forem confirmadas pelo PoGoCoordinates. O resultado de build **não equivale à homologação no aparelho**, especialmente a sincronização HOME/overlay, DOM remoto de seleção/formas, Save Filters e Search. Não anunciar essas funções como homologadas até o usuário testar.
+
+**Governança pós-build:** retirar `fix/ps009-stable-test-signing-20261018` de `on.push.branches`; deixar a assinatura privada no GitHub Actions Secrets; `permissions: contents: read`; manter PR #27 Draft, sem merge. Este commit posterior ao build modifica apenas documentação canônica e o gatilho CI e não recompila APK.
