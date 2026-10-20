@@ -1,10 +1,35 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: file:; connect-src 'none'; form-action 'none'; base-uri 'none'; frame-src 'none'"><title>PokeSearch v2.00 • Filtros</title>
 <style>
 :root{color-scheme:dark;--back:#0b0b0e;--card:#151518;--field:#0c0c0f;--border:#25252b;--red:#ff123f;--text:#f7f7f8;--muted:#888891}*{box-sizing:border-box}body{background:var(--back);color:var(--text);font:12px/1.48 system-ui,-apple-system,Roboto,Arial,sans-serif;margin:0;padding:0 1px 18px}button,select,input{font:inherit;color:inherit}button{border:0;cursor:pointer}label{color:#a3a3aa;font-size:11px;display:block;margin:9px 0 5px}.small{font-size:10px;color:#7e7f88}.section{padding:1px 1px 10px}.section h2{font-size:10px;letter-spacing:.6px;font-weight:600;color:#8b8b94}.saved-line{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.field,.select{background:var(--field);color:#e8e8ed;border:1px solid var(--border);height:38px;width:100%;border-radius:11px;padding:0 11px;outline:none;min-width:0}.field:focus,.select:focus{border-color:#8d243c}.smallBtn{background:#24242b;border-radius:18px;padding:10px 13px;font-weight:650;font-size:11px}.primary{background:var(--red);color:white}.outline{background:var(--field);border:1px solid var(--border);padding:6px 12px;border-radius:25px}.seg{display:inline-flex;align-items:center;background:#101014;border:1px solid var(--border);border-radius:25px;overflow:hidden}.seg button{padding:5px 11px;border-radius:25px;background:none;font-weight:700;font-size:11px;color:#84848b}.seg .active{background:var(--red);color:white}.panel{background:#151518;border:1px solid #222228;border-radius:13px;padding:13px;margin:7px 0 12px}.layout{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}.triple{grid-template-columns:repeat(3,minmax(0,1fr))}.quad{grid-template-columns:repeat(4,minmax(0,1fr))}.header-row{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:12px}.chipbox{min-height:40px;background:#09090c;border:1px solid #26252c;border-radius:11px;padding:6px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}.chip{border-radius:17px;background:#3b111b;color:#ff7893;padding:4px 8px;font-size:11px;max-width:100%;word-break:break-word}.chip button{background:none;color:#ff6e88;font-size:13px;padding:0 0 0 5px}.picker{margin-top:7px}.picker input{width:100%}.options{max-height:140px;overflow:auto}.options button{display:block;width:100%;border-bottom:1px solid #25242b;text-align:left;background:#121216;padding:9px;border-radius:4px}.switchrow{background:#0c0c10;border:1px solid #25252b;border-radius:13px;margin:12px 0;padding:10px;display:flex;align-items:center;gap:9px}.switchrow button{background:#43434b;border-radius:20px;min-width:37px;height:21px;text-align:left;padding:2px}.switchrow button.active{background:var(--red);text-align:right}.switchrow i{display:inline-block;width:17px;height:17px;background:white;border-radius:50%}.status{font-size:11px;padding:10px;margin:8px 0;border-left:3px solid #808080;background:#1b1a1d;border-radius:6px}.status.warn{border-color:#ff1747}.status.confirm{border-color:#39ae88}.bottom{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;padding-top:15px}.footer-results{margin-top:14px}.card{padding:11px;background:#151518;border-radius:12px;border:1px solid #292930;margin:8px 0}.card strong{color:white}.card .muted{color:#aaa}.loader{opacity:.6}.hidden{display:none!important}.pill{border-radius:20px;padding:4px 8px;background:#24242c;font-size:10px;color:#b1b1bd}.tiny{font-size:10px}#siteProof{color:#91b5a9}#status{white-space:normal}.filter-row{display:flex;justify-content:space-between;align-items:center;gap:8px}.filter-row>*{min-width:0}#pickMessage{margin-top:5px}.linebreak{margin-top:7px}#savedName{flex:1;min-width:100px}.btnFull{width:100%;padding:9px}.chips-head{color:#a5a5aa}.empty-notice{color:#90919a;padding:14px 3px}#resultsList{max-height:800px;overflow-y:auto}.hint{margin-top:5px}.sep{margin-top:12px}
+/* HOME-POKEMON-02: one compact multiselect surface like the official form. */
+.pokemon-select{position:relative;display:flex;flex-direction:column;gap:1px;background:#09090c;border:1px solid #29242b;border-radius:12px;padding:8px 9px 6px;min-height:58px}
+.pokemon-select:focus-within{border-color:#ad314c}
+.pokemon-chips{display:flex;flex-wrap:wrap;align-items:center;gap:5px;min-height:22px;padding:0;border:0;border-radius:0;background:transparent}
+.pokemon-chips .small{color:#94949b}
+.pokemon-entry{display:flex;gap:6px;align-items:center;min-width:0}
+#pokemonQuery{border:0;background:transparent;box-shadow:none;outline:none;color:#eee;flex:1;width:100%;min-width:0;height:29px;padding:1px 3px;font-size:12px}
+#pokemonQuery::placeholder{color:#777680}
+.pokemon-entry button{background:#17171d;border-radius:6px;padding:2px 6px;font-size:16px;color:#9b9aa3;min-width:29px;min-height:27px}
+#selectedCount{font-size:10px;font-weight:600;white-space:nowrap;color:#a2a0ab}
+.pokemon-select .chip{display:inline-flex;align-items:center;gap:3px;padding:4px 7px;border-radius:15px;background:#3a101b;color:#f66c8c;font-size:10px;line-height:1.2}
+.pokemon-ball{display:inline-block;flex:none;width:11px;height:11px;border:1px solid #303036;border-radius:50%;background:linear-gradient(#ec234e 0 44%,#25252a 44% 55%,#f5f5f7 55%);position:relative}
+.pokemon-ball:after{content:'';position:absolute;top:3px;left:3px;border:1px solid #242428;background:#fafafa;width:3px;height:3px;border-radius:50%}
+#pokemonOptions{position:relative;max-height:205px;overflow-y:auto;border:1px solid #2d2930;background:#0f0e12;border-radius:8px;margin-top:4px;z-index:3;box-shadow:0 5px 14px #0008}
+#pokemonOptions button{display:flex;align-items:center;gap:8px;width:100%;min-height:35px;padding:7px 9px;color:#eeeeef;background:#141318;border-bottom:1px solid #24212a;font-size:12px;cursor:pointer;text-align:left}
+#pokemonOptions button:active,#pokemonOptions button:focus{background:#36202b}
+#pokemonOptions button .dex{font-size:10px;color:#85838d;margin-left:auto}
+#pokemonOptions button .source{color:#8c8d94;font-size:9px}
+#pokemonOptions .empty-notice{padding:9px}
+#pickMessage{color:#909096;font-size:10px;margin:5px 2px 10px}
+#savedName.hidden,#deleteBtn.hidden{display:none}
 </style></head><body>
-<section class="section" aria-label="Filtros salvos"><h2>SAVED FILTERS</h2><select class="select" id="saved" aria-label="Selecionar filtro salvo"><option value="">Selecionar filtro salvo...</option></select><div class="saved-line" style="margin-top:7px"><input class="field" id="savedName" placeholder="Nome do filtro para salvar" maxlength="36" style="height:34px"><button class="smallBtn" id="saveBtn">Save filter</button><button class="smallBtn" id="deleteBtn">Excluir</button></div><div class="small hint">Presets salvos no PokeSearch e aplicados na busca oficial.</div></section>
+<section class="section" aria-label="Filtros salvos"><h2>SAVED FILTERS</h2><select class="select" id="saved" aria-label="Selecionar filtro salvo"><option value="">Selecionar filtro salvo...</option></select><div class="saved-line" style="margin-top:7px"><input class="field hidden" id="savedName" placeholder="Nome do filtro para salvar" maxlength="36" style="height:34px"><button class="smallBtn" id="saveBtn">Save filter</button><button class="smallBtn hidden" id="deleteBtn">Excluir</button></div><div class="small hint">Presets salvos no PokeSearch e aplicados na busca oficial.</div></section>
 <section class="panel">
-<label style="margin-top:0">Pokémon</label><div class="chipbox" id="chips"><span class="small">Todos os Pokémon</span></div><div class="picker"><input class="field" id="pokemonQuery" placeholder="Buscar por espécie ou forma oficial" maxlength="65" autocomplete="off"><div class="options" id="pokemonOptions"></div></div><div class="small hint" id="pickMessage">Espécies/formas serão confirmadas pelo formulário do site.</div>
+<label style="margin-top:0">Pokémon</label><div class="pokemon-select" id="pokemonPicker">
+<div class="pokemon-chips" id="chips"><span class="small">Todos os Pokémon</span></div>
+<div class="pokemon-entry"><input id="pokemonQuery" role="combobox" aria-autocomplete="list" aria-controls="pokemonOptions" aria-expanded="false" aria-label="Selecionar espécies e formas de Pokémon" placeholder="Pesquisar Pokémon ou forma" maxlength="65" autocomplete="off"><span id="selectedCount"></span><button id="pokemonClear" aria-label="Limpar seleção de Pokémon" title="Limpar todos" class="hidden">×</button><button id="pokemonChevron" aria-label="Abrir seleção de Pokémon" title="Mostrar opções">⌄</button></div>
+<div class="options hidden" id="pokemonOptions" role="listbox" aria-label="Opções Pokémon"></div></div>
+<div class="small hint" id="pickMessage">Espécies disponíveis mesmo sem overlay. Formas dependem das opções oficiais; a aplicação só é confirmada após a busca no site.</div>
 <label for="sortBy">Sort by</label><select class="select" id="sortBy"><option value="">Padrão do site</option><option value="Despawn (longest)">Despawn (longest)</option><option value="Despawn (shortest)">Despawn (shortest)</option><option value="IV (highest)">IV (highest)</option><option value="CP (highest)">CP (highest)</option></select>
 <div class="switchrow"><button id="shinyToggle" title="Ativar apenas Shiny"><i></i></button><div><b>✨ Shiny only</b><div class="small">Requer login e vínculo confirmados no PoGoCoordinates.</div></div></div>
 <div class="header-row"><label>Location</label><div class="seg" id="locationMode"><button data-locationmode="area">Area</button><button class="active" data-locationmode="coords">Coords</button></div></div>
@@ -26,11 +51,32 @@ const $=id=>document.getElementById(id), values=[0,2,4,7,9,11,13,16,18,20,22,24,
 let cfg={mode:'raw',attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:'',pokemon:'',pokemonSelections:[],form:'',size:'',gender:'',weather:'',cpMin:'',cpMax:'',levelMin:'',levelMax:'',minPvpCp:'',includePreviousEvolutions:true};
 let requestedShiny=false,locEnabled=false,locRadius=0,locCoords='',remote=false,dirty=false,serverVersion='',saved={},debounce=null,suggestDelay=null,suggestions=[],pendingUntil=0;
+let pokemonCatalog=[],pickerOpen=false;
 const keys=['attack','defense','stamina','percentMin','percentMax','sortBy','cpMin','cpMax','levelMin','levelMax','size','form','gender','weather','minPvpCp'];
 function safe(str){return String(str==null?'':str)}
 function updateSeg(id,attribute,val){document.querySelectorAll('#'+id+' button').forEach(b=>b.classList.toggle('active',b.getAttribute(attribute)===val));}
-function chips(){const root=$('chips');root.replaceChildren();const chosen=cfg.pokemonSelections||[];if(!chosen.length){const span=document.createElement('span');span.className='small';span.textContent='Todos os Pokémon';root.append(span);return;}
- chosen.forEach(name=>{const chip=document.createElement('span');chip.className='chip';chip.append(document.createTextNode(name));const rm=document.createElement('button');rm.textContent='×';rm.setAttribute('aria-label','Remover '+name);rm.onclick=()=>{cfg.pokemonSelections=chosen.filter(x=>x!==name);cfg.clearPokemonSelection=cfg.pokemonSelections.length===0;chips();changed();};chip.append(rm);root.append(chip);});}
+function chips(){
+ const root=$('chips');root.replaceChildren();
+ const chosen=Array.isArray(cfg.pokemonSelections)?cfg.pokemonSelections:[];
+ $('selectedCount').textContent=chosen.length?String(chosen.length):'';
+ $('pokemonClear').classList.toggle('hidden',!chosen.length);
+ if(!chosen.length){
+  const span=document.createElement('span');span.className='small';span.textContent='Todos os Pokémon';
+  root.append(span);return;
+ }
+ chosen.forEach(name=>{
+  const chip=document.createElement('span');chip.className='chip';
+  const ball=document.createElement('i');ball.className='pokemon-ball';ball.setAttribute('aria-hidden','true');
+  chip.append(ball,document.createTextNode(name));
+  const rm=document.createElement('button');rm.type='button';rm.textContent='×';
+  rm.setAttribute('aria-label','Remover '+name);rm.onclick=()=>{
+   cfg.pokemonSelections=chosen.filter(x=>x!==name);
+   cfg.clearPokemonSelection=cfg.pokemonSelections.length===0;
+   chips();changed();
+  };
+  chip.append(rm);root.append(chip);
+ });
+}
 function syncInputs(){keys.forEach(k=>{if($(k))$(k).value=safe(cfg[k]);});$('league').value=cfg.mode==='ul'?'ul':'gl';$('rank').value=cfg.mode==='ul'?cfg.ulRank:cfg.glRank;
  $('includePreviousEvolutions').checked=cfg.includePreviousEvolutions!==false;requestedShiny=!!requestedShiny;
  $('shinyToggle').classList.toggle('active',requestedShiny);$('coords').value=locCoords;$('radius').value=locEnabled?safe(locRadius):'';
@@ -64,13 +110,106 @@ function commitLocation(){const coords=$('coords').value.trim(),r=$('radius').va
  if(!/^\s*[-+]?\d{1,2}(?:\.\d+)?\s*,\s*[-+]?\d{1,3}(?:\.\d+)?\s*$/.test(coords)||r===''||Number(r)<0||Number(r)>1000){setError('Informe latitude,longitude válidas e raio de 0 a 1000km');return;}
  HomeNative.setLocation(true,coords,Number(r));$('status').textContent='Localização solicitada · aguardando verificação do site';}
 $('coords').addEventListener('change',commitLocation);$('radius').addEventListener('change',commitLocation);$('clearLocation').onclick=()=>{locEnabled=false;locCoords='';locRadius=0;$('coords').value='';$('radius').value='';HomeNative.setLocation(false,'',0);};
-function renderSuggestions(items){const root=$('pokemonOptions');root.replaceChildren();for(const option of items.slice(0,35)){const value=typeof option==='string'?option:option.label;if(!value)continue;const btn=document.createElement('button');btn.textContent=value;btn.onclick=()=>{if(!(cfg.pokemonSelections||[]).some(x=>x.toLowerCase()===value.toLowerCase())&&cfg.pokemonSelections.length<50){cfg.pokemonSelections.push(value);cfg.clearPokemonSelection=false;chips();changed();}$('pokemonQuery').value='';root.replaceChildren();};root.append(btn);}}
-$('pokemonQuery').addEventListener('input',()=>{clearTimeout(suggestDelay);const q=$('pokemonQuery').value.trim();if(!q){$('pokemonOptions').replaceChildren();return;}suggestDelay=setTimeout(()=>{HomeNative.suggest(q);$('pickMessage').textContent='Consultando opções oficiais...';},220);});
-window.onHomeSuggestions=message=>{if(!message)return;$('pickMessage').textContent=message.ok?'Opções recebidas do seletor oficial':'Opções ainda indisponíveis: '+(message.reason||'seletor não carregado');renderSuggestions(Array.isArray(message.options)?message.options:[]);};
-function updateSaved(){const sel=$('saved'),selected=sel.value;sel.replaceChildren();sel.add(new Option('Selecionar filtro salvo...',''));Object.keys(saved).sort().forEach(name=>sel.add(new Option(name,name)));if(saved[selected])sel.value=selected;}
-$('saveBtn').onclick=()=>{const name=$('savedName').value.trim();if(!name){setError('Informe um nome para salvar o filtro');return;}if(dirty){commit();if(dirty)return;}try{HomeNative.savePreset(name,JSON.stringify({config:cfg,shinyRequested:requestedShiny,locationEnabled:locEnabled,locationCoords:locCoords,locationRadius:locRadius}));snapshot();$('saved').value=name;}catch(e){setError('Falha ao salvar preset');}};
+// Bundled real Pokédex species for immediate selection; NEVER declare remote verification.
+function localPokemonMatches(query){
+ const wanted=String(query||'').trim().toLocaleLowerCase();
+ return pokemonCatalog.filter(([dex,name])=>
+  String(name).toLocaleLowerCase().includes(wanted)||String(dex)===wanted)
+  .slice(0,35).map(([dex,name])=>({label:name,dex:String(dex),source:'catalog'}));
+}
+function showPokemonPicker(show){
+ pickerOpen=!!show;
+ $('pokemonOptions').classList.toggle('hidden',!pickerOpen);
+ $('pokemonQuery').setAttribute('aria-expanded',pickerOpen?'true':'false');
+ if(pickerOpen)renderSuggestions(localPokemonMatches($('pokemonQuery').value));
+}
+function selectPokemon(value){
+ const name=String(value||'').trim();
+ if(!name)return;
+ const chosen=Array.isArray(cfg.pokemonSelections)?cfg.pokemonSelections:[];
+ if(chosen.some(x=>x.toLocaleLowerCase()===name.toLocaleLowerCase())){
+  $('pokemonQuery').value='';showPokemonPicker(false);return;
+ }
+ if(chosen.length>=50){setError('Máximo de 50 Pokémon ou formas por seleção.');return;}
+ cfg.pokemonSelections=[...chosen,name];
+ cfg.clearPokemonSelection=false;
+ chips();changed();
+ $('pokemonQuery').value='';showPokemonPicker(false);
+ $('pickMessage').textContent='Seleção solicitada · aguardando confirmação pelo PoGoCoordinates.';
+}
+function renderSuggestions(items){
+ const root=$('pokemonOptions');root.replaceChildren();
+ const seen=new Set(),chosen=Array.isArray(cfg.pokemonSelections)?cfg.pokemonSelections:[];
+ let shown=0;
+ for(const option of (Array.isArray(items)?items:[])){
+  const name=typeof option==='string'?option:option&&option.label;
+  if(typeof name!=='string'||!name.trim()||name.length>90)continue;
+  const lower=name.trim().toLocaleLowerCase();
+  if(seen.has(lower)||chosen.some(x=>x.toLocaleLowerCase()===lower))continue;
+  seen.add(lower);if(shown++>=35)break;
+  const btn=document.createElement('button');btn.type='button';btn.setAttribute('role','option');
+  const ball=document.createElement('i');ball.className='pokemon-ball';ball.setAttribute('aria-hidden','true');
+  const label=document.createElement('span');label.textContent=name;
+  btn.append(ball,label);
+  if(option&&typeof option==='object'&&option.dex){
+   const dex=document.createElement('span');dex.className='dex';dex.textContent='#'+String(option.dex);btn.append(dex);
+  }
+  btn.onclick=()=>selectPokemon(name);root.append(btn);
+ }
+ if(!shown){
+  const message=document.createElement('div');message.className='empty-notice';
+  message.textContent=pokemonCatalog.length?'Nenhuma espécie do catálogo. Formas adicionais exigem resposta do site.':'Carregando catálogo de Pokémon...';
+  root.append(message);
+ }
+}
+window.onHomeCatalog=entries=>{
+ if(!Array.isArray(entries))return;
+ pokemonCatalog=entries.filter(e=>Array.isArray(e)&&Number.isInteger(e[0])&&
+  typeof e[1]==='string'&&e[1].trim()&&e[1].length<=90)
+  .map(e=>[e[0],e[1]]);
+ if(pickerOpen)renderSuggestions(localPokemonMatches($('pokemonQuery').value));
+};
+$('pokemonChevron').onclick=()=>{
+ showPokemonPicker(!pickerOpen);
+ if(pickerOpen)$('pokemonQuery').focus();
+};
+$('pokemonClear').onclick=()=>{
+ cfg.pokemonSelections=[];cfg.clearPokemonSelection=true;
+ chips();changed();$('pokemonQuery').value='';showPokemonPicker(false);
+};
+$('pokemonQuery').addEventListener('focus',()=>showPokemonPicker(true));
+$('pokemonQuery').addEventListener('input',()=>{
+ clearTimeout(suggestDelay);
+ const q=$('pokemonQuery').value.trim();
+ showPokemonPicker(true);
+ $('pickMessage').textContent=remote?
+  'Espécies locais disponíveis. Consultando formas no site...':
+  'Espécies locais disponíveis. As formas serão verificadas quando o overlay se conectar.';
+ if(remote&&q)suggestDelay=setTimeout(()=>HomeNative.suggest(q),250);
+});
+window.onHomeSuggestions=message=>{
+ if(!message)return;
+ const query=$('pokemonQuery').value.trim();
+ if(!pickerOpen||!query)return;
+ if(message.query&&String(message.query).toLocaleLowerCase()!==query.toLocaleLowerCase())return;
+ const local=localPokemonMatches(query);
+ if(message.ok){
+  const official=Array.isArray(message.options)?message.options:[];
+  renderSuggestions([...official,...local]);
+  $('pickMessage').textContent='Opções do PoGoCoordinates recebidas. Confirmação final na busca.';
+ }else{
+  // A failed/stale site query NEVER clears the locally selectable species.
+  renderSuggestions(local);
+  $('pickMessage').textContent='Espécies do catálogo disponíveis. Formas oficiais: '+String(message.reason||'aguardando site');
+ }
+};
+document.addEventListener('click',e=>{
+ if(pickerOpen&&!$('pokemonPicker').contains(e.target))showPokemonPicker(false);
+});
+function updateSaved(){const sel=$('saved'),selected=sel.value;sel.replaceChildren();sel.add(new Option('Selecionar filtro salvo...',''));Object.keys(saved).sort().forEach(name=>sel.add(new Option(name,name)));if(saved[selected])sel.value=selected;$('deleteBtn').classList.toggle('hidden',!sel.value);}
+$('saveBtn').onclick=()=>{if($('savedName').classList.contains('hidden')){$('savedName').classList.remove('hidden');$('savedName').focus();return;}const name=$('savedName').value.trim();if(!name){setError('Informe um nome para salvar o filtro');return;}if(dirty){commit();if(dirty)return;}try{HomeNative.savePreset(name,JSON.stringify({config:cfg,shinyRequested:requestedShiny,locationEnabled:locEnabled,locationCoords:locCoords,locationRadius:locRadius}));snapshot();$('saved').value=name;$('savedName').value='';$('savedName').classList.add('hidden');}catch(e){setError('Falha ao salvar preset');}};
 $('deleteBtn').onclick=()=>{const name=$('saved').value;if(name){HomeNative.deletePreset(name);snapshot();}};
-$('saved').onchange=()=>{const p=saved[$('saved').value];if(!p)return;cfg={...cfg,...p.config};requestedShiny=!!p.shinyRequested;locEnabled=!!p.locationEnabled;locCoords=p.locationCoords||'';locRadius=p.locationRadius||0;syncInputs();dirty=true;commit();HomeNative.setShiny(requestedShiny);HomeNative.setLocation(locEnabled,locCoords,locRadius);};
+$('saved').onchange=()=>{$('deleteBtn').classList.toggle('hidden',!$('saved').value);const p=saved[$('saved').value];if(!p)return;cfg={...cfg,...p.config};requestedShiny=!!p.shinyRequested;locEnabled=!!p.locationEnabled;locCoords=p.locationCoords||'';locRadius=p.locationRadius||0;syncInputs();dirty=true;commit();HomeNative.setShiny(requestedShiny);HomeNative.setLocation(locEnabled,locCoords,locRadius);};
 $('reset').onclick=()=>{cfg={...cfg,mode:'raw',attack:15,defense:15,stamina:15,percentMin:0,percentMax:100,glRank:1,ulRank:1,pokemonSelections:[],clearPokemonSelection:true,sortBy:'',form:'',size:'',gender:'',weather:'',cpMin:'',cpMax:'',levelMin:'',levelMax:'',minPvpCp:''};requestedShiny=false;locEnabled=false;locCoords='';locRadius=0;syncInputs();dirty=true;commit();HomeNative.setShiny(false);HomeNative.setLocation(false,'',0);};
 $('notify').onclick=()=>HomeNative.openAlerts();
 $('search').onclick=()=>{if(dirty){commit();if(dirty)return;}HomeNative.search(JSON.stringify({...cfg}));$('status').textContent='Solicitando busca oficial...';};

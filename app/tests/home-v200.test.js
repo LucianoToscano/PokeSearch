@@ -98,5 +98,50 @@ check('Maintains original package and signing version configuration',()=>{
  assert.ok(gradle.includes('applicationId = "com.lucianotoscano.pokesearch"'));
  assert.ok(gradle.includes('2.00-beta.test.'));
 });
+check('Embedded picker is one multiselect surface with accessible chips and search',()=>{
+ assert.ok(home.includes('id="pokemonPicker"'));
+ assert.ok(home.includes('id="pokemonQuery" role="combobox"'));
+ assert.ok(home.includes('id="pokemonChevron"'));
+ assert.ok(home.includes('id="pokemonClear"'));
+ assert.ok(home.includes('role="listbox"'));
+});
+check('The HOME Pokédex works without starting the overlay',()=>{
+ assert.ok(main.includes('view.evaluateJavascript("window.onHomeCatalog("'));
+ assert.ok(main.includes('new JSONArray(readAsset("pokemon_catalog.json"))'));
+ assert.ok(home.includes('window.onHomeCatalog=entries=>'));
+ assert.ok(home.includes('function localPokemonMatches(query)'));
+ assert.ok(home.includes('showPokemonPicker(true)'));
+ assert.ok(!main.includes("Ative o overlay para obter opções oficiais"));
+});
+check('Local species remain visible while official form suggestions are pending',()=>{
+ assert.ok(home.includes('renderSuggestions([...official,...local])'));
+ assert.ok(home.includes('renderSuggestions(local)'));
+ assert.ok(home.includes('if(remote&&q)suggestDelay='));
+});
+check('Multiple species selection and clear propagate to one shared filter state',()=>{
+ assert.ok(home.includes('cfg.pokemonSelections=[...chosen,name]'));
+ assert.ok(home.includes('cfg.clearPokemonSelection=true'));
+ assert.ok(home.includes("if(chosen.length>=50)"));
+ assert.ok(home.includes('chips();changed()'));
+});
+check('Only site-verified results can be presented as confirmed',()=>{
+ assert.ok(home.includes('Confirmação final na busca'));
+ assert.ok(service.includes('execute("verifyFilters"'));
+});
+check('Bundled Pokédex query resolves species locally and never guesses forms',()=>{
+ const catalog=JSON.parse(read('app/src/main/assets/pokemon_catalog.json'));
+ assert.ok(catalog.length>1000);
+ const f=home.match(/function localPokemonMatches\(query\)\{[\s\S]*?\n\}/);
+ assert.ok(f,'Local catalog matcher must be available');
+ const matcher=vm.runInNewContext(f[0]+';localPokemonMatches;', {pokemonCatalog:catalog});
+ const char=matcher('char');
+ assert.ok(char.some(x=>x.label==='Charmander'));
+ assert.ok(char.some(x=>x.label==='Charizard'));
+ assert.ok(matcher('7').some(x=>x.label==='Squirtle'));
+ assert.equal(matcher('not-a-pokemon-name-xyz').length,0);
+ assert.ok(char.length<=35);
+ assert.ok(!char.some(x=>x.label.toLowerCase().includes('alolan')),
+   'Do not manufacture unverified regional form labels');
+});
 console.log('PokeSearch HOME v2.00 unified state: '+count+' tests passed');
 if(process.exitCode)process.exit(process.exitCode);

@@ -395,7 +395,19 @@ public class MainActivity extends Activity {
                 return true; // No navigation from locally rendered HOME.
             }
             @Override public void onPageFinished(WebView view,String url){
-                if(url!=null&&url.startsWith("https://pokesearch.invalid/"))syncHomeUi();
+                if(url!=null&&url.startsWith("https://pokesearch.invalid/")){
+                    // Load the bundled Pokédex into the local, network-blocked HOME.
+                    // The catalog only suggests species; actual forms and filters
+                    // are always validated against the live official page.
+                    try{
+                        JSONArray catalog=new JSONArray(readAsset("pokemon_catalog.json"));
+                        if(catalog.length()>1000)
+                            view.evaluateJavascript("window.onHomeCatalog("+catalog.toString()+")",null);
+                    }catch(org.json.JSONException e){
+                        BugReport.log(MainActivity.this,"HOME","Catálogo Pokémon inválido");
+                    }
+                    syncHomeUi();
+                }
             }
         });
         filtersHost.addView(homeFiltersWebView,new FrameLayout.LayoutParams(-1,-1));
@@ -486,9 +498,9 @@ public class MainActivity extends Activity {
                     Intent i=new Intent(MainActivity.this,OverlayService.class);
                     i.putExtra("query",query);
                     sendHomeAction(HomeFilterState.ACTION_SUGGEST,i);
-                }else if(homeFiltersWebView!=null)
-                    homeFiltersWebView.evaluateJavascript(
-                        "window.onHomeSuggestions({ok:false,reason:'Ative o overlay para obter opções oficiais'})",null);
+                }
+                // With the overlay stopped, the local bundled catalog already
+                // serves valid Pokédex species; do not clear those suggestions.
             });
         }
         @android.webkit.JavascriptInterface public void savePreset(String name,String value){
