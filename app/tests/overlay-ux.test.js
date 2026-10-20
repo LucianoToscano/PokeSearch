@@ -357,9 +357,9 @@ const iconGenerator=fs.readFileSync(path.join(__dirname,'../scripts/RoundIcon.ja
 const ci=fs.readFileSync(path.join(__dirname,'../../.github/workflows/build-overlay.yml'),'utf8');
 const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
-test("PokeSearch 0.51 source configured",
+test("PokeSearch v2.00 source configured",
   gradleBuild.includes('versionCode = testVersionCode ?: 51')&&
-  gradleBuild.includes('versionName = if (testVersionCode != null) "0.51-beta.test.$testVersionCode" else "0.51-beta"')&&
+  gradleBuild.includes('versionName = if (testVersionCode != null) "2.00-beta.test.$testVersionCode" else "2.00-beta"')&&
   gradleBuild.includes('applicationId = "com.lucianotoscano.pokesearch"'));
 test("Round icon generator always uses headless mode",gradleBuild.includes('-Djava.awt.headless=true')&&iconGenerator.includes('System.setProperty("java.awt.headless","true")'));
 test("Network main-frame error is handled",service.includes('request.isForMainFrame()')&&service.includes('Falha de navegação principal'));
@@ -1616,9 +1616,10 @@ test("HOME-02 has visible ON/OFF resources and drawer with safe export",(()=>{
   !exportCode.includes('prefs.getAll().toString()')&&
   !exportCode.includes('"locationCoords"');
 })());
-test("HOME-01 keeps centered body empty and PoGoCoordinates panel compact",(()=>{
+test("HOME-v2.00 embeds the official site and retains the compact account header",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
- return home.includes("screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1))")&&
+ return home.includes('homeFiltersWebView.loadUrl("https://pogocoordinates.com/search")')&&
+  home.includes("setGeolocationEnabled(false)")&&
   home.includes("R.drawable.ps_pogocoordinates")&&
   home.includes('homeText("PoGoCoordinates"')&&
   home.includes("guestPanel=new LinearLayout(this)")&&
