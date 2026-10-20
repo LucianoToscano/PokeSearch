@@ -1729,7 +1729,21 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  if(!resultWindow)document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  locationVerified=!!verifiedLocation&&locationEnabled;
+ const oldFilterSignature=JSON.stringify(searchSettings);
  if(config&&typeof config==="object")searchSettings={...searchSettings,...config};
+ // HOME edits and floating menus are two views of one canonical filter state.
+ // Do not silently overwrite fields while the owner is editing a draft.
+ const filterChangedByHome=JSON.stringify(searchSettings)!==oldFilterSignature;
+ if(controlsWindow&&filterChangedByHome&&["filters","mode","pokemon"].includes(choiceOpen)&&
+    !["INPUT","SELECT","TEXTAREA"].includes(document.activeElement?.tagName||"")){
+  modeDraft={...searchSettings,mode:m==="iv"?"raw":m};
+  if(choiceOpen==="filters")renderFiltersChoices();
+  if(choiceOpen==="mode")renderModeChoices();
+  if(choiceOpen==="pokemon"){
+   pokemonDraft=[...(Array.isArray(searchSettings.pokemonSelections)?searchSettings.pokemonSelections:[])];
+   renderPokemonChoices();
+  }
+ }
  // Compatibility with the original single-Pokémon filter stored before SITE-POKEMON-01.
  if(config&&!Array.isArray(config.pokemonSelections)&&typeof config.pokemon==="string"&&config.pokemon.trim())
   searchSettings.pokemonSelections=[config.pokemon.trim()];

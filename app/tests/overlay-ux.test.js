@@ -420,7 +420,7 @@ test("PS-079 menu positions before a single sync",service.includes('deferMenuSyn
 test("PS-080 IV verification has no unreachable success",!read("assets/probe.js").includes('não confirmados"};\\n  return {ok:true};'));
 test("PS-080 bug report notice requires manual review",main.includes('O relatório filtra formatos comuns de dados sensíveis. Revise o conteúdo antes de compartilhar.'));
 // v0.50 regression contracts: PS-081–PS-085 and stale bridge replies.
-const prefSync=service.split('private void syncPreferencesWithoutSearch(){')[1]?.split('    @Override public int onStartCommand(')[0]||'';
+const prefSync=service.split('private void syncPreferencesWithoutSearch(){')[1]?.split('    private void sendHomeSuggestions(')[0]||'';
 const startCommand=service.split('    @Override public int onStartCommand(')[1]?.split('    private void destroyWebView(')[0]||'';
 test("PS-081 home requests POST_NOTIFICATIONS from test action",main.includes('requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},203)'));
 test("PS-081 callback runs notification test only after permission granted",main.includes('if(requestCode==203)')&&main.includes('results[0]==PackageManager.PERMISSION_GRANTED')&&main.includes('granted&&WatchAlerts.permissionGranted(this)')&&main.includes('WatchAlerts.test(this)'));
@@ -1616,9 +1616,9 @@ test("HOME-02 has visible ON/OFF resources and drawer with safe export",(()=>{
   !exportCode.includes('prefs.getAll().toString()')&&
   !exportCode.includes('"locationCoords"');
 })());
-test("HOME-v2.00 embeds the official site and retains the compact account header",(()=>{
+test("HOME-v2.00 local filters mirror official site and retain the compact account header",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
- return home.includes('homeFiltersWebView.loadUrl("https://pogocoordinates.com/search")')&&
+ return home.includes('readAsset("home_v200.html")')&&
   home.includes("setGeolocationEnabled(false)")&&
   home.includes("R.drawable.ps_pogocoordinates")&&
   home.includes('homeText("PoGoCoordinates"')&&

@@ -42,16 +42,37 @@ import android.graphics.Typeface;
 
 public class MainActivity extends Activity {
     private WebView website;
-    // HOME-V200: the real official PoGoCoordinates form, not copied controls.
+    // HOME-V200-02: custom local UI; the existing OverlayService owns all site queries.
     private WebView homeFiltersWebView;
-    private int homeFiltersNavigation=0;
-    private boolean homeFiltersAligned=false;
-    private static final String HOME_V200_SAVED_FILTERS_JS=
-        "(function(){try{var nodes=document.querySelectorAll('span,label,p,h1,h2,h3,h4,div,strong');"+
-        "for(var i=0;i<nodes.length;i++){var e=nodes[i],value=(e.textContent||'').trim();"+
-        "if(/^saved filters$/i.test(value)&&e.getClientRects().length){"+
-        "e.scrollIntoView({block:'start',behavior:'auto'});return true;}}"+
-        "return false;}catch(ex){return false;}})();";
+    private final android.os.Handler homeHandler=new android.os.Handler(android.os.Looper.getMainLooper());
+    private boolean homeForeground=false;
+    private final Runnable homePoll=new Runnable(){
+        @Override public void run(){
+            if(!homeForeground)return;
+            syncHomeUi();
+            homeHandler.postDelayed(this,850L);
+        }
+    };
+    private final android.content.BroadcastReceiver homeEvents=new android.content.BroadcastReceiver(){
+        @Override public void onReceive(android.content.Context context,Intent intent){
+            if(intent==null||!HomeFilterState.ACTION_EVENT.equals(intent.getAction()))return;
+            WebView view=homeFiltersWebView;
+            if(view==null||!homeForeground)return;
+            String event=intent.getStringExtra("payload");
+            if(event==null||event.length()>128000)return;
+            // Broadcast is package scoped and receiver not exported. Only the
+            // local HOME has a bridge; do not forward this data to the site.
+            try {
+                JSONObject decoded=new JSONObject(event);
+                if("suggestions".equals(decoded.optString("kind")))
+                    view.evaluateJavascript("window.onHomeSuggestions("+
+                        decoded.optJSONObject("response").toString()+")",null);
+                else if("result".equals(decoded.optString("kind")))
+                    view.evaluateJavascript("window.onHomeResults("+event+")",null);
+            }catch(Exception ignored){}
+            syncHomeUi();
+        }
+    };
     private TextView watchSummary;
     private TextView sessionSummary;
     private boolean loginStartedForShiny=false;
@@ -360,69 +381,144 @@ public class MainActivity extends Activity {
         filtersHost.setClipToOutline(true);
         homeFiltersWebView=new WebView(this);
         homeFiltersWebView.setBackgroundColor(Color.rgb(10,11,15));
-        homeFiltersWebView.setVerticalScrollBarEnabled(false);
-        homeFiltersWebView.setFocusable(true);
-        homeFiltersWebView.setFocusableInTouchMode(true);
         homeFiltersWebView.getSettings().setJavaScriptEnabled(true);
-        homeFiltersWebView.getSettings().setDomStorageEnabled(true);
-        homeFiltersWebView.getSettings().setDatabaseEnabled(true);
+        homeFiltersWebView.getSettings().setDomStorageEnabled(false);
+        homeFiltersWebView.getSettings().setJavaScriptCanOpenWindowsAutomatically(false);
         homeFiltersWebView.getSettings().setAllowFileAccess(false);
         homeFiltersWebView.getSettings().setAllowContentAccess(false);
-        // Deny physical GPS; manual Coords remain handled by official form.
+        homeFiltersWebView.getSettings().setBlockNetworkLoads(true);
         homeFiltersWebView.getSettings().setGeolocationEnabled(false);
-        CookieManager.getInstance().setAcceptCookie(true);
-        CookieManager.getInstance().setAcceptThirdPartyCookies(homeFiltersWebView,true);
-        homeFiltersWebView.setWebChromeClient(new WebChromeClient(){
-            @Override public void onGeolocationPermissionsShowPrompt(
-                    String origin,android.webkit.GeolocationPermissions.Callback callback){
-                callback.invoke(origin,false,false);
-            }
-        });
+        // The only WebView with HomeNative is local, no remote page or iframe.
+        homeFiltersWebView.addJavascriptInterface(new HomeBridge(),"HomeNative");
         homeFiltersWebView.setWebViewClient(new WebViewClient(){
-            @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap favicon){
-                homeFiltersNavigation++;
-                homeFiltersAligned=false;
+            @Override public boolean shouldOverrideUrlLoading(WebView view,android.webkit.WebResourceRequest req){
+                return true; // No navigation from locally rendered HOME.
             }
             @Override public void onPageFinished(WebView view,String url){
-                if(!isOfficialSearchUrl(url))return;
-                alignHomeFilters(homeFiltersNavigation,20);
-            }
-            @Override public boolean shouldOverrideUrlLoading(
-                    WebView view,android.webkit.WebResourceRequest request){
-                if(!request.isForMainFrame())return false;
-                Uri uri=request.getUrl();
-                if(uri==null)return true;
-                if(isOfficialSearchUrl(uri.toString()))return false;
-                if(!"https".equalsIgnoreCase(uri.getScheme()))return true;
-                try{startActivity(new Intent(Intent.ACTION_VIEW,uri));}
-                catch(Exception ignored){Toast.makeText(MainActivity.this,
-                    "Link externo indisponível",Toast.LENGTH_SHORT).show();}
-                return true;
+                if(url!=null&&url.startsWith("https://pokesearch.invalid/"))syncHomeUi();
             }
         });
         filtersHost.addView(homeFiltersWebView,new FrameLayout.LayoutParams(-1,-1));
-        LinearLayout.LayoutParams filtersLp=new LinearLayout.LayoutParams(-1,0,1);
-        screen.addView(filtersHost,filtersLp);
-        homeFiltersWebView.loadUrl("https://pogocoordinates.com/search");
+        screen.addView(filtersHost,new LinearLayout.LayoutParams(-1,0,1));
+        // Local HTML, CSP connect-src none. No duplicate PoGoCoordinates WebView.
+        homeFiltersWebView.loadDataWithBaseURL("https://pokesearch.invalid/",
+            readAsset("home_v200.html"),"text/html","UTF-8",null);
         return frame;
     }
-    private boolean isOfficialSearchUrl(String url){
-        if(url==null)return false;
-        Uri uri=Uri.parse(url);
-        String host=uri.getHost();
-        return "https".equalsIgnoreCase(uri.getScheme())&&host!=null&&
-            (host.equalsIgnoreCase("pogocoordinates.com")||
-            host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"));
-    }
-    private void alignHomeFilters(final int generation,final int attemptsLeft){
+    private void syncHomeUi(){
         WebView view=homeFiltersWebView;
-        if(view==null||generation!=homeFiltersNavigation||homeFiltersAligned||
-            !isOfficialSearchUrl(view.getUrl()))return;
-        view.evaluateJavascript(HOME_V200_SAVED_FILTERS_JS,result->{
-            if(homeFiltersWebView!=view||generation!=homeFiltersNavigation||homeFiltersAligned)return;
-            if("true".equals(result)){homeFiltersAligned=true;return;}
-            if(attemptsLeft>0)view.postDelayed(()->alignHomeFilters(generation,attemptsLeft-1),400L);
-        });
+        if(view==null)return;
+        JSONObject state=HomeFilterState.snapshot(this);
+        view.evaluateJavascript("window.onHomeState("+state.toString()+")",null);
+    }
+    private void sendHomeAction(String action,Intent extras){
+        if(!OverlayService.isRunning())return;
+        Intent intent=extras!=null?extras:new Intent(this,OverlayService.class);
+        intent.setClass(this,OverlayService.class);
+        intent.setAction(action);
+        // Already running foreground service, no unrequested background start.
+        startService(intent);
+    }
+    private final class HomeBridge {
+        @android.webkit.JavascriptInterface public String snapshot(){
+            return HomeFilterState.snapshot(MainActivity.this).toString();
+        }
+        @android.webkit.JavascriptInterface public void applyConfig(String json){
+            if(json==null||json.length()>12000)return;
+            runOnUiThread(()->{
+                if(OverlayService.isRunning()){
+                    Intent i=new Intent(MainActivity.this,OverlayService.class);
+                    i.putExtra("config",json);
+                    sendHomeAction(HomeFilterState.ACTION_CONFIG,i);
+                }else if(!HomeFilterState.saveConfigIfStopped(MainActivity.this,json)){
+                    Toast.makeText(MainActivity.this,"Valores de filtro inválidos",Toast.LENGTH_SHORT).show();
+                }
+                syncHomeUi();
+            });
+        }
+        @android.webkit.JavascriptInterface public void setLocation(boolean enabled,String coords,int radius){
+            if(coords==null||coords.length()>128)return;
+            runOnUiThread(()->{
+                if(OverlayService.isRunning()){
+                    Intent i=new Intent(MainActivity.this,OverlayService.class);
+                    i.putExtra("enabled",enabled);i.putExtra("coords",coords);i.putExtra("radius",radius);
+                    sendHomeAction(HomeFilterState.ACTION_LOCATION,i);
+                }else if(!HomeFilterState.saveLocationIfStopped(MainActivity.this,enabled,coords,radius)){
+                    Toast.makeText(MainActivity.this,"Coordenadas inválidas",Toast.LENGTH_SHORT).show();
+                }
+                syncHomeUi();
+            });
+        }
+        @android.webkit.JavascriptInterface public void setShiny(boolean enabled){
+            runOnUiThread(()->{
+                boolean current=getSharedPreferences("prefs",0).getBoolean("shiny",false);
+                if(current!=enabled){
+                    if(OverlayService.isRunning()){
+                        Intent i=new Intent(MainActivity.this,OverlayService.class);
+                        i.putExtra("enabled",enabled);
+                        sendHomeAction(HomeFilterState.ACTION_SHINY,i);
+                    }else getSharedPreferences("prefs",0).edit().putBoolean("shiny",enabled).apply();
+                }
+                syncHomeUi();
+            });
+        }
+        @android.webkit.JavascriptInterface public void search(String payload){
+            if(payload==null||payload.length()>12000)return;
+            runOnUiThread(()->{
+                if(OverlayService.isRunning()){
+                    Intent intent=new Intent(MainActivity.this,OverlayService.class);
+                    intent.putExtra("config",payload);
+                    sendHomeAction(HomeFilterState.ACTION_SEARCH,intent);
+                }else {
+                    if(!HomeFilterState.saveConfigIfStopped(MainActivity.this,payload)){
+                        Toast.makeText(MainActivity.this,"Reveja os filtros antes da busca",Toast.LENGTH_LONG).show();return;
+                    }
+                    Toast.makeText(MainActivity.this,
+                        "Iniciando consulta no serviço oficial",Toast.LENGTH_LONG).show();
+                    startOverlay(true); // Permissions still apply; remain in HOME.
+                }
+            });
+        }
+        @android.webkit.JavascriptInterface public void suggest(String query){
+            if(query==null||query.length()>65)return;
+            runOnUiThread(()->{
+                if(OverlayService.isRunning()){
+                    Intent i=new Intent(MainActivity.this,OverlayService.class);
+                    i.putExtra("query",query);
+                    sendHomeAction(HomeFilterState.ACTION_SUGGEST,i);
+                }else if(homeFiltersWebView!=null)
+                    homeFiltersWebView.evaluateJavascript(
+                        "window.onHomeSuggestions({ok:false,reason:'Ative o overlay para obter opções oficiais'})",null);
+            });
+        }
+        @android.webkit.JavascriptInterface public void savePreset(String name,String value){
+            if(name==null||value==null||name.trim().length()<1||name.length()>36||value.length()>12000)return;
+            runOnUiThread(()->{
+                try{
+                    android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+                    JSONObject presets=new JSONObject(p.getString("homeSavedFilters","{}"));
+                    if(presets.length()>=30&&!presets.has(name))return;
+                    presets.put(name.trim(),new JSONObject(value));
+                    p.edit().putString("homeSavedFilters",presets.toString()).apply();syncHomeUi();
+                }catch(Exception ignored){}
+            });
+        }
+        @android.webkit.JavascriptInterface public void deletePreset(String name){
+            if(name==null||name.length()>36)return;
+            runOnUiThread(()->{
+                try{
+                    android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+                    JSONObject presets=new JSONObject(p.getString("homeSavedFilters","{}"));
+                    presets.remove(name);p.edit().putString("homeSavedFilters",presets.toString()).apply();syncHomeUi();
+                }catch(Exception ignored){}
+            });
+        }
+        @android.webkit.JavascriptInterface public void openAlerts(){runOnUiThread(()->{
+            new AlertDialog.Builder(MainActivity.this).setTitle("Alertas do PokeSearch")
+                .setMessage("As notificações são enviadas apenas para resultados confirmados pelo site. Configure os canais e favoritos no overlay.")
+                .setPositiveButton("Configurar permissão",(d,w)->requestOverlayNotificationPermission())
+                .setNegativeButton("Fechar",null).show();
+        });}
     }
     private void openTrainerManagement(){
         String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
@@ -800,6 +896,19 @@ public class MainActivity extends Activity {
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
+        homeForeground=true;
+        android.content.IntentFilter filter=new android.content.IntentFilter(HomeFilterState.ACTION_EVENT);
+        if(android.os.Build.VERSION.SDK_INT>=33)
+            registerReceiver(homeEvents,filter,android.content.Context.RECEIVER_NOT_EXPORTED);
+        else registerReceiver(homeEvents,filter);
+        homeHandler.removeCallbacks(homePoll);
+        homePoll.run();
+        sendHomeAction(HomeFilterState.ACTION_SYNC,null);
+    }
+    @Override protected void onPause(){
+        homeForeground=false;homeHandler.removeCallbacks(homePoll);
+        try{unregisterReceiver(homeEvents);}catch(IllegalArgumentException ignored){}
+        super.onPause();
     }
     private void handleShinyLoginIntent(Intent intent){
         if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
@@ -1378,7 +1487,10 @@ public class MainActivity extends Activity {
             return "void 0";
         }
     }
-    private void startOverlay(){
+    private void startOverlay(){startOverlay(false);}
+    private boolean homeStartPending=false;
+    private void startOverlay(boolean stayOnHome){
+        homeStartPending=stayOnHome;
         CookieManager.getInstance().flush();
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -1398,11 +1510,11 @@ public class MainActivity extends Activity {
         Intent i=new Intent(this,OverlayService.class);
         i.setAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
         if(Build.VERSION.SDK_INT>=26)startForegroundService(i);else startService(i);
-        moveTaskToBack(true);
+        if(!stayOnHome)moveTaskToBack(true);
     }
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
-        if(req==101&&Settings.canDrawOverlays(this))startOverlay();
+        if(req==101&&Settings.canDrawOverlays(this))startOverlay(homeStartPending);
         if(req==302){
             if(result==RESULT_OK&&data!=null&&data.getData()!=null&&!pendingExportText.isEmpty()){
                 try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){
@@ -1439,7 +1551,7 @@ public class MainActivity extends Activity {
     }
     @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
         super.onRequestPermissionsResult(requestCode,permissions,results);
-        if(requestCode==202)startOverlay();
+        if(requestCode==202)startOverlay(homeStartPending);
         if(requestCode==204){
             boolean granted=results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED;
             Toast.makeText(this,granted&&WatchAlerts.permissionGranted(this)?
@@ -1462,13 +1574,9 @@ public class MainActivity extends Activity {
         if(loginDialog!=null&&loginDialog.isShowing()&&website!=null&&website.canGoBack()){
             website.goBack();return;
         }
-        if(homeFiltersWebView!=null&&homeFiltersWebView.canGoBack()){
-            homeFiltersWebView.goBack();return;
-        }
         super.onBackPressed();
     }
     @Override protected void onDestroy(){
-        ++homeFiltersNavigation;
         if(homeFiltersWebView!=null){
             homeFiltersWebView.stopLoading();homeFiltersWebView.destroy();homeFiltersWebView=null;
         }

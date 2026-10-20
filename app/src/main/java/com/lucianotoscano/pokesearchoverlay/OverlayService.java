@@ -353,6 +353,22 @@ public class OverlayService extends Service {
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
         if(selected>=0)showDetails(selected);
+        // HOME-V200-02: package-scoped broadcast of the *same* authoritative
+        // filter state/results already supplied to overlay windows. Never
+        // label cached or unverified results as fresh site responses.
+        try {
+            JSONObject payload=new JSONObject();
+            payload.put("kind","result");
+            payload.put("cards",new JSONArray(results));
+            payload.put("status",status);
+            payload.put("stale",resultsStale);
+            payload.put("confirmed",!resultsStale&&!searchInProgress&&
+                submittedSearchGeneration==requestGeneration);
+            Intent signal=new Intent(HomeFilterState.ACTION_EVENT);
+            signal.setPackage(getPackageName());
+            signal.putExtra("payload",payload.toString());
+            sendBroadcast(signal);
+        }catch(org.json.JSONException ignored){}
     }
     private void status(String s){
         status=s;
@@ -2398,8 +2414,69 @@ public class OverlayService extends Service {
         }
         update(); // Local UI only; does not call refresh or navigate the website.
     }
+    private void sendHomeSuggestions(String query,int generation,int tries){
+        if(stopped||loginPaused||generation!=requestGeneration)return;
+        if(searchInProgress){sendHomeSuggestionError("Aguarde a busca terminar");return;}
+        execute("pokemonSuggest:"+JSONObject.quote(query),response->{
+            if(stopped||generation!=requestGeneration)return;
+            if(response.optBoolean("pending",false)&&tries<5){
+                handler.postDelayed(()->sendHomeSuggestions(query,generation,tries+1),270L);
+                return;
+            }
+            try {
+                JSONObject wrapper=new JSONObject();
+                wrapper.put("kind","suggestions");wrapper.put("response",response);
+                Intent b=new Intent(HomeFilterState.ACTION_EVENT);
+                b.setPackage(getPackageName());b.putExtra("payload",wrapper.toString());
+                sendBroadcast(b);
+            }catch(org.json.JSONException ignored){}
+        });
+    }
+    private void sendHomeSuggestionError(String reason){
+        try{
+            JSONObject response=new JSONObject(),wrapper=new JSONObject();
+            response.put("ok",false);response.put("reason",reason);
+            wrapper.put("kind","suggestions");wrapper.put("response",response);
+            Intent b=new Intent(HomeFilterState.ACTION_EVENT);
+            b.setPackage(getPackageName());b.putExtra("payload",wrapper.toString());
+            sendBroadcast(b);
+        }catch(org.json.JSONException ignored){}
+    }
     @Override public int onStartCommand(Intent i,int flags,int id){
         String action=i==null||i.getAction()==null?"":i.getAction();
+        // HOME and overlay share the existing Bridge validators and one actual
+        // PoGoCoordinates session. A local WebView never performs remote Search.
+        if(HomeFilterState.ACTION_CONFIG.equals(action)){
+            String json=i.getStringExtra("config");
+            if(json!=null&&json.length()<12000)new Bridge().setSearchConfig(json);
+            return START_STICKY;
+        }
+        if(HomeFilterState.ACTION_LOCATION.equals(action)){
+            new Bridge().setLocation(i.getBooleanExtra("enabled",false),
+                i.getStringExtra("coords"),i.getIntExtra("radius",0));
+            return START_STICKY;
+        }
+        if(HomeFilterState.ACTION_SHINY.equals(action)){
+            boolean wanted=i.getBooleanExtra("enabled",false);
+            if(shiny!=wanted)new Bridge().shiny();
+            return START_STICKY;
+        }
+        if(HomeFilterState.ACTION_SYNC.equals(action)){
+            update();return START_STICKY;
+        }
+        if(HomeFilterState.ACTION_SEARCH.equals(action)){
+            String requested=i.getStringExtra("config");
+            if(requested!=null&&requested.length()<12000){
+                // Same validator + queued refresh path used by floating menus.
+                new Bridge().setSearchConfig(requested);
+            }else handler.post(()->{if(!stopped&&!loginPaused)refresh(true);});
+            return START_STICKY;
+        }
+        if(HomeFilterState.ACTION_SUGGEST.equals(action)){
+            String query=i.getStringExtra("query");
+            if(query!=null&&query.length()<=65)sendHomeSuggestions(query,requestGeneration,0);
+            return START_STICKY;
+        }
         if("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS".equals(action)){
             syncPreferencesWithoutSearch();
             return START_STICKY;
