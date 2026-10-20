@@ -14,6 +14,12 @@ import java.security.MessageDigest;
 /** Defense in depth for distributed builds; certificate and six local asset pins. */
 public final class IntegrityGuard {
     private static final String PACKAGE = "com.lucianotoscano.pokesearch";
+    // Keep this independent runtime allowlist aligned with Gradle's
+    // checkedAssetNames. CI checks exact names/order, not just the count.
+    private static final String[] CHECKED_ASSET_NAMES = {
+        "dock.html", "overlay.html", "detail.html", "probe.js",
+        "login_entry.js", "shiny_login.js", "home_v200.html"
+    };
     private static final String OFFICIAL_PIX_SHA256 = "c2862867b812f44058a0a4c78d69ead87cb5195a0cd00072575e1a2d29c707fe";
     private IntegrityGuard() {}
     static boolean matchesPix(String payload) {
@@ -38,12 +44,15 @@ public final class IntegrityGuard {
         String hashes=BuildConfig.EXPECTED_ASSET_SHA256;
         if(hashes==null||hashes.isEmpty())return false;
         String[] entries=hashes.split(";",-1);
-        if(entries.length!=6)return false;
+        if(entries.length!=CHECKED_ASSET_NAMES.length)return false;
         try{
-            for(String entry:entries){
+            for(int i=0;i<entries.length;i++){
+                String entry=entries[i];
                 int eq=entry.indexOf('=');
                 if(eq<=0||eq==entry.length()-1)return false;
                 String path=entry.substring(0,eq);
+                // Reject duplicate, absent, reordered or unexpected asset entries.
+                if(!path.equals(CHECKED_ASSET_NAMES[i]))return false;
                 byte[] expected=fromHex(entry.substring(eq+1));
                 if(expected==null||path.contains("..")||path.indexOf('/')>=0)return false;
                 MessageDigest hash=MessageDigest.getInstance("SHA-256");

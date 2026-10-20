@@ -68,10 +68,19 @@ check("runtime signer pin uses current certificate",()=>{
  assert.doesNotMatch(guard,/getSigningCertificateHistory\(\)/);
  assert.match(guard,/EXPECTED_SIGNING_CERT_SHA256/);
 });
-check("six critical assets checked at runtime",()=>{
+check("all critical assets checked at runtime and pinned names synchronized",()=>{
  const guard=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/IntegrityGuard.java");
  assert.match(gradle,/assetChecksums/);
  assert.match(guard,/MessageDigest\.isEqual\(hash\.digest\(\),expected\)/);
+ const gradleNames=gradle.match(/val checkedAssetNames = listOf\(([\s\S]*?)\)/);
+ const guardNames=guard.match(/private static final String\[\] CHECKED_ASSET_NAMES = \{([\s\S]*?)\};/);
+ assert.ok(gradleNames&&guardNames,"Asset allowlists must exist");
+ const names=content=>[...content.matchAll(/"([^"]+)"/g)].map(match=>match[1]);
+ assert.deepEqual(names(gradleNames[1]),names(guardNames[1]),
+   "Gradle/R8 asset checksums must match the runtime allowlist in exact order");
+ assert.equal(names(gradleNames[1]).length,7,"v2.00 requires seven pinned assets");
+ assert.match(guard,/entries\.length!=CHECKED_ASSET_NAMES\.length/);
+ assert.match(guard,/!path\.equals\(CHECKED_ASSET_NAMES\[i\]\)/);
 });
 check("stable signed debug enables R8",()=>{
  const rules=read("app/proguard-rules.pro");
