@@ -47,6 +47,8 @@ body{padding:0 0 15px;background:#0c0c0f;color:#edebf0}
 .site-card-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;font-size:10px}
 .site-card-loc{font-size:10px;color:#cecad4}
 .site-card-copy{background:#ff123f;color:white;border-radius:22px;font-weight:700;padding:8px;width:100%}
+/* Hide inactive IV mode completely; keep Weather visible alongside both modes. */
+.iv-fields{display:contents}
 </style></head><body>
 <header class="site-search-head"><h1>Pokesearch</h1><p>Find live Pokemon GO spawns by IV, CP, level, size, form, and location.</p><nav class="search-tabs" aria-label="Search categories">
 <button type="button" class="active" data-search-tab="pokemon">Pokémon</button>
@@ -71,7 +73,7 @@ body{padding:0 0 15px;background:#0c0c0f;color:#edebf0}
 <div class="header-row"><label>Filter by</label><div class="seg" id="filterMode"><button data-filtermode="stats" class="active">Stats</button><button data-filtermode="pvp">PvP</button></div></div>
 <div class="layout sep"><div><label>CP</label><div class="layout"><input id="cpMin" class="field" type="number" min="0" max="99999" placeholder="Min"><input id="cpMax" class="field" type="number" min="0" max="99999" placeholder="Max"></div></div><div><label>Level</label><div class="layout"><input id="levelMin" class="field" type="number" min="0" max="99" placeholder="Min"><input id="levelMax" class="field" type="number" min="0" max="99" placeholder="Max"></div></div></div>
 <div class="header-row"><label>IV</label><div class="seg" id="ivMode"><button class="active" data-ivmode="percent">% IV</button><button data-ivmode="raw">Raw IV</button></div></div>
-<div id="statsMode"><div class="layout triple"><input class="field" id="percentMin" aria-label="IV mínimo" type="number" min="0" max="100" placeholder="Min %"><input class="field" id="percentMax" aria-label="IV máximo" type="number" min="0" max="100" placeholder="Max %"><select class="select" id="weather" aria-label="Weather"><option value="">Weather · Any</option><option>Clear</option><option>Partly Cloudy</option><option>Cloudy</option><option>Rainy</option><option>Snow</option><option>Fog</option><option>Windy</option><option>Sunny</option></select></div><div class="layout triple" id="rawFields" style="margin-top:8px"><input id="attack" class="field" type="number" min="0" max="15" placeholder="A"><input id="defense" class="field" type="number" min="0" max="15" placeholder="D"><input id="stamina" class="field" type="number" min="0" max="15" placeholder="S"></div></div>
+<div id="statsMode"><div class="layout triple" id="ivInputsRow"><div id="percentFields" class="iv-fields"><input class="field" id="percentMin" aria-label="IV mínimo" type="number" min="0" max="100" placeholder="Min %"><input class="field" id="percentMax" aria-label="IV máximo" type="number" min="0" max="100" placeholder="Max %"></div><div id="rawFields" class="iv-fields hidden"><input id="attack" class="field" type="number" min="0" max="15" placeholder="A"><input id="defense" class="field" type="number" min="0" max="15" placeholder="D"><input id="stamina" class="field" type="number" min="0" max="15" placeholder="S"></div><select class="select" id="weather" aria-label="Weather"><option value="">Weather · Any</option><option>Clear</option><option>Partly Cloudy</option><option>Cloudy</option><option>Rainy</option><option>Snow</option><option>Fog</option><option>Windy</option><option>Sunny</option></select></div></div>
 <div id="pvpMode" class="hidden"><div class="layout"><div><label>Liga</label><select class="select" id="league"><option value="gl">Great League</option><option value="ul">Ultra League</option></select></div><div><label>Top ranking</label><input id="rank" class="field" type="number" min="1" max="50" placeholder="1–50"></div></div><label>Min PvP CP</label><input id="minPvpCp" class="field" type="number" min="0" max="99999" placeholder="Opcional"><label class="filter-row"><input id="includePreviousEvolutions" type="checkbox" checked> Incluir pré-evoluções quando suportado</label></div>
 <div class="layout triple sep"><div><label>Size</label><select class="select" id="size"><option value="">Any</option><option>XXS</option><option>XS</option><option>Normal</option><option>XL</option><option>XXL</option></select></div><div><label>Form</label><input id="form" class="field" placeholder="Any"></div><div><label>Gender</label><select class="select" id="gender"><option value="">Any</option><option>Male</option><option>Female</option><option>Genderless</option></select></div></div>
 <details class="sep" id="advancedSite"><summary>Advanced <span class="site-vip-pill">VIP</span></summary><p class="small">Os filtros avançados dependem da conta e da disponibilidade do PoGoCoordinates.</p><button type="button" class="smallBtn" id="advancedOfficial">Abrir opções oficiais</button></details>
@@ -126,7 +128,12 @@ function syncInputs(){keys.forEach(k=>{if($(k))$(k).value=safe(cfg[k]);});$('lea
  $('shinyToggle').classList.toggle('active',requestedShiny);$('coords').value=locCoords;$('radius').value=locEnabled?safe(locRadius):'';
  updateSeg('filterMode','data-filtermode',['gl','ul'].includes(cfg.mode)?'pvp':'stats');updateSeg('ivMode','data-ivmode',cfg.mode==='raw'?'raw':'percent');
  $('statsMode').classList.toggle('hidden',['gl','ul'].includes(cfg.mode));$('pvpMode').classList.toggle('hidden',!['gl','ul'].includes(cfg.mode));
- $('rawFields').classList.toggle('hidden',cfg.mode!=='raw');chips();}
+ const raw=cfg.mode==='raw';
+ $('rawFields').classList.toggle('hidden',!raw);
+ $('percentFields').classList.toggle('hidden',raw);
+ $('ivInputsRow').classList.toggle('triple',!raw);
+ $('ivInputsRow').classList.toggle('quad',raw);
+ chips();}
 function applySnapshot(s,force=false){if(!s||!s.config)return;const next=JSON.stringify([s.config,s.shinyRequested,s.locationEnabled,s.locationCoords,s.locationRadius]);
  if((dirty||Date.now()<pendingUntil)&&!force)return;if(next!==serverVersion||force){serverVersion=next;cfg={...cfg,...s.config};requestedShiny=!!s.shinyRequested;locEnabled=!!s.locationEnabled;locCoords=s.locationCoords||'';locRadius=s.locationRadius||0;syncInputs();}
  remote=!!s.overlayRunning;saved=s.savedFilters||saved;updateSaved();const t=s.status||'Aguardando busca';if(!dirty)$('status').textContent=t;

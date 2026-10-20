@@ -2578,3 +2578,13 @@ Correção de confirmação pós-busca de espécies e formas foi preparada no ZI
 Após montar a navegação da página completa, a revisão encontrou um erro de **ordem do DOM**: o rodapé com `siteTerms/sitePrivacy/siteRefunds` tinha sido inserido após `</script>`, enquanto `home_v200.html` registrava eventos desses botões dentro do script executado imediatamente. No Android isso produziria um `TypeError` antes de inicializar toda a HOME.
 
 **Correção preventiva:** mover o rodapé para antes do único `<script>`, mantendo CSP e o WebView local sem rede. Ampliar `app/tests/home-v200.test.js` com verificação das posições dos três controles antes de `<script>`. Teste interativo em Chromium com **ponte HomeNative simulada**, viewport mobile, confirmou ausência de erros JavaScript ao abrir Raids, Terms e Map (apenas envio da ação à ponte simulada); isto **não prova** o funcionamento do site em Android real. Nenhum APK compilado; respeitar assinatura e PR Draft. Nenhuma mudança no overlay neste ajuste.
+
+### 12.101 SEARCH-IV-MODE — correção visual % IV, Raw IV e PvP (20/10/2026)
+
+**Continuidade exata após 12.100, sem reiniciar:** na HOME v2.00 a seção Stats exibia simultaneamente campos % IV e Raw IV, diferente do comportamento do formulário PoGoCoordinates `/search`. O Weather permanecia na mesma linha, mas os campos extras geravam duplicação e layout incorreto.
+
+**Mudanças locais no `app/src/main/assets/home_v200.html`:** adicionar grupo `percentFields` (Min %, Max %) e `rawFields` (A, D, S), ambos na mesma área de entrada `ivInputsRow`; alterar a lógica `syncInputs()` para mostrar exatamente um dos dois grupos conforme `cfg.mode`; em Raw IV usar quatro colunas (A/D/S/Weather), em % IV três (Min/Max/Weather), mantendo Weather e sem mudar as funções compartilhadas HOME/overlay. O modo PvP continua com painel separado. CSS `.iv-fields{display:contents}` permite os campos ativos participarem diretamente do grid, e `.hidden` oculta integralmente o grupo inativo.
+
+**Validação:** script inline analisado sem erro de sintaxe; simulação JavaScript de quatro estados `raw`, `percent`, `gl`, `ul` aprovou visibilidade exclusiva, painel Stats/PvP e layout de colunas; `app/tests/home-v200.test.js` recebe contrato de regressão, total 33 contratos da HOME. Isso **não prova funcionamento em Android real**. Integração de abas não-Pokémon ainda usa site oficial separado, sem sincronização completa. Não declarar a réplica inteira 1:1 pronta enquanto ações do site não forem verificadas.
+
+**Segurança/governança:** manter assinatura, backup `backup/pokesearch-v200-pre-search-replica-20261020`, PR #27 Draft, sem merge; gatilho automático de APK desativado. Usuário não solicitou build neste turno, portanto **não gerar APK** até autorização explícita.

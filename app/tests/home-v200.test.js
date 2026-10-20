@@ -185,5 +185,15 @@ check('Footer controls exist before the inline HOME script runs',()=>{
   assert.ok(at>=0&&at<scriptStart,name+' must exist before listeners attach');
  }
 });
+check('Raw IV and percent IV never share visible inputs',()=>{
+ assert.ok(home.includes('id="percentFields"'));
+ assert.ok(home.includes('id="rawFields" class="iv-fields hidden"'));
+ assert.ok(home.includes('id="ivInputsRow"'));
+ assert.ok(home.includes("$('percentFields').classList.toggle('hidden',raw)"));
+ assert.ok(home.includes("$('rawFields').classList.toggle('hidden',!raw)"));
+ assert.ok(home.includes("$('ivInputsRow').classList.toggle('quad',raw)"));
+ assert.ok(home.includes("$('ivInputsRow').classList.toggle('triple',!raw)"));
+ assert.ok(home.indexOf('id="weather"')>home.indexOf('id="rawFields"'));
+});
 console.log('PokeSearch HOME v2.00 unified state: '+count+' tests passed');
 if(process.exitCode)process.exit(process.exitCode);
