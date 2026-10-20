@@ -1021,7 +1021,7 @@ public class OverlayService extends Service {
                     prepared.optString("reason","Não foi possível confirmar a aba Stats/PvP."));
                 return;
             }
-            status("Preparando "+("raw".equals(mode)?"Raw IV":"percent".equals(mode)?"IV%":"gl".equals(mode)?"Grande Liga":"Ultra Liga")+"...");
+            status("Preenchendo filtros… "+("raw".equals(mode)?"Raw IV":"percent".equals(mode)?"IV%":"gl".equals(mode)?"Grande Liga":"Ultra Liga"));
             handler.postDelayed(()->{
                 if(stopped||loginPaused||generation!=requestGeneration)return;
                 configureSearchWithRetry(generation,manual,0);
@@ -1332,7 +1332,7 @@ public class OverlayService extends Service {
                             .putLong("lastNetworkSearchAt",submittedAt).apply();
                         BugReport.log(this,"SUBMIT","Busca "+mode+" Shiny="+shiny+
                             " geofiltro="+(locationEnabled?"confirmado":"OFF"));
-                        status(manual?"Busca manual em andamento...":"Buscando...");
+                        status("Buscando…");
                         pollSearch(generation,0,manual);
                     });
                 });
@@ -1595,6 +1595,12 @@ public class OverlayService extends Service {
             " • encontrados "+r.optInt("found",0));
         JSONArray items=r.optJSONArray("cards");
         if(items==null)items=new JSONArray();
+        // PSC-02: never display, cache or alert on more than ten site cards.
+        if(items.length()>10){
+            JSONArray firstTen=new JSONArray();
+            for(int i=0;i<10;i++)firstTen.put(items.opt(i));
+            items=firstTen;
+        }
         // Defence in depth: JS collection can never be the sole IV gate.
         // Filter BEFORE cache, display, history and any general/watch alert.
         if("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)){
@@ -1640,8 +1646,10 @@ public class OverlayService extends Service {
         if(r.optBoolean("uncertain"))
             status(("raw".equals(mode)||"percent".equals(mode)||"iv".equals(mode))
                 ?"Alguns IVs não comprovados foram ignorados.":"Alguns rankings PvP não confirmados.");
-        else if(sorted.length()==0)status("Sem resultados confirmados");
-        else status(sorted.length()+" Pokémon atualizados");
+        else if(sorted.length()==0&&r.optBoolean("explicitEmpty",false))
+            status("0 resultados reais");
+        else if(sorted.length()==0)status("⚠ Resultados não comprovados");
+        else status(sorted.length()+" resultados atualizados");
     }
     private void resize(int h){
         // The gear window never expands with the Pokémon results.

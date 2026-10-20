@@ -105,6 +105,11 @@ function run(action,mode,shinyOnly,opts={}){
     button.parentElement=box;
     cardButtons=[button];
   }
+  if(opts.searchButton){
+    const search=element("Search",{}, {tagName:"BUTTON"});
+    search.click=()=>{opts.searchClicks=(opts.searchClicks||0)+1;};
+    cardButtons.push(search);
+  }
   if(opts.pending||opts.pendingText){
     pending=[element(opts.pendingText||"Link a Pokémon GO account. Your trainer code: 12 digits")];
   }
@@ -577,4 +582,45 @@ assert.equal(rankState.pvp.rankInput.value,"50","Input changed to the correct ra
 const secondRank=run("configureSearch","gl",false,rankState);
 assert.equal(secondRank.configured,true,"Next round confirms GL and rank 50");
 checked++;
+// STAGE-6: each React numeric field must settle before the next is edited.
+{
+ const begin=source.indexOf("function extras(action){");
+ const end=source.indexOf("function currentCoreControlsVisible(){",begin);
+ assert.ok(begin>0&&end>begin);
+ const edits=[],fields={cpMin:{value:"",disabled:false,readOnly:false},cpMax:{value:"",disabled:false,readOnly:false}};
+ const factory=new Function("filters","pokemonListSelection","EXTRA_LABELS","extraNumberKeys",
+  "extraNumberField","valueInput","vis","extraSelect","extraMatches",
+  "let transientPending=false;"+source.slice(begin,end)+"return extras;");
+ const extras=factory({cpMin:"100",cpMax:"500"},()=>({ok:true}),{},()=>["cpMin","cpMax"],
+  key=>fields[key],(field,value)=>{edits.push(value);field.value=String(value);return true;},()=>true,
+  ()=>true,()=>true);
+ const first=extras("apply");
+ assert.equal(first.ok,false);assert.equal(first.pending,true);
+ assert.deepEqual(edits,["100"],"Only CP Min may change on the first React turn");
+ const second=extras("apply");
+ assert.equal(second.ok,false);assert.equal(second.pending,true);
+ assert.deepEqual(edits,["100","500"],"Only CP Max changes on the next React turn");
+ assert.equal(extras("apply").ok,true);
+ assert.equal(extras("verify").ok,true);
+ // Simulate a React rollback, then demand reapplication instead of false success.
+ fields.cpMin.value="";
+ assert.equal(extras("verify").ok,false);
+ assert.equal(extras("apply").pending,true);
+ assert.deepEqual(edits,["100","500","100"]);
+ checked+=6;
+}
+// STAGE-6: a submit click is forbidden when filters have changed after verification.
+{
+ const wrong={tabs:{top:"PvP",sub:""},pvp:{rank:"1",league:"Ultra League",prior:"Yes"},searchButton:true};
+ const rejected=run("submitSearch","gl",false,wrong);
+ assert.equal(rejected.ok,false);
+ assert.equal(rejected.stage,"pre-submit-mismatch");
+ assert.equal(wrong.searchClicks||0,0);
+ const right={tabs:{top:"PvP",sub:""},pvp:{rank:"1",league:"Great League",prior:"Yes"},searchButton:true};
+ const clicked=run("submitSearch","gl",false,right);
+ assert.equal(clicked.ok,true);
+ assert.equal(clicked.stage,"submitted");
+ assert.equal(right.searchClicks,1,"Exactly one click when all requested settings still match");
+ checked+=5;
+}
 console.log("PokeSearch probe contract: "+checked+" tests passed");

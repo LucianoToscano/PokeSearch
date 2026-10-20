@@ -1952,6 +1952,21 @@ test("React tab preflight retries are generation-guarded and bounded",
   service.includes('prepared.optBoolean("pending",false)&&attempt<10')&&
   service.includes('prepareSearchWithRetry(generation,manual,attempt+1)')&&
   service.includes('generation!=requestGeneration'));
+test("STAGE-7 overlay status distinguishes preparing, searching, zero real and updated",()=>
+ service.includes('status("Preenchendo filtros… ')&&
+ service.includes('status("Buscando…")')&&
+ service.includes('sorted.length()==0&&r.optBoolean("explicitEmpty",false)')&&
+ service.includes('status("0 resultados reais")')&&
+ service.includes('status(sorted.length()+" resultados atualizados")')&&
+ service.includes('if(count()>0)resultsStale=true;'));
+test("STAGE-7 native result gate caps cards to 10 before cache, history and alerts",()=>{
+ const start=service.indexOf('private void applyCollectedResults(JSONObject r)');
+ const cap=service.indexOf('if(items.length()>10){',start);
+ const evidence=service.indexOf('// Defence in depth: JS collection',start);
+ const saved=service.indexOf('rememberConfirmedPreview(sorted,now);',start);
+ return start>0&&cap>start&&cap<evidence&&evidence<saved&&
+  service.includes('for(int i=0;i<10;i++)firstTen.put(items.opt(i));');
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 

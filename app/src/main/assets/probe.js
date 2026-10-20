@@ -644,15 +644,31 @@ function extras(action){
   if(!ok)failed.push(key);
   if(transientPending)break; // one portal dropdown at a time
  }
+ // Controlled React inputs may rerender after *each* input/change event.
+ // Set just one CP/Level/minPvpCp field in a given evaluateJavascript roundtrip.
+ // Every following roundtrip independently reads back the new DOM value.
  if(!transientPending)for(const key of extraNumberKeys()){
-  const want=String(filters[key]||"").trim(),input=extraNumberField(key);
+  const provided=filters[key];
+  const want=provided==null?"":String(provided).trim(),input=extraNumberField(key);
   if(!want&&!resetKeys.includes(key))continue;
   if(want&&!input){failed.push(key);continue;}
   if(!input)continue;
-  const ok=action==="apply"?valueInput(input,want):String(input.value||"").trim()===want;
-  if(!ok)failed.push(key);
+  const actual=String(input.value??"").trim();
+  if(actual===want)continue;
+  if(action!=="apply"){failed.push(key);continue;}
+  if(input.disabled||input.readOnly||!vis(input)||!valueInput(input,want)){
+   failed.push(key);continue;
+  }
+  // Even if input.value looks correct immediately, React may still revert it.
+  transientPending=true;
+  failed.push(key);
+  break;
  }
- return {ok:failed.length===0,pending:action==="apply"&&transientPending,reason:"Filtros adicionais: "+failed.join(", ")};
+ return {ok:failed.length===0&&!transientPending,
+  pending:action==="apply"&&transientPending,
+  stage:transientPending?"awaiting-react-fields":"checked-extras",
+  reason:transientPending?"Aguardando atualização React de filtro adicional":
+   "Filtros adicionais: "+failed.join(", ")};
 }
 function currentCoreControlsVisible(){
  if(mode==="percent")return percentageIVInputs().length===2;
@@ -1120,11 +1136,19 @@ if(action==="configureSearch"){
  return JSON.stringify({ok:true,configured,pending:other.pending||transientPending,reason:other.reason,shinyKnown:existing!==null,stage:"configure"});
 }
 if(action==="submitSearch"){
+ // Native has already verified Shiny + Coords in this requestGeneration.
+ // Recheck the core and explicitly requested extras at the *click boundary*.
+ // No data is submitted if React reset a value between native verification
+ // and this final evaluateJavascript call.
+ const verified=check();
+ if(!verified.ok)return JSON.stringify({ok:false,stage:"pre-submit-mismatch",
+  reason:verified.reason||"Filtro alterado antes de Search"});
  const b=oneButton("Search");
- if(!b)return JSON.stringify({ok:false,reason:"Botão Search não localizado"});
+ if(!b)return JSON.stringify({ok:false,stage:"missing-search",reason:"Botão Search não localizado"});
  if(b.disabled||b.getAttribute("aria-disabled")==="true")
-  return JSON.stringify({ok:false,reason:"Botão Search indisponível"});
+  return JSON.stringify({ok:false,stage:"disabled-search",reason:"Botão Search indisponível"});
  b.click();
+ // `submitted` means only a confirmed click, NEVER completed search/results.
  return JSON.stringify({ok:true,stage:"submitted"});
 }
 if(action==="search"){
