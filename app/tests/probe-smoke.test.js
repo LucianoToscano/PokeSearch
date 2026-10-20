@@ -48,7 +48,7 @@ function run(action,mode,shinyOnly,opts={}){
     lab.parentElement=parent;all.push(lab);
   }
   if(opts.pvp){
-    const rank=element("",{}, {tagName:"INPUT",value:String(opts.pvp.rank||"1")});
+    const rank=opts.pvp.rankInput||(opts.pvp.rankInput=element("",{}, {tagName:"INPUT",value:String(opts.pvp.rank||"1")}));
     const league=element("Great League",{}, {tagName:"SELECT",selectedOptions:[element(opts.pvp.league||"Great League")]});
     const prior=element("Yes",{}, {tagName:"SELECT",selectedOptions:[element(opts.pvp.prior||"Yes")]});
     for(const [label,control] of [["Top ranking",rank],["League",league],["Include previous evolutions",prior]]){
@@ -560,4 +560,21 @@ checked++;
  assert.equal(parse(card,0).distance,'');
  checked+=6;
 }
+// GL/UL tab changes need an independently confirmed React render cycle.
+const tabCycle={top:"Stats",sub:"Raw IV"};
+const pendingTab=run("prepareSearch","gl",false,{tabs:tabCycle});
+assert.equal(pendingTab.ok,false,"Clicking PvP is not confirmation of selecting PvP");
+assert.equal(pendingTab.pending,true,"Preflight reports pending until tab state settles");
+assert.equal(tabCycle.top,"PvP","Preflight clicks the real PvP tab");
+assert.equal(run("prepareSearch","gl",false,{tabs:tabCycle}).ok,true);
+checked++;
+// Top rank input must be edited on its own roundtrip and read back after React.
+const rankState={tabs:{top:"PvP",sub:""},pvp:{rank:"1",league:"Great League",prior:"Yes"},config:{glRank:50}};
+const firstRank=run("configureSearch","gl",false,rankState);
+assert.equal(firstRank.configured,false,"Typing the ranking is not finished selection");
+assert.equal(firstRank.pending,true,"Ranking must wait for a new React cycle");
+assert.equal(rankState.pvp.rankInput.value,"50","Input changed to the correct ranking");
+const secondRank=run("configureSearch","gl",false,rankState);
+assert.equal(secondRank.configured,true,"Next round confirms GL and rank 50");
+checked++;
 console.log("PokeSearch probe contract: "+checked+" tests passed");

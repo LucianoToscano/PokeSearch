@@ -1947,6 +1947,11 @@ test("SITE-POKEMON-05 12-icon toolbar & no personal GPS remain intact",()=>
  !probe.includes('navigator.geolocation')&&
  dock.includes('items.slice(0,10)')&&
  service.includes('"locationCoords"'));
+test("React tab preflight retries are generation-guarded and bounded",
+  service.includes('private void prepareSearchWithRetry(int generation,boolean manual,int attempt)')&&
+  service.includes('prepared.optBoolean("pending",false)&&attempt<10')&&
+  service.includes('prepareSearchWithRetry(generation,manual,attempt+1)')&&
+  service.includes('generation!=requestGeneration'));
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 

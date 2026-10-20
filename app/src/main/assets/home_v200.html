@@ -266,7 +266,7 @@ $('notify').onclick=()=>official('notify');
 $('search').onclick=()=>{if(dirty){commit();if(dirty)return;}HomeNative.search(JSON.stringify({...cfg}));$('status').textContent='Solicitando busca oficial...';};
 function renderResults(cards,confirmed,stale){
  const root=$('resultsList');root.replaceChildren();
- const filtered=Array.isArray(cards)?cards.slice(0,100):[];
+ const filtered=Array.isArray(cards)?cards.slice(0,10):[];
  $('resultCount').textContent=filtered.length+' spawns';
  if(!filtered.length){
   const e=document.createElement('div');e.className='empty-notice';e.textContent='Nenhum resultado confirmado para esta busca.';root.append(e);return;

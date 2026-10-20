@@ -39,21 +39,30 @@ function optionElements(){return elements('[role=option],[role=menuitemradio],[d
 function findOption(want){return optionElements().find(o=>text(o).toLowerCase()===String(want).toLowerCase())||null;}
 function choice(label,want){
  const e=field(label);
- if(!e)return false;
- if(e.tagName==="SELECT"){
-  const opt=Array.from(e.options).find(o=>text(o).toLowerCase()===want.toLowerCase());
-  if(!opt)return false;
-  e.value=opt.value;e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));
-  return true;
+ if(!e||e.disabled)return false;
+ if(e.tagName==='SELECT'){
+  const current=readChoice(label);
+  if(current&&current.toLowerCase()===want.toLowerCase())return true;
+  const choices=Array.from(e.options||[]).filter(o=>text(o).toLowerCase()===want.toLowerCase());
+  if(choices.length!==1)return false;
+  e.value=choices[0].value;
+  e.dispatchEvent(new Event('input',{bubbles:true}));
+  e.dispatchEvent(new Event('change',{bubbles:true}));
+  transientPending=true;return false; // next JS call verifies React's selection
+ }
+ if(e.matches('input[type=checkbox],[role=switch],[role=checkbox],button[role=switch]')){
+  const wantOn=want.toLowerCase()==='yes';
+  const attr=e.getAttribute('aria-checked');
+  const on=attr===null?!!e.checked:attr==='true';
+  if(on===wantOn)return true;
+  e.click();transientPending=true;return false;
  }
  if(text(e).toLowerCase()===want.toLowerCase())return true;
- // React/Radix menus render asynchronously: read an already-open option before toggling.
- let opt=findOption(want);
- if(opt){opt.click();return true;}
- if(e.disabled)return false;
- if(e.getAttribute("aria-expanded")!=="true")e.click();
- transientPending=true;
- return false;
+ // Never select from an unrelated Radix portal, even with the same label.
+ const option=optionForExtra(e,want);
+ if(option){option.click();transientPending=true;return false;}
+ if(e.getAttribute('aria-expanded')!=='true'&&e.getAttribute('data-state')!=='open')e.click();
+ transientPending=true;return false;
 }
 function readChoice(label){
  const e=field(label);
@@ -63,9 +72,18 @@ function readChoice(label){
 }
 function tab(label){
  const b=oneButton(label);
- if(!b)return false;
- if(b.getAttribute("aria-selected")==="true"||b.getAttribute("data-state")==="active")return true;
- b.click();return true;
+ if(!b||b.disabled)return false;
+ const selected=b.getAttribute('aria-selected');
+ const state=b.getAttribute('data-state');
+ const pressed=b.getAttribute('aria-pressed');
+ if(selected==='true'||state==='active'||pressed==='true')return true;
+ if(selected===null&&state===null&&pressed===null){
+  // Legacy pages have no active-tab attributes. Accept only target-specific
+  // fields; an unverified click never means the tab has finished rendering.
+  if(label==='Stats'&&(rawIVInputs().length>0||percentageIVInputs().length===2))return true;
+  if(label==='PvP'&&inputNear('Top ranking')&&field('League'))return true;
+ }
+ b.click();return false;
 }
 // React mounts a different field group AFTER the tab click. Only return
 // configured once its selected state and the requested inputs are available.
@@ -142,7 +160,10 @@ function setShiny(want){
  const before=readShiny();
  if(before===want)return {ok:true,controlFound:true,changed:false,siteShiny:before};
  if(before===null||sw.disabled)return {ok:false,controlFound:true,reason:"Estado do Shiny não identificável"};
- sw.click();return {ok:true,controlFound:true,changed:true,siteShiny:readShiny()};
+ sw.click();
+ const after=readShiny();
+ return {ok:after===want,pending:after!==want,controlFound:true,changed:true,siteShiny:after,
+  reason:after===want?'':'Aguardando confirmação do Shiny no site'};
 }
 function inputsByIvGroup(count){
  const matches=labels(document,/^IV$/i);
@@ -285,10 +306,15 @@ function applyIv(){
  return !oneButton("Raw IV")&&set100Percent();
 }
 function applyLeague(){
- const rank=inputNear("Top ranking");
- return !!rank&&valueInput(rank,configuredRank())&&
-  choice("League",mode==="ul"?"Ultra League":"Great League")&&
-  choice("Include previous evolutions",filters.includePreviousEvolutions===false?"No":"Yes");
+ const rank=inputNear('Top ranking'),expected=configuredRank();
+ if(!rank||!Number.isInteger(expected)||expected<1||expected>50)return false;
+ if(!confirmedNumber(rank,expected,1,50)){
+  if(!valueInput(rank,expected))return false;
+  transientPending=true;return false; // one React update per injection
+ }
+ if(!choice('League',mode==='ul'?'Ultra League':'Great League'))return false;
+ if(!choice('Include previous evolutions',filters.includePreviousEvolutions===false?'No':'Yes'))return false;
+ return true;
 }
 function checkCore(){
  const currentShiny=readShiny();
@@ -1071,7 +1097,9 @@ if(action==="session"){
 }
 if(action==="prepareSearch"){
  const target=["iv","raw","percent"].includes(mode)?"Stats":"PvP";
- return JSON.stringify({ok:tab(target),stage:"prepare"});
+ const ready=tab(target);
+ return JSON.stringify({ok:ready,pending:!ready,stage:"prepare",
+  reason:ready?'':'Aguardando confirmação da aba '+target});
 }
 if(action==="configureSearch"){
  const ready=prepareCoreFilters();

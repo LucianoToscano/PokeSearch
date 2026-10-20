@@ -1002,19 +1002,30 @@ public class OverlayService extends Service {
                 revertUnverifiedShiny("✨ Shiny exige login e treinador vinculado · busca comum liberada");
                 update();
             }
-            execute("prepareSearch",prepared->{
-                if(stopped||loginPaused||generation!=requestGeneration)return;
-                if(!prepared.optBoolean("ok")){
-                    searchInProgress=false;
-                    searchFailure("⚠ Aba não confirmada","Não foi possível selecionar a aba de busca.");
+            prepareSearchWithRetry(generation,manual,0);
+        });
+    }
+    // A click is not proof that the React Stats/PvP tab is active.
+    private void prepareSearchWithRetry(int generation,boolean manual,int attempt){
+        if(stopped||loginPaused||generation!=requestGeneration)return;
+        execute("prepareSearch",prepared->{
+            if(stopped||loginPaused||generation!=requestGeneration)return;
+            if(!prepared.optBoolean("ok")){
+                if(prepared.optBoolean("pending",false)&&attempt<10){
+                    if(attempt==0)status("Preenchendo filtros… aguardando aba do site");
+                    handler.postDelayed(()->prepareSearchWithRetry(generation,manual,attempt+1),300L);
                     return;
                 }
-                status("Preparando "+("raw".equals(mode)?"Raw IV":"percent".equals(mode)?"IV%":"gl".equals(mode)?"Grande Liga":"Ultra Liga")+"...");
-                handler.postDelayed(()->{
-                    if(stopped||loginPaused||generation!=requestGeneration)return;
-                    configureSearchWithRetry(generation,manual,0);
-                },600L);
-            });
+                searchInProgress=false;
+                searchFailure("⚠ Aba não confirmada",
+                    prepared.optString("reason","Não foi possível confirmar a aba Stats/PvP."));
+                return;
+            }
+            status("Preparando "+("raw".equals(mode)?"Raw IV":"percent".equals(mode)?"IV%":"gl".equals(mode)?"Grande Liga":"Ultra Liga")+"...");
+            handler.postDelayed(()->{
+                if(stopped||loginPaused||generation!=requestGeneration)return;
+                configureSearchWithRetry(generation,manual,0);
+            },400L);
         });
     }
     // React dropdowns are asynchronous: opening and selecting an option cannot

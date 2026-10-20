@@ -176,7 +176,7 @@ check('Only site-confirmed coordinates can be copied from result cards',()=>{
  assert.ok(home.includes("if(confirmed&&!stale&&typeof c.coords==='string'"));
  assert.ok(home.includes('HomeNative.copyConfirmedCoords(c.coords)'));
  assert.ok(main.includes('copyConfirmedCoords(String coords)'));
- assert.ok(home.includes('cards.slice(0,100)'));
+ assert.ok(home.includes('cards.slice(0,10)'));
 });
 check('Footer controls exist before the inline HOME script runs',()=>{
  const scriptStart=home.indexOf('<script>');
@@ -194,6 +194,10 @@ check('Raw IV and percent IV never share visible inputs',()=>{
  assert.ok(home.includes("$('ivInputsRow').classList.toggle('quad',raw)"));
  assert.ok(home.includes("$('ivInputsRow').classList.toggle('triple',!raw)"));
  assert.ok(home.indexOf('id="weather"')>home.indexOf('id="rawFields"'));
+});
+check('HOME never shows more than ten search cards',()=>{
+ assert.ok(home.includes('cards.slice(0,10)'));
+ assert.ok(!home.includes('cards.slice(0,100)'));
 });
 console.log('PokeSearch HOME v2.00 unified state: '+count+' tests passed');
 if(process.exitCode)process.exit(process.exitCode);
