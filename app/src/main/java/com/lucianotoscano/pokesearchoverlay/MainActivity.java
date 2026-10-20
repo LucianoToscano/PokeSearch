@@ -44,6 +44,9 @@ public class MainActivity extends Activity {
     private WebView website;
     // HOME-V200-02: custom local UI; the existing OverlayService owns all site queries.
     private WebView homeFiltersWebView;
+    // Separate from the local HOME bridge; official pages never receive it.
+    private WebView officialSearchWebView;
+    private android.app.Dialog officialSearchDialog;
     private final android.os.Handler homeHandler=new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean homeForeground=false;
     private final Runnable homePoll=new Runnable(){
@@ -431,7 +434,131 @@ public class MainActivity extends Activity {
         // Already running foreground service, no unrequested background start.
         startService(intent);
     }
+    // SEARCH-V200: unimplemented site categories use the real site UI,
+    // in a distinct WebView that has NO JavascriptInterface and no GPS.
+    // This does not claim bidirectional sync with the floating Pokemon menu.
+    private void openOfficialSearchTab(String requestedTab){
+        if(requestedTab==null)return;
+        final String tab=requestedTab.toLowerCase(Locale.ROOT);
+        final String route;
+        switch(tab){
+            case "raids":route="/search?tab=raids";break;
+            case "quests":route="/search?tab=quests";break;
+            case "weather":case "rocket":case "power-spots":
+            case "saved":case "notify":case "area":case "pokemon":
+                route="/search";break;
+            case "map":route="/map";break;
+            case "vip":route="/vip";break;
+            case "terms":route="/terms";break;
+            case "privacy":route="/privacy";break;
+            case "refunds":route="/refunds";break;
+            default:return;
+        }
+        if(officialSearchDialog!=null&&officialSearchDialog.isShowing())return;
+        WebView browser=new WebView(this);
+        officialSearchWebView=browser;
+        browser.setBackgroundColor(Color.rgb(11,11,15));
+        browser.getSettings().setJavaScriptEnabled(true);
+        browser.getSettings().setDomStorageEnabled(true);
+        browser.getSettings().setAllowFileAccess(false);
+        browser.getSettings().setAllowContentAccess(false);
+        browser.getSettings().setGeolocationEnabled(false);
+        android.webkit.CookieManager.getInstance().setAcceptCookie(true);
+        android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(browser,true);
+        browser.setWebChromeClient(new WebChromeClient(){
+            @Override public void onGeolocationPermissionsShowPrompt(
+                    String origin,android.webkit.GeolocationPermissions.Callback callback){
+                callback.invoke(origin,false,false);
+            }
+        });
+        browser.setWebViewClient(new WebViewClient(){
+            private boolean tabClicked=false;
+            @Override public boolean shouldOverrideUrlLoading(
+                    WebView view,android.webkit.WebResourceRequest request){
+                Uri uri=request.getUrl();
+                if(uri==null||!"https".equalsIgnoreCase(uri.getScheme()))return true;
+                String host=uri.getHost();
+                if(host!=null&&(host.equalsIgnoreCase("pogocoordinates.com")||
+                     host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return false;
+                // External authentication providers remain in the system browser.
+                try{startActivity(new Intent(Intent.ACTION_VIEW,uri));}
+                catch(Exception ignored){}
+                return true;
+            }
+            @Override public void onPageFinished(WebView view,String url){
+                if(view!=browser||tabClicked)return;
+                String label=null;
+                if("weather".equals(tab))label="Weather";
+                else if("rocket".equals(tab))label="Rocket";
+                else if("power-spots".equals(tab))label="Power Spots";
+                else if("notify".equals(tab))label="Notify Me";
+                else if("area".equals(tab))label="Area";
+                if(label!=null)selectRealSiteButton(browser,label,12,()->tabClicked=true);
+            }
+        });
+        LinearLayout layout=new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setBackgroundColor(Color.rgb(11,11,15));
+        LinearLayout header=new LinearLayout(this);
+        header.setPadding(d(12),d(3),d(8),d(3));
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        TextView heading=homeText("PoGoCoordinates · "+tab,14,Color.WHITE,true);
+        header.addView(heading,new LinearLayout.LayoutParams(0,d(45),1));
+        Button close=homeAuthButton("Fechar",Color.rgb(43,43,49),Color.WHITE);
+        header.addView(close,new LinearLayout.LayoutParams(d(76),d(40)));
+        layout.addView(header);
+        layout.addView(browser,new LinearLayout.LayoutParams(-1,0,1));
+        android.app.Dialog dialog=new android.app.Dialog(this);
+        officialSearchDialog=dialog;
+        dialog.setContentView(layout);
+        dialog.setOnDismissListener(ignored->{
+            if(officialSearchWebView!=null){
+                officialSearchWebView.stopLoading();
+                officialSearchWebView.destroy();
+                officialSearchWebView=null;
+            }
+            officialSearchDialog=null;
+        });
+        close.setOnClickListener(v->dialog.dismiss());
+        dialog.show();
+        if(dialog.getWindow()!=null)dialog.getWindow().setLayout(-1,-1);
+        browser.loadUrl("https://pogocoordinates.com"+route);
+    }
+    private void selectRealSiteButton(WebView browser,String label,int tries,Runnable done){
+        if(tries<=0||officialSearchWebView!=browser||officialSearchDialog==null||
+           !officialSearchDialog.isShowing())return;
+        final String script="(function(){var label="+JSONObject.quote(label)+";"+
+            "var opts=[...document.querySelectorAll('button,a')];"+
+            "var b=opts.find(e=>e.getClientRects().length&&"+
+            "(e.textContent||'').trim().toLowerCase()===label.toLowerCase());"+
+            "if(b){b.click();return true;}return false;})()";
+        browser.evaluateJavascript(script,value->{
+            if("true".equals(value)){done.run();return;}
+            browser.postDelayed(()->selectRealSiteButton(browser,label,tries-1,done),350L);
+        });
+    }
     private final class HomeBridge {
+        @android.webkit.JavascriptInterface public void openOfficialSearchTab(String tab){
+            if(tab==null||tab.length()>30)return;
+            runOnUiThread(()->MainActivity.this.openOfficialSearchTab(tab));
+        }
+        @android.webkit.JavascriptInterface public void copyConfirmedCoords(String coords){
+            if(coords==null||coords.length()>80||!
+                 coords.trim().matches("[-+]?\\d{1,2}(?:\\.\\d+)?,\\s*[-+]?\\d{1,3}(?:\\.\\d+)?"))return;
+            String[] parts=coords.split(",");
+            try{
+                if(Math.abs(Double.parseDouble(parts[0].trim()))>90||
+                   Math.abs(Double.parseDouble(parts[1].trim()))>180)return;
+            }catch(Exception ignored){return;}
+            runOnUiThread(()->{
+                android.content.ClipboardManager clipboard=(android.content.ClipboardManager)
+                    getSystemService(CLIPBOARD_SERVICE);
+                if(clipboard!=null)clipboard.setPrimaryClip(
+                    android.content.ClipData.newPlainText("Coordinates",coords.trim()));
+                Toast.makeText(MainActivity.this,"Coordenadas copiadas",Toast.LENGTH_SHORT).show();
+            });
+        }
+
         @android.webkit.JavascriptInterface public String snapshot(){
             return HomeFilterState.snapshot(MainActivity.this).toString();
         }
@@ -1589,6 +1716,14 @@ public class MainActivity extends Activity {
         super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        if(officialSearchDialog!=null){
+            officialSearchDialog.setOnDismissListener(null);
+            officialSearchDialog.dismiss();officialSearchDialog=null;
+        }
+        if(officialSearchWebView!=null){
+            officialSearchWebView.stopLoading();
+            officialSearchWebView.destroy();officialSearchWebView=null;
+        }
         if(homeFiltersWebView!=null){
             homeFiltersWebView.stopLoading();homeFiltersWebView.destroy();homeFiltersWebView=null;
         }

@@ -143,5 +143,40 @@ check('Bundled Pokédex query resolves species locally and never guesses forms',
  assert.ok(!char.some(x=>x.label.toLowerCase().includes('alolan')),
    'Do not manufacture unverified regional form labels');
 });
+check('Search replica has original header and all six tab controls',()=>{
+ for(const tab of ['pokemon','raids','quests','weather','rocket','power-spots'])
+  assert.ok(home.includes('data-search-tab="'+tab+'"'),tab);
+ assert.ok(home.includes('<h1>Pokesearch</h1>'));
+ assert.ok(home.includes('Find live Pokemon GO spawns by IV, CP, level, size, form, and location.'));
+});
+check('Unsupported categories use a secure unbridged official browser',()=>{
+ assert.ok(home.includes('HomeNative.openOfficialSearchTab'));
+ assert.ok(main.includes('case "raids":route="/search?tab=raids"'));
+ assert.ok(main.includes('case "quests":route="/search?tab=quests"'));
+ assert.ok(main.includes('case "weather":case "rocket":case "power-spots"'));
+ assert.ok(main.includes('browser.loadUrl("https://pogocoordinates.com"+route)'));
+ assert.ok(!main.includes('officialSearchWebView.addJavascriptInterface'));
+ assert.ok(main.includes('callback.invoke(origin,false,false)'));
+});
+check('Native HOME exposes official site actions without claiming account presets are local',()=>{
+ for(const id of ['savedOfficial','advancedOfficial','map','siteTerms','sitePrivacy','siteRefunds'])
+  assert.ok(home.includes('id="'+id+'"'),id);
+ assert.ok(home.includes("$('notify').onclick=()=>official('notify')"));
+ assert.ok(main.includes('case "map":route="/map"'));
+ assert.ok(main.includes('case "vip":route="/vip"'));
+ assert.ok(home.includes('Presets salvos no PokeSearch'));
+});
+check('Area and location respect the no physical GPS constraint',()=>{
+ assert.ok(home.includes('id="useMyLocation"'));
+ assert.ok(home.includes('disabled title="GPS físico desativado'));
+ assert.ok(home.includes("official('area')"));
+ assert.ok(!home.includes('navigator.geolocation'));
+});
+check('Only site-confirmed coordinates can be copied from result cards',()=>{
+ assert.ok(home.includes("if(confirmed&&!stale&&typeof c.coords==='string'"));
+ assert.ok(home.includes('HomeNative.copyConfirmedCoords(c.coords)'));
+ assert.ok(main.includes('copyConfirmedCoords(String coords)'));
+ assert.ok(home.includes('cards.slice(0,100)'));
+});
 console.log('PokeSearch HOME v2.00 unified state: '+count+' tests passed');
 if(process.exitCode)process.exit(process.exitCode);

@@ -22,8 +22,41 @@
 #pokemonOptions .empty-notice{padding:9px}
 #pickMessage{color:#909096;font-size:10px;margin:5px 2px 10px}
 #savedName.hidden,#deleteBtn.hidden{display:none}
+/* SEARCH-V200: PoGoCoordinates-compatible mobile search surface */
+body{padding:0 0 15px;background:#0c0c0f;color:#edebf0}
+.site-search-head{padding:9px 8px 8px 5px}
+.site-search-head h1{margin:0;color:#f7f6f9;font-weight:760;letter-spacing:-.6px;font-size:21px}
+.site-search-head p{font-size:11px;line-height:1.4;color:#99969f;margin:3px 0 14px}
+.search-tabs{display:flex;gap:6px;overflow-x:auto;white-space:nowrap;padding:2px 2px 13px;scrollbar-width:none}
+.search-tabs::-webkit-scrollbar{display:none}
+.search-tabs button{background:#25232b;border-radius:20px;color:#aaa7b2;padding:8px 13px;min-height:32px;font-weight:650;font-size:11px;flex:none}
+.search-tabs button.active{background:#ff123f;color:#fff}
+.section{padding:4px 3px 12px}.panel{margin:7px 2px 10px;background:#161619;border-color:#242329}
+.section h2{letter-spacing:1px;color:#929097;margin:4px 0 10px}
+.field,.select{background:#0b0b0e;border-color:#25242b;min-height:37px}
+.site-official-link{border:0;background:transparent;color:#9e9ba5;font-size:10px;padding:5px 0;text-align:left}
+.site-loc-help{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:7px}
+.site-loc-help button{border:0;background:transparent;font-size:10px;color:#85838c}
+.site-vip-pill{border-radius:12px;background:#3d121c;color:#ff3558;font-size:9px;padding:2px 6px;margin-left:5px}
+.site-footer{padding:17px 8px 12px;border-top:1px solid #22212a;margin-top:13px;text-align:center;font-size:10px;color:#787680}
+.site-footer button{background:transparent;color:#9896a1;padding:3px 8px;font-size:10px}
+.site-limit{color:#8c8993;font-size:10px;margin:8px 0}
+.site-card-head{display:flex;align-items:center;gap:10px}
+.site-card-pokeball{font-size:22px}
+.site-card-sub{font-size:10px;color:#9996a0}
+.site-card-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;font-size:10px}
+.site-card-loc{font-size:10px;color:#cecad4}
+.site-card-copy{background:#ff123f;color:white;border-radius:22px;font-weight:700;padding:8px;width:100%}
 </style></head><body>
-<section class="section" aria-label="Filtros salvos"><h2>SAVED FILTERS</h2><select class="select" id="saved" aria-label="Selecionar filtro salvo"><option value="">Selecionar filtro salvo...</option></select><div class="saved-line" style="margin-top:7px"><input class="field hidden" id="savedName" placeholder="Nome do filtro para salvar" maxlength="36" style="height:34px"><button class="smallBtn" id="saveBtn">Save filter</button><button class="smallBtn hidden" id="deleteBtn">Excluir</button></div><div class="small hint">Presets salvos no PokeSearch e aplicados na busca oficial.</div></section>
+<header class="site-search-head"><h1>Pokesearch</h1><p>Find live Pokemon GO spawns by IV, CP, level, size, form, and location.</p><nav class="search-tabs" aria-label="Search categories">
+<button type="button" class="active" data-search-tab="pokemon">Pokémon</button>
+<button type="button" data-search-tab="raids">Raids</button>
+<button type="button" data-search-tab="quests">Quests</button>
+<button type="button" data-search-tab="weather">Weather</button>
+<button type="button" data-search-tab="rocket">Rocket</button>
+<button type="button" data-search-tab="power-spots">Power Spots</button>
+</nav></header>
+<section class="section" aria-label="Filtros salvos"><h2>SAVED FILTERS</h2><select class="select" id="saved" aria-label="Selecionar filtro salvo"><option value="">Selecionar filtro salvo...</option></select><div class="saved-line" style="margin-top:7px"><input class="field hidden" id="savedName" placeholder="Nome do filtro para salvar" maxlength="36" style="height:34px"><button class="smallBtn" id="saveBtn">Save filter</button><button class="smallBtn hidden" id="deleteBtn">Excluir</button></div><button type="button" class="site-official-link" id="savedOfficial">Abrir Saved Filters da conta no site oficial ↗</button><div class="small hint">Presets salvos no PokeSearch são locais; os filtros da conta permanecem no site.</div></section>
 <section class="panel">
 <label style="margin-top:0">Pokémon</label><div class="pokemon-select" id="pokemonPicker">
 <div class="pokemon-chips" id="chips"><span class="small">Todos os Pokémon</span></div>
@@ -33,17 +66,17 @@
 <label for="sortBy">Sort by</label><select class="select" id="sortBy"><option value="">Padrão do site</option><option value="Despawn (longest)">Despawn (longest)</option><option value="Despawn (shortest)">Despawn (shortest)</option><option value="IV (highest)">IV (highest)</option><option value="CP (highest)">CP (highest)</option></select>
 <div class="switchrow"><button id="shinyToggle" title="Ativar apenas Shiny"><i></i></button><div><b>✨ Shiny only</b><div class="small">Requer login e vínculo confirmados no PoGoCoordinates.</div></div></div>
 <div class="header-row"><label>Location</label><div class="seg" id="locationMode"><button data-locationmode="area">Area</button><button class="active" data-locationmode="coords">Coords</button></div></div>
-<div id="areaInfo" class="small hidden">Modo Area depende do formulário oficial. Nesta etapa use Coords para buscas geográficas verificadas.</div>
-<input class="field" id="coords" placeholder="Latitude,longitude • somente manual" inputmode="text"><input class="field linebreak" id="radius" placeholder="Radius (km, max 1000)" inputmode="decimal" type="number" min="0" max="1000"><div class="filter-row" style="margin-top:6px"><span class="small">Sem leitura de GPS físico</span><button class="outline tiny" id="clearLocation">Desligar localização</button></div>
+<div id="areaInfo" class="small hidden">O controle Area é executado no site oficial.</div>
+<input class="field" id="coords" placeholder="Latitude,longitude • somente manual" inputmode="text"><input class="field linebreak" id="radius" placeholder="Radius (km, max 1000)" inputmode="decimal" type="number" min="0" max="1000"><div class="site-loc-help"><span class="small">Paste coordinates (lat,lng) and a radius.</span><button id="useMyLocation" type="button" disabled title="GPS físico desativado por segurança">Use my location</button></div><div class="filter-row"><span class="small">Coordenadas manuais · GPS bloqueado</span><button class="outline tiny" id="clearLocation">Limpar</button></div>
 <div class="header-row"><label>Filter by</label><div class="seg" id="filterMode"><button data-filtermode="stats" class="active">Stats</button><button data-filtermode="pvp">PvP</button></div></div>
 <div class="layout sep"><div><label>CP</label><div class="layout"><input id="cpMin" class="field" type="number" min="0" max="99999" placeholder="Min"><input id="cpMax" class="field" type="number" min="0" max="99999" placeholder="Max"></div></div><div><label>Level</label><div class="layout"><input id="levelMin" class="field" type="number" min="0" max="99" placeholder="Min"><input id="levelMax" class="field" type="number" min="0" max="99" placeholder="Max"></div></div></div>
 <div class="header-row"><label>IV</label><div class="seg" id="ivMode"><button class="active" data-ivmode="percent">% IV</button><button data-ivmode="raw">Raw IV</button></div></div>
 <div id="statsMode"><div class="layout triple"><input class="field" id="percentMin" aria-label="IV mínimo" type="number" min="0" max="100" placeholder="Min %"><input class="field" id="percentMax" aria-label="IV máximo" type="number" min="0" max="100" placeholder="Max %"><select class="select" id="weather" aria-label="Weather"><option value="">Weather · Any</option><option>Clear</option><option>Partly Cloudy</option><option>Cloudy</option><option>Rainy</option><option>Snow</option><option>Fog</option><option>Windy</option><option>Sunny</option></select></div><div class="layout triple" id="rawFields" style="margin-top:8px"><input id="attack" class="field" type="number" min="0" max="15" placeholder="A"><input id="defense" class="field" type="number" min="0" max="15" placeholder="D"><input id="stamina" class="field" type="number" min="0" max="15" placeholder="S"></div></div>
 <div id="pvpMode" class="hidden"><div class="layout"><div><label>Liga</label><select class="select" id="league"><option value="gl">Great League</option><option value="ul">Ultra League</option></select></div><div><label>Top ranking</label><input id="rank" class="field" type="number" min="1" max="50" placeholder="1–50"></div></div><label>Min PvP CP</label><input id="minPvpCp" class="field" type="number" min="0" max="99999" placeholder="Opcional"><label class="filter-row"><input id="includePreviousEvolutions" type="checkbox" checked> Incluir pré-evoluções quando suportado</label></div>
 <div class="layout triple sep"><div><label>Size</label><select class="select" id="size"><option value="">Any</option><option>XXS</option><option>XS</option><option>Normal</option><option>XL</option><option>XXL</option></select></div><div><label>Form</label><input id="form" class="field" placeholder="Any"></div><div><label>Gender</label><select class="select" id="gender"><option value="">Any</option><option>Male</option><option>Female</option><option>Genderless</option></select></div></div>
-<details class="sep"><summary class="pill">Advanced • Opções adicionais</summary><p class="small">Filtros VIP dependem da disponibilidade e assinatura oficial no PoGoCoordinates. Nenhuma função VIP é simulada pelo aplicativo.</p></details>
+<details class="sep" id="advancedSite"><summary>Advanced <span class="site-vip-pill">VIP</span></summary><p class="small">Os filtros avançados dependem da conta e da disponibilidade do PoGoCoordinates.</p><button type="button" class="smallBtn" id="advancedOfficial">Abrir opções oficiais</button></details>
 <div id="status" class="status">Aguardando conexão do overlay...</div><div id="siteProof" class="tiny"></div>
-<div class="bottom"><button class="smallBtn" id="reset">⟳ Reset</button><button class="smallBtn" id="notify">♧ Notify Me</button><button class="smallBtn primary" id="search">⌕ Search</button></div>
+<div class="bottom"><button class="smallBtn" id="reset">⟳ Reset</button><button class="smallBtn" id="map">▣ Map</button><button class="smallBtn" id="notify">♧ Notify Me</button><button class="smallBtn primary" id="search">⌕ Search</button></div><div class="site-limit">Os filtros Pokémon são compartilhados com o overlay. Outras categorias, filtros salvos na conta e VIP usam os controles reais do site enquanto a integração é validada.</div>
 </section><section class="footer-results"><div class="filter-row"><b>Resultados oficiais</b><span class="pill" id="resultCount">0 spawns</span></div><div id="resultsList"><div class="empty-notice">Os resultados só aparecem após confirmação da busca no site.</div></div></section>
 <script>
 'use strict';
@@ -54,6 +87,16 @@ let requestedShiny=false,locEnabled=false,locRadius=0,locCoords='',remote=false,
 let pokemonCatalog=[],pickerOpen=false;
 const keys=['attack','defense','stamina','percentMin','percentMax','sortBy','cpMin','cpMax','levelMin','levelMax','size','form','gender','weather','minPvpCp'];
 function safe(str){return String(str==null?'':str)}
+function official(tab){HomeNative.openOfficialSearchTab(String(tab));}
+document.querySelectorAll('[data-search-tab]').forEach(b=>b.onclick=()=>{
+ if(b.dataset.searchTab!=='pokemon')official(b.dataset.searchTab);
+});
+$('savedOfficial').onclick=()=>official('saved');
+$('advancedOfficial').onclick=()=>official('vip');
+$('map').onclick=()=>official('map');
+$('siteTerms').onclick=()=>official('terms');
+$('sitePrivacy').onclick=()=>official('privacy');
+$('siteRefunds').onclick=()=>official('refunds');
 function updateSeg(id,attribute,val){document.querySelectorAll('#'+id+' button').forEach(b=>b.classList.toggle('active',b.getAttribute(attribute)===val));}
 function chips(){
  const root=$('chips');root.replaceChildren();
@@ -105,7 +148,7 @@ $('rank').addEventListener('change',()=>{cfg[cfg.mode==='ul'?'ulRank':'glRank']=
 document.querySelectorAll('[data-filtermode]').forEach(b=>b.onclick=()=>{cfg.mode=b.dataset.filtermode==='stats'?(cfg.mode==='raw'?'raw':'percent'):'gl';syncInputs();changed();});
 document.querySelectorAll('[data-ivmode]').forEach(b=>b.onclick=()=>{cfg.mode=b.dataset.ivmode;syncInputs();changed();});
 $('shinyToggle').onclick=()=>{requestedShiny=!requestedShiny;$('shinyToggle').classList.toggle('active',requestedShiny);HomeNative.setShiny(requestedShiny);$('status').textContent='✨ Aguardando confirmação do Shiny';};
-document.querySelectorAll('[data-locationmode]').forEach(b=>b.onclick=()=>{if(b.dataset.locationmode==='area'){$('areaInfo').classList.remove('hidden');updateSeg('locationMode','data-locationmode','area');}else{$('areaInfo').classList.add('hidden');updateSeg('locationMode','data-locationmode','coords');}});
+document.querySelectorAll('[data-locationmode]').forEach(b=>b.onclick=()=>{if(b.dataset.locationmode==='area'){$('areaInfo').classList.remove('hidden');official('area');}else{$('areaInfo').classList.add('hidden');updateSeg('locationMode','data-locationmode','coords');}});
 function commitLocation(){const coords=$('coords').value.trim(),r=$('radius').value.trim();if(!coords&&!r){HomeNative.setLocation(false,'',0);return;}
  if(!/^\s*[-+]?\d{1,2}(?:\.\d+)?\s*,\s*[-+]?\d{1,3}(?:\.\d+)?\s*$/.test(coords)||r===''||Number(r)<0||Number(r)>1000){setError('Informe latitude,longitude válidas e raio de 0 a 1000km');return;}
  HomeNative.setLocation(true,coords,Number(r));$('status').textContent='Localização solicitada · aguardando verificação do site';}
@@ -211,12 +254,40 @@ $('saveBtn').onclick=()=>{if($('savedName').classList.contains('hidden')){$('sav
 $('deleteBtn').onclick=()=>{const name=$('saved').value;if(name){HomeNative.deletePreset(name);snapshot();}};
 $('saved').onchange=()=>{$('deleteBtn').classList.toggle('hidden',!$('saved').value);const p=saved[$('saved').value];if(!p)return;cfg={...cfg,...p.config};requestedShiny=!!p.shinyRequested;locEnabled=!!p.locationEnabled;locCoords=p.locationCoords||'';locRadius=p.locationRadius||0;syncInputs();dirty=true;commit();HomeNative.setShiny(requestedShiny);HomeNative.setLocation(locEnabled,locCoords,locRadius);};
 $('reset').onclick=()=>{cfg={...cfg,mode:'raw',attack:15,defense:15,stamina:15,percentMin:0,percentMax:100,glRank:1,ulRank:1,pokemonSelections:[],clearPokemonSelection:true,sortBy:'',form:'',size:'',gender:'',weather:'',cpMin:'',cpMax:'',levelMin:'',levelMax:'',minPvpCp:''};requestedShiny=false;locEnabled=false;locCoords='';locRadius=0;syncInputs();dirty=true;commit();HomeNative.setShiny(false);HomeNative.setLocation(false,'',0);};
-$('notify').onclick=()=>HomeNative.openAlerts();
+$('notify').onclick=()=>official('notify');
 $('search').onclick=()=>{if(dirty){commit();if(dirty)return;}HomeNative.search(JSON.stringify({...cfg}));$('status').textContent='Solicitando busca oficial...';};
-function renderResults(cards,confirmed,stale){const root=$('resultsList');root.replaceChildren();const filtered=Array.isArray(cards)?cards.slice(0,10):[]; $('resultCount').textContent=filtered.length+' spawns';if(!filtered.length){const e=document.createElement('div');e.className='empty-notice';e.textContent='Nenhum resultado confirmado para esta busca.';root.append(e);return;}
- filtered.forEach(c=>{const el=document.createElement('article');el.className='card';const title=document.createElement('strong');title.textContent=String(c.name||'Pokémon');el.append(title);
- const detail=document.createElement('div');detail.className='small';detail.textContent=[c.iv?('IV '+c.iv):'',c.ivPercent!=null?c.ivPercent+'%':'',c.cp?('PC '+c.cp):'',c.location||'',c.distance||''].filter(Boolean).join(' • ');el.append(detail);
- const badge=document.createElement('div');badge.className='small';badge.textContent=stale?'Resultado anterior · pendente':'Confirmado pelo site';el.append(badge);root.append(el);});}
+function renderResults(cards,confirmed,stale){
+ const root=$('resultsList');root.replaceChildren();
+ const filtered=Array.isArray(cards)?cards.slice(0,100):[];
+ $('resultCount').textContent=filtered.length+' spawns';
+ if(!filtered.length){
+  const e=document.createElement('div');e.className='empty-notice';e.textContent='Nenhum resultado confirmado para esta busca.';root.append(e);return;
+ }
+ filtered.forEach(c=>{
+  const el=document.createElement('article');el.className='card';
+  const header=document.createElement('div');header.className='site-card-head';
+  const ball=document.createElement('span');ball.className='site-card-pokeball';ball.textContent='◉';
+  const group=document.createElement('div');
+  const name=document.createElement('strong');name.textContent=String(c.name||'Pokémon');group.append(name);
+  const sub=document.createElement('div');sub.className='site-card-sub';
+  sub.textContent=[c.number!=null?'#'+c.number:'',c.gender||'',c.form||''].filter(Boolean).join(' · ');
+  group.append(sub);header.append(ball,group);el.append(header);
+  const stats=document.createElement('div');stats.className='site-card-stats';
+  for(const [label,value] of [['CP',c.cp],['LVL',c.level],['IV',c.ivPercent!=null?String(c.ivPercent)+'%':c.iv]]){
+   const span=document.createElement('span');span.textContent=label+'  '+(value==null||value===''?'—':String(value));stats.append(span);
+  }
+  el.append(stats);
+  if(c.location){const place=document.createElement('div');place.className='site-card-loc';place.textContent='LOCATION  '+String(c.location);el.append(place);}
+  const hint=document.createElement('div');hint.className='site-card-sub';
+  hint.textContent=stale?'Resultado anterior · pendente':confirmed?'Consulta confirmada pelo site':'Aguardando comprovação do site';
+  el.append(hint);
+  if(confirmed&&!stale&&typeof c.coords==='string'&&/^[-+]?\d+(?:\.\d+)?,\s*[-+]?\d+(?:\.\d+)?$/.test(c.coords.trim())){
+   const copy=document.createElement('button');copy.className='site-card-copy';copy.type='button';copy.textContent='◎ Get coords';
+   copy.onclick=()=>HomeNative.copyConfirmedCoords(c.coords);el.append(copy);
+  }
+  root.append(el);
+ });
+}
 window.onHomeResults=payload=>{if(!payload)return;remote=true;renderResults(payload.cards,!!payload.confirmed,!!payload.stale);$('status').textContent=payload.status||'Aguardando site';$('status').classList.toggle('warn',!payload.confirmed);$('status').classList.toggle('confirm',!!payload.confirmed&&!payload.stale);};
 window.addEventListener('pageshow',()=>{snapshot();});snapshot();
-</script></body></html>
+</script><footer class="site-footer"><div><button id="siteTerms">Terms</button><button id="sitePrivacy">Privacy</button><button id="siteRefunds">Refunds</button></div><p>Pokemon GO Coordinates · Not affiliated with Niantic, The Pokemon Company, or Nintendo.</p></footer></body></html>
