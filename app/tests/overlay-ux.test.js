@@ -1937,7 +1937,8 @@ test("SITE-POKEMON-03 native validates names, caps 50, and preserves forms",()=>
  service.includes('clearKeys.put("pokemonSelections")'));
 test("SITE-POKEMON-04 site filter uses selected chips and exact official options",()=>
  probe.includes('function pokemonSelectedChips()')&&
- probe.includes('function pokemonPickerOptions()')&&
+ probe.includes('function pokemonPickerOptions(popup)')&&
+ probe.includes('function pokemonPickerPopup(root,input)')&&
  probe.includes('const pokemon=pokemonListSelection(action)')&&
  probe.includes('return {ok:false,pending:false,reason:')&&
  probe.includes('found.filter(x=>matches(x)&&requestedSpecies(x))'));

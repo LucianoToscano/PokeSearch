@@ -337,8 +337,9 @@ function pokemonPickerRoot(){
  return null;
 }
 function pokemonPickerInput(){
+ // Search is official, never autocomplete from a fabricated species/form list.
  return elements('input:not([type=hidden])').find(e=>vis(e)&&
-  /search by name, form, or dex|search.*(?:pok[eé]mon|form|dex)/i.test(
+  /search by name, form, or dex|search.*(?:pok[eé]mon|form|dex)|(?:pok[eé]mon|form|dex).*search/i.test(
    (e.getAttribute('placeholder')||'')+' '+(e.getAttribute('aria-label')||'')))||null;
 }
 function pokemonPickerButton(root){
@@ -354,9 +355,9 @@ function pokemonSelectedChips(){
  const buttons=Array.from(root.querySelectorAll('button,[role=button]')).filter(vis);
  for(const b of buttons){
   const aria=String(b.getAttribute('aria-label')||'');
-  const isRemove=/\b(?:remove|remover|delete)\b/i.test(aria)||/^[×✕x]$/.test(text(b));
+  const isRemove=/\b(?:remove|remover|delete|excluir)\b/i.test(aria)||/^[×✕x]$/.test(text(b));
   if(!isRemove||!b.parentElement)continue;
-  const raw=aria.match(/(?:remove|remover|delete)\s+(.+)/i)?.[1]||text(b.parentElement);
+  const raw=aria.match(/(?:remove|remover|delete|excluir)\s+(.+)/i)?.[1]||text(b.parentElement);
   const label=normalizePokemonLabel(raw);
   if(!label||label.length>100||!/\p{L}/u.test(label)||
    /^(?:pok[eé]mon|any|clear|remove|limpar|search)$/i.test(label))continue;
@@ -364,9 +365,37 @@ function pokemonSelectedChips(){
  }
  return selected;
 }
-function pokemonPickerOptions(){
- const input=pokemonPickerInput();if(!input)return [];
- const candidates=elements('[role=option],[role=listbox] [role=checkbox],[cmdk-item],[data-radix-collection-item],[role=listbox] button,[role=listbox] li,li').filter(vis);
+// Only read the popup that belongs to this Pokemon picker. Radix may portal
+// the listbox outside the form; global document-wide <li> selection is unsafe.
+function pokemonPickerPopup(root,input){
+ if(!input)return null;
+ const trigger=pokemonPickerButton(root);
+ const controls=[input,trigger].filter(Boolean);
+ for(const control of controls){
+  for(const attr of ['aria-controls','aria-owns']){
+   const id=control.getAttribute(attr)||'';
+   if(!id||!document.getElementById)continue;
+   const panel=document.getElementById(id);
+   if(vis(panel))return panel;
+  }
+ }
+ if(typeof input.closest==='function'){
+  const panel=input.closest('[role=dialog],[role=listbox],[cmdk-root],[data-radix-popper-content-wrapper]');
+  if(vis(panel))return panel;
+ }
+ // A single open listbox is a safe fallback only when the Pokemon trigger
+ // explicitly says open; multiple listboxes remain ambiguous and fail closed.
+ if(trigger&&trigger.getAttribute('aria-expanded')==='true'){
+  const visible=elements('[role=listbox],[cmdk-root],[data-radix-popper-content-wrapper]')
+   .filter(vis);
+  if(visible.length===1)return visible[0];
+ }
+ return null;
+}
+function pokemonPickerOptions(popup){
+ if(!popup)return [];
+ const candidates=Array.from(popup.querySelectorAll(
+  '[role=option],[role=listbox] [role=checkbox],[cmdk-item],[data-radix-collection-item],[role=listbox] button,[role=listbox] li,li')).filter(vis);
  return candidates.map(e=>{
   const raw=text(e),label=normalizePokemonLabel(raw);
   const dex=(raw.match(/#\s*(\d{1,4})/)||[])[1]||'';
@@ -377,24 +406,37 @@ function pokemonPickerOptions(){
   .filter((item,i,all)=>all.findIndex(v=>v.label.toLowerCase()===item.label.toLowerCase())===i)
   .slice(0,35);
 }
+function pokemonPickerExplicitEmpty(popup){
+ if(!popup)return false;
+ const statuses=Array.from(popup.querySelectorAll('[cmdk-empty],[data-cmdk-empty],[role=status],[data-state=empty]')).filter(vis);
+ return statuses.some(e=>/^(?:no results(?: found)?|no matches|nenhum resultado|nenhuma op[çc][ãa]o)(?:\.|$)/i.test(text(e)));
+}
 function pokemonSuggestion(query){
+ const wanted=String(query||'').slice(0,65);
  const root=pokemonPickerRoot();
- if(!root)return {ok:false,reason:'Filtro Pokémon não localizado no site'};
+ if(!root)return {ok:false,pending:true,stage:'waiting-picker',query:wanted,reason:'Aguardando seletor Pokémon do site'};
  let input=pokemonPickerInput();
  if(!input){
   const button=pokemonPickerButton(root);
-  if(!button)return {ok:false,reason:'Seletor Pokémon não disponível no site'};
-  button.click();
-  return {ok:false,pending:true,reason:'Abrindo opções oficiais'};
+  if(!button)return {ok:false,pending:true,stage:'waiting-trigger',query:wanted,reason:'Aguardando botão oficial de Pokémon'};
+  if(button.disabled)return {ok:false,pending:false,stage:'failed',query:wanted,reason:'Botão Pokémon desabilitado no site'};
+  if(button.getAttribute('aria-expanded')!=='true')button.click();
+  return {ok:false,pending:true,stage:'opening',query:wanted,reason:'Aguardando abertura do seletor oficial'};
  }
- const wanted=String(query||'').slice(0,65);
  if(String(input.value||'')!==wanted){
-  if(!valueInput(input,wanted))return {ok:false,reason:'Busca Pokémon indisponível'};
-  return {ok:false,pending:true,reason:'Aguardando opções do site'};
+  if(!valueInput(input,wanted))return {ok:false,pending:false,stage:'failed',query:wanted,reason:'Não foi possível digitar no seletor oficial'};
+  return {ok:false,pending:true,stage:'typing',query:wanted,reason:'Aguardando a pesquisa oficial'};
  }
+ const popup=pokemonPickerPopup(root,input);
+ if(!popup)return {ok:false,pending:true,stage:'waiting-popup',query:wanted,reason:'Menu oficial ainda não está visível'};
+ const options=pokemonPickerOptions(popup);
  const chips=pokemonSelectedChips();
- return {ok:true,query:wanted,options:pokemonPickerOptions().map(({label,dex,image})=>({label,dex,image})),
+ if(options.length)return {ok:true,pending:false,stage:'ready',query:wanted,
+  options:options.map(({label,dex,image})=>({label,dex,image})),
   selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
+ if(pokemonPickerExplicitEmpty(popup))return {ok:true,pending:false,stage:'explicit-empty',explicitEmpty:true,query:wanted,
+  options:[],selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
+ return {ok:false,pending:true,stage:'waiting-options',query:wanted,reason:'Aguardando opções do seletor oficial'};
 }
 if(action.startsWith('pokemonSuggest:')){
  try{return JSON.stringify(pokemonSuggestion(JSON.parse(action.slice('pokemonSuggest:'.length))));}
@@ -416,7 +458,9 @@ function pokemonListSelection(verb){
  if(extra.length){extra[0].remove.click();return {ok:false,pending:true,reason:'Removendo outra espécie ou forma'};}
  const result=pokemonSuggestion(missing[0]);
  if(!result.ok)return {ok:false,pending:!!result.pending,reason:result.reason||'Filtro Pokémon indisponível'};
- const candidate=pokemonPickerOptions().find(x=>x.label.toLowerCase()===missing[0].toLowerCase());
+ if(result.explicitEmpty)return {ok:false,pending:false,reason:'Espécie ou forma ausente nas opções oficiais: '+missing[0]};
+ const popup=pokemonPickerPopup(pokemonPickerRoot(),pokemonPickerInput());
+ const candidate=pokemonPickerOptions(popup).find(x=>x.label.toLowerCase()===missing[0].toLowerCase());
  if(!candidate)return {ok:false,pending:true,reason:'Aguardando espécie/forma no seletor oficial: '+missing[0]};
  candidate.node.click();
  return {ok:false,pending:true,reason:'Aplicando espécie/forma no site'};

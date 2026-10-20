@@ -1895,6 +1895,8 @@ public class OverlayService extends Service {
                 }),210L);
             });
         }
+        // A newer typed query invalidates retries from older Pokemon suggestions.
+        private int pokemonSuggestionSequence=0;
         @JavascriptInterface public void requestPokemonSuggestions(String query){handler.post(()->{
             if(stopped||loginPaused||!menuExpanded||menuPanel==null||!menuLoaded)return;
             if(searchInProgress){
@@ -1903,16 +1905,25 @@ public class OverlayService extends Service {
             }
             final String wanted=query==null?"":query.trim();
             if(wanted.length()>65)return;
-            final int generation=requestGeneration;
-            requestPokemonSuggestionsLater(wanted,generation,0);
+            final int generation=requestGeneration,sequence=++pokemonSuggestionSequence;
+            requestPokemonSuggestionsLater(wanted,generation,sequence,0);
         });}
-        private void requestPokemonSuggestionsLater(String query,int generation,int attempt){
-            if(stopped||loginPaused||searchInProgress||generation!=requestGeneration||!menuExpanded)return;
+        private void requestPokemonSuggestionsLater(String query,int generation,int sequence,int attempt){
+            if(stopped||loginPaused||searchInProgress||generation!=requestGeneration||
+               sequence!=pokemonSuggestionSequence||!menuExpanded)return;
             execute("pokemonSuggest:"+JSONObject.quote(query),response->{
-                if(stopped||generation!=requestGeneration||menuPanel==null||!menuLoaded)return;
-                if(response.optBoolean("pending",false)&&attempt<5){
-                    handler.postDelayed(()->requestPokemonSuggestionsLater(query,generation,attempt+1),280L);
-                    return;
+                if(stopped||generation!=requestGeneration||sequence!=pokemonSuggestionSequence||
+                   menuPanel==null||!menuLoaded)return;
+                if(response.optBoolean("pending",false)){
+                    if(attempt<12){
+                        handler.postDelayed(()->requestPokemonSuggestionsLater(query,generation,sequence,attempt+1),280L);
+                        return;
+                    }
+                    try{
+                        response.put("ok",false);response.put("pending",false);
+                        response.put("stage","failed");response.put("query",query);
+                        response.put("reason","Tempo limite aguardando opções oficiais do Pokémon");
+                    }catch(org.json.JSONException ignored){}
                 }
                 js(menuPanel,true,"window.onPokemonSuggestions("+response.toString()+")");
             });
@@ -2422,9 +2433,16 @@ public class OverlayService extends Service {
         if(searchInProgress){sendHomeSuggestionError("Aguarde a busca terminar");return;}
         execute("pokemonSuggest:"+JSONObject.quote(query),response->{
             if(stopped||generation!=requestGeneration)return;
-            if(response.optBoolean("pending",false)&&tries<5){
-                handler.postDelayed(()->sendHomeSuggestions(query,generation,tries+1),270L);
-                return;
+            if(response.optBoolean("pending",false)){
+                if(tries<12){
+                    handler.postDelayed(()->sendHomeSuggestions(query,generation,tries+1),270L);
+                    return;
+                }
+                try{
+                    response.put("ok",false);response.put("pending",false);
+                    response.put("stage","failed");response.put("query",query);
+                    response.put("reason","Tempo limite aguardando sugestões oficiais");
+                }catch(org.json.JSONException ignored){}
             }
             try {
                 JSONObject wrapper=new JSONObject();

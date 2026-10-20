@@ -1890,8 +1890,10 @@ window.onPokemonSuggestions=response=>{
  if(choiceOpen!=="pokemon"||!response)return;
  if(response.query!==undefined&&response.query!==pokemonQuery)return; // stale suggestion response
  pokemonSuggestions=response.ok&&Array.isArray(response.options)?response.options:[];
- pokemonSuggestionStatus=response.ok?pokemonSuggestions.length?"":"Nenhuma opção oficial encontrada":
-  String(response.reason||"Aguardando filtro Pokémon do PoGoCoordinates");
+ pokemonSuggestionStatus=response.explicitEmpty?"Nenhuma opção encontrada no seletor oficial":
+  response.pending?String(response.reason||"Aguardando opções oficiais..."):
+  response.ok?pokemonSuggestions.length?"":"Aguardando opções oficiais...":
+  String(response.reason||"Filtro Pokémon ainda indisponível no site");
  drawPokemonSuggestions();
 };
 function drawPokemonSuggestions(){
@@ -1918,6 +1920,7 @@ function drawPokemonSuggestions(){
   button.onclick=()=>{
    if(exists)pokemonDraft=pokemonDraft.filter(x=>x.toLowerCase()!==label.toLowerCase());
    else if(pokemonDraft.length<50)pokemonDraft.push(label);
+   if(pokemonDraft.length)pokemonForceClear=false;
    renderPokemonTags();drawPokemonSuggestions();
   };
   box.appendChild(button);
