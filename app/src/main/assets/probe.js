@@ -473,8 +473,38 @@ function extraControl(label){
  return elements('input:not([type=hidden]),select,[role=combobox],button[aria-haspopup]')
   .find(x=>vis(x)&&rx.test((x.getAttribute("placeholder")||"")+" "+(x.getAttribute("aria-label")||"")))||null;
 }
-function siteOptions(){
- return [...new Set(optionElements().map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80);
+// React/Radix portals are detached from controls. Resolve the list tied to
+// the requested trigger before reading or selecting ANY option.
+function extraPopup(e){
+ if(!e)return null;
+ for(const attr of ['aria-controls','aria-owns']){
+  const id=e.getAttribute(attr)||'';
+  if(id&&document.getElementById){
+   const popup=document.getElementById(id);
+   if(vis(popup))return popup;
+  }
+ }
+ if(typeof e.closest==='function'){
+  const panel=e.closest('[role=listbox],[role=dialog],[data-radix-popper-content-wrapper]');
+  if(vis(panel))return panel;
+ }
+ if(e.getAttribute('aria-expanded')==='true'||e.getAttribute('data-state')==='open'){
+  const candidates=elements('[role=listbox],[data-radix-select-content],[data-radix-popper-content-wrapper]').filter(vis);
+  if(candidates.length===1)return candidates[0];
+ }
+ return null;
+}
+function optionsForExtra(e){
+ const popup=extraPopup(e);
+ if(!popup)return [];
+ return Array.from(popup.querySelectorAll('[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item],option')).filter(vis);
+}
+function siteOptions(e){
+ return [...new Set(optionsForExtra(e).map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80);
+}
+function optionForExtra(e,want){
+ const matching=optionsForExtra(e).filter(o=>text(o).toLowerCase()===String(want).toLowerCase());
+ return matching.length===1?matching[0]:null;
 }
 function describeChoice(label){
  const e=extraControl(label);
@@ -497,10 +527,14 @@ function extraSelect(key,want){
  const actual=extraValue(key);
  if(!want){
   if(isNeutral(actual))return true;
-  if(e.matches("input"))return valueInput(e,"");
+  if(e.matches("input")){
+   if(!valueInput(e,""))return false;
+   transientPending=true;return false;
+  }
   // Reset prior active filter when user switches back to Any.
-  const opt=optionElements().find(o=>isNeutral(text(o)));
-  if(opt){opt.click();return true;}
+  const neutral=optionsForExtra(e).filter(o=>isNeutral(text(o)));
+  const opt=neutral.length===1?neutral[0]:null;
+  if(opt){opt.click();transientPending=true;return false;} // Wait for the neutral state to settle
   if(e.disabled)return false;
   if(e.getAttribute("aria-expanded")!=="true")e.click();
   transientPending=true;
@@ -508,10 +542,13 @@ function extraSelect(key,want){
  }
  if(e.disabled)return false;
  if(actual&&actual.toLowerCase()===want.toLowerCase())return true;
- if(e.matches("input"))return valueInput(e,want);
+ if(e.matches("input")){
+  if(!valueInput(e,want))return false;
+  transientPending=true;return false;
+ }
  if(e.matches("select"))return choice(label,want);
- const opt=findOption(want);
- if(opt){opt.click();transientPending=true;return false;} // React state must settle before later filters
+ const opt=optionForExtra(e,want);
+ if(opt){opt.click();transientPending=true;return false;} // Verify React state after rerender
  if(e.getAttribute("aria-expanded")!=="true")e.click();
  transientPending=true;
  return false;
@@ -526,11 +563,16 @@ if(action.startsWith("openFilterOptions:")){
  const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
  if(!e||e.disabled||e.matches("input")||e.matches("select"))return JSON.stringify({ok:false,key});
  if(e.getAttribute("aria-expanded")!=="true")e.click();
- return JSON.stringify({ok:true,key});
+ return JSON.stringify({ok:true,pending:true,key,reason:"Abrindo opções de "+label});
 }
 if(action.startsWith("readFilterOptions:")){
- const key=action.split(":")[1],label=EXTRA_LABELS[key];
- return JSON.stringify({ok:!!label,key,options:label?siteOptions():[]});
+ const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
+ if(!e)return JSON.stringify({ok:false,key,reason:"Controle indisponível"});
+ const popup=extraPopup(e);
+ if(!popup)return JSON.stringify({ok:false,pending:true,key,reason:"Aguardando portal de "+label});
+ const options=siteOptions(e);
+ if(!options.length)return JSON.stringify({ok:false,pending:true,key,reason:"Aguardando opções de "+label});
+ return JSON.stringify({ok:true,key,options,stage:"ready"});
 }
 if(action.startsWith("closeFilterOptions:")){
  const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
@@ -923,14 +965,25 @@ function configureLocation(req){
   // Clearing it on every public search can alter an unrelated field and
   // cause a false "location not applied" block.
   const previousCoords=locationValue(fieldsBefore.coords);
+  // The BODY is stable across React component rerenders, unlike the fields.
+  // This Boolean tracks only whether an active location radius must be reset;
+  // it does not store coordinates or personal data.
+  const root=document.body;
   if(previousCoords){
-   valueInput(fieldsBefore.coords,"");
-   if(fieldsBefore.radius&&locationValue(fieldsBefore.radius))
-    valueInput(fieldsBefore.radius,"");
+   if(root)root.__psClearLocationRadius=true;
+   if(!valueInput(fieldsBefore.coords,""))return JSON.stringify({ok:false,reason:"Campo Coords não editável"});
+   return JSON.stringify({ok:false,pending:true,stage:"clearing-coords",
+    reason:"Aguardando remoção das coordenadas anteriores"});
   }
-  const blank=!locationValue(fieldsBefore.coords);
-  return JSON.stringify({ok:blank,pending:!blank,stage:"location-off",
-   reason:blank?"":"Coordenadas antigas ainda presentes no site"});
+  if(root&&root.__psClearLocationRadius){
+   root.__psClearLocationRadius=false;
+   if(fieldsBefore.radius&&locationValue(fieldsBefore.radius)){
+    if(!valueInput(fieldsBefore.radius,""))return JSON.stringify({ok:false,reason:"Campo Raio não editável"});
+    return JSON.stringify({ok:false,pending:true,stage:"clearing-radius",
+     reason:"Aguardando remoção do raio anterior"});
+   }
+  }
+  return JSON.stringify({ok:true,pending:false,stage:"location-off"});
  }
  if(typeof req.coords!=="string"||!/^[-+]?\d+(?:\.\d+)?,[-+]?\d+(?:\.\d+)?$/.test(req.coords)||
     !Number.isInteger(req.radius)||req.radius<0||req.radius>1000||
@@ -944,7 +997,16 @@ function configureLocation(req){
  }
  const fields=locationFields();
  if(!fields.coords||!fields.radius)return JSON.stringify({ok:false,pending:true,reason:"Aguardando campos de coordenadas/raio"});
- return JSON.stringify({ok:valueInput(fields.coords,req.coords)&&valueInput(fields.radius,String(req.radius)),stage:"location-on"});
+  const requestedCoords=String(req.coords||"").replace(/\s/g,"");
+  if(locationValue(fields.coords).replace(/\s/g,"")!==requestedCoords){
+   if(!valueInput(fields.coords,req.coords))return JSON.stringify({ok:false,reason:"Campo de coordenadas não editável"});
+   return JSON.stringify({ok:false,pending:true,stage:"setting-coords",reason:"Aguardando confirmação das coordenadas"});
+  }
+  if(locationValue(fields.radius)!==String(req.radius)){
+   if(!valueInput(fields.radius,String(req.radius)))return JSON.stringify({ok:false,reason:"Campo de raio não editável"});
+   return JSON.stringify({ok:false,pending:true,stage:"setting-radius",reason:"Aguardando confirmação do raio"});
+  }
+  return JSON.stringify({ok:true,pending:false,stage:"location-on"});
 }
 function verifyLocation(req){
  const fields=locationFields(),active=coordsModeSelected();

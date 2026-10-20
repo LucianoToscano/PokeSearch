@@ -60,22 +60,27 @@ function run(action,mode,shinyOnly,opts={}){
     }
   }
   // A React select menu opens now; its options become visible on the next render.
-  const dynamicOptions=[];
+  const dynamicOptions=[]; const extraPortals={};
   if(opts.extra){
     for(const [key,state] of Object.entries(opts.extra)){
       const lab=element(state.label||key);
       const ctrl=element(state.value||"Any",{}, {tagName:"BUTTON",disabled:!!state.disabled});
-      ctrl.getAttribute=name=>name==="aria-expanded"?String(!!state.open):null;
+      ctrl.getAttribute=name=>name==="aria-expanded"?String(!!state.open):name==="aria-controls"?"extra-"+key:null;
       ctrl.click=()=>{state.open=!state.open;};
       const wrap=element();
       wrap.querySelectorAll=selector=>selector.includes("[role=combobox]")?[ctrl]:[];
       lab.parentElement=wrap;all.push(lab);
+      const ownOptions=[];
       if(state.options)for(const label of state.options){
         const opt=element(label);
         opt.click=()=>{state.value=label;state.open=false;};
         opt.getClientRects=()=>state.open&&state.ready?[{}]:[];
-        dynamicOptions.push(opt);
+        dynamicOptions.push(opt);ownOptions.push(opt);
       }
+      extraPortals["extra-"+key]=element("",{}, {
+        getClientRects:()=>state.open?[{}]:[],
+        querySelectorAll:selector=>selector.includes('[role=option]')?ownOptions:[]
+      });
     }
   }
   let cardButtons=[];
@@ -116,7 +121,7 @@ function run(action,mode,shinyOnly,opts={}){
     if(selector==="p,small,span,div,label")return accountLabels;
     return [];
   }
-  const document={querySelectorAll,querySelector:()=>null,
+  const document={querySelectorAll,querySelector:()=>null,getElementById:id=>extraPortals[id]||null,
     body:element(opts.profileBody|| (opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":""))};
   const code=source.replace("__ACTION__",JSON.stringify(action))
       .replace("__MODE__",JSON.stringify(mode))
@@ -294,8 +299,33 @@ const settledSize=run("configureExtras","iv",false,{config:{size:"XXL"},extra:{S
 assert.equal(settledSize.ok,true,"Committed menu selection is accepted after rerender");
 const confirmedSize=run("verifyExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
 assert.equal(confirmedSize.ok,true,"XXL is confirmed by reading control");
+// Even identical option labels in another open portal cannot receive clicks.
+const unrelatedForm={value:"Any",options:["Any","XXL"],open:true,ready:true};
+const scopedSize={value:"Any",options:["Any","XXL"],open:false,ready:true};
+const twoMenus={Form:unrelatedForm,Size:scopedSize};
+const openOwn=run("configureExtras","iv",false,{config:{size:"XXL"},extra:twoMenus});
+assert.equal(openOwn.pending,true,"Requested size portal must open first");
+const selectOwn=run("configureExtras","iv",false,{config:{size:"XXL"},extra:twoMenus});
+assert.equal(selectOwn.pending,true,"Size selection waits for rerender");
+assert.equal(scopedSize.value,"XXL","Size portal should receive the choice");
+assert.equal(unrelatedForm.value,"Any","Unrelated Form portal must never be clicked");
+checked++;
 checked+=4;
-
+const waitingOptions={value:"Any",options:["Any","Male","Female","Genderless"],open:true,ready:false};
+const notReady=run("readFilterOptions:gender","iv",false,{extra:{Gender:waitingOptions}});
+assert.equal(notReady.pending,true,"A mounted but still empty Radix portal cannot claim options ready");
+waitingOptions.ready=true;
+const readyOptions=run("readFilterOptions:gender","iv",false,{extra:{Gender:waitingOptions}});
+assert.equal(readyOptions.ok,true,"Gender portal options appear only after readiness");
+assert.ok(readyOptions.options.includes("Genderless"),"Genderless option is visible when site offers it");
+const formState={value:"Any",options:["Any","Normal","Goggles 2026"],open:false,ready:true};
+const formFirst=run("configureExtras","iv",false,{config:{form:"Normal"},extra:{Form:formState}});
+assert.equal(formFirst.pending,true,"Form must open its own popup");
+const formSecond=run("configureExtras","iv",false,{config:{form:"Normal"},extra:{Form:formState}});
+assert.equal(formSecond.pending,true,"Form selection awaits React commit");
+assert.equal(formState.value,"Normal","Only the site's actual Form label is used");
+assert.equal(run("verifyExtras","iv",false,{config:{form:"Normal"},extra:{Form:formState}}).ok,true);
+checked+=2;
 
 const beforeSubmitOnly=run("collect","gl",false,{switch:false,spawn,
   config:{glRank:1,_preSubmitVerified:true,size:"XXL"}});

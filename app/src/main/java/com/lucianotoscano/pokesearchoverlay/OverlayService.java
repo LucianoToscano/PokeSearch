@@ -1875,28 +1875,38 @@ public class OverlayService extends Service {
                 if(!opened.optBoolean("ok")){
                     discoverFilterMenu(position+1,generation);return;
                 }
-                handler.postDelayed(()->execute("readFilterOptions:"+key,options->{
-                    if(stopped||generation!=requestGeneration)return;
-                    if(options.optBoolean("ok")&&menuPanel!=null&&menuLoaded){
-                        JSONObject message=new JSONObject();
-                        try{
-                            message.put("ok",true);
-                            JSONObject fields=new JSONObject();
-                            JSONObject field=new JSONObject();
-                            field.put("present",true);
-                            field.put("options",options.optJSONArray("options"));
-                            fields.put(key,field);
-                            message.put("options",fields);
-                            message.put("partial",true);
-                        }catch(org.json.JSONException ignored){}
-                        js(menuPanel,true,"window.onFilterOptions("+message.toString()+")");
-                    }
-                    execute("closeFilterOptions:"+key,closed->discoverFilterMenu(position+1,generation));
-                }),210L);
+                handler.postDelayed(()->readFilterMenuUntilReady(key,position,generation,0),210L);
             });
         }
         // A newer typed query invalidates retries from older Pokemon suggestions.
         private int pokemonSuggestionSequence=0;
+        // Read only the popup linked to the requested Form/Size/Gender/etc.
+        // Radix may render its portal after the initial opening click.
+        private void readFilterMenuUntilReady(String key,int position,int generation,int attempt){
+            if(stopped||loginPaused||searchInProgress||generation!=requestGeneration||
+               !menuExpanded||menuPanel==null||!menuLoaded)return;
+            execute("readFilterOptions:"+key,options->{
+                if(stopped||generation!=requestGeneration||menuPanel==null||!menuLoaded)return;
+                if(!options.optBoolean("ok")&&options.optBoolean("pending")&&attempt<8){
+                    handler.postDelayed(()->readFilterMenuUntilReady(key,position,generation,attempt+1),270L);
+                    return;
+                }
+                if(options.optBoolean("ok")){
+                    JSONObject message=new JSONObject();
+                    try{
+                        message.put("ok",true);
+                        JSONObject fields=new JSONObject(),field=new JSONObject();
+                        field.put("present",true);
+                        field.put("options",options.optJSONArray("options"));
+                        fields.put(key,field);
+                        message.put("options",fields);
+                        message.put("partial",true);
+                    }catch(org.json.JSONException ignored){}
+                    js(menuPanel,true,"window.onFilterOptions("+message.toString()+")");
+                }
+                execute("closeFilterOptions:"+key,closed->discoverFilterMenu(position+1,generation));
+            });
+        }
         @JavascriptInterface public void requestPokemonSuggestions(String query){handler.post(()->{
             if(stopped||loginPaused||!menuExpanded||menuPanel==null||!menuLoaded)return;
             if(searchInProgress){
