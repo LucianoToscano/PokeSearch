@@ -35,7 +35,7 @@ public class OverlayService extends Service {
     private static volatile boolean running=false;
     public static boolean isRunning(){return running;}
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
-    private static final int RESULTS_HEADER_DP=30;
+    private static final int RESULTS_HEADER_DP=26;
     private int spriteSize=45;
     private int dockDp(){return spriteSize+8;}
     private int resultWidthDp(){return dockDp()+resultMetadataWidthDp;}
@@ -342,9 +342,9 @@ public class OverlayService extends Service {
         try{return new JSONArray(results).length();}catch(Exception e){recordFailure("contar resultados",e);return 0;}
     }
     private int rowDp(){
-        // UX-SPRITE-01: one equal-height, nonoverlapping slot per Pokemon.
-        // Keep a minimal 3dp breathing room in P/M/G without cropping sprites.
-        return spriteSize+3;
+        // UX-SPRITE-COMPACT-01: exactly 1dp between P/M/G sprite slots.
+        // Optional metadata stays inside the same slot without stretching it.
+        return spriteSize+1;
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
@@ -829,7 +829,10 @@ public class OverlayService extends Service {
         resultRoot.addView(resultGrip,gripParams);
 
         int preferredX=Math.max(0,screenWidthDp()-2*dockDp()-35);
-        int preferredY=165;
+        // Use the original gear as the DEFAULT vertical anchor only.
+        // A manually saved resultsY always takes precedence below.
+        int preferredY=params!=null?Math.round(params.y/
+            getResources().getDisplayMetrics().density):120;
         int savedX=prefs.getInt("resultsX",preferredX);
         int savedY=prefs.getInt("resultsY",preferredY);
         resultParams=new WindowManager.LayoutParams(dp(resultWidthDp()),dp(RESULTS_HEADER_DP),

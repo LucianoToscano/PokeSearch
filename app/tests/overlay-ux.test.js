@@ -42,7 +42,7 @@ test("Throttled refresh is queued",service.includes('handler.postDelayed(queuedR
 test("Quick guide remains accessible",main.includes("showQuickGuide()")&&main.includes("tutorialSeenV41")&&main.includes("tutorial.html"));
 test("UX-RESULT-10 keeps P/M/G sprite stages centred with compact per-card touch rows",(()=>{
  const row=service.match(/private int rowDp\(\)\{([\s\S]*?)\}/)?.[1]||"";
- return row.includes("return spriteSize+3;")&&
+ return row.includes("return spriteSize+1;")&&
   dock.includes("height:var(--spawn-row,var(--row))")&&
   dock.includes("min-height:var(--spawn-row,var(--row))")&&
   dock.includes('style="--spawn-row:')&&
@@ -52,7 +52,7 @@ test("Result list is always non-scrollable and has no eight-row height cap",
  dock.includes("body.result-window #spawns{")&&
  dock.includes("max-height:none!important;height:auto!important")&&
  dock.includes("overflow-y:visible!important;overflow-x:visible!important")&&
- dock.includes("#spawns:not(:empty){padding-bottom:6px!important}")&&
+ dock.includes("#spawns:not(:empty){padding-bottom:1px!important}")&&
  !service.includes("rowDp()*8"));
 test("Native passes full display height and preserves up to ten card slots",
  service.includes("Math.min(rowDp()*10,screenHeightDp()-52)")&&
@@ -62,7 +62,7 @@ test("Native passes full display height and preserves up to ten card slots",
  dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
-test("UX-RESULT-10 only expands spacing for actual visible timers or verified IV",()=>{
+test("UX-SPRITE-COMPACT-01 metadata never expands sprite spacing",()=>{
  const from=dock.indexOf("const PVPOKE_OVERALL=");
  const until=dock.indexOf('let lastListKey=""',from);
  if(from<0||until<from)return false;
@@ -79,13 +79,37 @@ test("UX-RESULT-10 only expands spacing for actual visible timers or verified IV
  const fewer=functions.computeResultLayout(short.slice(0,4),35,800,false,false);
  const none=functions.computeResultLayout([],45,800,false,false);
  return base.visibleCount===10&&base.rows.every(x=>x===46)&&base.total===460&&
-  iv.rows[0]===48&&iv.rows[1]===46&&
-  timers.rows[0]===48&&timers.rows[1]===46&&
-  both.visibleCount===10&&both.total+30+6<=380-16&&
+  iv.rows.every(x=>x===46)&&
+  timers.rows.every(x=>x===46)&&
+  both.visibleCount===10&&both.total+26+1<=380-16&&
   fewer.visibleCount===4&&none.visibleCount===0&&
   functions.resultHasVisibleInfo(withInfo[0],false,true)===true&&
   functions.resultHasVisibleInfo(withInfo[1],false,true)===false&&
   !dock.includes('if(resultWindow)document.getElementById("spawns").innerHTML=cards.slice(0,8)');
+});
+test("UX-SPRITE-COMPACT-01 HTML and Android use identical 26dp result header",()=>
+ service.includes('private static final int RESULTS_HEADER_DP=26;')&&
+ dock.includes('#resultHeader{width:35px;height:26px')&&
+ service.includes('dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT')&&
+ service.includes('int desired=resultCollapsed?RESULTS_HEADER_DP:')&&
+ dock.includes('h=Math.ceil(header.getBoundingClientRect().height)+1;'));
+test("UX-SPRITE-COMPACT-01 initial results position follows gear, saved manual Y wins",()=>
+ service.includes('int preferredY=params!=null?Math.round(params.y/')&&
+ service.includes('int savedY=prefs.getInt("resultsY",preferredY);')&&
+ service.includes('putInt("resultsY",Math.round(resultParams.y/density))'));
+test("UX-SPRITE-COMPACT-01 one pixel gap P/M/G even when all metadata are visible",()=>{
+ const from=dock.indexOf('const PVPOKE_OVERALL='),until=dock.indexOf('let lastListKey=""',from);
+ const f=new Function('window','verifiedSpawnIvPercent',dock.slice(from,until)+
+  'return {computeResultLayout}')( {},()=>null);
+ const records=Array.from({length:10},(_,i)=>({name:'P'+i,expiresAtMs:123456,iv:'15/15/15'}));
+ const opts={name:true,location:true,moves:true,overallRank:true,despawn:true,iv:true};
+ return [35,45,55].every(sprite=>{
+  const plain=f.computeResultLayout(records,sprite,900,false,false);
+  const decorated=f.computeResultLayout(records,sprite,900,true,true,opts,'gl');
+  return plain.visibleCount===10&&decorated.visibleCount===10&&
+   plain.rows.every(r=>r===sprite+1)&&decorated.rows.every(r=>r===sprite+1)&&
+   plain.sprite===sprite&&decorated.sprite===sprite;
+ });
 });
 test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten-card limit",
  dock.includes('["count","Quantidade de spawns"]')&&
@@ -220,7 +244,7 @@ test("UX-RESULT-10 no-data rows have a minimal gap and never overlap full sprite
   const unscaled=helpers.computeResultLayout(ten,size,900,false,false);
   if(unscaled.sprite!==size||unscaled.rows.some(row=>row<size)||unscaled.visibleCount!==10)return false;
   const short=helpers.computeResultLayout(ten,size,330,false,false);
-  if(short.visibleCount!==10||short.total+54>330)return false;
+  if(short.visibleCount!==10||short.total+50>330)return false;
   if(short.rows.some(row=>row<short.sprite))return false;
   // Tiny split-screen overlay heights must not overlap sprite drawings.
   for(const veryShortHeight of [190,160]){
@@ -228,7 +252,8 @@ test("UX-RESULT-10 no-data rows have a minimal gap and never overlap full sprite
    if(tight.visibleCount!==10||tight.rows.some(row=>row<tight.sprite))return false;
   }
  }
- return dock.includes("size+3:size+1; // 1px gap when no metadata;");
+ return dock.includes("const natural=items.slice(0,10).map(()=>size+1);")&&
+  !dock.includes("if(lines.length)return size+3");
 });
 test("UX-INFO-08 bundled PvPoke data includes MIT attribution and stays display-only",
  read("assets/licenses/PvPoke-MIT.txt").includes("MIT License")&&
@@ -1196,8 +1221,8 @@ test("UX-ICON-01 uses five base PNGs and keeps 18 historical resources",()=>{
  })&&!fs.existsSync(path.join(dir,"base-cup.png"))&&
  dock.includes('const RESULT_BASE_ICONS=Object.freeze(');
 });
-test("UX-ICON-01 keeps 35x30 touch area and badges strictly within 21px",
- dock.includes("#resultHeader{width:35px;height:30px")&&
+test("UX-ICON-01 keeps 35x26 touch area and badges strictly within 21px",
+ dock.includes("#resultHeader{width:35px;height:26px")&&
  dock.includes("max-width:21px;max-height:21px;aspect-ratio:1/1;overflow:visible;pointer-events:none")&&
  dock.includes("const headerIconSize=Math.max(17,Math.min(21,Math.round(spriteSize*0.45)));")&&
  ["modeIndicatorValue","modeIndicatorShiny","modeIndicatorBackground"].every(x=>dock.includes('id="'+x+'"')));
@@ -1265,7 +1290,7 @@ test("Compact IV label stays inside existing row, clear of the despawn timer",((
  return css.includes("position:absolute")&&css.includes("left:0;bottom:0")&&
         css.includes("max-width:29px")&&css.includes("background:transparent")&&css.includes("pointer-events:none")&&
         dock.includes(".timer{position:absolute;right:0;bottom:0")&&
-        dock.includes("#resultHeader{width:35px;height:30px");
+        dock.includes("#resultHeader{width:35px;height:26px");
 })());
 test("Shiny sparkle is independent neutral, header extremes match the IV palette",(()=>{
  const css=dock.match(/\.modeIndicator\.shiny\{[^}]+\}/)?.[0]||"";
@@ -1339,7 +1364,7 @@ test("UX-ICON-02 capture animation reacts to native search state",()=>{
  dock.includes('prefers-reduced-motion:reduce');
 });
 test("UX-ICON-02 sizes, static click control and timers remain intact",()=>{
- return dock.includes('#resultHeader{width:35px;height:30px')&&
+ return dock.includes('#resultHeader{width:35px;height:26px')&&
  dock.includes('max-width:21px;max-height:21px')&&
  dock.includes('width:29%;height:29%')&&dock.includes('pointer-events:none')&&
  !dock.includes('setAttribute("data-wait"')&&dock.includes("Native.toggleResultsCollapsed()");
@@ -1844,7 +1869,7 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
     service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",false)'))&&
   keys.every(key=>dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:0;')&&
-  dock.includes('if(lines.length)return size+3;')&&
+  dock.includes('const natural=items.slice(0,10).map(()=>size+1);')&&
   dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
 });
 test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
@@ -1872,7 +1897,7 @@ test("UX-INFO-ALL-03 optional metadata respects the compact row dimensions",()=>
  return lines.includes('Nome Machop')&&lines.includes('Local Shibuya, Tokyo, Japan')&&
    lines.includes('Dist 0.3 km')&&lines.includes('Sexo ♀')&&
    lines.includes('Tam M')&&lines.includes('✨ Shiny')&&
-   hidden.length===0&&layout.rows.every(r=>r===48)&&layout.visibleCount===2;
+   hidden.length===0&&layout.rows.every(r=>r===46)&&layout.visibleCount===2;
 });
 test("UX-LOC-SHINY-01 reasserts shiny after site Coords switch and before Search",()=>{
  const begin=service.indexOf('private void verifyShinyAfterLocation(');

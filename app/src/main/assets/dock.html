@@ -189,10 +189,10 @@ body.controls-window #resultHeader{display:none!important}
 body.result-window #gear,body.result-window #menu,body.result-window #locBadge,
 body.result-window #collapse,body.result-window #bubble{display:none!important}
 body.result-window #shell{width:var(--dock);margin:0!important;overflow:hidden}
-body.result-window #resultHeader{width:35px;height:30px;display:flex;
+body.result-window #resultHeader{width:35px;height:26px;display:flex;
  align-items:center;justify-content:center;padding:0;margin:0 auto;border:0;
  border-radius:8px;background:transparent;box-shadow:none}
-/* Composition stays inside the original 35x30px touch area and 21px max art. */
+/* Compact 35x26px result header; Pokéball artwork remains at most 21px. */
 body.result-window #resultHeader .resultModeStack{position:relative;display:block;flex:none;width:var(--mode-icon-size,21px);height:var(--mode-icon-size,21px);max-width:21px;max-height:21px;aspect-ratio:1/1;overflow:visible;pointer-events:none}
 body.result-window #resultHeader .resultModeStack img{position:absolute;inset:0;display:block;width:100%;height:100%;aspect-ratio:1/1;object-fit:contain;object-position:center;max-width:none;max-height:none;pointer-events:none;filter:drop-shadow(0 1px 1px #0007)}
 body.result-window #resultHeader .modeIndicator{position:absolute;z-index:1;display:none;align-items:center;justify-content:center;box-sizing:border-box;pointer-events:none;font-family:Arial,Roboto,sans-serif;font-weight:900;line-height:1;text-shadow:0 1px 1px #000}
@@ -226,7 +226,7 @@ body.result-window #spawns{
  scrollbar-width:none!important;touch-action:manipulation!important
 }
 /* Preserve the final sprite's overhang without adding gaps between entries. */
-body.result-window #spawns:not(:empty){padding-bottom:6px!important}
+body.result-window #spawns:not(:empty){padding-bottom:1px!important}
 body.result-window #empty{margin:0 auto;max-height:18px}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
@@ -1530,16 +1530,10 @@ function resultHasVisibleInfo(card,timersEnabled,textEnabled,opts=null,league=""
 }
 function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,textEnabled,opts=null,league=""){
  const size=Math.max(18,Number(chosenSprite)||45);
- const natural=items.slice(0,10).map(card=>{
-  const lines=opts?resultLines(card,opts,league):[];
-  // UX-SPRITE-GAP-02: metadata is independently scrollable inside the side strip.
-  // Never stretch the Pokemon's vertical slot to fit all enabled rank lines.
-  if(lines.length)return size+3;
-  return resultHasVisibleInfo(card,timersEnabled,textEnabled)?
-   size+3:size+1; // 1px gap when no metadata; do not overlap full-size sprites
- });
+ // UX-SPRITE-COMPACT-01: 1px gap always; optional info never expands the row.
+ const natural=items.slice(0,10).map(()=>size+1);
  const desired=natural.reduce((a,b)=>a+b,0);
- const room=Math.max(120,(Number(displayHeight)||700)-30-24);
+ const room=Math.max(120,(Number(displayHeight)||700)-26-24);
  const factor=desired>0?Math.min(1,room/desired):1;
  const rows=natural.map(n=>Math.max(12,Math.floor(n*factor)));
  // A very short display can reduce a row to 12px: never draw a
