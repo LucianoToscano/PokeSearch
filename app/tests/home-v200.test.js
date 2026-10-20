@@ -1,0 +1,23 @@
+"use strict";
+const fs=require("node:fs"),path=require("node:path"),assert=require("node:assert/strict");
+const root=path.resolve(__dirname,"../..");
+const activity=fs.readFileSync(path.join(root,"app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java"),"utf8");
+const gradle=fs.readFileSync(path.join(root,"app/build.gradle.kts"),"utf8");
+let count=0;function check(name,fn){fn();count++;}
+check("live site URL",()=>assert.ok(activity.includes('homeFiltersWebView.loadUrl("https://pogocoordinates.com/search")')));
+check("saved filters anchor",()=>assert.ok(activity.includes("saved filters$/i.test(value)")));
+check("non-mutating scroll",()=>assert.ok(activity.includes("scrollIntoView")));
+check("bounded DOM retry",()=>assert.ok(activity.includes("alignHomeFilters(homeFiltersNavigation,20)")));
+check("navigation generation",()=>assert.ok(activity.includes("generation!=homeFiltersNavigation")));
+check("physical GPS blocked",()=>assert.ok(activity.includes("setGeolocationEnabled(false)")));
+check("geolocation request denied",()=>assert.ok(activity.includes("callback.invoke(origin,false,false)")));
+check("no JavascriptInterface",()=>assert.ok(!activity.includes("homeFiltersWebView.addJavascriptInterface")));
+check("session CookieManager",()=>assert.ok(activity.includes("setAcceptThirdPartyCookies(homeFiltersWebView,true)")));
+check("HTTPS only external",()=>assert.ok(activity.includes('if(!"https".equalsIgnoreCase(uri.getScheme()))return true')));
+check("local file access blocked",()=>assert.ok(activity.includes("setAllowFileAccess(false)")));
+check("local content blocked",()=>assert.ok(activity.includes("setAllowContentAccess(false)")));
+check("lifecycle cleanup",()=>assert.ok(activity.includes("homeFiltersWebView.stopLoading();homeFiltersWebView.destroy()")));
+check("native UI preserved",()=>{for(const term of ["toggleHomeOverlay()","showHomeMenu()","openProviderLogin(\"discord\")","openProviderLogin(\"google\")"])assert.ok(activity.includes(term),term);});
+check("app package stable",()=>assert.ok(gradle.includes('applicationId = "com.lucianotoscano.pokesearch"')));
+check("2.00 label",()=>assert.ok(gradle.includes("2.00-beta.test.")));
+console.log("PokeSearch HOME v2.00 contracts: "+count+" tests passed");

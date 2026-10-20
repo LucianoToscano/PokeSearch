@@ -29,7 +29,7 @@ check("secrets come only from Actions secrets", () => {
   assert.match(workflow, /Remove restored keystore/);
 });
 check("versionCode derives from the workflow run number", () => {
-  assert.ok(workflow.includes("POKE_TEST_VERSION_CODE=$((51000 + GITHUB_RUN_NUMBER))"));
+  assert.ok(workflow.includes("POKE_TEST_VERSION_CODE=$((52000 + GITHUB_RUN_NUMBER))"));
   assert.match(gradle, /versionCode = testVersionCode \?: 51/);
 });
 check("publish only a signed and verified APK", () => {
@@ -45,7 +45,7 @@ check("actual APK package, code and name are inspected before publication", () =
   assert.ok(!workflow.includes("grep -m1 '^package: '"));
   assert.ok(workflow.includes('"name=\'com.lucianotoscano.pokesearch\'"'));
   assert.ok(workflow.includes('"versionCode=\'${EXPECTED_CODE}\'"'));
-  assert.ok(workflow.includes('"versionName=\'0.51-beta.test.${EXPECTED_CODE}\'"'));
+  assert.ok(workflow.includes('"versionName=\'2.00-beta.test.${EXPECTED_CODE}\'"'));
   assert.ok(workflow.includes('grep -Fq -- "$expected"'));
 });
 check("v2 scheme check rejects false and avoids permissive substring grep", () => {

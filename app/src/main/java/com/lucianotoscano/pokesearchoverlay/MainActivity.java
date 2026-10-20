@@ -42,6 +42,16 @@ import android.graphics.Typeface;
 
 public class MainActivity extends Activity {
     private WebView website;
+    // HOME-V200: the real official PoGoCoordinates form, not copied controls.
+    private WebView homeFiltersWebView;
+    private int homeFiltersNavigation=0;
+    private boolean homeFiltersAligned=false;
+    private static final String HOME_V200_SAVED_FILTERS_JS=
+        "(function(){try{var nodes=document.querySelectorAll('span,label,p,h1,h2,h3,h4,div,strong');"+
+        "for(var i=0;i<nodes.length;i++){var e=nodes[i],value=(e.textContent||'').trim();"+
+        "if(/^saved filters$/i.test(value)&&e.getClientRects().length){"+
+        "e.scrollIntoView({block:'start',behavior:'auto'});return true;}}"+
+        "return false;}catch(ex){return false;}})();";
     private TextView watchSummary;
     private TextView sessionSummary;
     private boolean loginStartedForShiny=false;
@@ -339,9 +349,80 @@ public class MainActivity extends Activity {
         trainerCodeGroup.addView(trainerAction,actionLp);
         trainerAction.setOnClickListener(v->openTrainerManagement());
 
-        // Future Home features can occupy the remaining center without affecting login.
-        screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
+        // HOME-V200: same live website DOM and site functions, embedded below
+        // the existing account panel; never a second/fake form or backend.
+        TextView filterCaption=homeText("Filtros oficiais  •  PoGoCoordinates",11,
+            Color.rgb(176,199,229),true);
+        filterCaption.setPadding(d(3),d(8),0,d(5));
+        screen.addView(filterCaption,new LinearLayout.LayoutParams(-1,-2));
+        FrameLayout filtersHost=new FrameLayout(this);
+        filtersHost.setBackground(homeSurface(Color.rgb(10,11,15),13,Color.rgb(39,46,57)));
+        filtersHost.setClipToOutline(true);
+        homeFiltersWebView=new WebView(this);
+        homeFiltersWebView.setBackgroundColor(Color.rgb(10,11,15));
+        homeFiltersWebView.setVerticalScrollBarEnabled(false);
+        homeFiltersWebView.setFocusable(true);
+        homeFiltersWebView.setFocusableInTouchMode(true);
+        homeFiltersWebView.getSettings().setJavaScriptEnabled(true);
+        homeFiltersWebView.getSettings().setDomStorageEnabled(true);
+        homeFiltersWebView.getSettings().setDatabaseEnabled(true);
+        homeFiltersWebView.getSettings().setAllowFileAccess(false);
+        homeFiltersWebView.getSettings().setAllowContentAccess(false);
+        // Deny physical GPS; manual Coords remain handled by official form.
+        homeFiltersWebView.getSettings().setGeolocationEnabled(false);
+        CookieManager.getInstance().setAcceptCookie(true);
+        CookieManager.getInstance().setAcceptThirdPartyCookies(homeFiltersWebView,true);
+        homeFiltersWebView.setWebChromeClient(new WebChromeClient(){
+            @Override public void onGeolocationPermissionsShowPrompt(
+                    String origin,android.webkit.GeolocationPermissions.Callback callback){
+                callback.invoke(origin,false,false);
+            }
+        });
+        homeFiltersWebView.setWebViewClient(new WebViewClient(){
+            @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap favicon){
+                homeFiltersNavigation++;
+                homeFiltersAligned=false;
+            }
+            @Override public void onPageFinished(WebView view,String url){
+                if(!isOfficialSearchUrl(url))return;
+                alignHomeFilters(homeFiltersNavigation,20);
+            }
+            @Override public boolean shouldOverrideUrlLoading(
+                    WebView view,android.webkit.WebResourceRequest request){
+                if(!request.isForMainFrame())return false;
+                Uri uri=request.getUrl();
+                if(uri==null)return true;
+                if(isOfficialSearchUrl(uri.toString()))return false;
+                if(!"https".equalsIgnoreCase(uri.getScheme()))return true;
+                try{startActivity(new Intent(Intent.ACTION_VIEW,uri));}
+                catch(Exception ignored){Toast.makeText(MainActivity.this,
+                    "Link externo indisponível",Toast.LENGTH_SHORT).show();}
+                return true;
+            }
+        });
+        filtersHost.addView(homeFiltersWebView,new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout.LayoutParams filtersLp=new LinearLayout.LayoutParams(-1,0,1);
+        screen.addView(filtersHost,filtersLp);
+        homeFiltersWebView.loadUrl("https://pogocoordinates.com/search");
         return frame;
+    }
+    private boolean isOfficialSearchUrl(String url){
+        if(url==null)return false;
+        Uri uri=Uri.parse(url);
+        String host=uri.getHost();
+        return "https".equalsIgnoreCase(uri.getScheme())&&host!=null&&
+            (host.equalsIgnoreCase("pogocoordinates.com")||
+            host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"));
+    }
+    private void alignHomeFilters(final int generation,final int attemptsLeft){
+        WebView view=homeFiltersWebView;
+        if(view==null||generation!=homeFiltersNavigation||homeFiltersAligned||
+            !isOfficialSearchUrl(view.getUrl()))return;
+        view.evaluateJavascript(HOME_V200_SAVED_FILTERS_JS,result->{
+            if(homeFiltersWebView!=view||generation!=homeFiltersNavigation||homeFiltersAligned)return;
+            if("true".equals(result)){homeFiltersAligned=true;return;}
+            if(attemptsLeft>0)view.postDelayed(()->alignHomeFilters(generation,attemptsLeft-1),400L);
+        });
     }
     private void openTrainerManagement(){
         String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
@@ -1378,9 +1459,19 @@ public class MainActivity extends Activity {
     }
     @Override public void onBackPressed(){
         if(homeDrawerLayer!=null){closeHomeMenu();return;}
-        if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
+        if(loginDialog!=null&&loginDialog.isShowing()&&website!=null&&website.canGoBack()){
+            website.goBack();return;
+        }
+        if(homeFiltersWebView!=null&&homeFiltersWebView.canGoBack()){
+            homeFiltersWebView.goBack();return;
+        }
+        super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        ++homeFiltersNavigation;
+        if(homeFiltersWebView!=null){
+            homeFiltersWebView.stopLoading();homeFiltersWebView.destroy();homeFiltersWebView=null;
+        }
         if(loginDialog!=null){loginDialog.setOnDismissListener(null);loginDialog.dismiss();loginDialog=null;}
         if(website!=null){website.stopLoading();website.destroy();website=null;}
         super.onDestroy();

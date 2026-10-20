@@ -49,7 +49,7 @@ android {
         buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256", "\"\"")
         buildConfigField("String", "EXPECTED_ASSET_SHA256", "\"$assetChecksums\"")
         versionCode = testVersionCode ?: 51
-        versionName = if (testVersionCode != null) "0.51-beta.test.$testVersionCode" else "0.51-beta"
+        versionName = if (testVersionCode != null) "2.00-beta.test.$testVersionCode" else "2.00-beta"
     }
     // Sideloaded beta: keep tested overlay behavior on target 32. Play Store publishing needs a separate target SDK migration.
     lint { disable += "ExpiredTargetSdkVersion" }
