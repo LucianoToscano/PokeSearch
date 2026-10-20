@@ -178,5 +178,12 @@ check('Only site-confirmed coordinates can be copied from result cards',()=>{
  assert.ok(main.includes('copyConfirmedCoords(String coords)'));
  assert.ok(home.includes('cards.slice(0,100)'));
 });
+check('Footer controls exist before the inline HOME script runs',()=>{
+ const scriptStart=home.indexOf('<script>');
+ for(const name of ['siteTerms','sitePrivacy','siteRefunds']){
+  const at=home.indexOf('id="'+name+'"');
+  assert.ok(at>=0&&at<scriptStart,name+' must exist before listeners attach');
+ }
+});
 console.log('PokeSearch HOME v2.00 unified state: '+count+' tests passed');
 if(process.exitCode)process.exit(process.exitCode);

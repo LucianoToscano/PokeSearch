@@ -78,6 +78,7 @@ body{padding:0 0 15px;background:#0c0c0f;color:#edebf0}
 <div id="status" class="status">Aguardando conexão do overlay...</div><div id="siteProof" class="tiny"></div>
 <div class="bottom"><button class="smallBtn" id="reset">⟳ Reset</button><button class="smallBtn" id="map">▣ Map</button><button class="smallBtn" id="notify">♧ Notify Me</button><button class="smallBtn primary" id="search">⌕ Search</button></div><div class="site-limit">Os filtros Pokémon são compartilhados com o overlay. Outras categorias, filtros salvos na conta e VIP usam os controles reais do site enquanto a integração é validada.</div>
 </section><section class="footer-results"><div class="filter-row"><b>Resultados oficiais</b><span class="pill" id="resultCount">0 spawns</span></div><div id="resultsList"><div class="empty-notice">Os resultados só aparecem após confirmação da busca no site.</div></div></section>
+<footer class="site-footer"><div><button id="siteTerms">Terms</button><button id="sitePrivacy">Privacy</button><button id="siteRefunds">Refunds</button></div><p>Pokemon GO Coordinates · Not affiliated with Niantic, The Pokemon Company, or Nintendo.</p></footer>
 <script>
 'use strict';
 const $=id=>document.getElementById(id), values=[0,2,4,7,9,11,13,16,18,20,22,24,27,29,31,33,36,38,40,42,44,47,49,51,53,56,58,60,62,64,67,69,71,73,76,78,80,82,84,87,89,91,93,96,98,100];
@@ -290,4 +291,4 @@ function renderResults(cards,confirmed,stale){
 }
 window.onHomeResults=payload=>{if(!payload)return;remote=true;renderResults(payload.cards,!!payload.confirmed,!!payload.stale);$('status').textContent=payload.status||'Aguardando site';$('status').classList.toggle('warn',!payload.confirmed);$('status').classList.toggle('confirm',!!payload.confirmed&&!payload.stale);};
 window.addEventListener('pageshow',()=>{snapshot();});snapshot();
-</script><footer class="site-footer"><div><button id="siteTerms">Terms</button><button id="sitePrivacy">Privacy</button><button id="siteRefunds">Refunds</button></div><p>Pokemon GO Coordinates · Not affiliated with Niantic, The Pokemon Company, or Nintendo.</p></footer></body></html>
+</script></body></html>
