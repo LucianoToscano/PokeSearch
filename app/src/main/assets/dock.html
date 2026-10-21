@@ -875,21 +875,42 @@ body.visual-guides.result-window #shell{
  outline:1px dotted #9d8dff8c!important;outline-offset:-1px;
 }
 
-/* Bell: one red strike for one muted source; red X for both muted. */
+/* AUD-BELL-02: no audio=white; new audio=gold; favorites=gold star
+   inside the bell; both=gold bell plus star. Gray dot=silent alerts;
+   orange exclamation point=Android permission blocked. */
 body.controls-window #quickMenuList button[data-key="bell"] .quickGlyph{position:relative}
-body.controls-window #quickMenuList button[data-key="bell"].bell-one-muted .quickGlyph::after,
-body.controls-window #quickMenuList button[data-key="bell"].bell-both-muted .quickGlyph::after,
-body.controls-window #quickMenuList button[data-key="bell"].bell-both-muted .quickGlyph::before{
- content:"";position:absolute;z-index:3;left:50%;top:50%;
- width:20px;height:2.5px;background:#ff4458;border-radius:2px;pointer-events:none;
- transform:translate(-50%,-50%) rotate(-44deg);box-shadow:0 0 2px #000a;
-}
-body.controls-window #quickMenuList button[data-key="bell"].bell-both-muted .quickGlyph::before{
- transform:translate(-50%,-50%) rotate(44deg);
-}
-body.controls-window #quickMenuList button[data-key="bell"].bell-both-muted{
+body.controls-window #quickMenuList button[data-key="bell"],
+body.controls-window #quickMenuList button[data-key="bell"].selected,
+body.controls-window #quickMenuList button[data-key="bell"].bell-sound-favorites{
  color:#f7f8fa!important;
 }
+body.controls-window #quickMenuList button[data-key="bell"].bell-sound-new,
+body.controls-window #quickMenuList button[data-key="bell"].bell-sound-both{
+ color:#ffd64b!important;
+}
+body.controls-window #quickMenuList button[data-key="bell"].bell-sound-favorites .quickGlyph::after,
+body.controls-window #quickMenuList button[data-key="bell"].bell-sound-both .quickGlyph::after{
+ content:"★";position:absolute;z-index:3;left:50%;top:48%;color:#ffdc63;
+ font:bold 9px/1 Arial,sans-serif;transform:translate(-50%,-50%);
+ text-shadow:0 0 2px #15181d;pointer-events:none;
+}
+body.controls-window #quickMenuList button[data-key="bell"].bell-sound-both .quickGlyph::after{
+ color:#fff6ce;
+}
+body.controls-window #quickMenuList button[data-key="bell"].bell-silent-mode .quickGlyph::before{
+ content:"";position:absolute;right:0;bottom:0;z-index:4;width:4px;height:4px;
+ border-radius:50%;background:#abb1ba;box-shadow:0 0 1px #111;
+ pointer-events:none;
+}
+body.controls-window #quickMenuList button[data-key="bell"].bell-permission-blocked .quickGlyph::before{
+ content:"!";position:absolute;right:-1px;top:-4px;bottom:auto;z-index:4;
+ width:7px;height:9px;border-radius:0;background:transparent;color:#ffb45c;
+ font:bold 9px/9px Arial,sans-serif;text-align:center;pointer-events:none;
+}
+/* Keep the hidden classic toolbar in the same color scheme. */
+body.controls-window #controls #bell.bell-sound-favorites{color:#f7f8fa!important}
+body.controls-window #controls #bell.bell-sound-new,
+body.controls-window #controls #bell.bell-sound-both{color:#ffd64b!important}
 /* Compact mode list under its own icon; editors unfold only on demand. */
 body.controls-window #choices.modePanel.modeCascade{width:60px!important}
 body.controls-window #choices.modePanel.modeCascade.modeCascadeOpen{
@@ -2015,8 +2036,12 @@ function draw(){
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
  if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status))document.getElementById("manualRefresh").classList.remove("requested");
  const bell=document.getElementById("bell");
- bell.classList.toggle("generalOn",generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites));
-  bell.classList.toggle("generalSilent",!(generalAlerts&&alertMode==="on")&&!(favoriteAlertMode==="on"&&hasFavorites)&&((generalAlerts&&alertMode==="silent")||(favoriteAlertMode==="silent"&&hasFavorites)));
+ const bellVisual=notificationBellVisual(notificationPermissionGranted,alertMode,favoriteAlertMode);
+ bell.classList.toggle("generalOn",bellVisual.newSound);
+ bell.classList.toggle("generalSilent",false);
+ bell.classList.toggle("bell-sound-new",bellVisual.newOnly);
+ bell.classList.toggle("bell-sound-favorites",bellVisual.favoritesOnly);
+ bell.classList.toggle("bell-sound-both",bellVisual.both);
  bell.classList.toggle("permissionMissing",!notificationPermissionGranted);
  bell.setAttribute("aria-pressed",String((generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))&&notificationPermissionGranted));
  bell.title=!notificationPermissionGranted?"Alertas bloqueados no Android · toque para configurar":"Novos: "+alertMode+" · Favoritos: "+favoriteAlertMode+" · toque para configurar";
@@ -2435,10 +2460,24 @@ function audibleAlertState(permission,generalMode,favoriteMode,hasWatched){
  return {newAudible,favoriteAudible,
   mutedCount:(newAudible?0:1)+(favoriteAudible?0:1)};
 }
+// These states reflect the two independently configured sound modes.
+// Favorite-list size affects playback, not the stored preference display.
+function notificationBellVisual(permission,generalMode,favoriteMode){
+ const newSound=!!permission&&generalMode==="on";
+ const favoriteSound=!!permission&&favoriteMode==="on";
+ return {newSound,favoriteSound,
+  newOnly:newSound&&!favoriteSound,
+  favoritesOnly:favoriteSound&&!newSound,
+  both:newSound&&favoriteSound,
+  silent:!!permission&&(generalMode==="silent"||favoriteMode==="silent"),
+  blocked:!permission&&(generalMode!=="off"||favoriteMode!=="off")};
+}
 function refreshQuickMenuStates(){
  if(!controlsWindow)return;
  const {mutedCount}=audibleAlertState(
   notificationPermissionGranted,alertMode,favoriteAlertMode,hasFavorites);
+ const bellState=notificationBellVisual(
+  notificationPermissionGranted,alertMode,favoriteAlertMode);
  document.querySelectorAll("#quickMenuList button[data-key]").forEach(button=>{
   const id=button.dataset.key, current=quickState(id), state=button.querySelector(".quickState");
   if(state)state.textContent=current;
@@ -2455,11 +2494,17 @@ function refreshQuickMenuStates(){
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
   button.classList.toggle("pending",id==="sh"&&shinyPending);
    button.classList.toggle("silent",false);
-   button.classList.toggle("bell-one-muted",id==="bell"&&mutedCount===1);
-   button.classList.toggle("bell-both-muted",id==="bell"&&mutedCount===2);
+   button.classList.toggle("bell-sound-new",id==="bell"&&bellState.newOnly);
+   button.classList.toggle("bell-sound-favorites",id==="bell"&&bellState.favoritesOnly);
+   button.classList.toggle("bell-sound-both",id==="bell"&&bellState.both);
+   button.classList.toggle("bell-silent-mode",id==="bell"&&bellState.silent);
+   button.classList.toggle("bell-permission-blocked",id==="bell"&&bellState.blocked);
+   if(id==="bell")button.title+=" · Novos: "+alertMode+" · Favoritos: "+
+     favoriteAlertMode+" · fontes audíveis: "+(2-mutedCount)+
+     (favoriteAlertMode==="on"&&!hasFavorites?" · cadastre favoritos":"");
   button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
    id==="sh"?(shiny&&!shinyPending):
-   id==="bell"?((generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))&&notificationPermissionGranted):id==="period"?period>0:
+   id==="bell"?(bellState.newSound||bellState.favoriteSound):id==="period"?period>0:
    id==="star"?hasFavorites:id==="mode"?(mode==="gl"||mode==="ul"):false);
  });
 }
