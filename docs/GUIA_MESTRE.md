@@ -2907,3 +2907,11 @@ Após montar a navegação da página completa, a revisão encontrou um erro de 
 **APK:** autorização expressa do usuário nesta rodada. A branch isolada foi habilitada no workflow existente de APK de teste com chave persistente e versionCode automático, mas **com guarda por mensagem `build: approved icon colors`** (ou despacho manual); pushes normais na branch não podem compilar sem nova autorização. O workflow só publica depois de verificar pacote, incremento, assinatura v2 e certificado persistente. Não publicar APK diferente por fallback com chave de debug efêmera. Não fazer merge na main. Backup `backup/pokesearch-51081-pre-editor-visual-20261021` preservado.
 
 **Homologação pendente:** teste dos quatro controles em OFF/ON, alerta silencioso, Shiny pendente, localização pendente e falta de permissão, com fundos neutros em temas claro e escuro. Se o CI falhar, registrar o motivo e corrigir antes de chamar o APK de pronto.
+
+### 12.121 UX-ICON-STATE-QA — correção de testes históricos antes do APK (21/10/2026)
+
+**Execução #83:** GitHub Actions assinada iniciada no commit `d1448f65f842c0063cbc8055d51cf613fd7624a0`. Chave persistente restaurada corretamente e SDK instalado; o passo Node falhou em oito contratos legados de `app/tests/overlay-ux.test.js`, que esperavam altura fixa de 34dp e pitch não sobreponível, anterior ao editor 12.117–12.119. O APK não foi compilado nem publicado nessa tentativa.
+
+**Auditoria e atualização de contratos (SEM desativar a suíte):** ajustadas exatamente oito asserções/casos para verificar as invariantes atuais — base horizontal 34dp/vertical 232dp, janela nativa redimensionável, popup com altura solicitada preservada, passo variável entre sprites inclusive Compacto 0, metadados ao lado sem ampliar linhas, limitação de altura da tela e rolagem do próprio strip de metadados. As asserções de autenticação, filtragem, IV comprovado, brilho, ícones de ligas e assinatura seguem habilitadas. Todos os testes serão novamente executados em CI antes de declarar build.
+
+**Build:** continua autorizado pelo pedido atual somente com mensagem de commit `build: approved icon colors`. Sem alterações de APK instalável antes de resultado verde, nem de chave, applicationId, branch main ou backup. É necessário avaliar o próximo CI e verificar apksigner + incremento de versionCode.

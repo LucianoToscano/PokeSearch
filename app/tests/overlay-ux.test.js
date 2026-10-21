@@ -29,9 +29,10 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
  b.includes('applyExact(15)')&&b.includes('applyExact(0)')&&
  !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
 test("Intervals minimum 5 minutes",["Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
-test("Cascade measures full height even after native clip, restoring space after drag",
- dock.includes('choiceOpen==="mode"?34+190+6')&&
- dock.includes('Native.resizeMenu(h)')&&service.includes('menuRequestedHeightDp=MENU_BASE_DP'));
+test("Cascade uses current toolbar height even after clipping or vertical rotation",
+ dock.includes('choiceOpen==="mode"?baseHeight+190+6')&&
+ dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;')&&
+ dock.includes("Native.resizeMenu(h)")&&service.includes("menuRequestedHeightDp=visualMenuBaseDp();"));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
 test("Favorites remain in overlay",service.includes("PokemonPicker.show(OverlayService.this")&&!service.includes('intent.setAction("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST")'));
@@ -62,30 +63,28 @@ test("Native passes full display height and preserves up to ten card slots",
  dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
-test("UX-RESULT-10 only expands spacing for actual visible timers or verified IV",()=>{
+test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
  const from=dock.indexOf("const PVPOKE_OVERALL=");
  const until=dock.indexOf('let lastListKey=""',from);
  if(from<0||until<from)return false;
  const source=dock.slice(from,until);
- const functions=new Function("window","verifiedSpawnIvPercent",source+
-  "return {resultHasVisibleInfo,computeResultLayout}")(
-  {POKESEARCH_PVPOKE_OVERALL:{gl:[],ul:[]}},c=>c.verified?98:null);
+ const win={visualPrefs:{resultGapBetween:31,resultsOrientation:"vertical"}};
+ const helpers=new Function("window","verifiedSpawnIvPercent",source+
+   "return {resultHasVisibleInfo,computeResultLayout}")(win,c=>c.verified?98:null);
  const short=Array.from({length:10},(_,i)=>({name:"Pokémon "+i,verified:false,expiresAtMs:0}));
  const withInfo=short.map((x,i)=>({...x,verified:i%2===0,expiresAtMs:i%3===0?12345:0}));
- const base=functions.computeResultLayout(short,45,800,false,false);
- const iv=functions.computeResultLayout(withInfo,45,800,false,true);
- const timers=functions.computeResultLayout(withInfo,45,800,true,false);
- const both=functions.computeResultLayout(withInfo,55,380,true,true);
- const fewer=functions.computeResultLayout(short.slice(0,4),35,800,false,false);
- const none=functions.computeResultLayout([],45,800,false,false);
- return base.visibleCount===10&&base.rows.every(x=>x===46)&&base.total===460&&
-  iv.rows[0]===48&&iv.rows[1]===46&&
-  timers.rows[0]===48&&timers.rows[1]===46&&
-  both.visibleCount===10&&both.total+30+6<=380-16&&
-  fewer.visibleCount===4&&none.visibleCount===0&&
-  functions.resultHasVisibleInfo(withInfo[0],false,true)===true&&
-  functions.resultHasVisibleInfo(withInfo[1],false,true)===false&&
-  !dock.includes('if(resultWindow)document.getElementById("spawns").innerHTML=cards.slice(0,8)');
+ const base=helpers.computeResultLayout(short,45,900,false,false);
+ const iv=helpers.computeResultLayout(withInfo,45,900,false,true);
+ const timers=helpers.computeResultLayout(withInfo,45,900,true,false);
+ const both=helpers.computeResultLayout(withInfo,55,380,true,true);
+ win.visualPrefs.resultGapBetween=0;
+ const compact=helpers.computeResultLayout(short,45,900,false,false);
+ return base.visibleCount===10&&base.rows.every(x=>x===45)&&
+   iv.rows.every(x=>x===45)&&timers.rows.every(x=>x===45)&&
+   both.visibleCount===10&&both.total+30+6<=380-16&&
+   compact.rows.every(x=>x===14)&&compact.sprite===45&&
+   helpers.resultHasVisibleInfo(withInfo[0],false,true)===true&&
+   helpers.resultHasVisibleInfo(withInfo[1],false,true)===false;
 });
 test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten-card limit",
  dock.includes('["count","Quantidade de spawns"]')&&
@@ -211,24 +210,27 @@ test("UX-INFO-09 despawn expiry still marks entire Pokémon when timer is inline
  dock.includes('class="timer" data-deadline=')&&
  dock.includes('.spawn.expired{opacity:.38}')&&
  dock.includes('infoScale:Math.max(0.86,Math.min(1,factor))'));
-test("UX-RESULT-10 no-data rows have a minimal gap and never overlap full sprite size",()=>{
+test("UX-RESULT-10 default rows remain full size; compact can overlap transparent sprite slots",()=>{
  const from=dock.indexOf("const PVPOKE_OVERALL="),until=dock.indexOf('let lastListKey=""',from);
+ if(from<0||until<from)return false;
+ const win={visualPrefs:{resultGapBetween:31}};
  const helpers=new Function("window","verifiedSpawnIvPercent",dock.slice(from,until)+
-  "return {computeResultLayout}")( {},()=>null);
+   "return {computeResultLayout}")(win,()=>null);
  const ten=Array.from({length:10},(_,i)=>({name:"Pokémon "+i,expiresAtMs:0}));
  for(const size of [35,45,55]){
-  const unscaled=helpers.computeResultLayout(ten,size,900,false,false);
-  if(unscaled.sprite!==size||unscaled.rows.some(row=>row<size)||unscaled.visibleCount!==10)return false;
+  const full=helpers.computeResultLayout(ten,size,900,false,false);
+  if(full.sprite!==size||full.rows.some(row=>row!==size)||full.visibleCount!==10)return false;
   const short=helpers.computeResultLayout(ten,size,330,false,false);
   if(short.visibleCount!==10||short.total+54>330)return false;
-  if(short.rows.some(row=>row<short.sprite))return false;
-  // Tiny split-screen overlay heights must not overlap sprite drawings.
-  for(const veryShortHeight of [190,160]){
-   const tight=helpers.computeResultLayout(ten,size,veryShortHeight,false,false);
+  for(const height of [190,160]){
+   const tight=helpers.computeResultLayout(ten,size,height,false,false);
    if(tight.visibleCount!==10||tight.rows.some(row=>row<tight.sprite))return false;
   }
  }
- return dock.includes("size+3:size+1; // 1px gap when no metadata;");
+ win.visualPrefs.resultGapBetween=0;
+ const compact=helpers.computeResultLayout(ten,45,900,false,false);
+ return compact.sprite===45&&compact.rows.every(row=>row===14)&&
+   dock.includes("return pitch; // Transparent sprite squares may overlap");
 });
 test("UX-INFO-08 bundled PvPoke data includes MIT attribution and stays display-only",
  read("assets/licenses/PvPoke-MIT.txt").includes("MIT License")&&
@@ -258,7 +260,7 @@ test("League badge replaces the bottom chevron as result collapse control",dock.
 test("Red close is alongside heart with standard background",dock.indexOf('id="close"')>dock.indexOf('id="donate"')&&dock.includes("#controls #close{"));
 test("No duplicate close/collapse above gear",!dock.includes('id="topActions"'));
 test("Menu occupies separate window rather than wide sprite dock",service.includes('menuRoot=new FrameLayout(this)')&&service.includes('menuPanel=new WebView(this)')&&dock.includes('controlsWindow=window.location.search'));
-test("Original compact toolbar is only one 34dp row",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP)')&&service.includes("MENU_BASE_DP=34"));
+test("Original compact toolbar is only one 34dp row",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(visualMenuBaseDp())')&&service.includes("MENU_BASE_DP=34"));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login launched from overlay returns to gameplay with PokeSearch only on successful authentication",
  main.includes('if(authenticatedNow&&fromOverlay&&OverlayService.isRunning())')&&
@@ -463,10 +465,10 @@ test("Android responsive controls have no phantom spacer below popup",
   service.includes('menuPadDp=0; // Results remain in their own separate native overlay.')&&
   service.includes('menuParams.y=Math.max(0,Math.min(bottom-menuParams.height,')&&
   dock.includes('#choices{display:none;position:absolute;top:34px;'));
-test("UX-MENU-01 measures the compact menu or single submenu",
-  dock.includes('if(controlsWindow)h=34; // UX-MENU-03: the thin toolbar is always exactly one row.')&&
-  service.includes('menuParams.height=dp(MENU_BASE_DP)')&&
-  service.includes('Math.min(450,screenHeightDp()-24)'));
+test("UX-MENU-01 measures horizontal and vertical menus with dynamic base height",
+ dock.includes('if(controlsWindow)h=window.visualPrefs?.menuOrientation==="vertical"?232:34;')&&
+ service.includes("menuParams.height=dp(visualMenuBaseDp())")&&
+ service.includes("Math.min(450,screenHeightDp()-24)"));
 test("All legacy twelve bridge buttons remain unique in HTML",
   toolbarButtons.length===12&&
   ['cycle','sh','period','manualRefresh','size','clock','bell','star','location','report','donate','close']
@@ -1291,18 +1293,18 @@ test("RESULT-RESTORE all historical effects intact with only corrected UL base",
  draw.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
  draw.includes('selectedIcon.shinyBadge')&&draw.includes('selectedIcon.backgroundBadge')&&
  dock.includes('animation:psCapturePulse');})());
-test("UX-CASCADE window resizing retains full requested size after temporary clipping",
- service.includes('private int menuRequestedHeightDp=MENU_BASE_DP;')&&
- service.includes('Math.max(0,dp(menuRequestedHeightDp)-rowHeight)')&&
- service.includes('menuRequestedHeightDp=Math.max(MENU_BASE_DP,Math.min(maxMenuHeight,desiredDp))')&&
- !service.includes('int requestedPopup=Math.max(0,menuParams.height-rowHeight)')&&
- dock.includes('choiceOpen==="mode"?34+190+6')&&
- dock.includes('function positionCascadeEditor()')&&
- dock.includes('rail.scrollTop=Math.max(0,requested+36-visible)')&&
+test("UX-CASCADE retains requested popup height while visual editor changes orientation",
+ service.includes("private int menuRequestedHeightDp=MENU_BASE_DP;")&&
+ service.includes("Math.max(0,dp(menuRequestedHeightDp)-rowHeight)")&&
+ service.includes("menuRequestedHeightDp=Math.max(visualMenuBaseDp(),Math.min(maxMenuHeight,desiredDp))")&&
+ !service.includes("int requestedPopup=Math.max(0,menuParams.height-rowHeight)")&&
+ dock.includes('choiceOpen==="mode"?baseHeight+190+6')&&
+ dock.includes("function positionCascadeEditor()")&&
+ dock.includes("rail.scrollTop=Math.max(0,requested+36-visible)")&&
  dock.includes('if(choiceOpen==="mode")positionCascadeEditor()')&&
- service.includes('if(menuParams.width!=width)menuParams.width=width;')&&
- service.includes('menuParams.x=Math.max(0,Math.min(Math.max(0,screen-width),menuParams.x))')&&
- dock.includes('if(controlsWindow)Native.locationEditor(false);'));
+ service.includes("if(menuParams.width!=width)menuParams.width=width;")&&
+ service.includes("menuParams.x=Math.max(0,Math.min(Math.max(0,screen-width),")&&
+ dock.includes("if(controlsWindow)Native.locationEditor(false);"));
 test("RESULT UL correct historic black-yellow icon, preserving other base artwork",
  dock.includes('baseFamily==="ul"?"file:///android_asset/result-icons/ultra-league.png"')&&
  dock.includes('gl:"base-gl.png",ul:"base-ul.png",ml:"base-ml.png"')&&
@@ -1843,7 +1845,7 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
     service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",false)'))&&
   keys.every(key=>dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:0;')&&
-  dock.includes('if(lines.length)return size+3;')&&
+  dock.includes("return pitch; // Transparent sprite squares may overlap")&&
   dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
 });
 test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
@@ -1871,7 +1873,7 @@ test("UX-INFO-ALL-03 optional metadata respects the compact row dimensions",()=>
  return lines.includes('Nome Machop')&&lines.includes('Local Shibuya, Tokyo, Japan')&&
    lines.includes('Dist 0.3 km')&&lines.includes('Sexo ♀')&&
    lines.includes('Tam M')&&lines.includes('✨ Shiny')&&
-   hidden.length===0&&layout.rows.every(r=>r===48)&&layout.visibleCount===2;
+   hidden.length===0&&layout.rows.every(r=>r===45)&&layout.visibleCount===2;
 });
 test("UX-LOC-SHINY-01 reasserts shiny after site Coords switch and before Search",()=>{
  const begin=service.indexOf('private void verifyShinyAfterLocation(');
