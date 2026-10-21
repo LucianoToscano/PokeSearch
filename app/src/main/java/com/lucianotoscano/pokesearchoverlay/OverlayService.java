@@ -1937,9 +1937,18 @@ public class OverlayService extends Service {
             }
             if(locationEnabled==enabled&&
                 (!enabled||(locationCoords.equals(valid)&&locationRadius==radius))){
-                // Repeated Apply/ON taps are not a new search and cannot turn
-                // an already verified location into a pending one.
-                update();return;
+                // Duplicate requests must not reset a verified state. However,
+                // after a failed/unconfirmed search, Apply is an explicit retry.
+                // Leave an in-flight or rate-limited query untouched.
+                boolean retry=!searchInProgress&&
+                    nextScheduledSearchAtMs<=System.currentTimeMillis()&&
+                    ((enabled&&!locationVerified)||"error".equals(searchPhase));
+                if(retry){
+                    status(enabled?"📍 Revalidando coordenadas e raio no site...":
+                        "📍 Revalidando busca geral sem localização...");
+                    OverlayService.this.refresh(true);
+                }else update();
+                return;
             }
             locationVerified=false;
             locationEnabled=enabled;

@@ -11,6 +11,7 @@ function check(title,result,expected){
  assert.equal(result,expected,title);passed++;
 }
 function fixture(options={}){
+ let lastInput=null;
  class MockInput{
   constructor(label,value=""){
    this.tagName="INPUT";this._value=value;this.parentElement=null;
@@ -22,7 +23,14 @@ function fixture(options={}){
   getClientRects(){return [{}];}
   getAttribute(k){return options.unnamedFields?null:
    k==="aria-label"?(this.labels[0]?.innerText||""):null;}
-  dispatchEvent(){return true;}
+  dispatchEvent(event){
+   if(event.type==="input"){
+    // React may discard the first field if both change in the same JS turn.
+    if(options.reactResetsSameTurn&&this===radius&&lastInput===coord)coord.value="";
+    lastInput=this;
+   }
+   return true;
+  }
  }
  const coord=options.noCoords?null:new MockInput("Coordinates",options.currentCoords||"");
  const radius=options.noRadius?null:new MockInput(options.radiusLabel||"Radius",options.currentRadius||"");
@@ -52,6 +60,7 @@ function fixture(options={}){
   }
  };
  function run(action,req={}){
+  lastInput=null;
   const source=raw.replace("__ACTION__",JSON.stringify(action+":"+JSON.stringify(req)))
    .replace("__MODE__",JSON.stringify("raw"))
    .replace("__SHINY__","false")
@@ -64,11 +73,23 @@ function fixture(options={}){
  }
  return {coord,radius,run,selected:()=>selected};
 }
+function settle(f,request,maxCycles=7){
+ let result;
+ for(let i=0;i<maxCycles;i++){
+  result=f.run("configureLocation",request);
+  if(result.ok||!result.pending)return result;
+ }
+ return result;
+}
 const req={enabled:true,coords:"-23.5505,-46.6333",radius:10};
 let f=fixture();
 let result=f.run("configureLocation",req);
 check("Mode changes must be reported as pending",result.pending,true);
 check("React mode was switched",f.selected(),"coords");
+result=f.run("configureLocation",req);
+check("First React-controlled edit returns pending coordinates",result.stage,"setting-coords");
+result=f.run("configureLocation",req);
+check("Second React-controlled edit returns pending radius",result.stage,"setting-radius");
 result=f.run("configureLocation",req);
 check("Location configuration succeeds after mode hydration",result.ok,true);
 check("Coordinates input contains requested value",f.coord.value,req.coords);
@@ -89,7 +110,7 @@ check("Unconfirmed Coords mode cannot apply",
 let labeled=fixture({unnamedFields:true,radiusLabel:"Distance"});
 labeled.run("configureLocation",req);
 check("Associated visible labels work without placeholders or aria-labels",
- labeled.run("configureLocation",req).ok,true);
+ settle(labeled,req).ok,true);
 check("Distance label recognized as radius",labeled.run("verifyLocation",req).ok,true);
 let invalid=fixture();
 check("Out-of-range latitude never submits",
@@ -98,8 +119,9 @@ check("Negative radius never submits",
  invalid.run("configureLocation",{...req,radius:-1}).ok,false);
 let off=fixture({active:"coords",currentCoords:"1,2",currentRadius:"10"});
 let disabled={enabled:false,coords:"",radius:0};
-check("OFF clears stale values without forcing Area mode",
- off.run("configureLocation",disabled).ok,true);
+check("OFF clears coordinates before clearing radius",off.run("configureLocation",disabled).stage,"clearing-coords");
+check("OFF clears radius in a separate React cycle",off.run("configureLocation",disabled).stage,"clearing-radius");
+check("OFF clears stale values without forcing Area mode",off.run("configureLocation",disabled).ok,true);
 check("OFF keeps the site's existing Coords tab without enabling location",off.selected(),"coords");
 check("OFF confirmation clears previous radius",off.radius.value,"");
 check("OFF confirmation clears previous coordinates",off.coord.value,"");
@@ -128,7 +150,7 @@ let zeroRadius=fixture();
 const reqZero={...req,radius:0};
 zeroRadius.run("configureLocation",reqZero);
 check("Zero-radius Coords form applies after React tab changes",
- zeroRadius.run("configureLocation",reqZero).ok,true);
+ settle(zeroRadius,reqZero).ok,true);
 check("Zero radius remains 0 instead of being treated as an empty string",
  zeroRadius.radius.value,"0");
 check("Zero radius is verified as exactly the requested filter",
@@ -137,10 +159,32 @@ let worldRadius=fixture();
 const reqMax={...req,radius:1000};
 worldRadius.run("configureLocation",reqMax);
 check("Maximum documented radius 1000 is applied",
- worldRadius.run("configureLocation",reqMax).ok,true);
+ settle(worldRadius,reqMax).ok,true);
 check("Maximum radius passes exact site verification",
  worldRadius.run("verifyLocation",reqMax).ok,true);
 worldRadius.radius.value="1001";
 check("Site never silently expands maximum radius after hydration",
  worldRadius.run("verifyLocation",reqMax).ok,false);
+
+let raced=fixture({reactResetsSameTurn:true});
+check("React form initially requests Coords",raced.run("configureLocation",req).pending,true);
+check("React forms edit coords first",raced.run("configureLocation",req).stage,"setting-coords");
+check("React forms edit radius in the next turn",raced.run("configureLocation",req).stage,"setting-radius");
+check("The first field survives a simulated React same-turn reset",raced.coord.value,req.coords);
+check("React form is confirmed only after a subsequent read",raced.run("configureLocation",req).ok,true);
+let normalized=fixture({active:"coords",currentCoords:"-23.550500,-46.633300",currentRadius:"10"});
+check("Semantically identical coordinates do not cause endless rewrites",normalized.run("configureLocation",req).ok,true);
+let stalled=fixture({active:"coords",currentCoords:"11,22",currentRadius:"10"});
+check("Stale coords require an OFF transition",stalled.run("configureLocation",disabled).stage,"clearing-coords");
+stalled.coord.value="11,22";
+check("Rehydrated stale coords cannot be considered disabled",stalled.run("verifyLocation",disabled).ok,false);
+check("Repeated OFF returns pending until restored stale coords are cleared",stalled.run("configureLocation",disabled).pending,true);
+let disabledFields=fixture({active:"coords"});
+disabledFields.radius.disabled=true;
+check("Disabled React radius blocks active location configuration",disabledFields.run("configureLocation",req).pending,true);
+check("Disabled radius never causes premature confirmed Coords",disabledFields.run("verifyLocation",req).ok,false);
+let disabledOff=fixture({active:"coords",currentCoords:"1,2",currentRadius:"10"});
+disabledOff.coord.disabled=true;
+check("Disabled Coords cannot be cleared optimistically",disabledOff.run("configureLocation",disabled).stage,"waiting-coords");
+check("Disabled Coords retains its original value",disabledOff.coord.value,"1,2");
 console.log("PokeSearch location contract: "+passed+" tests passed");

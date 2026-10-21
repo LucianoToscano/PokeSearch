@@ -1765,6 +1765,17 @@ test("UX-LOCATION-FIX-01 invalid location never clears native confirmation or st
   block.includes('replaceActiveFilterSearch();')&&
   block.includes('OverlayService.this.refresh(true);');
 });
+test("UX-LOCATION-RETRY-01 same unverified coordinates can retry safely",()=>{
+ const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
+  ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";
+ return block.includes('boolean retry=!searchInProgress&&')&&
+   block.includes('nextScheduledSearchAtMs<=System.currentTimeMillis()')&&
+   block.includes('enabled&&!locationVerified')&&
+   block.includes('"error".equals(searchPhase)')&&
+   block.includes('OverlayService.this.refresh(true);')&&
+   block.includes('}else update();')&&
+   block.indexOf('locationVerified=false;')>block.indexOf('boolean retry=');
+});
 test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
  const body=dock.split('function renderLocationChoices(){')[1]?.split('function manualRefreshTap(){')[0]||"";
  return body.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&

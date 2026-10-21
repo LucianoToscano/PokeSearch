@@ -906,6 +906,16 @@ function coordsModeSelected(){
  return null;
 }
 function locationValue(field){return field?String(field.value||"").trim():"";}
+ function sameLocationCoordinates(actual,requested){
+  const parse=s=>{
+   const found=String(s||"").trim().match(/^([-+]?\d+(?:\.\d+)?)\s*[,;]\s*([-+]?\d+(?:\.\d+)?)$/);
+   if(!found)return null;
+   const values=[Number(found[1]),Number(found[2])];
+   return values.every(Number.isFinite)&&Math.abs(values[0])<=90&&Math.abs(values[1])<=180?values:null;
+  };
+  const a=parse(actual),b=parse(requested);
+  return !!a&&!!b&&Math.abs(a[0]-b[0])<0.0000001&&Math.abs(a[1]-b[1])<0.0000001;
+ }
 function configureLocation(req){
  const use=!!req.enabled;
  const fieldsBefore=locationFields();
@@ -918,14 +928,30 @@ function configureLocation(req){
   // Clearing it on every public search can alter an unrelated field and
   // cause a false "location not applied" block.
   const previousCoords=locationValue(fieldsBefore.coords);
+  // A React re-render may replace the radius input after the coordinates edit.
+  // Only carry a boolean across cycles: never retain personal coordinates in DOM flags.
+  const root=document.body;
   if(previousCoords){
-   valueInput(fieldsBefore.coords,"");
-   if(fieldsBefore.radius&&locationValue(fieldsBefore.radius))
-    valueInput(fieldsBefore.radius,"");
+   if(fieldsBefore.coords.disabled)
+    return JSON.stringify({ok:false,pending:true,stage:"waiting-coords",reason:"Campo Coords indisponível"});
+   if(root)root.__psClearLocationRadius=true;
+   if(!valueInput(fieldsBefore.coords,""))
+    return JSON.stringify({ok:false,reason:"Campo de coordenadas não editável"});
+   return JSON.stringify({ok:false,pending:true,stage:"clearing-coords",
+    reason:"Aguardando remover coordenadas antigas"});
   }
-  const blank=!locationValue(fieldsBefore.coords);
-  return JSON.stringify({ok:blank,pending:!blank,stage:"location-off",
-   reason:blank?"":"Coordenadas antigas ainda presentes no site"});
+  if(root&&root.__psClearLocationRadius){
+   if(fieldsBefore.radius&&locationValue(fieldsBefore.radius)){
+    if(fieldsBefore.radius.disabled)
+     return JSON.stringify({ok:false,pending:true,stage:"waiting-radius",reason:"Campo Raio indisponível"});
+    if(!valueInput(fieldsBefore.radius,""))
+     return JSON.stringify({ok:false,reason:"Campo de raio não editável"});
+    return JSON.stringify({ok:false,pending:true,stage:"clearing-radius",
+     reason:"Aguardando remover o raio anterior"});
+   }
+   root.__psClearLocationRadius=false;
+  }
+  return JSON.stringify({ok:true,pending:false,stage:"location-off"});
  }
  if(typeof req.coords!=="string"||!/^[-+]?\d+(?:\.\d+)?,[-+]?\d+(?:\.\d+)?$/.test(req.coords)||
     !Number.isInteger(req.radius)||req.radius<0||req.radius>1000||
@@ -939,7 +965,24 @@ function configureLocation(req){
  }
  const fields=locationFields();
  if(!fields.coords||!fields.radius)return JSON.stringify({ok:false,pending:true,reason:"Aguardando campos de coordenadas/raio"});
- return JSON.stringify({ok:valueInput(fields.coords,req.coords)&&valueInput(fields.radius,String(req.radius)),stage:"location-on"});
+  if(fields.coords.disabled||fields.radius.disabled)
+   return JSON.stringify({ok:false,pending:true,stage:"waiting-location-fields",
+    reason:"Aguardando liberação dos campos do site"});
+  // Set ONE React-controlled field per evaluateJavascript round trip. The next
+  // call re-reads actual DOM inputs before trying the second field or searching.
+  if(!sameLocationCoordinates(locationValue(fields.coords),req.coords)){
+   if(!valueInput(fields.coords,req.coords))
+    return JSON.stringify({ok:false,reason:"Campo de coordenadas não editável"});
+   return JSON.stringify({ok:false,pending:true,stage:"setting-coords",
+    reason:"Aguardando confirmação das coordenadas"});
+  }
+  if(locationValue(fields.radius)!==String(req.radius)){
+   if(!valueInput(fields.radius,String(req.radius)))
+    return JSON.stringify({ok:false,reason:"Campo de raio não editável"});
+   return JSON.stringify({ok:false,pending:true,stage:"setting-radius",
+    reason:"Aguardando confirmação do raio"});
+  }
+  return JSON.stringify({ok:true,pending:false,stage:"location-on"});
 }
 function verifyLocation(req){
  const fields=locationFields(),active=coordsModeSelected();
