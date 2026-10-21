@@ -39,6 +39,7 @@ val testKeyPassword = System.getenv("POKE_TEST_KEY_PASSWORD")
 val testSigningFields = listOf(testKeyFile, testStorePassword, testKeyAlias, testKeyPassword)
 val testSigningComplete = testSigningFields.all { !it.isNullOrBlank() }
 val testSigningRequired = System.getenv("POKE_TEST_SIGNING_REQUIRED") == "true"
+val friendsDistribution = System.getenv("POKE_FRIENDS_DISTRIBUTION") == "true"
 if ((testSigningRequired || testSigningFields.any { !it.isNullOrBlank() }) && !testSigningComplete)
     throw org.gradle.api.GradleException("Stable test signing is incomplete; configure the protected CI secrets")
 if (testSigningRequired && testVersionLabel == null)
@@ -98,8 +99,11 @@ android {
         }
         getByName("release") {
             buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256",
-                "\"$releaseCertificateSha256\"")
-            if (!releaseStore.isNullOrBlank()) signingConfig = signingConfigs.getByName("privateTestRelease")
+                "\"${if (friendsDistribution) officialTestCertificateSha256 else releaseCertificateSha256}\"")
+            if (friendsDistribution) {
+                if (!testSigningComplete) throw org.gradle.api.GradleException("Friends APK requires permanent test signing")
+                signingConfig = signingConfigs.getByName("persistentTestDebug")
+            } else if (!releaseStore.isNullOrBlank()) signingConfig = signingConfigs.getByName("privateTestRelease")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -113,7 +117,7 @@ android {
 
 tasks.matching { it.name == "preReleaseBuild" }.configureEach {
     doFirst {
-        if (System.getenv("POKE_RELEASE_KEYSTORE").isNullOrBlank() || releaseCertificateSha256.isEmpty())
+        if (!friendsDistribution && (System.getenv("POKE_RELEASE_KEYSTORE").isNullOrBlank() || releaseCertificateSha256.isEmpty()))
             throw org.gradle.api.GradleException("Release signing and POKE_RELEASE_CERT_SHA256 are required")
     }
 }
