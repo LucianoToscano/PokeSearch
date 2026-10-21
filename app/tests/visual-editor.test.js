@@ -105,7 +105,7 @@ test("slider edits are not reverted by stale service state",()=>{
  assert.ok(script.includes('if(pendingVisualJson===incoming)pendingVisualJson=""'));
 });
 test("large header gap is included in native window height",()=>{
- assert.ok(dock.includes('Math.max(0,Number(window.visualPrefs?.resultGapTop)||0)'));
+ assert.ok(dock.includes('Math.max(0,Math.ceil(spawns.getBoundingClientRect().height)+'));
  assert.ok(dock.includes('margin-top:var(--visual-top-gap,0px)!important'));
 });
 test("styling changes don't need reload of all Pokemon images",()=>{
