@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Build;
 import android.content.Intent;
 import android.net.Uri;
+import android.media.RingtoneManager;
 import android.provider.Settings;
 import android.graphics.Color;
 import android.webkit.CookieManager;
@@ -73,6 +74,8 @@ public class MainActivity extends Activity {
     private TextView loginWaitLabel,loginFallback;
     private int loginPageGeneration=0;
     private String pendingReportText="";
+    private String alertToneTarget="";
+    private String alertToneSpecies="";
     private FrameLayout homeRoot;
     private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
     private View trainerCopyButton;
@@ -117,6 +120,8 @@ public class MainActivity extends Activity {
             root.post(this::showBugReportDialog);
         if("com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(getIntent().getAction()))
             root.post(this::requestOverlayNotificationPermission);
+        if("com.lucianotoscano.pokesearchoverlay.PICK_ALERT_TONE".equals(getIntent().getAction()))
+            root.post(()->beginAlertToneChoice(getIntent().getStringExtra("alertToneTarget")));
     }
 
     private TextView homeText(String value,int sp,int color,boolean bold){
@@ -1157,6 +1162,8 @@ public class MainActivity extends Activity {
             getWindow().getDecorView().post(this::showBugReportDialog);
         if("com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(intent.getAction()))
             getWindow().getDecorView().post(this::requestOverlayNotificationPermission);
+        if("com.lucianotoscano.pokesearchoverlay.PICK_ALERT_TONE".equals(intent.getAction()))
+            getWindow().getDecorView().post(()->beginAlertToneChoice(intent.getStringExtra("alertToneTarget")));
     }
     private void showBugReportDialog(){
         BugReport.log(this,"report","Relatório aberto manualmente");
