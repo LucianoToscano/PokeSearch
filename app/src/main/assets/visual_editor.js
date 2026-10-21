@@ -22,7 +22,7 @@ const PRESETS={
  balanced:{resultGapTop:3,resultGapBetween:13,resultSpriteScale:100,menuItemGap:3},
  readable:{resultGapTop:10,resultGapBetween:40,resultSpriteScale:110,menuItemGap:7}
 };
-let current={...DEFAULTS},tab="results",saveTimer=null;
+let current={...DEFAULTS},tab="results",saveTimer=null,pendingVisualJson="",saveEpoch=0;
 function normalize(raw){
  const src=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{};
  const result={...DEFAULTS};
@@ -50,6 +50,11 @@ function applyVisual(){
  set("menu-gap",current.menuItemGap+"px");
  set("results-bg",rgba(current.resultsBgMode,current.resultsTransparency));
  set("menu-bg",rgba(current.menuBgMode,current.menuTransparency));
+ set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency));
+ set("menu-fg",current.menuBgMode==="light"?"#152231":"#f2f7fc");
+ set("results-fg",current.resultsBgMode==="light"?"#172533":"#e6eefa");
+ body.classList.toggle("visual-light-menu",current.menuBgMode==="light");
+ body.classList.toggle("visual-light-results",current.resultsBgMode==="light");
  set("sprite-scale",String(current.resultSpriteScale/100));
  set("header-offset",current.headerIconY+"px");
  set("popup-width",current.popupWidth+"px");
@@ -58,16 +63,26 @@ function applyVisual(){
  body.classList.toggle("visual-results-horizontal",current.resultsOrientation==="horizontal");
  body.classList.toggle("visual-guides",current.showGuides);
  if(resultWindow&&typeof draw==="function"){
-  lastListKey="";draw();
+  // Only row pitch/orientation changes require rebuilding sprites; theme and scale
+  // apply via CSS without discarding images or their loaded/failed state.
+  const signature=[current.resultGapBetween,current.resultsOrientation].join("/");
+  if(window.__visualGeometry!==signature){
+   window.__visualGeometry=signature;
+   lastListKey="";draw();
+  }else if(typeof fit==="function")fit();
  }
  if(controlsWindow&&typeof fit==="function")fit();
 }
 function saveSoon(){
  if(!controlsWindow)return;
  clearTimeout(saveTimer);
+ const generation=++saveEpoch;
+ pendingVisualJson=JSON.stringify(current);
  saveTimer=setTimeout(()=>{
+  if(generation!==saveEpoch)return;
   saveTimer=null;
-  if(window.Native&&Native.saveVisualPrefs)Native.saveVisualPrefs(JSON.stringify(current));
+  if(window.Native&&Native.saveVisualPrefs)
+   Native.saveVisualPrefs(pendingVisualJson);
  },100);
 }
 function change(key,value){
@@ -215,8 +230,12 @@ window.renderVisualEditor=renderVisualEditor;
 window.onVisualPrefs=function(raw){
  try{
   const obj=typeof raw==="string"?JSON.parse(raw):raw;
-  const next=normalize(obj);
-  if(JSON.stringify(next)!==JSON.stringify(current)){current=next;applyVisual();}
+  const next=normalize(obj),incoming=JSON.stringify(next);
+  // Status/notification updates may rebroadcast the last saved layout while
+  // the thumb is still moving. Never roll back the user's unsaved values.
+  if(pendingVisualJson&&pendingVisualJson!==incoming)return;
+  if(pendingVisualJson===incoming)pendingVisualJson="";
+  if(incoming!==JSON.stringify(current)){current=next;applyVisual();}
  }catch(e){/* ignore invalid persisted visual prefs */}
 };
 window.visualEditorCurrent=function(){return {...current};};
