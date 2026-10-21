@@ -2882,3 +2882,16 @@ Após montar a navegação da página completa, a revisão encontrou um erro de 
 
 **Próxima etapa sob autorização:** testes integrados em Android/CI e compilação assinada somente quando o usuário ordenar “gere o APK”; validar com dados reais o slider 0, os 3 presets, modo horizontal/vertical, botões clicáveis em overlap, popups sem recortes, transparência 0–100, restart sem perda de preferências e exportação JSON. Não declarar o problema histórico do espaçamento definitivamente corrigido antes de ver captura de tela real do APK novo.
 
+
+### 12.119 VISUAL-EDITOR-04 — largura horizontal real, cabeçalho e sincronização de detalhes (21/10/2026)
+
+**Ponto de retomada:** branch auditada no HEAD `4c70520a440bf679158e733d34fbae27dbc2b9ac`, já contendo 12.118. Continuação exclusiva da auditoria de integração do Painel Visual Temporário; nenhuma alteração de APK, assinatura, filtros, IV, Shiny, login, ícones, dados do site ou outros projetos.
+
+**Defeitos e correções feitas no código:**
+1. **Horizontal:** `OverlayService.resultWidthDp()` contabilizava somente cartão × colunas, mas `dock.html` aplicava `column-gap`; por exemplo, dois cartões de 149dp e gap 31 precisavam de 329dp e recebiam apenas 298dp, causando quebra involuntária. A largura agora inclui `resultGapBetween × (colunas−1) + 2dp`, limitada à tela e a cinco colunas. O Java lê a preferência atual e atualiza a janela nativa ao alterar o slider ou a contagem.
+2. **Topo no Compacto:** `pitch < sprite` centralizava a arte do primeiro Pokémon acima da linha, podendo invadir a Pokébola. Foi acrescentado padding superior simétrico ao inferior de `max(0, (sprite−pitch)/2)` na lista, incorporado à altura medida por `fit()`. Mantêm-se altura máxima e rolagem existentes.
+3. **Detalhes ao mover:** alteração X/Y dos resultados aciona `moveDetail()` após atualização da posição nativa para acompanhar o painel de detalhes aberto; o salvamento da posição-base após arrasto não foi alterado.
+
+**Testes de regressão adicionados:** três casos à suíte `app/tests/visual-editor.test.js` (total: 15), relativos à largura com gaps, compensação superior/inferior para sprite de 45px em pitch de 14px e atualização de detalhe. Foram feitas inspeções estáticas e conferências de consistência das alterações, não execução de Node, Gradle ou testes físicos neste ambiente. **15 testes previstos, não declarados aprovados** até efetiva execução.
+
+**Segurança e continuidade:** mudanças em um único commit nesta branch, sem merge, sem novo workflow ou gatilho de build, sem compilação. Backup `backup/pokesearch-51081-pre-editor-visual-20261021` preservado. Próxima etapa: executar testes completos em ambiente com Node e homologar em aparelho (1/2/5 Pokémon, gaps 0/31/65, com e sem metadados, Compacto, JSON, orientação, offsets e reinício). Apenas compilar/assinar por solicitação expressa.

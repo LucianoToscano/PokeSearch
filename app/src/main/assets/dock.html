@@ -602,6 +602,8 @@ body.result-window .spawnInfo .timer{
 /* Optional visual editor: custom backgrounds, true packed rows, flexible orientation. */
 body.result-window #shell{background:var(--visual-results-bg,transparent)!important;border-radius:9px;overflow:visible!important}
 body.result-window #spawns:not(:empty){
+ /* Avoid the first packed sprite overlapping the Pokébola header. */
+ padding-top:max(0px,calc((var(--sprite) - var(--visual-row-pitch,46px))/2))!important;
  padding-bottom:max(0px,calc((var(--sprite) - var(--visual-row-pitch,46px))/2))!important;
  margin-top:var(--visual-top-gap,0px)!important;
 }

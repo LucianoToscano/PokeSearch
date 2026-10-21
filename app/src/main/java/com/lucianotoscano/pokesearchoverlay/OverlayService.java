@@ -41,7 +41,7 @@ public class OverlayService extends Service {
     private boolean visualMenuVertical=false,visualResultsHorizontal=false;
     private int visualMenuOffsetX=0,visualMenuOffsetY=0,
         visualResultsOffsetX=0,visualResultsOffsetY=0,
-        visualGearMenuGap=0,visualMenuItemGap=0;
+        visualGearMenuGap=0,visualMenuItemGap=0,visualResultGapBetween=31;
     private int visualMenuBaseDp(){
         return visualMenuVertical?232:MENU_BASE_DP;
     }
@@ -81,6 +81,7 @@ public class OverlayService extends Service {
             visualResultsOffsetY=o.optInt("resultsOffsetY",0);
             visualGearMenuGap=o.optInt("gearMenuGap",0);
             visualMenuItemGap=o.optInt("menuItemGap",0);
+            visualResultGapBetween=o.optInt("resultGapBetween",31);
         }catch(org.json.JSONException ignored){}
     }
     private void broadcastVisualPrefs(){
@@ -110,6 +111,7 @@ public class OverlayService extends Service {
                 resultParams.y=Math.max(0,Math.min(Math.max(0,m.heightPixels-resultParams.height),resultParams.y));
                 try{wm.updateViewLayout(resultRoot,resultParams);}
                 catch(Exception e){recordFailure("editor posição resultados",e);}
+                moveDetail();
             }
             if(menuExpanded&&menuParams!=null){
                 menuDrawHeight=-1;menuDrawWidth=-1;
@@ -129,7 +131,10 @@ public class OverlayService extends Service {
             // when the site returned only one or two Pokemon.
             int columns=Math.max(1,Math.min(5,count()));
             int perCard=dockDp()+resultMetadataWidthDp;
-            return Math.max(dockDp(),Math.min(screenWidthDp()-16,perCard*columns));
+            // CSS flex gap occupies additional real width between cards.
+            // Reserve 2dp for fractional WebView measurement/rounding.
+            int width=perCard*columns+visualResultGapBetween*(columns-1)+2;
+            return Math.max(dockDp(),Math.min(screenWidthDp()-16,width));
         }
         return dockDp()+resultMetadataWidthDp;
     }

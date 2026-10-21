@@ -112,4 +112,22 @@ test("styling changes don't need reload of all Pokemon images",()=>{
  assert.ok(script.includes('if(window.__visualGeometry!==signature)'));
  assert.ok(script.includes('else if(typeof fit==="function")fit()'));
 });
+test("horizontal native width includes the live CSS inter-card spacing",()=>{
+ assert.match(java,/visualResultGapBetween=o\.optInt\("resultGapBetween",31\)/);
+ assert.match(java,/perCard\*columns\+visualResultGapBetween\*\(columns-1\)\+2/);
+ assert.ok(java.includes("resultParams.width=dp(resultWidthDp())"));
+ assert.ok(dock.includes("column-gap:var(--visual-result-spacing,4px)!important"));
+ const width=(count,card,gap)=>card*count+gap*(count-1)+2;
+ assert.equal(width(2,149,31),331);
+ assert.equal(width(5,53,0),267);
+});
+test("packed sprite pitch reserves symmetrical first and last art space",()=>{
+ assert.ok(dock.includes('padding-top:max(0px,calc((var(--sprite) - var(--visual-row-pitch,46px))/2))!important'));
+ assert.ok(dock.includes('padding-bottom:max(0px,calc((var(--sprite) - var(--visual-row-pitch,46px))/2))!important'));
+ const sprite=45,pitch=Math.max(8,Math.round(sprite*.32));
+ assert.equal((sprite-pitch)/2,15.5);
+});
+test("visual position sliders keep the currently open detail window in sync",()=>{
+ assert.match(java,/recordFailure\("editor posição resultados",e\);\}\s*moveDetail\(\);/);
+});
 console.log("PokeSearch temporary visual editor: "+count+" tests passed");
