@@ -160,6 +160,9 @@ public class MainActivity extends Activity {
     private void toggleHomeTheme(){
         homeLightMode=!homeLightMode;
         getSharedPreferences("prefs",0).edit().putBoolean("homeLightMode",homeLightMode).apply();
+        // The menu color selector is hidden: keep its shared background aligned
+        // with this Home switch without restarting the active collector/WebView.
+        serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_HOME_THEME");
         closeHomeMenu();
         // Refresh only the native Home presentation. Persistent site login,
         // overlay service, results, filter preferences and watched species stay.
