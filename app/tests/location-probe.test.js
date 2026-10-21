@@ -13,16 +13,18 @@ function check(title,result,expected){
 function fixture(options={}){
  let lastInput=null;
  class MockInput{
-  constructor(label,value=""){
+  constructor(label,value="",placeholder=""){
    this.tagName="INPUT";this._value=value;this.parentElement=null;
-   this.previousElementSibling=null;this.labels=[{innerText:label,textContent:label}];
+   this.previousElementSibling=null;this._placeholder=placeholder;
+   this.labels=label?[{innerText:label,textContent:label}]:[];
    this.children=[];this.disabled=false;
   }
   get value(){return this._value;}
   set value(v){this._value=String(v);}
   getClientRects(){return [{}];}
   getAttribute(k){return options.unnamedFields?null:
-   k==="aria-label"?(this.labels[0]?.innerText||""):null;}
+   k==="placeholder"?this._placeholder:
+    k==="aria-label"?(this.labels[0]?.innerText||""):null;}
   dispatchEvent(event){
    if(event.type==="input"){
     // React may discard the first field if both change in the same JS turn.
@@ -32,8 +34,12 @@ function fixture(options={}){
    return true;
   }
  }
- const coord=options.noCoords?null:new MockInput("Coordinates",options.currentCoords||"");
- const radius=options.noRadius?null:new MockInput(options.radiusLabel||"Radius",options.currentRadius||"");
+ const coord=options.noCoords?null:new MockInput(
+  options.numericPlaceholder?"":"Coordinates",options.currentCoords||"",
+  options.numericPlaceholder?"40.63727564,-73.93869163":"");
+ const radius=options.noRadius?null:new MockInput(
+  options.numericPlaceholder?"":options.radiusLabel||"Radius",options.currentRadius||"",
+  options.numericPlaceholder?"Radius (km, max 1000)":"");
  const extraDistance=options.unrelatedDistance?new MockInput("Distance","500"):null;
  const visibleInputs=[extraDistance,coord,radius].filter(Boolean);
  const groupedInputs=[coord,radius].filter(Boolean);
@@ -55,7 +61,7 @@ function fixture(options={}){
   click:()=>{selected=title.toLowerCase();}
  }));
  const document={
-  body:{innerText:"Search",getClientRects:()=>[{}]},
+  body:{innerText:options.siteHint?"Paste coordinates (lat,lng) and a radius.":"Search",getClientRects:()=>[{}]},
   querySelectorAll:sel=>{
    if(sel.startsWith("input:not"))return visibleInputs;
    if(sel.includes("[role=tab]")||sel.includes("input[type=radio]"))return buttons;
@@ -197,4 +203,16 @@ check("Location chooses the actual Coords and Radius pair despite a Distance fil
 check("Location Radius field receives the requested value",withDistance.radius.value,"10");
 check("Unrelated Distance setting remains unchanged",withDistance.extraDistance.value,"500");
 check("Location verification checks the correct radius",withDistance.run("verifyLocation",req).ok,true);
+// Simulate the exact visible site inputs rather than invented Coordinates labels.
+let liveLike=fixture({active:"coords",unknownState:true,siteHint:true,
+ numericPlaceholder:true,unrelatedDistance:true});
+check("Numeric placeholder resolves Coords field",liveLike.run("configureLocation",req).stage,"setting-coords");
+check("Numeric Coords and Radius configure independently",settle(liveLike,req).ok,true);
+check("Radius field is updated",liveLike.radius.value,"10");
+check("Unrelated Distance is preserved",liveLike.extraDistance.value,"500");
+check("Site-like form verifies exact values",liveLike.run("verifyLocation",req).ok,true);
+liveLike.coord.value="-1,-2";
+check("Changing Coords invalidates proof",liveLike.run("verifyLocation",req).ok,false);
+let ambiguous=fixture({active:"area",unknownState:true,numericPlaceholder:true});
+check("Unconfirmed tab never passes as active",ambiguous.run("configureLocation",req).pending,true);
 console.log("PokeSearch location contract: "+passed+" tests passed");

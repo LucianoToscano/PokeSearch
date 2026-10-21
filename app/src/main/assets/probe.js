@@ -852,8 +852,12 @@ function locationFields(){
  const name=e=>words(e);
  const radiusPattern=/\b(?:radius|raio|distance|dist[aâ]ncia)\b/i;
  const coordsPattern=/\b(?:coords?|coordinates?|coordenadas?|latitude|longitude|lat[\s,\/+-]*lng|lat[\s,\/+-]*lon)\b/i;
- let radius=inputs.find(e=>radiusPattern.test(name(e)))||null;
- let coords=inputs.find(e=>e!==radius&&coordsPattern.test(name(e)))||null;
+ // The official site may show only a numeric lat,lng placeholder for Coords.
+ const coordExample=/^\s*[-+]?\d{1,2}(?:\.\d+)?\s*[,;]\s*[-+]?\d{1,3}(?:\.\d+)?\s*$/;
+ const isCoords=e=>coordsPattern.test(name(e))||coordExample.test(e.getAttribute("placeholder")||"");
+ // Prefer Radius over unrelated Distance; pair-specific lookup remains authoritative.
+ let radius=inputs.find(e=>/\b(?:radius|raio)\b/i.test(name(e)))||null;
+ let coords=inputs.find(e=>e!==radius&&isCoords(e))||null;
  // Resolve coordinates and radius as a pair first. A general "Distance"
  // filter may otherwise be mistaken for the Coords radius field.
  if(inputs.length){
@@ -863,7 +867,7 @@ function locationFields(){
     if(!p.querySelectorAll)continue;
     const near=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
     if(near.length!==2||!near.includes(e))continue;
-    const pairedCoords=near.find(v=>coordsPattern.test(name(v)));
+    const pairedCoords=near.find(v=>isCoords(v));
     const pairedRadius=near.find(v=>v!==pairedCoords&&radiusPattern.test(name(v)));
     if(pairedCoords&&pairedRadius)roots.push({near,depth});
    }
@@ -871,7 +875,7 @@ function locationFields(){
   roots.sort((a,b)=>a.depth-b.depth);
   if(roots.length){
    const pair=roots[0].near;
-   const pairedCoords=pair.find(e=>coordsPattern.test(name(e)));
+   const pairedCoords=pair.find(e=>isCoords(e));
    const pairedRadius=pair.find(e=>e!==pairedCoords&&radiusPattern.test(name(e)));
    // React may expose unrelated Distance/CP inputs; choose this pair together.
    if(pairedCoords&&pairedRadius){coords=pairedCoords;radius=pairedRadius;}
