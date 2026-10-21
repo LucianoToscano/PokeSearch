@@ -210,7 +210,7 @@ test("UX-INFO-09 despawn expiry still marks entire Pokémon when timer is inline
  dock.includes('class="timer" data-deadline=')&&
  dock.includes('.spawn.expired{opacity:.38}')&&
  dock.includes('infoScale:Math.max(0.86,Math.min(1,factor))'));
-test("UX-RESULT-10 default rows remain full size; compact can overlap transparent sprite slots",()=>{
+test("UX-RESULT-10 P/M/G pitch tracks slider and fits short displays",()=>{
  const from=dock.indexOf("const PVPOKE_OVERALL="),until=dock.indexOf('let lastListKey=""',from);
  if(from<0||until<from)return false;
  const win={visualPrefs:{resultGapBetween:31}};
@@ -219,12 +219,13 @@ test("UX-RESULT-10 default rows remain full size; compact can overlap transparen
  const ten=Array.from({length:10},(_,i)=>({name:"Pokémon "+i,expiresAtMs:0}));
  for(const size of [35,45,55]){
   const full=helpers.computeResultLayout(ten,size,900,false,false);
-  if(full.sprite!==size||full.rows.some(row=>row!==size)||full.visibleCount!==10)return false;
+  const pitch=Math.max(8,Math.round(size*.32)+31);
+  if(full.sprite!==size||full.rows.some(row=>row!==pitch)||full.visibleCount!==10)return false;
   const short=helpers.computeResultLayout(ten,size,330,false,false);
   if(short.visibleCount!==10||short.total+54>330)return false;
   for(const height of [190,160]){
    const tight=helpers.computeResultLayout(ten,size,height,false,false);
-   if(tight.visibleCount!==10||tight.rows.some(row=>row<tight.sprite))return false;
+   if(tight.visibleCount!==10||tight.rows.some(row=>row<8)||tight.sprite<10)return false;
   }
  }
  win.visualPrefs.resultGapBetween=0;
