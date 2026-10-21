@@ -600,7 +600,7 @@ body.result-window .spawnInfo .timer{
 }
 
 /* Optional visual editor: custom backgrounds, true packed rows, flexible orientation. */
-body.result-window #shell{background:var(--visual-results-bg,transparent)!important;border-radius:9px}
+body.result-window #shell{background:var(--visual-results-bg,transparent)!important;border-radius:9px;overflow:visible!important}
 body.result-window #spawns:not(:empty){
  padding-bottom:max(0px,calc((var(--sprite) - var(--visual-row-pitch,46px))/2))!important;
  margin-top:var(--visual-top-gap,0px)!important;
@@ -623,7 +623,21 @@ body.controls-window #menu,
 body.controls-window #quickMenuList,
 body.controls-window #choices{background:var(--visual-menu-bg,#232b35e5)!important}
 body.controls-window #quickRows{gap:var(--visual-menu-gap,0px)!important}
-body.controls-window.visual-menu-vertical #quickMenuList{width:100%!important;max-height:none!important;overflow:visible!important}
+body.controls-window.visual-menu-vertical #menu{height:232px!important;min-height:232px!important}
+body.controls-window.visual-menu-vertical #quickMenuList,
+body.controls-window.visual-menu-vertical #menu.subview #quickMenuList,
+body.controls-window.visual-menu-vertical.popup-above #quickMenuList{
+ width:100%!important;min-height:232px!important;height:232px!important;
+ max-height:232px!important;overflow-y:auto!important;overflow-x:hidden!important;
+ display:flex!important;flex-direction:column!important;grid-template-columns:none!important;
+ grid-auto-flow:row!important;
+}
+body.controls-window.visual-menu-vertical #choices{
+ top:232px!important;bottom:auto!important;
+}
+body.controls-window.visual-menu-vertical.popup-above #choices{
+ top:auto!important;bottom:232px!important;
+}
 body.controls-window.visual-menu-vertical #quickRows,
 body.controls-window.visual-menu-vertical #quickFooter{
  display:flex!important;flex-direction:column!important;gap:var(--visual-menu-gap,0px)!important;
@@ -940,7 +954,7 @@ let fitPending=false;
 function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{fitPending=false;
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
- if(controlsWindow)h=34; // UX-MENU-03: the thin toolbar is always exactly one row.
+ if(controlsWindow)h=window.visualPrefs?.menuOrientation==="vertical"?232:34; // scrolling column or original ribbon.
  if(resultWindow){
   const header=document.getElementById("resultHeader");
   const spawns=document.getElementById("spawns");
@@ -956,8 +970,9 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
   // Stable measured height regardless of whether native positions it above or below.
   // The intended cascade is always 190px tall even if CSS temporarily clamps
   // its visible height to a short screen. Repositioning must be able to expand it.
-  h=Math.max(h,choiceOpen==="mode"?34+190+6:
-   34+Math.ceil(popup.getBoundingClientRect().height)+6);
+  const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;
+   h=Math.max(h,choiceOpen==="mode"?baseHeight+190+6:
+    baseHeight+Math.ceil(popup.getBoundingClientRect().height)+6);
  }
  if(Math.abs(h-lastHeight)>1){
   lastHeight=h;
