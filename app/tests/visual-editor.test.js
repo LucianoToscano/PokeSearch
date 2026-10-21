@@ -270,11 +270,17 @@ test("compact preset increases artwork size with zero space but keeps saved pref
  const original=window.visualEditorCurrent();
  assert.equal(original.resultGapBetween,31);
  assert.equal(original.resultSpriteScale,100);
- assert.ok(script.includes('compact:{resultGapTop:-6,resultGapBetween:0,resultSpriteScale:135'));
+ assert.ok(script.includes('compact:{resultGapTop:-6,resultGapBetween:0,resultSpriteScale:130'));
  assert.ok(script.includes('balanced:{resultGapTop:0,resultGapBetween:13,resultSpriteScale:115'));
- assert.ok(script.includes('resultSpriteScale:[70,220]'));
- assert.ok(java.includes('{70,220,100}'));
+ assert.ok(script.includes('resultSpriteScale:[70,160]'));
+ assert.ok(java.includes('{70,160,100}'));
  window.onVisualPrefs({resultGapBetween:31,resultSpriteScale:100});
  assert.equal(window.visualEditorCurrent().resultGapBetween,31);
+});
+test("Compact preset keeps artwork inside native sprite column at P M G sizes",()=>{
+ const fitted=0.86*1.30;
+ for(const size of [35,45,55])assert.ok(size*fitted<=size+8);
+ assert.ok(script.includes("resultSpriteScale:[70,160]"));
+ assert.ok(script.includes("resultGapBetween:[0,65]"));
 });
 console.log("PokeSearch temporary visual editor: "+count+" tests passed");
