@@ -757,8 +757,7 @@ function collect(){
    });
   };
   const valid=siteCriteria?found.filter(x=>matches(x)&&requestedSpecies(x)).map(x=>{
-  if(isLeague&&rankLimit===1&&!x.rank)return {...x,rank:"1",rankSource:"verified-site-filter"};
-  if(isLeague&&!x.rank)return {...x,rankLimit,rankSource:"verified-site-filter"};
+  if(isLeague&&!x.rank)return {...x,rank:"",rankLimit,rankSource:"verified-site-filter"};
   return x;
  }):[];
  const uncertain=!siteCriteria||found.some(x=>!matches(x));
