@@ -620,7 +620,8 @@ body.result-window.visual-results-horizontal .spawn{
  flex:0 0 calc(var(--dock) + var(--visual-meta-width,0px))!important;
  height:var(--spawn-row,var(--row))!important;
 }
-body.result-window.visual-results-horizontal #spawns:not(:empty){padding-bottom:0!important}
+/* Horizontal cards have full-size rows: packed vertical edge padding is unnecessary. */
+body.result-window.visual-results-horizontal #spawns:not(:empty){padding-top:0!important;padding-bottom:0!important}
 body.controls-window #menu,
 body.controls-window #quickMenuList,
 body.controls-window #choices{background:var(--visual-menu-bg,#232b35e5)!important}
@@ -1717,6 +1718,15 @@ function resultHasVisibleInfo(card,timersEnabled,textEnabled,opts=null,league=""
  return (timersEnabled&&Number(card.expiresAtMs)>0)||
   (textEnabled&&verifiedSpawnIvPercent(card)!==null);
 }
+// Geometry-only instrument: no Pokemon names, locations, IV or account data.
+window.measureResultSpacing=()=>{
+ if(!resultWindow)return null;
+ const header=document.getElementById("resultHeader")?.getBoundingClientRect();
+ const stages=[...document.querySelectorAll("#spawns .spriteStage")].map(e=>e.getBoundingClientRect());
+ if(!header||!stages.length)return {count:0};
+ return {count:stages.length,headerToFirstPx:Math.round(stages[0].top-header.bottom),
+  stageGapPx:stages.slice(1).map((b,i)=>Math.round(b.top-stages[i].bottom))};
+};
 function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,textEnabled,opts=null,league="",preparedLines=null){
  const size=Math.max(18,Number(chosenSprite)||45);
  const v=window.visualPrefs||{};

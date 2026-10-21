@@ -158,4 +158,13 @@ test("legacy toggle icon colors match compact menu without changing IV or result
  assert.ok(css.includes("#controls #bell.generalOn{color:#ffd64b!important}"));
  assert.ok(!css.includes(".ivPct")&&!css.includes(".spawnInfo"));
 });
+test("horizontal layout has no leftover vertical packed padding",()=>{
+ assert.ok(dock.includes('visual-results-horizontal #spawns:not(:empty){padding-top:0!important;padding-bottom:0!important}'));
+});
+test("geometry diagnostic reports only stage measurements, never spawn data",()=>{
+ const f=dock.split('window.measureResultSpacing=()=>{')[1]?.split('function computeResultLayout(',1)[0]||'';
+ assert.ok(f.includes('headerToFirstPx'));
+ assert.ok(f.includes('stageGapPx'));
+ assert.ok(!f.includes('card.')&&!f.includes('locationCoords'));
+});
 console.log("PokeSearch temporary visual editor: "+count+" tests passed");
