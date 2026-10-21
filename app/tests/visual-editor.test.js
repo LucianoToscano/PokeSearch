@@ -208,7 +208,7 @@ test("sprite guide tracks normalized art, not whole row",()=>{
  assert.ok(dock.includes('document.getElementById("resultIconStack")'));
 });
 test("negative header gap changes native height instead of leaving invisible bottom padding",()=>{
- assert.ok(script.includes('resultGapTop:[-16,80]'));
+ assert.ok(script.includes('resultGapTop:[-80,80]'));
  assert.ok(dock.includes('Math.ceil(end-shellTop)+1'));
  assert.ok(dock.includes('margin-top:var(--visual-top-gap,0px)!important'));
 });
@@ -247,7 +247,7 @@ test("Editor supports precise one-unit adjustments and touch-area guides",()=>{
  assert.ok(dock.includes("body.visual-guides.result-window #shell{"));
 });
 test("Native constraints and collapsed height agree with actual touch target",()=>{
- assert.ok(java.includes("int[][] limits={{-16,80,0}"));
+ assert.ok(java.includes("int[][] limits={{-80,80,0}"));
  assert.ok(java.includes("{-16,16,0},{26,42,35},{24,50,30},{0,36,0}"));
  assert.ok(java.includes('visualHeaderY=o.optInt("headerIconY",0)'));
  assert.ok(java.includes("int min=minResultsHeaderHeightDp();"));
@@ -299,5 +299,21 @@ test("menu icons have separate rounded backgrounds instead of a shared ribbon",(
  assert.ok(dock.includes("body.controls-window #choices{background:var(--visual-menu-bg,#232b35e5)!important}"));
  assert.ok(script.includes('set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency))'));
  assert.ok(script.includes('set("menu-gap",current.menuItemGap+"px")'));
+});
+test("top-gap can extend to -80px with synchronized Android and editor validation",()=>{
+ const {window,styles}=fixture();
+ window.onVisualPrefs({resultGapTop:-80});
+ assert.equal(window.visualEditorCurrent().resultGapTop,-80);
+ assert.equal(styles["--visual-top-gap"],"-80px");
+ window.onVisualPrefs({resultGapTop:-100});
+ assert.equal(window.visualEditorCurrent().resultGapTop,-80);
+ window.onVisualPrefs({resultGapTop:80});
+ assert.equal(window.visualEditorCurrent().resultGapTop,80);
+ window.onVisualPrefs({resultGapTop:0});
+ assert.equal(window.visualEditorCurrent().resultGapTop,0);
+ assert.ok(script.includes('resultGapTop:[-80,80]'));
+ assert.ok(java.includes('int[][] limits={{-80,80,0}'));
+ assert.ok(dock.includes('margin-top:var(--visual-top-gap,0px)!important'));
+ assert.ok(script.includes('minus.onclick=()=>step(-1);plus.onclick=()=>step(1)'));
 });
 console.log("PokeSearch temporary visual editor: "+count+" tests passed");

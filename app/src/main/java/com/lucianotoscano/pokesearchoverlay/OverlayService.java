@@ -57,7 +57,7 @@ public class OverlayService extends Service {
             "headerOffsetX","headerTouchWidth","headerTouchHeight","headerAfterGap",
             "resultsOffsetX","resultsOffsetY","menuOffsetX","menuOffsetY",
             "gearMenuGap","menuItemGap","popupWidth","popupHeight","resultsTransparency","menuTransparency"};
-        int[][] limits={{-16,80,0},{0,65,31},{70,160,100},{0,72,0},
+        int[][] limits={{-80,80,0},{0,65,31},{70,160,100},{0,72,0},
             {-16,16,0},{26,42,35},{24,50,30},{0,36,0},
             {-200,200,0},{-350,350,0},{-200,200,0},{-350,350,0},
             {0,80,0},{0,16,0},{160,330,232},{140,420,390},{0,100,100},{0,100,35}};

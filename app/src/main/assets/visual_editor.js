@@ -12,7 +12,7 @@ const DEFAULTS=Object.freeze({
  menuBgMode:"dark",menuTransparency:35,showGuides:false
 });
 const RANGES={
- resultGapTop:[-16,80],resultGapBetween:[0,65],resultSpriteScale:[70,160],headerIconY:[0,72],
+ resultGapTop:[-80,80],resultGapBetween:[0,65],resultSpriteScale:[70,160],headerIconY:[0,72],
  headerOffsetX:[-16,16],headerTouchWidth:[26,42],headerTouchHeight:[24,50],headerAfterGap:[0,36],
  resultsOffsetX:[-200,200],resultsOffsetY:[-350,350],
  menuOffsetX:[-200,200],menuOffsetY:[-350,350],
