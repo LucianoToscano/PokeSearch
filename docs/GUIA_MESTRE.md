@@ -3405,3 +3405,32 @@ Após montar a navegação da página completa, a revisão encontrou um erro de 
 **Qualidade pré-build:** as seções 12.158–12.160 incluem 46/46 verificações isoladas V8 dos contratos de `visual-editor.test.js`, 379 contratos do `overlay-ux.test.js` mapeados e evidência histórica dos PNGs de equipe via #167. O CI oficial precisa executar `node app/tests/location-probe.test.js`, `probe-smoke.test.js`, `pokemon-picker.test.js`, `login-entry.test.js`, `overlay-ux.test.js`, `visual-editor.test.js`, `signing-contract.test.js` e Gradle `:app:assembleDebug :app:testDebugUnitTest`. Não afirmar aprovação antes da execução.
 
 **Plano de artefatos:** liberar APK somente se pipeline sinalizar `success`, assinatura compatível, número de versão superior ao APK 51167 e artefatos presentes; senão registrar falha real com logs, sem publicar build inválido. O Guia Mestre continua único.
+
+### 12.162 APK-V051-51192-APROVADO — build real, testes, assinatura e artefatos (21/10/2026)
+
+**Autorização aplicada / escopo:** o usuário autorizou explicitamente a geração do novo APK e a entrega do prompt do próximo chat. Trabalhado exclusivamente na `feature/pokesearch-51081-visual-editor-20261021`, sem reiniciar, fazer merge, alterar `main`, renomear `applicationId`, substituir identidade/chave ou tocar no PvPPokeGo. Os ajustes de §§12.150–12.161 (separação dos botões, ausência de bordas/faixa, transparência única, Modos, Home claro/escuro, estrela do sino e testes) integram a compilação.
+
+**Commit-fonte do APK:** `87a936dc4335a3a780de415d6df3cbee7a4a3152`. O commit da compilação usa a mensagem exata iniciada por `build: approved icon colors`, como exige o guard preexistente do workflow. O complemento de texto descreve as correções visuais e notificações. Foi alterado apenas um comentário explicativo em `app/tests/visual-editor.test.js` para acionar o build com autorização; o Guia Mestre já continha a autorização §12.161. Workflow: `.github/workflows/build-v051-filters-preview.yml` (“PokeSearch v0.51 stable-signed test APK”).
+
+**Execução oficial:** GitHub Actions **#192**, run ID `39688301440`, job ID `119527861904`, URL: https://github.com/LucianoToscano/PokeSearch/actions/runs/39688301440. Resultado final de run e job: **success**. Etapas aprovadas: checkout, JDK 17, Gradle 8.11.1, restauração do **keystore persistente e privado** via Secrets, instalação de Android SDK 36, testes Node/JS, compilação de APK Android debug ofuscado com assinatura de teste estável e `testDebugUnitTest`, verificação `aapt` do pacote/versão, verificação `apksigner` com v2, checksum, publicação do APK e pacote completo de edição. Limpeza do keystore temporário também aprovada.
+
+**Resultados publicados nos logs reais (#192, step “Syntax and search tests”):**
+- `PokeSearch location contract: 68 tests passed`
+- `PokeSearch probe contract: 104 tests passed`
+- `PokeSearch official multi-Pokemon picker: 9 tests passed`
+- `PokeSearch login-entry contract: 38 tests passed`
+- `PokeSearch UX contract: 379 tests passed`
+- `PokeSearch temporary visual editor: 46 tests passed`
+- `PokeSearch stable signing contract: 14 tests passed`
+Total **658 contratos JS reportados pelos sete comandos**. O `gradle :app:assembleDebug :app:testDebugUnitTest` terminou `BUILD SUCCESSFUL`. Estes são resultados do **commit-fonte 87a936dc...**, não do APK 51167 histórico. Testes em aparelho/sessão PoGoCoordinates real ainda NÃO foram feitos.
+
+**APK e assinatura verificados:**
+- `applicationId = com.lucianotoscano.pokesearch`; versão do build **`0.51-beta.test.51192`**, `versionCode=54192`, superior ao versionCode da compilação #167 `54167`; `minSdk=26`, `targetSdk=33`, `compileSdk=36`. A configuração de debug com keystore persistente habilita `isMinifyEnabled=true`, `isShrinkResources=true` e ProGuard/R8.
+- Nome dentro do artefato publicado: `PokeSearch-v0.51-Teste-Atualizavel.apk`, 15.774.337 bytes. Arquivo de entrega extraído na conversa e renomeado para `PokeSearch-v0.51-beta.test.51192.apk`, com mesmos bytes.
+- SHA-256 de `SHA256SUMS.txt` publicado pela CI **e conferido independentemente no arquivo local**: `77751b20113abeeedef800014dbc89fa5078b9e9ccfd9f0d5cfa628597064d36`.
+- Fingerprint SHA-256 do certificado de assinatura de `SIGNING_CERT_SHA256.txt`: `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, igual ao fingerprint público `officialTestCertificateSha256` de `app/build.gradle.kts`. A chave privada não foi acessada/divulgada.
+- Artefato GitHub Actions `PokeSearch-v0.51-APK-TESTE-ATUALIZAVEL` ID `12386654795`, ZIP ~14,85 MB. A CI publicou também `PokeSearch-PACOTE-COMPLETO-EDICAO`, artifact ID `12387675443`, ZIP ~44,86 MB. Ambos foram baixados via conector GitHub na conversa; o ZIP completo contém `PokeSearch-Pacote-Completo-Edicao.zip` com o APK assinado, `PokeSearch-Codigo-Fonte-Completo.zip` e `PokeSearch-Conteudo-Extraido-APK.zip`, checksums, certificado público, listas de arquivos e `SOURCE_COMMIT.txt`. Os dois ZIPs extraídos localmente passaram na verificação de integridade do arquivo ZIP. `SOURCE_COMMIT.txt` corresponde a `87a936dc4335a3a780de415d6df3cbee7a4a3152`.
+
+**Nota de distribuição segura:** o usuário pode instalar a versão 51192 sobre a versão estável 51167 se ambos APKs tiverem o mesmo `applicationId` e certificado (verificados pela CI). Se o Android indicar “App não instalado” por conflito de certificado, **não** desinstalar sem fazer backup/exportar dados antes; registrar o APK exato em uso e comparar fingerprints. Não interpretar sucesso de CI como prova do posicionamento visual no dispositivo; QA com screenshots e validação de localização/Shiny em sessão real ainda é necessário.
+
+**Estado e próximo chat:** código-fonte testado/compilado e APK gerado, sem merge. Branch mantém os commits anteriores; o presente registro documental é posterior ao commit-fonte do APK, portanto o APK/ZIP de fontes da CI apontam corretamente para `87a936dc...`, enquanto o novo HEAD da branch após este registro será somente documentação. O próximo chat deve começar por conferir o APK 51192 em Android, coletar capturas das opções de transparência/bordas, iconografia do sino e Coords/Radius; registrar bugs e corrigir por pequenas etapas, sem reiniciar.
