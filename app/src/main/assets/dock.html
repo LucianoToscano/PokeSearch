@@ -853,6 +853,48 @@ body.visual-guides.result-window #resultHeader{
 body.visual-guides.result-window #shell{
  outline:1px dotted #9d8dff8c!important;outline-offset:-1px;
 }
+
+/* Bell: one red strike for one muted source; red X for both muted. */
+body.controls-window #quickMenuList button[data-key="bell"] .quickGlyph{position:relative}
+body.controls-window #quickMenuList button[data-key="bell"].bell-one-muted .quickGlyph::after,
+body.controls-window #quickMenuList button[data-key="bell"].bell-both-muted .quickGlyph::after,
+body.controls-window #quickMenuList button[data-key="bell"].bell-both-muted .quickGlyph::before{
+ content:"";position:absolute;z-index:3;left:50%;top:50%;
+ width:20px;height:2.5px;background:#ff4458;border-radius:2px;pointer-events:none;
+ transform:translate(-50%,-50%) rotate(-44deg);box-shadow:0 0 2px #000a;
+}
+body.controls-window #quickMenuList button[data-key="bell"].bell-both-muted .quickGlyph::before{
+ transform:translate(-50%,-50%) rotate(44deg);
+}
+body.controls-window #quickMenuList button[data-key="bell"].bell-both-muted{
+ color:#f7f8fa!important;
+}
+/* Compact mode list under its own icon; editors unfold only on demand. */
+body.controls-window #choices.modePanel.modeCascade{width:60px!important}
+body.controls-window #choices.modePanel.modeCascade.modeCascadeOpen{
+ width:min(254px,calc(100vw - 12px))!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeRail{width:58px!important}
+body.controls-window #choices.modeCascade .modeCascadeEditor{
+ left:60px!important;max-width:calc(100% - 60px)!important;
+}
+body.menu-left.controls-window #choices.modeCascade .modeCascadeEditor{
+ left:auto!important;right:60px!important;
+}
+body.controls-window #choices.modeCascade button.modeCascadeEntry{
+ padding:0 3px!important;font-size:10px!important;
+}
+body.controls-window #choices .alertModeGroup{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;margin:4px 2px 7px;
+}
+body.controls-window #choices .alertModeGroup button{
+ min-width:0!important;height:28px!important;margin:0!important;padding:3px!important;
+ text-align:center!important;font-size:10px!important;background:#2c3542!important;
+ border:1px solid #ffffff35!important;border-radius:6px!important;
+}
+body.controls-window #choices .alertModeGroup button.chosen{
+ background:#365b4c!important;border-color:#8ad9b5!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -2362,7 +2404,12 @@ function refreshQuickMenuStates(){
   }
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
   button.classList.toggle("pending",id==="sh"&&shinyPending);
-   button.classList.toggle("silent",id==="bell"&&notificationPermissionGranted&&!(generalAlerts&&alertMode==="on")&&!(favoriteAlertMode==="on"&&hasFavorites)&&((generalAlerts&&alertMode==="silent")||(favoriteAlertMode==="silent"&&hasFavorites)));
+   const generalAudio=notificationPermissionGranted&&alertMode==="on";
+   const favoriteAudio=notificationPermissionGranted&&favoriteAlertMode==="on";
+   const mutedCount=(generalAudio?0:1)+(favoriteAudio?0:1);
+   button.classList.toggle("silent",false);
+   button.classList.toggle("bell-one-muted",id==="bell"&&mutedCount===1);
+   button.classList.toggle("bell-both-muted",id==="bell"&&mutedCount===2);
   button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
    id==="sh"?(shiny&&!shinyPending):
    id==="bell"?((generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))&&notificationPermissionGranted):id==="period"?period>0:
@@ -2396,22 +2443,32 @@ function renderAlertsChoices(){
  panel.appendChild(permission);
  const head=document.createElement("div");head.className="uxSubheading";
  head.textContent="Novos Pokémon (filtros confirmados)";panel.appendChild(head);
- for(const [id,name] of [["on","🔔 Som"],["silent","🔕 Silencioso"],["off","Desligado"]]){
-  uxOption(panel,name,alertMode===id?"✓":"–",()=>Native.setAlertMode(id));
+ const generalModes=document.createElement("div");generalModes.className="alertModeGroup";
+ for(const [id,label] of [["on","🔊 Som"],["silent","🔇 Sem som"],["off","OFF"]]){
+  const button=document.createElement("button");button.type="button";button.textContent=label;
+  button.classList.toggle("chosen",alertMode===id);
+  button.setAttribute("aria-pressed",String(alertMode===id));
+  button.onclick=()=>Native.setAlertMode(id);generalModes.appendChild(button);
  }
+ panel.appendChild(generalModes);
  uxOption(panel,"🎵 Escolher som dos novos Pokémon",
   generalCustomTone?"Personalizado":"Padrão",()=>Native.pickAlertTone("general"));
  const favTitle=document.createElement("div");favTitle.className="uxSubheading";
  favTitle.textContent="Favoritos cadastrados (independentes)";panel.appendChild(favTitle);
- for(const [id,label] of [["on","🔔 Som"],["silent","🔕 Silencioso"],["off","Desligado"]]){
-  uxOption(panel,label,favoriteAlertMode===id?"✓":"–",()=>Native.setFavoriteAlertMode(id));
+ const favoriteModes=document.createElement("div");favoriteModes.className="alertModeGroup";
+ for(const [id,label] of [["on","🔊 Som"],["silent","🔇 Sem som"],["off","OFF"]]){
+  const button=document.createElement("button");button.type="button";button.textContent=label;
+  button.classList.toggle("chosen",favoriteAlertMode===id);
+  button.setAttribute("aria-pressed",String(favoriteAlertMode===id));
+  button.onclick=()=>Native.setFavoriteAlertMode(id);favoriteModes.appendChild(button);
  }
+ panel.appendChild(favoriteModes);
  uxOption(panel,"🎵 Som padrão dos favoritos",
   favoriteCustomTone?"Personalizado":"Padrão",()=>Native.pickAlertTone("favorites"));
  uxOption(panel,"🎵 Som de cada Pokémon favorito",
   individualToneCount?individualToneCount+" configurado(s)":"Escolher",()=>Native.pickAlertTone("species"));
  const note=document.createElement("div");note.className="uxNote";
- note.textContent="Novos e favoritos são independentes. Se a ocorrência atender aos dois alertas, ambos podem tocar. Os sons vêm do Android; o PokeSearch não baixa cries.";
+ note.textContent="Avisos independentes: deixe Novos em OFF e Favoritos em Som para ouvir somente favoritos. Sem som mantém aviso visual; OFF não notifica. Escolha um toque Android ou arquivo de áudio baixado no aparelho/Drive.";
  panel.appendChild(note);
  for(const [label,action] of [
   ["🔔 Testar aviso geral","testGeneralNotification"],
