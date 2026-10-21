@@ -1734,7 +1734,10 @@ test("UX-NOTIFY-01 bell opens live notification panel with full controls",()=>{
   dock.includes('onclick="toggleChoices(\'alerts\')"')&&
   !block.includes('case "bell":Native.toggleGeneralAlerts()')&&
   panel.includes('Native.setAlertMode(id)')&&
-  panel.includes('Native.toggleWatchAlerts()')&&
+  panel.includes('Native.setFavoriteAlertMode(id)')&&
+   panel.includes('Native.pickAlertTone("general")')&&
+   panel.includes('Native.pickAlertTone("favorites")')&&
+   panel.includes('Native.pickAlertTone("species")')&&
   panel.includes('"testGeneralNotification"')&&
   panel.includes('"testNotification"')&&
   panel.includes('"requestNotificationPermission"')&&
@@ -1749,7 +1752,8 @@ test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay 
  dock.includes('notificationPermissionGranted=!!permissionGranted')&&
  dock.includes('watchAlertsEnabled=!!favoriteAlertsEnabled')&&
  dock.includes('bell.classList.toggle("permissionMissing",!notificationPermissionGranted)')&&
- service.includes('","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+")"')&&
+ service.includes('","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+","')&&
+  dock.includes('favoriteAlertMode=["on","silent","off"].includes(favoriteMode)')&&
  service.includes('if(!WatchAlerts.permissionGranted(this))return false;')&&
  service.includes('if(sendGeneralNotification("Novo Pokémon: "+firstNew,')&&
  service.includes('lastAlertAt=now;')&&
@@ -1765,6 +1769,44 @@ test("UX-NOTIFY-03 keep native Android channel sound and explicitly separate two
  service.includes('nm.getNotificationChannel(channelId).getImportance()==NotificationManager.IMPORTANCE_NONE'));
 
 
+test("UX-NOTIFY-04 favorites sound and silence never inherit general alert mode",()=>{
+ return watch.includes('String soundMode=mode(context);')&&
+  !watch.includes('getString("alertsMode","off")')&&
+  watch.includes('boolean quiet="silent".equals(soundMode);')&&
+  service.includes('WatchAlerts.setMode(OverlayService.this,mode);')&&
+  service.includes('WatchAlerts.setMode(OverlayService.this,enabled?"on":"off");')&&
+  dock.includes('favoriteAlertMode===id?"✓":"–"');
+});
+test("UX-NOTIFY-05 independent system tones and individual Pokémon overrides",()=>{
+ return watch.includes('public static final String PREF_GENERAL_TONE=')&&
+  watch.includes('public static final String PREF_FAVORITE_TONE=')&&
+  watch.includes('public static final String PREF_SPECIES_TONES=')&&
+  watch.includes('soundChannelId(context,true,species)')&&
+  watch.includes('selectedTone(context,true,species)')&&
+  service.includes('WatchAlerts.soundChannelId(this,false,null)')&&
+  service.includes('WatchAlerts.selectedTone(this,false,null)')&&
+  main.includes('RingtoneManager.ACTION_RINGTONE_PICKER')&&
+  main.includes('WatchAlerts.PREF_SPECIES_TONES')&&
+  main.includes('setItems(options,(dialog,which)->');
+});
+test("UX-NOTIFY-06 ringtone options never fetch or ship copyrighted cries",()=>{
+ const panel=dock.split('function renderAlertsChoices(){')[1]?.split('function renderFiltersChoices(){')[0]||"";
+ return panel.includes('Native.pickAlertTone("general")')&&
+  panel.includes('Native.pickAlertTone("favorites")')&&
+  panel.includes('Native.pickAlertTone("species")')&&
+  !watch.includes('pokemonshowdown.com')&&
+  !watch.includes('soundlibrary.pokemon.co.jp')&&
+  main.includes('RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT,false')&&
+  main.includes('"content".equals(scheme)&&!"android.resource".equals(scheme)');
+});
+test("UX-NOTIFY-07 Home favorites toggle migrates safely to tri-state preference",()=>{
+ return watch.includes('PREF_MODE="favoriteAlertMode"')&&
+  watch.includes('String fallback=prefs.getBoolean(PREF_ENABLED,true)?"on":"off"')&&
+  main.includes('WatchAlerts.PREF_ENABLED.equals(key)?')&&
+  main.includes('WatchAlerts.setMode(this,enabled?"on":"off")')&&
+  service.includes('WatchAlerts.mode(this)')&&
+  dock.includes('individualToneCount=Math.max(0,Number(individualTones)||0)');
+});
 test("UX-LOCATION-FIX-01 invalid location never clears native confirmation or starts new search",()=>{
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
   ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";
