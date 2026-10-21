@@ -150,6 +150,11 @@ public final class PokemonPicker {
                 row.setGravity(Gravity.CENTER_VERTICAL);
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setPadding(dp(activity,10),dp(activity,5),dp(activity,10),dp(activity,5));
+                android.graphics.drawable.GradientDrawable rowBg=new android.graphics.drawable.GradientDrawable();
+                rowBg.setColor(Color.argb(225,43,48,57));
+                rowBg.setCornerRadius(dp(activity,7));
+                rowBg.setStroke(dp(activity,1),Color.argb(78,190,201,215));
+                row.setBackground(rowBg);
                 holder.picture=new ImageView(activity);
                 holder.picture.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 row.addView(holder.picture,new LinearLayout.LayoutParams(dp(activity,43),dp(activity,43)));
@@ -192,26 +197,27 @@ public final class PokemonPicker {
         LinearLayout header=new LinearLayout(activity);
         header.setGravity(Gravity.CENTER_VERTICAL);
         TextView title=new TextView(activity);
-        title.setText("★  Favoritos");
+        title.setText("☆  POKÉMON FAVORITOS");
         title.setTextColor(Color.rgb(244,247,250));
         title.setTypeface(null,Typeface.BOLD);
-        title.setTextSize(17);
+        title.setTextSize(15);
         header.addView(title,new LinearLayout.LayoutParams(0,dp(activity,43),1));
         TextView finish=new TextView(activity);
-        finish.setText("Concluir");
+        finish.setText("✓ Fechar");
         finish.setGravity(Gravity.CENTER);
-        finish.setTextColor(Color.rgb(169,239,219));
+        finish.setTextColor(Color.rgb(237,241,247));
         finish.setTextSize(14);
         finish.setTypeface(null,Typeface.BOLD);
         android.graphics.drawable.GradientDrawable finishBg=new android.graphics.drawable.GradientDrawable();
-        finishBg.setColor(Color.argb(200,28,69,62));
+        finishBg.setColor(Color.argb(225,48,53,63));
+        finishBg.setStroke(dp(activity,1),Color.argb(100,194,202,218));
         finishBg.setCornerRadius(dp(activity,9));
         finish.setBackground(finishBg);
         header.addView(finish,new LinearLayout.LayoutParams(dp(activity,87),dp(activity,34)));
         root.addView(header);
 
         TextView selectedTitle=new TextView(activity);
-        selectedTitle.setTextColor(Color.rgb(255,211,118));
+        selectedTitle.setTextColor(Color.rgb(230,233,239));
         selectedTitle.setTypeface(null,Typeface.BOLD);
         selectedTitle.setTextSize(14);
         selectedTitle.setPadding(dp(activity,3),dp(activity,3),0,dp(activity,6));
@@ -240,7 +246,7 @@ public final class PokemonPicker {
         root.addView(divider,dividerParams);
 
         TextView searchTitle=new TextView(activity);
-        searchTitle.setText("Adicionar Pokémon");
+        searchTitle.setText("BUSCAR E ADICIONAR");
         searchTitle.setTextColor(Color.WHITE);
         searchTitle.setTextSize(14);
         searchTitle.setTypeface(null,Typeface.BOLD);
@@ -251,7 +257,7 @@ public final class PokemonPicker {
         search.setSingleLine(true);
         search.setTextColor(Color.WHITE);
         search.setHintTextColor(Color.rgb(146,154,168));
-        search.setHint("Nome ou número da Pokédex");
+        search.setHint("⌕  Nome ou número da Pokédex");
         search.setTextSize(14);
         root.addView(search,new LinearLayout.LayoutParams(-1,dp(activity,49)));
 
@@ -263,13 +269,16 @@ public final class PokemonPicker {
         results.setAdapter(suggestions);
 
         android.widget.CheckBox sound=new android.widget.CheckBox(activity);
-        sound.setText("Alertar com som ao encontrar um favorito válido");
+        sound.setText("Notificar favoritos (som definido no sino 🔔)");
         sound.setTextColor(Color.WHITE);
         sound.setTextSize(12);
         sound.setChecked(WatchAlerts.enabled(activity));
-        sound.setOnCheckedChangeListener((button,enabled)->
-            activity.getSharedPreferences("prefs",0).edit()
-                .putBoolean(WatchAlerts.PREF_ENABLED,enabled).apply());
+        sound.setOnCheckedChangeListener((button,enabled)->{
+            // PREF_MODE is authoritative. Changing only the old boolean
+            // leaves previous OFF/SILENT states active after reopening.
+            WatchAlerts.setMode(activity,enabled?"on":"off");
+            if(changed!=null)changed.run();
+        });
         root.addView(sound);
 
         android.widget.Button testNotification=new android.widget.Button(activity);
@@ -277,7 +286,11 @@ public final class PokemonPicker {
         testNotification.setAllCaps(false);
         testNotification.setTextSize(12);
         testNotification.setTextColor(Color.rgb(218,247,239));
-        testNotification.setBackgroundColor(Color.argb(174,36,77,68));
+        android.graphics.drawable.GradientDrawable testBg=new android.graphics.drawable.GradientDrawable();
+        testBg.setColor(Color.argb(208,47,57,69));
+        testBg.setCornerRadius(dp(activity,8));
+        testBg.setStroke(dp(activity,1),Color.argb(100,185,202,218));
+        testNotification.setBackground(testBg);
         LinearLayout.LayoutParams testParams=new LinearLayout.LayoutParams(-1,dp(activity,38));
         testParams.setMargins(0,0,0,dp(activity,5));
         root.addView(testNotification,testParams);
@@ -332,10 +345,10 @@ public final class PokemonPicker {
         // Single translucent charcoal panel: no duplicate platform title,
         // no separate grey footer, and Concluir belongs inside the panel.
         android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable();
-        background.setColors(new int[]{Color.argb(187,30,42,58),Color.argb(159,24,34,47)});
+        background.setColors(new int[]{Color.argb(239,34,38,47),Color.argb(238,29,32,39)});
         background.setOrientation(android.graphics.drawable.GradientDrawable.Orientation.TL_BR);
-        background.setStroke(dp(activity,1),Color.argb(114,193,218,240));
-        background.setCornerRadius(dp(activity,17));
+        background.setStroke(dp(activity,1),Color.argb(109,170,183,202));
+        background.setCornerRadius(dp(activity,12));
         root.setBackground(background);
         Context context=(activity instanceof Activity)?activity:
             new android.view.ContextThemeWrapper(activity,android.R.style.Theme_Material_NoActionBar);
