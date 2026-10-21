@@ -3435,7 +3435,7 @@ Total **658 contratos JS reportados pelos sete comandos**. O `gradle :app:assemb
 
 **Estado e próximo chat:** código-fonte testado/compilado e APK gerado, sem merge. Branch mantém os commits anteriores; o presente registro documental é posterior ao commit-fonte do APK, portanto o APK/ZIP de fontes da CI apontam corretamente para `87a936dc...`, enquanto o novo HEAD da branch após este registro será somente documentação. O próximo chat deve começar por conferir o APK 51192 em Android, coletar capturas das opções de transparência/bordas, iconografia do sino e Coords/Radius; registrar bugs e corrigir por pequenas etapas, sem reiniciar.
 
-### 12.162 APK-51192-RESULTADO — versão de teste 0.51 compilada, assinada e publicada (21/10/2026)
+### 12.163 APK-51192-RESULTADO — versão de teste 0.51 compilada, assinada e publicada (21/10/2026)
 
 **Autorização expressa nesta conversa:** o usuário solicitou continuar, aplicar, registrar tudo e **gerar novo APK**, mantendo o PokeSearch na branch `feature/pokesearch-51081-visual-editor-20261021` e sem merge na `main`. Base funcional: §§ 12.158–12.160 mais §12.161 (registro de autorização anterior). O workflow autorizado preexistente foi acionado por commit de verificação de fonte `87a936dc4335a3a780de415d6df3cbee7a4a3152`, mensagem `build: approved icon colors | v0.51 visual editor, opacity, Home theme and bell QA`. O commit altera apenas comentários de QA em `app/tests/visual-editor.test.js`; inclui no histórico as correções do `dock.html`, integração Home/serviço/editor e testes anteriores, sem reiniciar projeto e sem mesclar branches.
 
