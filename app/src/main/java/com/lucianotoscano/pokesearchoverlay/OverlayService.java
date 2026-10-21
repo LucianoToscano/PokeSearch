@@ -135,6 +135,24 @@ public class OverlayService extends Service {
             BugReport.log(this,"UX","Configuração visual inválida");
         }
     }
+    // VISUAL-HOME-THEME-01: Home is authoritative for menu background tone.
+    // Preserve every numeric layout preference, especially transparency, and
+    // keep the collector/WebView and active requests intact on theme changes.
+    private void syncHomeThemeVisual(boolean broadcast){
+        try{
+            String wanted=getSharedPreferences("prefs",0)
+                .getBoolean("homeLightMode",false)?"light":"dark";
+            JSONObject stored=normalizeVisualPrefs(visualPrefsJson);
+            if(wanted.equals(stored.optString("menuBgMode","dark")))return;
+            stored.put("menuBgMode",wanted);
+            visualPrefsJson=stored.toString();
+            getSharedPreferences("prefs",0).edit()
+                .putString("visualPrefsJson",visualPrefsJson).apply();
+            if(broadcast)broadcastVisualPrefs();
+        }catch(org.json.JSONException ex){
+            BugReport.log(this,"UX","Tema visual não sincronizado");
+        }
+    }
     private int dockDp(){return spriteSize+8;}
     private int resultWidthDp(){
         if(visualResultsHorizontal&&!resultCollapsed){
@@ -746,6 +764,7 @@ public class OverlayService extends Service {
         try{visualPrefsJson=normalizeVisualPrefs(
             getSharedPreferences("prefs",0).getString("visualPrefsJson","{}")).toString();}
         catch(org.json.JSONException ignored){visualPrefsJson="{}";}
+        syncHomeThemeVisual(false);
         readVisualRuntime();
         root=new FrameLayout(this);
         root.setBackgroundColor(Color.TRANSPARENT);
@@ -2649,6 +2668,10 @@ public class OverlayService extends Service {
         String action=i==null||i.getAction()==null?"":i.getAction();
         if("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS".equals(action)){
             syncPreferencesWithoutSearch();
+            return START_STICKY;
+        }
+        if("com.lucianotoscano.pokesearchoverlay.SYNC_HOME_THEME".equals(action)){
+            syncHomeThemeVisual(true);
             return START_STICKY;
         }
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN".equals(action)){
