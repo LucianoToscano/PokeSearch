@@ -81,4 +81,35 @@ test("rendered results remain an independent WebView and retain old filters",()=
  assert.ok(dock.includes('visual_editor.js'));
  assert.ok(dock.includes('🎛 Editor visual temporário'));
 });
+test("light theme changes foreground and actual button backgrounds",()=>{
+ const {window,styles,classes}=fixture();
+ window.onVisualPrefs({menuBgMode:"light",resultsBgMode:"light",
+   menuTransparency:25,resultsTransparency:40});
+ assert.equal(styles["--visual-menu-fg"],"#152231");
+ assert.equal(styles["--visual-results-fg"],"#172533");
+ assert.equal(styles["--visual-menu-button-bg"],"rgba(255,255,255,0.75)");
+ assert.equal(styles["--visual-results-bg"],"rgba(255,255,255,0.60)");
+ assert.equal(classes.has("visual-light-menu"),true);
+ assert.equal(classes.has("visual-light-results"),true);
+ assert.ok(dock.includes('background:var(--visual-menu-button-bg'));
+});
+test("service bounds horizontal overlay touch area to populated columns",()=>{
+ assert.ok(java.includes("int columns=Math.max(1,Math.min(5,count()))"));
+ assert.ok(java.includes("perCard*columns"));
+ assert.ok(java.includes("resultParams.width!=dp(resultWidthDp())"));
+ assert.ok(java.includes("updateResultsWidth();"));
+});
+test("slider edits are not reverted by stale service state",()=>{
+ assert.ok(script.includes("pendingVisualJson=JSON.stringify(current)"));
+ assert.ok(script.includes("if(pendingVisualJson&&pendingVisualJson!==incoming)return;"));
+ assert.ok(script.includes('if(pendingVisualJson===incoming)pendingVisualJson=""'));
+});
+test("large header gap is included in native window height",()=>{
+ assert.ok(dock.includes('Math.max(0,Number(window.visualPrefs?.resultGapTop)||0)'));
+ assert.ok(dock.includes('margin-top:var(--visual-top-gap,0px)!important'));
+});
+test("styling changes don't need reload of all Pokemon images",()=>{
+ assert.ok(script.includes('if(window.__visualGeometry!==signature)'));
+ assert.ok(script.includes('else if(typeof fit==="function")fit()'));
+});
 console.log("PokeSearch temporary visual editor: "+count+" tests passed");
