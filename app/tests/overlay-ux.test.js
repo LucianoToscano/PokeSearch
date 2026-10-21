@@ -1829,7 +1829,7 @@ test("UX-WATCHDOG-45S late requests discarded",()=>{
  const body=service.split('private final Runnable searchWatchdog=()->{')[1]?.split('private boolean pickerOpen=')[0]||'';
  return body.includes('++requestGeneration;')&&body.includes('confirmedSubmittedFiltersGeneration=-1;')&&
   service.includes('private static final long SEARCH_WATCHDOG_MS=45_000L;')&&
-  service.includes('if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;');
+  service.includes('callbackGeneration!=requestGeneration||callbackWebsite!=website||(!mayNavigate&&callbackPage!=pageLoadGeneration)');
 });
 
 // UI-INFO-ALL and UX-LOC-SHINY regression tests: all visibility switches are
