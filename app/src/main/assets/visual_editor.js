@@ -255,7 +255,16 @@ window.onVisualPrefs=function(raw){
   const next=normalize(obj),incoming=JSON.stringify(next);
   // Status/notification updates may rebroadcast the last saved layout while
   // the thumb is still moving. Never roll back the user's unsaved values.
-  if(pendingVisualJson&&pendingVisualJson!==incoming)return;
+  // Exception: the Home light/dark switch is authoritative for menu tone.
+  // Merge ONLY its color, preserving the live slider draft; then save both.
+  if(pendingVisualJson&&pendingVisualJson!==incoming){
+   if(next.menuBgMode!==current.menuBgMode){
+    current=normalize({...current,menuBgMode:next.menuBgMode});
+    applyVisual();
+    saveSoon();
+   }
+   return;
+  }
   if(pendingVisualJson===incoming)pendingVisualJson="";
   if(incoming!==JSON.stringify(current)){current=next;applyVisual();}
  }catch(e){/* ignore invalid persisted visual prefs */}
