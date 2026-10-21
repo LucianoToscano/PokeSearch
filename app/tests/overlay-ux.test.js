@@ -2135,14 +2135,16 @@ test("UX-NOTIFY-12 new and favorite audio channels remain separate",()=>{
   watch.includes('selectedTone(context,true,species)')&&
   watch.includes('pokesearch_watch_silent_v1');
 });
-test("UX-NOTIFY-13 bundled user sounds include 25 Android resource references and category/species picker",()=>{
+test("UX-NOTIFY-13 bundled user sounds include 24 Android resource references and category/species picker",()=>{
  const library=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
- return (library.match(/R\.raw\.ps_[a-z0-9_]+/g)||[]).length===25&&
+ return (library.match(/R\.raw\.ps_[a-z0-9_]+/g)||[]).length===24&&
   main.includes("openBundledAlertTonePicker(")&&
   main.includes("PokeSoundLibrary.soundUri(this,which)")&&
   main.includes("openAlertAudioFilePicker(target,pokemon)")&&
   watch.includes('"android.resource".equals(uri.getScheme())')&&
-  dock.includes("Biblioteca PokeSearch (25 sons)");
+  dock.includes("Biblioteca PokeSearch (24 sons)")&&
+  !library.includes("ps_freesound_community_jigglypuff_evolves_into_wigglytuff_then_the_world_implodes_24177")&&
+  watch.includes("context.getResources().getIdentifier(");
 });
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
