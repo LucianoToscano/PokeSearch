@@ -996,7 +996,8 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
   const empty=document.getElementById("empty");
   h=Math.ceil(header.getBoundingClientRect().height)+1;
   if(!document.body.classList.contains("results-collapsed")){
-    h+=Math.ceil(spawns.getBoundingClientRect().height);
+    h+=Math.ceil(spawns.getBoundingClientRect().height)+
+      Math.max(0,Number(window.visualPrefs?.resultGapTop)||0);
     if(!cards.length)h+=Math.ceil(empty.getBoundingClientRect().height);
   }
  }
