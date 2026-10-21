@@ -207,7 +207,7 @@ public class OverlayService extends Service {
         armedDespawnMillis=next;
         handler.postDelayed(expiryRefresh,Math.max(250L,next-now+150L));
     }
-    private String mode="raw",results="[]",status="Conectando...";
+    private String mode="raw",results="[]",status="Conectando...",searchPhase="idle";
     // Provenance of the last site-confirmed result set, not the pending filter.
     // Never relabel previous Pokémon with the new mode while validation fails.
     private String shownMode="raw",shownConfigJson="{}";
@@ -348,7 +348,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -399,6 +399,7 @@ public class OverlayService extends Service {
         status(s);
     }
     private void searchFailure(String shortReason,String detail){
+        searchPhase="error";
         // Show one concise message; keep the detailed diagnosis for the ⚠ report.
         getSharedPreferences("prefs",0).edit().putString("lastError",detail).apply();
         BugReport.log(this,"FILTER",detail);
@@ -957,6 +958,7 @@ public class OverlayService extends Service {
         BugReport.log(this,"PREPARE","Filtros "+mode+" Shiny="+shiny+" manual="+manual);
         // Preserve the despawn cleanup timer while the network search is pending.
         searchInProgress=true;
+        searchPhase="filling";
         if(count()>0)resultsStale=true;
         if(shiny){shinyVerified=false;update();}
         final int generation=++requestGeneration;
@@ -1302,7 +1304,8 @@ public class OverlayService extends Service {
                             .putLong("lastNetworkSearchAt",submittedAt).apply();
                         BugReport.log(this,"SUBMIT","Busca "+mode+" Shiny="+shiny+
                             " geofiltro="+(locationEnabled?"confirmado":"OFF"));
-                        status(manual?"Busca manual em andamento...":"Buscando...");
+                        searchPhase="searching";
+            status(manual?"Busca manual em andamento...":"Buscando...");
                         pollSearch(generation,0,manual);
                     });
                 });
@@ -1326,6 +1329,14 @@ public class OverlayService extends Service {
             if(!r.optBoolean("ok")){
                 searchInProgress=false;
                 searchFailure("⚠ Falha na leitura","Falha na leitura dos resultados do site.");
+                return;
+            }
+            // A React result page can expose transient incomplete cards while loading.
+            // Do not classify those as a failed extraction or a verified empty response.
+            if(r.optBoolean("loading",false)){
+                if(attempt<8){pollSearch(generation,attempt+1,manual);return;}
+                searchInProgress=false;
+                searchFailure("⚠ Tempo limite","O site não concluiu a consulta de resultados.");
                 return;
             }
             // Shiny was verified before submission. A missing switch after navigation
@@ -1599,6 +1610,7 @@ public class OverlayService extends Service {
         JSONArray sorted=sortItems(items);
         recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
         results=sorted.toString();
+        searchPhase=sorted.length()==0?"empty":"updated";
         shownMode=mode;shownConfigJson=filterConfigJson();
         shownShiny=shiny&&shinyVerified;resultsStale=false;
         rememberConfirmedPreview(sorted,now);
