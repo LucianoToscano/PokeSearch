@@ -2027,6 +2027,52 @@ test("SITE-POKEMON-05 12-icon toolbar & no personal GPS remain intact",()=>
  !probe.includes('navigator.geolocation')&&
  dock.includes('items.slice(0,10)')&&
  service.includes('"locationCoords"'));
+test("NOTIFY-02 two independent three-state controls and audible streams",()=>{
+ const panel=dock.split("function renderAlertsChoices(){")[1]?.split("function renderFiltersChoices(){")[0]||"";
+ return panel.includes('const generalModes=document.createElement("div")')&&
+  panel.includes('const favoriteModes=document.createElement("div")')&&
+  panel.includes('Native.setAlertMode(id)')&&panel.includes('Native.setFavoriteAlertMode(id)')&&
+  panel.includes('["silent","🔇 Sem som"]')&&panel.includes('Novos em OFF e Favoritos em Som');
+});
+test("NOTIFY-03 one muted stream gets one slash and both muted get X",()=>{
+ const states=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(",1)[0]||"";
+ return states.includes('const mutedCount=(generalAudio?0:1)+(favoriteAudio?0:1)')&&
+  states.includes('bell-one-muted')&&states.includes('bell-both-muted')&&
+  dock.includes('bell-both-muted .quickGlyph::before')&&
+  dock.includes('rotate(44deg)')&&dock.includes('rotate(-44deg)');
+});
+test("NOTIFY-04 choose MP3 or OGG from Files or Drive with persistent access",()=>{
+ return main.includes('Intent.ACTION_OPEN_DOCUMENT')&&
+  main.includes('pick.setType("audio/*")')&&
+  main.includes('Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION')&&
+  main.includes('takePersistableUriPermission(uri,')&&
+  main.includes('startActivityForResult(pick,306)')&&
+  main.includes('saveChosenAlertTone(data,req==306)')&&
+  main.includes('storeAlertTone(target,species,chosen)');
+});
+test("NOTIFY-05 favorites dialog uses authoritative mode and styled cards",()=>{
+ const picker=read("java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java");
+ return picker.includes('WatchAlerts.setMode(activity,enabled?"on":"off")')&&
+  picker.includes('POKÉMON FAVORITOS')&&
+  picker.includes('row.setBackground(rowBg)')&&
+  picker.includes('background.setCornerRadius(dp(activity,12))');
+});
+test("COORDS-06 typed radius still requires actual site two-field confirmation",()=>{
+ return dock.includes('radiusField.type="number"')&&
+  dock.includes('wantedRadius=Number(radiusField.value)')&&
+  dock.includes('radiusField.oninput=()=>')&&
+  service.includes('if(configured.optBoolean("pending",false)&&attempt<16)')&&
+  service.includes('if(attempt<12)')&&
+  service.includes('execute("verifyLocation:"+data,verified->')&&
+  probe.includes('function configureLocation(req)')&&
+  probe.includes('function verifyLocation(req)');
+});
+test("MODE-08 compact six-choice popup stays under its launcher",()=>{
+ return dock.includes('modeCascade{width:60px!important}')&&
+  dock.includes('.modeCascadeRail{width:58px!important}')&&
+  dock.includes('function positionPopupUnderTrigger(){')&&
+  dock.includes('bounds.left-area.getBoundingClientRect().left');
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
