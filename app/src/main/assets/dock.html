@@ -656,8 +656,23 @@ body.result-window.visual-light-results #empty{
 }
 body.controls-window #quickRows{gap:var(--visual-menu-gap,0px)!important}
 body.controls-window.visual-menu-vertical #quickMenuList{gap:0!important}
-body.result-window #resultHeader .resultModeStack{
- transform:translateY(var(--visual-header-offset,4px))!important;
+/* VISUAL-132: move whole header button and native hit target, never only icon. */
+body.result-window #shell{padding-top:var(--visual-header-y,0px)!important}
+body.result-window #resultHeader{
+ width:var(--visual-header-touch-width,35px)!important;
+ height:var(--visual-header-touch-height,30px)!important;
+ min-width:0!important;min-height:0!important;
+ margin-left:clamp(0px,
+ calc((var(--dock) - var(--visual-header-touch-width,35px))/2 + var(--visual-header-x,0px)),
+ calc(var(--dock) - var(--visual-header-touch-width,35px)))!important;
+ margin-bottom:var(--visual-header-after,0px)!important;
+}
+body.result-window #resultHeader .resultModeStack{transform:none!important}
+body.visual-guides.result-window #resultHeader{
+ outline:1px dashed #ffce4c!important;outline-offset:-1px;
+}
+body.visual-guides.result-window #shell{
+ outline:1px dotted #9d8dff8c!important;outline-offset:-1px;
 }
 body.controls-window #choices.modePanel:not(.visualPanel),
 body.controls-window #choices.standardPanel:not(.visualPanel):not(.locationPanel){
@@ -817,6 +832,16 @@ body.controls-window #choices .spriteSizeChoices button{
 body.controls-window #choices .spriteSizeChoices button.chosen{
  background:#3d5263!important;border-color:#a6c4d7!important;
  color:#fff!important;
+}
+body.controls-window #choices.visualPanel .visualFineTune{
+ display:flex;gap:4px;justify-content:flex-end;margin-top:2px;
+}
+body.controls-window #choices.visualPanel .visualFineTune button{
+ min-width:32px!important;width:32px!important;height:25px!important;
+ padding:0!important;margin:0!important;text-align:center!important;
+ background:#344254!important;border:1px solid #ffffff54!important;
+ border-radius:5px!important;color:var(--visual-menu-fg,#fff)!important;
+ font-weight:800!important;font-size:17px!important;
 }
 </style></head><body>
 <div id="shell">
@@ -1108,13 +1133,12 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
   const header=document.getElementById("resultHeader");
   const spawns=document.getElementById("spawns");
   const empty=document.getElementById("empty");
-  h=Math.ceil(header.getBoundingClientRect().height)+1;
+  // Use DOM extents: the top offset now belongs to the whole button.
+  const shellTop=shell.getBoundingClientRect().top;
+  h=Math.ceil(header.getBoundingClientRect().bottom-shellTop)+1;
   if(!document.body.classList.contains("results-collapsed")){
-    // Include negative editor gaps too; otherwise the native window keeps
-    // dead transparent pixels below the last sprite in compact mode.
-    h+=Math.max(0,Math.ceil(spawns.getBoundingClientRect().height)+
-      (Number(window.visualPrefs?.resultGapTop)||0));
-    if(!cards.length)h+=Math.ceil(empty.getBoundingClientRect().height);
+    const end=(cards.length?spawns:empty).getBoundingClientRect().bottom;
+    h=Math.max(h,Math.ceil(end-shellTop)+1);
   }
  }
  if(controlsWindow&&choiceOpen&&menuOpen){
@@ -1803,7 +1827,9 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
   return pitch; // Transparent sprite squares may overlap without shrinking the image.
  });
  const desired=natural.reduce((a,b)=>a+b,0);
- const room=Math.max(120,(Number(displayHeight)||700)-30-24);
+ const headerArea=(Number(v.headerIconY)||0)+(Number(v.headerTouchHeight)||30)+
+  (Number(v.headerAfterGap)||0);
+ const room=Math.max(120,(Number(displayHeight)||700)-headerArea-24);
  const factor=desired>0?Math.min(1,room/desired):1;
  const rows=natural.map(n=>Math.max(8,Math.floor(n*factor)));
  // A very short display can reduce a row to 12px: never draw a
