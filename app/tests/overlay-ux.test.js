@@ -2199,7 +2199,7 @@ test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=
   main.includes("View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR");
 });
 test("UX-LOC-DRAFT-01 preserves unsent Radius across native updates and releases on site proof",()=>{
- const source=dock.match(/function locationPanelFeedback\\(\\)\\{[\\s\\S]*?\\n\\}/)?.[0];
+ const source=dock.match(/function locationPanelFeedback\(\)\{[\s\S]*?\n\}/)?.[0];
  if(!source||!dock.includes('radiusField.dataset.locationDraft="true"')||
     !dock.includes('slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";}')||
     !dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)'))return false;
