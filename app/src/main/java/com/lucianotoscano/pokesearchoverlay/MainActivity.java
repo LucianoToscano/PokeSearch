@@ -1371,15 +1371,25 @@ public class MainActivity extends Activity {
                     chooseAlertToneSource("species",options[which]);
             }).setNegativeButton("Cancelar",null).show();
     }
+    private void openBundledAlertTonePicker(String target,String pokemon){
+        new AlertDialog.Builder(this)
+            .setTitle("Biblioteca PokeSearch · "+PokeSoundLibrary.size()+" sons")
+            .setItems(PokeSoundLibrary.LABELS,(dialog,which)->{
+                Uri chosen=PokeSoundLibrary.soundUri(this,which);
+                if(chosen!=null)storeAlertTone(target,pokemon,chosen.toString());
+            }).setNegativeButton("Cancelar",null).show();
+    }
     private void chooseAlertToneSource(String target,String pokemon){
         new AlertDialog.Builder(this)
             .setTitle("Som de "+("species".equals(target)?pokemon:
                 "favorites".equals(target)?"favoritos":"novos Pokémon"))
-            .setItems(new String[]{"🔔 Toques do Android","🎵 Escolher áudio (MP3/OGG) do aparelho ou Drive","↩ Restaurar som padrão"},
+            .setItems(new String[]{"🎶 Biblioteca PokeSearch (25 sons)","🔔 Toques do Android",
+                "🎵 Escolher áudio (MP3/OGG) do aparelho ou Drive","↩ Restaurar som padrão"},
                 (dialog,which)->{
-                    if(which==0)openAlertRingtonePicker(target,pokemon);
-                    else if(which==1)openAlertAudioFilePicker(target,pokemon);
-                    else if(which==2)storeAlertTone(target,pokemon,"");
+                    if(which==0)openBundledAlertTonePicker(target,pokemon);
+                    else if(which==1)openAlertRingtonePicker(target,pokemon);
+                    else if(which==2)openAlertAudioFilePicker(target,pokemon);
+                    else if(which==3)storeAlertTone(target,pokemon,"");
                 }).setNegativeButton("Cancelar",null).show();
     }
     private void openAlertAudioFilePicker(String target,String pokemon){
