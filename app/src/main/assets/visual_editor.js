@@ -2,7 +2,8 @@
 (function(){
 "use strict";
 const DEFAULTS=Object.freeze({
- resultGapTop:0,resultGapBetween:31,resultSpriteScale:100,headerIconY:4,
+ resultGapTop:0,resultGapBetween:31,resultSpriteScale:100,headerIconY:0,
+ headerOffsetX:0,headerTouchWidth:35,headerTouchHeight:30,headerAfterGap:0,
  resultsOffsetX:0,resultsOffsetY:0,
  menuOffsetX:0,menuOffsetY:0,gearMenuGap:0,menuItemGap:0,
  popupWidth:232,popupHeight:390,
@@ -11,7 +12,8 @@ const DEFAULTS=Object.freeze({
  menuBgMode:"dark",menuTransparency:35,showGuides:false
 });
 const RANGES={
- resultGapTop:[-16,80],resultGapBetween:[0,65],resultSpriteScale:[70,160],headerIconY:[-10,20],
+ resultGapTop:[-16,80],resultGapBetween:[0,65],resultSpriteScale:[70,160],headerIconY:[0,72],
+ headerOffsetX:[-16,16],headerTouchWidth:[26,42],headerTouchHeight:[24,50],headerAfterGap:[0,36],
  resultsOffsetX:[-200,200],resultsOffsetY:[-350,350],
  menuOffsetX:[-200,200],menuOffsetY:[-350,350],
  gearMenuGap:[0,80],menuItemGap:[0,16],popupWidth:[160,330],popupHeight:[140,420],
@@ -56,7 +58,11 @@ function applyVisual(){
  body.classList.toggle("visual-light-menu",current.menuBgMode==="light");
  body.classList.toggle("visual-light-results",current.resultsBgMode==="light");
  set("sprite-scale",String(current.resultSpriteScale/100));
- set("header-offset",current.headerIconY+"px");
+ set("header-y",current.headerIconY+"px");
+ set("header-x",current.headerOffsetX+"px");
+ set("header-touch-width",current.headerTouchWidth+"px");
+ set("header-touch-height",current.headerTouchHeight+"px");
+ set("header-after",current.headerAfterGap+"px");
  set("popup-width",current.popupWidth+"px");
  set("popup-height",current.popupHeight+"px");
  body.classList.toggle("visual-menu-vertical",current.menuOrientation==="vertical");
@@ -115,7 +121,14 @@ function addSlider(parent,key,label,unit){
   value.textContent=range.value+(unit||"");
   change(key,Number(range.value));
  };
- wrap.append(title,value,range);parent.appendChild(wrap);
+ const fine=document.createElement("div");fine.className="visualFineTune";
+ const minus=document.createElement("button"),plus=document.createElement("button");
+ minus.type="button";plus.type="button";minus.textContent="−";plus.textContent="+";
+ minus.setAttribute("aria-label",label+" menos 1");
+ plus.setAttribute("aria-label",label+" mais 1");
+ const step=d=>{change(key,current[key]+d);range.value=String(current[key]);value.textContent=current[key]+(unit||"");};
+ minus.onclick=()=>step(-1);plus.onclick=()=>step(1);
+ fine.append(minus,plus);wrap.append(title,value,range,fine);parent.appendChild(wrap);
 }
 function addSegment(parent,key,label,options){
  const row=document.createElement("div");row.className="visualLine";
@@ -155,7 +168,12 @@ function renderVisualEditor(){
   addSlider(panel,"resultGapTop","Pokébola → primeiro Pokémon"," px");
   addSlider(panel,"resultGapBetween","Distância entre Pokémon (0 = colados)"," px");
   addSlider(panel,"resultSpriteScale","Escala visual dos Pokémon","%");
-  addSlider(panel,"headerIconY","Deslocar Pokébola (Y)"," px");
+  heading(panel,"Pokébola · botão completo e área de toque");
+  addSlider(panel,"headerIconY","Botão + toque: posição Y (0 = topo)"," px");
+  addSlider(panel,"headerOffsetX","Botão + toque: posição X"," px");
+  addSlider(panel,"headerTouchWidth","Área clicável: largura"," px");
+  addSlider(panel,"headerTouchHeight","Área clicável: altura"," px");
+  addSlider(panel,"headerAfterGap","Espaço abaixo do botão"," px");
   heading(panel,"Posição da janela de resultados");
   addSlider(panel,"resultsOffsetX","Mover horizontalmente (X)"," dp");
   addSlider(panel,"resultsOffsetY","Mover verticalmente (Y)"," dp");
