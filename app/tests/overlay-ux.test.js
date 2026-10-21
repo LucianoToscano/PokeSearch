@@ -2073,6 +2073,17 @@ test("MODE-08 compact six-choice popup stays under its launcher",()=>{
   dock.includes('function positionPopupUnderTrigger(){')&&
   dock.includes('bounds.left-area.getBoundingClientRect().left');
 });
+test("COORDS-08 UI preserves user editing while site controls location and Shiny",()=>{
+ const feedback=dock.split("function locationPanelFeedback(){")[1]?.split("window.onLocationPaste=",1)[0]||"";
+ const modal=dock.split("function renderLocationChoices(){")[1]?.split("function manualRefreshTap(){",1)[0]||"";
+ return feedback.includes('document.activeElement!==radius')&&
+  feedback.includes('radius.value=String(locationRadius)')&&
+  modal.includes('radiusField.id="locRadiusValue"')&&
+  modal.includes('wantedRadius=Number(radiusField.value)')&&
+  service.includes('verifyShinyAfterLocation(generation,manual,0)')&&
+  probe.includes('function verifyLocation(req)')&&
+  probe.includes('function setShiny(want)');
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
