@@ -6,7 +6,6 @@ on:
       - ux/iv-color-shiny-separate-20261018
       - fix/ps009-stable-test-signing-20261018
       - feature/pokesearch-51081-visual-editor-20261021
-      - fix/pokesearch-v051-restored-20261021
     paths:
       - 'app/**'
       - '.github/workflows/build-v051-filters-preview.yml'
