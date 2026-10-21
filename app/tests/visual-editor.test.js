@@ -43,7 +43,7 @@ test("invalid imported JSON is ignored and values are clamped",()=>{
   popupWidth:600,headerIconY:-99,resultsOrientation:"horizontal",menuOrientation:"vertical"});
  const p=window.visualEditorCurrent();
  assert.equal(p.resultGapBetween,0);assert.equal(p.resultsTransparency,100);
- assert.equal(p.popupWidth,330);assert.equal(p.headerIconY,-10);
+ assert.equal(p.popupWidth,330);assert.equal(p.headerIconY,0);
  assert.equal(p.resultsOrientation,"horizontal");assert.equal(p.menuOrientation,"vertical");
  assert.equal(styles["--visual-results-bg"],"rgba(15,19,26,0.00)");
  assert.equal(classes.has("visual-results-horizontal"),true);
@@ -105,7 +105,7 @@ test("slider edits are not reverted by stale service state",()=>{
  assert.ok(script.includes('if(pendingVisualJson===incoming)pendingVisualJson=""'));
 });
 test("large header gap is included in native window height",()=>{
- assert.ok(dock.includes('Math.max(0,Math.ceil(spawns.getBoundingClientRect().height)+'));
+ assert.ok(dock.includes('Math.ceil(end-shellTop)+1'));
  assert.ok(dock.includes('margin-top:var(--visual-top-gap,0px)!important'));
 });
 test("styling changes don't need reload of all Pokemon images",()=>{
@@ -205,7 +205,49 @@ test("sprite guide tracks normalized art, not whole row",()=>{
 });
 test("negative header gap changes native height instead of leaving invisible bottom padding",()=>{
  assert.ok(script.includes('resultGapTop:[-16,80]'));
- assert.ok(dock.includes('Math.max(0,Math.ceil(spawns.getBoundingClientRect().height)+'));
+ assert.ok(dock.includes('Math.ceil(end-shellTop)+1'));
  assert.ok(dock.includes('(Number(window.visualPrefs?.resultGapTop)||0)'));
+});
+test("Pokebola Y starts at 0 and button artwork tracks Android's native drag grip",()=>{
+ const {window,styles}=fixture();
+ window.onVisualPrefs({headerIconY:0,headerTouchWidth:35,headerTouchHeight:30});
+ assert.equal(window.visualEditorCurrent().headerIconY,0);
+ assert.equal(styles["--visual-header-y"],"0px");
+ window.onVisualPrefs({headerIconY:16,headerTouchHeight:40});
+ assert.equal(styles["--visual-header-y"],"16px");
+ assert.equal(styles["--visual-header-touch-height"],"40px");
+ assert.ok(java.includes("box.topMargin=dp(visualHeaderY)"));
+ assert.ok(java.includes("dp(width),dp(visualHeaderTouchHeight)"));
+ assert.ok(dock.includes("body.result-window #shell{padding-top:var(--visual-header-y,0px)!important}"));
+ assert.ok(dock.includes("body.result-window #resultHeader .resultModeStack{transform:none!important}"));
+});
+test("Pokebola rectangle X width height and after-gap are controlled together",()=>{
+ const {window,styles}=fixture();
+ window.onVisualPrefs({headerOffsetX:12,headerTouchWidth:42,headerTouchHeight:50,headerAfterGap:9});
+ for(const [key,value] of [
+  ["--visual-header-x","12px"],["--visual-header-touch-width","42px"],
+  ["--visual-header-touch-height","50px"],["--visual-header-after","9px"]])
+  assert.equal(styles[key],value);
+ assert.ok(dock.includes("margin-left:clamp(0px,"));
+ assert.ok(dock.includes("margin-bottom:var(--visual-header-after,0px)!important"));
+ assert.ok(java.includes("Math.round((dockDp()-width)/2f)+visualHeaderX"));
+ assert.ok(java.includes("box.leftMargin=dp(left)"));
+});
+test("Editor supports precise one-unit adjustments and touch-area guides",()=>{
+ for(const label of ["Botão + toque: posição Y (0 = topo)","Botão + toque: posição X",
+  "Área clicável: largura","Área clicável: altura","Espaço abaixo do botão"])
+  assert.ok(script.includes(label),label);
+ assert.ok(script.includes('className="visualFineTune"'));
+ assert.ok(script.includes('minus.onclick=()=>step(-1);plus.onclick=()=>step(1)'));
+ assert.ok(dock.includes("body.visual-guides.result-window #resultHeader{"));
+ assert.ok(dock.includes("body.visual-guides.result-window #shell{"));
+});
+test("Native constraints and collapsed height agree with actual touch target",()=>{
+ assert.ok(java.includes("int[][] limits={{-16,80,0}"));
+ assert.ok(java.includes("{-16,16,0},{26,42,35},{24,50,30},{0,36,0}"));
+ assert.ok(java.includes('visualHeaderY=o.optInt("headerIconY",0)'));
+ assert.ok(java.includes("int min=minResultsHeaderHeightDp();"));
+ assert.ok(java.includes("int desired=resultCollapsed?min:"));
+ assert.ok(java.includes("resizeResults(minResultsHeaderHeightDp());"));
 });
 console.log("PokeSearch temporary visual editor: "+count+" tests passed");
