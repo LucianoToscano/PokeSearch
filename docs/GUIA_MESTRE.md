@@ -3182,3 +3182,29 @@ Após montar a navegação da página completa, a revisão encontrou um erro de 
 **Correção isolada sem alterar outros recursos:** a faixa de `resultGapTop` é **−80 até +80 px** nos dois validadores. O incremento permanece em **1 px** tanto no slider como nos botões −/+; importação/exportação JSON e preview continuam na mesma chave `resultGapTop`, e a preferência previamente salva não é substituída até o usuário editar. O CSS continua aplicando `margin-top:var(--visual-top-gap,0px)` somente ao primeiro bloco de resultados. Posição/tamanho/hitbox da Pokébola, quantidade máxima de 10 sprites, espaçamento entre espécies, janelas independentes, sons, menus, filtros, sincronização Coords/Shiny e certificado não foram modificados.
 
 **Cuidados:** valores negativos muito grandes podem causar sobreposição visual ou recorte pela área nativa da janela Android, dependendo do tamanho P/M/G e zoom; ampliar a faixa é um controle solicitado, **não** comprova que todo extremo será utilizável no aparelho. Teste de regressão adicionado a `visual-editor.test.js` conferindo −80/−100/+80/0, CSS e limite Java. O teste Android físico e compilação nova **não** foram executados nesta etapa e exigem autorização expressa. Backup anterior `backup/pokesearch-51158-before-topgap-range-20261021`. Nenhum merge nem reinicialização.
+
+
+### 12.146 AUD-SONS-03 / AUD-BELL-02 — ouvir antes de escolher e estados independentes (21/10/2026)
+
+**Motivação do proprietário:** a biblioteca de MP3 apresentava nomes de arquivos longos e gravava o toque imediatamente ao tocar numa linha, sem ouvi-lo antes. O sino deveria ficar **branco simples** quando os dois sons estiverem OFF, **amarelo** quando ambos estiverem ON, e distinguir novos Pokémon e favoritos com uma pequena estrela. O padrão antigo de um risco/X foi substituído por solicitação expressa mais recente.
+
+**Sons — alteração somente de UX, sem editar os MP3:** `PokeSoundLibrary.java` preserva a ordem e a referência `R.raw.ps_*` exata dos **24 áudios**, mas usa títulos legíveis em português (`Pokémon capturado`, `Aipom · Grito`, `Pokémon brilhante · Shiny`, `Quem é esse Pokémon? · BR/EN` etc.). URIs já salvas, exceções por espécie, favoritos, modos Som/Sem som/OFF e importação via Android/Drive não foram alterados.
+
+**Prévia segura:** `MainActivity.openBundledAlertTonePicker()` usa `setSingleChoiceItems`; toque na linha dispara reprodução local `MediaPlayer.create(this,source)` do MP3 embutido, parando/reliberando a prévia anterior. `Usar este som` fica desabilitado até a seleção de um recurso reproduzível e é a **única ação que persiste** a URI, via `storeAlertTone()`; `Cancelar`, fechar a janela ou destruir a Activity libera o player e não salva nada. Falhas de reprodução geram mensagem, não disparam gravação. Áudios externos continuam pelo seletor Android/Drive já existente e não são pré-carregados nem transmitidos remotamente.
+
+**Padrão dos ícones de sino (independente das opções de áudio em cada categoria):**
+
+| Novos | Favoritos | Ícone de estado |
+|---|---|---|
+| OFF | OFF | Sino branco, sem marca adicional |
+| Som | OFF | Sino amarelo |
+| OFF | Som | Sino branco, pequena estrela amarela dentro |
+| Som | Som | Sino amarelo, pequena estrela clara dentro |
+| Sem som em uma/both categorias | qualquer outra opção | Pequeno ponto cinza indica notificação silenciosa; outras marcas mostram quais categorias têm som |
+| Permissão Android bloqueada, categoria ≠ OFF | qualquer | Sino branco + pequeno indicador ! laranja, sem alegar áudio |
+
+**Detalhe técnico:** `dock.html` mantém `audibleAlertState()` para avaliar som efetivamente disponível, considerando a existência de favoritos na lista; o novo `notificationBellVisual()` representa as preferências `alertsMode`/favoritos salvas e a permissão Android. A estrela continua visível quando Favoritos=Som mesmo com lista vazia, mas o título acessível sinaliza que é preciso cadastrar favoritos. Não confluir cor dos resultados IV/Shiny com estado do sino. CSS separado é aplicado apenas ao sino, não ao menu todo; Nenhum fundo/contorno do UX-MENU-BG-01 foi revertido.
+
+**QA:** atualizados contratos antigos que ainda exigiam risco/X, além de `UX-NOTIFY-15` (24 rótulos amigáveis e recursos intactos) e `UX-NOTIFY-16` (preview/confirmar/cancelar/liberar player). **11 cenários da função de estado do sino foram executados e aprovados** em avaliador JS isolado; 24 rótulos e 24 referências conferidos. Os arquivos de contrato foram versionados; **suíte Node completa, Gradle, APK e reprodução real Android NÃO executados nesta etapa**. A confirmação física deve testar reprodução com mídia/volume real, toque individual e pausas, permissões e canais existentes.
+
+**Governança:** branch `feature/pokesearch-51081-visual-editor-20261021`, ancestral 0.51; backup `backup/pokesearch-51158-before-sound-preview-bell-20261021` no commit `13160db56737744950a4077f09892480a6d86543`. Último APK de teste continua `0.51-beta.test.51158` e não incorpora essas correções. Não gerar novo APK sem autorização, não alterar assinatura, `applicationId`, `main`, PokeSearch/WebView ou projeto PvPPokeGo; sem merge.
