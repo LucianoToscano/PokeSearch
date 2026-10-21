@@ -52,7 +52,7 @@ test("Result list is always non-scrollable and has no eight-row height cap",
  dock.includes("body.result-window #spawns{")&&
  dock.includes("max-height:none!important;height:auto!important")&&
  dock.includes("overflow-y:visible!important;overflow-x:visible!important")&&
- dock.includes("#spawns:not(:empty){padding-bottom:6px!important}")&&
+ dock.includes("#spawns:not(:empty){padding-bottom:0!important}")&&
  !service.includes("rowDp()*8"));
 test("Native passes full display height and preserves up to ten card slots",
  service.includes("Math.min(rowDp()*10,screenHeightDp()-52)")&&
@@ -159,9 +159,9 @@ test("UX-INFO-04 PokeSearch keeps the sprite column centered exactly below the P
  service.includes('int safe=Math.max(0,Math.min(100,widthDp))'));
 test("UX-INFO-05 verified metadata never creates results or a scrollable list",
  dock.includes('function resultLines(card,opts,league)')&&
- dock.includes('resultDisplayOptions,shownMode):null;')&&
+ dock.includes('resultDisplayOptions,shownMode,preparedLines):null;')&&
  dock.includes('overflow-y:visible!important;overflow-x:visible!important')&&
- dock.includes("const metadataVisible=resultWindow&&cards.some(card=>")&&
+ dock.includes("const metadataVisible=resultWindow&&preparedLines.some(lines=>")&&
  dock.includes('resultInfoHtml(text,c)')&&
  dock.includes('Native.resizeResultsMetadata(metaWidth)')&&
  dock.includes('showTimers=!!timers')&&
@@ -430,7 +430,7 @@ test("PS-082 Home syncs on spinner, checkbox and dismiss",main.includes('syncOve
 test("PS-082 Overlay handles SYNC_PREFS without network refresh",startCommand.includes('com.lucianotoscano.pokesearchoverlay.SYNC_PREFS')&&startCommand.includes('syncPreferencesWithoutSearch();')&&!prefSync.includes('refresh(')&&!prefSync.includes('execute(')&&!prefSync.includes('loadUrl('));
 test("PS-082 re-sorts current results and updates dock",prefSync.includes('sortItems(items)')&&prefSync.includes('params.width=dp(minimized?BUBBLE_DP:dockDp())')&&prefSync.includes('update();'));
 test("PS-082 preferences keys for sprite size, sort, timers, alerts",['spriteSize','showTimers','alerts','sort'].every(k=>prefSync.includes('get'+(k==='spriteSize'?'Int':k==='sort'?'String':'Boolean')+'("'+k+'"')));
-test("Probe result is discarded across generation switches",service.includes('final int callbackGeneration=requestGeneration;')&&service.includes('if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;'));
+test("Probe result is discarded across generation switches",service.includes('final int callbackGeneration=requestGeneration;')&&service.includes('callbackGeneration!=requestGeneration||callbackWebsite!=website||(!mayNavigate&&callbackPage!=pageLoadGeneration)'));
 test("PS-084 catalogue asset failures log only class and stage",picker.includes('BugReport.log(activity,"ASSET","ler catálogo Pokémon · "+e.getClass().getSimpleName())'));
 test("PS-084 MainActivity asset failures log only stage and class",main.includes('BugReport.log(this,"ASSET"')&&main.includes('e.getClass().getSimpleName()')&&!main.includes('e.getMessage()'));
 test("PS-085 sanitizer masks OAuth code/state and discord_token",sanitizer.includes('discord[_-]?token')&&sanitizer.includes('code|state|secret'));
@@ -1334,7 +1334,7 @@ test("Mode emblems preserve historical fallback artwork without Cup alias",()=>{
 test("UX-ICON-02 capture animation reacts to native search state",()=>{
  return service.includes('","+searchInProgress+","+showResultText+')&&
  dock.includes("isSearching=false,textVisible=false")&&dock.includes("searchActive=!!isSearching;")&&
- dock.includes('searchActive&&!shinyPending&&nextQueryAt<=Date.now()')&&
+ dock.includes('activeSearchPhase==="searching"&&!shinyPending&&nextQueryAt<=Date.now()')&&
  dock.includes('id="capturePulse"')&&dock.includes('@keyframes psCapturePulse')&&
  dock.includes('prefers-reduced-motion:reduce');
 });
@@ -1523,7 +1523,7 @@ test("UX-SPRITE-01 missing images remain visible without inventing Pokémon or b
   dock.includes('alt="" loading="eager" decoding="async"')&&
   dock.includes('onclick="spriteClick(')&&dock.includes("Native.toggleDetail(i)")&&
   dock.includes("Native.longPressCoords(i)")&&dock.includes("showTimers&&deadline")&&
-  dock.includes("attachLongPress();attachSpriteFeedback();updateTimers()");
+  dock.includes("attachLongPress();attachSpriteFeedback();syncTimerTicker()");
 })());
 test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image sources",(()=>{
  const source=dock.split("function attachSpriteFeedback(){")[1]?.split("function attachLongPress(){")[0]||"";
@@ -1734,7 +1734,7 @@ test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay 
  dock.includes('notificationPermissionGranted=!!permissionGranted')&&
  dock.includes('watchAlertsEnabled=!!favoriteAlertsEnabled')&&
  dock.includes('bell.classList.toggle("permissionMissing",!notificationPermissionGranted)')&&
- service.includes('","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+")"')&&
+ service.includes('","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+")"')&&
  service.includes('if(!WatchAlerts.permissionGranted(this))return false;')&&
  service.includes('if(sendGeneralNotification("Novo Pokémon: "+firstNew,')&&
  service.includes('lastAlertAt=now;')&&
@@ -1812,7 +1812,7 @@ test("UX-PERF-01 PvPoke scripts load only in results WebView",()=>{
  return r.length===2&&r[0].includes('pvpoke-overall-ranks.js"></script>')&&r[1].includes('pvpoke-iv-gamemaster.js"></script>')&&load('?controls=1').length===0&&load('').length===0;
 });
 test("UX-PERF-02 countdown interval only in results window",()=>
- dock.includes('if(resultWindow)setInterval(updateTimers,1000);')&&!dock.includes('\nsetInterval(updateTimers,1000);'));
+ dock.includes('function syncTimerTicker(){')&&dock.includes('if(timerTicker===null){updateTimers();timerTicker=setInterval(updateTimers,1000);}')&&dock.includes('clearInterval(timerTicker);timerTicker=null;'));
 test("UX-DETAIL-TIMER-01 hidden detail pauses interval",()=>{
  const d=read("assets/detail.html");
  return d.includes('window.pauseDetailTimer=()=>{')&&d.includes('window.pauseDetailTimer();')&&d.includes('if(expiresAt)ticking=setInterval(updateCountdown,1000);')&&service.includes('js(detailPanel,detailLoaded,"window.pauseDetailTimer()")');
