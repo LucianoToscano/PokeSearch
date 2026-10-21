@@ -1354,7 +1354,7 @@ public class MainActivity extends Activity {
     // Launched only after user interaction with the Notifications menu.
     private void beginAlertToneChoice(String target){
         if("general".equals(target)||"favorites".equals(target)){
-            openAlertRingtonePicker(target,"");
+            chooseAlertToneSource(target,"");
             return;
         }
         if(!"species".equals(target))return;
@@ -1368,8 +1368,32 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("Som de qual Pokémon favorito?")
             .setItems(options,(dialog,which)->{
                 if(which>=0&&which<options.length)
-                    openAlertRingtonePicker("species",options[which]);
+                    chooseAlertToneSource("species",options[which]);
             }).setNegativeButton("Cancelar",null).show();
+    }
+    private void chooseAlertToneSource(String target,String pokemon){
+        new AlertDialog.Builder(this)
+            .setTitle("Som de "+("species".equals(target)?pokemon:
+                "favorites".equals(target)?"favoritos":"novos Pokémon"))
+            .setItems(new String[]{"🔔 Toques do Android","🎵 Escolher áudio (MP3/OGG) do aparelho ou Drive","↩ Restaurar som padrão"},
+                (dialog,which)->{
+                    if(which==0)openAlertRingtonePicker(target,pokemon);
+                    else if(which==1)openAlertAudioFilePicker(target,pokemon);
+                    else if(which==2)storeAlertTone(target,pokemon,"");
+                }).setNegativeButton("Cancelar",null).show();
+    }
+    private void openAlertAudioFilePicker(String target,String pokemon){
+        alertToneTarget=target;alertToneSpecies=pokemon;
+        Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        pick.addCategory(Intent.CATEGORY_OPENABLE);
+        pick.setType("audio/*");
+        pick.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|
+            Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        try{startActivityForResult(pick,306);}
+        catch(Exception error){
+            alertToneTarget="";alertToneSpecies="";
+            Toast.makeText(this,"Abra um arquivo de áudio local ou do Drive",Toast.LENGTH_LONG).show();
+        }
     }
     private void openAlertRingtonePicker(String target,String pokemon){
         alertToneTarget=target;alertToneSpecies=pokemon;
@@ -1389,16 +1413,29 @@ public class MainActivity extends Activity {
             Toast.makeText(this,"Seletor de sons indisponível no Android",Toast.LENGTH_LONG).show();
         }
     }
-    private void saveChosenAlertTone(Intent data){
+    private void saveChosenAlertTone(Intent data,boolean document){
         String target=alertToneTarget,species=alertToneSpecies;
         alertToneTarget="";alertToneSpecies="";
         if(data==null||target.isEmpty())return;
-        Uri uri=data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
+        Uri uri=document?data.getData():
+            data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
         if(uri==null)return;
         String scheme=uri.getScheme();
         if(!"content".equals(scheme)&&!"android.resource".equals(scheme))return;
-        String chosen=uri.equals(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))?
+        if(document){
+            try{
+                getContentResolver().takePersistableUriPermission(uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }catch(Exception unavailable){
+                Toast.makeText(this,"O provedor de áudio não concedeu acesso permanente. Baixe o MP3 no aparelho.",Toast.LENGTH_LONG).show();
+                return;
+            }
+        }
+        String chosen=!document&&uri.equals(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))?
             "":uri.toString();
+        storeAlertTone(target,species,chosen);
+    }
+    private void storeAlertTone(String target,String species,String chosen){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         if("general".equals(target)||"favorites".equals(target)){
             prefs.edit().putString("general".equals(target)?
@@ -1420,8 +1457,8 @@ public class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
-        if(req==305){
-            if(result==RESULT_OK)saveChosenAlertTone(data);
+        if(req==305||req==306){
+            if(result==RESULT_OK)saveChosenAlertTone(data,req==306);
             else{alertToneTarget="";alertToneSpecies="";}
             return;
         }
