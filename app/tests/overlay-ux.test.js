@@ -450,7 +450,8 @@ test("v0.50 AUTO OFF in UI and service, with no periodic posts",
     service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(periodic,'));
 test("General notifications still cycle off/on/silent while bell indicates both sources",
     service.includes('alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off"')&&
-    dock.includes('bell-one-muted')&&dock.includes('bell-both-muted'));
+    dock.includes('bell-sound-new')&&dock.includes('bell-sound-favorites')&&
+    dock.includes('bell-sound-both')&&dock.includes('bell-silent-mode'));
 test("v0.50 silent channels are actually without sound",
     service.includes('pokesearch_alerts_silent_v1')&&
     watch.includes('pokesearch_watch_silent_v1')&&watch.includes('channel.setSound(null,null)'));
@@ -1048,8 +1049,10 @@ test("VIS team artworks are mapped to existing verified Home assets",()=>{
  return items.every(n=>fs.existsSync(path.join(root,"res/drawable-nodpi",n)))&&
   main.includes('teamBadge.setImageResource(homeTeamIcon(linked?team:""))')&&
   main.includes('return R.drawable.ps_team_neutral;')&&
-  main.includes('pageBackground.setScaleType(ImageView.ScaleType.FIT_XY)')&&
-  main.includes('dim.setBackgroundColor(Color.argb(16,6,12,24))');
+  main.includes('pageBackground.setScaleType(ImageView.ScaleType.CENTER_CROP)')&&
+  main.includes('R.drawable.ps_home_background_light')&&
+  fs.existsSync(path.join(root,"res/drawable-nodpi/ps_home_background_light.png"))&&
+  main.includes('dim.setBackgroundColor(homeLightMode?');
 });
 test("VIS tiny white Pokemon and pencil-gear are independent SVG toolbar icons",()=>{
  const source=dock.split('const QUICK_SOURCE_ICONS=')[1]?.split('function iconForQuick')[0]||"";
@@ -1593,7 +1596,7 @@ test("HOME-04 keeps transparent brand left, controls right and plain outside bac
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
   !home.includes("R.drawable.ps_home_wordmark")&&
-  home.includes("frame.setBackgroundColor(Color.rgb(10,14,23))")&&
+  home.includes("frame.setBackgroundColor(homeLightMode?")&&
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
 })());
@@ -2142,7 +2145,7 @@ test("UX-NOTIFY-13 bundled user sounds include 24 Android resource references an
  const library=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
  return (library.match(/R\.raw\.ps_[a-z0-9_]+/g)||[]).length===24&&
   main.includes("openBundledAlertTonePicker(")&&
-  main.includes("PokeSoundLibrary.soundUri(this,which)")&&
+  main.includes("PokeSoundLibrary.soundUri(this,selected[0])")&&
   main.includes("openAlertAudioFilePicker(target,pokemon)")&&
   watch.includes('"android.resource".equals(uri.getScheme())')&&
   dock.includes("Biblioteca PokeSearch (24 sons)")&&
