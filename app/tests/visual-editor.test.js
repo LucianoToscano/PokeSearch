@@ -145,6 +145,34 @@ test("favorites location and notification share neutral button background",()=>{
  assert.ok(css.includes('button[data-key="location"].selected{color:#ff5264!important}'));
  assert.ok(css.includes('button[data-key="star"].selected,'));
 });
+test("favorite star is yellow on, white silent and absent off independently of bell sound",()=>{
+ const fragment=dock.split("function notificationBellVisual(")[1]
+  ?.split("function refreshQuickMenuStates(){")[0]||"";
+ assert.ok(fragment);
+ const fn=new Function("return function notificationBellVisual("+fragment)();
+ for(const permission of [true,false])for(const general of ["off","silent","on"])
+  for(const favorite of ["off","silent","on"]){
+   const state=fn(permission,general,favorite);
+   assert.equal(state.favoriteStarOn,favorite==="on");
+   assert.equal(state.favoriteStarSilent,favorite==="silent");
+   assert.ok(!(state.favoriteStarOn&&state.favoriteStarSilent));
+   assert.equal(state.blocked,!permission&&(general!=="off"||favorite!=="off"));
+  }
+ for(const marker of [
+  'button.classList.toggle("bell-star-on",id==="bell"&&bellState.favoriteStarOn)',
+  'button.classList.toggle("bell-star-silent",id==="bell"&&bellState.favoriteStarSilent)',
+  'bell.classList.toggle("bell-star-on",bellVisual.favoriteStarOn)',
+  'bell.classList.toggle("bell-star-silent",bellVisual.favoriteStarSilent)',
+  '.bell-star-on .quickGlyph::after',
+  '.bell-star-silent .quickGlyph::after',
+  'color:#ffdc63;',
+  'color:#fff;'
+ ]) assert.ok(dock.includes(marker),marker);
+ const css=dock.split("/* Star is a separate indicator for FAVORITES")[1]
+  ?.split("body.controls-window #quickMenuList button[data-key=\"bell\"].bell-silent-mode")[0]||"";
+ assert.ok(css.includes("content:\"★\""));
+ assert.ok(!css.includes("bell-sound-both .quickGlyph::after"));
+});
 test("bell shows independent white/gold/star/silent/permission patterns",()=>{
  assert.ok(dock.includes('button.classList.toggle("bell-sound-new",id==="bell"&&bellState.newOnly)'));
  assert.ok(dock.includes('button.classList.toggle("bell-sound-favorites",id==="bell"&&bellState.favoritesOnly)'));
@@ -187,12 +215,20 @@ test("editor dark light and vertical horizontal work without native select dialo
    dock.includes('.visualSegmentGroup');
  }
 });
-test("quick menu has a surrounding container and selected state cannot tint border",()=>{
- assert.ok(dock.includes('/* VISUAL-129: container surrounds the gray 12-button ribbon.'));
- assert.ok(dock.includes('box-sizing:border-box!important;'));
- assert.ok(dock.includes('border:1px solid #ffffff32!important;border-radius:9px!important;'));
+test("flat individual menu buttons override the old shared ribbon in the final cascade",()=>{
+ const final=dock.split("/* UX-MENU-FLAT-02 final override:")[1]?.split("</style>")[0]||"";
+ assert.ok(final.includes("body.controls-window #menu,"));
+ assert.ok(final.includes("body.controls-window.popup-above #quickMenuList{"));
+ assert.ok(final.includes("background:transparent!important;border:0!important;box-shadow:none!important;"));
+ assert.ok(final.includes("body.controls-window #quickMenuList button[data-key].selected"));
+ assert.ok(final.includes("background:var(--visual-menu-button-bg,#28292cce)!important;"));
+ assert.ok(final.includes("border:0!important;box-shadow:none!important;"));
+ assert.ok(final.includes("border-radius:6px!important;"));
+ assert.ok(dock.indexOf("/* UX-MENU-FLAT-02 final override:")>
+           dock.indexOf("/* AUD-BELL-02:"));
  assert.ok(dock.includes('button[data-key="sh"].selected'));
- assert.ok(dock.includes('background:var(--visual-menu-button-bg,#28292cce)!important;'));
+ assert.ok(!script.includes('addSegment(panel,"menuBgMode"'));
+ assert.ok(script.includes('addSlider(panel,"menuTransparency","Transparência única dos menus","%")'));
 });
 test("Minior art receives additional consistent scaling in the 10-sprite list",()=>{
  assert.ok(dock.includes('const artFit=/^'));
@@ -287,19 +323,23 @@ test("Compact preset keeps artwork inside native sprite column at P M G sizes",(
  assert.ok(script.includes("resultSpriteScale:[70,160]"));
  assert.ok(script.includes("resultGapBetween:[0,65]"));
 });
-test("menu icons have separate rounded backgrounds instead of a shared ribbon",()=>{
- const section=dock.split("/* UX-MENU-BG-01:")[1]?.split("body.controls-window.visual-light-menu #choices")[0]||"";
- assert.ok(section.includes("body.controls-window #menu,"));
- assert.ok(section.includes("body.controls-window #quickMenuList{"));
- assert.ok(section.includes("background:transparent!important;"));
- assert.ok(section.includes("background:var(--visual-menu-button-bg,#28292cce)!important;"));
- assert.ok(section.includes("border:1px solid #ffffff40!important;"));
- assert.ok(section.includes("border-radius:6px!important;"));
- assert.ok(section.includes("box-shadow:0 1px 3px #0008!important;"));
- assert.ok(section.includes("body.controls-window.visual-light-menu #quickMenuList"));
- assert.ok(dock.includes("body.controls-window #choices{background:var(--visual-menu-bg,#232b35e5)!important}"));
- assert.ok(script.includes('set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency))'));
+test("separate button opacity is controlled by one slider, without double-opacity ribbon",()=>{
+ const {window,styles}=fixture();
+ for(const [percent,alpha] of [[0,"1.00"],[35,"0.65"],[100,"0.00"]]){
+  window.onVisualPrefs({menuBgMode:"dark",menuTransparency:percent});
+  assert.equal(styles["--visual-menu-button-bg"],"rgba(15,19,26,"+alpha+")");
+  assert.equal(styles["--visual-menu-bg"],"rgba(15,19,26,"+alpha+")");
+ }
+ const css=dock.split("/* UX-MENU-FLAT-02 final override:")[1]?.split("</style>")[0]||"";
+ assert.ok(css.includes("background:transparent!important;"));
+ assert.ok(css.includes("border:0!important;box-shadow:none!important;"));
  assert.ok(script.includes('set("menu-gap",current.menuItemGap+"px")'));
+ assert.ok(script.includes('set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency))'));
+ assert.ok(script.includes('set("menu-bg",rgba(current.menuBgMode,current.menuTransparency))'));
+ // Read old layouts intact; menu color setting is not exposed as an extra UI control.
+ window.onVisualPrefs({menuBgMode:"light",menuTransparency:20});
+ assert.equal(styles["--visual-menu-button-bg"],"rgba(255,255,255,0.80)");
+ assert.equal(window.visualEditorCurrent().menuBgMode,"light");
 });
 test("top-gap can extend to -80px with synchronized Android and editor validation",()=>{
  const {window,styles}=fixture();
