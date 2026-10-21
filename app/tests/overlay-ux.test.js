@@ -2198,6 +2198,34 @@ test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=
   main.includes("refreshHomeOverlay();")&&
   main.includes("View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR");
 });
+test("UX-LOC-DRAFT-01 preserves unsent Radius across native updates and releases on site proof",()=>{
+ const source=dock.match(/function locationPanelFeedback\\(\\)\\{[\\s\\S]*?\\n\\}/)?.[0];
+ if(!source||!dock.includes('radiusField.dataset.locationDraft="true"')||
+    !dock.includes('slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";}')||
+    !dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)'))return false;
+ const vm=require("node:vm");
+ const radius={value:"25",dataset:{locationDraft:"true"}};
+ const slider={value:"25"};
+ const hint={textContent:"",style:{color:""}};
+ const toggle={textContent:"",className:"",setAttribute(){}};
+ const panel={querySelector(sel){
+  return {"#locHint":hint,"#locActiveSwitch":toggle,"#locRadiusValue":radius,
+   'input[type="range"]':slider}[sel]||null;
+ }};
+ const doc={activeElement:{},getElementById(){return panel;}};
+ const state={controlsWindow:true,choiceOpen:"location",document:doc,
+  locationEnabled:true,locationVerified:false,locationRadius:10,status:""};
+ const run=()=>vm.runInNewContext(source+";locationPanelFeedback()",state);
+ run();
+ assert.equal(radius.value,"25","Native event must not overwrite unsent draft");
+ assert.equal(slider.value,"25","Slider must preserve the matching draft");
+ state.locationRadius=25;state.locationVerified=true;run();
+ assert.equal(radius.dataset.locationDraft,undefined,"Matching site proof unlocks controlled updates");
+ state.locationRadius=30;run();
+ assert.equal(radius.value,"30","Confirmed subsequent state updates still synchronize");
+ assert.equal(slider.value,"30","Slider follows confirmed radius after unlock");
+ return true;
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
