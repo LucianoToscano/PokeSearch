@@ -146,14 +146,16 @@ test("UX-INFO-03 PvPoke species overall rank and within-species IV rank never co
   functions.verifiedOverallRank({name:"Pokémon inexistente"},"gl")===null&&
   lines.includes("IV67% · RG#2")&&lines.includes("IV#1");
 });
-test("UX-INFO-04 PokeSearch keeps the sprite column centered exactly below the Pokéball",
+test("UX-INFO-04 sprite column stays under the movable full Pokébola hitbox",
  dock.includes('body.result-window #resultHeader{')&&
- dock.includes('margin:0 0 0 calc((var(--dock) - 35px)/2)!important')&&
+ dock.includes('margin-left:clamp(0px,')&&
  dock.includes('body.result-window .spriteStage{')&&
  dock.includes('width:var(--dock)!important')&&
  dock.includes('max-width:96px')&&
  dock.includes('metadataVisible?96:0')&&
- service.includes('gripParams.leftMargin=dp(Math.max(0,(dockDp()-35)/2))')&&
+ service.includes('private void updateResultHeaderGrip()')&&
+ service.includes('hit.leftMargin=dp(left)')===false&&
+ service.includes('box.leftMargin=dp(left)')&&
  service.includes('int right=dockPos+resultWidthDp()+gap;')&&
  service.includes('int safe=Math.max(0,Math.min(100,widthDp))'));
 test("UX-INFO-05 verified metadata never creates results or a scrollable list",
@@ -267,8 +269,8 @@ test("Login launched from overlay returns to gameplay with PokeSearch only on su
  main.includes('if(authenticatedNow&&fromOverlay&&OverlayService.isRunning())')&&
  main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
  main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
-test("Favorites dialog is one panel with integrated Concluir",picker.includes('finish.setText("Concluir")')&&!picker.includes('.setPositiveButton("Concluído"'));
-test("Translucent favorites with optional background blur",picker.includes('Color.argb(187,30,42,58)')&&picker.includes('setBlurBehindRadius'));
+test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("✓ Fechar")')&&!picker.includes('.setPositiveButton("Concluído"'));
+test("Favorites retain translucent dark styling with optional background blur",picker.includes('Color.argb(239,34,38,47)')&&picker.includes('setBlurBehindRadius'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
@@ -334,7 +336,7 @@ test("Mode applies one atomic native configuration and AUTO retains direct selec
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(330,screenWidthDp()-8)"));
-test("Favorites use translucent gradient without background dim",picker.includes("Color.argb(159,24,34,47)")&&picker.includes("window.setDimAmount(0.0f)"));
+test("Favorites use uniform dark gradient without background dim",picker.includes("Color.argb(238,29,32,39)")&&picker.includes("window.setDimAmount(0.0f)"));
 test("HOME-01 has explicit official Google/Discord login and sign-out",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return home.includes('homeAuthButton("◉  Discord"')&&home.includes('homeAuthButton("G  Google"')&&
@@ -446,9 +448,9 @@ test("v0.50 AUTO OFF in UI and service, with no periodic posts",
     dock.includes('[[0,"Auto · OFF')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
     service.includes('if(minutes!=0&&minutes!=5')&&
     service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(periodic,'));
-test("v0.50 notifications cycle off / on / silent",
+test("General notifications still cycle off/on/silent while bell indicates both sources",
     service.includes('alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off"')&&
-    dock.includes('bell.classList.toggle("generalSilent",alertMode==="silent")'));
+    dock.includes('bell-one-muted')&&dock.includes('bell-both-muted'));
 test("v0.50 silent channels are actually without sound",
     service.includes('pokesearch_alerts_silent_v1')&&
     watch.includes('pokesearch_watch_silent_v1')&&watch.includes('channel.setSound(null,null)'));
@@ -1775,7 +1777,7 @@ test("UX-NOTIFY-04 favorites sound and silence never inherit general alert mode"
   watch.includes('boolean quiet="silent".equals(soundMode);')&&
   service.includes('WatchAlerts.setMode(OverlayService.this,mode);')&&
   service.includes('WatchAlerts.setMode(OverlayService.this,enabled?"on":"off");')&&
-  dock.includes('favoriteAlertMode===id?"✓":"–"');
+  dock.includes('button.classList.toggle("chosen",favoriteAlertMode===id)');
 });
 test("UX-NOTIFY-05 independent system tones and individual Pokémon overrides",()=>{
  return watch.includes('public static final String PREF_GENERAL_TONE=')&&
