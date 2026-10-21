@@ -1773,6 +1773,14 @@ test("SITE-POKEMON-02 stale autocomplete requests cannot replace newer site choi
   dock.includes('response.empty===true?"Nenhuma opção oficial encontrada"')&&
   probe.includes("reason:'Aguardando opções oficiais do PoGoCoordinates'");
 });
+test("UX-MENU-ANCHOR-01 popups track their own launcher within native window",()=>{
+ const fn=dock.split('function positionPopupUnderTrigger(){')[1]?.split('window.setMenuPopupPlacement=',1)[0]||'';
+ return fn.includes('quickMenuList button[data-key=')&&fn.includes('Math.min(width-popupWidth')&&
+  fn.includes('bounds.left-area.getBoundingClientRect().left')&&
+  fn.includes('panel.style.setProperty("left",Math.round(left)+"px","important")')&&
+  dock.includes('positionPopupUnderTrigger();')&&
+  dock.includes('style.removeProperty("left")');
+});
 test("UX-LOCATION-RETRY-01 same unverified coordinates can retry safely",()=>{
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
   ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";

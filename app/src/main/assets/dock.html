@@ -1006,6 +1006,26 @@ function setMenuOpen(open,side,pad){
  if(menuOpen&&controlsWindow)renderQuickMenu();
 }
 window.syncMenu=(open,side,pad)=>{setMenuOpen(open,side,pad);fit();};
+// Anchor each floating submenu to its launcher instead of the ribbon's left edge.
+// Works inside the independent native menu WebView and never exceeds its width.
+function positionPopupUnderTrigger(){
+ if(!controlsWindow||!choiceOpen)return;
+ const panel=document.getElementById("choices");
+ if(!panel||!panel.classList.contains("visible"))return;
+ const key={alerts:"bell",info:"appearance",visual:"appearance"}[choiceOpen]||choiceOpen;
+ const trigger=document.querySelector('#quickMenuList button[data-key="'+key+'"]')||
+  document.getElementById(({mode:"cycle",sh:"sh",period:"period",alerts:"bell"})[key]||key);
+ if(!trigger)return;
+ const area=document.getElementById("menu");
+ const width=area.getBoundingClientRect().width;
+ const bounds=trigger.getBoundingClientRect();
+ const popupWidth=panel.getBoundingClientRect().width;
+ if(width<=0||popupWidth<=0)return;
+ // Anchoring the left edge is exact if there is room, clamped at the right edge.
+ const left=Math.max(0,Math.min(width-popupWidth,bounds.left-area.getBoundingClientRect().left));
+ panel.style.setProperty("left",Math.round(left)+"px","important");
+ panel.style.setProperty("right","auto","important");
+}
 window.setMenuPopupPlacement=(above,offset,room)=>{
  if(!controlsWindow)return;
  const top=Math.max(0,Number(offset)||0),available=Math.max(60,Number(room)||420);
@@ -1038,6 +1058,7 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
   }
  }
  if(controlsWindow&&choiceOpen&&menuOpen){
+  positionPopupUnderTrigger();
   const popup=document.getElementById("choices");
   // Stable measured height regardless of whether native positions it above or below.
   // The intended cascade is always 190px tall even if CSS temporarily clamps
@@ -1059,6 +1080,8 @@ function closeChoices(){
  document.getElementById("menu").classList.remove("subview");
  modeScrollTop=0;appearanceScrollTop=0;
  document.getElementById("choices").classList.remove("visible");
+ document.getElementById("choices").style.removeProperty("left");
+ document.getElementById("choices").style.removeProperty("right");
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");

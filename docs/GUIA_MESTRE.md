@@ -2952,3 +2952,11 @@ Após montar a navegação da página completa, a revisão encontrou um erro de 
 **Teste local realizado sobre a cópia do código 51085 mais Etapa 1:** `node --check probe.js`; `pokemon-picker.test.js` passou de 7 para **9** fixtures; `overlay-ux.test.js` de 353 para **354**; as outras suítes seguem aprovadas (total **586**). O teste com DOM autenticado, carregamento remoto real e Android permanece pendente; particularmente a detecção explícita "no results" depende do texto efetivamente apresentado pelo portal oficial. Para evitar falsos negativos, timeout não informa ausência oficial.
 
 **Segurança:** commits isolados na branch visual; nenhum workflow de APK ligado e nenhum merge, servidor, proxy, login, IDs, layouts ou demais filtros alterados.
+
+### 12.124 ETAPA-3 — ancoragem horizontal do popup ao ícone de origem (21/10/2026)
+
+**Diagnóstico:** o submenu `#choices` mantinha posição `left:0` da janela nativa independente, independentemente do botão na barra horizontal de 12 controles; ao abrir Localização, Filtros ou Alertas, a borda esquerda aparecia deslocada. O Java já protege o posicionamento geral da janela contra limites da tela e escolhe popup acima/abaixo por espaço disponível.
+
+**Correção localizada:** `dock.html.positionPopupUnderTrigger()` identifica o botão que originou `choiceOpen` (Alertas→sino, Informações/Editor→Personalização), mede botão/menu/popup e ancora a borda à origem usando `clamp(0,larguraMenu−larguraPopup)`. Aplica CSS inline com prioridade suficiente para sobrescrever os `left/right!important` históricos e limpa os offsets ao fechar. Recalcula no `fit()`, incluindo após reposicionamento da janela pelo Android. Não modifica larguras, janelas nativas, disposição dos 12 botões, orientação padrão nem arrasto. Na orientação vertical, o posicionamento vertical individual continua condicionado ao espaço da janela nativa e deve ser homologado.
+
+**Testes:** contrato `UX-MENU-ANCHOR-01` acrescentado à suíte e aprovado localmente; nenhum Gradle/Android/APK. Risco residual: a posição lateral pode ser limitada pela largura nativa menor do que a largura de um popup aberto; nesses casos alinha pela borda viável em vez de transbordar a janela. Exigir capturas com menus Modo/Localização/Alertas e arrasto próximo às bordas antes da homologação.
