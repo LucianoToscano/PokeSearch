@@ -61,11 +61,14 @@ function run(action,mode,shinyOnly,opts={}){
   }
   // A React select menu opens now; its options become visible on the next render.
   const dynamicOptions=[];
+  const popupById={};
   if(opts.extra){
     for(const [key,state] of Object.entries(opts.extra)){
       const lab=element(state.label||key);
       const ctrl=element(state.value||"Any",{}, {tagName:"BUTTON",disabled:!!state.disabled});
-      ctrl.getAttribute=name=>name==="aria-expanded"?String(!!state.open):null;
+      const popupId="extra-menu-"+key,controlledOptions=[];
+      ctrl.getAttribute=name=>name==="aria-expanded"?String(!!state.open):
+        name==="aria-controls"?popupId:null;
       ctrl.click=()=>{state.open=!state.open;};
       const wrap=element();
       wrap.querySelectorAll=selector=>selector.includes("[role=combobox]")?[ctrl]:[];
@@ -75,7 +78,13 @@ function run(action,mode,shinyOnly,opts={}){
         opt.click=()=>{state.value=label;state.open=false;};
         opt.getClientRects=()=>state.open&&state.ready?[{}]:[];
         dynamicOptions.push(opt);
+        controlledOptions.push(opt);
       }
+    const popup=element("",{},{
+        querySelectorAll:()=>controlledOptions,
+        getClientRects:()=>state.open&&state.ready?[{}]:[],
+      });
+      popupById[popupId]=popup;
     }
   }
   let cardButtons=[];
@@ -116,7 +125,7 @@ function run(action,mode,shinyOnly,opts={}){
     if(selector==="p,small,span,div,label")return accountLabels;
     return [];
   }
-  const document={querySelectorAll,querySelector:()=>null,
+  const document={querySelectorAll,querySelector:()=>null,getElementById:id=>popupById[id]||null,
     body:element(opts.profileBody|| (opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":""))};
   const code=source.replace("__ACTION__",JSON.stringify(action))
       .replace("__MODE__",JSON.stringify(mode))
