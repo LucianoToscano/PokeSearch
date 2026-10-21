@@ -414,6 +414,35 @@ test("Modos rail and inline editor inherit the only menu transparency slider",()
   assert.equal(styles["--visual-menu-button-bg"],expected);
  }
 });
+test("single transparency controls ordinary submenus without residual band or border",()=>{
+ const tail=dock.split("/* VISUAL-MENU-ALPHA-02:")[1]?.split("</style>")[0]||"";
+ assert.ok(tail.includes("body.controls-window #choices:not(.visualPanel):not(.modeCascade){"));
+ assert.ok(tail.includes("background:var(--visual-menu-bg,rgba(15,19,26,.65))!important;"));
+ assert.ok(tail.includes("border:0!important;box-shadow:none!important;"));
+ assert.ok(dock.includes("/* VISUAL-MENU-ALPHA-01:"));
+ assert.ok(!tail.includes("body.controls-window #choices.visualPanel{"));
+ const {window,styles}=fixture();
+ for(const transparency of [0,50,100]){
+  window.onVisualPrefs({menuTransparency:transparency});
+  const alpha=(1-transparency/100).toFixed(2);
+  assert.equal(styles["--visual-menu-bg"],"rgba(15,19,26,"+alpha+")");
+  assert.equal(styles["--visual-menu-button-bg"],styles["--visual-menu-bg"]);
+ }
+});
+test("light-theme selected actions retain legible ink on colored backgrounds",()=>{
+ const tail=dock.split("/* VISUAL-MENU-ALPHA-02:")[1]?.split("</style>")[0]||"";
+ for(const part of ["button.modeCascadeConfirm","button.modeCascadeCancel",
+   "button.modeCascadeEntry.chosen",".modeAction button.modeApply",
+   ".alertModeGroup button.chosen",".uxSegment button.chosen",
+   ".locLine button.locActive"]){
+  assert.ok(tail.includes(part),part);
+ }
+ assert.ok(tail.includes("color:#f4fff8!important;"));
+ assert.ok(dock.includes('body.controls-window.visual-light-menu #choices:not(.visualPanel) button{'));
+ const {window,classes}=fixture();
+ window.onVisualPrefs({menuBgMode:"light"});
+ assert.equal(classes.has("visual-light-menu"),true);
+});
 test("Home light/dark switch updates the overlay menu without collector reload",()=>{
  const home=main.split("private void toggleHomeTheme(){")[1]?.split("private FrameLayout buildHome()")[0]||"";
  assert.ok(home.includes('putBoolean("homeLightMode",homeLightMode)'));
