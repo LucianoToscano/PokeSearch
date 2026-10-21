@@ -108,7 +108,8 @@ public class MainActivity extends Activity {
         handleShinyLoginIntent(getIntent());
         if(!getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false)&&
            !"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(getIntent().getAction())&&
-            !"com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(getIntent().getAction()))
+            !"com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(getIntent().getAction())&&
+            !"com.lucianotoscano.pokesearchoverlay.PICK_ALERT_TONE".equals(getIntent().getAction()))
             root.post(this::showQuickGuide);
         if("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST".equals(getIntent().getAction()))
             root.post(this::openPicker);
@@ -1304,9 +1305,12 @@ public class MainActivity extends Activity {
     }
     private void settingCheckbox(LinearLayout root,SharedPreferences prefs,String key,String label,boolean def){
         CheckBox check=new CheckBox(this);check.setText(label);check.setTextColor(Color.WHITE);
-        check.setChecked(prefs.getBoolean(key,def));
+        check.setChecked(WatchAlerts.PREF_ENABLED.equals(key)?
+            WatchAlerts.enabled(this):prefs.getBoolean(key,def));
         check.setOnCheckedChangeListener((button,enabled)->{
-            prefs.edit().putBoolean(key,enabled).apply();
+            if(WatchAlerts.PREF_ENABLED.equals(key))
+                WatchAlerts.setMode(this,enabled?"on":"off");
+            else prefs.edit().putBoolean(key,enabled).apply();
             syncOverlayPreferences();
         });
         root.addView(check);
