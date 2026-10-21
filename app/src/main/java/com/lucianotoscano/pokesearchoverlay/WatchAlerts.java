@@ -169,7 +169,12 @@ public final class WatchAlerts {
         String soundMode=mode(context);
         if("off".equals(soundMode))return false;
         boolean quiet="silent".equals(soundMode);
-        if(quiet)ensureSilentChannel(context);else ensureChannel(context,species);
+        try{
+            if(quiet)ensureSilentChannel(context);else ensureChannel(context,species);
+        }catch(Exception error){
+            BugReport.log(context,"NOTIFICATION","Falha ao criar canal favorito");
+            return false;
+        }
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager==null)return false;
         String channelId=quiet?SILENT_CHANNEL_ID:soundChannelId(context,true,species);
