@@ -865,6 +865,18 @@ test("UX-MENU-04 keeps Informações in Ajustes and restores Atualização besid
   dock.includes('function renderInfoChoices()')&&
   service.includes('void setIntervalMinutes(int minutes)');
 })());
+test("UX-SPRITE-PMG-01 offers three direct size options with persistent Android values",()=>{
+ const appearance=dock.split('function renderAppearanceChoices(){')[1]?.split('const title=document.createElement("div");title.className="uxSubheading"')[0]||"";
+ const selector=dock.split('function renderSpriteSizeButtons(panel,visual=false){')[1]?.split('function renderAppearanceChoices(){')[0]||"";
+ return appearance.includes("renderSpriteSizeButtons(panel);")&&
+  selector.includes('[["P",35],["M",45],["G",55]]')&&
+  selector.includes('Native.setSpriteSize(size)')&&
+  selector.includes('button.setAttribute("aria-label","Sprite "+label')&&
+  service.includes('void setSpriteSize(int size)')&&
+  service.includes('if(size!=35&&size!=45&&size!=55)return;')&&
+  service.includes('putInt("spriteSize",size).apply()')&&
+  service.includes('void cycleSpriteSize()');
+});
 test("UX-MENU-04 preserves all old Android feature bridges and migrates 12-icon preferences",(()=>{
  const bridge=["setIntervalMinutes","refresh","toggleTimers","setResultTextVisible","setAlertMode",
   "openWatchList","openReport","openPix"];

@@ -802,6 +802,22 @@ body.controls-window #quickMenuList button[data-key="sh"].selected,
 body.controls-window #quickMenuList button[data-key="star"].selected,
 body.controls-window #quickMenuList button[data-key="bell"].selected{color:#ffd64b!important}
 body.controls-window #quickMenuList button[data-key="location"].selected{color:#ff5264!important}
+/* P/M/G direct sprite-size selection, centered and usable without cycling. */
+body.controls-window #choices .spriteSizeLine{min-width:0}
+body.controls-window #choices .spriteSizeChoices{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:4px;flex:1 1 135px;max-width:168px;min-width:114px;
+}
+body.controls-window #choices .spriteSizeChoices button{
+ box-sizing:border-box;min-width:0!important;width:100%!important;height:29px!important;
+ padding:3px 5px!important;margin:0!important;border-radius:6px!important;
+ background:#333e4b!important;border:1px solid #ffffff36!important;
+ color:#f6f8fc!important;font-size:12px!important;font-weight:700!important;
+}
+body.controls-window #choices .spriteSizeChoices button.chosen{
+ background:#3d5263!important;border-color:#a6c4d7!important;
+ color:#fff!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -2024,7 +2040,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  nextQueryAt=Number(nextDue)||0;
  searchActive=!!isSearching;
  mode=m==="iv"?"raw":m;status=String(s||"");activeSearchPhase=String(searchPhase||"idle");
- if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  showResultText=!!textVisible;
  notificationPermissionGranted=!!permissionGranted;
  watchAlertsEnabled=!!favoriteAlertsEnabled;
@@ -2403,6 +2419,32 @@ function renderInfoChoices(){
  requestAnimationFrame(()=>{if(choiceOpen==="info"&&panel.isConnected)panel.scrollTop=scroll;});
  fit();
 }
+// A persistent direct P/M/G selector, shared by Personalização and the visual editor.
+// The Android service remains authoritative and rebroadcasts its confirmed size.
+function refreshSpriteSizeButtons(){
+ document.querySelectorAll('#choices .spriteSizeChoices button[data-size]').forEach(button=>{
+  const chosen=Number(button.dataset.size)===spriteSize;
+  button.classList.toggle("chosen",chosen);
+  button.setAttribute("aria-pressed",String(chosen));
+ });
+}
+function renderSpriteSizeButtons(panel,visual=false){
+ const line=document.createElement("div");
+ line.className=(visual?"visualLine":"uxSetting")+" spriteSizeLine";
+ const title=document.createElement("span");title.textContent="Tamanho do sprite";
+ const group=document.createElement("div");group.className="spriteSizeChoices";
+ group.setAttribute("role","group");group.setAttribute("aria-label","Tamanho do sprite");
+ for(const [label,size] of [["P",35],["M",45],["G",55]]){
+  const button=document.createElement("button");button.type="button";
+  button.textContent=label;button.dataset.size=String(size);
+  button.title="Sprite "+label+" · "+size+" px";
+  button.setAttribute("aria-label","Sprite "+label+" ("+size+" px)");
+  button.onclick=()=>{if(Native.setSpriteSize)Native.setSpriteSize(size);};
+  group.appendChild(button);
+ }
+ line.append(title,group);panel.appendChild(line);
+ refreshSpriteSizeButtons();
+}
 function renderAppearanceChoices(){
  const panel=uxPanel("PERSONALIZAÇÃO");
  const scrollRestoration=appearanceScrollTop;
@@ -2411,9 +2453,7 @@ function renderAppearanceChoices(){
   uxOption(panel,"🎛 Editor visual temporário","Ajustar ›",()=>toggleChoices("visual"));
  // Atualização has its own toolbar icon beside Alertas.
  // The unchanged horizontal ribbon needs no paragraph in this compact panel.
- uxOption(panel,"Próximo tamanho do sprite",spriteSize<=35?"P":spriteSize>=55?"G":"M",()=>{
-  Native.cycleSpriteSize();renderAppearanceChoices();
- });
+ renderSpriteSizeButtons(panel);
  const title=document.createElement("div");title.className="uxSubheading";
  title.textContent="Comandos · mostrar / ocultar / ordenar";panel.appendChild(title);
  // Button accessibility labels explain show/hide and ordering without a second paragraph.

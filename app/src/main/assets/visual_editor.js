@@ -151,6 +151,7 @@ function renderVisualEditor(){
  panel.appendChild(nav);
  if(tab==="results"){
   heading(panel,"Espaçamento e tamanho");
+  if(window.renderSpriteSizeButtons)window.renderSpriteSizeButtons(panel,true);
   addSlider(panel,"resultGapTop","Pokébola → primeiro Pokémon"," px");
   addSlider(panel,"resultGapBetween","Distância entre Pokémon (0 = colados)"," px");
   addSlider(panel,"resultSpriteScale","Escala visual dos Pokémon","%");

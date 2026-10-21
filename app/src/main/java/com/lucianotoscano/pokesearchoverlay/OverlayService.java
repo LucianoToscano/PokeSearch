@@ -2191,13 +2191,9 @@ public class OverlayService extends Service {
             status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
             scheduleFilterChangeRefresh();
         });}
-        @JavascriptInterface public void cycleSpriteSize(){handler.post(()->{
-            int[] sizes={35,45,55};
-            int at=1;
-            for(int j=0;j<sizes.length;j++)if(sizes[j]==spriteSize)at=j;
-            int size=sizes[(at+1)%sizes.length];
-            boolean wasExpanded=menuExpanded;
-            if(wasExpanded)menu(false);
+        private void applySpriteSize(int size){
+            if(size!=35&&size!=45&&size!=55)return;
+            if(size==spriteSize){update();return;}
             spriteSize=size;
             getSharedPreferences("prefs",0).edit().putInt("spriteSize",size).apply();
             if(params!=null){
@@ -2210,6 +2206,19 @@ public class OverlayService extends Service {
                 updateResultsWidth();
             }
             update();
+        }
+        // Direct P/M/G selection keeps the Personalização popup open.
+        @JavascriptInterface public void setSpriteSize(int size){
+            handler.post(()->applySpriteSize(size));
+        }
+        @JavascriptInterface public void cycleSpriteSize(){handler.post(()->{
+            int[] sizes={35,45,55};
+            int at=1;
+            for(int j=0;j<sizes.length;j++)if(sizes[j]==spriteSize)at=j;
+            int size=sizes[(at+1)%sizes.length];
+            boolean wasExpanded=menuExpanded;
+            if(wasExpanded)menu(false);
+            applySpriteSize(size);
             if(wasExpanded)menu(true);
             android.widget.Toast.makeText(OverlayService.this,
                 new String[]{"P","M","G"}[(at+1)%sizes.length]+" · "+size+" × "+size,

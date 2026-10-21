@@ -167,6 +167,13 @@ test("geometry diagnostic reports only stage measurements, never spawn data",()=
  assert.ok(f.includes('stageGapPx'));
  assert.ok(!f.includes('card.')&&!f.includes('locationCoords'));
 });
+test("Visual Editor Pokémon tab has direct P M G size buttons without restarting overlay",()=>{
+ assert.ok(script.includes('if(window.renderSpriteSizeButtons)window.renderSpriteSizeButtons(panel,true);'));
+ assert.ok(dock.includes('className="spriteSizeChoices"'));
+ assert.ok(dock.includes('function refreshSpriteSizeButtons(){'));
+ assert.ok(dock.includes('spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();'));
+ assert.ok(dock.includes('button.onclick=()=>{if(Native.setSpriteSize)Native.setSpriteSize(size);}'));
+});
 test("editor dark light and vertical horizontal work without native select dialogs",()=>{
  assert.ok(editorHasButtons());
  function editorHasButtons(){
