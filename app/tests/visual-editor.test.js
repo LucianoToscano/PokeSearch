@@ -9,6 +9,7 @@ const read=p=>fs.readFileSync(path.join(root,p),"utf8");
 const script=read("assets/visual_editor.js");
 const dock=read("assets/dock.html");
 const java=read("java/com/lucianotoscano/pokesearchoverlay/OverlayService.java");
+const main=read("java/com/lucianotoscano/pokesearchoverlay/MainActivity.java");
 let count=0;
 function test(name,fn){fn();count++;}
 function fixture(){
@@ -388,6 +389,52 @@ test("Modos rail and inline editor inherit the only menu transparency slider",()
   assert.equal(styles["--visual-menu-bg"],expected);
   assert.equal(styles["--visual-menu-button-bg"],expected);
  }
+});
+test("Home light/dark switch updates the overlay menu without collector reload",()=>{
+ const home=main.split("private void toggleHomeTheme(){")[1]?.split("private FrameLayout buildHome()")[0]||"";
+ assert.ok(home.includes('putBoolean("homeLightMode",homeLightMode)'));
+ assert.ok(home.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_HOME_THEME")'));
+ const service=java.split("@Override public int onStartCommand(")[1]||"";
+ const early=service.indexOf('"com.lucianotoscano.pokesearchoverlay.SYNC_HOME_THEME"');
+ const initial=service.indexOf("boolean initialStart=firstStart;");
+ assert.ok(early>=0&&initial>early,"Theme action exits before collector search initialization");
+ assert.ok(service.slice(early,initial).includes("syncHomeThemeVisual(true);"));
+ const updater=java.split("private void syncHomeThemeVisual(boolean broadcast){")[1]
+  ?.split("private int dockDp()",1)[0]||"";
+ assert.ok(updater.includes('getBoolean("homeLightMode",false)'));
+ assert.ok(updater.includes('stored.put("menuBgMode",wanted)'));
+ assert.ok(updater.includes('putString("visualPrefsJson",visualPrefsJson)'));
+ assert.ok(updater.includes("if(broadcast)broadcastVisualPrefs();"));
+ assert.ok(!updater.includes("website.loadUrl")&&!updater.includes("refresh("));
+ assert.ok(java.includes("syncHomeThemeVisual(false);"));
+});
+test("theme update merges into unsaved opacity edit without rolling it back",()=>{
+ const sent=[],timers=[];
+ const Native={saveVisualPrefs:json=>sent.push(JSON.parse(json))};
+ const window={Native},styles={};
+ const document={
+  documentElement:{style:{setProperty:(key,value)=>styles[key]=value}},
+  body:{classList:{toggle(){} }}
+ };
+ // Test-only exposure of the real private slider handler.
+ const instrumented=script.replace("window.visualEditorCurrent=function(){",
+  "window.__testChange=change;window.visualEditorCurrent=function(){");
+ assert.notEqual(instrumented,script,"Missing private editor change callback");
+ vm.runInNewContext(instrumented,{window,document,controlsWindow:true,resultWindow:false,
+   Native,fit:()=>{},draw:()=>{},setTimeout:fn=>{timers.push(fn);return timers.length;},
+   clearTimeout:()=>{}});
+ window.__testChange("menuTransparency",72);
+ window.onVisualPrefs({menuBgMode:"light",menuTransparency:35});
+ assert.equal(window.visualEditorCurrent().menuTransparency,72);
+ assert.equal(window.visualEditorCurrent().menuBgMode,"light");
+ assert.equal(styles["--visual-menu-bg"],"rgba(255,255,255,0.28)");
+ for(const fn of timers)fn();
+ assert.equal(sent.length,1,"Only the latest merged visual change is saved");
+ assert.equal(sent[0].menuBgMode,"light");
+ assert.equal(sent[0].menuTransparency,72);
+ window.onVisualPrefs(sent[0]);
+ assert.equal(window.visualEditorCurrent().menuBgMode,"light");
+ assert.equal(window.visualEditorCurrent().menuTransparency,72);
 });
 test("top-gap can extend to -80px with synchronized Android and editor validation",()=>{
  const {window,styles}=fixture();
