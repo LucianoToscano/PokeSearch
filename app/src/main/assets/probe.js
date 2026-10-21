@@ -35,8 +35,22 @@ function field(label){
 }
 function inputNear(label){const e=field(label);return e&&e.matches("input")?e:null;}
 let transientPending=false;
-function optionElements(){return elements('[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item],option').filter(vis);}
-function findOption(want){return optionElements().find(o=>text(o).toLowerCase()===String(want).toLowerCase())||null;}
+function activeOptionPopup(control){
+ const ids=[control?.getAttribute?.("aria-controls"),control?.getAttribute?.("aria-owns")].filter(Boolean);
+ for(const id of ids){
+  const popup=document.getElementById?.(id);
+  if(popup&&vis(popup))return popup;
+ }
+ const open=elements('[role=listbox],[role=menu],[cmdk-list],[data-radix-menu-content]').filter(vis);
+ return open.length===1?open[0]:null;
+}
+function optionElements(control){
+ const scope=control?activeOptionPopup(control):null;
+ const selector='[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item],option';
+ if(control&&!scope)return [];
+ return (scope?Array.from(scope.querySelectorAll(selector)):elements(selector)).filter(vis);
+}
+function findOption(want,control){return optionElements(control).find(o=>text(o).toLowerCase()===String(want).toLowerCase())||null;}
 function choice(label,want){
  const e=field(label);
  if(!e)return false;
@@ -48,7 +62,7 @@ function choice(label,want){
  }
  if(text(e).toLowerCase()===want.toLowerCase())return true;
  // React/Radix menus render asynchronously: read an already-open option before toggling.
- let opt=findOption(want);
+ let opt=findOption(want,e);
  if(opt){opt.click();return true;}
  if(e.disabled)return false;
  if(e.getAttribute("aria-expanded")!=="true")e.click();
@@ -285,9 +299,14 @@ function applyIv(){
  return !oneButton("Raw IV")&&set100Percent();
 }
 function applyLeague(){
- const rank=inputNear("Top ranking");
- return !!rank&&valueInput(rank,configuredRank())&&
-  choice("League",mode==="ul"?"Ultra League":"Great League")&&
+ const rank=inputNear("Top ranking"),want=configuredRank();
+ if(!rank)return false;
+ if(!confirmedNumber(rank,want,1,50)){
+  if(!valueInput(rank,want))return false;
+  transientPending=true;
+  return false;
+ }
+ return choice("League",mode==="ul"?"Ultra League":"Great League")&&
   choice("Include previous evolutions",filters.includePreviousEvolutions===false?"No":"Yes");
 }
 function checkCore(){
@@ -366,7 +385,11 @@ function pokemonSelectedChips(){
 }
 function pokemonPickerOptions(){
  const input=pokemonPickerInput();if(!input)return [];
- const candidates=elements('[role=option],[role=listbox] [role=checkbox],[cmdk-item],[data-radix-collection-item],[role=listbox] button,[role=listbox] li,li').filter(vis);
+ const trigger=pokemonPickerButton(pokemonPickerRoot());
+ const popup=activeOptionPopup(input)||activeOptionPopup(trigger);
+ const selector='[role=option],[role=listbox] [role=checkbox],[cmdk-item],[data-radix-collection-item],[role=listbox] button,[role=listbox] li,li';
+ const declared=!!(input.getAttribute('aria-controls')||trigger?.getAttribute?.('aria-controls'));
+ const candidates=(popup?Array.from(popup.querySelectorAll(selector)):declared?[]:elements(selector)).filter(vis);
  return candidates.map(e=>{
   const raw=text(e),label=normalizePokemonLabel(raw);
   const dex=(raw.match(/#\s*(\d{1,4})/)||[])[1]||'';
@@ -387,13 +410,14 @@ function pokemonSuggestion(query){
   button.click();
   return {ok:false,pending:true,reason:'Abrindo opções oficiais'};
  }
- const wanted=String(query||'').slice(0,65);
+ const originalQuery=String(query||'').slice(0,65);
+ const wanted=originalQuery.replace(/^#0+(\d{1,4})$/,'#$1');
  if(String(input.value||'')!==wanted){
   if(!valueInput(input,wanted))return {ok:false,reason:'Busca Pokémon indisponível'};
   return {ok:false,pending:true,reason:'Aguardando opções do site'};
  }
  const chips=pokemonSelectedChips();
- return {ok:true,query:wanted,options:pokemonPickerOptions().map(({label,dex,image})=>({label,dex,image})),
+ return {ok:true,query:originalQuery,options:pokemonPickerOptions().map(({label,dex,image})=>({label,dex,image})),
   selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
 }
 if(action.startsWith('pokemonSuggest:')){
@@ -429,8 +453,15 @@ function extraControl(label){
  return elements('input:not([type=hidden]),select,[role=combobox],button[aria-haspopup]')
   .find(x=>vis(x)&&rx.test((x.getAttribute("placeholder")||"")+" "+(x.getAttribute("aria-label")||"")))||null;
 }
-function siteOptions(){
- return [...new Set(optionElements().map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80);
+function siteOptions(key){
+ const control=extraControl(EXTRA_LABELS[key]);
+ if(!control)return {ok:false,pending:false,options:[]};
+ if(control.matches("select"))
+  return {ok:true,pending:false,options:[...control.options].map(text).map(clean).filter(Boolean).slice(0,80)};
+ const popup=activeOptionPopup(control);
+ if(!popup)return {ok:false,pending:true,options:[]};
+ return {ok:true,pending:false,
+  options:[...new Set(optionElements(control).map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80)};
 }
 function describeChoice(label){
  const e=extraControl(label);
@@ -455,7 +486,7 @@ function extraSelect(key,want){
   if(isNeutral(actual))return true;
   if(e.matches("input"))return valueInput(e,"");
   // Reset prior active filter when user switches back to Any.
-  const opt=optionElements().find(o=>isNeutral(text(o)));
+  const opt=optionElements(e).find(o=>isNeutral(text(o)));
   if(opt){opt.click();return true;}
   if(e.disabled)return false;
   if(e.getAttribute("aria-expanded")!=="true")e.click();
@@ -466,7 +497,7 @@ function extraSelect(key,want){
  if(actual&&actual.toLowerCase()===want.toLowerCase())return true;
  if(e.matches("input"))return valueInput(e,want);
  if(e.matches("select"))return choice(label,want);
- const opt=findOption(want);
+ const opt=findOption(want,e);
  if(opt){opt.click();transientPending=true;return false;} // React state must settle before later filters
  if(e.getAttribute("aria-expanded")!=="true")e.click();
  transientPending=true;
@@ -486,7 +517,7 @@ if(action.startsWith("openFilterOptions:")){
 }
 if(action.startsWith("readFilterOptions:")){
  const key=action.split(":")[1],label=EXTRA_LABELS[key];
- return JSON.stringify({ok:!!label,key,options:label?siteOptions():[]});
+ return JSON.stringify(label?{key,...siteOptions(key)}:{ok:false,key,options:[]});
 }
 if(action.startsWith("closeFilterOptions:")){
  const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
@@ -537,8 +568,11 @@ function extras(action){
   if(!want&&!resetKeys.includes(key))continue;
   if(want&&!input){failed.push(key);continue;}
   if(!input)continue;
-  const ok=action==="apply"?valueInput(input,want):String(input.value||"").trim()===want;
-  if(!ok)failed.push(key);
+  const current=String(input.value||"").trim();
+   if(current===want)continue;
+   if(action!=="apply"){failed.push(key);continue;}
+   if(!valueInput(input,want)){failed.push(key);continue;}
+   transientPending=true;failed.push(key);break;
  }
  return {ok:failed.length===0,pending:action==="apply"&&transientPending,reason:"Filtros adicionais: "+failed.join(", ")};
 }
@@ -732,7 +766,13 @@ function collect(){
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
- const explicitEmpty=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i.test(t);
+ const emptyMessage=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i;
+ const regions=elements('main section,[role=region],[data-testid*=result],[aria-label*=result]').filter(vis);
+ const explicitEmpty=found.length===0&&regions.some(region=>{
+  const body=text(region);
+  return body.length<500&&emptyMessage.test(body)&&
+   !region.querySelector('[role=listbox],[cmdk-list],[role=dialog]');
+ });
  const siteCount=Number((t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1]||0);
  const parseFailure=siteCount>0&&found.length===0;
  return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,siteCount,parseFailure,uncertain,loading,explicitEmpty,
