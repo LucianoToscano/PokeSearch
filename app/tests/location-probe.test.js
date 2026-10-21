@@ -107,9 +107,11 @@ check("Radius input contains requested value",f.radius.value,"10");
 check("Verification proves exact state",f.run("verifyLocation",req).ok,true);
 f.radius.value="9";
 check("Changed radius is not silently accepted",f.run("verifyLocation",req).ok,false);
+check("Divergent radius reports the correct field",f.run("verifyLocation",req).reason,"Raio não persistiu no campo Radius do site");
 f.radius.value="10";
 f.coord.value="-23.5506,-46.6333";
 check("Changed coordinates fail verification",f.run("verifyLocation",req).ok,false);
+check("Divergent coords report no personal numeric data",f.run("verifyLocation",req).reason,"Coordenadas não persistiram no campo Coords do site");
 let missing=fixture({noRadius:true});
 missing.run("configureLocation",req);
 check("Missing fields wait for DOM instead of returning success",
@@ -117,6 +119,7 @@ check("Missing fields wait for DOM instead of returning success",
 let unknown=fixture({unknownState:true});
 check("Unconfirmed Coords mode cannot apply",
  unknown.run("configureLocation",req).pending,true);
+check("Unconfirmed mode identifies missing proof",unknown.run("verifyLocation",req).reason,"Modo Coords não confirmado no site");
 let labeled=fixture({unnamedFields:true,radiusLabel:"Distance"});
 labeled.run("configureLocation",req);
 check("Associated visible labels work without placeholders or aria-labels",
