@@ -1934,9 +1934,9 @@ function draw(){
  if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status))document.getElementById("manualRefresh").classList.remove("requested");
  const bell=document.getElementById("bell");
  bell.classList.toggle("generalOn",generalAlerts||favoriteAlertMode!=="off");
-  bell.classList.toggle("generalSilent",!(generalAlerts&&alertMode==="on")&&favoriteAlertMode!=="on"&&((generalAlerts&&alertMode==="silent")||favoriteAlertMode==="silent"));
+  bell.classList.toggle("generalSilent",!(generalAlerts&&alertMode==="on")&&!(favoriteAlertMode==="on"&&hasFavorites)&&((generalAlerts&&alertMode==="silent")||(favoriteAlertMode==="silent"&&hasFavorites)));
  bell.classList.toggle("permissionMissing",!notificationPermissionGranted);
- bell.setAttribute("aria-pressed",String((generalAlerts||favoriteAlertMode!=="off")&&notificationPermissionGranted));
+ bell.setAttribute("aria-pressed",String((generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))&&notificationPermissionGranted));
  bell.title=!notificationPermissionGranted?"Alertas bloqueados no Android · toque para configurar":"Novos: "+alertMode+" · Favoritos: "+favoriteAlertMode+" · toque para configurar";
   bell.setAttribute("aria-label",bell.title);
  const star=document.getElementById("star");
@@ -2153,7 +2153,7 @@ function quickState(id){
  switch(id){
   case "mode":return specialIVLabel(mode,searchSettings);
   case "sh":return shinyPending?"Pendente":shiny?"ON":"OFF";
-  case "bell":return !notificationPermissionGranted?"Permissão":(generalAlerts||favoriteAlertMode!=="off")?"ON":"OFF";
+  case "bell":return !notificationPermissionGranted?"Permissão":(generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))?"ON":"OFF";
   case "star":return hasFavorites?"Ativos":"";
   case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF";
   case "filters":return (Array.isArray(searchSettings.pokemonSelections)&&searchSettings.pokemonSelections.length>0)||
@@ -2362,10 +2362,10 @@ function refreshQuickMenuStates(){
   }
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
   button.classList.toggle("pending",id==="sh"&&shinyPending);
-   button.classList.toggle("silent",id==="bell"&&notificationPermissionGranted&&!(generalAlerts&&alertMode==="on")&&favoriteAlertMode!=="on"&&((generalAlerts&&alertMode==="silent")||favoriteAlertMode==="silent"));
+   button.classList.toggle("silent",id==="bell"&&notificationPermissionGranted&&!(generalAlerts&&alertMode==="on")&&!(favoriteAlertMode==="on"&&hasFavorites)&&((generalAlerts&&alertMode==="silent")||(favoriteAlertMode==="silent"&&hasFavorites)));
   button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
    id==="sh"?(shiny&&!shinyPending):
-   id==="bell"?((generalAlerts||favoriteAlertMode!=="off")&&notificationPermissionGranted):id==="period"?period>0:
+   id==="bell"?((generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))&&notificationPermissionGranted):id==="period"?period>0:
    id==="star"?hasFavorites:id==="mode"?(mode==="gl"||mode==="ul"):false);
  });
 }
