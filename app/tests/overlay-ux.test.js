@@ -1807,6 +1807,20 @@ test("UX-NOTIFY-07 Home favorites toggle migrates safely to tri-state preference
   service.includes('WatchAlerts.mode(this)')&&
   dock.includes('individualToneCount=Math.max(0,Number(individualTones)||0)');
 });
+test("UX-NOTIFY-08 personalized matching favorites use separate notifications and distinct IDs",()=>{
+ return service.includes('java.util.LinkedHashMap<String,String[]> individualFavorites')&&
+  service.includes('if(WatchAlerts.speciesToneCount(this)>0)')&&
+  service.includes('WatchAlerts.match(this,info[0]')&&
+  service.includes('if(count++>=5)break')&&
+  watch.includes('java.util.concurrent.atomic.AtomicInteger NEXT_ALERT_ID')&&
+  watch.includes('NEXT_ALERT_ID.updateAndGet');
+});
+test("UX-NOTIFY-09 bell indicates favorites-only mode even when general is off",()=>{
+ return dock.includes('id==="bell"?((generalAlerts||favoriteAlertMode!=="off")&&notificationPermissionGranted)')&&
+  dock.includes('bell.classList.toggle("generalOn",generalAlerts||favoriteAlertMode!=="off")')&&
+  dock.includes('Novos: "+alertMode+" · Favoritos: "+favoriteAlertMode')&&
+  dock.includes('favoriteAlertMode!=="on"&&((generalAlerts&&alertMode==="silent")||favoriteAlertMode==="silent")');
+});
 test("UX-LOCATION-FIX-01 invalid location never clears native confirmation or starts new search",()=>{
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
   ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";
