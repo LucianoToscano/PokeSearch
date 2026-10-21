@@ -193,7 +193,7 @@ body.result-window #resultHeader{width:35px;height:30px;display:flex;
  align-items:center;justify-content:center;padding:0;margin:0 auto;border:0;
  border-radius:8px;background:transparent;box-shadow:none}
 /* Composition stays inside the original 35x30px touch area and 21px max art. */
-body.result-window #resultHeader .resultModeStack{position:relative;display:block;flex:none;width:var(--mode-icon-size,21px);height:var(--mode-icon-size,21px);max-width:21px;max-height:21px;aspect-ratio:1/1;overflow:visible;pointer-events:none}
+body.result-window #resultHeader .resultModeStack{transform:translateY(4px);position:relative;display:block;flex:none;width:var(--mode-icon-size,21px);height:var(--mode-icon-size,21px);max-width:21px;max-height:21px;aspect-ratio:1/1;overflow:visible;pointer-events:none}
 body.result-window #resultHeader .resultModeStack img{position:absolute;inset:0;display:block;width:100%;height:100%;aspect-ratio:1/1;object-fit:contain;object-position:center;max-width:none;max-height:none;pointer-events:none;filter:drop-shadow(0 1px 1px #0007)}
 body.result-window #resultHeader .modeIndicator{position:absolute;z-index:1;display:none;align-items:center;justify-content:center;box-sizing:border-box;pointer-events:none;font-family:Arial,Roboto,sans-serif;font-weight:900;line-height:1;text-shadow:0 1px 1px #000}
 body.result-window #resultHeader .modeIndicator.visible{display:flex}
@@ -226,7 +226,7 @@ body.result-window #spawns{
  scrollbar-width:none!important;touch-action:manipulation!important
 }
 /* Preserve the final sprite's overhang without adding gaps between entries. */
-body.result-window #spawns:not(:empty){padding-bottom:6px!important}
+body.result-window #spawns:not(:empty){padding-bottom:0!important}
 body.result-window #empty{margin:0 auto;max-height:18px}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
@@ -856,7 +856,7 @@ window.setMenuPopupPlacement=(above,offset,room)=>{
 window.setResultsCollapsed=collapsed=>{
  document.body.classList.toggle("results-collapsed",!!collapsed);
  document.getElementById("resultHeader").setAttribute("aria-expanded",String(!collapsed));
- lastHeight=0;fit();
+ lastHeight=0;syncTimerTicker();fit();
 };
 let lastHeight=0;
 let fitPending=false;
@@ -890,6 +890,7 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  }
 });}
 function closeChoices(){
+ clearTimeout(pokemonSuggestTimer);pokemonSuggestTimer=null;
  choiceOpen="";cascadeMode=null;
  document.getElementById("menu").classList.remove("subview");
  modeScrollTop=0;appearanceScrollTop=0;
@@ -1548,11 +1549,21 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  return {rows,sprite,total:rows.reduce((a,b)=>a+b,0),visibleCount:rows.length,
   infoScale:Math.max(0.86,Math.min(1,factor))};
 }
-let lastListKey="";
+let lastListKey="",metadataCacheKey="",metadataCache=[];
+function preparedResultLines(){
+ if(!resultWindow)return [];
+ const key=JSON.stringify([cards,resultDisplayOptions,shownMode]);
+ if(key!==metadataCacheKey){
+  metadataCacheKey=key;
+  metadataCache=cards.map(card=>resultLines(card,resultDisplayOptions,shownMode));
+ }
+ return metadataCache;
+}
 function draw(){
+ const preparedLines=preparedResultLines();
  const resultLayout=resultWindow?
   computeResultLayout(cards,spriteSize,resultDisplayHeightDp,showTimers,showResultText,
-   resultDisplayOptions,shownMode):null;
+   resultDisplayOptions,shownMode,preparedLines):null;
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",(resultLayout?resultLayout.sprite:spriteSize)+"px");
  document.documentElement.style.setProperty("--result-info-scale",String(resultLayout?.infoScale||1));
@@ -1633,7 +1644,7 @@ function draw(){
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" aria-hidden="true">◉</span></span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
-  const infoLines=resultLines(c,resultDisplayOptions,shownMode);
+  const infoLines=preparedLines[i]||[];
   const inlineTimer=resultDisplayOptions.despawn&&deadline?
    '<span class="timer" data-deadline="'+deadline+'"></span>':"";
   const info=infoLines.length?'<span class="spawnInfo" aria-label="Dados opcionais do Pokémon">'+infoLines.map(text=>
@@ -1648,7 +1659,7 @@ function draw(){
   return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+info+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
- if(resultWindow){attachLongPress();attachSpriteFeedback();updateTimers();}
+ if(resultWindow){attachLongPress();attachSpriteFeedback();syncTimerTicker();}
  }
  const empty=document.getElementById("empty");
  empty.style.display=cards.length?"none":"block";
@@ -1706,7 +1717,23 @@ function updateTimers(){
   e.closest(".spawn")?.classList.toggle("expired",seconds===0);
  });
 }
-if(resultWindow)setInterval(updateTimers,1000);
+let timerTicker=null;
+function syncTimerTicker(){
+ if(!resultWindow)return;
+ const shown=!document.body.classList.contains("results-collapsed");
+ const hasTimers=!!document.querySelector(".timer");
+ if(shown&&hasTimers){
+  if(timerTicker===null){updateTimers();timerTicker=setInterval(updateTimers,1000);}
+ }else if(timerTicker!==null){
+  clearInterval(timerTicker);timerTicker=null;
+ }
+}
+function releaseUiTimers(){
+ clearTimeout(longTimer);
+ clearTimeout(pokemonSuggestTimer);
+ if(timerTicker!==null){clearInterval(timerTicker);timerTicker=null;}
+}
+window.addEventListener("pagehide",releaseUiTimers);
 window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled]);
@@ -1876,7 +1903,7 @@ let pokemonSuggestTimer=null;
 function requestPokemonSuggestions(query){
  if(!controlsWindow||choiceOpen!=="pokemon"||!Native.requestPokemonSuggestions)return;
  clearTimeout(pokemonSuggestTimer);
- pokemonSuggestTimer=setTimeout(()=>Native.requestPokemonSuggestions(String(query||"").slice(0,65)),180);
+ pokemonSuggestTimer=setTimeout(()=>Native.requestPokemonSuggestions(String(query||"").slice(0,65)),250);
 }
 window.onPokemonSuggestions=response=>{
  if(choiceOpen!=="pokemon"||!response)return;
