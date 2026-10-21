@@ -1,5 +1,7 @@
 "use strict";
 // Visual editor contracts. No Android SDK or external network required.
+// QA gate for the explicitly authorized stable-signed 0.51 APK: always rerun
+// these checks on the source commit that Actions will package (no merge).
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const path=require("node:path");
