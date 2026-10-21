@@ -237,8 +237,8 @@ test("CSS specificity prevents borders returning to unselected horizontal and ve
   selectors:match[1].split(",").map(s=>s.trim()),
   border:(match[2].match(/(?:^|;)\s*border\s*:\s*([^;]+)/)||[])[1]||""
  })).filter(r=>r.border.includes("!important"));
- const cls=selector=>(selector.match(/\.[\\w-]+|\[[^\]]+\]/g)||[]).length;
- const ids=selector=>(selector.match(/#[\\w-]+/g)||[]).length;
+ const cls=selector=>(selector.match(/\.[\w-]+|\[[^\]]+\]/g)||[]).length;
+ const ids=selector=>(selector.match(/#[\w-]+/g)||[]).length;
  const cmp=(a,b)=>ids(a)-ids(b)||cls(a)-cls(b);
  for(const mode of [".quick-horizontal",":not(.quick-horizontal)"])
   for(const tile of [".quickRow",".quickFooterAction"]){
