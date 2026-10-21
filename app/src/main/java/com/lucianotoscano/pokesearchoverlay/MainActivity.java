@@ -76,6 +76,7 @@ public class MainActivity extends Activity {
     private String pendingReportText="";
     private String alertToneTarget="";
     private String alertToneSpecies="";
+    private android.media.MediaPlayer bundledTonePreview;
     private FrameLayout homeRoot;
     private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
     private View trainerCopyButton;
@@ -1371,13 +1372,57 @@ public class MainActivity extends Activity {
                     chooseAlertToneSource("species",options[which]);
             }).setNegativeButton("Cancelar",null).show();
     }
+    // Local preview is triggered only by tapping a sound. No preference
+    // is changed until the separate confirmation button is pressed.
+    private void stopBundledTonePreview(){
+        android.media.MediaPlayer previous=bundledTonePreview;
+        bundledTonePreview=null;
+        if(previous!=null){
+            try{previous.setOnCompletionListener(null);previous.release();}
+            catch(RuntimeException ignored){}
+        }
+    }
+    private boolean playBundledTonePreview(int selection){
+        stopBundledTonePreview();
+        Uri source=PokeSoundLibrary.soundUri(this,selection);
+        if(source==null)return false;
+        try{
+            android.media.MediaPlayer player=android.media.MediaPlayer.create(this,source);
+            if(player==null){
+                Toast.makeText(this,"Não foi possível reproduzir este som",Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            bundledTonePreview=player;
+            player.setOnCompletionListener(done->stopBundledTonePreview());
+            player.start();
+            return true;
+        }catch(RuntimeException error){
+            stopBundledTonePreview();
+            Toast.makeText(this,"Prévia indisponível para este som",Toast.LENGTH_SHORT).show();
+            return false;
+        }
+    }
     private void openBundledAlertTonePicker(String target,String pokemon){
-        new AlertDialog.Builder(this)
-            .setTitle("Biblioteca PokeSearch · "+PokeSoundLibrary.size()+" sons")
-            .setItems(PokeSoundLibrary.LABELS,(dialog,which)->{
-                Uri chosen=PokeSoundLibrary.soundUri(this,which);
+        stopBundledTonePreview();
+        final int[] selected={-1};
+        AlertDialog dialog=new AlertDialog.Builder(this)
+            .setTitle("Toque para ouvir · "+PokeSoundLibrary.size()+" sons")
+            .setSingleChoiceItems(PokeSoundLibrary.LABELS,-1,(opened,which)->{
+                selected[0]=playBundledTonePreview(which)?which:-1;
+                ((AlertDialog)opened).getButton(AlertDialog.BUTTON_POSITIVE)
+                    .setEnabled(selected[0]>=0);
+            })
+            .setPositiveButton("Usar este som",(opened,which)->{
+                if(selected[0]<0)return;
+                Uri chosen=PokeSoundLibrary.soundUri(this,selected[0]);
                 if(chosen!=null)storeAlertTone(target,pokemon,chosen.toString());
-            }).setNegativeButton("Cancelar",null).show();
+            })
+            .setNegativeButton("Cancelar",null)
+            .create();
+        dialog.setOnShowListener(opened->
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false));
+        dialog.setOnDismissListener(closed->stopBundledTonePreview());
+        dialog.show();
     }
     private void chooseAlertToneSource(String target,String pokemon){
         new AlertDialog.Builder(this)
@@ -1532,6 +1577,7 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        stopBundledTonePreview();
         activityClosing=true;
         avatarRequestGeneration++;
         if(tutorialDialog!=null)tutorialDialog.dismiss();
