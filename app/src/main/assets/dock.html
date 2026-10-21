@@ -622,7 +622,17 @@ body.result-window.visual-results-horizontal #spawns:not(:empty){padding-bottom:
 body.controls-window #menu,
 body.controls-window #quickMenuList,
 body.controls-window #choices{background:var(--visual-menu-bg,#232b35e5)!important}
+body.controls-window #quickMenuList{gap:var(--visual-menu-gap,2px)!important}
 body.controls-window #quickRows{gap:var(--visual-menu-gap,0px)!important}
+body.controls-window.visual-menu-vertical #quickMenuList{gap:0!important}
+body.result-window #resultHeader .resultModeStack{
+ transform:translateY(var(--visual-header-offset,4px))!important;
+}
+body.controls-window #choices.modePanel:not(.visualPanel),
+body.controls-window #choices.standardPanel:not(.visualPanel):not(.locationPanel){
+ width:min(var(--visual-popup-width,232px),calc(100vw - 12px))!important;
+ max-height:min(var(--visual-popup-height,390px),var(--popup-room,390px))!important;
+}
 body.controls-window.visual-menu-vertical #menu{height:232px!important;min-height:232px!important}
 body.controls-window.visual-menu-vertical #quickMenuList,
 body.controls-window.visual-menu-vertical #menu.subview #quickMenuList,
