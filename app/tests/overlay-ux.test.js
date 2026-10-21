@@ -364,7 +364,7 @@ const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
 test("PokeSearch 0.51 source configured",
   gradleBuild.includes('versionCode = testVersionCode ?: 51')&&
-  gradleBuild.includes('versionName = if (testVersionCode != null) "0.51-beta.test.$testVersionCode" else "0.51-beta"')&&
+  gradleBuild.includes('versionName = if (testVersionCode != null) "0.51-beta.test.${testVersionLabel ?: testVersionCode}" else "0.51-beta"')&&
   gradleBuild.includes('applicationId = "com.lucianotoscano.pokesearch"'));
 test("Round icon generator always uses headless mode",gradleBuild.includes('-Djava.awt.headless=true')&&iconGenerator.includes('System.setProperty("java.awt.headless","true")'));
 test("Network main-frame error is handled",service.includes('request.isForMainFrame()')&&service.includes('Falha de navegação principal'));
@@ -2062,7 +2062,9 @@ test("NOTIFY-02 two independent three-state controls and audible streams",()=>{
 });
 test("NOTIFY-03 one muted stream gets one slash and both muted get X",()=>{
  const states=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(",1)[0]||"";
- return states.includes('const mutedCount=(generalAudio?0:1)+(favoriteAudio?0:1)')&&
+ const helper=dock.split("function audibleAlertState(")[1]?.split("function refreshQuickMenuStates(){")[0]||"";
+ return helper.includes('mutedCount:(newAudible?0:1)+(favoriteAudible?0:1)')&&
+  states.includes('const {mutedCount}=audibleAlertState(')&&
   states.includes('bell-one-muted')&&states.includes('bell-both-muted')&&
   dock.includes('bell-both-muted .quickGlyph::before')&&
   dock.includes('rotate(44deg)')&&dock.includes('rotate(-44deg)');
