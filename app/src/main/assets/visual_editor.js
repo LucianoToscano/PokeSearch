@@ -195,9 +195,9 @@ function renderVisualEditor(){
    [["dark","Escuro"],["light","Claro"]]);
   addSlider(panel,"resultsTransparency","Transparência (100 = invisível)","%");
   heading(panel,"Menus e filtros");
-  addSegment(panel,"menuBgMode","Cor do fundo",
-   [["dark","Escuro"],["light","Claro"]]);
-  addSlider(panel,"menuTransparency","Transparência (100 = invisível)","%");
+  // One opacity control drives tiles and submenus; legacy menuBgMode remains
+  // in saved/imported JSON so earlier user presets are never destroyed.
+  addSlider(panel,"menuTransparency","Transparência única dos menus","%");
   btn(panel,"Linhas-guia: "+(current.showGuides?"ON":"OFF"),()=>{
    change("showGuides",!current.showGuides);renderVisualEditor();
   });
