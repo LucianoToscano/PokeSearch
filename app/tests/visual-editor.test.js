@@ -145,14 +145,15 @@ test("favorites location and notification share neutral button background",()=>{
  assert.ok(css.includes('button[data-key="location"].selected{color:#ff5264!important}'));
  assert.ok(css.includes('button[data-key="star"].selected,'));
 });
-test("bell shows one red slash for a muted sound source and X for both",()=>{
- assert.ok(dock.includes('button.classList.toggle("bell-one-muted",id==="bell"&&mutedCount===1)'));
- assert.ok(dock.includes('button.classList.toggle("bell-both-muted",id==="bell"&&mutedCount===2)'));
- assert.ok(dock.includes('bell-one-muted .quickGlyph::after'));
- assert.ok(dock.includes('bell-both-muted .quickGlyph::before'));
- assert.ok(dock.includes("background:#ff4458;"));
- assert.ok(dock.includes("rotate(-44deg)"));
- assert.ok(dock.includes("rotate(44deg)"));
+test("bell shows independent white/gold/star/silent/permission patterns",()=>{
+ assert.ok(dock.includes('button.classList.toggle("bell-sound-new",id==="bell"&&bellState.newOnly)'));
+ assert.ok(dock.includes('button.classList.toggle("bell-sound-favorites",id==="bell"&&bellState.favoritesOnly)'));
+ assert.ok(dock.includes('button.classList.toggle("bell-sound-both",id==="bell"&&bellState.both)'));
+ assert.ok(dock.includes('button.classList.toggle("bell-silent-mode",id==="bell"&&bellState.silent)'));
+ assert.ok(dock.includes('button.classList.toggle("bell-permission-blocked",id==="bell"&&bellState.blocked)'));
+ assert.ok(dock.includes('content:"★"'));
+ assert.ok(dock.includes('color:#ffd64b!important;'));
+ assert.ok(!dock.includes('bell-both-muted .quickGlyph::before'));
 });
 test("legacy toggle icon colors match compact menu without changing IV or results",()=>{
  const css=dock.split("/* UX-ICONS-STATE:")[1]?.split("</style>")[0]||"";

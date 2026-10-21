@@ -1817,35 +1817,38 @@ test("UX-NOTIFY-08 personalized matching favorites use separate notifications an
   watch.includes('java.util.concurrent.atomic.AtomicInteger NEXT_ALERT_ID')&&
   watch.includes('NEXT_ALERT_ID.updateAndGet');
 });
-test("UX-NOTIFY-09 bell indicates favorites-only mode even when general is off",()=>{
- return dock.includes('id==="bell"?((generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))&&notificationPermissionGranted)')&&
-  dock.includes('bell.classList.toggle("generalOn",generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))')&&
+test("UX-NOTIFY-09 favorites-only uses a white bell with an internal star",()=>{
+ return dock.includes('bell.classList.toggle("bell-sound-favorites",bellVisual.favoritesOnly)')&&
+  dock.includes('bell.classList.toggle("generalOn",bellVisual.newSound)')&&
+  dock.includes('button.classList.toggle("bell-sound-favorites",id==="bell"&&bellState.favoritesOnly)')&&
   dock.includes('Novos: "+alertMode+" · Favoritos: "+favoriteAlertMode')&&
-  dock.includes('!(favoriteAlertMode==="on"&&hasFavorites)&&((generalAlerts&&alertMode==="silent")||(favoriteAlertMode==="silent"&&hasFavorites))');
+  dock.includes('content:"★"');
 });
-test("UX-NOTIFY-10 bell slash and X honor actual favorite list and Android permission",()=>{
- const fragment=dock.split("function audibleAlertState(")[1]?.split("function refreshQuickMenuStates(){")[0]||"";
+test("UX-NOTIFY-10 all bell configurations honor two modes and Android permission",()=>{
+ const fragment=dock.split("function notificationBellVisual(")[1]
+  ?.split("function refreshQuickMenuStates(){")[0]||"";
  if(!fragment)return false;
- const state=new Function("return function audibleAlertState("+fragment)();
- const cases=[
-  [true,"on","on",true,0],
-  [true,"off","on",true,1],
-  [true,"on","off",true,1],
-  [true,"silent","on",true,1],
-  [true,"on","silent",true,1],
-  [true,"silent","silent",true,2],
-  [true,"off","off",true,2],
-  [true,"off","on",false,2],
-  [true,"on","on",false,1],
-  [true,"on","off",false,1],
-  [true,"off","on",true,1],
-  [false,"on","on",true,2]
+ const state=new Function("return function notificationBellVisual("+fragment)();
+ const scenarios=[
+  [true,"off","off",false,false,false,false,false],
+  [true,"on","off",true,false,false,false,false],
+  [true,"off","on",false,true,false,false,false],
+  [true,"on","on",false,false,true,false,false],
+  [true,"silent","off",false,false,false,true,false],
+  [true,"off","silent",false,false,false,true,false],
+  [true,"silent","silent",false,false,false,true,false],
+  [true,"on","silent",true,false,false,true,false],
+  [true,"silent","on",false,true,false,true,false],
+  [false,"on","on",false,false,false,false,true],
+  [false,"off","off",false,false,false,false,false]
  ];
- return cases.every(([permission,general,favorite,watched,expected])=>
-  state(permission,general,favorite,watched).mutedCount===expected)&&
-  dock.includes("const {mutedCount}=audibleAlertState(")&&
-  dock.includes('button.classList.toggle("bell-one-muted",id==="bell"&&mutedCount===1)')&&
-  dock.includes('button.classList.toggle("bell-both-muted",id==="bell"&&mutedCount===2)');
+ return scenarios.every(([permission,general,favorite,newOnly,favOnly,both,silent,blocked])=>{
+  const result=state(permission,general,favorite);
+  return result.newOnly===newOnly&&result.favoritesOnly===favOnly&&
+   result.both===both&&result.silent===silent&&result.blocked===blocked;
+ })&&dock.includes('button.classList.toggle("bell-sound-new",id==="bell"&&bellState.newOnly)')&&
+   dock.includes('button.classList.toggle("bell-sound-favorites",id==="bell"&&bellState.favoritesOnly)')&&
+   dock.includes('button.classList.toggle("bell-sound-both",id==="bell"&&bellState.both)');
 });
 test("UX-LOCATION-FIX-01 invalid location never clears native confirmation or starts new search",()=>{
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
@@ -2060,14 +2063,14 @@ test("NOTIFY-02 two independent three-state controls and audible streams",()=>{
   panel.includes('Native.setAlertMode(id)')&&panel.includes('Native.setFavoriteAlertMode(id)')&&
   panel.includes('["silent","🔇 Sem som"]')&&panel.includes('Novos em OFF e Favoritos em Som');
 });
-test("NOTIFY-03 one muted stream gets one slash and both muted get X",()=>{
+test("NOTIFY-03 silent notifications and blocked Android are visually distinguished",()=>{
  const states=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(",1)[0]||"";
- const helper=dock.split("function audibleAlertState(")[1]?.split("function refreshQuickMenuStates(){")[0]||"";
- return helper.includes('mutedCount:(newAudible?0:1)+(favoriteAudible?0:1)')&&
-  states.includes('const {mutedCount}=audibleAlertState(')&&
-  states.includes('bell-one-muted')&&states.includes('bell-both-muted')&&
-  dock.includes('bell-both-muted .quickGlyph::before')&&
-  dock.includes('rotate(44deg)')&&dock.includes('rotate(-44deg)');
+ return states.includes('bell-silent-mode')&&
+  states.includes('bell-permission-blocked')&&
+  dock.includes('.bell-silent-mode .quickGlyph::before')&&
+  dock.includes('.bell-permission-blocked .quickGlyph::before')&&
+  dock.includes('background:#abb1ba')&&dock.includes('color:#ffb45c')&&
+  !dock.includes('bell-both-muted .quickGlyph::before');
 });
 test("NOTIFY-04 choose MP3 or OGG from Files or Drive with persistent access",()=>{
  return main.includes('Intent.ACTION_OPEN_DOCUMENT')&&
@@ -2145,6 +2148,35 @@ test("UX-NOTIFY-13 bundled user sounds include 24 Android resource references an
   dock.includes("Biblioteca PokeSearch (24 sons)")&&
   !library.includes("ps_freesound_community_jigglypuff_evolves_into_wigglytuff_then_the_world_implodes_24177")&&
   watch.includes("context.getResources().getIdentifier(");
+});
+test("UX-NOTIFY-15 all 24 bundled sounds have user-readable labels and original files",()=>{
+ const library=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
+ const labels=(library.split('static final String[] LABELS={')[1]||"").split('};')[0];
+ const entries=(labels.match(/^\s*"[^"]+",?$/gm)||[]);
+ return entries.length===24&&
+  library.match(/R\.raw\.ps_[a-z0-9_]+/g).length===24&&
+  labels.includes('"Aipom · Grito"')&&labels.includes('"Pokémon brilhante · Shiny"')&&
+  !labels.includes('freesound community')&&!labels.includes('ps_')&&
+  !library.includes('jigglypuff');
+});
+test("UX-NOTIFY-16 sound preview is separate from saving, cancellable and released",()=>{
+ const picker=main.slice(main.indexOf('private void openBundledAlertTonePicker('),
+  main.indexOf('private void chooseAlertToneSource('));
+ const preview=main.slice(main.indexOf('private void stopBundledTonePreview('),
+  main.indexOf('private void openBundledAlertTonePicker('));
+ const tap=picker.split('.setSingleChoiceItems(')[1]?.split('.setPositiveButton(')[0]||"";
+ return picker.includes('setSingleChoiceItems(PokeSoundLibrary.LABELS,-1,')&&
+  tap.includes('playBundledTonePreview(which)')&&
+  !tap.includes('storeAlertTone(')&&
+  picker.includes('setPositiveButton("Usar este som"')&&
+  picker.includes('if(selected[0]<0)return;')&&
+  picker.includes('storeAlertTone(target,pokemon,chosen.toString())')&&
+  picker.includes('setNegativeButton("Cancelar",null)')&&
+  picker.includes('setOnDismissListener(closed->stopBundledTonePreview())')&&
+  picker.includes('setEnabled(false)')&&
+  preview.includes('android.media.MediaPlayer.create(this,source)')&&
+  preview.includes('previous.release()')&&
+  main.includes('stopBundledTonePreview();\n        activityClosing=true;');
 });
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
