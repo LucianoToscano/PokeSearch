@@ -1640,7 +1640,8 @@ public class OverlayService extends Service {
         else channel.setSound(WatchAlerts.selectedTone(this,false,null),
             new android.media.AudioAttributes.Builder()
                 .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_EVENT).build());
-        nm.createNotificationChannel(channel);
+        try{nm.createNotificationChannel(channel);}
+        catch(Exception error){recordFailure("criar canal de novos Pokémon",error);return false;}
         // The user owns channel sound/importance after first creation.
         if(nm.getNotificationChannel(channelId)==null||
             nm.getNotificationChannel(channelId).getImportance()==NotificationManager.IMPORTANCE_NONE)
@@ -1666,7 +1667,7 @@ public class OverlayService extends Service {
         String firstWatched="";
         String watchDetails="";
         int watchedCount=0;
-        java.util.LinkedHashMap<String,String> individualFavorites=new java.util.LinkedHashMap<>();
+        java.util.LinkedHashMap<String,String[]> individualFavorites=new java.util.LinkedHashMap<>();
         java.util.Set<String> wanted=WatchAlerts.watched(this);
         long now=System.currentTimeMillis();
         for(int i=0;i<cards.length();i++){
@@ -1692,7 +1693,7 @@ public class OverlayService extends Service {
                 String favoriteName=c.optString("name","Pokémon");
                 if(!individualFavorites.containsKey(WatchAlerts.normalized(favoriteName)))
                     individualFavorites.put(WatchAlerts.normalized(favoriteName),
-                        favoriteName+"|"+("PC "+c.optString("cp","?")));
+                        new String[]{favoriteName,"PC "+c.optString("cp","?")});
             }
             JSONObject entry=new JSONObject();
             try{
@@ -1713,12 +1714,10 @@ public class OverlayService extends Service {
                 // Distinct custom cries are meaningful only if every matching
                 // species gets its own channel. Cap each refresh to 5 notices.
                 int count=0;
-                for(String value:individualFavorites.values()){
+                for(String[] info:individualFavorites.values()){
                     if(count++>=5)break;
-                    int split=value.indexOf('|');
-                    if(split<0)continue;
-                    WatchAlerts.match(this,value.substring(0,split),
-                        "Busca "+mode.toUpperCase(java.util.Locale.ROOT)+" · "+value.substring(split+1));
+                    WatchAlerts.match(this,info[0],
+                        "Busca "+mode.toUpperCase(java.util.Locale.ROOT)+" · "+info[1]);
                 }
             }else{
                 if(watchedCount>1)watchDetails+=" · +"+(watchedCount-1)+" Pokémon da lista";
