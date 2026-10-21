@@ -488,7 +488,7 @@ body.controls-window #choices.standardPanel{
  max-height:min(350px,var(--popup-room,400px))!important;padding:3px!important;
  border-radius:7px!important;overscroll-behavior:contain;scrollbar-width:thin;
 }
-body.controls-window #choices.standardPanel[data-panel-kind="alerts"]{width:204px!important;max-height:min(230px,var(--popup-room,400px))!important}
+body.controls-window #choices.standardPanel[data-panel-kind="alerts"]{width:232px!important;max-height:min(395px,var(--popup-room,420px))!important;overflow-y:auto!important}
 body.controls-window #choices.standardPanel[data-panel-kind="period"]{width:190px!important;max-height:min(245px,var(--popup-room,400px))!important}
 body.controls-window #choices.standardPanel[data-panel-kind="appearance"]{width:240px!important}
 body.controls-window #choices.standardPanel[data-panel-kind="info"]{width:225px!important;max-height:min(235px,var(--popup-room,400px))!important}
@@ -1024,6 +1024,7 @@ let locationEnabled=false,locationCoords="",locationRadius=0,locationVerified=fa
 // Future preference may expose Show/Hide results text; default is OFF.
 let showResultText=false;
 let notificationPermissionGranted=false,watchAlertsEnabled=true;
+let favoriteAlertMode="on",generalCustomTone=false,favoriteCustomTone=false,individualToneCount=0;
 let resultDisplayHeightDp=0;
 let resultDisplayOptions={count:true,name:false,number:false,gender:false,size:false,
  form:false,moves:false,location:false,distance:false,shiny:false,
@@ -2049,9 +2050,9 @@ function releaseUiTimers(){
  if(timerTicker!==null){clearInterval(timerTicker);timerTicker=null;}
 }
 window.addEventListener("pagehide",releaseUiTimers);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle")=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
- const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled]);
+ const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount]);
  cards=Array.isArray(a)?a.slice(0,10):[];
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
@@ -2086,6 +2087,10 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  showResultText=!!textVisible;
  notificationPermissionGranted=!!permissionGranted;
  watchAlertsEnabled=!!favoriteAlertsEnabled;
+ favoriteAlertMode=["on","silent","off"].includes(favoriteMode)?favoriteMode:(watchAlertsEnabled?"on":"off");
+ generalCustomTone=!!hasGeneralTone;
+ favoriteCustomTone=!!hasFavoriteTone;
+ individualToneCount=Math.max(0,Number(individualTones)||0);
  if(controlsWindow&&menuPreferences&&typeof menuPreferences==="object"){
   const p=normalizedQuickPrefs(menuPreferences);
   if(JSON.stringify(quickPrefs)!==JSON.stringify(p)){quickPrefs=p;renderQuickMenu();}
@@ -2096,7 +2101,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  if(controlsWindow&&choiceOpen==="info"&&
     JSON.stringify(resultDisplayOptions)!==previousDisplayPrefs)renderInfoChoices();
  if(controlsWindow&&choiceOpen==="alerts"&&
-    JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled])!==previousAlertsState)
+    JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount])!==previousAlertsState)
   renderAlertsChoices();
 };
 window.menuSide=side=>document.body.classList.toggle("menu-left",menuOpen&&side==="left");
@@ -2394,12 +2399,19 @@ function renderAlertsChoices(){
  for(const [id,name] of [["on","🔔 Som"],["silent","🔕 Silencioso"],["off","Desligado"]]){
   uxOption(panel,name,alertMode===id?"✓":"–",()=>Native.setAlertMode(id));
  }
+ uxOption(panel,"🎵 Escolher som dos novos Pokémon",
+  generalCustomTone?"Personalizado":"Padrão",()=>Native.pickAlertTone("general"));
  const favTitle=document.createElement("div");favTitle.className="uxSubheading";
- favTitle.textContent="Favoritos cadastrados";panel.appendChild(favTitle);
- uxOption(panel,"Alertar ao encontrar favorito nos filtros",
-  watchAlertsEnabled?"✓":"–",()=>Native.toggleWatchAlerts());
+ favTitle.textContent="Favoritos cadastrados (independentes)";panel.appendChild(favTitle);
+ for(const [id,label] of [["on","🔔 Som"],["silent","🔕 Silencioso"],["off","Desligado"]]){
+  uxOption(panel,label,favoriteAlertMode===id?"✓":"–",()=>Native.setFavoriteAlertMode(id));
+ }
+ uxOption(panel,"🎵 Som padrão dos favoritos",
+  favoriteCustomTone?"Personalizado":"Padrão",()=>Native.pickAlertTone("favorites"));
+ uxOption(panel,"🎵 Som de cada Pokémon favorito",
+  individualToneCount?individualToneCount+" configurado(s)":"Escolher",()=>Native.pickAlertTone("species"));
  const note=document.createElement("div");note.className="uxNote";
- note.textContent="Favoritos funcionam independentemente dos avisos gerais. Top N não comprova IV100 nem Rank IV #1. O toque de cada canal é configurado no Android.";
+ note.textContent="Novos e favoritos são independentes. Se a ocorrência atender aos dois alertas, ambos podem tocar. Os sons vêm do Android; o PokeSearch não baixa cries.";
  panel.appendChild(note);
  for(const [label,action] of [
   ["🔔 Testar aviso geral","testGeneralNotification"],
