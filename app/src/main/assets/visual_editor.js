@@ -2,18 +2,19 @@
 (function(){
 "use strict";
 const DEFAULTS=Object.freeze({
- resultGapTop:0,resultGapBetween:31,resultSpriteScale:100,
+ resultGapTop:0,resultGapBetween:31,resultSpriteScale:100,headerIconY:4,
  resultsOffsetX:0,resultsOffsetY:0,
  menuOffsetX:0,menuOffsetY:0,gearMenuGap:0,menuItemGap:0,
+ popupWidth:232,popupHeight:390,
  resultsOrientation:"vertical",menuOrientation:"horizontal",
  resultsBgMode:"dark",resultsTransparency:100,
  menuBgMode:"dark",menuTransparency:35,showGuides:false
 });
 const RANGES={
- resultGapTop:[0,80],resultGapBetween:[0,65],resultSpriteScale:[70,160],
+ resultGapTop:[0,80],resultGapBetween:[0,65],resultSpriteScale:[70,160],headerIconY:[-10,20],
  resultsOffsetX:[-200,200],resultsOffsetY:[-350,350],
  menuOffsetX:[-200,200],menuOffsetY:[-350,350],
- gearMenuGap:[0,80],menuItemGap:[0,16],
+ gearMenuGap:[0,80],menuItemGap:[0,16],popupWidth:[160,330],popupHeight:[140,420],
  resultsTransparency:[0,100],menuTransparency:[0,100]
 };
 const PRESETS={
@@ -50,6 +51,9 @@ function applyVisual(){
  set("results-bg",rgba(current.resultsBgMode,current.resultsTransparency));
  set("menu-bg",rgba(current.menuBgMode,current.menuTransparency));
  set("sprite-scale",String(current.resultSpriteScale/100));
+ set("header-offset",current.headerIconY+"px");
+ set("popup-width",current.popupWidth+"px");
+ set("popup-height",current.popupHeight+"px");
  body.classList.toggle("visual-menu-vertical",current.menuOrientation==="vertical");
  body.classList.toggle("visual-results-horizontal",current.resultsOrientation==="horizontal");
  body.classList.toggle("visual-guides",current.showGuides);
@@ -132,6 +136,7 @@ function renderVisualEditor(){
   addSlider(panel,"resultGapTop","Pokébola → primeiro Pokémon"," px");
   addSlider(panel,"resultGapBetween","Distância entre Pokémon (0 = colados)"," px");
   addSlider(panel,"resultSpriteScale","Escala visual dos Pokémon","%");
+  addSlider(panel,"headerIconY","Deslocar Pokébola (Y)"," px");
   heading(panel,"Posição da janela de resultados");
   addSlider(panel,"resultsOffsetX","Mover horizontalmente (X)"," dp");
   addSlider(panel,"resultsOffsetY","Mover verticalmente (Y)"," dp");
@@ -141,6 +146,8 @@ function renderVisualEditor(){
   heading(panel,"Posição e distância");
   addSlider(panel,"gearMenuGap","Engrenagem → menu"," dp");
   addSlider(panel,"menuItemGap","Distância entre botões"," px");
+  addSlider(panel,"popupWidth","Largura das janelas (Modos)"," px");
+  addSlider(panel,"popupHeight","Altura máxima das janelas"," px");
   addSlider(panel,"menuOffsetX","Mover menu horizontalmente (X)"," dp");
   addSlider(panel,"menuOffsetY","Mover menu verticalmente (Y)"," dp");
   addSegment(panel,"menuOrientation","Organização do menu",
