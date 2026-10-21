@@ -2110,6 +2110,29 @@ test("COORDS-08 UI preserves user editing while site controls location and Shiny
   probe.includes('function verifyLocation(req)')&&
   probe.includes('function setShiny(want)');
 });
+test("UX-NOTIFY-11 only verified favorites notify if general alerts are OFF",()=>{
+ const begin=service.indexOf("private void recordNewResults(JSONArray cards,boolean leagueConfirmed)");
+ const finish=service.indexOf("private void applyCollectedResults(JSONObject r)",begin);
+ const src=service.slice(begin,finish);
+ const fav=watch.slice(watch.indexOf("private static boolean send("),watch.indexOf("public static boolean test("));
+ return begin>0&&finish>begin&&src.includes('if(WatchAlerts.enabled(this) &&')&&
+  src.includes('WatchAlerts.matches(c.optString("name",""),wanted)')&&
+  src.includes('WatchAlerts.match(this,firstWatched,watchDetails)')&&
+  src.includes('if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()')&&
+  fav.includes('String soundMode=mode(context);')&&
+  fav.includes('if("off".equals(soundMode))return false;')&&
+  !fav.includes("alertsMode");
+});
+test("UX-NOTIFY-12 new and favorite audio channels remain separate",()=>{
+ const src=service.slice(service.indexOf("private boolean sendGeneralNotification("),
+  service.indexOf("private void recordNewResults("));
+ return src.includes('WatchAlerts.soundChannelId(this,false,null)')&&
+  src.includes('WatchAlerts.selectedTone(this,false,null)')&&
+  src.includes('pokesearch_alerts_silent_v1')&&
+  watch.includes('String id=soundChannelId(context,true,species);')&&
+  watch.includes('selectedTone(context,true,species)')&&
+  watch.includes('pokesearch_watch_silent_v1');
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 

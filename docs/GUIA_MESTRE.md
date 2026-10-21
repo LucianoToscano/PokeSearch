@@ -3087,3 +3087,11 @@ Após montar a navegação da página completa, a revisão encontrou um erro de 
 **Correção:** função pura `audibleAlertState(permission,generalMode,favoriteMode,hasWatched)` exige espécie cadastrada para contabilizar áudio de favoritos, preservando os três estados independentes ON/silent/OFF de cada fonte e a permissão efetiva. O cálculo passa a ser feito uma vez por atualização dos 12 botões, sem trabalho repetido por ícone. Quando nenhuma fonte está apta a tocar, exibir X; exatamente uma fonte audível, um risco; duas fontes audíveis, sem risco. A mensagem geral, os testes de canal, URI de arquivos, sons personalizados e todas as outras áreas permanecem intactas.
 
 **Validação:** novo contrato UX-NOTIFY-10 inclui matriz executável de 12 combinações de modos, favoritos existentes/ausentes e permissão Android. Também testado diretamente o helper puro; nenhuma execução Android ou reprodução de MP3 nesta etapa. Sem build/merge; a versão 51134 permanece a última compilada.
+
+### 12.138 QA-NOTIFY-ROUTING — isolamento dos sons de novos e favoritos (21/10/2026)
+
+**Etapa única de continuidade:** áudio independente, personalização de toques, sino com risco/X e APK 51134 já implementados; não foram refeitos. `recordNewResults()` despacha favoritos pela lista `WatchAlerts.enabled()` separadamente dos novos por `alertsMode`. `WatchAlerts.send()` tem canal próprio e rejeita seu modo OFF, sem herdar a escolha de novos.
+
+**QA:** adicionados contratos UX-NOTIFY-11 e UX-NOTIFY-12 para verificar guardas da entrega real e isolamento de canais sonoros. São verificações sobre código, não testes de som Android em aparelho. Nenhuma funcionalidade modificada.
+
+**Governança:** apenas suíte UX e este Guia Mestre atualizados; sem APK novo, sem merge e sem alterar assinatura. Última compilação homologada pelo CI: 51134.
