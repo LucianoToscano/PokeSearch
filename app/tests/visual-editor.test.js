@@ -101,9 +101,33 @@ test("service bounds horizontal overlay touch area to populated columns",()=>{
  assert.ok(java.includes("updateResultsWidth();"));
 });
 test("slider edits are not reverted by stale service state",()=>{
- assert.ok(script.includes("pendingVisualJson=JSON.stringify(current)"));
- assert.ok(script.includes("if(pendingVisualJson&&pendingVisualJson!==incoming)return;"));
- assert.ok(script.includes('if(pendingVisualJson===incoming)pendingVisualJson=""'));
+ const saved=[],timers=[],styles={};
+ const Native={saveVisualPrefs:json=>saved.push(JSON.parse(json))};
+ const window={Native};
+ const document={
+  documentElement:{style:{setProperty:(k,v)=>styles[k]=v}},
+  body:{classList:{toggle(){}}}
+ };
+ // Exercise the REAL private change callback rather than relying on its
+ // former exact source spelling (the theme-sync branch now merges color).
+ const instrumented=script.replace("window.visualEditorCurrent=function(){",
+  "window.__testChange=change;window.visualEditorCurrent=function(){");
+ assert.notEqual(instrumented,script);
+ vm.runInNewContext(instrumented,{window,document,Native,controlsWindow:true,
+  resultWindow:false,draw:()=>{},fit:()=>{},
+  setTimeout:fn=>{timers.push(fn);return timers.length;},clearTimeout:()=>{}});
+ window.__testChange("menuTransparency",72);
+ window.onVisualPrefs({menuBgMode:"dark",menuTransparency:35});
+ assert.equal(window.visualEditorCurrent().menuTransparency,72,
+  "An old Android broadcast cannot override a pending slider change");
+ assert.equal(styles["--visual-menu-button-bg"],"rgba(15,19,26,0.28)");
+ for(const fn of timers)fn();
+ assert.equal(saved.length,1);
+ assert.equal(saved[0].menuTransparency,72);
+ window.onVisualPrefs(saved[0]);
+ window.onVisualPrefs({menuBgMode:"dark",menuTransparency:17});
+ assert.equal(window.visualEditorCurrent().menuTransparency,17,
+  "After the matching save acknowledgement, later external updates are accepted");
 });
 test("large header gap is included in native window height",()=>{
  assert.ok(dock.includes('Math.ceil(end-shellTop)+1'));
