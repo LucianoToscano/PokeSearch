@@ -23,6 +23,7 @@ public final class WatchAlerts {
     private static final String SILENT_CHANNEL_ID="pokesearch_watch_silent_v1";
     public static final String PREF_LIST="watchList";
     public static final String PREF_ENABLED="watchAlertsEnabled";
+    public static final String PREF_MODE="favoriteAlertMode";
     private WatchAlerts(){}
     public static String normalized(String text){
         if(text==null)return "";
@@ -67,8 +68,17 @@ public final class WatchAlerts {
         p.edit().putString(PREF_LIST,String.join("\n",list.values())).apply();
         return added;
     }
-    public static boolean enabled(Context context){
-        return context.getSharedPreferences("prefs",0).getBoolean(PREF_ENABLED,true);
+    public static String mode(Context context){
+        SharedPreferences prefs=context.getSharedPreferences("prefs",0);
+        String fallback=prefs.getBoolean(PREF_ENABLED,true)?"on":"off";
+        String value=prefs.getString(PREF_MODE,fallback);
+        return "on".equals(value)||"silent".equals(value)||"off".equals(value)?value:fallback;
+    }
+    public static boolean enabled(Context context){return !"off".equals(mode(context));}
+    public static void setMode(Context context,String mode){
+        if(!"on".equals(mode)&&!"silent".equals(mode)&&!"off".equals(mode))return;
+        context.getSharedPreferences("prefs",0).edit()
+            .putString(PREF_MODE,mode).putBoolean(PREF_ENABLED,!"off".equals(mode)).apply();
     }
     public static boolean permissionGranted(Context context){
         if(Build.VERSION.SDK_INT>=33 &&
@@ -97,8 +107,9 @@ public final class WatchAlerts {
     }
     private static boolean send(Context context,String title,String info,int id){
         if(!permissionGranted(context))return false;
-        boolean quiet="silent".equals(context.getSharedPreferences("prefs",0)
-            .getString("alertsMode","off"));
+        String soundMode=mode(context);
+        if("off".equals(soundMode))return false;
+        boolean quiet="silent".equals(soundMode);
         if(quiet)ensureSilentChannel(context);else ensureChannel(context);
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager==null)return false;
