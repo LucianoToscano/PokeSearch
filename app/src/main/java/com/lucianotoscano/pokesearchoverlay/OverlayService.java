@@ -37,8 +37,95 @@ public class OverlayService extends Service {
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
     private static final int RESULTS_HEADER_DP=30;
     private int spriteSize=45;
+    private String visualPrefsJson="{}";
+    private boolean visualMenuVertical=false,visualResultsHorizontal=false;
+    private int visualMenuOffsetX=0,visualMenuOffsetY=0,
+        visualResultsOffsetX=0,visualResultsOffsetY=0,
+        visualGearMenuGap=0,visualMenuItemGap=0;
+    private int visualMenuBaseDp(){
+        return visualMenuVertical?232:MENU_BASE_DP;
+    }
+    private int vInt(JSONObject obj,String key,int def,int min,int max){
+        return Math.max(min,Math.min(max,obj.optInt(key,def)));
+    }
+    private JSONObject normalizeVisualPrefs(String raw) throws org.json.JSONException {
+        if(raw==null||raw.length()>5000)throw new org.json.JSONException("Visual settings too large");
+        JSONObject input=new JSONObject(raw),clean=new JSONObject();
+        String[] keys={"resultGapTop","resultGapBetween","resultSpriteScale",
+            "resultsOffsetX","resultsOffsetY","menuOffsetX","menuOffsetY",
+            "gearMenuGap","menuItemGap","resultsTransparency","menuTransparency"};
+        int[][] limits={{0,80,0},{0,65,31},{70,160,100},
+            {-200,200,0},{-350,350,0},{-200,200,0},{-350,350,0},
+            {0,80,0},{0,16,0},{0,100,100},{0,100,35}};
+        for(int i=0;i<keys.length;i++)clean.put(keys[i],
+            vInt(input,keys[i],limits[i][2],limits[i][0],limits[i][1]));
+        for(String key:new String[]{"resultsOrientation","menuOrientation"}){
+            String value=input.optString(key,"vertical");
+            if("menuOrientation".equals(key)&&!input.has(key))value="horizontal";
+            clean.put(key,"horizontal".equals(value)?"horizontal":"vertical");
+        }
+        for(String key:new String[]{"resultsBgMode","menuBgMode"}){
+            clean.put(key,"light".equals(input.optString(key,"dark"))?"light":"dark");
+        }
+        clean.put("showGuides",input.optBoolean("showGuides",false));
+        return clean;
+    }
+    private void readVisualRuntime(){
+        try{
+            JSONObject o=new JSONObject(visualPrefsJson);
+            visualMenuVertical="vertical".equals(o.optString("menuOrientation","horizontal"));
+            visualResultsHorizontal="horizontal".equals(o.optString("resultsOrientation","vertical"));
+            visualMenuOffsetX=o.optInt("menuOffsetX",0);
+            visualMenuOffsetY=o.optInt("menuOffsetY",0);
+            visualResultsOffsetX=o.optInt("resultsOffsetX",0);
+            visualResultsOffsetY=o.optInt("resultsOffsetY",0);
+            visualGearMenuGap=o.optInt("gearMenuGap",0);
+            visualMenuItemGap=o.optInt("menuItemGap",0);
+        }catch(org.json.JSONException ignored){}
+    }
+    private void broadcastVisualPrefs(){
+        String jsCode="window.onVisualPrefs&&window.onVisualPrefs("+visualPrefsJson+")";
+        js(panel,panelLoaded,jsCode);
+        js(menuPanel,menuLoaded,jsCode);
+        js(resultPanel,resultLoaded,jsCode);
+    }
+    private void saveVisualPrefs(String raw){
+        if(stopped)return;
+        try{
+            JSONObject cleaned=normalizeVisualPrefs(raw);
+            String next=cleaned.toString();
+            if(next.equals(visualPrefsJson))return;
+            int oldX=visualResultsOffsetX,oldY=visualResultsOffsetY;
+            visualPrefsJson=next;
+            readVisualRuntime();
+            getSharedPreferences("prefs",0).edit()
+                .putString("visualPrefsJson",visualPrefsJson).apply();
+            if(resultParams!=null&&resultRoot!=null&&wm!=null){
+                resultParams.width=dp(resultWidthDp());
+                resultParams.x+=dp(visualResultsOffsetX-oldX);
+                resultParams.y+=dp(visualResultsOffsetY-oldY);
+                DisplayMetrics m=metrics();
+                resultParams.x=Math.max(0,Math.min(Math.max(0,m.widthPixels-resultParams.width),resultParams.x));
+                resultParams.y=Math.max(0,Math.min(Math.max(0,m.heightPixels-resultParams.height),resultParams.y));
+                try{wm.updateViewLayout(resultRoot,resultParams);}
+                catch(Exception e){recordFailure("editor posição resultados",e);}
+            }
+            if(menuExpanded&&menuParams!=null){
+                menuDrawHeight=-1;menuDrawWidth=-1;
+                menuRequestedHeightDp=visualMenuBaseDp()+
+                    Math.max(0,menuRequestedHeightDp-MENU_BASE_DP);
+                updateMenuPosition();
+            }
+            broadcastVisualPrefs();
+        }catch(org.json.JSONException e){
+            BugReport.log(this,"UX","Configuração visual inválida");
+        }
+    }
     private int dockDp(){return spriteSize+8;}
-    private int resultWidthDp(){return dockDp()+resultMetadataWidthDp;}
+    private int resultWidthDp(){
+        return visualResultsHorizontal?Math.max(dockDp(),screenWidthDp()-16):
+            dockDp()+resultMetadataWidthDp;
+    }
     private String resultDisplayOptionsJson(){
         return "{\"count\":"+resultShowCount+
             ",\"name\":"+resultShowName+",\"number\":"+resultShowNumber+
@@ -55,7 +142,9 @@ public class OverlayService extends Service {
             ",\"speciesIvRankGl\":"+resultShowSpeciesIvRankGl+",\"speciesIvRankUl\":"+resultShowSpeciesIvRankUl+
             ",\"speciesIvRankMl\":"+resultShowSpeciesIvRankMl+"}";
     }
-    private int menuDp(){return Math.max(1,Math.min(330,screenWidthDp()-8));} // twelve compact icons, single-row thin menu
+    private int menuDp(){return visualMenuVertical?
+        Math.max(1,Math.min(198,screenWidthDp()-8)):
+        Math.max(1,Math.min(330,screenWidthDp()-8));} // twelve compact icons, single-row thin menu
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams,menuParams,resultParams;
@@ -352,6 +441,7 @@ public class OverlayService extends Service {
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
+        broadcastVisualPrefs();
         if(selected>=0)showDetails(selected);
     }
     private void status(String s){
@@ -416,17 +506,19 @@ public class OverlayService extends Service {
         if(!menuExpanded||menuRoot==null||menuParams==null||params==null||wm==null)return;
         DisplayMetrics d=metrics();
         int screen=d.widthPixels, bottom=d.heightPixels, width=dp(menuDp());
+        int menuBase=visualMenuBaseDp();
+        int gap=dp(visualGearMenuGap);
         // Rotation and window switching can change the available screen width.
         // Keep the native hit area aligned with the 12 visible toolbar buttons.
         if(menuParams.width!=width)menuParams.width=width;
-        boolean right=params.x+dp(dockDp())+width<=screen;
-        boolean left=params.x-width>=0;
+        boolean right=params.x+dp(dockDp())+gap+width<=screen;
+        boolean left=params.x-width-gap>=0;
         int priorPad=menuPadDp;
         boolean priorLeft=menuLeft;
         int rowY;
         if(right||left){
             menuLeft=!right;
-            menuParams.x=right?params.x+dp(dockDp()):params.x-width;
+            menuParams.x=right?params.x+dp(dockDp())+gap:params.x-width-gap;
             rowY=params.y;
         }else{
             // Keep the one-row toolbar next to, never ON TOP of, the gear.
@@ -434,19 +526,20 @@ public class OverlayService extends Service {
             menuParams.x=Math.max(0,Math.min(screen-width,
                 params.x+dp(dockDp())/2-width/2));
             int below=params.y+dp(TOOLBAR_DP);
-            int above=params.y-dp(MENU_BASE_DP);
+            int above=params.y-dp(menuBase);
             rowY=above>=0?above:below;
         }
         // Never let the toolbar or its touch targets drift outside the display
         // after dragging, returning from the keyboard, or rotating the device.
-        menuParams.x=Math.max(0,Math.min(Math.max(0,screen-width),menuParams.x));
-        rowY=Math.max(0,Math.min(Math.max(0,bottom-dp(MENU_BASE_DP)),rowY));
+        menuParams.x=Math.max(0,Math.min(Math.max(0,screen-width),
+            menuParams.x+dp(visualMenuOffsetX)));
+        rowY=Math.max(0,Math.min(Math.max(0,bottom-dp(menuBase)),rowY+dp(visualMenuOffsetY)));
         menuPadDp=0; // Results remain in their own separate native overlay.
 
         // The old resize/clamp moved the entire toolbar when a long numeric
         // picker opened. Preserve rowY and expand the touchable window ABOVE
         // or BELOW it without moving the row under the user's finger.
-        int rowHeight=dp(MENU_BASE_DP);
+        int rowHeight=dp(menuBase);
         int requestedPopup=Math.max(0,dp(menuRequestedHeightDp)-rowHeight);
         int roomAbove=Math.max(0,rowY);
         int roomBelow=Math.max(0,bottom-(rowY+rowHeight)-dp(5));
@@ -481,8 +574,8 @@ public class OverlayService extends Service {
     }
     private void resizeMenu(int desiredDp){
         if(!menuExpanded||menuParams==null||menuRoot==null)return;
-        int maxMenuHeight=Math.max(MENU_BASE_DP,Math.min(450,screenHeightDp()-24));
-        menuRequestedHeightDp=Math.max(MENU_BASE_DP,Math.min(maxMenuHeight,desiredDp));
+        int maxMenuHeight=Math.max(visualMenuBaseDp(),Math.min(450,screenHeightDp()-24));
+        menuRequestedHeightDp=Math.max(visualMenuBaseDp(),Math.min(maxMenuHeight,desiredDp));
         // Always recompute placement from the untruncated size, including after a drag
         // or switching between a tall cascade and a short settings strip.
         updateMenuPosition();
@@ -620,6 +713,10 @@ public class OverlayService extends Service {
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(73,note);
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
+        try{visualPrefsJson=normalizeVisualPrefs(
+            getSharedPreferences("prefs",0).getString("visualPrefsJson","{}")).toString();}
+        catch(org.json.JSONException ignored){visualPrefsJson="{}";}
+        readVisualRuntime();
         root=new FrameLayout(this);
         root.setBackgroundColor(Color.TRANSPARENT);
         root.setClipChildren(true);
@@ -704,7 +801,7 @@ public class OverlayService extends Service {
                 }
             }
         });
-        menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(MENU_BASE_DP),
+        menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(visualMenuBaseDp()),
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
@@ -800,8 +897,8 @@ public class OverlayService extends Service {
                     else{
                         float density=getResources().getDisplayMetrics().density;
                         getSharedPreferences("prefs",0).edit()
-                            .putInt("resultsX",Math.round(resultParams.x/density))
-                            .putInt("resultsY",Math.round(resultParams.y/density)).apply();
+                            .putInt("resultsX",Math.round(resultParams.x/density)-visualResultsOffsetX)
+                            .putInt("resultsY",Math.round(resultParams.y/density)-visualResultsOffsetY).apply();
                     }
                     return true;
                 case MotionEvent.ACTION_CANCEL:return true;
@@ -823,8 +920,10 @@ public class OverlayService extends Service {
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT);
         resultParams.gravity=Gravity.TOP|Gravity.LEFT;
-        resultParams.x=dp(Math.max(0,Math.min(screenWidthDp()-dockDp(),savedX)));
-        resultParams.y=dp(Math.max(0,Math.min(screenHeightDp()-72,savedY)));
+        resultParams.x=dp(Math.max(0,Math.min(
+            screenWidthDp()-resultWidthDp(),savedX+visualResultsOffsetX)));
+        resultParams.y=dp(Math.max(0,Math.min(
+            screenHeightDp()-72,savedY+visualResultsOffsetY)));
         try{wm.addView(resultRoot,resultParams);}
         catch(Exception e){
             recordFailure("criar janela independente de resultados",e);
@@ -1673,8 +1772,8 @@ public class OverlayService extends Service {
         if(show){
             menuDrawHeight=-1;menuDrawWidth=-1;
             if(menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
-            if(menuParams!=null){menuRequestedHeightDp=MENU_BASE_DP;
-                menuParams.width=dp(menuDp());menuParams.height=dp(MENU_BASE_DP);
+            if(menuParams!=null){menuRequestedHeightDp=visualMenuBaseDp();
+                menuParams.width=dp(menuDp());menuParams.height=dp(visualMenuBaseDp());
                 popupOffsetDp=-1;popupRoomDp=-1;}
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
@@ -1783,6 +1882,24 @@ public class OverlayService extends Service {
         status(message);
     }
     public class Bridge{
+        @JavascriptInterface public void saveVisualPrefs(String json){
+            handler.post(()->OverlayService.this.saveVisualPrefs(json));
+        }
+        @JavascriptInterface public void visualEditorFocus(boolean focused){
+            handler.post(()->locationEditor(focused));
+        }
+        @JavascriptInterface public void copyVisualPrefs(String json){
+            handler.post(()->{
+                try{
+                    JSONObject clean=normalizeVisualPrefs(json);
+                    clean.put("schema","pokesearch-visual-v1");
+                    android.content.ClipboardManager clipboard=
+                        (android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                    if(clipboard!=null)clipboard.setPrimaryClip(
+                        ClipData.newPlainText("PokeSearch layout JSON",clean.toString(2)));
+                }catch(Exception ignored){}
+            });
+        }
         @JavascriptInterface public void toggleWatch(String pokemon){handler.post(()->{
             boolean watched=WatchAlerts.toggle(OverlayService.this,pokemon);
             js(detailPanel,detailLoaded,"window.watchFeedback("+watched+")");
