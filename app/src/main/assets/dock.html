@@ -776,7 +776,7 @@ let resultDisplayOptions={count:true,name:false,number:false,gender:false,size:f
  overallRank:false,speciesIvRank:false,overallRankGl:false,overallRankUl:false,overallRankMl:false,
  speciesIvRankGl:false,speciesIvRankUl:false,speciesIvRankMl:false};
 let displayedMetadataWidth=0;
-let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
+let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=false,advancedExpanded=false;
@@ -1663,7 +1663,7 @@ function draw(){
  const empty=document.getElementById("empty");
  empty.style.display=cards.length?"none":"block";
  const waiting=nextQueryAt>Date.now();
- empty.textContent=/sem resultados/i.test(status)?"0":/falha|erro|não|login/i.test(status)?"!":"…";
+ empty.textContent=activeSearchPhase==="empty"?"0":activeSearchPhase==="error"?"!":"…";
  empty.title=status||"Aguardando busca";
  if(resultWindow){
   // Only show a Shiny badge after the site confirms that Shiny-only is active.
@@ -1674,7 +1674,7 @@ function draw(){
   const iconSettings=hasHistory?shownSettings:searchSettings;
   const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings);
   document.body.classList.toggle("results-stale",hasHistory&&resultsStale);
-  document.body.classList.toggle("search-active",searchActive&&!shinyPending&&nextQueryAt<=Date.now());
+  document.body.classList.toggle("search-active",activeSearchPhase==="searching"&&!shinyPending&&nextQueryAt<=Date.now());
   const header=document.getElementById("resultHeader");
   const count=document.getElementById("resultSpawnCount");
   count.textContent=resultDisplayOptions.count?String(cards.length):"";
@@ -1695,7 +1695,7 @@ function draw(){
   primaryBadge.classList.toggle("perfect",selectedIcon.family==="hundo");
   document.getElementById("modeIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge);
   document.getElementById("modeIndicatorBackground").classList.toggle("visible",selectedIcon.backgroundBadge);
-  const label=(hasHistory&&resultsStale?"⚠ Resultados anteriores · ":"")+selectedIcon.title+
+  const label=(hasHistory&&resultsStale?"⚠ Resultados anteriores · ":"")+(activeSearchPhase==="filling"?"Preenchendo filtros · ":activeSearchPhase==="searching"?"Buscando · ":activeSearchPhase==="error"?"⚠ Falha na busca · ":"")+selectedIcon.title+
       ((iconMode==="gl"||iconMode==="ul")?" · PvP top "+(iconMode==="gl"?iconSettings.glRank:iconSettings.ulRank):"")+
       (!hasHistory&&shinyPending?" · Shiny aguardando confirmação":"");
   header.title=label+(waiting?" · próxima consulta em "+Math.ceil((nextQueryAt-Date.now())/1000)+"s":"")+
@@ -1733,7 +1733,7 @@ function releaseUiTimers(){
  if(timerTicker!==null){clearInterval(timerTicker);timerTicker=null;}
 }
 window.addEventListener("pagehide",releaseUiTimers);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle")=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled]);
  cards=Array.isArray(a)?a.slice(0,10):[];
@@ -1765,7 +1765,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  shownShiny=!!resultSourceShiny;resultsStale=!!stale;
  nextQueryAt=Number(nextDue)||0;
  searchActive=!!isSearching;
- mode=m==="iv"?"raw":m;status=String(s||"");
+ mode=m==="iv"?"raw":m;status=String(s||"");activeSearchPhase=String(searchPhase||"idle");
  if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  showResultText=!!textVisible;
  notificationPermissionGranted=!!permissionGranted;
