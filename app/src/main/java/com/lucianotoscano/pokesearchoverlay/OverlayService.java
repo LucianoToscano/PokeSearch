@@ -103,8 +103,17 @@ public class OverlayService extends Service {
         if(stopped)return;
         try{
             JSONObject cleaned=normalizeVisualPrefs(raw);
+            // The single visible Home theme switch owns menu tone. Prevent
+            // older queued slider saves/imported JSON from undoing that tone.
+            cleaned.put("menuBgMode",getSharedPreferences("prefs",0)
+                .getBoolean("homeLightMode",false)?"light":"dark");
             String next=cleaned.toString();
-            if(next.equals(visualPrefsJson))return;
+            if(next.equals(visualPrefsJson)){
+                // Acknowledge even no-op saves so the WebView can release its
+                // pending local slider value after a concurrent theme change.
+                broadcastVisualPrefs();
+                return;
+            }
             int oldX=visualResultsOffsetX,oldY=visualResultsOffsetY;
             int oldMenuBase=visualMenuBaseDp();
             visualPrefsJson=next;
