@@ -895,7 +895,13 @@ body.controls-window #choices .alertModeGroup button{
 body.controls-window #choices .alertModeGroup button.chosen{
  background:#365b4c!important;border-color:#8ad9b5!important;
 }
-</style></head><body>
+body.controls-window #choices .locRadiusNumber{
+ width:72px!important;height:30px!important;min-width:72px!important;
+ padding:3px 6px!important;border-radius:6px!important;
+ background:#17191bdc!important;color:#fff!important;
+ border:1px solid #96999c88!important;text-align:right!important;
+ font-size:12px!important;
+}</style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
  <div id="menu"><div id="quickHead"><strong>⚙ PokeSearch</strong><button id="quickBack" type="button" aria-label="Voltar ou recolher">✕</button></div><div id="quickMenuList"><div id="quickRows"></div><div id="quickUtilities"></div><div id="quickFooter"></div></div><div id="controls">
@@ -1595,10 +1601,20 @@ function renderLocationChoices(){
  toggle.setAttribute("aria-label","Ativar ou desativar o filtro de coordenadas");
  fieldRow.append(field,paste,toggle);
  const label=make("div","locLine");const labelName=make("span","","Raio da busca");
- const value=make("strong","",locationRadius+" km");value.id="locRadiusValue";label.append(labelName,value);
+ const radiusField=make("input","locRadiusNumber");
+ radiusField.type="number";radiusField.min="0";radiusField.max="1000";radiusField.step="1";
+ radiusField.inputMode="numeric";radiusField.value=String(locationRadius);
+ radiusField.setAttribute("aria-label","Raio em quilômetros; campo numérico de 0 a 1000");
+ radiusField.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
+ radiusField.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
+ const unit=make("span","","km");label.append(labelName,radiusField,unit);
  const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);
- slide.setAttribute("aria-label","Raio em quilômetros de 0 a 1000");
- slide.oninput=()=>{value.textContent=slide.value+" km";};
+ slide.setAttribute("aria-label","Ajustar raio de 0 a 1000");
+ slide.oninput=()=>{radiusField.value=slide.value;};
+ radiusField.oninput=()=>{
+  const number=Number(radiusField.value);
+  if(Number.isInteger(number)&&number>=0&&number<=1000)slide.value=String(number);
+ };
  const message=make("p","");message.id="locHint";
  const actions=make("div","locLine");const apply=make("button","locSave","✓ Aplicar");
  const hide=make("button","locHide","Ocultar");
@@ -1614,7 +1630,7 @@ function renderLocationChoices(){
    message.textContent="⚠ Cole latitude,longitude válidas para ativar.";
    message.style.color="#ffbf8f";return;
   }
-  const wantedCoords=match[1]+","+match[2],wantedRadius=Number(slide.value);
+  const wantedCoords=match[1]+","+match[2],wantedRadius=Number(radiusField.value);
   if(!Number.isInteger(wantedRadius)||wantedRadius<0||wantedRadius>1000){
    message.textContent="⚠ Escolha raio de 0 a 1000 km.";message.style.color="#ffbf8f";return;
   }
