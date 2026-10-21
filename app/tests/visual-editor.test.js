@@ -35,7 +35,7 @@ test("packed preset allows true overlap via lowered row pitch",()=>{
  assert.match(dock,/const pitch=Math\.max\(8,Math\.round\(size\*\.32\)/);
  assert.match(dock,/return pitch; \/\/ Transparent sprite squares may overlap/);
  assert.match(dock,/const sprite=Math\.max\(10,Math\.floor\(size\*factor\)\)/);
- assert.match(script,/compact:\{resultGapTop:0,resultGapBetween:0/);
+ assert.match(script,/compact:\{resultGapTop:-6,resultGapBetween:0/);
 });
 test("invalid imported JSON is ignored and values are clamped",()=>{
  const {window,styles,classes}=fixture();
@@ -132,7 +132,7 @@ test("visual position sliders keep the currently open detail window in sync",()=
 });
 test("sparkle is vector white by default, yellow when site-verified",()=>{
  assert.ok(dock.includes('const QUICK_SOURCE_ICONS={sh:"sh"'));
- assert.ok(dock.includes('onclick="Native.shiny()"><svg viewBox="0 0 24 24"'));
+ assert.ok(dock.includes('onclick="Native.shiny()"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"'));
  assert.ok(!dock.includes('onclick="Native.shiny()">✨</button>'));
  assert.ok(dock.includes('button[data-key="sh"].selected,'));
 });
@@ -166,5 +166,38 @@ test("geometry diagnostic reports only stage measurements, never spawn data",()=
  assert.ok(f.includes('headerToFirstPx'));
  assert.ok(f.includes('stageGapPx'));
  assert.ok(!f.includes('card.')&&!f.includes('locationCoords'));
+});
+test("editor dark light and vertical horizontal work without native select dialogs",()=>{
+ assert.ok(editorHasButtons());
+ function editorHasButtons(){
+  return script.includes('className="visualSegment"')&&
+   script.includes('button.onclick=()=>{change(key,value);renderVisualEditor();}')&&
+   !script.includes('const select=document.createElement("select")')&&
+   dock.includes('.visualSegmentGroup');
+ }
+});
+test("quick menu has a surrounding container and selected state cannot tint border",()=>{
+ assert.ok(dock.includes('/* VISUAL-129: container surrounds the gray 12-button ribbon.'));
+ assert.ok(dock.includes('box-sizing:border-box!important;'));
+ assert.ok(dock.includes('border:1px solid #ffffff32!important;border-radius:9px!important;'));
+ assert.ok(dock.includes('button[data-key="sh"].selected'));
+ assert.ok(dock.includes('background:var(--visual-menu-button-bg,#28292cce)!important;'));
+});
+test("Minior art receives additional consistent scaling in the 10-sprite list",()=>{
+ assert.ok(dock.includes('const artFit=/^'));
+ assert.ok(dock.includes('minior(?:'));
+ assert.ok(dock.includes('?0.67:0.86;'));
+ assert.ok(dock.includes('style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+artFit'));
+ assert.ok(dock.includes('width:calc(var(--sprite) * var(--visual-art-fit,0.86))!important;'));
+});
+test("sprite guide tracks normalized art, not whole row",()=>{
+ assert.ok(dock.includes('body.visual-guides.result-window .spriteStage::after'));
+ assert.ok(dock.includes('var(--visual-art-fit,0.86) * var(--visual-sprite-scale,1)'));
+ assert.ok(dock.includes('document.getElementById("resultIconStack")'));
+});
+test("negative header gap changes native height instead of leaving invisible bottom padding",()=>{
+ assert.ok(script.includes('resultGapTop:[-16,80]'));
+ assert.ok(dock.includes('Math.max(0,Math.ceil(spawns.getBoundingClientRect().height)+'));
+ assert.ok(dock.includes('(Number(window.visualPrefs?.resultGapTop)||0)'));
 });
 console.log("PokeSearch temporary visual editor: "+count+" tests passed");

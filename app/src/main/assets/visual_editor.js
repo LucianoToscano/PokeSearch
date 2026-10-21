@@ -11,16 +11,16 @@ const DEFAULTS=Object.freeze({
  menuBgMode:"dark",menuTransparency:35,showGuides:false
 });
 const RANGES={
- resultGapTop:[0,80],resultGapBetween:[0,65],resultSpriteScale:[70,160],headerIconY:[-10,20],
+ resultGapTop:[-16,80],resultGapBetween:[0,65],resultSpriteScale:[70,160],headerIconY:[-10,20],
  resultsOffsetX:[-200,200],resultsOffsetY:[-350,350],
  menuOffsetX:[-200,200],menuOffsetY:[-350,350],
  gearMenuGap:[0,80],menuItemGap:[0,16],popupWidth:[160,330],popupHeight:[140,420],
  resultsTransparency:[0,100],menuTransparency:[0,100]
 };
 const PRESETS={
- compact:{resultGapTop:0,resultGapBetween:0,resultSpriteScale:100,menuItemGap:0},
- balanced:{resultGapTop:3,resultGapBetween:13,resultSpriteScale:100,menuItemGap:3},
- readable:{resultGapTop:10,resultGapBetween:40,resultSpriteScale:110,menuItemGap:7}
+ compact:{resultGapTop:-6,resultGapBetween:0,resultSpriteScale:100,menuItemGap:0},
+ balanced:{resultGapTop:0,resultGapBetween:13,resultSpriteScale:100,menuItemGap:3},
+ readable:{resultGapTop:8,resultGapBetween:40,resultSpriteScale:110,menuItemGap:7}
 };
 let current={...DEFAULTS},tab="results",saveTimer=null,pendingVisualJson="",saveEpoch=0;
 function normalize(raw){
@@ -120,14 +120,17 @@ function addSlider(parent,key,label,unit){
 function addSegment(parent,key,label,options){
  const row=document.createElement("div");row.className="visualLine";
  const head=document.createElement("span");head.textContent=label;row.appendChild(head);
- const select=document.createElement("select");select.setAttribute("aria-label",label);
+ const group=document.createElement("div");group.className="visualSegmentGroup";
+ group.setAttribute("role","group");group.setAttribute("aria-label",label);
  for(const [value,title] of options){
-  const opt=document.createElement("option");opt.value=value;opt.textContent=title;
-  select.appendChild(opt);
+  const button=document.createElement("button");
+  button.type="button";button.className="visualSegment";button.textContent=title;
+  button.setAttribute("aria-pressed",String(current[key]===value));
+  button.classList.toggle("chosen",current[key]===value);
+  button.onclick=()=>{change(key,value);renderVisualEditor();};
+  group.appendChild(button);
  }
- select.value=current[key];
- select.onchange=()=>change(key,select.value);
- row.appendChild(select);parent.appendChild(row);
+ row.appendChild(group);parent.appendChild(row);
 }
 function btn(container,title,fn){
  const b=document.createElement("button");b.type="button";b.className="visualButton";

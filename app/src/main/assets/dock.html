@@ -567,8 +567,11 @@ body.result-window .spriteStage{
  flex:0 0 var(--dock)!important;display:flex!important;align-items:center;justify-content:center;
 }
 body.result-window .spriteStage .sprite{
- flex:none!important;width:var(--sprite)!important;height:var(--sprite)!important;
- max-width:var(--sprite)!important;max-height:var(--sprite)!important;
+ flex:none!important;
+ width:calc(var(--sprite) * var(--visual-art-fit,0.86))!important;
+ height:calc(var(--sprite) * var(--visual-art-fit,0.86))!important;
+ max-width:calc(var(--sprite) * var(--visual-art-fit,0.86))!important;
+ max-height:calc(var(--sprite) * var(--visual-art-fit,0.86))!important;
 }
 body.result-window .spriteStage .spriteFallback{inset:auto}
 body.result-window .spawnInfo{
@@ -717,16 +720,31 @@ body.controls-window #choices.visualPanel .visualLine{
  display:flex;justify-content:space-between;align-items:center;gap:6px;
  padding:6px 3px;font-size:11px;
 }
-body.controls-window #choices.visualPanel select{
- background:#344254;color:#fff;padding:5px;border-radius:5px;max-width:56%;min-width:80px;
+body.controls-window #choices.visualPanel .visualSegmentGroup{
+ display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;flex:1 1 auto;min-width:0;
+}
+body.controls-window #choices.visualPanel .visualSegment{
+ background:#344254;color:#fff;padding:6px 7px;border-radius:6px;
+ border:1px solid #647487;min-width:0;flex:1 1 auto;line-height:1.2;font-size:11px;
+}
+body.controls-window #choices.visualPanel .visualSegment.chosen{
+ background:#20684f;border-color:#91ddc1;
 }
 body.controls-window #choices.visualPanel .visualJSON{
  box-sizing:border-box;width:100%;min-height:92px;font:10px monospace;
  color:#dcf4ec;background:#0c1420;border:1px solid #77948b;border-radius:6px;
  resize:vertical;padding:6px;overflow:auto;
 }
-body.visual-guides.result-window .spawn{outline:1px dashed #4ce5ff9a;outline-offset:-1px}
-body.visual-guides.result-window #resultHeader{outline:1px dashed #ffce4ca8}
+body.visual-guides.result-window .spawn{outline:none!important}
+body.visual-guides.result-window .spriteStage::after{
+ content:"";position:absolute;left:50%;top:50%;
+ width:calc(var(--sprite) * var(--visual-art-fit,0.86) * var(--visual-sprite-scale,1));
+ height:calc(var(--sprite) * var(--visual-art-fit,0.86) * var(--visual-sprite-scale,1));
+ transform:translate(-50%,-50%);box-sizing:border-box;
+ border:1px dashed #4ce5ff9a;pointer-events:none;
+}
+body.visual-guides.result-window #resultHeader{outline:none!important}
+body.visual-guides.result-window #resultHeader .resultModeStack{outline:1px dashed #ffce4ca8;outline-offset:0}
 /* UX-ICONS-STATE: preserve neutral button backgrounds; color only outlines. */
 body.controls-window #quickMenuList button[data-key="sh"],
 body.controls-window #quickMenuList button[data-key="star"],
@@ -761,12 +779,35 @@ body.controls-window #controls #bell.generalSilent::after{
  width:17px;height:2.5px;border-radius:2px;background:#ff4458;
  transform:translate(-50%,-50%) rotate(-43deg);pointer-events:none;
 }
+/* VISUAL-129: container surrounds the gray 12-button ribbon.
+   The user-selected menu theme/transparency still controls its background. */
+body.controls-window #quickMenuList,
+body.controls-window #menu.subview #quickMenuList,
+body.controls-window.popup-above #quickMenuList{
+ box-sizing:border-box!important;
+ background:var(--visual-menu-bg,rgba(20,26,35,.88))!important;
+ border:1px solid #ffffff32!important;border-radius:9px!important;
+ box-shadow:0 4px 12px #0007!important;padding:1px 2px!important;
+}
+/* Active states never tint button surfaces/borders green or gold. */
+body.controls-window #quickMenuList button.selected,
+body.controls-window #quickMenuList button[data-key="sh"].selected,
+body.controls-window #quickMenuList button[data-key="location"].selected,
+body.controls-window #quickMenuList button[data-key="star"].selected,
+body.controls-window #quickMenuList button[data-key="bell"].selected{
+ background:var(--visual-menu-button-bg,#28292cce)!important;
+ border-color:#ffffff2d!important;
+}
+body.controls-window #quickMenuList button[data-key="sh"].selected,
+body.controls-window #quickMenuList button[data-key="star"].selected,
+body.controls-window #quickMenuList button[data-key="bell"].selected{color:#ffd64b!important}
+body.controls-window #quickMenuList button[data-key="location"].selected{color:#ff5264!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
  <div id="menu"><div id="quickHead"><strong>⚙ PokeSearch</strong><button id="quickBack" type="button" aria-label="Voltar ou recolher">✕</button></div><div id="quickMenuList"><div id="quickRows"></div><div id="quickUtilities"></div><div id="quickFooter"></div></div><div id="controls">
   <button id="cycle" title="Modos · Raw IV, % IV, Grande Liga e Ultra Liga" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('mode')">100%</button>
-  <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.7 5.3L5 10l5.3 1.7L12 17l1.7-5.3L19 10l-5.3-1.7L12 3Z"/><path d="m19 18-.75 2.25L16 21l2.25.75L19 24l.75-2.25L22 21l-2.25-.75L19 18Z"/><path d="m5 2-.75 2.25L2 5l2.25.75L5 8l.75-2.25L8 5l-2.25-.75L5 2Z"/></svg></button>
+  <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14 3.2c.65 3.8 2.7 7 6.8 8.3-4.2 1.3-6.15 4.6-6.8 8.6-.8-4-2.8-7.3-6.9-8.6 4.15-1.3 6.1-4.5 6.9-8.3Z"/><path d="M5.2 3c.35 1.8 1.1 2.7 2.8 3.2-1.7.55-2.45 1.55-2.8 3.2-.4-1.65-1.15-2.65-2.8-3.2C4.05 5.7 4.8 4.8 5.2 3Z"/><path d="M4.3 11.8c.38 2 1.5 3.2 3.5 3.8-2 .6-3.1 1.8-3.5 3.8-.45-2-1.6-3.2-3.6-3.8 2-.6 3.15-1.8 3.6-3.8Z"/><path d="M19.9 17.5c.4 1.6 1.2 2.5 2.8 3-1.6.5-2.4 1.4-2.8 3-.4-1.6-1.2-2.5-2.8-3 1.6-.5 2.4-1.4 2.8-3Z"/></svg></button>
   <button id="period" title="Atualização automática ou OFF" aria-label="Atualização automática, 5 minutos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">5m</span></button>
   <button id="manualRefresh" title="Atualizar resultados agora" aria-label="Atualizar resultados agora" onclick="manualRefreshTap()">↻</button>
   <button id="size" title="Tamanho P / M / G" onclick="Native.cycleSpriteSize()">M</button>
@@ -1053,8 +1094,10 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
   const empty=document.getElementById("empty");
   h=Math.ceil(header.getBoundingClientRect().height)+1;
   if(!document.body.classList.contains("results-collapsed")){
-    h+=Math.ceil(spawns.getBoundingClientRect().height)+
-      Math.max(0,Number(window.visualPrefs?.resultGapTop)||0);
+    // Include negative editor gaps too; otherwise the native window keeps
+    // dead transparent pixels below the last sprite in compact mode.
+    h+=Math.max(0,Math.ceil(spawns.getBoundingClientRect().height)+
+      (Number(window.visualPrefs?.resultGapTop)||0));
     if(!cards.length)h+=Math.ceil(empty.getBoundingClientRect().height);
   }
  }
@@ -1723,7 +1766,8 @@ function resultHasVisibleInfo(card,timersEnabled,textEnabled,opts=null,league=""
 // Geometry-only instrument: no Pokemon names, locations, IV or account data.
 window.measureResultSpacing=()=>{
  if(!resultWindow)return null;
- const header=document.getElementById("resultHeader")?.getBoundingClientRect();
+ const header=(document.getElementById("resultIconStack")||
+  document.getElementById("resultHeader"))?.getBoundingClientRect();
  const stages=[...document.querySelectorAll("#spawns .spriteStage")].map(e=>e.getBoundingClientRect());
  if(!header||!stages.length)return {count:0};
  return {count:stages.length,headerToFirstPx:Math.round(stages[0].top-header.bottom),
@@ -1850,6 +1894,9 @@ function draw(){
   const label=[c.name,verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
   const imageUrl=String(c.image||"");
   const hasImage=/^(https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(imageUrl);
+  // Fixed-size art box for everyone; extra reduction only for Minior's
+  // unusually full artwork. Never alter its species identity or image URL.
+  const artFit=/^\s*minior(?:\s|\(|$)/i.test(String(c.name||""))?0.67:0.86;
   const icon='<span class="spriteStage">'+
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" aria-hidden="true">◉</span></span>';
@@ -1866,7 +1913,7 @@ function draw(){
   const ivBadge=!metadataVisible&&showResultText&&verifiedPercent!==null?
    '<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>':"";
   const measuredRow=resultLayout?.rows[i]||row;
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+info+'</button>';
+  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+artFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+info+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
  if(resultWindow){attachLongPress();attachSpriteFeedback();syncTimerTicker();}
