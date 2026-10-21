@@ -1933,7 +1933,7 @@ function draw(){
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
  if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status))document.getElementById("manualRefresh").classList.remove("requested");
  const bell=document.getElementById("bell");
- bell.classList.toggle("generalOn",generalAlerts||favoriteAlertMode!=="off");
+ bell.classList.toggle("generalOn",generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites));
   bell.classList.toggle("generalSilent",!(generalAlerts&&alertMode==="on")&&!(favoriteAlertMode==="on"&&hasFavorites)&&((generalAlerts&&alertMode==="silent")||(favoriteAlertMode==="silent"&&hasFavorites)));
  bell.classList.toggle("permissionMissing",!notificationPermissionGranted);
  bell.setAttribute("aria-pressed",String((generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))&&notificationPermissionGranted));
