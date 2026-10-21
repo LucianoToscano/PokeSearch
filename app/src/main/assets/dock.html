@@ -2406,8 +2406,18 @@ function renderQuickMenu(){
  }
  fit();
 }
+// A sound channel is audibly available only with Android permission and,
+// for favorites, at least one Pokémon on the watch list.
+function audibleAlertState(permission,generalMode,favoriteMode,hasWatched){
+ const newAudible=!!permission&&generalMode==="on";
+ const favoriteAudible=!!permission&&!!hasWatched&&favoriteMode==="on";
+ return {newAudible,favoriteAudible,
+  mutedCount:(newAudible?0:1)+(favoriteAudible?0:1)};
+}
 function refreshQuickMenuStates(){
  if(!controlsWindow)return;
+ const {mutedCount}=audibleAlertState(
+  notificationPermissionGranted,alertMode,favoriteAlertMode,hasFavorites);
  document.querySelectorAll("#quickMenuList button[data-key]").forEach(button=>{
   const id=button.dataset.key, current=quickState(id), state=button.querySelector(".quickState");
   if(state)state.textContent=current;
@@ -2423,9 +2433,6 @@ function refreshQuickMenuStates(){
   }
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
   button.classList.toggle("pending",id==="sh"&&shinyPending);
-   const generalAudio=notificationPermissionGranted&&alertMode==="on";
-   const favoriteAudio=notificationPermissionGranted&&favoriteAlertMode==="on";
-   const mutedCount=(generalAudio?0:1)+(favoriteAudio?0:1);
    button.classList.toggle("silent",false);
    button.classList.toggle("bell-one-muted",id==="bell"&&mutedCount===1);
    button.classList.toggle("bell-both-muted",id==="bell"&&mutedCount===2);

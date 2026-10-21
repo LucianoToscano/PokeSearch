@@ -1823,6 +1823,30 @@ test("UX-NOTIFY-09 bell indicates favorites-only mode even when general is off",
   dock.includes('Novos: "+alertMode+" · Favoritos: "+favoriteAlertMode')&&
   dock.includes('!(favoriteAlertMode==="on"&&hasFavorites)&&((generalAlerts&&alertMode==="silent")||(favoriteAlertMode==="silent"&&hasFavorites))');
 });
+test("UX-NOTIFY-10 bell slash and X honor actual favorite list and Android permission",()=>{
+ const fragment=dock.split("function audibleAlertState(")[1]?.split("function refreshQuickMenuStates(){")[0]||"";
+ if(!fragment)return false;
+ const state=new Function("return function audibleAlertState("+fragment)();
+ const cases=[
+  [true,"on","on",true,0],
+  [true,"off","on",true,1],
+  [true,"on","off",true,1],
+  [true,"silent","on",true,1],
+  [true,"on","silent",true,1],
+  [true,"silent","silent",true,2],
+  [true,"off","off",true,2],
+  [true,"off","on",false,2],
+  [true,"on","on",false,1],
+  [true,"on","off",false,1],
+  [true,"off","on",true,1],
+  [false,"on","on",true,2]
+ ];
+ return cases.every(([permission,general,favorite,watched,expected])=>
+  state(permission,general,favorite,watched).mutedCount===expected)&&
+  dock.includes("const {mutedCount}=audibleAlertState(")&&
+  dock.includes('button.classList.toggle("bell-one-muted",id==="bell"&&mutedCount===1)')&&
+  dock.includes('button.classList.toggle("bell-both-muted",id==="bell"&&mutedCount===2)');
+});
 test("UX-LOCATION-FIX-01 invalid location never clears native confirmation or starts new search",()=>{
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
   ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";
