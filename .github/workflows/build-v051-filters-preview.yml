@@ -15,7 +15,7 @@ permissions:
 jobs:
   build:
     # Isolated branch builds only after explicit owner approval or workflow_dispatch.
-    if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name != 'feature/pokesearch-51081-visual-editor-20261021' || startsWith(github.event.head_commit.message, 'build: approved icon colors') }}
+    if: "${{ github.event_name == 'workflow_dispatch' || github.ref_name != 'feature/pokesearch-51081-visual-editor-20261021' || startsWith(github.event.head_commit.message, 'build: approved icon colors') }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     # Fail closed: no downloadable APK from an ephemeral debug key.
