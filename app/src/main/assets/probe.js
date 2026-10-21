@@ -854,29 +854,27 @@ function locationFields(){
  const coordsPattern=/\b(?:coords?|coordinates?|coordenadas?|latitude|longitude|lat[\s,\/+-]*lng|lat[\s,\/+-]*lon)\b/i;
  let radius=inputs.find(e=>radiusPattern.test(name(e)))||null;
  let coords=inputs.find(e=>e!==radius&&coordsPattern.test(name(e)))||null;
- if((!radius||!coords)&&inputs.length){
+ // Resolve coordinates and radius as a pair first. A general "Distance"
+ // filter may otherwise be mistaken for the Coords radius field.
+ if(inputs.length){
   const roots=[];
   for(const e of inputs){
    for(let p=e.parentElement,depth=0;p&&depth<5;p=p.parentElement,depth++){
     if(!p.querySelectorAll)continue;
     const near=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
     if(near.length!==2||!near.includes(e))continue;
-    const title=text(p).slice(0,140);
-    const coordsEvidence=near.some(v=>coordsPattern.test(name(v)))||
-      /\b(?:coords?|coordinates?|coordenadas?)\b/i.test(title);
-    const radiusEvidence=near.some(v=>radiusPattern.test(name(v)))||
-      /\b(?:radius|raio|distance|dist[aâ]ncia)\b/i.test(title);
-    // Never mistake a nearby IV/CP field for the radius of a location search.
-    if(coordsEvidence&&radiusEvidence)roots.push({near,depth});
+    const pairedCoords=near.find(v=>coordsPattern.test(name(v)));
+    const pairedRadius=near.find(v=>v!==pairedCoords&&radiusPattern.test(name(v)));
+    if(pairedCoords&&pairedRadius)roots.push({near,depth});
    }
   }
   roots.sort((a,b)=>a.depth-b.depth);
   if(roots.length){
    const pair=roots[0].near;
-   if(radius&&!pair.includes(radius))return {coords:null,radius:null};
-   if(coords&&!pair.includes(coords))return {coords:null,radius:null};
-   if(radius&&!coords)coords=pair.find(e=>e!==radius)||null;
-   if(coords&&!radius)radius=pair.find(e=>e!==coords)||null;
+   const pairedCoords=pair.find(e=>coordsPattern.test(name(e)));
+   const pairedRadius=pair.find(e=>e!==pairedCoords&&radiusPattern.test(name(e)));
+   // React may expose unrelated Distance/CP inputs; choose this pair together.
+   if(pairedCoords&&pairedRadius){coords=pairedCoords;radius=pairedRadius;}
   }
  }
  // A radio or select named "Radius" is not an editable numeric field.
