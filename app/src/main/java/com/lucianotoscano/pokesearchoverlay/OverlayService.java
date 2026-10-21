@@ -196,6 +196,12 @@ public class OverlayService extends Service {
         Math.max(1,Math.min(198,screenWidthDp()-8)):
         Math.max(1,Math.min(330,screenWidthDp()-8));} // twelve compact icons, single-row thin menu
     private final Handler handler=new Handler(Looper.getMainLooper());
+    private final Runnable friendsExpiryCheck = new Runnable() {
+        @Override public void run() {
+            if (!FriendsExpiryGuard.isAllowed(OverlayService.this)) { stopSelf(); return; }
+            handler.postDelayed(this,15_000L);
+        }
+    };
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams,menuParams,resultParams;
     private FrameLayout root,detailRoot,menuRoot,resultRoot;
@@ -752,6 +758,7 @@ public class OverlayService extends Service {
     }
     @Override public void onCreate(){
         super.onCreate();
+        if (!FriendsExpiryGuard.isAllowed(this)) { stopSelf(); return; }
         if (!IntegrityGuard.verify(this)) {
             BugReport.log(this,"SECURITY","Falha de integridade do pacote");
             android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
@@ -769,6 +776,7 @@ public class OverlayService extends Service {
                 .setContentText("Toque para abrir PokeSearch")
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(73,note);
+        handler.postDelayed(friendsExpiryCheck,15_000L);
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         try{visualPrefsJson=normalizeVisualPrefs(
             getSharedPreferences("prefs",0).getString("visualPrefsJson","{}")).toString();}
@@ -2674,6 +2682,7 @@ public class OverlayService extends Service {
         update(); // Local UI only; does not call refresh or navigate the website.
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
+        if (!FriendsExpiryGuard.isAllowed(this)) { stopSelf(); return START_NOT_STICKY; }
         String action=i==null||i.getAction()==null?"":i.getAction();
         if("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS".equals(action)){
             syncPreferencesWithoutSearch();
