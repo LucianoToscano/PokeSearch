@@ -198,6 +198,35 @@ test("favorite star is yellow on, white silent and absent off independently of b
  assert.ok(css.includes("content:\"★\""));
  assert.ok(!css.includes("bell-sound-both .quickGlyph::after"));
 });
+test("bell transitions remove stale star classes across all 18 sound states",()=>{
+ const logic=dock.split("function audibleAlertState(")[1]
+  ?.split("function uxPanel(")[0]||"";
+ assert.ok(logic.includes("function refreshQuickMenuStates(){"));
+ const run=new Function("document","controlsWindow","notificationPermissionGranted",
+  "alertMode","favoriteAlertMode","hasFavorites","quickState",
+  "function audibleAlertState("+logic+"\nrefreshQuickMenuStates()");
+ const classes=new Set();
+ const bell={
+  dataset:{key:"bell"},
+  getAttribute:()=> "Alertas",
+  querySelector:()=>null,
+  classList:{toggle:(key,on)=>on?classes.add(key):classes.delete(key)},
+  title:""
+ };
+ const doc={querySelectorAll:()=>[bell]};
+ for(const permission of [true,false])
+ for(const general of ["on","silent","off"])
+ for(const favorite of ["on","silent","off"]){
+  run(doc,true,permission,general,favorite,true,()=> "");
+  assert.equal(classes.has("bell-star-on"),favorite==="on");
+  assert.equal(classes.has("bell-star-silent"),favorite==="silent");
+  assert.equal(classes.has("bell-permission-blocked"),!permission&&(general!=="off"||favorite!=="off"));
+  assert.ok(!(classes.has("bell-star-on")&&classes.has("bell-star-silent")));
+  assert.ok(bell.title.includes("Novos: "+general+" · Favoritos: "+favorite));
+ }
+ assert.equal(classes.has("bell-star-on"),false);
+ assert.equal(classes.has("bell-star-silent"),false);
+});
 test("bell shows independent white/gold/star/silent/permission patterns",()=>{
  assert.ok(dock.includes('button.classList.toggle("bell-sound-new",id==="bell"&&bellState.newOnly)'));
  assert.ok(dock.includes('button.classList.toggle("bell-sound-favorites",id==="bell"&&bellState.favoritesOnly)'));
