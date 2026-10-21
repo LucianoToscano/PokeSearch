@@ -124,8 +124,14 @@ public class OverlayService extends Service {
     }
     private int dockDp(){return spriteSize+8;}
     private int resultWidthDp(){
-        return visualResultsHorizontal&&!resultCollapsed?Math.max(dockDp(),screenWidthDp()-16):
-            dockDp()+resultMetadataWidthDp;
+        if(visualResultsHorizontal&&!resultCollapsed){
+            // Never cover the full screen with an invisible touch-blocking overlay
+            // when the site returned only one or two Pokemon.
+            int columns=Math.max(1,Math.min(5,count()));
+            int perCard=dockDp()+resultMetadataWidthDp;
+            return Math.max(dockDp(),Math.min(screenWidthDp()-16,perCard*columns));
+        }
+        return dockDp()+resultMetadataWidthDp;
     }
     private String resultDisplayOptionsJson(){
         return "{\"count\":"+resultShowCount+
@@ -437,6 +443,9 @@ public class OverlayService extends Service {
         return spriteSize+3;
     }
     private void update(){
+        // Result count changes the native horizontal hit area, not only the HTML.
+        if(visualResultsHorizontal&&resultParams!=null&&resultParams.width!=dp(resultWidthDp()))
+            updateResultsWidth();
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
                 JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+")";
         js(panel,panelLoaded,data);
