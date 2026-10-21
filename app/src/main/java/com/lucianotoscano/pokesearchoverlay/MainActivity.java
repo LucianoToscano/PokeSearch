@@ -1346,8 +1346,81 @@ public class MainActivity extends Activity {
         if(Build.VERSION.SDK_INT>=26)startForegroundService(i);else startService(i);
         moveTaskToBack(true);
     }
+
+    // Launched only after user interaction with the Notifications menu.
+    private void beginAlertToneChoice(String target){
+        if("general".equals(target)||"favorites".equals(target)){
+            openAlertRingtonePicker(target,"");
+            return;
+        }
+        if(!"species".equals(target))return;
+        java.util.LinkedHashMap<String,String> names=WatchAlerts.names(
+            getSharedPreferences("prefs",0).getString(WatchAlerts.PREF_LIST,""));
+        if(names.isEmpty()){
+            Toast.makeText(this,"Adicione um Pokémon aos favoritos primeiro",Toast.LENGTH_LONG).show();
+            return;
+        }
+        String[] options=names.values().toArray(new String[0]);
+        new AlertDialog.Builder(this).setTitle("Som de qual Pokémon favorito?")
+            .setItems(options,(dialog,which)->{
+                if(which>=0&&which<options.length)
+                    openAlertRingtonePicker("species",options[which]);
+            }).setNegativeButton("Cancelar",null).show();
+    }
+    private void openAlertRingtonePicker(String target,String pokemon){
+        alertToneTarget=target;alertToneSpecies=pokemon;
+        Uri existing=WatchAlerts.selectedTone(this,
+            !"general".equals(target),"species".equals(target)?pokemon:null);
+        Intent intent=new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
+        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE,RingtoneManager.TYPE_NOTIFICATION);
+        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE,
+            "species".equals(target)?"Som · "+pokemon:
+            "favorites".equals(target)?"Som de favoritos":"Som de novos Pokémon");
+        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT,true);
+        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT,false);
+        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,existing);
+        try{startActivityForResult(intent,305);}
+        catch(Exception e){
+            alertToneTarget="";alertToneSpecies="";
+            Toast.makeText(this,"Seletor de sons indisponível no Android",Toast.LENGTH_LONG).show();
+        }
+    }
+    private void saveChosenAlertTone(Intent data){
+        String target=alertToneTarget,species=alertToneSpecies;
+        alertToneTarget="";alertToneSpecies="";
+        if(data==null||target.isEmpty())return;
+        Uri uri=data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
+        if(uri==null)return;
+        String scheme=uri.getScheme();
+        if(!"content".equals(scheme)&&!"android.resource".equals(scheme))return;
+        String chosen=uri.equals(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))?
+            "":uri.toString();
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        if("general".equals(target)||"favorites".equals(target)){
+            prefs.edit().putString("general".equals(target)?
+                WatchAlerts.PREF_GENERAL_TONE:WatchAlerts.PREF_FAVORITE_TONE,chosen).apply();
+        }else if("species".equals(target)&&!species.isEmpty()){
+            try{
+                JSONObject own=new JSONObject(prefs.getString(WatchAlerts.PREF_SPECIES_TONES,"{}"));
+                String key=WatchAlerts.normalized(species);
+                if(!WatchAlerts.watched(this).contains(key))return;
+                if(chosen.isEmpty())own.remove(key);else own.put(key,chosen);
+                prefs.edit().putString(WatchAlerts.PREF_SPECIES_TONES,own.toString()).apply();
+            }catch(Exception e){
+                Toast.makeText(this,"Não foi possível salvar o som individual",Toast.LENGTH_LONG).show();
+                return;
+            }
+        }
+        Toast.makeText(this,"Som escolhido para futuras notificações",Toast.LENGTH_LONG).show();
+        syncOverlayPreferences();
+    }
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
+        if(req==305){
+            if(result==RESULT_OK)saveChosenAlertTone(data);
+            else{alertToneTarget="";alertToneSpecies="";}
+            return;
+        }
         if(req==101&&Settings.canDrawOverlays(this))startOverlay();
         if(req==302){
             if(result==RESULT_OK&&data!=null&&data.getData()!=null&&!pendingExportText.isEmpty()){
