@@ -1529,10 +1529,10 @@ function resultHasVisibleInfo(card,timersEnabled,textEnabled,opts=null,league=""
  return (timersEnabled&&Number(card.expiresAtMs)>0)||
   (textEnabled&&verifiedSpawnIvPercent(card)!==null);
 }
-function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,textEnabled,opts=null,league=""){
+function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,textEnabled,opts=null,league="",preparedLines=null){
  const size=Math.max(18,Number(chosenSprite)||45);
- const natural=items.slice(0,10).map(card=>{
-  const lines=opts?resultLines(card,opts,league):[];
+ const natural=items.slice(0,10).map((card,index)=>{
+   const lines=preparedLines?preparedLines[index]:(opts?resultLines(card,opts,league):[]);
   // UX-SPRITE-GAP-02: metadata is independently scrollable inside the side strip.
   // Never stretch the Pokemon's vertical slot to fit all enabled rank lines.
   if(lines.length)return size+3;
