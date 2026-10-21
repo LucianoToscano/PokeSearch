@@ -1593,13 +1593,20 @@ function locationPanelFeedback(){
  const toggle=panel.querySelector("#locActiveSwitch");
  const radius=panel.querySelector("#locRadiusValue");
  if(!hint||!toggle||!radius)return;
+ // Preserve an unsubmitted radius draft across asynchronous native updates.
+ // Only release it once the requested radius has been confirmed on the site.
+ if(radius.dataset.locationDraft==="true"&&locationEnabled&&locationVerified&&
+    radius.value.trim()!==""&&Number(radius.value)===locationRadius)
+   delete radius.dataset.locationDraft;
  toggle.textContent=locationEnabled?"ON":"OFF";
  toggle.className=locationEnabled?"locActive":"locOff";
  toggle.setAttribute("aria-checked",String(locationEnabled));
  // Never overwrite a number being typed; radiusField is now a real input.
- if(document.activeElement!==radius)radius.value=String(locationRadius);
+ if(document.activeElement!==radius&&radius.dataset.locationDraft!=="true")
+   radius.value=String(locationRadius);
  const radiusSlider=panel.querySelector('input[type="range"]');
- if(radiusSlider&&document.activeElement!==radiusSlider)radiusSlider.value=String(locationRadius);
+ if(radiusSlider&&document.activeElement!==radiusSlider&&radius.dataset.locationDraft!=="true")
+   radiusSlider.value=String(locationRadius);
  const error=/localiza(?:ção|cao) (?:não|nao) (?:aplicada|confirmada)|localiza(?:ção|cao) residual/i.test(status);
  hint.textContent=error?"⚠ "+status:
   locationEnabled?(locationVerified?"✓ Localização confirmada na busca · "+locationRadius+" km":
@@ -1655,8 +1662,9 @@ function renderLocationChoices(){
  const unit=make("span","","km");label.append(labelName,radiusField,unit);
  const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);
  slide.setAttribute("aria-label","Ajustar raio de 0 a 1000");
- slide.oninput=()=>{radiusField.value=slide.value;};
+ slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";};
  radiusField.oninput=()=>{
+  radiusField.dataset.locationDraft="true";
   const number=Number(radiusField.value);
   if(Number.isInteger(number)&&number>=0&&number<=1000)slide.value=String(number);
  };
@@ -1664,6 +1672,8 @@ function renderLocationChoices(){
  const actions=make("div","locLine");const apply=make("button","locSave","✓ Aplicar");
  const hide=make("button","locHide","Ocultar");
  const disable=()=>{
+  // OFF is explicit: discard the unsent radius draft, not saved site filters.
+  delete radiusField.dataset.locationDraft;
   message.textContent="⌛ Desativando filtro geográfico...";
   Native.setLocation(false,"",0);
  };
