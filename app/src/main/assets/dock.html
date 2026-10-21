@@ -818,15 +818,15 @@ body.controls-window #controls #bell.generalSilent::after{
  width:17px;height:2.5px;border-radius:2px;background:#ff4458;
  transform:translate(-50%,-50%) rotate(-43deg);pointer-events:none;
 }
-/* VISUAL-129: container surrounds the gray 12-button ribbon.
-   The user-selected menu theme/transparency still controls its background. */
+/* UX-MENU-FLAT-02: preserve the row's geometry, never paint a shared
+   ribbon behind its individually transparent/opaque buttons. */
 body.controls-window #quickMenuList,
 body.controls-window #menu.subview #quickMenuList,
 body.controls-window.popup-above #quickMenuList{
  box-sizing:border-box!important;
- background:var(--visual-menu-bg,rgba(20,26,35,.88))!important;
- border:1px solid #ffffff32!important;border-radius:9px!important;
- box-shadow:0 4px 12px #0007!important;padding:1px 2px!important;
+ background:transparent!important;
+ border:0!important;border-radius:0!important;
+ box-shadow:none!important;padding:0 2px!important;
 }
 /* Active states never tint button surfaces/borders green or gold. */
 body.controls-window #quickMenuList button.selected,
@@ -888,14 +888,19 @@ body.controls-window #quickMenuList button[data-key="bell"].bell-sound-new,
 body.controls-window #quickMenuList button[data-key="bell"].bell-sound-both{
  color:#ffd64b!important;
 }
-body.controls-window #quickMenuList button[data-key="bell"].bell-sound-favorites .quickGlyph::after,
-body.controls-window #quickMenuList button[data-key="bell"].bell-sound-both .quickGlyph::after{
- content:"★";position:absolute;z-index:3;left:50%;top:48%;color:#ffdc63;
+/* Star is a separate indicator for FAVORITES, not the general channel.
+   ON = yellow, SILENT = white, OFF = no star. */
+body.controls-window #quickMenuList button[data-key="bell"].bell-star-on .quickGlyph::after,
+body.controls-window #quickMenuList button[data-key="bell"].bell-star-silent .quickGlyph::after{
+ content:"★";position:absolute;z-index:3;left:50%;top:48%;
  font:bold 9px/1 Arial,sans-serif;transform:translate(-50%,-50%);
  text-shadow:0 0 2px #15181d;pointer-events:none;
 }
-body.controls-window #quickMenuList button[data-key="bell"].bell-sound-both .quickGlyph::after{
- color:#fff6ce;
+body.controls-window #quickMenuList button[data-key="bell"].bell-star-on .quickGlyph::after{
+ color:#ffdc63;
+}
+body.controls-window #quickMenuList button[data-key="bell"].bell-star-silent .quickGlyph::after{
+ color:#fff;
 }
 body.controls-window #quickMenuList button[data-key="bell"].bell-silent-mode .quickGlyph::before{
  content:"";position:absolute;right:0;bottom:0;z-index:4;width:4px;height:4px;
@@ -943,7 +948,35 @@ body.controls-window #choices .locRadiusNumber{
  background:#17191bdc!important;color:#fff!important;
  border:1px solid #96999c88!important;text-align:right!important;
  font-size:12px!important;
-}</style></head><body>
+}
+/* UX-MENU-FLAT-02 final override: legacy and selected-state rules must
+   not restore borders, shadows or a painted toolbar container. */
+body.controls-window #menu,
+body.controls-window #quickMenuList,
+body.controls-window #menu.subview #quickMenuList,
+body.controls-window.popup-above #quickMenuList{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+body.controls-window #quickMenuList .quickRow,
+body.controls-window #quickMenuList .quickFooterAction,
+body.controls-window #quickMenuList button[data-key],
+body.controls-window #quickMenuList button[data-key].selected,
+body.controls-window.visual-light-menu #quickMenuList button[data-key]{
+ background:var(--visual-menu-button-bg,#28292cce)!important;
+ border:0!important;box-shadow:none!important;
+ border-radius:6px!important;background-clip:padding-box!important;
+}
+/* The hidden classic toolbar also follows the same favorites star semantics. */
+body.controls-window #controls #bell.bell-star-on,
+body.controls-window #controls #bell.bell-star-silent{position:relative}
+body.controls-window #controls #bell.bell-star-on::after,
+body.controls-window #controls #bell.bell-star-silent::after{
+ content:"★";position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);
+ font:bold 9px/1 Arial,sans-serif;pointer-events:none;
+}
+body.controls-window #controls #bell.bell-star-on::after{color:#ffdc63}
+body.controls-window #controls #bell.bell-star-silent::after{color:#fff}
+</style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
  <div id="menu"><div id="quickHead"><strong>⚙ PokeSearch</strong><button id="quickBack" type="button" aria-label="Voltar ou recolher">✕</button></div><div id="quickMenuList"><div id="quickRows"></div><div id="quickUtilities"></div><div id="quickFooter"></div></div><div id="controls">
@@ -2052,6 +2085,8 @@ function draw(){
  bell.classList.toggle("bell-sound-new",bellVisual.newOnly);
  bell.classList.toggle("bell-sound-favorites",bellVisual.favoritesOnly);
  bell.classList.toggle("bell-sound-both",bellVisual.both);
+ bell.classList.toggle("bell-star-on",bellVisual.favoriteStarOn);
+ bell.classList.toggle("bell-star-silent",bellVisual.favoriteStarSilent);
  bell.classList.toggle("permissionMissing",!notificationPermissionGranted);
  bell.setAttribute("aria-pressed",String((generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))&&notificationPermissionGranted));
  bell.title=!notificationPermissionGranted?"Alertas bloqueados no Android · toque para configurar":"Novos: "+alertMode+" · Favoritos: "+favoriteAlertMode+" · toque para configurar";
@@ -2476,6 +2511,8 @@ function notificationBellVisual(permission,generalMode,favoriteMode){
  const newSound=!!permission&&generalMode==="on";
  const favoriteSound=!!permission&&favoriteMode==="on";
  return {newSound,favoriteSound,
+  favoriteStarOn:favoriteMode==="on",
+  favoriteStarSilent:favoriteMode==="silent",
   newOnly:newSound&&!favoriteSound,
   favoritesOnly:favoriteSound&&!newSound,
   both:newSound&&favoriteSound,
@@ -2507,6 +2544,8 @@ function refreshQuickMenuStates(){
    button.classList.toggle("bell-sound-new",id==="bell"&&bellState.newOnly);
    button.classList.toggle("bell-sound-favorites",id==="bell"&&bellState.favoritesOnly);
    button.classList.toggle("bell-sound-both",id==="bell"&&bellState.both);
+   button.classList.toggle("bell-star-on",id==="bell"&&bellState.favoriteStarOn);
+   button.classList.toggle("bell-star-silent",id==="bell"&&bellState.favoriteStarSilent);
    button.classList.toggle("bell-silent-mode",id==="bell"&&bellState.silent);
    button.classList.toggle("bell-permission-blocked",id==="bell"&&bellState.blocked);
    if(id==="bell")button.title+=" · Novos: "+alertMode+" · Favoritos: "+
