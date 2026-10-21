@@ -51,12 +51,12 @@ public class OverlayService extends Service {
     private JSONObject normalizeVisualPrefs(String raw) throws org.json.JSONException {
         if(raw==null||raw.length()>5000)throw new org.json.JSONException("Visual settings too large");
         JSONObject input=new JSONObject(raw),clean=new JSONObject();
-        String[] keys={"resultGapTop","resultGapBetween","resultSpriteScale",
+        String[] keys={"resultGapTop","resultGapBetween","resultSpriteScale","headerIconY",
             "resultsOffsetX","resultsOffsetY","menuOffsetX","menuOffsetY",
-            "gearMenuGap","menuItemGap","resultsTransparency","menuTransparency"};
-        int[][] limits={{0,80,0},{0,65,31},{70,160,100},
+            "gearMenuGap","menuItemGap","popupWidth","popupHeight","resultsTransparency","menuTransparency"};
+        int[][] limits={{0,80,0},{0,65,31},{70,160,100},{-10,20,4},
             {-200,200,0},{-350,350,0},{-200,200,0},{-350,350,0},
-            {0,80,0},{0,16,0},{0,100,100},{0,100,35}};
+            {0,80,0},{0,16,0},{160,330,232},{140,420,390},{0,100,100},{0,100,35}};
         for(int i=0;i<keys.length;i++)clean.put(keys[i],
             vInt(input,keys[i],limits[i][2],limits[i][0],limits[i][1]));
         for(String key:new String[]{"resultsOrientation","menuOrientation"}){
