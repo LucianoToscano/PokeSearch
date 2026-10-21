@@ -855,6 +855,12 @@ function locationFields(){
  // The official site may show only a numeric lat,lng placeholder for Coords.
  const coordExample=/^\s*[-+]?\d{1,2}(?:\.\d+)?\s*[,;]\s*[-+]?\d{1,3}(?:\.\d+)?\s*$/;
  const isCoords=e=>coordsPattern.test(name(e))||coordExample.test(e.getAttribute("placeholder")||"");
+ // COORDS-11: exactly the two official site placeholders take precedence.
+ // Other filters can have their own Radius and Distance inputs.
+ const siteCoords=inputs.filter(e=>coordExample.test(e.getAttribute("placeholder")||""));
+ const siteRadius=inputs.filter(e=>/^\s*radius\s*\(\s*km\b/i.test(e.getAttribute("placeholder")||""));
+ if(siteCoords.length===1&&siteRadius.length===1&&siteCoords[0]!==siteRadius[0])
+  return {coords:siteCoords[0],radius:siteRadius[0]};
  // Prefer Radius over unrelated Distance; pair-specific lookup remains authoritative.
  let radius=inputs.find(e=>/\b(?:radius|raio)\b/i.test(name(e)))||null;
  let coords=inputs.find(e=>e!==radius&&isCoords(e))||null;
