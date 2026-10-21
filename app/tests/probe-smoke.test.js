@@ -244,7 +244,8 @@ checked++;
 const spawn="Tangela\\n#114 Female M\\nInfestation / Solar Beam\\nCP\\n404\\nLVL\\n7\\nIV\\n67% (1/15/14)\\nLOCATION\\nBron, Rhone, France\\nDESPAWN\\n57:57\\nGet coords";
 const league=run("collect","gl",false,{switch:false,pvp:{rank:"1",league:"Great League",prior:"Yes"},spawn});
 assert.equal(league.cards.length,1,"GL#1: card without a rank label must be accepted only when form confirms rank 1");
-assert.equal(league.cards[0].rank,"1");
+assert.equal(league.cards[0].rank,"","Verified Top 1 is a search ceiling, not a proven individual rank");
+assert.equal(league.cards[0].rankLimit,1,"Verified Top 1 threshold is separately retained");
 assert.equal(league.cards[0].rankSource,"verified-site-filter");
 checked++;
 const top50=run("collect","gl",false,
