@@ -2494,7 +2494,7 @@ function renderAlertsChoices(){
  uxOption(panel,"🎵 Som de cada Pokémon favorito",
   individualToneCount?individualToneCount+" configurado(s)":"Escolher",()=>Native.pickAlertTone("species"));
  const note=document.createElement("div");note.className="uxNote";
- note.textContent="🎵 Sons personalizados: toque em Padrão/Personalizado → Biblioteca PokeSearch (25 sons) ou Escolher áudio MP3/OGG → Arquivos/Google Drive. Para Pikachu, Aipom ou outro Pokémon, cadastre-o em Favoritos e use Som de cada Pokémon favorito. Novos em OFF e Favoritos em Som = só favoritos com áudio. Sem som mantém aviso visual; OFF não notifica.";
+ note.textContent="🎵 Sons personalizados: toque em Padrão/Personalizado → Biblioteca PokeSearch (24 sons) ou Escolher áudio MP3/OGG → Arquivos/Google Drive. Para Pikachu, Aipom ou outro Pokémon, cadastre-o em Favoritos e use Som de cada Pokémon favorito. Novos em OFF e Favoritos em Som = só favoritos com áudio. Sem som mantém aviso visual; OFF não notifica.";
  panel.appendChild(note);
  for(const [label,action] of [
   ["🔔 Testar aviso geral","testGeneralNotification"],
