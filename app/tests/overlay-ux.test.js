@@ -1781,6 +1781,11 @@ test("UX-MENU-ANCHOR-01 popups track their own launcher within native window",()
   dock.includes('positionPopupUnderTrigger();')&&
   dock.includes('style.removeProperty("left")');
 });
+test("PSC-FILTER-01 explicit reset needs site control and cannot assume neutral",()=>{
+ return probe.includes('if(!e)return false; // Explicitly requested selection/reset')&&
+  probe.includes('if(v===null)return false; // Cannot prove reset/selection')&&
+  probe.includes('if(!input){failed.push(key);continue;} // Includes explicitly requested numeric resets.');
+});
 test("UX-LOCATION-RETRY-01 same unverified coordinates can retry safely",()=>{
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
   ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";

@@ -2968,3 +2968,11 @@ Após montar a navegação da página completa, a revisão encontrou um erro de 
 **Alterações:** CSS horizontal agora força `padding-top:0!important;padding-bottom:0!important`; não modifica sprites, resolução, PNG, tamanhos, efeitos nem 10 posições. `window.measureResultSpacing()` permite ler apenas geometria do header e rects de sprites: `headerToFirstPx` e `stageGapPx`, sem coletar coordenadas, IV, nome ou conta, para reproduzir a diferença entre medidas CSS e Android durante homologação. Nenhuma chamada automática/rede ou alerta novo.
 
 **QA:** dois contratos novos do editor, agora 21, aprovados localmente; o teste visual real de Pixel/alpha da arte e de `WindowManager` em aparelho ainda falta e pode revelar espaço interno do PNG, não mensurável por CSS. Não alterar preferência salva do usuário sem seu JSON. Nenhum APK, merge ou workflow ativado.
+
+### 12.126 ETAPA-5 — confirmação estrita dos filtros auxiliares (21/10/2026)
+
+**Causa identificada:** quando o usuário removia explicitamente um critério previamente ativo (`clearExtraKeys`), `extraSelect(key,"")` e `extraMatches(key,"")` respondiam verdadeiro se o controle do site desaparecesse. O mesmo ocorria com números CP/Level ao limpar campo ausente. Isso comunicava neutralização sem evidência e podia contaminar buscas seguintes.
+
+**Correção:** para um critério *explicitamente solicitado ou explicitamente limpo*, `probe.js` agora exige controle do DOM visível e valor neutralizado comprovado. Na ausência do campo, `extras()` devolve falha e não apresenta Search como confirmado. Opções vazias nunca solicitadas continuam ignoradas e não bloqueiam consultas gerais. Demais filtros (Raw A/D/S, IV%, GL, UL, Shiny, forma, tamanho, sexo, clima, ordenação), suas cores e defaults permanecem inalterados; não presumimos que o site exponha todos os controles em todas as abas.
+
+**Risco e testes:** regressão fail-closed `PSC-FILTER-01` adicionada a `overlay-ux.test.js` e aprovada localmente. Um filtro que React oculta temporariamente agora pode requerer espera/reabertura e produzir erro visível; preferível a afirmar falsamente que foi removido. Confirmação no site autenticado, todos os modos e aparelho permanece pendente. Sem build, sem merge.

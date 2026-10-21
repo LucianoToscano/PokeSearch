@@ -491,7 +491,7 @@ function isNeutral(v){
 }
 function extraSelect(key,want){
  const label=EXTRA_LABELS[key],e=extraControl(label);
- if(!e)return !want;
+ if(!e)return false; // Explicitly requested selection/reset requires an observable site control.
  const actual=extraValue(key);
  if(!want){
   if(isNeutral(actual))return true;
@@ -516,7 +516,7 @@ function extraSelect(key,want){
 }
 function extraMatches(key,want){
  const v=extraValue(key);
- if(v===null)return !want;
+ if(v===null)return false; // Cannot prove reset/selection without the live control.
  if(!want)return isNeutral(v);
  return v.toLowerCase()===clean(want).toLowerCase();
 }
@@ -577,8 +577,7 @@ function extras(action){
  if(!transientPending)for(const key of extraNumberKeys()){
   const want=String(filters[key]||"").trim(),input=extraNumberField(key);
   if(!want&&!resetKeys.includes(key))continue;
-  if(want&&!input){failed.push(key);continue;}
-  if(!input)continue;
+  if(!input){failed.push(key);continue;} // Includes explicitly requested numeric resets.
   const current=String(input.value||"").trim();
    if(current===want)continue;
    if(action!=="apply"){failed.push(key);continue;}
