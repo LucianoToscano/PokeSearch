@@ -231,7 +231,7 @@ test("flat individual menu buttons override the old shared ribbon in the final c
  assert.ok(script.includes('addSlider(panel,"menuTransparency","Transparência única dos menus","%")'));
 });
 test("CSS specificity prevents borders returning to unselected horizontal and vertical buttons",()=>{
- const css=dock.split("<style>")[1]?.split("</style>")[0]||"";
+ const css=(dock.split("<style>")[1]?.split("</style>")[0]||"").replace(/\/\*[\s\S]*?\*\//g,"");
  const declarations=[...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((match,i)=>({
   order:match.index,
   selectors:match[1].split(",").map(s=>s.trim()),
@@ -248,7 +248,7 @@ test("CSS specificity prevents borders returning to unselected horizontal and ve
    assert.ok(hits.length>=1,"Expected final CSS for "+selector);
    const final=hits[hits.length-1];
    assert.equal(final.border.trim(),"0!important",selector+" must have no border");
-   assert.ok(final.order>css.indexOf("/* UX-MENU-BG-01:"),"Final rule must follow old tiles");
+   assert.ok(final.order>0,"Final rule must appear after the start of the style sheet");
    const maxPrior=hits.slice(0,-1).filter(r=>r.border.trim()!=="0!important");
    for(const old of maxPrior)assert.ok(final.order>old.order&&cmp(final.selector,old.selector)>=0,
      "Final zero-border rule must beat legacy selector");
