@@ -98,7 +98,7 @@ public final class WatchAlerts {
     private static boolean send(Context context,String title,String info,int id){
         if(!permissionGranted(context))return false;
         boolean quiet="silent".equals(context.getSharedPreferences("prefs",0)
-            .getString("alertsMode","off"));
+            .getString("favoriteSoundMode","on"));
         if(quiet)ensureSilentChannel(context);else ensureChannel(context);
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager==null)return false;

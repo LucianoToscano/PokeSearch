@@ -598,6 +598,12 @@ body.result-window .spawnInfo .timer{
  position:static;display:inline;padding:0;margin:0;min-width:0;
  font:700 9px/11px Roboto,Arial,sans-serif;text-align:left;
 }
+/* AUD-SONS-01: muted sound class count on the bell */
+body.controls-window #bell,body.controls-window #quickMenuList button[data-key="bell"]{position:relative}
+body.controls-window #bell[data-muted-count="1"]::after,body.controls-window #quickMenuList button[data-key="bell"][data-muted-count="1"]::after{
+content:"╱";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;pointer-events:none;text-shadow:0 1px 2px #111}
+body.controls-window #bell[data-muted-count="2"]::after,body.controls-window #quickMenuList button[data-key="bell"][data-muted-count="2"]::after{
+content:"×";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;pointer-events:none;text-shadow:0 1px 2px #111}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -776,7 +782,7 @@ let resultDisplayOptions={count:true,name:false,number:false,gender:false,size:f
  overallRank:false,speciesIvRank:false,overallRankGl:false,overallRankUl:false,overallRankMl:false,
  speciesIvRankGl:false,speciesIvRankUl:false,speciesIvRankMl:false};
 let displayedMetadataWidth=0;
-let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
+let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off",favoriteSoundMode="on";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=false,advancedExpanded=false;
@@ -1701,9 +1707,9 @@ function updateTimers(){
  });
 }
 if(resultWindow)setInterval(updateTimers,1000);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,favoriteAudioMode="on")=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
- const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled]);
+ const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteSoundMode]);
  cards=Array.isArray(a)?a.slice(0,10):[];
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
@@ -1752,6 +1758,8 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  showResultText=!!textVisible;
  notificationPermissionGranted=!!permissionGranted;
  watchAlertsEnabled=!!favoriteAlertsEnabled;
+ favoriteSoundMode=favoriteAudioMode==="silent"?"silent":"on";
+ document.getElementById("bell").dataset.mutedCount=String(Number(alertMode!=="on")+Number(!watchAlertsEnabled||favoriteSoundMode!=="on"));
  if(controlsWindow&&menuPreferences&&typeof menuPreferences==="object"){
   const p=normalizedQuickPrefs(menuPreferences);
   if(JSON.stringify(quickPrefs)!==JSON.stringify(p)){quickPrefs=p;renderQuickMenu();}
@@ -1762,7 +1770,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  if(controlsWindow&&choiceOpen==="info"&&
     JSON.stringify(resultDisplayOptions)!==previousDisplayPrefs)renderInfoChoices();
  if(controlsWindow&&choiceOpen==="alerts"&&
-    JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled])!==previousAlertsState)
+    JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteSoundMode])!==previousAlertsState)
   renderAlertsChoices();
 };
 window.menuSide=side=>document.body.classList.toggle("menu-left",menuOpen&&side==="left");
@@ -2013,6 +2021,7 @@ function refreshQuickMenuStates(){
  document.querySelectorAll("#quickMenuList button[data-key]").forEach(button=>{
   const id=button.dataset.key, current=quickState(id), state=button.querySelector(".quickState");
   if(state)state.textContent=current;
+  if(id==="bell")button.dataset.mutedCount=String(Number(alertMode!=="on")+Number(!watchAlertsEnabled||favoriteSoundMode!=="on"));
   button.title=button.getAttribute("aria-label")+(current?" · "+current:"");
   if(id==="mode"){
    const art=getModeMenuIcon(mode,false,searchSettings);
@@ -2051,37 +2060,34 @@ function uxOption(panel,label,value,callback){
  line.append(name,button);panel.appendChild(line);return button;
 }
 function renderAlertsChoices(){
- const panel=uxPanel("NOTIFICAÇÕES");
+ const panel=uxPanel("SONS E ALERTAS");
  const permission=document.createElement("div");permission.className="uxNote";
- permission.textContent=notificationPermissionGranted?
-  "✓ Android permite notificações":"⚠ Android bloqueia notificações; habilite a permissão.";
+ permission.textContent=notificationPermissionGranted?"✓ Notificações permitidas":"⚠ Permissão do Android não concedida";
  panel.appendChild(permission);
- const head=document.createElement("div");head.className="uxSubheading";
- head.textContent="Novos Pokémon (filtros confirmados)";panel.appendChild(head);
- for(const [id,name] of [["on","🔔 Som"],["silent","🔕 Silencioso"],["off","Desligado"]]){
-  uxOption(panel,name,alertMode===id?"✓":"–",()=>Native.setAlertMode(id));
- }
- const favTitle=document.createElement("div");favTitle.className="uxSubheading";
- favTitle.textContent="Favoritos cadastrados";panel.appendChild(favTitle);
- uxOption(panel,"Alertar ao encontrar favorito nos filtros",
-  watchAlertsEnabled?"✓":"–",()=>Native.toggleWatchAlerts());
+ const channel=(title,choices,current,apply,test,kind)=>{
+  const h=document.createElement("div");h.className="uxSubheading";h.textContent=title;panel.appendChild(h);
+  for(const [value,label] of choices)uxOption(panel,label,current===value?"✓":"–",()=>apply(value));
+  const row=document.createElement("div");row.className="uxSetting";
+  const a=document.createElement("button");a.textContent="▶ Testar";a.onclick=()=>Native[test]();
+  const c=document.createElement("button");c.textContent="♫ Som";c.title="Escolher toque do canal no Android";
+  c.onclick=()=>Native.openSoundChannel(kind);row.append(a,c);panel.appendChild(row);
+ };
+ channel("🔔 Novos Pokémon",[["on","Som ligado"],["silent","Silencioso"],["off","Desligado"]],
+  alertMode,v=>Native.setAlertMode(v),"testGeneralNotification","general");
+ const h=document.createElement("div");h.className="uxSubheading";h.textContent="☆ Favoritos";panel.appendChild(h);
+ uxOption(panel,"Alertas de favoritos",watchAlertsEnabled?"✓ ON":"OFF",()=>Native.toggleWatchAlerts());
+ channel("Som dos favoritos",[["on","Som ligado"],["silent","Silencioso"]],
+  favoriteSoundMode,v=>Native.setFavoriteSoundMode(v),"testNotification","favorites");
  const note=document.createElement("div");note.className="uxNote";
- note.textContent="Favoritos funcionam independentemente dos avisos gerais. Top N não comprova IV100 nem Rank IV #1. O toque de cada canal é configurado no Android.";
+ note.textContent="Cada canal funciona sozinho. Em ♫ Som escolha um toque no Android; seus MP3 precisam estar disponíveis nos sons do aparelho.";
  panel.appendChild(note);
- for(const [label,action] of [
-  ["🔔 Testar aviso geral","testGeneralNotification"],
-  ["☆ Testar aviso favorito","testNotification"],
-  ["☆ Editar lista de favoritos","openWatchList"],
+ for(const [title,method] of [["☆ Editar favoritos","openWatchList"],
   [notificationPermissionGranted?"✓ Permissão concedida":"Permitir notificações","requestNotificationPermission"],
-  ["⚙ Sons e canais no Android","openNotificationSettings"],
-  ["↻ Verificar permissão","refreshNotificationStatus"]
- ]){
-  const button=document.createElement("button");button.type="button";
-  button.textContent=label;button.onclick=()=>Native[action]();panel.appendChild(button);
+  ["⚙ Todos os canais","openNotificationSettings"],["↻ Atualizar permissão","refreshNotificationStatus"]]){
+  const button=document.createElement("button");button.textContent=title;button.onclick=()=>Native[method]();panel.appendChild(button);
  }
  fit();
 }
-
 function renderFiltersChoices(){
  if(!modeDraft)modeDraft={...searchSettings,mode};
  const panel=uxPanel("FILTROS");

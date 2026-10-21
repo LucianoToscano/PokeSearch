@@ -348,7 +348,7 @@ public class OverlayService extends Service {
     }
     private void update(){
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(getSharedPreferences("prefs",0).getString("favoriteSoundMode","on"))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -1547,7 +1547,9 @@ public class OverlayService extends Service {
             String key=spawnKey(c);
             current.add(key);
             if(knownSpawns.contains(key))continue;
+            // A watched Pokemon should use only the favorite alert channel.
             if(firstNew.isEmpty() &&
+                !(WatchAlerts.enabled(this)&&WatchAlerts.matches(c.optString("name",""),wanted)) &&
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) && verifiedTargetCriteria(c))
                 firstNew=c.optString("name","Pokémon");
             if(WatchAlerts.enabled(this) &&
@@ -2153,6 +2155,26 @@ public class OverlayService extends Service {
             getSharedPreferences("prefs",0).edit().putString("alertsMode",value)
                 .putBoolean("alerts",alerts).apply();
             update();
+        });}
+        @JavascriptInterface public void setFavoriteSoundMode(String value){handler.post(()->{
+            if(!"on".equals(value)&&!"silent".equals(value))return;
+            getSharedPreferences("prefs",0).edit().putString("favoriteSoundMode",value).apply();
+            update();
+        });}
+        @JavascriptInterface public void openSoundChannel(String kind){handler.post(()->{
+            if(!"general".equals(kind)&&!"favorites".equals(kind))return;
+            String channelId="favorites".equals(kind)?"pokesearch_watch_sound_v1":"pokesearch_alerts";
+            NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+            if(manager==null)return;
+            if("favorites".equals(kind))WatchAlerts.ensureChannel(OverlayService.this);
+            else manager.createNotificationChannel(new NotificationChannel(channelId,
+                "Novos Pokémon encontrados",NotificationManager.IMPORTANCE_DEFAULT));
+            Intent intent=new Intent(android.provider.Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+            intent.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName());
+            intent.putExtra(android.provider.Settings.EXTRA_CHANNEL_ID,channelId);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try{startActivity(intent);}
+            catch(Exception e){recordFailure("configurar audio",e);}
         });}
         @JavascriptInterface public void testNotification(){handler.post(()->{
             boolean sent=WatchAlerts.test(OverlayService.this);
