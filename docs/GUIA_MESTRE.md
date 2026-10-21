@@ -3095,3 +3095,15 @@ Após montar a navegação da página completa, a revisão encontrou um erro de 
 **QA:** adicionados contratos UX-NOTIFY-11 e UX-NOTIFY-12 para verificar guardas da entrega real e isolamento de canais sonoros. São verificações sobre código, não testes de som Android em aparelho. Nenhuma funcionalidade modificada.
 
 **Governança:** apenas suíte UX e este Guia Mestre atualizados; sem APK novo, sem merge e sem alterar assinatura. Última compilação homologada pelo CI: 51134.
+
+### 12.138 COORDS-08 — pareamento correto dos dois campos do site (21/10/2026)
+
+**Continuidade de uma etapa apenas:** após a entrega assinada `0.51-beta.test.51134` (12.136) e a correção isolada do sino (12.137), a próxima pendência é localização não confirmada. Sons por categoria, arquivos externos, Favoritos e menus já estavam implementados, não foram recriados nem alterados.
+
+**Diagnóstico no código:** a função `locationFields()` de `probe.js` buscava primeiro o primeiro input rotulado `Distance/Radius` na página inteira; só procurava o par `Coords+Radius` dentro de uma mesma região se algum campo faltasse. Com um outro filtro `Distance` visível, podia escolher esse campo em vez do `Radius` de localização, resultando em configurações ou verificações incorretas. Isso é uma causa demonstrável na lógica, não prova de que seja a única causa do erro mostrado no Android.
+
+**Correção localizada:** a descoberta sempre procura uma região que contenha exatamente dois inputs visíveis com evidência individual de `Coords` e `Radius`, escolhendo-os juntos. Controles globais não relacionados deixam de substituir o raio correto. A busca anterior por rótulos continua como compatibilidade quando não há par identificável; continua proibido afirmar sucesso sem a verificação `verifyLocation` e sem Search do site. Nenhum GPS, proxy, dados fictícios ou outra forma de aplicação foi introduzida.
+
+**Teste executado:** o fixture da suíte `app/tests/location-probe.test.js` passou a simular um filtro `Distance=500` fora da área Coords e o par correto `Coords/Radius`. Foram executados por avaliador JavaScript isolado **52/52 contratos de localização aprovados**, incluindo quatro novos casos que verificam seleção do par, preenchimento, preservação do campo não relacionado e verificação do raio. Execução Gradle, WebView real, login e homologação Android ainda **não executadas** nesta etapa. A regressão é orientada ao DOM simulado, não garante aplicação em `pogocoordinates.com/search` autenticado.
+
+**Próxima etapa pendente:** verificação no aparelho dos estados dos controles e a causa real das falhas de aplicação, coletando evidências do DOM com segurança, sem expor coordenadas pessoais. Não compilar APK ou fazer merge sem autorização específica para esta nova etapa. Branch de desenvolvimento e certificado anteriores preservados.
