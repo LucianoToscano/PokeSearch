@@ -2178,6 +2178,23 @@ test("UX-NOTIFY-16 sound preview is separate from saving, cancellable and releas
   preview.includes('previous.release()')&&
   main.includes('stopBundledTonePreview();\n        activityClosing=true;');
 });
+test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=>{
+ const home=main.split("private FrameLayout buildHome(){")[1]?.split("private void openTrainerManagement(){")[0]||"";
+ return main.includes("private void toggleHomeTheme(){")&&
+  main.includes('putBoolean("homeLightMode",homeLightMode)')&&
+  main.includes('getBoolean("homeLightMode",false)')&&
+  home.includes("R.drawable.ps_home_background_dark")&&
+  home.includes("R.drawable.ps_home_background_light")&&
+  home.includes("ImageView.ScaleType.CENTER_CROP")&&
+  home.includes('homeMiniButton(homeLightMode?"☾":"☀"')&&
+  home.includes("homeThemeButton.setOnClickListener(v->toggleHomeTheme())")&&
+  home.includes("R.drawable.ps_home_brand_transparent")&&
+  home.includes("R.drawable.ps_pogocoordinates")&&
+  home.includes("auth.setBackground(homeSurface(")&&
+  main.includes("refreshSessionSummary();")&&
+  main.includes("refreshHomeOverlay();")&&
+  main.includes("View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR");
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 

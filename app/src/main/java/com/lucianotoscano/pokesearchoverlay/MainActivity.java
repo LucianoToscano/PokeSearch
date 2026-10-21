@@ -78,6 +78,9 @@ public class MainActivity extends Activity {
     private String alertToneSpecies="";
     private android.media.MediaPlayer bundledTonePreview;
     private FrameLayout homeRoot;
+    private boolean homeLightMode=false;
+    private ImageView homeBackgroundImage;
+    private TextView homeThemeButton;
     private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
     private View trainerCopyButton;
     private View guestHeading;
@@ -145,20 +148,43 @@ public class MainActivity extends Activity {
         t.setBackground(homeSurface(Color.argb(130,9,25,49),11,Color.argb(90,180,221,255)));
         return t;
     }
+    // HOME-THEME-01: one saved switch; no WebView recreation and no new OAuth.
+    private void updateHomeSystemBars(){
+        getWindow().setStatusBarColor(homeLightMode?Color.rgb(236,242,247):Color.rgb(12,33,67));
+        getWindow().setNavigationBarColor(homeLightMode?Color.rgb(236,242,247):Color.rgb(9,20,37));
+        View decor=getWindow().getDecorView();
+        int previous=decor.getSystemUiVisibility();
+        int light=View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+        decor.setSystemUiVisibility((previous&~light)|(homeLightMode?light:0));
+    }
+    private void toggleHomeTheme(){
+        homeLightMode=!homeLightMode;
+        getSharedPreferences("prefs",0).edit().putBoolean("homeLightMode",homeLightMode).apply();
+        closeHomeMenu();
+        // Refresh only the native Home presentation. Persistent site login,
+        // overlay service, results, filter preferences and watched species stay.
+        setContentView(buildHome());
+        refreshSessionSummary();
+        refreshHomeOverlay();
+    }
     private FrameLayout buildHome(){
+        homeLightMode=getSharedPreferences("prefs",0).getBoolean("homeLightMode",false);
+        updateHomeSystemBars();
         FrameLayout frame=new FrameLayout(this);
         homeRoot=frame;
-        // HOME: restore owner's actual wallpaper across the entire page.
-        frame.setBackgroundColor(Color.rgb(10,14,23));
+        // Owner-supplied backgrounds share the same 941×1672 portrait geometry.
+        // CENTER_CROP (one gravity for both) avoids distortion when switching.
+        frame.setBackgroundColor(homeLightMode?Color.rgb(239,245,249):Color.rgb(10,14,23));
         ImageView pageBackground=new ImageView(this);
-        pageBackground.setImageResource(R.drawable.ps_home_background_dark);
-        // The dark wallpaper supplied for the Home was being cropped into its
-        // nearly-black center on portrait phones. Fill the whole surface.
-        pageBackground.setScaleType(ImageView.ScaleType.FIT_XY);
+        homeBackgroundImage=pageBackground;
+        pageBackground.setImageResource(homeLightMode?
+            R.drawable.ps_home_background_light:R.drawable.ps_home_background_dark);
+        pageBackground.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        pageBackground.setContentDescription(homeLightMode?"Fundo PokeSearch claro":"Fundo PokeSearch escuro");
         pageBackground.setAlpha(1.0f);
         frame.addView(pageBackground,new FrameLayout.LayoutParams(-1,-1));
         View dim=new View(this);
-        dim.setBackgroundColor(Color.argb(16,6,12,24)); // Keep artwork visible.
+        dim.setBackgroundColor(homeLightMode?Color.argb(8,255,255,255):Color.argb(16,6,12,24));
         frame.addView(dim,new FrameLayout.LayoutParams(-1,-1));
 
         LinearLayout screen=new LinearLayout(this);
@@ -177,6 +203,16 @@ public class MainActivity extends Activity {
         brand.setScaleType(ImageView.ScaleType.FIT_CENTER);
         brand.setContentDescription("Ícone PokeSearch");
         header.addView(brand,new LinearLayout.LayoutParams(d(38),d(38)));
+        LinearLayout brandLabels=new LinearLayout(this);
+        brandLabels.setOrientation(LinearLayout.VERTICAL);
+        brandLabels.setPadding(d(6),0,0,0);
+        TextView brandTitle=homeText("PokeSearch",14,
+            homeLightMode?Color.rgb(21,34,49):Color.WHITE,true);
+        TextView brandSubtitle=homeText("POKÉMON GO",9,
+            homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
+        brandLabels.addView(brandTitle);
+        brandLabels.addView(brandSubtitle);
+        header.addView(brandLabels,new LinearLayout.LayoutParams(-2,-2));
 
         header.addView(new View(this),new LinearLayout.LayoutParams(0,d(1),1));
         LinearLayout controls=new LinearLayout(this);
@@ -184,10 +220,22 @@ public class MainActivity extends Activity {
         controls.setOrientation(LinearLayout.HORIZONTAL);
         header.addView(controls,new LinearLayout.LayoutParams(-2,d(46)));
 
+        homeThemeButton=homeMiniButton(homeLightMode?"☾":"☀",
+            homeLightMode?"Ativar modo escuro":"Ativar modo claro");
+        homeThemeButton.setTextSize(21);
+        homeThemeButton.setTextColor(homeLightMode?Color.rgb(22,45,61):Color.rgb(255,230,155));
+        homeThemeButton.setBackground(homeSurface(
+            homeLightMode?Color.argb(225,244,249,253):Color.argb(150,9,25,49),10,
+            homeLightMode?Color.argb(110,67,98,128):Color.argb(90,180,221,255)));
+        controls.addView(homeThemeButton,new LinearLayout.LayoutParams(d(34),d(34)));
+        homeThemeButton.setOnClickListener(v->toggleHomeTheme());
+
         overlayControl=makeIcon(R.drawable.ic_overlay_off,"Ativar overlay");
         overlayControl.setPadding(d(5),d(5),d(5),d(5));
         overlayControl.setBackground(homeSurface(Color.argb(125,9,25,49),10,0));
-        controls.addView(overlayControl,new LinearLayout.LayoutParams(d(34),d(34)));
+        LinearLayout.LayoutParams overlayLp=new LinearLayout.LayoutParams(d(34),d(34));
+        overlayLp.leftMargin=d(5);
+        controls.addView(overlayControl,overlayLp);
         overlayControl.setOnClickListener(v->toggleHomeOverlay());
 
         ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
@@ -210,7 +258,10 @@ public class MainActivity extends Activity {
         LinearLayout auth=new LinearLayout(this);
         auth.setOrientation(LinearLayout.VERTICAL);
         auth.setPadding(d(15),d(15),d(15),d(16));
-        auth.setBackground(homeSurface(Color.rgb(16,22,34),20,Color.rgb(43,60,91)));
+        auth.setBackground(homeSurface(
+            homeLightMode?Color.argb(241,25,37,55):Color.argb(232,16,22,34),
+            20,homeLightMode?Color.rgb(110,137,157):Color.rgb(55,76,100)));
+        auth.setElevation(d(5));
         screen.addView(auth,new LinearLayout.LayoutParams(-1,-2));
 
         LinearLayout accountHeading=new LinearLayout(this);
@@ -361,8 +412,16 @@ public class MainActivity extends Activity {
         trainerCodeGroup.addView(trainerAction,actionLp);
         trainerAction.setOnClickListener(v->openTrainerManagement());
 
-        // Future Home features can occupy the remaining center without affecting login.
+        // Keep the center open for the user's Pokémon GO wallpaper.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
+        TextView footer=homeText("PokeSearch  •  PoGoCoordinates /search",10,
+            homeLightMode?Color.rgb(26,51,72):Color.rgb(185,208,233),false);
+        footer.setGravity(Gravity.CENTER);
+        footer.setBackground(homeSurface(
+            homeLightMode?Color.argb(200,248,251,255):Color.argb(135,9,23,42),
+            12,homeLightMode?Color.argb(80,33,65,89):Color.argb(75,180,215,247)));
+        footer.setPadding(d(9),d(5),d(9),d(5));
+        screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));
         return frame;
     }
     private void openTrainerManagement(){

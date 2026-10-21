@@ -157,7 +157,7 @@ function renderVisualEditor(){
  note.textContent="Ajuste ao vivo no jogo. Nada altera os filtros ou o IV. Os ajustes persistem até restaurar.";
  panel.appendChild(note);
  const nav=document.createElement("div");nav.className="visualTabs";
- for(const [id,title] of [["results","Pokémon"],["menu","Menu"],["bg","Fundo"],["export","JSON"]]){
+ for(const [id,title] of [["results","Pokémon"],["menu","Menu"],["bg","Fundo"]]){
   const b=btn(nav,title,()=>{tab=id;renderVisualEditor();});
   b.classList.toggle("chosen",tab===id);
  }

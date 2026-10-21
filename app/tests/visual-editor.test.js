@@ -317,4 +317,13 @@ test("top-gap can extend to -80px with synchronized Android and editor validatio
  assert.ok(dock.includes('margin-top:var(--visual-top-gap,0px)!important'));
  assert.ok(script.includes('minus.onclick=()=>step(-1);plus.onclick=()=>step(1)'));
 });
+test("JSON tab hidden while copy JSON and internal import support remain",()=>{
+ const tabs=script.split('const nav=document.createElement("div");nav.className="visualTabs";')[1]?.split("panel.appendChild(nav);")[0]||"";
+ assert.ok(tabs.includes('["results","Pokémon"]'));
+ assert.ok(tabs.includes('["menu","Menu"]'));
+ assert.ok(tabs.includes('["bg","Fundo"]'));
+ assert.ok(!tabs.includes('["export","JSON"]'));
+ assert.ok(script.includes('btn(actions,"Copiar JSON"'));
+ assert.ok(script.includes('btn(panel,"Importar JSON digitado"'));
+});
 console.log("PokeSearch temporary visual editor: "+count+" tests passed");
