@@ -364,7 +364,7 @@ const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
 test("PokeSearch 0.51 source configured",
   gradleBuild.includes('versionCode = testVersionCode ?: 51')&&
-  gradleBuild.includes('versionName = if (testVersionCode != null) "0.51-beta.test.$testVersionCode" else "0.51-beta"')&&
+  gradleBuild.includes('versionName = if (testVersionCode != null) "0.51-beta.test.${testVersionLabel ?: testVersionCode}" else "0.51-beta"')&&
   gradleBuild.includes('applicationId = "com.lucianotoscano.pokesearch"'));
 test("Round icon generator always uses headless mode",gradleBuild.includes('-Djava.awt.headless=true')&&iconGenerator.includes('System.setProperty("java.awt.headless","true")'));
 test("Network main-frame error is handled",service.includes('request.isForMainFrame()')&&service.includes('Falha de navegação principal'));
