@@ -1554,7 +1554,10 @@ function locationPanelFeedback(){
  toggle.textContent=locationEnabled?"ON":"OFF";
  toggle.className=locationEnabled?"locActive":"locOff";
  toggle.setAttribute("aria-checked",String(locationEnabled));
- radius.textContent=(panel.querySelector('input[type="range"]')?.value??locationRadius)+" km";
+ // Never overwrite a number being typed; radiusField is now a real input.
+ if(document.activeElement!==radius)radius.value=String(locationRadius);
+ const radiusSlider=panel.querySelector('input[type="range"]');
+ if(radiusSlider&&document.activeElement!==radiusSlider)radiusSlider.value=String(locationRadius);
  const error=/localiza(?:ção|cao) (?:não|nao) (?:aplicada|confirmada)|localiza(?:ção|cao) residual/i.test(status);
  hint.textContent=error?"⚠ "+status:
   locationEnabled?(locationVerified?"✓ Localização confirmada na busca · "+locationRadius+" km":
@@ -1602,7 +1605,7 @@ function renderLocationChoices(){
  fieldRow.append(field,paste,toggle);
  const label=make("div","locLine");const labelName=make("span","","Raio da busca");
  const radiusField=make("input","locRadiusNumber");
- radiusField.type="number";radiusField.min="0";radiusField.max="1000";radiusField.step="1";
+ radiusField.id="locRadiusValue";radiusField.type="number";radiusField.min="0";radiusField.max="1000";radiusField.step="1";
  radiusField.inputMode="numeric";radiusField.value=String(locationRadius);
  radiusField.setAttribute("aria-label","Raio em quilômetros; campo numérico de 0 a 1000");
  radiusField.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
