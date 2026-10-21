@@ -1,4 +1,4 @@
-name: PokeSearch ZERO - APK assinada
+name: PokeSearch HOME - APK assinada
 on:
   push:
     branches: [rebuild/zero-20261020]
@@ -42,7 +42,7 @@ jobs:
         run: |
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
           "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
-      - name: Compilar somente base vazia
+      - name: Compilar HOME com tema e importacao/exportacao
         run: gradle --no-daemon :app:assembleDebug
       - name: Validar identidade, permissões, ícone e certificado
         shell: bash
@@ -64,12 +64,12 @@ jobs:
           test -s app/src/main/res/drawable-nodpi/ic_launcher.png
           test -s app/src/main/res/drawable-nodpi/pokesearch_round.png
           mkdir -p delivery
-          cp "$APK" delivery/PokeSearch-ZERO-Atualizavel.apk
+          cp "$APK" delivery/PokeSearch-HOME-Atualizavel.apk
           printf '%s\n' "$ACTUAL" > delivery/CERTIFICADO_SHA256.txt
-          (cd delivery && sha256sum PokeSearch-ZERO-Atualizavel.apk > SHA256SUMS.txt)
+          (cd delivery && sha256sum PokeSearch-HOME-Atualizavel.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-ZERO-APK-ASSINADO
+          name: PokeSearch-HOME-APK-ASSINADO
           path: delivery/
           if-no-files-found: error
           retention-days: 30

@@ -22,7 +22,7 @@ android {
         minSdk = 26
         targetSdk = 33
         versionCode = buildCode
-        versionName = "3.00-zero.test.$buildCode"
+        versionName = "3.01-home.test.$buildCode"
     }
     lint { disable += "ExpiredTargetSdkVersion" }
     if (signingReady) {

@@ -1,9 +1,7 @@
-# PokeSearch — Base zero
+# PokeSearch — HOME da nova base
 
-Projeto Android mínimo, reiniciado do zero em 20/10/2026. Ao abrir, mostra uma tela vazia e escura. Sem permissões e sem funções.
+Nova base independente: ícone e certificado originais, HOME com backgrounds claro/escuro originais do Google Drive, logo, menu, doação, reportar, tema, login, overlay, importar/exportar.
 
-**Preservado:** nome, package ID, arte oficial do ícone e pipeline com a mesma chave de testes (secrets GitHub Actions).
+Tema, importação e exportação (somente a preferência de tema), doação por Pix e relatório por compartilhamento funcionam. Login e overlay são controles preparados com avisos, ainda sem serviço ou autenticação. Código e progresso no único `docs/GUIA_MESTRE.md`.
 
-**Backup do projeto anterior:** branch `backup/pre-restart-20261020`, commit `3fc3e38fb5fb95034210ee907c5705946e8e471a`.
-
-Apenas a branch de reconstrução é modificada. Documentação central: `docs/GUIA_MESTRE.md`.
+Backup anterior: `backup/pre-restart-20261020`. Nenhum merge na main.
