@@ -957,8 +957,12 @@ body.controls-window #menu.subview #quickMenuList,
 body.controls-window.popup-above #quickMenuList{
  background:transparent!important;border:0!important;box-shadow:none!important;
 }
-body.controls-window #quickMenuList .quickRow,
-body.controls-window #quickMenuList .quickFooterAction,
+/* Match the older .quick-horizontal / :not(.quick-horizontal) specificity
+   so border:0 wins for ordinary, non-selected buttons in either direction. */
+body.controls-window #quickMenuList.quick-horizontal .quickRow,
+body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow,
+body.controls-window #quickMenuList.quick-horizontal .quickFooterAction,
+body.controls-window #quickMenuList:not(.quick-horizontal) .quickFooterAction,
 body.controls-window #quickMenuList button[data-key],
 body.controls-window #quickMenuList button[data-key].selected,
 body.controls-window.visual-light-menu #quickMenuList button[data-key]{
