@@ -1171,7 +1171,7 @@ public class OverlayService extends Service {
         execute("configureLocation:"+data,configured->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
             if(!configured.optBoolean("ok")){
-                if(configured.optBoolean("pending",false)&&attempt<8){
+                if(configured.optBoolean("pending",false)&&attempt<16){
                     handler.postDelayed(()->{
                         if(stopped||loginPaused||generation!=requestGeneration)return;
                         configureLocationAndVerify(generation,manual,attempt+1);
@@ -1190,12 +1190,15 @@ public class OverlayService extends Service {
                 execute("verifyLocation:"+data,verified->{
                 if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!verified.optBoolean("ok")){
-                    if(attempt<6){
+                    if(attempt<12){
                         handler.postDelayed(()->configureLocationAndVerify(generation,manual,attempt+1),350L);
                         return;
                     }
                     searchInProgress=false;
-                    searchFailure("⚠ Localização não confirmada","Filtro de localização não confirmado. Pesquisa não enviada.");
+                    searchFailure("⚠ Localização não confirmada",
+                        "Aguardando confirmação dos dois campos Coords/Radius no site: "+
+                        verified.optString("reason","estado ainda diferente")+
+                        ". Pesquisa não enviada.");
                     return;
                 }
                 // Only confirm after the actual fields and active Coords form
