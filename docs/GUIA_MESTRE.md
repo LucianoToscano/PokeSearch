@@ -2865,3 +2865,20 @@ Após montar a navegação da página completa, a revisão encontrou um erro de 
 
 **Próximo passo:** mediante autorização de nova compilação, executar `visual-editor.test.js` e toda a suíte de regressão, gerar APK assinado com certificado persistente/versionCode crescente, fazer teste real de layout com 1/5/10 Pokémon em P/M/G; exportar JSON pelo botão e enviar o texto à conversa para adoção do padrão após aprovação. Preservar esta edição temporária reversível e o backup.
 
+### 12.118 VISUAL-EDITOR-03 — auditoria de integração, estabilidade da prévia e segurança do toque (21/10/2026)
+
+**Continuação autorizada sem compilação:** após implementação do painel (12.117), o usuário solicitou “crie o prompt para começar o novo chat e continua”. Seguimos **apenas para Etapa 3: auditoria, correções e testes isolados**; nenhum build/APK, merge ou recomeço.
+
+**Correções realmente gravadas nesta etapa:**
+1. **Contraste dos fundos:** `visual_editor.js` deriva variáveis CSS para fundo e texto conforme modo claro/escuro e transparência; `dock.html` aplica transparência nos **botões reais** do menu e ajusta cores de menus/metadados no tema claro, sem alterar a paleta IV nem símbolos Shiny.
+2. **Prévia sem flicker:** mudanças puramente cosméticas (cores, transparência, escala, offset visual da Pokébola) não reconstroem a lista nem recarregam imagens; mudança de geometria/orientação ainda invalida o layout para reposicionar corretamente os sprites.
+3. **Sliders versus callbacks atrasadas:** alterações locais pendentes não são sobrescritas por transmissões de preferências antigas provenientes de status/alertas da WebView. O novo valor só é reconhecido como confirmado quando o eco normalizado coincide; envio continua com debounce de 100ms.
+4. **Proteção da jogabilidade em horizontal:** `OverlayService.resultWidthDp()` agora limita a largura nativa à quantidade de colunas realmente necessárias (1–5), dentro da tela; `update()` recalcula largura quando a quantidade de resultados mudar. Evita a janela transparente ocupar praticamente toda a largura e interceptar cliques do Pokémon GO com somente um ou dois spawns.
+5. **Altura real dos resultados:** `dock.html.fit()` soma a distância variável entre Pokébola e primeiro sprite ao tamanho solicitado à janela Android, evitando cortar o último Pokémon quando esse slider aumenta.
+
+**Validação efetivamente realizada:** parsing JS com `new Function` do asset `visual_editor.js` e do script principal `dock.html`; 12 testes isolados de `app/tests/visual-editor.test.js` executados em runtime JavaScript in-memory com mocks de fs, path, assert e vm, todos aprovados. A suíte foi ampliada de 7 para 12 para incluir contraste de tema claro, largura de toque nativa limitada, preservação de sliders pendentes, altura e proteção contra recarregar sprites por mudanças cosméticas. Esses mocks conferem invariantes; **não executam o Gradle, testes do Android, DOM real do site nem verificação física**.
+
+**Estado de segurança:** backup original da 51081 permanece em `backup/pokesearch-51081-pre-editor-visual-20261021`; desenvolvimento somente na branch `feature/pokesearch-51081-visual-editor-20261021`; main intocada. O fluxo de CI foi preparado com testes do editor, **sem adicionar a branch ao gatilho de builds assinados**.
+
+**Próxima etapa sob autorização:** testes integrados em Android/CI e compilação assinada somente quando o usuário ordenar “gere o APK”; validar com dados reais o slider 0, os 3 presets, modo horizontal/vertical, botões clicáveis em overlap, popups sem recortes, transparência 0–100, restart sem perda de preferências e exportação JSON. Não declarar o problema histórico do espaçamento definitivamente corrigido antes de ver captura de tela real do APK novo.
+
