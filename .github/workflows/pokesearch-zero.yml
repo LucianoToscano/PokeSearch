@@ -1,0 +1,78 @@
+name: PokeSearch ZERO - APK assinada
+on:
+  push:
+    branches: [rebuild/zero-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      POKE_TEST_SIGNING_REQUIRED: "true"
+      POKE_TEST_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_TEST_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_TEST_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Restaurar assinatura permanente em segredo
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for var in POKE_TEST_KEYSTORE_B64 POKE_TEST_STORE_PASSWORD POKE_TEST_KEY_ALIAS POKE_TEST_KEY_PASSWORD; do
+            if [ -z "${!var:-}" ]; then echo "::error::Chave de assinatura permanente ausente: $var"; exit 1; fi
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pokesearch-test-key.p12"
+          keytool -list -storetype PKCS12 -keystore "$RUNNER_TEMP/pokesearch-test-key.p12" \
+             -storepass "$POKE_TEST_STORE_PASSWORD" -alias "$POKE_TEST_KEY_ALIAS" > /dev/null
+          echo "POKE_TEST_KEYSTORE=$RUNNER_TEMP/pokesearch-test-key.p12" >> "$GITHUB_ENV"
+          echo "POKE_TEST_VERSION_CODE=$((53000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+      - name: SDK Android 36
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Compilar somente base vazia
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Validar identidade, permissões, ícone e certificado
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          unzip -t "$APK" > /dev/null
+          TOOL="$ANDROID_HOME/build-tools/36.0.0"
+          "$TOOL/apksigner" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/sign.txt"
+          grep -Eq '^Verified using v2 scheme.*: true$' "$RUNNER_TEMP/sign.txt"
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' "$RUNNER_TEMP/sign.txt" | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          EXPECTED="34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"
+          test "$ACTUAL" = "$EXPECTED" || { echo "::error::Assinatura divergente"; exit 1; }
+          "$TOOL/aapt" dump badging "$APK" | grep -F "name='com.lucianotoscano.pokesearch' versionCode='${POKE_TEST_VERSION_CODE}'" 
+          if "$TOOL/aapt" dump permissions "$APK" | grep -q "uses-permission:"; then
+            echo "::error::O APK vazio não deve requisitar permissões."; exit 1
+          fi
+          test -s app/src/main/res/drawable-nodpi/ic_launcher.png
+          test -s app/src/main/res/drawable-nodpi/pokesearch_round.png
+          mkdir -p delivery
+          cp "$APK" delivery/PokeSearch-ZERO-Atualizavel.apk
+          printf '%s\n' "$ACTUAL" > delivery/CERTIFICADO_SHA256.txt
+          (cd delivery && sha256sum PokeSearch-ZERO-Atualizavel.apk > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-ZERO-APK-ASSINADO
+          path: delivery/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Apagar keystore temporário
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pokesearch-test-key.p12"
