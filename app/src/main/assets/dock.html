@@ -598,6 +598,83 @@ body.result-window .spawnInfo .timer{
  position:static;display:inline;padding:0;margin:0;min-width:0;
  font:700 9px/11px Roboto,Arial,sans-serif;text-align:left;
 }
+
+/* Optional visual editor: custom backgrounds, true packed rows, flexible orientation. */
+body.result-window #shell{background:var(--visual-results-bg,transparent)!important;border-radius:9px}
+body.result-window #spawns:not(:empty){
+ padding-bottom:max(0px,calc((var(--sprite) - var(--visual-row-pitch,46px))/2))!important;
+ margin-top:var(--visual-top-gap,0px)!important;
+}
+body.result-window .spriteStage .sprite{transform:scale(var(--visual-sprite-scale,1));transform-origin:center}
+body.result-window.visual-results-horizontal #spawns{
+ display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
+ align-items:flex-start!important;justify-content:flex-start!important;
+ column-gap:var(--visual-result-spacing,4px)!important;
+ row-gap:var(--visual-result-spacing,4px)!important;
+ width:100%!important;
+}
+body.result-window.visual-results-horizontal .spawn{
+ width:calc(var(--dock) + var(--visual-meta-width,0px))!important;
+ flex:0 0 calc(var(--dock) + var(--visual-meta-width,0px))!important;
+ height:var(--spawn-row,var(--row))!important;
+}
+body.result-window.visual-results-horizontal #spawns:not(:empty){padding-bottom:0!important}
+body.controls-window #menu,
+body.controls-window #quickMenuList,
+body.controls-window #choices{background:var(--visual-menu-bg,#232b35e5)!important}
+body.controls-window #quickRows{gap:var(--visual-menu-gap,0px)!important}
+body.controls-window.visual-menu-vertical #quickMenuList{width:100%!important;max-height:none!important;overflow:visible!important}
+body.controls-window.visual-menu-vertical #quickRows,
+body.controls-window.visual-menu-vertical #quickFooter{
+ display:flex!important;flex-direction:column!important;gap:var(--visual-menu-gap,0px)!important;
+ width:100%!important;align-items:stretch!important;
+}
+body.controls-window.visual-menu-vertical #quickMenuList .quickRow,
+body.controls-window.visual-menu-vertical #quickMenuList .quickFooterAction{
+ width:100%!important;min-width:0!important;height:29px!important;min-height:29px!important;
+ flex:0 0 29px!important;
+}
+body.controls-window #choices.visualPanel{
+ width:min(306px,calc(100vw - 12px))!important;
+ max-height:min(390px,var(--popup-room,390px))!important;
+ overflow-y:auto!important;padding:7px!important;
+ background:#1b2430f8!important;color:#f4f8fb!important;
+}
+body.controls-window #choices.visualPanel .visualTabs,
+body.controls-window #choices.visualPanel .visualPresets,
+body.controls-window #choices.visualPanel .visualActions{
+ display:flex;gap:4px;flex-wrap:wrap;margin:5px 0;
+}
+body.controls-window #choices.visualPanel .visualButton{
+ width:auto;flex:1 1 auto;min-width:0;padding:7px 5px;margin:0;text-align:center;
+ background:#344254;border:1px solid #647487;border-radius:7px;
+ color:#f8faff;font-size:11px;
+}
+body.controls-window #choices.visualPanel .visualButton.chosen{
+ background:#20684f;border-color:#91ddc1;
+}
+body.controls-window #choices.visualPanel .visualSlider{
+ display:grid;grid-template-columns:1fr auto;column-gap:6px;row-gap:3px;
+ padding:5px 3px;align-items:center;font-size:11px;
+}
+body.controls-window #choices.visualPanel .visualSlider output{color:#98e5c8;font-variant-numeric:tabular-nums}
+body.controls-window #choices.visualPanel .visualSlider input{
+ grid-column:1/3;width:100%;height:20px;margin:0;padding:0;accent-color:#69dfb1;
+}
+body.controls-window #choices.visualPanel .visualLine{
+ display:flex;justify-content:space-between;align-items:center;gap:6px;
+ padding:6px 3px;font-size:11px;
+}
+body.controls-window #choices.visualPanel select{
+ background:#344254;color:#fff;padding:5px;border-radius:5px;max-width:56%;min-width:80px;
+}
+body.controls-window #choices.visualPanel .visualJSON{
+ box-sizing:border-box;width:100%;min-height:92px;font:10px monospace;
+ color:#dcf4ec;background:#0c1420;border:1px solid #77948b;border-radius:6px;
+ resize:vertical;padding:6px;overflow:auto;
+}
+body.visual-guides.result-window .spawn{outline:1px dashed #4ce5ff9a;outline-offset:-1px}
+body.visual-guides.result-window #resultHeader{outline:1px dashed #ffce4ca8}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -898,7 +975,7 @@ function closeChoices(){
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
- document.getElementById("choices").classList.remove("locationPanel","modePanel","standardPanel","filterPicker",
+ document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker",
   "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
  delete document.getElementById("choices").dataset.panelKind;
  if(controlsWindow)Native.locationEditor(false);
@@ -924,6 +1001,7 @@ function toggleChoices(kind){
  if(kind==="alerts"){renderAlertsChoices();return;}
  if(kind==="info"){renderInfoChoices();return;}
  if(kind==="appearance"){renderAppearanceChoices();return;}
+  if(kind==="visual"){window.renderVisualEditor();return;}
  if(kind==="filters"){
   modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
   renderFiltersChoices();
@@ -1531,21 +1609,24 @@ function resultHasVisibleInfo(card,timersEnabled,textEnabled,opts=null,league=""
 }
 function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,textEnabled,opts=null,league="",preparedLines=null){
  const size=Math.max(18,Number(chosenSprite)||45);
+ const v=window.visualPrefs||{};
+ const rawSpacing=Number(v.resultGapBetween);
+ const pitch=Math.max(8,Math.round(size*.32)+(Number.isFinite(rawSpacing)?rawSpacing:Math.round(size*.68)));
+ const horizontal=v.resultsOrientation==="horizontal";
  const natural=items.slice(0,10).map((card,index)=>{
    const lines=preparedLines?preparedLines[index]:(opts?resultLines(card,opts,league):[]);
   // UX-SPRITE-GAP-02: metadata is independently scrollable inside the side strip.
   // Never stretch the Pokemon's vertical slot to fit all enabled rank lines.
-  if(lines.length)return size+3;
-  return resultHasVisibleInfo(card,timersEnabled,textEnabled)?
-   size+3:size+1; // 1px gap when no metadata; do not overlap full-size sprites
+  if(horizontal)return size+3;
+  return pitch; // Transparent sprite squares may overlap without shrinking the image.
  });
  const desired=natural.reduce((a,b)=>a+b,0);
  const room=Math.max(120,(Number(displayHeight)||700)-30-24);
  const factor=desired>0?Math.min(1,room/desired):1;
- const rows=natural.map(n=>Math.max(12,Math.floor(n*factor)));
+ const rows=natural.map(n=>Math.max(8,Math.floor(n*factor)));
  // A very short display can reduce a row to 12px: never draw a
  // larger sprite inside it, even when ten results must remain visible.
- const sprite=Math.max(10,Math.min(Math.floor(size*factor),...(rows.length?rows:[size])));
+ const sprite=Math.max(10,Math.floor(size*factor));
  return {rows,sprite,total:rows.reduce((a,b)=>a+b,0),visibleCount:rows.length,
   infoScale:Math.max(0.86,Math.min(1,factor))};
 }
@@ -1564,6 +1645,11 @@ function draw(){
  const resultLayout=resultWindow?
   computeResultLayout(cards,spriteSize,resultDisplayHeightDp,showTimers,showResultText,
    resultDisplayOptions,shownMode,preparedLines):null;
+ if(resultWindow){
+  const vp=window.visualPrefs||{};
+  document.documentElement.style.setProperty("--visual-row-pitch",(resultLayout?.rows?.[0]||spriteSize+1)+"px");
+  document.documentElement.style.setProperty("--visual-result-spacing",(Number(vp.resultGapBetween)||0)+"px");
+ }
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",(resultLayout?resultLayout.sprite:spriteSize)+"px");
  document.documentElement.style.setProperty("--result-info-scale",String(resultLayout?.infoScale||1));
@@ -1571,7 +1657,10 @@ function draw(){
  // P/M/G scales the header DOWN, never above its original 21px.
  const metadataVisible=resultWindow&&preparedLines.some(lines=>lines.length>0);
  const metaWidth=metadataVisible?96:0;
- document.documentElement.style.setProperty("--results-width",(spriteSize+8+metaWidth)+"px");
+ document.documentElement.style.setProperty("--results-width",
+  resultWindow&&window.visualPrefs?.resultsOrientation==="horizontal"?"calc(100vw - 2px)":
+  (spriteSize+8+metaWidth)+"px");
+ document.documentElement.style.setProperty("--visual-meta-width",metaWidth+"px");
  if(resultWindow&&displayedMetadataWidth!==metaWidth){
   displayedMetadataWidth=metaWidth;
   Native.resizeResultsMetadata(metaWidth);
@@ -2148,6 +2237,7 @@ function renderAppearanceChoices(){
  const scrollRestoration=appearanceScrollTop;
  const info=document.createElement("div");info.className="uxSubheading";info.textContent="Painéis";panel.appendChild(info);
  uxOption(panel,"Informações dos Pokémon","Configurar ›",()=>toggleChoices("info"));
+  uxOption(panel,"🎛 Editor visual temporário","Ajustar ›",()=>toggleChoices("visual"));
  // Atualização has its own toolbar icon beside Alertas.
  // The unchanged horizontal ribbon needs no paragraph in this compact panel.
  uxOption(panel,"Próximo tamanho do sprite",spriteSize<=35?"P":spriteSize>=55?"G":"M",()=>{
@@ -2184,4 +2274,4 @@ if(controlsWindow){
 
 document.getElementById("clock").addEventListener("click",()=>Native.toggleTimers());
 draw();
-</script></body></html>
+</script><script src="file:///android_asset/visual_editor.js"></script></body></html>
