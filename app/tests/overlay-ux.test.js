@@ -1786,6 +1786,10 @@ test("PSC-FILTER-01 explicit reset needs site control and cannot assume neutral"
   probe.includes('if(v===null)return false; // Cannot prove reset/selection')&&
   probe.includes('if(!input){failed.push(key);continue;} // Includes explicitly requested numeric resets.');
 });
+test("UX-PERF-02 closing picker cancels queued DOM polling",()=>{
+ return service.includes('public void cancelPokemonSuggestions(){handler.post(()->++pokemonSuggestionSequence);}')&&
+  dock.includes('Native.cancelPokemonSuggestions(); // Stop obsolete JS probe retries');
+});
 test("UX-LOCATION-RETRY-01 same unverified coordinates can retry safely",()=>{
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
   ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";

@@ -1076,6 +1076,8 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  }
 });}
 function closeChoices(){
+ if(controlsWindow&&choiceOpen==="pokemon"&&Native.cancelPokemonSuggestions)
+  Native.cancelPokemonSuggestions(); // Stop obsolete JS probe retries after closing picker.
  clearTimeout(pokemonSuggestTimer);pokemonSuggestTimer=null;
  choiceOpen="";cascadeMode=null;
  document.getElementById("menu").classList.remove("subview");

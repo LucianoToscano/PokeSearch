@@ -2034,6 +2034,7 @@ public class OverlayService extends Service {
             });
         }
         private int pokemonSuggestionSequence=0;
+        @JavascriptInterface public void cancelPokemonSuggestions(){handler.post(()->++pokemonSuggestionSequence);}
         @JavascriptInterface public void requestPokemonSuggestions(String query){handler.post(()->{
             if(stopped||loginPaused||!menuExpanded||menuPanel==null||!menuLoaded)return;
             if(searchInProgress){
