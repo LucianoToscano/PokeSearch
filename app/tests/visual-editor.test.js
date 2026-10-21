@@ -365,6 +365,30 @@ test("separate button opacity is controlled by one slider, without double-opacit
  assert.equal(styles["--visual-menu-button-bg"],"rgba(255,255,255,0.80)");
  assert.equal(window.visualEditorCurrent().menuBgMode,"light");
 });
+test("Modos rail and inline editor inherit the only menu transparency slider",()=>{
+ const tail=dock.split("/* VISUAL-MENU-ALPHA-01:")[1]?.split("</style>")[0]||"";
+ assert.ok(tail);
+ for(const key of [".modeCascadeRail",".modeCascadeEditor"]){
+  assert.ok(tail.includes(key),"Missing "+key);
+ }
+ assert.ok(tail.includes("background:var(--visual-menu-bg,rgba(15,19,26,.65))!important;"));
+ assert.ok(tail.includes("border:0!important;box-shadow:none!important;"));
+ assert.ok(script.includes('set("menu-bg",rgba(current.menuBgMode,current.menuTransparency))'));
+ assert.ok(script.includes('set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency))'));
+ assert.ok(!script.includes('addSegment(panel,"menuBgMode"'));
+ const {window,styles}=fixture();
+ for(const [mode,transparency,expected] of [
+  ["dark",0,"rgba(15,19,26,1.00)"],
+  ["dark",35,"rgba(15,19,26,0.65)"],
+  ["dark",100,"rgba(15,19,26,0.00)"],
+  ["light",0,"rgba(255,255,255,1.00)"],
+  ["light",100,"rgba(255,255,255,0.00)"]
+ ]){
+  window.onVisualPrefs({menuBgMode:mode,menuTransparency:transparency});
+  assert.equal(styles["--visual-menu-bg"],expected);
+  assert.equal(styles["--visual-menu-button-bg"],expected);
+ }
+});
 test("top-gap can extend to -80px with synchronized Android and editor validation",()=>{
  const {window,styles}=fixture();
  window.onVisualPrefs({resultGapTop:-80});
