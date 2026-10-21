@@ -880,6 +880,9 @@ public class OverlayService extends Service {
         // Each asynchronous JS response belongs to the session that launched it.
         // A login, page reload or replacement search invalidates stale responses.
         final int callbackGeneration=requestGeneration;
+        final int callbackPage=pageLoadGeneration;
+        final WebView callbackWebsite=website;
+        final boolean mayNavigate="submitSearch".equals(action);
         if(!loaded||website==null){
             if(callback!=null){
                 JSONObject failure=new JSONObject();
@@ -901,7 +904,7 @@ public class OverlayService extends Service {
                 .replace("__SHINY__",shiny?"true":"false")
                 .replace("__FILTERS__",queryFilters);
         try{website.evaluateJavascript(code,raw->{
-            if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;
+            if(stopped||loginPaused||callbackGeneration!=requestGeneration||callbackWebsite!=website||(!mayNavigate&&callbackPage!=pageLoadGeneration))return;
             try{
                 String decoded=new JSONArray("["+raw+"]").getString(0);
                 JSONObject r=new JSONObject(decoded);
@@ -914,7 +917,7 @@ public class OverlayService extends Service {
                 else diagnosticError("Falha ao ler resultados no site.");
             }
         });}catch(RuntimeException e){
-            if(stopped||loginPaused||callbackGeneration!=requestGeneration)return;
+            if(stopped||loginPaused||callbackGeneration!=requestGeneration||callbackWebsite!=website||(!mayNavigate&&callbackPage!=pageLoadGeneration))return;
             recordFailure("executar JS site",e);
             if(callback!=null){
                 JSONObject failure=new JSONObject();
@@ -2392,6 +2395,11 @@ public class OverlayService extends Service {
         String wantedSort=prefs.getString("sort","despawn");
         sort=("rank".equals(wantedSort)||"iv".equals(wantedSort)||
               "shiny".equals(wantedSort))?wantedSort:"despawn";
+        try{
+            // Site order is authoritative when the user selected remote Sort by.
+            JSONObject extras=new JSONObject(extraFiltersJson);
+            if(!extras.optString("sortBy","").trim().isEmpty())sort="site";
+        }catch(org.json.JSONException ignored){}
         try{
             JSONArray items=new JSONArray(results);
             results=sortItems(items).toString();
