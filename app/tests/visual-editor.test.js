@@ -206,7 +206,7 @@ test("sprite guide tracks normalized art, not whole row",()=>{
 test("negative header gap changes native height instead of leaving invisible bottom padding",()=>{
  assert.ok(script.includes('resultGapTop:[-16,80]'));
  assert.ok(dock.includes('Math.ceil(end-shellTop)+1'));
- assert.ok(dock.includes('(Number(window.visualPrefs?.resultGapTop)||0)'));
+ assert.ok(dock.includes('margin-top:var(--visual-top-gap,0px)!important'));
 });
 test("Pokebola Y starts at 0 and button artwork tracks Android's native drag grip",()=>{
  const {window,styles}=fixture();
