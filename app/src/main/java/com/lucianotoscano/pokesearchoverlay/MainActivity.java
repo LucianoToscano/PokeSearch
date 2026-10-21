@@ -42,6 +42,21 @@ import android.graphics.Typeface;
 
 public class MainActivity extends Activity {
     private WebView website;
+    private android.app.Dialog tutorialDialog;
+    private WebView tutorialWebView;
+    private volatile boolean activityClosing=false;
+    private int avatarRequestGeneration=0;
+    private void releaseTutorialWebView(){
+        WebView guide=tutorialWebView;
+        tutorialWebView=null;
+        tutorialDialog=null;
+        if(guide==null)return;
+        try{guide.stopLoading();}catch(RuntimeException ignored){}
+        android.view.ViewParent parent=guide.getParent();
+        if(parent instanceof android.view.ViewGroup)
+            ((android.view.ViewGroup)parent).removeView(guide);
+        try{guide.destroy();}catch(RuntimeException ignored){}
+    }
     private TextView watchSummary;
     private TextView sessionSummary;
     private boolean loginStartedForShiny=false;
@@ -510,6 +525,9 @@ public class MainActivity extends Activity {
         dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         dialog.setContentView(layout);
         done.setOnClickListener(v->dialog.dismiss());
+        tutorialDialog=dialog;
+        tutorialWebView=guide;
+        dialog.setOnDismissListener(ignored->releaseTutorialWebView());
         dialog.show();
         if(dialog.getWindow()!=null){
             android.view.Window window=dialog.getWindow();
@@ -552,6 +570,7 @@ public class MainActivity extends Activity {
         final String next=allowedGoogleAvatar(url)?url:"";
         if(shownAvatarUrl.equals(next))return;
         shownAvatarUrl=next;
+        final int avatarRequestId=++avatarRequestGeneration;
         accountAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
         accountAvatar.setColorFilter(Color.rgb(183,201,229));
         accountAvatar.setPadding(d(11),d(11),d(11),d(11));
@@ -601,12 +620,13 @@ public class MainActivity extends Activity {
                 if(bitmap==null)runOnUiThread(()->{
                     // Includes early returns on HTTP failure/redirect/size.
                     // Do not permanently cache a failed URL on the new Home.
-                    if(next.equals(shownAvatarUrl))shownAvatarUrl="";
+                    if(!activityClosing&&!isDestroyed()&&avatarRequestId==avatarRequestGeneration&&next.equals(shownAvatarUrl))shownAvatarUrl="";
                 });
             }
             final android.graphics.Bitmap photo=bitmap;
             if(photo!=null)runOnUiThread(()->{
-                if(accountAvatar==null||!shownAvatarUrl.equals(next)||
+                if(activityClosing||isFinishing()||isDestroyed()||avatarRequestId!=avatarRequestGeneration||
+                     accountAvatar==null||!shownAvatarUrl.equals(next)||
                     !"autenticada".equals(getSharedPreferences("prefs",0)
                         .getString("sessionStatus","")))return;
                 accountAvatar.clearColorFilter();
@@ -1381,6 +1401,10 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        activityClosing=true;
+        avatarRequestGeneration++;
+        if(tutorialDialog!=null)tutorialDialog.dismiss();
+        releaseTutorialWebView();
         if(loginDialog!=null){loginDialog.setOnDismissListener(null);loginDialog.dismiss();loginDialog=null;}
         if(website!=null){website.stopLoading();website.destroy();website=null;}
         super.onDestroy();
