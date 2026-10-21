@@ -726,12 +726,46 @@ body.controls-window #choices.visualPanel .visualJSON{
 }
 body.visual-guides.result-window .spawn{outline:1px dashed #4ce5ff9a;outline-offset:-1px}
 body.visual-guides.result-window #resultHeader{outline:1px dashed #ffce4ca8}
+/* UX-ICONS-STATE: preserve neutral button backgrounds; color only outlines. */
+body.controls-window #quickMenuList button[data-key="sh"],
+body.controls-window #quickMenuList button[data-key="star"],
+body.controls-window #quickMenuList button[data-key="location"],
+body.controls-window #quickMenuList button[data-key="bell"]{
+ background:var(--visual-menu-button-bg,#28292cce)!important;
+ border-color:#ffffff2d!important;color:#f7f8fa!important;
+}
+body.controls-window #quickMenuList button[data-key="sh"].selected,
+body.controls-window #quickMenuList button[data-key="star"].selected,
+body.controls-window #quickMenuList button[data-key="bell"].selected{color:#ffd64b!important}
+body.controls-window #quickMenuList button[data-key="location"].selected{color:#ff5264!important}
+body.controls-window #quickMenuList button[data-key="sh"] .quickGlyph{filter:none!important}
+body.controls-window #quickMenuList button[data-key="bell"] .quickGlyph{position:relative}
+body.controls-window #quickMenuList button[data-key="bell"].silent .quickGlyph::after{
+ content:"";position:absolute;z-index:2;left:50%;top:50%;
+ width:19px;height:2.5px;border-radius:2px;background:#ff4458;
+ transform:translate(-50%,-50%) rotate(-43deg);pointer-events:none;box-shadow:0 0 2px #000a;
+}
+/* Historical toolbar receives the identical symbolic states. */
+body.controls-window #controls #sh,body.controls-window #controls #star,
+body.controls-window #controls #location,body.controls-window #controls #bell{
+ background:var(--visual-menu-button-bg,#28292cce)!important;
+ border-color:#ffffff2d!important;color:#f7f8fa!important;
+}
+body.controls-window #controls #sh.shinyOn,body.controls-window #controls #star.favoritesOn,
+body.controls-window #controls #bell.generalOn{color:#ffd64b!important}
+body.controls-window #controls #location.locOn{color:#ff5264!important}
+body.controls-window #controls #bell.generalSilent{position:relative}
+body.controls-window #controls #bell.generalSilent::after{
+ content:"";position:absolute;z-index:2;left:50%;top:50%;
+ width:17px;height:2.5px;border-radius:2px;background:#ff4458;
+ transform:translate(-50%,-50%) rotate(-43deg);pointer-events:none;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
  <div id="menu"><div id="quickHead"><strong>⚙ PokeSearch</strong><button id="quickBack" type="button" aria-label="Voltar ou recolher">✕</button></div><div id="quickMenuList"><div id="quickRows"></div><div id="quickUtilities"></div><div id="quickFooter"></div></div><div id="controls">
   <button id="cycle" title="Modos · Raw IV, % IV, Grande Liga e Ultra Liga" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('mode')">100%</button>
-  <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()">✨</button>
+  <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.7 5.3L5 10l5.3 1.7L12 17l1.7-5.3L19 10l-5.3-1.7L12 3Z"/><path d="m19 18-.75 2.25L16 21l2.25.75L19 24l.75-2.25L22 21l-2.25-.75L19 18Z"/><path d="m5 2-.75 2.25L2 5l2.25.75L5 8l.75-2.25L8 5l-2.25-.75L5 2Z"/></svg></button>
   <button id="period" title="Atualização automática ou OFF" aria-label="Atualização automática, 5 minutos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">5m</span></button>
   <button id="manualRefresh" title="Atualizar resultados agora" aria-label="Atualizar resultados agora" onclick="manualRefreshTap()">↻</button>
   <button id="size" title="Tamanho P / M / G" onclick="Native.cycleSpriteSize()">M</button>
@@ -2009,7 +2043,7 @@ const QUICK_SVG=Object.freeze({
  period:'<path d="M25 15a9 9 0 1 1-3.5-7"/><path d="M22 3v7h-7"/>',
  appearance:'<path d="M13 3.5 14.4 5l2.4.5 2.5-1.2 2.6 2.5-1.2 2.5.6 2.3 1.5 1.5v1.8l-1.5 1.5"/><path d="m9 4-2.1.5L4.2 7l1.2 2.5-.6 2.4L3 13v3l1.8 1.2.7 2.5L4.2 22l2.5 2.5 2.5-1.2 2.1.5"/><circle cx="12.6" cy="14.1" r="4.1"/><path d="m12.7 25 13.1-13.1 3.4 3.4-13.1 13.1-5 1.7z"/><path d="m23.7 14 3.4 3.3"/>'
 });
-const QUICK_SOURCE_ICONS={location:"location",bell:"bell",star:"star",donate:"donate"};
+const QUICK_SOURCE_ICONS={sh:"sh",location:"location",bell:"bell",star:"star",donate:"donate"};
 function iconForQuick(id, fallback){
  const glyph=document.createElement("span");glyph.className="quickGlyph";
  if(id==="mode"){
@@ -2182,6 +2216,7 @@ function refreshQuickMenuStates(){
   }
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
   button.classList.toggle("pending",id==="sh"&&shinyPending);
+   button.classList.toggle("silent",id==="bell"&&generalAlerts&&alertMode==="silent"&&notificationPermissionGranted);
   button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
    id==="sh"?(shiny&&!shinyPending):
    id==="bell"?(generalAlerts&&notificationPermissionGranted):id==="period"?period>0:
