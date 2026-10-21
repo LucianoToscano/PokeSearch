@@ -407,6 +407,12 @@ test("Home light/dark switch updates the overlay menu without collector reload",
  assert.ok(updater.includes("if(broadcast)broadcastVisualPrefs();"));
  assert.ok(!updater.includes("website.loadUrl")&&!updater.includes("refresh("));
  assert.ok(java.includes("syncHomeThemeVisual(false);"));
+ const saver=java.split("private void saveVisualPrefs(String raw){")[1]
+  ?.split("private void syncHomeThemeVisual(boolean broadcast){")[0]||"";
+ assert.ok(saver.includes('cleaned.put("menuBgMode",getSharedPreferences("prefs",0)'));
+ assert.ok(saver.includes('getBoolean("homeLightMode",false)?"light":"dark"'));
+ assert.ok(saver.includes("if(next.equals(visualPrefsJson)){"));
+ assert.ok(saver.includes("broadcastVisualPrefs();"));
 });
 test("theme update merges into unsaved opacity edit without rolling it back",()=>{
  const sent=[],timers=[];
