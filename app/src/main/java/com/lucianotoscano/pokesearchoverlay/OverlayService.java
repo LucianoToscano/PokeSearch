@@ -463,7 +463,11 @@ public class OverlayService extends Service {
         if(visualResultsHorizontal&&resultParams!=null&&resultParams.width!=dp(resultWidthDp()))
             updateResultsWidth();
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+")";
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+","+
+                JSONObject.quote(WatchAlerts.mode(this))+","+
+                WatchAlerts.hasCustomTone(this,false)+","+
+                WatchAlerts.hasCustomTone(this,true)+","+
+                WatchAlerts.speciesToneCount(this)+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -1627,11 +1631,15 @@ public class OverlayService extends Service {
         NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         if(nm==null)return false;
         boolean quiet="silent".equals(alertsMode);
-        String channelId=quiet?"pokesearch_alerts_silent_v1":"pokesearch_alerts";
+        String channelId=quiet?"pokesearch_alerts_silent_v1":
+            WatchAlerts.soundChannelId(this,false,null);
         NotificationChannel channel=new NotificationChannel(channelId,
             quiet?"Novos Pokémon · silencioso":"Novos Pokémon encontrados",
             quiet?NotificationManager.IMPORTANCE_LOW:NotificationManager.IMPORTANCE_DEFAULT);
         if(quiet)channel.setSound(null,null);
+        else channel.setSound(WatchAlerts.selectedTone(this,false,null),
+            new android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_EVENT).build());
         nm.createNotificationChannel(channel);
         // The user owns channel sound/importance after first creation.
         if(nm.getNotificationChannel(channelId)==null||
@@ -2291,6 +2299,25 @@ public class OverlayService extends Service {
                 .putBoolean("alerts",alerts).apply();
             update();
         });}
+        @JavascriptInterface public void setFavoriteAlertMode(String mode){handler.post(()->{
+            if(!"on".equals(mode)&&!"silent".equals(mode)&&!"off".equals(mode))return;
+            WatchAlerts.setMode(OverlayService.this,mode);
+            update();
+        });}
+        private void requestAlertTonePicker(String target){
+            Intent intent=new Intent(OverlayService.this,MainActivity.class);
+            intent.setAction("com.lucianotoscano.pokesearchoverlay.PICK_ALERT_TONE");
+            intent.putExtra("alertToneTarget",target);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP|
+                Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            try{startActivity(intent);}
+            catch(Exception ex){recordFailure("selecionar som de notificação",ex);}
+        }
+        @JavascriptInterface public void pickAlertTone(String target){handler.post(()->{
+            if(!"general".equals(target)&&!"favorites".equals(target)&&
+                !"species".equals(target))return;
+            requestAlertTonePicker(target);
+        });}
         @JavascriptInterface public void testNotification(){handler.post(()->{
             boolean sent=WatchAlerts.test(OverlayService.this);
             android.widget.Toast.makeText(OverlayService.this,
@@ -2369,8 +2396,7 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void toggleWatchAlerts(){handler.post(()->{
             boolean enabled=!WatchAlerts.enabled(OverlayService.this);
-            getSharedPreferences("prefs",0).edit()
-                .putBoolean(WatchAlerts.PREF_ENABLED,enabled).apply();
+            WatchAlerts.setMode(OverlayService.this,enabled?"on":"off");
             update();
             android.widget.Toast.makeText(OverlayService.this,
                 enabled?"Alertas de procurados ativados":"Alertas de procurados pausados",
