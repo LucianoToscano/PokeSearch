@@ -41,7 +41,9 @@ public class OverlayService extends Service {
     private boolean visualMenuVertical=false,visualResultsHorizontal=false;
     private int visualMenuOffsetX=0,visualMenuOffsetY=0,
         visualResultsOffsetX=0,visualResultsOffsetY=0,
-        visualGearMenuGap=0,visualMenuItemGap=0,visualResultGapBetween=31;
+        visualGearMenuGap=0,visualMenuItemGap=0,visualResultGapBetween=31,
+        visualHeaderY=0,visualHeaderX=0,visualHeaderTouchWidth=35,
+        visualHeaderTouchHeight=30,visualHeaderAfterGap=0;
     private int visualMenuBaseDp(){
         return visualMenuVertical?232:MENU_BASE_DP;
     }
@@ -52,9 +54,11 @@ public class OverlayService extends Service {
         if(raw==null||raw.length()>5000)throw new org.json.JSONException("Visual settings too large");
         JSONObject input=new JSONObject(raw),clean=new JSONObject();
         String[] keys={"resultGapTop","resultGapBetween","resultSpriteScale","headerIconY",
+            "headerOffsetX","headerTouchWidth","headerTouchHeight","headerAfterGap",
             "resultsOffsetX","resultsOffsetY","menuOffsetX","menuOffsetY",
             "gearMenuGap","menuItemGap","popupWidth","popupHeight","resultsTransparency","menuTransparency"};
-        int[][] limits={{0,80,0},{0,65,31},{70,160,100},{-10,20,4},
+        int[][] limits={{-16,80,0},{0,65,31},{70,160,100},{0,72,0},
+            {-16,16,0},{26,42,35},{24,50,30},{0,36,0},
             {-200,200,0},{-350,350,0},{-200,200,0},{-350,350,0},
             {0,80,0},{0,16,0},{160,330,232},{140,420,390},{0,100,100},{0,100,35}};
         for(int i=0;i<keys.length;i++)clean.put(keys[i],
@@ -82,6 +86,11 @@ public class OverlayService extends Service {
             visualGearMenuGap=o.optInt("gearMenuGap",0);
             visualMenuItemGap=o.optInt("menuItemGap",0);
             visualResultGapBetween=o.optInt("resultGapBetween",31);
+            visualHeaderY=o.optInt("headerIconY",0);
+            visualHeaderX=o.optInt("headerOffsetX",0);
+            visualHeaderTouchWidth=o.optInt("headerTouchWidth",35);
+            visualHeaderTouchHeight=o.optInt("headerTouchHeight",30);
+            visualHeaderAfterGap=o.optInt("headerAfterGap",0);
         }catch(org.json.JSONException ignored){}
     }
     private void broadcastVisualPrefs(){
@@ -103,6 +112,8 @@ public class OverlayService extends Service {
             getSharedPreferences("prefs",0).edit()
                 .putString("visualPrefsJson",visualPrefsJson).apply();
             if(resultParams!=null&&resultRoot!=null&&wm!=null){
+                updateResultHeaderGrip();
+                resultParams.height=Math.max(resultParams.height,dp(minResultsHeaderHeightDp()));
                 resultParams.width=dp(resultWidthDp());
                 resultParams.x+=dp(visualResultsOffsetX-oldX);
                 resultParams.y+=dp(visualResultsOffsetY-oldY);
@@ -920,16 +931,15 @@ public class OverlayService extends Service {
             }
             return true;
         });
-        FrameLayout.LayoutParams gripParams=new FrameLayout.LayoutParams(
-            dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT);
-        gripParams.leftMargin=dp(Math.max(0,(dockDp()-35)/2));
-        resultRoot.addView(resultGrip,gripParams);
+        resultRoot.addView(resultGrip,new FrameLayout.LayoutParams(
+            dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT));
+        updateResultHeaderGrip();
 
         int preferredX=Math.max(0,screenWidthDp()-2*dockDp()-35);
         int preferredY=165;
         int savedX=prefs.getInt("resultsX",preferredX);
         int savedY=prefs.getInt("resultsY",preferredY);
-        resultParams=new WindowManager.LayoutParams(dp(resultWidthDp()),dp(RESULTS_HEADER_DP),
+        resultParams=new WindowManager.LayoutParams(dp(resultWidthDp()),dp(minResultsHeaderHeightDp()),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
@@ -957,16 +967,27 @@ public class OverlayService extends Service {
         });
         resultPanel.loadUrl("file:///android_asset/dock.html?results=1");
     }
+    private int minResultsHeaderHeightDp(){
+        return Math.max(RESULTS_HEADER_DP,visualHeaderY+visualHeaderTouchHeight);
+    }
+    // Native drag/tap hitbox follows the HTML button without enlarging the
+    // transparent touch-blocking surface outside the sprite column.
+    private void updateResultHeaderGrip(){
+        if(resultGrip==null)return;
+        int width=visualHeaderTouchWidth;
+        int maxLeft=Math.max(0,dockDp()-width);
+        int left=Math.max(0,Math.min(maxLeft,Math.round((dockDp()-width)/2f)+visualHeaderX));
+        FrameLayout.LayoutParams box=new FrameLayout.LayoutParams(
+            dp(width),dp(visualHeaderTouchHeight),Gravity.TOP|Gravity.LEFT);
+        box.leftMargin=dp(left);
+        box.topMargin=dp(visualHeaderY);
+        resultGrip.setLayoutParams(box);
+    }
     private void updateResultsWidth(){
         if(resultParams==null||resultRoot==null)return;
         resultParams.width=dp(resultWidthDp());
         resultParams.x=Math.max(0,Math.min(metrics().widthPixels-resultParams.width,resultParams.x));
-        if(resultGrip!=null){
-            FrameLayout.LayoutParams gripParams=new FrameLayout.LayoutParams(
-                dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT);
-            gripParams.leftMargin=dp(Math.max(0,(dockDp()-35)/2));
-            resultGrip.setLayoutParams(gripParams);
-        }
+        updateResultHeaderGrip();
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar largura dos resultados",e);}
     }
@@ -1754,9 +1775,10 @@ public class OverlayService extends Service {
         // The WebView already budgets all up to ten cards against the full display.
         // Resize the native touch window to that exact measured height; never
         // force an 8-row scroll or clip the bottom when dragged near an edge.
-        int max=Math.max(RESULTS_HEADER_DP,screenHeightDp()-16);
-        int desired=resultCollapsed?RESULTS_HEADER_DP:
-            Math.max(RESULTS_HEADER_DP,Math.min(max,desiredDp));
+        int min=minResultsHeaderHeightDp();
+        int max=Math.max(min,screenHeightDp()-16);
+        int desired=resultCollapsed?min:
+            Math.max(min,Math.min(max,desiredDp));
         int pixels=dp(desired);
         int screenPixels=metrics().heightPixels;
         int fittedY=Math.max(0,Math.min(Math.max(0,screenPixels-pixels),resultParams.y));
@@ -1776,7 +1798,7 @@ public class OverlayService extends Service {
         updateResultsWidth();
         if(resultCollapsed){
             hideDetails();
-            resizeResults(RESULTS_HEADER_DP);
+            resizeResults(minResultsHeaderHeightDp());
         }
     }
     private void menu(boolean show){
