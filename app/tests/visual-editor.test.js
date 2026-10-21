@@ -145,11 +145,14 @@ test("favorites location and notification share neutral button background",()=>{
  assert.ok(css.includes('button[data-key="location"].selected{color:#ff5264!important}'));
  assert.ok(css.includes('button[data-key="star"].selected,'));
 });
-test("bell silent mode has a red diagonal slash, not a colored button",()=>{
- assert.ok(dock.includes('button.classList.toggle("silent",id==="bell"&&generalAlerts&&alertMode==="silent"&&notificationPermissionGranted)'));
- assert.ok(dock.includes('button[data-key="bell"].silent .quickGlyph::after'));
+test("bell shows one red slash for a muted sound source and X for both",()=>{
+ assert.ok(dock.includes('button.classList.toggle("bell-one-muted",id==="bell"&&mutedCount===1)'));
+ assert.ok(dock.includes('button.classList.toggle("bell-both-muted",id==="bell"&&mutedCount===2)'));
+ assert.ok(dock.includes('bell-one-muted .quickGlyph::after'));
+ assert.ok(dock.includes('bell-both-muted .quickGlyph::before'));
  assert.ok(dock.includes("background:#ff4458;"));
- assert.ok(dock.includes("rotate(-43deg)"));
+ assert.ok(dock.includes("rotate(-44deg)"));
+ assert.ok(dock.includes("rotate(44deg)"));
 });
 test("legacy toggle icon colors match compact menu without changing IV or results",()=>{
  const css=dock.split("/* UX-ICONS-STATE:")[1]?.split("</style>")[0]||"";
