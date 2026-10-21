@@ -34,13 +34,17 @@ function fixture(options={}){
  }
  const coord=options.noCoords?null:new MockInput("Coordinates",options.currentCoords||"");
  const radius=options.noRadius?null:new MockInput(options.radiusLabel||"Radius",options.currentRadius||"");
- const visibleInputs=[coord,radius].filter(Boolean);
+ const extraDistance=options.unrelatedDistance?new MockInput("Distance","500"):null;
+ const visibleInputs=[extraDistance,coord,radius].filter(Boolean);
+ const groupedInputs=[coord,radius].filter(Boolean);
  const root={
   innerText:"Coords Area Coordinates Radius",children:[],
-  getClientRects:()=>[{}],
-  querySelectorAll:()=>visibleInputs
+  getClientRects:()=>[{}],querySelectorAll:()=>visibleInputs
  };
- for(const i of visibleInputs)i.parentElement=root;
+ const group={parentElement:root,innerText:"Coords Radius",children:[],
+  getClientRects:()=>[{}],querySelectorAll:()=>groupedInputs};
+ for(const i of groupedInputs)i.parentElement=group;
+ if(extraDistance)extraDistance.parentElement=root;
  let selected=options.active||"area";
  const buttons=["Coords","Area"].map(title=>({
   tagName:"BUTTON",innerText:title,textContent:title,disabled:false,children:[],
@@ -71,7 +75,7 @@ function fixture(options={}){
    Event:class{constructor(type){this.type=type;}}
   }));
  }
- return {coord,radius,run,selected:()=>selected};
+ return {coord,radius,extraDistance,run,selected:()=>selected};
 }
 function settle(f,request,maxCycles=7){
  let result;
@@ -187,4 +191,10 @@ let disabledOff=fixture({active:"coords",currentCoords:"1,2",currentRadius:"10"}
 disabledOff.coord.disabled=true;
 check("Disabled Coords cannot be cleared optimistically",disabledOff.run("configureLocation",disabled).stage,"waiting-coords");
 check("Disabled Coords retains its original value",disabledOff.coord.value,"1,2");
+let withDistance=fixture({active:"coords",unrelatedDistance:true});
+check("Location chooses the actual Coords and Radius pair despite a Distance filter",
+ settle(withDistance,req).ok,true);
+check("Location Radius field receives the requested value",withDistance.radius.value,"10");
+check("Unrelated Distance setting remains unchanged",withDistance.extraDistance.value,"500");
+check("Location verification checks the correct radius",withDistance.run("verifyLocation",req).ok,true);
 console.log("PokeSearch location contract: "+passed+" tests passed");
