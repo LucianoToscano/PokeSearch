@@ -751,12 +751,15 @@ body.controls-window #choices.visualPanel .visualJSON{
  resize:vertical;padding:6px;overflow:auto;
 }
 body.visual-guides.result-window .spawn{outline:none!important}
-body.visual-guides.result-window .spriteStage::after{
- content:"";position:absolute;left:50%;top:50%;
- width:calc(var(--sprite) * var(--visual-art-fit,0.86) * var(--visual-sprite-scale,1));
- height:calc(var(--sprite) * var(--visual-art-fit,0.86) * var(--visual-sprite-scale,1));
- transform:translate(-50%,-50%);box-sizing:border-box;
- border:1px dashed #4ce5ff9a;pointer-events:none;
+/* The dashed square previously followed the sprite container, not the visible
+   pixels. A drop-shadow follows the actual alpha silhouette of the sprite PNG.
+   The image itself stays unchanged; guides are visual-only. */
+body.visual-guides.result-window .spriteStage::after{display:none!important}
+body.visual-guides.result-window .spriteStage .sprite{
+ filter:drop-shadow(0 0 1px #4ce5ff) drop-shadow(0 0 1.5px #4ce5ff)!important;
+}
+body.visual-guides.result-window .spriteStage .spriteFallback{
+ filter:drop-shadow(0 0 1px #4ce5ff)!important;
 }
 body.visual-guides.result-window #resultHeader{outline:none!important}
 body.visual-guides.result-window #resultHeader .resultModeStack{outline:1px dashed #ffce4ca8;outline-offset:0}
@@ -1815,10 +1818,16 @@ window.measureResultSpacing=()=>{
  if(!resultWindow)return null;
  const header=(document.getElementById("resultIconStack")||
   document.getElementById("resultHeader"))?.getBoundingClientRect();
- const stages=[...document.querySelectorAll("#spawns .spriteStage")].map(e=>e.getBoundingClientRect());
- if(!header||!stages.length)return {count:0};
- return {count:stages.length,headerToFirstPx:Math.round(stages[0].top-header.bottom),
-  stageGapPx:stages.slice(1).map((b,i)=>Math.round(b.top-stages[i].bottom))};
+ const images=[...document.querySelectorAll("#spawns .spriteStage .sprite")]
+  .filter(img=>img.complete&&img.naturalWidth>0)
+  .map(img=>img.getBoundingClientRect());
+ const hitboxes=[...document.querySelectorAll("#spawns .spawn")].map(b=>b.getBoundingClientRect());
+ if(!header||!hitboxes.length)return {count:0};
+ const rects=images.length===hitboxes.length?images:hitboxes;
+ return {count:hitboxes.length,measurement:images.length===hitboxes.length?"image-box":"hitbox",
+  headerToFirstPx:Math.round(rects[0].top-header.bottom),
+  stageGapPx:rects.slice(1).map((box,i)=>Math.round(box.top-rects[i].bottom)),
+  touchGapPx:hitboxes.slice(1).map((box,i)=>Math.round(box.top-hitboxes[i].bottom))};
 };
 function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,textEnabled,opts=null,league="",preparedLines=null){
  const size=Math.max(18,Number(chosenSprite)||45);

@@ -199,8 +199,9 @@ test("Minior art receives additional consistent scaling in the 10-sprite list",(
  assert.ok(dock.includes('width:calc(var(--sprite) * var(--visual-art-fit,0.86))!important;'));
 });
 test("sprite guide tracks normalized art, not whole row",()=>{
- assert.ok(dock.includes('body.visual-guides.result-window .spriteStage::after'));
- assert.ok(dock.includes('var(--visual-art-fit,0.86) * var(--visual-sprite-scale,1)'));
+ assert.ok(dock.includes('body.visual-guides.result-window .spriteStage::after{display:none!important}'));
+ assert.ok(dock.includes('body.visual-guides.result-window .spriteStage .sprite{'));
+ assert.ok(dock.includes('filter:drop-shadow(0 0 1px #4ce5ff)'));
  assert.ok(dock.includes('document.getElementById("resultIconStack")'));
 });
 test("negative header gap changes native height instead of leaving invisible bottom padding",()=>{
@@ -249,5 +250,31 @@ test("Native constraints and collapsed height agree with actual touch target",()
  assert.ok(java.includes("int min=minResultsHeaderHeightDp();"));
  assert.ok(java.includes("int desired=resultCollapsed?min:"));
  assert.ok(java.includes("resizeResults(minResultsHeaderHeightDp());"));
+});
+test("silhouette guides follow alpha pixels instead of fixed-sized dashed squares",()=>{
+ assert.ok(dock.includes("body.visual-guides.result-window .spriteStage::after{display:none!important}"));
+ assert.ok(dock.includes('filter:drop-shadow(0 0 1px #4ce5ff)'));
+ assert.ok(dock.includes('body.visual-guides.result-window .spriteStage .spriteFallback{'));
+});
+test("geometry diagnostic distinguishes the rendered image rectangle from touch rows",()=>{
+ const f=dock.split('window.measureResultSpacing=()=>{')[1]?.split('function computeResultLayout(',1)[0]||"";
+ assert.ok(f.includes('querySelectorAll("#spawns .spriteStage .sprite")'));
+ assert.ok(f.includes("img.complete&&img.naturalWidth>0"));
+ assert.ok(f.includes('querySelectorAll("#spawns .spawn")'));
+ assert.ok(f.includes("touchGapPx:"));
+ assert.ok(f.includes('measurement:'));
+ assert.ok(!f.includes("card.")&&!f.includes("locationCoords"));
+});
+test("compact preset increases artwork size with zero space but keeps saved prefs unchanged",()=>{
+ const {window}=fixture();
+ const original=window.visualEditorCurrent();
+ assert.equal(original.resultGapBetween,31);
+ assert.equal(original.resultSpriteScale,100);
+ assert.ok(script.includes('compact:{resultGapTop:-6,resultGapBetween:0,resultSpriteScale:135'));
+ assert.ok(script.includes('balanced:{resultGapTop:0,resultGapBetween:13,resultSpriteScale:115'));
+ assert.ok(script.includes('resultSpriteScale:[70,220]'));
+ assert.ok(java.includes('{70,220,100}'));
+ window.onVisualPrefs({resultGapBetween:31,resultSpriteScale:100});
+ assert.equal(window.visualEditorCurrent().resultGapBetween,31);
 });
 console.log("PokeSearch temporary visual editor: "+count+" tests passed");
