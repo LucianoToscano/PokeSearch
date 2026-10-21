@@ -1765,6 +1765,14 @@ test("UX-LOCATION-FIX-01 invalid location never clears native confirmation or st
   block.includes('replaceActiveFilterSearch();')&&
   block.includes('OverlayService.this.refresh(true);');
 });
+test("SITE-POKEMON-02 stale autocomplete requests cannot replace newer site choices",()=>{
+ const java=service.split('@JavascriptInterface public void requestPokemonSuggestions(String query)')[1]
+  ?.split('@JavascriptInterface public void setSearchConfig(String payload)')[0]||'';
+ return java.includes('pokemonSuggestionSequence')&&java.includes('sequence!=pokemonSuggestionSequence')&&
+  java.includes('attempt<12')&&java.includes('response.put("query",query)')&&
+  dock.includes('response.empty===true?"Nenhuma opção oficial encontrada"')&&
+  probe.includes("reason:'Aguardando opções oficiais do PoGoCoordinates'");
+});
 test("UX-LOCATION-RETRY-01 same unverified coordinates can retry safely",()=>{
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
   ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";

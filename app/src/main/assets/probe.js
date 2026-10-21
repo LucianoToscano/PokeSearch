@@ -417,7 +417,18 @@ function pokemonSuggestion(query){
   return {ok:false,pending:true,reason:'Aguardando opções do site'};
  }
  const chips=pokemonSelectedChips();
- return {ok:true,query:originalQuery,options:pokemonPickerOptions().map(({label,dex,image})=>({label,dex,image})),
+ const options=pokemonPickerOptions().map(({label,dex,image})=>({label,dex,image}));
+ if(!options.length){
+  const popup=activeOptionPopup(input)||activeOptionPopup(pokemonPickerButton(root));
+  // Absence of items during React hydration is NOT an official empty response.
+  const explicitEmpty=!!originalQuery.trim()&&!!popup&&
+   /(?:no (?:results|pok[eé]mon|matches) found|no results|nenhum(?:a|s)? (?:resultado|pok[eé]mon))/i.test(text(popup));
+  if(!explicitEmpty)return {ok:false,pending:true,query:originalQuery,
+   reason:'Aguardando opções oficiais do PoGoCoordinates'};
+  return {ok:true,empty:true,query:originalQuery,options:[],
+   selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
+ }
+ return {ok:true,query:originalQuery,options,
   selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
 }
 if(action.startsWith('pokemonSuggest:')){

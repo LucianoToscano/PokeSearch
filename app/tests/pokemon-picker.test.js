@@ -92,4 +92,18 @@ test('Neutral unconfigured Pokémon picker does not block other search filters',
  site.open=false;
  assert.equal(run('verifyExtras',{pokemonSelections:[]}).ok,true);
 });
+test('Empty asynchronous options stay pending until official absence is explicit',()=>{
+ site.open=true;site.query='';
+ let state=run('pokemonSuggest:'+JSON.stringify('MissingSpecies999'));
+ assert.equal(state.pending,true);
+ state=run('pokemonSuggest:'+JSON.stringify('MissingSpecies999'));
+ assert.equal(state.pending,true);
+ assert.notEqual(state.empty,true);
+});
+test('A new official query may resolve without false empty',()=>{
+ assert.equal(run('pokemonSuggest:'+JSON.stringify('Venusaur')).pending,true);
+ const options=run('pokemonSuggest:'+JSON.stringify('Venusaur'));
+ assert.equal(options.ok,true);
+ assert.ok(options.options.some(v=>v.label==='Venusaur (Normal)'));
+});
 console.log('PokeSearch official multi-Pokemon picker: '+tested+' tests passed');

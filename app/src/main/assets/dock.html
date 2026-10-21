@@ -2084,7 +2084,8 @@ window.onPokemonSuggestions=response=>{
  if(choiceOpen!=="pokemon"||!response)return;
  if(response.query!==undefined&&response.query!==pokemonQuery)return; // stale suggestion response
  pokemonSuggestions=response.ok&&Array.isArray(response.options)?response.options:[];
- pokemonSuggestionStatus=response.ok?pokemonSuggestions.length?"":"Nenhuma opção oficial encontrada":
+ pokemonSuggestionStatus=response.ok?pokemonSuggestions.length?"":
+  response.empty===true?"Nenhuma opção oficial encontrada":"Aguardando opções oficiais...":
   String(response.reason||"Aguardando filtro Pokémon do PoGoCoordinates");
  drawPokemonSuggestions();
 };

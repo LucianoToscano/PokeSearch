@@ -2033,6 +2033,7 @@ public class OverlayService extends Service {
                 }),210L);
             });
         }
+        private int pokemonSuggestionSequence=0;
         @JavascriptInterface public void requestPokemonSuggestions(String query){handler.post(()->{
             if(stopped||loginPaused||!menuExpanded||menuPanel==null||!menuLoaded)return;
             if(searchInProgress){
@@ -2042,16 +2043,22 @@ public class OverlayService extends Service {
             final String wanted=query==null?"":query.trim();
             if(wanted.length()>65)return;
             final int generation=requestGeneration;
-            requestPokemonSuggestionsLater(wanted,generation,0);
+            final int sequence=++pokemonSuggestionSequence;
+            requestPokemonSuggestionsLater(wanted,generation,sequence,0);
         });}
-        private void requestPokemonSuggestionsLater(String query,int generation,int attempt){
-            if(stopped||loginPaused||searchInProgress||generation!=requestGeneration||!menuExpanded)return;
+        private void requestPokemonSuggestionsLater(String query,int generation,int sequence,int attempt){
+            if(stopped||loginPaused||searchInProgress||generation!=requestGeneration||
+                sequence!=pokemonSuggestionSequence||!menuExpanded)return;
             execute("pokemonSuggest:"+JSONObject.quote(query),response->{
-                if(stopped||generation!=requestGeneration||menuPanel==null||!menuLoaded)return;
-                if(response.optBoolean("pending",false)&&attempt<5){
-                    handler.postDelayed(()->requestPokemonSuggestionsLater(query,generation,attempt+1),280L);
+                if(stopped||generation!=requestGeneration||sequence!=pokemonSuggestionSequence||
+                    menuPanel==null||!menuLoaded)return;
+                if(response.optBoolean("pending",false)&&attempt<12){
+                    handler.postDelayed(()->requestPokemonSuggestionsLater(query,generation,sequence,attempt+1),300L);
                     return;
                 }
+                // Even the final timeout must be displayed as a wait/error, not
+                // as proven absence of an official species or event form.
+                try{response.put("query",query);}catch(org.json.JSONException ignored){}
                 js(menuPanel,true,"window.onPokemonSuggestions("+response.toString()+")");
             });
         }
