@@ -1011,11 +1011,17 @@ function verifyLocation(req){
  const actual=coordInput.split(/[,;]/).map(Number),expected=requested.split(/[,;]/).map(Number);
  const withinRange=p=>p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=90&&Math.abs(p[1])<=180;
  const validRadius=radiusInput!==""&&/^\d+$/.test(radiusInput)&&Number.isInteger(req.radius)&&req.radius>=0&&req.radius<=1000;
- const same=validText&&withinRange(actual)&&withinRange(expected)&&validRadius&&
-   Math.abs(expected[0]-actual[0])<0.0000001&&Math.abs(expected[1]-actual[1])<0.0000001&&
-   Number(radiusInput)===req.radius;
- return JSON.stringify({ok:!!same&&active===true,reason:active===true?
-   "Campos do filtro de localização não confirmados":"Modo Coords não confirmado no site"});
+ const coordsMatch=validText&&withinRange(actual)&&withinRange(expected)&&
+   Math.abs(expected[0]-actual[0])<0.0000001&&Math.abs(expected[1]-actual[1])<0.0000001;
+ const radiusMatch=validRadius&&Number(radiusInput)===req.radius;
+ const ok=coordsMatch&&radiusMatch&&active===true;
+ // Explain site DOM mismatch without exposing user coordinates or radius.
+ const reason=!fields.coords?"Campo Coords não localizado no site":
+   !fields.radius?"Campo Radius não localizado no site":
+   active!==true?"Modo Coords não confirmado no site":
+   !coordsMatch?"Coordenadas não persistiram no campo Coords do site":
+   !radiusMatch?"Raio não persistiu no campo Radius do site":"";
+ return JSON.stringify({ok:!!ok,reason});
 }
 
 if(action.startsWith("configureLocation:")){
