@@ -286,4 +286,18 @@ test("Compact preset keeps artwork inside native sprite column at P M G sizes",(
  assert.ok(script.includes("resultSpriteScale:[70,160]"));
  assert.ok(script.includes("resultGapBetween:[0,65]"));
 });
+test("menu icons have separate rounded backgrounds instead of a shared ribbon",()=>{
+ const section=dock.split("/* UX-MENU-BG-01:")[1]?.split("body.controls-window.visual-light-menu #choices")[0]||"";
+ assert.ok(section.includes("body.controls-window #menu,"));
+ assert.ok(section.includes("body.controls-window #quickMenuList{"));
+ assert.ok(section.includes("background:transparent!important;"));
+ assert.ok(section.includes("background:var(--visual-menu-button-bg,#28292cce)!important;"));
+ assert.ok(section.includes("border:1px solid #ffffff40!important;"));
+ assert.ok(section.includes("border-radius:6px!important;"));
+ assert.ok(section.includes("box-shadow:0 1px 3px #0008!important;"));
+ assert.ok(section.includes("body.controls-window.visual-light-menu #quickMenuList"));
+ assert.ok(dock.includes("body.controls-window #choices{background:var(--visual-menu-bg,#232b35e5)!important}"));
+ assert.ok(script.includes('set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency))'));
+ assert.ok(script.includes('set("menu-gap",current.menuItemGap+"px")'));
+});
 console.log("PokeSearch temporary visual editor: "+count+" tests passed");

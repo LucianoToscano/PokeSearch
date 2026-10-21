@@ -636,6 +636,27 @@ body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow{
  background:var(--visual-menu-button-bg,#28292cce)!important;
  color:var(--visual-menu-fg,#f2f7fc)!important;
 }
+/* UX-MENU-BG-01: separate rounded tiles, no shared ribbon background.
+   Popup #choices keeps its independent dark/light panel. */
+body.controls-window #menu,
+body.controls-window #quickMenuList{
+ background:transparent!important;
+}
+body.controls-window #quickMenuList .quickRow,
+body.controls-window #quickMenuList .quickFooterAction,
+body.controls-window #quickMenuList.quick-horizontal .quickRow,
+body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow{
+ background:var(--visual-menu-button-bg,#28292cce)!important;
+ background-clip:padding-box!important;
+ border:1px solid #ffffff40!important;
+ border-radius:6px!important;
+ box-shadow:0 1px 3px #0008!important;
+}
+body.controls-window.visual-light-menu #quickMenuList .quickRow,
+body.controls-window.visual-light-menu #quickMenuList .quickFooterAction{
+ border-color:#24394c66!important;
+ box-shadow:0 1px 3px #14233633!important;
+}
 body.controls-window.visual-light-menu #choices:not(.visualPanel){
  color:#172533!important;
 }
