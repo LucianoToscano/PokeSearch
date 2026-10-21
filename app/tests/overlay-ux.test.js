@@ -1816,10 +1816,10 @@ test("UX-NOTIFY-08 personalized matching favorites use separate notifications an
   watch.includes('NEXT_ALERT_ID.updateAndGet');
 });
 test("UX-NOTIFY-09 bell indicates favorites-only mode even when general is off",()=>{
- return dock.includes('id==="bell"?((generalAlerts||favoriteAlertMode!=="off")&&notificationPermissionGranted)')&&
-  dock.includes('bell.classList.toggle("generalOn",generalAlerts||favoriteAlertMode!=="off")')&&
+ return dock.includes('id==="bell"?((generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))&&notificationPermissionGranted)')&&
+  dock.includes('bell.classList.toggle("generalOn",generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))')&&
   dock.includes('Novos: "+alertMode+" · Favoritos: "+favoriteAlertMode')&&
-  dock.includes('favoriteAlertMode!=="on"&&((generalAlerts&&alertMode==="silent")||favoriteAlertMode==="silent")');
+  dock.includes('!(favoriteAlertMode==="on"&&hasFavorites)&&((generalAlerts&&alertMode==="silent")||(favoriteAlertMode==="silent"&&hasFavorites))');
 });
 test("UX-LOCATION-FIX-01 invalid location never clears native confirmation or starts new search",()=>{
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
