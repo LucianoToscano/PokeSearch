@@ -41,7 +41,8 @@ function fixture(options={}){
   options.numericPlaceholder?"":options.radiusLabel||"Radius",options.currentRadius||"",
   options.numericPlaceholder?"Radius (km, max 1000)":"");
  const extraDistance=options.unrelatedDistance?new MockInput("Distance","500"):null;
- const visibleInputs=[extraDistance,coord,radius].filter(Boolean);
+ const extraRadius=options.unrelatedRadius?new MockInput("Radius","250","Radius (m)"):null;
+ const visibleInputs=[extraDistance,extraRadius,coord,radius].filter(Boolean);
  const groupedInputs=[coord,radius].filter(Boolean);
  const root={
   innerText:"Coords Area Coordinates Radius",children:[],
@@ -51,6 +52,7 @@ function fixture(options={}){
   getClientRects:()=>[{}],querySelectorAll:()=>groupedInputs};
  for(const i of groupedInputs)i.parentElement=group;
  if(extraDistance)extraDistance.parentElement=root;
+ if(extraRadius)extraRadius.parentElement=root;
  let selected=options.active||"area";
  const buttons=["Coords","Area"].map(title=>({
   tagName:"BUTTON",innerText:title,textContent:title,disabled:false,children:[],
@@ -81,7 +83,7 @@ function fixture(options={}){
    Event:class{constructor(type){this.type=type;}}
   }));
  }
- return {coord,radius,extraDistance,run,selected:()=>selected};
+ return {coord,radius,extraDistance,extraRadius,run,selected:()=>selected};
 }
 function settle(f,request,maxCycles=7){
  let result;
@@ -218,4 +220,15 @@ liveLike.coord.value="-1,-2";
 check("Changing Coords invalidates proof",liveLike.run("verifyLocation",req).ok,false);
 let ambiguous=fixture({active:"area",unknownState:true,numericPlaceholder:true});
 check("Unconfirmed tab never passes as active",ambiguous.run("configureLocation",req).pending,true);
+// A competing Radius elsewhere on the page must never replace the actual
+// PoGoCoordinates "Radius (km, max 1000)" next to the numeric coords field.
+const competing=fixture({active:"coords",unknownState:true,siteHint:true,
+ numericPlaceholder:true,unrelatedRadius:true,unrelatedDistance:true});
+check("Official pair overrides unrelated Radius",settle(competing,req).ok,true);
+check("Official radius is set",competing.radius.value,"10");
+check("Unrelated Radius is unchanged",competing.extraRadius.value,"250");
+check("Unrelated Distance is unchanged",competing.extraDistance.value,"500");
+check("Verification uses only the official radius",competing.run("verifyLocation",req).ok,true);
+competing.radius.value="11";
+check("Actual radius mismatch is rejected",competing.run("verifyLocation",req).ok,false);
 console.log("PokeSearch location contract: "+passed+" tests passed");
