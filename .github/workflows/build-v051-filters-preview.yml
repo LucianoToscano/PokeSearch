@@ -61,6 +61,8 @@ jobs:
           node --check app/src/main/assets/probe.js
           node app/tests/location-probe.test.js
           node app/tests/probe-smoke.test.js
+          node app/tests/pokemon-picker.test.js
+          node app/tests/login-entry.test.js
           node app/tests/overlay-ux.test.js
           node app/tests/signing-contract.test.js
           python3 - <<'PY'
