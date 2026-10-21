@@ -46,6 +46,13 @@ public class MainActivity extends Activity {
     private android.app.Dialog tutorialDialog;
     private WebView tutorialWebView;
     private volatile boolean activityClosing=false;
+    private final android.os.Handler friendsExpiryHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable friendsExpiryCheck = new Runnable() {
+        @Override public void run() {
+            if (!FriendsExpiryGuard.isAllowed(MainActivity.this)) { finish(); return; }
+            friendsExpiryHandler.postDelayed(this,15_000L);
+        }
+    };
     private int avatarRequestGeneration=0;
     private void releaseTutorialWebView(){
         WebView guide=tutorialWebView;
@@ -96,12 +103,14 @@ public class MainActivity extends Activity {
     private String observedLoginProvider="";
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
+        if (!FriendsExpiryGuard.isAllowed(this)) { finish(); return; }
         if (!IntegrityGuard.verify(this)) {
             BugReport.log(this,"SECURITY","Falha de integridade do pacote");
             android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
             finish();
             return;
         }
+        friendsExpiryHandler.postDelayed(friendsExpiryCheck,15_000L);
         // HOME-01: rebuild only the presentation, never discard existing features.
         getWindow().setStatusBarColor(Color.rgb(12,33,67));
         getWindow().setNavigationBarColor(Color.rgb(9,20,37));
@@ -805,6 +814,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onResume(){
         super.onResume();
+        if (!FriendsExpiryGuard.isAllowed(this)) { finish(); return; }
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
@@ -1639,6 +1649,7 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        friendsExpiryHandler.removeCallbacks(friendsExpiryCheck);
         stopBundledTonePreview();
         activityClosing=true;
         avatarRequestGeneration++;
