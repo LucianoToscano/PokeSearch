@@ -39,21 +39,30 @@ function optionElements(){return elements('[role=option],[role=menuitemradio],[d
 function findOption(want){return optionElements().find(o=>text(o).toLowerCase()===String(want).toLowerCase())||null;}
 function choice(label,want){
  const e=field(label);
- if(!e)return false;
- if(e.tagName==="SELECT"){
-  const opt=Array.from(e.options).find(o=>text(o).toLowerCase()===want.toLowerCase());
-  if(!opt)return false;
-  e.value=opt.value;e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));
-  return true;
+ if(!e||e.disabled)return false;
+ if(e.tagName==='SELECT'){
+  const current=readChoice(label);
+  if(current&&current.toLowerCase()===want.toLowerCase())return true;
+  const choices=Array.from(e.options||[]).filter(o=>text(o).toLowerCase()===want.toLowerCase());
+  if(choices.length!==1)return false;
+  e.value=choices[0].value;
+  e.dispatchEvent(new Event('input',{bubbles:true}));
+  e.dispatchEvent(new Event('change',{bubbles:true}));
+  transientPending=true;return false; // next JS call verifies React's selection
+ }
+ if(e.matches('input[type=checkbox],[role=switch],[role=checkbox],button[role=switch]')){
+  const wantOn=want.toLowerCase()==='yes';
+  const attr=e.getAttribute('aria-checked');
+  const on=attr===null?!!e.checked:attr==='true';
+  if(on===wantOn)return true;
+  e.click();transientPending=true;return false;
  }
  if(text(e).toLowerCase()===want.toLowerCase())return true;
- // React/Radix menus render asynchronously: read an already-open option before toggling.
- let opt=findOption(want);
- if(opt){opt.click();return true;}
- if(e.disabled)return false;
- if(e.getAttribute("aria-expanded")!=="true")e.click();
- transientPending=true;
- return false;
+ // Never select from an unrelated Radix portal, even with the same label.
+ const option=optionForExtra(e,want);
+ if(option){option.click();transientPending=true;return false;}
+ if(e.getAttribute('aria-expanded')!=='true'&&e.getAttribute('data-state')!=='open')e.click();
+ transientPending=true;return false;
 }
 function readChoice(label){
  const e=field(label);
@@ -63,9 +72,59 @@ function readChoice(label){
 }
 function tab(label){
  const b=oneButton(label);
- if(!b)return false;
- if(b.getAttribute("aria-selected")==="true"||b.getAttribute("data-state")==="active")return true;
- b.click();return true;
+ if(!b||b.disabled)return false;
+ const selected=b.getAttribute('aria-selected');
+ const state=b.getAttribute('data-state');
+ const pressed=b.getAttribute('aria-pressed');
+ if(selected==='true'||state==='active'||pressed==='true')return true;
+ if(selected===null&&state===null&&pressed===null){
+  // Legacy pages have no active-tab attributes. Accept only target-specific
+  // fields; an unverified click never means the tab has finished rendering.
+  if(label==='Stats'&&(rawIVInputs().length>0||percentageIVInputs().length===2))return true;
+  if(label==='PvP'&&inputNear('Top ranking')&&field('League'))return true;
+ }
+ b.click();return false;
+}
+// React mounts a different field group AFTER the tab click. Only return
+// configured once its selected state and the requested inputs are available.
+function ensureModeTab(label,controlsReady){
+ const b=oneButton(label);
+ if(!b)return {ok:false,pending:true,reason:"Aguardando aba "+label};
+ const selected=b.getAttribute("aria-selected"),state=b.getAttribute("data-state"),pressed=b.getAttribute("aria-pressed");
+ if(selected==="true"||state==="active"||pressed==="true")
+  return controlsReady?{ok:true}:{ok:false,pending:true,reason:"Aguardando campos "+label};
+ if(selected!==null||state!==null||pressed!==null){
+  if(!b.disabled)b.click();
+  return {ok:false,pending:true,reason:"Alternando para "+label};
+ }
+ // Older site widgets have no aria state. Visible, mode-specific fields
+ // are the only safe readiness signal; otherwise request a render cycle.
+ if(controlsReady)return {ok:true};
+ if(!b.disabled)b.click();
+ return {ok:false,pending:true,reason:"Aguardando campos "+label};
+}
+function prepareCoreFilters(){
+ const league=mode==="gl"||mode==="ul";
+ const main=league?"PvP":"Stats",mainButton=oneButton(main);
+ if(!mainButton)return {ok:false,pending:true,reason:"Aguardando aba "+main};
+ const selected=mainButton.getAttribute("aria-selected"),state=mainButton.getAttribute("data-state");
+ if((selected!==null||state!==null)&&selected!=="true"&&state!=="active"){
+  if(!mainButton.disabled)mainButton.click();
+  return {ok:false,pending:true,reason:"Alternando para "+main};
+ }
+ if(league){
+  if(!inputNear("Top ranking")||!field("League"))
+   return {ok:false,pending:true,reason:"Aguardando filtros PvP"};
+  return {ok:true};
+ }
+ const isRaw=mode==="raw"||mode==="iv";
+ if(isRaw){
+  const rawTab=oneButton("Raw IV");
+  if(rawTab)return ensureModeTab("Raw IV",rawIVInputs().length===3||rawIVInputs().length===6);
+  if(rawIsHundo())return ensureModeTab("% IV",percentageIVInputs().length===2);
+  return {ok:false,pending:true,reason:"Aba Raw IV indisponível para IV personalizado"};
+ }
+ return ensureModeTab("% IV",percentageIVInputs().length===2);
 }
 function currentMode(){
  if(field("Top ranking"))return "gl";
@@ -101,7 +160,10 @@ function setShiny(want){
  const before=readShiny();
  if(before===want)return {ok:true,controlFound:true,changed:false,siteShiny:before};
  if(before===null||sw.disabled)return {ok:false,controlFound:true,reason:"Estado do Shiny não identificável"};
- sw.click();return {ok:true,controlFound:true,changed:true,siteShiny:readShiny()};
+ sw.click();
+ const after=readShiny();
+ return {ok:after===want,pending:after!==want,controlFound:true,changed:true,siteShiny:after,
+  reason:after===want?'':'Aguardando confirmação do Shiny no site'};
 }
 function inputsByIvGroup(count){
  const matches=labels(document,/^IV$/i);
@@ -118,51 +180,105 @@ function inputsByIvGroup(count){
 function rawIVInputs(){return inputsByIvGroup(3).length?inputsByIvGroup(3):inputsByIvGroup(6);}
 function percentageIVInputs(){return inputsByIvGroup(2);}
 function set100Percent(){
- tab("Stats");tab("% IV");
  const fields=percentageIVInputs();
- if(fields.length!==2)return false;
- return fields.every(e=>valueInput(e,"100"));
+ return fields.length===2&&applyNumbersOneAtATime(fields,[100,100],0,100);
 }
 function configuredRank(){return mode==="ul"?filters.ulRank:filters.glRank;}
+// IV form shown by PoGoCoordinates: A / D / S in three adjacent inputs.
+// Attribute labels (A,D,S or full stat names) take precedence if available.
+function ivStatFor(value){
+ const v=clean(value).replace(/[_-]/g," ");
+ if(!v)return -1;
+ const rx=[/^(?:a|attack|atk|ataque)$/i,/^(?:d|defense|defence|def|defesa)$/i,/^(?:s|stamina|sta|hp|vida)$/i];
+ const names=[/\b(?:attack|atk|ataque)\b/i,/\b(?:defense|defence|def|defesa)\b/i,/\b(?:stamina|sta|hp|vida)\b/i];
+ const m=names.map((re,i)=>re.test(v)||rx[i].test(v)?i:-1).filter(i=>i>=0);
+ return m.length===1?m[0]:-1;
+}
+function ivInputStat(input){
+ const attrs=["aria-label","name","id","placeholder"].map(k=>input.getAttribute(k)||"").filter(Boolean);
+ for(const a of attrs){const stat=ivStatFor(a);if(stat>=0)return stat;}
+ const id=input.getAttribute("id")||"";
+ if(id){
+  const lab=elements("label[for]").find(e=>e.getAttribute("for")===id);
+  if(lab){const stat=ivStatFor(text(lab));if(stat>=0)return stat;}
+ }
+ const labelled=input.getAttribute("aria-labelledby")||"";
+ if(labelled){
+  const ids=labelled.split(/\s+/);
+  for(const id of ids){
+   const label=elements("[id]").find(e=>e.getAttribute("id")===id);
+   if(label){const stat=ivStatFor(text(label));if(stat>=0)return stat;}
+  }
+ }
+ // The narrow wrapper of one/two controls can label the stat. Do not
+ // promote ancestor groups that include CP, Level or all three IV stats.
+ for(let p=input.parentElement,d=0;p&&d<4;p=p.parentElement,d++){
+  const local=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
+  if(local.length>2)break;
+  const stat=ivStatFor(text(p));if(stat>=0)return stat;
+ }
+ return -1;
+}
 function rawValues(){
  const values=[filters.attack,filters.defense,filters.stamina];
+ if(!values.every(v=>Number.isInteger(v)&&v>=0&&v<=15))return null;
  const inputs=rawIVInputs();
- if(inputs.length===3)return {inputs,values};
- if(inputs.length!==6)return null;
- // Raw IV forms may expose a min/max field for each stat.
- // Use nearby stat labels rather than guessing the 6-field DOM order.
- const mapped=inputs.map(input=>{
-  for(let node=input.parentElement,depth=0;node&&depth<3;node=node.parentElement,depth++){
-   const own=clean(node.innerText||"").toLowerCase();
-   const names=[/\b(?:attack|atk|ataque)\b/,/\b(?:defense|defence|def|defesa)\b/,/\b(?:stamina|sta|hp|vida)\b/];
-   const matching=names.map((re,i)=>re.test(own)?i:-1).filter(i=>i>=0);
-   if(matching.length===1)return matching[0];
-  }
-  return -1;
- });
- if(mapped.every(i=>i>=0)&&[0,1,2].every(i=>mapped.filter(x=>x===i).length===2))
-  return {inputs,values:mapped.map(i=>values[i])};
- // Equal IVs are unambiguous even without labels; unequal ones must not be misapplied.
- if(values.every(v=>v===values[0]))return {inputs,values:inputs.map(()=>values[0])};
+ if(inputs.length!==3&&inputs.length!==6)return null;
+ const mapped=inputs.map(ivInputStat);
+ if(inputs.length===3){
+  // Site's three-input Raw IV card is ordered A/D/S, proven by screenshots.
+  // Use that order only when *none* of its controls claims another label.
+  if(mapped.every(v=>v<0))return {inputs,values};
+  if(mapped.every(v=>v>=0)&&[0,1,2].every(v=>mapped.filter(x=>x===v).length===1))
+   return {inputs,values:mapped.map(v=>values[v])};
+  return null;
+ }
+ if(mapped.every(v=>v>=0)&&[0,1,2].every(v=>mapped.filter(x=>x===v).length===2))
+  return {inputs,values:mapped.map(v=>values[v])};
+ // Six anonymous min/max fields are safe only for all-equal triples.
+ if(mapped.every(v=>v<0)&&values.every(v=>v===values[0]))
+  return {inputs,values:inputs.map(()=>values[0])};
  return null;
+}
+function confirmedNumber(input,want,min,max){
+ if(!input)return false;
+ const val=String(input.value??"").trim();
+ // Number("") equals 0; that must NEVER verify a blank Raw IV input.
+ if(!/^(?:0|[1-9]\d*)$/.test(val))return false;
+ const number=Number(val);
+ return Number.isInteger(number)&&number>=min&&number<=max&&number===want;
+}
+function applyNumbersOneAtATime(inputs,values,min,max){
+ if(inputs.length!==values.length)return false;
+ for(let i=0;i<inputs.length;i++){
+  const target=values[i],input=inputs[i];
+  if(!Number.isInteger(target)||target<min||target>max)return false;
+  if(confirmedNumber(input,target,min,max))continue;
+  if(!vis(input)||input.disabled||input.readOnly)return false;
+  // Native value setter + input/change events mirrors an actual typed value.
+  // React may re-render after each event: advance ONE field per JS roundtrip.
+  if(!valueInput(input,target))return false;
+  transientPending=true;
+  return false;
+ }
+ return true;
 }
 function rawIsHundo(){
  return filters.attack===15&&filters.defense===15&&filters.stamina===15;
 }
 function applyRaw(){
- tab("Stats");tab("Raw IV");
  const group=rawValues();
- if(group&&group.inputs.every((input,i)=>valueInput(input,group.values[i])))return true;
- // A 15/15/15 selection is IV100 even on the site's % IV form.
- // Fallback only for this exact combination, never for mixed IV values.
- return rawIsHundo()&&set100Percent();
+ if(group)return applyNumbersOneAtATime(group.inputs,group.values,0,15);
+ // Only a Hundo can safely fall back to % IV 100/100, and only if
+ // the site's Raw IV tab is missing. Never change tabs mid-configuration.
+ return rawIsHundo()&&!oneButton("Raw IV")&&set100Percent();
 }
 function verifyRaw(){
  const group=rawValues();
- if(group&&group.inputs.every((input,i)=>Number(input.value)===group.values[i]))return true;
- if(!rawIsHundo())return false;
+ if(group&&group.inputs.every((input,i)=>confirmedNumber(input,group.values[i],0,15)))return true;
+ if(!rawIsHundo()||oneButton("Raw IV"))return false;
  const percent=percentageIVInputs();
- return percent.length===2&&percent.every(input=>Number(input.value)===100);
+ return percent.length===2&&percent.every(input=>confirmedNumber(input,100,0,100));
 }
 // Defense-in-depth: the UI and Android bridge reject unattainable IV values,
 // and the site automation independently verifies the same 46-value domain.
@@ -175,27 +291,30 @@ function validPercentRange(){
 }
 function applyPercent(){
  if(!validPercentRange())return false;
- tab("Stats");tab("% IV");
  const inputs=percentageIVInputs();
- return inputs.length===2&&valueInput(inputs[0],filters.percentMin)&&valueInput(inputs[1],filters.percentMax);
+ return inputs.length===2&&applyNumbersOneAtATime(inputs,[filters.percentMin,filters.percentMax],0,100);
 }
 function verifyPercent(){
  if(!validPercentRange())return false;
  const inputs=percentageIVInputs();
- return inputs.length===2&&Number(inputs[0].value)===filters.percentMin&&Number(inputs[1].value)===filters.percentMax;
+ return inputs.length===2&&confirmedNumber(inputs[0],filters.percentMin,0,100)&&confirmedNumber(inputs[1],filters.percentMax,0,100);
 }
 function applyIv(){
- // Preserve the original Hundo compatibility (% IV 100/100 or exact Raw IV).
- if(set100Percent())return true;
- tab("Stats");tab("Raw IV");
- const raw=rawIVInputs();
- return (raw.length===3||raw.length===6)&&raw.every(x=>valueInput(x,"15"));
+ // Legacy perfect-IV option, kept for compatibility with older saved modes.
+ const group=rawValues();
+ if(group)return applyNumbersOneAtATime(group.inputs,group.inputs.map(()=>15),0,15);
+ return !oneButton("Raw IV")&&set100Percent();
 }
 function applyLeague(){
- const rank=inputNear("Top ranking");
- return !!rank&&valueInput(rank,configuredRank())&&
-  choice("League",mode==="ul"?"Ultra League":"Great League")&&
-  choice("Include previous evolutions",filters.includePreviousEvolutions===false?"No":"Yes");
+ const rank=inputNear('Top ranking'),expected=configuredRank();
+ if(!rank||!Number.isInteger(expected)||expected<1||expected>50)return false;
+ if(!confirmedNumber(rank,expected,1,50)){
+  if(!valueInput(rank,expected))return false;
+  transientPending=true;return false; // one React update per injection
+ }
+ if(!choice('League',mode==='ul'?'Ultra League':'Great League'))return false;
+ if(!choice('Include previous evolutions',filters.includePreviousEvolutions===false?'No':'Yes'))return false;
+ return true;
 }
 function checkCore(){
  const currentShiny=readShiny();
@@ -203,10 +322,18 @@ function checkCore(){
   return {ok:false,reason:"Shiny não confirmado",shiny:currentShiny};
  if(mode==="iv"){
   const ins=rawIVInputs();
-  if((ins.length===3||ins.length===6)&&ins.every(x=>x.value==="15"))return {ok:true};
+  if((ins.length===3||ins.length===6)&&ins.every(x=>confirmedNumber(x,15,0,15)))return {ok:true};
   const pc=percentageIVInputs();
-  if(pc.length===2&&pc.every(x=>x.value==="100"))return {ok:true};
+  if(pc.length===2&&pc.every(x=>confirmedNumber(x,100,0,100)))return {ok:true};
   return {ok:false,reason:"IV100: Raw IV 15/15/15 ou % IV 100/100 não confirmados"};
+ }
+ // A verified input in a different tab is not proof of the selected mode.
+ const target=mode==="raw"?"Raw IV":mode==="percent"?"% IV":null;
+ if(target){
+  const button=oneButton(target);
+  if(button&&(button.getAttribute("aria-selected")!==null||button.getAttribute("data-state")!==null)&&
+    button.getAttribute("aria-selected")!=="true"&&button.getAttribute("data-state")!=="active")
+   return {ok:false,reason:"Aba "+target+" não selecionada"};
  }
  if(mode==="raw")return {ok:verifyRaw(),reason:"Raw IV A/D/S não confirmado no site"};
  if(mode==="percent")return {ok:verifyPercent(),reason:"IV% Min/Max não confirmados no site"};
@@ -218,6 +345,153 @@ function checkCore(){
  return {ok:true};
 }
 
+// SITE-POKEMON-01: PoGoCoordinates uses a multiple-species/form token picker.
+// A Pokemon's exact form label is NOT a free-text single-species search.
+function normalizePokemonLabel(value){
+ return clean(value).replace(/^#\s*\d{1,4}\s+/,'').replace(/[\s×✕✓✔]+$/,'').trim();
+}
+function pokemonPickerRoot(){
+ const heads=labels(document,/^Pok[eé]mon$/i);
+ for(const head of heads){
+  for(let p=head.parentElement,depth=0;p&&depth<6;p=p.parentElement,depth++){
+   const all=text(p);
+   if(all.length>2800||/\b(?:Sort by|Filter by|Despawn|Weather)\b/i.test(all))break;
+   const btns=p.querySelectorAll('button,[role=combobox],input:not([type=hidden])');
+   if(btns.length&&p!==document.body)return p;
+  }
+ }
+ return null;
+}
+function pokemonPickerInput(){
+ // Search is official, never autocomplete from a fabricated species/form list.
+ return elements('input:not([type=hidden])').find(e=>vis(e)&&
+  /search by name, form, or dex|search.*(?:pok[eé]mon|form|dex)|(?:pok[eé]mon|form|dex).*search/i.test(
+   (e.getAttribute('placeholder')||'')+' '+(e.getAttribute('aria-label')||'')))||null;
+}
+function pokemonPickerButton(root){
+ if(!root)return null;
+ return Array.from(root.querySelectorAll('button,[role=combobox],[aria-haspopup]'))
+  .find(e=>vis(e)&&(/pok[eé]mon/i.test(String(e.getAttribute('aria-label')||''))||
+    e.getAttribute('aria-haspopup')||e.getAttribute('role')==='combobox'||
+    /(?:any pok[eé]mon|\b\d+\b)/i.test(text(e))))||null;
+}
+function pokemonSelectedChips(){
+ const root=pokemonPickerRoot();if(!root)return null;
+ const selected=[];
+ const buttons=Array.from(root.querySelectorAll('button,[role=button]')).filter(vis);
+ for(const b of buttons){
+  const aria=String(b.getAttribute('aria-label')||'');
+  const isRemove=/\b(?:remove|remover|delete|excluir)\b/i.test(aria)||/^[×✕x]$/.test(text(b));
+  if(!isRemove||!b.parentElement)continue;
+  const raw=aria.match(/(?:remove|remover|delete|excluir)\s+(.+)/i)?.[1]||text(b.parentElement);
+  const label=normalizePokemonLabel(raw);
+  if(!label||label.length>100||!/\p{L}/u.test(label)||
+   /^(?:pok[eé]mon|any|clear|remove|limpar|search)$/i.test(label))continue;
+  if(!selected.some(v=>v.label.toLowerCase()===label.toLowerCase()))selected.push({label,remove:b});
+ }
+ return selected;
+}
+// Only read the popup that belongs to this Pokemon picker. Radix may portal
+// the listbox outside the form; global document-wide <li> selection is unsafe.
+function pokemonPickerPopup(root,input){
+ if(!input)return null;
+ const trigger=pokemonPickerButton(root);
+ const controls=[input,trigger].filter(Boolean);
+ for(const control of controls){
+  for(const attr of ['aria-controls','aria-owns']){
+   const id=control.getAttribute(attr)||'';
+   if(!id||!document.getElementById)continue;
+   const panel=document.getElementById(id);
+   if(vis(panel))return panel;
+  }
+ }
+ if(typeof input.closest==='function'){
+  const panel=input.closest('[role=dialog],[role=listbox],[cmdk-root],[data-radix-popper-content-wrapper]');
+  if(vis(panel))return panel;
+ }
+ // A single open listbox is a safe fallback only when the Pokemon trigger
+ // explicitly says open; multiple listboxes remain ambiguous and fail closed.
+ if(trigger&&trigger.getAttribute('aria-expanded')==='true'){
+  const visible=elements('[role=listbox],[cmdk-root],[data-radix-popper-content-wrapper]')
+   .filter(vis);
+  if(visible.length===1)return visible[0];
+ }
+ return null;
+}
+function pokemonPickerOptions(popup){
+ if(!popup)return [];
+ const candidates=Array.from(popup.querySelectorAll(
+  '[role=option],[role=listbox] [role=checkbox],[cmdk-item],[data-radix-collection-item],[role=listbox] button,[role=listbox] li,li')).filter(vis);
+ return candidates.map(e=>{
+  const raw=text(e),label=normalizePokemonLabel(raw);
+  const dex=(raw.match(/#\s*(\d{1,4})/)||[])[1]||'';
+  const img=e.querySelector('img[src]'),image=img?String(img.src||''):'';
+  return {label,dex,image:/^https:\/\//.test(image)?image:'',node:e};
+ }).filter(item=>item.label&&item.label.length<=90&&
+  !/^(?:any pok[eé]mon|clear|search|close|no results|loading)$/i.test(item.label))
+  .filter((item,i,all)=>all.findIndex(v=>v.label.toLowerCase()===item.label.toLowerCase())===i)
+  .slice(0,35);
+}
+function pokemonPickerExplicitEmpty(popup){
+ if(!popup)return false;
+ const statuses=Array.from(popup.querySelectorAll('[cmdk-empty],[data-cmdk-empty],[role=status],[data-state=empty]')).filter(vis);
+ return statuses.some(e=>/^(?:no results(?: found)?|no matches|nenhum resultado|nenhuma op[çc][ãa]o)(?:\.|$)/i.test(text(e)));
+}
+function pokemonSuggestion(query){
+ const wanted=String(query||'').slice(0,65);
+ const root=pokemonPickerRoot();
+ if(!root)return {ok:false,pending:true,stage:'waiting-picker',query:wanted,reason:'Aguardando seletor Pokémon do site'};
+ let input=pokemonPickerInput();
+ if(!input){
+  const button=pokemonPickerButton(root);
+  if(!button)return {ok:false,pending:true,stage:'waiting-trigger',query:wanted,reason:'Aguardando botão oficial de Pokémon'};
+  if(button.disabled)return {ok:false,pending:false,stage:'failed',query:wanted,reason:'Botão Pokémon desabilitado no site'};
+  if(button.getAttribute('aria-expanded')!=='true')button.click();
+  return {ok:false,pending:true,stage:'opening',query:wanted,reason:'Aguardando abertura do seletor oficial'};
+ }
+ if(String(input.value||'')!==wanted){
+  if(!valueInput(input,wanted))return {ok:false,pending:false,stage:'failed',query:wanted,reason:'Não foi possível digitar no seletor oficial'};
+  return {ok:false,pending:true,stage:'typing',query:wanted,reason:'Aguardando a pesquisa oficial'};
+ }
+ const popup=pokemonPickerPopup(root,input);
+ if(!popup)return {ok:false,pending:true,stage:'waiting-popup',query:wanted,reason:'Menu oficial ainda não está visível'};
+ const options=pokemonPickerOptions(popup);
+ const chips=pokemonSelectedChips();
+ if(options.length)return {ok:true,pending:false,stage:'ready',query:wanted,
+  options:options.map(({label,dex,image})=>({label,dex,image})),
+  selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
+ if(pokemonPickerExplicitEmpty(popup))return {ok:true,pending:false,stage:'explicit-empty',explicitEmpty:true,query:wanted,
+  options:[],selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
+ return {ok:false,pending:true,stage:'waiting-options',query:wanted,reason:'Aguardando opções do seletor oficial'};
+}
+if(action.startsWith('pokemonSuggest:')){
+ try{return JSON.stringify(pokemonSuggestion(JSON.parse(action.slice('pokemonSuggest:'.length))));}
+ catch(_){return JSON.stringify({ok:false,reason:'Consulta de Pokémon inválida'});}
+}
+function pokemonListSelection(verb){
+ const raw=filters.pokemonSelections;
+ if(!Array.isArray(raw))return {ok:true,pending:false};
+ const wanted=[...new Set(raw.map(normalizePokemonLabel).filter(Boolean))];
+ const needClear=Array.isArray(filters.clearExtraKeys)&&
+  (filters.clearExtraKeys.includes('pokemonSelections')||filters.clearExtraKeys.includes('pokemon'));
+ if(wanted.length===0&&!needClear)return {ok:true,pending:false};
+ const selected=pokemonSelectedChips();
+ if(!selected)return {ok:false,pending:false,reason:'Cartões selecionados do site não encontrados'};
+ const missing=wanted.filter(name=>!selected.some(x=>x.label.toLowerCase()===name.toLowerCase()));
+ const extra=selected.filter(x=>!wanted.some(name=>name.toLowerCase()===x.label.toLowerCase()));
+ if(!missing.length&&!extra.length)return {ok:true,pending:false};
+ if(verb!=='apply')return {ok:false,pending:false,reason:'Seleção de espécies ou formas diferente da solicitada'};
+ if(extra.length){extra[0].remove.click();return {ok:false,pending:true,reason:'Removendo outra espécie ou forma'};}
+ const result=pokemonSuggestion(missing[0]);
+ if(!result.ok)return {ok:false,pending:!!result.pending,reason:result.reason||'Filtro Pokémon indisponível'};
+ if(result.explicitEmpty)return {ok:false,pending:false,reason:'Espécie ou forma ausente nas opções oficiais: '+missing[0]};
+ const popup=pokemonPickerPopup(pokemonPickerRoot(),pokemonPickerInput());
+ const candidate=pokemonPickerOptions(popup).find(x=>x.label.toLowerCase()===missing[0].toLowerCase());
+ if(!candidate)return {ok:false,pending:true,reason:'Aguardando espécie/forma no seletor oficial: '+missing[0]};
+ candidate.node.click();
+ return {ok:false,pending:true,reason:'Aplicando espécie/forma no site'};
+}
+
 const EXTRA_LABELS={sortBy:"Sort by",pokemon:"Pokemon",form:"Form",size:"Size",gender:"Gender",weather:"Weather"};
 function extraControl(label){
  const e=field(label);if(e)return e;
@@ -225,8 +499,38 @@ function extraControl(label){
  return elements('input:not([type=hidden]),select,[role=combobox],button[aria-haspopup]')
   .find(x=>vis(x)&&rx.test((x.getAttribute("placeholder")||"")+" "+(x.getAttribute("aria-label")||"")))||null;
 }
-function siteOptions(){
- return [...new Set(optionElements().map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80);
+// React/Radix portals are detached from controls. Resolve the list tied to
+// the requested trigger before reading or selecting ANY option.
+function extraPopup(e){
+ if(!e)return null;
+ for(const attr of ['aria-controls','aria-owns']){
+  const id=e.getAttribute(attr)||'';
+  if(id&&document.getElementById){
+   const popup=document.getElementById(id);
+   if(vis(popup))return popup;
+  }
+ }
+ if(typeof e.closest==='function'){
+  const panel=e.closest('[role=listbox],[role=dialog],[data-radix-popper-content-wrapper]');
+  if(vis(panel))return panel;
+ }
+ if(e.getAttribute('aria-expanded')==='true'||e.getAttribute('data-state')==='open'){
+  const candidates=elements('[role=listbox],[data-radix-select-content],[data-radix-popper-content-wrapper]').filter(vis);
+  if(candidates.length===1)return candidates[0];
+ }
+ return null;
+}
+function optionsForExtra(e){
+ const popup=extraPopup(e);
+ if(!popup)return [];
+ return Array.from(popup.querySelectorAll('[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item],option')).filter(vis);
+}
+function siteOptions(e){
+ return [...new Set(optionsForExtra(e).map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80);
+}
+function optionForExtra(e,want){
+ const matching=optionsForExtra(e).filter(o=>text(o).toLowerCase()===String(want).toLowerCase());
+ return matching.length===1?matching[0]:null;
 }
 function describeChoice(label){
  const e=extraControl(label);
@@ -249,10 +553,14 @@ function extraSelect(key,want){
  const actual=extraValue(key);
  if(!want){
   if(isNeutral(actual))return true;
-  if(e.matches("input"))return valueInput(e,"");
+  if(e.matches("input")){
+   if(!valueInput(e,""))return false;
+   transientPending=true;return false;
+  }
   // Reset prior active filter when user switches back to Any.
-  const opt=optionElements().find(o=>isNeutral(text(o)));
-  if(opt){opt.click();return true;}
+  const neutral=optionsForExtra(e).filter(o=>isNeutral(text(o)));
+  const opt=neutral.length===1?neutral[0]:null;
+  if(opt){opt.click();transientPending=true;return false;} // Wait for the neutral state to settle
   if(e.disabled)return false;
   if(e.getAttribute("aria-expanded")!=="true")e.click();
   transientPending=true;
@@ -260,10 +568,13 @@ function extraSelect(key,want){
  }
  if(e.disabled)return false;
  if(actual&&actual.toLowerCase()===want.toLowerCase())return true;
- if(e.matches("input"))return valueInput(e,want);
+ if(e.matches("input")){
+  if(!valueInput(e,want))return false;
+  transientPending=true;return false;
+ }
  if(e.matches("select"))return choice(label,want);
- const opt=findOption(want);
- if(opt){opt.click();transientPending=true;return false;} // React state must settle before later filters
+ const opt=optionForExtra(e,want);
+ if(opt){opt.click();transientPending=true;return false;} // Verify React state after rerender
  if(e.getAttribute("aria-expanded")!=="true")e.click();
  transientPending=true;
  return false;
@@ -278,11 +589,16 @@ if(action.startsWith("openFilterOptions:")){
  const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
  if(!e||e.disabled||e.matches("input")||e.matches("select"))return JSON.stringify({ok:false,key});
  if(e.getAttribute("aria-expanded")!=="true")e.click();
- return JSON.stringify({ok:true,key});
+ return JSON.stringify({ok:true,pending:true,key,reason:"Abrindo opções de "+label});
 }
 if(action.startsWith("readFilterOptions:")){
- const key=action.split(":")[1],label=EXTRA_LABELS[key];
- return JSON.stringify({ok:!!label,key,options:label?siteOptions():[]});
+ const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
+ if(!e)return JSON.stringify({ok:false,key,reason:"Controle indisponível"});
+ const popup=extraPopup(e);
+ if(!popup)return JSON.stringify({ok:false,pending:true,key,reason:"Aguardando portal de "+label});
+ const options=siteOptions(e);
+ if(!options.length)return JSON.stringify({ok:false,pending:true,key,reason:"Aguardando opções de "+label});
+ return JSON.stringify({ok:true,key,options,stage:"ready"});
 }
 if(action.startsWith("closeFilterOptions:")){
  const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
@@ -316,7 +632,10 @@ function extras(action){
  transientPending=false;
  const failed=[];
  const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
+ const pokemon=pokemonListSelection(action);
+ if(!pokemon.ok)return {ok:false,pending:!!pokemon.pending,reason:pokemon.reason||'Seleção Pokémon não confirmada'};
  for(const key of Object.keys(EXTRA_LABELS)){
+  if(key==="pokemon"&&Array.isArray(filters.pokemonSelections))continue;
   const want=String(filters[key]||"").trim();
   // Blank means no optional restriction; it is not a request to discover a
   // dropdown. Only a tracked transition from a prior filter needs clearing.
@@ -325,15 +644,31 @@ function extras(action){
   if(!ok)failed.push(key);
   if(transientPending)break; // one portal dropdown at a time
  }
+ // Controlled React inputs may rerender after *each* input/change event.
+ // Set just one CP/Level/minPvpCp field in a given evaluateJavascript roundtrip.
+ // Every following roundtrip independently reads back the new DOM value.
  if(!transientPending)for(const key of extraNumberKeys()){
-  const want=String(filters[key]||"").trim(),input=extraNumberField(key);
+  const provided=filters[key];
+  const want=provided==null?"":String(provided).trim(),input=extraNumberField(key);
   if(!want&&!resetKeys.includes(key))continue;
   if(want&&!input){failed.push(key);continue;}
   if(!input)continue;
-  const ok=action==="apply"?valueInput(input,want):String(input.value||"").trim()===want;
-  if(!ok)failed.push(key);
+  const actual=String(input.value??"").trim();
+  if(actual===want)continue;
+  if(action!=="apply"){failed.push(key);continue;}
+  if(input.disabled||input.readOnly||!vis(input)||!valueInput(input,want)){
+   failed.push(key);continue;
+  }
+  // Even if input.value looks correct immediately, React may still revert it.
+  transientPending=true;
+  failed.push(key);
+  break;
  }
- return {ok:failed.length===0,pending:action==="apply"&&transientPending,reason:"Filtros adicionais: "+failed.join(", ")};
+ return {ok:failed.length===0&&!transientPending,
+  pending:action==="apply"&&transientPending,
+  stage:transientPending?"awaiting-react-fields":"checked-extras",
+  reason:transientPending?"Aguardando atualização React de filtro adicional":
+   "Filtros adicionais: "+failed.join(", ")};
 }
 function currentCoreControlsVisible(){
  if(mode==="percent")return percentageIVInputs().length===2;
@@ -345,6 +680,7 @@ function currentCoreControlsVisible(){
 function visibleExtrasMismatch(){
  const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
  for(const key of Object.keys(EXTRA_LABELS)){
+  if(key==="pokemon"&&Array.isArray(filters.pokemonSelections))continue;
   const want=String(filters[key]||"").trim();
   if(!want&&!resetKeys.includes(key))continue;
   const control=extraControl(EXTRA_LABELS[key]);
@@ -424,6 +760,13 @@ function parseCard(box,sourceIndex){
  const move=lines.find(s=>/\s\/\s/.test(s)&&!/\d+\s*\/\s*\d+\s*\/\s*\d+/.test(s))||"";
  const loc=nextLabelValue(box,"LOCATION")||(body.match(/\bLOCATION\s*\n?\s*([^\n]+?)(?=\n|DESPAWN|$)/i)||[])[1]||"";
  const desp=nextLabelValue(box,"DESPAWN")||(body.match(/\bDESPAWN\s*(\d{1,2}:\d{2})/i)||[])[1]||"";
+ // PL-LOC-INFO: only use the distance explicitly printed inside this card.
+ // Never derive distance from device GPS or the user's saved coordinates.
+ const distanceMatch=body.match(/(?:^|\n)\s*(\d+(?:[.,]\d+)?)\s*(km|m|mi)\s+(?:away|de\s+dist[âa]ncia)\b/im);
+ const distance=distanceMatch?distanceMatch[1]+" "+distanceMatch[2]:"";
+ // The site's LOCATION container can include its own separate distance line.
+ // Strip it from the place name so Location and Distance can be toggled independently.
+ const place=clean(loc).replace(/\s*\d+(?:[.,]\d+)?\s*(?:km|m|mi)\s+(?:away|de\s+dist[âa]ncia)\s*$/i,"").trim();
  const candidates=Array.from(box.querySelectorAll("img[src]")).filter(e=>/^https?:/.test(e.src)||e.src.startsWith("data:image/"));
  const image=candidates.sort((a,b)=>{
   const score=e=>{
@@ -437,14 +780,27 @@ function parseCard(box,sourceIndex){
   return score(b)-score(a);
  })[0];
  const rankMatch=body.match(/\b(?:PvP\s*)?(?:Rank|Ranking|Rk)\s*#?\s*(\d+)\b/i);
+ // Species-specific IV rank is NOT the Top-N search filter and is not
+ // PvPoke's cross-species performance rank. Require a labeled card value.
+ const explicitSpeciesIvRank=body.match(/(?:^|\n)\s*(?:(PvP|GL|UL)\s+)?(?:IV\s+Rank|Rank\s+(?:de\s+)?IV|Stat\s+Product\s+Rank)\s*[:#]?\s*(\d{1,4})\b/im);
+ const rankLeagueHint=String(explicitSpeciesIvRank?.[1]||"").toLowerCase();
+ const evidence=verifiedCardIv({iv:raw,ivPercent:percent});
+ const ivRankValue=explicitSpeciesIvRank?Number(explicitSpeciesIvRank[2]):0;
+ const ivRankValid=Number.isInteger(ivRankValue)&&ivRankValue>=1&&ivRankValue<=4096&&
+  evidence?.percent!==null&&evidence?.percent!==undefined&&
+  (mode==="gl"||mode==="ul")&&
+  (rankLeagueHint!=="gl"&&rankLeagueHint!=="ul"||rankLeagueHint===mode);
  const isShiny=/✨/.test(title);
  return {
   sourceIndex,name:title.replace(/✨/g,"").trim(),image:image?image.src:"",
   number:(meta.match(/#\d{1,4}/)||[])[0]||"",
   gender:/\bFemale\b|♀/i.test(meta)?"♀":/\bMale\b|♂/i.test(meta)?"♂":"",
-  size:size,moves:move,location:clean(loc),despawn:(desp.match(/\d{1,2}:\d{2}/)||[])[0]||"",
+  size:size,moves:move,location:place,distance,despawn:(desp.match(/\d{1,2}:\d{2}/)||[])[0]||"",
   cp:val("CP",/(\d{1,5})/),level:val("(?:LVL|Level)",/([\d.]+)/),
   iv:raw,ivPercent:percent,rank:rankMatch?rankMatch[1]:"",
+  ivRank:ivRankValid?ivRankValue:null,
+  ivRankSource:ivRankValid?"explicit-species-iv":"",
+  ivRankLeague:ivRankValid?mode:"",
   shiny:isShiny,form:(title.match(/\(([^)]+)\)/)||[])[1]||""
  };
 }
@@ -484,7 +840,17 @@ function collect(){
    return evidence.percent>=filters.percentMin&&evidence.percent<=filters.percentMax;
   return false;
  };
- const valid=siteCriteria?found.filter(matches).map(x=>{
+  const wantedSpecies=Array.isArray(filters.pokemonSelections)?filters.pokemonSelections.map(normalizePokemonLabel):[];
+  const requestedSpecies=x=>{
+   if(!wantedSpecies.length)return true;
+   const name=normalizePokemonLabel(x.name),form=clean(x.form);
+   const observed=form&&!name.toLowerCase().includes('('+form.toLowerCase()+')')?name+' ('+form+')':name;
+   return wantedSpecies.some(label=>{
+    const query=label.toLowerCase(),seen=observed.toLowerCase();
+    return seen===query||(seen.endsWith(' (normal)')&&seen.slice(0,-9)===query);
+   });
+  };
+  const valid=siteCriteria?found.filter(x=>matches(x)&&requestedSpecies(x)).map(x=>{
   if(isLeague&&rankLimit===1&&!x.rank)return {...x,rank:"1",rankSource:"verified-site-filter"};
   if(isLeague&&!x.rank)return {...x,rankLimit,rankSource:"verified-site-filter"};
   return x;
@@ -547,30 +913,85 @@ if(action.startsWith("readCoords:")){
  return JSON.stringify({ok:false,status:"O site ainda não exibiu coordenadas"});
 }
 
+// PL-04: resolve the actual Coords form after React hydration. Avoid picking
+// unrelated IV/CP fields from the search form by using a small shared group.
 function locationFields(){
  const inputs=elements('input:not([type=hidden]):not([type=checkbox]):not([type=radio])').filter(vis);
- const label=e=>(e.getAttribute("placeholder")||"")+" "+(e.getAttribute("aria-label")||"");
- const radius=inputs.find(e=>/radius|raio/i.test(label(e)));
- let coords=inputs.find(e=>e!==radius&&/coords|coordinates|latitude|longitude|lat[ ,/]+lng|40\.637/i.test(label(e)));
- if(!coords&&radius){
-  for(let p=radius.parentElement,depth=0;p&&depth<5;p=p.parentElement,depth++){
-   const nearby=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
-   if(nearby.length===2&&nearby.includes(radius)){coords=nearby.find(e=>e!==radius);break;}
-   if(nearby.length>6)break;
+ const words=e=>{
+  let parts=["placeholder","aria-label","name","id"].map(k=>e.getAttribute(k)||"");
+  if(e.labels)for(const label of Array.from(e.labels).slice(0,3))parts.push(text(label).slice(0,90));
+  let node=e;
+  for(let depth=0;node&&depth<3;depth++,node=node.parentElement){
+   const prev=node.previousElementSibling;
+   if(prev&&vis(prev)&&text(prev).length<=85)parts.push(text(prev));
+   if(node.tagName==="LABEL"&&text(node).length<=100)parts.push(text(node));
+  }
+  return parts.join(" ").toLowerCase();
+ };
+ const name=e=>words(e);
+ const radiusPattern=/\b(?:radius|raio|distance|dist[aâ]ncia)\b/i;
+ const coordsPattern=/\b(?:coords?|coordinates?|coordenadas?|latitude|longitude|lat[\s,\/+-]*lng|lat[\s,\/+-]*lon)\b/i;
+ let radius=inputs.find(e=>radiusPattern.test(name(e)))||null;
+ let coords=inputs.find(e=>e!==radius&&coordsPattern.test(name(e)))||null;
+ if((!radius||!coords)&&inputs.length){
+  const roots=[];
+  for(const e of inputs){
+   for(let p=e.parentElement,depth=0;p&&depth<5;p=p.parentElement,depth++){
+    if(!p.querySelectorAll)continue;
+    const near=Array.from(p.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio])')).filter(vis);
+    if(near.length!==2||!near.includes(e))continue;
+    const title=text(p).slice(0,140);
+    const coordsEvidence=near.some(v=>coordsPattern.test(name(v)))||
+      /\b(?:coords?|coordinates?|coordenadas?)\b/i.test(title);
+    const radiusEvidence=near.some(v=>radiusPattern.test(name(v)))||
+      /\b(?:radius|raio|distance|dist[aâ]ncia)\b/i.test(title);
+    // Never mistake a nearby IV/CP field for the radius of a location search.
+    if(coordsEvidence&&radiusEvidence)roots.push({near,depth});
+   }
+  }
+  roots.sort((a,b)=>a.depth-b.depth);
+  if(roots.length){
+   const pair=roots[0].near;
+   if(radius&&!pair.includes(radius))return {coords:null,radius:null};
+   if(coords&&!pair.includes(coords))return {coords:null,radius:null};
+   if(radius&&!coords)coords=pair.find(e=>e!==radius)||null;
+   if(coords&&!radius)radius=pair.find(e=>e!==coords)||null;
   }
  }
+ // A radio or select named "Radius" is not an editable numeric field.
+ // Fail closed if React hasn't exposed a unique text/number control.
+ if(radius&&coords&&radius===coords)return {coords:null,radius:null};
  return {coords,radius};
 }
+function locationModeControl(label){
+ const re=new RegExp("^\\s*"+label+"\\s*$","i");
+ const candidates=elements('button,[role=button],[role=tab],[role=radio],input[type=radio],label');
+ for(const e of candidates){
+  if(!vis(e))continue;
+  const t=text(e)||e.getAttribute("aria-label")||"";
+  if(!re.test(t))continue;
+  if(e.tagName==="LABEL"&&e.control)return e.control;
+  return e;
+ }
+ return null;
+}
 function coordsModeSelected(){
- const coordButton=oneButton("Coords"),areaButton=oneButton("Area");
+ const coordButton=locationModeControl("Coords"),areaButton=locationModeControl("Area");
  if(!coordButton&&!areaButton)return null;
- const active=e=>e&&(e.getAttribute("aria-pressed")==="true"||
+ const active=e=>e&&(e.checked===true||
+  e.getAttribute("aria-checked")==="true"||e.getAttribute("aria-pressed")==="true"||
   e.getAttribute("aria-selected")==="true"||
   ["true","on","active","checked"].includes(e.getAttribute("data-state")||"")||
-  /(?:^|\s)(?:active|selected|bg-red|bg-rose|bg-primary)(?:\s|$)/.test(e.className||""));
- if(active(coordButton))return true;
- if(active(areaButton))return false;
- // Field presence alone is not proof that the site selected Coords.
+  /(?:^|\s)(?:active|selected|bg-red(?:-\d+)?|bg-rose(?:-\d+)?|bg-primary(?:-\d+)?)(?:\s|$)/i.test(String(e.className||"")));
+ if(active(coordButton)&&!active(areaButton))return true;
+ if(active(areaButton)&&!active(coordButton))return false;
+ // Actual mobile Coords form may have no readable state attribute. Confirm
+ // its visible site-specific hint and both editable inputs after switching.
+ const fields=locationFields();
+ const visibleText=String(document.body&&document.body.innerText||"");
+ if(coordButton&&fields.coords&&fields.radius&&
+    /paste coordinates\s*\(\s*lat\s*[,;]\s*lng\s*\)\s*and\s*a\s*radius/i.test(visibleText))
+   return true;
  return null;
 }
 function locationValue(field){return field?String(field.value||"").trim():"";}
@@ -578,28 +999,64 @@ function configureLocation(req){
  const use=!!req.enabled;
  const fieldsBefore=locationFields();
  if(!use){
-  if(fieldsBefore.coords)valueInput(fieldsBefore.coords,"");
-  if(fieldsBefore.radius)valueInput(fieldsBefore.radius,"");
-  const area=oneButton("Area");
-  if(area&&coordsModeSelected()!==false)area.click();
-  return JSON.stringify({ok:true,stage:"location-off"});
+  // PL-04: Site defaults to Coords on some mobile layouts even when the
+  // application never enabled location. An empty Coords form is still
+  // an unrestricted search: do not require the unrelated Area tab.
+  // However, never silently accept stale coordinate or radius values.
+  // A prefilled radius is an INERT site default without a coordinate.
+  // Clearing it on every public search can alter an unrelated field and
+  // cause a false "location not applied" block.
+  const previousCoords=locationValue(fieldsBefore.coords);
+  // The BODY is stable across React component rerenders, unlike the fields.
+  // This Boolean tracks only whether an active location radius must be reset;
+  // it does not store coordinates or personal data.
+  const root=document.body;
+  if(previousCoords){
+   if(root)root.__psClearLocationRadius=true;
+   if(!valueInput(fieldsBefore.coords,""))return JSON.stringify({ok:false,reason:"Campo Coords não editável"});
+   return JSON.stringify({ok:false,pending:true,stage:"clearing-coords",
+    reason:"Aguardando remoção das coordenadas anteriores"});
+  }
+  if(root&&root.__psClearLocationRadius){
+   root.__psClearLocationRadius=false;
+   if(fieldsBefore.radius&&locationValue(fieldsBefore.radius)){
+    if(!valueInput(fieldsBefore.radius,""))return JSON.stringify({ok:false,reason:"Campo Raio não editável"});
+    return JSON.stringify({ok:false,pending:true,stage:"clearing-radius",
+     reason:"Aguardando remoção do raio anterior"});
+   }
+  }
+  return JSON.stringify({ok:true,pending:false,stage:"location-off"});
  }
  if(typeof req.coords!=="string"||!/^[-+]?\d+(?:\.\d+)?,[-+]?\d+(?:\.\d+)?$/.test(req.coords)||
     !Number.isInteger(req.radius)||req.radius<0||req.radius>1000||
     Math.abs(Number(req.coords.split(",")[0]))>90||Math.abs(Number(req.coords.split(",")[1]))>180)
     return JSON.stringify({ok:false,reason:"Parâmetros de localização inválidos"});
- const coords=oneButton("Coords");
- if(!coords)return JSON.stringify({ok:false,reason:"Opção Coords não localizada"});
- if(coordsModeSelected()!==true)coords.click();
+ const coords=locationModeControl("Coords");
+ if(!coords)return JSON.stringify({ok:false,pending:true,reason:"Aguardando opção Coords"});
+ if(coordsModeSelected()!==true){
+  if(!coords.disabled)coords.click();
+  return JSON.stringify({ok:false,pending:true,reason:"Aguardando confirmação do modo Coords"});
+ }
  const fields=locationFields();
- if(!fields.coords||!fields.radius)return JSON.stringify({ok:false,reason:"Campos de coordenadas/raio não encontrados"});
- return JSON.stringify({ok:valueInput(fields.coords,req.coords)&&valueInput(fields.radius,String(req.radius)),stage:"location-on"});
+ if(!fields.coords||!fields.radius)return JSON.stringify({ok:false,pending:true,reason:"Aguardando campos de coordenadas/raio"});
+  const requestedCoords=String(req.coords||"").replace(/\s/g,"");
+  if(locationValue(fields.coords).replace(/\s/g,"")!==requestedCoords){
+   if(!valueInput(fields.coords,req.coords))return JSON.stringify({ok:false,reason:"Campo de coordenadas não editável"});
+   return JSON.stringify({ok:false,pending:true,stage:"setting-coords",reason:"Aguardando confirmação das coordenadas"});
+  }
+  if(locationValue(fields.radius)!==String(req.radius)){
+   if(!valueInput(fields.radius,String(req.radius)))return JSON.stringify({ok:false,reason:"Campo de raio não editável"});
+   return JSON.stringify({ok:false,pending:true,stage:"setting-radius",reason:"Aguardando confirmação do raio"});
+  }
+  return JSON.stringify({ok:true,pending:false,stage:"location-on"});
 }
 function verifyLocation(req){
  const fields=locationFields(),active=coordsModeSelected();
  if(!req.enabled){
-  const blank=(!fields.coords||!locationValue(fields.coords))&&(!fields.radius||!locationValue(fields.radius));
-  return JSON.stringify({ok:active!==true&&blank,reason:"Coordenadas do site ainda ativas"});
+  // Without coordinates the radius is only a dormant form default.
+  // Never block a guest/non-Shiny search for an unrelated default radius.
+  const blank=!locationValue(fields.coords);
+  return JSON.stringify({ok:blank,reason:blank?"":"Coordenadas antigas permanecem no site"});
  }
  const coordInput=locationValue(fields.coords),radiusInput=locationValue(fields.radius);
  const coordinatePattern=/^[-+]?\d+(?:\.\d+)?\s*[,;]\s*[-+]?\d+(?:\.\d+)?$/;
@@ -634,28 +1091,43 @@ if(action==="verifyShiny"){
 }
 if(action==="session"){
  const sw=shinyControl();
- const login=elements("a,button,[role=button]").some(e=>vis(e)&&/^(?:Log ?in|Sign ?in|Entrar|Fazer login)$/i.test(text(e)));
- const loggedIn=elements("a,button,[role=button]").some(e=>vis(e)&&/^(?:Log ?out|Sign ?out|Sair|Desconectar)$/i.test(text(e)));
- // Mobile menus may hide Logout. The site's account-specific Shiny notice
- // confirms a session without exposing the account identifier to Android.
+ const clickable=elements("a,button,[role=button]").filter(vis);
+ const login=clickable.some(e=>/^(?:(?:log\s*in|sign\s*in|login|entrar|fazer login)(?:\s+(?:with|com)\s+(?:google|discord))?)$/i.test(text(e)));
+ const loggedIn=clickable.some(e=>/^(?:log\s*out|sign\s*out|sair|desconectar)$/i.test(text(e)));
+ const body=String(document.body&&document.body.innerText||"");
  const badgeText=/(?:^|\n)\s*Shiny for your account\b/i;
- const accountBadge=badgeText.test(String(document.body&&document.body.innerText||"")) ||
+ const accountBadge=badgeText.test(body)||
    elements("p,small,span,div,label").some(e=>
      vis(e)&&e.children.length<=2&&badgeText.test(text(e))&&text(e).length<140);
- return JSON.stringify({ok:true,auth:loggedIn||accountBadge?"autenticada":login?"login necessário":"não confirmado",
-   shinyAvailable:!!sw,site:location.hostname});
+ // On the official profile page, the section pair is only present for an
+ // authenticated account. A linked Pokemon trainer is NOT required.
+ const profileProof=location.pathname==="/profile"&&
+   /\bLinked accounts\b/i.test(body)&&/\bPokemon GO accounts\b/i.test(body);
+ // Do not infer "authenticated" merely from an absent login button:
+ // hidden mobile menus and partially hydrated React can be ambiguous.
+ const auth=loggedIn||profileProof||accountBadge?"autenticada":
+   login?"login necessário":"não confirmado";
+ // The official account-specific Shiny badge is live linkage evidence.
+ // Report only a boolean; never expose trainer codes or account details to Java.
+ return JSON.stringify({ok:true,auth,trainerLinked:!!accountBadge,shinyAvailable:!!sw,site:location.hostname});
 }
 if(action==="prepareSearch"){
  const target=["iv","raw","percent"].includes(mode)?"Stats":"PvP";
- return JSON.stringify({ok:tab(target),stage:"prepare"});
+ const ready=tab(target);
+ return JSON.stringify({ok:ready,pending:!ready,stage:"prepare",
+  reason:ready?'':'Aguardando confirmação da aba '+target});
 }
 if(action==="configureSearch"){
+ const ready=prepareCoreFilters();
+ if(!ready.ok)
+  return JSON.stringify({ok:true,configured:false,pending:ready.pending,reason:ready.reason,stage:"wait-form"});
  let configured=false;
  if(mode==="iv")configured=applyIv();
  else if(mode==="raw")configured=applyRaw();
  else if(mode==="percent")configured=applyPercent();
  else configured=applyLeague();
- const other=configured?extras("apply"):{ok:false,pending:transientPending,reason:"Filtro principal indisponível"};
+ const other=configured?extras("apply"):{ok:false,pending:true,
+  reason:transientPending?"Aguardando confirmar os números digitados no site":mode==="raw"?"Raw IV: não foi possível identificar ou preencher A/D/S":mode==="percent"?"IV%: mínimo/máximo indisponíveis":"Filtro principal indisponível"};
  configured=configured&&other.ok;
  const existing=readShiny();
  if(existing!==null&&existing!==shinyOnly){
@@ -664,11 +1136,19 @@ if(action==="configureSearch"){
  return JSON.stringify({ok:true,configured,pending:other.pending||transientPending,reason:other.reason,shinyKnown:existing!==null,stage:"configure"});
 }
 if(action==="submitSearch"){
+ // Native has already verified Shiny + Coords in this requestGeneration.
+ // Recheck the core and explicitly requested extras at the *click boundary*.
+ // No data is submitted if React reset a value between native verification
+ // and this final evaluateJavascript call.
+ const verified=check();
+ if(!verified.ok)return JSON.stringify({ok:false,stage:"pre-submit-mismatch",
+  reason:verified.reason||"Filtro alterado antes de Search"});
  const b=oneButton("Search");
- if(!b)return JSON.stringify({ok:false,reason:"Botão Search não localizado"});
+ if(!b)return JSON.stringify({ok:false,stage:"missing-search",reason:"Botão Search não localizado"});
  if(b.disabled||b.getAttribute("aria-disabled")==="true")
-  return JSON.stringify({ok:false,reason:"Botão Search indisponível"});
+  return JSON.stringify({ok:false,stage:"disabled-search",reason:"Botão Search indisponível"});
  b.click();
+ // `submitted` means only a confirmed click, NEVER completed search/results.
  return JSON.stringify({ok:true,stage:"submitted"});
 }
 if(action==="search"){

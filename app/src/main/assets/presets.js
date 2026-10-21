@@ -49,14 +49,31 @@
    const rank=near("Top ranking",1);
    if(!rankInitialized&&rank.length===1){applyInput(rank[0],"1");rankInitialized=true;}
  }
- let pending=false;
- function schedule(){
-   if(pending)return;pending=true;
-   setTimeout(()=>{pending=false;scan();},220);
+ let pending=false,stopped=false,timeout=null,ob=null,interval=null;
+ function cleanup(){
+   if(stopped)return;
+   stopped=true;
+   if(timeout!==null)clearTimeout(timeout);
+   if(interval!==null)clearInterval(interval);
+   if(ob!==null)ob.disconnect();
+   document.removeEventListener("click",schedule,true);
+   window.removeEventListener("pagehide",cleanup);
+   window.__psoPresetsInstalled=false;
  }
- const ob=new MutationObserver(schedule);
+ function schedule(){
+   if(stopped||pending)return;
+   if(Date.now()-start>=20000){cleanup();return;}
+   pending=true;
+   timeout=setTimeout(()=>{pending=false;timeout=null;if(!stopped)scan();},220);
+ }
+ ob=new MutationObserver(schedule);
  ob.observe(document.documentElement,{subtree:true,childList:true});
  document.addEventListener("click",schedule,true);
- let times=0;const interval=setInterval(()=>{schedule();if(++times>=35)clearInterval(interval);},450);
+ window.addEventListener("pagehide",cleanup,{once:true});
+ let times=0;
+ interval=setInterval(()=>{
+   if(++times>=35||Date.now()-start>=20000){cleanup();return;}
+   schedule();
+ },450);
  schedule();
 })();

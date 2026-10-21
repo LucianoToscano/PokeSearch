@@ -42,10 +42,48 @@ import android.graphics.Typeface;
 
 public class MainActivity extends Activity {
     private WebView website;
+    // HOME-V200-02: custom local UI; the existing OverlayService owns all site queries.
+    private WebView homeFiltersWebView;
+    // Separate from the local HOME bridge; official pages never receive it.
+    private WebView officialSearchWebView;
+    private android.app.Dialog officialSearchDialog;
+    private final android.os.Handler homeHandler=new android.os.Handler(android.os.Looper.getMainLooper());
+    private boolean homeForeground=false;
+    private final Runnable homePoll=new Runnable(){
+        @Override public void run(){
+            if(!homeForeground)return;
+            syncHomeUi();
+            homeHandler.postDelayed(this,850L);
+        }
+    };
+    private final android.content.BroadcastReceiver homeEvents=new android.content.BroadcastReceiver(){
+        @Override public void onReceive(android.content.Context context,Intent intent){
+            if(intent==null||!HomeFilterState.ACTION_EVENT.equals(intent.getAction()))return;
+            WebView view=homeFiltersWebView;
+            if(view==null||!homeForeground)return;
+            String event=intent.getStringExtra("payload");
+            if(event==null||event.length()>128000)return;
+            // Broadcast is package scoped and receiver not exported. Only the
+            // local HOME has a bridge; do not forward this data to the site.
+            try {
+                JSONObject decoded=new JSONObject(event);
+                if("suggestions".equals(decoded.optString("kind")))
+                    view.evaluateJavascript("window.onHomeSuggestions("+
+                        decoded.optJSONObject("response").toString()+")",null);
+                else if("result".equals(decoded.optString("kind")))
+                    view.evaluateJavascript("window.onHomeResults("+event+")",null);
+            }catch(Exception ignored){}
+            syncHomeUi();
+        }
+    };
     private TextView watchSummary;
     private TextView sessionSummary;
     private boolean loginStartedForShiny=false;
     private boolean loginAutoReturnQueued=false;
+    private String loginPurpose="login"; // login | manage
+    private boolean profileCaptureInProgress=false;
+    private int avatarReadRetryCount=0; // bounded retry for lazy official Google image
+    private boolean profileDiscoveryAttempted=false;
     private android.app.Dialog loginDialog;
     private boolean loginSessionNotified=false;
     private boolean loginLinkAttempted=false;
@@ -54,6 +92,20 @@ public class MainActivity extends Activity {
     private TextView loginWaitLabel,loginFallback;
     private int loginPageGeneration=0;
     private String pendingReportText="";
+    private FrameLayout homeRoot;
+    private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
+    private View trainerCopyButton;
+    private View guestHeading;
+    private ImageView teamBadge, accountAvatar;
+    private Button trainerAction;
+    private TextView trainerSectionTitle;
+    private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
+    private ImageView overlayControl;
+    private TextView sessionHint;
+    private View homeDrawerLayer;
+    private String pendingExportText="";
+    private String preferredLoginProvider="";
+    private String observedLoginProvider="";
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         if (!IntegrityGuard.verify(this)) {
@@ -62,129 +114,17 @@ public class MainActivity extends Activity {
             finish();
             return;
         }
-        getWindow().setStatusBarColor(Color.rgb(11,13,18));
-        getWindow().setNavigationBarColor(Color.rgb(11,13,18));
-        LinearLayout root=new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.rgb(11,13,18));
-        root.setPadding(d(12),d(3),d(12),0);
-        LinearLayout header=new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setOrientation(LinearLayout.HORIZONTAL);
-        TextView brand=new TextView(this);
-        brand.setText("PokeSearch");
-        brand.setTextColor(Color.WHITE);
-        brand.setTextSize(22);
-        brand.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
-        brand.setPadding(d(7),0,0,0);
-        header.addView(brand,new LinearLayout.LayoutParams(0,d(51),1));
-        ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Contribuir com um café via Pix");
-        heart.setOnClickListener(v->PixSupport.show(this));
-        header.addView(heart,new LinearLayout.LayoutParams(d(45),d(45)));
-        ImageButton gear=makeIcon(R.drawable.ic_settings_outline,"Preferências");
-        gear.setOnClickListener(v->showPreferencesDialog());
-        header.addView(gear,new LinearLayout.LayoutParams(d(45),d(45)));
-        root.addView(header);
-        Button start=new Button(this);
-        start.setText("Ativar overlay");
-        start.setTextColor(Color.WHITE);
-        start.setTextSize(15);
-        start.setAllCaps(false);
-        start.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
-        start.setBackground(round(Color.rgb(213,45,79),12));
-        LinearLayout.LayoutParams startParams=new LinearLayout.LayoutParams(-1,d(49));
-        startParams.setMargins(d(2),d(3),d(2),d(9));
-        root.addView(start,startParams);
-        start.setOnClickListener(v->startOverlay());
-        // Account controls stay on the native Home; the site is a temporary login surface.
-        LinearLayout account=new LinearLayout(this);
-        account.setOrientation(LinearLayout.VERTICAL);
-        account.setPadding(d(12),d(9),d(12),d(10));
-        account.setBackground(round(Color.rgb(23,30,41),11));
-        sessionSummary=new TextView(this);
-        sessionSummary.setTextColor(Color.rgb(188,204,222));
-        sessionSummary.setTextSize(12);
-        sessionSummary.setPadding(0,0,0,d(8));
-        account.addView(sessionSummary);
-        LinearLayout buttons=new LinearLayout(this);
-        buttons.setOrientation(LinearLayout.HORIZONTAL);
-        Button signIn=new Button(this);
-        signIn.setText("Entrar / vincular");
-        signIn.setAllCaps(false);
-        signIn.setTextSize(12);
-        signIn.setTextColor(Color.rgb(213,255,238));
-        signIn.setBackground(round(Color.rgb(30,91,73),9));
-        buttons.addView(signIn,new LinearLayout.LayoutParams(0,d(42),1));
-        signIn.setOnClickListener(v->openLoginDialog(false));
-        Button signOut=new Button(this);
-        signOut.setText("Sair");
-        signOut.setAllCaps(false);
-        signOut.setTextSize(12);
-        signOut.setTextColor(Color.rgb(255,204,213));
-        signOut.setBackground(round(Color.rgb(77,40,52),9));
-        LinearLayout.LayoutParams signOutParams=new LinearLayout.LayoutParams(d(91),d(42));
-        signOutParams.setMargins(d(8),0,0,0);
-        buttons.addView(signOut,signOutParams);
-        signOut.setOnClickListener(v->askLogout());
-        account.addView(buttons);
-        LinearLayout.LayoutParams accountParams=new LinearLayout.LayoutParams(-1,-2);
-        accountParams.setMargins(d(2),0,d(2),d(10));
-        root.addView(account,accountParams);
-        refreshSessionSummary();
-        LinearLayout watchRow=new LinearLayout(this);
-        watchRow.setOrientation(LinearLayout.HORIZONTAL);
-        watchRow.setGravity(Gravity.CENTER_VERTICAL);
-        watchRow.setPadding(d(11),d(5),d(10),d(5));
-        watchRow.setBackground(round(Color.rgb(24,28,36),11));
-        ImageView bell=new ImageView(this);
-        bell.setImageResource(R.drawable.ic_star_outline);
-        watchRow.addView(bell,new LinearLayout.LayoutParams(d(27),d(27)));
-        LinearLayout watchTexts=new LinearLayout(this);
-        watchTexts.setOrientation(LinearLayout.VERTICAL);
-        watchTexts.setPadding(d(9),0,0,0);
-        TextView watchTitle=new TextView(this);
-        watchTitle.setText("Pokémon favoritos");
-        watchTitle.setTextColor(Color.WHITE);
-        watchTitle.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
-        watchTitle.setTextSize(13);
-        watchTexts.addView(watchTitle);
-        watchSummary=new TextView(this);
-        watchSummary.setTextSize(11);
-        watchSummary.setTextColor(Color.rgb(159,169,183));
-        watchTexts.addView(watchSummary);
-        watchRow.addView(watchTexts,new LinearLayout.LayoutParams(0,-2,1));
-        TextView arrow=new TextView(this);
-        arrow.setText("›");
-        arrow.setTextColor(Color.rgb(175,184,195));
-        arrow.setTextSize(23);
-        watchRow.addView(arrow);
-        LinearLayout.LayoutParams rowParams=new LinearLayout.LayoutParams(-1,d(60));
-        rowParams.setMargins(d(2),0,d(2),d(10));
-        root.addView(watchRow,rowParams);
-        watchRow.setOnClickListener(v->openPicker());
-        refreshWatchCount();
-        TextView guide=new TextView(this);
-        guide.setText("ⓘ  Guia rápido · entenda os botões");
-        guide.setTextColor(Color.rgb(189,207,223));
-        guide.setTextSize(13);
-        guide.setGravity(Gravity.CENTER_VERTICAL);
-        guide.setPadding(d(14),0,d(12),0);
-        guide.setBackground(round(Color.rgb(24,29,38),10));
-        LinearLayout.LayoutParams guideParams=new LinearLayout.LayoutParams(-1,d(43));
-        guideParams.setMargins(d(2),0,d(2),d(9));
-        root.addView(guide,guideParams);
-        guide.setOnClickListener(v->showQuickGuide());
-        // Home independente: a interface do site não faz parte da tela principal.
-        TextView hint=new TextView(this);
-        hint.setText("IV100  ·  GL#1  ·  UL#1\nToque em Ativar overlay para começar.");
-        hint.setTextColor(Color.rgb(155,165,181));
-        hint.setTextSize(12);
-        hint.setGravity(Gravity.CENTER);
-        root.addView(hint,new LinearLayout.LayoutParams(-1,0,1));
+        // HOME-01: rebuild only the presentation, never discard existing features.
+        getWindow().setStatusBarColor(Color.rgb(12,33,67));
+        getWindow().setNavigationBarColor(Color.rgb(9,20,37));
+        FrameLayout root=buildHome();
         setContentView(root);
+        refreshSessionSummary();
+        refreshHomeOverlay();
         handleShinyLoginIntent(getIntent());
         if(!getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false)&&
-           !"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(getIntent().getAction()))
+           !"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(getIntent().getAction())&&
+            !"com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(getIntent().getAction()))
             root.post(this::showQuickGuide);
         if("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST".equals(getIntent().getAction()))
             root.post(this::openPicker);
@@ -194,7 +134,667 @@ public class MainActivity extends Activity {
             root.post(()->PixSupport.show(this));
         if("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT".equals(getIntent().getAction()))
             root.post(this::showBugReportDialog);
+        if("com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(getIntent().getAction()))
+            root.post(this::requestOverlayNotificationPermission);
     }
+
+    private TextView homeText(String value,int sp,int color,boolean bold){
+        TextView t=new TextView(this);
+        t.setText(value);t.setTextColor(color);t.setTextSize(sp);
+        if(bold)t.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        t.setGravity(Gravity.CENTER_VERTICAL);
+        return t;
+    }
+    private android.graphics.drawable.GradientDrawable homeSurface(int color,int radius,int stroke){
+        android.graphics.drawable.GradientDrawable bg=round(color,radius);
+        if(stroke!=0)bg.setStroke(d(1),stroke);
+        return bg;
+    }
+    private TextView homeMiniButton(String glyph,String description){
+        TextView t=homeText(glyph,21,Color.WHITE,true);
+        t.setGravity(Gravity.CENTER);
+        t.setContentDescription(description);
+        t.setBackground(homeSurface(Color.argb(130,9,25,49),11,Color.argb(90,180,221,255)));
+        return t;
+    }
+    private FrameLayout buildHome(){
+        FrameLayout frame=new FrameLayout(this);
+        homeRoot=frame;
+        // HOME: restore owner's actual wallpaper across the entire page.
+        frame.setBackgroundColor(Color.rgb(10,14,23));
+        ImageView pageBackground=new ImageView(this);
+        pageBackground.setImageResource(R.drawable.ps_home_background_dark);
+        // The dark wallpaper supplied for the Home was being cropped into its
+        // nearly-black center on portrait phones. Fill the whole surface.
+        pageBackground.setScaleType(ImageView.ScaleType.FIT_XY);
+        pageBackground.setAlpha(1.0f);
+        frame.addView(pageBackground,new FrameLayout.LayoutParams(-1,-1));
+        View dim=new View(this);
+        dim.setBackgroundColor(Color.argb(16,6,12,24)); // Keep artwork visible.
+        frame.addView(dim,new FrameLayout.LayoutParams(-1,-1));
+
+        LinearLayout screen=new LinearLayout(this);
+        screen.setOrientation(LinearLayout.VERTICAL);
+        screen.setPadding(d(14),d(6),d(14),d(12));
+        frame.addView(screen,new FrameLayout.LayoutParams(-1,-1));
+
+        LinearLayout header=new LinearLayout(this);
+        header.setGravity(Gravity.TOP|Gravity.CENTER_VERTICAL);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        screen.addView(header,new LinearLayout.LayoutParams(-1,d(56)));
+
+        // HOME-02: icon only at top left; compact actions on the right.
+        ImageView brand=new ImageView(this);
+        brand.setImageResource(R.drawable.ps_home_brand_transparent);
+        brand.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        brand.setContentDescription("Ícone PokeSearch");
+        header.addView(brand,new LinearLayout.LayoutParams(d(38),d(38)));
+
+        header.addView(new View(this),new LinearLayout.LayoutParams(0,d(1),1));
+        LinearLayout controls=new LinearLayout(this);
+        controls.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        controls.setOrientation(LinearLayout.HORIZONTAL);
+        header.addView(controls,new LinearLayout.LayoutParams(-2,d(46)));
+
+        overlayControl=makeIcon(R.drawable.ic_overlay_off,"Ativar overlay");
+        overlayControl.setPadding(d(5),d(5),d(5),d(5));
+        overlayControl.setBackground(homeSurface(Color.argb(125,9,25,49),10,0));
+        controls.addView(overlayControl,new LinearLayout.LayoutParams(d(34),d(34)));
+        overlayControl.setOnClickListener(v->toggleHomeOverlay());
+
+        ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
+        heart.setPadding(d(6),d(6),d(6),d(6));
+        heart.setBackground(homeSurface(Color.argb(125,9,25,49),10,0));
+        LinearLayout.LayoutParams heartLp=new LinearLayout.LayoutParams(d(34),d(34));
+        heartLp.leftMargin=d(5);
+        controls.addView(heart,heartLp);
+        heart.setOnClickListener(v->PixSupport.show(this));
+
+        TextView menu=homeMiniButton("☰","Abrir menu lateral");
+        menu.setTextSize(18);
+        menu.setBackground(homeSurface(Color.argb(125,9,25,49),10,0));
+        LinearLayout.LayoutParams menuLp=new LinearLayout.LayoutParams(d(34),d(34));
+        menuLp.leftMargin=d(5);
+        controls.addView(menu,menuLp);
+        menu.setOnClickListener(v->showHomeMenu());
+
+        // HOME-04: compact reference card, fed only by verified profile fields.
+        LinearLayout auth=new LinearLayout(this);
+        auth.setOrientation(LinearLayout.VERTICAL);
+        auth.setPadding(d(15),d(15),d(15),d(16));
+        auth.setBackground(homeSurface(Color.rgb(16,22,34),20,Color.rgb(43,60,91)));
+        screen.addView(auth,new LinearLayout.LayoutParams(-1,-2));
+
+        LinearLayout accountHeading=new LinearLayout(this);
+        guestHeading=accountHeading;
+        accountHeading.setGravity(Gravity.CENTER_VERTICAL);
+        ImageView providerIcon=new ImageView(this);
+        providerIcon.setImageResource(R.drawable.ps_pogocoordinates);
+        providerIcon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        providerIcon.setContentDescription("PoGoCoordinates");
+        LinearLayout.LayoutParams providerIconLp=new LinearLayout.LayoutParams(d(42),d(42));
+        providerIconLp.rightMargin=d(9);
+        accountHeading.addView(providerIcon,providerIconLp);
+        LinearLayout headingTexts=new LinearLayout(this);
+        headingTexts.setOrientation(LinearLayout.VERTICAL);
+        accountHeading.addView(headingTexts,new LinearLayout.LayoutParams(0,-2,1));
+        TextView heading=homeText("PoGoCoordinates",17,Color.WHITE,true);
+        headingTexts.addView(heading);
+        sessionHint=homeText("Buscas comuns sem login · Shiny exige treinador vinculado",11,
+            Color.rgb(156,174,205),false);
+        headingTexts.addView(sessionHint);
+        LinearLayout.LayoutParams headingLp=new LinearLayout.LayoutParams(-1,-2);
+        headingLp.bottomMargin=d(12);
+        auth.addView(accountHeading,headingLp);
+
+        guestPanel=new LinearLayout(this);
+        guestPanel.setGravity(Gravity.CENTER_VERTICAL);
+        guestPanel.setOrientation(LinearLayout.HORIZONTAL);
+        auth.addView(guestPanel,new LinearLayout.LayoutParams(-1,d(42)));
+        Button discord=homeAuthButton("◉  Discord",Color.rgb(80,95,246),Color.WHITE);
+        Button google=homeAuthButton("G  Google",Color.WHITE,Color.rgb(27,32,42));
+        guestPanel.addView(discord,new LinearLayout.LayoutParams(0,-1,1));
+        LinearLayout.LayoutParams googleLp=new LinearLayout.LayoutParams(0,-1,1);
+        googleLp.leftMargin=d(8);
+        guestPanel.addView(google,googleLp);
+        discord.setOnClickListener(v->openProviderLogin("discord"));
+        google.setOnClickListener(v->openProviderLogin("google"));
+
+        connectedPanel=new LinearLayout(this);
+        connectedPanel.setOrientation(LinearLayout.VERTICAL);
+        auth.addView(connectedPanel,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout accountRow=new LinearLayout(this);
+        accountRow.setGravity(Gravity.CENTER_VERTICAL);
+        connectedPanel.addView(accountRow,new LinearLayout.LayoutParams(-1,-2));
+        ImageView avatar=new ImageView(this);
+        accountAvatar=avatar;
+        // A rebuilt Home owns a new ImageView; do not suppress reloading an
+        // already-known URL just because the old view had shown that URL.
+        shownAvatarUrl="";
+        // A neutral fallback is used until the official profile provides
+        // an allowlisted Google-hosted image (never a guessed portrait).
+        avatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+        avatar.setColorFilter(Color.rgb(183,201,229));
+        avatar.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        avatar.setPadding(d(11),d(11),d(11),d(11));
+        android.graphics.drawable.GradientDrawable avatarBg=homeSurface(
+            Color.rgb(34,46,69),30,Color.rgb(85,113,153));
+        avatarBg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        avatar.setBackground(avatarBg);
+        LinearLayout.LayoutParams avatarLp=new LinearLayout.LayoutParams(d(52),d(52));
+        avatarLp.rightMargin=d(10);
+        accountRow.addView(avatar,avatarLp);
+
+        LinearLayout identity=new LinearLayout(this);
+        identity.setOrientation(LinearLayout.VERTICAL);
+        accountRow.addView(identity,new LinearLayout.LayoutParams(0,-2,1));
+        accountDisplay=homeText("Conta conectada",17,Color.WHITE,true);
+        accountDisplay.setSingleLine(true);
+        accountDisplay.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        accountProvider=homeText("Conectado ao PoGoCoordinates",11,
+            Color.rgb(175,191,224),false);
+        accountProvider.setSingleLine(true);
+        accountProvider.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        identity.addView(accountDisplay);
+        identity.addView(accountProvider);
+        Button logout=homeAuthButton("⇥  Logout",Color.rgb(28,37,54),Color.WHITE);
+        logout.setBackground(homeSurface(Color.rgb(27,36,52),13,Color.rgb(51,67,92)));
+        LinearLayout.LayoutParams logoutLp=new LinearLayout.LayoutParams(d(88),d(37));
+        logoutLp.leftMargin=d(7);
+        accountRow.addView(logout,logoutLp);
+        logout.setOnClickListener(v->askLogout());
+
+        trainerPanel=new LinearLayout(this);
+        trainerPanel.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams trainLp=new LinearLayout.LayoutParams(-1,-2);
+        trainLp.topMargin=d(13);
+        connectedPanel.addView(trainerPanel,trainLp);
+        View rule=new View(this);
+        rule.setBackgroundColor(Color.rgb(39,53,74));
+        LinearLayout.LayoutParams ruleLp=new LinearLayout.LayoutParams(-1,d(1));
+        ruleLp.bottomMargin=d(10);
+        trainerPanel.addView(rule,ruleLp);
+        trainerSectionTitle=homeText("Treinador vinculado",12,Color.rgb(171,188,215),false);
+        LinearLayout.LayoutParams sectionLp=new LinearLayout.LayoutParams(-1,-2);
+        sectionLp.bottomMargin=d(7);
+        trainerPanel.addView(trainerSectionTitle,sectionLp);
+
+        LinearLayout trainerRow=new LinearLayout(this);
+        trainerRow.setGravity(Gravity.CENTER_VERTICAL);
+        trainerPanel.addView(trainerRow,new LinearLayout.LayoutParams(-1,-2));
+        teamBadge=new ImageView(this);
+        teamBadge.setImageResource(R.drawable.ps_team_neutral);
+        teamBadge.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        teamBadge.setContentDescription("Sem equipe");
+        // Individual team PNGs have transparent alpha; never put a tile behind them.
+        teamBadge.setBackgroundColor(Color.TRANSPARENT);
+        LinearLayout.LayoutParams badgeLp=new LinearLayout.LayoutParams(d(53),d(53));
+        badgeLp.rightMargin=d(10);
+        trainerRow.addView(teamBadge,badgeLp);
+        LinearLayout trainerIdentity=new LinearLayout(this);
+        trainerIdentity.setOrientation(LinearLayout.VERTICAL);
+        trainerRow.addView(trainerIdentity,new LinearLayout.LayoutParams(0,-2,1));
+        trainerDisplay=homeText("Treinador não confirmado",15,Color.WHITE,true);
+        trainerDisplay.setSingleLine(true);
+        trainerDisplay.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        trainerDetails=homeText("",11,Color.rgb(177,205,244),false);
+        trainerIdentity.addView(trainerDisplay);
+        trainerIdentity.addView(trainerDetails);
+
+        trainerCodeGroup=new LinearLayout(this);
+        trainerCodeGroup.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams codeRowLp=new LinearLayout.LayoutParams(-1,-2);
+        codeRowLp.topMargin=d(5);
+        trainerPanel.addView(trainerCodeGroup,codeRowLp);
+        LinearLayout codeTexts=new LinearLayout(this);
+        trainerCodeTexts=codeTexts;
+        codeTexts.setOrientation(LinearLayout.VERTICAL);
+        trainerCodeGroup.addView(codeTexts,new LinearLayout.LayoutParams(0,-2,1));
+        TextView codeHeading=homeText("Código de Treinador",10,
+            Color.rgb(158,178,207),false);
+        trainerCode=homeText("",15,Color.WHITE,true);
+        trainerCode.setLetterSpacing(.025f);
+        codeTexts.addView(codeHeading);
+        codeTexts.addView(trainerCode);
+        TextView copy=homeMiniButton("⧉","Copiar código do treinador");
+        trainerCopyButton=copy;
+        copy.setTextSize(18);
+        copy.setBackgroundColor(Color.TRANSPARENT);
+        LinearLayout.LayoutParams copyLp=new LinearLayout.LayoutParams(d(34),d(38));
+        copyLp.leftMargin=d(3);
+        trainerCodeGroup.addView(copy,copyLp);
+        copy.setOnClickListener(v->copyTrainerCode());
+        trainerAction=homeAuthButton("Remover",Color.rgb(54,28,39),
+            Color.rgb(255,145,158));
+        trainerAction.setBackground(homeSurface(Color.rgb(52,29,40),12,
+            Color.rgb(94,50,61)));
+        LinearLayout.LayoutParams actionLp=new LinearLayout.LayoutParams(d(90),d(38));
+        actionLp.leftMargin=d(7);
+        trainerCodeGroup.addView(trainerAction,actionLp);
+        trainerAction.setOnClickListener(v->openTrainerManagement());
+
+        // HOME-V200: same live website DOM and site functions, embedded below
+        // the existing account panel; never a second/fake form or backend.
+        TextView filterCaption=homeText("Filtros oficiais  •  PoGoCoordinates",11,
+            Color.rgb(176,199,229),true);
+        filterCaption.setPadding(d(3),d(8),0,d(5));
+        screen.addView(filterCaption,new LinearLayout.LayoutParams(-1,-2));
+        FrameLayout filtersHost=new FrameLayout(this);
+        filtersHost.setBackground(homeSurface(Color.rgb(10,11,15),13,Color.rgb(39,46,57)));
+        filtersHost.setClipToOutline(true);
+        homeFiltersWebView=new WebView(this);
+        homeFiltersWebView.setBackgroundColor(Color.rgb(10,11,15));
+        homeFiltersWebView.getSettings().setJavaScriptEnabled(true);
+        homeFiltersWebView.getSettings().setDomStorageEnabled(false);
+        homeFiltersWebView.getSettings().setJavaScriptCanOpenWindowsAutomatically(false);
+        homeFiltersWebView.getSettings().setAllowFileAccess(false);
+        homeFiltersWebView.getSettings().setAllowContentAccess(false);
+        homeFiltersWebView.getSettings().setBlockNetworkLoads(true);
+        homeFiltersWebView.getSettings().setGeolocationEnabled(false);
+        // The only WebView with HomeNative is local, no remote page or iframe.
+        homeFiltersWebView.addJavascriptInterface(new HomeBridge(),"HomeNative");
+        homeFiltersWebView.setWebViewClient(new WebViewClient(){
+            @Override public boolean shouldOverrideUrlLoading(WebView view,android.webkit.WebResourceRequest req){
+                return true; // No navigation from locally rendered HOME.
+            }
+            @Override public void onPageFinished(WebView view,String url){
+                if(url!=null&&url.startsWith("https://pokesearch.invalid/")){
+                    // Load the bundled Pokédex into the local, network-blocked HOME.
+                    // The catalog only suggests species; actual forms and filters
+                    // are always validated against the live official page.
+                    try{
+                        JSONArray catalog=new JSONArray(readAsset("pokemon_catalog.json"));
+                        if(catalog.length()>1000)
+                            view.evaluateJavascript("window.onHomeCatalog("+catalog.toString()+")",null);
+                    }catch(org.json.JSONException e){
+                        BugReport.log(MainActivity.this,"HOME","Catálogo Pokémon inválido");
+                    }
+                    syncHomeUi();
+                }
+            }
+        });
+        filtersHost.addView(homeFiltersWebView,new FrameLayout.LayoutParams(-1,-1));
+        screen.addView(filtersHost,new LinearLayout.LayoutParams(-1,0,1));
+        // Local HTML, CSP connect-src none. No duplicate PoGoCoordinates WebView.
+        homeFiltersWebView.loadDataWithBaseURL("https://pokesearch.invalid/",
+            readAsset("home_v200.html"),"text/html","UTF-8",null);
+        return frame;
+    }
+    private void syncHomeUi(){
+        WebView view=homeFiltersWebView;
+        if(view==null)return;
+        JSONObject state=HomeFilterState.snapshot(this);
+        view.evaluateJavascript("window.onHomeState("+state.toString()+")",null);
+    }
+    private void sendHomeAction(String action,Intent extras){
+        if(!OverlayService.isRunning())return;
+        Intent intent=extras!=null?extras:new Intent(this,OverlayService.class);
+        intent.setClass(this,OverlayService.class);
+        intent.setAction(action);
+        // Already running foreground service, no unrequested background start.
+        startService(intent);
+    }
+    // SEARCH-V200: unimplemented site categories use the real site UI,
+    // in a distinct WebView that has NO JavascriptInterface and no GPS.
+    // This does not claim bidirectional sync with the floating Pokemon menu.
+    private void openOfficialSearchTab(String requestedTab){
+        if(requestedTab==null)return;
+        final String tab=requestedTab.toLowerCase(Locale.ROOT);
+        final String route;
+        switch(tab){
+            case "raids":route="/search?tab=raids";break;
+            case "quests":route="/search?tab=quests";break;
+            case "weather":case "rocket":case "power-spots":
+            case "saved":case "notify":case "area":case "pokemon":
+                route="/search";break;
+            case "map":route="/map";break;
+            case "vip":route="/vip";break;
+            case "terms":route="/terms";break;
+            case "privacy":route="/privacy";break;
+            case "refunds":route="/refunds";break;
+            default:return;
+        }
+        if(officialSearchDialog!=null&&officialSearchDialog.isShowing())return;
+        WebView browser=new WebView(this);
+        officialSearchWebView=browser;
+        browser.setBackgroundColor(Color.rgb(11,11,15));
+        browser.getSettings().setJavaScriptEnabled(true);
+        browser.getSettings().setDomStorageEnabled(true);
+        browser.getSettings().setAllowFileAccess(false);
+        browser.getSettings().setAllowContentAccess(false);
+        browser.getSettings().setGeolocationEnabled(false);
+        android.webkit.CookieManager.getInstance().setAcceptCookie(true);
+        android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(browser,true);
+        browser.setWebChromeClient(new WebChromeClient(){
+            @Override public void onGeolocationPermissionsShowPrompt(
+                    String origin,android.webkit.GeolocationPermissions.Callback callback){
+                callback.invoke(origin,false,false);
+            }
+        });
+        browser.setWebViewClient(new WebViewClient(){
+            private boolean tabClicked=false;
+            @Override public boolean shouldOverrideUrlLoading(
+                    WebView view,android.webkit.WebResourceRequest request){
+                Uri uri=request.getUrl();
+                if(uri==null||!"https".equalsIgnoreCase(uri.getScheme()))return true;
+                String host=uri.getHost();
+                if(host!=null&&(host.equalsIgnoreCase("pogocoordinates.com")||
+                     host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return false;
+                // External authentication providers remain in the system browser.
+                try{startActivity(new Intent(Intent.ACTION_VIEW,uri));}
+                catch(Exception ignored){}
+                return true;
+            }
+            @Override public void onPageFinished(WebView view,String url){
+                if(view!=browser||tabClicked)return;
+                String label=null;
+                if("weather".equals(tab))label="Weather";
+                else if("rocket".equals(tab))label="Rocket";
+                else if("power-spots".equals(tab))label="Power Spots";
+                else if("notify".equals(tab))label="Notify Me";
+                else if("area".equals(tab))label="Area";
+                if(label!=null)selectRealSiteButton(browser,label,12,()->tabClicked=true);
+            }
+        });
+        LinearLayout layout=new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setBackgroundColor(Color.rgb(11,11,15));
+        LinearLayout header=new LinearLayout(this);
+        header.setPadding(d(12),d(3),d(8),d(3));
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        TextView heading=homeText("PoGoCoordinates · "+tab,14,Color.WHITE,true);
+        header.addView(heading,new LinearLayout.LayoutParams(0,d(45),1));
+        Button close=homeAuthButton("Fechar",Color.rgb(43,43,49),Color.WHITE);
+        header.addView(close,new LinearLayout.LayoutParams(d(76),d(40)));
+        layout.addView(header);
+        layout.addView(browser,new LinearLayout.LayoutParams(-1,0,1));
+        android.app.Dialog dialog=new android.app.Dialog(this);
+        officialSearchDialog=dialog;
+        dialog.setContentView(layout);
+        dialog.setOnDismissListener(ignored->{
+            if(officialSearchWebView!=null){
+                officialSearchWebView.stopLoading();
+                officialSearchWebView.destroy();
+                officialSearchWebView=null;
+            }
+            officialSearchDialog=null;
+        });
+        close.setOnClickListener(v->dialog.dismiss());
+        dialog.show();
+        if(dialog.getWindow()!=null)dialog.getWindow().setLayout(-1,-1);
+        browser.loadUrl("https://pogocoordinates.com"+route);
+    }
+    private void selectRealSiteButton(WebView browser,String label,int tries,Runnable done){
+        if(tries<=0||officialSearchWebView!=browser||officialSearchDialog==null||
+           !officialSearchDialog.isShowing())return;
+        final String script="(function(){var label="+JSONObject.quote(label)+";"+
+            "var opts=[...document.querySelectorAll('button,a')];"+
+            "var b=opts.find(e=>e.getClientRects().length&&"+
+            "(e.textContent||'').trim().toLowerCase()===label.toLowerCase());"+
+            "if(b){b.click();return true;}return false;})()";
+        browser.evaluateJavascript(script,value->{
+            if("true".equals(value)){done.run();return;}
+            browser.postDelayed(()->selectRealSiteButton(browser,label,tries-1,done),350L);
+        });
+    }
+    private final class HomeBridge {
+        @android.webkit.JavascriptInterface public void openOfficialSearchTab(String tab){
+            if(tab==null||tab.length()>30)return;
+            runOnUiThread(()->MainActivity.this.openOfficialSearchTab(tab));
+        }
+        @android.webkit.JavascriptInterface public void copyConfirmedCoords(String coords){
+            if(coords==null||coords.length()>80||!
+                 coords.trim().matches("[-+]?\\d{1,2}(?:\\.\\d+)?,\\s*[-+]?\\d{1,3}(?:\\.\\d+)?"))return;
+            String[] parts=coords.split(",");
+            try{
+                if(Math.abs(Double.parseDouble(parts[0].trim()))>90||
+                   Math.abs(Double.parseDouble(parts[1].trim()))>180)return;
+            }catch(Exception ignored){return;}
+            runOnUiThread(()->{
+                android.content.ClipboardManager clipboard=(android.content.ClipboardManager)
+                    getSystemService(CLIPBOARD_SERVICE);
+                if(clipboard!=null)clipboard.setPrimaryClip(
+                    android.content.ClipData.newPlainText("Coordinates",coords.trim()));
+                Toast.makeText(MainActivity.this,"Coordenadas copiadas",Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        @android.webkit.JavascriptInterface public String snapshot(){
+            return HomeFilterState.snapshot(MainActivity.this).toString();
+        }
+        @android.webkit.JavascriptInterface public void applyConfig(String json){
+            if(json==null||json.length()>12000)return;
+            runOnUiThread(()->{
+                if(OverlayService.isRunning()){
+                    Intent i=new Intent(MainActivity.this,OverlayService.class);
+                    i.putExtra("config",json);
+                    sendHomeAction(HomeFilterState.ACTION_CONFIG,i);
+                }else if(!HomeFilterState.saveConfigIfStopped(MainActivity.this,json)){
+                    Toast.makeText(MainActivity.this,"Valores de filtro inválidos",Toast.LENGTH_SHORT).show();
+                }
+                syncHomeUi();
+            });
+        }
+        @android.webkit.JavascriptInterface public void setLocation(boolean enabled,String coords,int radius){
+            if(coords==null||coords.length()>128)return;
+            runOnUiThread(()->{
+                if(OverlayService.isRunning()){
+                    Intent i=new Intent(MainActivity.this,OverlayService.class);
+                    i.putExtra("enabled",enabled);i.putExtra("coords",coords);i.putExtra("radius",radius);
+                    sendHomeAction(HomeFilterState.ACTION_LOCATION,i);
+                }else if(!HomeFilterState.saveLocationIfStopped(MainActivity.this,enabled,coords,radius)){
+                    Toast.makeText(MainActivity.this,"Coordenadas inválidas",Toast.LENGTH_SHORT).show();
+                }
+                syncHomeUi();
+            });
+        }
+        @android.webkit.JavascriptInterface public void setShiny(boolean enabled){
+            runOnUiThread(()->{
+                boolean current=getSharedPreferences("prefs",0).getBoolean("shiny",false);
+                if(current!=enabled){
+                    if(OverlayService.isRunning()){
+                        Intent i=new Intent(MainActivity.this,OverlayService.class);
+                        i.putExtra("enabled",enabled);
+                        sendHomeAction(HomeFilterState.ACTION_SHINY,i);
+                    }else getSharedPreferences("prefs",0).edit().putBoolean("shiny",enabled).apply();
+                }
+                syncHomeUi();
+            });
+        }
+        @android.webkit.JavascriptInterface public void search(String payload){
+            if(payload==null||payload.length()>12000)return;
+            runOnUiThread(()->{
+                if(OverlayService.isRunning()){
+                    Intent intent=new Intent(MainActivity.this,OverlayService.class);
+                    intent.putExtra("config",payload);
+                    sendHomeAction(HomeFilterState.ACTION_SEARCH,intent);
+                }else {
+                    if(!HomeFilterState.saveConfigIfStopped(MainActivity.this,payload)){
+                        Toast.makeText(MainActivity.this,"Reveja os filtros antes da busca",Toast.LENGTH_LONG).show();return;
+                    }
+                    Toast.makeText(MainActivity.this,
+                        "Iniciando consulta no serviço oficial",Toast.LENGTH_LONG).show();
+                    startOverlay(true); // Permissions still apply; remain in HOME.
+                }
+            });
+        }
+        @android.webkit.JavascriptInterface public void suggest(String query){
+            if(query==null||query.length()>65)return;
+            runOnUiThread(()->{
+                if(OverlayService.isRunning()){
+                    Intent i=new Intent(MainActivity.this,OverlayService.class);
+                    i.putExtra("query",query);
+                    sendHomeAction(HomeFilterState.ACTION_SUGGEST,i);
+                }
+                // With the overlay stopped, the local bundled catalog already
+                // serves valid Pokédex species; do not clear those suggestions.
+            });
+        }
+        @android.webkit.JavascriptInterface public void savePreset(String name,String value){
+            if(name==null||value==null||name.trim().length()<1||name.length()>36||value.length()>12000)return;
+            runOnUiThread(()->{
+                try{
+                    android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+                    JSONObject presets=new JSONObject(p.getString("homeSavedFilters","{}"));
+                    if(presets.length()>=30&&!presets.has(name))return;
+                    presets.put(name.trim(),new JSONObject(value));
+                    p.edit().putString("homeSavedFilters",presets.toString()).apply();syncHomeUi();
+                }catch(Exception ignored){}
+            });
+        }
+        @android.webkit.JavascriptInterface public void deletePreset(String name){
+            if(name==null||name.length()>36)return;
+            runOnUiThread(()->{
+                try{
+                    android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+                    JSONObject presets=new JSONObject(p.getString("homeSavedFilters","{}"));
+                    presets.remove(name);p.edit().putString("homeSavedFilters",presets.toString()).apply();syncHomeUi();
+                }catch(Exception ignored){}
+            });
+        }
+        @android.webkit.JavascriptInterface public void openAlerts(){runOnUiThread(()->{
+            new AlertDialog.Builder(MainActivity.this).setTitle("Alertas do PokeSearch")
+                .setMessage("As notificações são enviadas apenas para resultados confirmados pelo site. Configure os canais e favoritos no overlay.")
+                .setPositiveButton("Configurar permissão",(d,w)->requestOverlayNotificationPermission())
+                .setNegativeButton("Fechar",null).show();
+        });}
+    }
+    private void openTrainerManagement(){
+        String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
+        if(!code.matches("[0-9]{12}")){
+            openLoginDialog(false,"manage");
+            return;
+        }
+        new AlertDialog.Builder(this)
+            .setTitle("Remover treinador vinculado")
+            .setMessage("A remoção precisa ser confirmada no perfil oficial do PoGoCoordinates. Deseja abrir o gerenciamento?")
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Abrir perfil oficial",(dialog,which)->
+                openLoginDialog(false,"manage"))
+            .show();
+    }
+    private int homeTeamIcon(String team){
+        if("Mystic".equalsIgnoreCase(team))return R.drawable.ps_team_mystic;
+        if("Valor".equalsIgnoreCase(team))return R.drawable.ps_team_valor;
+        if("Instinct".equalsIgnoreCase(team))return R.drawable.ps_team_instinct;
+        return R.drawable.ps_team_neutral;
+    }
+    private Button homeAuthButton(String name,int bg,int fg){
+        Button button=new Button(this);
+        button.setText(name);button.setAllCaps(false);button.setTextSize(12);
+        button.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        button.setTextColor(fg);button.setMinWidth(0);button.setMinimumWidth(0);
+        button.setMinHeight(0);button.setMinimumHeight(0);
+        button.setPadding(d(7),0,d(7),0);
+        button.setBackground(homeSurface(bg,10,0));
+        return button;
+    }
+    private void closeHomeMenu(){
+        if(homeDrawerLayer!=null&&homeRoot!=null){
+            homeRoot.removeView(homeDrawerLayer);
+            homeDrawerLayer=null;
+        }
+    }
+    private void addHomeDrawerItem(LinearLayout panel,String icon,String name,Runnable callback){
+        TextView item=homeText(icon+"     "+name,15,Color.WHITE,false);
+        item.setPadding(d(18),0,d(12),0);
+        panel.addView(item,new LinearLayout.LayoutParams(-1,d(48)));
+        item.setOnClickListener(v->{closeHomeMenu();callback.run();});
+    }
+    private void showHomeMenu(){
+        if(homeRoot==null)return;
+        if(homeDrawerLayer!=null){closeHomeMenu();return;}
+        FrameLayout layer=new FrameLayout(this);
+        View scrim=new View(this);
+        scrim.setBackgroundColor(Color.argb(160,0,5,14));
+        scrim.setOnClickListener(v->closeHomeMenu());
+        layer.addView(scrim,new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout drawer=new LinearLayout(this);
+        drawer.setOrientation(LinearLayout.VERTICAL);
+        drawer.setPadding(0,d(14),0,d(10));
+        drawer.setBackgroundColor(Color.rgb(25,42,60));
+        int width=Math.min(d(286),getResources().getDisplayMetrics().widthPixels-d(48));
+        FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(width,-1,Gravity.RIGHT|Gravity.TOP);
+        layer.addView(drawer,lp);
+        drawer.setOnClickListener(v->{});
+        TextView label=homeText("  PokeSearch",19,Color.WHITE,true);
+        drawer.addView(label,new LinearLayout.LayoutParams(-1,d(60)));
+        View rule=new View(this);rule.setBackgroundColor(Color.argb(90,174,199,235));
+        drawer.addView(rule,new LinearLayout.LayoutParams(-1,d(1)));
+        addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
+        addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
+        addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
+        addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
+        addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
+        homeRoot.addView(layer,new FrameLayout.LayoutParams(-1,-1));
+        homeDrawerLayer=layer;
+    }
+    private void exportHomeData(){
+        // Export a fixed whitelist. No cookies, OAuth state, coordinates, trainer
+        // codes, private identifiers, account profile or diagnostic logs.
+        try{
+            SharedPreferences prefs=getSharedPreferences("prefs",0);
+            JSONObject out=new JSONObject();
+            out.put("schema","pokesearch-home-export-v1");
+            out.put("createdAt",new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ",Locale.US)
+                .format(new Date()));
+            JSONObject settings=new JSONObject();
+            String[] keys={"mode","rawAttack","rawDefense","rawStamina",
+                "ivPercentMin","ivPercentMax","glRank","ulRank","shiny",
+                "sort","intervalMinutes","spriteSize","showTimers",
+                "alertsMode","alerts","locationEnabled","locationRadius"};
+            for(String key:keys){
+                Object value=prefs.getAll().get(key);
+                if(value instanceof String||value instanceof Number||value instanceof Boolean)
+                    settings.put(key,value);
+            }
+            out.put("filtersAndPreferences",settings);
+            JSONArray favorites=new JSONArray();
+            for(String name:WatchAlerts.watched(this))favorites.put(name);
+            out.put("favorites",favorites);
+            pendingExportText=out.toString(2);
+            Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/json");
+            intent.putExtra(Intent.EXTRA_TITLE,"PokeSearch-dados-"+
+                new SimpleDateFormat("yyyyMMdd-HHmm",Locale.US).format(new Date())+".json");
+            startActivityForResult(intent,302);
+        }catch(Exception e){
+            pendingExportText="";
+            Toast.makeText(this,"Não foi possível preparar os dados",Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void toggleHomeOverlay(){
+        if(OverlayService.isRunning()){
+            stopService(new Intent(this,OverlayService.class));
+            Toast.makeText(this,"Overlay desativado",Toast.LENGTH_SHORT).show();
+            refreshHomeOverlay();
+            return;
+        }
+        startOverlay();
+        if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,750);
+    }
+    private void refreshHomeOverlay(){
+        if(overlayControl==null)return;
+        boolean on=OverlayService.isRunning();
+        overlayControl.setImageResource(on?R.drawable.ic_overlay_on:R.drawable.ic_overlay_off);
+        overlayControl.setContentDescription(on?"Desativar overlay":"Ativar overlay");
+        overlayControl.setBackground(homeSurface(on?Color.argb(180,9,70,68):
+            Color.argb(125,9,25,49),10,0));
+    }
+    private void openProviderLogin(String provider){
+        preferredLoginProvider=provider;
+        openLoginDialog(false);
+    }
+    private void copyTrainerCode(){
+        String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
+        if(!code.matches("[0-9]{12}"))return;
+        android.content.ClipboardManager manager=
+            (android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+        manager.setPrimaryClip(android.content.ClipData.newPlainText("Código de treinador",code));
+        Toast.makeText(this,"Código copiado",Toast.LENGTH_SHORT).show();
+    }
+
     private void showQuickGuide(){
         getSharedPreferences("prefs",0).edit().putBoolean("tutorialSeenV41",true).apply();
         // A scrollable visual guide reuses the actual icons from dock.html.
@@ -248,14 +848,147 @@ public class MainActivity extends Activity {
         android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
         bg.setColor(color);bg.setCornerRadius(d(radius));return bg;
     }
+
+    // Fetch only a public Google avatar URL explicitly present in the
+    // authenticated /profile DOM. Never forward cookies or OAuth secrets.
+    private static boolean allowedGoogleAvatar(String url){
+        if(url==null||url.length()>1600)return false;
+        try{
+            Uri uri=Uri.parse(url);
+            String host=uri.getHost(),scheme=uri.getScheme();
+            return "https".equalsIgnoreCase(scheme)&&host!=null&&
+                (host.equalsIgnoreCase("googleusercontent.com")||
+                 host.toLowerCase(Locale.ROOT).endsWith(".googleusercontent.com"))&&
+                uri.getUserInfo()==null;
+        }catch(Exception ignored){return false;}
+    }
+    private String shownAvatarUrl="";
+    private void refreshGoogleAvatar(String url){
+        if(accountAvatar==null)return;
+        final String next=allowedGoogleAvatar(url)?url:"";
+        if(shownAvatarUrl.equals(next))return;
+        shownAvatarUrl=next;
+        accountAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+        accountAvatar.setColorFilter(Color.rgb(183,201,229));
+        accountAvatar.setPadding(d(11),d(11),d(11),d(11));
+        if(next.isEmpty())return;
+        new Thread(()->{
+            android.graphics.Bitmap bitmap=null;
+            java.net.HttpURLConnection connection=null;
+            try{
+                // Google public avatar CDN occasionally redirects between
+                // googleusercontent hosts. Follow only a short allowlisted chain,
+                // never forward WebView cookies or bearer credentials.
+                String current=next;
+                boolean ready=false;
+                for(int redirect=0;redirect<4;redirect++){
+                    if(!allowedGoogleAvatar(current))break;
+                    if(connection!=null)connection.disconnect();
+                    connection=(java.net.HttpURLConnection)new java.net.URL(current).openConnection();
+                    connection.setInstanceFollowRedirects(false);
+                    connection.setConnectTimeout(5000);
+                    connection.setReadTimeout(6000);
+                    int code=connection.getResponseCode();
+                    if(code==200){ready=true;break;}
+                    if(code!=301&&code!=302&&code!=303&&code!=307&&code!=308)break;
+                    String location=connection.getHeaderField("Location");
+                    if(location==null)break;
+                    String redirected=new java.net.URL(new java.net.URL(current),location).toExternalForm();
+                    if(!allowedGoogleAvatar(redirected))break;
+                    current=redirected;
+                }
+                if(!ready)return;
+                if(!String.valueOf(connection.getContentType()).startsWith("image/"))return;
+                if(connection.getContentLengthLong()>2_500_000L)return;
+                try(InputStream stream=new java.io.BufferedInputStream(connection.getInputStream())){
+                    ByteArrayOutputStream data=new ByteArrayOutputStream();
+                    byte[] buf=new byte[8192];int n;
+                    while((n=stream.read(buf))!=-1){
+                        if(data.size()+n>2_500_000)return;
+                        data.write(buf,0,n);
+                    }
+                    byte[] bytes=data.toByteArray();
+                    bitmap=android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+                }
+            }catch(Exception ignored){
+                // Network or an unavailable avatar keeps the neutral icon.
+            }finally{
+                if(connection!=null)connection.disconnect();
+                if(bitmap==null)runOnUiThread(()->{
+                    // Includes early returns on HTTP failure/redirect/size.
+                    // Do not permanently cache a failed URL on the new Home.
+                    if(next.equals(shownAvatarUrl))shownAvatarUrl="";
+                });
+            }
+            final android.graphics.Bitmap photo=bitmap;
+            if(photo!=null)runOnUiThread(()->{
+                if(accountAvatar==null||!shownAvatarUrl.equals(next)||
+                    !"autenticada".equals(getSharedPreferences("prefs",0)
+                        .getString("sessionStatus","")))return;
+                accountAvatar.clearColorFilter();
+                accountAvatar.setPadding(0,0,0,0);
+                accountAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                accountAvatar.setImageBitmap(photo);
+            });
+        },"PokeSearch-Google-Avatar").start();
+    }
+
     private void refreshSessionSummary(){
-        if(sessionSummary==null)return;
-        String state=getSharedPreferences("prefs",0).getString("sessionStatus","não confirmado");
-        String text="autenticada".equals(state)?"● Sessão identificada · PoGoCoordinates":
-            "desconectado".equals(state)?"○ Sessão local desconectada":
-            "login necessário".equals(state)?"○ Login necessário para Shiny":
-            "○ Sessão ainda não confirmada";
-        sessionSummary.setText(text);
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        boolean logged="autenticada".equals(prefs.getString("sessionStatus","não confirmado"));
+        if(guestHeading!=null)guestHeading.setVisibility(logged?View.GONE:View.VISIBLE);
+        if(guestPanel!=null)guestPanel.setVisibility(logged?View.GONE:View.VISIBLE);
+        if(connectedPanel!=null)connectedPanel.setVisibility(logged?View.VISIBLE:View.GONE);
+        if(sessionHint!=null)sessionHint.setText(
+            "Buscas comuns sem login · Shiny exige treinador vinculado");
+        if(accountDisplay!=null)accountDisplay.setText(
+            prefs.getString("profileDisplayName","Conta conectada"));
+        refreshGoogleAvatar(logged?prefs.getString("profileAvatarUrl",""):"");
+        if(accountProvider!=null){
+            String provider=prefs.getString("profileProvider","");
+            accountProvider.setText("Google".equals(provider)?"G  Logado via Google":
+                "Discord".equals(provider)?"◉  Logado via Discord":
+                "Conectado ao PoGoCoordinates");
+        }
+        String trainer=prefs.getString("profileTrainerName",""),
+            code=prefs.getString("profileTrainerCode","");
+        boolean linked=logged&&!trainer.isEmpty()&&code.matches("[0-9]{12}")&&
+            "linked".equals(prefs.getString("profileTrainerState","unknown"));
+        if(trainerPanel!=null)trainerPanel.setVisibility(logged?View.VISIBLE:View.GONE);
+        if(trainerCodeGroup!=null)trainerCodeGroup.setVisibility(logged?View.VISIBLE:View.GONE);
+        if(trainerCodeTexts!=null)trainerCodeTexts.setVisibility(linked?View.VISIBLE:View.INVISIBLE);
+        if(trainerCopyButton!=null)trainerCopyButton.setVisibility(linked?View.VISIBLE:View.GONE);
+        if(trainerSectionTitle!=null)trainerSectionTitle.setText(linked?
+            "Treinador vinculado":"Conta Pokémon GO");
+        String team=prefs.getString("profileTrainerTeam","");
+        String details=prefs.getString("profileTrainerDetails","");
+        if(team.isEmpty()){
+            if(details.contains("Mystic"))team="Mystic";
+            else if(details.contains("Valor"))team="Valor";
+            else if(details.contains("Instinct"))team="Instinct";
+        }
+        if(teamBadge!=null){
+            teamBadge.setImageResource(homeTeamIcon(linked?team:""));
+            teamBadge.setContentDescription(linked&&team.length()>0?
+                "Equipe "+team:"Sem equipe");
+        }
+        if(trainerDisplay!=null)trainerDisplay.setText(linked?trainer:
+            "unlinked".equals(prefs.getString("profileTrainerState","unknown"))?
+                "Nenhum treinador vinculado":"Treinador não confirmado");
+        if(trainerDetails!=null){
+            trainerDetails.setText(linked?(details.isEmpty()?
+                (team.isEmpty()?"Sem equipe":team):"★ "+details):
+                "Gerencie seu vínculo no PoGoCoordinates");
+            trainerDetails.setTextColor("Mystic".equals(team)?Color.rgb(104,183,255):
+                "Valor".equals(team)?Color.rgb(255,130,134):
+                "Instinct".equals(team)?Color.rgb(255,211,99):
+                Color.rgb(165,185,214));
+        }
+        if(linked&&trainerCode!=null)
+            trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
+        if(trainerAction!=null)trainerAction.setText(linked?"Remover":"Gerenciar");
+        if(sessionSummary!=null)sessionSummary.setText(logged?
+            "● Sessão identificada · PoGoCoordinates":"○ Login necessário");
     }
     private void askLogout(){
         new AlertDialog.Builder(this)
@@ -271,6 +1004,10 @@ public class MainActivity extends Activity {
         if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
         getSharedPreferences("prefs",0).edit()
             .putString("sessionStatus","desconectado")
+            .remove("profileDisplayName").remove("profileProvider").remove("profileAvatarUrl")
+            .remove("profileTrainerName").remove("profileTrainerCode")
+            .remove("profileTrainerDetails").remove("profileTrainerState")
+            .remove("profileTrainerTeam").remove("profileTrainerLevel")
             .putBoolean("shiny",false)
             .putString("lastStatus","Sessão local desconectada")
             .putString("lastError","Nenhum")
@@ -297,6 +1034,20 @@ public class MainActivity extends Activity {
         super.onResume();
         refreshWatchCount();
         refreshSessionSummary();
+        refreshHomeOverlay();
+        homeForeground=true;
+        android.content.IntentFilter filter=new android.content.IntentFilter(HomeFilterState.ACTION_EVENT);
+        if(android.os.Build.VERSION.SDK_INT>=33)
+            registerReceiver(homeEvents,filter,android.content.Context.RECEIVER_NOT_EXPORTED);
+        else registerReceiver(homeEvents,filter);
+        homeHandler.removeCallbacks(homePoll);
+        homePoll.run();
+        sendHomeAction(HomeFilterState.ACTION_SYNC,null);
+    }
+    @Override protected void onPause(){
+        homeForeground=false;homeHandler.removeCallbacks(homePoll);
+        try{unregisterReceiver(homeEvents);}catch(IllegalArgumentException ignored){}
+        super.onPause();
     }
     private void handleShinyLoginIntent(Intent intent){
         if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
@@ -345,32 +1096,151 @@ public class MainActivity extends Activity {
             }
             if("autenticada".equals(auth)){
                 loginSessionNotified=true;
-                loginAutoReturnQueued=true;
+                // A newly confirmed OAuth session may belong to another account.
+                // Never reuse the prior trainer proof while /profile hydrates.
                 getSharedPreferences("prefs",0).edit()
-                    .putString("sessionStatus","autenticada").apply();
-                refreshSessionSummary();
-                BugReport.log(MainActivity.this,"LOGIN","Sessão confirmada; retornando ao aplicativo");
+                    .putString("sessionStatus","autenticada")
+                    .putString("profileTrainerState","unknown")
+                    .remove("profileAvatarUrl")
+                    .remove("profileTrainerName").remove("profileTrainerCode")
+                    .remove("profileTrainerDetails").remove("profileTrainerTeam")
+                    .remove("profileTrainerLevel").apply();
                 CookieManager.getInstance().flush();
-                // A confirmed session closes the WebView even when the switch
-                // still needs to be enabled by the background collector.
-                view.post(()->{
-                    if(view==website&&loginDialog!=null&&loginDialog.isShowing())
+                if("manage".equals(loginPurpose)){
+                    // Management must stay open until the user explicitly leaves.
+                    refreshSessionSummary();
+                    return;
+                }
+                loginAutoReturnQueued=true;
+                refreshSessionSummary();
+                // The site returns to /search after OAuth. Public account
+                // metadata is at /profile, not the search view.
+                profileCaptureInProgress=true;
+                avatarReadRetryCount=0;
+                if("/profile".equals(current.getPath())){
+                    captureOfficialProfile(view,pageGeneration);
+                }else{
+                    if(loginWaitLabel!=null)loginWaitLabel.setText("Sincronizando perfil…");
+                    if(loginCover!=null)loginCover.setVisibility(View.VISIBLE);
+                    view.loadUrl("https://pogocoordinates.com/profile");
+                }
+                // Site-origin failures must never trap the user in a page.
+                view.postDelayed(()->{
+                    if(view==website&&loginAutoReturnQueued&&
+                       loginDialog!=null&&loginDialog.isShowing())
                         loginDialog.dismiss();
-                });
+                },6500L);
             }else{
-                // Check actual session before opening Login. This also handles
-                // already-signed-in users with a hidden mobile Logout button.
-                if(attemptsLeft<=13&&!loginDiscoveryStarted&&!loginLinkAttempted){
+                // Search does not expose a Shiny badge for unlinked trainers.
+                // On an ambiguous, hydrated page, visit the official profile once.
+                if("não confirmado".equals(auth)&&!profileDiscoveryAttempted&&
+                   !"/profile".equals(current.getPath())&&attemptsLeft<=12){
+                    profileDiscoveryAttempted=true;
+                    view.loadUrl("https://pogocoordinates.com/profile");
+                    return;
+                }
+                if(!"manage".equals(loginPurpose)&&attemptsLeft<=13&&
+                   !loginDiscoveryStarted&&!loginLinkAttempted){
                     loginDiscoveryStarted=true;
                     openOfficialLoginControl(view,8);
                 }
-                // Logins completed by an in-page modal can take longer than the
-                // first hydration window and may not navigate the WebView.
-                // Keep one bounded-frequency probe until dialog is dismissed.
-                final int next=Math.max(1,attemptsLeft-1);
-                view.postDelayed(()->checkLoginSession(view,next,pageGeneration),
-                    attemptsLeft>1?400L:850L);
+                // Do not infinitely retry an unauthenticated or unhydrated page.
+                if(attemptsLeft>1)view.postDelayed(
+                    ()->checkLoginSession(view,attemptsLeft-1,pageGeneration),450L);
+                else if(loginWaitLabel!=null){
+                    loginWaitLabel.setText("Login não confirmado. Você pode voltar ou abrir o site.");
+                    if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+                }
             }
+        });
+    }
+    private void captureOfficialProfile(WebView view,int generation){
+        if(view!=website||loginDialog==null||!loginDialog.isShowing()||
+           !loginAutoReturnQueued||!profileCaptureInProgress)return;
+        Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
+        String host=current.getHost();
+        if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
+            host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"))||
+            !"/profile".equals(current.getPath()))return;
+        // Allow the React profile cards to hydrate after onPageFinished.
+        view.evaluateJavascript(readAsset("profile_summary.js"),raw->{
+            if(view!=website||generation!=loginPageGeneration||
+               loginDialog==null||!loginDialog.isShowing()||
+               !profileCaptureInProgress)return;
+            boolean parsed=false;
+            boolean avatarAwaitingHydration=false;
+            try{
+                String payload=new JSONArray("["+raw+"]").getString(0);
+                JSONObject profile=new JSONObject(payload);
+                if(profile.optBoolean("ok",false)&&
+                   "profile".equals(profile.optString("page"))){
+                    SharedPreferences.Editor edit=getSharedPreferences("prefs",0).edit();
+                    String name=profile.optString("displayName","").trim();
+                    String provider=profile.optString("provider","");
+                    // Linked Google/Discord provider is NOT proof of the
+                    // provider used this time. Only observed OAuth is.
+                    if(!provider.equals("Google")&&!provider.equals("Discord"))
+                        provider=observedLoginProvider;
+                    if(name.length()>0&&name.length()<=65)
+                        edit.putString("profileDisplayName",name);
+                    if(provider.equals("Google")||provider.equals("Discord"))
+                        edit.putString("profileProvider",provider);
+                    String avatar=profile.optString("avatarUrl","");
+                    if("Google".equals(provider)&&allowedGoogleAvatar(avatar))
+                        edit.putString("profileAvatarUrl",avatar);
+                    else {
+                        edit.remove("profileAvatarUrl");
+                        // The official React profile can show the name before
+                        // its public Google avatar has finished loading.
+                        avatarAwaitingHydration="Google".equals(provider);
+                    }
+                    String state=profile.optString("trainerState","unknown");
+                    String trainer=profile.optString("trainerName","");
+                    String code=profile.optString("trainerCode","");
+                    if("linked".equals(state)&&trainer.length()>0&&
+                       trainer.length()<=40&&code.matches("[0-9]{12}")){
+                        String level=profile.optString("level","");
+                        String team=profile.optString("team","");
+                        String details=(level.matches("[0-9]{1,2}")?"Nível "+level:"")+
+                            (team.matches("Mystic|Valor|Instinct")?
+                             (level.isEmpty()?"":" · ")+team:"");
+                        edit.putString("profileTrainerState","linked")
+                            .putString("profileTrainerName",trainer)
+                            .putString("profileTrainerCode",code)
+                            .putString("profileTrainerDetails",details)
+                            .putString("profileTrainerTeam",team.matches("Mystic|Valor|Instinct")?team:"")
+                            .putString("profileTrainerLevel",level.matches("[0-9]{1,2}")?level:"");
+                    }else{
+                        // Unlinked or unverified current account never inherits
+                        // a linked trainer from the previous login.
+                        edit.putString("profileTrainerState",
+                                "unlinked".equals(state)?"unlinked":"unknown")
+                            .remove("profileTrainerName").remove("profileTrainerCode")
+                            .remove("profileTrainerDetails")
+                            .remove("profileTrainerTeam").remove("profileTrainerLevel");
+                    }
+                    edit.apply();
+                    parsed=true;
+                }
+            }catch(Exception e){
+                BugReport.log(MainActivity.this,"HOME",
+                    "Perfil não confirmado · "+e.getClass().getSimpleName());
+            }
+            if(!parsed){
+                // A returned 200 is not proof that React rendered the cards.
+                view.postDelayed(()->captureOfficialProfile(view,generation),600L);
+                return;
+            }
+            if(avatarAwaitingHydration&&avatarReadRetryCount<2){
+                avatarReadRetryCount++;
+                // Preserve the already confirmed trainer data, wait briefly for
+                // the public picture; do not attempt OAuth or access cookies.
+                view.postDelayed(()->captureOfficialProfile(view,generation),700L);
+                return;
+            }
+            profileCaptureInProgress=false;
+            refreshSessionSummary();
+            if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
         });
     }
     // Site controls may hydrate after onPageFinished. Retry briefly instead
@@ -391,7 +1261,8 @@ public class MainActivity extends Activity {
         if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
            host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
         String script=readAsset("login_entry.js")
-            .replace("__SHINY__",loginStartedForShiny?"true":"false");
+            .replace("__SHINY__",loginStartedForShiny?"true":"false")
+            .replace("__PROVIDER__",JSONObject.quote(preferredLoginProvider));
         view.evaluateJavascript(script,result->{
             if(view!=website||loginLinkAttempted||loginDialog==null||
                !loginDialog.isShowing())return;
@@ -409,10 +1280,16 @@ public class MainActivity extends Activity {
             }
         });
     }
-    private void openLoginDialog(){openLoginDialog(true);}
-    private void openLoginDialog(boolean shinyRequest){
+    private void openLoginDialog(){openLoginDialog(true,"login");}
+    private void openLoginDialog(boolean shinyRequest){openLoginDialog(shinyRequest,"login");}
+    private void openLoginDialog(boolean shinyRequest,String purpose){
         if(loginDialog!=null&&loginDialog.isShowing())return;
+        loginPurpose="manage".equals(purpose)?"manage":"login";
         loginStartedForShiny=shinyRequest;
+        profileCaptureInProgress=false;
+        profileDiscoveryAttempted=false;
+        if(shinyRequest)preferredLoginProvider="";
+        observedLoginProvider="";
         loginAutoReturnQueued=false;
         loginSessionNotified=false;
         loginLinkAttempted=false;
@@ -438,6 +1315,12 @@ public class MainActivity extends Activity {
                 loginDiscoveryStarted=false;
                 Uri current=Uri.parse(url==null?"":url);
                 String host=current.getHost();
+                if(host!=null){
+                    String lower=host.toLowerCase(Locale.ROOT);
+                    if(lower.equals("accounts.google.com"))observedLoginProvider="Google";
+                    else if(lower.equals("discord.com")||lower.endsWith(".discord.com"))
+                        observedLoginProvider="Discord";
+                }
                 boolean site=host!=null&&(host.equalsIgnoreCase("pogocoordinates.com")||
                     host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"));
                 if(loginCover!=null)loginCover.setVisibility(site?View.VISIBLE:View.GONE);
@@ -447,9 +1330,17 @@ public class MainActivity extends Activity {
                 String host=Uri.parse(url).getHost();
                 if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
                      host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
-                // First verify session. Only a logged-out user should be sent
-                // through the official Login control.
                 int generation=loginPageGeneration;
+                if(loginAutoReturnQueued){
+                    if("/profile".equals(Uri.parse(url).getPath()))
+                        view.postDelayed(()->captureOfficialProfile(view,generation),700L);
+                    return;
+                }
+                if("manage".equals(loginPurpose)){
+                    // Profile management is an intentional official-site view.
+                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    return;
+                }
                 checkLoginSession(view,14,generation);
             }
         });
@@ -464,7 +1355,7 @@ public class MainActivity extends Activity {
         toolbar.setPadding(d(12),0,d(12),0);
         toolbar.setBackgroundColor(Color.rgb(20,24,31));
         TextView loginName=new TextView(this);
-        loginName.setText("PoGoCoordinates · Login");
+        loginName.setText("manage".equals(loginPurpose)?"PoGoCoordinates · Perfil":"PoGoCoordinates · Login");
         loginName.setTextColor(Color.WHITE);
         loginName.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         loginName.setTextSize(15);
@@ -532,6 +1423,7 @@ public class MainActivity extends Activity {
             boolean fromOverlay=loginStartedForShiny;
             ++loginPageGeneration; // Invalidate pending WebView session probes.
             loginCover=null;
+            profileCaptureInProgress=false;
             loginWaitLabel=null;
             loginFallback=null;
             if(website!=null){website.stopLoading();website.destroy();website=null;}
@@ -549,6 +1441,7 @@ public class MainActivity extends Activity {
         loginDialog.show();
         android.view.Window loginWindow=loginDialog.getWindow();
         if(loginWindow!=null){
+            loginWindow.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
             loginWindow.setBackgroundDrawableResource(android.R.color.transparent);
             loginWindow.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
             loginWindow.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,
@@ -556,7 +1449,8 @@ public class MainActivity extends Activity {
             loginWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
         }
         website.requestFocus();
-        website.loadUrl("https://pogocoordinates.com/search");
+        website.loadUrl("manage".equals(loginPurpose)?
+            "https://pogocoordinates.com/profile":"https://pogocoordinates.com/search");
     }
     @Override protected void onNewIntent(Intent intent){
         super.onNewIntent(intent);
@@ -570,6 +1464,8 @@ public class MainActivity extends Activity {
             getWindow().getDecorView().post(()->PixSupport.show(this));
         if("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT".equals(intent.getAction()))
             getWindow().getDecorView().post(this::showBugReportDialog);
+        if("com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(intent.getAction()))
+            getWindow().getDecorView().post(this::requestOverlayNotificationPermission);
     }
     private void showBugReportDialog(){
         BugReport.log(this,"report","Relatório aberto manualmente");
@@ -663,7 +1559,7 @@ public class MainActivity extends Activity {
         settingCheckbox(body,prefs,"showTimers","Mostrar tempo individual de despawn",false);
         settingAlertMode(body,prefs);
         settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,
-            "Alertar com som ao encontrar favorito",true);
+            "Alertar ao encontrar favorito nos filtros confirmados",true);
         Button testNotification=new Button(this);
         testNotification.setText("🔔 Testar notificação");
         testNotification.setAllCaps(false);
@@ -730,7 +1626,10 @@ public class MainActivity extends Activity {
             return "void 0";
         }
     }
-    private void startOverlay(){
+    private void startOverlay(){startOverlay(false);}
+    private boolean homeStartPending=false;
+    private void startOverlay(boolean stayOnHome){
+        homeStartPending=stayOnHome;
         CookieManager.getInstance().flush();
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -750,11 +1649,23 @@ public class MainActivity extends Activity {
         Intent i=new Intent(this,OverlayService.class);
         i.setAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
         if(Build.VERSION.SDK_INT>=26)startForegroundService(i);else startService(i);
-        moveTaskToBack(true);
+        if(!stayOnHome)moveTaskToBack(true);
     }
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
-        if(req==101&&Settings.canDrawOverlays(this))startOverlay();
+        if(req==101&&Settings.canDrawOverlays(this))startOverlay(homeStartPending);
+        if(req==302){
+            if(result==RESULT_OK&&data!=null&&data.getData()!=null&&!pendingExportText.isEmpty()){
+                try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){
+                    if(out==null)throw new java.io.IOException("Arquivo indisponível");
+                    out.write(pendingExportText.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    Toast.makeText(this,"Dados exportados em JSON",Toast.LENGTH_SHORT).show();
+                }catch(Exception e){
+                    Toast.makeText(this,"Falha ao salvar os dados",Toast.LENGTH_SHORT).show();
+                }
+            }
+            pendingExportText="";
+        }
         if(req==301 && result==RESULT_OK && data!=null && data.getData()!=null){
             try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){
                 if(out==null)throw new java.io.IOException("Documento indisponível");
@@ -764,9 +1675,28 @@ public class MainActivity extends Activity {
             pendingReportText="";
         }
     }
+    private void requestOverlayNotificationPermission(){
+        // A Service/WebView cannot present the Android 13+ runtime permission
+        // dialog. Only the foreground Activity requests it after a real tap.
+        if(Build.VERSION.SDK_INT>=33&&!WatchAlerts.permissionGranted(this)){
+            if(checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){
+                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},204);
+                return;
+            }
+        }
+        Toast.makeText(this,WatchAlerts.permissionGranted(this)?
+            "Notificações permitidas":"Notificações bloqueadas. Abra os canais nas Configurações do Android.",
+            Toast.LENGTH_LONG).show();
+    }
     @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
         super.onRequestPermissionsResult(requestCode,permissions,results);
-        if(requestCode==202)startOverlay();
+        if(requestCode==202)startOverlay(homeStartPending);
+        if(requestCode==204){
+            boolean granted=results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED;
+            Toast.makeText(this,granted&&WatchAlerts.permissionGranted(this)?
+                "Permissão de notificações concedida":"Permissão negada. Configure as notificações no Android.",
+                Toast.LENGTH_LONG).show();
+        }
         if(requestCode==203){
             boolean granted=results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED;
             if(granted&&WatchAlerts.permissionGranted(this)){
@@ -779,9 +1709,24 @@ public class MainActivity extends Activity {
         }
     }
     @Override public void onBackPressed(){
-        if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
+        if(homeDrawerLayer!=null){closeHomeMenu();return;}
+        if(loginDialog!=null&&loginDialog.isShowing()&&website!=null&&website.canGoBack()){
+            website.goBack();return;
+        }
+        super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        if(officialSearchDialog!=null){
+            officialSearchDialog.setOnDismissListener(null);
+            officialSearchDialog.dismiss();officialSearchDialog=null;
+        }
+        if(officialSearchWebView!=null){
+            officialSearchWebView.stopLoading();
+            officialSearchWebView.destroy();officialSearchWebView=null;
+        }
+        if(homeFiltersWebView!=null){
+            homeFiltersWebView.stopLoading();homeFiltersWebView.destroy();homeFiltersWebView=null;
+        }
         if(loginDialog!=null){loginDialog.setOnDismissListener(null);loginDialog.dismiss();loginDialog=null;}
         if(website!=null){website.stopLoading();website.destroy();website=null;}
         super.onDestroy();

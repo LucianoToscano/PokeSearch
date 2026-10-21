@@ -55,7 +55,7 @@ public final class WatchAlerts {
     public static boolean isWatched(Context context,String name){
         return matches(name,watched(context));
     }
-    public static boolean toggle(Context context,String name){
+    public static synchronized boolean toggle(Context context,String name){
         SharedPreferences p=context.getSharedPreferences("prefs",0);
         LinkedHashMap<String,String> list=names(p.getString(PREF_LIST,""));
         String key=normalized(name);
@@ -71,15 +71,18 @@ public final class WatchAlerts {
         return context.getSharedPreferences("prefs",0).getBoolean(PREF_ENABLED,true);
     }
     public static boolean permissionGranted(Context context){
-        return Build.VERSION.SDK_INT<33 ||
-            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED;
+        if(Build.VERSION.SDK_INT>=33 &&
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)
+            return false;
+        NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        return manager!=null&&manager.areNotificationsEnabled();
     }
     public static void ensureChannel(Context context){
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager==null)return;
         NotificationChannel channel=new NotificationChannel(CHANNEL_ID,
             "PokeSearch · Favoritos",NotificationManager.IMPORTANCE_HIGH);
-        channel.setDescription("Aviso sonoro ao encontrar um favorito com IV100 ou ranking #1");
+        channel.setDescription("Aviso de favorito cadastrado encontrado nos filtros de busca comprovados");
         channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
             new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT).build());
         manager.createNotificationChannel(channel);
@@ -95,14 +98,18 @@ public final class WatchAlerts {
     private static boolean send(Context context,String title,String info,int id){
         if(!permissionGranted(context))return false;
         boolean quiet="silent".equals(context.getSharedPreferences("prefs",0)
-            .getString("alertsMode","off"));
+            .getString("favoriteSoundMode","on"));
         if(quiet)ensureSilentChannel(context);else ensureChannel(context);
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager==null)return false;
+        String channelId=quiet?SILENT_CHANNEL_ID:CHANNEL_ID;
+        NotificationChannel current=manager.getNotificationChannel(channelId);
+        if(current==null||current.getImportance()==NotificationManager.IMPORTANCE_NONE)
+            return false;
         Intent open=new Intent(context,MainActivity.class);
         PendingIntent intent=PendingIntent.getActivity(context,11,open,
             PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
-        Notification note=new Notification.Builder(context,quiet?SILENT_CHANNEL_ID:CHANNEL_ID)
+        Notification note=new Notification.Builder(context,channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title).setContentText(info).setAutoCancel(true)
             .setStyle(new Notification.BigTextStyle().bigText(info)).setContentIntent(intent).build();
@@ -114,7 +121,7 @@ public final class WatchAlerts {
     }
     public static boolean test(Context context){
         return send(context,"🔔 Teste: Pokémon procurado",
-            "Teste de notificação. Alertas reais exigem Pokémon cadastrado e IV100 ou ranking 1 confirmado.",11999);
+            "Teste do canal Favoritos. Alertas reais exigem favorito cadastrado e resultado confirmado nos filtros.",11999);
     }
     public static boolean match(Context context,String pokemon,String info){
         return send(context,"🔔 Encontrado: "+pokemon,info,

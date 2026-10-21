@@ -9,7 +9,7 @@ function element(text="",attrs={},extra={}){
   return {
     innerText:text,textContent:text,children:[],parentElement:null,tagName:"SPAN",
     value:"",disabled:false,
-    getClientRects:()=>[{}],querySelectorAll:()=>[],querySelector:()=>null,
+    getClientRects:()=>[{}],querySelectorAll:()=>[],querySelector:()=>null,dispatchEvent:()=>true,
     getAttribute:(name)=>Object.prototype.hasOwnProperty.call(attrs,name)?attrs[name]:null,
     hasAttribute:(name)=>Object.prototype.hasOwnProperty.call(attrs,name),
     matches:(sel)=>(sel==="input"&&extra.tagName==="INPUT") || (sel==="input[type=checkbox]"&&extra.checkbox===true),
@@ -37,13 +37,18 @@ function run(action,mode,shinyOnly,opts={}){
   }
   if(opts.iv!==undefined){
     const lab=element("IV");
-    const fields=opts.iv.map(v=>element("",{}, {tagName:"INPUT",value:v}));
+    const fields=opts.ivFields&&opts.ivFields.length===opts.iv.length?opts.ivFields:
+      opts.iv.map((v,i)=>element("",{
+        name:(opts.ivNames||[])[i]||"",placeholder:(opts.ivPlaceholders||[])[i]||"",
+        id:(opts.ivIds||[])[i]||"","aria-label":(opts.ivAria||[])[i]||""
+      }, {tagName:"INPUT",value:v}));
+    opts.ivFields=fields;
     const parent=element();
     parent.querySelectorAll=selector=>selector.includes("input:not")?fields:[];
     lab.parentElement=parent;all.push(lab);
   }
   if(opts.pvp){
-    const rank=element("",{}, {tagName:"INPUT",value:String(opts.pvp.rank||"1")});
+    const rank=opts.pvp.rankInput||(opts.pvp.rankInput=element("",{}, {tagName:"INPUT",value:String(opts.pvp.rank||"1")}));
     const league=element("Great League",{}, {tagName:"SELECT",selectedOptions:[element(opts.pvp.league||"Great League")]});
     const prior=element("Yes",{}, {tagName:"SELECT",selectedOptions:[element(opts.pvp.prior||"Yes")]});
     for(const [label,control] of [["Top ranking",rank],["League",league],["Include previous evolutions",prior]]){
@@ -55,25 +60,42 @@ function run(action,mode,shinyOnly,opts={}){
     }
   }
   // A React select menu opens now; its options become visible on the next render.
-  const dynamicOptions=[];
+  const dynamicOptions=[]; const extraPortals={};
   if(opts.extra){
     for(const [key,state] of Object.entries(opts.extra)){
       const lab=element(state.label||key);
       const ctrl=element(state.value||"Any",{}, {tagName:"BUTTON",disabled:!!state.disabled});
-      ctrl.getAttribute=name=>name==="aria-expanded"?String(!!state.open):null;
+      ctrl.getAttribute=name=>name==="aria-expanded"?String(!!state.open):name==="aria-controls"?"extra-"+key:null;
       ctrl.click=()=>{state.open=!state.open;};
       const wrap=element();
       wrap.querySelectorAll=selector=>selector.includes("[role=combobox]")?[ctrl]:[];
       lab.parentElement=wrap;all.push(lab);
+      const ownOptions=[];
       if(state.options)for(const label of state.options){
         const opt=element(label);
         opt.click=()=>{state.value=label;state.open=false;};
         opt.getClientRects=()=>state.open&&state.ready?[{}]:[];
-        dynamicOptions.push(opt);
+        dynamicOptions.push(opt);ownOptions.push(opt);
       }
+      extraPortals["extra-"+key]=element("",{}, {
+        getClientRects:()=>state.open?[{}]:[],
+        querySelectorAll:selector=>selector.includes('[role=option]')?ownOptions:[]
+      });
     }
   }
   let cardButtons=[];
+  if(opts.tabs){
+    for(const label of ["Stats","PvP","Raw IV","% IV"]){
+      const button=element(label,{}, {tagName:"BUTTON"});
+      button.getAttribute=name=>name==="aria-selected"?String(
+        ["Stats","PvP"].includes(label)?opts.tabs.top===label:opts.tabs.sub===label):null;
+      button.click=()=>{
+        if(["Stats","PvP"].includes(label)){opts.tabs.top=label;opts.tabs.sub="";}
+        else opts.tabs.sub=label;
+      };
+      cardButtons.push(button);
+    }
+  }
   if(opts.spawn){
     const box=element(opts.spawn,{}, {
       querySelector:()=>element("Tangela"),
@@ -83,11 +105,16 @@ function run(action,mode,shinyOnly,opts={}){
     button.parentElement=box;
     cardButtons=[button];
   }
+  if(opts.searchButton){
+    const search=element("Search",{}, {tagName:"BUTTON"});
+    search.click=()=>{opts.searchClicks=(opts.searchClicks||0)+1;};
+    cardButtons.push(search);
+  }
   if(opts.pending||opts.pendingText){
     pending=[element(opts.pendingText||"Link a Pokémon GO account. Your trainer code: 12 digits")];
   }
   const accountLabels=opts.accountBadge?[element("Shiny for your account TestAccount (123456789012).")]:[];
-  const sessionButtons=opts.loggedOut?[element("Log in")]:opts.logoutVisible?[element("Log out")]:[];
+  const sessionButtons=opts.loggedOut?[element(opts.loginLabel||"Log in")]:opts.logoutVisible?[element("Log out")]:[];
   function querySelectorAll(selector){
     if(selector==="label,span,strong,div")return labels;
     if(selector==="span,label,strong,small,dt,div,p")return all;
@@ -99,8 +126,8 @@ function run(action,mode,shinyOnly,opts={}){
     if(selector==="p,small,span,div,label")return accountLabels;
     return [];
   }
-  const document={querySelectorAll,querySelector:()=>null,
-    body:element(opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":"")};
+  const document={querySelectorAll,querySelector:()=>null,getElementById:id=>extraPortals[id]||null,
+    body:element(opts.profileBody|| (opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":""))};
   const code=source.replace("__ACTION__",JSON.stringify(action))
       .replace("__MODE__",JSON.stringify(mode))
       .replace("__SHINY__",String(shinyOnly))
@@ -108,7 +135,22 @@ function run(action,mode,shinyOnly,opts={}){
          attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
          ...(opts.config||{})
        }));
-  return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:"/search",hostname:"pogocoordinates.com"},window:{}}));
+  const HTMLInputElement={prototype:{}};
+  Object.defineProperty(HTMLInputElement.prototype,"value",{set(v){this.value=String(v);}});
+  const HTMLTextAreaElement={prototype:{}};
+  Object.defineProperty(HTMLTextAreaElement.prototype,"value",{set(v){this.value=String(v);}});
+  class Event{constructor(type){this.type=type;}}
+  return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:opts.pathname||"/search",hostname:"pogocoordinates.com"},window:{},HTMLInputElement,HTMLTextAreaElement,Event}));
+}
+function configureSettled(mode,opts,max=14){
+ let last=null,waits=0;
+ for(let i=0;i<max;i++){
+  last=run("configureSearch",mode,false,opts);
+  if(last.configured)return {result:last,waits};
+  assert.equal(last.pending,true,"React form not ready should request retry");
+  waits++;
+ }
+ return {result:last,waits};
 }
 let checked=0;
 function test(name,action,mode,shiny,options,predicate){
@@ -189,6 +231,20 @@ checked++;
 const noSession=run("session","iv",false,{loggedOut:true});
 assert.equal(noSession.auth,"login necessário","Login-required view remains unauthenticated");
 checked++;
+const officialGoogleGuest=run("session","iv",false,{loggedOut:true,loginLabel:"Login with Google"});
+assert.equal(officialGoogleGuest.auth,"login necessário","Exact provider-button Login with Google is recognized");
+checked++;
+const officialDiscordGuest=run("session","iv",false,{loggedOut:true,loginLabel:"Login with Discord"});
+assert.equal(officialDiscordGuest.auth,"login necessário","Exact provider-button Login with Discord is recognized");
+checked++;
+const noTrainerProfile=run("session","iv",false,{
+ pathname:"/profile",profileBody:"Linked accounts\nGoogle\nPokemon GO accounts 0/1\nLink my account"
+});
+assert.equal(noTrainerProfile.auth,"autenticada","Logged-in without trainer must be recognized on official profile");
+checked++;
+const stillLoadingProfile=run("session","iv",false,{pathname:"/profile",profileBody:"Danger zone"});
+assert.equal(stillLoadingProfile.auth,"não confirmado","Incomplete profile is not trusted as proof of login");
+checked++;
 const uncertainSession=run("session","iv",false,{});
 assert.equal(uncertainSession.auth,"não confirmado","Missing login/logout is not automatically authenticated");
 checked++;
@@ -248,8 +304,33 @@ const settledSize=run("configureExtras","iv",false,{config:{size:"XXL"},extra:{S
 assert.equal(settledSize.ok,true,"Committed menu selection is accepted after rerender");
 const confirmedSize=run("verifyExtras","iv",false,{config:{size:"XXL"},extra:{Size:delayedSize}});
 assert.equal(confirmedSize.ok,true,"XXL is confirmed by reading control");
+// Even identical option labels in another open portal cannot receive clicks.
+const unrelatedForm={value:"Any",options:["Any","XXL"],open:true,ready:true};
+const scopedSize={value:"Any",options:["Any","XXL"],open:false,ready:true};
+const twoMenus={Form:unrelatedForm,Size:scopedSize};
+const openOwn=run("configureExtras","iv",false,{config:{size:"XXL"},extra:twoMenus});
+assert.equal(openOwn.pending,true,"Requested size portal must open first");
+const selectOwn=run("configureExtras","iv",false,{config:{size:"XXL"},extra:twoMenus});
+assert.equal(selectOwn.pending,true,"Size selection waits for rerender");
+assert.equal(scopedSize.value,"XXL","Size portal should receive the choice");
+assert.equal(unrelatedForm.value,"Any","Unrelated Form portal must never be clicked");
+checked++;
 checked+=4;
-
+const waitingOptions={value:"Any",options:["Any","Male","Female","Genderless"],open:true,ready:false};
+const notReady=run("readFilterOptions:gender","iv",false,{extra:{Gender:waitingOptions}});
+assert.equal(notReady.pending,true,"A mounted but still empty Radix portal cannot claim options ready");
+waitingOptions.ready=true;
+const readyOptions=run("readFilterOptions:gender","iv",false,{extra:{Gender:waitingOptions}});
+assert.equal(readyOptions.ok,true,"Gender portal options appear only after readiness");
+assert.ok(readyOptions.options.includes("Genderless"),"Genderless option is visible when site offers it");
+const formState={value:"Any",options:["Any","Normal","Goggles 2026"],open:false,ready:true};
+const formFirst=run("configureExtras","iv",false,{config:{form:"Normal"},extra:{Form:formState}});
+assert.equal(formFirst.pending,true,"Form must open its own popup");
+const formSecond=run("configureExtras","iv",false,{config:{form:"Normal"},extra:{Form:formState}});
+assert.equal(formSecond.pending,true,"Form selection awaits React commit");
+assert.equal(formState.value,"Normal","Only the site's actual Form label is used");
+assert.equal(run("verifyExtras","iv",false,{config:{form:"Normal"},extra:{Form:formState}}).ok,true);
+checked+=2;
 
 const beforeSubmitOnly=run("collect","gl",false,{switch:false,spawn,
   config:{glRank:1,_preSubmitVerified:true,size:"XXL"}});
@@ -345,4 +426,201 @@ const invalidStat=run("collect","raw",false,
  {iv:["15","15","15"],spawn:ivEvidenceSpawn("100% (16/15/15)")});
 assert.equal(invalidStat.cards.length,0,"Out-of-range IV stats must never prove a match");
 checked++;
+
+// Form switching is asynchronous: clicking a new React tab is not proof
+// that its fields have mounted. This reproduces the reported stuck filters.
+const rawTabs={top:"Stats",sub:"% IV"};
+const lateRaw={tabs:rawTabs,iv:["100","100"],config:{attack:0,defense:0,stamina:0}};
+const beforeRaw=run("configureSearch","raw",false,lateRaw);
+assert.equal(beforeRaw.configured,false,"Raw 0/0/0 must wait for the Raw IV tab");
+assert.equal(beforeRaw.pending,true,"New tab must schedule a retry rather than fail forever");
+assert.equal(rawTabs.sub,"Raw IV","The desired Raw IV tab is requested");
+lateRaw.iv=["15","15","15"]; // The site now mounts Raw fields on the next rendering pass.
+const appliedZero=configureSettled("raw",lateRaw);
+assert.equal(appliedZero.result.configured,true,"Raw 0/0/0 is actually applied after React settles");
+assert.deepEqual(lateRaw.ivFields.map(x=>x.value),["0","0","0"]);
+checked+=2;
+const hundoOpts={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0"],config:{attack:15,defense:15,stamina:15}};
+const appliedHundo=configureSettled("raw",hundoOpts);
+assert.equal(appliedHundo.result.configured,true,"Raw 15/15/15 must update actual site fields");
+assert.deepEqual(hundoOpts.ivFields.map(x=>x.value),["15","15","15"]);
+checked++;
+const customOpts={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0"],config:{attack:3,defense:15,stamina:12}};
+const appliedCustom=configureSettled("raw",customOpts);
+assert.equal(appliedCustom.result.configured,true,"Mixed Raw 3/15/12 must be applied");
+assert.deepEqual(customOpts.ivFields.map(x=>x.value),["3","15","12"]);
+checked++;
+const sixOpts={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0","0","0","0"],
+ ivNames:["defense-min","attack-max","stamina-min","attack-min","stamina-max","defense-max"],
+ config:{attack:3,defense:15,stamina:12}};
+const sixResponse=configureSettled("raw",sixOpts);
+assert.equal(sixResponse.result.configured,true,"Six Raw min/max fields use identified stat names");
+assert.deepEqual(sixOpts.ivFields.map(x=>x.value),["15","3","12","3","12","15"]);
+checked++;
+const unknownSix={tabs:{top:"Stats",sub:"Raw IV"},iv:["0","0","0","0","0","0"],
+ config:{attack:3,defense:15,stamina:12}};
+const unknownResponse=run("configureSearch","raw",false,unknownSix);
+assert.equal(unknownResponse.configured,false,"Ambiguous six-field Raw IV must never fake a custom result");
+assert.equal(unknownResponse.pending,true,"Ambiguous six-field Raw IV requires controlled retries");
+checked++;
+const percentTabs={top:"Stats",sub:"Raw IV"};
+const pctOpts={tabs:percentTabs,iv:["0","0","0"],config:{percentMin:91,percentMax:100}};
+const pctWaiting=run("configureSearch","percent",false,pctOpts);
+assert.equal(pctWaiting.configured,false,"Percent mode must wait for the % IV tab");
+assert.equal(pctWaiting.pending,true,"Percent tab hydration requests another attempt");
+pctOpts.iv=["0","100"];
+const pctReady=configureSettled("percent",pctOpts);
+assert.equal(pctReady.result.configured,true,"91–100% values applied only once the form exists");
+assert.deepEqual(pctOpts.ivFields.map(x=>x.value),["91","100"]);
+checked+=2;
+const invalidPct={tabs:{top:"Stats",sub:"% IV"},iv:["0","100"],config:{percentMin:90,percentMax:100}};
+const invalidApply=run("configureSearch","percent",false,invalidPct);
+assert.equal(invalidApply.configured,false,"Unattainable IV% cannot be silently applied");
+checked++;
+
+for(const [value,fields] of [[0,["100","100"]],[100,["0","0"]]]){
+ const pctCase={tabs:{top:"Stats",sub:"% IV"},iv:fields,
+   config:{percentMin:value,percentMax:value}};
+ const pctApplied=configureSettled("percent",pctCase);
+ assert.equal(pctApplied.result.configured,true,"Exact IV% "+value+"–"+value+" must apply");
+ assert.deepEqual(pctCase.ivFields.map(x=>x.value),[String(value),String(value)]);
+ checked++;
+}
+const equalSix={tabs:{top:"Stats",sub:"Raw IV"},iv:["15","15","15","15","15","15"],
+ config:{attack:0,defense:0,stamina:0}};
+const zeroSix=configureSettled("raw",equalSix);
+assert.equal(zeroSix.result.configured,true,"Six indistinguishable fields can safely apply the equal 0/0/0 triple");
+assert.deepEqual(equalSix.ivFields.map(x=>x.value),["0","0","0","0","0","0"]);
+checked++;
+// The real PoGoCoordinates form in the screenshots shows three A/D/S inputs.
+for(const [triple,site] of [
+  [[0,15,15],["","",""]],
+  [[3,15,12],["0","0","0"]],
+  [[0,0,0],["15","15","15"]],
+  [[15,15,15],["0","0","0"]]
+]){
+ const opts={tabs:{top:"Stats",sub:"Raw IV"},iv:site,
+  ivPlaceholders:["A","D","S"],
+  config:{attack:triple[0],defense:triple[1],stamina:triple[2]}};
+ const result=configureSettled("raw",opts);
+ assert.equal(result.result.configured,true,"Screenshot A/D/S triple must be configured");
+ assert.deepEqual(opts.ivFields.map(x=>x.value),triple.map(String));
+ assert.equal(run("verifyFilters","raw",false,opts).ok,true,"Site must retain exact IVs");
+ assert.ok(result.waits>=2,"React fields must commit through distinct JS rounds");
+ checked++;
+}
+const blankZero={tabs:{top:"Stats",sub:"Raw IV"},iv:["","",""],config:{attack:0,defense:0,stamina:0}};
+assert.equal(run("verifyFilters","raw",false,blankZero).ok,false,
+ "Blank Raw input must never be mistaken for IV 0");
+assert.equal(configureSettled("raw",blankZero).result.configured,true);
+assert.deepEqual(blankZero.ivFields.map(x=>x.value),["0","0","0"]);
+assert.equal(run("verifyFilters","raw",false,blankZero).ok,true);
+checked++;
+const reordered={tabs:{top:"Stats",sub:"Raw IV"},iv:["","",""],
+ ivPlaceholders:["D","A","S"],config:{attack:0,defense:15,stamina:12}};
+assert.equal(configureSettled("raw",reordered).result.configured,true);
+assert.deepEqual(reordered.ivFields.map(x=>x.value),["15","0","12"]);
+checked++;
+const ambiguous={tabs:{top:"Stats",sub:"Raw IV"},iv:["","",""],
+ ivPlaceholders:["A","","S"],config:{attack:0,defense:15,stamina:12}};
+assert.equal(run("configureSearch","raw",false,ambiguous).configured,false,
+ "Partially identified fields must not be guessed");
+assert.deepEqual(ambiguous.ivFields.map(x=>x.value),["","",""]);
+checked++;
+const percentEmpty={tabs:{top:"Stats",sub:"% IV"},iv:["",""],
+ config:{percentMin:0,percentMax:100}};
+assert.equal(run("verifyFilters","percent",false,percentEmpty).ok,false,
+ "Blank percent minimum must not count as 0");
+assert.equal(configureSettled("percent",percentEmpty).result.configured,true);
+assert.equal(run("verifyFilters","percent",false,percentEmpty).ok,true);
+checked++;
+// Live account-specific site badge is an authoritative boolean, not a stored code.
+{
+ const yes=run("session","raw",false,{accountBadge:true});
+ assert.equal(yes.auth,"autenticada");
+ assert.equal(yes.trainerLinked,true);
+ assert.ok(!JSON.stringify(yes).includes("123456789012"));
+ const no=run("session","raw",false,{loggedOut:true});
+ assert.equal(no.trainerLinked,false);
+ checked+=2;
+}
+// Parse the card DOM in isolation: never guess a distance from coordinates.
+{
+ const from=source.indexOf('function nextLabelValue(');
+ const to=source.indexOf('// IV is evidence about THIS card,',from);
+ assert.ok(from>0&&to>from);
+ const parse=new Function('clean','text','verifiedCardIv','mode',
+   source.slice(from,to)+'return parseCard;')(
+   s=>String(s||'').trim(),e=>String(e?.innerText||e?.textContent||''),
+   ()=>({percent:36}),'raw');
+ const card={innerText:'Machop ✨\n#066 · Female · M\nKarate Chop / Brick Break\nCP\n274\nLVL\n9\nIV\n36% (2/0/14)\nLOCATION\nShibuya, Tokyo, Japan\n0.3 km away\nDESPAWN\n19:16',
+  querySelector:()=>({innerText:'Machop ✨'}),querySelectorAll:()=>[]};
+ const parsed=parse(card,0);
+ assert.equal(parsed.distance,'0.3 km');
+ assert.equal(parsed.location,'Shibuya, Tokyo, Japan');
+ assert.equal(parsed.gender,'♀');
+ assert.equal(parsed.size,'M');
+ assert.equal(parsed.name,'Machop');
+ card.innerText=card.innerText.replace('0.3 km away','');
+ assert.equal(parse(card,0).distance,'');
+ checked+=6;
+}
+// GL/UL tab changes need an independently confirmed React render cycle.
+const tabCycle={top:"Stats",sub:"Raw IV"};
+const pendingTab=run("prepareSearch","gl",false,{tabs:tabCycle});
+assert.equal(pendingTab.ok,false,"Clicking PvP is not confirmation of selecting PvP");
+assert.equal(pendingTab.pending,true,"Preflight reports pending until tab state settles");
+assert.equal(tabCycle.top,"PvP","Preflight clicks the real PvP tab");
+assert.equal(run("prepareSearch","gl",false,{tabs:tabCycle}).ok,true);
+checked++;
+// Top rank input must be edited on its own roundtrip and read back after React.
+const rankState={tabs:{top:"PvP",sub:""},pvp:{rank:"1",league:"Great League",prior:"Yes"},config:{glRank:50}};
+const firstRank=run("configureSearch","gl",false,rankState);
+assert.equal(firstRank.configured,false,"Typing the ranking is not finished selection");
+assert.equal(firstRank.pending,true,"Ranking must wait for a new React cycle");
+assert.equal(rankState.pvp.rankInput.value,"50","Input changed to the correct ranking");
+const secondRank=run("configureSearch","gl",false,rankState);
+assert.equal(secondRank.configured,true,"Next round confirms GL and rank 50");
+checked++;
+// STAGE-6: each React numeric field must settle before the next is edited.
+{
+ const begin=source.indexOf("function extras(action){");
+ const end=source.indexOf("function currentCoreControlsVisible(){",begin);
+ assert.ok(begin>0&&end>begin);
+ const edits=[],fields={cpMin:{value:"",disabled:false,readOnly:false},cpMax:{value:"",disabled:false,readOnly:false}};
+ const factory=new Function("filters","pokemonListSelection","EXTRA_LABELS","extraNumberKeys",
+  "extraNumberField","valueInput","vis","extraSelect","extraMatches",
+  "let transientPending=false;"+source.slice(begin,end)+"return extras;");
+ const extras=factory({cpMin:"100",cpMax:"500"},()=>({ok:true}),{},()=>["cpMin","cpMax"],
+  key=>fields[key],(field,value)=>{edits.push(value);field.value=String(value);return true;},()=>true,
+  ()=>true,()=>true);
+ const first=extras("apply");
+ assert.equal(first.ok,false);assert.equal(first.pending,true);
+ assert.deepEqual(edits,["100"],"Only CP Min may change on the first React turn");
+ const second=extras("apply");
+ assert.equal(second.ok,false);assert.equal(second.pending,true);
+ assert.deepEqual(edits,["100","500"],"Only CP Max changes on the next React turn");
+ assert.equal(extras("apply").ok,true);
+ assert.equal(extras("verify").ok,true);
+ // Simulate a React rollback, then demand reapplication instead of false success.
+ fields.cpMin.value="";
+ assert.equal(extras("verify").ok,false);
+ assert.equal(extras("apply").pending,true);
+ assert.deepEqual(edits,["100","500","100"]);
+ checked+=6;
+}
+// STAGE-6: a submit click is forbidden when filters have changed after verification.
+{
+ const wrong={tabs:{top:"PvP",sub:""},pvp:{rank:"1",league:"Ultra League",prior:"Yes"},searchButton:true};
+ const rejected=run("submitSearch","gl",false,wrong);
+ assert.equal(rejected.ok,false);
+ assert.equal(rejected.stage,"pre-submit-mismatch");
+ assert.equal(wrong.searchClicks||0,0);
+ const right={tabs:{top:"PvP",sub:""},pvp:{rank:"1",league:"Great League",prior:"Yes"},searchButton:true};
+ const clicked=run("submitSearch","gl",false,right);
+ assert.equal(clicked.ok,true);
+ assert.equal(clicked.stage,"submitted");
+ assert.equal(right.searchClicks,1,"Exactly one click when all requested settings still match");
+ checked+=5;
+}
 console.log("PokeSearch probe contract: "+checked+" tests passed");
