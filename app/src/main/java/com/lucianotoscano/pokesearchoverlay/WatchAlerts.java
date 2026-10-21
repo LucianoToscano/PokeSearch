@@ -96,11 +96,22 @@ public final class WatchAlerts {
     }
 
     // Store only Android-selected ringtone content URIs. No bundled Pokémon cries.
-    private static Uri ringtoneUri(String value){
+    private static Uri ringtoneUri(Context context,String value){
         if(value!=null&&value.length()<2048&&!value.isEmpty()){
             Uri uri=Uri.parse(value);
-            if("content".equals(uri.getScheme())||
-                "android.resource".equals(uri.getScheme()))return uri;
+            if("content".equals(uri.getScheme()))return uri;
+            if("android.resource".equals(uri.getScheme())){
+                // Old preferences may target an MP3 deleted from a later APK.
+                // Fall back safely without resetting sounds of other species.
+                if(context.getPackageName().equals(uri.getAuthority())){
+                    java.util.List<String> segments=uri.getPathSegments();
+                    if(segments.size()==2&&"raw".equals(segments.get(0))&&
+                        context.getResources().getIdentifier(
+                            segments.get(1),"raw",context.getPackageName())==0)
+                        return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                }
+                return uri;
+            }
         }
         return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
     }
@@ -110,10 +121,10 @@ public final class WatchAlerts {
             try{
                 String own=new JSONObject(p.getString(PREF_SPECIES_TONES,"{}"))
                     .optString(normalized(species),"");
-                if(!own.isEmpty())return ringtoneUri(own);
+                if(!own.isEmpty())return ringtoneUri(context,own);
             }catch(Exception ignored){}
         }
-        return ringtoneUri(p.getString(favorite?PREF_FAVORITE_TONE:PREF_GENERAL_TONE,""));
+        return ringtoneUri(context,p.getString(favorite?PREF_FAVORITE_TONE:PREF_GENERAL_TONE,""));
     }
     public static boolean hasCustomTone(Context context,boolean favorite){
         SharedPreferences p=context.getSharedPreferences("prefs",0);
