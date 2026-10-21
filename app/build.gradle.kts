@@ -2,9 +2,9 @@ plugins { id("com.android.application") }
 
 val keyFile = System.getenv("POKE_TEST_KEYSTORE")
 val keyStorePass = System.getenv("POKE_TEST_STORE_PASSWORD")
-val testAlias = System.getenv("POKE_TEST_KEY_ALIAS")
+val keyAlias = System.getenv("POKE_TEST_KEY_ALIAS")
 val keyPass = System.getenv("POKE_TEST_KEY_PASSWORD")
-val signingReady = listOf(keyFile,keyStorePass,testAlias,keyPass).all { !it.isNullOrBlank() }
+val signingReady = listOf(keyFile,keyStorePass,keyAlias,keyPass).all { !it.isNullOrBlank() }
 if (System.getenv("POKE_TEST_SIGNING_REQUIRED") == "true" && !signingReady) {
     throw GradleException("Assinatura permanente obrigatória: secrets da chave ausentes.")
 }
@@ -30,7 +30,7 @@ android {
             create("permanentTest") {
                 storeFile = file(keyFile!!)
                 storePassword = keyStorePass
-                keyAlias = testAlias
+                keyAlias = keyAlias
                 keyPassword = keyPass
             }
         }
