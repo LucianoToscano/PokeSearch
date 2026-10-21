@@ -1569,8 +1569,7 @@ function draw(){
  document.documentElement.style.setProperty("--result-info-scale",String(resultLayout?.infoScale||1));
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
  // P/M/G scales the header DOWN, never above its original 21px.
- const metadataVisible=resultWindow&&cards.some(card=>
-  resultLines(card,resultDisplayOptions,shownMode).length>0);
+ const metadataVisible=resultWindow&&preparedLines.some(lines=>lines.length>0);
  const metaWidth=metadataVisible?96:0;
  document.documentElement.style.setProperty("--results-width",(spriteSize+8+metaWidth)+"px");
  if(resultWindow&&displayedMetadataWidth!==metaWidth){
