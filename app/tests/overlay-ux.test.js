@@ -1744,7 +1744,9 @@ test("UX-NOTIFY-01 bell opens live notification panel with full controls",()=>{
  return block.includes('case "bell":toggleChoices("alerts")')&&
   dock.includes('onclick="toggleChoices(\'alerts\')"')&&
   !block.includes('case "bell":Native.toggleGeneralAlerts()')&&
-  panel.includes('Native.setAlertMode(id)')&&
+  panel.includes('v=>Native.setAlertMode(v)')&&
+  panel.includes('v=>Native.setFavoriteSoundMode(v)')&&
+  panel.includes('Native.openSoundChannel(kind)')&&
   panel.includes('Native.toggleWatchAlerts()')&&
   panel.includes('"testGeneralNotification"')&&
   panel.includes('"testNotification"')&&
@@ -1760,7 +1762,9 @@ test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay 
  dock.includes('notificationPermissionGranted=!!permissionGranted')&&
  dock.includes('watchAlertsEnabled=!!favoriteAlertsEnabled')&&
  dock.includes('bell.classList.toggle("permissionMissing",!notificationPermissionGranted)')&&
- service.includes('","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+")"')&&
+ service.includes('","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(')&&
+ watch.includes('.getString("favoriteSoundMode","on")')&&
+ !watch.includes('.getString("alertsMode","off")')&&
  service.includes('if(!WatchAlerts.permissionGranted(this))return false;')&&
  service.includes('if(sendGeneralNotification("Novo Pokémon: "+firstNew,')&&
  service.includes('lastAlertAt=now;')&&
@@ -1774,6 +1778,15 @@ test("UX-NOTIFY-03 keep native Android channel sound and explicitly separate two
  watch.includes('Teste do canal Favoritos')&&
  watch.includes('RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)')&&
  service.includes('nm.getNotificationChannel(channelId).getImportance()==NotificationManager.IMPORTANCE_NONE'));
+test("UX-NOTIFY-04 one slash and two-slash X follow independent mute states",()=>{
+ return dock.includes('favoriteSoundMode=favoriteAudioMode==="silent"?"silent":"on"')&&
+  dock.includes('Number(alertMode!=="on")+Number(!watchAlertsEnabled||favoriteSoundMode!=="on")')&&
+  dock.includes('#bell[data-muted-count="1"]::after')&&
+  dock.includes('#bell[data-muted-count="2"]::after')&&
+  service.includes('!(WatchAlerts.enabled(this)&&WatchAlerts.matches(c.optString("name",""),wanted))')&&
+  service.includes('void setFavoriteSoundMode(String value)')&&
+  service.includes('void openSoundChannel(String kind)');
+});
 
 
 test("UX-LOCATION-FIX-01 invalid location never clears native confirmation or starts new search",()=>{
