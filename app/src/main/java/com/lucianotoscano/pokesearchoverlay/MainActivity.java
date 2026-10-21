@@ -1383,7 +1383,7 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this)
             .setTitle("Som de "+("species".equals(target)?pokemon:
                 "favorites".equals(target)?"favoritos":"novos Pokémon"))
-            .setItems(new String[]{"🎶 Biblioteca PokeSearch (25 sons)","🔔 Toques do Android",
+            .setItems(new String[]{"🎶 Biblioteca PokeSearch (24 sons)","🔔 Toques do Android",
                 "🎵 Escolher áudio (MP3/OGG) do aparelho ou Drive","↩ Restaurar som padrão"},
                 (dialog,which)->{
                     if(which==0)openBundledAlertTonePicker(target,pokemon);
