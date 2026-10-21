@@ -96,6 +96,7 @@ public class OverlayService extends Service {
             String next=cleaned.toString();
             if(next.equals(visualPrefsJson))return;
             int oldX=visualResultsOffsetX,oldY=visualResultsOffsetY;
+            int oldMenuBase=visualMenuBaseDp();
             visualPrefsJson=next;
             readVisualRuntime();
             getSharedPreferences("prefs",0).edit()
@@ -113,7 +114,7 @@ public class OverlayService extends Service {
             if(menuExpanded&&menuParams!=null){
                 menuDrawHeight=-1;menuDrawWidth=-1;
                 menuRequestedHeightDp=visualMenuBaseDp()+
-                    Math.max(0,menuRequestedHeightDp-MENU_BASE_DP);
+                    Math.max(0,menuRequestedHeightDp-oldMenuBase);
                 updateMenuPosition();
             }
             broadcastVisualPrefs();
@@ -123,7 +124,7 @@ public class OverlayService extends Service {
     }
     private int dockDp(){return spriteSize+8;}
     private int resultWidthDp(){
-        return visualResultsHorizontal?Math.max(dockDp(),screenWidthDp()-16):
+        return visualResultsHorizontal&&!resultCollapsed?Math.max(dockDp(),screenWidthDp()-16):
             dockDp()+resultMetadataWidthDp;
     }
     private String resultDisplayOptionsJson(){
@@ -1758,6 +1759,7 @@ public class OverlayService extends Service {
         getSharedPreferences("prefs",0).edit()
             .putBoolean("resultsCollapsed",resultCollapsed).apply();
         js(resultPanel,resultLoaded,"window.setResultsCollapsed("+resultCollapsed+")");
+        updateResultsWidth();
         if(resultCollapsed){
             hideDetails();
             resizeResults(RESULTS_HEADER_DP);
