@@ -130,4 +130,32 @@ test("packed sprite pitch reserves symmetrical first and last art space",()=>{
 test("visual position sliders keep the currently open detail window in sync",()=>{
  assert.match(java,/recordFailure\("editor posição resultados",e\);\}\s*moveDetail\(\);/);
 });
+test("sparkle is vector white by default, yellow when site-verified",()=>{
+ assert.ok(dock.includes('const QUICK_SOURCE_ICONS={sh:"sh"'));
+ assert.ok(dock.includes('onclick="Native.shiny()"><svg viewBox="0 0 24 24"'));
+ assert.ok(!dock.includes('onclick="Native.shiny()">✨</button>'));
+ assert.ok(dock.includes('button[data-key="sh"].selected,'));
+});
+test("favorites location and notification share neutral button background",()=>{
+ const css=dock.split("/* UX-ICONS-STATE:")[1]?.split("</style>")[0]||"";
+ for(const id of ["sh","star","location","bell"]){
+  assert.ok(css.includes('button[data-key="'+id+'"]'),id);
+  assert.ok(css.includes('background:var(--visual-menu-button-bg,#28292cce)!important;'));
+ }
+ assert.ok(css.includes('button[data-key="location"].selected{color:#ff5264!important}'));
+ assert.ok(css.includes('button[data-key="star"].selected,'));
+});
+test("bell silent mode has a red diagonal slash, not a colored button",()=>{
+ assert.ok(dock.includes('button.classList.toggle("silent",id==="bell"&&generalAlerts&&alertMode==="silent"&&notificationPermissionGranted)'));
+ assert.ok(dock.includes('button[data-key="bell"].silent .quickGlyph::after'));
+ assert.ok(dock.includes("background:#ff4458;"));
+ assert.ok(dock.includes("rotate(-43deg)"));
+});
+test("legacy toggle icon colors match compact menu without changing IV or results",()=>{
+ const css=dock.split("/* UX-ICONS-STATE:")[1]?.split("</style>")[0]||"";
+ for(const id of ["sh","star","location","bell"])assert.ok(css.includes("#controls #"+id),id);
+ assert.ok(css.includes("#controls #location.locOn{color:#ff5264!important}"));
+ assert.ok(css.includes("#controls #bell.generalOn{color:#ffd64b!important}"));
+ assert.ok(!css.includes(".ivPct")&&!css.includes(".spawnInfo"));
+});
 console.log("PokeSearch temporary visual editor: "+count+" tests passed");
