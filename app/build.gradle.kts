@@ -10,6 +10,15 @@ val testVersionCode = System.getenv("POKE_TEST_VERSION_CODE")?.let { value ->
         throw org.gradle.api.GradleException("POKE_TEST_VERSION_CODE is outside the allowed upgrade range")
     parsed
 }
+// Human-visible version stays on the original 0.51 branch; the Android upgrade
+// integer is deliberately higher to preserve installed data from the 2.00 mistake.
+val testVersionLabel = System.getenv("POKE_TEST_VERSION_LABEL")?.let { value ->
+    val parsed = value.toIntOrNull()
+        ?: throw org.gradle.api.GradleException("POKE_TEST_VERSION_LABEL must be numeric")
+    if (parsed !in 51000..2_100_000_000)
+        throw org.gradle.api.GradleException("POKE_TEST_VERSION_LABEL is invalid")
+    parsed
+}
 // Public fingerprint of permanent test-signing certificate (not a secret).
 val officialTestCertificateSha256 = "34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"
 val releaseCertificateSha256 = System.getenv("POKE_RELEASE_CERT_SHA256")?.trim()?.lowercase() ?: ""
@@ -32,6 +41,8 @@ val testSigningComplete = testSigningFields.all { !it.isNullOrBlank() }
 val testSigningRequired = System.getenv("POKE_TEST_SIGNING_REQUIRED") == "true"
 if ((testSigningRequired || testSigningFields.any { !it.isNullOrBlank() }) && !testSigningComplete)
     throw org.gradle.api.GradleException("Stable test signing is incomplete; configure the protected CI secrets")
+if (testSigningRequired && testVersionLabel == null)
+    throw org.gradle.api.GradleException("Signed tests require a stable 0.51 version label")
 if (testSigningRequired && testVersionCode == null)
     throw org.gradle.api.GradleException("Signed test builds require a monotonically increasing versionCode")
 if (testSigningComplete && !file(testKeyFile!!).isFile)
@@ -49,7 +60,7 @@ android {
         buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256", "\"\"")
         buildConfigField("String", "EXPECTED_ASSET_SHA256", "\"$assetChecksums\"")
         versionCode = testVersionCode ?: 51
-        versionName = if (testVersionCode != null) "0.51-beta.test.$testVersionCode" else "0.51-beta"
+        versionName = if (testVersionCode != null) "0.51-beta.test.${testVersionLabel ?: testVersionCode}" else "0.51-beta"
     }
     // Sideloaded beta: keep tested overlay behavior on target 32. Play Store publishing needs a separate target SDK migration.
     lint { disable += "ExpiredTargetSdkVersion" }

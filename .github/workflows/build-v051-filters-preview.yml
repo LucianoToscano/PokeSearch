@@ -6,6 +6,7 @@ on:
       - ux/iv-color-shiny-separate-20261018
       - fix/ps009-stable-test-signing-20261018
       - feature/pokesearch-51081-visual-editor-20261021
+      - fix/pokesearch-v051-restored-20261021
     paths:
       - 'app/**'
       - '.github/workflows/build-v051-filters-preview.yml'
@@ -53,7 +54,11 @@ jobs:
             -storetype PKCS12 -storepass "$POKE_TEST_STORE_PASSWORD" \
             -alias "$POKE_TEST_KEY_ALIAS" > /dev/null
           echo "POKE_TEST_KEYSTORE=$RUNNER_TEMP/pokesearch-stable-test.p12" >> "$GITHUB_ENV"
-          echo "POKE_TEST_VERSION_CODE=$((51000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+          # Keep the real 0.51 test label while making the Android integer code
+          # greater than the mistakenly distributed 2.00-beta.test.52140.
+          # This permits a signed in-place upgrade without deleting user data.
+          echo "POKE_TEST_VERSION_CODE=$((53000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+          echo "POKE_TEST_VERSION_LABEL=$((51000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
       - name: Android SDK platform
         run: |
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
@@ -86,6 +91,7 @@ jobs:
           test -s "$APK"
           unzip -t "$APK" > /dev/null
           EXPECTED_CODE="${POKE_TEST_VERSION_CODE:?Missing signed test versionCode}"
+          EXPECTED_LABEL="${POKE_TEST_VERSION_LABEL:?Missing signed test label}"
           if [[ ! "$EXPECTED_CODE" =~ ^[0-9]+$ ]]; then
             echo "::error::Invalid signed test versionCode."
             exit 1
@@ -94,7 +100,7 @@ jobs:
           for expected in \
             "name='com.lucianotoscano.pokesearch'" \
             "versionCode='${EXPECTED_CODE}'" \
-            "versionName='0.51-beta.test.${EXPECTED_CODE}'"; do
+            "versionName='0.51-beta.test.${EXPECTED_LABEL}'"; do
             if ! grep -Fq -- "$expected" <<< "$PACKAGE_LINE"; then
               echo "::error::APK package/version mismatch: refusing to distribute."
               exit 1
