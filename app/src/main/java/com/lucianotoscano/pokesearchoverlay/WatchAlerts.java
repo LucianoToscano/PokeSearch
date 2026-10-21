@@ -22,6 +22,8 @@ import java.util.Set;
 
 public final class WatchAlerts {
     private static final String CHANNEL_ID="pokesearch_watch_sound_v1";
+    private static final java.util.concurrent.atomic.AtomicInteger NEXT_ALERT_ID=
+        new java.util.concurrent.atomic.AtomicInteger(13000);
     private static final String SILENT_CHANNEL_ID="pokesearch_watch_silent_v1";
     public static final String PREF_LIST="watchList";
     public static final String PREF_ENABLED="watchAlertsEnabled";
@@ -193,6 +195,6 @@ public final class WatchAlerts {
     }
     public static boolean match(Context context,String pokemon,String info){
         return send(context,"🔔 Encontrado: "+pokemon,info,
-            13000+(int)(System.currentTimeMillis()%10000L),pokemon);
+            NEXT_ALERT_ID.updateAndGet(previous->previous>=22999?13000:previous+1),pokemon);
     }
 }
