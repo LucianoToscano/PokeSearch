@@ -1666,6 +1666,7 @@ public class OverlayService extends Service {
         String firstWatched="";
         String watchDetails="";
         int watchedCount=0;
+        java.util.LinkedHashMap<String,String> individualFavorites=new java.util.LinkedHashMap<>();
         java.util.Set<String> wanted=WatchAlerts.watched(this);
         long now=System.currentTimeMillis();
         for(int i=0;i<cards.length();i++){
@@ -1688,6 +1689,10 @@ public class OverlayService extends Service {
                         " · PC "+c.optString("cp","?")+
                         (c.optString("location","").isEmpty()?"":" · "+c.optString("location",""));
                 }
+                String favoriteName=c.optString("name","Pokémon");
+                if(!individualFavorites.containsKey(WatchAlerts.normalized(favoriteName)))
+                    individualFavorites.put(WatchAlerts.normalized(favoriteName),
+                        favoriteName+"|"+("PC "+c.optString("cp","?")));
             }
             JSONObject entry=new JSONObject();
             try{
@@ -1704,9 +1709,22 @@ public class OverlayService extends Service {
         for(int i=Math.max(0,history.length()-40);i<history.length();i++)limited.put(history.opt(i));
         preferences.edit().putString("history",limited.toString()).apply();
         if(watchedCount>0&&!firstWatched.isEmpty()){
-            if(watchedCount>1)watchDetails+=" · +"+(watchedCount-1)+" Pokémon da lista";
-            boolean sent=WatchAlerts.match(this,firstWatched,watchDetails);
-            if(!sent&&!WatchAlerts.permissionGranted(this))
+            if(WatchAlerts.speciesToneCount(this)>0){
+                // Distinct custom cries are meaningful only if every matching
+                // species gets its own channel. Cap each refresh to 5 notices.
+                int count=0;
+                for(String value:individualFavorites.values()){
+                    if(count++>=5)break;
+                    int split=value.indexOf('|');
+                    if(split<0)continue;
+                    WatchAlerts.match(this,value.substring(0,split),
+                        "Busca "+mode.toUpperCase(java.util.Locale.ROOT)+" · "+value.substring(split+1));
+                }
+            }else{
+                if(watchedCount>1)watchDetails+=" · +"+(watchedCount-1)+" Pokémon da lista";
+                WatchAlerts.match(this,firstWatched,watchDetails);
+            }
+            if(!WatchAlerts.permissionGranted(this))
                 preferences.edit().putString("lastWatchAlertError",
                     "Permissão de notificações não concedida").apply();
         }
