@@ -623,6 +623,31 @@ body.controls-window #menu,
 body.controls-window #quickMenuList,
 body.controls-window #choices{background:var(--visual-menu-bg,#232b35e5)!important}
 body.controls-window #quickMenuList{gap:var(--visual-menu-gap,2px)!important}
+body.controls-window #quickMenuList .quickRow,
+body.controls-window #quickMenuList .quickFooterAction,
+body.controls-window #quickMenuList.quick-horizontal .quickRow,
+body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow{
+ background:var(--visual-menu-button-bg,#28292cce)!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+}
+body.controls-window.visual-light-menu #choices:not(.visualPanel){
+ color:#172533!important;
+}
+body.controls-window.visual-light-menu #choices:not(.visualPanel) .choiceHeader,
+body.controls-window.visual-light-menu #choices:not(.visualPanel) .uxSubheading,
+body.controls-window.visual-light-menu #choices:not(.visualPanel) .uxNote{
+ color:#263849!important;text-shadow:none!important;
+}
+body.controls-window.visual-light-menu #choices:not(.visualPanel) button{
+ color:#172533!important;text-shadow:none!important;
+}
+body.result-window.visual-light-results .spawnInfo{
+ color:var(--visual-results-fg,#172533)!important;
+ text-shadow:0 0 2px #fff9!important;
+}
+body.result-window.visual-light-results #empty{
+ color:#172533!important;text-shadow:0 1px 3px #fff!important;
+}
 body.controls-window #quickRows{gap:var(--visual-menu-gap,0px)!important}
 body.controls-window.visual-menu-vertical #quickMenuList{gap:0!important}
 body.result-window #resultHeader .resultModeStack{
