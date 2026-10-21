@@ -2062,7 +2062,9 @@ test("NOTIFY-02 two independent three-state controls and audible streams",()=>{
 });
 test("NOTIFY-03 one muted stream gets one slash and both muted get X",()=>{
  const states=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(",1)[0]||"";
- return states.includes('const mutedCount=(generalAudio?0:1)+(favoriteAudio?0:1)')&&
+ const helper=dock.split("function audibleAlertState(")[1]?.split("function refreshQuickMenuStates(){")[0]||"";
+ return helper.includes('mutedCount:(newAudible?0:1)+(favoriteAudible?0:1)')&&
+  states.includes('const {mutedCount}=audibleAlertState(')&&
   states.includes('bell-one-muted')&&states.includes('bell-both-muted')&&
   dock.includes('bell-both-muted .quickGlyph::before')&&
   dock.includes('rotate(44deg)')&&dock.includes('rotate(-44deg)');
