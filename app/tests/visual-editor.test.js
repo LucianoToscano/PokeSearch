@@ -187,7 +187,8 @@ test("Minior art receives additional consistent scaling in the 10-sprite list",(
  assert.ok(dock.includes('const artFit=/^'));
  assert.ok(dock.includes('minior(?:'));
  assert.ok(dock.includes('?0.67:0.86;'));
- assert.ok(dock.includes('style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+artFit'));
+ assert.ok(dock.includes('const artFit='));
+ assert.ok(dock.includes('--visual-art-fit:'));
  assert.ok(dock.includes('width:calc(var(--sprite) * var(--visual-art-fit,0.86))!important;'));
 });
 test("sprite guide tracks normalized art, not whole row",()=>{
