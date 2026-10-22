@@ -33,6 +33,7 @@ test("defaults preserve original orientation and unclipped renderer",()=>{
  assert.equal(v.menuOrientation,"horizontal");
  assert.equal(v.resultsTransparency,100);
  assert.equal(v.menuTransparency,35);
+ assert.equal(v.menuItemGap,3);
 });
 test("packed preset allows true overlap via lowered row pitch",()=>{
  assert.match(dock,/const pitch=Math\.max\(8,Math\.round\(size\*\.32\)/);
@@ -271,44 +272,44 @@ test("editor dark light and vertical horizontal work without native select dialo
    dock.includes('.visualSegmentGroup');
  }
 });
-test("flat individual menu buttons override the old shared ribbon in the final cascade",()=>{
- const final=dock.split("/* UX-MENU-FLAT-02 final override:")[1]?.split("</style>")[0]||"";
- assert.ok(final.includes("body.controls-window #menu,"));
- assert.ok(final.includes("body.controls-window.popup-above #quickMenuList{"));
- assert.ok(final.includes("background:transparent!important;border:0!important;box-shadow:none!important;"));
- assert.ok(final.includes("body.controls-window #quickMenuList button[data-key].selected"));
- assert.ok(final.includes("background:var(--visual-menu-button-bg,#28292cce)!important;"));
- assert.ok(final.includes("border:0!important;box-shadow:none!important;"));
- assert.ok(final.includes("border-radius:6px!important;"));
- assert.ok(dock.indexOf("/* UX-MENU-FLAT-02 final override:")>
-           dock.indexOf("/* AUD-BELL-02:"));
+test("Menu tiles return to individual rounded borders like the legacy reference",()=>{
+ const tail=dock.split("/* UX-MENU-TILES-RESTORE-01:")[1]?.split("</style>")[0]||"";
+ assert.ok(tail.includes("body.controls-window #menu,"));
+ assert.ok(tail.includes("body.controls-window.popup-above #quickMenuList{"));
+ assert.ok(tail.includes("background:transparent!important;border:0!important;box-shadow:none!important;"));
+ assert.ok(tail.includes("body.controls-window #quickMenuList button[data-key].selected"));
+ assert.ok(tail.includes("background:var(--visual-menu-button-bg,#28292cce)!important;"));
+ assert.ok(tail.includes("border:1px solid var(--visual-menu-border,#ffffff48)!important;"));
+ assert.ok(tail.includes("box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0006)!important;"));
+ assert.ok(tail.includes("border-radius:7px!important;"));
+ assert.ok(tail.includes("gap:var(--visual-menu-gap,3px)!important;"));
+ assert.ok(dock.indexOf("/* UX-MENU-TILES-RESTORE-01:")>dock.indexOf("/* AUD-BELL-02:"));
  assert.ok(dock.includes('button[data-key="sh"].selected'));
  assert.ok(!script.includes('addSegment(panel,"menuBgMode"'));
  assert.ok(script.includes('addSlider(panel,"menuTransparency","Transparência única dos menus","%")'));
 });
-test("CSS specificity prevents borders returning to unselected horizontal and vertical buttons",()=>{
+test("Final cascade reintroduces 1px borders on regular, selected and light menu tiles",()=>{
  const css=(dock.split("<style>")[1]?.split("</style>")[0]||"").replace(/\/\*[\s\S]*?\*\//g,"");
- const declarations=[...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((match,i)=>({
-  order:match.index,
-  selectors:match[1].split(",").map(s=>s.trim()),
-  border:(match[2].match(/(?:^|;)\s*border\s*:\s*([^;]+)/)||[])[1]||""
- })).filter(r=>r.border.includes("!important"));
- const cls=selector=>(selector.match(/\.[\w-]+|\[[^\]]+\]/g)||[]).length;
- const ids=selector=>(selector.match(/#[\w-]+/g)||[]).length;
- const cmp=(a,b)=>ids(a)-ids(b)||cls(a)-cls(b);
- for(const mode of [".quick-horizontal",":not(.quick-horizontal)"])
-  for(const tile of [".quickRow",".quickFooterAction"]){
-   const selector="body.controls-window #quickMenuList"+mode+" "+tile;
-   const hits=declarations.filter(r=>r.selectors.includes(selector))
-     .map(r=>({order:r.order,border:r.border,selector}));
-   assert.ok(hits.length>=1,"Expected final CSS for "+selector);
-   const final=hits[hits.length-1];
-   assert.equal(final.border.trim(),"0!important",selector+" must have no border");
-   assert.ok(final.order>0,"Final rule must appear after the start of the style sheet");
-   const maxPrior=hits.slice(0,-1).filter(r=>r.border.trim()!=="0!important");
-   for(const old of maxPrior)assert.ok(final.order>old.order&&cmp(final.selector,old.selector)>=0,
-     "Final zero-border rule must beat legacy selector");
+ const rules=[...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(x=>({
+  selectors:x[1].split(",").map(y=>y.trim()),
+  border:(x[2].match(/(?:^|;)\s*border\s*:\s*([^;]+)/)||[])[1]||""
+ })).filter(x=>x.border.includes("!important"));
+ const wanted="1px solid var(--visual-menu-border,#ffffff48)!important";
+ for(const variant of [".quick-horizontal",":not(.quick-horizontal)"]){
+  for(const type of [".quickRow",".quickFooterAction"]){
+   const selector="body.controls-window #quickMenuList"+variant+" "+type;
+   const hits=rules.filter(x=>x.selectors.includes(selector));
+   assert.ok(hits.length>=2);
+   assert.equal(hits[hits.length-1].border.trim(),wanted,selector);
   }
+ }
+ for(const selector of ["body.controls-window #quickMenuList button[data-key]",
+   "body.controls-window #quickMenuList button[data-key].selected",
+   "body.controls-window.visual-light-menu #quickMenuList button[data-key]"]){
+  const hits=rules.filter(x=>x.selectors.includes(selector));
+  assert.ok(hits.length>=1);
+  assert.equal(hits[hits.length-1].border.trim(),wanted,selector);
+ }
 });
 test("Minior art receives additional consistent scaling in the 10-sprite list",()=>{
  assert.ok(dock.includes('const artFit=/^'));
