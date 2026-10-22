@@ -602,7 +602,12 @@ public class MainActivity extends Activity {
         done.setOnClickListener(v->dialog.dismiss());
         tutorialDialog=dialog;
         tutorialWebView=guide;
-        dialog.setOnDismissListener(ignored->releaseTutorialWebView());
+        dialog.setOnDismissListener(ignored->{
+            releaseTutorialWebView();
+            // First-time users read the guide before any pending upgrade notes.
+            if(Intent.ACTION_MAIN.equals(getIntent().getAction()))
+                ReleaseNotes.maybeShowAfterUpgrade(this);
+        });
         dialog.show();
         if(dialog.getWindow()!=null){
             android.view.Window window=dialog.getWindow();
