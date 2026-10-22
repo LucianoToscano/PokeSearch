@@ -2493,6 +2493,26 @@ test("RANK-EVO-DETAIL-03 native async bridge rejects old or mismatched results",
   dock.includes("const descendants=evolutionCandidates(card,league).slice(0,24)");
 });
 
+
+test("RANK-EVO-DETAIL-04 unknown CP never looks confirmed eligible",()=>{
+ const win={};new Function("window",read("assets/pvpoke-iv-gamemaster.js"))(win);
+ const p=dock.indexOf("const PVPOKE_OVERALL="),q=dock.indexOf('let lastListKey=""',p);
+ if(p<0||q<=p)return false;
+ const api=new Function("window","verifiedSpawnIvPercent","esc","ivPaletteClass",
+  dock.slice(p,q)+"return {resultLines,resultInfoHtml};")(
+   win,c=>c.ivPercent==null?null:Number(c.ivPercent),
+   s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"),()=> "medium");
+ const card={name:"Swablu",iv:"0/14/15",ivPercent:64};
+ const lines=api.resultLines(card,{speciesIvRankGl:true},"gl");
+ const row=lines.find(x=>x.startsWith("↳ Altaria"));
+ const known=api.resultLines({...card,level:15},{speciesIvRankGl:true},"gl")
+   .find(x=>x.startsWith("↳ Altaria"));
+ return row?.includes("GL IV#1")&&row.includes("· PC?")&&
+  !api.resultInfoHtml(row,card).includes("evolutionInfo best")&&
+  known?.includes("GL IV#1")&&!known.includes("PC?")&&
+  api.resultInfoHtml(known,card).includes("evolutionInfo best");
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
