@@ -20,6 +20,30 @@
           "Validação visual no Android e teste real de atualização sobre o APK anterior."
         ]
       }
+    },
+    {
+      "id": "visual-brand-v053-20261022",
+      "minVersionCode": 54251,
+      "date": "22/10/2026",
+      "title": "PokeSearch v0.00.53 — Identidade e Editor",
+      "sections": {
+        "novidades": [
+          "Moldura dinâmica por time na foto do perfil.",
+          "Realce temporário de áreas clicáveis durante a edição visual."
+        ],
+        "melhorias": [
+          "Logo azul na Home e proporção correta do nome.",
+          "Temas, transparências e linhas-guia independentes para Menu e Pokémon.",
+          "Transparência própria do fundo da Home."
+        ],
+        "correcoes": [
+          "Ícone do instalador referenciado à arte oficial.",
+          "Editor com duas abas, sem aba Fundo."
+        ],
+        "emDesenvolvimento": [
+          "Testes de atualização em aparelho Android."
+        ]
+      }
     }
   ]
 }

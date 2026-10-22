@@ -285,7 +285,7 @@ test("Menu tiles return to individual rounded borders like the legacy reference"
  assert.ok(tail.includes("gap:var(--visual-menu-gap,3px)!important;"));
  assert.ok(dock.indexOf("/* UX-MENU-TILES-RESTORE-01:")>dock.indexOf("/* AUD-BELL-02:"));
  assert.ok(dock.includes('button[data-key="sh"].selected'));
- assert.ok(!script.includes('addSegment(panel,"menuBgMode"'));
+ assert.ok(script.includes('addSegment(panel,"menuBgMode"'));
  assert.ok(script.includes('addSlider(panel,"menuTransparency","Transparência única dos menus","%")'));
 });
 test("Final cascade reintroduces 1px borders on regular, selected and light menu tiles",()=>{
@@ -478,57 +478,20 @@ test("light-theme selected actions retain legible ink on colored backgrounds",()
  window.onVisualPrefs({menuBgMode:"light"});
  assert.equal(classes.has("visual-light-menu"),true);
 });
-test("Home light/dark switch updates the overlay menu without collector reload",()=>{
+test("Home theme never overwrites independent Menu or Resultados theme",()=>{
  const home=main.split("private void toggleHomeTheme(){")[1]?.split("private FrameLayout buildHome()")[0]||"";
  assert.ok(home.includes('putBoolean("homeLightMode",homeLightMode)'));
- assert.ok(home.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_HOME_THEME")'));
- const service=java.split("@Override public int onStartCommand(")[1]||"";
- const early=service.indexOf('"com.lucianotoscano.pokesearchoverlay.SYNC_HOME_THEME"');
- const initial=service.indexOf("boolean initialStart=firstStart;");
- assert.ok(early>=0&&initial>early,"Theme action exits before collector search initialization");
- assert.ok(service.slice(early,initial).includes("syncHomeThemeVisual(true);"));
- const updater=java.split("private void syncHomeThemeVisual(boolean broadcast){")[1]
-  ?.split("private int dockDp()",1)[0]||"";
- assert.ok(updater.includes('getBoolean("homeLightMode",false)'));
- assert.ok(updater.includes('stored.put("menuBgMode",wanted)'));
- assert.ok(updater.includes('putString("visualPrefsJson",visualPrefsJson)'));
- assert.ok(updater.includes("if(broadcast)broadcastVisualPrefs();"));
- assert.ok(!updater.includes("website.loadUrl")&&!updater.includes("refresh("));
- assert.ok(java.includes("syncHomeThemeVisual(false);"));
- const saver=java.split("private void saveVisualPrefs(String raw){")[1]
-  ?.split("private void syncHomeThemeVisual(boolean broadcast){")[0]||"";
- assert.ok(saver.includes('cleaned.put("menuBgMode",getSharedPreferences("prefs",0)'));
- assert.ok(saver.includes('getBoolean("homeLightMode",false)?"light":"dark"'));
- assert.ok(saver.includes("if(next.equals(visualPrefsJson)){"));
- assert.ok(saver.includes("broadcastVisualPrefs();"));
+ assert.ok(!home.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_HOME_THEME")'));
+ assert.ok(!java.includes('cleaned.put("menuBgMode",getSharedPreferences'));
+ assert.ok(java.includes('private void syncHomeThemeVisual(boolean broadcast){ }'));
+ assert.ok(main.includes("homeBackgroundTransparency"));
 });
-test("theme update merges into unsaved opacity edit without rolling it back",()=>{
- const sent=[],timers=[];
- const Native={saveVisualPrefs:json=>sent.push(JSON.parse(json))};
- const window={Native},styles={};
- const document={
-  documentElement:{style:{setProperty:(key,value)=>styles[key]=value}},
-  body:{classList:{toggle(){} }}
- };
- // Test-only exposure of the real private slider handler.
- const instrumented=script.replace("window.visualEditorCurrent=function(){",
-  "window.__testChange=change;window.visualEditorCurrent=function(){");
- assert.notEqual(instrumented,script,"Missing private editor change callback");
- vm.runInNewContext(instrumented,{window,document,controlsWindow:true,resultWindow:false,
-   Native,fit:()=>{},draw:()=>{},setTimeout:fn=>{timers.push(fn);return timers.length;},
-   clearTimeout:()=>{}});
- window.__testChange("menuTransparency",72);
- window.onVisualPrefs({menuBgMode:"light",menuTransparency:35});
- assert.equal(window.visualEditorCurrent().menuTransparency,72);
- assert.equal(window.visualEditorCurrent().menuBgMode,"light");
- assert.equal(styles["--visual-menu-bg"],"rgba(255,255,255,0.28)");
- for(const fn of timers)fn();
- assert.equal(sent.length,1,"Only the latest merged visual change is saved");
- assert.equal(sent[0].menuBgMode,"light");
- assert.equal(sent[0].menuTransparency,72);
- window.onVisualPrefs(sent[0]);
- assert.equal(window.visualEditorCurrent().menuBgMode,"light");
- assert.equal(window.visualEditorCurrent().menuTransparency,72);
+test("Editor visual displays independent scopes and preview touch boundaries",()=>{
+ for(const s of ["menuGuides","resultsGuides","Linhas-guia menu: ","Linhas-guia resultados: ","Native.previewVisualArea(tab)"])
+  assert.ok(script.includes(s),s);
+ assert.ok(java.includes("void previewVisualArea(String area)"));
+ assert.ok(dock.includes("visual-preview-menu #menu"));
+ assert.ok(dock.includes("visual-preview-results #resultHeader"));
 });
 test("top-gap can extend to -80px with synchronized Android and editor validation",()=>{
  const {window,styles}=fixture();
@@ -550,7 +513,7 @@ test("JSON tab hidden while copy JSON and internal import support remain",()=>{
  const tabs=script.split('const nav=document.createElement("div");nav.className="visualTabs";')[1]?.split("panel.appendChild(nav);")[0]||"";
  assert.ok(tabs.includes('["results","Pokémon"]'));
  assert.ok(tabs.includes('["menu","Menu"]'));
- assert.ok(tabs.includes('["bg","Fundo"]'));
+ assert.ok(!tabs.includes('["bg","Fundo"]'));
  assert.ok(!tabs.includes('["export","JSON"]'));
  assert.ok(script.includes('btn(actions,"Copiar JSON"'));
  assert.ok(script.includes('btn(panel,"Importar JSON digitado"'));
