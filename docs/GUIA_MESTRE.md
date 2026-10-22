@@ -3655,3 +3655,23 @@ Total **658 contratos JS reportados pelos sete comandos**. O `gradle :app:assemb
 **Correção incremental de precisão:** o caso de nível ausente permitia que o resultado compacto destacasse em verde `IV#1` sem conhecer o PC após a evolução. Commit `e6c8bf3f9accc0f85a05e6e10e9fd66df5a8b680` passou a exibir ` · PC?` na linha de evolução sem nível validado; não usa destaque verde quando elegibilidade desconhecida. Dados de IV e rank matemático continuam visíveis e uma evolução confirmadamente elegível mantém destaque. Commit de teste `97664311dcac7a48b2b09d22737344fa26053b6f` acrescentou `RANK-EVO-DETAIL-04` para ambos os casos, executado com arquivos reais no motor JavaScript isolado: 1/1 aprovado. Não é homologação Android. Foi também feita verificação de sintaxe com `new Function` sobre os quatro blocos inline existentes no HTML atual, sem erros.
 
 **Pendências:** aguardar resultado efetivo do workflow nativo Node, corrigir falhas se confirmadas, homologar o overlay em Android real e comparar as classificações com PokéGenie; nenhuma compilação nem merge autorizados. Os seis fornecedores externos continuam apenas no plano de integração, sem alterações de rede nesta etapa.
+
+### 12.173-RANK-EVO-QA-04 — suíte Node nativa completa confirmada no checkout exato (22/10/2026)
+
+**Fonte verificável:** GitHub Actions `PokeSearch Node QA (sem APK)`, execução **#39815753109**, URL `https://github.com/LucianoToscano/PokeSearch/actions/runs/39815753109`, conclusão **success**, status completed, SHA do checkout confirmado em log `97664311dcac7a48b2b09d22737344fa26053b6f`. Rodou em runner ubuntu-24.04 com Node **v22.23.3**. Não confundir a data/hora de observação da API com a versão funcional do aplicativo.
+
+**Resultado oficial da suíte Node — 677/677 aprovados, 0 falhas:**
+- `location-probe.test.js`: 68;
+- `probe-smoke.test.js`: 111;
+- `pokemon-picker.test.js`: 9;
+- `login-entry.test.js`: 38;
+- `overlay-ux.test.js`: 391;
+- `visual-editor.test.js`: 46;
+- `signing-contract.test.js`: 14.
+Todos os passos do job `119953796712` concluíram com sucesso, inclusive checkout exato, `node --check` em probe.js, pvpoke-overall-ranks.js e pvpoke-iv-gamemaster.js, parsing dos scripts embutidos em dock.html (3 blocos) e detail.html (1 bloco) via `vm.Script` e confirmação final de `git status --porcelain` vazio. Foram vistos avisos não fatais de descontinuação `punycode` e ações Node 20, sem quebra de build ou testes.
+
+**Integridade do checkpoint:** o HEAD `a1c9acb396f22c7dc26dcaa0012c62724949f3ed` imediatamente anterior a esta documentação difere do checkout de QA `97664311dcac7a48b2b09d22737344fa26053b6f` SOMENTE em `docs/GUIA_MESTRE.md` (1 commit / 14 linhas). Assim, **o código ativo é exatamente o código validado no GitHub Actions**, e esta atualização de documentação não muda o código. Auditoria nativa Node pode ser dada como concluída; **homologação Android real permanece pendente** e não foi realizada.
+
+**Proteções:** o workflow Android `PokeSearch v0.51 stable-signed test APK` relacionado ao mesmo commit exibiu job `build` marcado `skipped`, sem APK. Não houve Gradle, nova assinatura, compilação, release ou merge neste trabalho. As seis APIs externas continuam fora da árvore ativa. Não alegar equivalência de teste Node com prova visual/táctil em Android.
+
+**Portão de homologação:** para validar no aparelho os detalhes expansíveis, seções GL/UL/Master, IV#1 e elegibilidade, posicionamento, rolagem e continuidade do login, ainda será necessário APK de teste com assinatura persistente e teste manual no Android, mediante autorização explícita para compilar/distribuir.
