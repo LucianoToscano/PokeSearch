@@ -2666,6 +2666,18 @@ test("FILTERS-POGO-03 size and gender buttons never invent site-supported option
   service.includes('final String[] keys={"sortBy","size","form","gender","weather"}')&&
   service.includes('execute("readFilterOptions:"+key,options->');
 });
+test("FILTERS-POGO-05 reusing confirmed coordinates still executes Search",()=>{
+ const handler=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
+  ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";
+ const same=handler.split('if(locationEnabled==enabled&&')[1]
+  ?.split('locationVerified=false;')[0]||"";
+ return same.includes('!searchInProgress&&nextScheduledSearchAtMs<=System.currentTimeMillis()')&&
+  same.includes('OverlayService.this.refresh(true)')&&
+  same.includes('Pesquisando com coordenadas e filtros ativos')&&
+  !same.includes('enabled&&!locationVerified')&&
+  handler.includes('replaceActiveFilterSearch();')&&
+  handler.includes('locationCoords=enabled?valid:""');
+});
 test("FILTERS-POGO-04 location Apply submits same saved criteria through live DOM",()=>{
  const probe=read("assets/probe.js");
  return dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&
