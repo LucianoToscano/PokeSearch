@@ -93,6 +93,29 @@ body.controls-window #choices[data-panel-kind="filters"]{
  margin:0;padding:3px 6px;font-size:11px;text-align:center}
 #choices .extraChipRow .extraChip.chosen{background:#226bbf!important;
  color:#fff!important;border-color:#9dc8ff!important}
+/* FILTERS-POGO-06: two tiny overlay indicators, original 12 slots unchanged. */
+body.controls-window #quickMenuList button[data-key="filters"]{position:relative!important}
+body.controls-window #quickMenuList button[data-key="filters"].has-extra-filters::after{
+ content:attr(data-filter-count);position:absolute;top:0;right:0;z-index:3;
+ display:flex;align-items:center;justify-content:center;min-width:10px;height:10px;
+ padding:0 1px;border-radius:7px;background:#38485e;color:#fff;
+ font:700 8px/10px Arial,sans-serif;line-height:1;pointer-events:none;
+}
+body.controls-window #quickMenuList button[data-key="filters"].site-filters-applied::before{
+ content:"";position:absolute;bottom:2px;right:2px;z-index:3;
+ width:4px;height:4px;border-radius:50%;background:#63d29b;pointer-events:none;
+}
+#choices .extraApplyStatus{margin:6px 4px 4px;font-size:10px;line-height:1.3;
+ color:#c7d5e4}
+#choices .extraApplyStatus.confirmed{color:#65d6a5}
+body.controls-window.visual-light-menu #choices .extraApplyStatus{color:#334961}
+body.controls-window.visual-light-menu #choices .extraApplyStatus.confirmed{color:#14583f}
+#choices .modeAction.filterActions button{width:33.333%;font-size:10px}
+#choices .modeAction.filterActions .filterClear{background:#374050;color:#fff;
+ border:1px solid #8794a4}
+body.controls-window.visual-light-menu #choices .modeAction.filterActions .filterClear{
+ background:#e7edf4;color:#1e354b;border-color:#a4b4c5
+}
 body.controls-window.visual-light-menu #choices:not(.visualPanel) .extraChipRow .extraChip:not(.chosen),
 body.controls-window.visual-light-menu #choices:not(.visualPanel) .extraNumberRow .extraStep{
  background:#eef3f9!important;color:#172533!important;border-color:#96aabe!important}
@@ -1693,13 +1716,13 @@ function renderExtraFilters(panel,make){
   input.dataset.filterNumber=key;input.setAttribute("aria-label",label);
   input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
   input.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
-  input.oninput=()=>{modeDraft[key]=input.value;input.setCustomValidity("");};
+  input.oninput=()=>{modeDraft[key]=input.value;input.setCustomValidity("");updateFiltersPanelStatus();};
   if(level){
    const step=direction=>{
     const fallback=key.endsWith("Min")?1:35;
     const current=input.value===""?fallback:Number(input.value);
     const wanted=Math.max(1,Math.min(35,(Number.isFinite(current)?current:fallback)+direction));
-    input.value=String(wanted);modeDraft[key]=input.value;input.setCustomValidity("");
+    input.value=String(wanted);modeDraft[key]=input.value;input.setCustomValidity("");updateFiltersPanelStatus();
     // Keep the range consistent when a button crosses the other endpoint.
     const counterpart=key==="levelMin"?"levelMax":"levelMin";
     const other=panel.querySelector('[data-filter-number="'+counterpart+'"]');
