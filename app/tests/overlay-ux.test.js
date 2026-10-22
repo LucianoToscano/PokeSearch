@@ -1618,7 +1618,7 @@ test("PL-02 marks submit boundary before Search can navigate",()=>{
 test("PL-02 waits for WebView after submit navigation without treating missing DOM as zero",()=>{
  const poll=service.split("private void pollSearch(")[1]?.split("private long expiration(")[0]||"";
  return poll.includes("if(!loaded||website==null){")&&
-  poll.includes("if(attempt<8){pollSearch(generation,attempt+1,manual);return;}")&&
+  poll.includes("if(attempt<24){pollSearch(generation,attempt+1,manual);return;}")&&
   poll.indexOf("if(!loaded||website==null){")<poll.indexOf('execute("collect",r->{')&&
   poll.includes('searchFailure("⚠ Site não carregado"');
 });
@@ -2124,9 +2124,11 @@ test("UX-INFO-ALL-03 optional metadata respects the compact row dimensions",()=>
    location:true,distance:true,shiny:true,rawIv:false};
  const lines=f.resultLines(card,opts,'gl'),hidden=f.resultLines(card,{},'gl');
  const layout=f.computeResultLayout([card,card],45,700,false,false,opts,'gl');
- return lines.includes('Nome Machop')&&lines.includes('Local Shibuya, Tokyo, Japan')&&
-   lines.includes('Dist 0.3 km')&&lines.includes('Sexo ♀')&&
-   lines.includes('Tam M')&&lines.includes('✨ Shiny')&&
+ return lines.includes('Machop')&&lines.includes('#066')&&
+   lines.some(line=>line.endsWith('Shibuya, Tokyo, Japan'))&&
+   lines.includes('0.3 km')&&lines.includes('♀')&&lines.includes('M')&&
+   lines.includes('✨')&&
+   !lines.some(line=>/^(?:Nome |Nº |Sexo |Tam |Forma |Golpes |Local |Dist )/.test(line))&&
    hidden.length===0&&layout.rows.every(r=>r===45)&&layout.visibleCount===2;
 });
 test("UX-LOC-SHINY-01 reasserts shiny after site Coords switch and before Search",()=>{
