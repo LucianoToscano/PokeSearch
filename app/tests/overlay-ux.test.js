@@ -168,11 +168,17 @@ test("UX-INFO-COMPACT-01 requested Pokémon metadata has no verbose labels",()=>
   overallRankGl:true,overallRankUl:true,overallRankMl:true,
   speciesIvRankGl:true,speciesIvRankUl:true,speciesIvRankMl:true,despawn:true};
  const lines=makeLines.resultLines(c,opts,"gl");
+ const nameWithForm=makeLines.resultLines({...c,name:"Yamask ✨ (Galarian)"},{name:true,form:true},"gl");
+ const zero={...c,iv:"0/0/0",ivPercent:0};
+
  const rank=["GL RG#12","GL IV#1","GL P100,00%","UL RG#84","UL IV#50",
    "ML RG#35","ML IV#307"];
  return ["Yamask","#562","♂","XXL","Galarian","Astonish / Rock Tomb",
    "🇹🇼 Tainan City, Taiwan","0.3 km","✨","PC813 · Nv29","15/15/15","100%","TIMER"].every(x=>lines.includes(x))&&
   rank.every(x=>lines.includes(x))&&
+  nameWithForm[0]==="Yamask"&&nameWithForm[1]==="Galarian"&&
+  makeLines.resultInfoHtml("0%",zero).includes('ivInfo zero')&&
+  makeLines.resultInfoHtml("0/0/0",zero).includes('ivInfo zero')&&
   !lines.some(x=>/^(?:Nome |Nº |Sexo |Tam |Forma |Golpes |Local |Dist |IV )/.test(x))&&
   makeLines.resultInfoHtml("♂",c).includes('genderInfo male')&&
   makeLines.resultInfoHtml("♀",c).includes('genderInfo female')&&
@@ -183,7 +189,10 @@ test("UX-INFO-COMPACT-01 requested Pokémon metadata has no verbose labels",()=>
   makeLines.locationCountryFlag("place unknown")===""&&
   dock.includes('.genderInfo.male{color:#59a9ff}')&&
   dock.includes('.genderInfo.female{color:#ff83bb}')&&
-  dock.includes('.statPrefix{font-size:.72em');
+  dock.includes('.statPrefix{font-size:.78em')&&
+  makeLines.resultInfoHtml('GL RG#12',c).includes('leaguePrefix gl')&&
+  makeLines.resultInfoHtml('UL IV#50',c).includes('leaguePrefix ul')&&
+  makeLines.resultInfoHtml('ML P100,00%',c).includes('leaguePrefix ml');
 });
 test("UX-INFO-04 sprite column stays under the movable full Pokébola hitbox",
  dock.includes('body.result-window #resultHeader{')&&
