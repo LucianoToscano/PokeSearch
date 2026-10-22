@@ -86,7 +86,7 @@ function evolutionRow(x,first){
  if(x.eligible===false)state="Não elegível no nível atual";
  else if(x.eligible===null)state="Elegibilidade não verificada";
  const label=(first?"Atual: ":"↳ ")+name;
- return '<div class="evoLine'+(rank===1&&x.eligible!==false?' best':'')+'"><b>'+
+ return '<div class="evoLine'+(rank===1&&x.eligible===true?' best':'')+'"><b>'+
   h(label)+'</b> · IV#'+rank+(pct?' · '+h(pct)+'%':"")+
   (data.length?'<div class="evoStats">'+h(data.join(" · "))+'</div>':"")+
   (state?'<div class="evoState">'+h(state)+'</div>':"")+'</div>';
