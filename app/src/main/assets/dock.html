@@ -2391,72 +2391,70 @@ window.setMinimized=value=>{
 
 /* UX-MENU-01: contextual menu reuses native actions and verified filters. */
 
-/* COORDSGO OVERLAY: Only real site data, never an assumed active PokéStop. */
+/* COORDSGO SAFE MENU: controls only. Results have their own draggable native window.
+ * Never rebuild the submenu from asynchronous site callbacks. */
 let cgData={ok:false,cards:[],city:"",missionCount:null,status:"Aguardando CoordsGo"};
 let cgTerm="",cgShiny=false,cgEvent=false,cgCityDraft="";
+function cgStatusText(){
+ const count=cgData.missionCount;
+ const countLabel=count===0?"0 missões ativas (catálogo)":
+   Number.isInteger(count)?count+" missões informadas":"Missões ativas não confirmadas";
+ return countLabel+" · "+String(cgData.status||"");
+}
+function drawCoordsGoMatches(){
+ if(choiceOpen!=="missions")return;
+ const line=document.getElementById("cgStatus");
+ if(line)line.textContent=cgStatusText();
+ const city=document.getElementById("cgCityLabel");
+ if(city)city.textContent="Cidade: "+(cgData.city||"Aguardando site");
+}
 function renderCoordsGoChoices(){
  if(choiceOpen!=="missions")return;
  const panel=uxPanel("MISSÕES · COORDSGO");
  panel.classList.add("coordsGoPanel");
  const city=document.createElement("div");city.className="uxSubheading";
- city.textContent="Cidade: "+(cgData.city||"Aguardando site");panel.append(city);
+ city.id="cgCityLabel";panel.append(city);
  const crow=document.createElement("div");crow.className="cgRow";
  const cityField=document.createElement("input");cityField.type="text";cityField.maxLength=75;
  cityField.placeholder="Cidade do site";cityField.value=cgCityDraft||cgData.city||"";
+ cityField.setAttribute("aria-label","Cidade do CoordsGo");
  cityField.oninput=()=>{cgCityDraft=cityField.value};
  cityField.onfocus=()=>{if(controlsWindow)Native.locationEditor(true)};
  cityField.onblur=()=>{if(controlsWindow)Native.locationEditor(false)};
- const go=document.createElement("button");go.textContent="✓";go.title="Aplicar no seletor oficial do CoordsGo";
- go.onclick=()=>{if(cityField.value.trim()&&Native.coordsGoCity)Native.coordsGoCity(cityField.value.trim())};
+ const go=document.createElement("button");go.textContent="✓";go.title="Aplicar no seletor oficial";
+ go.onclick=()=>{const city=cityField.value.trim();if(city&&Native.coordsGoCity)Native.coordsGoCity(city)};
  crow.append(cityField,go);panel.append(crow);
  const search=document.createElement("input");search.type="search";search.id="cgSearch";
  search.placeholder="Pokémon, tarefa ou recompensa";search.value=cgTerm;
- search.oninput=()=>{cgTerm=search.value;drawCoordsGoMatches()};
+ search.oninput=()=>{cgTerm=search.value};
  search.onfocus=()=>{if(controlsWindow)Native.locationEditor(true)};
  search.onblur=()=>{if(controlsWindow)Native.locationEditor(false)};
  panel.append(search);
- const controls=document.createElement("div");controls.className="cgRow";
+ const flags=document.createElement("div");flags.className="cgRow";
  for(const [label,key] of [["✨ Shiny","shiny"],["🌄 Evento","event"],["↻","refresh"]]){
-  const button=document.createElement("button");button.textContent=label;button.type="button";
-  button.className=(key==="shiny"&&cgShiny)||(key==="event"&&cgEvent)?"chosen":"";
-  button.onclick=()=>{
-   if(key==="shiny"){cgShiny=!cgShiny;renderCoordsGoChoices()}
-   else if(key==="event"){cgEvent=!cgEvent;renderCoordsGoChoices()}
+  const b=document.createElement("button");b.textContent=label;b.type="button";
+  b.className=(key==="shiny"&&cgShiny)||(key==="event"&&cgEvent)?"chosen":"";
+  b.onclick=()=>{
+   if(key==="shiny"){cgShiny=!cgShiny;b.classList.toggle("chosen",cgShiny)}
+   else if(key==="event"){cgEvent=!cgEvent;b.classList.toggle("chosen",cgEvent)}
    else if(Native.coordsGoRefresh)Native.coordsGoRefresh();
-  };controls.append(button);
- }panel.append(controls);
- const note=document.createElement("p");note.className="uxNote";note.id="cgStatus";panel.append(note);
- const results=document.createElement("div");results.id="cgResults";panel.append(results);
- drawCoordsGoMatches();fit();
-}
-function drawCoordsGoMatches(){
- if(choiceOpen!=="missions")return;
- const note=document.getElementById("cgStatus"),box=document.getElementById("cgResults");
- if(!note||!box)return;
- const count=cgData.missionCount;
- note.textContent=(count===0?"0 missões ativas; exibindo catálogo":
- Number.isInteger(count)?count+" missões informadas":"Missões ativas não confirmadas")+
- " · "+(cgData.status||"");
- box.replaceChildren();
- const find=cgTerm.trim().toLocaleLowerCase("pt-BR");
- const arr=(cgData.cards||[]).filter(x=>(!cgShiny||x.shiny)&&(!cgEvent||x.event)&&
-  (!find||[x.name,x.task,x.number].some(v=>String(v||"").toLocaleLowerCase("pt-BR").includes(find))));
- if(!arr.length){const p=document.createElement("p");p.className="uxNote";
-  p.textContent=cgData.ok?"Sem recompensas para estes filtros.":"Sem dados confirmados no momento.";
-  box.append(p);return;}
- for(const c of arr.slice(0,10)){
-  const card=document.createElement("div");card.className="cgCard";
-  const name=document.createElement("strong");name.textContent=
-   (c.number?"#"+c.number+" ":"")+(c.name||"Recompensa")+(c.shiny?" ✨":"")+(c.event?" 🌄":"");
-  const task=document.createElement("span");task.textContent=c.task||"Tarefa indisponível";
-  const cp=document.createElement("small");cp.textContent=c.cpMin&&c.cpMax?"PC "+c.cpMin+"–"+c.cpMax:"";
-  const pick=document.createElement("button");pick.type="button";pick.textContent="Selecionar";
-  pick.onclick=()=>{if(Native.coordsGoSelect)Native.coordsGoSelect(c.sourceIndex)};
-  card.append(name,task,cp,pick);box.append(card);
- }
- if(arr.length>10){const p=document.createElement("p");p.className="uxNote";
-  p.textContent="10 de "+arr.length+" · refine a pesquisa";box.append(p)}
- fit();
+  };flags.append(b);
+ }panel.append(flags);
+ const note=document.createElement("p");note.className="uxNote";note.id="cgStatus";
+ panel.append(note);
+ const open=document.createElement("button");open.type="button";
+ open.className="modeApply";open.textContent="🎯 Mostrar resultados";
+ open.onclick=()=>{
+  const term=search.value.trim().slice(0,70);cgTerm=term;
+  if(Native.coordsGoShowResults)Native.coordsGoShowResults(term,cgShiny,cgEvent);
+  closeChoices(); // Restore original menu touch geometry before displaying separate panel.
+ };
+ panel.append(open);
+ const disclaimer=document.createElement("p");disclaimer.className="uxNote";
+ disclaimer.textContent="Catálogo ≠ missões com coordenadas. Sem resultado confirmado, nenhum mapa será inventado.";
+ panel.append(disclaimer);
+ drawCoordsGoMatches();
+ fit(); // Exactly once when opening, never on CoordsGo data updates.
 }
 window.onCoordsGoData=function(input){
  let d=input;
@@ -2469,10 +2467,10 @@ window.onCoordsGoData=function(input){
    sourceIndex:Number(c.sourceIndex)||0,number:String(c.number||"").slice(0,6),
    name:String(c.name||"").slice(0,90),task:String(c.task||"").slice(0,160),
    cpMin:String(c.cpMin||"").slice(0,6),cpMax:String(c.cpMax||"").slice(0,6),
-   shiny:c.shiny===true,event:c.event===true})):[]};
- if(choiceOpen==="missions")renderCoordsGoChoices();
+   shiny:c.shiny===true,event:c.event===true,coords:String(c.coords||"").slice(0,70)
+  })):[]};
+ drawCoordsGoMatches(); // Text only. Never recreate 10+ cards or refocus inputs.
 };
-
 const QUICK_ACTIONS=[
  ["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"],
  ["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"],["missions","⚑","Missões · CoordsGo","missions"],

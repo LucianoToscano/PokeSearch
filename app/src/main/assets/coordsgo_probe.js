@@ -16,6 +16,27 @@ function cardRoot(button){
  }
  return choice||button.parentElement;
 }
+function verifiedLinkCoords(row){
+ if(!row)return "";
+ const links=Array.from(row.querySelectorAll("a[href]"))
+  .filter(a=>/maps|mapa|coordenad|localizar/i.test(text(a)+" "+a.href));
+ if(links.length!==1)return ""; // ambiguous links must not invent a PokéStop.
+ let url;try{url=new URL(links[0].href,location.href)}catch(_){return ""}
+ if(!/^https:$/.test(url.protocol)||!/^(?:www\.)?(?:google\.com|maps\.google\.com|maps\.apple\.com)$/i.test(url.hostname))
+  return "";
+ const candidates=[url.searchParams.get("q"),url.searchParams.get("query"),
+   url.searchParams.get("ll")];
+ const at=url.pathname.match(/@(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/);
+ if(at)candidates.push(at[1]+","+at[2]);
+ for(const raw of candidates){
+  const m=String(raw||"").trim().match(/^(-?\d{1,2}(?:\.\d+)?),\s*(-?\d{1,3}(?:\.\d+)?)$/);
+  if(!m)continue;
+  const lat=Number(m[1]),lon=Number(m[2]);
+  if(Number.isFinite(lat)&&Number.isFinite(lon)&&Math.abs(lat)<=90&&Math.abs(lon)<=180)
+   return m[1]+","+m[2];
+ }
+ return "";
+}
 function collect(){
  if(!document.body)return JSON.stringify({ok:false,status:"Aguardando DOM",cards:[]});
  const raw=document.body.innerText||"";
@@ -36,7 +57,8 @@ function collect(){
    task:task.slice(0,160),
    cpMax:(block.match(/PC\s*(\d+)\s*M[ÁA]X/i)||[])[1]||"",
    cpMin:(block.match(/PC\s*(\d+)\s*M[ÍI]N/i)||[])[1]||"",
-   shiny:/\bShiny\b/i.test(block),event:/\bEvento\b/i.test(block)};
+   shiny:/\bShiny\b/i.test(block),event:/\bEvento\b/i.test(block),
+   coords:verifiedLinkCoords(row)};
  }).filter(c=>c.number||c.task).slice(0,150);
  return JSON.stringify({ok:true,status:missionCount===0?"Catálogo do site":"Catálogo consultado",
   city:clean(location),missionCount,cards});

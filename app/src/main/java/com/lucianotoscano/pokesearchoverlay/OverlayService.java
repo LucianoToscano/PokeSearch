@@ -202,6 +202,8 @@ public class OverlayService extends Service {
     private View grip;
     private WebView panel,detailPanel,website,menuPanel,resultPanel;
     private CoordsGoCollector coordsCollector;
+    private CoordsGoResultsWindow coordsResultsWindow;
+    private JSONObject coordsLatest= new JSONObject();
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
     private int height=32,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
@@ -1998,10 +2000,22 @@ public class OverlayService extends Service {
             if(stopped)return;
             if(coordsCollector==null)coordsCollector=new CoordsGoCollector(
                 OverlayService.this,root,handler,data->{
-                    if(!stopped)js(menuPanel,menuLoaded,
+                    if(stopped)return;
+                    coordsLatest=data;
+                    if(coordsResultsWindow!=null)coordsResultsWindow.onData(data);
+                    // Update the tiny menu status without resynchronizing PoGoCoordinates.
+                    js(menuPanel,menuLoaded,
                         "window.onCoordsGoData&&window.onCoordsGoData("+data.toString()+")");
                 });
             coordsCollector.refresh();
+        });}
+        @JavascriptInterface public void coordsGoShowResults(String query,boolean shiny,boolean event){handler.post(()->{
+            if(stopped)return;
+            if(coordsResultsWindow==null)coordsResultsWindow=new CoordsGoResultsWindow(
+                OverlayService.this,()->{
+                    if(coordsCollector!=null)coordsCollector.refresh();
+                });
+            coordsResultsWindow.show(coordsLatest,query,shiny,event);
         });}
         @JavascriptInterface public void coordsGoSelect(int index){handler.post(()->{
             if(!stopped&&coordsCollector!=null)coordsCollector.selectReward(index);
@@ -2879,6 +2893,7 @@ public class OverlayService extends Service {
         destroyWebView(detailPanel,true,"detalhes");detailPanel=null;
         destroyWebView(website,false,"site");website=null;
         if(coordsCollector!=null){coordsCollector.destroy();coordsCollector=null;}
+        if(coordsResultsWindow!=null){coordsResultsWindow.destroy();coordsResultsWindow=null;}
         root=null;menuRoot=null;detailRoot=null;resultRoot=null;resultGrip=null;resultParams=null;
         super.onDestroy();
     }

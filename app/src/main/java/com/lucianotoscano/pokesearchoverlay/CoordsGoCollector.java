@@ -24,6 +24,7 @@ final class CoordsGoCollector {
  private final Consumer<JSONObject> callback;
  private WebView web;
  private String probe=null;
+ private static final int MAX_JSON_CHARS=110_000;
  private boolean loaded=false,destroyed=false;
  private int generation=0;
  private static final String URL="https://coordsgo.com/";
@@ -47,7 +48,8 @@ final class CoordsGoCollector {
  private void create(){
   web=new WebView(context);
   web.setBackgroundColor(Color.TRANSPARENT);web.setAlpha(0);
-  web.setFocusable(false);web.setClickable(false);web.setOnTouchListener((v,e)->true);
+  web.setFocusable(false);web.setClickable(false);web.setEnabled(false);
+  web.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
   WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);
   s.setGeolocationEnabled(false);s.setAllowFileAccess(false);s.setAllowContentAccess(false);
   s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
@@ -70,7 +72,8 @@ final class CoordsGoCollector {
   });
   float density=context.getResources().getDisplayMetrics().density;
   FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams((int)(390*density),(int)(690*density),Gravity.TOP|Gravity.LEFT);
-  root.addView(web,lp);send(info(false,"Carregando o CoordsGo…"));web.loadUrl(URL);
+  root.addView(web,0,lp); // BEHIND gear and other interactive overlay views.
+  send(info(false,"Carregando o CoordsGo…"));web.loadUrl(URL);
  }
  void refresh(){if(destroyed)return;if(web==null)create();else if(loaded)run("collect","",0);
   else send(info(false,"Aguardando carregamento…"));}
@@ -93,7 +96,9 @@ final class CoordsGoCollector {
   current.evaluateJavascript(script,raw->{
    if(destroyed||current!=web||gen!=generation)return;
    try{
-    JSONObject d=new JSONObject(new JSONArray("["+raw+"]").getString(0));send(d);
+    String response=new JSONArray("["+raw+"]").getString(0);
+    if(response.length()>MAX_JSON_CHARS){send(info(false,"Resposta CoordsGo excedeu o limite"));return;}
+    JSONObject d=new JSONObject(response);send(d);
     if(!"collect".equals(action))handler.postDelayed(
      ()->{if(!destroyed&&gen==generation)run("collect","",0);},850L);
    }catch(Exception e){send(info(false,"Erro de leitura do CoordsGo"));}
