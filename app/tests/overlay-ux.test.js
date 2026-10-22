@@ -1823,23 +1823,24 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
  const master=api.resultLines(origin,opts,"raw");
  const unknown=api.resultLines({name:"Unknown",iv:"",ivPercent:""},opts,"raw");
  const falseForm={...alt,form:"Shadow"};
- const countFromNative=service.includes('putBoolean("resultCountUxV2",true)');
+ const countStartsHidden=!service.includes('putBoolean("resultShowCount",true)')&&
+  service.includes('resultShowCount=prefs.getBoolean("resultShowCount",false)');
  return win.POKESEARCH_PVPOKE_OVERALL.ml.length>=350&&
   api.verifiedOverallRank(origin,"ml")===1&&
   api.verifiedSpeciesIvRank(origin,"ml")===1&&
   api.verifiedSpawnRawIv(alt)==="0/14/15"&&
-  lines.includes("IV 0/14/15")&&lines.includes("IV% 64%")&&
-  lines.includes("GL RG#2")&&lines.includes("IV#1 100,00%")&&
-  lines.includes("UL RG#275")&&lines.includes("IV#1460 64,37%")&&
-  master.includes("ML RG#1")&&master.includes("IV#1 100,00%")&&
+  lines.includes("0/14/15")&&lines.includes("64%")&&
+  lines.includes("GL RG#2")&&lines.includes("GL IV#1")&&lines.includes("GL P100,00%")&&
+  lines.includes("UL RG#275")&&lines.includes("UL IV#1460")&&lines.includes("UL P64,37%")&&
+  master.includes("ML RG#1")&&master.includes("ML IV#1")&&master.includes("ML P100,00%")&&
   api.pvpIvClassPercent(14)==="99,68"&&
-  unknown.includes("IV ?/?/?")&&
+  unknown.includes("?/?/?")&&
   !unknown.some(v=>v.includes("RG#")||v.includes("IV#"))&&
   api.verifiedSpawnRawIv({...alt,ivPercent:"100"})===null&&
   api.verifiedSpeciesIvRank(falseForm,"gl")===null&&
-  api.resultInfoHtml("IV 0/14/15",alt).includes("ivInfo medium")&&
+  api.resultInfoHtml("0/14/15",alt).includes("ivInfo medium")&&
   dock.includes('["stamina","H","iv","H"]')&&
-  countFromNative&&
+  countStartsHidden&&
   service.includes('case "speciesIvRankMl":resultShowSpeciesIvRankMl=value')&&
   service.includes('case "overallRankMl":resultShowOverallRankMl=value')&&
   api.computeResultLayout(Array.from({length:10},()=>alt),45,330,false,false,opts,"gl").visibleCount===10;
