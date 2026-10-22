@@ -2782,7 +2782,7 @@ function renderInfoChoices(){
   });
  }
  const hint=document.createElement("div");hint.className="uxNote";
- hint.textContent="Até 10 spawns. Nome, distância, localização, tamanho, sexo e todos os demais campos podem aparecer ou ficar ocultos. A distância só vem do cartão do PoGoCoordinates, sem GPS. O espaço dos sprites não aumenta; arraste a coluna lateral para ler informações longas. Rank Geral = RG#, Rank de IV = IV#; P = percentil da distribuição de IV (não é IV%). GL/UL/ML sempre aparecem no rank. Países reconhecidos exibem bandeira; sem localização inventada. Dados não comprovados não são inventados.";
+ hint.textContent="As 21 informações começam ocultas por padrão e são ativadas individualmente. Até 10 spawns. Nome, distância, localização, tamanho, sexo e todos os demais campos podem aparecer ou ficar ocultos. A distância só vem do cartão do PoGoCoordinates, sem GPS. O espaço dos sprites não aumenta; arraste a coluna lateral para ler informações longas. Rank Geral = RG#, Rank de IV = IV#; P = percentil da distribuição de IV (não é IV%). GL/UL/ML sempre aparecem no rank. Países reconhecidos exibem bandeira; sem localização inventada. Dados não comprovados não são inventados.";
  panel.appendChild(hint);
  requestAnimationFrame(()=>{if(choiceOpen==="info"&&panel.isConnected)panel.scrollTop=scroll;});
  fit();
