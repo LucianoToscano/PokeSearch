@@ -435,7 +435,7 @@ test("Modos rail and inline editor inherit the only menu transparency slider",()
  assert.ok(tail.includes("border:0!important;box-shadow:none!important;"));
  assert.ok(script.includes('set("menu-bg",rgba(current.menuBgMode,current.menuTransparency))'));
  assert.ok(script.includes('set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency))'));
- assert.ok(!script.includes('addSegment(panel,"menuBgMode"'));
+ assert.ok(script.includes('addSegment(panel,"menuBgMode"'));
  const {window,styles}=fixture();
  for(const [mode,transparency,expected] of [
   ["dark",0,"rgba(15,19,26,1.00)"],
