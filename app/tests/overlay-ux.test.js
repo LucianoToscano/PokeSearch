@@ -1719,6 +1719,22 @@ test("HOME-04 keeps transparent brand left, controls right and plain outside bac
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
 })());
+test("BELL-THEME-02 floating bell uses black in light mode and white in dark mode",()=>{
+ const light='body.controls-window.visual-light-menu #quickMenuList button[data-key="bell"]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{';
+ const dark='body.controls-window:not(.visual-light-menu) #quickMenuList button[data-key="bell"]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{';
+ const css=dock.split("/* LT54 BELL-THEME-02:")[1]?.split("/* Colored glyphs")[0]||"";
+ const l=css.split(light)[1]?.split("}")[0]||"";
+ const d=css.split(dark)[1]?.split("}")[0]||"";
+ return l.includes("color:#111821!important")&&d.includes("color:#f7f8fa!important")&&
+  l.includes("filter:none!important")&&d.includes("filter:none!important")&&
+  dock.includes('button[data-key="bell"].bell-sound-new')&&
+  dock.includes('button[data-key="bell"].bell-star-on .quickGlyph::after')&&
+  dock.includes('button[data-key="bell"].bell-star-silent .quickGlyph::after')&&
+  dock.includes('[data-key=report] .quickGlyph{color:#ffd674!important}')&&
+  dock.includes('[data-key=donate] .quickGlyph{color:#fa94a7!important}')&&
+  dock.includes('[data-key=close] .quickGlyph{color:#ff596c!important}');
+});
+
 test("LT54-ICON-01 launcher uses adaptive artwork and responsive 3:1 header",(()=>{
  const manifest=fs.readFileSync(path.join(root,"AndroidManifest.xml"),"utf8");
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
