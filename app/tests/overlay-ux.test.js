@@ -152,12 +152,13 @@ test("UX-INFO-COMPACT-01 requested Pokémon metadata has no verbose labels",()=>
  if(begin<0||end<begin)return false;
  const extract=dock.slice(begin,end);
  const makeLines=new Function("verifiedSpawnRawIv","verifiedSpawnIvPercent",
-  "verifiedOverallRank","verifiedSpeciesIvRank","pvpIvClassPercent","esc",extract+
+  "verifiedOverallRank","verifiedSpeciesIvRank","pvpIvClassPercent","esc","ivPaletteClass",extract+
   "return {resultLines,resultInfoHtml,locationCountryFlag};")(
    c=>c.iv||null,c=>c.ivPercent??null,(card,lg)=>({gl:12,ul:84,ml:35}[lg]),
    (card,lg)=>({gl:1,ul:50,ml:307}[lg]),
    n=>(100*(4096-n)/4095).toFixed(2).replace(".",","),
-   x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+   x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;"),
+   value=>value===100?"perfect":value===0?"zero":"medium"
   );
  const c={name:"Yamask",number:"#562",gender:"♂",size:"XXL",form:"Galarian",
   moves:"Astonish / Rock Tomb",location:"Tainan City, Taiwan",distance:"0.3 km",
