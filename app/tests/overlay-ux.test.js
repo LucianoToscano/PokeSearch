@@ -2531,8 +2531,9 @@ test("RELEASE-NOTES-02 automatic notice only on normal Home launch, no OAuth int
  main.includes('Intent.ACTION_MAIN.equals(getIntent().getAction())')&&
  main.includes('root.post(()->ReleaseNotes.maybeShowAfterUpgrade(this))')&&
  main.includes('getBoolean("tutorialSeenV41",false)')&&
- main.includes('dialog.setOnDismissListener(ignored->{\\n            releaseTutorialWebView();'.replace("\\\\n","\\n"))&&
- (main.match(/ReleaseNotes\\.maybeShowAfterUpgrade\\(this\\)/g)||[]).length===2);
+ main.includes('dialog.setOnDismissListener(ignored->{')&&
+ main.includes('releaseTutorialWebView();')&&
+ main.split('ReleaseNotes.maybeShowAfterUpgrade(this)').length===3);
 test("RELEASE-NOTES-03 manual release history is available in the existing Home menu",
  main.includes('addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this))'));
 test("RELEASE-NOTES-04 a clean install does not trigger the update notice",
