@@ -76,6 +76,27 @@ body.controls-window #locBadge{display:none!important}
 #choices .extraField input[type=checkbox]{flex:none;width:17px;height:17px;accent-color:#5bba96}
 #choices .extraNote{margin:2px 5px 5px;font-size:9px;color:#b7c3d1;line-height:1.25}
 #choices .extraValue:disabled{opacity:.5;cursor:default}
+/* FILTERS-POGO-01 controls: compact numeric steppers and site-verified chips. */
+body.controls-window #choices[data-panel-kind="filters"]{
+ width:min(306px,calc(100vw - 12px))!important;
+}
+#choices .extraNumberRow{display:flex;align-items:center;gap:3px;flex:1;min-width:0}
+#choices .extraNumberRow input{height:30px!important;text-align:center;min-width:0}
+#choices .extraNumberRow .extraStep{flex:0 0 29px;width:29px;height:29px;min-width:29px;
+ margin:0;padding:0;text-align:center;border-radius:6px;border:1px solid #ffffff40;
+ background:#2b3848;color:#f0f5ff;font-size:17px}
+#choices .extraChipsField{display:flex;flex-wrap:wrap;align-items:flex-start;gap:4px}
+#choices .extraChipsField>label{width:100%;flex:0 0 100%;font-weight:700}
+#choices .extraChipRow{width:100%;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+#choices .extraChipRow .extraChip{flex:1 0 35px;min-width:35px;height:30px;
+ border-radius:8px;border:1px solid #ffffff36;background:#344052;color:#f1f5fb;
+ margin:0;padding:3px 6px;font-size:11px;text-align:center}
+#choices .extraChipRow .extraChip.chosen{background:#226bbf!important;
+ color:#fff!important;border-color:#9dc8ff!important}
+body.controls-window.visual-light-menu #choices:not(.visualPanel) .extraChipRow .extraChip:not(.chosen),
+body.controls-window.visual-light-menu #choices:not(.visualPanel) .extraNumberRow .extraStep{
+ background:#eef3f9!important;color:#172533!important;border-color:#96aabe!important}
+
 #choices .modeRow{display:flex;align-items:center;gap:2px;padding:1px 2px;min-height:29px;border-radius:5px}
 #choices .modeRow.selected{background:#183b32aa}
 #choices .modeRow .modeSelect{flex:1;min-width:0;width:auto;font-size:11px;padding:5px 3px;margin:0}
