@@ -25,7 +25,7 @@ val releaseCertificateSha256 = System.getenv("POKE_RELEASE_CERT_SHA256")?.trim()
 if (releaseCertificateSha256.isNotEmpty() && !Regex("[0-9a-f]{64}").matches(releaseCertificateSha256))
     throw org.gradle.api.GradleException("POKE_RELEASE_CERT_SHA256 must contain 64 hexadecimal characters")
 val checkedAssetNames = listOf("dock.html", "overlay.html", "detail.html",
-    "probe.js", "login_entry.js", "shiny_login.js")
+    "probe.js", "login_entry.js", "shiny_login.js", "release_notes.json")
 val assetChecksums = checkedAssetNames.joinToString(";") { name ->
     val bytes = file("src/main/assets/$name").readBytes()
     val hash = MessageDigest.getInstance("SHA-256").digest(bytes)
