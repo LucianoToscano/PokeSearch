@@ -39,6 +39,12 @@ val testKeyPassword = System.getenv("POKE_TEST_KEY_PASSWORD")
 val testSigningFields = listOf(testKeyFile, testStorePassword, testKeyAlias, testKeyPassword)
 val testSigningComplete = testSigningFields.all { !it.isNullOrBlank() }
 val testSigningRequired = System.getenv("POKE_TEST_SIGNING_REQUIRED") == "true"
+// Enabled ONLY on the isolated distribution branch and its protected CI build.
+val friendsDistribution = System.getenv("POKE_FRIENDS_DISTRIBUTION") == "true"
+val friendsBuildUtcMillis = System.getenv("POKE_FRIENDS_BUILD_UTC_MS")?.toLongOrNull()
+if (friendsDistribution && (friendsBuildUtcMillis == null || friendsBuildUtcMillis <= 0L))
+    throw org.gradle.api.GradleException("15-day distribution requires an official UTC build timestamp")
+val friendsExpiryUtcMillis = if (friendsDistribution) friendsBuildUtcMillis!! + 15L * 24 * 60 * 60 * 1000 else 0L
 if ((testSigningRequired || testSigningFields.any { !it.isNullOrBlank() }) && !testSigningComplete)
     throw org.gradle.api.GradleException("Stable test signing is incomplete; configure the protected CI secrets")
 if (testSigningRequired && testVersionLabel == null)
@@ -59,6 +65,9 @@ android {
         targetSdk = 33
         buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256", "\"\"")
         buildConfigField("String", "EXPECTED_ASSET_SHA256", "\"$assetChecksums\"")
+        buildConfigField("boolean", "FRIENDS_DISTRIBUTION", "$friendsDistribution")
+        buildConfigField("long", "FRIENDS_BUILD_UTC_MILLIS", "${friendsBuildUtcMillis ?: 0L}L")
+        buildConfigField("long", "FRIENDS_EXPIRY_UTC_MILLIS", "${friendsExpiryUtcMillis}L")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) "0.51-beta.test.${testVersionLabel ?: testVersionCode}" else "0.51-beta"
     }
@@ -98,8 +107,13 @@ android {
         }
         getByName("release") {
             buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256",
-                "\"$releaseCertificateSha256\"")
-            if (!releaseStore.isNullOrBlank()) signingConfig = signingConfigs.getByName("privateTestRelease")
+                "\"${if (friendsDistribution) officialTestCertificateSha256 else releaseCertificateSha256}\"")
+            if (friendsDistribution) {
+                if (!testSigningComplete)
+                    throw org.gradle.api.GradleException("Friends release requires the permanent test certificate")
+                signingConfig = signingConfigs.getByName("persistentTestDebug")
+            } else if (!releaseStore.isNullOrBlank()) signingConfig = signingConfigs.getByName("privateTestRelease")
+            isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -113,7 +127,7 @@ android {
 
 tasks.matching { it.name == "preReleaseBuild" }.configureEach {
     doFirst {
-        if (System.getenv("POKE_RELEASE_KEYSTORE").isNullOrBlank() || releaseCertificateSha256.isEmpty())
+        if (!friendsDistribution && (System.getenv("POKE_RELEASE_KEYSTORE").isNullOrBlank() || releaseCertificateSha256.isEmpty()))
             throw org.gradle.api.GradleException("Release signing and POKE_RELEASE_CERT_SHA256 are required")
     }
 }

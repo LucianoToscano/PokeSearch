@@ -1,0 +1,163 @@
+name: PokeSearch Amigos - APK protegido 15 dias
+on:
+  push:
+    branches:
+      - distribution/friends-51250-15days-20261022
+    paths:
+      - 'app/**'
+      - 'docs/GUIA_MESTRE.md'
+      - '.github/workflows/distribute-friends-15days.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pokesearch-amigos-15days-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  apk-amigos:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      POKE_TEST_SIGNING_REQUIRED: "true"
+      POKE_FRIENDS_DISTRIBUTION: "true"
+      POKE_TEST_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_TEST_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_TEST_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+    steps:
+      - name: Checkout exato, sem credenciais persistentes
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Restore permanent signing key and freeze build expiry
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for value in "${POKE_TEST_KEYSTORE_B64:-}" "${POKE_TEST_STORE_PASSWORD:-}" "${POKE_TEST_KEY_ALIAS:-}" "${POKE_TEST_KEY_PASSWORD:-}"; do
+            test -n "$value" || { echo "::error::Missing permanent signing secret"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pokesearch-amigos.p12"
+          chmod 600 "$RUNNER_TEMP/pokesearch-amigos.p12"
+          keytool -list -storetype PKCS12 -keystore "$RUNNER_TEMP/pokesearch-amigos.p12" \
+            -storepass "$POKE_TEST_STORE_PASSWORD" -alias "$POKE_TEST_KEY_ALIAS" >/dev/null
+          echo "POKE_TEST_KEYSTORE=$RUNNER_TEMP/pokesearch-amigos.p12" >> "$GITHUB_ENV"
+          echo "POKE_TEST_VERSION_CODE=54250" >> "$GITHUB_ENV"
+          echo "POKE_TEST_VERSION_LABEL=51250" >> "$GITHUB_ENV"
+          BUILD_UTC_MS="$(date -u +%s%3N)"
+          EXPIRY_UTC_MS="$((BUILD_UTC_MS + 15 * 24 * 60 * 60 * 1000))"
+          echo "POKE_FRIENDS_BUILD_UTC_MS=$BUILD_UTC_MS" >> "$GITHUB_ENV"
+          echo "POKE_FRIENDS_EXPIRY_UTC_MS=$EXPIRY_UTC_MS" >> "$GITHUB_ENV"
+          echo "SOURCE_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "BUILD_UTC_MS=$BUILD_UTC_MS" >> "$GITHUB_STEP_SUMMARY"
+          echo "EXPIRY_UTC_MS=$EXPIRY_UTC_MS" >> "$GITHUB_STEP_SUMMARY"
+      - name: Install Android SDK
+        shell: bash
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Run seven original Node suites + distribution regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in app/src/main/assets/{probe,pvpoke-overall-ranks,pvpoke-iv-gamemaster,login_entry,shiny_login}.js; do node --check "$f"; done
+          for suite in app/tests/{location-probe,probe-smoke,pokemon-picker,login-entry,overlay-ux,visual-editor,signing-contract,friends-expiry}.test.js; do
+            node "$suite"
+          done
+          node - <<'NODE'
+          const fs=require('node:fs'),vm=require('node:vm');
+          for(const f of ['app/src/main/assets/dock.html','app/src/main/assets/detail.html']){
+            const s=fs.readFileSync(f,'utf8');
+            let n=0;
+            for(const m of s.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)){
+              new vm.Script(m[1],{filename:f+':'+(++n)});
+            }
+            if(!n)throw new Error('Missing JS: '+f);
+          }
+          NODE
+      - name: Minify non-HTML JavaScript without renaming WebView bridge properties
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/friends-js"
+          for f in probe.js login_entry.js shiny_login.js; do
+            INPUT="app/src/main/assets/$f"
+            npx --yes --package=terser@5.37.0 terser "$INPUT" --compress --mangle \
+              --output "$RUNNER_TEMP/friends-js/$f"
+            node --check "$RUNNER_TEMP/friends-js/$f"
+            test "$(wc -c < "$RUNNER_TEMP/friends-js/$f")" -lt "$(wc -c < "$INPUT")"
+            cp "$RUNNER_TEMP/friends-js/$f" "$INPUT"
+          done
+          # Never use property mangling: native JavascriptInterface names are fixed.
+          git diff --stat -- app/src/main/assets/
+      - name: Build minified non-debuggable release + JVM tests
+        shell: bash
+        run: gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleRelease :app:lintRelease
+      - name: Inspect APK, signer, version, expiry and deliverable
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          test -s app/build/outputs/mapping/release/mapping.txt
+          BADGING="$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK")"
+          PACKAGE_LINE="$(grep '^package: ' <<< "$BADGING")"
+          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54250'" "versionName='0.51-beta.test.51250'"; do
+            grep -Fq -- "$expected" <<< "$PACKAGE_LINE"
+          done
+          if grep -q '^application-debuggable' <<< "$BADGING"; then
+            echo "::error::Debuggable APK may not be distributed"; exit 1
+          fi
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/apksigner-report.txt"
+          grep -Eq '^Verified using v2 scheme.*: true$' "$RUNNER_TEMP/apksigner-report.txt"
+          grep 'Signer #1 certificate SHA-256 digest:' "$RUNNER_TEMP/apksigner-report.txt" | awk '{print $NF}' > SIGNING_CERT_SHA256.txt
+          CERT="$(tr -d ':\r\n ' < SIGNING_CERT_SHA256.txt | tr '[:upper:]' '[:lower:]')"
+          if [ "$CERT" != '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e' ]; then
+            echo "::error::Unexpected signature certificate: distribution blocked"; exit 1
+          fi
+          if unzip -Z1 "$APK" | grep -E '(^|/)([^/]+\.(java|kt|jks|p12|keystore)|mapping\.txt)$'; then
+            echo "::error::APK contains a source or secret file"; exit 1
+          fi
+          test "$POKE_FRIENDS_EXPIRY_UTC_MS" -gt "$POKE_FRIENDS_BUILD_UTC_MS"
+          test "$((POKE_FRIENDS_EXPIRY_UTC_MS - POKE_FRIENDS_BUILD_UTC_MS))" -eq 1296000000
+          NAME="PokeSearch-0.51-beta.test.51250-Amigos-15dias.apk"
+          cp "$APK" "$NAME"
+          sha256sum "$NAME" > SHA256SUMS.txt
+          {
+            printf 'SOURCE_COMMIT=%s\n' "$SOURCE_COMMIT"
+            printf 'PACKAGE=com.lucianotoscano.pokesearch\n'
+            printf 'VERSION_CODE=54250\nVERSION_NAME=0.51-beta.test.51250\n'
+            printf 'BUILD_UTC_MS=%s\nEXPIRY_UTC_MS=%s\n' "$POKE_FRIENDS_BUILD_UTC_MS" "$POKE_FRIENDS_EXPIRY_UTC_MS"
+            printf 'BUILD_UTC=%s\n' "$(date -u -d "@$((POKE_FRIENDS_BUILD_UTC_MS/1000))" --iso-8601=seconds)"
+            printf 'EXPIRY_UTC=%s\n' "$(date -u -d "@$((POKE_FRIENDS_EXPIRY_UTC_MS/1000))" --iso-8601=seconds)"
+            printf 'R8=enabled\nRESOURCE_SHRINK=enabled\nDEBUGGABLE=false\n'
+            printf 'PERMANENT_CERT_SHA256=%s\n' "$CERT"
+          } > BUILD_PROVENANCE.txt
+          (sha256sum -c SHA256SUMS.txt)
+      - name: Publish only APK and verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-51250-Amigos-15dias-APK
+          path: |
+            PokeSearch-0.51-beta.test.51250-Amigos-15dias.apk
+            SHA256SUMS.txt
+            SIGNING_CERT_SHA256.txt
+            BUILD_PROVENANCE.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Erase restored private signing key
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/pokesearch-amigos.p12"

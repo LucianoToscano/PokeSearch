@@ -751,8 +751,22 @@ public class OverlayService extends Service {
             }
         });
     }
+    private final Runnable friendsExpiryCheck = new Runnable() {
+        @Override public void run() {
+            if (!FriendsExpiryGuard.isAllowed(OverlayService.this)) {
+                stopSelf();
+                return;
+            }
+            if (BuildConfig.FRIENDS_DISTRIBUTION)
+                handler.postDelayed(this, 15_000L);
+        }
+    };
     @Override public void onCreate(){
         super.onCreate();
+        if (!FriendsExpiryGuard.isAllowed(this)) {
+            stopSelf();
+            return;
+        }
         if (!IntegrityGuard.verify(this)) {
             BugReport.log(this,"SECURITY","Falha de integridade do pacote");
             android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
@@ -770,6 +784,8 @@ public class OverlayService extends Service {
                 .setContentText("Toque para abrir PokeSearch")
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(73,note);
+        if (BuildConfig.FRIENDS_DISTRIBUTION)
+            handler.postDelayed(friendsExpiryCheck, 15_000L);
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         try{visualPrefsJson=normalizeVisualPrefs(
             getSharedPreferences("prefs",0).getString("visualPrefsJson","{}")).toString();}
@@ -2724,6 +2740,10 @@ public class OverlayService extends Service {
         update(); // Local UI only; does not call refresh or navigate the website.
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
+        if (!FriendsExpiryGuard.isAllowed(this)) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
         String action=i==null||i.getAction()==null?"":i.getAction();
         if("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS".equals(action)){
             syncPreferencesWithoutSearch();

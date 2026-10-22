@@ -94,8 +94,27 @@ public class MainActivity extends Activity {
     private String pendingExportText="";
     private String preferredLoginProvider="";
     private String observedLoginProvider="";
+    // Distribution-only silent gate. The development branch never receives this code.
+    private final android.os.Handler friendsExpiryHandler =
+        new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable friendsExpiryCheck = new Runnable() {
+        @Override public void run() {
+            if (!FriendsExpiryGuard.isAllowed(MainActivity.this)) {
+                stopService(new Intent(MainActivity.this, OverlayService.class));
+                finish();
+                return;
+            }
+            if (BuildConfig.FRIENDS_DISTRIBUTION)
+                friendsExpiryHandler.postDelayed(this, 15_000L);
+        }
+    };
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
+        if (!FriendsExpiryGuard.isAllowed(this)) {
+            stopService(new Intent(this, OverlayService.class));
+            finish();
+            return;
+        }
         if (!IntegrityGuard.verify(this)) {
             BugReport.log(this,"SECURITY","Falha de integridade do pacote");
             android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
@@ -805,6 +824,15 @@ public class MainActivity extends Activity {
     }
     @Override protected void onResume(){
         super.onResume();
+        if (!FriendsExpiryGuard.isAllowed(this)) {
+            stopService(new Intent(this, OverlayService.class));
+            finish();
+            return;
+        }
+        if (BuildConfig.FRIENDS_DISTRIBUTION) {
+            friendsExpiryHandler.removeCallbacks(friendsExpiryCheck);
+            friendsExpiryHandler.postDelayed(friendsExpiryCheck, 15_000L);
+        }
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
@@ -1392,6 +1420,11 @@ public class MainActivity extends Activity {
         }
     }
     private void startOverlay(){
+        if (!FriendsExpiryGuard.isAllowed(this)) {
+            stopService(new Intent(this, OverlayService.class));
+            finish();
+            return;
+        }
         CookieManager.getInstance().flush();
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -1639,6 +1672,7 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        friendsExpiryHandler.removeCallbacks(friendsExpiryCheck);
         stopBundledTonePreview();
         activityClosing=true;
         avatarRequestGeneration++;
