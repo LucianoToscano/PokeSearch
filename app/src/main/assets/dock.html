@@ -1050,6 +1050,20 @@ body.controls-window:not(.visual-light-menu) #quickMenuList button[data-key="bel
   color:#f7f8fa!important;
   filter:none!important;
 }
+/* LT55 BELL-THEME-03: the bell is an SVG with its own stroke. Follow the
+   independent VISUAL MENU foreground directly on the SVG, not only on the
+   parent glyph/button. This works after a saved theme is restored or changed
+   and avoids the white bell on a light tile (or dark bell on a dark tile).
+   Audible general alerts remain gold; favorites stars use separate ::after. */
+body.controls-window #quickMenuList button[data-key="bell"] .quickGlyph svg{
+  color:var(--visual-menu-fg,#f2f7fc)!important;
+  stroke:var(--visual-menu-fg,#f2f7fc)!important;
+}
+body.controls-window #quickMenuList button[data-key="bell"].bell-sound-new .quickGlyph svg,
+body.controls-window #quickMenuList button[data-key="bell"].bell-sound-both .quickGlyph svg{
+  color:#ffd64b!important;
+  stroke:#ffd64b!important;
+}
 /* Colored glyphs are always colored and override the generic neutral rule. */
 body.controls-window #quickMenuList [data-key=report] .quickGlyph{color:#ffd674!important}
 body.controls-window #quickMenuList [data-key=donate] .quickGlyph{color:#fa94a7!important}
