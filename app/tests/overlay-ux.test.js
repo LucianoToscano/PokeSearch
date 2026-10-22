@@ -1485,6 +1485,15 @@ test("PL-02 watchdog can release stalled generation without false success",()=>{
   watchdog.includes('searchFailure("⚠ Tempo limite"')&&
   service.includes("handler.removeCallbacks(searchWatchdog);");
 });
+test("RESULTS-ALL-MODES partial site counts wait for complete card extraction",()=>{
+ const probe=read("assets/probe.js");
+ return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,10):0;')&&
+  probe.includes('const siteIncomplete=expectedVisible>found.length;')&&
+  probe.includes('siteCount,siteIncomplete,expectedVisible,parseFailure')&&
+  service.includes('if(r.optBoolean("siteIncomplete",false)&&attempt<24)')&&
+  service.includes('BugReport.log(this,"RESULTS_PARTIAL"')&&
+  service.includes(' • leitura parcial');
+});
 test("Mode switches retry transitional old cards and map-link extraction",()=>{
  return service.includes('if(attempt<24){pollSearch(generation,attempt+1,manual);return;}')&&
   service.includes('if((loading||(!empty&&found==0))&&attempt<24)')&&
