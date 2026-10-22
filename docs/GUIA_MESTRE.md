@@ -3564,3 +3564,17 @@ Total **658 contratos JS reportados pelos sete comandos**. O `gradle :app:assemb
 
 **Governança:** branch feature/pokesearch-51081-visual-editor-20261021. Arquivos alterados: app/src/main/assets/dock.html, app/src/main/assets/visual_editor.js, app/tests/visual-editor.test.js e este mesmo docs/GUIA_MESTRE.md. Sem merge, sem compilação e sem novo APK. Permanecem assinatura, applicationId, backups, WebView + evaluateJavascript + probe.js, sessão e integração PoGoCoordinates e separação do PvPPokeGo. O APK 0.51-beta.test.51192 ainda é uma versão antiga e não possui estas mudanças.
 
+### 12.171 UX-INFO-ALL-HIDDEN-DEFAULT — todas as 21 informações começam ocultas (21/10/2026)
+
+**Decisão do usuário:** por padrão, todas as informações opcionais dos Pokémon devem iniciar ocultas, inclusive quantidade de spawns, IV A/D/H e demais rankings GL/UL/ML. Cada um dos 21 interruptores continua independente e opt-in. Isto não significa ocultar os próprios sprites ou o cabeçalho/ícone base da lista.
+
+**Causa verificada:** o estado inicial em app/src/main/assets/dock.html trazia count:true e rawIv:true, apesar de os demais campos começarem false; adicionalmente OverlayService.syncPreferencesWithoutSearch() forçava a migração resultCountUxV2, gravando resultShowCount=true na primeira inicialização de algumas instalações. Assim a contagem aparecia mesmo sem uma ativação manual.
+
+**Implementação:** o objeto resultDisplayOptions no dock.html agora inicializa count:false, rawIv:false e os outros 19 campos de Informações com false, somando 21 interruptores visíveis no menu. O serviço mantém seus booleanos com default false, incluindo showTimers e showResultText, e não executa mais a migração que ativava a contagem. O texto explicativo do menu informa que os 21 campos começam ocultos. Os dados brutos dos Pokémon, filtros, WebView, resultados, sprites e cálculos permanecem intactos. O total de até dez sprites continua válido.
+
+**Persistência e upgrades:** opções já configuradas nas preferências SharedPreferences são respeitadas quando o app é atualizado; não apagar escolhas do usuário. Em instalações existentes que já tenham resultShowCount=true gravado por versões anteriores, o valor permanece ligado até ser desativado no próprio menu. Para uma instalação sem preferências, os 21 campos começam OFF. O controle de Shiny de busca, bem como notificações, não é confundido com o indicador Shiny opcional dos detalhes.
+
+**Testes:** adicionado UX-INFO-DEFAULT-ALL-HIDDEN em app/tests/overlay-ux.test.js para exigir 21 opções false no estado inicial, defaults Android false, ausência de código que force resultShowCount=true e persistência das ativações manuais. O teste antigo UX-INFO-LEAGUES foi atualizado para a formatação compacta já implantada na seção 12.169 e para a ausência da migração da contagem. Ambos os testes reais foram executados isoladamente com os assets PvPoke conectados e aprovados (2/2). Ainda não houve CI Node completo, Gradle, nova versão de APK, teste no Android ou merge.
+
+**Governança:** alterações limitadas a app/src/main/assets/dock.html, app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java, app/tests/overlay-ux.test.js e o mesmo docs/GUIA_MESTRE.md; branch feature/pokesearch-51081-visual-editor-20261021. Sem modificar assinatura, applicationId, backups, WebView + evaluateJavascript + probe.js, integração com PoGoCoordinates, login ou projeto PvPPokeGo.
+
