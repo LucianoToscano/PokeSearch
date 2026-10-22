@@ -362,7 +362,7 @@ test("Login, Shiny and league filters remain independent",service.includes('JSON
 const toolbarCols=dock.match(/#controls\{[^}]*grid-template-columns:([^;]+);/);
 const toolbarButtons=dock.slice(dock.indexOf('<div id="controls">'),dock.indexOf('</div><div id="choices"')).match(/<button\b/g)||[];
 test("Legacy twelve toolbar handlers remain available for rollback",
-  !!toolbarCols&&toolbarCols[1].trim()==="34fr 22fr 41fr 20fr 20fr 23fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr"&&
+  !!toolbarCols&&toolbarCols[1].trim()==="34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr"&&
   toolbarButtons.length===12&&dock.includes("grid-auto-flow:column"));
 test("Single pin shows active radius without a second settings button",
   (dock.match(/id="location"/g)||[]).length===1&&dock.includes('id="locationRadiusText"')&&
@@ -892,7 +892,7 @@ test("UX-MENU-01 visibility toggles cannot invent unverified data",
 // UX-MENU-02 · explicit visual checkpoint, no APK build or site claim.
 test("UX-MENU-02 orders Modos, Filtros, Localização and Pokémon consecutively",
  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"]')&&
- dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"],["missions","⚑","Missões · CoordsGo","missions"]')&&
+ dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
  dock.includes('["star","☆","Favoritos","star"],["bell","♧","Alertas","alerts"]'));
 test("UX-MENU-02 uses earlier SVG icons for location, alerts, favorites, appearance and support",
  dock.includes('location:"location",bell:"bell",star:"star",donate:"donate"')&&
@@ -914,7 +914,7 @@ test("UX-SHINY-01 restores Shiny ✨ next to Modos using the existing native tog
  !dock.includes('shinyButton.onclick=()=>Native.shiny()'));
 test("UX-MENU-04 restores twelve small icons in the old thin row while migrating saved menu",
  dock.includes('id="quickUtilities"')&&
- dock.includes('grid-template-columns:repeat(13,minmax(0,1fr))!important')&&
+ dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important')&&
  dock.includes('body.controls-window #quickRows,')&&
  dock.includes('display:contents!important')&&
  dock.includes('const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon")'));
@@ -930,13 +930,13 @@ test("PL-04 OFF does not force Area when default Coords are blank",
 
 test("UX-MENU-03 keeps one tiny toolbar, cascade and independent other menus",
  dock.includes('body.controls-window #quickHead{display:none!important}')&&
- dock.includes('grid-template-columns:repeat(13,minmax(0,1fr))!important')&&
+ dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important')&&
  dock.includes('width:88px!important;height:190px!important')&&
  dock.includes('width:220px!important')&&dock.includes('width:306px!important'));
 test("UX-MENU-04 keeps twelve icon-first entry points in one thin row",
   dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])')&&
   dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"]')&&
-  dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"],["missions","⚑","Missões · CoordsGo","missions"]')&&
+  dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
   dock.includes('["report","⚠","Reportar","report"]')&&
   dock.includes('["donate","♡","Apoiar","donate"]')&&
   dock.includes('["close","×","Fechar","close"]')&&
@@ -951,7 +951,7 @@ test("UX-MENU-03 highlights active states by icon without visible labels",
 test("UX-MENU-04 exposes exactly the approved twelve icons in order",(()=>{
  const chunk=dock.split('const QUICK_ACTIONS=[')[1]?.split('];')[0]||"";
  const keys=[...chunk.matchAll(/\["([a-z]+)","[^"]+","[^"]+","[^"]+"\]/g)].map(m=>m[1]);
- return JSON.stringify(keys)===JSON.stringify(["mode","sh","filters","location","pokemon","missions","star",
+ return JSON.stringify(keys)===JSON.stringify(["mode","sh","filters","location","pokemon","star",
    "bell","period","appearance","report","donate","close"])&&
    chunk.includes('"period"')&&!chunk.includes('"info"')&&
    chunk.includes('["sh","✨","Shiny Only","sh"]')&&
@@ -984,10 +984,10 @@ test("UX-MENU-04 preserves all old Android feature bridges and migrates 12-icon 
  return bridge.every(name=>service.includes('void '+name+'('))&&
  dock.includes('p.order.some(id=>!ids.includes(id))')&&
  dock.includes('const QUICK_UTILITY_IDS=[];')&&
- service.includes('String[] allowed={"mode","sh","filters","location","pokemon","missions","star",')&&
+ service.includes('String[] allowed={"mode","sh","filters","location","pokemon","star",')&&
  service.includes('"bell","period","appearance","report","donate","close"')&&
  dock.includes('["sh","✨","Shiny Only","sh"]')&&
- dock.includes('grid-template-columns:repeat(13,minmax(0,1fr))!important');
+ dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important');
 })());
 
 
@@ -1064,7 +1064,7 @@ test("REG-51049 OFF public search ignores inert radius while refusing residual c
 test("UX-MENU-06 refresh directly after Alertas and personalization before Reportar",()=>{
  const raw=dock.split("const QUICK_ACTIONS=[")[1]?.split("];")[0]||"";
  const ids=[...raw.matchAll(/\["([a-z]+)","[^"]+","[^"]+","[^"]+"\]/g)].map(x=>x[1]);
- return ids.length===13&&ids.indexOf("sh")===ids.indexOf("mode")+1&&
+ return ids.length===12&&ids.indexOf("sh")===ids.indexOf("mode")+1&&
   ids.indexOf("period")===ids.indexOf("bell")+1&&
   ids.indexOf("appearance")===ids.indexOf("report")-1&&
   dock.includes('case "bell":toggleChoices("alerts")')&&
@@ -1137,7 +1137,7 @@ test("Thin bar Modos icon redraws on filter/rank change and does not add buttons
  return dock.includes('button.dataset.modeArtKey=art.path+"|"+art.ivBadge')&&
    block.includes('previous.replaceWith(iconForQuick("mode","☷"))')&&
    dock.includes('rank.textContent=art.ivBadge')&&
-   dock.includes('grid-template-columns:repeat(13,minmax(0,1fr))!important');
+   dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important');
 });
 
 
@@ -1159,7 +1159,7 @@ test("VIS tiny white Pokemon and pencil-gear are independent SVG toolbar icons",
   !source.includes('appearance:"gear"')&&
   dock.includes('[data-key=pokemon] .quickGlyph')&&
   dock.includes('[data-key=appearance] .quickGlyph{color:#f4f6fa!important}')&&
-  dock.includes('grid-template-columns:repeat(13,minmax(0,1fr))!important');
+  dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important');
 });
 test("PL-04 final site verification happens after IV filters and before Search",()=>{
  const verified=service.indexOf('execute("verifyFilters",filters->');
@@ -1618,7 +1618,7 @@ test("PL-02 marks submit boundary before Search can navigate",()=>{
 test("PL-02 waits for WebView after submit navigation without treating missing DOM as zero",()=>{
  const poll=service.split("private void pollSearch(")[1]?.split("private long expiration(")[0]||"";
  return poll.includes("if(!loaded||website==null){")&&
-  poll.includes("if(attempt<24){pollSearch(generation,attempt+1,manual);return;}")&&
+  poll.includes("if(attempt<8){pollSearch(generation,attempt+1,manual);return;}")&&
   poll.indexOf("if(!loaded||website==null){")<poll.indexOf('execute("collect",r->{')&&
   poll.includes('searchFailure("⚠ Site não carregado"');
 });
@@ -2124,11 +2124,9 @@ test("UX-INFO-ALL-03 optional metadata respects the compact row dimensions",()=>
    location:true,distance:true,shiny:true,rawIv:false};
  const lines=f.resultLines(card,opts,'gl'),hidden=f.resultLines(card,{},'gl');
  const layout=f.computeResultLayout([card,card],45,700,false,false,opts,'gl');
- return lines.includes('Machop')&&
-   lines.some(s=>s.endsWith('Shibuya, Tokyo, Japan'))&&
-   lines.includes('0.3 km')&&lines.includes('♀')&&
-   lines.includes('M')&&lines.includes('✨')&&
-   !lines.some(s=>/^(Nome |Local |Dist |Sexo |Tam )/.test(s))&&
+ return lines.includes('Nome Machop')&&lines.includes('Local Shibuya, Tokyo, Japan')&&
+   lines.includes('Dist 0.3 km')&&lines.includes('Sexo ♀')&&
+   lines.includes('Tam M')&&lines.includes('✨ Shiny')&&
    hidden.length===0&&layout.rows.every(r=>r===45)&&layout.visibleCount===2;
 });
 test("UX-LOC-SHINY-01 reasserts shiny after site Coords switch and before Search",()=>{
@@ -2174,7 +2172,7 @@ test("SITE-POKEMON-04 site filter uses selected chips and exact official options
  probe.includes('return {ok:false,pending:false,reason:')&&
  probe.includes('found.filter(x=>matches(x)&&requestedSpecies(x))'));
 test("SITE-POKEMON-05 12-icon toolbar & no personal GPS remain intact",()=>
- dock.includes('grid-template-columns:34fr 22fr 41fr 20fr 20fr 23fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr')&&
+ dock.includes('grid-template-columns:34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr')&&
  !probe.includes('navigator.geolocation')&&
  dock.includes('items.slice(0,10)')&&
  service.includes('"locationCoords"'));
