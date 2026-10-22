@@ -1640,6 +1640,9 @@ function renderModeChoices(){
  fit();
 }
 
+/* FILTERS-POGO-01: source-aligned menu. Pokémon species/IV/PvP/Coords stay
+   in their dedicated menus. These selectors are just a compact UI for the
+   existing PoGoCoordinates probe; nothing is applied until ✓ Aplicar. */
 function renderExtraFilters(panel,make){
  const divider=()=>panel.appendChild(make("div","extraDivider"));
  const field=(label,control)=>{
@@ -1648,59 +1651,115 @@ function renderExtraFilters(panel,make){
  };
  const option=(key,label)=>{
   const data=filterOptions[key]||{};
-  // This exact option was observed in the supplied PoGoCoordinates screenshot.
-  // If the current site no longer supports it, probe verification blocks Search.
-  const choices=(data.options&&data.options.length?data.options:(key==="sortBy"?["Despawn (longest)"]:[])).filter(Boolean);
-  const current=String(modeDraft[key]||""),button=make("button","extraValue",current||"Any / padrão");
+  const choices=Array.isArray(data.options)?data.options.map(x=>String(x).trim()).filter(Boolean):[];
+  const current=String(modeDraft[key]||"");
+  const button=make("button","extraValue",current||"Qualquer / padrão");
   button.type="button";button.disabled=!choices.length;
-  button.title=choices.length?"Escolher "+label:"Aguardando opções reais do site";
+  button.title=choices.length?"Selecionar "+label:"Aguardando opções verificadas no PoGoCoordinates";
   button.onclick=()=>{modeScrollTop=panel.scrollTop;renderFilterPicker(key,label,choices);};
   field(label,button);
  };
- const number=(key,label)=>{
-  const input=make("input");input.type="number";input.inputMode="decimal";input.min="0";
+ const number=(key,label,level=false)=>{
+  const line=make("div","extraField"),name=make("label","",label);
+  const wrapper=make("div",level?"extraNumberRow extraLevel":"extraNumberRow");
+  const input=make("input");input.type="number";input.inputMode="numeric";input.step="1";
+  input.min=level?"1":"0";input.max=level?"35":"99999";
+  input.value=String(modeDraft[key]??"");input.placeholder=level?(key.endsWith("Min")?"1":"35"):"Qualquer";
+  input.dataset.filterNumber=key;input.setAttribute("aria-label",label);
   input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
   input.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
-  input.placeholder="Any";input.value=modeDraft[key]||"";input.setAttribute("aria-label",label);
-  input.oninput=()=>{modeDraft[key]=input.value;};
-  field(label,input);
+  input.oninput=()=>{modeDraft[key]=input.value;input.setCustomValidity("");};
+  if(level){
+   const step=direction=>{
+    const fallback=key.endsWith("Min")?1:35;
+    const current=input.value===""?fallback:Number(input.value);
+    const wanted=Math.max(1,Math.min(35,(Number.isFinite(current)?current:fallback)+direction));
+    input.value=String(wanted);modeDraft[key]=input.value;input.setCustomValidity("");
+    // Keep the range consistent when a button crosses the other endpoint.
+    const counterpart=key==="levelMin"?"levelMax":"levelMin";
+    const other=panel.querySelector('[data-filter-number="'+counterpart+'"]');
+    if(other&&other.value!==""&&
+       (key==="levelMin"?wanted>Number(other.value):wanted<Number(other.value))){
+      other.value=String(wanted);modeDraft[counterpart]=other.value;
+    }
+   };
+   const minus=make("button","extraStep","−");minus.type="button";minus.title="Diminuir "+label;
+   const plus=make("button","extraStep","+");plus.type="button";plus.title="Aumentar "+label;
+   minus.onclick=()=>step(-1);plus.onclick=()=>step(1);
+   wrapper.append(minus,input,plus);
+  }else wrapper.append(input);
+  line.append(name,wrapper);panel.appendChild(line);
+ };
+ const chips=(key,label)=>{
+  const choices=(filterOptions[key]?.options||[]).map(x=>String(x).trim())
+   .filter(x=>x&&!/^(?:any\b|all\b|qualquer\b|todos?\b|select\b)/i.test(x));
+  const uniq=[...new Set(choices)];
+  const sizeOrder=["XXS","XS","S","M","L","XL","XXL"];
+  const mapLabel=value=>{
+   if(key==="gender"){
+    if(/^(?:male|macho|masculino)$/i.test(value))return "♂";
+    if(/^(?:female|f[eê]mea|feminino)$/i.test(value))return "♀";
+    if(/(?:genderless|unknown|sem g[eê]nero|gender unknown)/i.test(value))return "⚲";
+   }
+   return value;
+  };
+  const siteValues=key==="size"?
+   uniq.sort((a,b)=>sizeOrder.indexOf(a.toUpperCase())-sizeOrder.indexOf(b.toUpperCase())):uniq;
+  const line=make("div","extraField extraChipsField"),name=make("label","",label);
+  const group=make("div","extraChipRow");
+  const values=[["","Qualquer"],...siteValues.map(value=>[value,mapLabel(value)])];
+  for(const [value,text] of values){
+   const button=make("button","extraChip",text);button.type="button";
+   button.classList.toggle("chosen",String(modeDraft[key]||"")===value);
+   button.setAttribute("aria-pressed",String(String(modeDraft[key]||"")===value));
+   button.setAttribute("aria-label",label+": "+(value||"Qualquer"));
+   button.onclick=()=>{modeDraft[key]=value;modeScrollTop=panel.scrollTop;renderFiltersChoices();};
+   group.appendChild(button);
+  }
+  if(uniq.length===0){
+   const wait=make("span","extraNote","Carregando opções oficiais…");group.appendChild(wait);
+  }
+  line.append(name,group);panel.appendChild(line);
  };
  const section=(label,open,onClick)=>{
   divider();
-  const button=make("button","extraHead");
-  button.type="button";button.textContent=label+(open?" ▴":" ▾");
+  const button=make("button","extraHead");button.type="button";
+  button.textContent=label+(open?" ▴":" ▾");
   button.setAttribute("aria-expanded",String(open));
   button.onclick=()=>{modeScrollTop=panel.scrollTop;onClick();
-    if(choiceOpen==="filters")renderFiltersChoices();else renderModeChoices();};
+   if(choiceOpen==="filters")renderFiltersChoices();else renderModeChoices();};
   panel.appendChild(button);
  };
- // Sort is an ordering control, not a fifth search mode.
+ // The remote ordering control is not a search mode.
  divider();option("sortBy","Sort by");
  section("Filtros gerais",generalExpanded,()=>{generalExpanded=!generalExpanded;});
  if(generalExpanded){
-  const input=make("input");input.type="text";input.placeholder="Qualquer Pokémon";
-  input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
-  input.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
-  const pick=make("button","extraValue",Array.isArray(modeDraft.pokemonSelections)&&modeDraft.pokemonSelections.length?
-   modeDraft.pokemonSelections.length+" escolhidos ›":"Escolher Pokémon ›");
-  pick.onclick=()=>toggleChoices("pokemon");
-  field("Pokémon",pick);
-  option("form","Form");option("size","Size");
-  panel.appendChild(make("p","extraNote","Form depende das variantes disponíveis; os menus usam opções lidas do site."));
+  const pvp=["gl","ul"].includes(modeDraft.mode);
+  if(!pvp){
+   number("cpMin","PC mínimo");number("cpMax","PC máximo");
+   number("levelMin","Nível mínimo",true);number("levelMax","Nível máximo",true);
+  }else{
+   panel.appendChild(make("p","extraNote",
+    "PC mínimo/máximo e nível são filtros da aba Stats do site; ficam preservados para quando você voltar a IV ou IV%."));
+  }
+  option("weather","Clima");
+  chips("size","Tamanho");
+  option("form","Forma");
+  chips("gender","Gênero");
+  panel.appendChild(make("p","extraNote",
+   "Tamanho e Gênero: escolha por botões (uma opção por filtro, conforme o seletor atual do site)."));
  }
  section("Filtros avançados",advancedExpanded,()=>{advancedExpanded=!advancedExpanded;});
  if(advancedExpanded){
-  if(["raw","percent","iv"].includes(modeDraft.mode)){
-   number("cpMin","CP mínimo");number("cpMax","CP máximo");
-   number("levelMin","Nível mínimo");number("levelMax","Nível máximo");
-   option("weather","Weather");
-  }else{
-   number("minPvpCp","Min CP PvP");
-   const input=make("input");input.type="checkbox";input.checked=modeDraft.includePreviousEvolutions!==false;
+  if(["gl","ul"].includes(modeDraft.mode)){
+   number("minPvpCp","PC mínimo PvP");
+   const input=make("input");input.type="checkbox";
+   input.checked=modeDraft.includePreviousEvolutions!==false;
    input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;};
-   field("Evol. anteriores",input);
+   field("Evoluções anteriores",input);
   }
-  option("gender","Gender");
+  panel.appendChild(make("p","extraNote",
+   "Espécies e formas específicas: menu Pokémon. IV, IV%, GL e UL: menu Modos. Coordenadas e raio: menu Localização."));
  }
 }
 function renderFilterPicker(key,label,options){
