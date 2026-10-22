@@ -1527,11 +1527,17 @@ public class OverlayService extends Service {
                 " • validação="+r.optString("confirmationSource","desconhecida")+
                 " • modo="+mode);
             if(r.optBoolean("parseFailure",false)&&!r.optBoolean("loading",false)){
+                // The old result DOM can remain visible while React replaces it.
+                // Do not fail after the first incomplete frame.
+                if(attempt<24){pollSearch(generation,attempt+1,manual);return;}
                 searchInProgress=false;
                 searchFailure("⚠ Leitura não confirmada","Leitura do site: "+onSite+" ocorrências exibidas, mas nenhum cartão foi reconhecido.");
                 return;
             }
             if(found>0&&r.optJSONArray("cards")!=null&&r.optJSONArray("cards").length()==0){
+                // Switching GL/UL/IV leaves old cards visible briefly. Retry
+                // rather than treating them as definitive results of the new mode.
+                if(attempt<24){pollSearch(generation,attempt+1,manual);return;}
                 searchInProgress=false;
                 boolean pvp="gl".equals(mode)||"ul".equals(mode);
                 searchFailure(pvp?"⚠ Ranking não confirmado":"⚠ IV não comprovado",
