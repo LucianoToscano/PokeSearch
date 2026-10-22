@@ -2516,7 +2516,7 @@ test("RANK-EVO-DETAIL-04 unknown CP never looks confirmed eligible",()=>{
 
 const releaseNotesJava=read("java/com/lucianotoscano/pokesearchoverlay/ReleaseNotes.java");
 const releaseNotesData=JSON.parse(read("assets/release_notes.json"));
-const releaseNotesGradle=fs.readFileSync(path.join(root,"..","build.gradle.kts"),"utf8");
+const releaseNotesGradle=fs.readFileSync(path.join(root,"..","..","build.gradle.kts"),"utf8");
 test("RELEASE-NOTES-01 asset has a versioned, local schema",()=>{
  const entries=releaseNotesData.releases;
  return releaseNotesData.schema==="pokesearch-release-notes-v1"&&Array.isArray(entries)&&entries.length>=1&&
