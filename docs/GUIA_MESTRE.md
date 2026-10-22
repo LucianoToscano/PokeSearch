@@ -3876,3 +3876,18 @@ A imagem `ps_home_official_wordmark.png` mede 2172×724 (proporção exata 3:1),
 **Correção aplicada:** `app/src/main/assets/dock.html` remove a regra invertida que deixava o sino preto com `not(.visual-light-menu)` e acrescenta duas regras com especificidade adequada, em `visual-light-menu` preto / `not(.visual-light-menu)` branco. Exceção de `bell-sound-new` e `bell-sound-both` continua permitindo amarelo de estado audível. `app/tests/overlay-ux.test.js` recebe regressão `BELL-THEME-02` para ambas as condições e estados intactos.
 
 **Entrega parcial:** junto à correção de ícone e wordmark já registrada em 12.180, na branch `fix/lt54-launcher-wordmark-scale-20261022`, PR #31 em rascunho. **Ainda não existe novo APK/merge da correção; v0.00.54-LT segue última versão assinada/mesclada.** Manter esse histórico e aguardar autorização explícita de merge e compilação antes de marcar correção como testada fisicamente.
+
+
+### 12.182-LT55-APK-COMPILADO-SEM-MERGE (22/10/2026)
+
+**Autorização do proprietário:** "Gere o apk." A partir do PR #31 (`fix/lt54-launcher-wordmark-scale-20261022`) foi gerada **PokeSearch-v0.00.55-LT.apk**, **sem fazer merge** e mantendo PR #31 como draft.
+
+**Build efetivamente concluído:** workflow `.github/workflows/build-v055-visual-fixes.yml`, GitHub Actions **run 39864790648** (job 120124153746, status `success`), commit compilado `ec7d4e69977336416e2635d798903332d898527c`. Artifact GitHub **12463601970**, nome `PokeSearch-v0.00.55-LT`, digest ZIP `sha256:9f4899b6bf56a0211dd7c8b3f061de1b10492f7a3bc303b62469dfb1df41a542`; link oficial: https://github.com/LucianoToscano/PokeSearch/actions/runs/39864790648/artifacts/12463601970. O pacote ZIP foi baixado e extraiu-se o APK idêntico ao do CI, sem repacotamento e sem resign.
+
+**Identidade e certificação de APK:** `applicationId com.lucianotoscano.pokesearch`, `versionCode 54253`, `versionName 0.00.55`, `compileSdk 36`; certificado assinatura SHA-256 **34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e** (mesma assinatura permanente do LT54), verificado por `apksigner` no CI. Tamanho **25.418.956 bytes**. `sha256sum -c SHA256SUMS.txt` retornou **OK** após extração. Download direto pelo chat: `sandbox:/mnt/data/PokeSearch-v0.00.55-LT.apk` (referência da conversa geradora, não é URL persistente do Drive).
+
+**Testes:** oito suítes Node passaram: location 68, probe 111, picker 9, login 38, UX **404** (inclui `LT54-ICON-01` e `BELL-THEME-02`), visual editor 46, assinatura 14, Firebase 7; total **697** verificações Node. Gradle `:app:testDebugUnitTest :app:assembleDebug` aprovado e manifesto/pacote conferidos. O 1º disparo foi pulado por guard de CI herdado de LT54; consertado e reexecutado com sucesso. Não declarar teste visual realizado no Samsung ainda.
+
+**Mudanças funcionais apenas visuais:** recurso adaptativo principal agora `@mipmap/ic_launcher` (ícone ampliado), wordmark 3:1 responsivo; sino preto em tema claro e branco em escuro, mantendo exceções de amarelo e estrela de favoritos. Firebase e PoGoCoordinates preservados sem alterações no banco. O APK entregue é candidato validado em CI; última **versão mesclada na main continua LT54**, não confundir build entregue com merge. PR #31 aguarda autorização específica para merge.
+
+**Aceite pendente em aparelho:** instalar sobre LT54 sem limpar dados, conferir ícone em launcher e instalador, nome intacto na Home, sino em ambos os temas, quatro cores especiais, sessão PoGoCoordinates, contadores Firebase, e confirmar nenhum crash. Registrar os resultados reais depois.
