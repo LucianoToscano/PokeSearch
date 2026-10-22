@@ -1463,6 +1463,9 @@ function toggleChoices(kind){
   if(kind==="visual"){window.renderVisualEditor();return;}
  if(kind==="filters"){
   modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
+  // Initial Level selection covers the requested wild-spawn range.
+  if(modeDraft.levelMin===""||modeDraft.levelMin==null)modeDraft.levelMin="1";
+  if(modeDraft.levelMax===""||modeDraft.levelMax==null)modeDraft.levelMax="35";
   renderFiltersChoices();
   if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();
   return;
@@ -1712,7 +1715,7 @@ function renderExtraFilters(panel,make){
   line.append(name,wrapper);panel.appendChild(line);
  };
  const chips=(key,label)=>{
-  const choices=(filterOptions[key]?.options||[]).map(x=>String(x).trim())
+  const choices=(Array.isArray(filterOptions[key]?.options)?filterOptions[key].options:[]).map(x=>String(x).trim())
    .filter(x=>x&&!/^(?:any\b|all\b|qualquer\b|todos?\b|select\b)/i.test(x));
   const uniq=[...new Set(choices)];
   const sizeOrder=["XXS","XS","S","M","L","XL","XXL"];
@@ -1858,7 +1861,7 @@ function renderLocationChoices(){
  const title=make("div","choiceHeader","📍 LOCALIZAÇÃO");
  const close=make("button","choiceClose","×");close.type="button";close.title="Fechar";
  close.onclick=closeChoices;title.appendChild(close);
- const hint=make("p","locText","Cole latitude,longitude. ON ativa o filtro; OFF mantém a busca geral. Ocultar conserva o estado.");
+ const hint=make("p","locText","Cole latitude,longitude e escolha 0–1000 km. ✓ Aplicar executa Search no PoGoCoordinates com todos os filtros já ativos. ON ativa Coords; OFF volta à busca geral. Ocultar conserva o estado.");
  const fieldRow=make("div","locCoordsRow");
  const field=make("input","locField");field.id="locCoordinateInput";field.type="text";field.inputMode="decimal";
  field.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
@@ -2997,7 +3000,25 @@ function renderFiltersChoices(){
  panel.appendChild(make("div","uxNote","As opções e os resultados dependem da confirmação no site; não são inventados."));
  const actions=make("div","modeAction");const apply=make("button","modeApply","✓ Aplicar");
  const cancel=make("button","","Cancelar");
- apply.onclick=()=>{const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));};
+ apply.onclick=()=>{
+  // Reject invalid bounds before saving them or submitting anything to the site.
+  for(const input of panel.querySelectorAll("input[data-filter-number]")){
+   if(input.value.trim()!==""&&!input.checkValidity()){
+    input.reportValidity();return;
+   }
+  }
+  if(!["gl","ul"].includes(modeDraft.mode)){
+   for(const [lowKey,highKey] of [["cpMin","cpMax"],["levelMin","levelMax"]]){
+    const low=String(modeDraft[lowKey]??""),high=String(modeDraft[highKey]??"");
+    if(low!==""&&high!==""&&Number(low)>Number(high)){
+     const input=panel.querySelector('[data-filter-number="'+lowKey+'"]');
+     if(input){input.setCustomValidity("Mínimo maior que máximo");input.reportValidity();}
+     return;
+    }
+   }
+  }
+  const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));
+ };
  cancel.onclick=closeChoices;actions.append(apply,cancel);panel.appendChild(actions);
  requestAnimationFrame(()=>{if(choiceOpen==="filters"&&panel.isConnected)panel.scrollTop=scrollRestoration;});
  fit();
