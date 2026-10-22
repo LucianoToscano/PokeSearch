@@ -2400,6 +2400,99 @@ test("RANK-EVO-02 evolution eligibility is constrained by current level",()=>{
   evos.some(x=>x.eligible===true);
 });
 
+
+// RANK-EVO-DETAIL: verify production result bridge, separated detail UI and
+// asynchronous Android gate without altering search filters or creating a 22nd field.
+test("RANK-EVO-DETAIL-01 exports all evolution stages only in results WebView",()=>{
+ const win={};
+ new Function("window",read("assets/pvpoke-overall-ranks.js"))(win);
+ new Function("window",read("assets/pvpoke-iv-gamemaster.js"))(win);
+ const from=dock.indexOf("const PVPOKE_OVERALL="),to=dock.indexOf('let lastListKey=""',from);
+ if(from<0||to<=from)return false;
+ const checked=c=>{
+  if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(String(c?.iv||"")))return null;
+  const pct=Math.round(c.iv.split("/").map(Number).reduce((a,b)=>a+b,0)*100/45);
+  return Number(c.ivPercent)===pct?pct:null;
+ };
+ const card={name:"Rookidee",iv:"0/13/14",ivPercent:60,cp:368,level:23,sourceIndex:2};
+ const fn=(on,cards)=>new Function("window","verifiedSpawnIvPercent","resultWindow","cards",
+  dock.slice(from,to)+"return window.pvpEvolutionDetails;")(win,checked,on,cards);
+ const exportCard=fn(true,[card]);
+ const projected=exportCard(0);
+ const gl=projected?.leagues?.find(l=>l.league==="gl");
+ const knight=gl?.evolutions?.find(x=>x.name==="Corviknight");
+ const corvisquire=gl?.evolutions?.find(x=>x.name==="Corvisquire");
+ return projected?.sourceIndex===2&&projected?.iv==="0/13/14"&&
+  projected?.cp==="368"&&projected.leagues.length===3&&
+  gl?.own?.rank===1266&&gl.own.statProductPct==="82,60"&&
+  knight?.rank===1&&knight?.statProductPct==="100,00"&&
+  knight?.cp===1500&&knight?.level===23.5&&knight?.currentCp===1468&&
+  knight?.overallRank===6&&corvisquire?.rank===1397&&
+  exportCard(1)===null&&fn(false,[card])(0)===null&&
+  fn(true,[{...card,ivPercent:100}])(0)===null;
+});
+test("RANK-EVO-DETAIL-02 card expands and escapes all visible evolution values",()=>{
+ const html=read("assets/detail.html");
+ const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+ if(!script)return false;
+ const elements={};
+ const node=id=>elements[id]||(elements[id]={
+  hidden:false,innerHTML:"",textContent:"",style:{},src:"",
+  removeAttribute(){},setAttribute(n,v){this[n]=v;},getBoundingClientRect(){return {height:255}},
+  scrollHeight:410
+ });
+ const document={getElementById:node};
+ const window={},heights=[];
+ const Native={resizeDetail:n=>heights.push(n)};
+ const ctx=new Function("document","window","Native","requestAnimationFrame","setInterval","clearInterval",
+  script+"return {toggleEvolutionDetails};"
+ )(document,window,Native,fn=>fn(),()=>1,()=>{});
+ const card={name:"Swablu",iv:"0/14/15",ivPercent:64,sourceIndex:5,cp:293,level:15};
+ window.showDetails(card,"gl",false);
+ const rankOne={name:"Altaria",rank:1,statProductPct:"100,00",
+  level:29,cp:1497,currentCp:774,eligible:true,overallRank:2};
+ const wrongLevel={...rankOne,name:"<img src=x onerror=alert(1)>",eligible:false};
+ const detail={...card,cp:"293",leagues:[
+  {league:"gl",own:{rank:1832,statProductPct:"82,95",level:50,cp:775,overallRank:null},
+   evolutions:[rankOne,wrongLevel]},
+  {league:"ul",own:{rank:1832,statProductPct:"82,95",level:50,cp:775},
+   evolutions:[{...rankOne,rank:1460,statProductPct:"89,97",cp:2043,level:50}]},
+  {league:"ml",own:{rank:1832,statProductPct:"82,95",level:50,cp:775},
+   evolutions:[{...rankOne,rank:1460,statProductPct:"89,97",cp:2043,level:50}]}
+ ]};
+ if(!window.showEvolutionDetails(detail))return false;
+ const body=node("evoBody"),section=node("evolutions");
+ if(section.hidden||!body.hidden||!body.innerHTML.includes("Grande Liga")||
+   !body.innerHTML.includes("Ultra Liga")||!body.innerHTML.includes("Liga Master")||
+   !body.innerHTML.includes("Não elegível no nível atual")||
+   !body.innerHTML.includes("&lt;img")||body.innerHTML.includes("<img src=x")||
+   !body.innerHTML.includes("PC 1497")||!body.innerHTML.includes("Nv 29,0"))return false;
+ ctx.toggleEvolutionDetails();
+ if(body.hidden||node("evoToggle")["aria-expanded"]!=="true")return false;
+ ctx.toggleEvolutionDetails();
+ if(!body.hidden||node("evoToggle")["aria-expanded"]!=="false")return false;
+ window.showDetails({...card,name:"Rookidee",sourceIndex:7},"gl",false);
+ return section.hidden&&window.showEvolutionDetails(detail)===false&&
+  html.includes('Native.toggleWatch(watchName)')&&html.includes("Native.coords(currentIndex)")&&
+  html.includes("window.pauseDetailTimer=()=>")&&heights.length>=4;
+});
+test("RANK-EVO-DETAIL-03 native async bridge rejects old or mismatched results",()=>{
+ const method=service.split("private void showDetails(int index){")[1]?.split("private void hideDetails(){")[0]||"";
+ const detail=read("assets/detail.html");
+ return method.includes("resultPanel.evaluateJavascript(query,raw->")&&
+  method.includes("requestGeneration!=expectedGeneration")&&
+  method.includes("selected!=index")&&method.includes("getVisibility()!=View.VISIBLE")&&
+  method.includes('new JSONArray("["+raw+"]")')&&
+  method.includes('payload.optJSONArray("leagues").length()!=3')&&
+  method.includes('window.showEvolutionDetails(')&&
+  detail.includes("evoIdentity(payload)!==detailIdentity")&&
+  detail.includes("max-height:165px;overflow-y:auto")&&
+  !service.includes("setAllowUniversalAccessFromFileURLs(true)")&&
+  !dock.includes('name:"Rookidee"')&&
+  dock.includes('window.pvpEvolutionDetails=function(index)')&&
+  dock.includes("const descendants=evolutionCandidates(card,league).slice(0,24)");
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
