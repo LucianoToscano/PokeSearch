@@ -490,17 +490,12 @@ public class MainActivity extends Activity {
         View rule=new View(this);rule.setBackgroundColor(Color.argb(90,174,199,235));
         drawer.addView(rule,new LinearLayout.LayoutParams(-1,d(1)));
         addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
-        addHomeDrawerItem(drawer,"◈","Missões · CoordsGo",this::openCoordsGoPreview);
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
         addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
         addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
         homeRoot.addView(layer,new FrameLayout.LayoutParams(-1,-1));
         homeDrawerLayer=layer;
-    }
-    // Preview-only activity: never touches the active PoGoCoordinates collector.
-    private void openCoordsGoPreview(){
-        startActivity(new Intent(this,CoordsGoPreviewActivity.class));
     }
     private void exportHomeData(){
         // Export a fixed whitelist. No cookies, OAuth state, coordinates, trainer

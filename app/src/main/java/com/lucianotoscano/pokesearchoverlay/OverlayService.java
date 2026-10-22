@@ -201,6 +201,7 @@ public class OverlayService extends Service {
     private FrameLayout root,detailRoot,menuRoot,resultRoot;
     private View grip;
     private WebView panel,detailPanel,website,menuPanel,resultPanel;
+    private CoordsGoCollector coordsCollector;
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
     private int height=32,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
@@ -1993,6 +1994,22 @@ public class OverlayService extends Service {
         status(message);
     }
     public class Bridge{
+        @JavascriptInterface public void coordsGoRefresh(){handler.post(()->{
+            if(stopped)return;
+            if(coordsCollector==null)coordsCollector=new CoordsGoCollector(
+                OverlayService.this,root,handler,data->{
+                    if(!stopped)js(menuPanel,menuLoaded,
+                        "window.onCoordsGoData&&window.onCoordsGoData("+data.toString()+")");
+                });
+            coordsCollector.refresh();
+        });}
+        @JavascriptInterface public void coordsGoSelect(int index){handler.post(()->{
+            if(!stopped&&coordsCollector!=null)coordsCollector.selectReward(index);
+        });}
+        @JavascriptInterface public void coordsGoCity(String city){handler.post(()->{
+            if(!stopped&&coordsCollector!=null)coordsCollector.setCity(city);
+        });}
+
         @JavascriptInterface public void saveVisualPrefs(String json){
             handler.post(()->OverlayService.this.saveVisualPrefs(json));
         }
@@ -2861,6 +2878,7 @@ public class OverlayService extends Service {
         destroyWebView(resultPanel,true,"resultados");resultPanel=null;
         destroyWebView(detailPanel,true,"detalhes");detailPanel=null;
         destroyWebView(website,false,"site");website=null;
+        if(coordsCollector!=null){coordsCollector.destroy();coordsCollector=null;}
         root=null;menuRoot=null;detailRoot=null;resultRoot=null;resultGrip=null;resultParams=null;
         super.onDestroy();
     }

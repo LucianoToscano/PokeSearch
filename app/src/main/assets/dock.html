@@ -21,7 +21,7 @@ body.menu-left #choices{left:auto;right:0}
 #choices .choiceHeader{padding:3px 9px 6px;color:#9faabd;font-weight:bold;font-size:10px}
 body.menu-left #shell{margin-left:333px}
 body.menu-left #menu{left:-333px}
-#controls{width:calc(100% - 4px);display:grid;grid-template-columns:34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr;grid-auto-rows:30px;gap:2px;padding:0;margin:0;align-items:center}
+#controls{width:calc(100% - 4px);display:grid;grid-template-columns:34fr 22fr 41fr 20fr 20fr 23fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr;grid-auto-rows:30px;gap:2px;padding:0;margin:0;align-items:center}
 body.menu-left #controls{direction:rtl}
 body.dock-window #menu{display:none!important}
 body.dock-window #shell{margin-left:0!important}
@@ -326,7 +326,7 @@ body.controls-window.popup-above #quickMenuList{
  max-height:34px!important;overflow:hidden!important;overscroll-behavior:none;
  background:transparent!important;border:0!important;border-radius:0!important;
  box-shadow:none!important;padding:0 2px!important;margin:0!important;
- grid-template-columns:repeat(12,minmax(0,1fr))!important;grid-template-rows:30px!important;
+ grid-template-columns:repeat(13,minmax(0,1fr))!important;grid-template-rows:30px!important;
  grid-auto-flow:column!important;gap:2px!important;align-items:start!important;
 }
 body.controls-window #quickRows,
@@ -1029,6 +1029,16 @@ body.controls-window.visual-light-menu #choices:not(.visualPanel) .uxSegment but
 body.controls-window.visual-light-menu #choices:not(.visualPanel) .locLine button.locActive{
  color:#f4fff8!important;
 }
+
+/* CoordsGo compact overlay submenu with separate translucent item borders */
+.coordsGoPanel{max-height:min(72vh,480px);overflow:auto}
+.cgRow{display:flex;gap:3px;margin:4px 0}
+.cgRow input{min-width:0;flex:1}.cgRow button{min-width:0}
+.cgCard{display:flex;flex-direction:column;gap:2px;padding:5px 6px;margin:4px 0;
+ border:1px solid var(--visual-menu-border,#ffffff27);border-radius:7px;
+ background:var(--visual-menu-button-bg,#192637d9);font-size:11px}
+.cgCard span{font-size:10px;overflow-wrap:anywhere}.cgCard small{opacity:.8}
+.cgCard button{font-size:10px;padding:3px}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -1387,6 +1397,7 @@ function toggleChoices(kind){
  if(kind==="info"){renderInfoChoices();return;}
  if(kind==="appearance"){renderAppearanceChoices();return;}
   if(kind==="visual"){window.renderVisualEditor();return;}
+ if(kind==="missions"){renderCoordsGoChoices();if(controlsWindow&&Native.coordsGoRefresh)Native.coordsGoRefresh();return;}
  if(kind==="filters"){
   modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
   renderFiltersChoices();
@@ -2379,16 +2390,99 @@ window.setMinimized=value=>{
 };
 
 /* UX-MENU-01: contextual menu reuses native actions and verified filters. */
+
+/* COORDSGO OVERLAY: Only real site data, never an assumed active PokéStop. */
+let cgData={ok:false,cards:[],city:"",missionCount:null,status:"Aguardando CoordsGo"};
+let cgTerm="",cgShiny=false,cgEvent=false,cgCityDraft="";
+function renderCoordsGoChoices(){
+ if(choiceOpen!=="missions")return;
+ const panel=uxPanel("MISSÕES · COORDSGO");
+ panel.classList.add("coordsGoPanel");
+ const city=document.createElement("div");city.className="uxSubheading";
+ city.textContent="Cidade: "+(cgData.city||"Aguardando site");panel.append(city);
+ const crow=document.createElement("div");crow.className="cgRow";
+ const cityField=document.createElement("input");cityField.type="text";cityField.maxLength=75;
+ cityField.placeholder="Cidade do site";cityField.value=cgCityDraft||cgData.city||"";
+ cityField.oninput=()=>{cgCityDraft=cityField.value};
+ cityField.onfocus=()=>{if(controlsWindow)Native.locationEditor(true)};
+ cityField.onblur=()=>{if(controlsWindow)Native.locationEditor(false)};
+ const go=document.createElement("button");go.textContent="✓";go.title="Aplicar no seletor oficial do CoordsGo";
+ go.onclick=()=>{if(cityField.value.trim()&&Native.coordsGoCity)Native.coordsGoCity(cityField.value.trim())};
+ crow.append(cityField,go);panel.append(crow);
+ const search=document.createElement("input");search.type="search";search.id="cgSearch";
+ search.placeholder="Pokémon, tarefa ou recompensa";search.value=cgTerm;
+ search.oninput=()=>{cgTerm=search.value;drawCoordsGoMatches()};
+ search.onfocus=()=>{if(controlsWindow)Native.locationEditor(true)};
+ search.onblur=()=>{if(controlsWindow)Native.locationEditor(false)};
+ panel.append(search);
+ const controls=document.createElement("div");controls.className="cgRow";
+ for(const [label,key] of [["✨ Shiny","shiny"],["🌄 Evento","event"],["↻","refresh"]]){
+  const button=document.createElement("button");button.textContent=label;button.type="button";
+  button.className=(key==="shiny"&&cgShiny)||(key==="event"&&cgEvent)?"chosen":"";
+  button.onclick=()=>{
+   if(key==="shiny"){cgShiny=!cgShiny;renderCoordsGoChoices()}
+   else if(key==="event"){cgEvent=!cgEvent;renderCoordsGoChoices()}
+   else if(Native.coordsGoRefresh)Native.coordsGoRefresh();
+  };controls.append(button);
+ }panel.append(controls);
+ const note=document.createElement("p");note.className="uxNote";note.id="cgStatus";panel.append(note);
+ const results=document.createElement("div");results.id="cgResults";panel.append(results);
+ drawCoordsGoMatches();fit();
+}
+function drawCoordsGoMatches(){
+ if(choiceOpen!=="missions")return;
+ const note=document.getElementById("cgStatus"),box=document.getElementById("cgResults");
+ if(!note||!box)return;
+ const count=cgData.missionCount;
+ note.textContent=(count===0?"0 missões ativas; exibindo catálogo":
+ Number.isInteger(count)?count+" missões informadas":"Missões ativas não confirmadas")+
+ " · "+(cgData.status||"");
+ box.replaceChildren();
+ const find=cgTerm.trim().toLocaleLowerCase("pt-BR");
+ const arr=(cgData.cards||[]).filter(x=>(!cgShiny||x.shiny)&&(!cgEvent||x.event)&&
+  (!find||[x.name,x.task,x.number].some(v=>String(v||"").toLocaleLowerCase("pt-BR").includes(find))));
+ if(!arr.length){const p=document.createElement("p");p.className="uxNote";
+  p.textContent=cgData.ok?"Sem recompensas para estes filtros.":"Sem dados confirmados no momento.";
+  box.append(p);return;}
+ for(const c of arr.slice(0,10)){
+  const card=document.createElement("div");card.className="cgCard";
+  const name=document.createElement("strong");name.textContent=
+   (c.number?"#"+c.number+" ":"")+(c.name||"Recompensa")+(c.shiny?" ✨":"")+(c.event?" 🌄":"");
+  const task=document.createElement("span");task.textContent=c.task||"Tarefa indisponível";
+  const cp=document.createElement("small");cp.textContent=c.cpMin&&c.cpMax?"PC "+c.cpMin+"–"+c.cpMax:"";
+  const pick=document.createElement("button");pick.type="button";pick.textContent="Selecionar";
+  pick.onclick=()=>{if(Native.coordsGoSelect)Native.coordsGoSelect(c.sourceIndex)};
+  card.append(name,task,cp,pick);box.append(card);
+ }
+ if(arr.length>10){const p=document.createElement("p");p.className="uxNote";
+  p.textContent="10 de "+arr.length+" · refine a pesquisa";box.append(p)}
+ fit();
+}
+window.onCoordsGoData=function(input){
+ let d=input;
+ if(typeof d==="string"){try{d=JSON.parse(d)}catch(_){return}}
+ if(!d||typeof d!=="object")return;
+ cgData={ok:d.ok===true,status:String(d.status||"").slice(0,140),
+  city:String(d.city||"").slice(0,80),
+  missionCount:Number.isInteger(d.missionCount)?d.missionCount:null,
+  cards:Array.isArray(d.cards)?d.cards.slice(0,150).map(c=>({
+   sourceIndex:Number(c.sourceIndex)||0,number:String(c.number||"").slice(0,6),
+   name:String(c.name||"").slice(0,90),task:String(c.task||"").slice(0,160),
+   cpMin:String(c.cpMin||"").slice(0,6),cpMax:String(c.cpMax||"").slice(0,6),
+   shiny:c.shiny===true,event:c.event===true})):[]};
+ if(choiceOpen==="missions")renderCoordsGoChoices();
+};
+
 const QUICK_ACTIONS=[
  ["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"],
- ["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"],
+ ["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"],["missions","⚑","Missões · CoordsGo","missions"],
  ["star","☆","Favoritos","star"],["bell","♧","Alertas","alerts"],
  ["period","↻","Atualização","period"],["appearance","⚙","Personalização","appearance"],
  ["report","⚠","Reportar","report"],
  ["donate","♡","Apoiar","donate"],["close","×","Fechar","close"]
 ];
 // Shiny Only is the independent second switch next to Modos; search entries follow.
-const QUICK_PRIMARY_IDS=["mode","sh","filters","location","pokemon","star","bell","period","appearance"];
+const QUICK_PRIMARY_IDS=["mode","sh","filters","location","pokemon","missions","star","bell","period","appearance"];
 const QUICK_UTILITY_IDS=[]; // All non-footer buttons share the same DOM list.
 const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0]);
 let quickPrefs={direction:"horizontal",labels:false,order:[...QUICK_DEFAULT_ORDER],hidden:[]};
@@ -2427,11 +2521,12 @@ function quickState(id){
    searchSettings.pokemonSelections.length+" escolhidos":"Todos";
   case "period":return period>0?"Auto "+period+"m":"Auto OFF";
   case "appearance":return "Personalização";
+  case "missions":return "CoordsGo";
   default:return "";
  }
 }
 function quickClick(id){
- if(["mode","location","filters","period","appearance"].includes(id)){toggleChoices(id);return;}
+ if(["mode","location","filters","period","appearance","missions"].includes(id)){toggleChoices(id);return;}
  switch(id){
   case "sh":Native.shiny();break; // Reuse native, login-verified Shiny toggle.
   case "bell":toggleChoices("alerts");break;
@@ -2446,6 +2541,7 @@ function quickClick(id){
    Unicode glyphs. The Pokémon silhouette is a new custom outline. */
 const QUICK_SVG=Object.freeze({
  mode:'<path d="M4 7h16M4 12h16M4 17h16"/><path d="M9 4v6m6-1v6m-6-1v6" stroke-width="2.8"/>',
+ missions:'<path d="M4 8h24M5 11l11 17 11-17"/><circle cx="16" cy="14" r="3"/>',
  filters:'<path d="M6 8h20M6 16h20M6 24h20"/>',
  pokemon:'<path d="M7.8 12.2 4.5 2.5Q4.2 1.5 5.4 1.6Q6.1 1.7 6.6 2.5L10.7 9.4Q14 7.8 17.2 9.5L22.4 2.2Q23.4 1.1 24.3 2.4Q25.1 3.5 24.5 4.9L20.4 12.2 28.2 7.2Q29.9 6.7 29.6 8.6V14.9Q29.6 16.1 28.4 16.5L23.7 18.1 26.2 20.6Q26.8 21.4 25.8 22.2L23.3 24Q22.9 24.5 23.3 25.7L24.1 28.4Q24.3 30 22.9 30H19.8Q18.8 30 18 29.2L15.2 28.4 11.9 29.5Q11.3 30.2 10.1 30.1H7.2Q5.7 30.1 5.6 28.5L6 26.2V17Q6 14 7.8 12.2Z"/>',
  appearance:'<path d="M12 4 13 2h6l1 2 2.5 1 2.5-1 3 3-1 2.5 1 2.5-.8 1.8M12 27l-2 1-2.5-1-2.5 1-3-3 1-2.5-1-2.5-2-1v-6l2-1 1-2.5-1-2.5 3-3 2.5 1L10 4"/><circle cx="15.5" cy="14" r="5"/><path d="m17 23 8-8 3 3-8 8-5 2zM24 16l3 3" stroke-width="2"/>',

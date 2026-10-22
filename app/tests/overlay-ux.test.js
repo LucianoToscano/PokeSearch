@@ -2174,7 +2174,7 @@ test("SITE-POKEMON-04 site filter uses selected chips and exact official options
  probe.includes('return {ok:false,pending:false,reason:')&&
  probe.includes('found.filter(x=>matches(x)&&requestedSpecies(x))'));
 test("SITE-POKEMON-05 12-icon toolbar & no personal GPS remain intact",()=>
- dock.includes('grid-template-columns:34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr')&&
+ dock.includes('grid-template-columns:34fr 22fr 41fr 20fr 20fr 23fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr')&&
  !probe.includes('navigator.geolocation')&&
  dock.includes('items.slice(0,10)')&&
  service.includes('"locationCoords"'));

@@ -69,7 +69,7 @@ jobs:
           node app/tests/overlay-ux.test.js
           node app/tests/visual-editor.test.js
           node app/tests/signing-contract.test.js
-          node app/tests/coordsgo-preview.test.js
+          node app/tests/coordsgo-overlay.test.js
           python3 - <<'PY'
           from pathlib import Path
           t=Path('app/src/main/assets/dock.html').read_text()
