@@ -13,7 +13,7 @@ permissions:
 jobs:
   build-lt-52:
     # Only the explicitly approved editor-and-brand commit may trigger this build.
-    if: "${{ github.event_name == 'workflow_dispatch' || (github.ref_name == 'feature/release-notes-20261022' && startsWith(github.event.head_commit.message, 'build: approved v0.00.53 official logo')) }}"
+    if: "${{ github.event_name == 'workflow_dispatch' || (github.ref_name == 'feature/release-notes-20261022' && startsWith(github.event.head_commit.message, 'build: approved v0.00.53 editor')) }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     env:
