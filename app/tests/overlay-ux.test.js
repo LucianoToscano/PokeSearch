@@ -101,6 +101,34 @@ test("UX-INFO-10 visibility toggles report confirmed Android state without scrol
  dock.includes('resultDisplayOptions[key]?"✓":"–"')&&
  dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
  !dock.includes('resultDisplayOptions[key]=!resultDisplayOptions[key];'));
+test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overriding saved choices",()=>{
+ const source=dock.match(/let resultDisplayOptions=\{([\s\S]*?)\};/);
+ if(!source)return false;
+ const names=[
+  "count","name","number","gender","size","form","moves","location",
+  "distance","shiny","despawn","level","cp","rawIv","iv",
+  "overallRankGl","overallRankUl","overallRankMl",
+  "speciesIvRankGl","speciesIvRankUl","speciesIvRankMl"
+ ];
+ const defaultOptions=Object.fromEntries([...source[1].matchAll(/(\w+):(?:true|false)/g)]
+  .map(m=>[m[1],source[1].slice(m.index).startsWith(m[1]+":true")]));
+ const nativeBlock=service.split("private void syncPreferencesWithoutSearch(){")[1]
+  ?.split("String wantedSort=",1)[0]||"";
+ return names.length===21&&names.every(name=>defaultOptions[name]===false)&&
+  names.every(name=>dock.includes('["'+name+'",'))&&
+  dock.includes('let showResultText=false;')&&
+  dock.includes('showTimers=false')&&
+  service.includes('private boolean showTimers=false,alerts=false,showResultText=false;')&&
+  service.includes('private boolean resultShowCount=false,')&&
+  service.includes('resultShowRawIv=false')&&
+  !service.includes('putBoolean("resultShowCount",true)')&&
+  !nativeBlock.includes('resultCountUxV2')&&
+  nativeBlock.includes('resultShowCount=prefs.getBoolean("resultShowCount",false)')&&
+  nativeBlock.includes('resultShowRawIv=prefs.getBoolean("resultShowRawIv",false)')&&
+  dock.includes('resultDisplayOptions[key]?"✓":"–"')&&
+  dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
+  dock.includes('As 21 informações começam ocultas por padrão');
+});
 test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
  dock.includes('count.style.display=resultDisplayOptions.count?"inline":"none"')&&
