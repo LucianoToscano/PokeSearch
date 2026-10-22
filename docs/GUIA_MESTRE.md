@@ -3867,3 +3867,12 @@ Todos os passos do job `119953796712` concluíram com sucesso, inclusive checkou
 A imagem `ps_home_official_wordmark.png` mede 2172×724 (proporção exata 3:1), mas antes a janela era fixa 118×36 dp. Na Home, `MainActivity.java` calcula largura responsiva de 90–156 dp e altura pela proporção `largura/3`, reservando os quatro botões de toque no topo; cabeçalho 70 dp para acomodar marca e subtítulo. Ajustado o teste `BRAND-01` e adicionado `LT54-ICON-01`.
 
 **Estado:** modificações isoladas em `fix/lt54-launcher-wordmark-scale-20261022`; base `main` commit `050abf67475fc86c09ae4219c81a30809b68ba09`. A versão oficial permanece `0.00.54-LT`; **sem compilação, merge ou novo APK** nesta etapa, seguindo regra de autorização expressa. Para gerar nova versão (candidata `0.00.55-LT`), exigir autorização e testar iconografia no launcher/instalador Samsung, proporcionalidade da marca, Firebase e atualização por cima, mantendo assinatura e package.
+
+
+### 12.181-LT54-BELL-THEME-02 (22/10/2026)
+
+**Nova evidência do proprietário:** as cores do sino no menu **flutuante** ficaram invertidas após o patch LT54. Com a aba/tema do **menu** claro, o sino neutro deve ser **preto** (`#111821`); com o menu escuro, deve ser **branco** (`#f7f8fa`). O modo visual da Home é independente do menu flutuante; respeitar `visual-light-menu`, não `homeLightMode`. Preservar o amarelo (`#ffd64b`) do sino quando o canal de notificações gerais com áudio estiver ativo, a estrela amarela/ branca ou ausente (favoritos on/silencioso/off), o pontinho cinza de alertas silenciosos e o aviso laranja de permissão. Preservar também Reportar amarelo (`#ffd674`), Apoiar rosa (`#fa94a7`) e Fechar X vermelho (`#ff596c`).
+
+**Correção aplicada:** `app/src/main/assets/dock.html` remove a regra invertida que deixava o sino preto com `not(.visual-light-menu)` e acrescenta duas regras com especificidade adequada, em `visual-light-menu` preto / `not(.visual-light-menu)` branco. Exceção de `bell-sound-new` e `bell-sound-both` continua permitindo amarelo de estado audível. `app/tests/overlay-ux.test.js` recebe regressão `BELL-THEME-02` para ambas as condições e estados intactos.
+
+**Entrega parcial:** junto à correção de ícone e wordmark já registrada em 12.180, na branch `fix/lt54-launcher-wordmark-scale-20261022`, PR #31 em rascunho. **Ainda não existe novo APK/merge da correção; v0.00.54-LT segue última versão assinada/mesclada.** Manter esse histórico e aguardar autorização explícita de merge e compilação antes de marcar correção como testada fisicamente.
