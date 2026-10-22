@@ -1,6 +1,14 @@
 import java.security.MessageDigest
 plugins { id("com.android.application") }
 
+// Independent, anonymous LT54 counters; no google-services plugin required
+// because FirebaseStats initializes the named app using public Android config.
+dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-database")
+}
+
 // Stable internal-test signing is optional for local development, but mandatory
 // for the CI distribution workflow. Never store the keystore or passwords in Git.
 val testVersionCode = System.getenv("POKE_TEST_VERSION_CODE")?.let { value ->
