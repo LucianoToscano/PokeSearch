@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/pokesearch-51081-visual-editor-20261021
+      - feature/release-notes-20261022
     paths:
       - 'app/tests/**'
       - 'app/src/main/assets/**'
