@@ -1585,7 +1585,7 @@ public class OverlayService extends Service {
         if(p.length!=2)return Long.MAX_VALUE;
         try{
             long secs=Long.parseLong(p[0])*60+Long.parseLong(p[1]);
-            if(secs<=0||secs>86400)return Long.MAX_VALUE;
+            if(secs<0||secs>86400)return Long.MAX_VALUE;
             return item.optLong("sampledAt",System.currentTimeMillis())+secs*1000L;
         }catch(NumberFormatException ignored){return Long.MAX_VALUE;}
         catch(Exception e){recordFailure("interpretar despawn",e);return Long.MAX_VALUE;}
@@ -1796,16 +1796,21 @@ public class OverlayService extends Service {
             items=verified;
         }
         long now=System.currentTimeMillis();
+        JSONArray unexpired=new JSONArray();
         for(int i=0;i<items.length();i++){
             JSONObject card=items.optJSONObject(i);
             if(card==null)continue;
             try{
                 card.put("sampledAt",now);
                 long end=expiration(card);
+                // Even if the site briefly shows an old 0:00 card during
+                // React updates, do not reinsert an expired spawn or notify it.
+                if(end<=now)continue;
                 if(end!=Long.MAX_VALUE)card.put("expiresAtMs",end);
             }catch(Exception e){recordFailure("marcar despawn",e);}
+            unexpired.put(card);
         }
-        JSONArray sorted=sortItems(items);
+        JSONArray sorted=sortItems(unexpired);
         recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
         results=sorted.toString();
         searchPhase=sorted.length()==0?"empty":"updated";
