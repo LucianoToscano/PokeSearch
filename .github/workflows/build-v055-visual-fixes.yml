@@ -13,7 +13,7 @@ permissions:
 jobs:
   build-lt-55:
     # Explicitly authorized by the user for the v0.00.55 signed APK build.
-    if: "${{ github.event_name == 'workflow_dispatch' || (github.ref_name == 'fix/lt54-launcher-wordmark-scale-20261022' && startsWith(github.event.head_commit.message, 'build: approved v0.00.55 firebase')) }}"
+    if: "${{ github.event_name == 'workflow_dispatch' || (github.ref_name == 'fix/lt54-launcher-wordmark-scale-20261022' && startsWith(github.event.head_commit.message, 'build: approved v0.00.55 visuals')) }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     env:
