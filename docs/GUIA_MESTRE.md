@@ -1,5 +1,10 @@
 # PokeSearch — GUIA MESTRE
 
+> **CHECKPOINT ATUAL / ÚLTIMO APK APROVADO EM CI (22/10/2026):** **PokeSearch-v0.00.53-LT.apk**, versionName `0.00.53`, versionCode `54251`, pacote `com.lucianotoscano.pokesearch`. Fonte compilada `7ce055b2f7c40169a274e34a83665b029d059389`, GitHub Actions `39847072880` (success), **688/688 testes Node aprovados**, Gradle e assinatura persistente aprovados. Branch ativa `feature/release-notes-20261022` / PR #29 **draft, sem merge**. Último registro documental antes desta instrução: `4c5d56e9f617e735d035bf68e5801f3a27d61733`; verificar o HEAD atualizado antes de prosseguir. A `main` segue em `95ca97ad1daf2bb9196689880d783d768a41090c`. **Homologação em Android físico pendente.** Próxima versão reservada somente para novo lançamento autorizado: `PokeSearch-v0.00.54-LT.apk`.
+
+> **PREFERÊNCIA DE ENTREGA DO PROPRIETÁRIO:** disponibilizar sempre o arquivo **.apk diretamente**, sem exigir download ou extração do ZIP. Para a v53, o APK de 27.780.837 bytes foi extraído do artefato oficial e verificado com o `SHA256SUMS.txt`: SHA-256 do próprio APK `f0f0212319bdbd2f98beab60153ae45f9fe3462f2888306f2aa700fcc6c1949d`. O link direto em chat é uma cópia de entrega, **não é hospedagem permanente**; no GitHub, o artefato original permanece dentro do ZIP https://github.com/LucianoToscano/PokeSearch/actions/runs/39847072880/artifacts/12456550151. Nos próximos builds autorizados, preparar um meio persistente de distribuição direta (.apk como asset próprio) sem alterar certificado, identidade ou versionCode para facilitar o download. **Não criar builds ou releases sem autorização.**
+
+
 > **RETOMADA MAIS RECENTE:** leia primeiro a **seção 12** (CENTRAL-002, comparação PokeSearch / PoGoCoordinates / PokéLocation, caminhos e banco de dados, PSC e próximo passo PL-01); depois a governança da seção 11 e o histórico 1–10. **Somente documentação foi autorizada; não alterar código nem APK sem aprovação expressa.**
 
 > **DOCUMENTO CENTRAL PERMANENTE:** Guia Mestre de todo o projeto PokeSearch, independente da versão atual do aplicativo. Cada versão, decisão, teste e meta é registrada dentro deste documento. Registro central iniciado em 18/10/2026. A seção 11 reúne estado verificado, documentação, histórico, diário, metas, bugs e PL/UX. As seções 1–10 foram preservadas como cronologia; algumas afirmações antigas são superadas pelos registros posteriores. **Não alterar código, APK ou fazer merge sem confirmação expressa.**
@@ -3808,3 +3813,16 @@ Todos os passos do job `119953796712` concluíram com sucesso, inclusive checkou
 
 **Próximo lançamento autorizado:** `PokeSearch-v0.00.54-LT.apk` apenas depois de novas alterações e autorização. Incrementar `versionCode`, manter certificado e documentar no mesmo `docs/GUIA_MESTRE.md`. `main` conservada em `95ca97ad1daf2bb9196689880d783d768a41090c`, PR #29 aberto/draft, sem merge.
 
+
+
+### 12.177-DISTRIBUICAO-LT53-DIRETA — versão mais recente e APK direto (22/10/2026)
+
+**Decisão oficial de distribuição:** o proprietário prefere obter **`PokeSearch-v0.00.53-LT.apk` diretamente**, sem baixar/descompactar ZIP. O download direto fornecido nesta conversa foi preparado a partir dos bytes do artefato GitHub Actions ID `12456550151` (run `39847072880`), sem recompilação, sem alterações no aplicativo, sem merge e sem nova versão.
+
+**Verificação independente da cópia:** o ZIP original foi obtido pelo conector GitHub e o arquivo `PokeSearch-v0.00.53-LT.apk` foi extraído. A checagem `sha256sum -c SHA256SUMS.txt` retornou `PokeSearch-v0.00.53-LT.apk: OK`. Tamanho real `27.780.837 bytes` e SHA-256 do **APK** `f0f0212319bdbd2f98beab60153ae45f9fe3462f2888306f2aa700fcc6c1949d`. O SHA-256 do ZIP `854f894179f865b2d47afc0129310b322ddef239c415c95da272d4a7ac2f6642` é distinto, não deve ser usado para verificar o APK. `SOURCE_COMMIT.txt`: `7ce055b2f7c40169a274e34a83665b029d059389`; `PACKAGE_VERSION.txt`: `com.lucianotoscano.pokesearch`, `versionCode 54251`, `versionName 0.00.53`. `SIGNING_CERT_SHA256.txt`: `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, certificado persistente verificado pelo workflow anterior. A extração local não equivale a ensaio físico Android.
+
+**Vigência:** esta é a **VERSÃO MAIS RECENTE OFICIAL PARA TESTE** até novo build expressamente aprovado: **`PokeSearch-v0.00.53-LT.apk`**, não a v52. Último build de sucesso: GitHub Actions `39847072880`, 688/688 testes Node, Gradle e validações de assinatura. A documentação atual foi atualizada **após** o commit-fonte do APK; não confundir HEAD documental com o SHA efetivamente compilado. PR #29 mantido aberto em draft, branch `feature/release-notes-20261022`; `main` não alterada. Aspectos visuais e atualização in-place seguem pendentes de homologação em aparelho real.
+
+**Entrega futura:** publicar o **.apk como arquivo diretamente acessível**, sem obrigar o usuário a extrair ZIP, usando um destino de hospedagem de arquivo direto autorizado (por exemplo, asset APK de GitHub Release quando tal publicação estiver autorizada). Não criar release/tag, não mudar a assinatura, não gerar nova compilação, não anunciar sucesso ou instalação no aparelho sem provas. Evitar novos documentos mestres; adicionar registros sempre a `docs/GUIA_MESTRE.md`.
+
+**Próxima numeração, somente com aprovação posterior:** `PokeSearch-v0.00.54-LT.apk` com `versionCode > 54251`, mesmo package/certificado, sem retomar PvPPokeGo ou CoordsGo.
