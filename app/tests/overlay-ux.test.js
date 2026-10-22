@@ -463,7 +463,8 @@ const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
 test("PokeSearch 0.51 source configured",
   gradleBuild.includes('versionCode = testVersionCode ?: 51')&&
-  gradleBuild.includes('versionName = if (testVersionCode != null) "0.51-beta.test.${testVersionLabel ?: testVersionCode}" else "0.51-beta"')&&
+  gradleBuild.includes('publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}"')&&
+  gradleBuild.includes('POKE_TEST_PUBLIC_VERSION')&&
   gradleBuild.includes('applicationId = "com.lucianotoscano.pokesearch"'));
 test("Round icon generator always uses headless mode",gradleBuild.includes('-Djava.awt.headless=true')&&iconGenerator.includes('System.setProperty("java.awt.headless","true")'));
 test("Network main-frame error is handled",service.includes('request.isForMainFrame()')&&service.includes('Falha de navegação principal'));
@@ -1712,11 +1713,30 @@ test("HOME-04 keeps transparent brand left, controls right and plain outside bac
   home.includes("overlayControl=makeIcon(R.drawable.ic_overlay_off")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
-  !home.includes("R.drawable.ps_home_wordmark")&&
+  home.includes("R.drawable.ps_home_wordmark")&&
+  home.includes('brandTitle.setContentDescription("PokeSearch")')&&
   home.includes("frame.setBackgroundColor(homeLightMode?")&&
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
 })());
+test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved",()=>{
+ const pngs=[
+  ["res/drawable-nodpi/ic_launcher.png",1254,1254],
+  ["res/drawable-nodpi/ps_home_brand_transparent.png",1254,1254],
+  ["res/drawable-nodpi/ps_home_wordmark.png",2172,724],
+  ["assets/branding/PokeSearchLogoShinyBlueEffectAll.png",1254,1254],
+  ["assets/branding/PokeSearchLogoShiny.png",1254,1254],
+  ["assets/branding/PokeSearchName.png",2172,724],
+ ];
+ return pngs.every(([p,w,h])=>{
+  const img=fs.readFileSync(path.join(root,p));
+  return img.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
+    img.readUInt32BE(16)===w&&img.readUInt32BE(20)===h;
+ })&&
+ iconGenerator.includes("int artworkSize = 272")&&
+ iconGenerator.includes("int padding = 12")&&
+ iconGenerator.includes("return new int[] {0, 0, image.getWidth(), image.getHeight()}");
+});
 test("HOME-04 shows genuine trainer data and the four transparent team assets",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  const state=main.split("private void refreshSessionSummary(){")[1]?.split("private void askLogout(){")[0]||"";
