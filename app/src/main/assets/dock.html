@@ -2021,6 +2021,38 @@ function evolutionCandidates(card,league){
 function bestEvolutionRank(card,league){
  return evolutionCandidates(card,league)[0]||null;
 }
+// RANK-EVO-DETAIL-01: export bounded, read-only PvP projections to the native
+// detail WebView. Never disclose cookies or query the PoGoCoordinates page.
+// Computed on demand; does not allocate another Game Master in detail.html.
+window.pvpEvolutionDetails=function(index){
+ if(!resultWindow||!Number.isInteger(index)||index<0||index>=cards.length)return null;
+ const card=cards[index];
+ if(!card||verifiedSpawnIvPercent(card)===null)return null;
+ const output={
+  sourceIndex:Number(card.sourceIndex??-1),
+  name:String(card.name||"").slice(0,100),
+  iv:String(card.iv||""),
+  cp:String(card.cp??""),
+  leagues:[]
+ };
+ for(const league of ["gl","ul","ml"]){
+  const own=calculatedSpeciesIvDetail(card,league);
+  const currentRank=verifiedOverallRank(card,league);
+  const descendants=evolutionCandidates(card,league).slice(0,24).map(e=>{
+   const overall=verifiedOverallRank({name:e.name},league);
+   return {name:e.name,rank:e.rank,statProductPct:e.statProductPct,
+    cp:e.cp,level:e.level,eligible:e.eligible,currentCp:e.currentCp,
+    overallRank:overall};
+  });
+  output.leagues.push({
+   league,own:own?{rank:own.rank,statProductPct:own.statProductPct,
+    cp:own.cp,level:own.level,overallRank:currentRank}:null,
+   evolutions:descendants
+  });
+ }
+ return output;
+};
+
 // Country code comes ONLY from an explicit country suffix in a site location,
 // never inferred from GPS, state, region, coordinates or the phone locale.
 let locationCountryNames=null;
