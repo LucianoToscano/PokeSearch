@@ -1,0 +1,25 @@
+{
+  "schema": "pokesearch-release-notes-v1",
+  "releases": [
+    {
+      "id": "release-notes-ui-20261022",
+      "minVersionCode": 54250,
+      "date": "22/10/2026",
+      "title": "Notas de atualização no PokeSearch",
+      "sections": {
+        "novidades": [
+          "Novidades exibidas automaticamente na primeira abertura após uma atualização compatível.",
+          "Histórico de atualizações disponível na Home em Menu → Novidades."
+        ],
+        "melhorias": [
+          "Janela compacta, rolável e adaptada aos modos claro e escuro.",
+          "Exibição única por conjunto de notas, sem exigir login nem alterar a busca."
+        ],
+        "correcoes": [],
+        "emDesenvolvimento": [
+          "Validação visual no Android e teste real de atualização sobre o APK anterior."
+        ]
+      }
+    }
+  ]
+}
