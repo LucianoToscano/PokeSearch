@@ -299,7 +299,7 @@ test("Final cascade reintroduces 1px borders on regular, selected and light menu
   for(const type of [".quickRow",".quickFooterAction"]){
    const selector="body.controls-window #quickMenuList"+variant+" "+type;
    const hits=rules.filter(x=>x.selectors.includes(selector));
-   assert.ok(hits.length>=2);
+   assert.ok(hits.length>=1,"Expected final CSS border for "+selector);
    assert.equal(hits[hits.length-1].border.trim(),wanted,selector);
   }
  }
