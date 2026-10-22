@@ -127,6 +127,11 @@ public class MainActivity extends Activity {
             root.post(this::requestOverlayNotificationPermission);
         if("com.lucianotoscano.pokesearchoverlay.PICK_ALERT_TONE".equals(getIntent().getAction()))
             root.post(()->beginAlertToneChoice(getIntent().getStringExtra("alertToneTarget")));
+        // Release notes belong only to a normal Home opening. Never interrupt OAuth,
+        // notification permissions or overlay callbacks. The quick guide comes first.
+        if(Intent.ACTION_MAIN.equals(getIntent().getAction())&&
+            getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false))
+            root.post(()->ReleaseNotes.maybeShowAfterUpgrade(this));
     }
 
     private TextView homeText(String value,int sp,int color,boolean bold){
@@ -493,6 +498,7 @@ public class MainActivity extends Activity {
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
         addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
+        addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this));
         addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
         homeRoot.addView(layer,new FrameLayout.LayoutParams(-1,-1));
         homeDrawerLayer=layer;
