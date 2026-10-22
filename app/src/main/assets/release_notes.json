@@ -55,13 +55,12 @@
         ],
         "melhorias": [
           "Transparência afeta o fundo dos cartões e menus da Home, não o papel de parede.",
-          "Fundo da conta acompanha o modo claro/escuro e texto tem contraste adequado."
+          "Fundo da conta acompanha o modo claro/escuro e texto tem contraste adequado.",
+          "Avatar agora tem borda perfeitamente circular, sem pontas quadradas. (validação visual no Android pendente)",
+          "Sino escuro no menu flutuante com indicador de estrela preservado. (validação visual no Android pendente)",
+          "Reportar amarelo, apoiar rosa e fechar vermelho, como antes. (validação visual no Android pendente)"
         ],
-        "correcoes": [
-          "Avatar agora tem borda perfeitamente circular, sem pontas quadradas.",
-          "Sino escuro no menu flutuante com indicador de estrela preservado.",
-          "Reportar amarelo, apoiar rosa e fechar vermelho, como antes."
-        ],
+        "correcoes": [],
         "emDesenvolvimento": [
           "Contadores exigem publicar as regras restritivas do Realtime Database antes do uso real.",
           "Aparência e conectividade ainda precisam ser verificadas no Android de teste."
