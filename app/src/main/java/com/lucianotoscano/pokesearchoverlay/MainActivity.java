@@ -215,7 +215,7 @@ public class MainActivity extends Activity {
         brandLabels.setOrientation(LinearLayout.VERTICAL);
         brandLabels.setPadding(d(6),0,0,0);
         ImageView brandTitle=new ImageView(this);
-        brandTitle.setImageResource(R.drawable.ps_home_wordmark);
+        brandTitle.setImageResource(R.drawable.ps_home_official_wordmark);
         brandTitle.setScaleType(ImageView.ScaleType.FIT_CENTER);
         brandTitle.setContentDescription("PokeSearch");
         TextView brandSubtitle=homeText("POKÉMON GO",9,

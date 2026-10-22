@@ -74,7 +74,7 @@ jobs:
           const files=[
             ['app/src/main/res/drawable-nodpi/ic_launcher.png',1254,1254],
             ['app/src/main/res/drawable-nodpi/ps_home_brand_transparent.png',1254,1254],
-            ['app/src/main/res/drawable-nodpi/ps_home_wordmark.png',2172,724],
+            ['app/src/main/res/drawable-nodpi/ps_home_official_wordmark.png',2172,724],
           ];
           for (const [name,w,h] of files){
             const b=fs.readFileSync(name);

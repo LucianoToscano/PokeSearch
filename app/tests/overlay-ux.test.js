@@ -1713,7 +1713,7 @@ test("HOME-04 keeps transparent brand left, controls right and plain outside bac
   home.includes("overlayControl=makeIcon(R.drawable.ic_overlay_off")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
-  home.includes("R.drawable.ps_home_wordmark")&&
+  home.includes("R.drawable.ps_home_official_wordmark")&&
   home.includes('brandTitle.setContentDescription("PokeSearch")')&&
   home.includes("frame.setBackgroundColor(homeLightMode?")&&
   !home.includes("sky.setImageResource(")&&
@@ -1723,7 +1723,7 @@ test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved
  const pngs=[
   ["res/drawable-nodpi/ic_launcher.png",1254,1254],
   ["res/drawable-nodpi/ps_home_brand_transparent.png",1254,1254],
-  ["res/drawable-nodpi/ps_home_wordmark.png",2172,724],
+  ["res/drawable-nodpi/ps_home_official_wordmark.png",2172,724],
   ["assets/branding/PokeSearchLogoShinyBlueEffectAll.png",1254,1254],
   ["assets/branding/PokeSearchLogoShiny.png",1254,1254],
   ["assets/branding/PokeSearchName.png",2172,724],
