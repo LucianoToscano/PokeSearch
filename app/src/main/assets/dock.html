@@ -1981,7 +1981,7 @@ function resultLines(card,opts,league){
  const lines=[],compact=[];
  const safeText=(value,max=90)=>String(value??"").replace(/[\r\n\t]+/g," ").trim().slice(0,max);
  if(opts.name&&safeText(card?.name)){
-  let displayName=safeText(card.name,65).replace(/\s*✨\s*/g,"").trim();
+  let displayName=safeText(card.name,65).replace(/\s*✨\s*/g," ").replace(/\s+/g," ").trim();
   const form=safeText(card?.form,48);
   // A separately enabled Form field must not repeat "(Galarian)" in Name.
   if(form&&displayName.endsWith(" ("+form+")"))displayName=displayName.slice(0,-form.length-3);
