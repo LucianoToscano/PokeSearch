@@ -1735,6 +1735,25 @@ test("BELL-THEME-02 floating bell uses black in light mode and white in dark mod
   dock.includes('[data-key=close] .quickGlyph{color:#ff596c!important}');
 });
 
+test("BELL-THEME-03 bell SVG stroke follows independent menu colors and audible state",()=>{
+ const visual=read("assets/visual_editor.js");
+ const css=dock.split("/* LT55 BELL-THEME-03:")[1]?.split("/* Colored glyphs")[0]||"";
+ const neutral='body.controls-window #quickMenuList button[data-key="bell"] .quickGlyph svg{';
+ const audible='body.controls-window #quickMenuList button[data-key="bell"].bell-sound-new .quickGlyph svg,';
+ const both='body.controls-window #quickMenuList button[data-key="bell"].bell-sound-both .quickGlyph svg{';
+ const idle=css.split(neutral)[1]?.split("}")[0]||"";
+ const sound=css.split(both)[1]?.split("}")[0]||"";
+ return visual.includes('set("menu-fg",current.menuBgMode==="light"?"#152231":"#f2f7fc")')&&
+  visual.includes('body.classList.toggle("visual-light-menu",current.menuBgMode==="light")')&&
+  idle.includes("stroke:var(--visual-menu-fg,#f2f7fc)!important")&&
+  idle.includes("color:var(--visual-menu-fg,#f2f7fc)!important")&&
+  css.includes(audible)&&sound.includes("stroke:#ffd64b!important")&&
+  sound.includes("color:#ffd64b!important")&&
+  dock.includes('if(source){glyph.appendChild(source.cloneNode(true));return glyph;}')&&
+  dock.includes('button.classList.toggle("bell-star-on",')&&
+  dock.includes('button.classList.toggle("bell-star-silent",');
+});
+
 test("LT54-ICON-01 launcher uses adaptive artwork and responsive 3:1 header",(()=>{
  const manifest=fs.readFileSync(path.join(root,"AndroidManifest.xml"),"utf8");
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
