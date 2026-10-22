@@ -959,16 +959,18 @@ body.controls-window #choices .locRadiusNumber{
  border:1px solid #96999c88!important;text-align:right!important;
  font-size:12px!important;
 }
-/* UX-MENU-FLAT-02 final override: legacy and selected-state rules must
-   not restore borders, shadows or a painted toolbar container. */
+/* UX-MENU-TILES-RESTORE-01: the uploaded legacy reference shows each icon
+   on its own dark, rounded tile with a thin visible border.  Only the common
+   ribbon stays transparent; never draw one joined strip behind the buttons.
+   Single menuTransparency sets fill, border AND shadow alpha together. */
 body.controls-window #menu,
 body.controls-window #quickMenuList,
 body.controls-window #menu.subview #quickMenuList,
 body.controls-window.popup-above #quickMenuList{
  background:transparent!important;border:0!important;box-shadow:none!important;
 }
-/* Match the older .quick-horizontal / :not(.quick-horizontal) specificity
-   so border:0 wins for ordinary, non-selected buttons in either direction. */
+/* Match both layout variants and the specific selected/light selectors to
+   override the old final border:0 rule without changing quick-menu actions. */
 body.controls-window #quickMenuList.quick-horizontal .quickRow,
 body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow,
 body.controls-window #quickMenuList.quick-horizontal .quickFooterAction,
@@ -976,9 +978,16 @@ body.controls-window #quickMenuList:not(.quick-horizontal) .quickFooterAction,
 body.controls-window #quickMenuList button[data-key],
 body.controls-window #quickMenuList button[data-key].selected,
 body.controls-window.visual-light-menu #quickMenuList button[data-key]{
+ box-sizing:border-box!important;
  background:var(--visual-menu-button-bg,#28292cce)!important;
- border:0!important;box-shadow:none!important;
- border-radius:6px!important;background-clip:padding-box!important;
+ border:1px solid var(--visual-menu-border,#ffffff48)!important;
+ border-radius:7px!important;
+ background-clip:padding-box!important;
+ box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0006)!important;
+}
+/* Keep the original thin row; the editor's 0-16px button gap remains editable. */
+body.controls-window #quickMenuList{
+ gap:var(--visual-menu-gap,3px)!important;
 }
 /* The hidden classic toolbar also follows the same favorites star semantics. */
 body.controls-window #controls #bell.bell-star-on,
