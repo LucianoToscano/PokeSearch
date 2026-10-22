@@ -2726,7 +2726,7 @@ test("FILTERS-POGO-07 Applied requires native verified submission and accepted c
 });
 test("FILTERS-POGO-08 scoped Clear preserves species, IV, Shiny and coordinates",()=>{
  const block=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices(){")[0]||"";
- const clear=block.split("clear.onclick=()=>{")[1]?.split("};")[0]||"";
+ const clear=block.split("clear.onclick=()=>{")[1]?.split("\n };")[0]||"";
  const saved={mode:"ul",pokemon:"",pokemonSelections:["Pikachu","Eevee"],
   attack:3,defense:14,stamina:15,glRank:1,ulRank:7,percentMin:20,percentMax:96,
   sortBy:"CP",weather:"Rainy",size:"XXL",form:"Alolan",gender:"Female",
