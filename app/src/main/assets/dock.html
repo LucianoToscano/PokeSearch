@@ -1980,7 +1980,13 @@ function locationCountryFlag(location){
 function resultLines(card,opts,league){
  const lines=[],compact=[];
  const safeText=(value,max=90)=>String(value??"").replace(/[\r\n\t]+/g," ").trim().slice(0,max);
- if(opts.name&&safeText(card?.name))lines.push(safeText(card.name,65).replace(/\s*✨\s*/g,"").trim());
+ if(opts.name&&safeText(card?.name)){
+  let displayName=safeText(card.name,65).replace(/\s*✨\s*/g,"").trim();
+  const form=safeText(card?.form,48);
+  // A separately enabled Form field must not repeat "(Galarian)" in Name.
+  if(form&&displayName.endsWith(" ("+form+")"))displayName=displayName.slice(0,-form.length-3);
+  if(displayName)lines.push(displayName);
+ }
  if(opts.number&&safeText(card?.number))lines.push("#"+safeText(card.number,12).replace(/^#/,""));
  if(opts.gender&&["♀","♂"].includes(card?.gender))lines.push(card.gender);
  if(opts.size&&["XXS","XS","M","XL","XXL"].includes(String(card?.size||"").toUpperCase()))
