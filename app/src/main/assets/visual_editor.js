@@ -5,7 +5,7 @@ const DEFAULTS=Object.freeze({
  resultGapTop:0,resultGapBetween:31,resultSpriteScale:100,headerIconY:0,
  headerOffsetX:0,headerTouchWidth:35,headerTouchHeight:30,headerAfterGap:0,
  resultsOffsetX:0,resultsOffsetY:0,
- menuOffsetX:0,menuOffsetY:0,gearMenuGap:0,menuItemGap:0,
+ menuOffsetX:0,menuOffsetY:0,gearMenuGap:0,menuItemGap:3,
  popupWidth:232,popupHeight:390,
  resultsOrientation:"vertical",menuOrientation:"horizontal",
  resultsBgMode:"dark",resultsTransparency:100,
@@ -53,6 +53,13 @@ function applyVisual(){
  set("results-bg",rgba(current.resultsBgMode,current.resultsTransparency));
  set("menu-bg",rgba(current.menuBgMode,current.menuTransparency));
  set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency));
+ // One opacity slider controls fill, border and shadow of each tile.
+ // At 100% transparency, no ghost outline/shadow remains.
+ const tileOpacity=Math.max(0,1-current.menuTransparency/100);
+ const borderRgb=current.menuBgMode==="light"?"49,69,91":"227,233,241";
+ set("menu-border","rgba("+borderRgb+","+(tileOpacity*0.45).toFixed(2)+")");
+ set("menu-tile-shadow",tileOpacity===0?"none":
+  "0 1px 3px rgba(0,0,0,"+(tileOpacity*0.36).toFixed(2)+")");
  set("menu-fg",current.menuBgMode==="light"?"#152231":"#f2f7fc");
  set("results-fg",current.resultsBgMode==="light"?"#172533":"#e6eefa");
  body.classList.toggle("visual-light-menu",current.menuBgMode==="light");
