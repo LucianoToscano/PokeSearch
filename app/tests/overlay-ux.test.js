@@ -2759,6 +2759,28 @@ test("FILTERS-POGO-09 badge never enlarges twelve-slot ribbon and is accessible"
   dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important');
 });
 
+test("FILTERS-POGO-10 simulated UI never claims Applied for pending/stale/dirty filters",()=>{
+ const helper=dock.split("const FILTERS_MENU_KEYS=Object.freeze(")[1]
+  ?.split("function quickState(id){")[0]||"";
+ const compiled=new Function("searchSettings","mode","modeDraft","controlsWindow",
+  "choiceOpen","document","siteFiltersConfirmed","searchActive","resultsStale",
+  "const FILTERS_MENU_KEYS=Object.freeze("+helper+
+  ";return updateFiltersPanelStatus;");
+ const saved={mode:"raw",sortBy:"Despawn (longest)",cpMin:"500",cpMax:"",
+  levelMin:"1",levelMax:"35",includePreviousEvolutions:true};
+ const result=(proof,active,stale,draft)=>{
+  const badge={textContent:"",classList:{toggle(_key,_value){}}};
+  compiled(saved,"raw",draft,true,"filters",
+   {getElementById:()=>badge},proof,active,stale)();
+  return badge.textContent;
+ };
+ return result(false,false,false,saved).includes("Aguardando confirmação")&&
+  result(true,false,false,saved)==="✓ Aplicado no PoGoCoordinates"&&
+  result(true,true,false,saved).includes("Aguardando confirmação")&&
+  result(true,false,true,saved).includes("Aguardando confirmação")&&
+  result(true,false,false,{...saved,weather:"Rainy"}).includes("Alterações ainda não aplicadas");
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
