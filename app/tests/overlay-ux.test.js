@@ -28,7 +28,7 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
  b.includes('["percent","IV%"],["gl","GL"],["ul","UL"]')&&
  b.includes('applyExact(15)')&&b.includes('applyExact(0)')&&
  !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
-test("Intervals minimum 5 minutes",["Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
+test("AUTO offers OFF, 3, 5, 10, 15 and 20 minutes",["Auto · OFF","Auto · 3 min","Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
 test("Cascade uses current toolbar height even after clipping or vertical rotation",
  dock.includes('choiceOpen==="mode"?baseHeight+190+6')&&
  dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;')&&
@@ -309,8 +309,28 @@ test("Location validation refuses blank radius",read("assets/probe.js").includes
 test("Location selection requires state confirmation",read("assets/probe.js").includes("active===true"));
 test("AUTO provides feedback",service.includes("AUTO: "));
 const expiry=service.split("private final Runnable expiryRefresh=new Runnable(){")[1]?.split("private void armNextDespawn")[0]||"";
-test("Despawn removes expired sprites without triggering an extra site search",expiry.includes("armNextDespawn(active);")&&!expiry.includes("refresh(false);"));
-test("AUTO retains 5/10/15/20 minute scheduling",service.includes("handler.postDelayed(periodic,intervalMinutes*60000L)"));
+test("Despawn removes expired sprites then reloads the site even when AUTO is OFF",()=>
+ expiry.includes('results=active.toString();hideDetails();update();')&&
+ expiry.includes('armNextDespawn(active);')&&
+ expiry.includes('if(expired&&!stopped&&!loginPaused)')&&
+ expiry.includes('schedulePeriodic();')&&
+ expiry.includes('refresh(true);')&&
+ expiry.indexOf('results=active.toString()')<expiry.indexOf('refresh(true);'));
+test("Expired 0:00 cards are never restored or announced as live",()=>{
+ return service.includes('if(secs<0||secs>86400)return Long.MAX_VALUE;')&&
+  service.includes('if(end<=now)continue;')&&
+  service.includes('JSONArray sorted=sortItems(unexpired);')&&
+  service.indexOf('JSONArray sorted=sortItems(unexpired);')<service.indexOf('recordNewResults(sorted,');
+});
+test("Reopening menu immediately re-applies active visual states to recreated buttons",()=>{
+ const block=dock.split('function renderQuickMenu(){')[1]?.split('function audibleAlertState(')[0]||"";
+ return block.includes('rows.replaceChildren();util.replaceChildren();footer.replaceChildren();')&&
+  block.includes('refreshQuickMenuStates();')&&
+  block.indexOf('button.onclick=()=>quickClick(id);')<block.indexOf('refreshQuickMenuStates();')&&
+  dock.includes('if(menuOpen&&controlsWindow)renderQuickMenu();')&&
+  dock.includes('button.classList.toggle("selected",');
+});
+test("AUTO retains 3/5/10/15/20 minute scheduling",service.includes("handler.postDelayed(periodic,intervalMinutes*60000L)")&&service.includes("int[] options={0,3,5,10,15,20};"));
 test("PL-02 manual refresh queues one follow-up only while busy",
   service.includes('queuedManualRefresh=true;')&&
   service.includes('status("↻ Nova busca agendada após a atual.")')&&
@@ -445,8 +465,8 @@ test("v0.50 no phantom gap when toolbar is beside dock",
 test("v0.50 transparent floating collapse arrow",
     dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("v0.50 AUTO OFF in UI and service, with no periodic posts",
-    dock.includes('[[0,"Auto · OFF')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
-    service.includes('if(minutes!=0&&minutes!=5')&&
+    dock.includes('[[0,"Auto · OFF')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
+    service.includes('if(minutes!=0&&minutes!=3&&minutes!=5')&&
     service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(periodic,'));
 test("General notifications still cycle off/on/silent while bell indicates both sources",
     service.includes('alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off"')&&
