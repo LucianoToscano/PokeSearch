@@ -763,6 +763,7 @@ public class OverlayService extends Service {
                 .setContentText("Toque para abrir PokeSearch")
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(73,note);
+        FirebaseStats.setOverlayVisible(this,true);
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         try{visualPrefsJson=normalizeVisualPrefs(
             getSharedPreferences("prefs",0).getString("visualPrefsJson","{}")).toString();}
@@ -2880,6 +2881,7 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
+        FirebaseStats.setOverlayVisible(this,false);
         stopped=true;
         running=false;
         ++requestGeneration;
