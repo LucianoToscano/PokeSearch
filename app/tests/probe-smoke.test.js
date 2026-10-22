@@ -290,6 +290,7 @@ checked++;
 for(const scenario of [
  {label:"0%",mode:"raw",config:{attack:0,defense:0,stamina:0},iv:["0","0","0"],value:"0% (0/0/0)"},
  {label:"100%",mode:"raw",config:{attack:15,defense:15,stamina:15},iv:["15","15","15"],value:"100% (15/15/15)"},
+ {label:"IV personalizado",mode:"raw",config:{attack:3,defense:15,stamina:12},iv:["3","15","12"],value:"67% (3/15/12)"},
  {label:"IV%",mode:"percent",config:{percentMin:100,percentMax:100},iv:["100","100"],value:"100% (15/15/15)"},
  {label:"GL",mode:"gl",config:{glRank:1},pvp:{rank:"1",league:"Great League",prior:"Yes"},value:"100% (15/15/15)"},
  {label:"UL",mode:"ul",config:{ulRank:1},pvp:{rank:"1",league:"Ultra League",prior:"Yes"},value:"100% (15/15/15)"}
