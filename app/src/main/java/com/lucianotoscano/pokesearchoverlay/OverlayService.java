@@ -1545,6 +1545,16 @@ public class OverlayService extends Service {
                     (pvp?"":" IVs ausentes ou divergentes: "+r.optInt("unverifiedIv",0))+".");
                 return;
             }
+            // A site with ten visible spawns can temporarily yield fewer parsed
+            // cards while it updates after any IV, GL or UL mode switch.
+            // Never mark that partial snapshot as a complete result too soon.
+            if(r.optBoolean("siteIncomplete",false)&&attempt<24){
+                if(attempt==0)BugReport.log(this,"RESULTS_PARTIAL",
+                    "Modo="+mode+" • identificados="+found+
+                    " • esperado="+r.optInt("expectedVisible",0));
+                pollSearch(generation,attempt+1,manual);
+                return;
+            }
             boolean loading=r.optBoolean("loading",false);
             boolean empty=r.optBoolean("explicitEmpty",false);
             if((loading||(!empty&&found==0))&&attempt<24){
@@ -1798,7 +1808,16 @@ public class OverlayService extends Service {
         if(selected>=0)hideDetails();
         getSharedPreferences("prefs",0).edit()
             .putLong("lastSearchAt",now).putString("lastError","Nenhum").apply();
-        if(r.optBoolean("uncertain"))
+        if(r.optBoolean("siteIncomplete",false)){
+            // Show independently verified matches, but never label a visibly
+            // incomplete extraction as the complete result set.
+            BugReport.log(this,"RESULTS_PARTIAL",
+                "Modo="+mode+" • site="+r.optInt("siteCount",0)+
+                " • extraídos="+r.optInt("found",0)+
+                " • confirmados="+sorted.length());
+            status(sorted.length()+" Pokémon confirmados • site indica "+
+                r.optInt("expectedVisible",0)+" • leitura parcial");
+        }else if(r.optBoolean("uncertain"))
             status(("raw".equals(mode)||"percent".equals(mode)||"iv".equals(mode))
                 ?"Alguns IVs não comprovados foram ignorados.":"Alguns rankings PvP não confirmados.");
         else if(sorted.length()==0)status("Sem resultados confirmados");
