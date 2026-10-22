@@ -2158,7 +2158,7 @@ function resultLines(card,opts,league){
    }
    const evo=bestEvolutionRank(card,leagueKey);
    if(evo){
-    const eligibility=evo.eligible===false?" · Não elegível":"";
+    const eligibility=evo.eligible===false?" · Não elegível":evo.eligible===null?" · PC?":"";
     lines.push("↳ "+evo.name+" "+short+" IV#"+evo.rank+
       " P"+evo.statProductPct+"%"+eligibility);
    }
@@ -2170,7 +2170,7 @@ function resultLines(card,opts,league){
 function resultInfoHtml(value,card){
  const raw=String(value??"");
  const safe=esc(raw);
- if(raw.startsWith("↳ "))return '<span class="evolutionInfo'+(raw.includes('IV#1')&&!raw.includes('Não elegível')?' best':'')+'">'+safe+'</span>';
+ if(raw.startsWith("↳ "))return '<span class="evolutionInfo'+(raw.includes('IV#1')&&!raw.includes('Não elegível')&&!raw.includes('PC?')?' best':'')+'">'+safe+'</span>';
  if(raw==="♂")return '<span class="genderInfo male">♂</span>';
  if(raw==="♀")return '<span class="genderInfo female">♀</span>';
  const valid=verifiedSpawnIvPercent(card);
