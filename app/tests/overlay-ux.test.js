@@ -144,7 +144,45 @@ test("UX-INFO-03 PvPoke species overall rank and within-species IV rank never co
   functions.verifiedSpeciesIvRank(alt,"ul")===null&&
   functions.verifiedSpeciesIvRank(wrong,"gl")===null&&
   functions.verifiedOverallRank({name:"Pokémon inexistente"},"gl")===null&&
-  lines.includes("IV67% · RG#2")&&lines.includes("IV#1");
+  lines.includes("67%")&&lines.includes("RG#2")&&lines.includes("IV#1");
+});
+test("UX-INFO-COMPACT-01 requested Pokémon metadata has no verbose labels",()=>{
+ const begin=dock.indexOf('function resultLines(card,opts,league){');
+ const end=dock.indexOf('function resultHasVisibleInfo(',begin);
+ if(begin<0||end<begin)return false;
+ const extract=dock.slice(begin,end);
+ const makeLines=new Function("verifiedSpawnRawIv","verifiedSpawnIvPercent",
+  "verifiedOverallRank","verifiedSpeciesIvRank","pvpIvClassPercent","esc",extract+
+  "return {resultLines,resultInfoHtml,locationCountryFlag};")(
+   c=>c.iv||null,c=>c.ivPercent??null,(card,lg)=>({gl:12,ul:84,ml:35}[lg]),
+   (card,lg)=>({gl:1,ul:50,ml:307}[lg]),
+   n=>(100*(4096-n)/4095).toFixed(2).replace(".",","),
+   x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+  );
+ const c={name:"Yamask",number:"#562",gender:"♂",size:"XXL",form:"Galarian",
+  moves:"Astonish / Rock Tomb",location:"Tainan City, Taiwan",distance:"0.3 km",
+  shiny:true,cp:813,level:29,iv:"15/15/15",ivPercent:100,expiresAtMs:3210000};
+ const opts={name:true,number:true,gender:true,size:true,form:true,moves:true,
+  location:true,distance:true,shiny:true,cp:true,level:true,rawIv:true,iv:true,
+  overallRankGl:true,overallRankUl:true,overallRankMl:true,
+  speciesIvRankGl:true,speciesIvRankUl:true,speciesIvRankMl:true,despawn:true};
+ const lines=makeLines.resultLines(c,opts,"gl");
+ const rank=["GL RG#12","GL IV#1","GL P100,00%","UL RG#84","UL IV#50",
+   "ML RG#35","ML IV#307"];
+ return ["Yamask","#562","♂","XXL","Galarian","Astonish / Rock Tomb",
+   "🇹🇼 Tainan City, Taiwan","0.3 km","✨","PC813 · Nv29","15/15/15","100%","TIMER"].every(x=>lines.includes(x))&&
+  rank.every(x=>lines.includes(x))&&
+  !lines.some(x=>/^(?:Nome |Nº |Sexo |Tam |Forma |Golpes |Local |Dist |IV )/.test(x))&&
+  makeLines.resultInfoHtml("♂",c).includes('genderInfo male')&&
+  makeLines.resultInfoHtml("♀",c).includes('genderInfo female')&&
+  makeLines.resultInfoHtml("PC813 · Nv29",c).includes('statPrefix')&&
+  makeLines.resultInfoHtml("15/15/15",c).includes('ivInfo perfect')&&
+  makeLines.resultInfoHtml("100%",c).includes('ivInfo perfect')&&
+  makeLines.locationCountryFlag("Santa Maria, California, United States")==="🇺🇸"&&
+  makeLines.locationCountryFlag("place unknown")===""&&
+  dock.includes('.genderInfo.male{color:#59a9ff}')&&
+  dock.includes('.genderInfo.female{color:#ff83bb}')&&
+  dock.includes('.statPrefix{font-size:.72em');
 });
 test("UX-INFO-04 sprite column stays under the movable full Pokébola hitbox",
  dock.includes('body.result-window #resultHeader{')&&
