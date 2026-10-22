@@ -3856,3 +3856,14 @@ Todos os passos do job `119953796712` concluíram com sucesso, inclusive checkou
 **IMPORTANTE — serviço ainda não ativado:** regras do Firebase Realtime Database no Console permanecem por padrão bloqueadas até que o proprietário aplique, avalie e publique `firebase-realtime.rules.json` no projeto `pokesearch-lt`. O APK foi construído com integração Firebase e apresenta contadores, mas os totais de rede ficarão “—” até a regra ser publicada. **Não registrar números de instalações/online como reais antes da confirmação.** Testes visuais/funcionais em aparelhos reais ainda pendentes. A coleção de UID anônimo necessária para o modo Spark é visível aos próprios clientes autenticados, sem dados pessoais adicionais. Nunca anunciar métricas robustas contra manipulação sem serviço agregado de servidor.
 
 **Estado da versão:** LT54 é o build mais recente entregue aqui, mantendo LT53 disponível para rollback. Não alterar assinatura, package, PoGoCoordinates ou outro repositório. Não fazer novas compilações sem solicitação.
+
+
+### 12.180-LT54-AJUSTE-ICONE-WORDMARK (22/10/2026)
+
+**Evidências reais do usuário:** as capturas de `0.00.54-LT` mostram contadores Firebase operacionais no aparelho (Ativos agora **1**, Instalações **1**). No launcher, a Pokébola aparece pequena no quadrado; na Home a parte final do nome PokeSearch parece comprimida. Não interpretar 1 instalação como 1 pessoa identificada.
+
+**Raiz e solução preparada:** o gerador `app/scripts/RoundIcon.java` desenhava 272 px de arte numa tela adaptativa 432 px (área exibida central de ~288 px), deixando o emblema muito menor que o ícone; corrigido para 332 px, com legado de 12 px para 3 px de margem. O `AndroidManifest.xml` passa a preferir `@mipmap/ic_launcher`, que já possui XML adaptativo; `roundIcon` preservado. Brilho e estrelas das bordas podem ser parcialmente recortados pelo launcher para valorizar a Pokébola. Mantidos os PNGs originais.
+
+A imagem `ps_home_official_wordmark.png` mede 2172×724 (proporção exata 3:1), mas antes a janela era fixa 118×36 dp. Na Home, `MainActivity.java` calcula largura responsiva de 90–156 dp e altura pela proporção `largura/3`, reservando os quatro botões de toque no topo; cabeçalho 70 dp para acomodar marca e subtítulo. Ajustado o teste `BRAND-01` e adicionado `LT54-ICON-01`.
+
+**Estado:** modificações isoladas em `fix/lt54-launcher-wordmark-scale-20261022`; base `main` commit `050abf67475fc86c09ae4219c81a30809b68ba09`. A versão oficial permanece `0.00.54-LT`; **sem compilação, merge ou novo APK** nesta etapa, seguindo regra de autorização expressa. Para gerar nova versão (candidata `0.00.55-LT`), exigir autorização e testar iconografia no launcher/instalador Samsung, proporcionalidade da marca, Firebase e atualização por cima, mantendo assinatura e package.

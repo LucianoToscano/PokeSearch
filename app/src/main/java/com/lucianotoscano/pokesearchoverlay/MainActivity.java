@@ -218,7 +218,8 @@ public class MainActivity extends Activity {
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.TOP|Gravity.CENTER_VERTICAL);
         header.setOrientation(LinearLayout.HORIZONTAL);
-        screen.addView(header,new LinearLayout.LayoutParams(-1,d(56)));
+        // 3:1 wordmark should have natural height, without crowding toolbar.
+        screen.addView(header,new LinearLayout.LayoutParams(-1,d(70)));
 
         // HOME-02: icon only at top left; compact actions on the right.
         ImageView brand=new ImageView(this);
@@ -235,8 +236,15 @@ public class MainActivity extends Activity {
         brandTitle.setContentDescription("PokeSearch");
         TextView brandSubtitle=homeText("POKÉMON GO",9,
             homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
-        brandTitle.setAdjustViewBounds(true);
-        brandLabels.addView(brandTitle,new LinearLayout.LayoutParams(d(118),d(36)));
+        // Original wordmark: 2172 × 724 (3:1). Avoid fixed 118×36 squeezing.
+        // Reserve the four native 34dp action targets (plus 5dp margins).
+        int availableBrandWidth=getResources().getDisplayMetrics().widthPixels
+            -d(28)-d(38)-d(6)-(d(34)*4+d(5)*3)-d(3);
+        int wordmarkWidth=Math.max(d(90),Math.min(d(156),availableBrandWidth));
+        int wordmarkHeight=Math.round(wordmarkWidth/3f);
+        brandTitle.setAdjustViewBounds(false);
+        brandLabels.addView(brandTitle,
+            new LinearLayout.LayoutParams(wordmarkWidth,wordmarkHeight));
         brandLabels.addView(brandSubtitle);
         header.addView(brandLabels,new LinearLayout.LayoutParams(-2,-2));
 

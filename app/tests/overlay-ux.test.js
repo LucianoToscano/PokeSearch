@@ -1719,6 +1719,18 @@ test("HOME-04 keeps transparent brand left, controls right and plain outside bac
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
 })());
+test("LT54-ICON-01 launcher uses adaptive artwork and responsive 3:1 header",(()=>{
+ const manifest=fs.readFileSync(path.join(root,"AndroidManifest.xml"),"utf8");
+ const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
+ return manifest.includes('android:icon="@mipmap/ic_launcher"')&&
+  manifest.includes('android:roundIcon="@mipmap/ic_launcher_round"')&&
+  iconGenerator.includes("int artworkSize = 332")&&
+  iconGenerator.includes("int padding = 3")&&
+  home.includes("wordmarkWidth/3f")&&
+  home.includes("wordmarkWidth=Math.max(d(90),Math.min(d(156),availableBrandWidth))")&&
+  home.includes("new LinearLayout.LayoutParams(-1,d(70))");
+})());
+
 test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved",()=>{
  const pngs=[
   ["res/drawable-nodpi/ic_launcher.png",1254,1254],
@@ -1733,8 +1745,8 @@ test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved
   return img.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
     img.readUInt32BE(16)===w&&img.readUInt32BE(20)===h;
  })&&
- iconGenerator.includes("int artworkSize = 272")&&
- iconGenerator.includes("int padding = 12")&&
+ iconGenerator.includes("int artworkSize = 332")&&
+ iconGenerator.includes("int padding = 3")&&
  iconGenerator.includes("return new int[] {0, 0, image.getWidth(), image.getHeight()}");
 });
 test("HOME-04 shows genuine trainer data and the four transparent team assets",(()=>{
