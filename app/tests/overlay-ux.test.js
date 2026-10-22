@@ -147,7 +147,7 @@ test("UX-INFO-03 PvPoke species overall rank and within-species IV rank never co
   lines.includes("67%")&&lines.includes("RG#2")&&lines.includes("IV#1");
 });
 test("UX-INFO-COMPACT-01 requested Pokémon metadata has no verbose labels",()=>{
- const begin=dock.indexOf('function resultLines(card,opts,league){');
+ const begin=dock.indexOf("let locationCountryNames=null;");
  const end=dock.indexOf('function resultHasVisibleInfo(',begin);
  if(begin<0||end<begin)return false;
  const extract=dock.slice(begin,end);
