@@ -43,6 +43,30 @@
           "Testes de atualização em aparelho Android."
         ]
       }
+    },
+    {
+      "id": "pokesearch-v054-firebase-home-20261022",
+      "minVersionCode": 54252,
+      "date": "22/10/2026",
+      "title": "PokeSearch v0.00.54 — Estatísticas e ajustes",
+      "sections": {
+        "novidades": [
+          "Instalações registradas e usuários ativos agora na Home, sem login obrigatório."
+        ],
+        "melhorias": [
+          "Transparência afeta o fundo dos cartões e menus da Home, não o papel de parede.",
+          "Fundo da conta acompanha o modo claro/escuro e texto tem contraste adequado."
+        ],
+        "correcoes": [
+          "Avatar agora tem borda perfeitamente circular, sem pontas quadradas.",
+          "Sino escuro no menu flutuante com indicador de estrela preservado.",
+          "Reportar amarelo, apoiar rosa e fechar vermelho, como antes."
+        ],
+        "emDesenvolvimento": [
+          "Contadores exigem publicar as regras restritivas do Realtime Database antes do uso real.",
+          "Aparência e conectividade ainda precisam ser verificadas no Android de teste."
+        ]
+      }
     }
   ]
 }
