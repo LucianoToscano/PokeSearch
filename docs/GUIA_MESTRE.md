@@ -3590,3 +3590,11 @@ Total **658 contratos JS reportados pelos sete comandos**. O `gradle :app:assemb
 **Arquivos desta etapa:** novo `CoordsGoPreviewActivity.java`, novo `app/tests/coordsgo-preview.test.js`, `MainActivity.java` (somente entrada no menu e startActivity), `AndroidManifest.xml` (Activity privada), workflow (adição do contrato Node), este único `GUIA_MESTRE.md`. Workflow de APK assinado continua exigindo keystore estável, versão monotônica, certificados e publicação de checksums; caso falhe, **não** distribuir APK de debug com chave diferente.
 
 **Validação:** os testes Node e a compilação Gradle devem ser confirmados pelo novo GitHub Actions; não atribuir aprovação antes de observar conclusão. Nenhuma homologação real Android foi executada aqui. Sem merge na main.
+
+### 12.173 QA-REGRESSION-CONTRACTS-UPDATE — compatibilização de dois contratos antigos (22/10/2026)
+
+**CI #232 (run 39715326484) FALHOU corretamente antes do Gradle:** depois de 68 verificações de localização, 111 de probe, 9 do picker e 38 de login aprovadas, `overlay-ux.test.js` apontou dois contratos desatualizados, sem falha comprovada em Android:
+1. **PL-02:** o teste antigo exigia literalmente retry `attempt<8`, enquanto a correção já implementada na Etapa 12.166 aumentou o limite de recuperação da WebView para 24 tentativas. O contrato passa a esperar 24, **sem mexer na implementação**.
+2. **UX-INFO-ALL-03:** o teste antigo ainda exigia prefixos `Nome`, `Local`, `Dist`, `Sexo`, `Tam` e `✨ Shiny`, removidos intencionalmente na Etapa 12.169. O contrato passa a verificar valores curtos e ausência dos prefixos, mantendo o teste de dimensões do sprite. **Sem mudança de CSS, layout ou renderização.**
+
+**Mudanças permitidas:** somente `app/tests/overlay-ux.test.js` e registro no mesmo Guia Mestre. O CI de assinatura e o Gradle serão reexecutados por commit explicitamente aprovado de build. Não há merge. Novo APK/homologação somente após sucesso completo do workflow e teste físico pendente.
