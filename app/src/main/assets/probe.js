@@ -631,15 +631,25 @@ if(action==="describeFilters"){
 }
 
 function cardRoots(){
- const btns=elements("button,[role=button]").filter(e=>vis(e)&&/^(?:Get coords|Open in Maps)$/i.test(text(e)));
- return btns.slice(0,10).map((b,i)=>{
-  let node=b,chosen=b.parentElement;
+ // After Get coords is clicked, the site may render Open in Maps as an <a>.
+ // Include both controls or formerly visible cards silently disappear.
+ const actions=elements("button,a,[role=button]").filter(e=>vis(e)&&
+   /^(?:Get coords|Open in Maps)$/i.test(text(e)));
+ const cards=[],seen=new Set();
+ for(const action of actions){
+  let node=action,chosen=null;
   for(let depth=0;depth<10&&node;depth++,node=node.parentElement){
    const t=text(node);
-   if(/\bLOCATION\b/i.test(t)&&/\bDESPAWN\b/i.test(t)&&/\bCP\b/i.test(t)&&t.length<2500){chosen=node;break;}
+   if(/\bLOCATION\b/i.test(t)&&/\bDESPAWN\b/i.test(t)&&/\bCP\b/i.test(t)&&t.length<2500){
+    chosen=node;break;
+   }
   }
-  return {node:chosen,sourceIndex:i};
- });
+  if(!chosen||seen.has(chosen))continue;
+  seen.add(chosen);
+  cards.push({node:chosen,sourceIndex:cards.length});
+  if(cards.length===10)break;
+ }
+ return cards;
 }
 function nextLabelValue(root,label){
  const re=new RegExp("^"+label+"$","i");
