@@ -587,6 +587,12 @@ body.result-window .spawnInfo{
   scrollbar-width:none;overscroll-behavior:contain;touch-action:pan-y;
 }
 body.result-window .spawnInfo::-webkit-scrollbar{display:none}
+/* Compact optional details: same IV palette, sex indicators, miniature PC/Nv. */
+body.result-window .genderInfo{font-weight:900;font-size:calc(11px * var(--result-info-scale,1))}
+body.result-window .genderInfo.male{color:#59a9ff}
+body.result-window .genderInfo.female{color:#ff83bb}
+body.result-window .statPrefix{font-size:.72em;font-weight:800;vertical-align:baseline;opacity:.9;margin-right:1px}
+body.result-window .spawnInfoLine.wrap{overflow-wrap:anywhere}
 body.result-window .ivInfo{font-weight:900}
 body.result-window .ivInfo.zero{color:#00cfe8}
 body.result-window .ivInfo.low{color:#b8bec8}
@@ -1923,71 +1929,119 @@ function pvpIvClassPercent(rank){
  return Number.isInteger(rank)&&rank>=1&&rank<=4096?
   (100*(4096-rank)/4095).toFixed(2).replace(".",","):null;
 }
+// Country code comes ONLY from an explicit country suffix in a site location,
+// never inferred from GPS, state, region, coordinates or the phone locale.
+let locationCountryNames=null;
+function locationCountryFlag(location){
+ const parts=String(location||"").split(",");
+ if(parts.length<2)return "";
+ const normalized=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+ const country=normalized(parts[parts.length-1]);
+ if(!locationCountryNames){
+  locationCountryNames=new Map(Object.entries({
+   "united states":"US","united states of america":"US","usa":"US","us":"US",
+   "united kingdom":"GB","uk":"GB","great britain":"GB",
+   "south korea":"KR","north korea":"KP","russia":"RU","viet nam":"VN","vietnam":"VN",
+   "czech republic":"CZ","czechia":"CZ","ivory coast":"CI","cote d'ivoire":"CI",
+   "the netherlands":"NL","netherlands":"NL",
+   "taiwan":"TW","australia":"AU","brazil":"BR","brasil":"BR",
+   "japan":"JP","france":"FR","germany":"DE","canada":"CA","china":"CN",
+   "india":"IN","mexico":"MX","singapore":"SG","thailand":"TH",
+   "argentina":"AR","colombia":"CO","chile":"CL","peru":"PE",
+   "new zealand":"NZ","indonesia":"ID","philippines":"PH","malaysia":"MY",
+   "italy":"IT","spain":"ES","portugal":"PT","poland":"PL","turkey":"TR",
+   "south africa":"ZA","egypt":"EG","nigeria":"NG","saudi arabia":"SA",
+   "united arab emirates":"AE","switzerland":"CH","sweden":"SE",
+   "norway":"NO","finland":"FI","denmark":"DK","greece":"GR",
+   "israel":"IL","ireland":"IE","belgium":"BE","austria":"AT",
+   "pakistan":"PK","bangladesh":"BD","nepal":"NP",
+   "hong kong":"HK","macau":"MO","macao":"MO"
+  }));
+  // Additional country names in English and Portuguese, when supported by
+  // the device WebView; computed only once, with a conservative fallback.
+  if(typeof Intl!=="undefined"&&typeof Intl.DisplayNames==="function"){
+   try{
+    const displayNames=[new Intl.DisplayNames(["en"],{type:"region"}),
+      new Intl.DisplayNames(["pt-BR"],{type:"region"})];
+    for(let a=65;a<=90;a++)for(let b=65;b<=90;b++){
+     const code=String.fromCharCode(a,b);
+     for(const display of displayNames){
+      const label=display.of(code);
+      if(label&&label!==code)locationCountryNames.set(normalized(label),code);
+     }
+    }
+   }catch(_ignored){}
+  }
+ }
+ const code=locationCountryNames.get(country);
+ return /^[A-Z]{2}$/.test(code||"")?
+  String.fromCodePoint(...[...code].map(c=>127397+c.charCodeAt(0))):"";
+}
 function resultLines(card,opts,league){
  const lines=[],compact=[];
- // Every card data field is opt-in and display-only; never affects search.
  const safeText=(value,max=90)=>String(value??"").replace(/[\r\n\t]+/g," ").trim().slice(0,max);
- if(opts.name&&safeText(card?.name))lines.push("Nome "+safeText(card.name,65));
- if(opts.number&&safeText(card?.number))lines.push("Nº "+safeText(card.number,12));
- if(opts.gender&&["♀","♂"].includes(card?.gender))lines.push("Sexo "+card.gender);
- if(opts.size&&["XXS","XS","M","XL","XXL"].includes(String(card?.size||"").toUpperCase()))lines.push("Tam "+String(card.size).toUpperCase());
- if(opts.form&&safeText(card?.form))lines.push("Forma "+safeText(card.form,48));
- if(opts.moves&&safeText(card?.moves))lines.push("Golpes "+safeText(card.moves,65));
- if(opts.location&&safeText(card?.location))lines.push("Local "+safeText(card.location,90));
- if(opts.distance&&/^(?:\d+(?:[.,]\d+)?)\s*(?:km|m|mi)$/i.test(safeText(card?.distance)))lines.push("Dist "+safeText(card.distance,20));
- if(opts.shiny&&card?.shiny===true)lines.push("✨ Shiny");
+ if(opts.name&&safeText(card?.name))lines.push(safeText(card.name,65).replace(/\s*✨\s*/g,"").trim());
+ if(opts.number&&safeText(card?.number))lines.push("#"+safeText(card.number,12).replace(/^#/,""));
+ if(opts.gender&&["♀","♂"].includes(card?.gender))lines.push(card.gender);
+ if(opts.size&&["XXS","XS","M","XL","XXL"].includes(String(card?.size||"").toUpperCase()))
+  lines.push(String(card.size).toUpperCase());
+ if(opts.form&&safeText(card?.form))lines.push(safeText(card.form,48));
+ if(opts.moves&&safeText(card?.moves))lines.push(safeText(card.moves,65));
+ if(opts.location&&safeText(card?.location)){
+  const siteLocation=safeText(card.location,90);
+  const flag=locationCountryFlag(siteLocation);
+  lines.push((flag?flag+" ":"")+siteLocation);
+ }
+ if(opts.distance&&/^(?:\d+(?:[.,]\d+)?)\s*(?:km|m|mi)$/i.test(safeText(card?.distance)))
+  lines.push(safeText(card.distance,20));
+ if(opts.shiny&&card?.shiny===true)lines.push("✨");
  const cp=String(card?.cp??"").trim(),lvl=String(card?.level??"").trim();
  if(opts.cp&&/^[0-9]{1,5}$/.test(cp)&&Number(cp)>0&&Number(cp)<=10000)compact.push("PC"+cp);
  if(opts.level&&/^\d{1,2}(?:\.5)?$/.test(lvl)&&Number(lvl)>=1&&Number(lvl)<=55)compact.push("Nv"+lvl);
  if(compact.length)lines.push(compact.join(" · "));
- if(opts.rawIv)lines.push("IV "+(verifiedSpawnRawIv(card)||"?/?/?"));
+ if(opts.rawIv)lines.push(verifiedSpawnRawIv(card)||"?/?/?");
  const leagues=[["gl","Gl","GL"],["ul","Ul","UL"],["ml","Ml","ML"]];
  const hasLeaguePrefs=leagues.some(([,suffix])=>
   Object.prototype.hasOwnProperty.call(opts,"overallRank"+suffix)||
   Object.prototype.hasOwnProperty.call(opts,"speciesIvRank"+suffix));
- const combat=[],pct=opts.iv?verifiedSpawnIvPercent(card):null;
- if(pct!==null&&pct!==undefined)combat.push((hasLeaguePrefs?"IV% ":"IV")+pct+"%");
+ const pct=opts.iv?verifiedSpawnIvPercent(card):null;
+ if(pct!==null&&pct!==undefined)lines.push(pct+"%");
  if(!hasLeaguePrefs&&opts.overallRank){
-  const rank=verifiedOverallRank(card,league);if(rank!==null)combat.push("RG#"+rank);
+  const rank=verifiedOverallRank(card,league);if(rank!==null)lines.push("RG#"+rank);
  }
- if(combat.length)lines.push(combat.join(" · "));
  if(!hasLeaguePrefs&&opts.speciesIvRank){
   const rank=verifiedSpeciesIvRank(card,league);if(rank!==null)lines.push("IV#"+rank);
  }
+ // Every rank carries its league, even if GL/UL/ML all appear at once.
+ // P = IV-rank percentile, distinct from the Pokémon's ordinary IV%.
  if(hasLeaguePrefs)for(const [leagueKey,suffix,short] of leagues){
-  const ranks=[];
   if(opts["overallRank"+suffix]){
-   const rank=verifiedOverallRank(card,leagueKey);if(rank!==null)ranks.push("RG#"+rank);
+   const rank=verifiedOverallRank(card,leagueKey);
+   if(rank!==null)lines.push(short+" RG#"+rank);
   }
   if(opts["speciesIvRank"+suffix]){
    const rank=verifiedSpeciesIvRank(card,leagueKey);
-   if(rank!==null)ranks.push("IV#"+rank+" "+pvpIvClassPercent(rank)+"%");
-  }
-  if(ranks.length){
-   const text=short+" "+ranks.join(" · ");
-   // Split the compact, 96px-wide column instead of clipping a rank.
-   if(ranks.length===2){
-    lines.push(short+" "+ranks[0]);
-    lines.push(ranks[1]);
-   }else if(text.length>16&&ranks[0].startsWith("IV#")){
-    const [rankLabel,percent]=ranks[0].split(" ");
-    lines.push(short+" "+rankLabel);
-    if(percent)lines.push("Classe "+percent);
-   }else lines.push(text);
+   if(rank!==null){
+    lines.push(short+" IV#"+rank);
+    const percentile=pvpIvClassPercent(rank);
+    if(percentile!==null)lines.push(short+" P"+percentile+"%");
+   }
   }
  }
- if(opts.despawn&&Number(card?.expiresAtMs)>0){
-  const last=lines[lines.length-1]||"";
-  if(last.startsWith("IV#"))lines[lines.length-1]=last+" · TIMER";
-  else lines.push("TIMER");
- }
+ if(opts.despawn&&Number(card?.expiresAtMs)>0)lines.push("TIMER");
  return lines;
 }
-function resultInfoHtml(text,card){
- const valid=verifiedSpawnIvPercent(card),safe=esc(text);
- if(valid===null)return safe;
- return safe.replace(/(IV%\s*\d{1,3}%|IV\d{1,3}%|IV\s*\d{1,2}\/\d{1,2}\/\d{1,2})/g,
-  '<span class="ivInfo '+ivPaletteClass(valid)+'">$1</span>');
+function resultInfoHtml(value,card){
+ const raw=String(value??"");
+ const safe=esc(raw);
+ if(raw==="♂")return '<span class="genderInfo male">♂</span>';
+ if(raw==="♀")return '<span class="genderInfo female">♀</span>';
+ const valid=verifiedSpawnIvPercent(card);
+ if(valid!==null&&(raw===String(valid)+"%"||raw===verifiedSpawnRawIv(card)))
+  return '<span class="ivInfo '+ivPaletteClass(valid)+'">'+safe+'</span>';
+ // Labels retain their original short letters but occupy less space than CP/level.
+ return safe.replace(/\b(PC|Nv)(\d+(?:\.5)?)/g,
+  '<span class="statPrefix">$1</span>$2');
 }
 function resultHasVisibleInfo(card,timersEnabled,textEnabled,opts=null,league=""){
  if(opts)return resultLines(card,opts,league).length>0;
@@ -2150,7 +2204,7 @@ function draw(){
   const inlineTimer=resultDisplayOptions.despawn&&deadline?
    '<span class="timer" data-deadline="'+deadline+'"></span>':"";
   const info=infoLines.length?'<span class="spawnInfo" aria-label="Dados opcionais do Pokémon">'+infoLines.map(text=>
-   '<span class="spawnInfoLine'+(/^(?:Nome |Local |Golpes |Forma )/.test(text)?" wrap":"")+'" title="'+esc(text)+'">'+(text.includes("TIMER")?
+   '<span class="spawnInfoLine'+(text.length>16?" wrap":"")+'" title="'+esc(text)+'">'+(text.includes("TIMER")?
     text.split("TIMER").map(line=>resultInfoHtml(line,c)).join(inlineTimer):resultInfoHtml(text,c))+'</span>').join("")+'</span>':"";
   // When the optional side strip is closed, retain historical timer/IV badges.
   const badge=!metadataVisible&&showTimers&&deadline?
@@ -2703,7 +2757,7 @@ function renderInfoChoices(){
   });
  }
  const hint=document.createElement("div");hint.className="uxNote";
- hint.textContent="Até 10 spawns. Nome, distância, localização, tamanho, sexo e todos os demais campos podem aparecer ou ficar ocultos. A distância só vem do cartão do PoGoCoordinates, sem GPS. O espaço dos sprites não aumenta; arraste a coluna lateral para ler informações longas. Dados não comprovados não são inventados.";
+ hint.textContent="Até 10 spawns. Nome, distância, localização, tamanho, sexo e todos os demais campos podem aparecer ou ficar ocultos. A distância só vem do cartão do PoGoCoordinates, sem GPS. O espaço dos sprites não aumenta; arraste a coluna lateral para ler informações longas. Rank Geral = RG#, Rank de IV = IV#; P = percentil da distribuição de IV (não é IV%). GL/UL/ML sempre aparecem no rank. Países reconhecidos exibem bandeira; sem localização inventada. Dados não comprovados não são inventados.";
  panel.appendChild(hint);
  requestAnimationFrame(()=>{if(choiceOpen==="info"&&panel.isConnected)panel.scrollTop=scroll;});
  fit();
