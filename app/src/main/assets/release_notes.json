@@ -34,12 +34,11 @@
         "melhorias": [
           "Logo azul na Home e proporção correta do nome.",
           "Temas, transparências e linhas-guia independentes para Menu e Pokémon.",
-          "Transparência própria do fundo da Home."
-        ],
-        "correcoes": [
+          "Transparência própria do fundo da Home.",
           "Ícone do instalador referenciado à arte oficial.",
           "Editor com duas abas, sem aba Fundo."
         ],
+        "correcoes": [],
         "emDesenvolvimento": [
           "Testes de atualização em aparelho Android."
         ]
