@@ -311,12 +311,21 @@ public class OverlayService extends Service {
                     long expiry=card.optLong("expiresAtMs",Long.MAX_VALUE);
                     if(expiry>now)active.put(card);
                 }
-                if(active.length()!=old.length()){
+                boolean expired=active.length()!=old.length();
+                if(expired){
+                    // Despawn is authoritative locally: remove expired sprites at
+                    // once, before requesting any new site results.
                     results=active.toString();hideDetails();update();
                 }
-                // Expiration is a local UI event, never a reason to query the site.
-                // Re-arm the next remaining deadline without changing AUTO cadence.
                 armNextDespawn(active);
+                if(expired&&!stopped&&!loginPaused){
+                    // Independent of AUTO/OFF: reload when a spawn expires so
+                    // newly available matches replace the expired entry.
+                    // Reset the periodic timer to avoid a duplicate scheduled
+                    // request immediately after this despawn refresh.
+                    schedulePeriodic();
+                    refresh(true);
+                }
             }catch(Exception e){recordFailure("limpar vencidos",e);}
         }
     };
@@ -2509,7 +2518,7 @@ public class OverlayService extends Service {
             }
         });}
         @JavascriptInterface public void setIntervalMinutes(int minutes){handler.post(()->{
-            if(minutes!=0&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
+            if(minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
             if(intervalMinutes==minutes)return;
             intervalMinutes=minutes;
             getSharedPreferences("prefs",0).edit()
@@ -2520,7 +2529,7 @@ public class OverlayService extends Service {
                 intervalMinutes==0?"AUTO desligado":"AUTO: "+intervalMinutes+" minutos",android.widget.Toast.LENGTH_SHORT).show();
         });}
         @JavascriptInterface public void cycleInterval(){handler.post(()->{
-            int[] options={0,5,10,15,20};
+            int[] options={0,3,5,10,15,20};
             int next=0;
             for(int j=0;j<options.length;j++){
                 if(options[j]==intervalMinutes){next=(j+1)%options.length;break;}
@@ -2764,8 +2773,8 @@ public class OverlayService extends Service {
         }else{
             intervalMinutes=pref.getInt("intervalMinutes",5);
         }
-        if(intervalMinutes!=0&&intervalMinutes!=5&&intervalMinutes!=10&&
-           intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=5;
+        if(intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&
+           intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=5;
         schedulePeriodic();
         spriteSize=pref.getInt("spriteSize",45);
         if(spriteSize!=35&&spriteSize!=45&&spriteSize!=55)spriteSize=45;
