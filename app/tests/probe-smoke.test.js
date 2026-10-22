@@ -109,6 +109,25 @@ function run(action,mode,shinyOnly,opts={}){
     button.parentElement=box;
     cardButtons=[button];
   }
+  if(Array.isArray(opts.spawns)){
+    cardButtons=[];
+    for(const card of opts.spawns){
+      const box=element(card.text,{},{
+        querySelector:()=>element(card.name),
+        querySelectorAll:()=>[],
+      });
+      const button=element(card.action||"Get coords",{},{
+        tagName:card.link?"A":"BUTTON"
+      });
+      button.parentElement=box;
+      cardButtons.push(button);
+      if(card.duplicateAction){
+        const sibling=element("Open in Maps",{}, {tagName:"A"});
+        sibling.parentElement=box;
+        cardButtons.push(sibling);
+      }
+    }
+  }
   if(opts.pending||opts.pendingText){
     pending=[element(opts.pendingText||"Link a Pokémon GO account. Your trainer code: 12 digits")];
   }
@@ -120,7 +139,7 @@ function run(action,mode,shinyOnly,opts={}){
     if(selector==='[role="dialog"],[aria-modal="true"],form')return pending;
     if(selector==="label,span,div,p,strong")return all;
     if(selector.includes("[role=option]"))return dynamicOptions;
-    if(selector==="button,[role=button]")return cardButtons;
+    if(selector==="button,a,[role=button]")return cardButtons;
     if(selector==="a,button,[role=button]")return sessionButtons;
     if(selector==="p,small,span,div,label")return accountLabels;
     return [];
@@ -256,6 +275,16 @@ assert.equal(league.cards.length,1,"GL#1: card without a rank label must be acce
 assert.equal(league.cards[0].rank,"","Verified Top 1 is a search ceiling, not a proven individual rank");
 assert.equal(league.cards[0].rankLimit,1,"Verified Top 1 threshold is separately retained");
 assert.equal(league.cards[0].rankSource,"verified-site-filter");
+checked++;
+const linkedSpawn=(name)=>name+" ✨\\n#562 · Male · M\\nAstonish / Rock Tomb\\nCP\\n813\\nLVL\\n29\\nIV\\n100% (15/15/15)\\nLOCATION\\nTainan City, Taiwan\\nDESPAWN\\n5:16\\nOpen in Maps";
+const mixedCards=run("collect","raw",false,{iv:["15","15","15"],
+  spawns:[
+   {name:"Flabebe",text:linkedSpawn("Flabebe"),action:"Get coords"},
+   {name:"Yamask",text:linkedSpawn("Yamask"),action:"Open in Maps",link:true,duplicateAction:true}
+  ]});
+assert.equal(mixedCards.cards.length,2,"Both Get coords and linked Open in Maps must be collected");
+assert.equal(mixedCards.found,2,"Two action elements on one card never duplicate a spawn");
+assert.deepEqual(Array.from(mixedCards.cards,x=>x.sourceIndex),[0,1]);
 checked++;
 const top50=run("collect","gl",false,
   {switch:false,pvp:{rank:"50",league:"Great League",prior:"Yes"},config:{glRank:50},spawn});
