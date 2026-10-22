@@ -1039,9 +1039,16 @@ body.controls-window #quickMenuList [data-key=appearance] .quickGlyph{
  color:var(--visual-menu-fg,#f2f7fc)!important;
 }
 body.controls-window.visual-light-menu #quickMenuList .quickGlyph svg:not([fill="none"]){fill:currentColor}
-/* LT54: requested dark bell; retain yellow star & audio states separately. */
-body.controls-window:not(.visual-light-menu) #quickMenuList [data-key=bell]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{
-  color:#111821!important;filter:drop-shadow(0 0 1.5px #f3f6ffcc)!important;
+/* LT54 BELL-THEME-02: correct light/dark mapping in the FLOATING menu.
+   Light menu -> black bell; dark menu -> white bell. Yellow audible states
+   and the separate yellow/white favorite star remain untouched. */
+body.controls-window.visual-light-menu #quickMenuList button[data-key="bell"]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{
+  color:#111821!important;
+  filter:none!important;
+}
+body.controls-window:not(.visual-light-menu) #quickMenuList button[data-key="bell"]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{
+  color:#f7f8fa!important;
+  filter:none!important;
 }
 /* Colored glyphs are always colored and override the generic neutral rule. */
 body.controls-window #quickMenuList [data-key=report] .quickGlyph{color:#ffd674!important}
