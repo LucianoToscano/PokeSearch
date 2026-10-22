@@ -7,27 +7,21 @@ import java.io.File;
 import javax.imageio.ImageIO;
 
 /**
- * Generate launcher resources from the ORIGINAL approved PokeSearch artwork.
+ * Generate launcher resources from the official PokeSearch Shiny Blue Effect artwork.
  *
  * One UI and other launchers often inset legacy round icons. Keep the legacy
  * circle as a fallback, but also generate an adaptive foreground at Android's
  * required 108dp canvas size so the icon fills the launcher mask.
  *
- * Source artwork is centered and zoomed without changing its colors or design.
+ * Full artwork is fitted inside the safe area, protecting blue glow and Shiny stars.
  * This is an offline resource step; it does not run in the app.
  */
 public final class RoundIcon {
     private static final int LEGACY_SIZE = 192;
     private static final int ADAPTIVE_SIZE = 432;
-    // Crop approximately 11% from each side to remove the original empty border.
-    private static final double SOURCE_ZOOM = 1.28;
-
+    // The original image already fills a square, including stars and glow.
     private static int[] sourceCrop(BufferedImage image) {
-        int square = Math.min(image.getWidth(), image.getHeight());
-        int cropped = Math.max(1, (int) Math.round(square / SOURCE_ZOOM));
-        int x0 = (image.getWidth() - cropped) / 2;
-        int y0 = (image.getHeight() - cropped) / 2;
-        return new int[] {x0, y0, x0 + cropped, y0 + cropped};
+        return new int[] {0, 0, image.getWidth(), image.getHeight()};
     }
 
     private static Graphics2D configure(BufferedImage target) {
@@ -67,7 +61,9 @@ public final class RoundIcon {
         Graphics2D legacyG = configure(legacy);
         try {
             legacyG.setClip(new Ellipse2D.Double(0, 0, LEGACY_SIZE, LEGACY_SIZE));
-            legacyG.drawImage(original, 0, 0, LEGACY_SIZE, LEGACY_SIZE,
+            int padding = 12; // Prevent edge stars from being cut by round launchers.
+            legacyG.drawImage(original, padding, padding,
+                LEGACY_SIZE - padding, LEGACY_SIZE - padding,
                 crop[0], crop[1], crop[2], crop[3], null);
         } finally {
             legacyG.dispose();
@@ -85,7 +81,7 @@ public final class RoundIcon {
             BufferedImage.TYPE_INT_ARGB);
         Graphics2D adaptiveG = configure(adaptive);
         try {
-            int artworkSize = 300; // Slightly overfills the central 288px mask.
+            int artworkSize = 272; // Keep every star inside the 288px adaptive safe zone.
             int inset = (ADAPTIVE_SIZE - artworkSize) / 2;
             adaptiveG.drawImage(original, inset, inset, inset + artworkSize, inset + artworkSize,
                 crop[0], crop[1], crop[2], crop[3], null);

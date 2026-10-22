@@ -463,7 +463,8 @@ const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
 test("PokeSearch 0.51 source configured",
   gradleBuild.includes('versionCode = testVersionCode ?: 51')&&
-  gradleBuild.includes('versionName = if (testVersionCode != null) "0.51-beta.test.${testVersionLabel ?: testVersionCode}" else "0.51-beta"')&&
+  gradleBuild.includes('publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}"')&&
+  gradleBuild.includes('POKE_TEST_PUBLIC_VERSION')&&
   gradleBuild.includes('applicationId = "com.lucianotoscano.pokesearch"'));
 test("Round icon generator always uses headless mode",gradleBuild.includes('-Djava.awt.headless=true')&&iconGenerator.includes('System.setProperty("java.awt.headless","true")'));
 test("Network main-frame error is handled",service.includes('request.isForMainFrame()')&&service.includes('Falha de navegação principal'));
@@ -1712,11 +1713,30 @@ test("HOME-04 keeps transparent brand left, controls right and plain outside bac
   home.includes("overlayControl=makeIcon(R.drawable.ic_overlay_off")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
-  !home.includes("R.drawable.ps_home_wordmark")&&
+  home.includes("R.drawable.ps_home_official_wordmark")&&
+  home.includes('brandTitle.setContentDescription("PokeSearch")')&&
   home.includes("frame.setBackgroundColor(homeLightMode?")&&
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
 })());
+test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved",()=>{
+ const pngs=[
+  ["res/drawable-nodpi/ic_launcher.png",1254,1254],
+  ["res/drawable-nodpi/ps_home_brand_transparent.png",1254,1254],
+  ["res/drawable-nodpi/ps_home_official_wordmark.png",2172,724],
+  ["assets/branding/PokeSearchLogoShinyBlueEffectAll.png",1254,1254],
+  ["assets/branding/PokeSearchLogoShiny.png",1254,1254],
+  ["assets/branding/PokeSearchName.png",2172,724],
+ ];
+ return pngs.every(([p,w,h])=>{
+  const img=fs.readFileSync(path.join(root,p));
+  return img.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
+    img.readUInt32BE(16)===w&&img.readUInt32BE(20)===h;
+ })&&
+ iconGenerator.includes("int artworkSize = 272")&&
+ iconGenerator.includes("int padding = 12")&&
+ iconGenerator.includes("return new int[] {0, 0, image.getWidth(), image.getHeight()}");
+});
 test("HOME-04 shows genuine trainer data and the four transparent team assets",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  const state=main.split("private void refreshSessionSummary(){")[1]?.split("private void askLogout(){")[0]||"";
@@ -2512,6 +2532,55 @@ test("RANK-EVO-DETAIL-04 unknown CP never looks confirmed eligible",()=>{
   known?.includes("GL IV#1")&&!known.includes("PC?")&&
   api.resultInfoHtml(known,card).includes("evolutionInfo best");
 });
+
+
+const releaseNotesJava=read("java/com/lucianotoscano/pokesearchoverlay/ReleaseNotes.java");
+const releaseNotesData=JSON.parse(read("assets/release_notes.json"));
+const releaseNotesGradle=fs.readFileSync(path.join(root,"..","..","build.gradle.kts"),"utf8");
+test("RELEASE-NOTES-01 asset has a versioned, local schema",()=>{
+ const entries=releaseNotesData.releases;
+ return releaseNotesData.schema==="pokesearch-release-notes-v1"&&Array.isArray(entries)&&entries.length>=1&&
+  entries.every(e=>typeof e.id==="string"&&e.id.trim()&&
+   Number.isInteger(e.minVersionCode)&&e.minVersionCode>0&&e.sections&&
+   ["novidades","melhorias","correcoes","emDesenvolvimento"].every(k=>
+    Array.isArray(e.sections[k])&&e.sections[k].every(line=>typeof line==="string"&&line.trim())))&&
+  new Set(entries.map(e=>e.id)).size===entries.length&&
+  entries.every((e,i)=>i===0||e.minVersionCode>entries[i-1].minVersionCode);
+});
+test("RELEASE-NOTES-02 automatic notice only on normal Home launch, no OAuth interruption",
+ main.includes('Intent.ACTION_MAIN.equals(getIntent().getAction())')&&
+ main.includes('root.post(()->ReleaseNotes.maybeShowAfterUpgrade(this))')&&
+ main.includes('getBoolean("tutorialSeenV41",false)')&&
+ main.includes('dialog.setOnDismissListener(ignored->{')&&
+ main.includes('releaseTutorialWebView();')&&
+ main.split('ReleaseNotes.maybeShowAfterUpgrade(this)').length===3);
+test("RELEASE-NOTES-03 manual release history is available in the existing Home menu",
+ main.includes('addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this))'));
+test("RELEASE-NOTES-04 a clean install does not trigger the update notice",
+ releaseNotesJava.includes('previous<0')&&releaseNotesJava.includes('info.lastUpdateTime>info.firstInstallTime+2000')&&
+ releaseNotesJava.includes('previous>0&&code>previous'));
+test("RELEASE-NOTES-05 display is once per verified notes revision, not every launch",
+ releaseNotesJava.includes('LAST_SHOWN_ID')&&releaseNotesJava.includes('PENDING_VERSION')&&
+ releaseNotesJava.includes('id.equals(prefs.getString(LAST_SHOWN_ID,""))')&&
+ releaseNotesJava.includes('dialog.setOnDismissListener(ignored->onDismiss.run())')&&
+ releaseNotesJava.includes('.remove(PENDING_VERSION).apply()'));
+test("RELEASE-NOTES-06 history does not modify upgrade markers",
+ !releaseNotesJava.split('public static void showHistory(Activity activity)')[1]
+  .split('private static TextView text(')[0].includes('prefs.edit()')&&
+ releaseNotesJava.includes('for (int i=list.length()-1;i>=0;i--)'));
+test("RELEASE-NOTES-07 interface is scrollable and adapts to Home theme",
+ releaseNotesJava.includes('new ScrollView(activity)')&&
+ releaseNotesJava.includes('getBoolean("homeLightMode",false)')&&
+ releaseNotesJava.includes('window.setLayout(width,height)'));
+test("RELEASE-NOTES-08 metadata is integrity checked within the APK",
+ releaseNotesGradle.includes('"shiny_login.js", "release_notes.json"')&&
+ releaseNotesJava.includes('getAssets().open(ASSET)'));
+test("RELEASE-NOTES-09 the reader fails closed on missing or corrupt notes",
+ releaseNotesJava.includes('return new JSONArray(); // Release notes must never prevent the Home from opening.')&&
+ releaseNotesJava.includes('out.size()+size>96000'));
+test("RELEASE-NOTES-10 no unaudited corrections advertised",
+ releaseNotesData.releases.every(e=>e.sections.correcoes.length===0)&&
+ releaseNotesData.releases[0].sections.emDesenvolvimento.some(s=>s.includes("Validação visual")));
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
