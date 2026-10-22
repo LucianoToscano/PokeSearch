@@ -9,7 +9,7 @@ const DEFAULTS=Object.freeze({
  popupWidth:232,popupHeight:390,
  resultsOrientation:"vertical",menuOrientation:"horizontal",
  resultsBgMode:"dark",resultsTransparency:100,
- menuBgMode:"dark",menuTransparency:35,showGuides:false
+ menuBgMode:"dark",menuTransparency:35,showGuides:false,menuGuides:false,resultsGuides:false
 });
 const RANGES={
  resultGapTop:[-80,80],resultGapBetween:[0,65],resultSpriteScale:[70,160],headerIconY:[0,72],
@@ -24,7 +24,7 @@ const PRESETS={
  balanced:{resultGapTop:0,resultGapBetween:13,resultSpriteScale:115,menuItemGap:3},
  readable:{resultGapTop:8,resultGapBetween:40,resultSpriteScale:100,menuItemGap:7}
 };
-let current={...DEFAULTS},tab="results",saveTimer=null,pendingVisualJson="",saveEpoch=0;
+let current={...DEFAULTS},tab="results",saveTimer=null,pendingVisualJson="",saveEpoch=0,previewArea="";
 function normalize(raw){
  const src=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{};
  const result={...DEFAULTS};
@@ -38,6 +38,8 @@ function normalize(raw){
  for(const key of ["resultsBgMode","menuBgMode"])
   if(src[key]==="light"||src[key]==="dark")result[key]=src[key];
  result.showGuides=src.showGuides===true;
+ result.menuGuides=src.menuGuides===true||(src.menuGuides===undefined&&result.showGuides);
+ result.resultsGuides=src.resultsGuides===true||(src.resultsGuides===undefined&&result.showGuides);
  return result;
 }
 function rgba(mode,transparent){
@@ -74,7 +76,11 @@ function applyVisual(){
  set("popup-height",current.popupHeight+"px");
  body.classList.toggle("visual-menu-vertical",current.menuOrientation==="vertical");
  body.classList.toggle("visual-results-horizontal",current.resultsOrientation==="horizontal");
- body.classList.toggle("visual-guides",current.showGuides);
+ const guided=controlsWindow?(current.menuGuides||previewArea==="menu"):
+  resultWindow?(current.resultsGuides||previewArea==="results"):false;
+ body.classList.toggle("visual-guides",guided);
+ body.classList.toggle("visual-preview-menu",controlsWindow&&previewArea==="menu");
+ body.classList.toggle("visual-preview-results",resultWindow&&previewArea==="results");
  if(resultWindow&&typeof draw==="function"){
   // Only row pitch/orientation changes require rebuilding sprites; theme and scale
   // apply via CSS without discarding images or their loaded/failed state.
@@ -86,6 +92,10 @@ function applyVisual(){
  }
  if(controlsWindow&&typeof fit==="function")fit();
 }
+window.onVisualEditorPreview=function(area){
+ previewArea=area==="menu"||area==="results"?area:"";
+ applyVisual();
+};
 function saveSoon(){
  if(!controlsWindow)return;
  clearTimeout(saveTimer);
@@ -159,12 +169,13 @@ function btn(container,title,fn){
 function renderVisualEditor(){
  if(!controlsWindow||choiceOpen!=="visual")return;
  const panel=uxPanel("🎛 EDITOR VISUAL · TEMPORÁRIO");
+ if(window.Native&&Native.previewVisualArea)Native.previewVisualArea(tab);
  panel.classList.add("visualPanel");
  const note=document.createElement("div");note.className="uxNote";
  note.textContent="Ajuste ao vivo no jogo. Nada altera os filtros ou o IV. Os ajustes persistem até restaurar.";
  panel.appendChild(note);
  const nav=document.createElement("div");nav.className="visualTabs";
- for(const [id,title] of [["results","Pokémon"],["menu","Menu"],["bg","Fundo"]]){
+ for(const [id,title] of [["results","Pokémon"],["menu","Menu"]]){
   const b=btn(nav,title,()=>{tab=id;renderVisualEditor();});
   b.classList.toggle("chosen",tab===id);
  }
@@ -186,6 +197,15 @@ function renderVisualEditor(){
   addSlider(panel,"resultsOffsetY","Mover verticalmente (Y)"," dp");
   addSegment(panel,"resultsOrientation","Organização dos resultados",
    [["vertical","Vertical ↕"],["horizontal","Horizontal ↔ (quebra de linha)"]]);
+  heading(panel,"Fundo e área clicável dos resultados");
+  addSegment(panel,"resultsBgMode","Modo dos resultados",[["dark","Escuro"],["light","Claro"]]);
+  addSlider(panel,"resultsTransparency","Transparência do fundo dos resultados","%");
+  btn(panel,"Linhas-guia resultados: "+(current.resultsGuides?"ON":"OFF"),()=>{
+   change("resultsGuides",!current.resultsGuides);renderVisualEditor();
+  });
+  const preview=document.createElement("div");preview.className="uxNote";
+  preview.textContent="Amarelo: área clicável da Pokébola · azul: sprites. Só durante a edição.";
+  panel.appendChild(preview);
  }else if(tab==="menu"){
   heading(panel,"Posição e distância");
   addSlider(panel,"gearMenuGap","Engrenagem → menu"," dp");
@@ -196,18 +216,15 @@ function renderVisualEditor(){
   addSlider(panel,"menuOffsetY","Mover menu verticalmente (Y)"," dp");
   addSegment(panel,"menuOrientation","Organização do menu",
    [["horizontal","Horizontal ↔"],["vertical","Vertical ↕"]]);
- }else if(tab==="bg"){
-  heading(panel,"Resultados dos Pokémon");
-  addSegment(panel,"resultsBgMode","Cor do fundo",
-   [["dark","Escuro"],["light","Claro"]]);
-  addSlider(panel,"resultsTransparency","Transparência (100 = invisível)","%");
-  heading(panel,"Menus e filtros");
-  // One opacity control drives tiles and submenus; legacy menuBgMode remains
-  // in saved/imported JSON so earlier user presets are never destroyed.
+  heading(panel,"Fundo e área clicável do Menu");
+  addSegment(panel,"menuBgMode","Modo do menu",[["dark","Escuro"],["light","Claro"]]);
   addSlider(panel,"menuTransparency","Transparência única dos menus","%");
-  btn(panel,"Linhas-guia: "+(current.showGuides?"ON":"OFF"),()=>{
-   change("showGuides",!current.showGuides);renderVisualEditor();
+  btn(panel,"Linhas-guia menu: "+(current.menuGuides?"ON":"OFF"),()=>{
+   change("menuGuides",!current.menuGuides);renderVisualEditor();
   });
+  const preview=document.createElement("div");preview.className="uxNote";
+  preview.textContent="Verde: área clicável dos botões. Só durante a edição.";
+  panel.appendChild(preview);
  }else{
   heading(panel,"Exportar o visual para o ChatGPT");
   const textarea=document.createElement("textarea");
@@ -250,6 +267,7 @@ function renderVisualEditor(){
  feedback.className="uxNote";feedback.setAttribute("role","status");
  feedback.textContent="Prévia ativa · não precisa reiniciar";panel.appendChild(feedback);
  const back=btn(panel,"‹ Voltar à personalização",()=>{
+  if(window.Native&&Native.previewVisualArea)Native.previewVisualArea("");
   choiceOpen="appearance";renderAppearanceChoices();
  });
  back.classList.add("visualBack");
@@ -262,16 +280,7 @@ window.onVisualPrefs=function(raw){
   const next=normalize(obj),incoming=JSON.stringify(next);
   // Status/notification updates may rebroadcast the last saved layout while
   // the thumb is still moving. Never roll back the user's unsaved values.
-  // Exception: the Home light/dark switch is authoritative for menu tone.
-  // Merge ONLY its color, preserving the live slider draft; then save both.
-  if(pendingVisualJson&&pendingVisualJson!==incoming){
-   if(next.menuBgMode!==current.menuBgMode){
-    current=normalize({...current,menuBgMode:next.menuBgMode});
-    applyVisual();
-    saveSoon();
-   }
-   return;
-  }
+  if(pendingVisualJson&&pendingVisualJson!==incoming)return;
   if(pendingVisualJson===incoming)pendingVisualJson="";
   if(incoming!==JSON.stringify(current)){current=next;applyVisual();}
  }catch(e){/* ignore invalid persisted visual prefs */}

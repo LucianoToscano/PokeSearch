@@ -79,12 +79,24 @@ public class MainActivity extends Activity {
     private android.media.MediaPlayer bundledTonePreview;
     private FrameLayout homeRoot;
     private boolean homeLightMode=false;
-    private ImageView homeBackgroundImage;
+
+    // Native Home panels change alpha; the wallpaper never changes transparency.
+    private final java.util.List<android.graphics.drawable.GradientDrawable> homeSurfaces=
+        new java.util.ArrayList<>();
+    private int homeSurfacesTransparency(){
+        android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+        return Math.max(0,Math.min(100,p.getInt("homePanelsTransparency",
+            p.getInt("homeBackgroundTransparency",0))));
+    }
+    private void refreshHomeSurfaceOpacity(){
+        int alpha=Math.round(255f*(100-homeSurfacesTransparency())/100f);
+        for(android.graphics.drawable.GradientDrawable bg:homeSurfaces)bg.setAlpha(alpha);
+    }
     private TextView homeThemeButton;
     private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
     private View trainerCopyButton;
     private View guestHeading;
-    private ImageView teamBadge, accountAvatar;
+    private ImageView teamBadge, accountAvatar, accountAvatarFrame;
     private Button trainerAction;
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
@@ -107,6 +119,7 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(Color.rgb(9,20,37));
         FrameLayout root=buildHome();
         setContentView(root);
+        FirebaseStats.setHomeVisible(this,true);
         refreshSessionSummary();
         refreshHomeOverlay();
         handleShinyLoginIntent(getIntent());
@@ -127,6 +140,11 @@ public class MainActivity extends Activity {
             root.post(this::requestOverlayNotificationPermission);
         if("com.lucianotoscano.pokesearchoverlay.PICK_ALERT_TONE".equals(getIntent().getAction()))
             root.post(()->beginAlertToneChoice(getIntent().getStringExtra("alertToneTarget")));
+        // Release notes belong only to a normal Home opening. Never interrupt OAuth,
+        // notification permissions or overlay callbacks. The quick guide comes first.
+        if(Intent.ACTION_MAIN.equals(getIntent().getAction())&&
+            getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false))
+            root.post(()->ReleaseNotes.maybeShowAfterUpgrade(this));
     }
 
     private TextView homeText(String value,int sp,int color,boolean bold){
@@ -139,13 +157,16 @@ public class MainActivity extends Activity {
     private android.graphics.drawable.GradientDrawable homeSurface(int color,int radius,int stroke){
         android.graphics.drawable.GradientDrawable bg=round(color,radius);
         if(stroke!=0)bg.setStroke(d(1),stroke);
+        homeSurfaces.add(bg);
+        bg.setAlpha(Math.round(255f*(100-homeSurfacesTransparency())/100f));
         return bg;
     }
     private TextView homeMiniButton(String glyph,String description){
         TextView t=homeText(glyph,21,Color.WHITE,true);
         t.setGravity(Gravity.CENTER);
         t.setContentDescription(description);
-        t.setBackground(homeSurface(Color.argb(130,9,25,49),11,Color.argb(90,180,221,255)));
+        t.setBackground(homeSurface(homeLightMode?Color.rgb(248,251,254):Color.rgb(27,32,41),
+            11,homeLightMode?Color.rgb(148,163,179):Color.rgb(86,99,114)));
         return t;
     }
     // HOME-THEME-01: one saved switch; no WebView recreation and no new OAuth.
@@ -160,9 +181,7 @@ public class MainActivity extends Activity {
     private void toggleHomeTheme(){
         homeLightMode=!homeLightMode;
         getSharedPreferences("prefs",0).edit().putBoolean("homeLightMode",homeLightMode).apply();
-        // The menu color selector is hidden: keep its shared background aligned
-        // with this Home switch without restarting the active collector/WebView.
-        serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_HOME_THEME");
+        // Home theme is independent of the overlay editor themes.
         closeHomeMenu();
         // Refresh only the native Home presentation. Persistent site login,
         // overlay service, results, filter preferences and watched species stay.
@@ -175,16 +194,17 @@ public class MainActivity extends Activity {
         updateHomeSystemBars();
         FrameLayout frame=new FrameLayout(this);
         homeRoot=frame;
+        homeSurfaces.clear();
         // Owner-supplied backgrounds share the same 941×1672 portrait geometry.
         // CENTER_CROP (one gravity for both) avoids distortion when switching.
         frame.setBackgroundColor(homeLightMode?Color.rgb(239,245,249):Color.rgb(10,14,23));
         ImageView pageBackground=new ImageView(this);
-        homeBackgroundImage=pageBackground;
+        // Wallpaper remains an independent, full-opacity decorative image.
         pageBackground.setImageResource(homeLightMode?
             R.drawable.ps_home_background_light:R.drawable.ps_home_background_dark);
         pageBackground.setScaleType(ImageView.ScaleType.CENTER_CROP);
         pageBackground.setContentDescription(homeLightMode?"Fundo PokeSearch claro":"Fundo PokeSearch escuro");
-        pageBackground.setAlpha(1.0f);
+        pageBackground.setAlpha(1f); // Slider affects surfaces only.
         frame.addView(pageBackground,new FrameLayout.LayoutParams(-1,-1));
         View dim=new View(this);
         dim.setBackgroundColor(homeLightMode?Color.argb(8,255,255,255):Color.argb(16,6,12,24));
@@ -209,11 +229,14 @@ public class MainActivity extends Activity {
         LinearLayout brandLabels=new LinearLayout(this);
         brandLabels.setOrientation(LinearLayout.VERTICAL);
         brandLabels.setPadding(d(6),0,0,0);
-        TextView brandTitle=homeText("PokeSearch",14,
-            homeLightMode?Color.rgb(21,34,49):Color.WHITE,true);
+        ImageView brandTitle=new ImageView(this);
+        brandTitle.setImageResource(R.drawable.ps_home_official_wordmark);
+        brandTitle.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        brandTitle.setContentDescription("PokeSearch");
         TextView brandSubtitle=homeText("POKÉMON GO",9,
             homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
-        brandLabels.addView(brandTitle);
+        brandTitle.setAdjustViewBounds(true);
+        brandLabels.addView(brandTitle,new LinearLayout.LayoutParams(d(118),d(36)));
         brandLabels.addView(brandSubtitle);
         header.addView(brandLabels,new LinearLayout.LayoutParams(-2,-2));
 
@@ -235,7 +258,7 @@ public class MainActivity extends Activity {
 
         overlayControl=makeIcon(R.drawable.ic_overlay_off,"Ativar overlay");
         overlayControl.setPadding(d(5),d(5),d(5),d(5));
-        overlayControl.setBackground(homeSurface(Color.argb(125,9,25,49),10,0));
+        overlayControl.setBackground(homeSurface(homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
         LinearLayout.LayoutParams overlayLp=new LinearLayout.LayoutParams(d(34),d(34));
         overlayLp.leftMargin=d(5);
         controls.addView(overlayControl,overlayLp);
@@ -243,7 +266,7 @@ public class MainActivity extends Activity {
 
         ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
         heart.setPadding(d(6),d(6),d(6),d(6));
-        heart.setBackground(homeSurface(Color.argb(125,9,25,49),10,0));
+        heart.setBackground(homeSurface(homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
         LinearLayout.LayoutParams heartLp=new LinearLayout.LayoutParams(d(34),d(34));
         heartLp.leftMargin=d(5);
         controls.addView(heart,heartLp);
@@ -251,7 +274,7 @@ public class MainActivity extends Activity {
 
         TextView menu=homeMiniButton("☰","Abrir menu lateral");
         menu.setTextSize(18);
-        menu.setBackground(homeSurface(Color.argb(125,9,25,49),10,0));
+        menu.setBackground(homeSurface(homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
         LinearLayout.LayoutParams menuLp=new LinearLayout.LayoutParams(d(34),d(34));
         menuLp.leftMargin=d(5);
         controls.addView(menu,menuLp);
@@ -262,8 +285,8 @@ public class MainActivity extends Activity {
         auth.setOrientation(LinearLayout.VERTICAL);
         auth.setPadding(d(15),d(15),d(15),d(16));
         auth.setBackground(homeSurface(
-            homeLightMode?Color.argb(241,25,37,55):Color.argb(232,16,22,34),
-            20,homeLightMode?Color.rgb(110,137,157):Color.rgb(55,76,100)));
+            homeLightMode?Color.rgb(251,253,255):Color.rgb(33,37,44),
+            20,homeLightMode?Color.rgb(175,188,204):Color.rgb(77,84,96)));
         auth.setElevation(d(5));
         screen.addView(auth,new LinearLayout.LayoutParams(-1,-2));
 
@@ -280,10 +303,11 @@ public class MainActivity extends Activity {
         LinearLayout headingTexts=new LinearLayout(this);
         headingTexts.setOrientation(LinearLayout.VERTICAL);
         accountHeading.addView(headingTexts,new LinearLayout.LayoutParams(0,-2,1));
-        TextView heading=homeText("PoGoCoordinates",17,Color.WHITE,true);
+        TextView heading=homeText("PoGoCoordinates",17,
+            homeLightMode?Color.rgb(19,38,59):Color.WHITE,true);
         headingTexts.addView(heading);
         sessionHint=homeText("Buscas comuns sem login · Shiny exige treinador vinculado",11,
-            Color.rgb(156,174,205),false);
+            homeLightMode?Color.rgb(74,93,116):Color.rgb(156,174,205),false);
         headingTexts.addView(sessionHint);
         LinearLayout.LayoutParams headingLp=new LinearLayout.LayoutParams(-1,-2);
         headingLp.bottomMargin=d(12);
@@ -325,16 +349,33 @@ public class MainActivity extends Activity {
         avatar.setBackground(avatarBg);
         LinearLayout.LayoutParams avatarLp=new LinearLayout.LayoutParams(d(52),d(52));
         avatarLp.rightMargin=d(10);
-        accountRow.addView(avatar,avatarLp);
+        FrameLayout avatarShell=new FrameLayout(this);
+        // Clip the actual photo to a perfect circle. No ornamental PNG square corners.
+        android.graphics.drawable.GradientDrawable avatarClip=round(Color.TRANSPARENT,30);
+        avatarClip.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        avatarShell.setBackground(avatarClip);
+        avatarShell.setOutlineProvider(android.view.ViewOutlineProvider.BACKGROUND);
+        avatarShell.setClipToOutline(true);
+        FrameLayout.LayoutParams photoLp=new FrameLayout.LayoutParams(-1,-1);
+        photoLp.setMargins(d(3),d(3),d(3),d(3));
+        avatarShell.addView(avatar,photoLp);
+        accountAvatarFrame=new ImageView(this);
+        accountAvatarFrame.setImageDrawable(homeAvatarOutline(""));
+        accountAvatarFrame.setScaleType(ImageView.ScaleType.FIT_XY);
+        accountAvatarFrame.setContentDescription("Moldura da equipe");
+        accountAvatarFrame.setClickable(false);
+        avatarShell.addView(accountAvatarFrame,new FrameLayout.LayoutParams(-1,-1));
+        accountRow.addView(avatarShell,avatarLp);
 
         LinearLayout identity=new LinearLayout(this);
         identity.setOrientation(LinearLayout.VERTICAL);
         accountRow.addView(identity,new LinearLayout.LayoutParams(0,-2,1));
-        accountDisplay=homeText("Conta conectada",17,Color.WHITE,true);
+        accountDisplay=homeText("Conta conectada",17,
+            homeLightMode?Color.rgb(19,38,59):Color.WHITE,true);
         accountDisplay.setSingleLine(true);
         accountDisplay.setEllipsize(android.text.TextUtils.TruncateAt.END);
         accountProvider=homeText("Conectado ao PoGoCoordinates",11,
-            Color.rgb(175,191,224),false);
+            homeLightMode?Color.rgb(69,88,109):Color.rgb(175,191,224),false);
         accountProvider.setSingleLine(true);
         accountProvider.setEllipsize(android.text.TextUtils.TruncateAt.END);
         identity.addView(accountDisplay);
@@ -352,11 +393,12 @@ public class MainActivity extends Activity {
         trainLp.topMargin=d(13);
         connectedPanel.addView(trainerPanel,trainLp);
         View rule=new View(this);
-        rule.setBackgroundColor(Color.rgb(39,53,74));
+        rule.setBackgroundColor(homeLightMode?Color.rgb(194,205,218):Color.rgb(62,72,84));
         LinearLayout.LayoutParams ruleLp=new LinearLayout.LayoutParams(-1,d(1));
         ruleLp.bottomMargin=d(10);
         trainerPanel.addView(rule,ruleLp);
-        trainerSectionTitle=homeText("Treinador vinculado",12,Color.rgb(171,188,215),false);
+        trainerSectionTitle=homeText("Treinador vinculado",12,
+            homeLightMode?Color.rgb(72,92,111):Color.rgb(171,188,215),false);
         LinearLayout.LayoutParams sectionLp=new LinearLayout.LayoutParams(-1,-2);
         sectionLp.bottomMargin=d(7);
         trainerPanel.addView(trainerSectionTitle,sectionLp);
@@ -376,10 +418,12 @@ public class MainActivity extends Activity {
         LinearLayout trainerIdentity=new LinearLayout(this);
         trainerIdentity.setOrientation(LinearLayout.VERTICAL);
         trainerRow.addView(trainerIdentity,new LinearLayout.LayoutParams(0,-2,1));
-        trainerDisplay=homeText("Treinador não confirmado",15,Color.WHITE,true);
+        trainerDisplay=homeText("Treinador não confirmado",15,
+            homeLightMode?Color.rgb(19,38,59):Color.WHITE,true);
         trainerDisplay.setSingleLine(true);
         trainerDisplay.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        trainerDetails=homeText("",11,Color.rgb(177,205,244),false);
+        trainerDetails=homeText("",11,
+            homeLightMode?Color.rgb(72,92,111):Color.rgb(177,205,244),false);
         trainerIdentity.addView(trainerDisplay);
         trainerIdentity.addView(trainerDetails);
 
@@ -393,8 +437,9 @@ public class MainActivity extends Activity {
         codeTexts.setOrientation(LinearLayout.VERTICAL);
         trainerCodeGroup.addView(codeTexts,new LinearLayout.LayoutParams(0,-2,1));
         TextView codeHeading=homeText("Código de Treinador",10,
-            Color.rgb(158,178,207),false);
-        trainerCode=homeText("",15,Color.WHITE,true);
+            homeLightMode?Color.rgb(72,92,111):Color.rgb(158,178,207),false);
+        trainerCode=homeText("",15,
+            homeLightMode?Color.rgb(19,38,59):Color.WHITE,true);
         trainerCode.setLetterSpacing(.025f);
         codeTexts.addView(codeHeading);
         codeTexts.addView(trainerCode);
@@ -414,6 +459,27 @@ public class MainActivity extends Activity {
         actionLp.leftMargin=d(7);
         trainerCodeGroup.addView(trainerAction,actionLp);
         trainerAction.setOnClickListener(v->openTrainerManagement());
+
+        // New compact LT54 counters; a dash indicates missing connectivity/rules.
+        LinearLayout stats=new LinearLayout(this);
+        stats.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams statsLp=new LinearLayout.LayoutParams(-1,d(48));
+        statsLp.topMargin=d(8);
+        screen.addView(stats,statsLp);
+        TextView online=homeText("●  Ativos agora: —",11,
+            homeLightMode?Color.rgb(34,63,80):Color.rgb(224,237,245),true);
+        TextView installations=homeText("▣  Instalações: —",11,
+            homeLightMode?Color.rgb(34,63,80):Color.rgb(224,237,245),true);
+        online.setGravity(Gravity.CENTER);installations.setGravity(Gravity.CENTER);
+        online.setBackground(homeSurface(homeLightMode?Color.rgb(251,253,255):Color.rgb(33,37,44),11,0));
+        installations.setBackground(homeSurface(homeLightMode?Color.rgb(251,253,255):Color.rgb(33,37,44),11,0));
+        LinearLayout.LayoutParams firstStat=new LinearLayout.LayoutParams(0,-1,1);
+        firstStat.rightMargin=d(5);
+        stats.addView(online,firstStat);
+        LinearLayout.LayoutParams secondStat=new LinearLayout.LayoutParams(0,-1,1);
+        secondStat.leftMargin=d(5);
+        stats.addView(installations,secondStat);
+        FirebaseStats.bind(this,online,installations);
 
         // Keep the center open for the user's Pokémon GO wallpaper.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
@@ -464,7 +530,8 @@ public class MainActivity extends Activity {
         }
     }
     private void addHomeDrawerItem(LinearLayout panel,String icon,String name,Runnable callback){
-        TextView item=homeText(icon+"     "+name,15,Color.WHITE,false);
+        TextView item=homeText(icon+"     "+name,15,
+            homeLightMode?Color.rgb(29,47,66):Color.WHITE,false);
         item.setPadding(d(18),0,d(12),0);
         panel.addView(item,new LinearLayout.LayoutParams(-1,d(48)));
         item.setOnClickListener(v->{closeHomeMenu();callback.run();});
@@ -480,19 +547,23 @@ public class MainActivity extends Activity {
         LinearLayout drawer=new LinearLayout(this);
         drawer.setOrientation(LinearLayout.VERTICAL);
         drawer.setPadding(0,d(14),0,d(10));
-        drawer.setBackgroundColor(Color.rgb(25,42,60));
+        drawer.setBackground(homeSurface(homeLightMode?Color.rgb(247,250,254):Color.rgb(31,35,43),
+            12,homeLightMode?Color.rgb(173,187,202):Color.rgb(85,95,111)));
         int width=Math.min(d(286),getResources().getDisplayMetrics().widthPixels-d(48));
         FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(width,-1,Gravity.RIGHT|Gravity.TOP);
         layer.addView(drawer,lp);
         drawer.setOnClickListener(v->{});
-        TextView label=homeText("  PokeSearch",19,Color.WHITE,true);
+        TextView label=homeText("  PokeSearch",19,
+            homeLightMode?Color.rgb(29,47,66):Color.WHITE,true);
         drawer.addView(label,new LinearLayout.LayoutParams(-1,d(60)));
         View rule=new View(this);rule.setBackgroundColor(Color.argb(90,174,199,235));
         drawer.addView(rule,new LinearLayout.LayoutParams(-1,d(1)));
         addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
+        addHomeDrawerItem(drawer,"◐","Transparência dos fundos",this::showHomeTransparencyDialog);
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
         addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
+        addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this));
         addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
         homeRoot.addView(layer,new FrameLayout.LayoutParams(-1,-1));
         homeDrawerLayer=layer;
@@ -547,8 +618,8 @@ public class MainActivity extends Activity {
         boolean on=OverlayService.isRunning();
         overlayControl.setImageResource(on?R.drawable.ic_overlay_on:R.drawable.ic_overlay_off);
         overlayControl.setContentDescription(on?"Desativar overlay":"Ativar overlay");
-        overlayControl.setBackground(homeSurface(on?Color.argb(180,9,70,68):
-            Color.argb(125,9,25,49),10,0));
+        overlayControl.setBackground(homeSurface(on?Color.rgb(18,94,82):
+            homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
     }
     private void openProviderLogin(String provider){
         preferredLoginProvider=provider;
@@ -563,6 +634,28 @@ public class MainActivity extends Activity {
         Toast.makeText(this,"Código copiado",Toast.LENGTH_SHORT).show();
     }
 
+    private void showHomeTransparencyDialog(){
+        android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+        int old=homeSurfacesTransparency();
+        LinearLayout view=new LinearLayout(this);
+        view.setPadding(d(18),d(12),d(18),d(10));
+        view.setOrientation(LinearLayout.VERTICAL);
+        TextView label=homeText("Transparência: "+old+"%",14,Color.rgb(25,42,60),true);
+        view.addView(label);
+        android.widget.SeekBar slider=new android.widget.SeekBar(this);
+        slider.setMax(100);slider.setProgress(old);view.addView(slider);
+        slider.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener(){
+            @Override public void onProgressChanged(android.widget.SeekBar bar,int value,boolean user){
+                label.setText("Transparência: "+value+"%");
+                prefs.edit().putInt("homePanelsTransparency",value).apply();
+                refreshHomeSurfaceOpacity();
+            }
+            @Override public void onStartTrackingTouch(android.widget.SeekBar bar){}
+            @Override public void onStopTrackingTouch(android.widget.SeekBar bar){}
+        });
+        new android.app.AlertDialog.Builder(this).setTitle("Transparência dos fundos da Home")
+            .setView(view).setPositiveButton("Concluído",(dialog,which)->{}).show();
+    }
     private void showQuickGuide(){
         getSharedPreferences("prefs",0).edit().putBoolean("tutorialSeenV41",true).apply();
         // A scrollable visual guide reuses the actual icons from dock.html.
@@ -596,7 +689,12 @@ public class MainActivity extends Activity {
         done.setOnClickListener(v->dialog.dismiss());
         tutorialDialog=dialog;
         tutorialWebView=guide;
-        dialog.setOnDismissListener(ignored->releaseTutorialWebView());
+        dialog.setOnDismissListener(ignored->{
+            releaseTutorialWebView();
+            // First-time users read the guide before any pending upgrade notes.
+            if(Intent.ACTION_MAIN.equals(getIntent().getAction()))
+                ReleaseNotes.maybeShowAfterUpgrade(this);
+        });
         dialog.show();
         if(dialog.getWindow()!=null){
             android.view.Window window=dialog.getWindow();
@@ -706,6 +804,27 @@ public class MainActivity extends Activity {
         },"PokeSearch-Google-Avatar").start();
     }
 
+    // Precisely follows the circular photo instead of stretching 1254px ornamental frames.
+    private android.graphics.drawable.GradientDrawable homeAvatarOutline(String team){
+        int border=Color.rgb(189,193,199);
+        if("Mystic".equalsIgnoreCase(team)||"Místico".equalsIgnoreCase(team))
+            border=Color.rgb(80,165,248);
+        else if("Valor".equalsIgnoreCase(team)||"Valentia".equalsIgnoreCase(team))
+            border=Color.rgb(238,82,97);
+        else if("Instinct".equalsIgnoreCase(team)||"Instinto".equalsIgnoreCase(team))
+            border=Color.rgb(245,202,74);
+        android.graphics.drawable.GradientDrawable outline=new android.graphics.drawable.GradientDrawable();
+        outline.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        outline.setColor(Color.TRANSPARENT);
+        outline.setStroke(d(3),border);
+        return outline;
+    }
+    private int homeUserFrame(String team){
+        if("Mystic".equalsIgnoreCase(team)||"Místico".equalsIgnoreCase(team))return R.drawable.ps_user_frame_mystic;
+        if("Valor".equalsIgnoreCase(team)||"Valentia".equalsIgnoreCase(team))return R.drawable.ps_user_frame_valor;
+        if("Instinct".equalsIgnoreCase(team)||"Instinto".equalsIgnoreCase(team))return R.drawable.ps_user_frame_instinct;
+        return R.drawable.ps_user_frame_neutral;
+    }
     private void refreshSessionSummary(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         boolean logged="autenticada".equals(prefs.getString("sessionStatus","não confirmado"));
@@ -740,6 +859,7 @@ public class MainActivity extends Activity {
             else if(details.contains("Valor"))team="Valor";
             else if(details.contains("Instinct"))team="Instinct";
         }
+        if(accountAvatarFrame!=null)accountAvatarFrame.setImageDrawable(homeAvatarOutline(linked?team:""));
         if(teamBadge!=null){
             teamBadge.setImageResource(homeTeamIcon(linked?team:""));
             teamBadge.setContentDescription(linked&&team.length()>0?
@@ -805,9 +925,14 @@ public class MainActivity extends Activity {
     }
     @Override protected void onResume(){
         super.onResume();
+        FirebaseStats.setHomeVisible(this,true);
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
+    }
+    @Override protected void onPause(){
+        FirebaseStats.setHomeVisible(this,false);
+        super.onPause();
     }
     private void handleShinyLoginIntent(Intent intent){
         if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))

@@ -72,6 +72,8 @@ public class OverlayService extends Service {
             clean.put(key,"light".equals(input.optString(key,"dark"))?"light":"dark");
         }
         clean.put("showGuides",input.optBoolean("showGuides",false));
+        clean.put("menuGuides",input.optBoolean("menuGuides",input.optBoolean("showGuides",false)));
+        clean.put("resultsGuides",input.optBoolean("resultsGuides",input.optBoolean("showGuides",false)));
         return clean;
     }
     private void readVisualRuntime(){
@@ -98,15 +100,13 @@ public class OverlayService extends Service {
         js(panel,panelLoaded,jsCode);
         js(menuPanel,menuLoaded,jsCode);
         js(resultPanel,resultLoaded,jsCode);
+        broadcastVisualPreview();
     }
     private void saveVisualPrefs(String raw){
         if(stopped)return;
         try{
             JSONObject cleaned=normalizeVisualPrefs(raw);
-            // The single visible Home theme switch owns menu tone. Prevent
-            // older queued slider saves/imported JSON from undoing that tone.
-            cleaned.put("menuBgMode",getSharedPreferences("prefs",0)
-                .getBoolean("homeLightMode",false)?"light":"dark");
+            // Overlay themes remain independent of the Home theme.
             String next=cleaned.toString();
             if(next.equals(visualPrefsJson)){
                 // Acknowledge even no-op saves so the WebView can release its
@@ -144,23 +144,16 @@ public class OverlayService extends Service {
             BugReport.log(this,"UX","Configuração visual inválida");
         }
     }
-    // VISUAL-HOME-THEME-01: Home is authoritative for menu background tone.
-    // Preserve every numeric layout preference, especially transparency, and
-    // keep the collector/WebView and active requests intact on theme changes.
-    private void syncHomeThemeVisual(boolean broadcast){
-        try{
-            String wanted=getSharedPreferences("prefs",0)
-                .getBoolean("homeLightMode",false)?"light":"dark";
-            JSONObject stored=normalizeVisualPrefs(visualPrefsJson);
-            if(wanted.equals(stored.optString("menuBgMode","dark")))return;
-            stored.put("menuBgMode",wanted);
-            visualPrefsJson=stored.toString();
-            getSharedPreferences("prefs",0).edit()
-                .putString("visualPrefsJson",visualPrefsJson).apply();
-            if(broadcast)broadcastVisualPrefs();
-        }catch(org.json.JSONException ex){
-            BugReport.log(this,"UX","Tema visual não sincronizado");
-        }
+    private void syncHomeThemeVisual(boolean broadcast){ } // Legacy action is now Home-only.
+    private String visualEditorPreview="";
+    private void setVisualEditorPreview(String area){
+        String next="menu".equals(area)||"results".equals(area)?area:"";
+        if(next.equals(visualEditorPreview))return;
+        visualEditorPreview=next;broadcastVisualPreview();
+    }
+    private void broadcastVisualPreview(){
+        String code="window.onVisualEditorPreview&&window.onVisualEditorPreview('"+visualEditorPreview+"')";
+        js(panel,panelLoaded,code);js(menuPanel,menuLoaded,code);js(resultPanel,resultLoaded,code);
     }
     private int dockDp(){return spriteSize+8;}
     private int resultWidthDp(){
@@ -770,6 +763,7 @@ public class OverlayService extends Service {
                 .setContentText("Toque para abrir PokeSearch")
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(73,note);
+        FirebaseStats.setOverlayVisible(this,true);
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         try{visualPrefsJson=normalizeVisualPrefs(
             getSharedPreferences("prefs",0).getString("visualPrefsJson","{}")).toString();}
@@ -2030,6 +2024,9 @@ public class OverlayService extends Service {
         status(message);
     }
     public class Bridge{
+        @JavascriptInterface public void previewVisualArea(String area){
+            handler.post(()->OverlayService.this.setVisualEditorPreview(area));
+        }
         @JavascriptInterface public void saveVisualPrefs(String json){
             handler.post(()->OverlayService.this.saveVisualPrefs(json));
         }
@@ -2884,6 +2881,7 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
+        FirebaseStats.setOverlayVisible(this,false);
         stopped=true;
         running=false;
         ++requestGeneration;
