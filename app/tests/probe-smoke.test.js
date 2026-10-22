@@ -139,7 +139,7 @@ function run(action,mode,shinyOnly,opts={}){
     if(selector==='[role="dialog"],[aria-modal="true"],form')return pending;
     if(selector==="label,span,div,p,strong")return all;
     if(selector.includes("[role=option]"))return dynamicOptions;
-    if(selector==="button,a,[role=button]")return cardButtons;
+    if(selector==="button,[role=button]"||selector==="button,a,[role=button]")return cardButtons;
     if(selector==="a,button,[role=button]")return sessionButtons;
     if(selector==="p,small,span,div,label")return accountLabels;
     return [];
