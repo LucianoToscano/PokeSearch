@@ -1,0 +1,76 @@
+name: PokeSearch Node QA (sem APK)
+on:
+  push:
+    branches:
+      - feature/pokesearch-51081-visual-editor-20261021
+    paths:
+      - 'app/tests/**'
+      - 'app/src/main/assets/**'
+      - 'app/src/main/java/**'
+      - 'app/src/main/AndroidManifest.xml'
+      - 'app/build.gradle.kts'
+      - 'app/proguard-rules.pro'
+      - '.github/workflows/pokesearch-node-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pokesearch-node-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node-only-qa:
+    name: Suítes Node, sem Gradle e sem APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exato
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Configurar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Registrar SHA testado
+        shell: bash
+        run: |
+          echo "HEAD validado: $(git rev-parse HEAD)"
+          node --version
+          git status --short
+      - name: Verificar sintaxe do probe e scripts locais
+        shell: bash
+        run: |
+          node --check app/src/main/assets/probe.js
+          node --check app/src/main/assets/pvpoke-overall-ranks.js
+          node --check app/src/main/assets/pvpoke-iv-gamemaster.js
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const vm=require('node:vm');
+          for(const file of ['app/src/main/assets/dock.html','app/src/main/assets/detail.html']){
+            const html=fs.readFileSync(file,'utf8');
+            let count=0;
+            const blocks=html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g);
+            for(const match of blocks){
+              new vm.Script(match[1],{filename:file+':inline-'+(++count)});
+            }
+            if(!count)throw Error('Sem scripts inline: '+file);
+            console.log(file+': '+count+' blocos JS validados');
+          }
+          NODE
+      - name: Executar todas as sete suítes Node
+        shell: bash
+        run: |
+          set -euo pipefail
+          for suite in             app/tests/location-probe.test.js             app/tests/probe-smoke.test.js             app/tests/pokemon-picker.test.js             app/tests/login-entry.test.js             app/tests/overlay-ux.test.js             app/tests/visual-editor.test.js             app/tests/signing-contract.test.js; do
+            echo "::group::$suite"
+            node "$suite"
+            echo "::endgroup::"
+          done
+      - name: Verificar checkout somente leitura
+        shell: bash
+        run: |
+          test -z "$(git status --porcelain)"
+          echo "Nenhuma alteração no checkout. Nenhum Gradle, build, merge ou APK."
