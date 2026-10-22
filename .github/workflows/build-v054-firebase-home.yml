@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build-lt-54:
-    # Only the explicitly approved editor-and-brand commit may trigger this build.
+    # Only an explicitly authorized LT54 Firebase commit may trigger this signed build.
     if: "${{ github.event_name == 'workflow_dispatch' || (github.ref_name == 'feature/pokesearch-v054-firebase-home-20261022' && startsWith(github.event.head_commit.message, 'build: approved v0.00.54 firebase')) }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 40
