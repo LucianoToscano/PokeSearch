@@ -314,7 +314,9 @@ test("Despawn removes expired sprites then reloads the site even when AUTO is OF
  expiry.includes('armNextDespawn(active);')&&
  expiry.includes('if(expired&&!stopped&&!loginPaused)')&&
  expiry.includes('schedulePeriodic();')&&
- expiry.includes('refresh(true);')&&
+ expiry.includes('if(searchInProgress)queuedManualRefresh=true;')&&
+ expiry.includes('else refresh(true);')&&
+ !expiry.includes('handler.postDelayed(this,2000L)')&&
  expiry.indexOf('results=active.toString()')<expiry.indexOf('refresh(true);'));
 test("Expired 0:00 cards are never restored or announced as live",()=>{
  return service.includes('if(secs<0||secs>86400)return Long.MAX_VALUE;')&&
