@@ -217,8 +217,9 @@ public class OverlayService extends Service {
     // PL-02: a UI selection and an already submitted query are distinct.
     private boolean queuedManualRefresh=false;
     private int submittedSearchGeneration=-1,submittingSearchGeneration=-1,watchdogGeneration=-1;
-    private long submitAttemptAtMs=0L,remoteDrainUntilMs=0L;
-    private static final long SEARCH_WATCHDOG_MS=45_000L;
+    private long submitAttemptAtMs=0L;
+    // Recovery watchdog (not a search rate limit).
+    private static final long SEARCH_WATCHDOG_MS=90_000L;
     private final Runnable searchWatchdog=()->{
         if(stopped||loginPaused||!searchInProgress||watchdogGeneration!=requestGeneration)return;
         guardSubmittedSearchBeforeReplacement();
@@ -264,12 +265,8 @@ public class OverlayService extends Service {
         handler.removeCallbacks(loginEndRefresh);
         handler.removeCallbacks(deferredSessionReload);
     }
-    // Temporary QA bypass: only debug APK skips the local 60s wait.
-    // Release still enforces it; upstream service limits are not bypassed.
-    private boolean skipLocalGapInDebug(){
-        return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0;
-    }
-    private static final long MIN_SEARCH_GAP_MS=60_000L;
+    // Never enforce an artificial minimum interval after changing IV / GL / UL.
+    // One active native request and upstream policy remain authoritative.
     private static final long RESULT_PREVIEW_CACHE_TTL_MS=120_000L;
     private long nextScheduledSearchAtMs=0L;
     private long lastSearchStartMs=0L;
@@ -509,8 +506,6 @@ public class OverlayService extends Service {
         // after the search ends, never concurrently with remote submission.
         if(!searchInProgress&&queuedManualRefresh&&!stopped&&!loginPaused){
             queuedManualRefresh=false;
-            if(submittedSearchGeneration==requestGeneration)
-                remoteDrainUntilMs=Math.max(remoteDrainUntilMs,lastSearchStartMs+MIN_SEARCH_GAP_MS);
             final int queuedGeneration=requestGeneration;
             handler.postDelayed(()->{
                 if(!stopped&&!loginPaused&&queuedGeneration==requestGeneration)refresh(true);
@@ -519,13 +514,11 @@ public class OverlayService extends Service {
     }
     private void guardSubmittedSearchBeforeReplacement(){
         if(!searchInProgress)return;
-        // The site may navigate before the submitSearch JS callback arrives.
-        // Treat that narrow interval as potentially submitted, never as
-        // permission to dispatch a second query.
-        long started=submittedSearchGeneration==requestGeneration?lastSearchStartMs:
-            submittingSearchGeneration==requestGeneration?submitAttemptAtMs:0L;
-        if(started>0L)
-            remoteDrainUntilMs=Math.max(remoteDrainUntilMs,started+MIN_SEARCH_GAP_MS);
+        // The current result belongs to the old generation; never publish
+        // it under a newly selected mode. There is no 60-second wait.
+        if(submittedSearchGeneration==requestGeneration||
+            submittingSearchGeneration==requestGeneration)
+            BugReport.log(this,"SEARCH_REPLACED","Consulta anterior invalidada por novo filtro");
     }
     private void replaceActiveFilterSearch(){
         // Logical cancel only; a previously submitted HTTP request may still
@@ -1108,21 +1101,8 @@ public class OverlayService extends Service {
             status("Carregando o site. Aguarde alguns segundos...");
             return;
         }
-        long now=System.currentTimeMillis();
-        long previous=getSharedPreferences("prefs",0).getLong("lastNetworkSearchAt",0L);
-        long earliest=skipLocalGapInDebug()?0L:previous+MIN_SEARCH_GAP_MS;
-        // Even a debug build cannot overlap a superseded upstream request.
-        earliest=Math.max(earliest,remoteDrainUntilMs);
-        if(now<earliest){
-            long remaining=(earliest-now+999L)/1000L;
-            // No intrusive countdown Toast; status remains available in the menu.
-            nextScheduledSearchAtMs=now+remaining*1000L+300L;
-            status("Filtro "+mode.toUpperCase(java.util.Locale.ROOT)+" selecionado · próxima consulta em "+remaining+"s"
-                +(count()>0?" · prévia anterior":"")+".");
-            handler.removeCallbacks(queuedRefresh);
-            handler.postDelayed(queuedRefresh,remaining*1000L+300L);
-            return;
-        }
+        // Explicit filter changes always request a new search without waiting
+        // for a locally invented network cooldown.
         handler.removeCallbacks(queuedRefresh);
         nextScheduledSearchAtMs=0L;
         BugReport.log(this,"PREPARE","Filtros "+mode+" Shiny="+shiny+" manual="+manual);
@@ -1306,9 +1286,8 @@ public class OverlayService extends Service {
         getSharedPreferences("prefs",0).edit().putBoolean("shiny",false).apply();
         status(reason);
     }
-    // A ✨ tap must not wait for Pokémon search cooldown, polling or AUTO.
-    // Only the site control is changed here; a subsequent search still respects
-    // MIN_SEARCH_GAP_MS. All JS replies are guarded by requestGeneration.
+    // Shiny control and the following search never wait for a local 60s timer.
+    // Site state is still verified and all JS replies use requestGeneration.
     private void applyShinyOnSite(int generation,int attempt){
         if(stopped||loginPaused||generation!=requestGeneration)return;
         execute("setShiny",applied->{
@@ -1492,7 +1471,7 @@ public class OverlayService extends Service {
             if(!loaded||website==null){
                 // Search can navigate to a result document. A temporarily
                 // unavailable WebView is not an empty or failed search.
-                if(attempt<8){pollSearch(generation,attempt+1,manual);return;}
+                if(attempt<24){pollSearch(generation,attempt+1,manual);return;}
                 searchInProgress=false;
                 searchFailure("⚠ Site não carregado","A página não terminou de carregar após Search.");
                 return;
@@ -1507,7 +1486,7 @@ public class OverlayService extends Service {
             // A React result page can expose transient incomplete cards while loading.
             // Do not classify those as a failed extraction or a verified empty response.
             if(r.optBoolean("loading",false)){
-                if(attempt<8){pollSearch(generation,attempt+1,manual);return;}
+                if(attempt<24){pollSearch(generation,attempt+1,manual);return;}
                 searchInProgress=false;
                 searchFailure("⚠ Tempo limite","O site não concluiu a consulta de resultados.");
                 return;
@@ -1562,11 +1541,11 @@ public class OverlayService extends Service {
             }
             boolean loading=r.optBoolean("loading",false);
             boolean empty=r.optBoolean("explicitEmpty",false);
-            if((loading||(!empty&&found==0))&&attempt<8){
+            if((loading||(!empty&&found==0))&&attempt<24){
                 pollSearch(generation,attempt+1,manual);
                 return;
             }
-            if(loading||(!empty&&found==0&&attempt>=8)){
+            if(loading||(!empty&&found==0&&attempt>=24)){
                 searchInProgress=false;
                 searchFailure("⚠ Site sem confirmação","Busca não confirmada no site (tempo limite). Resultados anteriores mantidos.");
                 return;
