@@ -39,7 +39,7 @@ test("Favorites remain in overlay",service.includes("PokemonPicker.show(OverlayS
 test("Favorites picker is service-safe and focusable",picker.includes("TYPE_APPLICATION_OVERLAY")&&picker.includes("Runnable dismissed"));
 test("Login has one top toolbar and no native footer buttons",main.includes('done.setText("✓ PokeSearch")')&&main.includes('loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)')&&main.includes('MATCH_PARENT,\n                android.view.WindowManager.LayoutParams.MATCH_PARENT'));
 test("Shiny remains separate from the chosen filter",service.includes('shiny=!shiny;')&&dock.includes('onclick="Native.shiny()"')&&service.includes('mode.equals(selected)'));
-test("Throttled refresh is queued",service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
+test("A changed mode immediately reaches refresh without a 60s queue",!service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)')&&service.includes('filterChangeRefresh=()->refresh(true)'));
 test("Quick guide remains accessible",main.includes("showQuickGuide()")&&main.includes("tutorialSeenV41")&&main.includes("tutorial.html"));
 test("UX-RESULT-10 keeps P/M/G sprite stages centred with compact per-card touch rows",(()=>{
  const row=service.match(/private int rowDp\(\)\{([\s\S]*?)\}/)?.[1]||"";
