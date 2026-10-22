@@ -1924,6 +1924,43 @@ public class OverlayService extends Service {
             detailRoot.setVisibility(View.VISIBLE);
             moveDetail();
             js(resultPanel,resultLoaded,"window.highlight("+index+")");
+            // RANK-EVO-DETAIL-03: request derived PvP projections only on tap.
+            // Read-only on the results WebView: no extra GM, network or site filters.
+            if(resultPanel!=null&&resultLoaded){
+                final int expectedGeneration=requestGeneration;
+                final int expectedSource=obj.optInt("sourceIndex",-1);
+                final String expectedName=obj.optString("name","");
+                final String expectedIv=obj.optString("iv","");
+                final String expectedCp=obj.optString("cp","");
+                String query="(function(){if(typeof window.pvpEvolutionDetails!=='function')return 'null';"+
+                        "return JSON.stringify(window.pvpEvolutionDetails("+index+"));})()";
+                resultPanel.evaluateJavascript(query,raw->{
+                    if(raw==null||raw.isEmpty()||selected!=index||
+                            requestGeneration!=expectedGeneration||!detailLoaded||
+                            detailRoot==null||detailRoot.getVisibility()!=View.VISIBLE)return;
+                    try{
+                        // evaluateJavascript encodes the returned JSON as a quoted string.
+                        // Decode once and reject stale results before sending to detail.html.
+                        String json=new JSONArray("["+raw+"]").optString(0,"");
+                        if(json.isEmpty()||"null".equals(json))return;
+                        JSONObject payload=new JSONObject(json);
+                        JSONArray currentArray=new JSONArray(results);
+                        if(index>=currentArray.length())return;
+                        JSONObject current=currentArray.getJSONObject(index);
+                        if(current.optInt("sourceIndex",-1)!=expectedSource||
+                                !expectedName.equals(current.optString("name",""))||
+                                !expectedIv.equals(current.optString("iv",""))||
+                                !expectedCp.equals(current.optString("cp",""))||
+                                payload.optInt("sourceIndex",-1)!=expectedSource||
+                                !expectedName.equals(payload.optString("name",""))||
+                                !expectedIv.equals(payload.optString("iv",""))||
+                                !expectedCp.equals(payload.optString("cp",""))||
+                                payload.optJSONArray("leagues")==null||
+                                payload.optJSONArray("leagues").length()!=3)return;
+                        js(detailPanel,detailLoaded,"window.showEvolutionDetails("+payload.toString()+")");
+                    }catch(Exception e){recordFailure("dados de evoluções PvP",e);}
+                });
+            }
         }catch(Exception e){recordFailure("mostrar detalhes",e);hideDetails();}
     }
     private void hideDetails(){
