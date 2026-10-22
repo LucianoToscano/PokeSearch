@@ -3578,3 +3578,15 @@ Total **658 contratos JS reportados pelos sete comandos**. O `gradle :app:assemb
 
 **Governança:** alterações limitadas a app/src/main/assets/dock.html, app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java, app/tests/overlay-ux.test.js e o mesmo docs/GUIA_MESTRE.md; branch feature/pokesearch-51081-visual-editor-20261021. Sem modificar assinatura, applicationId, backups, WebView + evaluateJavascript + probe.js, integração com PoGoCoordinates, login ou projeto PvPPokeGo.
 
+
+### 12.172 QA-REGRESSAO-COORDSGO-PREVIEW — APK de prévia autorizada (22/10/2026)
+
+**Origem:** o usuário solicitou gerar APK para visualizar a parceria autorizada com CoordsGo e forneceu o checkpoint exato 0134eb2cdec96fd50f3599458adc60b4b7214fb3. Preservar todas as correções 12.166–12.171, sobretudo recuperação de resultados, Auto 3 min, vencimento de despawn, menu individualizado e os 21 campos opcionais ocultos por padrão. Branch de trabalho: feature/pokesearch-51081-visual-editor-20261021; nunca misturar PvPPokeGo nem fazer merge.
+
+**Escopo desta prévia:** nova tela Android **Missões · CoordsGo** acessível por item no menu lateral da Home. Uma WebView separada carrega exclusivamente https://coordsgo.com/ com JavaScript/DOM Storage e mostra o próprio site, sob cabeçalho compacto com Voltar/Recarregar/estado. Um `evaluateJavascript` de leitura simples detecta documento carregado sem alterar filtros. Links HTTPS externos de mapas podem ser encaminhados ao navegador. URLs não HTTPS ou fora do domínio autorizado não navegam dentro da WebView. O módulo desabilita geolocalização, acesso a arquivos e conteúdo, não cria backend/API, não adiciona JS bridge e não altera o collector, o `probe.js`, assinatura, applicationId, identidade, preferências, layouts do overlay ou fluxo de login PoGoCoordinates.
+
+**Advertência:** é uma prévia do site incorporado, não ainda um parser de missões/resultado nativo nem uma prova de funcionamento das coordenadas/UX no dispositivo. A estrutura DOM e a compatibilidade JavaScript dependem do site real. A integração de resultados compactos ficará para uma etapa posterior após QA físico desta prévia. A autorização relatada refere-se à integração direta do site.
+
+**Arquivos desta etapa:** novo `CoordsGoPreviewActivity.java`, novo `app/tests/coordsgo-preview.test.js`, `MainActivity.java` (somente entrada no menu e startActivity), `AndroidManifest.xml` (Activity privada), workflow (adição do contrato Node), este único `GUIA_MESTRE.md`. Workflow de APK assinado continua exigindo keystore estável, versão monotônica, certificados e publicação de checksums; caso falhe, **não** distribuir APK de debug com chave diferente.
+
+**Validação:** os testes Node e a compilação Gradle devem ser confirmados pelo novo GitHub Actions; não atribuir aprovação antes de observar conclusão. Nenhuma homologação real Android foi executada aqui. Sem merge na main.
