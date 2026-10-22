@@ -2629,6 +2629,55 @@ test("RELEASE-NOTES-10 no unaudited corrections advertised",
  releaseNotesData.releases.every(e=>e.sections.correcoes.length===0)&&
  releaseNotesData.releases[0].sections.emDesenvolvimento.some(s=>s.includes("Validação visual")));
 
+test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menus",()=>{
+ const filters=dock.split("function renderExtraFilters(panel,make){")[1]
+  ?.split("function renderFilterPicker(key,label,options){")[0]||"";
+ return filters.includes('option("sortBy","Sort by")')&&
+  filters.includes('option("weather","Clima")')&&
+  filters.includes('option("form","Forma")')&&
+  filters.includes('chips("size","Tamanho")')&&
+  filters.includes('chips("gender","Gênero")')&&
+  !filters.includes('field("Pokémon",pick)')&&
+  dock.includes('if(kind==="pokemon"){')&&
+  dock.includes('["percent","IV%"],["gl","GL"],["ul","UL"]');
+});
+test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()=>{
+ const filters=dock.split("function renderExtraFilters(panel,make){")[1]
+  ?.split("function renderFilterPicker(key,label,options){")[0]||"";
+ return filters.includes('number("cpMin","PC mínimo");number("cpMax","PC máximo");')&&
+  filters.includes('number("levelMin","Nível mínimo",true);number("levelMax","Nível máximo",true);')&&
+  filters.includes('input.min=level?"1":"0";input.max=level?"35":"99999"')&&
+  filters.includes('input.type="number";input.inputMode="numeric";input.step="1"')&&
+  dock.includes('modeDraft.levelMin="1"')&&
+  dock.includes('modeDraft.levelMax="35"')&&
+  dock.includes('input.checkValidity()')&&
+  dock.includes('field.setCustomValidity("Mínimo maior que máximo")')===false&&
+  service.includes('{"cpMin","cpMax"}')&&service.includes('{"levelMin","levelMax"}');
+});
+test("FILTERS-POGO-03 size and gender buttons never invent site-supported options",()=>{
+ const filters=dock.split("function renderExtraFilters(panel,make){")[1]
+  ?.split("function renderFilterPicker(key,label,options){")[0]||"";
+ return filters.includes('const sizeOrder=["XXS","XS","S","M","L","XL","XXL"]')&&
+  filters.includes('["Male","Female","Genderless"]')&&
+  filters.includes('button.disabled=!item.enabled')&&
+  filters.includes('const actual=uniq.find(v=>v.toUpperCase()===label)')&&
+  filters.includes('const choices=(Array.isArray(filterOptions[key]?.options)')&&
+  dock.includes('window.onFilterOptions=function(response){')&&
+  service.includes('final String[] keys={"sortBy","size","form","gender","weather"}')&&
+  service.includes('execute("readFilterOptions:"+key,options->');
+});
+test("FILTERS-POGO-04 location Apply submits same saved criteria through live DOM",()=>{
+ const probe=read("assets/probe.js");
+ return dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&
+  dock.includes('slide.min="0";slide.max="1000"')&&
+  dock.includes('Aplicar executa Search no PoGoCoordinates')&&
+  service.includes('OverlayService.this.refresh(true);')&&
+  service.includes('configureLocationAndVerify(generation,manual,0)')&&
+  service.includes('verifyAndSubmit(generation,manual,0)')&&
+  probe.includes('const EXTRA_LABELS={sortBy:"Sort by"')&&
+  probe.includes('if(action==="verifyExtras")');
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
