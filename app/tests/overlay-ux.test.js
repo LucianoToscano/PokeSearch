@@ -180,11 +180,12 @@ test("UX-INFO-COMPACT-01 requested Pokémon metadata has no verbose labels",()=>
  if(begin<0||end<begin)return false;
  const extract=dock.slice(begin,end);
  const makeLines=new Function("verifiedSpawnRawIv","verifiedSpawnIvPercent",
-  "verifiedOverallRank","verifiedSpeciesIvRank","pvpIvClassPercent","esc","ivPaletteClass",extract+
+  "verifiedOverallRank","verifiedSpeciesIvRank","pvpIvClassPercent","bestEvolutionRank","esc","ivPaletteClass",extract+
   "return {resultLines,resultInfoHtml,locationCountryFlag};")(
    c=>c.iv||null,c=>c.ivPercent??null,(card,lg)=>({gl:12,ul:84,ml:35}[lg]),
    (card,lg)=>({gl:1,ul:50,ml:307}[lg]),
    n=>(100*(4096-n)/4095).toFixed(2).replace(".",","),
+   ()=>null,
    x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;"),
    value=>value===100?"perfect":value===0?"zero":"medium"
   );
@@ -1831,9 +1832,9 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
   api.verifiedSpawnRawIv(alt)==="0/14/15"&&
   lines.includes("0/14/15")&&lines.includes("64%")&&
   lines.includes("GL RG#2")&&lines.includes("GL IV#1")&&lines.includes("GL P100,00%")&&
-  lines.includes("UL RG#275")&&lines.includes("UL IV#1460")&&lines.includes("UL P64,37%")&&
+  lines.includes("UL RG#275")&&lines.includes("UL IV#1460")&&lines.includes("UL P89,97%")&&
   master.includes("ML RG#1")&&master.includes("ML IV#1")&&master.includes("ML P100,00%")&&
-  api.pvpIvClassPercent(14)==="99,68"&&
+  api.pvpIvClassPercent(1460,alt,"ul")==="89,97"&&
   unknown.includes("?/?/?")&&
   !unknown.some(v=>v.includes("RG#")||v.includes("IV#"))&&
   api.verifiedSpawnRawIv({...alt,ivPercent:"100"})===null&&
@@ -2345,6 +2346,60 @@ test("UX-LOC-DRAFT-01 preserves unsent Radius across native updates and releases
  assert.equal(slider.value,"30","Slider follows confirmed radius after unlock");
  return true;
 });
+
+// RANK-EVO-01: use the EXACT stored PvPoke snapshot and exported production
+// calculator; source PoGoCoordinates IV values remain read-only.
+test("RANK-EVO-01 evolution rank #1 and stat-product quality for GL",()=>{
+ const win={};
+ new Function("window",read("assets/pvpoke-overall-ranks.js"))(win);
+ new Function("window",read("assets/pvpoke-iv-gamemaster.js"))(win);
+ const a=dock.indexOf("const IV_PERCENT_VALUES=Object.freeze(");
+ const b=dock.indexOf("let modeDraft=",a);
+ const c=dock.indexOf("const PVPOKE_OVERALL=");
+ const d=dock.indexOf('let lastListKey=""',c);
+ if([a,b,c,d].some(x=>x<0))return false;
+ const api=new Function("window","esc",dock.slice(a,b)+dock.slice(c,d)+
+  "return {resultLines,calculatedSpeciesIvDetail,bestEvolutionRank,evolutionCandidates};"
+ )(win,v=>String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;"));
+ const rook={name:"Rookidee",iv:"0/13/14",ivPercent:60,level:23,cp:368};
+ const swa={name:"Swablu",iv:"0/14/15",ivPercent:64,level:15,cp:293};
+ const vul={name:"Vulpix",iv:"0/15/15",ivPercent:67,level:17,cp:371};
+ const re=api.bestEvolutionRank(rook,"gl"),se=api.bestEvolutionRank(swa,"gl");
+ const ve=api.bestEvolutionRank(vul,"gl");
+ const noRank=api.resultLines(rook,{speciesIvRankGl:false},"gl");
+ const rank=api.resultLines(rook,{speciesIvRankGl:true},"gl");
+ const unknown={...rook,form:"Galarian"};
+ const badIv={...rook,ivPercent:100};
+ return re?.name==="Corviknight"&&re.rank===1&&re.statProductPct==="100,00"&&
+  re.eligible===true&&re.currentCp===1468&&
+  se?.name==="Altaria"&&se.rank===1&&se.statProductPct==="100,00"&&
+  ve?.name==="Ninetales"&&ve.rank===1&&
+  api.calculatedSpeciesIvDetail(rook,"gl")?.statProductPct==="82,60"&&
+  api.calculatedSpeciesIvDetail(swa,"gl")?.statProductPct==="82,95"&&
+  rank.includes("GL IV#1266")&&rank.includes("GL P82,60%")&&
+  rank.includes("↳ Corviknight GL IV#1 P100,00%")&&
+  !noRank.some(x=>x.includes("Corviknight"))&&
+  api.bestEvolutionRank(unknown,"gl")===null&&
+  api.bestEvolutionRank(badIv,"gl")===null&&
+  !service.includes('case "evolutionRank":');
+});
+test("RANK-EVO-02 evolution eligibility is constrained by current level",()=>{
+ const win={};new Function("window",read("assets/pvpoke-iv-gamemaster.js"))(win);
+ const start=dock.indexOf("const PVPOKE_OVERALL=");
+ const end=dock.indexOf('let lastListKey=""',start);
+ const api=new Function("window","verifiedSpawnIvPercent",dock.slice(start,end)+
+  "return {bestEvolutionRank,evolutionCandidates};")(win,card=>{
+   if(!card||String(card.iv)!=="0/13/14"||Number(card.ivPercent)!==60)return null;
+   return 60;
+  });
+ const card={name:"Rookidee",iv:"0/13/14",ivPercent:60,level:50};
+ const evos=api.evolutionCandidates(card,"gl");
+ const knight=evos.find(x=>x.name==="Corviknight");
+ return knight?.eligible===false&&knight.rank===1&&
+  api.bestEvolutionRank(card,"gl")?.name!=="Corviknight"&&
+  evos.some(x=>x.eligible===true);
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
