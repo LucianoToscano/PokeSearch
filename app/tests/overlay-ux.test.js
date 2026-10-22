@@ -2690,6 +2690,75 @@ test("FILTERS-POGO-04 location Apply submits same saved criteria through live DO
   probe.includes('if(action==="verifyExtras")');
 });
 
+test("FILTERS-POGO-06 badge counts only extra filter criteria with neutral level defaults",()=>{
+ const helper=dock.split("const FILTERS_MENU_KEYS=Object.freeze(")[1]
+  ?.split("function quickState(id){")[0]||"";
+ const factory=new Function("searchSettings","mode","modeDraft","controlsWindow",
+  "choiceOpen","document","siteFiltersConfirmed","searchActive","resultsStale",
+  "const FILTERS_MENU_KEYS=Object.freeze("+helper+
+  ";return {count:activeExtraFilterCount,keys:FILTERS_MENU_KEYS};");
+ const base={mode:"raw",attack:15,defense:15,stamina:15,glRank:1,ulRank:1,
+  percentMin:0,percentMax:100,pokemonSelections:["Pikachu"],pokemon:"Pikachu",
+  levelMin:"1",levelMax:"35",includePreviousEvolutions:true};
+ const ctx=factory(base,"raw",null,false,"",{},false,false,false);
+ const count=ctx.count;
+ return count(base,"raw")===0&&
+  count({...base,sortBy:"Despawn (longest)",weather:"Rainy",size:"XXL",
+   cpMin:"600",cpMax:"900",levelMin:"6",levelMax:"32",gender:"Female"},"raw")===6&&
+  count({...base,minPvpCp:"100",includePreviousEvolutions:false},"gl")===2&&
+  count({...base,cpMin:"50",levelMin:"12",minPvpCp:"100"},"gl")===1&&
+  !ctx.keys.includes("pokemon")&&!ctx.keys.includes("pokemonSelections")&&
+  !ctx.keys.includes("attack")&&!ctx.keys.includes("locationCoords");
+});
+test("FILTERS-POGO-07 Applied requires native verified submission and accepted collection",()=>{
+ const update=service.split("private void update(){")[1]?.split("private void status(String s)")[0]||"";
+ const confirmed=update.split("// FILTERS-POGO-06:")[1]||"";
+ const phase=dock.split("function updateFiltersPanelStatus(){")[1]?.split("function quickState(id){")[0]||"";
+ return confirmed.includes("confirmedSubmittedFiltersGeneration==requestGeneration")&&
+  confirmed.includes("submittedSearchGeneration==requestGeneration")&&
+  confirmed.includes('("updated".equals(searchPhase)||"empty".equals(searchPhase))')&&
+  confirmed.includes("!searchInProgress&&!resultsStale")&&
+  dock.includes("filtersConfirmed=false)=>{")&&
+  dock.includes("siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale")&&
+  phase.includes("verified?\"✓ Aplicado no PoGoCoordinates\"")&&
+  phase.includes("dirty?\"● Alterações ainda não aplicadas\"")&&
+  dock.includes('button.classList.toggle("site-filters-applied",count>0&&siteFiltersConfirmed');
+});
+test("FILTERS-POGO-08 scoped Clear preserves species, IV, Shiny and coordinates",()=>{
+ const block=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices(){")[0]||"";
+ const clear=block.split("clear.onclick=()=>{")[1]?.split("};")[0]||"";
+ const saved={mode:"ul",pokemon:"",pokemonSelections:["Pikachu","Eevee"],
+  attack:3,defense:14,stamina:15,glRank:1,ulRank:7,percentMin:20,percentMax:96,
+  sortBy:"CP",weather:"Rainy",size:"XXL",form:"Alolan",gender:"Female",
+  cpMin:"300",cpMax:"900",levelMin:"3",levelMax:"31",minPvpCp:"100",
+  includePreviousEvolutions:false};
+ const keys=["sortBy","weather","size","form","gender","cpMin","cpMax",
+  "levelMin","levelMax","minPvpCp"];
+ let output=null,closed=false;
+ new Function("searchSettings","mode","FILTERS_MENU_KEYS","closeChoices","Native",
+  "const clear=()=>{"+clear+"};clear();")(saved,"ul",keys,()=>{closed=true;},
+  {setSearchConfig:value=>{output=JSON.parse(value);}});
+ return closed&&!!output&&keys.every(key=>output[key]==="")&&
+  output.includePreviousEvolutions===true&&output.mode==="ul"&&
+  output.ulRank===7&&output.attack===3&&output.defense===14&&output.stamina===15&&
+  JSON.stringify(output.pokemonSelections)===JSON.stringify(saved.pokemonSelections)&&
+  !Object.hasOwn(output,"clearPokemonSelection")&&
+  block.includes('actions.append(apply,clear,cancel)')&&
+  !block.includes("Native.setLocation(");
+});
+test("FILTERS-POGO-09 badge never enlarges twelve-slot ribbon and is accessible",()=>{
+ const styles=dock.split("/* FILTERS-POGO-06: two tiny overlay indicators")[1]
+  ?.split("#choices .modeRow")[0]||"";
+ return styles.includes('content:attr(data-filter-count)')&&
+  styles.includes('button[data-key="filters"].has-extra-filters::after')&&
+  styles.includes('button[data-key="filters"].site-filters-applied::before')&&
+  styles.includes("width:33.333%")&&
+  dock.includes('if(count>0)button.dataset.filterCount=String(count)')&&
+  dock.includes('else delete button.dataset.filterCount')&&
+  dock.includes('button.setAttribute("aria-label","Filtros · "+count')&&
+  dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important');
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
