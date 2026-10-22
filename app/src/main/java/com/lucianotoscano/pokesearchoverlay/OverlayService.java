@@ -297,11 +297,9 @@ public class OverlayService extends Service {
     private final Runnable expiryRefresh=new Runnable(){
         @Override public void run(){
             armedDespawnMillis=0L;
-            if(stopped||loginPaused||!loaded)return;
-            if(searchInProgress){
-                handler.postDelayed(this,2000L);
-                return;
-            }
+            if(stopped)return;
+            // Expiration is local and must clean sprites even during a slow
+            // remote query, while the hidden collector loads or during login.
             try{
                 JSONArray old=new JSONArray(results),active=new JSONArray();
                 long now=System.currentTimeMillis();
@@ -324,7 +322,8 @@ public class OverlayService extends Service {
                     // Reset the periodic timer to avoid a duplicate scheduled
                     // request immediately after this despawn refresh.
                     schedulePeriodic();
-                    refresh(true);
+                    if(searchInProgress)queuedManualRefresh=true;
+                    else refresh(true); // If not loaded, onPageFinished restarts it.
                 }
             }catch(Exception e){recordFailure("limpar vencidos",e);}
         }
