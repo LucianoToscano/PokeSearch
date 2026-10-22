@@ -2680,6 +2680,48 @@ function saveQuickPrefs(){
  quickPrefs=normalizedQuickPrefs(quickPrefs);renderQuickMenu();
  if(controlsWindow&&Native.saveMenuPrefs)Native.saveMenuPrefs(JSON.stringify(quickPrefs));
 }
+/* FILTERS-POGO-06/07: criteria count includes only this menu, never Pokémon,
+   Shiny, coordinates, IV or GL/UL rank. Min+max = one range criterion.
+   Level 1–35 is the user-selected neutral default, not an active restriction. */
+const FILTERS_MENU_KEYS=Object.freeze(["sortBy","weather","size","form","gender",
+ "cpMin","cpMax","levelMin","levelMax","minPvpCp"]);
+function extraFilterValue(config,key){
+ const value=String(config?.[key]??"").trim();
+ if((key==="levelMin"&&value==="1")||(key==="levelMax"&&value==="35"))return "";
+ if((key==="cpMin"||key==="minPvpCp")&&value==="0")return "";
+ return value;
+}
+function activeExtraFilterCount(config=searchSettings,selectedMode=mode){
+ const active=key=>extraFilterValue(config,key)!=="";
+ const pvp=selectedMode==="gl"||selectedMode==="ul";
+ let total=["sortBy","weather","size","form","gender"].filter(active).length;
+ if(pvp){
+  if(active("minPvpCp"))total++;
+  if(config?.includePreviousEvolutions===false)total++;
+ }else{
+  if(active("cpMin")||active("cpMax"))total++;
+  if(active("levelMin")||active("levelMax"))total++;
+ }
+ return total;
+}
+function filterDraftChanged(){
+ if(!modeDraft)return false;
+ return FILTERS_MENU_KEYS.some(key=>
+  extraFilterValue(modeDraft,key)!==extraFilterValue(searchSettings,key))||
+  (modeDraft.includePreviousEvolutions!==false)!==(searchSettings.includePreviousEvolutions!==false);
+}
+function updateFiltersPanelStatus(){
+ if(!controlsWindow||choiceOpen!=="filters")return;
+ const el=document.getElementById("filterStatus");if(!el)return;
+ const count=activeExtraFilterCount(searchSettings,mode);
+ const dirty=filterDraftChanged();
+ const verified=count>0&&siteFiltersConfirmed&&!searchActive&&!resultsStale;
+ el.textContent=dirty?"● Alterações ainda não aplicadas":
+  count===0?"Nenhum filtro adicional ativo":
+  verified?"✓ Aplicado no PoGoCoordinates":
+  "⌛ Aguardando confirmação do site";
+ el.classList.toggle("confirmed",!dirty&&verified);
+}
 function quickState(id){
  switch(id){
   case "mode":return specialIVLabel(mode,searchSettings);
