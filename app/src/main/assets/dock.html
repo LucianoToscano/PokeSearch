@@ -1032,13 +1032,21 @@ body.controls-window.visual-light-menu #choices:not(.visualPanel) .locLine butto
  color:#f4fff8!important;
 }
 /* BRAND-EDITOR-053: neutral glyphs match the independent menu theme. */
-body.controls-window #quickMenuList .quickRow:not(.selected) .quickGlyph,
-body.controls-window #quickMenuList .quickFooterAction:not(.selected) .quickGlyph,
+body.controls-window #quickMenuList .quickRow:not(.selected):not([data-key=donate]):not([data-key=report]):not([data-key=close]):not([data-key=bell]) .quickGlyph,
+body.controls-window #quickMenuList .quickFooterAction:not(.selected):not([data-key=donate]):not([data-key=report]):not([data-key=close]):not([data-key=bell]) .quickGlyph,
 body.controls-window #quickMenuList [data-key=pokemon] .quickGlyph,
 body.controls-window #quickMenuList [data-key=appearance] .quickGlyph{
  color:var(--visual-menu-fg,#f2f7fc)!important;
 }
 body.controls-window.visual-light-menu #quickMenuList .quickGlyph svg:not([fill="none"]){fill:currentColor}
+/* LT54: requested dark bell; retain yellow star & audio states separately. */
+body.controls-window:not(.visual-light-menu) #quickMenuList [data-key=bell]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{
+  color:#111821!important;filter:drop-shadow(0 0 1.5px #f3f6ffcc)!important;
+}
+/* Colored glyphs are always colored and override the generic neutral rule. */
+body.controls-window #quickMenuList [data-key=report] .quickGlyph{color:#ffd674!important}
+body.controls-window #quickMenuList [data-key=donate] .quickGlyph{color:#fa94a7!important}
+body.controls-window #quickMenuList [data-key=close] .quickGlyph{color:#ff596c!important}
 body.controls-window.visual-preview-menu #menu,
 body.controls-window.visual-preview-menu #quickMenuList{
  outline:2px dashed #50f6b2!important;outline-offset:-2px!important;
