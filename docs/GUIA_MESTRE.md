@@ -3598,3 +3598,15 @@ Total **658 contratos JS reportados pelos sete comandos**. O `gradle :app:assemb
 2. **UX-INFO-ALL-03:** o teste antigo ainda exigia prefixos `Nome`, `Local`, `Dist`, `Sexo`, `Tam` e `✨ Shiny`, removidos intencionalmente na Etapa 12.169. O contrato passa a verificar valores curtos e ausência dos prefixos, mantendo o teste de dimensões do sprite. **Sem mudança de CSS, layout ou renderização.**
 
 **Mudanças permitidas:** somente `app/tests/overlay-ux.test.js` e registro no mesmo Guia Mestre. O CI de assinatura e o Gradle serão reexecutados por commit explicitamente aprovado de build. Não há merge. Novo APK/homologação somente após sucesso completo do workflow e teste físico pendente.
+
+### 12.174 ENTREGA-COORDSGO-51233 — compilação oficial e verificação do APK (22/10/2026)
+
+**Resultado confirmado:** GitHub Actions **#233**, run **39715542995**, workflow `PokeSearch v0.51 stable-signed test APK`, executado no commit de código `09ea439e79959303a2a6b9f60165f9d53c067582`, terminou **SUCCESS**. Testes Node: localização 68, probe 111, seletor 9, login 38, UX 385, editor visual 46, assinatura 14 e prévia CoordsGo 13 = **684 verificações aprovadas**. Gradle `:app:assembleDebug :app:testDebugUnitTest` passou (BUILD SUCCESSFUL). Também foram aprovados a verificação do nome do pacote, `versionCode`, `versionName`, ZIP íntegro, assinatura v2 e certificado persistente.
+
+**Identificação do APK:** `PokeSearch-v0.51-beta.test.51233.apk`, `versionCode=54233`, `versionName=0.51-beta.test.51233`, `applicationId=com.lucianotoscano.pokesearch`, tamanho exato **15.780.657 bytes**, SHA-256 do instalador **`bba1f030a7d6dd921c9013b58e21125976853f6e00b0cf2ac87dd04b4f54b579`**. A conferência dos bytes extraídos do artifact bateu com o `SHA256SUMS.txt` oficial; `unzip -t` não encontrou erros. SHA-256 do certificado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, igual ao da 51192. Assinatura persistente foi restaurada a partir de segredo protegido do GitHub Actions, sem publicá-lo.
+
+**Artefatos GitHub:** APK `PokeSearch-v0.51-APK-TESTE-ATUALIZAVEL` (ID `12399041491`), pacote de edição `PokeSearch-PACOTE-COMPLETO-EDICAO` (ID `12399031637`), página https://github.com/LucianoToscano/PokeSearch/actions/runs/39715542995 . A cópia direta do APK foi entregue na conversa, sem alterar os bytes. Artifact GitHub de retenção de 30 dias.
+
+**Teste Android ainda obrigatório:** instalar por cima da versão anterior sem perder favoritos/login; abrir Home > ☰ > Missões · CoordsGo; validar carregamento do site, WebView JavaScript, botões Voltar/Recarregar, navegação para missões e mapas; voltar ao overlay e verificar PoGoCoordinates/Shiny/locais/IV/GL/UL e 21 campos desativados; testar telas menores e tema claro/escuro. Não declarar homologação física sem evidências do dispositivo.
+
+**Rastro das falhas:** o Actions #232 (commit `98ffd563...`) falhou antes do Gradle por dois contratos legados desatualizados, corrigidos somente em testes no commit `09ea439e...`. Não foi necessário alterar a lógica original de coleta ou renderização. Sem merge na main; nenhuma nova versão do app decorre de commits exclusivamente documentais posteriores.
