@@ -597,6 +597,8 @@ body.result-window .leaguePrefix.gl{color:#67b6ff}
 body.result-window .leaguePrefix.ul{color:#ffcb64}
 body.result-window .leaguePrefix.ml{color:#cda9ff}
 body.result-window .spawnInfoLine.wrap{overflow-wrap:anywhere}
+body.result-window .evolutionInfo{font-size:.96em;opacity:.95}
+body.result-window .evolutionInfo.best{color:#72e1b6;font-weight:900}
 body.result-window .ivInfo{font-weight:900}
 body.result-window .ivInfo.zero{color:#00cfe8}
 body.result-window .ivInfo.low{color:#b8bec8}
@@ -1863,11 +1865,22 @@ function verifiedOverallRank(card,league){
  return Number.isInteger(value)&&value>0?value:null;
 }
 
+
+/* RANK-EVO-01: evolução conservadora (PokeAPI species CSV + catálogo local + PvPoke).
+   Formas regionais que exigem identidade específica nunca são presumidas. */
+const PVP_EVO_LINKS=Object.freeze([["Bulbasaur","Ivysaur"],["Ivysaur","Venusaur"],["Charmander","Charmeleon"],["Charmeleon","Charizard"],["Squirtle","Wartortle"],["Wartortle","Blastoise"],["Caterpie","Metapod"],["Metapod","Butterfree"],["Weedle","Kakuna"],["Kakuna","Beedrill"],["Pidgey","Pidgeotto"],["Pidgeotto","Pidgeot"],["Rattata","Raticate"],["Spearow","Fearow"],["Ekans","Arbok"],["Pichu","Pikachu"],["Pikachu","Raichu"],["Sandshrew","Sandslash"],["Nidoran Female","Nidorina"],["Nidorina","Nidoqueen"],["Nidoran Male","Nidorino"],["Nidorino","Nidoking"],["Cleffa","Clefairy"],["Clefairy","Clefable"],["Vulpix","Ninetales"],["Igglybuff","Jigglypuff"],["Jigglypuff","Wigglytuff"],["Zubat","Golbat"],["Oddish","Gloom"],["Gloom","Vileplume"],["Paras","Parasect"],["Venonat","Venomoth"],["Diglett","Dugtrio"],["Meowth","Persian"],["Psyduck","Golduck"],["Mankey","Primeape"],["Growlithe","Arcanine"],["Poliwag","Poliwhirl"],["Poliwhirl","Poliwrath"],["Abra","Kadabra"],["Kadabra","Alakazam"],["Machop","Machoke"],["Machoke","Machamp"],["Bellsprout","Weepinbell"],["Weepinbell","Victreebel"],["Tentacool","Tentacruel"],["Geodude","Graveler"],["Graveler","Golem"],["Ponyta","Rapidash"],["Slowpoke","Slowbro"],["Magnemite","Magneton"],["Doduo","Dodrio"],["Seel","Dewgong"],["Grimer","Muk"],["Shellder","Cloyster"],["Gastly","Haunter"],["Haunter","Gengar"],["Drowzee","Hypno"],["Krabby","Kingler"],["Voltorb","Electrode"],["Exeggcute","Exeggutor"],["Cubone","Marowak"],["Tyrogue","Hitmonlee"],["Tyrogue","Hitmonchan"],["Koffing","Weezing"],["Rhyhorn","Rhydon"],["Happiny","Chansey"],["Horsea","Seadra"],["Goldeen","Seaking"],["Staryu","Starmie"],["Smoochum","Jynx"],["Elekid","Electabuzz"],["Magby","Magmar"],["Magikarp","Gyarados"],["Eevee","Vaporeon"],["Eevee","Jolteon"],["Eevee","Flareon"],["Omanyte","Omastar"],["Kabuto","Kabutops"],["Munchlax","Snorlax"],["Dratini","Dragonair"],["Dragonair","Dragonite"],["Chikorita","Bayleef"],["Bayleef","Meganium"],["Cyndaquil","Quilava"],["Quilava","Typhlosion"],["Totodile","Croconaw"],["Croconaw","Feraligatr"],["Sentret","Furret"],["Hoothoot","Noctowl"],["Ledyba","Ledian"],["Spinarak","Ariados"],["Golbat","Crobat"],["Chinchou","Lanturn"],["Togepi","Togetic"],["Natu","Xatu"],["Mareep","Flaaffy"],["Flaaffy","Ampharos"],["Gloom","Bellossom"],["Azurill","Marill"],["Marill","Azumarill"],["Bonsly","Sudowoodo"],["Poliwhirl","Politoed"],["Hoppip","Skiploom"],["Skiploom","Jumpluff"],["Sunkern","Sunflora"],["Wooper","Quagsire"],["Eevee","Espeon"],["Eevee","Umbreon"],["Slowpoke","Slowking"],["Wynaut","Wobbuffet"],["Pineco","Forretress"],["Onix","Steelix"],["Snubbull","Granbull"],["Scyther","Scizor"],["Teddiursa","Ursaring"],["Slugma","Magcargo"],["Swinub","Piloswine"],["Remoraid","Octillery"],["Mantyke","Mantine"],["Houndour","Houndoom"],["Seadra","Kingdra"],["Phanpy","Donphan"],["Porygon","Porygon2"],["Tyrogue","Hitmontop"],["Chansey","Blissey"],["Larvitar","Pupitar"],["Pupitar","Tyranitar"],["Treecko","Grovyle"],["Grovyle","Sceptile"],["Torchic","Combusken"],["Combusken","Blaziken"],["Mudkip","Marshtomp"],["Marshtomp","Swampert"],["Poochyena","Mightyena"],["Zigzagoon","Linoone"],["Wurmple","Silcoon"],["Silcoon","Beautifly"],["Wurmple","Cascoon"],["Cascoon","Dustox"],["Lotad","Lombre"],["Lombre","Ludicolo"],["Seedot","Nuzleaf"],["Nuzleaf","Shiftry"],["Taillow","Swellow"],["Wingull","Pelipper"],["Ralts","Kirlia"],["Kirlia","Gardevoir"],["Surskit","Masquerain"],["Shroomish","Breloom"],["Slakoth","Vigoroth"],["Vigoroth","Slaking"],["Nincada","Ninjask"],["Nincada","Shedinja"],["Whismur","Loudred"],["Loudred","Exploud"],["Makuhita","Hariyama"],["Skitty","Delcatty"],["Aron","Lairon"],["Lairon","Aggron"],["Meditite","Medicham"],["Electrike","Manectric"],["Budew","Roselia"],["Gulpin","Swalot"],["Carvanha","Sharpedo"],["Wailmer","Wailord"],["Numel","Camerupt"],["Spoink","Grumpig"],["Trapinch","Vibrava"],["Vibrava","Flygon"],["Cacnea","Cacturne"],["Swablu","Altaria"],["Barboach","Whiscash"],["Corphish","Crawdaunt"],["Baltoy","Claydol"],["Lileep","Cradily"],["Anorith","Armaldo"],["Feebas","Milotic"],["Shuppet","Banette"],["Duskull","Dusclops"],["Chingling","Chimecho"],["Snorunt","Glalie"],["Spheal","Sealeo"],["Sealeo","Walrein"],["Clamperl","Huntail"],["Clamperl","Gorebyss"],["Bagon","Shelgon"],["Shelgon","Salamence"],["Beldum","Metang"],["Metang","Metagross"],["Turtwig","Grotle"],["Grotle","Torterra"],["Chimchar","Monferno"],["Monferno","Infernape"],["Piplup","Prinplup"],["Prinplup","Empoleon"],["Starly","Staravia"],["Staravia","Staraptor"],["Bidoof","Bibarel"],["Kricketot","Kricketune"],["Shinx","Luxio"],["Luxio","Luxray"],["Roselia","Roserade"],["Cranidos","Rampardos"],["Shieldon","Bastiodon"],["Combee","Vespiquen"],["Buizel","Floatzel"],["Shellos","Gastrodon"],["Aipom","Ambipom"],["Drifloon","Drifblim"],["Buneary","Lopunny"],["Misdreavus","Mismagius"],["Murkrow","Honchkrow"],["Glameow","Purugly"],["Stunky","Skuntank"],["Bronzor","Bronzong"],["Gible","Gabite"],["Gabite","Garchomp"],["Riolu","Lucario"],["Hippopotas","Hippowdon"],["Skorupi","Drapion"],["Croagunk","Toxicroak"],["Finneon","Lumineon"],["Snover","Abomasnow"],["Sneasel","Weavile"],["Magneton","Magnezone"],["Lickitung","Lickilicky"],["Rhydon","Rhyperior"],["Tangela","Tangrowth"],["Electabuzz","Electivire"],["Magmar","Magmortar"],["Togetic","Togekiss"],["Yanma","Yanmega"],["Eevee","Leafeon"],["Eevee","Glaceon"],["Gligar","Gliscor"],["Piloswine","Mamoswine"],["Porygon2","Porygon-Z"],["Kirlia","Gallade"],["Nosepass","Probopass"],["Dusclops","Dusknoir"],["Snorunt","Froslass"],["Snivy","Servine"],["Servine","Serperior"],["Tepig","Pignite"],["Pignite","Emboar"],["Oshawott","Dewott"],["Dewott","Samurott"],["Patrat","Watchog"],["Lillipup","Herdier"],["Herdier","Stoutland"],["Purrloin","Liepard"],["Pansage","Simisage"],["Pansear","Simisear"],["Panpour","Simipour"],["Munna","Musharna"],["Pidove","Tranquill"],["Tranquill","Unfezant"],["Blitzle","Zebstrika"],["Roggenrola","Boldore"],["Boldore","Gigalith"],["Woobat","Swoobat"],["Drilbur","Excadrill"],["Timburr","Gurdurr"],["Gurdurr","Conkeldurr"],["Tympole","Palpitoad"],["Palpitoad","Seismitoad"],["Sewaddle","Swadloon"],["Swadloon","Leavanny"],["Venipede","Whirlipede"],["Whirlipede","Scolipede"],["Cottonee","Whimsicott"],["Petilil","Lilligant"],["Sandile","Krokorok"],["Krokorok","Krookodile"],["Dwebble","Crustle"],["Scraggy","Scrafty"],["Yamask","Cofagrigus"],["Tirtouga","Carracosta"],["Archen","Archeops"],["Trubbish","Garbodor"],["Zorua","Zoroark"],["Minccino","Cinccino"],["Gothita","Gothorita"],["Gothorita","Gothitelle"],["Solosis","Duosion"],["Duosion","Reuniclus"],["Ducklett","Swanna"],["Vanillite","Vanillish"],["Vanillish","Vanilluxe"],["Deerling","Sawsbuck"],["Karrablast","Escavalier"],["Foongus","Amoonguss"],["Frillish","Jellicent"],["Joltik","Galvantula"],["Ferroseed","Ferrothorn"],["Klink","Klang"],["Klang","Klinklang"],["Tynamo","Eelektrik"],["Eelektrik","Eelektross"],["Elgyem","Beheeyem"],["Litwick","Lampent"],["Lampent","Chandelure"],["Axew","Fraxure"],["Fraxure","Haxorus"],["Cubchoo","Beartic"],["Shelmet","Accelgor"],["Mienfoo","Mienshao"],["Golett","Golurk"],["Pawniard","Bisharp"],["Rufflet","Braviary"],["Vullaby","Mandibuzz"],["Deino","Zweilous"],["Zweilous","Hydreigon"],["Larvesta","Volcarona"],["Chespin","Quilladin"],["Quilladin","Chesnaught"],["Fennekin","Braixen"],["Braixen","Delphox"],["Froakie","Frogadier"],["Frogadier","Greninja"],["Bunnelby","Diggersby"],["Fletchling","Fletchinder"],["Fletchinder","Talonflame"],["Scatterbug","Spewpa"],["Spewpa","Vivillon"],["Litleo","Pyroar"],["Flabebe","Floette"],["Floette","Florges"],["Skiddo","Gogoat"],["Pancham","Pangoro"],["Honedge","Doublade"],["Spritzee","Aromatisse"],["Swirlix","Slurpuff"],["Inkay","Malamar"],["Binacle","Barbaracle"],["Skrelp","Dragalge"],["Clauncher","Clawitzer"],["Helioptile","Heliolisk"],["Tyrunt","Tyrantrum"],["Amaura","Aurorus"],["Eevee","Sylveon"],["Goomy","Sliggoo"],["Sliggoo","Goodra"],["Phantump","Trevenant"],["Bergmite","Avalugg"],["Noibat","Noivern"],["Rowlet","Dartrix"],["Dartrix","Decidueye"],["Litten","Torracat"],["Torracat","Incineroar"],["Popplio","Brionne"],["Brionne","Primarina"],["Pikipek","Trumbeak"],["Trumbeak","Toucannon"],["Yungoos","Gumshoos"],["Grubbin","Charjabug"],["Charjabug","Vikavolt"],["Crabrawler","Crabominable"],["Cutiefly","Ribombee"],["Mareanie","Toxapex"],["Mudbray","Mudsdale"],["Dewpider","Araquanid"],["Fomantis","Lurantis"],["Morelull","Shiinotic"],["Salandit","Salazzle"],["Stufful","Bewear"],["Bounsweet","Steenee"],["Steenee","Tsareena"],["Wimpod","Golisopod"],["Sandygast","Palossand"],["Jangmo-o","Hakamo-o"],["Hakamo-o","Kommo-o"],["Cosmog","Cosmoem"],["Cosmoem","Solgaleo"],["Cosmoem","Lunala"],["Poipole","Naganadel"],["Meltan","Melmetal"],["Grookey","Thwackey"],["Thwackey","Rillaboom"],["Scorbunny","Raboot"],["Raboot","Cinderace"],["Sobble","Drizzile"],["Drizzile","Inteleon"],["Skwovet","Greedent"],["Rookidee","Corvisquire"],["Corvisquire","Corviknight"],["Blipbug","Dottler"],["Dottler","Orbeetle"],["Nickit","Thievul"],["Gossifleur","Eldegoss"],["Wooloo","Dubwool"],["Chewtle","Drednaw"],["Yamper","Boltund"],["Rolycoly","Carkol"],["Carkol","Coalossal"],["Applin","Flapple"],["Applin","Appletun"],["Silicobra","Sandaconda"],["Arrokuda","Barraskewda"],["Toxel","Toxtricity"],["Sizzlipede","Centiskorch"],["Clobbopus","Grapploct"],["Sinistea","Polteageist"],["Hatenna","Hattrem"],["Hattrem","Hatterene"],["Impidimp","Morgrem"],["Morgrem","Grimmsnarl"],["Milcery","Alcremie"],["Snom","Frosmoth"],["Cufant","Copperajah"],["Dreepy","Drakloak"],["Drakloak","Dragapult"],["Stantler","Wyrdeer"],["Scyther","Kleavor"],["Ursaring","Ursaluna"],["Sprigatito","Floragato"],["Floragato","Meowscarada"],["Fuecoco","Crocalor"],["Crocalor","Skeledirge"],["Quaxly","Quaxwell"],["Quaxwell","Quaquaval"],["Lechonk","Oinkologne"],["Tarountula","Spidops"],["Nymble","Lokix"],["Pawmi","Pawmo"],["Pawmo","Pawmot"],["Tandemaus","Maushold"],["Fidough","Dachsbun"],["Smoliv","Dolliv"],["Dolliv","Arboliva"],["Nacli","Naclstack"],["Naclstack","Garganacl"],["Charcadet","Armarouge"],["Charcadet","Ceruledge"],["Tadbulb","Bellibolt"],["Wattrel","Kilowattrel"],["Maschiff","Mabosstiff"],["Shroodle","Grafaiai"],["Bramblin","Brambleghast"],["Toedscool","Toedscruel"],["Capsakid","Scovillain"],["Rellor","Rabsca"],["Flittle","Espathra"],["Tinkatink","Tinkatuff"],["Tinkatuff","Tinkaton"],["Wiglett","Wugtrio"],["Finizen","Palafin"],["Varoom","Revavroom"],["Glimmet","Glimmora"],["Greavard","Houndstone"],["Cetoddle","Cetitan"],["Primeape","Annihilape"],["Girafarig","Farigiraf"],["Dunsparce","Dudunsparce"],["Bisharp","Kingambit"],["Frigibax","Arctibax"],["Arctibax","Baxcalibur"],["Gimmighoul","Gholdengo"],["Applin","Dipplin"],["Poltchageist","Sinistcha"],["Duraludon","Archaludon"],["Dipplin","Hydrapple"]]);
+const pvpEvolutionGraph=new Map();
+for(const [source,target] of PVP_EVO_LINKS){
+ const key=speciesKey(source);
+ if(!pvpEvolutionGraph.has(key))pvpEvolutionGraph.set(key,[]);
+ pvpEvolutionGraph.get(key).push(target);
+}
+
 /* Species-specific IV stat-product ranking: CP 1500/2500, max level 50,
    no best buddy. Based on PvPoke game master species stats and CPMs.
    Distinct from PvPoke's overall species-performance ranking. */
 const PVP_IV_GAME_MASTER=window.POKESEARCH_PVP_IV_DATA||null;
-const ivSpeciesByName=new Map(),speciesIvRanksCache=new Map();
+const ivSpeciesByName=new Map(),speciesIvRanksCache=new Map(),speciesIvMetaCache=new Map();
 if(PVP_IV_GAME_MASTER&&Array.isArray(PVP_IV_GAME_MASTER.pokemon)){
  for(const data of PVP_IV_GAME_MASTER.pokemon){
   const [id,name,atk,def,hp]=data;
@@ -1900,14 +1913,23 @@ function computeSpeciesIvRanks(species,league){
     if(best<0)continue;
     const cpm=cpms[best],hpBattle=Math.max(10,Math.floor(hp*cpm));
     const product=atk*def*hpBattle*cpmSquared[best];
-    scores.push([a*256+d*16+h,product]);
+    const cp=Math.max(10,Math.floor(cpScale*cpmSquared[best]));
+    scores.push([a*256+d*16+h,product,best,cp]);
    }
   }
  }
  if(!scores.length)return null;
  scores.sort((a,b)=>b[1]-a[1]||a[0]-b[0]);
- const order=new Uint16Array(4096);
- scores.forEach(([index],position)=>{order[index]=position+1;});
+ const order=new Uint16Array(4096),quality=new Uint16Array(4096);
+ const bestLevels=new Uint8Array(4096),bestCps=new Uint16Array(4096);
+ const maximum=scores[0][1];
+ scores.forEach(([index,product,levelIndex,cp],position)=>{
+  order[index]=position+1;
+  quality[index]=Math.min(10000,Math.round(10000*product/maximum));
+  bestLevels[index]=levelIndex;
+  bestCps[index]=cp;
+ });
+ speciesIvMetaCache.set(league+":"+species[0],{quality,bestLevels,bestCps});
  return order;
 }
 function calculatedSpeciesIvRank(card,league){
@@ -1938,11 +1960,66 @@ function verifiedSpeciesIvRank(card,league){
  }
  return calculatedSpeciesIvRank(card,league);
 }
-// Classe PvP (%) means percentile of the ranked 4096 IV spreads, NOT
-// the ordinary 0-100 IV% and NOT the stat-product percentage.
-function pvpIvClassPercent(rank){
- return Number.isInteger(rank)&&rank>=1&&rank<=4096?
-  (100*(4096-rank)/4095).toFixed(2).replace(".",","):null;
+// Classe PvP = stat-product / best stat-product of SAME species/form and league.
+// Rank percentile (4096-rank)/4095 is NOT a PvP class score.
+function calculatedSpeciesIvDetail(card,league){
+ const rank=calculatedSpeciesIvRank(card,league);
+ if(rank===null)return null;
+ const species=ivSpeciesByName.get(safePvpSpeciesKey(card));
+ if(!species)return null;
+ const metrics=speciesIvMetaCache.get(league+":"+species[0]);
+ const [a,d,h]=String(card.iv).split("/").map(Number);
+ const index=a*256+d*16+h;
+ if(!metrics||!metrics.quality[index])return null;
+ return {rank,statProductPct:(metrics.quality[index]/100).toFixed(2).replace(".",","),
+  cp:metrics.bestCps[index],level:1+metrics.bestLevels[index]/2};
+}
+function pvpIvClassPercent(rank,card,league){
+ if(!Number.isInteger(rank)||rank<1||rank>4096)return null;
+ return calculatedSpeciesIvDetail(card,league)?.statProductPct??null;
+}
+// Reuse the original IV across the entire reachable evolution line; no site writes.
+// Unknown regional forms, event costumes and transformations fail closed.
+function evolutionCandidates(card,league){
+ if(!card||!["gl","ul","ml"].includes(league)||verifiedSpawnIvPercent(card)===null)return [];
+ const full=safePvpSpeciesKey(card);
+ if(!full||!ivSpeciesByName.has(full))return [];
+ const match=full.match(/ \(([^()]+)\)$/),variant=match?match[1]:"";
+ if(variant&&variant!=="shadow")return [];
+ const root=variant?full.slice(0,-match[0].length):full;
+ const candidates=[],queue=[root],visited=new Set([root]);
+ while(queue.length&&visited.size<=64){
+  const parent=queue.shift();
+  for(const target of pvpEvolutionGraph.get(parent)||[]){
+   const base=speciesKey(target),lookup=base+(variant?" (shadow)":"");
+   if(visited.has(base))continue;
+   visited.add(base);
+   if(!ivSpeciesByName.has(lookup))continue;
+   queue.push(base);
+   const evolved={name:variant?target+" (Shadow)":target,iv:card.iv,ivPercent:card.ivPercent};
+   const detail=calculatedSpeciesIvDetail(evolved,league);
+   if(!detail)continue;
+   let eligible=null,currentCp=null;
+   const level=Number(card.level),iv=String(card.iv).split("/").map(Number);
+   const cpms=PVP_IV_GAME_MASTER?.cpms||[];
+   const idx=Math.round((level-1)*2);
+   if(Number.isFinite(level)&&level>=1&&level<=50&&
+      Math.abs((level-1)*2-idx)<0.001&&cpms[idx]){
+    const [,at,de,hp]=ivSpeciesByName.get(lookup),cpm=cpms[idx];
+    currentCp=Math.max(10,Math.floor((at+iv[0])*Math.sqrt((de+iv[1])*(hp+iv[2]))*cpm*cpm/10));
+    const cap=league==="gl"?1500:league==="ul"?2500:Infinity;
+    eligible=currentCp<=cap;
+   }
+   candidates.push({...detail,name:evolved.name,eligible,currentCp});
+  }
+ }
+ candidates.sort((a,b)=>(a.eligible===false?2:a.eligible===null?1:0)-
+  (b.eligible===false?2:b.eligible===null?1:0)||a.rank-b.rank||
+  b.statProductPct.localeCompare(a.statProductPct)||a.name.localeCompare(b.name));
+ return candidates;
+}
+function bestEvolutionRank(card,league){
+ return evolutionCandidates(card,league)[0]||null;
 }
 // Country code comes ONLY from an explicit country suffix in a site location,
 // never inferred from GPS, state, region, coordinates or the phone locale.
@@ -2044,8 +2121,14 @@ function resultLines(card,opts,league){
    const rank=verifiedSpeciesIvRank(card,leagueKey);
    if(rank!==null){
     lines.push(short+" IV#"+rank);
-    const percentile=pvpIvClassPercent(rank);
-    if(percentile!==null)lines.push(short+" P"+percentile+"%");
+    const quality=pvpIvClassPercent(rank,card,leagueKey);
+    if(quality!==null)lines.push(short+" P"+quality+"%");
+   }
+   const evo=bestEvolutionRank(card,leagueKey);
+   if(evo){
+    const eligibility=evo.eligible===false?" · Não elegível":"";
+    lines.push("↳ "+evo.name+" "+short+" IV#"+evo.rank+
+      " P"+evo.statProductPct+"%"+eligibility);
    }
   }
  }
@@ -2055,6 +2138,7 @@ function resultLines(card,opts,league){
 function resultInfoHtml(value,card){
  const raw=String(value??"");
  const safe=esc(raw);
+ if(raw.startsWith("↳ "))return '<span class="evolutionInfo'+(raw.includes('IV#1')&&!raw.includes('Não elegível')?' best':'')+'">'+safe+'</span>';
  if(raw==="♂")return '<span class="genderInfo male">♂</span>';
  if(raw==="♀")return '<span class="genderInfo female">♀</span>';
  const valid=verifiedSpawnIvPercent(card);
