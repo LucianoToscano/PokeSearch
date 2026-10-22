@@ -637,7 +637,9 @@ function cardRoots(){
    /^(?:Get coords|Open in Maps)$/i.test(text(e)));
  const cards=[],seen=new Set();
  for(const action of actions){
-  let node=action,chosen=null;
+  // Keep the nearest parent when the site temporarily hides card labels.
+  // Native IV/rank checks still reject unverified data.
+  let node=action,chosen=action.parentElement;
   for(let depth=0;depth<10&&node;depth++,node=node.parentElement){
    const t=text(node);
    if(/\bLOCATION\b/i.test(t)&&/\bDESPAWN\b/i.test(t)&&/\bCP\b/i.test(t)&&t.length<2500){
