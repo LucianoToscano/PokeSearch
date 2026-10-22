@@ -2631,12 +2631,8 @@ public class OverlayService extends Service {
         spriteSize=(wanted==35||wanted==45||wanted==55)?wanted:45;
         showTimers=prefs.getBoolean("showTimers",false);
         showResultText=prefs.getBoolean("showResultText",false);
-        // One-time migration: the visible spawn count is ON after the requested UX fix.
-        // Subsequent explicit user OFF selections remain respected on upgrades.
-        if(!prefs.getBoolean("resultCountUxV2",false)){
-            prefs.edit().putBoolean("resultShowCount",true)
-                .putBoolean("resultCountUxV2",true).apply();
-        }
+        // Never auto-enable a Pokémon info field, including spawn count.
+        // Existing individually saved ON/OFF preferences remain untouched.
         resultShowCount=prefs.getBoolean("resultShowCount",false);
         resultShowName=prefs.getBoolean("resultShowName",false);
         resultShowNumber=prefs.getBoolean("resultShowNumber",false);
