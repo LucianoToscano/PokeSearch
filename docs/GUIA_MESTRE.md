@@ -3593,4 +3593,33 @@ Total **658 contratos JS reportados pelos sete comandos**. O `gradle :app:assemb
 
 **Pendências e limitações:** ainda não foi executada suíte Node completa sobre um checkout EXATO deste HEAD, Gradle ou homologação no aparelho, por restrição de fonte local e ausência de autorização explícita de compilação. Para retomar: obter checkout direto da branch, executar toda suite Node, auditar resultados GL/UL e despawn em dispositivo e, **somente com autorização do proprietário**, compilar APK de teste incremental sob a assinatura persistente. Nenhuma API, backend, proxy, localização automática, alteração de `applicationId`, perda de backup ou merge.
 
-**Registro final:** após este checkpoint a numeração retorna a 12.172; a etapa não reimplanta CoordsGo. A base do APP continua EXATAMENTE a árvore de `0134eb2` e todos os novos commits posteriores a `f543ce3` modificam somente testes/documentação, nunca assets ou código Android. 
+**Registro final:** após este checkpoint a numeração retorna a 12.172; a etapa não reimplanta CoordsGo. A base do APP continua EXATAMENTE a árvore de `0134eb2` e todos os novos commits posteriores a `f543ce3` modificam somente testes/documentação, nunca assets ou código Android.
+
+### 12.173-RANK-EVO-01 — potencial PvP de evolução por espécie e classe estatística (22/10/2026)
+
+**Autorização do usuário:** corrigir a apresentação de rankings PvP comparando as evoluções futuras no estilo de candidatos PvP do PokéGenie. **Não autorizado:** compilar APK, executar Gradle, fazer merge, reintroduzir CoordsGo, misturar PvPPokeGo ou alterar assinatura, applicationId, login ou filtros do PoGoCoordinates.
+
+**Checkpoint de partida:** branch `feature/pokesearch-51081-visual-editor-20261021`, HEAD original `f453661a81a09ff8878c60b45efe4a7a5b61be09`, base de aplicativo restaurada de `0134eb2cdec96fd50f3599458adc60b4b7214fb3`. Último APK anterior permanece `0.51-beta.test.51192` / Actions #192. A auditoria nativa Node sobre checkout completo e homologação Android da 12.173 permanecem pendentes; isto não significa que a implementação foi homologada.
+
+**Diagnóstico confirmado no código:** `pvpIvClassPercent(rank)` aplicava `(4096-rank)/4095`, que é percentil de posição e não razão de produtos estatísticos; o resultado calculava apenas os IVs da espécie atual, ocultando potenciais evolutivos como Swablu 0/14/15 → Altaria GL IV#1 e Rookidee 0/13/14 → Corviknight GL IV#1.
+
+**Implementação no `app/src/main/assets/dock.html`:**
+- Preservado o carregamento dos mesmos assets PvPoke locais e seu ranking geral RG. Os cálculos continuam exclusivamente no WebView de resultados, sem chamadas externas nem mudanças no `probe.js` ou WebView de busca.
+- Gerado grafo estático conservador com 463 relações canônicas de evolução derivadas do `PokeAPI/pokeapi/data/v2/csv/pokemon_species.csv`, conciliado ao `pokemon_catalog.json` já existente e às espécies disponíveis no Game Master PvPoke incluído no APK. Fonte de metadados para correspondência; NÃO é prova de condição ou disponibilidade de evolução dentro de Pokémon GO. Evoluções especificamente dependentes de formas regionais não foram inferidas, assim como fantasias/eventos e variantes ambíguas.
+- Reutilizados os mesmos IVs A/D/H nas evoluções identificadas. Busca recursiva limitada, ciclos evitados, ordenação priorizando estágios elegíveis no nível atual e menor ranking de IV; somente a melhor evolução por liga entra no painel compacto.
+- O rank IV da espécie atual e o `RG#` de desempenho geral continuam separados e independentes em GL, UL e ML.
+- A classe PvP exibida como `Pxx,xx%` passa a ser o produto estatístico do exemplar dividido pelo melhor produto da própria espécie/forma e liga, considerados 4096 spreads, teto GL=1500/UL=2500 e nível máximo 50 sem melhor amigo. Usa atributos, CPM e HP efetivo da base PvPoke local; mantém cache por espécie e liga, separando rank e produto percentual.
+- O PC estimado da evolução no mesmo nível atual determina elegibilidade quando existe nível válido; caso contrário, a elegibilidade fica indeterminada (sem suposição de certeza). Exibir `Não elegível` para evolução acima do teto, preservando o rank calculado somente como valor teórico.
+- Novo texto opcional `↳ NomeDaEvolução GL IV#N Pxx,xx%`, colorido discretamente quando IV#1 elegível. Usa as opções `speciesIvRankGl/Ul/Ml` existentes; **nenhum novo interruptor foi criado**, e os 21 campos continuam ocultos por padrão salvo preferências do usuário.
+- Mantidos limite de dez sprites, painéis independentes, menu compacto, transparências, aparência, resultados brutos, pesquisa, login e sincronização PoGoCoordinates.
+
+**Casos de conferência usando o motor/GM local, snapshot PvPoke de 19/10/2026:**
+- Swablu 0/14/15: GL IV#1832, produto estatístico 82,95%; Altaria GL IV#1, 100,00%; CP evoluído no nível 15 ≈774, nível ótimo 29, CP máximo elegível 1497.
+- Rookidee 0/13/14: GL IV#1266, produto 82,60%; Corviknight GL IV#1, 100,00%; CP evoluído no nível 23 ≈1468, nível ótimo 23,5, PC 1500.
+- Vulpix 0/15/15: evolução Ninetales GL IV#1, produto 100%, mediante a rota normal não ambígua.
+
+**Testes:** dois contratos direcionados `RANK-EVO-01` e `RANK-EVO-02` foram adicionados em `app/tests/overlay-ux.test.js` e executados com avaliação JavaScript isolada sobre os arquivos reais deste HEAD, passando 2/2. Contratos legados adaptados para o percentual de produto estatístico (`Altaria UL P89,97%`) e mock de seleção evolutiva. Não atribuir esta validação ao Node oficial ou ao Android real. Ainda executar todas as suítes Node de um checkout idêntico, inclusive inspeção binária PNG, e homologar posteriormente com autorização de APK.
+
+**Commits desta etapa:** implementação `ea1e00dd8f829c36c5b108c3ba2be45501065048`; contratos `bb409036f8e71339500c60ceb4380b3c62f9435b`. O commit de documentação será informado após concluir a escrita. Sem merge nem APK.
+
+**Limitações e pendências:** a origem evolutiva atual é uma lista estática baseada na série principal e cruzada com GM PvPoke: não promete todas as evoluções de GO, custos de doces, itens, condições de amizade/horário, alterações futuras ou formas especiais. Confirmar com PoGoAPI `pokemon_evolutions.json` antes de ampliar a cobertura; testar casos reais do PokéGenie, consistência de PC e nível, performance em WebView Android e regressões. Nenhuma mudança de estado no PoGoCoordinates.
