@@ -795,8 +795,12 @@ function collect(){
    !region.querySelector('[role=listbox],[cmdk-list],[role=dialog]');
  });
  const siteCount=Number((t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1]||0);
+ // If the site advertises more visible cards than we could parse, retry.
+ // Apply to every search mode, without assuming every site total is <= 10.
+ const expectedVisible=siteCount>0?Math.min(siteCount,10):0;
+ const siteIncomplete=expectedVisible>found.length;
  const parseFailure=siteCount>0&&found.length===0;
- return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,siteCount,parseFailure,uncertain,loading,explicitEmpty,
+ return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,siteCount,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,
   criteriaConfirmed:siteCriteria,criteriaReason:confirmation.reason,confirmationSource:confirmation.source,
   leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }
