@@ -9,7 +9,7 @@ assert.match(dock,/repeat\(13,minmax\(0,1fr\)\)/);
 assert.match(dock,/function renderCoordsGoChoices/);
 assert.match(dock,/window.onCoordsGoData/);
 assert.match(dock,/Native.coordsGoRefresh/);
-assert.match(dock,/Native.coordsGoSelect/);
+assert.match(service,/@JavascriptInterface public void coordsGoSelect/);
 assert.match(dock,/coordsGoShowResults/);
 assert.match(dock,/closeChoices\(\); \/\/ Restore original menu touch geometry/);
 assert.doesNotMatch(dock.slice(dock.indexOf('function drawCoordsGoMatches(){'),dock.indexOf('function renderCoordsGoChoices(){')),/box.replaceChildren/);
