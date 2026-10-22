@@ -70,9 +70,11 @@ check("runtime signer pin uses current certificate",()=>{
  assert.doesNotMatch(guard,/getSigningCertificateHistory\(\)/);
  assert.match(guard,/EXPECTED_SIGNING_CERT_SHA256/);
 });
-check("six critical assets checked at runtime",()=>{
+check("seven critical assets including Release Notes checked at runtime",()=>{
  const guard=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/IntegrityGuard.java");
  assert.match(gradle,/assetChecksums/);
+ assert.match(gradle,/"shiny_login.js", "release_notes.json"/);
+ assert.match(guard,/entries\.length!=7/);
  assert.match(guard,/MessageDigest\.isEqual\(hash\.digest\(\),expected\)/);
 });
 check("stable signed debug enables R8",()=>{

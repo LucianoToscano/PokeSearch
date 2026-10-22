@@ -3750,3 +3750,18 @@ Todos os passos do job `119953796712` concluíram com sucesso, inclusive checkou
 8. Validar despawn, Auto 3, notificações, histórico, atualização de tela e ausência de regressões. Guardar versão do aparelho/Android, versão instalada, passos, logs e capturas para cada resultado.
 
 **Bloqueios restantes:** Gradle/Android ainda não compilados na revisão do PR #29; teste físico e update in-place ainda pendentes. A etapa futura de gerar APK exige autorização separada; antes disso revisar o workflow assinado apropriado, os parâmetros reais de versão do CI e a assinatura persistente. **Proibido merge, distribuição ou integração futura** (PoGoAPI, PvPoke, PokeMiners, Leek Duck, PokéAPI, CoordsGo) nesta etapa. Documentação mantida somente neste `docs/GUIA_MESTRE.md`.
+
+
+### 12.175-BRAND-01 — identidade oficial e nomeação contínua (22/10/2026)
+
+**Autorização:** proprietário solicitou o novo ícone do APK usando o PNG original `PokeSearchLogoShinyBlueEffectAll.png` na pasta Drive **Logos PokeSearch** (id `1Wv9iIRQGrLufNZIT7Hqq0pKsU6J-WLJn`), e declarou `PokeSearchLogoShiny.png` como logo institucional e `PokeSearchName.png` como marca nominal oficial. Confirmou antes a convenção de APK `PokeSearch-v0.00.XX-LT.apk`, começando por **PokeSearch-v0.00.52-LT.apk**, depois 53, 54 etc. Nunca reutilizar um identificador/versionCode já distribuído.
+
+**Fontes oficiais Drive, sem recriação ou filtros:** ícone `1fR0-yNKlqphm60hgoFW0NVJ5Fs88ZpRl` (1254×1254 PNG RGBA), logo `1U8OLAgH6vA2oViaZ81wamA4ls51syLQe` (1254×1254 PNG RGBA), wordmark `1kT8Q5DcN-rRjYFYuzprkp9gu04WHwLun` (2172×724 PNG RGBA). Os três arquivos foram lidos diretamente do Drive, preservados com nomes originais em `app/src/main/assets/branding/`, e distribuídos nas referências Android: `drawable-nodpi/ic_launcher.png` (novo ícone com brilhos azuis), `ps_home_brand_transparent.png` (logo da Home) e `ps_home_wordmark.png` (nome visual da Home). Não altera os ícones de GL/UL/Master ou os símbolos do overlay.
+
+**Enquadramento:** `app/scripts/RoundIcon.java` deixa de aproximar/cortar a arte original, usando escala dentro da área segura circular/adaptativa para preservar estrelas e brilho. Os recursos adaptativos existentes continuam sendo gerados pelo Gradle a partir de `ic_launcher.png`.
+
+**Versão e identidade:** `app/build.gradle.kts` adiciona `POKE_TEST_PUBLIC_VERSION` opcional validado, permitindo `versionName=0.00.52` em builds autorizados, sem perder versionCode monotônico. A distribuição planejada deve ter `versionCode=54250` (maior que 54249) e manter rigorosamente o `applicationId=com.lucianotoscano.pokesearch`, namespace, keystore/certificado persistente, R8 e integração PoGoCoordinates/WebView/probe.js. Novas numerações por build futuro somente com conteúdo autorizado. O popup Release Notes do PR #29 segue pendente de homologação Android.
+
+**Correção necessária descoberta no checkpoint:** `app/build.gradle.kts` já inventariava **sete** arquivos SHA-256 ao incluir `release_notes.json`, mas `IntegrityGuard.assetsMatch()` rejeitava qualquer número diferente de **seis**; um APK novo com assinatura válida falharia ao abrir. Corrigido o guard para sete e ampliado o contrato Node `signing-contract.test.js` (sete ativos, incluindo o JSON). **O sucesso de Node não substitui execução Android.**
+
+**Limites da alteração:** não alterar mecanismo de login/sessão, localização manual, filtros, favoritos, rankings, sons ou visual do overlay. Preservar PR #29 em rascunho, sem merge. A compilação específica da versão 0.00.52 foi solicitada; validar sete suítes Node, APK com assinatura permanente, metadados, checksum e publicação do nome exato antes de afirmar sucesso. Não presumir teste físico.

@@ -20,6 +20,9 @@ val testVersionLabel=System.getenv("POKE_TEST_VERSION_LABEL")?.let { value ->
     parsed
 }
 // Public fingerprint of permanent test-signing certificate (not a secret).
+val publicVersionName = System.getenv("POKE_TEST_PUBLIC_VERSION")?.trim()?.takeIf { it.isNotEmpty() }
+if (publicVersionName != null && !Regex("0\\.\\d{2}\\.\\d{2,}").matches(publicVersionName))
+    throw org.gradle.api.GradleException("Invalid public PokeSearch version name")
 val officialTestCertificateSha256 = "34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"
 val releaseCertificateSha256 = System.getenv("POKE_RELEASE_CERT_SHA256")?.trim()?.lowercase() ?: ""
 if (releaseCertificateSha256.isNotEmpty() && !Regex("[0-9a-f]{64}").matches(releaseCertificateSha256))
@@ -60,7 +63,7 @@ android {
         buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256", "\"\"")
         buildConfigField("String", "EXPECTED_ASSET_SHA256", "\"$assetChecksums\"")
         versionCode = testVersionCode ?: 51
-        versionName = if (testVersionCode != null) "0.51-beta.test.${testVersionLabel ?: testVersionCode}" else "0.51-beta"
+        versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
     }
     // Sideloaded beta: keep tested overlay behavior on target 32. Play Store publishing needs a separate target SDK migration.
     lint { disable += "ExpiredTargetSdkVersion" }

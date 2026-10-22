@@ -11,7 +11,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
-/** Defense in depth for distributed builds; certificate and six local asset pins. */
+/** Defense in depth for distributed builds; certificate and seven local asset pins. */
 public final class IntegrityGuard {
     private static final String PACKAGE = "com.lucianotoscano.pokesearch";
     private static final String OFFICIAL_PIX_SHA256 = "c2862867b812f44058a0a4c78d69ead87cb5195a0cd00072575e1a2d29c707fe";
@@ -38,7 +38,7 @@ public final class IntegrityGuard {
         String hashes=BuildConfig.EXPECTED_ASSET_SHA256;
         if(hashes==null||hashes.isEmpty())return false;
         String[] entries=hashes.split(";",-1);
-        if(entries.length!=6)return false;
+        if(entries.length!=7)return false;
         try{
             for(String entry:entries){
                 int eq=entry.indexOf('=');

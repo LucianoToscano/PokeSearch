@@ -214,11 +214,13 @@ public class MainActivity extends Activity {
         LinearLayout brandLabels=new LinearLayout(this);
         brandLabels.setOrientation(LinearLayout.VERTICAL);
         brandLabels.setPadding(d(6),0,0,0);
-        TextView brandTitle=homeText("PokeSearch",14,
-            homeLightMode?Color.rgb(21,34,49):Color.WHITE,true);
+        ImageView brandTitle=new ImageView(this);
+        brandTitle.setImageResource(R.drawable.ps_home_wordmark);
+        brandTitle.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        brandTitle.setContentDescription("PokeSearch");
         TextView brandSubtitle=homeText("POKÉMON GO",9,
             homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
-        brandLabels.addView(brandTitle);
+        brandLabels.addView(brandTitle,new LinearLayout.LayoutParams(d(90),d(30)));
         brandLabels.addView(brandSubtitle);
         header.addView(brandLabels,new LinearLayout.LayoutParams(-2,-2));
 
