@@ -3,7 +3,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;background:transparent;color:#fff;font:11px Roboto,Arial,sans-serif;overflow:hidden}
 button{font:inherit;color:inherit;border:0;cursor:pointer}
-#panel{border:1px solid #ffffff50;border-radius:13px;background:rgba(9,13,20,.73);box-shadow:0 5px 18px #0007;padding:9px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+#panel{max-height:calc(100vh - 2px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;border:1px solid #ffffff50;border-radius:13px;background:rgba(9,13,20,.73);box-shadow:0 5px 18px #0007;padding:9px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
 #header{display:flex;align-items:center;gap:5px;min-width:0}
 #img{width:35px;height:35px;object-fit:contain}
 #imageFallback{display:flex;align-items:center;justify-content:center;
@@ -20,6 +20,17 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #info em{color:#afb9c8;font-style:normal}
 #watch{margin-top:6px;width:100%;border:1px solid #edc95778;background:#e8bf3d24;border-radius:7px;padding:6px;font-weight:bold;color:#ffecba;display:flex;align-items:center;justify-content:center;gap:5px}
 #watch svg{width:14px;height:14px;flex-shrink:0}
+/* RANK-EVO-DETAIL-02: folded section; details always scroll inside the same 226dp card. */
+#evolutions[hidden],#evoBody[hidden]{display:none}
+#evolutions{margin-top:6px;border:1px solid #ffffff28;border-radius:7px;overflow:hidden}
+#evoToggle{width:100%;text-align:left;background:#24425699;color:#d5ecff;
+ padding:6px 7px;font-size:10px;font-weight:800;display:flex;justify-content:space-between;gap:4px}
+#evoBody{max-height:165px;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:3px 6px}
+.evoLeague{font-weight:900;color:#cbd8e7;font-size:10px;border-bottom:1px solid #ffffff24;padding:4px 0 2px}
+.evoLeague.gl{color:#68b7ff}.evoLeague.ul{color:#ffd17c}.evoLeague.ml{color:#cda9ff}
+.evoLine{font-size:10px;line-height:1.32;padding:3px 0;border-bottom:1px solid #ffffff12}
+.evoLine b{font-weight:900}.evoLine.best b{color:#83e7bb}
+.evoStats{font-size:9px;color:#c1ced9}.evoState{font-size:9px;color:#ffb3ac;font-weight:800}
 #copy{margin-top:5px;width:100%;border:1px solid #ffffff35;background:#ffffff22;border-radius:7px;padding:7px;font-weight:bold}#coords{margin-top:7px;width:100%;border-radius:7px;padding:7px;background:#eb2850ce;font-weight:bold}
 </style></head><body><div id="panel">
  <div id="header">
@@ -28,6 +39,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   <button id="x" onclick="Native.hideDetail()">×</button>
  </div>
  <div id="major"></div><div id="info"></div>
+ <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
+  <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
+   <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
+  </button>
+  <div id="evoBody" hidden></div>
+ </section>
  <button id="watch" onclick="Native.toggleWatch(watchName)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg> <span id="watchLabel">Adicionar aos favoritos</span></button>
  <button id="coords" onclick="Native.coords(currentIndex)">⌖ Get coords</button><button id="copy" onclick="copyCoords()">⧉ Copiar coordenadas</button>
 </div>
@@ -37,12 +54,81 @@ function fmt(sec){sec=Math.max(0,Math.floor(sec));return Math.floor(sec/60)+":"+
 function updateCountdown(){const e=document.getElementById("timer");if(e&&expiresAt)e.textContent=fmt((expiresAt-Date.now())/1000);}
 window.coordsResult=function(coords,message){if(coords)currentCoords=coords;document.getElementById("copy").textContent=currentCoords?"⧉ Copiar coordenadas":"Obtenha coordenadas";const el=document.getElementById("coordsValue");if(el)el.textContent=coords||message||"Coordenadas indisponíveis";};
 const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let detailIdentity="",evolutionExpanded=false;
+const evoIdentity=c=>JSON.stringify([
+ Number(c?.sourceIndex??-1),String(c?.name||""),String(c?.iv||""),String(c?.cp??"")]);
+function resizeEvolutionPanel(){
+ requestAnimationFrame(()=>Native.resizeDetail(
+  Math.ceil(document.getElementById("panel").scrollHeight)+2));
+}
+function toggleEvolutionDetails(){
+ const section=document.getElementById("evolutions");
+ if(section.hidden)return;
+ evolutionExpanded=!evolutionExpanded;
+ document.getElementById("evoBody").hidden=!evolutionExpanded;
+ document.getElementById("evoChevron").textContent=evolutionExpanded?"▴":"▾";
+ document.getElementById("evoToggle").setAttribute("aria-expanded",String(evolutionExpanded));
+ resizeEvolutionPanel();
+}
+function evolutionRow(x,first){
+ if(!x||typeof x!=="object")return "";
+ const rank=Number(x.rank),overall=Number(x.overallRank);
+ if(!Number.isInteger(rank)||rank<1||rank>4096)return "";
+ const name=String(x.name||"").slice(0,90);
+ const pct=/^(?:\d{1,3}),\d{2}$/.test(String(x.statProductPct||""))?
+  String(x.statProductPct):"";
+ const cp=Number(x.cp),level=Number(x.level);
+ const data=[];
+ if(Number.isFinite(cp)&&cp>=10&&cp<=10000)data.push("PC "+Math.floor(cp));
+ if(Number.isFinite(level)&&level>=1&&level<=55)data.push("Nv "+level.toFixed(1).replace(".",","));
+ if(Number.isInteger(overall)&&overall>0)data.push("RG#"+overall);
+ let state="";
+ if(x.eligible===false)state="Não elegível no nível atual";
+ else if(x.eligible===null)state="Elegibilidade não verificada";
+ const label=(first?"Atual: ":"↳ ")+name;
+ return '<div class="evoLine'+(rank===1&&x.eligible!==false?' best':'')+'"><b>'+
+  h(label)+'</b> · IV#'+rank+(pct?' · '+h(pct)+'%':"")+
+  (data.length?'<div class="evoStats">'+h(data.join(" · "))+'</div>':"")+
+  (state?'<div class="evoState">'+h(state)+'</div>':"")+'</div>';
+}
+window.showEvolutionDetails=payload=>{
+ if(!payload||!Array.isArray(payload.leagues)||payload.leagues.length!==3||
+    evoIdentity(payload)!==detailIdentity)return false;
+ const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
+ let html="",count=0;
+ const labels={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Master"};
+ for(const league of payload.leagues){
+  if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
+  const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
+  const rows=entries.map(e=>evolutionRow(e,false)).filter(Boolean);
+  if(!rows.length)continue;
+  const own=league.own?evolutionRow({...league.own,name:payload.name},true):"";
+  html+='<div class="evoLeague '+league.league+'">'+labels[league.league]+'</div>'+own+rows.join("");
+  count+=rows.length;
+ }
+ if(!count){outer.hidden=true;return false;}
+ body.innerHTML=html;
+ outer.hidden=false;
+ document.getElementById("evoLabel").textContent="Evoluções PvP · "+count+" análises";
+ body.hidden=!evolutionExpanded;
+ document.getElementById("evoChevron").textContent=evolutionExpanded?"▴":"▾";
+ document.getElementById("evoToggle").setAttribute("aria-expanded",String(evolutionExpanded));
+ resizeEvolutionPanel();
+ return true;
+};
 const item=(k,v)=>v?'<div><em>'+h(k)+':</em> '+h(v)+'</div>':"";
 window.watchFeedback=watched=>{
  document.getElementById("watchLabel").textContent=watched?"★ Favorito · remover":"☆ Adicionar aos favoritos";
 };
 window.pauseDetailTimer=()=>{if(ticking){clearInterval(ticking);ticking=null;}};
 window.showDetails=(c,mode,watched)=>{
+ const nextIdentity=evoIdentity(c);
+ if(detailIdentity!==nextIdentity){
+  detailIdentity=nextIdentity;evolutionExpanded=false;
+  document.getElementById("evolutions").hidden=true;
+  document.getElementById("evoBody").hidden=true;
+  document.getElementById("evoBody").innerHTML="";
+ }
  watchName=String(c.name||"");window.watchFeedback(!!watched);
  currentIndex=Number(c.sourceIndex);currentCoords=String(c.coords||"");document.getElementById("copy").textContent=currentCoords?"⧉ Copiar coordenadas":"Obtenha coordenadas";
  const parts=String(c.despawn||"").split(":").map(Number);
@@ -71,6 +157,6 @@ window.showDetails=(c,mode,watched)=>{
  document.getElementById("info").innerHTML=
   item("Golpes",c.moves)+item("Local",c.location)+item("Distância",c.distance)+(expiresAt?'<div><em>Despawn:</em> <span id="timer"></span></div>':item("Despawn",c.despawn))+'<div><em>Coordenadas:</em> <span id="coordsValue">'+h(c.coords||"Toque em Get coords")+'</span></div>';
  updateCountdown();
- requestAnimationFrame(()=>Native.resizeDetail(Math.ceil(document.getElementById("panel").getBoundingClientRect().height)+2));
+ resizeEvolutionPanel();
 };
 </script></body></html>
