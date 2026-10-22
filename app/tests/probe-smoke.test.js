@@ -276,7 +276,7 @@ assert.equal(league.cards[0].rank,"","Verified Top 1 is a search ceiling, not a 
 assert.equal(league.cards[0].rankLimit,1,"Verified Top 1 threshold is separately retained");
 assert.equal(league.cards[0].rankSource,"verified-site-filter");
 checked++;
-const linkedSpawn=(name)=>name+" ✨\\n#562 · Male · M\\nAstonish / Rock Tomb\\nCP\\n813\\nLVL\\n29\\nIV\\n100% (15/15/15)\\nLOCATION\\nTainan City, Taiwan\\nDESPAWN\\n5:16\\nOpen in Maps";
+const linkedSpawn=(name)=>name+" ✨\n#562 · Male · M\nAstonish / Rock Tomb\nCP\n813\nLVL\n29\nIV\n100% (15/15/15)\nLOCATION\nTainan City, Taiwan\nDESPAWN\n5:16\nOpen in Maps";
 const mixedCards=run("collect","raw",false,{iv:["15","15","15"],
   spawns:[
    {name:"Flabebe",text:linkedSpawn("Flabebe"),action:"Get coords"},
