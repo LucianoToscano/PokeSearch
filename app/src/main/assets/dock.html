@@ -1727,21 +1727,34 @@ function renderExtraFilters(panel,make){
    }
    return value;
   };
+  // Show PokeLocation-style button positions, but never enable an option
+  // that has not been discovered in the official live PoGoCoordinates selector.
   const siteValues=key==="size"?
-   uniq.sort((a,b)=>sizeOrder.indexOf(a.toUpperCase())-sizeOrder.indexOf(b.toUpperCase())):uniq;
+   sizeOrder.map(label=>{
+    const actual=uniq.find(v=>v.toUpperCase()===label);
+    return {value:actual||label,label,enabled:!!actual};
+   }):[
+    ...["Male","Female","Genderless"].map(label=>{
+     const match=uniq.find(v=>mapLabel(v)===(label==="Male"?"♂":label==="Female"?"♀":"⚲"));
+     return {value:match||label,label:label==="Male"?"♂":label==="Female"?"♀":"⚲",enabled:!!match};
+    }),
+    ...uniq.filter(v=>!["♂","♀","⚲"].includes(mapLabel(v)))
+      .map(value=>({value,label:mapLabel(value),enabled:true}))
+   ];
   const line=make("div","extraField extraChipsField"),name=make("label","",label);
   const group=make("div","extraChipRow");
-  const values=[["","Qualquer"],...siteValues.map(value=>[value,mapLabel(value)])];
-  for(const [value,text] of values){
-   const button=make("button","extraChip",text);button.type="button";
-   button.classList.toggle("chosen",String(modeDraft[key]||"")===value);
-   button.setAttribute("aria-pressed",String(String(modeDraft[key]||"")===value));
-   button.setAttribute("aria-label",label+": "+(value||"Qualquer"));
-   button.onclick=()=>{modeDraft[key]=value;modeScrollTop=panel.scrollTop;renderFiltersChoices();};
+  const values=[{value:"",label:"Qualquer",enabled:true},...siteValues];
+  for(const item of values){
+   const button=make("button","extraChip",item.label);button.type="button";
+   button.disabled=!item.enabled;
+   button.classList.toggle("chosen",String(modeDraft[key]||"")===item.value);
+   button.setAttribute("aria-pressed",String(String(modeDraft[key]||"")===item.value));
+   button.setAttribute("aria-label",label+": "+(item.value||"Qualquer"));
+   button.onclick=()=>{modeDraft[key]=item.value;modeScrollTop=panel.scrollTop;renderFiltersChoices();};
    group.appendChild(button);
   }
   if(uniq.length===0){
-   const wait=make("span","extraNote","Carregando opções oficiais…");group.appendChild(wait);
+   const wait=make("span","extraNote","Aguardando opções do site…");group.appendChild(wait);
   }
   line.append(name,group);panel.appendChild(line);
  };
