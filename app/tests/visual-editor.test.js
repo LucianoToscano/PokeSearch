@@ -404,22 +404,25 @@ test("Compact preset keeps artwork inside native sprite column at P M G sizes",(
  assert.ok(script.includes("resultSpriteScale:[70,160]"));
  assert.ok(script.includes("resultGapBetween:[0,65]"));
 });
-test("separate button opacity is controlled by one slider, without double-opacity ribbon",()=>{
+test("One transparency slider controls independent menu tile fill, border and shadow",()=>{
  const {window,styles}=fixture();
- for(const [percent,alpha] of [[0,"1.00"],[35,"0.65"],[100,"0.00"]]){
+ for(const [percent,alpha,border] of [[0,"1.00","0.45"],[35,"0.65","0.29"],[100,"0.00","0.00"]]){
   window.onVisualPrefs({menuBgMode:"dark",menuTransparency:percent});
   assert.equal(styles["--visual-menu-button-bg"],"rgba(15,19,26,"+alpha+")");
   assert.equal(styles["--visual-menu-bg"],"rgba(15,19,26,"+alpha+")");
+  assert.equal(styles["--visual-menu-border"],"rgba(227,233,241,"+border+")");
  }
- const css=dock.split("/* UX-MENU-FLAT-02 final override:")[1]?.split("</style>")[0]||"";
- assert.ok(css.includes("background:transparent!important;"));
- assert.ok(css.includes("border:0!important;box-shadow:none!important;"));
+ assert.equal(styles["--visual-menu-tile-shadow"],"none");
+ const css=dock.split("/* UX-MENU-TILES-RESTORE-01:")[1]?.split("</style>")[0]||"";
+ assert.ok(css.includes("background:transparent!important;border:0!important;box-shadow:none!important;"));
+ assert.ok(css.includes("border:1px solid var(--visual-menu-border,#ffffff48)!important;"));
+ assert.ok(css.includes("box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0006)!important;"));
  assert.ok(script.includes('set("menu-gap",current.menuItemGap+"px")'));
  assert.ok(script.includes('set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency))'));
  assert.ok(script.includes('set("menu-bg",rgba(current.menuBgMode,current.menuTransparency))'));
- // Read old layouts intact; menu color setting is not exposed as an extra UI control.
  window.onVisualPrefs({menuBgMode:"light",menuTransparency:20});
  assert.equal(styles["--visual-menu-button-bg"],"rgba(255,255,255,0.80)");
+ assert.equal(styles["--visual-menu-border"],"rgba(49,69,91,0.36)");
  assert.equal(window.visualEditorCurrent().menuBgMode,"light");
 });
 test("Modos rail and inline editor inherit the only menu transparency slider",()=>{
