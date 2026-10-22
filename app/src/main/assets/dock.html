@@ -1388,7 +1388,7 @@ function toggleChoices(kind){
   return;
  }
  const current=period;
- const entries=[[0,"Auto · OFF"],[5,"Auto · 5 min"],[10,"Auto · 10 min"],[15,"Auto · 15 min"],[20,"Auto · 20 min"]];
+ const entries=[[0,"Auto · OFF"],[3,"Auto · 3 min"],[5,"Auto · 5 min"],[10,"Auto · 10 min"],[15,"Auto · 15 min"],[20,"Auto · 20 min"]];
  const panel=document.getElementById("choices");
  panel.replaceChildren();panel.classList.remove("modePanel","locationPanel","modeCascade","modeCascadeOpen","filterPicker");
  panel.classList.add("standardPanel","visible");panel.dataset.panelKind="period";
@@ -2269,7 +2269,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  nextQueryAt=Number(nextDue)||0;
  searchActive=!!isSearching;
  mode=m==="iv"?"raw":m;status=String(s||"");activeSearchPhase=String(searchPhase||"idle");
- if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  showResultText=!!textVisible;
  notificationPermissionGranted=!!permissionGranted;
  watchAlertsEnabled=!!favoriteAlertsEnabled;
@@ -2529,6 +2529,9 @@ function renderQuickMenu(){
   }else footer.appendChild(button);
   button.onclick=()=>quickClick(id);
  }
+ // Recreating the menu replaces previously selected DOM nodes: restore all
+ // native ON/OFF, Shiny pending and bell states on the NEW buttons.
+ refreshQuickMenuStates();
  fit();
 }
 // A sound channel is audibly available only with Android permission and,
