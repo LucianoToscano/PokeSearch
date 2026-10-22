@@ -1183,10 +1183,12 @@ test("Filter cache is memory-only, two minutes, and separated by mode, shiny, lo
  service.includes('locationEnabled+"|"+locationCoords+"|"')&&
  service.includes('locationRadius+"|"+filterConfigJson()')&&
  service.includes('now-cached.confirmedAtMs>RESULT_PREVIEW_CACHE_TTL_MS'));
-test("Next search stays on the existing 60-second safety interval",
- service.includes('MIN_SEARCH_GAP_MS=60_000L')&&
- service.includes('nextScheduledSearchAtMs=now+remaining*1000L+300L')&&
- service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)'));
+test("Mode switches have no artificial 60-second search penalty",
+ !service.includes('MIN_SEARCH_GAP_MS')&&
+ !service.includes('remoteDrainUntilMs')&&
+ !service.includes('skipLocalGapInDebug()')&&
+ !service.includes('próxima consulta em')&&
+ service.includes('nextScheduledSearchAtMs=0L;'));
 test("Cooldown remains accessible but not drawn over the original compact icon",
  dock.includes('header.title=label+(waiting?')&&
  dock.includes('nextQueryAt=Number(nextDue)||0')&&
@@ -1390,13 +1392,12 @@ test("UX-FIX-01 no floating cooldown or Toast, despawn switch remains",()=>{
  dock.includes('showTimers&&deadline')&&
  !service.includes('Toast.makeText(this,"↻ Nova busca em');
 });
-test("UX-FIX-01 60s local cooldown bypass is debug-only",()=>{
- return service.includes('private boolean skipLocalGapInDebug()')&&
- service.includes('android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE')&&
- service.includes('long earliest=skipLocalGapInDebug()?0L:previous+MIN_SEARCH_GAP_MS;')&&
- service.includes('earliest=Math.max(earliest,remoteDrainUntilMs);')&&
- service.includes('private static final long MIN_SEARCH_GAP_MS=60_000L;')&&
- service.includes('if(searchInProgress){');
+test("UX-FIX-01 no 60s rate limit in either debug or release",()=>{
+ return !service.includes('MIN_SEARCH_GAP_MS')&&
+ !service.includes('remoteDrainUntilMs')&&
+ !service.includes('skipLocalGapInDebug')&&
+ service.includes('if(searchInProgress){')&&
+ service.includes('handler.removeCallbacks(queuedRefresh);');
 });
 test("UX-FIX-01 brighter capture pulse uses confirmed searching status",()=>{
  const pulse=dock.match(/\.capturePulse\{[^}]+\}/)?.[0]||"";
@@ -1459,12 +1460,13 @@ test("PL-02 only the newest selection starts after debounce",()=>{
   service.includes("handler.postDelayed(filterChangeRefresh,240L);")&&
   service.includes("replaceActiveFilterSearch();shinyVerified=false;");
 });
-test("PL-02 logical cancellation protects remote submission against overlap",()=>{
+test("PL-02 logical cancellation drops stale callbacks without delaying the new filter",()=>{
  return service.includes("private void guardSubmittedSearchBeforeReplacement()")&&
   service.includes("submittedSearchGeneration==requestGeneration")&&
-  service.includes("remoteDrainUntilMs=Math.max(remoteDrainUntilMs,started+MIN_SEARCH_GAP_MS)")&&
-  service.includes("earliest=Math.max(earliest,remoteDrainUntilMs);")&&
-  service.includes("handler.postDelayed(queuedRefresh,remaining*1000L+300L)");
+  service.includes("++requestGeneration;")&&
+  service.includes("callbackGeneration!=requestGeneration")&&
+  !service.includes("remoteDrainUntilMs")&&
+  !service.includes("MIN_SEARCH_GAP_MS");
 });
 test("PL-02 pending manual retry is guarded against subsequent filter switches",()=>{
  return service.includes("queuedManualRefresh=true;")&&
@@ -1475,13 +1477,20 @@ test("PL-02 pending manual retry is guarded against subsequent filter switches",
 });
 test("PL-02 watchdog can release stalled generation without false success",()=>{
  const watchdog=service.split("private final Runnable searchWatchdog=()->{")[1]?.split("    };")[0]||"";
- return service.includes("SEARCH_WATCHDOG_MS=45_000L")&&
+ return service.includes("SEARCH_WATCHDOG_MS=90_000L")&&
   service.includes("handler.postDelayed(searchWatchdog,SEARCH_WATCHDOG_MS);")&&
   watchdog.includes("watchdogGeneration!=requestGeneration")&&
   watchdog.includes("guardSubmittedSearchBeforeReplacement();")&&
   watchdog.includes("++requestGeneration;")&&
   watchdog.includes('searchFailure("⚠ Tempo limite"')&&
   service.includes("handler.removeCallbacks(searchWatchdog);");
+});
+test("Mode switches retry transitional old cards and map-link extraction",()=>{
+ return service.includes('if(attempt<24){pollSearch(generation,attempt+1,manual);return;}')&&
+  service.includes('if((loading||(!empty&&found==0))&&attempt<24)')&&
+  service.includes('if(found>0&&r.optJSONArray("cards")!=null&&r.optJSONArray("cards").length()==0)')&&
+  read("assets/probe.js").includes('elements("button,a,[role=button]")')&&
+  read("assets/probe.js").includes('if(!chosen||seen.has(chosen))continue;');
 });
 test("PL-02 stale previews keep their confirmed source and never fire new alerts",()=>{
  const cache=service.split("private boolean restoreFilterPreview(){")[1]?.split("    private int rawAttack")[0]||"";
