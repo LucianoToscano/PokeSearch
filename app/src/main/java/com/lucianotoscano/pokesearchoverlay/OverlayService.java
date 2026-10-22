@@ -492,7 +492,13 @@ public class OverlayService extends Service {
                 JSONObject.quote(WatchAlerts.mode(this))+","+
                 WatchAlerts.hasCustomTone(this,false)+","+
                 WatchAlerts.hasCustomTone(this,true)+","+
-                WatchAlerts.speciesToneCount(this)+")";
+                WatchAlerts.speciesToneCount(this)+","+
+                // FILTERS-POGO-06: show "Aplicado" only after THIS generation
+                // was verified, submitted, and collected from the live website.
+                (confirmedSubmittedFiltersGeneration==requestGeneration&&
+                 submittedSearchGeneration==requestGeneration&&
+                 !searchInProgress&&!resultsStale&&
+                 ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
