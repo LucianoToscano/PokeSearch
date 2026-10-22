@@ -1,0 +1,68 @@
+package com.lucianotoscano.pokesearchoverlay;
+
+import android.content.Context;
+import android.net.Uri;
+
+/** User-supplied audio. Static R.raw references preserve MP3s in minified builds. */
+final class PokeSoundLibrary {
+    // Display labels; indexes stay aligned with the original 24 sound files.
+    static final String[] LABELS={
+        "Pokémon capturado",
+        "Pokémon recuperado",
+        "Item recebido",
+        "Aipom · Grito",
+        "Acerto",
+        "Dexter · Meme",
+        "Glaceon · Grito",
+        "Pikachu · Efeito especial",
+        "É o Pikachu!",
+        "Magikarp · Salto",
+        "Vitória · Efeito",
+        "Pikachu · Grito",
+        "Pikachu · Feliz",
+        "Pikachu · Clássico",
+        "Tema Pokémon",
+        "Batalha Pokémon",
+        "Evolução Pokémon",
+        "Alerta Pokémon",
+        "Vitória · Jogo clássico",
+        "Item encontrado",
+        "Quem é esse Pokémon? · BR",
+        "Pokémon brilhante · Shiny",
+        "Pokémon saindo da bola",
+        "Quem é esse Pokémon? · EN"
+    };
+    private static final int[] AUDIO={
+        R.raw.ps_06_caught_a_pokemon,
+        R.raw.ps_111_pokemon_recovery,
+        R.raw.ps_129_received_an_item,
+        R.raw.ps_aipom,
+        R.raw.ps_correct,
+        R.raw.ps_dexter_meme,
+        R.raw.ps_freesound_community_glaceon_cry_39075,
+        R.raw.ps_freesound_community_weird_pikachu_101090,
+        R.raw.ps_its_pikachu_short,
+        R.raw.ps_magikarp_jump,
+        R.raw.ps_mori_sound_fx_game_winner_497166,
+        R.raw.ps_pika_cry,
+        R.raw.ps_pikachu_happy,
+        R.raw.ps_pikachu_scream,
+        R.raw.ps_pkmntheme,
+        R.raw.ps_pokemon_battle,
+        R.raw.ps_pokemon_evolve,
+        R.raw.ps_pokemon_exclamation_mark_sound_effect,
+        R.raw.ps_pokemon_red_blue_music_wild_pokemon_victory_theme_1,
+        R.raw.ps_pokemon_red_blue_yellow_item_found_sound_effect,
+        R.raw.ps_quem_e_esse_pokemon_011,
+        R.raw.ps_shiny_pokemon,
+        R.raw.ps_sound_effects_pokemon_anime_7_pokemon_out,
+        R.raw.ps_whos_that_pokemon
+    };
+    static int size(){return LABELS.length;}
+    static Uri soundUri(Context context,int selection){
+        if(selection<0||selection>=AUDIO.length)return null;
+        return Uri.parse("android.resource://"+context.getPackageName()+"/raw/"+
+            context.getResources().getResourceEntryName(AUDIO[selection]));
+    }
+    private PokeSoundLibrary(){}
+}

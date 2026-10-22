@@ -27,10 +27,13 @@ final class DiagnosticSanitizer {
         // JWTs can appear on their own, without a key/value label.
         safe=safe.replaceAll("(?i)\\beyJ[A-Za-z0-9_-]{8,}\\.eyJ[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}\\b",
             "[credencial omitida]");
+        safe=safe.replaceAll("(?i)\"(?:authorization|cookie|set-cookie|access_token|refresh_token|id_token|session_id)\"\\s*:\\s*(?:\"[^\"]*\"|[^,}\\s]+)","[credencial omitida]");
         safe=safe.replaceAll("[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}","[email omitido]");
         safe=safe.replaceAll("(?<!\\d)(?:\\d[ -]?){12}(?!\\d)","[código omitido]");
         safe=safe.replaceAll("(?<!\\d)[-+]?\\d{1,2}\\.\\d+\\s*[,;]\\s*[-+]?\\d{1,3}\\.\\d+",
             "[coordenadas omitidas]");
+        safe=safe.replaceAll("(?i)\\b(?:latitude|longitude|lat|lng|lon)\\s*[:=]\\s*[-+]?\\d{1,3}(?:\\.\\d+)?","[coordenada omitida]");
+        safe=safe.replaceAll("(?<!\\d)(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(?!\\d)","[IP omitido]");
         return safe.substring(0,Math.min(safe.length(),MAX_FIELD_LENGTH));
     }
 }

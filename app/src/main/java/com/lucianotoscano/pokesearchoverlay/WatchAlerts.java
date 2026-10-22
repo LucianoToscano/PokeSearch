@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
+import android.net.Uri;
+import org.json.JSONObject;
 import android.media.RingtoneManager;
 import android.os.Build;
 import java.text.Normalizer;
@@ -20,9 +22,15 @@ import java.util.Set;
 
 public final class WatchAlerts {
     private static final String CHANNEL_ID="pokesearch_watch_sound_v1";
+    private static final java.util.concurrent.atomic.AtomicInteger NEXT_ALERT_ID=
+        new java.util.concurrent.atomic.AtomicInteger(13000);
     private static final String SILENT_CHANNEL_ID="pokesearch_watch_silent_v1";
     public static final String PREF_LIST="watchList";
     public static final String PREF_ENABLED="watchAlertsEnabled";
+    public static final String PREF_MODE="favoriteAlertMode";
+    public static final String PREF_GENERAL_TONE="newPokemonSoundUri";
+    public static final String PREF_FAVORITE_TONE="favoriteSoundUri";
+    public static final String PREF_SPECIES_TONES="favoritePokemonSoundUris";
     private WatchAlerts(){}
     public static String normalized(String text){
         if(text==null)return "";
@@ -55,7 +63,7 @@ public final class WatchAlerts {
     public static boolean isWatched(Context context,String name){
         return matches(name,watched(context));
     }
-    public static boolean toggle(Context context,String name){
+    public static synchronized boolean toggle(Context context,String name){
         SharedPreferences p=context.getSharedPreferences("prefs",0);
         LinkedHashMap<String,String> list=names(p.getString(PREF_LIST,""));
         String key=normalized(name);
@@ -67,20 +75,95 @@ public final class WatchAlerts {
         p.edit().putString(PREF_LIST,String.join("\n",list.values())).apply();
         return added;
     }
-    public static boolean enabled(Context context){
-        return context.getSharedPreferences("prefs",0).getBoolean(PREF_ENABLED,true);
+    public static String mode(Context context){
+        SharedPreferences prefs=context.getSharedPreferences("prefs",0);
+        String fallback=prefs.getBoolean(PREF_ENABLED,true)?"on":"off";
+        String value=prefs.getString(PREF_MODE,fallback);
+        return "on".equals(value)||"silent".equals(value)||"off".equals(value)?value:fallback;
+    }
+    public static boolean enabled(Context context){return !"off".equals(mode(context));}
+    public static void setMode(Context context,String mode){
+        if(!"on".equals(mode)&&!"silent".equals(mode)&&!"off".equals(mode))return;
+        context.getSharedPreferences("prefs",0).edit()
+            .putString(PREF_MODE,mode).putBoolean(PREF_ENABLED,!"off".equals(mode)).apply();
     }
     public static boolean permissionGranted(Context context){
-        return Build.VERSION.SDK_INT<33 ||
-            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED;
+        if(Build.VERSION.SDK_INT>=33 &&
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)
+            return false;
+        NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        return manager!=null&&manager.areNotificationsEnabled();
     }
-    public static void ensureChannel(Context context){
+
+    // Store only Android-selected ringtone content URIs. No bundled Pokémon cries.
+    private static Uri ringtoneUri(Context context,String value){
+        if(value!=null&&value.length()<2048&&!value.isEmpty()){
+            Uri uri=Uri.parse(value);
+            if("content".equals(uri.getScheme()))return uri;
+            if("android.resource".equals(uri.getScheme())){
+                // Old preferences may target an MP3 deleted from a later APK.
+                // Fall back safely without resetting sounds of other species.
+                if(context.getPackageName().equals(uri.getAuthority())){
+                    java.util.List<String> segments=uri.getPathSegments();
+                    if(segments.size()==2&&"raw".equals(segments.get(0))&&
+                        context.getResources().getIdentifier(
+                            segments.get(1),"raw",context.getPackageName())==0)
+                        return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                }
+                return uri;
+            }
+        }
+        return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+    }
+    public static Uri selectedTone(Context context,boolean favorite,String species){
+        SharedPreferences p=context.getSharedPreferences("prefs",0);
+        if(favorite&&species!=null){
+            try{
+                String own=new JSONObject(p.getString(PREF_SPECIES_TONES,"{}"))
+                    .optString(normalized(species),"");
+                if(!own.isEmpty())return ringtoneUri(context,own);
+            }catch(Exception ignored){}
+        }
+        return ringtoneUri(context,p.getString(favorite?PREF_FAVORITE_TONE:PREF_GENERAL_TONE,""));
+    }
+    public static boolean hasCustomTone(Context context,boolean favorite){
+        SharedPreferences p=context.getSharedPreferences("prefs",0);
+        return !p.getString(favorite?PREF_FAVORITE_TONE:PREF_GENERAL_TONE,"").isEmpty();
+    }
+    public static int speciesToneCount(Context context){
+        try{
+            return Math.min(50,new JSONObject(context.getSharedPreferences("prefs",0)
+                .getString(PREF_SPECIES_TONES,"{}")).length());
+        }catch(Exception ignored){return 0;}
+    }
+    public static String soundChannelId(Context context,boolean favorite,String species){
+        SharedPreferences prefs=context.getSharedPreferences("prefs",0);
+        String chosen=prefs.getString(favorite?PREF_FAVORITE_TONE:PREF_GENERAL_TONE,"");
+        if(favorite&&species!=null){
+            try{
+                String own=new JSONObject(prefs.getString(PREF_SPECIES_TONES,"{}"))
+                    .optString(normalized(species),"");
+                if(!own.isEmpty())
+                    return "pokesearch_fav_species_v2_"+
+                        Integer.toHexString((normalized(species)+"|"+own).hashCode());
+            }catch(Exception ignored){}
+        }
+        if(!chosen.isEmpty())
+            return (favorite?"pokesearch_fav_custom_v2_":"pokesearch_new_custom_v2_")+
+                Integer.toHexString(chosen.hashCode());
+        return favorite?CHANNEL_ID:"pokesearch_alerts";
+    }
+    public static void ensureChannel(Context context){ensureChannel(context,null);}
+    public static void ensureChannel(Context context,String species){
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager==null)return;
-        NotificationChannel channel=new NotificationChannel(CHANNEL_ID,
-            "PokeSearch · Favoritos",NotificationManager.IMPORTANCE_HIGH);
-        channel.setDescription("Aviso sonoro ao encontrar um favorito com IV100 ou ranking #1");
-        channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
+        String id=soundChannelId(context,true,species);
+        NotificationChannel channel=new NotificationChannel(id,
+            id.startsWith("pokesearch_fav_species_v2_")?
+                "PokeSearch · Favorito "+species:"PokeSearch · Favoritos",
+            NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription("Som de favorito independente do aviso geral");
+        channel.setSound(selectedTone(context,true,species),
             new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT).build());
         manager.createNotificationChannel(channel);
     }
@@ -92,17 +175,27 @@ public final class WatchAlerts {
         channel.setSound(null,null);
         manager.createNotificationChannel(channel);
     }
-    private static boolean send(Context context,String title,String info,int id){
+    private static boolean send(Context context,String title,String info,int id,String species){
         if(!permissionGranted(context))return false;
-        boolean quiet="silent".equals(context.getSharedPreferences("prefs",0)
-            .getString("alertsMode","off"));
-        if(quiet)ensureSilentChannel(context);else ensureChannel(context);
+        String soundMode=mode(context);
+        if("off".equals(soundMode))return false;
+        boolean quiet="silent".equals(soundMode);
+        try{
+            if(quiet)ensureSilentChannel(context);else ensureChannel(context,species);
+        }catch(Exception error){
+            BugReport.log(context,"NOTIFICATION","Falha ao criar canal favorito");
+            return false;
+        }
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager==null)return false;
+        String channelId=quiet?SILENT_CHANNEL_ID:soundChannelId(context,true,species);
+        NotificationChannel current=manager.getNotificationChannel(channelId);
+        if(current==null||current.getImportance()==NotificationManager.IMPORTANCE_NONE)
+            return false;
         Intent open=new Intent(context,MainActivity.class);
         PendingIntent intent=PendingIntent.getActivity(context,11,open,
             PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
-        Notification note=new Notification.Builder(context,quiet?SILENT_CHANNEL_ID:CHANNEL_ID)
+        Notification note=new Notification.Builder(context,channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title).setContentText(info).setAutoCancel(true)
             .setStyle(new Notification.BigTextStyle().bigText(info)).setContentIntent(intent).build();
@@ -114,10 +207,10 @@ public final class WatchAlerts {
     }
     public static boolean test(Context context){
         return send(context,"🔔 Teste: Pokémon procurado",
-            "Teste de notificação. Alertas reais exigem Pokémon cadastrado e IV100 ou ranking 1 confirmado.",11999);
+            "Teste do canal Favoritos. Alertas reais exigem favorito cadastrado e resultado confirmado nos filtros.",11999,null);
     }
     public static boolean match(Context context,String pokemon,String info){
         return send(context,"🔔 Encontrado: "+pokemon,info,
-            13000+(int)(System.currentTimeMillis()%10000L));
+            NEXT_ALERT_ID.updateAndGet(previous->previous>=22999?13000:previous+1),pokemon);
     }
 }

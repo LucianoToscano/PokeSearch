@@ -1,7 +1,7 @@
 # PokeSearch — Auditoria de referência: PokéLocation Android v1.2 + servidor v1.1
 **Data:** 18/10/2026 · **Estado:** DOCUMENTAÇÃO / PROPOSTAS PENDENTES · **Alteração no código do PokeSearch:** NENHUMA
 
-> Esta referência não substitui `docs/ARQUIVO_MESTRE_v0.51.md`. Nenhuma etapa abaixo autoriza alterar a UI, ícones, fontes de dados, autenticação, permissões, backend ou APK do PokeSearch sem confirmação expressa do proprietário. Não misturar com PvPPokeGo.
+> Esta referência não substitui `docs/GUIA_MESTRE.md`. Nenhuma etapa abaixo autoriza alterar a UI, ícones, fontes de dados, autenticação, permissões, backend ou APK do PokeSearch sem confirmação expressa do proprietário. Não misturar com PvPPokeGo.
 
 ## 1. Fontes, versão e material arquivado
 - Perfil: https://github.com/ayranoliveira1 (perfil público, dezenas de projetos; escopo da auditoria aprofundada restrito aos dois repositórios abaixo).
