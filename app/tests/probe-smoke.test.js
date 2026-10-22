@@ -145,7 +145,7 @@ function run(action,mode,shinyOnly,opts={}){
     return [];
   }
   const document={querySelectorAll,querySelector:()=>null,getElementById:id=>popupById[id]||null,
-    body:element(opts.profileBody|| (opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":""))};
+    body:element(opts.siteCount!==undefined?"Showing "+opts.siteCount+" spawns":opts.profileBody|| (opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":""))};
   const code=source.replace("__ACTION__",JSON.stringify(action))
       .replace("__MODE__",JSON.stringify(mode))
       .replace("__SHINY__",String(shinyOnly))
@@ -286,6 +286,24 @@ assert.equal(mixedCards.cards.length,2,"Both Get coords and linked Open in Maps 
 assert.equal(mixedCards.found,2,"Two action elements on one card never duplicate a spawn");
 assert.deepEqual(Array.from(mixedCards.cards,x=>x.sourceIndex),[0,1]);
 checked++;
+// Missing cards affect every mode; don't silently accept a partial site response.
+for(const scenario of [
+ {label:"0%",mode:"raw",config:{attack:0,defense:0,stamina:0},iv:["0","0","0"],value:"0% (0/0/0)"},
+ {label:"100%",mode:"raw",config:{attack:15,defense:15,stamina:15},iv:["15","15","15"],value:"100% (15/15/15)"},
+ {label:"IV%",mode:"percent",config:{percentMin:100,percentMax:100},iv:["100","100"],value:"100% (15/15/15)"},
+ {label:"GL",mode:"gl",config:{glRank:1},pvp:{rank:"1",league:"Great League",prior:"Yes"},value:"100% (15/15/15)"},
+ {label:"UL",mode:"ul",config:{ulRank:1},pvp:{rank:"1",league:"Ultra League",prior:"Yes"},value:"100% (15/15/15)"}
+]){
+ const card=name=>name+"\n#669 Female M\nVine Whip / Psychic\nCP\n790\nLVL\n26\nIV\n"+scenario.value+"\nLOCATION\nSanta Maria, California\nDESPAWN\n5:18\nGet coords";
+ const results=run("collect",scenario.mode,false,{switch:false,iv:scenario.iv,pvp:scenario.pvp,config:scenario.config,siteCount:3,
+   spawns:[{name:"First",text:card("First")},{name:"Second",text:card("Second"),action:"Open in Maps",link:true}]});
+ assert.equal(results.criteriaConfirmed,true,scenario.label+" filter is confirmed");
+ assert.equal(results.found,2,scenario.label+" recognizes two card roots");
+ assert.equal(results.cards.length,2,scenario.label+" preserves two verified results");
+ assert.equal(results.expectedVisible,3,scenario.label+" compares with site count");
+ assert.equal(results.siteIncomplete,true,scenario.label+" flags missing card");
+ checked++;
+}
 const top50=run("collect","gl",false,
   {switch:false,pvp:{rank:"50",league:"Great League",prior:"Yes"},config:{glRank:50},spawn});
 assert.equal(top50.cards.length,1,"Top 50 search retains a result from a verified search");
