@@ -1973,10 +1973,10 @@ test("UX-DETAIL-TIMER-02 timer cleanup executes clearInterval",()=>{
  const v=new Function("window","clearInterval",code+"\nticking=37;window.pauseDetailTimer();return ticking;")({},id=>cleared.push(id));
  return v===null&&cleared.length===1&&cleared[0]===37;
 });
-test("UX-WATCHDOG-45S late requests discarded",()=>{
+test("UX-WATCHDOG-90S late requests discarded",()=>{
  const body=service.split('private final Runnable searchWatchdog=()->{')[1]?.split('private boolean pickerOpen=')[0]||'';
  return body.includes('++requestGeneration;')&&body.includes('confirmedSubmittedFiltersGeneration=-1;')&&
-  service.includes('private static final long SEARCH_WATCHDOG_MS=45_000L;')&&
+  service.includes('private static final long SEARCH_WATCHDOG_MS=90_000L;')&&
   service.includes('callbackGeneration!=requestGeneration||callbackWebsite!=website||(!mayNavigate&&callbackPage!=pageLoadGeneration)');
 });
 
