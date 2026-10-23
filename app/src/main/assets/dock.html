@@ -1743,10 +1743,14 @@ function renderExtraFilters(panel,make){
  };
  const option=(key,label)=>{
   const data=filterOptions[key]||{};
-  const choices=Array.isArray(data.options)?data.options.map(x=>String(x).trim()).filter(Boolean):[];
+  const live=Array.isArray(data.options)?data.options.map(x=>String(x).trim()).filter(Boolean):[];
+  const choices=key==="sortBy"?
+   (live.length?live:["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]):
+   key==="weather"?
+   (live.length?live:["Any","Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"]):live;
   const current=String(modeDraft[key]||(key==="sortBy"?"Despawn (longest)":""));
   const button=make("button","extraValue",current||(key==="weather"?"Any":"—"));
-  button.type="button";button.disabled=!choices.length;
+  button.type="button";button.disabled=!choices.length&&!["sortBy","weather"].includes(key);
   button.title=choices.length?"Selecionar "+label:"Aguardando opções verificadas no PoGoCoordinates";
   button.onclick=()=>{modeScrollTop=panel.scrollTop;renderFilterPicker(key,label,choices);};
   field(label,button);
@@ -1807,7 +1811,7 @@ function renderExtraFilters(panel,make){
    const resolved=actual||value;
    // Keep the button reachable, but do not claim that the site supports it
    // until the live selector's list has been received.
-   button.disabled=!actual;
+   button.disabled=!actual&&!selected.has(resolved);
    button.classList.toggle("chosen",selected.has(resolved));
    button.setAttribute("aria-pressed",String(selected.has(resolved)));
    button.title=actual?resolved:"Aguardando opção no site";
@@ -1879,7 +1883,12 @@ function renderFilterPicker(key,label,options){
   safe;
  for(const value of allowed){
   const btn=document.createElement("button");btn.type="button";
-  btn.textContent=(modeDraft[key]===value?"✓ ":"")+value;btn.className=modeDraft[key]===value?"chosen":"";
+  const weatherSymbol=key==="weather"?({
+   "Boosted":"⚡ ","Sunny":"☀️ ","Rainy":"🌧️ ","Partly Cloudy":"🌤️ ",
+   "Cloudy":"☁️ ","Windy":"💨 ","Snow":"❄️ ","Fog":"🌫️ "
+  }[value]||""):"";
+  btn.textContent=(modeDraft[key]===value?"✓ ":"")+weatherSymbol+value;
+  btn.className=modeDraft[key]===value?"chosen":"";
   btn.onclick=()=>{modeDraft[key]=value;choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
   panel.appendChild(btn);
  }
@@ -3173,15 +3182,24 @@ function renderFiltersChoices(){
     }
    }
   }
-  const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));
+  const delta={};
+  for(const key of FILTERS_MENU_KEYS){
+   const desired=modeDraft[key]??(key.endsWith("Selections")?[]:"");
+   const previous=searchSettings[key]??(key.endsWith("Selections")?[]:"");
+   if(JSON.stringify(desired)!==JSON.stringify(previous))delta[key]=desired;
+  }
+  if((modeDraft.includePreviousEvolutions!==false)!==(searchSettings.includePreviousEvolutions!==false))
+   delta.includePreviousEvolutions=modeDraft.includePreviousEvolutions!==false;
+  closeChoices();
+  // Only changed fields are patched. IV, species, shiny and location survive.
+  Native.patchSearchFilters(JSON.stringify(delta));
  };
  clear.onclick=()=>{
-  // FILTERS-POGO-08: clear only extra filters, not species, mode or location.
-  const next={...searchSettings,mode};
-  for(const key of FILTERS_MENU_KEYS)next[key]=key==="sortBy"?"Despawn (longest)":"";
-  next.sizeSelections=[];next.genderSelections=[];
-  next.includePreviousEvolutions=true;
-  closeChoices();Native.setSearchConfig(JSON.stringify(next));
+  const delta={};
+  for(const key of FILTERS_MENU_KEYS)
+   delta[key]=key.endsWith("Selections")?[]:key==="sortBy"?"Despawn (longest)":"";
+  delta.includePreviousEvolutions=true;
+  closeChoices();Native.patchSearchFilters(JSON.stringify(delta));
  };
  cancel.onclick=closeChoices;actions.append(apply,clear,cancel);panel.appendChild(actions);
  requestAnimationFrame(()=>{if(choiceOpen==="filters"&&panel.isConnected)panel.scrollTop=scrollRestoration;});
