@@ -3556,6 +3556,37 @@ test("LT60-E9-02 stale-card handling must never emit a new Search or new result 
   !stale.includes('execute("submitSearch"')&&
   !stale.includes("refresh(");
 });
+test("LT61-SHINY-MODE-01 native mode changes do not rewrite the saved Shiny toggle",()=>{
+ const start=service.indexOf("@JavascriptInterface public void setSearchConfig(String payload)");
+ const end=service.indexOf("@JavascriptInterface public void shiny()",start);
+ const modes=service.slice(start,end);
+ return start>=0&&end>start&&
+  !modes.includes("shiny=false;")&&!modes.includes("shiny=true;")&&
+  !modes.includes("shiny=!shiny;")&&
+  modes.includes("mode=nextMode;rawAttack=a;rawDefense=d;rawStamina=st;")&&
+  modes.includes("scheduleFilterChangeRefresh();")&&
+  service.includes("private void refresh(boolean manual)")&&
+  service.includes("if(shiny){shinyVerified=false;update();}");
+});
+test("LT61-SHINY-MODE-02 dock preserves requested Shiny during verification",()=>{
+ const statement="shinyPending=!!pending;shiny=!!shi||shinyPending;";
+ if(!dock.includes(statement))return false;
+ const fn=require("node:vm").runInNewContext("((shi,pending)=>{let shiny,shinyPending;"+statement+"return [shiny,shinyPending]})",{});
+ return JSON.stringify(fn(false,true))==="[true,true]"&&
+  JSON.stringify(fn(true,false))==="[true,false]"&&
+  JSON.stringify(fn(false,false))==="[false,false]"&&
+  dock.includes("Shiny solicitado · aguardando confirmação no site")&&
+  dock.includes("button.classList.toggle(\"pending\",id===\"sh\"&&shinyPending);");
+});
+test("LT61-SHINY-MODE-03 pending Shiny is not presented as an applied site filter",()=>{
+ return dock.includes("shinyPending?\"✨ Shiny solicitado · aguardando confirmação no site\":shiny?\"✨ Shiny confirmado\"")&&
+  dock.includes("shiny=!!shi||shinyPending;")&&
+  dock.includes("shownShiny=!!resultSourceShiny;resultsStale=!!stale;")&&
+  service.includes("(shiny&&shinyVerified)+\"")&&
+  service.includes("(shiny&&!shinyVerified)+\"")&&
+  service.includes("shinyVerified=shiny;")&&
+  service.includes('execute("verifyShiny",verified->{');
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
