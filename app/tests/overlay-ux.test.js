@@ -3026,6 +3026,32 @@ test("UX-QUICK-MORE-05 close on outside tap and ordinary preferences survive",()
   dock.includes('quickPrefs.order.indexOf(id)');
 });
 
+
+test("UX-QUICK-MORE-STABLE-01 More does not switch ribbon to a subview or stretch CSS tracks",()=>{
+ const choices=dock.split("function toggleChoices(kind){")[1]?.split("function renderModeChoices(){")[0]||"";
+ const fit=dock.split("function fit(){")[1]?.split("function closeChoices(){")[0]||"";
+ return choices.includes('document.getElementById("menu").classList.toggle("subview",kind!=="more")')&&
+  choices.includes('if(kind==="more"){renderMoreChoices();return;}')&&
+  dock.includes('body.controls-window #menu:has(#choices.morePanel.visible) #quickMenuList{')&&
+  dock.includes('grid-template-columns:repeat(var(--quick-slot-count,12),minmax(0,1fr))!important')&&
+  fit.includes('if(choiceOpen==="more"){')&&
+  fit.includes('const tiles=popup.querySelectorAll(".quickMoreAction").length;')&&
+  fit.includes('const moreHeight=tiles*30+Math.max(0,tiles-1)*gap;')&&
+  fit.includes('baseHeight+Math.ceil(moreHeight)+6');
+});
+test("UX-QUICK-MORE-STABLE-02 Android toolbar-only WebView prevents viewport rescaling",()=>{
+ const create=service.split('menuPanel=new WebView(this);')[1]
+  ?.split('menuPanel.addJavascriptInterface(',1)[0]||"";
+ const native=service.split('private void updateMenuPosition(){')[1]
+  ?.split('private void resizeMenu(',1)[0]||"";
+ return create.includes('menuPanel.getSettings().setUseWideViewPort(true);')&&
+  create.includes('menuPanel.getSettings().setLoadWithOverviewMode(false);')&&
+  dock.includes('name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"')&&
+  native.includes('if(menuParams.width!=width)menuParams.width=width;')&&
+  native.includes('menuParams.height=rowHeight+actualPopup;')&&
+  dock.includes('button.onclick=()=>{closeChoices();quickClick(id);}');
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
