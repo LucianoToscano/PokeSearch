@@ -2057,7 +2057,7 @@ test("SITE-POKEMON-02 stale autocomplete requests cannot replace newer site choi
  const java=service.split('@JavascriptInterface public void requestPokemonSuggestions(String query)')[1]
   ?.split('@JavascriptInterface public void setSearchConfig(String payload)')[0]||'';
  return java.includes('pokemonSuggestionSequence')&&java.includes('sequence!=pokemonSuggestionSequence')&&
-  java.includes('attempt<12')&&java.includes('response.put("query",query)')&&
+  java.includes('attempt<20')&&java.includes('response.put("query",query)')&&
   dock.includes('response.empty===true?"Nenhuma opção oficial encontrada"')&&
   probe.includes("reason:'Aguardando opções oficiais do PoGoCoordinates'");
 });
@@ -3215,6 +3215,26 @@ test("LT60-LOC-STATE-03 native feedback observes updated error status",()=>{
   dock.includes('state==="NOT_APPLIED"?"⚠ Localização não aplicada')&&
   dock.includes('state==="REQUESTED"?"⌛ Coordenadas solicitadas')&&
   service.includes('prefs.remove("locationCoords").remove("locationRadius")');
+});
+
+
+test("LT61-POKEMON-DEX sends official site its numeric dex query",()=>{
+ const start=probe.indexOf("function pokemonQueryForSite(query){");
+ const end=probe.indexOf("function pokemonPickerOptions(){",start);
+ if(start<0||end<=start)return false;
+ const normalize=new Function("query",probe.slice(start,end)+"return pokemonQueryForSite(query);");
+ return normalize("#0025")==="25"&&normalize("#25")==="25"&&
+  normalize("Pikachu")==="Pikachu"&&normalize("Venusaur")==="Venusaur"&&
+  normalize("Charmander Goggles 2026")==="Charmander Goggles 2026";
+});
+test("LT61-POKEMON-PORTAL accepts one verified listbox after stale aria-controls",()=>{
+ const start=probe.indexOf("function pokemonPickerOptions(){");
+ const end=probe.indexOf("function pokemonSuggestion(",start);
+ const block=probe.slice(start,end);
+ return block.includes("const alternatives=popup?[]:elements('[role=listbox],[cmdk-list],[role=menu]')")&&
+  block.includes("alternatives.length===1")&&block.includes("if(!scope)return [];")&&
+  !block.includes("declared?[]:elements(selector)")&&
+  probe.includes("function pokemonPickerRoot(){");
 });
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
