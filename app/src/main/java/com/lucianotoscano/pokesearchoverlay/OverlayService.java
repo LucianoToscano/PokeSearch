@@ -3019,6 +3019,10 @@ public class OverlayService extends Service {
             shinyVerified=false;
             shinyLoginWindowOpened=false;
             shinyLoginPromptRequested=shiny;
+            // Existing cards were collected under the prior Shiny selection.
+            // Keep them visible but clearly stale until the site confirms new ones.
+            resultsStale=count()>0;
+            hideDetails();
             // Show the neutral pending state immediately; it becomes yellow
             // only after the actual website confirms the active Shiny filter.
             status(shiny?"✨ Shiny solicitado · verificando no site...":
