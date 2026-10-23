@@ -3497,6 +3497,41 @@ test("LT60-E7-02 empty result needs a fresh site signal, not a generic zero",()=
    probe.includes('emptySignalFound:explicitEmptySignal,resultChanged,')&&
    service.includes('"estado vazio anterior sem atualização"');
 });
+// LT60-E8: saved mode, editable submenu and actual site confirmation are separate.
+test("LT60-E8-01 reopened menu identifies persisted GL/UL and raw extremes",()=>{
+ const from=dock.indexOf("function selectedModeEntry(currentMode,settings){");
+ const to=dock.indexOf("function renderModeChoices(){",from);
+ if(from<0||to<=from)return false;
+ const selected=require("node:vm").runInNewContext(dock.slice(from,to)+";selectedModeEntry",{});
+ return selected("gl",{glRank:1})==="gl"&&
+  selected("ul",{ulRank:50})==="ul"&&
+  selected("percent",{percentMin:91,percentMax:100})==="percent"&&
+  selected("raw",{attack:15,defense:15,stamina:15})==="hundo"&&
+  selected("raw",{attack:0,defense:0,stamina:0})==="nundo"&&
+  selected("raw",{attack:3,defense:15,stamina:12})==="raw";
+});
+test("LT60-E8-02 open cascade does not overwrite persisted mode",()=>{
+ const from=dock.indexOf("function renderModeChoices(){");
+ const choices=dock.slice(from,dock.indexOf("/* FILTERS-POGO-01",from));
+ return choices.includes("const activeModeEntry=selectedModeEntry(mode,searchSettings);")&&
+  choices.includes('button.classList.toggle("activeMode",selected);')&&
+  choices.includes('button.classList.toggle("chosen",cascadeMode===id);')&&
+  choices.includes('button.setAttribute("aria-current",String(selected));')&&
+  choices.includes('button.setAttribute("aria-expanded",String(cascadeMode===id));')&&
+  choices.includes('button.classList.toggle("siteConfirmed",selected&&confirmedMode);')&&
+  dock.includes("button.modeCascadeEntry.activeMode:not(.chosen)")&&
+  choices.includes('site pendente');
+});
+test("LT60-E8-03 confirmed state requires completed current site search",()=>{
+ const from=dock.indexOf("function renderModeChoices(){");
+ const choices=dock.slice(from,dock.indexOf("/* FILTERS-POGO-01",from));
+ return choices.includes("siteFiltersConfirmed&&!searchActive&&!resultsStale")&&
+  choices.includes('(activeSearchPhase==="updated"||activeSearchPhase==="empty")')&&
+  service.includes("confirmedSubmittedFiltersGeneration==requestGeneration")&&
+  service.includes("submittedSearchGeneration==requestGeneration")&&
+  service.includes("!searchInProgress&&!resultsStale");
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
