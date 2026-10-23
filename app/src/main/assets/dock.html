@@ -2061,6 +2061,12 @@ window.onFilterOptions=function(response){
  }
 };
 
+// LT60-LOC-STATE-01: the current search must earn its own Coords/Radius proof.
+function currentLocationUiState(){
+ if(!locationEnabled)return "OFF";
+ if(locationVerified)return "CONFIRMED";
+ return activeSearchPhase==="error"?"NOT_APPLIED":"REQUESTED";
+}
 function locationPanelFeedback(){
  if(!controlsWindow||choiceOpen!=="location")return;
  const panel=document.getElementById("choices"),hint=panel.querySelector("#locHint");
@@ -2083,12 +2089,12 @@ function locationPanelFeedback(){
  const radiusSlider=panel.querySelector('input[type="range"]');
  if(radiusSlider&&document.activeElement!==radiusSlider&&radius.dataset.locationDraft!=="true")
    radiusSlider.value=String(locationRadius);
- const error=/localiza(?:ção|cao) (?:não|nao) (?:aplicada|confirmada)|localiza(?:ção|cao) residual/i.test(status);
- hint.textContent=error?"⚠ "+status:
-  locationEnabled?(locationVerified?"✓ Localização confirmada na busca · "+locationRadius+" km":
-    "⌛ Coordenadas solicitadas · aguardando confirmação no PoGoCoordinates"):
+ const state=currentLocationUiState();
+ hint.textContent=state==="CONFIRMED"?"✓ Localização confirmada na busca · "+locationRadius+" km":
+  state==="NOT_APPLIED"?"⚠ Localização não aplicada · confira Coords e raio no site.":
+  state==="REQUESTED"?"⌛ Coordenadas solicitadas · aguardando confirmação no PoGoCoordinates":
   "OFF · busca geral, sem coordenadas do aplicativo.";
- hint.style.color=error?"#ffbf8f":"";
+ hint.style.color=state==="NOT_APPLIED"?"#ffbf8f":"";
 }
 window.onLocationPaste=coords=>{
  if(!controlsWindow||choiceOpen!=="location")return;
@@ -2858,7 +2864,8 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  searchActive=!!isSearching;
  siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale;
  mode=m==="iv"?"raw":m;status=String(s||"");activeSearchPhase=String(searchPhase||"idle");
- if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+  if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();
+ shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  showResultText=!!textVisible;
  notificationPermissionGranted=!!permissionGranted;
  watchAlertsEnabled=!!favoriteAlertsEnabled;
@@ -2997,7 +3004,9 @@ function quickState(id){
   case "sh":return shinyPending?"Pendente":shiny?"ON":"OFF";
   case "bell":return !notificationPermissionGranted?"Permissão":(generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))?"ON":"OFF";
   case "star":return hasFavorites?"Ativos":"";
-  case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF";
+  case "location":return currentLocationUiState()==="CONFIRMED"?"✓ "+locationRadius+" km":
+   currentLocationUiState()==="REQUESTED"?"Solicitada":
+   currentLocationUiState()==="NOT_APPLIED"?"Não aplicada":"OFF";
   case "filters":return activeExtraFilterCount(searchSettings,mode)+" ativos";
   case "pokemon":return Array.isArray(searchSettings.pokemonSelections)&&searchSettings.pokemonSelections.length?
    searchSettings.pokemonSelections.length+" escolhidos":"Todos";
