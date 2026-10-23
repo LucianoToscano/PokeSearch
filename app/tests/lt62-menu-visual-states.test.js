@@ -131,5 +131,28 @@ check("LT62 native site accepts all IV% boundaries and keeps gear on top",()=>{
  assert.ok(createResult>=0&&attachDock>createResult,"gear must be attached after menu/results");
 });
 
+check("LT62 Filtros: seven direct compact entries with separate editor, never accordion",()=>{
+ const block=dock.split("function renderExtraFilters(panel,make){")[1]
+  .split("function renderFilterPicker(")[0];
+ assert.ok(block.includes('const rows=[...panel.querySelectorAll(":scope > .extraField")]'));
+ assert.ok(block.includes('panel.append(rail,editor)'));
+ assert.ok(block.includes('entry.classList.toggle("chosen",label===selected)'));
+ assert.ok(!block.includes('section("Filtros gerais",generalExpanded'));
+ assert.ok(dock.includes('panel.classList.add(\'filterCascade\')'));
+ assert.ok(dock.includes('grid-template-columns:77px minmax(0,1fr)'));
+});
+check("LT62 Filtros: single Min/Max placeholders, blank Level/PC, large gender icons",()=>{
+ const block=dock.split("function renderExtraFilters(panel,make){")[1]
+  .split("function renderFilterPicker(")[0];
+ assert.ok(block.includes('input.value=""; // UI-only empty'));
+ assert.ok(block.includes('[[minKey,"Min","mínimo"],[maxKey,"Max","máximo"]]'));
+ assert.ok(block.includes('cell.appendChild(input)'));
+ assert.ok(!block.includes('cell.append(cap,input)'));
+ assert.ok(dock.includes('filterFocus="PC"'));
+ assert.ok(dock.includes('font:700 20px/1 Arial'));
+ assert.ok(dock.includes('height:35px!important;min-height:35px!important'));
+ assert.ok(dock.includes('const numericBounds=['));
+ assert.ok(dock.includes('invalidNumber(lowKey,lowKey.startsWith("cp")?"PC":"Nível"'));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
