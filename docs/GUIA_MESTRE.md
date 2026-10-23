@@ -4866,3 +4866,24 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 
 **Proteções:** PR #34 continua Draft, main LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`, sem merge, sem LT63, sem backend/proxy/GPS físico.
 
+
+### 12.255 — LT62: APK do arraste conjunto gerado e assinado, verificação concluída (23/10/2026)
+
+**Nova compilação autorizada, sem merge:** workflow `.github/workflows/build-v062-compact-preview.yml` na branch `fix/lt62-menu-visual-states-20261023`, execução **#40021475526**, job **#120646828760**, conclusão **SUCCESS**. Publicado artefato GitHub Actions **#12530308458** com nome `PokeSearch-v0.00.62-LT`. Link: `https://github.com/LucianoToscano/PokeSearch/actions/runs/40021475526`.
+
+**Comprovantes extraídos do artefato oficial, conferidos contra SHA-256 calculado dos bytes:**
+- `SOURCE_COMMIT.txt` = `af8d2d60b00d892cb3619908b89e0c883acec30e` (**código compilado**, contém ajuste do arraste de 12.253).
+- `PACKAGE_VERSION.txt` = `package: name='com.lucianotoscano.pokesearch' versionCode='54260' versionName='0.00.62' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'`.
+- `SIGNING_CERT_SHA256.txt` = `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; assinatura persistente idêntica à do LT62 anterior. A execução validou `apksigner verify --verbose --print-certs`, assinatura v2 e certificado esperado.
+- `SHA256SUMS.txt` = `2533f0adfb7f750478344407243869a8b2181400dd51179756b53f492c4a09f1  PokeSearch-v0.00.62-LT.apk`.
+- APK `PokeSearch-v0.00.62-LT.apk`: **33.254.536 bytes**. SHA-256 recalculado do APK descompactado = `2533f0adfb7f750478344407243869a8b2181400dd51179756b53f492c4a09f1` (**MATCH**). Arquivo APK validado como ZIP sem erro CRC, **215 entradas**.
+- ZIP de artefato armazenado para entrega como `PokeSearch-v0.00.62-LT-arraste-corrigido.zip`: **30.568.997 bytes**. SHA-256 ZIP `b2f999554de7bac9a078a9531a938c96160e90fd120b4a7877c5fc068a47c0ef`. CRC ZIP OK.
+
+**Verificações no workflow:** nove suítes Node aprovadas (**848/848**: localização 68, probe 144, Pokémon 15, login 38, UX 479, editor visual 46, assinatura 14, Firebase 7, LT62 37). Scripts inline dock.html validados. Java 17 + Gradle 8.11.1 + Android SDK 36; `gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug` finalizado `BUILD SUCCESSFUL` (testDebugUnitTest NO-SOURCE, Node regressões executadas). Versão, pacote e certificado conferidos na execução e novamente nos metadados do artefato.
+
+**Diferença para build LT62 anterior:** arquivo com mesmo nome e número de versão, mas o APK da execução #40019242360 tinha SHA-256 `7e5cedb7f54a2cae17af5a13ad3d5c8eefa18a56ff738378513083cba06e135d` e **não** continha o movimento sincronizado. O novo APK correto possui SHA `2533f0adfb7f750478344407243869a8b2181400dd51179756b53f492c4a09f1`. Substituir apenas por instalação sobre app existente (sem desinstalar), manter dados de login e preferências, respeitar `applicationId` e certificado.
+
+**Pendente — homologação Samsung física:** arrastar Pokébola com lista visível e menu aberto, movimento das duas janelas X/Y simultâneo, limites da tela, distância relativa, lista recolhida, persistência após reinício e detalhes. Com isso não se deve afirmar teste físico já concluído. Melhorias de editor/persistência só após feedback da homologação.
+
+**Estado de segurança:** PR #34 aberta em Draft; `main` ainda LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`. **Sem merge, sem LT63, sem mudança do applicationId, sem backend/proxy/GPS físico.** Esta documentação posterior não altera o código contido no APK (`SOURCE_COMMIT` acima).
+
