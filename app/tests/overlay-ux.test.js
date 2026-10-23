@@ -405,7 +405,7 @@ test("Reopening menu immediately re-applies active visual states to recreated bu
  const block=dock.split('function renderQuickMenu(){')[1]?.split('function audibleAlertState(')[0]||"";
  return block.includes('rows.replaceChildren();util.replaceChildren();footer.replaceChildren();')&&
   block.includes('refreshQuickMenuStates();')&&
-  block.indexOf('button.onclick=()=>quickClick(id);')<block.indexOf('refreshQuickMenuStates();')&&
+  block.indexOf('button.onclick=()=>quickClick(renderedId);')<block.indexOf('refreshQuickMenuStates();')&&
   dock.includes('if(menuOpen&&controlsWindow)renderQuickMenu();')&&
   dock.includes('button.classList.toggle("selected",');
 });
@@ -2940,6 +2940,72 @@ test("LT57-DEFAULT-COUNT-01 neutral controls never add to active filter badge",(
   count({...base,genderSelections:["Male","Female"]},"raw")===1&&
   count({...base,weather:"Any",genderSelections:["Any"]},"raw")===0;
 });
+test("UX-QUICK-MORE-01 keeps all three original action IDs movable in settings",()=>{
+ const group=dock.split("const MORE_ACTION_IDS=Object.freeze(")[1]
+  ?.split("let quickPrefs=")[0]||"";
+ const make=new Function("quickPrefs","const MORE_ACTION_IDS=Object.freeze("+group+
+  ";return groupedMoreIds;");
+ const originals=["mode","sh","filters","location","pokemon","star","bell","period","appearance","report","donate","close"];
+ const find=make({order:originals,hidden:[]});
+ const moveReport=make({order:["mode","report","sh","filters","location","pokemon","star","bell","period","appearance","donate","close"],hidden:[]});
+ const hideDonor=make({order:originals,hidden:["donate"]});
+ const onlyClose=make({order:originals,hidden:["report","donate"]});
+ return JSON.stringify(find())==='["report","donate","close"]'&&
+  JSON.stringify(moveReport())==='["donate","close"]'&&
+  JSON.stringify(hideDonor())==='["report","close"]'&&
+  JSON.stringify(onlyClose())==='[]'&&
+  dock.includes('for(const id of quickPrefs.order)')&&
+  dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])');
+});
+test("UX-QUICK-MORE-02 dynamically frees two ribbon slots and preserves order",()=>{
+ const block=dock.split("function renderQuickMenu(){")[1]
+  ?.split("// A sound channel")[0]||"";
+ return block.includes('if(inMore&&moreDrawn)continue;')&&
+  block.includes('const renderedId=inMore?"more":id')&&
+  block.includes('rows.appendChild(button);slotCount++')&&
+  block.includes('outer.style.setProperty("--quick-slot-count",String(Math.max(1,slotCount)))')&&
+  dock.includes('grid-template-columns:repeat(var(--quick-slot-count,12),minmax(0,1fr))!important')&&
+  dock.includes('if(choiceOpen==="more"){')&&
+  !block.includes('footer.appendChild(button)');
+});
+test("UX-QUICK-MORE-03 cascade opens DOWN with separate original rounded tiles",()=>{
+ const b=dock.split("function renderMoreChoices(){")[1]
+  ?.split("function renderQuickMenu(){")[0]||"";
+ return b.includes('panel.classList.add("visible","morePanel")')&&
+  b.includes('panel.setAttribute("role","menu")')&&
+  b.includes('button.className="quickMoreAction"')&&
+  b.includes('button.appendChild(iconForQuick(id,action[1]))')&&
+  b.includes('button.onclick=()=>{closeChoices();quickClick(id);}')&&
+  dock.includes('top:34px!important;bottom:auto!important')&&
+  dock.includes('top:232px!important;bottom:auto!important')&&
+  dock.includes('height:30px!important;min-height:30px!important')&&
+  dock.includes('gap:var(--visual-menu-gap,3px)!important')&&
+  dock.includes('border:1px solid var(--visual-menu-border,#ffffff48)!important');
+});
+test("UX-QUICK-MORE-04 original colors and bridges stay unchanged",()=>{
+ const b=dock.split("function renderMoreChoices(){")[1]
+  ?.split("function renderQuickMenu(){")[0]||"";
+ return ['report','donate','close'].every(id=>dock.includes('[data-key='+id+'] .quickGlyph'))&&
+  dock.includes('#choices.morePanel [data-key=report] .quickGlyph{color:#ffd674!important}')&&
+  dock.includes('#choices.morePanel [data-key=donate] .quickGlyph{color:#fa94a7!important}')&&
+  dock.includes('#choices.morePanel [data-key=close] .quickGlyph{color:#ff596c!important}')&&
+  dock.includes('case "report":Native.openReport();break;')&&
+  dock.includes('case "donate":Native.openPix();break;')&&
+  dock.includes('case "close":Native.close();break;')&&
+  b.includes('button.setAttribute("aria-label",action[2])');
+});
+test("UX-QUICK-MORE-05 close on outside tap and ordinary preferences survive",()=>{
+ return dock.includes('document.addEventListener("pointerdown",event=>{')&&
+  dock.includes('if(choiceOpen!=="more")return;')&&
+  dock.includes('event.target.closest("#choices.morePanel")')&&
+  dock.includes('event.target.closest(\'#quickMenuList button[data-key="more"]\')')&&
+  dock.includes('document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker","morePanel"')&&
+  dock.includes('if(!menuOpen){closeChoices();')&&
+  dock.includes('const hidden=legacy?[]:Array.isArray(p.hidden)')&&
+  dock.includes('for(const id of quickPrefs.order)')&&
+  dock.includes('quickPrefs.order.indexOf(id)');
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
