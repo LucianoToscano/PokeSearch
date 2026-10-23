@@ -4904,3 +4904,16 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 
 **Proteções:** PR #34 segue Draft, `main` LT61 em `caea98b7b57b9e45d5218e907eb392d76953dd53`, sem merge ou LT63. APK assinado mais recente **antes desta correção** é `PokeSearch-v0.00.62-LT.apk` run #40021475526, SHA256 `2533f0adfb7f750478344407243869a8b2181400dd51179756b53f492c4a09f1`; ainda tem o problema de posições antigas independentes, não o recomendar como prova desta correção.
 
+
+### 12.257 — LT62: build autorizado do alinhamento da Pokébola (23/10/2026)
+
+**Autorização do usuário:** “Continue”, após o encerramento da Etapa 8 que informou a necessidade de recompilar para testar o alinhamento sob a Pokébola. Esta etapa deve emitir APK **LT62** para homologação Samsung, **não** fazer merge, não promover LT63 e não alterar dados nem assinatura.
+
+**Fonte protegida:** branch `fix/lt62-menu-visual-states-20261023`, PR #34 em Draft, main LT61. Contém a correção **12.256** que elimina o posicionamento legado da lista desconectado da Pokébola e recalcula a janela dos resultados a partir de `params.x/y` e dos deslocamentos relativos do Editor Visual. A coluna começa, por padrão, ~2 dp abaixo do ícone após os 30 dp do cabeçalho e pode ficar acima perto da borda inferior para não cortar os sprites. Arraste conjunto e persistência permanecem os da 12.253. Regressões `app/tests/lt62-menu-visual-states.test.js` incluem **39** contratos; nove suítes Node aprovadas **850/850**, run #40022700316.
+
+**Gatilho controlado:** o commit que adiciona esta seção usa a mensagem prefixada `build: approved v0.00.62 LT signed`, requisito do workflow `.github/workflows/build-v062-compact-preview.yml` para build push da branch. Construir `PokeSearch-v0.00.62-LT.apk` com Java17/Gradle8.11.1/Android SDK36, `com.lucianotoscano.pokesearch`, versionCode `54260`, versionName `0.00.62`, assinatura persistente com certificado SHA256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Parar a entrega se build falhar, assinatura/versão divergirem ou se a integridade ZIP/SHA do APK não bater com o artefato. Não usar chaves novas nem substituir a main.
+
+**A preencher somente após publicação do artefato:** ID da run, commit exato do `SOURCE_COMMIT.txt`, ID do artefato, SHA-256 calculado, tamanho real, conteúdo de `PACKAGE_VERSION.txt` e `SIGNING_CERT_SHA256.txt`. O APK anterior do arraste conjunto (run #40021475526; SHA `2533f0adfb7f750478344407243869a8b2181400dd51179756b53f492c4a09f1`) **não possui** o realinhamento 12.256 e não pode ser entregue como sendo o novo.
+
+**Checklist físico pendente:** no Samsung com 1, 5, 10 Pokémon, confirmar que a primeira sprite nasce sob a Pokébola, arrasta junto em ambas as direções e mantém distância ao trocar tamanho, orientação e filtros; verificar posicionamento acima perto da borda inferior, limites da tela, painel de informações, menu aberto, toque curto/longo e persistência após reiniciar. Não afirmar homologação física com base em CI.
+
