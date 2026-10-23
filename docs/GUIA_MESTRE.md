@@ -3950,3 +3950,14 @@ A imagem `ps_home_official_wordmark.png` mede 2172×724 (proporção exata 3:1),
 
 **Regressões preservadas:** Pokémon/IV/PvP/Coords separados, Shiny, Firebase, login Google/Discord, resultados até 10, dois painéis, assinatura. `main` estava em `050abf67475fc86c09ae4219c81a30809b68ba09` antes de integrar o PR #31. O merge será verificado e o SHA definitivo registrado em adendo ao mesmo Guia Mestre após retorno real do GitHub; nunca inventar estado de merge.
 
+### 12.187-LT56-PR31-MESCLADO (22/10/2026, Fortaleza)
+
+**Resultado verificado no GitHub após a autorização do proprietário:**
+- PR **#31** `https://github.com/LucianoToscano/PokeSearch/pull/31`: mudou de Draft para Ready e recebeu **merge_method=merge**; GitHub respondeu `merged=true`, PR `state=closed` e `merge_commit_sha=4de1dddf674d4a5a069f65a5be7b2a6ba3177832`.
+- **HEAD da `main` após o merge:** `4de1dddf674d4a5a069f65a5be7b2a6ba3177832` (verificado por consulta à branch GitHub).
+- **HEAD do PR mesclado:** `cb419e6a925a437366425617c9cf0735a69e7708`. A comparação com o **commit efetivamente compilado** `ea42e655d544d8f4dc7372842d9b7a56d15080e9` mostrou somente uma alteração documental em `docs/GUIA_MESTRE.md` (+15 linhas), **nenhuma alteração posterior no código do APK**.
+- **CI real assinado:** `39875436441` = success, Node **708/708**, `gradle :app:testDebugUnitTest :app:assembleDebug` = BUILD SUCCESSFUL; artefato `12467493248`. Versão `0.00.56` / `54254`, APK SHA-256 `e6cca9c12d80ab297177638ce26bed76b97a534f865953890d730d1b593a1baf`; certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **APK original enviado ao Drive:** `https://drive.google.com/file/d/1taIGSb8ahi0KkywbgxVS1nxlLsqSpux4/view?usp=drivesdk`, verificado 25.422.996 bytes, acesso privado somente ao proprietário. Não substituir por outro APK sem atualizar `versionCode`.
+- **QA visual:** Chromium headless com CSS real do APK confirmou cores do sino no menu claro/escuro, estado audível amarelo, estrela amarela/branca, contador e selo no painel. **Ainda não existe prova em aparelho Android real**: validar no Samsung e PoGoCoordinates autenticado antes de expandir para testadores.
+- **Estado do projeto:** PR #31 mesclado na `main`; esta seção adicionada diretamente ao **mesmo único** `docs/GUIA_MESTRE.md` como registro posterior ao merge. O SHA gerado por este commit documental será o novo HEAD da `main` e não invalida o hash do APK compilado no commit anterior.
+
