@@ -2101,8 +2101,8 @@ test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
  return body.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&
   !body.includes('locationEnabled=true;closeChoices()')&&
   !body.includes('locationCoords=match[1]')&&
-  body.includes('message.textContent="⌛ Aplicando coordenadas')&&
-  body.includes('hide.onclick=closeChoices')&&
+  body.includes('message.textContent="⌛ Verificando localização')&&
+  body.includes('const close=make("button","choiceClose","×")')&&
   body.includes('Native.setLocation(false,"",0)')&&
   dock.includes('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
   dock.includes('state==="CONFIRMED"?"✓ Localização confirmada');
@@ -3230,7 +3230,7 @@ test("LT60-LOC-STATE-03 native feedback observes updated error status",()=>{
  return bridge.indexOf('activeSearchPhase=String(searchPhase||"idle");')<
   bridge.indexOf('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
   dock.includes('state==="NOT_APPLIED"?"⚠ Localização não aplicada')&&
-  dock.includes('state==="REQUESTED"?"⌛ Coordenadas solicitadas')&&
+  dock.includes('state==="REQUESTED"?"⌛ Verificando localização')&&
   service.includes('prefs.remove("locationCoords").remove("locationRadius")');
 });
 
