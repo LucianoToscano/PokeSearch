@@ -515,6 +515,15 @@ body.controls-window #choices.modeCascade button.modeCascadeEntry.chosen,
 body.controls-window #choices.modeCascade button.modeCascadeEntry:active{
  background:#285449e8!important;color:#e0fff1!important;
 }
+/* LT60-E8: configured (not necessarily site-confirmed) is distinct from
+   the submenu currently being edited. Never paint both as "applied". */
+body.controls-window #choices.modeCascade button.modeCascadeEntry.activeMode:not(.chosen){
+ box-shadow:inset 2px 0 #89c1d5!important;
+ background:#314150b0!important;
+}
+body.controls-window #choices.modeCascade button.modeCascadeEntry.siteConfirmed:not(.chosen){
+ box-shadow:inset 2px 0 #62bba1!important;
+}
 body.controls-window #choices.modeCascade .modeCascadeArrow{font:700 14px/1 Roboto,Arial,sans-serif;opacity:.75}
 body.controls-window #choices.modeCascade .modeCascadeEditor{
  display:flex;align-items:center;gap:3px;box-sizing:border-box;
@@ -1756,6 +1765,15 @@ function positionCascadeEditor(){
  rail.scrollTop=Math.max(0,requested+36-visible);
  editor.style.top=Math.max(0,Math.min(visible-36,requested-rail.scrollTop))+"px";
 }
+// Highlight the SAVED mode, independently of the temporary editor row.
+// A selected mode is not automatically a site-confirmed Search.
+function selectedModeEntry(currentMode,settings){
+ if(currentMode!=="raw")return currentMode;
+ const v=[settings.attack,settings.defense,settings.stamina].map(Number);
+ if(v.every(n=>n===15))return "hundo";
+ if(v.every(n=>n===0))return "nundo";
+ return "raw";
+}
 function renderModeChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();
@@ -1775,14 +1793,22 @@ function renderModeChoices(){
  };
  const entries=[["hundo","100%"],["nundo","0%"],["raw","IV"],
   ["percent","IV%"],["gl","GL"],["ul","UL"]];
+ const activeModeEntry=selectedModeEntry(mode,searchSettings);
+ const confirmedMode=siteFiltersConfirmed&&!searchActive&&!resultsStale&&
+  (activeSearchPhase==="updated"||activeSearchPhase==="empty");
  entries.forEach(([id,label],idx)=>{
   const button=document.createElement("button");button.type="button";
   button.className="modeCascadeEntry";button.textContent=label;
+  const selected=activeModeEntry===id;
   button.classList.toggle("chosen",cascadeMode===id);
+  button.classList.toggle("activeMode",selected);
+  button.classList.toggle("siteConfirmed",selected&&confirmedMode);
   button.setAttribute("role","menuitem");
+  button.setAttribute("aria-current",String(selected));
   button.setAttribute("aria-haspopup",String(idx>=2));
   button.setAttribute("aria-expanded",String(cascadeMode===id));
-  button.title=idx<2?"Aplicar agora "+label:label+" · abrir ajuste";
+  button.title=(idx<2?"Aplicar agora "+label:label+" · abrir ajuste")+
+   (selected?(confirmedMode?" · confirmado no site":" · selecionado no app, site pendente"):"");
   if(idx>=2){
    const arrow=document.createElement("span");arrow.className="modeCascadeArrow";
    arrow.textContent="›";button.appendChild(arrow);
