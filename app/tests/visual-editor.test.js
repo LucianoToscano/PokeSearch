@@ -356,8 +356,8 @@ test("Pokebola rectangle X width height and after-gap are controlled together",(
  assert.ok(java.includes("box.leftMargin=dp(left)"));
 });
 test("Editor supports precise one-unit adjustments and touch-area guides",()=>{
- for(const label of ["Botão + toque: posição Y (0 = topo)","Botão + toque: posição X",
-  "Área clicável: largura","Área clicável: altura","Espaço abaixo do botão"])
+ for(const label of ["Posição Y","Posição X",
+  "Área de toque · largura","Área de toque · altura","Espaço abaixo"])
   assert.ok(script.includes(label),label);
  assert.ok(script.includes('className="visualFineTune"'));
  assert.ok(script.includes('minus.onclick=()=>step(-1);plus.onclick=()=>step(1)'));
