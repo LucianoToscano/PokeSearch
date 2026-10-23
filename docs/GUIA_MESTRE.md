@@ -4917,3 +4917,16 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 
 **Checklist físico pendente:** no Samsung com 1, 5, 10 Pokémon, confirmar que a primeira sprite nasce sob a Pokébola, arrasta junto em ambas as direções e mantém distância ao trocar tamanho, orientação e filtros; verificar posicionamento acima perto da borda inferior, limites da tela, painel de informações, menu aberto, toque curto/longo e persistência após reiniciar. Não afirmar homologação física com base em CI.
 
+
+### 12.258 — LT62: usuário removeu AUTO decorativo do menu Atualização; novo APK de homologação (23/10/2026)
+
+**Interrupção do proprietário durante a geração do APK da seção 12.257:** “Nas atualizações menu pode remove aquela parte AUTO.” O workflow #40023704324 já havia sido concluído com SUCCESS, mas seu APK ainda continha o marcador visual `AUTO` entre `OFF` e as cinco escolhas. Esse artefato foi **supersedido antes da entrega** por este novo pedido.
+
+**Correção pontual:** no `app/src/main/assets/dock.html`, `renderPeriodPanel` deixa de criar o `span.periodCompactLabel` com `AUTO`. O submenu aberto por segurar o ícone `RefreshCw` por 600 ms exibe em cascata, sem cabeçalho nem X, **somente seis opções clicáveis**, na ordem: `OFF`, `3`, `5`, `10`, `15`, `20` (minutos). `OFF` desativa buscas periódicas; os demais aplicam a frequência selecionada sem alterar outros filtros. Não remover o texto `AUTO` da nomenclatura histórica do mecanismo nem mexer no comportamento do toque curto (uma atualização e giro neutro do ícone). O ajuste exclui apenas a placa decorativa interna do submenu, mantendo badge numérico centralizado e menu de Mais inalterados.
+
+**Commits:** `df6400728a621409eca68cf5d94c8299dd22d394` (marcador removido), `0bfc158d8d49d0f1ff28fd540717d51c6b8f3a65` (contrato UI), `3fda5c36624862aad2e7e6766361ca66c27914f1` (regressão LT62). O código também inclui a ancoragem de 12.256: coluna de sprites imediatamente abaixo da Pokébola unificada, preservando arraste conjunto e Editor Visual.
+
+**Novo build solicitado em continuidade:** o commit desta seção será prefixado por `build: approved v0.00.62 LT signed`, autorizando exclusivamente mais uma execução de `.github/workflows/build-v062-compact-preview.yml`. Exigir `PokeSearch-v0.00.62-LT.apk`, applicationId `com.lucianotoscano.pokesearch`, versionName `0.00.62`, versionCode `54260`, Java 17, Gradle 8.11.1, SDK36, assinatura persistente SHA256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, apksigner v2, SHA256SUMS, SOURCE_COMMIT e validação ZIP. Somente distribuir APK se todos os testes e verificações de assinatura aprovarem.
+
+**Proteções:** PR #34 permanece Draft e main LT61, sem merge ou nova versão LT63. Não alterar login, filtros, coords, resultados, preferências, applicationId, assinatura, Firebase, backend ou GPS. Compilação física Samsung continua pendente até o usuário testar.
+
