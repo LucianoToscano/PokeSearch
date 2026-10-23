@@ -2228,7 +2228,7 @@ public class OverlayService extends Service {
                     }
                     if(key.equals("sizeSelections")||key.equals("genderSelections")){
                         org.json.JSONArray input=delta.optJSONArray(key);
-                        if(input==null||input.length()>7)return;
+                        if(input==null||input.length()>(key.equals("genderSelections")?1:7))return;
                         org.json.JSONArray cleaned=new org.json.JSONArray();
                         java.util.HashSet<String> unique=new java.util.HashSet<>();
                         for(int i=0;i<input.length();i++){
@@ -2317,7 +2317,11 @@ public class OverlayService extends Service {
                         for(int i=0;i<requested.length();i++){
                             String value=requested.optString(i,"").trim();
                             if(value.length()>30||value.matches("(?s).*[<>\\r\\n].*"))return;
-                            if(!value.isEmpty()&&seen.add(value.toLowerCase(java.util.Locale.ROOT)))allowed.put(value);
+                            if(!value.isEmpty()&&seen.add(value.toLowerCase(java.util.Locale.ROOT))){
+                                // The previous build allowed multiple genders. Keep the
+                                // first value during migration; the site is single-choice.
+                                if(!key.equals("gender")||allowed.length()==0)allowed.put(value);
+                            }
                         }
                     }else if(!input.optString(key,"").trim().isEmpty()){
                         allowed.put(input.optString(key,"").trim());
