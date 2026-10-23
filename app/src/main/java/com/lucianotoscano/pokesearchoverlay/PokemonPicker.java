@@ -115,6 +115,9 @@ public final class PokemonPicker {
         }
         void filter(String term){
             String key=WatchAlerts.normalized(term);
+            // Dex text accepts #004, 004 or 4 without guessing other species.
+            String dexInput=term==null?"":term.trim().replaceFirst("^#","").trim();
+            boolean dexSearch=dexInput.matches("[0-9]{1,4}");
             visible.clear();
             Set<String> selected=WatchAlerts.watched(activity);
             if(selectedOnly){
@@ -125,7 +128,9 @@ public final class PokemonPicker {
                 if(!key.isEmpty()){
                     for(Entry e:full){
                         if(selected.contains(e.normalized))continue;
-                        if(e.normalized.startsWith(key)||String.valueOf(e.id).startsWith(key)){
+                        if(e.normalized.startsWith(key)||
+                           (dexSearch&&(String.valueOf(e.id).startsWith(dexInput)||
+                            String.format(Locale.US,"%03d",e.id).startsWith(dexInput)))){
                             visible.add(e);if(visible.size()==3)break;
                         }
                     }
