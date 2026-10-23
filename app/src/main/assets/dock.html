@@ -1228,6 +1228,14 @@ body.controls-window:not(.visual-menu-vertical) #menu #quickMenuList{
  grid-auto-flow:column!important;align-content:start!important;
  overflow:hidden!important;
 }
+/* LT58-ALL-POPUPS-SCALE-01: Android WebView may inflate text when the
+   native overlay height changes, even while the toolbar width is unchanged.
+   Keep CSS pixel typography stable across popup open/close and popup-above.
+   This does not alter the Visual Editor's explicit font-size controls. */
+html.controls-root,body.controls-window{
+ -webkit-text-size-adjust:100%!important;
+ text-size-adjust:100%!important;
+}
 /* UX-QUICK-MORE-02: 10 compact ribbon slots by default, each tile separate.
    Moving any original utility before the suffix extracts that action from More. */
 body.controls-window #quickMenuList{
