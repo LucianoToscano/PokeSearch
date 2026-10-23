@@ -30,7 +30,7 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
  !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
 test("AUTO offers OFF, 3, 5, 10, 15 and 20 minutes",["Auto · OFF","Auto · 3 min","Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
 test("Cascade uses current toolbar height even after clipping or vertical rotation",
- dock.includes('h=Math.max(h,baseHeight+190+6);')&&
+ dock.includes('h=Math.max(h,baseHeight+164+6);')&&
  dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;')&&
  dock.includes("Native.resizeMenu(h)")&&service.includes("menuRequestedHeightDp=visualMenuBaseDp();"));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
@@ -741,10 +741,10 @@ test("Mode popup keeps one stable row while expanding upward or downward",
  dock.includes('body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}')&&
  dock.includes('body.controls-window.popup-above #menu{top:var(--popup-offset,0px)!important}'));
 test("Cascade popup uses 27px rail rows and small lateral settings",
- dock.includes('width:88px!important;height:190px!important')&&
- dock.includes('height:27px!important;min-height:27px!important')&&
+ dock.includes('width:54px!important;height:164px!important')&&
+ dock.includes('height:23px!important;min-height:23px!important')&&
  dock.includes('modeCascadeEditor')&&
- dock.includes('max-width:calc(100% - 88px)')&&
+ dock.includes('max-width:calc(100% - 54px)')&&
  service.includes('int roomDp=requestedPopup==0?420:'));
 test("Cascade numeric input supports touch swipe, keyboard typing and percentage stepping",
  dock.includes('input.type="number";input.inputMode="numeric"')&&
@@ -933,7 +933,7 @@ test("PL-04 OFF does not force Area when default Coords are blank",
 test("UX-MENU-03 keeps one tiny toolbar, cascade and independent other menus",
  dock.includes('body.controls-window #quickHead{display:none!important}')&&
  dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important')&&
- dock.includes('width:88px!important;height:190px!important')&&
+ dock.includes('width:54px!important;height:164px!important')&&
  dock.includes('width:220px!important')&&dock.includes('width:306px!important'));
 test("UX-MENU-04 keeps twelve icon-first entry points in one thin row",
   dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])')&&
@@ -1198,9 +1198,9 @@ test("Duplicate popup Shiny removed: only independent toolbar ✨ remains",
 test("UX-MODOS-CASCADE-03 uses classic 6-row menu, no oversized wheels",(()=>{const b=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
  return dock.includes('modeCascadeRail')&&
  dock.includes('modeCascadeEditor')&&
- dock.includes('width:88px!important;height:190px!important')&&
- dock.includes('height:27px!important;min-height:27px!important')&&
- b.includes('const offsets={raw:76,percent:103,gl:130,ul:154}')&&
+ dock.includes('width:54px!important;height:164px!important')&&
+ dock.includes('height:23px!important;min-height:23px!important')&&
+ b.includes('const offsets={raw:67,percent:90,gl:113,ul:136}')&&
  b.includes('editor.append(confirm,cancel)')&&
  !b.includes('modeWheel')&&
  !b.includes('Native.shiny()');})());
@@ -1425,7 +1425,7 @@ test("UX-CASCADE retains requested popup height while visual editor changes orie
  service.includes("Math.max(0,dp(menuRequestedHeightDp)-rowHeight)")&&
  service.includes("menuRequestedHeightDp=Math.max(visualMenuBaseDp(),Math.min(maxMenuHeight,desiredDp))")&&
  !service.includes("int requestedPopup=Math.max(0,menuParams.height-rowHeight)")&&
- dock.includes('h=Math.max(h,baseHeight+190+6);')&&
+ dock.includes('h=Math.max(h,baseHeight+164+6);')&&
  dock.includes("function positionCascadeEditor()")&&
  dock.includes("rail.scrollTop=Math.max(0,requested+36-visible)")&&
  dock.includes('if(choiceOpen==="mode")positionCascadeEditor()')&&
@@ -3133,7 +3133,7 @@ test("LT58-ALL-POPUPS-STABLE-02 intrinsic popup height ignores Android clipping"
   run("location",150,340)===305&&
   run("filters",80,420)===355&&
   run("filters",200,420)===355&&
-  run("mode",50,320)===230&&
+  run("mode",50,320)===204&&
   run("more",34,130)===136;
 });
 
