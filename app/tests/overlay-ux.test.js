@@ -2707,7 +2707,7 @@ test("FILTERS-POGO-04 location Apply submits same saved criteria through live DO
  const probe=read("assets/probe.js");
  return dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&
   dock.includes('slide.min="0";slide.max="1000"')&&
-  dock.includes('// Other search filters are preserved by Native.setLocation.')&&
+  !dock.includes('make("p","locText","Coords e raio')&&
   dock.includes('clear.onclick=disable')&&
   !dock.includes('fieldRow.append(field,paste,toggle)')&&
   service.includes('OverlayService.this.refresh(true);')&&
