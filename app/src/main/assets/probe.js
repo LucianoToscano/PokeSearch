@@ -1157,6 +1157,9 @@ function collect(){
  if(submission&&!submission.observedUpdate&&visibleResultSignature()!==submission.before)
   submission.observedUpdate=true;
  const resultChanged=!submission||submission.observedUpdate===true;
+ // A still-visible card from the previous query is not proof of this Search.
+ // Identical legitimate result sets may require a new site DOM transition.
+ const resultFreshnessPending=found.length>0&&!resultChanged;
  const zeroInResults=countLabel==="0"&&mainEmptyMessage();
  const explicitEmptySignal=regionEmpty||zeroInResults;
  const explicitEmpty=found.length===0&&!loading&&explicitEmptySignal&&resultChanged;
@@ -1166,7 +1169,7 @@ function collect(){
  const siteIncomplete=expectedVisible>found.length;
  const parseFailure=siteCount>0&&found.length===0;
  return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,siteCount,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,
-  criteriaConfirmed:siteCriteria,criteriaReason:confirmation.reason,confirmationSource:confirmation.source,
+  criteriaConfirmed:siteCriteria,criteriaReason:confirmation.reason,confirmationSource:confirmation.source,resultFreshnessPending,
   leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }
 if(action==="collect")return collect();
