@@ -212,8 +212,51 @@ check("LT62 Favoritos: compact 348dp dialog and notifications only in Alerts",()
  assert.ok(!picker.includes('WatchAlerts.setMode('));
  assert.ok(!picker.includes('testNotification.setText('));
  assert.ok(!picker.includes('Notificar favoritos (som definido no sino'));
- assert.ok(dock.includes('["☆ Testar aviso favorito","testNotification"]'));
- assert.ok(dock.includes('button.onclick=()=>Native.setFavoriteAlertMode(id)'));
+ assert.ok(!dock.split("function renderAlertsChoices(){")[1].split("// Site -> App")[0].includes('"testNotification"]'));
+ assert.ok(dock.includes('Native.setFavoriteAlertMode(id)'));
+});
+check("LT62 Notificações: painel somente 2 blocos × 3 ícones SVG e botões de áudio",()=>{
+ const block=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
+ assert.ok(block.includes('panel.classList.add("alertsMini")'));
+ assert.ok(block.includes('const symbols={'));
+ assert.ok(block.includes('for(const id of ["on","silent","off"])'));
+ assert.ok(block.includes('section("Novos Pokémon","general",alertMode,generalCustomTone)'));
+ assert.ok(block.includes('section("Pokémon Favoritos","favorites",favoriteAlertMode,favoriteCustomTone)'));
+ assert.ok(block.includes('select.textContent=tone?"Personalizado":"Padrão"'));
+ assert.ok(block.includes('select.onclick=()=>Native.pickAlertTone(target)'));
+ assert.ok(dock.includes('const SHOW_INDIVIDUAL_FAVORITE_TONES=false'));
+ assert.ok(!block.includes('testNotification"]'));
+ assert.ok(!block.includes('requestNotificationPermission'));
+ assert.ok(dock.includes('body.controls-window #choices.standardPanel.alertsMini'));
+});
+check("LT62 Notificações: 36 MP3 locais, favorito BR por padrão sem alterar preferências",()=>{
+ const base=path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay");
+ const audio=fs.readFileSync(path.join(base,"PokeSoundLibrary.java"),"utf8");
+ const watch=fs.readFileSync(path.join(base,"WatchAlerts.java"),"utf8");
+ const service=fs.readFileSync(path.join(base,"OverlayService.java"),"utf8");
+ const listed=audio.split('static final String[] LABELS={')[1].split('};')[0];
+ const resource=audio.split('private static final int[] AUDIO={')[1].split('};')[0];
+ assert.equal((listed.match(/^\s*"[^"]+",?$/gm)||[]).length,36);
+ assert.equal((resource.match(/R\.raw\.ps_[a-z0-9_]+/g)||[]).length,36);
+ assert.ok(resource.includes('R.raw.ps_jigglypuff_evolucao_meme'));
+ assert.ok(resource.includes('R.raw.ps_snorlax'));
+ assert.ok(watch.includes('if(favorite&&!p.contains(PREF_FAVORITE_TONE))'));
+ assert.ok(watch.includes('PokeSoundLibrary.favoriteDefaultUri(context)'));
+ assert.ok(watch.includes('PokeSoundLibrary.favoriteDefaultUri(context).toString()'));
+ assert.ok(service.includes('alertModeCaption("Novos Pokémon",value)'));
+ assert.ok(service.includes('alertModeCaption("Pokémon Favoritos",mode)'));
+});
+check("LT62 Notificações: ouvir, escolher, cancelar e enviar áudio são escolhas separadas",()=>{
+ const main=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java"),"utf8");
+ assert.ok(main.includes('String[] choices=new String[count+2]'));
+ assert.ok(main.includes('choices[0]="Padrão"'));
+ assert.ok(main.includes('choices[count+1]="＋ Enviar áudio"'));
+ assert.ok(main.includes('playBundledTonePreview(which-1)'));
+ assert.ok(main.includes('setPositiveButton("✓ Usar áudio"'));
+ assert.ok(main.includes('setNegativeButton("Cancelar",null)'));
+ assert.ok(main.includes('setNeutralButton("▶ Ouvir",null)'));
+ assert.ok(main.includes('confirmUploadedAlertTone(target,species,uri)'));
+ assert.ok(main.includes('dialog.setOnDismissListener(closed->stopBundledTonePreview())'));
 });
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
