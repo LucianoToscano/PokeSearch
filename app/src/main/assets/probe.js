@@ -69,7 +69,9 @@ function choice(label,want){
   return true;
  }
  if(text(e).toLowerCase()===want.toLowerCase())return true;
- // React/Radix menus render asynchronously: opening/selecting an option is not proof\n // until a later DOM read confirms the selected value.\n // React/Radix menus render asynchronously: read an already-open option before toggling.
+ // React/Radix menus render asynchronously: an option click is pending until
+ // the next DOM read confirms the selected value; never assume success.
+ // Read an already-open portal option before toggling the dropdown.
  let opt=findOption(want,e);
  if(opt){opt.click();transientPending=true;return false;}
  if(e.disabled)return false;
