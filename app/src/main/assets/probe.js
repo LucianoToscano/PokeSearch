@@ -571,8 +571,11 @@ function extraMulti(key,desired,operation){
   }
   return false;
  }
+ const allowed=key==="size"?["xxs","xs","s","m","l","xl","xxl"]:
+  ["male","female","genderless","unknown"];
  const observed=options.map(el=>({el,label:clean(text(el)).toLowerCase(),active:multiState(el)}))
-  .filter(x=>x.active!==null);
+  // The site's neutral Any row is not a selected size/gender checkbox.
+  .filter(x=>x.active!==null&&allowed.includes(x.label));
  if(target.some(v=>!observed.some(o=>o.label===v)))return false;
  if(!observed.length)return false;
  for(const choice of observed){
