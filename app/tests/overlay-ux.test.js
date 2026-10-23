@@ -87,7 +87,7 @@ test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
    helpers.resultHasVisibleInfo(withInfo[1],false,true)===false;
 });
 test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten-card limit",
- dock.includes('["count","Quantidade de spawns"]')&&
+ dock.includes('["count","Spawns","Quantidade de spawns"]')&&
  dock.includes('id="resultSpawnCount"')&&
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
@@ -98,7 +98,7 @@ test("UX-INFO-10 visibility toggles report confirmed Android state without scrol
  dock.includes('JSON.stringify(resultDisplayOptions)!==previousDisplayPrefs)renderInfoChoices();')&&
  dock.includes('const scroll=previous.dataset.panelKind==="info"?previous.scrollTop:0;')&&
  dock.includes('if(choiceOpen==="info"&&panel.isConnected)panel.scrollTop=scroll;')&&
- dock.includes('resultDisplayOptions[key]?"✓":"–"')&&
+ dock.includes('selected?"✓":"–"')&&
  dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
  !dock.includes('resultDisplayOptions[key]=!resultDisplayOptions[key];'));
 test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overriding saved choices",()=>{
@@ -125,7 +125,7 @@ test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overri
   !nativeBlock.includes('resultCountUxV2')&&
   nativeBlock.includes('resultShowCount=prefs.getBoolean("resultShowCount",false)')&&
   nativeBlock.includes('resultShowRawIv=prefs.getBoolean("resultShowRawIv",false)')&&
-  dock.includes('resultDisplayOptions[key]?"✓":"–"')&&
+  dock.includes('selected?"✓":"–"')&&
   dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
   dock.includes('As 21 informações começam ocultas por padrão');
 });
@@ -136,10 +136,10 @@ test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  !dock.includes("count.textContent=resultDisplayOptions.count&&cards.length")&&
  !service.includes("setSpawnLimit"));
 test("UX-INFO-02 legacy and new IV/rank display choices persist independently",()=>{
- const labels=["Quantidade de spawns","Tempo de despawn","Nível (Lv)",
-  "Poder de Combate (PC)","IV do Pokémon · A/D/H","IV% do Pokémon",
-  "Rank Geral · Grande Liga","Rank Geral · Ultra Liga","Rank Geral · Liga Mestre",
-  "Rank IV · Grande Liga","Rank IV · Ultra Liga","Rank IV · Liga Mestre"];
+ const labels=["Quantidade de spawns","Tempo até desaparecer","Nível",
+  "Poder de Combate","IV bruto","Porcentagem de IV",
+  "Rank geral Grande Liga","Rank geral Ultra Liga","Rank geral Liga Mestre",
+  "Rank IV Grande Liga","Rank IV Ultra Liga","Rank IV Liga Mestre"];
  return labels.every(label=>dock.includes('"'+label+'"'))&&
   dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
   dock.includes('Native.toggleTimers()')&&
@@ -963,7 +963,7 @@ test("UX-MENU-04 exposes exactly the approved twelve icons in order",(()=>{
 test("UX-MENU-04 keeps Informações in Ajustes and restores Atualização beside Alertas",(()=>{
  const body=dock.split('function renderAppearanceChoices()')[1]?.split('if(controlsWindow){')[0]||"";
  return body.includes('uxPanel("PERSONALIZAÇÃO")')&&
-  body.includes('uxOption(panel,"Informações dos Pokémon","Configurar ›",()=>toggleChoices("info"))')&&
+  body.includes('link("Info Pokémon","info")')&&body.includes('link("Editor Visual","visual")')&&
   dock.includes('["period","↻","Atualização","period"]')&&
   dock.includes('back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();}')&&
   dock.includes('function renderInfoChoices()')&&
@@ -2178,7 +2178,7 @@ test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()
   source.includes('location:place,distance,despawn:')&&
   detail.includes('item("Distância",c.distance)')&&
   !source.includes('navigator.geolocation')&&
-  dock.includes('"Distância do local informado"');
+  dock.includes('["distance","Dist.","Distância"]');
 });
 test("UX-INFO-ALL-03 optional metadata respects the compact row dimensions",()=>{
  const win={};new Function("window",read("assets/pvpoke-overall-ranks.js"))(win);
