@@ -215,10 +215,14 @@ test("Configurable percentage range passes","verifyFilters","percent",false,
   {iv:["20","80"],config:{percentMin:20,percentMax:80}},true);
 test("Actual IV interval 91–100 passes","verifyFilters","percent",false,
   {iv:["91","100"],config:{percentMin:91,percentMax:100}},true);
-test("Unattainable 90 percent minimum must fail even if form displays 90","verifyFilters","percent",false,
-  {iv:["90","100"],config:{percentMin:90,percentMax:100}},false);
-test("Unattainable 95 percent maximum must fail even if form displays 95","verifyFilters","percent",false,
-  {iv:["91","95"],config:{percentMin:91,percentMax:95}},false);
+test("IV% accepts manual 90% minimum","verifyFilters","percent",false,
+  {iv:["90","100"],config:{percentMin:90,percentMax:100}},true);
+test("IV% accepts manual 95% maximum","verifyFilters","percent",false,
+  {iv:["91","95"],config:{percentMin:91,percentMax:95}},true);
+test("IV% outside 0..100 is rejected","verifyFilters","percent",false,
+  {iv:["91","101"],config:{percentMin:91,percentMax:101}},false);
+test("IV% inverted range is rejected","verifyFilters","percent",false,
+  {iv:["95","90"],config:{percentMin:95,percentMax:90}},false);
 test("Configurable percentage range mismatch fails","verifyFilters","percent",false,
   {iv:["20","80"],config:{percentMin:31,percentMax:80}},false);
 test("Great League top 50 confirmed","verifyFilters","gl",false,
