@@ -258,5 +258,55 @@ check("LT62 Notificações: ouvir, escolher, cancelar e enviar áudio são escol
  assert.ok(main.includes('confirmUploadedAlertTone(target,species,uri)'));
  assert.ok(main.includes('dialog.setOnDismissListener(closed->stopBundledTonePreview())'));
 });
+check("LT62 Personalização: short labels, fixed-size sprites and aligned menu controls",()=>{
+ const body=dock.split("function renderAppearanceChoices(){")[1]?.split('document.addEventListener("pointerdown",event=>{')[0]||"";
+ assert.ok(body.includes('link("Info Pokémon","info")'));
+ assert.ok(body.includes('link("Editor Visual","visual")'));
+ assert.ok(body.includes('heading.textContent="Menus"'));
+ assert.ok(body.includes('commands.className="appearanceCommands"'));
+ assert.ok(body.includes('line.dataset.key=id'));
+ assert.ok(body.includes('up.disabled=i===0'));
+ assert.ok(body.includes('down.disabled=i===movable.length-1'));
+ assert.ok(body.includes('eye.disabled=locked'));
+ assert.ok(dock.includes('grid-template-columns:minmax(0,1fr) 26px 25px 25px'));
+ assert.ok(dock.includes('grid-template-columns:repeat(3,27px)'));
+ assert.ok(dock.includes('button.onclick=()=>{if(Native.setSpriteSize)Native.setSpriteSize(size);}'));
+});
+check("LT62 menu ordering: skips fixed items and persists moves in both directions",()=>{
+ const code=dock.split("function movableMenuIds(){")[1]?.split("function renderAppearanceChoices(){")[0]||"";
+ assert.ok(code.includes('!["close","appearance","sh"].includes(id)'));
+ assert.ok(code.includes('const movable=movableMenuIds(),index=movable.indexOf(id),other=movable[index+direction]'));
+ assert.ok(code.includes('[quickPrefs.order[a],quickPrefs.order[b]]=[quickPrefs.order[b],quickPrefs.order[a]]'));
+ assert.ok(code.includes('saveQuickPrefs();return true;'));
+ assert.ok(dock.includes('const hidden=quickPrefs.hidden.includes(id)'));
+});
+check("LT62 Info Pokémon: 21 short accessible options and no descriptive footer",()=>{
+ const block=dock.split("function renderInfoChoices(){")[1]?.split("// A persistent direct P/M/G selector")[0]||"";
+ assert.ok(block.includes('uxPanel("INFO POKÉMON")'));
+ assert.ok(block.includes('grid.className="infoGrid"'));
+ assert.ok(block.includes('["distance","Dist.","Distância"]'));
+ assert.ok(block.includes('["rawIv","IV A/D/S","IV bruto"]'));
+ assert.ok(block.includes('const selected=key==="despawn"?showTimers:key==="iv"?showResultText:!!resultDisplayOptions[key]'));
+ assert.ok(block.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])'));
+ assert.ok(!block.includes("As 21 informações começam ocultas"));
+ assert.ok(dock.includes('grid-template-columns:repeat(2,minmax(0,1fr))'));
+});
+check("LT62 Editor Visual: collapsible groups preserve preview, settings and compact controls",()=>{
+ const script=fs.readFileSync(path.join(__dirname,"../src/main/assets/visual_editor.js"),"utf8");
+ assert.ok(script.includes('uxPanel("EDITOR VISUAL")'));
+ assert.ok(script.includes('function visualGroup(host,id,title,create){'));
+ assert.ok(script.includes('const visualOpenSection={results:"spacing",menu:"position"}'));
+ assert.ok(script.includes('section.addEventListener("toggle"'));
+ assert.ok(script.includes('if(!section.isConnected||choiceOpen!=="visual"||tab!==sectionTab)return'));
+ assert.ok(script.includes('addSlider(panel,"popupWidth","Largura dos painéis"," px")'));
+ assert.ok(script.includes('addSlider(panel,"popupHeight","Altura máxima"," px")'));
+ assert.ok(script.includes('Native.previewVisualArea(tab)'));
+ assert.ok(script.includes('saveSoon();renderVisualEditor()'));
+ assert.ok(script.includes('btn(actions,"Copiar JSON"'));
+ assert.ok(!script.includes('Ajuste ao vivo no jogo. Nada altera os filtros'));
+ assert.ok(dock.includes('body.controls-window #choices.visualPanel.visualCompact .visualGroupTitle'));
+ assert.ok(dock.includes('body.controls-window #choices.visualPanel.visualCompact .visualFineTune'));
+ assert.ok(dock.includes('if(choiceOpen==="visual"&&kind!=="visual"&&window.Native&&Native.previewVisualArea)'));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
