@@ -156,7 +156,7 @@ test("packed sprite pitch reserves symmetrical first and last art space",()=>{
  assert.equal((sprite-pitch)/2,15.5);
 });
 test("visual position sliders keep the currently open detail window in sync",()=>{
- assert.match(java,/recordFailure\("editor posição resultados",e\);\}\s*moveDetail\(\);/);
+ assert.match(java,/positionResultsUnderPokeball\(true\); \/\/ Editor offsets now relative to the unified icon\.\s*moveDetail\(\);/);
 });
 test("sparkle is vector white by default, yellow when site-verified",()=>{
  assert.ok(dock.includes('const QUICK_SOURCE_ICONS={sh:"sh"'));
