@@ -1618,6 +1618,34 @@ body.controls-window.visual-light-menu #choices[data-panel-kind="filters"] .filt
 }
 body.controls-window #choices.modeCascade .modeCascadeField{flex:0 0 auto!important;gap:2px!important}
 body.controls-window #choices.modeCascade .modeCascadeLabel{font-size:8px!important}
+
+/* LT62-MODOS-PLACEHOLDERS: input vazio, placeholder, uma ação de aplicar.
+   Nota: pointer-events libera apenas hit testing na WebView, não a região
+   nativa retangular do WindowManager. */
+body.controls-window #choices.modeCascade{pointer-events:none!important}
+body.controls-window #choices.modeCascade .modeCascadeRail,
+body.controls-window #choices.modeCascade .modeCascadeEditor{pointer-events:auto!important}
+body.controls-window #choices.modeCascade .modeCascadeField{gap:0!important}
+body.controls-window #choices.modeCascade input.modeCascadeInput{
+ background:transparent!important;color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid #ffffff39!important;border-radius:6px!important;
+ width:35px!important;min-width:0!important;height:28px!important;
+ padding:2px 3px!important;text-align:center!important;font-size:11px!important;
+ font-weight:500!important;-webkit-text-fill-color:currentColor;
+}
+body.controls-window #choices.modeCascade input.modeCascade-percent{width:52px!important;font-size:10px!important}
+body.controls-window #choices.modeCascade input.modeCascade-rank{width:34px!important}
+body.controls-window #choices.modeCascade input.modeCascadeInput::placeholder{
+ color:var(--visual-menu-fg,#f2f7fc);opacity:.57;font-weight:400;
+ -webkit-text-fill-color:var(--visual-menu-fg,#f2f7fc);
+}
+body.controls-window #choices.modeCascade input.modeCascadeInput:focus{
+ outline:1px solid #62cdb6!important;border-color:#62cdb6!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeEditor{gap:3px!important}
+body.controls-window #choices.modeCascade button.modeCascadeConfirm{
+ flex:0 0 28px!important;width:28px!important;min-width:28px!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -2145,92 +2173,58 @@ function renderModeChoices(){
   const offsets={raw:67,percent:90,gl:113,ul:136};
   editor.style.top=offsets[cascadeMode]+"px";
   editor.setAttribute("role","group");editor.setAttribute("aria-label","Ajustar "+cascadeMode);
+  // LT62: campos vazios e placeholders; só a confirmação grava a seleção.
   const fields=cascadeMode==="raw"?[
-   ["attack","A","iv","Ataque"],["defense","D","iv","Defesa"],["stamina","H","iv","H"]
+   ["attack","A","iv","Ataque"],["defense","D","iv","Defesa"],["stamina","S","iv","Stamina"]
   ]:cascadeMode==="percent"?[
-   ["percentMin","Mín","percent","IV mínimo"],["percentMax","Máx","percent","IV máximo"]
+   ["percentMin","Min %","percent","IV mínimo"],["percentMax","Max %","percent","IV máximo"]
   ]:cascadeMode==="gl"?[["glRank","#","rank","Ranking GL"]]:
    [["ulRank","#","rank","Ranking UL"]];
   const inputs=[];
-  const allowedFor=kind=>kind==="percent"?IV_PERCENT_VALUES:
-   Array.from({length:kind==="iv"?16:50},(_,k)=>k+(kind==="rank"?1:0));
-  fields.forEach(([key,label,kind,description])=>{
-   const allowed=allowedFor(kind);
+  const limitsFor=kind=>kind==="percent"?[0,100]:kind==="iv"?[0,15]:[1,50];
+  fields.forEach(([key,placeholder,kind,description])=>{
+   const [min,max]=limitsFor(kind);
    const group=document.createElement("label");group.className="modeCascadeField";
-   const tag=document.createElement("span");tag.className="modeCascadeLabel";tag.textContent=label;
-   const input=document.createElement("input");input.type="number";input.inputMode="numeric";
-   input.className="modeCascadeInput";input.min=String(allowed[0]);
-   input.max=String(allowed[allowed.length-1]);input.step="1";
-   input.value=String(modeDraft[key]);
+   const input=document.createElement("input");input.type="text";input.inputMode="numeric";
+   input.className="modeCascadeInput modeCascade-"+kind;
+   input.placeholder=placeholder;input.value="";
+   input.autocomplete="off";input.maxLength=3;input.setAttribute("pattern","[0-9]*");
    input.setAttribute("aria-label",description);
-   input.title=description+" · deslize para alterar ou toque para digitar";
-   const commit=value=>{
-    if(!allowed.includes(value))return false;
-    modeDraft[key]=value;input.setCustomValidity("");
-    if(key==="percentMin"&&modeDraft.percentMax<value){
-     modeDraft.percentMax=value;
-     const related=inputs.find(x=>x.key==="percentMax");
-     if(related)related.input.value=String(value);
-    }
-    if(key==="percentMax"&&modeDraft.percentMin>value){
-     modeDraft.percentMin=value;
-     const related=inputs.find(x=>x.key==="percentMin");
-     if(related)related.input.value=String(value);
-    }
-    return true;
-   };
-   const step=direction=>{
-    const value=Number(input.value);
-    let index=allowed.indexOf(value);
-    if(index<0)index=allowed.reduce((best,n,k)=>Math.abs(n-value)<Math.abs(allowed[best]-value)?k:best,0);
-    const next=allowed[Math.max(0,Math.min(allowed.length-1,index+direction))];
-    input.value=String(next);commit(next);
-   };
-   let gesture=null,swiped=false;
-   input.addEventListener("touchstart",e=>{gesture=e.touches[0]?.clientY??null;swiped=false;},{passive:true});
-   input.addEventListener("touchend",e=>{
-    if(gesture===null)return;
-    const delta=gesture-(e.changedTouches[0]?.clientY??gesture);gesture=null;
-    if(Math.abs(delta)<11)return;
-    swiped=true;e.preventDefault();step((delta>0?1:-1)*Math.max(1,Math.round(Math.abs(delta)/20)));
-   },{passive:false});
-   input.addEventListener("click",e=>{if(swiped){e.preventDefault();swiped=false;}});
-   input.addEventListener("wheel",e=>{e.preventDefault();step(e.deltaY>0?-1:1);},{passive:false});
-   input.addEventListener("change",()=>{
-    const value=Number(input.value);
-    if(!Number.isInteger(value)||!commit(value))
-     input.setCustomValidity("Escolha um valor permitido");
+   input.title=description+" · digite "+min+" a "+max;
+   input.addEventListener("input",()=>input.setCustomValidity(""));
+   input.addEventListener("keydown",e=>{
+    if(e.key==="Enter"){e.preventDefault();confirm.click();}
    });
    input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
    input.onblur=()=>requestAnimationFrame(()=>{
     if(choiceOpen==="mode"&&!document.activeElement?.matches(".modeCascadeInput")&&controlsWindow)
      Native.locationEditor(false);
    });
-   inputs.push({key,input,allowed});group.append(tag,input);editor.appendChild(group);
+   inputs.push({key,input,min,max});
+   group.appendChild(input);editor.appendChild(group);
   });
-  const confirm=document.createElement("button"),cancel=document.createElement("button");
+  const confirm=document.createElement("button");
   confirm.className="modeCascadeConfirm";confirm.textContent="✓";confirm.type="button";
-  cancel.className="modeCascadeCancel";cancel.textContent="×";cancel.type="button";
-  confirm.title="Aplicar filtro";cancel.title="Cancelar ajuste";
-  confirm.setAttribute("aria-label","Aplicar filtro");cancel.setAttribute("aria-label","Cancelar ajuste");
+  confirm.title="Aplicar filtro";confirm.setAttribute("aria-label","Aplicar filtro");
   confirm.onclick=()=>{
+   const values={};
    for(const entry of inputs){
-    const value=Number(entry.input.value);
-    if(entry.input.value.trim()===""||!Number.isInteger(value)||!entry.allowed.includes(value)){
-     entry.input.setCustomValidity("Escolha um valor permitido");
+    const raw=entry.input.value.trim(),value=Number(raw);
+    if(!/^[0-9]{1,3}$/.test(raw)||!Number.isInteger(value)||
+       value<entry.min||value>entry.max){
+     entry.input.setCustomValidity("Digite um número de "+entry.min+" a "+entry.max);
      entry.input.reportValidity();return;
     }
-    modeDraft[entry.key]=value;entry.input.setCustomValidity("");
+    values[entry.key]=value;entry.input.setCustomValidity("");
    }
-   if(cascadeMode==="percent"&&modeDraft.percentMin>modeDraft.percentMax){
-    inputs[0].input.setCustomValidity("O mínimo não pode ser maior que o máximo");
+   if(cascadeMode==="percent"&&values.percentMin>values.percentMax){
+    inputs[0].input.setCustomValidity("Min % não pode ultrapassar Max %");
     inputs[0].input.reportValidity();return;
    }
+   Object.assign(modeDraft,values);
    const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));
   };
-  cancel.onclick=()=>{if(controlsWindow)Native.locationEditor(false);
-   cascadeMode=null;modeDraft={...searchSettings,mode};renderModeChoices();};
-  editor.append(confirm,cancel);panel.appendChild(editor);
+  editor.appendChild(confirm);panel.appendChild(editor);
   requestAnimationFrame(positionCascadeEditor);
  }
  document.getElementById("cycle").setAttribute("aria-expanded","true");
