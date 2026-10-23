@@ -670,7 +670,10 @@ function extraSelect(key,want){
    e.dispatchEvent(new Event("change",{bubbles:true}));
    transientPending=true;return false;
   }
-  if(e.matches("input"))return valueInput(e,"");
+  if(e.matches("input")){
+   if(!valueInput(e,""))return false;
+   transientPending=true;return false;
+  }
   // Reset prior active filter when user switches back to Any.
   const popup=(key==="gender"||key==="form")?extraOptionPopup(key,e):null;
    const opt=(popup?Array.from(popup.querySelectorAll(
@@ -684,7 +687,10 @@ function extraSelect(key,want){
  }
  if(e.disabled)return false;
  if(actual&&comparableOption(actual)===comparableOption(want))return true;
- if(e.matches("input"))return valueInput(e,want);
+ if(e.matches("input")){
+  if(!valueInput(e,want))return false;
+  transientPending=true;return false;
+ }
  if(e.matches("select"))return choice(label,want);
  const opt=(key==="gender"||key==="form"?
   (extraOptionPopup(key,e)?Array.from(extraOptionPopup(key,e).querySelectorAll(
