@@ -476,5 +476,49 @@ check("Unified Pokébola drag persists both windows and restores without overrid
  assert.ok(grip.includes('handler.removeCallbacks(dockLongPress);'));
  assert.ok(grip.includes('if(!dragged&&!dockHeld[0])'));
 });
+
+check("LT62 unified Pokébola: results start directly below icon, not at old saved location",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const anchor=native.split("private void positionResultsUnderPokeball(boolean applyLayout){")[1]
+  ?.split("private void updateResultsWidth(){",1)[0]||"";
+ assert.ok(anchor.length>200,"anchoring routine exists");
+ for(const contract of [
+  "int gap=dp(2+visualHeaderAfterGap);",
+  "int x=params.x+dp(visualResultsOffsetX);",
+  "int below=params.y+dp(30)+gap+dp(visualResultsOffsetY);",
+  "int above=params.y-resultParams.height-gap+dp(visualResultsOffsetY);",
+  "if(below+resultParams.height>display.heightPixels&&above>=0)",
+  "int maxX=Math.max(0,display.widthPixels-resultParams.width);",
+  "int maxY=Math.max(0,display.heightPixels-resultParams.height);",
+  "resultParams.x=desiredX;",
+  "resultParams.y=desiredY;",
+  "wm.updateViewLayout(resultRoot,resultParams);",
+ ])assert.ok(anchor.includes(contract),contract);
+ assert.ok(native.includes('resultPanel.loadUrl("file:///android_asset/dock.html?results=1");\n        positionResultsUnderPokeball(true);'));
+ assert.ok(native.includes("positionResultsUnderPokeball(true); // Editor offsets now relative to the unified icon."));
+ assert.ok(native.includes("positionResultsUnderPokeball(false);"));
+ assert.ok(native.includes("resultParams.height=pixels;\n        positionResultsUnderPokeball(false);"));
+ const first=native.indexOf("int savedX=prefs.getInt(\"resultsX\",preferredX);");
+ const migrated=native.indexOf("positionResultsUnderPokeball(true); // Migrate legacy independently saved list coordinates.");
+ assert.ok(first>=0&&migrated>first,"legacy coordinate is replaced by the new anchor");
+});
+check("LT62 unified Pokébola: anchored placement clamps and flips above only when needed",()=>{
+ const place=({iconX,iconY,iconW=53,resultsW=53,resultsH=400,width=400,height=850,gap=2,offX=0,offY=0})=>{
+  const x=iconX+offX;
+  const below=iconY+30+gap+offY,above=iconY-resultsH-gap+offY;
+  const y=below+resultsH>height&&above>=0?above:below;
+  return {x:Math.max(0,Math.min(Math.max(0,width-resultsW),x)),
+   y:Math.max(0,Math.min(Math.max(0,height-resultsH),y))};
+ };
+ let a=place({iconX:280,iconY:90});
+ assert.equal(a.x,280);assert.equal(a.y,122,"sprites begin 2dp below 30dp icon");
+ a=place({iconX:280,iconY:700,resultsH:400});
+ assert.equal(a.x,280);assert.equal(a.y,298,"above icon when below would overflow");
+ a=place({iconX:375,iconY:50,resultsH:600,width:400,height:850});
+ assert.equal(a.x,347,"clamp when right edge reached");
+ a=place({iconX:280,iconY:90,offX:-12,offY:8,resultsH:400});
+ assert.equal(a.x,268);assert.equal(a.y,130,"Editor offsets remain relative");
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
