@@ -2222,6 +2222,30 @@ public class OverlayService extends Service {
                        !value.isEmpty()&&!value.matches("[0-9]{1,2}(\\.[0-9])?"))return;
                     extra.put(key,value);
                 }
+                // LT57 ONE-FORM: size and gender independently allow multiple
+                // values. Empty array is "Any"; do not discard previous state
+                // if an older Modes/Pokémon UI omits the arrays.
+                JSONObject previousMulti=new JSONObject(extraFiltersJson);
+                for(String key:new String[]{"size","gender"}){
+                    String plural=key+"Selections";
+                    org.json.JSONArray requested=input.optJSONArray(plural);
+                    if(requested==null)requested=previousMulti.optJSONArray(plural);
+                    org.json.JSONArray allowed=new org.json.JSONArray();
+                    java.util.HashSet<String> seen=new java.util.HashSet<>();
+                    if(requested!=null){
+                        if(requested.length()>7)return;
+                        for(int i=0;i<requested.length();i++){
+                            String value=requested.optString(i,"").trim();
+                            if(value.length()>30||value.matches("(?s).*[<>\\r\\n].*"))return;
+                            if(!value.isEmpty()&&seen.add(value.toLowerCase(java.util.Locale.ROOT)))allowed.put(value);
+                        }
+                    }else if(!input.optString(key,"").trim().isEmpty()){
+                        allowed.put(input.optString(key,"").trim());
+                    }
+                    extra.put(plural,allowed);
+                    // Never apply obsolete single-choice selection concurrently.
+                    extra.put(key,"");
+                }
                 org.json.JSONArray species=input.optJSONArray("pokemonSelections");
                 if(species!=null){
                     if(species.length()>50)return;
@@ -2235,6 +2259,7 @@ public class OverlayService extends Service {
                     extra.put("pokemonSelections",cleaned);
                     extra.put("pokemon",""); // Multi-select replaces legacy single text.
                 }
+                if(extra.optString("sortBy","").isEmpty())extra.put("sortBy","Despawn (longest)");
                 for(String[] pair:new String[][]{{"cpMin","cpMax"},{"levelMin","levelMax"}}){
                     String low=extra.optString(pair[0]),high=extra.optString(pair[1]);
                     if(!low.isEmpty()&&!high.isEmpty()&&Double.parseDouble(low)>Double.parseDouble(high))return;
@@ -2253,6 +2278,13 @@ public class OverlayService extends Service {
                         if(key.equals(previouslyCleared.optString(i)))stillNeedsClear=true;
                     if(after.isEmpty()&&(!before.isEmpty()||stillNeedsClear))
                         clearKeys.put(key);
+                }
+                for(String key:new String[]{"sizeSelections","genderSelections"}){
+                    org.json.JSONArray before=previousExtra.optJSONArray(key),after=extra.optJSONArray(key);
+                    if(before!=null&&before.length()>0&&after!=null&&after.length()==0)clearKeys.put(key);
+                    if(previouslyCleared!=null&&after!=null&&after.length()==0)
+                        for(int i=0;i<previouslyCleared.length();i++)
+                            if(key.equals(previouslyCleared.optString(i)))clearKeys.put(key);
                 }
                 org.json.JSONArray beforeSpecies=previousExtra.optJSONArray("pokemonSelections");
                 org.json.JSONArray afterSpecies=extra.optJSONArray("pokemonSelections");
@@ -2283,7 +2315,8 @@ public class OverlayService extends Service {
                     .putInt("rawStamina",st).putInt("glRank",gl).putInt("ulRank",ul)
                     .putInt("ivPercentMin",min).putInt("ivPercentMax",max)
                     .putString("extraFiltersJson",extraFiltersJson).apply();
-                replaceActiveFilterSearch();shinyVerified=false;
+                replaceActiveFilterSearch();
+                // Preserve authenticated Shiny preference; reverify it after location when searching.
                 // Keep site-confirmed cards with their original mode/icon
                 // until the new search passes all checks and returns valid cards.
                 boolean preview=restoreFilterPreview();
