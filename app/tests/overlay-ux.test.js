@@ -3362,11 +3362,13 @@ test("LT70-FORM-MULTI uses official DOM checkboxes, not hardcoded form names",()
   probe.includes('!extraMulti("form",wanted,"verify")')&&
   probe.includes('slice(0,key==="form"?500:80)');
 });
-test("LT71-FORM-EDITOR searches official forms with chips but applies only on final Filters confirm",()=>{
+test("LT62-FORM-EDITOR searches official forms and only Form is patched on each choice",()=>{
  const block=dock.split("function renderFormPicker(){")[1]?.split("window.onFormOptions=response=>",1)[0]||"";
- return block.includes("input.placeholder=\"Buscar forma no PoGoCoordinates\"")&&
+ const picker=dock.split("function refreshOfficialFormList(){")[1]?.split("function renderFormPicker()",1)[0]||"";
+ return block.includes('input.placeholder="Buscar forma no PoGoCoordinates"')&&
   block.includes("Native.requestFormOptions(formQuery)")&&
-  block.includes("renderFiltersChoices();")&&
+  !block.includes('done.textContent="✓ Confirmar seleção"')&&
+  picker.includes('patchSelectedFilterKeys(["formSelections","form"])')&&
   dock.includes('formButton.onclick=()=>{modeScrollTop=panel.scrollTop;formQuery="";renderFormPicker();}')&&
   dock.includes('filterOptions.form={present:true,options:[...new Set([...previous,...options])].slice(0,500)}')&&
   dock.includes('Native.patchSearchFilters(JSON.stringify(delta))');
