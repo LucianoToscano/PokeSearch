@@ -373,12 +373,18 @@ function pokemonPickerInput(){
   /search by name, form, or dex|search.*(?:pok[eé]mon|form|dex)|name.*form.*dex/i.test(
    (e.getAttribute('placeholder')||'')+' '+(e.getAttribute('aria-label')||'')))||null;
 }
+// PS66: a generic aria-haspopup button is NOT proof of the Pokémon trigger.
 function pokemonPickerButton(root){
  if(!root)return null;
- return Array.from(root.querySelectorAll('button,[role=combobox],[aria-haspopup]'))
-  .find(e=>vis(e)&&(/pok[eé]mon/i.test(String(e.getAttribute('aria-label')||''))||
-    e.getAttribute('aria-haspopup')||e.getAttribute('role')==='combobox'||
-    /(?:any pok[eé]mon|\b\d+\b)/i.test(text(e))))||null;
+ const all=Array.from(root.querySelectorAll('button,[role=combobox],[aria-haspopup]'))
+  .filter(vis);
+ const named=all.filter(e=>/pok[eé]mon/i.test(String(e.getAttribute('aria-label')||'')+
+  ' '+String(e.getAttribute('title')||''))||/^(?:any pok[eé]mon|pok[eé]mon)$/i.test(text(e)));
+ if(named.length===1)return named[0];
+ if(named.length>1)return null; // Ambiguous: never click some other filter.
+ const combos=all.filter(e=>e.getAttribute('aria-haspopup')==='listbox'||
+  e.getAttribute('role')==='combobox');
+ return combos.length===1?combos[0]:null;
 }
 function pokemonSelectedChips(){
  const root=pokemonPickerRoot();if(!root)return null;
@@ -401,18 +407,48 @@ function pokemonQueryForSite(query){
  const dex=value.match(/^#0*(\d{1,4})$/);
  return dex?String(Number(dex[1])):value;
 }
-function pokemonPickerOptions(){
+// PS66: never fall back to an unrelated open weather/form/size dropdown.
+// Read exact aria-controls/owns first; otherwise require ONE candidate listbox
+// with matching Pokémon results for the currently typed query.
+function pokemonPickerPopup(input,trigger,query){
+ const controls=[input,trigger].filter(Boolean);
+ const ids=[...new Set(controls.flatMap(control=>
+  [control.getAttribute('aria-controls'),control.getAttribute('aria-owns')].filter(Boolean)))];
+ for(const id of ids){
+  const popup=document.getElementById?.(id);
+  if(popup&&vis(popup))return popup;
+ }
+ const selector='[role=option],[cmdk-item],[data-radix-collection-item],li';
+ const all=elements('[role=listbox],[cmdk-list]').filter(vis);
+ const innermost=all.filter(scope=>!all.some(inner=>inner!==scope&&scope.contains?.(inner)));
+ const wanted=clean(query||'').toLowerCase();
+ const matches=innermost.filter(scope=>{
+  const options=Array.from(scope.querySelectorAll(selector)).filter(vis);
+  if(!options.length)return wanted!==''&&
+   /(?:no results|no matches|nothing found|nenhum(?:a|s)? resultado)/i.test(text(scope))&&
+   (controls.some(c=>c.getAttribute('aria-expanded')==='true')||
+    document.activeElement===input);
+  if(!wanted)return controls.some(c=>c.getAttribute('aria-expanded')==='true')||
+   document.activeElement===input;
+  return options.some(option=>{
+   const raw=text(option).toLowerCase();
+   // A #dex query can render leading zeros on the site.
+   if(/^\d{1,4}$/.test(wanted)){
+    const id=(raw.match(/#\s*0*(\d{1,4})\b/)||[])[1];
+    return (id&&String(Number(id))===String(Number(wanted)))||raw.includes(wanted);
+   }
+   return raw.includes(wanted);
+  });
+ });
+ return matches.length===1?matches[0]:null;
+}
+function pokemonPickerOptions(query){
  const input=pokemonPickerInput();if(!input)return [];
  const trigger=pokemonPickerButton(pokemonPickerRoot());
- const popup=activeOptionPopup(input)||activeOptionPopup(trigger);
- const selector='[role=option],[role=listbox] [role=checkbox],[cmdk-item],[data-radix-collection-item],[role=listbox] button,[role=listbox] li,li';
- // Stale aria-controls may point to an unmounted React node. Only accept
- // a fallback when there is ONE visible listbox; never mine unrelated page <li>.
- const alternatives=popup?[]:elements('[role=listbox],[cmdk-list],[role=menu]')
-  .filter(vis).filter(scope=>scope.querySelectorAll(selector).length>0);
- const scope=popup||(alternatives.length===1?alternatives[0]:null);
- if(!scope)return [];
- const candidates=Array.from(scope.querySelectorAll(selector)).filter(vis);
+ const popup=pokemonPickerPopup(input,trigger,query===undefined?input.value:query);
+ if(!popup)return [];
+ const selector='[role=option],[cmdk-item],[data-radix-collection-item],[role=listbox] li,li';
+ const candidates=Array.from(popup.querySelectorAll(selector)).filter(vis);
  return candidates.map(e=>{
   const raw=text(e),label=normalizePokemonLabel(raw);
   const dex=(raw.match(/#\s*(\d{1,4})/)||[])[1]||'';
@@ -421,7 +457,7 @@ function pokemonPickerOptions(){
  }).filter(item=>item.label&&item.label.length<=90&&
   !/^(?:any pok[eé]mon|clear|search|close|no results|loading)$/i.test(item.label))
   .filter((item,i,all)=>all.findIndex(v=>v.label.toLowerCase()===item.label.toLowerCase())===i)
-  .slice(0,35);
+  .slice(0,50);
 }
 function pokemonSuggestion(query){
  const root=pokemonPickerRoot();
