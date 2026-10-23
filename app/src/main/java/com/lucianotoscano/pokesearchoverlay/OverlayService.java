@@ -2199,7 +2199,7 @@ public class OverlayService extends Service {
             execute("pokemonSuggest:"+JSONObject.quote(query),response->{
                 if(stopped||generation!=requestGeneration||sequence!=pokemonSuggestionSequence||
                     menuPanel==null||!menuLoaded)return;
-                if(response.optBoolean("pending",false)&&attempt<12){
+                if(response.optBoolean("pending",false)&&attempt<20){
                     handler.postDelayed(()->requestPokemonSuggestionsLater(query,generation,sequence,attempt+1),300L);
                     return;
                 }
