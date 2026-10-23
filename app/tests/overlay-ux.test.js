@@ -3065,7 +3065,7 @@ test("LT58-SITE-SELECT-01 Size selects locally while site probe must confirm bef
   !f.includes('button.disabled=!actual')&&
   p.includes('const rows=key==="form"?formOptionRows(control):')&&
   p.includes('const ok=extraMulti("size",wanted,action);')&&
-  p.includes('if(!target.length&&isNeutral(extraValue(key)))return true;')&&
+  p.includes('if(!target.length&&isNeutral(extraValue(key))&&key!=="form")return true;')&&
   p.includes('if(!ok)failed.push("sizeSelections");');
 });
 test("LT58-SITE-SELECT-02 Gender exclusive; Form directly below; redundant text gone",()=>{
@@ -3278,7 +3278,7 @@ test("LT64-FILTER-DELTA species selection preserves unrelated search configurati
   !native.includes('mode=nextMode')&&!native.includes('locationCoords=')&&!native.includes('shiny=');
 });
 test("LT64-FILTER-SIZE recognizes accessible button state and still verifies the site",()=>{
- const source=probe.split("function multiOptions(control){")[1]?.split("function extraMulti(",1)[0]||"";
+ const source=probe.split("function multiOptions(control,key){")[1]?.split("function extraMulti(",1)[0]||"";
  return source.includes("button[aria-pressed]")&&source.includes('option.getAttribute("aria-pressed")')&&
   probe.includes("if(target.some(v=>!observed.some(o=>o.label===v)))return false;")&&
   probe.includes("if(!observed.length)return false;");
