@@ -701,4 +701,23 @@ checked++;
  assert.equal(heldAgain.resultFreshnessPending,false,'Transition proof persists within one submission');
  checked+=3;
 }
+// LT61-SHINY-ALL-MODES: every supported mode must verify Shiny on the live form.
+{
+ const modes=[
+  ["raw-zero","raw",{iv:["0","0","0"],config:{attack:0,defense:0,stamina:0}}],
+  ["raw-custom","raw",{iv:["3","15","12"],config:{attack:3,defense:15,stamina:12}}],
+  ["raw-hundo","raw",{iv:["15","15","15"],config:{attack:15,defense:15,stamina:15}}],
+  ["iv100-legacy","iv",{iv:["15","15","15"]}],
+  ["percent","percent",{iv:["91","100"],config:{percentMin:91,percentMax:100}}],
+  ["great-league","gl",{pvp:{rank:"1",league:"Great League",prior:"Yes"},config:{glRank:1}}],
+  ["ultra-league","ul",{pvp:{rank:"1",league:"Ultra League",prior:"Yes"},config:{ulRank:1}}]
+ ];
+ for(const [label,mode,options] of modes){
+  const good=run("verifyFilters",mode,true,{...options,switch:true});
+  assert.equal(good.ok,true,label+" must keep exact mode filters and confirmed Shiny ON");
+  const off=run("verifyFilters",mode,true,{...options,switch:false});
+  assert.equal(off.ok,false,label+" must reject a site Shiny switch that went OFF");
+  checked+=2;
+ }
+}
 console.log("PokeSearch probe contract: "+checked+" tests passed");
