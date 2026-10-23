@@ -1024,7 +1024,8 @@ test("Guest public search continues even if stale Shiny preference was ON",
  service.includes('private void refresh(boolean manual)'));
 test("Shiny OFF and normal search never depend on login or trainer linkage",
  service.includes('if(!shiny){applyShinyOnSite(generation,0);return;}')&&
- service.includes('if(!shiny){\n                // OFF never requires signing in')&&
+ service.includes('if(!shiny){\n                // Coords, Shiny and other filters belong to one site form.')&&
+ service.includes('if(locationEnabled){refresh(true);return;}')&&
  !service.includes('if(!hasConfirmedTrainerLink())return;\n        execute("session"'));
 test("Authenticated profile cannot inherit previous trainer link",
  main.includes('.putString("profileTrainerState","unknown")')&&
@@ -1211,9 +1212,10 @@ test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
   dock.indexOf('id="sh"')>dock.indexOf('id="cycle"')&&
   (dock.match(/<button id="(?:cycle|sh|period|manualRefresh|size|clock|bell|star|location|report|donate|close)"/g)||[]).length===12);
 test("Sort by remains among existing verified advanced filters",
-  dock.includes('renderExtraFilters(panel,make)')&&
-  dock.includes('option("sortBy","Sort by")')&&
-  dock.includes('const RESULT_ICONS=Object.freeze'));
+ dock.includes('renderExtraFilters(panel,make)')&&
+ dock.includes('option("sortBy","Ordenar")')&&
+ dock.includes('["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]')&&
+ dock.includes('const RESULT_ICONS=Object.freeze'));
 test("UX-OTHER-01 isolates compact secondary popups from the cascading Modos layout",
  dock.includes('panel.classList.remove("locationPanel","modeCascade","modeCascadeOpen"')&&
  dock.includes('panel.classList.add("visible","modePanel","standardPanel")')&&
@@ -1759,13 +1761,12 @@ test("LT54-ICON-01 launcher uses adaptive artwork and responsive 3:1 header",(()
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return manifest.includes('android:icon="@mipmap/ic_launcher"')&&
   manifest.includes('android:roundIcon="@mipmap/ic_launcher_round"')&&
-  iconGenerator.includes("int artworkSize = 332")&&
-  iconGenerator.includes("int padding = 3")&&
+  iconGenerator.includes("int artworkSize = 288")&&
+  iconGenerator.includes("int padding = 8")&&
   home.includes("wordmarkWidth/3f")&&
   home.includes("wordmarkWidth=Math.max(d(90),Math.min(d(156),availableBrandWidth))")&&
   home.includes("new LinearLayout.LayoutParams(-1,d(70))");
 })());
-
 test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved",()=>{
  const pngs=[
   ["res/drawable-nodpi/ic_launcher.png",1254,1254],
@@ -1773,15 +1774,14 @@ test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved
   ["res/drawable-nodpi/ps_home_official_wordmark.png",2172,724],
   ["assets/branding/PokeSearchLogoShinyBlueEffectAll.png",1254,1254],
   ["assets/branding/PokeSearchLogoShiny.png",1254,1254],
-  ["assets/branding/PokeSearchName.png",2172,724],
+  ["assets/branding/PokeSearchName.png",2172,724]
  ];
  return pngs.every(([p,w,h])=>{
   const img=fs.readFileSync(path.join(root,p));
   return img.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
-    img.readUInt32BE(16)===w&&img.readUInt32BE(20)===h;
- })&&
- iconGenerator.includes("int artworkSize = 332")&&
- iconGenerator.includes("int padding = 3")&&
+   img.readUInt32BE(16)===w&&img.readUInt32BE(20)===h;
+ })&&iconGenerator.includes("int artworkSize = 288")&&
+ iconGenerator.includes("int padding = 8")&&
  iconGenerator.includes("return new int[] {0, 0, image.getWidth(), image.getHeight()}");
 });
 test("HOME-04 shows genuine trainer data and the four transparent team assets",(()=>{
@@ -2634,7 +2634,7 @@ test("RELEASE-NOTES-10 no unaudited corrections advertised",
 test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menus",()=>{
  const filters=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
- return filters.includes('option("sortBy","Sort by")')&&
+ return filters.includes('option("sortBy","Ordenar")')&&
   filters.includes('option("weather","Clima")')&&
   filters.includes('option("form","Forma")')&&
   filters.includes('chips("size","Tamanho")')&&
@@ -2659,14 +2659,17 @@ test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()
 test("FILTERS-POGO-03 size and gender buttons never invent site-supported options",()=>{
  const filters=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
- return filters.includes('const sizeOrder=["XXS","XS","S","M","L","XL","XXL"]')&&
+ const probe=read("assets/probe.js");
+ return filters.includes('["XXS","XS","S","M","L","XL","XXL"]')&&
   filters.includes('["Male","Female","Genderless"]')&&
-  filters.includes('button.disabled=!item.enabled')&&
-  filters.includes('const actual=uniq.find(v=>v.toUpperCase()===label)')&&
-  filters.includes('const choices=(Array.isArray(filterOptions[key]?.options)')&&
+  filters.includes('button.disabled=!actual&&!selected.has(resolved)')&&
+  filters.includes('modeDraft[multiKey]=[...selected]')&&
+  !filters.includes('extraChip","Qualquer"')&&
+  probe.includes('function extraMulti(key,desired,operation){')&&
+  probe.includes('function multiState(option){')&&
+  service.includes('for(String key:new String[]{"size","gender"})')&&
   dock.includes('window.onFilterOptions=function(response){')&&
-  service.includes('final String[] keys={"sortBy","size","form","gender","weather"}')&&
-  service.includes('execute("readFilterOptions:"+key,options->');
+  service.includes('final String[] keys={"sortBy","size","form","gender","weather"}');
 });
 test("FILTERS-POGO-05 reusing confirmed coordinates still executes Search",()=>{
  const handler=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
@@ -2684,14 +2687,14 @@ test("FILTERS-POGO-04 location Apply submits same saved criteria through live DO
  const probe=read("assets/probe.js");
  return dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&
   dock.includes('slide.min="0";slide.max="1000"')&&
-  dock.includes('Aplicar executa Search no PoGoCoordinates')&&
+  dock.includes('Aplicar pesquisa sem limpar outros filtros')&&
+  dock.includes('clear.onclick=disable')&&
+  !dock.includes('fieldRow.append(field,paste,toggle)')&&
   service.includes('OverlayService.this.refresh(true);')&&
   service.includes('configureLocationAndVerify(generation,manual,0)')&&
   service.includes('verifyAndSubmit(generation,manual,0)')&&
-  probe.includes('const EXTRA_LABELS={sortBy:"Sort by"')&&
   probe.includes('if(action==="verifyExtras")');
 });
-
 test("FILTERS-POGO-06 badge counts only extra filter criteria with neutral level defaults",()=>{
  const helper=dock.split("const FILTERS_MENU_KEYS=Object.freeze(")[1]
   ?.split("function quickState(id){")[0]||"";
@@ -2701,12 +2704,12 @@ test("FILTERS-POGO-06 badge counts only extra filter criteria with neutral level
   ";return {count:activeExtraFilterCount,keys:FILTERS_MENU_KEYS};");
  const base={mode:"raw",attack:15,defense:15,stamina:15,glRank:1,ulRank:1,
   percentMin:0,percentMax:100,pokemonSelections:["Pikachu"],pokemon:"Pikachu",
-  levelMin:"1",levelMax:"35",includePreviousEvolutions:true};
+  sortBy:"Despawn (longest)",levelMin:"1",levelMax:"35",includePreviousEvolutions:true};
  const ctx=factory(base,"raw",null,false,"",{},false,false,false);
  const count=ctx.count;
  return count(base,"raw")===0&&
-  count({...base,sortBy:"Despawn (longest)",weather:"Rainy",size:"XXL",
-   cpMin:"600",cpMax:"900",levelMin:"6",levelMax:"32",gender:"Female"},"raw")===6&&
+  count({...base,sortBy:"CP (highest)",weather:"Rainy",sizeSelections:["XXL","XS"],
+   cpMin:"600",cpMax:"900",levelMin:"6",levelMax:"32",genderSelections:["Female"]},"raw")===6&&
   count({...base,minPvpCp:"100",includePreviousEvolutions:false},"gl")===2&&
   count({...base,cpMin:"50",levelMin:"12",minPvpCp:"100"},"gl")===1&&
   !ctx.keys.includes("pokemon")&&!ctx.keys.includes("pokemonSelections")&&
@@ -2729,24 +2732,22 @@ test("FILTERS-POGO-07 Applied requires native verified submission and accepted c
 test("FILTERS-POGO-08 scoped Clear preserves species, IV, Shiny and coordinates",()=>{
  const block=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices(){")[0]||"";
  const clear=block.split("clear.onclick=()=>{")[1]?.split("\n };")[0]||"";
- const saved={mode:"ul",pokemon:"",pokemonSelections:["Pikachu","Eevee"],
-  attack:3,defense:14,stamina:15,glRank:1,ulRank:7,percentMin:20,percentMax:96,
-  sortBy:"CP",weather:"Rainy",size:"XXL",form:"Alolan",gender:"Female",
-  cpMin:"300",cpMax:"900",levelMin:"3",levelMax:"31",minPvpCp:"100",
-  includePreviousEvolutions:false};
  const keys=["sortBy","weather","size","form","gender","cpMin","cpMax",
-  "levelMin","levelMax","minPvpCp"];
+  "levelMin","levelMax","minPvpCp","sizeSelections","genderSelections"];
  let output=null,closed=false;
- new Function("searchSettings","mode","FILTERS_MENU_KEYS","closeChoices","Native",
-  "const clear=()=>{"+clear+"};clear();")(saved,"ul",keys,()=>{closed=true;},
-  {setSearchConfig:value=>{output=JSON.parse(value);}});
- return closed&&!!output&&keys.every(key=>output[key]==="")&&
-  output.includePreviousEvolutions===true&&output.mode==="ul"&&
-  output.ulRank===7&&output.attack===3&&output.defense===14&&output.stamina===15&&
-  JSON.stringify(output.pokemonSelections)===JSON.stringify(saved.pokemonSelections)&&
-  !Object.hasOwn(output,"clearPokemonSelection")&&
+ new Function("FILTERS_MENU_KEYS","closeChoices","Native",
+  "const clear=()=>{"+clear+"};clear();")(keys,()=>{closed=true;},
+  {patchSearchFilters:value=>{output=JSON.parse(value);}});
+ return closed&&!!output&&keys.every(key=>key.endsWith("Selections")?
+  Array.isArray(output[key])&&output[key].length===0:
+  output[key]===(key==="sortBy"?"Despawn (longest)":""))&&
+  output.includePreviousEvolutions===true&&
+  !Object.hasOwn(output,"mode")&&!Object.hasOwn(output,"pokemonSelections")&&
+  !Object.hasOwn(output,"attack")&&!Object.hasOwn(output,"glRank")&&
+  !Object.hasOwn(output,"locationCoords")&&
   block.includes('actions.append(apply,clear,cancel)')&&
-  !block.includes("Native.setLocation(");
+  !block.includes("Native.setLocation(")&&
+  service.includes('@JavascriptInterface public void patchSearchFilters(String payload)');
 });
 test("FILTERS-POGO-09 badge never enlarges twelve-slot ribbon and is accessible",()=>{
  const styles=dock.split("/* FILTERS-POGO-06: two tiny overlay indicators")[1]
