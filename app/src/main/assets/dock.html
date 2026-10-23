@@ -1125,6 +1125,50 @@ body.result-window.visual-preview-results #resultHeader{
 body.result-window.visual-preview-results #spawns{
  outline:1px dashed #62d9ff!important;outline-offset:-1px!important;
 }
+/* LT57 COMPACT-01: Samsung: small detached popup, not a full-screen sheet. */
+body.controls-window #choices[data-panel-kind="filters"]{
+ width:min(260px,calc(100vw - 18px))!important;max-width:260px!important;
+ padding:4px!important;max-height:min(315px,var(--popup-room,400px))!important;
+ overflow-y:auto!important;overscroll-behavior:contain!important;
+}
+body.controls-window #choices.locationPanel{
+ width:min(250px,calc(100vw - 18px))!important;max-height:min(265px,var(--popup-room,400px))!important;
+ padding:4px!important;
+}
+body.controls-window #choices.filterPicker{width:min(238px,calc(100vw - 18px))!important;
+ max-height:min(300px,var(--popup-room,400px))!important;padding:3px!important}
+body.controls-window #choices.filterPicker button{padding:5px 6px!important;margin:1px 0!important;
+ font-size:10px!important;min-height:23px!important}
+#choices[data-panel-kind="filters"] .extraField{min-height:22px!important;gap:3px!important;margin:2px 1px!important}
+#choices[data-panel-kind="filters"] .extraField>label{font-size:9px!important;min-width:68px!important}
+#choices[data-panel-kind="filters"] .extraField button.extraValue{
+ padding:3px 5px!important;font-size:9px!important;min-height:23px!important}
+#choices[data-panel-kind="filters"] .extraNumberRow input{height:23px!important;font-size:10px!important}
+#choices[data-panel-kind="filters"] .extraNumberRow .extraStep{
+ height:23px!important;width:23px!important;flex-basis:23px!important;font-size:13px!important}
+#choices[data-panel-kind="filters"] .extraChipsField{display:flex!important;gap:2px!important}
+#choices[data-panel-kind="filters"] .extraChipsField>label{font-size:9px!important}
+#choices[data-panel-kind="filters"] .extraChipRow{
+ width:100%!important;display:grid!important;gap:2px!important;
+}
+#choices[data-panel-kind="filters"] .extraChipRow[data-kind="size"]{
+ grid-template-columns:repeat(7,minmax(0,1fr))!important;
+}
+#choices[data-panel-kind="filters"] .extraChipRow[data-kind="gender"]{
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+}
+#choices[data-panel-kind="filters"] .extraChipRow .extraChip{
+ width:100%!important;min-width:0!important;height:25px!important;min-height:25px!important;
+ padding:1px!important;margin:0!important;font-size:9px!important;border-radius:6px!important}
+#choices[data-panel-kind="filters"] .extraDivider{margin:3px 1px!important}
+#choices[data-panel-kind="filters"] .extraHead{padding:4px!important;font-size:10px!important}
+#choices[data-panel-kind="filters"] .extraNote,#choices[data-panel-kind="filters"] .uxNote{font-size:8px!important;padding:2px!important}
+#choices[data-panel-kind="filters"] .modeAction.filterActions{gap:2px!important;padding:3px 1px!important}
+#choices[data-panel-kind="filters"] .modeAction.filterActions button{
+ padding:4px 1px!important;font-size:9px!important;line-height:1.1!important}
+#choices[data-panel-kind="filters"] .choiceHeader{padding:3px 4px!important;font-size:10px!important}
+body.controls-window #choices.locationPanel .locText{font-size:9px!important;line-height:1.2!important;
+ margin:3px 2px!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
