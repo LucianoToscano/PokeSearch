@@ -128,12 +128,22 @@ function run(action,mode,shinyOnly,opts={}){
       }
     }
   }
+  if(opts.searchButton){
+    const search=element("Search",{},{tagName:"BUTTON",click(){opts.submitted=true;}});
+    cardButtons.push(search);
+  }
   if(opts.pending||opts.pendingText){
     pending=[element(opts.pendingText||"Link a Pokémon GO account. Your trainer code: 12 digits")];
   }
   const accountLabels=opts.accountBadge?[element("Shiny for your account TestAccount (123456789012).")]:[];
   const sessionButtons=opts.loggedOut?[element(opts.loginLabel||"Log in")]:opts.logoutVisible?[element("Log out")]:[];
   function querySelectorAll(selector){
+    if(opts.emptyStatus&&selector==='main [role=status],main [aria-live],main p,main h2,main h3'){
+      return [element("No results found",{}, {closest:()=>null})];
+    }
+    if(opts.emptyRegion&&selector==='main section,[role=region],[data-testid*=result],[aria-label*=result]'){
+      return [element("No results found",{}, {querySelector:()=>null})];
+    }
     if(selector==="label,span,strong,div")return labels;
     if(selector==="span,label,strong,small,dt,div,p")return all;
     if(selector==='[role="dialog"],[aria-modal="true"],form')return pending;
@@ -144,7 +154,7 @@ function run(action,mode,shinyOnly,opts={}){
     if(selector==="p,small,span,div,label")return accountLabels;
     return [];
   }
-  const document={querySelectorAll,querySelector:()=>null,getElementById:id=>popupById[id]||null,
+  const document={querySelectorAll,querySelector:selector=>opts.loading&&selector==='[aria-busy="true"],[role="progressbar"]'?element("Loading"):null,getElementById:id=>popupById[id]||null,
     body:element(opts.siteCount!==undefined?"Showing "+opts.siteCount+" spawns":opts.profileBody|| (opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":""))};
   const code=source.replace("__ACTION__",JSON.stringify(action))
       .replace("__MODE__",JSON.stringify(mode))
@@ -158,7 +168,7 @@ function run(action,mode,shinyOnly,opts={}){
   const HTMLTextAreaElement={prototype:{}};
   Object.defineProperty(HTMLTextAreaElement.prototype,"value",{set(v){this.value=String(v);}});
   class Event{constructor(type){this.type=type;}}
-  return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:opts.pathname||"/search",hostname:"pogocoordinates.com"},window:{},HTMLInputElement,HTMLTextAreaElement,Event}));
+  return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:opts.pathname||"/search",hostname:"pogocoordinates.com"},window:opts.browserWindow||{},HTMLInputElement,HTMLTextAreaElement,Event}));
 }
 function configureSettled(mode,opts,max=14){
  let last=null,waits=0;
@@ -640,5 +650,37 @@ checked++;
   assert.equal(changes,1,'Input is changed once');
   checked++;
  }
+}
+// LT60 E7: never approve an old zero without proof that the result UI changed.
+{
+ const shared={};
+ const form={config:{_preSubmitVerified:true},pvp:{rank:'1',league:'Great League',prior:'Yes'},browserWindow:shared};
+ const first=run('submitSearch','gl',false,{...form,siteCount:0,emptyStatus:true,searchButton:true});
+ assert.equal(first.ok,true,'Search should submit');
+ const stale=run('collect','gl',false,{...form,siteCount:0,emptyStatus:true});
+ assert.equal(stale.emptySignalFound,true,'Explicit old zero message is visible');
+ assert.equal(stale.resultChanged,false,'Old zero has no result DOM transition');
+ assert.equal(stale.explicitEmpty,false,'Old empty results must never be confirmed');
+ checked++;
+}
+{
+ const shared={};
+ const form={config:{_preSubmitVerified:true},pvp:{rank:'1',league:'Great League',prior:'Yes'},browserWindow:shared};
+ run('submitSearch','gl',false,{...form,siteCount:3,searchButton:true});
+ const fresh=run('collect','gl',false,{...form,siteCount:0,emptyStatus:true});
+ assert.equal(fresh.resultChanged,true,'Result count has changed since Search');
+ assert.equal(fresh.explicitEmpty,true,'Fresh empty result with site proof is accepted');
+ assert.equal(fresh.criteriaConfirmed,true,'Pre-submit site filter must still be confirmed');
+ checked++;
+}
+{
+ const shared={};
+ const form={config:{_preSubmitVerified:true},pvp:{rank:'1',league:'Great League',prior:'Yes'},browserWindow:shared};
+ run('submitSearch','gl',false,{...form,siteCount:4,searchButton:true});
+ const countOnly=run('collect','gl',false,{...form,siteCount:0});
+ assert.equal(countOnly.explicitEmpty,false,'Showing 0 spawns alone is not a confirmed zero');
+ const busy=run('collect','gl',false,{...form,siteCount:0,emptyRegion:true,loading:true});
+ assert.equal(busy.explicitEmpty,false,'Loading UI cannot be confirmed as empty');
+ checked+=2;
 }
 console.log("PokeSearch probe contract: "+checked+" tests passed");
