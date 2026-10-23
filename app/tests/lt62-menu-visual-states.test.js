@@ -521,5 +521,55 @@ check("LT62 unified Pokébola: anchored placement clamps and flips above only wh
  a=place({iconX:280,iconY:90,offX:-12,offY:8,resultsH:400});
  assert.equal(a.x,268);assert.equal(a.y,130,"Editor offsets remain relative");
 });
+
+check("LT62 Shiny one-pass: tap only submits one verified Search, no extra setShiny calls",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const toggle=native.split("@JavascriptInterface public void shiny(){")[1]?.split("@JavascriptInterface public void refresh(){",1)[0]||"";
+ assert.ok(toggle.includes("shiny=!shiny;"));
+ assert.ok(toggle.includes("replaceActiveFilterSearch();"));
+ assert.ok(toggle.includes("shinyLoginPromptRequested=shiny;"));
+ assert.ok(toggle.includes("resultsStale=count()>0;"));
+ assert.ok(toggle.includes("shinyVerified=false;"));
+ assert.ok(toggle.includes("if(!shiny){"));
+ assert.ok(toggle.includes("refresh(true);"));
+ assert.ok(toggle.includes("startVerifiedShinySearch(generation,0);"));
+ assert.ok(!toggle.includes("prepareImmediateShiny(generation);"));
+ assert.ok(!toggle.includes("applyShinyOnSite(generation,0);"));
+ assert.ok(!toggle.includes('execute("setShiny"'));
+ assert.equal((toggle.match(/refresh\(true\);/g)||[]).length,1,
+  "OFF refreshes once and ON starts the session-gated pipeline");
+});
+check("LT62 Shiny one-pass: short session-hydration retry never trusts stale preferences",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const code=native.split("private void startVerifiedShinySearch(int generation,int attempt){")[1]
+  ?.split("private void prepareImmediateShiny(",1)[0]||"";
+ assert.ok(code.includes('execute("session",session->'));
+ assert.ok(code.includes('if("não confirmado".equals(auth)&&attempt<6){'));
+ assert.ok(code.includes('startVerifiedShinySearch(generation,attempt+1),400L'));
+ assert.ok(code.includes('if(!siteConfirmsShinyAccount(session))'));
+ assert.ok(code.includes('revertUnverifiedShiny('));
+ assert.ok(code.includes('openShinyLogin();'));
+ assert.ok(code.includes('refresh(true);'));
+ assert.ok(code.includes('generation!=requestGeneration||!shiny'));
+ assert.ok(native.includes('session.optBoolean("trainerLinked",false)||hasConfirmedTrainerLink()'));
+ assert.ok(native.includes('confirmedSubmittedFiltersGeneration=generation;'));
+ assert.ok(native.includes('execute("verifyShiny",verified->'));
+});
+check("LT62 Shiny page readiness: one deferred search prevents two concurrent DOM updates",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const nav=native.split('pendingPageRefreshGeneration=searchInProgress?-1:requestGeneration;')[1]
+  ?.split('@Override public void onReceivedError',1)[0]||"";
+ assert.ok(nav.includes('if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,'));
+ assert.ok(nav.includes('shiny&&!shinyVerified?900L:2500L'));
+ assert.ok(!nav.includes('prepareImmediateShiny(generation);'));
+ assert.ok(native.includes('execute("setShiny",applied->') &&
+  native.includes('verifyShinyAfterLocation(generation,manual,0);'),
+  "the single Search must still apply Shiny after location verification");
+ assert.ok(native.includes('confirmedSubmittedFiltersGeneration==requestGeneration&&'));
+ assert.ok(native.includes('shiny&&!shinyVerified'));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
