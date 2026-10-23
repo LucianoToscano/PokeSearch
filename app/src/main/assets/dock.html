@@ -1215,6 +1215,15 @@ body.controls-window #choices.locationPanel .compactLocationActions{gap:3px!impo
 body.controls-window #choices.locationPanel .compactLocationActions button{
  flex:1!important;min-width:0!important;padding:5px 2px!important;
  font-size:10px!important;text-align:center!important}
+/* UX-QUICK-MORE-STABLE-01: More only changes the overlay's height.
+   The ribbon keeps its native width, original tile sizing and horizontal layout.
+   Do not let a visible submenu contribute to its grid track sizing. */
+body.controls-window #menu:has(#choices.morePanel.visible) #quickMenuList{
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ height:34px!important;min-height:34px!important;max-height:34px!important;
+ grid-auto-rows:30px!important;align-content:start!important;
+ overflow:hidden!important;
+}
 /* UX-QUICK-MORE-02: 10 compact ribbon slots by default, each tile separate.
    Moving any original utility before the suffix extracts that action from More. */
 body.controls-window #quickMenuList{
@@ -1572,12 +1581,20 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  if(controlsWindow&&choiceOpen&&menuOpen){
   positionPopupUnderTrigger();
   const popup=document.getElementById("choices");
-  // Stable measured height regardless of whether native positions it above or below.
-  // The intended cascade is always 190px tall even if CSS temporarily clamps
-  // its visible height to a short screen. Repositioning must be able to expand it.
   const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;
+  if(choiceOpen==="more"){
+   // The cascade is independent of the main ribbon. Native height must never
+   // derive from a WebView reflow during the height transition: three fixed
+   // 30px tiles + the actual configured gaps are the only extension.
+   const tiles=popup.querySelectorAll(".quickMoreAction").length;
+   const gap=Math.max(0,parseFloat(getComputedStyle(popup).rowGap)||0);
+   const moreHeight=tiles*30+Math.max(0,tiles-1)*gap;
+   h=Math.max(h,baseHeight+Math.ceil(moreHeight)+6);
+  }else{
+   // Preserve existing adaptive sizing for every other popup.
    h=Math.max(h,choiceOpen==="mode"?baseHeight+190+6:
     baseHeight+Math.ceil(popup.getBoundingClientRect().height)+6);
+  }
  }
  if(Math.abs(h-lastHeight)>1){
   lastHeight=h;
@@ -1624,7 +1641,9 @@ function toggleChoices(kind){
  choiceOpen=kind;
  if(kind!=="mode")document.getElementById("choices").classList.remove(
   "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
- document.getElementById("menu").classList.add("subview");
+ // MORE never enters a subview: the original 10-button ribbon stays visible
+ // with exactly the same CSS and hit geometry while its three tiles open below.
+ document.getElementById("menu").classList.toggle("subview",kind!=="more");
  if(kind==="alerts"){renderAlertsChoices();return;}
  if(kind==="info"){renderInfoChoices();return;}
  if(kind==="appearance"){renderAppearanceChoices();return;}
