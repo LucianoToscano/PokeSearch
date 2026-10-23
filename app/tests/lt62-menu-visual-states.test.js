@@ -356,7 +356,7 @@ check("LT62 Atualização and More: OFF + five minutes, no AUTO decoration, tran
  assert.ok(dock.includes('#choices.morePanel [data-key=close] .quickGlyph{color:#ff596c!important}'));
 });
 
-check("LT62 Filtros: ✓ next to PC, Nível and PvP minimum CP only, no global footer",()=>{
+check("LT62 Filtros: numeric ✓ remain inline; three requested icon actions show below rail",()=>{
  const body=dock.split("function renderExtraFilters(panel,make){")[1]?.split("function renderFilterPicker(",1)[0]||"";
  const panel=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices()",1)[0]||"";
  assert.ok(body.includes('numericConfirmButton(make,[minKey,maxKey],label)'));
@@ -364,7 +364,7 @@ check("LT62 Filtros: ✓ next to PC, Nível and PvP minimum CP only, no global f
  assert.ok(dock.includes('button.dataset.filterConfirm=keys.join(",")'));
  assert.ok(dock.includes('button.onclick=()=>confirmNumericFilter(keys,label)'));
  assert.ok(dock.includes(".filterCascadeEditor .filterInlineConfirm{"));
- assert.ok(!panel.includes("rail.appendChild(actions)"),"no footer buttons below filters");
+ assert.ok(panel.includes("if(rail)rail.appendChild(actions);"),"three requested actions must be in the DOM");
  assert.ok(body.includes('patchSelectedFilterKeys([multiKey,key])'));
  assert.ok(dock.includes('patchSelectedFilterKeys(["formSelections","form"])'));
  assert.ok(!dock.includes('done.textContent="✓ Confirmar seleção"'));
