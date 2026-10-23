@@ -4987,6 +4987,9 @@ function renderAlertsChoices(){
      node.classList.toggle("awaiting",node===button&&pendingAlertChoice[target]!==null));
     if(target==="general")Native.setAlertMode(id);
     else Native.setFavoriteAlertMode(id);
+    // This is a user tap, not an automatic permission request on startup.
+    if(id==="on"&&!notificationPermissionGranted&&Native.requestNotificationPermission)
+     Native.requestNotificationPermission();
    };
    states.appendChild(button);
   }
@@ -5286,11 +5289,9 @@ function renderAppearanceChoices(){
  fit();
 }
 document.addEventListener("pointerdown",event=>{
- if(choiceOpen!=="more"&&choiceOpen!=="period")return;
- if(event.target.closest("#choices.morePanel")||
-    event.target.closest("#choices.periodCompact")||
-    event.target.closest('#quickMenuList button[data-key="more"]')||
-    event.target.closest('#quickMenuList button[data-key="period"]'))return;
+ if(!choiceOpen)return;
+ if(event.target.closest("#choices")||
+    event.target.closest('#quickMenuList button[data-key]'))return;
  closeChoices();
 },true);
 if(controlsWindow){

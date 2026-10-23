@@ -243,7 +243,7 @@ check("LT62 Notificações: painel somente 2 blocos × 3 ícones SVG e botões d
  assert.ok(block.includes('select.onclick=()=>Native.pickAlertTone(target)'));
  assert.ok(dock.includes('const SHOW_INDIVIDUAL_FAVORITE_TONES=false'));
  assert.ok(!block.includes('testNotification"]'));
- assert.ok(!block.includes('requestNotificationPermission'));
+ assert.ok(block.includes('Native.requestNotificationPermission()'));
  assert.ok(dock.includes('body.controls-window #choices.standardPanel.alertsMini'));
 });
 check("LT62 Notificações: 36 MP3 locais, favorito BR por padrão sem alterar preferências",()=>{
@@ -820,6 +820,21 @@ check("LT62 audit: Visual Editor parameters and touch limitations remain explici
  assert.ok(visual.includes('addSlider(panel,"popupWidth"'));
  assert.ok(visual.includes('addSlider(panel,"popupHeight"'));
  assert.ok(visual.includes('addSegment(panel,"menuOrientation"'));
+});
+
+check("LT62 touch: outside a visible popup closes it without stealing real controls",()=>{
+ const capture=dock.split('document.addEventListener("pointerdown",event=>{')[1]
+   ?.split("if(controlsWindow){",1)[0]||"";
+ assert.ok(capture.includes("if(!choiceOpen)return;"));
+ assert.ok(capture.includes('event.target.closest("#choices")'));
+ assert.ok(capture.includes('event.target.closest(\'#quickMenuList button[data-key]\')'));
+ assert.ok(capture.includes("closeChoices();"));
+});
+check("LT62 notices: ON asks permission only after explicit selection",()=>{
+ const alerts=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App",1)[0]||"";
+ assert.ok(alerts.includes('if(id==="on"&&!notificationPermissionGranted&&Native.requestNotificationPermission)'));
+ assert.ok(alerts.includes('Native.requestNotificationPermission();'));
+ assert.ok(alerts.indexOf('Native.requestNotificationPermission();')>alerts.indexOf('button.onclick=()=>{'));
 });
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
