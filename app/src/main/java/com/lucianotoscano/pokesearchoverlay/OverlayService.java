@@ -835,7 +835,9 @@ public class OverlayService extends Service {
                 PixelFormat.TRANSLUCENT);
         params.gravity=Gravity.TOP|Gravity.LEFT;
         params.x=dp(Math.max(0,screenWidthDp()-dockDp()-7));params.y=dp(120);
-        try{wm.addView(root,params);}catch(Exception e){recordFailure("abrir dock",e);stopSelf();return;}
+        // The dock is attached AFTER the menu and results overlays, so its
+        // independent 53x32dp gear/grip stays above any transparent popup
+        // rectangle. Reordering avoids removing/readding an active WebView.
 
         // Dedicated 308dp-by-29dp touchable window for the toolbar.
         // Transparent regions outside this rectangle belong to Pokémon GO:
@@ -880,6 +882,11 @@ public class OverlayService extends Service {
         // The Pokémon list is always its OWN Android overlay. The gear remains
         // a small independent control even if there is only one active search.
         createResultsWindow();
+        // LT62: topmost small dock receives taps/drags even if Modos is open.
+        // Only this small dock can pass through the native menu hit rectangle;
+        // arbitrary touches behind a popup require separate native touch windows.
+        try{wm.addView(root,params);}
+        catch(Exception e){recordFailure("abrir dock",e);stopSelf();return;}
 
         detailRoot=new FrameLayout(this);
         detailRoot.setBackgroundColor(Color.TRANSPARENT);
@@ -2432,7 +2439,7 @@ public class OverlayService extends Service {
                 int min=input.getInt("percentMin"),max=input.getInt("percentMax");
                 if(!within(a,0,15)||!within(d,0,15)||!within(st,0,15)||
                     !within(gl,1,50)||!within(ul,1,50)||
-                    !isAllowedIvPercent(min)||!isAllowedIvPercent(max)||min>max)return;
+                    !within(min,0,100)||!within(max,0,100)||min>max)return;
                 JSONObject extra=new JSONObject();
                 String[] strings={"sortBy","pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","minPvpCp"};
                 for(String key:strings){
@@ -3134,15 +3141,12 @@ public class OverlayService extends Service {
         }
         glRank=Math.max(1,Math.min(50,pref.getInt("glRank",1)));
         ulRank=Math.max(1,Math.min(50,pref.getInt("ulRank",1)));
-        // Existing installations may have saved unattainable values such as 90%.
-        // Round Min DOWN and Max UP, preserving the intended inclusive range.
-        int previousMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
-        int previousMax=Math.max(previousMin,Math.min(100,pref.getInt("ivPercentMax",100)));
-        ivPercentMin=floorIvPercent(previousMin);
-        ivPercentMax=Math.max(ivPercentMin,ceilIvPercent(previousMax));
-        if(ivPercentMin!=previousMin||ivPercentMax!=previousMax)
-            pref.edit().putInt("ivPercentMin",ivPercentMin)
-                .putInt("ivPercentMax",ivPercentMax).apply();
+        // LT62: accept any typed integer 0..100 and preserve it across restarts.
+        // Spawn values remain physically attainable IV sums; thresholds can be
+        // any integer and the site receives the exact requested min/max.
+        ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
+        ivPercentMax=Math.max(ivPercentMin,
+            Math.min(100,pref.getInt("ivPercentMax",100)));
         shiny=getSharedPreferences("prefs",0).getBoolean("shiny",false);
         if(!shiny)shinyVerified=false;
         update();
