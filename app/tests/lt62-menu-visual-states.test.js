@@ -337,5 +337,51 @@ check("LT62 AUTO and More: detached identical vertical tiles, transparent backgr
  assert.ok(dock.includes('#choices.morePanel [data-key=donate] .quickGlyph{color:#fa94a7!important}'));
  assert.ok(dock.includes('#choices.morePanel [data-key=close] .quickGlyph{color:#ff596c!important}'));
 });
+
+check("LT62 Filtros: ✓ next to PC, Nível and PvP minimum CP only, no global footer",()=>{
+ const body=dock.split("function renderExtraFilters(panel,make){")[1]?.split("function renderFilterPicker(",1)[0]||"";
+ const panel=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices()",1)[0]||"";
+ assert.ok(body.includes('numericConfirmButton(make,[minKey,maxKey],label)'));
+ assert.ok(body.includes('if(key==="minPvpCp")wrapper.appendChild(numericConfirmButton(make,[key],label));'));
+ assert.ok(dock.includes('button.dataset.filterConfirm=keys.join(",")'));
+ assert.ok(dock.includes('button.onclick=()=>confirmNumericFilter(keys,label)'));
+ assert.ok(dock.includes(".filterCascadeEditor .filterInlineConfirm{"));
+ assert.ok(!panel.includes("rail.appendChild(actions)"),"no footer buttons below filters");
+ assert.ok(body.includes('patchSelectedFilterKeys([multiKey,key])'));
+ assert.ok(dock.includes('patchSelectedFilterKeys(["formSelections","form"])'));
+ assert.ok(!dock.includes('done.textContent="✓ Confirmar seleção"'));
+});
+check("LT62 Filtros: numeric ✓ patches only its own bounded fields",()=>{
+ const script=dock.split("function patchSelectedFilterKeys(keys){")[1]?.split("function renderExtraFilters(",1)[0]||"";
+ assert.ok(script,"scoped helpers");
+ const source="function patchSelectedFilterKeys(keys){"+script+";this.patch=patchSelectedFilterKeys;this.confirm=confirmNumericFilter;";
+ const requests=[],errors=[],saved={
+  cpMin:"50",cpMax:"500",levelMin:"1",levelMax:"35",minPvpCp:"0",
+  weather:"Rainy",genderSelections:["Female"],sortBy:"Despawn (longest)"};
+ const draft={...saved,cpMin:"100",cpMax:"400",weather:"Sunny",genderSelections:["Male"]};
+ let closes=0;
+ const sandbox={modeDraft:draft,searchSettings:saved,
+  Native:{patchSearchFilters:value=>requests.push(JSON.parse(value))},
+  closeChoices:()=>{closes++;},
+  document:{querySelector:()=>({setCustomValidity:m=>errors.push(m),reportValidity:()=>{}})}};
+ vm.runInNewContext(source,sandbox);
+ assert.equal(sandbox.confirm(["cpMin","cpMax"],"PC"),true);
+ assert.equal(JSON.stringify(requests[0]),JSON.stringify({cpMin:"100",cpMax:"400"}));
+ assert.equal(closes,1);
+ sandbox.patch(["genderSelections"]);
+ assert.equal(JSON.stringify(requests[1]),JSON.stringify({genderSelections:["Male"]}));
+ draft.levelMin="36";
+ assert.equal(sandbox.confirm(["levelMin","levelMax"],"Nível"),false);
+ assert.equal(requests.length,2);
+ assert.equal(closes,1);
+ assert.ok(errors.some(x=>x.includes("1 a 35")));
+ draft.levelMin="20";draft.levelMax="10";
+ assert.equal(sandbox.confirm(["levelMin","levelMax"],"Nível"),false);
+ assert.ok(errors.some(x=>x.includes("Min não pode ultrapassar Max")));
+ draft.levelMax="35";draft.minPvpCp="1200";
+ assert.equal(sandbox.confirm(["minPvpCp"],"PC PvP"),true);
+ assert.equal(JSON.stringify(requests[2]),JSON.stringify({minPvpCp:"1200"}));
+ assert.equal(closes,2);
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
