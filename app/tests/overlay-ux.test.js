@@ -3034,9 +3034,9 @@ test("UX-QUICK-MORE-05 close on outside tap and ordinary preferences survive",()
 test("UX-QUICK-MORE-STABLE-01 More does not switch ribbon to a subview or stretch CSS tracks",()=>{
  const choices=dock.split("function toggleChoices(kind){")[1]?.split("function renderModeChoices(){")[0]||"";
  const fit=dock.split("function fit(){")[1]?.split("function closeChoices(){")[0]||"";
- return choices.includes('document.getElementById("menu").classList.toggle("subview",kind!=="more")')&&
+ return choices.includes('document.getElementById("menu").classList.remove("subview");')&&
   choices.includes('if(kind==="more"){renderMoreChoices();return;}')&&
-  dock.includes('body.controls-window #menu:has(#choices.morePanel.visible) #quickMenuList{')&&
+  dock.includes('body.controls-window:not(.visual-menu-vertical) #menu #quickMenuList{')&&
   dock.includes('grid-template-columns:repeat(var(--quick-slot-count,12),minmax(0,1fr))!important')&&
   fit.includes('if(choiceOpen==="more"){')&&
   fit.includes('const tiles=popup.querySelectorAll(".quickMoreAction").length;')&&
@@ -3081,6 +3081,48 @@ test("LT58-SITE-SELECT-02 Gender exclusive; Form directly below; redundant text 
   !f.includes('Filtros avançados')&&
   !dock.includes('Nenhum filtro adicional ativo')&&
   !dock.includes('Cada campo altera apenas seu próprio filtro. Outros filtros permanecem.');
+});
+
+
+test("LT58-ALL-POPUPS-STABLE-01 never changes toolbar layout for ANY submenu",()=>{
+ const toggle=dock.split("function toggleChoices(kind){")[1]?.split("const current=period;")[0]||"";
+ const css=dock.split("/* LT58-ALL-POPUPS-STABLE-01")[1]?.split("/* UX-QUICK-MORE-02:")[0]||"";
+ const native=service.split("private void updateMenuPosition(){")[1]?.split("private void resizeMenu(",1)[0]||"";
+ return toggle.includes('document.getElementById("menu").classList.remove("subview");')&&
+  !toggle.includes('classList.add("subview")')&&
+  !toggle.includes('classList.toggle("subview"')&&
+  css.includes('body.controls-window:not(.visual-menu-vertical) #menu #quickMenuList{')&&
+  css.includes('grid-template-rows:30px!important')&&
+  css.includes('grid-template-columns:repeat(var(--quick-slot-count,12),minmax(0,1fr))!important')&&
+  css.includes('grid-auto-flow:column!important')&&
+  !css.includes(':has(')&&
+  native.includes('if(menuParams.width!=width)menuParams.width=width;')&&
+  native.includes('menuParams.height=rowHeight+actualPopup;');
+});
+test("LT58-ALL-POPUPS-STABLE-02 intrinsic popup height ignores Android clipping",()=>{
+ const part=dock.split("let lastHeight=0;")[1]?.split("function closeChoices(){")[0]||"";
+ if(!part.includes('popup.scrollHeight'))return false;
+ const run=(choice,visibleHeight,scrollHeight)=>{
+  let result=null;
+  const popup={scrollHeight,
+   getBoundingClientRect:()=>({height:visibleHeight}),
+   classList:{contains:s=>(s==="locationPanel"&&choice==="location")||(s==="filterPicker"&&choice==="picker")},
+   querySelectorAll:()=>[1,2,3]};
+  const doc={getElementById:id=>id==="shell"?{getBoundingClientRect:()=>({height:34,top:0})}:popup};
+  new Function("document","requestAnimationFrame","controlsWindow","resultWindow",
+   "choiceOpen","menuOpen","window","Native","positionPopupUnderTrigger","getComputedStyle",
+   "let lastHeight=0;"+part+"fit();")(
+    doc,callback=>callback(),true,false,choice,true,
+    {visualPrefs:{menuOrientation:"horizontal",popupHeight:390}},
+    {resizeMenu:h=>{result=h;}},()=>{},()=>({rowGap:"3px"}));
+  return result;
+ };
+ return run("location",90,340)===305&&
+  run("location",150,340)===305&&
+  run("filters",80,420)===355&&
+  run("filters",200,420)===355&&
+  run("mode",50,320)===230&&
+  run("more",34,130)===136;
 });
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
