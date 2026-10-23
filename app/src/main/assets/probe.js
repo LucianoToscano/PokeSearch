@@ -50,7 +50,12 @@ function optionElements(control){
  if(control&&!scope)return [];
  return (scope?Array.from(scope.querySelectorAll(selector)):elements(selector)).filter(vis);
 }
-function findOption(want,control){return optionElements(control).find(o=>text(o).toLowerCase()===String(want).toLowerCase())||null;}
+function comparableOption(value){
+ // Weather entries may have a leading emoji (☀️ Sunny, 🌧️ Rainy).
+ return clean(String(value||"")).replace(/^[^\\p{L}\\p{N}]+/gu,"").toLowerCase();
+}
+function findOption(want,control){return optionElements(control).find(o=>
+ comparableOption(text(o))===comparableOption(want))||null;}
 function choice(label,want){
  const e=field(label);
  if(!e)return false;
@@ -505,7 +510,7 @@ function extraSelect(key,want){
   return false;
  }
  if(e.disabled)return false;
- if(actual&&actual.toLowerCase()===want.toLowerCase())return true;
+ if(actual&&comparableOption(actual)===comparableOption(want))return true;
  if(e.matches("input"))return valueInput(e,want);
  if(e.matches("select"))return choice(label,want);
  const opt=findOption(want,e);
@@ -582,7 +587,7 @@ function extraMatches(key,want){
  const v=extraValue(key);
  if(v===null)return false; // Cannot prove reset/selection without the live control.
  if(!want)return isNeutral(v);
- return v.toLowerCase()===clean(want).toLowerCase();
+ return comparableOption(v)===comparableOption(want);
 }
 if(action.startsWith("openFilterOptions:")){
  const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
