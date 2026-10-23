@@ -1773,6 +1773,53 @@ body.controls-window #choices.locationPanel .compactLocationActions button{
  flex:0 0 auto!important;width:auto!important;min-width:0!important;
  padding:5px 9px!important;min-height:27px!important;font-size:10px!important;border-radius:6px!important;
 }
+
+/* LT62 alerts: two small sections, icon-only states and one audio picker each. */
+body.controls-window #choices.standardPanel.alertsMini[data-panel-kind="alerts"]{
+ width:min(194px,calc(100vw - 12px))!important;max-width:calc(100vw - 12px)!important;
+ max-height:min(244px,var(--popup-room,400px))!important;
+ overflow:visible!important;padding:5px!important;
+}
+body.controls-window #choices.alertsMini .choiceHeader{
+ min-height:26px!important;padding:2px 3px!important;margin:0 0 4px!important;
+ font-size:11px!important;
+}
+body.controls-window #choices.alertsMini .miniAlertSection{
+ padding:4px 3px 6px!important;margin:0!important;display:flex!important;
+ flex-direction:column!important;gap:4px!important;
+ border-bottom:1px solid #ffffff1d!important;background:transparent!important;
+}
+body.controls-window #choices.alertsMini .miniAlertSection:last-child{
+ border-bottom:0!important;padding-bottom:2px!important;
+}
+body.controls-window #choices.alertsMini .miniAlertHeading{
+ font-weight:600!important;font-size:10px!important;line-height:14px!important;
+ color:var(--visual-menu-fg,#eff4fb)!important;
+}
+body.controls-window #choices.alertsMini .miniAlertModes{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:5px!important;width:100%!important;
+}
+body.controls-window #choices.alertsMini .miniAlertState{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;width:100%!important;height:32px!important;
+ min-height:32px!important;min-width:0!important;margin:0!important;padding:3px!important;
+ border-radius:7px!important;border:1px solid #ffffff35!important;
+ background:#ffffff0d!important;color:var(--visual-menu-fg,#e5eef8)!important;
+}
+body.controls-window #choices.alertsMini .miniAlertState svg{
+ display:block!important;width:23px!important;height:23px!important;pointer-events:none!important;
+}
+body.controls-window #choices.alertsMini .miniAlertState.chosen{
+ border-color:#eac66e!important;color:#ffe092!important;background:#57492288!important;
+}
+body.controls-window #choices.alertsMini .miniAlertTone{
+ display:block!important;width:100%!important;min-height:26px!important;height:26px!important;
+ margin:0!important;padding:2px 6px!important;font-size:10px!important;
+ text-align:center!important;font-weight:600!important;
+ border-radius:6px!important;border:1px solid #ffffff32!important;
+ background:#ffffff12!important;color:var(--visual-menu-fg,#e5eef8)!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -4036,52 +4083,54 @@ function uxOption(panel,label,value,callback){
  const button=document.createElement("button");button.type="button";button.textContent=value;button.onclick=callback;
  line.append(name,button);panel.appendChild(line);return button;
 }
+/* LT62: notification controls stay on one compact panel.
+   Species-specific customization remains available in native code, hidden by UI flag. */
+const SHOW_INDIVIDUAL_FAVORITE_TONES=false;
 function renderAlertsChoices(){
- const panel=uxPanel("NOTIFICAÇÕES");
- const permission=document.createElement("div");permission.className="uxNote";
- permission.textContent=notificationPermissionGranted?
-  "✓ Android permite notificações":"⚠ Android bloqueia notificações; habilite a permissão.";
- panel.appendChild(permission);
- const head=document.createElement("div");head.className="uxSubheading";
- head.textContent="Novos Pokémon (filtros confirmados)";panel.appendChild(head);
- const generalModes=document.createElement("div");generalModes.className="alertModeGroup";
- for(const [id,label] of [["on","🔊 Som"],["silent","🔇 Sem som"],["off","OFF"]]){
-  const button=document.createElement("button");button.type="button";button.textContent=label;
-  button.classList.toggle("chosen",alertMode===id);
-  button.setAttribute("aria-pressed",String(alertMode===id));
-  button.onclick=()=>Native.setAlertMode(id);generalModes.appendChild(button);
- }
- panel.appendChild(generalModes);
- uxOption(panel,"🎵 Escolher som dos novos Pokémon",
-  generalCustomTone?"Personalizado":"Padrão",()=>Native.pickAlertTone("general"));
- const favTitle=document.createElement("div");favTitle.className="uxSubheading";
- favTitle.textContent="Favoritos cadastrados (independentes)";panel.appendChild(favTitle);
- const favoriteModes=document.createElement("div");favoriteModes.className="alertModeGroup";
- for(const [id,label] of [["on","🔊 Som"],["silent","🔇 Sem som"],["off","OFF"]]){
-  const button=document.createElement("button");button.type="button";button.textContent=label;
-  button.classList.toggle("chosen",favoriteAlertMode===id);
-  button.setAttribute("aria-pressed",String(favoriteAlertMode===id));
-  button.onclick=()=>Native.setFavoriteAlertMode(id);favoriteModes.appendChild(button);
- }
- panel.appendChild(favoriteModes);
- uxOption(panel,"🎵 Som padrão dos favoritos",
-  favoriteCustomTone?"Personalizado":"Padrão",()=>Native.pickAlertTone("favorites"));
- uxOption(panel,"🎵 Som de cada Pokémon favorito",
-  individualToneCount?individualToneCount+" configurado(s)":"Escolher",()=>Native.pickAlertTone("species"));
- const note=document.createElement("div");note.className="uxNote";
- note.textContent="🎵 Sons personalizados: toque em Padrão/Personalizado → Biblioteca PokeSearch (24 sons): toque para ouvir e confirme em 'Usar este som'; ou Escolher áudio MP3/OGG → Arquivos/Google Drive. Para Pikachu, Aipom ou outro Pokémon, cadastre-o em Favoritos e use Som de cada Pokémon favorito. Novos em OFF e Favoritos em Som = só favoritos com áudio. Sem som mantém aviso visual; OFF não notifica.";
- panel.appendChild(note);
- for(const [label,action] of [
-  ["🔔 Testar aviso geral","testGeneralNotification"],
-  ["☆ Testar aviso favorito","testNotification"],
-  ["☆ Editar lista de favoritos","openWatchList"],
-  [notificationPermissionGranted?"✓ Permissão concedida":"Permitir notificações","requestNotificationPermission"],
-  ["⚙ Sons e canais no Android","openNotificationSettings"],
-  ["↻ Verificar permissão","refreshNotificationStatus"]
- ]){
-  const button=document.createElement("button");button.type="button";
-  button.textContent=label;button.onclick=()=>Native[action]();panel.appendChild(button);
- }
+ const panel=uxPanel("NOTIFICAÇÕES");panel.classList.add("alertsMini");
+ const symbols={
+  on:'<path d="M3 9v6h4l5 4V5L7 9H3z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19 5a10 10 0 0 1 0 14"/>',
+  silent:'<path d="M3 9v6h4l5 4V5L7 9H3z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19 5a10 10 0 0 1 0 14"/><path d="M2 2l20 20"/>',
+  off:'<path d="M3 9v6h4l5 4V5L7 9H3z"/><path d="M16 9l6 6m0-6-6 6"/>'
+ };
+ const section=(name,target,value,tone)=>{
+  const block=document.createElement("div");block.className="miniAlertSection";
+  const heading=document.createElement("div");heading.className="miniAlertHeading";
+  heading.textContent=name;block.appendChild(heading);
+  const states=document.createElement("div");states.className="miniAlertModes";
+  const labels={on:"Som",silent:"Sem som",off:"OFF"};
+  for(const id of ["on","silent","off"]){
+   const button=document.createElement("button");button.type="button";
+   button.className="miniAlertState"+(id===value?" chosen":"");
+   button.title=name+" · "+labels[id];
+   button.setAttribute("aria-label",name+" · "+labels[id]);
+   button.setAttribute("aria-pressed",String(id===value));
+   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+   svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("aria-hidden","true");
+   svg.setAttribute("stroke","currentColor");svg.setAttribute("stroke-width","1.9");
+   svg.setAttribute("fill","none");svg.setAttribute("stroke-linecap","round");
+   svg.setAttribute("stroke-linejoin","round");
+   svg.innerHTML=symbols[id];button.appendChild(svg);
+   button.onclick=()=>target==="general"?Native.setAlertMode(id):Native.setFavoriteAlertMode(id);
+   states.appendChild(button);
+  }
+  block.appendChild(states);
+  const select=document.createElement("button");select.type="button";
+  select.className="miniAlertTone";
+  select.textContent=tone?"Personalizado":"Padrão";
+  select.setAttribute("aria-label","Escolher áudio · "+name);
+  select.title="Abrir lista de áudios e ouvir prévia";
+  select.onclick=()=>Native.pickAlertTone(target);
+  block.appendChild(select);
+  panel.appendChild(block);
+ };
+ section("Novos Pokémon","general",alertMode,generalCustomTone);
+ section("Pokémon Favoritos","favorites",favoriteAlertMode,favoriteCustomTone);
+ // Feature remains implemented in MainActivity, just absent from public UI.
+ if(SHOW_INDIVIDUAL_FAVORITE_TONES)
+  uxOption(panel,"Som de cada Pokémon favorito",
+   individualToneCount?individualToneCount+" configurado(s)":"Escolher",
+   ()=>Native.pickAlertTone("species"));
  fit();
 }
 
