@@ -505,7 +505,11 @@ test("PL-02 page navigation independent of mutable filter generation",
  pageBlock.includes('pendingPageRefreshGeneration=searchInProgress?-1:requestGeneration;')&&
  !pageBlock.includes('pageLoadGeneration!=requestGeneration')&&
  service.includes('pendingPageRefreshGeneration==requestGeneration)refresh(false)'));
-test("B06 page finish 2500ms handler is cancelable",pageBlock.includes('handler.removeCallbacks(pageFinishedRefresh);')&&pageBlock.includes('handler.postDelayed(pageFinishedRefresh,2500L)')&&!pageBlock.includes('handler.postDelayed(()->{if(!stopped&&!loginPaused)refresh();}'));
+test("B06 page finish schedules one cancellable refresh, 900ms Shiny or 2500ms standard",
+ pageBlock.includes('handler.removeCallbacks(pageFinishedRefresh);')&&
+ pageBlock.includes('handler.postDelayed(pageFinishedRefresh,')&&
+ pageBlock.includes('shiny&&!shinyVerified?900L:2500L')&&
+ !pageBlock.includes('handler.postDelayed(()->{if(!stopped&&!loginPaused)refresh();}'));
 test("B06 REFRESH_LOGIN cancels callbacks before cookie flush",reloadBlock.includes('++requestGeneration;')&&reloadBlock.indexOf('cancelSessionCallbacks();')<reloadBlock.indexOf('CookieManager.getInstance().flush();'));
 test("B06 reload occurs after 350ms with generation guard",reloadBlock.includes('handler.postDelayed(deferredSessionReload,350L)')&&service.includes('pendingReloadGeneration!=requestGeneration'));
 test("B06 delayed search stages verify pause/generation",(service.match(/if\(stopped\|\|loginPaused\|\|generation!=requestGeneration\)return;/g)||[]).length>=8);
@@ -593,10 +597,12 @@ test("Shiny tap waits for LIVE authenticated trainer proof instead of stale loca
   service.includes('if(!siteConfirmsShinyAccount(session)){')&&
   service.includes('openShinyLogin();')&&
   service.includes('if(!loaded||website==null){'));
-test("Shiny off works without forced login",
-  service.includes('if(!shiny){')&&
-  service.includes('prepareImmediateShiny(generation);')&&
-  read("assets/probe.js").includes('if(action==="setShiny")return JSON.stringify(setShiny(shinyOnly))'));
+test("Shiny OFF uses immediate verified Search without login",(()=>{
+ const bridge=service.split('@JavascriptInterface public void shiny()')[1]?.split('@JavascriptInterface public void refresh()')[0]||"";
+ return bridge.includes('if(!shiny){')&&bridge.includes('refresh(true);')&&
+  bridge.includes('startVerifiedShinySearch(generation,0);')&&
+  read("assets/probe.js").includes('if(action==="setShiny")return JSON.stringify(setShiny(shinyOnly))');
+})());
 test("Shiny is only verified after reading site state",
   service.includes('execute("verifyShiny",verified->')&&
   service.includes('shinyVerified=shiny;')&&
@@ -624,10 +630,12 @@ test("Login session detection substitutes all probe placeholders and reads mobil
  main.includes('JSONObject.quote("session")')&&
  main.includes('.replace("__FILTERS__","{}")')&&
  read("assets/probe.js").includes('const accountBadge=badgeText.test('));
-test("Shiny state sync starts on site load independently of Search cooldown",
-  service.includes('if(shiny&&!shinyVerified){')&&
-  service.includes('prepareImmediateShiny(generation);')&&
-  service.includes('},420L);'));
+test("Shiny state sync on page hydration has one Search, no duplicate setShiny",(()=>{
+ const nav=service.split('pendingPageRefreshGeneration=searchInProgress?-1:requestGeneration;')[1]?.split('@Override public void onReceivedError',1)[0]||"";
+ return nav.includes('handler.postDelayed(pageFinishedRefresh,')&&
+  nav.includes('shiny&&!shinyVerified?900L:2500L')&&
+  !nav.includes('prepareImmediateShiny(generation);');
+})());
 test("After login, authenticated site missing switch never restarts login loop",
   service.includes('"autenticada".equals(auth)')&&
   service.includes('Conta conectada; controle Shiny não encontrado no site.'));
@@ -1025,11 +1033,13 @@ test("Guest public search continues even if stale Shiny preference was ON",
  service.includes('revertUnverifiedShiny("✨ Shiny exige login e treinador vinculado · busca comum liberada")')&&
  service.includes('execute("prepareSearch",prepared->{')&&
  service.includes('private void refresh(boolean manual)'));
-test("Shiny OFF and normal search never depend on login or trainer linkage",
- service.includes('if(!shiny){applyShinyOnSite(generation,0);return;}')&&
- service.includes('if(!shiny){\n                // Coords, Shiny and other filters belong to one site form.')&&
- service.includes('if(locationEnabled){OverlayService.this.refresh(true);return;}')&&
- !service.includes('if(!hasConfirmedTrainerLink())return;\n        execute("session"'));
+test("Shiny OFF and normal search use same site form, without trainer gate",(()=>{
+ const bridge=service.split('@JavascriptInterface public void shiny()')[1]?.split('@JavascriptInterface public void refresh()')[0]||"";
+ const off=bridge.split('if(!shiny){')[1]?.split('startVerifiedShinySearch(generation,0);')[0]||"";
+ return off.includes('refresh(true);')&&!off.includes('execute("session"')&&
+  service.includes('verifyShinyAfterLocation(generation,manual,0);')&&
+  !service.includes('if(!hasConfirmedTrainerLink())return;\n        execute("session"');
+})());
 test("Authenticated profile cannot inherit previous trainer link",
  main.includes('.putString("profileTrainerState","unknown")')&&
  main.includes('a newly confirmed OAuth session may belong to another account'.replace(/^a/,"A"))&&
@@ -1561,13 +1571,14 @@ test("PS-009 Android Java inner Bridge invokes outer refresh(boolean) explicitly
   service.includes('status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");\n                scheduleFilterChangeRefresh();')&&
   service.includes('private void scheduleFilterChangeRefresh()');
 });
-test("PL-02 navigation recovery survives a filter change while loading",()=>{
+test("PL-02 navigation recovery survives filter change while loading",()=>{
  const nav=service.split("website.setWebViewClient(new WebViewClient(){")[1]?.split("    @Override public void onCreate()")[0]||"";
  return nav.includes("pageLoadGeneration++")&&
   !nav.includes("pageLoadGeneration!=requestGeneration")&&
   nav.includes("url.equals(view.getUrl())")&&
   nav.includes("view.getProgress()==100")&&
-  nav.includes("if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,2500L);");
+  nav.includes("if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,")&&
+  nav.includes("shiny&&!shinyVerified?900L:2500L");
 });
 test("PL-02 only the newest selection starts after debounce",()=>{
  return service.includes("private final Runnable filterChangeRefresh=()->refresh(true);")&&
@@ -2880,20 +2891,19 @@ test("LT57-ONEFORM-06 compact menu and launcher safe area preserved",()=>{
   iconGenerator.includes("int artworkSize = 288")&&
   iconGenerator.includes("int padding = 8");
 });
-test("LT57-ONEFORM-07 coordinate + Shiny share verified submit, no separate reset",()=>{
- const shiny=service.split('@JavascriptInterface public void shiny()')[1]
-  ?.split('@JavascriptInterface public void refresh()')[0]||"";
- return shiny.includes('if(locationEnabled){OverlayService.this.refresh(true);return;}')&&
-  shiny.includes('Sincronizando Shiny e localização na mesma pesquisa')&&
+test("LT62 one-pass Shiny + location share verified Search with no reset",()=>{
+ const bridge=service.split('@JavascriptInterface public void shiny()')[1]?.split('@JavascriptInterface public void refresh()')[0]||"";
+ const helper=service.split('private void startVerifiedShinySearch(int generation,int attempt){')[1]?.split('private void prepareImmediateShiny(',1)[0]||"";
+ return bridge.includes('startVerifiedShinySearch(generation,0);')&&
+  bridge.includes('refresh(true);')&&
+  helper.includes('Verificando Shiny e localização na mesma busca')&&
   service.includes('verifyShinyAfterLocation(generation,manual,0)')&&
   service.includes('execute("verifyLocation:"+data')&&
   service.includes('execute("verifyShiny",verified->')&&
-  !shiny.includes('locationEnabled=false')&&
-  !shiny.includes('locationCoords=""')&&
+  !bridge.includes('locationEnabled=false')&&!bridge.includes('locationCoords=""')&&
   dock.includes('clear.onclick=disable')&&
   !dock.includes('fieldRow.append(field,paste,toggle)');
 });
-
 test("LT57-DRIVE-ICON-01 exact replacement StarGL, StarUL and StarIVRaw PNGs",()=>{
  const crypto=require("node:crypto");
  const icons={
