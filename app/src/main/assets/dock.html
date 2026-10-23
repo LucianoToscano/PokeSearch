@@ -447,6 +447,19 @@ body.controls-window #quickMenuList .quickRank{
  padding:0!important;margin:0!important;
  text-shadow:0 1px 2px #000,0 0 3px #000,0 0 4px #d5e7ff!important;
 }
+/* LT57-MODES-RAW-01: original Drive PNG with non-destructive tiny IVs. */
+body.controls-window #quickMenuList .quickGlyph.modeArt.rawArt .quickModeImage{
+ width:21px!important;height:21px!important;
+}
+body.controls-window #quickMenuList .quickIvValues{
+ display:block!important;position:absolute!important;left:50%!important;top:51%!important;
+ transform:translate(-50%,-50%)!important;z-index:2!important;
+ width:22px!important;text-align:center!important;pointer-events:none!important;
+ white-space:nowrap!important;color:#13263b!important;
+ font:800 5.7px/7px Roboto,Arial,sans-serif!important;
+ letter-spacing:-.4px!important;text-shadow:0 0 1px #fff!important;
+ background:transparent!important;border:0!important;padding:0!important;
+}
 /* UX-MODOS-CASCADE: the 6 items stay one small native-popup-width menu;
    only the chosen item opens its right/left settings strip. */
 body.controls-window #choices.modePanel.modeCascade{
@@ -1313,7 +1326,11 @@ function getModeMenuIcon(searchMode,shinyActive,settings=searchSettings){
     (modeKey==="percent"?" · "+settings.percentMin+"–"+settings.percentMax+"%":
      modeKey==="raw"?" · "+settings.attack+"/"+settings.defense+"/"+settings.stamina:"")+
     (shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
-  family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
+  family,baseFamily,ivBadge:badge,
+  ivText:baseFamily==="custom"&&modeKey==="raw"?
+   [settings.attack,settings.defense,settings.stamina].map(v=>
+    Number.isFinite(Number(v))?String(Math.min(15,Math.max(0,Number(v)))):"?").join("/"):"",
+  shinyBadge:shining,backgroundBadge:backgroundConfirmed
  };
 }
 // Historical result icons are independent from the newer Modos toolbar.
@@ -2880,6 +2897,12 @@ function iconForQuick(id, fallback){
   image.src=art.path;image.alt="";image.setAttribute("aria-hidden","true");
   image.onerror=()=>{image.onerror=null;image.src=art.fallbackPath;};
   glyph.classList.add("modeArt");glyph.appendChild(image);
+  if(art.ivText){
+   glyph.classList.add("rawArt");
+   const values=document.createElement("span");values.className="quickIvValues";
+   values.textContent=art.ivText;values.setAttribute("aria-label","IV "+art.ivText);
+   glyph.appendChild(values);
+  }
   if((mode==="gl"||mode==="ul")&&art.ivBadge){
    const rank=document.createElement("span");rank.className="quickRank";
    rank.textContent=art.ivBadge;glyph.appendChild(rank);
@@ -3011,7 +3034,7 @@ function renderQuickMenu(){
   const glyph=iconForQuick(id,a[1]);
   if(id==="mode"){
    const art=getModeMenuIcon(mode,false,searchSettings);
-   button.dataset.modeArtKey=art.path+"|"+art.ivBadge;
+   button.dataset.modeArtKey=art.path+"|"+art.ivBadge+"|"+art.ivText;
   }
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
   const label=document.createElement("span");label.className="quickName";label.textContent=a[2];
@@ -3065,7 +3088,7 @@ function refreshQuickMenuStates(){
   button.title=button.getAttribute("aria-label")+(current?" · "+current:"");
   if(id==="mode"){
    const art=getModeMenuIcon(mode,false,searchSettings);
-   const key=art.path+"|"+art.ivBadge;
+   const key=art.path+"|"+art.ivBadge+"|"+art.ivText;
    if(button.dataset.modeArtKey!==key){
     const previous=button.querySelector(".quickGlyph");
     if(previous)previous.replaceWith(iconForQuick("mode","☷"));
