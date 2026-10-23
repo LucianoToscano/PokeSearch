@@ -2671,17 +2671,26 @@ public class OverlayService extends Service {
                 update();
             });
         }
+        private void alertModeCaption(String group,String choice){
+            String label="on".equals(choice)?"Som ativado":
+                "silent".equals(choice)?"Sem som · apenas aviso":"Notificações desativadas";
+            // Android system text toast: a short transient caption outside the panel.
+            android.widget.Toast.makeText(OverlayService.this,group+" · "+label,
+                android.widget.Toast.LENGTH_SHORT).show();
+        }
         @JavascriptInterface public void setAlertMode(String value){handler.post(()->{
             if(!"on".equals(value)&&!"silent".equals(value)&&!"off".equals(value))return;
             alertsMode=value;alerts=!"off".equals(value);
             getSharedPreferences("prefs",0).edit().putString("alertsMode",value)
                 .putBoolean("alerts",alerts).apply();
             update();
+            alertModeCaption("Novos Pokémon",value);
         });}
         @JavascriptInterface public void setFavoriteAlertMode(String mode){handler.post(()->{
             if(!"on".equals(mode)&&!"silent".equals(mode)&&!"off".equals(mode))return;
             WatchAlerts.setMode(OverlayService.this,mode);
             update();
+            alertModeCaption("Pokémon Favoritos",mode);
         });}
         private void requestAlertTonePicker(String target){
             Intent intent=new Intent(OverlayService.this,MainActivity.class);
