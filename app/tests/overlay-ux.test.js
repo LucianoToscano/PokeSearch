@@ -2075,16 +2075,18 @@ test("UX-PERF-02 closing picker cancels queued DOM polling",()=>{
  return service.includes('public void cancelPokemonSuggestions(){handler.post(()->++pokemonSuggestionSequence);}')&&
   dock.includes('Native.cancelPokemonSuggestions(); // Stop obsolete JS probe retries');
 });
-test("UX-LOCATION-RETRY-01 same unverified coordinates can retry safely",()=>{
+test("UX-LOCATION-RETRY-01 same coordinates apply repeats safely without resetting proof",()=>{
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
   ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";
- return block.includes('boolean retry=!searchInProgress&&')&&
-   block.includes('nextScheduledSearchAtMs<=System.currentTimeMillis()')&&
-   block.includes('enabled&&!locationVerified')&&
-   block.includes('"error".equals(searchPhase)')&&
-   block.includes('OverlayService.this.refresh(true);')&&
-   block.includes('}else update();')&&
-   block.indexOf('locationVerified=false;')>block.indexOf('boolean retry=');
+ const same=block.split('if(locationEnabled==enabled&&')[1]?.split('locationVerified=false;')[0]||"";
+ return same.includes('!searchInProgress&&nextScheduledSearchAtMs<=System.currentTimeMillis()')&&
+   same.includes('OverlayService.this.refresh(true);')&&
+   same.includes('Pesquisando com coordenadas e filtros ativos')&&
+   same.includes('Aguarde a busca atual ou o intervalo do site')&&
+   !same.includes('locationVerified=false;')&&
+   block.indexOf('locationVerified=false;')>block.indexOf('if(locationEnabled==enabled&&')&&
+   block.includes('String valid=enabled?extractCoordinates(')&&
+   block.includes('valid.isEmpty()||radius<0||radius>1000');
 });
 test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
  const body=dock.split('function renderLocationChoices(){')[1]?.split('function manualRefreshTap(){')[0]||"";
