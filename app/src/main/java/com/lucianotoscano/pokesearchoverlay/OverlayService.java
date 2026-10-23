@@ -800,6 +800,8 @@ public class OverlayService extends Service {
         // LT62-ONE-POKEBALL: native grip owns taps/holds/drags. The dock WebView
         // is only a renderer, avoiding click+contextmenu double dispatch.
         final boolean[] dockHeld={false};
+        final int[] dragResultStart={0,0};
+        final long[] lastResultMoveAt={0L};
         final Runnable dockLongPress=()->{
             if(dragged||params==null||stopped||loginPaused||pickerOpen)return;
             dockHeld[0]=true;
@@ -812,6 +814,11 @@ public class OverlayService extends Service {
                 case MotionEvent.ACTION_DOWN:
                     startRawX=event.getRawX();startRawY=event.getRawY();
                     startX=params.x;startY=params.y;dragged=false;dockHeld[0]=false;
+                    if(resultParams!=null){
+                        dragResultStart[0]=resultParams.x;
+                        dragResultStart[1]=resultParams.y;
+                    }
+                    lastResultMoveAt[0]=0L;
                     handler.removeCallbacks(dockLongPress);
                     handler.postDelayed(dockLongPress,600L);
                     return true;
@@ -823,15 +830,62 @@ public class OverlayService extends Service {
                     }
                     if(dragged){
                         DisplayMetrics d=metrics();
-                        int winWidth=dp(minimized?BUBBLE_DP:dockDp());
-                        int winHeight=dp(minimized?BUBBLE_DP:height);
-                        params.x=Math.max(0,Math.min(d.widthPixels-winWidth,startX+dx));
-                        params.y=Math.max(0,Math.min(d.heightPixels-winHeight,startY+dy));
-                        updateWindow();moveDetail();
+                        int dockWidth=dp(minimized?BUBBLE_DP:dockDp());
+                        int dockHeight=dp(minimized?BUBBLE_DP:height);
+                        // Share one clamped translation, not two independently
+                        // clamped coordinates: preserve the saved relative spacing
+                        // between the unified Pokébola, its results, and details.
+                        int minDx=-startX,maxDx=Math.max(0,d.widthPixels-dockWidth)-startX;
+                        int minDy=-startY,maxDy=Math.max(0,d.heightPixels-dockHeight)-startY;
+                        if(resultParams!=null){
+                            minDx=Math.max(minDx,-dragResultStart[0]);
+                            maxDx=Math.min(maxDx,
+                                Math.max(0,d.widthPixels-resultParams.width)-dragResultStart[0]);
+                            minDy=Math.max(minDy,-dragResultStart[1]);
+                            maxDy=Math.min(maxDy,
+                                Math.max(0,d.heightPixels-resultParams.height)-dragResultStart[1]);
+                        }
+                        int moveX=Math.max(minDx,Math.min(maxDx,dx));
+                        int moveY=Math.max(minDy,Math.min(maxDy,dy));
+                        params.x=startX+moveX;
+                        params.y=startY+moveY;
+                        if(resultParams!=null){
+                            resultParams.x=dragResultStart[0]+moveX;
+                            resultParams.y=dragResultStart[1]+moveY;
+                        }
+                        updateWindow(); // The open toolbar follows the same Pokébola.
+                        if(resultParams!=null&&resultRoot!=null&&wm!=null){
+                            long now=android.os.SystemClock.uptimeMillis();
+                            if(now-lastResultMoveAt[0]>=16L){
+                                lastResultMoveAt[0]=now;
+                                try{wm.updateViewLayout(resultRoot,resultParams);}
+                                catch(Exception e){recordFailure("arrastar resultados com Pokébola",e);}
+                                moveDetail();
+                            }
+                        }
                     }
                     return true;
                 case MotionEvent.ACTION_UP:
                     handler.removeCallbacks(dockLongPress);
+                    if(dragged){
+                        // Last position must be committed even if the 16ms
+                        // throttled layout update did not run for the final move.
+                        if(resultParams!=null&&resultRoot!=null&&wm!=null){
+                            try{wm.updateViewLayout(resultRoot,resultParams);}
+                            catch(Exception e){recordFailure("finalizar arraste conjunto",e);}
+                        }
+                        moveDetail();
+                        float density=getResources().getDisplayMetrics().density;
+                        android.content.SharedPreferences.Editor saved=
+                            getSharedPreferences("prefs",0).edit()
+                                .putInt("pokeballX",Math.round(params.x/density))
+                                .putInt("pokeballY",Math.round(params.y/density));
+                        if(resultParams!=null){
+                            saved.putInt("resultsX",Math.round(resultParams.x/density)-visualResultsOffsetX)
+                                .putInt("resultsY",Math.round(resultParams.y/density)-visualResultsOffsetY);
+                        }
+                        saved.apply();
+                    }
                     if(!dragged&&!dockHeld[0]){
                         if(minimized)minimize(false);
                         else if(menuExpanded)menu(false); // Short tap always closes open menu.
@@ -840,7 +894,16 @@ public class OverlayService extends Service {
                     // Long press or drag never triggers a second short-tap action.
                     return true;
                 case MotionEvent.ACTION_CANCEL:
-                    handler.removeCallbacks(dockLongPress);return true;
+                    handler.removeCallbacks(dockLongPress);
+                    if(dragged){
+                        // A canceled gesture still leaves the two windows together.
+                        if(resultParams!=null&&resultRoot!=null&&wm!=null){
+                            try{wm.updateViewLayout(resultRoot,resultParams);}
+                            catch(Exception e){recordFailure("encerrar arraste conjunto",e);}
+                        }
+                        moveDetail();
+                    }
+                    return true;
             }
             return true;
         });
@@ -851,7 +914,12 @@ public class OverlayService extends Service {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT);
         params.gravity=Gravity.TOP|Gravity.LEFT;
-        params.x=dp(Math.max(0,screenWidthDp()-dockDp()-7));params.y=dp(120);
+        android.content.SharedPreferences dockPrefs=getSharedPreferences("prefs",0);
+        int oldDefaultX=Math.max(0,screenWidthDp()-dockDp()-7);
+        int savedPokeballX=dockPrefs.getInt("pokeballX",oldDefaultX);
+        int savedPokeballY=dockPrefs.getInt("pokeballY",120);
+        params.x=dp(Math.max(0,Math.min(screenWidthDp()-dockDp(),savedPokeballX)));
+        params.y=dp(Math.max(0,Math.min(screenHeightDp()-height,savedPokeballY)));
         // The dock is attached AFTER the menu and results overlays, so its
         // independent 53x32dp gear/grip stays above any transparent popup
         // rectangle. Reordering avoids removing/readding an active WebView.
