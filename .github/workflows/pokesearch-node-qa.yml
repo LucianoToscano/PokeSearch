@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - fix/lt57-compact-single-form-20261022
       - feature/pokesearch-51081-visual-editor-20261021
       - feature/release-notes-20261022
     paths:
