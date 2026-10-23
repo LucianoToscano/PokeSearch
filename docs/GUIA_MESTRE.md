@@ -3961,3 +3961,14 @@ A imagem `ps_home_official_wordmark.png` mede 2172×724 (proporção exata 3:1),
 - **QA visual:** Chromium headless com CSS real do APK confirmou cores do sino no menu claro/escuro, estado audível amarelo, estrela amarela/branca, contador e selo no painel. **Ainda não existe prova em aparelho Android real**: validar no Samsung e PoGoCoordinates autenticado antes de expandir para testadores.
 - **Estado do projeto:** PR #31 mesclado na `main`; esta seção adicionada diretamente ao **mesmo único** `docs/GUIA_MESTRE.md` como registro posterior ao merge. O SHA gerado por este commit documental será o novo HEAD da `main` e não invalida o hash do APK compilado no commit anterior.
 
+### 12.188-LT56-MAIN-QA-LEGADO-CORRIGIDO (22/10/2026, horário de Fortaleza)
+
+**Diagnóstico pós-merge:** o antigo workflow `.github/workflows/build-overlay.yml` executava em todo push de `main` uma validação incompatível com a arquitetura atual (`assert text.count('<script>')==1`, quando `dock.html` já contém 3 blocos inline) e tentava gerar um APK legado `0.50-beta`/versionCode `51`. Runs históricos `39876242590` e `39876330632` ficaram vermelhos por esse contrato obsoleto, **não por falha dos 708 testes Node nem do APK LT56**, cujo workflow dedicado `39875436441` permanece `SUCCESS`.
+
+**Correção pontual da automação, sem alteração de app, Firebase, APK ou assinatura:**
+- Commit `9a5f71f7e26c874b0f464a6a11297ae59fc0d985`: `build-overlay.yml` permanece disponível para execução manual explícita, mas não executa o build legado automaticamente nos merges modernos (job marcado `skipped` nos pushes).
+- Commit `e7a3256c45301c4c9b574e4a0a5d032ad81248c1`: `pokesearch-node-qa.yml` passa a incluir a branch `main` no gatilho `push` para arquivos de código/workflow; atualiza o comando para as **oito** suítes Node, incluindo `firebase-stats.test.js`, e não compila APK.
+- **CI pós-merge real:** workflow `PokeSearch Node QA (sem APK)`, run `39876597417`, commit `e7a3256c45301c4c9b574e4a0a5d032ad81248c1`, **SUCCESS**. `dock.html`: 3 scripts inline válidos; `detail.html`: 1 válido; 8 suítes aprovadas, **708/708** testes (68+111+9+38+415+46+14+7); checkout permaneceu inalterado.
+- **Estado de distribuição:** `PokeSearch-v0.00.56-LT.apk` original continua sendo o arquivo gerado pelo commit `ea42e655d544d8f4dc7372842d9b7a56d15080e9` e publicado no artifact `12467493248` e no Drive `1taIGSb8ahi0KkywbgxVS1nxlLsqSpux4`, SHA-256 `e6cca9c12d80ab297177638ce26bed76b97a534f865953890d730d1b593a1baf`. Nenhuma mudança de código entre o APK aprovado e a `main` pós-merge/QA; os commits adicionais foram apenas documentação e workflows.
+- **Limite:** validação visual realizada com CSS extraído do APK e Chromium headless; teste no Samsung com sessão PoGoCoordinates ainda depende de dispositivo real. Não declarar homologação física concluída.
+
