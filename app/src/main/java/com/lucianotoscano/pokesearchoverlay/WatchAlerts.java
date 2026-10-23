@@ -95,7 +95,7 @@ public final class WatchAlerts {
         return manager!=null&&manager.areNotificationsEnabled();
     }
 
-    // Store only Android-selected ringtone content URIs. No bundled Pokémon cries.
+    // Accept persisted content URIs or installed Android raw resources; never remote streams.
     private static Uri ringtoneUri(Context context,String value){
         if(value!=null&&value.length()<2048&&!value.isEmpty()){
             Uri uri=Uri.parse(value);
@@ -124,11 +124,16 @@ public final class WatchAlerts {
                 if(!own.isEmpty())return ringtoneUri(context,own);
             }catch(Exception ignored){}
         }
+        // No preference yet: start favorites on the bundled Portuguese reveal.
+        // An explicitly saved empty string still means Android "Padrão".
+        if(favorite&&!p.contains(PREF_FAVORITE_TONE))
+            return PokeSoundLibrary.favoriteDefaultUri(context);
         return ringtoneUri(context,p.getString(favorite?PREF_FAVORITE_TONE:PREF_GENERAL_TONE,""));
     }
     public static boolean hasCustomTone(Context context,boolean favorite){
         SharedPreferences p=context.getSharedPreferences("prefs",0);
-        return !p.getString(favorite?PREF_FAVORITE_TONE:PREF_GENERAL_TONE,"").isEmpty();
+        return favorite&&!p.contains(PREF_FAVORITE_TONE)||
+            !p.getString(favorite?PREF_FAVORITE_TONE:PREF_GENERAL_TONE,"").isEmpty();
     }
     public static int speciesToneCount(Context context){
         try{
@@ -138,7 +143,9 @@ public final class WatchAlerts {
     }
     public static String soundChannelId(Context context,boolean favorite,String species){
         SharedPreferences prefs=context.getSharedPreferences("prefs",0);
-        String chosen=prefs.getString(favorite?PREF_FAVORITE_TONE:PREF_GENERAL_TONE,"");
+        String chosen=favorite&&!prefs.contains(PREF_FAVORITE_TONE)?
+            PokeSoundLibrary.favoriteDefaultUri(context).toString():
+            prefs.getString(favorite?PREF_FAVORITE_TONE:PREF_GENERAL_TONE,"");
         if(favorite&&species!=null){
             try{
                 String own=new JSONObject(prefs.getString(PREF_SPECIES_TONES,"{}"))
