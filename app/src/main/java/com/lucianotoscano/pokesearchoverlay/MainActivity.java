@@ -1690,6 +1690,34 @@ public class MainActivity extends Activity {
             Toast.makeText(this,"Seletor de sons indisponível no Android",Toast.LENGTH_LONG).show();
         }
     }
+    private void confirmUploadedAlertTone(String target,String species,Uri chosen){
+        stopBundledTonePreview();
+        AlertDialog confirm=new AlertDialog.Builder(this)
+            .setTitle("Áudio enviado")
+            .setMessage("Ouça a prévia e confirme para usar nas notificações.")
+            .setNeutralButton("▶ Ouvir",null)
+            .setPositiveButton("✓ Usar áudio",(dialog,which)->
+                storeAlertTone(target,species,chosen.toString()))
+            .setNegativeButton("Cancelar",null).create();
+        confirm.setOnShowListener(shown->
+            confirm.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v->{
+                stopBundledTonePreview();
+                try{
+                    bundledTonePreview=android.media.MediaPlayer.create(this,chosen);
+                    if(bundledTonePreview==null){
+                        Toast.makeText(this,"Prévia indisponível",Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    bundledTonePreview.setOnCompletionListener(done->stopBundledTonePreview());
+                    bundledTonePreview.start();
+                }catch(RuntimeException error){
+                    stopBundledTonePreview();
+                    Toast.makeText(this,"Não foi possível ouvir o arquivo",Toast.LENGTH_SHORT).show();
+                }
+            }));
+        confirm.setOnDismissListener(done->stopBundledTonePreview());
+        confirm.show();
+    }
     private void saveChosenAlertTone(Intent data,boolean document){
         String target=alertToneTarget,species=alertToneSpecies;
         alertToneTarget="";alertToneSpecies="";
@@ -1707,8 +1735,11 @@ public class MainActivity extends Activity {
                 Toast.makeText(this,"O provedor de áudio não concedeu acesso permanente. Baixe o MP3 no aparelho.",Toast.LENGTH_LONG).show();
                 return;
             }
+            // Choosing a file does not persist the tone: preview + confirm first.
+            confirmUploadedAlertTone(target,species,uri);
+            return;
         }
-        String chosen=!document&&uri.equals(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))?
+        String chosen=uri.equals(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))?
             "":uri.toString();
         storeAlertTone(target,species,chosen);
     }
