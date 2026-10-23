@@ -3522,16 +3522,22 @@ test("LT62 AUTO refresh icon and long press must never double trigger a search",
   body.includes('manualRefreshTap();')&&body.includes('pointermove')&&
   body.includes('pointercancel')&&
   !menu.includes('now.textContent=')&&
-  dock.includes('badge.textContent=period===0?"OFF":period+"m"');
+  dock.includes('badge.textContent=period===0?"":period+"m"')&&
+  dock.includes('button.classList.add("refreshSpinning")')&&
+  dock.includes('animation:psRefreshSpin .7s linear 1!important');
 });
 test("LT62 AUTO compact six-choice menu is usable without scrolling",()=>{
  const menu=dock.split('const current=period;')[1]?.split('function positionCascadeEditor()')[0]||"";
  return menu.includes('off.setAttribute("aria-pressed",String(current===0))')&&
   menu.includes('button.setAttribute("aria-pressed",String(value===current))')&&
   menu.includes('Native.setIntervalMinutes(0)')&&menu.includes('Native.setIntervalMinutes(value)')&&
-  dock.includes('grid-template-columns:34px 28px repeat(5,minmax(0,1fr))')&&
+  menu.includes('[...row.children].forEach(tile=>panel.appendChild(tile))')&&
+  menu.includes('panel.setAttribute("aria-label","Atualização automática")')&&
+  !menu.includes('title.textContent="ATUALIZAÇÃO"')&&
+  !menu.includes('close.className="choiceClose"')&&
   dock.includes('body.controls-window #choices.periodCompact[data-panel-kind="period"]')&&
-  dock.includes('max-height:92px!important')&&dock.includes('overflow:hidden!important');
+  dock.includes('max-height:none!important')&&
+  dock.includes('const periodHeight=tiles*30+Math.max(0,tiles-1)*gap;');
 });
 test("LT62: Shiny pending remains neutral, and site Pokemon import requires a user action",()=>{
  return dock.includes('button[data-key="sh"].pending .quickGlyph')&&
