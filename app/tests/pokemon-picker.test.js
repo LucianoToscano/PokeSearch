@@ -26,18 +26,27 @@ root.querySelectorAll=selector=>{
  })];
  return [];
 };
+// React mounts choices in a dedicated portal listbox, not arbitrary global <li>s.
+const optionRows=()=>site.open?site.available
+ .filter(label=>label.toLowerCase().includes(site.query.toLowerCase()))
+ .map(label=>el(label,{},{
+  tagName:'LI',querySelector:()=>null,click(){
+   const clean=label.replace(/^#\d+\s+/, '');
+   if(!site.selected.includes(clean))site.selected.push(clean);
+   site.open=false;site.query='';input.value='';
+  }
+ })):[];
+const listbox=el('',{role:'listbox'},{
+ tagName:'UL',querySelectorAll:selector=>selector.includes('[role=option]')?optionRows():[],
+ contains:()=>false
+});
 const document={body:el(''),querySelector:()=>null,querySelectorAll(selector){
  if(selector==='span,label,strong,small,dt,div,p')return [head];
  if(selector==='label,span,div,p,strong')return [head];
  if(selector==='label,span,strong,div')return [];
  if(selector==='input:not([type=hidden])')return site.open?[input]:[];
- if(selector.includes('[role=option]'))return site.open?site.available.filter(label=>label.toLowerCase().includes(site.query.toLowerCase())).map(label=>el(label,{}, {
-   tagName:'LI',querySelector:()=>null,click(){
-    const clean=label.replace(/^#\d+\s+/, '');
-    if(!site.selected.includes(clean))site.selected.push(clean);
-    site.open=false;site.query='';input.value='';
-   }
- })):[];
+ if(selector.includes('[role=listbox]')||selector.includes('[cmdk-list]'))return site.open?[listbox]:[];
+ if(selector.includes('[role=option]'))return optionRows();
  return [];
 }};
 const HTMLInputElement={prototype:{}};
