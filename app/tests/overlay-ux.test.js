@@ -432,7 +432,8 @@ test("Mode AUTO and location work before delayed native menu sync",dock.includes
 test("Mode applies one atomic native configuration and AUTO retains direct selection",
   dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
   dock.includes('button.onclick=()=>{closeChoices();Native.setIntervalMinutes(value);}'));
-test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
+test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&
+ dock.includes('button.classList.add("refreshSpinning")')&&dock.includes('Native.refresh();'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(330,screenWidthDp()-8)"));
 test("Favorites use uniform dark gradient without background dim",picker.includes("Color.argb(238,29,32,39)")&&picker.includes("window.setDimAmount(0.0f)"));
@@ -1128,7 +1129,7 @@ test("Modos chooses exact Drive PNGs across 0–3 stars and GL/UL",()=>{
    });
 });
 test("Only refresh actions appear in Atualização: no path to Ajustes",()=>{
- const code=dock.split('title.textContent="ATUALIZAÇÃO"')[1]?.split("function renderModeChoices()")[0]||"";
+ const code=dock.split('const current=period;')[1]?.split("function positionCascadeEditor()")[0]||"";
  return !code.includes("‹ Ajustes")&&!code.includes('choiceOpen="appearance"')&&
   !code.includes('now.textContent=')&&code.includes('Native.setIntervalMinutes(value)')&&code.includes('Native.setIntervalMinutes(0)');
 });
@@ -1233,8 +1234,9 @@ test("UX-OTHER-02 all submenus close explicitly without changing their saved set
  dock.includes('close.setAttribute("aria-label","Fechar "+title)')&&
  dock.includes('close.onclick=closeChoices')&&
  dock.includes('const panel=uxPanel(label);panel.dataset.panelKind="filters";panel.classList.add("filterPicker")')&&
- dock.includes('panel.classList.add("standardPanel","periodCompact","visible")')&&
- dock.includes('close.onclick=closeChoices;title.appendChild(close);')&&
+ dock.includes('panel.classList.add("periodCompact","visible")')&&
+ dock.includes('if(choiceOpen==="period")closeChoices();')&&
+ dock.includes('[...row.children].forEach(tile=>panel.appendChild(tile))')&&
  dock.includes('delete document.getElementById("choices").dataset.panelKind'));
 test("UX-OTHER-03 neither Filters nor Location force keyboard without field focus",
  dock.includes('if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();')&&
