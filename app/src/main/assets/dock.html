@@ -76,6 +76,50 @@ body.controls-window #locBadge{display:none!important}
 #choices .extraField input[type=checkbox]{flex:none;width:17px;height:17px;accent-color:#5bba96}
 #choices .extraNote{margin:2px 5px 5px;font-size:9px;color:#b7c3d1;line-height:1.25}
 #choices .extraValue:disabled{opacity:.5;cursor:default}
+/* FILTERS-POGO-01 controls: compact numeric steppers and site-verified chips. */
+body.controls-window #choices[data-panel-kind="filters"]{
+ width:min(306px,calc(100vw - 12px))!important;
+}
+#choices .extraNumberRow{display:flex;align-items:center;gap:3px;flex:1;min-width:0}
+#choices .extraNumberRow input{height:30px!important;text-align:center;min-width:0}
+#choices .extraNumberRow .extraStep{flex:0 0 29px;width:29px;height:29px;min-width:29px;
+ margin:0;padding:0;text-align:center;border-radius:6px;border:1px solid #ffffff40;
+ background:#2b3848;color:#f0f5ff;font-size:17px}
+#choices .extraChipsField{display:flex;flex-wrap:wrap;align-items:flex-start;gap:4px}
+#choices .extraChipsField>label{width:100%;flex:0 0 100%;font-weight:700}
+#choices .extraChipRow{width:100%;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+#choices .extraChipRow .extraChip{flex:1 0 35px;min-width:35px;height:30px;
+ border-radius:8px;border:1px solid #ffffff36;background:#344052;color:#f1f5fb;
+ margin:0;padding:3px 6px;font-size:11px;text-align:center}
+#choices .extraChipRow .extraChip.chosen{background:#226bbf!important;
+ color:#fff!important;border-color:#9dc8ff!important}
+/* FILTERS-POGO-06: two tiny overlay indicators, original 12 slots unchanged. */
+body.controls-window #quickMenuList button[data-key="filters"]{position:relative!important}
+body.controls-window #quickMenuList button[data-key="filters"].has-extra-filters::after{
+ content:attr(data-filter-count);position:absolute;top:0;right:0;z-index:3;
+ display:flex;align-items:center;justify-content:center;min-width:10px;height:10px;
+ padding:0 1px;border-radius:7px;background:#38485e;color:#fff;
+ font:700 8px/10px Arial,sans-serif;line-height:1;pointer-events:none;
+}
+body.controls-window #quickMenuList button[data-key="filters"].site-filters-applied::before{
+ content:"";position:absolute;bottom:2px;right:2px;z-index:3;
+ width:4px;height:4px;border-radius:50%;background:#63d29b;pointer-events:none;
+}
+#choices .extraApplyStatus{margin:6px 4px 4px;font-size:10px;line-height:1.3;
+ color:#c7d5e4}
+#choices .extraApplyStatus.confirmed{color:#65d6a5}
+body.controls-window.visual-light-menu #choices .extraApplyStatus{color:#334961}
+body.controls-window.visual-light-menu #choices .extraApplyStatus.confirmed{color:#14583f}
+#choices .modeAction.filterActions button{width:33.333%;font-size:10px}
+#choices .modeAction.filterActions .filterClear{background:#374050;color:#fff;
+ border:1px solid #8794a4}
+body.controls-window.visual-light-menu #choices .modeAction.filterActions .filterClear{
+ background:#e7edf4;color:#1e354b;border-color:#a4b4c5
+}
+body.controls-window.visual-light-menu #choices:not(.visualPanel) .extraChipRow .extraChip:not(.chosen),
+body.controls-window.visual-light-menu #choices:not(.visualPanel) .extraNumberRow .extraStep{
+ background:#eef3f9!important;color:#172533!important;border-color:#96aabe!important}
+
 #choices .modeRow{display:flex;align-items:center;gap:2px;padding:1px 2px;min-height:29px;border-radius:5px}
 #choices .modeRow.selected{background:#183b32aa}
 #choices .modeRow .modeSelect{flex:1;min-width:0;width:auto;font-size:11px;padding:5px 3px;margin:0}
@@ -1039,9 +1083,30 @@ body.controls-window #quickMenuList [data-key=appearance] .quickGlyph{
  color:var(--visual-menu-fg,#f2f7fc)!important;
 }
 body.controls-window.visual-light-menu #quickMenuList .quickGlyph svg:not([fill="none"]){fill:currentColor}
-/* LT54: requested dark bell; retain yellow star & audio states separately. */
-body.controls-window:not(.visual-light-menu) #quickMenuList [data-key=bell]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{
-  color:#111821!important;filter:drop-shadow(0 0 1.5px #f3f6ffcc)!important;
+/* LT54 BELL-THEME-02: correct light/dark mapping in the FLOATING menu.
+   Light menu -> black bell; dark menu -> white bell. Yellow audible states
+   and the separate yellow/white favorite star remain untouched. */
+body.controls-window.visual-light-menu #quickMenuList button[data-key="bell"]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{
+  color:#111821!important;
+  filter:none!important;
+}
+body.controls-window:not(.visual-light-menu) #quickMenuList button[data-key="bell"]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{
+  color:#f7f8fa!important;
+  filter:none!important;
+}
+/* LT55 BELL-THEME-03: the bell is an SVG with its own stroke. Follow the
+   independent VISUAL MENU foreground directly on the SVG, not only on the
+   parent glyph/button. This works after a saved theme is restored or changed
+   and avoids the white bell on a light tile (or dark bell on a dark tile).
+   Audible general alerts remain gold; favorites stars use separate ::after. */
+body.controls-window #quickMenuList button[data-key="bell"] .quickGlyph svg{
+  color:var(--visual-menu-fg,#f2f7fc)!important;
+  stroke:var(--visual-menu-fg,#f2f7fc)!important;
+}
+body.controls-window #quickMenuList button[data-key="bell"].bell-sound-new .quickGlyph svg,
+body.controls-window #quickMenuList button[data-key="bell"].bell-sound-both .quickGlyph svg{
+  color:#ffd64b!important;
+  stroke:#ffd64b!important;
 }
 /* Colored glyphs are always colored and override the generic neutral rule. */
 body.controls-window #quickMenuList [data-key=report] .quickGlyph{color:#ffd674!important}
@@ -1245,6 +1310,7 @@ let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activ
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=false,advancedExpanded=false;
+let siteFiltersConfirmed=false; // Evidence from Android: same generation, verified Search and accepted results.
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
 // Math.round(total / 45 * 100) produces exactly 46 possible shown percentages.
 const IV_PERCENT_VALUES=Object.freeze([0,2,4,7,9,11,13,16,18,20,22,24,27,29,31,33,36,38,40,42,44,47,49,51,53,56,58,60,62,64,67,69,71,73,76,78,80,82,84,87,89,91,93,96,98,100]);
@@ -1421,6 +1487,9 @@ function toggleChoices(kind){
   if(kind==="visual"){window.renderVisualEditor();return;}
  if(kind==="filters"){
   modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
+  // Initial Level selection covers the requested wild-spawn range.
+  if(modeDraft.levelMin===""||modeDraft.levelMin==null)modeDraft.levelMin="1";
+  if(modeDraft.levelMax===""||modeDraft.levelMax==null)modeDraft.levelMax="35";
   renderFiltersChoices();
   if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();
   return;
@@ -1619,6 +1688,9 @@ function renderModeChoices(){
  fit();
 }
 
+/* FILTERS-POGO-01: source-aligned menu. Pokémon species/IV/PvP/Coords stay
+   in their dedicated menus. These selectors are just a compact UI for the
+   existing PoGoCoordinates probe; nothing is applied until ✓ Aplicar. */
 function renderExtraFilters(panel,make){
  const divider=()=>panel.appendChild(make("div","extraDivider"));
  const field=(label,control)=>{
@@ -1627,59 +1699,128 @@ function renderExtraFilters(panel,make){
  };
  const option=(key,label)=>{
   const data=filterOptions[key]||{};
-  // This exact option was observed in the supplied PoGoCoordinates screenshot.
-  // If the current site no longer supports it, probe verification blocks Search.
-  const choices=(data.options&&data.options.length?data.options:(key==="sortBy"?["Despawn (longest)"]:[])).filter(Boolean);
-  const current=String(modeDraft[key]||""),button=make("button","extraValue",current||"Any / padrão");
+  const choices=Array.isArray(data.options)?data.options.map(x=>String(x).trim()).filter(Boolean):[];
+  const current=String(modeDraft[key]||"");
+  const button=make("button","extraValue",current||"Qualquer / padrão");
   button.type="button";button.disabled=!choices.length;
-  button.title=choices.length?"Escolher "+label:"Aguardando opções reais do site";
+  button.title=choices.length?"Selecionar "+label:"Aguardando opções verificadas no PoGoCoordinates";
   button.onclick=()=>{modeScrollTop=panel.scrollTop;renderFilterPicker(key,label,choices);};
   field(label,button);
  };
- const number=(key,label)=>{
-  const input=make("input");input.type="number";input.inputMode="decimal";input.min="0";
+ const number=(key,label,level=false)=>{
+  const line=make("div","extraField"),name=make("label","",label);
+  const wrapper=make("div",level?"extraNumberRow extraLevel":"extraNumberRow");
+  const input=make("input");input.type="number";input.inputMode="numeric";input.step="1";
+  input.min=level?"1":"0";input.max=level?"35":"99999";
+  input.value=String(modeDraft[key]??"");input.placeholder=level?(key.endsWith("Min")?"1":"35"):"Qualquer";
+  input.dataset.filterNumber=key;input.setAttribute("aria-label",label);
   input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
   input.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
-  input.placeholder="Any";input.value=modeDraft[key]||"";input.setAttribute("aria-label",label);
-  input.oninput=()=>{modeDraft[key]=input.value;};
-  field(label,input);
+  input.oninput=()=>{modeDraft[key]=input.value;input.setCustomValidity("");updateFiltersPanelStatus();};
+  if(level){
+   const step=direction=>{
+    const fallback=key.endsWith("Min")?1:35;
+    const current=input.value===""?fallback:Number(input.value);
+    const wanted=Math.max(1,Math.min(35,(Number.isFinite(current)?current:fallback)+direction));
+    input.value=String(wanted);modeDraft[key]=input.value;input.setCustomValidity("");updateFiltersPanelStatus();
+    // Keep the range consistent when a button crosses the other endpoint.
+    const counterpart=key==="levelMin"?"levelMax":"levelMin";
+    const other=panel.querySelector('[data-filter-number="'+counterpart+'"]');
+    if(other&&other.value!==""&&
+       (key==="levelMin"?wanted>Number(other.value):wanted<Number(other.value))){
+      other.value=String(wanted);modeDraft[counterpart]=other.value;
+    }
+   };
+   const minus=make("button","extraStep","−");minus.type="button";minus.title="Diminuir "+label;
+   const plus=make("button","extraStep","+");plus.type="button";plus.title="Aumentar "+label;
+   minus.onclick=()=>step(-1);plus.onclick=()=>step(1);
+   wrapper.append(minus,input,plus);
+  }else wrapper.append(input);
+  line.append(name,wrapper);panel.appendChild(line);
+ };
+ const chips=(key,label)=>{
+  const choices=(Array.isArray(filterOptions[key]?.options)?filterOptions[key].options:[]).map(x=>String(x).trim())
+   .filter(x=>x&&!/^(?:any\b|all\b|qualquer\b|todos?\b|select\b)/i.test(x));
+  const uniq=[...new Set(choices)];
+  const sizeOrder=["XXS","XS","S","M","L","XL","XXL"];
+  const mapLabel=value=>{
+   if(key==="gender"){
+    if(/^(?:male|macho|masculino)$/i.test(value))return "♂";
+    if(/^(?:female|f[eê]mea|feminino)$/i.test(value))return "♀";
+    if(/(?:genderless|unknown|sem g[eê]nero|gender unknown)/i.test(value))return "⚲";
+   }
+   return value;
+  };
+  // Show PokeLocation-style button positions, but never enable an option
+  // that has not been discovered in the official live PoGoCoordinates selector.
+  const siteValues=key==="size"?
+   sizeOrder.map(label=>{
+    const actual=uniq.find(v=>v.toUpperCase()===label);
+    return {value:actual||label,label,enabled:!!actual};
+   }):[
+    ...["Male","Female","Genderless"].map(label=>{
+     const match=uniq.find(v=>mapLabel(v)===(label==="Male"?"♂":label==="Female"?"♀":"⚲"));
+     return {value:match||label,label:label==="Male"?"♂":label==="Female"?"♀":"⚲",enabled:!!match};
+    }),
+    ...uniq.filter(v=>!["♂","♀","⚲"].includes(mapLabel(v)))
+      .map(value=>({value,label:mapLabel(value),enabled:true}))
+   ];
+  const line=make("div","extraField extraChipsField"),name=make("label","",label);
+  const group=make("div","extraChipRow");
+  const values=[{value:"",label:"Qualquer",enabled:true},...siteValues];
+  for(const item of values){
+   const button=make("button","extraChip",item.label);button.type="button";
+   button.disabled=!item.enabled;
+   button.classList.toggle("chosen",String(modeDraft[key]||"")===item.value);
+   button.setAttribute("aria-pressed",String(String(modeDraft[key]||"")===item.value));
+   button.setAttribute("aria-label",label+": "+(item.value||"Qualquer"));
+   button.onclick=()=>{modeDraft[key]=item.value;modeScrollTop=panel.scrollTop;renderFiltersChoices();};
+   group.appendChild(button);
+  }
+  if(uniq.length===0){
+   const wait=make("span","extraNote","Aguardando opções do site…");group.appendChild(wait);
+  }
+  line.append(name,group);panel.appendChild(line);
  };
  const section=(label,open,onClick)=>{
   divider();
-  const button=make("button","extraHead");
-  button.type="button";button.textContent=label+(open?" ▴":" ▾");
+  const button=make("button","extraHead");button.type="button";
+  button.textContent=label+(open?" ▴":" ▾");
   button.setAttribute("aria-expanded",String(open));
   button.onclick=()=>{modeScrollTop=panel.scrollTop;onClick();
-    if(choiceOpen==="filters")renderFiltersChoices();else renderModeChoices();};
+   if(choiceOpen==="filters")renderFiltersChoices();else renderModeChoices();};
   panel.appendChild(button);
  };
- // Sort is an ordering control, not a fifth search mode.
+ // The remote ordering control is not a search mode.
  divider();option("sortBy","Sort by");
  section("Filtros gerais",generalExpanded,()=>{generalExpanded=!generalExpanded;});
  if(generalExpanded){
-  const input=make("input");input.type="text";input.placeholder="Qualquer Pokémon";
-  input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
-  input.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
-  const pick=make("button","extraValue",Array.isArray(modeDraft.pokemonSelections)&&modeDraft.pokemonSelections.length?
-   modeDraft.pokemonSelections.length+" escolhidos ›":"Escolher Pokémon ›");
-  pick.onclick=()=>toggleChoices("pokemon");
-  field("Pokémon",pick);
-  option("form","Form");option("size","Size");
-  panel.appendChild(make("p","extraNote","Form depende das variantes disponíveis; os menus usam opções lidas do site."));
+  const pvp=["gl","ul"].includes(modeDraft.mode);
+  if(!pvp){
+   number("cpMin","PC mínimo");number("cpMax","PC máximo");
+   number("levelMin","Nível mínimo",true);number("levelMax","Nível máximo",true);
+  }else{
+   panel.appendChild(make("p","extraNote",
+    "PC mínimo/máximo e nível são filtros da aba Stats do site; ficam preservados para quando você voltar a IV ou IV%."));
+  }
+  option("weather","Clima");
+  chips("size","Tamanho");
+  option("form","Forma");
+  chips("gender","Gênero");
+  panel.appendChild(make("p","extraNote",
+   "Tamanho e Gênero: escolha por botões (uma opção por filtro, conforme o seletor atual do site)."));
  }
  section("Filtros avançados",advancedExpanded,()=>{advancedExpanded=!advancedExpanded;});
  if(advancedExpanded){
-  if(["raw","percent","iv"].includes(modeDraft.mode)){
-   number("cpMin","CP mínimo");number("cpMax","CP máximo");
-   number("levelMin","Nível mínimo");number("levelMax","Nível máximo");
-   option("weather","Weather");
-  }else{
-   number("minPvpCp","Min CP PvP");
-   const input=make("input");input.type="checkbox";input.checked=modeDraft.includePreviousEvolutions!==false;
+  if(["gl","ul"].includes(modeDraft.mode)){
+   number("minPvpCp","PC mínimo PvP");
+   const input=make("input");input.type="checkbox";
+   input.checked=modeDraft.includePreviousEvolutions!==false;
    input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;};
-   field("Evol. anteriores",input);
+   field("Evoluções anteriores",input);
   }
-  option("gender","Gender");
+  panel.appendChild(make("p","extraNote",
+   "Espécies e formas específicas: menu Pokémon. IV, IV%, GL e UL: menu Modos. Coordenadas e raio: menu Localização."));
  }
 }
 function renderFilterPicker(key,label,options){
@@ -1757,7 +1898,7 @@ function renderLocationChoices(){
  const title=make("div","choiceHeader","📍 LOCALIZAÇÃO");
  const close=make("button","choiceClose","×");close.type="button";close.title="Fechar";
  close.onclick=closeChoices;title.appendChild(close);
- const hint=make("p","locText","Cole latitude,longitude. ON ativa o filtro; OFF mantém a busca geral. Ocultar conserva o estado.");
+ const hint=make("p","locText","Cole latitude,longitude e escolha 0–1000 km. ✓ Aplicar executa Search no PoGoCoordinates com todos os filtros já ativos. ON ativa Coords; OFF volta à busca geral. Ocultar conserva o estado.");
  const fieldRow=make("div","locCoordsRow");
  const field=make("input","locField");field.id="locCoordinateInput";field.type="text";field.inputMode="decimal";
  field.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
@@ -2461,7 +2602,7 @@ function releaseUiTimers(){
  if(timerTicker!==null){clearInterval(timerTicker);timerTicker=null;}
 }
 window.addEventListener("pagehide",releaseUiTimers);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount]);
  cards=Array.isArray(a)?a.slice(0,10):[];
@@ -2493,6 +2634,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  shownShiny=!!resultSourceShiny;resultsStale=!!stale;
  nextQueryAt=Number(nextDue)||0;
  searchActive=!!isSearching;
+ siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale;
  mode=m==="iv"?"raw":m;status=String(s||"");activeSearchPhase=String(searchPhase||"idle");
  if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  showResultText=!!textVisible;
@@ -2514,6 +2656,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  if(controlsWindow&&choiceOpen==="alerts"&&
     JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount])!==previousAlertsState)
   renderAlertsChoices();
+ if(controlsWindow&&choiceOpen==="filters")updateFiltersPanelStatus();
 };
 window.menuSide=side=>document.body.classList.toggle("menu-left",menuOpen&&side==="left");
 window.highlight=i=>{active=i;document.querySelectorAll(".spawn").forEach((e,index)=>e.classList.toggle("active",index===i));};
@@ -2560,6 +2703,48 @@ function saveQuickPrefs(){
  quickPrefs=normalizedQuickPrefs(quickPrefs);renderQuickMenu();
  if(controlsWindow&&Native.saveMenuPrefs)Native.saveMenuPrefs(JSON.stringify(quickPrefs));
 }
+/* FILTERS-POGO-06/07: criteria count includes only this menu, never Pokémon,
+   Shiny, coordinates, IV or GL/UL rank. Min+max = one range criterion.
+   Level 1–35 is the user-selected neutral default, not an active restriction. */
+const FILTERS_MENU_KEYS=Object.freeze(["sortBy","weather","size","form","gender",
+ "cpMin","cpMax","levelMin","levelMax","minPvpCp"]);
+function extraFilterValue(config,key){
+ const value=String(config?.[key]??"").trim();
+ if((key==="levelMin"&&value==="1")||(key==="levelMax"&&value==="35"))return "";
+ if((key==="cpMin"||key==="minPvpCp")&&value==="0")return "";
+ return value;
+}
+function activeExtraFilterCount(config=searchSettings,selectedMode=mode){
+ const active=key=>extraFilterValue(config,key)!=="";
+ const pvp=selectedMode==="gl"||selectedMode==="ul";
+ let total=["sortBy","weather","size","form","gender"].filter(active).length;
+ if(pvp){
+  if(active("minPvpCp"))total++;
+  if(config?.includePreviousEvolutions===false)total++;
+ }else{
+  if(active("cpMin")||active("cpMax"))total++;
+  if(active("levelMin")||active("levelMax"))total++;
+ }
+ return total;
+}
+function filterDraftChanged(){
+ if(!modeDraft)return false;
+ return FILTERS_MENU_KEYS.some(key=>
+  extraFilterValue(modeDraft,key)!==extraFilterValue(searchSettings,key))||
+  (modeDraft.includePreviousEvolutions!==false)!==(searchSettings.includePreviousEvolutions!==false);
+}
+function updateFiltersPanelStatus(){
+ if(!controlsWindow||choiceOpen!=="filters")return;
+ const el=document.getElementById("filterStatus");if(!el)return;
+ const count=activeExtraFilterCount(searchSettings,mode);
+ const dirty=filterDraftChanged();
+ const verified=count>0&&siteFiltersConfirmed&&!searchActive&&!resultsStale;
+ el.textContent=dirty?"● Alterações ainda não aplicadas":
+  count===0?"Nenhum filtro adicional ativo":
+  verified?"✓ Aplicado no PoGoCoordinates":
+  "⌛ Aguardando confirmação do site";
+ el.classList.toggle("confirmed",!dirty&&verified);
+}
 function quickState(id){
  switch(id){
   case "mode":return specialIVLabel(mode,searchSettings);
@@ -2567,8 +2752,7 @@ function quickState(id){
   case "bell":return !notificationPermissionGranted?"Permissão":(generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))?"ON":"OFF";
   case "star":return hasFavorites?"Ativos":"";
   case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF";
-  case "filters":return (Array.isArray(searchSettings.pokemonSelections)&&searchSettings.pokemonSelections.length>0)||
-   ["pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","sortBy"].some(k=>searchSettings[k])?"Ativos":"Nenhum";
+  case "filters":return activeExtraFilterCount(searchSettings,mode)+" ativos";
   case "pokemon":return Array.isArray(searchSettings.pokemonSelections)&&searchSettings.pokemonSelections.length?
    searchSettings.pokemonSelections.length+" escolhidos":"Todos";
   case "period":return period>0?"Auto "+period+"m":"Auto OFF";
@@ -2802,6 +2986,15 @@ function refreshQuickMenuStates(){
   }
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
   button.classList.toggle("pending",id==="sh"&&shinyPending);
+   if(id==="filters"){
+    const count=activeExtraFilterCount(searchSettings,mode);
+    button.classList.toggle("has-extra-filters",count>0);
+    button.classList.toggle("site-filters-applied",count>0&&siteFiltersConfirmed&&!searchActive&&!resultsStale);
+    if(count>0)button.dataset.filterCount=String(count);
+    else delete button.dataset.filterCount;
+    button.setAttribute("aria-label","Filtros · "+count+" critérios adicionais"+
+     (count>0&&siteFiltersConfirmed?" · Aplicado no site":""));
+   }
    button.classList.toggle("silent",false);
    button.classList.toggle("bell-sound-new",id==="bell"&&bellState.newOnly);
    button.classList.toggle("bell-sound-favorites",id==="bell"&&bellState.favoritesOnly);
@@ -2893,11 +3086,40 @@ function renderFiltersChoices(){
  const scrollRestoration=modeScrollTop;
  const make=(tag,cls,value)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e;};
  renderExtraFilters(panel,make);
- panel.appendChild(make("div","uxNote","As opções e os resultados dependem da confirmação no site; não são inventados."));
- const actions=make("div","modeAction");const apply=make("button","modeApply","✓ Aplicar");
+ const indicator=make("div","extraApplyStatus","");indicator.id="filterStatus";
+ panel.appendChild(indicator);
+ updateFiltersPanelStatus();
+ panel.appendChild(make("div","uxNote","Aplicar e Limpar alteram só este menu. Pokémon, Modos, Shiny e Localização permanecem intactos."));
+ const actions=make("div","modeAction filterActions");const apply=make("button","modeApply","✓ Aplicar");
+ const clear=make("button","filterClear","Limpar filtros");
  const cancel=make("button","","Cancelar");
- apply.onclick=()=>{const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));};
- cancel.onclick=closeChoices;actions.append(apply,cancel);panel.appendChild(actions);
+ apply.onclick=()=>{
+  // Reject invalid bounds before saving them or submitting anything to the site.
+  for(const input of panel.querySelectorAll("input[data-filter-number]")){
+   if(input.value.trim()!==""&&!input.checkValidity()){
+    input.reportValidity();return;
+   }
+  }
+  if(!["gl","ul"].includes(modeDraft.mode)){
+   for(const [lowKey,highKey] of [["cpMin","cpMax"],["levelMin","levelMax"]]){
+    const low=String(modeDraft[lowKey]??""),high=String(modeDraft[highKey]??"");
+    if(low!==""&&high!==""&&Number(low)>Number(high)){
+     const input=panel.querySelector('[data-filter-number="'+lowKey+'"]');
+     if(input){input.setCustomValidity("Mínimo maior que máximo");input.reportValidity();}
+     return;
+    }
+   }
+  }
+  const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));
+ };
+ clear.onclick=()=>{
+  // FILTERS-POGO-08: clear only extra filters, not species, mode or location.
+  const next={...searchSettings,mode};
+  for(const key of FILTERS_MENU_KEYS)next[key]="";
+  next.includePreviousEvolutions=true;
+  closeChoices();Native.setSearchConfig(JSON.stringify(next));
+ };
+ cancel.onclick=closeChoices;actions.append(apply,clear,cancel);panel.appendChild(actions);
  requestAnimationFrame(()=>{if(choiceOpen==="filters"&&panel.isConnected)panel.scrollTop=scrollRestoration;});
  fit();
 }

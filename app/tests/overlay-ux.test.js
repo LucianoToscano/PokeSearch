@@ -1719,6 +1719,53 @@ test("HOME-04 keeps transparent brand left, controls right and plain outside bac
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
 })());
+test("BELL-THEME-02 floating bell uses black in light mode and white in dark mode",()=>{
+ const light='body.controls-window.visual-light-menu #quickMenuList button[data-key="bell"]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{';
+ const dark='body.controls-window:not(.visual-light-menu) #quickMenuList button[data-key="bell"]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{';
+ const css=dock.split("/* LT54 BELL-THEME-02:")[1]?.split("/* Colored glyphs")[0]||"";
+ const l=css.split(light)[1]?.split("}")[0]||"";
+ const d=css.split(dark)[1]?.split("}")[0]||"";
+ return l.includes("color:#111821!important")&&d.includes("color:#f7f8fa!important")&&
+  l.includes("filter:none!important")&&d.includes("filter:none!important")&&
+  dock.includes('button[data-key="bell"].bell-sound-new')&&
+  dock.includes('button[data-key="bell"].bell-star-on .quickGlyph::after')&&
+  dock.includes('button[data-key="bell"].bell-star-silent .quickGlyph::after')&&
+  dock.includes('[data-key=report] .quickGlyph{color:#ffd674!important}')&&
+  dock.includes('[data-key=donate] .quickGlyph{color:#fa94a7!important}')&&
+  dock.includes('[data-key=close] .quickGlyph{color:#ff596c!important}');
+});
+
+test("BELL-THEME-03 bell SVG stroke follows independent menu colors and audible state",()=>{
+ const visual=read("assets/visual_editor.js");
+ const css=dock.split("/* LT55 BELL-THEME-03:")[1]?.split("/* Colored glyphs")[0]||"";
+ const neutral='body.controls-window #quickMenuList button[data-key="bell"] .quickGlyph svg{';
+ const audible='body.controls-window #quickMenuList button[data-key="bell"].bell-sound-new .quickGlyph svg,';
+ const both='body.controls-window #quickMenuList button[data-key="bell"].bell-sound-both .quickGlyph svg{';
+ const idle=css.split(neutral)[1]?.split("}")[0]||"";
+ const sound=css.split(both)[1]?.split("}")[0]||"";
+ return visual.includes('set("menu-fg",current.menuBgMode==="light"?"#152231":"#f2f7fc")')&&
+  visual.includes('body.classList.toggle("visual-light-menu",current.menuBgMode==="light")')&&
+  idle.includes("stroke:var(--visual-menu-fg,#f2f7fc)!important")&&
+  idle.includes("color:var(--visual-menu-fg,#f2f7fc)!important")&&
+  css.includes(audible)&&sound.includes("stroke:#ffd64b!important")&&
+  sound.includes("color:#ffd64b!important")&&
+  dock.includes('if(source){glyph.appendChild(source.cloneNode(true));return glyph;}')&&
+  dock.includes('button.classList.toggle("bell-star-on",')&&
+  dock.includes('button.classList.toggle("bell-star-silent",');
+});
+
+test("LT54-ICON-01 launcher uses adaptive artwork and responsive 3:1 header",(()=>{
+ const manifest=fs.readFileSync(path.join(root,"AndroidManifest.xml"),"utf8");
+ const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
+ return manifest.includes('android:icon="@mipmap/ic_launcher"')&&
+  manifest.includes('android:roundIcon="@mipmap/ic_launcher_round"')&&
+  iconGenerator.includes("int artworkSize = 332")&&
+  iconGenerator.includes("int padding = 3")&&
+  home.includes("wordmarkWidth/3f")&&
+  home.includes("wordmarkWidth=Math.max(d(90),Math.min(d(156),availableBrandWidth))")&&
+  home.includes("new LinearLayout.LayoutParams(-1,d(70))");
+})());
+
 test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved",()=>{
  const pngs=[
   ["res/drawable-nodpi/ic_launcher.png",1254,1254],
@@ -1733,8 +1780,8 @@ test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved
   return img.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
     img.readUInt32BE(16)===w&&img.readUInt32BE(20)===h;
  })&&
- iconGenerator.includes("int artworkSize = 272")&&
- iconGenerator.includes("int padding = 12")&&
+ iconGenerator.includes("int artworkSize = 332")&&
+ iconGenerator.includes("int padding = 3")&&
  iconGenerator.includes("return new int[] {0, 0, image.getWidth(), image.getHeight()}");
 });
 test("HOME-04 shows genuine trainer data and the four transparent team assets",(()=>{
@@ -2028,16 +2075,18 @@ test("UX-PERF-02 closing picker cancels queued DOM polling",()=>{
  return service.includes('public void cancelPokemonSuggestions(){handler.post(()->++pokemonSuggestionSequence);}')&&
   dock.includes('Native.cancelPokemonSuggestions(); // Stop obsolete JS probe retries');
 });
-test("UX-LOCATION-RETRY-01 same unverified coordinates can retry safely",()=>{
+test("UX-LOCATION-RETRY-01 same coordinates apply repeats safely without resetting proof",()=>{
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
   ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";
- return block.includes('boolean retry=!searchInProgress&&')&&
-   block.includes('nextScheduledSearchAtMs<=System.currentTimeMillis()')&&
-   block.includes('enabled&&!locationVerified')&&
-   block.includes('"error".equals(searchPhase)')&&
-   block.includes('OverlayService.this.refresh(true);')&&
-   block.includes('}else update();')&&
-   block.indexOf('locationVerified=false;')>block.indexOf('boolean retry=');
+ const same=block.split('if(locationEnabled==enabled&&')[1]?.split('locationVerified=false;')[0]||"";
+ return same.includes('!searchInProgress&&nextScheduledSearchAtMs<=System.currentTimeMillis()')&&
+   same.includes('OverlayService.this.refresh(true);')&&
+   same.includes('Pesquisando com coordenadas e filtros ativos')&&
+   same.includes('Aguarde a busca atual ou o intervalo do site')&&
+   !same.includes('locationVerified=false;')&&
+   block.indexOf('locationVerified=false;')>block.indexOf('if(locationEnabled==enabled&&')&&
+   block.includes('String valid=enabled?extractCoordinates(')&&
+   block.includes('valid.isEmpty()||radius<0||radius>1000');
 });
 test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
  const body=dock.split('function renderLocationChoices(){')[1]?.split('function manualRefreshTap(){')[0]||"";
@@ -2581,6 +2630,158 @@ test("RELEASE-NOTES-09 the reader fails closed on missing or corrupt notes",
 test("RELEASE-NOTES-10 no unaudited corrections advertised",
  releaseNotesData.releases.every(e=>e.sections.correcoes.length===0)&&
  releaseNotesData.releases[0].sections.emDesenvolvimento.some(s=>s.includes("Validação visual")));
+
+test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menus",()=>{
+ const filters=dock.split("function renderExtraFilters(panel,make){")[1]
+  ?.split("function renderFilterPicker(key,label,options){")[0]||"";
+ return filters.includes('option("sortBy","Sort by")')&&
+  filters.includes('option("weather","Clima")')&&
+  filters.includes('option("form","Forma")')&&
+  filters.includes('chips("size","Tamanho")')&&
+  filters.includes('chips("gender","Gênero")')&&
+  !filters.includes('field("Pokémon",pick)')&&
+  dock.includes('if(kind==="pokemon"){')&&
+  dock.includes('["percent","IV%"],["gl","GL"],["ul","UL"]');
+});
+test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()=>{
+ const filters=dock.split("function renderExtraFilters(panel,make){")[1]
+  ?.split("function renderFilterPicker(key,label,options){")[0]||"";
+ return filters.includes('number("cpMin","PC mínimo");number("cpMax","PC máximo");')&&
+  filters.includes('number("levelMin","Nível mínimo",true);number("levelMax","Nível máximo",true);')&&
+  filters.includes('input.min=level?"1":"0";input.max=level?"35":"99999"')&&
+  filters.includes('input.type="number";input.inputMode="numeric";input.step="1"')&&
+  dock.includes('modeDraft.levelMin="1"')&&
+  dock.includes('modeDraft.levelMax="35"')&&
+  dock.includes('input.checkValidity()')&&
+  dock.includes('field.setCustomValidity("Mínimo maior que máximo")')===false&&
+  service.includes('{"cpMin","cpMax"}')&&service.includes('{"levelMin","levelMax"}');
+});
+test("FILTERS-POGO-03 size and gender buttons never invent site-supported options",()=>{
+ const filters=dock.split("function renderExtraFilters(panel,make){")[1]
+  ?.split("function renderFilterPicker(key,label,options){")[0]||"";
+ return filters.includes('const sizeOrder=["XXS","XS","S","M","L","XL","XXL"]')&&
+  filters.includes('["Male","Female","Genderless"]')&&
+  filters.includes('button.disabled=!item.enabled')&&
+  filters.includes('const actual=uniq.find(v=>v.toUpperCase()===label)')&&
+  filters.includes('const choices=(Array.isArray(filterOptions[key]?.options)')&&
+  dock.includes('window.onFilterOptions=function(response){')&&
+  service.includes('final String[] keys={"sortBy","size","form","gender","weather"}')&&
+  service.includes('execute("readFilterOptions:"+key,options->');
+});
+test("FILTERS-POGO-05 reusing confirmed coordinates still executes Search",()=>{
+ const handler=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
+  ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";
+ const same=handler.split('if(locationEnabled==enabled&&')[1]
+  ?.split('locationVerified=false;')[0]||"";
+ return same.includes('!searchInProgress&&nextScheduledSearchAtMs<=System.currentTimeMillis()')&&
+  same.includes('OverlayService.this.refresh(true)')&&
+  same.includes('Pesquisando com coordenadas e filtros ativos')&&
+  !same.includes('enabled&&!locationVerified')&&
+  handler.includes('replaceActiveFilterSearch();')&&
+  handler.includes('locationCoords=enabled?valid:""');
+});
+test("FILTERS-POGO-04 location Apply submits same saved criteria through live DOM",()=>{
+ const probe=read("assets/probe.js");
+ return dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&
+  dock.includes('slide.min="0";slide.max="1000"')&&
+  dock.includes('Aplicar executa Search no PoGoCoordinates')&&
+  service.includes('OverlayService.this.refresh(true);')&&
+  service.includes('configureLocationAndVerify(generation,manual,0)')&&
+  service.includes('verifyAndSubmit(generation,manual,0)')&&
+  probe.includes('const EXTRA_LABELS={sortBy:"Sort by"')&&
+  probe.includes('if(action==="verifyExtras")');
+});
+
+test("FILTERS-POGO-06 badge counts only extra filter criteria with neutral level defaults",()=>{
+ const helper=dock.split("const FILTERS_MENU_KEYS=Object.freeze(")[1]
+  ?.split("function quickState(id){")[0]||"";
+ const factory=new Function("searchSettings","mode","modeDraft","controlsWindow",
+  "choiceOpen","document","siteFiltersConfirmed","searchActive","resultsStale",
+  "const FILTERS_MENU_KEYS=Object.freeze("+helper+
+  ";return {count:activeExtraFilterCount,keys:FILTERS_MENU_KEYS};");
+ const base={mode:"raw",attack:15,defense:15,stamina:15,glRank:1,ulRank:1,
+  percentMin:0,percentMax:100,pokemonSelections:["Pikachu"],pokemon:"Pikachu",
+  levelMin:"1",levelMax:"35",includePreviousEvolutions:true};
+ const ctx=factory(base,"raw",null,false,"",{},false,false,false);
+ const count=ctx.count;
+ return count(base,"raw")===0&&
+  count({...base,sortBy:"Despawn (longest)",weather:"Rainy",size:"XXL",
+   cpMin:"600",cpMax:"900",levelMin:"6",levelMax:"32",gender:"Female"},"raw")===6&&
+  count({...base,minPvpCp:"100",includePreviousEvolutions:false},"gl")===2&&
+  count({...base,cpMin:"50",levelMin:"12",minPvpCp:"100"},"gl")===1&&
+  !ctx.keys.includes("pokemon")&&!ctx.keys.includes("pokemonSelections")&&
+  !ctx.keys.includes("attack")&&!ctx.keys.includes("locationCoords");
+});
+test("FILTERS-POGO-07 Applied requires native verified submission and accepted collection",()=>{
+ const update=service.split("private void update(){")[1]?.split("private void status(String s)")[0]||"";
+ const confirmed=update.split("// FILTERS-POGO-06:")[1]||"";
+ const phase=dock.split("function updateFiltersPanelStatus(){")[1]?.split("function quickState(id){")[0]||"";
+ return confirmed.includes("confirmedSubmittedFiltersGeneration==requestGeneration")&&
+  confirmed.includes("submittedSearchGeneration==requestGeneration")&&
+  confirmed.includes('("updated".equals(searchPhase)||"empty".equals(searchPhase))')&&
+  confirmed.includes("!searchInProgress&&!resultsStale")&&
+  dock.includes("filtersConfirmed=false)=>{")&&
+  dock.includes("siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale")&&
+  phase.includes("verified?\"✓ Aplicado no PoGoCoordinates\"")&&
+  phase.includes("dirty?\"● Alterações ainda não aplicadas\"")&&
+  dock.includes('button.classList.toggle("site-filters-applied",count>0&&siteFiltersConfirmed');
+});
+test("FILTERS-POGO-08 scoped Clear preserves species, IV, Shiny and coordinates",()=>{
+ const block=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices(){")[0]||"";
+ const clear=block.split("clear.onclick=()=>{")[1]?.split("\n };")[0]||"";
+ const saved={mode:"ul",pokemon:"",pokemonSelections:["Pikachu","Eevee"],
+  attack:3,defense:14,stamina:15,glRank:1,ulRank:7,percentMin:20,percentMax:96,
+  sortBy:"CP",weather:"Rainy",size:"XXL",form:"Alolan",gender:"Female",
+  cpMin:"300",cpMax:"900",levelMin:"3",levelMax:"31",minPvpCp:"100",
+  includePreviousEvolutions:false};
+ const keys=["sortBy","weather","size","form","gender","cpMin","cpMax",
+  "levelMin","levelMax","minPvpCp"];
+ let output=null,closed=false;
+ new Function("searchSettings","mode","FILTERS_MENU_KEYS","closeChoices","Native",
+  "const clear=()=>{"+clear+"};clear();")(saved,"ul",keys,()=>{closed=true;},
+  {setSearchConfig:value=>{output=JSON.parse(value);}});
+ return closed&&!!output&&keys.every(key=>output[key]==="")&&
+  output.includePreviousEvolutions===true&&output.mode==="ul"&&
+  output.ulRank===7&&output.attack===3&&output.defense===14&&output.stamina===15&&
+  JSON.stringify(output.pokemonSelections)===JSON.stringify(saved.pokemonSelections)&&
+  !Object.hasOwn(output,"clearPokemonSelection")&&
+  block.includes('actions.append(apply,clear,cancel)')&&
+  !block.includes("Native.setLocation(");
+});
+test("FILTERS-POGO-09 badge never enlarges twelve-slot ribbon and is accessible",()=>{
+ const styles=dock.split("/* FILTERS-POGO-06: two tiny overlay indicators")[1]
+  ?.split("#choices .modeRow")[0]||"";
+ return styles.includes('content:attr(data-filter-count)')&&
+  styles.includes('button[data-key="filters"].has-extra-filters::after')&&
+  styles.includes('button[data-key="filters"].site-filters-applied::before')&&
+  styles.includes("width:33.333%")&&
+  dock.includes('if(count>0)button.dataset.filterCount=String(count)')&&
+  dock.includes('else delete button.dataset.filterCount')&&
+  dock.includes('button.setAttribute("aria-label","Filtros · "+count')&&
+  dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important');
+});
+
+test("FILTERS-POGO-10 simulated UI never claims Applied for pending/stale/dirty filters",()=>{
+ const helper=dock.split("const FILTERS_MENU_KEYS=Object.freeze(")[1]
+  ?.split("function quickState(id){")[0]||"";
+ const compiled=new Function("searchSettings","mode","modeDraft","controlsWindow",
+  "choiceOpen","document","siteFiltersConfirmed","searchActive","resultsStale",
+  "const FILTERS_MENU_KEYS=Object.freeze("+helper+
+  ";return updateFiltersPanelStatus;");
+ const saved={mode:"raw",sortBy:"Despawn (longest)",cpMin:"500",cpMax:"",
+  levelMin:"1",levelMax:"35",includePreviousEvolutions:true};
+ const result=(proof,active,stale,draft)=>{
+  const badge={textContent:"",classList:{toggle(_key,_value){}}};
+  compiled(saved,"raw",draft,true,"filters",
+   {getElementById:()=>badge},proof,active,stale)();
+  return badge.textContent;
+ };
+ return result(false,false,false,saved).includes("Aguardando confirmação")&&
+  result(true,false,false,saved)==="✓ Aplicado no PoGoCoordinates"&&
+  result(true,true,false,saved).includes("Aguardando confirmação")&&
+  result(true,false,true,saved).includes("Aguardando confirmação")&&
+  result(true,false,false,{...saved,weather:"Rainy"}).includes("Alterações ainda não aplicadas");
+});
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");

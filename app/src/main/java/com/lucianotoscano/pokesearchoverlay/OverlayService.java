@@ -492,7 +492,13 @@ public class OverlayService extends Service {
                 JSONObject.quote(WatchAlerts.mode(this))+","+
                 WatchAlerts.hasCustomTone(this,false)+","+
                 WatchAlerts.hasCustomTone(this,true)+","+
-                WatchAlerts.speciesToneCount(this)+")";
+                WatchAlerts.speciesToneCount(this)+","+
+                // FILTERS-POGO-06: show "Aplicado" only after THIS generation
+                // was verified, submitted, and collected from the live website.
+                (confirmedSubmittedFiltersGeneration==requestGeneration&&
+                 submittedSearchGeneration==requestGeneration&&
+                 !searchInProgress&&!resultsStale&&
+                 ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(resultPanel,resultLoaded,data);
@@ -2066,17 +2072,18 @@ public class OverlayService extends Service {
             }
             if(locationEnabled==enabled&&
                 (!enabled||(locationCoords.equals(valid)&&locationRadius==radius))){
-                // Duplicate requests must not reset a verified state. However,
-                // after a failed/unconfirmed search, Apply is an explicit retry.
-                // Leave an in-flight or rate-limited query untouched.
-                boolean retry=!searchInProgress&&
-                    nextScheduledSearchAtMs<=System.currentTimeMillis()&&
-                    ((enabled&&!locationVerified)||"error".equals(searchPhase));
-                if(retry){
-                    status(enabled?"📍 Revalidando coordenadas e raio no site...":
-                        "📍 Revalidando busca geral sem localização...");
+                // A user tap on ✓ Aplicar is the equivalent of Search even
+                // if Coords/Radius were already verified. Keep the existing
+                // settings, avoid resetting proof prematurely, and respect the
+                // in-flight/rate-limit gate before launching a fresh search.
+                if(!searchInProgress&&nextScheduledSearchAtMs<=System.currentTimeMillis()){
+                    status(enabled?"📍 Pesquisando com coordenadas e filtros ativos...":
+                        "📍 Pesquisando com filtros ativos (busca geral)...");
                     OverlayService.this.refresh(true);
-                }else update();
+                }else{
+                    status("⌛ Aguarde a busca atual ou o intervalo do site antes de pesquisar novamente.");
+                    update();
+                }
                 return;
             }
             locationVerified=false;

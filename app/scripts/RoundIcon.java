@@ -61,7 +61,7 @@ public final class RoundIcon {
         Graphics2D legacyG = configure(legacy);
         try {
             legacyG.setClip(new Ellipse2D.Double(0, 0, LEGACY_SIZE, LEGACY_SIZE));
-            int padding = 12; // Prevent edge stars from being cut by round launchers.
+            int padding = 3; // Fill legacy round mask, with a minimal glow inset.
             legacyG.drawImage(original, padding, padding,
                 LEGACY_SIZE - padding, LEGACY_SIZE - padding,
                 crop[0], crop[1], crop[2], crop[3], null);
@@ -81,7 +81,7 @@ public final class RoundIcon {
             BufferedImage.TYPE_INT_ARGB);
         Graphics2D adaptiveG = configure(adaptive);
         try {
-            int artworkSize = 272; // Keep every star inside the 288px adaptive safe zone.
+            int artworkSize = 332; // Larger main emblem; only peripheral glow clips at mask edges.
             int inset = (ADAPTIVE_SIZE - artworkSize) / 2;
             adaptiveG.drawImage(original, inset, inset, inset + artworkSize, inset + artworkSize,
                 crop[0], crop[1], crop[2], crop[3], null);
