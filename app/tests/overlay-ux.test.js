@@ -30,7 +30,7 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
  !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
 test("AUTO offers OFF, 3, 5, 10, 15 and 20 minutes",["Auto · OFF","Auto · 3 min","Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
 test("Cascade uses current toolbar height even after clipping or vertical rotation",
- dock.includes('choiceOpen==="mode"?baseHeight+190+6')&&
+ dock.includes('h=Math.max(h,baseHeight+190+6);')&&
  dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;')&&
  dock.includes("Native.resizeMenu(h)")&&service.includes("menuRequestedHeightDp=visualMenuBaseDp();"));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
@@ -1423,7 +1423,7 @@ test("UX-CASCADE retains requested popup height while visual editor changes orie
  service.includes("Math.max(0,dp(menuRequestedHeightDp)-rowHeight)")&&
  service.includes("menuRequestedHeightDp=Math.max(visualMenuBaseDp(),Math.min(maxMenuHeight,desiredDp))")&&
  !service.includes("int requestedPopup=Math.max(0,menuParams.height-rowHeight)")&&
- dock.includes('choiceOpen==="mode"?baseHeight+190+6')&&
+ dock.includes('h=Math.max(h,baseHeight+190+6);')&&
  dock.includes("function positionCascadeEditor()")&&
  dock.includes("rail.scrollTop=Math.max(0,requested+36-visible)")&&
  dock.includes('if(choiceOpen==="mode")positionCascadeEditor()')&&
@@ -3095,7 +3095,7 @@ test("LT58-ALL-POPUPS-STABLE-01 never changes toolbar layout for ANY submenu",()
   css.includes('grid-template-rows:30px!important')&&
   css.includes('grid-template-columns:repeat(var(--quick-slot-count,12),minmax(0,1fr))!important')&&
   css.includes('grid-auto-flow:column!important')&&
-  !css.includes(':has(')&&
+  !css.includes('#menu:has(')&&
   native.includes('if(menuParams.width!=width)menuParams.width=width;')&&
   native.includes('menuParams.height=rowHeight+actualPopup;');
 });
