@@ -459,35 +459,51 @@ function pokemonPickerOptions(query){
   .filter((item,i,all)=>all.findIndex(v=>v.label.toLowerCase()===item.label.toLowerCase())===i)
   .slice(0,50);
 }
+// PS67: a field value alone is not proof that the official portal has opened.
+// Empty means no options ONLY when the linked portal explicitly says so.
 function pokemonSuggestion(query){
- const root=pokemonPickerRoot();
- if(!root)return {ok:false,reason:'Filtro Pokémon não localizado no site'};
- let input=pokemonPickerInput();
- if(!input){
-  const button=pokemonPickerButton(root);
-  if(!button)return {ok:false,reason:'Seletor Pokémon não disponível no site'};
-  button.click();
-  return {ok:false,pending:true,reason:'Abrindo opções oficiais'};
- }
  const originalQuery=String(query||'').slice(0,65);
+ const root=pokemonPickerRoot();
+ if(!root)return {ok:false,state:'failed',query:originalQuery,
+  reason:'Filtro Pokémon não localizado no site'};
+ let input=pokemonPickerInput(),trigger=pokemonPickerButton(root);
+ if(!input){
+  if(!trigger)return {ok:false,state:'failed',query:originalQuery,
+   reason:'Seletor Pokémon não disponível no site'};
+  if(trigger.getAttribute('aria-expanded')!=='true')trigger.click();
+  return {ok:false,pending:true,state:'pending',query:originalQuery,
+   reason:'Abrindo opções oficiais'};
+ }
  const wanted=pokemonQueryForSite(originalQuery);
  if(String(input.value||'')!==wanted){
-  if(!valueInput(input,wanted))return {ok:false,reason:'Busca Pokémon indisponível'};
-  return {ok:false,pending:true,reason:'Aguardando opções do site'};
+  if(!valueInput(input,wanted))return {ok:false,state:'failed',query:originalQuery,
+   reason:'Busca Pokémon indisponível'};
+  return {ok:false,pending:true,state:'pending',query:originalQuery,
+   reason:'Aguardando atualização React do site'};
+ }
+ const popup=pokemonPickerPopup(input,trigger,wanted);
+ if(!popup){
+  // Never toggle another site's menu. Only operate on the identified
+  // Pokémon trigger, and let React finish opening its listbox.
+  if(input.getAttribute('aria-expanded')!=='true'&&
+     trigger?.getAttribute('aria-expanded')!=='true'){
+   if(trigger&&!trigger.disabled)trigger.click();
+   else if(document.activeElement!==input)input.focus?.();
+  }
+  return {ok:false,pending:true,state:'pending',query:originalQuery,
+   reason:'Aguardando portal oficial do seletor Pokémon'};
  }
  const chips=pokemonSelectedChips();
- const options=pokemonPickerOptions().map(({label,dex,image})=>({label,dex,image}));
+ const options=pokemonPickerOptions(wanted).map(({label,dex,image})=>({label,dex,image}));
  if(!options.length){
-  const popup=activeOptionPopup(input)||activeOptionPopup(pokemonPickerButton(root));
-  // Absence of items during React hydration is NOT an official empty response.
-  const explicitEmpty=!!originalQuery.trim()&&!!popup&&
+  const explicitEmpty=!!originalQuery.trim()&&
    /(?:no (?:results|pok[eé]mon|matches) found|no results|nenhum(?:a|s)? (?:resultado|pok[eé]mon))/i.test(text(popup));
-  if(!explicitEmpty)return {ok:false,pending:true,query:originalQuery,
+  if(!explicitEmpty)return {ok:false,pending:true,state:'pending',query:originalQuery,
    reason:'Aguardando opções oficiais do PoGoCoordinates'};
-  return {ok:true,empty:true,query:originalQuery,options:[],
+  return {ok:true,state:'explicit-empty',empty:true,query:originalQuery,options:[],
    selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
  }
- return {ok:true,query:originalQuery,options,
+ return {ok:true,state:'ready',query:originalQuery,options,
   selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
 }
 if(action.startsWith('pokemonSuggest:')){
@@ -508,9 +524,12 @@ function pokemonListSelection(verb){
  if(!missing.length&&!extra.length)return {ok:true,pending:false};
  if(verb!=='apply')return {ok:false,pending:false,reason:'Seleção de espécies ou formas diferente da solicitada'};
  if(extra.length){extra[0].remove.click();return {ok:false,pending:true,reason:'Removendo outra espécie ou forma'};}
- const result=pokemonSuggestion(missing[0]);
+ // The official search may index the species name, not its full costume
+ // suffix. Query the species, then require the EXACT official form to click.
+ const siteTerm=missing[0].replace(/\s*\([^)]{1,65}\)\s*$/,'');
+ const result=pokemonSuggestion(siteTerm);
  if(!result.ok)return {ok:false,pending:!!result.pending,reason:result.reason||'Filtro Pokémon indisponível'};
- const candidate=pokemonPickerOptions().find(x=>x.label.toLowerCase()===missing[0].toLowerCase());
+ const candidate=pokemonPickerOptions(siteTerm).find(x=>x.label.toLowerCase()===missing[0].toLowerCase());
  if(!candidate)return {ok:false,pending:true,reason:'Aguardando espécie/forma no seletor oficial: '+missing[0]};
  candidate.node.click();
  return {ok:false,pending:true,reason:'Aplicando espécie/forma no site'};
