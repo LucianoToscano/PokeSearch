@@ -1574,6 +1574,50 @@ body.controls-window #choices.visualPanel .visualActions .visualButton{
 }
 
 /* Compact while keeping tap targets distinguishable for accessibility. */
+
+/* LT62-RANGE-ICONS: paired PC/Level inputs and three icon-only commands. */
+body.controls-window #choices[data-panel-kind="filters"] .extraRangeField{
+ display:flex!important;align-items:center!important;gap:5px!important;
+ min-height:42px!important;margin:1px!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraRangeField>label{
+ flex:0 0 41px!important;min-width:41px!important;max-width:41px!important;
+ font-size:10px!important;font-weight:700!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraRangeInputs{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ flex:0 0 auto!important;width:auto!important;max-width:calc(100% - 48px)!important;gap:5px!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraRangeCell{
+ display:flex!important;flex-direction:column!important;gap:1px!important;
+ min-width:0!important;max-width:68px!important;width:68px!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraRangeCaption{
+ font-size:8px!important;line-height:10px!important;white-space:nowrap!important;
+ color:var(--visual-menu-fg,#dae4ef)!important;opacity:.80!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraRangeInputs input{
+ box-sizing:border-box!important;flex:none!important;width:68px!important;max-width:68px!important;
+ min-width:0!important;height:25px!important;min-height:25px!important;
+ padding:3px 5px!important;text-align:center!important;font-size:11px!important;border-radius:5px!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .modeAction.filterActions .filterIconAction{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 31px!important;width:31px!important;min-width:31px!important;
+ height:29px!important;min-height:29px!important;max-width:31px!important;
+ margin:0!important;padding:3px!important;border-radius:7px!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .filterIconAction svg{
+ width:17px!important;height:17px!important;display:block!important;flex:none!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .filterIconAction.filterCancel{
+ color:#ffb2ba!important;border:1px solid #ac4b59!important;background:#482632!important;
+}
+body.controls-window.visual-light-menu #choices[data-panel-kind="filters"] .filterIconAction.filterCancel{
+ background:#fff0f0!important;color:#982c3a!important;border-color:#c48990!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeField{flex:0 0 auto!important;gap:2px!important}
+body.controls-window #choices.modeCascade .modeCascadeLabel{font-size:8px!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -2104,7 +2148,7 @@ function renderModeChoices(){
   const fields=cascadeMode==="raw"?[
    ["attack","A","iv","Ataque"],["defense","D","iv","Defesa"],["stamina","H","iv","H"]
   ]:cascadeMode==="percent"?[
-   ["percentMin","MIN","percent","IV mínimo"],["percentMax","MAX","percent","IV máximo"]
+   ["percentMin","Mín","percent","IV mínimo"],["percentMax","Máx","percent","IV máximo"]
   ]:cascadeMode==="gl"?[["glRank","#","rank","Ranking GL"]]:
    [["ulRank","#","rank","Ranking UL"]];
   const inputs=[];
@@ -2210,6 +2254,18 @@ function makeWeatherIcon(value){
  img.onerror=()=>{img.style.display="none";};
  return img;
 }
+/* Display-only translations: never submit localized values to PoGoCoordinates. */
+const FILTER_DISPLAY_LABELS=Object.freeze({
+ sortBy:Object.freeze({"Despawn (longest)":"Despawn","CP (highest)":"CP",
+  "IV % (highest)":"IV %","Level (highest)":"Nível","Distance (nearest)":"Distância"}),
+ weather:Object.freeze({"Any":"Qualquer","Boosted":"Boosted",
+  "Sunny":"Ensolarado/Limpo","Rainy":"Chuvoso",
+  "Partly Cloudy":"Parcialmente nublado","Cloudy":"Nublado",
+  "Windy":"Ventando","Snow":"Neve","Fog":"Névoa"})
+});
+function filterDisplayLabel(key,value){
+ const raw=String(value??"");return FILTER_DISPLAY_LABELS[key]?.[raw]||raw;
+}
 function renderExtraFilters(panel,make){
  const divider=()=>panel.appendChild(make("div","extraDivider"));
  const field=(label,control)=>{
@@ -2224,43 +2280,41 @@ function renderExtraFilters(panel,make){
    key==="weather"?
    (live.length?live:["Any","Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"]):live;
   const current=String(modeDraft[key]||(key==="sortBy"?"Despawn (longest)":""));
-  const button=make("button","extraValue",current||(key==="weather"?"Any":"—"));
+  const button=make("button","extraValue",filterDisplayLabel(key,current||(key==="weather"?"Any":"—")));
   if(key==="weather")button.prepend(makeWeatherIcon(current||"Any"));
   button.type="button";button.disabled=!choices.length&&!["sortBy","weather"].includes(key);
   button.title=choices.length?"Selecionar "+label:"Aguardando opções verificadas no PoGoCoordinates";
   button.onclick=()=>{modeScrollTop=panel.scrollTop;renderFilterPicker(key,label,choices);};
   field(label,button);
  };
- const number=(key,label,level=false)=>{
-  const line=make("div","extraField"),name=make("label","",label);
-  const wrapper=make("div",level?"extraNumberRow extraLevel":"extraNumberRow");
-  const input=make("input");input.type="number";input.inputMode="numeric";input.step="1";
-  input.min=level?"1":"0";input.max=level?"35":"99999";
-  input.value=String(modeDraft[key]??"");input.placeholder=level?(key.endsWith("Min")?"1":"35"):"Qualquer";
+ const numericInput=(key,label,level=false)=>{
+  const input=make("input");input.type="number";input.inputMode="numeric";
+  input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999";
+  input.value=String(modeDraft[key]??"");
+  input.placeholder=level?(key.endsWith("Min")?"1":"35"):"Qualquer";
   input.dataset.filterNumber=key;input.setAttribute("aria-label",label);
+  input.title=label;
   input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
   input.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
   input.oninput=()=>{modeDraft[key]=input.value;input.setCustomValidity("");updateFiltersPanelStatus();};
-  if(level){
-   const step=direction=>{
-    const fallback=key.endsWith("Min")?1:35;
-    const current=input.value===""?fallback:Number(input.value);
-    const wanted=Math.max(1,Math.min(35,(Number.isFinite(current)?current:fallback)+direction));
-    input.value=String(wanted);modeDraft[key]=input.value;input.setCustomValidity("");updateFiltersPanelStatus();
-    // Keep the range consistent when a button crosses the other endpoint.
-    const counterpart=key==="levelMin"?"levelMax":"levelMin";
-    const other=panel.querySelector('[data-filter-number="'+counterpart+'"]');
-    if(other&&other.value!==""&&
-       (key==="levelMin"?wanted>Number(other.value):wanted<Number(other.value))){
-      other.value=String(wanted);modeDraft[counterpart]=other.value;
-    }
-   };
-   const minus=make("button","extraStep","−");minus.type="button";minus.title="Diminuir "+label;
-   const plus=make("button","extraStep","+");plus.type="button";plus.title="Aumentar "+label;
-   minus.onclick=()=>step(-1);plus.onclick=()=>step(1);
-   wrapper.append(minus,input,plus);
-  }else wrapper.append(input);
+  return input;
+ };
+ const number=(key,label,level=false)=>{
+  const line=make("div","extraField"),name=make("label","",label);
+  const wrapper=make("div","extraNumberRow");
+  wrapper.appendChild(numericInput(key,label,level));
   line.append(name,wrapper);panel.appendChild(line);
+ };
+ const numberPair=(label,minKey,maxKey,level=false)=>{
+  const line=make("div","extraField extraRangeField"),name=make("label","",label);
+  const group=make("div","extraRangeInputs");
+  group.setAttribute("role","group");group.setAttribute("aria-label",label+" mínimo e máximo");
+  for(const [key,short,full] of [[minKey,"Mín.","mínimo"],[maxKey,"Máx.","máximo"]]){
+   const cell=make("label","extraRangeCell"),cap=make("span","extraRangeCaption",short);
+   const input=numericInput(key,label+" "+full,level);
+   input.placeholder=short;cell.append(cap,input);group.appendChild(cell);
+  }
+  line.append(name,group);panel.appendChild(line);
  };
  const chips=(key,label)=>{
   const known=Array.isArray(filterOptions[key]?.options)?filterOptions[key].options:[];
@@ -2324,8 +2378,8 @@ function renderExtraFilters(panel,make){
  if(generalExpanded){
   const pvp=["gl","ul"].includes(modeDraft.mode);
   if(!pvp){
-   number("cpMin","PC mínimo");number("cpMax","PC máximo");
-   number("levelMin","Nível mínimo",true);number("levelMax","Nível máximo",true);
+   numberPair("PC","cpMin","cpMax");
+   numberPair("Nível","levelMin","levelMax",true);
   }else{
    panel.appendChild(make("p","extraNote",
     "PC mínimo/máximo e nível são filtros da aba Stats do site; ficam preservados para quando você voltar a IV ou IV%."));
@@ -2352,7 +2406,7 @@ function renderFilterPicker(key,label,options){
  const panel=uxPanel(label);panel.dataset.panelKind="filters";panel.classList.add("filterPicker");
  // A neutral option is a UI state; site changes will be verified before submitting.
  if(key!=="sortBy"){
-  const neutral=document.createElement("button");neutral.textContent="Any";
+  const neutral=document.createElement("button");neutral.textContent=filterDisplayLabel(key,"Any");
   if(key==="weather")neutral.prepend(makeWeatherIcon("Any"));
   neutral.onclick=()=>{modeDraft[key]="";choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
   panel.appendChild(neutral);
@@ -2365,7 +2419,7 @@ function renderFilterPicker(key,label,options){
   safe;
  for(const value of allowed){
   const btn=document.createElement("button");btn.type="button";
-  btn.textContent=(modeDraft[key]===value?"✓ ":"")+value;
+  btn.textContent=(modeDraft[key]===value?"✓ ":"")+filterDisplayLabel(key,value);
   if(key==="weather")btn.prepend(makeWeatherIcon(value));
   btn.className=modeDraft[key]===value?"chosen":"";
   btn.onclick=()=>{modeDraft[key]=value;choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
@@ -3922,9 +3976,26 @@ function renderFiltersChoices(){
   panel.append(diff,importFromSite);
  }
  // No redundant instructional paragraph: keep the filter popup compacto.
- const actions=make("div","modeAction filterActions");const apply=make("button","modeApply","✓ Aplicar");
- const clear=make("button","filterClear","Limpar filtros");
- const cancel=make("button","","Cancelar");
+ const actions=make("div","modeAction filterActions");
+ actions.setAttribute("role","group");actions.setAttribute("aria-label","Ações dos filtros");
+ const actionIcon=(cls,label,icon)=>{
+  const button=make("button",cls);button.type="button";
+  button.setAttribute("aria-label",label);button.title=label;
+  const art={
+   apply:'<path d="M5 12l4 4L19 6"/>',
+   clear:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v7M14 10v7"/>',
+   cancel:'<path d="M6 6l12 12M18 6L6 18"/>'
+  };
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("aria-hidden","true");
+  svg.setAttribute("fill","none");svg.setAttribute("stroke","currentColor");
+  svg.setAttribute("stroke-width","2");svg.setAttribute("stroke-linecap","round");
+  svg.setAttribute("stroke-linejoin","round");svg.innerHTML=art[icon];
+  button.append(svg);return button;
+ };
+ const apply=actionIcon("modeApply filterIconAction","Aplicar filtros","apply");
+ const clear=actionIcon("filterClear filterIconAction","Limpar filtros","clear");
+ const cancel=actionIcon("filterIconAction filterCancel","Cancelar alterações","cancel");
  apply.onclick=()=>{
   // Reject invalid bounds before saving them or submitting anything to the site.
   for(const input of panel.querySelectorAll("input[data-filter-number]")){
