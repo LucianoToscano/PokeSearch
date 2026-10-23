@@ -683,4 +683,22 @@ checked++;
  assert.equal(busy.explicitEmpty,false,'Loading UI cannot be confirmed as empty');
  checked+=2;
 }
+// LT60-E9: already visible cards cannot be attributed to the newly submitted mode.
+{
+ const shared={};
+ const card=name=>name+'\n#114 Female M\nInfestation / Solar Beam\nCP\n404\nLVL\n7\nIV\n67% (1/15/14)\nLOCATION\nBron, France\nDESPAWN\n57:57\nGet coords';
+ const pvp={rank:'1',league:'Great League',prior:'Yes'};
+ const settings={config:{glRank:1,_preSubmitVerified:true},pvp,browserWindow:shared};
+ const previous=run('submitSearch','gl',false,{...settings,siteCount:1,spawn:card('Tangela'),searchButton:true});
+ assert.equal(previous.ok,true,'Search must be submitted once');
+ const stale=run('collect','gl',false,{...settings,siteCount:1,spawn:card('Tangela')});
+ assert.equal(stale.resultChanged,false,'Still-visible prior result has no new DOM evidence');
+ assert.equal(stale.resultFreshnessPending,true,'Still-visible result must be held for retry');
+ const updated=run('collect','gl',false,{...settings,siteCount:1,spawn:card('Oddish')});
+ assert.equal(updated.resultChanged,true,'Changing result card proves DOM transition');
+ assert.equal(updated.resultFreshnessPending,false,'Freshly updated cards may be evaluated');
+ const heldAgain=run('collect','gl',false,{...settings,siteCount:1,spawn:card('Oddish')});
+ assert.equal(heldAgain.resultFreshnessPending,false,'Transition proof persists within one submission');
+ checked+=3;
+}
 console.log("PokeSearch probe contract: "+checked+" tests passed");
