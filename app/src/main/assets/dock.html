@@ -3183,9 +3183,9 @@ function renderPokemonChoices(){
  const actions=document.createElement("div");actions.className="modeAction";
  const apply=document.createElement("button");apply.type="button";apply.className="modeApply";
  apply.textContent="✓ Aplicar";apply.onclick=()=>{
-  const next={...(pokemonPickerBase||searchSettings),mode,pokemon:"",
-   pokemonSelections:[...pokemonDraft],clearPokemonSelection:pokemonForceClear};
-  closeChoices();Native.setSearchConfig(JSON.stringify(next));
+  // Apply species/forms alone, never a stale snapshot of IV, Size, Form or other fields.
+  const selection={selections:[...pokemonDraft],clear:pokemonForceClear};
+  closeChoices();Native.setPokemonSelections(JSON.stringify(selection));
  };
  const clear=document.createElement("button");clear.type="button";clear.textContent="Limpar todos";
  clear.onclick=()=>{pokemonDraft=[];pokemonForceClear=true;renderPokemonTags();drawPokemonSuggestions();};
