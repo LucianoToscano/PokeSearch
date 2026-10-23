@@ -122,6 +122,35 @@
           "O site pode devolver a mesma lista sem alteração visível; esse cenário ainda requer validação física."
         ]
       }
+    },
+    {
+      "id": "pokesearch-v062-lt-compact-ui-20261023",
+      "minVersionCode": 54260,
+      "date": "23/10/2026",
+      "title": "PokeSearch v0.00.62 LT Beta — Menus compactos e referências do site",
+      "sections": {
+        "novidades": [
+          "Menus compactos: Sexo agora usa [⚥][♂][♀][⚲], cada opção em seu quadrinho individual.",
+          "Comparação das seleções de Pokémon e filtros simples observadas no PoGoCoordinates, com importação explícita ao rascunho."
+        ],
+        "melhorias": [
+          "Removidas colunas e margens vazias em Modos, Filtros, Localização, Atualização, Personalização e Informações.",
+          "Campos PC/Nível, botões de Tamanho, raio, filtros e ações ficam próximos do conteúdo, sem esticar os controles à largura total.",
+          "Editor Visual com abas Pokémon/Menu menores; controles P/M/G compactos e botões menos/mais ao lado de cada slider.",
+          "Refresh direto por toque curto, com opções de atualização automática por pressão longa.",
+          "Acompanhamento do tempo das consultas confirmadas, sem registrar dados pessoais."
+        ],
+        "correcoes": [
+          "Reconhece a mensagem oficial de nenhum spawn do site, preservando verificação de resposta posterior à pesquisa.",
+          "Shiny pendente não usa a mesma cor da confirmação efetiva.",
+          "Cores dos ícones independentes do fundo dos botões selecionados.",
+          "Preservação da barra de menus fixa, identidade Android, filtros e preferências de autenticação."
+        ],
+        "emDesenvolvimento": [
+          "Validação física das dimensões na WebView Samsung e das cascatas GL/UL, IV, filtros e Localização ainda necessária.",
+          "Sincronização bidirecional de todos os controles múltiplos continua em desenvolvimento; teste Node não comprova funcionamento do site autenticado."
+        ]
+      }
     }
   ]
 }
