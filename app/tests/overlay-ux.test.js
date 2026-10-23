@@ -2631,9 +2631,19 @@ test("RELEASE-NOTES-08 metadata is integrity checked within the APK",
 test("RELEASE-NOTES-09 the reader fails closed on missing or corrupt notes",
  releaseNotesJava.includes('return new JSONArray(); // Release notes must never prevent the Home from opening.')&&
  releaseNotesJava.includes('out.size()+size>96000'));
-test("RELEASE-NOTES-10 no unaudited corrections advertised",
- releaseNotesData.releases.every(e=>e.sections.correcoes.length===0)&&
- releaseNotesData.releases[0].sections.emDesenvolvimento.some(s=>s.includes("Validação visual")));
+test("RELEASE-NOTES-10 no unverified physical claims; audited fixes are versioned",()=>{
+ const old=releaseNotesData.releases.filter(e=>e.minVersionCode<54258);
+ const current=releaseNotesData.releases.find(e=>e.minVersionCode===54258);
+ return old.every(e=>e.sections.correcoes.length===0)&&
+  !!current&&current.id==="pokesearch-v060-lt-pokemon-form-coords-20261023"&&
+  current.sections.novidades.length>=2&&current.sections.melhorias.length>=2&&
+  current.sections.correcoes.length>=4&&
+  current.sections.emDesenvolvimento.some(s=>s.includes("Samsung"))&&
+  current.sections.emDesenvolvimento.some(s=>s.includes("testes automatizados"))&&
+  service.includes("function")===false&&
+  probe.includes("function extraOptionPopup(key,control){")&&
+  service.includes("void requestFormOptions(String query)");
+});
 
 test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menus",()=>{
  const filters=dock.split("function renderExtraFilters(panel,make){")[1]
