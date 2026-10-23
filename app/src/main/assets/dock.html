@@ -2430,6 +2430,8 @@ function toggleChoices(kind){
  if(controlsWindow&&!menuOpen)setMenuOpen(true,document.body.classList.contains('menu-left')?'left':'right',0);
  if(!menuOpen)return;
  if(choiceOpen===kind){closeChoices();return;}
+ if(choiceOpen==="visual"&&kind!=="visual"&&window.Native&&Native.previewVisualArea)
+  Native.previewVisualArea("");
  // Native/programmatic navigation must also discard the More-only popup CSS.
  if(choiceOpen==="more")closeChoices();
  if(["location","filters"].includes(choiceOpen)&&!["location","filters"].includes(kind)){
