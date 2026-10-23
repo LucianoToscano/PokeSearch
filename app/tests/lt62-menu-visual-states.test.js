@@ -643,7 +643,7 @@ check("LT62 Shiny: mode and filter changes do not overwrite user Shiny intent",(
 check("LT62 visual parity: no empty Filtros backing and four compact gender symbols",()=>{
  const general=dock.match(/body\.controls-window #choices:not\(\.visualPanel\):[^\n]+/g)||[];
  assert.ok(general.some(line=>line.includes(':not(.filterCascade)')));
- assert.ok(dock.includes('LT62-VISUAL-PARITY-01'));
+ assert.ok(dock.includes('LT62-FILTER-PARITY-02'));
  assert.ok(dock.includes('grid-template-columns:repeat(4,29px)!important'));
  assert.ok(dock.includes('font:600 16px/1 Arial'));
  assert.ok(dock.includes('#choices.filterCascade .filterCascadeEditor'));
