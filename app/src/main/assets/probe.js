@@ -46,7 +46,7 @@ function activeOptionPopup(control){
 }
 function optionElements(control){
  const scope=control?activeOptionPopup(control):null;
- const selector='[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item],option';
+ const selector='[role=option],[role=menuitemradio],[role=menuitemcheckbox],[role=checkbox],[data-slot="select-item"],[data-radix-collection-item],option';
  if(control&&!scope)return [];
  return (scope?Array.from(scope.querySelectorAll(selector)):elements(selector)).filter(vis);
 }
@@ -514,6 +514,70 @@ function extraSelect(key,want){
  transientPending=true;
  return false;
 }
+/* LT57 ONE-FORM: checkbox-aware multiselection. Return false instead of
+   inventing a successful multi-filter when the live site state is unknown. */
+function multiOptions(control){
+ const popup=activeOptionPopup(control);
+ if(!popup)return null;
+ const selector='[role=option],[role=menuitemcheckbox],[role=checkbox],label,[data-radix-collection-item]';
+ return [...new Set(Array.from(popup.querySelectorAll(selector)))].filter(vis)
+  .filter(e=>text(e).length>0&&text(e).length<90);
+}
+function multiState(option){
+ const raw=(option.getAttribute("aria-checked")||
+  option.getAttribute("aria-selected")||option.getAttribute("data-state")||"").toLowerCase();
+ if(["true","checked","on","selected"].includes(raw))return true;
+ if(["false","unchecked","off","unselected"].includes(raw))return false;
+ const cb=option.matches('input[type=checkbox]')?option:
+  option.querySelector('input[type=checkbox],[role=checkbox]');
+ if(cb){
+  if(cb.matches('input[type=checkbox]'))return cb.checked;
+  const state=cb.getAttribute("aria-checked")||cb.getAttribute("data-state");
+  if(state==="true"||state==="checked")return true;
+  if(state==="false"||state==="unchecked")return false;
+ }
+ return null;
+}
+function extraMulti(key,desired,operation){
+ const control=extraControl(EXTRA_LABELS[key]);
+ if(!control||control.disabled)return false;
+ const target=[...new Set(desired.map(x=>clean(x).toLowerCase()))];
+ if(control.matches("select")&&control.multiple){
+  const options=Array.from(control.options);
+  if(target.some(v=>!options.some(opt=>clean(text(opt)).toLowerCase()===v)))return false;
+  if(operation==="apply"){
+   let changed=false;
+   for(const opt of options){
+    const required=target.includes(clean(text(opt)).toLowerCase());
+    if(opt.selected!==required){opt.selected=required;changed=true;}
+   }
+   if(changed){control.dispatchEvent(new Event("input",{bubbles:true}));
+    control.dispatchEvent(new Event("change",{bubbles:true}));transientPending=true;return false;}
+  }
+  return options.every(opt=>opt.selected===target.includes(clean(text(opt)).toLowerCase()));
+ }
+ // A single-choice site control cannot truthfully represent >1 desired items.
+ if(control.matches("select"))return target.length<=1&&
+  (operation==="apply"?extraSelect(key,target[0]||""):extraMatches(key,target[0]||""));
+ const options=multiOptions(control);
+ if(!options){
+  if(operation==="apply"&&control.getAttribute("aria-expanded")!=="true"){
+   control.click();transientPending=true;
+  }
+  return false;
+ }
+ const observed=options.map(el=>({el,label:clean(text(el)).toLowerCase(),active:multiState(el)}))
+  .filter(x=>x.active!==null);
+ if(target.some(v=>!observed.some(o=>o.label===v)))return false;
+ if(!observed.length)return false;
+ for(const choice of observed){
+  if(choice.active!==target.includes(choice.label)){
+   if(operation!=="apply")return false;
+   choice.el.click();transientPending=true;return false;
+  }
+ }
+ return true;
+}
 function extraMatches(key,want){
  const v=extraValue(key);
  if(v===null)return false; // Cannot prove reset/selection without the live control.
@@ -566,6 +630,14 @@ function extras(action){
  if(!pokemon.ok)return {ok:false,pending:!!pokemon.pending,reason:pokemon.reason||'Seleção Pokémon não confirmada'};
  for(const key of Object.keys(EXTRA_LABELS)){
   if(key==="pokemon"&&Array.isArray(filters.pokemonSelections))continue;
+  if((key==="size"||key==="gender")&&Array.isArray(filters[key+"Selections"])){
+   const wanted=filters[key+"Selections"].map(x=>String(x).trim()).filter(Boolean);
+   if(!wanted.length&&!resetKeys.includes(key+"Selections"))continue;
+   const ok=extraMulti(key,wanted,action);
+   if(!ok)failed.push(key+"Selections");
+   if(transientPending)break;
+   continue;
+  }
   const want=String(filters[key]||"").trim();
   // Blank means no optional restriction; it is not a request to discover a
   // dropdown. Only a tracked transition from a prior filter needs clearing.
@@ -597,6 +669,12 @@ function visibleExtrasMismatch(){
  const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
  for(const key of Object.keys(EXTRA_LABELS)){
   if(key==="pokemon"&&Array.isArray(filters.pokemonSelections))continue;
+  if((key==="size"||key==="gender")&&Array.isArray(filters[key+"Selections"])){
+   const wanted=filters[key+"Selections"].map(x=>String(x).trim()).filter(Boolean);
+   if((wanted.length||resetKeys.includes(key+"Selections"))&&!extraMulti(key,wanted,"verify"))
+    return key+"Selections";
+   continue;
+  }
   const want=String(filters[key]||"").trim();
   if(!want&&!resetKeys.includes(key))continue;
   const control=extraControl(EXTRA_LABELS[key]);
