@@ -1112,8 +1112,8 @@ test("Modos chooses exact Drive PNGs across 0–3 stars and GL/UL",()=>{
  const gl=get("gl",{glRank:1}),ul=get("ul",{ulRank:12});
  const cases=[
   [0,0,"0Star.png"],[100,100,"3Star.png"],
-  [0,98,"2Star.png"],[2,100,"2Star.png"],[2,98,"2Star.png"],[0,100,"2Star.png"],
-  [0,50,"1Star.png"],[0,49,"1Star.png"],
+  [0,98,"StarIVRaw.png"],[2,100,"StarIVRaw.png"],[2,98,"StarIVRaw.png"],[0,100,"StarIVRaw.png"],
+  [0,50,"0Star.png"],[0,49,"0Star.png"],
   [49,49,"0Star.png"],[51,51,"1Star.png"],[64,64,"1Star.png"],
   [67,67,"2Star.png"],[80,80,"2Star.png"],[82,82,"3Star.png"],
   [51,64,"1Star.png"],[67,80,"2Star.png"],[82,98,"3Star.png"],[82,100,"3Star.png"]
@@ -1330,7 +1330,8 @@ test("UX-ICON-01 keeps 35x30 touch area and badges strictly within 21px",
  ["modeIndicatorValue","modeIndicatorShiny","modeIndicatorBackground"].every(x=>dock.includes('id="'+x+'"')));
 test("Results preserve original IV badges, with Shiny and Background as separate effects",
  dock.includes('function getResultIcon(searchMode,shinyActive,settings=searchSettings)')&&
- dock.includes('const badge=family==="hundo"?"100%":family==="nundo"?"0":family==="percent"?"%":rankLabel||(baseFamily==="cup"?"CUP":"");')&&
+ dock.includes('const rawLabel=')&&dock.includes('const percentLabel=')&&
+ dock.includes('const badge=family==="hundo"?"100%":family==="nundo"?"0%":rawLabel')&&
  dock.includes('shinyBadge:shining')&&
  dock.includes('backgroundOnly===true&&settings.backgroundVerified===true'));
 test("UX-ICON-01 does not silently introduce unimplemented searches",
@@ -1446,8 +1447,8 @@ test("RESULT-RESTORE GL/UL still preserve result effects; UL now uses correct Ul
  return gl.path.endsWith("/base-gl.png")&&gl.ivBadge==="#1"&&
   ul.path.endsWith("/ultra-league.png")&&ul.ivBadge==="#12"&&
   perfect.path.endsWith("/base-custom.png")&&perfect.ivBadge==="100%"&&
-  zero.path.endsWith("/base-custom.png")&&zero.ivBadge==="0"&&
-  range.path.endsWith("/base-custom.png")&&range.ivBadge==="%"&&all.ivBadge==="%"&&
+  zero.path.endsWith("/base-custom.png")&&zero.ivBadge==="0%"&&
+  range.path.endsWith("/base-custom.png")&&range.ivBadge==="2–98%"&&all.ivBadge==="0–100%"&&
   get("ul",true).shinyBadge===true&&
   get("ul",false,{backgroundOnly:true,backgroundVerified:true}).backgroundBadge===true;
 });
@@ -2916,7 +2917,7 @@ test("LT57-DRIVE-ICON-02 Raw IV text follows A D H and updates on changes",()=>{
   dock.includes('svg.quickIvValues text{')&&
   !dock.includes('body.controls-window #quickMenuList .quickIvValues{');
 });
-test("LT57-RAW-IV-CLIP-01 only personalized Raw IV has bounded text in the medal",()=>{
+test("LT62 raw IV and neutral mixed IV% keep bounded text inside the medal",()=>{
  const vm=require("node:vm");
  const start=dock.indexOf("const RESULT_ICONS=Object.freeze("),end=dock.indexOf("let locationEnabled=",start);
  if(start<0||end<start)return false;
@@ -2929,7 +2930,7 @@ test("LT57-RAW-IV-CLIP-01 only personalized Raw IV has bounded text in the medal
   get("raw",{attack:0,defense:0,stamina:0}).ivText===""&&
   get("raw",{attack:15,defense:15,stamina:15}).ivText===""&&
   get("hundo",{}).ivText===""&&get("nundo",{}).ivText===""&&
-  get("percent",{percentMin:0,percentMax:100}).ivText===""&&
+  get("percent",{percentMin:0,percentMax:100}).ivText==="%"&&
   get("gl",{}).ivText===""&&get("ul",{}).ivText==="";
 });
 test("LT57-WEATHER-ICONS-01 exact nine weather Drive PNGs embedded",()=>{
