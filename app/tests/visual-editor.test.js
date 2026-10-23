@@ -451,7 +451,7 @@ test("Modos rail and inline editor inherit the only menu transparency slider",()
 });
 test("single transparency controls ordinary submenus without residual band or border",()=>{
  const tail=dock.split("/* VISUAL-MENU-ALPHA-02:")[1]?.split("</style>")[0]||"";
- assert.ok(tail.includes("body.controls-window #choices:not(.visualPanel):not(.modeCascade){"));
+ assert.ok(tail.includes("body.controls-window #choices:not(.visualPanel):not(.modeCascade):not(.morePanel):not(.periodCompact){"));
  assert.ok(tail.includes("background:var(--visual-menu-bg,rgba(15,19,26,.65))!important;"));
  assert.ok(tail.includes("border:0!important;box-shadow:none!important;"));
  assert.ok(dock.includes("/* VISUAL-MENU-ALPHA-01:"));
