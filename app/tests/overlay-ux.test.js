@@ -3532,6 +3532,30 @@ test("LT60-E8-03 confirmed state requires completed current site search",()=>{
   service.includes("!searchInProgress&&!resultsStale");
 });
 
+// LT60-E9: old visible cards remain in cache, never collected or alerted as new.
+test("LT60-E9-01 prior cards require DOM change after Search before acceptance",()=>{
+ const collect=probe.slice(probe.indexOf("function collect(){"),probe.indexOf('if(action==="collect")return collect();'));
+ const poll=service.slice(service.indexOf("private void pollSearch("),service.indexOf("private long expiration("));
+ return collect.includes("const resultFreshnessPending=found.length>0&&!resultChanged;")&&
+  collect.includes("resultFreshnessPending,")&&
+  poll.includes('if(r.optBoolean("resultFreshnessPending",false)){')&&
+  poll.includes("if(attempt<24){")&&
+  poll.includes("pollSearch(generation,attempt+1,manual);")&&
+  poll.includes('searchFailure("⚠ Resultados anteriores",')&&
+  poll.indexOf('if(r.optBoolean("resultFreshnessPending",false)){')<
+    poll.indexOf('int found=r.optInt("found",0);')&&
+  poll.indexOf('if(r.optBoolean("resultFreshnessPending",false)){')<
+    poll.indexOf("applyCollectedResults(r);");
+});
+test("LT60-E9-02 stale-card handling must never emit a new Search or new result alert",()=>{
+ const poll=service.slice(service.indexOf("private void pollSearch("),service.indexOf("private long expiration("));
+ const stale=poll.slice(poll.indexOf('if(r.optBoolean("resultFreshnessPending",false)){' ),poll.indexOf('int found=r.optInt("found",0);'));
+ return stale.includes("searchInProgress=false;")&&
+  !stale.includes("applyCollectedResults(")&&
+  !stale.includes("recordNewResults(")&&
+  !stale.includes('execute("submitSearch"')&&
+  !stale.includes("refresh(");
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
