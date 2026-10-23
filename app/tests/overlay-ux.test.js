@@ -770,7 +770,7 @@ test("Cascade replaces wheels and popup Shiny without losing the independent ✨
 test("Direct extremes and explicit ✓ are the only cascade save paths",
  dock.includes('const next={...searchSettings,mode:"raw",attack:value,defense:value,stamina:value}')&&
  dock.includes('const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));')&&
- !!dock.includes('cancel.className="modeCascadeCancel"')&&toolbarButtons.length===12);
+ !dock.includes('cancel.className="modeCascadeCancel"')&&toolbarButtons.length===12);
 test("Cascade percent MIN/MAX are kept in valid order on edit",
  dock.includes('if(cascadeMode==="percent"&&values.percentMin>values.percentMax)')&&
  dock.includes('Object.assign(modeDraft,values)')&&
@@ -778,8 +778,8 @@ test("Cascade percent MIN/MAX are kept in valid order on edit",
 test("Native bridge validates all requested IV, PvP ranking and percent bounds",
  service.includes("public void setSearchConfig(String payload)")&&
  service.includes("within(a,0,15)")&&service.includes("within(gl,1,50)")&&
- service.includes("isAllowedIvPercent(min)")&&
-  service.includes("isAllowedIvPercent(max)")&&service.includes("min>max"));
+ service.includes("within(min,0,100)")&&
+  service.includes("within(max,0,100)")&&service.includes("min>max"));
 test("Native mode and filter options persist through service restarts",
  ["rawAttack","rawDefense","rawStamina","glRank","ulRank","ivPercentMin","ivPercentMax"].every(k=>
   service.includes('putInt("'+k+'"')&&service.includes('pref.getInt("'+k+'"')));
@@ -852,8 +852,8 @@ test("Exactly 46 attainable IV percentages are offered with 91 and 100 included"
   !actual.includes(90)&&!actual.includes(92)&&!actual.includes(95);
 })());
 test("Cascade IV% and league rank limits stay independent and site validated",(()=>{const b=dock.split('function renderModeChoices()')[1]?.split('function renderExtraFilters(')[0]||"";
- return b.includes('kind==="percent"?IV_PERCENT_VALUES')&&
- b.includes('kind==="iv"?16:50')&&
+ return b.includes('kind==="percent"?[0,100]')&&
+ b.includes('kind==="iv"?[0,15]:[1,50]')&&
  b.includes('Object.assign(modeDraft,values)')&&
  read("assets/probe.js").includes('filters.percentMin>=0&&filters.percentMax<=100')&&
  read("assets/probe.js").includes('configuredRank()');})());
@@ -1206,9 +1206,9 @@ test("UX-MODOS-CASCADE-03 uses classic 6-row menu, no oversized wheels",(()=>{co
  !b.includes('Native.shiny()');})());
 test("UX-MODOS-CASCADE-04 confirms or cancels only the chosen lateral editor",
  dock.includes('confirm.className="modeCascadeConfirm"')&&
- dock.includes('cancel.className="modeCascadeCancel"')&&
+ !dock.includes('cancel.className="modeCascadeCancel"')&&
  dock.includes('confirm.onclick=()=>')&&
- dock.includes('cancel.onclick=()=>{if(controlsWindow)Native.locationEditor(false);')&&
+ dock.includes('input.placeholder=placeholder;input.value=""')&&
  dock.includes('entry.input.setCustomValidity("Digite um número de "')&&
  dock.includes('Native.setSearchConfig(JSON.stringify(next))'));
 test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
