@@ -693,5 +693,43 @@ check("LT62 Favorite grid has exactly 50 10-column tiles before search with resp
  assert.ok(!picker.includes('pagination.setText('));
  assert.ok(!picker.includes('PAGE_SIZE=12'));
 });
+
+check("LT62 visual Filtros: one rail, content-fitted editor, no empty background",()=>{
+ const block=dock.split("/* LT62-FILTER-PARITY-02:")[1]
+  ?.split("/* Compact location:",1)[0]||"";
+ assert.ok(block.includes("background:transparent!important;border:0!important"));
+ assert.ok(block.includes('width:min(calc(80px + var(--filter-editor-width,134px)),calc(100vw - 12px))!important'));
+ assert.ok(block.includes('width:var(--filter-editor-width,134px)!important'));
+ assert.ok(block.includes('pointer-events:none!important'));
+ assert.ok(block.includes('pointer-events:auto!important'));
+ assert.ok(dock.includes('panel.classList.remove("modePanel","standardPanel")'));
+ assert.ok(dock.includes('panel.style.setProperty("--filter-editor-width",filterCascadeEditorWidth(selected)+"px")'));
+ assert.ok(!block.includes("width:min(270px"));
+});
+check("LT62 visual Filtros: precise width contract per editor, never giant Sex panel",()=>{
+ const code=dock.split("function filterCascadeEditorWidth(label){")[1]
+  ?.split("function renderExtraFilters(panel,make){")[0]||"";
+ assert.ok(code,"size resolver is available");
+ const context={};
+ vm.runInNewContext("function filterCascadeEditorWidth(label){"+code+";this.resolve=filterCascadeEditorWidth",context);
+ for(const [type,expected] of [
+  ["Sexo",134],["Tamanho",134],["PC",168],["Nível",168],
+  ["Clima",160],["Ordenar",156],["Forma",110],["PC mínimo PvP",116]
+ ])assert.equal(context.resolve(type),expected,type);
+});
+check("LT62 visual Filtros: exclusive Sex and 7 Size remain compact and independent",()=>{
+ const block=dock.split("/* LT62-FILTER-PARITY-02:")[1]
+  ?.split("/* Compact location:",1)[0]||"";
+ assert.ok(block.includes('grid-template-columns:repeat(4,29px)!important'));
+ assert.ok(block.includes('font:600 16px/1 Arial'));
+ assert.ok(block.includes('font:600 10px/1 Roboto'));
+ const render=dock.split('function renderExtraFilters(panel,make){')[1]
+  ?.split('function renderFilterPicker(',1)[0]||"";
+ assert.ok(render.includes('["Any","Male","Female","Genderless"]'));
+ assert.ok(render.includes('["XXS","XS","S","M","L","XL","XXL"]'));
+ assert.ok(render.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}'));
+ assert.ok(render.includes('patchSelectedFilterKeys([multiKey,key])'));
+ assert.ok(render.includes('numericConfirmButton(make,[minKey,maxKey],label)'));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");

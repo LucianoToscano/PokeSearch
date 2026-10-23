@@ -2223,39 +2223,108 @@ body.controls-window #choices.visualPanel.visualCompact .visualStatus{
 }
 body.controls-window #choices.visualPanel.visualCompact .visualStatus[hidden]{display:none!important}
 
-/* LT62-VISUAL-PARITY-01: the Modos rail owns the dimensional grammar.  Do not
-   paint a full #choices rectangle behind the detached Filtros cascade. */
-body.controls-window #choices.filterCascade[data-panel-kind="filters"]{
- background:transparent!important;border:0!important;box-shadow:none!important;
+/* LT62-FILTER-PARITY-02: Modos proportions, no oversized transparent hit area.
+   The 78px rail remains anchored to its toolbar icon; only the selected
+   editor receives an opaque surface, and its width follows its content. */
+body.controls-window #choices.filterCascade[data-panel-kind="filters"]:not(.filterPicker){
+ box-sizing:border-box!important;display:block!important;position:absolute!important;
+ width:80px!important;min-width:80px!important;max-width:calc(100vw - 12px)!important;
+ height:216px!important;min-height:0!important;max-height:none!important;
+ margin:0!important;padding:0!important;overflow:visible!important;
+ background:transparent!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;pointer-events:none!important;
+}
+body.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]:not(.filterPicker){
+ width:min(calc(80px + var(--filter-editor-width,134px)),calc(100vw - 12px))!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeRail{
+ box-sizing:border-box!important;width:78px!important;min-width:78px!important;
+ padding:2px!important;gap:1px!important;overflow:visible!important;
+ border-radius:8px!important;pointer-events:auto!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeHead{
+ height:20px!important;min-height:20px!important;font-size:10px!important;
+}
+body.controls-window #choices.filterCascade button.filterCascadeEntry{
+ width:100%!important;height:23px!important;min-height:23px!important;
+ padding:0 3px!important;font:500 10px/1 Roboto,Arial,sans-serif!important;
+ border-radius:5px!important;
+}
+body.controls-window #choices.filterCascade button.filterCascadeEntry.chosen{
+ background:var(--visual-menu-button-bg,#303842e6)!important;
+ border-color:#7bc3b39c!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+}
+body.controls-window #choices.filterCascade button.filterCascadeEntry:focus-visible{
+ outline:1px solid #84c5b9!important;outline-offset:-1px!important;
 }
 body.controls-window #choices.filterCascade .filterCascadeEditor{
- width:max-content!important;max-width:min(178px,calc(100% - 80px))!important;
- padding:3px!important;
+ box-sizing:border-box!important;display:none!important;
+ left:80px!important;right:auto!important;
+ width:var(--filter-editor-width,134px)!important;
+ max-width:calc(100% - 80px)!important;min-width:0!important;
+ height:auto!important;padding:3px!important;margin:0!important;gap:2px!important;
+ overflow-wrap:anywhere!important;
+ background:var(--visual-menu-bg,rgba(15,19,26,.65))!important;
+ border:1px solid var(--visual-menu-border,#ffffff48)!important;
+ border-radius:7px!important;box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0006)!important;
+ pointer-events:auto!important;
 }
-body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"]{
+body.controls-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor{
+ display:block!important;
+}
+body.menu-left.controls-window #choices.filterCascade .filterCascadeEditor{
+ left:auto!important;right:80px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraField{
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ margin:0!important;gap:3px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs,
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraNumberRow{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;gap:3px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"],
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"]{
  display:grid!important;grid-template-columns:repeat(4,29px)!important;
+ justify-content:start!important;justify-items:center!important;
  width:max-content!important;max-width:100%!important;gap:3px!important;
 }
 body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"] .extraChip{
- box-sizing:border-box!important;width:29px!important;min-width:29px!important;max-width:29px!important;
- height:29px!important;min-height:29px!important;padding:0!important;
+ box-sizing:border-box!important;display:inline-flex!important;
+ justify-content:center!important;align-items:center!important;
+ width:29px!important;min-width:29px!important;max-width:29px!important;
+ height:29px!important;min-height:29px!important;padding:0!important;margin:0!important;
  font:600 16px/1 Arial,"Noto Sans Symbols 2","Segoe UI Symbol",sans-serif!important;
 }
-body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"]{
- display:grid!important;grid-template-columns:repeat(4,29px)!important;
- width:max-content!important;max-width:100%!important;gap:3px!important;
-}
 body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"] .extraChip{
+ box-sizing:border-box!important;display:inline-flex!important;
+ justify-content:center!important;align-items:center!important;
  width:29px!important;min-width:29px!important;max-width:29px!important;
- height:27px!important;min-height:27px!important;padding:0!important;
- font-size:10px!important;
+ height:27px!important;min-height:27px!important;padding:0!important;margin:0!important;
+ font:600 10px/1 Roboto,Arial,sans-serif!important;
 }
 body.controls-window #choices.filterCascade .filterCascadeEditor .extraChip.chosen{
  background:var(--visual-menu-button-bg,#323943e8)!important;
  color:var(--visual-menu-fg,#eef3fb)!important;border-color:#71c9b5ad!important;
 }
-body.controls-window #choices.filterCascade .filterCascadeEntry.chosen{
- background:#365346b8!important;border-color:#71c9b5ad!important;
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChip:focus-visible{
+ outline:1px solid #85c9bb!important;outline-offset:0!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterInlineConfirm{
+ flex:0 0 26px!important;width:26px!important;min-width:26px!important;
+ height:29px!important;min-height:29px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraApplyStatus,
+body.controls-window #choices.filterCascade .filterCascadeEditor .uxNote{
+ margin:0!important;max-width:100%!important;white-space:normal!important;
+ font-size:8px!important;line-height:1.2!important;
+}
+/* Unconfirmed edits are neutral; editor open is not a confirmed site Search. */
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeEditor,
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeRail{
+ color:var(--visual-menu-fg,#172533)!important;
 }
 /* Compact location: paste beside title, kilometres INSIDE the numeric field. */
 body.controls-window #choices.locationPanel{
@@ -3031,6 +3100,11 @@ function numericConfirmButton(make,keys,label){
  button.onclick=()=>confirmNumericFilter(keys,label);
  return button;
 }
+function filterCascadeEditorWidth(label){
+ const width={Ordenar:156,PC:168,"Nível":168,Clima:160,Tamanho:134,
+  Sexo:134,Forma:110,"PC mínimo PvP":116,"Evoluções anteriores":92};
+ return width[label]||134;
+}
 function renderExtraFilters(panel,make){
  const divider=()=>panel.appendChild(make("div","extraDivider"));
  const field=(label,control)=>{
@@ -3176,6 +3250,9 @@ function renderExtraFilters(panel,make){
  const heading=make("div","filterCascadeHead","Filtros");rail.appendChild(heading);
  const selected=rows.some(row=>row.querySelector("label")?.textContent===filterFocus)?filterFocus:"";
  filterFocus=selected;
+ // CSS uses a content-specific width so Sexo/Tamanho do not inherit the
+ // numeric editor's width or leave a large dead rectangle to the right.
+ panel.style.setProperty("--filter-editor-width",filterCascadeEditorWidth(selected)+"px");
  panel.classList.toggle("filterCascadeOpen",!!selected);
  rows.forEach((row,index)=>{
   const label=row.querySelector("label")?.textContent||"Filtro";
@@ -4854,6 +4931,9 @@ function renderFiltersChoices(){
  if(!modeDraft)modeDraft={...searchSettings,mode};
  const panel=uxPanel("FILTROS");
  panel.querySelector(".choiceHeader")?.remove(); // same rail as Modos
+ // The old standard/mode panel classes forced a broad opaque backing and
+ // collided with the narrow native cascade CSS.
+ panel.classList.remove("modePanel","standardPanel");
  const scrollRestoration=modeScrollTop;
  const make=(tag,cls,value)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e;};
  panel.classList.add('filterCascade');
