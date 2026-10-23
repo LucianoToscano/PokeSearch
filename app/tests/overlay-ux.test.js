@@ -912,7 +912,7 @@ test("UX-MENU-02 Pokémon silhouette opens the official multi-species/form picke
 test("UX-SHINY-01 restores Shiny ✨ next to Modos using the existing native toggle",
  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"]')&&
  dock.includes('case "sh":Native.shiny();break;')&&
- dock.includes('id==="sh"?(shiny&&!shinyPending)')&&
+ dock.includes('id==="sh"?shiny:')&&dock.includes('shinyPending=!!pending;shiny=!!shi||shinyPending;')&&
  !dock.includes('shinyButton.onclick=()=>Native.shiny()'));
 test("UX-MENU-04 restores twelve small icons in the old thin row while migrating saved menu",
  dock.includes('id="quickUtilities"')&&
@@ -1000,9 +1000,9 @@ test("UX-SHINY-02 keeps Shiny beside Modos through saved preferences and native 
  return prefs.includes('order.splice(modeIndex+1,0,"sh")')&&
   prefs.includes('"period","sh"')&&
   click.includes('case "sh":Native.shiny();break;')&&
-  dock.includes('if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending))')&&
+  dock.includes('if(id==="sh")button.setAttribute("aria-pressed",String(shiny))')&&
   state.includes('button.classList.toggle("pending",id==="sh"&&shinyPending)')&&
-  state.includes('id==="sh"?(shiny&&!shinyPending)')&&
+  state.includes('id==="sh"?shiny:')&&
   dock.includes('[data-key=sh].selected')&&dock.includes('[data-key=sh].pending')&&
   service.includes('!"sh".equals(id)')&&
   service.includes('siteConfirmsShinyAccount(session)')&&
