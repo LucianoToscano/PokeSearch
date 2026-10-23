@@ -1250,7 +1250,8 @@ test("Filters remain independent of cascade and retain their popup dimensions",
  dock.includes('section("Filtros gerais"')&&!dock.includes('section("Filtros avançados"')&&
  dock.includes('#choices.modePanel{width:232px')&&dock.includes('function renderExtraFilters('));
 test("Site dropdown options are discovered instead of inventing weather/form values",
-  dock.includes('filterOptions=response.partial?')&&
+  dock.includes('for(const [key,value] of Object.entries(response.options||{}))')&&
+  dock.includes('filterOptions[key]={...(filterOptions[key]||{}),...value};')&&
   dock.includes('Native.requestFilterOptions()')&&
   !dock.includes('option("weather","Sunny")'));
 test("Mode popup allows keyboard focus for optional numeric and Pokémon inputs",
