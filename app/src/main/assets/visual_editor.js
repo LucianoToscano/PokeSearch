@@ -25,6 +25,7 @@ const PRESETS={
  readable:{resultGapTop:8,resultGapBetween:40,resultSpriteScale:100,menuItemGap:7}
 };
 let current={...DEFAULTS},tab="results",saveTimer=null,pendingVisualJson="",saveEpoch=0,previewArea="";
+const visualOpenSection={results:"spacing",menu:"position"};
 function normalize(raw){
  const src=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{};
  const result={...DEFAULTS};
@@ -166,66 +167,89 @@ function btn(container,title,fn){
  const b=document.createElement("button");b.type="button";b.className="visualButton";
  b.textContent=title;b.onclick=fn;container.appendChild(b);return b;
 }
+// Only one section expanded per tab: all controls and their saved keys survive.
+function visualGroup(host,id,title,create){
+ const section=document.createElement("details");section.className="visualGroup";
+ section.dataset.section=id;section.open=visualOpenSection[tab]===id;
+ const summary=document.createElement("summary");
+ summary.className="visualGroupTitle";summary.textContent=title;
+ summary.setAttribute("aria-label","Editar "+title);
+ section.appendChild(summary);
+ const content=document.createElement("div");content.className="visualGroupBody";
+ create(content);section.appendChild(content);host.appendChild(section);
+ section.addEventListener("toggle",()=>{
+  if(section.open){
+   visualOpenSection[tab]=id;
+   for(const other of host.querySelectorAll("details.visualGroup"))
+    if(other!==section)other.open=false;
+  }else if(visualOpenSection[tab]===id){
+   visualOpenSection[tab]="";
+  }
+ });
+}
 function renderVisualEditor(){
  if(!controlsWindow||choiceOpen!=="visual")return;
- const panel=uxPanel("🎛 EDITOR VISUAL · TEMPORÁRIO");
+ const panel=uxPanel("EDITOR VISUAL");
  if(window.Native&&Native.previewVisualArea)Native.previewVisualArea(tab);
- panel.classList.add("visualPanel");
- const note=document.createElement("div");note.className="uxNote";
- note.textContent="Ajuste ao vivo no jogo. Nada altera os filtros ou o IV. Os ajustes persistem até restaurar.";
- panel.appendChild(note);
+ panel.classList.add("visualPanel","visualCompact");
  const nav=document.createElement("div");nav.className="visualTabs";
  for(const [id,title] of [["results","Pokémon"],["menu","Menu"]]){
   const b=btn(nav,title,()=>{tab=id;renderVisualEditor();});
   b.classList.toggle("chosen",tab===id);
+  b.setAttribute("aria-pressed",String(tab===id));
  }
  panel.appendChild(nav);
  if(tab==="results"){
-  heading(panel,"Espaçamento e tamanho");
-  if(window.renderSpriteSizeButtons)window.renderSpriteSizeButtons(panel,true);
-  addSlider(panel,"resultGapTop","Pokébola → primeiro Pokémon"," px");
-  addSlider(panel,"resultGapBetween","Distância entre Pokémon (0 = colados)"," px");
-  addSlider(panel,"resultSpriteScale","Escala visual dos Pokémon","%");
-  heading(panel,"Pokébola · botão completo e área de toque");
-  addSlider(panel,"headerIconY","Botão + toque: posição Y (0 = topo)"," px");
-  addSlider(panel,"headerOffsetX","Botão + toque: posição X"," px");
-  addSlider(panel,"headerTouchWidth","Área clicável: largura"," px");
-  addSlider(panel,"headerTouchHeight","Área clicável: altura"," px");
-  addSlider(panel,"headerAfterGap","Espaço abaixo do botão"," px");
-  heading(panel,"Posição da janela de resultados");
-  addSlider(panel,"resultsOffsetX","Mover horizontalmente (X)"," dp");
-  addSlider(panel,"resultsOffsetY","Mover verticalmente (Y)"," dp");
-  addSegment(panel,"resultsOrientation","Organização dos resultados",
-   [["vertical","Vertical ↕"],["horizontal","Horizontal ↔ (quebra de linha)"]]);
-  heading(panel,"Fundo e área clicável dos resultados");
-  addSegment(panel,"resultsBgMode","Modo dos resultados",[["dark","Escuro"],["light","Claro"]]);
-  addSlider(panel,"resultsTransparency","Transparência do fundo dos resultados","%");
-  btn(panel,"Linhas-guia resultados: "+(current.resultsGuides?"ON":"OFF"),()=>{
-   change("resultsGuides",!current.resultsGuides);renderVisualEditor();
+  visualGroup(panel,"spacing","Sprites e espaçamento",panel=>{
+   if(window.renderSpriteSizeButtons)window.renderSpriteSizeButtons(panel,true);
+   addSlider(panel,"resultSpriteScale","Escala dos Pokémon","%");
+   addSlider(panel,"resultGapTop","Pokébola → primeiro"," px");
+   addSlider(panel,"resultGapBetween","Entre Pokémon"," px");
   });
-  const preview=document.createElement("div");preview.className="uxNote";
-  preview.textContent="Amarelo: área clicável da Pokébola · azul: sprites. Só durante a edição.";
-  panel.appendChild(preview);
+  visualGroup(panel,"ball","Pokébola e toque",panel=>{
+   addSlider(panel,"headerIconY","Posição Y"," px");
+   addSlider(panel,"headerOffsetX","Posição X"," px");
+   addSlider(panel,"headerTouchWidth","Área de toque · largura"," px");
+   addSlider(panel,"headerTouchHeight","Área de toque · altura"," px");
+   addSlider(panel,"headerAfterGap","Espaço abaixo"," px");
+  });
+  visualGroup(panel,"window","Janela e orientação",panel=>{
+   addSlider(panel,"resultsOffsetX","Mover X"," dp");
+   addSlider(panel,"resultsOffsetY","Mover Y"," dp");
+   addSegment(panel,"resultsOrientation","Resultados",
+    [["vertical","Vertical"],["horizontal","Horizontal"]]);
+  });
+  visualGroup(panel,"theme","Cores e guias",panel=>{
+   addSegment(panel,"resultsBgMode","Tema",[["dark","Escuro"],["light","Claro"]]);
+   addSlider(panel,"resultsTransparency","Transparência dos resultados","%");
+   btn(panel,"Linhas-guia resultados: "+(current.resultsGuides?"ON":"OFF"),()=>{
+    change("resultsGuides",!current.resultsGuides);renderVisualEditor();
+   });
+  });
  }else if(tab==="menu"){
-  heading(panel,"Posição e distância");
-  addSlider(panel,"gearMenuGap","Engrenagem → menu"," dp");
-  addSlider(panel,"menuItemGap","Distância entre botões"," px");
-  addSlider(panel,"popupWidth","Largura das janelas (Modos)"," px");
-  addSlider(panel,"popupHeight","Altura máxima das janelas"," px");
-  addSlider(panel,"menuOffsetX","Mover menu horizontalmente (X)"," dp");
-  addSlider(panel,"menuOffsetY","Mover menu verticalmente (Y)"," dp");
-  addSegment(panel,"menuOrientation","Organização do menu",
-   [["horizontal","Horizontal ↔"],["vertical","Vertical ↕"]]);
-  heading(panel,"Fundo e área clicável do Menu");
-  addSegment(panel,"menuBgMode","Modo do menu",[["dark","Escuro"],["light","Claro"]]);
-  addSlider(panel,"menuTransparency","Transparência única dos menus","%");
-  btn(panel,"Linhas-guia menu: "+(current.menuGuides?"ON":"OFF"),()=>{
-   change("menuGuides",!current.menuGuides);renderVisualEditor();
+  visualGroup(panel,"position","Posição do menu",panel=>{
+   addSlider(panel,"gearMenuGap","Engrenagem → menu"," dp");
+   addSlider(panel,"menuOffsetX","Mover X"," dp");
+   addSlider(panel,"menuOffsetY","Mover Y"," dp");
+   addSegment(panel,"menuOrientation","Orientação",
+    [["horizontal","Horizontal"],["vertical","Vertical"]]);
   });
-  const preview=document.createElement("div");preview.className="uxNote";
-  preview.textContent="Verde: área clicável dos botões. Só durante a edição.";
-  panel.appendChild(preview);
- }else{
+  visualGroup(panel,"spacing","Espaçamento e painéis",panel=>{
+   addSlider(panel,"menuItemGap","Entre botões"," px");
+   addSlider(panel,"popupWidth","Largura dos painéis"," px");
+   addSlider(panel,"popupHeight","Altura máxima"," px");
+  });
+  visualGroup(panel,"theme","Cores e guias",panel=>{
+   addSegment(panel,"menuBgMode","Tema",[["dark","Escuro"],["light","Claro"]]);
+   addSlider(panel,"menuTransparency","Transparência única dos menus","%");
+   btn(panel,"Linhas-guia menu: "+(current.menuGuides?"ON":"OFF"),()=>{
+    change("menuGuides",!current.menuGuides);renderVisualEditor();
+   });
+  });
+ }
+ // Keep the JSON source and import function for controlled future use,
+ // but do not expose a distracting JSON tab in ordinary operation.
+ if(tab==="export"){
   heading(panel,"Exportar o visual para o ChatGPT");
   const textarea=document.createElement("textarea");
   textarea.className="visualJSON";textarea.value=JSON.stringify({schema:"pokesearch-visual-v1",...current},null,2);
@@ -235,7 +259,7 @@ function renderVisualEditor(){
   textarea.addEventListener("blur",()=>Native.visualEditorFocus&&Native.visualEditorFocus(false));
   btn(panel,"Copiar JSON",()=>{
    Native.copyVisualPrefs&&Native.copyVisualPrefs(JSON.stringify({schema:"pokesearch-visual-v1",...current},null,2));
-   toast("✓ JSON copiado. Cole aqui na conversa.");
+   toast("✓ JSON copiado");
   });
   btn(panel,"Importar JSON digitado",()=>{
    let input;
@@ -246,27 +270,29 @@ function renderVisualEditor(){
    toast("✓ Layout importado");
   });
  }
- heading(panel,"Presets rápidos");
- const presets=document.createElement("div");presets.className="visualPresets";
- btn(presets,"Compacto",()=>usePreset("compact"));
- btn(presets,"Equilibrado",()=>usePreset("balanced"));
- btn(presets,"Legível",()=>usePreset("readable"));
- panel.appendChild(presets);
- const actions=document.createElement("div");actions.className="visualActions";
- btn(actions,"Restaurar padrão original",()=>{
-  current=normalize(DEFAULTS);applyVisual();saveSoon();renderVisualEditor();
-  toast("✓ Padrão original restaurado");
+ visualGroup(panel,"presets","Presets e ferramentas",panel=>{
+  const presets=document.createElement("div");presets.className="visualPresets";
+  btn(presets,"Compacto",()=>usePreset("compact"));
+  btn(presets,"Equilibrado",()=>usePreset("balanced"));
+  btn(presets,"Legível",()=>usePreset("readable"));
+  panel.appendChild(presets);
+  const actions=document.createElement("div");actions.className="visualActions";
+  btn(actions,"Restaurar",()=>{
+   current=normalize(DEFAULTS);applyVisual();saveSoon();renderVisualEditor();
+   toast("✓ Padrão restaurado");
+  });
+  btn(actions,"Copiar JSON",()=>{
+   if(window.Native&&Native.copyVisualPrefs)
+    Native.copyVisualPrefs(JSON.stringify({schema:"pokesearch-visual-v1",...current},null,2));
+   toast("✓ JSON copiado");
+  });
+  panel.appendChild(actions);
  });
- btn(actions,"Copiar JSON",()=>{
-  if(window.Native&&Native.copyVisualPrefs)
-   Native.copyVisualPrefs(JSON.stringify({schema:"pokesearch-visual-v1",...current},null,2));
-  toast("✓ JSON copiado");
- });
- panel.appendChild(actions);
  const feedback=document.createElement("div");feedback.id="visualFeedback";
- feedback.className="uxNote";feedback.setAttribute("role","status");
- feedback.textContent="Prévia ativa · não precisa reiniciar";panel.appendChild(feedback);
- const back=btn(panel,"‹ Voltar à personalização",()=>{
+ feedback.className="visualStatus";feedback.setAttribute("role","status");
+ feedback.setAttribute("aria-live","polite");feedback.hidden=true;
+ panel.appendChild(feedback);
+ const back=btn(panel,"‹ Voltar",()=>{
   if(window.Native&&Native.previewVisualArea)Native.previewVisualArea("");
   choiceOpen="appearance";renderAppearanceChoices();
  });
