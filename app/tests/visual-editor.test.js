@@ -56,7 +56,7 @@ test("invalid imported JSON is ignored and values are clamped",()=>{
  assert.equal(JSON.stringify(window.visualEditorCurrent()),before);
 });
 test("editor includes preset, live preview, JSON copy/import and reset",()=>{
- for(const term of ["compact:","balanced:","readable:","Copiar JSON","Restaurar padrão original",
+ for(const term of ["compact:","balanced:","readable:","Copiar JSON",'btn(actions,"Restaurar"',
   "Importar JSON digitado","JSON.stringify","renderVisualEditor","saveSoon","applyVisual","setTimeout"]){
   assert.ok(script.includes(term),term);
  }
