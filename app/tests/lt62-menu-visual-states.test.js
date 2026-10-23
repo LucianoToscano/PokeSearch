@@ -179,5 +179,38 @@ check("LT62 Localização: SVG de colar centralizado, km limitado e busca indepe
  assert.ok(body.includes('Native.setLocation(true,wantedCoords,wantedRadius)'));
  assert.ok(body.includes('Native.setLocation(false,"",0)'));
 });
+check("LT62 Favoritos: no lists or scroll areas, max three live search results",()=>{
+ const picker=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
+ assert.ok(!picker.includes("new ListView("));
+ assert.ok(!picker.includes("new ScrollView("));
+ assert.ok(picker.includes('if(!key.isEmpty()){'));
+ assert.ok(picker.includes('if(visible.size()==3)break;'));
+ assert.ok(picker.includes('search.addTextChangedListener(new TextWatcher()'));
+ assert.ok(picker.includes('results.removeAllViews()'));
+ assert.ok(picker.includes('String term=search.getText().toString().trim()'));
+ assert.ok(picker.includes('if(term.isEmpty())return;'));
+});
+check("LT62 Favoritos: all 50 accessible by 12-sprite pages with direct removal",()=>{
+ const picker=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
+ assert.ok(picker.includes('final int PAGE_SIZE=12;'));
+ assert.ok(picker.includes('sprites.setColumnCount(6);'));
+ assert.ok(picker.includes('GridLayout.spec(local/6),GridLayout.spec(local%6)'));
+ assert.ok(picker.includes('selected.add(found!=null?found:new Entry(0,favorite.getValue()))'));
+ assert.ok(picker.includes('tile.setOnClickListener(v->{WatchAlerts.toggle(activity,entry.name);refresh[0].run();})'));
+ assert.ok(picker.includes('next.setOnClickListener'));
+ assert.ok(picker.includes('previous.setOnClickListener'));
+ assert.ok(picker.includes('count.setText("Selecionados  "+size+"/50")'));
+});
+check("LT62 Favoritos: compact 348dp dialog and notifications only in Alerts",()=>{
+ const picker=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
+ assert.ok(picker.includes('window.setLayout(Math.min(screen-dp(activity,22),dp(activity,348))'));
+ assert.ok(picker.includes('finish.setText("×")'));
+ assert.ok(picker.includes('search.setHint("Nome, forma ou nº da Pokédex")'));
+ assert.ok(!picker.includes('WatchAlerts.setMode('));
+ assert.ok(!picker.includes('testNotification.setText('));
+ assert.ok(!picker.includes('Notificar favoritos (som definido no sino'));
+ assert.ok(dock.includes('["☆ Testar aviso favorito","testNotification"]'));
+ assert.ok(dock.includes('button.onclick=()=>Native.setFavoriteAlertMode(id)'));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
