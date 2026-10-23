@@ -28,7 +28,7 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
  b.includes('["percent","IV%"],["gl","GL"],["ul","UL"]')&&
  b.includes('applyExact(15)')&&b.includes('applyExact(0)')&&
  !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
-test("AUTO offers OFF, 3, 5, 10, 15 and 20 minutes",["Auto · OFF","Auto · 3 min","Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
+test("AUTO offers OFF, 3, 5, 10, 15 and 20 minutes in a compact row",dock.includes('off.textContent="OFF"')&&dock.includes('label.textContent="AUTO"')&&dock.includes('for(const value of [3,5,10,15,20])')&&dock.includes('row.className="periodCompactRow"'));
 test("Cascade uses current toolbar height even after clipping or vertical rotation",
  dock.includes('h=Math.max(h,baseHeight+164+6);')&&
  dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;')&&
@@ -431,7 +431,7 @@ test("Menus are never clipped by the HTML viewport",dock.includes("html.controls
 test("Mode AUTO and location work before delayed native menu sync",dock.includes("if(controlsWindow&&!menuOpen)setMenuOpen(true"));
 test("Mode applies one atomic native configuration and AUTO retains direct selection",
   dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
-  dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
+  dock.includes('button.onclick=()=>{closeChoices();Native.setIntervalMinutes(value);}'));
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(330,screenWidthDp()-8)"));
@@ -547,7 +547,7 @@ test("v0.50 no phantom gap when toolbar is beside dock",
 test("v0.50 transparent floating collapse arrow",
     dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("v0.50 AUTO OFF in UI and service, with no periodic posts",
-    dock.includes('[[0,"Auto · OFF')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
+    dock.includes('off.textContent="OFF"')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
     service.includes('if(minutes!=0&&minutes!=3&&minutes!=5')&&
     service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(periodic,'));
 test("General notifications still cycle off/on/silent while bell indicates both sources",
@@ -1072,8 +1072,8 @@ test("UX-MENU-06 refresh directly after Alertas and personalization before Repor
   ids.indexOf("period")===ids.indexOf("bell")+1&&
   ids.indexOf("appearance")===ids.indexOf("report")-1&&
   dock.includes('case "bell":toggleChoices("alerts")')&&
-  dock.includes('now.textContent="↻ Atualizar agora"')&&
-  dock.includes('btn.className=value===current?"chosen":""')&&
+  !dock.includes('now.textContent="↻ Atualizar agora"')&&
+  dock.includes('button.className="periodCompactValue"+(value===current?" chosen":"")')&&
   dock.includes('rows.appendChild(button)')&&
   service.includes('"bell","period","appearance","report","donate","close"');
 });
@@ -1130,7 +1130,7 @@ test("Modos chooses exact Drive PNGs across 0–3 stars and GL/UL",()=>{
 test("Only refresh actions appear in Atualização: no path to Ajustes",()=>{
  const code=dock.split('title.textContent="ATUALIZAÇÃO"')[1]?.split("function renderModeChoices()")[0]||"";
  return !code.includes("‹ Ajustes")&&!code.includes('choiceOpen="appearance"')&&
-  code.includes('manualRefreshTap()')&&code.includes('Native.setIntervalMinutes(period)');
+  !code.includes('now.textContent=')&&code.includes('Native.setIntervalMinutes(value)')&&code.includes('Native.setIntervalMinutes(0)');
 });
 test("Modos changes UL result base only; menu rank overlays centered",(()=>{const menu=dock.split("function getModeMenuIcon(")[1]?.split("// Historical result icons")[0]||"";
  const result=dock.split("function getResultIcon(")[1]?.split("let locationEnabled=")[0]||"";
@@ -1233,7 +1233,7 @@ test("UX-OTHER-02 all submenus close explicitly without changing their saved set
  dock.includes('close.setAttribute("aria-label","Fechar "+title)')&&
  dock.includes('close.onclick=closeChoices')&&
  dock.includes('const panel=uxPanel(label);panel.dataset.panelKind="filters";panel.classList.add("filterPicker")')&&
- dock.includes('panel.classList.add("standardPanel","visible");panel.dataset.panelKind="period"')&&
+ dock.includes('panel.classList.add("standardPanel","periodCompact","visible")')&&
  dock.includes('close.onclick=closeChoices;title.appendChild(close);')&&
  dock.includes('delete document.getElementById("choices").dataset.panelKind'));
 test("UX-OTHER-03 neither Filters nor Location force keyboard without field focus",
@@ -3507,10 +3507,31 @@ test("LT60-E7-02 empty result needs a fresh site signal, not a generic zero",()=
 // LT62 reference: Refresh direct tap + AUTO long-press preserve two behaviors.
 test("LT62: direct refresh, long press AUTO and official sprite-only chips",()=>{
  return dock.includes('if(id==="period"){manualRefreshTap();return;}')&&
-   dock.includes('button.addEventListener("contextmenu",event=>{')&&
-   dock.includes('toggleChoices("period");')&&
+   dock.includes('button.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();open();})')&&
+   dock.includes('if(choiceOpen!=="period")toggleChoices("period")')&&
    dock.includes('pokemonSuggestionSpriteCache.set(label.toLowerCase(),src);')&&
    dock.includes('pokemonSuggestionSpriteCache.get(String(name).toLowerCase())');
+});
+test("LT62 AUTO refresh icon and long press must never double trigger a search",()=>{
+ const body=dock.split('function bindRefreshGesture(button){')[1]?.split('function renderQuickMenu(){')[0]||"";
+ const menu=dock.split('const current=period;')[1]?.split('function positionCascadeEditor()')[0]||"";
+ return dock.includes('period:\'<path d="M27 12A11 11 0 0 0 8 5"')&&
+  dock.includes('bindRefreshGesture(button);')&&
+  body.includes('hold=setTimeout(open,600)')&&
+  body.includes('if(longTriggered){e.preventDefault();e.stopPropagation();longTriggered=false;return;}')&&
+  body.includes('manualRefreshTap();')&&body.includes('pointermove')&&
+  body.includes('pointercancel')&&
+  !menu.includes('now.textContent=')&&
+  dock.includes('badge.textContent=period===0?"OFF":period+"m"');
+});
+test("LT62 AUTO compact six-choice menu is usable without scrolling",()=>{
+ const menu=dock.split('const current=period;')[1]?.split('function positionCascadeEditor()')[0]||"";
+ return menu.includes('off.setAttribute("aria-pressed",String(current===0))')&&
+  menu.includes('button.setAttribute("aria-pressed",String(value===current))')&&
+  menu.includes('Native.setIntervalMinutes(0)')&&menu.includes('Native.setIntervalMinutes(value)')&&
+  dock.includes('grid-template-columns:34px 28px repeat(5,minmax(0,1fr))')&&
+  dock.includes('body.controls-window #choices.periodCompact[data-panel-kind="period"]')&&
+  dock.includes('max-height:92px!important')&&dock.includes('overflow:hidden!important');
 });
 test("LT62: Shiny pending remains neutral, and site Pokemon import requires a user action",()=>{
  return dock.includes('button[data-key="sh"].pending .quickGlyph')&&
