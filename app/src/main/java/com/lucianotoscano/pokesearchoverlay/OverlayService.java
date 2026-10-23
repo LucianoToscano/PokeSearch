@@ -1553,6 +1553,20 @@ public class OverlayService extends Service {
                 searchFailure("⚠ Ranking não confirmado","Liga PvP/ranking configurado não confirmado. Resultados preservados.");
                 return;
             }
+            // LT60-E9: the site may briefly retain cards from the previous
+            // Search while React switches GL/UL or IV modes. A verified filter
+            // form alone is not proof that those visible cards were refreshed.
+            if(r.optBoolean("resultFreshnessPending",false)){
+                if(attempt<24){
+                    pollSearch(generation,attempt+1,manual);
+                    return;
+                }
+                searchInProgress=false;
+                searchFailure("⚠ Resultados anteriores",
+                    "O site não apresentou alteração comprovável da lista após Search. "+
+                    "Os cartões anteriores foram preservados, sem novos alertas.");
+                return;
+            }
             int found=r.optInt("found",0);
             int onSite=r.optInt("siteCount",0);
             if(attempt==0)BugReport.log(this,"SEARCH_RESULT",
