@@ -349,7 +349,7 @@ check("LT62 Atualização and More: OFF + five minutes, no AUTO decoration, tran
  assert.ok(dock.includes('flex-direction:column!important'));
  assert.ok(dock.includes('width:var(--more-tile-width,30px)!important'));
  assert.ok(dock.includes('const periodHeight=tiles*30+Math.max(0,tiles-1)*gap;'));
- assert.ok(dock.includes('#choices:not(.visualPanel):not(.modeCascade):not(.morePanel):not(.periodCompact){'));
+ assert.ok(dock.includes('#choices:not(.visualPanel):not(.modeCascade):not(.filterCascade):not(.morePanel):not(.periodCompact){'));
  assert.ok(dock.includes('#choices.morePanel .quickMoreAction .quickGlyph{background:transparent!important'));
  assert.ok(dock.includes('#choices.morePanel [data-key=report] .quickGlyph{color:#ffd674!important}'));
  assert.ok(dock.includes('#choices.morePanel [data-key=donate] .quickGlyph{color:#fa94a7!important}'));
