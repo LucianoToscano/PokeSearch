@@ -1931,7 +1931,7 @@ test("UX-NOTIFY-01 bell shows only six SVG states and two audio selectors",()=>{
  const block=dock.split("function quickClick(id){")[1]?.split("const QUICK_SVG=")[0]||"";
  const panel=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
  return block.includes('case "bell":toggleChoices("alerts")')&&
-  dock.includes('onclick="toggleChoices(\\'alerts\\')"')&&
+  dock.includes(`onclick="toggleChoices('alerts')"`)&&
   panel.includes('Native.setAlertMode(id)')&&panel.includes('Native.setFavoriteAlertMode(id)')&&
   panel.includes('const symbols={')&&panel.includes('for(const id of ["on","silent","off"])')&&
   panel.includes('section("Novos Pokémon","general"')&&
