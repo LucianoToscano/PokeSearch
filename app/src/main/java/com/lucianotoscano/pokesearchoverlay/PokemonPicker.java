@@ -198,10 +198,9 @@ public final class PokemonPicker {
             return;
         }
 
-        // LT62: Favorites are paged sprites and up to three live suggestions.
+        // LT62: Show every saved favorite together, at most 10 per row and
+        // five rows (50). Search below sprites, no horizontal paging/swiping.
         // No ListView, ScrollView or hidden off-screen controls.
-        final int PAGE_SIZE=12;
-        final int[] page={0};
         LinearLayout root=new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(activity,10),dp(activity,8),dp(activity,10),dp(activity,9));
@@ -243,8 +242,6 @@ public final class PokemonPicker {
         search.setBackground(inputBg);
         LinearLayout.LayoutParams searchParams=new LinearLayout.LayoutParams(-1,dp(activity,37));
         searchParams.setMargins(0,dp(activity,5),0,dp(activity,6));
-        root.addView(search,searchParams);
-
         LinearLayout counter=new LinearLayout(activity);
         counter.setGravity(Gravity.CENTER_VERTICAL);
         TextView count=new TextView(activity);
@@ -252,32 +249,22 @@ public final class PokemonPicker {
         count.setTextSize(10);
         count.setTypeface(null,Typeface.BOLD);
         counter.addView(count,new LinearLayout.LayoutParams(0,dp(activity,22),1));
-        TextView pagination=new TextView(activity);
-        pagination.setTextColor(Color.rgb(155,169,188));
-        pagination.setTextSize(10);
-        counter.addView(pagination);
         root.addView(counter);
 
         LinearLayout selectedRow=new LinearLayout(activity);
-        selectedRow.setGravity(Gravity.CENTER_VERTICAL);
-        TextView previous=new TextView(activity),next=new TextView(activity);
-        for(TextView arrow:new TextView[]{previous,next}){
-            arrow.setGravity(Gravity.CENTER);
-            arrow.setTextColor(Color.rgb(215,231,246));
-            arrow.setTextSize(17);
-            arrow.setBackgroundColor(Color.argb(48,153,173,192));
-        }
-        previous.setText("‹");next.setText("›");
-        previous.setContentDescription("Favoritos anteriores");
-        next.setContentDescription("Próximos favoritos");
-        selectedRow.addView(previous,new LinearLayout.LayoutParams(dp(activity,25),dp(activity,36)));
+        selectedRow.setGravity(Gravity.CENTER);
         GridLayout sprites=new GridLayout(activity);
-        sprites.setColumnCount(6);
+        sprites.setColumnCount(10);
+        sprites.setRowCount(5);
+        // Fit 10 sprites even in a narrow 320dp Android window; outer tile
+        // width includes 1dp margins on both sides.
+        int screenDp=(int)(activity.getResources().getDisplayMetrics().widthPixels/
+            activity.getResources().getDisplayMetrics().density);
+        final int tileOuterDp=Math.max(23,Math.min(32,(Math.min(screenDp-22,348)-22)/10));
         LinearLayout centeredSprites=new LinearLayout(activity);
         centeredSprites.setGravity(Gravity.CENTER);
         centeredSprites.addView(sprites,new LinearLayout.LayoutParams(-2,-2));
-        selectedRow.addView(centeredSprites,new LinearLayout.LayoutParams(0,-2,1));
-        selectedRow.addView(next,new LinearLayout.LayoutParams(dp(activity,25),dp(activity,36)));
+        selectedRow.addView(centeredSprites,new LinearLayout.LayoutParams(-1,-2));
         root.addView(selectedRow);
 
         TextView empty=new TextView(activity);
@@ -286,6 +273,8 @@ public final class PokemonPicker {
         empty.setTextSize(10);
         empty.setPadding(dp(activity,4),dp(activity,3),0,dp(activity,4));
         root.addView(empty);
+        // Search and three native suggestions are BELOW the five sprite rows.
+        root.addView(search,searchParams);
 
         // Suggestions are capped, unscrollable views. Search is empty by default.
         LinearLayout results=new LinearLayout(activity);
@@ -335,16 +324,10 @@ public final class PokemonPicker {
                 for(Entry item:all)if(item.normalized.equals(favorite.getKey())){found=item;break;}
                 selected.add(found!=null?found:new Entry(0,favorite.getValue()));
             }
-            int size=selected.size(),pages=Math.max(1,(size+PAGE_SIZE-1)/PAGE_SIZE);
-            page[0]=Math.min(page[0],pages-1);
+            int size=selected.size();
             count.setText("Selecionados  "+size+"/50");
-            pagination.setText(pages>1?(page[0]+1)+"/"+pages:"");
-            previous.setVisibility(pages>1?View.VISIBLE:View.INVISIBLE);
-            next.setVisibility(pages>1?View.VISIBLE:View.INVISIBLE);
-            previous.setAlpha(page[0]==0?.3f:1f);
-            next.setAlpha(page[0]==pages-1?.3f:1f);
             sprites.removeAllViews();
-            for(int i=page[0]*PAGE_SIZE;i<Math.min(size,(page[0]+1)*PAGE_SIZE);i++){
+            for(int i=0;i<Math.min(size,50);i++){
                 Entry entry=selected.get(i);
                 FrameLayout tile=new FrameLayout(activity);
                 android.graphics.drawable.GradientDrawable border=new android.graphics.drawable.GradientDrawable();
@@ -367,11 +350,10 @@ public final class PokemonPicker {
                     fallback.setTextSize(20);fallback.setGravity(Gravity.CENTER);
                     tile.addView(fallback,new FrameLayout.LayoutParams(-1,-1));
                 }
-                int local=i%PAGE_SIZE;
                 GridLayout.LayoutParams tileParams=new GridLayout.LayoutParams(
-                    GridLayout.spec(local/6),GridLayout.spec(local%6));
-                tileParams.width=dp(activity,34);
-                tileParams.height=dp(activity,35);
+                    GridLayout.spec(i/10),GridLayout.spec(i%10));
+                tileParams.width=dp(activity,tileOuterDp-2);
+                tileParams.height=dp(activity,tileOuterDp-2);
                 tileParams.setMargins(dp(activity,1),dp(activity,1),dp(activity,1),dp(activity,1));
                 sprites.addView(tile,tileParams);
             }
@@ -380,11 +362,6 @@ public final class PokemonPicker {
             updateSuggestions.run();
             if(changed!=null)changed.run();
         };
-        previous.setOnClickListener(v->{if(page[0]>0){page[0]--;refresh[0].run();}});
-        next.setOnClickListener(v->{
-            int total=WatchAlerts.watched(activity).size();
-            if(page[0]<Math.max(0,(total-1)/PAGE_SIZE)){page[0]++;refresh[0].run();}
-        });
         search.addTextChangedListener(new TextWatcher(){
             @Override public void beforeTextChanged(CharSequence text,int start,int count,int after){}
             @Override public void onTextChanged(CharSequence text,int start,int before,int count){

@@ -432,7 +432,7 @@ test("Menus are never clipped by the HTML viewport",dock.includes("html.controls
 test("Mode AUTO and location work before delayed native menu sync",dock.includes("if(controlsWindow&&!menuOpen)setMenuOpen(true"));
 test("Mode applies one atomic native configuration and AUTO retains direct selection",
   dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
-  dock.includes('button.onclick=()=>{closeChoices();Native.setIntervalMinutes(value);}'));
+  dock.includes('button.onclick=()=>selectInterval(value)'));
 test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&
  dock.includes('button.classList.add("refreshSpinning")')&&dock.includes('Native.refresh();'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
@@ -1142,7 +1142,7 @@ test("Modos chooses exact Drive PNGs across 0–3 stars and GL/UL",()=>{
 test("Only refresh actions appear in Atualização: no path to Ajustes",()=>{
  const code=dock.split('const current=period;')[1]?.split("function positionCascadeEditor()")[0]||"";
  return !code.includes("‹ Ajustes")&&!code.includes('choiceOpen="appearance"')&&
-  !code.includes('now.textContent=')&&code.includes('Native.setIntervalMinutes(value)')&&code.includes('Native.setIntervalMinutes(0)');
+  !code.includes('now.textContent=')&&code.includes('Native.setIntervalMinutes(value)')&&code.includes('off.onclick=()=>selectInterval(0)');
 });
 test("Modos changes UL result base only; menu rank overlays centered",(()=>{const menu=dock.split("function getModeMenuIcon(")[1]?.split("// Historical result icons")[0]||"";
  const result=dock.split("function getResultIcon(")[1]?.split("let locationEnabled=")[0]||"";
@@ -3546,7 +3546,7 @@ test("LT62 AUTO compact six-choice menu is usable without scrolling",()=>{
  const menu=dock.split('const current=period;')[1]?.split('function positionCascadeEditor()')[0]||"";
  return menu.includes('off.setAttribute("aria-pressed",String(current===0))')&&
   menu.includes('button.setAttribute("aria-pressed",String(value===current))')&&
-  menu.includes('Native.setIntervalMinutes(0)')&&menu.includes('Native.setIntervalMinutes(value)')&&
+  menu.includes('off.onclick=()=>selectInterval(0)')&&menu.includes('Native.setIntervalMinutes(value)')&&
   menu.includes('[...row.children].forEach(tile=>panel.appendChild(tile))')&&
   menu.includes('panel.setAttribute("aria-label","Atualização automática")')&&
   !menu.includes('title.textContent="ATUALIZAÇÃO"')&&

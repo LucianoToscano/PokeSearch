@@ -153,7 +153,7 @@ check("LT62 Filtros: seven direct compact entries with separate editor, never ac
  assert.ok(dock.includes('panel.classList.add(\'filterCascade\')'));
  assert.ok(dock.includes('grid-template-columns:77px minmax(0,1fr)'));
 });
-check("LT62 Filtros: single Min/Max placeholders, blank Level/PC, large gender icons",()=>{
+check("LT62 Filtros: single Min/Max placeholders and 29px gender chips",()=>{
  const block=dock.split("function renderExtraFilters(panel,make){")[1]
   .split("function renderFilterPicker(")[0];
  assert.ok(block.includes('input.value=""; // UI-only empty'));
@@ -161,15 +161,17 @@ check("LT62 Filtros: single Min/Max placeholders, blank Level/PC, large gender i
  assert.ok(block.includes('cell.appendChild(input)'));
  assert.ok(!block.includes('cell.append(cap,input)'));
  assert.ok(dock.includes('filterFocus="PC"'));
- assert.ok(dock.includes('font:700 20px/1 Arial'));
- assert.ok(dock.includes('height:35px!important;min-height:35px!important'));
+ assert.ok(dock.includes('font:600 16px/1 Arial'));
+ assert.ok(dock.includes('width:29px!important;min-width:29px!important;max-width:29px!important'));
  assert.ok(dock.includes('const numericBounds=['));
  assert.ok(dock.includes('invalidNumber(lowKey,lowKey.startsWith("cp")?"PC":"Nível"'));
 });
 check("LT62 Localização: no instructional paragraphs, concise state and no OFF caption",()=>{
  const body=dock.split("function renderLocationChoices(){")[1]?.split("function manualRefreshTap(){")[0]||"";
  const feedback=dock.split("function locationPanelFeedback(){")[1]?.split("window.onLocationPaste=",1)[0]||"";
- assert.ok(body.includes('make("div","choiceHeader","LOCALIZAÇÃO")'));
+ assert.ok(body.includes('const title=make("div","choiceHeader")'));
+ assert.ok(body.includes('title.appendChild(make("span","","Localização"))'));
+ assert.ok(!body.includes('close.onclick=closeChoices;title.appendChild(close)'));
  assert.ok(!body.includes('Coords e raio 0–1000 km. Aplicar pesquisa sem limpar outros filtros.'));
  assert.ok(!body.includes('const hide=make("button","locHide","Fechar")'));
  assert.ok(body.includes('actions.append(apply,clear)'));
@@ -204,16 +206,19 @@ check("LT62 Favoritos: no lists or scroll areas, max three live search results",
  assert.ok(picker.includes('String term=search.getText().toString().trim()'));
  assert.ok(picker.includes('if(term.isEmpty())return;'));
 });
-check("LT62 Favoritos: all 50 accessible by 12-sprite pages with direct removal",()=>{
+check("LT62 Favoritos: all 50 sprites visible in 10 x 5 grid, no paging",()=>{
  const picker=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
- assert.ok(picker.includes('final int PAGE_SIZE=12;'));
- assert.ok(picker.includes('sprites.setColumnCount(6);'));
+ assert.ok(picker.includes('sprites.setColumnCount(10);'));
+ assert.ok(picker.includes('sprites.setRowCount(5);'));
  assert.ok(picker.includes('centeredSprites.setGravity(Gravity.CENTER);'));
- assert.ok(picker.includes('GridLayout.spec(local/6),GridLayout.spec(local%6)'));
+ assert.ok(picker.includes('GridLayout.spec(i/10),GridLayout.spec(i%10)'));
+ assert.ok(picker.includes('tileOuterDp-2'));
  assert.ok(picker.includes('selected.add(found!=null?found:new Entry(0,favorite.getValue()))'));
  assert.ok(picker.includes('tile.setOnClickListener(v->{WatchAlerts.toggle(activity,entry.name);refresh[0].run();})'));
- assert.ok(picker.includes('next.setOnClickListener'));
- assert.ok(picker.includes('previous.setOnClickListener'));
+ assert.ok(!picker.includes('next.setOnClickListener'));
+ assert.ok(!picker.includes('previous.setOnClickListener'));
+ assert.ok(!picker.includes('final int PAGE_SIZE=12;'));
+ assert.ok(picker.indexOf('root.addView(selectedRow)')<picker.indexOf('root.addView(search,searchParams)'));
  assert.ok(picker.includes('count.setText("Selecionados  "+size+"/50")'));
 });
 check("LT62 Favoritos: compact 348dp dialog and notifications only in Alerts",()=>{
@@ -634,5 +639,59 @@ check("LT62 Shiny: mode and filter changes do not overwrite user Shiny intent",(
  assert.ok(!changing.includes("shiny=false;"));
 });
 
+
+check("LT62 visual parity: no empty Filtros backing and four compact gender symbols",()=>{
+ const general=dock.match(/body\.controls-window #choices:not\(\.visualPanel\):[^\n]+/g)||[];
+ assert.ok(general.some(line=>line.includes(':not(.filterCascade)')));
+ assert.ok(dock.includes('LT62-VISUAL-PARITY-01'));
+ assert.ok(dock.includes('grid-template-columns:repeat(4,29px)!important'));
+ assert.ok(dock.includes('font:600 16px/1 Arial'));
+ assert.ok(dock.includes('#choices.filterCascade .filterCascadeEditor'));
+});
+check("LT62 refresh menu: all 6 choices reach native and receive confirmed state feedback",()=>{
+ const menu=dock.split('const current=period;')[1]?.split('function positionCascadeEditor()',1)[0]||"";
+ assert.ok(menu.includes('const selectInterval=value=>'));
+ assert.ok(menu.includes('Native.setIntervalMinutes(value);'));
+ assert.ok(menu.includes('off.onclick=()=>selectInterval(0)'));
+ assert.ok(menu.includes('button.onclick=()=>selectInterval(value)'));
+ assert.ok(menu.includes('requestedInterval=value===period?null:value'));
+ assert.ok(dock.includes('if(requestedInterval!==null&&period===requestedInterval)requestedInterval=null'));
+ assert.ok(menu.includes('tile.classList.toggle("awaiting",chosen&&requestedInterval!==null)'));
+ assert.ok(!menu.includes('button.onclick=()=>{closeChoices();'));
+});
+check("LT62 Location: title paste, no close X, inline km and compact panel",()=>{
+ const location=dock.split('function renderLocationChoices(){')[1]?.split('function manualRefreshTap(){',1)[0]||"";
+ assert.ok(location.includes('title.appendChild(paste)'));
+ assert.ok(location.includes('fieldRow.append(field)'));
+ assert.ok(location.includes('const radiusWrap=make("span","locRadiusInputWrap")'));
+ assert.ok(location.includes('radiusWrap.append(radiusField,unit)'));
+ assert.ok(location.includes('const unit=make("span","locRadiusUnit","km")'));
+ assert.ok(!location.includes('const close=make("button","choiceClose","×")'));
+ assert.ok(dock.includes('width:min(208px,calc(100vw - 14px))!important'));
+});
+check("LT62 Alerts: smaller neutral buttons, real native tri-state and explicit pending status",()=>{
+ const mini=dock.split('function renderAlertsChoices(){')[1]?.split('// Site -> App',1)[0]||"";
+ assert.ok(dock.includes('width:min(166px,calc(100vw - 12px))!important'));
+ assert.ok(dock.includes('font-size:10px!important;line-height:13px!important'));
+ assert.ok(dock.includes('grid-template-columns:repeat(3,30px)!important'));
+ assert.ok(dock.includes('.miniAlertState.chosen{\n background:var(--visual-menu-button-bg'));
+ assert.ok(mini.includes('pendingAlertChoice[target]=id===value?null:id;'));
+ assert.ok(mini.includes('Native.setAlertMode(id)'));
+ assert.ok(mini.includes('Native.setFavoriteAlertMode(id)'));
+ assert.ok(dock.includes('if(pendingAlertChoice.general===alertMode)pendingAlertChoice.general=null'));
+ assert.ok(dock.includes('if(pendingAlertChoice.favorites===favoriteAlertMode)pendingAlertChoice.favorites=null'));
+});
+check("LT62 Favorite grid has exactly 50 10-column tiles before search with responsive size",()=>{
+ const picker=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
+ assert.ok(picker.includes('sprites.setColumnCount(10);'));
+ assert.ok(picker.includes('sprites.setRowCount(5);'));
+ assert.ok(picker.includes('for(int i=0;i<Math.min(size,50);i++)'));
+ assert.ok(picker.includes('GridLayout.spec(i/10),GridLayout.spec(i%10)'));
+ assert.ok(picker.includes('Math.min(screenDp-22,348)-22'));
+ assert.ok(picker.indexOf('root.addView(selectedRow)')<picker.indexOf('root.addView(search,searchParams)'));
+ assert.ok(!picker.includes('pagination.setText('));
+ assert.ok(!picker.includes('PAGE_SIZE=12'));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");

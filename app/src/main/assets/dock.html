@@ -1139,7 +1139,7 @@ body.controls-window.visual-light-menu #choices.modeCascade .modeCascadeLabel{
 /* VISUAL-MENU-ALPHA-02: the single opacity slider controls all ordinary
    floating submenus. Never leave an opaque border/shadow around a fully
    transparent panel. The Visual Editor itself keeps its readable backing. */
-body.controls-window #choices:not(.visualPanel):not(.modeCascade):not(.morePanel):not(.periodCompact){
+body.controls-window #choices:not(.visualPanel):not(.modeCascade):not(.filterCascade):not(.morePanel):not(.periodCompact){
  background:var(--visual-menu-bg,rgba(15,19,26,.65))!important;
  border:0!important;box-shadow:none!important;
 }
@@ -2222,6 +2222,115 @@ body.controls-window #choices.visualPanel.visualCompact .visualStatus{
  font-size:9px!important;line-height:1.3!important;padding:3px!important;
 }
 body.controls-window #choices.visualPanel.visualCompact .visualStatus[hidden]{display:none!important}
+
+/* LT62-VISUAL-PARITY-01: the Modos rail owns the dimensional grammar.  Do not
+   paint a full #choices rectangle behind the detached Filtros cascade. */
+body.controls-window #choices.filterCascade[data-panel-kind="filters"]{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor{
+ width:max-content!important;max-width:min(178px,calc(100% - 80px))!important;
+ padding:3px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"]{
+ display:grid!important;grid-template-columns:repeat(4,29px)!important;
+ width:max-content!important;max-width:100%!important;gap:3px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"] .extraChip{
+ box-sizing:border-box!important;width:29px!important;min-width:29px!important;max-width:29px!important;
+ height:29px!important;min-height:29px!important;padding:0!important;
+ font:600 16px/1 Arial,"Noto Sans Symbols 2","Segoe UI Symbol",sans-serif!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"]{
+ display:grid!important;grid-template-columns:repeat(4,29px)!important;
+ width:max-content!important;max-width:100%!important;gap:3px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"] .extraChip{
+ width:29px!important;min-width:29px!important;max-width:29px!important;
+ height:27px!important;min-height:27px!important;padding:0!important;
+ font-size:10px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChip.chosen{
+ background:var(--visual-menu-button-bg,#323943e8)!important;
+ color:var(--visual-menu-fg,#eef3fb)!important;border-color:#71c9b5ad!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEntry.chosen{
+ background:#365346b8!important;border-color:#71c9b5ad!important;
+}
+/* Compact location: paste beside title, kilometres INSIDE the numeric field. */
+body.controls-window #choices.locationPanel{
+ width:min(208px,calc(100vw - 14px))!important;padding:4px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:5px!important;margin:0 0 4px!important;padding:0 2px!important;
+ min-height:24px!important;font-size:11px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader .locPaste{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:24px!important;min-width:24px!important;height:24px!important;
+ padding:2px!important;margin:0!important;flex:0 0 24px!important;
+ background:var(--visual-menu-button-bg,#29313b)!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow{margin:0 2px 3px!important}
+body.controls-window #choices.locationPanel .locRadiusRow{justify-content:flex-start!important;gap:7px!important}
+body.controls-window #choices.locationPanel .locRadiusInputWrap{
+ display:inline-flex!important;position:relative!important;align-items:center!important;
+ width:72px!important;max-width:72px!important;height:27px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap .locRadiusNumber{
+ flex:none!important;box-sizing:border-box!important;width:72px!important;min-width:72px!important;
+ height:27px!important;padding:2px 23px 2px 5px!important;text-align:left!important;
+}
+body.controls-window #choices.locationPanel .locRadiusUnit{
+ position:absolute!important;right:7px!important;top:50%!important;transform:translateY(-50%);
+ pointer-events:none!important;font:500 10px/1 Roboto,Arial,sans-serif!important;
+ color:var(--visual-menu-fg,#edf3fa)!important;opacity:.78!important;
+}
+/* Notification choices respond immediately (pending outline) but do not claim
+   Android accepted the state until the bridge reports it back. */
+body.controls-window #choices.standardPanel.alertsMini[data-panel-kind="alerts"]{
+ width:min(166px,calc(100vw - 12px))!important;max-height:min(244px,var(--popup-room,400px))!important;
+ padding:4px!important;
+}
+body.controls-window #choices.alertsMini .choiceHeader{
+ min-height:20px!important;margin:0 0 2px!important;padding:1px!important;
+ font-size:10px!important;
+}
+body.controls-window #choices.alertsMini .choiceClose{
+ min-width:19px!important;width:19px!important;height:19px!important;
+ padding:0!important;font-size:14px!important;
+}
+body.controls-window #choices.alertsMini .miniAlertSection{
+ padding:3px 1px 5px!important;gap:3px!important;
+}
+body.controls-window #choices.alertsMini .miniAlertHeading{font-size:10px!important;line-height:13px!important}
+body.controls-window #choices.alertsMini .miniAlertModes{
+ grid-template-columns:repeat(3,30px)!important;gap:4px!important;width:max-content!important;
+}
+body.controls-window #choices.alertsMini .miniAlertState{
+ width:30px!important;min-width:30px!important;height:30px!important;min-height:30px!important;
+ padding:4px!important;border-radius:6px!important;
+}
+body.controls-window #choices.alertsMini .miniAlertState svg{width:16px!important;height:16px!important}
+body.controls-window #choices.alertsMini .miniAlertState.chosen{
+ background:var(--visual-menu-button-bg,#323944e0)!important;
+ color:var(--visual-menu-fg,#eef3f9)!important;
+ border-color:#7dc8b4b8!important;
+}
+body.controls-window #choices.alertsMini .miniAlertState.awaiting{
+ outline:1px dashed #97acbd!important;outline-offset:-2px!important;
+}
+body.controls-window #choices.alertsMini .miniAlertTone{
+ width:auto!important;min-width:98px!important;max-width:100%!important;
+ height:23px!important;min-height:23px!important;padding:1px 5px!important;
+ font-size:10px!important;text-align:left!important;
+}
+/* The six refresh buttons remain separate, exactly one site scheduler. */
+body.controls-window #choices.periodCompact .periodCompactValue.awaiting{
+ outline:1px dashed #97acbd!important;outline-offset:-2px!important;
+}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -2663,6 +2772,18 @@ function toggleChoices(kind){
  }
  const current=period;
  const panel=document.getElementById("choices");
+ const selectInterval=value=>{
+  // Keep the choice visible. A dashed outline denotes a command awaiting
+  // the native callback; the actual period is taken only from onNativeData.
+  requestedInterval=value===period?null:value;
+  panel.querySelectorAll(".periodCompactValue").forEach(tile=>{
+   const chosen=Number(tile.dataset.minutes)===value;
+   tile.classList.toggle("chosen",chosen);
+   tile.classList.toggle("awaiting",chosen&&requestedInterval!==null);
+   tile.setAttribute("aria-pressed",String(chosen));
+  });
+  Native.setIntervalMinutes(value);
+ };
  panel.replaceChildren();
  panel.classList.remove("modePanel","locationPanel","standardPanel","morePanel","modeCascade","modeCascadeOpen","filterPicker","filterCascade","alertsMini");
  panel.classList.add("periodCompact","visible");
@@ -2677,19 +2798,19 @@ function toggleChoices(kind){
  
 const off=document.createElement("button");off.type="button";
  off.className="periodCompactValue"+(current===0?" chosen":"");
- off.textContent="OFF";off.setAttribute("aria-pressed",String(current===0));
+ off.textContent="OFF";off.dataset.minutes="0";off.setAttribute("aria-pressed",String(current===0));
  off.setAttribute("aria-label","Desligar atualização automática");
- off.onclick=()=>{closeChoices();Native.setIntervalMinutes(0);};
+ off.onclick=()=>selectInterval(0);
  row.appendChild(off);
  // AUTO was only a decorative tile; OFF and minute presets are sufficient.
  for(const value of [3,5,10,15,20]){
   const button=document.createElement("button");button.type="button";
   button.className="periodCompactValue"+(value===current?" chosen":"");
-  button.textContent=String(value);
+  button.textContent=String(value);button.dataset.minutes=String(value);
   button.title="Atualizar automaticamente a cada "+value+" minutos";
   button.setAttribute("aria-label",button.title);
   button.setAttribute("aria-pressed",String(value===current));
-  button.onclick=()=>{closeChoices();Native.setIntervalMinutes(value);};
+  button.onclick=()=>selectInterval(value);
   row.appendChild(button);
  }
  [...row.children].forEach(tile=>panel.appendChild(tile));
@@ -3256,9 +3377,8 @@ function renderLocationChoices(){
  panel.replaceChildren();panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen","filterPicker");
  panel.classList.add("locationPanel","visible");panel.dataset.panelKind="location";
  const make=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x;};
- const title=make("div","choiceHeader","LOCALIZAÇÃO");
- const close=make("button","choiceClose","×");close.type="button";close.title="Fechar";
- close.onclick=closeChoices;title.appendChild(close);
+ const title=make("div","choiceHeader");
+ title.appendChild(make("span","","Localização"));
  // No permanent help paragraph: controls speak for themselves; Native.setLocation preserves other filters.
  const fieldRow=make("div","locCoordsRow");
  const field=make("input","locField");field.id="locCoordinateInput";field.type="text";field.inputMode="decimal";
@@ -3278,8 +3398,9 @@ function renderLocationChoices(){
   '<path d="M9 15h6m-3-3 3 3-3 3"/>';
  paste.appendChild(pasteIcon);
  paste.onclick=()=>Native.pasteLocationCoords();
+ title.appendChild(paste); // Paste is a title action, not a wide field button.
  // Location changes only when applying or clearing this one field.
- fieldRow.append(field,paste);
+ fieldRow.append(field);
  const label=make("div","locLine locRadiusRow");
  const labelName=make("span","","Raio");
  label.title="Raio da busca: de 0 a 1000 km";
@@ -3289,7 +3410,10 @@ function renderLocationChoices(){
  radiusField.setAttribute("aria-label","Raio em quilômetros; campo numérico de 0 a 1000");
  radiusField.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
  radiusField.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
- const unit=make("span","","km");label.append(labelName,radiusField,unit);
+ const unit=make("span","locRadiusUnit","km");
+ const radiusWrap=make("span","locRadiusInputWrap");
+ radiusWrap.append(radiusField,unit);
+ label.append(labelName,radiusWrap);
  const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);
  slide.setAttribute("aria-label","Ajustar raio de 0 a 1000");
  slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";};
@@ -3336,6 +3460,8 @@ function renderLocationChoices(){
  locationPanelFeedback();
  fit();
 }
+let requestedInterval=null;
+let pendingAlertChoice={general:null,favorites:null};
 let refreshSpinTimer=null;
 function manualRefreshTap(){
  const button=document.querySelector('#quickMenuList button[data-key="period"]')||
@@ -4063,6 +4189,15 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  mode=m==="iv"?"raw":m;status=String(s||"");activeSearchPhase=String(searchPhase||"idle");
   if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();
  shinyPending=!!pending;shiny=!!shi||shinyPending; // Preserve requested ON while site verification is pending.row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ if(requestedInterval!==null&&period===requestedInterval)requestedInterval=null;
+ if(controlsWindow&&choiceOpen==="period")document.querySelectorAll("#choices.periodCompact .periodCompactValue").forEach(tile=>{
+  const chosen=Number(tile.dataset.minutes)===period;
+  if(requestedInterval===null){
+   tile.classList.toggle("chosen",chosen);
+   tile.classList.remove("awaiting");
+   tile.setAttribute("aria-pressed",String(chosen));
+  }
+ });
  showResultText=!!textVisible;
  notificationPermissionGranted=!!permissionGranted;
  watchAlertsEnabled=!!favoriteAlertsEnabled;
@@ -4070,6 +4205,8 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  generalCustomTone=!!hasGeneralTone;
  favoriteCustomTone=!!hasFavoriteTone;
  individualToneCount=Math.max(0,Number(individualTones)||0);
+ if(pendingAlertChoice.general===alertMode)pendingAlertChoice.general=null;
+ if(pendingAlertChoice.favorites===favoriteAlertMode)pendingAlertChoice.favorites=null;
  if(controlsWindow&&menuPreferences&&typeof menuPreferences==="object"){
   const p=normalizedQuickPrefs(menuPreferences);
   if(JSON.stringify(quickPrefs)!==JSON.stringify(p)){quickPrefs=p;renderQuickMenu();}
@@ -4654,7 +4791,8 @@ function renderAlertsChoices(){
   const labels={on:"Som",silent:"Sem som",off:"OFF"};
   for(const id of ["on","silent","off"]){
    const button=document.createElement("button");button.type="button";
-   button.className="miniAlertState"+(id===value?" chosen":"");
+   button.className="miniAlertState"+(id===value?" chosen":"")+
+    (pendingAlertChoice[target]===id?" awaiting":"");
    button.title=name+" · "+labels[id];
    button.setAttribute("aria-label",name+" · "+labels[id]);
    button.setAttribute("aria-pressed",String(id===value));
@@ -4664,7 +4802,13 @@ function renderAlertsChoices(){
    svg.setAttribute("fill","none");svg.setAttribute("stroke-linecap","round");
    svg.setAttribute("stroke-linejoin","round");
    svg.innerHTML=symbols[id];button.appendChild(svg);
-   button.onclick=()=>target==="general"?Native.setAlertMode(id):Native.setFavoriteAlertMode(id);
+   button.onclick=()=>{
+    pendingAlertChoice[target]=id===value?null:id;
+    states.querySelectorAll(".miniAlertState").forEach(node=>
+     node.classList.toggle("awaiting",node===button&&pendingAlertChoice[target]!==null));
+    if(target==="general")Native.setAlertMode(id);
+    else Native.setFavoriteAlertMode(id);
+   };
    states.appendChild(button);
   }
   block.appendChild(states);
