@@ -2888,6 +2888,7 @@ function renderExtraFilters(panel,make){
   const line=make("div","extraField"),name=make("label","",label);
   const wrapper=make("div","extraNumberRow");
   wrapper.appendChild(numericInput(key,label,level));
+  if(key==="minPvpCp")wrapper.appendChild(numericConfirmButton(make,[key],label));
   line.append(name,wrapper);panel.appendChild(line);
  };
  const numberPair=(label,minKey,maxKey,level=false)=>{
@@ -2899,6 +2900,7 @@ function renderExtraFilters(panel,make){
    const input=numericInput(key,label+" "+full,level);
    input.placeholder=short;cell.appendChild(input);group.appendChild(cell);
   }
+  group.appendChild(numericConfirmButton(make,[minKey,maxKey],label));
   line.append(name,group);panel.appendChild(line);
  };
  const chips=(key,label)=>{
@@ -2942,6 +2944,7 @@ function renderExtraFilters(panel,make){
      modeDraft[multiKey]=[...selected];
     }
     modeDraft[key]=""; // Do not apply the stale legacy one-choice setting.
+    patchSelectedFilterKeys([multiKey,key]);
     modeScrollTop=panel.scrollTop;renderFiltersChoices();
    };
    group.appendChild(button);
@@ -2981,7 +2984,8 @@ function renderExtraFilters(panel,make){
   number("minPvpCp","PC mínimo PvP");
   const input=make("input");input.type="checkbox";
   input.checked=modeDraft.includePreviousEvolutions!==false;
-  input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;};
+  input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;
+   patchSelectedFilterKeys(["includePreviousEvolutions"]);};
   field("Evoluções anteriores",input);
  }
  // Compact rail: all original real controls stay registered, just reparented.
@@ -3017,7 +3021,7 @@ function renderFilterPicker(key,label,options){
  if(key!=="sortBy"){
   const neutral=document.createElement("button");neutral.textContent=filterDisplayLabel(key,"Any");
   if(key==="weather")neutral.prepend(makeWeatherIcon("Any"));
-  neutral.onclick=()=>{modeDraft[key]="";choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
+  neutral.onclick=()=>{modeDraft[key]="";patchSelectedFilterKeys([key]);closeChoices();};
   panel.appendChild(neutral);
  }
  const safe=key==="sortBy"?["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]:
@@ -3031,7 +3035,7 @@ function renderFilterPicker(key,label,options){
   btn.textContent=(modeDraft[key]===value?"✓ ":"")+filterDisplayLabel(key,value);
   if(key==="weather")btn.prepend(makeWeatherIcon(value));
   btn.className=modeDraft[key]===value?"chosen":"";
-  btn.onclick=()=>{modeDraft[key]=value;choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
+  btn.onclick=()=>{modeDraft[key]=value;patchSelectedFilterKeys([key]);closeChoices();};
   panel.appendChild(btn);
  }
  const back=document.createElement("button");back.textContent="‹ Voltar";back.onclick=()=>choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();panel.appendChild(back);
@@ -4717,7 +4721,7 @@ function renderFiltersChoices(){
  };
  cancel.onclick=closeChoices;actions.append(apply,clear,cancel);
  const rail=panel.querySelector(".filterCascadeRail"),editor=panel.querySelector(".filterCascadeEditor");
- if(rail)rail.appendChild(actions);
+ // No global footer: ✓ is rendered inline only for numeric editors.
  if(editor){
   editor.appendChild(indicator);
   for(const child of [...panel.children].filter(child=>child.classList.contains("uxNote")||
