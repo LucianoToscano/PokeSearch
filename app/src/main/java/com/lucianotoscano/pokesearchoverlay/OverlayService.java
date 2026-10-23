@@ -932,6 +932,7 @@ public class OverlayService extends Service {
         final float[] touchStart=new float[2];
         final int[] positionStart=new int[2];
         final boolean[] hasDragged={false};
+        final long[] lastLayoutMoveAt={0L};
         resultGrip=new View(this);
         resultGrip.setBackgroundColor(Color.TRANSPARENT);
         resultGrip.setOnTouchListener((view,event)->{
@@ -952,14 +953,23 @@ public class OverlayService extends Service {
                             positionStart[0]+xMove));
                         resultParams.y=Math.max(0,Math.min(m.heightPixels-resultParams.height,
                             positionStart[1]+yMove));
-                        try{wm.updateViewLayout(resultRoot,resultParams);}
-                        catch(Exception e){recordFailure("arrastar resultados",e);}
-                        moveDetail();
+                        // LT65-PERF: do not dispatch WindowManager work for every MotionEvent.
+                        long now=android.os.SystemClock.uptimeMillis();
+                        if(now-lastLayoutMoveAt[0]>=16L){
+                            lastLayoutMoveAt[0]=now;
+                            try{wm.updateViewLayout(resultRoot,resultParams);}
+                            catch(Exception e){recordFailure("arrastar resultados",e);}
+                            moveDetail();
+                        }
                     }
                     return true;
                 case MotionEvent.ACTION_UP:
                     if(!hasDragged[0])toggleResultsCollapsed();
                     else{
+                        // Always commit the final coordinates even after a throttled move.
+                        try{wm.updateViewLayout(resultRoot,resultParams);}
+                        catch(Exception e){recordFailure("finalizar arraste",e);}
+                        moveDetail();
                         float density=getResources().getDisplayMetrics().density;
                         getSharedPreferences("prefs",0).edit()
                             .putInt("resultsX",Math.round(resultParams.x/density)-visualResultsOffsetX)
@@ -1918,6 +1928,8 @@ public class OverlayService extends Service {
         grip.setLayoutParams(new FrameLayout.LayoutParams(
                 dp(yes?BUBBLE_DP:dockDp()),dp(yes?BUBBLE_DP:30),Gravity.TOP|Gravity.LEFT));
         js(panel,panelLoaded,"window.setMinimized("+yes+")");
+        // Hidden result WebView must not keep its 1-second despawn ticker active.
+        js(resultPanel,resultLoaded,"window.setResultsPaused("+yes+")");
         if(resultRoot!=null)resultRoot.setVisibility(
             yes||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
         updateWindow();
