@@ -2888,7 +2888,7 @@ test("LT57-DRIVE-ICON-01 exact replacement StarGL, StarUL and StarIVRaw PNGs",()
 test("LT57-DRIVE-ICON-02 Raw IV text follows A D H and updates on changes",()=>{
  const art=dock.split("function getModeMenuIcon(")[1]?.split("// Historical result icons")[0]||"";
  const glyph=dock.split("function iconForQuick(id, fallback){")[1]?.split("// SITE-POKEMON")[0]||"";
- return art.includes('ivText:baseFamily==="custom"&&modeKey==="raw"')&&
+ return art.includes('ivText:family==="custom"&&modeKey==="raw"')&&
   art.includes('[settings.attack,settings.defense,settings.stamina]')&&
   art.includes('.join("/")')&&
   glyph.includes('glyph.classList.add("rawArt")')&&
@@ -2896,7 +2896,27 @@ test("LT57-DRIVE-ICON-02 Raw IV text follows A D H and updates on changes",()=>{
   dock.includes('button.dataset.modeArtKey=art.path+"|"+art.ivBadge+"|"+art.ivText')&&
   dock.includes('const key=art.path+"|"+art.ivBadge+"|"+art.ivText')&&
   dock.includes('.quickIvValues{')&&
-  dock.includes('white-space:nowrap!important');
+  glyph.includes('values.setAttribute("textLength","16.5")')&&
+  glyph.includes('values.setAttribute("lengthAdjust","spacingAndGlyphs")')&&
+  glyph.includes('document.createElementNS(ns,"svg")')&&
+  dock.includes('svg.quickIvValues text{')&&
+  !dock.includes('body.controls-window #quickMenuList .quickIvValues{');
+});
+test("LT57-RAW-IV-CLIP-01 only personalized Raw IV has bounded text in the medal",()=>{
+ const vm=require("node:vm");
+ const start=dock.indexOf("const RESULT_ICONS=Object.freeze("),end=dock.indexOf("let locationEnabled=",start);
+ if(start<0||end<start)return false;
+ const definitions=dock.slice(start,end);
+ const base={attack:0,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100};
+ const get=(mode,attrs)=>vm.runInNewContext(definitions+"\ngetModeMenuIcon("+JSON.stringify(mode)+",false,"+
+  JSON.stringify({...base,...attrs})+")",{}, {timeout:2000});
+ return get("raw",{}).ivText==="0/15/15"&&
+  get("raw",{attack:10}).ivText==="10/15/15"&&
+  get("raw",{attack:0,defense:0,stamina:0}).ivText===""&&
+  get("raw",{attack:15,defense:15,stamina:15}).ivText===""&&
+  get("hundo",{}).ivText===""&&get("nundo",{}).ivText===""&&
+  get("percent",{percentMin:0,percentMax:100}).ivText===""&&
+  get("gl",{}).ivText===""&&get("ul",{}).ivText==="";
 });
 test("LT57-WEATHER-ICONS-01 exact nine weather Drive PNGs embedded",()=>{
  const crypto=require("node:crypto");
