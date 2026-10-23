@@ -511,8 +511,9 @@ test("B06 destruction cancels callbacks and removes windows before WebViews",des
 test("B06 privacy of errors unchanged",service.includes('error.getClass().getSimpleName()')&&!service.includes('error.getMessage()'));
 test("B06 Android SDK and manifest unchanged",manifest.includes('<service android:name=".OverlayService" android:exported="false" />')&&gradleBuild.includes('targetSdk = 33')&&gradleBuild.includes('compileSdk = 36'));
 // PS-075–PS-080 regression contracts
-test("PS-075 favorite notification test stays in Alerts",dock.includes('["☆ Testar aviso favorito","testNotification"]')&&!picker.includes('testNotification.setText('));
-test("PS-075 Home Preferences provides both toggles and test action",main.includes("settingAlertMode(body,prefs);")&&main.includes('settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,')&&main.includes('WatchAlerts.test(this)'));
+test("PS-075 favorite tests remain in native code, hidden from compact notifications", 
+ service.includes('void testNotification()')&&
+ !dock.split("function renderAlertsChoices(){")[1].split("// Site -> App")[0].includes('testNotification"]'));test("PS-075 Home Preferences provides both toggles and test action",main.includes("settingAlertMode(body,prefs);")&&main.includes('settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,')&&main.includes('WatchAlerts.test(this)'));
 test("PS-076 Android Back returns within OAuth dialog history",main.includes('loginDialog.setOnKeyListener(')&&main.includes('android.view.KeyEvent.KEYCODE_BACK')&&main.includes('website.canGoBack()')&&main.includes('website.goBack()'));
 test("PS-077 loginEndRefresh is cancelable across all transitions",service.includes('private final Runnable loginEndRefresh=')&&cancelBlock.includes('handler.removeCallbacks(loginEndRefresh)')&&beginBlock.includes('cancelSessionCallbacks();')&&endBlock.includes('cancelSessionCallbacks();')&&reloadBlock.includes('cancelSessionCallbacks();'));
 const javaSignedLat='[-+]?'+String.fromCharCode(92,92)+'d{1,2}';
@@ -529,8 +530,9 @@ const prefSync=service.split('private void syncPreferencesWithoutSearch(){')[1]?
 const startCommand=service.split('    @Override public int onStartCommand(')[1]?.split('    private void destroyWebView(')[0]||'';
 test("PS-081 home requests POST_NOTIFICATIONS from test action",main.includes('requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},203)'));
 test("PS-081 callback runs notification test only after permission granted",main.includes('if(requestCode==203)')&&main.includes('results[0]==PackageManager.PERMISSION_GRANTED')&&main.includes('granted&&WatchAlerts.permissionGranted(this)')&&main.includes('WatchAlerts.test(this)'));
-test("PS-081 picker has no notification permission UI",!picker.includes('requestPermissions(')&&!picker.includes('Conceda notificações na tela inicial')&&dock.includes('"requestNotificationPermission"'));
-test("PS-082 sync action from Home requires running overlay",main.includes('OverlayService.isRunning()')&&main.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS")'));
+test("PS-081 notification permission stays available outside compact picker",
+ !picker.includes('requestPermissions(')&&service.includes('void requestNotificationPermission()')&&
+ main.includes('requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},204)'));test("PS-082 sync action from Home requires running overlay",main.includes('OverlayService.isRunning()')&&main.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS")'));
 test("PS-082 Home syncs on spinner, checkbox and dismiss",main.includes('syncOverlayPreferences();')&&main.includes('dialog.setOnDismissListener(d->syncOverlayPreferences())')&&main.includes('check.setOnCheckedChangeListener'));
 test("PS-082 Overlay handles SYNC_PREFS without network refresh",startCommand.includes('com.lucianotoscano.pokesearchoverlay.SYNC_PREFS')&&startCommand.includes('syncPreferencesWithoutSearch();')&&!prefSync.includes('refresh(')&&!prefSync.includes('execute(')&&!prefSync.includes('loadUrl('));
 test("PS-082 re-sorts current results and updates dock",prefSync.includes('sortItems(items)')&&prefSync.includes('params.width=dp(minimized?BUBBLE_DP:dockDp())')&&prefSync.includes('update();'));
@@ -1925,28 +1927,19 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
 
 // UX-NOTIFY-01: the bell in the compact ribbon opens the real alert panel.
 // Notification permission and sound preferences are never a fake visual toggle.
-test("UX-NOTIFY-01 bell opens live notification panel with full controls",()=>{
+test("UX-NOTIFY-01 bell shows only six SVG states and two audio selectors",()=>{
  const block=dock.split("function quickClick(id){")[1]?.split("const QUICK_SVG=")[0]||"";
- const panel=dock.split("function renderAlertsChoices(){")[1]?.split("function renderFiltersChoices(){")[0]||"";
+ const panel=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
  return block.includes('case "bell":toggleChoices("alerts")')&&
-  dock.includes('onclick="toggleChoices(\'alerts\')"')&&
-  !block.includes('case "bell":Native.toggleGeneralAlerts()')&&
-  panel.includes('Native.setAlertMode(id)')&&
-  panel.includes('Native.setFavoriteAlertMode(id)')&&
-   panel.includes('Native.pickAlertTone("general")')&&
-   panel.includes('Native.pickAlertTone("favorites")')&&
-   panel.includes('Native.pickAlertTone("species")')&&
-  panel.includes('"testGeneralNotification"')&&
-  panel.includes('"testNotification"')&&
-  panel.includes('"requestNotificationPermission"')&&
-  panel.includes('"openNotificationSettings"')&&
-  panel.includes('"refreshNotificationStatus"')&&
-  service.includes('void testGeneralNotification()')&&
-  service.includes('void requestNotificationPermission()')&&
-  service.includes('void openNotificationSettings()')&&
-  main.includes('REQUEST_NOTIFICATION_PERMISSION');
-});
-test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay independent",
+  dock.includes('onclick="toggleChoices(\\'alerts\\')"')&&
+  panel.includes('Native.setAlertMode(id)')&&panel.includes('Native.setFavoriteAlertMode(id)')&&
+  panel.includes('const symbols={')&&panel.includes('for(const id of ["on","silent","off"])')&&
+  panel.includes('section("Novos Pokémon","general"')&&
+  panel.includes('section("Pokémon Favoritos","favorites"')&&
+  panel.includes('select.onclick=()=>Native.pickAlertTone(target)')&&
+  panel.includes('SHOW_INDIVIDUAL_FAVORITE_TONES')&&
+  !panel.includes('requestNotificationPermission')&&!panel.includes('testGeneralNotification');
+});test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay independent",
  dock.includes('notificationPermissionGranted=!!permissionGranted')&&
  dock.includes('watchAlertsEnabled=!!favoriteAlertsEnabled')&&
  dock.includes('bell.classList.toggle("permissionMissing",!notificationPermissionGranted)')&&
@@ -1967,15 +1960,15 @@ test("UX-NOTIFY-03 keep native Android channel sound and explicitly separate two
  service.includes('nm.getNotificationChannel(channelId).getImportance()==NotificationManager.IMPORTANCE_NONE'));
 
 
-test("UX-NOTIFY-04 favorites sound and silence never inherit general alert mode",()=>{
+test("UX-NOTIFY-04 favorites and general retain separate tri-state controls",()=>{
+ const panel=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
  return watch.includes('String soundMode=mode(context);')&&
   !watch.includes('getString("alertsMode","off")')&&
   watch.includes('boolean quiet="silent".equals(soundMode);')&&
   service.includes('WatchAlerts.setMode(OverlayService.this,mode);')&&
   service.includes('WatchAlerts.setMode(OverlayService.this,enabled?"on":"off");')&&
-  dock.includes('button.classList.toggle("chosen",favoriteAlertMode===id)');
-});
-test("UX-NOTIFY-05 independent system tones and individual Pokémon overrides",()=>{
+  panel.includes('Native.setFavoriteAlertMode(id)')&&panel.includes('Native.setAlertMode(id)');
+});test("UX-NOTIFY-05 independent system tones and individual Pokémon overrides",()=>{
  return watch.includes('public static final String PREF_GENERAL_TONE=')&&
   watch.includes('public static final String PREF_FAVORITE_TONE=')&&
   watch.includes('public static final String PREF_SPECIES_TONES=')&&
@@ -1987,17 +1980,13 @@ test("UX-NOTIFY-05 independent system tones and individual Pokémon overrides",(
   main.includes('WatchAlerts.PREF_SPECIES_TONES')&&
   main.includes('setItems(options,(dialog,which)->');
 });
-test("UX-NOTIFY-06 ringtone options never fetch or ship copyrighted cries",()=>{
- const panel=dock.split('function renderAlertsChoices(){')[1]?.split('function renderFiltersChoices(){')[0]||"";
- return panel.includes('Native.pickAlertTone("general")')&&
-  panel.includes('Native.pickAlertTone("favorites")')&&
-  panel.includes('Native.pickAlertTone("species")')&&
-  !watch.includes('pokemonshowdown.com')&&
-  !watch.includes('soundlibrary.pokemon.co.jp')&&
+test("UX-NOTIFY-06 audio selection is native, persisted and never fetched by JavaScript",()=>{
+ const panel=dock.split('function renderAlertsChoices(){')[1]?.split('// Site -> App')[0]||"";
+ return panel.includes('Native.pickAlertTone(target)')&&
+  !panel.includes('fetch(')&&!watch.includes('pokemonshowdown.com')&&
   main.includes('RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT,false')&&
   main.includes('"content".equals(scheme)&&!"android.resource".equals(scheme)');
-});
-test("UX-NOTIFY-07 Home favorites toggle migrates safely to tri-state preference",()=>{
+});test("UX-NOTIFY-07 Home favorites toggle migrates safely to tri-state preference",()=>{
  return watch.includes('PREF_MODE="favoriteAlertMode"')&&
   watch.includes('String fallback=prefs.getBoolean(PREF_ENABLED,true)?"on":"off"')&&
   main.includes('WatchAlerts.PREF_ENABLED.equals(key)?')&&
@@ -2256,14 +2245,16 @@ test("SITE-POKEMON-05 12-icon toolbar & no personal GPS remain intact",()=>
  !probe.includes('navigator.geolocation')&&
  dock.includes('items.slice(0,10)')&&
  service.includes('"locationCoords"'));
-test("NOTIFY-02 two independent three-state controls and audible streams",()=>{
- const panel=dock.split("function renderAlertsChoices(){")[1]?.split("function renderFiltersChoices(){")[0]||"";
- return panel.includes('const generalModes=document.createElement("div")')&&
-  panel.includes('const favoriteModes=document.createElement("div")')&&
-  panel.includes('Native.setAlertMode(id)')&&panel.includes('Native.setFavoriteAlertMode(id)')&&
-  panel.includes('["silent","🔇 Sem som"]')&&panel.includes('Novos em OFF e Favoritos em Som');
-});
-test("NOTIFY-03 silent notifications and blocked Android are visually distinguished",()=>{
+test("NOTIFY-02 compact grouped speaker icons still drive two distinct native modes",()=>{
+ const panel=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
+ return panel.includes('const symbols={')&&
+  panel.includes('const labels={on:"Som",silent:"Sem som",off:"OFF"}')&&
+  panel.includes('section("Novos Pokémon","general",alertMode,generalCustomTone)')&&
+  panel.includes('section("Pokémon Favoritos","favorites",favoriteAlertMode,favoriteCustomTone)')&&
+  panel.includes('Native.setAlertMode(id):Native.setFavoriteAlertMode(id)')&&
+  service.includes('alertModeCaption("Novos Pokémon",value)')&&
+  service.includes('alertModeCaption("Pokémon Favoritos",mode)');
+});test("NOTIFY-03 silent notifications and blocked Android are visually distinguished",()=>{
  const states=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(",1)[0]||"";
  return states.includes('bell-silent-mode')&&
   states.includes('bell-permission-blocked')&&
@@ -2281,15 +2272,14 @@ test("NOTIFY-04 choose MP3 or OGG from Files or Drive with persistent access",()
   main.includes('saveChosenAlertTone(data,req==306)')&&
   main.includes('storeAlertTone(target,species,chosen)');
 });
-test("NOTIFY-05 favorites only edits the saved list; notifications remain in Alerts",()=>{
+test("NOTIFY-05 Favorites remains selection-only; audio settings reside in mini Alerts",()=>{
  const picker=read("java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java");
+ const alerts=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
  return !picker.includes('WatchAlerts.setMode(')&&
-  picker.includes('FAVORITOS')&&
-  picker.includes('row.setBackground(rowBg)')&&
+  picker.includes('FAVORITOS')&&picker.includes('row.setBackground(rowBg)')&&
   picker.includes('background.setCornerRadius(dp(activity,12))')&&
-  dock.includes('button.onclick=()=>Native.setFavoriteAlertMode(id)');
-});
-test("COORDS-06 typed radius still requires actual site two-field confirmation",()=>{
+  alerts.includes('Native.setFavoriteAlertMode(id)');
+});test("COORDS-06 typed radius still requires actual site two-field confirmation",()=>{
  return dock.includes('radiusField.type="number"')&&
   dock.includes('wantedRadius=Number(radiusField.value)')&&
   dock.includes('radiusField.oninput=()=>')&&
@@ -2339,47 +2329,47 @@ test("UX-NOTIFY-12 new and favorite audio channels remain separate",()=>{
   watch.includes('selectedTone(context,true,species)')&&
   watch.includes('pokesearch_watch_silent_v1');
 });
-test("UX-NOTIFY-13 bundled user sounds include 24 Android resource references and category/species picker",()=>{
- const library=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
- return (library.match(/R\.raw\.ps_[a-z0-9_]+/g)||[]).length===24&&
-  main.includes("openBundledAlertTonePicker(")&&
-  main.includes("PokeSoundLibrary.soundUri(this,selected[0])")&&
-  main.includes("openAlertAudioFilePicker(target,pokemon)")&&
+test("UX-NOTIFY-13 audio selector includes 36 local tones, default and upload",()=>{
+ const lib=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
+ const audio=lib.split("private static final int[] AUDIO={")[1]?.split("};")[0]||"";
+ return (audio.match(/R\\.raw\\.ps_[a-z0-9_]+/g)||[]).length===36&&
+  main.includes('String[] choices=new String[count+2]')&&
+  main.includes('choices[0]="Padrão"')&&
+  main.includes('choices[count+1]="＋ Enviar áudio"')&&
+  main.includes('System.arraycopy(PokeSoundLibrary.LABELS,0,choices,1,count)')&&
   watch.includes('"android.resource".equals(uri.getScheme())')&&
-  dock.includes("Biblioteca PokeSearch (24 sons)")&&
-  !library.includes("ps_freesound_community_jigglypuff_evolves_into_wigglytuff_then_the_world_implodes_24177")&&
-  watch.includes("context.getResources().getIdentifier(");
-});
-test("UX-NOTIFY-15 all 24 bundled sounds have user-readable labels and original files",()=>{
- const library=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
- const labels=(library.split('static final String[] LABELS={')[1]||"").split('};')[0];
- const entries=(labels.match(/^\s*"[^"]+",?$/gm)||[]);
- return entries.length===24&&
-  library.match(/R\.raw\.ps_[a-z0-9_]+/g).length===24&&
-  labels.includes('"Aipom · Grito"')&&labels.includes('"Pokémon brilhante · Shiny"')&&
+  watch.includes('context.getResources().getIdentifier(');
+});test("UX-NOTIFY-15 all 36 audio labels match bundled Android raw entries",()=>{
+ const lib=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
+ const labels=lib.split('static final String[] LABELS={')[1]?.split('};')[0]||"";
+ const audio=lib.split('private static final int[] AUDIO={')[1]?.split('};')[0]||"";
+ return (labels.match(/^\\s*"[^"]+",?$/gm)||[]).length===36&&
+  (audio.match(/R\\.raw\\.ps_[a-z0-9_]+/g)||[]).length===36&&
+  labels.includes('"Quem é esse Pokémon? · BR"')&&
+  labels.includes('"Jigglypuff · Evolução meme"')&&labels.includes('"Snorlax"')&&
   !labels.includes('freesound community')&&!labels.includes('ps_')&&
-  !library.includes('jigglypuff');
-});
-test("UX-NOTIFY-16 sound preview is separate from saving, cancellable and released",()=>{
- const picker=main.slice(main.indexOf('private void openBundledAlertTonePicker('),
+  lib.includes('static Uri favoriteDefaultUri(Context context)');
+});test("UX-NOTIFY-16 tapping previews before ✓; default and uploaded file require confirmation",()=>{
+ const selector=main.slice(main.indexOf('private void openBundledAlertTonePicker('),
   main.indexOf('private void chooseAlertToneSource('));
  const preview=main.slice(main.indexOf('private void stopBundledTonePreview('),
   main.indexOf('private void openBundledAlertTonePicker('));
- const tap=picker.split('.setSingleChoiceItems(')[1]?.split('.setPositiveButton(')[0]||"";
- return picker.includes('setSingleChoiceItems(PokeSoundLibrary.LABELS,-1,')&&
-  tap.includes('playBundledTonePreview(which)')&&
+ const tap=selector.split('.setSingleChoiceItems(')[1]?.split('.setPositiveButton(')[0]||"";
+ return selector.includes('setSingleChoiceItems(choices,-1,')&&
+  tap.includes('playBundledTonePreview(which-1)')&&
   !tap.includes('storeAlertTone(')&&
-  picker.includes('setPositiveButton("Usar este som"')&&
-  picker.includes('if(selected[0]<0)return;')&&
-  picker.includes('storeAlertTone(target,pokemon,chosen.toString())')&&
-  picker.includes('setNegativeButton("Cancelar",null)')&&
-  picker.includes('setOnDismissListener(closed->stopBundledTonePreview())')&&
-  picker.includes('setEnabled(false)')&&
+  selector.includes('setPositiveButton("✓ Usar áudio"')&&
+  selector.includes('if(selected[0]==-1)return;')&&
+  selector.includes('storeAlertTone(target,pokemon,chosen.toString())')&&
+  selector.includes('setNegativeButton("Cancelar",null)')&&
+  selector.includes('setOnDismissListener(closed->stopBundledTonePreview())')&&
   preview.includes('android.media.MediaPlayer.create(this,source)')&&
   preview.includes('previous.release()')&&
-  main.includes('stopBundledTonePreview();\n        activityClosing=true;');
-});
-test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=>{
+  main.includes('private void confirmUploadedAlertTone(')&&
+  main.includes('setNeutralButton("▶ Ouvir",null)')&&
+  main.includes('confirmUploadedAlertTone(target,species,uri)')&&
+  main.includes('stopBundledTonePreview();\\n        activityClosing=true;');
+});test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private void openTrainerManagement(){")[0]||"";
  return main.includes("private void toggleHomeTheme(){")&&
   main.includes('putBoolean("homeLightMode",homeLightMode)')&&
