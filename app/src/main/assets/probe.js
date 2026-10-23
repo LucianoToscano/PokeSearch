@@ -552,12 +552,13 @@ function extraSelect(key,want){
 function multiOptions(control){
  const popup=activeOptionPopup(control);
  if(!popup)return null;
- const selector='[role=option],[role=menuitemcheckbox],[role=checkbox],label,[data-radix-collection-item]';
+ const selector='[role=option],[role=menuitemcheckbox],[role=checkbox],label,[data-radix-collection-item],button[aria-pressed],button[aria-checked]';
  return [...new Set(Array.from(popup.querySelectorAll(selector)))].filter(vis)
   .filter(e=>text(e).length>0&&text(e).length<90);
 }
 function multiState(option){
  const raw=(option.getAttribute("aria-checked")||
+  option.getAttribute("aria-pressed")||
   option.getAttribute("aria-selected")||option.getAttribute("data-state")||"").toLowerCase();
  if(["true","checked","on","selected"].includes(raw))return true;
  if(["false","unchecked","off","unselected"].includes(raw))return false;
