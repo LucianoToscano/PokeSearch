@@ -1209,6 +1209,54 @@ body.controls-window #choices.locationPanel .compactLocationActions{gap:3px!impo
 body.controls-window #choices.locationPanel .compactLocationActions button{
  flex:1!important;min-width:0!important;padding:5px 2px!important;
  font-size:10px!important;text-align:center!important}
+/* UX-QUICK-MORE-02: 10 compact ribbon slots by default, each tile separate.
+   Moving any original utility before the suffix extracts that action from More. */
+body.controls-window #quickMenuList{
+ grid-template-columns:repeat(var(--quick-slot-count,12),minmax(0,1fr))!important;
+}
+body.controls-window.visual-menu-vertical #quickMenuList{
+ grid-template-columns:none!important;
+}
+body.controls-window #choices.morePanel,
+body.controls-window.popup-above #choices.morePanel{
+ position:absolute!important;display:flex!important;flex-direction:column!important;
+ left:0;right:auto;top:34px!important;bottom:auto!important;
+ width:var(--more-tile-width,30px)!important;min-width:28px!important;
+ max-width:calc(100vw - 8px)!important;height:auto!important;
+ max-height:none!important;overflow:visible!important;
+ gap:var(--visual-menu-gap,3px)!important;padding:0!important;margin:0!important;
+ background:transparent!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;z-index:25!important;
+}
+body.controls-window.visual-menu-vertical #choices.morePanel,
+body.controls-window.visual-menu-vertical.popup-above #choices.morePanel{
+ top:232px!important;bottom:auto!important;
+}
+body.controls-window #choices.morePanel .quickMoreAction{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;flex:none!important;
+ width:100%!important;height:30px!important;min-height:30px!important;
+ margin:0!important;padding:0!important;line-height:1!important;
+ background:var(--visual-menu-button-bg,#28292cce)!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid var(--visual-menu-border,#ffffff48)!important;
+ border-radius:7px!important;background-clip:padding-box!important;
+ box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0006)!important;
+}
+body.controls-window #choices.morePanel .quickMoreAction .quickGlyph{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:19px!important;height:19px!important;min-width:19px!important;
+ font-size:17px!important;
+}
+body.controls-window #choices.morePanel .quickMoreAction .quickGlyph svg{
+ display:block!important;width:18px!important;height:18px!important;
+}
+body.controls-window #choices.morePanel [data-key=report] .quickGlyph{color:#ffd674!important}
+body.controls-window #choices.morePanel [data-key=donate] .quickGlyph{color:#fa94a7!important}
+body.controls-window #choices.morePanel [data-key=close] .quickGlyph{color:#ff596c!important}
+body.controls-window.visual-light-menu #choices.morePanel .quickMoreAction{
+ border-color:#24394c66!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
