@@ -4086,13 +4086,30 @@ function renderFiltersChoices(){
     input.reportValidity();return;
    }
   }
+  // A hidden editor is still an active draft: validate all numeric fields.
+  const numericBounds=[
+   ["cpMin","PC",0,99999],["cpMax","PC",0,99999],
+   ["levelMin","Nível",1,35],["levelMax","Nível",1,35],
+   ["minPvpCp","PC mínimo PvP",0,99999]
+  ];
+  const invalidNumber=(key,focus,message)=>{
+   filterFocus=focus;renderFiltersChoices();
+   const input=document.querySelector('#choices [data-filter-number="'+key+'"]');
+   if(input){input.setCustomValidity(message);input.reportValidity();}
+  };
+  for(const [key,focus,min,max] of numericBounds){
+   if(key==="minPvpCp"&&!["gl","ul"].includes(modeDraft.mode))continue;
+   const raw=String(modeDraft[key]??"").trim();
+   if(raw!==""&&(!/^[0-9]+$/.test(raw)||!Number.isSafeInteger(Number(raw))||
+    Number(raw)<min||Number(raw)>max)){
+    invalidNumber(key,focus,"Digite um número de "+min+" a "+max);return;
+   }
+  }
   if(!["gl","ul"].includes(modeDraft.mode)){
    for(const [lowKey,highKey] of [["cpMin","cpMax"],["levelMin","levelMax"]]){
     const low=String(modeDraft[lowKey]??""),high=String(modeDraft[highKey]??"");
     if(low!==""&&high!==""&&Number(low)>Number(high)){
-     const input=panel.querySelector('[data-filter-number="'+lowKey+'"]');
-     if(input){input.setCustomValidity("Mínimo maior que máximo");input.reportValidity();}
-     return;
+     invalidNumber(lowKey,lowKey.startsWith("cp")?"PC":"Nível","Min não pode ultrapassar Max");return;
     }
    }
   }
