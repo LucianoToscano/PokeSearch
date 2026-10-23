@@ -1946,6 +1946,114 @@ body.controls-window #choices.infoCompact .infoGrid .uxSetting button{
 body.controls-window #choices.infoCompact .infoGrid .uxSetting.chosen{
  border-color:#63b79d88!important;background:#306f5b2c!important;
 }
+
+/* LT62 VISUAL EDITOR: semantic grouped tools, compact even on Samsung narrow popup. */
+body.controls-window #choices.visualPanel.visualCompact{
+ box-sizing:border-box!important;width:min(268px,calc(100vw - 14px))!important;
+ max-width:calc(100vw - 14px)!important;max-height:min(370px,var(--popup-room,400px))!important;
+ padding:4px!important;overflow-y:auto!important;overflow-x:hidden!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualTabs{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:4px!important;margin:4px 2px!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualTabs button{
+ height:29px!important;min-height:29px!important;padding:3px 5px!important;
+ font-size:11px!important;border-radius:6px!important;
+}
+body.controls-window #choices.visualPanel.visualCompact details.visualGroup{
+ display:block!important;margin:3px 1px!important;padding:0!important;
+ border:1px solid #ffffff29!important;border-radius:6px!important;
+ overflow:hidden!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualGroupTitle{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ min-height:30px!important;padding:5px 8px!important;margin:0!important;
+ font-size:11px!important;font-weight:600!important;list-style:none!important;
+ cursor:pointer!important;user-select:none!important;
+}
+body.controls-window #choices.visualPanel.visualCompact summary::-webkit-details-marker{display:none}
+body.controls-window #choices.visualPanel.visualCompact .visualGroupTitle::after{
+ content:"⌄";font-size:14px!important;opacity:.75!important;
+ transform:rotate(-90deg);transition:transform .12s ease;
+}
+body.controls-window #choices.visualPanel.visualCompact details[open]>.visualGroupTitle::after{
+ transform:rotate(0deg);
+}
+body.controls-window #choices.visualPanel.visualCompact .visualGroupBody{
+ display:flex!important;flex-direction:column!important;gap:2px!important;
+ padding:4px!important;border-top:1px solid #ffffff22!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualSlider{
+ box-sizing:border-box!important;display:grid!important;
+ grid-template-columns:minmax(0,1fr) 58px!important;
+ grid-template-rows:18px 25px!important;
+ gap:1px 4px!important;margin:0!important;padding:2px 3px!important;
+ min-width:0!important;font-size:10px!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualSlider>span{
+ overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualSlider output{
+ min-width:0!important;text-align:right!important;font-size:10px!important;
+ font-variant-numeric:tabular-nums;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualSlider input[type="range"]{
+ grid-column:1!important;grid-row:2!important;min-width:0!important;
+ width:100%!important;height:24px!important;margin:0!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualFineTune{
+ display:grid!important;grid-template-columns:1fr 1fr!important;
+ gap:3px!important;grid-column:2!important;grid-row:2!important;
+ align-items:center!important;width:100%!important;margin:0!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualFineTune button{
+ height:23px!important;min-height:23px!important;min-width:0!important;
+ width:100%!important;padding:0!important;margin:0!important;
+ border-radius:4px!important;font-size:15px!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualLine{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:4px!important;margin:0!important;padding:3px!important;min-height:29px!important;
+ font-size:10px!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualLine>span{
+ max-width:45%!important;white-space:nowrap!important;overflow:hidden!important;
+ text-overflow:ellipsis!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualSegmentGroup{
+ display:flex!important;gap:3px!important;flex-wrap:nowrap!important;
+ min-width:0!important;flex:0 1 auto!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualSegment{
+ flex:0 1 auto!important;min-width:0!important;
+ height:25px!important;min-height:25px!important;
+ margin:0!important;padding:2px 5px!important;font-size:10px!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualGroupBody>.visualButton{
+ min-height:27px!important;padding:3px!important;font-size:10px!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualPresets,
+body.controls-window #choices.visualPanel.visualCompact .visualActions{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:3px!important;margin:2px 0!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualActions{
+ grid-template-columns:1fr 1fr!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualPresets button,
+body.controls-window #choices.visualPanel.visualCompact .visualActions button{
+ min-width:0!important;height:28px!important;min-height:28px!important;
+ margin:0!important;padding:2px!important;font-size:9px!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualBack{
+ width:100%!important;min-height:27px!important;height:27px!important;
+ margin:4px 0 0!important;padding:3px!important;font-size:10px!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualStatus{
+ font-size:9px!important;line-height:1.3!important;padding:3px!important;
+}
+body.controls-window #choices.visualPanel.visualCompact .visualStatus[hidden]{display:none!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
