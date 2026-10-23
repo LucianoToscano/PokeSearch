@@ -1700,8 +1700,8 @@ function renderExtraFilters(panel,make){
  const option=(key,label)=>{
   const data=filterOptions[key]||{};
   const choices=Array.isArray(data.options)?data.options.map(x=>String(x).trim()).filter(Boolean):[];
-  const current=String(modeDraft[key]||"");
-  const button=make("button","extraValue",current||"Qualquer / padrão");
+  const current=String(modeDraft[key]||(key==="sortBy"?"Despawn (longest)":""));
+  const button=make("button","extraValue",current||(key==="weather"?"Any":"—"));
   button.type="button";button.disabled=!choices.length;
   button.title=choices.length?"Selecionar "+label:"Aguardando opções verificadas no PoGoCoordinates";
   button.onclick=()=>{modeScrollTop=panel.scrollTop;renderFilterPicker(key,label,choices);};
@@ -1789,7 +1789,7 @@ function renderExtraFilters(panel,make){
   panel.appendChild(button);
  };
  // The remote ordering control is not a search mode.
- divider();option("sortBy","Sort by");
+ divider();option("sortBy","Ordenar");
  section("Filtros gerais",generalExpanded,()=>{generalExpanded=!generalExpanded;});
  if(generalExpanded){
   const pvp=["gl","ul"].includes(modeDraft.mode);
@@ -1822,9 +1822,18 @@ function renderExtraFilters(panel,make){
 function renderFilterPicker(key,label,options){
  const panel=uxPanel(label);panel.dataset.panelKind="filters";panel.classList.add("filterPicker");
  // A neutral option is a UI state; site changes will be verified before submitting.
- const neutral=document.createElement("button");neutral.textContent="Any / padrão";
- neutral.onclick=()=>{modeDraft[key]="";choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};panel.appendChild(neutral);
- for(const value of options){
+ if(key!=="sortBy"){
+  const neutral=document.createElement("button");neutral.textContent="Any";
+  neutral.onclick=()=>{modeDraft[key]="";choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
+  panel.appendChild(neutral);
+ }
+ const safe=key==="sortBy"?["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]:
+  key==="weather"?["Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"]:options;
+ const allowed=key==="sortBy"?
+  safe.filter(v=>options.some(x=>x.toLowerCase()===v.toLowerCase())):
+  key==="weather"?safe.filter(v=>options.some(x=>x.replace(/[^a-z]/ig,"").toLowerCase()===v.replace(/[^a-z]/ig,"").toLowerCase())):
+  safe;
+ for(const value of allowed){
   const btn=document.createElement("button");btn.type="button";
   btn.textContent=(modeDraft[key]===value?"✓ ":"")+value;btn.className=modeDraft[key]===value?"chosen":"";
   btn.onclick=()=>{modeDraft[key]=value;choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
@@ -1894,7 +1903,7 @@ function renderLocationChoices(){
  const title=make("div","choiceHeader","📍 LOCALIZAÇÃO");
  const close=make("button","choiceClose","×");close.type="button";close.title="Fechar";
  close.onclick=closeChoices;title.appendChild(close);
- const hint=make("p","locText","Cole latitude,longitude e escolha 0–1000 km. ✓ Aplicar executa Search no PoGoCoordinates com todos os filtros já ativos. ON ativa Coords; OFF volta à busca geral. Ocultar conserva o estado.");
+ const hint=make("p","locText","Coords e raio 0–1000 km. Aplicar altera só Localização e pesquisa, preservando o restante.");
  const fieldRow=make("div","locCoordsRow");
  const field=make("input","locField");field.id="locCoordinateInput";field.type="text";field.inputMode="decimal";
  field.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
@@ -2710,7 +2719,7 @@ function saveQuickPrefs(){
 /* FILTERS-POGO-06/07: criteria count includes only this menu, never Pokémon,
    Shiny, coordinates, IV or GL/UL rank. Min+max = one range criterion.
    Level 1–35 is the user-selected neutral default, not an active restriction. */
-const FILTERS_MENU_KEYS=Object.freeze(["sortBy","weather","size","form","gender",
+const FILTERS_MENU_KEYS=Object.freeze(["sortBy","weather","size","form","gender","sizeSelections","genderSelections",
  "cpMin","cpMax","levelMin","levelMax","minPvpCp"]);
 function extraFilterValue(config,key){
  const value=String(config?.[key]??"").trim();
@@ -2720,8 +2729,12 @@ function extraFilterValue(config,key){
 }
 function activeExtraFilterCount(config=searchSettings,selectedMode=mode){
  const active=key=>extraFilterValue(config,key)!=="";
+ const hasMulti=key=>Array.isArray(config?.[key+"Selections"])&&config[key+"Selections"].length>0;
  const pvp=selectedMode==="gl"||selectedMode==="ul";
- let total=["sortBy","weather","size","form","gender"].filter(active).length;
+ let total=["weather","form"].filter(active).length+
+  (active("sortBy")&&config.sortBy!=="Despawn (longest)"?1:0)+
+  (active("size")||hasMulti("size")?1:0)+
+  (active("gender")||hasMulti("gender")?1:0);
  if(pvp){
   if(active("minPvpCp"))total++;
   if(config?.includePreviousEvolutions===false)total++;
@@ -2734,7 +2747,9 @@ function activeExtraFilterCount(config=searchSettings,selectedMode=mode){
 function filterDraftChanged(){
  if(!modeDraft)return false;
  return FILTERS_MENU_KEYS.some(key=>
-  extraFilterValue(modeDraft,key)!==extraFilterValue(searchSettings,key))||
+  key.endsWith("Selections")?
+   JSON.stringify(modeDraft[key]||[])!==JSON.stringify(searchSettings[key]||[]):
+   extraFilterValue(modeDraft,key)!==extraFilterValue(searchSettings,key))||
   (modeDraft.includePreviousEvolutions!==false)!==(searchSettings.includePreviousEvolutions!==false);
 }
 function updateFiltersPanelStatus(){
@@ -3093,7 +3108,7 @@ function renderFiltersChoices(){
  const indicator=make("div","extraApplyStatus","");indicator.id="filterStatus";
  panel.appendChild(indicator);
  updateFiltersPanelStatus();
- panel.appendChild(make("div","uxNote","Aplicar e Limpar alteram só este menu. Pokémon, Modos, Shiny e Localização permanecem intactos."));
+ panel.appendChild(make("div","uxNote","Cada campo altera apenas seu próprio filtro. Outros filtros permanecem."));
  const actions=make("div","modeAction filterActions");const apply=make("button","modeApply","✓ Aplicar");
  const clear=make("button","filterClear","Limpar filtros");
  const cancel=make("button","","Cancelar");
@@ -3119,7 +3134,8 @@ function renderFiltersChoices(){
  clear.onclick=()=>{
   // FILTERS-POGO-08: clear only extra filters, not species, mode or location.
   const next={...searchSettings,mode};
-  for(const key of FILTERS_MENU_KEYS)next[key]="";
+  for(const key of FILTERS_MENU_KEYS)next[key]=key==="sortBy"?"Despawn (longest)":"";
+  next.sizeSelections=[];next.genderSelections=[];
   next.includePreviousEvolutions=true;
   closeChoices();Native.setSearchConfig(JSON.stringify(next));
  };
