@@ -464,14 +464,20 @@ body.controls-window #choices .extraValue:has(.weatherChoiceIcon){
 body.controls-window #quickMenuList .quickGlyph.modeArt.rawArt .quickModeImage{
  width:21px!important;height:21px!important;
 }
-body.controls-window #quickMenuList .quickIvValues{
- display:block!important;position:absolute!important;left:50%!important;top:51%!important;
+/* LT57-RAW-IV-CLIP-01: SVG overlay prevents WebView text auto-zoom. */
+body.controls-window #quickMenuList .quickGlyph.modeArt.rawArt svg.quickIvValues{
+ display:block!important;position:absolute!important;left:50%!important;top:50%!important;
  transform:translate(-50%,-50%)!important;z-index:2!important;
- width:22px!important;text-align:center!important;pointer-events:none!important;
- white-space:nowrap!important;color:#13263b!important;
- font:800 5.7px/7px Roboto,Arial,sans-serif!important;
- letter-spacing:-.4px!important;text-shadow:0 0 1px #fff!important;
+ width:21px!important;min-width:21px!important;max-width:21px!important;
+ height:21px!important;min-height:21px!important;max-height:21px!important;
+ pointer-events:none!important;overflow:visible!important;flex:none!important;
  background:transparent!important;border:0!important;padding:0!important;
+ stroke:none!important;
+}
+body.controls-window #quickMenuList .quickGlyph.modeArt.rawArt svg.quickIvValues text{
+ font:800 7px "Arial Narrow",Roboto,Arial,sans-serif!important;
+ fill:#13263b!important;stroke:#f1f6fc!important;stroke-width:.18px!important;
+ paint-order:stroke fill!important;letter-spacing:0!important;
 }
 /* UX-MODOS-CASCADE: the 6 items stay one small native-popup-width menu;
    only the chosen item opens its right/left settings strip. */
@@ -1388,7 +1394,7 @@ function getModeMenuIcon(searchMode,shinyActive,settings=searchSettings){
      modeKey==="raw"?" · "+settings.attack+"/"+settings.defense+"/"+settings.stamina:"")+
     (shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
   family,baseFamily,ivBadge:badge,
-  ivText:baseFamily==="custom"&&modeKey==="raw"?
+  ivText:family==="custom"&&modeKey==="raw"?
    [settings.attack,settings.defense,settings.stamina].map(v=>
     Number.isFinite(Number(v))?String(Math.min(15,Math.max(0,Number(v)))):"?").join("/"):"",
   shinyBadge:shining,backgroundBadge:backgroundConfirmed
@@ -2994,9 +3000,19 @@ function iconForQuick(id, fallback){
   glyph.classList.add("modeArt");glyph.appendChild(image);
   if(art.ivText){
    glyph.classList.add("rawArt");
-   const values=document.createElement("span");values.className="quickIvValues";
-   values.textContent=art.ivText;values.setAttribute("aria-label","IV "+art.ivText);
-   glyph.appendChild(values);
+   // Tiny SVG text fits the medal even when Android enlarges HTML fonts.
+   const ns="http://www.w3.org/2000/svg";
+   const overlay=document.createElementNS(ns,"svg");overlay.classList.add("quickIvValues");
+   overlay.setAttribute("viewBox","0 0 24 24");overlay.setAttribute("role","img");
+   overlay.setAttribute("aria-label","IV "+art.ivText);
+   const values=document.createElementNS(ns,"text");
+   values.setAttribute("x","12");values.setAttribute("y","12");
+   values.setAttribute("text-anchor","middle");
+   values.setAttribute("dominant-baseline","central");
+   values.setAttribute("textLength","16.5");
+   values.setAttribute("lengthAdjust","spacingAndGlyphs");
+   values.textContent=art.ivText;overlay.appendChild(values);
+   glyph.appendChild(overlay);
   }
   if((mode==="gl"||mode==="ul")&&art.ivBadge){
    const rank=document.createElement("span");rank.className="quickRank";
