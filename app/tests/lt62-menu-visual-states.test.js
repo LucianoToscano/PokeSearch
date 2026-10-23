@@ -77,5 +77,30 @@ check("LT62 screenshots: editor tabs, P/M/G and steppers use intrinsic widths",(
   'grid-column:2!important;grid-row:2!important','grid-template-columns:repeat(3,29px)!important'])
   assert.ok(dock.includes(token),token);
 });
+
+check("LT62 followup: PC and Level are minimum/maximum pairs with no steppers",()=>{
+ for(const p of ['numberPair("PC","cpMin","cpMax");',
+  'numberPair("Nível","levelMin","levelMax",true);',
+  'group.setAttribute("aria-label",label+" mínimo e máximo")',
+  '.extraRangeInputs input{'])assert.ok(dock.includes(p),p);
+ assert.ok(!dock.includes('make("button","extraStep"'));
+});
+check("LT62 followup: display-only translations preserve English site values",()=>{
+ for(const p of ['"Despawn (longest)":"Despawn"','"CP (highest)":"CP"',
+ '"IV % (highest)":"IV %"','"Level (highest)":"Nível"',
+ '"Distance (nearest)":"Distância"','"Any":"Qualquer"',
+ '"Sunny":"Ensolarado/Limpo"','"Rainy":"Chuvoso"',
+ '"Partly Cloudy":"Parcialmente nublado"','"Cloudy":"Nublado"',
+ '"Windy":"Ventando"','"Snow":"Neve"','"Fog":"Névoa"'])
+  assert.ok(dock.includes(p),p);
+ assert.ok(dock.includes('btn.onclick=()=>{modeDraft[key]=value;'));
+ assert.ok(dock.includes('btn.textContent=(modeDraft[key]===value?"✓ ":"")+filterDisplayLabel(key,value);'));
+});
+check("LT62 followup: Apply Clear Cancel are icon-only SVG buttons",()=>{
+ for(const p of ['Aplicar filtros','Limpar filtros','Cancelar alterações',
+  'svg.innerHTML=art[icon]','modeApply filterIconAction',
+  'filterClear filterIconAction','filterIconAction filterCancel'])
+  assert.ok(dock.includes(p),p);
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");

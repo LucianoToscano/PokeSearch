@@ -2661,10 +2661,11 @@ test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menu
 test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()=>{
  const filters=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
- return filters.includes('number("cpMin","PC mínimo");number("cpMax","PC máximo");')&&
-  filters.includes('number("levelMin","Nível mínimo",true);number("levelMax","Nível máximo",true);')&&
-  filters.includes('input.min=level?"1":"0";input.max=level?"35":"99999"')&&
-  filters.includes('input.type="number";input.inputMode="numeric";input.step="1"')&&
+ return filters.includes('numberPair("PC","cpMin","cpMax");')&&
+  filters.includes('numberPair("Nível","levelMin","levelMax",true);')&&
+  filters.includes('input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999"')&&
+  filters.includes('input.type="number";input.inputMode="numeric";')&&
+  !filters.includes('make("button","extraStep"')&&
   dock.includes('modeDraft.levelMin="1"')&&
   dock.includes('modeDraft.levelMax="35"')&&
   dock.includes('input.checkValidity()')&&
@@ -2860,7 +2861,7 @@ test("LT57-ONEFORM-05 Weather uses site Any and only screenshot-supported choice
   ?.split("window.onFilterOptions=function")[0]||"";
  const expected=["Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"];
  return expected.every(v=>picker.includes('"'+v+'"'))&&
-  picker.includes('neutral.textContent="Any"')&&
+  picker.includes('neutral.textContent=filterDisplayLabel(key,"Any")')&&
   dock.includes('key==="weather"?"Any":"—"')&&
   read("assets/probe.js").includes('function comparableOption(value)');
 });

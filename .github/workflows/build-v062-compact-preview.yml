@@ -129,7 +129,8 @@ jobs:
               throw Error('Icone clima vazio: '+name);
           if(!dock.includes('svg.quickIvValues text{')||
              !dock.includes('ivText:family==="custom"&&modeKey==="raw"')||
-             !tests.includes('LT57-RAW-IV-CLIP-01'))
+             !dock.includes('LT57-RAW-IV-CLIP-01')||
+             !tests.includes('LT57-DRIVE-ICON-02'))
              throw Error('Regressão Raw IV personalizada sem SVG ou teste');
           if(!dock.includes('LT58-ALL-POPUPS-STABLE-01')||
              !dock.includes('LT58-ALL-POPUPS-SCALE-01')||
