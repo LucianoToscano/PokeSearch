@@ -3120,8 +3120,12 @@ window.onPokemonSuggestions=response=>{
  if(choiceOpen!=="pokemon"||!response)return;
  if(response.query!==undefined&&response.query!==pokemonQuery)return; // stale suggestion response
  pokemonSuggestions=response.ok&&Array.isArray(response.options)?response.options:[];
- pokemonSuggestionStatus=response.ok?pokemonSuggestions.length?"":
-  response.empty===true?"Nenhuma opção oficial encontrada":"Aguardando opções oficiais...":
+ const state=String(response.state||"");
+ pokemonSuggestionStatus=state==="ready"&&pokemonSuggestions.length?"":
+  state==="explicit-empty"&&response.empty===true?"Nenhuma opção oficial encontrada":
+  state==="pending"?"⌛ "+String(response.reason||"Aguardando opções oficiais do site"):
+  state==="failed"?"⚠ "+String(response.reason||"Seletor oficial indisponível; tente novamente"):
+  response.ok&&pokemonSuggestions.length?"":
   String(response.reason||"Aguardando filtro Pokémon do PoGoCoordinates");
  drawPokemonSuggestions();
 };
