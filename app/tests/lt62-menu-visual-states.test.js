@@ -758,5 +758,68 @@ check("LT62 Tamanho: multi-select remains independent of Sex and other filters",
  assert.ok(block.includes('chips("size","Tamanho")'));
  assert.ok(block.includes('chips("gender","Sexo")'));
 });
+
+check("LT62 audit: bridge assignments are executable, not swallowed by // comment",()=>{
+ const callback=dock.split("window.onNativeData=")[1]?.split("window.menuSide=",1)[0]||"";
+ assert.ok(callback.includes('shiny=!!shi||shinyPending; // Preserve requested ON while site verification is pending.\n row=Number(r)||46;'));
+ assert.ok(callback.includes('period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;'));
+ assert.ok(callback.includes('spriteSize=[35,45,55].includes(Number(sprite))?Number(sprite):45;'));
+ assert.ok(callback.includes('refreshSpriteSizeButtons();'));
+ assert.ok(callback.includes('showTimers=!!timers;'));
+ assert.ok(callback.includes('generalAlerts=!!general;'));
+ assert.ok(callback.includes('hasFavorites=!!hasFav;'));
+ assert.ok(callback.includes('notificationMode:(generalAlerts?"on":"off")'));
+ assert.ok(!callback.includes('pending.row=Number(r)'));
+});
+check("LT62 audit: Filtros rail visibly contains Apply, Clear, Cancel",()=>{
+ const filters=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices(){",1)[0]||"";
+ assert.ok(filters.includes('actions.append(apply,clear,cancel);'));
+ assert.ok(filters.includes('if(rail)rail.appendChild(actions);'));
+ assert.ok(filters.includes('svg.innerHTML=art[icon]'));
+ assert.ok(filters.includes('apply.onclick=()=>'));
+ assert.ok(filters.includes('clear.onclick=()=>'));
+ assert.ok(filters.includes('cancel.onclick=closeChoices'));
+ assert.ok(dock.includes('#choices.filterCascade .filterCascadeRail .filterRailActions'));
+});
+check("LT62 audit: Favoritos counter is in header and picker passes outside taps",()=>{
+ const src=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
+ const header=src.split('header.addView(title,')[1]?.split('root.addView(header);',1)[0]||"";
+ assert.ok(header.includes('header.addView(count,'));
+ assert.ok(header.includes('header.addView(finish,'));
+ assert.ok(!src.includes('root.addView(counter)'));
+ assert.ok(src.includes('count.setText("Selecionados  "+size+"/50")'));
+ assert.ok(src.includes('FLAG_NOT_TOUCH_MODAL'));
+ assert.ok(src.includes('window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND'));
+ assert.ok(src.includes('android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND'));
+ assert.ok(src.includes('dialog.setCanceledOnTouchOutside(false)'));
+ assert.ok(src.includes('sprites.setColumnCount(10)'));
+});
+check("LT62 audit: smaller centered notifications and readable location coordinates",()=>{
+ const css=dock.split("/* LT62-AUDIT-267:")[1]?.split("</style>",1)[0]||"";
+ assert.ok(css.includes('width:min(138px,calc(100vw - 12px))'));
+ assert.ok(css.includes('text-align:center!important'));
+ assert.ok(css.includes('justify-content:center!important;width:100%!important'));
+ assert.ok(css.includes('margin:1px auto 0!important'));
+ assert.ok(css.includes('width:min(172px,calc(100vw - 12px))'));
+ assert.ok(css.includes('.locCoordsRow .locField'));
+ assert.ok(css.includes('font-size:9px!important'));
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ assert.ok(native.includes('@JavascriptInterface public void setAlertMode(String value)'));
+ assert.ok(native.includes('@JavascriptInterface public void setSpriteSize(int size)'));
+});
+check("LT62 audit: Visual Editor parameters and touch limitations remain explicit",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ assert.ok(native.includes('menuRoot.addView(menuPanel,new FrameLayout.LayoutParams(-1,-1))'));
+ assert.ok(native.includes('WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL'));
+ const visual=fs.readFileSync(path.join(__dirname,"../src/main/assets/visual_editor.js"),"utf8");
+ assert.ok(visual.includes('renderVisualEditor()'));
+ assert.ok(visual.includes('window.renderSpriteSizeButtons(panel,true)'));
+ assert.ok(visual.includes('addSlider(panel,"popupWidth"'));
+ assert.ok(visual.includes('addSlider(panel,"popupHeight"'));
+ assert.ok(visual.includes('addSegment(panel,"menuOrientation"'));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");

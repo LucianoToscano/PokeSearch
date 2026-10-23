@@ -260,7 +260,9 @@ test("Visual Editor Pokémon tab has direct P M G size buttons without restartin
  assert.ok(script.includes('if(window.renderSpriteSizeButtons)window.renderSpriteSizeButtons(panel,true);'));
  assert.ok(dock.includes('className="spriteSizeChoices"'));
  assert.ok(dock.includes('function refreshSpriteSizeButtons(){'));
- assert.ok(dock.includes('spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();'));
+ assert.ok(dock.includes('spriteSize=[35,45,55].includes(Number(sprite))?Number(sprite):45;'));
+ assert.ok(dock.includes('refreshSpriteSizeButtons();'));
+ assert.ok(!dock.includes('pending.row=Number(r)'));
  assert.ok(dock.includes('button.onclick=()=>{if(Native.setSpriteSize)Native.setSpriteSize(size);}'));
 });
 test("editor dark light and vertical horizontal work without native select dialogs",()=>{

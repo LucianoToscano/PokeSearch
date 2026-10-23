@@ -213,6 +213,12 @@ public final class PokemonPicker {
         title.setTypeface(null,Typeface.BOLD);
         title.setTextSize(13);
         header.addView(title,new LinearLayout.LayoutParams(0,dp(activity,30),1));
+        TextView count=new TextView(activity);
+        count.setTextColor(Color.rgb(197,213,230));
+        count.setTextSize(10);
+        count.setTypeface(null,Typeface.BOLD);
+        count.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
+        header.addView(count,new LinearLayout.LayoutParams(-2,dp(activity,28)));
         TextView finish=new TextView(activity);
         finish.setText("×");
         finish.setContentDescription("Fechar Favoritos");
@@ -242,15 +248,6 @@ public final class PokemonPicker {
         search.setBackground(inputBg);
         LinearLayout.LayoutParams searchParams=new LinearLayout.LayoutParams(-1,dp(activity,37));
         searchParams.setMargins(0,dp(activity,5),0,dp(activity,6));
-        LinearLayout counter=new LinearLayout(activity);
-        counter.setGravity(Gravity.CENTER_VERTICAL);
-        TextView count=new TextView(activity);
-        count.setTextColor(Color.rgb(197,213,230));
-        count.setTextSize(10);
-        count.setTypeface(null,Typeface.BOLD);
-        counter.addView(count,new LinearLayout.LayoutParams(0,dp(activity,22),1));
-        root.addView(counter);
-
         LinearLayout selectedRow=new LinearLayout(activity);
         selectedRow.setGravity(Gravity.CENTER);
         GridLayout sprites=new GridLayout(activity);
@@ -383,6 +380,7 @@ public final class PokemonPicker {
         Dialog dialog=new Dialog(context,android.R.style.Theme_Material_NoActionBar);
         dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         dialog.setContentView(root);
+        dialog.setCanceledOnTouchOutside(false);
         finish.setOnClickListener(v->dialog.dismiss());
         if(!(activity instanceof Activity)&&dialog.getWindow()!=null)
             dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
@@ -392,14 +390,13 @@ public final class PokemonPicker {
             android.view.Window window=dialog.getWindow();
             window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
             window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            // A floating picker must not swallow taps OUTSIDE its own bounds.
+            // FLAG_NOT_TOUCH_MODAL passes external taps to the app underneath,
+            // unlike the former modal Dialog; internal tiles remain clickable.
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND |
+                android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
             window.setDimAmount(0.0f);
-            if(android.os.Build.VERSION.SDK_INT>=31){
-                window.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
-                android.view.WindowManager.LayoutParams params=window.getAttributes();
-                params.setBlurBehindRadius(dp(activity,12));
-                window.setAttributes(params);
-            }
             int screen=activity.getResources().getDisplayMetrics().widthPixels;
             window.setLayout(Math.min(screen-dp(activity,22),dp(activity,348)),
                 android.view.WindowManager.LayoutParams.WRAP_CONTENT);
