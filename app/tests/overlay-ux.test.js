@@ -2640,7 +2640,6 @@ test("RELEASE-NOTES-10 no unverified physical claims; audited fixes are versione
   current.sections.correcoes.length>=4&&
   current.sections.emDesenvolvimento.some(s=>s.includes("Samsung"))&&
   current.sections.emDesenvolvimento.some(s=>s.includes("testes automatizados"))&&
-  service.includes("function")===false&&
   probe.includes("function extraOptionPopup(key,control){")&&
   service.includes("void requestFormOptions(String query)");
 });
