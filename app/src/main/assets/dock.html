@@ -1482,8 +1482,9 @@ let resultDisplayOptions={count:false,name:false,number:false,gender:false,size:
 let displayedMetadataWidth=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
- sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
+ sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=false,advancedExpanded=false;
+let formQuery="",formOptionsStatus="Aguardando lista oficial de Form do site...";
 let siteFiltersConfirmed=false; // Evidence from Android: same generation, verified Search and accepted results.
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
 // Math.round(total / 45 * 100) produces exactly 46 possible shown percentages.
@@ -2036,7 +2037,11 @@ function renderExtraFilters(panel,make){
   option("weather","Clima");
   chips("size","Tamanho");
   chips("gender","Sexo");
-  option("form","Forma");
+  const formSelected=Array.isArray(modeDraft.formSelections)?modeDraft.formSelections:[];
+  const formButton=make("button","extraValue",formSelected.length?formSelected.length+" formas":"Any");
+  formButton.type="button";formButton.title="Buscar e selecionar formas oficiais no site";
+  formButton.onclick=()=>{modeScrollTop=panel.scrollTop;formQuery="";renderFormPicker();};
+  field("Forma",formButton);
  }
  // Keep active PvP-only criteria without the obsolete Advanced header.
  if(["gl","ul"].includes(modeDraft.mode)){
@@ -2073,10 +2078,99 @@ function renderFilterPicker(key,label,options){
  const back=document.createElement("button");back.textContent="‹ Voltar";back.onclick=()=>choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();panel.appendChild(back);
  fit();
 }
+// LT71: Form has its own official site-driven multi-picker, never Gender items.
+function refreshOfficialFormList(){
+ if(!controlsWindow||choiceOpen!=="filters")return;
+ const target=document.getElementById("officialFormItems");
+ const chips=document.getElementById("officialFormSelected");
+ if(!target||!chips)return;
+ const wanted=Array.isArray(modeDraft.formSelections)?modeDraft.formSelections:[];
+ const selected=new Set(wanted.map(x=>String(x).toLowerCase()));
+ const source=Array.isArray(filterOptions.form?.options)?filterOptions.form.options:[];
+ const values=[...new Set(source.map(x=>String(x||"").trim()).filter(Boolean))];
+ const term=formQuery.trim().toLowerCase();
+ const matches=values.filter(x=>!term||x.toLowerCase().includes(term)).slice(0,60);
+ target.replaceChildren();chips.replaceChildren();
+ const status=document.createElement("p");status.className="uxNote";
+ status.textContent=formOptionsStatus+(values.length?" · "+values.length+" opções verificadas":"");
+ target.appendChild(status);
+ if(!matches.length){
+  const message=document.createElement("p");message.className="uxNote";
+  message.textContent="Aguardando Form do site · nenhuma forma será inventada";
+  target.appendChild(message);
+ }
+ for(const value of matches){
+  const button=document.createElement("button");button.type="button";
+  const active=selected.has(value.toLowerCase());
+  button.className=active?"chosen":"";
+  button.setAttribute("aria-pressed",String(active));
+  button.textContent=(active?"✓ ":"")+value;
+  button.onclick=()=>{
+   const list=Array.isArray(modeDraft.formSelections)?[...modeDraft.formSelections]:[];
+   modeDraft.formSelections=active?list.filter(v=>v.toLowerCase()!==value.toLowerCase()):
+    [...list,value];
+   modeDraft.form="";refreshOfficialFormList();
+  };
+  target.appendChild(button);
+ }
+ for(const value of wanted){
+  const chip=document.createElement("button");chip.className="pokemonChip";chip.type="button";
+  chip.textContent=value+" ×";chip.onclick=()=>{
+   modeDraft.formSelections=modeDraft.formSelections.filter(v=>v!==value);
+   refreshOfficialFormList();
+  };
+  chips.appendChild(chip);
+ }
+}
+function renderFormPicker(){
+ if(!modeDraft)modeDraft={...searchSettings,mode};
+ const panel=uxPanel("FORMA · filtro oficial");
+ panel.dataset.panelKind="filters";panel.classList.add("filterPicker","formPicker");
+ const selected=document.createElement("div");selected.id="officialFormSelected";selected.className="pokemonSelected";
+ const input=document.createElement("input");input.type="search";
+ input.id="officialFormSearch";input.placeholder="Buscar forma no PoGoCoordinates";
+ input.value=formQuery;input.setAttribute("aria-label","Pesquisar Form oficial do site");
+ input.oninput=()=>{
+  formQuery=input.value;
+  formOptionsStatus="Pesquisando formas no site...";
+  refreshOfficialFormList();
+  if(Native.requestFormOptions)Native.requestFormOptions(formQuery);
+ };
+ input.onfocus=()=>{if(Native.locationEditor)Native.locationEditor(true);};
+ input.onblur=()=>{if(Native.locationEditor)Native.locationEditor(false);};
+ const list=document.createElement("div");list.id="officialFormItems";
+ const done=document.createElement("button");done.type="button";
+ done.textContent="✓ Confirmar seleção";
+ done.onclick=()=>{modeDraft.form="";renderFiltersChoices();};
+ const clear=document.createElement("button");clear.type="button";
+ clear.textContent="Limpar formas";clear.onclick=()=>{
+  modeDraft.formSelections=[];modeDraft.form="";refreshOfficialFormList();
+ };
+ const back=document.createElement("button");back.type="button";back.textContent="‹ Voltar aos filtros";
+ back.onclick=renderFiltersChoices;
+ const note=document.createElement("p");note.className="uxNote";
+ note.textContent="Somente ✓ Aplicar, no painel Filtros, envia as alterações ao site.";
+ panel.append(selected,input,list,done,clear,back,note);
+ refreshOfficialFormList();
+ if(Native.requestFormOptions)Native.requestFormOptions(formQuery);
+ fit();
+}
+window.onFormOptions=response=>{
+ if(!response||response.key!=="form")return;
+ if(response.query!==undefined&&response.query!==formQuery.trim())return;
+ const previous=Array.isArray(filterOptions.form?.options)?filterOptions.form.options:[];
+ const options=response.ok&&Array.isArray(response.options)?response.options:[];
+ if(options.length){
+  filterOptions.form={present:true,options:[...new Set([...previous,...options])].slice(0,500)};
+  formOptionsStatus="Form confirmado no PoGoCoordinates";
+ }else formOptionsStatus=response.pending?"⌛ Aguardando Form oficial":
+  String(response.reason||"Sem confirmação do site; tente novamente");
+ refreshOfficialFormList();
+};
 window.onFilterOptions=function(response){
  if(!response||!response.ok)return;
  filterOptions=response.partial?{...filterOptions,...(response.options||{})}:(response.options||{});
- if(choiceOpen==="filters"&&modeDraft){
+ if(choiceOpen==="filters"&&modeDraft&&document.getElementById("officialFormItems")===null){
   const panel=document.getElementById("choices"),scroll=panel.scrollTop;
   if(!document.activeElement||!document.activeElement.matches("input")){
    renderFiltersChoices();panel.scrollTop=scroll;
@@ -2970,7 +3064,7 @@ function saveQuickPrefs(){
 /* FILTERS-POGO-06/07: criteria count includes only this menu, never Pokémon,
    Shiny, coordinates, IV or GL/UL rank. Min+max = one range criterion.
    Level 1–35 is the user-selected neutral default, not an active restriction. */
-const FILTERS_MENU_KEYS=Object.freeze(["sortBy","weather","size","form","gender","sizeSelections","genderSelections",
+const FILTERS_MENU_KEYS=Object.freeze(["sortBy","weather","size","form","gender","sizeSelections","genderSelections","formSelections",
  "cpMin","cpMax","levelMin","levelMax","minPvpCp"]);
 function extraFilterValue(config,key){
  const value=String(config?.[key]??"").trim();
@@ -2988,7 +3082,8 @@ function activeExtraFilterCount(config=searchSettings,selectedMode=mode){
  const hasMulti=key=>Array.isArray(config?.[key+"Selections"])&&
   config[key+"Selections"].some(v=>!["","any","qualquer"].includes(String(v||"").trim().toLowerCase()));
  const pvp=selectedMode==="gl"||selectedMode==="ul";
- let total=["weather","form"].filter(active).length+
+ let total=["weather"].filter(active).length+
+   (active("form")||hasMulti("form")?1:0)+
   (active("sortBy")?1:0)+
   (active("size")||hasMulti("size")?1:0)+
   (active("gender")||hasMulti("gender")?1:0);
