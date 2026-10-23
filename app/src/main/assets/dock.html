@@ -1311,7 +1311,12 @@ body.controls-window #quickMenuList button[data-key="location"].selected,
 body.controls-window #quickMenuList button[data-key="sh"].selected,
 body.controls-window #quickMenuList button[data-key="star"].selected{
  background:var(--visual-menu-button-bg,#28292cce)!important;
- border-color:inherit!important;
+ border-color:#ffffff40!important;
+}
+body.controls-window.visual-light-menu #quickMenuList button[data-key="location"].selected,
+body.controls-window.visual-light-menu #quickMenuList button[data-key="sh"].selected,
+body.controls-window.visual-light-menu #quickMenuList button[data-key="star"].selected{
+ border-color:#24394c66!important;
 }
 body.controls-window #quickMenuList button[data-key="sh"].selected .quickGlyph,
 body.controls-window #quickMenuList button[data-key="star"].selected .quickGlyph{
@@ -1750,6 +1755,7 @@ function toggleChoices(kind){
  if(kind==="filters"){
   modeScrollTop=0; // Open at the first field, not at an old scroll offset.
   modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
+  filterOptions={}; // Never reuse an old site snapshot as a fresh external change.
   // Initial Level selection covers the requested wild-spawn range.
   if(modeDraft.levelMin===""||modeDraft.levelMin==null)modeDraft.levelMin="1";
   if(modeDraft.levelMax===""||modeDraft.levelMax==null)modeDraft.levelMax="35";
@@ -2241,7 +2247,12 @@ window.onFormOptions=response=>{
 };
 window.onFilterOptions=function(response){
  if(!response||!response.ok)return;
- filterOptions=response.partial?{...filterOptions,...(response.options||{})}:(response.options||{});
+ if(response.partial){
+  // Dropdown option discovery must not erase the actual selected value
+  // previously read from the live form.
+  for(const [key,value] of Object.entries(response.options||{}))
+   filterOptions[key]={...(filterOptions[key]||{}),...value};
+ }else filterOptions=response.options||{};
  if(choiceOpen==="filters"&&modeDraft&&document.getElementById("officialFormItems")===null){
   const panel=document.getElementById("choices"),scroll=panel.scrollTop;
   if(!document.activeElement||!document.activeElement.matches("input")){
@@ -3648,6 +3659,25 @@ function renderAlertsChoices(){
  fit();
 }
 
+// Site -> App, safely limited to single-choice values actually observable
+// in the real form. Multi-size/Form and numeric fields need independent DOM
+// verification and are NEVER guessed from exported saved-filter JSONs.
+const SITE_SINGLE_CHOICES=Object.freeze({
+ sortBy:["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"],
+ weather:["Any","Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"],
+ gender:["Any","Male","Female","Genderless"]
+});
+function verifiedSiteSingleFilterValues(){
+ const selected={};
+ for(const [key,allowed] of Object.entries(SITE_SINGLE_CHOICES)){
+  const field=filterOptions[key];
+  if(!field||field.present!==true||field.disabled===true||typeof field.value!=="string")continue;
+  const actual=field.value.trim();
+  const match=allowed.find(v=>v.toLowerCase()===actual.toLowerCase());
+  if(match)selected[key]=match==="Any"?"":match;
+ }
+ return selected;
+}
 function renderFiltersChoices(){
  if(!modeDraft)modeDraft={...searchSettings,mode};
  const panel=uxPanel("FILTROS");
@@ -3657,7 +3687,23 @@ function renderFiltersChoices(){
  const indicator=make("div","extraApplyStatus","");indicator.id="filterStatus";
  panel.appendChild(indicator);
  updateFiltersPanelStatus();
- // No redundant instructional paragraph: keep the filter popup compact.
+ // Inform about verified external changes; importing never calls native
+ // Search until the user explicitly presses the existing ✓ Aplicar button.
+ const websiteSingles=verifiedSiteSingleFilterValues();
+ const changed=Object.entries(websiteSingles).filter(([key,value])=>
+   String(modeDraft[key]??"").toLowerCase()!==String(value).toLowerCase());
+ if(changed.length){
+  const diff=make("div","uxNote","Site e aplicativo divergem em: "+
+   changed.map(([key])=>({sortBy:"Ordenar",weather:"Clima",gender:"Sexo"}[key])).join(", ")+".");
+  const importFromSite=make("button","","Usar opções observadas no site");
+  importFromSite.type="button";
+  importFromSite.onclick=()=>{
+   for(const [key,value] of changed)modeDraft[key]=value;
+   renderFiltersChoices();
+  };
+  panel.append(diff,importFromSite);
+ }
+ // No redundant instructional paragraph: keep the filter popup compacto.
  const actions=make("div","modeAction filterActions");const apply=make("button","modeApply","✓ Aplicar");
  const clear=make("button","filterClear","Limpar filtros");
  const cancel=make("button","","Cancelar");

@@ -4456,3 +4456,11 @@ No `OverlayService.java`, `requestFormOptions()` e `requestFormOptionsLater()` f
 **Medição de latência:** `OverlayService.pollSearch` registra `SEARCH_LATENCY` apenas após resultados/zero confirmados, com modo, número de tentativas, tempo local transcorrido, quantidade de cartões e sinal `empty`. Nunca incluir coordenadas, nome de treinador, filtros pessoais ou tokens em logs. Usar os números do Samsung para distinguir lentidão real do site vs. detecção/polling sem reduzir falsamente a validação e sem enviar novas requisições extras.
 
 **Qualidade:** novo contrato UX Node de Shiny pendente/importação explícita/métrica. A homologação física permanece pendente. Não houve instalação, APK LT62, merge, backend, proxy nem GPS automático.
+
+### 12.231-LT62-REVERSE-SINGLE-FILTERS — importação segura de seleções observadas (23/10/2026)
+
+**Escopo deliberadamente comprovável:** o `describeFilters` preexistente do PoGoCoordinates lê `value` dos controles reais. Ao abrir Filtros, `dock.html` descarta snapshots obsoletos, aceita apenas valores exatos de Sort by, Weather e Gender presentes na lista oficial e identifica divergências frente ao rascunho. O usuário pode tocar **Usar opções observadas no site** para atualizar **somente o rascunho**; ✓ Aplicar ainda é obrigatório para persistir/solicitar Search. Nenhuma leitura parcial de opções substitui o valor previamente verificado do campo. Um `Any` observado remove apenas a restrição desse critério, sem apagar outros. Valores ambíguos ou ausentes não provocam alterações.
+
+**Limite físico:** isso não realiza sincronização automática bidirecional universal. Multi-seleção de Size, Form, formas específicas Pokémon, números IV/CP/Level/GL/UL, coordenadas e Shiny exigem leituras confiáveis independentes e reconciliação do ciclo React autenticado. A exportação JSON do Drive é evidência do formato salvo, não constitui API de leitura/escrita do DOM do site. Não simular IDs ou submeter filtros em loop.
+
+**CSS:** estados selecionados de Location/Shiny/Favorites restauram borda neutra exata dos botões individuais, inclusive no tema claro, ao invés de herdar uma borda colorida da caixa-mãe. Contrato de regressão Node para leitura simples e importação de rascunho. Sem APK, sem merge, homologação Samsung ainda pendente.
