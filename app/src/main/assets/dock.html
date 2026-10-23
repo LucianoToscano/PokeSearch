@@ -2430,6 +2430,8 @@ function closeChoices(){
  document.getElementById("choices").classList.remove("visible","periodCompact");
  document.getElementById("choices").style.removeProperty("left");
  document.getElementById("choices").style.removeProperty("right");
+ document.getElementById("choices").style.removeProperty("width");
+ document.getElementById("choices").style.removeProperty("max-width");
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
@@ -4214,7 +4216,7 @@ function bindRefreshGesture(button){
  let hold=null,longTriggered=false,pressed=false,x=0,y=0;
  const cancel=()=>{if(hold!==null){clearTimeout(hold);hold=null;}};
  const open=()=>{cancel();if(longTriggered)return;
-  longTriggered=true;if(choiceOpen!=="period")toggleChoices("period");};
+  longTriggered=true;if(choiceOpen==="period")closeChoices();else toggleChoices("period");};
  button.addEventListener("pointerdown",e=>{
   if(e.button!==0)return;
   cancel();longTriggered=false;pressed=true;x=e.clientX;y=e.clientY;
@@ -4702,9 +4704,11 @@ function renderAppearanceChoices(){
  fit();
 }
 document.addEventListener("pointerdown",event=>{
- if(choiceOpen!=="more")return;
+ if(choiceOpen!=="more"&&choiceOpen!=="period")return;
  if(event.target.closest("#choices.morePanel")||
-    event.target.closest('#quickMenuList button[data-key="more"]'))return;
+    event.target.closest("#choices.periodCompact")||
+    event.target.closest('#quickMenuList button[data-key="more"]')||
+    event.target.closest('#quickMenuList button[data-key="period"]'))return;
  closeChoices();
 },true);
 if(controlsWindow){
