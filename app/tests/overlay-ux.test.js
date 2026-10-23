@@ -2349,7 +2349,7 @@ test("UX-NOTIFY-15 all 36 audio labels match bundled Android raw entries",()=>{
  const lib=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
  const labels=lib.split('static final String[] LABELS={')[1]?.split('};')[0]||"";
  const audio=lib.split('private static final int[] AUDIO={')[1]?.split('};')[0]||"";
- return (labels.match(/^\\s*"[^"]+",?$/gm)||[]).length===36&&
+ return (labels.match(/^\s*"[^"]+",?$/gm)||[]).length===36&&
   (audio.match(/R\.raw\.ps_[a-z0-9_]+/g)||[]).length===36&&
   labels.includes('"Quem é esse Pokémon? · BR"')&&
   labels.includes('"Jigglypuff · Evolução meme"')&&labels.includes('"Snorlax"')&&
