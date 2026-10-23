@@ -3330,7 +3330,7 @@ test("LT69-FORM-SCOPE prevents Sex dropdown being returned for Form",()=>{
  return body.includes('if(label==="Form"||label==="Gender")')&&
   body.includes('return null; // Fail closed')&&
   body.includes("function extraOptionPopup(key,control){")&&
-  body.includes("if(control.getAttribute('aria-expanded')!=='true')return null;")&&
+  body.includes("if(!control||control.getAttribute('aria-expanded')!=='true')return null;")&&
   body.includes("if(key==='form')")&&
   body.includes("distinct.every(")&&
   service.includes('final String[] keys={"sortBy","size","form","gender","weather"}');
