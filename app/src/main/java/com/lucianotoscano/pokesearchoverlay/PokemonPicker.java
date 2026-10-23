@@ -273,7 +273,10 @@ public final class PokemonPicker {
         selectedRow.addView(previous,new LinearLayout.LayoutParams(dp(activity,25),dp(activity,36)));
         GridLayout sprites=new GridLayout(activity);
         sprites.setColumnCount(6);
-        selectedRow.addView(sprites,new LinearLayout.LayoutParams(0,-2,1));
+        LinearLayout centeredSprites=new LinearLayout(activity);
+        centeredSprites.setGravity(Gravity.CENTER);
+        centeredSprites.addView(sprites,new LinearLayout.LayoutParams(-2,-2));
+        selectedRow.addView(centeredSprites,new LinearLayout.LayoutParams(0,-2,1));
         selectedRow.addView(next,new LinearLayout.LayoutParams(dp(activity,25),dp(activity,36)));
         root.addView(selectedRow);
 
