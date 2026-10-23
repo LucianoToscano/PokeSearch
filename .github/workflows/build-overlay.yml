@@ -9,9 +9,11 @@ permissions:
   contents: read
 jobs:
   build:
-    # v0.51 work branch: build only via an explicit workflow_dispatch request.
-    # Draft PR pushes must never build an APK without the owner's request.
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.head_ref != 'feature/v0.51-launcher-icon-fill-20261016' && github.head_ref != 'feature/release-notes-20261022' && (github.event_name != 'pull_request' || !github.event.pull_request.draft)) }}
+    # Legacy v0.50 build path remains available only by explicit manual dispatch.
+    # Never rebuild an obsolete unsigned/debug v0.50 APK on LT56 main pushes.
+    # Current main push QA is in pokesearch-node-qa.yml; signed LT56 already
+    # passed in workflow build-v056-filters-bell.yml.
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
