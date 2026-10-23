@@ -3375,7 +3375,7 @@ test("LT71-FORM-NATIVE saves multiple forms without resetting species or locatio
 
 
 test("LT72-FORM-DOM explicitly rejects the four Gender options under Form",()=>{
- const begin=probe.indexOf("function extraOptionPopup(key,control){");
+ const begin=probe.indexOf("function extraPopupMatchesKey(key,popup){");
  const end=probe.indexOf("function formOptionRows(control){",begin);
  if(begin<0||end<=begin)return false;
  const clean=x=>String(x||"").trim();
@@ -3405,6 +3405,39 @@ test("LT72-FORM-DOM explicitly rejects the four Gender options under Form",()=>{
  const c=create([single])("form",control);
  const d=create([forms,gender])("form",control);
  return a===null&&b===forms&&c===single&&d===null;
+});
+
+
+test("LT73-FORM-LINKED-PORTAL validates stale aria-controls as strictly as fallback",()=>{
+ const begin=probe.indexOf("function extraPopupMatchesKey(key,popup){");
+ const end=probe.indexOf("function formOptionRows(control){",begin);
+ if(begin<0||end<=begin)return false;
+ const clean=x=>String(x||"").trim();
+ const text=el=>clean(el&&(el.innerText||el.textContent)||"");
+ const vis=el=>!!(el&&el.getClientRects().length);
+ const option=name=>({innerText:name,textContent:name,getClientRects:()=>[1]});
+ const popup=values=>({
+  getClientRects:()=>[1],contains:()=>false,
+  querySelectorAll:()=>values.map(option)
+ });
+ const gender=popup(["Any","Male","Female","Genderless"]);
+ const forms=popup(["Normal","Alola","Copy 2019"]);
+ const linked={getAttribute:key=>key==="aria-controls"?"portal":key==="aria-expanded"?"true":null};
+ const closed={getAttribute:key=>key==="aria-controls"?"portal":key==="aria-expanded"?"false":null};
+ const create=chosen=>{
+  const doc={getElementById:id=>id==="portal"?chosen:null};
+  return new Function("elements","vis","text","clean","document",
+   probe.slice(begin,end)+"return extraOptionPopup;")(
+   ()=>[chosen],vis,text,clean,doc);
+ };
+ const code=probe.split("function siteOptions(key){")[1]?.split("function describeChoice(",1)[0]||"";
+ return create(gender)("form",linked)===null&&
+  create(forms)("form",linked)===forms&&
+  create(forms)("form",closed)===null&&
+  create(forms)("gender",linked)===null&&
+  code.includes('if(key==="form"&&(!rows||!rows.length)){')&&
+  code.includes('return explicit?{ok:true,pending:false,empty:true,options:[]}:')&&
+  code.includes('{ok:false,pending:true,options:[]};');
 });
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
