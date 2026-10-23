@@ -4816,3 +4816,22 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 
 **Restrições preservadas:** PR #34 Draft, main LT61, sem merge, sem LT63, sem proxy/backend/GPS físico, sem reconfiguração de login e preferências do usuário. Novos APKs devem manter assinatura e versionCode monotônico; esta é uma recompilação da mesma versão de teste LT62 autorizada pelo proprietário.
 
+
+### 12.252 — LT62: APK de homologação emitido e conferido (23/10/2026)
+
+**Solicitação do proprietário:** registrar o Guia Mestre, preparar prompt de continuidade e gerar novo APK assinado sem merge. **Execução concluída:** workflow original `.github/workflows/build-v062-compact-preview.yml`, GitHub Actions **#40019242360**, job `build-lt-62` **SUCCESS**, artefato **#12528779958**, nome `PokeSearch-v0.00.62-LT`, ZIP de comprovantes + APK íntegros (CRC OK). Gatilho: commit documentado na 12.251.
+
+**Provas lidas diretamente do artefato #12528779958:**
+- `SOURCE_COMMIT.txt` = `dd70989c5c01de9170838a3a82010bb10db47c9f` (**código EXATO contido no APK**; commits documentais posteriores não o modificam).
+- `PACKAGE_VERSION.txt` = `package: name='com.lucianotoscano.pokesearch' versionCode='54260' versionName='0.00.62' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'`.
+- `SIGNING_CERT_SHA256.txt` = `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, mesmo certificado estável de LT61/LT62. O workflow exigiu assinatura persistente, validou `apksigner verify` e identidade `aapt`; assinatura desconhecida reprovaria a execução.
+- `SHA256SUMS.txt` = `7e5cedb7f54a2cae17af5a13ad3d5c8eefa18a56ff738378513083cba06e135d  PokeSearch-v0.00.62-LT.apk`.
+- APK final: **33.254.536 bytes**, SHA-256 recalculado localmente = `7e5cedb7f54a2cae17af5a13ad3d5c8eefa18a56ff738378513083cba06e135d`. ZIP do artefato completo: **30.567.683 bytes**, CRC OK; SHA-256 do ZIP = `1c3eaa7999d67e1165745a36c290d07304bc050c6cdbe3fdba760fd339550df3`. APK internamente validado como arquivo ZIP íntegro (215 entradas).
+- Link oficial da execução: `https://github.com/LucianoToscano/PokeSearch/actions/runs/40019242360`. O commit `dd70989...` também teve `PokeSearch Node QA (sem APK)` run **#40019249168** com `SUCCESS`. O workflow de build executou as nove suítes Node, Java 17, Gradle 8.11.1, testes unitários debug e `:app:assembleDebug`, além das verificações de assinatura/versão.
+
+**Conteúdo desta recompilação de LT62:** menus e filtros compactos com melhorias visuais de 12.247–12.249; ícone RefreshCw menor sem amarelar, intervalos centralizados, cascata vertical com OFF/AUTO/3/5/10/15/20 e menu Mais sem fundo preto indevido; Filtros como Modos, ✓ somente ao lado de PC, Nível e PC mínimo PvP, demais critérios individuais; **Pokébola única no lugar da engrenagem** com modos/IV/Shiny/contador/busca, toque curto alterna a lista, toque curto com menu aberto recolhe apenas menu, segurar 600 ms alterna menu, arraste cancela toque. Lista em janela independente de resultados no posicionamento salvo. Preferências, login, dados, applicationId e versões mantidos. Não há backend/proxy/GPS físico.
+
+**Comparação com APK anterior:** o APK inicial da LT62, SHA-256 `8ce4b86457f32c9c618348a7c3a80f8e58b7403279bf67232fbcb894df20bb9c`, build #40007032664, foi substituído como candidato de homologação por este novo arquivo de **mesmo nome e mesma versão**, com fonte e hash distintos. Não confundir; somente o SHA `7e5ced...` incorpora a Pokébola unificada.
+
+**Status de entrega:** PR #34 **aberta em Draft**, `main` LT61 em `caea98b7b57b9e45d5218e907eb392d76953dd53`. Não houve merge, alteração de applicationId, incremento de versionCode ou criação da LT63. **Homologação real Samsung NÃO foi feita pelo assistente**. Orientação: instalar por cima mantendo certificado; conferir sem perda de sessão/permissões, tap/hold/drag, Filtros e Modos, lista 0–10, seleção Shiny/PvP, atualização AUTO, toque em camadas transparentes, layout em horizontal/vertical, alinhamento da lista e persistência após reabrir. Abrir um novo chat usando o prompt de continuidade gerado neste checkpoint.
+
