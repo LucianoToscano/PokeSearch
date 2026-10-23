@@ -1245,9 +1245,13 @@ test("UX-OTHER-04 scroll position remains reachable on toggles and popup switchi
  dock.includes('modeScrollTop=panel.scrollTop')&&
  dock.includes('position:sticky;top:0;z-index:5')&&
  dock.includes('position:sticky;bottom:0;z-index:5'));
-test("Filters remain independent of cascade and retain their popup dimensions",
- dock.includes('section("Filtros gerais"')&&!dock.includes('section("Filtros avançados"')&&
- dock.includes('#choices.modePanel{width:232px')&&dock.includes('function renderExtraFilters('));
+test("Filters use compact Modos-like rail without collapsed general section",
+ dock.includes('const rows=[...panel.querySelectorAll(":scope > .extraField")]')&&
+ dock.includes('classList.toggle("chosen",label===selected)')&&
+ dock.includes('panel.append(rail,editor)')&&
+ dock.includes("panel.classList.add('filterCascade')")&&
+ !dock.includes('section("Filtros gerais",generalExpanded')&&
+ dock.includes('grid-template-columns:77px minmax(0,1fr)'));
 test("Site dropdown options are discovered instead of inventing weather/form values",
   dock.includes('for(const [key,value] of Object.entries(response.options||{}))')&&
   dock.includes('filterOptions[key]={...(filterOptions[key]||{}),...value};')&&
@@ -2665,8 +2669,9 @@ test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()
   filters.includes('input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999"')&&
   filters.includes('input.type="number";input.inputMode="numeric";')&&
   !filters.includes('make("button","extraStep"')&&
-  dock.includes('modeDraft.levelMin="1"')&&
-  dock.includes('modeDraft.levelMax="35"')&&
+  filters.includes('input.value=""; // UI-only empty: modeDraft retains the saved value until typed.')&&
+  filters.includes('[[minKey,"Min","mínimo"],[maxKey,"Max","máximo"]]')&&
+  !filters.includes('cell.append(cap,input)')&&
   dock.includes('input.checkValidity()')&&
   dock.includes('field.setCustomValidity("Mínimo maior que máximo")')===false&&
   service.includes('{"cpMin","cpMax"}')&&service.includes('{"levelMin","levelMax"}');
