@@ -3,8 +3,20 @@ on:
   push:
     branches:
       - main
+      - fix/lt57-compact-single-form-20261022
       - feature/pokesearch-51081-visual-editor-20261021
       - feature/release-notes-20261022
+    paths:
+      - 'app/tests/**'
+      - 'app/src/main/assets/**'
+      - 'app/src/main/java/**'
+      - 'app/src/main/AndroidManifest.xml'
+      - 'app/build.gradle.kts'
+      - 'app/proguard-rules.pro'
+      - '.github/workflows/pokesearch-node-qa.yml'
+  pull_request:
+    branches:
+      - main
     paths:
       - 'app/tests/**'
       - 'app/src/main/assets/**'
@@ -32,6 +44,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Configurar Node 22
         uses: actions/setup-node@v4
         with:

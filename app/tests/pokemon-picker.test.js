@@ -2,9 +2,9 @@
 // SITE-POKEMON-01 synthetic DOM contract for the supplied PoGoCoordinates screenshot.
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync(path.join(__dirname,'../src/main/assets/probe.js'),'utf8');
-const site={open:false,query:'',selected:['Zorua'],available:[
+const site={open:false,foreignOpen:false,query:'',selected:['Zorua'],available:[
   '#002 Ivysaur','#003 Venusaur (Normal)','#004 Charmander',
-  '#004 Charmander (Goggles 2026)','#570 Zorua'
+  '#004 Charmander (Goggles 2026)','#025 Pikachu','#570 Zorua'
 ]};
 const el=(txt='',attrs={},extra={})=>({
  innerText:txt,textContent:txt,tagName:'SPAN',children:[],parentElement:null,value:'',disabled:false,
@@ -26,20 +26,36 @@ root.querySelectorAll=selector=>{
  })];
  return [];
 };
+// React mounts choices in a dedicated portal listbox, not arbitrary global <li>s.
+const optionRows=()=>site.open?site.available
+ .filter(label=>label.toLowerCase().includes(site.query.toLowerCase()))
+ .map(label=>el(label,{},{
+  tagName:'LI',querySelector:()=>null,click(){
+   const clean=label.replace(/^#\d+\s+/, '');
+   if(!site.selected.includes(clean))site.selected.push(clean);
+   site.open=false;site.query='';input.value='';
+  }
+ })):[];
+const unrelated=el('Sunny',{},{
+ tagName:'UL',querySelectorAll:selector=>selector.includes('[role=option]')?[el('Sunny')]:[],
+ contains:()=>false
+});
+const listbox=el('',{role:'listbox'},{
+ tagName:'UL',querySelectorAll:selector=>selector.includes('[role=option]')?optionRows():[],
+ contains:()=>false
+});
 const document={body:el(''),querySelector:()=>null,querySelectorAll(selector){
  if(selector==='span,label,strong,small,dt,div,p')return [head];
  if(selector==='label,span,div,p,strong')return [head];
  if(selector==='label,span,strong,div')return [];
  if(selector==='input:not([type=hidden])')return site.open?[input]:[];
- if(selector.includes('[role=option]'))return site.open?site.available.filter(label=>label.toLowerCase().includes(site.query.toLowerCase())).map(label=>el(label,{}, {
-   tagName:'LI',querySelector:()=>null,click(){
-    const clean=label.replace(/^#\d+\s+/, '');
-    if(!site.selected.includes(clean))site.selected.push(clean);
-    site.open=false;site.query='';input.value='';
-   }
- })):[];
+ if(selector.includes('[role=listbox]')||selector.includes('[cmdk-list]'))
+  return site.open?[listbox,...(site.foreignOpen?[unrelated]:[])]:[];
+ if(selector.includes('[role=option]'))return optionRows();
  return [];
 }};
+const originalInputAttr=input.getAttribute;
+input.getAttribute=name=>name==='aria-expanded'?(site.open?'true':'false'):originalInputAttr(name);
 const HTMLInputElement={prototype:{}};
 Object.defineProperty(HTMLInputElement.prototype,'value',{set(v){this.value=String(v)}});
 const HTMLTextAreaElement={prototype:{}};
@@ -106,4 +122,67 @@ test('A new official query may resolve without false empty',()=>{
  assert.equal(options.ok,true);
  assert.ok(options.options.some(v=>v.label==='Venusaur (Normal)'));
 });
+
+test('Dex #0025 resolves the official #025 Pikachu row',()=>{
+ site.open=true;site.foreignOpen=false;site.query='';
+ assert.equal(run('pokemonSuggest:'+JSON.stringify('#0025')).state,'pending');
+ const r=run('pokemonSuggest:'+JSON.stringify('#0025'));
+ assert.equal(r.state,'ready');assert.equal(r.options.length,1);
+ assert.equal(r.options[0].label,'Pikachu');assert.equal(r.options[0].dex,'025');
+});
+test('Unrelated dropdown stays excluded from the official Pokémon picker',()=>{
+ site.open=true;site.foreignOpen=true;site.query='';
+ assert.equal(run('pokemonSuggest:'+JSON.stringify('Charmander')).state,'pending');
+ const r=run('pokemonSuggest:'+JSON.stringify('Charmander'));
+ assert.equal(r.state,'ready');assert.equal(r.options.length,2);
+ assert.ok(r.options.some(o=>o.label==='Charmander (Goggles 2026)'));
+ site.foreignOpen=false;
+});
+test('Explicit-empty only after official portal actually renders no results',()=>{
+ site.open=true;site.foreignOpen=false;site.query='';
+ assert.equal(run('pokemonSuggest:'+JSON.stringify('Absent999')).state,'pending');
+ let r=run('pokemonSuggest:'+JSON.stringify('Absent999'));
+ assert.equal(r.state,'pending');assert.notEqual(r.empty,true);
+ listbox.innerText='No results';listbox.textContent='No results';
+ r=run('pokemonSuggest:'+JSON.stringify('Absent999'));
+ assert.equal(r.state,'explicit-empty');assert.equal(r.empty,true);
+ assert.equal(r.options.length,0);
+ listbox.innerText='';listbox.textContent='';
+});
+test('Two matching listboxes cannot produce a guessed Pokémon result',()=>{
+ site.open=true;site.foreignOpen=true;site.query='';
+ unrelated.innerText='Charmander';unrelated.textContent='Charmander';
+ unrelated.querySelectorAll=selector=>selector.includes('[role=option]')?[el('Charmander')]:[];
+ assert.equal(run('pokemonSuggest:'+JSON.stringify('Charmander')).state,'pending');
+ const r=run('pokemonSuggest:'+JSON.stringify('Charmander'));
+ assert.equal(r.state,'pending');assert.notEqual(r.empty,true);
+ site.foreignOpen=false;
+});
+
+
+test('A stale aria-controls link falls back only to the matching official portal',()=>{
+ const old=input.getAttribute;
+ input.getAttribute=name=>name==='aria-controls'?'old-unmounted-react-node':old(name);
+ document.getElementById=()=>null;
+ site.open=true;site.foreignOpen=true;site.query='';
+ assert.equal(run('pokemonSuggest:'+JSON.stringify('Venusaur')).state,'pending');
+ const r=run('pokemonSuggest:'+JSON.stringify('Venusaur'));
+ assert.equal(r.state,'ready');
+ assert.ok(r.options.some(x=>x.label==='Venusaur (Normal)'));
+ input.getAttribute=old;delete document.getElementById;site.foreignOpen=false;
+});
+test('Official costume and regional forms preserve exact site labels',()=>{
+ site.available.push('#019 Raticate (Alola)','#025 Pikachu (Copy 2019)');
+ site.open=true;site.query='';
+ assert.equal(run('pokemonSuggest:'+JSON.stringify('Raticate')).state,'pending');
+ let r=run('pokemonSuggest:'+JSON.stringify('Raticate'));
+ assert.equal(r.state,'ready');
+ assert.ok(r.options.some(x=>x.label==='Raticate (Alola)'));
+ assert.equal(run('pokemonSuggest:'+JSON.stringify('Pikachu')).state,'pending');
+ r=run('pokemonSuggest:'+JSON.stringify('Pikachu'));
+ assert.equal(r.state,'ready');
+ assert.ok(r.options.some(x=>x.label==='Pikachu (Copy 2019)'));
+ site.available.splice(-2);
+});
+
 console.log('PokeSearch official multi-Pokemon picker: '+tested+' tests passed');

@@ -35,9 +35,9 @@ test("defaults preserve original orientation and unclipped renderer",()=>{
  assert.equal(v.menuTransparency,35);
  assert.equal(v.menuItemGap,3);
 });
-test("packed preset allows true overlap via lowered row pitch",()=>{
+test("packed preset keeps zero visual gap without sprite overlap",()=>{
  assert.match(dock,/const pitch=Math\.max\(8,Math\.round\(size\*\.32\)/);
- assert.match(dock,/return pitch; \/\/ Transparent sprite squares may overlap/);
+ assert.match(dock,/return Math\.max\(size,pitch\); \/\/ No sprite-overlap/);
  assert.match(dock,/const sprite=Math\.max\(10,Math\.floor\(size\*factor\)\)/);
  assert.match(script,/compact:\{resultGapTop:-6,resultGapBetween:0/);
 });

@@ -845,6 +845,12 @@ public class OverlayService extends Service {
         menuPanel=new WebView(this);
         menuPanel.setBackgroundColor(Color.TRANSPARENT);
         menuPanel.getSettings().setJavaScriptEnabled(true);
+        // LT58-MORE-STABLE: honor <meta viewport width=device-width> in the
+        // toolbar-only WebView. Increasing the window height for the cascade
+        // must not trigger Android WebView's overview-scale fit/reflow, which
+        // made the same ten tiles shrink/grow in Samsung screenshots.
+        menuPanel.getSettings().setUseWideViewPort(true);
+        menuPanel.getSettings().setLoadWithOverviewMode(false);
         menuPanel.getSettings().setAllowContentAccess(false);
         menuPanel.getSettings().setAllowFileAccessFromFileURLs(false);
         menuPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
@@ -926,6 +932,7 @@ public class OverlayService extends Service {
         final float[] touchStart=new float[2];
         final int[] positionStart=new int[2];
         final boolean[] hasDragged={false};
+        final long[] lastLayoutMoveAt={0L};
         resultGrip=new View(this);
         resultGrip.setBackgroundColor(Color.TRANSPARENT);
         resultGrip.setOnTouchListener((view,event)->{
@@ -946,14 +953,23 @@ public class OverlayService extends Service {
                             positionStart[0]+xMove));
                         resultParams.y=Math.max(0,Math.min(m.heightPixels-resultParams.height,
                             positionStart[1]+yMove));
-                        try{wm.updateViewLayout(resultRoot,resultParams);}
-                        catch(Exception e){recordFailure("arrastar resultados",e);}
-                        moveDetail();
+                        // LT65-PERF: do not dispatch WindowManager work for every MotionEvent.
+                        long now=android.os.SystemClock.uptimeMillis();
+                        if(now-lastLayoutMoveAt[0]>=16L){
+                            lastLayoutMoveAt[0]=now;
+                            try{wm.updateViewLayout(resultRoot,resultParams);}
+                            catch(Exception e){recordFailure("arrastar resultados",e);}
+                            moveDetail();
+                        }
                     }
                     return true;
                 case MotionEvent.ACTION_UP:
                     if(!hasDragged[0])toggleResultsCollapsed();
                     else{
+                        // Always commit the final coordinates even after a throttled move.
+                        try{wm.updateViewLayout(resultRoot,resultParams);}
+                        catch(Exception e){recordFailure("finalizar arraste",e);}
+                        moveDetail();
                         float density=getResources().getDisplayMetrics().density;
                         getSharedPreferences("prefs",0).edit()
                             .putInt("resultsX",Math.round(resultParams.x/density)-visualResultsOffsetX)
@@ -1120,6 +1136,9 @@ public class OverlayService extends Service {
         if(count()>0)resultsStale=true;
         if(shiny){shinyVerified=false;update();}
         final int generation=++requestGeneration;
+        // LT60-LOC-STATE-01: every new Search needs fresh Coords/Radius proof.
+        // Prior cards remain untouched; only the CURRENT request loses its proof.
+        locationVerified=false;
         confirmedSubmittedFiltersGeneration=-1;
         submittedSearchGeneration=-1;
         submittingSearchGeneration=-1;
@@ -1909,6 +1928,8 @@ public class OverlayService extends Service {
         grip.setLayoutParams(new FrameLayout.LayoutParams(
                 dp(yes?BUBBLE_DP:dockDp()),dp(yes?BUBBLE_DP:30),Gravity.TOP|Gravity.LEFT));
         js(panel,panelLoaded,"window.setMinimized("+yes+")");
+        // Hidden result WebView must not keep its 1-second despawn ticker active.
+        js(resultPanel,resultLoaded,"window.setResultsPaused("+yes+")");
         if(resultRoot!=null)resultRoot.setVisibility(
             yes||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
         updateWindow();
@@ -2019,7 +2040,8 @@ public class OverlayService extends Service {
         if(m.find()){
             try{
                 double lat=Double.parseDouble(m.group(1)),lon=Double.parseDouble(m.group(2));
-                if(Math.abs(lat)<=90&&Math.abs(lon)<=180)return m.group(1)+","+m.group(2);
+                if(Math.abs(lat)<=90&&Math.abs(lon)<=180)
+                    return String.format(java.util.Locale.US,"%s,%s",m.group(1),m.group(2));
             }catch(NumberFormatException ignored){}
             catch(Exception e){recordFailure("interpretar coordenadas",e);}
         }
@@ -2166,7 +2188,35 @@ public class OverlayService extends Service {
                         js(menuPanel,true,"window.onFilterOptions("+message.toString()+")");
                     }
                     execute("closeFilterOptions:"+key,closed->discoverFilterMenu(position+1,generation));
-                }),210L);
+                }),"form".equals(key)?500L:210L);
+            });
+        }
+        private int formOptionsSequence=0;
+        @JavascriptInterface public void requestFormOptions(String query){handler.post(()->{
+            if(stopped||loginPaused||searchInProgress||!menuExpanded||!menuLoaded)return;
+            String wanted=query==null?"":query.trim();
+            if(wanted.length()>70)return;
+            int generation=requestGeneration,sequence=++formOptionsSequence;
+            requestFormOptionsLater(wanted,generation,sequence,0);
+        });}
+        private void requestFormOptionsLater(String query,int generation,int sequence,int attempt){
+            if(stopped||loginPaused||searchInProgress||!menuExpanded||
+               generation!=requestGeneration||sequence!=formOptionsSequence)return;
+            execute("searchFormOptions:"+JSONObject.quote(query),result->{
+                if(stopped||generation!=requestGeneration||sequence!=formOptionsSequence||
+                   menuPanel==null||!menuLoaded)return;
+                if(result.optBoolean("pending",false)&&attempt<15){
+                    handler.postDelayed(()->requestFormOptionsLater(query,generation,sequence,attempt+1),300L);
+                    return;
+                }
+                try{
+                    result.put("key","form").put("query",query);
+                    if(result.optBoolean("pending",false)){
+                        result.put("pending",false).put("ok",false)
+                            .put("reason","Form não foi confirmado no site; tente novamente.");
+                    }
+                }catch(org.json.JSONException ignored){}
+                js(menuPanel,true,"window.onFormOptions("+result.toString()+")");
             });
         }
         private int pokemonSuggestionSequence=0;
@@ -2189,16 +2239,139 @@ public class OverlayService extends Service {
             execute("pokemonSuggest:"+JSONObject.quote(query),response->{
                 if(stopped||generation!=requestGeneration||sequence!=pokemonSuggestionSequence||
                     menuPanel==null||!menuLoaded)return;
-                if(response.optBoolean("pending",false)&&attempt<12){
+                if(response.optBoolean("pending",false)&&attempt<20){
                     handler.postDelayed(()->requestPokemonSuggestionsLater(query,generation,sequence,attempt+1),300L);
                     return;
                 }
-                // Even the final timeout must be displayed as a wait/error, not
-                // as proven absence of an official species or event form.
-                try{response.put("query",query);}catch(org.json.JSONException ignored){}
+                // Timeout means FAILED, never 'none found'. Only the linked
+                // live Pokémon portal may explicitly prove an empty search.
+                try{
+                    response.put("query",query);
+                    if(response.optBoolean("pending",false)){
+                        response.put("ok",false).put("pending",false).put("state","failed");
+                        response.put("reason","Tempo esgotado aguardando opções oficiais do site. Tente novamente.");
+                    }
+                }catch(org.json.JSONException ignored){}
                 js(menuPanel,true,"window.onPokemonSuggestions("+response.toString()+")");
             });
         }
+        // LT57 single-form bridge: menus submit a DELTA, not a stale copy of
+        // all search settings. Pokémon, Raw IV, Shiny and Location are untouched.
+        @JavascriptInterface public void patchSearchFilters(String payload){handler.post(()->{
+            try{
+                JSONObject delta=new JSONObject(payload),updated=new JSONObject(extraFiltersJson);
+                java.util.HashSet<String> allowed=new java.util.HashSet<>(java.util.Arrays.asList(
+                    "sortBy","weather","size","form","gender","cpMin","cpMax",
+                    "levelMin","levelMax","minPvpCp","sizeSelections","genderSelections","formSelections",
+                    "includePreviousEvolutions"));
+                if(delta.length()==0||delta.length()>allowed.size())return;
+                java.util.Iterator<String> requested=delta.keys();
+                while(requested.hasNext())if(!allowed.contains(requested.next()))return;
+                org.json.JSONArray priorClear=updated.optJSONArray("clearExtraKeys");
+                java.util.LinkedHashSet<String> clears=new java.util.LinkedHashSet<>();
+                if(priorClear!=null)for(int i=0;i<priorClear.length();i++)
+                    clears.add(priorClear.optString(i));
+                for(String key:allowed){
+                    if(!delta.has(key))continue;
+                    if(key.equals("includePreviousEvolutions")){
+                        updated.put(key,delta.optBoolean(key,true));continue;
+                    }
+                    if(key.equals("sizeSelections")||key.equals("genderSelections")||
+                       key.equals("formSelections")){
+                        org.json.JSONArray input=delta.optJSONArray(key);
+                        if(input==null||input.length()>(key.equals("genderSelections")?1:
+                            key.equals("formSelections")?500:7))return;
+                        org.json.JSONArray cleaned=new org.json.JSONArray();
+                        java.util.HashSet<String> unique=new java.util.HashSet<>();
+                        for(int i=0;i<input.length();i++){
+                            String value=input.optString(i,"").trim();
+                            if(value.length()>(key.equals("formSelections")?100:30)||value.matches("(?s).*[<>\\r\\n].*"))return;
+                            if(!value.isEmpty()&&unique.add(value.toLowerCase(java.util.Locale.ROOT)))
+                                cleaned.put(value);
+                        }
+                        boolean wasActive=updated.optJSONArray(key)!=null&&
+                            updated.optJSONArray(key).length()>0;
+                        if(cleaned.length()==0&&
+                        (wasActive||!updated.optString(key.replace("Selections",""),"").isEmpty()))
+                        clears.add(key);
+                        if(cleaned.length()>0)clears.remove(key);
+                        updated.put(key,cleaned);
+                        updated.put(key.replace("Selections",""),"");
+                        continue;
+                    }
+                    String value=delta.optString(key,"").trim();
+                    if(value.length()>100||value.matches("(?s).*[<>\\r\\n].*"))return;
+                    if((key.equals("cpMin")||key.equals("cpMax")||key.equals("minPvpCp"))&&
+                        !value.isEmpty()&&!value.matches("[0-9]{1,5}"))return;
+                    if((key.equals("levelMin")||key.equals("levelMax"))&&
+                        !value.isEmpty()&&!value.matches("[0-9]{1,2}(\\.[0-9])?"))return;
+                    if(key.equals("sortBy")&&value.isEmpty())value="Despawn (longest)";
+                    if(value.isEmpty()&&!updated.optString(key,"").isEmpty())clears.add(key);
+                    if(!value.isEmpty())clears.remove(key);
+                    updated.put(key,value);
+                }
+                for(String[] pair:new String[][]{{"cpMin","cpMax"},{"levelMin","levelMax"}}){
+                    String low=updated.optString(pair[0]),high=updated.optString(pair[1]);
+                    if(!low.isEmpty()&&!high.isEmpty()&&Double.parseDouble(low)>Double.parseDouble(high))return;
+                }
+                org.json.JSONArray clear=new org.json.JSONArray();
+                for(String key:clears)clear.put(key);
+                updated.put("clearExtraKeys",clear);
+                String serialized=updated.toString();
+                if(extraFiltersJson.equals(serialized)){
+                    OverlayService.this.refresh(true);return;
+                }
+                extraFiltersJson=serialized;
+                getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",serialized).apply();
+                replaceActiveFilterSearch(); // Preserve shiny, mode, Pokémon, coords.
+                resultsStale=count()>0;
+                status("Filtro atualizado • pesquisando com os demais campos preservados");
+                scheduleFilterChangeRefresh();
+            }catch(org.json.JSONException ex){
+                status("Filtro inválido; nenhuma configuração foi alterada.");
+            }
+        });}
+        // LT64-FILTER-DELTA: Pokémon/form selections never replace other filters.
+        @JavascriptInterface public void setPokemonSelections(String payload){handler.post(()->{
+            try{
+                JSONObject request=new JSONObject(payload);
+                org.json.JSONArray values=request.getJSONArray("selections");
+                if(values.length()>50)return;
+                JSONObject extra=new JSONObject(extraFiltersJson);
+                org.json.JSONArray previous=extra.optJSONArray("pokemonSelections");
+                org.json.JSONArray cleaned=new org.json.JSONArray();
+                java.util.HashSet<String> unique=new java.util.HashSet<>();
+                for(int i=0;i<values.length();i++){
+                    String label=values.optString(i,"").trim();
+                    if(label.isEmpty()||label.length()>90||label.matches("(?s).*[<>\\r\\n].*"))return;
+                    if(unique.add(label.toLowerCase(java.util.Locale.ROOT)))cleaned.put(label);
+                }
+                java.util.LinkedHashSet<String> clears=new java.util.LinkedHashSet<>();
+                org.json.JSONArray oldClears=extra.optJSONArray("clearExtraKeys");
+                if(oldClears!=null)for(int i=0;i<oldClears.length();i++)
+                    clears.add(oldClears.optString(i));
+                if(cleaned.length()==0&&(request.optBoolean("clear",false)||
+                    (previous!=null&&previous.length()>0)||!extra.optString("pokemon","").isEmpty()))
+                    clears.add("pokemonSelections");
+                if(cleaned.length()>0)clears.remove("pokemonSelections");
+                extra.put("pokemonSelections",cleaned);
+                extra.put("pokemon","");
+                org.json.JSONArray reset=new org.json.JSONArray();
+                for(String key:clears)if(!key.isEmpty())reset.put(key);
+                extra.put("clearExtraKeys",reset);
+                String next=extra.toString();
+                if(extraFiltersJson.equals(next)){OverlayService.this.refresh(true);return;}
+                extraFiltersJson=next;
+                getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",next).apply();
+                replaceActiveFilterSearch();
+                resultsStale=count()>0;
+                hideDetails();
+                status("Espécies/formas solicitadas · aguardando confirmação no site; demais filtros preservados");
+                scheduleFilterChangeRefresh();
+            }catch(org.json.JSONException ex){
+                status("Seleção Pokémon inválida · filtros anteriores preservados.");
+            }
+        });}
         @JavascriptInterface public void setSearchConfig(String payload){handler.post(()->{
             try{
                 JSONObject input=new JSONObject(payload);
@@ -2222,6 +2395,34 @@ public class OverlayService extends Service {
                        !value.isEmpty()&&!value.matches("[0-9]{1,2}(\\.[0-9])?"))return;
                     extra.put(key,value);
                 }
+                // LT57 ONE-FORM: size and gender independently allow multiple
+                // values. Empty array is "Any"; do not discard previous state
+                // if an older Modes/Pokémon UI omits the arrays.
+                JSONObject previousMulti=new JSONObject(extraFiltersJson);
+                for(String key:new String[]{"size","gender","form"}){
+                    String plural=key+"Selections";
+                    org.json.JSONArray requested=input.optJSONArray(plural);
+                    if(requested==null)requested=previousMulti.optJSONArray(plural);
+                    org.json.JSONArray allowed=new org.json.JSONArray();
+                    java.util.HashSet<String> seen=new java.util.HashSet<>();
+                    if(requested!=null){
+                        if(requested.length()>(key.equals("form")?500:7))return;
+                        for(int i=0;i<requested.length();i++){
+                            String value=requested.optString(i,"").trim();
+                            if(value.length()>(key.equals("form")?100:30)||value.matches("(?s).*[<>\\r\\n].*"))return;
+                            if(!value.isEmpty()&&seen.add(value.toLowerCase(java.util.Locale.ROOT))){
+                                // The previous build allowed multiple genders. Keep the
+                                // first value during migration; the site is single-choice.
+                                if(!key.equals("gender")||allowed.length()==0)allowed.put(value);
+                            }
+                        }
+                    }else if(!input.optString(key,"").trim().isEmpty()){
+                        allowed.put(input.optString(key,"").trim());
+                    }
+                    extra.put(plural,allowed);
+                    // Never apply obsolete single-choice selection concurrently.
+                    extra.put(key,"");
+                }
                 org.json.JSONArray species=input.optJSONArray("pokemonSelections");
                 if(species!=null){
                     if(species.length()>50)return;
@@ -2235,6 +2436,7 @@ public class OverlayService extends Service {
                     extra.put("pokemonSelections",cleaned);
                     extra.put("pokemon",""); // Multi-select replaces legacy single text.
                 }
+                if(extra.optString("sortBy","").isEmpty())extra.put("sortBy","Despawn (longest)");
                 for(String[] pair:new String[][]{{"cpMin","cpMax"},{"levelMin","levelMax"}}){
                     String low=extra.optString(pair[0]),high=extra.optString(pair[1]);
                     if(!low.isEmpty()&&!high.isEmpty()&&Double.parseDouble(low)>Double.parseDouble(high))return;
@@ -2251,8 +2453,22 @@ public class OverlayService extends Service {
                     boolean stillNeedsClear=false;
                     if(previouslyCleared!=null)for(int i=0;i<previouslyCleared.length();i++)
                         if(key.equals(previouslyCleared.optString(i)))stillNeedsClear=true;
-                    if(after.isEmpty()&&(!before.isEmpty()||stillNeedsClear))
+                    if(after.isEmpty()&&(!before.isEmpty()||stillNeedsClear)){
                         clearKeys.put(key);
+                        // A legacy one-choice Size/Gender value belongs to
+                        // this same site control and must be cleared once.
+                        if((key.equals("size")||key.equals("gender"))&&
+                            extra.optJSONArray(key+"Selections")!=null&&
+                            extra.optJSONArray(key+"Selections").length()==0)
+                            clearKeys.put(key+"Selections");
+                    }
+                }
+                for(String key:new String[]{"sizeSelections","genderSelections","formSelections"}){
+                    org.json.JSONArray before=previousExtra.optJSONArray(key),after=extra.optJSONArray(key);
+                    if(before!=null&&before.length()>0&&after!=null&&after.length()==0)clearKeys.put(key);
+                    if(previouslyCleared!=null&&after!=null&&after.length()==0)
+                        for(int i=0;i<previouslyCleared.length();i++)
+                            if(key.equals(previouslyCleared.optString(i)))clearKeys.put(key);
                 }
                 org.json.JSONArray beforeSpecies=previousExtra.optJSONArray("pokemonSelections");
                 org.json.JSONArray afterSpecies=extra.optJSONArray("pokemonSelections");
@@ -2283,7 +2499,8 @@ public class OverlayService extends Service {
                     .putInt("rawStamina",st).putInt("glRank",gl).putInt("ulRank",ul)
                     .putInt("ivPercentMin",min).putInt("ivPercentMax",max)
                     .putString("extraFiltersJson",extraFiltersJson).apply();
-                replaceActiveFilterSearch();shinyVerified=false;
+                replaceActiveFilterSearch();
+                // Preserve authenticated Shiny preference; reverify it after location when searching.
                 // Keep site-confirmed cards with their original mode/icon
                 // until the new search passes all checks and returns valid cards.
                 boolean preview=restoreFilterPreview();
@@ -2603,7 +2820,9 @@ public class OverlayService extends Service {
                 return;
             }
             if(!shiny){
-                // OFF never requires signing in and never waits for Search cooldown.
+                // Coords, Shiny and other filters belong to one site form.
+                // Refresh fills only changed fields and verifies all selections.
+                if(locationEnabled){OverlayService.this.refresh(true);return;}
                 prepareImmediateShiny(generation);
                 return;
             }
@@ -2614,6 +2833,13 @@ public class OverlayService extends Service {
                 if(!siteConfirmsShinyAccount(session)){
                     revertUnverifiedShiny("✨ Conta logada e treinador confirmado são obrigatórios para Shiny.");
                     openShinyLogin();
+                    return;
+                }
+                if(locationEnabled){
+                    // Re-enter the unified form so the site does not discard
+                    // active Coords when switching Shiny.
+                    status("✨ Sincronizando Shiny e localização na mesma pesquisa...");
+                    OverlayService.this.refresh(true);
                     return;
                 }
                 prepareImmediateShiny(generation);

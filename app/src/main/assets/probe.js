@@ -41,16 +41,24 @@ function activeOptionPopup(control){
   const popup=document.getElementById?.(id);
   if(popup&&vis(popup))return popup;
  }
- const open=elements('[role=listbox],[role=menu],[cmdk-list],[data-radix-menu-content]').filter(vis);
- return open.length===1?open[0]:null;
+ const open=elements('[role=listbox],[role=menu],[cmdk-list],[data-radix-menu-content],[data-radix-popper-content-wrapper],[data-state="open"][data-side]').filter(vis);
+ // A portal can expose both a wrapper AND an inner listbox. Prefer the single
+ // innermost visible menu rather than treating this valid DOM as ambiguous.
+ const inner=open.filter(el=>!open.some(other=>other!==el&&el.contains(other)));
+ return inner.length===1?inner[0]:null;
 }
 function optionElements(control){
  const scope=control?activeOptionPopup(control):null;
- const selector='[role=option],[role=menuitemradio],[data-slot="select-item"],[data-radix-collection-item],option';
+ const selector='[role=option],[role=menuitemradio],[role=menuitemcheckbox],[role=checkbox],[data-slot="select-item"],[data-radix-collection-item],option';
  if(control&&!scope)return [];
  return (scope?Array.from(scope.querySelectorAll(selector)):elements(selector)).filter(vis);
 }
-function findOption(want,control){return optionElements(control).find(o=>text(o).toLowerCase()===String(want).toLowerCase())||null;}
+function comparableOption(value){
+ // Weather entries may have a leading emoji (☀️ Sunny, 🌧️ Rainy).
+ return clean(String(value||"")).replace(/^[^\\p{L}\\p{N}]+/gu,"").toLowerCase();
+}
+function findOption(want,control){return optionElements(control).find(o=>
+ comparableOption(text(o))===comparableOption(want))||null;}
 function choice(label,want){
  const e=field(label);
  if(!e)return false;
@@ -343,6 +351,7 @@ function checkCore(){
 function normalizePokemonLabel(value){
  return clean(value).replace(/^#\s*\d{1,4}\s+/,'').replace(/[\s×✕✓✔]+$/,'').trim();
 }
+// LT61-POKEMON: resolve the official picker by label or live input.
 function pokemonPickerRoot(){
  const heads=labels(document,/^Pok[eé]mon$/i);
  for(const head of heads){
@@ -350,22 +359,32 @@ function pokemonPickerRoot(){
    const all=text(p);
    if(all.length>2800||/\b(?:Sort by|Filter by|Despawn|Weather)\b/i.test(all))break;
    const btns=p.querySelectorAll('button,[role=combobox],input:not([type=hidden])');
-   if(btns.length&&p!==document.body)return p;
+   if(btns.length&&p!==document.body&&pokemonPickerButton(p))return p;
   }
+ }
+ const input=pokemonPickerInput();
+ if(input)for(let parent=input.parentElement,depth=0;parent&&depth<5;parent=parent.parentElement,depth++){
+  if(parent!==document.body&&pokemonPickerButton(parent))return parent;
  }
  return null;
 }
 function pokemonPickerInput(){
  return elements('input:not([type=hidden])').find(e=>vis(e)&&
-  /search by name, form, or dex|search.*(?:pok[eé]mon|form|dex)/i.test(
+  /search by name, form, or dex|search.*(?:pok[eé]mon|form|dex)|name.*form.*dex/i.test(
    (e.getAttribute('placeholder')||'')+' '+(e.getAttribute('aria-label')||'')))||null;
 }
+// PS66: a generic aria-haspopup button is NOT proof of the Pokémon trigger.
 function pokemonPickerButton(root){
  if(!root)return null;
- return Array.from(root.querySelectorAll('button,[role=combobox],[aria-haspopup]'))
-  .find(e=>vis(e)&&(/pok[eé]mon/i.test(String(e.getAttribute('aria-label')||''))||
-    e.getAttribute('aria-haspopup')||e.getAttribute('role')==='combobox'||
-    /(?:any pok[eé]mon|\b\d+\b)/i.test(text(e))))||null;
+ const all=Array.from(root.querySelectorAll('button,[role=combobox],[aria-haspopup]'))
+  .filter(vis);
+ const named=all.filter(e=>/pok[eé]mon/i.test(String(e.getAttribute('aria-label')||'')+
+  ' '+String(e.getAttribute('title')||''))||/^(?:any pok[eé]mon|pok[eé]mon)$/i.test(text(e)));
+ if(named.length===1)return named[0];
+ if(named.length>1)return null; // Ambiguous: never click some other filter.
+ const combos=all.filter(e=>e.getAttribute('aria-haspopup')==='listbox'||
+  e.getAttribute('role')==='combobox');
+ return combos.length===1?combos[0]:null;
 }
 function pokemonSelectedChips(){
  const root=pokemonPickerRoot();if(!root)return null;
@@ -383,13 +402,55 @@ function pokemonSelectedChips(){
  }
  return selected;
 }
-function pokemonPickerOptions(){
+function pokemonQueryForSite(query){
+ const value=String(query||'').trim();
+ const dex=value.match(/^#0*(\d{1,4})$/);
+ return dex?String(Number(dex[1])):value;
+}
+// PS66: never fall back to an unrelated open weather/form/size dropdown.
+// Read exact aria-controls/owns first; otherwise require ONE candidate listbox
+// with matching Pokémon results for the currently typed query.
+function pokemonPickerPopup(input,trigger,query){
+ const controls=[input,trigger].filter(Boolean);
+ const ids=[...new Set(controls.flatMap(control=>
+  [control.getAttribute('aria-controls'),control.getAttribute('aria-owns')].filter(Boolean)))];
+ for(const id of ids){
+  const popup=document.getElementById?.(id);
+  if(popup&&vis(popup))return popup;
+ }
+ const selector='[role=option],[cmdk-item],[data-radix-collection-item],li';
+ const all=elements('[role=listbox],[cmdk-list],[data-radix-popper-content-wrapper]')
+  .filter(vis).filter(scope=>scope.querySelectorAll(selector).length>0||
+   /(?:no results|no matches|nenhum(?:a|s)? resultado)/i.test(text(scope)));
+ const innermost=all.filter(scope=>!all.some(inner=>inner!==scope&&scope.contains?.(inner)));
+ const wanted=clean(query||'').toLowerCase();
+ const matches=innermost.filter(scope=>{
+  const options=Array.from(scope.querySelectorAll(selector)).filter(vis);
+  if(!options.length)return wanted!==''&&
+   /(?:no results|no matches|nothing found|nenhum(?:a|s)? resultado)/i.test(text(scope))&&
+   (controls.some(c=>c.getAttribute('aria-expanded')==='true')||
+    document.activeElement===input);
+  if(!wanted)return controls.some(c=>c.getAttribute('aria-expanded')==='true')||
+   document.activeElement===input;
+  return options.some(option=>{
+   const raw=text(option).toLowerCase();
+   // A #dex query can render leading zeros on the site.
+   if(/^\d{1,4}$/.test(wanted)){
+    const id=(raw.match(/#\s*0*(\d{1,4})\b/)||[])[1];
+    return (id&&String(Number(id))===String(Number(wanted)))||raw.includes(wanted);
+   }
+   return raw.includes(wanted);
+  });
+ });
+ return matches.length===1?matches[0]:null;
+}
+function pokemonPickerOptions(query){
  const input=pokemonPickerInput();if(!input)return [];
  const trigger=pokemonPickerButton(pokemonPickerRoot());
- const popup=activeOptionPopup(input)||activeOptionPopup(trigger);
- const selector='[role=option],[role=listbox] [role=checkbox],[cmdk-item],[data-radix-collection-item],[role=listbox] button,[role=listbox] li,li';
- const declared=!!(input.getAttribute('aria-controls')||trigger?.getAttribute?.('aria-controls'));
- const candidates=(popup?Array.from(popup.querySelectorAll(selector)):declared?[]:elements(selector)).filter(vis);
+ const popup=pokemonPickerPopup(input,trigger,query===undefined?input.value:query);
+ if(!popup)return [];
+ const selector='[role=option],[cmdk-item],[data-radix-collection-item],[role=listbox] li,li';
+ const candidates=Array.from(popup.querySelectorAll(selector)).filter(vis);
  return candidates.map(e=>{
   const raw=text(e),label=normalizePokemonLabel(raw);
   const dex=(raw.match(/#\s*(\d{1,4})/)||[])[1]||'';
@@ -398,42 +459,58 @@ function pokemonPickerOptions(){
  }).filter(item=>item.label&&item.label.length<=90&&
   !/^(?:any pok[eé]mon|clear|search|close|no results|loading)$/i.test(item.label))
   .filter((item,i,all)=>all.findIndex(v=>v.label.toLowerCase()===item.label.toLowerCase())===i)
-  .slice(0,35);
+  .slice(0,50);
 }
+// PS67: a field value alone is not proof that the official portal has opened.
+// Empty means no options ONLY when the linked portal explicitly says so.
 function pokemonSuggestion(query){
- const root=pokemonPickerRoot();
- if(!root)return {ok:false,reason:'Filtro Pokémon não localizado no site'};
- let input=pokemonPickerInput();
- if(!input){
-  const button=pokemonPickerButton(root);
-  if(!button)return {ok:false,reason:'Seletor Pokémon não disponível no site'};
-  button.click();
-  return {ok:false,pending:true,reason:'Abrindo opções oficiais'};
- }
  const originalQuery=String(query||'').slice(0,65);
- const wanted=originalQuery.replace(/^#0+(\d{1,4})$/,'#$1');
+ const root=pokemonPickerRoot();
+ if(!root)return {ok:false,state:'failed',query:originalQuery,
+  reason:'Filtro Pokémon não localizado no site'};
+ let input=pokemonPickerInput(),trigger=pokemonPickerButton(root);
+ if(!input){
+  if(!trigger)return {ok:false,state:'failed',query:originalQuery,
+   reason:'Seletor Pokémon não disponível no site'};
+  if(trigger.getAttribute('aria-expanded')!=='true')trigger.click();
+  return {ok:false,pending:true,state:'pending',query:originalQuery,
+   reason:'Abrindo opções oficiais'};
+ }
+ const wanted=pokemonQueryForSite(originalQuery);
  if(String(input.value||'')!==wanted){
-  if(!valueInput(input,wanted))return {ok:false,reason:'Busca Pokémon indisponível'};
-  return {ok:false,pending:true,reason:'Aguardando opções do site'};
+  if(!valueInput(input,wanted))return {ok:false,state:'failed',query:originalQuery,
+   reason:'Busca Pokémon indisponível'};
+  return {ok:false,pending:true,state:'pending',query:originalQuery,
+   reason:'Aguardando atualização React do site'};
+ }
+ const popup=pokemonPickerPopup(input,trigger,wanted);
+ if(!popup){
+  // Never toggle another site's menu. Only operate on the identified
+  // Pokémon trigger, and let React finish opening its listbox.
+  if(input.getAttribute('aria-expanded')!=='true'&&
+     trigger?.getAttribute('aria-expanded')!=='true'){
+   if(trigger&&!trigger.disabled)trigger.click();
+   else if(document.activeElement!==input)input.focus?.();
+  }
+  return {ok:false,pending:true,state:'pending',query:originalQuery,
+   reason:'Aguardando portal oficial do seletor Pokémon'};
  }
  const chips=pokemonSelectedChips();
- const options=pokemonPickerOptions().map(({label,dex,image})=>({label,dex,image}));
+ const options=pokemonPickerOptions(wanted).map(({label,dex,image})=>({label,dex,image}));
  if(!options.length){
-  const popup=activeOptionPopup(input)||activeOptionPopup(pokemonPickerButton(root));
-  // Absence of items during React hydration is NOT an official empty response.
-  const explicitEmpty=!!originalQuery.trim()&&!!popup&&
+  const explicitEmpty=!!originalQuery.trim()&&
    /(?:no (?:results|pok[eé]mon|matches) found|no results|nenhum(?:a|s)? (?:resultado|pok[eé]mon))/i.test(text(popup));
-  if(!explicitEmpty)return {ok:false,pending:true,query:originalQuery,
+  if(!explicitEmpty)return {ok:false,pending:true,state:'pending',query:originalQuery,
    reason:'Aguardando opções oficiais do PoGoCoordinates'};
-  return {ok:true,empty:true,query:originalQuery,options:[],
+  return {ok:true,state:'explicit-empty',empty:true,query:originalQuery,options:[],
    selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
  }
- return {ok:true,query:originalQuery,options,
+ return {ok:true,state:'ready',query:originalQuery,options,
   selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
 }
 if(action.startsWith('pokemonSuggest:')){
  try{return JSON.stringify(pokemonSuggestion(JSON.parse(action.slice('pokemonSuggest:'.length))));}
- catch(_){return JSON.stringify({ok:false,reason:'Consulta de Pokémon inválida'});}
+ catch(_){return JSON.stringify({ok:false,state:'failed',reason:'Consulta de Pokémon inválida'});}
 }
 function pokemonListSelection(verb){
  const raw=filters.pokemonSelections;
@@ -449,30 +526,118 @@ function pokemonListSelection(verb){
  if(!missing.length&&!extra.length)return {ok:true,pending:false};
  if(verb!=='apply')return {ok:false,pending:false,reason:'Seleção de espécies ou formas diferente da solicitada'};
  if(extra.length){extra[0].remove.click();return {ok:false,pending:true,reason:'Removendo outra espécie ou forma'};}
- const result=pokemonSuggestion(missing[0]);
+ // The official search may index the species name, not its full costume
+ // suffix. Query the species, then require the EXACT official form to click.
+ const siteTerm=missing[0].replace(/\s*\([^)]{1,65}\)\s*$/,'');
+ const result=pokemonSuggestion(siteTerm);
  if(!result.ok)return {ok:false,pending:!!result.pending,reason:result.reason||'Filtro Pokémon indisponível'};
- const candidate=pokemonPickerOptions().find(x=>x.label.toLowerCase()===missing[0].toLowerCase());
+ const candidate=pokemonPickerOptions(siteTerm).find(x=>x.label.toLowerCase()===missing[0].toLowerCase());
  if(!candidate)return {ok:false,pending:true,reason:'Aguardando espécie/forma no seletor oficial: '+missing[0]};
  candidate.node.click();
  return {ok:false,pending:true,reason:'Aplicando espécie/forma no site'};
 }
 
 const EXTRA_LABELS={sortBy:"Sort by",pokemon:"Pokemon",form:"Form",size:"Size",gender:"Gender",weather:"Weather"};
+// LT69: Form and Gender MUST resolve from their OWN label/combobox.
+// Never recover Form by using a nearby Gender control or an arbitrary open popup.
 function extraControl(label){
+ if(label==="Form"||label==="Gender"){
+  const rx=new RegExp("^\\s*"+label+"\\s*$","i");
+  const exact=elements('button,[role=combobox],select,input:not([type=hidden])')
+   .filter(vis).filter(e=>rx.test((e.getAttribute('aria-label')||'').trim())||
+    rx.test((e.getAttribute('title')||'').trim()));
+  if(exact.length===1)return exact[0];
+  if(exact.length>1)return null;
+  for(const head of labels(document,rx)){
+   const linked=head.control||(
+    head.getAttribute('for')?document.getElementById?.(head.getAttribute('for')):null);
+   if(linked&&vis(linked))return linked;
+   for(let p=head.parentElement,depth=0;p&&depth<4;p=p.parentElement,depth++){
+    // A broad ancestor containing BOTH filters cannot own either one.
+    const others=Array.from(p.querySelectorAll('label')).filter(vis)
+     .some(e=>/^(?:Form|Gender)$/i.test(text(e))&&!rx.test(text(e)));
+    if(others)break;
+    const controls=Array.from(p.querySelectorAll(
+     'button,[role=combobox],select,input:not([type=hidden])')).filter(vis);
+    const triggers=controls.filter(e=>e.matches('button,[role=combobox],select')&&
+     (e.getAttribute('aria-haspopup')||e.getAttribute('role')==='combobox'||
+      e.tagName==='SELECT'));
+    if(triggers.length===1)return triggers[0];
+    if(controls.length===1)return controls[0];
+   }
+  }
+  return null; // Fail closed, NEVER return the adjacent Gender control for Form.
+ }
  const e=field(label);if(e)return e;
  const rx=label==="Pokemon"?/pok[eé]mon/i:new RegExp(label,"i");
  return elements('input:not([type=hidden]),select,[role=combobox],button[aria-haspopup]')
   .find(x=>vis(x)&&rx.test((x.getAttribute("placeholder")||"")+" "+(x.getAttribute("aria-label")||"")))||null;
 }
+// Popup ownership is distinct from picker option text. An old Gender popup
+// cannot be claimed by Form merely because it is the only visible menu.
+// LT73: validate EVERY popup path, including stale aria-controls/aria-owns.
+function extraPopupMatchesKey(key,popup){
+ if(!popup||!vis(popup))return false;
+ const values=Array.from(popup.querySelectorAll(
+  '[role=option],[role=menuitemcheckbox],[role=checkbox],label,[data-radix-collection-item],li'))
+  .filter(vis).map(e=>clean(text(e))).filter(Boolean);
+ if(key==='form'){
+  const distinct=[...new Set(values.map(v=>v.toLowerCase()))];
+  // Reject the complete Gender menu; Male/Female ALONE can be real Form labels.
+  if(distinct.length>=3&&distinct.includes('any')&&
+   distinct.includes('male')&&distinct.includes('female')&&
+   distinct.every(v=>/^(?:any|male|female|genderless|unknown)$/.test(v)))
+   return false;
+ }
+ if(key==='gender'&&values.some(v=>
+  /^(?:normal|alola|hisuian|copy 2019|goggles 2026)$/i.test(v)))return false;
+ return true;
+}
+function extraOptionPopup(key,control){
+ if(!control||control.getAttribute('aria-expanded')!=='true')return null;
+ const ids=[control.getAttribute('aria-controls'),control.getAttribute('aria-owns')]
+  .filter(Boolean);
+ for(const name of ids){
+  const popup=document.getElementById?.(name);
+  if(popup&&vis(popup))return extraPopupMatchesKey(key,popup)?popup:null;
+ }
+ const selector='[role=listbox],[role=menu],[cmdk-list],[data-radix-menu-content],[data-radix-popper-content-wrapper]';
+ const all=elements(selector).filter(vis);
+ const leaf=all.filter(e=>!all.some(other=>other!==e&&e.contains(other)));
+ if(leaf.length!==1)return null;
+ return extraPopupMatchesKey(key,leaf[0])?leaf[0]:null;
+}
+function formOptionRows(control){
+ const popup=extraOptionPopup('form',control);
+ if(!popup)return null;
+ const selector='[role=option],[role=menuitemcheckbox],[role=checkbox],[data-radix-collection-item],label,li,button[aria-pressed],button[aria-checked]';
+ const candidates=Array.from(popup.querySelectorAll(selector)).filter(vis)
+  .filter(e=>text(e).length>0&&text(e).length<100);
+ // Prefer the selectable leaf row; do not synthesize labels from parent menus.
+ return candidates.filter(el=>!candidates.some(other=>other!==el&&el.contains(other)));
+}
 function siteOptions(key){
  const control=extraControl(EXTRA_LABELS[key]);
  if(!control)return {ok:false,pending:false,options:[]};
  if(control.matches("select"))
-  return {ok:true,pending:false,options:[...control.options].map(text).map(clean).filter(Boolean).slice(0,80)};
- const popup=activeOptionPopup(control);
+  return {ok:true,pending:false,options:[...control.options].map(text).map(clean).filter(Boolean)
+   .slice(0,key==="form"?500:80)};
+ const popup=(key==="form"||key==="gender")?
+  extraOptionPopup(key,control):activeOptionPopup(control);
  if(!popup)return {ok:false,pending:true,options:[]};
+ const rows=key==="form"?formOptionRows(control):
+  key==="size"?multiOptions(control):key==="gender"?
+  Array.from(popup.querySelectorAll('[role=option],[role=menuitemradio],[role=radio],label')).filter(vis):
+  optionElements(control);
+ if(key==="form"&&(!rows||!rows.length)){
+  // An empty React portal is loading, NOT evidence of zero official Forms.
+  const explicit=/\b(?:no results|no matches|nothing found)\b|nenhum(?:a|s)? resultado/i.test(text(popup));
+  return explicit?{ok:true,pending:false,empty:true,options:[]}:
+   {ok:false,pending:true,options:[]};
+ }
  return {ok:true,pending:false,
-  options:[...new Set(optionElements(control).map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80)};
+  options:[...new Set((rows||[]).map(text).map(clean)
+   .filter(x=>x&&x.length<100))].slice(0,key==="form"?500:80)};
 }
 function describeChoice(label){
  const e=extraControl(label);
@@ -495,9 +660,20 @@ function extraSelect(key,want){
  const actual=extraValue(key);
  if(!want){
   if(isNeutral(actual))return true;
+  if(e.matches("select")){
+   const neutral=Array.from(e.options).find(o=>isNeutral(clean(text(o))));
+   if(!neutral)return false;
+   e.value=neutral.value;
+   e.dispatchEvent(new Event("input",{bubbles:true}));
+   e.dispatchEvent(new Event("change",{bubbles:true}));
+   transientPending=true;return false;
+  }
   if(e.matches("input"))return valueInput(e,"");
   // Reset prior active filter when user switches back to Any.
-  const opt=optionElements(e).find(o=>isNeutral(text(o)));
+  const popup=(key==="gender"||key==="form")?extraOptionPopup(key,e):null;
+   const opt=(popup?Array.from(popup.querySelectorAll(
+    '[role=option],[role=menuitemradio],[role=menuitemcheckbox],label')).filter(vis):
+    key==="gender"||key==="form"?[]:optionElements(e)).find(o=>isNeutral(text(o)));
   if(opt){opt.click();return true;}
   if(e.disabled)return false;
   if(e.getAttribute("aria-expanded")!=="true")e.click();
@@ -505,26 +681,134 @@ function extraSelect(key,want){
   return false;
  }
  if(e.disabled)return false;
- if(actual&&actual.toLowerCase()===want.toLowerCase())return true;
+ if(actual&&comparableOption(actual)===comparableOption(want))return true;
  if(e.matches("input"))return valueInput(e,want);
  if(e.matches("select"))return choice(label,want);
- const opt=findOption(want,e);
+ const opt=(key==="gender"||key==="form"?
+  (extraOptionPopup(key,e)?Array.from(extraOptionPopup(key,e).querySelectorAll(
+   '[role=option],[role=menuitemradio],[role=radio],[role=menuitemcheckbox],label'))
+   .filter(vis).find(o=>comparableOption(text(o))===comparableOption(want)):null):
+  findOption(want,e));
  if(opt){opt.click();transientPending=true;return false;} // React state must settle before later filters
  if(e.getAttribute("aria-expanded")!=="true")e.click();
  transientPending=true;
  return false;
 }
+/* LT57 ONE-FORM: checkbox-aware multiselection. Return false instead of
+   inventing a successful multi-filter when the live site state is unknown. */
+function multiOptions(control,key){
+ const popup=key==='form'?extraOptionPopup('form',control):activeOptionPopup(control);
+ if(!popup)return null;
+ const selector='[role=option],[role=menuitemcheckbox],[role=checkbox],label,[data-radix-collection-item],button[aria-pressed],button[aria-checked]';
+ return [...new Set(Array.from(popup.querySelectorAll(selector)))].filter(vis)
+  .filter(e=>text(e).length>0&&text(e).length<90);
+}
+function multiState(option){
+ const raw=(option.getAttribute("aria-checked")||
+  option.getAttribute("aria-pressed")||
+  option.getAttribute("aria-selected")||option.getAttribute("data-state")||"").toLowerCase();
+ if(["true","checked","on","selected"].includes(raw))return true;
+ if(["false","unchecked","off","unselected"].includes(raw))return false;
+ const cb=option.matches('input[type=checkbox]')?option:
+  option.querySelector('input[type=checkbox],[role=checkbox]');
+ if(cb){
+  if(cb.matches('input[type=checkbox]'))return cb.checked;
+  const state=cb.getAttribute("aria-checked")||cb.getAttribute("data-state");
+  if(state==="true"||state==="checked")return true;
+  if(state==="false"||state==="unchecked")return false;
+ }
+ return null;
+}
+function extraMulti(key,desired,operation){
+ const control=extraControl(EXTRA_LABELS[key]);
+ if(!control||control.disabled)return false;
+ // The site Form search may remain narrowed to one costume. Before applying
+ // MULTIPLE forms, restore the full official checkbox list and wait for React.
+ if(key==="form"&&operation==="apply"){
+  const popup=extraOptionPopup('form',control);
+  const search=popup&&Array.from(popup.querySelectorAll(
+   'input:not([type=hidden])')).find(vis);
+  if(search&&String(search.value||'').trim()!==""){
+   if(valueInput(search,""))transientPending=true;
+   return false;
+  }
+ }
+ const target=[...new Set(desired.map(x=>clean(x).toLowerCase()))];
+ if(!target.length&&isNeutral(extraValue(key))&&key!=="form")return true;
+ if(control.matches("select")&&control.multiple){
+  const options=Array.from(control.options);
+  if(target.some(v=>!options.some(opt=>clean(text(opt)).toLowerCase()===v)))return false;
+  if(operation==="apply"){
+   let changed=false;
+   for(const opt of options){
+    const required=target.includes(clean(text(opt)).toLowerCase());
+    if(opt.selected!==required){opt.selected=required;changed=true;}
+   }
+   if(changed){control.dispatchEvent(new Event("input",{bubbles:true}));
+    control.dispatchEvent(new Event("change",{bubbles:true}));transientPending=true;return false;}
+  }
+  return options.every(opt=>opt.selected===target.includes(clean(text(opt)).toLowerCase()));
+ }
+ // A single-choice site control cannot truthfully represent >1 desired items.
+ if(control.matches("select"))return target.length<=1&&
+  (operation==="apply"?extraSelect(key,target[0]||""):extraMatches(key,target[0]||""));
+ const options=multiOptions(control,key);
+ if(!options){
+  if(operation==="apply"&&control.getAttribute("aria-expanded")!=="true"){
+   control.click();transientPending=true;
+  }
+  return false;
+ }
+ const allowed=key==="form"?null:key==="size"?["xxs","xs","s","m","l","xl","xxl"]:
+  ["male","female","genderless","unknown"];
+ const observed=options.map(el=>({el,label:clean(text(el)).toLowerCase(),active:multiState(el)}))
+  // Form labels are taken only from its own checkbox nodes.
+  .filter(x=>x.active!==null&&(allowed===null?!isNeutral(x.label):allowed.includes(x.label)));
+ if(target.some(v=>!observed.some(o=>o.label===v)))return false;
+ if(!observed.length)return false;
+ for(const choice of observed){
+  if(choice.active!==target.includes(choice.label)){
+   if(operation!=="apply")return false;
+   choice.el.click();transientPending=true;return false;
+  }
+ }
+ return true;
+}
 function extraMatches(key,want){
  const v=extraValue(key);
  if(v===null)return false; // Cannot prove reset/selection without the live control.
  if(!want)return isNeutral(v);
- return v.toLowerCase()===clean(want).toLowerCase();
+ return comparableOption(v)===comparableOption(want);
 }
 if(action.startsWith("openFilterOptions:")){
  const key=action.split(":")[1],label=EXTRA_LABELS[key],e=label?extraControl(label):null;
  if(!e||e.disabled||e.matches("input")||e.matches("select"))return JSON.stringify({ok:false,key});
  if(e.getAttribute("aria-expanded")!=="true")e.click();
  return JSON.stringify({ok:true,key});
+}
+// Only the official Form portal may answer this search.
+function searchOfficialFormOptions(query){
+ const control=extraControl('Form');
+ if(!control)return {ok:false,pending:true,key:'form',reason:'Aguardando filtro Form oficial'};
+ if(control.disabled)return {ok:false,key:'form',reason:'Filtro Form indisponível'};
+ if(control.getAttribute('aria-expanded')!=='true'){
+  control.click();return {ok:false,pending:true,key:'form',reason:'Abrindo Form oficial'};
+ }
+ const popup=extraOptionPopup('form',control);
+ if(!popup)return {ok:false,pending:true,key:'form',reason:'Aguardando dropdown Form'};
+ const input=Array.from(popup.querySelectorAll('input:not([type=hidden])')).find(vis);
+ const wanted=String(query||'').slice(0,70).trim();
+ if(input&&String(input.value||'')!==wanted){
+  if(!valueInput(input,wanted))return {ok:false,key:'form',reason:'Busca Form indisponível'};
+  return {ok:false,pending:true,key:'form',reason:'Aguardando opções de Form'};
+ }
+ const result=siteOptions('form');
+ return {...result,key:'form',query:wanted};
+}
+if(action.startsWith("searchFormOptions:")){
+ try{return JSON.stringify(searchOfficialFormOptions(
+  JSON.parse(action.slice("searchFormOptions:".length))));}
+ catch(_){return JSON.stringify({ok:false,key:'form',reason:'Consulta Form inválida'});}
 }
 if(action.startsWith("readFilterOptions:")){
  const key=action.split(":")[1],label=EXTRA_LABELS[key];
@@ -566,6 +850,33 @@ function extras(action){
  if(!pokemon.ok)return {ok:false,pending:!!pokemon.pending,reason:pokemon.reason||'Seleção Pokémon não confirmada'};
  for(const key of Object.keys(EXTRA_LABELS)){
   if(key==="pokemon"&&Array.isArray(filters.pokemonSelections))continue;
+  if(key==="size"&&Array.isArray(filters.sizeSelections)){
+   const wanted=filters.sizeSelections.map(x=>String(x).trim()).filter(Boolean);
+   if(!wanted.length&&!resetKeys.includes("sizeSelections"))continue;
+   const ok=extraMulti("size",wanted,action);
+   if(!ok)failed.push("sizeSelections");
+   if(transientPending)break;
+   continue;
+  }
+  if(key==="form"&&Array.isArray(filters.formSelections)){
+    const wanted=filters.formSelections.map(x=>String(x).trim()).filter(Boolean);
+    if(!wanted.length&&!resetKeys.includes("formSelections")&&!resetKeys.includes("form"))continue;
+    const ok=extraMulti("form",wanted,action);
+    if(!ok)failed.push("formSelections");
+    if(transientPending)break;
+    continue;
+   }
+   if(key==="gender"&&Array.isArray(filters.genderSelections)){
+   // Gender is a single-choice radio on the site's official form.
+   const wanted=filters.genderSelections.map(x=>String(x).trim()).filter(Boolean);
+   if(wanted.length>1){failed.push("genderSelections");continue;}
+   if(!wanted.length&&!resetKeys.includes("genderSelections"))continue;
+   const ok=action==="apply"?extraSelect("gender",wanted[0]||""):
+    extraMatches("gender",wanted[0]||"");
+   if(!ok)failed.push("genderSelections");
+   if(transientPending)break;
+   continue;
+  }
   const want=String(filters[key]||"").trim();
   // Blank means no optional restriction; it is not a request to discover a
   // dropdown. Only a tracked transition from a prior filter needs clearing.
@@ -597,6 +908,28 @@ function visibleExtrasMismatch(){
  const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
  for(const key of Object.keys(EXTRA_LABELS)){
   if(key==="pokemon"&&Array.isArray(filters.pokemonSelections))continue;
+  if(key==="size"&&Array.isArray(filters.sizeSelections)){
+   const wanted=filters.sizeSelections.map(x=>String(x).trim()).filter(Boolean);
+   if(extraControl(EXTRA_LABELS[key])&&
+      (wanted.length||resetKeys.includes("sizeSelections"))&&
+      !extraMulti("size",wanted,"verify"))return "sizeSelections";
+   continue;
+  }
+  if(key==="form"&&Array.isArray(filters.formSelections)){
+    const wanted=filters.formSelections.map(x=>String(x).trim()).filter(Boolean);
+    if(extraControl(EXTRA_LABELS[key])&&
+       (wanted.length||resetKeys.includes("formSelections")||resetKeys.includes("form"))&&
+       !extraMulti("form",wanted,"verify"))return "formSelections";
+    continue;
+   }
+   if(key==="gender"&&Array.isArray(filters.genderSelections)){
+   const wanted=filters.genderSelections.map(x=>String(x).trim()).filter(Boolean);
+   if(wanted.length>1)return "genderSelections";
+   if(extraControl(EXTRA_LABELS[key])&&
+      (wanted.length||resetKeys.includes("genderSelections"))&&
+      !extraMatches("gender",wanted[0]||""))return "genderSelections";
+   continue;
+  }
   const want=String(filters[key]||"").trim();
   if(!want&&!resetKeys.includes(key))continue;
   const control=extraControl(EXTRA_LABELS[key]);

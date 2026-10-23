@@ -66,6 +66,36 @@
           "Aparência e conectividade ainda precisam ser verificadas no Android de teste."
         ]
       }
+    },
+    {
+      "id": "pokesearch-v060-lt-pokemon-form-coords-20261023",
+      "minVersionCode": 54258,
+      "date": "23/10/2026",
+      "title": "PokeSearch v0.00.60 LT Beta — Busca, Forma e Localização",
+      "sections": {
+        "novidades": [
+          "Novo seletor Forma independente de Sexo, com pesquisa no site e chips de seleção múltipla.",
+          "Pesquisa de Pokémon por nome, forma ou número da Pokédex, utilizando rótulos oficiais oferecidos pelo PoGoCoordinates.",
+          "Estados de confirmação mais claros para localização, filtros e opções de Pokémon."
+        ],
+        "melhorias": [
+          "Filtros aplicados individualmente sem apagar espécies, IV, GL/UL, Shiny ou coordenadas existentes.",
+          "Menus e cascatas com posicionamento mais estável e abertura acima quando necessário.",
+          "Espaçamento entre resultados compactado sem sobrepor sprites; até dez Pokémon.",
+          "Arraste dos resultados com menos atualizações de tela e contador pausado ao minimizar."
+        ],
+        "correcoes": [
+          "Correção no código que impedia Forma de rejeitar um popup desatualizado com opções de Sexo.",
+          "Leitura de dropdown Form restrita ao próprio controle, com verificação das seleções reais.",
+          "Correção da busca que confundia portal React ainda carregando com ausência oficial de Pokémon.",
+          "Localização por Coords (lat,lng) e Radius 0–1000 km, com confirmação renovada a cada pesquisa.",
+          "Separação dos estados pending, ready, explicit-empty e failed no seletor de Pokémon."
+        ],
+        "emDesenvolvimento": [
+          "Validação no Samsung, com sessão real do PoGoCoordinates, ainda necessária; testes automatizados não substituem esse teste.",
+          "Formas e trajes especiais aparecem apenas quando o próprio site os disponibiliza."
+        ]
+      }
     }
   ]
 }

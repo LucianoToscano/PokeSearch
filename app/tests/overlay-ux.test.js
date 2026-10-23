@@ -30,7 +30,7 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
  !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
 test("AUTO offers OFF, 3, 5, 10, 15 and 20 minutes",["Auto · OFF","Auto · 3 min","Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
 test("Cascade uses current toolbar height even after clipping or vertical rotation",
- dock.includes('choiceOpen==="mode"?baseHeight+190+6')&&
+ dock.includes('h=Math.max(h,baseHeight+190+6);')&&
  dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;')&&
  dock.includes("Native.resizeMenu(h)")&&service.includes("menuRequestedHeightDp=visualMenuBaseDp();"));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
@@ -82,7 +82,7 @@ test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
  return base.visibleCount===10&&base.rows.every(x=>x===45)&&
    iv.rows.every(x=>x===45)&&timers.rows.every(x=>x===45)&&
    both.visibleCount===10&&both.total+30+6<=380-16&&
-   compact.rows.every(x=>x===14)&&compact.sprite===45&&
+   compact.rows.every(x=>x===45)&&compact.sprite===45&&
    helpers.resultHasVisibleInfo(withInfo[0],false,true)===true&&
    helpers.resultHasVisibleInfo(withInfo[1],false,true)===false;
 });
@@ -298,7 +298,7 @@ test("UX-RESULT-10 P/M/G pitch tracks slider and fits short displays",()=>{
  const ten=Array.from({length:10},(_,i)=>({name:"Pokémon "+i,expiresAtMs:0}));
  for(const size of [35,45,55]){
   const full=helpers.computeResultLayout(ten,size,900,false,false);
-  const pitch=Math.max(8,Math.round(size*.32)+31);
+  const pitch=Math.max(size,8,Math.round(size*.32)+31);
   if(full.sprite!==size||full.rows.some(row=>row!==pitch)||full.visibleCount!==10)return false;
   const short=helpers.computeResultLayout(ten,size,330,false,false);
   if(short.visibleCount!==10||short.total+54>330)return false;
@@ -309,8 +309,8 @@ test("UX-RESULT-10 P/M/G pitch tracks slider and fits short displays",()=>{
  }
  win.visualPrefs.resultGapBetween=0;
  const compact=helpers.computeResultLayout(ten,45,900,false,false);
- return compact.sprite===45&&compact.rows.every(row=>row===14)&&
-   dock.includes("return pitch; // Transparent sprite squares may overlap");
+ return compact.sprite===45&&compact.rows.every(row=>row===45)&&
+   dock.includes("return Math.max(size,pitch); // No sprite-overlap");
 });
 test("UX-INFO-08 bundled PvPoke data includes MIT attribution and stays display-only",
  read("assets/licenses/PvPoke-MIT.txt").includes("MIT License")&&
@@ -352,7 +352,7 @@ test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&requ
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
 test("Single pin control expands the location editor",dock.includes('onclick="toggleChoices(\'location\')"'));
-test("Coords control has inline ON/OFF switch",dock.includes('fieldRow.append(field,paste,toggle)')&&dock.includes('toggle.setAttribute("role","switch")'));
+test("Coords editor uses one Apply and explicit Clear without a second ON/OFF switch",dock.includes('fieldRow.append(field,paste)')&&dock.includes('clear.onclick=disable')&&!dock.includes('fieldRow.append(field,paste,toggle)'));
 test("Location supports independent hide and disable",dock.includes('hide.onclick=closeChoices')&&dock.includes('Native.setLocation(false,"",0)'));
 test("Slider covers inclusive range 0 to 1000",dock.includes('slide.min="0"')&&dock.includes('slide.max="1000"'));
 test("Location enforces valid latitude and longitude",dock.includes('Math.abs(Number(match[1]))>90')&&dock.includes('Math.abs(Number(match[2]))>180'));
@@ -405,7 +405,7 @@ test("Reopening menu immediately re-applies active visual states to recreated bu
  const block=dock.split('function renderQuickMenu(){')[1]?.split('function audibleAlertState(')[0]||"";
  return block.includes('rows.replaceChildren();util.replaceChildren();footer.replaceChildren();')&&
   block.includes('refreshQuickMenuStates();')&&
-  block.indexOf('button.onclick=()=>quickClick(id);')<block.indexOf('refreshQuickMenuStates();')&&
+  block.indexOf('button.onclick=()=>quickClick(renderedId);')<block.indexOf('refreshQuickMenuStates();')&&
   dock.includes('if(menuOpen&&controlsWindow)renderQuickMenu();')&&
   dock.includes('button.classList.toggle("selected",');
 });
@@ -872,7 +872,7 @@ test("Legacy IV percent migration expands only as necessary without trimming Pok
 test("UX-MENU-01 keeps original 12 commands but navigates with compact contextual menu",
  dock.includes('id="quickMenuList"')&&dock.includes('id="quickRows"')&&
  dock.includes('body.controls-window #controls{display:none!important}')&&
- dock.includes('case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF"')&&
+ dock.includes('case "location":return currentLocationUiState()==="CONFIRMED"?"✓ "+locationRadius+" km"')&&
  dock.includes('function renderQuickMenu()')&&service.includes('Math.min(330,screenWidthDp()-8)'));
 test("UX-MENU-01 keeps independent cascade, filters, alerts, info and appearance panels",
  dock.includes('function renderModeChoices()')&&dock.includes('modeCascadeRail')&&
@@ -1024,7 +1024,8 @@ test("Guest public search continues even if stale Shiny preference was ON",
  service.includes('private void refresh(boolean manual)'));
 test("Shiny OFF and normal search never depend on login or trainer linkage",
  service.includes('if(!shiny){applyShinyOnSite(generation,0);return;}')&&
- service.includes('if(!shiny){\n                // OFF never requires signing in')&&
+ service.includes('if(!shiny){\n                // Coords, Shiny and other filters belong to one site form.')&&
+ service.includes('if(locationEnabled){OverlayService.this.refresh(true);return;}')&&
  !service.includes('if(!hasConfirmedTrainerLink())return;\n        execute("session"'));
 test("Authenticated profile cannot inherit previous trainer link",
  main.includes('.putString("profileTrainerState","unknown")')&&
@@ -1045,11 +1046,11 @@ test("REG-51049 opening Modos never starts background filter-option discovery",
  const block=dock.split('if(kind==="mode"){')[1]?.split('const current=period;')[0]||"";
  return block.includes('renderModeChoices()')&&!block.includes("requestFilterOptions")&&
   !block.includes('Native.locationEditor(true)')&&
-  dock.includes('if(choiceOpen==="filters"&&modeDraft)');
+  dock.includes('if(choiceOpen==="filters"&&modeDraft&&document.getElementById("officialFormItems")===null)');
  })());
 test("REG-51049 filters cannot replace a cascade editing session",
  dock.includes('if(choiceOpen==="filters")renderFiltersChoices();else renderModeChoices();')&&
- dock.includes('if(choiceOpen==="filters"&&modeDraft)')&&
+ dock.includes('if(choiceOpen==="filters"&&modeDraft&&document.getElementById("officialFormItems")===null)')&&
  dock.includes('cascadeMode=cascadeMode===id?null:id')&&
  dock.includes('const next={...modeDraft}'));
 test("REG-51049 OFF public search ignores inert radius while refusing residual coordinates",
@@ -1076,14 +1077,17 @@ test("UX-MENU-06 refresh directly after Alertas and personalization before Repor
   service.includes('"bell","period","appearance","report","donate","close"');
 });
 // UX-MODE-ICONS: use approved uploaded assets, keep the 11-button ribbon.
-test("Seven approved Mode PNGs optimized to 128px RGBA and backed up",()=>{
- const names=["0Star.png","1Star.png","2Star.png","3Star.png","StarIVRaw.png","StarGL.png","StarUL.png"];
- return names.every(name=>{
-  const asset=path.join(root,"assets/result-icons/modes",name);
-  if(!fs.existsSync(asset))return false;
-  const b=fs.readFileSync(asset);
+test("Four compact star PNGs and three new owner Mode originals are preserved",()=>{
+ const stars=["0Star.png","1Star.png","2Star.png","3Star.png"];
+ const updated=["StarIVRaw.png","StarGL.png","StarUL.png"];
+ return stars.every(name=>{
+  const b=fs.readFileSync(path.join(root,"assets/result-icons/modes",name));
   return b.subarray(0,8).equals(Buffer.from("89504e470d0a1a0a","hex"))&&
-   b.readUInt32BE(16)===128&&b.readUInt32BE(20)===128&&b.length<100000;
+   b.readUInt32BE(16)===128&&b.readUInt32BE(20)===128;
+ })&&updated.every(name=>{
+  const b=fs.readFileSync(path.join(root,"assets/result-icons/modes",name));
+  return b.subarray(0,8).equals(Buffer.from("89504e470d0a1a0a","hex"))&&
+   b.readUInt32BE(16)>=128&&b.readUInt32BE(20)>=128;
  });
 });
 test("Mode PNGs retain legacy vector fallback and 17px display only",()=>{
@@ -1211,9 +1215,10 @@ test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
   dock.indexOf('id="sh"')>dock.indexOf('id="cycle"')&&
   (dock.match(/<button id="(?:cycle|sh|period|manualRefresh|size|clock|bell|star|location|report|donate|close)"/g)||[]).length===12);
 test("Sort by remains among existing verified advanced filters",
-  dock.includes('renderExtraFilters(panel,make)')&&
-  dock.includes('option("sortBy","Sort by")')&&
-  dock.includes('const RESULT_ICONS=Object.freeze'));
+ dock.includes('renderExtraFilters(panel,make)')&&
+ dock.includes('option("sortBy","Ordenar")')&&
+ dock.includes('["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]')&&
+ dock.includes('const RESULT_ICONS=Object.freeze'));
 test("UX-OTHER-01 isolates compact secondary popups from the cascading Modos layout",
  dock.includes('panel.classList.remove("locationPanel","modeCascade","modeCascadeOpen"')&&
  dock.includes('panel.classList.add("visible","modePanel","standardPanel")')&&
@@ -1242,7 +1247,7 @@ test("UX-OTHER-04 scroll position remains reachable on toggles and popup switchi
  dock.includes('position:sticky;top:0;z-index:5')&&
  dock.includes('position:sticky;bottom:0;z-index:5'));
 test("Filters remain independent of cascade and retain their popup dimensions",
- dock.includes('section("Filtros gerais"')&&dock.includes('section("Filtros avançados"')&&
+ dock.includes('section("Filtros gerais"')&&!dock.includes('section("Filtros avançados"')&&
  dock.includes('#choices.modePanel{width:232px')&&dock.includes('function renderExtraFilters('));
 test("Site dropdown options are discovered instead of inventing weather/form values",
   dock.includes('filterOptions=response.partial?')&&
@@ -1418,7 +1423,7 @@ test("UX-CASCADE retains requested popup height while visual editor changes orie
  service.includes("Math.max(0,dp(menuRequestedHeightDp)-rowHeight)")&&
  service.includes("menuRequestedHeightDp=Math.max(visualMenuBaseDp(),Math.min(maxMenuHeight,desiredDp))")&&
  !service.includes("int requestedPopup=Math.max(0,menuParams.height-rowHeight)")&&
- dock.includes('choiceOpen==="mode"?baseHeight+190+6')&&
+ dock.includes('h=Math.max(h,baseHeight+190+6);')&&
  dock.includes("function positionCascadeEditor()")&&
  dock.includes("rail.scrollTop=Math.max(0,requested+36-visible)")&&
  dock.includes('if(choiceOpen==="mode")positionCascadeEditor()')&&
@@ -1759,13 +1764,12 @@ test("LT54-ICON-01 launcher uses adaptive artwork and responsive 3:1 header",(()
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return manifest.includes('android:icon="@mipmap/ic_launcher"')&&
   manifest.includes('android:roundIcon="@mipmap/ic_launcher_round"')&&
-  iconGenerator.includes("int artworkSize = 332")&&
-  iconGenerator.includes("int padding = 3")&&
+  iconGenerator.includes("int artworkSize = 288")&&
+  iconGenerator.includes("int padding = 8")&&
   home.includes("wordmarkWidth/3f")&&
   home.includes("wordmarkWidth=Math.max(d(90),Math.min(d(156),availableBrandWidth))")&&
   home.includes("new LinearLayout.LayoutParams(-1,d(70))");
 })());
-
 test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved",()=>{
  const pngs=[
   ["res/drawable-nodpi/ic_launcher.png",1254,1254],
@@ -1773,15 +1777,14 @@ test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved
   ["res/drawable-nodpi/ps_home_official_wordmark.png",2172,724],
   ["assets/branding/PokeSearchLogoShinyBlueEffectAll.png",1254,1254],
   ["assets/branding/PokeSearchLogoShiny.png",1254,1254],
-  ["assets/branding/PokeSearchName.png",2172,724],
+  ["assets/branding/PokeSearchName.png",2172,724]
  ];
  return pngs.every(([p,w,h])=>{
   const img=fs.readFileSync(path.join(root,p));
   return img.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
-    img.readUInt32BE(16)===w&&img.readUInt32BE(20)===h;
- })&&
- iconGenerator.includes("int artworkSize = 332")&&
- iconGenerator.includes("int padding = 3")&&
+   img.readUInt32BE(16)===w&&img.readUInt32BE(20)===h;
+ })&&iconGenerator.includes("int artworkSize = 288")&&
+ iconGenerator.includes("int padding = 8")&&
  iconGenerator.includes("return new int[] {0, 0, image.getWidth(), image.getHeight()}");
 });
 test("HOME-04 shows genuine trainer data and the four transparent team assets",(()=>{
@@ -2054,8 +2057,8 @@ test("SITE-POKEMON-02 stale autocomplete requests cannot replace newer site choi
  const java=service.split('@JavascriptInterface public void requestPokemonSuggestions(String query)')[1]
   ?.split('@JavascriptInterface public void setSearchConfig(String payload)')[0]||'';
  return java.includes('pokemonSuggestionSequence')&&java.includes('sequence!=pokemonSuggestionSequence')&&
-  java.includes('attempt<12')&&java.includes('response.put("query",query)')&&
-  dock.includes('response.empty===true?"Nenhuma opção oficial encontrada"')&&
+  java.includes('attempt<20')&&java.includes('response.put("query",query)')&&
+  dock.includes('state==="explicit-empty"&&response.empty===true?"Nenhuma opção oficial encontrada"')&&
   probe.includes("reason:'Aguardando opções oficiais do PoGoCoordinates'");
 });
 test("UX-MENU-ANCHOR-01 popups track their own launcher within native window",()=>{
@@ -2097,7 +2100,7 @@ test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
   body.includes('hide.onclick=closeChoices')&&
   body.includes('Native.setLocation(false,"",0)')&&
   dock.includes('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
-  dock.includes('locationEnabled?(locationVerified?"✓ Localização confirmada');
+  dock.includes('state==="CONFIRMED"?"✓ Localização confirmada');
 });
 test("UX-LOCATION-FIX-03 explicit clipboard paste is validated and never enables filters",()=>{
  const handler=service.split('@JavascriptInterface public void pasteLocationCoords()')[1]?.split(
@@ -2169,7 +2172,7 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
     service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",false)'))&&
   keys.every(key=>dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:0;')&&
-  dock.includes("return pitch; // Transparent sprite squares may overlap")&&
+  dock.includes("return Math.max(size,pitch); // No sprite-overlap")&&
   dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
 });
 test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
@@ -2225,7 +2228,7 @@ test("SITE-POKEMON-01 picker exposes selected chips and exact official suggestio
  dock.includes('function renderPokemonChoices()')&&
  dock.includes('pokemonDraft.length+" selecionados"')&&
  dock.includes('input.placeholder="Nome, forma ou número #"')&&
- dock.includes('pokemonSelections:[...pokemonDraft]')&&
+ dock.includes('const selection={selections:[...pokemonDraft],clear:pokemonForceClear}')&&
  dock.includes('pokemonDraft.length<50'));
 test("SITE-POKEMON-02 bridge performs nonblocking live suggestions",()=>
  service.includes('@JavascriptInterface public void requestPokemonSuggestions(String query)')&&
@@ -2239,7 +2242,7 @@ test("SITE-POKEMON-03 native validates names, caps 50, and preserves forms",()=>
  service.includes('clearKeys.put("pokemonSelections")'));
 test("SITE-POKEMON-04 site filter uses selected chips and exact official options",()=>
  probe.includes('function pokemonSelectedChips()')&&
- probe.includes('function pokemonPickerOptions()')&&
+ probe.includes('function pokemonPickerOptions(query)')&&
  probe.includes('const pokemon=pokemonListSelection(action)')&&
  probe.includes('return {ok:false,pending:false,reason:')&&
  probe.includes('found.filter(x=>matches(x)&&requestedSpecies(x))'));
@@ -2388,8 +2391,9 @@ test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=
   main.includes("View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR");
 });
 test("UX-LOC-DRAFT-01 preserves unsent Radius across native updates and releases on site proof",()=>{
+ const helper=dock.match(/function currentLocationUiState\(\)\{[\s\S]*?\n\}/)?.[0];
  const source=dock.match(/function locationPanelFeedback\(\)\{[\s\S]*?\n\}/)?.[0];
- if(!source||!dock.includes('radiusField.dataset.locationDraft="true"')||
+ if(!helper||!source||!dock.includes('radiusField.dataset.locationDraft="true"')||
     !dock.includes('slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";}')||
     !dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)'))return false;
  const vm=require("node:vm");
@@ -2403,8 +2407,8 @@ test("UX-LOC-DRAFT-01 preserves unsent Radius across native updates and releases
  }};
  const doc={activeElement:{},getElementById(){return panel;}};
  const state={controlsWindow:true,choiceOpen:"location",document:doc,
-  locationEnabled:true,locationVerified:false,locationRadius:10,status:""};
- const run=()=>vm.runInNewContext(source+";locationPanelFeedback()",state);
+  locationEnabled:true,locationVerified:false,locationRadius:10,status:"",activeSearchPhase:"idle"};
+ const run=()=>vm.runInNewContext(helper+";"+source+";locationPanelFeedback()",state);
  run();
  assert.equal(radius.value,"25","Native event must not overwrite unsent draft");
  assert.equal(slider.value,"25","Slider must preserve the matching draft");
@@ -2627,18 +2631,27 @@ test("RELEASE-NOTES-08 metadata is integrity checked within the APK",
 test("RELEASE-NOTES-09 the reader fails closed on missing or corrupt notes",
  releaseNotesJava.includes('return new JSONArray(); // Release notes must never prevent the Home from opening.')&&
  releaseNotesJava.includes('out.size()+size>96000'));
-test("RELEASE-NOTES-10 no unaudited corrections advertised",
- releaseNotesData.releases.every(e=>e.sections.correcoes.length===0)&&
- releaseNotesData.releases[0].sections.emDesenvolvimento.some(s=>s.includes("Validação visual")));
+test("RELEASE-NOTES-10 no unverified physical claims; audited fixes are versioned",()=>{
+ const old=releaseNotesData.releases.filter(e=>e.minVersionCode<54258);
+ const current=releaseNotesData.releases.find(e=>e.minVersionCode===54258);
+ return old.every(e=>e.sections.correcoes.length===0)&&
+  !!current&&current.id==="pokesearch-v060-lt-pokemon-form-coords-20261023"&&
+  current.sections.novidades.length>=2&&current.sections.melhorias.length>=2&&
+  current.sections.correcoes.length>=4&&
+  current.sections.emDesenvolvimento.some(s=>s.includes("Samsung"))&&
+  current.sections.emDesenvolvimento.some(s=>s.includes("testes automatizados"))&&
+  probe.includes("function extraOptionPopup(key,control){")&&
+  service.includes("void requestFormOptions(String query)");
+});
 
 test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menus",()=>{
  const filters=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
- return filters.includes('option("sortBy","Sort by")')&&
+ return filters.includes('option("sortBy","Ordenar")')&&
   filters.includes('option("weather","Clima")')&&
-  filters.includes('option("form","Forma")')&&
+  filters.includes('field("Forma",formButton)')&&
   filters.includes('chips("size","Tamanho")')&&
-  filters.includes('chips("gender","Gênero")')&&
+  filters.includes('chips("gender","Sexo")')&&
   !filters.includes('field("Pokémon",pick)')&&
   dock.includes('if(kind==="pokemon"){')&&
   dock.includes('["percent","IV%"],["gl","GL"],["ul","UL"]');
@@ -2659,14 +2672,17 @@ test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()
 test("FILTERS-POGO-03 size and gender buttons never invent site-supported options",()=>{
  const filters=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
- return filters.includes('const sizeOrder=["XXS","XS","S","M","L","XL","XXL"]')&&
-  filters.includes('["Male","Female","Genderless"]')&&
-  filters.includes('button.disabled=!item.enabled')&&
-  filters.includes('const actual=uniq.find(v=>v.toUpperCase()===label)')&&
-  filters.includes('const choices=(Array.isArray(filterOptions[key]?.options)')&&
+ const probe=read("assets/probe.js");
+ return filters.includes('["XXS","XS","S","M","L","XL","XXL"]')&&
+  filters.includes('["Any","Male","Female","Genderless"]')&&
+  !filters.includes('button.disabled=!actual&&!selected.has(resolved)')&&
+  filters.includes('modeDraft[multiKey]=[...selected]')&&
+  !filters.includes('extraChip","Qualquer"')&&
+  probe.includes('function extraMulti(key,desired,operation){')&&
+  probe.includes('function multiState(option){')&&
+  service.includes('for(String key:new String[]{"size","gender","form"})')&&
   dock.includes('window.onFilterOptions=function(response){')&&
-  service.includes('final String[] keys={"sortBy","size","form","gender","weather"}')&&
-  service.includes('execute("readFilterOptions:"+key,options->');
+  service.includes('final String[] keys={"sortBy","size","form","gender","weather"}');
 });
 test("FILTERS-POGO-05 reusing confirmed coordinates still executes Search",()=>{
  const handler=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
@@ -2684,14 +2700,14 @@ test("FILTERS-POGO-04 location Apply submits same saved criteria through live DO
  const probe=read("assets/probe.js");
  return dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&
   dock.includes('slide.min="0";slide.max="1000"')&&
-  dock.includes('Aplicar executa Search no PoGoCoordinates')&&
+  dock.includes('Aplicar pesquisa sem limpar outros filtros')&&
+  dock.includes('clear.onclick=disable')&&
+  !dock.includes('fieldRow.append(field,paste,toggle)')&&
   service.includes('OverlayService.this.refresh(true);')&&
   service.includes('configureLocationAndVerify(generation,manual,0)')&&
   service.includes('verifyAndSubmit(generation,manual,0)')&&
-  probe.includes('const EXTRA_LABELS={sortBy:"Sort by"')&&
   probe.includes('if(action==="verifyExtras")');
 });
-
 test("FILTERS-POGO-06 badge counts only extra filter criteria with neutral level defaults",()=>{
  const helper=dock.split("const FILTERS_MENU_KEYS=Object.freeze(")[1]
   ?.split("function quickState(id){")[0]||"";
@@ -2701,12 +2717,12 @@ test("FILTERS-POGO-06 badge counts only extra filter criteria with neutral level
   ";return {count:activeExtraFilterCount,keys:FILTERS_MENU_KEYS};");
  const base={mode:"raw",attack:15,defense:15,stamina:15,glRank:1,ulRank:1,
   percentMin:0,percentMax:100,pokemonSelections:["Pikachu"],pokemon:"Pikachu",
-  levelMin:"1",levelMax:"35",includePreviousEvolutions:true};
+  sortBy:"Despawn (longest)",levelMin:"1",levelMax:"35",includePreviousEvolutions:true};
  const ctx=factory(base,"raw",null,false,"",{},false,false,false);
  const count=ctx.count;
  return count(base,"raw")===0&&
-  count({...base,sortBy:"Despawn (longest)",weather:"Rainy",size:"XXL",
-   cpMin:"600",cpMax:"900",levelMin:"6",levelMax:"32",gender:"Female"},"raw")===6&&
+  count({...base,sortBy:"CP (highest)",weather:"Rainy",sizeSelections:["XXL","XS"],
+   cpMin:"600",cpMax:"900",levelMin:"6",levelMax:"32",genderSelections:["Female"]},"raw")===6&&
   count({...base,minPvpCp:"100",includePreviousEvolutions:false},"gl")===2&&
   count({...base,cpMin:"50",levelMin:"12",minPvpCp:"100"},"gl")===1&&
   !ctx.keys.includes("pokemon")&&!ctx.keys.includes("pokemonSelections")&&
@@ -2729,24 +2745,22 @@ test("FILTERS-POGO-07 Applied requires native verified submission and accepted c
 test("FILTERS-POGO-08 scoped Clear preserves species, IV, Shiny and coordinates",()=>{
  const block=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices(){")[0]||"";
  const clear=block.split("clear.onclick=()=>{")[1]?.split("\n };")[0]||"";
- const saved={mode:"ul",pokemon:"",pokemonSelections:["Pikachu","Eevee"],
-  attack:3,defense:14,stamina:15,glRank:1,ulRank:7,percentMin:20,percentMax:96,
-  sortBy:"CP",weather:"Rainy",size:"XXL",form:"Alolan",gender:"Female",
-  cpMin:"300",cpMax:"900",levelMin:"3",levelMax:"31",minPvpCp:"100",
-  includePreviousEvolutions:false};
  const keys=["sortBy","weather","size","form","gender","cpMin","cpMax",
-  "levelMin","levelMax","minPvpCp"];
+  "levelMin","levelMax","minPvpCp","sizeSelections","genderSelections"];
  let output=null,closed=false;
- new Function("searchSettings","mode","FILTERS_MENU_KEYS","closeChoices","Native",
-  "const clear=()=>{"+clear+"};clear();")(saved,"ul",keys,()=>{closed=true;},
-  {setSearchConfig:value=>{output=JSON.parse(value);}});
- return closed&&!!output&&keys.every(key=>output[key]==="")&&
-  output.includePreviousEvolutions===true&&output.mode==="ul"&&
-  output.ulRank===7&&output.attack===3&&output.defense===14&&output.stamina===15&&
-  JSON.stringify(output.pokemonSelections)===JSON.stringify(saved.pokemonSelections)&&
-  !Object.hasOwn(output,"clearPokemonSelection")&&
+ new Function("FILTERS_MENU_KEYS","closeChoices","Native",
+  "const clear=()=>{"+clear+"};clear();")(keys,()=>{closed=true;},
+  {patchSearchFilters:value=>{output=JSON.parse(value);}});
+ return closed&&!!output&&keys.every(key=>key.endsWith("Selections")?
+  Array.isArray(output[key])&&output[key].length===0:
+  output[key]===(key==="sortBy"?"Despawn (longest)":""))&&
+  output.includePreviousEvolutions===true&&
+  !Object.hasOwn(output,"mode")&&!Object.hasOwn(output,"pokemonSelections")&&
+  !Object.hasOwn(output,"attack")&&!Object.hasOwn(output,"glRank")&&
+  !Object.hasOwn(output,"locationCoords")&&
   block.includes('actions.append(apply,clear,cancel)')&&
-  !block.includes("Native.setLocation(");
+  !block.includes("Native.setLocation(")&&
+  service.includes('@JavascriptInterface public void patchSearchFilters(String payload)');
 });
 test("FILTERS-POGO-09 badge never enlarges twelve-slot ribbon and is accessible",()=>{
  const styles=dock.split("/* FILTERS-POGO-06: two tiny overlay indicators")[1]
@@ -2781,6 +2795,658 @@ test("FILTERS-POGO-10 simulated UI never claims Applied for pending/stale/dirty 
   result(true,true,false,saved).includes("Aguardando confirmação")&&
   result(true,false,true,saved).includes("Aguardando confirmação")&&
   result(true,false,false,{...saved,weather:"Rainy"}).includes("Alterações ainda não aplicadas");
+});
+
+test("LT57-ONEFORM-01 patch only Weather with no loss of species IV or location",()=>{
+ const block=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices(){")[0]||"";
+ const apply=block.split("apply.onclick=()=>{")[1]?.split("\n };")[0]||"";
+ const saved={mode:"ul",sortBy:"Despawn (longest)",weather:"",form:"",
+  sizeSelections:["XXL"],genderSelections:["Female"],cpMin:"",cpMax:"",
+  levelMin:"1",levelMax:"35",minPvpCp:"",pokemonSelections:["Pikachu"],
+  attack:3,defense:14,stamina:15,ulRank:7,includePreviousEvolutions:true};
+ const draft={...saved,weather:"Rainy"};
+ const keys=["sortBy","weather","size","form","gender","cpMin","cpMax",
+  "levelMin","levelMax","minPvpCp","sizeSelections","genderSelections"];
+ let out=null,closed=false;
+ const panel={querySelectorAll:()=>[]};
+ new Function("panel","modeDraft","searchSettings","FILTERS_MENU_KEYS","closeChoices","Native",
+  "const apply=()=>{"+apply+"};apply();")(panel,draft,saved,keys,()=>{closed=true;},
+  {patchSearchFilters:x=>{out=JSON.parse(x);}});
+ return closed&&!!out&&JSON.stringify(out)==='{"weather":"Rainy"}'&&
+  !Object.hasOwn(out,"pokemonSelections")&&!Object.hasOwn(out,"attack")&&
+  !Object.hasOwn(out,"locationCoords");
+});
+test("LT57-ONEFORM-02 native patch keeps independent search modes and Shiny",()=>{
+ const patch=service.split('@JavascriptInterface public void patchSearchFilters(String payload)')[1]
+  ?.split('@JavascriptInterface public void setSearchConfig(String payload)')[0]||"";
+ return patch.includes('JSONObject delta=new JSONObject(payload),updated=new JSONObject(extraFiltersJson)')&&
+  patch.includes('if(!delta.has(key))continue;')&&
+  patch.includes('getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",serialized).apply()')&&
+  !patch.includes('mode=')&&!patch.includes('shiny=')&&!patch.includes('locationEnabled=')&&
+  !patch.includes('rawAttack=')&&!patch.includes('locationCoords=')&&
+  patch.includes('replaceActiveFilterSearch();');
+});
+test("LT57-ONEFORM-03 Size multi and Gender single radio preserve Any",()=>{
+ const probe=read("assets/probe.js");
+ const filters=dock.split("function renderExtraFilters(panel,make){")[1]
+  ?.split("function renderFilterPicker(key,label,options){")[0]||"";
+ return filters.includes('const selected=new Set(existing.filter(')&&
+  filters.includes('if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);')&&
+  filters.includes('modeDraft[multiKey]=[...selected]')&&
+  filters.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}')&&
+  filters.includes('v==="Any"?"⚥"')&&
+  filters.includes('group.setAttribute("role","radiogroup")')&&
+  !filters.includes('button.disabled=!actual&&!selected.has(resolved)')&&
+  probe.includes('function extraMulti(key,desired,operation)')&&
+  probe.includes('extraSelect("gender",wanted[0]||"")')&&
+  probe.includes('if(target.some(v=>!observed.some(o=>o.label===v)))return false')&&
+  service.includes('key.equals("genderSelections")?1:')&&
+  service.includes('for(String key:new String[]{"size","gender","form"})');
+});
+test("LT57-ONEFORM-04 Sort by offers exactly five requested orders with default",()=>{
+ const picker=dock.split("function renderFilterPicker(key,label,options){")[1]
+  ?.split("window.onFilterOptions=function")[0]||"";
+ return dock.includes('sortBy:"Despawn (longest)"')&&
+  dock.includes('["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]')&&
+  picker.includes('key==="sortBy"')&&
+  picker.includes('if(key!=="sortBy"){')&&
+  service.includes('extra.put("sortBy","Despawn (longest)")')&&
+  !picker.includes('neutral.textContent="Qualquer"');
+});
+test("LT57-ONEFORM-05 Weather uses site Any and only screenshot-supported choices",()=>{
+ const picker=dock.split("function renderFilterPicker(key,label,options){")[1]
+  ?.split("window.onFilterOptions=function")[0]||"";
+ const expected=["Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"];
+ return expected.every(v=>picker.includes('"'+v+'"'))&&
+  picker.includes('neutral.textContent="Any"')&&
+  dock.includes('key==="weather"?"Any":"—"')&&
+  read("assets/probe.js").includes('function comparableOption(value)');
+});
+test("LT57-ONEFORM-06 compact menu and launcher safe area preserved",()=>{
+ return dock.includes('/* LT57 COMPACT-01: Samsung: small detached popup')&&
+  dock.includes('max-width:260px!important')&&
+  dock.includes('grid-template-columns:repeat(7,minmax(0,1fr))!important')&&
+  dock.includes('grid-template-columns:repeat(3,minmax(0,1fr))!important')&&
+  dock.includes('modeScrollTop=0; // Open at the first field')&&
+  iconGenerator.includes("int artworkSize = 288")&&
+  iconGenerator.includes("int padding = 8");
+});
+test("LT57-ONEFORM-07 coordinate + Shiny share verified submit, no separate reset",()=>{
+ const shiny=service.split('@JavascriptInterface public void shiny()')[1]
+  ?.split('@JavascriptInterface public void refresh()')[0]||"";
+ return shiny.includes('if(locationEnabled){OverlayService.this.refresh(true);return;}')&&
+  shiny.includes('Sincronizando Shiny e localização na mesma pesquisa')&&
+  service.includes('verifyShinyAfterLocation(generation,manual,0)')&&
+  service.includes('execute("verifyLocation:"+data')&&
+  service.includes('execute("verifyShiny",verified->')&&
+  !shiny.includes('locationEnabled=false')&&
+  !shiny.includes('locationCoords=""')&&
+  dock.includes('clear.onclick=disable')&&
+  !dock.includes('fieldRow.append(field,paste,toggle)');
+});
+
+test("LT57-DRIVE-ICON-01 exact replacement StarGL, StarUL and StarIVRaw PNGs",()=>{
+ const crypto=require("node:crypto");
+ const icons={
+  "StarGL.png":"cdca6c1b159e7a3da45758d073bf88d4fe05798e9343e4ef4056e77ccb8df575",
+  "StarUL.png":"7f59249d48556a43d0769667bb7a7c032d31ae69a96fe6db229da7f1413f5a9a",
+  "StarIVRaw.png":"74a9141ab3eff6ce3adab305a22aa478ee4022191f62bf8915ac88d4c9184cee"
+ };
+ return Object.entries(icons).every(([name,expected])=>{
+  const file=fs.readFileSync(path.join(root,"assets/result-icons/modes",name));
+  return file.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
+   crypto.createHash("sha256").update(file).digest("hex")===expected;
+ })&&dock.includes('gl:"StarGL.png",ul:"StarUL.png"')&&
+ dock.includes('custom:"StarIVRaw.png"');
+});
+test("LT57-DRIVE-ICON-02 Raw IV text follows A D H and updates on changes",()=>{
+ const art=dock.split("function getModeMenuIcon(")[1]?.split("// Historical result icons")[0]||"";
+ const glyph=dock.split("function iconForQuick(id, fallback){")[1]?.split("// SITE-POKEMON")[0]||"";
+ return art.includes('ivText:family==="custom"&&modeKey==="raw"')&&
+  art.includes('[settings.attack,settings.defense,settings.stamina]')&&
+  art.includes('.join("/")')&&
+  glyph.includes('glyph.classList.add("rawArt")')&&
+  glyph.includes('values.textContent=art.ivText')&&
+  dock.includes('button.dataset.modeArtKey=art.path+"|"+art.ivBadge+"|"+art.ivText')&&
+  dock.includes('const key=art.path+"|"+art.ivBadge+"|"+art.ivText')&&
+  dock.includes('.quickIvValues{')&&
+  glyph.includes('values.setAttribute("textLength","16.5")')&&
+  glyph.includes('values.setAttribute("lengthAdjust","spacingAndGlyphs")')&&
+  glyph.includes('document.createElementNS(ns,"svg")')&&
+  dock.includes('svg.quickIvValues text{')&&
+  !dock.includes('body.controls-window #quickMenuList .quickIvValues{');
+});
+test("LT57-RAW-IV-CLIP-01 only personalized Raw IV has bounded text in the medal",()=>{
+ const vm=require("node:vm");
+ const start=dock.indexOf("const RESULT_ICONS=Object.freeze("),end=dock.indexOf("let locationEnabled=",start);
+ if(start<0||end<start)return false;
+ const definitions=dock.slice(start,end);
+ const base={attack:0,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100};
+ const get=(mode,attrs)=>vm.runInNewContext(definitions+"\ngetModeMenuIcon("+JSON.stringify(mode)+",false,"+
+  JSON.stringify({...base,...attrs})+")",{}, {timeout:2000});
+ return get("raw",{}).ivText==="0/15/15"&&
+  get("raw",{attack:10}).ivText==="10/15/15"&&
+  get("raw",{attack:0,defense:0,stamina:0}).ivText===""&&
+  get("raw",{attack:15,defense:15,stamina:15}).ivText===""&&
+  get("hundo",{}).ivText===""&&get("nundo",{}).ivText===""&&
+  get("percent",{percentMin:0,percentMax:100}).ivText===""&&
+  get("gl",{}).ivText===""&&get("ul",{}).ivText==="";
+});
+test("LT57-WEATHER-ICONS-01 exact nine weather Drive PNGs embedded",()=>{
+ const crypto=require("node:crypto");
+ const icons={
+  "any.png":"d4839cd75cbe0402d18bcbf0a5f30e2809b460dd07230108c0b25d94f02194da",
+  "boosted.png":"a87266e89096e6ab59a9d97ee5aa514e12526618492387129787f674ce1d7a93",
+  "sunny.png":"3cfdfe44d746d4087e9d907702d8d536fa890a65eee1e3d67414bf58c4c8c7ec",
+  "rainy.png":"90969f1503a9fddddc2301d5aaa39bbb62a790e51dfe906cae5b97a2b8163509",
+  "partly-cloudy.png":"45ac8431e8d9ee8b220744e83e08b4b5afb26f4063a1230549a2308ec246bdc6",
+  "cloudy.png":"816ae46a0ba4104a2a14ed0baea845e158348d391aa1f240f14fe4a0af221642",
+  "windy.png":"e35c8f0fd7712ac74ee7faf01e5cb9186295631fa2fa7255b5b264bea774c47a",
+  "snow.png":"d3a2d189fcfc920daa6bb56bfecf47aab6f53e4e53a5a440a3c9f88defd1ebe2",
+  "fog.png":"c31680fe281e52db5a9573cb3832107a614460d3cec24a634febd7af31f5bb15"
+ };
+ return Object.entries(icons).every(([name,expected])=>{
+  const bytes=fs.readFileSync(path.join(root,"assets/weather-icons",name));
+  return bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
+   crypto.createHash("sha256").update(bytes).digest("hex")===expected;
+ })&&Object.keys(icons).length===9&&
+ dock.includes('WEATHER_ICON_FILES=Object.freeze({')&&
+ dock.includes('file:///android_asset/weather-icons/')&&
+ dock.includes('btn.prepend(makeWeatherIcon(value))')&&
+ dock.includes('neutral.prepend(makeWeatherIcon("Any"))');
+});
+test("LT57-DEFAULT-COUNT-01 neutral controls never add to active filter badge",()=>{
+ const helper=dock.split("const FILTERS_MENU_KEYS=Object.freeze(")[1]
+  ?.split("function quickState(id){")[0]||"";
+ const factory=new Function("searchSettings","mode","modeDraft","controlsWindow",
+  "choiceOpen","document","siteFiltersConfirmed","searchActive","resultsStale",
+  "const FILTERS_MENU_KEYS=Object.freeze("+helper+
+  ";return activeExtraFilterCount;");
+ const base={sortBy:"Despawn (longest)",weather:"Any",form:"Any",
+  size:"Any",gender:"Any",sizeSelections:[],genderSelections:[],
+  cpMin:"0",cpMax:"",levelMin:"1",levelMax:"35",
+  includePreviousEvolutions:true,minPvpCp:"0"};
+ const count=factory(base,"raw",null,false,"",{},false,false,false);
+ return count(base,"raw")===0&&count(base,"gl")===0&&
+  count({...base,weather:"Rainy"},"raw")===1&&
+  count({...base,sortBy:"CP (highest)"},"raw")===1&&
+  count({...base,sizeSelections:["XS","XXL"]},"raw")===1&&
+  count({...base,genderSelections:["Female"]},"raw")===1&&
+  count({...base,weather:"Any",genderSelections:["Any"]},"raw")===0;
+});
+test("UX-QUICK-MORE-01 keeps all three original action IDs movable in settings",()=>{
+ const group=dock.split("const MORE_ACTION_IDS=Object.freeze(")[1]
+  ?.split("let quickPrefs=")[0]||"";
+ const make=new Function("quickPrefs","const MORE_ACTION_IDS=Object.freeze("+group+
+  ";return groupedMoreIds;");
+ const originals=["mode","sh","filters","location","pokemon","star","bell","period","appearance","report","donate","close"];
+ const find=make({order:originals,hidden:[]});
+ const moveReport=make({order:["mode","report","sh","filters","location","pokemon","star","bell","period","appearance","donate","close"],hidden:[]});
+ const hideDonor=make({order:originals,hidden:["donate"]});
+ const onlyClose=make({order:originals,hidden:["report","donate"]});
+ return JSON.stringify(find())==='["report","donate","close"]'&&
+  JSON.stringify(moveReport())==='["donate","close"]'&&
+  JSON.stringify(hideDonor())==='["report","close"]'&&
+  JSON.stringify(onlyClose())==='[]'&&
+  dock.includes('for(const id of quickPrefs.order)')&&
+  dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])');
+});
+test("UX-QUICK-MORE-02 dynamically frees two ribbon slots and preserves order",()=>{
+ const block=dock.split("function renderQuickMenu(){")[1]
+  ?.split("// A sound channel")[0]||"";
+ return block.includes('if(inMore&&moreDrawn)continue;')&&
+  block.includes('const renderedId=inMore?"more":id')&&
+  block.includes('rows.appendChild(button);slotCount++')&&
+  block.includes('outer.style.setProperty("--quick-slot-count",String(Math.max(1,slotCount)))')&&
+  dock.includes('grid-template-columns:repeat(var(--quick-slot-count,12),minmax(0,1fr))!important')&&
+  dock.includes('if(choiceOpen==="more"){')&&
+  !block.includes('footer.appendChild(button)');
+});
+test("UX-QUICK-MORE-03 cascade opens DOWN with separate original rounded tiles",()=>{
+ const b=dock.split("function renderMoreChoices(){")[1]
+  ?.split("function renderQuickMenu(){")[0]||"";
+ return b.includes('panel.classList.add("visible","morePanel")')&&
+  b.includes('panel.setAttribute("role","menu")')&&
+  b.includes('button.className="quickMoreAction"')&&
+  b.includes('button.appendChild(iconForQuick(id,action[1]))')&&
+  b.includes('button.onclick=()=>{closeChoices();quickClick(id);}')&&
+  dock.includes('top:34px!important;bottom:auto!important')&&
+  dock.includes('top:232px!important;bottom:auto!important')&&
+  dock.includes('height:30px!important;min-height:30px!important')&&
+  dock.includes('gap:var(--visual-menu-gap,3px)!important')&&
+  dock.includes('border:1px solid var(--visual-menu-border,#ffffff48)!important');
+});
+test("UX-QUICK-MORE-04 original colors and bridges stay unchanged",()=>{
+ const b=dock.split("function renderMoreChoices(){")[1]
+  ?.split("function renderQuickMenu(){")[0]||"";
+ return ['report','donate','close'].every(id=>dock.includes('[data-key='+id+'] .quickGlyph'))&&
+  dock.includes('#choices.morePanel [data-key=report] .quickGlyph{color:#ffd674!important}')&&
+  dock.includes('#choices.morePanel [data-key=donate] .quickGlyph{color:#fa94a7!important}')&&
+  dock.includes('#choices.morePanel [data-key=close] .quickGlyph{color:#ff596c!important}')&&
+  dock.includes('case "report":Native.openReport();break;')&&
+  dock.includes('case "donate":Native.openPix();break;')&&
+  dock.includes('case "close":Native.close();break;')&&
+  b.includes('button.setAttribute("aria-label",action[2])');
+});
+test("UX-QUICK-MORE-05 close on outside tap and ordinary preferences survive",()=>{
+ return dock.includes('document.addEventListener("pointerdown",event=>{')&&
+  dock.includes('if(choiceOpen!=="more")return;')&&
+  dock.includes('event.target.closest("#choices.morePanel")')&&
+  dock.includes('event.target.closest(\'#quickMenuList button[data-key="more"]\')')&&
+  dock.includes('document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker","morePanel"')&&
+  dock.includes('if(!menuOpen){closeChoices();')&&
+  dock.includes('const hidden=legacy?[]:Array.isArray(p.hidden)')&&
+  dock.includes('for(const id of quickPrefs.order)')&&
+  dock.includes('quickPrefs.order.indexOf(id)');
+});
+
+
+test("UX-QUICK-MORE-STABLE-01 More does not switch ribbon to a subview or stretch CSS tracks",()=>{
+ const choices=dock.split("function toggleChoices(kind){")[1]?.split("function renderModeChoices(){")[0]||"";
+ const fit=dock.split("function fit(){")[1]?.split("function closeChoices(){")[0]||"";
+ return choices.includes('document.getElementById("menu").classList.remove("subview");')&&
+  choices.includes('if(kind==="more"){renderMoreChoices();return;}')&&
+  dock.includes('body.controls-window:not(.visual-menu-vertical) #menu #quickMenuList{')&&
+  dock.includes('grid-template-columns:repeat(var(--quick-slot-count,12),minmax(0,1fr))!important')&&
+  fit.includes('if(choiceOpen==="more"){')&&
+  fit.includes('const tiles=popup.querySelectorAll(".quickMoreAction").length;')&&
+  fit.includes('const moreHeight=tiles*30+Math.max(0,tiles-1)*gap;')&&
+  fit.includes('baseHeight+Math.ceil(moreHeight)+6');
+});
+test("UX-QUICK-MORE-STABLE-02 Android toolbar-only WebView prevents viewport rescaling",()=>{
+ const create=service.split('menuPanel=new WebView(this);')[1]
+  ?.split('menuPanel.addJavascriptInterface(',1)[0]||"";
+ const native=service.split('private void updateMenuPosition(){')[1]
+  ?.split('private void resizeMenu(',1)[0]||"";
+ return create.includes('menuPanel.getSettings().setUseWideViewPort(true);')&&
+  create.includes('menuPanel.getSettings().setLoadWithOverviewMode(false);')&&
+  dock.includes('name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"')&&
+  native.includes('if(menuParams.width!=width)menuParams.width=width;')&&
+  native.includes('menuParams.height=rowHeight+actualPopup;')&&
+  dock.includes('button.onclick=()=>{closeChoices();quickClick(id);}');
+});
+
+
+test("LT58-SITE-SELECT-01 Size selects locally while site probe must confirm before Search",()=>{
+ const f=dock.split("const chips=(key,label)=>{")[1]?.split("const section=(label,open,onClick)=>{")[0]||"";
+ const p=read("assets/probe.js");
+ return f.includes('modeDraft[multiKey]=[...selected]')&&
+  !f.includes('button.disabled=!actual')&&
+  p.includes('const rows=key==="form"?formOptionRows(control):')&&
+  p.includes('const ok=extraMulti("size",wanted,action);')&&
+  p.includes('if(!target.length&&isNeutral(extraValue(key))&&key!=="form")return true;')&&
+  p.includes('if(!ok)failed.push("sizeSelections");');
+});
+test("LT58-SITE-SELECT-02 Gender exclusive; Form directly below; redundant text gone",()=>{
+ const f=dock.split("function renderExtraFilters(panel,make){")[1]
+  ?.split("function renderFilterPicker(key,label,options){")[0]||"";
+ const p=read("assets/probe.js");
+ return f.includes('chips("gender","Sexo");\n  const formSelected=')&&f.includes('field("Forma",formButton)')&&
+  f.includes('group.setAttribute("role","radiogroup")')&&
+  f.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}')&&
+  p.includes('if(key==="gender"&&Array.isArray(filters.genderSelections))')&&
+  p.includes('extraMatches("gender",wanted[0]||"")')&&
+  service.includes('key.equals("genderSelections")?1:')&&
+  !f.includes('Nenhum botão marcado = Any do site.')&&
+  !f.includes('Filtros avançados')&&
+  !dock.includes('Nenhum filtro adicional ativo')&&
+  !dock.includes('Cada campo altera apenas seu próprio filtro. Outros filtros permanecem.');
+});
+
+
+test("LT58-ALL-POPUPS-STABLE-01 never changes toolbar layout for ANY submenu",()=>{
+ const toggle=dock.split("function toggleChoices(kind){")[1]?.split("const current=period;")[0]||"";
+ const css=dock.split("/* LT58-ALL-POPUPS-STABLE-01")[1]?.split("/* UX-QUICK-MORE-02:")[0]||"";
+ const native=service.split("private void updateMenuPosition(){")[1]?.split("private void resizeMenu(",1)[0]||"";
+ return toggle.includes('document.getElementById("menu").classList.remove("subview");')&&
+  !toggle.includes('classList.add("subview")')&&
+  !toggle.includes('classList.toggle("subview"')&&
+  css.includes('body.controls-window:not(.visual-menu-vertical) #menu #quickMenuList{')&&
+  css.includes('grid-template-rows:30px!important')&&
+  css.includes('grid-template-columns:repeat(var(--quick-slot-count,12),minmax(0,1fr))!important')&&
+  css.includes('grid-auto-flow:column!important')&&
+  !css.includes('#menu:has(')&&
+  native.includes('if(menuParams.width!=width)menuParams.width=width;')&&
+  native.includes('menuParams.height=rowHeight+actualPopup;');
+});
+test("LT58-ALL-POPUPS-STABLE-02 intrinsic popup height ignores Android clipping",()=>{
+ const part=dock.split("let lastHeight=0;")[1]?.split("function closeChoices(){")[0]||"";
+ if(!part.includes('popup.scrollHeight'))return false;
+ const run=(choice,visibleHeight,scrollHeight)=>{
+  let result=null;
+  const popup={scrollHeight,
+   getBoundingClientRect:()=>({height:visibleHeight}),
+   classList:{contains:s=>(s==="locationPanel"&&choice==="location")||(s==="filterPicker"&&choice==="picker")},
+   querySelectorAll:()=>[1,2,3]};
+  const doc={getElementById:id=>id==="shell"?{getBoundingClientRect:()=>({height:34,top:0})}:popup};
+  new Function("document","requestAnimationFrame","controlsWindow","resultWindow",
+   "choiceOpen","menuOpen","window","Native","positionPopupUnderTrigger","getComputedStyle",
+   "let lastHeight=0;"+part+"fit();")(
+    doc,callback=>callback(),true,false,choice,true,
+    {visualPrefs:{menuOrientation:"horizontal",popupHeight:390}},
+    {resizeMenu:h=>{result=h;}},()=>{},()=>({rowGap:"3px"}));
+  return result;
+ };
+ return run("location",90,340)===305&&
+  run("location",150,340)===305&&
+  run("filters",80,420)===355&&
+  run("filters",200,420)===355&&
+  run("mode",50,320)===230&&
+  run("more",34,130)===136;
+});
+
+
+test("LT58-ALL-POPUPS-STABLE-03 anchor all popup types to their original toolbar tile",()=>{
+ const segment=dock.split("function positionPopupUnderTrigger(){")[1]
+  ?.split("window.setMenuPopupPlacement=",1)[0]||"";
+ if(!segment.includes('panel.style.setProperty("left"'))return false;
+ const cases=[
+  ["mode","mode",210,60,210],
+  ["location","location",120,306,24],
+  ["filters","filters",70,238,70],
+  ["more","more",300,30,300],
+  ["alerts","bell",210,232,98],
+  ["info","appearance",250,232,98]
+ ];
+ return cases.every(([choice,key,triggerX,popupWidth,wantedLeft])=>{
+  const changed={};
+  const panel={classList:{contains:cls=>cls==="visible"},
+   getBoundingClientRect:()=>({width:popupWidth}),
+   style:{setProperty:(name,value,priority)=>{changed[name]=[value,priority];}}};
+  const area={getBoundingClientRect:()=>({width:330,left:0})};
+  const trigger={getBoundingClientRect:()=>({left:triggerX,width:30})};
+  const selectors=[];
+  const doc={querySelector:s=>{selectors.push(s);return s.includes('data-key="'+key+'"')?trigger:null;},
+   getElementById:id=>id==="choices"?panel:id==="menu"?area:null};
+  const fn=new Function("controlsWindow","choiceOpen","document",
+   "function positionPopupUnderTrigger(){"+segment+"return positionPopupUnderTrigger;");
+  fn(true,choice,doc)();
+  return selectors[0]?.includes(key)&&
+   changed.left?.[0]===wantedLeft+"px"&&changed.left?.[1]==="important"&&
+   changed.right?.[0]==="auto";
+ });
+});
+test("LT58-ALL-POPUPS-STABLE-04 popup above/below updates only placement CSS",()=>{
+ const segment=dock.split("window.setMenuPopupPlacement=(above,offset,room)=>{")[1]
+  ?.split("window.setResultsCollapsed=",1)[0]||"";
+ const values={},classes={},counts={position:0,fit:0};
+ const doc={documentElement:{style:{setProperty:(k,v)=>{values[k]=v;}}},
+  body:{classList:{toggle:(k,v)=>{classes[k]=v;}}}};
+ const fn=new Function("controlsWindow","document","choiceOpen","positionCascadeEditor","fit","window",
+  "window.setMenuPopupPlacement=(above,offset,room)=>{"+segment+
+  "return window.setMenuPopupPlacement;");
+ const f=fn(true,doc,"mode",()=>counts.position++,()=>counts.fit++,{});
+ f(false,0,340);
+ const first=values["--popup-offset"]==="0px"&&values["--popup-room"]==="340px"&&
+  classes["popup-above"]===false;
+ f(true,185,310);
+ return first&&values["--popup-offset"]==="185px"&&values["--popup-room"]==="310px"&&
+  classes["popup-above"]===true&&counts.position===2&&counts.fit===2&&
+  segment.includes('document.body.classList.toggle("popup-above",!!above)')&&
+  !segment.includes('menu.classList.toggle("subview"')&&
+  service.includes('rowY-(abovePopup?actualPopup:0)')&&
+  dock.includes('body.controls-window.popup-above #menu{top:var(--popup-offset,0px)!important}');
+});
+test("LT58-ALL-POPUPS-SCALE-01 WebView text inflation stays fixed on popup resize",()=>{
+ const css=dock.split("/* LT58-ALL-POPUPS-SCALE-01")[1]
+  ?.split("/* UX-QUICK-MORE-02:",1)[0]||"";
+ return css.includes("html.controls-root,body.controls-window{")&&
+  css.includes("-webkit-text-size-adjust:100%!important;")&&
+  css.includes("text-size-adjust:100%!important;")&&
+  service.includes("menuPanel.getSettings().setUseWideViewPort(true)")&&
+  service.includes("menuPanel.getSettings().setLoadWithOverviewMode(false)");
+});
+
+
+test("LT60-LOC-STATE-01 distinguishes OFF, requested, confirmed and not applied",()=>{
+ const start=dock.indexOf("function currentLocationUiState(){");
+ const end=dock.indexOf("function locationPanelFeedback(){",start);
+ if(start<0||end<=start)return false;
+ const fn=new Function("locationEnabled","locationVerified","activeSearchPhase",
+  dock.slice(start,end)+"return currentLocationUiState();");
+ return fn(false,false,"idle")==="OFF"&&
+  fn(true,false,"filling")==="REQUESTED"&&
+  fn(true,false,"error")==="NOT_APPLIED"&&
+  fn(true,true,"updated")==="CONFIRMED"&&
+  fn(true,true,"searching")==="CONFIRMED";
+});
+test("LT60-LOC-STATE-02 new Search revokes stale site confirmation before submit",()=>{
+ const refresh=service.split("private void refresh(boolean manual){")[1]
+  ?.split("private void configureSearchWithRetry(",1)[0]||"";
+ return refresh.includes("final int generation=++requestGeneration;\n        // LT60-LOC-STATE-01")&&
+  refresh.includes("locationVerified=false;")&&
+  service.includes("locationVerified=locationEnabled;")&&
+  service.includes('String.format(java.util.Locale.US,"%s,%s",m.group(1),m.group(2))');
+});
+test("LT60-LOC-STATE-03 native feedback observes updated error status",()=>{
+ const bridge=dock.split("window.onNativeData=")[1]?.split("function quickState(",1)[0]||"";
+ return bridge.indexOf('activeSearchPhase=String(searchPhase||"idle");')<
+  bridge.indexOf('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
+  dock.includes('state==="NOT_APPLIED"?"⚠ Localização não aplicada')&&
+  dock.includes('state==="REQUESTED"?"⌛ Coordenadas solicitadas')&&
+  service.includes('prefs.remove("locationCoords").remove("locationRadius")');
+});
+
+
+test("LT61-POKEMON-DEX sends official site its numeric dex query",()=>{
+ const start=probe.indexOf("function pokemonQueryForSite(query){");
+ const end=probe.indexOf("function pokemonPickerPopup(",start);
+ if(start<0||end<=start)return false;
+ const normalize=new Function("query",probe.slice(start,end)+"return pokemonQueryForSite(query);");
+ return normalize("#0025")==="25"&&normalize("#25")==="25"&&
+  normalize("Pikachu")==="Pikachu"&&normalize("Venusaur")==="Venusaur"&&
+  normalize("Charmander Goggles 2026")==="Charmander Goggles 2026";
+});
+test("LT61-POKEMON-PORTAL uses only a linked or unique relevant portal",()=>{
+ const start=probe.indexOf("function pokemonPickerPopup(");
+ const end=probe.indexOf("function pokemonSuggestion(",start);
+ const block=probe.slice(start,end);
+ return block.includes("const ids=[...new Set(")&&
+  block.includes("matches.length===1?matches[0]:null")&&
+  block.includes("function pokemonPickerOptions(query)")&&
+  block.includes("if(!popup)return [];")&&
+  probe.includes("function pokemonPickerRoot(){");
+});
+
+test("LT62-MORE-ABOVE obeys native popup placement without moving toolbar",()=>{
+ const start=dock.indexOf("/* LT62-MENU-ANCHOR:");
+ const end=dock.indexOf("</style>",start);
+ const css=dock.slice(start,end);
+ return css.includes("body.controls-window.popup-above #choices.morePanel{")&&
+  css.includes("top:auto!important;bottom:34px!important;")&&
+  css.includes("body.controls-window.visual-menu-vertical.popup-above #choices.morePanel{")&&
+  css.includes("top:auto!important;bottom:232px!important;")&&
+  service.includes("rowY-(abovePopup?actualPopup:0)")&&
+  dock.includes("panel.style.setProperty(\"max-width\",Math.floor(width)+\"px\",\"important\")");
+});
+test("LT63-SPRITE-PITCH never overlaps adjacent sprites with zero visual gap",()=>{
+ const begin=dock.indexOf("function computeResultLayout(");
+ const end=dock.indexOf('let lastListKey=""',begin);
+ if(begin<0||end<begin)return false;
+ const run=new Function("window",dock.slice(begin,end)+"return computeResultLayout;");
+ const compact=run({visualPrefs:{resultGapBetween:0,resultsOrientation:"vertical"}})(
+  Array.from({length:10},()=>({})),45,900,false,false);
+ const defaultSize=run({visualPrefs:{resultGapBetween:31,resultsOrientation:"vertical"}})(
+  Array.from({length:10},()=>({})),45,900,false,false);
+ return compact.rows.length===10&&compact.rows.every(row=>row>=compact.sprite)&&
+  compact.rows.every(row=>row===45)&&defaultSize.rows.every(row=>row===45)&&
+  dock.includes("return Math.max(size,pitch); // No sprite-overlap");
+});
+
+
+test("LT64-FILTER-DELTA species selection preserves unrelated search configuration",()=>{
+ const ui=dock.split("function renderPokemonChoices(){")[1]?.split("function renderMoreChoices(){",1)[0]||"";
+ const native=service.split("@JavascriptInterface public void setPokemonSelections(String payload)")[1]
+  ?.split("@JavascriptInterface public void setSearchConfig(",1)[0]||"";
+ return ui.includes("Native.setPokemonSelections(JSON.stringify(selection))")&&
+  !ui.includes("Native.setSearchConfig(")&&
+  native.includes('new JSONObject(extraFiltersJson)')&&
+  native.includes('extra.put("pokemonSelections",cleaned)')&&
+  native.includes('extra.put("clearExtraKeys",reset)')&&
+  native.includes('getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",next).apply()')&&
+  !native.includes('mode=nextMode')&&!native.includes('locationCoords=')&&!native.includes('shiny=');
+});
+test("LT64-FILTER-SIZE recognizes accessible button state and still verifies the site",()=>{
+ const source=probe.split("function multiOptions(control,key){")[1]?.split("function extraMulti(",1)[0]||"";
+ return source.includes("button[aria-pressed]")&&source.includes('option.getAttribute("aria-pressed")')&&
+  probe.includes("if(target.some(v=>!observed.some(o=>o.label===v)))return false;")&&
+  probe.includes("if(!observed.length)return false;");
+});
+
+
+test("LT65-PERF result drag is throttled and commits the final native position",()=>{
+ const start=service.indexOf("resultGrip.setOnTouchListener((view,event)->{");
+ const end=service.indexOf("resultRoot.addView(resultGrip",start);
+ const drag=service.slice(start,end);
+ return drag.includes("android.os.SystemClock.uptimeMillis()")&&
+  drag.includes("now-lastLayoutMoveAt[0]>=16L")&&
+  drag.includes('recordFailure("finalizar arraste",e)')&&
+  drag.includes('putInt("resultsX"')&&drag.includes('putInt("resultsY"');
+});
+test("LT65-PERF despawn clock stops while results window is minimized",()=>{
+ return service.includes('js(resultPanel,resultLoaded,"window.setResultsPaused("+yes+")")')&&
+  dock.includes("window.setResultsPaused=paused=>{")&&
+  dock.includes('document.body.classList.toggle("results-paused",!!paused)')&&
+  dock.includes('!document.body.classList.contains("results-paused")')&&
+  dock.includes('if(timerTicker!==null){clearInterval(timerTicker);timerTicker=null;}');
+});
+
+
+test("PS66-PORTAL ignores foreign menus and ambiguous result lists",()=>{
+ const b=probe.split("function pokemonPickerPopup(")[1]?.split("function pokemonSuggestion(",1)[0]||"";
+ return b.includes("document.getElementById?.(id)")&&
+  b.includes("matches.length===1?matches[0]:null")&&
+  b.includes("const innermost=")&&
+  !b.includes("activeOptionPopup(input)||activeOptionPopup(trigger)");
+});
+test("PS67-STATES never treats timeout or unproved empty as no species",()=>{
+ return probe.includes("state:'ready'")&&probe.includes("state:'pending'")&&
+  probe.includes("state:'explicit-empty'")&&probe.includes("state:'failed'")&&
+  dock.includes('state==="explicit-empty"&&response.empty===true?')&&
+  service.includes('response.put("ok",false).put("pending",false).put("state","failed")');
+});
+test("PS68-APPLY retains exact event forms and isolates the native filter delta",()=>{
+ return probe.includes("const siteTerm=missing[0].replace(")&&
+  probe.includes("pokemonPickerOptions(siteTerm).find(x=>x.label.toLowerCase()===missing[0].toLowerCase())")&&
+  dock.includes("Native.setPokemonSelections(JSON.stringify(selection))")&&
+  service.includes('new JSONObject(extraFiltersJson)')&&
+  service.includes('Espécies/formas solicitadas · aguardando confirmação no site');
+});
+
+
+test("LT69-FORM-SCOPE prevents Sex dropdown being returned for Form",()=>{
+ const body=probe.split("function extraControl(label){")[1]?.split("function describeChoice(",1)[0]||"";
+ return body.includes('if(label==="Form"||label==="Gender")')&&
+  body.includes('return null; // Fail closed')&&
+  body.includes("function extraOptionPopup(key,control){")&&
+  body.includes("if(!control||control.getAttribute('aria-expanded')!=='true')return null;")&&
+  body.includes("if(key==='form')")&&
+  body.includes("distinct.every(")&&
+  service.includes('final String[] keys={"sortBy","size","form","gender","weather"}');
+});
+test("LT70-FORM-MULTI uses official DOM checkboxes, not hardcoded form names",()=>{
+ const source=probe.split("function multiOptions(control,key){")[1]?.split("function extraMatches(",1)[0]||"";
+ return source.includes("key==='form'?extraOptionPopup('form',control)")&&
+  source.includes('key==="form"?null:')&&
+  source.includes('allowed===null?!isNeutral(x.label)')&&
+  probe.includes('extraMulti("form",wanted,action)')&&
+  probe.includes('!extraMulti("form",wanted,"verify")')&&
+  probe.includes('slice(0,key==="form"?500:80)');
+});
+test("LT71-FORM-EDITOR searches official forms with chips but applies only on final Filters confirm",()=>{
+ const block=dock.split("function renderFormPicker(){")[1]?.split("window.onFormOptions=response=>",1)[0]||"";
+ return block.includes("input.placeholder=\"Buscar forma no PoGoCoordinates\"")&&
+  block.includes("Native.requestFormOptions(formQuery)")&&
+  block.includes("renderFiltersChoices();")&&
+  dock.includes('formButton.onclick=()=>{modeScrollTop=panel.scrollTop;formQuery="";renderFormPicker();}')&&
+  dock.includes('filterOptions.form={present:true,options:[...new Set([...previous,...options])].slice(0,500)}')&&
+  dock.includes('Native.patchSearchFilters(JSON.stringify(delta))');
+});
+test("LT72-FORM-REACT clears only temporary official Form search before multi-apply",()=>{
+ const form=probe.split("function extraMulti(key,desired,operation){")[1]
+  ?.split("function extraMatches(",1)[0]||"";
+ return form.includes('if(key==="form"&&operation==="apply")')&&
+  form.includes("const popup=extraOptionPopup('form',control)")&&
+  form.includes('if(valueInput(search,""))transientPending=true;')&&
+  form.includes('const target=[...new Set(desired.map(x=>clean(x).toLowerCase()))]')&&
+  probe.includes('!extraMulti("form",wanted,"verify")');
+});
+test("LT71-FORM-NATIVE saves multiple forms without resetting species or location",()=>{
+ const patch=service.split("public void patchSearchFilters(String payload)")[1]?.split("public void setPokemonSelections(",1)[0]||"";
+ return patch.includes('"formSelections"')&&patch.includes('key.equals("formSelections")?500:7')&&
+  patch.includes('new JSONObject(extraFiltersJson)')&&
+  patch.includes('replaceActiveFilterSearch();')&&
+  !patch.includes("locationCoords=")&&!patch.includes("shiny=")&&
+  service.includes('void requestFormOptions(String query)')&&
+  service.includes('execute("searchFormOptions:"+JSONObject.quote(query)')&&
+  dock.includes('formSelections:[]');
+});
+
+
+test("LT72-FORM-DOM explicitly rejects the four Gender options under Form",()=>{
+ const begin=probe.indexOf("function extraPopupMatchesKey(key,popup){");
+ const end=probe.indexOf("function formOptionRows(control){",begin);
+ if(begin<0||end<=begin)return false;
+ const clean=x=>String(x||"").trim();
+ const text=el=>clean(el&&(el.innerText||el.textContent)||"");
+ const vis=el=>!!(el&&el.getClientRects().length);
+ const option=name=>({innerText:name,textContent:name,getClientRects:()=>[1]});
+ const popup=values=>({
+  getClientRects:()=>[1],
+  contains:()=>false,
+  querySelectorAll:()=>values.map(option)
+ });
+ const control={
+  getAttribute:key=>key==="aria-expanded"?"true":null
+ };
+ const create=(popups,linkedId)=>{
+  const doc={getElementById:id=>linkedId===id?popups[0]:null};
+  const elements=()=>popups;
+  return new Function("elements","vis","text","clean","document",
+   probe.slice(begin,end)+"return extraOptionPopup;")(
+   elements,vis,text,clean,doc);
+ };
+ const gender=popup(["Any","Male","Female","Genderless"]);
+ const forms=popup(["Normal","Alola","Copy 2019","Goggles 2026"]);
+ const single=popup(["Male"]); // Male is ALSO a legitimate Form name in saved JSON.
+ const a=create([gender])("form",control);
+ const b=create([forms])("form",control);
+ const c=create([single])("form",control);
+ const d=create([forms,gender])("form",control);
+ return a===null&&b===forms&&c===single&&d===null;
+});
+
+
+test("LT73-FORM-LINKED-PORTAL validates stale aria-controls as strictly as fallback",()=>{
+ const begin=probe.indexOf("function extraPopupMatchesKey(key,popup){");
+ const end=probe.indexOf("function formOptionRows(control){",begin);
+ if(begin<0||end<=begin)return false;
+ const clean=x=>String(x||"").trim();
+ const text=el=>clean(el&&(el.innerText||el.textContent)||"");
+ const vis=el=>!!(el&&el.getClientRects().length);
+ const option=name=>({innerText:name,textContent:name,getClientRects:()=>[1]});
+ const popup=values=>({
+  getClientRects:()=>[1],contains:()=>false,
+  querySelectorAll:()=>values.map(option)
+ });
+ const gender=popup(["Any","Male","Female","Genderless"]);
+ const forms=popup(["Normal","Alola","Copy 2019"]);
+ const linked={getAttribute:key=>key==="aria-controls"?"portal":key==="aria-expanded"?"true":null};
+ const closed={getAttribute:key=>key==="aria-controls"?"portal":key==="aria-expanded"?"false":null};
+ const create=chosen=>{
+  const doc={getElementById:id=>id==="portal"?chosen:null};
+  return new Function("elements","vis","text","clean","document",
+   probe.slice(begin,end)+"return extraOptionPopup;")(
+   ()=>[chosen],vis,text,clean,doc);
+ };
+ const code=probe.split("function siteOptions(key){")[1]?.split("function describeChoice(",1)[0]||"";
+ return create(gender)("form",linked)===null&&
+  create(forms)("form",linked)===forms&&
+  create(forms)("form",closed)===null&&
+  create(forms)("gender",linked)===null&&
+  code.includes('if(key==="form"&&(!rows||!rows.length)){')&&
+  code.includes('return explicit?{ok:true,pending:false,empty:true,options:[]}:')&&
+  code.includes('{ok:false,pending:true,options:[]};');
 });
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}

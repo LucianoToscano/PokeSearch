@@ -447,6 +447,38 @@ body.controls-window #quickMenuList .quickRank{
  padding:0!important;margin:0!important;
  text-shadow:0 1px 2px #000,0 0 3px #000,0 0 4px #d5e7ff!important;
 }
+/* LT57-WEATHER-ICONS-01: PNGs in compact picker; no emoji replacements. */
+body.controls-window #choices .weatherChoiceIcon{
+ width:19px!important;height:19px!important;min-width:19px!important;max-width:19px!important;
+ object-fit:contain!important;vertical-align:middle!important;margin-right:3px!important;
+ pointer-events:none!important;background:transparent!important;
+}
+body.controls-window #choices.filterPicker button:has(.weatherChoiceIcon){
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:2px!important;min-height:25px!important;font-size:10px!important;
+}
+body.controls-window #choices .extraValue:has(.weatherChoiceIcon){
+ display:flex!important;align-items:center!important;gap:3px!important;
+}
+/* LT57-MODES-RAW-01: original Drive PNG with non-destructive tiny IVs. */
+body.controls-window #quickMenuList .quickGlyph.modeArt.rawArt .quickModeImage{
+ width:21px!important;height:21px!important;
+}
+/* LT57-RAW-IV-CLIP-01: SVG overlay prevents WebView text auto-zoom. */
+body.controls-window #quickMenuList .quickGlyph.modeArt.rawArt svg.quickIvValues{
+ display:block!important;position:absolute!important;left:50%!important;top:50%!important;
+ transform:translate(-50%,-50%)!important;z-index:2!important;
+ width:21px!important;min-width:21px!important;max-width:21px!important;
+ height:21px!important;min-height:21px!important;max-height:21px!important;
+ pointer-events:none!important;overflow:visible!important;flex:none!important;
+ background:transparent!important;border:0!important;padding:0!important;
+ stroke:none!important;
+}
+body.controls-window #quickMenuList .quickGlyph.modeArt.rawArt svg.quickIvValues text{
+ font:800 7px "Arial Narrow",Roboto,Arial,sans-serif!important;
+ fill:#13263b!important;stroke:#f1f6fc!important;stroke-width:.18px!important;
+ paint-order:stroke fill!important;letter-spacing:0!important;
+}
 /* UX-MODOS-CASCADE: the 6 items stay one small native-popup-width menu;
    only the chosen item opens its right/left settings strip. */
 body.controls-window #choices.modePanel.modeCascade{
@@ -1125,6 +1157,144 @@ body.result-window.visual-preview-results #resultHeader{
 body.result-window.visual-preview-results #spawns{
  outline:1px dashed #62d9ff!important;outline-offset:-1px!important;
 }
+/* LT57 COMPACT-01: Samsung: small detached popup, not a full-screen sheet. */
+body.controls-window #choices[data-panel-kind="filters"]{
+ width:min(260px,calc(100vw - 18px))!important;max-width:260px!important;
+ padding:4px!important;max-height:min(315px,var(--popup-room,400px))!important;
+ overflow-y:auto!important;overscroll-behavior:contain!important;
+}
+body.controls-window #choices.locationPanel{
+ width:min(250px,calc(100vw - 18px))!important;max-height:min(265px,var(--popup-room,400px))!important;
+ padding:4px!important;
+}
+body.controls-window #choices.filterPicker{width:min(238px,calc(100vw - 18px))!important;
+ max-height:min(300px,var(--popup-room,400px))!important;padding:3px!important}
+body.controls-window #choices.filterPicker button{padding:5px 6px!important;margin:1px 0!important;
+ font-size:10px!important;min-height:23px!important}
+#choices[data-panel-kind="filters"] .extraField{min-height:22px!important;gap:3px!important;margin:2px 1px!important}
+#choices[data-panel-kind="filters"] .extraField>label{font-size:9px!important;min-width:68px!important}
+#choices[data-panel-kind="filters"] .extraField button.extraValue{
+ padding:3px 5px!important;font-size:9px!important;min-height:23px!important}
+#choices[data-panel-kind="filters"] .extraNumberRow input{height:23px!important;font-size:10px!important}
+#choices[data-panel-kind="filters"] .extraNumberRow .extraStep{
+ height:23px!important;width:23px!important;flex-basis:23px!important;font-size:13px!important}
+#choices[data-panel-kind="filters"] .extraChipsField{display:flex!important;gap:2px!important}
+#choices[data-panel-kind="filters"] .extraChipsField>label{font-size:9px!important}
+#choices[data-panel-kind="filters"] .extraChipRow{
+ width:100%!important;display:grid!important;gap:2px!important;
+}
+#choices[data-panel-kind="filters"] .extraChipRow[data-kind="size"]{
+ grid-template-columns:repeat(7,minmax(0,1fr))!important;
+}
+#choices[data-panel-kind="filters"] .extraChipRow[data-kind="gender"]{
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+}
+#choices[data-panel-kind="filters"] .extraChipRow .extraChip{
+ width:100%!important;min-width:0!important;height:25px!important;min-height:25px!important;
+ padding:1px!important;margin:0!important;font-size:9px!important;border-radius:6px!important}
+#choices[data-panel-kind="filters"] .extraDivider{margin:3px 1px!important}
+#choices[data-panel-kind="filters"] .extraHead{padding:4px!important;font-size:10px!important}
+#choices[data-panel-kind="filters"] .extraNote,#choices[data-panel-kind="filters"] .uxNote{font-size:8px!important;padding:2px!important}
+#choices[data-panel-kind="filters"] .modeAction.filterActions{gap:2px!important;padding:3px 1px!important}
+#choices[data-panel-kind="filters"] .modeAction.filterActions button{
+ padding:4px 1px!important;font-size:9px!important;line-height:1.1!important}
+#choices[data-panel-kind="filters"] .choiceHeader{padding:3px 4px!important;font-size:10px!important}
+body.controls-window #choices.locationPanel .locText{font-size:9px!important;line-height:1.2!important;
+ margin:3px 2px!important}
+body.controls-window #choices.locationPanel .locCoordsRow{margin:2px!important;gap:3px!important}
+body.controls-window #choices.locationPanel .locField{height:26px!important;min-height:26px!important;
+ padding:3px 4px!important;font-size:10px!important}
+body.controls-window #choices.locationPanel .locPaste{width:26px!important;min-width:26px!important;
+ height:26px!important;flex-basis:26px!important}
+body.controls-window #choices.locationPanel .locLine{padding:2px 3px!important;font-size:10px!important}
+body.controls-window #choices.locationPanel .locRadiusNumber{width:54px!important;height:25px!important;
+ font-size:10px!important}
+body.controls-window #choices.locationPanel input[type=range]{margin:3px 3px 5px!important;
+ width:calc(100% - 6px)!important}
+body.controls-window #choices.locationPanel .compactLocationActions{gap:3px!important}
+body.controls-window #choices.locationPanel .compactLocationActions button{
+ flex:1!important;min-width:0!important;padding:5px 2px!important;
+ font-size:10px!important;text-align:center!important}
+/* LT58-ALL-POPUPS-STABLE-01: the entire original ribbon is immutable
+   whether CLOSED, in Modos, Filtros, Localizacao or Mais. The submenu is an
+   absolutely positioned child; its height must never change ribbon geometry.
+   Do not depend on :has() (older Android WebViews may not support it). */
+body.controls-window:not(.visual-menu-vertical) #menu #quickMenuList{
+ position:absolute!important;top:0!important;bottom:auto!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ height:34px!important;min-height:34px!important;max-height:34px!important;
+ grid-auto-rows:30px!important;grid-template-rows:30px!important;
+ grid-template-columns:repeat(var(--quick-slot-count,12),minmax(0,1fr))!important;
+ grid-auto-flow:column!important;align-content:start!important;
+ overflow:hidden!important;
+}
+/* LT58-ALL-POPUPS-SCALE-01: Android WebView may inflate text when the
+   native overlay height changes, even while the toolbar width is unchanged.
+   Keep CSS pixel typography stable across popup open/close and popup-above.
+   This does not alter the Visual Editor's explicit font-size controls. */
+html.controls-root,body.controls-window{
+ -webkit-text-size-adjust:100%!important;
+ text-size-adjust:100%!important;
+}
+/* UX-QUICK-MORE-02: 10 compact ribbon slots by default, each tile separate.
+   Moving any original utility before the suffix extracts that action from More. */
+body.controls-window #quickMenuList{
+ grid-template-columns:repeat(var(--quick-slot-count,12),minmax(0,1fr))!important;
+}
+body.controls-window.visual-menu-vertical #quickMenuList{
+ grid-template-columns:none!important;
+}
+body.controls-window #choices.morePanel,
+body.controls-window.popup-above #choices.morePanel{
+ position:absolute!important;display:flex!important;flex-direction:column!important;
+ left:0;right:auto;top:34px!important;bottom:auto!important;
+ width:var(--more-tile-width,30px)!important;min-width:28px!important;
+ max-width:calc(100vw - 8px)!important;height:auto!important;
+ max-height:none!important;overflow:visible!important;
+ gap:var(--visual-menu-gap,3px)!important;padding:0!important;margin:0!important;
+ background:transparent!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;z-index:25!important;
+}
+body.controls-window.visual-menu-vertical #choices.morePanel,
+body.controls-window.visual-menu-vertical.popup-above #choices.morePanel{
+ top:232px!important;bottom:auto!important;
+}
+body.controls-window #choices.morePanel .quickMoreAction{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;flex:none!important;
+ width:100%!important;height:30px!important;min-height:30px!important;
+ margin:0!important;padding:0!important;line-height:1!important;
+ background:var(--visual-menu-button-bg,#28292cce)!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid var(--visual-menu-border,#ffffff48)!important;
+ border-radius:7px!important;background-clip:padding-box!important;
+ box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0006)!important;
+}
+body.controls-window #choices.morePanel .quickMoreAction .quickGlyph{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:19px!important;height:19px!important;min-width:19px!important;
+ font-size:17px!important;
+}
+body.controls-window #choices.morePanel .quickMoreAction .quickGlyph svg{
+ display:block!important;width:18px!important;height:18px!important;
+}
+body.controls-window #choices.morePanel [data-key=report] .quickGlyph{color:#ffd674!important}
+body.controls-window #choices.morePanel [data-key=donate] .quickGlyph{color:#fa94a7!important}
+body.controls-window #choices.morePanel [data-key=close] .quickGlyph{color:#ff596c!important}
+body.controls-window.visual-light-menu #choices.morePanel .quickMoreAction{
+ border-color:#24394c66!important;
+}
+/* LT62-MENU-ANCHOR: popup-above overrides the fixed More cascade origin. */
+body.controls-window.popup-above #choices.morePanel{
+ top:auto!important;bottom:34px!important;
+}
+body.controls-window.visual-menu-vertical.popup-above #choices.morePanel{
+ top:auto!important;bottom:232px!important;
+}
+body.controls-window.visual-menu-vertical #choices:not(.morePanel){
+ max-width:100%!important;
+ width:min(100%,var(--visual-popup-width,232px))!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -1255,7 +1425,11 @@ function getModeMenuIcon(searchMode,shinyActive,settings=searchSettings){
     (modeKey==="percent"?" · "+settings.percentMin+"–"+settings.percentMax+"%":
      modeKey==="raw"?" · "+settings.attack+"/"+settings.defense+"/"+settings.stamina:"")+
     (shining?" · Shiny only":"")+(backgroundConfirmed?" · Background":""),
-  family,baseFamily,ivBadge:badge,shinyBadge:shining,backgroundBadge:backgroundConfirmed
+  family,baseFamily,ivBadge:badge,
+  ivText:family==="custom"&&modeKey==="raw"?
+   [settings.attack,settings.defense,settings.stamina].map(v=>
+    Number.isFinite(Number(v))?String(Math.min(15,Math.max(0,Number(v)))):"?").join("/"):"",
+  shinyBadge:shining,backgroundBadge:backgroundConfirmed
  };
 }
 // Historical result icons are independent from the newer Modos toolbar.
@@ -1308,8 +1482,9 @@ let resultDisplayOptions={count:false,name:false,number:false,gender:false,size:
 let displayedMetadataWidth=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
- sortBy:"",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
+ sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=false,advancedExpanded=false;
+let formQuery="",formOptionsStatus="Aguardando lista oficial de Form do site...";
 let siteFiltersConfirmed=false; // Evidence from Android: same generation, verified Search and accepted results.
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
 // Math.round(total / 45 * 100) produces exactly 46 possible shown percentages.
@@ -1388,8 +1563,15 @@ function positionPopupUnderTrigger(){
  const area=document.getElementById("menu");
  const width=area.getBoundingClientRect().width;
  const bounds=trigger.getBoundingClientRect();
- const popupWidth=panel.getBoundingClientRect().width;
+ let popupWidth=panel.getBoundingClientRect().width;
  if(width<=0||popupWidth<=0)return;
+ // Vertical native WebView is narrower than several legacy popup presets.
+ // Resize the popup, not the fixed ribbon or its individual buttons.
+ if(popupWidth>width&&!panel.classList.contains("morePanel")){
+  panel.style.setProperty("max-width",Math.floor(width)+"px","important");
+  panel.style.setProperty("width",Math.floor(width)+"px","important");
+  popupWidth=Math.min(width,panel.getBoundingClientRect().width);
+ }
  // Anchoring the left edge is exact if there is room, clamped at the right edge.
  const left=Math.max(0,Math.min(width-popupWidth,bounds.left-area.getBoundingClientRect().left));
  panel.style.setProperty("left",Math.round(left)+"px","important");
@@ -1403,6 +1585,11 @@ window.setMenuPopupPlacement=(above,offset,room)=>{
  document.body.classList.toggle("popup-above",!!above);
  if(choiceOpen==="mode")positionCascadeEditor();
  fit();
+};
+window.setResultsPaused=paused=>{
+ if(!resultWindow)return;
+ document.body.classList.toggle("results-paused",!!paused);
+ syncTimerTicker();
 };
 window.setResultsCollapsed=collapsed=>{
  document.body.classList.toggle("results-collapsed",!!collapsed);
@@ -1430,12 +1617,28 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  if(controlsWindow&&choiceOpen&&menuOpen){
   positionPopupUnderTrigger();
   const popup=document.getElementById("choices");
-  // Stable measured height regardless of whether native positions it above or below.
-  // The intended cascade is always 190px tall even if CSS temporarily clamps
-  // its visible height to a short screen. Repositioning must be able to expand it.
   const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;
-   h=Math.max(h,choiceOpen==="mode"?baseHeight+190+6:
-    baseHeight+Math.ceil(popup.getBoundingClientRect().height)+6);
+  if(choiceOpen==="more"){
+   // Exactly N original 30px tiles, independent of WebView height/reflow.
+   const tiles=popup.querySelectorAll(".quickMoreAction").length;
+   const gap=Math.max(0,parseFloat(getComputedStyle(popup).rowGap)||0);
+   const moreHeight=tiles*30+Math.max(0,tiles-1)*gap;
+   h=Math.max(h,baseHeight+Math.ceil(moreHeight)+6);
+  }else if(choiceOpen==="mode"){
+   // Preserve the approved six-entry cascading Modos dimensions.
+   h=Math.max(h,baseHeight+190+6);
+  }else{
+   // Android first grows the native window, then limits --popup-room if the
+   // screen is short. client rect is therefore feedback from our OWN resize
+   // and made ALL menus oscillate/shrink. scrollHeight is the independent
+   // natural content height; cap at the popup's approved design height.
+   const natural=Math.max(popup.scrollHeight,Math.ceil(popup.getBoundingClientRect().height));
+   const cap=popup.classList.contains("locationPanel")?265:
+    popup.classList.contains("filterPicker")?255:
+    choiceOpen==="filters"?315:choiceOpen==="period"?245:
+    choiceOpen==="alerts"?395:Math.max(140,Number(window.visualPrefs?.popupHeight)||390);
+   h=Math.max(h,baseHeight+Math.min(cap,natural)+6);
+  }
  }
  if(Math.abs(h-lastHeight)>1){
   lastHeight=h;
@@ -1458,7 +1661,7 @@ function closeChoices(){
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
- document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker",
+ document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker","morePanel",
   "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
  delete document.getElementById("choices").dataset.panelKind;
  if(controlsWindow)Native.locationEditor(false);
@@ -1470,6 +1673,8 @@ function toggleChoices(kind){
  if(controlsWindow&&!menuOpen)setMenuOpen(true,document.body.classList.contains('menu-left')?'left':'right',0);
  if(!menuOpen)return;
  if(choiceOpen===kind){closeChoices();return;}
+ // Native/programmatic navigation must also discard the More-only popup CSS.
+ if(choiceOpen==="more")closeChoices();
  if(["location","filters"].includes(choiceOpen)&&!["location","filters"].includes(kind)){
   if(controlsWindow)Native.locationEditor(false);
  }
@@ -1480,12 +1685,16 @@ function toggleChoices(kind){
  choiceOpen=kind;
  if(kind!=="mode")document.getElementById("choices").classList.remove(
   "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
- document.getElementById("menu").classList.add("subview");
+ // Every popup is a cascade, not a substitute for the main ribbon.
+ // Do not toggle a layout-changing .subview class for ANY menu.
+ document.getElementById("menu").classList.remove("subview");
  if(kind==="alerts"){renderAlertsChoices();return;}
  if(kind==="info"){renderInfoChoices();return;}
  if(kind==="appearance"){renderAppearanceChoices();return;}
   if(kind==="visual"){window.renderVisualEditor();return;}
+ if(kind==="more"){renderMoreChoices();return;}
  if(kind==="filters"){
+  modeScrollTop=0; // Open at the first field, not at an old scroll offset.
   modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
   // Initial Level selection covers the requested wild-spawn range.
   if(modeDraft.levelMin===""||modeDraft.levelMin==null)modeDraft.levelMin="1";
@@ -1691,6 +1900,20 @@ function renderModeChoices(){
 /* FILTERS-POGO-01: source-aligned menu. Pokémon species/IV/PvP/Coords stay
    in their dedicated menus. These selectors are just a compact UI for the
    existing PoGoCoordinates probe; nothing is applied until ✓ Aplicar. */
+/* LT57-WEATHER-ICONS-01: original nine Drive PNGs; values stay canonical. */
+const WEATHER_ICON_FILES=Object.freeze({
+ "Any":"any.png","Boosted":"boosted.png","Sunny":"sunny.png",
+ "Rainy":"rainy.png","Partly Cloudy":"partly-cloudy.png",
+ "Cloudy":"cloudy.png","Windy":"windy.png","Snow":"snow.png","Fog":"fog.png"
+});
+function makeWeatherIcon(value){
+ const name=WEATHER_ICON_FILES[String(value||"").trim()]||WEATHER_ICON_FILES.Any;
+ const img=document.createElement("img");img.className="weatherChoiceIcon";
+ img.alt="";img.setAttribute("aria-hidden","true");
+ img.src="file:///android_asset/weather-icons/"+name;
+ img.onerror=()=>{img.style.display="none";};
+ return img;
+}
 function renderExtraFilters(panel,make){
  const divider=()=>panel.appendChild(make("div","extraDivider"));
  const field=(label,control)=>{
@@ -1699,10 +1922,15 @@ function renderExtraFilters(panel,make){
  };
  const option=(key,label)=>{
   const data=filterOptions[key]||{};
-  const choices=Array.isArray(data.options)?data.options.map(x=>String(x).trim()).filter(Boolean):[];
-  const current=String(modeDraft[key]||"");
-  const button=make("button","extraValue",current||"Qualquer / padrão");
-  button.type="button";button.disabled=!choices.length;
+  const live=Array.isArray(data.options)?data.options.map(x=>String(x).trim()).filter(Boolean):[];
+  const choices=key==="sortBy"?
+   (live.length?live:["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]):
+   key==="weather"?
+   (live.length?live:["Any","Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"]):live;
+  const current=String(modeDraft[key]||(key==="sortBy"?"Despawn (longest)":""));
+  const button=make("button","extraValue",current||(key==="weather"?"Any":"—"));
+  if(key==="weather")button.prepend(makeWeatherIcon(current||"Any"));
+  button.type="button";button.disabled=!choices.length&&!["sortBy","weather"].includes(key);
   button.title=choices.length?"Selecionar "+label:"Aguardando opções verificadas no PoGoCoordinates";
   button.onclick=()=>{modeScrollTop=panel.scrollTop;renderFilterPicker(key,label,choices);};
   field(label,button);
@@ -1739,46 +1967,49 @@ function renderExtraFilters(panel,make){
   line.append(name,wrapper);panel.appendChild(line);
  };
  const chips=(key,label)=>{
-  const choices=(Array.isArray(filterOptions[key]?.options)?filterOptions[key].options:[]).map(x=>String(x).trim())
-   .filter(x=>x&&!/^(?:any\b|all\b|qualquer\b|todos?\b|select\b)/i.test(x));
-  const uniq=[...new Set(choices)];
-  const sizeOrder=["XXS","XS","S","M","L","XL","XXL"];
-  const mapLabel=value=>{
-   if(key==="gender"){
-    if(/^(?:male|macho|masculino)$/i.test(value))return "♂";
-    if(/^(?:female|f[eê]mea|feminino)$/i.test(value))return "♀";
-    if(/(?:genderless|unknown|sem g[eê]nero|gender unknown)/i.test(value))return "⚲";
-   }
-   return value;
-  };
-  // Show PokeLocation-style button positions, but never enable an option
-  // that has not been discovered in the official live PoGoCoordinates selector.
-  const siteValues=key==="size"?
-   sizeOrder.map(label=>{
-    const actual=uniq.find(v=>v.toUpperCase()===label);
-    return {value:actual||label,label,enabled:!!actual};
-   }):[
-    ...["Male","Female","Genderless"].map(label=>{
-     const match=uniq.find(v=>mapLabel(v)===(label==="Male"?"♂":label==="Female"?"♀":"⚲"));
-     return {value:match||label,label:label==="Male"?"♂":label==="Female"?"♀":"⚲",enabled:!!match};
-    }),
-    ...uniq.filter(v=>!["♂","♀","⚲"].includes(mapLabel(v)))
-      .map(value=>({value,label:mapLabel(value),enabled:true}))
-   ];
-  const line=make("div","extraField extraChipsField"),name=make("label","",label);
-  const group=make("div","extraChipRow");
-  const values=[{value:"",label:"Qualquer",enabled:true},...siteValues];
-  for(const item of values){
-   const button=make("button","extraChip",item.label);button.type="button";
-   button.disabled=!item.enabled;
-   button.classList.toggle("chosen",String(modeDraft[key]||"")===item.value);
-   button.setAttribute("aria-pressed",String(String(modeDraft[key]||"")===item.value));
-   button.setAttribute("aria-label",label+": "+(item.value||"Qualquer"));
-   button.onclick=()=>{modeDraft[key]=item.value;modeScrollTop=panel.scrollTop;renderFiltersChoices();};
+  const known=Array.isArray(filterOptions[key]?.options)?filterOptions[key].options:[];
+  const choices=[...new Set(known.map(v=>String(v||"").trim()).filter(Boolean))];
+  const multiKey=key+"Selections";
+  const existing=Array.isArray(modeDraft[multiKey])?modeDraft[multiKey].map(v=>String(v).trim()):[];
+  const isGender=key==="gender";
+  const selected=new Set(existing.filter(v=>v&&!/^(any|qualquer)$/i.test(v)));
+  const order=isGender?["Any","Male","Female","Genderless"]:["XXS","XS","S","M","L","XL","XXL"];
+  const symbol=v=>!isGender?v:v==="Any"?"⚥":v==="Male"?"♂":v==="Female"?"♀":"⚲";
+  const itemValue=value=>choices.find(actual=>{
+   if(value==="Any")return /^(any(?: gender)?|qualquer)$/i.test(actual);
+   if(!isGender)return actual.toUpperCase()===value;
+   return value==="Genderless"?/^(genderless|unknown|sem gênero)$/i.test(actual):
+    actual.toLowerCase()===value.toLowerCase();
+  });
+  const line=make("div","extraField extraChipsField");
+  const name=make("label","",label),group=make("div","extraChipRow");
+  group.dataset.kind=key;
+  if(isGender){group.setAttribute("role","radiogroup");group.setAttribute("aria-label","Sexo");}
+  else {group.setAttribute("role","group");group.setAttribute("aria-label","Tamanhos");}
+  const chosenGender=existing.length?existing[0]:"";
+  for(const value of order){
+   const actual=itemValue(value),resolved=actual||value;
+   const button=make("button","extraChip",symbol(value));button.type="button";
+   const checked=isGender?(value==="Any"?!chosenGender||/^(any|qualquer)$/i.test(chosenGender):
+    chosenGender.toLowerCase()===resolved.toLowerCase()||chosenGender.toLowerCase()===value.toLowerCase()):
+    selected.has(resolved)||selected.has(value);
+   // Menu choices stay tappable while official options load. Search is still
+   // blocked unless the site probe verifies every requested value.
+   button.classList.toggle("chosen",checked);
+   button.setAttribute(isGender?"aria-checked":"aria-pressed",String(checked));
+   if(isGender)button.setAttribute("role","radio");
+   button.setAttribute("aria-label",value==="Any"?"Any":resolved);
+   button.title=actual?resolved:resolved+" · confirmar no site ao aplicar";
+   button.onclick=()=>{
+    if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}
+    else{
+     if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);
+     modeDraft[multiKey]=[...selected];
+    }
+    modeDraft[key]=""; // Do not apply the stale legacy one-choice setting.
+    modeScrollTop=panel.scrollTop;renderFiltersChoices();
+   };
    group.appendChild(button);
-  }
-  if(uniq.length===0){
-   const wait=make("span","extraNote","Aguardando opções do site…");group.appendChild(wait);
   }
   line.append(name,group);panel.appendChild(line);
  };
@@ -1792,7 +2023,7 @@ function renderExtraFilters(panel,make){
   panel.appendChild(button);
  };
  // The remote ordering control is not a search mode.
- divider();option("sortBy","Sort by");
+ divider();option("sortBy","Ordenar");
  section("Filtros gerais",generalExpanded,()=>{generalExpanded=!generalExpanded;});
  if(generalExpanded){
   const pvp=["gl","ul"].includes(modeDraft.mode);
@@ -1805,42 +2036,141 @@ function renderExtraFilters(panel,make){
   }
   option("weather","Clima");
   chips("size","Tamanho");
-  option("form","Forma");
-  chips("gender","Gênero");
-  panel.appendChild(make("p","extraNote",
-   "Tamanho e Gênero: escolha por botões (uma opção por filtro, conforme o seletor atual do site)."));
+  chips("gender","Sexo");
+  const formSelected=Array.isArray(modeDraft.formSelections)?modeDraft.formSelections:[];
+  const formButton=make("button","extraValue",formSelected.length?formSelected.length+" formas":"Any");
+  formButton.type="button";formButton.title="Buscar e selecionar formas oficiais no site";
+  formButton.onclick=()=>{modeScrollTop=panel.scrollTop;formQuery="";renderFormPicker();};
+  field("Forma",formButton);
  }
- section("Filtros avançados",advancedExpanded,()=>{advancedExpanded=!advancedExpanded;});
- if(advancedExpanded){
-  if(["gl","ul"].includes(modeDraft.mode)){
-   number("minPvpCp","PC mínimo PvP");
-   const input=make("input");input.type="checkbox";
-   input.checked=modeDraft.includePreviousEvolutions!==false;
-   input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;};
-   field("Evoluções anteriores",input);
-  }
-  panel.appendChild(make("p","extraNote",
-   "Espécies e formas específicas: menu Pokémon. IV, IV%, GL e UL: menu Modos. Coordenadas e raio: menu Localização."));
+ // Keep active PvP-only criteria without the obsolete Advanced header.
+ if(["gl","ul"].includes(modeDraft.mode)){
+  number("minPvpCp","PC mínimo PvP");
+  const input=make("input");input.type="checkbox";
+  input.checked=modeDraft.includePreviousEvolutions!==false;
+  input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;};
+  field("Evoluções anteriores",input);
  }
 }
 function renderFilterPicker(key,label,options){
  const panel=uxPanel(label);panel.dataset.panelKind="filters";panel.classList.add("filterPicker");
  // A neutral option is a UI state; site changes will be verified before submitting.
- const neutral=document.createElement("button");neutral.textContent="Any / padrão";
- neutral.onclick=()=>{modeDraft[key]="";choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};panel.appendChild(neutral);
- for(const value of options){
+ if(key!=="sortBy"){
+  const neutral=document.createElement("button");neutral.textContent="Any";
+  if(key==="weather")neutral.prepend(makeWeatherIcon("Any"));
+  neutral.onclick=()=>{modeDraft[key]="";choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
+  panel.appendChild(neutral);
+ }
+ const safe=key==="sortBy"?["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]:
+  key==="weather"?["Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"]:options;
+ const allowed=key==="sortBy"?
+  safe.filter(v=>options.some(x=>x.toLowerCase()===v.toLowerCase())):
+  key==="weather"?safe.filter(v=>options.some(x=>x.replace(/[^a-z]/ig,"").toLowerCase()===v.replace(/[^a-z]/ig,"").toLowerCase())):
+  safe;
+ for(const value of allowed){
   const btn=document.createElement("button");btn.type="button";
-  btn.textContent=(modeDraft[key]===value?"✓ ":"")+value;btn.className=modeDraft[key]===value?"chosen":"";
+  btn.textContent=(modeDraft[key]===value?"✓ ":"")+value;
+  if(key==="weather")btn.prepend(makeWeatherIcon(value));
+  btn.className=modeDraft[key]===value?"chosen":"";
   btn.onclick=()=>{modeDraft[key]=value;choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
   panel.appendChild(btn);
  }
  const back=document.createElement("button");back.textContent="‹ Voltar";back.onclick=()=>choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();panel.appendChild(back);
  fit();
 }
+// LT71: Form has its own official site-driven multi-picker, never Gender items.
+function refreshOfficialFormList(){
+ if(!controlsWindow||choiceOpen!=="filters")return;
+ const target=document.getElementById("officialFormItems");
+ const chips=document.getElementById("officialFormSelected");
+ if(!target||!chips)return;
+ const wanted=Array.isArray(modeDraft.formSelections)?modeDraft.formSelections:[];
+ const selected=new Set(wanted.map(x=>String(x).toLowerCase()));
+ const source=Array.isArray(filterOptions.form?.options)?filterOptions.form.options:[];
+ const values=[...new Set(source.map(x=>String(x||"").trim()).filter(Boolean))];
+ const term=formQuery.trim().toLowerCase();
+ const matches=values.filter(x=>!term||x.toLowerCase().includes(term)).slice(0,60);
+ target.replaceChildren();chips.replaceChildren();
+ const status=document.createElement("p");status.className="uxNote";
+ status.textContent=formOptionsStatus+(values.length?" · "+values.length+" opções verificadas":"");
+ target.appendChild(status);
+ if(!matches.length){
+  const message=document.createElement("p");message.className="uxNote";
+  message.textContent="Aguardando Form do site · nenhuma forma será inventada";
+  target.appendChild(message);
+ }
+ for(const value of matches){
+  const button=document.createElement("button");button.type="button";
+  const active=selected.has(value.toLowerCase());
+  button.className=active?"chosen":"";
+  button.setAttribute("aria-pressed",String(active));
+  button.textContent=(active?"✓ ":"")+value;
+  button.onclick=()=>{
+   const list=Array.isArray(modeDraft.formSelections)?[...modeDraft.formSelections]:[];
+   modeDraft.formSelections=active?list.filter(v=>v.toLowerCase()!==value.toLowerCase()):
+    [...list,value];
+   modeDraft.form="";refreshOfficialFormList();
+  };
+  target.appendChild(button);
+ }
+ for(const value of wanted){
+  const chip=document.createElement("button");chip.className="pokemonChip";chip.type="button";
+  chip.textContent=value+" ×";chip.onclick=()=>{
+   modeDraft.formSelections=modeDraft.formSelections.filter(v=>v!==value);
+   refreshOfficialFormList();
+  };
+  chips.appendChild(chip);
+ }
+}
+function renderFormPicker(){
+ if(!modeDraft)modeDraft={...searchSettings,mode};
+ const panel=uxPanel("FORMA · filtro oficial");
+ panel.dataset.panelKind="filters";panel.classList.add("filterPicker","formPicker");
+ const selected=document.createElement("div");selected.id="officialFormSelected";selected.className="pokemonSelected";
+ const input=document.createElement("input");input.type="search";
+ input.id="officialFormSearch";input.placeholder="Buscar forma no PoGoCoordinates";
+ input.value=formQuery;input.setAttribute("aria-label","Pesquisar Form oficial do site");
+ input.oninput=()=>{
+  formQuery=input.value;
+  formOptionsStatus="Pesquisando formas no site...";
+  refreshOfficialFormList();
+  if(Native.requestFormOptions)Native.requestFormOptions(formQuery);
+ };
+ input.onfocus=()=>{if(Native.locationEditor)Native.locationEditor(true);};
+ input.onblur=()=>{if(Native.locationEditor)Native.locationEditor(false);};
+ const list=document.createElement("div");list.id="officialFormItems";
+ const done=document.createElement("button");done.type="button";
+ done.textContent="✓ Confirmar seleção";
+ done.onclick=()=>{modeDraft.form="";renderFiltersChoices();};
+ const clear=document.createElement("button");clear.type="button";
+ clear.textContent="Limpar formas";clear.onclick=()=>{
+  modeDraft.formSelections=[];modeDraft.form="";refreshOfficialFormList();
+ };
+ const back=document.createElement("button");back.type="button";back.textContent="‹ Voltar aos filtros";
+ back.onclick=renderFiltersChoices;
+ const note=document.createElement("p");note.className="uxNote";
+ note.textContent="Somente ✓ Aplicar, no painel Filtros, envia as alterações ao site.";
+ panel.append(selected,input,list,done,clear,back,note);
+ refreshOfficialFormList();
+ if(Native.requestFormOptions)Native.requestFormOptions(formQuery);
+ fit();
+}
+window.onFormOptions=response=>{
+ if(!response||response.key!=="form")return;
+ if(response.query!==undefined&&response.query!==formQuery.trim())return;
+ const previous=Array.isArray(filterOptions.form?.options)?filterOptions.form.options:[];
+ const options=response.ok&&Array.isArray(response.options)?response.options:[];
+ if(options.length){
+  filterOptions.form={present:true,options:[...new Set([...previous,...options])].slice(0,500)};
+  formOptionsStatus="Form confirmado no PoGoCoordinates";
+ }else formOptionsStatus=response.pending?"⌛ Aguardando Form oficial":
+  String(response.reason||"Sem confirmação do site; tente novamente");
+ refreshOfficialFormList();
+};
 window.onFilterOptions=function(response){
  if(!response||!response.ok)return;
  filterOptions=response.partial?{...filterOptions,...(response.options||{})}:(response.options||{});
- if(choiceOpen==="filters"&&modeDraft){
+ if(choiceOpen==="filters"&&modeDraft&&document.getElementById("officialFormItems")===null){
   const panel=document.getElementById("choices"),scroll=panel.scrollTop;
   if(!document.activeElement||!document.activeElement.matches("input")){
    renderFiltersChoices();panel.scrollTop=scroll;
@@ -1848,32 +2178,40 @@ window.onFilterOptions=function(response){
  }
 };
 
+// LT60-LOC-STATE-01: the current search must earn its own Coords/Radius proof.
+function currentLocationUiState(){
+ if(!locationEnabled)return "OFF";
+ if(locationVerified)return "CONFIRMED";
+ return activeSearchPhase==="error"?"NOT_APPLIED":"REQUESTED";
+}
 function locationPanelFeedback(){
  if(!controlsWindow||choiceOpen!=="location")return;
  const panel=document.getElementById("choices"),hint=panel.querySelector("#locHint");
  const toggle=panel.querySelector("#locActiveSwitch");
  const radius=panel.querySelector("#locRadiusValue");
- if(!hint||!toggle||!radius)return;
+ if(!hint||!radius)return;
  // Preserve an unsubmitted radius draft across asynchronous native updates.
  // Only release it once the requested radius has been confirmed on the site.
  if(radius.dataset.locationDraft==="true"&&locationEnabled&&locationVerified&&
     radius.value.trim()!==""&&Number(radius.value)===locationRadius)
    delete radius.dataset.locationDraft;
- toggle.textContent=locationEnabled?"ON":"OFF";
- toggle.className=locationEnabled?"locActive":"locOff";
- toggle.setAttribute("aria-checked",String(locationEnabled));
+ if(toggle){
+  toggle.textContent=locationEnabled?"ON":"OFF";
+  toggle.className=locationEnabled?"locActive":"locOff";
+  toggle.setAttribute("aria-checked",String(locationEnabled));
+ }
  // Never overwrite a number being typed; radiusField is now a real input.
  if(document.activeElement!==radius&&radius.dataset.locationDraft!=="true")
    radius.value=String(locationRadius);
  const radiusSlider=panel.querySelector('input[type="range"]');
  if(radiusSlider&&document.activeElement!==radiusSlider&&radius.dataset.locationDraft!=="true")
    radiusSlider.value=String(locationRadius);
- const error=/localiza(?:ção|cao) (?:não|nao) (?:aplicada|confirmada)|localiza(?:ção|cao) residual/i.test(status);
- hint.textContent=error?"⚠ "+status:
-  locationEnabled?(locationVerified?"✓ Localização confirmada na busca · "+locationRadius+" km":
-    "⌛ Coordenadas solicitadas · aguardando confirmação no PoGoCoordinates"):
+ const state=currentLocationUiState();
+ hint.textContent=state==="CONFIRMED"?"✓ Localização confirmada na busca · "+locationRadius+" km":
+  state==="NOT_APPLIED"?"⚠ Localização não aplicada · confira Coords e raio no site.":
+  state==="REQUESTED"?"⌛ Coordenadas solicitadas · aguardando confirmação no PoGoCoordinates":
   "OFF · busca geral, sem coordenadas do aplicativo.";
- hint.style.color=error?"#ffbf8f":"";
+ hint.style.color=state==="NOT_APPLIED"?"#ffbf8f":"";
 }
 window.onLocationPaste=coords=>{
  if(!controlsWindow||choiceOpen!=="location")return;
@@ -1898,7 +2236,7 @@ function renderLocationChoices(){
  const title=make("div","choiceHeader","📍 LOCALIZAÇÃO");
  const close=make("button","choiceClose","×");close.type="button";close.title="Fechar";
  close.onclick=closeChoices;title.appendChild(close);
- const hint=make("p","locText","Cole latitude,longitude e escolha 0–1000 km. ✓ Aplicar executa Search no PoGoCoordinates com todos os filtros já ativos. ON ativa Coords; OFF volta à busca geral. Ocultar conserva o estado.");
+ const hint=make("p","locText","Coords e raio 0–1000 km. Aplicar pesquisa sem limpar outros filtros.");
  const fieldRow=make("div","locCoordsRow");
  const field=make("input","locField");field.id="locCoordinateInput";field.type="text";field.inputMode="decimal";
  field.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
@@ -1908,11 +2246,8 @@ function renderLocationChoices(){
  const paste=make("button","locPaste","📋");paste.type="button";paste.title="Colar coordenadas da área de transferência";
  paste.setAttribute("aria-label",paste.title);
  paste.onclick=()=>Native.pasteLocationCoords();
- const toggle=make("button",locationEnabled?"locActive":"locOff",locationEnabled?"ON":"OFF");
- toggle.id="locActiveSwitch";toggle.type="button";toggle.setAttribute("role","switch");
- toggle.setAttribute("aria-checked",String(locationEnabled));
- toggle.setAttribute("aria-label","Ativar ou desativar o filtro de coordenadas");
- fieldRow.append(field,paste,toggle);
+ // Location changes only when applying or clearing this one field.
+ fieldRow.append(field,paste);
  const label=make("div","locLine");const labelName=make("span","","Raio da busca");
  const radiusField=make("input","locRadiusNumber");
  radiusField.id="locRadiusValue";radiusField.type="number";radiusField.min="0";radiusField.max="1000";radiusField.step="1";
@@ -1930,15 +2265,17 @@ function renderLocationChoices(){
   if(Number.isInteger(number)&&number>=0&&number<=1000)slide.value=String(number);
  };
  const message=make("p","");message.id="locHint";
- const actions=make("div","locLine");const apply=make("button","locSave","✓ Aplicar");
- const hide=make("button","locHide","Ocultar");
+ const actions=make("div","locLine compactLocationActions");
+ const apply=make("button","locSave","✓ Aplicar");
+ const clear=make("button","locHide","Limpar");
+ const hide=make("button","locHide","Fechar");
  const disable=()=>{
   // OFF is explicit: discard the unsent radius draft, not saved site filters.
   delete radiusField.dataset.locationDraft;
   message.textContent="⌛ Desativando filtro geográfico...";
   Native.setLocation(false,"",0);
  };
- toggle.onclick=()=>{if(locationEnabled){disable();return;}submit();};
+ clear.onclick=disable;
  function submit(){
   const raw=field.value.trim();
   const match=raw.match(/^\s*([-+]?\d{1,2}(?:\.\d+)?)\s*[,;]\s*([-+]?\d{1,3}(?:\.\d+)?)\s*$/);
@@ -1956,7 +2293,7 @@ function renderLocationChoices(){
   Native.setLocation(true,wantedCoords,wantedRadius);
  }
  apply.onclick=submit;hide.onclick=closeChoices;
- actions.append(apply,hide);
+ actions.append(apply,clear,hide);
  panel.append(title,hint,fieldRow,label,slide,message,actions);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
@@ -2387,7 +2724,7 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
   // UX-SPRITE-GAP-02: metadata is independently scrollable inside the side strip.
   // Never stretch the Pokemon's vertical slot to fit all enabled rank lines.
   if(horizontal)return size+3;
-  return pitch; // Transparent sprite squares may overlap without shrinking the image.
+  return Math.max(size,pitch); // No sprite-overlap or artificial top padding at zero gap.
  });
  const desired=natural.reduce((a,b)=>a+b,0);
  const headerArea=(Number(v.headerIconY)||0)+(Number(v.headerTouchHeight)||30)+
@@ -2588,7 +2925,8 @@ function updateTimers(){
 let timerTicker=null;
 function syncTimerTicker(){
  if(!resultWindow)return;
- const shown=!document.body.classList.contains("results-collapsed");
+ const shown=!document.body.classList.contains("results-collapsed")&&
+  !document.body.classList.contains("results-paused");
  const hasTimers=!!document.querySelector(".timer");
  if(shown&&hasTimers){
   if(timerTicker===null){updateTimers();timerTicker=setInterval(updateTimers,1000);}
@@ -2624,7 +2962,15 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  if(!resultWindow)document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  locationVerified=!!verifiedLocation&&locationEnabled;
- if(config&&typeof config==="object")searchSettings={...searchSettings,...config};
+ if(config&&typeof config==="object"){
+  searchSettings={...searchSettings,...config};
+  for(const key of ["size","gender"]){
+   const multi=key+"Selections";
+   if(!Array.isArray(config[multi]))
+    searchSettings[multi]=config[key]?[String(config[key])]:[];
+  }
+  if(!searchSettings.sortBy)searchSettings.sortBy="Despawn (longest)";
+ }
  // Compatibility with the original single-Pokémon filter stored before SITE-POKEMON-01.
  if(config&&!Array.isArray(config.pokemonSelections)&&typeof config.pokemon==="string"&&config.pokemon.trim())
   searchSettings.pokemonSelections=[config.pokemon.trim()];
@@ -2636,7 +2982,8 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  searchActive=!!isSearching;
  siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale;
  mode=m==="iv"?"raw":m;status=String(s||"");activeSearchPhase=String(searchPhase||"idle");
- if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+  if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();
+ shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  showResultText=!!textVisible;
  notificationPermissionGranted=!!permissionGranted;
  watchAlertsEnabled=!!favoriteAlertsEnabled;
@@ -2680,6 +3027,17 @@ const QUICK_ACTIONS=[
 const QUICK_PRIMARY_IDS=["mode","sh","filters","location","pokemon","star","bell","period","appearance"];
 const QUICK_UTILITY_IDS=[]; // All non-footer buttons share the same DOM list.
 const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0]);
+// Only a presentation group; original IDs remain independently movable.
+const MORE_ACTION_IDS=Object.freeze(["report","donate","close"]);
+function groupedMoreIds(prefs=quickPrefs){
+ const order=Array.isArray(prefs?.order)?prefs.order:[];
+ const hidden=Array.isArray(prefs?.hidden)?prefs.hidden:[];
+ const suffix=[];
+ for(let i=order.length-1;i>=0&&MORE_ACTION_IDS.includes(order[i]);i--)
+  suffix.unshift(order[i]);
+ const visible=suffix.filter(id=>!hidden.includes(id));
+ return visible.length>=2?visible:[];
+}
 let quickPrefs={direction:"horizontal",labels:false,order:[...QUICK_DEFAULT_ORDER],hidden:[]};
 function normalizedQuickPrefs(p){
  const ids=QUICK_DEFAULT_ORDER;
@@ -2706,18 +3064,29 @@ function saveQuickPrefs(){
 /* FILTERS-POGO-06/07: criteria count includes only this menu, never Pokémon,
    Shiny, coordinates, IV or GL/UL rank. Min+max = one range criterion.
    Level 1–35 is the user-selected neutral default, not an active restriction. */
-const FILTERS_MENU_KEYS=Object.freeze(["sortBy","weather","size","form","gender",
+const FILTERS_MENU_KEYS=Object.freeze(["sortBy","weather","size","form","gender","sizeSelections","genderSelections","formSelections",
  "cpMin","cpMax","levelMin","levelMax","minPvpCp"]);
 function extraFilterValue(config,key){
  const value=String(config?.[key]??"").trim();
- if((key==="levelMin"&&value==="1")||(key==="levelMax"&&value==="35"))return "";
- if((key==="cpMin"||key==="minPvpCp")&&value==="0")return "";
+ // The search page has neutral defaults, not "active" criteria. No badge for
+ // Any, default Sort, Level 1–35, empty field, or default CP lower bound.
+ if(!value||/^(?:any|qualquer|padr[aã]o)$/i.test(value))return "";
+ if(key==="sortBy"&&value.toLowerCase()==="despawn (longest)")return "";
+ if((key==="levelMin"&&Number(value)===1)||
+    (key==="levelMax"&&Number(value)===35))return "";
+ if((key==="cpMin"||key==="minPvpCp")&&Number(value)===0)return "";
  return value;
 }
 function activeExtraFilterCount(config=searchSettings,selectedMode=mode){
  const active=key=>extraFilterValue(config,key)!=="";
+ const hasMulti=key=>Array.isArray(config?.[key+"Selections"])&&
+  config[key+"Selections"].some(v=>!["","any","qualquer"].includes(String(v||"").trim().toLowerCase()));
  const pvp=selectedMode==="gl"||selectedMode==="ul";
- let total=["sortBy","weather","size","form","gender"].filter(active).length;
+ let total=["weather"].filter(active).length+
+   (active("form")||hasMulti("form")?1:0)+
+  (active("sortBy")?1:0)+
+  (active("size")||hasMulti("size")?1:0)+
+  (active("gender")||hasMulti("gender")?1:0);
  if(pvp){
   if(active("minPvpCp"))total++;
   if(config?.includePreviousEvolutions===false)total++;
@@ -2730,7 +3099,9 @@ function activeExtraFilterCount(config=searchSettings,selectedMode=mode){
 function filterDraftChanged(){
  if(!modeDraft)return false;
  return FILTERS_MENU_KEYS.some(key=>
-  extraFilterValue(modeDraft,key)!==extraFilterValue(searchSettings,key))||
+  key.endsWith("Selections")?
+   JSON.stringify(modeDraft[key]||[])!==JSON.stringify(searchSettings[key]||[]):
+   extraFilterValue(modeDraft,key)!==extraFilterValue(searchSettings,key))||
   (modeDraft.includePreviousEvolutions!==false)!==(searchSettings.includePreviousEvolutions!==false);
 }
 function updateFiltersPanelStatus(){
@@ -2740,9 +3111,10 @@ function updateFiltersPanelStatus(){
  const dirty=filterDraftChanged();
  const verified=count>0&&siteFiltersConfirmed&&!searchActive&&!resultsStale;
  el.textContent=dirty?"● Alterações ainda não aplicadas":
-  count===0?"Nenhum filtro adicional ativo":
+  count===0?"":
   verified?"✓ Aplicado no PoGoCoordinates":
   "⌛ Aguardando confirmação do site";
+ el.hidden=!el.textContent;
  el.classList.toggle("confirmed",!dirty&&verified);
 }
 function quickState(id){
@@ -2751,7 +3123,9 @@ function quickState(id){
   case "sh":return shinyPending?"Pendente":shiny?"ON":"OFF";
   case "bell":return !notificationPermissionGranted?"Permissão":(generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))?"ON":"OFF";
   case "star":return hasFavorites?"Ativos":"";
-  case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF";
+  case "location":return currentLocationUiState()==="CONFIRMED"?"✓ "+locationRadius+" km":
+   currentLocationUiState()==="REQUESTED"?"Solicitada":
+   currentLocationUiState()==="NOT_APPLIED"?"Não aplicada":"OFF";
   case "filters":return activeExtraFilterCount(searchSettings,mode)+" ativos";
   case "pokemon":return Array.isArray(searchSettings.pokemonSelections)&&searchSettings.pokemonSelections.length?
    searchSettings.pokemonSelections.length+" escolhidos":"Todos";
@@ -2761,7 +3135,7 @@ function quickState(id){
  }
 }
 function quickClick(id){
- if(["mode","location","filters","period","appearance"].includes(id)){toggleChoices(id);return;}
+ if(["mode","location","filters","period","appearance","more"].includes(id)){toggleChoices(id);return;}
  switch(id){
   case "sh":Native.shiny();break; // Reuse native, login-verified Shiny toggle.
   case "bell":toggleChoices("alerts");break;
@@ -2775,6 +3149,7 @@ function quickClick(id){
 /* Use the ORIGINAL illustrated toolbar symbols instead of arbitrary
    Unicode glyphs. The Pokémon silhouette is a new custom outline. */
 const QUICK_SVG=Object.freeze({
+ more:'<circle cx="7" cy="16" r="2" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="2" fill="currentColor" stroke="none"/><circle cx="25" cy="16" r="2" fill="currentColor" stroke="none"/>',
  mode:'<path d="M4 7h16M4 12h16M4 17h16"/><path d="M9 4v6m6-1v6m-6-1v6" stroke-width="2.8"/>',
  filters:'<path d="M6 8h20M6 16h20M6 24h20"/>',
  pokemon:'<path d="M7.8 12.2 4.5 2.5Q4.2 1.5 5.4 1.6Q6.1 1.7 6.6 2.5L10.7 9.4Q14 7.8 17.2 9.5L22.4 2.2Q23.4 1.1 24.3 2.4Q25.1 3.5 24.5 4.9L20.4 12.2 28.2 7.2Q29.9 6.7 29.6 8.6V14.9Q29.6 16.1 28.4 16.5L23.7 18.1 26.2 20.6Q26.8 21.4 25.8 22.2L23.3 24Q22.9 24.5 23.3 25.7L24.1 28.4Q24.3 30 22.9 30H19.8Q18.8 30 18 29.2L15.2 28.4 11.9 29.5Q11.3 30.2 10.1 30.1H7.2Q5.7 30.1 5.6 28.5L6 26.2V17Q6 14 7.8 12.2Z"/>',
@@ -2792,6 +3167,22 @@ function iconForQuick(id, fallback){
   image.src=art.path;image.alt="";image.setAttribute("aria-hidden","true");
   image.onerror=()=>{image.onerror=null;image.src=art.fallbackPath;};
   glyph.classList.add("modeArt");glyph.appendChild(image);
+  if(art.ivText){
+   glyph.classList.add("rawArt");
+   // Tiny SVG text fits the medal even when Android enlarges HTML fonts.
+   const ns="http://www.w3.org/2000/svg";
+   const overlay=document.createElementNS(ns,"svg");overlay.classList.add("quickIvValues");
+   overlay.setAttribute("viewBox","0 0 24 24");overlay.setAttribute("role","img");
+   overlay.setAttribute("aria-label","IV "+art.ivText);
+   const values=document.createElementNS(ns,"text");
+   values.setAttribute("x","12");values.setAttribute("y","12");
+   values.setAttribute("text-anchor","middle");
+   values.setAttribute("dominant-baseline","central");
+   values.setAttribute("textLength","16.5");
+   values.setAttribute("lengthAdjust","spacingAndGlyphs");
+   values.textContent=art.ivText;overlay.appendChild(values);
+   glyph.appendChild(overlay);
+  }
   if((mode==="gl"||mode==="ul")&&art.ivBadge){
    const rank=document.createElement("span");rank.className="quickRank";
    rank.textContent=art.ivBadge;glyph.appendChild(rank);
@@ -2824,8 +3215,12 @@ window.onPokemonSuggestions=response=>{
  if(choiceOpen!=="pokemon"||!response)return;
  if(response.query!==undefined&&response.query!==pokemonQuery)return; // stale suggestion response
  pokemonSuggestions=response.ok&&Array.isArray(response.options)?response.options:[];
- pokemonSuggestionStatus=response.ok?pokemonSuggestions.length?"":
-  response.empty===true?"Nenhuma opção oficial encontrada":"Aguardando opções oficiais...":
+ const state=String(response.state||"");
+ pokemonSuggestionStatus=state==="ready"&&pokemonSuggestions.length?"":
+  state==="explicit-empty"&&response.empty===true?"Nenhuma opção oficial encontrada":
+  state==="pending"?"⌛ "+String(response.reason||"Aguardando opções oficiais do site"):
+  state==="failed"?"⚠ "+String(response.reason||"Seletor oficial indisponível; tente novamente"):
+  response.ok&&pokemonSuggestions.length?"":
   String(response.reason||"Aguardando filtro Pokémon do PoGoCoordinates");
  drawPokemonSuggestions();
 };
@@ -2893,9 +3288,9 @@ function renderPokemonChoices(){
  const actions=document.createElement("div");actions.className="modeAction";
  const apply=document.createElement("button");apply.type="button";apply.className="modeApply";
  apply.textContent="✓ Aplicar";apply.onclick=()=>{
-  const next={...(pokemonPickerBase||searchSettings),mode,pokemon:"",
-   pokemonSelections:[...pokemonDraft],clearPokemonSelection:pokemonForceClear};
-  closeChoices();Native.setSearchConfig(JSON.stringify(next));
+  // Apply species/forms alone, never a stale snapshot of IV, Size, Form or other fields.
+  const selection={selections:[...pokemonDraft],clear:pokemonForceClear};
+  closeChoices();Native.setPokemonSelections(JSON.stringify(selection));
  };
  const clear=document.createElement("button");clear.type="button";clear.textContent="Limpar todos";
  clear.onclick=()=>{pokemonDraft=[];pokemonForceClear=true;renderPokemonTags();drawPokemonSuggestions();};
@@ -2905,41 +3300,80 @@ function renderPokemonChoices(){
  panel.appendChild(hint);
  renderPokemonTags();drawPokemonSuggestions();fit();
 }
+// Submenu remains a column of the ORIGINAL individual colored menu actions.
+function renderMoreChoices(){
+ const ids=groupedMoreIds();
+ if(!ids.length){closeChoices();return;}
+ const panel=document.getElementById("choices");panel.replaceChildren();
+ panel.classList.remove("locationPanel","modePanel","standardPanel","visualPanel",
+  "filterPicker","modeCascade","modeCascadeOpen");
+ panel.classList.add("visible","morePanel");
+ panel.dataset.panelKind="more";
+ panel.setAttribute("role","menu");panel.setAttribute("aria-label","Mais ações");
+ const trigger=document.querySelector('#quickMenuList button[data-key="more"]');
+ if(trigger)panel.style.setProperty("--more-tile-width",
+  Math.max(28,Math.round(trigger.getBoundingClientRect().width))+"px");
+ for(const id of ids){
+  const action=QUICK_ACTIONS.find(item=>item[0]===id);
+  if(!action)continue;
+  const button=document.createElement("button");button.type="button";
+  button.className="quickMoreAction";button.dataset.key=id;
+  button.setAttribute("role","menuitem");button.setAttribute("aria-label",action[2]);
+  button.title=action[2];button.appendChild(iconForQuick(id,action[1]));
+  button.onclick=()=>{closeChoices();quickClick(id);};
+  panel.appendChild(button);
+ }
+ fit();
+}
 function renderQuickMenu(){
  if(!controlsWindow)return;
  const outer=document.getElementById("quickMenuList"),rows=document.getElementById("quickRows"),
-   util=document.getElementById("quickUtilities"),footer=document.getElementById("quickFooter");
+  util=document.getElementById("quickUtilities"),footer=document.getElementById("quickFooter");
  if(!rows||!util||!footer)return;
- outer.classList.add("quick-horizontal","quick-no-labels"); // Icons only, always.
+ outer.classList.add("quick-horizontal","quick-no-labels");
  rows.replaceChildren();util.replaceChildren();footer.replaceChildren();
+ const moreIds=groupedMoreIds();let moreDrawn=false,slotCount=0;
  for(const id of quickPrefs.order){
-  const a=QUICK_ACTIONS.find(x=>x[0]===id);
-  if(!a||quickPrefs.hidden.includes(id))continue;
-  const button=document.createElement("button");button.type="button";button.dataset.key=id;
-  const isFooter=["report","donate","close"].includes(id);
+  const action=QUICK_ACTIONS.find(item=>item[0]===id);
+  if(!action||quickPrefs.hidden.includes(id))continue;
+  const inMore=moreIds.includes(id);
+  if(inMore&&moreDrawn)continue;
+  if(inMore)moreDrawn=true;
+  const renderedId=inMore?"more":id,name=inMore?"Mais":action[2];
+  const button=document.createElement("button");button.type="button";
+  button.dataset.key=renderedId;
+  const isFooter=MORE_ACTION_IDS.includes(renderedId);
   button.className=isFooter?"quickFooterAction":"quickRow";
-  button.title=a[2]+(quickState(id)?" · "+quickState(id):"");
-  button.setAttribute("aria-label",a[2]);
-  const glyph=iconForQuick(id,a[1]);
-  if(id==="mode"){
-   const art=getModeMenuIcon(mode,false,searchSettings);
-   button.dataset.modeArtKey=art.path+"|"+art.ivBadge;
+  if(inMore){
+   button.classList.add("quickMoreTrigger");
+   button.setAttribute("aria-haspopup","menu");
+   button.setAttribute("aria-expanded",String(choiceOpen==="more"));
   }
-  if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
-  const label=document.createElement("span");label.className="quickName";label.textContent=a[2];
-  const state=document.createElement("span");state.className="quickState";state.textContent=quickState(id);
-  button.append(glyph,label); // Keep hidden text for accessibility and preferences.
+  button.title=name+(quickState(renderedId)?" · "+quickState(renderedId):"");
+  button.setAttribute("aria-label",name);
+  const glyph=iconForQuick(renderedId,inMore?"⋯":action[1]);
+  if(renderedId==="mode"){
+   const art=getModeMenuIcon(mode,false,searchSettings);
+   button.dataset.modeArtKey=art.path+"|"+art.ivBadge+"|"+art.ivText;
+  }
+  if(renderedId==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
+  const label=document.createElement("span");label.className="quickName";label.textContent=name;
+  const state=document.createElement("span");state.className="quickState";state.textContent=quickState(renderedId);
+  button.append(glyph,label);
   if(!isFooter){
    button.append(state);
    const arrow=document.createElement("span");arrow.className="quickArrow";arrow.textContent="›";
-   if(!["star"].includes(id))button.appendChild(arrow);
-   // display:contents preserves order only within a single DOM container.
-   rows.appendChild(button);
-  }else footer.appendChild(button);
-  button.onclick=()=>quickClick(id);
+   if(!["star","more"].includes(renderedId))button.appendChild(arrow);
+  }
+  // All buttons share ONE ordered parent. Extracted utilities keep their true
+  // visual position, not the legacy footer-container grouping.
+  rows.appendChild(button);slotCount++;
+  button.onclick=()=>quickClick(renderedId);
  }
- // Recreating the menu replaces previously selected DOM nodes: restore all
- // native ON/OFF, Shiny pending and bell states on the NEW buttons.
+ outer.style.setProperty("--quick-slot-count",String(Math.max(1,slotCount)));
+ if(choiceOpen==="more"){
+  if(moreIds.length)renderMoreChoices();else closeChoices();
+ }
  refreshQuickMenuStates();
  fit();
 }
@@ -2977,7 +3411,7 @@ function refreshQuickMenuStates(){
   button.title=button.getAttribute("aria-label")+(current?" · "+current:"");
   if(id==="mode"){
    const art=getModeMenuIcon(mode,false,searchSettings);
-   const key=art.path+"|"+art.ivBadge;
+   const key=art.path+"|"+art.ivBadge+"|"+art.ivText;
    if(button.dataset.modeArtKey!==key){
     const previous=button.querySelector(".quickGlyph");
     if(previous)previous.replaceWith(iconForQuick("mode","☷"));
@@ -2985,6 +3419,7 @@ function refreshQuickMenuStates(){
    }
   }
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
+  if(id==="more")button.setAttribute("aria-expanded",String(choiceOpen==="more"));
   button.classList.toggle("pending",id==="sh"&&shinyPending);
    if(id==="filters"){
     const count=activeExtraFilterCount(searchSettings,mode);
@@ -3089,7 +3524,7 @@ function renderFiltersChoices(){
  const indicator=make("div","extraApplyStatus","");indicator.id="filterStatus";
  panel.appendChild(indicator);
  updateFiltersPanelStatus();
- panel.appendChild(make("div","uxNote","Aplicar e Limpar alteram só este menu. Pokémon, Modos, Shiny e Localização permanecem intactos."));
+ // No redundant instructional paragraph: keep the filter popup compact.
  const actions=make("div","modeAction filterActions");const apply=make("button","modeApply","✓ Aplicar");
  const clear=make("button","filterClear","Limpar filtros");
  const cancel=make("button","","Cancelar");
@@ -3110,14 +3545,24 @@ function renderFiltersChoices(){
     }
    }
   }
-  const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));
+  const delta={};
+  for(const key of FILTERS_MENU_KEYS){
+   const desired=modeDraft[key]??(key.endsWith("Selections")?[]:"");
+   const previous=searchSettings[key]??(key.endsWith("Selections")?[]:"");
+   if(JSON.stringify(desired)!==JSON.stringify(previous))delta[key]=desired;
+  }
+  if((modeDraft.includePreviousEvolutions!==false)!==(searchSettings.includePreviousEvolutions!==false))
+   delta.includePreviousEvolutions=modeDraft.includePreviousEvolutions!==false;
+  closeChoices();
+  // Only changed fields are patched. IV, species, shiny and location survive.
+  Native.patchSearchFilters(JSON.stringify(delta));
  };
  clear.onclick=()=>{
-  // FILTERS-POGO-08: clear only extra filters, not species, mode or location.
-  const next={...searchSettings,mode};
-  for(const key of FILTERS_MENU_KEYS)next[key]="";
-  next.includePreviousEvolutions=true;
-  closeChoices();Native.setSearchConfig(JSON.stringify(next));
+  const delta={};
+  for(const key of FILTERS_MENU_KEYS)
+   delta[key]=key.endsWith("Selections")?[]:key==="sortBy"?"Despawn (longest)":"";
+  delta.includePreviousEvolutions=true;
+  closeChoices();Native.patchSearchFilters(JSON.stringify(delta));
  };
  cancel.onclick=closeChoices;actions.append(apply,clear,cancel);panel.appendChild(actions);
  requestAnimationFrame(()=>{if(choiceOpen==="filters"&&panel.isConnected)panel.scrollTop=scrollRestoration;});
@@ -3214,6 +3659,12 @@ function renderAppearanceChoices(){
  requestAnimationFrame(()=>{if(choiceOpen==="appearance"&&panel.isConnected)panel.scrollTop=scrollRestoration;});
  fit();
 }
+document.addEventListener("pointerdown",event=>{
+ if(choiceOpen!=="more")return;
+ if(event.target.closest("#choices.morePanel")||
+    event.target.closest('#quickMenuList button[data-key="more"]'))return;
+ closeChoices();
+},true);
 if(controlsWindow){
  document.getElementById("quickBack").onclick=()=>choiceOpen?closeChoices():Native.menu(false);
  renderQuickMenu();
