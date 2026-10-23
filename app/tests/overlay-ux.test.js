@@ -82,7 +82,7 @@ test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
  return base.visibleCount===10&&base.rows.every(x=>x===45)&&
    iv.rows.every(x=>x===45)&&timers.rows.every(x=>x===45)&&
    both.visibleCount===10&&both.total+30+6<=380-16&&
-   compact.rows.every(x=>x===14)&&compact.sprite===45&&
+   compact.rows.every(x=>x===45)&&compact.sprite===45&&
    helpers.resultHasVisibleInfo(withInfo[0],false,true)===true&&
    helpers.resultHasVisibleInfo(withInfo[1],false,true)===false;
 });
@@ -3235,6 +3235,32 @@ test("LT61-POKEMON-PORTAL accepts one verified listbox after stale aria-controls
   block.includes("alternatives.length===1")&&block.includes("if(!scope)return [];")&&
   !block.includes("declared?[]:elements(selector)")&&
   probe.includes("function pokemonPickerRoot(){");
+});
+
+
+test("LT62-MORE-ABOVE obeys native popup placement without moving toolbar",()=>{
+ const start=dock.indexOf("/* LT62-MENU-ANCHOR:");
+ const end=dock.indexOf("</style>",start);
+ const css=dock.slice(start,end);
+ return css.includes("body.controls-window.popup-above #choices.morePanel{")&&
+  css.includes("top:auto!important;bottom:34px!important;")&&
+  css.includes("body.controls-window.visual-menu-vertical.popup-above #choices.morePanel{")&&
+  css.includes("top:auto!important;bottom:232px!important;")&&
+  service.includes("rowY-(abovePopup?actualPopup:0)")&&
+  dock.includes("panel.style.setProperty(\"max-width\",Math.floor(width)+\"px\",\"important\")");
+});
+test("LT63-SPRITE-PITCH never overlaps adjacent sprites with zero visual gap",()=>{
+ const begin=dock.indexOf("function computeResultLayout(");
+ const end=dock.indexOf('let lastListKey=""',begin);
+ if(begin<0||end<begin)return false;
+ const run=new Function("window",dock.slice(begin,end)+"return computeResultLayout;");
+ const compact=run({visualPrefs:{resultGapBetween:0,resultsOrientation:"vertical"}})(
+  Array.from({length:10},()=>({})),45,900,false,false);
+ const defaultSize=run({visualPrefs:{resultGapBetween:31,resultsOrientation:"vertical"}})(
+  Array.from({length:10},()=>({})),45,900,false,false);
+ return compact.rows.length===10&&compact.rows.every(row=>row>=compact.sprite)&&
+  compact.rows.every(row=>row===45)&&defaultSize.rows.every(row=>row===45)&&
+  dock.includes("return Math.max(size,pitch); // No sprite-overlap");
 });
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
