@@ -2058,7 +2058,7 @@ test("SITE-POKEMON-02 stale autocomplete requests cannot replace newer site choi
   ?.split('@JavascriptInterface public void setSearchConfig(String payload)')[0]||'';
  return java.includes('pokemonSuggestionSequence')&&java.includes('sequence!=pokemonSuggestionSequence')&&
   java.includes('attempt<20')&&java.includes('response.put("query",query)')&&
-  dock.includes('response.empty===true?"Nenhuma opção oficial encontrada"')&&
+  dock.includes('state==="explicit-empty"&&response.empty===true?"Nenhuma opção oficial encontrada"')&&
   probe.includes("reason:'Aguardando opções oficiais do PoGoCoordinates'");
 });
 test("UX-MENU-ANCHOR-01 popups track their own launcher within native window",()=>{
@@ -2242,7 +2242,7 @@ test("SITE-POKEMON-03 native validates names, caps 50, and preserves forms",()=>
  service.includes('clearKeys.put("pokemonSelections")'));
 test("SITE-POKEMON-04 site filter uses selected chips and exact official options",()=>
  probe.includes('function pokemonSelectedChips()')&&
- probe.includes('function pokemonPickerOptions()')&&
+ probe.includes('function pokemonPickerOptions(query)')&&
  probe.includes('const pokemon=pokemonListSelection(action)')&&
  probe.includes('return {ok:false,pending:false,reason:')&&
  probe.includes('found.filter(x=>matches(x)&&requestedSpecies(x))'));
@@ -3221,23 +3221,23 @@ test("LT60-LOC-STATE-03 native feedback observes updated error status",()=>{
 
 test("LT61-POKEMON-DEX sends official site its numeric dex query",()=>{
  const start=probe.indexOf("function pokemonQueryForSite(query){");
- const end=probe.indexOf("function pokemonPickerOptions(){",start);
+ const end=probe.indexOf("function pokemonPickerPopup(",start);
  if(start<0||end<=start)return false;
  const normalize=new Function("query",probe.slice(start,end)+"return pokemonQueryForSite(query);");
  return normalize("#0025")==="25"&&normalize("#25")==="25"&&
   normalize("Pikachu")==="Pikachu"&&normalize("Venusaur")==="Venusaur"&&
   normalize("Charmander Goggles 2026")==="Charmander Goggles 2026";
 });
-test("LT61-POKEMON-PORTAL accepts one verified listbox after stale aria-controls",()=>{
- const start=probe.indexOf("function pokemonPickerOptions(){");
+test("LT61-POKEMON-PORTAL uses only a linked or unique relevant portal",()=>{
+ const start=probe.indexOf("function pokemonPickerPopup(");
  const end=probe.indexOf("function pokemonSuggestion(",start);
  const block=probe.slice(start,end);
- return block.includes("const alternatives=popup?[]:elements('[role=listbox],[cmdk-list],[role=menu]')")&&
-  block.includes("alternatives.length===1")&&block.includes("if(!scope)return [];")&&
-  !block.includes("declared?[]:elements(selector)")&&
+ return block.includes("const ids=[...new Set(")&&
+  block.includes("matches.length===1?matches[0]:null")&&
+  block.includes("function pokemonPickerOptions(query)")&&
+  block.includes("if(!popup)return [];")&&
   probe.includes("function pokemonPickerRoot(){");
 });
-
 
 test("LT62-MORE-ABOVE obeys native popup placement without moving toolbar",()=>{
  const start=dock.indexOf("/* LT62-MENU-ANCHOR:");
@@ -3300,6 +3300,28 @@ test("LT65-PERF despawn clock stops while results window is minimized",()=>{
   dock.includes('document.body.classList.toggle("results-paused",!!paused)')&&
   dock.includes('!document.body.classList.contains("results-paused")')&&
   dock.includes('if(timerTicker!==null){clearInterval(timerTicker);timerTicker=null;}');
+});
+
+
+test("PS66-PORTAL ignores foreign menus and ambiguous result lists",()=>{
+ const b=probe.split("function pokemonPickerPopup(")[1]?.split("function pokemonSuggestion(",1)[0]||"";
+ return b.includes("document.getElementById?.(id)")&&
+  b.includes("matches.length===1?matches[0]:null")&&
+  b.includes("const innermost=")&&
+  !b.includes("activeOptionPopup(input)||activeOptionPopup(trigger)");
+});
+test("PS67-STATES never treats timeout or unproved empty as no species",()=>{
+ return probe.includes("state:'ready'")&&probe.includes("state:'pending'")&&
+  probe.includes("state:'explicit-empty'")&&probe.includes("state:'failed'")&&
+  dock.includes('state==="explicit-empty"&&response.empty===true?')&&
+  service.includes('response.put("ok",false).put("pending",false).put("state","failed")');
+});
+test("PS68-APPLY retains exact event forms and isolates the native filter delta",()=>{
+ return probe.includes("const siteTerm=missing[0].replace(")&&
+  probe.includes("pokemonPickerOptions(siteTerm).find(x=>x.label.toLowerCase()===missing[0].toLowerCase())")&&
+  dock.includes("Native.setPokemonSelections(JSON.stringify(selection))")&&
+  service.includes('new JSONObject(extraFiltersJson)')&&
+  service.includes('Espécies/formas solicitadas · aguardando confirmação no site');
 });
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
