@@ -283,13 +283,13 @@ function verifyRaw(){
  const percent=percentageIVInputs();
  return percent.length===2&&percent.every(input=>confirmedNumber(input,100,0,100));
 }
-// Defense-in-depth: the UI and Android bridge reject unattainable IV values,
-// and the site automation independently verifies the same 46-value domain.
+// LT62: numeric thresholds can be any integer between 0 and 100.
+// Results still have the 46 physically attainable rounded IV percentages.
+// The website must confirm the exact typed bounds before searching.
 const ATTAINABLE_IV_PERCENTAGES=Array.from({length:46},(_,sum)=>Math.round(sum*100/45));
 function validPercentRange(){
  return Number.isInteger(filters.percentMin)&&Number.isInteger(filters.percentMax)&&
-  ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMin)&&
-  ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMax)&&
+  filters.percentMin>=0&&filters.percentMax<=100&&
   filters.percentMin<=filters.percentMax;
 }
 function applyPercent(){
