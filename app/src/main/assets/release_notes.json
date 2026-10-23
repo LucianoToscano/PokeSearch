@@ -96,6 +96,32 @@
           "Formas e trajes especiais aparecem apenas quando o próprio site os disponibiliza."
         ]
       }
+    },
+    {
+      "id": "pokesearch-v061-lt-modos-shiny-resultados-20261023",
+      "minVersionCode": 54259,
+      "date": "23/10/2026",
+      "title": "PokeSearch v0.00.61 LT Beta — Modos, Shiny e Resultados",
+      "sections": {
+        "novidades": [
+          "Indicador diferenciado no menu Modos para configuração selecionada, editor aberto e pesquisa confirmada no site."
+        ],
+        "melhorias": [
+          "Leituras de resultados antecipadas e com intervalos progressivos para reduzir esperas desnecessárias.",
+          "Tentativas de configuração React aguardam a confirmação real dos valores no PoGoCoordinates.",
+          "Shiny solicitado continua visivelmente selecionado enquanto a pesquisa verifica a opção no site."
+        ],
+        "correcoes": [
+          "GL, UL, IV e IV% mantêm seus critérios independentes de Shiny e dos filtros adicionais.",
+          "Limpeza de filtros adicionais só é encerrada após uma pesquisa com critérios confirmados.",
+          "Resultados anteriores não devem ser reapresentados como novos durante a atualização da página React.",
+          "Pesquisa vazia exige evidência explícita do site e atualização da consulta."
+        ],
+        "emDesenvolvimento": [
+          "Correções aprovadas nos testes automatizados; homologação de GL/UL, Shiny, desempenho e login no Samsung ainda necessária.",
+          "O site pode devolver a mesma lista sem alteração visível; esse cenário ainda requer validação física."
+        ]
+      }
     }
   ]
 }
