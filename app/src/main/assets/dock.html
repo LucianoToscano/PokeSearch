@@ -1356,6 +1356,224 @@ body.result-window #resultHeader .modeIndicator.value.long{
 @media (prefers-reduced-motion:reduce){
  #gear .gear-icon{transition:none!important}
 }
+
+/* LT62-COMPACT-REDMARKS (Samsung 2026-10-23):
+   Remove WASTED interior space, never shrink the main icon bar or change filters.
+   Symbols and numeric values use intrinsic widths instead of stretching to 100%.
+   This block is intentionally LAST to override legacy grid/flex widths. */
+
+/* Modo: one thin 54px vertical rail; the IV/GL/UL editor expands separately. */
+body.controls-window #choices.modePanel.modeCascade{
+ width:54px!important;height:164px!important;max-height:min(164px,var(--popup-room,400px))!important;
+}
+body.controls-window #choices.modePanel.modeCascade.modeCascadeOpen{
+ width:min(248px,calc(100vw - 12px))!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeRail{
+ width:52px!important;max-height:min(164px,var(--popup-room,400px))!important;padding:1px!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeHead{height:20px!important;line-height:20px!important}
+body.controls-window #choices.modeCascade button.modeCascadeEntry{
+ height:23px!important;min-height:23px!important;line-height:23px!important;
+ padding:0 3px!important;font-size:10px!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeEditor{
+ left:54px!important;max-width:calc(100% - 54px)!important;
+}
+body.menu-left.controls-window #choices.modeCascade .modeCascadeEditor{
+ left:auto!important;right:54px!important;
+}
+
+/* Filtros: values, numeric inputs and arrows occupy only their content width. */
+body.controls-window #choices[data-panel-kind="filters"]:not(.filterPicker){
+ width:min(232px,calc(100vw - 14px))!important;max-width:calc(100vw - 14px)!important;
+ padding:3px!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraField:not(.extraChipsField){
+ justify-content:flex-start!important;align-items:center!important;gap:4px!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraField>label{
+ flex:0 0 64px!important;min-width:64px!important;max-width:64px!important;
+ font-size:9px!important;line-height:1.1!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraField button.extraValue{
+ flex:0 1 auto!important;width:auto!important;min-width:48px!important;
+ max-width:155px!important;white-space:nowrap!important;
+ padding:4px 6px!important;text-align:left!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraNumberRow{
+ flex:0 0 auto!important;width:auto!important;max-width:calc(100% - 69px)!important;
+ justify-content:flex-start!important;gap:2px!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraNumberRow input{
+ flex:0 0 auto!important;width:72px!important;max-width:72px!important;
+ min-width:0!important;padding:1px 4px!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraNumberRow.extraLevel input{
+ width:37px!important;max-width:37px!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraNumberRow .extraStep{
+ flex:0 0 23px!important;width:23px!important;min-width:23px!important;
+ padding:0!important;
+}
+/* Gender uses 4 SHORT single-symbol squares: [⚥][♂][♀][⚲] */
+body.controls-window #choices[data-panel-kind="filters"] .extraChipRow{
+ display:grid!important;justify-content:start!important;justify-items:start!important;
+ width:max-content!important;max-width:100%!important;gap:3px!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraChipRow[data-kind="gender"]{
+ grid-template-columns:repeat(4,29px)!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraChipRow[data-kind="size"]{
+ grid-template-columns:repeat(7,29px)!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraChipRow .extraChip{
+ box-sizing:border-box!important;display:inline-flex!important;
+ justify-content:center!important;align-items:center!important;
+ width:29px!important;min-width:29px!important;max-width:29px!important;
+ height:27px!important;min-height:27px!important;flex:none!important;
+ padding:0!important;margin:0!important;text-align:center!important;
+ font-size:10px!important;line-height:1!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .extraChipsField>label{
+ width:100%!important;max-width:none!important;flex:0 0 100%!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .modeAction.filterActions{
+ display:flex!important;justify-content:flex-start!important;gap:3px!important;
+ width:max-content!important;max-width:100%!important;flex-wrap:nowrap!important;
+}
+body.controls-window #choices[data-panel-kind="filters"] .modeAction.filterActions button{
+ flex:0 0 auto!important;width:auto!important;min-width:0!important;
+ padding:5px 7px!important;font-size:10px!important;white-space:nowrap!important;
+}
+
+/* Localização: coords, copy button, radius, and 3 actions remain close together. */
+body.controls-window #choices.locationPanel{
+ width:min(222px,calc(100vw - 14px))!important;padding:3px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow{
+ justify-content:flex-start!important;gap:3px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow .locField{
+ flex:1 1 auto!important;width:auto!important;max-width:170px!important;
+}
+body.controls-window #choices.locationPanel .locLine{
+ justify-content:flex-start!important;gap:6px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusNumber{
+ flex:none!important;width:48px!important;min-width:48px!important;
+ text-align:center!important;padding:2px 3px!important;
+}
+body.controls-window #choices.locationPanel .compactLocationActions{
+ display:flex!important;justify-content:flex-start!important;
+ gap:3px!important;
+}
+body.controls-window #choices.locationPanel .compactLocationActions button{
+ flex:0 0 auto!important;width:auto!important;min-width:0!important;
+ padding:5px 8px!important;margin:0!important;white-space:nowrap!important;
+}
+
+/* Atualização: no empty column on the right of the 7 actions. */
+body.controls-window #choices.standardPanel[data-panel-kind="period"]{
+ width:min(153px,calc(100vw - 14px))!important;
+ max-height:min(232px,var(--popup-room,400px))!important;
+}
+body.controls-window #choices.standardPanel[data-panel-kind="period"]>button{
+ width:100%!important;min-width:0!important;
+ box-sizing:border-box!important;padding:4px 6px!important;
+ font-size:10px!important;line-height:16px!important;
+}
+
+/* Personalização e Informações: label + control adjacent, no blank flex spacer. */
+body.controls-window #choices.standardPanel[data-panel-kind="appearance"]{
+ width:min(232px,calc(100vw - 14px))!important;
+}
+body.controls-window #choices.standardPanel[data-panel-kind="info"]{
+ width:min(217px,calc(100vw - 14px))!important;
+}
+body.controls-window #choices.standardPanel[data-panel-kind="appearance"] .uxSetting,
+body.controls-window #choices.standardPanel[data-panel-kind="info"] .uxSetting{
+ justify-content:flex-start!important;gap:5px!important;
+ min-height:26px!important;padding:2px 3px!important;
+}
+body.controls-window #choices.standardPanel[data-panel-kind="appearance"] .uxSetting>span,
+body.controls-window #choices.standardPanel[data-panel-kind="info"] .uxSetting>span{
+ flex:0 1 auto!important;min-width:0!important;
+}
+body.controls-window #choices.standardPanel[data-panel-kind="appearance"] .uxSetting>button,
+body.controls-window #choices.standardPanel[data-panel-kind="info"] .uxSetting>button{
+ flex:0 0 auto!important;width:auto!important;min-width:27px!important;
+ height:25px!important;padding:2px 6px!important;margin:0!important;
+}
+body.controls-window #choices.standardPanel[data-panel-kind="appearance"] .uxAdjust{
+ justify-content:flex-start!important;gap:3px!important;flex-wrap:nowrap!important;
+}
+body.controls-window #choices.standardPanel[data-panel-kind="appearance"] .uxAdjust>span{
+ flex:0 1 auto!important;min-width:0!important;max-width:calc(100% - 96px)!important;
+}
+body.controls-window #choices.standardPanel[data-panel-kind="appearance"] .uxAdjust>button{
+ flex:0 0 27px!important;width:27px!important;min-width:27px!important;
+ height:25px!important;padding:0!important;
+}
+body.controls-window #choices .spriteSizeChoices{
+ flex:0 0 auto!important;width:max-content!important;min-width:0!important;max-width:none!important;
+ display:grid!important;grid-template-columns:repeat(3,29px)!important;gap:3px!important;
+}
+body.controls-window #choices .spriteSizeChoices button{
+ width:29px!important;min-width:29px!important;height:27px!important;
+ padding:2px 0!important;
+}
+
+/* Editor Visual: tabs and every +/- stay next to the value, not at far edges. */
+body.controls-window #choices.visualPanel{
+ width:min(268px,calc(100vw - 14px))!important;
+ padding:4px!important;
+}
+body.controls-window #choices.visualPanel .visualTabs,
+body.controls-window #choices.visualPanel .visualSegmentGroup,
+body.controls-window #choices.visualPanel .visualPresets{
+ justify-content:flex-start!important;gap:3px!important;
+}
+body.controls-window #choices.visualPanel .visualTabs .visualButton{
+ flex:0 0 auto!important;width:auto!important;min-width:68px!important;
+ padding:5px 10px!important;white-space:nowrap!important;
+}
+body.controls-window #choices.visualPanel .visualSegmentGroup{
+ flex:0 1 auto!important;max-width:100%!important;
+}
+body.controls-window #choices.visualPanel .visualSegmentGroup .visualSegment{
+ flex:0 0 auto!important;width:auto!important;min-width:27px!important;
+ padding:5px 8px!important;white-space:nowrap!important;
+}
+body.controls-window #choices.visualPanel .visualSlider{
+ grid-template-columns:minmax(0,1fr) auto!important;
+ column-gap:4px!important;row-gap:2px!important;
+ padding:3px 2px!important;
+}
+body.controls-window #choices.visualPanel .visualSlider>input[type="range"]{
+ grid-column:1!important;grid-row:2!important;
+ width:100%!important;min-width:0!important;
+}
+body.controls-window #choices.visualPanel .visualSlider>.visualFineTune{
+ grid-column:2!important;grid-row:2!important;
+ display:flex!important;justify-content:flex-start!important;
+ gap:3px!important;margin:0!important;
+}
+body.controls-window #choices.visualPanel .visualFineTune button{
+ flex:0 0 27px!important;width:27px!important;min-width:27px!important;
+ height:27px!important;min-height:27px!important;
+}
+body.controls-window #choices.visualPanel .visualLine{
+ justify-content:flex-start!important;gap:6px!important;
+ padding:3px 2px!important;
+}
+body.controls-window #choices.visualPanel .visualPresets .visualButton,
+body.controls-window #choices.visualPanel .visualActions .visualButton{
+ flex:0 0 auto!important;width:auto!important;
+ padding:5px 8px!important;
+}
+
+/* Compact while keeping tap targets distinguishable for accessibility. */
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -1685,7 +1903,7 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
    h=Math.max(h,baseHeight+Math.ceil(moreHeight)+6);
   }else if(choiceOpen==="mode"){
    // Preserve the approved six-entry cascading Modos dimensions.
-   h=Math.max(h,baseHeight+190+6);
+   h=Math.max(h,baseHeight+164+6);
   }else{
    // Android first grows the native window, then limits --popup-room if the
    // screen is short. client rect is therefore feedback from our OWN resize
@@ -1809,11 +2027,11 @@ function positionCascadeEditor(){
  const rail=document.querySelector("#choices .modeCascadeRail");
  const editor=document.querySelector("#choices .modeCascadeEditor");
  if(!rail||!editor||!cascadeMode)return;
- const tops={raw:76,percent:103,gl:130,ul:154};
+ const tops={raw:67,percent:90,gl:113,ul:136};
  const requested=tops[cascadeMode]||76;
  const room=Number.parseFloat(getComputedStyle(document.documentElement)
   .getPropertyValue("--popup-room"))||190;
- const visible=Math.max(40,Math.min(190,room));
+ const visible=Math.max(40,Math.min(164,room));
  rail.scrollTop=Math.max(0,requested+36-visible);
  editor.style.top=Math.max(0,Math.min(visible-36,requested-rail.scrollTop))+"px";
 }
@@ -1880,7 +2098,7 @@ function renderModeChoices(){
  panel.appendChild(rail);
  if(cascadeMode){
   const editor=document.createElement("div");editor.className="modeCascadeEditor";
-  const offsets={raw:76,percent:103,gl:130,ul:154};
+  const offsets={raw:67,percent:90,gl:113,ul:136};
   editor.style.top=offsets[cascadeMode]+"px";
   editor.setAttribute("role","group");editor.setAttribute("aria-label","Ajustar "+cascadeMode);
   const fields=cascadeMode==="raw"?[

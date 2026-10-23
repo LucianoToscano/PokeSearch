@@ -41,5 +41,41 @@ check("Percent interval badge uses one star band only or neutral percent art",()
  assert.ok(dock.includes('percent:starCount<0?"StarIVRaw.png"'));
  assert.ok(dock.includes('family==="percent"&&starCount<0?"%":""'));
 });
+check("LT62 screenshots: gender uses exactly four compact symbol squares; size uses seven",()=>{
+ assert.match(dock,/LT62-COMPACT-REDMARKS/);
+ assert.match(dock,/\.extraChipRow\[data-kind="gender"\]\{\s*grid-template-columns:repeat\(4,29px\)!important/);
+ assert.match(dock,/\.extraChipRow\[data-kind="size"\]\{\s*grid-template-columns:repeat\(7,29px\)!important/);
+ assert.match(dock,/\.extraChipRow \.extraChip\{[\s\S]*?width:29px!important;min-width:29px!important;max-width:29px!important/);
+ assert.ok(dock.includes('["Any","Male","Female","Genderless"]'));
+});
+check("LT62 screenshots: mode list loses blank right column but IV/GL/UL stay cascaded",()=>{
+ assert.match(dock,/\.modePanel\.modeCascade\{\s*width:54px!important;height:164px!important/);
+ assert.match(dock,/\.modeCascadeRail\{\s*width:52px!important/);
+ assert.ok(dock.includes('h=Math.max(h,baseHeight+164+6);'));
+ for(const token of ['const tops={raw:67,percent:90,gl:113,ul:136};',
+   'const offsets={raw:67,percent:90,gl:113,ul:136};',
+   'left:54px!important;max-width:calc(100% - 54px)!important;'])
+  assert.ok(dock.includes(token),token);
+});
+check("LT62 screenshots: filter numeric, size, sort and action buttons no longer stretch",()=>{
+ for(const token of ['.extraNumberRow input{','width:72px!important;max-width:72px!important',
+  '.extraNumberRow.extraLevel input{','width:37px!important;max-width:37px!important',
+  '.modeAction.filterActions button{','flex:0 0 auto!important;width:auto!important;min-width:0!important;'])
+  assert.ok(dock.includes(token),token);
+});
+check("LT62 screenshots: location and auto popup stay compact, with no empty footer widths",()=>{
+ for(const token of ['width:min(222px,calc(100vw - 14px))!important',
+  'width:min(153px,calc(100vw - 14px))!important',
+  '.compactLocationActions button{','flex:0 0 auto!important;width:auto!important;min-width:0!important'])
+  assert.ok(dock.includes(token),token);
+});
+check("LT62 screenshots: editor tabs, P/M/G and steppers use intrinsic widths",()=>{
+ const editor=fs.readFileSync(path.join(__dirname,"../src/main/assets/visual_editor.js"),"utf8");
+ assert.ok(editor.includes('wrap.append(title,value,range,fine)'));
+ for(const token of ['.visualTabs .visualButton{','flex:0 0 auto!important;width:auto!important;min-width:68px!important',
+  '.visualSlider>input[type="range"]{','.visualSlider>.visualFineTune{',
+  'grid-column:2!important;grid-row:2!important','grid-template-columns:repeat(3,29px)!important'])
+  assert.ok(dock.includes(token),token);
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
