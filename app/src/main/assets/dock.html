@@ -1308,7 +1308,7 @@ let resultDisplayOptions={count:false,name:false,number:false,gender:false,size:
 let displayedMetadataWidth=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
- sortBy:"",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
+ sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=false,advancedExpanded=false;
 let siteFiltersConfirmed=false; // Evidence from Android: same generation, verified Search and accepted results.
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
@@ -1739,47 +1739,44 @@ function renderExtraFilters(panel,make){
   line.append(name,wrapper);panel.appendChild(line);
  };
  const chips=(key,label)=>{
-  const choices=(Array.isArray(filterOptions[key]?.options)?filterOptions[key].options:[]).map(x=>String(x).trim())
-   .filter(x=>x&&!/^(?:any\b|all\b|qualquer\b|todos?\b|select\b)/i.test(x));
-  const uniq=[...new Set(choices)];
-  const sizeOrder=["XXS","XS","S","M","L","XL","XXL"];
-  const mapLabel=value=>{
-   if(key==="gender"){
-    if(/^(?:male|macho|masculino)$/i.test(value))return "♂";
-    if(/^(?:female|f[eê]mea|feminino)$/i.test(value))return "♀";
-    if(/(?:genderless|unknown|sem g[eê]nero|gender unknown)/i.test(value))return "⚲";
-   }
-   return value;
-  };
-  // Show PokeLocation-style button positions, but never enable an option
-  // that has not been discovered in the official live PoGoCoordinates selector.
-  const siteValues=key==="size"?
-   sizeOrder.map(label=>{
-    const actual=uniq.find(v=>v.toUpperCase()===label);
-    return {value:actual||label,label,enabled:!!actual};
-   }):[
-    ...["Male","Female","Genderless"].map(label=>{
-     const match=uniq.find(v=>mapLabel(v)===(label==="Male"?"♂":label==="Female"?"♀":"⚲"));
-     return {value:match||label,label:label==="Male"?"♂":label==="Female"?"♀":"⚲",enabled:!!match};
-    }),
-    ...uniq.filter(v=>!["♂","♀","⚲"].includes(mapLabel(v)))
-      .map(value=>({value,label:mapLabel(value),enabled:true}))
-   ];
-  const line=make("div","extraField extraChipsField"),name=make("label","",label);
-  const group=make("div","extraChipRow");
-  const values=[{value:"",label:"Qualquer",enabled:true},...siteValues];
-  for(const item of values){
-   const button=make("button","extraChip",item.label);button.type="button";
-   button.disabled=!item.enabled;
-   button.classList.toggle("chosen",String(modeDraft[key]||"")===item.value);
-   button.setAttribute("aria-pressed",String(String(modeDraft[key]||"")===item.value));
-   button.setAttribute("aria-label",label+": "+(item.value||"Qualquer"));
-   button.onclick=()=>{modeDraft[key]=item.value;modeScrollTop=panel.scrollTop;renderFiltersChoices();};
+  // Empty selection is the site's Any. The interface intentionally has NO
+  // "Qualquer" chip: each size/gender can be toggled independently.
+  const known=Array.isArray(filterOptions[key]?.options)?filterOptions[key].options:[];
+  const normalize=v=>String(v||"").trim();
+  const choices=[...new Set(known.map(normalize).filter(v=>v&&!/^(any|all|qualquer)$/i.test(v)))];
+  const multiKey=key+"Selections";
+  const selected=new Set(Array.isArray(modeDraft[multiKey])?modeDraft[multiKey]:[]);
+  const order=key==="size"?["XXS","XS","S","M","L","XL","XXL"]:["Male","Female","Genderless"];
+  const symbol=v=>key!=="gender"?v:v==="Male"?"♂":v==="Female"?"♀":"⚲";
+  const itemValue=label=>choices.find(value=>{
+   if(key==="size")return value.toUpperCase()===label;
+   if(label==="Male")return /^(male|macho|masculino)$/i.test(value);
+   if(label==="Female")return /^(female|fêmea|femea|feminino)$/i.test(value);
+   return /^(genderless|unknown|sem gênero|gender unknown)$/i.test(value);
+  });
+  const line=make("div","extraField extraChipsField");
+  const name=make("label","",label);const group=make("div","extraChipRow");
+  group.dataset.kind=key;
+  for(const value of order){
+   const actual=itemValue(value);
+   const button=make("button","extraChip",symbol(value));button.type="button";
+   const resolved=actual||value;
+   // Keep the button reachable, but do not claim that the site supports it
+   // until the live selector's list has been received.
+   button.disabled=!actual;
+   button.classList.toggle("chosen",selected.has(resolved));
+   button.setAttribute("aria-pressed",String(selected.has(resolved)));
+   button.title=actual?resolved:"Aguardando opção no site";
+   button.onclick=()=>{
+    if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);
+    modeDraft[multiKey]=[...selected];
+    modeDraft[key]=""; // New multi selection replaces only this old single key.
+    modeScrollTop=panel.scrollTop;
+    renderFiltersChoices();
+   };
    group.appendChild(button);
   }
-  if(uniq.length===0){
-   const wait=make("span","extraNote","Aguardando opções do site…");group.appendChild(wait);
-  }
+  if(choices.length===0)group.title="Aguardando opções confirmadas pelo PoGoCoordinates";
   line.append(name,group);panel.appendChild(line);
  };
  const section=(label,open,onClick)=>{
@@ -1807,8 +1804,7 @@ function renderExtraFilters(panel,make){
   chips("size","Tamanho");
   option("form","Forma");
   chips("gender","Gênero");
-  panel.appendChild(make("p","extraNote",
-   "Tamanho e Gênero: escolha por botões (uma opção por filtro, conforme o seletor atual do site)."));
+  panel.appendChild(make("p","extraNote","Nenhum botão marcado = Any do site."));
  }
  section("Filtros avançados",advancedExpanded,()=>{advancedExpanded=!advancedExpanded;});
  if(advancedExpanded){
@@ -2624,7 +2620,15 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  if(!resultWindow)document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  locationVerified=!!verifiedLocation&&locationEnabled;
- if(config&&typeof config==="object")searchSettings={...searchSettings,...config};
+ if(config&&typeof config==="object"){
+  searchSettings={...searchSettings,...config};
+  for(const key of ["size","gender"]){
+   const multi=key+"Selections";
+   if(!Array.isArray(config[multi]))
+    searchSettings[multi]=config[key]?[String(config[key])]:[];
+  }
+  if(!searchSettings.sortBy)searchSettings.sortBy="Despawn (longest)";
+ }
  // Compatibility with the original single-Pokémon filter stored before SITE-POKEMON-01.
  if(config&&!Array.isArray(config.pokemonSelections)&&typeof config.pokemon==="string"&&config.pokemon.trim())
   searchSettings.pokemonSelections=[config.pokemon.trim()];
