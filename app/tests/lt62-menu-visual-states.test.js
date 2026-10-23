@@ -537,7 +537,7 @@ check("LT62 Shiny one-pass: tap only submits one verified Search, no extra setSh
  assert.ok(toggle.includes("resultsStale=count()>0;"));
  assert.ok(toggle.includes("shinyVerified=false;"));
  assert.ok(toggle.includes("if(!shiny){"));
- assert.ok(toggle.includes("refresh(true);"));
+ assert.ok(toggle.includes("OverlayService.this.refresh(true);"));
  assert.ok(toggle.includes("startVerifiedShinySearch(generation,0);"));
  assert.ok(!toggle.includes("prepareImmediateShiny(generation);"));
  assert.ok(!toggle.includes("applyShinyOnSite(generation,0);"));

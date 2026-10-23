@@ -3058,7 +3058,7 @@ public class OverlayService extends Service {
             if(!shiny){
                 // No login is required for OFF. Reconfigure Shiny plus all
                 // existing filters in ONE verified request (even with Coords).
-                refresh(true);
+                OverlayService.this.refresh(true);
                 return;
             }
             startVerifiedShinySearch(generation,0);
