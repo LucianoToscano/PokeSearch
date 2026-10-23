@@ -1713,6 +1713,66 @@ body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[d
 body.controls-window #choices.filterCascade .filterCascadeEditor .extraValue{
  max-width:100%!important;min-width:0!important;
 }
+
+/* LT62 LOCATION REDESIGN: no instructions, small optional feedback, aligned SVG. */
+body.controls-window #choices.locationPanel{
+ width:min(218px,calc(100vw - 14px))!important;max-width:calc(100vw - 14px)!important;
+ padding:4px!important;border-radius:8px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader{
+ margin:0 0 4px!important;min-height:24px!important;padding:2px 4px!important;font-size:10px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow{
+ display:flex!important;align-items:center!important;gap:5px!important;
+ margin:1px 3px 5px!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow .locField{
+ flex:1 1 auto!important;width:0!important;min-width:0!important;max-width:none!important;
+ min-height:29px!important;height:29px!important;padding:4px 6px!important;
+ margin:0!important;font-size:11px!important;border-radius:6px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow button.locPaste{
+ box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 29px!important;width:29px!important;min-width:29px!important;max-width:29px!important;
+ height:29px!important;min-height:29px!important;margin:0!important;padding:0!important;
+ border:1px solid #ffffff40!important;border-radius:6px!important;
+ background:#ffffff0d!important;color:var(--visual-menu-fg,#e8f1fc)!important;line-height:1!important;
+}
+body.controls-window #choices.locationPanel .locPaste svg{
+ display:block!important;width:19px!important;height:19px!important;min-width:19px!important;
+ flex:none!important;pointer-events:none!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:5px!important;margin:0 3px 1px!important;padding:2px 0!important;
+ font-size:10px!important;min-height:28px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>span:first-child{
+ min-width:28px!important;flex:none!important;font-weight:600!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow .locRadiusNumber{
+ flex:0 0 59px!important;width:59px!important;min-width:59px!important;
+ height:27px!important;padding:2px 4px!important;text-align:center!important;
+ font-size:11px!important;background:transparent!important;border-radius:6px!important;
+}
+body.controls-window #choices.locationPanel input[type=range]{
+ display:block!important;width:calc(100% - 8px)!important;height:16px!important;
+ margin:2px 4px 4px!important;
+}
+body.controls-window #choices.locationPanel #locHint{
+ margin:1px 4px 3px!important;padding:0!important;font-size:9px!important;
+ line-height:1.25!important;min-height:0!important;
+ color:var(--visual-menu-fg,#d5e2f2)!important;opacity:.85!important;
+}
+body.controls-window #choices.locationPanel #locHint[hidden]{display:none!important}
+body.controls-window #choices.locationPanel .compactLocationActions{
+ gap:4px!important;padding:2px 3px!important;margin:0!important;
+ display:flex!important;justify-content:flex-start!important;
+}
+body.controls-window #choices.locationPanel .compactLocationActions button{
+ flex:0 0 auto!important;width:auto!important;min-width:0!important;
+ padding:5px 9px!important;min-height:27px!important;font-size:10px!important;border-radius:6px!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -2644,11 +2704,12 @@ function locationPanelFeedback(){
  if(radiusSlider&&document.activeElement!==radiusSlider&&radius.dataset.locationDraft!=="true")
    radiusSlider.value=String(locationRadius);
  const state=currentLocationUiState();
- hint.textContent=state==="CONFIRMED"?"✓ Localização confirmada na busca · "+locationRadius+" km":
-  state==="NOT_APPLIED"?"⚠ Localização não aplicada · confira Coords e raio no site.":
-  state==="REQUESTED"?"⌛ Coordenadas solicitadas · aguardando confirmação no PoGoCoordinates":
-  "OFF · busca geral, sem coordenadas do aplicativo.";
+ hint.textContent=state==="CONFIRMED"?"✓ Localização confirmada · "+locationRadius+" km":
+  state==="NOT_APPLIED"?"⚠ Localização não aplicada":
+  state==="REQUESTED"?"⌛ Verificando localização":"";
+ hint.hidden=state==="OFF";
  hint.style.color=state==="NOT_APPLIED"?"#ffbf8f":"";
+ fit();
 }
 window.onLocationPaste=coords=>{
  if(!controlsWindow||choiceOpen!=="location")return;
@@ -2656,36 +2717,46 @@ window.onLocationPaste=coords=>{
  const hint=document.getElementById("locHint");
  if(!field||!hint)return;
  if(!coords){
-  hint.textContent="⚠ A área de transferência não tem coordenadas válidas.";
-  hint.style.color="#ffbf8f";
-  return;
+  hint.textContent="⚠ Nenhuma coordenada válida";
+  hint.style.color="#ffbf8f";hint.hidden=false;fit();return;
  }
  // Paste only into the editor; no activation, network call or background read.
  field.value=String(coords);
- hint.textContent="📋 Coordenadas coladas. Escolha o raio e toque em Aplicar.";
- hint.style.color="";
+ hint.textContent="✓ Coordenadas coladas";
+ hint.style.color="";hint.hidden=false;fit();
 };
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen","filterPicker");
  panel.classList.add("locationPanel","visible");panel.dataset.panelKind="location";
  const make=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x;};
- const title=make("div","choiceHeader","📍 LOCALIZAÇÃO");
+ const title=make("div","choiceHeader","LOCALIZAÇÃO");
  const close=make("button","choiceClose","×");close.type="button";close.title="Fechar";
  close.onclick=closeChoices;title.appendChild(close);
- const hint=make("p","locText","Coords e raio 0–1000 km. Aplicar pesquisa sem limpar outros filtros.");
+ // No permanent help paragraph: controls speak for themselves; Native.setLocation preserves other filters.
  const fieldRow=make("div","locCoordsRow");
  const field=make("input","locField");field.id="locCoordinateInput";field.type="text";field.inputMode="decimal";
  field.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
  field.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
  field.placeholder="-23.5505,-46.6333";field.setAttribute("aria-label","Coordenadas latitude e longitude");
  field.value=locationCoords;
- const paste=make("button","locPaste","📋");paste.type="button";paste.title="Colar coordenadas da área de transferência";
- paste.setAttribute("aria-label",paste.title);
+ const paste=make("button","locPaste");paste.type="button";
+ paste.title="Colar coordenadas";paste.setAttribute("aria-label","Colar coordenadas");
+ const pasteIcon=document.createElementNS("http://www.w3.org/2000/svg","svg");
+ pasteIcon.setAttribute("viewBox","0 0 24 24");pasteIcon.setAttribute("fill","none");
+ pasteIcon.setAttribute("stroke","currentColor");pasteIcon.setAttribute("stroke-width","1.9");
+ pasteIcon.setAttribute("stroke-linecap","round");pasteIcon.setAttribute("stroke-linejoin","round");
+ pasteIcon.setAttribute("aria-hidden","true");
+ pasteIcon.innerHTML='<path d="M8 4h2a2 2 0 0 1 4 0h2v3H8z"/>'+
+  '<path d="M8 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>'+
+  '<path d="M9 15h6m-3-3 3 3-3 3"/>';
+ paste.appendChild(pasteIcon);
  paste.onclick=()=>Native.pasteLocationCoords();
  // Location changes only when applying or clearing this one field.
  fieldRow.append(field,paste);
- const label=make("div","locLine");const labelName=make("span","","Raio da busca");
+ const label=make("div","locLine locRadiusRow");
+ const labelName=make("span","","Raio");
+ label.title="Raio da busca: de 0 a 1000 km";
  const radiusField=make("input","locRadiusNumber");
  radiusField.id="locRadiusValue";radiusField.type="number";radiusField.min="0";radiusField.max="1000";radiusField.step="1";
  radiusField.inputMode="numeric";radiusField.value=String(locationRadius);
@@ -2702,14 +2773,15 @@ function renderLocationChoices(){
   if(Number.isInteger(number)&&number>=0&&number<=1000)slide.value=String(number);
  };
  const message=make("p","");message.id="locHint";
+ message.setAttribute("role","status");message.setAttribute("aria-live","polite");
+ message.hidden=true;
  const actions=make("div","locLine compactLocationActions");
  const apply=make("button","locSave","✓ Aplicar");
  const clear=make("button","locHide","Limpar");
- const hide=make("button","locHide","Fechar");
  const disable=()=>{
   // OFF is explicit: discard the unsent radius draft, not saved site filters.
   delete radiusField.dataset.locationDraft;
-  message.textContent="⌛ Desativando filtro geográfico...";
+  message.textContent="⌛ Removendo localização";message.hidden=false;
   Native.setLocation(false,"",0);
  };
  clear.onclick=disable;
@@ -2717,21 +2789,22 @@ function renderLocationChoices(){
   const raw=field.value.trim();
   const match=raw.match(/^\s*([-+]?\d{1,2}(?:\.\d+)?)\s*[,;]\s*([-+]?\d{1,3}(?:\.\d+)?)\s*$/);
   if(!match||Math.abs(Number(match[1]))>90||Math.abs(Number(match[2]))>180){
-   message.textContent="⚠ Cole latitude,longitude válidas para ativar.";
-   message.style.color="#ffbf8f";return;
+   message.textContent="⚠ Coordenadas inválidas";
+   message.hidden=false;message.style.color="#ffbf8f";return;
   }
   const wantedCoords=match[1]+","+match[2],wantedRadius=Number(radiusField.value);
   if(!Number.isInteger(wantedRadius)||wantedRadius<0||wantedRadius>1000){
-   message.textContent="⚠ Escolha raio de 0 a 1000 km.";message.style.color="#ffbf8f";return;
+   message.textContent="⚠ Raio: 0 a 1000 km";
+   message.hidden=false;message.style.color="#ffbf8f";return;
   }
   // No optimistic global state change or premature "filter applied" label.
   message.style.color="";
-  message.textContent="⌛ Aplicando coordenadas · aguardando confirmação...";
+  message.textContent="⌛ Verificando localização";message.hidden=false;
   Native.setLocation(true,wantedCoords,wantedRadius);
  }
- apply.onclick=submit;hide.onclick=closeChoices;
- actions.append(apply,clear,hide);
- panel.append(title,hint,fieldRow,label,slide,message,actions);
+ apply.onclick=submit;
+ actions.append(apply,clear);
+ panel.append(title,fieldRow,label,slide,message,actions);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
  locationPanelFeedback();
