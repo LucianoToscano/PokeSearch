@@ -59,7 +59,8 @@ test("Native passes full display height and preserves up to ten card slots",
  service.includes("Math.min(rowDp()*10,screenHeightDp()-52)")&&
  service.includes('screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)')&&
  service.includes("screenHeightDp()-16")&&
- service.includes("resultParams.y=fittedY;")&&
+ service.includes("positionResultsUnderPokeball(false);")&&
+ service.includes("int maxY=Math.max(0,display.heightPixels-resultParams.height);")&&
  dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
