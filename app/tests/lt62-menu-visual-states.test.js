@@ -102,5 +102,34 @@ check("LT62 followup: Apply Clear Cancel are icon-only SVG buttons",()=>{
   'filterClear filterIconAction','filterIconAction filterCancel'])
   assert.ok(dock.includes(p),p);
 });
+check("LT62 design: IV%, Raw IV and rank have empty placeholders and only ✓",()=>{
+ const block=dock.split("function renderModeChoices(){")[1].split("function renderExtraFilters(")[0];
+ for(const p of [
+  '["percentMin","Min %","percent"',
+  '["percentMax","Max %","percent"',
+  '["stamina","S","iv","Stamina"]',
+  '["glRank","#","rank"',
+  '["ulRank","#","rank"',
+  'input.placeholder=placeholder;input.value=""',
+  'editor.appendChild(confirm);panel.appendChild(editor)',
+  'const limitsFor=kind=>kind==="percent"?[0,100]:kind==="iv"?[0,15]:[1,50]',
+  'Object.assign(modeDraft,values)',
+  'if(cascadeMode==="percent"&&values.percentMin>values.percentMax)'
+ ])assert.ok(block.includes(p),p);
+ assert.ok(!block.includes('cancel.className="modeCascadeCancel"'));
+ assert.ok(!block.includes('input.addEventListener("touchend"'));
+ assert.ok(dock.includes('body.controls-window #choices.modeCascade{pointer-events:none!important}'));
+});
+check("LT62 native site accepts all IV% boundaries and keeps gear on top",()=>{
+ const service=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const probe=fs.readFileSync(path.join(__dirname,"../src/main/assets/probe.js"),"utf8");
+ assert.ok(service.includes('!within(min,0,100)||!within(max,0,100)||min>max'));
+ assert.ok(service.includes('ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)))'));
+ assert.ok(probe.includes('filters.percentMin>=0&&filters.percentMax<=100'));
+ const createResult=service.indexOf('createResultsWindow();');
+ const attachDock=service.indexOf('wm.addView(root,params);');
+ assert.ok(createResult>=0&&attachDock>createResult,"gear must be attached after menu/results");
+});
+
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
