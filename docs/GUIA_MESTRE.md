@@ -4588,3 +4588,21 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 **Validação:** GitHub Actions Node QA `39988694333` — **SUCCESS** no source SHA `dc49d508af277daa44a11ca9eca3eec13c911d69`, nove suítes. Workflow de build APK skipped por regra. **Não há APK novo nem teste físico Samsung**; as modificações recentes ainda NÃO estão no APK `PokeSearch-v0.00.62-LT.apk` anteriormente publicado. Não afirmar fidelidade final do layout/áreas de toque da WebView antes de homologação física.
 
 **Controle de mudanças:** `main` LT61 preservada, PR #34 aberta em Draft, sem merge, sem backend/proxy/GPS, `applicationId` e assinatura persistente preservados, documentação exclusiva no Guia Mestre. Próximas mudanças de design devem continuar na mesma PR sem compilação/publicação até autorização expressa.
+
+
+### 12.240 — LT62: Localização compacta, mensagens discretas e ícone de colar alinhado (23/10/2026)
+
+**Solicitação do proprietário:** melhorar o design do submenu Localização no Samsung; remover os textos longos “Coords e raio 0–1000 km. Aplicar pesquisa sem limpar outros filtros.” e “OFF · busca geral, sem coordenadas do aplicativo.”; manter apenas mensagens menores, como avisos discretos, quando houver algo útil a comunicar; corrigir o botão de área de transferência que estava desalinhado e não combinava com os demais controles.
+
+**Mudanças em `app/src/main/assets/dock.html`, branch `fix/lt62-menu-visual-states-20261023`:**
+- Painel com título simples **LOCALIZAÇÃO**, sem emoji nem parágrafo permanente. Campo latitude,longitude continua editável e recebe coordenadas da área de transferência exclusivamente por toque no botão; nada ativa localização automaticamente ao colar.
+- Botão antigo `📋` substituído por **ícone SVG com traço neutro**, 19 px centralizado dentro de botão quadrado 29×29 px, mesma linguagem visual dos demais ícones. Mantido rótulo acessível “Colar coordenadas”.
+- Faixa de raio alinhada em uma linha **Raio [valor] km**, usando campo numérico 0–1000 e o slider existente sincronizado. Interface de aproximadamente 218 px, bordas, espaçamentos e ações compactos. Evita aumento ou retração da barra flutuante.
+- Removido o botão inferior “Fechar”, redundante ao X do cabeçalho. **✓ Aplicar** e **Limpar** permanecem ações distintas. Limpar executa `Native.setLocation(false,"",0)` sem zerar Pokémon/IV/Shiny/filtros extras.
+- Linha `#locHint` passa a usar texto pequeno de 9 px, `role=status`, `aria-live=polite`; não é mostrada quando o estado é OFF, e não exibe mais a longa instrução sobre busca geral. Mensagens curtas: “⌛ Verificando localização”, “✓ Localização confirmada · N km”, “⚠ Localização não aplicada”, “⚠ Coordenadas inválidas”, “⚠ Raio: 0 a 1000 km” e “✓ Coordenadas coladas”. Avisos de erro preservam cor de destaque mesmo em temas diferentes. Opção escolhida foi *texto menor no próprio popup*, e não toast de sistema no centro do aparelho, para manter comportamento previsível em Android Overlay.
+- Mantidas **validação de latitude/longitude**, limites do raio, rascunho de raio enquanto a pessoa digita, verificação real no PoGoCoordinates antes de mostrar localização confirmada, preferência salva e preservação de filtros independentes. Nenhum uso de GPS físico, proxy ou backend.
+- Testes atualizados em `app/tests/overlay-ux.test.js` e `app/tests/lt62-menu-visual-states.test.js` para o novo layout, botão de colar e mensagens. Não confundir testes Node/DOM com homologação física.
+
+**CI:** `PokeSearch Node QA` run `39990432598` **SUCCESS** no commit `6a4301bc233fe34a5a9877d0a6ea124be0e1373b`, nove suítes e validação da sintaxe do `dock.html`/`probe.js`. Workflows de APK ficaram **skipped**. Nenhum APK novo foi compilado/assinado, e o APK LT62 antigo **não inclui** essas alterações. Homologação física no Samsung ainda pendente.
+
+**Regras imutáveis:** manter PR #34 Draft, `main` LT61 sem merge, `applicationId=com.lucianotoscano.pokesearch`, assinatura persistente, WebView+`evaluateJavascript`+`probe.js`, login e demais configurações. As próximas alterações podem continuar nesta mesma branch até autorização para compilar.
