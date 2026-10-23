@@ -298,7 +298,7 @@ test("UX-RESULT-10 P/M/G pitch tracks slider and fits short displays",()=>{
  const ten=Array.from({length:10},(_,i)=>({name:"Pokémon "+i,expiresAtMs:0}));
  for(const size of [35,45,55]){
   const full=helpers.computeResultLayout(ten,size,900,false,false);
-  const pitch=Math.max(8,Math.round(size*.32)+31);
+  const pitch=Math.max(size,8,Math.round(size*.32)+31);
   if(full.sprite!==size||full.rows.some(row=>row!==pitch)||full.visibleCount!==10)return false;
   const short=helpers.computeResultLayout(ten,size,330,false,false);
   if(short.visibleCount!==10||short.total+54>330)return false;
@@ -309,8 +309,8 @@ test("UX-RESULT-10 P/M/G pitch tracks slider and fits short displays",()=>{
  }
  win.visualPrefs.resultGapBetween=0;
  const compact=helpers.computeResultLayout(ten,45,900,false,false);
- return compact.sprite===45&&compact.rows.every(row=>row===14)&&
-   dock.includes("return pitch; // Transparent sprite squares may overlap");
+ return compact.sprite===45&&compact.rows.every(row=>row===45)&&
+   dock.includes("return Math.max(size,pitch); // No sprite-overlap");
 });
 test("UX-INFO-08 bundled PvPoke data includes MIT attribution and stays display-only",
  read("assets/licenses/PvPoke-MIT.txt").includes("MIT License")&&
@@ -2172,7 +2172,7 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
     service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",false)'))&&
   keys.every(key=>dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:0;')&&
-  dock.includes("return pitch; // Transparent sprite squares may overlap")&&
+  dock.includes("return Math.max(size,pitch); // No sprite-overlap")&&
   dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
 });
 test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
@@ -2228,7 +2228,7 @@ test("SITE-POKEMON-01 picker exposes selected chips and exact official suggestio
  dock.includes('function renderPokemonChoices()')&&
  dock.includes('pokemonDraft.length+" selecionados"')&&
  dock.includes('input.placeholder="Nome, forma ou número #"')&&
- dock.includes('pokemonSelections:[...pokemonDraft]')&&
+ dock.includes('const selection={selections:[...pokemonDraft],clear:pokemonForceClear}')&&
  dock.includes('pokemonDraft.length<50'));
 test("SITE-POKEMON-02 bridge performs nonblocking live suggestions",()=>
  service.includes('@JavascriptInterface public void requestPokemonSuggestions(String query)')&&
