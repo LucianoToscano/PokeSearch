@@ -3494,9 +3494,18 @@ test("LT60-E7-02 empty result needs a fresh site signal, not a generic zero",()=
  return probe.includes('function visibleResultSignature(){')&&
    probe.includes('window.__pokeSearchSubmission={before:visibleResultSignature(),observedUpdate:false};')&&
    probe.includes('const explicitEmpty=found.length===0&&!loading&&explicitEmptySignal&&resultChanged;')&&
-   probe.includes('const zeroInResults=countLabel==="0"&&mainEmptyMessage();')&&
+   probe.includes('const zeroInResults=emptyInMain&&(countLabel==="0"||countLabel===undefined);')&&
+   probe.includes('const empty=mainEmptyMessage()?"verified-empty-element":"";')&&
    probe.includes('emptySignalFound:explicitEmptySignal,resultChanged,')&&
    service.includes('"estado vazio anterior sem atualização"');
+});
+// LT62 reference: Refresh direct tap + AUTO long-press preserve two behaviors.
+test("LT62: direct refresh, long press AUTO and official sprite-only chips",()=>{
+ return dock.includes('if(id==="period"){manualRefreshTap();return;}')&&
+   dock.includes('button.addEventListener("contextmenu",event=>{')&&
+   dock.includes('toggleChoices("period");')&&
+   dock.includes('pokemonSuggestionSpriteCache.set(label.toLowerCase(),src);')&&
+   dock.includes('pokemonSuggestionSpriteCache.get(String(name).toLowerCase())');
 });
 // LT60-E8: saved mode, editable submenu and actual site confirmation are separate.
 test("LT60-E8-01 reopened menu identifies persisted GL/UL and raw extremes",()=>{
