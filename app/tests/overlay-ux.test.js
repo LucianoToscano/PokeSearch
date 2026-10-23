@@ -3283,6 +3283,24 @@ test("LT64-FILTER-SIZE recognizes accessible button state and still verifies the
   probe.includes("if(!observed.length)return false;");
 });
 
+
+test("LT65-PERF result drag is throttled and commits the final native position",()=>{
+ const start=service.indexOf("resultGrip.setOnTouchListener((view,event)->{");
+ const end=service.indexOf("resultRoot.addView(resultGrip",start);
+ const drag=service.slice(start,end);
+ return drag.includes("android.os.SystemClock.uptimeMillis()")&&
+  drag.includes("now-lastLayoutMoveAt[0]>=16L")&&
+  drag.includes('recordFailure("finalizar arraste",e)')&&
+  drag.includes('putInt("resultsX"')&&drag.includes('putInt("resultsY"');
+});
+test("LT65-PERF despawn clock stops while results window is minimized",()=>{
+ return service.includes('js(resultPanel,resultLoaded,"window.setResultsPaused("+yes+")")')&&
+  dock.includes("window.setResultsPaused=paused=>{")&&
+  dock.includes('document.body.classList.toggle("results-paused",!!paused)')&&
+  dock.includes('!document.body.classList.contains("results-paused")')&&
+  dock.includes('if(timerTicker!==null){clearInterval(timerTicker);timerTicker=null;}');
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
