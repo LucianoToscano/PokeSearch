@@ -845,6 +845,12 @@ public class OverlayService extends Service {
         menuPanel=new WebView(this);
         menuPanel.setBackgroundColor(Color.TRANSPARENT);
         menuPanel.getSettings().setJavaScriptEnabled(true);
+        // LT58-MORE-STABLE: honor <meta viewport width=device-width> in the
+        // toolbar-only WebView. Increasing the window height for the cascade
+        // must not trigger Android WebView's overview-scale fit/reflow, which
+        // made the same ten tiles shrink/grow in Samsung screenshots.
+        menuPanel.getSettings().setUseWideViewPort(true);
+        menuPanel.getSettings().setLoadWithOverviewMode(false);
         menuPanel.getSettings().setAllowContentAccess(false);
         menuPanel.getSettings().setAllowFileAccessFromFileURLs(false);
         menuPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
