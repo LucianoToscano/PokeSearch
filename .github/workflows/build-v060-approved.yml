@@ -4,7 +4,7 @@ on:
     branches:
       - fix/lt57-compact-single-form-20261022
     paths:
-      - '.github/workflows/build-v060-stable-menus.yml'
+      - '.github/workflows/build-v060-approved.yml'
       - 'app/src/main/assets/release_notes.json'
   workflow_dispatch:
 
