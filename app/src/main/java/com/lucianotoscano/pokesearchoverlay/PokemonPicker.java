@@ -18,7 +18,8 @@ import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
+import android.widget.GridLayout;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONArray;
@@ -119,21 +120,22 @@ public final class PokemonPicker {
             if(selectedOnly){
                 for(Entry e:full)if(selected.contains(e.normalized))visible.add(e);
             }else{
-                // Results are distinct from favorites, so you can always
-                // see WHAT IS ALREADY SELECTED above the search suggestions.
-                for(Entry e:full){
-                    if(selected.contains(e.normalized))continue;
-                    if(key.isEmpty()||e.normalized.startsWith(key)||
-                       String.valueOf(e.id).startsWith(key)){
-                        visible.add(e);
-                        if(visible.size()>=80)break;
-                    }
-                }
-                if(!key.isEmpty()&&visible.size()<80){
+                // Empty query never populates a large list. Max three visible
+                // suggestions; type more characters to narrow results, no scroll.
+                if(!key.isEmpty()){
                     for(Entry e:full){
-                        if(selected.contains(e.normalized)||visible.contains(e))continue;
-                        if(e.normalized.contains(key))visible.add(e);
-                        if(visible.size()>=80)break;
+                        if(selected.contains(e.normalized))continue;
+                        if(e.normalized.startsWith(key)||String.valueOf(e.id).startsWith(key)){
+                            visible.add(e);if(visible.size()==3)break;
+                        }
+                    }
+                    if(visible.size()<3){
+                        for(Entry e:full){
+                            if(selected.contains(e.normalized)||visible.contains(e))continue;
+                            if(e.normalized.contains(key)){
+                                visible.add(e);if(visible.size()==3)break;
+                            }
+                        }
                     }
                 }
             }
