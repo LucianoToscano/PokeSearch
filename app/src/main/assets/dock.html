@@ -1812,6 +1812,28 @@ body.controls-window #choices.filterCascade .filterCascadeEditor .uxNote{
  max-width:100%!important;overflow-wrap:anywhere!important;
 }
 
+/* LT62-FILTER-INLINE-CONFIRM-02: ✓ aligned to the numeric editor, never at bottom. */
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs{
+ display:flex!important;flex-flow:row nowrap!important;align-items:center!important;
+ gap:3px!important;width:100%!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraNumberRow{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ width:100%!important;max-width:100%!important;gap:4px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterInlineConfirm{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;flex:0 0 26px!important;width:26px!important;
+ min-width:26px!important;max-width:26px!important;height:29px!important;min-height:29px!important;
+ padding:0!important;margin:0!important;
+ background:var(--visual-menu-button-bg,#28292cce)!important;
+ border:1px solid var(--visual-menu-border,#ffffff48)!important;
+ border-radius:5px!important;color:var(--visual-menu-fg,#f2f7fc)!important;
+ font:700 17px/1 Roboto,Arial,sans-serif!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterInlineConfirm:active{
+ border-color:var(--visual-menu-fg,#f2f7fc)!important;
+}
 /* LT62 LOCATION REDESIGN: no instructions, small optional feedback, aligned SVG. */
 body.controls-window #choices.locationPanel{
  width:min(218px,calc(100vw - 14px))!important;max-width:calc(100vw - 14px)!important;
@@ -3072,7 +3094,7 @@ function refreshOfficialFormList(){
    const list=Array.isArray(modeDraft.formSelections)?[...modeDraft.formSelections]:[];
    modeDraft.formSelections=active?list.filter(v=>v.toLowerCase()!==value.toLowerCase()):
     [...list,value];
-   modeDraft.form="";refreshOfficialFormList();
+   modeDraft.form="";patchSelectedFilterKeys(["formSelections","form"]);refreshOfficialFormList();
   };
   target.appendChild(button);
  }
@@ -3080,7 +3102,7 @@ function refreshOfficialFormList(){
   const chip=document.createElement("button");chip.className="pokemonChip";chip.type="button";
   chip.textContent=value+" ×";chip.onclick=()=>{
    modeDraft.formSelections=modeDraft.formSelections.filter(v=>v!==value);
-   refreshOfficialFormList();
+   patchSelectedFilterKeys(["formSelections","form"]);refreshOfficialFormList();
   };
   chips.appendChild(chip);
  }
@@ -3102,18 +3124,15 @@ function renderFormPicker(){
  input.onfocus=()=>{if(Native.locationEditor)Native.locationEditor(true);};
  input.onblur=()=>{if(Native.locationEditor)Native.locationEditor(false);};
  const list=document.createElement("div");list.id="officialFormItems";
- const done=document.createElement("button");done.type="button";
- done.textContent="✓ Confirmar seleção";
- done.onclick=()=>{modeDraft.form="";renderFiltersChoices();};
  const clear=document.createElement("button");clear.type="button";
  clear.textContent="Limpar formas";clear.onclick=()=>{
-  modeDraft.formSelections=[];modeDraft.form="";refreshOfficialFormList();
+  modeDraft.formSelections=[];modeDraft.form="";patchSelectedFilterKeys(["formSelections","form"]);refreshOfficialFormList();
  };
  const back=document.createElement("button");back.type="button";back.textContent="‹ Voltar aos filtros";
  back.onclick=renderFiltersChoices;
  const note=document.createElement("p");note.className="uxNote";
- note.textContent="Somente ✓ Aplicar, no painel Filtros, envia as alterações ao site.";
- panel.append(selected,input,list,done,clear,back,note);
+ note.textContent="Cada seleção altera apenas o filtro Forma.";
+ panel.append(selected,input,list,clear,back,note);
  refreshOfficialFormList();
  if(Native.requestFormOptions)Native.requestFormOptions(formQuery);
  fit();
