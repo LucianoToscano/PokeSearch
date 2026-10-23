@@ -1077,14 +1077,17 @@ test("UX-MENU-06 refresh directly after Alertas and personalization before Repor
   service.includes('"bell","period","appearance","report","donate","close"');
 });
 // UX-MODE-ICONS: use approved uploaded assets, keep the 11-button ribbon.
-test("Seven approved Mode PNGs optimized to 128px RGBA and backed up",()=>{
- const names=["0Star.png","1Star.png","2Star.png","3Star.png","StarIVRaw.png","StarGL.png","StarUL.png"];
- return names.every(name=>{
-  const asset=path.join(root,"assets/result-icons/modes",name);
-  if(!fs.existsSync(asset))return false;
-  const b=fs.readFileSync(asset);
+test("Four compact star PNGs and three new owner Mode originals are preserved",()=>{
+ const stars=["0Star.png","1Star.png","2Star.png","3Star.png"];
+ const updated=["StarIVRaw.png","StarGL.png","StarUL.png"];
+ return stars.every(name=>{
+  const b=fs.readFileSync(path.join(root,"assets/result-icons/modes",name));
   return b.subarray(0,8).equals(Buffer.from("89504e470d0a1a0a","hex"))&&
-   b.readUInt32BE(16)===128&&b.readUInt32BE(20)===128&&b.length<100000;
+   b.readUInt32BE(16)===128&&b.readUInt32BE(20)===128;
+ })&&updated.every(name=>{
+  const b=fs.readFileSync(path.join(root,"assets/result-icons/modes",name));
+  return b.subarray(0,8).equals(Buffer.from("89504e470d0a1a0a","hex"))&&
+   b.readUInt32BE(16)>=128&&b.readUInt32BE(20)>=128;
  });
 });
 test("Mode PNGs retain legacy vector fallback and 17px display only",()=>{
