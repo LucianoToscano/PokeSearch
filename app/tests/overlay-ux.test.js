@@ -1952,7 +1952,7 @@ test("UX-NOTIFY-01 bell shows only six SVG states and two audio selectors",()=>{
   panel.includes('section("Pokémon Favoritos","favorites"')&&
   panel.includes('select.onclick=()=>Native.pickAlertTone(target)')&&
   panel.includes('SHOW_INDIVIDUAL_FAVORITE_TONES')&&
-  !panel.includes('requestNotificationPermission')&&!panel.includes('testGeneralNotification');
+  panel.includes('Native.requestNotificationPermission()')&&!panel.includes('testGeneralNotification');
 });
 test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay independent",
  dock.includes('notificationPermissionGranted=!!permissionGranted')&&
@@ -3049,10 +3049,10 @@ test("UX-QUICK-MORE-04 original colors and bridges stay unchanged",()=>{
 });
 test("UX-QUICK-MORE-05 close on outside tap and ordinary preferences survive",()=>{
  return dock.includes('document.addEventListener("pointerdown",event=>{')&&
-  dock.includes('if(choiceOpen!=="more"&&choiceOpen!=="period")return;')&&
-  dock.includes('event.target.closest("#choices.periodCompact")')&&
-  dock.includes('event.target.closest("#choices.morePanel")')&&
-  dock.includes('event.target.closest(\'#quickMenuList button[data-key="more"]\')')&&
+  dock.includes('if(!choiceOpen)return;')&&
+  dock.includes('event.target.closest("#choices")')&&
+  dock.includes('event.target.closest("#choices")')&&
+  dock.includes('event.target.closest(\'#quickMenuList button[data-key]\')')&&
   dock.includes('document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker","morePanel"')&&
   dock.includes('if(!menuOpen){closeChoices();')&&
   dock.includes('const hidden=legacy?[]:Array.isArray(p.hidden)')&&
