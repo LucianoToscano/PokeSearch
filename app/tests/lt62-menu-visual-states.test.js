@@ -308,5 +308,34 @@ check("LT62 Editor Visual: collapsible groups preserve preview, settings and com
  assert.ok(dock.includes('body.controls-window #choices.visualPanel.visualCompact .visualFineTune'));
  assert.ok(dock.includes('if(choiceOpen==="visual"&&kind!=="visual"&&window.Native&&Native.previewVisualArea)'));
 });
+check("LT62 Refresh: original 16px neutral icon spins only after manual tap; minutes in center",()=>{
+ assert.ok(dock.includes('button[data-key="period"] .quickGlyph svg{width:16px!important'));
+ assert.ok(dock.includes('button[data-key="period"] .periodBadge{'));
+ assert.ok(dock.includes('left:50%;top:50%;transform:translate(-50%,-50%)'));
+ assert.ok(dock.includes('font:400 7px/1 Roboto,Arial,sans-serif!important'));
+ assert.ok(dock.includes('badge.textContent=period===0?"":period+"m"'));
+ assert.ok(dock.includes('button.classList.add("refreshSpinning")'));
+ assert.ok(dock.includes('@keyframes psRefreshSpin{to{transform:rotate(360deg)}}'));
+ assert.ok(!dock.includes('button[data-key="period"].requested .quickGlyph{color:#ffdb70'));
+ assert.ok(dock.includes('Native.refresh();'));
+});
+check("LT62 AUTO and More: detached identical vertical tiles, transparent background, no header/X",()=>{
+ const auto=dock.split('const current=period;')[1]?.split('function positionCascadeEditor()')[0]||"";
+ assert.ok(auto.includes('panel.classList.add("periodCompact","visible")'));
+ assert.ok(auto.includes('row.appendChild(off)'));
+ assert.ok(auto.includes('label.textContent="AUTO"'));
+ assert.ok(auto.includes('for(const value of [3,5,10,15,20])'));
+ assert.ok(auto.includes('[...row.children].forEach(tile=>panel.appendChild(tile))'));
+ assert.ok(!auto.includes('title.textContent="ATUALIZAÇÃO"'));
+ assert.ok(!auto.includes('close.className="choiceClose"'));
+ assert.ok(dock.includes('flex-direction:column!important'));
+ assert.ok(dock.includes('width:var(--more-tile-width,30px)!important'));
+ assert.ok(dock.includes('const periodHeight=tiles*30+Math.max(0,tiles-1)*gap;'));
+ assert.ok(dock.includes('#choices:not(.visualPanel):not(.modeCascade):not(.morePanel):not(.periodCompact){'));
+ assert.ok(dock.includes('#choices.morePanel .quickMoreAction .quickGlyph{background:transparent!important'));
+ assert.ok(dock.includes('#choices.morePanel [data-key=report] .quickGlyph{color:#ffd674!important}'));
+ assert.ok(dock.includes('#choices.morePanel [data-key=donate] .quickGlyph{color:#fa94a7!important}'));
+ assert.ok(dock.includes('#choices.morePanel [data-key=close] .quickGlyph{color:#ff596c!important}'));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
