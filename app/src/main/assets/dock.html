@@ -1304,6 +1304,32 @@ body.controls-window.visual-menu-vertical #choices:not(.morePanel){
  max-width:100%!important;
  width:min(100%,var(--visual-popup-width,232px))!important;
 }
+/* LT62-VISUAL-STATES: precise icons only; keep the approved tile surface. */
+body.controls-window #quickMenuList button[data-key="location"].selected .quickGlyph{
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+}
+body.controls-window #quickMenuList button[data-key="location"].selected .quickGlyph svg>path{
+ stroke:#ff5264!important;fill:none!important;
+}
+body.controls-window #quickMenuList button[data-key="location"].selected .quickGlyph svg>circle{
+ stroke:var(--visual-menu-fg,#f2f7fc)!important;fill:none!important;
+}
+body.controls-window #quickMenuList button[data-key="pokemon"].pokemon-has-selection .quickGlyph,
+body.controls-window #quickMenuList button[data-key="pokemon"].pokemon-has-selection .quickGlyph svg{
+ color:#ffd64b!important;stroke:#ffd64b!important;
+}
+body.controls-window #quickMenuList button[data-key="filters"].has-extra-filters::after{
+ top:1px!important;right:1px!important;z-index:5!important;
+}
+#gear .gear-icon{transition:transform .35s ease}
+#gear[aria-expanded="true"]:not(.busy) .gear-icon{transform:rotate(90deg)}
+body.result-window #resultHeader .modeIndicator.value.long{
+ font-size:5px!important;letter-spacing:-.45px!important;
+ max-width:21px!important;white-space:nowrap!important;
+}
+@media (prefers-reduced-motion:reduce){
+ #gear .gear-icon{transition:none!important}
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -1376,21 +1402,17 @@ const RESULT_MODE_ALIASES=Object.freeze({
 // A mixed range spans multiple appraisal bands; the broad-range glyph
 // is a search shorthand, not a claim that every result has N stars.
 function modePercentStarCount(minValue,maxValue){
+ // Only one appraisal class when ALL possible IV totals within the filter
+ // map to the same class. Mixed or impossible ranges use the neutral % art.
  const min=Number(minValue),max=Number(maxValue);
- if(!Number.isFinite(min)||!Number.isFinite(max)||min<0||max>100||min>max)return 2;
- if(min===max){
-  if(min===0)return 0;
-  if(min===100)return 3;
-  if(min<=50)return 0; // 1 star first occurs at 23/45 = 51.1%.
-  if(min<66)return 1;
-  if(min<82)return 2;
-  return 3;
+ if(!Number.isFinite(min)||!Number.isFinite(max)||min<0||max>100||min>max)return -1;
+ const categories=new Set();
+ for(let total=0;total<=45;total++){
+  const percent=Math.round(100*total/45);
+  if(percent<min||percent>max)continue;
+  categories.add(total<=22?0:total<=29?1:total<=36?2:3);
  }
- // Mixed ranges: compact menu categories explicitly requested by owner.
- if(max<=50)return 1; // e.g. 0–50% displays one-star RANGE artwork.
- if(min>=82)return 3; // all values are in the 3-star appraisal band.
- if(min>=51&&max<=65)return 1;
- return 2; // broad/mixed searches: 0–98, 2–100, 2–98, 0–100.
+ return categories.size===1?[...categories][0]:-1;
 }
 function getModeMenuIcon(searchMode,shinyActive,settings=searchSettings){
  const modeKey=String(searchMode==null?"":searchMode).trim().toLowerCase().replace(/[\s-]+/g,"_");
@@ -1418,7 +1440,7 @@ function getModeMenuIcon(searchMode,shinyActive,settings=searchSettings){
  const modePath={
   hundo:"3Star.png",nundo:"0Star.png",
   gl:"StarGL.png",ul:"StarUL.png",
-  custom:"StarIVRaw.png",percent:starCount+"Star.png",none:"iv-unfiltered.svg"
+  custom:"StarIVRaw.png",percent:starCount<0?"StarIVRaw.png":starCount+"Star.png",none:"iv-unfiltered.svg"
  };
  const legacyFallback={
   hundo:"iv-three-stars.png",nundo:"iv-zero-stars.png",
@@ -1437,7 +1459,7 @@ function getModeMenuIcon(searchMode,shinyActive,settings=searchSettings){
   family,baseFamily,ivBadge:badge,
   ivText:family==="custom"&&modeKey==="raw"?
    [settings.attack,settings.defense,settings.stamina].map(v=>
-    Number.isFinite(Number(v))?String(Math.min(15,Math.max(0,Number(v)))):"?").join("/"):"",
+    Number.isFinite(Number(v))?String(Math.min(15,Math.max(0,Number(v)))):"?").join("/"):family==="percent"&&starCount<0?"%":"",
   shinyBadge:shining,backgroundBadge:backgroundConfirmed
  };
 }
@@ -1464,7 +1486,9 @@ function getResultIcon(searchMode,shinyActive,settings=searchSettings){
  const topN=baseFamily==="gl"?Number(settings.glRank):baseFamily==="ul"?Number(settings.ulRank):0;
  // #N is the confirmed search threshold (Top N), NOT an individual Pokémon rank.
  const rankLabel=Number.isInteger(topN)&&topN>=1&&topN<=50?"#"+topN:"";
- const badge=family==="hundo"?"100%":family==="nundo"?"0":family==="percent"?"%":rankLabel||(baseFamily==="cup"?"CUP":"");
+ const rawLabel=modeKey==="raw"&&family==="custom"?[settings.attack,settings.defense,settings.stamina].join("/"):"";
+  const percentLabel=modeKey==="percent"&&family==="percent"?String(settings.percentMin)+"–"+String(settings.percentMax)+"%":"";
+  const badge=family==="hundo"?"100%":family==="nundo"?"0%":rawLabel||percentLabel||rankLabel||(baseFamily==="cup"?"CUP":"");
  // Only confirmed site Background can be represented; not an activation shortcut.
  const backgroundConfirmed=!!(settings&&settings.backgroundOnly===true&&settings.backgroundVerified===true);
  return {
@@ -2923,6 +2947,7 @@ function draw(){
   const primaryBadge=document.getElementById("modeIndicatorValue");
   primaryBadge.textContent=selectedIcon.ivBadge;
   primaryBadge.classList.toggle("visible",!!selectedIcon.ivBadge);
+   primaryBadge.classList.toggle("long",String(selectedIcon.ivBadge||"").length>4);
   primaryBadge.classList.toggle("zero",selectedIcon.family==="nundo");
   primaryBadge.classList.toggle("perfect",selectedIcon.family==="hundo");
   document.getElementById("modeIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge);
@@ -3204,7 +3229,7 @@ function iconForQuick(id, fallback){
    values.setAttribute("x","12");values.setAttribute("y","12");
    values.setAttribute("text-anchor","middle");
    values.setAttribute("dominant-baseline","central");
-   values.setAttribute("textLength","16.5");
+   if(art.ivText.includes("/"))values.setAttribute("textLength","16.5");
    values.setAttribute("lengthAdjust","spacingAndGlyphs");
    values.textContent=art.ivText;overlay.appendChild(values);
    glyph.appendChild(overlay);
@@ -3467,7 +3492,8 @@ function refreshQuickMenuStates(){
    if(id==="bell")button.title+=" · Novos: "+alertMode+" · Favoritos: "+
      favoriteAlertMode+" · fontes audíveis: "+(2-mutedCount)+
      (favoriteAlertMode==="on"&&!hasFavorites?" · cadastre favoritos":"");
-  button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
+  button.classList.toggle("pokemon-has-selection",id==="pokemon"&&((Array.isArray(searchSettings.pokemonSelections)&&searchSettings.pokemonSelections.length>0)||!!String(searchSettings.pokemon||"").trim()));
+   button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
    id==="sh"?shiny:
    id==="bell"?(bellState.newSound||bellState.favoriteSound):id==="period"?period>0:
    id==="star"?hasFavorites:id==="mode"?(mode==="gl"||mode==="ul"):false);
