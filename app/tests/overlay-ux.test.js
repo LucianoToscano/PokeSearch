@@ -746,16 +746,16 @@ test("Cascade popup uses 27px rail rows and small lateral settings",
  dock.includes('modeCascadeEditor')&&
  dock.includes('max-width:calc(100% - 54px)')&&
  service.includes('int roomDp=requestedPopup==0?420:'));
-test("Cascade numeric input supports touch swipe, keyboard typing and percentage stepping",
- dock.includes('input.type="number";input.inputMode="numeric"')&&
- dock.includes('input.addEventListener("touchend"')&&
- dock.includes('input.addEventListener("wheel"')&&
- dock.includes('input.addEventListener("change"')&&
- dock.includes('kind==="percent"?IV_PERCENT_VALUES'));
+test("Cascade input uses placeholders and keyboard entry",
+ dock.includes('input.type="text";input.inputMode="numeric"')&&
+ dock.includes('input.placeholder=placeholder;input.value=""')&&
+ dock.includes('input.addEventListener("keydown"')&&
+ dock.includes('input.addEventListener("input"')&&
+ dock.includes('kind==="percent"?[0,100]'));
 test("Four editable cascade modes keep raw, percent and rank numeric bounds",(()=>{const b=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
- return b.includes('kind==="iv"?16:50')&&b.includes('kind==="rank"?1:0')&&
+ return b.includes('kind==="iv"?[0,15]:[1,50]')&&b.includes('limitsFor=kind')&&
  ["attack","defense","stamina","percentMin","percentMax","glRank","ulRank"].every(k=>b.includes('"'+k+'"'))&&
- b.includes('input.min=String(allowed[0])')&&b.includes('input.max=String(allowed[allowed.length-1])');})());
+ b.includes('input.placeholder=placeholder;input.value=""')&&b.includes('input.maxLength=3');})());
 test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy migration",
  dock.includes('if([attack,defense,stamina].every(v=>Number(v)===15))family="hundo"')&&
  dock.includes('if(min===100&&max===100)family="hundo"')&&
@@ -770,11 +770,11 @@ test("Cascade replaces wheels and popup Shiny without losing the independent ✨
 test("Direct extremes and explicit ✓ are the only cascade save paths",
  dock.includes('const next={...searchSettings,mode:"raw",attack:value,defense:value,stamina:value}')&&
  dock.includes('const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));')&&
- dock.includes('cancel.onclick=()=>{if(controlsWindow)Native.locationEditor(false);')&&toolbarButtons.length===12);
+ !!dock.includes('cancel.className="modeCascadeCancel"')&&toolbarButtons.length===12);
 test("Cascade percent MIN/MAX are kept in valid order on edit",
- dock.includes('key==="percentMin"&&modeDraft.percentMax<value')&&
- dock.includes('key==="percentMax"&&modeDraft.percentMin>value')&&
- dock.includes('modeDraft.percentMin>modeDraft.percentMax'));
+ dock.includes('if(cascadeMode==="percent"&&values.percentMin>values.percentMax)')&&
+ dock.includes('Object.assign(modeDraft,values)')&&
+ dock.includes('values.percentMin>values.percentMax'));
 test("Native bridge validates all requested IV, PvP ranking and percent bounds",
  service.includes("public void setSearchConfig(String payload)")&&
  service.includes("within(a,0,15)")&&service.includes("within(gl,1,50)")&&
@@ -854,19 +854,19 @@ test("Exactly 46 attainable IV percentages are offered with 91 and 100 included"
 test("Cascade IV% and league rank limits stay independent and site validated",(()=>{const b=dock.split('function renderModeChoices()')[1]?.split('function renderExtraFilters(')[0]||"";
  return b.includes('kind==="percent"?IV_PERCENT_VALUES')&&
  b.includes('kind==="iv"?16:50')&&
- b.includes('modeDraft[key]=value')&&
- read("assets/probe.js").includes('ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMin)')&&
+ b.includes('Object.assign(modeDraft,values)')&&
+ read("assets/probe.js").includes('filters.percentMin>=0&&filters.percentMax<=100')&&
  read("assets/probe.js").includes('configuredRank()');})());
 test("Native validation prevents invalid IV percentages including on saved requests",
  service.includes('private static boolean isAllowedIvPercent(int value)')&&
  service.includes('if(ivPercentageForSum(total)==value)return true;')&&
- service.includes('!isAllowedIvPercent(min)||!isAllowedIvPercent(max)||min>max')&&
+ service.includes('!within(min,0,100)||!within(max,0,100)||min>max')&&
  service.includes('!within(gl,1,50)||!within(ul,1,50)'));
 test("Legacy IV percent migration expands only as necessary without trimming Pokémon",
- service.includes('ivPercentMin=floorIvPercent(previousMin)')&&
- service.includes('ivPercentMax=Math.max(ivPercentMin,ceilIvPercent(previousMax))')&&
- service.includes('putInt("ivPercentMin",ivPercentMin)')&&
- service.includes('putInt("ivPercentMax",ivPercentMax)'));
+ service.includes('ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)))')&&
+ service.includes('ivPercentMax=Math.max(ivPercentMin,')&&
+ !service.includes('ivPercentMin=floorIvPercent(previousMin)')&&
+ service.includes('Math.min(100,pref.getInt("ivPercentMax",100))'));
 
 
 test("UX-MENU-01 keeps original 12 commands but navigates with compact contextual menu",
@@ -1201,7 +1201,7 @@ test("UX-MODOS-CASCADE-03 uses classic 6-row menu, no oversized wheels",(()=>{co
  dock.includes('width:54px!important;height:164px!important')&&
  dock.includes('height:23px!important;min-height:23px!important')&&
  b.includes('const offsets={raw:67,percent:90,gl:113,ul:136}')&&
- b.includes('editor.append(confirm,cancel)')&&
+ b.includes('editor.appendChild(confirm);panel.appendChild(editor)')&&
  !b.includes('modeWheel')&&
  !b.includes('Native.shiny()');})());
 test("UX-MODOS-CASCADE-04 confirms or cancels only the chosen lateral editor",
@@ -1209,7 +1209,7 @@ test("UX-MODOS-CASCADE-04 confirms or cancels only the chosen lateral editor",
  dock.includes('cancel.className="modeCascadeCancel"')&&
  dock.includes('confirm.onclick=()=>')&&
  dock.includes('cancel.onclick=()=>{if(controlsWindow)Native.locationEditor(false);')&&
- dock.includes('input.setCustomValidity("Escolha um valor permitido")')&&
+ dock.includes('entry.input.setCustomValidity("Digite um número de "')&&
  dock.includes('Native.setSearchConfig(JSON.stringify(next))'));
 test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
   dock.indexOf('id="sh"')>dock.indexOf('id="cycle"')&&
