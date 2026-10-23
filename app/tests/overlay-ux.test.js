@@ -1046,11 +1046,11 @@ test("REG-51049 opening Modos never starts background filter-option discovery",
  const block=dock.split('if(kind==="mode"){')[1]?.split('const current=period;')[0]||"";
  return block.includes('renderModeChoices()')&&!block.includes("requestFilterOptions")&&
   !block.includes('Native.locationEditor(true)')&&
-  dock.includes('if(choiceOpen==="filters"&&modeDraft)');
+  dock.includes('if(choiceOpen==="filters"&&modeDraft&&document.getElementById("officialFormItems")===null)');
  })());
 test("REG-51049 filters cannot replace a cascade editing session",
  dock.includes('if(choiceOpen==="filters")renderFiltersChoices();else renderModeChoices();')&&
- dock.includes('if(choiceOpen==="filters"&&modeDraft)')&&
+ dock.includes('if(choiceOpen==="filters"&&modeDraft&&document.getElementById("officialFormItems")===null)')&&
  dock.includes('cascadeMode=cascadeMode===id?null:id')&&
  dock.includes('const next={...modeDraft}'));
 test("REG-51049 OFF public search ignores inert radius while refusing residual coordinates",
@@ -2640,7 +2640,7 @@ test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menu
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
  return filters.includes('option("sortBy","Ordenar")')&&
   filters.includes('option("weather","Clima")')&&
-  filters.includes('option("form","Forma")')&&
+  filters.includes('field("Forma",formButton)')&&
   filters.includes('chips("size","Tamanho")')&&
   filters.includes('chips("gender","Sexo")')&&
   !filters.includes('field("Pokémon",pick)')&&
@@ -2671,7 +2671,7 @@ test("FILTERS-POGO-03 size and gender buttons never invent site-supported option
   !filters.includes('extraChip","Qualquer"')&&
   probe.includes('function extraMulti(key,desired,operation){')&&
   probe.includes('function multiState(option){')&&
-  service.includes('for(String key:new String[]{"size","gender"})')&&
+  service.includes('for(String key:new String[]{"size","gender","form"})')&&
   dock.includes('window.onFilterOptions=function(response){')&&
   service.includes('final String[] keys={"sortBy","size","form","gender","weather"}');
 });
@@ -2831,8 +2831,8 @@ test("LT57-ONEFORM-03 Size multi and Gender single radio preserve Any",()=>{
   probe.includes('function extraMulti(key,desired,operation)')&&
   probe.includes('extraSelect("gender",wanted[0]||"")')&&
   probe.includes('if(target.some(v=>!observed.some(o=>o.label===v)))return false')&&
-  service.includes('key.equals("genderSelections")?1:7')&&
-  service.includes('for(String key:new String[]{"size","gender"})');
+  service.includes('key.equals("genderSelections")?1:')&&
+  service.includes('for(String key:new String[]{"size","gender","form"})');
 });
 test("LT57-ONEFORM-04 Sort by offers exactly five requested orders with default",()=>{
  const picker=dock.split("function renderFilterPicker(key,label,options){")[1]
@@ -3063,7 +3063,7 @@ test("LT58-SITE-SELECT-01 Size selects locally while site probe must confirm bef
  const p=read("assets/probe.js");
  return f.includes('modeDraft[multiKey]=[...selected]')&&
   !f.includes('button.disabled=!actual')&&
-  p.includes('const rows=key==="size"?multiOptions(control):optionElements(control);')&&
+  p.includes('const rows=key==="form"?formOptionRows(control):')&&
   p.includes('const ok=extraMulti("size",wanted,action);')&&
   p.includes('if(!target.length&&isNeutral(extraValue(key)))return true;')&&
   p.includes('if(!ok)failed.push("sizeSelections");');
@@ -3072,12 +3072,12 @@ test("LT58-SITE-SELECT-02 Gender exclusive; Form directly below; redundant text 
  const f=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
  const p=read("assets/probe.js");
- return f.includes('chips("gender","Sexo");\n  option("form","Forma");')&&
+ return f.includes('chips("gender","Sexo");\n  const formSelected=')&&f.includes('field("Forma",formButton)')&&
   f.includes('group.setAttribute("role","radiogroup")')&&
   f.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}')&&
   p.includes('if(key==="gender"&&Array.isArray(filters.genderSelections))')&&
   p.includes('extraMatches("gender",wanted[0]||"")')&&
-  service.includes('key.equals("genderSelections")?1:7')&&
+  service.includes('key.equals("genderSelections")?1:')&&
   !f.includes('Nenhum botão marcado = Any do site.')&&
   !f.includes('Filtros avançados')&&
   !dock.includes('Nenhum filtro adicional ativo')&&
@@ -3322,6 +3322,46 @@ test("PS68-APPLY retains exact event forms and isolates the native filter delta"
   dock.includes("Native.setPokemonSelections(JSON.stringify(selection))")&&
   service.includes('new JSONObject(extraFiltersJson)')&&
   service.includes('Espécies/formas solicitadas · aguardando confirmação no site');
+});
+
+
+test("LT69-FORM-SCOPE prevents Sex dropdown being returned for Form",()=>{
+ const body=probe.split("function extraControl(label){")[1]?.split("function describeChoice(",1)[0]||"";
+ return body.includes('if(label==="Form"||label==="Gender")')&&
+  body.includes('return null; // Fail closed')&&
+  body.includes("function extraOptionPopup(key,control){")&&
+  body.includes("if(control.getAttribute('aria-expanded')!=='true')return null;")&&
+  body.includes("if(key==='form')")&&
+  body.includes("distinct.every(")&&
+  service.includes('final String[] keys={"sortBy","size","form","gender","weather"}');
+});
+test("LT70-FORM-MULTI uses official DOM checkboxes, not hardcoded form names",()=>{
+ const source=probe.split("function multiOptions(control,key){")[1]?.split("function extraMatches(",1)[0]||"";
+ return source.includes("key==='form'?extraOptionPopup('form',control)")&&
+  source.includes('key==="form"?null:')&&
+  source.includes('allowed===null?!isNeutral(x.label)')&&
+  probe.includes('extraMulti("form",wanted,action)')&&
+  probe.includes('!extraMulti("form",wanted,"verify")')&&
+  probe.includes('slice(0,key==="form"?500:80)');
+});
+test("LT71-FORM-EDITOR searches official forms with chips but applies only on final Filters confirm",()=>{
+ const block=dock.split("function renderFormPicker(){")[1]?.split("window.onFormOptions=response=>",1)[0]||"";
+ return block.includes("input.placeholder=\"Buscar forma no PoGoCoordinates\"")&&
+  block.includes("Native.requestFormOptions(formQuery)")&&
+  block.includes("renderFiltersChoices();")&&
+  dock.includes('formButton.onclick=()=>{modeScrollTop=panel.scrollTop;formQuery="";renderFormPicker();}')&&
+  dock.includes('filterOptions.form={present:true,options:[...new Set([...previous,...options])].slice(0,500)}')&&
+  dock.includes('Native.patchSearchFilters(JSON.stringify(delta))');
+});
+test("LT71-FORM-NATIVE saves multiple forms without resetting species or location",()=>{
+ const patch=service.split("public void patchSearchFilters(String payload)")[1]?.split("public void setPokemonSelections(",1)[0]||"";
+ return patch.includes('"formSelections"')&&patch.includes('key.equals("formSelections")?500:7')&&
+  patch.includes('new JSONObject(extraFiltersJson)')&&
+  patch.includes('replaceActiveFilterSearch();')&&
+  !patch.includes("locationCoords=")&&!patch.includes("shiny=")&&
+  service.includes('void requestFormOptions(String query)')&&
+  service.includes('execute("searchFormOptions:"+JSONObject.quote(query)')&&
+  dock.includes('formSelections:[]');
 });
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
