@@ -2391,8 +2391,9 @@ test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=
   main.includes("View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR");
 });
 test("UX-LOC-DRAFT-01 preserves unsent Radius across native updates and releases on site proof",()=>{
+ const helper=dock.match(/function currentLocationUiState\(\)\{[\s\S]*?\n\}/)?.[0];
  const source=dock.match(/function locationPanelFeedback\(\)\{[\s\S]*?\n\}/)?.[0];
- if(!source||!dock.includes('radiusField.dataset.locationDraft="true"')||
+ if(!helper||!source||!dock.includes('radiusField.dataset.locationDraft="true"')||
     !dock.includes('slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";}')||
     !dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)'))return false;
  const vm=require("node:vm");
@@ -2406,8 +2407,8 @@ test("UX-LOC-DRAFT-01 preserves unsent Radius across native updates and releases
  }};
  const doc={activeElement:{},getElementById(){return panel;}};
  const state={controlsWindow:true,choiceOpen:"location",document:doc,
-  locationEnabled:true,locationVerified:false,locationRadius:10,status:""};
- const run=()=>vm.runInNewContext(source+";locationPanelFeedback()",state);
+  locationEnabled:true,locationVerified:false,locationRadius:10,status:"",activeSearchPhase:"idle"};
+ const run=()=>vm.runInNewContext(helper+";"+source+";locationPanelFeedback()",state);
  run();
  assert.equal(radius.value,"25","Native event must not overwrite unsent draft");
  assert.equal(slider.value,"25","Slider must preserve the matching draft");
