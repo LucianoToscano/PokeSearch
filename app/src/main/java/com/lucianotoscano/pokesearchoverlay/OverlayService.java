@@ -2233,7 +2233,9 @@ public class OverlayService extends Service {
                         }
                         boolean wasActive=updated.optJSONArray(key)!=null&&
                             updated.optJSONArray(key).length()>0;
-                        if(cleaned.length()==0&&wasActive)clears.add(key);
+                        if(cleaned.length()==0&&
+                        (wasActive||!updated.optString(key.replace("Selections",""),"").isEmpty()))
+                        clears.add(key);
                         if(cleaned.length()>0)clears.remove(key);
                         updated.put(key,cleaned);
                         updated.put(key.replace("Selections",""),"");
@@ -2348,8 +2350,15 @@ public class OverlayService extends Service {
                     boolean stillNeedsClear=false;
                     if(previouslyCleared!=null)for(int i=0;i<previouslyCleared.length();i++)
                         if(key.equals(previouslyCleared.optString(i)))stillNeedsClear=true;
-                    if(after.isEmpty()&&(!before.isEmpty()||stillNeedsClear))
+                    if(after.isEmpty()&&(!before.isEmpty()||stillNeedsClear)){
                         clearKeys.put(key);
+                        // A legacy one-choice Size/Gender value belongs to
+                        // this same site control and must be cleared once.
+                        if((key.equals("size")||key.equals("gender"))&&
+                            extra.optJSONArray(key+"Selections")!=null&&
+                            extra.optJSONArray(key+"Selections").length()==0)
+                            clearKeys.put(key+"Selections");
+                    }
                 }
                 for(String key:new String[]{"sizeSelections","genderSelections"}){
                     org.json.JSONArray before=previousExtra.optJSONArray(key),after=extra.optJSONArray(key);
