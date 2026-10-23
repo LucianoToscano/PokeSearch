@@ -4624,3 +4624,35 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 **Validação automática:** workflow `PokeSearch Node QA` **39993487861 SUCCESS** no commit `cb5eb14d7e0608efec32a954a29f0f2510fa6a1f` (nove suítes); workflows Android de build **SKIPPED**, pois não foi autorizada nova compilação. **Homologação física, compilação Java/Gradle e acessibilidade Android ainda pendentes**: CI Node valida contratos/fonte e não prova como fica a UI Samsung. O APK `PokeSearch-v0.00.62-LT.apk` anterior não contém estas mudanças.
 
 **Checkpoint:** permanecer na branch `fix/lt62-menu-visual-states-20261023` e PR #34 **Draft sem merge**. `main` LT61, `applicationId=com.lucianotoscano.pokesearch`, assinatura, arquitetura WebView+`probe.js`, preferências, modos, Shiny e fluxos oficiais preservados. Sem produção de APK até autorização.
+
+
+### 12.242 — LT62: Notificações minimalistas, 36 áudios, prévia confirmada e favorito BR (23/10/2026)
+
+**Referência Samsung e solicitação:** substituir o antigo submenu NOTIFICAÇÕES longo/poluído por um painel muito compacto, com apenas **Novos Pokémon** e **Pokémon Favoritos**. Cada seção deve ter três botões de ícone (alto-falante com ondas = Som, alto-falante riscado = Sem som, alto-falante com X = OFF) e um único botão Padrão/Personalizado. Eliminar do popup o parágrafo de instruções, botões de teste, permissões, configurações avançadas e links secundários; não excluir rotinas funcionais. Mostrar uma legenda curta nativa quando um estado for tocado. Ocultar, mas manter implementado, o som individual por Pokémon.
+
+**Implementado em `app/src/main/assets/dock.html`:**
+- `renderAlertsChoices()` passou a mostrar somente o título NOTIFICAÇÕES com X do cabeçalho e dois blocos verticais, **Novos Pokémon** e **Pokémon Favoritos**.
+- Cada bloco tem três ícones SVG monocromáticos desenhados no mesmo estilo dos menus, contorno fino, área de toque 32 px, estado selecionado marcado com borda/amarelo e rótulos acessíveis `Som`, `Sem som`, `OFF`. Não usa imagens rasterizadas nem emoji/stock. Abaixo, um botão de largura total apresenta **Padrão** ou **Personalizado**, acionando `Native.pickAlertTone("general"|"favorites")` e os fluxos Android reais.
+- Largura planejada do popup cerca de **194 px**, com duas seções, textos de 10–11 px, sem rolagem no painel principal. `SHOW_INDIVIDUAL_FAVORITE_TONES=false` oculta apenas o controle; `Native.pickAlertTone("species")`, `MainActivity.beginAlertToneChoice("species")`, as preferências e a seleção do áudio individual permanecem funcionais no código, habilitáveis em versão futura.
+- Removidos *somente da interface de Notificações* os comandos de teste geral/favoritos, teste de permissão, lista de favoritos, nota longa, configurações Android e atualização de permissão. As APIs Android continuam existentes para a Home/testes e compatibilidade.
+
+**Legendas ao tocar:** `OverlayService.java` passa a usar `alertModeCaption()` após confirmar a alteração no `setAlertMode` ou `setFavoriteAlertMode`, com `Toast.LENGTH_SHORT`: “Novos Pokémon/Favoritos · Som ativado”, “Sem som · apenas aviso” ou “Notificações desativadas”. As duas famílias permanecem independentes e persistidas.
+
+**Biblioteca de 36 opções com arquivos reais, não apenas labels:**
+- Conferida a pasta Google Drive `SoundPokemon` (`1iuC_XLwfU24Yn39FGRl9Wf0YwKG_EdQc`), contendo 36 MP3s em 23/10/2026.
+- Foram importados como blobs Git binários **13 MP3s novos** para `app/src/main/res/raw`: `ps_jigglypuff_evolucao_meme.mp3`, `ps_snorlax.mp3`, `ps_wobbuffet.mp3`, `ps_gardevoir.mp3`, `ps_bulbasaur.mp3`, `ps_equipe_rocket.mp3`, `ps_mew.mp3`, `ps_charmander.mp3`, `ps_pikachu_choque.mp3`, `ps_ditto_triste.mp3`, `ps_togepi.mp3`, `ps_squirtle.mp3`, `ps_jigglypuff.mp3`. Commit binário `ecef6f1f1cb1e3f635259413a2bf176086abaeec`. A trilha antiga `ps_freesound_community_weird_pikachu_101090` foi preservada no repositório para compatibilidade, mas não consta entre as 36 escolhas da interface. Total do diretório raw é 37 MP3s; **biblioteca selecionável = exatamente 36**.
+- `PokeSoundLibrary.java` agora contém `LABELS[36]` e `AUDIO[36]` com recursos locais reais, ofuscáveis com referência estática `R.raw`. Mantido material anterior onde possível e incluídos os novos nomes amigáveis.
+
+**Padrão de Favoritos:**
+- `WatchAlerts.selectedTone(... favorite=true ...)` usa o recurso local **“Quem é esse Pokémon? · BR”** quando a preferência `favoriteSoundUri` nunca foi gravada. `hasCustomTone` mostra Personalizado nessa situação, e `soundChannelId` cria canal compatível com o áudio efetivo, sem modificar outros canais ou prefs. **Valores já escolhidos pelo usuário prevalecem**, inclusive string vazia previamente gravada que significa Padrão do sistema. `general` permanece com o tom padrão do sistema.
+- Preferências de som por espécie já existentes são preservadas e continuam prevalecendo sobre o áudio de favoritos.
+
+**Seletor e UX de escuta:**
+- Tocar em **Padrão** ou **Personalizado** agora abre diretamente o `AlertDialog.setSingleChoiceItems` nativo, com **38 entradas** e rolagem **apenas dentro do seletor**: `Padrão` (primeiro), **36 sons PokeSearch**, `＋ Enviar áudio` (último).
+- Ao tocar no nome de uma das 36 faixas, a prévia toca por `MediaPlayer`; somente após tocar **✓ Usar áudio** a preferência muda. “Padrão” oferece prévia de notificação Android via `RingtoneManager`. Cancelar não salva e, ao fechar, a reprodução é liberada/parada.
+- `＋ Enviar áudio` abre `ACTION_OPEN_DOCUMENT` (`audio/*`) para arquivos/Google Drive, com permissão URI persistente; agora mostra um diálogo de confirmação com **▶ Ouvir**, **✓ Usar áudio** e **Cancelar**, em vez de salvar ao simplesmente selecionar o arquivo. O som anterior permanece se cancelar.
+- A UI da escolha individual por Pokémon continua implementada e escondida no painel público, sem remover JSON/seleções já salvas.
+
+**Validação:** workflow GitHub `PokeSearch Node QA` `39999107398` — **SUCCESS** no código da branch até `c98d7fee252c8eb462846ef832166413ce4b91a1` (nove suítes) e testes específicos do design e biblioteca. A operação de importação verificou metadados e conteúdo dos 13 blobs; arquivos são binários reais. Build APK e secure-beta **skipped**, por orientação de não gerar versão sem autorização. **Não houve compilação Java/Android nem homologação física Samsung desta etapa**, portanto verificar durante futura homologação: renderização de SVG, som BR padrão, confirmação de áudio do Drive, Android channels/permissões e preservação de login.
+
+**Regra de continuidade:** PR #34 permanece em Draft na branch `fix/lt62-menu-visual-states-20261023`, `main` LT61 intacta, sem merge nem APK novo; não alterar applicationId `com.lucianotoscano.pokesearch`, assinatura, WebView+`probe.js`, dados salvos e demais funcionalidades.
