@@ -346,7 +346,7 @@ test("Login launched from overlay returns to gameplay with PokeSearch only on su
  main.includes('if(authenticatedNow&&fromOverlay&&OverlayService.isRunning())')&&
  main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
  main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
-test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("✓ Fechar")')&&!picker.includes('.setPositiveButton("Concluído"'));
+test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("×")')&&!picker.includes('.setPositiveButton("Concluído"'));
 test("Favorites retain translucent dark styling with optional background blur",picker.includes('Color.argb(239,34,38,47)')&&picker.includes('setBlurBehindRadius'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
@@ -511,7 +511,7 @@ test("B06 destruction cancels callbacks and removes windows before WebViews",des
 test("B06 privacy of errors unchanged",service.includes('error.getClass().getSimpleName()')&&!service.includes('error.getMessage()'));
 test("B06 Android SDK and manifest unchanged",manifest.includes('<service android:name=".OverlayService" android:exported="false" />')&&gradleBuild.includes('targetSdk = 33')&&gradleBuild.includes('compileSdk = 36'));
 // PS-075–PS-080 regression contracts
-test("PS-075 Favorites provides accessible test notification action",picker.includes('testNotification.setText("🔔 Testar notificação")')&&picker.includes('WatchAlerts.test(activity)')&&picker.includes('WatchAlerts.permissionGranted(activity)'));
+test("PS-075 favorite notification test stays in Alerts",dock.includes('["☆ Testar aviso favorito","testNotification"]')&&!picker.includes('testNotification.setText('));
 test("PS-075 Home Preferences provides both toggles and test action",main.includes("settingAlertMode(body,prefs);")&&main.includes('settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,')&&main.includes('WatchAlerts.test(this)'));
 test("PS-076 Android Back returns within OAuth dialog history",main.includes('loginDialog.setOnKeyListener(')&&main.includes('android.view.KeyEvent.KEYCODE_BACK')&&main.includes('website.canGoBack()')&&main.includes('website.goBack()'));
 test("PS-077 loginEndRefresh is cancelable across all transitions",service.includes('private final Runnable loginEndRefresh=')&&cancelBlock.includes('handler.removeCallbacks(loginEndRefresh)')&&beginBlock.includes('cancelSessionCallbacks();')&&endBlock.includes('cancelSessionCallbacks();')&&reloadBlock.includes('cancelSessionCallbacks();'));
@@ -529,7 +529,7 @@ const prefSync=service.split('private void syncPreferencesWithoutSearch(){')[1]?
 const startCommand=service.split('    @Override public int onStartCommand(')[1]?.split('    private void destroyWebView(')[0]||'';
 test("PS-081 home requests POST_NOTIFICATIONS from test action",main.includes('requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},203)'));
 test("PS-081 callback runs notification test only after permission granted",main.includes('if(requestCode==203)')&&main.includes('results[0]==PackageManager.PERMISSION_GRANTED')&&main.includes('granted&&WatchAlerts.permissionGranted(this)')&&main.includes('WatchAlerts.test(this)'));
-test("PS-081 picker provides permission directions without requesting service permission",picker.includes('Conceda notificações na tela inicial do PokeSearch ou nas Configurações do Android')&&!picker.includes('requestPermissions('));
+test("PS-081 picker has no notification permission UI",!picker.includes('requestPermissions(')&&!picker.includes('Conceda notificações na tela inicial')&&dock.includes('"requestNotificationPermission"'));
 test("PS-082 sync action from Home requires running overlay",main.includes('OverlayService.isRunning()')&&main.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS")'));
 test("PS-082 Home syncs on spinner, checkbox and dismiss",main.includes('syncOverlayPreferences();')&&main.includes('dialog.setOnDismissListener(d->syncOverlayPreferences())')&&main.includes('check.setOnCheckedChangeListener'));
 test("PS-082 Overlay handles SYNC_PREFS without network refresh",startCommand.includes('com.lucianotoscano.pokesearchoverlay.SYNC_PREFS')&&startCommand.includes('syncPreferencesWithoutSearch();')&&!prefSync.includes('refresh(')&&!prefSync.includes('execute(')&&!prefSync.includes('loadUrl('));
@@ -2281,12 +2281,13 @@ test("NOTIFY-04 choose MP3 or OGG from Files or Drive with persistent access",()
   main.includes('saveChosenAlertTone(data,req==306)')&&
   main.includes('storeAlertTone(target,species,chosen)');
 });
-test("NOTIFY-05 favorites dialog uses authoritative mode and styled cards",()=>{
+test("NOTIFY-05 favorites only edits the saved list; notifications remain in Alerts",()=>{
  const picker=read("java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java");
- return picker.includes('WatchAlerts.setMode(activity,enabled?"on":"off")')&&
-  picker.includes('POKÉMON FAVORITOS')&&
+ return !picker.includes('WatchAlerts.setMode(')&&
+  picker.includes('FAVORITOS')&&
   picker.includes('row.setBackground(rowBg)')&&
-  picker.includes('background.setCornerRadius(dp(activity,12))');
+  picker.includes('background.setCornerRadius(dp(activity,12))')&&
+  dock.includes('button.onclick=()=>Native.setFavoriteAlertMode(id)');
 });
 test("COORDS-06 typed radius still requires actual site two-field confirmation",()=>{
  return dock.includes('radiusField.type="number"')&&
