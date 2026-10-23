@@ -1,0 +1,204 @@
+name: PokeSearch v0.00.59 LT — APK assinado (menus estáveis)
+on:
+  push:
+    branches:
+      - fix/lt57-compact-single-form-20261022
+    paths:
+      - '.github/workflows/build-v059-stable-menus.yml'
+      - 'app/tests/overlay-ux.test.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-lt-59:
+    # Owner's Continue after LT59 build was explicitly identified as the next stage; PR #32 only, no merge.
+    if: "${{ github.event_name == 'workflow_dispatch' || (github.ref_name == 'fix/lt57-compact-single-form-20261022' && startsWith(github.event.head_commit.message, 'build: approved v0.00.59 stable menus')) }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      POKE_TEST_SIGNING_REQUIRED: "true"
+      POKE_TEST_VERSION_CODE: "54257"
+      POKE_TEST_VERSION_LABEL: "51059"
+      POKE_TEST_PUBLIC_VERSION: "0.00.59"
+      POKE_TEST_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_TEST_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_TEST_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+    steps:
+      - name: Checkout exato da branch de teste
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Configurar Gradle 8.11.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+      - name: Android SDK 36
+        shell: bash
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Restaurar chave de assinatura persistente (sem publicar segredos)
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for value in "${POKE_TEST_KEYSTORE_B64:-}" "${POKE_TEST_STORE_PASSWORD:-}" "${POKE_TEST_KEY_ALIAS:-}" "${POKE_TEST_KEY_PASSWORD:-}"; do
+            if [ -z "$value" ]; then
+              echo "::error::A assinatura persistente nao esta configurada."
+              exit 1
+            fi
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pokesearch-lt.p12"
+          test -s "$RUNNER_TEMP/pokesearch-lt.p12"
+          chmod 600 "$RUNNER_TEMP/pokesearch-lt.p12"
+          keytool -list -keystore "$RUNNER_TEMP/pokesearch-lt.p12" \
+            -storetype PKCS12 -storepass "$POKE_TEST_STORE_PASSWORD" -alias "$POKE_TEST_KEY_ALIAS" > /dev/null
+          echo "POKE_TEST_KEYSTORE=$RUNNER_TEMP/pokesearch-lt.p12" >> "$GITHUB_ENV"
+      - name: Validar identidade e PNGs originais
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'android:icon="@mipmap/ic_launcher"' app/src/main/AndroidManifest.xml
+          node --check app/src/main/assets/visual_editor.js
+          node --check app/src/main/assets/probe.js
+          node --check app/src/main/assets/pvpoke-overall-ranks.js
+          node --check app/src/main/assets/pvpoke-iv-gamemaster.js
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const files=[
+            ['app/src/main/res/drawable-nodpi/ic_launcher.png',1254,1254],
+            ['app/src/main/res/drawable-nodpi/ps_home_brand_transparent.png',1254,1254],
+            ['app/src/main/res/drawable-nodpi/ps_home_official_wordmark.png',2172,724],
+            ['app/src/main/res/drawable-nodpi/ps_user_frame_mystic.png',1254,1254],
+            ['app/src/main/res/drawable-nodpi/ps_user_frame_valor.png',1254,1254],
+            ['app/src/main/res/drawable-nodpi/ps_user_frame_instinct.png',1254,1254],
+            ['app/src/main/res/drawable-nodpi/ps_user_frame_neutral.png',1254,1254],
+          ];
+          for (const [name,w,h] of files){
+            const b=fs.readFileSync(name);
+            if(b.subarray(0,8).toString('hex')!=='89504e470d0a1a0a'||
+              b.readUInt32BE(16)!==w||b.readUInt32BE(20)!==h)
+                throw new Error('Identidade grafica invalida: '+name);
+          }
+          NODE
+      - name: Verificar JS inline, sino e cinco novos testes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app/tests/overlay-ux.test.js
+          node - <<'NODE'
+          const fs=require('node:fs'),vm=require('node:vm');
+          const dock=fs.readFileSync('app/src/main/assets/dock.html','utf8');
+          const scripts=[...dock.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
+          if(!scripts.length)throw Error('dock.html sem scripts inline');
+          scripts.forEach((m,i)=>new vm.Script(m[1],{filename:'dock-inline-'+i}));
+          const test=fs.readFileSync('app/tests/overlay-ux.test.js','utf8');
+          for(let i=6;i<=10;i++){
+            const id='FILTERS-POGO-'+String(i).padStart(2,'0');
+            if(!test.includes('test("'+id))throw Error('Contrato ausente: '+id);
+          }
+          if(!dock.includes('LT55 BELL-THEME-03'))throw Error('Correção SVG ausente');
+          console.log('JS inline válido; filtros e sino presentes');
+          NODE
+      - name: Validar regressões da cascata Mais e recursos LT57
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const dock=fs.readFileSync('app/src/main/assets/dock.html','utf8');
+          const tests=fs.readFileSync('app/tests/overlay-ux.test.js','utf8');
+          for(let i=1;i<=5;i++){
+            const key='UX-QUICK-MORE-'+String(i).padStart(2,'0');
+            if(!tests.includes('test("'+key))throw Error('Contrato ausente: '+key);
+          }
+          if(!dock.includes('function renderMoreChoices()'))throw Error('Cascata Mais ausente');
+          if(!dock.includes('flex-direction:column!important'))throw Error('Mais não é vertical');
+          for(const name of ['StarGL.png','StarUL.png','StarIVRaw.png'])
+            if(!fs.statSync('app/src/main/assets/result-icons/modes/'+name).size)
+              throw Error('Icone vazio: '+name);
+          const assets=['any','boosted','sunny','rainy','partly-cloudy','cloudy','windy','snow','fog'];
+          for(const name of assets)
+            if(!fs.statSync('app/src/main/assets/weather-icons/'+name+'.png').size)
+              throw Error('Icone clima vazio: '+name);
+          if(!dock.includes('svg.quickIvValues text{')||
+             !dock.includes('ivText:family==="custom"&&modeKey==="raw"')||
+             !tests.includes('LT57-RAW-IV-CLIP-01'))
+             throw Error('Regressão Raw IV personalizada sem SVG ou teste');
+          if(!dock.includes('LT58-ALL-POPUPS-STABLE-01')||
+             !dock.includes('LT58-ALL-POPUPS-SCALE-01')||
+             !tests.includes('LT58-ALL-POPUPS-STABLE-04')||
+             !tests.includes('LT58-SITE-SELECT-02'))
+             throw Error('Proteção de menus/Size/Gender/Form ausente');
+          console.log('Regressões UX, novo IV, menus universais e filtros oficiais presentes');
+          NODE
+      - name: Executar as oito suites Node
+        shell: bash
+        run: |
+          set -euo pipefail
+          for suite in \
+            app/tests/location-probe.test.js \
+            app/tests/probe-smoke.test.js \
+            app/tests/pokemon-picker.test.js \
+            app/tests/login-entry.test.js \
+            app/tests/overlay-ux.test.js \
+            app/tests/visual-editor.test.js \
+            app/tests/signing-contract.test.js \
+            app/tests/firebase-stats.test.js; do
+            node "$suite"
+          done
+      - name: Compilar APK de teste com a assinatura persistente
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
+      - name: Verificar assinatura, numero de versao e gerar arquivo oficial
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          OUT="PokeSearch-v0.00.59-LT.apk"
+          EXPECTED_CERT="34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          PACKAGE_LINE="$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package: ')"
+          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54257'" "versionName='0.00.59'"; do
+            if ! grep -Fq -- "$expected" <<< "$PACKAGE_LINE"; then
+              echo "::error::APK com identidade ou versao incorreta: $PACKAGE_LINE"
+              exit 1
+            fi
+          done
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' > SIGNING_CERT_SHA256.txt
+          ACTUAL_CERT="$(tr -d ':\r\n ' < SIGNING_CERT_SHA256.txt | tr '[:upper:]' '[:lower:]')"
+          if [ "$ACTUAL_CERT" != "$EXPECTED_CERT" ]; then
+            echo "::error::Certificado diferente da assinatura permanente: nao distribuir."
+            exit 1
+          fi
+          cp "$APK" "$OUT"
+          sha256sum "$OUT" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          echo "$PACKAGE_LINE" > PACKAGE_VERSION.txt
+      - name: Publicar APK aprovado e dados de verificacao
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-v0.00.59-LT
+          path: |
+            PokeSearch-v0.00.59-LT.apk
+            SHA256SUMS.txt
+            SIGNING_CERT_SHA256.txt
+            SOURCE_COMMIT.txt
+            PACKAGE_VERSION.txt
+          retention-days: 30
+          if-no-files-found: error
+      - name: Eliminar arquivo de assinatura temporariamente restaurado
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/pokesearch-lt.p12"
