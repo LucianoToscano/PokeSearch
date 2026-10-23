@@ -671,8 +671,11 @@ function visibleExtrasMismatch(){
   if(key==="pokemon"&&Array.isArray(filters.pokemonSelections))continue;
   if((key==="size"||key==="gender")&&Array.isArray(filters[key+"Selections"])){
    const wanted=filters[key+"Selections"].map(x=>String(x).trim()).filter(Boolean);
-   if((wanted.length||resetKeys.includes(key+"Selections"))&&!extraMulti(key,wanted,"verify"))
-    return key+"Selections";
+   // Result pages may hide the form. Pre-submit verification remains valid
+   // unless an ACTUALLY VISIBLE control disagrees with the saved selection.
+   if(extraControl(EXTRA_LABELS[key])&&
+      (wanted.length||resetKeys.includes(key+"Selections"))&&
+      !extraMulti(key,wanted,"verify"))return key+"Selections";
    continue;
   }
   const want=String(filters[key]||"").trim();
