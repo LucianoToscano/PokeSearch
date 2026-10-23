@@ -3476,6 +3476,27 @@ test("LT60-CLEAR-ACK-02 failed searches must keep pending resets",()=>{
  return helper.includes("if(pending==null||pending.length()==0)return;")&&
   !early.includes("acknowledgeConfirmedExtraResets();");
 });
+test("LT60-E7-01 poll first results early and back off without repeating Search",()=>{
+ const start=service.indexOf("private static long resultPollDelayMs(int attempt){");
+ const collectStart=service.indexOf("private void pollSearch(int generation,int attempt,boolean manual){",start);
+ const pollEnd=service.indexOf("private long expiration(",collectStart);
+ const policy=service.slice(start,collectStart),poll=service.slice(collectStart,pollEnd);
+ return start>0&&collectStart>start&&pollEnd>collectStart&&
+   policy.includes('if(attempt==0)return 700L;')&&
+   policy.includes('return attempt<=6?650L:1150L;')&&
+   poll.includes('}, resultPollDelayMs(attempt));')&&
+   poll.includes('execute("collect",r->{')&&
+   !poll.includes('execute("submitSearch"')&&
+   poll.includes('if(r.optBoolean("siteIncomplete",false)&&attempt<24)');
+});
+test("LT60-E7-02 empty result needs a fresh site signal, not a generic zero",()=>{
+ return probe.includes('function visibleResultSignature(){')&&
+   probe.includes('window.__pokeSearchSubmission={before:visibleResultSignature(),observedUpdate:false};')&&
+   probe.includes('const explicitEmpty=found.length===0&&!loading&&explicitEmptySignal&&resultChanged;')&&
+   probe.includes('const zeroInResults=countLabel==="0"&&mainEmptyMessage();')&&
+   probe.includes('emptySignalFound:explicitEmptySignal,resultChanged,')&&
+   service.includes('"estado vazio anterior sem atualização"');
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
