@@ -717,17 +717,11 @@ public class OverlayService extends Service {
                     loaded=true;
                     handler.removeCallbacks(pageFinishedRefresh);
                     pendingPageRefreshGeneration=searchInProgress?-1:requestGeneration;
-                    if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,2500L);
-                    if(shiny&&!shinyVerified){
-                        // The site is visible to JS now. Confirm the Shiny state
-                        // as soon as the tab is hydrated, not after a new Search.
-                        final int generation=requestGeneration;
-                        handler.postDelayed(()->{
-                            if(!stopped&&!loginPaused&&loaded&&!searchInProgress&&
-                               shiny&&!shinyVerified&&generation==requestGeneration)
-                                prepareImmediateShiny(generation);
-                        },420L);
-                    }
+                    // A single verified Search now owns Shiny and all filters.
+                    // Avoid starting a concurrent setShiny/verifyShiny sequence
+                    // before the deferred page-finished Search (race on React).
+                    if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,
+                        shiny&&!shinyVerified?900L:2500L);
                 }
             }
             @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){
@@ -1487,6 +1481,37 @@ public class OverlayService extends Service {
                     }
                 });
             },240L);
+        });
+    }
+    // LT62-SHINY-ONE-PASS: no duplicated setShiny -> verify -> Search.
+    // On a half-hydrated page, "não confirmado" is not proof of logout.
+    // Retry the SITE session briefly before showing an account-link prompt.
+    private void startVerifiedShinySearch(int generation,int attempt){
+        if(stopped||loginPaused||generation!=requestGeneration||!shiny)return;
+        if(!loaded||website==null){
+            status("✨ Site ainda carregando; Shiny será conferido no próximo carregamento.");
+            return;
+        }
+        execute("session",session->{
+            if(stopped||loginPaused||generation!=requestGeneration||!shiny)return;
+            String auth=session.optString("auth","não confirmado");
+            if("não confirmado".equals(auth)&&attempt<6){
+                if(attempt==0)status("✨ Aguardando confirmação da sessão no site...");
+                handler.postDelayed(()->startVerifiedShinySearch(generation,attempt+1),400L);
+                return;
+            }
+            getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
+            if(!siteConfirmsShinyAccount(session)){
+                revertUnverifiedShiny("✨ Conta logada e treinador confirmado são obrigatórios para Shiny.");
+                openShinyLogin();
+                return;
+            }
+            // One site search applies and verifies all active filters, including
+            // Shiny after Coords, before submitting Search. A single generation
+            // prevents stale answers from replacing the selected state.
+            status(locationEnabled?"✨ Verificando Shiny e localização na mesma busca...":
+                "✨ Verificando Shiny e pesquisando...");
+            refresh(true);
         });
     }
     private void prepareImmediateShiny(int generation){
@@ -2988,47 +3013,28 @@ public class OverlayService extends Service {
         @JavascriptInterface public void shiny(){handler.post(()->{
             if(stopped||loginPaused)return;
             shiny=!shiny;
-            android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
-            prefs.edit().putBoolean("shiny",shiny).apply();
+            getSharedPreferences("prefs",0).edit().putBoolean("shiny",shiny).apply();
             replaceActiveFilterSearch();
             final int generation=requestGeneration;
             shinyVerified=false;
             shinyLoginWindowOpened=false;
             shinyLoginPromptRequested=shiny;
-            // Keep existing results visible while the new site state is pending.
-            status(shiny?"✨ Verificando acesso ao Shiny...":"✨ Desativando Shiny no site...");
+            // Show the neutral pending state immediately; it becomes yellow
+            // only after the actual website confirms the active Shiny filter.
+            status(shiny?"✨ Shiny solicitado · verificando no site...":
+                "✨ Shiny OFF · aplicando na busca...");
             if(!loaded||website==null){
-                if(shiny){
-                    status("✨ Abrindo login; pesquisa ainda não carregada.");
-                    openShinyLogin();
-                }else status("✨ Shiny desligado; sincronização no próximo carregamento.");
+                if(shiny)status("✨ Site carregando; Shiny aguardando confirmação.");
+                else status("✨ Shiny desligado; sincronização no próximo carregamento.");
                 return;
             }
             if(!shiny){
-                // Coords, Shiny and other filters belong to one site form.
-                // Refresh fills only changed fields and verifies all selections.
-                if(locationEnabled){OverlayService.this.refresh(true);return;}
-                prepareImmediateShiny(generation);
+                // No login is required for OFF. Reconfigure Shiny plus all
+                // existing filters in ONE verified request (even with Coords).
+                refresh(true);
                 return;
             }
-            execute("session",session->{
-                if(stopped||loginPaused||generation!=requestGeneration)return;
-                String auth=session.optString("auth","não confirmado");
-                prefs.edit().putString("sessionStatus",auth).apply();
-                if(!siteConfirmsShinyAccount(session)){
-                    revertUnverifiedShiny("✨ Conta logada e treinador confirmado são obrigatórios para Shiny.");
-                    openShinyLogin();
-                    return;
-                }
-                if(locationEnabled){
-                    // Re-enter the unified form so the site does not discard
-                    // active Coords when switching Shiny.
-                    status("✨ Sincronizando Shiny e localização na mesma pesquisa...");
-                    OverlayService.this.refresh(true);
-                    return;
-                }
-                prepareImmediateShiny(generation);
-            });
+            startVerifiedShinySearch(generation,0);
         });}
         @JavascriptInterface public void refresh(){handler.post(()->{
             android.widget.Toast.makeText(OverlayService.this,
