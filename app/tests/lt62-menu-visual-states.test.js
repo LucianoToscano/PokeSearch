@@ -154,5 +154,30 @@ check("LT62 Filtros: single Min/Max placeholders, blank Level/PC, large gender i
  assert.ok(dock.includes('const numericBounds=['));
  assert.ok(dock.includes('invalidNumber(lowKey,lowKey.startsWith("cp")?"PC":"Nível"'));
 });
+check("LT62 Localização: no instructional paragraphs, concise state and no OFF caption",()=>{
+ const body=dock.split("function renderLocationChoices(){")[1]?.split("function manualRefreshTap(){")[0]||"";
+ const feedback=dock.split("function locationPanelFeedback(){")[1]?.split("window.onLocationPaste=",1)[0]||"";
+ assert.ok(body.includes('make("div","choiceHeader","LOCALIZAÇÃO")'));
+ assert.ok(!body.includes('Coords e raio 0–1000 km. Aplicar pesquisa sem limpar outros filtros.'));
+ assert.ok(!body.includes('const hide=make("button","locHide","Fechar")'));
+ assert.ok(body.includes('actions.append(apply,clear)'));
+ assert.ok(body.includes('message.setAttribute("role","status")'));
+ assert.ok(body.includes('message.hidden=true'));
+ assert.ok(feedback.includes('hint.hidden=state==="OFF"'));
+ assert.ok(feedback.includes('state==="NOT_APPLIED"?"⚠ Localização não aplicada"'));
+ assert.ok(!feedback.includes('OFF · busca geral'));
+});
+check("LT62 Localização: SVG de colar centralizado, km limitado e busca independente",()=>{
+ const body=dock.split("function renderLocationChoices(){")[1]?.split("function manualRefreshTap(){")[0]||"";
+ assert.ok(body.includes('document.createElementNS("http://www.w3.org/2000/svg","svg")'));
+ assert.ok(body.includes('paste.appendChild(pasteIcon)'));
+ assert.ok(body.includes('paste.onclick=()=>Native.pasteLocationCoords()'));
+ assert.ok(body.includes('paste.setAttribute("aria-label","Colar coordenadas")'));
+ assert.ok(dock.includes('justify-content:center!important;'));
+ assert.ok(dock.includes('body.controls-window #choices.locationPanel .locPaste svg'));
+ assert.ok(body.includes('radiusField.min="0";radiusField.max="1000";'));
+ assert.ok(body.includes('Native.setLocation(true,wantedCoords,wantedRadius)'));
+ assert.ok(body.includes('Native.setLocation(false,"",0)'));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
