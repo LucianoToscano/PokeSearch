@@ -447,6 +447,19 @@ body.controls-window #quickMenuList .quickRank{
  padding:0!important;margin:0!important;
  text-shadow:0 1px 2px #000,0 0 3px #000,0 0 4px #d5e7ff!important;
 }
+/* LT57-WEATHER-ICONS-01: PNGs in compact picker; no emoji replacements. */
+body.controls-window #choices .weatherChoiceIcon{
+ width:19px!important;height:19px!important;min-width:19px!important;max-width:19px!important;
+ object-fit:contain!important;vertical-align:middle!important;margin-right:3px!important;
+ pointer-events:none!important;background:transparent!important;
+}
+body.controls-window #choices.filterPicker button:has(.weatherChoiceIcon){
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:2px!important;min-height:25px!important;font-size:10px!important;
+}
+body.controls-window #choices .extraValue:has(.weatherChoiceIcon){
+ display:flex!important;align-items:center!important;gap:3px!important;
+}
 /* LT57-MODES-RAW-01: original Drive PNG with non-destructive tiny IVs. */
 body.controls-window #quickMenuList .quickGlyph.modeArt.rawArt .quickModeImage{
  width:21px!important;height:21px!important;
@@ -1767,6 +1780,20 @@ function renderModeChoices(){
 /* FILTERS-POGO-01: source-aligned menu. Pokémon species/IV/PvP/Coords stay
    in their dedicated menus. These selectors are just a compact UI for the
    existing PoGoCoordinates probe; nothing is applied until ✓ Aplicar. */
+/* LT57-WEATHER-ICONS-01: original nine Drive PNGs; values stay canonical. */
+const WEATHER_ICON_FILES=Object.freeze({
+ "Any":"any.png","Boosted":"boosted.png","Sunny":"sunny.png",
+ "Rainy":"rainy.png","Partly Cloudy":"partly-cloudy.png",
+ "Cloudy":"cloudy.png","Windy":"windy.png","Snow":"snow.png","Fog":"fog.png"
+});
+function makeWeatherIcon(value){
+ const name=WEATHER_ICON_FILES[String(value||"").trim()]||WEATHER_ICON_FILES.Any;
+ const img=document.createElement("img");img.className="weatherChoiceIcon";
+ img.alt="";img.setAttribute("aria-hidden","true");
+ img.src="file:///android_asset/weather-icons/"+name;
+ img.onerror=()=>{img.style.display="none";};
+ return img;
+}
 function renderExtraFilters(panel,make){
  const divider=()=>panel.appendChild(make("div","extraDivider"));
  const field=(label,control)=>{
@@ -1782,6 +1809,7 @@ function renderExtraFilters(panel,make){
    (live.length?live:["Any","Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"]):live;
   const current=String(modeDraft[key]||(key==="sortBy"?"Despawn (longest)":""));
   const button=make("button","extraValue",current||(key==="weather"?"Any":"—"));
+  if(key==="weather")button.prepend(makeWeatherIcon(current||"Any"));
   button.type="button";button.disabled=!choices.length&&!["sortBy","weather"].includes(key);
   button.title=choices.length?"Selecionar "+label:"Aguardando opções verificadas no PoGoCoordinates";
   button.onclick=()=>{modeScrollTop=panel.scrollTop;renderFilterPicker(key,label,choices);};
@@ -1904,6 +1932,7 @@ function renderFilterPicker(key,label,options){
  // A neutral option is a UI state; site changes will be verified before submitting.
  if(key!=="sortBy"){
   const neutral=document.createElement("button");neutral.textContent="Any";
+  if(key==="weather")neutral.prepend(makeWeatherIcon("Any"));
   neutral.onclick=()=>{modeDraft[key]="";choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
   panel.appendChild(neutral);
  }
@@ -1915,11 +1944,8 @@ function renderFilterPicker(key,label,options){
   safe;
  for(const value of allowed){
   const btn=document.createElement("button");btn.type="button";
-  const weatherSymbol=key==="weather"?({
-   "Boosted":"⚡ ","Sunny":"☀️ ","Rainy":"🌧️ ","Partly Cloudy":"🌤️ ",
-   "Cloudy":"☁️ ","Windy":"💨 ","Snow":"❄️ ","Fog":"🌫️ "
-  }[value]||""):"";
-  btn.textContent=(modeDraft[key]===value?"✓ ":"")+weatherSymbol+value;
+  btn.textContent=(modeDraft[key]===value?"✓ ":"")+value;
+  if(key==="weather")btn.prepend(makeWeatherIcon(value));
   btn.className=modeDraft[key]===value?"chosen":"";
   btn.onclick=()=>{modeDraft[key]=value;choiceOpen==="filters"?renderFiltersChoices():renderModeChoices();};
   panel.appendChild(btn);
