@@ -588,4 +588,38 @@ checked++;
  assert.equal(parse(card,0).distance,'');
  checked+=6;
 }
+// LT60 regression: React selection is pending until the website DOM confirms it.
+{
+ const start=source.indexOf('function choice(label,want){');
+ const end=source.indexOf('function readChoice(label)',start);
+ assert.ok(start>=0&&end>start,'League choice handler must exist');
+ let clicked=0;
+ const scope={
+  field:()=>({tagName:'BUTTON',disabled:false,getAttribute:()=> 'true'}),
+  text:()=> 'Any', findOption:()=>({click(){clicked++;}}), transientPending:false
+ };
+ const applied=vm.runInNewContext(source.slice(start,end)+";choice('League','Great League')",scope);
+ assert.equal(applied,false,'League selection must wait for React hydration');
+ assert.equal(scope.transientPending,true,'League selection requests another DOM read');
+ assert.equal(clicked,1,'League option clicked once');
+ checked++;
+}
+{
+ const start=source.indexOf('function extraSelect(key,want){');
+ const end=source.indexOf('/* LT57 ONE-FORM',start);
+ assert.ok(start>=0&&end>start,'Optional filter selector must exist');
+ let clicked=0;
+ const scope={
+  EXTRA_LABELS:{weather:'Weather'},
+  extraControl:()=>({disabled:false,matches:()=>false,getAttribute:()=> 'true'}),
+  extraValue:()=> 'Sunny', isNeutral:v=>v==='Any',
+  optionElements:()=>[{label:'Any',click(){clicked++;}}],
+  text:e=>e.label, transientPending:false
+ };
+ const applied=vm.runInNewContext(source.slice(start,end)+";extraSelect('weather','')",scope);
+ assert.equal(applied,false,'Reset to Any must wait for React confirmation');
+ assert.equal(scope.transientPending,true,'Weather reset requests another DOM read');
+ assert.equal(clicked,1,'Neutral option clicked once');
+ checked++;
+}
 console.log("PokeSearch probe contract: "+checked+" tests passed");
