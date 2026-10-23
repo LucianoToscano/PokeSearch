@@ -1585,6 +1585,11 @@ window.setMenuPopupPlacement=(above,offset,room)=>{
  if(choiceOpen==="mode")positionCascadeEditor();
  fit();
 };
+window.setResultsPaused=paused=>{
+ if(!resultWindow)return;
+ document.body.classList.toggle("results-paused",!!paused);
+ syncTimerTicker();
+};
 window.setResultsCollapsed=collapsed=>{
  document.body.classList.toggle("results-collapsed",!!collapsed);
  document.getElementById("resultHeader").setAttribute("aria-expanded",String(!collapsed));
@@ -2826,7 +2831,8 @@ function updateTimers(){
 let timerTicker=null;
 function syncTimerTicker(){
  if(!resultWindow)return;
- const shown=!document.body.classList.contains("results-collapsed");
+ const shown=!document.body.classList.contains("results-collapsed")&&
+  !document.body.classList.contains("results-paused");
  const hasTimers=!!document.querySelector(".timer");
  if(shown&&hasTimers){
   if(timerTicker===null){updateTimers();timerTicker=setInterval(updateTimers,1000);}
