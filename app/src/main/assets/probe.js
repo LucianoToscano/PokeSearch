@@ -41,7 +41,7 @@ function activeOptionPopup(control){
   const popup=document.getElementById?.(id);
   if(popup&&vis(popup))return popup;
  }
- const open=elements('[role=listbox],[role=menu],[cmdk-list],[data-radix-menu-content]').filter(vis);
+ const open=elements('[role=listbox],[role=menu],[cmdk-list],[data-radix-menu-content],[data-radix-popper-content-wrapper],[data-state="open"][data-side]').filter(vis);
  return open.length===1?open[0]:null;
 }
 function optionElements(control){
@@ -476,8 +476,10 @@ function siteOptions(key){
   return {ok:true,pending:false,options:[...control.options].map(text).map(clean).filter(Boolean).slice(0,80)};
  const popup=activeOptionPopup(control);
  if(!popup)return {ok:false,pending:true,options:[]};
+ // The official Size popup has checkbox rows rather than role=option nodes.
+ const rows=key==="size"?multiOptions(control):optionElements(control);
  return {ok:true,pending:false,
-  options:[...new Set(optionElements(control).map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80)};
+  options:[...new Set((rows||[]).map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80)};
 }
 function describeChoice(label){
  const e=extraControl(label);
@@ -500,6 +502,14 @@ function extraSelect(key,want){
  const actual=extraValue(key);
  if(!want){
   if(isNeutral(actual))return true;
+  if(e.matches("select")){
+   const neutral=Array.from(e.options).find(o=>isNeutral(clean(text(o))));
+   if(!neutral)return false;
+   e.value=neutral.value;
+   e.dispatchEvent(new Event("input",{bubbles:true}));
+   e.dispatchEvent(new Event("change",{bubbles:true}));
+   transientPending=true;return false;
+  }
   if(e.matches("input"))return valueInput(e,"");
   // Reset prior active filter when user switches back to Any.
   const opt=optionElements(e).find(o=>isNeutral(text(o)));
@@ -547,6 +557,7 @@ function extraMulti(key,desired,operation){
  const control=extraControl(EXTRA_LABELS[key]);
  if(!control||control.disabled)return false;
  const target=[...new Set(desired.map(x=>clean(x).toLowerCase()))];
+ if(!target.length&&isNeutral(extraValue(key)))return true;
  if(control.matches("select")&&control.multiple){
   const options=Array.from(control.options);
   if(target.some(v=>!options.some(opt=>clean(text(opt)).toLowerCase()===v)))return false;
@@ -638,11 +649,22 @@ function extras(action){
  if(!pokemon.ok)return {ok:false,pending:!!pokemon.pending,reason:pokemon.reason||'Seleção Pokémon não confirmada'};
  for(const key of Object.keys(EXTRA_LABELS)){
   if(key==="pokemon"&&Array.isArray(filters.pokemonSelections))continue;
-  if((key==="size"||key==="gender")&&Array.isArray(filters[key+"Selections"])){
-   const wanted=filters[key+"Selections"].map(x=>String(x).trim()).filter(Boolean);
-   if(!wanted.length&&!resetKeys.includes(key+"Selections"))continue;
-   const ok=extraMulti(key,wanted,action);
-   if(!ok)failed.push(key+"Selections");
+  if(key==="size"&&Array.isArray(filters.sizeSelections)){
+   const wanted=filters.sizeSelections.map(x=>String(x).trim()).filter(Boolean);
+   if(!wanted.length&&!resetKeys.includes("sizeSelections"))continue;
+   const ok=extraMulti("size",wanted,action);
+   if(!ok)failed.push("sizeSelections");
+   if(transientPending)break;
+   continue;
+  }
+  if(key==="gender"&&Array.isArray(filters.genderSelections)){
+   // Gender is a single-choice radio on the site's official form.
+   const wanted=filters.genderSelections.map(x=>String(x).trim()).filter(Boolean);
+   if(wanted.length>1){failed.push("genderSelections");continue;}
+   if(!wanted.length&&!resetKeys.includes("genderSelections"))continue;
+   const ok=action==="apply"?extraSelect("gender",wanted[0]||""):
+    extraMatches("gender",wanted[0]||"");
+   if(!ok)failed.push("genderSelections");
    if(transientPending)break;
    continue;
   }
@@ -677,13 +699,19 @@ function visibleExtrasMismatch(){
  const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
  for(const key of Object.keys(EXTRA_LABELS)){
   if(key==="pokemon"&&Array.isArray(filters.pokemonSelections))continue;
-  if((key==="size"||key==="gender")&&Array.isArray(filters[key+"Selections"])){
-   const wanted=filters[key+"Selections"].map(x=>String(x).trim()).filter(Boolean);
-   // Result pages may hide the form. Pre-submit verification remains valid
-   // unless an ACTUALLY VISIBLE control disagrees with the saved selection.
+  if(key==="size"&&Array.isArray(filters.sizeSelections)){
+   const wanted=filters.sizeSelections.map(x=>String(x).trim()).filter(Boolean);
    if(extraControl(EXTRA_LABELS[key])&&
-      (wanted.length||resetKeys.includes(key+"Selections"))&&
-      !extraMulti(key,wanted,"verify"))return key+"Selections";
+      (wanted.length||resetKeys.includes("sizeSelections"))&&
+      !extraMulti("size",wanted,"verify"))return "sizeSelections";
+   continue;
+  }
+  if(key==="gender"&&Array.isArray(filters.genderSelections)){
+   const wanted=filters.genderSelections.map(x=>String(x).trim()).filter(Boolean);
+   if(wanted.length>1)return "genderSelections";
+   if(extraControl(EXTRA_LABELS[key])&&
+      (wanted.length||resetKeys.includes("genderSelections"))&&
+      !extraMatches("gender",wanted[0]||""))return "genderSelections";
    continue;
   }
   const want=String(filters[key]||"").trim();
