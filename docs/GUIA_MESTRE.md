@@ -4930,3 +4930,22 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 
 **Proteções:** PR #34 permanece Draft e main LT61, sem merge ou nova versão LT63. Não alterar login, filtros, coords, resultados, preferências, applicationId, assinatura, Firebase, backend ou GPS. Compilação física Samsung continua pendente até o usuário testar.
 
+
+### 12.259 — LT62: entrega assinada da Pokébola alinhada + Atualização sem AUTO (23/10/2026)
+
+**Autorização:** usuário solicitou “Continue” para gerar APK LT62 atualizado com alinhamento da lista sob Pokébola (12.256–12.257), e, durante a etapa, solicitou remover o item visual AUTO do menu de Atualização (12.258). Antes da entrega foi executada nova compilação incorporando **ambas** as correções. A antiga execução de 12.257, `#40023704324`, ficou SUPERSEDIDA porque continha AUTO.
+
+**APK oficial desta etapa:** `PokeSearch-v0.00.62-LT.apk`, **33.254.540 bytes**, SHA-256 `a01a175481567631068834844caf96b53f45862a2d313244625412e47deeb2da`, também calculado diretamente dos bytes extraídos. A integridade ZIP do APK e de todas as cinco entradas do ZIP de artefato foi confirmada (APK interno com 215 entradas válidas). ZIP de comprovantes `PokeSearch-v0.00.62-LT-Sem-AUTO-Alinhado.zip`: 30.568.798 bytes; SHA-256 `04da1ba43b61a1197617208a18e96b6fa9c2f7c170da99d60989d33f0a0d67c9`.
+
+**Rastreabilidade do GitHub Actions:** run **#40024284774**, job **#120656409362** `build-lt-62`, status **SUCCESS**, artefato **#12531263489** (`PokeSearch-v0.00.62-LT`). URL `https://github.com/LucianoToscano/PokeSearch/actions/runs/40024284774`. `SOURCE_COMMIT.txt` = `c52044f1dab4ac15b80e45df5cc709840d742940` (**commit exato compilado**); commits posteriores de documentação não fazem parte do APK.
+
+**Conferência obrigatória de assinatura e identidade a partir do ZIP de artefato original:** `SIGNING_CERT_SHA256.txt` = `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` (certificado persistente compatível com a instalação existente). `PACKAGE_VERSION.txt` = `package: name='com.lucianotoscano.pokesearch' versionCode='54260' versionName='0.00.62' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'`. `SHA256SUMS.txt` = `a01a175481567631068834844caf96b53f45862a2d313244625412e47deeb2da  PokeSearch-v0.00.62-LT.apk`. Coincide com o hash real. Workflow executou `apksigner verify` e validou v2 e certificado fixo; falharia com chave divergente.
+
+**Testes:** workflow executou todas as 9 suítes Node (**850/850**: 68 localização, 144 probe, 15 picker, 38 login, 479 UX, 46 editor visual, 14 assinatura, 7 Firebase, 39 LT62). Scripts JS inline de `dock.html` passaram. Java 17 + Gradle 8.11.1 + Android SDK36. `:app:testDebugUnitTest` foi `NO-SOURCE` (não alegar testes unitários Java inexistentes) e `:app:assembleDebug` terminou `BUILD SUCCESSFUL in 1m 27s`.
+
+**Mudanças contidas no APK:** combinação completa LT62 de menus, filtros, atualização compacta e Pokébola unificada. Nova posição dos resultados recalculada sob a Pokébola (se houver espaço) ou acima perto da borda; arraste em conjunto com persistência; no submenu do ícone de refresh NÃO há placa `AUTO`: só `OFF / 3 / 5 / 10 / 15 / 20`, sem cabeçalho ou X. `OFF` impede atualização periódica; valores 3/5/10/15/20 configuram o intervalo. Toque curto no refresh continua com execução direta e giro neutro (nunca muda para amarelo). Menu Mais mantém transparência e design. Não alterar filtros, login, preferências nem `applicationId`.
+
+**Atenção à instalação:** este APK tem mesmo versionName/code e nome dos APKs LT62 antigos, mas **é arquivo diferente**. Confirmar SHA `a01a175...`; instalar por cima, sem desinstalar, para preservar login e dados. A homologação física Samsung NÃO foi realizada pelo assistente. Testar com 1, 5 e 10 sprites: posição relativa abaixo/ acima da Pokébola, arrastar, posição salva no reinício, popup aberto, troca vertical/horizontal, atualização OFF/3/5 etc, filtros, botão Shiny e proteção de toque fora do overlay.
+
+**Estado protegido:** PR #34 OPEN DRAFT, `main` LT61 no commit `caea98b7b57b9e45d5218e907eb392d76953dd53`. Sem merge, sem LT63, sem backend/proxy/GPS físico, sem chave de assinatura nova.
+
