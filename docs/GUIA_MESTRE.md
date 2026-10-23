@@ -4731,3 +4731,21 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 **Limitações ainda abertas:** nenhuma homologação física Samsung foi realizada nesta etapa, mesmo com build/testes válidos. Checar instalação sobre LT61/LT62 e persistência de login, overlays, áreas transparentes e eventos de toque, filtros reais PoGoCoordinates, GL/UL/IV%/Shiny, Favoritos, 36 áudios, AUTO 3/5/10/15/20, Editor Visual, Personalização e Info Pokémon; registrar falhas comprovadas antes de gerar LT63.
 
 **Controle:** PR #34 Draft **não mesclada**, `main` LT61 intocada; código, APK, assinatura e docs registradas. Para novo chat, abrir prompt no caminho oficial e conferir HEAD atual sem confundir commit documental com commit do APK.
+
+
+### 12.247 — LT62: ajuste final ícone Atualização e transparência da cascata ••• (23/10/2026)
+
+**Feedback Samsung fornecido pelo proprietário (ainda requer nova compilação para comprovar correção):** o botão Atualização ficou com símbolo excessivamente grande e amarelo, minutos embaixo com fundo, opções em faixa horizontal com cabeçalho “Atualização” e X. O submenu ••• estava funcional/aprovado, porém os itens Reportar, Apoiar e Fechar apareciam sobre um fundo preto extra.
+
+**Correção do código da branch `fix/lt62-menu-visual-states-20261023`, PR #34 Draft:**
+1. Em `app/src/main/assets/dock.html`, SVG RefreshCw restaurado ao tamanho compacto de 16 px (sem amarelo); toque curto executa `Native.refresh()` **uma vez** e anima apenas a rotação SVG por 700 ms, encerrada após 720 ms. O gesto de segurar por 600 ms continua abrindo apenas configuração AUTO e suprimindo o clique/refresh duplicado. `prefers-reduced-motion` suprime a animação.
+2. Badge `periodBadge` ocupa o centro do próprio ícone, texto simples e pequeno de 7 px (`3m`, `5m`, `10m`, `15m`, `20m`); quando AUTO OFF, não há algarismo nem fundo extra. Estado completo permanece no rótulo acessível.
+3. Submenu de Atualização espelha a cascata individual vertical `•••`: sem título nem X; coluna de sete peças `OFF / AUTO / 3 / 5 / 10 / 15 / 20` em tiles independentes de 30 px, largura do botão acionador, borda e transparência do tema, espaçamento igual ao `Mais`; `AUTO` é rótulo visual não clicável; escolhas acionam `Native.setIntervalMinutes(0|3|5|10|15|20)` e persistência já existente. `fit()` usa altura natural de sete tiles para o overlay nativo e preserva a barra fixa; respeita posição acima/abaixo e layout vertical.
+4. Causa técnica do fundo extra em `•••`: regra genérica `#choices:not(.visualPanel):not(.modeCascade)` possuía especificidade superior e pintava uma área opaca por trás da cascata. Excluídos explicitamente `.morePanel` e `.periodCompact` desta regra; seus contêineres ficam transparentes, com fundo só nos tiles individuais. Reforçado que os ícones Reportar/Apoiar/Fechar não têm uma segunda camada; cores originais de aviso/coração/X preservadas.
+5. Navegação entre submenus remove `periodCompact` antes de renderizar outros, sem alterar filtros, Shiny, Auto salvo, conta/login, resultados ou bridges. Nenhum ajuste em `applicationId`, versões ou assinatura.
+6. Contratos ajustados em `app/tests/overlay-ux.test.js` e adicionados em `app/tests/lt62-menu-visual-states.test.js` para tamanho, giro/neutralidade, badge central, coluna sem X, altura automática e fundo do `Mais`.
+
+**Commits:** implementação `b2cab8acfd962e84c5c1da9523f8e263a3f001db`; regressões overlay `012f378bb855496a908b036d39febfe10efb1e4e`; contratos visuais `061a6a3dbfbdd4fa020bc231c8fbe8ebc3ad0772`. Validação GitHub Node/Gradle e aparelho Samsung deverão ser registradas após execuções comprovadas.
+
+**Proteções:** PR #34 permanece Draft, `main` LT61 não mesclada. **Não foi recompilado APK**: o arquivo `PokeSearch-v0.00.62-LT.apk` da run `40007032664` corresponde ao commit antigo `878c7aa16918c30b96e0b1b651c16aeedec9927d` e **não inclui** este ajuste. Sem autorização para novo APK ou LT63; próximo passo é verificar QA e aguardar próxima falha relatada.
+
