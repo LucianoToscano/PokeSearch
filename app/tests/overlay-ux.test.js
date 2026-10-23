@@ -1025,7 +1025,7 @@ test("Guest public search continues even if stale Shiny preference was ON",
 test("Shiny OFF and normal search never depend on login or trainer linkage",
  service.includes('if(!shiny){applyShinyOnSite(generation,0);return;}')&&
  service.includes('if(!shiny){\n                // Coords, Shiny and other filters belong to one site form.')&&
- service.includes('if(locationEnabled){refresh(true);return;}')&&
+ service.includes('if(locationEnabled){OverlayService.this.refresh(true);return;}')&&
  !service.includes('if(!hasConfirmedTrainerLink())return;\n        execute("session"'));
 test("Authenticated profile cannot inherit previous trainer link",
  main.includes('.putString("profileTrainerState","unknown")')&&
