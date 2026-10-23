@@ -4853,3 +4853,16 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 
 **Proteções:** PR #34 aberta Draft, main LT61, sem merge, sem LT63. APK anterior `PokeSearch-v0.00.62-LT.apk`, fonte `dd70989c5c01de9170838a3a82010bb10db47c9f`, SHA-256 `7e5cedb7f54a2cae17af5a13ad3d5c8eefa18a56ff738378513083cba06e135d`, **não contém** o conserto do arraste. Não disponibilizar o APK antigo como prova desta correção.
 
+
+### 12.254 — LT62: nova compilação assinada do arraste conjunto (23/10/2026)
+
+**Autorização expressa:** “Gere o apk.” Pedido após o relato Samsung de que a lista não acompanhava o arraste da Pokébola e após a correção de código/QA da seção 12.253. Autoriza apenas novo APK assinado para homologação Samsung, **sem merge, sem LT63, sem alteração da main e sem mudança do pacote Android**.
+
+**Origem:** branch `fix/lt62-menu-visual-states-20261023`, PR #34 Draft; correção em `OverlayService.java` (commit `b9bfeda41c13a0723df803516983ad491d4f4647`) e dois testes novos (commit `f2582264cf0c64142e21b139e0e8c915434a979b`); documentação 12.253 em commit `6e660ccb47f2ba078f656de294b20560e10e3aa1`. Node QA #40020502490 concluiu SUCCESS com **848/848** verificações em nove suítes. O gesto agora desloca `params` e `resultParams` por um único vetor limitado ao espaço útil e salva `pokeballX/Y` e `resultsX/Y`, preservando offsets do Editor Visual; toque curto/segurar 600ms/arraste mantidos independentes.
+
+**Construção:** o commit desta seção usa mensagem iniciada por `build: approved v0.00.62 LT signed` para iniciar o workflow protegido `.github/workflows/build-v062-compact-preview.yml` da branch. Requisitos obrigatórios: Gradle 8.11.1 + Java 17 + SDK36; `:app:testDebugUnitTest`, `:app:assembleDebug`; `PokeSearch-v0.00.62-LT.apk`; versionName `0.00.62`, versionCode `54260`; applicationId `com.lucianotoscano.pokesearch`; certificado de assinatura persistente SHA256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, apksigner v2, aapt, SHA256SUMS e SOURCE_COMMIT. **Não distribuir** se qualquer checagem falhar. Não confundir com APK anterior do mesmo nome (build #40019242360 / SHA256 `7e5cedb7f54a2cae17af5a13ad3d5c8eefa18a56ff738378513083cba06e135d`), que não inclui correção do arraste.
+
+**Emissão ainda precisa ser comprovada:** preencher seção seguinte somente depois de obter status SUCCESS, artefato, `SOURCE_COMMIT.txt`, `PACKAGE_VERSION.txt`, `SIGNING_CERT_SHA256.txt` e hash recalculado. Até lá a homologação física não está concluída. Instalar sobre versão existente, sem desinstalar e sem perder sessão, permissões e preferências; testar arraste em X/Y nas bordas, posição relativa lista↔Pokébola, menu aberto, lista recolhida, reinício e detalhes; não chamar testes Node de prova física.
+
+**Proteções:** PR #34 continua Draft, main LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`, sem merge, sem LT63, sem backend/proxy/GPS físico.
+
