@@ -185,6 +185,8 @@ check("LT62 Favoritos: no lists or scroll areas, max three live search results",
  assert.ok(!picker.includes("new ScrollView("));
  assert.ok(picker.includes('if(!key.isEmpty()){'));
  assert.ok(picker.includes('if(visible.size()==3)break;'));
+ assert.ok(picker.includes('String dexInput=term==null?"":term.trim().replaceFirst("^#","").trim();'));
+ assert.ok(picker.includes('String.format(Locale.US,"%03d",e.id).startsWith(dexInput)'));
  assert.ok(picker.includes('search.addTextChangedListener(new TextWatcher()'));
  assert.ok(picker.includes('results.removeAllViews()'));
  assert.ok(picker.includes('String term=search.getText().toString().trim()'));
@@ -194,6 +196,7 @@ check("LT62 Favoritos: all 50 accessible by 12-sprite pages with direct removal"
  const picker=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
  assert.ok(picker.includes('final int PAGE_SIZE=12;'));
  assert.ok(picker.includes('sprites.setColumnCount(6);'));
+ assert.ok(picker.includes('centeredSprites.setGravity(Gravity.CENTER);'));
  assert.ok(picker.includes('GridLayout.spec(local/6),GridLayout.spec(local%6)'));
  assert.ok(picker.includes('selected.add(found!=null?found:new Entry(0,favorite.getValue()))'));
  assert.ok(picker.includes('tile.setOnClickListener(v->{WatchAlerts.toggle(activity,entry.name);refresh[0].run();})'));
