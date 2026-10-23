@@ -2784,6 +2784,90 @@ test("FILTERS-POGO-10 simulated UI never claims Applied for pending/stale/dirty 
   result(true,false,false,{...saved,weather:"Rainy"}).includes("Alterações ainda não aplicadas");
 });
 
+test("LT57-ONEFORM-01 patch only Weather with no loss of species IV or location",()=>{
+ const block=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices(){")[0]||"";
+ const apply=block.split("apply.onclick=()=>{")[1]?.split("\n };")[0]||"";
+ const saved={mode:"ul",sortBy:"Despawn (longest)",weather:"",form:"",
+  sizeSelections:["XXL"],genderSelections:["Female"],cpMin:"",cpMax:"",
+  levelMin:"1",levelMax:"35",minPvpCp:"",pokemonSelections:["Pikachu"],
+  attack:3,defense:14,stamina:15,ulRank:7,includePreviousEvolutions:true};
+ const draft={...saved,weather:"Rainy"};
+ const keys=["sortBy","weather","size","form","gender","cpMin","cpMax",
+  "levelMin","levelMax","minPvpCp","sizeSelections","genderSelections"];
+ let out=null,closed=false;
+ const panel={querySelectorAll:()=>[]};
+ new Function("panel","modeDraft","searchSettings","FILTERS_MENU_KEYS","closeChoices","Native",
+  "const apply=()=>{"+apply+"};apply();")(panel,draft,saved,keys,()=>{closed=true;},
+  {patchSearchFilters:x=>{out=JSON.parse(x);}});
+ return closed&&!!out&&JSON.stringify(out)==='{"weather":"Rainy"}'&&
+  !Object.hasOwn(out,"pokemonSelections")&&!Object.hasOwn(out,"attack")&&
+  !Object.hasOwn(out,"locationCoords");
+});
+test("LT57-ONEFORM-02 native patch keeps independent search modes and Shiny",()=>{
+ const patch=service.split('@JavascriptInterface public void patchSearchFilters(String payload)')[1]
+  ?.split('@JavascriptInterface public void setSearchConfig(String payload)')[0]||"";
+ return patch.includes('JSONObject delta=new JSONObject(payload),updated=new JSONObject(extraFiltersJson)')&&
+  patch.includes('if(!delta.has(key))continue;')&&
+  patch.includes('getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",serialized).apply()')&&
+  !patch.includes('mode=')&&!patch.includes('shiny=')&&!patch.includes('locationEnabled=')&&
+  !patch.includes('rawAttack=')&&!patch.includes('locationCoords=')&&
+  patch.includes('replaceActiveFilterSearch();');
+});
+test("LT57-ONEFORM-03 multi Size and Gender are additive and empty equals Any",()=>{
+ const probe=read("assets/probe.js");
+ const filters=dock.split("function renderExtraFilters(panel,make){")[1]
+  ?.split("function renderFilterPicker(key,label,options){")[0]||"";
+ return filters.includes('const selected=new Set(Array.isArray(modeDraft[multiKey])')&&
+  filters.includes('if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);')&&
+  filters.includes('modeDraft[multiKey]=[...selected]')&&
+  !filters.includes('extraChip","Qualquer"')&&
+  probe.includes('function extraMulti(key,desired,operation)')&&
+  probe.includes('if(target.some(v=>!observed.some(o=>o.label===v)))return false')&&
+  probe.includes('allowed.includes(x.label)')&&
+  service.includes('for(String key:new String[]{"size","gender"})');
+});
+test("LT57-ONEFORM-04 Sort by offers exactly five requested orders with default",()=>{
+ const picker=dock.split("function renderFilterPicker(key,label,options){")[1]
+  ?.split("window.onFilterOptions=function")[0]||"";
+ return dock.includes('sortBy:"Despawn (longest)"')&&
+  dock.includes('["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]')&&
+  picker.includes('key==="sortBy"')&&
+  picker.includes('if(key!=="sortBy"){')&&
+  service.includes('extra.put("sortBy","Despawn (longest)")')&&
+  !picker.includes('neutral.textContent="Qualquer"');
+});
+test("LT57-ONEFORM-05 Weather uses site Any and only screenshot-supported choices",()=>{
+ const picker=dock.split("function renderFilterPicker(key,label,options){")[1]
+  ?.split("window.onFilterOptions=function")[0]||"";
+ const expected=["Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"];
+ return expected.every(v=>picker.includes('"'+v+'"'))&&
+  picker.includes('neutral.textContent="Any"')&&
+  dock.includes('key==="weather"?"Any":"—"')&&
+  read("assets/probe.js").includes('function comparableOption(value)');
+});
+test("LT57-ONEFORM-06 compact menu and launcher safe area preserved",()=>{
+ return dock.includes('/* LT57 COMPACT-01: Samsung: small detached popup')&&
+  dock.includes('max-width:260px!important')&&
+  dock.includes('grid-template-columns:repeat(7,minmax(0,1fr))!important')&&
+  dock.includes('grid-template-columns:repeat(3,minmax(0,1fr))!important')&&
+  dock.includes('modeScrollTop=0; // Open at the first field')&&
+  iconGenerator.includes("int artworkSize = 288")&&
+  iconGenerator.includes("int padding = 8");
+});
+test("LT57-ONEFORM-07 coordinate + Shiny share verified submit, no separate reset",()=>{
+ const shiny=service.split('@JavascriptInterface public void shiny()')[1]
+  ?.split('@JavascriptInterface public void refresh()')[0]||"";
+ return shiny.includes('if(locationEnabled){refresh(true);return;}')&&
+  shiny.includes('Sincronizando Shiny e localização na mesma pesquisa')&&
+  service.includes('verifyShinyAfterLocation(generation,manual,0)')&&
+  service.includes('execute("verifyLocation:"+data')&&
+  service.includes('execute("verifyShiny",verified->')&&
+  !shiny.includes('locationEnabled=false')&&
+  !shiny.includes('locationCoords=""')&&
+  dock.includes('clear.onclick=disable')&&
+  !dock.includes('fieldRow.append(field,paste,toggle)');
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
