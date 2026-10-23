@@ -3364,6 +3364,40 @@ test("LT71-FORM-NATIVE saves multiple forms without resetting species or locatio
   dock.includes('formSelections:[]');
 });
 
+
+test("LT72-FORM-DOM explicitly rejects the four Gender options under Form",()=>{
+ const begin=probe.indexOf("function extraOptionPopup(key,control){");
+ const end=probe.indexOf("function formOptionRows(control){",begin);
+ if(begin<0||end<=begin)return false;
+ const clean=x=>String(x||"").trim();
+ const text=el=>clean(el&&(el.innerText||el.textContent)||"");
+ const vis=el=>!!(el&&el.getClientRects().length);
+ const option=name=>({innerText:name,textContent:name,getClientRects:()=>[1]});
+ const popup=values=>({
+  getClientRects:()=>[1],
+  contains:()=>false,
+  querySelectorAll:()=>values.map(option)
+ });
+ const control={
+  getAttribute:key=>key==="aria-expanded"?"true":null
+ };
+ const create=(popups,linkedId)=>{
+  const doc={getElementById:id=>linkedId===id?popups[0]:null};
+  const elements=()=>popups;
+  return new Function("elements","vis","text","clean","document",
+   probe.slice(begin,end)+"return extraOptionPopup;")(
+   elements,vis,text,clean,doc);
+ };
+ const gender=popup(["Any","Male","Female","Genderless"]);
+ const forms=popup(["Normal","Alola","Copy 2019","Goggles 2026"]);
+ const single=popup(["Male"]); // Male is ALSO a legitimate Form name in saved JSON.
+ const a=create([gender])("form",control);
+ const b=create([forms])("form",control);
+ const c=create([single])("form",control);
+ const d=create([forms,gender])("form",control);
+ return a===null&&b===forms&&c===single&&d===null;
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
