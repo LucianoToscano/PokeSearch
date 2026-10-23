@@ -1492,6 +1492,12 @@ public class OverlayService extends Service {
             });
         },650L);
     }
+    // Probe the hydrated result DOM early, then back off. These are local
+    // evaluateJavascript reads; never dispatch extra upstream Search requests.
+    private static long resultPollDelayMs(int attempt){
+        if(attempt==0)return 700L;
+        return attempt<=6?650L:1150L;
+    }
     private void pollSearch(int generation,int attempt,boolean manual){
         handler.postDelayed(()->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
@@ -1590,12 +1596,16 @@ public class OverlayService extends Service {
             }
             if(loading||(!empty&&found==0&&attempt>=24)){
                 searchInProgress=false;
-                searchFailure("⚠ Site sem confirmação","Busca não confirmada no site (tempo limite). Resultados anteriores mantidos.");
+                String evidence=r.optBoolean("emptySignalFound",false)?
+                    (r.optBoolean("resultChanged",false)?"estado vazio não concluído":"estado vazio anterior sem atualização"):
+                    "sem cartões nem sinal explícito de zero resultados";
+                searchFailure("⚠ Site sem confirmação",
+                    "Tempo limite: "+evidence+". Resultados anteriores preservados.");
                 return;
             }
             applyCollectedResults(r);
             });
-        }, attempt==0?3000L:1300L);
+        }, resultPollDelayMs(attempt));
     }
     private long expiration(JSONObject item){
         if(item==null)return Long.MAX_VALUE;
