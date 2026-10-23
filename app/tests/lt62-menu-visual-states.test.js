@@ -22,10 +22,22 @@ check("Filters: only additional nondefault filters create count badge",()=>{
  assert.ok(dock.includes('else delete button.dataset.filterCount'));
  assert.ok(dock.includes('top:1px!important;right:1px!important'));
 });
-check("Gear rotates while searching; opening changes orientation; motion preference respected",()=>{
- assert.ok(dock.includes('#gear.busy svg{animation:gearbusy'));
- assert.ok(dock.includes('#gear[aria-expanded="true"]:not(.busy) .gear-icon{transform:rotate(90deg)}'));
- assert.ok(dock.includes('@media (prefers-reduced-motion:reduce)'));
+check("Unified Pokébola replaces gear art and keeps real mode/Shiny/loading indicators",()=>{
+ const main=dock.split('<button id="gear"')[1]?.split('<div id="menu"',1)[0]||"";
+ assert.ok(main.includes('id="dockModeIcon"'));
+ assert.ok(main.includes('id="dockCapturePulse"'));
+ assert.ok(main.includes('id="dockIndicatorValue"'));
+ assert.ok(main.includes('id="dockIndicatorShiny"'));
+ assert.ok(main.includes('id="dockIndicatorBackground"'));
+ assert.ok(!main.includes('class="gear-icon"'));
+ assert.ok(dock.includes('body.dock-window.search-active #gear .capturePulse'));
+ assert.ok(dock.includes('body.result-window #resultHeader{display:none!important;pointer-events:none!important}'));
+ assert.ok(dock.includes('for(const id of ["dockModeIcon","bubbleModeIcon"])'));
+ assert.ok(dock.includes('getResultIcon(history?shownMode:mode,history?shownShiny:shiny,'));
+ assert.ok(dock.includes('id="resultIconStack"')); // Existing result metadata logic retained.
+ assert.ok(dock.includes('id="bubbleModeIcon"'));
+ assert.ok(!dock.includes('document.getElementById("gear").classList.toggle("busy"'));
+ assert.ok(dock.includes('prefers-reduced-motion:reduce'));
 });
 check("Result Pokéball keeps independent header, central pulse and confirmed metadata",()=>{
  for(const x of ['id="resultIconStack"','id="capturePulse"','@keyframes psCapturePulse','activeSearchPhase==="searching"','id="modeIndicatorValue"','classList.toggle("long"'])assert.ok(dock.includes(x),x);
@@ -382,6 +394,28 @@ check("LT62 Filtros: numeric ✓ patches only its own bounded fields",()=>{
  assert.equal(sandbox.confirm(["minPvpCp"],"PC PvP"),true);
  assert.equal(JSON.stringify(requests[2]),JSON.stringify({minPvpCp:"1200"}));
  assert.equal(closes,2);
+});
+check("Unified Pokébola touch contract: short tap results or closes menu, hold 600ms opens menu, drag cancels",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const grip=native.split('final boolean[] dockHeld={false};')[1]?.split("root.addView(grip,",1)[0]||"";
+ for(const check of ['handler.postDelayed(dockLongPress,600L);',
+  'handler.removeCallbacks(dockLongPress);',
+  'if(minimized)minimize(false);',
+  'menu(!menuExpanded);',
+  'else if(menuExpanded)menu(false);',
+  'else toggleResultsCollapsed();',
+  'if(!dragged&&!dockHeld[0])',
+  'if(Math.abs(dx)+Math.abs(dy)>dp(4))',
+  'if(dragged){'
+ ])assert.ok(grip.includes(check),check);
+ assert.ok(native.includes('resultGrip.setVisibility(View.GONE)'));
+ assert.ok(native.includes('if(resultCollapsed)resultRoot.setVisibility(View.GONE);'));
+ assert.ok(native.includes('resultCollapsed||minimized||loginPaused||pickerOpen?View.GONE:View.VISIBLE'));
+ assert.ok(native.includes('if(resultRoot!=null&&!pickerOpen&&!minimized&&!resultCollapsed)resultRoot.setVisibility(View.VISIBLE)'));
+ assert.ok(native.includes('putBoolean("resultsCollapsed",resultCollapsed).apply()'));
+ assert.ok(native.includes('putInt("resultsX",')); // User placement preferences retained.
+ assert.ok(native.includes('putInt("resultsY",'));
 });
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
