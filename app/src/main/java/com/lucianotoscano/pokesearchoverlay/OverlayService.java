@@ -2199,6 +2199,78 @@ public class OverlayService extends Service {
                 js(menuPanel,true,"window.onPokemonSuggestions("+response.toString()+")");
             });
         }
+        // LT57 single-form bridge: menus submit a DELTA, not a stale copy of
+        // all search settings. Pokémon, Raw IV, Shiny and Location are untouched.
+        @JavascriptInterface public void patchSearchFilters(String payload){handler.post(()->{
+            try{
+                JSONObject delta=new JSONObject(payload),updated=new JSONObject(extraFiltersJson);
+                java.util.HashSet<String> allowed=new java.util.HashSet<>(java.util.Arrays.asList(
+                    "sortBy","weather","size","form","gender","cpMin","cpMax",
+                    "levelMin","levelMax","minPvpCp","sizeSelections","genderSelections",
+                    "includePreviousEvolutions"));
+                if(delta.length()==0||delta.length()>allowed.size())return;
+                java.util.Iterator<String> requested=delta.keys();
+                while(requested.hasNext())if(!allowed.contains(requested.next()))return;
+                org.json.JSONArray priorClear=updated.optJSONArray("clearExtraKeys");
+                java.util.LinkedHashSet<String> clears=new java.util.LinkedHashSet<>();
+                if(priorClear!=null)for(int i=0;i<priorClear.length();i++)
+                    clears.add(priorClear.optString(i));
+                for(String key:allowed){
+                    if(!delta.has(key))continue;
+                    if(key.equals("includePreviousEvolutions")){
+                        updated.put(key,delta.optBoolean(key,true));continue;
+                    }
+                    if(key.equals("sizeSelections")||key.equals("genderSelections")){
+                        org.json.JSONArray input=delta.optJSONArray(key);
+                        if(input==null||input.length()>7)return;
+                        org.json.JSONArray cleaned=new org.json.JSONArray();
+                        java.util.HashSet<String> unique=new java.util.HashSet<>();
+                        for(int i=0;i<input.length();i++){
+                            String value=input.optString(i,"").trim();
+                            if(value.length()>30||value.matches("(?s).*[<>\\r\\n].*"))return;
+                            if(!value.isEmpty()&&unique.add(value.toLowerCase(java.util.Locale.ROOT)))
+                                cleaned.put(value);
+                        }
+                        boolean wasActive=updated.optJSONArray(key)!=null&&
+                            updated.optJSONArray(key).length()>0;
+                        if(cleaned.length()==0&&wasActive)clears.add(key);
+                        if(cleaned.length()>0)clears.remove(key);
+                        updated.put(key,cleaned);
+                        updated.put(key.replace("Selections",""),"");
+                        continue;
+                    }
+                    String value=delta.optString(key,"").trim();
+                    if(value.length()>100||value.matches("(?s).*[<>\\r\\n].*"))return;
+                    if((key.equals("cpMin")||key.equals("cpMax")||key.equals("minPvpCp"))&&
+                        !value.isEmpty()&&!value.matches("[0-9]{1,5}"))return;
+                    if((key.equals("levelMin")||key.equals("levelMax"))&&
+                        !value.isEmpty()&&!value.matches("[0-9]{1,2}(\\.[0-9])?"))return;
+                    if(key.equals("sortBy")&&value.isEmpty())value="Despawn (longest)";
+                    if(value.isEmpty()&&!updated.optString(key,"").isEmpty())clears.add(key);
+                    if(!value.isEmpty())clears.remove(key);
+                    updated.put(key,value);
+                }
+                for(String[] pair:new String[][]{{"cpMin","cpMax"},{"levelMin","levelMax"}}){
+                    String low=updated.optString(pair[0]),high=updated.optString(pair[1]);
+                    if(!low.isEmpty()&&!high.isEmpty()&&Double.parseDouble(low)>Double.parseDouble(high))return;
+                }
+                org.json.JSONArray clear=new org.json.JSONArray();
+                for(String key:clears)clear.put(key);
+                updated.put("clearExtraKeys",clear);
+                String serialized=updated.toString();
+                if(extraFiltersJson.equals(serialized)){
+                    OverlayService.this.refresh(true);return;
+                }
+                extraFiltersJson=serialized;
+                getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",serialized).apply();
+                replaceActiveFilterSearch(); // Preserve shiny, mode, Pokémon, coords.
+                resultsStale=count()>0;
+                status("Filtro atualizado • pesquisando com os demais campos preservados");
+                scheduleFilterChangeRefresh();
+            }catch(org.json.JSONException ex){
+                status("Filtro inválido; nenhuma configuração foi alterada.");
+            }
+        });}
         @JavascriptInterface public void setSearchConfig(String payload){handler.post(()->{
             try{
                 JSONObject input=new JSONObject(payload);
@@ -2636,7 +2708,9 @@ public class OverlayService extends Service {
                 return;
             }
             if(!shiny){
-                // OFF never requires signing in and never waits for Search cooldown.
+                // Coords, Shiny and other filters belong to one site form.
+                // Refresh fills only changed fields and verifies all selections.
+                if(locationEnabled){refresh(true);return;}
                 prepareImmediateShiny(generation);
                 return;
             }
@@ -2647,6 +2721,13 @@ public class OverlayService extends Service {
                 if(!siteConfirmsShinyAccount(session)){
                     revertUnverifiedShiny("✨ Conta logada e treinador confirmado são obrigatórios para Shiny.");
                     openShinyLogin();
+                    return;
+                }
+                if(locationEnabled){
+                    // Re-enter the unified form so the site does not discard
+                    // active Coords when switching Shiny.
+                    status("✨ Sincronizando Shiny e localização na mesma pesquisa...");
+                    refresh(true);
                     return;
                 }
                 prepareImmediateShiny(generation);
