@@ -2805,6 +2805,52 @@ const FILTER_DISPLAY_LABELS=Object.freeze({
 function filterDisplayLabel(key,value){
  const raw=String(value??"");return FILTER_DISPLAY_LABELS[key]?.[raw]||raw;
 }
+
+/* LT62-FILTER-INLINE-CONFIRM-02: scoped field updates, no global commit bar. */
+function patchSelectedFilterKeys(keys){
+ const delta={};
+ for(const key of keys){
+  const desired=modeDraft[key]??(key.endsWith("Selections")?[]:"");
+  const previous=searchSettings[key]??(key.endsWith("Selections")?[]:"");
+  if(JSON.stringify(desired)!==JSON.stringify(previous))delta[key]=desired;
+ }
+ if(Object.keys(delta).length)Native.patchSearchFilters(JSON.stringify(delta));
+}
+function confirmNumericFilter(keys,label){
+ const bounds={cpMin:[0,99999],cpMax:[0,99999],levelMin:[1,35],levelMax:[1,35],minPvpCp:[0,99999]};
+ for(const key of keys){
+  const raw=String(modeDraft[key]??"").trim();
+  const [min,max]=bounds[key];
+  if(raw!==""&&(!/^[0-9]+$/.test(raw)||!Number.isSafeInteger(Number(raw))||Number(raw)<min||Number(raw)>max)){
+   const input=document.querySelector('#choices [data-filter-number="'+key+'"]');
+   if(input){input.setCustomValidity("Digite "+min+" a "+max);input.reportValidity();}
+   return false;
+  }
+ }
+ if(keys.length===2){
+  const low=String(modeDraft[keys[0]]??""),high=String(modeDraft[keys[1]]??"");
+  if(low!==""&&high!==""&&Number(low)>Number(high)){
+   const input=document.querySelector('#choices [data-filter-number="'+keys[0]+'"]');
+   if(input){input.setCustomValidity("Min não pode ultrapassar Max");input.reportValidity();}
+   return false;
+  }
+ }
+ const delta={};
+ for(const key of keys){
+  const desired=modeDraft[key]??"",previous=searchSettings[key]??"";
+  if(String(desired)!==String(previous))delta[key]=desired;
+ }
+ closeChoices();
+ if(Object.keys(delta).length)Native.patchSearchFilters(JSON.stringify(delta));
+ return true;
+}
+function numericConfirmButton(make,keys,label){
+ const button=make("button","filterInlineConfirm","✓");
+ button.type="button";button.dataset.filterConfirm=keys.join(",");
+ button.title="Aplicar "+label;button.setAttribute("aria-label","Aplicar "+label);
+ button.onclick=()=>confirmNumericFilter(keys,label);
+ return button;
+}
 function renderExtraFilters(panel,make){
  const divider=()=>panel.appendChild(make("div","extraDivider"));
  const field=(label,control)=>{
