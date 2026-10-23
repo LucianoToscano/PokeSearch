@@ -4105,3 +4105,18 @@ A rotina `fit()` foi corrigida **para todos os popups**, não apenas Mais: evita
 
 **Limites do resultado:** correção aplicada somente ao **PR #32 Draft, sem merge**, não à `main` ou ao APK LT58 já distribuído; **nenhum APK novo foi solicitado ou gerado nesta etapa**. Não afirmar homologação física: instalar próxima versão assinada (versionCode superior a 54256) quando explicitamente autorizado e testar no Samsung o tamanho/largura da faixa antes/depois de abrir **Modos, Localização, Filtros, Mais, Alertas, Personalização**, tanto com popup abaixo quanto acima da faixa próximo à borda da tela, e preservar Tamanho/Sexo/Forma e sessão autenticada.
 
+### 12.199-LT58-POPUP-ANCHOR-SCALE-REGRESSION (23/10/2026, America/Fortaleza)
+
+**Contexto:** continuação explícita do checkpoint 12.198 ("Continue"), sem reiniciar, não mesclar e sem compilar novo APK sem autorização. PR #32 continua Draft, branch `fix/lt57-compact-single-form-20261022`. Reclamação anterior: todos os submenus (incluindo Modos, Localização e Mais) afetavam a escala/tamanho da faixa principal; 12.198 estabilizou o estado subview, a grade e a altura intrínseca. Esta etapa foca na **estabilidade da escala de texto e nos testes dinâmicos de posicionamento** de submenus estreitos/largos e próximos às bordas.
+
+**Hardening pontual:** `app/src/main/assets/dock.html`: adicionado `LT58-ALL-POPUPS-SCALE-01`, com `-webkit-text-size-adjust:100%!important` e `text-size-adjust:100%!important` para `html.controls-root,body.controls-window`. Objetivo: evitar ampliação automática de fonte decorrente de alterações da altura nativa da Android WebView, sem modificar os tamanhos CSS escolhidos pelo Editor Visual ou dimensões dos botões. Não alterado o desenho e as dimensões dos ícones, `menuDp()`, controles de Personalização, Popups, Raw IV, Firebase, Shiny, filtros, pacote, assinatura nem persistência.
+
+**Regressão comportamental, sem APK:** `app/tests/overlay-ux.test.js` adicionou três testes:
+- `LT58-ALL-POPUPS-STABLE-03` executa `positionPopupUnderTrigger()` em DOM simulado para Modos, Localização, Filtros, Mais, Alertas e Informações, medindo o `left` esperado dentro da faixa e a limitação quando o menu alcança a borda direita;
+- `LT58-ALL-POPUPS-STABLE-04` executa `window.setMenuPopupPlacement` duas vezes (popup embaixo e em cima), confirmando variáveis `--popup-offset` e `--popup-room`, classe `popup-above`, reposicionamento do editor de Modos, sem classe `subview`; mantém no Java o posicionamento da faixa baseado em `rowY-(abovePopup?actualPopup:0)`;
+- `LT58-ALL-POPUPS-SCALE-01` confirma a nova regra de tipografia e configurações anteriores `setUseWideViewPort(true)`, `setLoadWithOverviewMode(false)`.
+
+**QA executado:** GitHub Actions `PokeSearch Node QA (sem APK)`, run `39899050818`, código testado `17d396528293ae12f50e58c3d0963fbb2cba5cc9`: **SUCCESS, 734/734 testes Node aprovados** (68 location, 111 probe, 9 picker, 38 login, 441 UX, 46 editor visual, 14 signing, 7 Firebase). Três builds de APK vinculados ao workflow não foram disparados (skipped). Testes DOM simulados e inspeção de código **não equivalem a teste real Android**.
+
+**Estado operacional e próximo gate:** não houve merge, instalação física, versão assinada nova ou alteração na main nesta etapa. O binário `PokeSearch-v0.00.58-LT.apk` **não possui** correções 12.196–12.199. Antes da homologação, realizar captura no Samsung nos mesmos pontos da tela, com Modos/Localização/Filtros/Mais abertos e fechados, verificando 10 tiles invariáveis, alinhamento de popups acima/abaixo e escala. Se autorizada uma compilação, aumentar `versionCode` acima de `54256`, manter certificado permanente e testar atualização sem desinstalar.
+
