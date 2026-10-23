@@ -1126,6 +1126,9 @@ public class OverlayService extends Service {
         if(count()>0)resultsStale=true;
         if(shiny){shinyVerified=false;update();}
         final int generation=++requestGeneration;
+        // LT60-LOC-STATE-01: every new Search needs fresh Coords/Radius proof.
+        // Prior cards remain untouched; only the CURRENT request loses its proof.
+        locationVerified=false;
         confirmedSubmittedFiltersGeneration=-1;
         submittedSearchGeneration=-1;
         submittingSearchGeneration=-1;
@@ -2025,7 +2028,8 @@ public class OverlayService extends Service {
         if(m.find()){
             try{
                 double lat=Double.parseDouble(m.group(1)),lon=Double.parseDouble(m.group(2));
-                if(Math.abs(lat)<=90&&Math.abs(lon)<=180)return m.group(1)+","+m.group(2);
+                if(Math.abs(lat)<=90&&Math.abs(lon)<=180)
+                    return String.format(java.util.Locale.US,"%s,%s",m.group(1),m.group(2));
             }catch(NumberFormatException ignored){}
             catch(Exception e){recordFailure("interpretar coordenadas",e);}
         }
