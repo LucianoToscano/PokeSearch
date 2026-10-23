@@ -872,7 +872,7 @@ test("Legacy IV percent migration expands only as necessary without trimming Pok
 test("UX-MENU-01 keeps original 12 commands but navigates with compact contextual menu",
  dock.includes('id="quickMenuList"')&&dock.includes('id="quickRows"')&&
  dock.includes('body.controls-window #controls{display:none!important}')&&
- dock.includes('case "location":return locationEnabled?(locationVerified?"✓ "+locationRadius+" km":"Pendente"):"OFF"')&&
+ dock.includes('case "location":return currentLocationUiState()==="CONFIRMED"?"✓ "+locationRadius+" km"')&&
  dock.includes('function renderQuickMenu()')&&service.includes('Math.min(330,screenWidthDp()-8)'));
 test("UX-MENU-01 keeps independent cascade, filters, alerts, info and appearance panels",
  dock.includes('function renderModeChoices()')&&dock.includes('modeCascadeRail')&&
@@ -2100,7 +2100,7 @@ test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
   body.includes('hide.onclick=closeChoices')&&
   body.includes('Native.setLocation(false,"",0)')&&
   dock.includes('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
-  dock.includes('locationEnabled?(locationVerified?"✓ Localização confirmada');
+  dock.includes('state==="CONFIRMED"?"✓ Localização confirmada');
 });
 test("UX-LOCATION-FIX-03 explicit clipboard paste is validated and never enables filters",()=>{
  const handler=service.split('@JavascriptInterface public void pasteLocationCoords()')[1]?.split(
@@ -3185,6 +3185,36 @@ test("LT58-ALL-POPUPS-SCALE-01 WebView text inflation stays fixed on popup resiz
   css.includes("text-size-adjust:100%!important;")&&
   service.includes("menuPanel.getSettings().setUseWideViewPort(true)")&&
   service.includes("menuPanel.getSettings().setLoadWithOverviewMode(false)");
+});
+
+
+test("LT60-LOC-STATE-01 distinguishes OFF, requested, confirmed and not applied",()=>{
+ const start=dock.indexOf("function currentLocationUiState(){");
+ const end=dock.indexOf("function locationPanelFeedback(){",start);
+ if(start<0||end<=start)return false;
+ const fn=new Function("locationEnabled","locationVerified","activeSearchPhase",
+  dock.slice(start,end)+"return currentLocationUiState();");
+ return fn(false,false,"idle")==="OFF"&&
+  fn(true,false,"filling")==="REQUESTED"&&
+  fn(true,false,"error")==="NOT_APPLIED"&&
+  fn(true,true,"updated")==="CONFIRMED"&&
+  fn(true,true,"searching")==="CONFIRMED";
+});
+test("LT60-LOC-STATE-02 new Search revokes stale site confirmation before submit",()=>{
+ const refresh=service.split("private void refresh(boolean manual){")[1]
+  ?.split("private void configureSearchWithRetry(",1)[0]||"";
+ return refresh.includes("final int generation=++requestGeneration;\n        // LT60-LOC-STATE-01")&&
+  refresh.includes("locationVerified=false;")&&
+  service.includes("locationVerified=locationEnabled;")&&
+  service.includes('String.format(java.util.Locale.US,"%s,%s",m.group(1),m.group(2))');
+});
+test("LT60-LOC-STATE-03 native feedback observes updated error status",()=>{
+ const bridge=dock.split("window.onNativeData=")[1]?.split("function quickState(",1)[0]||"";
+ return bridge.indexOf('activeSearchPhase=String(searchPhase||"idle");')<
+  bridge.indexOf('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
+  dock.includes('state==="NOT_APPLIED"?"⚠ Localização não aplicada')&&
+  dock.includes('state==="REQUESTED"?"⌛ Coordenadas solicitadas')&&
+  service.includes('prefs.remove("locationCoords").remove("locationRadius")');
 });
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
