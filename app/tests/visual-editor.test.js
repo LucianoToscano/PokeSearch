@@ -457,11 +457,11 @@ test("single transparency controls ordinary submenus without residual band or bo
  assert.ok(dock.includes("/* VISUAL-MENU-ALPHA-01:"));
  // Geometric compactness of Visual Editor is allowed. This contract only
  // forbids transparency/background overrides that would desync the theme.
- const visualLayoutRules=[...tail.matchAll(/body\\.controls-window #choices\\.visualPanel\\{([^}]*)\\}/g)]
+ const visualLayoutRules=[...tail.matchAll(/body\.controls-window #choices\.visualPanel\{([^}]*)\}/g)]
   .map(match=>match[1]);
  assert.ok(visualLayoutRules.length>0);
  assert.ok(visualLayoutRules.every(rule=>
-  !/(?:^|;)\\s*(?:background(?:-color)?|color|border|box-shadow)\\s*:/.test(rule)));
+  !/(?:^|;)\s*(?:background(?:-color)?|color|border|box-shadow)\s*:/.test(rule)));
  assert.ok(visualLayoutRules.some(rule=>rule.includes("width:min(268px,calc(100vw - 14px))!important;")));
  const {window,styles}=fixture();
  for(const transparency of [0,50,100]){
