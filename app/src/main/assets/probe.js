@@ -994,6 +994,20 @@ function cardRoots(){
  }
  return cards;
 }
+// Submission-scoped result evidence. A stale zero from an earlier search is
+// not a verified empty response until result DOM has changed since Search.
+function visibleResultSignature(){
+ const body=text(document.body);
+ const count=(body.match(/\bShowing\s+\d+\s+spawns?\b/i)||[])[0]||"";
+ const cards=cardRoots().map(item=>text(item.node).slice(0,700)).join("\u001e");
+ return count+"\u001f"+cards;
+}
+function mainEmptyMessage(){
+ const empty=/^(?:no results(?: found)?|no matches(?: found)?|nenhum(?:a|s)? resultado(?:s)?|sem resultados)[.!]?$/i;
+ return elements('main [role=status],main [aria-live],main p,main h2,main h3')
+  .filter(vis).some(node=>!node.closest?.('[role=listbox],[role=dialog],[cmdk-list],[data-radix-popper-content-wrapper]')&&
+   empty.test(text(node)));
+}
 function nextLabelValue(root,label){
  const re=new RegExp("^"+label+"$","i");
  const c=Array.from(root.querySelectorAll("span,div,p,small,label,dt")).filter(e=>re.test(text(e))&&text(e).length<18).sort((a,b)=>text(a).length-text(b).length);
@@ -1130,18 +1144,28 @@ function collect(){
    !!oneButton("Searching")||!!oneButton("Loading");
  const emptyMessage=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i;
  const regions=elements('main section,[role=region],[data-testid*=result],[aria-label*=result]').filter(vis);
- const explicitEmpty=found.length===0&&regions.some(region=>{
+ const regionEmpty=found.length===0&&regions.some(region=>{
   const body=text(region);
   return body.length<500&&emptyMessage.test(body)&&
    !region.querySelector('[role=listbox],[cmdk-list],[role=dialog]');
  });
- const siteCount=Number((t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1]||0);
+ const countLabel=(t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1];
+ const siteCount=Number(countLabel||0);
+ // An explicit zero has to come from the result UI, not a dropdown's empty state.
+ // Require a new result state since this Search was submitted when using SPA state.
+ const submission=window.__pokeSearchSubmission;
+ if(submission&&!submission.observedUpdate&&visibleResultSignature()!==submission.before)
+  submission.observedUpdate=true;
+ const resultChanged=!submission||submission.observedUpdate===true;
+ const zeroInResults=countLabel==="0"&&mainEmptyMessage();
+ const explicitEmptySignal=regionEmpty||zeroInResults;
+ const explicitEmpty=found.length===0&&!loading&&explicitEmptySignal&&resultChanged;
  // If the site advertises more visible cards than we could parse, retry.
  // Apply to every search mode, without assuming every site total is <= 10.
  const expectedVisible=siteCount>0?Math.min(siteCount,10):0;
  const siteIncomplete=expectedVisible>found.length;
  const parseFailure=siteCount>0&&found.length===0;
- return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,siteCount,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,
+ return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,siteCount,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,
   criteriaConfirmed:siteCriteria,criteriaReason:confirmation.reason,confirmationSource:confirmation.source,
   leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }
@@ -1453,6 +1477,7 @@ if(action==="submitSearch"){
  if(!b)return JSON.stringify({ok:false,reason:"Botão Search não localizado"});
  if(b.disabled||b.getAttribute("aria-disabled")==="true")
   return JSON.stringify({ok:false,reason:"Botão Search indisponível"});
+ window.__pokeSearchSubmission={before:visibleResultSignature(),observedUpdate:false};
  b.click();
  return JSON.stringify({ok:true,stage:"submitted"});
 }
