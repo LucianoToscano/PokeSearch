@@ -1939,7 +1939,8 @@ test("UX-NOTIFY-01 bell shows only six SVG states and two audio selectors",()=>{
   panel.includes('select.onclick=()=>Native.pickAlertTone(target)')&&
   panel.includes('SHOW_INDIVIDUAL_FAVORITE_TONES')&&
   !panel.includes('requestNotificationPermission')&&!panel.includes('testGeneralNotification');
-});test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay independent",
+});
+test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay independent",
  dock.includes('notificationPermissionGranted=!!permissionGranted')&&
  dock.includes('watchAlertsEnabled=!!favoriteAlertsEnabled')&&
  dock.includes('bell.classList.toggle("permissionMissing",!notificationPermissionGranted)')&&
@@ -1968,7 +1969,8 @@ test("UX-NOTIFY-04 favorites and general retain separate tri-state controls",()=
   service.includes('WatchAlerts.setMode(OverlayService.this,mode);')&&
   service.includes('WatchAlerts.setMode(OverlayService.this,enabled?"on":"off");')&&
   panel.includes('Native.setFavoriteAlertMode(id)')&&panel.includes('Native.setAlertMode(id)');
-});test("UX-NOTIFY-05 independent system tones and individual Pokémon overrides",()=>{
+});
+test("UX-NOTIFY-05 independent system tones and individual Pokémon overrides",()=>{
  return watch.includes('public static final String PREF_GENERAL_TONE=')&&
   watch.includes('public static final String PREF_FAVORITE_TONE=')&&
   watch.includes('public static final String PREF_SPECIES_TONES=')&&
@@ -1986,7 +1988,8 @@ test("UX-NOTIFY-06 audio selection is native, persisted and never fetched by Jav
   !panel.includes('fetch(')&&!watch.includes('pokemonshowdown.com')&&
   main.includes('RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT,false')&&
   main.includes('"content".equals(scheme)&&!"android.resource".equals(scheme)');
-});test("UX-NOTIFY-07 Home favorites toggle migrates safely to tri-state preference",()=>{
+});
+test("UX-NOTIFY-07 Home favorites toggle migrates safely to tri-state preference",()=>{
  return watch.includes('PREF_MODE="favoriteAlertMode"')&&
   watch.includes('String fallback=prefs.getBoolean(PREF_ENABLED,true)?"on":"off"')&&
   main.includes('WatchAlerts.PREF_ENABLED.equals(key)?')&&
@@ -2254,7 +2257,8 @@ test("NOTIFY-02 compact grouped speaker icons still drive two distinct native mo
   panel.includes('Native.setAlertMode(id):Native.setFavoriteAlertMode(id)')&&
   service.includes('alertModeCaption("Novos Pokémon",value)')&&
   service.includes('alertModeCaption("Pokémon Favoritos",mode)');
-});test("NOTIFY-03 silent notifications and blocked Android are visually distinguished",()=>{
+});
+test("NOTIFY-03 silent notifications and blocked Android are visually distinguished",()=>{
  const states=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(",1)[0]||"";
  return states.includes('bell-silent-mode')&&
   states.includes('bell-permission-blocked')&&
@@ -2279,7 +2283,8 @@ test("NOTIFY-05 Favorites remains selection-only; audio settings reside in mini 
   picker.includes('FAVORITOS')&&picker.includes('row.setBackground(rowBg)')&&
   picker.includes('background.setCornerRadius(dp(activity,12))')&&
   alerts.includes('Native.setFavoriteAlertMode(id)');
-});test("COORDS-06 typed radius still requires actual site two-field confirmation",()=>{
+});
+test("COORDS-06 typed radius still requires actual site two-field confirmation",()=>{
  return dock.includes('radiusField.type="number"')&&
   dock.includes('wantedRadius=Number(radiusField.value)')&&
   dock.includes('radiusField.oninput=()=>')&&
@@ -2332,24 +2337,26 @@ test("UX-NOTIFY-12 new and favorite audio channels remain separate",()=>{
 test("UX-NOTIFY-13 audio selector includes 36 local tones, default and upload",()=>{
  const lib=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
  const audio=lib.split("private static final int[] AUDIO={")[1]?.split("};")[0]||"";
- return (audio.match(/R\\.raw\\.ps_[a-z0-9_]+/g)||[]).length===36&&
+ return (audio.match(/R\.raw\.ps_[a-z0-9_]+/g)||[]).length===36&&
   main.includes('String[] choices=new String[count+2]')&&
   main.includes('choices[0]="Padrão"')&&
   main.includes('choices[count+1]="＋ Enviar áudio"')&&
   main.includes('System.arraycopy(PokeSoundLibrary.LABELS,0,choices,1,count)')&&
   watch.includes('"android.resource".equals(uri.getScheme())')&&
   watch.includes('context.getResources().getIdentifier(');
-});test("UX-NOTIFY-15 all 36 audio labels match bundled Android raw entries",()=>{
+});
+test("UX-NOTIFY-15 all 36 audio labels match bundled Android raw entries",()=>{
  const lib=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
  const labels=lib.split('static final String[] LABELS={')[1]?.split('};')[0]||"";
  const audio=lib.split('private static final int[] AUDIO={')[1]?.split('};')[0]||"";
  return (labels.match(/^\\s*"[^"]+",?$/gm)||[]).length===36&&
-  (audio.match(/R\\.raw\\.ps_[a-z0-9_]+/g)||[]).length===36&&
+  (audio.match(/R\.raw\.ps_[a-z0-9_]+/g)||[]).length===36&&
   labels.includes('"Quem é esse Pokémon? · BR"')&&
   labels.includes('"Jigglypuff · Evolução meme"')&&labels.includes('"Snorlax"')&&
   !labels.includes('freesound community')&&!labels.includes('ps_')&&
   lib.includes('static Uri favoriteDefaultUri(Context context)');
-});test("UX-NOTIFY-16 tapping previews before ✓; default and uploaded file require confirmation",()=>{
+});
+test("UX-NOTIFY-16 tapping previews before ✓; default and uploaded file require confirmation",()=>{
  const selector=main.slice(main.indexOf('private void openBundledAlertTonePicker('),
   main.indexOf('private void chooseAlertToneSource('));
  const preview=main.slice(main.indexOf('private void stopBundledTonePreview('),
@@ -2368,8 +2375,9 @@ test("UX-NOTIFY-13 audio selector includes 36 local tones, default and upload",(
   main.includes('private void confirmUploadedAlertTone(')&&
   main.includes('setNeutralButton("▶ Ouvir",null)')&&
   main.includes('confirmUploadedAlertTone(target,species,uri)')&&
-  main.includes('stopBundledTonePreview();\\n        activityClosing=true;');
-});test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=>{
+  main.includes('stopBundledTonePreview();\n        activityClosing=true;');
+});
+test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private void openTrainerManagement(){")[0]||"";
  return main.includes("private void toggleHomeTheme(){")&&
   main.includes('putBoolean("homeLightMode",homeLightMode)')&&
