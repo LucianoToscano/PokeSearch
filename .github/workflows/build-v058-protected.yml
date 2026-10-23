@@ -1,0 +1,142 @@
+name: PokeSearch v0.00.58 LT Beta — APK PROTEGIDO (release)
+on:
+  push:
+    branches:
+      - distribution/protected-v058-lt-beta-20261023
+    paths:
+      - '.github/workflows/build-v058-protected.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  protected-release:
+    # Isolated distribution branch at approved LT58 source commit. No main merge.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      POKE_TEST_VERSION_CODE: "54257"
+      POKE_TEST_VERSION_LABEL: "51058"
+      POKE_TEST_PUBLIC_VERSION: "0.00.58"
+      POKE_RELEASE_CERT_SHA256: "34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+    steps:
+      - name: Checkout source from LT58 isolated branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Gradle 8.11.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Restore permanent signing key in secure runner
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for name in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing permanent signing material: $name"
+              exit 1
+            fi
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pokesearch-protected-lt58.p12"
+          chmod 600 "$RUNNER_TEMP/pokesearch-protected-lt58.p12"
+          keytool -list -keystore "$RUNNER_TEMP/pokesearch-protected-lt58.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" >/dev/null
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/pokesearch-protected-lt58.p12" >> "$GITHUB_ENV"
+      - name: Check R8 protection, application identity and WebView bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'applicationId = "com.lucianotoscano.pokesearch"' app/build.gradle.kts
+          grep -q 'isMinifyEnabled = true' app/build.gradle.kts
+          grep -q 'isShrinkResources = true' app/build.gradle.kts
+          grep -Fq 'proguard-android-optimize.txt' app/build.gradle.kts
+          grep -Fq '@android.webkit.JavascriptInterface' app/proguard-rules.pro
+          grep -Fq 'repackageclasses' app/proguard-rules.pro
+          node --check app/src/main/assets/probe.js
+          node --check app/src/main/assets/visual_editor.js
+          node --check app/src/main/assets/shiny_login.js
+          test -s app/src/main/assets/result-icons/modes/StarIVRaw.png
+      - name: Run all eight Node QA suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          for suite in \
+            app/tests/location-probe.test.js \
+            app/tests/probe-smoke.test.js \
+            app/tests/pokemon-picker.test.js \
+            app/tests/login-entry.test.js \
+            app/tests/overlay-ux.test.js \
+            app/tests/visual-editor.test.js \
+            app/tests/signing-contract.test.js \
+            app/tests/firebase-stats.test.js; do
+            node "$suite"
+          done
+      - name: Build non-debuggable protected R8 release APK
+        shell: bash
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease
+      - name: Verify protected APK and permanent certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/release/app-release.apk"
+          OUT="PokeSearch-v0.00.58-LT-Beta-PROTEGIDO.apk"
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          if unzip -Z1 "$APK" | grep -Ei '(^|/)([^/]+\.(java|kt|jks|p12|keystore|pem|key)|mapping\.txt)$'; then
+            echo "::error::Source code, signing material or R8 mapping appeared in APK"
+            exit 1
+          fi
+          PKG="$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package: ')"
+          for expect in "name='com.lucianotoscano.pokesearch'" "versionCode='54257'" "versionName='0.00.58'"; do
+            grep -Fq "$expect" <<< "$PKG" || { echo "::error::Unexpected package version: $PKG"; exit 1; }
+          done
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml > MANIFEST-REPORT.txt
+          if grep -Eq 'android:debuggable\(0x0101000f\)=\(type 0x12\)0xffffffff' MANIFEST-REPORT.txt; then
+            echo "::error::Release manifest is debuggable"
+            exit 1
+          fi
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' > SIGNING_CERT_SHA256.txt
+          ACTUAL_CERT="$(tr -d ':\r\n ' < SIGNING_CERT_SHA256.txt | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL_CERT" = "$POKE_RELEASE_CERT_SHA256" || { echo "::error::Unexpected certificate — refusing to distribute"; exit 1; }
+          cp "$APK" "$OUT"
+          sha256sum "$OUT" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          printf 'Source reference: LT58 SHA 07717cc5a54de369669f8111fbcf09fdcaa961a6\nBuild: release, non-debuggable, R8 obfuscated, resource shrinking\nAndroid package: com.lucianotoscano.pokesearch\nVersion: 0.00.58 (code 54257)\nPersistent signing certificate SHA-256: %s\n' "$ACTUAL_CERT" > BUILD-PROVENANCE.txt
+          echo "$PKG" > PACKAGE_VERSION.txt
+      - name: Publish installable protected APK and verification files only
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-v0.00.58-LT-Beta-PROTEGIDO
+          path: |
+            PokeSearch-v0.00.58-LT-Beta-PROTEGIDO.apk
+            SHA256SUMS.txt
+            SIGNING_CERT_SHA256.txt
+            SOURCE_COMMIT.txt
+            BUILD-PROVENANCE.txt
+            PACKAGE_VERSION.txt
+          retention-days: 30
+          if-no-files-found: error
+      - name: Remove restored signing key
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/pokesearch-protected-lt58.p12"
