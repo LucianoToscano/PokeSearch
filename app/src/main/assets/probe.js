@@ -538,23 +538,95 @@ function pokemonListSelection(verb){
 }
 
 const EXTRA_LABELS={sortBy:"Sort by",pokemon:"Pokemon",form:"Form",size:"Size",gender:"Gender",weather:"Weather"};
+// LT69: Form and Gender MUST resolve from their OWN label/combobox.
+// Never recover Form by using a nearby Gender control or an arbitrary open popup.
 function extraControl(label){
+ if(label==="Form"||label==="Gender"){
+  const rx=new RegExp("^\\s*"+label+"\\s*$","i");
+  const exact=elements('button,[role=combobox],select,input:not([type=hidden])')
+   .filter(vis).filter(e=>rx.test((e.getAttribute('aria-label')||'').trim())||
+    rx.test((e.getAttribute('title')||'').trim()));
+  if(exact.length===1)return exact[0];
+  if(exact.length>1)return null;
+  for(const head of labels(document,rx)){
+   const linked=head.control||(
+    head.getAttribute('for')?document.getElementById?.(head.getAttribute('for')):null);
+   if(linked&&vis(linked))return linked;
+   for(let p=head.parentElement,depth=0;p&&depth<4;p=p.parentElement,depth++){
+    // A broad ancestor containing BOTH filters cannot own either one.
+    const others=Array.from(p.querySelectorAll('label')).filter(vis)
+     .some(e=>/^(?:Form|Gender)$/i.test(text(e))&&!rx.test(text(e)));
+    if(others)break;
+    const controls=Array.from(p.querySelectorAll(
+     'button,[role=combobox],select,input:not([type=hidden])')).filter(vis);
+    const triggers=controls.filter(e=>e.matches('button,[role=combobox],select')&&
+     (e.getAttribute('aria-haspopup')||e.getAttribute('role')==='combobox'||
+      e.tagName==='SELECT'));
+    if(triggers.length===1)return triggers[0];
+    if(controls.length===1)return controls[0];
+   }
+  }
+  return null; // Fail closed, NEVER return the adjacent Gender control for Form.
+ }
  const e=field(label);if(e)return e;
  const rx=label==="Pokemon"?/pok[eé]mon/i:new RegExp(label,"i");
  return elements('input:not([type=hidden]),select,[role=combobox],button[aria-haspopup]')
   .find(x=>vis(x)&&rx.test((x.getAttribute("placeholder")||"")+" "+(x.getAttribute("aria-label")||"")))||null;
 }
+// Popup ownership is distinct from picker option text. An old Gender popup
+// cannot be claimed by Form merely because it is the only visible menu.
+function extraOptionPopup(key,control){
+ if(!control)return null;
+ const id=[control.getAttribute('aria-controls'),control.getAttribute('aria-owns')]
+  .filter(Boolean);
+ for(const name of id){
+  const popup=document.getElementById?.(name);
+  if(popup&&vis(popup))return popup;
+ }
+ if(control.getAttribute('aria-expanded')!=='true')return null;
+ const selector='[role=listbox],[role=menu],[cmdk-list],[data-radix-menu-content],[data-radix-popper-content-wrapper]';
+ const all=elements(selector).filter(vis);
+ const leaf=all.filter(e=>!all.some(other=>other!==e&&e.contains(other)));
+ if(leaf.length!==1)return null;
+ const popup=leaf[0];
+ const values=Array.from(popup.querySelectorAll(
+  '[role=option],[role=menuitemcheckbox],[role=checkbox],label,[data-radix-collection-item],li'))
+  .filter(vis).map(e=>clean(text(e))).filter(Boolean);
+ if(key==='form'){
+  const distinct=[...new Set(values.map(v=>v.toLowerCase()))];
+  // Explicitly reject the gender-only menu, including its neutral Any row.
+  if(distinct.length&&distinct.every(v=>
+   /^(?:any|male|female|genderless|unknown)$/.test(v)))return null;
+ }
+ if(key==='gender'&&values.length>0&&values.some(v=>
+  /^(?:normal|alola|hisuian|copy 2019|goggles 2026)$/i.test(v)))return null;
+ return popup;
+}
+function formOptionRows(control){
+ const popup=extraOptionPopup('form',control);
+ if(!popup)return null;
+ const selector='[role=option],[role=menuitemcheckbox],[role=checkbox],[data-radix-collection-item],label,li,button[aria-pressed],button[aria-checked]';
+ const candidates=Array.from(popup.querySelectorAll(selector)).filter(vis)
+  .filter(e=>text(e).length>0&&text(e).length<100);
+ // Prefer the selectable leaf row; do not synthesize labels from parent menus.
+ return candidates.filter(el=>!candidates.some(other=>other!==el&&el.contains(other)));
+}
 function siteOptions(key){
  const control=extraControl(EXTRA_LABELS[key]);
  if(!control)return {ok:false,pending:false,options:[]};
  if(control.matches("select"))
-  return {ok:true,pending:false,options:[...control.options].map(text).map(clean).filter(Boolean).slice(0,80)};
- const popup=activeOptionPopup(control);
+  return {ok:true,pending:false,options:[...control.options].map(text).map(clean).filter(Boolean)
+   .slice(0,key==="form"?500:80)};
+ const popup=(key==="form"||key==="gender")?
+  extraOptionPopup(key,control):activeOptionPopup(control);
  if(!popup)return {ok:false,pending:true,options:[]};
- // The official Size popup has checkbox rows rather than role=option nodes.
- const rows=key==="size"?multiOptions(control):optionElements(control);
+ const rows=key==="form"?formOptionRows(control):
+  key==="size"?multiOptions(control):key==="gender"?
+  Array.from(popup.querySelectorAll('[role=option],[role=menuitemradio],[role=radio],label')).filter(vis):
+  optionElements(control);
  return {ok:true,pending:false,
-  options:[...new Set((rows||[]).map(text).map(clean).filter(x=>x&&x.length<100))].slice(0,80)};
+  options:[...new Set((rows||[]).map(text).map(clean)
+   .filter(x=>x&&x.length<100))].slice(0,key==="form"?500:80)};
 }
 function describeChoice(label){
  const e=extraControl(label);
@@ -587,7 +659,10 @@ function extraSelect(key,want){
   }
   if(e.matches("input"))return valueInput(e,"");
   // Reset prior active filter when user switches back to Any.
-  const opt=optionElements(e).find(o=>isNeutral(text(o)));
+  const popup=(key==="gender"||key==="form")?extraOptionPopup(key,e):null;
+   const opt=(popup?Array.from(popup.querySelectorAll(
+    '[role=option],[role=menuitemradio],[role=menuitemcheckbox],label')).filter(vis):
+    key==="gender"||key==="form"?[]:optionElements(e)).find(o=>isNeutral(text(o)));
   if(opt){opt.click();return true;}
   if(e.disabled)return false;
   if(e.getAttribute("aria-expanded")!=="true")e.click();
@@ -598,7 +673,11 @@ function extraSelect(key,want){
  if(actual&&comparableOption(actual)===comparableOption(want))return true;
  if(e.matches("input"))return valueInput(e,want);
  if(e.matches("select"))return choice(label,want);
- const opt=findOption(want,e);
+ const opt=(key==="gender"||key==="form"?
+  (extraOptionPopup(key,e)?Array.from(extraOptionPopup(key,e).querySelectorAll(
+   '[role=option],[role=menuitemradio],[role=radio],[role=menuitemcheckbox],label'))
+   .filter(vis).find(o=>comparableOption(text(o))===comparableOption(want)):null):
+  findOption(want,e));
  if(opt){opt.click();transientPending=true;return false;} // React state must settle before later filters
  if(e.getAttribute("aria-expanded")!=="true")e.click();
  transientPending=true;
