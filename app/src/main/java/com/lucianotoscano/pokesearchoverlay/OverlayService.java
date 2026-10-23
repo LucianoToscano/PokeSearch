@@ -2215,9 +2215,15 @@ public class OverlayService extends Service {
                     handler.postDelayed(()->requestPokemonSuggestionsLater(query,generation,sequence,attempt+1),300L);
                     return;
                 }
-                // Even the final timeout must be displayed as a wait/error, not
-                // as proven absence of an official species or event form.
-                try{response.put("query",query);}catch(org.json.JSONException ignored){}
+                // Timeout means FAILED, never 'none found'. Only the linked
+                // live Pokémon portal may explicitly prove an empty search.
+                try{
+                    response.put("query",query);
+                    if(response.optBoolean("pending",false)){
+                        response.put("ok",false).put("pending",false).put("state","failed");
+                        response.put("reason","Tempo esgotado aguardando opções oficiais do site. Tente novamente.");
+                    }
+                }catch(org.json.JSONException ignored){}
                 js(menuPanel,true,"window.onPokemonSuggestions("+response.toString()+")");
             });
         }
@@ -2330,7 +2336,7 @@ public class OverlayService extends Service {
                 replaceActiveFilterSearch();
                 resultsStale=count()>0;
                 hideDetails();
-                status("Pokémon e formas selecionados · demais filtros preservados");
+                status("Espécies/formas solicitadas · aguardando confirmação no site; demais filtros preservados");
                 scheduleFilterChangeRefresh();
             }catch(org.json.JSONException ex){
                 status("Seleção Pokémon inválida · filtros anteriores preservados.");
