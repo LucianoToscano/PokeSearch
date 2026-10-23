@@ -359,12 +359,12 @@ function pokemonPickerRoot(){
    const all=text(p);
    if(all.length>2800||/\b(?:Sort by|Filter by|Despawn|Weather)\b/i.test(all))break;
    const btns=p.querySelectorAll('button,[role=combobox],input:not([type=hidden])');
-   if(btns.length&&p!==document.body)return p;
+   if(btns.length&&p!==document.body&&pokemonPickerButton(p))return p;
   }
  }
  const input=pokemonPickerInput();
  if(input)for(let parent=input.parentElement,depth=0;parent&&depth<5;parent=parent.parentElement,depth++){
-  if(parent!==document.body&&parent.querySelectorAll('button,[role=combobox],[aria-haspopup]').length)return parent;
+  if(parent!==document.body&&pokemonPickerButton(parent))return parent;
  }
  return null;
 }
@@ -419,7 +419,9 @@ function pokemonPickerPopup(input,trigger,query){
   if(popup&&vis(popup))return popup;
  }
  const selector='[role=option],[cmdk-item],[data-radix-collection-item],li';
- const all=elements('[role=listbox],[cmdk-list]').filter(vis);
+ const all=elements('[role=listbox],[cmdk-list],[data-radix-popper-content-wrapper]')
+  .filter(vis).filter(scope=>scope.querySelectorAll(selector).length>0||
+   /(?:no results|no matches|nenhum(?:a|s)? resultado)/i.test(text(scope)));
  const innermost=all.filter(scope=>!all.some(inner=>inner!==scope&&scope.contains?.(inner)));
  const wanted=clean(query||'').toLowerCase();
  const matches=innermost.filter(scope=>{
