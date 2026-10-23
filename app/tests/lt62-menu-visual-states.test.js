@@ -417,5 +417,64 @@ check("Unified Pokébola touch contract: short tap results or closes menu, hold 
  assert.ok(native.includes('putInt("resultsX",')); // User placement preferences retained.
  assert.ok(native.includes('putInt("resultsY",'));
 });
+
+check("Unified Pokébola drag moves result window by the same bounded delta",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const grip=native.split('final boolean[] dockHeld={false};')[1]?.split("root.addView(grip,",1)[0]||"";
+ for(const contract of [
+  'dragResultStart[0]=resultParams.x;',
+  'dragResultStart[1]=resultParams.y;',
+  'minDx=Math.max(minDx,-dragResultStart[0]);',
+  'maxDx=Math.min(maxDx,',
+  'minDy=Math.max(minDy,-dragResultStart[1]);',
+  'maxDy=Math.min(maxDy,',
+  'int moveX=Math.max(minDx,Math.min(maxDx,dx));',
+  'int moveY=Math.max(minDy,Math.min(maxDy,dy));',
+  'params.x=startX+moveX;',
+  'params.y=startY+moveY;',
+  'resultParams.x=dragResultStart[0]+moveX;',
+  'resultParams.y=dragResultStart[1]+moveY;',
+  'now-lastResultMoveAt[0]>=16L',
+  'wm.updateViewLayout(resultRoot,resultParams);',
+  'updateWindow(); // The open toolbar follows the same Pokébola.',
+  'moveDetail();',
+ ])assert.ok(grip.includes(contract),contract);
+ const simulate=(dock,result,dx,dy,screen)=>{
+  const minDx=Math.max(-dock.x,-result.x);
+  const maxDx=Math.min(screen.w-dock.w-dock.x,screen.w-result.w-result.x);
+  const minDy=Math.max(-dock.y,-result.y);
+  const maxDy=Math.min(screen.h-dock.h-dock.y,screen.h-result.h-result.y);
+  const x=Math.max(minDx,Math.min(maxDx,dx));
+  const y=Math.max(minDy,Math.min(maxDy,dy));
+  return {dock:{x:dock.x+x,y:dock.y+y},result:{x:result.x+x,y:result.y+y}};
+ };
+ for(const [dx,dy] of [[-30,45],[24,-12],[200,400],[-500,-500]]){
+  const dock={x:130,y:200,w:53,h:32},result={x:60,y:260,w:110,h:210};
+  const moved=simulate(dock,result,dx,dy,{w:390,h:850});
+  assert.equal(moved.result.x-moved.dock.x,result.x-dock.x);
+  assert.equal(moved.result.y-moved.dock.y,result.y-dock.y);
+  assert.ok(moved.result.x>=0&&moved.result.y>=0);
+  assert.ok(moved.result.x+result.w<=390&&moved.result.y+result.h<=850);
+  assert.ok(moved.dock.x>=0&&moved.dock.y>=0);
+ }
+});
+check("Unified Pokébola drag persists both windows and restores without overriding old result prefs",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const grip=native.split('final boolean[] dockHeld={false};')[1]?.split("root.addView(grip,",1)[0]||"";
+ assert.ok(grip.includes('if(dragged){'));
+ assert.ok(grip.includes('putInt("pokeballX",Math.round(params.x/density))'));
+ assert.ok(grip.includes('putInt("pokeballY",Math.round(params.y/density))'));
+ assert.ok(grip.includes('putInt("resultsX",Math.round(resultParams.x/density)-visualResultsOffsetX)'));
+ assert.ok(grip.includes('putInt("resultsY",Math.round(resultParams.y/density)-visualResultsOffsetY)'));
+ assert.ok(grip.includes('saved.apply();'));
+ assert.ok(native.includes('dockPrefs.getInt("pokeballX",oldDefaultX)'));
+ assert.ok(native.includes('dockPrefs.getInt("pokeballY",120)'));
+ assert.ok(native.includes('prefs.getInt("resultsX",preferredX)'));
+ assert.ok(native.includes('prefs.getInt("resultsY",preferredY)'));
+ assert.ok(grip.includes('handler.removeCallbacks(dockLongPress);'));
+ assert.ok(grip.includes('if(!dragged&&!dockHeld[0])'));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
