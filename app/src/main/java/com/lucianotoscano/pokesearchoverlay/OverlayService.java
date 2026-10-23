@@ -797,16 +797,30 @@ public class OverlayService extends Service {
         });
         grip=new View(this);
         grip.setBackgroundColor(Color.TRANSPARENT);
+        // LT62-ONE-POKEBALL: native grip owns taps/holds/drags. The dock WebView
+        // is only a renderer, avoiding click+contextmenu double dispatch.
+        final boolean[] dockHeld={false};
+        final Runnable dockLongPress=()->{
+            if(dragged||params==null||stopped||loginPaused||pickerOpen)return;
+            dockHeld[0]=true;
+            if(minimized)minimize(false);
+            menu(!menuExpanded);
+        };
         grip.setOnTouchListener((v,event)->{
             if(params==null)return true;
             switch(event.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
                     startRawX=event.getRawX();startRawY=event.getRawY();
-                    startX=params.x;startY=params.y;dragged=false;return true;
+                    startX=params.x;startY=params.y;dragged=false;dockHeld[0]=false;
+                    handler.removeCallbacks(dockLongPress);
+                    handler.postDelayed(dockLongPress,600L);
+                    return true;
                 case MotionEvent.ACTION_MOVE:
                     int dx=Math.round(event.getRawX()-startRawX);
                     int dy=Math.round(event.getRawY()-startRawY);
-                    if(Math.abs(dx)+Math.abs(dy)>dp(4))dragged=true;
+                    if(Math.abs(dx)+Math.abs(dy)>dp(4)){
+                        dragged=true;handler.removeCallbacks(dockLongPress);
+                    }
                     if(dragged){
                         DisplayMetrics d=metrics();
                         int winWidth=dp(minimized?BUBBLE_DP:dockDp());
@@ -817,13 +831,16 @@ public class OverlayService extends Service {
                     }
                     return true;
                 case MotionEvent.ACTION_UP:
-                    // The same gear is the drag handle and menu toggle.
-                    if(!dragged){
+                    handler.removeCallbacks(dockLongPress);
+                    if(!dragged&&!dockHeld[0]){
                         if(minimized)minimize(false);
-                        else menu(!menuExpanded);
+                        else if(menuExpanded)menu(false); // Short tap always closes open menu.
+                        else toggleResultsCollapsed();  // Otherwise short tap toggles results.
                     }
+                    // Long press or drag never triggers a second short-tap action.
                     return true;
-                case MotionEvent.ACTION_CANCEL:return true;
+                case MotionEvent.ACTION_CANCEL:
+                    handler.removeCallbacks(dockLongPress);return true;
             }
             return true;
         });
@@ -987,8 +1004,11 @@ public class OverlayService extends Service {
             }
             return true;
         });
+        // The Pokébola lives ONLY in the native dock grip. Disable the old
+        // results-header hit area; the result list remains a separate WebView.
         resultRoot.addView(resultGrip,new FrameLayout.LayoutParams(
             dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT));
+        resultGrip.setVisibility(View.GONE);
         updateResultHeaderGrip();
 
         int preferredX=Math.max(0,screenWidthDp()-2*dockDp()-35);
@@ -1022,6 +1042,7 @@ public class OverlayService extends Service {
             }
         });
         resultPanel.loadUrl("file:///android_asset/dock.html?results=1");
+        if(resultCollapsed)resultRoot.setVisibility(View.GONE);
     }
     private int minResultsHeaderHeightDp(){
         return Math.max(RESULTS_HEADER_DP,visualHeaderY+visualHeaderTouchHeight);
@@ -1943,6 +1964,8 @@ public class OverlayService extends Service {
         getSharedPreferences("prefs",0).edit()
             .putBoolean("resultsCollapsed",resultCollapsed).apply();
         js(resultPanel,resultLoaded,"window.setResultsCollapsed("+resultCollapsed+")");
+        if(resultRoot!=null)resultRoot.setVisibility(
+            resultCollapsed||minimized||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
         updateResultsWidth();
         if(resultCollapsed){
             hideDetails();
@@ -1987,7 +2010,7 @@ public class OverlayService extends Service {
         // Hidden result WebView must not keep its 1-second despawn ticker active.
         js(resultPanel,resultLoaded,"window.setResultsPaused("+yes+")");
         if(resultRoot!=null)resultRoot.setVisibility(
-            yes||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
+            yes||resultCollapsed||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
         updateWindow();
     }
     private void showDetails(int index){
@@ -2830,7 +2853,7 @@ public class OverlayService extends Service {
                 },()->{
                     pickerOpen=false;
                     if(!stopped&&!loginPaused&&root!=null)root.setVisibility(View.VISIBLE);
-                    if(!stopped&&!loginPaused&&!minimized&&resultRoot!=null)
+                    if(!stopped&&!loginPaused&&!minimized&&!resultCollapsed&&resultRoot!=null)
                         resultRoot.setVisibility(View.VISIBLE);
                     if(!stopped&&!loginPaused&&menuExpanded&&menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
                     update();
@@ -2838,7 +2861,7 @@ public class OverlayService extends Service {
             }catch(Exception e){
                 pickerOpen=false;
                 if(root!=null&&!loginPaused)root.setVisibility(View.VISIBLE);
-                if(resultRoot!=null&&!loginPaused&&!minimized)
+                if(resultRoot!=null&&!loginPaused&&!minimized&&!resultCollapsed)
                     resultRoot.setVisibility(View.VISIBLE);
                 if(menuRoot!=null&&!loginPaused&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
                 diagnosticError("Não foi possível abrir favoritos no overlay.");
@@ -3049,7 +3072,7 @@ public class OverlayService extends Service {
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_END".equals(action)){
             loginPaused=false;
             if(root!=null&&!pickerOpen)root.setVisibility(View.VISIBLE);
-            if(resultRoot!=null&&!pickerOpen&&!minimized)resultRoot.setVisibility(View.VISIBLE);
+            if(resultRoot!=null&&!pickerOpen&&!minimized&&!resultCollapsed)resultRoot.setVisibility(View.VISIBLE);
             if(menuRoot!=null&&!pickerOpen&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
             if(detailRoot!=null&&selected>=0&&!pickerOpen)detailRoot.setVisibility(View.VISIBLE);
             cancelSessionCallbacks();
