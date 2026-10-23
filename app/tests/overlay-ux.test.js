@@ -3263,6 +3263,26 @@ test("LT63-SPRITE-PITCH never overlaps adjacent sprites with zero visual gap",()
   dock.includes("return Math.max(size,pitch); // No sprite-overlap");
 });
 
+
+test("LT64-FILTER-DELTA species selection preserves unrelated search configuration",()=>{
+ const ui=dock.split("function renderPokemonChoices(){")[1]?.split("function renderMoreChoices(){",1)[0]||"";
+ const native=service.split("@JavascriptInterface public void setPokemonSelections(String payload)")[1]
+  ?.split("@JavascriptInterface public void setSearchConfig(",1)[0]||"";
+ return ui.includes("Native.setPokemonSelections(JSON.stringify(selection))")&&
+  !ui.includes("Native.setSearchConfig(")&&
+  native.includes('new JSONObject(extraFiltersJson)')&&
+  native.includes('extra.put("pokemonSelections",cleaned)')&&
+  native.includes('extra.put("clearExtraKeys",reset)')&&
+  native.includes('getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",next).apply()')&&
+  !native.includes('mode=nextMode')&&!native.includes('locationCoords=')&&!native.includes('shiny=');
+});
+test("LT64-FILTER-SIZE recognizes accessible button state and still verifies the site",()=>{
+ const source=probe.split("function multiOptions(control){")[1]?.split("function extraMulti(",1)[0]||"";
+ return source.includes("button[aria-pressed]")&&source.includes('option.getAttribute("aria-pressed")')&&
+  probe.includes("if(target.some(v=>!observed.some(o=>o.label===v)))return false;")&&
+  probe.includes("if(!observed.length)return false;");
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
