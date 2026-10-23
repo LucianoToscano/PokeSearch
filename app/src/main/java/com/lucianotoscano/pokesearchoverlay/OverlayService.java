@@ -2188,7 +2188,35 @@ public class OverlayService extends Service {
                         js(menuPanel,true,"window.onFilterOptions("+message.toString()+")");
                     }
                     execute("closeFilterOptions:"+key,closed->discoverFilterMenu(position+1,generation));
-                }),210L);
+                }),"form".equals(key)?500L:210L);
+            });
+        }
+        private int formOptionsSequence=0;
+        @JavascriptInterface public void requestFormOptions(String query){handler.post(()->{
+            if(stopped||loginPaused||searchInProgress||!menuExpanded||!menuLoaded)return;
+            String wanted=query==null?"":query.trim();
+            if(wanted.length()>70)return;
+            int generation=requestGeneration,sequence=++formOptionsSequence;
+            requestFormOptionsLater(wanted,generation,sequence,0);
+        });}
+        private void requestFormOptionsLater(String query,int generation,int sequence,int attempt){
+            if(stopped||loginPaused||searchInProgress||!menuExpanded||
+               generation!=requestGeneration||sequence!=formOptionsSequence)return;
+            execute("searchFormOptions:"+JSONObject.quote(query),result->{
+                if(stopped||generation!=requestGeneration||sequence!=formOptionsSequence||
+                   menuPanel==null||!menuLoaded)return;
+                if(result.optBoolean("pending",false)&&attempt<15){
+                    handler.postDelayed(()->requestFormOptionsLater(query,generation,sequence,attempt+1),300L);
+                    return;
+                }
+                try{
+                    result.put("key","form").put("query",query);
+                    if(result.optBoolean("pending",false)){
+                        result.put("pending",false).put("ok",false)
+                            .put("reason","Form não foi confirmado no site; tente novamente.");
+                    }
+                }catch(org.json.JSONException ignored){}
+                js(menuPanel,true,"window.onFormOptions("+result.toString()+")");
             });
         }
         private int pokemonSuggestionSequence=0;
@@ -2234,7 +2262,7 @@ public class OverlayService extends Service {
                 JSONObject delta=new JSONObject(payload),updated=new JSONObject(extraFiltersJson);
                 java.util.HashSet<String> allowed=new java.util.HashSet<>(java.util.Arrays.asList(
                     "sortBy","weather","size","form","gender","cpMin","cpMax",
-                    "levelMin","levelMax","minPvpCp","sizeSelections","genderSelections",
+                    "levelMin","levelMax","minPvpCp","sizeSelections","genderSelections","formSelections",
                     "includePreviousEvolutions"));
                 if(delta.length()==0||delta.length()>allowed.size())return;
                 java.util.Iterator<String> requested=delta.keys();
@@ -2248,14 +2276,16 @@ public class OverlayService extends Service {
                     if(key.equals("includePreviousEvolutions")){
                         updated.put(key,delta.optBoolean(key,true));continue;
                     }
-                    if(key.equals("sizeSelections")||key.equals("genderSelections")){
+                    if(key.equals("sizeSelections")||key.equals("genderSelections")||
+                       key.equals("formSelections")){
                         org.json.JSONArray input=delta.optJSONArray(key);
-                        if(input==null||input.length()>(key.equals("genderSelections")?1:7))return;
+                        if(input==null||input.length()>(key.equals("genderSelections")?1:
+                            key.equals("formSelections")?500:7))return;
                         org.json.JSONArray cleaned=new org.json.JSONArray();
                         java.util.HashSet<String> unique=new java.util.HashSet<>();
                         for(int i=0;i<input.length();i++){
                             String value=input.optString(i,"").trim();
-                            if(value.length()>30||value.matches("(?s).*[<>\\r\\n].*"))return;
+                            if(value.length()>(key.equals("formSelections")?100:30)||value.matches("(?s).*[<>\\r\\n].*"))return;
                             if(!value.isEmpty()&&unique.add(value.toLowerCase(java.util.Locale.ROOT)))
                                 cleaned.put(value);
                         }
@@ -2369,17 +2399,17 @@ public class OverlayService extends Service {
                 // values. Empty array is "Any"; do not discard previous state
                 // if an older Modes/Pokémon UI omits the arrays.
                 JSONObject previousMulti=new JSONObject(extraFiltersJson);
-                for(String key:new String[]{"size","gender"}){
+                for(String key:new String[]{"size","gender","form"}){
                     String plural=key+"Selections";
                     org.json.JSONArray requested=input.optJSONArray(plural);
                     if(requested==null)requested=previousMulti.optJSONArray(plural);
                     org.json.JSONArray allowed=new org.json.JSONArray();
                     java.util.HashSet<String> seen=new java.util.HashSet<>();
                     if(requested!=null){
-                        if(requested.length()>7)return;
+                        if(requested.length()>(key.equals("form")?500:7))return;
                         for(int i=0;i<requested.length();i++){
                             String value=requested.optString(i,"").trim();
-                            if(value.length()>30||value.matches("(?s).*[<>\\r\\n].*"))return;
+                            if(value.length()>(key.equals("form")?100:30)||value.matches("(?s).*[<>\\r\\n].*"))return;
                             if(!value.isEmpty()&&seen.add(value.toLowerCase(java.util.Locale.ROOT))){
                                 // The previous build allowed multiple genders. Keep the
                                 // first value during migration; the site is single-choice.
@@ -2433,7 +2463,7 @@ public class OverlayService extends Service {
                             clearKeys.put(key+"Selections");
                     }
                 }
-                for(String key:new String[]{"sizeSelections","genderSelections"}){
+                for(String key:new String[]{"sizeSelections","genderSelections","formSelections"}){
                     org.json.JSONArray before=previousExtra.optJSONArray(key),after=extra.optJSONArray(key);
                     if(before!=null&&before.length()>0&&after!=null&&after.length()==0)clearKeys.put(key);
                     if(previouslyCleared!=null&&after!=null&&after.length()==0)
