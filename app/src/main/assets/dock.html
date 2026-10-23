@@ -1646,6 +1646,73 @@ body.controls-window #choices.modeCascade .modeCascadeEditor{gap:3px!important}
 body.controls-window #choices.modeCascade button.modeCascadeConfirm{
  flex:0 0 28px!important;width:28px!important;min-width:28px!important;
 }
+
+/* LT62 FILTER CASCADE: compact Modos-like rail, no expandable header. */
+body.controls-window #choices.filterCascade:not(.filterPicker){
+ display:grid!important;grid-template-columns:77px minmax(0,1fr)!important;align-content:start!important;
+ gap:4px!important;width:min(258px,calc(100vw - 14px))!important;
+ max-width:calc(100vw - 14px)!important;max-height:min(310px,var(--popup-room,400px))!important;
+ overflow-y:auto!important;padding:4px!important;
+}
+body.controls-window #choices.filterCascade>:not(.filterCascadeRail):not(.filterCascadeEditor){grid-column:1/-1!important}
+body.controls-window #choices.filterCascade .filterCascadeRail{
+ grid-column:1!important;display:flex;flex-direction:column;gap:2px;align-self:start;min-width:0;
+}
+body.controls-window #choices.filterCascade .filterCascadeEntry{
+ display:block!important;width:100%!important;min-height:27px!important;height:27px!important;
+ padding:3px 5px!important;margin:0!important;font:600 10px/19px Roboto,Arial,sans-serif!important;
+ text-align:left!important;border-radius:5px!important;border:1px solid transparent!important;
+ white-space:nowrap!important;background:transparent!important;color:var(--visual-menu-fg,#edf3fa)!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEntry.chosen{
+ background:#1e5c4a98!important;border-color:#68bea19a!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor{
+ grid-column:2!important;align-self:start;min-width:0!important;
+ padding:5px 4px!important;background:#ffffff0b;border-radius:6px;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraField{
+ min-height:0!important;margin:0!important;display:flex!important;flex-direction:column!important;
+ align-items:flex-start!important;gap:4px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraField>label{
+ flex:none!important;width:auto!important;max-width:100%!important;min-width:0!important;
+ font-size:10px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeField>label{display:none!important}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs{
+ width:100%!important;max-width:100%!important;display:flex!important;gap:5px!important;
+ justify-content:flex-start!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeCell{
+ width:0!important;min-width:0!important;max-width:none!important;flex:1 1 0!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs input{
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ height:29px!important;font-size:12px!important;text-align:center!important;
+ padding:2px!important;background:transparent!important;border:1px solid #ffffff3a!important;
+ color:var(--visual-menu-fg,#fff)!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs input::placeholder{
+ opacity:.55!important;color:var(--visual-menu-fg,#fff)!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"],
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"]{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;width:100%!important;gap:3px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"] .extraChip{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;min-width:0!important;max-width:none!important;
+ height:35px!important;min-height:35px!important;padding:0!important;
+ font:700 20px/1 Arial,"Noto Sans Symbols 2","Segoe UI Symbol",sans-serif!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"] .extraChip{
+ width:100%!important;min-width:0!important;max-width:none!important;
+ height:28px!important;min-height:28px!important;padding:0!important;font-size:10px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraValue{
+ max-width:100%!important;min-width:0!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -1832,7 +1899,7 @@ let displayedMetadataWidth=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
-let filterOptions={},generalExpanded=false,advancedExpanded=false;
+let filterOptions={},generalExpanded=true,filterFocus="PC",advancedExpanded=false;
 let formQuery="",formOptionsStatus="Aguardando lista oficial de Form do site...";
 let siteFiltersConfirmed=false; // Evidence from Android: same generation, verified Search and accepted results.
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
@@ -2046,9 +2113,8 @@ function toggleChoices(kind){
   modeScrollTop=0; // Open at the first field, not at an old scroll offset.
   modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
   filterOptions={}; // Never reuse an old site snapshot as a fresh external change.
-  // Initial Level selection covers the requested wild-spawn range.
-  if(modeDraft.levelMin===""||modeDraft.levelMin==null)modeDraft.levelMin="1";
-  if(modeDraft.levelMax===""||modeDraft.levelMax==null)modeDraft.levelMax="35";
+  // No implicit level writes: preserve stored filter values, but show empty boxes.
+  filterFocus="PC";
   renderFiltersChoices();
   if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();
   return;
@@ -2284,7 +2350,7 @@ function renderExtraFilters(panel,make){
  const numericInput=(key,label,level=false)=>{
   const input=make("input");input.type="number";input.inputMode="numeric";
   input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999";
-  input.value=String(modeDraft[key]??"");
+  input.value=""; // UI-only empty: modeDraft retains the saved value until typed.
   input.placeholder=level?(key.endsWith("Min")?"1":"35"):"Qualquer";
   input.dataset.filterNumber=key;input.setAttribute("aria-label",label);
   input.title=label;
@@ -2303,10 +2369,10 @@ function renderExtraFilters(panel,make){
   const line=make("div","extraField extraRangeField"),name=make("label","",label);
   const group=make("div","extraRangeInputs");
   group.setAttribute("role","group");group.setAttribute("aria-label",label+" mínimo e máximo");
-  for(const [key,short,full] of [[minKey,"Mín.","mínimo"],[maxKey,"Máx.","máximo"]]){
-   const cell=make("label","extraRangeCell"),cap=make("span","extraRangeCaption",short);
+  for(const [key,short,full] of [[minKey,"Min","mínimo"],[maxKey,"Max","máximo"]]){
+   const cell=make("label","extraRangeCell");
    const input=numericInput(key,label+" "+full,level);
-   input.placeholder=short;cell.append(cap,input);group.appendChild(cell);
+   input.placeholder=short;cell.appendChild(input);group.appendChild(cell);
   }
   line.append(name,group);panel.appendChild(line);
  };
@@ -2368,8 +2434,7 @@ function renderExtraFilters(panel,make){
  };
  // The remote ordering control is not a search mode.
  divider();option("sortBy","Ordenar");
- section("Filtros gerais",generalExpanded,()=>{generalExpanded=!generalExpanded;});
- if(generalExpanded){
+ // Direct filter entries, like Modos. No "Filtros gerais" accordion.
   const pvp=["gl","ul"].includes(modeDraft.mode);
   if(!pvp){
    numberPair("PC","cpMin","cpMax");
@@ -2386,7 +2451,6 @@ function renderExtraFilters(panel,make){
   formButton.type="button";formButton.title="Buscar e selecionar formas oficiais no site";
   formButton.onclick=()=>{modeScrollTop=panel.scrollTop;formQuery="";renderFormPicker();};
   field("Forma",formButton);
- }
  // Keep active PvP-only criteria without the obsolete Advanced header.
  if(["gl","ul"].includes(modeDraft.mode)){
   number("minPvpCp","PC mínimo PvP");
@@ -2395,6 +2459,29 @@ function renderExtraFilters(panel,make){
   input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;};
   field("Evoluções anteriores",input);
  }
+ // Compact rail: all original real controls stay registered, just reparented.
+ const rows=[...panel.querySelectorAll(":scope > .extraField")];
+ const rail=make("div","filterCascadeRail"),editor=make("div","filterCascadeEditor");
+ rail.setAttribute("role","menu");editor.setAttribute("role","group");
+ editor.setAttribute("aria-label","Filtro selecionado");
+ const selected=rows.some(row=>row.querySelector("label")?.textContent===filterFocus)?
+  filterFocus:(rows[0]?.querySelector("label")?.textContent||"");
+ filterFocus=selected;
+ for(const row of rows){
+  const label=row.querySelector("label")?.textContent||"Filtro";
+  const entry=make("button","filterCascadeEntry",label);entry.type="button";
+  entry.setAttribute("role","menuitem");
+  entry.classList.toggle("chosen",label===selected);
+  entry.setAttribute("aria-current",String(label===selected));
+  entry.setAttribute("aria-expanded",String(label===selected));
+  entry.onclick=()=>{if(controlsWindow)Native.locationEditor(false);
+   filterFocus=label;modeScrollTop=0;renderFiltersChoices();};
+  rail.appendChild(entry);
+  row.remove();
+  if(label===selected)editor.appendChild(row);
+ }
+ panel.querySelectorAll(":scope > .extraDivider,:scope > .extraHead").forEach(e=>e.remove());
+ panel.append(rail,editor);
 }
 function renderFilterPicker(key,label,options){
  const panel=uxPanel(label);panel.dataset.panelKind="filters";panel.classList.add("filterPicker");
@@ -3949,6 +4036,7 @@ function renderFiltersChoices(){
  const panel=uxPanel("FILTROS");
  const scrollRestoration=modeScrollTop;
  const make=(tag,cls,value)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e;};
+ panel.classList.add('filterCascade');
  renderExtraFilters(panel,make);
  const indicator=make("div","extraApplyStatus","");indicator.id="filterStatus";
  panel.appendChild(indicator);
