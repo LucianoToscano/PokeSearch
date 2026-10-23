@@ -1923,44 +1923,50 @@ function renderExtraFilters(panel,make){
   line.append(name,wrapper);panel.appendChild(line);
  };
  const chips=(key,label)=>{
-  // Empty selection is the site's Any. The interface intentionally has NO
-  // "Qualquer" chip: each size/gender can be toggled independently.
   const known=Array.isArray(filterOptions[key]?.options)?filterOptions[key].options:[];
-  const normalize=v=>String(v||"").trim();
-  const choices=[...new Set(known.map(normalize).filter(v=>v&&!/^(any|all|qualquer)$/i.test(v)))];
+  const choices=[...new Set(known.map(v=>String(v||"").trim()).filter(Boolean))];
   const multiKey=key+"Selections";
-  const selected=new Set(Array.isArray(modeDraft[multiKey])?modeDraft[multiKey]:[]);
-  const order=key==="size"?["XXS","XS","S","M","L","XL","XXL"]:["Male","Female","Genderless"];
-  const symbol=v=>key!=="gender"?v:v==="Male"?"♂":v==="Female"?"♀":"⚲";
-  const itemValue=label=>choices.find(value=>{
-   if(key==="size")return value.toUpperCase()===label;
-   if(label==="Male")return /^(male|macho|masculino)$/i.test(value);
-   if(label==="Female")return /^(female|fêmea|femea|feminino)$/i.test(value);
-   return /^(genderless|unknown|sem gênero|gender unknown)$/i.test(value);
+  const existing=Array.isArray(modeDraft[multiKey])?modeDraft[multiKey].map(v=>String(v).trim()):[];
+  const isGender=key==="gender";
+  const selected=new Set(existing.filter(v=>v&&!/^(any|qualquer)$/i.test(v)));
+  const order=isGender?["Any","Male","Female","Genderless"]:["XXS","XS","S","M","L","XL","XXL"];
+  const symbol=v=>!isGender?v:v==="Any"?"⚥":v==="Male"?"♂":v==="Female"?"♀":"⚲";
+  const itemValue=value=>choices.find(actual=>{
+   if(value==="Any")return /^(any(?: gender)?|qualquer)$/i.test(actual);
+   if(!isGender)return actual.toUpperCase()===value;
+   return value==="Genderless"?/^(genderless|unknown|sem gênero)$/i.test(actual):
+    actual.toLowerCase()===value.toLowerCase();
   });
   const line=make("div","extraField extraChipsField");
-  const name=make("label","",label);const group=make("div","extraChipRow");
+  const name=make("label","",label),group=make("div","extraChipRow");
   group.dataset.kind=key;
+  if(isGender){group.setAttribute("role","radiogroup");group.setAttribute("aria-label","Sexo");}
+  else {group.setAttribute("role","group");group.setAttribute("aria-label","Tamanhos");}
+  const chosenGender=existing.length?existing[0]:"";
   for(const value of order){
-   const actual=itemValue(value);
+   const actual=itemValue(value),resolved=actual||value;
    const button=make("button","extraChip",symbol(value));button.type="button";
-   const resolved=actual||value;
-   // Keep the button reachable, but do not claim that the site supports it
-   // until the live selector's list has been received.
-   button.disabled=!actual&&!selected.has(resolved);
-   button.classList.toggle("chosen",selected.has(resolved));
-   button.setAttribute("aria-pressed",String(selected.has(resolved)));
-   button.title=actual?resolved:"Aguardando opção no site";
+   const checked=isGender?(value==="Any"?!chosenGender||/^(any|qualquer)$/i.test(chosenGender):
+    chosenGender.toLowerCase()===resolved.toLowerCase()||chosenGender.toLowerCase()===value.toLowerCase()):
+    selected.has(resolved)||selected.has(value);
+   // Menu choices stay tappable while official options load. Search is still
+   // blocked unless the site probe verifies every requested value.
+   button.classList.toggle("chosen",checked);
+   button.setAttribute(isGender?"aria-checked":"aria-pressed",String(checked));
+   if(isGender)button.setAttribute("role","radio");
+   button.setAttribute("aria-label",value==="Any"?"Any":resolved);
+   button.title=actual?resolved:resolved+" · confirmar no site ao aplicar";
    button.onclick=()=>{
-    if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);
-    modeDraft[multiKey]=[...selected];
-    modeDraft[key]=""; // New multi selection replaces only this old single key.
-    modeScrollTop=panel.scrollTop;
-    renderFiltersChoices();
+    if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}
+    else{
+     if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);
+     modeDraft[multiKey]=[...selected];
+    }
+    modeDraft[key]=""; // Do not apply the stale legacy one-choice setting.
+    modeScrollTop=panel.scrollTop;renderFiltersChoices();
    };
    group.appendChild(button);
   }
-  if(choices.length===0)group.title="Aguardando opções confirmadas pelo PoGoCoordinates";
   line.append(name,group);panel.appendChild(line);
  };
  const section=(label,open,onClick)=>{
@@ -1986,21 +1992,16 @@ function renderExtraFilters(panel,make){
   }
   option("weather","Clima");
   chips("size","Tamanho");
+  chips("gender","Sexo");
   option("form","Forma");
-  chips("gender","Gênero");
-  panel.appendChild(make("p","extraNote","Nenhum botão marcado = Any do site."));
  }
- section("Filtros avançados",advancedExpanded,()=>{advancedExpanded=!advancedExpanded;});
- if(advancedExpanded){
-  if(["gl","ul"].includes(modeDraft.mode)){
-   number("minPvpCp","PC mínimo PvP");
-   const input=make("input");input.type="checkbox";
-   input.checked=modeDraft.includePreviousEvolutions!==false;
-   input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;};
-   field("Evoluções anteriores",input);
-  }
-  panel.appendChild(make("p","extraNote",
-   "Espécies e formas específicas: menu Pokémon. IV, IV%, GL e UL: menu Modos. Coordenadas e raio: menu Localização."));
+ // Keep active PvP-only criteria without the obsolete Advanced header.
+ if(["gl","ul"].includes(modeDraft.mode)){
+  number("minPvpCp","PC mínimo PvP");
+  const input=make("input");input.type="checkbox";
+  input.checked=modeDraft.includePreviousEvolutions!==false;
+  input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;};
+  field("Evoluções anteriores",input);
  }
 }
 function renderFilterPicker(key,label,options){
@@ -2964,9 +2965,10 @@ function updateFiltersPanelStatus(){
  const dirty=filterDraftChanged();
  const verified=count>0&&siteFiltersConfirmed&&!searchActive&&!resultsStale;
  el.textContent=dirty?"● Alterações ainda não aplicadas":
-  count===0?"Nenhum filtro adicional ativo":
+  count===0?"":
   verified?"✓ Aplicado no PoGoCoordinates":
   "⌛ Aguardando confirmação do site";
+ el.hidden=!el.textContent;
  el.classList.toggle("confirmed",!dirty&&verified);
 }
 function quickState(id){
@@ -3370,7 +3372,7 @@ function renderFiltersChoices(){
  const indicator=make("div","extraApplyStatus","");indicator.id="filterStatus";
  panel.appendChild(indicator);
  updateFiltersPanelStatus();
- panel.appendChild(make("div","uxNote","Cada campo altera apenas seu próprio filtro. Outros filtros permanecem."));
+ // No redundant instructional paragraph: keep the filter popup compact.
  const actions=make("div","modeAction filterActions");const apply=make("button","modeApply","✓ Aplicar");
  const clear=make("button","filterClear","Limpar filtros");
  const cancel=make("button","","Cancelar");
