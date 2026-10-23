@@ -1546,7 +1546,7 @@ function closeChoices(){
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
- document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker",
+ document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker","morePanel",
   "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
  delete document.getElementById("choices").dataset.panelKind;
  if(controlsWindow)Native.locationEditor(false);
@@ -1573,6 +1573,7 @@ function toggleChoices(kind){
  if(kind==="info"){renderInfoChoices();return;}
  if(kind==="appearance"){renderAppearanceChoices();return;}
   if(kind==="visual"){window.renderVisualEditor();return;}
+ if(kind==="more"){renderMoreChoices();return;}
  if(kind==="filters"){
   modeScrollTop=0; // Open at the first field, not at an old scroll offset.
   modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
@@ -2805,6 +2806,17 @@ const QUICK_ACTIONS=[
 const QUICK_PRIMARY_IDS=["mode","sh","filters","location","pokemon","star","bell","period","appearance"];
 const QUICK_UTILITY_IDS=[]; // All non-footer buttons share the same DOM list.
 const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0]);
+// Only a presentation group; original IDs remain independently movable.
+const MORE_ACTION_IDS=Object.freeze(["report","donate","close"]);
+function groupedMoreIds(prefs=quickPrefs){
+ const order=Array.isArray(prefs?.order)?prefs.order:[];
+ const hidden=Array.isArray(prefs?.hidden)?prefs.hidden:[];
+ const suffix=[];
+ for(let i=order.length-1;i>=0&&MORE_ACTION_IDS.includes(order[i]);i--)
+  suffix.unshift(order[i]);
+ const visible=suffix.filter(id=>!hidden.includes(id));
+ return visible.length>=2?visible:[];
+}
 let quickPrefs={direction:"horizontal",labels:false,order:[...QUICK_DEFAULT_ORDER],hidden:[]};
 function normalizedQuickPrefs(p){
  const ids=QUICK_DEFAULT_ORDER;
@@ -2898,7 +2910,7 @@ function quickState(id){
  }
 }
 function quickClick(id){
- if(["mode","location","filters","period","appearance"].includes(id)){toggleChoices(id);return;}
+ if(["mode","location","filters","period","appearance","more"].includes(id)){toggleChoices(id);return;}
  switch(id){
   case "sh":Native.shiny();break; // Reuse native, login-verified Shiny toggle.
   case "bell":toggleChoices("alerts");break;
@@ -2912,6 +2924,7 @@ function quickClick(id){
 /* Use the ORIGINAL illustrated toolbar symbols instead of arbitrary
    Unicode glyphs. The Pokémon silhouette is a new custom outline. */
 const QUICK_SVG=Object.freeze({
+ more:'<circle cx="7" cy="16" r="2" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="2" fill="currentColor" stroke="none"/><circle cx="25" cy="16" r="2" fill="currentColor" stroke="none"/>',
  mode:'<path d="M4 7h16M4 12h16M4 17h16"/><path d="M9 4v6m6-1v6m-6-1v6" stroke-width="2.8"/>',
  filters:'<path d="M6 8h20M6 16h20M6 24h20"/>',
  pokemon:'<path d="M7.8 12.2 4.5 2.5Q4.2 1.5 5.4 1.6Q6.1 1.7 6.6 2.5L10.7 9.4Q14 7.8 17.2 9.5L22.4 2.2Q23.4 1.1 24.3 2.4Q25.1 3.5 24.5 4.9L20.4 12.2 28.2 7.2Q29.9 6.7 29.6 8.6V14.9Q29.6 16.1 28.4 16.5L23.7 18.1 26.2 20.6Q26.8 21.4 25.8 22.2L23.3 24Q22.9 24.5 23.3 25.7L24.1 28.4Q24.3 30 22.9 30H19.8Q18.8 30 18 29.2L15.2 28.4 11.9 29.5Q11.3 30.2 10.1 30.1H7.2Q5.7 30.1 5.6 28.5L6 26.2V17Q6 14 7.8 12.2Z"/>',
@@ -3128,6 +3141,7 @@ function refreshQuickMenuStates(){
    }
   }
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
+  if(id==="more")button.setAttribute("aria-expanded",String(choiceOpen==="more"));
   button.classList.toggle("pending",id==="sh"&&shinyPending);
    if(id==="filters"){
     const count=activeExtraFilterCount(searchSettings,mode);
@@ -3367,6 +3381,12 @@ function renderAppearanceChoices(){
  requestAnimationFrame(()=>{if(choiceOpen==="appearance"&&panel.isConnected)panel.scrollTop=scrollRestoration;});
  fit();
 }
+document.addEventListener("pointerdown",event=>{
+ if(choiceOpen!=="more")return;
+ if(event.target.closest("#choices.morePanel")||
+    event.target.closest('#quickMenuList button[data-key="more"]'))return;
+ closeChoices();
+},true);
 if(controlsWindow){
  document.getElementById("quickBack").onclick=()=>choiceOpen?closeChoices():Native.menu(false);
  renderQuickMenu();
