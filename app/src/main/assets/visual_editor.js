@@ -169,6 +169,7 @@ function btn(container,title,fn){
 }
 // Only one section expanded per tab: all controls and their saved keys survive.
 function visualGroup(host,id,title,create){
+ const sectionTab=tab;
  const section=document.createElement("details");section.className="visualGroup";
  section.dataset.section=id;section.open=visualOpenSection[tab]===id;
  const summary=document.createElement("summary");
@@ -178,6 +179,8 @@ function visualGroup(host,id,title,create){
  const content=document.createElement("div");content.className="visualGroupBody";
  create(content);section.appendChild(content);host.appendChild(section);
  section.addEventListener("toggle",()=>{
+  // Detached sections must not override a newer tab's expanded category.
+  if(!section.isConnected||choiceOpen!=="visual"||tab!==sectionTab)return;
   if(section.open){
    visualOpenSection[tab]=id;
    for(const other of host.querySelectorAll("details.visualGroup"))
