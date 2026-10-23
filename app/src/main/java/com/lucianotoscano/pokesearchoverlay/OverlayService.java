@@ -1786,6 +1786,22 @@ public class OverlayService extends Service {
                 lastAlertAt=now;
         }
     }
+    // A reset request is pending until a real Search is submitted and its
+    // results pass the website + native criteria gates. Never clear it on a
+    // click, timeout or rejected response; that would hide an active site filter.
+    private void acknowledgeConfirmedExtraResets(){
+        try{
+            JSONObject updated=new JSONObject(extraFiltersJson);
+            org.json.JSONArray pending=updated.optJSONArray("clearExtraKeys");
+            if(pending==null||pending.length()==0)return;
+            updated.remove("clearExtraKeys");
+            extraFiltersJson=updated.toString();
+            getSharedPreferences("prefs",0).edit()
+                .putString("extraFiltersJson",extraFiltersJson).apply();
+        }catch(org.json.JSONException error){
+            recordFailure("confirmar limpeza de filtros",error);
+        }
+    }
     private void applyCollectedResults(JSONObject r){
         BugReport.log(this,"RESULTS","Modo "+mode+" • válidos "+
             (r.optJSONArray("cards")==null?0:r.optJSONArray("cards").length())+
@@ -1832,6 +1848,9 @@ public class OverlayService extends Service {
         recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
         results=sorted.toString();
         searchPhase=sorted.length()==0?"empty":"updated";
+        // Criteria were verified before Search and rechecked during collection.
+        // Acknowledge transient clear intents only after accepting the result.
+        acknowledgeConfirmedExtraResets();
         shownMode=mode;shownConfigJson=filterConfigJson();
         shownShiny=shiny&&shinyVerified;resultsStale=false;
         rememberConfirmedPreview(sorted,now);
