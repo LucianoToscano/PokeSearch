@@ -836,5 +836,23 @@ check("LT62 notices: ON asks permission only after explicit selection",()=>{
  assert.ok(alerts.includes('Native.requestNotificationPermission();'));
  assert.ok(alerts.indexOf('Native.requestNotificationPermission();')>alerts.indexOf('button.onclick=()=>{'));
 });
+
+check("LT62 native: outside Android window closes submenu without trapping outside touch",()=>{
+ const src=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const window=src.split('menuRoot=new FrameLayout(this){')[1]
+  ?.split('menuPanel=new WebView(this);',1)[0]||"";
+ assert.ok(window.includes('@Override public boolean dispatchTouchEvent(MotionEvent event)'));
+ assert.ok(window.includes('event.getActionMasked()==MotionEvent.ACTION_OUTSIDE'));
+ assert.ok(window.includes('if(menuExpanded&&menuLoaded&&menuPanel!=null)'));
+ assert.ok(window.includes('js(menuPanel,true,"if(window.closeChoices)window.closeChoices()")'));
+ assert.ok(window.includes('return false;'));
+ assert.ok(window.includes('return super.dispatchTouchEvent(event);'));
+ const params=src.split('menuParams=new WindowManager.LayoutParams(')[1]
+  ?.split('PixelFormat.TRANSLUCENT);',1)[0]||"";
+ assert.ok(params.includes('WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL'));
+ assert.ok(params.includes('WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH'));
+ assert.ok(src.includes('menuRoot.addView(menuPanel,new FrameLayout.LayoutParams(-1,-1))'));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");

@@ -914,7 +914,19 @@ public class OverlayService extends Service {
         // Dedicated 308dp-by-29dp touchable window for the toolbar.
         // Transparent regions outside this rectangle belong to Pokémon GO:
         // a single expanded WebView used to intercept every tap underneath.
-        menuRoot=new FrameLayout(this);
+        // FLAG_WATCH_OUTSIDE_TOUCH delivers ACTION_OUTSIDE when the user
+        // touches beyond the native window; do not consume the underlying tap.
+        // Transparent pixels *inside* this window are still not pass-through.
+        menuRoot=new FrameLayout(this){
+            @Override public boolean dispatchTouchEvent(MotionEvent event){
+                if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
+                    if(menuExpanded&&menuLoaded&&menuPanel!=null)
+                        js(menuPanel,true,"if(window.closeChoices)window.closeChoices()");
+                    return false;
+                }
+                return super.dispatchTouchEvent(event);
+            }
+        };
         menuRoot.setBackgroundColor(Color.TRANSPARENT);
         menuPanel=new WebView(this);
         menuPanel.setBackgroundColor(Color.TRANSPARENT);
@@ -943,7 +955,8 @@ public class OverlayService extends Service {
         menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(visualMenuBaseDp()),
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT);
         menuParams.gravity=Gravity.TOP|Gravity.LEFT;
         menuParams.x=0;menuParams.y=params.y;
