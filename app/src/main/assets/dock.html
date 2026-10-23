@@ -2305,6 +2305,24 @@ body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[d
  height:27px!important;min-height:27px!important;padding:0!important;margin:0!important;
  font:600 10px/1 Roboto,Arial,sans-serif!important;
 }
+/* LT62-SIZE-ONE-ROW: exactly seven size chips beside [Tamanho ›].
+   7×29px + 6×3px gaps + 8px editor padding/borders = 229px < 230px.
+   Each chip is as high as its 23px menu entry; no horizontal scrolling. */
+body.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]
+ .filterCascadeEditor .extraChipRow[data-kind="size"]{
+ display:grid!important;grid-template-columns:repeat(7,29px)!important;
+ grid-template-rows:23px!important;grid-auto-flow:column!important;
+ gap:3px!important;column-gap:3px!important;row-gap:0!important;
+ width:max-content!important;min-width:0!important;max-width:100%!important;
+ overflow:visible!important;white-space:nowrap!important;
+}
+body.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]
+ .filterCascadeEditor .extraChipRow[data-kind="size"] .extraChip{
+ box-sizing:border-box!important;width:29px!important;min-width:29px!important;
+ max-width:29px!important;height:23px!important;min-height:23px!important;
+ max-height:23px!important;margin:0!important;padding:0!important;
+ font:600 10px/1 Roboto,Arial,sans-serif!important;white-space:nowrap!important;
+}
 body.controls-window #choices.filterCascade .filterCascadeEditor .extraChip.chosen{
  background:var(--visual-menu-button-bg,#323943e8)!important;
  color:var(--visual-menu-fg,#eef3fb)!important;border-color:#71c9b5ad!important;
@@ -3101,7 +3119,7 @@ function numericConfirmButton(make,keys,label){
  return button;
 }
 function filterCascadeEditorWidth(label){
- const width={Ordenar:156,PC:168,"Nível":168,Clima:160,Tamanho:134,
+ const width={Ordenar:156,PC:168,"Nível":168,Clima:160,Tamanho:230,
   Sexo:134,Forma:110,"PC mínimo PvP":116,"Evoluções anteriores":92};
  return width[label]||134;
 }

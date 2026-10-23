@@ -713,7 +713,7 @@ check("LT62 visual Filtros: precise width contract per editor, never giant Sex p
  const context={};
  vm.runInNewContext("function filterCascadeEditorWidth(label){"+code+";this.resolve=filterCascadeEditorWidth",context);
  for(const [type,expected] of [
-  ["Sexo",134],["Tamanho",134],["PC",168],["Nível",168],
+  ["Sexo",134],["Tamanho",230],["PC",168],["Nível",168],
   ["Clima",160],["Ordenar",156],["Forma",110],["PC mínimo PvP",116]
  ])assert.equal(context.resolve(type),expected,type);
 });
@@ -730,6 +730,33 @@ check("LT62 visual Filtros: exclusive Sex and 7 Size remain compact and independ
  assert.ok(render.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}'));
  assert.ok(render.includes('patchSelectedFilterKeys([multiKey,key])'));
  assert.ok(render.includes('numericConfirmButton(make,[minKey,maxKey],label)'));
+});
+
+check("LT62 Tamanho: seven inline chips one row next to its rail entry",()=>{
+ const css=dock.split("/* LT62-SIZE-ONE-ROW:")[1]?.split(
+  "body.controls-window #choices.filterCascade .filterCascadeEditor .extraChip.chosen{",1)[0]||"";
+ assert.ok(css.includes('grid-template-columns:repeat(7,29px)!important'));
+ assert.ok(css.includes('grid-template-rows:23px!important'));
+ assert.ok(css.includes('grid-auto-flow:column!important'));
+ assert.ok(css.includes('height:23px!important;min-height:23px!important'));
+ assert.ok(css.includes('white-space:nowrap!important'));
+ assert.ok(!css.includes('overflow-x:auto'));
+ // Seven chips and their six 3px gaps plus the editor chrome fit 230px.
+ assert.ok(7*29+6*3+8<=230);
+ assert.ok(80+230<=330);
+ const cascade=dock.split("function filterCascadeEditorWidth(label){")[1]
+  ?.split("function renderExtraFilters(panel,make){",1)[0]||"";
+ assert.ok(cascade.includes('Tamanho:230'));
+});
+check("LT62 Tamanho: multi-select remains independent of Sex and other filters",()=>{
+ const block=dock.split("function renderExtraFilters(panel,make){")[1]
+  ?.split("function renderFilterPicker(",1)[0]||"";
+ assert.ok(block.includes('["XXS","XS","S","M","L","XL","XXL"]'));
+ assert.ok(block.includes('if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);'));
+ assert.ok(block.includes('modeDraft[multiKey]=[...selected];'));
+ assert.ok(block.includes('patchSelectedFilterKeys([multiKey,key])'));
+ assert.ok(block.includes('chips("size","Tamanho")'));
+ assert.ok(block.includes('chips("gender","Sexo")'));
 });
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
