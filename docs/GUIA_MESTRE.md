@@ -4749,3 +4749,16 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 
 **Proteções:** PR #34 permanece Draft, `main` LT61 não mesclada. **Não foi recompilado APK**: o arquivo `PokeSearch-v0.00.62-LT.apk` da run `40007032664` corresponde ao commit antigo `878c7aa16918c30b96e0b1b651c16aeedec9927d` e **não inclui** este ajuste. Sem autorização para novo APK ou LT63; próximo passo é verificar QA e aguardar próxima falha relatada.
 
+
+### 12.248 — LT62: correção QA de refresh e fechamento da etapa sem APK (23/10/2026)
+
+**Origem:** relato visual do Samsung sobre ícone de Atualização aumentado/amarelo, minutos mal posicionados, cabeçalho/X e layout horizontal, e fundo preto extra em Reportar/Apoiar/Fechar dentro da cascata `•••`. Correções permanecem somente na PR #34 Draft.
+
+**Complemento técnico pós-12.247:** `bindRefreshGesture` agora permite fechar a cascata AUTO segurando novamente 600 ms; toque fora da cascata também a fecha, com o mesmo padrão de `•••`. A mudança entre menus e `closeChoices()` eliminam largura/max-width inline obsoletos para impedir herança de um painel anterior. O toque curto continua disparando exatamente uma solicitação `Native.refresh()`; girar é apenas feedback do botão, não evidência de conclusão da busca. AUTO somente muda o intervalo pelo caminho nativo já existente.
+
+**Commits adicionais:** `d3deb303ef85c5e9d405f4fc8eee39fec5f37bc5` (ajustes de testes UX); `c84e0a750452cd13d38de66926a630c28ad22660` (fechamento sem X, geometria inline); `c9e57c0385aa55fef97131af7fe7ff2b77e47c7c` (testes de fechar); `dce100b2b0b44535814e4f16455b58dc88e10b23` (contrato visual do CSS ajustado). Commits iniciais e detalhamento de design estão na 12.247.
+
+**QA automatizado confirmado:** workflow **PokeSearch Node QA (sem APK)** run **40014778615**, commit de código/teste **dce100b2b0b44535814e4f16455b58dc88e10b23**, status **SUCCESS**. Nove suítes, total **843 verificações**: localização 68, probe 144, Pokémon 15, login 38, UX 479, editor visual 46, assinatura 14, Firebase 7 e LT62 32. O JS inline de `dock.html` também passou na checagem sintática. Antes desse sucesso, runs intermediárias falharam por expectativas de testes antigas de cabeçalho/X, animação `requested` e seletor CSS opaco; corrigidas sem reverter a interface aprovada.
+
+**Sem release:** Android build e Secure Beta foram **SKIPPED** para o commit testado. Não há novo APK; a versão LT62 assinada run `40007032664` permanece inalterada e não contém esta correção. `main` LT61 preservada, PR #34 Draft não mesclada. **Não alegar homologação física:** confirmar visual, toque e pass-through no Samsung somente após autorização expressa de nova compilação.
+
