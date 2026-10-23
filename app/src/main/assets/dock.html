@@ -1544,6 +1544,7 @@ function toggleChoices(kind){
  if(kind==="appearance"){renderAppearanceChoices();return;}
   if(kind==="visual"){window.renderVisualEditor();return;}
  if(kind==="filters"){
+  modeScrollTop=0; // Open at the first field, not at an old scroll offset.
   modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
   // Initial Level selection covers the requested wild-spawn range.
   if(modeDraft.levelMin===""||modeDraft.levelMin==null)modeDraft.levelMin="1";
