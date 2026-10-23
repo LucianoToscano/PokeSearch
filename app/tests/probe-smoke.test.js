@@ -622,4 +622,23 @@ checked++;
  assert.equal(clicked,1,'Neutral option clicked once');
  checked++;
 }
+// LT60: text-backed site filters also require a post-input React confirmation.
+{
+ const start=source.indexOf('function extraSelect(key,want){');
+ const end=source.indexOf('/* LT57 ONE-FORM',start);
+ assert.ok(start>=0&&end>start,'Extra selector must be available');
+ for(const [wanted,observed] of [['','Sunny'],['Rainy','Sunny']]){
+  let changes=0;
+  const scope={EXTRA_LABELS:{weather:'Weather'},
+   extraControl:()=>({disabled:false,matches:s=>s==='input'}),
+   extraValue:()=>observed, isNeutral:()=>false,
+   comparableOption:s=>s, valueInput:()=>{changes++;return true;},
+   transientPending:false};
+  const output=vm.runInNewContext(source.slice(start,end)+";extraSelect('weather',"+JSON.stringify(wanted)+")",scope);
+  assert.equal(output,false,'Input change cannot be confirmed in its own tick');
+  assert.equal(scope.transientPending,true,'Input change requires a later DOM read');
+  assert.equal(changes,1,'Input is changed once');
+  checked++;
+ }
+}
 console.log("PokeSearch probe contract: "+checked+" tests passed");
