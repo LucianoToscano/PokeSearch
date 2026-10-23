@@ -3125,6 +3125,68 @@ test("LT58-ALL-POPUPS-STABLE-02 intrinsic popup height ignores Android clipping"
   run("more",34,130)===136;
 });
 
+
+test("LT58-ALL-POPUPS-STABLE-03 anchor all popup types to their original toolbar tile",()=>{
+ const segment=dock.split("function positionPopupUnderTrigger(){")[1]
+  ?.split("window.setMenuPopupPlacement=",1)[0]||"";
+ if(!segment.includes('panel.style.setProperty("left"'))return false;
+ const cases=[
+  ["mode","mode",210,60,210],
+  ["location","location",120,306,24],
+  ["filters","filters",70,238,70],
+  ["more","more",300,30,300],
+  ["alerts","bell",210,232,98],
+  ["info","appearance",250,232,98]
+ ];
+ return cases.every(([choice,key,triggerX,popupWidth,wantedLeft])=>{
+  const changed={};
+  const panel={classList:{contains:cls=>cls==="visible"},
+   getBoundingClientRect:()=>({width:popupWidth}),
+   style:{setProperty:(name,value,priority)=>{changed[name]=[value,priority];}}};
+  const area={getBoundingClientRect:()=>({width:330,left:0})};
+  const trigger={getBoundingClientRect:()=>({left:triggerX,width:30})};
+  const selectors=[];
+  const doc={querySelector:s=>{selectors.push(s);return s.includes('data-key="'+key+'"')?trigger:null;},
+   getElementById:id=>id==="choices"?panel:id==="menu"?area:null};
+  const fn=new Function("controlsWindow","choiceOpen","document",
+   "function positionPopupUnderTrigger(){"+segment+"return positionPopupUnderTrigger;");
+  fn(true,choice,doc)();
+  return selectors[0]?.includes(key)&&
+   changed.left?.[0]===wantedLeft+"px"&&changed.left?.[1]==="important"&&
+   changed.right?.[0]==="auto";
+ });
+});
+test("LT58-ALL-POPUPS-STABLE-04 popup above/below updates only placement CSS",()=>{
+ const segment=dock.split("window.setMenuPopupPlacement=(above,offset,room)=>{")[1]
+  ?.split("window.setResultsCollapsed=",1)[0]||"";
+ const values={},classes={},counts={position:0,fit:0};
+ const doc={documentElement:{style:{setProperty:(k,v)=>{values[k]=v;}}},
+  body:{classList:{toggle:(k,v)=>{classes[k]=v;}}}};
+ const fn=new Function("controlsWindow","document","choiceOpen","positionCascadeEditor","fit","window",
+  "window.setMenuPopupPlacement=(above,offset,room)=>{"+segment+
+  "return window.setMenuPopupPlacement;");
+ const f=fn(true,doc,"mode",()=>counts.position++,()=>counts.fit++,{});
+ f(false,0,340);
+ const first=values["--popup-offset"]==="0px"&&values["--popup-room"]==="340px"&&
+  classes["popup-above"]===false;
+ f(true,185,310);
+ return first&&values["--popup-offset"]==="185px"&&values["--popup-room"]==="310px"&&
+  classes["popup-above"]===true&&counts.position===2&&counts.fit===2&&
+  segment.includes('document.body.classList.toggle("popup-above",!!above)')&&
+  !segment.includes('menu.classList.toggle("subview"')&&
+  service.includes('rowY-(abovePopup?actualPopup:0)')&&
+  dock.includes('body.controls-window.popup-above #menu{top:var(--popup-offset,0px)!important}');
+});
+test("LT58-ALL-POPUPS-SCALE-01 WebView text inflation stays fixed on popup resize",()=>{
+ const css=dock.split("/* LT58-ALL-POPUPS-SCALE-01")[1]
+  ?.split("/* UX-QUICK-MORE-02:",1)[0]||"";
+ return css.includes("html.controls-root,body.controls-window{")&&
+  css.includes("-webkit-text-size-adjust:100%!important;")&&
+  css.includes("text-size-adjust:100%!important;")&&
+  service.includes("menuPanel.getSettings().setUseWideViewPort(true)")&&
+  service.includes("menuPanel.getSettings().setLoadWithOverviewMode(false)");
+});
+
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
