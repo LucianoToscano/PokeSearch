@@ -83,7 +83,7 @@ test("rendered results remain an independent WebView and retain old filters",()=
  assert.ok(dock.includes("Native.setSearchConfig"));
  assert.ok(dock.includes("Native.resizeResultsMetadata"));
  assert.ok(dock.includes('visual_editor.js'));
- assert.ok(dock.includes('🎛 Editor visual temporário'));
+ assert.ok(dock.includes('link("Editor Visual","visual")'));
 });
 test("light theme changes foreground and actual button backgrounds",()=>{
  const {window,styles,classes}=fixture();
