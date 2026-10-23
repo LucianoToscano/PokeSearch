@@ -3061,41 +3061,80 @@ function renderPokemonChoices(){
  panel.appendChild(hint);
  renderPokemonTags();drawPokemonSuggestions();fit();
 }
+// Submenu remains a column of the ORIGINAL individual colored menu actions.
+function renderMoreChoices(){
+ const ids=groupedMoreIds();
+ if(!ids.length){closeChoices();return;}
+ const panel=document.getElementById("choices");panel.replaceChildren();
+ panel.classList.remove("locationPanel","modePanel","standardPanel","visualPanel",
+  "filterPicker","modeCascade","modeCascadeOpen");
+ panel.classList.add("visible","morePanel");
+ panel.dataset.panelKind="more";
+ panel.setAttribute("role","menu");panel.setAttribute("aria-label","Mais ações");
+ const trigger=document.querySelector('#quickMenuList button[data-key="more"]');
+ if(trigger)panel.style.setProperty("--more-tile-width",
+  Math.max(28,Math.round(trigger.getBoundingClientRect().width))+"px");
+ for(const id of ids){
+  const action=QUICK_ACTIONS.find(item=>item[0]===id);
+  if(!action)continue;
+  const button=document.createElement("button");button.type="button";
+  button.className="quickMoreAction";button.dataset.key=id;
+  button.setAttribute("role","menuitem");button.setAttribute("aria-label",action[2]);
+  button.title=action[2];button.appendChild(iconForQuick(id,action[1]));
+  button.onclick=()=>{closeChoices();quickClick(id);};
+  panel.appendChild(button);
+ }
+ fit();
+}
 function renderQuickMenu(){
  if(!controlsWindow)return;
  const outer=document.getElementById("quickMenuList"),rows=document.getElementById("quickRows"),
-   util=document.getElementById("quickUtilities"),footer=document.getElementById("quickFooter");
+  util=document.getElementById("quickUtilities"),footer=document.getElementById("quickFooter");
  if(!rows||!util||!footer)return;
- outer.classList.add("quick-horizontal","quick-no-labels"); // Icons only, always.
+ outer.classList.add("quick-horizontal","quick-no-labels");
  rows.replaceChildren();util.replaceChildren();footer.replaceChildren();
+ const moreIds=groupedMoreIds();let moreDrawn=false,slotCount=0;
  for(const id of quickPrefs.order){
-  const a=QUICK_ACTIONS.find(x=>x[0]===id);
-  if(!a||quickPrefs.hidden.includes(id))continue;
-  const button=document.createElement("button");button.type="button";button.dataset.key=id;
-  const isFooter=["report","donate","close"].includes(id);
+  const action=QUICK_ACTIONS.find(item=>item[0]===id);
+  if(!action||quickPrefs.hidden.includes(id))continue;
+  const inMore=moreIds.includes(id);
+  if(inMore&&moreDrawn)continue;
+  if(inMore)moreDrawn=true;
+  const renderedId=inMore?"more":id,name=inMore?"Mais":action[2];
+  const button=document.createElement("button");button.type="button";
+  button.dataset.key=renderedId;
+  const isFooter=MORE_ACTION_IDS.includes(renderedId);
   button.className=isFooter?"quickFooterAction":"quickRow";
-  button.title=a[2]+(quickState(id)?" · "+quickState(id):"");
-  button.setAttribute("aria-label",a[2]);
-  const glyph=iconForQuick(id,a[1]);
-  if(id==="mode"){
+  if(inMore){
+   button.classList.add("quickMoreTrigger");
+   button.setAttribute("aria-haspopup","menu");
+   button.setAttribute("aria-expanded",String(choiceOpen==="more"));
+  }
+  button.title=name+(quickState(renderedId)?" · "+quickState(renderedId):"");
+  button.setAttribute("aria-label",name);
+  const glyph=iconForQuick(renderedId,inMore?"⋯":action[1]);
+  if(renderedId==="mode"){
    const art=getModeMenuIcon(mode,false,searchSettings);
    button.dataset.modeArtKey=art.path+"|"+art.ivBadge+"|"+art.ivText;
   }
-  if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
-  const label=document.createElement("span");label.className="quickName";label.textContent=a[2];
-  const state=document.createElement("span");state.className="quickState";state.textContent=quickState(id);
-  button.append(glyph,label); // Keep hidden text for accessibility and preferences.
+  if(renderedId==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
+  const label=document.createElement("span");label.className="quickName";label.textContent=name;
+  const state=document.createElement("span");state.className="quickState";state.textContent=quickState(renderedId);
+  button.append(glyph,label);
   if(!isFooter){
    button.append(state);
    const arrow=document.createElement("span");arrow.className="quickArrow";arrow.textContent="›";
-   if(!["star"].includes(id))button.appendChild(arrow);
-   // display:contents preserves order only within a single DOM container.
-   rows.appendChild(button);
-  }else footer.appendChild(button);
-  button.onclick=()=>quickClick(id);
+   if(!["star","more"].includes(renderedId))button.appendChild(arrow);
+  }
+  // All buttons share ONE ordered parent. Extracted utilities keep their true
+  // visual position, not the legacy footer-container grouping.
+  rows.appendChild(button);slotCount++;
+  button.onclick=()=>quickClick(renderedId);
  }
- // Recreating the menu replaces previously selected DOM nodes: restore all
- // native ON/OFF, Shiny pending and bell states on the NEW buttons.
+ outer.style.setProperty("--quick-slot-count",String(Math.max(1,slotCount)));
+ if(choiceOpen==="more"){
+  if(moreIds.length)renderMoreChoices();else closeChoices();
+ }
  refreshQuickMenuStates();
  fit();
 }
