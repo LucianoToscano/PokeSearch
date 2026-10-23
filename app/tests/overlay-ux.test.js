@@ -353,7 +353,7 @@ test("Toolbar hides during login and favorite editing",service.includes('if(menu
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
 test("Single pin control expands the location editor",dock.includes('onclick="toggleChoices(\'location\')"'));
 test("Coords editor uses one Apply and explicit Clear without a second ON/OFF switch",dock.includes('fieldRow.append(field,paste)')&&dock.includes('clear.onclick=disable')&&!dock.includes('fieldRow.append(field,paste,toggle)'));
-test("Location supports independent hide and disable",dock.includes('hide.onclick=closeChoices')&&dock.includes('Native.setLocation(false,"",0)'));
+test("Location has header close and separate geographic disable",dock.includes('close.onclick=closeChoices;title.appendChild(close)')&&dock.includes('Native.setLocation(false,"",0)'));
 test("Slider covers inclusive range 0 to 1000",dock.includes('slide.min="0"')&&dock.includes('slide.max="1000"'));
 test("Location enforces valid latitude and longitude",dock.includes('Math.abs(Number(match[1]))>90')&&dock.includes('Math.abs(Number(match[2]))>180'));
 test("Location preference persisted without exposing secrets",service.includes('putBoolean("locationEnabled",locationEnabled)')&&service.includes('prefs.remove("locationCoords").remove("locationRadius")'));
@@ -2120,7 +2120,7 @@ test("UX-LOCATION-FIX-03 explicit clipboard paste is validated and never enables
   !handler.includes('locationEnabled=true')&&
   !handler.includes('putString("locationCoords"')&&
   dock.includes('paste.onclick=()=>Native.pasteLocationCoords()')&&
-  dock.includes('aria-label",paste.title');
+  dock.includes('paste.setAttribute("aria-label","Colar coordenadas")');
 });
 test("UX-LOCATION-FIX-04 retains 12 toolbar controls, stale protection and site verification",()=>{
  const serviceMethod=service.split('private void configureLocationAndVerify(')[1]
@@ -2707,7 +2707,7 @@ test("FILTERS-POGO-04 location Apply submits same saved criteria through live DO
  const probe=read("assets/probe.js");
  return dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&
   dock.includes('slide.min="0";slide.max="1000"')&&
-  dock.includes('Aplicar pesquisa sem limpar outros filtros')&&
+  dock.includes('// Other search filters are preserved by Native.setLocation.')&&
   dock.includes('clear.onclick=disable')&&
   !dock.includes('fieldRow.append(field,paste,toggle)')&&
   service.includes('OverlayService.this.refresh(true);')&&
