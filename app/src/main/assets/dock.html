@@ -1820,6 +1820,37 @@ body.controls-window #choices.alertsMini .miniAlertTone{
  border-radius:6px!important;border:1px solid #ffffff32!important;
  background:#ffffff12!important;color:var(--visual-menu-fg,#e5eef8)!important;
 }
+
+/* LT62 UPDATE: single two-arrow icon, compact OFF / AUTO 3,5,10,15,20. */
+body.controls-window #quickMenuList button[data-key="period"]{position:relative!important;touch-action:manipulation!important}
+body.controls-window #quickMenuList button[data-key="period"] .quickGlyph svg{width:19px!important;height:19px!important;max-width:19px!important;max-height:19px!important}
+body.controls-window #quickMenuList button[data-key="period"] .periodBadge{
+ position:absolute;right:1px;bottom:1px;z-index:2;font:700 7px/8px Roboto,Arial,sans-serif;
+ color:#ffdb70;background:#161e26c9;border-radius:3px;padding:0 1px;pointer-events:none}
+body.controls-window #quickMenuList button[data-key="period"].autoOff .periodBadge{color:#b2becd}
+body.controls-window #quickMenuList button[data-key="period"].requested .quickGlyph{color:#ffdb70!important}
+body.controls-window #choices.periodCompact[data-panel-kind="period"]{
+ box-sizing:border-box!important;width:min(247px,calc(100vw - 12px))!important;
+ max-width:calc(100vw - 12px)!important;max-height:92px!important;
+ overflow:hidden!important;padding:4px!important;border-radius:8px!important}
+body.controls-window #choices.periodCompact .choiceHeader{
+ min-height:25px!important;height:25px!important;margin:0 0 3px!important;
+ padding:1px 4px!important;font-size:11px!important}
+body.controls-window #choices.periodCompact .periodCompactRow{
+ display:grid!important;grid-template-columns:34px 28px repeat(5,minmax(0,1fr))!important;
+ gap:3px!important;align-items:center!important;width:100%!important;
+ padding:1px 0 2px!important;margin:0!important}
+body.controls-window #choices.periodCompact .periodCompactLabel{
+ font-size:9px!important;font-weight:700!important;text-align:center!important;
+ color:var(--visual-menu-fg,#eef2f7)!important}
+body.controls-window #choices.periodCompact .periodCompactValue{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;height:28px!important;min-height:28px!important;
+ padding:2px 0!important;margin:0!important;min-width:0!important;
+ background:#ffffff0c!important;color:var(--visual-menu-fg,#eef2f7)!important;
+ border:1px solid #ffffff39!important;border-radius:6px!important;font-size:10px!important;font-weight:700!important}
+body.controls-window #choices.periodCompact .periodCompactValue.chosen{
+ border-color:#d4b35f!important;background:#52451f80!important;color:#ffdf7a!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -2244,25 +2275,38 @@ function toggleChoices(kind){
   return;
  }
  const current=period;
- const entries=[[0,"Auto · OFF"],[3,"Auto · 3 min"],[5,"Auto · 5 min"],[10,"Auto · 10 min"],[15,"Auto · 15 min"],[20,"Auto · 20 min"]];
  const panel=document.getElementById("choices");
- panel.replaceChildren();panel.classList.remove("modePanel","locationPanel","modeCascade","modeCascadeOpen","filterPicker");
- panel.classList.add("standardPanel","visible");panel.dataset.panelKind="period";
+ panel.replaceChildren();
+ panel.classList.remove("modePanel","locationPanel","modeCascade","modeCascadeOpen","filterPicker","filterCascade","alertsMini");
+ panel.classList.add("standardPanel","periodCompact","visible");
+ panel.dataset.panelKind="period";
  const title=document.createElement("div");title.className="choiceHeader";
  title.textContent="ATUALIZAÇÃO";
  const close=document.createElement("button");close.type="button";close.className="choiceClose";
  close.textContent="×";close.title="Fechar";close.onclick=closeChoices;title.appendChild(close);
  panel.appendChild(title);
- const now=document.createElement("button");now.type="button";now.textContent="↻ Atualizar agora";
- now.onclick=()=>{closeChoices();manualRefreshTap();};panel.appendChild(now);
- for(const [value,label] of entries){
-  const btn=document.createElement("button");btn.type="button";
-  btn.className=value===current?"chosen":"";
-  btn.textContent=(value===current?"✓ ":"")+label;
-  btn.onclick=()=>{closeChoices();period=Number(value);draw();Native.setIntervalMinutes(period);};
-  panel.appendChild(btn);
+ // Compact settings only. Refresh-now is the single short-tap toolbar action.
+ const row=document.createElement("div");row.className="periodCompactRow";
+ row.setAttribute("role","group");row.setAttribute("aria-label","Atualização automática");
+ const off=document.createElement("button");off.type="button";
+ off.className="periodCompactValue"+(current===0?" chosen":"");
+ off.textContent="OFF";off.setAttribute("aria-pressed",String(current===0));
+ off.setAttribute("aria-label","Desligar atualização automática");
+ off.onclick=()=>{closeChoices();Native.setIntervalMinutes(0);};
+ row.appendChild(off);
+ const label=document.createElement("span");label.className="periodCompactLabel";
+ label.textContent="AUTO";row.appendChild(label);
+ for(const value of [3,5,10,15,20]){
+  const button=document.createElement("button");button.type="button";
+  button.className="periodCompactValue"+(value===current?" chosen":"");
+  button.textContent=String(value);
+  button.title="Atualizar automaticamente a cada "+value+" minutos";
+  button.setAttribute("aria-label",button.title);
+  button.setAttribute("aria-pressed",String(value===current));
+  button.onclick=()=>{closeChoices();Native.setIntervalMinutes(value);};
+  row.appendChild(button);
  }
- panel.classList.add("visible");
+ panel.appendChild(row);
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","true");
  fit();
@@ -2857,9 +2901,10 @@ function renderLocationChoices(){
  fit();
 }
 function manualRefreshTap(){
- const button=document.getElementById("manualRefresh");
- button.classList.add("requested");
- button.title="Atualização solicitada · respeita o limite de buscas";
+ const button=document.querySelector('#quickMenuList button[data-key="period"]')||
+  document.getElementById("manualRefresh");
+ if(button){button.classList.add("requested");
+  button.title="Atualização solicitada · respeita o limite de buscas";}
  Native.refresh();
 }
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -3370,7 +3415,10 @@ function draw(){
  document.getElementById("sh").setAttribute("aria-pressed",String(shiny));
  document.getElementById("sh").title=shinyPending?"✨ Shiny solicitado · aguardando confirmação no site":shiny?"✨ Shiny confirmado":"Shiny desativado";
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
- if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status))document.getElementById("manualRefresh").classList.remove("requested");
+ if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status)){
+  document.getElementById("manualRefresh").classList.remove("requested");
+  document.querySelector('#quickMenuList button[data-key="period"]')?.classList.remove("requested");
+ }
  const bell=document.getElementById("bell");
  const bellVisual=notificationBellVisual(notificationPermissionGranted,alertMode,favoriteAlertMode);
  bell.classList.toggle("generalOn",bellVisual.newSound);
@@ -3715,7 +3763,7 @@ const QUICK_SVG=Object.freeze({
  pokemon:'<path d="M7.8 12.2 4.5 2.5Q4.2 1.5 5.4 1.6Q6.1 1.7 6.6 2.5L10.7 9.4Q14 7.8 17.2 9.5L22.4 2.2Q23.4 1.1 24.3 2.4Q25.1 3.5 24.5 4.9L20.4 12.2 28.2 7.2Q29.9 6.7 29.6 8.6V14.9Q29.6 16.1 28.4 16.5L23.7 18.1 26.2 20.6Q26.8 21.4 25.8 22.2L23.3 24Q22.9 24.5 23.3 25.7L24.1 28.4Q24.3 30 22.9 30H19.8Q18.8 30 18 29.2L15.2 28.4 11.9 29.5Q11.3 30.2 10.1 30.1H7.2Q5.7 30.1 5.6 28.5L6 26.2V17Q6 14 7.8 12.2Z"/>',
  appearance:'<path d="M12 4 13 2h6l1 2 2.5 1 2.5-1 3 3-1 2.5 1 2.5-.8 1.8M12 27l-2 1-2.5-1-2.5 1-3-3 1-2.5-1-2.5-2-1v-6l2-1 1-2.5-1-2.5 3-3 2.5 1L10 4"/><circle cx="15.5" cy="14" r="5"/><path d="m17 23 8-8 3 3-8 8-5 2zM24 16l3 3" stroke-width="2"/>',
  info:'<path d="M2 16s5-9 14-9 14 9 14 9-5 9-14 9S2 16 2 16Z"/><circle cx="16" cy="16" r="4"/>',
- period:'<path d="M25 15a9 9 0 1 1-3.5-7"/><path d="M22 3v7h-7"/>',
+ period:'<path d="M27 12A11 11 0 0 0 8 5"/><path d="M8 1v5h5"/><path d="M5 20a11 11 0 0 0 19 7"/><path d="M24 31v-5h-5"/>',
  appearance:'<path d="M13 3.5 14.4 5l2.4.5 2.5-1.2 2.6 2.5-1.2 2.5.6 2.3 1.5 1.5v1.8l-1.5 1.5"/><path d="m9 4-2.1.5L4.2 7l1.2 2.5-.6 2.4L3 13v3l1.8 1.2.7 2.5L4.2 22l2.5 2.5 2.5-1.2 2.1.5"/><circle cx="12.6" cy="14.1" r="4.1"/><path d="m12.7 25 13.1-13.1 3.4 3.4-13.1 13.1-5 1.7z"/><path d="m23.7 14 3.4 3.3"/>'
 });
 const QUICK_SOURCE_ICONS={sh:"sh",location:"location",bell:"bell",star:"star",donate:"donate"};
@@ -3934,6 +3982,28 @@ function renderMoreChoices(){
  }
  fit();
 }
+// Long press never sends manual refresh, including Android synthesized click.
+function bindRefreshGesture(button){
+ let hold=null,longTriggered=false,pressed=false,x=0,y=0;
+ const cancel=()=>{if(hold!==null){clearTimeout(hold);hold=null;}};
+ const open=()=>{cancel();if(longTriggered)return;
+  longTriggered=true;if(choiceOpen!=="period")toggleChoices("period");};
+ button.addEventListener("pointerdown",e=>{
+  if(e.button!==0)return;
+  cancel();longTriggered=false;pressed=true;x=e.clientX;y=e.clientY;
+  hold=setTimeout(open,600);
+ });
+ button.addEventListener("pointermove",e=>{
+  if(pressed&&Math.hypot(e.clientX-x,e.clientY-y)>11){cancel();pressed=false;}
+ });
+ button.addEventListener("pointerup",()=>{cancel();pressed=false;});
+ button.addEventListener("pointercancel",()=>{cancel();pressed=false;});
+ button.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();open();});
+ button.onclick=e=>{
+  if(longTriggered){e.preventDefault();e.stopPropagation();longTriggered=false;return;}
+  manualRefreshTap();
+ };
+}
 function renderQuickMenu(){
  if(!controlsWindow)return;
  const outer=document.getElementById("quickMenuList"),rows=document.getElementById("quickRows"),
@@ -3977,14 +4047,14 @@ function renderQuickMenu(){
   // All buttons share ONE ordered parent. Extracted utilities keep their true
   // visual position, not the legacy footer-container grouping.
   rows.appendChild(button);slotCount++;
-  button.onclick=()=>quickClick(renderedId);
   if(renderedId==="period"){
    button.title="Atualizar resultados · segure para ajustar AUTO";
-   button.addEventListener("contextmenu",event=>{
-    event.preventDefault();event.stopPropagation();
-    toggleChoices("period");
-   });
-  }
+   button.setAttribute("aria-haspopup","true");
+   button.setAttribute("aria-expanded",String(choiceOpen==="period"));
+   const badge=document.createElement("span");badge.className="periodBadge";
+   badge.setAttribute("aria-hidden","true");button.appendChild(badge);
+   bindRefreshGesture(button);
+  }else button.onclick=()=>quickClick(renderedId);
  }
  outer.style.setProperty("--quick-slot-count",String(Math.max(1,slotCount)));
  if(choiceOpen==="more"){
@@ -4037,6 +4107,15 @@ function refreshQuickMenuStates(){
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny));
   if(id==="more")button.setAttribute("aria-expanded",String(choiceOpen==="more"));
   button.classList.toggle("pending",id==="sh"&&shinyPending);
+  if(id==="period"){
+   const badge=button.querySelector(".periodBadge");
+   if(badge)badge.textContent=period===0?"OFF":period+"m";
+   button.classList.toggle("autoOff",period===0);
+   button.setAttribute("aria-expanded",String(choiceOpen==="period"));
+   button.setAttribute("aria-label",period===0?
+    "Atualizar agora · automático desligado · segure para configurar":
+    "Atualizar agora · automático a cada "+period+" minutos · segure para configurar");
+  }
    if(id==="filters"){
     const count=activeExtraFilterCount(searchSettings,mode);
     button.classList.toggle("has-extra-filters",count>0);
