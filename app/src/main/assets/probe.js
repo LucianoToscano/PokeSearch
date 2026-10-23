@@ -510,7 +510,7 @@ function pokemonSuggestion(query){
 }
 if(action.startsWith('pokemonSuggest:')){
  try{return JSON.stringify(pokemonSuggestion(JSON.parse(action.slice('pokemonSuggest:'.length))));}
- catch(_){return JSON.stringify({ok:false,reason:'Consulta de Pokémon inválida'});}
+ catch(_){return JSON.stringify({ok:false,state:'failed',reason:'Consulta de Pokémon inválida'});}
 }
 function pokemonListSelection(verb){
  const raw=filters.pokemonSelections;
