@@ -713,7 +713,7 @@ test("v0.51 header selects exact bundled original league art",
         dock.includes(name))&&dock.includes('result-icons/'));
 test("v0.51 opening favorites or login hides independent results window",
     service.includes('if(resultRoot!=null)resultRoot.setVisibility(View.GONE)')&&
-    service.includes('if(resultRoot!=null&&!pickerOpen&&!minimized)resultRoot.setVisibility(View.VISIBLE)'));
+    service.includes('if(resultRoot!=null&&!pickerOpen&&!minimized&&!resultCollapsed)resultRoot.setVisibility(View.VISIBLE)'));
 test("v0.51 original single search and toolbar remain unchanged",
     dock.includes('grid-template-columns:34fr 22fr 41fr')&&
     service.includes('private String mode="raw"')&&
