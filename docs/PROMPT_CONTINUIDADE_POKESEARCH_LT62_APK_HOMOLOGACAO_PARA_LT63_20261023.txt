@@ -9,7 +9,7 @@ GITHUB E BASE TÉCNICA
 - Repositório: LucianoToscano/PokeSearch
 - Branch de trabalho: fix/lt62-menu-visual-states-20261023
 - PR #34: Draft / aberta; main continua LT61 no commit caea98b7b57b9e45d5218e907eb392d76953dd53
-- Documento mestre único: docs/GUIA_MESTRE.md; ler seções 12.219–12.245 e histórico anterior.
+- Documento mestre único: docs/GUIA_MESTRE.md; ler seções 12.219–12.246 e histórico anterior.
 - Fonte de verdade de versão e APK: verificar PR HEAD, build run, artifact SOURCE_COMMIT.txt,
   SHA256SUMS.txt, PACKAGE_VERSION.txt, SIGNING_CERT_SHA256.txt e guia (não inventar SHA).
 - Arquitetura: Android overlay + WebView + evaluateJavascript + probe.js; sem backend/proxy/GPS físico.
@@ -19,6 +19,14 @@ GITHUB E BASE TÉCNICA
   34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e
 - Build oficial LT62: .github/workflows/build-v062-compact-preview.yml;
   versão 0.00.62 / versionCode 54260; PokeSearch-v0.00.62-LT.apk.
+- BUILD CONFIRMADO SUCCESS: GitHub Actions #40007032664, artefato #12524672001
+  nome PokeSearch-v0.00.62-LT, fonte EXATA do APK
+  878c7aa16918c30b96e0b1b651c16aeedec9927d
+  (commits documentais posteriores não mudam o APK).
+- APK 33.250.884 bytes, SHA256 8ce4b86457f32c9c618348a7c3a80f8e58b7403279bf67232fbcb894df20bb9c;
+  certificado persistente SHA256
+  34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e.
+- URL da run: https://github.com/LucianoToscano/PokeSearch/actions/runs/40007032664
 - Não fazer merge da PR #34 antes da autorização expressa.
 
 DESIGN/IMPLEMENTAÇÕES QUE DEVEM SER PRESERVADOS
@@ -76,7 +84,7 @@ POLÍTICA DE TRABALHO
   permanente e versionCode monotonicamente crescente.
 
 TAREFA INICIAL DO PRÓXIMO CHAT
-1. Conferir PR #34, HEAD, Guia Mestre 12.245 e resultado do último build LT62.
+1. Conferir PR #34, HEAD, Guia Mestre 12.246 e build confirmado #40007032664.
 2. Conferir artefato APK e certificado/versionCode/hash antes de repassar.
 3. Iniciar checklist de homologação real Samsung a partir dos itens acima.
 4. Se houver falha comprovada, corrigir em branch da LT62 sem merge;
