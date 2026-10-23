@@ -854,5 +854,17 @@ check("LT62 native: outside Android window closes submenu without trapping outsi
  assert.ok(params.includes('WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH'));
  assert.ok(src.includes('menuRoot.addView(menuPanel,new FrameLayout.LayoutParams(-1,-1))'));
 });
+
+check("LT62 Favorites: title counter, 10x5 grid and no redundant empty spacer",()=>{
+ const picker=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
+ assert.ok(picker.includes('header.addView(count'));
+ assert.ok(picker.includes('count.setText("Selecionados  "+size+"/50")'));
+ assert.ok(picker.includes('sprites.setColumnCount(10)'));
+ assert.ok(picker.includes('sprites.setRowCount(5)'));
+ assert.ok(picker.indexOf('root.addView(selectedRow)')<picker.indexOf('root.addView(search,searchParams)'));
+ assert.ok(!picker.includes('root.addView(empty)'));
+ assert.ok(!picker.includes('empty.setVisibility('));
+});
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");

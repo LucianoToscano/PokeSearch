@@ -264,12 +264,7 @@ public final class PokemonPicker {
         selectedRow.addView(centeredSprites,new LinearLayout.LayoutParams(-1,-2));
         root.addView(selectedRow);
 
-        TextView empty=new TextView(activity);
-        empty.setText("Digite para adicionar ☆");
-        empty.setTextColor(Color.rgb(156,173,190));
-        empty.setTextSize(10);
-        empty.setPadding(dp(activity,4),dp(activity,3),0,dp(activity,4));
-        root.addView(empty);
+        // Avoid an extra "Digite" text row: the search field already has its hint.
         // Search and three native suggestions are BELOW the five sprite rows.
         root.addView(search,searchParams);
 
@@ -355,7 +350,6 @@ public final class PokemonPicker {
                 sprites.addView(tile,tileParams);
             }
             selectedRow.setVisibility(size>0?View.VISIBLE:View.GONE);
-            empty.setVisibility(size==0?View.VISIBLE:View.GONE);
             updateSuggestions.run();
             if(changed!=null)changed.run();
         };
