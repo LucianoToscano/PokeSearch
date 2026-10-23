@@ -713,6 +713,17 @@ function multiState(option){
 function extraMulti(key,desired,operation){
  const control=extraControl(EXTRA_LABELS[key]);
  if(!control||control.disabled)return false;
+ // The site Form search may remain narrowed to one costume. Before applying
+ // MULTIPLE forms, restore the full official checkbox list and wait for React.
+ if(key==="form"&&operation==="apply"){
+  const popup=extraOptionPopup('form',control);
+  const search=popup&&Array.from(popup.querySelectorAll(
+   'input:not([type=hidden])')).find(vis);
+  if(search&&String(search.value||'').trim()!==""){
+   if(valueInput(search,""))transientPending=true;
+   return false;
+  }
+ }
  const target=[...new Set(desired.map(x=>clean(x).toLowerCase()))];
  if(!target.length&&isNeutral(extraValue(key))&&key!=="form")return true;
  if(control.matches("select")&&control.multiple){
