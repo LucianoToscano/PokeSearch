@@ -575,34 +575,37 @@ function extraControl(label){
 }
 // Popup ownership is distinct from picker option text. An old Gender popup
 // cannot be claimed by Form merely because it is the only visible menu.
-function extraOptionPopup(key,control){
- if(!control)return null;
- const id=[control.getAttribute('aria-controls'),control.getAttribute('aria-owns')]
-  .filter(Boolean);
- for(const name of id){
-  const popup=document.getElementById?.(name);
-  if(popup&&vis(popup))return popup;
- }
- if(control.getAttribute('aria-expanded')!=='true')return null;
- const selector='[role=listbox],[role=menu],[cmdk-list],[data-radix-menu-content],[data-radix-popper-content-wrapper]';
- const all=elements(selector).filter(vis);
- const leaf=all.filter(e=>!all.some(other=>other!==e&&e.contains(other)));
- if(leaf.length!==1)return null;
- const popup=leaf[0];
+// LT73: validate EVERY popup path, including stale aria-controls/aria-owns.
+function extraPopupMatchesKey(key,popup){
+ if(!popup||!vis(popup))return false;
  const values=Array.from(popup.querySelectorAll(
   '[role=option],[role=menuitemcheckbox],[role=checkbox],label,[data-radix-collection-item],li'))
   .filter(vis).map(e=>clean(text(e))).filter(Boolean);
  if(key==='form'){
   const distinct=[...new Set(values.map(v=>v.toLowerCase()))];
-  // Explicitly reject the gender-only menu, including its neutral Any row.
+  // Reject the complete Gender menu; Male/Female ALONE can be real Form labels.
   if(distinct.length>=3&&distinct.includes('any')&&
-     distinct.includes('male')&&distinct.includes('female')&&
-     distinct.every(v=>/^(?:any|male|female|genderless|unknown)$/.test(v)))
-      return null;
+   distinct.includes('male')&&distinct.includes('female')&&
+   distinct.every(v=>/^(?:any|male|female|genderless|unknown)$/.test(v)))
+   return false;
  }
- if(key==='gender'&&values.length>0&&values.some(v=>
-  /^(?:normal|alola|hisuian|copy 2019|goggles 2026)$/i.test(v)))return null;
- return popup;
+ if(key==='gender'&&values.some(v=>
+  /^(?:normal|alola|hisuian|copy 2019|goggles 2026)$/i.test(v)))return false;
+ return true;
+}
+function extraOptionPopup(key,control){
+ if(!control||control.getAttribute('aria-expanded')!=='true')return null;
+ const ids=[control.getAttribute('aria-controls'),control.getAttribute('aria-owns')]
+  .filter(Boolean);
+ for(const name of ids){
+  const popup=document.getElementById?.(name);
+  if(popup&&vis(popup))return extraPopupMatchesKey(key,popup)?popup:null;
+ }
+ const selector='[role=listbox],[role=menu],[cmdk-list],[data-radix-menu-content],[data-radix-popper-content-wrapper]';
+ const all=elements(selector).filter(vis);
+ const leaf=all.filter(e=>!all.some(other=>other!==e&&e.contains(other)));
+ if(leaf.length!==1)return null;
+ return extraPopupMatchesKey(key,leaf[0])?leaf[0]:null;
 }
 function formOptionRows(control){
  const popup=extraOptionPopup('form',control);
@@ -626,6 +629,12 @@ function siteOptions(key){
   key==="size"?multiOptions(control):key==="gender"?
   Array.from(popup.querySelectorAll('[role=option],[role=menuitemradio],[role=radio],label')).filter(vis):
   optionElements(control);
+ if(key==="form"&&(!rows||!rows.length)){
+  // An empty React portal is loading, NOT evidence of zero official Forms.
+  const explicit=/\b(?:no results|no matches|nothing found)\b|nenhum(?:a|s)? resultado/i.test(text(popup));
+  return explicit?{ok:true,pending:false,empty:true,options:[]}:
+   {ok:false,pending:true,options:[]};
+ }
  return {ok:true,pending:false,
   options:[...new Set((rows||[]).map(text).map(clean)
    .filter(x=>x&&x.length<100))].slice(0,key==="form"?500:80)};
