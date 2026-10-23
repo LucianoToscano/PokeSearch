@@ -2860,7 +2860,7 @@ test("LT57-ONEFORM-06 compact menu and launcher safe area preserved",()=>{
 test("LT57-ONEFORM-07 coordinate + Shiny share verified submit, no separate reset",()=>{
  const shiny=service.split('@JavascriptInterface public void shiny()')[1]
   ?.split('@JavascriptInterface public void refresh()')[0]||"";
- return shiny.includes('if(locationEnabled){refresh(true);return;}')&&
+ return shiny.includes('if(locationEnabled){OverlayService.this.refresh(true);return;}')&&
   shiny.includes('Sincronizando Shiny e localização na mesma pesquisa')&&
   service.includes('verifyShinyAfterLocation(generation,manual,0)')&&
   service.includes('execute("verifyLocation:"+data')&&
