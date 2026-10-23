@@ -5,6 +5,7 @@ on:
       - fix/lt54-launcher-wordmark-scale-20261022
     paths:
       - '.github/workflows/build-v056-filters-bell.yml'
+      - 'app/tests/overlay-ux.test.js'
   workflow_dispatch:
 
 permissions:
