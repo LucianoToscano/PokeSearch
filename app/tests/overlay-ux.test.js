@@ -3038,7 +3038,8 @@ test("UX-QUICK-MORE-04 original colors and bridges stay unchanged",()=>{
 });
 test("UX-QUICK-MORE-05 close on outside tap and ordinary preferences survive",()=>{
  return dock.includes('document.addEventListener("pointerdown",event=>{')&&
-  dock.includes('if(choiceOpen!=="more")return;')&&
+  dock.includes('if(choiceOpen!=="more"&&choiceOpen!=="period")return;')&&
+  dock.includes('event.target.closest("#choices.periodCompact")')&&
   dock.includes('event.target.closest("#choices.morePanel")')&&
   dock.includes('event.target.closest(\'#quickMenuList button[data-key="more"]\')')&&
   dock.includes('document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker","morePanel"')&&
@@ -3510,7 +3511,7 @@ test("LT60-E7-02 empty result needs a fresh site signal, not a generic zero",()=
 test("LT62: direct refresh, long press AUTO and official sprite-only chips",()=>{
  return dock.includes('if(id==="period"){manualRefreshTap();return;}')&&
    dock.includes('button.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();open();})')&&
-   dock.includes('if(choiceOpen!=="period")toggleChoices("period")')&&
+   dock.includes('if(choiceOpen==="period")closeChoices();else toggleChoices("period")')&&
    dock.includes('pokemonSuggestionSpriteCache.set(label.toLowerCase(),src);')&&
    dock.includes('pokemonSuggestionSpriteCache.get(String(name).toLowerCase())');
 });
