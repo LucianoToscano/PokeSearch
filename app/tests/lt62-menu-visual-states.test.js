@@ -331,11 +331,12 @@ check("LT62 Refresh: original 16px neutral icon spins only after manual tap; min
  assert.ok(!dock.includes('button[data-key="period"].requested .quickGlyph{color:#ffdb70'));
  assert.ok(dock.includes('Native.refresh();'));
 });
-check("LT62 AUTO and More: detached identical vertical tiles, transparent background, no header/X",()=>{
+check("LT62 Atualização and More: OFF + five minutes, no AUTO decoration, transparent tile cascade",()=>{
  const auto=dock.split('const current=period;')[1]?.split('function positionCascadeEditor()')[0]||"";
  assert.ok(auto.includes('panel.classList.add("periodCompact","visible")'));
  assert.ok(auto.includes('row.appendChild(off)'));
- assert.ok(auto.includes('label.textContent="AUTO"'));
+ assert.ok(!auto.includes('label.textContent="AUTO"'));
+ assert.ok(!auto.includes('className="periodCompactLabel"'));
  assert.ok(auto.includes('for(const value of [3,5,10,15,20])'));
  assert.ok(auto.includes('[...row.children].forEach(tile=>panel.appendChild(tile))'));
  assert.ok(!auto.includes('title.textContent="ATUALIZAÇÃO"'));
