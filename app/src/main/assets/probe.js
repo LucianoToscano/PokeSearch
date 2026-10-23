@@ -351,6 +351,7 @@ function checkCore(){
 function normalizePokemonLabel(value){
  return clean(value).replace(/^#\s*\d{1,4}\s+/,'').replace(/[\s×✕✓✔]+$/,'').trim();
 }
+// LT61-POKEMON: resolve the official picker by label or live input.
 function pokemonPickerRoot(){
  const heads=labels(document,/^Pok[eé]mon$/i);
  for(const head of heads){
@@ -361,11 +362,15 @@ function pokemonPickerRoot(){
    if(btns.length&&p!==document.body)return p;
   }
  }
+ const input=pokemonPickerInput();
+ if(input)for(let parent=input.parentElement,depth=0;parent&&depth<5;parent=parent.parentElement,depth++){
+  if(parent!==document.body&&parent.querySelectorAll('button,[role=combobox],[aria-haspopup]').length)return parent;
+ }
  return null;
 }
 function pokemonPickerInput(){
  return elements('input:not([type=hidden])').find(e=>vis(e)&&
-  /search by name, form, or dex|search.*(?:pok[eé]mon|form|dex)/i.test(
+  /search by name, form, or dex|search.*(?:pok[eé]mon|form|dex)|name.*form.*dex/i.test(
    (e.getAttribute('placeholder')||'')+' '+(e.getAttribute('aria-label')||'')))||null;
 }
 function pokemonPickerButton(root){
@@ -391,13 +396,23 @@ function pokemonSelectedChips(){
  }
  return selected;
 }
+function pokemonQueryForSite(query){
+ const value=String(query||'').trim();
+ const dex=value.match(/^#0*(\d{1,4})$/);
+ return dex?String(Number(dex[1])):value;
+}
 function pokemonPickerOptions(){
  const input=pokemonPickerInput();if(!input)return [];
  const trigger=pokemonPickerButton(pokemonPickerRoot());
  const popup=activeOptionPopup(input)||activeOptionPopup(trigger);
  const selector='[role=option],[role=listbox] [role=checkbox],[cmdk-item],[data-radix-collection-item],[role=listbox] button,[role=listbox] li,li';
- const declared=!!(input.getAttribute('aria-controls')||trigger?.getAttribute?.('aria-controls'));
- const candidates=(popup?Array.from(popup.querySelectorAll(selector)):declared?[]:elements(selector)).filter(vis);
+ // Stale aria-controls may point to an unmounted React node. Only accept
+ // a fallback when there is ONE visible listbox; never mine unrelated page <li>.
+ const alternatives=popup?[]:elements('[role=listbox],[cmdk-list],[role=menu]')
+  .filter(vis).filter(scope=>scope.querySelectorAll(selector).length>0);
+ const scope=popup||(alternatives.length===1?alternatives[0]:null);
+ if(!scope)return [];
+ const candidates=Array.from(scope.querySelectorAll(selector)).filter(vis);
  return candidates.map(e=>{
   const raw=text(e),label=normalizePokemonLabel(raw);
   const dex=(raw.match(/#\s*(\d{1,4})/)||[])[1]||'';
@@ -419,7 +434,7 @@ function pokemonSuggestion(query){
   return {ok:false,pending:true,reason:'Abrindo opções oficiais'};
  }
  const originalQuery=String(query||'').slice(0,65);
- const wanted=originalQuery.replace(/^#0+(\d{1,4})$/,'#$1');
+ const wanted=pokemonQueryForSite(originalQuery);
  if(String(input.value||'')!==wanted){
   if(!valueInput(input,wanted))return {ok:false,reason:'Busca Pokémon indisponível'};
   return {ok:false,pending:true,reason:'Aguardando opções do site'};
