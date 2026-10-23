@@ -275,6 +275,44 @@ body.result-window #empty{margin:0 auto;max-height:18px}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
 
+/* LT62 ONE-POKEBALL: the only visible header lives on the native dock. */
+body.dock-window #gear{position:relative!important;overflow:visible!important}
+body.dock-window #gear .resultModeStack,body.dock-window #bubble .resultModeStack{
+ position:relative;display:block;flex:none;width:var(--mode-icon-size,21px);height:var(--mode-icon-size,21px);
+ max-width:21px;max-height:21px;aspect-ratio:1/1;pointer-events:none}
+body.dock-window #gear .resultModeStack img,body.dock-window #bubble .resultModeStack img{
+ position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;
+ filter:drop-shadow(0 1px 1px #0007);pointer-events:none}
+body.dock-window #gear .modeIndicator{
+ position:absolute;z-index:1;display:none;align-items:center;justify-content:center;
+ box-sizing:border-box;pointer-events:none;font:900 9px/1 Arial,Roboto,sans-serif;text-shadow:0 1px 1px #000}
+body.dock-window #gear .modeIndicator.visible{display:flex}
+body.dock-window #gear .modeIndicator.value{
+ left:50%;bottom:-2px;max-width:33px;height:10px;color:#16191c;background:transparent;
+ font-size:9px;letter-spacing:-.2px;-webkit-text-stroke:.25px #fff;
+ text-shadow:0 1px 1px #fff,0 0 2px #fff,0 0 3px #fff;
+ transform:translateX(-50%) scale(var(--mode-indicator-scale,1));transform-origin:bottom center;white-space:nowrap}
+body.dock-window #gear .modeIndicator.value.long{font-size:5px!important;letter-spacing:-.45px!important;max-width:21px!important}
+body.dock-window #gear .modeIndicator.value.zero{color:#00cfe8}
+body.dock-window #gear .modeIndicator.value.perfect{color:#f04b70}
+body.dock-window #gear .modeIndicator.shiny{right:-3px;top:-3px;width:11px;height:11px;font-size:10px;transform:scale(var(--mode-indicator-scale,1));transform-origin:top right}
+body.dock-window #gear .modeIndicator.background{left:-3px;top:-2px;width:9px;height:9px;color:#adf1ee;transform:scale(var(--mode-indicator-scale,1));transform-origin:top left}
+body.dock-window #gear .modeIndicator.background svg{display:block;width:7px;height:7px}
+body.dock-window #gear .capturePulse{
+ position:absolute;left:50%;top:50%;z-index:1;width:29%;height:29%;border-radius:50%;pointer-events:none;
+ background:#f5ffff;box-shadow:0 0 0 1px #00e5ff,0 0 5px 2px #00cfff;
+ opacity:0;transform:translate(-50%,-50%) scale(.7)}
+body.dock-window.search-active #gear .capturePulse{animation:psCapturePulse .85s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){
+ body.dock-window.search-active #gear .capturePulse{animation:none!important;opacity:.45}}
+body.dock-window #dockSpawnCount{
+ position:absolute;right:-6px;top:1px;font:800 10px/11px Roboto,Arial,sans-serif;
+ color:#e2f7fd;text-shadow:0 1px 2px #000,0 0 3px #000;pointer-events:none}
+/* Hide the former independent results header, keep saved result coordinates. */
+body.result-window #resultHeader{display:none!important;pointer-events:none!important}
+body.result-window #shell{padding-top:0!important}
+body.dock-window #bubble{justify-content:center;align-items:center}
+
 /* UX-MENU-01: compact navigation; historical 12 original buttons remain intact. */
 #quickHead,#quickMenuList{display:none}
 body.controls-window #controls{display:none!important}
@@ -2186,7 +2224,7 @@ body.controls-window #choices.visualPanel.visualCompact .visualStatus{
 body.controls-window #choices.visualPanel.visualCompact .visualStatus[hidden]{display:none!important}
 </style></head><body>
 <div id="shell">
- <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
+ <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
  <div id="menu"><div id="quickHead"><strong>⚙ PokeSearch</strong><button id="quickBack" type="button" aria-label="Voltar ou recolher">✕</button></div><div id="quickMenuList"><div id="quickRows"></div><div id="quickUtilities"></div><div id="quickFooter"></div></div><div id="controls">
   <button id="cycle" title="Modos · Raw IV, % IV, Grande Liga e Ultra Liga" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('mode')">100%</button>
   <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14 3.2c.65 3.8 2.7 7 6.8 8.3-4.2 1.3-6.15 4.6-6.8 8.6-.8-4-2.8-7.3-6.9-8.6 4.15-1.3 6.1-4.5 6.9-8.3Z"/><path d="M5.2 3c.35 1.8 1.1 2.7 2.8 3.2-1.7.55-2.45 1.55-2.8 3.2-.4-1.65-1.15-2.65-2.8-3.2C4.05 5.7 4.8 4.8 5.2 3Z"/><path d="M4.3 11.8c.38 2 1.5 3.2 3.5 3.8-2 .6-3.1 1.8-3.5 3.8-.45-2-1.6-3.2-3.6-3.8 2-.6 3.15-1.8 3.6-3.8Z"/><path d="M19.9 17.5c.4 1.6 1.2 2.5 2.8 3-1.6.5-2.4 1.4-2.8 3-.4-1.6-1.2-2.5-2.8-3 1.6-.5 2.4-1.4 2.8-3Z"/></svg></button>
@@ -2207,7 +2245,7 @@ body.controls-window #choices.visualPanel.visualCompact .visualStatus[hidden]{di
  <button id="empty" title="Toque para saber o motivo" onclick="Native.showStatus()">Aguardando busca</button>
  <button id="collapse" title="Recolher todos os Pokémon e as opções, deixando apenas a engrenagem" aria-label="Recolher todos os Pokémon" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button>
 </div>
-<div id="bubble" role="button" aria-label="Restaurar overlay"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></div>
+<div id="bubble" role="button" aria-label="Restaurar PokeSearch"><span class="resultModeStack" aria-hidden="true"><img id="bubbleModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"></span></div>
 <script>
 // UX-PERF-01: synchronous PvPoke scripts only in the independent results WebView.
 if(window.location.search.indexOf("results=1")!==-1){
@@ -2431,7 +2469,7 @@ function setMenuOpen(open,side,pad){
  document.body.classList.toggle("menu-open",menuOpen);
  document.getElementById("menu").classList.toggle("open",menuOpen);
  document.getElementById("gear").setAttribute("aria-expanded",String(menuOpen));
- document.getElementById("gear").setAttribute("aria-label",menuOpen?"Recolher opções":"Abrir opções");
+ document.getElementById("gear").setAttribute("aria-label",menuOpen?"Toque para fechar menu; segure para alternar":"Toque para alternar resultados; segure para abrir menu");
  if(!menuOpen){closeChoices();document.body.classList.remove("menu-left");}
  else if(side)document.body.classList.toggle("menu-left",side==="left");
  if(menuOpen&&controlsWindow)renderQuickMenu();
@@ -3919,8 +3957,40 @@ function draw(){
    header.removeAttribute("data-wait"); // Cooldown accessible by title, not floating text
   header.setAttribute("aria-label",header.title);
  }
- document.getElementById("gear").title=menuOpen?"Recolher menu · arrastar para mover":status?("Abrir menu · "+status):"Abrir menu · arrastar para mover";
- document.getElementById("gear").classList.toggle("busy",/(atualizando|buscando|busca manual|pesquisa)/i.test(status));
+ if(!controlsWindow&&!resultWindow){
+  const history=cards.length>0;
+  const selectedIcon=getResultIcon(history?shownMode:mode,history?shownShiny:shiny,
+    history?shownSettings:searchSettings);
+  document.body.classList.toggle("search-active",activeSearchPhase==="searching"&&!shinyPending&&nextQueryAt<=Date.now());
+  document.body.classList.toggle("results-stale",history&&resultsStale);
+  for(const id of ["dockModeIcon","bubbleModeIcon"]){
+   const img=document.getElementById(id);
+   if(img&&img.getAttribute("src")!==selectedIcon.path){
+    img.onerror=()=>{
+     if(img.getAttribute("src")!==selectedIcon.fallbackPath)img.src=selectedIcon.fallbackPath;
+     else{img.onerror=null;img.removeAttribute("src");img.style.visibility="hidden";}
+    };
+    img.style.visibility="visible";img.src=selectedIcon.path;
+   }
+  }
+  const badge=document.getElementById("dockIndicatorValue");
+  badge.textContent=selectedIcon.ivBadge;
+  badge.classList.toggle("visible",!!selectedIcon.ivBadge);
+  badge.classList.toggle("long",String(selectedIcon.ivBadge||"").length>4);
+  badge.classList.toggle("zero",selectedIcon.family==="nundo");
+  badge.classList.toggle("perfect",selectedIcon.family==="hundo");
+  document.getElementById("dockIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge);
+  document.getElementById("dockIndicatorBackground").classList.toggle("visible",selectedIcon.backgroundBadge);
+  const count=document.getElementById("dockSpawnCount");
+  count.textContent=resultDisplayOptions.count?String(cards.length):"";
+  count.style.display=resultDisplayOptions.count?"inline":"none";
+  const gear=document.getElementById("gear");
+  gear.title=selectedIcon.title+(resultsStale?" · resultados anteriores":"")+
+    (menuOpen?" · toque para fechar menu":" · toque para alternar resultados")+
+    " · segure 600 ms para menu · arraste para mover";
+  gear.setAttribute("aria-label",gear.title);
+ }
+ // Use central capture pulse rather than spinning the removed gear.
  refreshQuickMenuStates();fit();
 }
 function updateTimers(){
