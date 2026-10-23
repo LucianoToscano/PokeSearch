@@ -42,7 +42,10 @@ function activeOptionPopup(control){
   if(popup&&vis(popup))return popup;
  }
  const open=elements('[role=listbox],[role=menu],[cmdk-list],[data-radix-menu-content],[data-radix-popper-content-wrapper],[data-state="open"][data-side]').filter(vis);
- return open.length===1?open[0]:null;
+ // A portal can expose both a wrapper AND an inner listbox. Prefer the single
+ // innermost visible menu rather than treating this valid DOM as ambiguous.
+ const inner=open.filter(el=>!open.some(other=>other!==el&&el.contains(other)));
+ return inner.length===1?inner[0]:null;
 }
 function optionElements(control){
  const scope=control?activeOptionPopup(control):null;
