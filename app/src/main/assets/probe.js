@@ -595,8 +595,10 @@ function extraOptionPopup(key,control){
  if(key==='form'){
   const distinct=[...new Set(values.map(v=>v.toLowerCase()))];
   // Explicitly reject the gender-only menu, including its neutral Any row.
-  if(distinct.length&&distinct.every(v=>
-   /^(?:any|male|female|genderless|unknown)$/.test(v)))return null;
+  if(distinct.length>=3&&distinct.includes('any')&&
+     distinct.includes('male')&&distinct.includes('female')&&
+     distinct.every(v=>/^(?:any|male|female|genderless|unknown)$/.test(v)))
+      return null;
  }
  if(key==='gender'&&values.length>0&&values.some(v=>
   /^(?:normal|alola|hisuian|copy 2019|goggles 2026)$/i.test(v)))return null;
@@ -712,7 +714,7 @@ function extraMulti(key,desired,operation){
  const control=extraControl(EXTRA_LABELS[key]);
  if(!control||control.disabled)return false;
  const target=[...new Set(desired.map(x=>clean(x).toLowerCase()))];
- if(!target.length&&isNeutral(extraValue(key)))return true;
+ if(!target.length&&isNeutral(extraValue(key))&&key!=="form")return true;
  if(control.matches("select")&&control.multiple){
   const options=Array.from(control.options);
   if(target.some(v=>!options.some(opt=>clean(text(opt)).toLowerCase()===v)))return false;
