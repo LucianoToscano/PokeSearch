@@ -69,9 +69,9 @@ function choice(label,want){
   return true;
  }
  if(text(e).toLowerCase()===want.toLowerCase())return true;
- // React/Radix menus render asynchronously: read an already-open option before toggling.
+ // React/Radix menus render asynchronously: opening/selecting an option is not proof\n // until a later DOM read confirms the selected value.\n // React/Radix menus render asynchronously: read an already-open option before toggling.
  let opt=findOption(want,e);
- if(opt){opt.click();return true;}
+ if(opt){opt.click();transientPending=true;return false;}
  if(e.disabled)return false;
  if(e.getAttribute("aria-expanded")!=="true")e.click();
  transientPending=true;
@@ -674,7 +674,7 @@ function extraSelect(key,want){
    const opt=(popup?Array.from(popup.querySelectorAll(
     '[role=option],[role=menuitemradio],[role=menuitemcheckbox],label')).filter(vis):
     key==="gender"||key==="form"?[]:optionElements(e)).find(o=>isNeutral(text(o)));
-  if(opt){opt.click();return true;}
+  if(opt){opt.click();transientPending=true;return false;}
   if(e.disabled)return false;
   if(e.getAttribute("aria-expanded")!=="true")e.click();
   transientPending=true;
