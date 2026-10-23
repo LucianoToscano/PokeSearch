@@ -1304,6 +1304,23 @@ body.controls-window.visual-menu-vertical #choices:not(.morePanel){
  max-width:100%!important;
  width:min(100%,var(--visual-popup-width,232px))!important;
 }
+/* LT62: checked states affect only glyphs, not the individual button surfaces.
+   Existing selected rules earlier in the file colored the whole tile green/
+   bronze. Preserve theme-aware backgrounds/borders for Location/Shiny/Star. */
+body.controls-window #quickMenuList button[data-key="location"].selected,
+body.controls-window #quickMenuList button[data-key="sh"].selected,
+body.controls-window #quickMenuList button[data-key="star"].selected{
+ background:var(--visual-menu-button-bg,#28292cce)!important;
+ border-color:inherit!important;
+}
+body.controls-window #quickMenuList button[data-key="sh"].selected .quickGlyph,
+body.controls-window #quickMenuList button[data-key="star"].selected .quickGlyph{
+ color:#ffd64b!important;
+}
+body.controls-window #choices .pokemonChipSprite{
+ width:16px!important;height:16px!important;object-fit:contain!important;
+ flex:none!important;margin-right:4px!important;
+}
 /* LT62-VISUAL-STATES: precise icons only; keep the approved tile surface. */
 body.controls-window #quickMenuList button[data-key="location"].selected .quickGlyph{
  color:var(--visual-menu-fg,#f2f7fc)!important;
@@ -3186,7 +3203,10 @@ function quickState(id){
  }
 }
 function quickClick(id){
- if(["mode","location","filters","period","appearance","more"].includes(id)){toggleChoices(id);return;}
+ // The RefreshCw glyph is a direct one-tap refresh, not an AUTO settings shortcut.
+ // Long-press on the same tile opens AUTO intervals (contextmenu below).
+ if(id==="period"){manualRefreshTap();return;}
+ if(["mode","location","filters","appearance","more"].includes(id)){toggleChoices(id);return;}
  switch(id){
   case "sh":Native.shiny();break; // Reuse native, login-verified Shiny toggle.
   case "bell":toggleChoices("alerts");break;
@@ -3256,6 +3276,8 @@ function iconForQuick(id, fallback){
 // SITE-POKEMON-01: Match the website's multi-species + form picker, without
 // inventing unreleased costumes, IDs, event forms, or site-only selections.
 let pokemonDraft=[],pokemonSuggestions=[],pokemonQuery="",pokemonSuggestionStatus="",pokemonPickerBase=null,pokemonForceClear=false;
+// Temporary official sprite cache: presentation only; no invented URLs/IDs.
+const pokemonSuggestionSpriteCache=new Map();
 let pokemonSuggestTimer=null;
 function requestPokemonSuggestions(query){
  if(!controlsWindow||choiceOpen!=="pokemon"||!Native.requestPokemonSuggestions)return;
@@ -3266,6 +3288,11 @@ window.onPokemonSuggestions=response=>{
  if(choiceOpen!=="pokemon"||!response)return;
  if(response.query!==undefined&&response.query!==pokemonQuery)return; // stale suggestion response
  pokemonSuggestions=response.ok&&Array.isArray(response.options)?response.options:[];
+ for(const option of pokemonSuggestions){
+  const label=String(option?.label||"").trim();
+  const src=String(option?.image||"");
+  if(label&&/^https:\/\//.test(src))pokemonSuggestionSpriteCache.set(label.toLowerCase(),src);
+ }
  const state=String(response.state||"");
  pokemonSuggestionStatus=state==="ready"&&pokemonSuggestions.length?"":
   state==="explicit-empty"&&response.empty===true?"Nenhuma opção oficial encontrada":
@@ -3312,7 +3339,14 @@ function renderPokemonTags(){
  if(counter)counter.textContent=pokemonDraft.length+" selecionados";
  pokemonDraft.forEach(name=>{
   const chip=document.createElement("button");chip.type="button";chip.className="pokemonChip";
-  chip.textContent=name+"  ×";chip.setAttribute("aria-label","Remover "+name);
+  chip.setAttribute("aria-label","Remover "+name);
+  // Use a real sprite returned by the site when it was observed. Saved chips
+  // without a matching site image remain text; never fabricate image URLs.
+  const src=pokemonSuggestionSpriteCache.get(String(name).toLowerCase());
+  if(src){const img=document.createElement("img");img.src=src;img.alt="";
+   img.className="pokemonChipSprite";img.loading="lazy";chip.appendChild(img);}
+  const label=document.createElement("span");label.textContent=name+"  ×";
+  chip.appendChild(label);
   chip.onclick=()=>{pokemonDraft=pokemonDraft.filter(x=>x!==name);renderPokemonTags();drawPokemonSuggestions();};
   target.appendChild(chip);
  });
@@ -3420,6 +3454,13 @@ function renderQuickMenu(){
   // visual position, not the legacy footer-container grouping.
   rows.appendChild(button);slotCount++;
   button.onclick=()=>quickClick(renderedId);
+  if(renderedId==="period"){
+   button.title="Atualizar resultados · segure para ajustar AUTO";
+   button.addEventListener("contextmenu",event=>{
+    event.preventDefault();event.stopPropagation();
+    toggleChoices("period");
+   });
+  }
  }
  outer.style.setProperty("--quick-slot-count",String(Math.max(1,slotCount)));
  if(choiceOpen==="more"){

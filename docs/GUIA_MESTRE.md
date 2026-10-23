@@ -4415,7 +4415,7 @@ No `OverlayService.java`, `requestFormOptions()` e `requestFormOptionsLater()` f
 
 **Status:** APK LT61 assinado gerado e disponível pelo artefato Actions; PR #33 MERGED; `main` recebeu as correções. Assinatura estável sem troca, pacote inalterado, versão superior a LT60. Esta seção foi adicionada após o merge como registro documental, não faz parte do código-fonte anterior usado para compilar o APK; os arquivos executáveis do APK correspondem ao commit `28b2098`.
 
-## 12.219 — LT62: especificação e implementação parcial dos estados visuais do overlay (23/10/2026)
+### 12.228-LT62-VISUAL-STATES — especificação e implementação parcial do overlay (23/10/2026)
 
 **Base verificada:** `main` contém PR #33 MERGED (LT61), commit de integração `bccc85bf23eb270c5862d7e94eb5781fdcf2a494`. Branch isolada `fix/lt62-menu-visual-states-20261023`. Não gerar APK, não efetuar merge, não declarar homologação física sem validação no Samsung.
 
@@ -4432,3 +4432,17 @@ No `OverlayService.java`, `requestFormOptions()` e `requestFormOptionsLater()` f
 **Critérios pendentes de homologação:** conferir CSS na WebView Samsung em ambos os temas; verificar estados OFF/ON quando seleciona diretamente no site; Badge 0, 1, 2+; testes de Raw IV 0/15/15, GL/UL #1/#50, IV% misto, Pokébola pulso/expiração; testes Node CI e sincronização no PoGoCoordinates real. Só então considerar a mudança concluída.
 
 **LT62 — complemento de QA (23/10/2026):** após atualizar quatro contratos antigos do `overlay-ux.test.js` para os novos indicadores verdadeiros e integrar a nona suíte `lt62-menu-visual-states.test.js` ao workflow Node QA, o run **39957842692** (`PokeSearch Node QA (sem APK)`) foi concluído com **SUCCESS** no commit `f522ade2b94594e35f34983c7dfabec6322849f1`. Sintaxe JS e nove suítes Node aprovadas; builds Android foram ignorados (skipped), portanto **sem APK novo e sem homologação física**. PR #34 permanece Draft, sem merge.
+
+### 12.229-LT62-REF-CORRECTIONS — captura real, busca vazia, Refresh e sprites (23/10/2026)
+
+**Base de trabalho:** PR #34 Draft em `fix/lt62-menu-visual-states-20261023`, continuação de `a06436ecdc8c25107079bf2a03d29dd5c4bd4797`. Main LT61 permanece isolada. Sem APK LT62, sem merge, sem Samsung homologado.
+
+**Referência autenticada pelo usuário:** pasta Drive `Pogocoordinates-Ref` (37 itens), especialmente `Todos_Filtros_Preenchidos_PVP.jpg` que exibe **No spawns match your filter right now.** Os JSON exportados do próprio site possuem `pokemon_ids`, `species_forms` com `pokemon_id/form_id/costume_id`, `forms`, `sizes`, `gender`, `boosted`, `weather_id`, `center_lat/center_lng/radius_km`, `shiny_only` e `pvp_top_rank/pvp_include_pre_evolutions/pvp_min_cp`; não interpretá-los como API pública ou contrato DOM. `pvp_mode=false` significa que valores de ranking salvos não são evidência de modo PvP ativo.
+
+**Ajuste de resultado vazio real:** `probe.js` reconhece o texto de nenhum spawn em elementos semânticos da área principal, inclusive quando a página não exibe `Showing 0 spawns`. Assinatura de resultado inclui apenas marcador de vazio explícito, além de contagem e cartões. Continua obrigatório `resultChanged=true` depois de `submitSearch` e filtros previamente verificados: texto idêntico já visível antes da busca não confirma zero novo. Não marcar erro como zero nem descartar cartões anteriores sem evidência.
+
+**Refresh independente:** toque simples no botão `RefreshCw` aciona `Native.refresh()`, mantendo IV, Shiny, Pokémon, localização, filtros e favoritos; pressão longa (evento contextmenu WebView) abre painel AUTO/OFF/intervalos, reaproveitando as ações existentes. Verificar o gesto no Samsung; não confundir configuração automática com busca manual. Sem novos requests no input.
+
+**Visual e Pokémon:** retirar pintura de todo o botão Location/Shiny/Favorites no estado selecionado, mantendo somente indicadores no símbolo; usar variável de fundo do botão para respeitar tema. Chips Pokémon podem exibir o sprite HTTPS somente quando a própria lista oficial de sugestões do site forneceu um PNG; sem sprite verificado permanecem texto e botão de remoção, sem URLs inventadas. Nenhum catálogo Pokémon estático novo.
+
+**QA:** regressões Node em `probe-smoke.test.js` cobrem a frase observada, ausência de contagem visível, transição de busca e rejeição de zero antigo. Homologar no Samsung: resultado zero após pesquisa vs. texto anterior, Refresh toque curto vs. pressão longa, filtro ativo sem fundo alterado, sprite do chip depois de sugestão real, Shiny autenticado e persistência de sessão. Controles DOM reversos, clima Boosted e espécies com IDs distintos permanecem pendentes de leitura autenticada: não assumir sincronização bidirecional concluída.

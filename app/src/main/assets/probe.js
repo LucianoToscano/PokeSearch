@@ -1000,10 +1000,15 @@ function visibleResultSignature(){
  const body=text(document.body);
  const count=(body.match(/\bShowing\s+\d+\s+spawns?\b/i)||[])[0]||"";
  const cards=cardRoots().map(item=>text(item.node).slice(0,700)).join("\u001e");
- return count+"\u001f"+cards;
+ // A real no-spawns message may replace cards without a "Showing 0" label.
+ // Record only its presence, not the surrounding account/location text.
+ const empty=mainEmptyMessage()?"verified-empty-element":"";
+ return count+"\u001f"+cards+"\u001f"+empty;
 }
 function mainEmptyMessage(){
- const empty=/^(?:no results(?: found)?|no matches(?: found)?|nenhum(?:a|s)? resultado(?:s)?|sem resultados)[.!]?$/i;
+ // Exact text observed in Pogocoordinates-Ref/Todos_Filtros_Preenchidos_PVP.jpg.
+ // A previously visible identical message does not prove a fresh submission.
+ const empty=/^(?:no spawns match your filters?(?: right now)?|no spawns found|no results(?: found)?|no matches(?: found)?|nenhum(?:a|s)? resultado(?:s)?|sem resultados)[.!]?$/i;
  return elements('main [role=status],main [aria-live],main p,main h2,main h3')
   .filter(vis).some(node=>!node.closest?.('[role=listbox],[role=dialog],[cmdk-list],[data-radix-popper-content-wrapper]')&&
    empty.test(text(node)));
@@ -1142,7 +1147,7 @@ function collect(){
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
- const emptyMessage=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i;
+ const emptyMessage=/\b(?:no spawns match your filters?(?: right now)?|no spawns found|no results found|no results|nenhum resultado|sem resultados)\b/i;
  const regions=elements('main section,[role=region],[data-testid*=result],[aria-label*=result]').filter(vis);
  const regionEmpty=found.length===0&&regions.some(region=>{
   const body=text(region);
@@ -1160,7 +1165,11 @@ function collect(){
  // A still-visible card from the previous query is not proof of this Search.
  // Identical legitimate result sets may require a new site DOM transition.
  const resultFreshnessPending=found.length>0&&!resultChanged;
- const zeroInResults=countLabel==="0"&&mainEmptyMessage();
+ // Some responsive result pages show the exact no-spawns message with no
+ // numerical "Showing 0 spawns" header. Require a MAIN status element, not
+ // arbitrary body/dropdown text, and a post-submit signature transition.
+ const emptyInMain=mainEmptyMessage();
+ const zeroInResults=emptyInMain&&(countLabel==="0"||countLabel===undefined);
  const explicitEmptySignal=regionEmpty||zeroInResults;
  const explicitEmpty=found.length===0&&!loading&&explicitEmptySignal&&resultChanged;
  // If the site advertises more visible cards than we could parse, retry.
