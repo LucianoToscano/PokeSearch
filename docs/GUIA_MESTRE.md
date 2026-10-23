@@ -4710,3 +4710,24 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 **Homologação Samsung pós-build:** testar reinstalação sobre app atual sem perder login, todos os menus, toque na engrenagem com submenu aberto, toques em áreas transparentes, Modos/GL/UL/IV%/Shiny, filtros reais PoGoCoordinates, busca e resultados, Localização, paginação de Favoritos, 36 áudios, AUTO 10 min e pressão longa, Personalização, Info Pokémon e Editor Visual. Atenção: área transparente nativa pode continuar interceptando toque; não afirmar corrigida até evidência física.
 
 **Entrega:** manter `main` sem merge e PR #34 Draft. Continuar o projeto a partir do último SHA REAL confirmado, sem reiniciar nem misturar outros projetos. Só criar LT63 após novos testes e autorização do proprietário.
+
+
+### 12.246 — LT62: APK assinado gerado e validado com sucesso (23/10/2026)
+
+**Autorização/escopo:** a solicitação expressa “Gere o prompt para próximo chat. Registre tudo no arquivo mestre. E gere o apk” autorizou apenas compilar um novo APK LT62, mantendo `main` LT61 e PR #34 Draft sem merge. A autorização foi materializada no commit de build iniciado por `build: approved v0.00.62 LT signed`.
+
+**Build assinado, concluído:** GitHub Actions `PokeSearch v0.00.62 LT — APK assinado para homologação de menus compactos`, run **40007032664**, status **SUCCESS**, fonte/checkout **878c7aa16918c30b96e0b1b651c16aeedec9927d**. Steps de Java 17, Gradle 8.11.1, Android SDK 36, assinatura privada, contratos de menus e nove suítes Node, `app:testDebugUnitTest`, `app:assembleDebug`, verificação de APK, assinatura e publicação de artefato: todos **SUCCESS**. O arquivo de origem real é verificado em `SOURCE_COMMIT.txt` dentro do artefato, não pela HEAD documental posterior.
+
+**Entrega confirmada:**
+- Artefato GitHub Actions **12524672001** denominado `PokeSearch-v0.00.62-LT` na run `https://github.com/LucianoToscano/PokeSearch/actions/runs/40007032664`.
+- APK oficial `PokeSearch-v0.00.62-LT.apk`, tamanho **33.250.884 bytes** (aprox. 31,7 MiB), conteúdo ZIP íntegro.
+- SHA-256 do APK **8ce4b86457f32c9c618348a7c3a80f8e58b7403279bf67232fbcb894df20bb9c**, confirmado por `sha256sum -c SHA256SUMS.txt`.
+- Assinatura SHA-256 do certificado **34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e**, certificado persistente da LT61/LT62, verificações v2 realizadas no runner Android.
+- Pacote `com.lucianotoscano.pokesearch`, `versionName=0.00.62`, `versionCode=54260`, confirmados por `aapt dump badging` no workflow e `PACKAGE_VERSION.txt`. Mesmo versionCode da LT62 anterior: a nova compilação traz alterações posteriores à LT62 original e deve ser diferenciada pelo SHA/commit.
+- Arquivos entregues junto ao APK: `SHA256SUMS.txt`, `SIGNING_CERT_SHA256.txt`, `SOURCE_COMMIT.txt`, `PACKAGE_VERSION.txt`. Pacote ZIP de artefatos disponível por 30 dias no GitHub Actions, conforme política da run.
+
+**Checkpoint documental posterior ao APK:** atualizações nesta seção e no prompt de continuidade `docs/PROMPT_CONTINUIDADE_POKESEARCH_LT62_APK_HOMOLOGACAO_PARA_LT63_20261023.txt` são **apenas documentação**. Podem fazer a HEAD da branch ser mais recente do que o SHA `878c7aa1` compilado; isso **não significa** que o APK foi recompilado sobre os commits documentais. O conteúdo funcional e release_notes incluídos no APK correspondem ao checkout indicado em `SOURCE_COMMIT.txt`.
+
+**Limitações ainda abertas:** nenhuma homologação física Samsung foi realizada nesta etapa, mesmo com build/testes válidos. Checar instalação sobre LT61/LT62 e persistência de login, overlays, áreas transparentes e eventos de toque, filtros reais PoGoCoordinates, GL/UL/IV%/Shiny, Favoritos, 36 áudios, AUTO 3/5/10/15/20, Editor Visual, Personalização e Info Pokémon; registrar falhas comprovadas antes de gerar LT63.
+
+**Controle:** PR #34 Draft **não mesclada**, `main` LT61 intocada; código, APK, assinatura e docs registradas. Para novo chat, abrir prompt no caminho oficial e conferir HEAD atual sem confundir commit documental com commit do APK.
