@@ -114,7 +114,6 @@ public class OverlayService extends Service {
                 broadcastVisualPrefs();
                 return;
             }
-            int oldX=visualResultsOffsetX,oldY=visualResultsOffsetY;
             int oldMenuBase=visualMenuBaseDp();
             visualPrefsJson=next;
             readVisualRuntime();
@@ -124,13 +123,7 @@ public class OverlayService extends Service {
                 updateResultHeaderGrip();
                 resultParams.height=Math.max(resultParams.height,dp(minResultsHeaderHeightDp()));
                 resultParams.width=dp(resultWidthDp());
-                resultParams.x+=dp(visualResultsOffsetX-oldX);
-                resultParams.y+=dp(visualResultsOffsetY-oldY);
-                DisplayMetrics m=metrics();
-                resultParams.x=Math.max(0,Math.min(Math.max(0,m.widthPixels-resultParams.width),resultParams.x));
-                resultParams.y=Math.max(0,Math.min(Math.max(0,m.heightPixels-resultParams.height),resultParams.y));
-                try{wm.updateViewLayout(resultRoot,resultParams);}
-                catch(Exception e){recordFailure("editor posição resultados",e);}
+                positionResultsUnderPokeball(true); // Editor offsets now relative to the unified icon.
                 moveDetail();
             }
             if(menuExpanded&&menuParams!=null){
@@ -1110,6 +1103,7 @@ public class OverlayService extends Service {
             }
         });
         resultPanel.loadUrl("file:///android_asset/dock.html?results=1");
+        positionResultsUnderPokeball(true); // Migrate legacy independently saved list coordinates.
         if(resultCollapsed)resultRoot.setVisibility(View.GONE);
     }
     private int minResultsHeaderHeightDp(){
@@ -1128,10 +1122,42 @@ public class OverlayService extends Service {
         box.topMargin=dp(visualHeaderY);
         resultGrip.setLayoutParams(box);
     }
+    // LT62-RESULTS-ANCHOR-01: The result list belongs visually to the
+    // unified Pokébola, not to the old separately draggable result header.
+    // Always derive its absolute position from the native dock and the Editor's
+    // RELATIVE resultsOffsetX/Y; legacy resultsX/Y are kept only as fallback.
+    // Never move a live user's login, filters, or poke search state.
+    private void positionResultsUnderPokeball(boolean applyLayout){
+        if(params==null||resultParams==null)return;
+        DisplayMetrics display=metrics();
+        int gap=dp(2+visualHeaderAfterGap);
+        int x=params.x+dp(visualResultsOffsetX);
+        int below=params.y+dp(30)+gap+dp(visualResultsOffsetY);
+        int above=params.y-resultParams.height-gap+dp(visualResultsOffsetY);
+        int y=below;
+        // When the list cannot fit below the icon, prefer ABOVE over clipping
+        // 10 Pokémon or silently shifting the whole icon away from the finger.
+        if(below+resultParams.height>display.heightPixels&&above>=0)
+            y=above;
+        int maxX=Math.max(0,display.widthPixels-resultParams.width);
+        int maxY=Math.max(0,display.heightPixels-resultParams.height);
+        int desiredX=Math.max(0,Math.min(maxX,x));
+        int desiredY=Math.max(0,Math.min(maxY,y));
+        if(resultParams.x==desiredX&&resultParams.y==desiredY)return;
+        resultParams.x=desiredX;
+        resultParams.y=desiredY;
+        if(applyLayout&&resultRoot!=null&&wm!=null&&resultRoot.isAttachedToWindow()){
+            try{wm.updateViewLayout(resultRoot,resultParams);}
+            catch(Exception e){recordFailure("alinhar resultados com Pokébola",e);}
+        }
+        moveDetail();
+    }
     private void updateResultsWidth(){
         if(resultParams==null||resultRoot==null)return;
         resultParams.width=dp(resultWidthDp());
-        resultParams.x=Math.max(0,Math.min(metrics().widthPixels-resultParams.width,resultParams.x));
+        // Width/orientation changes may invalidate the old X clamp.
+        // Re-anchor under the same Pokébola instead of leaving a detached list.
+        positionResultsUnderPokeball(false);
         updateResultHeaderGrip();
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar largura dos resultados",e);}
@@ -2018,10 +2044,13 @@ public class OverlayService extends Service {
             Math.max(min,Math.min(max,desiredDp));
         int pixels=dp(desired);
         int screenPixels=metrics().heightPixels;
-        int fittedY=Math.max(0,Math.min(Math.max(0,screenPixels-pixels),resultParams.y));
-        if(Math.abs(resultParams.height-pixels)<dp(2)&&resultParams.y==fittedY)return;
+        if(Math.abs(resultParams.height-pixels)<dp(2)){
+            // E.g. changing visual Y offset while the list height is unchanged.
+            positionResultsUnderPokeball(true);
+            return;
+        }
         resultParams.height=pixels;
-        resultParams.y=fittedY;
+        positionResultsUnderPokeball(false);
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar resultados",e);}
         moveDetail();
