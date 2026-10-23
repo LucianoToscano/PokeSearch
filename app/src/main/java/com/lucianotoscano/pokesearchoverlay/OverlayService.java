@@ -2719,7 +2719,7 @@ public class OverlayService extends Service {
             if(!shiny){
                 // Coords, Shiny and other filters belong to one site form.
                 // Refresh fills only changed fields and verifies all selections.
-                if(locationEnabled){refresh(true);return;}
+                if(locationEnabled){OverlayService.this.refresh(true);return;}
                 prepareImmediateShiny(generation);
                 return;
             }
@@ -2736,7 +2736,7 @@ public class OverlayService extends Service {
                     // Re-enter the unified form so the site does not discard
                     // active Coords when switching Shiny.
                     status("✨ Sincronizando Shiny e localização na mesma pesquisa...");
-                    refresh(true);
+                    OverlayService.this.refresh(true);
                     return;
                 }
                 prepareImmediateShiny(generation);
