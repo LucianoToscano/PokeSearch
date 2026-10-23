@@ -3353,6 +3353,15 @@ test("LT71-FORM-EDITOR searches official forms with chips but applies only on fi
   dock.includes('filterOptions.form={present:true,options:[...new Set([...previous,...options])].slice(0,500)}')&&
   dock.includes('Native.patchSearchFilters(JSON.stringify(delta))');
 });
+test("LT72-FORM-REACT clears only temporary official Form search before multi-apply",()=>{
+ const form=probe.split("function extraMulti(key,desired,operation){")[1]
+  ?.split("function extraMatches(",1)[0]||"";
+ return form.includes('if(key==="form"&&operation==="apply")')&&
+  form.includes("const popup=extraOptionPopup('form',control)")&&
+  form.includes('if(valueInput(search,""))transientPending=true;')&&
+  form.includes('const target=[...new Set(desired.map(x=>clean(x).toLowerCase()))]')&&
+  probe.includes('!extraMulti("form",wanted,"verify")');
+});
 test("LT71-FORM-NATIVE saves multiple forms without resetting species or location",()=>{
  const patch=service.split("public void patchSearchFilters(String payload)")[1]?.split("public void setPokemonSelections(",1)[0]||"";
  return patch.includes('"formSelections"')&&patch.includes('key.equals("formSelections")?500:7')&&
