@@ -3449,6 +3449,33 @@ test("LT73-FORM-LINKED-PORTAL validates stale aria-controls as strictly as fallb
   code.includes('{ok:false,pending:true,options:[]};');
 });
 
+// LT60: neutral-filter reset intents may only retire on a verified, accepted Search.
+test("LT60-CLEAR-ACK-01 pending extra reset requests retire after confirmed results only",()=>{
+ const start=service.indexOf("private void acknowledgeConfirmedExtraResets(){");
+ const end=service.indexOf("private void applyCollectedResults(JSONObject r)",start);
+ const helper=service.slice(start,end);
+ const apply=service.slice(end,service.indexOf("private void resize(int h)",end));
+ const poll=service.slice(service.indexOf("private void pollSearch("),
+  service.indexOf("private long expiration("));
+ return start>0&&end>start&&
+  helper.includes('updated.remove("clearExtraKeys");')&&
+  helper.includes('putString("extraFiltersJson",extraFiltersJson)')&&
+  apply.includes("acknowledgeConfirmedExtraResets();")&&
+  apply.indexOf("acknowledgeConfirmedExtraResets();")>
+   apply.indexOf("results=sorted.toString();")&&
+  apply.indexOf("acknowledgeConfirmedExtraResets();")<
+   apply.indexOf("shownMode=mode;shownConfigJson=filterConfigJson();")&&
+  poll.includes('!r.optBoolean("criteriaConfirmed",false)')&&
+  poll.includes("applyCollectedResults(r);");
+});
+test("LT60-CLEAR-ACK-02 failed searches must keep pending resets",()=>{
+ const helper=service.slice(service.indexOf("private void acknowledgeConfirmedExtraResets(){"),
+  service.indexOf("private void applyCollectedResults(JSONObject r)"));
+ const early=service.slice(service.indexOf("private void configureSearchWithRetry("),
+  service.indexOf("private void pollSearch("));
+ return helper.includes("if(pending==null||pending.length()==0)return;")&&
+  !early.includes("acknowledgeConfirmedExtraResets();");
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
