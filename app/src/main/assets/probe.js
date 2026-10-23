@@ -685,8 +685,8 @@ function extraSelect(key,want){
 }
 /* LT57 ONE-FORM: checkbox-aware multiselection. Return false instead of
    inventing a successful multi-filter when the live site state is unknown. */
-function multiOptions(control){
- const popup=activeOptionPopup(control);
+function multiOptions(control,key){
+ const popup=key==='form'?extraOptionPopup('form',control):activeOptionPopup(control);
  if(!popup)return null;
  const selector='[role=option],[role=menuitemcheckbox],[role=checkbox],label,[data-radix-collection-item],button[aria-pressed],button[aria-checked]';
  return [...new Set(Array.from(popup.querySelectorAll(selector)))].filter(vis)
@@ -730,18 +730,18 @@ function extraMulti(key,desired,operation){
  // A single-choice site control cannot truthfully represent >1 desired items.
  if(control.matches("select"))return target.length<=1&&
   (operation==="apply"?extraSelect(key,target[0]||""):extraMatches(key,target[0]||""));
- const options=multiOptions(control);
+ const options=multiOptions(control,key);
  if(!options){
   if(operation==="apply"&&control.getAttribute("aria-expanded")!=="true"){
    control.click();transientPending=true;
   }
   return false;
  }
- const allowed=key==="size"?["xxs","xs","s","m","l","xl","xxl"]:
+ const allowed=key==="form"?null:key==="size"?["xxs","xs","s","m","l","xl","xxl"]:
   ["male","female","genderless","unknown"];
  const observed=options.map(el=>({el,label:clean(text(el)).toLowerCase(),active:multiState(el)}))
-  // The site's neutral Any row is not a selected size/gender checkbox.
-  .filter(x=>x.active!==null&&allowed.includes(x.label));
+  // Form labels are taken only from its own checkbox nodes.
+  .filter(x=>x.active!==null&&(allowed===null?!isNeutral(x.label):allowed.includes(x.label)));
  if(target.some(v=>!observed.some(o=>o.label===v)))return false;
  if(!observed.length)return false;
  for(const choice of observed){
@@ -763,6 +763,30 @@ if(action.startsWith("openFilterOptions:")){
  if(!e||e.disabled||e.matches("input")||e.matches("select"))return JSON.stringify({ok:false,key});
  if(e.getAttribute("aria-expanded")!=="true")e.click();
  return JSON.stringify({ok:true,key});
+}
+// Only the official Form portal may answer this search.
+function searchOfficialFormOptions(query){
+ const control=extraControl('Form');
+ if(!control)return {ok:false,pending:true,key:'form',reason:'Aguardando filtro Form oficial'};
+ if(control.disabled)return {ok:false,key:'form',reason:'Filtro Form indisponível'};
+ if(control.getAttribute('aria-expanded')!=='true'){
+  control.click();return {ok:false,pending:true,key:'form',reason:'Abrindo Form oficial'};
+ }
+ const popup=extraOptionPopup('form',control);
+ if(!popup)return {ok:false,pending:true,key:'form',reason:'Aguardando dropdown Form'};
+ const input=Array.from(popup.querySelectorAll('input:not([type=hidden])')).find(vis);
+ const wanted=String(query||'').slice(0,70).trim();
+ if(input&&String(input.value||'')!==wanted){
+  if(!valueInput(input,wanted))return {ok:false,key:'form',reason:'Busca Form indisponível'};
+  return {ok:false,pending:true,key:'form',reason:'Aguardando opções de Form'};
+ }
+ const result=siteOptions('form');
+ return {...result,key:'form',query:wanted};
+}
+if(action.startsWith("searchFormOptions:")){
+ try{return JSON.stringify(searchOfficialFormOptions(
+  JSON.parse(action.slice("searchFormOptions:".length))));}
+ catch(_){return JSON.stringify({ok:false,key:'form',reason:'Consulta Form inválida'});}
 }
 if(action.startsWith("readFilterOptions:")){
  const key=action.split(":")[1],label=EXTRA_LABELS[key];
@@ -812,7 +836,15 @@ function extras(action){
    if(transientPending)break;
    continue;
   }
-  if(key==="gender"&&Array.isArray(filters.genderSelections)){
+  if(key==="form"&&Array.isArray(filters.formSelections)){
+    const wanted=filters.formSelections.map(x=>String(x).trim()).filter(Boolean);
+    if(!wanted.length&&!resetKeys.includes("formSelections")&&!resetKeys.includes("form"))continue;
+    const ok=extraMulti("form",wanted,action);
+    if(!ok)failed.push("formSelections");
+    if(transientPending)break;
+    continue;
+   }
+   if(key==="gender"&&Array.isArray(filters.genderSelections)){
    // Gender is a single-choice radio on the site's official form.
    const wanted=filters.genderSelections.map(x=>String(x).trim()).filter(Boolean);
    if(wanted.length>1){failed.push("genderSelections");continue;}
@@ -861,7 +893,14 @@ function visibleExtrasMismatch(){
       !extraMulti("size",wanted,"verify"))return "sizeSelections";
    continue;
   }
-  if(key==="gender"&&Array.isArray(filters.genderSelections)){
+  if(key==="form"&&Array.isArray(filters.formSelections)){
+    const wanted=filters.formSelections.map(x=>String(x).trim()).filter(Boolean);
+    if(extraControl(EXTRA_LABELS[key])&&
+       (wanted.length||resetKeys.includes("formSelections")||resetKeys.includes("form"))&&
+       !extraMulti("form",wanted,"verify"))return "formSelections";
+    continue;
+   }
+   if(key==="gender"&&Array.isArray(filters.genderSelections)){
    const wanted=filters.genderSelections.map(x=>String(x).trim()).filter(Boolean);
    if(wanted.length>1)return "genderSelections";
    if(extraControl(EXTRA_LABELS[key])&&
