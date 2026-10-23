@@ -348,7 +348,7 @@ test("Login launched from overlay returns to gameplay with PokeSearch only on su
  main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
  main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
 test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("×")')&&!picker.includes('.setPositiveButton("Concluído"'));
-test("Favorites retain translucent dark styling with optional background blur",picker.includes('Color.argb(239,34,38,47)')&&picker.includes('setBlurBehindRadius'));
+test("Favorites retain translucent charcoal but allow background touches outside dialog",picker.includes('Color.argb(239,34,38,47)')&&picker.includes('FLAG_NOT_TOUCH_MODAL')&&!picker.includes('setBlurBehindRadius'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
@@ -923,7 +923,7 @@ test("UX-MENU-02 Pokémon silhouette opens the official multi-species/form picke
 test("UX-SHINY-01 restores Shiny ✨ next to Modos using the existing native toggle",
  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"]')&&
  dock.includes('case "sh":Native.shiny();break;')&&
- dock.includes('id==="sh"?shiny:')&&dock.includes('shinyPending=!!pending;shiny=!!shi||shinyPending;')&&
+ dock.includes('id==="sh"?shiny:')&&dock.includes('shinyPending=!!pending;\n shiny=!!shi||shinyPending;')&&
  !dock.includes('shinyButton.onclick=()=>Native.shiny()'));
 test("UX-MENU-04 restores twelve small icons in the old thin row while migrating saved menu",
  dock.includes('id="quickUtilities"')&&
@@ -3648,7 +3648,7 @@ test("LT61-SHINY-MODE-01 native mode changes do not rewrite the saved Shiny togg
 });
 test("LT61-SHINY-MODE-02 dock preserves requested Shiny during verification",()=>{
  const statement="shinyPending=!!pending;shiny=!!shi||shinyPending;";
- if(!dock.includes(statement))return false;
+ if(!dock.includes('shinyPending=!!pending;\n shiny=!!shi||shinyPending;'))return false;
  const fn=require("node:vm").runInNewContext("((shi,pending)=>{let shiny,shinyPending;"+statement+"return [shiny,shinyPending]})",{});
  return JSON.stringify(fn(false,true))==="[true,true]"&&
   JSON.stringify(fn(true,false))==="[true,false]"&&
