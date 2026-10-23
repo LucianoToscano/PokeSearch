@@ -599,7 +599,7 @@ check("LT62 Shiny: rapid ON/OFF invalidates previous generation without a duplic
  assert.ok(toggle.includes("resultsStale=count()>0;"));
  assert.ok(toggle.includes("shinyVerified=false;"));
  assert.ok(toggle.includes("startVerifiedShinySearch(generation,0);"));
- assert.equal((toggle.match(/refresh\\(true\\);/g)||[]).length,1);
+ assert.equal(toggle.split("refresh(true);").length-1,1);
  assert.ok(cancel.includes("++requestGeneration;"));
  assert.ok(cancel.includes("confirmedSubmittedFiltersGeneration=-1;"));
  assert.ok(cancel.includes("handler.removeCallbacks(filterChangeRefresh);"));
