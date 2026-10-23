@@ -2709,7 +2709,6 @@ function locationPanelFeedback(){
   state==="REQUESTED"?"⌛ Verificando localização":"";
  hint.hidden=state==="OFF";
  hint.style.color=state==="NOT_APPLIED"?"#ffbf8f":"";
- fit();
 }
 window.onLocationPaste=coords=>{
  if(!controlsWindow||choiceOpen!=="location")return;
