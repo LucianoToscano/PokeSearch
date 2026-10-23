@@ -4690,3 +4690,23 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 **Verificação automatizada:** workflow `PokeSearch Node QA (sem APK)` **40005466378 SUCCESS** no commit `8611bc261bee73f881183f520331c3ef83ba2afd`, todas as nove suítes aprovadas. CI Android build e Secure Beta foram **SKIPPED**. Isso não equivale a compilação Java/Gradle nem homologação física; validar tamanhos, cliques, edição de ordem e deslizamento no Samsung antes de aprovar merge. Nenhum APK novo, nenhuma alteração na main LT61 ou na assinatura/applicationId. Arquitetura WebView+`probe.js`, login, persistência, demais filtros e menus preservados.
 
 **Próxima etapa sugerida:** ajustar outros detalhes visuais somente na PR #34 até autorização explícita para compilar novo APK; quando autorizado, homologar no Samsung primeiro a passagem de toque, o Editor Visual, a ordem dos menus, estados das 21 infos e os temas claro/escuro.
+
+
+### 12.245 — LT62: checkpoint consolidado, prompt de continuidade e autorização explícita do novo APK (23/10/2026)
+
+**Autorização expressa do proprietário:** “Gere o prompt para próximo chat. Registre tudo no arquivo mestre. E gere o apk”. Portanto, a geração de **nova compilação do APK LT62** está autorizada nesta ocasião, sem autorização de merge. Permanecer na branch `fix/lt62-menu-visual-states-20261023`, PR #34 Draft. `main` deve continuar em LT61 (`caea98b7b57b9e45d5218e907eb392d76953dd53`). Não alterar `applicationId=com.lucianotoscano.pokesearch`, certificado, login, arquitetura ou filtros.
+
+**Consolidação das seções 12.238–12.244 (mudanças pós-APK LT62 anterior):** (1) Modos A/D/S e IV% 0–100, GL/UL #, placeholders e ✓ único; (2) Filtros em cascata com PC/Nível sem duplicar Min/Max, Sexo maior, formas e tamanho; (3) Localização compacta, colar SVG e feedback curto; (4) Favoritos com busca instantânea, 3 sugestões, 12 sprites por página e sem scroll; (5) Notificações compactas em duas seções, som/silencioso/OFF, 36 opções de áudio, prévia, importação, som BR inicial de Favoritos e personalização por espécie oculta; (6) botão Atualização com duas setas circulares, toque curto e segurar 600ms, OFF/AUTO 3/5/10/15/20 e badge; (7) Personalização e Info Pokémon com fontes menores, P/M/G compactos, nomes abreviados, setas alinhadas e 21 controles; (8) Editor Visual agrupado e compactado sem perder funcionalidades originais; (9) barra fixa e autenticação preservadas.
+
+**Arquivos de referência:**
+- Prompt completo para novo chat: `docs/PROMPT_CONTINUIDADE_POKESEARCH_LT62_APK_HOMOLOGACAO_PARA_LT63_20261023.txt`.
+- Release notes atualizadas em `app/src/main/assets/release_notes.json`, entrada `minVersionCode=54260` (LT62), contendo novidades, melhorias, correções e homologação pendente.
+- Workflow oficial já instalado: `.github/workflows/build-v062-compact-preview.yml`, que exige mensagem de commit iniciada por `build: approved v0.00.62 LT signed` para compilar por push autorizado nesta branch.
+
+**Contrato de build autorizado:** `PokeSearch-v0.00.62-LT.apk`, `versionName=0.00.62`, `versionCode=54260` (mesmo identificador visual da LT62 de teste anterior, MAS novo binário compilado do commit documentado). Assinar **somente** com chave persistente protegida por secrets; verificar SHA-256 da assinatura `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, APK `com.lucianotoscano.pokesearch`, integridade ZIP e SHA256SUMS. Não distribuir binário de chave debug efêmera. Publicar artefato GitHub Actions e URL verdadeira após status SUCCESS. Nenhum arquivo APK deve ser declarado pronto antes de conferir esse artefato.
+
+**Gate de qualidade:** nove suítes Node passaram no commit `8611bc261bee73f881183f520331c3ef83ba2afd` (workflow `40005466378`). Ao iniciar a compilação autorizada, executar novamente testes Node, `app:testDebugUnitTest`, `app:assembleDebug`, verificação de assinatura e versão. Registrar em seção posterior o ID real do build, SHA de origem, status, hash e falhas/fixes. O resultado não prova homologação física Samsung.
+
+**Homologação Samsung pós-build:** testar reinstalação sobre app atual sem perder login, todos os menus, toque na engrenagem com submenu aberto, toques em áreas transparentes, Modos/GL/UL/IV%/Shiny, filtros reais PoGoCoordinates, busca e resultados, Localização, paginação de Favoritos, 36 áudios, AUTO 10 min e pressão longa, Personalização, Info Pokémon e Editor Visual. Atenção: área transparente nativa pode continuar interceptando toque; não afirmar corrigida até evidência física.
+
+**Entrega:** manter `main` sem merge e PR #34 Draft. Continuar o projeto a partir do último SHA REAL confirmado, sem reiniciar nem misturar outros projetos. Só criar LT63 após novos testes e autorização do proprietário.
