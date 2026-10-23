@@ -2283,6 +2283,47 @@ public class OverlayService extends Service {
                 status("Filtro inválido; nenhuma configuração foi alterada.");
             }
         });}
+        // LT64-FILTER-DELTA: Pokémon/form selections never replace other filters.
+        @JavascriptInterface public void setPokemonSelections(String payload){handler.post(()->{
+            try{
+                JSONObject request=new JSONObject(payload);
+                org.json.JSONArray values=request.getJSONArray("selections");
+                if(values.length()>50)return;
+                JSONObject extra=new JSONObject(extraFiltersJson);
+                org.json.JSONArray previous=extra.optJSONArray("pokemonSelections");
+                org.json.JSONArray cleaned=new org.json.JSONArray();
+                java.util.HashSet<String> unique=new java.util.HashSet<>();
+                for(int i=0;i<values.length();i++){
+                    String label=values.optString(i,"").trim();
+                    if(label.isEmpty()||label.length()>90||label.matches("(?s).*[<>\\r\\n].*"))return;
+                    if(unique.add(label.toLowerCase(java.util.Locale.ROOT)))cleaned.put(label);
+                }
+                java.util.LinkedHashSet<String> clears=new java.util.LinkedHashSet<>();
+                org.json.JSONArray oldClears=extra.optJSONArray("clearExtraKeys");
+                if(oldClears!=null)for(int i=0;i<oldClears.length();i++)
+                    clears.add(oldClears.optString(i));
+                if(cleaned.length()==0&&(request.optBoolean("clear",false)||
+                    (previous!=null&&previous.length()>0)||!extra.optString("pokemon","").isEmpty()))
+                    clears.add("pokemonSelections");
+                if(cleaned.length()>0)clears.remove("pokemonSelections");
+                extra.put("pokemonSelections",cleaned);
+                extra.put("pokemon","");
+                org.json.JSONArray reset=new org.json.JSONArray();
+                for(String key:clears)if(!key.isEmpty())reset.put(key);
+                extra.put("clearExtraKeys",reset);
+                String next=extra.toString();
+                if(extraFiltersJson.equals(next)){OverlayService.this.refresh(true);return;}
+                extraFiltersJson=next;
+                getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",next).apply();
+                replaceActiveFilterSearch();
+                resultsStale=count()>0;
+                hideDetails();
+                status("Pokémon e formas selecionados · demais filtros preservados");
+                scheduleFilterChangeRefresh();
+            }catch(org.json.JSONException ex){
+                status("Seleção Pokémon inválida · filtros anteriores preservados.");
+            }
+        });}
         @JavascriptInterface public void setSearchConfig(String payload){handler.post(()->{
             try{
                 JSONObject input=new JSONObject(payload);
