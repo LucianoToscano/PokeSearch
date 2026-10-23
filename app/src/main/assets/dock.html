@@ -2835,16 +2835,22 @@ const FILTERS_MENU_KEYS=Object.freeze(["sortBy","weather","size","form","gender"
  "cpMin","cpMax","levelMin","levelMax","minPvpCp"]);
 function extraFilterValue(config,key){
  const value=String(config?.[key]??"").trim();
- if((key==="levelMin"&&value==="1")||(key==="levelMax"&&value==="35"))return "";
- if((key==="cpMin"||key==="minPvpCp")&&value==="0")return "";
+ // The search page has neutral defaults, not "active" criteria. No badge for
+ // Any, default Sort, Level 1–35, empty field, or default CP lower bound.
+ if(!value||/^(?:any|qualquer|padr[aã]o)$/i.test(value))return "";
+ if(key==="sortBy"&&value.toLowerCase()==="despawn (longest)")return "";
+ if((key==="levelMin"&&Number(value)===1)||
+    (key==="levelMax"&&Number(value)===35))return "";
+ if((key==="cpMin"||key==="minPvpCp")&&Number(value)===0)return "";
  return value;
 }
 function activeExtraFilterCount(config=searchSettings,selectedMode=mode){
  const active=key=>extraFilterValue(config,key)!=="";
- const hasMulti=key=>Array.isArray(config?.[key+"Selections"])&&config[key+"Selections"].length>0;
+ const hasMulti=key=>Array.isArray(config?.[key+"Selections"])&&
+  config[key+"Selections"].some(v=>!["","any","qualquer"].includes(String(v||"").trim().toLowerCase()));
  const pvp=selectedMode==="gl"||selectedMode==="ul";
  let total=["weather","form"].filter(active).length+
-  (active("sortBy")&&config.sortBy!=="Despawn (longest)"?1:0)+
+  (active("sortBy")?1:0)+
   (active("size")||hasMulti("size")?1:0)+
   (active("gender")||hasMulti("gender")?1:0);
  if(pvp){
