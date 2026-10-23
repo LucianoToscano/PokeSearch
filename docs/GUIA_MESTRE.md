@@ -4803,3 +4803,16 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 
 **Proteção do release:** sem merge; `main` permanece LT61, PR #34 Draft. APK assinado v0.00.62 artefato #12524672001, commit `878c7aa16918c30b96e0b1b651c16aeedec9927d`, **não incorpora esta mudança**. Nova compilação ou LT63 exigem autorização expressa.
 
+
+### 12.251 — LT62: compilação assinada solicitada pelo proprietário (23/10/2026)
+
+**Autorização expressa neste chat:** “Registre no arquivo mestre. E gere o prompt para próximo chat e gere o apk”. Autorizada **somente** uma nova compilação do pacote LT62 para homologação Samsung; não foi autorizado merge da PR #34, modificação da main ou lançamento da LT63.
+
+**Fonte inicial da compilação:** branch `fix/lt62-menu-visual-states-20261023`, PR #34 Draft, com últimas correções até a seção 12.250: refresh compacto 16px (giro neutro, badge central e cascata), transparência do menu Mais, Filtros em cascata como Modos com ✓ apenas em PC/Nível/PC mínimo PvP, demais seleções por campo e Pokébola única no lugar da engrenagem (toque curto alterna resultados, menu aberto + toque curto fecha menu, segurar 600ms alterna menu, arraste cancela toque). A lista de resultados permanece independente e em posição salva; preserve todos os 0–10 sprites, badges, dados e login.
+
+**Gatilho controlado de build:** o commit desta seção começa com `build: approved v0.00.62 LT signed` para autorizar uma execução do workflow original `.github/workflows/build-v062-compact-preview.yml` pela regra de branch. Requisitos esperados: `PokeSearch-v0.00.62-LT.apk`, versionCode `54260`, applicationId `com.lucianotoscano.pokesearch`, certificado SHA256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Não trocar keystore nem usar debug auto-gerada; abortar distribuição se a validação falhar.
+
+**Pendências de verificação do build:** registrar em checkpoint posterior o commit fonte real lido de `SOURCE_COMMIT.txt`, número da run e artefato, `SHA256SUMS.txt`, `PACKAGE_VERSION.txt`, `SIGNING_CERT_SHA256.txt`, tamanho em bytes, teste Gradle e status. Não presumir sucesso nem SHA antes de ler os arquivos do artefato; não substituir APK antigo sem conferir certificado. Após a compilação, continuar homologação real no Samsung, em especial gesto de toque longo sem duplicação, pass-through e alinhamento entre ícone e resultados. Node QA não substitui teste físico.
+
+**Restrições preservadas:** PR #34 Draft, main LT61, sem merge, sem LT63, sem proxy/backend/GPS físico, sem reconfiguração de login e preferências do usuário. Novos APKs devem manter assinatura e versionCode monotônico; esta é uma recompilação da mesma versão de teste LT62 autorizada pelo proprietário.
+
