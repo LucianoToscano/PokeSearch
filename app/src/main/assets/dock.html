@@ -1284,6 +1284,17 @@ body.controls-window #choices.morePanel [data-key=close] .quickGlyph{color:#ff59
 body.controls-window.visual-light-menu #choices.morePanel .quickMoreAction{
  border-color:#24394c66!important;
 }
+/* LT62-MENU-ANCHOR: popup-above overrides the fixed More cascade origin. */
+body.controls-window.popup-above #choices.morePanel{
+ top:auto!important;bottom:34px!important;
+}
+body.controls-window.visual-menu-vertical.popup-above #choices.morePanel{
+ top:auto!important;bottom:232px!important;
+}
+body.controls-window.visual-menu-vertical #choices:not(.morePanel){
+ max-width:100%!important;
+ width:min(100%,var(--visual-popup-width,232px))!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Abrir opções · arrastar para mover" aria-label="Abrir opções" aria-expanded="false"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.69-1.64-.93L14.36 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.53c-.6.24-1.15.56-1.64.93l-2.39-.96a.49.49 0 0 0-.61.22L2.62 8.84a.5.5 0 0 0 .12.64l2.02 1.58c-.04.3-.07.62-.07.94s.03.64.08.94L2.74 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.49.38 1.04.7 1.64.93l.36 2.53c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.53c.6-.24 1.15-.55 1.64-.93l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.56ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg></button>
@@ -1551,8 +1562,15 @@ function positionPopupUnderTrigger(){
  const area=document.getElementById("menu");
  const width=area.getBoundingClientRect().width;
  const bounds=trigger.getBoundingClientRect();
- const popupWidth=panel.getBoundingClientRect().width;
+ let popupWidth=panel.getBoundingClientRect().width;
  if(width<=0||popupWidth<=0)return;
+ // Vertical native WebView is narrower than several legacy popup presets.
+ // Resize the popup, not the fixed ribbon or its individual buttons.
+ if(popupWidth>width&&!panel.classList.contains("morePanel")){
+  panel.style.setProperty("max-width",Math.floor(width)+"px","important");
+  panel.style.setProperty("width",Math.floor(width)+"px","important");
+  popupWidth=Math.min(width,panel.getBoundingClientRect().width);
+ }
  // Anchoring the left edge is exact if there is room, clamped at the right edge.
  const left=Math.max(0,Math.min(width-popupWidth,bounds.left-area.getBoundingClientRect().left));
  panel.style.setProperty("left",Math.round(left)+"px","important");
@@ -2607,7 +2625,7 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
   // UX-SPRITE-GAP-02: metadata is independently scrollable inside the side strip.
   // Never stretch the Pokemon's vertical slot to fit all enabled rank lines.
   if(horizontal)return size+3;
-  return pitch; // Transparent sprite squares may overlap without shrinking the image.
+  return Math.max(size,pitch); // No sprite-overlap or artificial top padding at zero gap.
  });
  const desired=natural.reduce((a,b)=>a+b,0);
  const headerArea=(Number(v.headerIconY)||0)+(Number(v.headerTouchHeight)||30)+
