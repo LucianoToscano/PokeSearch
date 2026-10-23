@@ -2868,6 +2868,75 @@ test("LT57-ONEFORM-07 coordinate + Shiny share verified submit, no separate rese
   !dock.includes('fieldRow.append(field,paste,toggle)');
 });
 
+test("LT57-DRIVE-ICON-01 exact replacement StarGL, StarUL and StarIVRaw PNGs",()=>{
+ const crypto=require("node:crypto");
+ const icons={
+  "StarGL.png":"cdca6c1b159e7a3da45758d073bf88d4fe05798e9343e4ef4056e77ccb8df575",
+  "StarUL.png":"7f59249d48556a43d0769667bb7a7c032d31ae69a96fe6db229da7f1413f5a9a",
+  "StarIVRaw.png":"04aa4e0689c345c64f5cdb0da8157d63a96b315ded027c6c5ffb1c46c4872f3b"
+ };
+ return Object.entries(icons).every(([name,expected])=>{
+  const file=fs.readFileSync(path.join(root,"assets/result-icons/modes",name));
+  return file.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
+   crypto.createHash("sha256").update(file).digest("hex")===expected;
+ })&&dock.includes('gl:"StarGL.png",ul:"StarUL.png"')&&
+ dock.includes('custom:"StarIVRaw.png"');
+});
+test("LT57-DRIVE-ICON-02 Raw IV text follows A D H and updates on changes",()=>{
+ const art=dock.split("function getModeMenuIcon(")[1]?.split("// Historical result icons")[0]||"";
+ const glyph=dock.split("function iconForQuick(id, fallback){")[1]?.split("// SITE-POKEMON")[0]||"";
+ return art.includes('ivText:baseFamily==="custom"&&modeKey==="raw"')&&
+  art.includes('[settings.attack,settings.defense,settings.stamina]')&&
+  art.includes('.join("/")')&&
+  glyph.includes('glyph.classList.add("rawArt")')&&
+  glyph.includes('values.textContent=art.ivText')&&
+  dock.includes('button.dataset.modeArtKey=art.path+"|"+art.ivBadge+"|"+art.ivText')&&
+  dock.includes('const key=art.path+"|"+art.ivBadge+"|"+art.ivText')&&
+  dock.includes('.quickIvValues{')&&
+  dock.includes('white-space:nowrap!important');
+});
+test("LT57-WEATHER-ICONS-01 exact nine weather Drive PNGs embedded",()=>{
+ const crypto=require("node:crypto");
+ const icons={
+  "any.png":"d4839cd75cbe0402d18bcbf0a5f30e2809b460dd07230108c0b25d94f02194da",
+  "boosted.png":"a87266e89096e6ab59a9d97ee5aa514e12526618492387129787f674ce1d7a93",
+  "sunny.png":"3cfdfe44d746d4087e9d907702d8d536fa890a65eee1e3d67414bf58c4c8c7ec",
+  "rainy.png":"90969f1503a9fddddc2301d5aaa39bbb62a790e51dfe906cae5b97a2b8163509",
+  "partly-cloudy.png":"45ac8431e8d9ee8b220744e83e08b4b5afb26f4063a1230549a2308ec246bdc6",
+  "cloudy.png":"816ae46a0ba4104a2a14ed0baea845e158348d391aa1f240f14fe4a0af221642",
+  "windy.png":"e35c8f0fd7712ac74ee7faf01e5cb9186295631fa2fa7255b5b264bea774c47a",
+  "snow.png":"d3a2d189fcfc920daa6bb56bfecf47aab6f53e4e53a5a440a3c9f88defd1ebe2",
+  "fog.png":"c31680fe281e52db5a9573cb3832107a614460d3cec24a634febd7af31f5bb15"
+ };
+ return Object.entries(icons).every(([name,expected])=>{
+  const bytes=fs.readFileSync(path.join(root,"assets/weather-icons",name));
+  return bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
+   crypto.createHash("sha256").update(bytes).digest("hex")===expected;
+ })&&Object.keys(icons).length===9&&
+ dock.includes('WEATHER_ICON_FILES=Object.freeze({')&&
+ dock.includes('file:///android_asset/weather-icons/')&&
+ dock.includes('btn.prepend(makeWeatherIcon(value))')&&
+ dock.includes('neutral.prepend(makeWeatherIcon("Any"))');
+});
+test("LT57-DEFAULT-COUNT-01 neutral controls never add to active filter badge",()=>{
+ const helper=dock.split("const FILTERS_MENU_KEYS=Object.freeze(")[1]
+  ?.split("function quickState(id){")[0]||"";
+ const factory=new Function("searchSettings","mode","modeDraft","controlsWindow",
+  "choiceOpen","document","siteFiltersConfirmed","searchActive","resultsStale",
+  "const FILTERS_MENU_KEYS=Object.freeze("+helper+
+  ";return activeExtraFilterCount;");
+ const base={sortBy:"Despawn (longest)",weather:"Any",form:"Any",
+  size:"Any",gender:"Any",sizeSelections:[],genderSelections:[],
+  cpMin:"0",cpMax:"",levelMin:"1",levelMax:"35",
+  includePreviousEvolutions:true,minPvpCp:"0"};
+ const count=factory(base,"raw",null,false,"",{},false,false,false);
+ return count(base,"raw")===0&&count(base,"gl")===0&&
+  count({...base,weather:"Rainy"},"raw")===1&&
+  count({...base,sortBy:"CP (highest)"},"raw")===1&&
+  count({...base,sizeSelections:["XS","XXL"]},"raw")===1&&
+  count({...base,genderSelections:["Male","Female"]},"raw")===1&&
+  count({...base,weather:"Any",genderSelections:["Any"]},"raw")===0;
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
