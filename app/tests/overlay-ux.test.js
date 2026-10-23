@@ -802,11 +802,10 @@ test("Raw zero/percent extremes retain the historical result badges and menu med
   dock.includes('nundo:{normal:"nundo.png",shiny:"shnundo.png"')&&
   dock.includes('hundo:{normal:"hundo.png",shiny:"shundo.png"');
 })());
-test("Cascade IV% accepts only 46 attainable percentages",
- dock.includes('const allowed=allowedFor(kind);')&&
- dock.includes('kind==="percent"?IV_PERCENT_VALUES')&&
- dock.includes('entry.allowed.includes(value)')&&
- dock.includes('input.reportValidity()'));
+test("Cascade IV% accepts all 0-100 typed values with explicit bounds",
+ dock.includes('const limitsFor=kind=>kind==="percent"?[0,100]:kind==="iv"?[0,15]:[1,50]')&&
+ dock.includes('value<entry.min||value>entry.max')&&
+ dock.includes('entry.input.reportValidity();return;'));
 test("Cascade rows highlight the open submenu and preserve the 0/100 header badge",
  dock.includes('button.classList.toggle("chosen",cascadeMode===id)')&&
  dock.includes('button.setAttribute("aria-expanded",String(cascadeMode===id))')&&
@@ -1912,7 +1911,7 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
   api.verifiedSpawnRawIv({...alt,ivPercent:"100"})===null&&
   api.verifiedSpeciesIvRank(falseForm,"gl")===null&&
   api.resultInfoHtml("0/14/15",alt).includes("ivInfo medium")&&
-  dock.includes('["stamina","H","iv","H"]')&&
+  dock.includes('["stamina","S","iv","Stamina"]')&&
   countStartsHidden&&
   service.includes('case "speciesIvRankMl":resultShowSpeciesIvRankMl=value')&&
   service.includes('case "overallRankMl":resultShowOverallRankMl=value')&&
