@@ -1262,9 +1262,33 @@ public class OverlayService extends Service {
         handler.removeCallbacks(searchWatchdog);
         handler.postDelayed(searchWatchdog,SEARCH_WATCHDOG_MS);
         status(manual?"Busca manual iniciada...":"Atualizando...");
-        execute("session",session->{
+        execute("session",session->continueVerifiedSearchSession(generation,manual,session,0));
+    }
+    // Keep the second (in-search) auth proof as careful as the Shiny tap.
+    // React hydration may temporarily report "não confirmado" even after
+    // the first session gate returned an authenticated trainer.
+    private void continueVerifiedSearchSession(int generation,boolean manual,JSONObject session,int attempt){
             if(stopped||loginPaused||generation!=requestGeneration)return;
             final String auth=session.optString("auth","não confirmado");
+            if(shiny&&"não confirmado".equals(auth)){
+                if(attempt<6){
+                    if(attempt==0)status("✨ Confirmando sessão Shiny antes da busca...");
+                    handler.postDelayed(()->{
+                        if(stopped||loginPaused||generation!=requestGeneration)return;
+                        execute("session",nextSession->
+                            continueVerifiedSearchSession(generation,manual,nextSession,attempt+1));
+                    },400L);
+                    return;
+                }
+                // No proof of logout: keep the user's ON intent and reject
+                // this search rather than silently submitting an OFF query.
+                searchInProgress=false;
+                shinyVerified=false;
+                searchFailure("⚠ Sessão Shiny pendente",
+                    "O site não confirmou a sessão Shiny após novas leituras. "+
+                    "Shiny solicitado permanece pendente; nenhuma busca foi enviada.");
+                return;
+            }
             // A partially hydrated mobile page is not proof that the stored
             // authentication expired. Do not turn a verified session into
             // "login necessary" merely because the DOM is temporarily empty.
@@ -1291,7 +1315,6 @@ public class OverlayService extends Service {
                     configureSearchWithRetry(generation,manual,0);
                 },600L);
             });
-        });
     }
     // React dropdowns are asynchronous: opening and selecting an option cannot
     // reliably happen in a single evaluateJavascript() call.

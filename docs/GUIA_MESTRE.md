@@ -4969,3 +4969,18 @@ O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identifi
 
 **Proteção:** PR #34 OPEN DRAFT, `main` LT61 commit `caea98b7b57b9e45d5218e907eb392d76953dd53`. **Sem merge, sem LT63, sem APK novo gerado nesta etapa.** O último APK assinado `PokeSearch-v0.00.62-LT.apk`, build #40024284774 com SHA-256 `a01a175481567631068834844caf96b53f45862a2d313244625412e47deeb2da`, **NÃO** contém esta correção Shiny.
 
+
+
+### 12.261 — LT62: auditoria complementar do Shiny e checagem dupla de sessão (23/10/2026)
+
+**Checkpoint antes da intervenção:** PR #34 OPEN DRAFT, branch `fix/lt62-menu-visual-states-20261023`, HEAD `ac648d0cc083e2c70dc9c08ed100747a03062442`, main LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`. A seção 12.260 já eliminou a configuração duplicada na ativação do Shiny, mas a verificação de sessão não era simétrica.
+
+**Falha técnica confirmada por leitura de código:** `startVerifiedShinySearch(generation,attempt)` tolerava a sessão `auth="não confirmado"` durante hidratação React, porém `refresh(true)` fazia nova leitura `execute("session")` e chamava imediatamente `revertUnverifiedShiny` se a resposta transitória viesse desconhecida. Assim uma sessão antes autenticada podia resultar em Shiny OFF silencioso, persistido, antes do `submitSearch`. O comportamento foi constatado no fluxo-fonte; **não** é confirmação de reprodução no Samsung.
+
+**Correção mínima:** extraído o processamento da segunda sessão para `continueVerifiedSearchSession(generation,manual,session,attempt)`. Com Shiny ON e `auth="não confirmado"`, são feitas no máximo seis releituras locais adicionais do DOM (400ms, sem novo Search), todas protegidas por `requestGeneration` e pela sessão WebView existente. Se continuar desconhecido, a busca é interrompida com indicação de sessão pendente; não desliga o Shiny solicitado nem apresenta resultados antigos como atuais. Se autenticação/vínculo forem comprovadamente ausentes, permanece a política de login/vínculo e busca comum histórica. OFF não recebe esse bloqueio. O restante do pipeline de Coords, IV, GL/UL, confirmação e coleta fica inalterado.
+
+**Regressões acrescentadas:** quatro contratos em `app/tests/lt62-menu-visual-states.test.js` verificam: (1) retry e falha segura na segunda sessão; (2) alternância rápida ON/OFF com invalidadores de geração; (3) descarte de callbacks WebView atrasados e rejeição de resultados sem confirmação; (4) preservação da intenção do Shiny ao mudar Modos e Filtros. Os três últimos são **testes de contrato estrutural**, não emulação real de respostas de rede fora de ordem.
+
+**Proteções:** sem alteração de `probe.js`, `dock.html`, `applicationId`, namespace, versão, assinatura, login, favoritos, GPS, backend, main ou PR Draft. **Nenhum APK autorizado/gerado.** Validar funcionamento real somente quando houver APK novo expressamente solicitado e homologação no Samsung. GitHub Actions Node valida contratos, não substitui compilação Java/Gradle nem o teste físico.
+
+**Commit e execução de CI:** consultar o histórico da PR #34 e a GitHub Actions do HEAD desta seção; não considerar os antigos 850/850 ou 853/853 como validação desta nova modificação até a execução específica ser concluída.

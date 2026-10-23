@@ -571,5 +571,68 @@ check("LT62 Shiny page readiness: one deferred search prevents two concurrent DO
  assert.ok(native.includes('confirmedSubmittedFiltersGeneration==requestGeneration&&'));
  assert.ok(native.includes('shiny&&!shinyVerified'));
 });
+
+check("LT62 Shiny: second session gate retries hydration instead of silently turning OFF",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const session=native.split("private void continueVerifiedSearchSession(")[1]
+  ?.split("// React dropdowns are asynchronous:",1)[0]||"";
+ assert.ok(session.includes('if(shiny&&"não confirmado".equals(auth)){'));
+ assert.ok(session.includes('if(attempt<6){'));
+ assert.ok(session.includes('continueVerifiedSearchSession(generation,manual,nextSession,attempt+1)'));
+ assert.ok(session.includes('generation!=requestGeneration'));
+ assert.ok(session.includes('searchInProgress=false;'));
+ assert.ok(session.includes('searchFailure("⚠ Sessão Shiny pendente"'));
+ const guard=session.indexOf('if(shiny&&!siteConfirmsShinyAccount(session))');
+ assert.ok(guard>0,"fallback is only after unknown-session gate");
+ assert.ok(!session.slice(0,guard).includes('revertUnverifiedShiny('),
+  "temporary unknown must not clear saved ON preference");
+});
+check("LT62 Shiny: rapid ON/OFF invalidates previous generation without a duplicate Search",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const toggle=native.split("@JavascriptInterface public void shiny(){")[1]
+  ?.split("@JavascriptInterface public void refresh(){",1)[0]||"";
+ const cancel=native.split("private void replaceActiveFilterSearch(){")[1]
+  ?.split("private void diagnosticError(",1)[0]||"";
+ assert.ok(toggle.indexOf("shiny=!shiny;")<toggle.indexOf("replaceActiveFilterSearch();"));
+ assert.ok(toggle.includes("resultsStale=count()>0;"));
+ assert.ok(toggle.includes("shinyVerified=false;"));
+ assert.ok(toggle.includes("startVerifiedShinySearch(generation,0);"));
+ assert.equal((toggle.match(/refresh\\(true\\);/g)||[]).length,1);
+ assert.ok(cancel.includes("++requestGeneration;"));
+ assert.ok(cancel.includes("confirmedSubmittedFiltersGeneration=-1;"));
+ assert.ok(cancel.includes("handler.removeCallbacks(filterChangeRefresh);"));
+});
+check("LT62 Shiny: late WebView callbacks and stale DOM cannot relabel old results",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const execute=native.split("private void execute(String action,Consumer<JSONObject> callback){")[1]
+  ?.split("private void refresh(){",1)[0]||"";
+ const polling=native.split("private void pollSearch(int generation,int attempt,boolean manual){")[1]
+  ?.split("private long expiration(",1)[0]||"";
+ assert.ok(execute.includes("callbackGeneration!=requestGeneration"));
+ assert.ok(execute.includes("callbackWebsite!=website"));
+ assert.ok(execute.includes("callbackPage!=pageLoadGeneration"));
+ assert.ok(polling.includes("generation!=requestGeneration"));
+ assert.ok(polling.includes('resultFreshnessPending'));
+ assert.ok(polling.includes('criteriaConfirmed'));
+ assert.ok(polling.includes('applyCollectedResults(r);'));
+ assert.ok(polling.indexOf('criteriaConfirmed')<polling.indexOf('applyCollectedResults(r);'));
+});
+check("LT62 Shiny: mode and filter changes do not overwrite user Shiny intent",()=>{
+ const native=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ const config=native.split("@JavascriptInterface public void setSearchConfig(String payload)")[1]
+  ?.split("@JavascriptInterface public void setMode(String s)",1)[0]||"";
+ const changing=native.split("@JavascriptInterface public void setMode(String s)")[1]
+  ?.split("@JavascriptInterface public void menu(boolean open)",1)[0]||"";
+ assert.ok(config.includes("scheduleFilterChangeRefresh();"));
+ assert.ok(changing.includes("replaceActiveFilterSearch();"));
+ assert.ok(changing.includes("scheduleFilterChangeRefresh();"));
+ assert.ok(!config.includes("shiny=false;"));
+ assert.ok(!changing.includes("shiny=false;"));
+});
+
 for(const [name,fn] of tests){fn();process.stdout.write("✓ "+name+"\n");}
 process.stdout.write("LT62: "+tests.length+"/"+tests.length+" checks passed\n");
