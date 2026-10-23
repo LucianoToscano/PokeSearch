@@ -127,7 +127,7 @@ test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overri
   nativeBlock.includes('resultShowRawIv=prefs.getBoolean("resultShowRawIv",false)')&&
   dock.includes('selected?"✓":"–"')&&
   dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
-  dock.includes('As 21 informações começam ocultas por padrão');
+  !dock.includes('As 21 informações começam ocultas por padrão');
 });
 test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
