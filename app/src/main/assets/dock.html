@@ -2838,7 +2838,7 @@ function draw(){
    "📍 Localização desligada · busca geral";
  geoControl.setAttribute("aria-label",geoControl.title);
  document.getElementById("sh").setAttribute("aria-pressed",String(shiny));
- document.getElementById("sh").title=shiny?"✨ Shiny confirmado":shinyPending?"✨ Aguardando vínculo/confirmação no site":"Shiny desativado";
+ document.getElementById("sh").title=shinyPending?"✨ Shiny solicitado · aguardando confirmação no site":shiny?"✨ Shiny confirmado":"Shiny desativado";
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
  if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status))document.getElementById("manualRefresh").classList.remove("requested");
  const bell=document.getElementById("bell");
@@ -3009,7 +3009,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale;
  mode=m==="iv"?"raw":m;status=String(s||"");activeSearchPhase=String(searchPhase||"idle");
   if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();
- shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ shinyPending=!!pending;shiny=!!shi||shinyPending; // Preserve requested ON while site verification is pending.row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  showResultText=!!textVisible;
  notificationPermissionGranted=!!permissionGranted;
  watchAlertsEnabled=!!favoriteAlertsEnabled;
@@ -3382,7 +3382,7 @@ function renderQuickMenu(){
    const art=getModeMenuIcon(mode,false,searchSettings);
    button.dataset.modeArtKey=art.path+"|"+art.ivBadge+"|"+art.ivText;
   }
-  if(renderedId==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
+  if(renderedId==="sh")button.setAttribute("aria-pressed",String(shiny));
   const label=document.createElement("span");label.className="quickName";label.textContent=name;
   const state=document.createElement("span");state.className="quickState";state.textContent=quickState(renderedId);
   button.append(glyph,label);
@@ -3444,7 +3444,7 @@ function refreshQuickMenuStates(){
     button.dataset.modeArtKey=key;
    }
   }
-  if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
+  if(id==="sh")button.setAttribute("aria-pressed",String(shiny));
   if(id==="more")button.setAttribute("aria-expanded",String(choiceOpen==="more"));
   button.classList.toggle("pending",id==="sh"&&shinyPending);
    if(id==="filters"){
@@ -3468,7 +3468,7 @@ function refreshQuickMenuStates(){
      favoriteAlertMode+" · fontes audíveis: "+(2-mutedCount)+
      (favoriteAlertMode==="on"&&!hasFavorites?" · cadastre favoritos":"");
   button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
-   id==="sh"?(shiny&&!shinyPending):
+   id==="sh"?shiny:
    id==="bell"?(bellState.newSound||bellState.favoriteSound):id==="period"?period>0:
    id==="star"?hasFavorites:id==="mode"?(mode==="gl"||mode==="ul"):false);
  });
