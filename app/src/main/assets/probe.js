@@ -505,10 +505,10 @@ function pokemonSuggestion(query){
   if(!explicitEmpty)return {ok:false,pending:true,state:'pending',query:originalQuery,
    reason:'Aguardando opções oficiais do PoGoCoordinates'};
   return {ok:true,state:'explicit-empty',empty:true,query:originalQuery,options:[],
-   selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
+   selected:chips?chips.map(c=>c.label):[],selectionVerified:chips!==null,source:'PoGoCoordinates'};
  }
  return {ok:true,state:'ready',query:originalQuery,options,
-  selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
+  selected:chips?chips.map(c=>c.label):[],selectionVerified:chips!==null,source:'PoGoCoordinates'};
 }
 if(action.startsWith('pokemonSuggest:')){
  try{return JSON.stringify(pokemonSuggestion(JSON.parse(action.slice('pokemonSuggest:'.length))));}

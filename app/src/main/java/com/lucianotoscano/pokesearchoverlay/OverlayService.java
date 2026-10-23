@@ -1617,6 +1617,12 @@ public class OverlayService extends Service {
                     "Tempo limite: "+evidence+". Resultados anteriores preservados.");
                 return;
             }
+            // Diagnostic only: record bounded local DOM polling latency, not
+            // user coordinates, trainer code, cookies or full query details.
+            if(lastSearchStartMs>0L)BugReport.log(this,"SEARCH_LATENCY",
+                "mode="+mode+" attempts="+attempt+
+                " elapsedMs="+Math.max(0L,System.currentTimeMillis()-lastSearchStartMs)+
+                " cards="+found+" empty="+empty);
             applyCollectedResults(r);
             });
         }, resultPollDelayMs(attempt));

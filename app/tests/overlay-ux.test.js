@@ -3507,6 +3507,16 @@ test("LT62: direct refresh, long press AUTO and official sprite-only chips",()=>
    dock.includes('pokemonSuggestionSpriteCache.set(label.toLowerCase(),src);')&&
    dock.includes('pokemonSuggestionSpriteCache.get(String(name).toLowerCase())');
 });
+test("LT62: Shiny pending remains neutral, and site Pokemon import requires a user action",()=>{
+ return dock.includes('button[data-key="sh"].pending .quickGlyph')&&
+  dock.includes('if(response.selectionVerified===true&&Array.isArray(response.selected))')&&
+  dock.includes('importButton.onclick=()=>{')&&
+  dock.includes('pokemonDraft=[...pokemonSiteSelections];')&&
+  dock.includes('importButton.hidden=!differs;')&&
+  probe.includes('selectionVerified:chips!==null')&&
+  service.includes('"SEARCH_LATENCY"')&&
+  service.includes('System.currentTimeMillis()-lastSearchStartMs');
+});
 // LT60-E8: saved mode, editable submenu and actual site confirmation are separate.
 test("LT60-E8-01 reopened menu identifies persisted GL/UL and raw extremes",()=>{
  const from=dock.indexOf("function selectedModeEntry(currentMode,settings){");

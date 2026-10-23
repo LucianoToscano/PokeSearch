@@ -1321,6 +1321,10 @@ body.controls-window #choices .pokemonChipSprite{
  width:16px!important;height:16px!important;object-fit:contain!important;
  flex:none!important;margin-right:4px!important;
 }
+/* Shiny requested but pending must never look like verified ON. */
+body.controls-window #quickMenuList button[data-key="sh"].pending .quickGlyph{
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+}
 /* LT62-VISUAL-STATES: precise icons only; keep the approved tile surface. */
 body.controls-window #quickMenuList button[data-key="location"].selected .quickGlyph{
  color:var(--visual-menu-fg,#f2f7fc)!important;
@@ -1759,6 +1763,7 @@ function toggleChoices(kind){
    pokemonDraft=Array.isArray(pokemonPickerBase.pokemonSelections)?[...pokemonPickerBase.pokemonSelections]:
     pokemonPickerBase.pokemon?[pokemonPickerBase.pokemon]:[];
    pokemonForceClear=false;pokemonQuery="";pokemonSuggestions=[];pokemonSuggestionStatus="Carregando opções do site...";
+   pokemonSiteSelections=[];pokemonSiteSelectionVerified=false;
    renderPokemonChoices();requestPokemonSuggestions("");return;
   }
   if(kind==="mode"){
@@ -3278,6 +3283,22 @@ function iconForQuick(id, fallback){
 let pokemonDraft=[],pokemonSuggestions=[],pokemonQuery="",pokemonSuggestionStatus="",pokemonPickerBase=null,pokemonForceClear=false;
 // Temporary official sprite cache: presentation only; no invented URLs/IDs.
 const pokemonSuggestionSpriteCache=new Map();
+let pokemonSiteSelections=[],pokemonSiteSelectionVerified=false;
+function updatePokemonSiteComparison(){
+ if(choiceOpen!=="pokemon")return;
+ const box=document.getElementById("pokemonSiteComparison"),
+  importButton=document.getElementById("pokemonSiteImport");
+ if(!box||!importButton)return;
+ if(!pokemonSiteSelectionVerified){
+  box.textContent="Seleção no site ainda não verificada.";
+  importButton.hidden=true;return;
+ }
+ const norm=list=>[...new Set(list.map(v=>String(v).trim().toLowerCase()))].sort().join("|");
+ const differs=norm(pokemonDraft)!==norm(pokemonSiteSelections);
+ box.textContent=differs?"PoGoCoordinates: "+pokemonSiteSelections.length+
+  " selecionado(s), diferente do rascunho.":"Seleção de Pokémon confere com o site.";
+ importButton.hidden=!differs;
+}
 let pokemonSuggestTimer=null;
 function requestPokemonSuggestions(query){
  if(!controlsWindow||choiceOpen!=="pokemon"||!Native.requestPokemonSuggestions)return;
@@ -3288,6 +3309,12 @@ window.onPokemonSuggestions=response=>{
  if(choiceOpen!=="pokemon"||!response)return;
  if(response.query!==undefined&&response.query!==pokemonQuery)return; // stale suggestion response
  pokemonSuggestions=response.ok&&Array.isArray(response.options)?response.options:[];
+ // Only trust an explicit DOM read from the official picker. Missing chips
+ // are not automatically equivalent to Any Pokemon.
+ if(response.selectionVerified===true&&Array.isArray(response.selected)){
+  pokemonSiteSelections=[...new Set(response.selected.map(x=>String(x||"").trim()).filter(Boolean))];
+  pokemonSiteSelectionVerified=true;
+ }
  for(const option of pokemonSuggestions){
   const label=String(option?.label||"").trim();
   const src=String(option?.image||"");
@@ -3300,7 +3327,7 @@ window.onPokemonSuggestions=response=>{
   state==="failed"?"⚠ "+String(response.reason||"Seletor oficial indisponível; tente novamente"):
   response.ok&&pokemonSuggestions.length?"":
   String(response.reason||"Aguardando filtro Pokémon do PoGoCoordinates");
- drawPokemonSuggestions();
+ drawPokemonSuggestions();updatePokemonSiteComparison();
 };
 function drawPokemonSuggestions(){
  const panel=document.getElementById("choices"),box=panel.querySelector("#pokemonCandidates");
@@ -3354,6 +3381,7 @@ function renderPokemonTags(){
   const hint=document.createElement("span");hint.className="uxNote";hint.textContent="Nenhum = todos os Pokémon";
   target.appendChild(hint);
  }
+ updatePokemonSiteComparison();
 }
 function renderPokemonChoices(){
  const panel=uxPanel("POKÉMON · espécies e formas");
@@ -3383,6 +3411,18 @@ function renderPokemonChoices(){
  const hint=document.createElement("p");hint.className="uxNote";
  hint.textContent="Selecione várias espécies e formas EXATAS. Só serão buscadas as escolhidas após ✓ Aplicar. As opções vêm do PoGoCoordinates.";
  panel.appendChild(hint);
+ const siteComparison=document.createElement("p");
+ siteComparison.id="pokemonSiteComparison";siteComparison.className="uxNote";
+ const importButton=document.createElement("button");importButton.type="button";
+ importButton.id="pokemonSiteImport";importButton.textContent="Usar seleção observada no site";
+ importButton.hidden=true;
+ importButton.onclick=()=>{
+  // Explicit user action only; update draft, not live search/preferences.
+  if(!pokemonSiteSelectionVerified)return;
+  pokemonDraft=[...pokemonSiteSelections];
+  renderPokemonTags();drawPokemonSuggestions();
+ };
+ panel.append(siteComparison,importButton);
  renderPokemonTags();drawPokemonSuggestions();fit();
 }
 // Submenu remains a column of the ORIGINAL individual colored menu actions.
