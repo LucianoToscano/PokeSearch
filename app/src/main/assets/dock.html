@@ -2078,7 +2078,7 @@ function closeChoices(){
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
  document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker","morePanel",
-  "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
+  "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen","filterCascade");
  delete document.getElementById("choices").dataset.panelKind;
  if(controlsWindow)Native.locationEditor(false);
  refreshQuickMenuStates();fit();
@@ -2099,6 +2099,7 @@ function toggleChoices(kind){
   if(controlsWindow)Native.locationEditor(false);
  }
  choiceOpen=kind;
+ if(kind!=="filters")document.getElementById("choices").classList.remove("filterCascade");
  if(kind!=="mode")document.getElementById("choices").classList.remove(
   "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
  // Every popup is a cascade, not a substitute for the main ribbon.
@@ -2185,7 +2186,7 @@ function selectedModeEntry(currentMode,settings){
 function renderModeChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();
- panel.classList.remove("locationPanel","standardPanel","filterPicker",
+ panel.classList.remove("locationPanel","standardPanel","filterPicker","filterCascade",
   "modeCompact-raw","modeCompact-percent","modeCompact-league");
  delete panel.dataset.panelKind;
  panel.classList.add("modePanel","modeCascade","visible");
@@ -3946,7 +3947,7 @@ function refreshQuickMenuStates(){
 }
 function uxPanel(title){
  const panel=document.getElementById("choices");panel.replaceChildren();
- panel.classList.remove("locationPanel","modeCascade","modeCascadeOpen","filterPicker",
+ panel.classList.remove("locationPanel","modeCascade","modeCascadeOpen","filterPicker","filterCascade",
   "modeCompact-raw","modeCompact-percent","modeCompact-league");
  panel.classList.add("visible","modePanel","standardPanel");panel.dataset.panelKind=choiceOpen;
  const heading=document.createElement("div");heading.className="choiceHeader";
