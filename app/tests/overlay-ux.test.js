@@ -1247,7 +1247,7 @@ test("UX-OTHER-04 scroll position remains reachable on toggles and popup switchi
  dock.includes('position:sticky;top:0;z-index:5')&&
  dock.includes('position:sticky;bottom:0;z-index:5'));
 test("Filters remain independent of cascade and retain their popup dimensions",
- dock.includes('section("Filtros gerais"')&&dock.includes('section("Filtros avançados"')&&
+ dock.includes('section("Filtros gerais"')&&!dock.includes('section("Filtros avançados"')&&
  dock.includes('#choices.modePanel{width:232px')&&dock.includes('function renderExtraFilters('));
 test("Site dropdown options are discovered instead of inventing weather/form values",
   dock.includes('filterOptions=response.partial?')&&
@@ -2641,7 +2641,7 @@ test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menu
   filters.includes('option("weather","Clima")')&&
   filters.includes('option("form","Forma")')&&
   filters.includes('chips("size","Tamanho")')&&
-  filters.includes('chips("gender","Gênero")')&&
+  filters.includes('chips("gender","Sexo")')&&
   !filters.includes('field("Pokémon",pick)')&&
   dock.includes('if(kind==="pokemon"){')&&
   dock.includes('["percent","IV%"],["gl","GL"],["ul","UL"]');
@@ -2664,8 +2664,8 @@ test("FILTERS-POGO-03 size and gender buttons never invent site-supported option
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
  const probe=read("assets/probe.js");
  return filters.includes('["XXS","XS","S","M","L","XL","XXL"]')&&
-  filters.includes('["Male","Female","Genderless"]')&&
-  filters.includes('button.disabled=!actual&&!selected.has(resolved)')&&
+  filters.includes('["Any","Male","Female","Genderless"]')&&
+  !filters.includes('button.disabled=!actual&&!selected.has(resolved)')&&
   filters.includes('modeDraft[multiKey]=[...selected]')&&
   !filters.includes('extraChip","Qualquer"')&&
   probe.includes('function extraMulti(key,desired,operation){')&&
@@ -2816,17 +2816,21 @@ test("LT57-ONEFORM-02 native patch keeps independent search modes and Shiny",()=
   !patch.includes('rawAttack=')&&!patch.includes('locationCoords=')&&
   patch.includes('replaceActiveFilterSearch();');
 });
-test("LT57-ONEFORM-03 multi Size and Gender are additive and empty equals Any",()=>{
+test("LT57-ONEFORM-03 Size multi and Gender single radio preserve Any",()=>{
  const probe=read("assets/probe.js");
  const filters=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
- return filters.includes('const selected=new Set(Array.isArray(modeDraft[multiKey])')&&
+ return filters.includes('const selected=new Set(existing.filter(')&&
   filters.includes('if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);')&&
   filters.includes('modeDraft[multiKey]=[...selected]')&&
-  !filters.includes('extraChip","Qualquer"')&&
+  filters.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}')&&
+  filters.includes('v==="Any"?"⚥"')&&
+  filters.includes('group.setAttribute("role","radiogroup")')&&
+  !filters.includes('button.disabled=!actual&&!selected.has(resolved)')&&
   probe.includes('function extraMulti(key,desired,operation)')&&
+  probe.includes('extraSelect("gender",wanted[0]||"")')&&
   probe.includes('if(target.some(v=>!observed.some(o=>o.label===v)))return false')&&
-  probe.includes('allowed.includes(x.label)')&&
+  service.includes('key.equals("genderSelections")?1:7')&&
   service.includes('for(String key:new String[]{"size","gender"})');
 });
 test("LT57-ONEFORM-04 Sort by offers exactly five requested orders with default",()=>{
@@ -2876,7 +2880,7 @@ test("LT57-DRIVE-ICON-01 exact replacement StarGL, StarUL and StarIVRaw PNGs",()
  const icons={
   "StarGL.png":"cdca6c1b159e7a3da45758d073bf88d4fe05798e9343e4ef4056e77ccb8df575",
   "StarUL.png":"7f59249d48556a43d0769667bb7a7c032d31ae69a96fe6db229da7f1413f5a9a",
-  "StarIVRaw.png":"04aa4e0689c345c64f5cdb0da8157d63a96b315ded027c6c5ffb1c46c4872f3b"
+  "StarIVRaw.png":"74a9141ab3eff6ce3adab305a22aa478ee4022191f62bf8915ac88d4c9184cee"
  };
  return Object.entries(icons).every(([name,expected])=>{
   const file=fs.readFileSync(path.join(root,"assets/result-icons/modes",name));
@@ -2957,7 +2961,7 @@ test("LT57-DEFAULT-COUNT-01 neutral controls never add to active filter badge",(
   count({...base,weather:"Rainy"},"raw")===1&&
   count({...base,sortBy:"CP (highest)"},"raw")===1&&
   count({...base,sizeSelections:["XS","XXL"]},"raw")===1&&
-  count({...base,genderSelections:["Male","Female"]},"raw")===1&&
+  count({...base,genderSelections:["Female"]},"raw")===1&&
   count({...base,weather:"Any",genderSelections:["Any"]},"raw")===0;
 });
 test("UX-QUICK-MORE-01 keeps all three original action IDs movable in settings",()=>{
@@ -3050,6 +3054,33 @@ test("UX-QUICK-MORE-STABLE-02 Android toolbar-only WebView prevents viewport res
   native.includes('if(menuParams.width!=width)menuParams.width=width;')&&
   native.includes('menuParams.height=rowHeight+actualPopup;')&&
   dock.includes('button.onclick=()=>{closeChoices();quickClick(id);}');
+});
+
+
+test("LT58-SITE-SELECT-01 Size selects locally while site probe must confirm before Search",()=>{
+ const f=dock.split("const chips=(key,label)=>{")[1]?.split("const section=(label,open,onClick)=>{")[0]||"";
+ const p=read("assets/probe.js");
+ return f.includes('modeDraft[multiKey]=[...selected]')&&
+  !f.includes('button.disabled=!actual')&&
+  p.includes('const rows=key==="size"?multiOptions(control):optionElements(control);')&&
+  p.includes('const ok=extraMulti("size",wanted,action);')&&
+  p.includes('if(!target.length&&isNeutral(extraValue(key)))return true;')&&
+  p.includes('if(!ok)failed.push("sizeSelections");');
+});
+test("LT58-SITE-SELECT-02 Gender exclusive; Form directly below; redundant text gone",()=>{
+ const f=dock.split("function renderExtraFilters(panel,make){")[1]
+  ?.split("function renderFilterPicker(key,label,options){")[0]||"";
+ const p=read("assets/probe.js");
+ return f.includes('chips("gender","Sexo");\n  option("form","Forma");')&&
+  f.includes('group.setAttribute("role","radiogroup")')&&
+  f.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}')&&
+  p.includes('if(key==="gender"&&Array.isArray(filters.genderSelections))')&&
+  p.includes('extraMatches("gender",wanted[0]||"")')&&
+  service.includes('key.equals("genderSelections")?1:7')&&
+  !f.includes('Nenhum botão marcado = Any do site.')&&
+  !f.includes('Filtros avançados')&&
+  !dock.includes('Nenhum filtro adicional ativo')&&
+  !dock.includes('Cada campo altera apenas seu próprio filtro. Outros filtros permanecem.');
 });
 
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
