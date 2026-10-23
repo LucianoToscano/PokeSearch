@@ -2391,6 +2391,12 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
    const gap=Math.max(0,parseFloat(getComputedStyle(popup).rowGap)||0);
    const moreHeight=tiles*30+Math.max(0,tiles-1)*gap;
    h=Math.max(h,baseHeight+Math.ceil(moreHeight)+6);
+  }else if(choiceOpen==="filters"&&popup.classList.contains("filterCascade")){
+   const rail=popup.querySelector(".filterCascadeRail"),editor=popup.querySelector(".filterCascadeEditor");
+   const base=rail?rail.scrollHeight:211;
+   const top=editor&&editor.children.length?Number.parseFloat(editor.style.top)||0:0;
+   const extra=editor&&editor.children.length?editor.scrollHeight:0;
+   h=Math.max(h,baseHeight+Math.ceil(Math.max(base,top+extra))+8);
   }else if(choiceOpen==="period"){
    const tiles=popup.querySelectorAll(".periodCompactValue,.periodCompactLabel").length;
    const gap=Math.max(0,parseFloat(getComputedStyle(popup).rowGap)||0);
@@ -2460,7 +2466,7 @@ function toggleChoices(kind){
   if(controlsWindow)Native.locationEditor(false);
  }
  choiceOpen=kind;
- if(kind!=="filters")document.getElementById("choices").classList.remove("filterCascade");
+ if(kind!=="filters")document.getElementById("choices").classList.remove("filterCascade","filterCascadeOpen");
  if(kind!=="mode")document.getElementById("choices").classList.remove(
   "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen");
  // Every popup is a cascade, not a substitute for the main ribbon.
@@ -2476,7 +2482,7 @@ function toggleChoices(kind){
   modeDraft={...searchSettings,mode};generalExpanded=true;advancedExpanded=false;
   filterOptions={}; // Never reuse an old site snapshot as a fresh external change.
   // No implicit level writes: preserve stored filter values, but show empty boxes.
-  filterFocus="PC";
+  filterFocus="";
   renderFiltersChoices();
   if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();
   return;
@@ -2839,22 +2845,25 @@ function renderExtraFilters(panel,make){
  const rail=make("div","filterCascadeRail"),editor=make("div","filterCascadeEditor");
  rail.setAttribute("role","menu");editor.setAttribute("role","group");
  editor.setAttribute("aria-label","Filtro selecionado");
- const selected=rows.some(row=>row.querySelector("label")?.textContent===filterFocus)?
-  filterFocus:(rows[0]?.querySelector("label")?.textContent||"");
+ const heading=make("div","filterCascadeHead","Filtros");rail.appendChild(heading);
+ const selected=rows.some(row=>row.querySelector("label")?.textContent===filterFocus)?filterFocus:"";
  filterFocus=selected;
- for(const row of rows){
+ panel.classList.toggle("filterCascadeOpen",!!selected);
+ rows.forEach((row,index)=>{
   const label=row.querySelector("label")?.textContent||"Filtro";
-  const entry=make("button","filterCascadeEntry",label);entry.type="button";
-  entry.setAttribute("role","menuitem");
+  const short=label==="Evoluções anteriores"?"Evoluções":label==="PC mínimo PvP"?"PC PvP":label;
+  const entry=make("button","filterCascadeEntry");entry.type="button";
+  entry.append(make("span","filterCascadeName",short),make("span","filterCascadeArrow","›"));
+  entry.title=label;entry.setAttribute("role","menuitem");entry.setAttribute("aria-label","Abrir "+label);
   entry.classList.toggle("chosen",label===selected);
   entry.setAttribute("aria-current",String(label===selected));
   entry.setAttribute("aria-expanded",String(label===selected));
   entry.onclick=()=>{if(controlsWindow)Native.locationEditor(false);
-   filterFocus=label;modeScrollTop=0;renderFiltersChoices();};
+   filterFocus=filterFocus===label?"":label;modeScrollTop=0;renderFiltersChoices();};
   rail.appendChild(entry);
   row.remove();
-  if(label===selected)editor.appendChild(row);
- }
+  if(label===selected){editor.style.top=(22+index*24)+"px";editor.appendChild(row);}
+ });
  panel.querySelectorAll(":scope > .extraDivider,:scope > .extraHead").forEach(e=>e.remove());
  panel.append(rail,editor);
 }
@@ -4464,6 +4473,7 @@ function verifiedSiteSingleFilterValues(){
 function renderFiltersChoices(){
  if(!modeDraft)modeDraft={...searchSettings,mode};
  const panel=uxPanel("FILTROS");
+ panel.querySelector(".choiceHeader")?.remove(); // same rail as Modos
  const scrollRestoration=modeScrollTop;
  const make=(tag,cls,value)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e;};
  panel.classList.add('filterCascade');
@@ -4488,7 +4498,7 @@ function renderFiltersChoices(){
   panel.append(diff,importFromSite);
  }
  // No redundant instructional paragraph: keep the filter popup compacto.
- const actions=make("div","modeAction filterActions");
+ const actions=make("div","modeAction filterActions filterRailActions");
  actions.setAttribute("role","group");actions.setAttribute("aria-label","Ações dos filtros");
  const actionIcon=(cls,label,icon)=>{
   const button=make("button",cls);button.type="button";
@@ -4561,10 +4571,17 @@ function renderFiltersChoices(){
   delta.includePreviousEvolutions=true;
   closeChoices();Native.patchSearchFilters(JSON.stringify(delta));
  };
- cancel.onclick=closeChoices;actions.append(apply,clear,cancel);panel.appendChild(actions);
- requestAnimationFrame(()=>{if(choiceOpen==="filters"&&panel.isConnected)panel.scrollTop=scrollRestoration;});
+ cancel.onclick=closeChoices;actions.append(apply,clear,cancel);
+ const rail=panel.querySelector(".filterCascadeRail"),editor=panel.querySelector(".filterCascadeEditor");
+ if(rail)rail.appendChild(actions);
+ if(editor){
+  editor.appendChild(indicator);
+  for(const child of [...panel.children].filter(child=>child.classList.contains("uxNote")||
+    (child.tagName==="BUTTON"&&child.textContent==="Usar opções observadas no site")))editor.appendChild(child);
+ }
  fit();
 }
+
 function renderInfoChoices(){
  const previous=document.getElementById("choices");
  const scroll=previous.dataset.panelKind==="info"?previous.scrollTop:0;
