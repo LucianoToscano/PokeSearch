@@ -1,0 +1,158 @@
+name: PokeSearch — exportação de fonte para auditoria (SEM BUILD)
+on:
+  push:
+    branches:
+      - audit/source-de9a007-20261023
+    paths:
+      - '.github/workflows/export-auditoria-fonte.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-audit:
+    if: github.ref_name == 'audit/source-de9a007-20261023'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      SOURCE_SHA: de9a007060c4c596f9f861e05c2410a384fc73dc
+      MAIN_SHA: 83948fa9ad205af6c648931aaf7da36a8a1f9a41
+      SOURCE_BRANCH: fix/lt57-compact-single-form-20261022
+      PACKAGE: PokeSearch-LT59-FONTE-COMPLETA-AUDITORIA-de9a007.zip
+    steps:
+      - name: Checkout read-only com histórico mínimo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Confirmar snapshot exato da versão mais recente
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "${SOURCE_SHA}^{commit}"
+          test "$(git rev-parse 'HEAD^')" = "$SOURCE_SHA"
+          git diff --quiet "$SOURCE_SHA" HEAD -- app/ docs/ gradle/ settings.gradle.kts build.gradle.kts
+          test -f docs/GUIA_MESTRE.md
+          git show "$SOURCE_SHA:docs/GUIA_MESTRE.md" | grep -q '12.200-LT59-APK-ASSINADO-CHECKPOINT'
+          echo "SNAPSHOT_CONFIRMADO=$SOURCE_SHA"
+      - name: Exportar TODOS os arquivos versionados sem recompilar
+        shell: bash
+        run: |
+          set -euo pipefail
+          git ls-tree -r --name-only "$SOURCE_SHA" > LISTA_FONTE_GIT.txt
+          test "$(wc -l < LISTA_FONTE_GIT.txt)" -gt 100
+          if grep -Ei '(^|/)(google-services[.]json|[.]env|[^/]+[.](jks|keystore|p12|pfx|pkcs12)|local-signing[.]properties)$' LISTA_FONTE_GIT.txt; then
+            echo "::error::Material potencialmente secreto versionado: exportação interrompida."
+            exit 1
+          fi
+          git archive --format=zip --output="$PACKAGE" "$SOURCE_SHA"
+          python3 - <<'PY'
+          import os,sys,zipfile,hashlib,json,subprocess,pathlib
+          package=os.environ['PACKAGE']; source=os.environ['SOURCE_SHA']
+          tracked=[x for x in pathlib.Path('LISTA_FONTE_GIT.txt').read_text().splitlines() if x]
+          with zipfile.ZipFile(package,'r') as z:
+              archived={n for n in z.namelist() if not n.endswith('/')}
+              if archived != set(tracked):
+                  missing=sorted(set(tracked)-archived)[:12]
+                  extra=sorted(archived-set(tracked))[:12]
+                  raise RuntimeError(f'ZIP não reflete TODOS os fontes: faltando={missing} extras={extra}')
+              source_sha={n:hashlib.sha256(z.read(n)).hexdigest() for n in sorted(archived)}
+          manifest = {
+            'projeto':'PokeSearch','repo':'LucianoToscano/PokeSearch',
+            'tipo':'snapshot-integral-git-tracked-com-relatorio',
+            'source_branch':os.environ['SOURCE_BRANCH'],'source_commit_sha':source,
+            'main_commit_sha':os.environ['MAIN_SHA'],
+            'ultima_versao_compilada':'PokeSearch v0.00.59 LT',
+            'ultimo_apk_commit':'096a60390109ca56fd49559c44d889fc2f4fb3ff',
+            'last_guiamestre_section':'12.200',
+            'pr_32':{'state':'open','draft':True,'merged':False},
+            'tests_automated':{'node_passed':734,'node_total':734,'github_actions_run':39899654254},
+            'android_physical_test':'nao realizado por esta exportacao',
+            'build_apk_this_export':False,
+            'archive_tracked_files':len(tracked),
+            'notice':'Manifeste achados; nao modifique o projeto sem autorizacao; nao confundir com PvPPokeGo'
+          }
+          intro = f"""# PokeSearch — arquivo de auditoria para outras IAs
+
+          Este ZIP contém o snapshot INTEGRAL dos arquivos versionados do repositório
+          LucianoToscano/PokeSearch na branch `{os.environ['SOURCE_BRANCH']}`,
+          commit EXATO `{source}`.
+          
+          **O conteúdo fonte não foi recompilado, alterado nem mesclado.**
+          A branch temporária `audit/source-de9a007-20261023` contém APENAS
+          a automação para exportação, não faz parte deste ZIP.
+          
+          ## Pontos de partida
+          - `docs/GUIA_MESTRE.md` — checkpoint até 12.200.
+          - `app/build.gradle.kts`, `app/src/main/AndroidManifest.xml` — configuração.
+          - `app/src/main/java/`, `app/src/main/assets/`, `app/src/main/res/` — implementação.
+          - `app/tests/` e `.github/workflows/` — testes e CI.
+          - `AUDITORIA/ARQUIVOS_SHA256.txt` — SHA-256 individual dos arquivos de origem.
+          - `AUDITORIA/CHECKPOINT.json` — checkpoint congelado e metadados.
+          - `AUDITORIA/ROTEIRO_PARA_OUTRA_IA.md` — roteiro de avaliação.
+
+          ## Escopo
+          Auditoria ESTÁTICA, sem compilar APK nesta exportação e sem teste físico.
+          O CI do APK LT59 foi SUCCESS com 734/734 testes Node, mas não confirma
+          comportamento visual no Samsung nem sincronização real de filtros no
+          PoGoCoordinates autenticado.
+
+          ## Validação do pacote
+          Confira `SHA256SUMS.txt` disponibilizado JUNTAMENTE com este ZIP;
+          para cada fonte, compare com `AUDITORIA/ARQUIVOS_SHA256.txt`.
+          Todos os {len(tracked)} arquivos versionados do commit estão incluídos,
+          além dos quatro arquivos exclusivamente de auditoria.
+          """
+          rubric="""# Roteiro de auditoria para IA externa — PokeSearch LT59
+
+          Revise TODO o código-fonte, testes e histórico do único Guia Mestre antes de propor alterações.
+          Nunca trate os resultados dos testes automatizados como homologação física no Android.
+
+          1. Arquitetura e isolamento: WebView + evaluateJavascript + probe.js; sem backend próprio,
+             sem proxy nem GPS automático; aplicação e pacote mantidos.
+          2. Sessão PoGoCoordinates: login Gmail/Discord persistente, treinador vinculado,
+             Shiny only condicionado; busca de convidados deve seguir funcionando.
+          3. Sincronização do formulário: filtros de Pokémon/formas, IV Raw, IV%, GL/UL,
+             coordenadas/raio, tamanho XXS..XXL, sexo ⚥ Any / Male / Female / Genderless,
+             Form oficial, clima, ordenação; cada delta NÃO pode apagar outro campo.
+          4. UX Samsung: barra original com 10 botões inalterada ao abrir Modos,
+             Filtros, Localização, Mais, Alertas e Personalização, com popup
+             acima/abaixo dependendo do espaço e sem zoom/reflow.
+          5. Arte: StarIVRaw.png novo; atributo como 0/15/15 deve estar PEQUENO e DENTRO
+             do ícone; 100% / 0% / IV% nunca têm texto extra; conferir GL/UL.
+          6. Integridade Android: versionCode 54257, assinatura permanente,
+             sem perda de dados, Firebase/contadores intactos.
+          7. Qualidade: identificar divergências entre testes Node e DOM React/Radix
+             REAL em WebView; sugerir testes físicos reproduzíveis com critérios pass/fail.
+          8. Segurança: permissões, JavascriptInterface, WebView, navegação,
+             persistência de sessão, segredos, supply chain e integridade da distribuição.
+
+          Entregue achados classificados por severidade (crítico/alto/médio/baixo),
+          evidências com arquivos/linhas, causa provável, passos de reprodução e
+          correção pontual sugerida. Não altere arquivos nem faça merge/build.
+          Separe FATOS VERIFICADOS, HIPÓTESES e ITENS NÃO TESTADOS.
+          """
+          hashes='\n'.join(f'{h}  {p}' for p,h in source_sha.items())+'\n'
+          with zipfile.ZipFile(package,'a',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as z:
+              z.writestr('AUDITORIA/LEIA_ME_PRIMEIRO.md',intro)
+              z.writestr('AUDITORIA/ROTEIRO_PARA_OUTRA_IA.md',rubric)
+              z.writestr('AUDITORIA/CHECKPOINT.json',json.dumps(manifest,indent=2,ensure_ascii=False)+'\n')
+              z.writestr('AUDITORIA/ARQUIVOS_SHA256.txt',hashes)
+          with zipfile.ZipFile(package,'r') as z:
+              if z.testzip() is not None: raise RuntimeError('Integridade ZIP falhou')
+              print('TOTAL_FONTE',len(tracked),'TOTAL_ARQUIVOS_ZIP',len([x for x in z.namelist() if not x.endswith('/')]))
+          PY
+          sha256sum "$PACKAGE" > SHA256SUMS.txt
+          printf '%s\n' "$SOURCE_SHA" > SOURCE_COMMIT.txt
+          git status --porcelain --untracked-files=no > MODIFICACOES_VERSIONADAS.txt
+          test ! -s MODIFICACOES_VERSIONADAS.txt
+          unzip -t "$PACKAGE" | tail -1
+      - name: Publicar ZIP completo de auditoria (sem APK)
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT59-FONTE-COMPLETA-AUDITORIA
+          path: |
+            PokeSearch-LT59-FONTE-COMPLETA-AUDITORIA-de9a007.zip
+            SHA256SUMS.txt
+            SOURCE_COMMIT.txt
+          retention-days: 30
+          if-no-files-found: error
