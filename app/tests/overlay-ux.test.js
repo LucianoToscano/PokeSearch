@@ -912,7 +912,7 @@ test("UX-MENU-02 Pokémon silhouette opens the official multi-species/form picke
 test("UX-SHINY-01 restores Shiny ✨ next to Modos using the existing native toggle",
  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"]')&&
  dock.includes('case "sh":Native.shiny();break;')&&
- dock.includes('id==="sh"?(shiny&&!shinyPending)')&&
+ dock.includes('id==="sh"?shiny:')&&dock.includes('shinyPending=!!pending;shiny=!!shi||shinyPending;')&&
  !dock.includes('shinyButton.onclick=()=>Native.shiny()'));
 test("UX-MENU-04 restores twelve small icons in the old thin row while migrating saved menu",
  dock.includes('id="quickUtilities"')&&
@@ -1000,9 +1000,9 @@ test("UX-SHINY-02 keeps Shiny beside Modos through saved preferences and native 
  return prefs.includes('order.splice(modeIndex+1,0,"sh")')&&
   prefs.includes('"period","sh"')&&
   click.includes('case "sh":Native.shiny();break;')&&
-  dock.includes('if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending))')&&
+  dock.includes('if(id==="sh")button.setAttribute("aria-pressed",String(shiny))')&&
   state.includes('button.classList.toggle("pending",id==="sh"&&shinyPending)')&&
-  state.includes('id==="sh"?(shiny&&!shinyPending)')&&
+  state.includes('id==="sh"?shiny:')&&
   dock.includes('[data-key=sh].selected')&&dock.includes('[data-key=sh].pending')&&
   service.includes('!"sh".equals(id)')&&
   service.includes('siteConfirmsShinyAccount(session)')&&
@@ -3449,6 +3449,144 @@ test("LT73-FORM-LINKED-PORTAL validates stale aria-controls as strictly as fallb
   code.includes('{ok:false,pending:true,options:[]};');
 });
 
+// LT60: neutral-filter reset intents may only retire on a verified, accepted Search.
+test("LT60-CLEAR-ACK-01 pending extra reset requests retire after confirmed results only",()=>{
+ const start=service.indexOf("private void acknowledgeConfirmedExtraResets(){");
+ const end=service.indexOf("private void applyCollectedResults(JSONObject r)",start);
+ const helper=service.slice(start,end);
+ const apply=service.slice(end,service.indexOf("private void resize(int h)",end));
+ const poll=service.slice(service.indexOf("private void pollSearch("),
+  service.indexOf("private long expiration("));
+ return start>0&&end>start&&
+  helper.includes('updated.remove("clearExtraKeys");')&&
+  helper.includes('putString("extraFiltersJson",extraFiltersJson)')&&
+  apply.includes("acknowledgeConfirmedExtraResets();")&&
+  apply.indexOf("acknowledgeConfirmedExtraResets();")>
+   apply.indexOf("results=sorted.toString();")&&
+  apply.indexOf("acknowledgeConfirmedExtraResets();")<
+   apply.indexOf("shownMode=mode;shownConfigJson=filterConfigJson();")&&
+  poll.includes('!r.optBoolean("criteriaConfirmed",false)')&&
+  poll.includes("applyCollectedResults(r);");
+});
+test("LT60-CLEAR-ACK-02 failed searches must keep pending resets",()=>{
+ const helper=service.slice(service.indexOf("private void acknowledgeConfirmedExtraResets(){"),
+  service.indexOf("private void applyCollectedResults(JSONObject r)"));
+ const early=service.slice(service.indexOf("private void configureSearchWithRetry("),
+  service.indexOf("private void pollSearch("));
+ return helper.includes("if(pending==null||pending.length()==0)return;")&&
+  !early.includes("acknowledgeConfirmedExtraResets();");
+});
+test("LT60-E7-01 poll first results early and back off without repeating Search",()=>{
+ const start=service.indexOf("private static long resultPollDelayMs(int attempt){");
+ const collectStart=service.indexOf("private void pollSearch(int generation,int attempt,boolean manual){",start);
+ const pollEnd=service.indexOf("private long expiration(",collectStart);
+ const policy=service.slice(start,collectStart),poll=service.slice(collectStart,pollEnd);
+ return start>0&&collectStart>start&&pollEnd>collectStart&&
+   policy.includes('if(attempt==0)return 700L;')&&
+   policy.includes('return attempt<=6?650L:1150L;')&&
+   poll.includes('}, resultPollDelayMs(attempt));')&&
+   poll.includes('execute("collect",r->{')&&
+   !poll.includes('execute("submitSearch"')&&
+   poll.includes('if(r.optBoolean("siteIncomplete",false)&&attempt<24)');
+});
+test("LT60-E7-02 empty result needs a fresh site signal, not a generic zero",()=>{
+ return probe.includes('function visibleResultSignature(){')&&
+   probe.includes('window.__pokeSearchSubmission={before:visibleResultSignature(),observedUpdate:false};')&&
+   probe.includes('const explicitEmpty=found.length===0&&!loading&&explicitEmptySignal&&resultChanged;')&&
+   probe.includes('const zeroInResults=countLabel==="0"&&mainEmptyMessage();')&&
+   probe.includes('emptySignalFound:explicitEmptySignal,resultChanged,')&&
+   service.includes('"estado vazio anterior sem atualização"');
+});
+// LT60-E8: saved mode, editable submenu and actual site confirmation are separate.
+test("LT60-E8-01 reopened menu identifies persisted GL/UL and raw extremes",()=>{
+ const from=dock.indexOf("function selectedModeEntry(currentMode,settings){");
+ const to=dock.indexOf("function renderModeChoices(){",from);
+ if(from<0||to<=from)return false;
+ const selected=require("node:vm").runInNewContext(dock.slice(from,to)+";selectedModeEntry",{});
+ return selected("gl",{glRank:1})==="gl"&&
+  selected("ul",{ulRank:50})==="ul"&&
+  selected("percent",{percentMin:91,percentMax:100})==="percent"&&
+  selected("raw",{attack:15,defense:15,stamina:15})==="hundo"&&
+  selected("raw",{attack:0,defense:0,stamina:0})==="nundo"&&
+  selected("raw",{attack:3,defense:15,stamina:12})==="raw";
+});
+test("LT60-E8-02 open cascade does not overwrite persisted mode",()=>{
+ const from=dock.indexOf("function renderModeChoices(){");
+ const choices=dock.slice(from,dock.indexOf("/* FILTERS-POGO-01",from));
+ return choices.includes("const activeModeEntry=selectedModeEntry(mode,searchSettings);")&&
+  choices.includes('button.classList.toggle("activeMode",selected);')&&
+  choices.includes('button.classList.toggle("chosen",cascadeMode===id);')&&
+  choices.includes('button.setAttribute("aria-current",String(selected));')&&
+  choices.includes('button.setAttribute("aria-expanded",String(cascadeMode===id));')&&
+  choices.includes('button.classList.toggle("siteConfirmed",selected&&confirmedMode);')&&
+  dock.includes("button.modeCascadeEntry.activeMode:not(.chosen)")&&
+  choices.includes('site pendente');
+});
+test("LT60-E8-03 confirmed state requires completed current site search",()=>{
+ const from=dock.indexOf("function renderModeChoices(){");
+ const choices=dock.slice(from,dock.indexOf("/* FILTERS-POGO-01",from));
+ return choices.includes("siteFiltersConfirmed&&!searchActive&&!resultsStale")&&
+  choices.includes('(activeSearchPhase==="updated"||activeSearchPhase==="empty")')&&
+  service.includes("confirmedSubmittedFiltersGeneration==requestGeneration")&&
+  service.includes("submittedSearchGeneration==requestGeneration")&&
+  service.includes("!searchInProgress&&!resultsStale");
+});
+
+// LT60-E9: old visible cards remain in cache, never collected or alerted as new.
+test("LT60-E9-01 prior cards require DOM change after Search before acceptance",()=>{
+ const collect=probe.slice(probe.indexOf("function collect(){"),probe.indexOf('if(action==="collect")return collect();'));
+ const poll=service.slice(service.indexOf("private void pollSearch("),service.indexOf("private long expiration("));
+ return collect.includes("const resultFreshnessPending=found.length>0&&!resultChanged;")&&
+  collect.includes("resultFreshnessPending,")&&
+  poll.includes('if(r.optBoolean("resultFreshnessPending",false)){')&&
+  poll.includes("if(attempt<24){")&&
+  poll.includes("pollSearch(generation,attempt+1,manual);")&&
+  poll.includes('searchFailure("⚠ Resultados anteriores",')&&
+  poll.indexOf('if(r.optBoolean("resultFreshnessPending",false)){')<
+    poll.indexOf('int found=r.optInt("found",0);')&&
+  poll.indexOf('if(r.optBoolean("resultFreshnessPending",false)){')<
+    poll.indexOf("applyCollectedResults(r);");
+});
+test("LT60-E9-02 stale-card handling must never emit a new Search or new result alert",()=>{
+ const poll=service.slice(service.indexOf("private void pollSearch("),service.indexOf("private long expiration("));
+ const stale=poll.slice(poll.indexOf('if(r.optBoolean("resultFreshnessPending",false)){' ),poll.indexOf('int found=r.optInt("found",0);'));
+ return stale.includes("searchInProgress=false;")&&
+  !stale.includes("applyCollectedResults(")&&
+  !stale.includes("recordNewResults(")&&
+  !stale.includes('execute("submitSearch"')&&
+  !stale.includes("refresh(");
+});
+test("LT61-SHINY-MODE-01 native mode changes do not rewrite the saved Shiny toggle",()=>{
+ const start=service.indexOf("@JavascriptInterface public void setSearchConfig(String payload)");
+ const end=service.indexOf("@JavascriptInterface public void shiny()",start);
+ const modes=service.slice(start,end);
+ return start>=0&&end>start&&
+  !modes.includes("shiny=false;")&&!modes.includes("shiny=true;")&&
+  !modes.includes("shiny=!shiny;")&&
+  modes.includes("mode=nextMode;rawAttack=a;rawDefense=d;rawStamina=st;")&&
+  modes.includes("scheduleFilterChangeRefresh();")&&
+  service.includes("private void refresh(boolean manual)")&&
+  service.includes("if(shiny){shinyVerified=false;update();}");
+});
+test("LT61-SHINY-MODE-02 dock preserves requested Shiny during verification",()=>{
+ const statement="shinyPending=!!pending;shiny=!!shi||shinyPending;";
+ if(!dock.includes(statement))return false;
+ const fn=require("node:vm").runInNewContext("((shi,pending)=>{let shiny,shinyPending;"+statement+"return [shiny,shinyPending]})",{});
+ return JSON.stringify(fn(false,true))==="[true,true]"&&
+  JSON.stringify(fn(true,false))==="[true,false]"&&
+  JSON.stringify(fn(false,false))==="[false,false]"&&
+  dock.includes("Shiny solicitado · aguardando confirmação no site")&&
+  dock.includes("button.classList.toggle(\"pending\",id===\"sh\"&&shinyPending);");
+});
+test("LT61-SHINY-MODE-03 pending Shiny is not presented as an applied site filter",()=>{
+ return dock.includes("shinyPending?\"✨ Shiny solicitado · aguardando confirmação no site\":shiny?\"✨ Shiny confirmado\"")&&
+  dock.includes("shiny=!!shi||shinyPending;")&&
+  dock.includes("shownShiny=!!resultSourceShiny;resultsStale=!!stale;")&&
+  service.includes("(shiny&&shinyVerified)+\"")&&
+  service.includes("(shiny&&!shinyVerified)+\"")&&
+  service.includes("shinyVerified=shiny;")&&
+  service.includes('execute("verifyShiny",verified->{');
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 

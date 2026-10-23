@@ -1492,6 +1492,12 @@ public class OverlayService extends Service {
             });
         },650L);
     }
+    // Probe the hydrated result DOM early, then back off. These are local
+    // evaluateJavascript reads; never dispatch extra upstream Search requests.
+    private static long resultPollDelayMs(int attempt){
+        if(attempt==0)return 700L;
+        return attempt<=6?650L:1150L;
+    }
     private void pollSearch(int generation,int attempt,boolean manual){
         handler.postDelayed(()->{
             if(stopped||loginPaused||generation!=requestGeneration)return;
@@ -1547,6 +1553,20 @@ public class OverlayService extends Service {
                 searchFailure("⚠ Ranking não confirmado","Liga PvP/ranking configurado não confirmado. Resultados preservados.");
                 return;
             }
+            // LT60-E9: the site may briefly retain cards from the previous
+            // Search while React switches GL/UL or IV modes. A verified filter
+            // form alone is not proof that those visible cards were refreshed.
+            if(r.optBoolean("resultFreshnessPending",false)){
+                if(attempt<24){
+                    pollSearch(generation,attempt+1,manual);
+                    return;
+                }
+                searchInProgress=false;
+                searchFailure("⚠ Resultados anteriores",
+                    "O site não apresentou alteração comprovável da lista após Search. "+
+                    "Os cartões anteriores foram preservados, sem novos alertas.");
+                return;
+            }
             int found=r.optInt("found",0);
             int onSite=r.optInt("siteCount",0);
             if(attempt==0)BugReport.log(this,"SEARCH_RESULT",
@@ -1590,12 +1610,16 @@ public class OverlayService extends Service {
             }
             if(loading||(!empty&&found==0&&attempt>=24)){
                 searchInProgress=false;
-                searchFailure("⚠ Site sem confirmação","Busca não confirmada no site (tempo limite). Resultados anteriores mantidos.");
+                String evidence=r.optBoolean("emptySignalFound",false)?
+                    (r.optBoolean("resultChanged",false)?"estado vazio não concluído":"estado vazio anterior sem atualização"):
+                    "sem cartões nem sinal explícito de zero resultados";
+                searchFailure("⚠ Site sem confirmação",
+                    "Tempo limite: "+evidence+". Resultados anteriores preservados.");
                 return;
             }
             applyCollectedResults(r);
             });
-        }, attempt==0?3000L:1300L);
+        }, resultPollDelayMs(attempt));
     }
     private long expiration(JSONObject item){
         if(item==null)return Long.MAX_VALUE;
@@ -1786,6 +1810,22 @@ public class OverlayService extends Service {
                 lastAlertAt=now;
         }
     }
+    // A reset request is pending until a real Search is submitted and its
+    // results pass the website + native criteria gates. Never clear it on a
+    // click, timeout or rejected response; that would hide an active site filter.
+    private void acknowledgeConfirmedExtraResets(){
+        try{
+            JSONObject updated=new JSONObject(extraFiltersJson);
+            org.json.JSONArray pending=updated.optJSONArray("clearExtraKeys");
+            if(pending==null||pending.length()==0)return;
+            updated.remove("clearExtraKeys");
+            extraFiltersJson=updated.toString();
+            getSharedPreferences("prefs",0).edit()
+                .putString("extraFiltersJson",extraFiltersJson).apply();
+        }catch(org.json.JSONException error){
+            recordFailure("confirmar limpeza de filtros",error);
+        }
+    }
     private void applyCollectedResults(JSONObject r){
         BugReport.log(this,"RESULTS","Modo "+mode+" • válidos "+
             (r.optJSONArray("cards")==null?0:r.optJSONArray("cards").length())+
@@ -1832,6 +1872,9 @@ public class OverlayService extends Service {
         recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
         results=sorted.toString();
         searchPhase=sorted.length()==0?"empty":"updated";
+        // Criteria were verified before Search and rechecked during collection.
+        // Acknowledge transient clear intents only after accepting the result.
+        acknowledgeConfirmedExtraResets();
         shownMode=mode;shownConfigJson=filterConfigJson();
         shownShiny=shiny&&shinyVerified;resultsStale=false;
         rememberConfirmedPreview(sorted,now);

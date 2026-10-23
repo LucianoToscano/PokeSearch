@@ -515,6 +515,15 @@ body.controls-window #choices.modeCascade button.modeCascadeEntry.chosen,
 body.controls-window #choices.modeCascade button.modeCascadeEntry:active{
  background:#285449e8!important;color:#e0fff1!important;
 }
+/* LT60-E8: configured (not necessarily site-confirmed) is distinct from
+   the submenu currently being edited. Never paint both as "applied". */
+body.controls-window #choices.modeCascade button.modeCascadeEntry.activeMode:not(.chosen){
+ box-shadow:inset 2px 0 #89c1d5!important;
+ background:#314150b0!important;
+}
+body.controls-window #choices.modeCascade button.modeCascadeEntry.siteConfirmed:not(.chosen){
+ box-shadow:inset 2px 0 #62bba1!important;
+}
 body.controls-window #choices.modeCascade .modeCascadeArrow{font:700 14px/1 Roboto,Arial,sans-serif;opacity:.75}
 body.controls-window #choices.modeCascade .modeCascadeEditor{
  display:flex;align-items:center;gap:3px;box-sizing:border-box;
@@ -1756,6 +1765,15 @@ function positionCascadeEditor(){
  rail.scrollTop=Math.max(0,requested+36-visible);
  editor.style.top=Math.max(0,Math.min(visible-36,requested-rail.scrollTop))+"px";
 }
+// Highlight the SAVED mode, independently of the temporary editor row.
+// A selected mode is not automatically a site-confirmed Search.
+function selectedModeEntry(currentMode,settings){
+ if(currentMode!=="raw")return currentMode;
+ const v=[settings.attack,settings.defense,settings.stamina].map(Number);
+ if(v.every(n=>n===15))return "hundo";
+ if(v.every(n=>n===0))return "nundo";
+ return "raw";
+}
 function renderModeChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();
@@ -1775,14 +1793,22 @@ function renderModeChoices(){
  };
  const entries=[["hundo","100%"],["nundo","0%"],["raw","IV"],
   ["percent","IV%"],["gl","GL"],["ul","UL"]];
+ const activeModeEntry=selectedModeEntry(mode,searchSettings);
+ const confirmedMode=siteFiltersConfirmed&&!searchActive&&!resultsStale&&
+  (activeSearchPhase==="updated"||activeSearchPhase==="empty");
  entries.forEach(([id,label],idx)=>{
   const button=document.createElement("button");button.type="button";
   button.className="modeCascadeEntry";button.textContent=label;
+  const selected=activeModeEntry===id;
   button.classList.toggle("chosen",cascadeMode===id);
+  button.classList.toggle("activeMode",selected);
+  button.classList.toggle("siteConfirmed",selected&&confirmedMode);
   button.setAttribute("role","menuitem");
+  button.setAttribute("aria-current",String(selected));
   button.setAttribute("aria-haspopup",String(idx>=2));
   button.setAttribute("aria-expanded",String(cascadeMode===id));
-  button.title=idx<2?"Aplicar agora "+label:label+" · abrir ajuste";
+  button.title=(idx<2?"Aplicar agora "+label:label+" · abrir ajuste")+
+   (selected?(confirmedMode?" · confirmado no site":" · selecionado no app, site pendente"):"");
   if(idx>=2){
    const arrow=document.createElement("span");arrow.className="modeCascadeArrow";
    arrow.textContent="›";button.appendChild(arrow);
@@ -2812,7 +2838,7 @@ function draw(){
    "📍 Localização desligada · busca geral";
  geoControl.setAttribute("aria-label",geoControl.title);
  document.getElementById("sh").setAttribute("aria-pressed",String(shiny));
- document.getElementById("sh").title=shiny?"✨ Shiny confirmado":shinyPending?"✨ Aguardando vínculo/confirmação no site":"Shiny desativado";
+ document.getElementById("sh").title=shinyPending?"✨ Shiny solicitado · aguardando confirmação no site":shiny?"✨ Shiny confirmado":"Shiny desativado";
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
  if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status))document.getElementById("manualRefresh").classList.remove("requested");
  const bell=document.getElementById("bell");
@@ -2983,7 +3009,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale;
  mode=m==="iv"?"raw":m;status=String(s||"");activeSearchPhase=String(searchPhase||"idle");
   if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();
- shiny=!!shi;shinyPending=!!pending;row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
+ shinyPending=!!pending;shiny=!!shi||shinyPending; // Preserve requested ON while site verification is pending.row=Number(r)||46;period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();showTimers=!!timers;generalAlerts=!!general;hasFavorites=!!hasFav;alertMode=notificationMode==="silent"?"silent":generalAlerts?"on":"off";
  showResultText=!!textVisible;
  notificationPermissionGranted=!!permissionGranted;
  watchAlertsEnabled=!!favoriteAlertsEnabled;
@@ -3356,7 +3382,7 @@ function renderQuickMenu(){
    const art=getModeMenuIcon(mode,false,searchSettings);
    button.dataset.modeArtKey=art.path+"|"+art.ivBadge+"|"+art.ivText;
   }
-  if(renderedId==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
+  if(renderedId==="sh")button.setAttribute("aria-pressed",String(shiny));
   const label=document.createElement("span");label.className="quickName";label.textContent=name;
   const state=document.createElement("span");state.className="quickState";state.textContent=quickState(renderedId);
   button.append(glyph,label);
@@ -3418,7 +3444,7 @@ function refreshQuickMenuStates(){
     button.dataset.modeArtKey=key;
    }
   }
-  if(id==="sh")button.setAttribute("aria-pressed",String(shiny&&!shinyPending));
+  if(id==="sh")button.setAttribute("aria-pressed",String(shiny));
   if(id==="more")button.setAttribute("aria-expanded",String(choiceOpen==="more"));
   button.classList.toggle("pending",id==="sh"&&shinyPending);
    if(id==="filters"){
@@ -3442,7 +3468,7 @@ function refreshQuickMenuStates(){
      favoriteAlertMode+" · fontes audíveis: "+(2-mutedCount)+
      (favoriteAlertMode==="on"&&!hasFavorites?" · cadastre favoritos":"");
   button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
-   id==="sh"?(shiny&&!shinyPending):
+   id==="sh"?shiny:
    id==="bell"?(bellState.newSound||bellState.favoriteSound):id==="period"?period>0:
    id==="star"?hasFavorites:id==="mode"?(mode==="gl"||mode==="ul"):false);
  });

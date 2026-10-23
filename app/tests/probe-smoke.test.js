@@ -128,12 +128,22 @@ function run(action,mode,shinyOnly,opts={}){
       }
     }
   }
+  if(opts.searchButton){
+    const search=element("Search",{},{tagName:"BUTTON",click(){opts.submitted=true;}});
+    cardButtons.push(search);
+  }
   if(opts.pending||opts.pendingText){
     pending=[element(opts.pendingText||"Link a Pokémon GO account. Your trainer code: 12 digits")];
   }
   const accountLabels=opts.accountBadge?[element("Shiny for your account TestAccount (123456789012).")]:[];
   const sessionButtons=opts.loggedOut?[element(opts.loginLabel||"Log in")]:opts.logoutVisible?[element("Log out")]:[];
   function querySelectorAll(selector){
+    if(opts.emptyStatus&&selector==='main [role=status],main [aria-live],main p,main h2,main h3'){
+      return [element("No results found",{}, {closest:()=>null})];
+    }
+    if(opts.emptyRegion&&selector==='main section,[role=region],[data-testid*=result],[aria-label*=result]'){
+      return [element("No results found",{}, {querySelector:()=>null})];
+    }
     if(selector==="label,span,strong,div")return labels;
     if(selector==="span,label,strong,small,dt,div,p")return all;
     if(selector==='[role="dialog"],[aria-modal="true"],form')return pending;
@@ -144,7 +154,7 @@ function run(action,mode,shinyOnly,opts={}){
     if(selector==="p,small,span,div,label")return accountLabels;
     return [];
   }
-  const document={querySelectorAll,querySelector:()=>null,getElementById:id=>popupById[id]||null,
+  const document={querySelectorAll,querySelector:selector=>opts.loading&&selector==='[aria-busy="true"],[role="progressbar"]'?element("Loading"):null,getElementById:id=>popupById[id]||null,
     body:element(opts.siteCount!==undefined?"Showing "+opts.siteCount+" spawns":opts.profileBody|| (opts.bodyBadge?"Pokémon\nShiny for your account DemoTrainer (000000000000).":opts.spawn?"Showing 10 spawns":""))};
   const code=source.replace("__ACTION__",JSON.stringify(action))
       .replace("__MODE__",JSON.stringify(mode))
@@ -158,7 +168,7 @@ function run(action,mode,shinyOnly,opts={}){
   const HTMLTextAreaElement={prototype:{}};
   Object.defineProperty(HTMLTextAreaElement.prototype,"value",{set(v){this.value=String(v);}});
   class Event{constructor(type){this.type=type;}}
-  return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:opts.pathname||"/search",hostname:"pogocoordinates.com"},window:{},HTMLInputElement,HTMLTextAreaElement,Event}));
+  return JSON.parse(vm.runInNewContext(code,{document,location:{pathname:opts.pathname||"/search",hostname:"pogocoordinates.com"},window:opts.browserWindow||{},HTMLInputElement,HTMLTextAreaElement,Event}));
 }
 function configureSettled(mode,opts,max=14){
  let last=null,waits=0;
@@ -587,5 +597,127 @@ checked++;
  card.innerText=card.innerText.replace('0.3 km away','');
  assert.equal(parse(card,0).distance,'');
  checked+=6;
+}
+// LT60 regression: React selection is pending until the website DOM confirms it.
+{
+ const start=source.indexOf('function choice(label,want){');
+ const end=source.indexOf('function readChoice(label)',start);
+ assert.ok(start>=0&&end>start,'League choice handler must exist');
+ let clicked=0;
+ const scope={
+  field:()=>({tagName:'BUTTON',disabled:false,getAttribute:()=> 'true'}),
+  text:()=> 'Any', findOption:()=>({click(){clicked++;}}), transientPending:false
+ };
+ const applied=vm.runInNewContext(source.slice(start,end)+";choice('League','Great League')",scope);
+ assert.equal(applied,false,'League selection must wait for React hydration');
+ assert.equal(scope.transientPending,true,'League selection requests another DOM read');
+ assert.equal(clicked,1,'League option clicked once');
+ checked++;
+}
+{
+ const start=source.indexOf('function extraSelect(key,want){');
+ const end=source.indexOf('/* LT57 ONE-FORM',start);
+ assert.ok(start>=0&&end>start,'Optional filter selector must exist');
+ let clicked=0;
+ const scope={
+  EXTRA_LABELS:{weather:'Weather'},
+  extraControl:()=>({disabled:false,matches:()=>false,getAttribute:()=> 'true'}),
+  extraValue:()=> 'Sunny', isNeutral:v=>v==='Any',
+  optionElements:()=>[{label:'Any',click(){clicked++;}}],
+  text:e=>e.label, transientPending:false
+ };
+ const applied=vm.runInNewContext(source.slice(start,end)+";extraSelect('weather','')",scope);
+ assert.equal(applied,false,'Reset to Any must wait for React confirmation');
+ assert.equal(scope.transientPending,true,'Weather reset requests another DOM read');
+ assert.equal(clicked,1,'Neutral option clicked once');
+ checked++;
+}
+// LT60: text-backed site filters also require a post-input React confirmation.
+{
+ const start=source.indexOf('function extraSelect(key,want){');
+ const end=source.indexOf('/* LT57 ONE-FORM',start);
+ assert.ok(start>=0&&end>start,'Extra selector must be available');
+ for(const [wanted,observed] of [['','Sunny'],['Rainy','Sunny']]){
+  let changes=0;
+  const scope={EXTRA_LABELS:{weather:'Weather'},
+   extraControl:()=>({disabled:false,matches:s=>s==='input'}),
+   extraValue:()=>observed, isNeutral:()=>false,
+   comparableOption:s=>s, valueInput:()=>{changes++;return true;},
+   transientPending:false};
+  const output=vm.runInNewContext(source.slice(start,end)+";extraSelect('weather',"+JSON.stringify(wanted)+")",scope);
+  assert.equal(output,false,'Input change cannot be confirmed in its own tick');
+  assert.equal(scope.transientPending,true,'Input change requires a later DOM read');
+  assert.equal(changes,1,'Input is changed once');
+  checked++;
+ }
+}
+// LT60 E7: never approve an old zero without proof that the result UI changed.
+{
+ const shared={};
+ const form={config:{_preSubmitVerified:true},pvp:{rank:'1',league:'Great League',prior:'Yes'},browserWindow:shared};
+ const first=run('submitSearch','gl',false,{...form,siteCount:0,emptyStatus:true,searchButton:true});
+ assert.equal(first.ok,true,'Search should submit');
+ const stale=run('collect','gl',false,{...form,siteCount:0,emptyStatus:true});
+ assert.equal(stale.emptySignalFound,true,'Explicit old zero message is visible');
+ assert.equal(stale.resultChanged,false,'Old zero has no result DOM transition');
+ assert.equal(stale.explicitEmpty,false,'Old empty results must never be confirmed');
+ checked++;
+}
+{
+ const shared={};
+ const form={config:{_preSubmitVerified:true},pvp:{rank:'1',league:'Great League',prior:'Yes'},browserWindow:shared};
+ run('submitSearch','gl',false,{...form,siteCount:3,searchButton:true});
+ const fresh=run('collect','gl',false,{...form,siteCount:0,emptyStatus:true});
+ assert.equal(fresh.resultChanged,true,'Result count has changed since Search');
+ assert.equal(fresh.explicitEmpty,true,'Fresh empty result with site proof is accepted');
+ assert.equal(fresh.criteriaConfirmed,true,'Pre-submit site filter must still be confirmed');
+ checked++;
+}
+{
+ const shared={};
+ const form={config:{_preSubmitVerified:true},pvp:{rank:'1',league:'Great League',prior:'Yes'},browserWindow:shared};
+ run('submitSearch','gl',false,{...form,siteCount:4,searchButton:true});
+ const countOnly=run('collect','gl',false,{...form,siteCount:0});
+ assert.equal(countOnly.explicitEmpty,false,'Showing 0 spawns alone is not a confirmed zero');
+ const busy=run('collect','gl',false,{...form,siteCount:0,emptyRegion:true,loading:true});
+ assert.equal(busy.explicitEmpty,false,'Loading UI cannot be confirmed as empty');
+ checked+=2;
+}
+// LT60-E9: already visible cards cannot be attributed to the newly submitted mode.
+{
+ const shared={};
+ const card=name=>name+'\n#114 Female M\nInfestation / Solar Beam\nCP\n404\nLVL\n7\nIV\n67% (1/15/14)\nLOCATION\nBron, France\nDESPAWN\n57:57\nGet coords';
+ const pvp={rank:'1',league:'Great League',prior:'Yes'};
+ const settings={config:{glRank:1,_preSubmitVerified:true},pvp,browserWindow:shared};
+ const previous=run('submitSearch','gl',false,{...settings,siteCount:1,spawn:card('Tangela'),searchButton:true});
+ assert.equal(previous.ok,true,'Search must be submitted once');
+ const stale=run('collect','gl',false,{...settings,siteCount:1,spawn:card('Tangela')});
+ assert.equal(stale.resultChanged,false,'Still-visible prior result has no new DOM evidence');
+ assert.equal(stale.resultFreshnessPending,true,'Still-visible result must be held for retry');
+ const updated=run('collect','gl',false,{...settings,siteCount:1,spawn:card('Oddish')});
+ assert.equal(updated.resultChanged,true,'Changing result card proves DOM transition');
+ assert.equal(updated.resultFreshnessPending,false,'Freshly updated cards may be evaluated');
+ const heldAgain=run('collect','gl',false,{...settings,siteCount:1,spawn:card('Oddish')});
+ assert.equal(heldAgain.resultFreshnessPending,false,'Transition proof persists within one submission');
+ checked+=3;
+}
+// LT61-SHINY-ALL-MODES: every supported mode must verify Shiny on the live form.
+{
+ const modes=[
+  ["raw-zero","raw",{iv:["0","0","0"],config:{attack:0,defense:0,stamina:0}}],
+  ["raw-custom","raw",{iv:["3","15","12"],config:{attack:3,defense:15,stamina:12}}],
+  ["raw-hundo","raw",{iv:["15","15","15"],config:{attack:15,defense:15,stamina:15}}],
+  ["iv100-legacy","iv",{iv:["15","15","15"]}],
+  ["percent","percent",{iv:["91","100"],config:{percentMin:91,percentMax:100}}],
+  ["great-league","gl",{pvp:{rank:"1",league:"Great League",prior:"Yes"},config:{glRank:1}}],
+  ["ultra-league","ul",{pvp:{rank:"1",league:"Ultra League",prior:"Yes"},config:{ulRank:1}}]
+ ];
+ for(const [label,mode,options] of modes){
+  const good=run("verifyFilters",mode,true,{...options,switch:true});
+  assert.equal(good.ok,true,label+" must keep exact mode filters and confirmed Shiny ON");
+  const off=run("verifyFilters",mode,true,{...options,switch:false});
+  assert.equal(off.ok,false,label+" must reject a site Shiny switch that went OFF");
+  checked+=2;
+ }
 }
 console.log("PokeSearch probe contract: "+checked+" tests passed");
