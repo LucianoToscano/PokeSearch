@@ -5318,3 +5318,15 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 
 **Regressões:** `app/tests/lt66-samsung-panels.test.js` + suítes históricas e geometria Java, build Gradle e inspeção da assinatura original. Versão planejada `0.00.66 / 54264`, certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Não confundir teste automático com aprovação física: verificar scroll até último botão, gesto do dedo no cartão, direita/esquerda, foco, troca de filtros, Shiny, alertas, sprites e despawn.
 
+
+## LT67 — Etapa 2: campos compactos de Nível, IV bruto, Tamanho e Sexo (24/10/2026)
+
+**Evidências:** prints Samsung 1000844487/1000844491 mostram IV Raw com `100` digitado e campos largos; 1000844494 mostra Nível aceitando visualmente `99999`, 1000844498 mostra Sexo desalinhado, e 1000844491 mostra PC com retângulos e aviso ocupando espaço. Outros prints destacam distância do menu Modo, fundo dos subeditores, painel de Localização, rodapé e ⋯ afastado (todos reservados às etapas 3–5, não confundidos com correções já realizadas).
+
+**Branch isolada:** `fix/lt67-level-size-sex-iv-samsung-20261024`, criada do HEAD LT66 `b99345b94df6af0f2a122464735b1a65396d1d64` (PR #39 Draft), sem edição da main, sem merge, sem APK LT67 nesta etapa.
+
+**Mudanças reais:** `dock.html` preserva PC como numérico convencional, mas usa texto com `inputMode=numeric`, `maxLength=2` e normalização imediata de dígitos para Nível Min e Max. A confirmação ✓ mantém faixa 1–35 e Min<=Max; placeholders curtos 1 e 35, nomes de acessibilidade completos. Input bruto IV (Ataque/Defesa/Stamina) e ranking GL/UL limitados visualmente a dois dígitos; IV% mantém 3 para poder exibir 100, todos com a validação de valores original (Raw 0–15). Campos de Nível com 31 CSS px cada e largura de editor 108 px; Tamanho sete células 23×22px em uma linha, editor 182px; Sexo quatro células 23×22px em uma linha, editor 107px, opção Any ⚥ e seleção exclusiva preservadas. Tipografia vetorial de Unicode reduzida, sem PNGs falsificados ou modificação da lista oficial do site. Indicadores de filtros, Shiny, Form, estrutura WebView/probe, assinatura e dados permanecem como antes.
+
+**Regressões:** `app/tests/lt67-compact-fields.test.js` (12 novos contratos), suites históricas atualizadas somente onde exigiam tamanhos legados, e workflow QA exclusivo `.github/workflows/lt67-stage2-qa.yml` — 14 suites Node + Java PopupTouchGeometry, deliberadamente sem gerar APK.
+
+**Pendências das próximas etapas:** eliminar rolagem do Modo e More quando couber; alinhar e dimensionar popup de Pokémon e Favoritos; reduzir rodapé Filtros, status e espaço extra no PC, e margens de Localização; centralizar os demais popups sem engolir toques externos; Get coords sujeito a cooldown do site, com nova tentativa real. Validar no Samsung que dois caracteres cabem e a digitação é acessível, que todas as formas/sexo do site se mantêm corretas e que a cascata não sofre recorte próximo da borda.
