@@ -50,7 +50,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 </div>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
-let coordsNote="",coordsPending=false;
+let coordsNote="",coordsPending=false,coordsRequestSeq=0;
 function coordButtons(){
  const fetch=document.getElementById("coords"),copy=document.getElementById("copy");
  if(!fetch||!copy)return;
@@ -63,6 +63,15 @@ function coordButtons(){
 function requestCoordsUi(){
  if(coordsPending||currentIndex<0)return;
  coordsPending=true;coordsNote="Consultando coordenadas do Pokémon no site...";
+ const seq=++coordsRequestSeq;
+ setTimeout(()=>{
+  if(seq!==coordsRequestSeq||!coordsPending)return;
+  coordsPending=false;
+  coordsNote="O site não respondeu à solicitação. Toque em Get coords para tentar novamente.";
+  const label=document.getElementById("coordsValue");
+  if(label)label.textContent=coordsNote;
+  coordButtons();
+ },9000);
  coordButtons();
  const label=document.getElementById("coordsValue");
  if(label)label.textContent=coordsNote;
@@ -81,6 +90,7 @@ window.copyFeedback=msg=>{
 function fmt(sec){sec=Math.max(0,Math.floor(sec));return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");}
 function updateCountdown(){const e=document.getElementById("timer");if(e&&expiresAt)e.textContent=fmt((expiresAt-Date.now())/1000);}
 window.coordsResult=function(coords,message){
+ coordsRequestSeq++;
  coordsPending=false;
  if(coords){currentCoords=coords;coordsNote="";}
  else coordsNote=String(message||"Coordenadas indisponíveis");
@@ -161,6 +171,7 @@ window.showDetails=(c,mode,watched)=>{
  const changed=detailIdentity!==nextIdentity;
  if(changed){
   detailIdentity=nextIdentity;evolutionExpanded=false;
+  coordsRequestSeq++;
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
   document.getElementById("evolutions").hidden=true;
   document.getElementById("evoBody").hidden=true;
