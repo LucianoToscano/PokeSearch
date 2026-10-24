@@ -5390,3 +5390,41 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Testes:** novo `app/tests/lt69-more-popup-origin.test.js` verifica origem/estilos nas quatro orientações e posições, largura, listagem sem limite artificial de duas ações e sintaxe dos scripts. `app/tests/PopupTouchGeometryTest.java` ganha cinco verificações da borda nativa com popup abaixo/acima/vertical. A versão LT68 e PR #41 permanecem intocados; esta correção reside na branch `fix/lt69-more-native-popup-origin-20261024` derivada de `ee144e8042e321652d0303878e5bb75bf93d8ada`.
 
 **Pendências até aferição:** rodar 17 suítes Node, geometria e compilação Java Android no GitHub Actions; somente se passarem, construir APK estável LT69 com `versionName=0.00.69`, `versionCode=54269`, certificado original com SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, R8 e SHA-256 do APK. A validação física do espaçamento, Reportar/Apoiar/Fechar e toque nos resultados continua dependente de novo print Samsung.
+
+## LT70 — Localização compacta e fechamento por segundo toque (24/10/2026)
+
+**Referência Samsung:** dois prints mostram a versão correta de **largura compacta** do popup de Localização, contrastando com uma versão com largura excessiva quando o campo está em foco. O usuário pediu título `Localização` e ícone **Colar** centralizados como um único grupo; linha das coordenadas e slider sem espaços laterais desnecessários; linha do Radius com entrada de somente 4 dígitos (`0–1000`) no formato **`[1000]km`**, sem grande vazio antes da unidade; confirmar e limpar centralizados na mesma linha; um novo toque no ícone Localização deve recolher o popup.
+
+**Causa técnica e solução:** `dock.html` tinha múltiplas regras de largura 172/192/225px e se comportava diferente durante foco, além de `radiusField.type="number"` (que ignora `maxlength` em Android/WebView) e inseria `km` por `position:absolute;right:4px` em um campo de 62–72px, o que criava uma lacuna visual. CSS final `LT70 LOC-CENTER-01` fixa **192px** (também no `popup-window` e `popup-above`) e `box-sizing:border-box`; centraliza `.choiceHeader`, incluindo Colar; mantém o campo coords em 100% e slider sem margens externas; centraliza `.locRadiusRow` com ações de 26px; `.locRadiusNumber` tem 42px em fonte monoespaçada e `.locRadiusUnit` volta ao fluxo normal, imediatamente ao lado da borda do campo, sem mudar os valores do filtro.
+
+**Entrada e validação:** `radiusField.type="text"; inputMode="numeric"; maxLength=4; pattern="[0-9]{1,4}"`, com `oninput` que descarta símbolos, limita a quatro algarismos e restringe imediatamente `>1000` a `1000`. Slider permanece de `0` a `1000`; `submit()` segue exigindo número inteiro no intervalo, coordenadas válidas e confirmação pelo site. Não alterar filtros anteriores (IV, Shiny, PvP, espécie), não alterar a localização automaticamente enquanto o usuário digita.
+
+**Fechamento:** como menu da barra e popup independente são WebViews diferentes, o `choiceOpen` da barra não acompanha a seleção atual. `OverlayService.openIndependentPopup()/closeIndependentPopup()` agora sincroniza `window.setActiveNativePopupKind` no `menuPanel`; `toggleChoices(kind)` usa esse estado para chamar `Native.closePopup()` quando recebe segundo toque no mesmo botão. O guard nativo `if(kind.equals(popupKind)){closeIndependentPopup();return;}` continua como fallback. Isso preserva troca de menu, foco da caixa, animações, overlay e controles sem segundo popup.
+
+**Verificação inicial:** novo `app/tests/lt70-location-radius-toggle.test.js` com 9 contratos (CSS, centralização, digitação 0/1000, limites e letras, label `[1000]km`, aplicação/limpeza, segundo toque e parse do JS) passou em execução V8 isolada usando o código do GitHub; **ainda precisa ser confirmado na suíte Node do Actions e em Samsung real**. `app/tests/overlay-ux.test.js` atualizada para a entrada de texto numérica estrita. Branch LT70 derivada da LT69, PR de revisão em Draft; sem merge em `main` ou PRs anteriores.
+
+**Próxima homologação:** (1) Popup continua com mesma largura antes/depois de foco. (2) `[0]km`, `[999]km` e `[1000]km` sem espaço interno e não aceita quinto caractere. (3) Título+Colar alinhados ao centro. (4) Clicar Localização abre, clicar novamente fecha, clicar outro ícone troca. (5) Aplicar coordenadas e limpar sem apagar outros filtros. (6) Novo APK protegido LT70, somente se o GitHub Actions compilar com assinatura persistente e comparar o SHA-256 do certificado, código e pacote originais.
+
+
+---
+
+## LT70 — CI, assinatura e checkpoint para homologação Samsung (24/10/2026)
+
+**Origem do APK validado:** branch `fix/lt70-location-radius-center-toggle-20261024`, código no commit `22e0e3151fe4e7885ca0d671095ae0e5127e1110`; PR [#44](https://github.com/LucianoToscano/PokeSearch/pull/44) aberto em **Draft**, base LT69, sem merge em `main`.
+
+**Alterações do código já presentes e auditadas:** em `app/src/main/assets/dock.html`, CSS `LT70 LOC-CENTER-01` dá 192px fixos ao painel Localização, inclusive durante foco, centraliza título+Colar, campo das coordenadas, slider e grupo de raio/Aplicar/Limpar. O Radius usa caixa numérica visual de 42px e texto `km` imediatamente após o campo ([1000]km); `inputMode=numeric`, `maxlength=4`, sanitização exclusiva de dígitos e limite 0–1000. Na `OverlayService.java`, `setActiveNativePopupKind` sincroniza a WebView da barra com o popup nativo; repetir o toque fecha e trocar o menu substitui o popup. O guard nativo `kind.equals(popupKind)` permanece. Ações de Localização usam `Native.setLocation` sem alterar filtros independentes. Não foram refeitos assets ou filtros fora do escopo.
+
+**Validação de CI real:** workflow `.github/workflows/build-v070-lt-location-signed.yml`; [run 40071682037](https://github.com/LucianoToscano/PokeSearch/actions/runs/40071682037) — **SUCCESS**, código de origem exato acima. As **18 suítes Node** declaradas no workflow concluíram; a nova `lt70-location-radius-toggle.test.js` passou **9/9** verificações; `PopupTouchGeometryTest` passou **44/44**; sintaxe de `probe.js`, `visual_editor.js` e JavaScript inline de `dock.html`/`detail.html` aprovada. `gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug --stacktrace` terminou **BUILD SUCCESSFUL**, com tarefa `:app:minifyDebugWithR8`. Na configuração de assinatura persistente, o `app/build.gradle.kts` mantém `isMinifyEnabled=true`, `isShrinkResources=true` e `proguard-rules.pro`. Esta é a variante **debug assinada de testes internos**, e não uma alegação de variante release não depurável.
+
+**Artefato oficial:** `PokeSearch-v0.00.70-LT` (ID `12551990106`) contém `PokeSearch-v0.00.70-LT.apk`. O APK foi baixado do GitHub Actions, extraído e a verificação `sha256sum -c SHA256SUMS.txt` deu **OK**; integridade da estrutura ZIP aprovada. Relatório oficial `apksigner verify --verbose --print-certs` indica assinatura APK v2 válida, um assinante e certificado correspondente ao esperado.
+
+- `applicationId`: `com.lucianotoscano.pokesearch`
+- `versionName`: `0.00.70`
+- `versionCode`: `54270`
+- SHA-256 do **certificado**: `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`
+- SHA-256 do **APK**: `029b7d616f6d661e58d43d06f8a0c037e5b03378eabffea083ba0d5743103f28`
+- Fonte compilada: `22e0e3151fe4e7885ca0d671095ae0e5127e1110`
+
+**Homologação física Samsung ainda pendente:** conferir painel ~192px antes/depois de focar coordenadas e abrir teclado; texto `[0]km`, `[999]km` e `[1000]km` sem lacuna, rejeição de um quinto caractere e acima de 1000; centralização título+Colar, slider e ações; abrir Localização, tocar novamente para fechar com teclado aberto, trocar entre menus sem retrair a barra; painel não intercepta resultados indevidamente; aplicar/limpar coordenadas e raio mantendo Shiny, GL/UL, Favoritos, Clima branco/preto e demais filtros; verificar funcionamento normal com limite de dez resultados. **Nenhum teste físico foi realizado pelo assistente.**
+
+**Restrições mantidas:** não fazer merge na `main`, não converter Draft para Ready, preservar branches/PRs LT68 e LT69, package, namespace, identidade persistente e assets. Este adendo documental é posterior ao build e não modifica os bytes do APK LT70 validado.

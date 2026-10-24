@@ -2357,7 +2357,8 @@ test("NOTIFY-05 Favorites remains selection-only; audio settings reside in mini 
   alerts.includes('Native.setFavoriteAlertMode(id)');
 });
 test("COORDS-06 typed radius still requires actual site two-field confirmation",()=>{
- return dock.includes('radiusField.type="number"')&&
+ return dock.includes('radiusField.type="text"')&&
+   dock.includes('radiusField.maxLength=4')&&
   dock.includes('wantedRadius=Number(radiusField.value)')&&
   dock.includes('radiusField.oninput=()=>')&&
   service.includes('if(configured.optBoolean("pending",false)&&attempt<16)')&&
