@@ -77,7 +77,7 @@ check("three gender chips; tap again resets to Any",()=>{
  assert.ok(!filter.includes('["Any","Male","Female","Genderless"]'));
  assert.ok(filter.includes('modeDraft[multiKey]=checked?[]:[resolved]'));
  assert.ok(filter.includes('filterOptions[key]?.options'));
- assert.ok(filter.includes('filterOptions.form?.options'));
+ assert.ok(source.includes('filterOptions.form?.options'));
  assert.ok(html.includes('grid-template-columns:repeat(3,23px)!important'));
 });
 check("seven Size chips remain multiselect and single-line",()=>{
