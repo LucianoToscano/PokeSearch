@@ -8,3 +8,6 @@ Verificações: 11 suítes Node, Java PopupTouchGeometry, unit tests e Gradle co
 
 ### Tentativa 1
 Primeiro workflow falhou na asserção antiga `UX-SPRITE-01` que exigia declaração imediata de falha nas imagens. O comportamento LT64 tenta recuperar duas vezes a mesma URL verificada antes de exibir o fallback; teste atualizado para esse contrato. Nenhum APK publicou na tentativa falha.
+
+### Tentativa 2
+As 10 suítes herdadas passaram e os novos 16 contratos LT64 tiveram 15 PASS e 1 erro de caminho de arquivo no próprio teste (`app/src/build.gradle.kts` em vez de `app/build.gradle.kts`). Corrigida a referência; nova compilação assinada solicitada no commit seguinte.
