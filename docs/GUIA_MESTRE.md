@@ -5703,3 +5703,24 @@ A LT75 foi previamente colocada no manifesto para **homologação remota real**,
 6. **Não** gerar APK nem publicar esta missão até novo pedido explícito. Conforme regra permanente, futura atualização pública exige APK **Release protegida** com certificado de atualização compatível e homologação; builds internas de teste não são publicação definitiva.
 
 **Status:** funcionalidades codificadas e validação automatizada aprovadas. Homologação física e eventual APK/publicação continuam pendentes. `main`/PR #34/PR #49 preservados.
+
+
+---
+
+## MISSÃO ESPECIAL DE APOIO V2 — QA incremental do tempo efetivo e tela apagada (24/10/2026)
+
+**Escopo autorizado:** continuação das etapas 2–7, exclusivamente na branch `feature/support-mission-v2-20261024`. A implementação V2 já existia no início desta auditoria; não se duplicaram contadores, ícones, temas ou botões. `main`, PR #34 e PR #49 não foram alterados. Não foi gerado APK nem alterado Google Drive.
+
+### Correção preventiva identificada na revisão do código
+
+O serviço de overlay já verificava se a tela estava interativa ao receber um toque, mas preservava o timestamp do toque anterior quando a tela apagava **sem interação**. Se a tela reacendesse em menos de 60 s, o primeiro toque poderia creditar incorretamente parte do intervalo em que ela estivera apagada. A regra de **100 minutos de uso efetivo** exige que isso não ocorra.
+
+- `OverlayService.java`: registro dinâmico e remoção segura de `BroadcastReceiver` exclusivo do evento de sistema `Intent.ACTION_SCREEN_OFF`. Ao apagar a tela, chama `SupportMissionState.overlayStopped()`, que descarta o timestamp anterior. Sem receiver persistente em manifesto e sem permissões, backend ou Firebase novos.
+- `SupportMissionPolicy.java`: cálculo puro e determinístico `overlayTouchCredit(previousAtMs,nowMs,screenInteractive)`. Rejeita o primeiro toque, tela não interativa, relógio monotônico invertido e inatividade acima de 60 s; limita o crédito de uma interação a 30 s.
+- `SupportMissionState.java`: passa a utilizar a função pura, mantendo as sete chaves de preferências, limiares da missão, cooldown, sorteio ponderado e estados da Home inalterados.
+- `SupportMissionPolicyTest.java`: testes adicionais de todos os limites de intervalo, inatividade e tela apagada.
+- `support-mission-v2.test.js`: contrato de registro/liberação do receiver, interrupção do intervalo quando a tela apaga e uso da política pura. Os hashes dos assets Pix e imagens originais continuam obrigatórios.
+
+**Testes de laboratório:** o workflow existente executa contratos Node, política Java, 21 suítes anteriores e `:app:compileDebugJavaWithJavac` sem gerar APK. A execução de uma versão alterada deverá ser atestada por nova conclusão GitHub Actions antes da homologação; nunca confundir código compilado com Samsung físico.
+
+**Pendências externas à verificação automática:** teste no Samsung de tela apagada/retomada; 9/100, 10/99 e 10/100; 02A/02B, FUGIR/X/Voltar e expiração em 15 dias; Pix em leitor bancário **sem pagamento**; quatro artes, responsividade e regressões dos menus/filtros/resultados/Editor Visual. Não anunciar a missão como homologada fisicamente nem publicar APK sem novo pedido.

@@ -11,6 +11,20 @@ public final class SupportMissionPolicyTest {
         check(!SupportMissionPolicy.eligible(10,5_940_000L),"10 opens 99 minutes hidden");
         check(SupportMissionPolicy.eligible(10,6_000_000L),"10 opens 100 minutes eligible");
         check(!SupportMissionPolicy.coolingDown(100L,0L),"no cooldown initially");
+        check(SupportMissionPolicy.overlayTouchCredit(-1L,1000L,true)==0L,
+            "first overlay touch never credits earlier time");
+        check(SupportMissionPolicy.overlayTouchCredit(1000L,2000L,false)==0L,
+            "screen-off gap credits nothing");
+        check(SupportMissionPolicy.overlayTouchCredit(1000L,3000L,true)==2000L,
+            "short overlay interaction credits exact interval");
+        check(SupportMissionPolicy.overlayTouchCredit(1000L,41000L,true)==30000L,
+            "overlay interval capped at thirty seconds");
+        check(SupportMissionPolicy.overlayTouchCredit(1000L,61000L,true)==30000L,
+            "sixty-second active window is inclusive");
+        check(SupportMissionPolicy.overlayTouchCredit(1000L,61001L,true)==0L,
+            "inactive overlay interval above sixty seconds excluded");
+        check(SupportMissionPolicy.overlayTouchCredit(3000L,2000L,true)==0L,
+            "monotonic time reversal never credits time");
         long now=1_000_000L;
         long next=SupportMissionPolicy.nextEligibleAt(now);
         check(next-now==15L*24L*3600L*1000L,"15 days exact");

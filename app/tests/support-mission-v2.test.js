@@ -40,9 +40,16 @@ check("interactive focus and overlay touches only, no passive service time",()=>
  assert.ok(state.includes("power.isInteractive()"));
  assert.ok(state.includes("homeVisibility(Activity a, boolean visible)"));
  assert.ok(state.includes("Math.min(Math.max(0, now - homeAt), 5500)"));
- assert.ok(state.includes("if (gap <= 60000L) credit(c, Math.min(gap, 30000L));"));
+ assert.ok(state.includes("SupportMissionPolicy.overlayTouchCredit(lastOverlayInteractionAt, now, true)"));
+ assert.ok(policy.includes("gap <= 60000L ? Math.min(gap, 30000L) : 0L"));
  assert.ok(main.includes("syncMissionClock(false);"));
  assert.ok(overlay.includes("SupportMissionState.overlayTouch(OverlayService.this);"));
+ assert.ok(overlay.includes("SupportMissionState.overlayStopped();"));
+});
+check("screen-off resets overlay touch timestamp and unhooks receiver on service teardown",()=>{
+ assert.ok(overlay.includes("Intent.ACTION_SCREEN_OFF.equals(intent.getAction())"));
+ assert.ok(overlay.includes("registerReceiver(missionScreenOffReceiver"));
+ assert.ok(overlay.includes("unregisterReceiver(missionScreenOffReceiver)"));
  assert.ok(overlay.includes("SupportMissionState.overlayStopped();"));
 });
 check("badge only on eligibility and no popup until user taps",()=>{

@@ -32,6 +32,15 @@ import java.io.InputStream;
 import java.util.function.Consumer;
 
 public class OverlayService extends Service {
+    // Screen-off is a real system transition, not a touch. Never credit a gap across it.
+    private final android.content.BroadcastReceiver missionScreenOffReceiver =
+        new android.content.BroadcastReceiver() {
+            @Override public void onReceive(android.content.Context context, Intent intent) {
+                if (intent != null && Intent.ACTION_SCREEN_OFF.equals(intent.getAction()))
+                    SupportMissionState.overlayStopped();
+            }
+        };
+    private boolean missionScreenOffRegistered = false;
     private static volatile boolean running=false;
     public static boolean isRunning(){return running;}
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
@@ -886,6 +895,13 @@ public class OverlayService extends Service {
             android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
             stopSelf();
             return;
+        }
+        try {
+            registerReceiver(missionScreenOffReceiver,
+                new android.content.IntentFilter(Intent.ACTION_SCREEN_OFF));
+            missionScreenOffRegistered = true;
+        } catch (RuntimeException e) {
+            recordFailure("escuta de tela apagada",e);
         }
         NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel("pokesearch","PokeSearch",
@@ -3636,6 +3652,11 @@ public class OverlayService extends Service {
     }
     @Override public void onDestroy(){
         SupportMissionState.overlayStopped();
+        if (missionScreenOffRegistered) {
+            try { unregisterReceiver(missionScreenOffReceiver); }
+            catch (IllegalArgumentException ignored) {}
+            missionScreenOffRegistered = false;
+        }
         FirebaseStats.setOverlayVisible(this,false);
         stopped=true;
         running=false;

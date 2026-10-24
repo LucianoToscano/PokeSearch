@@ -87,10 +87,7 @@ public final class SupportMissionState {
     public static synchronized void overlayTouch(Context c) {
         long now = SystemClock.elapsedRealtime();
         if (!screenOn(c) || homeActive) { lastOverlayInteractionAt = -1; return; }
-        if (lastOverlayInteractionAt >= 0 && now >= lastOverlayInteractionAt) {
-            long gap = now - lastOverlayInteractionAt;
-            if (gap <= 60000L) credit(c, Math.min(gap, 30000L));
-        }
+        credit(c, SupportMissionPolicy.overlayTouchCredit(lastOverlayInteractionAt, now, true));
         lastOverlayInteractionAt = now;
     }
     public static synchronized void overlayStopped() { lastOverlayInteractionAt = -1; }

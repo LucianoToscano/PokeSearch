@@ -8,6 +8,13 @@ public final class SupportMissionPolicy {
     public static final int[] WEIGHTS = {40, 30, 20, 10};
     private SupportMissionPolicy() {}
 
+    /** Credit only a recent, interactive interval between real overlay touches. */
+    public static long overlayTouchCredit(long previousAtMs, long nowMs, boolean screenInteractive) {
+        if (!screenInteractive || previousAtMs < 0 || nowMs < previousAtMs) return 0L;
+        long gap = nowMs - previousAtMs;
+        return gap <= 60000L ? Math.min(gap, 30000L) : 0L;
+    }
+
     public static boolean eligible(int opens, long effectiveUsageMs) {
         return opens >= REQUIRED_OPENS && effectiveUsageMs >= REQUIRED_USAGE_MS;
     }
