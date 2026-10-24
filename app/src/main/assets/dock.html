@@ -2492,6 +2492,27 @@ body.controls-window #choices.filterCascade .filterCascadeEditor .extraField{
  padding:0!important;margin:0!important;min-height:0!important;
 }
 
+
+/* Split native overlay window: no touch interception by invisible toolbar margins. */
+body.popup-window #quickHead,body.popup-window #quickMenuList,body.popup-window #controls,
+body.popup-window #gear,body.popup-window #collapse,body.popup-window #spawns,
+body.popup-window #empty,body.popup-window #bubble{display:none!important}
+body.popup-window #shell{width:100%!important;height:0!important;overflow:visible!important}
+body.popup-window #menu,body.popup-window.visual-menu-vertical #menu{
+ display:block!important;position:relative!important;top:0!important;left:0!important;
+ width:100%!important;height:0!important;min-height:0!important;padding:0!important;
+ margin:0!important;overflow:visible!important}
+body.popup-window #choices,body.popup-window.popup-above #choices,
+body.popup-window.visual-menu-vertical #choices,body.popup-window.visual-menu-vertical.popup-above #choices{
+ position:absolute!important;display:block;top:0!important;bottom:auto!important;
+ left:0!important;right:auto!important;max-width:100%!important;
+ max-height:var(--popup-room,440px)!important}
+body.popup-window #choices.filterCascade .filterCascadeEditor,
+body.popup-window.menu-left #choices.filterCascade .filterCascadeEditor{
+ left:80px!important;right:auto!important}
+body.popup-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.menu-left #choices.filterCascade .filterCascadeRail{
+ left:0!important;right:auto!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -2525,8 +2546,10 @@ if(window.location.search.indexOf("results=1")!==-1){
 </script>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
+const popupWindow=window.location.search.indexOf("popup=1")!==-1;
 const resultWindow=window.location.search.indexOf("results=1")!==-1;
 document.body.classList.add(resultWindow?"result-window":controlsWindow?"controls-window":"dock-window");
+document.body.classList.toggle("popup-window",popupWindow);
 document.documentElement.classList.toggle("controls-root",controlsWindow);
 // All 18 original artworks from Google Drive/03_Icones_Ligas.
 // These describe the CURRENT search; they do not activate unavailable filters.
@@ -2748,7 +2771,7 @@ window.syncMenu=(open,side,pad)=>{setMenuOpen(open,side,pad);fit();};
 // Anchor each floating submenu to its launcher instead of the ribbon's left edge.
 // Works inside the independent native menu WebView and never exceeds its width.
 function positionPopupUnderTrigger(){
- if(!controlsWindow||!choiceOpen)return;
+ if(!controlsWindow||!choiceOpen||popupWindow)return;
  const panel=document.getElementById("choices");
  if(!panel||!panel.classList.contains("visible"))return;
  const key={alerts:"bell",info:"appearance",visual:"appearance"}[choiceOpen]||choiceOpen;
@@ -2797,6 +2820,20 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
  if(controlsWindow)h=window.visualPrefs?.menuOrientation==="vertical"?232:34; // scrolling column or original ribbon.
+ if(popupWindow){
+  if(choiceOpen&&menuOpen){
+   const pane=document.getElementById("choices"),rect=pane.getBoundingClientRect();
+   let right=rect.right,bottom=rect.bottom;
+   for(const child of pane.querySelectorAll("*")){
+    if(!child.getClientRects().length)continue;
+    const r=child.getBoundingClientRect();
+    if(r.width>0&&r.height>0){right=Math.max(right,r.right);bottom=Math.max(bottom,r.bottom);}
+   }
+   Native.resizePopup(Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2),
+    Math.min(450,Math.ceil(Math.max(rect.height,pane.scrollHeight,bottom-rect.top))+2));
+  }
+  return;
+ }
  if(resultWindow){
   const header=document.getElementById("resultHeader");
   const spawns=document.getElementById("spawns");
@@ -2874,8 +2911,30 @@ function closeChoices(){
  delete document.getElementById("choices").dataset.panelKind;
  if(controlsWindow)Native.locationEditor(false);
  refreshQuickMenuStates();fit();
+ if(popupWindow&&Native.closePopup)Native.closePopup();
 }
+window.showNativePopup=kind=>{
+ if(!popupWindow)return;
+ if(!menuOpen)setMenuOpen(true);
+ if(choiceOpen===kind)return;
+ toggleChoices(kind);
+};
+window.hideNativePopup=()=>{if(popupWindow&&choiceOpen)closeChoices();};
+window.setNativePopupRoom=height=>{
+ if(!popupWindow)return;
+ const next=Math.max(30,Math.min(450,Number(height)||440));
+ const previous=Number.parseFloat(document.documentElement.style.getPropertyValue("--popup-room"));
+ if(!Number.isFinite(previous)||Math.abs(previous-next)>1)
+  document.documentElement.style.setProperty("--popup-room",next+"px");
+};
 function toggleChoices(kind){
+ if(controlsWindow&&!popupWindow&&Native.openPopup){
+  const key={alerts:"bell",visual:"appearance",info:"appearance"}[kind]||kind;
+  const button=document.querySelector('#quickMenuList button[data-key="'+key+'"]');
+  const rect=button?.getBoundingClientRect(),host=document.getElementById("menu").getBoundingClientRect();
+  Native.openPopup(kind,Math.round(rect?rect.left-host.left+rect.width/2:host.width/2));
+  return;
+ }
  const pokemonFromFilters=kind==="pokemon"&&choiceOpen==="filters";
  // The separate toolbar WebView may be visible before syncMenu arrives.
  if(controlsWindow&&!menuOpen)setMenuOpen(true,document.body.classList.contains('menu-left')?'left':'right',0);

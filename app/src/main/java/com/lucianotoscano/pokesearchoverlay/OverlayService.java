@@ -99,6 +99,7 @@ public class OverlayService extends Service {
         String jsCode="window.onVisualPrefs&&window.onVisualPrefs("+visualPrefsJson+")";
         js(panel,panelLoaded,jsCode);
         js(menuPanel,menuLoaded,jsCode);
+        js(popupPanel,popupLoaded,jsCode);
         js(resultPanel,resultLoaded,jsCode);
         broadcastVisualPreview();
     }
@@ -146,7 +147,7 @@ public class OverlayService extends Service {
     }
     private void broadcastVisualPreview(){
         String code="window.onVisualEditorPreview&&window.onVisualEditorPreview('"+visualEditorPreview+"')";
-        js(panel,panelLoaded,code);js(menuPanel,menuLoaded,code);js(resultPanel,resultLoaded,code);
+        js(panel,panelLoaded,code);js(menuPanel,menuLoaded,code);js(popupPanel,popupLoaded,code);js(resultPanel,resultLoaded,code);
     }
     private int dockDp(){return spriteSize+8;}
     private int resultWidthDp(){
@@ -183,10 +184,14 @@ public class OverlayService extends Service {
         Math.max(1,Math.min(330,screenWidthDp()-8));} // twelve compact icons, single-row thin menu
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
-    private WindowManager.LayoutParams params,detailParams,menuParams,resultParams;
-    private FrameLayout root,detailRoot,menuRoot,resultRoot;
+    private WindowManager.LayoutParams params,detailParams,menuParams,resultParams,popupParams;
+    private FrameLayout root,detailRoot,menuRoot,resultRoot,popupRoot;
     private View grip;
-    private WebView panel,detailPanel,website,menuPanel,resultPanel;
+    private WebView panel,detailPanel,website,menuPanel,resultPanel,popupPanel;
+    private boolean popupLoaded=false;
+    private String popupKind="";
+    private int popupTriggerDp,popupWidthDp,popupHeightDp;
+    private int lastPopupX=Integer.MIN_VALUE,lastPopupY=Integer.MIN_VALUE,lastPopupW=-1,lastPopupH=-1;
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
     private int height=32,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
@@ -494,6 +499,7 @@ public class OverlayService extends Service {
                  ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
+        js(popupPanel,popupLoaded,data);
         js(resultPanel,resultLoaded,data);
         broadcastVisualPrefs();
         if(selected>=0)showDetails(selected);
@@ -615,6 +621,7 @@ public class OverlayService extends Service {
             js(menuPanel,menuLoaded,"window.setMenuPopupPlacement("+
                 abovePopup+","+offsetDp+","+roomDp+")");
         }
+        positionIndependentPopup();
         if((priorPad!=menuPadDp||priorLeft!=menuLeft)&&!deferMenuSync){
             String edge=JSONObject.quote(menuLeft?"left":"right");
             js(panel,panelLoaded,"window.syncMenu(true,"+edge+","+menuPadDp+")");
@@ -630,30 +637,94 @@ public class OverlayService extends Service {
         // or switching between a tall cascade and a short settings strip.
         updateMenuPosition();
     }
+    // Two separate TYPE_APPLICATION_OVERLAY hit rectangles: the menu stays
+    // exactly its original toolbar height. The popup is content-sized.
+    private void positionIndependentPopup(){
+        if(popupRoot==null||popupParams==null||menuParams==null||wm==null||
+                !menuExpanded||popupKind.isEmpty()||popupWidthDp<1||popupHeightDp<1)return;
+        DisplayMetrics m=metrics();
+        PopupTouchGeometry.Bounds b=PopupTouchGeometry.place(
+            m.widthPixels,m.heightPixels,menuParams.x,menuParams.y,
+            menuParams.width,dp(visualMenuBaseDp()),dp(popupTriggerDp),
+            dp(popupWidthDp),dp(popupHeightDp),dp(6));
+        if(!b.visible()){popupRoot.setVisibility(View.GONE);return;}
+        if(lastPopupX!=b.x||lastPopupY!=b.y||lastPopupW!=b.width||lastPopupH!=b.height){
+            popupParams.x=b.x;popupParams.y=b.y;
+            popupParams.width=b.width;popupParams.height=b.height;
+            try{wm.updateViewLayout(popupRoot,popupParams);}
+            catch(Exception ex){recordFailure("posicionar popup independente",ex);return;}
+            lastPopupX=b.x;lastPopupY=b.y;lastPopupW=b.width;lastPopupH=b.height;
+        }
+        if(popupRoot.getVisibility()!=View.VISIBLE)popupRoot.setVisibility(View.VISIBLE);
+        js(popupPanel,popupLoaded,"window.setNativePopupRoom&&window.setNativePopupRoom("+
+            Math.max(30,Math.round(b.height/m.density))+")");
+    }
+    private void resizeIndependentPopup(int width,int height){
+        if(popupKind.isEmpty()||!popupLoaded||!menuExpanded)return;
+        int w=Math.max(1,Math.min(330,width)),h=Math.max(1,Math.min(450,height));
+        if(popupWidthDp==w&&popupHeightDp==h)return;
+        popupWidthDp=w;popupHeightDp=h;positionIndependentPopup();
+    }
+    private void closeIndependentPopup(){
+        if(popupKind.isEmpty())return;
+        popupKind="";popupWidthDp=popupHeightDp=0;
+        if(popupRoot!=null)popupRoot.setVisibility(View.GONE);
+        if(popupParams!=null&&popupRoot!=null&&wm!=null){
+            popupParams.flags|=WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+            popupParams.softInputMode=0;
+            try{wm.updateViewLayout(popupRoot,popupParams);}
+            catch(Exception ex){recordFailure("recolher popup",ex);}
+        }
+        if(popupPanel!=null){
+            popupPanel.clearFocus();
+            js(popupPanel,popupLoaded,"window.hideNativePopup&&window.hideNativePopup()");
+        }
+    }
+    private void openIndependentPopup(String kind,int x){
+        if(!validIndependentPopup(kind)||!menuExpanded||loginPaused||stopped||pickerOpen)return;
+        if(kind.equals(popupKind)){closeIndependentPopup();return;}
+        popupKind=kind;popupTriggerDp=Math.max(0,Math.min(menuDp(),x));
+        popupWidthDp=popupHeightDp=0;
+        lastPopupX=Integer.MIN_VALUE;lastPopupY=Integer.MIN_VALUE;
+        if(popupRoot!=null)popupRoot.setVisibility(View.GONE);
+        if(popupLoaded)js(popupPanel,true,
+            "window.showNativePopup&&window.showNativePopup("+JSONObject.quote(kind)+")");
+    }
+    private static boolean validIndependentPopup(String kind){
+        if(kind==null)return false;
+        switch(kind){
+            case "mode":case "filters":case "location":case "pokemon":
+            case "alerts":case "appearance":case "visual":case "info":
+            case "period":case "more":return true;
+            default:return false;
+        }
+    }
     private void locationEditor(boolean open){
         locationEditorOpen=open;
         if(menuParams==null||menuRoot==null||wm==null)return;
+        boolean inPopup=!popupKind.isEmpty()&&popupParams!=null&&popupRoot!=null;
+        WindowManager.LayoutParams target=inPopup?popupParams:menuParams;
+        FrameLayout surface=inPopup?popupRoot:menuRoot;
+        WebView web=inPopup?popupPanel:menuPanel;
         final int base=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
         final int unfocusable=WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         if(open){
-            menuParams.flags=(menuParams.flags|base)&~unfocusable;
-            menuParams.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+            target.flags=(target.flags|base)&~unfocusable;
+            target.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
         }else{
-            menuParams.flags|=unfocusable|base;
-            menuParams.softInputMode=0;
-            if(menuPanel!=null){
+            target.flags|=unfocusable|base;
+            target.softInputMode=0;
+            if(web!=null){
                 android.view.inputmethod.InputMethodManager keyboard=
                     (android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
-                if(keyboard!=null)keyboard.hideSoftInputFromWindow(menuPanel.getWindowToken(),0);
-                menuPanel.clearFocus();
+                if(keyboard!=null)keyboard.hideSoftInputFromWindow(web.getWindowToken(),0);
+                web.clearFocus();
             }
         }
-        try{wm.updateViewLayout(menuRoot,menuParams);}catch(Exception e){recordFailure("atualizar menu",e);}
-        updateMenuPosition(); // a keyboard/focus transition must not leave controls clipped
-        if(open&&menuPanel!=null){
-            menuPanel.setFocusableInTouchMode(true);
-            menuPanel.requestFocus();
-        }
+        try{wm.updateViewLayout(surface,target);}catch(Exception e){recordFailure("atualizar foco popup",e);}
+        updateMenuPosition();
+        if(open&&web!=null){web.setFocusableInTouchMode(true);web.requestFocus();}
     }
     private String locationPayload(){
         JSONObject data=new JSONObject();
@@ -963,6 +1034,48 @@ public class OverlayService extends Service {
         menuRoot.setVisibility(View.GONE);
         try{wm.addView(menuRoot,menuParams);}catch(Exception e){recordFailure("abrir controles",e);menuRoot=null;menuPanel=null;}
         if(menuPanel!=null)menuPanel.loadUrl("file:///android_asset/dock.html?controls=1");
+        // A second hidden WebView owns the submenu hitbox; the toolbar never stretches.
+        popupRoot=new FrameLayout(this){
+            @Override public boolean dispatchTouchEvent(MotionEvent event){
+                if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
+                    closeIndependentPopup();return false;
+                }
+                return super.dispatchTouchEvent(event);
+            }
+        };
+        popupRoot.setBackgroundColor(Color.TRANSPARENT);
+        popupPanel=new WebView(this);
+        popupPanel.setBackgroundColor(Color.TRANSPARENT);
+        popupPanel.getSettings().setJavaScriptEnabled(true);
+        popupPanel.getSettings().setUseWideViewPort(true);
+        popupPanel.getSettings().setLoadWithOverviewMode(false);
+        popupPanel.getSettings().setAllowContentAccess(false);
+        popupPanel.getSettings().setAllowFileAccessFromFileURLs(false);
+        popupPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
+        popupPanel.addJavascriptInterface(new Bridge(),"Native");
+        popupRoot.addView(popupPanel,new FrameLayout.LayoutParams(-1,-1));
+        popupPanel.setWebViewClient(new WebViewClient(){
+            @Override public void onPageFinished(WebView web,String url){
+                if(url!=null&&url.startsWith("file:///android_asset/")){
+                    popupLoaded=true;update();
+                    if(menuExpanded&&!popupKind.isEmpty())
+                        js(popupPanel,true,"window.showNativePopup&&window.showNativePopup("+
+                            JSONObject.quote(popupKind)+")");
+                }
+            }
+        });
+        popupParams=new WindowManager.LayoutParams(dp(Math.max(1,Math.min(330,screenWidthDp()-12))),dp(450),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            PixelFormat.TRANSLUCENT);
+        popupParams.gravity=Gravity.TOP|Gravity.LEFT;
+        popupRoot.setVisibility(View.GONE);
+        try{wm.addView(popupRoot,popupParams);}
+        catch(Exception ex){recordFailure("criar popup independente",ex);
+            popupRoot=null;popupPanel=null;popupParams=null;}
+        if(popupPanel!=null)popupPanel.loadUrl("file:///android_asset/dock.html?controls=1&popup=1");
 
         // The Pokémon list is always its OWN Android overlay. The gear remains
         // a small independent control even if there is only one active search.
@@ -2133,7 +2246,7 @@ public class OverlayService extends Service {
     private void menu(boolean show){
         if(params==null||minimized)return;
         if(show==menuExpanded)return;
-        if(!show&&locationEditorOpen)locationEditor(false);
+        if(!show){if(locationEditorOpen)locationEditor(false);closeIndependentPopup();}
         menuExpanded=show;
         menuPadDp=0; // Only the measured overlap may shift the sprite list.
         if(show){
@@ -3000,6 +3113,7 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void openWatchList(){handler.post(()->{
             if(root==null||loginPaused||pickerOpen)return;
+            closeIndependentPopup();
             pickerOpen=true;
             hideDetails();
             // Favorites is a separate, content-sized TYPE_APPLICATION_OVERLAY Dialog
@@ -3086,6 +3200,13 @@ public class OverlayService extends Service {
         }
         @JavascriptInterface public void toggleResultsCollapsed(){handler.post(OverlayService.this::toggleResultsCollapsed);}
         @JavascriptInterface public void resizeMenu(int size){handler.post(()->OverlayService.this.resizeMenu(size));}
+        @JavascriptInterface public void openPopup(String kind,int triggerDp){
+            handler.post(()->openIndependentPopup(kind,triggerDp));
+        }
+        @JavascriptInterface public void closePopup(){handler.post(OverlayService.this::closeIndependentPopup);}
+        @JavascriptInterface public void resizePopup(int width,int height){
+            handler.post(()->resizeIndependentPopup(width,height));
+        }
         @JavascriptInterface public void resizeDetail(int size){handler.post(()->OverlayService.this.resizeDetail(size));}
         @JavascriptInterface public void toggleDetail(int index){handler.post(()->{
             if(selected==index)hideDetails();else showDetails(index);
@@ -3190,6 +3311,7 @@ public class OverlayService extends Service {
             return START_STICKY;
         }
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN".equals(action)){
+            closeIndependentPopup();
             loginPaused=true;
             guardSubmittedSearchBeforeReplacement();
             ++requestGeneration;
@@ -3345,14 +3467,16 @@ public class OverlayService extends Service {
         handler.removeCallbacksAndMessages(null);
         if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception e){recordFailure("remover dock",e);}}
         if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception e){recordFailure("remover menu",e);}}
+        if(wm!=null&&popupRoot!=null){try{wm.removeView(popupRoot);}catch(Exception e){recordFailure("remover popup",e);}}
         if(wm!=null&&resultRoot!=null){try{wm.removeView(resultRoot);}catch(Exception e){recordFailure("remover resultados",e);}}
         if(wm!=null&&detailRoot!=null){try{wm.removeView(detailRoot);}catch(Exception e){recordFailure("remover detalhes",e);}}
         destroyWebView(panel,true,"painel");panel=null;
         destroyWebView(menuPanel,true,"menu");menuPanel=null;
+        destroyWebView(popupPanel,true,"popup");popupPanel=null;popupLoaded=false;
         destroyWebView(resultPanel,true,"resultados");resultPanel=null;
         destroyWebView(detailPanel,true,"detalhes");detailPanel=null;
         destroyWebView(website,false,"site");website=null;
-        root=null;menuRoot=null;detailRoot=null;resultRoot=null;resultGrip=null;resultParams=null;
+        root=null;menuRoot=null;popupRoot=null;popupParams=null;detailRoot=null;resultRoot=null;resultGrip=null;resultParams=null;
         super.onDestroy();
     }
     @Override public IBinder onBind(Intent intent){return null;}
