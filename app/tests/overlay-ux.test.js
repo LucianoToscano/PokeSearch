@@ -2858,7 +2858,7 @@ test("FILTERS-POGO-10 simulated UI never claims Applied for pending/stale/dirty 
  const saved={mode:"raw",sortBy:"Despawn (longest)",cpMin:"500",cpMax:"",
   levelMin:"1",levelMax:"35",includePreviousEvolutions:true};
  const result=(proof,active,stale,draft)=>{
-  const badge={textContent:"",classList:{toggle(_key,_value){}}};
+  const badge={textContent:"",title:"",setAttribute(_key,_value){},classList:{toggle(_key,_value){}}};
   compiled(saved,"raw",draft,true,"filters",
    {getElementById:()=>badge},proof,active,stale)();
   return badge.textContent;
@@ -2867,7 +2867,7 @@ test("FILTERS-POGO-10 simulated UI never claims Applied for pending/stale/dirty 
   result(true,false,false,saved)==="✓ Aplicado no PoGoCoordinates"&&
   result(true,true,false,saved).includes("Aguardando confirmação")&&
   result(true,false,true,saved).includes("Aguardando confirmação")&&
-  result(true,false,false,{...saved,weather:"Rainy"}).includes("Alterações ainda não aplicadas");
+  result(true,false,false,{...saved,weather:"Rainy"}).includes("Falta aplicar");
 });
 
 test("LT57-ONEFORM-01 patch only Weather with no loss of species IV or location",()=>{
