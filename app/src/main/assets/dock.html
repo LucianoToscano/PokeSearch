@@ -3062,6 +3062,46 @@ body.controls-window #choices.locationPanel .compactLocationActions .psLineActio
  height:26px!important;min-height:26px!important;
  padding:3px!important;margin:0!important;
 }
+
+/* LT71 LOC-NATIVE-TRIM-01 — remove the right-hand unused area on Samsung.
+   Override LT67's popup-specific width:max-content (higher specificity than
+   LT70) and keep the Android WebView rectangle equal to the actual card. */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel,
+body.popup-window.controls-window.popup-above #choices.locationPanel{
+ box-sizing:border-box!important;
+ width:160px!important;min-width:160px!important;max-width:160px!important;
+ overflow:visible!important;
+}
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow,
+body.popup-window.controls-window.popup-above #choices.locationPanel .locRadiusRow,
+body.controls-window #choices.locationPanel .locRadiusRow{
+ box-sizing:border-box!important;display:flex!important;
+ flex-flow:row nowrap!important;align-items:center!important;
+ justify-content:center!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ margin:0!important;padding:0!important;gap:3px!important;
+}
+body.popup-window.controls-window #choices.locationPanel .locRadiusInputWrap,
+body.popup-window.controls-window.popup-above #choices.locationPanel .locRadiusInputWrap{
+ display:inline-flex!important;align-items:center!important;
+ flex:0 0 auto!important;width:max-content!important;
+ min-width:0!important;max-width:none!important;
+ margin:0!important;padding:0!important;gap:0!important;
+}
+body.popup-window.controls-window #choices.locationPanel .compactLocationActions{
+ display:inline-flex!important;align-items:center!important;
+ justify-content:center!important;flex:0 0 auto!important;
+ width:max-content!important;min-width:0!important;
+ max-width:none!important;margin:0!important;padding:0!important;gap:3px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow .locField,
+body.controls-window #choices.locationPanel .locCoordsRow .locField:focus{
+ font-size:9px!important;min-width:0!important;
+}
+body.controls-window #choices.locationPanel #locHint{
+ text-align:center!important;max-width:100%!important;overflow-wrap:anywhere!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3378,7 +3418,11 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
     const r=child.getBoundingClientRect();
     if(r.width>0&&r.height>0){right=Math.max(right,r.right);bottom=Math.max(bottom,r.bottom);}
    }
-   Native.resizePopup(Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2),
+   // LT71: Location is a fixed-width compact popup. Overflowing descendants,
+   // text focus, and transient scrollWidth must not grow its native hitbox.
+   const measuredWidth=Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2);
+   const exactWidth=choiceOpen==="location"?Math.round(rect.width):measuredWidth;
+   Native.resizePopup(exactWidth,
     Math.min(450,Math.ceil(Math.max(rect.height,pane.scrollHeight,bottom-rect.top))+2));
   }
   return;
