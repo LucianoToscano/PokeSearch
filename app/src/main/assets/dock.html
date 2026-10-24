@@ -2949,6 +2949,18 @@ body.popup-window.controls-window #choices.standardPanel[data-panel-kind="alerts
  box-sizing:border-box!important;max-height:var(--popup-room,440px)!important;
  overscroll-behavior:contain!important;
 }
+
+/* LT68 final cascade specificity: overrides earlier historical fixed panels. */
+body.popup-window.controls-window #choices.modePanel.modeCascade.modeCascadeOpen .modeCascadeEditor{
+ box-sizing:border-box!important;width:max-content!important;max-width:calc(100% - 54px)!important;
+ min-width:0!important;height:auto!important;min-height:29px!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ padding:2px!important;margin:0!important;
+}
+body.popup-window.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"] .filterCascadeEditor{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ padding:2px!important;margin:0!important;min-height:0!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -5096,11 +5108,13 @@ function updateFiltersPanelStatus(){
  const count=activeExtraFilterCount(searchSettings,mode);
  const dirty=filterDraftChanged();
  const verified=count>0&&siteFiltersConfirmed&&!searchActive&&!resultsStale;
- el.textContent=dirty?"● Alterações ainda não aplicadas":
+ el.textContent=dirty?"● Falta aplicar":
   count===0?"":
   verified?"✓ Aplicado no PoGoCoordinates":
   "⌛ Aguardando confirmação do site";
  el.hidden=!el.textContent;
+ el.title=dirty?"Alterações ainda não aplicadas":el.textContent;
+ el.setAttribute("aria-label",el.title);
  el.classList.toggle("confirmed",!dirty&&verified);
 }
 function quickState(id){
