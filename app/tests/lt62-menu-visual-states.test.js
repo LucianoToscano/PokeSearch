@@ -713,7 +713,7 @@ check("LT62 visual Filtros: precise width contract per editor, never giant Sex p
  const context={};
  vm.runInNewContext("function filterCascadeEditorWidth(label){"+code+";this.resolve=filterCascadeEditorWidth",context);
  for(const [type,expected] of [
-  ["Sexo",107],["Tamanho",182],["PC",139],["Nível",108],
+  ["Sexo",80],["Tamanho",182],["PC",139],["Nível",108],
   ["Clima",158],["Ordenar",178],["Forma",216],["PC mínimo PvP",116]
  ])assert.equal(context.resolve(type),expected,type);
 });
@@ -725,9 +725,9 @@ check("LT62 visual Filtros: exclusive Sex and 7 Size remain compact and independ
  assert.ok(block.includes('font:600 10px/1 Roboto'));
  const render=dock.split('function renderExtraFilters(panel,make){')[1]
   ?.split('function renderFilterPicker(',1)[0]||"";
- assert.ok(render.includes('["Any","Male","Female","Genderless"]'));
+ assert.ok(render.includes('["Male","Female","Genderless"]'));
  assert.ok(render.includes('["XXS","XS","S","M","L","XL","XXL"]'));
- assert.ok(render.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}'));
+ assert.ok(render.includes('if(isGender){modeDraft[multiKey]=checked?[]:[resolved];}'));
  assert.ok(render.includes('updateFiltersPanelStatus()'));
  assert.ok(render.includes('numericConfirmButton(make,[minKey,maxKey],label)'));
 });
