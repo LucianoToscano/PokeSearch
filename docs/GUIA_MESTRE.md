@@ -5983,3 +5983,55 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 2. Obter resposta redigida/sanitizada de `/reveal` para determinar método, campos reais, auth, erros; não publicar `reveal_code` real nem URLs com segredo.
 3. Integrar primeiro via opt-in/feature flag **desligada por padrão**, com isolamento de geração de requisição, renderização apenas após validação de filtros/identidade e fallback ao mecanismo DOM sem duplicar buscas nem ultrapassar rate limits.
 4. Em etapa separada, homologar em Samsung resultados, coordenadas, menus, Shiny, favoritados, notificações e compatibilidade com sessão existente; somente após aprovação produzir APK protegido e distribuí-lo mediante autorização.
+
+---
+
+## LT77 — CONSOLIDAÇÃO FORMAL PARA AUDITORIA E EXPORTAÇÃO INTEGRAL (24/10/2026)
+
+### Escopo e fonte da auditoria
+- **Pedido do usuário:** registrar toda a investigação e implementação LT77, manter o histórico integral do projeto e fornecer um arquivo completo para auditoria independente.
+- **Documento de auditoria complementar:** `docs/auditoria/LT77_AUDITORIA_CONSOLIDADA_20261024.md` (criado na mesma branch), que detalha LT76 publicada, evidências da API, JWT/localStorage, rota /search, hipótese /reveal, arquitetura, código, 38 testes, segurança, commits, pendências e homologação Samsung. Faz parte obrigatória do pacote entregue.
+- O presente `docs/GUIA_MESTRE.md` continua sendo a **documentação oficial única e histórica do PokeSearch**. Os registros LT76/LT77 anteriores foram **preservados integralmente**, e esta seção é um índice complementar de auditoria, não substituição de conteúdo.
+- Branch de trabalho: `feature/lt77-authorized-api-contract-20261024`; `main` permaneceu em `caea98b7b57b9e45d5218e907eb392d76953dd53` durante as verificações. PR #34 e PR #49 permaneceram abertos e Draft, sem merge. Branch e código da LT76 publicada não foram alterados neste trabalho.
+- A API é objeto de autorização afirmada expressamente pelo proprietário, mas o escopo técnico formal, limites contratuais e a homologação de chamadas ao vivo **não** foram apresentados. Não extrapolar essa declaração para afirmar que /reveal funciona sem autenticação.
+
+### Matriz LT77 consolidada com fonte rastreável
+| Componente / fato | Evidência efetivamente confirmada | O que ainda falta |
+|---|---|---|
+| `POST https://coordinates-api.pokemongopro.com/search` | Screenshots de HTTP 200 / `results` JSON fornecidos pelo usuário | Execução direta real pelo PokeSearch, CORS e contrato estável |
+| Filtros e metadados | Campos visíveis nos request/response bodies; mapeador JS com fail-closed | IDs oficiais de Form/Pokémon/Clima, ordenação e demais filtros |
+| Sessão | Chave `jwt` em localStorage da origem do site observada nas capturas | Verificação de escopo, renovação, consentimento e WebView real sem divulgar valor |
+| `/auth/google/callback` | Endereço comentado por terceiros | Não é comprovante de token Bearer extraível da URL |
+| `/reveal/{reveal_code}` | Padrão de URL encaminhado pelo usuário | HTTP 200, método, schema, autenticação, limites e CORS |
+| `api_result_contract.js` | Contrato e testes com mocks, 12/12 | Validação de JSON real, filtros e integração Android |
+| `api_reveal_contract.js` | Parser conservador de lat/lng; 12/12 | Resposta real, correlação de identidade e segurança de URL |
+| `api_browser_transport.js` | Protótipo sob demanda na origem do site; 14/14 mocks | Integração opt-in com WebView e tratamento real dos ciclos de vida |
+| `probe.js`, `OverlayService.java` e app publicado | Permaneceram sem alteração na etapa LT77 | Estratégia de fallback e migração sem regressões |
+| Resultados / interface | Regras de IV/dedup/despawn e máximo dez representadas em contratos | Provar sprites, GL/UL, Shiny, Favoritos, Pokébola, coordenadas e alertas no Samsung |
+| Publicação LT76 | Run release #40125870288 SUCCESS; APK, assinatura e manifesto auditados remotamente no Guia | Homologação física LT76 e qualquer upgrade LT77 |
+| CI LT77 final | [Actions #40133524298](https://github.com/LucianoToscano/PokeSearch/actions/runs/40133524298): **38/38 PASS** | Não equivale a testes HTTP reais, Android ou APK |
+
+### Histórico dos testes (não apagar tentativas falhas)
+1. [#40132327045](https://github.com/LucianoToscano/PokeSearch/actions/runs/40132327045): **SUCCESS — 12/12**, contrato de pesquisa em Node.
+2. [#40132916646](https://github.com/LucianoToscano/PokeSearch/actions/runs/40132916646): **SUCCESS — 24/24**, pesquisa + reveal em Node.
+3. [#40133471790](https://github.com/LucianoToscano/PokeSearch/actions/runs/40133471790): **FAILURE**, problema sintático no teste `lt77-api-browser-transport.test.js` (função `||async` sem parênteses); contratos anteriores 24/24 continuam PASS. O erro foi corrigido.
+4. [#40133524298](https://github.com/LucianoToscano/PokeSearch/actions/runs/40133524298): **SUCCESS — 38/38** (12+12+14), código-fonte dos testes no commit `81553a7b62d7109675f3059cab3db3816f06de75`. O número correto é **38**, não 40. Nenhuma chamada real à API, APK ou atualização do Google Drive ocorreu nessa bateria.
+
+### Proteções de credenciais e de resultados
+- JWT e `reveal_code` são segredos/sessão e **não** devem ser incluídos no relatório de auditoria, exportação, logs, screenshot ou código versionado. Os testes usam strings sintéticas; os arquivos de código do contrato/exportação não possuem JWT verdadeiro.
+- O protótipo `createBrowserClient()` prevê ler `localStorage.jwt` **somente** dentro da origem HTTPS oficial e mantê-lo na requisição de pesquisa; nenhum retorno em JSON ao Android nem `SharedPreferences`. Isso não foi executado no Samsung.
+- `reveal()` supõe GET sem Bearer baseado no print e armazena código opaco em memória apenas por pesquisa, exigindo índice, ID, PC e validade temporal; a efetividade dessa hipótese permanece PENDENTE.
+- A rota /reveal usa código opaco no segmento de URL e pode gerar rastros no servidor remoto; proibir registros locais e revisão de segurança antes de habilitar. Rejeitar 401/403/429; não contornar limites.
+- A normalização de `results` não confirma automaticamente filtros/site e não libera alertas até nova verificação por integração. Nenhum resultado inventado nem captura de GPS físico.
+
+### Arquivos obrigatórios do pacote para auditoria
+- Este arquivo **integral** `docs/GUIA_MESTRE.md` (sem truncamento), incluindo os registros anteriores e esta consolidação.
+- `docs/auditoria/LT77_AUDITORIA_CONSOLIDADA_20261024.md` (relatório independente com rastreabilidade).
+- `app/src/main/assets/api_result_contract.js`, `api_reveal_contract.js`, `api_browser_transport.js`.
+- `app/tests/lt77-api-contract.test.js`, `lt77-api-reveal.test.js`, `lt77-api-browser-transport.test.js`.
+- `.github/workflows/lt77-authorized-api-contract-qa.yml` e workflow específico de exportação de auditoria, com `MANIFESTO_SHA256.txt` e `ORIGEM_GIT.txt`.
+- **Verificação de integridade:** o pacote deve ser gerado a partir de um único commit da branch, com hashes SHA-256 por arquivo, sem usar conteúdo misturado de commits distintos. Não incluir tokens/capturas de credenciais.
+- O arquivo integral sempre pode ser conferido no GitHub no caminho oficial da branch; o ZIP automatizado é um arquivo de transporte para auditoria, não substituto do controle de versão.
+
+### Estado de encerramento documental
+**Comprovado:** documentação histórica cumulativa, código experimental isolado, 38/38 testes Node, rastreabilidade do release LT76, nenhuma republicação nem merge. **Não comprovado:** pesquisa API ao vivo no Samsung, método/resposta/anonimato /reveal, CORS real, homologação física ou APK LT77. **Próxima execução:** CI de exportação do pacote integral e conferência do artefato com hash e commit.
