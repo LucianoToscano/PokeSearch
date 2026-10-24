@@ -6223,3 +6223,15 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Pesquisa/Reveal escolhem uma única fonte por execução, sem mistura de cartões ou coordenadas DOM/API. `dispose()` cancela futuras execuções. Módulo não lê nem persiste tokens, cookies ou códigos de reveal. A validação de origem e JWT permanece sob o transporte experimental original.
 - Testes novos `app/tests/lt77-stage10-api-router-off.test.js` e workflow `.github/workflows/lt77-stage10-api-router-qa.yml` cobrindo OFF por padrão, isolamento, origem, opt-in, descarte e ausência de import no APK atual. Run [#40142917426](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142917426): conferir CI.
 - **Limite explícito:** isto conclui a preparação/roteamento puro, NÃO a integração Java→WebView, a autenticação live, renderização real de cartões API nem fallback de release. O aplicativo continua integralmente DOM; nenhuma chamada à API acontece por este roteador até existir homologação e conexão ao WebView, que permanece PENDENTE. Não declarar migração funcional em produção.
+
+
+---
+
+## LT77 — ETAPA 11: VALIDAR REVEAL E DESPAWN SEM EXPOR CÓDIGOS (24/10/2026)
+
+- Branch `feature/lt77-stage11-reveal-validation-20261024`, derivada da Etapa 10 `9106e97459dea4e70a970378a1c9be2e0d66049d`.
+- `app/src/main/assets/api_reveal_contract.js`: interpretador `GET /reveal/{code}` aceita também campo `coords` textual no formato estrito `lat,lng` previsto em `pogo.md`, validando limites -90..90/-180..180. Se o mesmo JSON fornece `lat/lng` numéricos ou `coordinates` aninhado, todos os pares devem ser **idênticos**; divergências bloqueiam o uso das coordenadas em vez de escolher uma fonte arbitrária.
+- Continuam intactos: `planForSpawn` só permite reveal de código opaco vindo de spawn com identidade/expiração verificáveis; tratamento de 400/404/410/429 pelo transporte sem retry cego; exclusão de JWT, reveal_code, encounter_id, resposta bruta e URLs sensíveis da saída.
+- Novo teste `app/tests/lt77-stage11-reveal-validation.test.js`; workflow `.github/workflows/lt77-stage11-reveal-qa.yml`. Execução [#40143066929](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143066929): conferir sucesso do CI.
+- O roteador API permanece desconectado do serviço Android e OFF por padrão. **Sem reveal real, sem dados sensíveis acessados e sem APK**. Homologação real de expiração/cooldown no Samsung segue pendente.
+- Durante a Etapa 10 o CI inicial [#40142917426](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142917426) falhou por falso positivo do teste de segurança que inspecionava a palavra `JWT` em comentários; a asserção foi corrigida em `352069f4a0f37a58206911e51339f5923a041e69` e propagada nesta branch. Run de reexecução [#40143042368](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143042368): conferir CI antes de declarar.
