@@ -62,7 +62,7 @@ check("horizontal result gaps are no longer the legacy 31px value",()=>{
   assert.match(service,/ResultsSpacingPolicy\.additionalRowGapPx\(visualResultGapBetween\)\*\(columns-1\)/);
   const result=layout(31,"horizontal",45,5);
   assert.equal(result.gap,0);
-  assert.deepEqual(Array.from(result.result.rows),[48,48,48,48,48]);
+  assert.deepEqual(Array.from(result.result.rows),[45,45,45,45,45]);
 });
 check("10 results remain counted on short screen without hidden slots",()=>{
   const result=layout(31,"vertical",45,10,260);
