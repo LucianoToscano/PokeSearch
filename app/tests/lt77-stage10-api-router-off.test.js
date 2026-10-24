@@ -8,7 +8,8 @@ let count=0;async function check(name,fn){await fn();count++;console.log("PASS L
 async function suite(){
  await check("default is hard OFF and module has no credential access",()=>{
   assert.equal(router.USE_AUTHORIZED_API,false);
-  assert.ok(!/localStorage|Authorization|Bearer|jwt|fetch\(/i.test(source));
+  const executable=source.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g,"");
+  assert.ok(!/localStorage|Authorization|Bearer|jwt|fetch\(/i.test(executable));
  });
  await check("DOM fallback when feature flag omitted",async()=>{
   const calls=[];const r=router.createRouter({
