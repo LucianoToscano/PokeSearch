@@ -5283,3 +5283,14 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 
 **Homologação separada:** verificações estáticas/Node e geometria Java não equivalem a teste no Samsung. Verificar, após APK assinado, cascateamento, toques externos, coordenadas negativas, GL/UL, Shiny, teclado, rotação, atualização de 3/5/10/15/20 min, arraste Pokébola/resultados e atualização em cima da LT62. Registrar a conclusão do Actions e o fingerprint conferido antes de disponibilizar o binário.
 
+
+## LT64 — Homologação Samsung: coordenadas, sprites e despawn (24/10/2026)
+
+**Origem:** screenshots Samsung informam que Get coords não copia e segurar sprite não copia, sprites aparecem como anéis temporários e cartões vencidos não somem nem são repostos. Base LT63 `0fc75219d0c63d7d740f5a5fd9d19d807f6b643d`, PR #36 Draft, main intacta. Branch isolada `fix/lt64-result-coords-sprites-expiry-20261024`, sem merge.
+
+**Diagnóstico de código:** Native `requestCoordinates` usava `sourceIndex` numérico para clicar em um resultado do site, sujeito à reordenação/atualização; o botão Get coords apenas buscava, enquanto copiar acontecia separadamente; a extração das coordenadas procurava texto, sem ler o href `Open in Maps`. `parseCard` usava `img.src` de imagens React que podiam ser 1×1 placeholders ou lazy-loaded; `attachSpriteFeedback` marcava falhas definitivas sem tentativa de recuperação. `updateTimers` mudava apenas uma classe CSS, e `armNextDespawn` recalculava a data a partir do texto MM:SS, sem usar `expiresAtMs` já gravado. Falha de navegação cancelava `expiryRefresh`.
+
+**Correções implementadas em código:** identidade com nome, PC, número e posição como fallback de compatibilidade; recusa explícita de copiar coordenadas de cartão ambíguo; suporte a URL de `Open in Maps` da mesma carta. Toque em Get coords copia ao obter coordenadas e toque longo permanece com cópia. Coordenadas já verificadas são copiadas imediatamente sem nova chamada. Sprite tenta URL original do site via data-src/currentSrc/srcset e faz até duas novas tentativas locais com intervalo limitado; não inventa imagem nem altera Shiny/Form. Despawn passa a agendar `expiresAtMs` absoluto, remover resultados expirados, consultar novos independentemente de AUTO e recebe watchdog limitado dos timers visíveis; reativa agendamento após falha da navegação.
+
+**Limites de homologação:** extração continua dependente da resposta do site; retorno quando formulário muda, lazy load das imagens e refresco de site dependem de teste físico Samsung. Confrontar 0/50 favoritos, GL/UL, Shiny, Localização, nenhuma coordenada errada por Pokémon, AUTO OFF e senha/login persistente. Não distribuir APK sem assinatura original verificada.
+

@@ -3895,18 +3895,32 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 let longTimer, longDone=false;
 function spriteClick(i){if(longDone){longDone=false;return;}Native.toggleDetail(i);}
 // Broken remote image URLs and 1px placeholders must not leave invisible rows.
+// LT64: the site's offscreen lazy sprites can arrive after the list appears.
+// Retry bounded image failures in-place; never rerender cards or touch Search.
 function attachSpriteFeedback(){
  document.querySelectorAll(".spawn .spriteStage").forEach(stage=>{
   const img=stage.querySelector("img.sprite");
   if(!img){stage.classList.add("failed");return;}
-  const confirmLoaded=()=>{
-   if(img.naturalWidth>=8&&img.naturalHeight>=8)stage.classList.add("loaded");
-   else stage.classList.add("failed");
+  let retries=0,done=false;
+  const good=()=>img.naturalWidth>=8&&img.naturalHeight>=8;
+  const loaded=()=>{
+   if(good()){done=true;stage.classList.remove("failed");stage.classList.add("loaded");}
+   else failed();
   };
-  img.addEventListener("load",confirmLoaded,{once:true});
-  img.addEventListener("error",()=>stage.classList.add("failed"),{once:true});
-  // Covers cached images whose load event fired before listeners attached.
-  if(img.complete)confirmLoaded();
+  const failed=()=>{
+   if(done||!img.isConnected)return;
+   if(retries>=2){stage.classList.remove("loaded");stage.classList.add("failed");return;}
+   const delay=retries===0?550:1600;retries++;
+   setTimeout(()=>{
+    if(!done&&img.isConnected){
+     const original=img.getAttribute("data-original-src");
+     if(original)img.src=original; // same verified URL; never fabricate sprite paths
+    }
+   },delay);
+  };
+  img.addEventListener("load",loaded);
+  img.addEventListener("error",failed);
+  if(img.complete)loaded();
  });
 }
 function attachLongPress(){
@@ -4434,7 +4448,7 @@ function draw(){
   // unusually full artwork. Never alter its species identity or image URL.
   const artFit=/^\s*minior(?:\s|\(|$)/i.test(String(c.name||""))?0.67:0.86;
   const icon='<span class="spriteStage">'+
-   (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" alt="" loading="eager" decoding="async">':"")+
+   (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" data-original-src="'+esc(imageUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" aria-hidden="true">◉</span></span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const infoLines=preparedLines[i]||[];
@@ -4535,13 +4549,16 @@ function draw(){
  refreshQuickMenuStates();fit();
 }
 function updateTimers(){
- // Only opt-in despawn clocks; no floating wait count below the Pokéball.
+ // A visible zero is an independent signal to native, not just an opacity class.
+ let newlyExpired=false;
  document.querySelectorAll(".timer").forEach(e=>{
   const deadline=Number(e.dataset.deadline),seconds=Math.max(0,Math.ceil((deadline-Date.now())/1000));
   e.textContent=Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");
   // Timer can be inside the narrow metadata column; expire the whole sprite row.
   e.closest(".spawn")?.classList.toggle("expired",seconds===0);
+  if(seconds===0&&!e.dataset.expiryReported){e.dataset.expiryReported="1";newlyExpired=true;}
  });
+ if(newlyExpired&&Native.expiredResults)Native.expiredResults();
 }
 let timerTicker=null;
 function syncTimerTicker(){
