@@ -1488,7 +1488,7 @@ test("UX-CASCADE retains requested popup height while visual editor changes orie
  !service.includes("int requestedPopup=Math.max(0,menuParams.height-rowHeight)")&&
  dock.includes('h=Math.max(h,baseHeight+164+6);')&&
  dock.includes("function positionCascadeEditor()")&&
- dock.includes("rail.scrollTop=Math.max(0,requested+36-visible)")&&
+ dock.includes("rail.scrollTop=Math.max(0,wanted+selected.offsetHeight-visibleRail)")&&
  dock.includes('if(choiceOpen==="mode")positionCascadeEditor()')&&
  service.includes("if(menuParams.width!=width)menuParams.width=width;")&&
  service.includes("menuParams.x=Math.max(0,Math.min(Math.max(0,screen-width),")&&
@@ -2630,7 +2630,7 @@ test("RANK-EVO-DETAIL-03 native async bridge rejects old or mismatched results",
   method.includes('payload.optJSONArray("leagues").length()!=3')&&
   method.includes('window.showEvolutionDetails(')&&
   detail.includes("evoIdentity(payload)!==detailIdentity")&&
-  detail.includes("max-height:165px;overflow-y:auto")&&
+  detail.includes("#evoBody{max-height:none;overflow:visible")&&
   !service.includes("setAllowUniversalAccessFromFileURLs(true)")&&
   !dock.includes('name:"Rookidee"')&&
   dock.includes('window.pvpEvolutionDetails=function(index)')&&
