@@ -223,7 +223,7 @@ check("LT62 Favoritos: all 50 sprites visible in 10 x 5 grid, no paging",()=>{
 });
 check("LT62 Favoritos: compact 348dp dialog and notifications only in Alerts",()=>{
  const picker=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
- assert.ok(picker.includes('window.setLayout(Math.min(screen-dp(activity,22),dp(activity,348))'));
+ assert.ok(picker.includes('int preferredWidth=Math.min(screen-dp(activity,22),dp(activity,348))')&&picker.includes('window.setLayout(preferredWidth,')&&picker.includes('android.view.WindowManager.LayoutParams.WRAP_CONTENT'));
  assert.ok(picker.includes('finish.setText("×")'));
  assert.ok(picker.includes('search.setHint("Nome, forma ou nº da Pokédex")'));
  assert.ok(!picker.includes('WatchAlerts.setMode('));
