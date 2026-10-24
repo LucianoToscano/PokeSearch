@@ -9,3 +9,6 @@ A primeira tentativa do workflow LT63 encontrou uma asserção herdada do teste 
 
 ## CI attempt 3
 A segunda execução detectou testes LT62 que assumiam larguras antigas (PC/Nível 168px, Clima 160px, Ordenar 156px, Forma 110px) e foram atualizados para os valores LT63 reais. O workflow agora confere explicitamente `POKE_TEST_PUBLIC_VERSION=0.00.63` e `versionName='0.00.63'` pelo aapt, evitando distribuir a versão 0.00.62. Sem merge ou troca de certificado.
+
+## CI attempt 4
+Corrigido teste herdado: a fábrica SVG é compartilhada entre Filtros e Localização, logo a verificação deve ler o script do dock completo, não apenas o bloco de renderização de Filtros.
