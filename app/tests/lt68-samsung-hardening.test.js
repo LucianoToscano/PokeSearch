@@ -28,7 +28,7 @@ check("Filter editors have one unobstructed background and icon-only actions",()
   assert.ok(dock.includes(bit),bit);
 });
 check("Compact size, gender, 1-35 level and CP confirmation intact",()=>{
- for(const bit of ['repeat(7,23px)','repeat(4,23px)','["XXS","XS","S","M","L","XL","XXL"]','["Any","Male","Female","Genderless"]',
+ for(const bit of ['repeat(7,23px)','repeat(3,23px)','["XXS","XS","S","M","L","XL","XXL"]','["Male","Female","Genderless"]',
  'levelMin:[1,35]','levelMax:[1,35]','numericConfirmButton(make,[minKey,maxKey],label)'])
   assert.ok(dock.includes(bit),bit);
 });
