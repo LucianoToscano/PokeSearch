@@ -993,6 +993,7 @@ public class OverlayService extends Service {
                 if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
                     if(menuExpanded&&menuLoaded&&menuPanel!=null)
                         js(menuPanel,true,"if(window.closeChoices)window.closeChoices()");
+                    closeIndependentPopup();
                     return false;
                 }
                 return super.dispatchTouchEvent(event);
@@ -1034,6 +1035,41 @@ public class OverlayService extends Service {
         menuRoot.setVisibility(View.GONE);
         try{wm.addView(menuRoot,menuParams);}catch(Exception e){recordFailure("abrir controles",e);menuRoot=null;menuPanel=null;}
         if(menuPanel!=null)menuPanel.loadUrl("file:///android_asset/dock.html?controls=1");
+        // The Pokémon list is always its OWN Android overlay. The gear remains
+        // a small independent control even if there is only one active search.
+        createResultsWindow();
+        // LT62: topmost small dock receives taps/drags even if Modos is open.
+        // Only this small dock can pass through the native menu hit rectangle;
+        // arbitrary touches behind a popup require separate native touch windows.
+        try{wm.addView(root,params);}
+        catch(Exception e){recordFailure("abrir dock",e);stopSelf();return;}
+
+        detailRoot=new FrameLayout(this);
+        detailRoot.setBackgroundColor(Color.TRANSPARENT);
+        detailPanel=new WebView(this);
+        detailPanel.setBackgroundColor(Color.TRANSPARENT);
+        detailPanel.getSettings().setJavaScriptEnabled(true);
+        detailPanel.getSettings().setAllowContentAccess(false);
+        detailPanel.getSettings().setAllowFileAccessFromFileURLs(false);
+        detailPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
+        detailPanel.addJavascriptInterface(new Bridge(),"Native");
+        detailRoot.addView(detailPanel,new FrameLayout.LayoutParams(-1,-1));
+        detailPanel.setWebViewClient(new WebViewClient(){
+            @Override public void onPageFinished(WebView v,String url){
+                if(url!=null&&url.startsWith("file:///android_asset/")){
+                    detailLoaded=true;
+                    if(selected>=0)showDetails(selected);
+                }
+            }
+        });
+        detailParams=new WindowManager.LayoutParams(dp(DETAIL_DP),dp(detailHeight),
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                PixelFormat.TRANSLUCENT);
+        detailParams.gravity=Gravity.TOP|Gravity.LEFT;
+        detailParams.x=dp(15);detailParams.y=dp(135);
+        detailRoot.setVisibility(View.GONE);
+        try{wm.addView(detailRoot,detailParams);}catch(Exception e){recordFailure("abrir detalhes",e);detailRoot=null;}
         // A second hidden WebView owns the submenu hitbox; the toolbar never stretches.
         popupRoot=new FrameLayout(this){
             @Override public boolean dispatchTouchEvent(MotionEvent event){
@@ -1077,41 +1113,6 @@ public class OverlayService extends Service {
             popupRoot=null;popupPanel=null;popupParams=null;}
         if(popupPanel!=null)popupPanel.loadUrl("file:///android_asset/dock.html?controls=1&popup=1");
 
-        // The Pokémon list is always its OWN Android overlay. The gear remains
-        // a small independent control even if there is only one active search.
-        createResultsWindow();
-        // LT62: topmost small dock receives taps/drags even if Modos is open.
-        // Only this small dock can pass through the native menu hit rectangle;
-        // arbitrary touches behind a popup require separate native touch windows.
-        try{wm.addView(root,params);}
-        catch(Exception e){recordFailure("abrir dock",e);stopSelf();return;}
-
-        detailRoot=new FrameLayout(this);
-        detailRoot.setBackgroundColor(Color.TRANSPARENT);
-        detailPanel=new WebView(this);
-        detailPanel.setBackgroundColor(Color.TRANSPARENT);
-        detailPanel.getSettings().setJavaScriptEnabled(true);
-        detailPanel.getSettings().setAllowContentAccess(false);
-        detailPanel.getSettings().setAllowFileAccessFromFileURLs(false);
-        detailPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
-        detailPanel.addJavascriptInterface(new Bridge(),"Native");
-        detailRoot.addView(detailPanel,new FrameLayout.LayoutParams(-1,-1));
-        detailPanel.setWebViewClient(new WebViewClient(){
-            @Override public void onPageFinished(WebView v,String url){
-                if(url!=null&&url.startsWith("file:///android_asset/")){
-                    detailLoaded=true;
-                    if(selected>=0)showDetails(selected);
-                }
-            }
-        });
-        detailParams=new WindowManager.LayoutParams(dp(DETAIL_DP),dp(detailHeight),
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-                PixelFormat.TRANSLUCENT);
-        detailParams.gravity=Gravity.TOP|Gravity.LEFT;
-        detailParams.x=dp(15);detailParams.y=dp(135);
-        detailRoot.setVisibility(View.GONE);
-        try{wm.addView(detailRoot,detailParams);}catch(Exception e){recordFailure("abrir detalhes",e);detailRoot=null;}
         panel.loadUrl("file:///android_asset/dock.html");
         if(detailRoot!=null)detailPanel.loadUrl("file:///android_asset/detail.html");
         // Initial navigation is scheduled after cookie flush in onStartCommand.
@@ -2493,6 +2494,7 @@ public class OverlayService extends Service {
                 }
             }catch(Exception e){recordFailure("colar coordenadas",e);}
             js(menuPanel,menuLoaded,"window.onLocationPaste("+JSONObject.quote(parsed)+")");
+            js(popupPanel,popupLoaded,"window.onLocationPaste("+JSONObject.quote(parsed)+")");
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
         @JavascriptInterface public void requestFilterOptions(){handler.post(()->requestFilterOptionsLater(0));}
@@ -2508,6 +2510,7 @@ public class OverlayService extends Service {
             execute("describeFilters",found->{
                 if(stopped||generation!=requestGeneration||menuPanel==null||!menuLoaded)return;
                 js(menuPanel,true,"window.onFilterOptions("+found.toString()+")");
+            js(popupPanel,popupLoaded,"window.onFilterOptions("+found.toString()+")");
                 discoverFilterMenu(0,generation);
             });
         }
@@ -2536,6 +2539,7 @@ public class OverlayService extends Service {
                             message.put("partial",true);
                         }catch(org.json.JSONException ignored){}
                         js(menuPanel,true,"window.onFilterOptions("+message.toString()+")");
+            js(popupPanel,popupLoaded,"window.onFilterOptions("+message.toString()+")");
                     }
                     execute("closeFilterOptions:"+key,closed->discoverFilterMenu(position+1,generation));
                 }),"form".equals(key)?500L:210L);
@@ -2567,6 +2571,7 @@ public class OverlayService extends Service {
                     }
                 }catch(org.json.JSONException ignored){}
                 js(menuPanel,true,"window.onFormOptions("+result.toString()+")");
+            js(popupPanel,popupLoaded,"window.onFormOptions("+result.toString()+")");
             });
         }
         private int pokemonSuggestionSequence=0;
@@ -2575,6 +2580,7 @@ public class OverlayService extends Service {
             if(stopped||loginPaused||!menuExpanded||menuPanel==null||!menuLoaded)return;
             if(searchInProgress){
                 js(menuPanel,true,"window.onPokemonSuggestions({ok:false,reason:'Aguarde a busca atual terminar'})");
+            js(popupPanel,popupLoaded,"window.onPokemonSuggestions({ok:false,reason:'Aguarde a busca atual terminar'})");
                 return;
             }
             final String wanted=query==null?"":query.trim();
@@ -2603,6 +2609,7 @@ public class OverlayService extends Service {
                     }
                 }catch(org.json.JSONException ignored){}
                 js(menuPanel,true,"window.onPokemonSuggestions("+response.toString()+")");
+            js(popupPanel,popupLoaded,"window.onPokemonSuggestions("+response.toString()+")");
             });
         }
         // LT57 single-form bridge: menus submit a DELTA, not a stale copy of

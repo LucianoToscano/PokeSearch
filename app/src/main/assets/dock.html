@@ -2513,6 +2513,19 @@ body.popup-window.menu-left #choices.filterCascade .filterCascadeEditor{
 body.popup-window #choices.filterCascade .filterCascadeRail,
 body.popup-window.menu-left #choices.filterCascade .filterCascadeRail{
  left:0!important;right:auto!important}
+/* A narrow rail must be allowed to GROW when its lateral editor opens:
+   using the popup WebView's 80px 100vw would otherwise clamp all seven Size chips. */
+body.popup-window #choices.filterCascade[data-panel-kind="filters"]:not(.filterPicker){
+ height:0!important;min-height:0!important;overflow:visible!important;
+ max-width:none!important;max-height:none!important}
+body.popup-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]:not(.filterPicker){
+ width:320px!important;max-width:none!important}
+body.popup-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor{
+ width:230px!important;max-width:none!important;min-width:0!important}
+body.popup-window #choices.modeCascade.modeCascadeOpen{
+ max-width:none!important;overflow:visible!important}
+body.popup-window #choices.modeCascade.modeCascadeOpen .modeCascadeEditor{
+ max-width:none!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -2771,7 +2784,7 @@ window.syncMenu=(open,side,pad)=>{setMenuOpen(open,side,pad);fit();};
 // Anchor each floating submenu to its launcher instead of the ribbon's left edge.
 // Works inside the independent native menu WebView and never exceeds its width.
 function positionPopupUnderTrigger(){
- if(!controlsWindow||!choiceOpen||popupWindow)return;
+ if(!controlsWindow||!choiceOpen||(typeof popupWindow!=="undefined"&&popupWindow))return;
  const panel=document.getElementById("choices");
  if(!panel||!panel.classList.contains("visible"))return;
  const key={alerts:"bell",info:"appearance",visual:"appearance"}[choiceOpen]||choiceOpen;
@@ -2820,7 +2833,7 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
  if(controlsWindow)h=window.visualPrefs?.menuOrientation==="vertical"?232:34; // scrolling column or original ribbon.
- if(popupWindow){
+ if(typeof popupWindow!=="undefined"&&popupWindow){
   if(choiceOpen&&menuOpen){
    const pane=document.getElementById("choices"),rect=pane.getBoundingClientRect();
    let right=rect.right,bottom=rect.bottom;

@@ -36,6 +36,33 @@ test("Cascade uses current toolbar height even after clipping or vertical rotati
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
 test("Favorites remain in overlay",service.includes("PokemonPicker.show(OverlayService.this")&&!service.includes('intent.setAction("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST")'));
+
+test("LT62 split popup preserves toolbar, content-sized hitbox and page lifecycle",()=>{
+ const measured=service.split("private void positionIndependentPopup(){")[1]?.split("private void locationEditor(boolean open)")[0]||"";
+ return service.includes("PopupTouchGeometry.place(")&&
+  measured.includes("popupParams.width=b.width;popupParams.height=b.height;")&&
+  measured.includes("FLAG_NOT_TOUCH_MODAL")&&
+  measured.includes("FLAG_NOT_FOCUSABLE")&&
+  service.includes('dock.html?controls=1&popup=1')&&
+  service.includes('popupPanel.addJavascriptInterface(new Bridge(),"Native")')&&
+  service.includes("destroyWebView(popupPanel,true")&&
+  dock.includes('const popupWindow=window.location.search.indexOf("popup=1")!==-1')&&
+  dock.includes("Native.resizePopup(Math.min(330,")&&
+  dock.includes("window.showNativePopup=kind=>")&&
+  dock.includes("Native.openPopup(kind,Math.round(");
+});
+test("LT62 popup receives picker/filter events, focus and P/M/G state updates",()=>{
+ for(const code of ["window.onLocationPaste(","window.onFilterOptions(",
+   "window.onFormOptions(","window.onPokemonSuggestions("])
+  if(!service.includes("js(popupPanel,popupLoaded,\""+code))return false;
+ return service.includes("WebView web=inPopup?popupPanel:menuPanel;")&&
+  service.includes("js(popupPanel,popupLoaded,data);")&&
+  service.includes("js(popupPanel,popupLoaded,jsCode);")&&
+  dock.includes("refreshSpriteSizeButtons();")&&
+  dock.includes("if(popupWindow&&Native.closePopup)Native.closePopup();")&&
+  dock.includes("body.popup-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor");
+});
+
 test("Favorites picker is service-safe and focusable",picker.includes("TYPE_APPLICATION_OVERLAY")&&picker.includes("Runnable dismissed"));
 
 test("LT62 Favorites never hide background controls while the nonmodal picker is open",()=>{
