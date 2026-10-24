@@ -90,6 +90,55 @@ final class PopupTouchGeometry {
         return new Bounds(x,y,width,height,false);
     }
 
+    /**
+     * LT63: keep the *native touch rectangle* away from the visible results
+     * overlay, even after the user drags either surface. CSS transparency
+     * cannot stop a TYPE_APPLICATION_OVERLAY window intercepting touches.
+     * Prefer the nearest full-size location; when none fits, use the largest
+     * non-overlapping screen region and let WebView scroll internally.
+     */
+    static Bounds avoidResult(Bounds popup,Bounds results,int screenWidth,
+                              int screenHeight,int edgeMargin) {
+        if(popup==null || !popup.visible() || results==null || !results.visible() ||
+                !overlaps(popup,results))return popup;
+        int edge=Math.max(0,edgeMargin),gap=edge;
+        int left=clamp(results.x-gap,edge,Math.max(edge,screenWidth-edge));
+        int right=clamp(results.x+results.width+gap,edge,Math.max(edge,screenWidth-edge));
+        int top=clamp(results.y-gap,edge,Math.max(edge,screenHeight-edge));
+        int bottom=clamp(results.y+results.height+gap,edge,Math.max(edge,screenHeight-edge));
+        int[][] regions={
+            {edge,edge,left,screenHeight-edge},
+            {right,edge,screenWidth-edge,screenHeight-edge},
+            {edge,edge,screenWidth-edge,top},
+            {edge,bottom,screenWidth-edge,screenHeight-edge}
+        };
+        Bounds best=null;
+        long bestScore=Long.MAX_VALUE;
+        for(int[] r:regions){
+            int rw=r[2]-r[0],rh=r[3]-r[1];
+            if(rw<=0||rh<=0)continue;
+            int w=Math.min(popup.width,rw),h=Math.min(popup.height,rh);
+            // A truncated rail or a button-only strip would be unusable.
+            if(w<Math.min(70,popup.width)||h<Math.min(38,popup.height))continue;
+            int x=clamp(popup.x,r[0],r[2]-w);
+            int y=clamp(popup.y,r[1],r[3]-h);
+            Bounds candidate=new Bounds(x,y,w,h,popup.above);
+            if(overlaps(candidate,results))continue;
+            long lostArea=(long)popup.width*popup.height-(long)w*h;
+            long displacement=Math.abs((long)x-popup.x)+Math.abs((long)y-popup.y);
+            long score=(lostArea==0?0:1000000000L)+lostArea*100L+displacement;
+            if(score<bestScore){best=candidate;bestScore=score;}
+        }
+        // Never leave an invisible native hitbox over sprites.
+        return best!=null?best:new Bounds(0,0,0,0,popup.above);
+    }
+
+    static boolean overlaps(Bounds a,Bounds b){
+        return a!=null&&b!=null&&a.visible()&&b.visible()&&
+            a.x<b.x+b.width&&b.x<a.x+a.width&&
+            a.y<b.y+b.height&&b.y<a.y+a.height;
+    }
+
     private static int clamp(int value,int min,int max){
         return Math.max(min,Math.min(Math.max(min,max),value));
     }
