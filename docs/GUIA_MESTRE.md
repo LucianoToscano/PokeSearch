@@ -5552,3 +5552,19 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Pendente confirmar pelo usuário:** toque no ✕ e desaparecimento do card, fechamento/reabertura com dispensa persistida, reativação por toque longo, modo claro, modo offline, retorno ao manifesto remoto desligado, resultados e filtros do overlay, estabilidade da sessão, e download de APK real no Drive após publicação homologada. O aviso simulado **não** valida entrega HTTP pública, instalação de APK real ou lógica remota com `enabled:true`. Não ativar `atualizacao.json` e não declarar central pública homologada.
 
 **Estado:** LT74 PR #48 permanece Draft, APK assinado original e compartilhamento privado de homologação no Drive preservados, sem merge em main. Esta atualização altera apenas documentação e não exige novo APK.
+
+---
+
+## LT74 — Homologação funcional da simulação Samsung confirmada pelo usuário (24/10/2026)
+
+**Fonte da evidência:** confirmação expressa do usuário, após instalação da LT74 no aparelho Samsung e após envio de screenshot anterior da Home com card de simulação no tema escuro. Três cenários adicionais foram executados pelo usuário e informados como **APROVADOS**:
+
+1. **Dispensa (✕):** tocou no ✕ do aviso "Atualização de teste" e o card desapareceu corretamente da Home.
+2. **Persistência:** fechou o aplicativo e abriu novamente; a simulação dispensada permaneceu oculta, confirmando na experiência relatada o estado persistido entre aberturas.
+3. **Tema claro e reativação:** no tema claro, desativou e reativou a simulação pelo toque longo no rodapé; o card reapareceu corretamente.
+
+**Consolidação da homologação LT74 (escopo local):** screenshot anterior demonstrou card compacto, texto `SIMULAÇÃO`, layout acima dos contadores Firebase, botão `Baixar APK` e o Toast de teste; agora os três casos pendentes de ✕, persistência e reativação no tema claro foram **confirmados pelo usuário**. Considerar **homologada a simulação local da Central de Atualizações no Samsung**, exclusivamente nos cenários exercitados. Esta confirmação não equivale a teste físico realizado pelo assistente nem prova que os demais recursos estejam sem regressões.
+
+**Limites de cobertura / pendências mantidas:** a simulação não baixa APK e não valida publicação remota. Ainda não foram comprovados o comportamento de download externo e confirmação no Google Drive, a recepção de manifesto real com `enabled:true` e versão superior, operação offline, respostas HTML inválidas em dispositivo, regressão completa de filtros/resultados/overlay ou segurança de um APK de produção. Testes CI prévios permanecem registrados em suas seções, sem reexecução nesta etapa.
+
+**Controle de publicação:** preservar `atualizacao.json` (ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`) com `enabled:false` e referência LT62; não anunciar LT74/LT75 nem substituir os binários existentes. APK interno LT74 original e cópias privadas no Google Drive permanecem preservados. PR #48 Draft, sem merge em `main`, sem Ready. **Registro somente documental; não gerar novo APK.**
