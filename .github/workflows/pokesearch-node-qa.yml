@@ -84,6 +84,21 @@ jobs:
             node "$suite"
             echo "::endgroup::"
           done
+      - name: Validar geometria Java de janela popup isolada sem Gradle
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Testar limites de toque sem Android nem APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pokesearch-popup-geometry"
+          javac --release 17 -d "$RUNNER_TEMP/pokesearch-popup-geometry" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java \
+            app/tests/PopupTouchGeometryTest.java
+          java -cp "$RUNNER_TEMP/pokesearch-popup-geometry" \
+            com.lucianotoscano.pokesearchoverlay.PopupTouchGeometryTest
       - name: Verificar checkout somente leitura
         shell: bash
         run: |
