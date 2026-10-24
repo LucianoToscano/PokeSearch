@@ -62,8 +62,8 @@ public final class UpdateCenter {
 
     /** Pure eligibility policy; dismissed codes only hide that exact version. */
     static boolean shouldShow(Manifest manifest,int installedCode,int dismissedCode) {
-        return manifest!=null && manifest.enabled && installedCode>0 &&
-            manifest.versionCode>installedCode && manifest.versionCode!=dismissedCode;
+        return manifest!=null && UpdatePolicy.shouldDisplay(manifest.enabled,
+            manifest.versionCode,installedCode,dismissedCode);
     }
 
     public static boolean isEligible(Activity activity,Manifest manifest) {
@@ -192,16 +192,13 @@ public final class UpdateCenter {
             long code=((Number)rawCode).longValue();
             if(code<=0||code>Integer.MAX_VALUE)return null;
             String name=o.getString("versionName").trim();
-            if(!name.matches("0\\.\\d{2}\\.\\d{2,}"))return null;
             String apkName=o.getString("apkName").trim();
-            if(!apkName.equals("PokeSearch-v"+name+"-LT.apk"))return null;
+            if(!UpdatePolicy.validVersion(name,apkName))return null;
             String fileId=o.getString("apkFileId").trim();
-            if(!fileId.matches("[A-Za-z0-9_-]{15,128}"))return null;
             String url=o.getString("apkUrl").trim();
-            if(!url.equals("https://drive.google.com/uc?export=download&id="+fileId))
-                return null;
+            if(!UpdatePolicy.safeDownloadLink(fileId,url))return null;
             String hash=o.getString("apkSha256").trim().toLowerCase(java.util.Locale.US);
-            if(!hash.matches("[0-9a-f]{64}"))return null;
+            if(!UpdatePolicy.validHash(hash))return null;
             String message=o.getString("message").trim();
             String description=o.getString("description").trim();
             String status=o.getString("status").trim();
