@@ -227,6 +227,31 @@
           "Confirmar atualização automática quando o Pokémon expira, mesmo em AUTO OFF e conexão intermitente."
         ]
       }
+    },
+    {
+      "id": "pokesearch-v065-lt-samsung-detail-feedback-20261024",
+      "minVersionCode": 54263,
+      "date": "24/10/2026",
+      "title": "PokeSearch v0.00.65 LT — Feedback de coordenadas e card sem sobreposição",
+      "sections": {
+        "novidades": [
+          "O botão de cópia solicita Get coords quando o Pokémon ainda não possui coordenadas, sem deixar ação inerte."
+        ],
+        "melhorias": [
+          "Detalhes indicam 'Obtendo coordenadas' durante a consulta e mantêm a resposta ou o erro no card até mudar de Pokémon.",
+          "Estado de consulta encerra com aviso após prazo limitado, sem ficar preso em aguardando.",
+          "O card de detalhes abre em posição que evita o retângulo de toque da barra flutuante, usando coordenadas nativas da tela."
+        ],
+        "correcoes": [
+          "A atualização de status não apaga mais mensagens de Get coords do mesmo Pokémon.",
+          "Erros do site mostram o motivo informado pelo navegador interno, sem alegar sucesso.",
+          "Card não começa desenhado em cima da toolbar quando ambos dividem a mesma área."
+        ],
+        "emDesenvolvimento": [
+          "Homologar com o Samsung Get coords de Exeggcute e outra espécie sem coordenadas, incluindo caso de site sem resposta.",
+          "Conferir barra e card após arraste e rotação; vídeo de 24/10 não cobre despawn até zero."
+        ]
+      }
     }
   ]
 }
