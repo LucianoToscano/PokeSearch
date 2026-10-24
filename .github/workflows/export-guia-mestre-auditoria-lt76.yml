@@ -1,0 +1,52 @@
+name: PokeSearch LT76 - exportar Guia Mestre para auditoria
+on:
+  push:
+    branches:
+      - feature/support-mission-v2-20261024
+    paths:
+      - '.github/workflows/export-guia-mestre-auditoria-lt76.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export-audit-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exato do checkpoint auditado
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verificar guia preservado e fonte de auditoria
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/GUIA_MESTRE.md
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1200000
+          grep -Fq '# PokeSearch — GUIA MESTRE' docs/GUIA_MESTRE.md
+          grep -Fq 'CONTINUIDADE LT76 — ARTE ORIGINAL' docs/GUIA_MESTRE.md
+          git rev-parse HEAD > AUDIT_CHECKOUT_SHA.txt
+          printf '%s\n' 'Source commit of published LT76 APK: 6916be5b2d0e13ddcb94f38baa993980cebad854' > APK_SOURCE_COMMIT.txt
+          sha256sum docs/GUIA_MESTRE.md > GUIA_MESTRE_SHA256.txt
+      - name: Disponibilizar snapshot integral e trechos auditáveis
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT76-GuiaMestre-AuditoriaIA
+          path: |
+            docs/GUIA_MESTRE.md
+            .github/workflows/build-v076-support-mission-release.yml
+            .github/workflows/support-mission-v2-verify.yml
+            app/build.gradle.kts
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/UpdateCenter.java
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/UpdatePolicy.java
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/SupportMissionPolicy.java
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/SupportMissionState.java
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/SupportMissionDialog.java
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java
+            app/tests/SupportMissionPolicyTest.java
+            app/tests/support-mission-v2.test.js
+            AUDIT_CHECKOUT_SHA.txt
+            APK_SOURCE_COMMIT.txt
+            GUIA_MESTRE_SHA256.txt
+          if-no-files-found: error
+          retention-days: 30
