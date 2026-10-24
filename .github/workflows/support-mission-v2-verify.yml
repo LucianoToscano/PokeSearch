@@ -1,0 +1,38 @@
+name: Support Mission V2 - validations only (no APK)
+on:
+  push:
+    branches:
+      - feature/support-mission-v2-20261024
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Support mission asset and integration contracts
+        run: node app/tests/support-mission-v2.test.js
+      - name: Pure Java weighted policy tests
+        run: |
+          mkdir -p /tmp/supportmission
+          javac -encoding UTF-8 -d /tmp/supportmission \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/SupportMissionPolicy.java \
+            app/tests/SupportMissionPolicyTest.java
+          java -cp /tmp/supportmission com.lucianotoscano.pokesearchoverlay.SupportMissionPolicyTest
+      - name: Compile Android Java only - DO NOT package an APK
+        run: ./gradlew :app:compileDebugJavaWithJavac --no-daemon
