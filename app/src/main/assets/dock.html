@@ -2861,6 +2861,94 @@ body.controls-window.visual-light-menu #choices .weatherChoicePair .weatherChoic
 body.controls-window.visual-light-menu #choices .weatherChoicePair .weatherChoice-black{
  display:block!important;
 }
+
+/* LT68 Samsung compact layout: final scoped overrides after historical presets.
+   The native popup WebView owns placement; no duplicate background/touch layer. */
+body.popup-window.controls-window #choices.modePanel.modeCascade{
+ top:0!important;bottom:auto!important;
+ height:min(190px,var(--popup-room,440px))!important;
+ max-height:var(--popup-room,440px)!important;overflow:visible!important;
+}
+body.popup-window.controls-window #choices.modeCascade .modeCascadeRail{
+ box-sizing:border-box!important;max-height:var(--popup-room,440px)!important;
+ overflow-x:hidden!important;overscroll-behavior:contain!important;
+}
+body.popup-window.controls-window #choices.modeCascade .modeCascadeEditor{
+ box-sizing:border-box!important;min-height:30px!important;height:auto!important;
+ width:max-content!important;max-width:calc(100% - 54px)!important;
+ padding:2px!important;gap:3px!important;
+ background:transparent!important;border:0!important;
+ box-shadow:none!important;border-radius:0!important;
+}
+body.popup-window.controls-window #choices.modeCascade .modeCascadeField{
+ margin:0!important;padding:0!important;gap:2px!important;
+}
+body.popup-window.controls-window #choices.modeCascade input.modeCascadeInput{
+ height:27px!important;min-height:27px!important;
+}
+body.popup-window.controls-window #choices.filterCascade[data-panel-kind="filters"]:not(.filterPicker){
+ box-sizing:border-box!important;height:auto!important;
+ min-height:0!important;overflow:visible!important;
+}
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor{
+ box-sizing:border-box!important;padding:2px!important;
+ background:transparent!important;border:0!important;
+ border-radius:0!important;box-shadow:none!important;
+ overflow-y:auto!important;overscroll-behavior:contain!important;
+}
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor .extraField{
+ box-sizing:border-box!important;width:max-content!important;max-width:100%!important;
+ min-height:0!important;margin:0!important;padding:0!important;gap:2px!important;
+}
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs{
+ margin:0!important;padding:0!important;gap:3px!important;width:max-content!important;
+}
+body.popup-window.controls-window #choices.filterCascade .filterRailActions{
+ box-sizing:border-box!important;display:flex!important;justify-content:center!important;
+ gap:2px!important;margin:2px 0 0!important;padding:3px 0 0!important;
+}
+body.popup-window.controls-window #choices.filterCascade .filterRailActions .psLineAction{
+ flex:0 0 23px!important;width:23px!important;min-width:23px!important;
+ height:24px!important;min-height:24px!important;padding:2px!important;
+}
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor #filterStatus:empty{
+ display:none!important;
+}
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor #filterStatus{
+ box-sizing:border-box!important;font-size:8px!important;line-height:1.15!important;
+ margin:2px 0 0!important;padding:1px!important;
+ max-width:100%!important;white-space:normal!important;
+}
+body.popup-window.controls-window #choices.locationPanel{
+ box-sizing:border-box!important;width:192px!important;padding:3px 4px!important;
+}
+body.popup-window.controls-window #choices.locationPanel .locCoordsRow{
+ width:100%!important;min-width:0!important;margin:0 0 2px!important;
+}
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow{
+ width:max-content!important;max-width:100%!important;gap:3px!important;
+}
+body.popup-window.controls-window #choices.locationPanel .locRadiusInputWrap,
+body.popup-window.controls-window #choices.locationPanel .locRadiusNumber{
+ box-sizing:border-box!important;width:62px!important;min-width:62px!important;
+ max-width:62px!important;
+}
+body.popup-window.controls-window #choices.locationPanel .compactLocationActions{
+ flex:0 0 auto!important;width:max-content!important;max-width:100%!important;
+ gap:3px!important;
+}
+body.popup-window.controls-window #choices.morePanel{
+ height:auto!important;min-height:0!important;
+ max-height:var(--popup-room,440px)!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ overscroll-behavior:contain!important;
+}
+body.popup-window.controls-window #choices.standardPanel[data-panel-kind="pokemon"],
+body.popup-window.controls-window #choices.standardPanel[data-panel-kind="appearance"],
+body.popup-window.controls-window #choices.standardPanel[data-panel-kind="alerts"]{
+ box-sizing:border-box!important;max-height:var(--popup-room,440px)!important;
+ overscroll-behavior:contain!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3400,8 +3488,11 @@ function positionCascadeEditor(){
  if(!selected)return;
  const room=Math.max(70,Number.parseFloat(getComputedStyle(document.documentElement)
   .getPropertyValue("--popup-room"))||190);
- const visibleRail=Math.min(164,room);
+ const visibleRail=Math.min(Math.ceil(rail.scrollHeight)+2,room);
  rail.style.maxHeight=visibleRail+"px";
+ // Only short viewports scroll; the six rows must not create an inner scrollbar
+ // when all options fit inside the native popup.
+ rail.style.overflowY=rail.scrollHeight>visibleRail?"auto":"hidden";
  const wanted=selected.offsetTop;
  if(wanted+selected.offsetHeight>rail.scrollTop+visibleRail)
   rail.scrollTop=Math.max(0,wanted+selected.offsetHeight-visibleRail);
