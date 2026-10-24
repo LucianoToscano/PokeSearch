@@ -1055,14 +1055,29 @@ function parseCard(box,sourceIndex){
  // The site's LOCATION container can include its own separate distance line.
  // Strip it from the place name so Location and Distance can be toggled independently.
  const place=clean(loc).replace(/\s*\d+(?:[.,]\d+)?\s*(?:km|m|mi)\s+(?:away|de\s+dist[âa]ncia)\s*$/i,"").trim();
- const candidates=Array.from(box.querySelectorAll("img[src]")).filter(e=>/^https?:/.test(e.src)||e.src.startsWith("data:image/"));
+ // LT64: lazy images may expose a 1px data: placeholder in src while
+ // data-src/currentSrc/srcset already contains the real Pokémon sprite.
+ // Prefer the verified card image URL, never synthesize a generic species.
+ const imageCandidates=Array.from(box.querySelectorAll("img"));
+ const candidateImageUrl=e=>{
+  const srcset=e.getAttribute("data-srcset")||e.getAttribute("srcset")||"";
+  const fromSet=srcset.split(",").map(x=>x.trim().split(/\s+/)[0]).find(Boolean)||"";
+  const options=[
+   e.getAttribute("data-src"),e.getAttribute("data-original"),
+   e.getAttribute("data-lazy-src"),e.currentSrc,
+   e.src,fromSet
+  ].filter(Boolean);
+  return options.find(v=>/^https:\/\//i.test(v))||
+   options.find(v=>/^data:image\/(?:png|webp|gif|jpeg);base64,/i.test(v)&&v.length>150)||"";
+ };
+ const candidates=imageCandidates.filter(e=>!!candidateImageUrl(e));
  const image=candidates.sort((a,b)=>{
   const score=e=>{
-   const alt=String(e.alt||"").toLowerCase(),src=String(e.src||"").toLowerCase();
+   const alt=String(e.alt||"").toLowerCase(),src=candidateImageUrl(e).toLowerCase();
    const name=String(title||"").replace(/✨/g,"").trim().toLowerCase();
    return (name&&alt.includes(name)?80:0)+(/pokemon|pok[eé]mon|sprite|pogo|pokeapi/.test(src)?18:0)+
     (/sprite|pokemon|pok[eé]mon/.test(alt)?12:0)+
-    (e.naturalWidth>0&&e.naturalWidth===e.naturalHeight?7:0)-
+    (e.naturalWidth>=8&&e.naturalHeight>=8?25:0)-
     (/logo|avatar|icon-user|profile/.test(src)?35:0);
   };
   return score(b)-score(a);
@@ -1080,7 +1095,7 @@ function parseCard(box,sourceIndex){
   (rankLeagueHint!=="gl"&&rankLeagueHint!=="ul"||rankLeagueHint===mode);
  const isShiny=/✨/.test(title);
  return {
-  sourceIndex,name:title.replace(/✨/g,"").trim(),image:image?image.src:"",
+  sourceIndex,name:title.replace(/✨/g,"").trim(),image:image?candidateImageUrl(image):"",
   number:(meta.match(/#\d{1,4}/)||[])[0]||"",
   gender:/\bFemale\b|♀/i.test(meta)?"♀":/\bMale\b|♂/i.test(meta)?"♂":"",
   size:size,moves:move,location:place,distance,despawn:(desp.match(/\d{1,2}:\d{2}/)||[])[0]||"",
