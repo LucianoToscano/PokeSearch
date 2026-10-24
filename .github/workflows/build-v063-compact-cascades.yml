@@ -18,7 +18,7 @@ jobs:
       POKE_TEST_SIGNING_REQUIRED: "true"
       POKE_TEST_VERSION_CODE: "54261"
       POKE_TEST_VERSION_LABEL: "51063"
-      POKE_TEST_PUBLIC_VERSION: "0.00.62"
+      POKE_TEST_PUBLIC_VERSION: "0.00.63"
       POKE_TEST_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
       POKE_TEST_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
       POKE_TEST_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
@@ -164,7 +164,7 @@ jobs:
           const fs=require('node:fs');
           const notes=JSON.parse(fs.readFileSync('app/src/main/assets/release_notes.json','utf8'));
           const v=notes.releases.find(x=>x.minVersionCode===54261);
-          if(!v||!v.title.includes('0.00.63'))throw Error('Release Notes LT62 ausentes');
+          if(!v||!v.title.includes('0.00.63'))throw Error('Release Notes LT63 ausentes');
           const dock=fs.readFileSync('app/src/main/assets/dock.html','utf8');
           if(!dock.includes('LT62-COMPACT-REDMARKS')||
              !dock.includes('grid-template-columns:repeat(4,29px)!important'))
@@ -192,7 +192,7 @@ jobs:
           test -s "$APK"
           unzip -t "$APK" >/dev/null
           PACKAGE_LINE="$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package: ')"
-          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54261'" "versionName='0.00.62'"; do
+          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54261'" "versionName='0.00.63'"; do
             if ! grep -Fq -- "$expected" <<< "$PACKAGE_LINE"; then
               echo "::error::APK com identidade ou versao incorreta: $PACKAGE_LINE"
               exit 1
