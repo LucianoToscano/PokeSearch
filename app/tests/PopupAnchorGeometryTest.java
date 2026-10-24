@@ -20,7 +20,7 @@ public final class PopupAnchorGeometryTest {
         PopupTouchGeometry.Bounds compact=PopupTouchGeometry.placeBesideMeasured(
             420,900,230,300,184,232,210,26,280,420,6);
         check(compact.visible()&&compact.x+compact.width==230,"small phone opens to left");
-        check(compact.y==497,"left-side popup anchors to icon top");
+        check(compact.y==474,"left-side popup clamps to screen bottom without clipping");
         PopupTouchGeometry.Bounds bottom=PopupTouchGeometry.placeBesideMeasured(
             720,1280,100,1040,220,232,200,26,300,350,6);
         check(bottom.y+bottom.height<=1274,"bottom screen clamp");
