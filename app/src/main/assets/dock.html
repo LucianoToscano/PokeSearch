@@ -4832,7 +4832,7 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
    const lines=preparedLines?preparedLines[index]:(opts?resultLines(card,opts,league):[]);
   // UX-SPRITE-GAP-02: metadata is independently scrollable inside the side strip.
   // Never stretch the Pokemon's vertical slot to fit all enabled rank lines.
-  if(horizontal)return size+3;
+  if(horizontal)return size; // horizontal rows do not reserve invisible 3px each
   return Math.max(size,pitch); // No sprite-overlap or artificial top padding at zero gap.
  });
  const desired=natural.reduce((a,b)=>a+b,0);
