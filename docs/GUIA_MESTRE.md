@@ -5240,3 +5240,8 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Transição:** a troca interna de Mais/Atualização para outro submenu executava `closeChoices()`, que podia emitir `Native.closePopup()` e encerrar o *novo* painel devido ao retorno assíncrono da ponte. Introduzida guarda lexical `popupNativeSwitch` apenas durante `window.showNativePopup`; fechamento real pelo usuário continua chamando o nativo. Se o painel pedido já está renderizado, `fit()` mede novamente em vez de deixar a janela escondida após reiniciar a dimensão.
 
 **QA:** testes Node cobrem bootstrap de 1dp, não uso de `GONE` durante medição e transição entre submenus. Executar nova CI Node e compilação Android sem APK, preservar PR Draft, main LT61, versionCode e assinatura. Teste físico Samsung ainda necessário.
+
+
+### 12.282 — LT62: regressão atualizada para transição assíncrona segura (23/10/2026)
+
+**Resultado de CI em 12.281:** a suíte Node de UI falhou exclusivamente porque a asserção anterior esperava `if(popupWindow&&Native.closePopup)`, enquanto a implementação corrigida utiliza `if(popupWindow&&!popupNativeSwitch&&Native.closePopup)` para impedir que uma troca de submenus envie fechamento ao nativo. A asserção foi atualizada para refletir a nova regra de segurança, sem remover o teste nem alterar sua cobertura dos demais retornos de filtros, sprites, foco e notificações. Reexecutar CI Node e compilação Java/Android no SHA atualizado. Sem APK, merge, alterações da main ou promoção de versão.

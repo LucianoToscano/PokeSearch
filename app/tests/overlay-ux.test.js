@@ -59,7 +59,7 @@ test("LT62 popup receives picker/filter events, focus and P/M/G state updates",(
   service.includes("js(popupPanel,popupLoaded,data);")&&
   service.includes("js(popupPanel,popupLoaded,jsCode);")&&
   dock.includes("refreshSpriteSizeButtons();")&&
-  dock.includes("if(popupWindow&&Native.closePopup)Native.closePopup();")&&
+  dock.includes("if(popupWindow&&!popupNativeSwitch&&Native.closePopup)Native.closePopup();")&&
   dock.includes("body.popup-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor");
 });
 
