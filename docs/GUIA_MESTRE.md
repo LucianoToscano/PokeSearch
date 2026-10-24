@@ -5797,3 +5797,47 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - `UpdateCenter` da Home consulta `atualizacao.json` público, respeita `enabled`, só exibe versões com `versionCode` superior à instalada, mantém opção de dispensar aviso e abre explicitamente o link no navegador; não instala automaticamente.
 - Instalação efetiva no Samsung (LT75 -> LT76), preservação de preferências, assinatura em dispositivos físicos, 02A/02B, quatro temas, gatilhos de 10 aberturas/100 minutos, 15 dias de cooldown, Pix em app bancário **sem efetuar pagamento**, overlay/Editor Visual/filtros e resultados continuam **pendentes de homologação física**. Não afirmar que foram verificados por CI.
 - **Publicação remota LT76 finalizada**, com backup para rollback; nenhum merge e nenhuma alteração à `main`, aos PRs #34/#49 ou à chave Pix.
+
+---
+ 
+## CONTINUIDADE LT76 — ARTE ORIGINAL, ARQUIVOS PARA AUDITORIA IA E PRÓXIMO CHAT (24/10/2026)
+
+**Escopo:** o usuário solicitou imagem de anúncio para WhatsApp, pediu correção para CORES e LOGO ORIGINAIS do PokeSearch e determinou que NÃO constassem informações de missões. Depois pediu prompt para novo chat, registro no Guia Mestre e arquivo completo para auditoria IA. Esta etapa é DOCUMENTAL e não altera app, APK ou manifesto.
+
+### Checkpoint GitHub e publicação Drive — confirmado em 24/10/2026
+- Repo: LucianoToscano/PokeSearch; branch de trabalho feature/support-mission-v2-20261024. HEAD antes deste registro: 71fb93794c84a22ac88aadc24de77d432dd2e206. Main: caea98b7b57b9e45d5218e907eb392d76953dd53, intocada.
+- PR #34 e PR #49: abertas Draft, sem merge. Não alterar base nem HEAD sem pedido.
+- APK público PokeSearch-v0.00.76-LT.apk, versionName 0.00.76, versionCode 54276, package com.lucianotoscano.pokesearch; 38.443.571 bytes e SHA-256 889e7193b9f2fd87a1a96b2bfb6d3842c3630215e52a93287c6428d50fb7940c.
+- Fonte BINÁRIA EXATA: commit 6916be5b2d0e13ddcb94f38baa993980cebad854, e NÃO os commits documentais posteriores. GitHub Actions https://github.com/LucianoToscano/PokeSearch/actions/runs/40125870288: SUCCESS, variante release assinada, não depurável, R8 e shrinkResources; certificado persistente SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e, compatível com LT75.
+- Distribuição oficial Google Drive: pasta https://drive.google.com/drive/folders/1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA- ; APK ID 1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l, nome exato PokeSearch-v0.00.76-LT.apk, URL https://drive.google.com/file/d/1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l/view . APK com permissão anyone/reader.
+- Manifesto ativo atualizado no arquivo ORIGINAL atualizacao.json, ID 15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf: schema pokesearch-update-v1, enabled=true, versionName 0.00.76, versionCode 54276, apkName PokeSearch-v0.00.76-LT.apk, arquivo e SHA do APK LT76, forceUpdate=false, 857 bytes, permissão anyone/reader. Atualização opcional, sem instalar automaticamente.
+- Backup privado atualizacao_LT75_backup_antes_LT76.json, ID 1CkcVLuLiCDliBvxSwDZOBzijAmaG64-N, preservado. APKs LT62, LT74 e LT75 mantidos.
+- IMPORTANTE: seção ANTERIOR deste guia ainda relata a etapa intermediária em que a LT76 estava privada e não anunciada. Aquilo é fato HISTÓRICO SUPERADO, não o estado atual. Não eliminar o histórico: o checkpoint posterior da Etapa 8 confirmou publicação pública e o readback atual a ratifica.
+
+### Arte de WhatsApp FINAL — identitária, sem divulgar missões
+- O primeiro cartaz usava identidade visual aproximada e continha textos indesejados; outro rascunho mostrava v0.00.75 (VERSÃO INCORRETA). NÃO reutilizar essas imagens.
+- O pedido definitivo foi usar logo e cores originais do PokeSearch e remover toda referência a Missões de Apoio.
+- Arquivo final: PokeSearch_Atualizacao_LT76_WhatsApp.png, PNG RGB, 1080 x 1350 pixels, SHA-256 a1f9fc1ad1822b548e76141d52c364501e2c6bd57c3179246b1fec791dbe7c42.
+- Identidade: azul-marinho, azul luminoso, ciano e branco; logotipo original preservado sem ser redesenhado. Recursos oficiais do Drive utilizados na composição: PokeSearchLogoShinyBlueEffectAllNameEffect.png, ID 1vFAIh59rpZEpXmtzi0pf6JTAz5oZZZYW; Background PokeSearch Escuro.png, ID 1wEap_p_YahHHmQaR8u8aDwhJ6VcWKrrr.
+- Textos da arte: ATUALIZAÇÃO DISPONÍVEL / NOVA VERSÃO! / v0.00.76 LT / POKÉSEARCH • ANDROID / Melhorias e correções na nova atualização / APK DISPONÍVEL PARA BAIXAR / Baixe e teste a nova versão!
+- Nunca incluir Missão Especial, apoio Pix, sorteios, quatro temas ou mecânicas de gatilho no cartaz. O recurso continua documentado na engenharia do app; não é pauta do anúncio do grupo.
+- A criação dessa arte NÃO muda código Android, APK, assinaturas, app, APK original, Drive ou manifesto.
+
+### Arquivos auxiliares entregues para próximo chat e auditoria
+- PROMPT_CONTINUAR_POKESEARCH_LT76_20261024.txt: instrução integral para novo chat com estado técnico, Drive, hashing, checklist Samsung, Mission V2, decisões de divulgação, proibições de alteração e passos sem exigir a palavra continue.
+- AUDITORIA_IA_POKESEARCH_LT76_20261024.md: relatório de evidências e limitações, fontes, pontos de atenção para outro auditor e checklist.
+- PokeSearch_Atualizacao_LT76_WhatsApp.png: a arte FINAL, original da marca, incluída no pacote de auditoria.
+- GUIA_MESTRE.md: cópia integral do Guia Mestre com mais de 1 milhão de caracteres. É CRÍTICO para auditoria exportar o blob COMPLETO, não a string vazia/truncada que algumas leituras por faixa de linhas retornam.
+- atualizacao.json: snapshot do manifesto LT76 para contraste com a versão remota ao vivo.
+- APK LT76 disponibilizado separadamente e validado por SHA; não duplicar build nem alterar a versão já publicada sem autorização.
+
+### PENDENTE — validações não realizadas fisicamente
+1. Instalar LT76 por cima da LT75 em Samsung e validar assinatura efetiva, permissões, favoritos, sessão e preferências.
+2. Com LT75 ou anterior, verificar anúncio da Home, cache 5 minutos, link Drive, versão dispensada, offline e bloqueio de JSON remoto malformado.
+3. Testar Missão V2: ambas as condições 10 aberturas e 100 minutos de uso EFETIVO, estados do badge 02A/02B, quatro apresentações e pesos, FUGIR/X/Voltar, cooldown 15 dias, desligar/acender tela, persistência.
+4. Conferir leitura do Pix no banco sem efetuar pagamento nem expor dados pessoais do PAYLOAD.
+5. Validar filtros GL/UL/IV/IV%, raio [1000]km, Favoritos 10x5, alertas, shiny, resultados acompanhando Pokébola, menus, Editor Visual, status do overlay e limite 10 resultados.
+6. Separar claramente CI SUCCESS, publicação no Google Drive ATIVA e homologação física Samsung PENDENTE. Não afirmar que print/log/instalação foram confirmados sem evidências.
+7. Em novo chat, consultar GitHub e Google Drive ANTES de qualquer mudança; preservar main, PRs Draft, applicationId, namespace, R8/assinatura e documento mestre; não recomeçar do zero, não misturar PvPPokeGo e não exigir “continue”.
+
+**Fechamento:** arte corrigida para identidade original, nova versão v0.00.76 LT no Drive, arquivos de continuidade/auditoria preparados, próximo objetivo = auditoria independente e homologação Samsung.
