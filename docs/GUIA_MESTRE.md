@@ -5276,3 +5276,12 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Favoritos:** `PokemonPicker.java` coloca o contador `Selecionados n/50` no espaço flexível do centro entre título e X; alinha o fechar e reduz margens para aproximar ícones e busca. **Android:** `PopupTouchGeometry.avoidResults` busca posições livres ao redor dos resultados sem interceptar o retângulo da barra; testes Java e suíte Node LT63 são independentes do APK. Exceção segura mantém popup original se não houver posição livre, exigindo teste físico Samsung.
 
 **Versão planejada:** `PokeSearch-v0.00.63-LT.apk`, versionCode `54261`, versionName `0.00.63`. Workflow de assinatura persistente pronto em `.github/workflows/build-v063-samsung-cascade.yml`, mas bloqueado a menos que haja `workflow_dispatch` ou commit de autorização com prefixo `build: approved v0.00.63 LT signed`. Não fazer merge nem publicar APK antes de autorização de geração. Validar comportamento no Samsung e no site real; CI não comprova equivalência física.
+
+
+### 12.286 — LT63: checkpoint verificado / Draft PR #35 (24/10/2026)
+
+**Código validado:** `b502c9b8e1ade26aa653574eda8ddfd8deb76594`, branch `fix/lt63-samsung-cascade-ui-20261023`. A última correção acrescentou `positionIndependentPopup()` após movimentações, mudanças de largura e altura da lista de resultados no `OverlayService.java`, evitando que a proteção de sobreposição atue somente na abertura do painel. `PopupTouchGeometry.avoidResults` oferece candidatos superiores, inferiores e laterais sem cobrir a barra de botões.
+
+**Execuções oficiais:** Node QA `#40054915583` concluída com SUCCESS (nove suítes anteriores, mais 11 contratos LT63: total 895 testes Node; 31/31 checagens Java independentes). Link https://github.com/LucianoToscano/PokeSearch/actions/runs/40054915583. Compilação Android Java (sem gerar APK) `#40054915548` SUCCESS para o mesmo código: https://github.com/LucianoToscano/PokeSearch/actions/runs/40054915548.
+
+**Revisão:** PR #35 OPEN/DRAFT em https://github.com/LucianoToscano/PokeSearch/pull/35, empilhada sobre PR #34, preservando main em `caea98b7b57b9e45d5218e907eb392d76953dd53`. Build assinado LT63 intencionalmente SKIPPED; nenhuma alegação de homologação física no Samsung. Próximo APK quando autorizado: `PokeSearch-v0.00.63-LT.apk` com versionCode 54261 e certificado estável. Novos testes de resolução visual na WebView real são mandatórios, incluindo alinhamento, setas, teclado numérico, ambiente com lista de resultados e popups à esquerda/direita.
