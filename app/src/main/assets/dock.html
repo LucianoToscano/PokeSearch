@@ -3105,6 +3105,119 @@ body.controls-window #choices.locationPanel .locCoordsRow .locField:focus{
 body.controls-window #choices.locationPanel #locHint{
  text-align:center!important;max-width:100%!important;overflow-wrap:anywhere!important;
 }
+
+/* LT77 Stage 3 — compact Level/Size/Gender/Location, scoped after legacy CSS.
+   The popup WebView owns positioning; this only changes content geometry. */
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraLevelInputs{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ width:max-content!important;gap:3px!important;min-width:0!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraLevelInputs .extraRangeCell,
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraLevelInputs input.levelCompactInput{
+ box-sizing:border-box!important;flex:0 0 31px!important;
+ width:31px!important;min-width:31px!important;max-width:31px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor input.levelCompactInput{
+ height:25px!important;padding:1px 2px!important;
+ color:var(--visual-menu-fg,#fff)!important;
+ -webkit-text-fill-color:currentColor!important;caret-color:currentColor!important;
+ font:500 12px/1 Roboto,Arial,sans-serif!important;text-align:center!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"],
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"]{
+ box-sizing:border-box!important;display:grid!important;grid-template-rows:23px!important;
+ grid-auto-flow:column!important;justify-content:start!important;
+ margin:0!important;padding:0!important;gap:2px!important;
+ width:max-content!important;min-width:0!important;max-width:100%!important;
+ overflow:visible!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"]{
+ grid-template-columns:repeat(7,23px)!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"]{
+ grid-template-columns:repeat(3,23px)!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"] .extraChip,
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"] .extraChip{
+ box-sizing:border-box!important;flex:0 0 23px!important;
+ width:23px!important;min-width:23px!important;max-width:23px!important;
+ height:23px!important;min-height:23px!important;max-height:23px!important;
+ padding:0!important;margin:0!important;line-height:1!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"] .extraChip{
+ font-size:14px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"] .extraChip{
+ font-size:9px!important;
+}
+/* One centered row: Localização + paste + editable coordinates. */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel,
+body.popup-window.controls-window.popup-above #choices.locationPanel{
+ box-sizing:border-box!important;
+ width:min(256px,calc(100vw - 12px))!important;
+ min-width:0!important;max-width:calc(100vw - 12px)!important;
+ padding:3px 4px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader{
+ display:flex!important;flex-flow:row nowrap!important;align-items:center!important;
+ justify-content:center!important;width:100%!important;min-width:0!important;
+ gap:3px!important;margin:0 0 3px!important;padding:0!important;
+ min-height:26px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader>span{
+ flex:0 0 auto!important;white-space:nowrap!important;font-size:10px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader .locPaste{
+ flex:0 0 24px!important;width:24px!important;min-width:24px!important;
+ height:24px!important;padding:2px!important;margin:0!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader .locCoordsRow{
+ display:flex!important;flex:1 1 0!important;min-width:0!important;
+ width:0!important;max-width:none!important;
+ margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader .locCoordsRow .locField{
+ box-sizing:border-box!important;flex:1 1 0!important;
+ width:100%!important;min-width:0!important;max-width:none!important;
+ height:26px!important;padding:2px 3px!important;font-size:10px!important;
+}
+body.controls-window #choices.locationPanel input[type="range"]{
+ display:block!important;width:100%!important;max-width:100%!important;
+ height:19px!important;margin:1px 0 2px!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;width:100%!important;
+ margin:0!important;padding:0!important;gap:3px!important;min-height:26px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap{
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;
+ flex:0 0 auto!important;width:max-content!important;min-width:0!important;max-width:none!important;
+ margin:0!important;padding:0!important;gap:0!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap input.locRadiusNumber{
+ box-sizing:border-box!important;flex:0 0 42px!important;width:42px!important;
+ min-width:42px!important;max-width:42px!important;height:26px!important;
+ padding:2px 3px!important;margin:0!important;text-align:center!important;
+ font:500 12px/1.2 monospace!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap .locRadiusUnit{
+ display:inline!important;position:static!important;
+ flex:0 0 auto!important;inset:auto!important;width:auto!important;
+ margin:0!important;padding:0 0 0 1px!important;transform:none!important;
+}
+body.controls-window #choices.locationPanel .compactLocationActions{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 auto!important;width:max-content!important;gap:3px!important;
+ margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .compactLocationActions .psLineAction{
+ box-sizing:border-box!important;flex:0 0 26px!important;
+ width:26px!important;min-width:26px!important;max-width:26px!important;
+ height:26px!important;min-height:26px!important;padding:3px!important;
+}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3896,7 +4009,7 @@ function numericConfirmButton(make,keys,label){
 }
 function filterCascadeEditorWidth(label){
  const width={Ordenar:178,PC:139,"Nível":108,Clima:158,Tamanho:182,
-  Sexo:107,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
+  Sexo:80,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
  return width[label]||134;
 }
 function renderExtraFilters(panel,make){
@@ -3932,12 +4045,9 @@ function renderExtraFilters(panel,make){
    input.classList.add("levelCompactInput");
   }
   input.value=String(modeDraft[key]??"");
-  // Older beta builds could retain invalid 5-digit drafts; do not display or submit them.
-  if(level&&input.value!==""&&(!/^[0-9]{1,2}$/.test(input.value)||Number(input.value)<1||Number(input.value)>35)){
-   input.value="";modeDraft[key]="";
-  }
-  input.placeholder=level?(key.endsWith("Min")?"1":"35"):
-   key.endsWith("Min")?"Min":"Max";
+  // Never delete an old saved draft (including a value above this UI's 1–35
+  // range). Validation happens on Apply; the user can edit the visible field.
+  input.placeholder=key.endsWith("Min")?"Min":"Max";
   input.dataset.filterNumber=key;input.setAttribute("aria-label",label);
   input.title=label;
   input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
@@ -3974,8 +4084,9 @@ function renderExtraFilters(panel,make){
   const existing=Array.isArray(modeDraft[multiKey])?modeDraft[multiKey].map(v=>String(v).trim()):[];
   const isGender=key==="gender";
   const selected=new Set(existing.filter(v=>v&&!/^(any|qualquer)$/i.test(v)));
-  const order=isGender?["Any","Male","Female","Genderless"]:["XXS","XS","S","M","L","XL","XXL"];
-  const symbol=v=>!isGender?v:v==="Any"?"⚥":v==="Male"?"♂":v==="Female"?"♀":"⚲";
+  // Empty genderSelections means Any; no fourth Any chip is required.
+  const order=isGender?["Male","Female","Genderless"]:["XXS","XS","S","M","L","XL","XXL"];
+  const symbol=v=>!isGender?v:v==="Male"?"♂":v==="Female"?"♀":"⚲";
   const itemValue=value=>choices.find(actual=>{
    if(value==="Any")return /^(any(?: gender)?|qualquer)$/i.test(actual);
    if(!isGender)return actual.toUpperCase()===value;
@@ -3991,18 +4102,18 @@ function renderExtraFilters(panel,make){
   for(const value of order){
    const actual=itemValue(value),resolved=actual||value;
    const button=make("button","extraChip",symbol(value));button.type="button";
-   const checked=isGender?(value==="Any"?!chosenGender||/^(any|qualquer)$/i.test(chosenGender):
-    chosenGender.toLowerCase()===resolved.toLowerCase()||chosenGender.toLowerCase()===value.toLowerCase()):
+   const checked=isGender?
+    (chosenGender.toLowerCase()===resolved.toLowerCase()||chosenGender.toLowerCase()===value.toLowerCase()):
     selected.has(resolved)||selected.has(value);
    // Menu choices stay tappable while official options load. Search is still
    // blocked unless the site probe verifies every requested value.
    button.classList.toggle("chosen",checked);
    button.setAttribute(isGender?"aria-checked":"aria-pressed",String(checked));
    if(isGender)button.setAttribute("role","radio");
-   button.setAttribute("aria-label",value==="Any"?"Any":resolved);
+   button.setAttribute("aria-label",resolved);
    button.title=actual?resolved:resolved+" · confirmar no site ao aplicar";
    button.onclick=()=>{
-    if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}
+    if(isGender){modeDraft[multiKey]=checked?[]:[resolved];}
     else{
      if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);
      modeDraft[multiKey]=[...selected];
@@ -4286,6 +4397,10 @@ function makeDockAction(kind,label){
  svg.setAttribute("aria-hidden","true");svg.innerHTML=icons[kind];
  b.appendChild(svg);return b;
 }
+function sanitizeLocationRadiusDraft(raw){
+ const digits=String(raw??"").replace(/\D/g,"").slice(0,4);
+ return digits===""?"":String(Math.min(1000,Number(digits)));
+}
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen","filterPicker");
@@ -4312,9 +4427,10 @@ function renderLocationChoices(){
   '<path d="M9 15h6m-3-3 3 3-3 3"/>';
  paste.appendChild(pasteIcon);
  paste.onclick=()=>Native.pasteLocationCoords();
- title.appendChild(paste); // Paste is a title action, not a wide field button.
+ title.appendChild(paste); // The compact title row also owns the coordinates input.
  // Location changes only when applying or clearing this one field.
  fieldRow.append(field);
+ title.appendChild(fieldRow);
  const label=make("div","locLine locRadiusRow");
  const labelName=make("span","locRadiusText","Raio");
  label.title="Raio da busca: de 0 a 1000 km";
@@ -4333,10 +4449,8 @@ function renderLocationChoices(){
  slide.setAttribute("aria-label","Ajustar raio de 0 a 1000");
  slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";};
  radiusField.oninput=()=>{
-  // Android type=number ignores maxlength and may show exponent/spinner controls.
-  // Keep precisely 0–1000 as a numeric draft of at most four visible digits.
-  const digits=String(radiusField.value||"").replace(/\D/g,"").slice(0,4);
-  const value=digits===""?"":String(Math.min(1000,Number(digits)));
+  // Keep the Android text input numeric and limited to four visible digits.
+  const value=sanitizeLocationRadiusDraft(radiusField.value);
   if(radiusField.value!==value)radiusField.value=value;
   radiusField.dataset.locationDraft="true";
   if(value!=="")slide.value=value;
@@ -4363,7 +4477,8 @@ function renderLocationChoices(){
    message.hidden=false;message.style.color="#ffbf8f";return;
   }
   const wantedCoords=match[1]+","+match[2],wantedRadius=Number(radiusField.value);
-  if(!Number.isInteger(wantedRadius)||wantedRadius<0||wantedRadius>1000){
+  if(radiusField.value.trim()===""||!/^[0-9]{1,4}$/.test(radiusField.value)||
+     !Number.isInteger(wantedRadius)||wantedRadius<0||wantedRadius>1000){
    message.textContent="⚠ Raio: 0 a 1000 km";
    message.hidden=false;message.style.color="#ffbf8f";return;
   }
@@ -4374,7 +4489,7 @@ function renderLocationChoices(){
  }
  apply.onclick=submit;
  actions.append(apply,clear);label.appendChild(actions);
- panel.append(title,fieldRow,slide,label,message);
+ panel.append(title,slide,label,message);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
  locationPanelFeedback();
