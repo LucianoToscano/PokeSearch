@@ -713,7 +713,7 @@ check("LT62 visual Filtros: precise width contract per editor, never giant Sex p
  const context={};
  vm.runInNewContext("function filterCascadeEditorWidth(label){"+code+";this.resolve=filterCascadeEditorWidth",context);
  for(const [type,expected] of [
-  ["Sexo",116],["Tamanho",230],["PC",139],["Nível",139],
+  ["Sexo",107],["Tamanho",182],["PC",139],["Nível",108],
   ["Clima",158],["Ordenar",178],["Forma",216],["PC mínimo PvP",116]
  ])assert.equal(context.resolve(type),expected,type);
 });
@@ -733,20 +733,19 @@ check("LT62 visual Filtros: exclusive Sex and 7 Size remain compact and independ
 });
 
 check("LT62 Tamanho: seven inline chips one row next to its rail entry",()=>{
- const css=dock.split("/* LT62-SIZE-ONE-ROW:")[1]?.split(
-  "body.controls-window #choices.filterCascade .filterCascadeEditor .extraChip.chosen{",1)[0]||"";
- assert.ok(css.includes('grid-template-columns:repeat(7,29px)!important'));
- assert.ok(css.includes('grid-template-rows:23px!important'));
+ const css=dock.split("/* LT67 Stage 2 — width follows visible numbers")[1]?.split("</style>",1)[0]||"";
+ assert.ok(css.includes('grid-template-columns:repeat(7,23px)!important'));
+ assert.ok(css.includes('grid-template-rows:22px!important'));
  assert.ok(css.includes('grid-auto-flow:column!important'));
- assert.ok(css.includes('height:23px!important;min-height:23px!important'));
- assert.ok(css.includes('white-space:nowrap!important'));
+ assert.ok(css.includes('height:22px!important;min-height:22px!important'));
+ assert.ok(css.includes('width:max-content!important'));
  assert.ok(!css.includes('overflow-x:auto'));
  // Seven chips and their six 3px gaps plus the editor chrome fit 230px.
- assert.ok(7*29+6*3+8<=230);
- assert.ok(80+230<=330);
+ assert.ok(7*23+6*2+8<=182);
+ assert.ok(80+182<=330);
  const cascade=dock.split("function filterCascadeEditorWidth(label){")[1]
   ?.split("function renderExtraFilters(panel,make){",1)[0]||"";
- assert.ok(cascade.includes('Tamanho:230'));
+ assert.ok(cascade.includes('Tamanho:182'));
 });
 check("LT62 Tamanho: multi-select remains independent of Sex and other filters",()=>{
  const block=dock.split("function renderExtraFilters(panel,make){")[1]
