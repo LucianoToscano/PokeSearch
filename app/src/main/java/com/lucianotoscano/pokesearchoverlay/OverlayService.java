@@ -202,7 +202,7 @@ public class OverlayService extends Service {
     private String popupKind="";
     // One in-flight Get coords request may own the detail/clipboard at a time.
     private long coordinateRequestToken=0L;
-    private int popupTriggerDp,popupTriggerYDp,popupWidthDp,popupHeightDp;
+    private int popupTriggerDp,popupTriggerYDp,popupTriggerHeightDp,popupWidthDp,popupHeightDp;
     private int lastPopupX=Integer.MIN_VALUE,lastPopupY=Integer.MIN_VALUE,lastPopupW=-1,lastPopupH=-1;
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
@@ -651,11 +651,19 @@ public class OverlayService extends Service {
         if(popupRoot==null||popupParams==null||menuParams==null||wm==null||
                 !menuExpanded||popupKind.isEmpty()||popupWidthDp<1||popupHeightDp<1)return;
         DisplayMetrics m=metrics();
+        // menuParams.y can include a reserved native popup ABOVE the toolbar.
+        // Position from the real visible row, never the expanded window top.
+        int toolbarTop=menuParams.y+dp(popupOffsetDp);
         PopupTouchGeometry.Bounds b=visualMenuVertical?
-            PopupTouchGeometry.placeBeside(m.widthPixels,m.heightPixels,
-                menuParams.x,menuParams.y,menuParams.width,dp(visualMenuBaseDp()),
-                dp(popupTriggerYDp),dp(popupWidthDp),dp(popupHeightDp),dp(6)):
-            PopupTouchGeometry.place(m.widthPixels,m.heightPixels,menuParams.x,menuParams.y,
+            (popupTriggerHeightDp>0?
+                PopupTouchGeometry.placeBesideMeasured(m.widthPixels,m.heightPixels,
+                    menuParams.x,toolbarTop,menuParams.width,dp(visualMenuBaseDp()),
+                    dp(popupTriggerYDp),dp(popupTriggerHeightDp),
+                    dp(popupWidthDp),dp(popupHeightDp),dp(6)):
+                PopupTouchGeometry.placeBeside(m.widthPixels,m.heightPixels,
+                    menuParams.x,toolbarTop,menuParams.width,dp(visualMenuBaseDp()),
+                    dp(popupTriggerYDp),dp(popupWidthDp),dp(popupHeightDp),dp(6))):
+            PopupTouchGeometry.place(m.widthPixels,m.heightPixels,menuParams.x,toolbarTop,
                 menuParams.width,dp(visualMenuBaseDp()),dp(popupTriggerDp),
                 dp(popupWidthDp),dp(popupHeightDp),dp(6));
         if(!visualMenuVertical&&("filters".equals(popupKind)||"mode".equals(popupKind)))
@@ -711,6 +719,9 @@ public class OverlayService extends Service {
         }
     }
     private void openIndependentPopup(String kind,int x,int y){
+        openIndependentPopup(kind,x,y,0);
+    }
+    private void openIndependentPopup(String kind,int x,int y,int triggerHeight){
         if(!validIndependentPopup(kind)||!menuExpanded||loginPaused||stopped||pickerOpen)return;
         if(kind.equals(popupKind)){closeIndependentPopup();return;}
         popupKind=kind;
@@ -718,6 +729,7 @@ public class OverlayService extends Service {
         js(menuPanel,menuLoaded,"window.setActiveNativePopupKind&&window.setActiveNativePopupKind("+JSONObject.quote(kind)+")");
         popupTriggerDp=Math.max(0,Math.min(menuDp(),x));
         popupTriggerYDp=Math.max(0,Math.min(visualMenuBaseDp(),y));
+        popupTriggerHeightDp=Math.max(0,Math.min(visualMenuBaseDp(),triggerHeight));
         popupWidthDp=popupHeightDp=0;
         lastPopupX=Integer.MIN_VALUE;lastPopupY=Integer.MIN_VALUE;
         // A GONE WebView may suspend requestAnimationFrame on Samsung, so
@@ -731,7 +743,9 @@ public class OverlayService extends Service {
             popupParams.x=Math.max(0,Math.min(m.widthPixels-popupParams.width,
                 menuParams!=null?menuParams.x:0));
             int anchorY=menuParams==null?0:
-                menuParams.y+(visualMenuVertical?dp(popupTriggerYDp):dp(visualMenuBaseDp()));
+                menuParams.y+dp(popupOffsetDp)+
+                (visualMenuVertical?dp(popupTriggerYDp)-dp(popupTriggerHeightDp)/2:
+                    dp(visualMenuBaseDp()));
             popupParams.y=Math.max(0,Math.min(m.heightPixels-popupParams.height,anchorY));
             try{
                 wm.updateViewLayout(popupRoot,popupParams);
@@ -3366,6 +3380,10 @@ public class OverlayService extends Service {
         @JavascriptInterface public void resizeMenu(int size){handler.post(()->OverlayService.this.resizeMenu(size));}
         @JavascriptInterface public void openPopup(String kind,int triggerDp,int triggerYDp){
             handler.post(()->openIndependentPopup(kind,triggerDp,triggerYDp));
+        }
+        @JavascriptInterface public void openPopupMeasured(String kind,int triggerDp,
+                                                            int triggerYDp,int triggerHeightDp){
+            handler.post(()->openIndependentPopup(kind,triggerDp,triggerYDp,triggerHeightDp));
         }
         @JavascriptInterface public void closePopup(){handler.post(OverlayService.this::closeIndependentPopup);}
         @JavascriptInterface public void resizePopup(int width,int height){
