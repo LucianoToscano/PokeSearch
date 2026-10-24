@@ -49,6 +49,16 @@ public final class PopupTouchGeometryTest {
             "lateral editor stays within right display margin");
         check(PopupTouchGeometry.alignRail(hidden,1080,0,300,100,78,8)==hidden,
             "zero-sized popup remains unclickable after anchoring");
+        PopupTouchGeometry.Bounds sideRight=PopupTouchGeometry.placeBeside(
+            1080,2400,100,300,198,232,90,268,390,6);
+        check(sideRight.visible(),"vertical toolbar gets a visible adjacent popup");
+        check(sideRight.x==298,"vertical popup begins after right edge of rail");
+        check(sideRight.y==374,"vertical popup starts beside tapped row");
+        PopupTouchGeometry.Bounds sideLeft=PopupTouchGeometry.placeBeside(
+            420,900,230,300,184,232,210,300,420,6);
+        check(sideLeft.x+sideLeft.width==230,"vertical popup moves left when right side is full");
+        check(sideLeft.x>=6&&sideLeft.y+sideLeft.height<=894,
+            "vertical adjacent popup remains bounded to display");
         System.out.println("PopupTouchGeometry: "+passed+"/"+passed+" checks passed");
     }
 }

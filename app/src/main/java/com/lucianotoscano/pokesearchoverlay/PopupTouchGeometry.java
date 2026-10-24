@@ -64,6 +64,32 @@ final class PopupTouchGeometry {
         return new Bounds(left,popup.y,popup.width,popup.height,popup.above);
     }
 
+    /**
+     * Vertical toolbar: put a short native popup BESIDE the icon's row.
+     * Never grow the menu's own window or cover its other touch targets.
+     * A narrow phone may have less room for the editor; caller must scroll.
+     */
+    static Bounds placeBeside(int screenWidth,int screenHeight,
+                              int toolbarX,int toolbarY,int toolbarWidth,int toolbarHeight,
+                              int triggerY,int requestedWidth,int requestedHeight,int margin) {
+        int edge=Math.max(0,margin);
+        int maxHeight=Math.max(0,screenHeight-2*edge);
+        int right=Math.max(0,screenWidth-edge-(toolbarX+toolbarWidth));
+        int left=Math.max(0,toolbarX-edge);
+        if(toolbarWidth<=0||toolbarHeight<=0||requestedWidth<=0||requestedHeight<=0||
+                maxHeight<=0||Math.max(left,right)<=0)
+            return new Bounds(0,0,0,0,false);
+        boolean useRight=right>=requestedWidth||
+            (left<requestedWidth&&right>=left);
+        int space=useRight?right:left;
+        int width=Math.min(requestedWidth,space),height=Math.min(requestedHeight,maxHeight);
+        if(width<=0||height<=0)return new Bounds(0,0,0,0,false);
+        int x=useRight?toolbarX+toolbarWidth:toolbarX-width;
+        int centerY=toolbarY+clamp(triggerY,0,toolbarHeight);
+        int y=clamp(centerY-16,edge,screenHeight-edge-height);
+        return new Bounds(x,y,width,height,false);
+    }
+
     private static int clamp(int value,int min,int max){
         return Math.max(min,Math.min(Math.max(min,max),value));
     }

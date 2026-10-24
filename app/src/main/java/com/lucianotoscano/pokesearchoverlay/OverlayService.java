@@ -190,7 +190,7 @@ public class OverlayService extends Service {
     private WebView panel,detailPanel,website,menuPanel,resultPanel,popupPanel;
     private boolean popupLoaded=false;
     private String popupKind="";
-    private int popupTriggerDp,popupWidthDp,popupHeightDp;
+    private int popupTriggerDp,popupTriggerYDp,popupWidthDp,popupHeightDp;
     private int lastPopupX=Integer.MIN_VALUE,lastPopupY=Integer.MIN_VALUE,lastPopupW=-1,lastPopupH=-1;
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
@@ -643,11 +643,14 @@ public class OverlayService extends Service {
         if(popupRoot==null||popupParams==null||menuParams==null||wm==null||
                 !menuExpanded||popupKind.isEmpty()||popupWidthDp<1||popupHeightDp<1)return;
         DisplayMetrics m=metrics();
-        PopupTouchGeometry.Bounds b=PopupTouchGeometry.place(
-            m.widthPixels,m.heightPixels,menuParams.x,menuParams.y,
-            menuParams.width,dp(visualMenuBaseDp()),dp(popupTriggerDp),
-            dp(popupWidthDp),dp(popupHeightDp),dp(6));
-        if("filters".equals(popupKind)||"mode".equals(popupKind))
+        PopupTouchGeometry.Bounds b=visualMenuVertical?
+            PopupTouchGeometry.placeBeside(m.widthPixels,m.heightPixels,
+                menuParams.x,menuParams.y,menuParams.width,dp(visualMenuBaseDp()),
+                dp(popupTriggerYDp),dp(popupWidthDp),dp(popupHeightDp),dp(6)):
+            PopupTouchGeometry.place(m.widthPixels,m.heightPixels,menuParams.x,menuParams.y,
+                menuParams.width,dp(visualMenuBaseDp()),dp(popupTriggerDp),
+                dp(popupWidthDp),dp(popupHeightDp),dp(6));
+        if(!visualMenuVertical&&("filters".equals(popupKind)||"mode".equals(popupKind)))
             b=PopupTouchGeometry.alignRail(b,m.widthPixels,menuParams.x,menuParams.width,
                 dp(popupTriggerDp),dp("filters".equals(popupKind)?78:52),dp(6));
         if(!b.visible()){popupRoot.setVisibility(View.GONE);return;}
@@ -690,10 +693,11 @@ public class OverlayService extends Service {
             js(popupPanel,popupLoaded,"window.hideNativePopup&&window.hideNativePopup()");
         }
     }
-    private void openIndependentPopup(String kind,int x){
+    private void openIndependentPopup(String kind,int x,int y){
         if(!validIndependentPopup(kind)||!menuExpanded||loginPaused||stopped||pickerOpen)return;
         if(kind.equals(popupKind)){closeIndependentPopup();return;}
         popupKind=kind;popupTriggerDp=Math.max(0,Math.min(menuDp(),x));
+        popupTriggerYDp=Math.max(0,Math.min(visualMenuBaseDp(),y));
         popupWidthDp=popupHeightDp=0;
         lastPopupX=Integer.MIN_VALUE;lastPopupY=Integer.MIN_VALUE;
         if(popupRoot!=null)popupRoot.setVisibility(View.GONE);
@@ -3220,8 +3224,8 @@ public class OverlayService extends Service {
         }
         @JavascriptInterface public void toggleResultsCollapsed(){handler.post(OverlayService.this::toggleResultsCollapsed);}
         @JavascriptInterface public void resizeMenu(int size){handler.post(()->OverlayService.this.resizeMenu(size));}
-        @JavascriptInterface public void openPopup(String kind,int triggerDp){
-            handler.post(()->openIndependentPopup(kind,triggerDp));
+        @JavascriptInterface public void openPopup(String kind,int triggerDp,int triggerYDp){
+            handler.post(()->openIndependentPopup(kind,triggerDp,triggerYDp));
         }
         @JavascriptInterface public void closePopup(){handler.post(OverlayService.this::closeIndependentPopup);}
         @JavascriptInterface public void resizePopup(int width,int height){

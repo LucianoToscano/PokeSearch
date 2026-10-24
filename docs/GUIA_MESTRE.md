@@ -5224,3 +5224,10 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Fechamento/foco:** `closeIndependentPopup()` esconde o IME usando o token da própria WebView do popup, reseta `locationEditorOpen`, devolve `FLAG_NOT_FOCUSABLE` e deixa a janela `GONE`. Isso cobre o fechamento por `ACTION_OUTSIDE`, que pode chegar antes do retorno JS `locationEditor(false)`, sem bloquear o toque subjacente.
 
 **QA:** ampliada `PopupTouchGeometryTest.java` de 16 para **20 asserções** (posição do rail, altura preservada, clamp direito e zero hitbox). Executar os workflows Node e compilação Java Android (sem APK), depois homologar em Samsung. Sem merge, mudança de identidade/versão ou novo APK.
+
+
+### 12.280 — LT62: orientação vertical da barra com submenu lateral nativo (23/10/2026)
+
+**Falha arquitetural evitada:** a separação nativa 12.275 usava por padrão popup acima/abaixo da barra de 34dp, mas na orientação vertical `menuOrientation=vertical` a barra tem 232dp e cada item precisa abrir o submenu ao **lado** da linha tocada, não abaixo de toda a coluna. Incluído `PopupTouchGeometry.placeBeside`: escolhe a lateral com espaço real, respeita margens da tela, ancora a posição Y ao ícone e reduz a largura/altura quando o espaço é insuficiente. O JS envia a coordenada Y do disparador pela mesma ponte `Native.openPopup(kind,x,y)`; o serviço escolhe `placeBeside` só em vertical e conserva `place/alignRail` em horizontal.
+
+**Contratos:** a classe pura Java passa a verificar também abertura lateral direita, esquerda, alinhamento Y e clamp da tela, somando **25 asserções**. Largura insuficiente em Samsung estreito pode demandar scroll do editor; não criar painel fora da tela nem cobrir a barra. Editor Visual, P/M/G, Pokébola/resultados, filtros e notificações mantêm suas preferências. Nenhum APK, assinatura, main ou PR merge nesta etapa; validação física pendente.

@@ -2965,7 +2965,8 @@ function toggleChoices(kind){
   const key={alerts:"bell",visual:"appearance",info:"appearance"}[kind]||kind;
   const button=document.querySelector('#quickMenuList button[data-key="'+key+'"]');
   const rect=button?.getBoundingClientRect(),host=document.getElementById("menu").getBoundingClientRect();
-  Native.openPopup(kind,Math.round(rect?rect.left-host.left+rect.width/2:host.width/2));
+  Native.openPopup(kind,Math.round(rect?rect.left-host.left+rect.width/2:host.width/2),
+   Math.round(rect?rect.top-host.top+rect.height/2:host.height/2));
   return;
  }
  const pokemonFromFilters=kind==="pokemon"&&choiceOpen==="filters";
