@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          ref: 11fd11b4ec8a66430bbaf79a15f1eb585e6e42f8
+          ref: b5cb5019c59633dd0c1b0e095f6f18e8d68c8c56
           path: source
       - name: Gerar fonte completa original e relatorios em um unico ZIP
         run: |
@@ -31,7 +31,7 @@ jobs:
             --source source \
             --staging staging \
             --output entregavel \
-            --sha 11fd11b4ec8a66430bbaf79a15f1eb585e6e42f8
+            --sha b5cb5019c59633dd0c1b0e095f6f18e8d68c8c56
           test -s entregavel/PokeSearch-Auditoria-Completa-Fonte.zip
           cat entregavel/RESULTADO_EXPORTACAO.txt
       - name: Conferir ZIP independente e pasta raiz unica
