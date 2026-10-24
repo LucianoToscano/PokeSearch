@@ -1734,12 +1734,17 @@ test("UX-SPRITE-01 missing images remain visible without inventing Pokémon or b
 })());
 test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image sources",(()=>{
  const source=dock.split("function attachSpriteFeedback(){")[1]?.split("function attachLongPress(){")[0]||"";
- if(!source.includes("if(img.complete)confirmLoaded()"))return false;
+ if(!source.includes("if(img.complete)loaded()")||
+    !source.includes("retries>=2")||!source.includes('data-original-src'))return false;
  function makeStage(image){
   const classes=new Set(),listeners={};
-  if(image)image.addEventListener=(name,fn)=>{listeners[name]=fn;};
-  return {image,classes,listeners,classList:{add:name=>classes.add(name)},
-   querySelector:()=>image};
+  if(image){
+   image.isConnected=true;
+   image.addEventListener=(name,fn)=>{listeners[name]=fn;};
+   image.getAttribute=()=>image.src||"https://example.test/sprite.png";
+  }
+  return {image,classes,listeners,classList:{add:name=>classes.add(name),
+   remove:name=>classes.delete(name)},querySelector:()=>image};
  }
  const cached=makeStage({naturalWidth:128,naturalHeight:128,complete:true});
  const waiting=makeStage({naturalWidth:128,naturalHeight:128,complete:false});
@@ -1747,13 +1752,18 @@ test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image source
  const tiny=makeStage({naturalWidth:1,naturalHeight:1,complete:true});
  const absent=makeStage(null);
  const stages=[cached,waiting,broken,tiny,absent];
- const mockDoc={querySelectorAll:(sel)=>sel===".spawn .spriteStage"?stages:[]};
- const attach=(new Function("document","return function attachSpriteFeedback(){"+source))(mockDoc);
+ const mockDoc={querySelectorAll:sel=>sel===".spawn .spriteStage"?stages:[]};
+ const attach=(new Function("document","setTimeout","return function attachSpriteFeedback(){"+source))(
+  mockDoc,()=>{} // no timers after tests; simulate exhausted onerror manually
+ );
  attach();
  if(waiting.classes.has("loaded")||waiting.classes.has("failed"))return false;
  waiting.listeners.load();
+ // First two failures get a recovery attempt; the third shows fallback.
+ broken.listeners.error();broken.listeners.error();
+ tiny.listeners.error();tiny.listeners.error();
  return cached.classes.has("loaded")&&waiting.classes.has("loaded")&&
-  broken.classes.has("failed")&&tiny.classes.has("failed")&&absent.classes.has("failed");
+   broken.classes.has("failed")&&tiny.classes.has("failed")&&absent.classes.has("failed");
 })());
 
 test("HOME-03 authenticates using official profile only after session proof",(()=>{
