@@ -11,3 +11,6 @@ A tentativa 1 falhou somente nos contratos antigos de teste de Modo que exigiam 
 
 ## Tentativa 3
 A segunda execução passou nas 8 suítes iniciais e encontrou um teste LT62 que ainda exigia top fixo de editor Modo. Ajustada a asserção para exigir posicionamento dinâmico limitado ao espaço disponível, sem relaxar valores e confirmação de filtros. A compilação assinada fica condicionada a todos os testes.
+
+## Tentativa 4
+A terceira execução chegou aos testes de geometria LT62 e bloqueou a largura antiga de Sexo (134px), incompatível com os quatro novos ícones de 26px. Atualizada expectativa específica para o editor LT66 de 116px. Nenhum APK foi entregue em tentativas falhas. Reexecutar todos os testes e assinatura.
