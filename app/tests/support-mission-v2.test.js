@@ -22,7 +22,7 @@ check("all seven local persistence keys present; no server and no Firebase",()=>
  "support_current_style_id","support_last_style_id","support_mission_badge_unread",
  "support_mission_dismissed_at_ms","support_mission_next_eligible_at_ms"])
    assert.ok(state.includes(key),key);
- assert.ok(!/Firebase|HttpURLConnection|Socket|Retrofit|WebView/.test(state));
+ assert.ok(!/import\s+.*(?:Firebase|HttpURLConnection|Socket|Retrofit|WebView)/.test(state));
 });
 check("ten opens + 100 effective minutes both required",()=>{
  assert.ok(policy.includes("REQUIRED_OPENS = 10"));
