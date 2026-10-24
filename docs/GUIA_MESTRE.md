@@ -5540,3 +5540,15 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Visibilidade:** APK LT74 e ZIP de homologação **privados**, acessíveis ao proprietário autenticado (não conceder `anyone/reader` nesta etapa). LT62 permanece público por link, não foi substituído. `atualizacao.json` original com ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf` não foi editado e mantém `enabled:false`; nenhum aviso de atualização real foi publicado. Não converter PR #48 Draft em Ready, não realizar merge na `main`.
 
 **Próximo passo de validação:** no Samsung abrir o link Drive com a conta proprietária, baixar e instalar a LT74 por cima da LT73, testar o long-press no rodapé, card `SIMULAÇÃO`, interação de botão e ✕, persistência de dispensa e alternância claro/escuro. Depois, homologar fluxo remoto real em ambiente controlado sem anúncios prematuros.
+
+---
+
+## LT74 — Homologação visual parcial Samsung (24/10/2026)
+
+**Evidência recebida do usuário:** screenshot de execução no Samsung mostrando a Home com o aviso **"Atualização de teste"**, a linha **"v0.00.75 · SIMULAÇÃO"**, botão **"Baixar APK"**, botão **✕**, descrição de teste local sem downloads/anúncios, e o Toast **"Teste: botão acionado. Nenhum APK foi baixado."**. Rodapé indica **"PokeSearch v0.00.74 LT • PoGoCoordinates /search"**. Conta vinculada e indicadores Firebase aparecem na mesma tela. Screenshot corresponde ao **tema escuro**.
+
+**Aprovado visualmente pelo print:** aviso exibido acima dos contadores, textos legíveis, layout compacto sem cortes aparentes, botão de download desenhado e resposta de Toast, versão real LT74 no rodapé, sessão e contadores visíveis. É **homologação parcial no aparelho**, não verificação programática ou funcional de todas as interações. A presença da mensagem de teste é compatível com a implementação que não faz download; o print isolado não demonstra que nenhum request externo foi feito, embora o código revise esse comportamento.
+
+**Pendente confirmar pelo usuário:** toque no ✕ e desaparecimento do card, fechamento/reabertura com dispensa persistida, reativação por toque longo, modo claro, modo offline, retorno ao manifesto remoto desligado, resultados e filtros do overlay, estabilidade da sessão, e download de APK real no Drive após publicação homologada. O aviso simulado **não** valida entrega HTTP pública, instalação de APK real ou lógica remota com `enabled:true`. Não ativar `atualizacao.json` e não declarar central pública homologada.
+
+**Estado:** LT74 PR #48 permanece Draft, APK assinado original e compartilhamento privado de homologação no Drive preservados, sem merge em main. Esta atualização altera apenas documentação e não exige novo APK.
