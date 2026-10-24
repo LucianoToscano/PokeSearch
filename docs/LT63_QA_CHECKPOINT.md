@@ -6,3 +6,6 @@ Certificado permanente obrigatório: `34766c15d09013ad65873f9976539c8fa2f826e917
 
 ## CI attempt 2
 A primeira tentativa do workflow LT63 encontrou uma asserção herdada do teste FILTERS-POGO-02 que ainda continha texto antigo sobre campos vazios. O teste foi corrigido para exigir restauração fiel do rascunho Min/Max; código Android e assinatura não alterados. Nova execução aprovada somente na branch LT63.
+
+## CI attempt 3
+A segunda execução detectou testes LT62 que assumiam larguras antigas (PC/Nível 168px, Clima 160px, Ordenar 156px, Forma 110px) e foram atualizados para os valores LT63 reais. O workflow agora confere explicitamente `POKE_TEST_PUBLIC_VERSION=0.00.63` e `versionName='0.00.63'` pelo aapt, evitando distribuir a versão 0.00.62. Sem merge ou troca de certificado.
