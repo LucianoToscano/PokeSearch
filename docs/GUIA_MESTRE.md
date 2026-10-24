@@ -6063,3 +6063,38 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - O transporte deve distinguir erros de `trainer_not_linked`, conta Shiny não vinculada, VIP, códigos inválidos, spawns expirados e rate limit 429 com `Retry-After`. O fluxo atual baseado no DOM permanece a única integração Android publicada.
 - **Estado:** nenhuma edição adicional ao código de runtime, nenhum HTTP live com JWT, nenhuma chamada a endpoints destrutivos, nenhum APK LT77, nenhum merge/republicação. QA 38/38 de LT77 anterior segue como referência, mas não validou este material novo nem a compatibilidade real no Samsung.
 - **Próxima ação técnica:** ampliar testes de contrato com fixtures redigidas, ajustar adaptadores com flags desligadas, e somente então homologar em sessão real autorizada no Samsung, sem coletar credenciais no app nativo ou publicar dados pessoais.
+
+---
+
+## LT77 — ETAPA 2: ESPAÇAMENTO DOS RESULTADOS E ARRASTE DA POKÉBOLA (24/10/2026)
+
+### Objetivo, revisão e preservações
+- Continuação do prompt de 14 etapas: **somente Etapa 2**, corrigindo o gap Pokébola → resultados, o espaçamento de cartões e a sincronização de arraste em até 60 atualizações/segundo. Os próximos popups/filtros/API NÃO foram modificados. O diagnóstico da Etapa 1 foi realizado sem mudanças.
+- Base: branch `feature/lt77-authorized-api-contract-20261024` em `b5cb5019c59633dd0c1b0e095f6f18e8d68c8c56`. Correção isolada: `fix/lt77-stage2-results-spacing-20261024`. Fonte validada pelo CI: `ab1ea0f8718dde6f02a2ce1ca84df94972a94b2a` (o commit documental posterior será diferente).
+- `main` permanece `caea98b7b57b9e45d5218e907eb392d76953dd53`. APK LT76 assinado e manifesto de atualizações Drive permanecem intocados; PRs Draft não mescladas. **Nenhum APK novo ou distribuição, assinatura ou alteração de applicationId/namespace**.
+
+### Correções reais (código)
+- `OverlayService.java`: `positionResultsUnderPokeball()` usa `ResultsSpacingPolicy.DEFAULT_TOP_GAP_PX` igual a **2 pixels físicos**, em vez de `dp(2)`, evitando que densidade Samsung transforme 2 dp em uma folga maior. `visualHeaderAfterGap` e `visualResultsOffsetY` continuam sendo offsets explícitos do Editor Visual e podem elevar/alterar a distância se personalizados; **o compromisso de 0–2 px é para a configuração padrão**, não a override voluntária. Preservadas regras de inversão acima da Pokébola quando não cabe abaixo, clamp da tela, ancoragem X e todos os dados salvos.
+- `ResultsSpacingPolicy.java` (novo helper puro): `DEFAULT_TOP_GAP_PX=2`, preferência antiga de distância entre cartões com ponto neutro `31`, e `additionalRowGapPx()` com transformação `max(0,min(34,valor-31))`. Esta conversão evita usar o valor legado `31` como **31 px de gap horizontal**. `resultWidthDp()` passa a reservar exatamente o gap extra real; não altera slider nem preferências salvas.
+- `dock.html`: `computeResultLayout()` agora usa `size + additionalResultGapPx(resultGapBetween)` para o tamanho da linha vertical; ponto neutro 31 e valores anteriores menores não geram espaço automático. Linhas horizontais não reservam os antigos 3 px extras. O CSS horizontal usa a mesma conversão para `column-gap` e `row-gap`; padrão `0px`. O cabeçalho antigo de resultados está oculto: removido o `padding-top:var(--visual-header-y)` que estava empurrando a lista, deixando `padding-top:0`. Removido padding automático superior/inferior de sprite. **Mantido** `margin-top:var(--visual-top-gap,0px)` para o controle manual `resultGapTop` do Editor Visual; o valor padrão é 0, a personalização explícita permanece.
+- `OverlayService.java` touch handler principal: um **único limite de 16 ms** por quadro agora governa as chamadas nativas que movem a Pokébola (`updateWindow()`, incluindo menu) e a lista (`wm.updateViewLayout(resultRoot,...)`), sem deixar a Pokébola avançar separadamente enquanto resultados aguardam. `ACTION_UP` sempre confirma posição final de ambas as janelas mesmo se ocorrer entre quadros. O grip antigo de resultados conserva limite de 16 ms e commit final.
+- Ícones PNG, formas, Shiny, ranking, menus, resultado máximo 10 e módulos `api_*.js` **não foram alterados**. Nenhuma leitura ou persistência de token/JWT; feature flag da API permanece desativada.
+
+### Arquivos alterados/criados
+- Modificados: `app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java`, `app/src/main/assets/dock.html`, `app/tests/lt62-menu-visual-states.test.js`, `app/tests/overlay-ux.test.js`, `app/tests/visual-editor.test.js` (expectativas antigas de spacing, sem exclusão de funcionalidades).
+- Novos: `app/src/main/java/com/lucianotoscano/pokesearchoverlay/ResultsSpacingPolicy.java`, `app/tests/ResultsSpacingPolicyTest.java`, `app/tests/lt77-stage2-results-layout.test.js`, `.github/workflows/lt77-stage2-results-qa.yml`.
+
+### Execução CI — evidência final
+- **GitHub Actions [#40139004204](https://github.com/LucianoToscano/PokeSearch/actions/runs/40139004204): COMPLETED / SUCCESS** para código `ab1ea0f8718dde6f02a2ce1ca84df94972a94b2a`; suites JavaScript existentes passaram (com **exclusão explícita** do teste legado de LT74 `lt74-local-update-preview.test.js`, dependente de controle DEBUG removido no release protegido), as três suítes LT77 API tiveram **38/38 PASS** e o teste novo LT77 Etapa 2 teve **10/10 PASS**.
+- `ResultsSpacingPolicyTest.java`: **9/9 PASS** e teste legado `PopupTouchGeometryTest.java` também passou com JDK17 puro. Sintaxe do JS embutido `dock.html`/`detail.html` validada. `gradle :app:compileDebugJavaWithJavac`: **BUILD SUCCESSFUL**, com Android SDK 36, JDK 17 e Gradle 8.11.1. O job não produziu APK.
+- Workflow de desenvolvimento inicialmente apresentou falsos positivos de testes que buscavam literalmente os nomes/fórmulas antigas `lastResultMoveAt`, `dp(2+visualHeaderAfterGap)`, `Math.round(size*.32)+31` e CSS removido. As expectativas foram atualizadas para o comportamento correto. A primeira compilação teve **BUILD SUCCESSFUL** mas uma checagem `git status` inadequada marcou o run como falho por artefatos de geração `:app:createRoundIcon` no runner. A verificação foi ajustada para apenas registrar geração local; o run final ficou **SUCCESS**. Esses eventos não foram ocultados.
+
+### Critérios de aceitação / Samsung físico pendente
+- [x] Política nativa para **2 px físicos** de espaço padrão Pokébola → painel; acima disso somente por override visual ou necessidade de reancoragem perto das bordas.
+- [x] Política de **gap automático 0** entre cartões padrão na vertical e horizontal; espaçamento extra manual acima do ponto neutro ainda existe.
+- [x] Nenhum padding fantasma do antigo cabeçalho; personalização manual top-gap preservada.
+- [x] `updateViewLayout` do dock e resultados compartilhando throttle de 16 ms, com flush no `ACTION_UP`; compilação Android passou.
+- [ ] Teste real no Samsung: com Editor Visual zerado, medir borda da Pokébola até primeiro cartão em pixels físicos, e entre primeiro/segundo cartões, em orientação vertical/horizontal e tamanhos P/M/G.
+- [ ] Arrastar a Pokébola com 1, 5 e 10 resultados, inclusive perto do limite superior/inferior, com menu aberto, confirmar que lista e detalhes acompanham sem saltos ou cortes. Tocar brevemente para mostrar/recolher resultados, segurar 600 ms para menu.
+- [ ] Alterar manualmente `resultGapTop`, `resultGapBetween`, `headerAfterGap`, `resultsOffsetY` no Editor Visual e reabrir overlay: os offsets devem continuar respeitados; retornar ao preset padrão restaura o espaço mínimo.
+- **Status:** implementação e CI concluídos; homologação visual/funcional física ainda não executada. Não declarar Etapa 2 aprovada no Samsung sem prints/vídeo e medidas.
