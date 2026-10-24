@@ -3200,13 +3200,21 @@ function positionCascadeEditor(){
  const rail=document.querySelector("#choices .modeCascadeRail");
  const editor=document.querySelector("#choices .modeCascadeEditor");
  if(!rail||!editor||!cascadeMode)return;
- const tops={raw:67,percent:90,gl:113,ul:136};
- const requested=tops[cascadeMode]||76;
- const room=Number.parseFloat(getComputedStyle(document.documentElement)
-  .getPropertyValue("--popup-room"))||190;
- const visible=Math.max(40,Math.min(164,room));
- rail.scrollTop=Math.max(0,requested+36-visible);
- editor.style.top=Math.max(0,Math.min(visible-36,requested-rail.scrollTop))+"px";
+ const selected=rail.querySelector('[data-mode-id="'+cascadeMode+'"]');
+ if(!selected)return;
+ const room=Math.max(70,Number.parseFloat(getComputedStyle(document.documentElement)
+  .getPropertyValue("--popup-room"))||190);
+ const visibleRail=Math.min(164,room);
+ rail.style.maxHeight=visibleRail+"px";
+ const wanted=selected.offsetTop;
+ if(wanted+selected.offsetHeight>rail.scrollTop+visibleRail)
+  rail.scrollTop=Math.max(0,wanted+selected.offsetHeight-visibleRail);
+ else if(wanted<rail.scrollTop)rail.scrollTop=wanted;
+ const natural=Math.max(30,editor.scrollHeight||36);
+ const top=Math.max(0,Math.min(wanted-rail.scrollTop,room-Math.min(natural,room-2)-2));
+ editor.style.top=top+"px";
+ editor.style.maxHeight=Math.max(29,room-top-2)+"px";
+ editor.style.overflowY=natural>room-top-2?"auto":"visible";
 }
 // Highlight the SAVED mode, independently of the temporary editor row.
 // A selected mode is not automatically a site-confirmed Search.
@@ -3241,7 +3249,7 @@ function renderModeChoices(){
   (activeSearchPhase==="updated"||activeSearchPhase==="empty");
  entries.forEach(([id,label],idx)=>{
   const button=document.createElement("button");button.type="button";
-  button.className="modeCascadeEntry";button.textContent=label;
+  button.className="modeCascadeEntry";button.textContent=label;button.dataset.modeId=id;
   const selected=activeModeEntry===id;
   button.classList.toggle("chosen",cascadeMode===id);
   button.classList.toggle("activeMode",selected);
@@ -3409,7 +3417,7 @@ function numericConfirmButton(make,keys,label){
 }
 function filterCascadeEditorWidth(label){
  const width={Ordenar:178,PC:139,"Nível":139,Clima:158,Tamanho:230,
-  Sexo:134,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
+  Sexo:116,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
  return width[label]||134;
 }
 function renderExtraFilters(panel,make){
@@ -3483,7 +3491,7 @@ function renderExtraFilters(panel,make){
    return value==="Genderless"?/^(genderless|unknown|sem gênero)$/i.test(actual):
     actual.toLowerCase()===value.toLowerCase();
   });
-  const line=make("div","extraField extraChipsField");
+  const line=make("div","extraField extraChipsField"+(isGender?" extraGenderField":""));
   const name=make("label","",label),group=make("div","extraChipRow");
   group.dataset.kind=key;
   if(isGender){group.setAttribute("role","radiogroup");group.setAttribute("aria-label","Sexo");}
@@ -5221,6 +5229,8 @@ function uxOption(panel,label,value,callback){
 const SHOW_INDIVIDUAL_FAVORITE_TONES=false;
 function renderAlertsChoices(){
  const panel=uxPanel("NOTIFICAÇÕES");panel.classList.add("alertsMini");
+ panel.querySelector(".choiceClose")?.remove();
+ panel.querySelector(".choiceHeader")?.classList.add("alertsCenteredTitle");
  const symbols={
   on:'<path d="M3 9v6h4l5 4V5L7 9H3z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19 5a10 10 0 0 1 0 14"/>',
   silent:'<path d="M3 9v6h4l5 4V5L7 9H3z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19 5a10 10 0 0 1 0 14"/><path d="M2 2l20 20"/>',
