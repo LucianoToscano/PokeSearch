@@ -6177,3 +6177,14 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Testes específicos: `app/tests/lt77-stage6-form-gender-source.test.js`, cobrindo menu completo/parcial de Sexo, Form legítimo, IDs textuais oficiais, seletor independente e compatibilidade com seleção múltipla. Workflow isolado `.github/workflows/lt77-stage6-form-gender-qa.yml` roda demais regressões Node, Java e compilação sem APK.
 - Fonte `pogo.md` (Biblioteca pessoal), seções 4.1 e 8, conferida: API `GET /forms` devolve lista de nomes oficiais e `GET /pokemon/catalog?costumes=true` entrega pares `pokemon_id/form_id`. **Sem execução de GET real** ou integração API nesta etapa: catálogo completo e migração aguardam ativação controlada da API após homologação. O app ainda depende do catálogo observável no site via DOM.
 - GitHub Actions [#40142110424](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142110424): conferir fechamento antes de declarar sucesso. Teste Samsung de busca, lista completa e opções oficiais segue pendente.
+
+
+---
+
+## LT77 — ETAPA 7: LOCALIZAÇÃO, CLIMA, NÍVEL, PC, TAMANHO E ORDENAR (24/10/2026)
+
+- Branch `fix/lt77-stage7-geo-sort-guard-20261024`, derivada da Etapa 6 `b3c46c2dcffcf0592857ddce5399def9bbd40c9b`.
+- Código existente auditado e preservado: `OverlayService.configureLocationAndVerify` verifica Coords/Radius no DOM antes de Search; `setLocation` altera apenas o geofiltro e preserva os outros parâmetros; `probe.js` usa os controles reais de Weather, Level, CP, Size e Sort, exige confirmação do site e múltipla seleção para Size. Sem substituição por opções inventadas.
+- Correção concreta de `app/src/main/assets/dock.html`: `Distance (nearest)` só pode ser aplicado no painel de Filtros quando `locationEnabled && locationVerified`; do contrário mostra feedback e mantém todos os valores salvos, pois a API também exige centro/raio para a ordenação DISTANCE.
+- Novo teste de regressão `app/tests/lt77-stage7-dom-filter-guards.test.js` mais workflow `.github/workflows/lt77-stage7-dom-filter-qa.yml`, sem APK.
+- **Limite de evidência:** essa etapa faz ajuste defensivo e regressão automatizada, mas NÃO comprova a operação dos filtros no React real logado. A equivalência completa DOM/site, incluindo diferentes opções Weather e resultado de busca, continua pendente de homologação autenticada e Samsung. A API experimental segue OFF.
