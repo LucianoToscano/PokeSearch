@@ -132,9 +132,10 @@ test("slider edits are not reverted by stale service state",()=>{
  assert.equal(window.visualEditorCurrent().menuTransparency,17,
   "After the matching save acknowledgement, later external updates are accepted");
 });
-test("large header gap is included in native window height",()=>{
+test("hidden results header adds no invisible top margin",()=>{
  assert.ok(dock.includes('Math.ceil(end-shellTop)+1'));
- assert.ok(dock.includes('margin-top:var(--visual-top-gap,0px)!important'));
+ assert.ok(dock.includes('margin-top:0!important'));
+ assert.ok(dock.includes('body.result-window #shell{padding-top:0!important}'));
 });
 test("styling changes don't need reload of all Pokemon images",()=>{
  assert.ok(script.includes('if(window.__visualGeometry!==signature)'));
@@ -142,18 +143,17 @@ test("styling changes don't need reload of all Pokemon images",()=>{
 });
 test("horizontal native width includes the live CSS inter-card spacing",()=>{
  assert.match(java,/visualResultGapBetween=o\.optInt\("resultGapBetween",31\)/);
- assert.match(java,/perCard\*columns\+visualResultGapBetween\*\(columns-1\)\+2/);
+ assert.match(java,/ResultsSpacingPolicy\.additionalRowGapPx\(visualResultGapBetween\)\*\(columns-1\)\+2/);
  assert.ok(java.includes("resultParams.width=dp(resultWidthDp())"));
- assert.ok(dock.includes("column-gap:var(--visual-result-spacing,4px)!important"));
+ assert.ok(dock.includes("column-gap:var(--visual-result-spacing,0px)!important"));
  const width=(count,card,gap)=>card*count+gap*(count-1)+2;
- assert.equal(width(2,149,31),331);
+ assert.equal(width(2,149,0),300);
  assert.equal(width(5,53,0),267);
 });
-test("packed sprite pitch reserves symmetrical first and last art space",()=>{
- assert.ok(dock.includes('padding-top:max(0px,calc((var(--sprite) - var(--visual-row-pitch,46px))/2))!important'));
- assert.ok(dock.includes('padding-bottom:max(0px,calc((var(--sprite) - var(--visual-row-pitch,46px))/2))!important'));
- const sprite=45,pitch=Math.max(8,Math.round(sprite*.32));
- assert.equal((sprite-pitch)/2,15.5);
+test("packed sprite rows have no phantom top or bottom padding",()=>{
+ assert.ok(dock.includes("padding-top:0!important;padding-bottom:0!important;"));
+ assert.ok(dock.includes("const pitch=size+additionalResultGapPx(v.resultGapBetween);"));
+ assert.equal(45+Math.max(0,31-31),45);
 });
 test("visual position sliders keep the currently open detail window in sync",()=>{
  assert.match(java,/positionResultsUnderPokeball\(true\); \/\/ Editor offsets now relative to the unified icon\.\s*moveDetail\(\);/);
