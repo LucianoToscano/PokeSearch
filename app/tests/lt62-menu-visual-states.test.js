@@ -490,7 +490,7 @@ check("LT62 unified Pokébola: results start directly below icon, not at old sav
   ?.split("private void updateResultsWidth(){",1)[0]||"";
  assert.ok(anchor.length>200,"anchoring routine exists");
  for(const contract of [
-  "int gap=dp(2+visualHeaderAfterGap);",
+  "int gap=ResultsSpacingPolicy.DEFAULT_TOP_GAP_PX+dp(visualHeaderAfterGap);",
   "int x=params.x+dp(visualResultsOffsetX);",
   "int below=params.y+dp(30)+gap+dp(visualResultsOffsetY);",
   "int above=params.y-resultParams.height-gap+dp(visualResultsOffsetY);",
