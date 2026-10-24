@@ -64,7 +64,7 @@ check("LT62 screenshots: mode list loses blank right column but IV/GL/UL stay ca
  assert.match(dock,/\.modePanel\.modeCascade\{\s*width:54px!important;height:164px!important/);
  assert.match(dock,/\.modeCascadeRail\{\s*width:52px!important/);
  assert.ok(dock.includes('h=Math.max(h,baseHeight+164+6);'));
- for(const token of ['const tops={raw:67,percent:90,gl:113,ul:136};',
+ for(const token of ['const room=Math.max(70,Number.parseFloat(getComputedStyle(document.documentElement)',
    'const offsets={raw:67,percent:90,gl:113,ul:136};',
    'left:54px!important;max-width:calc(100% - 54px)!important;'])
   assert.ok(dock.includes(token),token);
