@@ -30,7 +30,7 @@ check("C Size seven multi and per-editor width",()=>{
  assert.ok(filters.includes('["XXS","XS","S","M","L","XL","XXL"]'));
  assert.ok(filters.includes('modeDraft[multiKey]=[...selected]'));
  assert.ok(dock.includes('grid-template-columns:repeat(7,29px)!important'));
- assert.ok(dock.includes('Sexo:134,Forma:216'));assert.ok(dock.includes('Tamanho:230'));
+ assert.ok(dock.includes('Sexo:116,Forma:216'));assert.ok(dock.includes('Tamanho:230'));
  assert.ok(!dock.includes("width:320px!important;max-width:none!important}"));
  assert.ok(!dock.includes("width:230px!important;max-width:none!important;min-width:0!important}"));
 });
@@ -59,8 +59,8 @@ check("F Location paste, slider, radius and SVG actions",()=>{
  assert.ok(location.includes('Native.setLocation(true,wantedCoords,wantedRadius)'));
 });
 check("G Favorite counter between title and X, grid 10x5",()=>{
- assert.ok(picker.includes('header.addView(title,new LinearLayout.LayoutParams(-2,dp(activity,29)))'));
- assert.ok(picker.includes('header.addView(count,new LinearLayout.LayoutParams(0,dp(activity,29),1))'));
+ assert.ok(picker.includes('header.addView(title,titleLp)'));
+ assert.ok(picker.includes('header.addView(count,countLp)'));
  assert.ok(picker.includes('count.setGravity(Gravity.CENTER)'));
  assert.ok(picker.includes('count.setText("Selecionados "+size+"/50")'));
  assert.ok(picker.includes("sprites.setColumnCount(10)"));
