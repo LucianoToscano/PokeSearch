@@ -107,6 +107,47 @@ public class MainActivity extends Activity {
     private ImageView overlayControl;
     private TextView sessionHint;
     private View homeDrawerLayer;
+    // Optional mission: never open without an explicit tap.
+    private ImageView homeMissionBadge;
+    private boolean missionResumed=false;
+    private final android.os.Handler missionHandler=
+        new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable missionHeartbeat=new Runnable(){
+        @Override public void run(){
+            if(!missionResumed || !hasWindowFocus())return;
+            SupportMissionState.homeTick(MainActivity.this);
+            syncMissionBadge();
+            missionHandler.postDelayed(this,5000L);
+        }
+    };
+    private void syncMissionBadge(){
+        if(homeMissionBadge==null)return;
+        int state=SupportMissionState.badge(this);
+        homeMissionBadge.setVisibility(state==SupportMissionState.HIDDEN?View.GONE:View.VISIBLE);
+        if(state!=SupportMissionState.HIDDEN){
+            homeMissionBadge.setImageResource(state==SupportMissionState.NEW?
+                R.drawable.support_home_new:R.drawable.support_home_seen);
+            homeMissionBadge.setContentDescription(state==SupportMissionState.NEW?
+                "Nova Missão Especial de Apoio":"Reabrir Missão Especial de Apoio");
+        }
+    }
+    private void openSupportMission(){
+        int style=SupportMissionState.open(this);
+        if(style<0){syncMissionBadge();return;}
+        syncMissionBadge();
+        SupportMissionDialog.show(this,style,homeLightMode,this::syncMissionBadge);
+    }
+    private void syncMissionClock(boolean focused){
+        missionHandler.removeCallbacks(missionHeartbeat);
+        boolean active=focused&&missionResumed&&!isFinishing();
+        SupportMissionState.homeVisibility(this,active);
+        if(active)missionHandler.postDelayed(missionHeartbeat,5000L);
+        syncMissionBadge();
+    }
+    @Override public void onWindowFocusChanged(boolean hasFocus){
+        super.onWindowFocusChanged(hasFocus);
+        syncMissionClock(hasFocus);
+    }
     private String pendingExportText="";
     private String preferredLoginProvider="";
     private String observedLoginProvider="";
@@ -118,6 +159,7 @@ public class MainActivity extends Activity {
             finish();
             return;
         }
+        SupportMissionState.onLauncherIntent(this,getIntent(),b);
         // HOME-01: rebuild only the presentation, never discard existing features.
         getWindow().setStatusBarColor(Color.rgb(12,33,67));
         getWindow().setNavigationBarColor(Color.rgb(9,20,37));
@@ -514,6 +556,18 @@ public class MainActivity extends Activity {
             12,homeLightMode?Color.argb(80,33,65,89):Color.argb(75,180,215,247)));
         footer.setPadding(d(9),d(5),d(9),d(5));
         screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));
+        // Mission icon floats above the footer, without stealing space from
+        // header controls, update alerts, counters or trainer details.
+        homeMissionBadge=new ImageView(this);
+        homeMissionBadge.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        homeMissionBadge.setBackgroundColor(Color.TRANSPARENT);
+        homeMissionBadge.setOnClickListener(v->openSupportMission());
+        FrameLayout.LayoutParams missionLp=new FrameLayout.LayoutParams(
+            d(52),d(52),Gravity.RIGHT|Gravity.BOTTOM);
+        missionLp.rightMargin=d(16);
+        missionLp.bottomMargin=d(49);
+        frame.addView(homeMissionBadge,missionLp);
+        syncMissionBadge();
         return frame;
     }
     /** Callback from UpdateCenter, always on Android's UI thread. */
@@ -1025,6 +1079,8 @@ public class MainActivity extends Activity {
     }
     @Override protected void onResume(){
         super.onResume();
+        missionResumed=true;
+        syncMissionClock(hasWindowFocus());
         FirebaseStats.setHomeVisible(this,true);
         refreshWatchCount();
         refreshSessionSummary();
@@ -1034,6 +1090,8 @@ public class MainActivity extends Activity {
             serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
     }
     @Override protected void onPause(){
+        missionResumed=false;
+        syncMissionClock(false);
         FirebaseStats.setHomeVisible(this,false);
         super.onPause();
     }
@@ -1442,6 +1500,8 @@ public class MainActivity extends Activity {
     }
     @Override protected void onNewIntent(Intent intent){
         super.onNewIntent(intent);
+        SupportMissionState.onLauncherIntent(this,intent,null);
+        syncMissionBadge();
         setIntent(intent);
         handleShinyLoginIntent(intent);
         if("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST".equals(intent.getAction()))
@@ -1925,6 +1985,9 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        missionResumed=false;
+        missionHandler.removeCallbacks(missionHeartbeat);
+        SupportMissionState.homeVisibility(this,false);
         stopBundledTonePreview();
         activityClosing=true;
         avatarRequestGeneration++;
