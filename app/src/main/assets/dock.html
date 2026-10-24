@@ -3218,6 +3218,32 @@ body.controls-window #choices.locationPanel .compactLocationActions .psLineActio
  height:26px!important;min-height:26px!important;padding:3px!important;
 }
 
+
+/* LT77 Stage 3 selector guard: older .filterCascadeOpen rules had higher
+   specificity, so pin both chip rows to the same height without clipping. */
+body.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]
+ .filterCascadeEditor .extraChipRow[data-kind="size"]{
+ display:grid!important;grid-template-columns:repeat(7,23px)!important;
+ grid-template-rows:23px!important;grid-auto-flow:column!important;
+ column-gap:2px!important;row-gap:0!important;
+ width:max-content!important;max-width:100%!important;overflow:visible!important;
+}
+body.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]
+ .filterCascadeEditor .extraChipRow[data-kind="gender"]{
+ display:grid!important;grid-template-columns:repeat(3,23px)!important;
+ grid-template-rows:23px!important;grid-auto-flow:column!important;
+ column-gap:2px!important;row-gap:0!important;
+ width:max-content!important;max-width:100%!important;overflow:visible!important;
+}
+body.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]
+ .filterCascadeEditor .extraChipRow[data-kind="size"] .extraChip,
+body.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]
+ .filterCascadeEditor .extraChipRow[data-kind="gender"] .extraChip{
+ width:23px!important;min-width:23px!important;max-width:23px!important;
+ height:23px!important;min-height:23px!important;max-height:23px!important;
+ padding:0!important;margin:0!important;
+}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
