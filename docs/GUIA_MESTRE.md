@@ -6129,3 +6129,12 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 4. Abrir Localização: coordenadas visíveis/editáveis ao lado do título e de Colar; raio 0, 1, 999, 1000 e vazio; `km` junto ao campo; slider e botões alcançáveis; aplicar não limpa PC, Nível, Clima ou Pokémon ativos.
 5. Verificar Ordenar, PC, Clima em tema claro/escuro, popup perto das bordas, orientação vertical/horizontal e teclado aberto; avaliar sem regressão do arraste Pokébola/resultados da Etapa 2.
 6. Não instalar nem atualizar a LT76 como consequência desta etapa, pois nenhum APK LT77 foi gerado; a homologação física dependerá de um APK de teste autorizado.
+
+
+
+### Fechamento do CI de implementação (24/10/2026)
+- **GitHub Actions [#40140600351](https://github.com/LucianoToscano/PokeSearch/actions/runs/40140600351): COMPLETED / SUCCESS**, no commit de código e testes `079f0dd9c53e12f8a170da99e118fb2ca31055f3`. Todas as etapas do job concluíram com sucesso, inclusive JavaScript inline, todas as suítes Node elegíveis, testes Java e Android SDK 36/Gradle.
+- **Etapa 3:** `lt77-stage3-compact-filters.test.js` **13/13 PASS**; **Etapa 2:** `lt77-stage2-results-layout.test.js` **10/10 PASS**, `ResultsSpacingPolicyTest.java` **9/9 PASS**, `PopupTouchGeometryTest.java` PASS. Contratos experimentais LT77 API: **38/38 PASS** no conjunto de três suítes (transport 14, search 12, reveal 12). Todas as demais suítes Node executadas pelo workflow ficaram PASS. O teste legado de preview LT74 permanece excluído explicitamente por depender de DEBUG removido, assim como na Etapa 2.
+- Compilação `gradle :app:compileDebugJavaWithJavac`: **BUILD SUCCESSFUL**; o job verificou que **não gerou APK**. Nenhum deploy, manifesto Drive, assinatura, distribuição, `main` ou feature flag de API foi alterado.
+- Runs anteriores da Etapa 3 falharam por verificações históricas que ainda exigiam quatro chips de Sexo/largura 107px e um caso de teste novo que procurava o catálogo de Forma no escopo incorreto. Todas as falhas tiveram ajustes rastreáveis; não foram desativadas suites para mascará-las.
+- **Pendência real:** nenhum Samsung foi homologado fisicamente. Critérios visuais, toque, teclado e persistência devem ser aferidos no aparelho quando houver build de teste autorizado. A Etapa 3 está concluída quanto a implementação, regressão automatizada e compilação, mas não equivale a homologação física.
