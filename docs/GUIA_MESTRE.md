@@ -5910,3 +5910,27 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Termos públicos consultados em 24/10/2026: https://pogocoordinates.com/terms (atualizados em 16/05/2026). Proíbem espelhamento ou scraping/redistribuição em massa; contorno de autenticação/rate limits; automação além de uma interação humana normal. A presença da rota não comprova concessão de uso independente. Recomenda-se obter autorização/documentação oficial antes de desenvolver cliente de API direto.
 - Não capturar códigos de callback, ler/mostrar/exportar tokens/cookies de `localStorage` sem um fluxo autorizado e seguro, colocar Bearer nos logs, manifests, screenshots, GitHub ou Drive, contornar controles ou realizar pesquisas automáticas sem consentimento do serviço. Para um fluxo autorizado, usar credenciais próprias e armazenamento protegido, rotação/revogação e limites acordados.
 - **Status:** possibilidade técnica promissora; API e permissão não verificadas oficialmente; dados das capturas são evidência externa; nenhuma mudança funcional feita. LT76 protegida e já publicada fica intocada; homologação Samsung mantém-se pendente. Caso haja consentimento formal, investigar em branch isolada com feature flag desativada, testes com fixtures sintéticas e sem tokens reais.
+
+---
+
+## LT77 — CONTRATO EXPERIMENTAL DE API AUTORIZADA E QA ISOLADO (24/10/2026)
+
+**Declaração do proprietário:** em 24/10/2026, informou expressamente que o PokeSearch possui autorização para usar a API do PoGoCoordinates. Registrada como declaração do proprietário, sem presumir escopo técnico adicional (rate limits, endpoint privado, redistribuição etc.).
+
+### Novas evidências do usuário
+- Capturas de DevTools mostram `localStorage` da origem `https://pogocoordinates.com` com chave **`jwt`**. A existência dessa chave é confirmada visualmente; ela não prova isoladamente validade, vencimento, audience, permissões do token nem sua equivalência com outra credencial OAuth.
+- O usuário também encaminhou comentários sobre a URL `/auth/google/callback`, mas **não se deve coletar códigos de callback** nem divulgar tokens. Um token JWT visto em capturas de tela deve ser tratado como segredo; não registrar, copiar ou incluir seus bytes no repositório, documentação, logs ou resultados.
+- A WebView do PokeSearch já navega dentro da origem `https://pogocoordinates.com`; uma futura integração aprovada deve manter o token exclusivamente no contexto de sessão autorizado, sem transferi-lo ao Android/logs ou a terceiros. Uma busca real dependerá de comportamento de autenticação/CORS e testes na sessão do próprio usuário; não foi realizada agora.
+
+### Implementado em branch isolada, sem conexão de rede
+- Branch: `feature/lt77-authorized-api-contract-20261024`, criada a partir do HEAD documental LT76 `5be159030570cbc4f614d486649caa66d06e0a28`; `main` e branch LT76 publicada preservadas.
+- Arquivo `app/src/main/assets/api_result_contract.js`: biblioteca JS pura, **não importada nem usada pelo aplicativo publicado**, com mapeamento conservador de estrutura de filtros observada nas capturas e normalização de `{results:[...]}` para cartões PokeSearch.
+- Entradas com IV bruto inválido, porcentagem contraditória, identidade inválida, despawn expirado ou duplicatas são rejeitadas. O limite é **10 cartões**, sem inventar sprite, ranking PvP, localização GPS ou estado confirmado do site; nenhum código/token de sessão é retornado. Respostas vazias não são marcadas como busca real confirmada.
+- O construtor de payload **falha de forma explícita** para filtros sem identificador oficial mapeado (formas, Pokémon por texto, clima, ordenações não observadas), impedindo afrouxamento silencioso de buscas e falsos positivos. Integração real dependerá de catálogo/valores oficiais comprovados.
+- Arquivo `app/tests/lt77-api-contract.test.js` e workflow `.github/workflows/lt77-authorized-api-contract-qa.yml`, restrito a Node/fixtures sintéticas, sem `Gradle`, APK ou acesso autenticado à API.
+- CI GitHub Actions [#40132327045](https://github.com/LucianoToscano/PokeSearch/actions/runs/40132327045) **SUCCESS** (`contract-tests`, **12/12 testes aprovados**, etapa final atesta ausência de APK). Fonte do run `339f92431229cb191ea2762e8da529dabb41ee63`.
+
+### Limitações e condição para próxima etapa
+- Ainda **não** existe transporte HTTP autenticado nem leitura de `localStorage.jwt` pelo PokeSearch; não há interceptação de cookies, nem mudanças no login/`probe.js`/`OverlayService.java`. O adaptador é apenas um contrato testado com fixtures.
+- O fluxo atual baseado em WebView/DOM permanece funcional e inalterado. Nenhum build/merge/republicação de APK; LT76 remota segue `versionCode=54276`.
+- Próximo passo técnico: desenhar caminho isolado de comunicação autorizado, com gestão de credencial de sessão sem persistência duplicada e observabilidade sem segredos; verificar formatos reais/erros, permissões, limitação de buscas, migração e fallback do DOM; depois realizar testes com usuário em dispositivo físico antes de ativação. Não acessar ou solicitar ao usuário que cole seu token JWT em chats.
