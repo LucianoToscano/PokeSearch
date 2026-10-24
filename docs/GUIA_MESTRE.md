@@ -6188,3 +6188,14 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Correção concreta de `app/src/main/assets/dock.html`: `Distance (nearest)` só pode ser aplicado no painel de Filtros quando `locationEnabled && locationVerified`; do contrário mostra feedback e mantém todos os valores salvos, pois a API também exige centro/raio para a ordenação DISTANCE.
 - Novo teste de regressão `app/tests/lt77-stage7-dom-filter-guards.test.js` mais workflow `.github/workflows/lt77-stage7-dom-filter-qa.yml`, sem APK.
 - **Limite de evidência:** essa etapa faz ajuste defensivo e regressão automatizada, mas NÃO comprova a operação dos filtros no React real logado. A equivalência completa DOM/site, incluindo diferentes opções Weather e resultado de busca, continua pendente de homologação autenticada e Samsung. A API experimental segue OFF.
+
+
+---
+
+## LT77 — ETAPA 8: AUDITORIA DOS MODOS IV, GL/UL E SHINY (24/10/2026)
+
+- Branch `fix/lt77-stage8-pvp-shiny-regression-20261024`, derivada de `fix/lt77-stage7-geo-sort-guard-20261024` no checkpoint `76512779787206f78a4c50070c439244e737810f`.
+- Inspecionados e preservados os fluxos anteriores em `OverlayService.java`, `dock.html` e `probe.js`: ataque/defesa/stamina de 0–15, IV% de 0–100, rank GL/UL de 1–50, input numérico em Modos, personalização dos ícones oficiais; Shiny distingue solicitado/pending/confirmado e exige verificação explícita no DOM.
+- `verifyShinyAfterLocation` reaplica/valida a seleção após o React trocar geofiltro, com controles por `requestGeneration`; falhas de login/treinador/site não fabricam resultado. Não mexer em latência/retries sem evidência, porque redução arbitrária pode voltar a quebrar a seleção.
+- Adicionado teste `app/tests/lt77-stage8-iv-pvp-shiny-regression.test.js` e workflow `.github/workflows/lt77-stage8-pvp-shiny-qa.yml` para proteger os contratos existentes. **Nenhuma alteração de runtime** nesta etapa. GitHub Actions [#40142426181](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142426181): verificar término.
+- Equivalência real com GL/UL do site, ícones visíveis e Shiny sem demora NÃO pode ser confirmada só por testes estáticos; requer login/treinador vinculado e Samsung. Manter como pendência aberta de homologação, não como correção funcional comprovada.
