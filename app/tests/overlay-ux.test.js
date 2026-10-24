@@ -1052,7 +1052,7 @@ test("UX-SHINY-02 keeps Shiny beside Modos through saved preferences and native 
  const state=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(")[0]||"";
  const click=dock.split("function quickClick(id){")[1]?.split("const QUICK_SVG=")[0]||"";
  return prefs.includes('order.splice(modeIndex+1,0,"sh")')&&
-  prefs.includes('"period","sh"')&&
+  prefs.includes('"appearance","sh"')&&
   click.includes('case "sh":Native.shiny();break;')&&
   dock.includes('if(id==="sh")button.setAttribute("aria-pressed",String(shiny))')&&
   state.includes('button.classList.toggle("pending",id==="sh"&&shinyPending)')&&
