@@ -2835,6 +2835,32 @@ body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[d
 body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"] .extraChip{
  font:600 9px/1 Roboto,Arial,sans-serif!important;
 }
+/* LT68 — matched white/black PNGs use the same physical icon bounds;
+   no CSS filter that could blur or recolor original owner artwork. */
+body.controls-window #choices .weatherChoicePair{
+ display:inline-flex!important;position:relative!important;
+ width:19px!important;min-width:19px!important;max-width:19px!important;
+ height:19px!important;min-height:19px!important;max-height:19px!important;
+ flex:0 0 19px!important;align-items:center!important;justify-content:center!important;
+ margin:0 3px 0 0!important;padding:0!important;vertical-align:middle!important;
+ background:transparent!important;pointer-events:none!important;
+}
+body.controls-window #choices .weatherChoicePair .weatherChoiceIcon{
+ position:absolute!important;inset:0!important;
+ display:block!important;width:19px!important;min-width:19px!important;
+ height:19px!important;min-height:19px!important;
+ margin:0!important;padding:0!important;
+ object-fit:contain!important;image-rendering:auto!important;
+}
+body.controls-window #choices .weatherChoicePair .weatherChoice-black{
+ display:none!important;
+}
+body.controls-window.visual-light-menu #choices .weatherChoicePair .weatherChoice-white{
+ display:none!important;
+}
+body.controls-window.visual-light-menu #choices .weatherChoicePair .weatherChoice-black{
+ display:block!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3523,13 +3549,29 @@ const WEATHER_ICON_FILES=Object.freeze({
  "Rainy":"rainy.png","Partly Cloudy":"partly-cloudy.png",
  "Cloudy":"cloudy.png","Windy":"windy.png","Snow":"snow.png","Fog":"fog.png"
 });
+/* LT68: original owner's Drive icons, exactly nine canonical site choices.
+   Sunny uses owner's combined "Ensolarado - Limpo" for the site's single Sunny
+   option. White artwork on dark menus, black artwork on light menus. */
+const WEATHER_THEME_FILES=Object.freeze({
+ "Any":"any","Boosted":"boosted","Sunny":"sunny","Rainy":"rainy",
+ "Partly Cloudy":"partly-cloudy","Cloudy":"cloudy","Windy":"windy",
+ "Snow":"snow","Fog":"fog"
+});
 function makeWeatherIcon(value){
- const name=WEATHER_ICON_FILES[String(value||"").trim()]||WEATHER_ICON_FILES.Any;
- const img=document.createElement("img");img.className="weatherChoiceIcon";
- img.alt="";img.setAttribute("aria-hidden","true");
- img.src="file:///android_asset/weather-icons/"+name;
- img.onerror=()=>{img.style.display="none";};
- return img;
+ const key=String(value||"").trim();
+ const stem=WEATHER_THEME_FILES[key]||WEATHER_THEME_FILES.Any;
+ const fallback=WEATHER_ICON_FILES[key]||WEATHER_ICON_FILES.Any;
+ const pair=document.createElement("span");pair.className="weatherChoicePair";
+ pair.setAttribute("aria-hidden","true");
+ for(const variant of ["white","black"]){
+  const img=document.createElement("img");
+  img.className="weatherChoiceIcon weatherChoice-"+variant;
+  img.alt="";img.setAttribute("aria-hidden","true");
+  img.src="file:///android_asset/weather-icons/v2/"+stem+"-"+variant+".png";
+  img.onerror=()=>{img.onerror=null;img.src="file:///android_asset/weather-icons/"+fallback;};
+  pair.appendChild(img);
+ }
+ return pair;
 }
 /* Display-only translations: never submit localized values to PoGoCoordinates. */
 const FILTER_DISPLAY_LABELS=Object.freeze({
@@ -4905,7 +4947,7 @@ function normalizedQuickPrefs(p){
  const modeIndex=order.indexOf("mode");
  if(modeIndex>=0)order.splice(modeIndex+1,0,"sh");
  const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter(x=>
-  ids.includes(x)&&!["close","appearance","period","sh"].includes(x)):[];
+  ids.includes(x)&&!["close","appearance","sh"].includes(x)):[];
  return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.
   labels:false,
   order:[...order,...ids.filter(x=>!order.includes(x))],hidden};
@@ -5713,7 +5755,7 @@ function renderAppearanceChoices(){
   name.textContent=APPEARANCE_SHORT_NAMES[id]||action[2];
   name.title=action[2];line.appendChild(name);
   const hidden=quickPrefs.hidden.includes(id);
-  const locked=["period"].includes(id); // native requirement: refresh must stay reachable.
+  const locked=false; // LT68: Atualizar may be hidden and restored like other movable menus.
   const eye=document.createElement("button");eye.type="button";
   eye.textContent=hidden?"□":"☑";eye.className="orderVisibility";
   eye.disabled=locked;eye.setAttribute("aria-pressed",String(!hidden));
