@@ -201,6 +201,32 @@
           "A confirmação de equivalência das opções oficiais e busca pelo site exige teste com PoGoCoordinates ativo."
         ]
       }
+    },
+    {
+      "id": "pokesearch-v064-lt-result-coords-expiry-20261024",
+      "minVersionCode": 54262,
+      "date": "24/10/2026",
+      "title": "PokeSearch v0.00.64 LT — Coordenadas, sprites e despawn",
+      "sections": {
+        "novidades": [
+          "Get coords tenta copiar as coordenadas do próprio Pokémon ao tocar, como o toque longo na sprite."
+        ],
+        "melhorias": [
+          "Busca por coordenadas verifica espécie e PC mesmo se a ordem dos cards do site mudar.",
+          "Sprites extraídas de URLs reais de carregamento tardio do site; repetição controlada de falhas temporárias sem alterar formas.",
+          "Leitura de coordenadas também aceita endereço confirmado do botão Open in Maps do card correto."
+        ],
+        "correcoes": [
+          "O despawn usa o timestamp absoluto capturado em vez de recalcular um contador relativo potencialmente deslocado.",
+          "Resultados expirados são removidos localmente e solicitam nova busca independentemente de AUTO; relógio visível fornece sinal adicional protegido.",
+          "Agendamento de despawn é rearmado após falha de navegação principal do site."
+        ],
+        "emDesenvolvimento": [
+          "A eficiência da captura de coordenadas depende do site; validar no Samsung card já fechado, conta logada, dois Pokémon iguais e atualização durante clique.",
+          "Testar imagens reais nas diferentes formas/shiny sem substituir sprites oficiais.",
+          "Confirmar atualização automática quando o Pokémon expira, mesmo em AUTO OFF e conexão intermitente."
+        ]
+      }
     }
   ]
 }
