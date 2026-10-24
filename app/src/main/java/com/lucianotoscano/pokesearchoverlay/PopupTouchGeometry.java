@@ -90,6 +90,45 @@ final class PopupTouchGeometry {
         return new Bounds(x,y,width,height,false);
     }
 
+    /**
+     * Keep submenus from covering the live Pokémon result cards. The popup may
+     * be moved beside/above/below results but must never be put on top of the
+     * toolbar or moved outside the screen. If there is no free region, keep
+     * original geometry instead of inventing a zero-sized/unreachable menu.
+     */
+    static Bounds avoidResults(Bounds popup,int screenWidth,int screenHeight,
+                               int resultX,int resultY,int resultWidth,int resultHeight,
+                               int menuX,int menuY,int menuWidth,int menuHeight,int margin) {
+        if(popup==null||!popup.visible()||resultWidth<=0||resultHeight<=0||
+                !overlap(popup.x,popup.y,popup.width,popup.height,
+                         resultX,resultY,resultWidth,resultHeight))return popup;
+        int edge=Math.max(0,margin);
+        int[][] candidates={
+            {popup.x,resultY-popup.height-edge},
+            {popup.x,resultY+resultHeight+edge},
+            {resultX-popup.width-edge,popup.y},
+            {resultX+resultWidth+edge,popup.y}
+        };
+        Bounds best=null;
+        long distance=Long.MAX_VALUE;
+        for(int[] pos:candidates){
+            int x=pos[0],y=pos[1];
+            if(x<edge||y<edge||x+popup.width>screenWidth-edge||
+                    y+popup.height>screenHeight-edge)continue;
+            if(overlap(x,y,popup.width,popup.height,resultX,resultY,resultWidth,resultHeight)||
+                    overlap(x,y,popup.width,popup.height,menuX,menuY,menuWidth,menuHeight))continue;
+            long delta=(long)(x-popup.x)*(x-popup.x)+(long)(y-popup.y)*(y-popup.y);
+            if(delta<distance){distance=delta;best=new Bounds(x,y,popup.width,popup.height,y<menuY);}
+        }
+        return best==null?popup:best;
+    }
+
+    private static boolean overlap(int ax,int ay,int aw,int ah,
+                                   int bx,int by,int bw,int bh) {
+        return aw>0&&ah>0&&bw>0&&bh>0&&ax<bx+bw&&ax+aw>bx&&
+                ay<by+bh&&ay+ah>by;
+    }
+
     private static int clamp(int value,int min,int max){
         return Math.max(min,Math.min(Math.max(min,max),value));
     }
