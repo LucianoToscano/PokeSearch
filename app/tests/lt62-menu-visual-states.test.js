@@ -441,9 +441,9 @@ check("Unified Pokébola drag moves result window by the same bounded delta",()=
   'params.y=startY+moveY;',
   'resultParams.x=dragResultStart[0]+moveX;',
   'resultParams.y=dragResultStart[1]+moveY;',
-  'now-lastResultMoveAt[0]>=16L',
+  'now-lastDockFrameAt[0]>=16L',
   'wm.updateViewLayout(resultRoot,resultParams);',
-  'updateWindow(); // The open toolbar follows the same Pokébola.',
+  'updateWindow(); // Includes open toolbar reposition.',
   'moveDetail();',
  ])assert.ok(grip.includes(contract),contract);
  const simulate=(dock,result,dx,dy,screen)=>{
