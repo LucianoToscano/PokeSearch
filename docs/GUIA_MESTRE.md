@@ -6212,3 +6212,14 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Nova suíte `app/tests/lt77-stage9-authorized-search-contract.test.js`: catálogo oficial, gênero, 7 climas, DISTANCE+raio, 0–1000 km, Level1–50, TTL, listas negras, IV decimal e limite de 10. Novo workflow `.github/workflows/lt77-stage9-authorized-api-qa.yml`; só testes e compilação Java/Android, sem APK.
 - **Não integrar ainda em produção.** `api_browser_transport.js` e `api_reveal_contract.js` permanecem sem import na WebView de produção e sem chamadas automáticas. JWT de usuário deve ser lido somente dentro da origem oficial `https://pogocoordinates.com` após opt-in/homologação. Nenhum token/reveal foi logado ou persistido.
 - GitHub Actions [#40142716370](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142716370): conferir resultado final antes de declarar PASS. A compilação/testes com mock não comprovam autorização funcional, sessão autenticada nem catálogo atual ao vivo.
+
+
+---
+
+## LT77 — ETAPA 10: ROTEADOR EXPERIMENTAL DOM → API COM FLAG OFF (24/10/2026)
+
+- Branch isolada `feature/lt77-stage10-disabled-api-router-20261024`, da Etapa 9 `b87310aa2ed406c64c745fbc2ef4ed1124d450a7`. Não tocar em `main`, LT76, arquivo manifesto do Drive ou assinatura.
+- Criado `app/src/main/assets/api_integration_router.js` — módulo *experimental e não carregado pelo OverlayService Android*. Possui constante `USE_AUTHORIZED_API=false` e exige simultaneamente `useAuthorizedApi===true`, `homologated===true`, origem HTTPS exata do site oficial e transporte provido explicitamente para qualquer rota API. Sem isso usa o callback DOM de pesquisa/reveal. Uma origem inválida não tem fallback silencioso para API.
+- Pesquisa/Reveal escolhem uma única fonte por execução, sem mistura de cartões ou coordenadas DOM/API. `dispose()` cancela futuras execuções. Módulo não lê nem persiste tokens, cookies ou códigos de reveal. A validação de origem e JWT permanece sob o transporte experimental original.
+- Testes novos `app/tests/lt77-stage10-api-router-off.test.js` e workflow `.github/workflows/lt77-stage10-api-router-qa.yml` cobrindo OFF por padrão, isolamento, origem, opt-in, descarte e ausência de import no APK atual. Run [#40142917426](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142917426): conferir CI.
+- **Limite explícito:** isto conclui a preparação/roteamento puro, NÃO a integração Java→WebView, a autenticação live, renderização real de cartões API nem fallback de release. O aplicativo continua integralmente DOM; nenhuma chamada à API acontece por este roteador até existir homologação e conexão ao WebView, que permanece PENDENTE. Não declarar migração funcional em produção.
