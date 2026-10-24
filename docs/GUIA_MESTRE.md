@@ -6098,3 +6098,34 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - [ ] Arrastar a Pokébola com 1, 5 e 10 resultados, inclusive perto do limite superior/inferior, com menu aberto, confirmar que lista e detalhes acompanham sem saltos ou cortes. Tocar brevemente para mostrar/recolher resultados, segurar 600 ms para menu.
 - [ ] Alterar manualmente `resultGapTop`, `resultGapBetween`, `headerAfterGap`, `resultsOffsetY` no Editor Visual e reabrir overlay: os offsets devem continuar respeitados; retornar ao preset padrão restaura o espaço mínimo.
 - **Status:** implementação e CI concluídos; homologação visual/funcional física ainda não executada. Não declarar Etapa 2 aprovada no Samsung sem prints/vídeo e medidas.
+
+
+
+---
+
+## LT77 — ETAPA 3: NÍVEL, TAMANHO, SEXO E LOCALIZAÇÃO (24/10/2026)
+
+### Origem e escopo controlado
+- HEAD-base lido novamente do GitHub: `fix/lt77-stage2-results-spacing-20261024` em `a5ac1e148a9bb69905dab50b1ae169d462dde0bf`. Criada sem rebase ou merge a branch isolada `fix/lt77-stage3-level-size-gender-location-20261024`.
+- Somente correções visuais e validação local dos editores `dock.html`. Etapa 2 (espaçamento e arraste) intacta; `main`, LT76 assinada, APK, assinatura e manifesto Drive intactos.
+- **Nível Min/Max:** inputs de texto com teclado numérico Android, `maxLength=2`, placeholders literais `Min` e `Max`, células estreitas de 31 px, cor/cursor legíveis, aplicação exclusivamente pelo botão ✓; validação já existente rejeita 0, acima de 35, caracteres não numéricos e Min > Max. A conversão de UI continua **1–35** conforme decisão anterior, enquanto o contrato **1–50** informado pela API fica reservado para etapa futura. Removida a limpeza silenciosa de drafts legados ao abrir o painel: valores antigos não são apagados; se excederem o limite da UI atual, serão rejeitados no Aplicar até correção explícita.
+- **Sexo:** exibir somente três botões compactos `♂` (Male), `♀` (Female), `⚲` (Genderless), com uma única seleção; segundo toque na opção ativa limpa a seleção e corresponde a **Any**. O quarto botão `Any` foi removido apenas da interface; o estado vazio `genderSelections=[]` e o fallback de valor oficial no site são preservados. O menu Forma continua usando `filterOptions.form`, distinto do menu Sexo, que usa `filterOptions.gender`; carregar/validar catálogo oficial permanece na Etapa 6.
+- **Tamanho:** sete chips `XXS XS S M L XL XXL`, sem quebra de linha, 23×23 px, múltipla seleção preservada. CSS final com especificidade maior que regras legadas da cascata; editor Sexo passa de 107 para 80 px sem faixa vazia. PC, Ordenar e Clima mantêm fontes/opções/código e foram conferidos contra as regras de compactação existentes; sem mudança na lógica de pesquisa.
+- **Localização:** a linha superior foi reorganizada para `Localização [Colar] [Coordenadas]`; slider compacto na linha seguinte; rodapé central `[1000]km [Aplicar] [Limpar]`. Painel com largura responsiva máxima de 256 px para tornar coordenadas editáveis na mesma linha; raio `type=text`, `inputMode=numeric`, quatro caracteres, normalização 0–1000, campo de 42 px e `km` adjacente sem espaço extra. Campo de raio vazio agora é invalidado, não convertido implicitamente a zero. `Native.setLocation(true,wantedCoords,wantedRadius)` e `Native.setLocation(false,"",0)` permanecem intactos, sem apagar os demais filtros ou antecipar o refactor da pesquisa na Etapa 7.
+- Resultados continuam limitados a 10; o Editor Visual, preferências, localização previamente salva, recursos oficiais, arquitetura `OverlayService`/`WebView`, feature-flag desligada da API e protocolos de JWT/reveal não foram tocados.
+
+### Arquivos e testes
+- Runtime modificado: `app/src/main/assets/dock.html` (CSS localizado, editor numérico, três chips de sexo, cabeçalho/raio da Localização).
+- Asserções históricas de UX ajustadas para refletir o novo contrato solicitado, sem suprimir suas suítes: `app/tests/lt62-menu-visual-states.test.js`, `lt63-compact-cascades.test.js`, `lt66-samsung-panels.test.js`, `lt67-compact-fields.test.js`, `lt68-samsung-hardening.test.js`, `lt70-location-radius-toggle.test.js`.
+- Nova suíte `app/tests/lt77-stage3-compact-filters.test.js`: sintaxe JS inline, Nível vazio/válido/inválido/legado, Min>Max, preservação de drafts, Sexo/Any, Tamanho multi, raio 0/1/999/1000/limites/vazio, DOM de localização e CSS de popup.
+- Novo workflow `.github/workflows/lt77-stage3-compact-filters-qa.yml`: executa as suites Node do app (com exclusão declarada da antiga prévia DEBUG LT74 já obsoleta, exatamente como Etapa 2), javac 17 de espaçamento e geometria, `:app:compileDebugJavaWithJavac` com SDK 36, sem `assemble` e sem APK.
+- **Rastreabilidade:** primeira alteração `5abae5f3c601664a46ef32af0f7b18f55b4a5f9e`, guarda de especificidade CSS `2b1ca97644e3ccb57f41a30ff0df81c3a3f63d1e`, ajustes de teste até `d1291d119514fefa575f8a8e4c12bd160efc4e3f`. O HEAD final será maior após este registro documental. Primeiras execuções CI falharam em asserções históricas de tamanho/sexo desatualizadas; falhas registradas e correções versionadas. **Status do último workflow: conferir GitHub Actions antes de declarar PASS.**
+- **Homologação física Samsung:** pendente; não afirmar que o layout, popups, teclado ou persistência foram conferidos em aparelho real.
+
+### Checklist para Samsung (pendente)
+1. Abrir Filtros → Nível: teclas numéricas; Min/Max vazios, 1/35 e 25/20, verificando que ✓ bloqueia inválidos e não apaga valores salvos ao reabrir.
+2. Abrir Tamanho: todos os 7 chips na mesma linha, multi-seleção, sem corte, rolagem lateral ou tocar no resultado por trás inadvertidamente.
+3. Abrir Sexo: 3 chips menores; segundo toque limpa a seleção (Any); verificar que Forma continua independente.
+4. Abrir Localização: coordenadas visíveis/editáveis ao lado do título e de Colar; raio 0, 1, 999, 1000 e vazio; `km` junto ao campo; slider e botões alcançáveis; aplicar não limpa PC, Nível, Clima ou Pokémon ativos.
+5. Verificar Ordenar, PC, Clima em tema claro/escuro, popup perto das bordas, orientação vertical/horizontal e teclado aberto; avaliar sem regressão do arraste Pokébola/resultados da Etapa 2.
+6. Não instalar nem atualizar a LT76 como consequência desta etapa, pois nenhum APK LT77 foi gerado; a homologação física dependerá de um APK de teste autorizado.
