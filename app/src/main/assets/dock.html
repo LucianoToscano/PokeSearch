@@ -3627,6 +3627,10 @@ function renderExtraFilters(panel,make){
    input.classList.add("levelCompactInput");
   }
   input.value=String(modeDraft[key]??"");
+  // Older beta builds could retain invalid 5-digit drafts; do not display or submit them.
+  if(level&&input.value!==""&&(!/^[0-9]{1,2}$/.test(input.value)||Number(input.value)<1||Number(input.value)>35)){
+   input.value="";modeDraft[key]="";
+  }
   input.placeholder=level?(key.endsWith("Min")?"1":"35"):
    key.endsWith("Min")?"Min":"Max";
   input.dataset.filterNumber=key;input.setAttribute("aria-label",label);
