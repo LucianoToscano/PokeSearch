@@ -1,8 +1,9 @@
 name: PokeSearch v0.00.69 LT — Correção expansão Mais
 on:
-  push:
+  pull_request:
+    types: [synchronize]
     branches:
-      - fix/lt69-more-native-popup-origin-20261024
+      - fix/lt68-refresh-visibility-weather-icons-20261024
     paths:
       - '.github/workflows/build-v069-lt-more-popup-signed.yml'
   workflow_dispatch:
@@ -12,6 +13,7 @@ permissions:
 
 jobs:
   signed-lt69:
+    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == 'LucianoToscano/PokeSearch' && github.event.pull_request.head.ref == 'fix/lt69-more-native-popup-origin-20261024') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -26,7 +28,7 @@ jobs:
       - name: Fonte LT68 exata
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Java 17
         uses: actions/setup-java@v4
