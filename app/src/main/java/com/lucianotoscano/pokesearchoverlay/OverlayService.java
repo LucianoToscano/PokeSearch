@@ -679,6 +679,8 @@ public class OverlayService extends Service {
     private void closeIndependentPopup(){
         if(popupKind.isEmpty())return;
         popupKind="";popupWidthDp=popupHeightDp=0;
+        // The toolbar is a separate WebView; notify it when native closes.
+        js(menuPanel,menuLoaded,"window.setActiveNativePopupKind&&window.setActiveNativePopupKind(\"\")");
         locationEditorOpen=false;
         if(popupPanel!=null){
             android.view.inputmethod.InputMethodManager keyboard=
@@ -701,7 +703,10 @@ public class OverlayService extends Service {
     private void openIndependentPopup(String kind,int x,int y){
         if(!validIndependentPopup(kind)||!menuExpanded||loginPaused||stopped||pickerOpen)return;
         if(kind.equals(popupKind)){closeIndependentPopup();return;}
-        popupKind=kind;popupTriggerDp=Math.max(0,Math.min(menuDp(),x));
+        popupKind=kind;
+        // Mirror native state back to the toolbar: tapping Location again closes.
+        js(menuPanel,menuLoaded,"window.setActiveNativePopupKind&&window.setActiveNativePopupKind("+JSONObject.quote(kind)+")");
+        popupTriggerDp=Math.max(0,Math.min(menuDp(),x));
         popupTriggerYDp=Math.max(0,Math.min(visualMenuBaseDp(),y));
         popupWidthDp=popupHeightDp=0;
         lastPopupX=Integer.MIN_VALUE;lastPopupY=Integer.MIN_VALUE;
