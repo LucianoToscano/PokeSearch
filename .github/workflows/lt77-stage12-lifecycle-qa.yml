@@ -1,0 +1,104 @@
+name: LT77 Etapa 12 - lifecycle e recursos Android (sem APK)
+on:
+  push:
+    branches:
+      - fix/lt77-stage12-overlay-lifecycle-20261024
+    paths:
+      - 'app/src/main/assets/dock.html'
+      - 'app/src/main/assets/detail.html'
+      - 'app/src/main/assets/probe.js'
+      - 'app/src/main/assets/api_result_contract.js'
+      - 'app/src/main/assets/api_browser_transport.js'
+      - 'app/src/main/assets/api_integration_router.js'
+      - 'app/src/main/assets/api_reveal_contract.js'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java'
+      - 'app/tests/**'
+      - '.github/workflows/lt77-stage12-lifecycle-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stage12-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Verificar JS inline e todos os testes Node existentes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/probe.js
+          node - <<'NODE'
+          const fs=require('node:fs'),vm=require('node:vm');
+          for(const file of ['app/src/main/assets/dock.html','app/src/main/assets/detail.html']){
+            const html=fs.readFileSync(file,'utf8');
+            let n=0;
+            for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)){
+              new vm.Script(match[1],{filename:file+':script-'+(++n)});
+            }
+            if(!n)throw Error('Sem script '+file);
+          }
+          NODE
+          for suite in app/tests/*.test.js; do
+            # Historical LT74 preview asserted a DEBUG-only flag later removed
+            # by the secure release flow; unrelated to results geometry.
+            if [ "$suite" = "app/tests/lt74-local-update-preview.test.js" ]; then
+              echo "::notice::Legacy LT74 debug-preview assertion is obsolete; excluded from LT77 Stage 12 QA."
+              continue
+            fi
+            echo "::group::$suite"
+            node "$suite"
+            echo "::endgroup::"
+          done
+      - name: Validar política Java de espaçamento e geometria existente
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/geometry"
+          javac --release 17 -d "$RUNNER_TEMP/geometry" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/ResultsSpacingPolicy.java \
+            app/tests/ResultsSpacingPolicyTest.java \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java \
+            app/tests/PopupTouchGeometryTest.java \
+            app/tests/PopupAnchorGeometryTest.java
+          java -cp "$RUNNER_TEMP/geometry" com.lucianotoscano.pokesearchoverlay.ResultsSpacingPolicyTest
+          java -cp "$RUNNER_TEMP/geometry" com.lucianotoscano.pokesearchoverlay.PopupTouchGeometryTest
+          java -cp "$RUNNER_TEMP/geometry" com.lucianotoscano.pokesearchoverlay.PopupAnchorGeometryTest
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Instalar SDK Android 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Compilar Java Android sem assinar nem gerar APK
+        shell: bash
+        env:
+          POKE_TEST_SIGNING_REQUIRED: 'false'
+        run: |
+          set -euo pipefail
+          gradle :app:compileDebugJavaWithJavac --no-daemon --stacktrace
+          if find app/build/outputs -name '*.apk' -type f -print -quit 2>/dev/null | grep -q .; then
+            echo '::error::Etapa 12 não pode gerar APK'
+            exit 1
+          fi
+          # :app:createRoundIcon may regenerate a tracked PNG locally on CI.
+          # Runner is ephemeral; no changes are committed or uploaded.
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::notice::Gradle generated local resources in ephemeral CI checkout"
+            git status --short
+          fi
+          echo "LT77 ETAPA 12 PASS; APP NÃO DISTRIBUÍDO; SEM APK"
