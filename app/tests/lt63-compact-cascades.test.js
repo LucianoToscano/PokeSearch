@@ -30,13 +30,13 @@ check("C Size seven multi and per-editor width",()=>{
  assert.ok(filters.includes('["XXS","XS","S","M","L","XL","XXL"]'));
  assert.ok(filters.includes('modeDraft[multiKey]=[...selected]'));
  assert.ok(dock.includes('grid-template-columns:repeat(7,29px)!important'));
- assert.ok(dock.includes('Sexo:116,Forma:216'));assert.ok(dock.includes('Tamanho:230'));
+ assert.ok(dock.includes('Sexo:107,Forma:216'));assert.ok(dock.includes('Tamanho:182'));
  assert.ok(!dock.includes("width:320px!important;max-width:none!important}"));
  assert.ok(!dock.includes("width:230px!important;max-width:none!important;min-width:0!important}"));
 });
 check("D narrow Min Max retain draft, bounded PC/Level",()=>{
  assert.ok(filters.includes('input.value=String(modeDraft[key]??"")'));
- assert.ok(filters.includes('input.placeholder=key.endsWith("Min")?"Min":"Max"'));
+ assert.ok(filters.includes('input.placeholder=level?(key.endsWith("Min")?"1":"35")'));
  assert.ok(filters.includes('input.max=level?"35":"99999"'));
  assert.ok(filters.includes('numericConfirmButton(make,[minKey,maxKey],label)'));
  assert.ok(actions.includes('Number(low)>Number(high)'));

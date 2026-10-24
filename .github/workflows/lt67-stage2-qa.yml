@@ -1,0 +1,67 @@
+name: PokeSearch LT67 Stage 2 QA (sem APK)
+on:
+  push:
+    branches:
+      - fix/lt67-level-size-sex-iv-samsung-20261024
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stage2:
+    name: Node regression + geometry, no APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout source commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate scripts and all 15 Node suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/probe.js
+          node - <<'NODE'
+          const fs=require('node:fs'),vm=require('node:vm');
+          for(const file of ['app/src/main/assets/dock.html','app/src/main/assets/detail.html']){
+            const html=fs.readFileSync(file,'utf8');
+            let count=0;
+            for(const item of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)){
+              new vm.Script(item[1],{filename:file+':inline-'+(++count)});
+            }
+            if(!count)throw Error('Missing inline JS: '+file);
+          }
+          NODE
+          for suite in \
+            app/tests/location-probe.test.js \
+            app/tests/probe-smoke.test.js \
+            app/tests/pokemon-picker.test.js \
+            app/tests/login-entry.test.js \
+            app/tests/overlay-ux.test.js \
+            app/tests/visual-editor.test.js \
+            app/tests/signing-contract.test.js \
+            app/tests/firebase-stats.test.js \
+            app/tests/lt62-menu-visual-states.test.js \
+            app/tests/lt63-compact-cascades.test.js \
+            app/tests/lt64-results-lifecycle.test.js \
+            app/tests/lt65-detail-feedback.test.js \
+            app/tests/lt66-samsung-panels.test.js \
+            app/tests/lt67-compact-fields.test.js \
+            app/tests/lt67-refresh-weather.test.js; do
+            echo "::group::$suite"
+            node "$suite"
+            echo "::endgroup::"
+          done
+      - name: Java geometry regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/geometry"
+          javac -d "$RUNNER_TEMP/geometry" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java \
+            app/tests/PopupTouchGeometryTest.java
+          java -cp "$RUNNER_TEMP/geometry" com.lucianotoscano.pokesearchoverlay.PopupTouchGeometryTest

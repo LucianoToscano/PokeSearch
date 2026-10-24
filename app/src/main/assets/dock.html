@@ -2778,6 +2778,83 @@ body.popup-window.controls-window.menu-left #choices.modePanel.modeCascade .mode
 body.popup-window.controls-window.menu-left #choices.modePanel.modeCascade .modeCascadeEditor{
  left:auto!important;right:54px!important;
 }
+/* LT67 Stage 2 — width follows visible numbers, not flex leftovers.
+   The high-specificity wrappers neutralize historical 100%-width ranges,
+   without changing CP/other editors. */
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraLevelRange .extraLevelInputs{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ box-sizing:border-box!important;width:max-content!important;min-width:0!important;
+ max-width:100%!important;gap:3px!important;margin:0!important;padding:0!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraLevelRange .extraLevelInputs .extraRangeCell{
+ display:block!important;box-sizing:border-box!important;flex:0 0 31px!important;
+ width:31px!important;min-width:31px!important;max-width:31px!important;
+ margin:0!important;padding:0!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraLevelRange .extraLevelInputs input.levelCompactInput{
+ box-sizing:border-box!important;flex:0 0 31px!important;
+ width:31px!important;min-width:31px!important;max-width:31px!important;
+ height:25px!important;min-height:25px!important;padding:1px 2px!important;
+ font:500 12px/1 Roboto,Arial,sans-serif!important;
+ font-variant-numeric:tabular-nums!important;text-align:center!important;
+ -webkit-text-fill-color:currentColor!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraLevelRange .extraLevelInputs .filterInlineConfirm{
+ flex:0 0 25px!important;width:25px!important;min-width:25px!important;
+ height:25px!important;min-height:25px!important;padding:2px!important;
+}
+/* A single tight row, 23x22 CSS pixels each; live symbols stay vector text. */
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"],
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"]{
+ display:grid!important;justify-items:center!important;align-items:center!important;
+ gap:2px!important;margin:0!important;padding:0!important;
+ width:max-content!important;max-width:100%!important;overflow:visible!important;
+ grid-template-rows:22px!important;grid-auto-flow:column!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"]{
+ grid-template-columns:repeat(4,23px)!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"]{
+ grid-template-columns:repeat(7,23px)!important;
+}
+body.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"] .filterCascadeEditor .extraChipRow[data-kind="size"]{
+ grid-template-columns:repeat(7,23px)!important;grid-template-rows:22px!important;
+ column-gap:2px!important;row-gap:0!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"] .extraChip,
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"] .extraChip,
+body.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"] .filterCascadeEditor .extraChipRow[data-kind="size"] .extraChip{
+ box-sizing:border-box!important;flex:0 0 23px!important;
+ width:23px!important;min-width:23px!important;max-width:23px!important;
+ height:22px!important;min-height:22px!important;max-height:22px!important;
+ padding:0!important;margin:0!important;border-radius:4px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"] .extraChip{
+ font:600 14px/1 "Noto Sans Symbols 2","Segoe UI Symbol",Arial,sans-serif!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="size"] .extraChip{
+ font:600 9px/1 Roboto,Arial,sans-serif!important;
+}
+/* LT67 weather PNG source selection by the already-established Visual Editor
+   menu theme. No JS reload, no filter state change on light/dark switching. */
+body.controls-window #choices .weatherIconPair{
+ display:inline-grid!important;grid-template-columns:1fr!important;
+ grid-template-rows:1fr!important;
+ align-items:center!important;justify-items:center!important;
+ flex:0 0 19px!important;width:19px!important;height:19px!important;
+ max-width:19px!important;max-height:19px!important;overflow:hidden!important;
+}
+body.controls-window #choices .weatherIconPair .weatherChoiceIcon{
+ display:block!important;grid-column:1!important;grid-row:1!important;
+ width:19px!important;height:19px!important;max-width:19px!important;
+ max-height:19px!important;object-fit:contain!important;pointer-events:none!important;
+}
+body.controls-window:not(.visual-light-menu) #choices .weatherIconPair .weatherIcon-black{
+ visibility:hidden!important;
+}
+body.controls-window.visual-light-menu #choices .weatherIconPair .weatherIcon-white{
+ visibility:hidden!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3411,10 +3488,13 @@ function renderModeChoices(){
    input.className="modeCascadeInput modeCascade-"+kind;
    input.placeholder=placeholder;
     input.value=String(modeDraft[key]??searchSettings[key]??"");
-   input.autocomplete="off";input.maxLength=3;input.setAttribute("pattern","[0-9]*");
+   input.autocomplete="off";input.maxLength=kind==="percent"?3:2;input.setAttribute("pattern","[0-9]*");
    input.setAttribute("aria-label",description);
    input.title=description+" · digite "+min+" a "+max;
-   input.addEventListener("input",()=>input.setCustomValidity(""));
+   input.addEventListener("input",()=>{
+    input.value=input.value.replace(/[^0-9]/g,"").slice(0,input.maxLength);
+    input.setCustomValidity("");
+   });
    input.addEventListener("keydown",e=>{
     if(e.key==="Enter"){e.preventDefault();confirm.click();}
    });
@@ -3463,13 +3543,33 @@ const WEATHER_ICON_FILES=Object.freeze({
  "Rainy":"rainy.png","Partly Cloudy":"partly-cloudy.png",
  "Cloudy":"cloudy.png","Windy":"windy.png","Snow":"snow.png","Fog":"fog.png"
 });
+/* LT67: owner's 24/10 white/black weather PNGs. The 9 values are STILL
+   the site's canonical filter options. Additional Drive icons stay assets,
+   not invented search values. Dark menu = white glyph; light = black. */
+const WEATHER_ICON_VARIANTS=Object.freeze({
+ "Any":"any","Boosted":"boosted","Sunny":"sunny-clear",
+ "Rainy":"rainy","Partly Cloudy":"partly-cloudy",
+ "Cloudy":"cloudy","Windy":"windy","Snow":"snow","Fog":"fog"
+});
 function makeWeatherIcon(value){
- const name=WEATHER_ICON_FILES[String(value||"").trim()]||WEATHER_ICON_FILES.Any;
- const img=document.createElement("img");img.className="weatherChoiceIcon";
- img.alt="";img.setAttribute("aria-hidden","true");
- img.src="file:///android_asset/weather-icons/"+name;
- img.onerror=()=>{img.style.display="none";};
- return img;
+ const key=String(value||"").trim();
+ const base=WEATHER_ICON_VARIANTS[key]||WEATHER_ICON_VARIANTS.Any;
+ const fallback=WEATHER_ICON_FILES[key]||WEATHER_ICON_FILES.Any;
+ const pair=document.createElement("span");
+ pair.className="weatherIconPair";pair.setAttribute("aria-hidden","true");
+ for(const variant of ["white","black"]){
+  const img=document.createElement("img");
+  img.className="weatherChoiceIcon weatherIcon-"+variant;
+  img.alt="";img.decoding="async";
+  img.src="file:///android_asset/weather-icons/v2/"+base+"-"+variant+".png";
+  img.onerror=()=>{
+   if(img.dataset.fallback==="1"){img.style.visibility="hidden";return;}
+   img.dataset.fallback="1";
+   img.src="file:///android_asset/weather-icons/"+fallback;
+  };
+  pair.appendChild(img);
+ }
+ return pair;
 }
 /* Display-only translations: never submit localized values to PoGoCoordinates. */
 const FILTER_DISPLAY_LABELS=Object.freeze({
@@ -3530,8 +3630,8 @@ function numericConfirmButton(make,keys,label){
  return button;
 }
 function filterCascadeEditorWidth(label){
- const width={Ordenar:178,PC:139,"Nível":139,Clima:158,Tamanho:230,
-  Sexo:116,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
+ const width={Ordenar:178,PC:139,"Nível":108,Clima:158,Tamanho:182,
+  Sexo:107,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
  return width[label]||134;
 }
 function renderExtraFilters(panel,make){
@@ -3560,15 +3660,27 @@ function renderExtraFilters(panel,make){
   field(label,list);
  };
  const numericInput=(key,label,level=false)=>{
-  const input=make("input");input.type="number";input.inputMode="numeric";
+  const input=make("input");input.type=level?"text":"number";input.inputMode="numeric";
   input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999";
+  if(level){
+   input.maxLength=2;input.pattern="[0-9]{1,2}";
+   input.classList.add("levelCompactInput");
+  }
   input.value=String(modeDraft[key]??"");
-  input.placeholder=key.endsWith("Min")?"Min":"Max";
+  // Older beta builds could retain invalid 5-digit drafts; do not display or submit them.
+  if(level&&input.value!==""&&(!/^[0-9]{1,2}$/.test(input.value)||Number(input.value)<1||Number(input.value)>35)){
+   input.value="";modeDraft[key]="";
+  }
+  input.placeholder=level?(key.endsWith("Min")?"1":"35"):
+   key.endsWith("Min")?"Min":"Max";
   input.dataset.filterNumber=key;input.setAttribute("aria-label",label);
   input.title=label;
   input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
   input.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
-  input.oninput=()=>{modeDraft[key]=input.value;input.setCustomValidity("");updateFiltersPanelStatus();};
+  input.oninput=()=>{
+   if(level)input.value=input.value.replace(/[^0-9]/g,"").slice(0,2);
+   modeDraft[key]=input.value;input.setCustomValidity("");updateFiltersPanelStatus();
+  };
   return input;
  };
  const number=(key,label,level=false)=>{
@@ -3579,8 +3691,8 @@ function renderExtraFilters(panel,make){
   line.append(name,wrapper);panel.appendChild(line);
  };
  const numberPair=(label,minKey,maxKey,level=false)=>{
-  const line=make("div","extraField extraRangeField"),name=make("label","",label);
-  const group=make("div","extraRangeInputs");
+  const line=make("div","extraField extraRangeField"+(level?" extraLevelRange":"")),name=make("label","",label);
+  const group=make("div","extraRangeInputs"+(level?" extraLevelInputs":""));
   group.setAttribute("role","group");group.setAttribute("aria-label",label+" mínimo e máximo");
   for(const [key,short,full] of [[minKey,"Min","mínimo"],[maxKey,"Max","máximo"]]){
    const cell=make("label","extraRangeCell");
@@ -4833,7 +4945,7 @@ function normalizedQuickPrefs(p){
  const modeIndex=order.indexOf("mode");
  if(modeIndex>=0)order.splice(modeIndex+1,0,"sh");
  const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter(x=>
-  ids.includes(x)&&!["close","appearance","period","sh"].includes(x)):[];
+  ids.includes(x)&&!["close","appearance","sh"].includes(x)):[];
  return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.
   labels:false,
   order:[...order,...ids.filter(x=>!order.includes(x))],hidden};
@@ -5641,7 +5753,7 @@ function renderAppearanceChoices(){
   name.textContent=APPEARANCE_SHORT_NAMES[id]||action[2];
   name.title=action[2];line.appendChild(name);
   const hidden=quickPrefs.hidden.includes(id);
-  const locked=["period"].includes(id); // native requirement: refresh must stay reachable.
+  const locked=false; // LT67: allow user to toggle Atualizar visibility via Personalização.
   const eye=document.createElement("button");eye.type="button";
   eye.textContent=hidden?"□":"☑";eye.className="orderVisibility";
   eye.disabled=locked;eye.setAttribute("aria-pressed",String(!hidden));

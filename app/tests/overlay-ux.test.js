@@ -810,7 +810,7 @@ test("Cascade input uses placeholders and keyboard entry",
 test("Four editable cascade modes keep raw, percent and rank numeric bounds",(()=>{const b=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
  return b.includes('kind==="iv"?[0,15]:[1,50]')&&b.includes('limitsFor=kind')&&
  ["attack","defense","stamina","percentMin","percentMax","glRank","ulRank"].every(k=>b.includes('"'+k+'"'))&&
- b.includes('input.value=String(modeDraft[key]??searchSettings[key]??"")')&&b.includes('input.maxLength=3');})());
+ b.includes('input.value=String(modeDraft[key]??searchSettings[key]??"")')&&b.includes('input.maxLength=kind==="percent"?3:2');})());
 test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy migration",
  dock.includes('if([attack,defense,stamina].every(v=>Number(v)===15))family="hundo"')&&
  dock.includes('if(min===100&&max===100)family="hundo"')&&
@@ -1052,7 +1052,7 @@ test("UX-SHINY-02 keeps Shiny beside Modos through saved preferences and native 
  const state=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(")[0]||"";
  const click=dock.split("function quickClick(id){")[1]?.split("const QUICK_SVG=")[0]||"";
  return prefs.includes('order.splice(modeIndex+1,0,"sh")')&&
-  prefs.includes('"period","sh"')&&
+  prefs.includes('"appearance","sh"')&&
   click.includes('case "sh":Native.shiny();break;')&&
   dock.includes('if(id==="sh")button.setAttribute("aria-pressed",String(shiny))')&&
   state.includes('button.classList.toggle("pending",id==="sh"&&shinyPending)')&&
@@ -2733,7 +2733,7 @@ test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()
  return filters.includes('numberPair("PC","cpMin","cpMax");')&&
   filters.includes('numberPair("Nível","levelMin","levelMax",true);')&&
   filters.includes('input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999"')&&
-  filters.includes('input.type="number";input.inputMode="numeric";')&&
+  filters.includes('input.type=level?"text":"number";input.inputMode="numeric";')&&
   !filters.includes('make("button","extraStep"')&&
   filters.includes('input.value=String(modeDraft[key]??"")')&&
   filters.includes('[[minKey,"Min","mínimo"],[maxKey,"Max","máximo"]]')&&
