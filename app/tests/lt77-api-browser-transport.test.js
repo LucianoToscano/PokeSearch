@@ -23,11 +23,11 @@ function reply(status,body){
 function makeClient(opts={}){
  const calls=[],reads=[];
  let clock=NOW;
- const fetchImpl=opts.fetchImpl||async (url,req)=>{
+ const fetchImpl=opts.fetchImpl||(async (url,req)=>{
   calls.push({url,req});
   return req.method==="POST"?reply(200,{results:[item()]}):
    reply(200,{coordinates:{latitude:-5.12,longitude:-35.21}});
- };
+ });
  const client=transport.createClient({
   fetchImpl,
   storage:{getItem:(key)=>{reads.push(key);return opts.jwt===undefined?JWT:opts.jwt;}},
