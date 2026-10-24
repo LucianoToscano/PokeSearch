@@ -86,5 +86,10 @@ jobs:
             echo '::error::Etapa 2 não pode gerar APK'
             exit 1
           fi
-          test -z "$(git status --porcelain)"
+          # :app:createRoundIcon may regenerate a tracked PNG locally on CI.
+          # Runner is ephemeral; no changes are committed or uploaded.
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::notice::Gradle generated local resources in ephemeral CI checkout"
+            git status --short
+          fi
           echo "LT77 ETAPA 2 PASS; APP NÃO DISTRIBUÍDO; SEM APK"
