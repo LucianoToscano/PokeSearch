@@ -3517,21 +3517,41 @@ function renderModeChoices(){
 /* FILTERS-POGO-01: source-aligned menu. Pokémon species/IV/PvP/Coords stay
    in their dedicated menus. These selectors are just a compact UI for the
    existing PoGoCoordinates probe; nothing is applied until ✓ Aplicar. */
-/* LT57-WEATHER-ICONS-01: original nine Drive PNGs; values stay canonical. */
-const WEATHER_ICON_FILES=Object.freeze({
- "Any":"any.png","Boosted":"boosted.png","Sunny":"sunny.png",
- "Rainy":"rainy.png","Partly Cloudy":"partly-cloudy.png",
- "Cloudy":"cloudy.png","Windy":"windy.png","Snow":"snow.png","Fog":"fog.png"
-});
-function makeWeatherIcon(value){
- const name=WEATHER_ICON_FILES[String(value||"").trim()]||WEATHER_ICON_FILES.Any;
- const img=document.createElement("img");img.className="weatherChoiceIcon";
- img.alt="";img.setAttribute("aria-hidden","true");
- img.src="file:///android_asset/weather-icons/"+name;
- img.onerror=()=>{img.style.display="none";};
- return img;
-}
-/* Display-only translations: never submit localized values to PoGoCoordinates. */
+/* LT68-WEATHER-ICON-PAIR: these 18 approved white/black Drive PNGs
+   share the nine *existing* official PoGoCoordinates filter values.
+   Ensolarado/Limpo uses the matching composite image, never invent a value. */
+ const WEATHER_ICON_FILES=Object.freeze({
+  "Any":"any","Boosted":"boosted","Sunny":"sunny",
+  "Rainy":"rainy","Partly Cloudy":"partly-cloudy",
+  "Cloudy":"cloudy","Windy":"windy","Snow":"snow","Fog":"fog"
+ });
+ function weatherIconFile(value,light){
+  const filename=WEATHER_ICON_FILES[String(value||"").trim()]||WEATHER_ICON_FILES.Any;
+  return "file:///android_asset/weather-icons/lt68/"+filename+"-"+(light?"black":"white")+".png";
+ }
+ function makeWeatherIcon(value){
+  const name=String(value||"").trim();
+  const img=document.createElement("img");img.className="weatherChoiceIcon";
+  img.alt="";img.setAttribute("aria-hidden","true");img.dataset.weatherKey=name;
+  img.src=weatherIconFile(name,document.body.classList.contains("visual-light-menu"));
+  // Old approved artwork remains packaged for older paths/fallback only.
+  img.onerror=()=>{
+   if(img.dataset.weatherFallback==="1"){img.style.display="none";return;}
+   img.dataset.weatherFallback="1";
+   const fallback=WEATHER_ICON_FILES[name]||WEATHER_ICON_FILES.Any;
+   img.src="file:///android_asset/weather-icons/"+fallback+".png";
+  };
+  return img;
+ }
+ // Visual Editor switches the menu theme live without closing the filter panel.
+ window.syncWeatherIcons=()=>{
+  const light=document.body.classList.contains("visual-light-menu");
+  document.querySelectorAll('img.weatherChoiceIcon[data-weather-key]').forEach(img=>{
+   const next=weatherIconFile(img.dataset.weatherKey,light);
+   if(img.src!==next){img.dataset.weatherFallback="0";img.style.display="";img.src=next;}
+  });
+ };
+ /* Display-only translations: never submit localized values to PoGoCoordinates. */
 const FILTER_DISPLAY_LABELS=Object.freeze({
  sortBy:Object.freeze({"Despawn (longest)":"Despawn","CP (highest)":"CP",
   "IV % (highest)":"IV %","Level (highest)":"Nível","Distance (nearest)":"Distância"}),
@@ -4905,7 +4925,7 @@ function normalizedQuickPrefs(p){
  const modeIndex=order.indexOf("mode");
  if(modeIndex>=0)order.splice(modeIndex+1,0,"sh");
  const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter(x=>
-  ids.includes(x)&&!["close","appearance","period","sh"].includes(x)):[];
+  ids.includes(x)&&!["close","appearance","sh"].includes(x)):[];
  return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.
   labels:false,
   order:[...order,...ids.filter(x=>!order.includes(x))],hidden};
@@ -5713,7 +5733,7 @@ function renderAppearanceChoices(){
   name.textContent=APPEARANCE_SHORT_NAMES[id]||action[2];
   name.title=action[2];line.appendChild(name);
   const hidden=quickPrefs.hidden.includes(id);
-  const locked=["period"].includes(id); // native requirement: refresh must stay reachable.
+  const locked=false; // Refresh visibility is user-controlled; Personalização stays available.
   const eye=document.createElement("button");eye.type="button";
   eye.textContent=hidden?"□":"☑";eye.className="orderVisibility";
   eye.disabled=locked;eye.setAttribute("aria-pressed",String(!hidden));
