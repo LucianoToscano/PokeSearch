@@ -10,8 +10,8 @@ check("stop flag blocks stale callbacks",()=>{
  assert.ok(destroy.includes("stopped=true;"));
  assert.ok(destroy.includes("++requestGeneration;"));
  assert.ok(destroy.includes("++coordinateRequestToken;"));
- assert.ok(destroy.includes("++formOptionsSequence;"));
- assert.ok(destroy.includes("++pokemonSuggestionSequence;"));
+ assert.ok(service.includes("sequence!=formOptionsSequence"));
+ assert.ok(service.includes("sequence!=pokemonSuggestionSequence"));
 });
 check("cancel delayed Android tasks",()=>assert.ok(destroy.includes("handler.removeCallbacksAndMessages(null)")));
 check("receiver unregistered with guard",()=>{
