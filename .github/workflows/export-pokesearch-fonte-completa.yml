@@ -1,0 +1,64 @@
+name: PokeSearch Fonte Completa para Auditoria
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - audit/export-source-lt77-20261024
+    paths:
+      - ".github/scripts/export_full_source_audit.py"
+      - ".github/workflows/export-pokesearch-fonte-completa.yml"
+permissions:
+  contents: read
+jobs:
+  exportar-fonte:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Baixar exportador auditavel
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          path: exporter
+      - name: Congelar revisao original LT77
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: 11fd11b4ec8a66430bbaf79a15f1eb585e6e42f8
+          path: source
+      - name: Gerar fonte completa original e relatorios em um unico ZIP
+        run: |
+          python3 exporter/.github/scripts/export_full_source_audit.py \
+            --source source \
+            --staging staging \
+            --output entregavel \
+            --sha 11fd11b4ec8a66430bbaf79a15f1eb585e6e42f8
+          test -s entregavel/PokeSearch-Auditoria-Completa-Fonte.zip
+          cat entregavel/RESULTADO_EXPORTACAO.txt
+      - name: Conferir ZIP independente e pasta raiz unica
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          z=Path("entregavel/PokeSearch-Auditoria-Completa-Fonte.zip")
+          with ZipFile(z) as f:
+            names=f.namelist()
+            assert len(names)>250, len(names)
+            assert f.testzip() is None
+            assert all(x.startswith("PokeSearch-Auditoria-Completa-Fonte/") for x in names)
+            assert any(x.endswith("/docs/GUIA_MESTRE.md") for x in names)
+            assert any(x.endswith("/app/src/main/assets/dock.html") for x in names)
+            assert any(x.endswith("/app/src/main/assets/probe.js") for x in names)
+            assert any(x.endswith("/app/src/main/assets/api_browser_transport.js") for x in names)
+            assert any(x.endswith("/RELATORIO-INTEGRIDADE.md") for x in names)
+            assert not any(x.endswith((".apk",".aab",".jks",".p12",".keystore")) for x in names)
+            print("CONFIRMADO: arquivo ZIP real, pasta raiz única, "+str(len(names))+" arquivos.")
+          PY
+      - name: Transferir ZIP completo com nome exato
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-Auditoria-Completa-Fonte
+          path: entregavel/PokeSearch-Auditoria-Completa-Fonte.zip
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 90
+          compression-level: 0
