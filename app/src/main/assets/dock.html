@@ -2505,7 +2505,7 @@ body.popup-window #menu,body.popup-window.visual-menu-vertical #menu{
 body.popup-window #choices,body.popup-window.popup-above #choices,
 body.popup-window.visual-menu-vertical #choices,body.popup-window.visual-menu-vertical.popup-above #choices{
  position:absolute!important;display:block;top:0!important;bottom:auto!important;
- left:0!important;right:auto!important;max-width:100%!important;
+ left:0!important;right:auto!important;max-width:none!important;
  max-height:var(--popup-room,440px)!important}
 body.popup-window #choices.filterCascade .filterCascadeEditor,
 body.popup-window.menu-left #choices.filterCascade .filterCascadeEditor{
@@ -2526,6 +2526,26 @@ body.popup-window #choices.modeCascade.modeCascadeOpen{
  max-width:none!important;overflow:visible!important}
 body.popup-window #choices.modeCascade.modeCascadeOpen .modeCascadeEditor{
  max-width:none!important}
+
+/* Native width equals measured content. Never use 100vw inside a shrinking
+   WebView: calc(100vw - 12px) recursively subtracts 12px on every resize. */
+body.popup-window.controls-window #choices.standardPanel.appearanceCompact[data-panel-kind="appearance"]{
+ width:240px!important;max-width:none!important}
+body.popup-window.controls-window #choices.standardPanel.infoCompact[data-panel-kind="info"]{
+ width:248px!important;max-width:none!important}
+body.popup-window.controls-window #choices.visualPanel.visualCompact{
+ width:268px!important;max-width:none!important}
+body.popup-window.controls-window #choices.standardPanel.alertsMini[data-panel-kind="alerts"]{
+ width:138px!important;max-width:none!important}
+body.popup-window.controls-window #choices.locationPanel{
+ width:172px!important;max-width:none!important}
+body.popup-window.controls-window #choices.standardPanel[data-panel-kind="pokemon"]{
+ width:270px!important;max-width:none!important}
+body.popup-window.controls-window #choices.modePanel.modeCascade.modeCascadeOpen .modeCascadeEditor{
+ width:166px!important;max-width:none!important}
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor{
+ max-height:var(--popup-room,440px)!important;overflow-y:auto!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>

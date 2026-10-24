@@ -5206,3 +5206,12 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Motivação:** a auditoria estrutural 12.275 introduziu uma segunda WebView e a ponte de popup em `OverlayService.java`. Nove suítes Node e a classe Java de geometria comprovam contratos, mas não compilam classes dependentes do SDK Android. Criado workflow isolado `.github/workflows/pokesearch-android-compile-qa.yml`, acionado por mudanças na PR #34, com JDK 17/Gradle 8.11.1/SDK 36. Executa exclusivamente `gradle :app:compileDebugJavaWithJavac`; não executa `assemble`, `bundle`, assinatura nem publica APK. A própria verificação falha se algum `.apk` surgir no diretório de saída do job.
 
 **Estado:** revisão de código e QA em curso na branch `fix/lt62-menu-visual-states-20261023`, PR Draft e main LT61 mantidas. Último APK assinado LT62 continua sendo o anterior ao trabalho de arquitetura; não afirmar homologação Samsung antes de instalação de build expressamente autorizado. Relatar outcome de compilação e erros reais após a execução.
+
+
+### 12.278 — LT62: CSS responsivo sem regressão de auto-retração do popup (23/10/2026)
+
+**Causa raiz descoberta na nova arquitetura:** regras antigas com `width:min(Npx,calc(100vw - 12px))` foram escritas para a WebView de 330dp fixa. Numa WebView de popup que se ajusta à largura do próprio conteúdo, `100vw` é a largura atual do popup; a próxima medição subtrai outros 12px e encolhe indefinidamente. Isso repetiria exatamente a queixa de menus se retraindo/distorcendo. **Correção estrutural no CSS exclusivo `body.popup-window`:** substituir max-width dependente de viewport por larguras estáveis de conteúdo nas famílias: Personalização 240px, Info Pokémon 248px, Editor Visual 268px, Notificações 138px, Localização 172px, Pokémon 270px, cascatas com dimensões próprias. A janela nativa segue reduzindo/clampando pelas coordenadas reais e tela via `PopupTouchGeometry.place`; altura limitada ao espaço livre com scroll dentro dos controles, não um fundo vazio.
+
+**Faltas já corrigidas na rodada:** retorno de sugestões Pokémon/Form/Filtros para `popupPanel`, o seletor P/M/G do Editor Visual e atualização da UI da permissão de Notificações. QA Node novo verifica as larguras estáveis e os controles não cortados pela antiga dependência de `100vw`.
+
+**Pendência:** comprovar no Samsung a abertura, toque externo, teclado, cascatas, visualização de formas, sons Novos/Favoritos e posição dos resultados em horizontal/vertical. Sem APK novo, sem merge e sem LT63.

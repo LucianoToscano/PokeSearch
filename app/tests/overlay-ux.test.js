@@ -3725,6 +3725,20 @@ test("LT62 Android notifications are confirmed from permission callbacks",()=>{
   service.includes("preferência salva; libere as notificações no Android")&&
   dock.includes("heading.title=notificationPermissionGranted");
 });
+
+test("LT62 independent popup widths are stable after WebView shrink and have no empty tail",()=>{
+ const css=dock.split("/* Split native overlay window:")[1]?.split("</style>")[0]||"";
+ return css.includes("width:240px!important;max-width:none!important")&&
+  css.includes("width:248px!important;max-width:none!important")&&
+  css.includes("width:268px!important;max-width:none!important")&&
+  css.includes("width:138px!important;max-width:none!important")&&
+  css.includes("width:172px!important;max-width:none!important")&&
+  css.includes("width:270px!important;max-width:none!important")&&
+  css.includes("modeCascade.modeCascadeOpen .modeCascadeEditor")&&
+  css.includes("height:0!important;min-height:0!important;overflow:visible!important")&&
+  css.includes("max-height:var(--popup-room,440px)!important;overflow-y:auto!important")&&
+  css.includes("max-width:none!important;");
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 
