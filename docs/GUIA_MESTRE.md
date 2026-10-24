@@ -5724,3 +5724,12 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 **Testes de laboratório:** o workflow existente executa contratos Node, política Java, 21 suítes anteriores e `:app:compileDebugJavaWithJavac` sem gerar APK. A execução de uma versão alterada deverá ser atestada por nova conclusão GitHub Actions antes da homologação; nunca confundir código compilado com Samsung físico.
 
 **Pendências externas à verificação automática:** teste no Samsung de tela apagada/retomada; 9/100, 10/99 e 10/100; 02A/02B, FUGIR/X/Voltar e expiração em 15 dias; Pix em leitor bancário **sem pagamento**; quatro artes, responsividade e regressões dos menus/filtros/resultados/Editor Visual. Não anunciar a missão como homologada fisicamente nem publicar APK sem novo pedido.
+
+
+### Evidência de CI após correção (24/10/2026)
+
+**SUCCESS confirmado:** workflow GitHub Actions [Support Mission V2 — validations only (no APK), execução 40125140330](https://github.com/LucianoToscano/PokeSearch/actions/runs/40125140330), HEAD de código `bcfe753ed9c0c3d5da31457d9dcf3b7db86636c2`. Etapas individuais concluídas com sucesso: contrato de assets/integrações da missão (12 verificações específicas), todas as 21 suítes JavaScript históricas, testes da política Java com 7 novas asserções de contagem de tempo e compilação `:app:compileDebugJavaWithJavac`. Nenhum APK produzido pela execução.
+
+**Verificação adicional:** checagem independente do texto Pix EMV existente: prefixo e identificador Pix presentes, campo final de CRC-16 completo e checksum calculado coincide com o registrado. Isto **não substitui** leitura do QR JPEG original em aplicativo bancário no Samsung. O payload não foi alterado, exibido ou registrado no Guia Mestre.
+
+**Estado da homologação:** testes automáticos aprovados; Samsung e testes visuais/funcionais continuam pendentes. Sem autorização para etapa 8, nenhuma geração, upload, compartilhamento ou anúncio de APK da Missão V2. `main`/PR #34/PR #49 preservados.
