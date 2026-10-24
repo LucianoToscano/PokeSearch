@@ -6165,3 +6165,15 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Novos testes `app/tests/lt77-stage5-detail-cooldown.test.js`; workflow `.github/workflows/lt77-stage5-detail-cooldown-qa.yml`, executando Node, sintaxe dos assets, geometria Java e compilação Android com JDK17/SDK36 sem gerar APK.
 - Execução de GitHub Actions [#40141873620](https://github.com/LucianoToscano/PokeSearch/actions/runs/40141873620) — verificar resultado final antes de declarar sucesso. Testes automatizados não substituem homologação Samsung.
 - Homologação física pendente: clicar e segurar Get coords, alternar de cartão durante loading, fechar ficha durante polling, aguardar cooldown acabar, ver feedback e cópia válida, verificar site com login real e observar que não há toque perdido nem resultado antigo.
+
+
+---
+
+## LT77 — ETAPA 6: FONTES DISTINTAS DE FORMA E SEXO (24/10/2026)
+
+- Branch `fix/lt77-stage6-form-gender-source-20261024`, derivada da Etapa 5 `9e39b80cd8301e04fc4afec9cf70af956acab8ce`. `main`, APK LT76, preferências e fonte de resultados não modificados.
+- Revisado o `dock.html`: **Forma** lê apenas `filterOptions.form.options` e mantém multi-seleção em `formSelections`; **Sexo** usa `filterOptions.gender.options`, seleção única (Male/Female/Genderless) e vazio = Any. Controles, search/chips e lógica separados já existiam e foram preservados.
+- Corrigido `app/src/main/assets/probe.js`: um portal `Form` que só apresente 2 ou mais entradas `Any/Male/Female/Genderless/Unknown` é considerado ambíguo, inclusive com carregamento parcial de React, e não é apresentado como catálogo oficial de Forma. A mesma proteção cobre o caminho `<select>`. Em caso ambíguo, o probe retorna pending/sem opções, **sem inventar formas**.
+- Testes específicos: `app/tests/lt77-stage6-form-gender-source.test.js`, cobrindo menu completo/parcial de Sexo, Form legítimo, IDs textuais oficiais, seletor independente e compatibilidade com seleção múltipla. Workflow isolado `.github/workflows/lt77-stage6-form-gender-qa.yml` roda demais regressões Node, Java e compilação sem APK.
+- Fonte `pogo.md` (Biblioteca pessoal), seções 4.1 e 8, conferida: API `GET /forms` devolve lista de nomes oficiais e `GET /pokemon/catalog?costumes=true` entrega pares `pokemon_id/form_id`. **Sem execução de GET real** ou integração API nesta etapa: catálogo completo e migração aguardam ativação controlada da API após homologação. O app ainda depende do catálogo observável no site via DOM.
+- GitHub Actions [#40142110424](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142110424): conferir fechamento antes de declarar sucesso. Teste Samsung de busca, lista completa e opções oficiais segue pendente.
