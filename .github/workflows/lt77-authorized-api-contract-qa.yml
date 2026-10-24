@@ -1,0 +1,29 @@
+name: LT77 authorized API contract QA (no APK)
+on:
+  push:
+    branches:
+      - feature/lt77-authorized-api-contract-20261024
+    paths:
+      - "app/src/main/assets/api_result_contract.js"
+      - "app/tests/lt77-api-contract.test.js"
+      - ".github/workflows/lt77-authorized-api-contract-qa.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify experimental API contract offline
+        run: node app/tests/lt77-api-contract.test.js
+      - name: Confirm no Android APK is built or distributed
+        run: |
+          test ! -f app/build/outputs/apk/release/app-release.apk
+          echo "No APK; no network API requests; source fixture tests only."
