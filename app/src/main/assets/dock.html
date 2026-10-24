@@ -2923,6 +2923,7 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
   else Native.resize(h);
  }
 });}
+let popupNativeSwitch=false;
 function closeChoices(){
  if(window.Native&&Native.previewVisualArea)Native.previewVisualArea("");
  if(controlsWindow&&choiceOpen==="pokemon"&&Native.cancelPokemonSuggestions)
@@ -2944,13 +2945,15 @@ function closeChoices(){
  delete document.getElementById("choices").dataset.panelKind;
  if(controlsWindow)Native.locationEditor(false);
  refreshQuickMenuStates();fit();
- if(popupWindow&&Native.closePopup)Native.closePopup();
+ if(popupWindow&&!popupNativeSwitch&&Native.closePopup)Native.closePopup();
 }
 window.showNativePopup=kind=>{
  if(!popupWindow)return;
  if(!menuOpen)setMenuOpen(true);
- if(choiceOpen===kind)return;
- toggleChoices(kind);
+ if(choiceOpen===kind){fit();return;}
+ popupNativeSwitch=true;
+ try{toggleChoices(kind);}
+ finally{popupNativeSwitch=false;}
 };
 window.hideNativePopup=()=>{if(popupWindow&&choiceOpen)closeChoices();};
 window.setNativePopupRoom=height=>{

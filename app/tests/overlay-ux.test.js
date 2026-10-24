@@ -3739,6 +3739,24 @@ test("LT62 independent popup widths are stable after WebView shrink and have no 
   css.includes("max-height:var(--popup-room,440px)!important;overflow-y:auto!important")&&
   css.includes("max-width:none!important;");
 });
+
+test("LT62 popup first paint is 1dp touch strip, not a GONE rAF deadlock",()=>{
+ const open=service.split("private void openIndependentPopup(String kind,int x,int y){")[1]
+  ?.split("private static boolean validIndependentPopup(",1)[0]||"";
+ return open.includes("popupParams.height=Math.max(1,dp(1))")&&
+  open.includes("popupRoot.setVisibility(View.VISIBLE)")&&
+  open.includes("wm.updateViewLayout(popupRoot,popupParams)")&&
+  !open.includes("popupRoot.setVisibility(View.GONE)")&&
+  open.includes("if(popupLoaded)js(popupPanel,true,");
+});
+test("LT62 internal submenu switches do not close native popup before its resize",()=>{
+ const js=dock.split("let popupNativeSwitch=false;")[1]
+   ?.split("function toggleChoices(kind){",1)[0]||"";
+ return js.includes("if(popupWindow&&!popupNativeSwitch&&Native.closePopup)")&&
+  js.includes("popupNativeSwitch=true;")&&
+  js.includes("finally{popupNativeSwitch=false;}")&&
+  js.includes("if(choiceOpen===kind){fit();return;}");
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 

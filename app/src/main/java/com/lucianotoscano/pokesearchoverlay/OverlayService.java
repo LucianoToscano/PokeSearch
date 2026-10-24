@@ -700,7 +700,24 @@ public class OverlayService extends Service {
         popupTriggerYDp=Math.max(0,Math.min(visualMenuBaseDp(),y));
         popupWidthDp=popupHeightDp=0;
         lastPopupX=Integer.MIN_VALUE;lastPopupY=Integer.MIN_VALUE;
-        if(popupRoot!=null)popupRoot.setVisibility(View.GONE);
+        // A GONE WebView may suspend requestAnimationFrame on Samsung, so
+        // its JS cannot measure the popup and would never make itself visible.
+        // Boot with a ONE-PIXEL-HIGH visible strip; native geometry replaces
+        // the hitbox as soon as the real DOM height arrives.
+        if(popupRoot!=null&&popupParams!=null&&wm!=null){
+            DisplayMetrics m=metrics();
+            popupParams.width=dp(Math.max(1,Math.min(330,screenWidthDp()-12)));
+            popupParams.height=Math.max(1,dp(1));
+            popupParams.x=Math.max(0,Math.min(m.widthPixels-popupParams.width,
+                menuParams!=null?menuParams.x:0));
+            int anchorY=menuParams==null?0:
+                menuParams.y+(visualMenuVertical?dp(popupTriggerYDp):dp(visualMenuBaseDp()));
+            popupParams.y=Math.max(0,Math.min(m.heightPixels-popupParams.height,anchorY));
+            try{
+                wm.updateViewLayout(popupRoot,popupParams);
+                popupRoot.setVisibility(View.VISIBLE);
+            }catch(Exception ex){recordFailure("medir popup inicial",ex);return;}
+        }
         if(popupLoaded)js(popupPanel,true,
             "window.showNativePopup&&window.showNativePopup("+JSONObject.quote(kind)+")");
     }
