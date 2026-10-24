@@ -6029,6 +6029,13 @@ function renderFiltersChoices(){
  const cancel=makeDockAction("cancel","Cancelar alterações");
  for(const btn of [apply,clear,cancel])btn.classList.add("filterIconAction");
  apply.onclick=()=>{
+  // DISTANCE is defined by the provider only with center and radius; do
+  // not silently accept a sort that the site cannot reproduce.
+  if(modeDraft.sortBy==="Distance (nearest)"&&!(locationEnabled&&locationVerified)){
+   indicator.textContent="📍 Ordenar por distância exige localização confirmada no site.";
+   indicator.classList.remove("confirmed");
+   return;
+  }
   // Reject invalid bounds before saving them or submitting anything to the site.
   for(const input of panel.querySelectorAll("input[data-filter-number]")){
    if(input.value.trim()!==""&&!input.checkValidity()){
