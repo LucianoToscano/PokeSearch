@@ -6138,3 +6138,17 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Compilação `gradle :app:compileDebugJavaWithJavac`: **BUILD SUCCESSFUL**; o job verificou que **não gerou APK**. Nenhum deploy, manifesto Drive, assinatura, distribuição, `main` ou feature flag de API foi alterado.
 - Runs anteriores da Etapa 3 falharam por verificações históricas que ainda exigiam quatro chips de Sexo/largura 107px e um caso de teste novo que procurava o catálogo de Forma no escopo incorreto. Todas as falhas tiveram ajustes rastreáveis; não foram desativadas suites para mascará-las.
 - **Pendência real:** nenhum Samsung foi homologado fisicamente. Critérios visuais, toque, teclado e persistência devem ser aferidos no aparelho quando houver build de teste autorizado. A Etapa 3 está concluída quanto a implementação, regressão automatizada e compilação, mas não equivale a homologação física.
+
+
+---
+
+## LT77 — ETAPA 4: ANCORAGEM DOS POPUPS (24/10/2026)
+
+- Branch isolada: `fix/lt77-stage4-popup-anchor-20261024`, derivada do checkpoint aprovado da Etapa 3 `a4afa8b6915883cfac0deeeeaa1a5d853aed0c0a`. `main`, LT76, APK, assinatura, Drive e API experimental preservados.
+- `PopupTouchGeometry.java`: `placeBesideMeasured` ancora o submenu vertical ao topo do ícone verdadeiro (centro − metade da altura física), em vez de deslocamento fixo de 16px. Mantidos os métodos históricos e os limites físicos.
+- `OverlayService.java`: quando a barra nativa reserva espaço acima dos botões, a origem real passa a ser `menuParams.y + dp(popupOffsetDp)`; passagem de altura do botão em novo bridge `openPopupMeasured`, mantendo o bridge anterior compatível. Proteção contra sobreposição com resultados permanece.
+- `dock.html`: mede o alvo real no WebView e envia centro/altura à geometria nativa; Mais (•••) rola apenas quando o conteúdo excede a altura fornecida pela janela. Não há mudanças na barra principal, nos filtros ou na API.
+- `PokemonPicker.java`: Favoritos agora inicia próximo à borda do ícone estrela (12dp meia-altura + 2dp intervalo), com clamp à tela e sem bloquear toques externos.
+- Testes novos: `app/tests/PopupAnchorGeometryTest.java` e `app/tests/lt77-stage4-popup-anchor.test.js`. Workflow novo: `.github/workflows/lt77-stage4-popup-anchor-qa.yml`; sem geração ou publicação de APK.
+- Histórico CI: execução [#40141563515](https://github.com/LucianoToscano/PokeSearch/actions/runs/40141563515) falhou em expectativa inválida do novo teste de tela pequena (497 ultrapassava a tela; posição correta com clamp 474). Corrigida em commit `50c1bd712d42dc66433a0924964e6c01b8352e46`; nenhuma suíte desativada. Execução seguinte [#40141616065](https://github.com/LucianoToscano/PokeSearch/actions/runs/40141616065): **SUCCESS**, validação JS/Node, testes Java de geometria, SDK 36 e compilação Android sem APK.
+- **Pendente homologação Samsung:** bordas superior/inferior, barra horizontal/vertical, Modos/Filtros/Pokémon/Notificações/More, Favoritos alinhado à estrela, scroll só quando necessário, toque fora e proteção contra resultados. O CI não comprova essas interações físicas.
