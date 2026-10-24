@@ -3693,7 +3693,11 @@ public class OverlayService extends Service {
         stopped=true;
         running=false;
         ++requestGeneration;
+        ++coordinateRequestToken;
+        ++formOptionsSequence;
+        ++pokemonSuggestionSequence;
         searchInProgress=false;
+        // Cancels periodic refresh, timers, popup retries and all delayed polls.
         handler.removeCallbacksAndMessages(null);
         if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception e){recordFailure("remover dock",e);}}
         if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception e){recordFailure("remover menu",e);}}
