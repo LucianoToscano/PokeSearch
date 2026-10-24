@@ -938,6 +938,8 @@ public class OverlayService extends Service {
             menu(!menuExpanded);
         };
         grip.setOnTouchListener((v,event)->{
+            if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
+                SupportMissionState.overlayTouch(OverlayService.this);
             if(params==null)return true;
             switch(event.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
@@ -1062,6 +1064,8 @@ public class OverlayService extends Service {
         // Transparent pixels *inside* this window are still not pass-through.
         menuRoot=new FrameLayout(this){
             @Override public boolean dispatchTouchEvent(MotionEvent event){
+                if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
+                    SupportMissionState.overlayTouch(OverlayService.this);
                 if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
                     if(menuExpanded&&menuLoaded&&menuPanel!=null)
                         js(menuPanel,true,"if(window.closeChoices)window.closeChoices()");
@@ -1116,7 +1120,13 @@ public class OverlayService extends Service {
         try{wm.addView(root,params);}
         catch(Exception e){recordFailure("abrir dock",e);stopSelf();return;}
 
-        detailRoot=new FrameLayout(this);
+        detailRoot=new FrameLayout(this){
+            @Override public boolean dispatchTouchEvent(MotionEvent event){
+                if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
+                    SupportMissionState.overlayTouch(OverlayService.this);
+                return super.dispatchTouchEvent(event);
+            }
+        };
         detailRoot.setBackgroundColor(Color.TRANSPARENT);
         detailPanel=new WebView(this);
         detailPanel.setBackgroundColor(Color.TRANSPARENT);
@@ -1145,6 +1155,8 @@ public class OverlayService extends Service {
         // A second hidden WebView owns the submenu hitbox; the toolbar never stretches.
         popupRoot=new FrameLayout(this){
             @Override public boolean dispatchTouchEvent(MotionEvent event){
+                if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
+                    SupportMissionState.overlayTouch(OverlayService.this);
                 if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
                     closeIndependentPopup();return false;
                 }
@@ -1193,7 +1205,13 @@ public class OverlayService extends Service {
     private void createResultsWindow(){
         android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
         resultCollapsed=prefs.getBoolean("resultsCollapsed",false);
-        resultRoot=new FrameLayout(this);
+        resultRoot=new FrameLayout(this){
+            @Override public boolean dispatchTouchEvent(MotionEvent event){
+                if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
+                    SupportMissionState.overlayTouch(OverlayService.this);
+                return super.dispatchTouchEvent(event);
+            }
+        };
         resultRoot.setBackgroundColor(Color.TRANSPARENT);
         resultRoot.setClipChildren(true);
         resultPanel=new WebView(this);
@@ -3617,6 +3635,7 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
+        SupportMissionState.overlayStopped();
         FirebaseStats.setOverlayVisible(this,false);
         stopped=true;
         running=false;
