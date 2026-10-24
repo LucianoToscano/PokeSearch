@@ -6,8 +6,10 @@ on:
     paths:
       - "app/src/main/assets/api_result_contract.js"
       - "app/src/main/assets/api_reveal_contract.js"
+      - "app/src/main/assets/api_browser_transport.js"
       - "app/tests/lt77-api-contract.test.js"
       - "app/tests/lt77-api-reveal.test.js"
+      - "app/tests/lt77-api-browser-transport.test.js"
       - ".github/workflows/lt77-authorized-api-contract-qa.yml"
   workflow_dispatch:
 permissions:
@@ -27,6 +29,7 @@ jobs:
         run: |
           node app/tests/lt77-api-contract.test.js
           node app/tests/lt77-api-reveal.test.js
+          node app/tests/lt77-api-browser-transport.test.js
       - name: Confirm no Android APK is built or distributed
         run: |
           test ! -f app/build/outputs/apk/release/app-release.apk
