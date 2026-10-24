@@ -167,7 +167,8 @@ public class OverlayService extends Service {
             int perCard=dockDp()+resultMetadataWidthDp;
             // CSS flex gap occupies additional real width between cards.
             // Reserve 2dp for fractional WebView measurement/rounding.
-            int width=perCard*columns+visualResultGapBetween*(columns-1)+2;
+            int width=perCard*columns+
+                ResultsSpacingPolicy.additionalRowGapPx(visualResultGapBetween)*(columns-1)+2;
             return Math.max(dockDp(),Math.min(screenWidthDp()-16,width));
         }
         return dockDp()+resultMetadataWidthDp;
@@ -946,7 +947,8 @@ public class OverlayService extends Service {
         // is only a renderer, avoiding click+contextmenu double dispatch.
         final boolean[] dockHeld={false};
         final int[] dragResultStart={0,0};
-        final long[] lastResultMoveAt={0L};
+        // One 16ms frame budget for BOTH native windows (Pokébola and list).
+        final long[] lastDockFrameAt={0L};
         final Runnable dockLongPress=()->{
             if(dragged||params==null||stopped||loginPaused)return;
             dockHeld[0]=true;
@@ -965,7 +967,7 @@ public class OverlayService extends Service {
                         dragResultStart[0]=resultParams.x;
                         dragResultStart[1]=resultParams.y;
                     }
-                    lastResultMoveAt[0]=0L;
+                    lastDockFrameAt[0]=0L;
                     handler.removeCallbacks(dockLongPress);
                     handler.postDelayed(dockLongPress,600L);
                     return true;
@@ -1000,23 +1002,27 @@ public class OverlayService extends Service {
                             resultParams.x=dragResultStart[0]+moveX;
                             resultParams.y=dragResultStart[1]+moveY;
                         }
-                        updateWindow(); // The open toolbar follows the same Pokébola.
-                        if(resultParams!=null&&resultRoot!=null&&wm!=null){
-                            long now=android.os.SystemClock.uptimeMillis();
-                            if(now-lastResultMoveAt[0]>=16L){
-                                lastResultMoveAt[0]=now;
+                        // Throttle both native windows together. Updating the dock
+                        // on every MotionEvent while limiting only results made
+                        // their relative positions appear to drift during fast drags.
+                        long now=android.os.SystemClock.uptimeMillis();
+                        if(now-lastDockFrameAt[0]>=16L){
+                            lastDockFrameAt[0]=now;
+                            updateWindow(); // Includes open toolbar reposition.
+                            if(resultParams!=null&&resultRoot!=null&&wm!=null){
                                 try{wm.updateViewLayout(resultRoot,resultParams);}
                                 catch(Exception e){recordFailure("arrastar resultados com Pokébola",e);}
-                                moveDetail();
                             }
+                            moveDetail();
                         }
                     }
                     return true;
                 case MotionEvent.ACTION_UP:
                     handler.removeCallbacks(dockLongPress);
                     if(dragged){
-                        // Last position must be committed even if the 16ms
-                        // throttled layout update did not run for the final move.
+                        // Always commit the final position for BOTH windows,
+                        // even when ACTION_UP falls between throttled frames.
+                        updateWindow();
                         if(resultParams!=null&&resultRoot!=null&&wm!=null){
                             try{wm.updateViewLayout(resultRoot,resultParams);}
                             catch(Exception e){recordFailure("finalizar arraste conjunto",e);}
@@ -1358,7 +1364,10 @@ public class OverlayService extends Service {
     private void positionResultsUnderPokeball(boolean applyLayout){
         if(params==null||resultParams==null)return;
         DisplayMetrics display=metrics();
-        int gap=dp(2+visualHeaderAfterGap);
+        // The old independent results header is hidden. Keep the NORMAL gap
+        // exactly 2 physical pixels, not 2dp (which grows with density).
+        // Only an explicit Editor Visual after-header offset adds to it.
+        int gap=ResultsSpacingPolicy.DEFAULT_TOP_GAP_PX+dp(visualHeaderAfterGap);
         int x=params.x+dp(visualResultsOffsetX);
         int below=params.y+dp(30)+gap+dp(visualResultsOffsetY);
         int above=params.y-resultParams.height-gap+dp(visualResultsOffsetY);
