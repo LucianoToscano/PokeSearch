@@ -11,14 +11,16 @@ const between=(s,start,end)=>{
 let passes=0;
 function check(label,fn){fn();passes++;console.log("PASS LT70 "+label)}
 const location=between(dock,"function renderLocationChoices(){","function manualRefreshTap(){");
-const css=between(dock,"/* LT70 LOC-CENTER-01","</style>");
-check("160px screenshot panel without the right-side blank area",()=>{
+const css=between(dock,"/* LT77 Stage 3","</style>");
+const sanitizer=between(dock,"function sanitizeLocationRadiusDraft(raw){","function renderLocationChoices(){");
+check("LT77 one-row Location coordinates fit compact 256px popup",()=>{
  for(const s of ['body.controls-window #choices.locationPanel,',
  'body.popup-window.controls-window #choices.locationPanel,',
  'body.popup-window.controls-window.popup-above #choices.locationPanel{',
- 'width:160px!important;','max-width:160px!important;',
- '.locCoordsRow .locField:focus{'])assert.ok(css.includes(s),s);
- assert.ok(!css.includes("width:225px"),"no expansion to oversized legacy width");
+ 'width:min(256px,calc(100vw - 12px))!important;',
+ '.choiceHeader .locCoordsRow{'])assert.ok(css.includes(s),s);
+ assert.ok(location.includes("title.appendChild(fieldRow)"));
+ assert.ok(location.includes("panel.append(title,slide,label,message)"));
 });
 check("header Location + clipboard centered as one group",()=>{
  for(const s of ['.choiceHeader{','justify-content:center!important;',
@@ -29,19 +31,21 @@ check("header Location + clipboard centered as one group",()=>{
 check("input has exactly four numeric characters and bound 0–1000",()=>{
  for(const s of ['radiusField.type="text"','radiusField.min="0"','radiusField.max="1000"',
  'radiusField.maxLength=4','radiusField.setAttribute("maxlength","4")',
- 'radiusField.setAttribute("pattern","[0-9]{1,4}")',
- '.replace(/\\D/g,"").slice(0,4)','Math.min(1000,Number(digits))'])
+ 'radiusField.setAttribute("pattern","[0-9]{1,4}")'])
  assert.ok(location.includes(s),s);
+ assert.ok(sanitizer.includes('.replace(/\\D/g,"").slice(0,4)'));
+ assert.ok(sanitizer.includes('Math.min(1000,Number(digits))'));
 });
 check("numeric input sanitizer enforces four-digit values at runtime",()=>{
  const m=location.match(/radiusField\.oninput=\(\)=>\{([\s\S]*?)\n \};/);
  assert.ok(m,"radius change handler");
  const radiusField={value:"",dataset:{}},slide={value:"0"};
- const onInput=new Function("radiusField","slide",m[1]);
+ const onInput=new Function("radiusField","slide","sanitizeLocationRadiusDraft",m[1]);
+ const normalize=vm.runInNewContext(sanitizer+";sanitizeLocationRadiusDraft");
  const examples=[["0","0"],["1000","1000"],["10000","1000"],
  ["9999","1000"],["123abc","123"],["99.9","999"],["",""]];
  for(const [input,expected] of examples){
-  radiusField.value=input;onInput(radiusField,slide);
+  radiusField.value=input;onInput(radiusField,slide,normalize);
   assert.equal(radiusField.value,expected,input);
   assert.ok(radiusField.value.length<=4,"never longer than four");
  }
