@@ -505,7 +505,8 @@ public class MainActivity extends Activity {
 
         // Keep the center open for the user's Pokémon GO wallpaper.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
-        TextView footer=homeText("PokeSearch  •  PoGoCoordinates /search",10,
+        // LT73: show the installed APK's real version; no manual version strings.
+        TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+" LT  •  PoGoCoordinates /search",10,
             homeLightMode?Color.rgb(26,51,72):Color.rgb(185,208,233),false);
         footer.setGravity(Gravity.CENTER);
         footer.setBackground(homeSurface(
