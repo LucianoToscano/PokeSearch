@@ -110,8 +110,8 @@ check("LT62 followup: display-only translations preserve English site values",()
 });
 check("LT62 followup: Apply Clear Cancel are icon-only SVG buttons",()=>{
  for(const p of ['Aplicar filtros','Limpar filtros','Cancelar alterações',
-  'svg.innerHTML=art[icon]','modeApply filterIconAction',
-  'filterClear filterIconAction','filterIconAction filterCancel'])
+  'svg.innerHTML=icons[kind]','makeDockAction("apply","Aplicar filtros")',
+  'makeDockAction("clear","Limpar filtros")','makeDockAction("cancel","Cancelar alterações")'])
   assert.ok(dock.includes(p),p);
 });
 check("LT62 design: IV%, Raw IV and rank have empty placeholders and only ✓",()=>{
@@ -156,7 +156,7 @@ check("LT62 Filtros: seven direct compact entries with separate editor, never ac
 check("LT62 Filtros: single Min/Max placeholders and 29px gender chips",()=>{
  const block=dock.split("function renderExtraFilters(panel,make){")[1]
   .split("function renderFilterPicker(")[0];
- assert.ok(block.includes('input.value=""; // UI-only empty'));
+ assert.ok(block.includes('input.value=String(modeDraft[key]??"")'));
  assert.ok(block.includes('[[minKey,"Min","mínimo"],[maxKey,"Max","máximo"]]'));
  assert.ok(block.includes('cell.appendChild(input)'));
  assert.ok(!block.includes('cell.append(cap,input)'));
@@ -219,7 +219,7 @@ check("LT62 Favoritos: all 50 sprites visible in 10 x 5 grid, no paging",()=>{
  assert.ok(!picker.includes('previous.setOnClickListener'));
  assert.ok(!picker.includes('final int PAGE_SIZE=12;'));
  assert.ok(picker.indexOf('root.addView(selectedRow)')<picker.indexOf('root.addView(search,searchParams)'));
- assert.ok(picker.includes('count.setText("Selecionados  "+size+"/50")'));
+ assert.ok(picker.includes('count.setText("Selecionados "+size+"/50")'));
 });
 check("LT62 Favoritos: compact 348dp dialog and notifications only in Alerts",()=>{
  const picker=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
@@ -365,8 +365,8 @@ check("LT62 Filtros: numeric ✓ remain inline; three requested icon actions sho
  assert.ok(dock.includes('button.onclick=()=>confirmNumericFilter(keys,label)'));
  assert.ok(dock.includes(".filterCascadeEditor .filterInlineConfirm{"));
  assert.ok(panel.includes("if(rail)rail.appendChild(actions);"),"three requested actions must be in the DOM");
- assert.ok(body.includes('patchSelectedFilterKeys([multiKey,key])'));
- assert.ok(dock.includes('patchSelectedFilterKeys(["formSelections","form"])'));
+ assert.ok(body.includes('updateFiltersPanelStatus()'));
+ assert.ok(dock.includes('updateFiltersPanelStatus()'));
  assert.ok(!dock.includes('done.textContent="✓ Confirmar seleção"'));
 });
 check("LT62 Filtros: numeric ✓ patches only its own bounded fields",()=>{
@@ -728,7 +728,7 @@ check("LT62 visual Filtros: exclusive Sex and 7 Size remain compact and independ
  assert.ok(render.includes('["Any","Male","Female","Genderless"]'));
  assert.ok(render.includes('["XXS","XS","S","M","L","XL","XXL"]'));
  assert.ok(render.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}'));
- assert.ok(render.includes('patchSelectedFilterKeys([multiKey,key])'));
+ assert.ok(render.includes('updateFiltersPanelStatus()'));
  assert.ok(render.includes('numericConfirmButton(make,[minKey,maxKey],label)'));
 });
 
@@ -754,7 +754,7 @@ check("LT62 Tamanho: multi-select remains independent of Sex and other filters",
  assert.ok(block.includes('["XXS","XS","S","M","L","XL","XXL"]'));
  assert.ok(block.includes('if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);'));
  assert.ok(block.includes('modeDraft[multiKey]=[...selected];'));
- assert.ok(block.includes('patchSelectedFilterKeys([multiKey,key])'));
+ assert.ok(block.includes('updateFiltersPanelStatus()'));
  assert.ok(block.includes('chips("size","Tamanho")'));
  assert.ok(block.includes('chips("gender","Sexo")'));
 });
@@ -775,7 +775,7 @@ check("LT62 audit: Filtros rail visibly contains Apply, Clear, Cancel",()=>{
  const filters=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices(){",1)[0]||"";
  assert.ok(filters.includes('actions.append(apply,clear,cancel);'));
  assert.ok(filters.includes('if(rail)rail.appendChild(actions);'));
- assert.ok(filters.includes('svg.innerHTML=art[icon]'));
+ assert.ok(filters.includes('svg.innerHTML=icons[kind]'));
  assert.ok(filters.includes('apply.onclick=()=>'));
  assert.ok(filters.includes('clear.onclick=()=>'));
  assert.ok(filters.includes('cancel.onclick=closeChoices'));
@@ -788,7 +788,7 @@ check("LT62 audit: Favoritos counter is in header and picker passes outside taps
  assert.ok(header.includes('header.addView(count,'));
  assert.ok(header.includes('header.addView(finish,'));
  assert.ok(!src.includes('root.addView(counter)'));
- assert.ok(src.includes('count.setText("Selecionados  "+size+"/50")'));
+ assert.ok(src.includes('count.setText("Selecionados "+size+"/50")'));
  assert.ok(src.includes('FLAG_NOT_TOUCH_MODAL'));
  assert.ok(src.includes('window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND'));
  assert.ok(src.includes('android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND'));
@@ -859,7 +859,7 @@ check("LT62 Favorites: title counter, 10x5 grid and no redundant empty spacer",(
  const picker=fs.readFileSync(path.join(__dirname,
   "../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
  assert.ok(picker.includes('header.addView(count'));
- assert.ok(picker.includes('count.setText("Selecionados  "+size+"/50")'));
+ assert.ok(picker.includes('count.setText("Selecionados "+size+"/50")'));
  assert.ok(picker.includes('sprites.setColumnCount(10)'));
  assert.ok(picker.includes('sprites.setRowCount(5)'));
  assert.ok(picker.indexOf('root.addView(selectedRow)')<picker.indexOf('root.addView(search,searchParams)'));
