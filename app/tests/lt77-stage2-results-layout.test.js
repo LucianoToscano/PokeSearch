@@ -36,8 +36,8 @@ check("the phantom header padding in the independent results WebView is gone",()
   assert.match(markup,/body\.result-window #shell\{padding-top:0!important\}/);
   assert.ok(!markup.includes("body.result-window #shell{padding-top:var(--visual-header-y"));
 });
-check("first and last rows have no invisible padding or margin",()=>{
-  assert.match(markup,/body\.result-window #spawns:not\(:empty\)\{[\s\S]*?padding-top:0!important;padding-bottom:0!important;\s*margin-top:0!important;\s*\}/);
+check("no default phantom padding; explicit Editor top gap remains available",()=>{
+  assert.match(markup,/body\.result-window #spawns:not\(:empty\)\{[\s\S]*?padding-top:0!important;padding-bottom:0!important;\s*margin-top:var\(--visual-top-gap,0px\)!important;/);
 });
 check("default spacing is zero at 25, 45 and 65 pixel sprite size",()=>{
   for(const size of [25,45,65]){
