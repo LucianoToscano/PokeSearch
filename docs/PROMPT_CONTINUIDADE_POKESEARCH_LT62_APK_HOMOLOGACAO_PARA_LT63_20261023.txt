@@ -1,0 +1,91 @@
+CONTINUAR POKESEARCH — LT62 ASSINADO → HOMOLOGAÇÃO SAMSUNG / LT63
+Data do checkpoint: 23/10/2026
+
+Atue como Engenheiro Android Sênior do repositório LucianoToscano/PokeSearch.
+Continue SEM REINICIAR, SEM misturar com PvPPokeGo, SEM alterar applicationId,
+SEM destruir configurações, login ou preferências de usuários.
+
+GITHUB E BASE TÉCNICA
+- Repositório: LucianoToscano/PokeSearch
+- Branch de trabalho: fix/lt62-menu-visual-states-20261023
+- PR #34: Draft / aberta; main continua LT61 no commit caea98b7b57b9e45d5218e907eb392d76953dd53
+- Documento mestre único: docs/GUIA_MESTRE.md; ler seções 12.219–12.246 e histórico anterior.
+- Fonte de verdade de versão e APK: verificar PR HEAD, build run, artifact SOURCE_COMMIT.txt,
+  SHA256SUMS.txt, PACKAGE_VERSION.txt, SIGNING_CERT_SHA256.txt e guia (não inventar SHA).
+- Arquitetura: Android overlay + WebView + evaluateJavascript + probe.js; sem backend/proxy/GPS físico.
+- Android: applicationId com.lucianotoscano.pokesearch, namespace
+  com.lucianotoscano.pokesearchoverlay, targetSdk 33, compileSdk 36, minSdk 26.
+- Assinatura estável de teste: certificado SHA256
+  34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e
+- Build oficial LT62: .github/workflows/build-v062-compact-preview.yml;
+  versão 0.00.62 / versionCode 54260; PokeSearch-v0.00.62-LT.apk.
+- BUILD CONFIRMADO SUCCESS: GitHub Actions #40007032664, artefato #12524672001
+  nome PokeSearch-v0.00.62-LT, fonte EXATA do APK
+  878c7aa16918c30b96e0b1b651c16aeedec9927d
+  (commits documentais posteriores não mudam o APK).
+- APK 33.250.884 bytes, SHA256 8ce4b86457f32c9c618348a7c3a80f8e58b7403279bf67232fbcb894df20bb9c;
+  certificado persistente SHA256
+  34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e.
+- URL da run: https://github.com/LucianoToscano/PokeSearch/actions/runs/40007032664
+- Não fazer merge da PR #34 antes da autorização expressa.
+
+DESIGN/IMPLEMENTAÇÕES QUE DEVEM SER PRESERVADOS
+1. Modos: campos editáveis inicialmente vazios, placeholders A/D/S,
+   IV% Min/Max (limites 0–100), GL/UL # (1–50), ✓ único, Shiny independente.
+2. Filtros: cascata compacta sem cabeçalho 'Filtros Gerais'; PC/Nível Min/Max
+   sem duplicação, Sexo ⚥ ♂ ♀ ⚲ legíveis, Tamanho múltiplo, Clima e Forma
+   oficiais; critérios não modificados permanecem salvos.
+3. Localização: campo coords e raio 0–1000 km; ícone SVG para colar centralizado,
+   mensagens discretas sem texto OFF permanente; aplicar não limpa outros filtros.
+4. Favoritos: busca instantânea até 3 sugestões; sprites clicáveis removem;
+   no máximo 12 sprites por página (2×6), setas para alcançar os 50 sem scroll;
+   som/configuração de alertas fora deste painel.
+5. Notificações: duas seções Novos Pokémon e Pokémon Favoritos, com
+   Som/Sem som/OFF; seletor de áudio abre 36 opções + Padrão + Enviar áudio;
+   prévia e confirmação; Favoritos por padrão 'Quem é esse Pokémon? BR';
+   personalização de áudio por espécie oculta, função preservada.
+6. Atualização: ícone de duas setas circulares; toque curto Native.refresh;
+   segurar 600ms abre OFF / AUTO 3,5,10,15,20 minutos em uma linha; badge
+   de intervalo; sem duplicação 'Atualizar agora' nem click disparado por hold.
+7. Personalização: atalhos Info Pokémon e Editor Visual; P/M/G compactos;
+   nomes abreviados; olho + ↑/↓ alinhados; setas pulam controles protegidos.
+8. Info Pokémon: 21 opções em duas colunas, textos menores e sem descrição longa.
+9. Editor Visual: título curto, abas Pokémon/Menu, seções recolhíveis,
+   sliders e botões −/+, guias, transparências, posições, tamanhos,
+   importação/cópia JSON preservadas; prévia é desativada ao sair.
+10. Barra fixa, no máximo dez resultados, login e assinatura preservados.
+11. Atualizar somente docs/GUIA_MESTRE.md para checkpoints técnicos;
+    as notas de versão em app/src/main/assets/release_notes.json refletem a LT62.
+
+HOMOLOGAÇÃO FÍSICA AINDA PENDENTE (NÃO SUPOR OK POR PASSAR NODE)
+- Instalar APK atualizado sobre a LT61/LT62 com assinatura correspondente;
+  conferir login persistente, versão, overlays, permissões e preferências.
+- Testar todas as entradas de Modos e sua persistência/efeito real no PoGoCoordinates;
+  resultado com 0–10 Pokémon, site lento/erro, Shiny ativo com filtros.
+- Checar renderização/controles dos Filtros, Forma, sexo, tamanho, coordenadas e raio.
+- Testar que clique na engrenagem funciona com menu aberto; áreas transparentes
+  podem capturar toques nativos; não alegar que o pass-through está resolvido.
+- Favoritos: páginas, remoção, pesquisa #004 e sem scroll.
+- Notificações: som, silêncio e OFF, escolha de um dos 36 áudios, prévia, upload,
+  confirmação e legendas breves no Android.
+- Atualização: toque curto x segurar 600ms (sem refresh duplicado), 10min,
+  badge de intervalo e persistência.
+- Personalização: alinhamento das setas, movimentação e ocultação permitida,
+  seleção P/M/G; Info Pokémon e Editor Visual, tema claro/escuro, −/+, guias.
+- Verificar Android Gradle build e assinatura, não apenas as nove suítes Node.
+
+POLÍTICA DE TRABALHO
+- Uma etapa por resposta, mostre apenas a próxima, finalize
+  '✅ Etapa X concluída. Digite continue.'
+- Ao corrigir defeitos comprovados, registrar commits SHA, provas, testes e
+  riscos no Guia Mestre. Não gerar nova versão nem fazer merge sem autorização.
+- Evitar afirmações de testes físicos feitos pelo assistente sem evidência do Samsung.
+- Para release futura, nome: PokeSearch-v0.00.XX-LT.apk; preservar assinatura
+  permanente e versionCode monotonicamente crescente.
+
+TAREFA INICIAL DO PRÓXIMO CHAT
+1. Conferir PR #34, HEAD, Guia Mestre 12.246 e build confirmado #40007032664.
+2. Conferir artefato APK e certificado/versionCode/hash antes de repassar.
+3. Iniciar checklist de homologação real Samsung a partir dos itens acima.
+4. Se houver falha comprovada, corrigir em branch da LT62 sem merge;
+   evoluir para LT63 somente com autorização explícita.

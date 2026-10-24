@@ -122,6 +122,58 @@
           "O site pode devolver a mesma lista sem alteração visível; esse cenário ainda requer validação física."
         ]
       }
+    },
+    {
+      "id": "pokesearch-v062-lt-compact-ui-20261023",
+      "minVersionCode": 54260,
+      "date": "23/10/2026",
+      "title": "PokeSearch v0.00.62 LT Beta — Menus compactos e referências do site",
+      "sections": {
+        "novidades": [
+          "Menus compactos: Sexo agora usa [⚥][♂][♀][⚲], cada opção em seu quadrinho individual.",
+          "Comparação das seleções de Pokémon e filtros simples observadas no PoGoCoordinates, com importação explícita ao rascunho.",
+          "Aplicar, Limpar e Cancelar usam botões compactos com ícones SVG acessíveis.",
+          "Favoritos: até 50 espécies em grade compacta de 10 colunas × 5 linhas, contador no cabeçalho e pesquisa inferior.",
+          "Notificações compactas: Som, Sem som e OFF para Novos e Favoritos; 36 sons, prévia, confirmação e opção Enviar áudio.",
+          "Atualização por duas setas: toque curto para atualizar; toque longo para selecionar OFF ou AUTO 3/5/10/15/20 minutos."
+        ],
+        "melhorias": [
+          "Removidas colunas e margens vazias em Modos, Filtros, Localização, Atualização, Personalização e Informações.",
+          "Campos PC/Nível, botões de Tamanho, raio, filtros e ações ficam próximos do conteúdo, sem esticar os controles à largura total.",
+          "Editor Visual com abas Pokémon/Menu menores; controles P/M/G compactos e botões menos/mais ao lado de cada slider.",
+          "Refresh direto por toque curto, com opções de atualização automática por pressão longa.",
+          "Acompanhamento do tempo das consultas confirmadas, sem registrar dados pessoais.",
+          "PC e Nível agora têm entradas Mín./Máx. lado a lado, sem botões de incremento.",
+          "Ordenar e Clima exibem nomes compactos em português, mantendo os valores técnicos originais em inglês.",
+          "Modos com campos vazios e placeholders A/D/S, Min/Max e #; botão ✓ único e IV% aceitando limites inteiros 0–100.",
+          "Filtros em cascata sem 'Filtros Gerais'; PC/Nível vazios com Min e Max apenas uma vez; símbolos de Sexo maiores.",
+          "Localização mais curta: ícone SVG de colar alinhado, avisos discretos e preservação dos demais filtros.",
+          "Personalização com atalhos Info Pokémon/Editor Visual, P/M/G menores e comandos visíveis organizados com ↑/↓.",
+          "Info Pokémon em grade de duas colunas, 21 opções abreviadas e sem parágrafo explicativo.",
+          "Editor Visual em grupos recolhíveis, sliders compactos com −/+ e prévia visual encerrada ao trocar de menu."
+        ],
+        "correcoes": [
+          "Reconhece a mensagem oficial de nenhum spawn do site, preservando verificação de resposta posterior à pesquisa.",
+          "Shiny pendente não usa a mesma cor da confirmação efetiva.",
+          "Cores dos ícones independentes do fundo dos botões selecionados.",
+          "Preservação da barra de menus fixa, identidade Android, filtros e preferências de autenticação.",
+          "Validação dos filtros PC/Nível mesmo após alternar entre editores e preservação de valores não alterados.",
+          "Ordem dos comandos pula itens protegidos e impede setas sem destino; controles fixos continuam acessíveis.",
+          "Seleção de áudio de Favoritos inicia com 'Quem é esse Pokémon? BR' sem apagar preferências anteriores.",
+          "Proteção contra clique duplo após pressão longa no botão de atualização.",
+          "Favoritos mantêm a Pokébola, resultados e menu acessíveis por trás do diálogo não modal fora dos limites físicos do painel.",
+          "Barra de menu e submenus agora usam janelas Android independentes, com limites compactos e ajustes de posição horizontal/vertical.",
+          "Editor Visual compartilha novamente os botões P/M/G com a Personalização e atualiza preferências confirmadas pelo serviço.",
+          "Notificações distinguem preferência de som selecionada da permissão realmente concedida pelo Android.",
+          "Janelas menores evitam encolhimento sucessivo de largura, grandes áreas vazias e bloqueio desnecessário de toques fora dos painéis."
+        ],
+        "emDesenvolvimento": [
+          "Validação física das dimensões na WebView Samsung e das cascatas GL/UL, IV, filtros e Localização ainda necessária.",
+          "Sincronização bidirecional de todos os controles múltiplos continua em desenvolvimento; teste Node não comprova funcionamento do site autenticado.",
+          "APK compilado para teste deve ser homologado fisicamente no Samsung; aprovação automatizada não confirma alinhamento, toque longo, login, áudio, filtros ou resultados.",
+          "A arquitetura de janelas independentes está no código; a passagem real de toque externo, sons, teclado e posicionamento necessita homologação Samsung Android 16."
+        ]
+      }
     }
   ]
 }

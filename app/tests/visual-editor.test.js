@@ -56,7 +56,7 @@ test("invalid imported JSON is ignored and values are clamped",()=>{
  assert.equal(JSON.stringify(window.visualEditorCurrent()),before);
 });
 test("editor includes preset, live preview, JSON copy/import and reset",()=>{
- for(const term of ["compact:","balanced:","readable:","Copiar JSON","Restaurar padrão original",
+ for(const term of ["compact:","balanced:","readable:","Copiar JSON",'btn(actions,"Restaurar"',
   "Importar JSON digitado","JSON.stringify","renderVisualEditor","saveSoon","applyVisual","setTimeout"]){
   assert.ok(script.includes(term),term);
  }
@@ -83,7 +83,7 @@ test("rendered results remain an independent WebView and retain old filters",()=
  assert.ok(dock.includes("Native.setSearchConfig"));
  assert.ok(dock.includes("Native.resizeResultsMetadata"));
  assert.ok(dock.includes('visual_editor.js'));
- assert.ok(dock.includes('🎛 Editor visual temporário'));
+ assert.ok(dock.includes('link("Editor Visual","visual")'));
 });
 test("light theme changes foreground and actual button backgrounds",()=>{
  const {window,styles,classes}=fixture();
@@ -156,7 +156,7 @@ test("packed sprite pitch reserves symmetrical first and last art space",()=>{
  assert.equal((sprite-pitch)/2,15.5);
 });
 test("visual position sliders keep the currently open detail window in sync",()=>{
- assert.match(java,/recordFailure\("editor posição resultados",e\);\}\s*moveDetail\(\);/);
+ assert.match(java,/positionResultsUnderPokeball\(true\); \/\/ Editor offsets now relative to the unified icon\.\s*moveDetail\(\);/);
 });
 test("sparkle is vector white by default, yellow when site-verified",()=>{
  assert.ok(dock.includes('const QUICK_SOURCE_ICONS={sh:"sh"'));
@@ -260,7 +260,9 @@ test("Visual Editor Pokémon tab has direct P M G size buttons without restartin
  assert.ok(script.includes('if(window.renderSpriteSizeButtons)window.renderSpriteSizeButtons(panel,true);'));
  assert.ok(dock.includes('className="spriteSizeChoices"'));
  assert.ok(dock.includes('function refreshSpriteSizeButtons(){'));
- assert.ok(dock.includes('spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();'));
+ assert.ok(dock.includes('spriteSize=[35,45,55].includes(Number(sprite))?Number(sprite):45;'));
+ assert.ok(dock.includes('refreshSpriteSizeButtons();'));
+ assert.ok(!dock.includes('pending.row=Number(r)'));
  assert.ok(dock.includes('button.onclick=()=>{if(Native.setSpriteSize)Native.setSpriteSize(size);}'));
 });
 test("editor dark light and vertical horizontal work without native select dialogs",()=>{
@@ -356,8 +358,8 @@ test("Pokebola rectangle X width height and after-gap are controlled together",(
  assert.ok(java.includes("box.leftMargin=dp(left)"));
 });
 test("Editor supports precise one-unit adjustments and touch-area guides",()=>{
- for(const label of ["Botão + toque: posição Y (0 = topo)","Botão + toque: posição X",
-  "Área clicável: largura","Área clicável: altura","Espaço abaixo do botão"])
+ for(const label of ["Posição Y","Posição X",
+  "Área de toque · largura","Área de toque · altura","Espaço abaixo"])
   assert.ok(script.includes(label),label);
  assert.ok(script.includes('className="visualFineTune"'));
  assert.ok(script.includes('minus.onclick=()=>step(-1);plus.onclick=()=>step(1)'));
@@ -451,11 +453,18 @@ test("Modos rail and inline editor inherit the only menu transparency slider",()
 });
 test("single transparency controls ordinary submenus without residual band or border",()=>{
  const tail=dock.split("/* VISUAL-MENU-ALPHA-02:")[1]?.split("</style>")[0]||"";
- assert.ok(tail.includes("body.controls-window #choices:not(.visualPanel):not(.modeCascade){"));
+ assert.ok(tail.includes("body.controls-window #choices:not(.visualPanel):not(.modeCascade):not(.filterCascade):not(.morePanel):not(.periodCompact){"));
  assert.ok(tail.includes("background:var(--visual-menu-bg,rgba(15,19,26,.65))!important;"));
  assert.ok(tail.includes("border:0!important;box-shadow:none!important;"));
  assert.ok(dock.includes("/* VISUAL-MENU-ALPHA-01:"));
- assert.ok(!tail.includes("body.controls-window #choices.visualPanel{"));
+ // Geometric compactness of Visual Editor is allowed. This contract only
+ // forbids transparency/background overrides that would desync the theme.
+ const visualLayoutRules=[...tail.matchAll(/body\.controls-window #choices\.visualPanel\{([^}]*)\}/g)]
+  .map(match=>match[1]);
+ assert.ok(visualLayoutRules.length>0);
+ assert.ok(visualLayoutRules.every(rule=>
+  !/(?:^|;)\s*(?:background(?:-color)?|color|border|box-shadow)\s*:/.test(rule)));
+ assert.ok(visualLayoutRules.some(rule=>rule.includes("width:min(268px,calc(100vw - 14px))!important;")));
  const {window,styles}=fixture();
  for(const transparency of [0,50,100]){
   window.onVisualPrefs({menuTransparency:transparency});

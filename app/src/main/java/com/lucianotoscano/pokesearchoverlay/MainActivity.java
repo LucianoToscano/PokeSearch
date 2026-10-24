@@ -77,6 +77,7 @@ public class MainActivity extends Activity {
     private String alertToneTarget="";
     private String alertToneSpecies="";
     private android.media.MediaPlayer bundledTonePreview;
+    private android.media.Ringtone systemTonePreview;
     private FrameLayout homeRoot;
     private boolean homeLightMode=false;
 
@@ -937,6 +938,8 @@ public class MainActivity extends Activity {
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
+        if(OverlayService.isRunning())
+            serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
     }
     @Override protected void onPause(){
         FirebaseStats.setHomeVisible(this,false);
@@ -1550,7 +1553,7 @@ public class MainActivity extends Activity {
     // Launched only after user interaction with the Notifications menu.
     private void beginAlertToneChoice(String target){
         if("general".equals(target)||"favorites".equals(target)){
-            chooseAlertToneSource(target,"");
+            openBundledAlertTonePicker(target,"");
             return;
         }
         if(!"species".equals(target))return;
@@ -1570,6 +1573,9 @@ public class MainActivity extends Activity {
     // Local preview is triggered only by tapping a sound. No preference
     // is changed until the separate confirmation button is pressed.
     private void stopBundledTonePreview(){
+        android.media.Ringtone oldSystem=systemTonePreview;
+        systemTonePreview=null;
+        if(oldSystem!=null)try{oldSystem.stop();}catch(RuntimeException ignored){}
         android.media.MediaPlayer previous=bundledTonePreview;
         bundledTonePreview=null;
         if(previous!=null){
@@ -1599,16 +1605,39 @@ public class MainActivity extends Activity {
     }
     private void openBundledAlertTonePicker(String target,String pokemon){
         stopBundledTonePreview();
+        // First item is the Android default, next the 36 locally bundled MP3
+        // resources, and the last opens ACTION_OPEN_DOCUMENT to upload audio.
+        final int count=PokeSoundLibrary.size();
+        String[] choices=new String[count+2];
+        choices[0]="Padrão";
+        System.arraycopy(PokeSoundLibrary.LABELS,0,choices,1,count);
+        choices[count+1]="＋ Enviar áudio";
         final int[] selected={-1};
         AlertDialog dialog=new AlertDialog.Builder(this)
-            .setTitle("Toque para ouvir · "+PokeSoundLibrary.size()+" sons")
-            .setSingleChoiceItems(PokeSoundLibrary.LABELS,-1,(opened,which)->{
-                selected[0]=playBundledTonePreview(which)?which:-1;
+            .setTitle("Toque para ouvir · confirme em ✓")
+            .setSingleChoiceItems(choices,-1,(opened,which)->{
+                if(which==count+1){
+                    opened.dismiss();
+                    openAlertAudioFilePicker(target,pokemon);
+                    return;
+                }
+                if(which==0){
+                    stopBundledTonePreview();
+                    selected[0]=-2; // Explicit Android default; no custom URI.
+                    try{
+                        systemTonePreview=RingtoneManager.getRingtone(this,
+                            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+                        if(systemTonePreview!=null)systemTonePreview.play();
+                    }catch(RuntimeException ignored){}
+                }else{
+                    selected[0]=playBundledTonePreview(which-1)?which-1:-1;
+                }
                 ((AlertDialog)opened).getButton(AlertDialog.BUTTON_POSITIVE)
-                    .setEnabled(selected[0]>=0);
+                    .setEnabled(selected[0]!=-1);
             })
-            .setPositiveButton("Usar este som",(opened,which)->{
-                if(selected[0]<0)return;
+            .setPositiveButton("✓ Usar áudio",(opened,which)->{
+                if(selected[0]==-1)return;
+                if(selected[0]==-2){storeAlertTone(target,pokemon,"");return;}
                 Uri chosen=PokeSoundLibrary.soundUri(this,selected[0]);
                 if(chosen!=null)storeAlertTone(target,pokemon,chosen.toString());
             })
@@ -1623,7 +1652,7 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this)
             .setTitle("Som de "+("species".equals(target)?pokemon:
                 "favorites".equals(target)?"favoritos":"novos Pokémon"))
-            .setItems(new String[]{"🎶 Biblioteca PokeSearch (24 sons)","🔔 Toques do Android",
+            .setItems(new String[]{"🎶 Biblioteca PokeSearch ("+PokeSoundLibrary.size()+" sons)","🔔 Toques do Android",
                 "🎵 Escolher áudio (MP3/OGG) do aparelho ou Drive","↩ Restaurar som padrão"},
                 (dialog,which)->{
                     if(which==0)openBundledAlertTonePicker(target,pokemon);
@@ -1663,6 +1692,34 @@ public class MainActivity extends Activity {
             Toast.makeText(this,"Seletor de sons indisponível no Android",Toast.LENGTH_LONG).show();
         }
     }
+    private void confirmUploadedAlertTone(String target,String species,Uri chosen){
+        stopBundledTonePreview();
+        AlertDialog confirm=new AlertDialog.Builder(this)
+            .setTitle("Áudio enviado")
+            .setMessage("Ouça a prévia e confirme para usar nas notificações.")
+            .setNeutralButton("▶ Ouvir",null)
+            .setPositiveButton("✓ Usar áudio",(dialog,which)->
+                storeAlertTone(target,species,chosen.toString()))
+            .setNegativeButton("Cancelar",null).create();
+        confirm.setOnShowListener(shown->
+            confirm.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v->{
+                stopBundledTonePreview();
+                try{
+                    bundledTonePreview=android.media.MediaPlayer.create(this,chosen);
+                    if(bundledTonePreview==null){
+                        Toast.makeText(this,"Prévia indisponível",Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    bundledTonePreview.setOnCompletionListener(done->stopBundledTonePreview());
+                    bundledTonePreview.start();
+                }catch(RuntimeException error){
+                    stopBundledTonePreview();
+                    Toast.makeText(this,"Não foi possível ouvir o arquivo",Toast.LENGTH_SHORT).show();
+                }
+            }));
+        confirm.setOnDismissListener(done->stopBundledTonePreview());
+        confirm.show();
+    }
     private void saveChosenAlertTone(Intent data,boolean document){
         String target=alertToneTarget,species=alertToneSpecies;
         alertToneTarget="";alertToneSpecies="";
@@ -1680,8 +1737,11 @@ public class MainActivity extends Activity {
                 Toast.makeText(this,"O provedor de áudio não concedeu acesso permanente. Baixe o MP3 no aparelho.",Toast.LENGTH_LONG).show();
                 return;
             }
+            // Choosing a file does not persist the tone: preview + confirm first.
+            confirmUploadedAlertTone(target,species,uri);
+            return;
         }
-        String chosen=!document&&uri.equals(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))?
+        String chosen=uri.equals(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))?
             "":uri.toString();
         storeAlertTone(target,species,chosen);
     }
@@ -1752,6 +1812,7 @@ public class MainActivity extends Activity {
         if(requestCode==202)startOverlay();
         if(requestCode==204){
             boolean granted=results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED;
+            serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
             Toast.makeText(this,granted&&WatchAlerts.permissionGranted(this)?
                 "Permissão de notificações concedida":"Permissão negada. Configure as notificações no Android.",
                 Toast.LENGTH_LONG).show();
