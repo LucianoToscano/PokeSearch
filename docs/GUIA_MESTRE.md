@@ -5199,3 +5199,10 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Auditados sem recriação:** Favoritos já conta `Selecionados n/50` na mesma linha e grade 10×5; Notificações possui duas seções compactas e três ícones alinhados; Filtros mantém ✓/lixeira/X, Tamanho de sete opções, Sexo quatro opções, confirmações numéricas; Localização reduzida a 172px e raio dentro do input; Editor Visual mantém presets/temas/escala/orientação e persistência. A separação das janelas 12.275 trata o bloqueio nativo de toques. Não acumular CSS novo desnecessário.
 
 **Cobertura:** duas regressões UX verificam o seletor real do Editor Visual e o retorno de permissão Android. Sem APK, sem main/merge e sem promoção LT63.
+
+
+### 12.277 — LT62: CI de compilação Android somente leitura de código, sem APK (23/10/2026)
+
+**Motivação:** a auditoria estrutural 12.275 introduziu uma segunda WebView e a ponte de popup em `OverlayService.java`. Nove suítes Node e a classe Java de geometria comprovam contratos, mas não compilam classes dependentes do SDK Android. Criado workflow isolado `.github/workflows/pokesearch-android-compile-qa.yml`, acionado por mudanças na PR #34, com JDK 17/Gradle 8.11.1/SDK 36. Executa exclusivamente `gradle :app:compileDebugJavaWithJavac`; não executa `assemble`, `bundle`, assinatura nem publica APK. A própria verificação falha se algum `.apk` surgir no diretório de saída do job.
+
+**Estado:** revisão de código e QA em curso na branch `fix/lt62-menu-visual-states-20261023`, PR Draft e main LT61 mantidas. Último APK assinado LT62 continua sendo o anterior ao trabalho de arquitetura; não afirmar homologação Samsung antes de instalação de build expressamente autorizado. Relatar outcome de compilação e erros reais após a execução.
