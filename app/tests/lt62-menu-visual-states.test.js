@@ -713,8 +713,8 @@ check("LT62 visual Filtros: precise width contract per editor, never giant Sex p
  const context={};
  vm.runInNewContext("function filterCascadeEditorWidth(label){"+code+";this.resolve=filterCascadeEditorWidth",context);
  for(const [type,expected] of [
-  ["Sexo",134],["Tamanho",230],["PC",168],["Nível",168],
-  ["Clima",160],["Ordenar",156],["Forma",110],["PC mínimo PvP",116]
+  ["Sexo",118],["Tamanho",230],["PC",114],["Nível",114],
+   ["Clima",172],["Ordenar",122],["Forma",180],["PC mínimo PvP",100]
  ])assert.equal(context.resolve(type),expected,type);
 });
 check("LT62 visual Filtros: exclusive Sex and 7 Size remain compact and independent",()=>{
