@@ -7,8 +7,7 @@ on:
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java'
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/ResultsSpacingPolicy.java'
       - 'app/src/main/assets/dock.html'
-      - 'app/tests/ResultsSpacingPolicyTest.java'
-      - 'app/tests/lt77-stage2-results-layout.test.js'
+      - 'app/tests/**'
       - '.github/workflows/lt77-stage2-results-qa.yml'
   workflow_dispatch:
 permissions:
