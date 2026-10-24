@@ -5428,3 +5428,26 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Homologação física Samsung ainda pendente:** conferir painel ~192px antes/depois de focar coordenadas e abrir teclado; texto `[0]km`, `[999]km` e `[1000]km` sem lacuna, rejeição de um quinto caractere e acima de 1000; centralização título+Colar, slider e ações; abrir Localização, tocar novamente para fechar com teclado aberto, trocar entre menus sem retrair a barra; painel não intercepta resultados indevidamente; aplicar/limpar coordenadas e raio mantendo Shiny, GL/UL, Favoritos, Clima branco/preto e demais filtros; verificar funcionamento normal com limite de dez resultados. **Nenhum teste físico foi realizado pelo assistente.**
 
 **Restrições mantidas:** não fazer merge na `main`, não converter Draft para Ready, preservar branches/PRs LT68 e LT69, package, namespace, identidade persistente e assets. Este adendo documental é posterior ao build e não modifica os bytes do APK LT70 validado.
+
+
+---
+
+## LT71 — Samsung: remover espaço direito e centralizar Radius (24/10/2026)
+
+**Motivação:** print Samsung posterior à LT70 mostrou espaço vazio à direita da parte inferior do painel Localização e campo Radius+km+✓+Limpar deslocado à esquerda, apesar da largura CSS original de 192px. Auditoria encontrou regra mais específica `body.popup-window.controls-window #choices.locationPanel .locRadiusRow {width:max-content!important}` herdada de LT67/LT68, que tinha precedência sobre a centralização geral LT70. O medidor JS do popup também considerava `scrollWidth` de todos os descendentes e podia aumentar a janela nativa independentemente da largura visual do cartão.
+
+**Correção implementada sem alterar os demais menus:** nova branch `fix/lt71-location-trim-native-center-20261024`, base LT70 `a6a82d8964f790e7fc16d59cf2c981b94839dc6a`; [PR #45](https://github.com/LucianoToscano/PokeSearch/pull/45) Draft (sem merge). Em `dock.html`, bloco `LT71 LOC-NATIVE-TRIM-01` no fim do CSS redefine **somente** o cartão Localização para **160px CSS** (mais estreito que o LT70), substitui `width:max-content` legado por `width:100%` na linha inteira com especificidade popup nativa, aplica `justify-content:center` e mantém o input de Radius e `km` adjacentes. Ajusta fonte das coordenadas para 9px, sem bloquear edição/rolagem horizontal do campo. O JS `fit()` continua dimensionando os demais popups pelo conteúdo, mas para `choiceOpen==="location"` usa precisamente `Math.round(rect.width)` no `Native.resizePopup` para impedir bordas invisíveis ao focar o teclado. Preserva slider, 0–1000, máximo de quatro dígitos, segundo toque fecha, troca de menus e `Native.setLocation` sem limpar outros filtros.
+
+**Testes:** a suíte `overlay-ux.test.js` foi atualizada para assegurar ambos os invariantes de geometria (popups gerais adaptativos; Localização exatamente do tamanho da caixa), não para suprimir falhas. A suíte LT70 passou a conferir **160px** e adicionou duas verificações explícitas de precedência CSS e largura da WebView nativa, total **11/11 PASS**. Na execução completa, **18 suítes Node PASS** (`overlay-ux`: 487 verificações; Localização: 68; probe: 144), `PopupTouchGeometry` **44/44 PASS**, sintaxe JS inline de HTML e `probe.js` validada, `gradle :app:testDebugUnitTest :app:assembleDebug` **BUILD SUCCESSFUL**, minimização R8/ProGuard e shrinkResources preservadas.
+
+**Build/assinatura:** workflow `.github/workflows/build-v071-lt-location-signed.yml`, [GitHub Actions 40073169208](https://github.com/LucianoToscano/PokeSearch/actions/runs/40073169208) **SUCCESS**, artefato oficial `12551703043`; certificado persistente recuperado exclusivamente dos secrets Actions. Arquivo oficial `PokeSearch-v0.00.71-LT.apk` extraído do artefato e `SHA256SUMS.txt` confrontado com SHA-256 calculado localmente: **OK**. Relatório `apksigner verify` comprova esquema v2 verdadeiro e **um assinante**, SHA-256 do certificado original aprovado. Build é variante interna debug assinada com R8/shrinkResources, **não** afirmar release não depurável.
+
+- Application ID: `com.lucianotoscano.pokesearch`
+- `versionCode=54271`; `versionName=0.00.71`
+- **Fonte exata compilada:** `38ef839973fed400518ebc94b5c030d53b084b15`
+- **SHA-256 APK:** `18cfe6d86aecfad9d8a06a3e0a67d7a5663fc0df637f0a0013e21a1de1cd9fcb`
+- **SHA-256 certificado:** `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`
+
+**Homologação Samsung PENDENTE:** comparar LT70 e LT71 no aparelho; confirmar painel reduzido sem coluna preta à direita; texto da coordenada longo visível/editável; título e Colar centrados; Radius [1000]km e ✓/Limpar centralizados; sem crescimento ao focar/teclado; segundo toque fecha e outros menus abrem; não cobrir sprites/resultados; aplicar/limpar Localização sem afetar Shiny, GL/UL, Favoritos, Clima e dez resultados. Não houve teste físico. LT70/PR #44, LT69/PR #43, LT68/PR #41 e main preservados; PR #45 segue Draft.
+
+**Nota de rastreabilidade:** este adendo é posterior ao APK e altera apenas documentação; o binário oficial corresponde ao commit de código mencionado, sem incluir este registro.
