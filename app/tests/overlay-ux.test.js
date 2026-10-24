@@ -2812,7 +2812,7 @@ test("FILTERS-POGO-07 Applied requires native verified submission and accepted c
   dock.includes("filtersConfirmed=false)=>{")&&
   dock.includes("siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale")&&
   phase.includes("verified?\"✓ Aplicado no PoGoCoordinates\"")&&
-  phase.includes("dirty?\"● Alterações ainda não aplicadas\"")&&
+  phase.includes("dirty?\"● Falta aplicar\"")&&
   dock.includes('button.classList.toggle("site-filters-applied",count>0&&siteFiltersConfirmed');
 });
 test("FILTERS-POGO-08 scoped Clear preserves species, IV, Shiny and coordinates",()=>{
