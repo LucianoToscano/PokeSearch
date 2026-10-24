@@ -548,8 +548,12 @@ public class MainActivity extends Activity {
         final boolean preview=BuildConfig.DEBUG && getSharedPreferences("prefs",0)
             .getBoolean(UPDATE_PREVIEW_ENABLED,false);
         final UpdateCenter.Manifest info=currentDriveUpdate;
-        if(preview?getSharedPreferences("prefs",0).getBoolean(UPDATE_PREVIEW_DISMISSED,false)
-                  :!UpdateCenter.isEligible(this,info)){
+        if(!preview){
+            if(!UpdateCenter.isEligible(this,info)){
+                holder.setVisibility(View.GONE);
+                return;
+            }
+        }else if(getSharedPreferences("prefs",0).getBoolean(UPDATE_PREVIEW_DISMISSED,false)){
             holder.setVisibility(View.GONE);
             return;
         }
