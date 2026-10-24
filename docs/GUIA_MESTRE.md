@@ -5294,3 +5294,14 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 
 **Limites de homologação:** extração continua dependente da resposta do site; retorno quando formulário muda, lazy load das imagens e refresco de site dependem de teste físico Samsung. Confrontar 0/50 favoritos, GL/UL, Shiny, Localização, nenhuma coordenada errada por Pokémon, AUTO OFF e senha/login persistente. Não distribuir APK sem assinatura original verificada.
 
+
+## LT65 — Vídeo Samsung: feedback de Get coords e detalhes longe do dock (24/10/2026)
+
+**Evidência:** gravação `Screen_Recording_20261024_004951_One UI Home.mp4` (~171 s, 1080×2340). Aos ~149–151 s, Nidoran♂ já tem coordenadas e aparece confirmação Android "Copiado." Ao redor de ~157–164 s, Exeggcute continua sem coordenadas: o usuário toca Get coords e em seguida recebe "Obtenha as coordenadas primeiro" ao tentar copiar. O card detalhado se sobrepõe verticalmente à barra de ferramentas em ~143–163 s. Tamanho, Sexo, Ordenar, Localização, Favoritos e Atualização abriram visualmente. **Não há prova em vídeo de um despawn chegar a zero; não afirmar aprovação disso.**
+
+**Raiz técnica adicional ao LT64:** `OverlayService.update()` chama `showDetails(selected)` a cada alteração de status; em `detail.html`, `showDetails` reatribuía `currentCoords` e `coordsValue` a cada render, escondendo a mensagem de sucesso/erro/pedido pendente exibida por `window.coordsResult`. `copyCoords()` sem coordenadas apenas trocava o texto do botão por uma instrução inerte. `moveDetail()` usava a coordenada Y dos resultados, podendo ocupar a mesma região tocável da toolbar.
+
+**Correções LT65:** `detail.html` agora mantém `coordsNote` e `currentCoords` para a mesma identidade de Pokémon até mudar de card; Get coords mostra "Consultando coordenadas" e o botão de copiar vazio aciona a mesma consulta nativa (com cópia automática). Exibe retorno real do site, evita cliques duplicados e libera estado após 9 s caso o callback seja perdido. `OverlayService.java` coloca card abaixo do dock, ou acima quando necessário, se houver sobreposição física; usa dimensões e limites nativos `WindowManager`. Resposta de Get coords recupera `reason` quando `status` estiver ausente. Sem alteração de API, login, filtros, Shiny, PvP, validade de resultados, assinatura ou applicationId.
+
+**Rastreabilidade:** branch `fix/lt65-samsung-detail-feedback-20261024`, baseada no SHA LT64 `9e3c44c6f3bc15557eacabcd2895c071758c976e`. Não realizar merge ou Ready. Regressão `app/tests/lt65-detail-feedback.test.js`. `versionName=0.00.65` e `versionCode=54263` para APK próprio, somente após build assinado e conferido. Homologação física Samsung permanece pendente.
+
