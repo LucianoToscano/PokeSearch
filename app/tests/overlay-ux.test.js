@@ -2757,7 +2757,7 @@ test("FILTERS-POGO-03 size and gender buttons never invent site-supported option
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
  const probe=read("assets/probe.js");
  return filters.includes('["XXS","XS","S","M","L","XL","XXL"]')&&
-  filters.includes('["Any","Male","Female","Genderless"]')&&
+  filters.includes('["Male","Female","Genderless"]')&&
   !filters.includes('button.disabled=!actual&&!selected.has(resolved)')&&
   filters.includes('modeDraft[multiKey]=[...selected]')&&
   !filters.includes('extraChip","Qualquer"')&&
@@ -2916,8 +2916,8 @@ test("LT57-ONEFORM-03 Size multi and Gender single radio preserve Any",()=>{
  return filters.includes('const selected=new Set(existing.filter(')&&
   filters.includes('if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);')&&
   filters.includes('modeDraft[multiKey]=[...selected]')&&
-  filters.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}')&&
-  filters.includes('v==="Any"?"⚥"')&&
+  filters.includes('if(isGender){modeDraft[multiKey]=checked?[]:[resolved];}')&&
+  filters.includes('v==="Male"?"♂"')&&
   filters.includes('group.setAttribute("role","radiogroup")')&&
   !filters.includes('button.disabled=!actual&&!selected.has(resolved)')&&
   probe.includes('function extraMulti(key,desired,operation)')&&
@@ -3166,7 +3166,7 @@ test("LT58-SITE-SELECT-02 Gender exclusive; Form directly below; redundant text 
  const p=read("assets/probe.js");
  return f.includes('chips("gender","Sexo");\n  const formSelected=')&&f.includes('field("Forma",formEditor)')&&
   f.includes('group.setAttribute("role","radiogroup")')&&
-  f.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}')&&
+  f.includes('if(isGender){modeDraft[multiKey]=checked?[]:[resolved];}')&&
   p.includes('if(key==="gender"&&Array.isArray(filters.genderSelections))')&&
   p.includes('extraMatches("gender",wanted[0]||"")')&&
   service.includes('key.equals("genderSelections")?1:')&&
