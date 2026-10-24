@@ -417,10 +417,13 @@ public final class PokemonPicker {
                     int displayH=activity.getResources().getDisplayMetrics().heightPixels;
                     int actualHeight=window.getDecorView().getHeight();
                     if(actualHeight<=0)return;
-                    int margin=dp(activity,8),gap=dp(activity,18);
+                    int margin=dp(activity,8),gap=dp(activity,2),iconHalf=dp(activity,12);
                     int left=Math.max(margin,Math.min(screen-margin-preferredWidth,
                         anchorX-preferredWidth/2));
-                    int below=anchorY+gap,above=anchorY-actualHeight-gap;
+                    // anchorY is the tapped star's CENTER. Start just outside
+                    // its bounds; the former 18dp center-gap pushed Favorites down.
+                    int below=anchorY+iconHalf+gap;
+                    int above=anchorY-iconHalf-actualHeight-gap;
                     int top=below+actualHeight<=displayH-margin?below:
                         Math.max(margin,above);
                     top=Math.max(margin,Math.min(displayH-margin-actualHeight,top));
