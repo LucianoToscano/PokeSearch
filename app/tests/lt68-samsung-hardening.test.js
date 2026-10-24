@@ -6,6 +6,7 @@ const read=p=>fs.readFileSync(path.join(root,p),"utf8");
 const dock=read("assets/dock.html"),probe=read("assets/probe.js");
 const java=read("java/com/lucianotoscano/pokesearchoverlay/OverlayService.java");
 const geometry=read("java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java");
+const favorites=read("java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java");
 const between=(s,a,b)=>{const start=s.indexOf(a);assert.ok(start>=0,a);const end=s.indexOf(b,start+a.length);assert.ok(end>start,b);return s.slice(start,end)};
 let passed=0,failed=0;
 function check(name,test){try{test();passed++;console.log("PASS LT68 Samsung "+name)}
@@ -40,6 +41,15 @@ check("Independent native popup obeys touch geometry and remains anchored",()=>{
  for(const bit of ['PopupTouchGeometry.placeBeside(','PopupTouchGeometry.place(','PopupTouchGeometry.alignRail(','PopupTouchGeometry.avoidResult(','popupParams.width=b.width;popupParams.height=b.height;'])
   assert.ok(java.includes(bit),bit);
  assert.ok(geometry.includes("if(overlaps(candidate,results))continue;"));
+});
+check("Favorites dialog anchors to the star and lets background taps pass",()=>{
+ assert.ok(dock.includes("Native.openWatchListAt(Math.round(target.left-host.left+target.width/2)"));
+ assert.ok(service.includes("@JavascriptInterface public void openWatchListAt(int triggerDp,int triggerYDp)"));
+ assert.ok(service.includes("showFavoritePicker(anchorX,anchorY)"));
+ assert.ok(favorites.includes("int anchorX,int anchorY"));
+ assert.ok(favorites.includes("lp.gravity=Gravity.TOP|Gravity.LEFT"));
+ assert.ok(favorites.includes("FLAG_NOT_TOUCH_MODAL"));
+ assert.ok(favorites.includes("window.setLayout(preferredWidth,"));
 });
 check("Disabled Get coords cannot click, user can retry after site unlocks",()=>{
  const part=between(probe,'if(action.startsWith("coords:")){','if(action.startsWith("readCoords:")){');
