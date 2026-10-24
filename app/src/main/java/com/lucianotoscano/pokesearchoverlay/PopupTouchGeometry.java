@@ -90,6 +90,35 @@ final class PopupTouchGeometry {
         return new Bounds(x,y,width,height,false);
     }
 
+
+    /**
+     * LT77 Stage 4: use the actual tapped icon height in vertical menus.
+     * The old fixed 16 physical pixels drifted with display density and
+     * smaller/larger toolbar cells. Do not shift or resize the toolbar.
+     */
+    static Bounds placeBesideMeasured(int screenWidth,int screenHeight,
+                                     int toolbarX,int toolbarY,int toolbarWidth,int toolbarHeight,
+                                     int triggerCenterY,int triggerHeight,
+                                     int requestedWidth,int requestedHeight,int margin) {
+        int edge=Math.max(0,margin);
+        int maxHeight=Math.max(0,screenHeight-2*edge);
+        int right=Math.max(0,screenWidth-edge-(toolbarX+toolbarWidth));
+        int left=Math.max(0,toolbarX-edge);
+        if(toolbarWidth<=0||toolbarHeight<=0||triggerHeight<=0||
+                requestedWidth<=0||requestedHeight<=0||maxHeight<=0||
+                Math.max(left,right)<=0)
+            return new Bounds(0,0,0,0,false);
+        boolean useRight=right>=requestedWidth||
+            (left<requestedWidth&&right>=left);
+        int space=useRight?right:left;
+        int width=Math.min(requestedWidth,space),height=Math.min(requestedHeight,maxHeight);
+        if(width<=0||height<=0)return new Bounds(0,0,0,0,false);
+        int x=useRight?toolbarX+toolbarWidth:toolbarX-width;
+        int triggerTop=toolbarY+clamp(triggerCenterY,0,toolbarHeight)-triggerHeight/2;
+        int y=clamp(triggerTop,edge,screenHeight-edge-height);
+        return new Bounds(x,y,width,height,false);
+    }
+
     /**
      * LT63: keep the *native touch rectangle* away from the visible results
      * overlay, even after the user drags either surface. CSS transparency
