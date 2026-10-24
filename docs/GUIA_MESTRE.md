@@ -5524,3 +5524,19 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Regressão:** 21 suítes Node (incluindo LT74 `8/8`, LT73 `5/5`, LT72 `10/10`), Java `UpdatePolicy 14/14`, `PopupTouchGeometry 44/44`, Gradle `:app:testDebugUnitTest :app:assembleDebug` BUILD SUCCESSFUL. Preserve-se o overlay, sessão, Home, Firebase e filtros existentes por contrato; o funcionamento físico do Samsung **ainda requer homologação**.
 
 **Roteiro Samsung LT74:** instalar por cima da LT72/LT73 sem desinstalar; validar rodapé `v0.00.74`, login/Firebase; tocar e segurar rodapé, ver `SIMULAÇÃO`; alternar claro/escuro, conferir card; tocar `Baixar APK` e verificar apenas Toast, sem navegador/download; tocar ✕ e confirmar desaparecimento; fechar/reabrir o app e garantir que permaneça oculto; tocar e segurar rodapé para desligar e novamente para religar a simulação; confirmar reaparição. Com prévia desligada e manifesto público `enabled:false`, não deve aparecer aviso. Teste do **link externo real** fica pendente de publicação homologada; não afirmar homologação do download real por meio do mock. Não dar merge ou publicar versão no Drive antes da autorização/homologação.
+
+---
+
+### LT74 — Entrega via Drive confirmada após erro do ChatGPT Android (24/10/2026)
+
+**Falha reproduzida:** o usuário enviou screenshot da mensagem `Library file not found` ao abrir o link de anexo do APK LT74 no aplicativo ChatGPT Android. Falha no canal de entrega do chat, não prova falha no APK ou na instalação Android. Evitar reenviar repetidamente links sandbox como única opção.
+
+**Solução Drive efetivada:** upload na pasta oficial `Atualizacoes_PokeSearch`, ID `1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA-`. Foram **criados arquivos novos**, sem substituir os existentes:
+- APK LT74: `PokeSearch-v0.00.74-LT.apk`, ID `18XMbfJOjJI4A-dfmaYK5EZ8p8VLu2sg9`, link de visualização `https://drive.google.com/file/d/18XMbfJOjJI4A-dfmaYK5EZ8p8VLu2sg9/view`, 34.664.510 bytes.
+- Backup ZIP oficial do GitHub Actions: `PokeSearch-v0.00.74-LT-homologacao.zip`, ID `1J0eXfvduFMkJW9ToHTNneZaOyFWF_bPe`, link `https://drive.google.com/file/d/1J0eXfvduFMkJW9ToHTNneZaOyFWF_bPe/view`, 31.891.610 bytes.
+
+**Integridade conferida após upload:** download de leitura autenticada do APK **a partir do próprio Drive**, SHA-256 calculado `3d1bf395dd25f0d5362612f343f318fd07878c3e8a6935b7f2e909140f52443d`, idêntico ao APK oficial do GitHub Actions e ao SHA256SUMS.txt; `unzip -t` sem erros. Assinatura Android v2 e certificado persistente foram validados no workflow assinado #40076752446. Abertura do link/instalação **ainda precisa de teste no Samsung**.
+
+**Visibilidade:** APK LT74 e ZIP de homologação **privados**, acessíveis ao proprietário autenticado (não conceder `anyone/reader` nesta etapa). LT62 permanece público por link, não foi substituído. `atualizacao.json` original com ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf` não foi editado e mantém `enabled:false`; nenhum aviso de atualização real foi publicado. Não converter PR #48 Draft em Ready, não realizar merge na `main`.
+
+**Próximo passo de validação:** no Samsung abrir o link Drive com a conta proprietária, baixar e instalar a LT74 por cima da LT73, testar o long-press no rodapé, card `SIMULAÇÃO`, interação de botão e ✕, persistência de dispensa e alternância claro/escuro. Depois, homologar fluxo remoto real em ambiente controlado sem anúncios prematuros.
