@@ -2665,6 +2665,111 @@ body.controls-window #choices.locationPanel .compactLocationActions .psLineActio
 }
 body.controls-window #choices.locationPanel input[type="range"]{width:calc(100% - 8px)!important;max-width:100%!important}
 body.controls-window #choices.locationPanel #locHint[hidden]{display:none!important}
+/* LT66 compact Samsung panels. Native WindowManager already positions
+   these independent popups; a second 34px CSS offset caused Modes drift. */
+body.popup-window.controls-window #choices.modePanel.modeCascade,
+body.popup-window.controls-window.visual-menu-vertical #choices.modePanel.modeCascade,
+body.popup-window.controls-window.popup-above #choices.modePanel.modeCascade{
+ top:0!important;bottom:auto!important;left:0!important;right:auto!important;
+ max-height:var(--popup-room,440px)!important;
+}
+body.popup-window.controls-window #choices.modePanel.modeCascade .modeCascadeRail{
+ left:0!important;right:auto!important;overflow-y:auto!important;overscroll-behavior:contain!important;
+}
+body.popup-window.controls-window #choices.modePanel.modeCascade .modeCascadeEditor{
+ left:54px!important;right:auto!important;max-height:var(--popup-room,440px)!important;
+ overscroll-behavior:contain!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraGenderField>label{
+ display:none!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraGenderField{
+ padding:0!important;margin:0!important;min-height:0!important;
+ gap:0!important;align-items:start!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"]{
+ display:grid!important;grid-template-columns:repeat(4,26px)!important;
+ column-gap:2px!important;row-gap:0!important;
+ width:max-content!important;max-width:none!important;padding:0!important;margin:0!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"] .extraChip{
+ box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:26px!important;min-width:26px!important;max-width:26px!important;
+ height:25px!important;min-height:25px!important;max-height:25px!important;
+ font:600 16px/1 Arial,"Noto Sans Symbols 2","Segoe UI Symbol",sans-serif!important;
+ padding:0!important;margin:0!important;
+}
+body.popup-window.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"] .filterCascadeEditor{
+ width:var(--filter-editor-width,116px)!important;overflow-y:auto!important;
+ max-height:var(--popup-room,440px)!important;
+}
+/* Three icon states require 96px; 112px total avoids side gutters. */
+body.controls-window #choices.standardPanel.alertsMini[data-panel-kind="alerts"],
+body.popup-window.controls-window #choices.standardPanel.alertsMini[data-panel-kind="alerts"]{
+ box-sizing:border-box!important;width:112px!important;max-width:112px!important;
+ padding:3px 4px!important;margin:0!important;
+}
+body.controls-window #choices.alertsMini .choiceHeader.alertsCenteredTitle{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ text-align:center!important;width:100%!important;
+ margin:0 0 2px!important;padding:2px 0!important;min-height:20px!important;
+}
+body.controls-window #choices.alertsMini .choiceHeader.alertsCenteredTitle>span{
+ display:block!important;width:100%!important;text-align:center!important;
+ font-size:9px!important;font-weight:700!important;
+}
+body.controls-window #choices.alertsMini .miniAlertSection{
+ display:flex!important;align-items:center!important;flex-direction:column!important;
+ width:100%!important;margin:0!important;padding:2px 0 3px!important;gap:2px!important;
+}
+body.controls-window #choices.alertsMini .miniAlertHeading{
+ display:block!important;width:100%!important;text-align:center!important;
+ margin:0!important;padding:0!important;font-size:9px!important;line-height:13px!important;
+}
+body.controls-window #choices.alertsMini .miniAlertModes{
+ display:grid!important;grid-template-columns:repeat(3,30px)!important;
+ gap:3px!important;width:max-content!important;margin:0 auto!important;
+}
+body.controls-window #choices.alertsMini .miniAlertTone{
+ display:block!important;margin:1px auto 0!important;
+ width:max-content!important;max-width:100%!important;padding:3px 4px!important;
+ text-align:center!important;font-size:9px!important;
+}
+/* Coordinates alone fill the width; radius and icons remain intrinsic. */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel{
+ box-sizing:border-box!important;width:192px!important;max-width:calc(100vw - 12px)!important;
+ padding:3px 4px!important;margin:0!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader{
+ min-height:22px!important;margin:0 0 2px!important;padding:0 1px!important;gap:4px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow{
+ width:100%!important;margin:0 0 2px!important;padding:0!important;gap:0!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow .locField{
+ min-height:26px!important;height:26px!important;box-sizing:border-box!important;
+ padding:2px 4px!important;font-size:10px!important;
+}
+body.controls-window #choices.locationPanel input[type="range"]{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;margin:2px 0!important;height:24px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow{
+ width:max-content!important;max-width:100%!important;
+ margin:0!important;padding:0!important;gap:3px!important;min-height:27px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap,
+body.controls-window #choices.locationPanel .locRadiusInputWrap .locRadiusNumber{
+ box-sizing:border-box!important;width:65px!important;min-width:65px!important;max-width:65px!important;
+ height:26px!important;
+}
+body.controls-window #choices.locationPanel .compactLocationActions{
+ display:flex!important;flex:0 0 auto!important;gap:3px!important;margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .psLineAction{
+ flex:0 0 26px!important;min-width:26px!important;width:26px!important;height:26px!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
