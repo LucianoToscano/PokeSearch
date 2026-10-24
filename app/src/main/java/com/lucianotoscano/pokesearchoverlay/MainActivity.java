@@ -938,6 +938,8 @@ public class MainActivity extends Activity {
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
+        if(OverlayService.isRunning())
+            serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
     }
     @Override protected void onPause(){
         FirebaseStats.setHomeVisible(this,false);
@@ -1810,6 +1812,7 @@ public class MainActivity extends Activity {
         if(requestCode==202)startOverlay();
         if(requestCode==204){
             boolean granted=results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED;
+            serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
             Toast.makeText(this,granted&&WatchAlerts.permissionGranted(this)?
                 "Permissão de notificações concedida":"Permissão negada. Configure as notificações no Android.",
                 Toast.LENGTH_LONG).show();

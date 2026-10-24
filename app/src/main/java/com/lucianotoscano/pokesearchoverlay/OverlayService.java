@@ -2976,7 +2976,11 @@ public class OverlayService extends Service {
             String label="on".equals(choice)?"Som ativado":
                 "silent".equals(choice)?"Sem som · apenas aviso":"Notificações desativadas";
             // Android system text toast: a short transient caption outside the panel.
-            android.widget.Toast.makeText(OverlayService.this,group+" · "+label,
+            boolean systemBlocked=!"off".equals(choice)&&
+                !WatchAlerts.permissionGranted(OverlayService.this);
+            android.widget.Toast.makeText(OverlayService.this,
+                group+" · "+(systemBlocked?
+                    "preferência salva; libere as notificações no Android":label),
                 android.widget.Toast.LENGTH_SHORT).show();
         }
         @JavascriptInterface public void setAlertMode(String value){handler.post(()->{
@@ -3311,6 +3315,11 @@ public class OverlayService extends Service {
         String action=i==null||i.getAction()==null?"":i.getAction();
         if("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS".equals(action)){
             syncPreferencesWithoutSearch();
+            return START_STICKY;
+        }
+        if("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION".equals(action)){
+            // Refresh only UI evidence from Android, never remote search filters.
+            update();
             return START_STICKY;
         }
         if("com.lucianotoscano.pokesearchoverlay.SYNC_HOME_THEME".equals(action)){

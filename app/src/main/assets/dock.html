@@ -5037,7 +5037,10 @@ function renderAlertsChoices(){
  const section=(name,target,value,tone)=>{
   const block=document.createElement("div");block.className="miniAlertSection";
   const heading=document.createElement("div");heading.className="miniAlertHeading";
-  heading.textContent=name;block.appendChild(heading);
+  heading.textContent=name;
+  heading.title=notificationPermissionGranted?"Permissão Android disponível":
+   "Preferência salva no app; notificações ainda bloqueadas pelo Android";
+  block.appendChild(heading);
   const states=document.createElement("div");states.className="miniAlertModes";
   const labels={on:"Som",silent:"Sem som",off:"OFF"};
   for(const id of ["on","silent","off"]){
@@ -5291,6 +5294,8 @@ function renderSpriteSizeButtons(panel,visual=false){
  line.append(title,group);panel.appendChild(line);
  refreshSpriteSizeButtons();
 }
+// visual_editor.js calls the selector through window, not local lexical scope.
+window.renderSpriteSizeButtons=renderSpriteSizeButtons;
 // Only movable commands are traversed by order arrows. Shiny and protected
 // controls keep their fixed semantics; visible moves skip hidden/protected slots.
 function movableMenuIds(){

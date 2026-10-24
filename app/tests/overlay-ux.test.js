@@ -3708,6 +3708,23 @@ test("LT61-SHINY-MODE-03 pending Shiny is not presented as an applied site filte
   service.includes("shinyVerified=shiny;")&&
   service.includes('execute("verifyShiny",verified->{');
 });
+
+test("LT62 P/M/G selector shared by Personalização and Editor Visual",()=>{
+ const visual=read("assets/visual_editor.js");
+ return dock.includes("window.renderSpriteSizeButtons=renderSpriteSizeButtons;")&&
+  visual.includes("window.renderSpriteSizeButtons(panel,true)")&&
+  dock.includes("if(Native.setSpriteSize)Native.setSpriteSize(size)")&&
+  dock.includes("refreshSpriteSizeButtons();")&&
+  service.includes("@JavascriptInterface public void setSpriteSize(int size)")&&
+  service.includes('putInt("spriteSize",size).apply()');
+});
+test("LT62 Android notifications are confirmed from permission callbacks",()=>{
+ return service.includes("SYNC_NOTIFICATION_PERMISSION")&&
+  main.includes("SYNC_NOTIFICATION_PERMISSION")&&
+  main.includes("if(requestCode==204)")&&
+  service.includes("preferência salva; libere as notificações no Android")&&
+  dock.includes("heading.title=notificationPermissionGranted");
+});
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");
 

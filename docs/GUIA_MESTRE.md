@@ -5188,3 +5188,14 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Ponte e UI:** `Native.openPopup/resizePopup/closePopup` liga a toolbar ao `dock.html?controls=1&popup=1`, mantendo os renderizadores Modos, Filtros, Localização, Pokémon, Favoritos nativo, Notificações, Personalização, Info e Editor Visual. `onNativeData`, tema/preview visual, sugestões Pokémon, Form, Filtros e Colar coordenadas passam a alcançar a nova WebView. O teclado altera flags de foco somente da janela que efetivamente contém o campo. CSS de janela separada remove a dependência de `100vw` reduzido da barra: a cascata de Tamanho pode crescer até acomodar sete chips em linha; altura do painel lateral é medida pelos controles efetivos, não por um fundo fixo.
 
 **QA/limites:** contratos Node expandidos para duas janelas, lifecycle, ponte Native e conteúdo. Preservados testes de funções isoladas da UI legada com guarda `typeof popupWindow`. Sem prova física Samsung; regiões cobertas pelo próprio painel continuam naturalmente tocáveis, enquanto somente espaço fora de seus limites deve passar ao aplicativo abaixo, sujeito a regras de segurança Android 12+. Sem compilação APK, sem merge/alteração de `main` ou de versão.
+
+
+### 12.276 — LT62: corrigir P/M/G no Editor Visual e feedback real do Android (23/10/2026)
+
+**Causa funcional confirmada:** `visual_editor.js` chamava `window.renderSpriteSizeButtons(panel,true)`, porém `dock.html` expunha apenas uma função lexical `renderSpriteSizeButtons()`. Isso deixava de construir os botões P/M/G no Editor Visual. Corrigido exportando a função já existente para `window`, sem duplicar lógica e preservando `Native.setSpriteSize(35/45/55)`, persistência da preferência `spriteSize`, renderização instantânea e `onNativeData`.
+
+**Notificações:** ao clicar em Som/Silencioso, se o Android ainda não concedeu permissão, o feedback agora descreve corretamente *preferência salva, notificações bloqueadas* e não finge entrega ou áudio confirmado. Após retorno à Activity ou resposta ao diálogo de permissão 204, o serviço recebe `SYNC_NOTIFICATION_PERMISSION` e atualiza o estado visual sem enviar consulta ao site, alterar favoritos ou filtros. Permanecem canais e sons independentes para Novos e Favoritos. Som/entrega real requerem teste Samsung.
+
+**Auditados sem recriação:** Favoritos já conta `Selecionados n/50` na mesma linha e grade 10×5; Notificações possui duas seções compactas e três ícones alinhados; Filtros mantém ✓/lixeira/X, Tamanho de sete opções, Sexo quatro opções, confirmações numéricas; Localização reduzida a 172px e raio dentro do input; Editor Visual mantém presets/temas/escala/orientação e persistência. A separação das janelas 12.275 trata o bloqueio nativo de toques. Não acumular CSS novo desnecessário.
+
+**Cobertura:** duas regressões UX verificam o seletor real do Editor Visual e o retorno de permissão Android. Sem APK, sem main/merge e sem promoção LT63.
