@@ -59,6 +59,23 @@ public final class PopupTouchGeometryTest {
         check(sideLeft.x+sideLeft.width==230,"vertical popup moves left when right side is full");
         check(sideLeft.x>=6&&sideLeft.y+sideLeft.height<=894,
             "vertical adjacent popup remains bounded to display");
+        PopupTouchGeometry.Bounds colliding=new PopupTouchGeometry.Bounds(400,450,180,180,false);
+        PopupTouchGeometry.Bounds moved=PopupTouchGeometry.avoidResults(
+            colliding,1080,1920,420,490,290,200,100,350,260,52,8);
+        check(moved.visible(),"LT63: moved menu stays visible");
+        check(moved.x!=colliding.x||moved.y!=colliding.y,"LT63: overlapping menu moves");
+        check(moved.width==colliding.width&&moved.height==colliding.height,
+            "LT63: collision does not stretch or shrink menu");
+        check(moved.x+moved.width<=420||moved.x>=710||
+              moved.y+moved.height<=490||moved.y>=690,
+            "LT63: menu no longer covers result cards");
+        PopupTouchGeometry.Bounds unaffected=PopupTouchGeometry.avoidResults(
+            bottom,1080,2400,820,200,200,100,150,300,660,72,8);
+        check(unaffected==bottom,"LT63: no change when results are far away");
+        PopupTouchGeometry.Bounds impossible=PopupTouchGeometry.avoidResults(
+            new PopupTouchGeometry.Bounds(12,12,180,180,false),
+            200,200,1,1,195,195,1,1,1,1,3);
+        check(impossible.visible(),"LT63: always keeps an accessible fallback");
         System.out.println("PopupTouchGeometry: "+passed+"/"+passed+" checks passed");
     }
 }
