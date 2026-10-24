@@ -5955,3 +5955,31 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 ### Preservações e próximo passo
 - LT76 publicada, assinatura, versionCode 54276, manifesto Google Drive, main e PRs Draft intocados. A branch LT77 contém só protótipos isolados, testes, workflow e registro.
 - Antes do código de transporte e ligação ao botão `Get coords`/`Copiar`, validar em ambiente autorizado um *exemplo sanitizado do corpo da resposta* com método HTTP e status (sem token, sem reveal_code verdadeiro). Ajustar parser ao formato observado. Em seguida habilitar caminho de teste explicitamente opt-in com rate limit, tratamento 401/403/429, timeout, geração de consulta e proibição de reutilizar coordenadas de cartão errado. Manter fallback WebView e homologação física separada.
+
+---
+
+## LT77 — TRANSPORTE EXPERIMENTAL DA API NO NAVEGADOR / QA 40-40 (24/10/2026)
+
+### Checkpoint real e escopo
+- Branch experimental isolada `feature/lt77-authorized-api-contract-20261024`, fonte antes deste registro `81553a7b62d7109675f3059cab3db3816f06de75`. LT76 publicada no Google Drive continua intocada; não houve merge, novo APK, alteração de assinatura/applicationId/main, manifesto nem PRs Draft.
+- Confirmação do proprietário na conversa anterior: há autorização para usar API PoGoCoordinates. Os detalhes de credenciais, scopes, endpoints e limites reais deverão ser observados em ambiente autenticado; prints não provam o formato completo de resposta do `/reveal` nem operação sem JWT.
+- Verificação pública complementar: `https://pogocoordinates.com/vip` menciona diferenças por plano para *Pokesearch limits* e *Coords reveal limits*; o aplicativo deverá respeitar status 401/403/429 e não contornar limites do serviço.
+
+### Implementação nova — não conectada ao serviço Android
+- `app/src/main/assets/api_browser_transport.js`: módulo JavaScript experimental para ser executado futuramente **dentro da origem HTTPS `pogocoordinates.com`** na WebView oficial. Não é importado pelo app em execução e **não inicia requisições sozinho**.
+- `createBrowserClient()` usa `window.fetch`, `window.localStorage`, `window.location.origin` apenas após futura invocação explícita. `search(config)` valida a origem exata, cria payload com `api_result_contract.js`, lê **temporariamente** a chave `jwt` da própria origem e a usa somente como Bearer em POST para o endpoint literal `https://coordinates-api.pokemongopro.com/search`. JWT não é salvo em SharedPreferences, não retorna ao Android, não entra em logs/JSON públicos e não vai no querystring.
+- Requisição de pesquisa exige sessão válida, não faz retry automático para falhas de sessão/limite e usa `mode=cors`, `redirect=error`, `credentials=omit`, `referrerPolicy=no-referrer`, `cache=no-store`, timeout (10s) e leitura limitada a 1 MiB. Erros 401/403/429, CORS/rede, timeout e payload inválido viram **códigos genéricos sem credenciais**.
+- Depois da busca, normaliza somente até 10 cartões com IV e dados estruturados já validados; guarda `reveal_code` unicamente em mapa **temporário, em memória**, associado a índice, ID de Pokémon, PC, expiração e geração da pesquisa. Nunca devolve o código opaco à interface/Android, nem grava em disco; descarta ao iniciar nova pesquisa ou encerrar cliente.
+- `reveal({sourceIndex,searchId,pokemonId,cp})` exige equivalência estrita à pesquisa corrente, Pokémon não expirado e código previamente recebido em resposta atual; prepara GET para `/reveal/{code}` sem cabeçalho Bearer por hipótese informada nas capturas, mas **não considera acesso anônimo confirmado**. 401/403/429 são respeitados; 200 é submetido ao parser conservador `api_reveal_contract.js`, retornando somente latitude/longitude/coords sem token/código. Não pesquisa códigos arbitrários fornecidos por usuários.
+- **Aviso de qualidade:** `search` devolve `criteriaConfirmed=false`, `resultChanged=false`, `leagueConfirmed=false` e `requiresIntegrationValidation=true`; respostas do mock NÃO são consideradas prova de pesquisa no site nem estão ligadas aos resultados/alertas nativos. CORS, formato real, filtro oficial, ordenação e endpoint GET sem JWT ainda não foram homologados.
+
+### QA no GitHub Actions, erros corrigidos
+- `app/tests/lt77-api-browser-transport.test.js` contém 14 verificações de transporte com mocks Node: ausência de efeito colateral/token na importação; POST autenticado no host exato; reveal sem Bearer; modo convidado; origens inseguras; filtros inválidos; 401/403/429; JSON/tamanho; CORS; identidade/generation; concorrência; dispose; expiração; proibição de vazamentos.
+- Workflow `lt77-authorized-api-contract-qa.yml` estendido com terceiro arquivo de testes. Execução inicial [40133471790](https://github.com/LucianoToscano/PokeSearch/actions/runs/40133471790) **FAIL** por sintaxe do mock JS (`||async` sem parênteses); nenhuma falha nos 24 testes anteriores. Corrigido no commit `81553a7b62d7109675f3059cab3db3816f06de75`.
+- Reexecução [40133524298](https://github.com/LucianoToscano/PokeSearch/actions/runs/40133524298) **SUCCESS** em commit `81553a7b62d7109675f3059cab3db3816f06de75`: `api_result_contract 12/12`, `api_reveal_contract 12/12` e `api_browser_transport 14/14` = **38/38 testes automatizados aprovados**. A etapa final confirmou **sem APK e sem requisições reais à API**, apenas mocks Node. Não confundir QA do transporte com homologação da WebView Samsung.
+
+### Próximas verificações, sem presumir êxito
+1. Confirmar em dispositivo de testes autorizado o comportamento do JWT **sem expor seu valor** e se `fetch` iniciado da origem do site aceita CORS e o Bearer. Não registrar/colar/copiar JWT no chat, log ou GitHub.
+2. Obter resposta redigida/sanitizada de `/reveal` para determinar método, campos reais, auth, erros; não publicar `reveal_code` real nem URLs com segredo.
+3. Integrar primeiro via opt-in/feature flag **desligada por padrão**, com isolamento de geração de requisição, renderização apenas após validação de filtros/identidade e fallback ao mecanismo DOM sem duplicar buscas nem ultrapassar rate limits.
+4. Em etapa separada, homologar em Samsung resultados, coordenadas, menus, Shiny, favoritados, notificações e compatibilidade com sessão existente; somente após aprovação produzir APK protegido e distribuí-lo mediante autorização.
