@@ -319,28 +319,24 @@ public class OverlayService extends Service {
             }catch(Exception e){recordFailure("limpar vencidos",e);}
         }
     };
+    // LT64: expiry uses the immutable absolute timestamp captured at Search.
+    // The old code recalculated from a moving MM:SS, which could rearm an
+    // already expired spawn indefinitely if the site updated its timer.
     private void armNextDespawn(JSONArray cards){
         handler.removeCallbacks(expiryRefresh);
         armedDespawnMillis=0L;
+        if(cards==null||cards.length()==0||stopped)return;
         long now=System.currentTimeMillis(),next=Long.MAX_VALUE;
-        if(cards==null)return;
         for(int i=0;i<cards.length();i++){
             JSONObject card=cards.optJSONObject(i);
             if(card==null)continue;
-            String timer=card.optString("despawn","");
-            String[] parts=timer.split(":");
-            if(parts.length!=2)continue;
-            try{
-                long seconds=Long.parseLong(parts[0])*60L+Long.parseLong(parts[1]);
-                if(seconds<=0||seconds>86400)continue;
-                long readAt=card.optLong("sampledAt",now);
-                long deadline=readAt+seconds*1000L;
-                if(deadline>now&&deadline<next)next=deadline;
-            }catch(NumberFormatException ignored){}
+            long absolute=card.optLong("expiresAtMs",Long.MAX_VALUE);
+            if(absolute==Long.MAX_VALUE)absolute=expiration(card);
+            if(absolute<next)next=absolute;
         }
         if(next==Long.MAX_VALUE)return;
         armedDespawnMillis=next;
-        handler.postDelayed(expiryRefresh,Math.max(250L,next-now+150L));
+        handler.postDelayed(expiryRefresh,Math.max(150L,next-now+150L));
     }
     private String mode="raw",results="[]",status="Conectando...",searchPhase="idle";
     // Provenance of the last site-confirmed result set, not the pending filter.
@@ -840,6 +836,10 @@ public class OverlayService extends Service {
                 queuedManualRefresh=false;
                 ++requestGeneration;
                 cancelSessionCallbacks();
+                // A navigation failure must not strand previously confirmed
+                // spawn deadlines; local expiration is independent of Search.
+                try{armNextDespawn(new JSONArray(results));}
+                catch(org.json.JSONException ex){recordFailure("rearmar despawn após rede",ex);}
                 BugReport.log(OverlayService.this,"NETWORK","Falha de navegação principal; código="+error.getErrorCode());
                 status("Não foi possível carregar PoGoCoordinates. Confira conexão e tente ↻.");
             }
@@ -3268,7 +3268,7 @@ public class OverlayService extends Service {
                 if(i>=0&&i<a.length())requestCoordinates(a.getJSONObject(i).optInt("sourceIndex",-1),true);
             }catch(Exception e){recordFailure("detalhes coordenadas",e);}
         });}
-        @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,false));}
+        @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,true));}
     }
     private void requestCoordinates(int sourceIndex,boolean autoCopy){
         JSONObject chosen=null;
@@ -3281,7 +3281,22 @@ public class OverlayService extends Service {
         }catch(Exception e){recordFailure("ler cartão coordenadas",e);}
         if(chosen==null){deliverCoords("","Pokémon indisponível");return;}
         JSONObject target=chosen;
-        execute("coords:"+sourceIndex,response->{
+        // Reuse a previously verified coordinate without another site click.
+        String saved=extractCoordinates(target.optString("coords",""));
+        if(!saved.isEmpty()){
+            if(autoCopy)copyCoordinatesInternal(saved);
+            deliverCoords(saved,autoCopy?"✓ Coordenadas copiadas":"Coordenadas disponíveis");
+            return;
+        }
+        JSONObject fingerprint=new JSONObject();
+        try{
+            fingerprint.put("index",sourceIndex);
+            fingerprint.put("name",target.optString("name",""));
+            fingerprint.put("cp",target.optString("cp",""));
+            fingerprint.put("number",target.optString("number",""));
+            fingerprint.put("location",target.optString("location",""));
+        }catch(org.json.JSONException e){recordFailure("identificar cartão coordenadas",e);}
+        execute("coords:"+fingerprint.toString(),response->{
             if(!response.optBoolean("ok")){
                 deliverCoords("",response.optString("status","Get coords indisponível"));return;
             }
