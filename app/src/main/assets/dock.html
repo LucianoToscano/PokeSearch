@@ -4549,13 +4549,16 @@ function draw(){
  refreshQuickMenuStates();fit();
 }
 function updateTimers(){
- // Only opt-in despawn clocks; no floating wait count below the Pokéball.
+ // A visible zero is an independent signal to native, not just an opacity class.
+ let newlyExpired=false;
  document.querySelectorAll(".timer").forEach(e=>{
   const deadline=Number(e.dataset.deadline),seconds=Math.max(0,Math.ceil((deadline-Date.now())/1000));
   e.textContent=Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");
   // Timer can be inside the narrow metadata column; expire the whole sprite row.
   e.closest(".spawn")?.classList.toggle("expired",seconds===0);
+  if(seconds===0&&!e.dataset.expiryReported){e.dataset.expiryReported="1";newlyExpired=true;}
  });
+ if(newlyExpired&&Native.expiredResults)Native.expiredResults();
 }
 let timerTicker=null;
 function syncTimerTicker(){
