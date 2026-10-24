@@ -2499,6 +2499,25 @@ public class OverlayService extends Service {
         js(detailPanel,detailLoaded,"window.coordsResult("+JSONObject.quote(coordinates)+","+JSONObject.quote(message)+")");
         status(message);
     }
+    // The regular Favorites picker is not a #choices popup. Give it the same
+    // originating icon coordinates while preserving its non-modal native dialog.
+    private void showFavoritePicker(int anchorX,int anchorY){
+        if(root==null||loginPaused||pickerOpen)return;
+        closeIndependentPopup();
+        pickerOpen=true;
+        hideDetails();
+        try{
+            PokemonPicker.show(OverlayService.this,()->{
+                if(!stopped)update();
+            },()->{
+                pickerOpen=false;
+                if(!stopped)update();
+            },anchorX,anchorY);
+        }catch(Exception e){
+            pickerOpen=false;
+            diagnosticError("Não foi possível abrir favoritos no overlay.");
+        }
+    }
     public class Bridge{
         @JavascriptInterface public void previewVisualArea(String area){
             handler.post(()->OverlayService.this.setVisualEditorPreview(area));
@@ -3219,29 +3238,18 @@ public class OverlayService extends Service {
                 diagnosticError("Não foi possível abrir o relatório de bugs.");
             }
         });}
-        @JavascriptInterface public void openWatchList(){handler.post(()->{
-            if(root==null||loginPaused||pickerOpen)return;
-            closeIndependentPopup();
-            pickerOpen=true;
-            hideDetails();
-            // Favorites is a separate, content-sized TYPE_APPLICATION_OVERLAY Dialog
-            // with FLAG_NOT_TOUCH_MODAL. Do NOT hide the Pokeball, results or toolbar:
-            // those controls must remain touchable outside the dialog's native bounds.
-            // The pickerOpen guard prevents duplicate dialogs, not background interaction.
-            try{
-                PokemonPicker.show(OverlayService.this,()->{
-                    if(!stopped)update();
-                },()->{
-                    pickerOpen=false;
-                    // Never force windows VISIBLE after dismissal: the user may have
-                    // collapsed the menu/results or started login behind this dialog.
-                    if(!stopped)update();
-                });
-            }catch(Exception e){
-                pickerOpen=false;
-                diagnosticError("Não foi possível abrir favoritos no overlay.");
-            }
-        });}
+        @JavascriptInterface public void openWatchList(){
+            handler.post(()->showFavoritePicker(-1,-1));
+        }
+        @JavascriptInterface public void openWatchListAt(int triggerDp,int triggerYDp){
+            handler.post(()->{
+                int anchorX=menuParams==null?-1:
+                    menuParams.x+dp(Math.max(0,Math.min(menuDp(),triggerDp)));
+                int anchorY=menuParams==null?-1:
+                    menuParams.y+dp(Math.max(0,Math.min(visualMenuBaseDp(),triggerYDp)));
+                showFavoritePicker(anchorX,anchorY);
+            });
+        }
         @JavascriptInterface public void setIntervalMinutes(int minutes){handler.post(()->{
             if(minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
             if(intervalMinutes==minutes)return;
