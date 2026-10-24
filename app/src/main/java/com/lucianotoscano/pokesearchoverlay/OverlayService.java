@@ -653,6 +653,13 @@ public class OverlayService extends Service {
         if(!visualMenuVertical&&("filters".equals(popupKind)||"mode".equals(popupKind)))
             b=PopupTouchGeometry.alignRail(b,m.widthPixels,menuParams.x,menuParams.width,
                 dp(popupTriggerDp),dp("filters".equals(popupKind)?78:52),dp(6));
+        // LT63: the results WebView is another native overlay rectangle. A CSS
+        // transparent area cannot pass Android touches through another window.
+        if(resultParams!=null&&resultRoot!=null&&!resultCollapsed&&!minimized&&
+                resultRoot.getVisibility()==View.VISIBLE)
+            b=PopupTouchGeometry.avoidResult(b,new PopupTouchGeometry.Bounds(
+                resultParams.x,resultParams.y,resultParams.width,resultParams.height,false),
+                m.widthPixels,m.heightPixels,dp(6));
         if(!b.visible()){popupRoot.setVisibility(View.GONE);return;}
         if(lastPopupX!=b.x||lastPopupY!=b.y||lastPopupW!=b.width||lastPopupH!=b.height){
             popupParams.x=b.x;popupParams.y=b.y;
@@ -963,6 +970,7 @@ public class OverlayService extends Service {
                             catch(Exception e){recordFailure("finalizar arraste conjunto",e);}
                         }
                         moveDetail();
+                        positionIndependentPopup(); // Re-evaluate against new results bounds.
                         float density=getResources().getDisplayMetrics().density;
                         android.content.SharedPreferences.Editor saved=
                             getSharedPreferences("prefs",0).edit()
@@ -1206,6 +1214,7 @@ public class OverlayService extends Service {
                         try{wm.updateViewLayout(resultRoot,resultParams);}
                         catch(Exception e){recordFailure("finalizar arraste",e);}
                         moveDetail();
+                        positionIndependentPopup(); // Re-evaluate against new results bounds.
                         float density=getResources().getDisplayMetrics().density;
                         getSharedPreferences("prefs",0).edit()
                             .putInt("resultsX",Math.round(resultParams.x/density)-visualResultsOffsetX)
