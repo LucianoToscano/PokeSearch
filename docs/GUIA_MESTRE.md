@@ -5934,3 +5934,24 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Ainda **não** existe transporte HTTP autenticado nem leitura de `localStorage.jwt` pelo PokeSearch; não há interceptação de cookies, nem mudanças no login/`probe.js`/`OverlayService.java`. O adaptador é apenas um contrato testado com fixtures.
 - O fluxo atual baseado em WebView/DOM permanece funcional e inalterado. Nenhum build/merge/republicação de APK; LT76 remota segue `versionCode=54276`.
 - Próximo passo técnico: desenhar caminho isolado de comunicação autorizado, com gestão de credencial de sessão sem persistência duplicada e observabilidade sem segredos; verificar formatos reais/erros, permissões, limitação de buscas, migração e fallback do DOM; depois realizar testes com usuário em dispositivo físico antes de ativação. Não acessar ou solicitar ao usuário que cole seu token JWT em chats.
+
+---
+
+## LT77 — ROTA REVEAL DE COORDENADAS: CONTRATO ISOLADO E TESTES (24/10/2026)
+
+### Nova evidência (mensagem do usuário)
+- Captura WhatsApp menciona `https://coordinates-api.pokemongopro.com/reveal/reveal_code_aqui` e afirma que seria possível obter coordenadas sem Bearer token. A captura NÃO mostra corpo de resposta, método HTTP nem teste 200/401/403, portanto **não comprova acesso anônimo**. A documentação pública indexada não forneceu schema verificável da rota.
+- `/search` na evidência anterior devolve `reveal_code`, `encounter_id`, `despawn_at`, entre outros campos. O código de revelação é um identificador opaco potencialmente sensível: NUNCA registrar valores reais, não procurar códigos de terceiros, não exportar para relatório ou publicar URL completa com valor real.
+- A autorização de uso da API foi informada pelo proprietário em 24/10/2026; qualquer implementação de transporte ao vivo deve respeitar o contrato de autorização e o comportamento efetivo do servidor, sem pressupor que rota e CORS são públicos.
+
+### Implementação segura de pesquisa futura
+- Branch experimental apenas: `feature/lt77-authorized-api-contract-20261024`. Arquivo **novo** `app/src/main/assets/api_reveal_contract.js` com biblioteca JavaScript pura, desativada na aplicação (não importada no runtime de `OverlayService` / `probe.js`). Não executa `fetch`, leitura de `localStorage`, cookies, persistência, JWT ou ponte Android.
+- `planForSpawn()` só monta GET **hipotético** em `https://coordinates-api.pokemongopro.com/reveal/<codigo>` quando a entrada possui `pokemon_id` inteiro válido, `despawn_at` futuro e `reveal_code` opaco seguro `[A-Za-z0-9_-]{12,2048}`. Método GET não foi confirmado externamente; é apenas hipótese para contrato interno e não foi enviado ao servidor.
+- `normalizeRevealResponse()` trata como hipóteses estruturas JSON com pares numéricos `{lat,lng}`, `{latitude,longitude}` ou equivalentes aninhados em `coordinates`, `coords` e `data`, com lat [-90,90], lng [-180,180]; dados inconsistentes/contraditórios ou ausentes rejeitados. Retorna somente latitude/longitude/coords, jamais JWT/reveal_code/resposta bruta.
+- **Atenção**: formatos de resposta não foram observados; o contrato de parsing está preparado para revisão mediante amostra sanitizada. Sem resposta real, não ativar a função nem afirmar coordenadas validadas. Evitar uso de código expirado, cache persistente, exposição em URL/logs, envio de dados a terceiros ou tentativa de burlar controles do serviço.
+- Arquivo novo `app/tests/lt77-api-reveal.test.js`, agora executado pelo workflow `.github/workflows/lt77-authorized-api-contract-qa.yml` junto ao teste de busca JSON. O teste garante URL com código sintético, rejeição de entradas malformadas/expiradas, faixas geográficas, resposta sem segredos e ausência de rede/token.
+- GitHub Actions [40132916646](https://github.com/LucianoToscano/PokeSearch/actions/runs/40132916646): **SUCCESS**, 12/12 contratos anteriores de pesquisa + 12/12 de revelação = **24/24**; checkout e Node 22, sem Android build, sem acesso remoto real, sem produzir/publicar APK. Fonte do CI `445fc95596f1c9ca4d01b6d863f86e5ad6f64031`.
+
+### Preservações e próximo passo
+- LT76 publicada, assinatura, versionCode 54276, manifesto Google Drive, main e PRs Draft intocados. A branch LT77 contém só protótipos isolados, testes, workflow e registro.
+- Antes do código de transporte e ligação ao botão `Get coords`/`Copiar`, validar em ambiente autorizado um *exemplo sanitizado do corpo da resposta* com método HTTP e status (sem token, sem reveal_code verdadeiro). Ajustar parser ao formato observado. Em seguida habilitar caminho de teste explicitamente opt-in com rate limit, tratamento 401/403/429, timeout, geração de consulta e proibição de reutilizar coordenadas de cartão errado. Manter fallback WebView e homologação física separada.
