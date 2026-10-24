@@ -6247,3 +6247,16 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Novo teste `app/tests/lt77-stage12-overlay-lifecycle.test.js`; workflow `.github/workflows/lt77-stage12-lifecycle-qa.yml`, sem APK. GitHub Actions: verificar execução da branch antes de declarar PASS.
 - A política já implementada de arraste limitado a 16ms permanece; esta etapa não comprova velocidade real ou consumo de memória do Samsung. Profiling de Android, leaks em atividade real e fluxo prolongado aguardam homologação física.
 - Todas as proteções de credenciais/reveal, DOM e feature-flag API OFF permanecem.
+
+
+---
+
+## LT77 — ETAPA 13: AUDITORIA DE CÓDIGO, PROGUARD E RECURSOS (24/10/2026)
+
+- Branch `fix/lt77-stage13-proguard-audit-20261024` derivada da Etapa 12. GitHub `main`, assinatura e LT76 inalterados.
+- Verificadas regras `app/proguard-rules.pro`: preservação de `@android.webkit.JavascriptInterface`, `MainActivity`, `OverlayService`, metadados de anotações e `org.json`. `app/build.gradle.kts` já configura R8/`isMinifyEnabled` e `isShrinkResources`; `applicationId` e `namespace` preservados.
+- Confirmada presença dos assets oficiais `dock.html`, `overlay.html`, `detail.html`, `probe.js`. Os quatro scripts API LT77 permanecem experimentais e NÃO são importados pelo `OverlayService` em produção; a API segue OFF.
+- Não foram encontrados trechos cuja remoção fosse **comprovadamente** segura pela auditoria estática; por isso nenhum asset, preferência, PNG, componente ou teste foi apagado. A remoção de código morto só será possível com medição/tracing de execução em dispositivo.
+- Adicionado `app/tests/lt77-stage13-proguard-audit.test.js`, com teste de identidade da aplicação, regras R8, WebViews, assets e isolamento dos scripts experimentais; workflow `.github/workflows/lt77-stage13-proguard-qa.yml`. Sem APK.
+- Falha real herdada da Etapa 12: o primeiro run [#40143185582](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143185582) não compilou: `onDestroy` referenciava contadores `formOptionsSequence` e `pokemonSuggestionSequence` pertencentes à classe interna `Bridge`. Corrigido em ambas as branches: manter invalidação de `coordinateRequestToken` e checagem existente de `stopped/requestGeneration` nos callbacks internos. A alteração e o teste foram registrados, sem ocultar a falha. Conferir novos Actions da Etapa 12 e 13 antes de atestar PASS.
+- **Pendências:** homologação Samsung, teste R8/ProGuard efetivo de um build release assinado (nenhum APK nesta fase), execução da API autorizada em origem real e confirmação de ausência de leaks sob carga.
