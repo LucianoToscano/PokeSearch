@@ -3411,10 +3411,13 @@ function renderModeChoices(){
    input.className="modeCascadeInput modeCascade-"+kind;
    input.placeholder=placeholder;
     input.value=String(modeDraft[key]??searchSettings[key]??"");
-   input.autocomplete="off";input.maxLength=3;input.setAttribute("pattern","[0-9]*");
+   input.autocomplete="off";input.maxLength=kind==="percent"?3:2;input.setAttribute("pattern","[0-9]*");
    input.setAttribute("aria-label",description);
    input.title=description+" · digite "+min+" a "+max;
-   input.addEventListener("input",()=>input.setCustomValidity(""));
+   input.addEventListener("input",()=>{
+    input.value=input.value.replace(/[^0-9]/g,"").slice(0,input.maxLength);
+    input.setCustomValidity("");
+   });
    input.addEventListener("keydown",e=>{
     if(e.key==="Enter"){e.preventDefault();confirm.click();}
    });
@@ -3530,8 +3533,8 @@ function numericConfirmButton(make,keys,label){
  return button;
 }
 function filterCascadeEditorWidth(label){
- const width={Ordenar:178,PC:139,"Nível":139,Clima:158,Tamanho:230,
-  Sexo:116,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
+ const width={Ordenar:178,PC:139,"Nível":108,Clima:158,Tamanho:182,
+  Sexo:107,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
  return width[label]||134;
 }
 function renderExtraFilters(panel,make){
@@ -3560,15 +3563,23 @@ function renderExtraFilters(panel,make){
   field(label,list);
  };
  const numericInput=(key,label,level=false)=>{
-  const input=make("input");input.type="number";input.inputMode="numeric";
+  const input=make("input");input.type=level?"text":"number";input.inputMode="numeric";
   input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999";
+  if(level){
+   input.maxLength=2;input.pattern="[0-9]{1,2}";
+   input.classList.add("levelCompactInput");
+  }
   input.value=String(modeDraft[key]??"");
-  input.placeholder=key.endsWith("Min")?"Min":"Max";
+  input.placeholder=level?(key.endsWith("Min")?"1":"35"):
+   key.endsWith("Min")?"Min":"Max";
   input.dataset.filterNumber=key;input.setAttribute("aria-label",label);
   input.title=label;
   input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
   input.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
-  input.oninput=()=>{modeDraft[key]=input.value;input.setCustomValidity("");updateFiltersPanelStatus();};
+  input.oninput=()=>{
+   if(level)input.value=input.value.replace(/[^0-9]/g,"").slice(0,2);
+   modeDraft[key]=input.value;input.setCustomValidity("");updateFiltersPanelStatus();
+  };
   return input;
  };
  const number=(key,label,level=false)=>{
@@ -3579,8 +3590,8 @@ function renderExtraFilters(panel,make){
   line.append(name,wrapper);panel.appendChild(line);
  };
  const numberPair=(label,minKey,maxKey,level=false)=>{
-  const line=make("div","extraField extraRangeField"),name=make("label","",label);
-  const group=make("div","extraRangeInputs");
+  const line=make("div","extraField extraRangeField"+(level?" extraLevelRange":"")),name=make("label","",label);
+  const group=make("div","extraRangeInputs"+(level?" extraLevelInputs":""));
   group.setAttribute("role","group");group.setAttribute("aria-label",label+" mínimo e máximo");
   for(const [key,short,full] of [[minKey,"Min","mínimo"],[maxKey,"Max","máximo"]]){
    const cell=make("label","extraRangeCell");
