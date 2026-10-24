@@ -803,14 +803,14 @@ test("Cascade popup uses 27px rail rows and small lateral settings",
  service.includes('int roomDp=requestedPopup==0?420:'));
 test("Cascade input uses placeholders and keyboard entry",
  dock.includes('input.type="text";input.inputMode="numeric"')&&
- dock.includes('input.placeholder=placeholder;input.value=""')&&
+ dock.includes('input.value=String(modeDraft[key]??searchSettings[key]??"")')&&
  dock.includes('input.addEventListener("keydown"')&&
  dock.includes('input.addEventListener("input"')&&
  dock.includes('kind==="percent"?[0,100]'));
 test("Four editable cascade modes keep raw, percent and rank numeric bounds",(()=>{const b=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
  return b.includes('kind==="iv"?[0,15]:[1,50]')&&b.includes('limitsFor=kind')&&
  ["attack","defense","stamina","percentMin","percentMax","glRank","ulRank"].every(k=>b.includes('"'+k+'"'))&&
- b.includes('input.placeholder=placeholder;input.value=""')&&b.includes('input.maxLength=3');})());
+ b.includes('input.value=String(modeDraft[key]??searchSettings[key]??"")')&&b.includes('input.maxLength=3');})());
 test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy migration",
  dock.includes('if([attack,defense,stamina].every(v=>Number(v)===15))family="hundo"')&&
  dock.includes('if(min===100&&max===100)family="hundo"')&&
@@ -1264,7 +1264,7 @@ test("UX-MODOS-CASCADE-04 confirms or cancels only the chosen lateral editor",
  dock.includes('confirm.className="modeCascadeConfirm"')&&
  !dock.includes('cancel.className="modeCascadeCancel"')&&
  dock.includes('confirm.onclick=()=>')&&
- dock.includes('input.placeholder=placeholder;input.value=""')&&
+ dock.includes('input.value=String(modeDraft[key]??searchSettings[key]??"")')&&
  dock.includes('entry.input.setCustomValidity("Digite um número de "')&&
  dock.includes('Native.setSearchConfig(JSON.stringify(next))'));
 test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
