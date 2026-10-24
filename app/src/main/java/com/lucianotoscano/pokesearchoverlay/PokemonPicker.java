@@ -203,7 +203,7 @@ public final class PokemonPicker {
         // No ListView, ScrollView or hidden off-screen controls.
         LinearLayout root=new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(activity,10),dp(activity,8),dp(activity,10),dp(activity,9));
+        root.setPadding(dp(activity,10),dp(activity,6),dp(activity,10),dp(activity,9));
 
         LinearLayout header=new LinearLayout(activity);
         header.setGravity(Gravity.CENTER_VERTICAL);
@@ -212,25 +212,21 @@ public final class PokemonPicker {
         title.setTextColor(Color.rgb(244,247,250));
         title.setTypeface(null,Typeface.BOLD);
         title.setTextSize(13);
-        header.addView(title,new LinearLayout.LayoutParams(0,dp(activity,30),1));
+        header.addView(title,new LinearLayout.LayoutParams(-2,dp(activity,29)));
         TextView count=new TextView(activity);
         count.setTextColor(Color.rgb(197,213,230));
         count.setTextSize(10);
         count.setTypeface(null,Typeface.BOLD);
-        count.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
-        header.addView(count,new LinearLayout.LayoutParams(-2,dp(activity,28)));
+        count.setGravity(Gravity.CENTER);count.setSingleLine(true);
+        header.addView(count,new LinearLayout.LayoutParams(0,dp(activity,29),1));
         TextView finish=new TextView(activity);
         finish.setText("×");
         finish.setContentDescription("Fechar Favoritos");
         finish.setGravity(Gravity.CENTER);
         finish.setTextColor(Color.rgb(231,237,246));
         finish.setTextSize(21);
-        android.graphics.drawable.GradientDrawable closeBg=new android.graphics.drawable.GradientDrawable();
-        closeBg.setColor(Color.argb(110,53,60,72));
-        closeBg.setStroke(dp(activity,1),Color.argb(95,170,185,205));
-        closeBg.setCornerRadius(dp(activity,7));
-        finish.setBackground(closeBg);
-        header.addView(finish,new LinearLayout.LayoutParams(dp(activity,29),dp(activity,29)));
+        finish.setBackgroundColor(Color.TRANSPARENT);
+        header.addView(finish,new LinearLayout.LayoutParams(dp(activity,27),dp(activity,29)));
         root.addView(header);
 
         EditText search=new EditText(activity);
@@ -317,7 +313,7 @@ public final class PokemonPicker {
                 selected.add(found!=null?found:new Entry(0,favorite.getValue()));
             }
             int size=selected.size();
-            count.setText("Selecionados  "+size+"/50");
+            count.setText("Selecionados "+size+"/50");
             sprites.removeAllViews();
             for(int i=0;i<Math.min(size,50);i++){
                 Entry entry=selected.get(i);
