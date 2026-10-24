@@ -775,7 +775,7 @@ check("LT62 audit: Filtros rail visibly contains Apply, Clear, Cancel",()=>{
  const filters=dock.split("function renderFiltersChoices(){")[1]?.split("function renderInfoChoices(){",1)[0]||"";
  assert.ok(filters.includes('actions.append(apply,clear,cancel);'));
  assert.ok(filters.includes('if(rail)rail.appendChild(actions);'));
- assert.ok(filters.includes('svg.innerHTML=icons[kind]'));
+ assert.ok(dock.includes('svg.innerHTML=icons[kind]'));
  assert.ok(filters.includes('apply.onclick=()=>'));
  assert.ok(filters.includes('clear.onclick=()=>'));
  assert.ok(filters.includes('cancel.onclick=closeChoices'));
