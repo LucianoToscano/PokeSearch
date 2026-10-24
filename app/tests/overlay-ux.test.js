@@ -3423,7 +3423,8 @@ test("LT62-FORM-EDITOR searches official forms and only Form is patched on each 
   block.includes("Native.requestFormOptions(formQuery)")&&
   !block.includes('done.textContent="✓ Confirmar seleção"')&&
   picker.includes('patchSelectedFilterKeys(["formSelections","form"])')&&
-  dock.includes('formButton.onclick=()=>{modeScrollTop=panel.scrollTop;formQuery="";renderFormPicker();}')&&
+  dock.includes('formButton.onclick=()=>{filterFocus="Forma";renderFiltersChoices();}')&&
+   dock.includes('box.append(chosen,search,results);field("Forma",box)')&&
   dock.includes('filterOptions.form={present:true,options:[...new Set([...previous,...options])].slice(0,500)}')&&
   dock.includes('Native.patchSearchFilters(JSON.stringify(delta))');
 });
