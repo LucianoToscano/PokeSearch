@@ -5733,3 +5733,33 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 **Verificação adicional:** checagem independente do texto Pix EMV existente: prefixo e identificador Pix presentes, campo final de CRC-16 completo e checksum calculado coincide com o registrado. Isto **não substitui** leitura do QR JPEG original em aplicativo bancário no Samsung. O payload não foi alterado, exibido ou registrado no Guia Mestre.
 
 **Estado da homologação:** testes automáticos aprovados; Samsung e testes visuais/funcionais continuam pendentes. Sem autorização para etapa 8, nenhuma geração, upload, compartilhamento ou anúncio de APK da Missão V2. `main`/PR #34/PR #49 preservados.
+
+---
+
+## LT76 — Release protegida e upload Drive com bloqueio de anúncio público (24/10/2026)
+
+**Autorização recebida:** o proprietário solicitou expressamente a etapa 8, envio do APK protegido ao Drive e publicação da atualização. Nesta execução, o build e o envio foram executados; a ativação do anúncio remoto permaneceu BLOQUEADA exclusivamente por falta de permissão pública do arquivo LT76 recém-enviado. Não anunciar link que devolve acesso negado.
+
+### APK release e auditoria CI
+
+- Branch exclusiva: feature/support-mission-v2-20261024; source build commit 6916be5b2d0e13ddcb94f38baa993980cebad854.
+- GitHub Actions 40125870288: SUCCESS; artifact 12573141700; versão 0.00.76, versionCode 54276, applicationId com.lucianotoscano.pokesearch.
+- Arquivo original: PokeSearch-v0.00.76-LT-MissaoV2-release.apk; tamanho 38.443.571 bytes; SHA-256 889e7193b9f2fd87a1a96b2bfb6d3842c3630215e52a93287c6428d50fb7940c. SHA novamente calculado no download feito do Drive, igual ao do ZIP do CI.
+- Release não depurável, R8 mapping presente, isMinifyEnabled e isShrinkResources true, assinatura APK v2 validada, certificado SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e (compatível com LT75). O teste real de instalação no Samsung continua pendente.
+
+### Google Drive — estado REAL verificado
+
+- Pasta oficial Atualizacoes_PokeSearch: ID 1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA-.
+- APK LT76 enviado com sucesso sem sobrescrever arquivos anteriores: ID 1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l, URL https://drive.google.com/file/d/1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l/view. MIME application/vnd.android.package-archive. Tamanho remoto confirmado 38.443.571 bytes; SHA-256 reconferido após baixar os bytes do Drive.
+- Backup anterior ao eventual anúncio: atualizacao_LT75_backup_antes_LT76.json, novo ID 1CkcVLuLiCDliBvxSwDZOBzijAmaG64-N, cópia íntegra do manifesto LT75, 624 bytes.
+- BLOQUEIO: metadados Drive do APK novo indicam shared:false, com permissão somente do owner. A integração de compartilhamento disponível aceita apenas usuário nominal ou domínio Workspace, não o necessário tipo anyone/reader (qualquer pessoa com link). Uma tentativa segura de usar reader sem destinatário retornou erro, sem alterar permissões. Um backup via cópia também nasce privado, então cópia de arquivo público não contorna o bloqueio.
+- MANIFESTO PRINCIPAL NÃO ALTERADO: atualizacao.json ID 15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf continua enabled:true, versionCode 54275, apkFileId LT75 1naQMKet-sYzLr40uGNQAVpc364kZCKRy. Não colocar LT76 no anúncio antes de validar permissão anyone/reader do arquivo novo; isso quebraria a atualização para usuários.
+- Nenhum arquivo LT62/LT74/LT75, backup ou histórico foi deletado. Nenhum merge, alteração de main, Ready ou novo PR.
+
+### Para concluir publicação
+
+1. Tornar o arquivo LT76 ID 1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l público como Qualquer pessoa com o link — Leitor nas configurações de compartilhamento do Google Drive.
+2. Confirmar metadados anyone/reader e acesso anônimo ao download. Somente depois editar o manifesto existente (preservando ID e backup) para versionCode 54276, versionName 0.00.76, apkFileId do LT76, apkSha256 verificado, enabled:true e forceUpdate:false; reler para confirmação.
+3. Fazer o teste real da instalação LT75 → LT76 no Samsung, Pix bancário sem pagamento, os quatro estilos, 02A/02B e regressões. Build CI aprovado não significa homologação física.
+
+**Conclusão operacional:** APK protegido gerado e efetivamente enviado para a pasta oficial, mas anúncio LT76 NÃO ativado devido a controle de acesso ainda privado. Não declarar publicação concluída.
