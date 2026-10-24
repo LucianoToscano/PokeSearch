@@ -31,12 +31,12 @@ check("D right-edge menu opens mode editor inwards",()=>{
  assert.ok(dock.includes("left:auto!important;right:54px!important"));
 });
 check("E gender icons same rhythm as 23px rail and no duplicate title",()=>{
- assert.ok(dock.includes("Sexo:107,Forma:216"));
+ assert.ok(dock.includes("Sexo:80,Forma:216"));
  assert.ok(dock.includes('(isGender?" extraGenderField":"")'));
  assert.ok(dock.includes(".extraGenderField>label{"));
- assert.ok(dock.includes("grid-template-columns:repeat(4,23px)!important"));
+ assert.ok(dock.includes("grid-template-columns:repeat(3,23px)!important"));
  assert.ok(dock.includes("height:22px!important;min-height:22px!important"));
- for(const code of ["⚥","♂","♀","⚲"])assert.ok(dock.includes(code));
+ for(const code of ["♂","♀","⚲"])assert.ok(dock.includes(code));
 });
 check("F Favorites counter centered in full row, not weighted remainder",()=>{
  assert.ok(picker.includes("FrameLayout header=new FrameLayout(activity)"));
