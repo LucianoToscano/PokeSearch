@@ -6235,3 +6235,15 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Novo teste `app/tests/lt77-stage11-reveal-validation.test.js`; workflow `.github/workflows/lt77-stage11-reveal-qa.yml`. Execução [#40143066929](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143066929): conferir sucesso do CI.
 - O roteador API permanece desconectado do serviço Android e OFF por padrão. **Sem reveal real, sem dados sensíveis acessados e sem APK**. Homologação real de expiração/cooldown no Samsung segue pendente.
 - Durante a Etapa 10 o CI inicial [#40142917426](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142917426) falhou por falso positivo do teste de segurança que inspecionava a palavra `JWT` em comentários; a asserção foi corrigida em `352069f4a0f37a58206911e51339f5923a041e69` e propagada nesta branch. Run de reexecução [#40143042368](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143042368): conferir CI antes de declarar.
+
+
+---
+
+## LT77 — ETAPA 12: LIMPEZA DE CALLBACKS E RECURSOS (24/10/2026)
+
+- Branch `fix/lt77-stage12-overlay-lifecycle-20261024`, da Etapa 11 `88c9d3cb57284c1dd8e8eb07de5b618aee950d1d`.
+- Auditoria do ciclo de vida: `OverlayService.onDestroy` já possui `stopped=true`, `handler.removeCallbacksAndMessages(null)`, desmontagem das cinco janelas flutuantes, `destroyWebView` para as cinco WebViews locais e a WebView oficial, remoção das interfaces JS e `unregisterReceiver` protegido do receiver de screen-off. Não há `LocationListener` nem requestLocationUpdates físico neste serviço.
+- Correção defensiva de `OverlayService.java`: no `onDestroy`, invalidar explicitamente `coordinateRequestToken`, `formOptionsSequence`, `pokemonSuggestionSequence` junto com `requestGeneration`, antes de remover callbacks. Assim respostas tardias nunca devem carregar resultados de sessões fechadas.
+- Novo teste `app/tests/lt77-stage12-overlay-lifecycle.test.js`; workflow `.github/workflows/lt77-stage12-lifecycle-qa.yml`, sem APK. GitHub Actions: verificar execução da branch antes de declarar PASS.
+- A política já implementada de arraste limitado a 16ms permanece; esta etapa não comprova velocidade real ou consumo de memória do Samsung. Profiling de Android, leaks em atividade real e fluxo prolongado aguardam homologação física.
+- Todas as proteções de credenciais/reveal, DOM e feature-flag API OFF permanecem.
