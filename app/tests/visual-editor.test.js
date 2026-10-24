@@ -342,7 +342,7 @@ test("Pokebola Y starts at 0 and button artwork tracks Android's native drag gri
  assert.equal(styles["--visual-header-touch-height"],"40px");
  assert.ok(java.includes("box.topMargin=dp(visualHeaderY)"));
  assert.ok(java.includes("dp(width),dp(visualHeaderTouchHeight)"));
- assert.ok(dock.includes("body.result-window #shell{padding-top:var(--visual-header-y,0px)!important}"));
+ assert.ok(dock.includes("body.result-window #shell{padding-top:0!important}"));
  assert.ok(dock.includes("body.result-window #resultHeader .resultModeStack{transform:none!important}"));
 });
 test("Pokebola rectangle X width height and after-gap are controlled together",()=>{
