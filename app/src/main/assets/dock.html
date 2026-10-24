@@ -744,7 +744,7 @@ body.result-window #spawns:not(:empty){
     Each packed row is measured against its own scaled sprite and never
     contributes a phantom margin to the Pokébola anchor. */
  padding-top:0!important;padding-bottom:0!important;
- margin-top:var(--visual-top-gap,0px)!important; // explicit Editor Visual override only
+ margin-top:var(--visual-top-gap,0px)!important; /* Explicit Editor Visual override only. */
 }
 body.result-window .spriteStage .sprite{transform:scale(var(--visual-sprite-scale,1));transform-origin:center}
 body.result-window.visual-results-horizontal #spawns{
