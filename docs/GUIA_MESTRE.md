@@ -5958,7 +5958,7 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 
 ---
 
-## LT77 — TRANSPORTE EXPERIMENTAL DA API NO NAVEGADOR / QA 40-40 (24/10/2026)
+## LT77 — TRANSPORTE EXPERIMENTAL DA API NO NAVEGADOR / QA 38-38 (24/10/2026)
 
 ### Checkpoint real e escopo
 - Branch experimental isolada `feature/lt77-authorized-api-contract-20261024`, fonte antes deste registro `81553a7b62d7109675f3059cab3db3816f06de75`. LT76 publicada no Google Drive continua intocada; não houve merge, novo APK, alteração de assinatura/applicationId/main, manifesto nem PRs Draft.
