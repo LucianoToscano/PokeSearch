@@ -3244,6 +3244,21 @@ body.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="f
  padding:0!important;margin:0!important;
 }
 
+
+/* LT77 Stage 4: More needs a scrollbar only if clipped by the native window. */
+body.popup-window.controls-window #choices.morePanel:not(.native-popup-clipped),
+body.popup-window.controls-window.popup-above #choices.morePanel:not(.native-popup-clipped),
+body.popup-window.controls-window.visual-menu-vertical #choices.morePanel:not(.native-popup-clipped),
+body.popup-window.controls-window.visual-menu-vertical.popup-above #choices.morePanel:not(.native-popup-clipped){
+ overflow-x:visible!important;overflow-y:visible!important;
+}
+body.popup-window.controls-window #choices.morePanel.native-popup-clipped,
+body.popup-window.controls-window.popup-above #choices.morePanel.native-popup-clipped,
+body.popup-window.controls-window.visual-menu-vertical #choices.morePanel.native-popup-clipped,
+body.popup-window.controls-window.visual-menu-vertical.popup-above #choices.morePanel.native-popup-clipped{
+ overflow-x:hidden!important;overflow-y:auto!important;
+}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3664,6 +3679,10 @@ window.setNativePopupRoom=height=>{
  const previous=Number.parseFloat(document.documentElement.style.getPropertyValue("--popup-room"));
  if(!Number.isFinite(previous)||Math.abs(previous-next)>1)
   document.documentElement.style.setProperty("--popup-room",next+"px");
+ // Scroll More only when the native popup truly cannot fit the utility tiles.
+ const pane=document.getElementById("choices");
+ if(choiceOpen==="more"&&pane)
+  pane.classList.toggle("native-popup-clipped",pane.scrollHeight>next+1);
 };
 let activeNativePopupKind="";
 window.setActiveNativePopupKind=kind=>{
@@ -3682,7 +3701,12 @@ function toggleChoices(kind){
   const key={alerts:"bell",visual:"appearance",info:"appearance"}[kind]||kind;
   const button=document.querySelector('#quickMenuList button[data-key="'+key+'"]');
   const rect=button?.getBoundingClientRect(),host=document.getElementById("menu").getBoundingClientRect();
-  Native.openPopup(kind,Math.round(rect?rect.left-host.left+rect.width/2:host.width/2),
+  const centerX=Math.round(rect?rect.left-host.left+rect.width/2:host.width/2);
+  const centerY=Math.round(rect?rect.top-host.top+rect.height/2:host.height/2);
+  // Align vertical cascades to the actual clicked icon, not a fixed 16px offset.
+  if(Native.openPopupMeasured&&rect&&rect.height>0)
+   Native.openPopupMeasured(kind,centerX,centerY,Math.round(rect.height));
+  else Native.openPopup(kind,Math.round(rect?rect.left-host.left+rect.width/2:host.width/2),
    Math.round(rect?rect.top-host.top+rect.height/2:host.height/2));
   return;
  }
