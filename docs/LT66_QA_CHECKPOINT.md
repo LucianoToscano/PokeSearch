@@ -8,3 +8,6 @@ Testar 13 suítes Node, Java PopupTouchGeometry, :app:compileDebugJavaWithJavac 
 
 ## Tentativa de build 2
 A tentativa 1 falhou somente nos contratos antigos de teste de Modo que exigiam inputs sempre vazios. O comportamento LT66 agora mantém valores de IV e ranking existentes; testes UX e LT62 atualizados para a nova exigência, sem enfraquecer validações numéricas ou a confirmação explícita ✓. Repetir build e validar certificado.
+
+## Tentativa 3
+A segunda execução passou nas 8 suítes iniciais e encontrou um teste LT62 que ainda exigia top fixo de editor Modo. Ajustada a asserção para exigir posicionamento dinâmico limitado ao espaço disponível, sem relaxar valores e confirmação de filtros. A compilação assinada fica condicionada a todos os testes.
