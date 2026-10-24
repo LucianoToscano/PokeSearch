@@ -114,7 +114,7 @@ check("LT62 followup: Apply Clear Cancel are icon-only SVG buttons",()=>{
   'makeDockAction("clear","Limpar filtros")','makeDockAction("cancel","Cancelar alterações")'])
   assert.ok(dock.includes(p),p);
 });
-check("LT62 design: IV%, Raw IV and rank have empty placeholders and only ✓",()=>{
+check("LT62 design: IV%, Raw IV and rank preserve saved values and only ✓ applies",()=>{
  const block=dock.split("function renderModeChoices(){")[1].split("function renderExtraFilters(")[0];
  for(const p of [
   '["percentMin","Min %","percent"',
@@ -122,7 +122,7 @@ check("LT62 design: IV%, Raw IV and rank have empty placeholders and only ✓",(
   '["stamina","S","iv","Stamina"]',
   '["glRank","#","rank"',
   '["ulRank","#","rank"',
-  'input.placeholder=placeholder;input.value=""',
+  'input.value=String(modeDraft[key]??searchSettings[key]??"")',
   'editor.appendChild(confirm);panel.appendChild(editor)',
   'const limitsFor=kind=>kind==="percent"?[0,100]:kind==="iv"?[0,15]:[1,50]',
   'Object.assign(modeDraft,values)',
