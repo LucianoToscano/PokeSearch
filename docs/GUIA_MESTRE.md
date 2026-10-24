@@ -5610,3 +5610,40 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Roteiro imediato no Samsung LT74:** (1) toque longo no rodapé para **desligar** a simulação até exibir Toast `Simulação desativada`; se aparecer `Simulação de atualização ativada`, repetir toque longo; (2) com internet, abrir a Home novamente e aguardar consulta (cache/intervalo cerca de 5 min), confirmar aviso **real LT75 sem SIMULAÇÃO**; (3) botão `Baixar APK` deve abrir URL Google Drive; baixar e instalar LT75 por cima, sem desinstalar; (4) conferir login, dados, Firebase, menus, resultados, Shiny e rodapé versão `v0.00.75 LT`; o aviso deixa de aparecer quando instalada a mesma `versionCode 54275`; (5) avaliar ✕/persistência do aviso real e modo offline. Em caso de erro global, restaurar `enabled:false` no manifesto mantendo ID e backup.
 
 **Git:** PR #49 permanece Draft, branch `feature/lt75-real-drive-update-20261024`, origem binária `c0a587b1f689ead72e3ca9f197182be42297bf5d`, sem merge na main. Registro apenas documental; nenhuma nova APK foi compilada nesta etapa.
+
+---
+
+## LT75 — Homologação física do fluxo remoto LT74 → LT75 no Samsung (24/10/2026)
+
+**Origem da evidência:** três capturas de tela enviadas pelo usuário em 24/10/2026, posteriores à publicação real do manifesto LT75. Trata-se de **homologação visual fornecida pelo usuário**, não de teste físico executado pelo assistente. Preservar a distinção entre fato observado, inferência e ponto ainda não verificado.
+
+### Evidências visuais recebidas
+
+1. **LT74, aviso remoto real exibido.** Na Home do PokeSearch ainda instalado como LT74, surgiu o cartão "Nova atualização do PokeSearch disponível!", com "PokeSearch v0.00.75 LT", descrição da LT75 e botão "Baixar APK"; não havia o rótulo "SIMULAÇÃO". O rodapé seguia informando a LT74 instalada. **Confirmado visualmente:** a leitura remota do manifesto produziu aviso real elegível e a UI distinguiu versão instalada e anunciada. O print sozinho não prova o navegador/URL que eventualmente realizou o download.
+2. **Instalador Android concluiu a atualização.** Outro print no Samsung mostra o ícone PokeSearch e a mensagem nativa **"O app foi atualizado"**, com ações "Concluído" e "Abrir". **Confirmado visualmente:** o Android concluiu a instalação de uma atualização do app. Não é possível reconstruir apenas pelo print todos os toques, telas intermediárias ou eventuais confirmações do Google Drive.
+3. **LT75 aberta após a instalação.** Terceiro print exibe a Home com rodapé **"PokeSearch v0.00.75 LT"**, conta Google ainda conectada, treinador vinculado, contadores Firebase visíveis, aviso de atualização ausente e apresentação da Home preservada. **Confirmado visualmente:** a versão exibida é LT75; sessão/vínculo aparentes preservados; elementos Firebase presentes; aviso deixa de ser exibido quando a versão instalada alcança a versão anunciada. Os prints não constituem auditoria isolada da persistência de todos os dados, nem teste de estabilidade prolongada.
+
+**Resultado do ciclo real:** a sequência de prints é consistente com **LT74 → aviso remoto LT75 → instalação Android concluída → Home LT75 aberta**. Considerar **fluxo básico homologado visualmente no Samsung**, sem extrapolar para regressão funcional geral, integridade em tempo de instalação ou download anônimo automatizado. Não afirmar que o assistente apertou "Baixar APK" ou manipulou o aparelho.
+
+### Auditoria técnica complementar após recebimento dos prints
+
+- GitHub: branch \`feature/lt75-real-drive-update-20261024\` no checkpoint \`d8b29749e54141d70d01455b28d57c344f7c3c9c\` antes deste commit documental; PR #49 **open / Draft / not merged**, base LT74, sem tocar a \`main\`.
+- CI: workflow \`40114373326\` **SUCCESS**, commit de fonte compilada \`c0a587b1f689ead72e3ca9f197182be42297bf5d\`; artefato \`12567607390\` disponível, job \`signed-lt75\` concluído e passos de assinatura/validação aprovados. Tests LT75 8/8 e contratos LT72 / políticas conforme logs/checkpoint; testes automatizados não equivalem à homologação física.
+- Google Drive: arquivo \`PokeSearch-v0.00.75-LT.apk\`, ID \`1naQMKet-sYzLr40uGNQAVpc364kZCKRy\`, **34.664.510 bytes**, permissão \`anyone/reader\`; manifesto ID \`15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf\`, mesma permissão, \`schema=pokesearch-update-v1\`, \`enabled=true\`, \`versionCode=54275\`, \`forceUpdate=false\`. Backup LT62, APKs LT62/LT74 e manifesto preparado LT75 permanecem preservados.
+- O APK real foi lido do Drive e seu SHA-256 calculado localmente nesta auditoria: \`5e70793bccea6052f286c629769d1da15f8080ab169c1067eaf28d2dc67a9c5e\`, **igual** ao manifesto e ao hash registrado no checkpoint. A assinatura v2/certificado persistente são evidenciados pelo CI, sem nova inspeção física do certificado instalado.
+- Inspeção de código: \`UpdateCenter\` consulta JSON por HTTPS fora da thread principal, limita tamanho, rejeita páginas HTML e erros de parse, valida \`schema\`/URLs/versionCode e guarda a dispensa por código de versão. \`UpdatePolicy.shouldDisplay\` exige remoto maior que instalado e exclui versão dispensada. \`openDownload\` abre navegador pelo \`ACTION_VIEW\` com confirmação Google potencialmente manual. Não há instalador silencioso nem checksum do APK no dispositivo pelo fluxo atual.
+
+### Pendências de homologação — NÃO atribuir PASS sem prova no Samsung
+
+- Overlay abre/fecha; Pokébola arrasta junto com resultados; limite de 10 resultados.
+- Modos, Filtros, GL/UL, IV bruto e IV%, Shiny; localização/coordenadas/radius \`0–1000 km\`; clima branco/preto.
+- Favoritos, Notificações, Editor Visual, menus compactos e cliques fora; temas claro/escuro; persistência prolongada da sessão e estabilidade dos contadores Firebase.
+- Ciclo \`✕\` e persistência da dispensa **em fluxo remoto real**, modo offline, erro HTTP/HTML/JSON na prática, comportamento após intervalos de cache, instalação/atualização posterior e navegador/etapas de confirmação do Google Drive.
+- Validação criptográfica independente da assinatura e do certificado da **APK instalada** pelo Samsung; o manifesto apenas **declara** SHA-256, não verifica bytes no Android quando o download é delegado ao navegador.
+
+### Decisão operacional e segurança de distribuição
+
+**Estado observado e preservado:** manifesto público continua \`enabled:true\`, anunciando LT75 para **todas** as instalações com \`versionCode < 54275\` que ainda não dispensaram essa versão. Essa abrangência excede o Samsung de teste. LT75 é variante **interna** assinada de testes, não um release final não depurável. **Recomendação:** considerar suspender temporariamente o anúncio (\`enabled:false\`) até concluir a regressão Samsung e validar a política de rollout; isso exigiria decisão operacional explícita, pois altera imediatamente o comportamento para demais usuários elegíveis. **Nenhuma alteração de manifesto foi realizada nesta etapa**, mantendo os arquivos, IDs e histórico remoto intactos.
+
+**Fechamento parcial:** evidência física suficiente para validar o fluxo básico remoto LT74 → LT75; regressão geral ainda aberta. Somente documentação alterada neste commit, sem recompilar APK, sem criar LT76, sem merge, sem marcar PR como Ready e sem modificar \`main\`.
+
