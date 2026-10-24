@@ -1,0 +1,113 @@
+name: PokeSearch LT76 Missao V2 - release protegido (nao publica)
+on:
+  push:
+    branches: [feature/support-mission-v2-20261024]
+    paths:
+      - '.github/workflows/build-v076-support-mission-release.yml'
+      - 'app/build.gradle.kts'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/**'
+      - 'app/tests/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      POKE_TEST_VERSION_CODE: '54276'
+      POKE_TEST_VERSION_LABEL: '51076'
+      POKE_TEST_PUBLIC_VERSION: '0.00.76'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Restore LT75 persistent signing key
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for var in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$var")" || { echo "::error::Signing secret missing"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pokesearch-v076.p12"
+          chmod 600 "$RUNNER_TEMP/pokesearch-v076.p12"
+          keytool -list -keystore "$RUNNER_TEMP/pokesearch-v076.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" >/dev/null
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/pokesearch-v076.p12" >> "$GITHUB_ENV"
+      - name: Run mission and 21 historical regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node app/tests/support-mission-v2.test.js
+          for suite in app/tests/location-probe.test.js app/tests/probe-smoke.test.js app/tests/pokemon-picker.test.js app/tests/login-entry.test.js app/tests/overlay-ux.test.js app/tests/visual-editor.test.js app/tests/signing-contract.test.js app/tests/firebase-stats.test.js app/tests/lt62-menu-visual-states.test.js app/tests/lt63-compact-cascades.test.js app/tests/lt64-results-lifecycle.test.js app/tests/lt65-detail-feedback.test.js app/tests/lt66-samsung-panels.test.js app/tests/lt67-compact-fields.test.js app/tests/lt68-refresh-weather-icons.test.js app/tests/lt68-samsung-hardening.test.js app/tests/lt69-more-popup-origin.test.js app/tests/lt70-location-radius-toggle.test.js app/tests/lt72-drive-update-center.test.js app/tests/lt73-home-footer-version.test.js app/tests/lt75-real-drive-update.test.js; do
+            node "$suite"
+          done
+          mkdir -p "$RUNNER_TEMP/qa"
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/qa" app/src/main/java/com/lucianotoscano/pokesearchoverlay/SupportMissionPolicy.java app/src/main/java/com/lucianotoscano/pokesearchoverlay/UpdatePolicy.java app/src/main/java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java app/tests/SupportMissionPolicyTest.java app/tests/UpdatePolicyTest.java app/tests/PopupTouchGeometryTest.java
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.SupportMissionPolicyTest
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.UpdatePolicyTest
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.PopupTouchGeometryTest
+      - name: Build protected RELEASE APK
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Validate APK package, release status and signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          OUT=PokeSearch-v0.00.76-LT-MissaoV2-release.apk
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          test -s app/build/outputs/mapping/release/mapping.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-BADGING.txt
+          PKG="$(grep '^package: ' PACKAGE-BADGING.txt)"
+          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54276'" "versionName='0.00.76'"; do
+            grep -Fq "$expected" <<< "$PKG" || exit 1
+          done
+          ! grep -q '^application-debuggable' PACKAGE-BADGING.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"
+          cp "$APK" "$OUT"
+          sha256sum "$OUT" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          echo "$PKG" > PACKAGE-VERSION.txt
+          echo "release; non-debuggable; R8 mapping present; shrinkResources enabled" > PROTECTION.txt
+      - name: Private QA artifact (NO Drive publication)
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-v0.00.76-LT-MissaoV2-protected-release
+          path: |
+            PokeSearch-v0.00.76-LT-MissaoV2-release.apk
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            SOURCE_COMMIT.txt
+            PACKAGE-VERSION.txt
+            PROTECTION.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Cleanup secret key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pokesearch-v076.p12"
