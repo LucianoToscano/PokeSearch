@@ -2420,6 +2420,8 @@ public class OverlayService extends Service {
         try{
             JSONArray a=new JSONArray(results);
             if(index<0||index>=a.length()){hideDetails();return;}
+            // A previous Get coords callback must never update another card.
+            if(selected!=index)coordinateRequestToken++;
             selected=index;
             JSONObject obj=a.getJSONObject(index);
             js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(count()>0?shownMode:mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
@@ -2466,6 +2468,7 @@ public class OverlayService extends Service {
         }catch(Exception e){recordFailure("mostrar detalhes",e);hideDetails();}
     }
     private void hideDetails(){
+        coordinateRequestToken++; // Invalidates pending site callbacks after dismiss.
         selected=-1;
         // UX-DETAIL-TIMER-01: pause JS countdown while detail WebView is hidden.
         js(detailPanel,detailLoaded,"window.pauseDetailTimer()");
@@ -2528,11 +2531,13 @@ public class OverlayService extends Service {
                 if(autoCopy)copyCoordinatesInternal(coords);
                 deliverCoords(coords,autoCopy?"Coordenadas copiadas":"Coordenadas obtidas");return;
             }
-            if(result.optBoolean("pending",false)&&attempt<8){
+            if(result.optBoolean("pending",false)&&attempt<9){
+                // Bounded polling of this one verified card, never a second
+                // Get coords click. Give slow React hydration time to settle.
                 handler.postDelayed(()->{
                     if(!stopped&&!loginPaused&&requestToken==coordinateRequestToken)
                         pollCoordinates(target,attempt+1,autoCopy,requestToken);
-                },450L);
+                },750L);
             }else{
                 String reason=result.optString("status","");
                 deliverCoords("",reason.isEmpty()?
