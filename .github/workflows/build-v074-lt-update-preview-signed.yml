@@ -1,0 +1,194 @@
+name: PokeSearch v0.00.74 LT — Simulacao local de atualizacao
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - feature/lt73-home-footer-version-20261024
+    paths:
+      - '.github/workflows/build-v074-lt-update-preview-signed.yml'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/UpdateCenter.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/UpdatePolicy.java'
+      - 'app/tests/lt72-drive-update-center.test.js'
+      - 'app/tests/lt73-home-footer-version.test.js'
+      - 'app/tests/lt74-local-update-preview.test.js'
+      - 'app/tests/UpdatePolicyTest.java'
+      - 'app/tests/overlay-ux.test.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-lt74:
+    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == 'LucianoToscano/PokeSearch' && github.event.pull_request.head.ref == 'feature/lt74-local-update-preview-20261024') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      POKE_TEST_SIGNING_REQUIRED: 'true'
+      POKE_TEST_VERSION_CODE: '54274'
+      POKE_TEST_VERSION_LABEL: '51074'
+      POKE_TEST_PUBLIC_VERSION: '0.00.74'
+      POKE_TEST_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_TEST_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_TEST_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+    steps:
+      - name: Fonte LT74 exata
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Gradle 8.11.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Restaurar assinatura persistente protegida
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for value in "${POKE_TEST_KEYSTORE_B64:-}" "${POKE_TEST_STORE_PASSWORD:-}" "${POKE_TEST_KEY_ALIAS:-}" "${POKE_TEST_KEY_PASSWORD:-}"; do
+            if [ -z "$value" ]; then
+              echo "::error::Segredos de assinatura persistente ausentes; APK nao sera publicado"
+              exit 1
+            fi
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pokesearch-lt.p12"
+          test -s "$RUNNER_TEMP/pokesearch-lt.p12"
+          chmod 600 "$RUNNER_TEMP/pokesearch-lt.p12"
+          keytool -list -keystore "$RUNNER_TEMP/pokesearch-lt.p12" -storetype PKCS12 \
+            -storepass "$POKE_TEST_STORE_PASSWORD" -alias "$POKE_TEST_KEY_ALIAS" >/dev/null
+          echo "POKE_TEST_KEYSTORE=$RUNNER_TEMP/pokesearch-lt.p12" >> "$GITHUB_ENV"
+      - name: Validar JavaScript, 21 suites (incluindo LT74) e imagens oficiais
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/probe.js
+          node --check app/src/main/assets/visual_editor.js
+          node - <<'NODE'
+          const fs=require('node:fs'),vm=require('node:vm');
+          for(const file of ['app/src/main/assets/dock.html','app/src/main/assets/detail.html']){
+            const html=fs.readFileSync(file,'utf8');
+            const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
+            if(!scripts.length)throw Error("Sem scripts inline: "+file);
+            scripts.forEach((match,i)=>new vm.Script(match[1],{filename:file+':inline-'+i}));
+          }
+          const path='app/src/main/assets/weather-icons/v2/';
+          for(const n of ['any','boosted','sunny','rainy','partly-cloudy','cloudy','windy','snow','fog'])
+            for(const theme of ['white','black']){
+              const name=path+n+'-'+theme+'.png',file=fs.readFileSync(name);
+              if(file.subarray(0,8).toString('hex')!=='89504e470d0a1a0a'||file.length<20000)
+                throw Error("PNG invalido: "+name);
+            }
+          NODE
+          for suite in \
+            app/tests/location-probe.test.js \
+            app/tests/probe-smoke.test.js \
+            app/tests/pokemon-picker.test.js \
+            app/tests/login-entry.test.js \
+            app/tests/overlay-ux.test.js \
+            app/tests/visual-editor.test.js \
+            app/tests/signing-contract.test.js \
+            app/tests/firebase-stats.test.js \
+            app/tests/lt62-menu-visual-states.test.js \
+            app/tests/lt63-compact-cascades.test.js \
+            app/tests/lt64-results-lifecycle.test.js \
+            app/tests/lt65-detail-feedback.test.js \
+            app/tests/lt66-samsung-panels.test.js \
+            app/tests/lt67-compact-fields.test.js \
+            app/tests/lt68-refresh-weather-icons.test.js \
+            app/tests/lt68-samsung-hardening.test.js \
+            app/tests/lt69-more-popup-origin.test.js \
+            app/tests/lt70-location-radius-toggle.test.js \
+            app/tests/lt72-drive-update-center.test.js \
+            app/tests/lt73-home-footer-version.test.js \
+            app/tests/lt74-local-update-preview.test.js; do
+            echo "::group::$suite"
+            node "$suite"
+            echo "::endgroup::"
+          done
+      - name: Geometry regression Java
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/geometry"
+          javac -d "$RUNNER_TEMP/geometry" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java \
+            app/tests/PopupTouchGeometryTest.java
+          java -cp "$RUNNER_TEMP/geometry" com.lucianotoscano.pokesearchoverlay.PopupTouchGeometryTest
+      - name: Java update policy regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/update-policy"
+          javac -d "$RUNNER_TEMP/update-policy" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/UpdatePolicy.java \
+            app/tests/UpdatePolicyTest.java
+          java -cp "$RUNNER_TEMP/update-policy" com.lucianotoscano.pokesearchoverlay.UpdatePolicyTest
+      - name: Compilar APK protegido e testes Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug --stacktrace
+      - name: Verificar APK e identidade original
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          OUT="PokeSearch-v0.00.74-LT.apk"
+          EXPECTED_CERT="34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          PACKAGE_LINE="$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package: ')"
+          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54274'" "versionName='0.00.74'"; do
+            if ! grep -Fq -- "$expected" <<< "$PACKAGE_LINE"; then
+              echo "::error::Pacote ou versao incorreta: $PACKAGE_LINE"
+              exit 1
+            fi
+          done
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' > SIGNING_CERT_SHA256.txt
+          ACTUAL_CERT="$(tr -d ':\r\n ' < SIGNING_CERT_SHA256.txt | tr '[:upper:]' '[:lower:]')"
+          if [ "$ACTUAL_CERT" != "$EXPECTED_CERT" ]; then
+            echo "::error::Certificado divergente do permanente; distribuicao bloqueada"
+            exit 1
+          fi
+          cp "$APK" "$OUT"
+          sha256sum "$OUT" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          echo "$PACKAGE_LINE" > PACKAGE_VERSION.txt
+      - name: Publicar APK LT74 validado
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-v0.00.74-LT
+          path: |
+            PokeSearch-v0.00.74-LT.apk
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            SIGNING_CERT_SHA256.txt
+            SOURCE_COMMIT.txt
+            PACKAGE_VERSION.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Remover chave de assinatura do runner
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/pokesearch-lt.p12"

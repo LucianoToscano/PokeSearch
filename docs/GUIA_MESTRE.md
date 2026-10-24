@@ -5508,3 +5508,63 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Regressão real CI:** 20 suítes Node aprovadas, inclusive `lt72-drive-update-center.test.js` 10/10, `lt73-home-footer-version.test.js` 5/5; UpdatePolicy Java 14/14; PopupTouchGeometry 44/44; Gradle testes Android e montagem APK BUILD SUCCESSFUL. Testes estruturais não substituem homologação visual/funcional no Samsung.
 
 **Homologação Samsung:** usuário enviou screenshot da LT72 já instalada mostrando Home, conta Google, treinador vinculado e contadores Firebase visíveis. Isso é comprovação visual parcial, não teste completo do fluxo Drive. O manifesto público `atualizacao.json` permanece `enabled:false` e aponta LT62 `versionCode:54260`; portanto nenhuma versão nova deve ser anunciada em LT72/LT73. Testes físicos pendentes: rodapé LT73 visível, claro/escuro, abertura offline sem travamento, login, contadores, overlay, menus, resultados, limite dez, Shiny, GL/UL, clima, aviso de update com versão superior e válida, download no navegador e dispensa por versão. **Não publicar anúncio remoto, não sobrescrever LT62, não mesclar main, não marcar PR Ready.** O APK de teste foi oferecido como arquivo nesta conversa e o ZIP original está em Actions; confirmar download no ChatGPT Android separadamente.
+
+---
+
+## LT74 — Simulação local da Central de Atualizações, sem publicação (24/10/2026)
+
+**Escopo e base:** branch `feature/lt74-local-update-preview-20261024`, [PR #48 Draft](https://github.com/LucianoToscano/PokeSearch/pull/48), base LT73 [PR #47 Draft](https://github.com/LucianoToscano/PokeSearch/pull/47). Nenhum merge na `main` ou conversão de PR para Ready. O commit **compilado** é `eba8bec85ed8fd86cdddda3e6bae72cfe0fca47c`; commits documentais posteriores não alteram a origem binária.
+
+**Mudança isolada no `MainActivity.java`:** em **variante interna debug somente** (`BuildConfig.DEBUG`), tocar e segurar o rodapé nativo `PokeSearch v0.00.74 LT • PoGoCoordinates /search` alterna a simulação da Home. Ao ativar, mostra o card real com os textos `Atualização de teste`, `v0.00.75 · SIMULAÇÃO` e `Teste local: sem downloads e sem anúncios públicos.`, usando mesmas cores/medidas do card remoto. O botão `Baixar APK` em modo teste mostra Toast `Teste: botão acionado. Nenhum APK foi baixado.`, sem `Intent.ACTION_VIEW` e **sem download real**. O ✕ salva `homeUpdatePreviewDismissed=true` no `prefs`, ocultando a prévia após reiniciar a Home/app; o gesto longo desativa/reativa e reinicia somente a dispensa do teste. Estado de prévia salvo em `homeUpdatePreviewEnabled`. As chaves da prévia são **diferentes** da chave real `homeDriveUpdateDismissedCode`. A prévia **não altera a API, a política, os dados do manifesto, a instalação Android ou o estado de dispensa real**.
+
+**Preservação e segurança:** `UpdateCenter.java` e `UpdatePolicy.java` **não alterados**. Quando a prévia está desligada, segue a elegibilidade original do Drive: `enabled:true`, `versionCode` superior, URL/hash/nome/schema válidos e não dispensado. Não alterar `atualizacao.json` (ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`), deixar `enabled:false` e versão pública de referência LT62; não anunciar LT74/LT75. Simulação da versão `v0.00.75` é somente texto local, **não existe APK LT75 anunciado** e não testa o download externo do Google Drive. O efeito só existe na variante debug assinada usada para homologação; nunca considerar um release depurável adequado para produção.
+
+**Build CI e evidências:** workflow `.github/workflows/build-v074-lt-update-preview-signed.yml`, [GitHub Actions #40076752446](https://github.com/LucianoToscano/PokeSearch/actions/runs/40076752446), job `signed-lt74` SUCCESS, artifact `12553880823` com retenção de 30 dias (até 23/11/2026 segundo GitHub). `PokeSearch-v0.00.74-LT.apk`, 34.664.510 bytes, `com.lucianotoscano.pokesearch`, `versionCode=54274`, `versionName=0.00.74`. SHA-256 APK `3d1bf395dd25f0d5362612f343f318fd07878c3e8a6935b7f2e909140f52443d` igual a `SHA256SUMS.txt` gerado pelo CI; SHA-256 ZIP original `2cc52fa6d6c7e05a1e0dfe985b921c2e048c9dbdf634bec3eadf76f4d2183614` igual ao digest do artifact. ZIP extraído e `unzip -t` OK; `SOURCE_COMMIT.txt` aponta `eba8bec85ed8fd86cdddda3e6bae72cfe0fca47c`; `SIGNING-REPORT.txt` comprova assinatura v2 e certificado original SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. A assinatura foi validada no GitHub Actions com segredos persistentes; nenhum keystore foi exposto.
+
+**Regressão:** 21 suítes Node (incluindo LT74 `8/8`, LT73 `5/5`, LT72 `10/10`), Java `UpdatePolicy 14/14`, `PopupTouchGeometry 44/44`, Gradle `:app:testDebugUnitTest :app:assembleDebug` BUILD SUCCESSFUL. Preserve-se o overlay, sessão, Home, Firebase e filtros existentes por contrato; o funcionamento físico do Samsung **ainda requer homologação**.
+
+**Roteiro Samsung LT74:** instalar por cima da LT72/LT73 sem desinstalar; validar rodapé `v0.00.74`, login/Firebase; tocar e segurar rodapé, ver `SIMULAÇÃO`; alternar claro/escuro, conferir card; tocar `Baixar APK` e verificar apenas Toast, sem navegador/download; tocar ✕ e confirmar desaparecimento; fechar/reabrir o app e garantir que permaneça oculto; tocar e segurar rodapé para desligar e novamente para religar a simulação; confirmar reaparição. Com prévia desligada e manifesto público `enabled:false`, não deve aparecer aviso. Teste do **link externo real** fica pendente de publicação homologada; não afirmar homologação do download real por meio do mock. Não dar merge ou publicar versão no Drive antes da autorização/homologação.
+
+---
+
+### LT74 — Entrega via Drive confirmada após erro do ChatGPT Android (24/10/2026)
+
+**Falha reproduzida:** o usuário enviou screenshot da mensagem `Library file not found` ao abrir o link de anexo do APK LT74 no aplicativo ChatGPT Android. Falha no canal de entrega do chat, não prova falha no APK ou na instalação Android. Evitar reenviar repetidamente links sandbox como única opção.
+
+**Solução Drive efetivada:** upload na pasta oficial `Atualizacoes_PokeSearch`, ID `1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA-`. Foram **criados arquivos novos**, sem substituir os existentes:
+- APK LT74: `PokeSearch-v0.00.74-LT.apk`, ID `18XMbfJOjJI4A-dfmaYK5EZ8p8VLu2sg9`, link de visualização `https://drive.google.com/file/d/18XMbfJOjJI4A-dfmaYK5EZ8p8VLu2sg9/view`, 34.664.510 bytes.
+- Backup ZIP oficial do GitHub Actions: `PokeSearch-v0.00.74-LT-homologacao.zip`, ID `1J0eXfvduFMkJW9ToHTNneZaOyFWF_bPe`, link `https://drive.google.com/file/d/1J0eXfvduFMkJW9ToHTNneZaOyFWF_bPe/view`, 31.891.610 bytes.
+
+**Integridade conferida após upload:** download de leitura autenticada do APK **a partir do próprio Drive**, SHA-256 calculado `3d1bf395dd25f0d5362612f343f318fd07878c3e8a6935b7f2e909140f52443d`, idêntico ao APK oficial do GitHub Actions e ao SHA256SUMS.txt; `unzip -t` sem erros. Assinatura Android v2 e certificado persistente foram validados no workflow assinado #40076752446. Abertura do link/instalação **ainda precisa de teste no Samsung**.
+
+**Visibilidade:** APK LT74 e ZIP de homologação **privados**, acessíveis ao proprietário autenticado (não conceder `anyone/reader` nesta etapa). LT62 permanece público por link, não foi substituído. `atualizacao.json` original com ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf` não foi editado e mantém `enabled:false`; nenhum aviso de atualização real foi publicado. Não converter PR #48 Draft em Ready, não realizar merge na `main`.
+
+**Próximo passo de validação:** no Samsung abrir o link Drive com a conta proprietária, baixar e instalar a LT74 por cima da LT73, testar o long-press no rodapé, card `SIMULAÇÃO`, interação de botão e ✕, persistência de dispensa e alternância claro/escuro. Depois, homologar fluxo remoto real em ambiente controlado sem anúncios prematuros.
+
+---
+
+## LT74 — Homologação visual parcial Samsung (24/10/2026)
+
+**Evidência recebida do usuário:** screenshot de execução no Samsung mostrando a Home com o aviso **"Atualização de teste"**, a linha **"v0.00.75 · SIMULAÇÃO"**, botão **"Baixar APK"**, botão **✕**, descrição de teste local sem downloads/anúncios, e o Toast **"Teste: botão acionado. Nenhum APK foi baixado."**. Rodapé indica **"PokeSearch v0.00.74 LT • PoGoCoordinates /search"**. Conta vinculada e indicadores Firebase aparecem na mesma tela. Screenshot corresponde ao **tema escuro**.
+
+**Aprovado visualmente pelo print:** aviso exibido acima dos contadores, textos legíveis, layout compacto sem cortes aparentes, botão de download desenhado e resposta de Toast, versão real LT74 no rodapé, sessão e contadores visíveis. É **homologação parcial no aparelho**, não verificação programática ou funcional de todas as interações. A presença da mensagem de teste é compatível com a implementação que não faz download; o print isolado não demonstra que nenhum request externo foi feito, embora o código revise esse comportamento.
+
+**Pendente confirmar pelo usuário:** toque no ✕ e desaparecimento do card, fechamento/reabertura com dispensa persistida, reativação por toque longo, modo claro, modo offline, retorno ao manifesto remoto desligado, resultados e filtros do overlay, estabilidade da sessão, e download de APK real no Drive após publicação homologada. O aviso simulado **não** valida entrega HTTP pública, instalação de APK real ou lógica remota com `enabled:true`. Não ativar `atualizacao.json` e não declarar central pública homologada.
+
+**Estado:** LT74 PR #48 permanece Draft, APK assinado original e compartilhamento privado de homologação no Drive preservados, sem merge em main. Esta atualização altera apenas documentação e não exige novo APK.
+
+---
+
+## LT74 — Homologação funcional da simulação Samsung confirmada pelo usuário (24/10/2026)
+
+**Fonte da evidência:** confirmação expressa do usuário, após instalação da LT74 no aparelho Samsung e após envio de screenshot anterior da Home com card de simulação no tema escuro. Três cenários adicionais foram executados pelo usuário e informados como **APROVADOS**:
+
+1. **Dispensa (✕):** tocou no ✕ do aviso "Atualização de teste" e o card desapareceu corretamente da Home.
+2. **Persistência:** fechou o aplicativo e abriu novamente; a simulação dispensada permaneceu oculta, confirmando na experiência relatada o estado persistido entre aberturas.
+3. **Tema claro e reativação:** no tema claro, desativou e reativou a simulação pelo toque longo no rodapé; o card reapareceu corretamente.
+
+**Consolidação da homologação LT74 (escopo local):** screenshot anterior demonstrou card compacto, texto `SIMULAÇÃO`, layout acima dos contadores Firebase, botão `Baixar APK` e o Toast de teste; agora os três casos pendentes de ✕, persistência e reativação no tema claro foram **confirmados pelo usuário**. Considerar **homologada a simulação local da Central de Atualizações no Samsung**, exclusivamente nos cenários exercitados. Esta confirmação não equivale a teste físico realizado pelo assistente nem prova que os demais recursos estejam sem regressões.
+
+**Limites de cobertura / pendências mantidas:** a simulação não baixa APK e não valida publicação remota. Ainda não foram comprovados o comportamento de download externo e confirmação no Google Drive, a recepção de manifesto real com `enabled:true` e versão superior, operação offline, respostas HTML inválidas em dispositivo, regressão completa de filtros/resultados/overlay ou segurança de um APK de produção. Testes CI prévios permanecem registrados em suas seções, sem reexecução nesta etapa.
+
+**Controle de publicação:** preservar `atualizacao.json` (ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`) com `enabled:false` e referência LT62; não anunciar LT74/LT75 nem substituir os binários existentes. APK interno LT74 original e cópias privadas no Google Drive permanecem preservados. PR #48 Draft, sem merge em `main`, sem Ready. **Registro somente documental; não gerar novo APK.**

@@ -83,6 +83,9 @@ public class MainActivity extends Activity {
     // LT72: Home-only update card; does not own or recreate the overlay/WebView.
     private LinearLayout homeUpdateHolder;
     private UpdateCenter.Manifest currentDriveUpdate;
+    // LT74: opt-in visual preview only on internal debug builds. Never touches Drive.
+    private static final String UPDATE_PREVIEW_ENABLED="homeUpdatePreviewEnabled";
+    private static final String UPDATE_PREVIEW_DISMISSED="homeUpdatePreviewDismissed";
 
     // Native Home panels change alpha; the wallpaper never changes transparency.
     private final java.util.List<android.graphics.drawable.GradientDrawable> homeSurfaces=
@@ -514,6 +517,21 @@ public class MainActivity extends Activity {
             12,homeLightMode?Color.argb(80,33,65,89):Color.argb(75,180,215,247)));
         footer.setPadding(d(9),d(5),d(9),d(5));
         screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));
+        if(BuildConfig.DEBUG){
+            footer.setContentDescription("Rodapé da Home. Toque e segure para ativar ou desativar a simulação de atualização.");
+            footer.setOnLongClickListener(v->{
+                android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+                boolean enabled=!prefs.getBoolean(UPDATE_PREVIEW_ENABLED,false);
+                // Each new manual activation resets only the demo dismissal, not real ones.
+                prefs.edit().putBoolean(UPDATE_PREVIEW_ENABLED,enabled)
+                    .putBoolean(UPDATE_PREVIEW_DISMISSED,false).apply();
+                renderDriveUpdateBanner();
+                android.widget.Toast.makeText(this,
+                    enabled?"Simulação de atualização ativada.":"Simulação desativada.",
+                    android.widget.Toast.LENGTH_SHORT).show();
+                return true;
+            });
+        }
         return frame;
     }
     /** Callback from UpdateCenter, always on Android's UI thread. */
@@ -527,8 +545,15 @@ public class MainActivity extends Activity {
         LinearLayout holder=homeUpdateHolder;
         if(holder==null)return;
         holder.removeAllViews();
+        final boolean preview=BuildConfig.DEBUG && getSharedPreferences("prefs",0)
+            .getBoolean(UPDATE_PREVIEW_ENABLED,false);
         final UpdateCenter.Manifest info=currentDriveUpdate;
-        if(!UpdateCenter.isEligible(this,info)){
+        if(!preview){
+            if(!UpdateCenter.isEligible(this,info)){
+                holder.setVisibility(View.GONE);
+                return;
+            }
+        }else if(getSharedPreferences("prefs",0).getBoolean(UPDATE_PREVIEW_DISMISSED,false)){
             holder.setVisibility(View.GONE);
             return;
         }
@@ -546,17 +571,19 @@ public class MainActivity extends Activity {
         LinearLayout titleRow=new LinearLayout(this);
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
         card.addView(titleRow,new LinearLayout.LayoutParams(-1,-2));
-        TextView title=homeText("⬇ "+info.message,12,primary,true);
+        TextView title=homeText("⬇ "+(preview?"Atualização de teste":info.message),12,primary,true);
         title.setSingleLine(true);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
         titleRow.addView(title,new LinearLayout.LayoutParams(0,-2,1));
 
         TextView close=homeText("✕",15,secondary,true);
         close.setGravity(Gravity.CENTER);
-        close.setContentDescription("Dispensar atualização "+info.versionName);
+        close.setContentDescription(preview?"Dispensar simulação de atualização":"Dispensar atualização "+info.versionName);
         titleRow.addView(close,new LinearLayout.LayoutParams(d(34),d(29)));
         close.setOnClickListener(v->{
-            UpdateCenter.dismiss(this,info.versionCode);
+            if(preview) getSharedPreferences("prefs",0).edit()
+                .putBoolean(UPDATE_PREVIEW_DISMISSED,true).apply();
+            else UpdateCenter.dismiss(this,info.versionCode);
             renderDriveUpdateBanner();
         });
 
@@ -566,7 +593,7 @@ public class MainActivity extends Activity {
         bodyLp.topMargin=d(1);
         card.addView(bodyRow,bodyLp);
 
-        TextView version=homeText("PokeSearch v"+info.versionName+" LT",12,primary,true);
+        TextView version=homeText(preview?"v0.00.75 · SIMULAÇÃO":"PokeSearch v"+info.versionName+" LT",12,primary,true);
         version.setSingleLine(true);
         version.setEllipsize(android.text.TextUtils.TruncateAt.END);
         bodyRow.addView(version,new LinearLayout.LayoutParams(0,-2,1));
@@ -574,16 +601,23 @@ public class MainActivity extends Activity {
         TextView download=homeText("Baixar APK",11,
             light?Color.rgb(11,80,75):Color.rgb(172,246,215),true);
         download.setGravity(Gravity.CENTER);
-        download.setContentDescription("Baixar APK oficial "+info.apkName+" do Google Drive");
+        download.setContentDescription(preview?"Simular download sem baixar arquivos":
+            "Baixar APK oficial "+info.apkName+" do Google Drive");
         download.setPadding(d(9),0,d(9),0);
         download.setBackground(homeSurface(
             light?Color.rgb(221,244,237):Color.rgb(23,70,61),
             8,light?Color.rgb(159,206,193):Color.rgb(68,138,116)));
         bodyRow.addView(download,new LinearLayout.LayoutParams(-2,d(33)));
-        download.setOnClickListener(v->UpdateCenter.openDownload(this,info));
+        download.setOnClickListener(v->{
+            if(preview) android.widget.Toast.makeText(this,
+                "Teste: botão acionado. Nenhum APK foi baixado.",
+                android.widget.Toast.LENGTH_LONG).show();
+            else UpdateCenter.openDownload(this,info);
+        });
 
-        if(!info.description.isEmpty()){
-            TextView note=homeText(info.description,10,secondary,false);
+        String description=preview?"Teste local: sem downloads e sem anúncios públicos.":info.description;
+        if(!description.isEmpty()){
+            TextView note=homeText(description,10,secondary,false);
             note.setMaxLines(2);
             note.setEllipsize(android.text.TextUtils.TruncateAt.END);
             LinearLayout.LayoutParams noteLp=new LinearLayout.LayoutParams(-1,-2);
