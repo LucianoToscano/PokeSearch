@@ -57,7 +57,7 @@ check("do not silently broaden unsupported user filters",()=>{
  for(const config of [
   {mode:"raw",attack:15,defense:15,stamina:15,formSelections:["Alola"]},
   {mode:"raw",attack:15,defense:15,stamina:15,pokemonSelections:["Rookidee"]},
-  {mode:"raw",attack:15,defense:15,stamina:15,weather:"Rainy"},
+  {mode:"raw",attack:15,defense:15,stamina:15,weather:"Thunderstorm"},
   {mode:"raw",attack:15,defense:15,stamina:15,sortBy:"Distance"},
   {mode:"raw",attack:15,defense:15,stamina:15,genderSelections:["Male","Female"]}
  ]) assert.equal(contract.buildPayload(config).ok,false);
