@@ -653,6 +653,12 @@ public class OverlayService extends Service {
         if(!visualMenuVertical&&("filters".equals(popupKind)||"mode".equals(popupKind)))
             b=PopupTouchGeometry.alignRail(b,m.widthPixels,menuParams.x,menuParams.width,
                 dp(popupTriggerDp),dp("filters".equals(popupKind)?78:52),dp(6));
+        // LT63: preserve visibility of results; submenu remains in its own
+        // narrowly measured native window and avoids covering Pokémon cards.
+        if(resultParams!=null&&resultRoot!=null&&resultRoot.getVisibility()==View.VISIBLE)
+            b=PopupTouchGeometry.avoidResults(b,m.widthPixels,m.heightPixels,
+                resultParams.x,resultParams.y,resultParams.width,resultParams.height,
+                menuParams.x,menuParams.y,menuParams.width,dp(visualMenuBaseDp()),dp(4));
         if(!b.visible()){popupRoot.setVisibility(View.GONE);return;}
         if(lastPopupX!=b.x||lastPopupY!=b.y||lastPopupW!=b.width||lastPopupH!=b.height){
             popupParams.x=b.x;popupParams.y=b.y;
