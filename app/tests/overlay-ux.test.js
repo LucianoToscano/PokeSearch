@@ -65,12 +65,17 @@ test("LT62 popup receives picker/filter events, focus and P/M/G state updates",(
 
 test("Favorites picker is service-safe and focusable",picker.includes("TYPE_APPLICATION_OVERLAY")&&picker.includes("Runnable dismissed"));
 
-test("LT62 Favorites never hide background controls while the nonmodal picker is open",()=>{
- const bridge=service.split("@JavascriptInterface public void openWatchList()")[1]
+test("LT62/LT68 Favorites stay nonmodal and anchored to their star icon",()=>{
+ const bridge=service.split("private void showFavoritePicker(int anchorX,int anchorY)")[1]
+   ?.split("public class Bridge{")[0]||"";
+ const publicApi=service.split("@JavascriptInterface public void openWatchList()")[1]
    ?.split("@JavascriptInterface public void setIntervalMinutes(")[0]||"";
  const longPress=service.split("final Runnable dockLongPress=()->{")[1]?.split("};")[0]||"";
  return bridge.includes("pickerOpen=true;")&&bridge.includes("PokemonPicker.show(OverlayService.this")&&
   bridge.includes("pickerOpen=false;")&&bridge.includes("if(!stopped)update();")&&
+  bridge.includes("},anchorX,anchorY);")&&
+  publicApi.includes("showFavoritePicker(-1,-1)")&&
+  publicApi.includes("showFavoritePicker(anchorX,anchorY)")&&
   !bridge.includes("root.setVisibility(View.GONE)")&&
   !bridge.includes("resultRoot.setVisibility(View.GONE)")&&
   !bridge.includes("menuRoot.setVisibility(View.GONE)")&&
@@ -2812,7 +2817,7 @@ test("FILTERS-POGO-07 Applied requires native verified submission and accepted c
   dock.includes("filtersConfirmed=false)=>{")&&
   dock.includes("siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale")&&
   phase.includes("verified?\"✓ Aplicado no PoGoCoordinates\"")&&
-  phase.includes("dirty?\"● Alterações ainda não aplicadas\"")&&
+  phase.includes("dirty?\"● Falta aplicar\"")&&
   dock.includes('button.classList.toggle("site-filters-applied",count>0&&siteFiltersConfirmed');
 });
 test("FILTERS-POGO-08 scoped Clear preserves species, IV, Shiny and coordinates",()=>{
@@ -2858,7 +2863,7 @@ test("FILTERS-POGO-10 simulated UI never claims Applied for pending/stale/dirty 
  const saved={mode:"raw",sortBy:"Despawn (longest)",cpMin:"500",cpMax:"",
   levelMin:"1",levelMax:"35",includePreviousEvolutions:true};
  const result=(proof,active,stale,draft)=>{
-  const badge={textContent:"",classList:{toggle(_key,_value){}}};
+  const badge={textContent:"",title:"",setAttribute(_key,_value){},classList:{toggle(_key,_value){}}};
   compiled(saved,"raw",draft,true,"filters",
    {getElementById:()=>badge},proof,active,stale)();
   return badge.textContent;
@@ -2867,7 +2872,7 @@ test("FILTERS-POGO-10 simulated UI never claims Applied for pending/stale/dirty 
   result(true,false,false,saved)==="✓ Aplicado no PoGoCoordinates"&&
   result(true,true,false,saved).includes("Aguardando confirmação")&&
   result(true,false,true,saved).includes("Aguardando confirmação")&&
-  result(true,false,false,{...saved,weather:"Rainy"}).includes("Alterações ainda não aplicadas");
+  result(true,false,false,{...saved,weather:"Rainy"}).includes("Falta aplicar");
 });
 
 test("LT57-ONEFORM-01 patch only Weather with no loss of species IV or location",()=>{

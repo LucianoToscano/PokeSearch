@@ -190,6 +190,8 @@ public class OverlayService extends Service {
     private WebView panel,detailPanel,website,menuPanel,resultPanel,popupPanel;
     private boolean popupLoaded=false;
     private String popupKind="";
+    // One in-flight Get coords request may own the detail/clipboard at a time.
+    private long coordinateRequestToken=0L;
     private int popupTriggerDp,popupTriggerYDp,popupWidthDp,popupHeightDp;
     private int lastPopupX=Integer.MIN_VALUE,lastPopupY=Integer.MIN_VALUE,lastPopupW=-1,lastPopupH=-1;
     private View resultGrip;
@@ -2417,23 +2419,46 @@ public class OverlayService extends Service {
             detailParams.height=dp(detailHeight);moveDetail();
         }
     }
-    private void pollCoordinates(JSONObject target,int attempt,boolean autoCopy){
-        if(stopped||loginPaused)return;
+    private boolean currentCoordinateTarget(JSONObject target){
+        try{
+            JSONArray a=new JSONArray(results);
+            for(int i=0;i<a.length();i++){
+                JSONObject card=a.getJSONObject(i);
+                if(card.optInt("sourceIndex",-1)!=target.optInt("sourceIndex",-2))continue;
+                return card.optString("name","").equals(target.optString("name",""))&&
+                    card.optString("cp","").equals(target.optString("cp",""))&&
+                    card.optString("number","").equals(target.optString("number",""))&&
+                    card.optString("location","").equals(target.optString("location",""));
+            }
+        }catch(Exception e){recordFailure("verificar identidade Get coords",e);}
+        return false;
+    }
+    private void pollCoordinates(JSONObject target,int attempt,boolean autoCopy,long requestToken){
+        if(stopped||loginPaused||requestToken!=coordinateRequestToken)return;
+        if(!currentCoordinateTarget(target)){
+            deliverCoords("","Resultados mudaram; selecione o Pokémon novamente.");return;
+        }
         JSONObject query=new JSONObject();
         try{
+            query.put("index",target.optInt("sourceIndex",-1));
             query.put("name",target.optString("name",""));
             query.put("cp",target.optString("cp",""));
+            query.put("number",target.optString("number",""));
+            query.put("location",target.optString("location",""));
         }catch(Exception e){recordFailure("preparar consulta de coordenadas",e);}
         execute("readCoords:"+query.toString(),result->{
-            String coords=result.optString("coords","");
+            if(stopped||loginPaused||requestToken!=coordinateRequestToken)return;
+            if(!currentCoordinateTarget(target)){
+                deliverCoords("","Resultados mudaram; coordenadas não copiadas.");return;
+            }
+            String coords=extractCoordinates(result.optString("coords",""));
             if(result.optBoolean("ok")&&!coords.isEmpty()){
                 try{
                     JSONArray existing=new JSONArray(results);
                     for(int i=0;i<existing.length();i++){
                         JSONObject card=existing.getJSONObject(i);
                         if(card.optInt("sourceIndex",-1)==target.optInt("sourceIndex",-2)){
-                            card.put("coords",coords);
-                            break;
+                            card.put("coords",coords);break;
                         }
                     }
                     results=existing.toString();
@@ -2441,12 +2466,15 @@ public class OverlayService extends Service {
                 if(autoCopy)copyCoordinatesInternal(coords);
                 deliverCoords(coords,autoCopy?"Coordenadas copiadas":"Coordenadas obtidas");return;
             }
-            if(attempt<8){
+            if(result.optBoolean("pending",false)&&attempt<8){
                 handler.postDelayed(()->{
-                    if(!stopped&&!loginPaused)pollCoordinates(target,attempt+1,autoCopy);
+                    if(!stopped&&!loginPaused&&requestToken==coordinateRequestToken)
+                        pollCoordinates(target,attempt+1,autoCopy,requestToken);
                 },450L);
             }else{
-                deliverCoords("","O site não retornou coordenadas. Confira no navegador interno.");
+                String reason=result.optString("status","");
+                deliverCoords("",reason.isEmpty()?
+                    "O site ainda não liberou Get coords; tente novamente mais tarde.":reason);
             }
         });
     }
@@ -2470,6 +2498,25 @@ public class OverlayService extends Service {
     private void deliverCoords(String coordinates,String message){
         js(detailPanel,detailLoaded,"window.coordsResult("+JSONObject.quote(coordinates)+","+JSONObject.quote(message)+")");
         status(message);
+    }
+    // The regular Favorites picker is not a #choices popup. Give it the same
+    // originating icon coordinates while preserving its non-modal native dialog.
+    private void showFavoritePicker(int anchorX,int anchorY){
+        if(root==null||loginPaused||pickerOpen)return;
+        closeIndependentPopup();
+        pickerOpen=true;
+        hideDetails();
+        try{
+            PokemonPicker.show(OverlayService.this,()->{
+                if(!stopped)update();
+            },()->{
+                pickerOpen=false;
+                if(!stopped)update();
+            },anchorX,anchorY);
+        }catch(Exception e){
+            pickerOpen=false;
+            diagnosticError("Não foi possível abrir favoritos no overlay.");
+        }
     }
     public class Bridge{
         @JavascriptInterface public void previewVisualArea(String area){
@@ -3191,29 +3238,18 @@ public class OverlayService extends Service {
                 diagnosticError("Não foi possível abrir o relatório de bugs.");
             }
         });}
-        @JavascriptInterface public void openWatchList(){handler.post(()->{
-            if(root==null||loginPaused||pickerOpen)return;
-            closeIndependentPopup();
-            pickerOpen=true;
-            hideDetails();
-            // Favorites is a separate, content-sized TYPE_APPLICATION_OVERLAY Dialog
-            // with FLAG_NOT_TOUCH_MODAL. Do NOT hide the Pokeball, results or toolbar:
-            // those controls must remain touchable outside the dialog's native bounds.
-            // The pickerOpen guard prevents duplicate dialogs, not background interaction.
-            try{
-                PokemonPicker.show(OverlayService.this,()->{
-                    if(!stopped)update();
-                },()->{
-                    pickerOpen=false;
-                    // Never force windows VISIBLE after dismissal: the user may have
-                    // collapsed the menu/results or started login behind this dialog.
-                    if(!stopped)update();
-                });
-            }catch(Exception e){
-                pickerOpen=false;
-                diagnosticError("Não foi possível abrir favoritos no overlay.");
-            }
-        });}
+        @JavascriptInterface public void openWatchList(){
+            handler.post(()->showFavoritePicker(-1,-1));
+        }
+        @JavascriptInterface public void openWatchListAt(int triggerDp,int triggerYDp){
+            handler.post(()->{
+                int anchorX=menuParams==null?-1:
+                    menuParams.x+dp(Math.max(0,Math.min(menuDp(),triggerDp)));
+                int anchorY=menuParams==null?-1:
+                    menuParams.y+dp(Math.max(0,Math.min(visualMenuBaseDp(),triggerYDp)));
+                showFavoritePicker(anchorX,anchorY);
+            });
+        }
         @JavascriptInterface public void setIntervalMinutes(int minutes){handler.post(()->{
             if(minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
             if(intervalMinutes==minutes)return;
@@ -3308,6 +3344,7 @@ public class OverlayService extends Service {
         @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,true));}
     }
     private void requestCoordinates(int sourceIndex,boolean autoCopy){
+        final long requestToken=++coordinateRequestToken;
         JSONObject chosen=null;
         try{
             JSONArray a=new JSONArray(results);
@@ -3334,6 +3371,10 @@ public class OverlayService extends Service {
             fingerprint.put("location",target.optString("location",""));
         }catch(org.json.JSONException e){recordFailure("identificar cartão coordenadas",e);}
         execute("coords:"+fingerprint.toString(),response->{
+            if(stopped||loginPaused||requestToken!=coordinateRequestToken)return;
+            if(!currentCoordinateTarget(target)){
+                deliverCoords("","Resultados mudaram; selecione o Pokémon novamente.");return;
+            }
             if(!response.optBoolean("ok")){
                 // A transient page refresh may return only "reason". Surface
                 // the actual bounded reason in the detail, never clear it via
@@ -3342,7 +3383,7 @@ public class OverlayService extends Service {
                     response.optString("reason","Get coords indisponível"));
                 deliverCoords("",why);return;
             }
-            pollCoordinates(target,0,autoCopy);
+            pollCoordinates(target,0,autoCopy,requestToken);
         });
     }
     private void syncPreferencesWithoutSearch(){
