@@ -67,6 +67,7 @@ function applyVisual(){
  set("results-fg",current.resultsBgMode==="light"?"#172533":"#e6eefa");
  body.classList.toggle("visual-light-menu",current.menuBgMode==="light");
  body.classList.toggle("visual-light-results",current.resultsBgMode==="light");
+  if(typeof window.syncWeatherIcons==="function")window.syncWeatherIcons();
  set("sprite-scale",String(current.resultSpriteScale/100));
  set("header-y",current.headerIconY+"px");
  set("header-x",current.headerOffsetX+"px");
