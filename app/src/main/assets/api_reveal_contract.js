@@ -38,6 +38,15 @@
   if(!body||typeof body!=="object"||Array.isArray(body))return null;
   const shapes=[body,body.coordinates,body.coords,body.data];
   let winner=null;
+  // pogo.md section 5 also returns "coords":"lat,lng".
+  // If both forms are supplied they MUST agree; conflicting data fails closed.
+  if(typeof body.coords==="string"){
+   const match=/^\s*(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$/.exec(body.coords);
+   if(!match)return null;
+   const lat=number(Number(match[1]),-90,90),lng=number(Number(match[2]),-180,180);
+   if(lat===null||lng===null)return null;
+   winner={lat,lng};
+  }
   for(const shape of shapes){
    if(!shape||typeof shape!=="object"||Array.isArray(shape))continue;
    let lat=number(shape.lat,-90,90),lng=number(shape.lng,-180,180);
