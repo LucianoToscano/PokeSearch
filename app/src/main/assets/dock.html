@@ -3289,8 +3289,8 @@ function numericConfirmButton(make,keys,label){
  return button;
 }
 function filterCascadeEditorWidth(label){
- const width={Ordenar:156,PC:168,"Nível":168,Clima:160,Tamanho:230,
-  Sexo:134,Forma:110,"PC mínimo PvP":116,"Evoluções anteriores":92};
+ const width={Ordenar:178,PC:139,"Nível":139,Clima:158,Tamanho:230,
+  Sexo:134,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
  return width[label]||134;
 }
 function renderExtraFilters(panel,make){
@@ -3300,25 +3300,29 @@ function renderExtraFilters(panel,make){
   line.append(name,control);panel.appendChild(line);
  };
  const option=(key,label)=>{
-  const data=filterOptions[key]||{};
-  const live=Array.isArray(data.options)?data.options.map(x=>String(x).trim()).filter(Boolean):[];
-  const choices=key==="sortBy"?
-   (live.length?live:["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]):
-   key==="weather"?
-   (live.length?live:["Any","Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"]):live;
-  const current=String(modeDraft[key]||(key==="sortBy"?"Despawn (longest)":""));
-  const button=make("button","extraValue",filterDisplayLabel(key,current||(key==="weather"?"Any":"—")));
-  if(key==="weather")button.prepend(makeWeatherIcon(current||"Any"));
-  button.type="button";button.disabled=!choices.length&&!["sortBy","weather"].includes(key);
-  button.title=choices.length?"Selecionar "+label:"Aguardando opções verificadas no PoGoCoordinates";
-  button.onclick=()=>{modeScrollTop=panel.scrollTop;renderFilterPicker(key,label,choices);};
-  field(label,button);
+  // LT63: one lateral editor, no second picker.
+  const official=key==="sortBy"?
+   ["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]:
+   ["Any","Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"];
+  const list=make("div","extraOptionList");list.dataset.kind=key;
+  list.setAttribute("role","radiogroup");list.setAttribute("aria-label",label);
+  const saved=String(modeDraft[key]||(key==="sortBy"?official[0]:"Any"));
+  for(const value of official){
+   const button=make("button","extraOptionItem",key==="sortBy"?value:filterDisplayLabel(key,value));
+   button.type="button";button.setAttribute("role","radio");
+   button.setAttribute("aria-checked",String(saved===value));
+   button.classList.toggle("chosen",saved===value);
+   if(key==="weather")button.prepend(makeWeatherIcon(value));
+   button.onclick=()=>{modeDraft[key]=key==="weather"&&value==="Any"?"":value;renderFiltersChoices();};
+   list.appendChild(button);
+  }
+  field(label,list);
  };
  const numericInput=(key,label,level=false)=>{
   const input=make("input");input.type="number";input.inputMode="numeric";
   input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999";
-  input.value=""; // UI-only empty: modeDraft retains the saved value until typed.
-  input.placeholder=level?(key.endsWith("Min")?"1":"35"):"Qualquer";
+  input.value=String(modeDraft[key]??"");
+  input.placeholder=key.endsWith("Min")?"Min":"Max";
   input.dataset.filterNumber=key;input.setAttribute("aria-label",label);
   input.title=label;
   input.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
@@ -3386,7 +3390,7 @@ function renderExtraFilters(panel,make){
      modeDraft[multiKey]=[...selected];
     }
     modeDraft[key]=""; // Do not apply the stale legacy one-choice setting.
-    patchSelectedFilterKeys([multiKey,key]);
+    updateFiltersPanelStatus();
     modeScrollTop=panel.scrollTop;renderFiltersChoices();
    };
    group.appendChild(button);
@@ -3410,8 +3414,7 @@ function renderExtraFilters(panel,make){
    numberPair("PC","cpMin","cpMax");
    numberPair("Nível","levelMin","levelMax",true);
   }else{
-   panel.appendChild(make("p","extraNote",
-    "PC mínimo/máximo e nível são filtros da aba Stats do site; ficam preservados para quando você voltar a IV ou IV%."));
+   // Stats filters stay in the draft when PvP is selected.
   }
   option("weather","Clima");
   chips("size","Tamanho");
@@ -3419,15 +3422,24 @@ function renderExtraFilters(panel,make){
   const formSelected=Array.isArray(modeDraft.formSelections)?modeDraft.formSelections:[];
   const formButton=make("button","extraValue",formSelected.length?formSelected.length+" formas":"Any");
   formButton.type="button";formButton.title="Buscar e selecionar formas oficiais no site";
-  formButton.onclick=()=>{modeScrollTop=panel.scrollTop;formQuery="";renderFormPicker();};
-  field("Forma",formButton);
+  const formEditor=make("div","filterFormEditor");
+  const selectedForms=make("div","pokemonSelected");selectedForms.id="officialFormSelected";
+  const formSearch=make("input");formSearch.id="officialFormSearch";formSearch.type="search";
+  formSearch.placeholder="Buscar forma";formSearch.value=formQuery;
+  formSearch.setAttribute("aria-label","Buscar formas oficiais");
+  formSearch.oninput=()=>{formQuery=formSearch.value;refreshOfficialFormList();
+   if(Native.requestFormOptions)Native.requestFormOptions(formQuery);};
+  formSearch.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
+  formSearch.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
+  const formItems=make("div","filterFormItems");formItems.id="officialFormItems";
+  formEditor.append(selectedForms,formSearch,formItems);
+  field("Forma",formEditor);
  // Keep active PvP-only criteria without the obsolete Advanced header.
  if(["gl","ul"].includes(modeDraft.mode)){
   number("minPvpCp","PC mínimo PvP");
   const input=make("input");input.type="checkbox";
   input.checked=modeDraft.includePreviousEvolutions!==false;
-  input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;
-   patchSelectedFilterKeys(["includePreviousEvolutions"]);};
+  input.onchange=()=>{modeDraft.includePreviousEvolutions=input.checked;updateFiltersPanelStatus();};
   field("Evoluções anteriores",input);
  }
  // Compact rail: all original real controls stay registered, just reparented.
@@ -3452,13 +3464,16 @@ function renderExtraFilters(panel,make){
   entry.setAttribute("aria-current",String(label===selected));
   entry.setAttribute("aria-expanded",String(label===selected));
   entry.onclick=()=>{if(controlsWindow)Native.locationEditor(false);
-   filterFocus=filterFocus===label?"":label;modeScrollTop=0;renderFiltersChoices();};
+   const opening=filterFocus!==label;filterFocus=opening?label:"";
+    modeScrollTop=0;renderFiltersChoices();
+    if(opening&&label==="Forma"&&Native.requestFormOptions)Native.requestFormOptions(formQuery);};
   rail.appendChild(entry);
   row.remove();
   if(label===selected){editor.style.top=(22+index*24)+"px";editor.appendChild(row);}
  });
  panel.querySelectorAll(":scope > .extraDivider,:scope > .extraHead").forEach(e=>e.remove());
  panel.append(rail,editor);
+ if(selected==="Forma")refreshOfficialFormList();
 }
 function renderFilterPicker(key,label,options){
  const panel=uxPanel(label);panel.dataset.panelKind="filters";panel.classList.add("filterPicker");
@@ -3499,9 +3514,8 @@ function refreshOfficialFormList(){
  const term=formQuery.trim().toLowerCase();
  const matches=values.filter(x=>!term||x.toLowerCase().includes(term)).slice(0,60);
  target.replaceChildren();chips.replaceChildren();
- const status=document.createElement("p");status.className="uxNote";
- status.textContent=formOptionsStatus+(values.length?" · "+values.length+" opções verificadas":"");
- target.appendChild(status);
+ if(!values.length){const status=document.createElement("p");status.className="uxNote";
+   status.textContent="Aguardando formas oficiais";target.appendChild(status);}
  if(!matches.length){
   const message=document.createElement("p");message.className="uxNote";
   message.textContent="Aguardando Form do site · nenhuma forma será inventada";
@@ -3512,12 +3526,12 @@ function refreshOfficialFormList(){
   const active=selected.has(value.toLowerCase());
   button.className=active?"chosen":"";
   button.setAttribute("aria-pressed",String(active));
-  button.textContent=(active?"✓ ":"")+value;
+  button.textContent=value;
   button.onclick=()=>{
    const list=Array.isArray(modeDraft.formSelections)?[...modeDraft.formSelections]:[];
    modeDraft.formSelections=active?list.filter(v=>v.toLowerCase()!==value.toLowerCase()):
     [...list,value];
-   modeDraft.form="";patchSelectedFilterKeys(["formSelections","form"]);refreshOfficialFormList();
+   modeDraft.form="";updateFiltersPanelStatus();refreshOfficialFormList();
   };
   target.appendChild(button);
  }
@@ -3525,7 +3539,7 @@ function refreshOfficialFormList(){
   const chip=document.createElement("button");chip.className="pokemonChip";chip.type="button";
   chip.textContent=value+" ×";chip.onclick=()=>{
    modeDraft.formSelections=modeDraft.formSelections.filter(v=>v!==value);
-   patchSelectedFilterKeys(["formSelections","form"]);refreshOfficialFormList();
+   updateFiltersPanelStatus();refreshOfficialFormList();
   };
   chips.appendChild(chip);
  }
@@ -3549,7 +3563,7 @@ function renderFormPicker(){
  const list=document.createElement("div");list.id="officialFormItems";
  const clear=document.createElement("button");clear.type="button";
  clear.textContent="Limpar formas";clear.onclick=()=>{
-  modeDraft.formSelections=[];modeDraft.form="";patchSelectedFilterKeys(["formSelections","form"]);refreshOfficialFormList();
+  modeDraft.formSelections=[];modeDraft.form="";updateFiltersPanelStatus();refreshOfficialFormList();
  };
  const back=document.createElement("button");back.type="button";back.textContent="‹ Voltar aos filtros";
  back.onclick=renderFiltersChoices;
