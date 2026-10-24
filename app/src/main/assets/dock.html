@@ -5128,7 +5128,15 @@ function quickClick(id){
  switch(id){
   case "sh":Native.shiny();break; // Reuse native, login-verified Shiny toggle.
   case "bell":toggleChoices("alerts");break;
-  case "star":Native.openWatchList();break;
+  case "star":{
+   const tile=document.querySelector('#quickMenuList button[data-key="star"]');
+   const target=tile?.getBoundingClientRect(),host=document.getElementById("menu").getBoundingClientRect();
+   if(controlsWindow&&target&&Native.openWatchListAt)
+    Native.openWatchListAt(Math.round(target.left-host.left+target.width/2),
+      Math.round(target.top-host.top+target.height/2));
+   else Native.openWatchList(); // Preserve old clients and result-only layouts.
+   break;
+  }
   case "pokemon":toggleChoices("pokemon");break;
   case "report":Native.openReport();break;
   case "donate":Native.openPix();break;
