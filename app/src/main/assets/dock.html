@@ -2519,9 +2519,9 @@ body.popup-window #choices.filterCascade[data-panel-kind="filters"]:not(.filterP
  height:0!important;min-height:0!important;overflow:visible!important;
  max-width:none!important;max-height:none!important}
 body.popup-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]:not(.filterPicker){
- width:320px!important;max-width:none!important}
+ width:calc(80px + var(--filter-editor-width,134px))!important;max-width:none!important}
 body.popup-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor{
- width:230px!important;max-width:none!important;min-width:0!important}
+ width:var(--filter-editor-width,134px)!important;max-width:none!important;min-width:0!important}
 body.popup-window #choices.modeCascade.modeCascadeOpen{
  max-width:none!important;overflow:visible!important}
 body.popup-window #choices.modeCascade.modeCascadeOpen .modeCascadeEditor{
@@ -2546,6 +2546,125 @@ body.popup-window.controls-window #choices.modePanel.modeCascade.modeCascadeOpen
 body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
 body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor{
  max-height:var(--popup-room,440px)!important;overflow-y:auto!important}
+/* LT63: all popup origin offsets come from WindowManager. Never apply
+   a second 34px/232px CSS offset to the independent popup window. */
+body.popup-window.controls-window #choices.periodCompact[data-panel-kind="period"],
+body.popup-window.controls-window.visual-menu-vertical #choices.periodCompact[data-panel-kind="period"],
+body.popup-window.controls-window.popup-above #choices.periodCompact[data-panel-kind="period"]{
+ top:0!important;bottom:auto!important;left:0!important;right:auto!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList{
+ display:flex;flex-direction:column;gap:2px;width:100%;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionItem{
+ display:flex;align-items:center;justify-content:flex-start;gap:4px;
+ width:100%;min-height:28px;height:auto;line-height:1.2;padding:4px 6px;
+ text-align:left;white-space:normal;box-sizing:border-box;
+ border:1px solid transparent;border-radius:5px;background:transparent;
+ color:var(--visual-menu-fg,#eef3fa);font-size:10px;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionItem.chosen,
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChip.chosen,
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterFormItems button.chosen{
+ background:var(--visual-menu-button-bg,#303842e6)!important;
+ border-color:var(--visual-menu-border,#ffffff48)!important;
+ box-shadow:inset 2px 0 #7ccea3!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList[data-kind="weather"]{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList[data-kind="weather"] .extraOptionItem{
+ flex-direction:column;justify-content:center;min-height:45px;font-size:8px;
+ padding:2px 1px;text-align:center;overflow-wrap:anywhere;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .weatherChoiceIcon{
+ width:19px;height:19px;object-fit:contain;margin:0;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs{
+ width:max-content!important;max-width:100%!important;justify-content:flex-start!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeCell{
+ flex:0 0 45px!important;width:45px!important;max-width:45px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs input{
+ width:45px!important;min-width:0!important;height:29px!important;padding:2px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterInlineConfirm{
+ flex:0 0 25px!important;min-width:25px!important;width:25px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterFormEditor{
+ display:flex;flex-direction:column;gap:3px;max-width:100%;min-width:0;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor #officialFormSearch{
+ box-sizing:border-box;width:100%;min-width:0;height:28px;padding:2px 5px;font-size:10px;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems{
+ display:flex;flex-direction:column;gap:2px;max-height:156px;overflow-y:auto;overflow-x:hidden;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems button{
+ text-align:left;white-space:normal;padding:4px;min-height:27px;
+ font-size:10px;background:transparent;color:var(--visual-menu-fg,#eef3fa);
+ border:1px solid transparent;border-radius:4px;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor #officialFormSelected{
+ display:flex;flex-wrap:wrap;gap:2px;max-height:50px;overflow:auto;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor #officialFormSelected button{
+ flex:none;max-width:100%;font-size:9px;min-height:22px;
+}
+body.controls-window #choices.filterCascade button.filterCascadeEntry.chosen{
+ box-shadow:inset 2px 0 #7ccea3!important;
+}
+body.controls-window #choices.filterCascade .filterRailActions{
+ display:flex!important;gap:3px!important;justify-content:center!important;
+ border-top:1px solid var(--visual-menu-border,#ffffff24)!important;
+}
+body.controls-window #choices.filterCascade .filterRailActions .psLineAction,
+body.controls-window #choices.locationPanel .psLineAction{
+ box-sizing:border-box!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;
+ width:26px!important;min-width:26px!important;height:27px!important;min-height:27px!important;
+ flex:0 0 26px!important;margin:0!important;padding:3px!important;
+ border:1px solid var(--visual-menu-border,#ffffff42)!important;
+ border-radius:6px!important;background:transparent!important;
+ box-shadow:none!important;opacity:.94;
+}
+body.controls-window #choices .psLineAction svg{
+ width:16px!important;height:16px!important;flex:none;
+}
+body.controls-window #choices .psLineAction-apply{color:#8dd0ad!important}
+body.controls-window #choices .psLineAction-clear{color:var(--visual-menu-fg,#b6c6d7)!important}
+body.controls-window #choices .psLineAction-cancel{color:#e3a4ae!important}
+body.controls-window #choices.locationPanel{
+ box-sizing:border-box!important;width:225px!important;max-width:calc(100vw - 12px)!important;
+ padding:4px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow .locField{
+ box-sizing:border-box!important;width:100%!important;height:28px!important;
+ font-size:11px!important;min-width:0!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:4px!important;padding:1px 2px!important;min-height:29px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusText{display:none!important}
+body.controls-window #choices.locationPanel .locRadiusInputWrap{
+ width:66px!important;max-width:66px!important;height:27px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusNumber{
+ width:66px!important;min-width:66px!important;max-width:66px!important;
+ height:27px!important;padding-right:18px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusUnit{right:4px!important}
+body.controls-window #choices.locationPanel .compactLocationActions{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:4px!important;padding:0!important;margin:0!important;
+}
+body.controls-window #choices.locationPanel .compactLocationActions .psLineAction{
+ padding:3px!important;min-height:27px!important;
+}
+body.controls-window #choices.locationPanel input[type="range"]{width:calc(100% - 8px)!important;max-width:100%!important}
+body.controls-window #choices.locationPanel #locHint[hidden]{display:none!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3634,7 +3753,7 @@ function locationPanelFeedback(){
  hint.textContent=state==="CONFIRMED"?"✓ Localização confirmada · "+locationRadius+" km":
   state==="NOT_APPLIED"?"⚠ Localização não aplicada":
   state==="REQUESTED"?"⌛ Verificando localização":"";
- hint.hidden=state==="OFF";
+ hint.hidden=state==="OFF"||state==="CONFIRMED";
  hint.style.color=state==="NOT_APPLIED"?"#ffbf8f":"";
 }
 window.onLocationPaste=coords=>{
@@ -3651,6 +3770,23 @@ window.onLocationPaste=coords=>{
  hint.textContent="✓ Coordenadas coladas";
  hint.style.color="";hint.hidden=false;fit();
 };
+/* LT63: thin reusable actions, never solid green/red toolbars. */
+function makeDockAction(kind,label){
+ const b=document.createElement("button");b.type="button";
+ b.className="psLineAction psLineAction-"+kind;
+ b.title=label;b.setAttribute("aria-label",label);
+ const icons={
+  apply:'<path d="M5 12l4 4L19 6"/>',
+  clear:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v7M14 10v7"/>',
+  cancel:'<path d="M6 6l12 12M18 6L6 18"/>'
+ };
+ const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+ svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("fill","none");
+ svg.setAttribute("stroke","currentColor");svg.setAttribute("stroke-width","1.8");
+ svg.setAttribute("stroke-linecap","round");svg.setAttribute("stroke-linejoin","round");
+ svg.setAttribute("aria-hidden","true");svg.innerHTML=icons[kind];
+ b.appendChild(svg);return b;
+}
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen","filterPicker");
@@ -3681,7 +3817,7 @@ function renderLocationChoices(){
  // Location changes only when applying or clearing this one field.
  fieldRow.append(field);
  const label=make("div","locLine locRadiusRow");
- const labelName=make("span","","Raio");
+ const labelName=make("span","locRadiusText","Raio");
  label.title="Raio da busca: de 0 a 1000 km";
  const radiusField=make("input","locRadiusNumber");
  radiusField.id="locRadiusValue";radiusField.type="number";radiusField.min="0";radiusField.max="1000";radiusField.step="1";
@@ -3705,8 +3841,9 @@ function renderLocationChoices(){
  message.setAttribute("role","status");message.setAttribute("aria-live","polite");
  message.hidden=true;
  const actions=make("div","locLine compactLocationActions");
- const apply=make("button","locSave","✓ Aplicar");
- const clear=make("button","locHide","Limpar");
+ const apply=makeDockAction("apply","Aplicar localização");
+ const clear=makeDockAction("clear","Limpar localização");
+ apply.classList.add("locSave");clear.classList.add("locHide");
  const disable=()=>{
   // OFF is explicit: discard the unsent radius draft, not saved site filters.
   delete radiusField.dataset.locationDraft;
@@ -3732,8 +3869,8 @@ function renderLocationChoices(){
   Native.setLocation(true,wantedCoords,wantedRadius);
  }
  apply.onclick=submit;
- actions.append(apply,clear);
- panel.append(title,fieldRow,label,slide,message,actions);
+ actions.append(apply,clear);label.appendChild(actions);
+ panel.append(title,fieldRow,slide,label,message);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
  locationPanelFeedback();
@@ -5178,24 +5315,10 @@ function renderFiltersChoices(){
  // No redundant instructional paragraph: keep the filter popup compacto.
  const actions=make("div","modeAction filterActions filterRailActions");
  actions.setAttribute("role","group");actions.setAttribute("aria-label","Ações dos filtros");
- const actionIcon=(cls,label,icon)=>{
-  const button=make("button",cls);button.type="button";
-  button.setAttribute("aria-label",label);button.title=label;
-  const art={
-   apply:'<path d="M5 12l4 4L19 6"/>',
-   clear:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v7M14 10v7"/>',
-   cancel:'<path d="M6 6l12 12M18 6L6 18"/>'
-  };
-  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-  svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("aria-hidden","true");
-  svg.setAttribute("fill","none");svg.setAttribute("stroke","currentColor");
-  svg.setAttribute("stroke-width","2");svg.setAttribute("stroke-linecap","round");
-  svg.setAttribute("stroke-linejoin","round");svg.innerHTML=art[icon];
-  button.append(svg);return button;
- };
- const apply=actionIcon("modeApply filterIconAction","Aplicar filtros","apply");
- const clear=actionIcon("filterClear filterIconAction","Limpar filtros","clear");
- const cancel=actionIcon("filterIconAction filterCancel","Cancelar alterações","cancel");
+ const apply=makeDockAction("apply","Aplicar filtros");
+ const clear=makeDockAction("clear","Limpar filtros");
+ const cancel=makeDockAction("cancel","Cancelar alterações");
+ for(const btn of [apply,clear,cancel])btn.classList.add("filterIconAction");
  apply.onclick=()=>{
   // Reject invalid bounds before saving them or submitting anything to the site.
   for(const input of panel.querySelectorAll("input[data-filter-number]")){
