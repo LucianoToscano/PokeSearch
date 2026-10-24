@@ -5245,3 +5245,10 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 ### 12.282 — LT62: regressão atualizada para transição assíncrona segura (23/10/2026)
 
 **Resultado de CI em 12.281:** a suíte Node de UI falhou exclusivamente porque a asserção anterior esperava `if(popupWindow&&Native.closePopup)`, enquanto a implementação corrigida utiliza `if(popupWindow&&!popupNativeSwitch&&Native.closePopup)` para impedir que uma troca de submenus envie fechamento ao nativo. A asserção foi atualizada para refletir a nova regra de segurança, sem remover o teste nem alterar sua cobertura dos demais retornos de filtros, sprites, foco e notificações. Reexecutar CI Node e compilação Java/Android no SHA atualizado. Sem APK, merge, alterações da main ou promoção de versão.
+
+
+### 12.283 — LT62: compilação assinada explicitamente autorizada para homologação Samsung (23/10/2026)
+
+**Solicitação expressa:** proprietário escreveu "Gere o apk." Autorizado gerar **somente o APK LT62** a partir desta branch, **sem merge**, mantendo `applicationId=com.lucianotoscano.pokesearch`, `versionName=0.00.62`, `versionCode=54260`, mesmo certificado persistente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Workflow assinado existente: `.github/workflows/build-v062-compact-preview.yml` com proteção por prefixo `build: approved v0.00.62 LT signed`. Commit-fonte das correções `64c292fcde4d09a0de805de814e42795539e0046` (12.274–12.282). Esta gravação de documentação/notas não altera Java, HTML, assinatura, permissões ou preferências.
+
+**Condições de publicação:** Actions só deve disponibilizar `PokeSearch-v0.00.62-LT.apk` se passar nove suítes Node, teste Gradle, validação do pacote e versionCode/versionName, `apksigner verify`, fingerprint do certificado original e SHA256SUMS. Artefato serve **para homologação Samsung**, não é declaração de aprovação física. Caso o workflow falhe, preservar a versão anterior sem apresentar um APK fictício. PR #34 continua OPEN/DRAFT; `main` LT61 permanece intacta.

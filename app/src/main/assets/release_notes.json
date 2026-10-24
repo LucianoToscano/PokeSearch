@@ -133,7 +133,7 @@
           "Menus compactos: Sexo agora usa [⚥][♂][♀][⚲], cada opção em seu quadrinho individual.",
           "Comparação das seleções de Pokémon e filtros simples observadas no PoGoCoordinates, com importação explícita ao rascunho.",
           "Aplicar, Limpar e Cancelar usam botões compactos com ícones SVG acessíveis.",
-          "Favoritos redesenhados: busca ao digitar, até três sugestões, sprites tocáveis para remover e navegação paginada sem rolagem.",
+          "Favoritos: até 50 espécies em grade compacta de 10 colunas × 5 linhas, contador no cabeçalho e pesquisa inferior.",
           "Notificações compactas: Som, Sem som e OFF para Novos e Favoritos; 36 sons, prévia, confirmação e opção Enviar áudio.",
           "Atualização por duas setas: toque curto para atualizar; toque longo para selecionar OFF ou AUTO 3/5/10/15/20 minutos."
         ],
@@ -160,13 +160,18 @@
           "Validação dos filtros PC/Nível mesmo após alternar entre editores e preservação de valores não alterados.",
           "Ordem dos comandos pula itens protegidos e impede setas sem destino; controles fixos continuam acessíveis.",
           "Seleção de áudio de Favoritos inicia com 'Quem é esse Pokémon? BR' sem apagar preferências anteriores.",
-          "Proteção contra clique duplo após pressão longa no botão de atualização."
+          "Proteção contra clique duplo após pressão longa no botão de atualização.",
+          "Favoritos mantêm a Pokébola, resultados e menu acessíveis por trás do diálogo não modal fora dos limites físicos do painel.",
+          "Barra de menu e submenus agora usam janelas Android independentes, com limites compactos e ajustes de posição horizontal/vertical.",
+          "Editor Visual compartilha novamente os botões P/M/G com a Personalização e atualiza preferências confirmadas pelo serviço.",
+          "Notificações distinguem preferência de som selecionada da permissão realmente concedida pelo Android.",
+          "Janelas menores evitam encolhimento sucessivo de largura, grandes áreas vazias e bloqueio desnecessário de toques fora dos painéis."
         ],
         "emDesenvolvimento": [
           "Validação física das dimensões na WebView Samsung e das cascatas GL/UL, IV, filtros e Localização ainda necessária.",
           "Sincronização bidirecional de todos os controles múltiplos continua em desenvolvimento; teste Node não comprova funcionamento do site autenticado.",
           "APK compilado para teste deve ser homologado fisicamente no Samsung; aprovação automatizada não confirma alinhamento, toque longo, login, áudio, filtros ou resultados.",
-          "Áreas transparentes de janelas Android ainda podem bloquear toques; o dock foi colocado acima das janelas, mas falta homologação nativa."
+          "A arquitetura de janelas independentes está no código; a passagem real de toque externo, sons, teclado e posicionamento necessita homologação Samsung Android 16."
         ]
       }
     }
