@@ -2770,6 +2770,14 @@ body.controls-window #choices.locationPanel .compactLocationActions{
 body.controls-window #choices.locationPanel .psLineAction{
  flex:0 0 26px!important;min-width:26px!important;width:26px!important;height:26px!important;
 }
+/* Right-edge dock: cascade opens inward, keeping its parent rail
+   contiguous to the trigger instead of escaping off the Samsung screen. */
+body.popup-window.controls-window.menu-left #choices.modePanel.modeCascade .modeCascadeRail{
+ left:auto!important;right:0!important;
+}
+body.popup-window.controls-window.menu-left #choices.modePanel.modeCascade .modeCascadeEditor{
+ left:auto!important;right:54px!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3401,7 +3409,8 @@ function renderModeChoices(){
    const group=document.createElement("label");group.className="modeCascadeField";
    const input=document.createElement("input");input.type="text";input.inputMode="numeric";
    input.className="modeCascadeInput modeCascade-"+kind;
-   input.placeholder=placeholder;input.value="";
+   input.placeholder=placeholder;
+    input.value=String(modeDraft[key]??searchSettings[key]??"");
    input.autocomplete="off";input.maxLength=3;input.setAttribute("pattern","[0-9]*");
    input.setAttribute("aria-label",description);
    input.title=description+" · digite "+min+" a "+max;
