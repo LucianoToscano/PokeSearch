@@ -770,16 +770,43 @@ public class OverlayService extends Service {
     }
     private void moveDetail(){
         if(detailRoot==null||detailParams==null||params==null)return;
-        int w=screenWidthDp(),h=screenHeightDp(),gap=5;
-        // The details card follows the independently positioned result layer.
-        int dockPos=(resultParams!=null?resultParams.x:params.x)/dp(1);
-        int right=dockPos+resultWidthDp()+gap;
-        int left=dockPos-DETAIL_DP-gap;
-        int preferred=right+DETAIL_DP<=w-4?right:left;
-        detailParams.x=dp(Math.max(0,Math.min(w-DETAIL_DP,preferred)));
-        int dockY=(resultParams!=null?resultParams.y:params.y)/dp(1)+RESULTS_HEADER_DP;
-        detailParams.y=dp(Math.max(0,Math.min(h-detailHeight-45,dockY+18)));
-        try{wm.updateViewLayout(detailRoot,detailParams);}catch(Exception e){recordFailure("reposicionar detalhes",e);}
+        // LT65 Samsung: do not paint the floating detail card over its
+        // originating toolbar. Prefer a position beside the result sprites,
+        // then place it below the native dock (or above when near the bottom).
+        // Native WindowManager rectangles, not transparent CSS dimensions,
+        // determine the areas able to intercept touches.
+        DisplayMetrics screen=metrics();
+        int margin=dp(6),cardWidth=detailParams.width;
+        int cardHeight=detailParams.height;
+        int anchorX=resultParams!=null?resultParams.x:params.x;
+        int railWidth=resultParams!=null?resultParams.width:dp(resultWidthDp());
+        int right=anchorX+railWidth+margin;
+        int left=anchorX-cardWidth-margin;
+        int x=right+cardWidth<=screen.widthPixels-margin?right:left;
+        x=Math.max(margin,Math.min(Math.max(margin,screen.widthPixels-cardWidth-margin),x));
+        int rowY=(resultParams!=null?resultParams.y:params.y)+dp(RESULTS_HEADER_DP+18);
+        int minY=margin,maxY=Math.max(margin,screen.heightPixels-cardHeight-margin);
+        int y=Math.max(minY,Math.min(maxY,rowY));
+        int toolbarHeight=Math.max(params.height,dp(TOOLBAR_DP));
+        boolean crossesToolbar=x<params.x+params.width&&params.x<x+cardWidth&&
+            y<params.y+toolbarHeight&&params.y<y+cardHeight;
+        if(crossesToolbar){
+            int below=params.y+toolbarHeight+margin;
+            int above=params.y-cardHeight-margin;
+            if(below<=maxY)y=below;
+            else if(above>=minY)y=above;
+            else{
+                // Last resort: prefer the side with more usable height,
+                // without allowing a native touch rectangle over the tools.
+                int spaceBelow=screen.heightPixels-(params.y+toolbarHeight);
+                int spaceAbove=params.y;
+                y=Math.max(minY,Math.min(maxY,
+                    spaceAbove>spaceBelow?above:below));
+            }
+        }
+        detailParams.x=x;detailParams.y=y;
+        try{wm.updateViewLayout(detailRoot,detailParams);}
+        catch(Exception e){recordFailure("reposicionar detalhes",e);}
     }
     private void newWebsite(){
         website=new WebView(this);
@@ -3305,7 +3332,12 @@ public class OverlayService extends Service {
         }catch(org.json.JSONException e){recordFailure("identificar cartão coordenadas",e);}
         execute("coords:"+fingerprint.toString(),response->{
             if(!response.optBoolean("ok")){
-                deliverCoords("",response.optString("status","Get coords indisponível"));return;
+                // A transient page refresh may return only "reason". Surface
+                // the actual bounded reason in the detail, never clear it via
+                // a generic status refresh or pretend the coords were copied.
+                String why=response.optString("status",
+                    response.optString("reason","Get coords indisponível"));
+                deliverCoords("",why);return;
             }
             pollCoordinates(target,0,autoCopy);
         });
