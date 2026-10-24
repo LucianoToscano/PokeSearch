@@ -59,6 +59,33 @@ public final class PopupTouchGeometryTest {
         check(sideLeft.x+sideLeft.width==230,"vertical popup moves left when right side is full");
         check(sideLeft.x>=6&&sideLeft.y+sideLeft.height<=894,
             "vertical adjacent popup remains bounded to display");
+        // LT63: simulated Samsung placements, independently dragged results,
+        // left/right edges, vertical rail and cramped lower screen.
+        int[][] phoneCases={
+            {1080,2400,180,375,310,290,160,395,370,640},
+            {1080,2400,690,375,310,290,700,390,360,600},
+            {1080,2400,230,1950,310,310,220,2020,610,300},
+            {720,1280,390,810,300,260,400,820,300,400},
+            {420,900,90,340,310,260,110,345,200,350},
+            {1440,3088,1020,800,310,330,1100,815,330,900}
+        };
+        for(int i=0;i<phoneCases.length;i++){
+            int[] c=phoneCases[i];
+            PopupTouchGeometry.Bounds popup=new PopupTouchGeometry.Bounds(c[2],c[3],c[4],c[5],false);
+            PopupTouchGeometry.Bounds results=new PopupTouchGeometry.Bounds(c[6],c[7],c[8],c[9],false);
+            PopupTouchGeometry.Bounds safe=PopupTouchGeometry.avoidResult(popup,results,c[0],c[1],6);
+            check(!PopupTouchGeometry.overlaps(safe,results),"LT63 results untouched: "+i);
+            if(safe.visible()){
+                check(safe.x>=6&&safe.y>=6&&safe.x+safe.width<=c[0]-6&&
+                      safe.y+safe.height<=c[1]-6,"LT63 safe bounds "+i);
+            }
+        }
+        PopupTouchGeometry.Bounds clearPopup=new PopupTouchGeometry.Bounds(6,6,140,140,false);
+        PopupTouchGeometry.Bounds farResults=new PopupTouchGeometry.Bounds(320,400,90,90,false);
+        check(PopupTouchGeometry.avoidResult(clearPopup,farResults,420,900,6)==clearPopup,
+              "LT63 non-overlapping popup stays anchored");
+        check(!PopupTouchGeometry.overlaps(clearPopup,farResults),
+              "LT63 disjoint rectangles");
         System.out.println("PopupTouchGeometry: "+passed+"/"+passed+" checks passed");
     }
 }

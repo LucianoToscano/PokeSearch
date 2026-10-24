@@ -5265,3 +5265,21 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Certificado de assinatura persistente verificado:** `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. O workflow confirmou assinatura Android v2 via `apksigner`, pacote e versão via `aapt`, integridade `unzip -t`, nove suítes Node e compilação Gradle `:app:testDebugUnitTest :app:assembleDebug`. Não houve troca de chave, nem alteração de identidade, login ou preferências.
 
 **Restrição de homologação:** APK pronto **para teste no Samsung**; sem instalação física ou confirmação de passagem de toques, atualização de Sprites P/M/G, áudio/permissões dos avisos e posição de Filtros/Localização/Editor Visual em hardware. PR #34 permanece OPEN/DRAFT e `main` LT61 intacta; sem merge, sem promoção LT63.
+
+## LT63 — Cascatas compactas e correções Samsung (24/10/2026)
+
+**Origem controlada:** branch `fix/lt63-compact-cascades-samsung-20261024`, derivada de `fix/lt62-menu-visual-states-20261023` no SHA `8babc0bc3d97496d6fa71ff0fa2e89a10af61bc2`; PR #34 da LT62 continua aberto/Draft e a `main` permanece no commit `caea98b7b57b9e45d5218e907eb392d76953dd53`. **Sem autorização para merge.**
+
+**Diagnóstico pelos prints Samsung:** Filtros exibiam retângulos vazios por CSS de popup impondo editor de `230px` e cascata de `320px` independentemente do item; Ordenar/Clima ainda invocavam `renderFilterPicker`; janelas WebView nativas não consideravam a interseção com o retângulo tocável dos resultados. Favoritos alinhava o contador à direita. Atualização somava `top:34px/232px` CSS ao deslocamento do WindowManager.
+
+**Alterações efetivamente implementadas na LT63:**
+- `dock.html`: Ordenar (cinco opções oficiais) e Clima (nove opções de Any a Fog) agora formam lista/grade dentro da cascata selecionada. Forma mostra pesquisa, chips e formas extraídas do site no mesmo editor; sem abrir segundo seletor. Sexo mantém os quatro símbolos `⚥ ♂ ♀ ⚲` com exclusividade; Tamanho preserva multi-seleção de sete tamanhos; PC/Nível retêm seus valores rascunhados, placeholders Min/Max e confirmação limitada a cada grupo. As alterações de chips permanecem rascunho até ação global Aplicar.
+- CSS: larguras por item (Sexo 134, Ordenar 178, Clima 158, Tamanho 230, PC/Nível 139, Forma 216 px) substituem duas larguras fixas do popup; seleção usa acento verde lateral. Ícones Aplicar/Limpar/Cancelar em SVG compartilhado e superfícies leves. Localização em três linhas: cabeçalho+Colar, campo coordenadas, slider e controle de 0–1000 km+ações agrupadas abaixo, com raio sincronizado. Atualização posiciona seu menu em `top:0` dentro do popup nativo.
+- `PokemonPicker.java`: cabeçalho Favoritos com título proporcional, contador expandido e centralizado e botão × discreto; preserva grade 10×5.
+- `PopupTouchGeometry.java` e `OverlayService.java`: a geometria de popup verifica interseção com o retângulo real da janela de resultados e procura outra região tocável, respeitando bordas e arraste; não usa máscara grande transparente. Reavalia a posição após arrastes.
+- `app/src/main/assets/release_notes.json`: nova entrada LT63 `54261`, sem prometer validação Samsung.
+
+**Identidade e assinatura obrigatórias:** `applicationId=com.lucianotoscano.pokesearch`, namespace `com.lucianotoscano.pokesearchoverlay`, Java 17, Gradle 8.11.1, `compileSdk=36`, `targetSdk=33`, `minSdk=26`. Compilação LT63 exige `POKE_TEST_VERSION_CODE=54261`, `POKE_TEST_PUBLIC_VERSION=0.00.63` e SHA-256 do certificado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Não substituir assinatura original por debug aleatório.
+
+**Homologação separada:** verificações estáticas/Node e geometria Java não equivalem a teste no Samsung. Verificar, após APK assinado, cascateamento, toques externos, coordenadas negativas, GL/UL, Shiny, teclado, rotação, atualização de 3/5/10/15/20 min, arraste Pokébola/resultados e atualização em cima da LT62. Registrar a conclusão do Actions e o fingerprint conferido antes de disponibilizar o binário.
+

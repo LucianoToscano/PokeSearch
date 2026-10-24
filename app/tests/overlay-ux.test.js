@@ -2710,7 +2710,7 @@ test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menu
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
  return filters.includes('option("sortBy","Ordenar")')&&
   filters.includes('option("weather","Clima")')&&
-  filters.includes('field("Forma",formButton)')&&
+  filters.includes('field("Forma",formEditor)')&&
   filters.includes('chips("size","Tamanho")')&&
   filters.includes('chips("gender","Sexo")')&&
   !filters.includes('field("Pokémon",pick)')&&
@@ -2725,7 +2725,7 @@ test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()
   filters.includes('input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999"')&&
   filters.includes('input.type="number";input.inputMode="numeric";')&&
   !filters.includes('make("button","extraStep"')&&
-  filters.includes('input.value=""; // UI-only empty: modeDraft retains the saved value until typed.')&&
+  filters.includes('input.value=String(modeDraft[key]??"")')&&
   filters.includes('[[minKey,"Min","mínimo"],[maxKey,"Max","máximo"]]')&&
   !filters.includes('cell.append(cap,input)')&&
   dock.includes('input.checkValidity()')&&
@@ -2922,7 +2922,7 @@ test("LT57-ONEFORM-05 Weather uses site Any and only screenshot-supported choice
  const expected=["Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"];
  return expected.every(v=>picker.includes('"'+v+'"'))&&
   picker.includes('neutral.textContent=filterDisplayLabel(key,"Any")')&&
-  dock.includes('key==="weather"?"Any":"—"')&&
+  dock.includes('key==="sortBy"?official[0]:"Any"')&&
   read("assets/probe.js").includes('function comparableOption(value)');
 });
 test("LT57-ONEFORM-06 compact menu and launcher safe area preserved",()=>{
@@ -3144,7 +3144,7 @@ test("LT58-SITE-SELECT-02 Gender exclusive; Form directly below; redundant text 
  const f=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
  const p=read("assets/probe.js");
- return f.includes('chips("gender","Sexo");\n  const formSelected=')&&f.includes('field("Forma",formButton)')&&
+ return f.includes('chips("gender","Sexo");\n  const formSelected=')&&f.includes('field("Forma",formEditor)')&&
   f.includes('group.setAttribute("role","radiogroup")')&&
   f.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}')&&
   p.includes('if(key==="gender"&&Array.isArray(filters.genderSelections))')&&
@@ -3422,8 +3422,8 @@ test("LT62-FORM-EDITOR searches official forms and only Form is patched on each 
  return block.includes('input.placeholder="Buscar forma no PoGoCoordinates"')&&
   block.includes("Native.requestFormOptions(formQuery)")&&
   !block.includes('done.textContent="✓ Confirmar seleção"')&&
-  picker.includes('patchSelectedFilterKeys(["formSelections","form"])')&&
-  dock.includes('formButton.onclick=()=>{modeScrollTop=panel.scrollTop;formQuery="";renderFormPicker();}')&&
+  picker.includes('updateFiltersPanelStatus()')&&
+  dock.includes('field("Forma",formEditor)')&&
   dock.includes('filterOptions.form={present:true,options:[...new Set([...previous,...options])].slice(0,500)}')&&
   dock.includes('Native.patchSearchFilters(JSON.stringify(delta))');
 });
