@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate scripts and all 14 Node suites
+      - name: Validate scripts and all 15 Node suites
         shell: bash
         run: |
           set -euo pipefail
@@ -50,7 +50,8 @@ jobs:
             app/tests/lt64-results-lifecycle.test.js \
             app/tests/lt65-detail-feedback.test.js \
             app/tests/lt66-samsung-panels.test.js \
-            app/tests/lt67-compact-fields.test.js; do
+            app/tests/lt67-compact-fields.test.js \
+            app/tests/lt67-refresh-weather.test.js; do
             echo "::group::$suite"
             node "$suite"
             echo "::endgroup::"
