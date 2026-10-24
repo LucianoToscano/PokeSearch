@@ -1198,38 +1198,52 @@ function collect(){
 }
 if(action==="collect")return collect();
 // LT64: resolve a card by its stable identity rather than a changing row.
+/* LT68 Samsung: every read/click is scoped to ONE uniquely identified card.
+   Never scan page-wide Open in Maps buttons, even when two names/CPs match. */
 function matchingCoordsCard(query){
  const roots=cardRoots(),name=String(query.name||"").replace(/✨/g,"").trim().toLowerCase();
  const cp=String(query.cp||"").trim(),number=String(query.number||"").trim();
- if(!name&&!cp)return roots.find(c=>c.sourceIndex===Number(query.index))||null;
+ const location=clean(query.location||"").toLowerCase();
+ const index=Number(query.index);
  const matches=roots.filter(card=>{
+  if(Number.isInteger(index)&&index>=0&&card.sourceIndex!==index)return false;
   const parsed=parseCard(card.node,card.sourceIndex);
   if(name&&parsed.name.replace(/✨/g,"").trim().toLowerCase()!==name)return false;
   if(cp&&String(parsed.cp||"").trim()!==cp)return false;
-  if(number&&parsed.number&&parsed.number!==number)return false;
+  if(number&&parsed.number!==number)return false;
+  if(location&&clean(parsed.location||"").toLowerCase()!==location)return false;
   return true;
  });
- return matches.length===1?matches[0]:null; // Never copy another Pokémon's coords.
+ return matches.length===1?matches[0]:null;
+}
+function cardCoordsControls(card){
+ return Array.from(card.node.querySelectorAll("button,a,[role=button]")).filter(vis);
 }
 if(action.startsWith("coords:")){
  const raw=action.slice(7);
  let query;try{query=JSON.parse(raw)}catch(_){query={index:Number(raw)}}
  const card=matchingCoordsCard(query);
- if(!card)return JSON.stringify({ok:false,status:"Pokémon não encontrado nos resultados atuais do site"});
- const btn=Array.from(card.node.querySelectorAll("button,[role=button]"))
-  .find(e=>vis(e)&&/^Get coords$/i.test(text(e)));
- if(!btn){
-  const opened=Array.from(card.node.querySelectorAll("button,a,[role=button]"))
-   .some(e=>vis(e)&&/^Open in Maps$/i.test(text(e)));
-  return JSON.stringify({ok:opened,status:opened?
-   "Coordenadas já disponíveis":"Get coords indisponível neste Pokémon"});
- }
+ if(!card)return JSON.stringify({ok:false,status:"Pokémon não encontrado ou identificação ambígua nos resultados atuais"});
+ const buttons=cardCoordsControls(card);
+ const available=buttons.find(e=>/^Open in Maps$/i.test(text(e)));
+ if(available)return JSON.stringify({ok:true,alreadyAvailable:true,status:"Coordenadas disponíveis no site"});
+ const btn=buttons.find(e=>/^Get coords$/i.test(text(e)));
+ if(!btn)return JSON.stringify({ok:false,status:"Get coords indisponível neste Pokémon"});
+ if(btn.disabled||btn.getAttribute("aria-disabled")==="true"||
+    btn.closest("fieldset[disabled]"))
+  return JSON.stringify({ok:false,cooldown:true,status:"Get coords em espera no site; tente novamente quando o botão liberar"});
  btn.click();
  return JSON.stringify({ok:true,status:"Solicitando coordenadas do Pokémon confirmado"});
 }
 if(action.startsWith("readCoords:")){
  const query=JSON.parse(action.slice("readCoords:".length));
- const latlong=/(-?\d{1,2}(?:\.\d{1,12})?)\s*[,;]\s*(-?\d{1,3}(?:\.\d{1,12})?)/g;
+ const target=matchingCoordsCard(query);
+ if(!target)return JSON.stringify({ok:false,pending:false,status:"Pokémon alterado nos resultados; coordenadas não copiadas"});
+ const controls=cardCoordsControls(target);
+ const button=controls.find(e=>/^Open in Maps$/i.test(text(e)));
+ if(!button)
+  return JSON.stringify({ok:false,pending:true,status:"Aguardando coordenadas deste Pokémon no site"});
+ const latlong=/(-?\\d{1,2}(?:\\.\\d{1,12})?)\\s*[,;]\\s*(-?\\d{1,3}(?:\\.\\d{1,12})?)/g;
  function coordinate(s){
   for(const m of String(s||"").matchAll(latlong)){
    const lat=Number(m[1]),lon=Number(m[2]);
@@ -1237,32 +1251,13 @@ if(action.startsWith("readCoords:")){
   }
   return "";
  }
- // The website replaces Get coords with "Open in Maps" and puts coordinates beneath.
- const buttons=elements('button,a,[role=button]').filter(x=>vis(x)&&/Open in Maps|Get coords/i.test(text(x)));
- for(const b of buttons){
-  if(!/Open in Maps/i.test(text(b)))continue;
-  let card=b.parentElement;
-  for(let i=0;i<9&&card;i++,card=card.parentElement){
-   const t=text(card);
-   if(!/\bLOCATION\b/i.test(t)||!/\bDESPAWN\b/i.test(t)||t.length>3500)continue;
-   const name=String(query.name||"").toLowerCase();
-   if(name&&!t.toLowerCase().includes(name))continue;
-   const cp=String(query.cp||"").trim();
-   if(cp){
-    const measured=nextLabelValue(card,"CP")||(t.match(/\bCP\s*:?\s*(\d{1,5})\b/i)||[])[1]||"";
-    if(!measured||Number((measured.match(/\d{1,5}/)||[])[0])!==Number(cp))continue;
-   }
-   // Read matching-card text OR its Open in Maps href (often URL encoded).
-    // Never scan the whole page or the search's saved location fields.
-    const href=b.getAttribute("href")||"";
-    let decoded=href;try{decoded=decodeURIComponent(href)}catch(_){}
-    const m=coordinate(t)||coordinate(decoded);
-   if(m)return JSON.stringify({ok:true,coords:m,status:"Coordenadas obtidas"});
-   // Matching card reached, avoid reading another Pokémon's coords.
-   break;
-  }
- }
- return JSON.stringify({ok:false,status:"O site ainda não exibiu coordenadas"});
+ const href=button.getAttribute("href")||"";
+ let decoded=href;try{decoded=decodeURIComponent(href)}catch(_){}
+ // Only parse the matched card's own LOCATION context or its own maps link.
+ const locationText=nextLabelValue(target.node,"LOCATION");
+ const m=coordinate(locationText)||coordinate(decoded);
+ return m?JSON.stringify({ok:true,coords:m,status:"Coordenadas obtidas"}):
+  JSON.stringify({ok:false,pending:true,status:"O site ainda não exibiu coordenadas deste Pokémon"});
 }
 
 // PL-04: resolve the actual Coords form after React hydration. Avoid picking
