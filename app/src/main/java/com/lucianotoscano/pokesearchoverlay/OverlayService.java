@@ -3694,8 +3694,8 @@ public class OverlayService extends Service {
         running=false;
         ++requestGeneration;
         ++coordinateRequestToken;
-        ++formOptionsSequence;
-        ++pokemonSuggestionSequence;
+        // Form/Pokémon sequences belong to Bridge and their callbacks already
+        // check stopped/requestGeneration before touching any live WebView.
         searchInProgress=false;
         // Cancels periodic refresh, timers, popup retries and all delayed polls.
         handler.removeCallbacksAndMessages(null);
