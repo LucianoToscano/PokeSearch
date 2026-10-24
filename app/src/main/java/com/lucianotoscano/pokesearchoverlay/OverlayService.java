@@ -2409,7 +2409,10 @@ public class OverlayService extends Service {
         js(resultPanel,resultLoaded,"window.highlight(-1)");
     }
     private void resizeDetail(int heightDp){
-        detailHeight=Math.max(90,Math.min(310,heightDp));
+        // LT66: 310dp clipped expanded PvP leagues on Samsung. Keep a
+        // screen-bounded native window and let #panel scroll all content.
+        int available=Math.max(90,screenHeightDp()-68);
+        detailHeight=Math.max(90,Math.min(Math.min(440,available),heightDp));
         if(detailParams!=null&&detailRoot!=null){
             detailParams.height=dp(detailHeight);moveDetail();
         }
