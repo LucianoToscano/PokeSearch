@@ -8,13 +8,14 @@ on:
       - '.github/workflows/build-v071-lt-location-signed.yml'
       - 'app/src/main/assets/dock.html'
       - 'app/tests/lt70-location-radius-toggle.test.js'
+      - 'app/tests/overlay-ux.test.js'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  signed-lt70:
+  signed-lt71:
     if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == 'LucianoToscano/PokeSearch' && github.event.pull_request.head.ref == 'fix/lt71-location-trim-native-center-20261024') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
