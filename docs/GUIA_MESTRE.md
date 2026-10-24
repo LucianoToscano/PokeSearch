@@ -6199,3 +6199,16 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - `verifyShinyAfterLocation` reaplica/valida a seleção após o React trocar geofiltro, com controles por `requestGeneration`; falhas de login/treinador/site não fabricam resultado. Não mexer em latência/retries sem evidência, porque redução arbitrária pode voltar a quebrar a seleção.
 - Adicionado teste `app/tests/lt77-stage8-iv-pvp-shiny-regression.test.js` e workflow `.github/workflows/lt77-stage8-pvp-shiny-qa.yml` para proteger os contratos existentes. **Nenhuma alteração de runtime** nesta etapa. GitHub Actions [#40142426181](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142426181): verificar término.
 - Equivalência real com GL/UL do site, ícones visíveis e Shiny sem demora NÃO pode ser confirmada só por testes estáticos; requer login/treinador vinculado e Samsung. Manter como pendência aberta de homologação, não como correção funcional comprovada.
+
+
+---
+
+## LT77 — ETAPA 9: COMPLETAR CONTRATOS DE BUSCA NA API AUTORIZADA (24/10/2026)
+
+- Branch experimental isolada `feature/lt77-stage9-api-contract-completion-20261024` derivada da Etapa 8 no commit `885f05ac36a7fa23aa6c4e5949d45bb85bbc39e3`. Leitura da especificação pessoal `pogo.md` de 14/10/2026, especialmente 4.1/5/8; nenhum JWT real foi acessado.
+- `app/src/main/assets/api_result_contract.js`: ampliado `buildPayload` com espécies/pares de forma somente se presentes em catálogos explicitamente fornecidos; Forms do catálogo exato; `weather_id` 1–7, `boosted`, `sort` DSP/CP/IV/LEVEL/DISTANCE, localização textual ou coordenadas+raio completos, Level 1–50 do contrato API, TTL 0–60, blacklists, shiny_account estritamente 12 dígitos, pvp e IV. Rótulos de espécie ambíguos ou costumes não representáveis falham fechados — nunca converter por suposição.
+- `normalizeResponse`: cap 0–10 respeitado, validação de IV percentual com uma casa decimal quando consistente com Raw IV, Level 1–50, gênero Genderless com ícone `⚲`; preserva `sourceIndex` e omite JWT, `reveal_code` e `encounter_id`. Resultado ainda é PROVISÓRIO e não atesta busca aplicada.
+- `app/tests/lt77-api-contract.test.js` mantém testes de rejeição de filtros não suportados, trocando apenas o exemplo de clima desconhecido para `Thunderstorm`, pois `Rainy` (id 2) é válido no `pogo.md`.
+- Nova suíte `app/tests/lt77-stage9-authorized-search-contract.test.js`: catálogo oficial, gênero, 7 climas, DISTANCE+raio, 0–1000 km, Level1–50, TTL, listas negras, IV decimal e limite de 10. Novo workflow `.github/workflows/lt77-stage9-authorized-api-qa.yml`; só testes e compilação Java/Android, sem APK.
+- **Não integrar ainda em produção.** `api_browser_transport.js` e `api_reveal_contract.js` permanecem sem import na WebView de produção e sem chamadas automáticas. JWT de usuário deve ser lido somente dentro da origem oficial `https://pogocoordinates.com` após opt-in/homologação. Nenhum token/reveal foi logado ou persistido.
+- GitHub Actions [#40142716370](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142716370): conferir resultado final antes de declarar PASS. A compilação/testes com mock não comprovam autorização funcional, sessão autenticada nem catálogo atual ao vivo.
