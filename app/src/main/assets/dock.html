@@ -2981,6 +2981,87 @@ body.popup-window.controls-window.visual-menu-vertical.popup-above #choices.more
  overflow-x:hidden!important;overflow-y:auto!important;
  overscroll-behavior:contain!important;
 }
+
+/* LT70 LOC-CENTER-01 — screenshot-approved 192px Location panel.
+   One stable content-sized native popup, including input focus/keyboard. */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel,
+body.popup-window.controls-window.popup-above #choices.locationPanel{
+ box-sizing:border-box!important;width:192px!important;
+ min-width:192px!important;max-width:192px!important;
+ padding:3px 4px!important;margin:0!important;
+ overflow:visible!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;width:100%!important;
+ gap:5px!important;padding:0!important;margin:0 0 3px!important;
+ min-height:26px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader .locPaste{
+ flex:0 0 24px!important;width:24px!important;min-width:24px!important;
+ margin:0!important;padding:2px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow{
+ display:flex!important;justify-content:center!important;align-items:center!important;
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ margin:0 0 3px!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow .locField,
+body.controls-window #choices.locationPanel .locCoordsRow .locField:focus{
+ box-sizing:border-box!important;flex:1 1 auto!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ height:27px!important;min-height:27px!important;
+ margin:0!important;padding:2px 4px!important;
+ font-size:10px!important;
+}
+body.controls-window #choices.locationPanel input[type="range"]{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ margin:2px 0 3px!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ gap:3px!important;margin:0!important;padding:0!important;min-height:28px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusText{display:none!important}
+body.controls-window #choices.locationPanel .locRadiusInputWrap{
+ display:inline-flex!important;position:static!important;align-items:center!important;
+ justify-content:flex-start!important;flex:0 0 auto!important;
+ box-sizing:border-box!important;width:max-content!important;min-width:0!important;
+ max-width:none!important;height:26px!important;margin:0!important;padding:0!important;
+ gap:0!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap input.locRadiusNumber{
+ box-sizing:border-box!important;display:block!important;
+ flex:0 0 42px!important;width:42px!important;min-width:42px!important;
+ max-width:42px!important;height:26px!important;min-height:26px!important;
+ padding:2px 3px!important;margin:0!important;
+ border-radius:6px!important;text-align:center!important;
+ font:500 12px/1.2 monospace!important;
+ font-variant-numeric:tabular-nums!important;letter-spacing:0!important;
+ appearance:textfield!important;-webkit-appearance:none!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap .locRadiusUnit{
+ display:inline!important;position:static!important;
+ flex:0 0 auto!important;width:auto!important;height:auto!important;
+ margin:0!important;padding:0 0 0 1px!important;
+ inset:auto!important;top:auto!important;right:auto!important;
+ transform:none!important;
+ font:500 11px/1 Roboto,Arial,sans-serif!important;
+ white-space:nowrap!important;pointer-events:none!important;
+}
+body.controls-window #choices.locationPanel .compactLocationActions{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 auto!important;width:max-content!important;max-width:none!important;
+ margin:0!important;padding:0!important;gap:3px!important;
+}
+body.controls-window #choices.locationPanel .compactLocationActions .psLineAction{
+ box-sizing:border-box!important;flex:0 0 26px!important;
+ width:26px!important;min-width:26px!important;max-width:26px!important;
+ height:26px!important;min-height:26px!important;
+ padding:3px!important;margin:0!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3398,8 +3479,20 @@ window.setNativePopupRoom=height=>{
  if(!Number.isFinite(previous)||Math.abs(previous-next)>1)
   document.documentElement.style.setProperty("--popup-room",next+"px");
 };
+let activeNativePopupKind="";
+window.setActiveNativePopupKind=kind=>{
+ activeNativePopupKind=String(kind||"");
+};
 function toggleChoices(kind){
  if(controlsWindow&&!popupWindow&&Native.openPopup){
+  // Toolbar and independent WebView have DIFFERENT choiceOpen values.
+  // Repeat tap closes the native popup explicitly, even with keyboard focus.
+  if(activeNativePopupKind===kind){
+   activeNativePopupKind="";
+   if(Native.closePopup)Native.closePopup();
+   return;
+  }
+  activeNativePopupKind=kind;
   const key={alerts:"bell",visual:"appearance",info:"appearance"}[kind]||kind;
   const button=document.querySelector('#quickMenuList button[data-key="'+key+'"]');
   const rect=button?.getBoundingClientRect(),host=document.getElementById("menu").getBoundingClientRect();
@@ -4179,7 +4272,8 @@ function renderLocationChoices(){
  const labelName=make("span","locRadiusText","Raio");
  label.title="Raio da busca: de 0 a 1000 km";
  const radiusField=make("input","locRadiusNumber");
- radiusField.id="locRadiusValue";radiusField.type="number";radiusField.min="0";radiusField.max="1000";radiusField.step="1";
+ radiusField.id="locRadiusValue";radiusField.type="text";radiusField.min="0";radiusField.max="1000";radiusField.step="1";
+ radiusField.maxLength=4;radiusField.setAttribute("maxlength","4");radiusField.setAttribute("pattern","[0-9]{1,4}");
  radiusField.inputMode="numeric";radiusField.value=String(locationRadius);
  radiusField.setAttribute("aria-label","Raio em quilômetros; campo numérico de 0 a 1000");
  radiusField.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
@@ -4192,9 +4286,13 @@ function renderLocationChoices(){
  slide.setAttribute("aria-label","Ajustar raio de 0 a 1000");
  slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";};
  radiusField.oninput=()=>{
+  // Android type=number ignores maxlength and may show exponent/spinner controls.
+  // Keep precisely 0–1000 as a numeric draft of at most four visible digits.
+  const digits=String(radiusField.value||"").replace(/\D/g,"").slice(0,4);
+  const value=digits===""?"":String(Math.min(1000,Number(digits)));
+  if(radiusField.value!==value)radiusField.value=value;
   radiusField.dataset.locationDraft="true";
-  const number=Number(radiusField.value);
-  if(Number.isInteger(number)&&number>=0&&number<=1000)slide.value=String(number);
+  if(value!=="")slide.value=value;
  };
  const message=make("p","");message.id="locHint";
  message.setAttribute("role","status");message.setAttribute("aria-live","polite");
