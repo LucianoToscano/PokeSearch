@@ -80,6 +80,9 @@ public class MainActivity extends Activity {
     private android.media.Ringtone systemTonePreview;
     private FrameLayout homeRoot;
     private boolean homeLightMode=false;
+    // LT72: Home-only update card; does not own or recreate the overlay/WebView.
+    private LinearLayout homeUpdateHolder;
+    private UpdateCenter.Manifest currentDriveUpdate;
 
     // Native Home panels change alpha; the wallpaper never changes transparency.
     private final java.util.List<android.graphics.drawable.GradientDrawable> homeSurfaces=
@@ -469,6 +472,16 @@ public class MainActivity extends Activity {
         trainerCodeGroup.addView(trainerAction,actionLp);
         trainerAction.setOnClickListener(v->openTrainerManagement());
 
+        // LT72: a zero-height, GONE placeholder unless Drive announces a
+        // valid, enabled and newer version. Never reserve blank Home space.
+        homeUpdateHolder=new LinearLayout(this);
+        homeUpdateHolder.setOrientation(LinearLayout.VERTICAL);
+        homeUpdateHolder.setVisibility(View.GONE);
+        LinearLayout.LayoutParams updateLp=new LinearLayout.LayoutParams(-1,-2);
+        updateLp.topMargin=d(5);
+        screen.addView(homeUpdateHolder,updateLp);
+        renderDriveUpdateBanner();
+
         // New compact LT54 counters; a dash indicates missing connectivity/rules.
         LinearLayout stats=new LinearLayout(this);
         stats.setOrientation(LinearLayout.HORIZONTAL);
@@ -502,6 +515,83 @@ public class MainActivity extends Activity {
         screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));
         return frame;
     }
+    /** Callback from UpdateCenter, always on Android's UI thread. */
+    void onDriveUpdateLoaded(UpdateCenter.Manifest manifest) {
+        if(activityClosing||isFinishing()||isDestroyed())return;
+        currentDriveUpdate=manifest;
+        renderDriveUpdateBanner();
+    }
+
+    private void renderDriveUpdateBanner() {
+        LinearLayout holder=homeUpdateHolder;
+        if(holder==null)return;
+        holder.removeAllViews();
+        final UpdateCenter.Manifest info=currentDriveUpdate;
+        if(!UpdateCenter.isEligible(this,info)){
+            holder.setVisibility(View.GONE);
+            return;
+        }
+        boolean light=homeLightMode;
+        int primary=light?Color.rgb(27,48,68):Color.rgb(245,250,255);
+        int secondary=light?Color.rgb(68,89,108):Color.rgb(191,210,229);
+        LinearLayout card=new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(d(9),d(6),d(8),d(7));
+        card.setBackground(homeSurface(
+            light?Color.argb(240,248,252,255):Color.argb(233,24,35,49),
+            11,light?Color.rgb(183,201,214):Color.rgb(69,91,112)));
+        holder.addView(card,new LinearLayout.LayoutParams(-1,-2));
+
+        LinearLayout titleRow=new LinearLayout(this);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        card.addView(titleRow,new LinearLayout.LayoutParams(-1,-2));
+        TextView title=homeText("⬇ "+info.message,12,primary,true);
+        title.setSingleLine(true);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        titleRow.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+
+        TextView close=homeText("✕",15,secondary,true);
+        close.setGravity(Gravity.CENTER);
+        close.setContentDescription("Dispensar atualização "+info.versionName);
+        titleRow.addView(close,new LinearLayout.LayoutParams(d(34),d(29)));
+        close.setOnClickListener(v->{
+            UpdateCenter.dismiss(this,info.versionCode);
+            renderDriveUpdateBanner();
+        });
+
+        LinearLayout bodyRow=new LinearLayout(this);
+        bodyRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams bodyLp=new LinearLayout.LayoutParams(-1,-2);
+        bodyLp.topMargin=d(1);
+        card.addView(bodyRow,bodyLp);
+
+        TextView version=homeText("PokeSearch v"+info.versionName+" LT",12,primary,true);
+        version.setSingleLine(true);
+        version.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        bodyRow.addView(version,new LinearLayout.LayoutParams(0,-2,1));
+
+        TextView download=homeText("Baixar APK",11,
+            light?Color.rgb(11,80,75):Color.rgb(172,246,215),true);
+        download.setGravity(Gravity.CENTER);
+        download.setContentDescription("Baixar APK oficial "+info.apkName+" do Google Drive");
+        download.setPadding(d(9),0,d(9),0);
+        download.setBackground(homeSurface(
+            light?Color.rgb(221,244,237):Color.rgb(23,70,61),
+            8,light?Color.rgb(159,206,193):Color.rgb(68,138,116)));
+        bodyRow.addView(download,new LinearLayout.LayoutParams(-2,d(33)));
+        download.setOnClickListener(v->UpdateCenter.openDownload(this,info));
+
+        if(!info.description.isEmpty()){
+            TextView note=homeText(info.description,10,secondary,false);
+            note.setMaxLines(2);
+            note.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            LinearLayout.LayoutParams noteLp=new LinearLayout.LayoutParams(-1,-2);
+            noteLp.topMargin=d(2);
+            card.addView(note,noteLp);
+        }
+        holder.setVisibility(View.VISIBLE);
+    }
+
     private void openTrainerManagement(){
         String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
         if(!code.matches("[0-9]{12}")){
@@ -938,6 +1028,7 @@ public class MainActivity extends Activity {
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
+        UpdateCenter.check(this); // Async, throttled; never blocks Home startup.
         if(OverlayService.isRunning())
             serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
     }
