@@ -134,7 +134,7 @@ test("slider edits are not reverted by stale service state",()=>{
 });
 test("hidden results header adds no invisible top margin",()=>{
  assert.ok(dock.includes('Math.ceil(end-shellTop)+1'));
- assert.ok(dock.includes('margin-top:0!important'));
+ assert.ok(dock.includes('margin-top:var(--visual-top-gap,0px)!important'));
  assert.ok(dock.includes('body.result-window #shell{padding-top:0!important}'));
 });
 test("styling changes don't need reload of all Pokemon images",()=>{
