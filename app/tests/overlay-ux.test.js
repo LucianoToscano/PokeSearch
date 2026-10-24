@@ -277,7 +277,7 @@ test("UX-INFO-04 sprite column stays under the movable full Pokébola hitbox",
  service.includes('private void updateResultHeaderGrip()')&&
  service.includes('hit.leftMargin=dp(left)')===false&&
  service.includes('box.leftMargin=dp(left)')&&
- service.includes('int right=dockPos+resultWidthDp()+gap;')&&
+ service.includes('int right=anchorX+railWidth+margin;')&&
  service.includes('int safe=Math.max(0,Math.min(100,widthDp))'));
 test("UX-INFO-05 verified metadata never creates results or a scrollable list",
  dock.includes('function resultLines(card,opts,league)')&&
