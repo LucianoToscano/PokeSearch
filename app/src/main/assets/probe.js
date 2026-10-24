@@ -585,9 +585,10 @@ function extraPopupMatchesKey(key,popup){
   .filter(vis).map(e=>clean(text(e))).filter(Boolean);
  if(key==='form'){
   const distinct=[...new Set(values.map(v=>v.toLowerCase()))];
-  // Reject the complete Gender menu; Male/Female ALONE can be real Form labels.
-  if(distinct.length>=3&&distinct.includes('any')&&
-   distinct.includes('male')&&distinct.includes('female')&&
+  // A popup consisting solely of Gender options cannot prove it belongs
+  // to Form. Reject even partially hydrated Gender lists (2+ choices);
+  // the user may retry once the official Form portal is identifiable.
+  if(distinct.length>=2&&
    distinct.every(v=>/^(?:any|male|female|genderless|unknown)$/.test(v)))
    return false;
  }
@@ -621,9 +622,17 @@ function formOptionRows(control){
 function siteOptions(key){
  const control=extraControl(EXTRA_LABELS[key]);
  if(!control)return {ok:false,pending:false,options:[]};
- if(control.matches("select"))
-  return {ok:true,pending:false,options:[...control.options].map(text).map(clean).filter(Boolean)
-   .slice(0,key==="form"?500:80)};
+ if(control.matches("select")){
+  const choices=[...control.options].map(text).map(clean).filter(Boolean);
+  // Do not label a Gender <select> as Form if its options are ambiguous.
+  if(key==="form"){
+   const distinct=[...new Set(choices.map(v=>v.toLowerCase()))];
+   if(distinct.length>=2&&distinct.every(v=>
+    /^(?:any|male|female|genderless|unknown)$/.test(v)))
+    return {ok:false,pending:true,options:[]};
+  }
+  return {ok:true,pending:false,options:choices.slice(0,key==="form"?500:80)};
+ }
  const popup=(key==="form"||key==="gender")?
   extraOptionPopup(key,control):activeOptionPopup(control);
  if(!popup)return {ok:false,pending:true,options:[]};
