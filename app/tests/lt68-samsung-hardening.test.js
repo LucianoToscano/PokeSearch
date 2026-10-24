@@ -44,8 +44,8 @@ check("Independent native popup obeys touch geometry and remains anchored",()=>{
 });
 check("Favorites dialog anchors to the star and lets background taps pass",()=>{
  assert.ok(dock.includes("Native.openWatchListAt(Math.round(target.left-host.left+target.width/2)"));
- assert.ok(service.includes("@JavascriptInterface public void openWatchListAt(int triggerDp,int triggerYDp)"));
- assert.ok(service.includes("showFavoritePicker(anchorX,anchorY)"));
+ assert.ok(java.includes("@JavascriptInterface public void openWatchListAt(int triggerDp,int triggerYDp)"));
+ assert.ok(java.includes("showFavoritePicker(anchorX,anchorY)"));
  assert.ok(favorites.includes("int anchorX,int anchorY"));
  assert.ok(favorites.includes("lp.gravity=Gravity.TOP|Gravity.LEFT"));
  assert.ok(favorites.includes("FLAG_NOT_TOUCH_MODAL"));
