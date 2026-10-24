@@ -225,6 +225,7 @@
       response.results.length>MAX_SOURCE_RESULTS) return {ok:false,reason:"Invalid API results"};
     var cards=[],seen=new Set(),rejected=0,expired=0;
     var cap=Number.isInteger(response.cap)&&response.cap>=0?Math.min(MAX_RESULTS,response.cap):MAX_RESULTS;
+    if(cap===0)return {ok:true,cards:[],found:0,siteCount:response.results.length,rejected:0,expired:0,source:"api-fixture",criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
     for(var i=0;i<response.results.length;i++) {
       var x=response.results[i];
       if(!x||typeof x!=="object") {rejected++;continue;}
