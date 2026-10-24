@@ -2725,7 +2725,7 @@ test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()
   filters.includes('input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999"')&&
   filters.includes('input.type="number";input.inputMode="numeric";')&&
   !filters.includes('make("button","extraStep"')&&
-  filters.includes('input.value=String(modeDraft[key]??""): modeDraft retains the saved value until typed.')&&
+  filters.includes('input.value=String(modeDraft[key]??"")')&&
   filters.includes('[[minKey,"Min","mínimo"],[maxKey,"Max","máximo"]]')&&
   !filters.includes('cell.append(cap,input)')&&
   dock.includes('input.checkValidity()')&&
