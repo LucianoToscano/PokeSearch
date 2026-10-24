@@ -351,7 +351,7 @@ test("UX-RESULT-10 P/M/G pitch tracks slider and fits short displays",()=>{
  const ten=Array.from({length:10},(_,i)=>({name:"Pokémon "+i,expiresAtMs:0}));
  for(const size of [35,45,55]){
   const full=helpers.computeResultLayout(ten,size,900,false,false);
-  const pitch=Math.max(size,8,Math.round(size*.32)+31);
+  const pitch=size; // LT77 E2: neutral Editor pitch must never create empty rows
   if(full.sprite!==size||full.rows.some(row=>row!==pitch)||full.visibleCount!==10)return false;
   const short=helpers.computeResultLayout(ten,size,330,false,false);
   if(short.visibleCount!==10||short.total+54>330)return false;
@@ -3343,7 +3343,7 @@ test("LT62-MORE-ABOVE obeys native popup placement without moving toolbar",()=>{
   dock.includes("panel.style.setProperty(\"max-width\",Math.floor(width)+\"px\",\"important\")");
 });
 test("LT63-SPRITE-PITCH never overlaps adjacent sprites with zero visual gap",()=>{
- const begin=dock.indexOf("function computeResultLayout(");
+ const begin=dock.indexOf("function additionalResultGapPx(");
  const end=dock.indexOf('let lastListKey=""',begin);
  if(begin<0||end<begin)return false;
  const run=new Function("window",dock.slice(begin,end)+"return computeResultLayout;");
