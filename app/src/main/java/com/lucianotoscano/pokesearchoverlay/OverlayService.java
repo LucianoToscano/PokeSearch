@@ -3262,6 +3262,13 @@ public class OverlayService extends Service {
             if(selected==index)hideDetails();else showDetails(index);
         });}
         @JavascriptInterface public void hideDetail(){handler.post(OverlayService.this::hideDetails);}
+        @JavascriptInterface public void expiredResults(){handler.post(()->{
+            // The WebView timer is a safety net when an Android handler was
+            // canceled by an interrupted navigation. Expire only on time.
+            if(!stopped&&armedDespawnMillis>0L&&
+                System.currentTimeMillis()+300L>=armedDespawnMillis)
+                expiryRefresh.run();
+        });}
         @JavascriptInterface public void longPressCoords(int i){handler.post(()->{
             try{
                 JSONArray a=new JSONArray(results);
