@@ -6152,3 +6152,16 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Testes novos: `app/tests/PopupAnchorGeometryTest.java` e `app/tests/lt77-stage4-popup-anchor.test.js`. Workflow novo: `.github/workflows/lt77-stage4-popup-anchor-qa.yml`; sem geração ou publicação de APK.
 - Histórico CI: execução [#40141563515](https://github.com/LucianoToscano/PokeSearch/actions/runs/40141563515) falhou em expectativa inválida do novo teste de tela pequena (497 ultrapassava a tela; posição correta com clamp 474). Corrigida em commit `50c1bd712d42dc66433a0924964e6c01b8352e46`; nenhuma suíte desativada. Execução seguinte [#40141616065](https://github.com/LucianoToscano/PokeSearch/actions/runs/40141616065): **SUCCESS**, validação JS/Node, testes Java de geometria, SDK 36 e compilação Android sem APK.
 - **Pendente homologação Samsung:** bordas superior/inferior, barra horizontal/vertical, Modos/Filtros/Pokémon/Notificações/More, Favoritos alinhado à estrela, scroll só quando necessário, toque fora e proteção contra resultados. O CI não comprova essas interações físicas.
+
+
+---
+
+## LT77 — ETAPA 5: GET COORDS, COOLDOWN E DETALHE (24/10/2026)
+
+- Branch isolada `fix/lt77-stage5-detail-cooldown-20261024`, derivada da Etapa 4 no commit `7cb507fd6210fe49ab4f1a15f92236f551900771`. Não modificados `main`, distribuição LT76, preferências, site/API autorizada ou recursos PNG.
+- `OverlayService.java`: ao trocar a ficha do Pokémon (`showDetails`) ou fechá-la (`hideDetails`), incrementa-se o `coordinateRequestToken` para invalidar respostas antigas; impede Get coords de outro cartão aparecer/copiar na ficha atual. Polling de `readCoords` limitado a 10 consultas (tentativas 0–9), 750 ms entre tentativas, sem novo `Get coords` ou requisição de autenticação. Identidade do cartão e ranges de coordenadas permanecem exigidos, com intervalo/cooldown do site respeitados: se o botão oficial está desabilitado, mostra feedback e permite nova tentativa **manual** quando liberar.
+- `detail.html`: área de toque dos botões Get coords/Copiar aumentada para pelo menos 36px, `touch-action:manipulation`, foco visível, bloqueio de índice inválido/NaN antes de chamar o bridge. Estado pending continua com timeout finito de 9s e finaliza em callbacks, sem spinner permanente; sem perda de detalhes PvP e timer.
+- `probe.js` não foi alterado nesta etapa: mantém a verificação de um único cartão identificável e da disponibilidade do botão oficial; retorno `cooldown:true` quando desabilitado e extração de latitude/longitude somente do cartão oficial correspondente.
+- Novos testes `app/tests/lt77-stage5-detail-cooldown.test.js`; workflow `.github/workflows/lt77-stage5-detail-cooldown-qa.yml`, executando Node, sintaxe dos assets, geometria Java e compilação Android com JDK17/SDK36 sem gerar APK.
+- Execução de GitHub Actions [#40141873620](https://github.com/LucianoToscano/PokeSearch/actions/runs/40141873620) — verificar resultado final antes de declarar sucesso. Testes automatizados não substituem homologação Samsung.
+- Homologação física pendente: clicar e segurar Get coords, alternar de cartão durante loading, fechar ficha durante polling, aguardar cooldown acabar, ver feedback e cópia válida, verificar site com login real e observar que não há toque perdido nem resultado antigo.
