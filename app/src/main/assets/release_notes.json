@@ -252,6 +252,34 @@
           "Conferir barra e card após arraste e rotação; vídeo de 24/10 não cobre despawn até zero."
         ]
       }
+    },
+    {
+      "id": "pokesearch-v066-lt-samsung-mode-notifications-scroll-20261024",
+      "minVersionCode": 54264,
+      "date": "24/10/2026",
+      "title": "PokeSearch v0.00.66 LT — Menus compactos e PvP rolável",
+      "sections": {
+        "novidades": [
+          "Card de evoluções PvP agora possui uma única área contínua de rolagem até o último item, com limite de altura de tela.",
+          "Modo usa linha selecionada real para posicionar o editor lateral e conserva números previamente escolhidos."
+        ],
+        "melhorias": [
+          "Símbolos ⚥ ♂ ♀ ⚲ proporcionais à linha Sexo, sem cabeçalho duplicado e editor de largura justa.",
+          "Favoritos: título, contador e × na mesma linha, contador centralizado sobre o cabeçalho inteiro.",
+          "Notificações: título centralizado, X redundante removido, largura definida pelos três controles e laterais reduzidas.",
+          "Localização: margens externas menores, caixa 0–1000km compacta, botões SVG preservados.",
+          "Abertura de Modo no lado direito respeita cascata voltada para dentro da tela."
+        ],
+        "correcoes": [
+          "Removido deslocamento adicional de 34px do menu Modo no popup nativo.",
+          "Card PvP deixa de disputar toques em dois contêineres roláveis e preserva a posição ao receber atualizações do status.",
+          "Limite nativo do card ajustado de 310dp para no máximo 440dp, respeitando espaço útil da tela."
+        ],
+        "emDesenvolvimento": [
+          "A narração do vídeo Samsung está presente no MP4, mas não foi transcrita de maneira verificável; comparados os toques visuais e as observações escritas pelo proprietário.",
+          "Validar no Samsung ícones Sexo, menu Modo nas duas bordas, alinhamento Favoritos, Notificações e rolagem completa PvP."
+        ]
+      }
     }
   ]
 }

@@ -205,28 +205,40 @@ public final class PokemonPicker {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(activity,10),dp(activity,6),dp(activity,10),dp(activity,9));
 
-        LinearLayout header=new LinearLayout(activity);
-        header.setGravity(Gravity.CENTER_VERTICAL);
+        // LT66: independently center the count in the entire row rather
+        // than the remaining width after the variable-length title.
+        FrameLayout header=new FrameLayout(activity);
+        header.setMinimumHeight(dp(activity,29));
         TextView title=new TextView(activity);
-        title.setText("☆  FAVORITOS");
+        title.setText("☆ FAVORITOS");
         title.setTextColor(Color.rgb(244,247,250));
         title.setTypeface(null,Typeface.BOLD);
-        title.setTextSize(13);
-        header.addView(title,new LinearLayout.LayoutParams(-2,dp(activity,29)));
+        title.setTextSize(11);
+        title.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);
+        title.setSingleLine(true);
+        title.setMaxWidth(dp(activity,99));
+        FrameLayout.LayoutParams titleLp=new FrameLayout.LayoutParams(
+            -2,dp(activity,29),Gravity.START|Gravity.CENTER_VERTICAL);
+        header.addView(title,titleLp);
         TextView count=new TextView(activity);
         count.setTextColor(Color.rgb(197,213,230));
         count.setTextSize(10);
         count.setTypeface(null,Typeface.BOLD);
-        count.setGravity(Gravity.CENTER);count.setSingleLine(true);
-        header.addView(count,new LinearLayout.LayoutParams(0,dp(activity,29),1));
+        count.setGravity(Gravity.CENTER);
+        count.setSingleLine(true);
+        FrameLayout.LayoutParams countLp=new FrameLayout.LayoutParams(
+            -2,dp(activity,29),Gravity.CENTER);
+        header.addView(count,countLp);
         TextView finish=new TextView(activity);
         finish.setText("×");
         finish.setContentDescription("Fechar Favoritos");
         finish.setGravity(Gravity.CENTER);
         finish.setTextColor(Color.rgb(231,237,246));
-        finish.setTextSize(21);
+        finish.setTextSize(19);
         finish.setBackgroundColor(Color.TRANSPARENT);
-        header.addView(finish,new LinearLayout.LayoutParams(dp(activity,27),dp(activity,29)));
+        FrameLayout.LayoutParams finishLp=new FrameLayout.LayoutParams(
+            dp(activity,27),dp(activity,29),Gravity.END|Gravity.CENTER_VERTICAL);
+        header.addView(finish,finishLp);
         root.addView(header);
 
         EditText search=new EditText(activity);

@@ -64,7 +64,7 @@ check("LT62 screenshots: mode list loses blank right column but IV/GL/UL stay ca
  assert.match(dock,/\.modePanel\.modeCascade\{\s*width:54px!important;height:164px!important/);
  assert.match(dock,/\.modeCascadeRail\{\s*width:52px!important/);
  assert.ok(dock.includes('h=Math.max(h,baseHeight+164+6);'));
- for(const token of ['const tops={raw:67,percent:90,gl:113,ul:136};',
+ for(const token of ['const room=Math.max(70,Number.parseFloat(getComputedStyle(document.documentElement)',
    'const offsets={raw:67,percent:90,gl:113,ul:136};',
    'left:54px!important;max-width:calc(100% - 54px)!important;'])
   assert.ok(dock.includes(token),token);
@@ -114,7 +114,7 @@ check("LT62 followup: Apply Clear Cancel are icon-only SVG buttons",()=>{
   'makeDockAction("clear","Limpar filtros")','makeDockAction("cancel","Cancelar alterações")'])
   assert.ok(dock.includes(p),p);
 });
-check("LT62 design: IV%, Raw IV and rank have empty placeholders and only ✓",()=>{
+check("LT62 design: IV%, Raw IV and rank preserve saved values and only ✓ applies",()=>{
  const block=dock.split("function renderModeChoices(){")[1].split("function renderExtraFilters(")[0];
  for(const p of [
   '["percentMin","Min %","percent"',
@@ -122,7 +122,7 @@ check("LT62 design: IV%, Raw IV and rank have empty placeholders and only ✓",(
   '["stamina","S","iv","Stamina"]',
   '["glRank","#","rank"',
   '["ulRank","#","rank"',
-  'input.placeholder=placeholder;input.value=""',
+  'input.value=String(modeDraft[key]??searchSettings[key]??"")',
   'editor.appendChild(confirm);panel.appendChild(editor)',
   'const limitsFor=kind=>kind==="percent"?[0,100]:kind==="iv"?[0,15]:[1,50]',
   'Object.assign(modeDraft,values)',
@@ -713,7 +713,7 @@ check("LT62 visual Filtros: precise width contract per editor, never giant Sex p
  const context={};
  vm.runInNewContext("function filterCascadeEditorWidth(label){"+code+";this.resolve=filterCascadeEditorWidth",context);
  for(const [type,expected] of [
-  ["Sexo",134],["Tamanho",230],["PC",139],["Nível",139],
+  ["Sexo",116],["Tamanho",230],["PC",139],["Nível",139],
   ["Clima",158],["Ordenar",178],["Forma",216],["PC mínimo PvP",116]
  ])assert.equal(context.resolve(type),expected,type);
 });
