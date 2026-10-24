@@ -5252,3 +5252,16 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Solicitação expressa:** proprietário escreveu "Gere o apk." Autorizado gerar **somente o APK LT62** a partir desta branch, **sem merge**, mantendo `applicationId=com.lucianotoscano.pokesearch`, `versionName=0.00.62`, `versionCode=54260`, mesmo certificado persistente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Workflow assinado existente: `.github/workflows/build-v062-compact-preview.yml` com proteção por prefixo `build: approved v0.00.62 LT signed`. Commit-fonte das correções `64c292fcde4d09a0de805de814e42795539e0046` (12.274–12.282). Esta gravação de documentação/notas não altera Java, HTML, assinatura, permissões ou preferências.
 
 **Condições de publicação:** Actions só deve disponibilizar `PokeSearch-v0.00.62-LT.apk` se passar nove suítes Node, teste Gradle, validação do pacote e versionCode/versionName, `apksigner verify`, fingerprint do certificado original e SHA256SUMS. Artefato serve **para homologação Samsung**, não é declaração de aprovação física. Caso o workflow falhe, preservar a versão anterior sem apresentar um APK fictício. PR #34 continua OPEN/DRAFT; `main` LT61 permanece intacta.
+
+
+### 12.284 — LT62: APK assinado compilado, auditado e publicado (23/10/2026)
+
+**Autorização e versão:** após solicitação expressa "Gere o apk", a branch `fix/lt62-menu-visual-states-20261023` executou `build-v062-compact-preview.yml` a partir do commit `6a1919e6155e3b4af14feebbad68250fa7800da2` (código funcional do checkpoint `64c292fcde4d09a0de805de814e42795539e0046`; apenas Guia Mestre e Release Notes atualizados entre ambos). `versionName=0.00.62`, `versionCode=54260`, `applicationId=com.lucianotoscano.pokesearch`, nome **PokeSearch-v0.00.62-LT.apk**.
+
+**GitHub Actions #40050484227 — SUCCESS**: https://github.com/LucianoToscano/PokeSearch/actions/runs/40050484227 . Artefato #12543112935 `PokeSearch-v0.00.62-LT` publicado, retenção de 30 dias; ZIP validado e APK individual extraído e verificado contra `SHA256SUMS.txt`.
+
+**SHA-256 do APK:** `c268ecfdca715836224df0d5cc2615daeecf6224637b60f0572718f8f3fc49f1`.
+
+**Certificado de assinatura persistente verificado:** `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. O workflow confirmou assinatura Android v2 via `apksigner`, pacote e versão via `aapt`, integridade `unzip -t`, nove suítes Node e compilação Gradle `:app:testDebugUnitTest :app:assembleDebug`. Não houve troca de chave, nem alteração de identidade, login ou preferências.
+
+**Restrição de homologação:** APK pronto **para teste no Samsung**; sem instalação física ou confirmação de passagem de toques, atualização de Sprites P/M/G, áudio/permissões dos avisos e posição de Filtros/Localização/Editor Visual em hardware. PR #34 permanece OPEN/DRAFT e `main` LT61 intacta; sem merge, sem promoção LT63.
