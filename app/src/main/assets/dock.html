@@ -2546,6 +2546,169 @@ body.popup-window.controls-window #choices.modePanel.modeCascade.modeCascadeOpen
 body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
 body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor{
  max-height:var(--popup-room,440px)!important;overflow-y:auto!important}
+
+/* LT63 SAMSUNG CASCADE: final intrinsic-size corrections over LT62's experimental panels. */
+body.controls-window #choices.modePanel.modeCascade,
+body.popup-window #choices.modePanel.modeCascade{
+ height:164px!important;max-height:none!important;overflow:visible!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeRail{
+ height:auto!important;max-height:none!important;overflow:visible!important;
+}
+body.controls-window #choices.modeCascade button.modeCascadeEntry.activeMode,
+body.controls-window #choices.modeCascade button.modeCascadeEntry.chosen{
+ background:var(--visual-menu-button-bg,#30434de0)!important;
+ box-shadow:inset 3px 0 #54c7a9!important;border-radius:5px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor{
+ box-sizing:border-box!important;width:var(--filter-editor-width,134px)!important;
+ max-width:none!important;height:max-content!important;min-height:0!important;
+ padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;overflow:visible!important;
+}
+body.popup-window.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]:not(.filterPicker){
+ width:calc(80px + var(--filter-editor-width,134px))!important;
+}
+body.popup-window.controls-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor{
+ width:var(--filter-editor-width,134px)!important;max-width:none!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraField,
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterOptionList{
+ box-sizing:border-box!important;width:max-content!important;max-width:100%!important;
+ min-width:0!important;margin:0!important;padding:0!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterOptionList{
+ display:flex!important;flex-direction:column!important;gap:2px!important;width:100%!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterOptionEntry{
+ box-sizing:border-box!important;display:flex!important;align-items:center!important;gap:4px!important;
+ width:100%!important;height:24px!important;min-height:24px!important;margin:0!important;
+ padding:0 5px!important;text-align:left!important;white-space:nowrap!important;
+ background:var(--visual-menu-bg,#1c222bcc)!important;
+ border:1px solid transparent!important;border-radius:5px!important;
+ color:var(--visual-menu-fg,#edf4fa)!important;font:500 10px/1 Roboto,Arial,sans-serif!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterOptionEntry.chosen,
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChip.chosen{
+ background:var(--visual-menu-button-bg,#30404be8)!important;
+ box-shadow:inset 3px 0 #57cbb1!important;border-color:#ffffff26!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterOptionEntry img{
+ width:16px!important;height:16px!important;object-fit:contain!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs,
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraNumberRow{
+ box-sizing:border-box!important;width:max-content!important;max-width:100%!important;gap:3px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeCell{
+ flex:0 0 37px!important;width:37px!important;min-width:37px!important;max-width:37px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs input{
+ width:37px!important;min-width:37px!important;max-width:37px!important;
+ height:25px!important;padding:1px!important;appearance:textfield!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs input::-webkit-inner-spin-button,
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraNumberRow input::-webkit-inner-spin-button{
+ -webkit-appearance:none!important;display:none!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterInlineConfirm{
+ flex:0 0 25px!important;width:25px!important;min-width:25px!important;
+ height:25px!important;min-height:25px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"]{
+ width:max-content!important;max-width:none!important;grid-template-columns:repeat(4,27px)!important;gap:2px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"] .extraChip{
+ width:27px!important;min-width:27px!important;max-width:27px!important;
+ height:25px!important;min-height:25px!important;
+}
+body.controls-window #choices.filterCascade .filterRailActions .filterIconAction,
+body.controls-window #choices.filterCascade .filterRailActions .filterIconAction.filterCancel{
+ color:var(--visual-menu-fg,#eaf3fb)!important;background:transparent!important;
+ border:1px solid #ffffff36!important;box-shadow:none!important;border-radius:5px!important;
+}
+body.controls-window #choices.filterCascade .filterRailActions .filterIconAction svg{
+ width:13px!important;height:13px!important;stroke-width:1.8!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterFormInline{
+ display:flex!important;flex-direction:column!important;gap:2px!important;
+ width:180px!important;max-width:180px!important;background:transparent!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterFormInline input{
+ box-sizing:border-box!important;width:100%!important;height:26px!important;padding:2px 4px!important;font-size:10px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterFormResults{
+ max-height:170px!important;overflow:auto!important;
+}
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel{
+ box-sizing:border-box!important;width:274px!important;max-width:none!important;padding:4px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader{
+ display:flex!important;align-items:center!important;gap:4px!important;
+ box-sizing:border-box!important;width:100%!important;min-height:25px!important;
+ margin:0 0 3px!important;padding:0 2px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader>span:first-child{
+ flex:0 0 auto!important;font-size:10px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader .locPaste{
+ flex:0 0 23px!important;width:23px!important;min-width:23px!important;
+ height:23px!important;min-height:23px!important;padding:2px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow{
+ flex:1 1 auto!important;width:auto!important;min-width:0!important;margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow .locField{
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;
+ height:24px!important;min-height:24px!important;padding:1px 3px!important;font-size:10px!important;
+}
+body.controls-window #choices.locationPanel input[type=range]{
+ width:calc(100% - 8px)!important;height:18px!important;margin:2px 4px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow{
+ display:flex!important;align-items:center!important;width:100%!important;
+ margin:0!important;padding:0 2px!important;min-height:27px!important;gap:5px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>span:first-child{
+ flex:0 0 29px!important;min-width:29px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap{
+ flex:0 0 58px!important;width:58px!important;max-width:58px!important;height:25px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap .locRadiusNumber{
+ box-sizing:border-box!important;flex:0 0 58px!important;width:58px!important;
+ min-width:58px!important;max-width:58px!important;height:25px!important;
+ padding:1px 17px 1px 3px!important;text-align:right!important;font-size:11px!important;
+ appearance:textfield!important;
+}
+body.controls-window #choices.locationPanel .locRadiusNumber::-webkit-inner-spin-button,
+body.controls-window #choices.locationPanel .locRadiusNumber::-webkit-outer-spin-button{
+ display:none!important;-webkit-appearance:none!important;
+}
+body.controls-window #choices.locationPanel .locRadiusUnit{right:3px!important;font-size:10px!important}
+body.controls-window #choices.locationPanel .compactLocationActions{
+ display:flex!important;align-items:center!important;flex:0 0 auto!important;
+ width:max-content!important;padding:0!important;margin:0!important;gap:3px!important;
+}
+body.controls-window #choices.locationPanel .compactLocationActions button.locationIconAction{
+ box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 25px!important;width:25px!important;height:25px!important;min-height:25px!important;
+ margin:0!important;padding:0!important;border:1px solid #ffffff40!important;border-radius:5px!important;
+ color:var(--visual-menu-fg,#ecf3fa)!important;background:transparent!important;
+}
+body.controls-window #choices.locationPanel .locationIconAction svg{
+ width:14px!important;height:14px!important;
+}
+body.popup-window #choices.periodCompact[data-panel-kind="period"],
+body.popup-window.controls-window.popup-above #choices.periodCompact[data-panel-kind="period"]{
+ top:0!important;bottom:auto!important;left:0!important;right:auto!important;
+}
+body.popup-window #choices.periodCompact .periodCompactValue{
+ height:27px!important;min-height:27px!important;box-shadow:none!important;
+}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
