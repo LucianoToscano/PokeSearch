@@ -653,6 +653,12 @@ public class OverlayService extends Service {
         if(!visualMenuVertical&&("filters".equals(popupKind)||"mode".equals(popupKind)))
             b=PopupTouchGeometry.alignRail(b,m.widthPixels,menuParams.x,menuParams.width,
                 dp(popupTriggerDp),dp("filters".equals(popupKind)?78:52),dp(6));
+        // LT63: preserve visibility of results; submenu remains in its own
+        // narrowly measured native window and avoids covering Pokémon cards.
+        if(resultParams!=null&&resultRoot!=null&&resultRoot.getVisibility()==View.VISIBLE)
+            b=PopupTouchGeometry.avoidResults(b,m.widthPixels,m.heightPixels,
+                resultParams.x,resultParams.y,resultParams.width,resultParams.height,
+                menuParams.x,menuParams.y,menuParams.width,dp(visualMenuBaseDp()),dp(4));
         if(!b.visible()){popupRoot.setVisibility(View.GONE);return;}
         if(lastPopupX!=b.x||lastPopupY!=b.y||lastPopupW!=b.width||lastPopupH!=b.height){
             popupParams.x=b.x;popupParams.y=b.y;
@@ -1302,6 +1308,8 @@ public class OverlayService extends Service {
             catch(Exception e){recordFailure("alinhar resultados com Pokébola",e);}
         }
         moveDetail();
+        // Moving results may change which side of a popup is safe.
+        positionIndependentPopup();
     }
     private void updateResultsWidth(){
         if(resultParams==null||resultRoot==null)return;
@@ -1312,6 +1320,7 @@ public class OverlayService extends Service {
         updateResultHeaderGrip();
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar largura dos resultados",e);}
+        positionIndependentPopup();
     }
     private void resizeResultsMetadata(int widthDp){
         // Data column is an optional 0–100dp beside the original sprite column.
@@ -2252,6 +2261,7 @@ public class OverlayService extends Service {
         if(Math.abs(resultParams.height-pixels)<dp(2)){
             // E.g. changing visual Y offset while the list height is unchanged.
             positionResultsUnderPokeball(true);
+            positionIndependentPopup();
             return;
         }
         resultParams.height=pixels;
@@ -2259,6 +2269,7 @@ public class OverlayService extends Service {
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar resultados",e);}
         moveDetail();
+        positionIndependentPopup();
     }
     private void toggleResultsCollapsed(){
         if(minimized||resultRoot==null)return;

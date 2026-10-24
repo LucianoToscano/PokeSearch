@@ -2519,9 +2519,9 @@ body.popup-window #choices.filterCascade[data-panel-kind="filters"]:not(.filterP
  height:0!important;min-height:0!important;overflow:visible!important;
  max-width:none!important;max-height:none!important}
 body.popup-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]:not(.filterPicker){
- width:320px!important;max-width:none!important}
+ width:calc(80px + var(--filter-editor-width,134px))!important;max-width:none!important}
 body.popup-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor{
- width:230px!important;max-width:none!important;min-width:0!important}
+ width:var(--filter-editor-width,134px)!important;max-width:none!important;min-width:0!important}
 body.popup-window #choices.modeCascade.modeCascadeOpen{
  max-width:none!important;overflow:visible!important}
 body.popup-window #choices.modeCascade.modeCascadeOpen .modeCascadeEditor{
@@ -2546,6 +2546,169 @@ body.popup-window.controls-window #choices.modePanel.modeCascade.modeCascadeOpen
 body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
 body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor{
  max-height:var(--popup-room,440px)!important;overflow-y:auto!important}
+
+/* LT63 SAMSUNG CASCADE: final intrinsic-size corrections over LT62's experimental panels. */
+body.controls-window #choices.modePanel.modeCascade,
+body.popup-window #choices.modePanel.modeCascade{
+ height:164px!important;max-height:none!important;overflow:visible!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeRail{
+ height:auto!important;max-height:none!important;overflow:visible!important;
+}
+body.controls-window #choices.modeCascade button.modeCascadeEntry.activeMode,
+body.controls-window #choices.modeCascade button.modeCascadeEntry.chosen{
+ background:var(--visual-menu-button-bg,#30434de0)!important;
+ box-shadow:inset 3px 0 #54c7a9!important;border-radius:5px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor{
+ box-sizing:border-box!important;width:var(--filter-editor-width,134px)!important;
+ max-width:none!important;height:max-content!important;min-height:0!important;
+ padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;overflow:visible!important;
+}
+body.popup-window.controls-window #choices.filterCascade.filterCascadeOpen[data-panel-kind="filters"]:not(.filterPicker){
+ width:calc(80px + var(--filter-editor-width,134px))!important;
+}
+body.popup-window.controls-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor{
+ width:var(--filter-editor-width,134px)!important;max-width:none!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraField,
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterOptionList{
+ box-sizing:border-box!important;width:max-content!important;max-width:100%!important;
+ min-width:0!important;margin:0!important;padding:0!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterOptionList{
+ display:flex!important;flex-direction:column!important;gap:2px!important;width:100%!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterOptionEntry{
+ box-sizing:border-box!important;display:flex!important;align-items:center!important;gap:4px!important;
+ width:100%!important;height:24px!important;min-height:24px!important;margin:0!important;
+ padding:0 5px!important;text-align:left!important;white-space:nowrap!important;
+ background:var(--visual-menu-bg,#1c222bcc)!important;
+ border:1px solid transparent!important;border-radius:5px!important;
+ color:var(--visual-menu-fg,#edf4fa)!important;font:500 10px/1 Roboto,Arial,sans-serif!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterOptionEntry.chosen,
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChip.chosen{
+ background:var(--visual-menu-button-bg,#30404be8)!important;
+ box-shadow:inset 3px 0 #57cbb1!important;border-color:#ffffff26!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterOptionEntry img{
+ width:16px!important;height:16px!important;object-fit:contain!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs,
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraNumberRow{
+ box-sizing:border-box!important;width:max-content!important;max-width:100%!important;gap:3px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeCell{
+ flex:0 0 37px!important;width:37px!important;min-width:37px!important;max-width:37px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs input{
+ width:37px!important;min-width:37px!important;max-width:37px!important;
+ height:25px!important;padding:1px!important;appearance:textfield!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraRangeInputs input::-webkit-inner-spin-button,
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraNumberRow input::-webkit-inner-spin-button{
+ -webkit-appearance:none!important;display:none!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterInlineConfirm{
+ flex:0 0 25px!important;width:25px!important;min-width:25px!important;
+ height:25px!important;min-height:25px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"]{
+ width:max-content!important;max-width:none!important;grid-template-columns:repeat(4,27px)!important;gap:2px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraChipRow[data-kind="gender"] .extraChip{
+ width:27px!important;min-width:27px!important;max-width:27px!important;
+ height:25px!important;min-height:25px!important;
+}
+body.controls-window #choices.filterCascade .filterRailActions .filterIconAction,
+body.controls-window #choices.filterCascade .filterRailActions .filterIconAction.filterCancel{
+ color:var(--visual-menu-fg,#eaf3fb)!important;background:transparent!important;
+ border:1px solid #ffffff36!important;box-shadow:none!important;border-radius:5px!important;
+}
+body.controls-window #choices.filterCascade .filterRailActions .filterIconAction svg{
+ width:13px!important;height:13px!important;stroke-width:1.8!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterFormInline{
+ display:flex!important;flex-direction:column!important;gap:2px!important;
+ width:180px!important;max-width:180px!important;background:transparent!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterFormInline input{
+ box-sizing:border-box!important;width:100%!important;height:26px!important;padding:2px 4px!important;font-size:10px!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterFormResults{
+ max-height:170px!important;overflow:auto!important;
+}
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel{
+ box-sizing:border-box!important;width:274px!important;max-width:none!important;padding:4px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader{
+ display:flex!important;align-items:center!important;gap:4px!important;
+ box-sizing:border-box!important;width:100%!important;min-height:25px!important;
+ margin:0 0 3px!important;padding:0 2px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader>span:first-child{
+ flex:0 0 auto!important;font-size:10px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader .locPaste{
+ flex:0 0 23px!important;width:23px!important;min-width:23px!important;
+ height:23px!important;min-height:23px!important;padding:2px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow{
+ flex:1 1 auto!important;width:auto!important;min-width:0!important;margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow .locField{
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;
+ height:24px!important;min-height:24px!important;padding:1px 3px!important;font-size:10px!important;
+}
+body.controls-window #choices.locationPanel input[type=range]{
+ width:calc(100% - 8px)!important;height:18px!important;margin:2px 4px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow{
+ display:flex!important;align-items:center!important;width:100%!important;
+ margin:0!important;padding:0 2px!important;min-height:27px!important;gap:5px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>span:first-child{
+ flex:0 0 29px!important;min-width:29px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap{
+ flex:0 0 58px!important;width:58px!important;max-width:58px!important;height:25px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap .locRadiusNumber{
+ box-sizing:border-box!important;flex:0 0 58px!important;width:58px!important;
+ min-width:58px!important;max-width:58px!important;height:25px!important;
+ padding:1px 17px 1px 3px!important;text-align:right!important;font-size:11px!important;
+ appearance:textfield!important;
+}
+body.controls-window #choices.locationPanel .locRadiusNumber::-webkit-inner-spin-button,
+body.controls-window #choices.locationPanel .locRadiusNumber::-webkit-outer-spin-button{
+ display:none!important;-webkit-appearance:none!important;
+}
+body.controls-window #choices.locationPanel .locRadiusUnit{right:3px!important;font-size:10px!important}
+body.controls-window #choices.locationPanel .compactLocationActions{
+ display:flex!important;align-items:center!important;flex:0 0 auto!important;
+ width:max-content!important;padding:0!important;margin:0!important;gap:3px!important;
+}
+body.controls-window #choices.locationPanel .compactLocationActions button.locationIconAction{
+ box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 25px!important;width:25px!important;height:25px!important;min-height:25px!important;
+ margin:0!important;padding:0!important;border:1px solid #ffffff40!important;border-radius:5px!important;
+ color:var(--visual-menu-fg,#ecf3fa)!important;background:transparent!important;
+}
+body.controls-window #choices.locationPanel .locationIconAction svg{
+ width:14px!important;height:14px!important;
+}
+body.popup-window #choices.periodCompact[data-panel-kind="period"],
+body.popup-window.controls-window.popup-above #choices.periodCompact[data-panel-kind="period"]{
+ top:0!important;bottom:auto!important;left:0!important;right:auto!important;
+}
+body.popup-window #choices.periodCompact .periodCompactValue{
+ height:27px!important;min-height:27px!important;box-shadow:none!important;
+}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3289,8 +3452,8 @@ function numericConfirmButton(make,keys,label){
  return button;
 }
 function filterCascadeEditorWidth(label){
- const width={Ordenar:156,PC:168,"Nível":168,Clima:160,Tamanho:230,
-  Sexo:134,Forma:110,"PC mínimo PvP":116,"Evoluções anteriores":92};
+ const width={Ordenar:122,PC:114,"Nível":114,Clima:172,Tamanho:230,
+   Sexo:118,Forma:180,"PC mínimo PvP":100,"Evoluções anteriores":84};
  return width[label]||134;
 }
 function renderExtraFilters(panel,make){
@@ -3311,8 +3474,23 @@ function renderExtraFilters(panel,make){
   if(key==="weather")button.prepend(makeWeatherIcon(current||"Any"));
   button.type="button";button.disabled=!choices.length&&!["sortBy","weather"].includes(key);
   button.title=choices.length?"Selecionar "+label:"Aguardando opções verificadas no PoGoCoordinates";
-  button.onclick=()=>{modeScrollTop=panel.scrollTop;renderFilterPicker(key,label,choices);};
-  field(label,button);
+  // LT63: open every ordering/weather choice in the SAME cascading editor.
+   const list=make("div","filterOptionList");
+   list.setAttribute("role","radiogroup");list.setAttribute("aria-label",label);
+   const values=key==="sortBy"?
+    ["Despawn (longest)","CP (highest)","IV % (highest)","Level (highest)","Distance (nearest)"]:
+    ["Any","Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"];
+   for(const value of values){
+    const item=make("button","filterOptionEntry",filterDisplayLabel(key,value));item.type="button";
+    if(key==="weather")item.prepend(makeWeatherIcon(value));
+    const chosen=value===current||(key==="weather"&&value==="Any"&&!current);
+    item.classList.toggle("chosen",chosen);item.setAttribute("aria-checked",String(chosen));
+    item.setAttribute("role","radio");item.title=filterDisplayLabel(key,value);
+    item.onclick=()=>{modeDraft[key]=key==="weather"&&value==="Any"?"":value;
+     patchSelectedFilterKeys([key]);filterFocus=label;renderFiltersChoices();};
+    list.appendChild(item);
+   }
+   field(label,list);
  };
  const numericInput=(key,label,level=false)=>{
   const input=make("input");input.type="number";input.inputMode="numeric";
@@ -3419,8 +3597,20 @@ function renderExtraFilters(panel,make){
   const formSelected=Array.isArray(modeDraft.formSelections)?modeDraft.formSelections:[];
   const formButton=make("button","extraValue",formSelected.length?formSelected.length+" formas":"Any");
   formButton.type="button";formButton.title="Buscar e selecionar formas oficiais no site";
-  formButton.onclick=()=>{modeScrollTop=panel.scrollTop;formQuery="";renderFormPicker();};
-  field("Forma",formButton);
+  formButton.onclick=()=>{filterFocus="Forma";renderFiltersChoices();};
+   if(filterFocus==="Forma"){
+    const box=make("div","filterFormInline");
+    const chosen=make("div","pokemonSelected");chosen.id="officialFormSelected";
+    const search=make("input");search.type="search";search.id="officialFormSearch";
+    search.placeholder="Buscar forma";search.value=formQuery;
+    search.setAttribute("aria-label","Buscar forma oficial");
+    search.oninput=()=>{formQuery=search.value;formOptionsStatus="Pesquisando formas no site...";
+     refreshOfficialFormList();if(Native.requestFormOptions)Native.requestFormOptions(formQuery);};
+    search.onfocus=()=>{if(Native.locationEditor)Native.locationEditor(true);};
+    search.onblur=()=>{if(Native.locationEditor)Native.locationEditor(false);};
+    const results=make("div","filterFormResults");results.id="officialFormItems";
+    box.append(chosen,search,results);field("Forma",box);
+   }else field("Forma",formButton);
  // Keep active PvP-only criteria without the obsolete Advanced header.
  if(["gl","ul"].includes(modeDraft.mode)){
   number("minPvpCp","PC mínimo PvP");
@@ -3663,9 +3853,9 @@ function renderLocationChoices(){
   '<path d="M9 15h6m-3-3 3 3-3 3"/>';
  paste.appendChild(pasteIcon);
  paste.onclick=()=>Native.pasteLocationCoords();
- title.appendChild(paste); // Paste is a title action, not a wide field button.
- // Location changes only when applying or clearing this one field.
- fieldRow.append(field);
+ title.appendChild(paste);
+  // One compact title/paste/coordinates line; radius slider remains independent.
+  fieldRow.append(field);title.appendChild(fieldRow);
  const label=make("div","locLine locRadiusRow");
  const labelName=make("span","","Raio");
  label.title="Raio da busca: de 0 a 1000 km";
@@ -3691,8 +3881,21 @@ function renderLocationChoices(){
  message.setAttribute("role","status");message.setAttribute("aria-live","polite");
  message.hidden=true;
  const actions=make("div","locLine compactLocationActions");
- const apply=make("button","locSave","✓ Aplicar");
- const clear=make("button","locHide","Limpar");
+ const apply=make("button","locSave locationIconAction");
+  const clear=make("button","locHide locationIconAction");
+  apply.type="button";clear.type="button";
+  apply.title="Aplicar localização";clear.title="Limpar localização";
+  apply.setAttribute("aria-label",apply.title);clear.setAttribute("aria-label",clear.title);
+  const makeActionGlyph=kind=>{
+   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+   svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("fill","none");
+   svg.setAttribute("stroke","currentColor");svg.setAttribute("stroke-width","1.8");
+   svg.setAttribute("stroke-linecap","round");svg.setAttribute("stroke-linejoin","round");
+   svg.innerHTML=kind==="apply"?'<path d="m5 12 4 4L19 6"/>':
+    '<path d="M4 7h16M9 7V5h6v2M7 7l1 12h8l1-12M10 10v6M14 10v6"/>';
+   return svg;
+  };
+  apply.appendChild(makeActionGlyph("apply"));clear.appendChild(makeActionGlyph("clear"));
  const disable=()=>{
   // OFF is explicit: discard the unsent radius draft, not saved site filters.
   delete radiusField.dataset.locationDraft;
@@ -3718,8 +3921,8 @@ function renderLocationChoices(){
   Native.setLocation(true,wantedCoords,wantedRadius);
  }
  apply.onclick=submit;
- actions.append(apply,clear);
- panel.append(title,fieldRow,label,slide,message,actions);
+ actions.append(apply,clear);label.appendChild(actions);
+  panel.append(title,slide,label,message);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
  locationPanelFeedback();
@@ -5175,7 +5378,7 @@ function renderFiltersChoices(){
   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
   svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("aria-hidden","true");
   svg.setAttribute("fill","none");svg.setAttribute("stroke","currentColor");
-  svg.setAttribute("stroke-width","2");svg.setAttribute("stroke-linecap","round");
+  svg.setAttribute("stroke-width","1.8");svg.setAttribute("stroke-linecap","round");
   svg.setAttribute("stroke-linejoin","round");svg.innerHTML=art[icon];
   button.append(svg);return button;
  };
@@ -5242,7 +5445,10 @@ function renderFiltersChoices(){
  if(rail)rail.appendChild(actions);
  // The ✓ within each numeric editor remains separate and unchanged.
  if(editor){
-  editor.appendChild(indicator);
+   if(filterFocus==="Forma")requestAnimationFrame(()=>{
+    refreshOfficialFormList();if(Native.requestFormOptions)Native.requestFormOptions(formQuery);
+   });
+   editor.appendChild(indicator);
   for(const child of [...panel.children].filter(child=>child.classList.contains("uxNote")||
     (child.tagName==="BUTTON"&&child.textContent==="Usar opções observadas no site")))editor.appendChild(child);
  }

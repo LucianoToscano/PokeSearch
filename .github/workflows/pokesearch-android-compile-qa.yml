@@ -1,5 +1,13 @@
-name: PokeSearch LT62 Android Java compile (sem APK)
+name: PokeSearch LT63 Android Java compile (sem APK)
 on:
+  push:
+    branches: [fix/lt63-samsung-cascade-ui-20261023]
+    paths:
+      - 'app/src/main/java/**'
+      - 'app/src/main/assets/**'
+      - 'app/src/main/AndroidManifest.xml'
+      - 'app/build.gradle.kts'
+      - '.github/workflows/pokesearch-android-compile-qa.yml'
   pull_request:
     branches: [main]
     paths:
@@ -23,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Java 17
         uses: actions/setup-java@v4
         with:

@@ -219,7 +219,7 @@ check("LT62 Favoritos: all 50 sprites visible in 10 x 5 grid, no paging",()=>{
  assert.ok(!picker.includes('previous.setOnClickListener'));
  assert.ok(!picker.includes('final int PAGE_SIZE=12;'));
  assert.ok(picker.indexOf('root.addView(selectedRow)')<picker.indexOf('root.addView(search,searchParams)'));
- assert.ok(picker.includes('count.setText("Selecionados  "+size+"/50")'));
+ assert.ok(picker.includes('count.setText("Selecionados "+size+"/50")'));
 });
 check("LT62 Favoritos: compact 348dp dialog and notifications only in Alerts",()=>{
  const picker=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
@@ -713,8 +713,8 @@ check("LT62 visual Filtros: precise width contract per editor, never giant Sex p
  const context={};
  vm.runInNewContext("function filterCascadeEditorWidth(label){"+code+";this.resolve=filterCascadeEditorWidth",context);
  for(const [type,expected] of [
-  ["Sexo",134],["Tamanho",230],["PC",168],["Nível",168],
-  ["Clima",160],["Ordenar",156],["Forma",110],["PC mínimo PvP",116]
+  ["Sexo",118],["Tamanho",230],["PC",114],["Nível",114],
+   ["Clima",172],["Ordenar",122],["Forma",180],["PC mínimo PvP",100]
  ])assert.equal(context.resolve(type),expected,type);
 });
 check("LT62 visual Filtros: exclusive Sex and 7 Size remain compact and independent",()=>{
@@ -788,7 +788,7 @@ check("LT62 audit: Favoritos counter is in header and picker passes outside taps
  assert.ok(header.includes('header.addView(count,'));
  assert.ok(header.includes('header.addView(finish,'));
  assert.ok(!src.includes('root.addView(counter)'));
- assert.ok(src.includes('count.setText("Selecionados  "+size+"/50")'));
+ assert.ok(src.includes('count.setText("Selecionados "+size+"/50")'));
  assert.ok(src.includes('FLAG_NOT_TOUCH_MODAL'));
  assert.ok(src.includes('window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND'));
  assert.ok(src.includes('android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND'));
@@ -859,7 +859,7 @@ check("LT62 Favorites: title counter, 10x5 grid and no redundant empty spacer",(
  const picker=fs.readFileSync(path.join(__dirname,
   "../src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
  assert.ok(picker.includes('header.addView(count'));
- assert.ok(picker.includes('count.setText("Selecionados  "+size+"/50")'));
+ assert.ok(picker.includes('count.setText("Selecionados "+size+"/50")'));
  assert.ok(picker.includes('sprites.setColumnCount(10)'));
  assert.ok(picker.includes('sprites.setRowCount(5)'));
  assert.ok(picker.indexOf('root.addView(selectedRow)')<picker.indexOf('root.addView(search,searchParams)'));
