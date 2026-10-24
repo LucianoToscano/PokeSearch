@@ -22,10 +22,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
-      - name: Ensure Android SDK 36 (runner-provided sdkmanager)
+      - name: Android SDK 36 via runner preinstalled tools
+        shell: bash
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
       - name: Support mission asset and integration contracts
         run: node app/tests/support-mission-v2.test.js
       - name: Pure Java weighted policy tests
