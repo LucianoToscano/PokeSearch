@@ -36,7 +36,7 @@ check("Visual Editor light/dark controls icon visibility in one menu",()=>{
 });
 check("Weather icon elements are paired and use old originals only as fallback",()=>{
  const s=dock.split("function makeWeatherIcon(value){")[1].split("const FILTER_DISPLAY_LABELS=",1)[0];
- for(const token of ['for(const variant of ["white","black"])','weatherIconPair','weatherIcon-'+ '"', 'img.dataset.fallback','file:///android_asset/weather-icons/v2/'])assert.ok(s.includes(token),token);
+ for(const token of ['for(const variant of ["white","black"])','weatherIconPair','weatherIcon-', 'img.dataset.fallback','file:///android_asset/weather-icons/v2/'])assert.ok(s.includes(token),token);
 });
 check("Every new white/black PNG for nine official weather states is intact",()=>{
  const names=["any","boosted","sunny-clear","rainy","partly-cloudy","cloudy","windy","snow","fog"];
