@@ -1308,6 +1308,8 @@ public class OverlayService extends Service {
             catch(Exception e){recordFailure("alinhar resultados com Pokébola",e);}
         }
         moveDetail();
+        // Moving results may change which side of a popup is safe.
+        positionIndependentPopup();
     }
     private void updateResultsWidth(){
         if(resultParams==null||resultRoot==null)return;
@@ -1318,6 +1320,7 @@ public class OverlayService extends Service {
         updateResultHeaderGrip();
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar largura dos resultados",e);}
+        positionIndependentPopup();
     }
     private void resizeResultsMetadata(int widthDp){
         // Data column is an optional 0–100dp beside the original sprite column.
@@ -2258,6 +2261,7 @@ public class OverlayService extends Service {
         if(Math.abs(resultParams.height-pixels)<dp(2)){
             // E.g. changing visual Y offset while the list height is unchanged.
             positionResultsUnderPokeball(true);
+            positionIndependentPopup();
             return;
         }
         resultParams.height=pixels;
@@ -2265,6 +2269,7 @@ public class OverlayService extends Service {
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar resultados",e);}
         moveDetail();
+        positionIndependentPopup();
     }
     private void toggleResultsCollapsed(){
         if(minimized||resultRoot==null)return;
