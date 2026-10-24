@@ -5215,3 +5215,12 @@ Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para 
 **Faltas já corrigidas na rodada:** retorno de sugestões Pokémon/Form/Filtros para `popupPanel`, o seletor P/M/G do Editor Visual e atualização da UI da permissão de Notificações. QA Node novo verifica as larguras estáveis e os controles não cortados pela antiga dependência de `100vw`.
 
 **Pendência:** comprovar no Samsung a abertura, toque externo, teclado, cascatas, visualização de formas, sons Novos/Favoritos e posição dos resultados em horizontal/vertical. Sem APK novo, sem merge e sem LT63.
+
+
+### 12.279 — LT62: ancoragem da cascata e liberação do teclado no fechamento (23/10/2026)
+
+**Problema geométrico auditado:** centralizar o popup inteiro de Filtros (rail 78px + editor lateral até 230px) sob o ícone deslocava a coluna Filtros para longe da opção selecionada. `PopupTouchGeometry.alignRail()` alinha a **coluna de opções** ao centro do botão que abriu o painel, mantendo o editor lateral no mesmo retângulo nativo compacto, limite de tela, posição acima/abaixo e barra estável. Também se aplica a Modos (rail 52px); demais painéis conservam alinhamento central habitual.
+
+**Fechamento/foco:** `closeIndependentPopup()` esconde o IME usando o token da própria WebView do popup, reseta `locationEditorOpen`, devolve `FLAG_NOT_FOCUSABLE` e deixa a janela `GONE`. Isso cobre o fechamento por `ACTION_OUTSIDE`, que pode chegar antes do retorno JS `locationEditor(false)`, sem bloquear o toque subjacente.
+
+**QA:** ampliada `PopupTouchGeometryTest.java` de 16 para **20 asserções** (posição do rail, altura preservada, clamp direito e zero hitbox). Executar os workflows Node e compilação Java Android (sem APK), depois homologar em Samsung. Sem merge, mudança de identidade/versão ou novo APK.

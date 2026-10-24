@@ -1,8 +1,8 @@
 package com.lucianotoscano.pokesearchoverlay;
 
 /**
- * Pure geometry for a future independent, content-sized overlay popup window.
- * It does not alter the existing menu WebView or install a touchable window.
+ * Pure geometry for the independent, content-sized overlay popup window.
+ * No Android dependencies; the native service supplies physical pixel bounds.
  * Dimensions and coordinates are in the same physical pixel space.
  */
 final class PopupTouchGeometry {
@@ -46,6 +46,22 @@ final class PopupTouchGeometry {
         final int x=clamp(absoluteCenter-width/2,margin,screenWidth-margin-width);
         final int y=above?safeToolbarY-height:safeToolbarY+toolbarHeight;
         return new Bounds(x,y,width,height,above);
+    }
+
+    /**
+     * An open lateral cascade uses a narrow rail followed by an editor.
+     * Anchor that RAIL under the tapped icon instead of centering the
+     * combined rail+editor width (which otherwise shifts the rail sideways).
+     * Preserve the original screen and vertical clamps.
+     */
+    static Bounds alignRail(Bounds popup,int screenWidth,int toolbarX,
+                            int toolbarWidth,int triggerCenterX,int railWidth,int margin) {
+        if(popup==null||!popup.visible())return popup;
+        int edge=Math.max(0,margin);
+        int center=toolbarX+clamp(triggerCenterX,0,toolbarWidth);
+        int rail=Math.max(0,Math.min(railWidth,popup.width));
+        int left=clamp(center-rail/2,edge,Math.max(edge,screenWidth-edge-popup.width));
+        return new Bounds(left,popup.y,popup.width,popup.height,popup.above);
     }
 
     private static int clamp(int value,int min,int max){

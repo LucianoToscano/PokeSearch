@@ -647,6 +647,9 @@ public class OverlayService extends Service {
             m.widthPixels,m.heightPixels,menuParams.x,menuParams.y,
             menuParams.width,dp(visualMenuBaseDp()),dp(popupTriggerDp),
             dp(popupWidthDp),dp(popupHeightDp),dp(6));
+        if("filters".equals(popupKind)||"mode".equals(popupKind))
+            b=PopupTouchGeometry.alignRail(b,m.widthPixels,menuParams.x,menuParams.width,
+                dp(popupTriggerDp),dp("filters".equals(popupKind)?78:52),dp(6));
         if(!b.visible()){popupRoot.setVisibility(View.GONE);return;}
         if(lastPopupX!=b.x||lastPopupY!=b.y||lastPopupW!=b.width||lastPopupH!=b.height){
             popupParams.x=b.x;popupParams.y=b.y;
@@ -668,6 +671,12 @@ public class OverlayService extends Service {
     private void closeIndependentPopup(){
         if(popupKind.isEmpty())return;
         popupKind="";popupWidthDp=popupHeightDp=0;
+        locationEditorOpen=false;
+        if(popupPanel!=null){
+            android.view.inputmethod.InputMethodManager keyboard=
+                (android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
+            if(keyboard!=null)keyboard.hideSoftInputFromWindow(popupPanel.getWindowToken(),0);
+        }
         if(popupRoot!=null)popupRoot.setVisibility(View.GONE);
         if(popupParams!=null&&popupRoot!=null&&wm!=null){
             popupParams.flags|=WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|

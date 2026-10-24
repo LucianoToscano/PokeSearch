@@ -38,6 +38,17 @@ public final class PopupTouchGeometryTest {
             1080,2400,0,0,300,34,100,0,100,8);
         check(!hidden.visible(),"zero-width popup never steals touches");
         check(hidden.width==0&&hidden.height==0,"zero-sized native touch window");
+        PopupTouchGeometry.Bounds rail=PopupTouchGeometry.alignRail(
+            bottom,1080,150,660,120,78,6);
+        check(rail.x==231,"filter rail centered beneath originating tile");
+        check(rail.y==bottom.y&&rail.height==bottom.height,
+            "rail alignment preserves height and vertical placement");
+        PopupTouchGeometry.Bounds clippedRail=PopupTouchGeometry.alignRail(
+            rightEdge,720,600,115,110,78,8);
+        check(clippedRail.x+clippedRail.width<=712,
+            "lateral editor stays within right display margin");
+        check(PopupTouchGeometry.alignRail(hidden,1080,0,300,100,78,8)==hidden,
+            "zero-sized popup remains unclickable after anchoring");
         System.out.println("PopupTouchGeometry: "+passed+"/"+passed+" checks passed");
     }
 }
