@@ -86,6 +86,24 @@ public final class PopupTouchGeometryTest {
               "LT63 non-overlapping popup stays anchored");
         check(!PopupTouchGeometry.overlaps(clearPopup,farResults),
               "LT63 disjoint rectangles");
+        // LT69 Samsung screenshots: More uses the EXACT native edge; CSS
+        // must render its first button at y=0 inside this popup (not +34dp).
+        PopupTouchGeometry.Bounds moreBelow=PopupTouchGeometry.place(
+            1080,2400,180,410,760,95,724,90,106,6);
+        check(moreBelow.visible()&&!moreBelow.above,
+            "LT69 More visible beneath toolbar");
+        check(moreBelow.y==505,
+            "LT69 More starts exactly at native bottom edge without an extra 34dp");
+        check(moreBelow.width==90&&moreBelow.height==106,
+            "LT69 More keeps enough native height for all utility icons");
+        PopupTouchGeometry.Bounds moreAbove=PopupTouchGeometry.place(
+            1080,2400,180,2240,760,95,724,90,106,6);
+        check(moreAbove.above&&moreAbove.y+moreAbove.height==2240,
+            "LT69 More stays flush against toolbar when it opens upward");
+        PopupTouchGeometry.Bounds moreVertical=PopupTouchGeometry.placeBeside(
+            1080,2400,100,400,220,720,650,90,106,6);
+        check(moreVertical.x==320&&moreVertical.visible(),
+            "LT69 vertical More appears beside the toolbar, never +232dp");
         System.out.println("PopupTouchGeometry: "+passed+"/"+passed+" checks passed");
     }
 }
