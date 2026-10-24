@@ -790,7 +790,7 @@ public class OverlayService extends Service {
         final int[] dragResultStart={0,0};
         final long[] lastResultMoveAt={0L};
         final Runnable dockLongPress=()->{
-            if(dragged||params==null||stopped||loginPaused||pickerOpen)return;
+            if(dragged||params==null||stopped||loginPaused)return;
             dockHeld[0]=true;
             if(minimized)minimize(false);
             menu(!menuExpanded);
@@ -3002,26 +3002,21 @@ public class OverlayService extends Service {
             if(root==null||loginPaused||pickerOpen)return;
             pickerOpen=true;
             hideDetails();
-            root.setVisibility(View.GONE);
-            if(resultRoot!=null)resultRoot.setVisibility(View.GONE);
-            if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
+            // Favorites is a separate, content-sized TYPE_APPLICATION_OVERLAY Dialog
+            // with FLAG_NOT_TOUCH_MODAL. Do NOT hide the Pokeball, results or toolbar:
+            // those controls must remain touchable outside the dialog's native bounds.
+            // The pickerOpen guard prevents duplicate dialogs, not background interaction.
             try{
                 PokemonPicker.show(OverlayService.this,()->{
                     if(!stopped)update();
                 },()->{
                     pickerOpen=false;
-                    if(!stopped&&!loginPaused&&root!=null)root.setVisibility(View.VISIBLE);
-                    if(!stopped&&!loginPaused&&!minimized&&!resultCollapsed&&resultRoot!=null)
-                        resultRoot.setVisibility(View.VISIBLE);
-                    if(!stopped&&!loginPaused&&menuExpanded&&menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
-                    update();
+                    // Never force windows VISIBLE after dismissal: the user may have
+                    // collapsed the menu/results or started login behind this dialog.
+                    if(!stopped)update();
                 });
             }catch(Exception e){
                 pickerOpen=false;
-                if(root!=null&&!loginPaused)root.setVisibility(View.VISIBLE);
-                if(resultRoot!=null&&!loginPaused&&!minimized&&!resultCollapsed)
-                    resultRoot.setVisibility(View.VISIBLE);
-                if(menuRoot!=null&&!loginPaused&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
                 diagnosticError("Não foi possível abrir favoritos no overlay.");
             }
         });}

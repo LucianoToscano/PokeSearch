@@ -37,6 +37,22 @@ test("Bridge supports explicit filter selection",service.includes("public void s
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
 test("Favorites remain in overlay",service.includes("PokemonPicker.show(OverlayService.this")&&!service.includes('intent.setAction("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST")'));
 test("Favorites picker is service-safe and focusable",picker.includes("TYPE_APPLICATION_OVERLAY")&&picker.includes("Runnable dismissed"));
+
+test("LT62 Favorites never hide background controls while the nonmodal picker is open",()=>{
+ const bridge=service.split("@JavascriptInterface public void openWatchList()")[1]
+   ?.split("@JavascriptInterface public void setIntervalMinutes(")[0]||"";
+ const longPress=service.split("final Runnable dockLongPress=()->{")[1]?.split("};")[0]||"";
+ return bridge.includes("pickerOpen=true;")&&bridge.includes("PokemonPicker.show(OverlayService.this")&&
+  bridge.includes("pickerOpen=false;")&&bridge.includes("if(!stopped)update();")&&
+  !bridge.includes("root.setVisibility(View.GONE)")&&
+  !bridge.includes("resultRoot.setVisibility(View.GONE)")&&
+  !bridge.includes("menuRoot.setVisibility(View.GONE)")&&
+  !bridge.includes("setVisibility(View.VISIBLE)")&&
+  !longPress.includes("pickerOpen")&&
+  picker.includes("window.addFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)")&&
+  picker.includes("android.view.WindowManager.LayoutParams.WRAP_CONTENT");
+});
+
 test("Login has one top toolbar and no native footer buttons",main.includes('done.setText("✓ PokeSearch")')&&main.includes('loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)')&&main.includes('MATCH_PARENT,\n                android.view.WindowManager.LayoutParams.MATCH_PARENT'));
 test("Shiny remains separate from the chosen filter",service.includes('shiny=!shiny;')&&dock.includes('onclick="Native.shiny()"')&&service.includes('mode.equals(selected)'));
 test("A changed mode immediately reaches refresh without a 60s queue",!service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)')&&service.includes('filterChangeRefresh=()->refresh(true)'));
