@@ -6260,3 +6260,18 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Adicionado `app/tests/lt77-stage13-proguard-audit.test.js`, com teste de identidade da aplicação, regras R8, WebViews, assets e isolamento dos scripts experimentais; workflow `.github/workflows/lt77-stage13-proguard-qa.yml`. Sem APK.
 - Falha real herdada da Etapa 12: o primeiro run [#40143185582](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143185582) não compilou: `onDestroy` referenciava contadores `formOptionsSequence` e `pokemonSuggestionSequence` pertencentes à classe interna `Bridge`. Corrigido em ambas as branches: manter invalidação de `coordinateRequestToken` e checagem existente de `stopped/requestGeneration` nos callbacks internos. A alteração e o teste foram registrados, sem ocultar a falha. Conferir novos Actions da Etapa 12 e 13 antes de atestar PASS.
 - **Pendências:** homologação Samsung, teste R8/ProGuard efetivo de um build release assinado (nenhum APK nesta fase), execução da API autorizada em origem real e confirmação de ausência de leaks sob carga.
+
+
+---
+
+## LT77 — ETAPA 14: CHECKLIST DE ACEITAÇÃO E FECHAMENTO DA AUDITORIA (24/10/2026)
+
+- Branch isolada `fix/lt77-stage14-acceptance-audit-20261024` derivada da Etapa 13 `01c0793003ef2fc3791bf552e1e9ec66926a7694`. `main`, assinatura, distribuição e manifesto LT76 inalterados.
+- Entregue `docs/LT77_CHECKLIST_ACEITACAO.md`: cada requisito da implantação foi classificado por **evidência automatizada** versus **homologação física/API real**, sem converter CI em aprovação Samsung. Itens não testados continuam [ ]; includes regressão de CSS/layout, Modos, More, Forma/Sexo, Localização, Weather, Get coords, Shiny, Performance, ProGuard, JWT, cap10, reveal, feature flag OFF.
+- Teste novo `app/tests/lt77-stage14-acceptance-audit.test.js`, protegendo artefato e fluxos críticos; workflow final `.github/workflows/lt77-stage14-acceptance-qa.yml` roda suítes Node e testes Java/compilação SDK36 sem APK.
+- Etapa 12: o CI inicial [#40143185582](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143185582) apontou erro de compilação por referência a contadores internos do Bridge; corrigido em Stage12 e propagado a Stage13/14 sem descartar invalidação de `coordinateRequestToken`. **Rerun [#40143457214](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143457214): SUCCESS.**
+- Etapa 13: **[#40143490838](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143490838): SUCCESS.**
+- Etapa 10: **[#40143042368](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143042368): SUCCESS** após corrigir falso positivo em teste de comentários; Etapa 11: **[#40143066929](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143066929): SUCCESS**.
+- Etapa 14: run [#40143616481](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143616481) ainda deve ser conferido no CI antes de declarar a regressão final aprovada.
+- **Não homologado:** Samsung físico em todas as posições/orientações, acesso autenticado e disponibilidade real do PoGoCoordinates, integração REST real dentro da WebView, catálogo completo ao vivo, equivalência Weather/GL/UL/Shiny, perfis de consumo, R8 de APK release assinado e cenário de release. O módulo de roteamento API continua desligado e desconectado do app Android. NÃO gerar APK, NÃO fazer merge, NÃO publicar nem alterar manifesto sem nova autorização e provas de homologação. Nenhuma dessas verificações foi efetuada nesta execução.
+- O checklist é o ponto de retomada para homologação, não atestado de prontidão para distribuição.
