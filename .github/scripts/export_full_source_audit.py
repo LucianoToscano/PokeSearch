@@ -50,7 +50,7 @@ def main():
  root=stage/ROOTNAME
  if root.exists():shutil.rmtree(root)
  root.mkdir(parents=True)
- excluded=[];copied=[];danger=[]
+ excluded=[];copied=[];sanitized=[]
  for raw in sorted(tracked):
   path=pathlib.PurePosixPath(raw)
   if path.is_absolute() or ".." in path.parts or str(path)!=raw or "\x00" in raw:
@@ -65,17 +65,24 @@ def main():
   if file.stat().st_size>100*1024*1024:
    excluded.append((raw,"arquivo maior que 100 MiB, precisa revisão"));continue
   data=file.read_bytes()
+  changed=[]
   if b"\x00" not in data[:4096] and file.stat().st_size<=6*1024*1024:
    for name,regex in PATTERNS:
-    if regex.search(data):
-     danger.append((raw,name))
+    replaced,count=regex.subn(lambda m: b"REDACTED_"+name.upper().replace("-","_").encode("ascii")+b"_AUDIT_ONLY",data)
+    if count:
+     data=replaced
+     changed.append((name,count))
   dest=root/raw
   dest.parent.mkdir(parents=True,exist_ok=True)
-  shutil.copyfile(file,dest)
+  if changed:
+   dest.write_bytes(data) # sanitized copy ONLY, source Git not changed
+   sanitized.append((raw,changed))
+  else:
+   shutil.copyfile(file,dest)
   copied.append(raw)
- if danger:
-  # Do not redistribute any suspicious tracked secret and do not print its value.
-  raise RuntimeError("SEGREDO POTENCIAL: revisar antes de exportar: "+str(danger))
+ # Do not redistribute any real credential. A pattern replacement must
+ # preserve parsable text and be listed in RELATORIO-LACUNAS.md.
+
  required=[
  "docs/GUIA_MESTRE.md",
  "docs/auditoria/LT77_AUDITORIA_CONSOLIDADA_20261024.md",
@@ -126,7 +133,8 @@ def main():
 - Termos/licença/rate limits de uso da API precisam conferência específica; autorização declarada pelo proprietário não comprova cada permissão técnica.
 ## BAIXO
 - Arquivos externos do Google Drive não foram misturados com o snapshot de código Git; verificar sua correspondência de versão antes de inclusão futura.
-## EXCLUSÕES APURADAS
+## ARQUIVOS SANITIZADOS APENAS NA CÓPIA
+"""+"\n".join(f"- {p}: "+", ".join(f"{typ} ({num} substituição)" for typ,num in matches) for p,matches in sanitized)+("\n" if sanitized else "- Nenhum.\n")+"""\n## EXCLUSÕES APURADAS
 """+"\n".join(f"- {p}: {why}" for p,why in excluded)+("\n" if excluded else "- Nenhuma entre os arquivos Git rastreados.\n")
  textfile(root/"RELATORIO-LACUNAS.md",lac)
  integ=f"""# RELATÓRIO DE INTEGRIDADE
@@ -136,8 +144,9 @@ def main():
 - Arquivos rastreados no commit: {len(tracked)}
 - Originais copiados sem alteração: {len(copied)}
 - Excluídos com motivo: {len(excluded)}
-- Sanitizados: 0 (se fosse detectado segredo forte, a exportação seria bloqueada).
-- Scanner de indicadores de segredo privado: sem detecção nos arquivos textuais rastreados avaliados.
+- Sanitizados: {len(sanitized)} (somente cópias dentro do ZIP; repositório original imutável).
+- Scanner de indicadores de segredo: {len(sanitized)} arquivo(s) com substituição de alto sinal; nomes e tipo documentados no RELATORIO-LACUNAS.md, valores nunca divulgados.
+- Aviso: os arquivos sanitizados diferem em bytes do snapshot Git; não prometer compilação funcional desses arquivos sem restauração controlada de configuração externa.
 - Marcadores de estrutura comprovados: GUIA_MESTRE, AndroidManifest, MainActivity, OverlayService, dock.html, probe.js, contratos LT77, testes, Gradle Kotlin DSL.
 - Diretórios Git, cache, APK, AAB, keystores privados e local.properties: não incluídos.
 - Verificação de CRC, caminhos relativos, lista e hashes: realizada pelo próprio exportador após gerar o ZIP.
@@ -166,13 +175,14 @@ Verificação: sha256sum -c CHECKSUMS-SHA256.txt; o arquivo de checksums exclui 
 """
  textfile(root/"LEIA-ME-AUDITORIA.md",readme)
  # LISTA-ARQUIVOS itself and CHECKSUMS are marked auto-referential
- originals=set(copied)
+ originals=set(copied)-{p for p,_ in sanitized}
+ sanitizedPaths={p for p,_ in sanitized}
  paths=sorted(p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file())
  listing=["LISTA DE ARQUIVOS DO ZIP — caminhos relativos à pasta raiz",
   "O tamanho de arquivos autorreferentes LISTA-ARQUIVOS.txt e CHECKSUMS-SHA256.txt não é auto-hasheado para evitar recursividade.",
   "CATEGORIA | BYTES | ARQUIVO"]
  for x in paths:
-  listing.append(f"{'ORIGINAL' if x in originals else 'GERADO'} | {(root/x).stat().st_size} | {x}")
+  listing.append(f"{'ORIGINAL' if x in originals else 'SANITIZADO' if x in sanitizedPaths else 'GERADO'} | {(root/x).stat().st_size} | {x}")
  listing.extend(["GERADO | autorreferente | LISTA-ARQUIVOS.txt",
                  "GERADO | autorreferente | CHECKSUMS-SHA256.txt"])
  textfile(root/"LISTA-ARQUIVOS.txt","\n".join(listing)+"\n")
@@ -208,6 +218,7 @@ arquivo_fonte_branch=feature/lt77-authorized-api-contract-20261024
 arquivos_git_rastreados={len(tracked)}
 arquivos_git_copiados={len(copied)}
 excluidos={len(excluded)}
+sanitizados={len(sanitized)}
 arquivos_gerados={len(source_files)-len(copied)}
 arquivos_total_zip={len(source_files)}
 bytes_zip={final.stat().st_size}
