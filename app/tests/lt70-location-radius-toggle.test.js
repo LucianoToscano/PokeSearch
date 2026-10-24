@@ -12,11 +12,11 @@ let passes=0;
 function check(label,fn){fn();passes++;console.log("PASS LT70 "+label)}
 const location=between(dock,"function renderLocationChoices(){","function manualRefreshTap(){");
 const css=between(dock,"/* LT70 LOC-CENTER-01","</style>");
-check("192px screenshot panel stable when input has focus",()=>{
+check("160px screenshot panel without the right-side blank area",()=>{
  for(const s of ['body.controls-window #choices.locationPanel,',
  'body.popup-window.controls-window #choices.locationPanel,',
  'body.popup-window.controls-window.popup-above #choices.locationPanel{',
- 'width:192px!important;','max-width:192px!important;',
+ 'width:160px!important;','max-width:160px!important;',
  '.locCoordsRow .locField:focus{'])assert.ok(css.includes(s),s);
  assert.ok(!css.includes("width:225px"),"no expansion to oversized legacy width");
 });
@@ -89,4 +89,25 @@ check("all HTML inline scripts parse after edits",()=>{
  assert.ok(scripts.length>0);
  for(const s of scripts)new vm.Script(s[1]);
 });
-console.log("LT70 compact Location + toggle: "+passes+"/"+passes+" PASS");
+check("LT71: popup-specific CSS overrides legacy max-content left-alignment",()=>{
+ const css71=between(dock,"/* LT71 LOC-NATIVE-TRIM-01","</style>");
+ for(const term of [
+  'body.popup-window.controls-window #choices.locationPanel .locRadiusRow,',
+  'body.popup-window.controls-window.popup-above #choices.locationPanel .locRadiusRow,',
+  'width:100%!important;min-width:0!important;max-width:100%!important;',
+  'justify-content:center!important;',
+  'body.popup-window.controls-window #choices.locationPanel .locRadiusInputWrap,',
+  'width:max-content!important;',
+  'body.controls-window #choices.locationPanel #locHint{',
+  'text-align:center!important;max-width:100%!important;'
+ ])assert.ok(css71.includes(term),term);
+});
+check("LT71: native popup width follows fixed card, not overflowing input or scrollWidth",()=>{
+ const fit=between(dock,"function fit(){","let popupNativeSwitch=false;");
+ for(const token of [
+  'const measuredWidth=Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2);',
+  'const exactWidth=choiceOpen==="location"?Math.round(rect.width):measuredWidth;',
+  'Native.resizePopup(exactWidth,'
+ ])assert.ok(fit.includes(token),token);
+});
+console.log("LT70/LT71 compact Location + toggle: "+passes+"/"+passes+" PASS");
