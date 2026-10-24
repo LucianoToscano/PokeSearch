@@ -192,6 +192,11 @@ public final class PokemonPicker {
     }
     /** Works from MainActivity and directly from OverlayService without changing apps. */
     public static void show(Context activity,Runnable changed,Runnable dismissed){
+        show(activity,changed,dismissed,-1,-1);
+    }
+    /** Native icon anchor is in physical screen pixels; negative means legacy centering. */
+    public static void show(Context activity,Runnable changed,Runnable dismissed,
+                            int anchorX,int anchorY){
         List<Entry> all=readCatalog(activity);
         if(all.isEmpty()){
             Toast.makeText(activity,"Catálogo de Pokémon indisponível",Toast.LENGTH_LONG).show();
@@ -400,8 +405,31 @@ public final class PokemonPicker {
                 android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
             window.setDimAmount(0.0f);
             int screen=activity.getResources().getDisplayMetrics().widthPixels;
-            window.setLayout(Math.min(screen-dp(activity,22),dp(activity,348)),
+            int preferredWidth=Math.min(screen-dp(activity,22),dp(activity,348));
+            window.setLayout(preferredWidth,
                 android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+            if(anchorX>=0&&anchorY>=0){
+                // Align the picker to the tapped Favorites icon, not screen center.
+                // Keep the native touch rectangle content-sized. Other overlays
+                // remain responsive via FLAG_NOT_TOUCH_MODAL.
+                window.getDecorView().post(()->{
+                    if(!window.getDecorView().isAttachedToWindow())return;
+                    int displayH=activity.getResources().getDisplayMetrics().heightPixels;
+                    int actualHeight=window.getDecorView().getHeight();
+                    if(actualHeight<=0)return;
+                    int margin=dp(activity,8),gap=dp(activity,18);
+                    int left=Math.max(margin,Math.min(screen-margin-preferredWidth,
+                        anchorX-preferredWidth/2));
+                    int below=anchorY+gap,above=anchorY-actualHeight-gap;
+                    int top=below+actualHeight<=displayH-margin?below:
+                        Math.max(margin,above);
+                    top=Math.max(margin,Math.min(displayH-margin-actualHeight,top));
+                    android.view.WindowManager.LayoutParams lp=window.getAttributes();
+                    lp.gravity=Gravity.TOP|Gravity.LEFT;
+                    lp.x=left;lp.y=top;
+                    window.setAttributes(lp);
+                });
+            }
         }
     }
 }
