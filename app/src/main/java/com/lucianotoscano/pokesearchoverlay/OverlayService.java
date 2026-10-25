@@ -3424,6 +3424,41 @@ public class OverlayService extends Service {
             getSharedPreferences("prefs",0).edit().putBoolean("showResultText",value).apply();
             update();
         });}
+        // One explicit, atomic visibility action. Never change Search filters,
+        // account limits, rank verification, saved Favorites or coordinates.
+        @JavascriptInterface public void setAllResultDisplayOptions(boolean enabled){
+            handler.post(()->{
+                resultShowCount=enabled;resultShowName=enabled;
+                resultShowNumber=enabled;resultShowGender=enabled;
+                resultShowSize=enabled;resultShowForm=enabled;
+                resultShowMoves=enabled;resultShowLocation=enabled;
+                resultShowDistance=enabled;resultShowShiny=enabled;
+                resultShowCp=enabled;resultShowLevel=enabled;
+                resultShowRawIv=enabled;resultShowOverallRank=enabled;
+                resultShowSpeciesIvRank=enabled;
+                resultShowOverallRankGl=enabled;resultShowOverallRankUl=enabled;
+                resultShowOverallRankMl=enabled;
+                resultShowSpeciesIvRankGl=enabled;resultShowSpeciesIvRankUl=enabled;
+                resultShowSpeciesIvRankMl=enabled;
+                showTimers=enabled;showResultText=enabled;
+                android.content.SharedPreferences.Editor pref=
+                    getSharedPreferences("prefs",0).edit();
+                String[] keys={"resultShowCount","resultShowName","resultShowNumber",
+                    "resultShowGender","resultShowSize","resultShowForm","resultShowMoves",
+                    "resultShowLocation","resultShowDistance","resultShowShiny",
+                    "resultShowCp","resultShowLevel","resultShowRawIv",
+                    "resultShowOverallRank","resultShowSpeciesIvRank",
+                    "resultShowOverallRankGl","resultShowOverallRankUl",
+                    "resultShowOverallRankMl","resultShowSpeciesIvRankGl",
+                    "resultShowSpeciesIvRankUl","resultShowSpeciesIvRankMl",
+                    "showTimers","showResultText"};
+                for(String key:keys)pref.putBoolean(key,enabled);
+                pref.apply();
+                update();
+                status(enabled?"Informações disponíveis ativadas · deslize para ver todos os dados":
+                    "Informações opcionais desativadas");
+            });
+        }
         @JavascriptInterface public void setResultDisplayOption(String key,boolean value){
             handler.post(()->{
                 String pref;
