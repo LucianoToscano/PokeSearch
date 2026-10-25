@@ -48,6 +48,25 @@
    }catch(_){return false;}
   }
   function fail(code){return {ok:false,reason:code};}
+  async function httpFailure(response){
+   if(response.status!==403||typeof response.text!=="function")
+    return fail(status(response.status));
+   // A controlled, short machine-readable error code is the ONLY field read.
+   // Never relay server messages or entire response objects to the overlay.
+   try{
+    const length=response.headers&&response.headers.get?
+     Number(response.headers.get("content-length")):0;
+    if(!Number.isFinite(length)||length>4096)return fail("access-denied");
+    const raw=await response.text();
+    if(typeof raw!=="string"||raw.length>4096)return fail("access-denied");
+    const body=JSON.parse(raw);
+    const kind=body&&body.detail&&body.detail.error;
+    if(kind==="trainer_not_linked")return fail("trainer-not-linked");
+    if(kind==="shiny_account_unavailable")return fail("shiny-account-unavailable");
+    if(kind==="vip_required")return fail("vip-required");
+   }catch(_){}
+   return fail("access-denied");
+  }
   function jwt(){
    // Read only after origin verification, never stringify a JWT into a
    // result, error, log, Android bridge, persistent file or URL.
@@ -80,7 +99,7 @@
      ...(controller?{signal:controller.signal}:{})
     });
     if(!response||!Number.isInteger(response.status))return fail("invalid-response");
-    if(response.status!==200)return fail(status(response.status));
+    if(response.status!==200)return await httpFailure(response);
     const len=response.headers&&response.headers.get&&Number(response.headers.get("content-length"));
     if(Number.isFinite(len)&&len>MAX_RESPONSE_BYTES)return fail("response-too-large");
     if(typeof response.text!=="function")return fail("invalid-response");
