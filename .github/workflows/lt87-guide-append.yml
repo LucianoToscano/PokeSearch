@@ -1,0 +1,55 @@
+name: PokeSearch LT87 Guide Corrective Append
+on:
+  push:
+    branches: [fix/lt87-filter-menu-backgrounds-qa-20261025]
+    paths:
+      - '.github/workflows/lt87-guide-append.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  append-guide:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Safely append LT87 signed QA checkpoint to entire Guia Mestre
+        shell: bash
+        run: |
+          set -euo pipefail
+          GUIDE=docs/GUIA_MESTRE.md
+          test -f "$GUIDE"
+          SIZE="$(wc -c < "$GUIDE")"
+          test "$SIZE" -gt 1400000 || { echo "::error::Incomplete Guia Mestre; refuse to write"; exit 1; }
+          BEFORE_SHA="$(sha256sum "$GUIDE" | awk '{print $1}')"
+          if grep -Fq '## LT87 QA — Fundo dos Filtros (adendo de correção documental)' "$GUIDE"; then
+            echo '::notice::LT87 addendum already present; no duplicate append'
+            exit 0
+          fi
+          {
+            printf '\n\n## LT87 QA — Fundo dos Filtros (adendo de correção documental)\n'
+            printf 'Data: 25/10/2026. Somente QA, nenhuma publicação oficial e nenhum merge.\n'
+            printf 'A anotação LT86 gerada por um workflow herdado no build LT87 trazia rótulo de versão anterior; este ADENDO identifica corretamente o mesmo build como LT87. Preserve ambos os registros históricos sem reescrever.\n'
+            printf 'Versão e código: 0.00.87 / 54290. Repositório: LucianoToscano/PokeSearch. Branch fix/lt87-filter-menu-backgrounds-qa-20261025, PR #62 Draft sobre LT86 PR #61.\n'
+            printf 'SOURCE_COMMIT do APK: 21d6547e9cb19efe941134d087f2783d6753ee55 (commits documentais posteriores não estão no APK).\n'
+            printf 'CI build: https://github.com/LucianoToscano/PokeSearch/actions/runs/40168986555 SUCCESS. Artifact QA ID 12590105916.\n'
+            printf 'APK: PokeSearch-v0.00.87-LT-Filter-Fundos-QA.apk, 38607807 bytes, SHA-256 d188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a.\n'
+            printf 'Assinatura v2 TRUE, release R8, applicationId com.lucianotoscano.pokesearch, certificado SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e.\n'
+            printf 'Modificação: dock.html restaura fundos de Filtros, editor lateral e perfis salvos, respeitando --visual-menu-bg e preferências claro/escuro/transparência; mantém contêiner externo transparente e toques fora.\n'
+            printf 'Teste específico app/tests/lt87-filter-menu-backgrounds.test.js 5/5 PASS, suíte histórica, Java e Gradle testDebugUnitTest/assembleRelease aprovados pelo CI.\n'
+            printf 'Pendente: QA real no Samsung de fundos e transparência e das demais correções LT86 (sprites, expiração, PvP, perfis, Get coords). CI não é PASS físico.\n'
+            printf 'Guia Mestre anterior preservado por append e verificação de prefixo SHA-256. Nenhuma alteração no lançamento oficial LT83 nem Google Drive legado.\n'
+          } >> "$GUIDE"
+          AFTER="$(wc -c < "$GUIDE")"
+          test "$AFTER" -gt "$SIZE"
+          test "$(head -c "$SIZE" "$GUIDE" | sha256sum | awk '{print $1}')" = "$BEFORE_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$GUIDE"
+          git commit -m "docs(LT87 QA): append corrected signed build proof without changing historical Guide"
+          git fetch origin "refs/heads/$GITHUB_REF_NAME:refs/remotes/origin/$GITHUB_REF_NAME"
+          git rebase "origin/$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
