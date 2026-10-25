@@ -160,6 +160,7 @@ jobs:
           expected='34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
           if len(d)!=3:
               print("Certificate fields found:",[line for line in s.splitlines() if "Signer #1 certificate" in line])
+              print("Certificate diagnostics snippet:",repr(s[:4800]))
           assert len(d)==3,d
           assert all(x.lower()==expected for x in d),d
           assert len(re.findall(r"Verified using v2 scheme.*:\s*true",s))>=3
