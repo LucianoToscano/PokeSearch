@@ -117,7 +117,7 @@ public final class PokemonPicker {
                     if(png.length>=8&&png[0]==(byte)0x89&&png[1]=='P'&&png[2]=='N'&&png[3]=='G')
                         {
                             Bitmap picture=BitmapFactory.decodeByteArray(png,0,png.length);
-                            if(picture!=null&&disk.isDirectory()||picture!=null&&disk.mkdirs()){
+                            if(picture!=null&&(disk.isDirectory()||disk.mkdirs())){
                                 java.io.File temporary=new java.io.File(disk,id+".tmp");
                                 try(java.io.FileOutputStream stream=new java.io.FileOutputStream(temporary)){
                                     stream.write(png);
@@ -412,7 +412,8 @@ public final class PokemonPicker {
                         Toast.LENGTH_SHORT).show();return;
                 }
                 String saved=WatchAlerts.canonicalList(p.getString(key,""));
-                p.edit().putString(WatchAlerts.PREF_LIST,saved).apply();
+                p.edit().putString(WatchAlerts.PREF_LIST,saved)
+                    .putInt("favoritePresetActiveV1",profile).apply();
                 refresh[0].run();
                 Toast.makeText(activity,"✓ Favoritos do perfil "+profile+" carregados",
                     Toast.LENGTH_SHORT).show();
