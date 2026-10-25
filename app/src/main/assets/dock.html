@@ -6394,12 +6394,14 @@ function pooledBaseSprite(url){
   const primary=new Image(),mirror=new Image();
   const finish=src=>{if(!src)entry.failedAt=Date.now();resolve(src);};
   const alternative="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+valid[1];
-  primary.onload=()=>finish(primary.naturalWidth>=8&&primary.naturalHeight>=8?url:"");
-  primary.onerror=()=>{
+  const useMirror=()=>{
    mirror.onload=()=>finish(mirror.naturalWidth>=8&&mirror.naturalHeight>=8?alternative:"");
    mirror.onerror=()=>finish("");
    mirror.src=alternative;
   };
+  primary.onload=()=>{if(primary.naturalWidth>=8&&primary.naturalHeight>=8)finish(url);
+   else useMirror();};
+  primary.onerror=useMirror;
   primary.src=url;
  });
  spriteRequestCache.set(url,entry);
