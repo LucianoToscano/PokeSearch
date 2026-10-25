@@ -1,9 +1,9 @@
 name: PokeSearch LT106 favorite alerts and offline sprites - protected signed QA
 on:
   push:
-    branches: [feature/lt106-bundled-favorite-alert-sounds-20261025]
+    branches: [fix/lt106-favorite-notification-audio-20261025]
     paths:
-      - '.github/workflows/lt106-bundled-sprites-signed-qa.yml'
+      - '.github/workflows/lt106-favorite-alerts-signed-qa.yml'
       - 'app/scripts/build_sprite_bundle.py'
       - 'app/tests/**'
       - 'app/src/main/java/**'
