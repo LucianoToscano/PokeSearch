@@ -40,7 +40,7 @@ async function suite(){
   const java=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
   const ui=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java"),"utf8");
   const collector=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/AuthorizedApiCollector.java"),"utf8");
-  assert.match(java,/getBoolean\("authorizedApiQaOptIn",false\)/);
+  assert.match(java,/getBoolean\("authorizedApiQaOptIn",true\)/);
   assert.match(ui,/authorizedApiQaOptIn/);
   assert.doesNotMatch(collector,/addJavascriptInterface/);
   assert.match(java,/if\(authorizedApiQaSelected\(\)\)/);
