@@ -5555,14 +5555,16 @@ function iconForQuick(id, fallback){
 let pokemonDraft=[],pokemonSuggestions=[],pokemonQuery="",pokemonSuggestionStatus="",pokemonPickerBase=null,pokemonForceClear=false;
 // Temporary official sprite cache: presentation only; no invented URLs/IDs.
 const pokemonSuggestionSpriteCache=new Map();
-let pokemonSiteSelections=[],pokemonSiteSelectionVerified=false;
+let pokemonSiteSelections=[],pokemonSiteSelectionVerified=false,pokemonSuggestionSource="dom";
 function updatePokemonSiteComparison(){
  if(choiceOpen!=="pokemon")return;
  const box=document.getElementById("pokemonSiteComparison"),
   importButton=document.getElementById("pokemonSiteImport");
  if(!box||!importButton)return;
  if(!pokemonSiteSelectionVerified){
-  box.textContent="Seleção no site ainda não verificada.";
+  box.textContent=pokemonSuggestionSource==="api"?
+    "Catálogo da API · seleção local será aplicada na próxima busca.":
+    "Seleção no site ainda não verificada.";
   importButton.hidden=true;return;
  }
  const norm=list=>[...new Set(list.map(v=>String(v).trim().toLowerCase()))].sort().join("|");
@@ -5581,6 +5583,7 @@ window.onPokemonSuggestions=response=>{
  if(choiceOpen!=="pokemon"||!response)return;
  if(response.query!==undefined&&response.query!==pokemonQuery)return; // stale suggestion response
  pokemonSuggestions=response.ok&&Array.isArray(response.options)?response.options:[];
+  pokemonSuggestionSource=response.source==="authorized-api-catalog"?"api":"dom";
  // Only trust an explicit DOM read from the official picker. Missing chips
  // are not automatically equivalent to Any Pokemon.
  if(response.selectionVerified===true&&Array.isArray(response.selected)){
@@ -5594,7 +5597,8 @@ window.onPokemonSuggestions=response=>{
  }
  const state=String(response.state||"");
  pokemonSuggestionStatus=state==="ready"&&pokemonSuggestions.length?"":
-  state==="explicit-empty"&&response.empty===true?"Nenhuma opção oficial encontrada":
+  state==="explicit-empty"&&response.empty===true?
+    (pokemonQuery?"Nenhuma opção no catálogo da API":"Digite um nome ou número para pesquisar"):
   state==="pending"?"⌛ "+String(response.reason||"Aguardando opções oficiais do site"):
   state==="failed"?"⚠ "+String(response.reason||"Seletor oficial indisponível; tente novamente"):
   response.ok&&pokemonSuggestions.length?"":

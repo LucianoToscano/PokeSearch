@@ -2882,6 +2882,25 @@ public class OverlayService extends Service {
             if(wanted.length()>65)return;
             final int generation=requestGeneration;
             final int sequence=++pokemonSuggestionSequence;
+            if(authorizedApiQaSelected()){
+                if(authorizedApiCollector==null)
+                    authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+                authorizedApiCollector.suggest(wanted,response->{
+                    if(stopped||loginPaused||generation!=requestGeneration||
+                       sequence!=pokemonSuggestionSequence||!menuExpanded||!menuLoaded)return;
+                    try{
+                        response.put("query",wanted);
+                        if(!response.optBoolean("ok",false)){
+                            response.put("state","failed").put("pending",false);
+                            response.put("reason","Catálogo da API indisponível ("+
+                                response.optString("reason","erro")+"). Selecione DOM nas configurações.");
+                        }
+                    }catch(org.json.JSONException ignored){}
+                    js(menuPanel,menuLoaded,"window.onPokemonSuggestions("+response.toString()+")");
+                    js(popupPanel,popupLoaded,"window.onPokemonSuggestions("+response.toString()+")");
+                });
+                return;
+            }
             requestPokemonSuggestionsLater(wanted,generation,sequence,0);
         });}
         private void requestPokemonSuggestionsLater(String query,int generation,int sequence,int attempt){
@@ -3731,6 +3750,16 @@ public class OverlayService extends Service {
         if(intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&
            intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=5;
         schedulePeriodic();
+        if(initialStart&&!pref.getBoolean("gestureHelpV1Shown",false)){
+            pref.edit().putBoolean("gestureHelpV1Shown",true).apply();
+            handler.postDelayed(()->{
+                if(!stopped&&!loginPaused)
+                    android.widget.Toast.makeText(OverlayService.this,
+                        "⚪ Pokébola: toque para resultados, segure 0,6 s para menu.\\n"+
+                        "↻ Atualizar: toque para pesquisar, segure 0,6 s para intervalos.",
+                        android.widget.Toast.LENGTH_LONG).show();
+            },1400L);
+        }
         spriteSize=pref.getInt("spriteSize",45);
         if(spriteSize!=35&&spriteSize!=45&&spriteSize!=55)spriteSize=45;
         showTimers=pref.getBoolean("showTimers",false);
