@@ -37,7 +37,7 @@ check("C Size seven multi and per-editor width",()=>{
 check("D narrow Min Max retain draft, bounded PC/Level",()=>{
  assert.ok(filters.includes('input.value=String(modeDraft[key]??"")'));
  assert.ok(filters.includes('input.placeholder=key.endsWith("Min")?"Min":"Max"'));
- assert.ok(filters.includes('input.max=level?"35":"99999"'));
+ assert.ok(filters.includes('input.max=level?"50":"99999"'));
  assert.ok(filters.includes('numericConfirmButton(make,[minKey,maxKey],label)'));
  assert.ok(actions.includes('Number(low)>Number(high)'));
  assert.ok(dock.includes('flex:0 0 45px!important'));
