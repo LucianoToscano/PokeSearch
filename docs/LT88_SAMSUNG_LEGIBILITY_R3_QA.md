@@ -21,3 +21,13 @@ Testar Filtros (Nível, PC, Ordenar, Forma 00–04, Sexo, Tamanho, Clima); Modos
 
 ## Segurança e publicação
 Sem novas permissões, sem exposição de tokens, sem alteração de assinatura ou API. Não alterar `main` ou publicar Release. Node/Java/R8/apksigner e hash devem ser verificados para o commit do APK; CI PASS não substitui PASS físico. Append protegido no Guia Mestre, nunca sobrescrever o histórico.
+
+## Evidência automatizada do APK 54294
+- Protected GitHub Actions `#40181204206` **SUCCESS**: https://github.com/LucianoToscano/PokeSearch/actions/runs/40181204206
+- SOURCE_COMMIT do APK: `dbc4c8ae148d886384b98a7d42df8fbeb7cfe525`.
+- APK `PokeSearch-v0.00.91-LT-Readable-Menus-QA.apk` — 38.613.651 bytes, SHA-256 `e506c72ba7341feced77661e606a1b2093151805b44a4d5acbe4a4c24a911afe`. `sha256sum -c SHA256SUMS.txt` **OK**.
+- Artifact Actions `#12594565075`: ZIP SHA-256 `606789c75199de105b8c4bba2b51cb5ce198c9eb7bf2b7dec74653447dcd9837`.
+- `PACKAGE-VERSION.txt`: `com.lucianotoscano.pokesearch`, `0.00.91`, `54294`.
+- `SIGNING-REPORT.txt`: APK Signature Scheme v2 **TRUE**, certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` (mesmo permanente da LT87).
+- ZIP íntegro, R8/proteção de release previstos no workflow; sem instalação Samsung automatizada.
+- Workflow append Guia `#40181270062` **SUCCESS**, hash do prefixo do Guia preservado; PR #63 continua Draft; sem merge/Release oficial.
