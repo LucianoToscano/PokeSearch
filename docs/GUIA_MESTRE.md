@@ -6683,3 +6683,16 @@ Documentacao: README.md, docs/ESTADO_CANONICO_LT87_OFICIAL.md e docs/PROMPT_NOVO
 - Provas de build e Samsung separadas; teste físico R3 pendente, confira docs/LT88_SAMSUNG_LEGIBILITY_R3_QA.md.
 - A main LT87 continua preservada, PR #63 Draft, sem merge, sem Release.
 - Guia anterior preservado com verificação SHA-256 de todo prefixo após append.
+
+
+## LT88 R5 — perfis Padrão, menu som Pix e Favoritos (25/10/2026)
+- Origem: branch feature/lt88-lt93-evolution-20261025, PR #63 Draft, main LT87 oficial preservada.
+- UI Filtros: ⊙ abre Padrão (sem ícone e X) e Perfis 1–3 com toque para usar, 💾 salvar e × excluir; sem long press.
+- Padrão zera campos e restrições IV por pesquisa neutra 0–100%, preserva Shiny e localização. Usar perfil fecha somente lista de salvos.
+- Localização não mostra mais Nome do local, locais 1–3 nem botão ?. Dados já persistidos preservados. Campos, Copiar/Colar, raio e ações mantidos.
+- Favoritos dialog nativo posiciona acima/abaixo do menu flutuante, mantendo não modal.
+- Notificações: som de Novos/Favoritos abre diálogo overlay, lista 36 áudios e Padrão; tocar ouve, ✓ confirma, fechar interrompe prévia; não volta à Home.
+- Pix: diálogo overlay com mesmo tema/alpha/blur, QR original não alterado e opção explícita de copiar; sem redirecionamento Home.
+- Importação de áudio continua no fluxo legado; não habilitada no novo selector overlay sem workflow de arquivos homologado.
+- APK QA candidato 0.00.92/54295; testes e assinatura devem ser conferidos, sem PASS físico presumido.
+- Docs: docs/LT88_FLOATING_MENUS_R5_QA.md. Guia Mestre anterior validado por hash de prefixo, somente append.
