@@ -1,0 +1,35 @@
+name: LT81 QA - record Samsung location checkpoint in Guia Mestre
+on:
+  push:
+    branches: [fix/lt81-location-apply-clear-wide-samsung-20261024]
+    paths: ['.github/workflows/lt81-document-master.yml']
+permissions:
+  contents: write
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/lt81-location-apply-clear-wide-samsung-20261024
+          fetch-depth: 1
+      - name: Append QA record; never replace historical guide
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/GUIA_MESTRE.md
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
+          if grep -Fq "LT81 — Localização Samsung corrigir aplicação, corte e limpeza" docs/GUIA_MESTRE.md; then exit 0; fi
+          cat >> docs/GUIA_MESTRE.md <<'LT81_GUIDE'
+          
+          ## LT81 — Localização Samsung corrigir aplicação, corte e limpeza (24/10/2026)
+          Evidência Samsung: print do app com coordenadas longas em linha estreita, raio 1000 km, "⚠ Localização não aplicada", lixeira que aparentemente não apagava coordenadas. Diagnóstico: input fazia parte do mesmo cabeçalho título+colar, reduzido por flex; lixeira chamava Native.setLocation(false,"",0) sem zerar o campo/raio/slider em HTML; resultado final não reconfigurava Coords/Radius após divergência do React no limite de envio.
+          Branch fix/lt81-location-apply-clear-wide-samsung-20261024, PR #54 Draft, versão de teste 0.00.81, versionCode 54284, appId com.lucianotoscano.pokesearch. CSS Localização tem limite 296 px e campo monoespaçado 100% na segunda linha. Limpar zera editor, slider e raio e delega ao nativo remoção de prefs e verificação de formulário OFF; sincroniza com estado Native preservando rascunho não submetido. Pré-Search faz duas tentativas adicionais de reconfigurar par site Coords+Radius se verificação final divergir, nunca permite Search não verificado. Demais filtros e resultados antigos preservados.
+          Testes app/tests/lt81-location-samsung-regression.test.js e regressões históricos acionados no GitHub Actions CI #40156253334. CI/build protegido e assinatura devem ser verificados antes de compartilhar APK de teste; nenhuma homologação física desta correção ainda recebida.
+          NÃO publicar LT81 via Releases/Drive antes de QA Samsung. Release GitHub LT80/54283, Drive LT79/54282, main e PRs anteriores não alterados. Ver docs/LT81_LOCATION_SAMSUNG_QA.md.
+          LT81_GUIDE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GUIA_MESTRE.md
+          git commit -m "docs(LT81): append Samsung location QA and security gate"
+          git push origin HEAD:fix/lt81-location-apply-clear-wide-samsung-20261024
