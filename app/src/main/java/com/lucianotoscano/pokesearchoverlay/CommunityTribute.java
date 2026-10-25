@@ -35,30 +35,34 @@ final class CommunityTribute {
         if(bold)t.setTypeface(null,android.graphics.Typeface.BOLD);
         t.setGravity(Gravity.CENTER_VERTICAL);return t;
     }
+    /** Small right-aligned Home shortcut. The image is not squeezed into a full
+     * card; tap to open the unchanged, offline full-size approved artwork. */
     static View homeCard(Activity a,boolean light,Runnable open){
-        int fg=light?0xFF213957:0xFFF3F9FF;
-        LinearLayout card=new LinearLayout(a);card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setGravity(Gravity.CENTER_VERTICAL);card.setPadding(dp(a,9),dp(a,8),dp(a,9),dp(a,8));
-        card.setBackground(bg(light?0xECF4F9FF:0xE52A384E,light?0xFFADC7DA:0xFF6383A5,12,a));
-        ImageView cover=new ImageView(a);
-        cover.setImageResource(R.drawable.pokesearch_agradecimento_miniatura);
-        cover.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        cover.setContentDescription("Miniatura original da homenagem à comunidade");
-        LinearLayout.LayoutParams coverLp=new LinearLayout.LayoutParams(dp(a,54),dp(a,72));
-        coverLp.rightMargin=dp(a,10);card.addView(cover,coverLp);
-        LinearLayout info=new LinearLayout(a);info.setOrientation(LinearLayout.VERTICAL);
-        card.addView(info,new LinearLayout.LayoutParams(0,-2,1));
-        info.addView(txt(a,"💙 Agradecimentos",15,fg,true));
-        TextView desc=txt(a,"Conheça quem ajuda o PokeSearch a acontecer.",11,
-            light?0xFF557087:0xFFBFD5EB,false);
-        desc.setMaxLines(3);info.addView(desc);
-        TextView small=txt(a,"10 treinadores • Toque para ver",10,
-            light?0xFF1676A4:0xFF8FD9F3,true);
-        info.addView(small);
-        TextView arrow=txt(a,"›",28,fg,true);card.addView(arrow);
-        card.setContentDescription("Agradecimentos à comunidade. Abrir homenagem completa");
-        card.setOnClickListener(v->open.run());
-        return card;
+        final int fg=light?0xFF254766:0xFFF4F9FF;
+        LinearLayout chip=new LinearLayout(a);
+        chip.setOrientation(LinearLayout.HORIZONTAL);
+        chip.setGravity(Gravity.CENTER_VERTICAL);
+        chip.setPadding(dp(a,6),dp(a,4),dp(a,9),dp(a,4));
+        chip.setMinimumHeight(dp(a,48));
+        chip.setBackground(bg(light?0xEDF0F8FF:0xD8213348,
+            light?0xFF99C4D7:0xFF6395B8,23,a));
+
+        ImageView thumbnail=new ImageView(a);
+        thumbnail.setImageResource(R.drawable.pokesearch_agradecimento_miniatura);
+        thumbnail.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        thumbnail.setContentDescription("Miniatura da homenagem aprovada");
+        LinearLayout.LayoutParams tlp=new LinearLayout.LayoutParams(dp(a,31),dp(a,39));
+        tlp.rightMargin=dp(a,7);
+        chip.addView(thumbnail,tlp);
+
+        TextView label=txt(a,"💙 Agradecimentos",12,fg,true);
+        label.setSingleLine(true);
+        chip.addView(label,new LinearLayout.LayoutParams(-2,-2));
+        TextView arrow=txt(a,"  ›",19,fg,true);
+        chip.addView(arrow,new LinearLayout.LayoutParams(-2,-2));
+        chip.setContentDescription("Abrir homenagem aos dez integrantes do PokeSearch");
+        chip.setOnClickListener(v->open.run());
+        return chip;
     }
     static View show(Activity a,FrameLayout home,boolean light,Runnable onClose){
         final FrameLayout overlay=new FrameLayout(a);

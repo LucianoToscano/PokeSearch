@@ -20,6 +20,11 @@ assert.match(app,/CommunityTribute\.homeCard\(this,homeLightMode,this::openTribu
 assert.match(app,/addHomeDrawerItem\(drawer,"💙","Agradecimentos",this::openTribute\)/);
 assert.match(app,/if\(tributeOverlay!=null&&homeRoot!=null\)/);
 assert.match(tribute,/ZoomView extends ImageView/);
+assert.match(tribute,/chip\.setMinimumHeight\(dp\(a,48\)\)/);
+assert.match(tribute,/thumbnail\.setImageResource\(R\.drawable\.pokesearch_agradecimento_miniatura\)/);
+assert.match(app,/thanksLp\.gravity=Gravity\.END/);
+assert.doesNotMatch(tribute,/Conheça quem ajuda o PokeSearch a acontecer\./);
+
 assert.match(tribute,/R\.drawable\.pokesearch_agradecimento_comunidade/);
 assert.match(tribute,/setType\("image\/webp"\)/);
 assert.match(tribute,/FileProvider\.getUriForFile/);
@@ -30,4 +35,4 @@ assert.match(policy,/REQUIRED_USAGE_MS = 10L \* 60L \* 1000L/);
 assert.match(state,/support_mission_first_install_welcome_pending/);
 assert.match(app,/maybeWelcomeMission\(\)/);
 assert.match(tribute,/original da homenagem|Arte completa aprovada/i);
-console.log("PASS QA 0.00.98: approved original WebPs, offline viewer, one-time welcome mission");
+console.log("PASS QA 0.00.101: approved original WebPs, offline viewer, one-time welcome mission");

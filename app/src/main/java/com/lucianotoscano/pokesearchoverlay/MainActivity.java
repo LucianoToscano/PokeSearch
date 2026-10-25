@@ -568,8 +568,9 @@ public class MainActivity extends Activity {
 
         // Original approved art, available offline in the same Home window.
         View thanks=CommunityTribute.homeCard(this,homeLightMode,this::openTribute);
-        LinearLayout.LayoutParams thanksLp=new LinearLayout.LayoutParams(-1,-2);
-        thanksLp.topMargin=d(7);
+        LinearLayout.LayoutParams thanksLp=new LinearLayout.LayoutParams(-2,d(48));
+        thanksLp.gravity=Gravity.END;
+        thanksLp.topMargin=d(4);
         screen.addView(thanks,thanksLp);
 
         // New compact LT54 counters; a dash indicates missing connectivity/rules.
