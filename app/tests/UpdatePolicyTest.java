@@ -17,6 +17,9 @@ public final class UpdatePolicyTest {
         check("invalid local code hidden",!UpdatePolicy.shouldDisplay(true,54290,0,-1));
         check("valid version and official APK filename",UpdatePolicy.validVersion("0.00.72","PokeSearch-v0.00.72-LT.apk"));
         check("wrong APK filename rejected",!UpdatePolicy.validVersion("0.00.72","other.apk"));
+        check("new 106 accepted",UpdatePolicy.validVersion("0.01.06","PokeSearch-v0.01.06-LT.apk"));
+        check("historically signed LT106 stays installable",UpdatePolicy.validVersion("0.00.106","PokeSearch-v0.00.106-LT.apk"));
+        check("future incorrect 0.00.107 rejected",!UpdatePolicy.validVersion("0.00.107","PokeSearch-v0.00.107-LT.apk"));
         check("URL matches Drive file id",UpdatePolicy.safeDownloadLink("1K59Jh1jw1Qd6BvAYE-geFdp3Z53dOFej",
            "https://drive.google.com/uc?export=download&id=1K59Jh1jw1Qd6BvAYE-geFdp3Z53dOFej"));
         check("malicious host rejected",!UpdatePolicy.safeDownloadLink("1K59Jh1jw1Qd6BvAYE-geFdp3Z53dOFej",

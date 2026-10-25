@@ -360,6 +360,31 @@
           "Homologação física da LT83 no Samsung ainda pendente. A publicação e o CI não comprovam, por si só, a aplicação correta do geofiltro em aparelho real."
         ]
       }
+    },
+    {
+      "id": "pokesearch-version-scheme-00106-20261025",
+      "minVersionCode": 54310,
+      "date": "25/10/2026",
+      "title": "PokeSearch v0.01.06 — versões corrigidas, Favoritos e sprites offline",
+      "sections": {
+        "novidades": [
+          "Versões agora seguem 0.00.99 → 0.01.00 → 0.01.01, até 0.01.06 e seguintes.",
+          "Mantidos dois overlays independentes, com padrões 100% e 0%, compartilhando a mesma conta.",
+          "Mantidos 1.025 sprites normais e 1.025 Shiny no pacote para funcionar sem downloads de imagem-base."
+        ],
+        "melhorias": [
+          "A Home e os painéis exibem o nome verdadeiro da versão instalada; o Android mantém versionCode crescente.",
+          "Atualizadores GitHub e Drive exibem versões legadas normalizadas, sem alterar nomes, hashes ou URLs de APKs assinados anteriormente."
+        ],
+        "correcoes": [
+          "Mapeamento de nomes: LT100=0.01.00, LT101=0.01.01, LT102=0.01.02, LT103=0.01.03, LT104=0.01.04, LT105=0.01.05, LT106=0.01.06.",
+          "Corrigido alerta sonoro de Favoritos e teste de notificação real no menu."
+        ],
+        "emDesenvolvimento": [
+          "Os APKs históricos publicados com etiqueta 0.00.100+ mantêm os próprios hashes e nomes originais como registros imutáveis; este novo APK é um build corrigido.",
+          "Homologação visual e sonora no Samsung continua necessária; CI aprovado não substitui o teste no aparelho."
+        ]
+      }
     }
   ]
 }

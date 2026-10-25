@@ -31,7 +31,9 @@ val testVersionLabel=System.getenv("POKE_TEST_VERSION_LABEL")?.let { value ->
 }
 // Public fingerprint of permanent test-signing certificate (not a secret).
 val publicVersionName = System.getenv("POKE_TEST_PUBLIC_VERSION")?.trim()?.takeIf { it.isNotEmpty() }
-if (publicVersionName != null && !Regex("0\\.\\d{2}\\.\\d{2,}").matches(publicVersionName))
+// Public names strictly follow 0.00.99 -> 0.01.00 (two digits per group).
+// Do not silently accept historical malformed 0.00.100+ labels on new builds.
+if (publicVersionName != null && !Regex("0\\.\\d{2}\\.\\d{2}").matches(publicVersionName))
     throw org.gradle.api.GradleException("Invalid public PokeSearch version name")
 val officialTestCertificateSha256 = "34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"
 val releaseCertificateSha256 = System.getenv("POKE_RELEASE_CERT_SHA256")?.trim()?.lowercase() ?: ""
