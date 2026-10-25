@@ -191,7 +191,7 @@
    const url=API+"/reveal/"+encodeURIComponent(code);
    // No Bearer for reveal. Its auth requirements remain unverified;
    // 401 or 403 must be respected, never bypassed.
-   const result=await request("GET",url,null,"optional",6000);
+   const result=await request("GET",url,null,false,6000);
    if(q.searchVersion!==searchVersion||disposed)return fail("superseded-search");
    if(!result.ok)return result;
    const parsed=d.revealContract.normalizeRevealResponse(result.body,
