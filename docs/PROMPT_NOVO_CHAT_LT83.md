@@ -15,6 +15,13 @@ Você é Engenheiro Android Sênior no projeto **LucianoToscano/PokeSearch**, e 
 - **Referências atuais:** `README.md`, `docs/ESTADO_CANONICO_LT83.md`, `docs/GUIA_MESTRE.md`, `docs/LT83_LOCATION_RECOVERY_QA.md`. Versionamentos anteriores são históricos.
 - Google Drive manifesto público `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf` ainda aponta à **LT79/54282** como ponte para clientes antigos; **GitHub** é padrão oficial a partir de LT79; não substituir manifesto antigo sem motivo e autorização.
 
+## Checkpoint adicional — histórico da Home pós-publicação
+
+- PR #58 **MERGED** na `main` (merge commit `3902b8dd6799f958b01adc5014d5b56a244947cd`): adicionou entradas cronológicas LT79, LT80, LT82 e LT83 ao catálogo de "Novidades" da Home em `app/src/main/assets/release_notes.json`. Total: **14 entradas**. Teste `app/tests/lt83-home-release-notes.test.js` incorporado ao workflow Node.
+- QA Node da PR #58: [#40162415342](https://github.com/LucianoToscano/PokeSearch/actions/runs/40162415342) **SUCCESS**; compilação Android sem APK [#40162415355](https://github.com/LucianoToscano/PokeSearch/actions/runs/40162415355) **SUCCESS**. Guia Mestre recebeu apêndice pós-release [#40162550559](https://github.com/LucianoToscano/PokeSearch/actions/runs/40162550559) **SUCCESS**, sem apagar o histórico.
+- **Essas notas foram adicionadas ao código-fonte DEPOIS de assinado e publicado o APK LT83.** Não estão necessariamente incluídas nos bytes do APK 0.00.83 original; entram somente quando houver próximo APK protegido assinado de código maior (LT84 ou posterior). Não criar nova release sem necessidade e aprovação.
+- Último HEAD `main` verificado antes desta atualização documental: `b39ac4bdb5fd1af4f93ac30384aae39899d57625`. Buscar HEAD novo ao abrir o próximo chat, pois commits documentais o alteram. **Versão pública permanece LT83**, `SOURCE_COMMIT` do APK permanece `5cf9adb6...`.
+
 ## Prioridade 1 — HOMOLOGAÇÃO FÍSICA SAMSUNG LT83 (PENDENTE)
 
 O usuário mandou print da **LT82** provando erro: painel Localização encolhendo, longitude cortada, botão Colar oculto parcialmente à esquerda, Lixeira ultrapassando borda direita, e "⚠ Localização não aplicada". Na LT79 o usuário informou que Localização funcionava. A LT83 já foi publicada e recebeu correções, **mas NÃO HÁ TESTE FÍSICO LT83 confirmado**. Nunca dizer que já foi homologada.
