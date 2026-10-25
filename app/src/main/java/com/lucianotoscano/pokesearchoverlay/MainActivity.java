@@ -804,8 +804,8 @@ public class MainActivity extends Activity {
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
         addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
-        // This debug-only entry never appears in any release distribution.
-        if(BuildConfig.DEBUG){
+        // Visible only in local debug or the explicitly signed QA demonstration; not in public release.
+        if(CommunityScrapbookStage1.isQaPreviewAllowed()){
             boolean preview=CommunityScrapbookStage1.isEnabled(this);
             addHomeDrawerItem(drawer,"💬",preview?"Ocultar protótipo Mural":"Mostrar protótipo Mural",
                 this::toggleCommunityScrapbookStage1);
@@ -833,7 +833,7 @@ public class MainActivity extends Activity {
         }
     }
     private void toggleCommunityScrapbookStage1(){
-        if(!BuildConfig.DEBUG)return;
+        if(!CommunityScrapbookStage1.isQaPreviewAllowed())return;
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         prefs.edit().putBoolean(CommunityScrapbookStage1.FLAG,
             !CommunityScrapbookStage1.isEnabled(this)).apply();
