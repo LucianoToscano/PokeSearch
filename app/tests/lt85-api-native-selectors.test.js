@@ -37,6 +37,8 @@ async function run(){
  assert.match(settings,/"Pesquisa direta pela API \(padrão ON; desmarque para usar DOM\)",true/);
  assert.match(native,/if\(authorizedApiQaSelected\(\)\)/);
  assert.match(native,/authorizedApiCollector\.forms\(wanted,response->/);
+ assert.match(native,/\(!authorizedApiQaSelected\(\)\&\&searchInProgress\)/);
+ assert.match(native,/if\(searchInProgress\&\&!authorizedApiQaSelected\(\)\)/);
  assert.match(native,/new JSONArray\(values\[i\]\)/);
  assert.match(collector,/void forms\(String query,Callback cb\)/);
  assert.match(collector,/window\.PokeSearchAndroidApi\.startForms/);
