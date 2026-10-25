@@ -264,7 +264,19 @@ public class MainActivity extends Activity {
         LinearLayout screen=new LinearLayout(this);
         screen.setOrientation(LinearLayout.VERTICAL);
         screen.setPadding(d(14),d(6),d(14),d(12));
-        frame.addView(screen,new FrameLayout.LayoutParams(-1,-1));
+        // Community Stage 1: debug opt-in only. Public release keeps the exact
+        // original Home hierarchy; preview wraps Home in a vertical scroller
+        // so the mural never covers controls or clips the footer on Samsung.
+        final boolean scrapbookPreview=CommunityScrapbookStage1.isEnabled(this);
+        if(scrapbookPreview){
+            ScrollView stage1HomeScroll=new ScrollView(this);
+            stage1HomeScroll.setFillViewport(true);
+            stage1HomeScroll.setClipToPadding(false);
+            stage1HomeScroll.addView(screen,new ScrollView.LayoutParams(-1,-2));
+            frame.addView(stage1HomeScroll,new FrameLayout.LayoutParams(-1,-1));
+        }else{
+            frame.addView(screen,new FrameLayout.LayoutParams(-1,-1));
+        }
 
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.TOP|Gravity.CENTER_VERTICAL);
@@ -563,6 +575,12 @@ public class MainActivity extends Activity {
         screen.addView(share,shareLp);
         share.setOnClickListener(v->sharePokeSearch());
 
+        if(scrapbookPreview){
+            LinearLayout.LayoutParams scrapbookLp=new LinearLayout.LayoutParams(-1,-2);
+            scrapbookLp.topMargin=d(6);
+            screen.addView(CommunityScrapbookStage1.homePanel(this,homeLightMode),scrapbookLp);
+        }
+
         // Keep the center open for the user's Pokémon GO wallpaper.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
         // LT73: show the installed APK's real version; no manual version strings.
@@ -786,6 +804,12 @@ public class MainActivity extends Activity {
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
         addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
+        // This debug-only entry never appears in any release distribution.
+        if(BuildConfig.DEBUG){
+            boolean preview=CommunityScrapbookStage1.isEnabled(this);
+            addHomeDrawerItem(drawer,"💬",preview?"Ocultar protótipo Mural":"Mostrar protótipo Mural",
+                this::toggleCommunityScrapbookStage1);
+        }
         addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
         addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this));
         addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
@@ -807,6 +831,17 @@ public class MainActivity extends Activity {
             Toast.makeText(this,"Não há aplicativo disponível para compartilhar",
                 Toast.LENGTH_SHORT).show();
         }
+    }
+    private void toggleCommunityScrapbookStage1(){
+        if(!BuildConfig.DEBUG)return;
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        prefs.edit().putBoolean(CommunityScrapbookStage1.FLAG,
+            !CommunityScrapbookStage1.isEnabled(this)).apply();
+        // Presentation-only rebuild: existing filters, login, location, stats,
+        // live overlay and Home preferences are preserved.
+        setContentView(buildHome());
+        refreshSessionSummary();
+        refreshHomeOverlay();
     }
     private void exportHomeData(){
         // Export a fixed whitelist. No cookies, OAuth state, coordinates, trainer
