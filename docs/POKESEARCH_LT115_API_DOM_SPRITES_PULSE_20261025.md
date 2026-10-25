@@ -23,3 +23,8 @@ API ligada: imagens ausentes ou incorretamente substituídas; efeito de captura/
 
 ## Governança
 LT115 QA 0.01.15/versionCode 54319, sem lançamento oficial até aprovação do proprietário. PR #73 Draft; não mexer em main nem backups. Corrigir conflitos de merge apenas em etapa explícita após QA, sem rollback.
+
+## Revisão de integração LT116
+- Durante o review foi identificado que `detailPanel.setWebViewClient` já estava configurado mais adiante no ciclo da Activity, contendo `onPageFinished`; a primeira alteração colocava outro interceptor antes, que seria sobrescrito. Foi consolidado **um único cliente**, mantendo simultaneamente `shouldInterceptRequest` e `onPageFinished`.
+- O APK preliminar `0.01.15/54319` não é candidato de instalação. Use somente a QA corrigida `0.01.16/54320`, se todos os testes de CI e assinatura passarem. Ambos continuam NÃO oficiais.
+- A suíte LT115 foi reforçada para falhar se houver dois `setWebViewClient` no painel de detalhes.

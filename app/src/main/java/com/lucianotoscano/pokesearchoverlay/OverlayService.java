@@ -1376,13 +1376,6 @@ public class OverlayService extends Service {
         detailPanel.getSettings().setAllowContentAccess(false);
         detailPanel.getSettings().setAllowFileAccessFromFileURLs(false);
         detailPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
-        // Same verified offline PokeAPI sprites in details and results.
-        detailPanel.setWebViewClient(new WebViewClient(){
-            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
-                    WebView view,android.webkit.WebResourceRequest request){
-                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
-            }
-        });
         detailPanel.addJavascriptInterface(new Bridge(),"Native");
         detailRoot.addView(detailPanel,new FrameLayout.LayoutParams(-1,-1));
         // A narrow transparent header grip lets the *detail card* move
@@ -1434,6 +1427,12 @@ public class OverlayService extends Service {
             }
         });
         detailPanel.setWebViewClient(new WebViewClient(){
+            // Preserve native card initialization and its offline sprites.
+            // Two separate setWebViewClient calls would cancel one another.
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+            }
             @Override public void onPageFinished(WebView v,String url){
                 if(url!=null&&url.startsWith("file:///android_asset/")){
                     detailLoaded=true;

@@ -26,6 +26,8 @@ check("API and DOM both animate actual active Pokeball searches",()=>{
 check("offline sprite grace period and same detail interceptor",()=>{
  assert.match(dock,/if\(img\.complete&&good\(\)\)loaded\(\)/);assert.match(dock,/\},4500\);/);
  assert.match(java,/detailPanel\.setWebViewClient\(new WebViewClient\(\)/);
+ assert.equal((java.match(/detailPanel\.setWebViewClient\(new WebViewClient\(\)/g)||[]).length,1);
+ assert.match(java,/detailPanel\.setWebViewClient\(new WebViewClient\(\)\{[\s\S]*?shouldInterceptRequest[\s\S]*?onPageFinished/);
  assert.match(detail,/PokeSearchOfflineSprite\.resolve\(c\)/);});
 check("API first; DOM transient fallback; no 401 403 429 bypass",()=>{
  const a=java.indexOf("private static boolean allowDomAfterApiFailure("),b=java.indexOf("private void performAuthorizedApiSearch",a);
