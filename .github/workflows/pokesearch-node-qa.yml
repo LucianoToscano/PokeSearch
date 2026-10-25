@@ -84,6 +84,8 @@ jobs:
             node "$suite"
             echo "::endgroup::"
           done
+      - name: Validar histórico da Home LT79–LT83
+        run: node app/tests/lt83-home-release-notes.test.js
       - name: Validar geometria Java de janela popup isolada sem Gradle
         uses: actions/setup-java@v4
         with:

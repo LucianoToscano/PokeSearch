@@ -34,6 +34,10 @@
 - **Preservado:** sistema de filtros IV 0/100/GL/UL, clima, formas, Shiny, favoritos (10×5 até 50), alertas gerais e sons, Get coords ligado ao mesmo spawn, sprites, Editor Visual, atualização SHA256+assinatura, botão limpar e controle do raio 0 a 1000km, modo automático, dados e preferências, sem alterar applicationId ou keystore.
 - **Testes:** `app/tests/location-probe.test.js` com fixture mobile, `app/tests/lt83-location-geometry-mobile.test.js` e suíte histórica, Gradle release assinado: PASS.
 
+### Home: histórico de Novidades (pós-publicação)
+
+O código-fonte em `main` recebeu posteriormente entradas de histórico para LT79, LT80, LT82 e LT83 em `app/src/main/assets/release_notes.json`. **Essa atualização do catálogo ocorreu após a geração e a publicação do APK LT83**: o arquivo `PokeSearch-v0.00.83-LT.apk` publicado é imutável e NÃO inclui automaticamente essas entradas novas. O catálogo atualizado será incorporado no próximo APK devidamente assinado, com versionCode superior a 54286 e respectivo teste. O fluxo de verificação GitHub já funciona na LT83 instalada; as notas locais não alteram o download ou o manifesto Drive.
+
 ## 4. Homologação física e risco não resolvido
 
 **NÃO homologado fisicamente** nesta versão; o último print mostra LT82 com falha. Testar LT83 no Samsung, colar `24.9407581,121.1889794`, conferir os dois números por inteiro sem rolagem; raio 0/215/1000; botões dentro da janela; aplicar, confirmar filtro de site; limpar antes e depois; minimizar e reabrir painel sem encolher; toggles Clima/Shiny, GL/UL, favoritos, atualização e Get coords. Se ainda falhar, usar relatório interno sem incluir coordenadas ou credenciais, inspecionar DOM/React real e corrigir em LT84 antes de marcar PASS.
