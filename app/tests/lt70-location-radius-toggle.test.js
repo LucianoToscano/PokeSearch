@@ -19,7 +19,7 @@ check("LT82 Location coordinates use separate line with compact popup",()=>{
  'body.popup-window.controls-window.popup-above #choices.locationPanel{',
  'width:min(256px,calc(100vw - 12px))!important;',
  '.choiceHeader .locCoordsRow{'])assert.ok(css.includes(s),s);
- assert.ok(location.includes("panel.append(title,fieldRow,slide,label,message)"));
+ assert.ok(location.includes("panel.append(title,fieldRow,label,message)"));
  assert.ok(css.includes("width:min(258px,calc(100vw - 14px))!important"));
 });
 check("header Location centered with paste in the bottom action row",()=>{
@@ -62,7 +62,7 @@ check("[1000]km contiguous with unit outside numeric input border",()=>{
  assert.ok(css.includes('justify-content:center!important;'));
 });
 check("center radius and Apply/Clear with icon-only actions",()=>{
- for(const s of ["label.append(labelName,paste,copy,radiusWrap)","actions.append(apply,clear);label.appendChild(actions)",
+ for(const s of ["label.append(labelName,paste,copy,radiusWrap)","actions.append(apply,clear);label.append(slide,actions)",
  'makeDockAction("apply","Aplicar localização")','makeDockAction("clear","Limpar localização")'])
  assert.ok(location.includes(s),s);
  assert.ok(css.includes("body.controls-window #choices.locationPanel .locRadiusRow{"));
