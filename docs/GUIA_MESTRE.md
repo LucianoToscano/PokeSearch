@@ -6696,3 +6696,15 @@ Documentacao: README.md, docs/ESTADO_CANONICO_LT87_OFICIAL.md e docs/PROMPT_NOVO
 - Importação de áudio continua no fluxo legado; não habilitada no novo selector overlay sem workflow de arquivos homologado.
 - APK QA candidato 0.00.92/54295; testes e assinatura devem ser conferidos, sem PASS físico presumido.
 - Docs: docs/LT88_FLOATING_MENUS_R5_QA.md. Guia Mestre anterior validado por hash de prefixo, somente append.
+
+
+## LT88 R6 — Favoritos automáticos e sprites verificadas (25/10/2026)
+- Branch feature/lt88-lt93-evolution-20261025, PR #63 Draft. Main LT87 oficial intacta; usuário já distribuiu APK anterior, sem Release nova autorizada.
+- Favoritos: apenas estrela do perfil ativo acesa; toque ativa/cria slot; seleção é salva automaticamente inclusive por WatchAlerts.toggle fora do seletor, no mesmo commit SharedPreferences.
+- Segurar estrela de perfil salvo permite limpar todos daquele slot após confirmação; somente lista ativa é limpa quando aplicável. Outros slots preservados.
+- Sprites: cache nativo compartilhado app-private e cache WebView, apenas URLs exatas de base PokeAPI e Shiny; arquivos distintos por variante, CDN fallback, timeouts, PNG até 256KiB, dimensões limitadas e cooldown 60s.
+- Menu Pokémon tenta CDN alternativo para base carregada com dimensões inválidas; resultados preservam retry da URL originalmente observada, sem substituir formas ou trajes.
+- Menus de som/Pix flutuantes e perfis de filtros/Padrão da R5 preservados. Nenhum GPS físico, nenhuma mudança de tokens ou limites da API.
+- APK QA candidato 0.00.93/54296, assinatura persistente e testes a validar; não alegar PASS Samsung sem evidência física desta build.
+- Checkpoint completo em docs/LT88_FAVORITOS_SPRITES_SAMSUNG_R6_QA.md. LT89–LT93 pendentes.
+- Guia Mestre anterior preservado via SHA-256 do prefixo; atualização por append apenas.
