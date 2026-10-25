@@ -47,6 +47,15 @@ function rgba(mode,transparent){
  const color=mode==="light"?"255,255,255":"15,19,26";
  return "rgba("+color+","+(1-transparent/100).toFixed(2)+")";
 }
+// Android overlays cannot rely on backdrop-filter to blur another app.
+// Use the persisted transparency as the BASE value; boost contrast only on
+// compact reading surfaces. 0% stays fully opaque and 100% fully transparent.
+// This is not a second, independently configurable transparency preference.
+function readableSurface(mode,transparent){
+ const base=mode==="light"?"255,255,255":"15,19,26";
+ const alpha=1-Math.pow(Math.max(0,Math.min(100,transparent))/100,2.8);
+ return "rgba("+base+","+alpha.toFixed(3)+")";
+}
 function applyVisual(){
  window.visualPrefs=current;
  const root=document.documentElement,body=document.body;
@@ -55,6 +64,9 @@ function applyVisual(){
  set("menu-gap",current.menuItemGap+"px");
  set("results-bg",rgba(current.resultsBgMode,current.resultsTransparency));
  set("menu-bg",rgba(current.menuBgMode,current.menuTransparency));
+ set("menu-readable-bg",readableSurface(current.menuBgMode,current.menuTransparency));
+ set("menu-readable-button-bg",readableSurface(current.menuBgMode,
+  Math.min(100,current.menuTransparency+12)));
  set("menu-blur",current.menuBlur+"px");
  set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency));
  // One opacity slider controls fill, border and shadow of each tile.
@@ -247,6 +259,9 @@ function renderVisualEditor(){
    addSegment(panel,"menuBgMode","Tema",[["dark","Escuro"],["light","Claro"]]);
    addSlider(panel,"menuTransparency","Transparência única dos menus","%");
    addSlider(panel,"menuBlur","Desfoque dos painéis"," px");
+   const info=document.createElement("p");info.className="uxNote";
+   info.textContent="50% de transparência base. Camada de contraste mantém as opções legíveis quando o desfoque não funciona sobre outros apps.";
+   panel.appendChild(info);
    btn(panel,"Linhas-guia menu: "+(current.menuGuides?"ON":"OFF"),()=>{
     change("menuGuides",!current.menuGuides);renderVisualEditor();
    });
