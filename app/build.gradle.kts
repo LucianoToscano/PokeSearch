@@ -52,6 +52,10 @@ val testKeyPassword = System.getenv("POKE_TEST_KEY_PASSWORD")
 val testSigningFields = listOf(testKeyFile, testStorePassword, testKeyAlias, testKeyPassword)
 val testSigningComplete = testSigningFields.all { !it.isNullOrBlank() }
 val testSigningRequired = System.getenv("POKE_TEST_SIGNING_REQUIRED") == "true"
+// A local, read-only scrapbook demo may be visible in the explicitly signed QA
+// candidate only. Ordinary Release builds default to false, regardless of prefs.
+val scrapbookStage1Qa = System.getenv("POKE_SCRAPBOOK_STAGE1_QA") == "true" &&
+    testSigningRequired && testVersionCode != null && testVersionCode >= 54299
 if ((testSigningRequired || testSigningFields.any { !it.isNullOrBlank() }) && !testSigningComplete)
     throw org.gradle.api.GradleException("Stable test signing is incomplete; configure the protected CI secrets")
 if (testSigningRequired && testVersionLabel == null)
@@ -72,6 +76,7 @@ android {
         targetSdk = 33
         buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256", "\"\"")
         buildConfigField("String", "EXPECTED_ASSET_SHA256", "\"$assetChecksums\"")
+        buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA", "false")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
     }
@@ -110,6 +115,9 @@ android {
             }
         }
         getByName("release") {
+            // True ONLY in this isolated signed QA workflow. Never on public Releases.
+            buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA",
+                if (scrapbookStage1Qa) "true" else "false")
             buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256",
                 "\"$releaseCertificateSha256\"")
             if (!releaseStore.isNullOrBlank()) signingConfig = signingConfigs.getByName("privateTestRelease")
