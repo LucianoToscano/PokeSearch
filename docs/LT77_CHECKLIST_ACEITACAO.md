@@ -149,3 +149,16 @@ Para cada nova captura de erro de Get coords, registrar nome, número, PC, cidad
 - [ ] Samsung homologado fisicamente (Get coords, Despawn, sexo, forma, clima, filtros): NÃO.
 - [ ] `OverlayService` chama API real autenticada, carrega catálogo para menus e usa `/reveal`: NÃO. `USE_AUTHORIZED_API=false`; fallback DOM mantido.
 - [ ] Alterar manifesto remoto/publicar LT77 como atualização geral: BLOQUEADO até aceitação física e ponta a ponta.
+
+
+### LT77 QA R4 — Integração Android implementada e API padrão ON somente no APK de teste
+- [x] `OverlayService.java` usa `AuthorizedApiCollector.java` para consulta API e `Get coords` em modo QA, sem expor token/código ao Java; respostas limitadas a 10.
+- [x] `api_android_session.js`: coordena sessão, catálogo oficial, filtragem e identidade de resultado; scripts são executados apenas na origem oficial da WebView; modo DOM alternativo foi preservado.
+- [x] `MainActivity.java`: configuração API **ON por padrão nesta build QA** por solicitação expressa, sem sobrescrever eventual preferência salva; modo DOM acessível desmarcando a opção e tocando ↻.
+- [x] Testes determinísticos de JS e Java passaram no workflow [#40150000064](https://github.com/LucianoToscano/PokeSearch/actions/runs/40150000064) — **SUCCESS**; commit binário `ab79cd8f8560fea8d80c3fb0bfccdf5fe8341ee3`.
+- [x] APK QA R4 `PokeSearch-v0.00.77-LT-Samsung-QA-r4.apk` gerado (0.00.77/54280), R8, não depurável, assinado v2; SHA256 APK `66bb242c9f0254184d03aaf38ca63091320c4c495a9d79b5bd6109e7c694ef7e`.
+- [x] Arquivos enviados ao Drive **privado**: [APK R4](https://drive.google.com/file/d/1TYWzwYmaL8L2nT2Y-SRhxGtO5YL8Z3m_/view), [ZIP R4](https://drive.google.com/file/d/11cMFUwdRCpxQGpUS-TyAIFyL2jZLPP_0/view).
+- [x] LT76 pública preservada no manifesto (0.00.76/54276); sem alterar main, PR #34 ou PR #49.
+- [ ] Homologação física Samsung: login/CORS + filtros reais + Get coords + compatibilidade do APK. **Pendente**, não pode ser substituída por CI.
+- [ ] Ligar alertas API QA e promover manifesto público. **Bloqueados até aceite Samsung**, pois os resultados de QA não são autorizados a produzir notificações.
+- [ ] Documentação detalhada: `docs/LT77_API_ANDROID_QA_R4.md`.
