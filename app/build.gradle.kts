@@ -55,7 +55,10 @@ val testSigningRequired = System.getenv("POKE_TEST_SIGNING_REQUIRED") == "true"
 // A local, read-only scrapbook demo may be visible in the explicitly signed QA
 // candidate only. Ordinary Release builds default to false, regardless of prefs.
 val scrapbookStage1Qa = System.getenv("POKE_SCRAPBOOK_STAGE1_QA") == "true" &&
-    testSigningRequired && testVersionCode != null && testVersionCode >= 54299
+    System.getenv("POKE_SCRAPBOOK_QA_ACK") == "stage1-readonly" &&
+    !System.getenv("POKE_RELEASE_KEYSTORE").isNullOrBlank() &&
+    releaseCertificateSha256 == officialTestCertificateSha256 &&
+    testVersionCode != null && testVersionCode >= 54299
 if ((testSigningRequired || testSigningFields.any { !it.isNullOrBlank() }) && !testSigningComplete)
     throw org.gradle.api.GradleException("Stable test signing is incomplete; configure the protected CI secrets")
 if (testSigningRequired && testVersionLabel == null)
