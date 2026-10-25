@@ -54,3 +54,5 @@ Guia Mestre tem mais de 1,4 MB. Somente append em checkout completo, verificar t
 
 9. SAÍDA
 Informar branch/HEAD real, versão, PRs, testes, Actions e hash, link direto de artifact/APK somente quando verificado, pendências do Samsung e estado exato do Guia Mestre. Não reiniciar nem pedir autorização da API novamente. Não publicar atualização oficial.
+
+CHECKPOINT DOCUMENTAL CONFIRMADO: GitHub Actions #40169916771 SUCCESS realizou append seguro ao Guia Mestre integral, incluindo retificação do registro LT87 rotulado equivocadamente LT86 no workflow herdado, sem substituir histórico. O HEAD documental posterior difere de SOURCE_COMMIT do APK. Verificar HEAD atualizado no início da próxima sessão.
