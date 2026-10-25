@@ -54,7 +54,7 @@ check("F Location paste, slider, radius and SVG actions",()=>{
  for(const s of ['label.append(labelName,paste,copy,radiusWrap)','fieldRow.append(field)','slide.min="0"','slide.max="1000"',
   'radiusField.min="0"','radiusField.max="1000"','radiusField.dataset.locationDraft="true"',
   'makeDockAction("apply","Aplicar localização")','makeDockAction("clear","Limpar localização")',
-  'panel.append(title,fieldRow,slide,label,message)'])
+  'label.append(slide,actions)','panel.append(title,fieldRow,label,message)'])
   assert.ok(location.includes(s),s);
  assert.ok(location.includes('Native.setLocation(true,wantedCoords,wantedRadius)'));
 });
