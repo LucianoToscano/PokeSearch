@@ -9,7 +9,7 @@ public final class UpdatePolicy {
                remoteCode>installedCode && remoteCode!=dismissedCode;
     }
     public static boolean validVersion(String versionName,String apkName) {
-        return versionName!=null && versionName.matches("0\\.\\d{2}\\.\\d{2,}") &&
+        return VersionNames.isCanonical(versionName) &&
                ("PokeSearch-v"+versionName+"-LT.apk").equals(apkName);
     }
     public static boolean validHash(String sha) {
