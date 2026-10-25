@@ -5162,7 +5162,7 @@ function renderExtraFilters(panel,make){
     if(key==="sortBy"&&value==="Distance (nearest)"&&
        !(locationEnabled&&locationVerified)){
      modeDraft.sortBy="Despawn (longest)";
-     if(Native.toast)Native.toast("Distância exige coordenadas e raio ativos. Mantida ordenação padrão.");
+     if(Native.filterDistanceNotice)Native.filterDistanceNotice();
      renderFiltersChoices();return;
     }
     modeDraft[key]=key==="weather"&&value==="Any"?"":value;
@@ -7285,7 +7285,7 @@ function renderFiltersChoices(){
    // Stale Distance sort is not a reason to reject new Sexo/Tamanho/PC.
    // Preserve all other draft filters, reset only this unavailable sort.
    modeDraft.sortBy="Despawn (longest)";
-   if(Native.toast)Native.toast("Sem coordenadas ativas: filtros aplicados com ordenação padrão.");
+   if(Native.filterDistanceNotice)Native.filterDistanceNotice();
   }
   // Reject invalid bounds before saving them or submitting anything to the site.
   for(const input of panel.querySelectorAll("input[data-filter-number]")){
