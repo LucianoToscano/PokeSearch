@@ -2299,6 +2299,55 @@ public class OverlayService extends Service {
             c.optString("level","")+"|"+c.optString("location","")+"|"+
             c.optString("iv","")+"|"+c.optLong("expiresAtMs",0);
     }
+    // Sort by distance can re-collect a partially hydrated result. Retain
+    // previously VERIFIED fields only for the identical unexpired encounter:
+    // same species, name, CP, level, location AND absolute despawn timestamp.
+    // Never copy between lookalike spawns or across a changed PvP mode.
+    private JSONArray retainVerifiedEncounterFields(JSONArray incoming){
+        if(incoming==null||incoming.length()==0)return incoming;
+        JSONArray previous;
+        try{previous=new JSONArray(results);}catch(org.json.JSONException ignored){return incoming;}
+        java.util.HashMap<String,JSONObject> existing=new java.util.HashMap<>();
+        long now=System.currentTimeMillis();
+        for(int i=0;i<previous.length();i++){
+            JSONObject old=previous.optJSONObject(i);
+            if(old==null||old.optLong("expiresAtMs",0)<=now)continue;
+            String key=encounterIdentityForMetadata(old);
+            if(!key.isEmpty())existing.put(key,old);
+        }
+        boolean samePvPMode=shownMode.equals(mode);
+        String[] stable={"iv","ivPercent","moves","gender","size","form"};
+        String[] scoped={"rank","ivRank","ivRankSource","ivRankLeague"};
+        for(int i=0;i<incoming.length();i++){
+            JSONObject card=incoming.optJSONObject(i);
+            if(card==null)continue;
+            JSONObject prior=existing.get(encounterIdentityForMetadata(card));
+            if(prior==null)continue;
+            try{
+                for(String field:stable)
+                    if((!card.has(field)||card.isNull(field)||
+                         card.optString(field,"").trim().isEmpty())&&
+                        prior.has(field)&&!prior.isNull(field)&&
+                        !prior.optString(field,"").trim().isEmpty())
+                        card.put(field,prior.get(field));
+                if(samePvPMode)for(String field:scoped)
+                    if((!card.has(field)||card.isNull(field)||
+                         card.optString(field,"").trim().isEmpty())&&
+                        prior.has(field)&&!prior.isNull(field)&&
+                        !prior.optString(field,"").trim().isEmpty())
+                        card.put(field,prior.get(field));
+            }catch(org.json.JSONException ignored){}
+        }
+        return incoming;
+    }
+    private String encounterIdentityForMetadata(JSONObject card){
+        if(card==null||card.optLong("expiresAtMs",0)<=0)return "";
+        for(String key:new String[]{"number","name","cp","level","location"})
+            if(card.optString(key,"").isEmpty())return "";
+        return card.optString("number")+"|"+card.optString("name")+"|"+
+            card.optString("cp")+"|"+card.optString("level")+"|"+
+            card.optString("location")+"|"+card.optLong("expiresAtMs");
+    }
     private JSONArray sortItems(JSONArray source){
         java.util.ArrayList<JSONObject> a=new java.util.ArrayList<>();
         if(source!=null)for(int i=0;i<source.length();i++){
@@ -2540,7 +2589,7 @@ public class OverlayService extends Service {
             }catch(Exception e){recordFailure("marcar despawn",e);}
             unexpired.put(card);
         }
-        JSONArray sorted=sortItems(unexpired);
+        JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));
         // QA data is shown for visual homologation but cannot send notifications.
         boolean authorizedApiQa="authorized-api-qa".equals(r.optString("source",""));
         if(!authorizedApiQa)recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
