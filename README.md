@@ -2,6 +2,17 @@
 
 > **Guia Mestre permanente:** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md). Este README indica o estado verificado; o Guia mantém todo o histórico. Não confundir tags oficiais com commits posteriores de documentos.
 
+## LT86 — Catálogo completo de Formas e nível 50 (somente QA)
+
+**QA 0.00.86 / versionCode 54289 — não publicado.** Branch `fix/lt86-api-filter-options-qa-20261025`, derivada do checkpoint LT85 PR #60 Draft; PR #59 e main preservadas.
+
+- **Corrigido no código:** Nível Min/Max permite 1–50 na interface (antes terminava em 35); o catálogo de Formas agora fornece até 500 valores (em vez de 200) e permite mostrar mais opções em páginas de 60, preservando chips marcados e a busca por nome.
+- **Verificação automatizada nova:** `app/tests/lt86-form-catalog-level.test.js`, além das regressões LT85 e históricas no [workflow QA LT86](https://github.com/LucianoToscano/PokeSearch/actions/workflows/lt86-api-filter-options-signed-qa.yml).
+- **Documentação:** [estado LT86](docs/ESTADO_CANONICO_LT86_QA.md), [checklist Samsung](docs/LT86_CHECKLIST_SAMSUNG.md), [prompt de continuação](docs/PROMPT_NOVO_CHAT_LT86_QA.md).
+- **Pendente:** CI final, SHA-256 e artifact de LT86, além de todas as verificações físicas Samsung e chamadas autenticadas. Não considerar sprites de formas/trajes especiais resolvidos sem fonte validada. Nenhum merge, Release ou atualização Drive sem autorização.
+
+---
+
 ## LT85 — Menus, imagens, filtros e API automática (somente QA)
 
 **QA 0.00.85 / versionCode 54288 — não publicado.** Branch `fix/lt85-menu-repeat-tap-20261025` e [PR #60 Draft](https://github.com/LucianoToscano/PokeSearch/pull/60) sobre a LT84 QA ([PR #59](https://github.com/LucianoToscano/PokeSearch/pull/59)). A última versão oficial segue LT83; a ponte Google Drive LT79 não foi tocada.
