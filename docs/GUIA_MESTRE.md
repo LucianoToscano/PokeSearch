@@ -6718,3 +6718,14 @@ Documentacao: README.md, docs/ESTADO_CANONICO_LT87_OFICIAL.md e docs/PROMPT_NOVO
 - Próximas atualizações autorizadas devem substituir o mesmo arquivo Drive após verificar APK SHA256/assinatura/versão; ID e link permanecem estáveis, sem merge nem Release automáticos.
 - Candidato R7 0.00.94/54297 é somente QA: CI assinado e Samsung ainda devem ser comprovados. Nenhum teste físico Samsung foi executado pelo CI.
 - Detalhes e checklist: docs/LT88_DRIVE_SHARE_R7_QA.md. Fluxos LT88-LT93 históricos e R6 preservados. Guia Mestre apendado com verificação de hash integral do prefixo.
+
+
+## LT88 R8 — Filtro compacto, seleção áudio e localização enxuta (25/10/2026)
+- Branch unica feature/lt88-lt93-evolution-20261025; PR #63 Draft; main LT87 inalterada.
+- Interface geral: palavra Filtro agora abre perfis. Popup Padrão, Filtro 1 salvar/lixeira e Filtro 2 salvar/lixeira, SVG branco fino; sem símbolo circular, título extra ou rodapé. Terceiro perfil existente preservado em preferências, porém oculto.
+- Sons Novos/Favoritos: ao abrir marcar som salvo, ao tocar marcar a prévia com ✓ e borda; cancelar sem salvar mantém configuração anterior. Lista mostra opção armazenada mesmo quando fora da primeira página.
+- Localização: controles de coordenadas e colar/copiar/raio/slider/aplicar/limpar em somente três linhas e estado eventual. Raio 0..1000, sem GPS físico, sem interferir Shiny e demais filtros.
+- Tests: app/tests/lt88-r8-compact-controls-sound.test.js; contratos legados LT62/LT63/R5 adaptados somente para novo arranjo DOM.
+- QA candidato 0.00.95/54298; não é versão oficial nem homologação Samsung. Exigir CI protegido assinado, hashes e testes Samsung antes de publicação.
+- Drive espelho: https://drive.google.com/drive/folders/1fVw93qUDE0YWp6tlJZaNjRmymyhEAUbR; preservar arquivo com id 1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P nas futuras atualizações consentidas.
+- Checkpoint docs/LT88_R8_FILTROS_AUDIO_LOCALIZACAO_QA.md. Nenhum merge, Release, apaga dados ou credenciais.
