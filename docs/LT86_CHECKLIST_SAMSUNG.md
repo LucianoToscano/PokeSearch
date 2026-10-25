@@ -28,3 +28,12 @@ Nunca converter um PASS automatizado em PASS físico. A imagem dos Pokémon espe
 - [ ] Com todas as Informações expandidas, arrastar a Pokébola até as bordas direita e esquerda, testar giro horizontal/vertical, sem travar ícone nem cortar controles; conferir que resultados reancoram.
 - [ ] Em Filtros, ▣ > 1/2/3 > Salvar/Usar; verificar persistência após fechar o app; não modificar Shiny, localização, favoritos nem preferências de outros perfis.
 - [ ] Em Favoritos, ▣ > segurar 1/2/3 salva, tocar carrega; confirmar grade 10×5, limite 50 e independência de notificações/sons.
+
+
+## Cartão, informações e Despawn
+- [ ] Editor Visual > Info Pokémon > ✓ Mostrar todas as informações: Despawn, PC, nível, IV Raw/%, sexo ⚲, golpes, local, distância e GL/UL/ML confirmados, sem valores inventados e com rolagem no texto.
+- [ ] Quando ordenar por distância e usar raio válido, conferir que o campo Distância aparece sem desligar outros dados; verificar requests do site/API.
+- [ ] Quando faltar rank de PvP, campo correspondente ausente em vez de valor calculado sem identidade.
+- [ ] Drag da Pokébola até o lado direito com todas informações ativas; depois arrastar *o cartão de detalhe* pelo cabeçalho sem mover Pokébola. ×, Get coords e Favoritos devem continuar clicáveis.
+- [ ] Ao expirar um Pokémon (Despawn 0), verificar que sprite/card desaparece mesmo com info Despawn oculta e com Atualização OFF, sem recarregar spawn vencido. Observar se nova busca respeita limite do servidor.
+- [ ] Verificar sprite de resultados com rede lenta: fallback CDN permitido somente para espécie padrão PokeAPI; forma/traje continuam sem sprite suposta.
