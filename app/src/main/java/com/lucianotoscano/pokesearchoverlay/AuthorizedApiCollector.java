@@ -107,6 +107,21 @@ final class AuthorizedApiCollector {
             });
         });
     }
+    // Read-only official forms; never moves JWT or reveal codes into Java.
+    void forms(String query,Callback cb){
+        if(!official()){cb.onResult(failure("invalid-origin"));return;}
+        if(query==null||query.length()>70){cb.onResult(failure("invalid-request"));return;}
+        bootstrap(ready->{
+            if(!ready.optBoolean("ok",false)){cb.onResult(ready);return;}
+            int request=++ticket;
+            js("(function(){return JSON.stringify("+
+                "window.PokeSearchAndroidApi.startForms("+request+","+
+                JSONObject.quote(query)+"));})()",started->{
+                if(!started.optBoolean("ok",false)){cb.onResult(started);return;}
+                poll(request,0,45,cb);
+            });
+        });
+    }
     void search(JSONObject filters,Callback cb){
         if(!official()){cb.onResult(failure("invalid-origin"));return;}
         bootstrap(ready->{
