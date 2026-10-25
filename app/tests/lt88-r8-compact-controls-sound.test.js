@@ -47,6 +47,8 @@ assertIt("Tone submenus reflect saved choice and last preview selection",()=>{
  assert.match(tone,/b\.setContentDescription\(name\+\(checked/);
  assert.match(tone,/toneButtons\.get\(selectedRow\)\.getTop\(\)/);
  assert.match(tone,/PREF_FAVORITE_TONE/);
+ assert.match(tone,/!tonePrefs\.contains\(toneKey\)/);
+ assert.match(tone,/PokeSoundLibrary\.favoriteDefaultUri\(context\)\.toString\(\)/);
  assert.match(tone,/PREF_GENERAL_TONE/);
  assert.match(tone,/stop\.run\(\);selection\[0\]=index/);
 });
