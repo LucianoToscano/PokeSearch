@@ -53,7 +53,7 @@ public final class UpdateCenter {
                          String apkFileId,String apkUrl,String apkSha256,
                          String message,String description,String status,
                          boolean enabled,boolean forceUpdate,JSONArray notes) {
-            this.versionCode=versionCode;this.versionName=versionName;this.apkName=apkName;
+            this.versionCode=versionCode;this.versionName=VersionNames.canonical(versionName);this.apkName=apkName;
             this.apkFileId=apkFileId;this.apkUrl=apkUrl;this.apkSha256=apkSha256;
             this.message=message;this.description=description;this.status=status;
             this.enabled=enabled;this.forceUpdate=forceUpdate;this.notes=notes;
