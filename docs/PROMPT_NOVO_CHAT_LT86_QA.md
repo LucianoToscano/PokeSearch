@@ -12,3 +12,8 @@ Próximos objetivos: homologar filtros e imagens reais; validar passagem dos par
 ## Complemento LT86 — pedidos de 25/10/2026
 
 O proprietário trouxe screenshots Samsung mostrando sprites ainda não carregados e solicitou Genderless ⚲ em Informações, liberdade de arraste da Pokébola com informações ligadas, correção de janelas, três filtros gerais e três conjuntos de Favoritos salvos. Código de QA implementado na branch LT86: fanout de sprites no Android e CDN PokeAPI alternativo limitado a espécies padrão; estilo de ⚲; arraste independente da largura dos resultados; perfis Filtros 1–3 sob `generalFilterPresetV1_*`, sem Shiny/coords; Favoritos 1–3 sob `favoritePresetV1_*` na aba ▣, tap para usar / segurar para salvar. Teste `lt86-samsung-followup.test.js`. Verificar GitHub CI final, instalar QA e validar fisicamente antes de declarar concluído. Não publicar sem autorização.
+
+
+## Complemento operacional obrigatório do checkpoint
+
+Além das correções de Formas/Nível e Favoritos, a LT86 implementou Informações completas via ação Mostrar todas as informações, suporte ⚲ Genderless, prioridade Despawn, ranks PvP disponíveis GL/UL/ML com validação, timer absoluto `expiresAtMs` para API e varredura de limpeza de vencidos, sprite de base por CDN alternativo após erro/1,4 s, arraste de Pokébola sem travar na margem e arraste independente do card de detalhes pelo cabeçalho. Executar testes `lt86-all-result-information.test.js`, `lt86-despawn-detail-drag.test.js` e históricos, build assinado QA, análise de versão/certificado/hash/Guia Mestre. Nunca afirmar homologação Samsung sem teste físico. Não publicar LT86 sem autorização.
