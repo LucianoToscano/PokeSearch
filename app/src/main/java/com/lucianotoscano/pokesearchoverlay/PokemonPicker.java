@@ -304,7 +304,7 @@ public final class PokemonPicker {
         TextView title=new TextView(activity);
         title.setText("☆ FAVORITOS");
         title.setOnClickListener(v->Toast.makeText(activity,
-            "★ Toque: usar • Segure: salvar ou excluir perfil",
+            "★ Toque: usar • Segure a estrela para limpar o perfil",
             Toast.LENGTH_LONG).show());
         title.setTextColor(panelFg);
         title.setTypeface(null,Typeface.BOLD);
@@ -410,7 +410,7 @@ public final class PokemonPicker {
                 star.setTextColor(selected?Color.rgb(255,212,104):Color.rgb(146,154,169));
                 star.setContentDescription("Perfil "+slot+
                     (selected?" ativo":stored?" salvo, inativo":" vazio")+
-                    ". Toque para usar; segure para salvar ou excluir");
+                    ". Toque para usar; segure para limpar todos os favoritos do perfil");
             }
         };
         // Only the active one is lit, even when all three are saved.
@@ -437,37 +437,41 @@ public final class PokemonPicker {
             favoriteProfiles.addView(tab,tabLp);
             favoriteTabs[profile-1]=tab;
             tab.setOnLongClickListener(v->{
-                // PopupMenu attaches to the already visible overlay Dialog;
-                // no new full-screen Android window or empty spacer.
-                android.widget.PopupMenu actions=new android.widget.PopupMenu(activity,tab);
-                actions.getMenu().add("Salvar favoritos atuais no perfil "+profile);
-                if(activity.getSharedPreferences("prefs",0).contains(key))
-                    actions.getMenu().add("Excluir perfil "+profile);
-                actions.setOnMenuItemClickListener(item->{
-                    SharedPreferences p=activity.getSharedPreferences("prefs",0);
-                    if(item.getTitle().toString().startsWith("Excluir")){
-                        SharedPreferences.Editor editor=p.edit().remove(key);
-                        if(p.getInt("favoritePresetActiveV1",0)==profile)
-                            editor.putInt("favoritePresetActiveV1",0);
-                        editor.apply();
-                        Toast.makeText(activity,"Perfil "+profile+" excluído",Toast.LENGTH_SHORT).show();
-                    }else{
-                        String current=WatchAlerts.canonicalList(p.getString(WatchAlerts.PREF_LIST,""));
-                        p.edit().putString(key,current)
-                            .putInt("favoritePresetActiveV1",profile).apply();
-                        Toast.makeText(activity,"✓ Favoritos salvos no perfil "+profile,
-                            Toast.LENGTH_SHORT).show();
-                    }
+                SharedPreferences p=activity.getSharedPreferences("prefs",0);
+                if(!p.contains(key)){
+                    Toast.makeText(activity,"Perfil vazio · toque para ativar",
+                        Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                // Long press is reserved for clearing a saved profile, never
+                // saving it. Confirm via a compact contextual action.
+                android.widget.PopupMenu confirm=new android.widget.PopupMenu(activity,tab);
+                confirm.getMenu().add("Limpar todos os favoritos do Perfil "+profile);
+                confirm.setOnMenuItemClickListener(item->{
+                    SharedPreferences current=activity.getSharedPreferences("prefs",0);
+                    boolean active=current.getInt("favoritePresetActiveV1",0)==profile;
+                    SharedPreferences.Editor edit=current.edit().putString(key,"");
+                    if(active)edit.putString(WatchAlerts.PREF_LIST,"");
+                    edit.apply();
+                    if(active)refresh[0].run();
                     refreshProfileStars.run();
+                    Toast.makeText(activity,"Perfil "+profile+" limpo",
+                        Toast.LENGTH_SHORT).show();
                     return true;
                 });
-                actions.show();
-                return true;
+                confirm.show();return true;
             });
             tab.setOnClickListener(v->{
                 SharedPreferences p=activity.getSharedPreferences("prefs",0);
                 if(!p.contains(key)){
-                    Toast.makeText(activity,"Segure "+profile+" para salvar os favoritos",
+                    // First tap on an unused star stores current Favorites and
+                    // activates this slot. Further edits auto-update the slot.
+                    String current=WatchAlerts.canonicalList(
+                        p.getString(WatchAlerts.PREF_LIST,""));
+                    p.edit().putString(key,current)
+                        .putInt("favoritePresetActiveV1",profile).apply();
+                    refreshProfileStars.run();
+                    Toast.makeText(activity,"★ Perfil "+profile+" ativo · salvamento automático",
                         Toast.LENGTH_SHORT).show();return;
                 }
                 String saved=WatchAlerts.canonicalList(p.getString(key,""));
@@ -506,6 +510,18 @@ public final class PokemonPicker {
         };
 
         refresh[0]=()->{
+            // Active profile is the live favorite list: every add/remove saves
+            // automatically and survives closing the dialog/restarting Android.
+            // Inactive saved slots are never silently modified.
+            SharedPreferences autoPrefs=activity.getSharedPreferences("prefs",0);
+            int activeSlot=autoPrefs.getInt("favoritePresetActiveV1",0);
+            if(activeSlot>=1&&activeSlot<=3){
+                String current=WatchAlerts.canonicalList(
+                    autoPrefs.getString(WatchAlerts.PREF_LIST,""));
+                String key="favoritePresetV1_"+activeSlot;
+                if(!current.equals(autoPrefs.getString(key,"")))
+                    autoPrefs.edit().putString(key,current).apply();
+            }
             // All 50 favorites remain reachable, including legacy catalog entries.
             java.util.LinkedHashMap<String,String> chosen=WatchAlerts.names(
                 activity.getSharedPreferences("prefs",0).getString(WatchAlerts.PREF_LIST,""));
