@@ -1664,7 +1664,7 @@ public class MainActivity extends Activity {
         // Explicit Samsung QA gate only; existing users remain on the DOM collector.
         // Use the refresh icon after switching between DOM and API.
         settingCheckbox(body,prefs,"authorizedApiQaOptIn",
-            "QA LT77: API autorizada ativa (desmarque para DOM; use ↻)",true);
+            "API experimental de QA (padrão seguro: DOM; use ↻ para alternar)",false);
         // LT79: separate update notifications and explicit user-driven check.
         CheckBox updateAlerts=new CheckBox(this);
         updateAlerts.setText("Avisar quando sair nova atualização do PokeSearch");
