@@ -257,8 +257,17 @@ public class OverlayService extends Service {
                         "A resposta não confirmou os filtros atuais.");return;
                 }
                 shinyVerified=shiny;
-                displayedApiSearchId=response.optInt("searchId",-1);
                 applyCollectedResults(response);
+                // Mark the active API request applied only if native IV checks
+                // also accepted the response. Failed QA searches retain old cards.
+                if(!searchInProgress&&displayedApiResults&&
+                    ("updated".equals(searchPhase)||"empty".equals(searchPhase))){
+                    displayedApiSearchId=response.optInt("searchId",-1);
+                    locationVerified=locationEnabled;
+                    confirmedSubmittedFiltersGeneration=generation;
+                    submittedSearchGeneration=generation;
+                    update();
+                }
             });
         }catch(Exception ignored){
             searchInProgress=false;
