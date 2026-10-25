@@ -25,6 +25,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.Query;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -85,7 +86,7 @@ final class CommunityScrapbookOnline {
         private final boolean light;
         private FirebaseDatabase db;
         private FirebaseAuth auth;
-        private DatabaseReference postsRef;
+        private Query postsQuery;
         private ValueEventListener postsListener;
         private LinearLayout feed,filters;
         private TextView status;
@@ -193,8 +194,8 @@ final class CommunityScrapbookOnline {
                         ?"Mural online · UID anônimo · postagens passam por aprovação"
                         :"Leitura QA · envio fechado no servidor (regras/configuração pendentes)");
                 }).addOnFailureListener(e->offline("Sem acesso às regras/configuração do Mural."));
-            postsRef=db.getReference("scrapbook/posts");
-            postsListener=postsRef.limitToLast(80).addValueEventListener(new ValueEventListener(){
+            postsQuery=db.getReference("scrapbook/posts").limitToLast(80);
+            postsListener=postsQuery.addValueEventListener(new ValueEventListener(){
                 @Override public void onDataChange(DataSnapshot snapshot){
                     if(destroyed)return;lastPosts=snapshot;renderFeed();
                 }
@@ -306,7 +307,7 @@ final class CommunityScrapbookOnline {
         }
         void detach(){
             destroyed=true;
-            if(postsRef!=null&&postsListener!=null)postsRef.removeEventListener(postsListener);
+            if(postsQuery!=null&&postsListener!=null)postsQuery.removeEventListener(postsListener);
         }
     }
 }
