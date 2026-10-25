@@ -1,0 +1,186 @@
+name: PokeSearch LT114 - complete editable audit bundle
+on:
+  push:
+    branches:
+      - fix/lt112-two-pokeballs-parity-20261025
+    paths:
+      - .github/workflows/lt114-complete-audit-bundle.yml
+      - scripts/prepare_lt114_audit_bundle.py
+      - docs/AUDITORIA_COMPLETA_LT114_*
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+jobs:
+  audit-bundle:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MAIN_SHA: '56403a2999fc8037aa020466cf03041b7926ae02'
+      LT113_SHA: '141ec637e60565591f6fe445da661b2a26eb6a79'
+      LT114_APK_SHA: '4734b6ce877961eff3bdaf7e5c05c69d33e86151'
+      QA113_RUN: '40235465567'
+      QA114_RUN: '40240634152'
+      OUTPUT: 'PokeSearch-AUDITORIA-COMPLETA-LT113-LT114-EDITAVEL-20261025.zip'
+    steps:
+      - name: Checkout full Git history and source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Preflight pinned refs and safeguards
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main \
+            fix/lt112-two-pokeballs-parity-20261025 \
+            backup/lt112-before-get-coords-fix-20261025 \
+            backup/lt111-before-dual-overlay-parity-20261025
+          test "$(git rev-parse origin/main)" = "$MAIN_SHA"
+          git cat-file -e "$LT113_SHA^{commit}"
+          git cat-file -e "$LT114_APK_SHA^{commit}"
+          test "$(git rev-parse HEAD)" != "$MAIN_SHA"
+          test -f docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md
+          python3 -m py_compile scripts/prepare_lt114_audit_bundle.py
+      - name: Build three complete editable Git source snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "pack/sources/MAIN_OFICIAL_EDITAVEL" \
+            "pack/sources/LT113_FONTE_EXATA_EDITAVEL" \
+            "pack/sources/LT114_BRANCH_COMPLETA_EDITAVEL" \
+            "pack/git" "pack/audit" "pack/governance" \
+            "pack/binaries/LT113_QA" "pack/binaries/LT114_QA" "pack/binaries/MAIN_OFICIAL"
+          git archive --format=tar "$MAIN_SHA" |
+            tar -xf - -C pack/sources/MAIN_OFICIAL_EDITAVEL
+          git archive --format=tar "$LT113_SHA" |
+            tar -xf - -C pack/sources/LT113_FONTE_EXATA_EDITAVEL
+          git archive --format=tar HEAD |
+            tar -xf - -C pack/sources/LT114_BRANCH_COMPLETA_EDITAVEL
+          # Never distribute tracked keystores, private keys, env files or
+          # credentials even if they were once mistakenly committed.
+          python3 - <<'PY'
+          from pathlib import Path
+          from fnmatch import fnmatch
+          base=Path("pack/sources")
+          denied=["*.p12","*.jks","*.keystore","*.pem","*.p8","*.key",
+                  "*.mobileprovision",".env",".env.*","*service-account*.json",
+                  "*credentials*.json","id_rsa","id_ed25519"]
+          excluded=[]
+          for p in sorted(base.rglob("*")):
+              if p.is_file() and (p.is_symlink() or any(fnmatch(p.name.lower(),x) for x in denied)):
+                  excluded.append(p.relative_to(base).as_posix())
+                  p.unlink()
+          Path("pack/audit/ARQUIVOS_SENSIVEIS_EXCLUIDOS.txt").write_text(
+              "Nomes excluidos, sem incluir conteudo:\n"+
+              ("\n".join(excluded) if excluded else "Nenhuma correspondencia.")+"\n",
+              encoding="utf-8")
+          PY
+          cp docs/AUDITORIA_COMPLETA_LT114_LEIA_PRIMEIRO.md pack/LEIA_PRIMEIRO.md
+          cp docs/AUDITORIA_COMPLETA_LT114_PROMPT.txt pack/governance/PROMPT_AUDITORIA_COMPLETA.txt
+          cp docs/AUDITORIA_COMPLETA_LT114_CHECKLIST_SAMSUNG.csv pack/governance/CHECKLIST_SAMSUNG.csv
+          cp scripts/prepare_lt114_audit_bundle.py pack/governance/GERADOR_INTEGRIDADE_EDITAVEL.py
+          cat > pack/governance/REPRODUCAO.md <<'EOF'
+          # Reprodução local
+          1. Abrir o ZIP e consultar LEIA_PRIMEIRO.md, governance/PROMPT_AUDITORIA_COMPLETA.txt e audit/STATUS_E_INTEGRIDADE.json.
+          2. Editar o código em sources/LT114_BRANCH_COMPLETA_EDITAVEL; para reproduzir exatamente o APK QA LT114, usar git commit 4734b6ce877961eff3bdaf7e5c05c69d33e86151.
+          3. Compilar: JDK17, Gradle 8.11.1, Android SDK36. Na raiz da fonte: gradle :app:testDebugUnitTest :app:assembleRelease. Credenciais de assinatura não são fornecidas.
+          4. Regressão: node app/tests/lt113-get-coords-canonical-dual.test.js; node app/tests/lt112-dual-overlay-parity.test.js; e outras suítes Node conforme workflow.
+          5. SHA-256: sha256sum binaries/LT114_QA/*.apk e comparar com SHA256SUMS.txt e audit/STATUS_E_INTEGRIDADE.json.
+          6. Verificar assinatura Android v2 com apksigner verify --verbose --print-certs no APK. A assinatura real requer keystore permanente fora do ZIP.
+          7. Verificar integridade do pacote: python3 -m zipfile -t binaries/LT114_QA/*.apk.
+          8. Teste físico no Samsung: preencher governance/CHECKLIST_SAMSUNG.csv; nunca considerar CI como homologação física.
+          EOF
+      - name: Fetch pinned APKs and original GitHub Actions evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run download "$QA113_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name 'PokeSearch-v0.01.13-LT-Coords-Parity-QA-protected-release' \
+            --dir pack/binaries/LT113_QA
+          gh run download "$QA114_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name 'PokeSearch-v0.01.14-LT-Coords-Parity-QA-protected-release' \
+            --dir pack/binaries/LT114_QA
+          gh release download 'v0.01.11-54315' --repo "$GITHUB_REPOSITORY" \
+            --pattern 'PokeSearch-v0.01.11-LT.apk' \
+            --dir pack/binaries/MAIN_OFICIAL
+          gh api "repos/$GITHUB_REPOSITORY/pulls/73" > pack/git/PR73_STATUS_GITHUB.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QA113_RUN" > pack/git/CI_LT113.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QA114_RUN" > pack/git/CI_LT114.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QA114_RUN/jobs?per_page=100" \
+            > pack/git/CI_LT114_JOBS.json
+          git log --date=iso --pretty=format:'%H %ad %an %s' "$MAIN_SHA" -30 \
+            > pack/git/HISTORICO_MAIN_30_COMMITS.txt
+          git log --date=iso --pretty=format:'%H %ad %an %s' -50 \
+            > pack/git/HISTORICO_BRANCH_50_COMMITS.txt
+          git diff --binary "$MAIN_SHA" HEAD > pack/git/DIFF_MAIN_VS_BRANCH_COMPLETO.patch
+          git diff --binary "$LT113_SHA" HEAD > pack/git/DIFF_LT113_VS_BRANCH_COMPLETO.patch
+          git diff --binary "$LT113_SHA" "$LT114_APK_SHA" > pack/git/DIFF_LT113_VS_LT114_CODIGO.patch
+          {
+            echo "Repo: $GITHUB_REPOSITORY"
+            echo "main=$MAIN_SHA"
+            echo "source_lt113=$LT113_SHA"
+            echo "source_lt114=$LT114_APK_SHA"
+            echo "audit_head=$(git rev-parse HEAD)"
+            echo "pr=https://github.com/$GITHUB_REPOSITORY/pull/73"
+            echo "official=https://github.com/$GITHUB_REPOSITORY/releases/tag/v0.01.11-54315"
+            echo "QA113=https://github.com/$GITHUB_REPOSITORY/actions/runs/$QA113_RUN"
+            echo "QA114=https://github.com/$GITHUB_REPOSITORY/actions/runs/$QA114_RUN"
+            for ref in backup/lt112-before-get-coords-fix-20261025 \
+                backup/lt111-before-dual-overlay-parity-20261025; do
+              echo "$ref=$(git rev-parse "refs/remotes/origin/$ref")"
+            done
+          } > pack/git/REFERENCIAS_VERIFICADAS.txt
+      - name: Validate QA certificates and official upgrade signer
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK_SIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)"
+          test -n "$APK_SIGNER"
+          expected='34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+          {
+            echo "Verification tool: $APK_SIGNER"
+            echo "Expected signer SHA256: $expected"
+            for label in LT113_QA LT114_QA MAIN_OFICIAL; do
+              for apk in pack/binaries/"$label"/*.apk; do
+                echo "### $label / $(basename "$apk")"
+                "$APK_SIGNER" verify --verbose --print-certs "$apk" |
+                  grep -E 'Verified using v[1234] scheme|Signer #1 certificate SHA-256 digest'
+                sha256sum "$apk"
+              done
+            done
+          } > pack/audit/ASSINATURAS_DOS_TRES_APKS.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path("pack/audit/ASSINATURAS_DOS_TRES_APKS.txt").read_text()
+          d=re.findall(r"Signer #1 certificate SHA-256 digest:\s*([0-9a-fA-F]{64})",s)
+          expected='34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+          assert len(d)==3,d
+          assert all(x.lower()==expected for x in d),d
+          assert len(re.findall(r"Verified using v2 scheme.*:\s*true",s))>=3
+          print("Official and QA APKs share the same v2 signer certificate.")
+          PY
+      - name: Validate 2050 sprites, versions, hashes and generate giant ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/prepare_lt114_audit_bundle.py \
+            --root pack --output "$OUTPUT" > PACKAGING_RESULT.json
+          sha256sum "$OUTPUT" > AUDIT_ZIP_SHA256.txt
+          cat PACKAGING_RESULT.json
+          ls -lh "$OUTPUT"
+      - name: Upload editable audit package with SHA256
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT114-AUDITORIA-COMPLETA-EDITAVEL-20261025
+          path: |
+            PokeSearch-AUDITORIA-COMPLETA-LT113-LT114-EDITAVEL-20261025.zip
+            AUDIT_ZIP_SHA256.txt
+            PACKAGING_RESULT.json
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error

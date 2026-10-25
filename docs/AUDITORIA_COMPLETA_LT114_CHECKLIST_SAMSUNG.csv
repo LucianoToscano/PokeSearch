@@ -1,0 +1,31 @@
+ID;Area;Cenario;P1_100%;P2_0%;Evidencia_esperada;Estado_inicial
+01;Instalacao;Instalar 0.01.14 sobre 0.01.11 sem limpar dados;PENDENTE;PENDENTE;Android instala sem conflito de certificado e mantém preferências;NAO_TESTADO
+02;Login;Sessão autenticada persiste e é compartilhada;PENDENTE;PENDENTE;Site abre autenticado em ambos;NAO_TESTADO
+03;Get coords;Audino #531 CP 1538 texto/número seleção válida;PENDENTE;PENDENTE;Coords do mesmo encontro são copiadas;NAO_TESTADO
+04;Get coords;Selecionar Pokémon enquanto sua busca atualiza;PENDENTE;PENDENTE;Bloquear antiga sem copiar;NAO_TESTADO
+05;Get coords;Concluir GET após despawn;PENDENTE;PENDENTE;Bloquear coordenadas expiradas;NAO_TESTADO
+06;Get coords;Selecionar card enquanto outra Pokébola pesquisa;PENDENTE;PENDENTE;Sem interferência entre instâncias;NAO_TESTADO
+07;Filtros;IV 15/15/15 e IV 0/0/0;PENDENTE;PENDENTE;Resultados respeitam filtro exclusivo;NAO_TESTADO
+08;Filtros;IV % e ranking GL/UL;PENDENTE;PENDENTE;Comparar API + resultados reais;NAO_TESTADO
+09;Filtros;PC mínimo/máximo e nível;PENDENTE;PENDENTE;Payload e resultado compatíveis;NAO_TESTADO
+10;Filtros;Shiny, tamanho, clima, sexo sem gênero;PENDENTE;PENDENTE;Filtros aplicados e seleção mantida;NAO_TESTADO
+11;Filtros;Pokémon e forma Furfrou Natural;PENDENTE;PENDENTE;Forma correta não se mistura;NAO_TESTADO
+12;Localização;Coordenadas + raio 0/215/1000km;PENDENTE;PENDENTE;Aplicar e limpar sem afetar outros filtros;NAO_TESTADO
+13;Sprites;Base/shiny em cartões da lista;PENDENTE;PENDENTE;Imagem exata carrega sem troca de forma;NAO_TESTADO
+14;Sprites;Base/shiny em detalhes abertos;PENDENTE;PENDENTE;Imagem exata no painel de detalhe;NAO_TESTADO
+15;Sprites;Sem rede, recursos offline base/shiny;PENDENTE;PENDENTE;Sprites offline do pacote;NAO_TESTADO
+16;Despawn;Resultado expirou com timer visível/oculto;PENDENTE;PENDENTE;Remoção sem notificação vencida;NAO_TESTADO
+17;Notificações;Pokémon novo detectado;PENDENTE;PENDENTE;Uma notificação correta e canal Android ativo;NAO_TESTADO
+18;Notificações;Favorito marcado depois de já visto;PENDENTE;PENDENTE;Novo alerta favorito único sem duplicar geral;NAO_TESTADO
+19;Notificações;Permissão Android bloqueada;PENDENTE;PENDENTE;Sem falso entregue, alerta possível depois de desbloquear;NAO_TESTADO
+20;Notificações;IDs de notificação independentes;PENDENTE;PENDENTE;Uma Pokébola não sobrescreve outra;NAO_TESTADO
+21;Som;Som normal/sem som/custom BR Favoritos;PENDENTE;PENDENTE;Canal e áudio corretos;NAO_TESTADO
+22;Som;Áudios por espécie, seletor e prévia;PENDENTE;PENDENTE;Som correto sem navegar Home;NAO_TESTADO
+23;Favoritos;Salvar automaticamente no perfil 1/2/3;PENDENTE;PENDENTE;Perfis distintos restaurados ao alternar;NAO_TESTADO
+24;Favoritos;Até 50, estrela ativa, limpar com confirmação;PENDENTE;PENDENTE;Outros slots não apagam;NAO_TESTADO
+25;Overlay;Arrastar Pokébola e resultados;PENDENTE;PENDENTE;Janelas acompanham posição;NAO_TESTADO
+26;Overlay;Menu e cliques no fundo;PENDENTE;PENDENTE;Sem bloqueio indevido;NAO_TESTADO
+27;Aparência;Tema, tamanho, transparência, posição salvos;PENDENTE;PENDENTE;Sem perda ao reiniciar;NAO_TESTADO
+28;Home;Controle habilitar 2ª Pokébola oculto;PENDENTE;PENDENTE;Serviço P2 continua funcional;NAO_TESTADO
+29;Segurança;Sem JWT/reveal_code/cookies nos logs Android;PENDENTE;PENDENTE;Logcat sanitizado;NAO_TESTADO
+30;Distribuição;Certificado, pacote, R8 e versões;PENDENTE;PENDENTE;apksigner + aapt + Android instalado;NAO_TESTADO
