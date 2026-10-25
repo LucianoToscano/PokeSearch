@@ -1,0 +1,86 @@
+name: PokeSearch LT104 - publish signed QA download only
+on:
+  workflow_run:
+    workflows: ['PokeSearch LT104 Dual Pokeballs - signed QA APK']
+    types: [completed]
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: pokesearch-lt104-qa-publish-once
+  cancel-in-progress: false
+jobs:
+  publish-qa-prerelease:
+    if: >-
+      ${{ github.repository == 'LucianoToscano/PokeSearch' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_sha == '55cee3c34ed9b6bf017f2acebebdc600f6ea54b1' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      QA_RUN_ID: ${{ github.event.workflow_run.id }}
+      SOURCE_SHA: '55cee3c34ed9b6bf017f2acebebdc600f6ea54b1'
+      ASSET: 'PokeSearch-v0.00.104-LT-Dual-Pokeballs-QA.apk'
+      ARTIFACT: 'PokeSearch-v0.00.104-LT-Dual-Pokeballs-QA-protected-release'
+      TAG: 'v0.00.104-54307-qa'
+      EXPECTED_CERT: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+    steps:
+      - name: Checkout official verification source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download exact signed artifact from successful QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh run view "$QA_RUN_ID" -R "$GITHUB_REPOSITORY" --json conclusion --jq .conclusion)" = "success"
+          mkdir -p "$RUNNER_TEMP/lt104"
+          gh run download "$QA_RUN_ID" -R "$GITHUB_REPOSITORY" --name "$ARTIFACT" --dir "$RUNNER_TEMP/lt104"
+      - name: Verify source, hash, APK version and exact permanent certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/lt104"
+          test -s "$ASSET"
+          test -s SHA256SUMS.txt
+          test "$(tr -d '\r\n' < SOURCE_COMMIT.txt)" = "$SOURCE_SHA"
+          sha256sum -c SHA256SUMS.txt
+          unzip -t "$ASSET" >/dev/null
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'build-tools;36.0.0'
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$ASSET" > "$RUNNER_TEMP/lt104-badging.txt"
+          grep -Fq "name='com.lucianotoscano.pokesearch'" "$RUNNER_TEMP/lt104-badging.txt"
+          grep -Fq "versionCode='54307'" "$RUNNER_TEMP/lt104-badging.txt"
+          grep -Fq "versionName='0.00.104'" "$RUNNER_TEMP/lt104-badging.txt"
+          ! grep -q '^application-debuggable' "$RUNNER_TEMP/lt104-badging.txt"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$ASSET" > "$RUNNER_TEMP/lt104-signing.txt"
+          grep -Eq '^Verified using v2 scheme.*: true$' "$RUNNER_TEMP/lt104-signing.txt"
+          SIGNER="$(grep 'Signer #1 certificate SHA-256 digest:' "$RUNNER_TEMP/lt104-signing.txt" | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$SIGNER" = "$EXPECTED_CERT"
+      - name: Upload installable signed QA APK as NON-latest prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::LT104 QA already published; will not overwrite."
+            exit 0
+          fi
+          cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
+          # PokeSearch LT104 — Duas Pokébolas (APK de teste)
+          - Duas pesquisas simultâneas independentes com a mesma sessão: primeira por padrão IV 15/15/15 (100%), segunda IV 0/0/0 (0%). Sem marcações de cor/número fixas: Pokébolas seguem os filtros atuais.
+          - Posição, filtros, menus, resultados, atualização independentes. Até 10 resultados por pesquisa.
+          - APK protegido, R8 e assinatura permanente igual à LT103. Atualização diretamente sobre LT103, mantendo dados.
+          - **PRÉ-RELEASE DE TESTE:** verificar no Samsung login compartilhado, resultado correto em cada busca, menus, localização, despawn, desempenho e cotas da API.
+          - Não substitui o canal oficial estável LT103. Sem alteração no link de distribuição Google Drive.
+          NOTES
+          gh release create "$TAG" "$RUNNER_TEMP/lt104/$ASSET"             --repo "$GITHUB_REPOSITORY"             --target "$SOURCE_SHA"             --title "PokeSearch LT104 (duas Pokébolas) — QA"             --notes-file "$RUNNER_TEMP/release-notes.md"             --prerelease --latest=false
+      - name: Confirm public QA asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          DATA="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG")"
+          test "$(echo "$DATA" | jq -r .prerelease)" = true
+          test "$(echo "$DATA" | jq -r .draft)" = false
+          test "$(echo "$DATA" | jq -r --arg name "$ASSET" '.assets[] | select(.name == $name) | .name')" = "$ASSET"
