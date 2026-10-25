@@ -2536,7 +2536,7 @@ public class OverlayService extends Service {
         }
         if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()&&now-lastAlertAt>60000L){
             if(sendGeneralNotification("Novo Pokémon: "+firstNew,
-                "Encontrado nos filtros confirmados · "+mode.toUpperCase(java.util.Locale.ROOT),74))
+                "Encontrado nos filtros confirmados · "+mode.toUpperCase(java.util.Locale.ROOT),12074))
                 lastAlertAt=now;
         }
     }
@@ -3868,9 +3868,10 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void testNotification(){handler.post(()->{
             boolean sent=WatchAlerts.test(OverlayService.this);
+            String diagnostic=WatchAlerts.soundDiagnostic(OverlayService.this);
             android.widget.Toast.makeText(OverlayService.this,
-                sent?"Teste do canal Favoritos enviado":"Aviso favorito bloqueado. Confira permissão e canal.",
-                android.widget.Toast.LENGTH_SHORT).show();
+                sent?"Teste de Favoritos enviado · "+diagnostic:diagnostic,
+                android.widget.Toast.LENGTH_LONG).show();
             update();
         });}
         @JavascriptInterface public void testGeneralNotification(){handler.post(()->{
