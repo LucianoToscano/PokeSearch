@@ -17,7 +17,7 @@ check("changed location / level / gender always rejected",()=>{for(const changes
 check("reordering cannot bypass missing complete fingerprint",()=>{cards=[card(1)];assert.equal(pick({...identity,location:""}),null)});
 check("React temporarily hides Get coords, then restores precise card",()=>{let present=false;
 const run=()=>JSON.parse(vm.runInNewContext("(function(){"+read+"})()",{action:"readCoords:"+JSON.stringify(identity),JSON,
-matchingCoordsCard:()=>present?{node:{}}:null,cardCoordsControls:()=>[{}],text:()=>"Open in Maps",
+matchingCoordsCard:()=>present?{node:{}}:null,cardCoordsControls:()=>[{getAttribute:()=>""}],text:()=>"Open in Maps",
 nextLabelValue:()=>"51.230,-3.015"}));
 let first=run();assert.equal(first.ok,false);assert.equal(first.pending,true);
 present=true;let after=run();assert.equal(after.ok,true);assert.equal(after.coords,"51.230,-3.015");
