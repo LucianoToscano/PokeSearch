@@ -325,6 +325,11 @@ public class MainActivity extends Activity {
         secondaryOverlayControl.setOnClickListener(v->toggleSecondaryOverlay());
         LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(42));
         dualLp.leftMargin=d(8);dualLp.rightMargin=d(8);dualLp.bottomMargin=d(4);
+        // LT111: hide only the option to ENABLE the second Pokeball in Home.
+        // GONE leaves no blank row and removes this control from accessibility
+        // navigation. Keep secondary service, saved filters and running state.
+        // Do not reset secondary preferences or stop either foreground service.
+        dualOverlayRow.setVisibility(View.GONE);
         screen.addView(dualOverlayRow,dualLp);
 
         // HOME-02: icon only at top left; compact actions on the right.
