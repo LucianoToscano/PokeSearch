@@ -2569,7 +2569,8 @@ public class OverlayService extends Service {
             }
             BugReport.log(this,"FAVORITE_ALERT_PARITY",
                 (isSecondaryOverlay()?"P2":"P1")+" candidatos="+watchedCount+
-                " avisos="+delivered+" perfil="+preferences.getInt("favoritePresetActiveV1",0)+
+                " avisos="+delivered+" perfil="+
+                    getSharedPreferences("prefs",0).getInt("favoritePresetActiveV1",0)+
                 " modo="+WatchAlerts.mode(this)+" permissão="+WatchAlerts.permissionGranted(this));
             if(!WatchAlerts.permissionGranted(this))
                 getSharedPreferences("prefs",0).edit().putString("lastWatchAlertError",
@@ -2577,7 +2578,8 @@ public class OverlayService extends Service {
         }
         if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()&&now-lastAlertAt>60000L){
             if(sendGeneralNotification("Novo Pokémon: "+firstNew,
-                "Encontrado nos filtros confirmados · "+mode.toUpperCase(java.util.Locale.ROOT),12074))
+                "Encontrado nos filtros confirmados · "+mode.toUpperCase(java.util.Locale.ROOT),
+                isSecondaryOverlay()?12075:12074))
                 lastAlertAt=now;
         }
     }
@@ -3953,7 +3955,8 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void testGeneralNotification(){handler.post(()->{
             boolean sent=sendGeneralNotification("🔔 Teste de aviso geral",
-                "Teste do canal de novos Pokémon · nenhuma captura real foi detectada.",75);
+                "Teste do canal de novos Pokémon · nenhuma captura real foi detectada.",
+                isSecondaryOverlay()?12077:12076);
             android.widget.Toast.makeText(OverlayService.this,
                 sent?"Teste de aviso geral enviado":"Aviso geral bloqueado. Confira permissão e canal.",
                 android.widget.Toast.LENGTH_SHORT).show();
