@@ -3044,6 +3044,53 @@ public class OverlayService extends Service {
         }
         // LT57 single-form bridge: menus submit a DELTA, not a stale copy of
         // all search settings. Pokémon, Raw IV, Shiny and Location are untouched.
+        // Three opt-in general presets. Only search-mode/form fields are stored:
+        // Location, Shiny and existing favorite/notification preferences remain
+        // independent so loading a preset cannot silently change those controls.
+        private String generalPresetKey(int slot){return "generalFilterPresetV1_"+slot;}
+        @JavascriptInterface public void requestGeneralFilterPresets(){handler.post(()->{
+            android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+            JSONArray available=new JSONArray();
+            for(int slot=1;slot<=3;slot++)
+                available.put(p.contains(generalPresetKey(slot)));
+            JSONObject status=new JSONObject();
+            try{status.put("saved",available);}catch(org.json.JSONException ignored){}
+            String script="window.onGeneralPresetStatus&&window.onGeneralPresetStatus("+status.toString()+")";
+            js(menuPanel,menuLoaded,script);
+            js(popupPanel,popupLoaded,script);
+        });}
+        @JavascriptInterface public void saveGeneralFilterPreset(int slot){handler.post(()->{
+            if(slot<1||slot>3||stopped)return;
+            try{
+                JSONObject snapshot=new JSONObject(filterConfigJson());
+                snapshot.put("mode",mode);
+                String value=snapshot.toString();
+                if(value.length()>16000)return;
+                getSharedPreferences("prefs",0).edit()
+                    .putString(generalPresetKey(slot),value).apply();
+                android.widget.Toast.makeText(OverlayService.this,
+                    "✓ Filtro geral "+slot+" salvo",android.widget.Toast.LENGTH_SHORT).show();
+                requestGeneralFilterPresets();
+            }catch(org.json.JSONException ignored){}
+        });}
+        @JavascriptInterface public void loadGeneralFilterPreset(int slot){handler.post(()->{
+            if(slot<1||slot>3||stopped)return;
+            String value=getSharedPreferences("prefs",0).getString(generalPresetKey(slot),"");
+            if(value.length()<10||value.length()>16000)return;
+            try{
+                JSONObject snapshot=new JSONObject(value);
+                String presetMode=snapshot.optString("mode","");
+                if(!("raw".equals(presetMode)||"percent".equals(presetMode)||
+                     "gl".equals(presetMode)||"ul".equals(presetMode)))return;
+                // Use the existing validated, atomic setSearchConfig pathway
+                // instead of introducing a second filter-submission mechanism.
+                new Bridge().setSearchConfig(value);
+                closeIndependentPopup();
+                android.widget.Toast.makeText(OverlayService.this,
+                    "✓ Carregando filtro geral "+slot,
+                    android.widget.Toast.LENGTH_SHORT).show();
+            }catch(org.json.JSONException ignored){}
+        });}
         @JavascriptInterface public void patchSearchFilters(String payload){handler.post(()->{
             try{
                 JSONObject delta=new JSONObject(payload),updated=new JSONObject(extraFiltersJson);
@@ -3232,6 +3279,12 @@ public class OverlayService extends Service {
                 // user explicitly switches it back to Any. Ordinary blank
                 // options must never block Raw IV or GL/UL searches.
                 JSONObject previousExtra=new JSONObject(extraFiltersJson);
+                // A general preset must not delete exclusions from existing users.
+                for(String preservedKey:new String[]{"blacklistPokemonIds",
+                    "blacklistSpeciesForms","blacklistForms"}){
+                    if(previousExtra.has(preservedKey))
+                        extra.put(preservedKey,previousExtra.get(preservedKey));
+                }
                 org.json.JSONArray previouslyCleared=previousExtra.optJSONArray("clearExtraKeys");
                 org.json.JSONArray clearKeys=new org.json.JSONArray();
                 for(String key:strings){
