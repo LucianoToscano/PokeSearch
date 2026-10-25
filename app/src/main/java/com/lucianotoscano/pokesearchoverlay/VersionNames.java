@@ -28,7 +28,15 @@ public final class VersionNames {
             return String.format(Locale.ROOT,"0.%02d.%02d",minor,patch);
         }catch(NumberFormatException e){return candidate;}
     }
-    /** Required on all new builds and manifest offers from LT107 onwards. */
+    /** Previously signed public releases cannot be renamed in place.
+     * Only their already-published 100..106 identities may be read from older
+     * Drive update manifests; new builds MUST use canonical labels. */
+    public static boolean isLegacyPublished(String version){
+        if(version==null||!version.matches("0\\\\.00\\\\.10[0-6]"))return false;
+        return true;
+    }
+
+    /** Required on all new builds and displayed remote versions. */
     public static boolean isCanonical(String version){
         if(version==null||!version.matches("0\\.\\d{2}\\.\\d{2}"))return false;
         return version.equals(canonical(version));
