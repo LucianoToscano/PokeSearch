@@ -65,11 +65,11 @@ public class OverlayService extends Service {
         String[] keys={"resultGapTop","resultGapBetween","resultSpriteScale","headerIconY",
             "headerOffsetX","headerTouchWidth","headerTouchHeight","headerAfterGap",
             "resultsOffsetX","resultsOffsetY","menuOffsetX","menuOffsetY",
-            "gearMenuGap","menuItemGap","popupWidth","popupHeight","resultsTransparency","menuTransparency"};
+            "gearMenuGap","menuItemGap","popupWidth","popupHeight","resultsTransparency","menuTransparency","menuBlur"};
         int[][] limits={{-80,80,0},{0,65,31},{70,160,100},{0,72,0},
             {-16,16,0},{26,42,35},{24,50,30},{0,36,0},
             {-200,200,0},{-350,350,0},{-200,200,0},{-350,350,0},
-            {0,80,0},{0,16,0},{160,330,232},{140,420,390},{0,100,100},{0,100,35}};
+            {0,80,0},{0,16,0},{160,330,232},{140,420,390},{0,100,100},{0,100,50},{0,16,4}};
         for(int i=0;i<keys.length;i++)clean.put(keys[i],
             vInt(input,keys[i],limits[i][2],limits[i][0],limits[i][1]));
         for(String key:new String[]{"resultsOrientation","menuOrientation"}){
@@ -341,6 +341,7 @@ public class OverlayService extends Service {
     };
     private boolean pickerOpen=false;
     private android.app.Dialog favoritePickerDialog;
+    private android.app.Dialog quickActionDialog;
     private final Runnable queuedRefresh=()->refresh(false);
     private final Runnable filterChangeRefresh=()->refresh(true);
     private void scheduleFilterChangeRefresh(){
@@ -404,6 +405,14 @@ public class OverlayService extends Service {
     private String sort="site"; // Follow the ten results returned by the site, not an inverted local despawn sort.
     private long lastAlertAt=0L;
     private final java.util.Set<String> knownSpawns=new java.util.HashSet<>();
+    // Recent identity TTL protects against duplicate notices when a briefly
+    // missing encounter reappears. It is never persisted or used for API retry.
+    private final java.util.LinkedHashMap<String,Long> recentSpawnExpiries=
+        new java.util.LinkedHashMap<String,Long>(256,0.75f,true){
+            @Override protected boolean removeEldestEntry(java.util.Map.Entry<String,Long> item){
+                return size()>256;
+            }
+        };
     private long armedDespawnMillis=0L;
     private final Runnable expiryRefresh=new Runnable(){
         @Override public void run(){
@@ -1267,6 +1276,10 @@ public class OverlayService extends Service {
         menuPanel.addJavascriptInterface(new Bridge(),"Native");
         menuRoot.addView(menuPanel,new FrameLayout.LayoutParams(-1,-1));
         menuPanel.setWebViewClient(new WebViewClient(){
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+            }
             @Override public void onPageFinished(WebView view,String url){
                 if(url!=null&&url.startsWith("file:///android_asset/")){
                     menuLoaded=true;
@@ -1399,6 +1412,10 @@ public class OverlayService extends Service {
         popupPanel.addJavascriptInterface(new Bridge(),"Native");
         popupRoot.addView(popupPanel,new FrameLayout.LayoutParams(-1,-1));
         popupPanel.setWebViewClient(new WebViewClient(){
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+            }
             @Override public void onPageFinished(WebView web,String url){
                 if(url!=null&&url.startsWith("file:///android_asset/")){
                     popupLoaded=true;update();
@@ -1530,6 +1547,10 @@ public class OverlayService extends Service {
             resultPanel=null;resultGrip=null;return;
         }
         resultPanel.setWebViewClient(new WebViewClient(){
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+            }
             @Override public void onPageFinished(WebView web,String url){
                 if(url!=null&&url.startsWith("file:///android_asset/")){
                     resultLoaded=true;
@@ -2271,8 +2292,62 @@ public class OverlayService extends Service {
         catch(Exception e){recordFailure("interpretar despawn",e);return Long.MAX_VALUE;}
     }
     private String spawnKey(JSONObject c){
-        return mode+"|"+c.optString("name","")+"|"+c.optString("cp","")+"|"+
-            c.optString("level","")+"|"+c.optString("location","");
+        // Never dedupe merely by the same species/CP/location. Different
+        // absolute expiries and verified form/IV can denote different spawns.
+        // Mode deliberately is not part of the encounter identity.
+        return c.optString("number","")+"|"+c.optString("name","")+"|"+
+            c.optString("form","")+"|"+c.optString("cp","")+"|"+
+            c.optString("level","")+"|"+c.optString("location","")+"|"+
+            c.optString("iv","")+"|"+c.optLong("expiresAtMs",0);
+    }
+    // Sort by distance can re-collect a partially hydrated result. Retain
+    // previously VERIFIED fields only for the identical unexpired encounter:
+    // same species, name, CP, level, location AND absolute despawn timestamp.
+    // Never copy between lookalike spawns or across a changed PvP mode.
+    private JSONArray retainVerifiedEncounterFields(JSONArray incoming){
+        if(incoming==null||incoming.length()==0)return incoming;
+        JSONArray previous;
+        try{previous=new JSONArray(results);}catch(org.json.JSONException ignored){return incoming;}
+        java.util.HashMap<String,JSONObject> existing=new java.util.HashMap<>();
+        long now=System.currentTimeMillis();
+        for(int i=0;i<previous.length();i++){
+            JSONObject old=previous.optJSONObject(i);
+            if(old==null||old.optLong("expiresAtMs",0)<=now)continue;
+            String key=encounterIdentityForMetadata(old);
+            if(!key.isEmpty())existing.put(key,old);
+        }
+        boolean samePvPMode=shownMode.equals(mode);
+        String[] stable={"iv","ivPercent","moves","gender","size","form"};
+        String[] scoped={"rank","ivRank","ivRankSource","ivRankLeague"};
+        for(int i=0;i<incoming.length();i++){
+            JSONObject card=incoming.optJSONObject(i);
+            if(card==null)continue;
+            JSONObject prior=existing.get(encounterIdentityForMetadata(card));
+            if(prior==null)continue;
+            try{
+                for(String field:stable)
+                    if((!card.has(field)||card.isNull(field)||
+                         card.optString(field,"").trim().isEmpty())&&
+                        prior.has(field)&&!prior.isNull(field)&&
+                        !prior.optString(field,"").trim().isEmpty())
+                        card.put(field,prior.get(field));
+                if(samePvPMode)for(String field:scoped)
+                    if((!card.has(field)||card.isNull(field)||
+                         card.optString(field,"").trim().isEmpty())&&
+                        prior.has(field)&&!prior.isNull(field)&&
+                        !prior.optString(field,"").trim().isEmpty())
+                        card.put(field,prior.get(field));
+            }catch(org.json.JSONException ignored){}
+        }
+        return incoming;
+    }
+    private String encounterIdentityForMetadata(JSONObject card){
+        if(card==null||card.optLong("expiresAtMs",0)<=0)return "";
+        for(String key:new String[]{"number","name","cp","level","location"})
+            if(card.optString(key,"").isEmpty())return "";
+        return card.optString("number")+"|"+card.optString("name")+"|"+
+            card.optString("cp")+"|"+card.optString("level")+"|"+
+            card.optString("location")+"|"+card.optLong("expiresAtMs");
     }
     private JSONArray sortItems(JSONArray source){
         java.util.ArrayList<JSONObject> a=new java.util.ArrayList<>();
@@ -2385,12 +2460,18 @@ public class OverlayService extends Service {
         java.util.LinkedHashMap<String,String[]> individualFavorites=new java.util.LinkedHashMap<>();
         java.util.Set<String> wanted=WatchAlerts.watched(this);
         long now=System.currentTimeMillis();
+        recentSpawnExpiries.entrySet().removeIf(entry->entry.getValue()<=now);
         for(int i=0;i<cards.length();i++){
             JSONObject c=cards.optJSONObject(i);
             if(c==null)continue;
+            long expiry=c.optLong("expiresAtMs",Long.MAX_VALUE);
+            if(expiry<=now)continue; // expired Pokémon can never notify
             String key=spawnKey(c);
             current.add(key);
-            if(knownSpawns.contains(key))continue;
+            if(knownSpawns.contains(key)||
+                recentSpawnExpiries.getOrDefault(key,0L)>now)continue;
+            recentSpawnExpiries.put(key,expiry==Long.MAX_VALUE?
+                now+15L*60_000L:expiry);
             if(firstNew.isEmpty() &&
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) && verifiedTargetCriteria(c))
                 firstNew=c.optString("name","Pokémon");
@@ -2509,7 +2590,7 @@ public class OverlayService extends Service {
             }catch(Exception e){recordFailure("marcar despawn",e);}
             unexpired.put(card);
         }
-        JSONArray sorted=sortItems(unexpired);
+        JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));
         // QA data is shown for visual homologation but cannot send notifications.
         boolean authorizedApiQa="authorized-api-qa".equals(r.optString("source",""));
         if(!authorizedApiQa)recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
@@ -2785,6 +2866,24 @@ public class OverlayService extends Service {
         }
         return "";
     }
+    // Clipboard may contain coordinates inside a maps link or formatted text.
+    // Fail closed on two different coordinate pairs instead of choosing at random.
+    private String extractClipboardCoordinates(String input){
+        if(input==null||input.length()>512)return "";
+        String exact=extractCoordinates(input.trim());
+        if(!exact.isEmpty())return exact;
+        java.util.regex.Matcher matches=java.util.regex.Pattern.compile(
+            "(?<![0-9.])([-+]?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*([-+]?\\d{1,3}(?:\\.\\d+)?)(?![0-9.])")
+            .matcher(input.replace('−','-'));
+        String found="";
+        while(matches.find()){
+            String candidate=extractCoordinates(matches.group());
+            if(candidate.isEmpty())continue;
+            if(!found.isEmpty()&&!found.equals(candidate))return "";
+            found=candidate;
+        }
+        return found;
+    }
     private void deliverCoords(String coordinates,String message){
         js(detailPanel,detailLoaded,"window.coordsResult("+JSONObject.quote(coordinates)+","+JSONObject.quote(message)+")");
         status(message);
@@ -2892,23 +2991,123 @@ public class OverlayService extends Service {
             status(locationEnabled?"📍 Localização solicitada • aguardando confirmação no site":"📍 Localização desligada • busca geral");
             OverlayService.this.refresh(true);
         });}
-        @JavascriptInterface public void pasteLocationCoords(){handler.post(()->{
-            // Clipboard is read ONLY after a user tap. Never log or persist a
-            // clipboard value that was not explicitly applied as a filter.
-            String parsed="";
-            try{
-                ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-                if(cb!=null&&cb.hasPrimaryClip()){
-                    android.content.ClipData clip=cb.getPrimaryClip();
-                    if(clip!=null&&clip.getItemCount()>0){
-                        CharSequence value=clip.getItemAt(0).coerceToText(OverlayService.this);
-                        if(value!=null&&value.length()<=128)
-                            parsed=extractCoordinates(value.toString());
-                    }
+        // LT91-A: local-only named hunt locations, no physical GPS or API call
+        // when saving. Applying always uses the existing validated setLocation.
+        private String savedLocationKey(int slot){return "savedSearchLocationV1_"+slot;}
+        @JavascriptInterface public void requestSavedSearchLocations(){handler.post(()->{
+            JSONArray slots=new JSONArray();
+            android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+            int active=p.getInt("savedSearchLocationActiveV1",0);
+            for(int slot=1;slot<=3;slot++){
+                JSONObject item=new JSONObject();
+                try{
+                    JSONObject stored=new JSONObject(p.getString(savedLocationKey(slot),"{}"));
+                    item.put("slot",slot)
+                        .put("saved",stored.has("coords")&&stored.has("radius"))
+                        .put("name",stored.optString("name","Local "+slot))
+                        .put("active",slot==active&&locationEnabled&&
+                            locationCoords.equals(stored.optString("coords",""))&&
+                            locationRadius==stored.optInt("radius",-1));
+                }catch(org.json.JSONException ignored){
+                    try{item.put("slot",slot).put("saved",false)
+                        .put("name","Local "+slot);}catch(org.json.JSONException ignoredAgain){}
                 }
-            }catch(Exception e){recordFailure("colar coordenadas",e);}
-            js(menuPanel,menuLoaded,"window.onLocationPaste("+JSONObject.quote(parsed)+")");
-            js(popupPanel,popupLoaded,"window.onLocationPaste("+JSONObject.quote(parsed)+")");
+                slots.put(item);
+            }
+            String script="window.onSavedSearchLocations&&window.onSavedSearchLocations("+slots.toString()+")";
+            js(menuPanel,menuLoaded,script);js(popupPanel,popupLoaded,script);
+        });}
+        @JavascriptInterface public void saveSearchLocation(int slot,String label,String coords,int radius){handler.post(()->{
+            if(stopped||slot<1||slot>3||radius<0||radius>1000)return;
+            String clean=extractCoordinates(coords==null?"":coords);
+            if(clean.isEmpty())return;
+            String name=label==null?"":label.trim().replaceAll("[\\r\\n\\t<>]"," ");
+            if(name.isEmpty())name="Local "+slot;
+            if(name.length()>30)return;
+            try{
+                JSONObject data=new JSONObject();
+                data.put("name",name).put("coords",clean).put("radius",radius);
+                getSharedPreferences("prefs",0).edit()
+                    .putString(savedLocationKey(slot),data.toString())
+                    .putInt("savedSearchLocationActiveV1",slot).apply();
+                requestSavedSearchLocations();
+                android.widget.Toast.makeText(OverlayService.this,
+                    "✓ Local "+slot+" salvo",android.widget.Toast.LENGTH_SHORT).show();
+            }catch(org.json.JSONException ignored){}
+        });}
+        @JavascriptInterface public void loadSearchLocation(int slot){handler.post(()->{
+            if(stopped||slot<1||slot>3)return;
+            try{
+                JSONObject saved=new JSONObject(getSharedPreferences("prefs",0)
+                    .getString(savedLocationKey(slot),"{}"));
+                String coords=extractCoordinates(saved.optString("coords",""));
+                int radius=saved.optInt("radius",-1);
+                if(coords.isEmpty()||radius<0||radius>1000)return;
+                getSharedPreferences("prefs",0).edit()
+                    .putInt("savedSearchLocationActiveV1",slot).apply();
+                new Bridge().setLocation(true,coords,radius);
+                requestSavedSearchLocations();
+            }catch(org.json.JSONException ignored){}
+        });}
+        @JavascriptInterface public void deleteSavedSearchLocation(int slot){handler.post(()->{
+            if(stopped||slot<1||slot>3)return;
+            android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+            android.content.SharedPreferences.Editor edit=prefs.edit().remove(savedLocationKey(slot));
+            if(prefs.getInt("savedSearchLocationActiveV1",0)==slot)
+                edit.putInt("savedSearchLocationActiveV1",0);
+            edit.apply();
+            requestSavedSearchLocations();
+            android.widget.Toast.makeText(OverlayService.this,
+                "Local "+slot+" excluído",android.widget.Toast.LENGTH_SHORT).show();
+        });}
+        @JavascriptInterface public void pasteLocationCoords(){handler.post(()->{
+            if(stopped)return;
+            // Android 10+ restricts clipboard reads to the focused app/IME.
+            // The menu overlay is normally FLAG_NOT_FOCUSABLE. Focus only after
+            // the explicit Colar tap, then read once after WindowManager updates.
+            OverlayService.this.locationEditor(true);
+            WebView editor=!popupKind.isEmpty()&&popupPanel!=null?popupPanel:menuPanel;
+            if(editor!=null)editor.requestFocus();
+            handler.postDelayed(()->{
+                if(stopped)return;
+                String parsed="",reason="unavailable";
+                try{
+                    ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                    android.content.ClipData clip=cb==null?null:cb.getPrimaryClip();
+                    if(clip!=null&&clip.getItemCount()>0){
+                        reason="invalid";
+                        boolean conflict=false;
+                        for(int i=0;i<Math.min(clip.getItemCount(),5);i++){
+                            CharSequence value=clip.getItemAt(i).coerceToText(OverlayService.this);
+                            String candidate=extractClipboardCoordinates(value==null?"":value.toString());
+                            if(candidate.isEmpty())continue;
+                            if(!parsed.isEmpty()&&!parsed.equals(candidate)){conflict=true;break;}
+                            parsed=candidate;
+                        }
+                        if(conflict){parsed="";reason="ambiguous";}
+                    }
+                }catch(SecurityException denied){
+                    reason="unavailable"; // OS restriction, not a bad coordinate
+                }catch(Exception e){reason="unavailable";recordFailure("colar coordenadas",e);}
+                // No clipboard contents are logged, saved or sent to the API.
+                String callback="window.onLocationPaste&&window.onLocationPaste("+
+                    JSONObject.quote(parsed)+","+JSONObject.quote(reason)+")";
+                js(menuPanel,menuLoaded,callback);
+                js(popupPanel,popupLoaded,callback);
+            },180L);
+        });}
+        @JavascriptInterface public void copyLocationCoords(String input){handler.post(()->{
+            String valid=extractCoordinates(input==null?"":input.trim());
+            String message="⚠ Informe coordenadas válidas para copiar";
+            if(!valid.isEmpty())try{
+                ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                if(clipboard!=null){
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Coordenadas PokeSearch",valid));
+                    message="✓ Coordenadas copiadas";
+                }
+            }catch(Exception e){recordFailure("copiar localização",e);}
+            String callback="window.onLocationCopy&&window.onLocationCopy("+JSONObject.quote(message)+")";
+            js(menuPanel,menuLoaded,callback);js(popupPanel,popupLoaded,callback);
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
         @JavascriptInterface public void requestFilterOptions(){handler.post(()->{
@@ -3111,16 +3310,30 @@ public class OverlayService extends Service {
         // Location, Shiny and existing favorite/notification preferences remain
         // independent so loading a preset cannot silently change those controls.
         private String generalPresetKey(int slot){return "generalFilterPresetV1_"+slot;}
+        private String generalPresetNameKey(int slot){return "generalPresetNameV1_"+slot;}
         @JavascriptInterface public void requestGeneralFilterPresets(){handler.post(()->{
             android.content.SharedPreferences p=getSharedPreferences("prefs",0);
-            JSONArray available=new JSONArray();
-            for(int slot=1;slot<=3;slot++)
+            JSONArray available=new JSONArray(),names=new JSONArray();
+            for(int slot=1;slot<=3;slot++){
                 available.put(p.contains(generalPresetKey(slot)));
+                names.put(p.getString(generalPresetNameKey(slot),"Perfil "+slot));
+            }
             JSONObject status=new JSONObject();
-            try{status.put("saved",available);}catch(org.json.JSONException ignored){}
+            try{status.put("saved",available).put("names",names)
+                .put("active",p.getInt("generalPresetActiveV1",0));}
+            catch(org.json.JSONException ignored){}
             String script="window.onGeneralPresetStatus&&window.onGeneralPresetStatus("+status.toString()+")";
             js(menuPanel,menuLoaded,script);
             js(popupPanel,popupLoaded,script);
+        });}
+        @JavascriptInterface public void renameGeneralFilterPreset(int slot,String requested){handler.post(()->{
+            if(slot<1||slot>3||stopped||requested==null)return;
+            String clean=requested.trim().replaceAll("[\\r\\n\\t<>]"," ");
+            clean=clean.replaceAll(" +"," ");
+            if(clean.isEmpty()||clean.length()>20)return;
+            getSharedPreferences("prefs",0).edit()
+                .putString(generalPresetNameKey(slot),clean).apply();
+            requestGeneralFilterPresets();
         });}
         @JavascriptInterface public void saveGeneralFilterPreset(int slot){handler.post(()->{
             if(slot<1||slot>3||stopped)return;
@@ -3130,9 +3343,44 @@ public class OverlayService extends Service {
                 String value=snapshot.toString();
                 if(value.length()>16000)return;
                 getSharedPreferences("prefs",0).edit()
-                    .putString(generalPresetKey(slot),value).apply();
+                    .putString(generalPresetKey(slot),value)
+                    .putInt("generalPresetActiveV1",slot).apply();
                 android.widget.Toast.makeText(OverlayService.this,
                     "✓ Filtro geral "+slot+" salvo",android.widget.Toast.LENGTH_SHORT).show();
+                requestGeneralFilterPresets();
+            }catch(org.json.JSONException ignored){}
+        });}
+        @JavascriptInterface public void deleteGeneralFilterPreset(int slot){handler.post(()->{
+            if(stopped||slot<1||slot>3)return;
+            android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+            android.content.SharedPreferences.Editor edit=p.edit().remove(generalPresetKey(slot));
+            if(p.getInt("generalPresetActiveV1",0)==slot)
+                edit.putInt("generalPresetActiveV1",0);
+            edit.apply();
+            requestGeneralFilterPresets();
+            android.widget.Toast.makeText(OverlayService.this,
+                "Filtro "+slot+" excluído",android.widget.Toast.LENGTH_SHORT).show();
+        });}
+        @JavascriptInterface public void clearGeneralFilterPreset(){handler.post(()->{
+            if(stopped)return;
+            // "Padrão" clears the optional search fields without changing
+            // the user's Shiny, location, sound, Favorites or mode preferences.
+            try{
+                JSONObject reset=new JSONObject(filterConfigJson());
+                // A neutral search uses IV% 0..100 (no IV restriction). It
+                // avoids implicitly retaining a prior 15/15/15 or GL rank.
+                reset.put("mode","percent");
+                reset.put("percentMin",0).put("percentMax",100);
+                for(String key:new String[]{"pokemon","sortBy","weather","size","gender",
+                    "form","cpMin","cpMax","levelMin","levelMax","minPvpCp"})
+                    reset.put(key,"");
+                for(String key:new String[]{"sizeSelections","genderSelections",
+                    "formSelections","pokemonSelections"})
+                    reset.put(key,new JSONArray());
+                reset.put("clearPokemonSelection",true);
+                reset.put("includePreviousEvolutions",true);
+                getSharedPreferences("prefs",0).edit().putInt("generalPresetActiveV1",0).apply();
+                new Bridge().setSearchConfig(reset.toString());
                 requestGeneralFilterPresets();
             }catch(org.json.JSONException ignored){}
         });}
@@ -3147,8 +3395,9 @@ public class OverlayService extends Service {
                      "gl".equals(presetMode)||"ul".equals(presetMode)))return;
                 // Use the existing validated, atomic setSearchConfig pathway
                 // instead of introducing a second filter-submission mechanism.
+                getSharedPreferences("prefs",0).edit().putInt("generalPresetActiveV1",slot).apply();
                 new Bridge().setSearchConfig(value);
-                closeIndependentPopup();
+                requestGeneralFilterPresets();
                 android.widget.Toast.makeText(OverlayService.this,
                     "✓ Carregando filtro geral "+slot,
                     android.widget.Toast.LENGTH_SHORT).show();
@@ -3578,14 +3827,28 @@ public class OverlayService extends Service {
             update();
             alertModeCaption("Pokémon Favoritos",mode);
         });}
+        private int menuActionAnchorY(){
+            if(menuParams==null)return dp(70);
+            return menuParams.y+dp(visualMenuBaseDp()+4);
+        }
+        private void closeQuickActionDialog(){
+            android.app.Dialog current=quickActionDialog;
+            quickActionDialog=null;
+            if(current!=null)try{current.dismiss();}catch(RuntimeException ignored){}
+        }
         private void requestAlertTonePicker(String target){
-            Intent intent=new Intent(OverlayService.this,MainActivity.class);
-            intent.setAction("com.lucianotoscano.pokesearchoverlay.PICK_ALERT_TONE");
-            intent.putExtra("alertToneTarget",target);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP|
-                Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            try{startActivity(intent);}
-            catch(Exception ex){recordFailure("selecionar som de notificação",ex);}
+            if(stopped||root==null)return;
+            if(!"general".equals(target)&&!"favorites".equals(target)){
+                android.widget.Toast.makeText(OverlayService.this,
+                    "Som individual: use a configuração de Favoritos",
+                    android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+            closeQuickActionDialog();
+            try{
+                quickActionDialog=OverlayQuickMenus.showTone(OverlayService.this,
+                    target,menuActionAnchorY(),()->{if(!stopped)update();});
+            }catch(Exception ex){recordFailure("selecionar som de notificação",ex);}
         }
         @JavascriptInterface public void pickAlertTone(String target){handler.post(()->{
             if(!"general".equals(target)&&!"favorites".equals(target)&&
@@ -3677,11 +3940,13 @@ public class OverlayService extends Service {
                 android.widget.Toast.LENGTH_SHORT).show();
         });}
         @JavascriptInterface public void openPix(){handler.post(()->{
-            Intent intent=new Intent(OverlayService.this,MainActivity.class);
-            intent.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_PIX");
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
-                Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            try{startActivity(intent);}catch(Exception e){recordFailure("abrir atalho",e);}
+            if(stopped||root==null)return;
+            if(quickActionDialog!=null&&quickActionDialog.isShowing()){
+                closeQuickActionDialog();return;
+            }
+            try{quickActionDialog=OverlayQuickMenus.showPix(
+                OverlayService.this,menuActionAnchorY());}
+            catch(Exception e){recordFailure("abrir Pix flutuante",e);}
         });}
         @JavascriptInterface public void openSettings(){handler.post(()->{
             Intent intent=new Intent(OverlayService.this,MainActivity.class);
@@ -3704,7 +3969,9 @@ public class OverlayService extends Service {
             }
         });}
         @JavascriptInterface public void openWatchList(){
-            handler.post(()->showFavoritePicker(-1,-1));
+            handler.post(()->showFavoritePicker(menuParams==null?-1:
+                menuParams.x+dp(menuDp()/2),menuParams==null?-1:
+                menuParams.y+dp(visualMenuBaseDp()/2)));
         }
         @JavascriptInterface public void openWatchListAt(int triggerDp,int triggerYDp){
             handler.post(()->{
@@ -4112,6 +4379,10 @@ public class OverlayService extends Service {
         running=false;
         if(favoritePickerDialog!=null){
             favoritePickerDialog.dismiss();favoritePickerDialog=null;
+        }
+        if(quickActionDialog!=null){
+            try{quickActionDialog.dismiss();}catch(RuntimeException ignored){}
+            quickActionDialog=null;
         }
         pickerOpen=false;
         ++requestGeneration;

@@ -56,9 +56,10 @@ test("LT62 split popup preserves toolbar, content-sized hitbox and page lifecycl
   dock.includes("Native.openPopup(kind,Math.round(");
 });
 test("LT62 popup receives picker/filter events, focus and P/M/G state updates",()=>{
- for(const code of ["window.onLocationPaste(","window.onFilterOptions(",
-   "window.onFormOptions(","window.onPokemonSuggestions("])
+ for(const code of ["window.onFilterOptions(","window.onFormOptions(",
+   "window.onPokemonSuggestions("])
   if(!service.includes("js(popupPanel,popupLoaded,\""+code))return false;
+ if(!service.includes("js(popupPanel,popupLoaded,callback);"))return false;
  return service.includes("WebView web=inPopup?popupPanel:menuPanel;")&&
   service.includes("js(popupPanel,popupLoaded,data);")&&
   service.includes("js(popupPanel,popupLoaded,jsCode);")&&
@@ -78,7 +79,7 @@ test("LT62/LT68 Favorites stay nonmodal and anchored to their star icon",()=>{
  return bridge.includes("pickerOpen=true;")&&bridge.includes("PokemonPicker.show(OverlayService.this")&&
   bridge.includes("pickerOpen=false;")&&bridge.includes("if(!stopped)update();")&&
   bridge.includes("},anchorX,anchorY);")&&
-  publicApi.includes("showFavoritePicker(-1,-1)")&&
+  publicApi.includes("showFavoritePicker(menuParams==null?-1:")&&
   publicApi.includes("showFavoritePicker(anchorX,anchorY)")&&
   !bridge.includes("root.setVisibility(View.GONE)")&&
   !bridge.includes("resultRoot.setVisibility(View.GONE)")&&
@@ -256,7 +257,7 @@ test("UX-INFO-COMPACT-01 requested Pokémon metadata has no verbose labels",()=>
  const rank=["GL RG#12","GL IV#1","GL P100,00%","UL RG#84","UL IV#50",
    "ML RG#35","ML IV#307"];
  return ["Yamask","#562","♂","XXL","Galarian","Astonish / Rock Tomb",
-   "🇹🇼 Tainan City, Taiwan","0.3 km","✨","PC813 · Nv29","15/15/15","100%","Despawn TIMER"].every(x=>lines.includes(x))&&
+   "🇹🇼 Tainan City, Taiwan","0.3 km","✨","PC813 · Nv29","15/15/15","100%","TIMER"].every(x=>lines.includes(x))&&
   rank.every(x=>lines.includes(x))&&
   nameWithForm[0]==="Yamask"&&nameWithForm[1]==="Galarian"&&
   makeLines.resultInfoHtml("0%",zero).includes('ivInfo zero')&&
@@ -400,13 +401,13 @@ test("Login launched from overlay returns to gameplay with PokeSearch only on su
  main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
  main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
 test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("×")')&&!picker.includes('.setPositiveButton("Concluído"'));
-test("Favorites retain translucent charcoal but allow background touches outside dialog",picker.includes('Color.argb(239,34,38,47)')&&picker.includes('FLAG_NOT_TOUCH_MODAL')&&!picker.includes('setBlurBehindRadius'));
+test("Favorites use persisted theme and transparency without intercepting outside touches",picker.includes('1-Math.pow(Math.max(0,Math.min(100,transparency))/100.0,2.8)')&&picker.includes('menuTransparency",50')&&picker.includes('FLAG_NOT_TOUCH_MODAL')&&!picker.includes('window.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND)'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
 test("Single pin control expands the location editor",dock.includes('onclick="toggleChoices(\'location\')"'));
-test("Coords editor uses one Apply and explicit Clear without a second ON/OFF switch",dock.includes('fieldRow.append(field)')&&dock.includes('label.append(labelName,paste,radiusWrap)')&&dock.includes('clear.onclick=disable')&&!dock.includes('fieldRow.append(field,paste,toggle)'));
-test("Location has title paste, no header X, and separate geographic disable",dock.includes('label.append(labelName,paste,radiusWrap)')&&!dock.includes('close.onclick=closeChoices;title.appendChild(close)')&&dock.includes('Native.setLocation(false,"",0)'));
+test("Coords editor uses one Apply and explicit Clear without a second ON/OFF switch",dock.includes('fieldRow.append(field)')&&dock.includes('label.append(labelName,radiusWrap)')&&dock.includes('clear.onclick=disable')&&!dock.includes('fieldRow.append(field,paste,toggle)'));
+test("Location has title paste, no header X, and separate geographic disable",dock.includes('label.append(labelName,radiusWrap)')&&!dock.includes('close.onclick=closeChoices;title.appendChild(close)')&&dock.includes('Native.setLocation(false,"",0)'));
 test("Slider covers inclusive range 0 to 1000",dock.includes('slide.min="0"')&&dock.includes('slide.max="1000"'));
 test("Location enforces valid latitude and longitude",dock.includes('Math.abs(Number(match[1]))>90')&&dock.includes('Math.abs(Number(match[2]))>180'));
 test("Location preference persisted without exposing secrets",service.includes('putBoolean("locationEnabled",locationEnabled)')&&service.includes('prefs.remove("locationCoords").remove("locationRadius")'));
@@ -451,8 +452,9 @@ test("Despawn removes expired sprites then reloads the site even when AUTO is OF
 test("Expired 0:00 cards are never restored or announced as live",()=>{
  return service.includes('if(secs<0||secs>86400)return Long.MAX_VALUE;')&&
   service.includes('if(end<=now)continue;')&&
-  service.includes('JSONArray sorted=sortItems(unexpired);')&&
-  service.indexOf('JSONArray sorted=sortItems(unexpired);')<service.indexOf('recordNewResults(sorted,');
+  service.includes('JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));')&&
+  service.indexOf('JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));')<
+   service.indexOf('recordNewResults(sorted,');
 });
 test("Reopening menu immediately re-applies active visual states to recreated buttons",()=>{
  const block=dock.split('function renderQuickMenu(){')[1]?.split('function audibleAlertState(')[0]||"";
@@ -489,7 +491,7 @@ test("Manual refresh button has touch feedback",dock.includes('onclick="manualRe
  dock.includes('button.classList.add("refreshSpinning")')&&dock.includes('Native.refresh();'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(330,screenWidthDp()-8)"));
-test("Favorites use uniform dark gradient without background dim",picker.includes("Color.argb(238,29,32,39)")&&picker.includes("window.setDimAmount(0.0f)"));
+test("Favorites share one background color and optional local blur without background dim",picker.includes("background.setColors(new int[]{panelColor,panelColor})")&&picker.includes("window.setBackgroundBlurRadius")&&picker.includes("window.setDimAmount(0.0f)"));
 test("HOME-01 has explicit official Google/Discord login and sign-out",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return home.includes('homeAuthButton("◉  Discord"')&&home.includes('homeAuthButton("G  Google"')&&
@@ -1988,7 +1990,7 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
   lines.includes("UL RG#275")&&lines.includes("UL IV#1460")&&lines.includes("UL P89,97%")&&
   master.includes("ML RG#1")&&master.includes("ML IV#1")&&master.includes("ML P100,00%")&&
   api.pvpIvClassPercent(1460,alt,"ul")==="89,97"&&
-  unknown.includes("?/?/?")&&
+  !unknown.includes("?/?/?")&&
   !unknown.some(v=>v.includes("RG#")||v.includes("IV#"))&&
   api.verifiedSpawnRawIv({...alt,ivPercent:"100"})===null&&
   api.verifiedSpeciesIvRank(falseForm,"gl")===null&&
@@ -2171,7 +2173,7 @@ test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
   !body.includes('locationEnabled=true;closeChoices()')&&
   !body.includes('locationCoords=match[1]')&&
   body.includes('message.textContent="⌛ Verificando localização')&&
-  body.includes('label.append(labelName,paste,radiusWrap)')&&
+  body.includes('label.append(labelName,radiusWrap)')&&
   body.includes('Native.setLocation(false,"",0)')&&
   dock.includes('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
   dock.includes('state==="CONFIRMED"?"✓ Localização confirmada');
@@ -2179,11 +2181,10 @@ test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
 test("UX-LOCATION-FIX-03 explicit clipboard paste is validated and never enables filters",()=>{
  const handler=service.split('@JavascriptInterface public void pasteLocationCoords()')[1]?.split(
  '@JavascriptInterface public void locationEditor(boolean open)')[0]||"";
- const render=dock.split('window.onLocationPaste=coords=>{')[1]?.split('function renderLocationChoices(){')[0]||"";
- return handler.includes('cb.hasPrimaryClip()')&&
-  handler.includes('value.length()<=128')&&
-  handler.includes('parsed=extractCoordinates(value.toString())')&&
-  handler.includes('window.onLocationPaste(')&&
+ const render=dock.split('window.onLocationPaste=(coords,reason)=>{')[1]?.split('function renderLocationChoices(){')[0]||"";
+ return handler.includes('cb.getPrimaryClip()')&&
+  handler.includes('extractClipboardCoordinates(value==null?"":value.toString())')&&
+  handler.includes('window.onLocationPaste&&window.onLocationPaste(')&&
   render.includes('field.value=String(coords);')&&
   !render.includes('Native.setLocation(')&&
   !handler.includes('locationEnabled=true')&&

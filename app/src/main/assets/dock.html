@@ -3530,6 +3530,756 @@ body.popup-window.controls-window #choices.filterCascade.filterPresetOpen[data-p
 body.controls-window.visual-light-menu #choices.filterCascade .generalPresetFlyout button{
  color:var(--visual-menu-fg,#172533)!important;
 }
+
+/* LT88 Samsung: the filter holder stays click-through, but every actual
+   interactive filter surface has a real dark/light backing like other menus.
+   Layered base prevents a zero-alpha inherited custom value from revealing
+   the wallpaper. Only the small rail, editor and saved-slot flyout are painted. */
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade .filterCascadeEditor,
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout {
+ background:linear-gradient(var(--visual-menu-bg,rgba(22,30,42,.94)),var(--visual-menu-bg,rgba(22,30,42,.94))),#17202c!important;
+ background-clip:padding-box!important;
+ border:1px solid var(--visual-menu-border,#9daeb24a)!important;
+ box-shadow:0 3px 11px #0009!important;
+}
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeRail,
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeEditor,
+body.controls-window.visual-light-menu #choices.filterCascade .generalPresetFlyout {
+ background:linear-gradient(var(--visual-menu-bg,rgba(245,249,253,.90)),var(--visual-menu-bg,rgba(245,249,253,.90))),#eaf0f6!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeHead {
+ display:block!important;position:relative!important;text-align:center!important;
+ height:23px!important;min-height:23px!important;line-height:23px!important;
+ padding:0 2px!important;white-space:nowrap!important;
+}
+body.controls-window #choices.filterCascade .filterHeaderTitle {
+ display:block!important;width:100%!important;font-size:10px!important;
+ font-weight:700!important;pointer-events:none!important;
+}
+body.controls-window #choices.filterCascade .generalPresetToggle {
+ position:absolute!important;right:3px!important;top:2px!important;
+ width:17px!important;min-width:17px!important;height:18px!important;
+ margin:0!important;padding:0!important;z-index:2!important;
+ color:var(--visual-menu-fg,#e6edf7)!important;
+ background:transparent!important;font-size:13px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetFlyout{
+ height:max-content!important;min-height:0!important;max-height:none!important;
+ grid-auto-rows:min-content!important;
+}
+
+/* LT89 names: profiles remain a compact three-row flyout, no giant empty box. */
+body.controls-window #choices.filterCascade .generalPresetFlyout{width:185px!important}
+body.controls-window #choices.filterCascade .generalPresetRow>.generalPresetName{
+ min-width:0!important;width:72px!important;max-width:72px!important;
+ flex:0 0 72px!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ white-space:nowrap!important;text-align:left!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow>.generalPresetRename{
+ box-sizing:border-box!important;flex:0 0 72px!important;width:72px!important;
+ min-width:72px!important;height:24px!important;font-size:10px!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;background:transparent!important;
+ border:1px solid #79aeaf!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow>button.generalPresetLoad,
+body.controls-window #choices.filterCascade .generalPresetRow>button.generalPresetSave{
+ width:41px!important;min-width:0!important;flex:1 1 0!important;
+}
+
+/* LT91-A: compact saved research locations; no GPS or server request on save. */
+body.controls-window #choices.locationPanel .locSavedRow{
+ display:flex!important;gap:3px!important;align-items:center!important;
+ margin:3px 1px 0!important;min-height:24px!important;
+}
+body.controls-window #choices.locationPanel .locSavedName{
+ flex:1 1 0!important;width:78px!important;min-width:0!important;
+ height:24px!important;min-height:24px!important;
+ padding:2px 4px!important;font-size:10px!important;
+ background:var(--visual-menu-button-bg,#263646)!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid var(--visual-menu-border,#ffffff48)!important;
+ border-radius:5px!important;
+}
+body.controls-window #choices.locationPanel .locSavedSlots{
+ display:flex!important;flex:0 0 auto!important;gap:2px!important;
+}
+body.controls-window #choices.locationPanel .locSavedSlots button.locSlot{
+ box-sizing:border-box!important;width:26px!important;min-width:26px!important;
+ height:24px!important;min-height:24px!important;margin:0!important;
+ padding:0!important;text-align:center!important;
+ font-size:10px!important;color:#a7b0be!important;
+ background:var(--visual-menu-button-bg,#283646)!important;
+}
+body.controls-window #choices.locationPanel .locSavedSlots button.locSlot.saved{
+ color:#ffda77!important;border:1px solid #ffda7766!important;
+}
+
+/* LT88 Samsung physical QA: paint each visible panel at high contrast,
+   not the transparent outer pass-through hitbox. No extra empty rectangle. */
+body.controls-window #choices.modeCascade .modeCascadeRail,
+body.controls-window #choices.modeCascade .modeCascadeEditor,
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade .filterCascadeEditor,
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeRail,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout{
+ background:#1b2533!important;color:#edf4ff!important;
+ border:1px solid #607085!important;border-radius:7px!important;
+ box-shadow:0 3px 10px #0009!important;
+ background-clip:padding-box!important;
+}
+body.controls-window.visual-light-menu #choices.modeCascade .modeCascadeRail,
+body.controls-window.visual-light-menu #choices.modeCascade .modeCascadeEditor,
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeRail,
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeEditor,
+body.controls-window.visual-light-menu #choices.filterCascade .generalPresetFlyout{
+ background:#edf2f8!important;color:#1b3047!important;
+ border-color:#8fa2b7!important;
+}
+body.controls-window #choices.filterCascade .generalPresetFlyout{
+ box-sizing:border-box!important;position:absolute!important;left:82px!important;
+ right:auto!important;top:0!important;z-index:40!important;
+ width:149px!important;min-width:149px!important;max-height:none!important;
+ padding:5px!important;margin:0!important;display:flex!important;
+ flex-direction:column!important;gap:3px!important;pointer-events:auto!important;
+}
+body.controls-window #choices.filterCascade .generalPresetTitle{
+ font:700 10px/16px Roboto,Arial,sans-serif!important;padding:0 3px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow{
+ box-sizing:border-box!important;display:flex!important;gap:3px!important;
+ min-height:25px!important;height:25px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad{
+ box-sizing:border-box!important;flex:1 1 0!important;width:115px!important;
+ min-width:0!important;height:25px!important;min-height:25px!important;
+ padding:3px 5px!important;margin:0!important;text-align:left!important;
+ white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ background:var(--visual-menu-button-bg,#344254)!important;
+ color:var(--visual-menu-fg,#fff)!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad.active{
+ color:#ffd56b!important;border:1px solid #b6904e!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetDelete{
+ flex:0 0 22px!important;width:22px!important;min-width:22px!important;
+ height:25px!important;min-height:25px!important;margin:0!important;padding:0!important;
+ text-align:center!important;font-size:15px!important;
+ background:#4a2e39!important;color:#ffc2c2!important;
+}
+body.controls-window #choices.filterCascade .generalPresetHint{
+ font:400 8px/12px Roboto,Arial,sans-serif!important;padding:1px 2px!important;
+ color:inherit!important;opacity:.83!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList{
+ background:#1b2533!important;border-radius:6px!important;padding:2px!important;
+}
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeEditor .extraOptionList{
+ background:#edf2f8!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeEntry,
+body.controls-window #choices.filterCascade .filterCascadeEntry{
+ color:var(--visual-menu-fg,#eef5ff)!important;
+}
+
+/* LT88 Samsung: clipboard actions in the title, not crushing the radius field. */
+body.controls-window #choices.locationPanel .choiceHeader{position:relative!important;
+ display:flex!important;justify-content:center!important;align-items:center!important;
+ padding:0 52px 0 3px!important;min-height:26px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader>.locPaste{
+ position:absolute!important;top:0!important;right:27px!important;
+ min-width:24px!important;width:24px!important;height:24px!important;margin:0!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader>.locCopy{
+ position:absolute!important;top:0!important;right:1px!important;
+ min-width:24px!important;width:24px!important;height:24px!important;
+ margin:0!important;padding:0!important;text-align:center!important;
+ background:var(--visual-menu-button-bg,#293444)!important;
+ color:var(--visual-menu-fg,#eef4fb)!important;font-size:17px!important;
+ border:1px solid #ffffff45!important;border-radius:5px!important;
+}
+body.controls-window #choices.locationPanel .locSlotTools[hidden]{display:none!important}
+body.controls-window #choices.locationPanel .locSlotTools:not([hidden]){
+ display:flex!important;flex-wrap:nowrap!important;gap:2px!important;
+ align-items:center!important;margin:3px 0 0!important;min-height:24px!important;
+}
+body.controls-window #choices.locationPanel .locSlotTools>span{font-size:9px!important}
+body.controls-window #choices.locationPanel .locSlotTools>button{
+ min-width:0!important;flex:1 1 0!important;width:auto!important;
+ font-size:9px!important;height:24px!important;min-height:24px!important;
+ margin:0!important;padding:1px 2px!important;
+ background:var(--visual-menu-button-bg,#293647)!important;
+}
+body.controls-window #choices.locationPanel .locSlotTools>.locManageCancel{
+ flex:0 0 20px!important;width:20px!important;
+}
+body.controls-window #choices.locationPanel .locSavedSlots>.locHelp{
+ width:18px!important;min-width:18px!important;height:24px!important;
+ margin:0!important;padding:0!important;font-size:11px!important;
+ background:transparent!important;
+}
+
+/* Hidden legacy comparison text must remain hidden even though generic
+   button styles force display:block in the popup. No unverified import action. */
+body.controls-window #choices [hidden]{display:none!important}
+
+/* LT88-STANDARD-MENU-01
+   Single theme for every actual menu surface. The empty parent/window stays
+   transparent and touch pass-through. Theme alpha is controlled by the same
+   Editor Visual slider (50% by default), without stacked opaque islands. */
+body.controls-window #choices:not(.modeCascade):not(.filterCascade),
+body.controls-window #choices.modeCascade .modeCascadeRail,
+body.controls-window #choices.modeCascade .modeCascadeEditor,
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade .filterCascadeEditor,
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeRail,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout{
+ background:var(--visual-menu-bg,rgba(15,19,26,.50))!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid var(--visual-menu-border,rgba(227,233,241,.22))!important;
+ border-radius:8px!important;
+ box-shadow:var(--visual-menu-tile-shadow,0 1px 4px #0004)!important;
+ -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ background-clip:padding-box!important;
+}
+/* Cascade wrappers never paint an oversized background behind the small cards. */
+body.controls-window #choices.modeCascade,
+body.controls-window #choices.filterCascade,
+body.popup-window.controls-window #choices.modeCascade,
+body.popup-window.controls-window #choices.filterCascade{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+/* Do not paint the same alpha twice on children of an already themed editor. */
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList,
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeEditor .extraOptionList{
+ background:transparent!important;border:0!important;
+ box-shadow:none!important;
+}
+/* Light/dark labels derive from exactly the same user setting. */
+body.controls-window #choices.modeCascade .modeCascadeHead,
+body.controls-window #choices.filterCascade .filterCascadeHead,
+body.controls-window #choices.filterCascade .generalPresetTitle{
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ background:transparent!important;
+}
+/* The toolbar remains separate; do not turn the ribbon into one large panel. */
+body.controls-window #menu,body.controls-window #quickMenuList{
+ background:transparent!important;-webkit-backdrop-filter:none!important;
+ backdrop-filter:none!important;
+}
+body.controls-window #quickMenuList .quickRow,
+body.controls-window #quickMenuList .quickFooterAction{
+ background:var(--visual-menu-bg,rgba(15,19,26,.50))!important;
+ border-color:var(--visual-menu-border,rgba(227,233,241,.22))!important;
+ -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+}
+/* LT88-STANDARD-LOCATION-01: put Copy/Paste back by the radius input, NOT
+   alongside the Localização heading. Four compact items stay on a single row. */
+body.controls-window #choices.locationPanel .choiceHeader,
+body.popup-window.controls-window #choices.locationPanel .choiceHeader{
+ padding:2px 4px!important;justify-content:center!important;
+ text-align:center!important;min-height:24px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow{
+ display:grid!important;grid-template-columns:29px 29px 75px 65px!important;
+ justify-content:center!important;align-items:center!important;
+ gap:4px!important;min-height:29px!important;margin:1px 1px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locPaste,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locPaste{
+ position:static!important;grid-column:1!important;top:auto!important;right:auto!important;
+ display:flex!important;min-width:29px!important;width:29px!important;height:29px!important;
+ margin:0!important;padding:3px!important;transform:none!important;
+ background:var(--visual-menu-button-bg,rgba(15,19,26,.50))!important;
+ border:1px solid var(--visual-menu-border,#ffffff40)!important;border-radius:6px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locCopy,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locCopy{
+ position:static!important;grid-column:2!important;top:auto!important;right:auto!important;
+ box-sizing:border-box!important;min-width:29px!important;width:29px!important;
+ height:29px!important;min-height:29px!important;margin:0!important;padding:0!important;
+ font-size:16px!important;text-align:center!important;
+ background:var(--visual-menu-button-bg,rgba(15,19,26,.50))!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid var(--visual-menu-border,#ffffff40)!important;border-radius:6px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap{
+ grid-column:3!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions{
+ grid-column:4!important;
+}
+/* Blur support varies between Android WebView/other-app surfaces. The solid
+   fallback color stays available if backdrop-filter is unavailable. */
+
+/* LT88-SAMSUNG-LEGIBILITY-02: 50% base stays in Editor Visual, but a
+   matching contrast surface protects text if Android cannot blur another app.
+   Only real sized panels are painted: no overlay-sized rectangle. */
+body.controls-window #choices:not(.modeCascade):not(.filterCascade),
+body.controls-window #choices.modeCascade .modeCascadeRail,
+body.controls-window #choices.modeCascade .modeCascadeEditor,
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor,
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeRail,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout{
+ background:var(--visual-menu-readable-bg,rgba(15,19,26,.86))!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid var(--visual-menu-border,#ffffff38)!important;
+ border-radius:8px!important;
+ box-shadow:0 3px 8px rgba(0,0,0,.4)!important;
+ -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ background-clip:padding-box!important;
+}
+/* Do not reintroduce a massive touch-catching backdrop. */
+body.controls-window #choices.filterCascade,
+body.popup-window.controls-window #choices.filterCascade,
+body.controls-window #choices.modeCascade,
+body.popup-window.controls-window #choices.modeCascade{
+ background:transparent!important;box-shadow:none!important;
+ border:0!important;backdrop-filter:none!important;
+ -webkit-backdrop-filter:none!important;pointer-events:none!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeRail,
+body.controls-window #choices.modeCascade .modeCascadeEditor,
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade .filterCascadeEditor,
+body.controls-window #choices.filterCascade .generalPresetFlyout{
+ pointer-events:auto!important;
+}
+/* Paint all compact option rows, including scrolling Forma and Ordenar,
+   so descendants cannot escape a transparent editor background. */
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList,
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterFormEditor,
+body.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems{
+ box-sizing:border-box!important;
+ background:var(--visual-menu-readable-bg,rgba(15,19,26,.86))!important;
+ border-radius:5px!important;
+ padding:2px!important;margin:0!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionItem,
+body.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems button{
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ background:var(--visual-menu-readable-button-bg,rgba(15,19,26,.70))!important;
+ border:1px solid var(--visual-menu-border,#ffffff30)!important;
+ text-shadow:none!important;
+}
+/* Numeric and PvP controls get exactly the same themed field backing. */
+body.controls-window #choices.filterCascade .filterCascadeEditor input:not([type=checkbox]),
+body.controls-window #choices.modeCascade input.modeCascadeInput,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor input:not([type=checkbox]),
+body.popup-window.controls-window #choices.modeCascade input.modeCascadeInput{
+ background:var(--visual-menu-readable-button-bg,rgba(15,19,26,.70))!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ -webkit-text-fill-color:currentColor!important;
+ border:1px solid var(--visual-menu-border,#ffffff44)!important;
+ border-radius:5px!important;
+}
+body.controls-window #quickMenuList .quickRow,
+body.controls-window #quickMenuList .quickFooterAction{
+ background:var(--visual-menu-readable-bg,rgba(15,19,26,.86))!important;
+}
+/* No extra width or height for backgrounds: rely on existing intrinsic sizes. */
+
+/* LT88 profiles R5 — compact explicit Save/Delete, no press-and-hold. */
+body.controls-window #choices.filterCascade .generalPresetFlyout{
+ width:190px!important;min-width:190px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetDefault{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;height:26px!important;min-height:26px!important;
+ text-align:left!important;margin:0 0 2px!important;padding:3px 7px!important;
+ background:var(--visual-menu-readable-button-bg,rgba(20,26,35,.8))!important;
+ color:var(--visual-menu-fg,#fff)!important;
+ border-radius:5px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow{
+ display:grid!important;grid-template-columns:minmax(0,1fr) 28px 24px!important;
+ gap:3px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad{
+ width:auto!important;max-width:none!important;min-width:0!important;
+ padding:2px 4px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetSave{
+ width:28px!important;min-width:28px!important;max-width:28px!important;
+ height:25px!important;min-height:25px!important;padding:0!important;
+ font-size:14px!important;
+ color:#c6e6db!important;
+ background:var(--visual-menu-readable-button-bg,rgba(20,26,35,.8))!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetDelete{
+ width:24px!important;min-width:24px!important;height:25px!important;
+}
+/* Location has no legacy named slots, star buttons or '?' controls. */
+body.controls-window #choices.locationPanel .locSavedRow,
+body.controls-window #choices.locationPanel .locSlotTools{display:none!important}
+
+/* LT88 R8: label-only saved preset button, with two compact rows. */
+body.controls-window #choices.filterCascade .filterCascadeHead{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  min-height:21px!important;height:21px!important;padding:0!important;
+}
+body.controls-window #choices.filterCascade .filterHeaderTitle{
+  display:block!important;box-sizing:border-box!important;width:100%!important;
+  min-height:21px!important;height:21px!important;margin:0!important;padding:0 2px!important;
+  background:transparent!important;border:0!important;border-radius:4px!important;
+  color:var(--visual-menu-fg,#edf4ff)!important;font:700 11px/21px Roboto,Arial,sans-serif!important;
+  text-align:center!important;cursor:pointer!important;pointer-events:auto!important;
+}
+body.controls-window #choices.filterCascade .filterHeaderTitle[aria-expanded="true"]{
+  background:var(--visual-menu-button-bg,#33465a)!important;
+}
+body.controls-window #choices.filterCascade .generalPresetToggle,
+body.controls-window #choices.filterCascade .generalPresetTitle,
+body.controls-window #choices.filterCascade .generalPresetHint{display:none!important}
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout{
+  box-sizing:border-box!important;position:absolute!important;left:82px!important;right:auto!important;
+  top:0!important;width:162px!important;min-width:162px!important;max-width:162px!important;
+  min-height:0!important;height:max-content!important;max-height:none!important;
+  margin:0!important;padding:4px!important;display:flex!important;flex-direction:column!important;
+  gap:2px!important;overflow:visible!important;
+}
+body.menu-left.controls-window #choices.filterCascade .generalPresetFlyout{
+  left:auto!important;right:calc(100% + 4px)!important;
+}
+body.controls-window #choices.filterCascade .generalPresetDefault{
+  width:100%!important;min-height:27px!important;height:27px!important;
+  padding:1px 6px!important;text-align:left!important;font:600 11px/23px Roboto,Arial,sans-serif!important;
+  color:var(--visual-menu-fg,#edf4ff)!important;
+  background:var(--visual-menu-button-bg,#293747)!important;border-radius:5px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetDefault.active{
+  border-color:var(--visual-menu-fg,#d4eff9)!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow{
+  box-sizing:border-box!important;display:flex!important;align-items:center!important;
+  width:100%!important;min-height:27px!important;height:27px!important;gap:2px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad{
+  box-sizing:border-box!important;flex:1 1 auto!important;min-width:0!important;width:0!important;
+  height:27px!important;min-height:27px!important;padding:2px 6px!important;
+  background:var(--visual-menu-button-bg,#293747)!important;
+  color:var(--visual-menu-fg,#edf4ff)!important;font:600 11px/21px Roboto,Arial,sans-serif!important;
+  border:1px solid var(--visual-menu-border,#ffffff48)!important;border-radius:5px!important;
+  text-align:left!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad.active{
+  border-color:#eec55b!important;color:#eec55b!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad.empty{opacity:.68!important}
+body.controls-window #choices.filterCascade .generalPresetRow>button.generalPresetSave,
+body.controls-window #choices.filterCascade .generalPresetRow>button.generalPresetDelete{
+  box-sizing:border-box!important;display:flex!important;align-items:center!important;
+  justify-content:center!important;flex:0 0 26px!important;width:26px!important;min-width:26px!important;
+  max-width:26px!important;height:27px!important;min-height:27px!important;
+  margin:0!important;padding:3px!important;border-radius:5px!important;
+  background:transparent!important;border:1px solid var(--visual-menu-border,#ffffff48)!important;
+  color:#fff!important;box-shadow:none!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow>button svg{
+  display:block!important;width:18px!important;height:18px!important;
+  stroke:#fff!important;stroke-width:1.65!important;fill:none!important;pointer-events:none!important;
+}
+/* Location: same coordinate width, roughly half the old height (3 rows),
+   keeping separate paste, copy, 0–1000km slider, apply, and reset actions. */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel{
+  box-sizing:border-box!important;width:min(286px,calc(100vw - 12px))!important;
+  min-width:0!important;max-width:calc(100vw - 12px)!important;
+  height:max-content!important;min-height:0!important;max-height:fit-content!important;
+  padding:3px 5px!important;margin:0!important;overflow-x:hidden!important;overflow-y:visible!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader,
+body.popup-window.controls-window #choices.locationPanel .choiceHeader{
+  box-sizing:border-box!important;height:21px!important;min-height:21px!important;
+  margin:0 0 1px!important;padding:0 2px!important;line-height:20px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow,
+body.popup-window.controls-window #choices.locationPanel .locCoordsRow{
+  box-sizing:border-box!important;margin:0 0 2px!important;padding:0!important;gap:0!important;
+  height:28px!important;min-height:28px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow .locField,
+body.popup-window.controls-window #choices.locationPanel .locCoordsRow .locField{
+  height:28px!important;min-height:28px!important;font-size:11px!important;
+  padding:3px 6px!important;text-align:left!important;letter-spacing:-.2px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow{
+  display:grid!important;box-sizing:border-box!important;
+  grid-template-columns:25px 25px 70px minmax(46px,1fr) 60px!important;
+  align-items:center!important;justify-content:stretch!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  gap:3px!important;margin:0!important;padding:0!important;
+  height:28px!important;min-height:28px!important;overflow:hidden!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locPaste,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locPaste{
+  grid-column:1!important;width:25px!important;min-width:25px!important;
+  max-width:25px!important;height:26px!important;min-height:26px!important;padding:3px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locCopy,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locCopy{
+  grid-column:2!important;position:static!important;width:25px!important;min-width:25px!important;
+  max-width:25px!important;height:26px!important;min-height:26px!important;padding:0!important;
+  margin:0!important;font-size:16px!important;transform:none!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap{
+  grid-column:3!important;box-sizing:border-box!important;width:70px!important;
+  min-width:70px!important;max-width:70px!important;height:26px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap .locRadiusNumber,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap .locRadiusNumber{
+  width:48px!important;min-width:48px!important;max-width:48px!important;
+  height:26px!important;min-height:26px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>input[type=range],
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>input[type=range]{
+  grid-column:4!important;box-sizing:border-box!important;width:100%!important;
+  min-width:0!important;max-width:100%!important;height:22px!important;
+  margin:0!important;padding:0!important;align-self:center!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions{
+  grid-column:5!important;display:flex!important;gap:2px!important;width:60px!important;
+  min-width:60px!important;max-width:60px!important;height:26px!important;
+  margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow .compactLocationActions>.psLineAction,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow .compactLocationActions>.psLineAction{
+  flex:0 0 29px!important;width:29px!important;min-width:29px!important;
+  max-width:29px!important;height:26px!important;min-height:26px!important;
+}
+body.controls-window #choices.locationPanel #locHint,
+body.popup-window.controls-window #choices.locationPanel #locHint{
+  margin:1px 0 0!important;padding:0!important;min-height:0!important;
+  font-size:9px!important;line-height:1.15!important;
+}
+
+
+/* LT99 compact Samsung Location — EXACT 3-row structure approved on 25/10/2026.
+   (1) Localização [Colar ↓] [Copiar] — (2) coordenadas até 30 caracteres
+   (3) [0000] km [Aplicar ✓] [Limpar □]. No visible slider or extra rows.
+   High-specificity override deliberately supersedes LT70..LT98 location-only rules. */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel,
+body.popup-window.controls-window.popup-above #choices.locationPanel{
+  box-sizing:border-box!important;
+  width:min(286px,calc(100vw - 12px))!important;
+  min-width:0!important;max-width:calc(100vw - 12px)!important;
+  height:auto!important;min-height:0!important;
+  max-height:min(165px,var(--popup-room,400px))!important;
+  margin:0!important;padding:6px 6px 8px!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  text-align:center!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader{
+  box-sizing:border-box!important;display:flex!important;
+  flex-flow:row nowrap!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-height:33px!important;height:33px!important;
+  gap:6px!important;margin:0 0 5px!important;padding:0!important;text-align:center!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader>span:first-child,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader>span:first-child{
+  flex:0 0 auto!important;order:0!important;min-width:0!important;
+  margin:0!important;padding:0!important;white-space:nowrap!important;
+  font:700 16px/1.12 Roboto,Arial,sans-serif!important;letter-spacing:0!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools{
+  box-sizing:border-box!important;display:inline-flex!important;
+  order:1!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 auto!important;gap:4px!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
+  height:31px!important;min-height:31px!important;padding:0!important;margin:0!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locPaste,
+body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locCopy,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locPaste,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locCopy{
+  box-sizing:border-box!important;position:static!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 31px!important;width:31px!important;min-width:31px!important;max-width:31px!important;
+  height:31px!important;min-height:31px!important;max-height:31px!important;
+  padding:4px!important;margin:0!important;transform:none!important;
+  font-size:18px!important;line-height:1!important;border-radius:7px!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locPaste svg,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locPaste svg{
+  display:block!important;width:22px!important;height:22px!important;flex:none!important;
+}
+body.controls-window #choices.locationPanel>.locCoordsRow,
+body.popup-window.controls-window #choices.locationPanel>.locCoordsRow{
+  box-sizing:border-box!important;display:flex!important;flex-flow:row nowrap!important;
+  align-items:center!important;justify-content:center!important;
+  gap:0!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  height:36px!important;min-height:36px!important;margin:0 0 6px!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>.locCoordsRow>input.locField,
+body.popup-window.controls-window #choices.locationPanel>.locCoordsRow>input.locField{
+  box-sizing:border-box!important;display:block!important;flex:1 1 auto!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  height:36px!important;min-height:36px!important;
+  margin:0!important;padding:4px 6px!important;
+  direction:ltr!important;text-align:left!important;
+  font:500 12px/1.16 monospace!important;letter-spacing:-.15px!important;
+  text-overflow:clip!important;border-radius:8px!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow,
+body.popup-window.controls-window.popup-above #choices.locationPanel>.locRadiusRow{
+  box-sizing:border-box!important;display:flex!important;flex-flow:row nowrap!important;
+  align-items:center!important;justify-content:center!important;
+  gap:8px!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  height:35px!important;min-height:35px!important;
+  margin:0!important;padding:0!important;overflow:visible!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusText,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusText{display:none!important}
+body.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap{
+  box-sizing:border-box!important;display:inline-flex!important;order:0!important;
+  flex:0 0 82px!important;width:82px!important;min-width:82px!important;max-width:82px!important;
+  height:35px!important;min-height:35px!important;
+  align-items:center!important;justify-content:center!important;
+  gap:2px!important;margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>input.locRadiusNumber,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>input.locRadiusNumber{
+  box-sizing:border-box!important;flex:0 0 58px!important;display:block!important;
+  width:58px!important;min-width:58px!important;max-width:58px!important;
+  height:35px!important;min-height:35px!important;
+  margin:0!important;padding:2px 4px!important;border-radius:8px!important;
+  font:500 15px/1.15 monospace!important;text-align:center!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>.locRadiusUnit,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>.locRadiusUnit{
+  box-sizing:border-box!important;display:inline!important;position:static!important;
+  flex:0 0 auto!important;width:auto!important;min-width:0!important;
+  margin:0!important;padding:0!important;transform:none!important;
+  font:600 12px/1 Roboto,Arial,sans-serif!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions{
+  box-sizing:border-box!important;display:inline-flex!important;order:1!important;
+  flex:0 0 auto!important;align-items:center!important;justify-content:center!important;
+  width:auto!important;max-width:none!important;min-width:0!important;
+  height:35px!important;min-height:35px!important;gap:6px!important;
+  margin:0!important;padding:0!important;overflow:visible!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction{
+  box-sizing:border-box!important;display:inline-flex!important;
+  align-items:center!important;justify-content:center!important;
+  flex:0 0 35px!important;width:35px!important;min-width:35px!important;max-width:35px!important;
+  height:35px!important;min-height:35px!important;max-height:35px!important;
+  margin:0!important;padding:5px!important;font-size:0!important;line-height:normal!important;
+  border-radius:8px!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction svg,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction svg{
+  display:block!important;flex:none!important;width:22px!important;height:22px!important;
+}
+body.controls-window #choices.locationPanel>#locHint,
+body.popup-window.controls-window #choices.locationPanel>#locHint{
+  box-sizing:border-box!important;min-height:0!important;max-width:100%!important;
+  text-align:center!important;margin:2px 0 0!important;padding:0!important;
+  font-size:10px!important;line-height:1.1!important;
+}
+body.controls-window #choices.locationPanel>#locHint[hidden],
+body.popup-window.controls-window #choices.locationPanel>#locHint[hidden]{display:none!important}
+
+
+/* LT100 Samsung reference FINAL: 4 centered rows with equal-width coordinate+slider.
+   Header [Localização][Colar↓][Copiar]
+   Full coordinates input up to 30 chars
+   Full-width 0–1000 km slider
+   Centered [0000]km [✓] [trash] — no extra spacers */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel,
+body.popup-window.controls-window.popup-above #choices.locationPanel{
+  box-sizing:border-box!important;
+  width:min(286px,calc(100vw - 12px))!important;
+  max-width:calc(100vw - 12px)!important;
+  min-width:0!important;height:auto!important;min-height:0!important;
+  max-height:min(202px,var(--popup-room,400px))!important;
+  margin:0!important;padding:6px 6px 8px!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader{
+  display:flex!important;justify-content:center!important;align-items:center!important;
+  width:100%!important;height:33px!important;min-height:33px!important;
+  gap:6px!important;margin:0 0 5px!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>.locCoordsRow,
+body.popup-window.controls-window #choices.locationPanel>.locCoordsRow{
+  box-sizing:border-box!important;display:flex!important;align-items:center!important;
+  justify-content:center!important;width:100%!important;min-width:0!important;
+  max-width:100%!important;height:36px!important;min-height:36px!important;
+  margin:0 0 3px!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>.locCoordsRow>.locField,
+body.popup-window.controls-window #choices.locationPanel>.locCoordsRow>.locField{
+  box-sizing:border-box!important;display:block!important;flex:1 1 auto!important;
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  height:36px!important;min-height:36px!important;padding:4px 6px!important;
+  text-align:left!important;font:500 12px/1.16 monospace!important;
+  letter-spacing:-.15px!important;
+}
+body.controls-window #choices.locationPanel>.locSliderRow,
+body.popup-window.controls-window #choices.locationPanel>.locSliderRow{
+  box-sizing:border-box!important;display:flex!important;
+  align-items:center!important;justify-content:center!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  height:30px!important;min-height:30px!important;
+  padding:0!important;margin:0 0 3px!important;
+}
+body.controls-window #choices.locationPanel>.locSliderRow>input[type="range"],
+body.popup-window.controls-window #choices.locationPanel>.locSliderRow>input[type="range"]{
+  box-sizing:border-box!important;display:block!important;
+  flex:1 1 auto!important;width:100%!important;min-width:0!important;
+  max-width:100%!important;height:24px!important;min-height:24px!important;
+  margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow{
+  box-sizing:border-box!important;display:flex!important;flex-flow:row nowrap!important;
+  align-items:center!important;justify-content:center!important;
+  gap:8px!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  height:35px!important;min-height:35px!important;margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>#locHint[hidden],
+body.popup-window.controls-window #choices.locationPanel>#locHint[hidden]{display:none!important}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3720,6 +4470,7 @@ let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin
  sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=true,filterFocus="PC",advancedExpanded=false;
 let generalPresetExpanded=false,generalPresetSaved=[false,false,false];
+let generalPresetNames=["Perfil 1","Perfil 2","Perfil 3"];
 let formQuery="",formListVisibleCount=60,formOptionsStatus="Aguardando lista oficial de Form do site...";
 let siteFiltersConfirmed=false; // Evidence from Android: same generation, verified Search and accepted results.
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
@@ -4332,35 +5083,101 @@ function filterCascadeEditorWidth(label){
   Sexo:80,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
  return width[label]||134;
 }
+// LT88 R8: the word "Filtro" IS the saved-presets toggle.
+// Historical preset slot 3 stays in SharedPreferences but is not shown.
+let generalPresetActive=0;
+function presetGlyph(kind){
+ const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+ svg.setAttribute("viewBox","0 0 24 24");
+ svg.setAttribute("fill","none");svg.setAttribute("stroke","currentColor");
+ svg.setAttribute("stroke-width","1.65");svg.setAttribute("stroke-linecap","round");
+ svg.setAttribute("stroke-linejoin","round");svg.setAttribute("aria-hidden","true");
+ svg.innerHTML=kind==="save"?
+  '<path d="M5 3h12l4 4v14H3V3h2zM7 3v6h10V3M7 21v-9h10v9M14 4v4"/>':
+  '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/>';
+ return svg;
+}
 function renderGeneralPresetControls(rail,make){
- const heading=rail.querySelector(".filterCascadeHead"),toggle=make("button","generalPresetToggle","▣");
- toggle.type="button";toggle.title="Três filtros salvos";toggle.setAttribute("aria-label","Filtros salvos");
- toggle.onclick=()=>{generalPresetExpanded=!generalPresetExpanded;
-  if(generalPresetExpanded)filterFocus=""; // Never overlay a second editor behind saved profiles.
+ const heading=rail.querySelector(".filterHeaderTitle");
+ heading.type="button";
+ heading.title="Filtro · perfis salvos";
+ heading.setAttribute("aria-label","Filtro · abrir ou fechar perfis salvos");
+ heading.setAttribute("aria-expanded",String(generalPresetExpanded));
+ heading.setAttribute("aria-controls","generalPresetFlyout");
+ heading.onclick=()=>{
+  generalPresetExpanded=!generalPresetExpanded;
+  if(generalPresetExpanded)filterFocus="";
   renderFiltersChoices();
-  if(Native.requestGeneralFilterPresets)Native.requestGeneralFilterPresets();};
- heading.appendChild(toggle);
+  if(generalPresetExpanded&&Native.requestGeneralFilterPresets)Native.requestGeneralFilterPresets();
+ };
  if(!generalPresetExpanded)return;
  const menu=make("div","generalPresetFlyout");
- menu.appendChild(make("div","generalPresetTitle","Perfis salvos"));
- for(let slot=1;slot<=3;slot++){
-  const row=make("div","generalPresetRow"),name=make("span","",String(slot));
-  const load=make("button","generalPresetLoad","Usar");
-  load.type="button";load.dataset.presetLoad=String(slot);load.disabled=!generalPresetSaved[slot-1];
-  load.title="Aplicar perfil "+slot;load.onclick=()=>Native.loadGeneralFilterPreset(slot);
-  const save=make("button","generalPresetSave","Salvar");
-  save.type="button";save.title="Salvar perfil "+slot;save.onclick=()=>Native.saveGeneralFilterPreset(slot);
-  row.append(name,load,save);menu.appendChild(row);
+ menu.id="generalPresetFlyout";menu.setAttribute("role","group");
+ menu.setAttribute("aria-label","Padrão e filtros salvos");
+ const standard=make("button","generalPresetDefault","Padrão");
+ standard.type="button";
+ standard.title="Limpar filtros gerais sem alterar Shiny ou localização";
+ standard.classList.toggle("active",generalPresetActive===0);
+ standard.setAttribute("aria-pressed",String(generalPresetActive===0));
+ standard.onclick=()=>{
+  generalPresetActive=0;generalPresetExpanded=false;
+  filterFocus="";renderFiltersChoices();
+  if(Native.clearGeneralFilterPreset)Native.clearGeneralFilterPreset();
+ };
+ menu.appendChild(standard);
+ for(let slot=1;slot<=2;slot++){
+  const row=make("div","generalPresetRow");
+  const name=make("button","generalPresetLoad","Filtro "+slot);
+  name.type="button";name.dataset.presetLoad=String(slot);
+  name.title="Tocar para aplicar Filtro "+slot;
+  name.setAttribute("aria-label","Usar Filtro "+slot);
+  name.classList.toggle("active",generalPresetActive===slot&&generalPresetSaved[slot-1]);
+  name.classList.toggle("empty",!generalPresetSaved[slot-1]);
+  name.setAttribute("aria-pressed",String(generalPresetActive===slot&&generalPresetSaved[slot-1]));
+  name.onclick=()=>{
+   if(!generalPresetSaved[slot-1]){
+    name.title="Filtro "+slot+" vazio · toque no disquete para salvar";
+    return;
+   }
+   generalPresetActive=slot;generalPresetExpanded=false;filterFocus="";
+   renderFiltersChoices();
+   if(Native.loadGeneralFilterPreset)Native.loadGeneralFilterPreset(slot);
+  };
+  const save=make("button","generalPresetSave");
+  save.type="button";save.appendChild(presetGlyph("save"));
+  save.title="Salvar filtros atuais no Filtro "+slot;
+  save.setAttribute("aria-label","Salvar Filtro "+slot);
+  save.onclick=()=>{
+   generalPresetActive=slot;
+   if(Native.saveGeneralFilterPreset)Native.saveGeneralFilterPreset(slot);
+  };
+  const remove=make("button","generalPresetDelete");
+  remove.type="button";remove.appendChild(presetGlyph("delete"));
+  remove.title="Excluir somente Filtro "+slot;
+  remove.setAttribute("aria-label","Limpar Filtro "+slot);
+  remove.onclick=()=>{
+   if(Native.deleteGeneralFilterPreset)Native.deleteGeneralFilterPreset(slot);
+  };
+  row.append(name,save,remove);menu.appendChild(row);
  }
- rail.insertBefore(menu,rail.children[1]||null);
+ rail.parentElement.appendChild(menu);
 }
 if(typeof window!=="undefined")window.onGeneralPresetStatus=response=>{
  if(!Array.isArray(response?.saved)||response.saved.length!==3)return;
- generalPresetSaved=response.saved.map(v=>v===true);
+ generalPresetSaved=response.saved.map(value=>value===true);
+ generalPresetActive=Number.isInteger(response.active)?response.active:0;
+ if(Array.isArray(response.names)&&response.names.length===3)
+  generalPresetNames=response.names.map((name,index)=>String(name||"Filtro "+(index+1)).slice(0,20));
  document.querySelectorAll(".generalPresetLoad").forEach(button=>{
-  const i=Number(button.dataset.presetLoad);
-  button.disabled=!Number.isInteger(i)||!generalPresetSaved[i-1];
+  const slot=Number(button.dataset.presetLoad),available=generalPresetSaved[slot-1];
+  button.textContent="Filtro "+slot;
+  button.classList.toggle("active",generalPresetActive===slot&&available);
+  button.classList.toggle("empty",!available);
+  button.setAttribute("aria-pressed",String(generalPresetActive===slot&&available));
+  button.title=available?"Tocar para aplicar Filtro "+slot:
+   "Filtro "+slot+" vazio · use o disquete para salvar";
  });
+ document.querySelector(".generalPresetDefault")?.classList.toggle("active",generalPresetActive===0);
 };
 function renderExtraFilters(panel,make){
  const divider=()=>panel.appendChild(make("div","extraDivider"));
@@ -4530,7 +5347,9 @@ function renderExtraFilters(panel,make){
  const rail=make("div","filterCascadeRail"),editor=make("div","filterCascadeEditor");
  rail.setAttribute("role","menu");editor.setAttribute("role","group");
  editor.setAttribute("aria-label","Filtro selecionado");
- const heading=make("div","filterCascadeHead","Filtros");rail.appendChild(heading);
+ const heading=make("div","filterCascadeHead");
+ heading.appendChild(make("button","filterHeaderTitle","Filtro"));
+ rail.appendChild(heading);
  const selected=rows.some(row=>row.querySelector("label")?.textContent===filterFocus)?filterFocus:"";
  filterFocus=selected;
  // CSS uses a content-specific width so Sexo/Tamanho do not inherit the
@@ -4741,19 +5560,26 @@ function locationPanelFeedback(){
  hint.hidden=state==="OFF"||state==="CONFIRMED";
  hint.style.color=state==="NOT_APPLIED"?"#ffbf8f":"";
 }
-window.onLocationPaste=coords=>{
+window.onLocationCopy=feedback=>{
+ if(!controlsWindow||choiceOpen!=="location")return;
+ const hint=document.getElementById("locHint");if(!hint)return;
+ hint.textContent=String(feedback||"");hint.hidden=false;
+ hint.style.color=String(feedback||"").startsWith("✓")?"":"#ffbf8f";fit();
+};
+window.onLocationPaste=(coords,reason)=>{
  if(!controlsWindow||choiceOpen!=="location")return;
  const field=document.getElementById("locCoordinateInput");
  const hint=document.getElementById("locHint");
  if(!field||!hint)return;
  if(!coords){
-  hint.textContent="⚠ Nenhuma coordenada válida";
-  hint.style.color="#ffbf8f";hint.hidden=false;fit();return;
+  hint.textContent=reason==="ambiguous"?"⚠ Mais de um par encontrado. Copie só um par.":
+   reason==="invalid"?"⚠ Não há coordenadas válidas no texto copiado.":
+   "⚠ Android bloqueou a leitura. Toque no campo e use Colar do teclado.";
+  hint.style.color="#ffbf8f";hint.hidden=false;fit();
+  if(reason!=="invalid"&&reason!=="ambiguous")field.focus();
+  return;
  }
- // Paste only into the editor; no activation, network call or background read.
- field.value=String(coords);
- field.dataset.locationDraft="true";
- field.scrollLeft=0;
+ field.value=String(coords);field.dataset.locationDraft="true";field.scrollLeft=0;
  hint.textContent="✓ Coordenadas coladas";
  hint.style.color="";hint.hidden=false;fit();
 };
@@ -4790,7 +5616,8 @@ function renderLocationChoices(){
  const field=make("input","locField");field.id="locCoordinateInput";field.type="text";field.inputMode="decimal";
  field.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
  field.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
- field.placeholder="-23.5505,-46.6333";field.setAttribute("aria-label","Coordenadas latitude e longitude");
+ field.placeholder="53.759856,-1.495755";field.maxLength=30;field.setAttribute("maxlength","30");
+ field.setAttribute("aria-label","Coordenadas latitude e longitude, até 30 caracteres");
  field.value=locationCoords;
  field.oninput=()=>{field.dataset.locationDraft="true";};
  const paste=make("button","locPaste");paste.type="button";
@@ -4802,10 +5629,16 @@ function renderLocationChoices(){
  pasteIcon.setAttribute("aria-hidden","true");
  pasteIcon.innerHTML='<path d="M8 4h2a2 2 0 0 1 4 0h2v3H8z"/>'+
   '<path d="M8 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>'+
-  '<path d="M12 19V9m-4 4 4-4 4 4"/>';
+  '<path d="M12 9v10m-4-4 4 4 4-4"/>';
  paste.appendChild(pasteIcon);
  paste.onclick=()=>Native.pasteLocationCoords();
- // Centered title; field on its own full-width line.
+ const copy=make("button","locCopy","⧉");copy.type="button";
+ copy.title="Copiar coordenadas";copy.setAttribute("aria-label","Copiar coordenadas digitadas");
+ copy.onclick=()=>{if(Native.copyLocationCoords)Native.copyLocationCoords(field.value);};
+ // Precisely three visible rows: header clipboard, full coordinates, radius/actions.
+ const clipboard=make("div","locClipboardTools");
+ clipboard.append(paste,copy);
+ title.appendChild(clipboard);
  fieldRow.append(field);
  const label=make("div","locLine locRadiusRow");
  const labelName=make("span","locRadiusText","Raio");
@@ -4820,8 +5653,9 @@ function renderLocationChoices(){
  const unit=make("span","locRadiusUnit","km");
  const radiusWrap=make("span","locRadiusInputWrap");
  radiusWrap.append(radiusField,unit);
- label.append(labelName,paste,radiusWrap);
+ label.append(labelName,radiusWrap);
  const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);
+ // Full-width slider, identical usable width to the coordinate editor.
  slide.setAttribute("aria-label","Ajustar raio de 0 a 1000");
  slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";};
  radiusField.oninput=()=>{
@@ -4837,6 +5671,7 @@ function renderLocationChoices(){
  const actions=make("div","locLine compactLocationActions");
  const apply=makeDockAction("apply","Aplicar localização");
  const clear=makeDockAction("clear","Limpar localização");
+ // Icon-only controls as in the approved Samsung reference.
  apply.classList.add("locSave");clear.classList.add("locHide");
  const disable=()=>{
   // Clear the visible editor immediately, then let Android remove persisted
@@ -4872,8 +5707,10 @@ function renderLocationChoices(){
   Native.setLocation(true,wantedCoords,wantedRadius);
  }
  apply.onclick=submit;
- actions.append(apply,clear);label.appendChild(actions);
- panel.append(title,fieldRow,slide,label,message);
+ actions.append(apply,clear);label.append(actions);
+ const sliderRow=make("div","locSliderRow");
+ sliderRow.append(slide);
+ panel.append(title,fieldRow,sliderRow,label,message);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
  locationPanelFeedback();
@@ -4941,6 +5778,21 @@ function attachSpriteFeedback(){
     img.src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+known[1];
    }
   },1400);
+  // An unanswered CDN request must not leave a blank sprite forever.
+  // Final retry uses ONLY this card's original verified/provider URL.
+  setTimeout(()=>{
+   if(done||!img.isConnected)return;
+   if(good()){loaded();return;}
+   if(retries>=2||!original){stage.classList.add("failed");return;}
+   retries=2;stage.classList.remove("failed");
+   img.src=original;
+  },12000);
+  // After all bounded attempts, make the existing neutral placeholder visible.
+  setTimeout(()=>{
+   if(!done&&img.isConnected&&!good()){
+    stage.classList.remove("loaded");stage.classList.add("failed");
+   }
+  },18500);
  });
 }
 function attachLongPress(){
@@ -5256,7 +6108,7 @@ function resultLines(card,opts,league){
  if(opts.cp&&/^[0-9]{1,5}$/.test(cp)&&Number(cp)>0&&Number(cp)<=10000)compact.push("PC"+cp);
  if(opts.level&&/^\d{1,2}(?:\.5)?$/.test(lvl)&&Number(lvl)>=1&&Number(lvl)<=55)compact.push("Nv"+lvl);
  if(compact.length)lines.push(compact.join(" · "));
- if(opts.rawIv)lines.push(verifiedSpawnRawIv(card)||"?/?/?");
+ if(opts.rawIv){const raw=verifiedSpawnRawIv(card);if(raw!==null)lines.push(raw);}
  const leagues=[["gl","Gl","GL"],["ul","Ul","UL"],["ml","Ml","ML"]];
  const hasLeaguePrefs=leagues.some(([,suffix])=>
   opts["overallRank"+suffix]===true||opts["speciesIvRank"+suffix]===true);
@@ -5290,7 +6142,7 @@ function resultLines(card,opts,league){
    }
   }
  }
- if(opts.despawn&&Number(card?.expiresAtMs)>0)lines.unshift("Despawn TIMER");
+ if(opts.despawn&&Number(card?.expiresAtMs)>0)lines.unshift("TIMER");
  return lines;
 }
 function resultInfoHtml(value,card){
@@ -5905,7 +6757,55 @@ function iconForQuick(id, fallback){
 // SITE-POKEMON-01: Match the website's multi-species + form picker, without
 // inventing unreleased costumes, IDs, event forms, or site-only selections.
 let pokemonDraft=[],pokemonSuggestions=[],pokemonQuery="",pokemonSuggestionStatus="",pokemonPickerBase=null,pokemonForceClear=false;
-// Temporary official sprite cache: presentation only; no invented URLs/IDs.
+// Shared, bounded decoded Image pool across Pokémon suggestions in the menu.
+// Fetch only the official verified BASE image paths; never guess costumes.
+const spriteRequestCache=new Map();
+const SPRITE_FAILURE_RETRY_MS=30000;
+function pooledBaseSprite(url){
+ const valid=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/([0-9]{1,4}\.png)$/.exec(String(url||""));
+ if(!valid)return Promise.resolve("");
+ const now=Date.now(),previous=spriteRequestCache.get(url);
+ if(previous&&(!previous.failedAt||now-previous.failedAt<SPRITE_FAILURE_RETRY_MS))
+  return previous.promise;
+ if(previous)spriteRequestCache.delete(url);
+ // Cache the in-flight promise, not only the completed image: the same base
+ // species requested in multiple chips shares one network operation.
+ const entry={promise:null,failedAt:0};
+ entry.promise=new Promise(resolve=>{
+  const primary=new Image(),mirror=new Image();
+  let settled=false,mirrorStarted=false;
+  let primaryWatch=null,mirrorWatch=null;
+  const finish=src=>{
+   if(settled)return;settled=true;
+   clearTimeout(primaryWatch);clearTimeout(mirrorWatch);
+   primary.onload=null;primary.onerror=null;mirror.onload=null;mirror.onerror=null;
+   if(!src)entry.failedAt=Date.now();
+   resolve(src);
+  };
+  const alternative="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+valid[1];
+  const useMirror=()=>{
+   if(settled||mirrorStarted)return;
+   mirrorStarted=true;clearTimeout(primaryWatch);
+   mirror.onload=()=>finish(mirror.naturalWidth>=8&&mirror.naturalHeight>=8?alternative:"");
+   mirror.onerror=()=>finish("");
+   // Android WebView can leave remote Image.pending forever without events.
+   mirrorWatch=setTimeout(()=>finish(""),3500);
+   mirror.src=alternative;
+  };
+  primary.onload=()=>{
+   if(settled)return;
+   if(primary.naturalWidth>=8&&primary.naturalHeight>=8)finish(url);
+   else useMirror();
+  };
+  primary.onerror=useMirror;
+  primaryWatch=setTimeout(useMirror,2400);
+  primary.src=url;
+ });
+ spriteRequestCache.set(url,entry);
+ while(spriteRequestCache.size>96)spriteRequestCache.delete(spriteRequestCache.keys().next().value);
+ return entry.promise;
+}
+// Saved chips reuse official sprite URLs, never synthetic form IDs.
 const pokemonSuggestionSpriteCache=new Map();
 let pokemonSiteSelections=[],pokemonSiteSelectionVerified=false,pokemonSuggestionSource="dom";
 function updatePokemonSiteComparison(){
@@ -5913,6 +6813,10 @@ function updatePokemonSiteComparison(){
  const box=document.getElementById("pokemonSiteComparison"),
   importButton=document.getElementById("pokemonSiteImport");
  if(!box||!importButton)return;
+ if(pokemonSuggestionSource==="api"){
+  box.hidden=true;importButton.hidden=true;return;
+ }
+ box.hidden=false;
  if(!pokemonSiteSelectionVerified){
   box.textContent=pokemonSuggestionSource==="api"?
     "Catálogo da API · seleção local será aplicada na próxima busca.":
@@ -5976,14 +6880,20 @@ function drawPokemonSuggestions(){
   placeholder.className="pokemonChipSprite";placeholder.textContent="◉";
   placeholder.setAttribute("aria-hidden","true");
   if(safeImage){
-   const img=document.createElement("img");img.src=item.image;img.alt="";
-   img.loading="eager";img.onerror=()=>{
-    if(!img.dataset.cdnAttempt&&/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/\d{1,4}\.png$/.test(item.image)&&/^\d{1,4}$/.test(String(item.dex||""))){
-     img.dataset.cdnAttempt="1";
-     img.src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+item.dex+".png";
-    }else img.replaceWith(placeholder);
-   };
-   button.appendChild(img);
+   button.appendChild(placeholder);
+   // One shared request for repeated base species inside this WebView.
+   // The response is cached in decoded memory by Image; no forms are guessed.
+   pooledBaseSprite(item.image).then(src=>{
+    if(!src||!button.isConnected||!placeholder.isConnected)return;
+    const img=document.createElement("img");img.src=src;img.alt="";
+    img.loading="eager";img.decoding="async";
+    img.onerror=()=>{
+     // A failed WebView load is transient, not a permanent "no sprite" fact.
+     spriteRequestCache.delete(item.image);
+     if(img.isConnected)img.replaceWith(placeholder);
+    };
+    placeholder.replaceWith(img);
+   });
   }else button.appendChild(placeholder);
   const text=document.createElement("span");text.textContent=(item.dex?"#"+item.dex+"  ":"")+label;
   button.appendChild(text);

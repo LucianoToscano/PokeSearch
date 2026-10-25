@@ -77,7 +77,17 @@ public final class PokemonPicker {
     // tiles permanently stuck on a placeholder when the same dex appeared twice.
     private static final java.util.Map<Integer,java.util.List<WeakReference<ImageView>>> WAITING=
         new java.util.HashMap<>();
-    private static Bitmap fetchVerifiedSprite(int id){
+    private static Bitmap fetchVerifiedSprite(Context context,int id){
+        // App-private bounded cache persists across picker sessions. File names
+        // are dex numbers only; costumes/forms never use this base-sprite cache.
+        java.io.File disk=new java.io.File(context.getCacheDir(),"verified-base-sprites-v1");
+        java.io.File cachedFile=new java.io.File(disk,id+".png");
+        if(cachedFile.isFile()&&cachedFile.length()>8&&cachedFile.length()<=256*1024){
+            Bitmap local=BitmapFactory.decodeFile(cachedFile.getAbsolutePath());
+            if(local!=null){cachedFile.setLastModified(System.currentTimeMillis());return local;}
+            cachedFile.delete();
+        }
+
         final String path="/PokeAPI/sprites/master/sprites/pokemon/"+id+".png";
         final String[] origins={
             "https://raw.githubusercontent.com"+path,
@@ -105,7 +115,23 @@ public final class PokemonPicker {
                     }
                     byte[] png=output.toByteArray();
                     if(png.length>=8&&png[0]==(byte)0x89&&png[1]=='P'&&png[2]=='N'&&png[3]=='G')
-                        return BitmapFactory.decodeByteArray(png,0,png.length);
+                        {
+                            Bitmap picture=BitmapFactory.decodeByteArray(png,0,png.length);
+                            if(picture!=null&&(disk.isDirectory()||disk.mkdirs())){
+                                java.io.File temporary=new java.io.File(disk,id+".tmp");
+                                try(java.io.FileOutputStream stream=new java.io.FileOutputStream(temporary)){
+                                    stream.write(png);
+                                    stream.flush();
+                                    if(!temporary.renameTo(cachedFile))temporary.delete();
+                                    java.io.File[] files=disk.listFiles();
+                                    if(files!=null&&files.length>80){
+                                        java.util.Arrays.sort(files,(a,b)->Long.compare(a.lastModified(),b.lastModified()));
+                                        for(int i=0;i<files.length-64;i++)files[i].delete();
+                                    }
+                                }catch(java.io.IOException ignored){temporary.delete();}
+                            }
+                            return picture;
+                        }
                 }
             }catch(Exception ignored){
                 // CDN or network unavailable: keep the neutral placeholder.
@@ -128,7 +154,7 @@ public final class PokemonPicker {
         }
         if(!start)return;
         IMAGE_POOL.execute(()->{
-            Bitmap bitmap=fetchVerifiedSprite(id);
+            Bitmap bitmap=fetchVerifiedSprite(activity.getApplicationContext(),id);
             if(bitmap!=null){synchronized(CACHE){CACHE.put(id,bitmap);}}
             java.util.List<WeakReference<ImageView>> waiting;
             synchronized(LOADING){
@@ -245,6 +271,25 @@ public final class PokemonPicker {
             return null;
         }
 
+        // Match the exact same visual preference used by WebView menus.
+        // Saved custom transparency wins; new installs default to 50%.
+        int transparency=50,blurRadius=4;
+        boolean lightMenu=false;
+        try{
+            org.json.JSONObject prefs=new org.json.JSONObject(activity
+                .getSharedPreferences("prefs",0).getString("visualPrefsJson","{}"));
+            transparency=Math.max(0,Math.min(100,prefs.optInt("menuTransparency",50)));
+            blurRadius=Math.max(0,Math.min(16,prefs.optInt("menuBlur",4)));
+            lightMenu="light".equals(prefs.optString("menuBgMode","dark"));
+        }catch(org.json.JSONException ignored){}
+        // Same legibility-aware surface as visual_editor.js: 50% BASE still
+        // reads clearly when external-window blur is unavailable on Android.
+        final int panelAlpha=(int)Math.round(255*
+            (1-Math.pow(Math.max(0,Math.min(100,transparency))/100.0,2.8)));
+        final int panelColor=lightMenu?Color.argb(panelAlpha,255,255,255):
+            Color.argb(panelAlpha,15,19,26);
+        final int panelFg=lightMenu?Color.rgb(21,34,49):Color.rgb(242,247,252);
+
         // LT62: Show every saved favorite together, at most 10 per row and
         // five rows (50). Search below sprites, no horizontal paging/swiping.
         // No ListView, ScrollView or hidden off-screen controls.
@@ -258,7 +303,10 @@ public final class PokemonPicker {
         header.setMinimumHeight(dp(activity,29));
         TextView title=new TextView(activity);
         title.setText("☆ FAVORITOS");
-        title.setTextColor(Color.rgb(244,247,250));
+        title.setOnClickListener(v->Toast.makeText(activity,
+            "★ Toque: usar • Segure a estrela para limpar o perfil",
+            Toast.LENGTH_LONG).show());
+        title.setTextColor(panelFg);
         title.setTypeface(null,Typeface.BOLD);
         title.setTextSize(11);
         title.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);
@@ -268,7 +316,7 @@ public final class PokemonPicker {
             -2,dp(activity,29),Gravity.START|Gravity.CENTER_VERTICAL);
         header.addView(title,titleLp);
         TextView count=new TextView(activity);
-        count.setTextColor(Color.rgb(197,213,230));
+        count.setTextColor(panelFg);
         count.setTextSize(10);
         count.setTypeface(null,Typeface.BOLD);
         count.setGravity(Gravity.CENTER);
@@ -280,7 +328,7 @@ public final class PokemonPicker {
         finish.setText("×");
         finish.setContentDescription("Fechar Favoritos");
         finish.setGravity(Gravity.CENTER);
-        finish.setTextColor(Color.rgb(231,237,246));
+        finish.setTextColor(panelFg);
         finish.setTextSize(19);
         finish.setBackgroundColor(Color.TRANSPARENT);
         FrameLayout.LayoutParams finishLp=new FrameLayout.LayoutParams(
@@ -292,25 +340,18 @@ public final class PokemonPicker {
         LinearLayout favoriteProfiles=new LinearLayout(activity);
         favoriteProfiles.setGravity(Gravity.CENTER_VERTICAL|Gravity.CENTER_HORIZONTAL);
         favoriteProfiles.setOrientation(LinearLayout.HORIZONTAL);
-        favoriteProfiles.setVisibility(View.GONE);
-        TextView profilesTab=new TextView(activity);
-        profilesTab.setText("▣");
-        profilesTab.setContentDescription("Perfis de favoritos salvos");
-        profilesTab.setTextColor(Color.rgb(166,201,241));
-        profilesTab.setTextSize(16);
-        profilesTab.setGravity(Gravity.CENTER);
+        favoriteProfiles.setVisibility(View.VISIBLE);
+        // LT88: 3 unobtrusive saved-profile stars BETWEEN counter and X.
+        // Never create a second tall profile row or obstruct the sprites.
         FrameLayout.LayoutParams profilesLp=new FrameLayout.LayoutParams(
-            dp(activity,23),dp(activity,28),Gravity.START|Gravity.CENTER_VERTICAL);
-        profilesLp.leftMargin=dp(activity,94);
-        header.addView(profilesTab,profilesLp);
-        profilesTab.setOnClickListener(v->favoriteProfiles.setVisibility(
-            favoriteProfiles.getVisibility()==View.VISIBLE?View.GONE:View.VISIBLE));
+            dp(activity,75),dp(activity,29),Gravity.END|Gravity.CENTER_VERTICAL);
+        profilesLp.rightMargin=dp(activity,29);
+        header.addView(favoriteProfiles,profilesLp);
         root.addView(header);
-        root.addView(favoriteProfiles);
 
         EditText search=new EditText(activity);
         search.setSingleLine(true);
-        search.setTextColor(Color.WHITE);
+        search.setTextColor(panelFg);
         search.setHintTextColor(Color.rgb(157,170,187));
         search.setHint("Nome, forma ou nº da Pokédex");
         search.setTextSize(12);
@@ -356,53 +397,93 @@ public final class PokemonPicker {
         root.addView(noResults);
 
         final Runnable[] refresh={null};
-        // Short tap loads; long press saves, with isolated SharedPreferences.
+        final TextView[] favoriteTabs=new TextView[3];
+        final Runnable refreshProfileStars=()->{
+            SharedPreferences prefs=activity.getSharedPreferences("prefs",0);
+            int active=prefs.getInt("favoritePresetActiveV1",0);
+            for(int slot=1;slot<=3;slot++){
+                TextView star=favoriteTabs[slot-1];
+                if(star==null)continue;
+                boolean stored=prefs.contains("favoritePresetV1_"+slot);
+                boolean selected=stored&&active==slot;
+                star.setText(selected?"★":"☆");
+                star.setTextColor(selected?Color.rgb(255,212,104):Color.rgb(146,154,169));
+                star.setContentDescription("Perfil "+slot+
+                    (selected?" ativo":stored?" salvo, inativo":" vazio")+
+                    ". Toque para usar; segure para limpar todos os favoritos do perfil");
+            }
+        };
+        // Only the active one is lit, even when all three are saved.
         // An empty saved profile is valid; current favorite list is untouched
         // until a conscious slot tap. No notifications or tones are reset.
         for(int slot=1;slot<=3;slot++){
             final int profile=slot;
             final String key="favoritePresetV1_"+profile;
             TextView tab=new TextView(activity);
-            tab.setText(String.valueOf(profile));
-            tab.setTextSize(12);tab.setTypeface(null,Typeface.BOLD);
+            boolean stored=activity.getSharedPreferences("prefs",0).contains(key);
+            tab.setText(stored&&activity.getSharedPreferences("prefs",0)
+                .getInt("favoritePresetActiveV1",0)==profile?"★":"☆");
+            tab.setTextSize(17);tab.setTypeface(null,Typeface.BOLD);
             tab.setGravity(Gravity.CENTER);
-            tab.setTextColor(Color.rgb(228,236,245));
+            tab.setTextColor(stored&&activity.getSharedPreferences("prefs",0)
+                .getInt("favoritePresetActiveV1",0)==profile?
+                Color.rgb(255,212,104):Color.rgb(146,154,169));
             tab.setContentDescription("Favoritos perfil "+profile+
-                ": toque para usar, segure para salvar");
-            tab.setBackgroundColor(activity.getSharedPreferences("prefs",0)
-                .contains(key)?Color.argb(100,69,107,92):Color.argb(65,72,81,95));
+                (stored?": salvo; toque para usar, segure para sobrescrever":": vazio; segure para salvar"));
+            tab.setBackgroundColor(Color.TRANSPARENT);
             LinearLayout.LayoutParams tabLp=new LinearLayout.LayoutParams(
-                dp(activity,42),dp(activity,27));
-            tabLp.setMargins(dp(activity,3),0,dp(activity,3),0);
+                dp(activity,23),dp(activity,27));
+            tabLp.setMargins(dp(activity,1),0,dp(activity,1),0);
             favoriteProfiles.addView(tab,tabLp);
+            favoriteTabs[profile-1]=tab;
             tab.setOnLongClickListener(v->{
                 SharedPreferences p=activity.getSharedPreferences("prefs",0);
-                String current=WatchAlerts.canonicalList(p.getString(WatchAlerts.PREF_LIST,""));
-                p.edit().putString(key,current).apply();
-                tab.setBackgroundColor(Color.argb(100,69,107,92));
-                Toast.makeText(activity,"✓ Perfil de favoritos "+profile+" salvo",
-                    Toast.LENGTH_SHORT).show();
-                return true;
+                if(!p.contains(key)){
+                    Toast.makeText(activity,"Perfil vazio · toque para ativar",
+                        Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                // Long press is reserved for clearing a saved profile, never
+                // saving it. Confirm via a compact contextual action.
+                android.widget.PopupMenu confirm=new android.widget.PopupMenu(activity,tab);
+                confirm.getMenu().add("Limpar todos os favoritos do Perfil "+profile);
+                confirm.setOnMenuItemClickListener(item->{
+                    SharedPreferences current=activity.getSharedPreferences("prefs",0);
+                    boolean active=current.getInt("favoritePresetActiveV1",0)==profile;
+                    SharedPreferences.Editor edit=current.edit().putString(key,"");
+                    if(active)edit.putString(WatchAlerts.PREF_LIST,"");
+                    edit.apply();
+                    if(active)refresh[0].run();
+                    refreshProfileStars.run();
+                    Toast.makeText(activity,"Perfil "+profile+" limpo",
+                        Toast.LENGTH_SHORT).show();
+                    return true;
+                });
+                confirm.show();return true;
             });
             tab.setOnClickListener(v->{
                 SharedPreferences p=activity.getSharedPreferences("prefs",0);
                 if(!p.contains(key)){
-                    Toast.makeText(activity,"Segure "+profile+" para salvar os favoritos",
+                    // First tap on an unused star stores current Favorites and
+                    // activates this slot. Further edits auto-update the slot.
+                    String current=WatchAlerts.canonicalList(
+                        p.getString(WatchAlerts.PREF_LIST,""));
+                    p.edit().putString(key,current)
+                        .putInt("favoritePresetActiveV1",profile).apply();
+                    refreshProfileStars.run();
+                    Toast.makeText(activity,"★ Perfil "+profile+" ativo · salvamento automático",
                         Toast.LENGTH_SHORT).show();return;
                 }
                 String saved=WatchAlerts.canonicalList(p.getString(key,""));
-                p.edit().putString(WatchAlerts.PREF_LIST,saved).apply();
+                p.edit().putString(WatchAlerts.PREF_LIST,saved)
+                    .putInt("favoritePresetActiveV1",profile).apply();
                 refresh[0].run();
+                refreshProfileStars.run();
                 Toast.makeText(activity,"✓ Favoritos do perfil "+profile+" carregados",
                     Toast.LENGTH_SHORT).show();
             });
         }
-        TextView hint=new TextView(activity);
-        hint.setText("Toque: usar  •  Segure: salvar");
-        hint.setGravity(Gravity.CENTER_VERTICAL);
-        hint.setTextSize(9);
-        hint.setTextColor(Color.rgb(177,190,207));
-        favoriteProfiles.addView(hint);
+        refreshProfileStars.run();
         Runnable updateSuggestions=()->{
             String term=search.getText().toString().trim();
             results.removeAllViews();
@@ -429,6 +510,18 @@ public final class PokemonPicker {
         };
 
         refresh[0]=()->{
+            // Active profile is the live favorite list: every add/remove saves
+            // automatically and survives closing the dialog/restarting Android.
+            // Inactive saved slots are never silently modified.
+            SharedPreferences autoPrefs=activity.getSharedPreferences("prefs",0);
+            int activeSlot=autoPrefs.getInt("favoritePresetActiveV1",0);
+            if(activeSlot>=1&&activeSlot<=3){
+                String current=WatchAlerts.canonicalList(
+                    autoPrefs.getString(WatchAlerts.PREF_LIST,""));
+                String key="favoritePresetV1_"+activeSlot;
+                if(!current.equals(autoPrefs.getString(key,"")))
+                    autoPrefs.edit().putString(key,current).apply();
+            }
             // All 50 favorites remain reachable, including legacy catalog entries.
             java.util.LinkedHashMap<String,String> chosen=WatchAlerts.names(
                 activity.getSharedPreferences("prefs",0).getString(WatchAlerts.PREF_LIST,""));
@@ -486,9 +579,10 @@ public final class PokemonPicker {
         // Single translucent charcoal panel: no duplicate platform title,
         // no separate grey footer, and Concluir belongs inside the panel.
         android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable();
-        background.setColors(new int[]{Color.argb(239,34,38,47),Color.argb(238,29,32,39)});
+        background.setColors(new int[]{panelColor,panelColor});
         background.setOrientation(android.graphics.drawable.GradientDrawable.Orientation.TL_BR);
-        background.setStroke(dp(activity,1),Color.argb(109,170,183,202));
+        background.setStroke(dp(activity,1),lightMenu?
+            Color.argb(105,49,69,91):Color.argb(109,170,183,202));
         background.setCornerRadius(dp(activity,12));
         root.setBackground(background);
         Context context=(activity instanceof Activity)?activity:
@@ -513,6 +607,13 @@ public final class PokemonPicker {
             window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND |
                 android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
             window.setDimAmount(0.0f);
+            // Optional blur is restricted to this nonmodal dialog bounds; on
+            // Android versions without cross-window blur support we retain
+            // the same translucent background without changing overlay flags.
+            if(android.os.Build.VERSION.SDK_INT>=31){
+                try{window.setBackgroundBlurRadius(dp(activity,blurRadius));}
+                catch(RuntimeException ignored){}
+            }
             int screen=activity.getResources().getDisplayMetrics().widthPixels;
             int preferredWidth=Math.min(screen-dp(activity,22),dp(activity,348));
             window.setLayout(preferredWidth,

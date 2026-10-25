@@ -96,10 +96,10 @@ check("radius 0, 1, 999, 1000, boundary and empty",()=>{
 });
 check("location title and full coordinate field on separate centered rows",()=>{
  const loc=section("function renderLocationChoices(){","let requestedInterval");
- assert.ok(loc.includes("label.append(labelName,paste,radiusWrap)"));
+ assert.ok(loc.includes("label.append(labelName,radiusWrap)"));
  assert.ok(loc.includes("fieldRow.append(field);"));
- assert.ok(loc.includes("panel.append(title,fieldRow,slide,label,message)"));
- assert.ok(loc.includes("panel.append(title,fieldRow,slide,label,message)"));
+ assert.ok(loc.includes("panel.append(title,fieldRow,sliderRow,label,message)"));
+ assert.ok(loc.includes("panel.append(title,fieldRow,sliderRow,label,message)"));
  assert.ok(loc.includes('radiusField.maxLength=4'));
  assert.ok(loc.includes('radiusField.inputMode="numeric"'));
  assert.ok(loc.includes('radiusField.value.trim()===""'));

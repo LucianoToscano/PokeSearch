@@ -2,8 +2,8 @@ package com.lucianotoscano.pokesearchoverlay;
 
 /** Pure rules: independently testable without Android, network or Firebase. */
 public final class SupportMissionPolicy {
-    public static final int REQUIRED_OPENS = 10;
-    public static final long REQUIRED_USAGE_MS = 100L * 60L * 1000L;
+    public static final int REQUIRED_OPENS = 3;
+    public static final long REQUIRED_USAGE_MS = 10L * 60L * 1000L;
     public static final long COOLDOWN_MS = 15L * 24L * 60L * 60L * 1000L;
     public static final int[] WEIGHTS = {40, 30, 20, 10};
     private SupportMissionPolicy() {}

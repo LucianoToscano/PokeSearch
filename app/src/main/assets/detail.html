@@ -226,11 +226,24 @@ window.showDetails=(c,mode,watched)=>{
   img.src=src;
  }
  const stat=(label,value,css="")=>value?'<span class="'+css+'">'+h(label)+" "+h(value)+"</span>":"";
+ const raw=String(c.iv??"").trim();
+ const validRaw=/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw);
+ const percent=String(c.ivPercent??"").trim();
+ const validPct=/^(?:0|[1-9][0-9]?|100)$/.test(percent);
+ const rawPct=validRaw?Math.round(raw.split("/").map(Number)
+  .reduce((sum,n)=>sum+n,0)*100/45):null;
+ const showPct=validPct&&(rawPct===null||rawPct===Number(percent));
+ const showRaw=validRaw&&(!validPct||rawPct===Number(percent));
  document.getElementById("major").innerHTML=
-  stat("PC",c.cp)+stat("Nv.",c.level)+stat("IV",c.ivPercent?c.ivPercent+"%"+(c.iv?" ("+c.iv+")":""):c.iv,"red")+
-  stat("Rank",c.rank);
+  stat("PC",c.cp)+stat("Nv.",c.level)+
+  stat("IV%",showPct?percent+"%":"","red")+
+  stat("A/D/S",showRaw?raw:"","red")+stat("Rank",c.rank);
  document.getElementById("info").innerHTML=
-  item("Golpes",c.moves)+item("Local",c.location)+item("Distância",c.distance)+(expiresAt?'<div><em>Despawn:</em> <span id="timer"></span></div>':item("Despawn",c.despawn))+'<div><em>Coordenadas:</em> <span id="coordsValue">'+h(currentCoords||coordsNote||"Toque em Get coords")+'</span></div>';
+  item("Golpes",c.moves)+item("Local",c.location)+item("Distância",c.distance)+
+  (expiresAt?'<div><span id="timer" aria-label="Tempo até desaparecer"></span></div>':
+    (c.despawn?'<div>'+h(c.despawn)+'</div>':""))+
+  '<div><em>Coordenadas:</em> <span id="coordsValue">'+
+  h(currentCoords||coordsNote||"Toque em Get coords")+'</span></div>';
  updateCountdown();
  resizeEvolutionPanel();
  if(changed)panel.scrollTop=0;

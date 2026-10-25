@@ -1,0 +1,30 @@
+name: PokeSearch LT88 - auditoria historico e guia resumido
+on:
+  push:
+    branches: [feature/lt88-lt93-evolution-20261025]
+    paths:
+      - 'docs/LT88_R8_FILTROS_AUDIO_LOCALIZACAO_QA.md'
+      - '.github/workflows/lt88-guide-append-safe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verificar politica atual ou guia legado (sem append)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f docs/GUIA_MESTRE.md
+          test -f docs/LT88_R8_FILTROS_AUDIO_LOCALIZACAO_QA.md
+          if [ -f docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md ]; then
+            test "$(git hash-object docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md)" = '466a92323dc319720b4ced50caf413a1a2bbef04'
+            grep -Fq 'GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md' docs/GUIA_MESTRE.md
+          else
+            test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
+          fi
+          echo "PASS historico/guia verificados sem editar arquivos"

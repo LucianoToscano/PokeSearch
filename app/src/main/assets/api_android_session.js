@@ -47,10 +47,16 @@
     const options=[],seen=new Set();
     // Base sprites are only used for verified default, uncostumed species.
     // Forms and costumes remain without a misleading substitute image.
-    const defaults=new Set(data.catalogSpeciesForms.filter(x=>
-      (x.form_id===0||x.form_id===null)&&
-      (x.costume_id===undefined||x.costume_id===0)&&
-      (!x.form_name||x.form_name===x.species_name||x.form_name==="Normal")).map(x=>x.pokemon_id));
+    // Official catalog often names the default as SPECIES_NORMAL with a
+    // nonzero form_id. Its base sprite is still the exact verified species.
+    // Special forms and costumes remain pictureless without a verified URL.
+    const defaults=new Set(data.catalogSpeciesForms.filter(x=>{
+      const species=String(x.species_name||"").replace(/[^a-z0-9]/ig,"").toUpperCase();
+      const form=String(x.form_name||"").replace(/[^a-z0-9]/ig,"").toUpperCase();
+      const baseForm=!form||form===species||form==="NORMAL"||form===species+"NORMAL";
+      return Number.isInteger(x.pokemon_id)&&x.pokemon_id>0&&
+        (x.costume_id===undefined||x.costume_id===null||x.costume_id===0)&&baseForm;
+    }).map(x=>x.pokemon_id));
     function add(label,id,base){
      if(!label||label.length>90||seen.has(label.toLocaleLowerCase()))return;
      if(wanted&&!(label.toLocaleLowerCase().includes(wanted)||
@@ -64,7 +70,13 @@
      if(options.length>=40)break;
      add(x.species_name,x.pokemon_id,true);
      if(x.costume_id===undefined&&x.form_id!==null&&x.form_name&&
-        x.form_name!==x.species_name)add(x.form_name,x.pokemon_id,false);
+        x.form_name!==x.species_name){
+       // The catalog's SPECIES_NORMAL entry is the verified base species,
+       // not a costume. All other special forms remain placeholder-only.
+       const species=String(x.species_name).replace(/[^a-z0-9]/ig,"").toUpperCase();
+       const form=String(x.form_name).replace(/[^a-z0-9]/ig,"").toUpperCase();
+       add(x.form_name,x.pokemon_id,form===species+"NORMAL");
+     }
     }
     return {ok:true,state:options.length?"ready":"explicit-empty",
      query,options,empty:options.length===0,selectionVerified:false,

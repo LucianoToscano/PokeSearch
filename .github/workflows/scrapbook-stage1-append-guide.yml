@@ -1,0 +1,39 @@
+name: PokeSearch Guia Mestre resumido - integridade do backup
+on:
+  push:
+    branches:
+      - feature/pokesearch-community-scrapbook-stage1-20261025
+    paths:
+      - 'docs/GUIA_MESTRE.md'
+      - 'docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md'
+      - 'docs/POKESEARCH_SCRAPBOOK_ETAPA1.md'
+      - '.github/workflows/scrapbook-stage1-append-guide.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-guide-archive:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Provar identidade do backup e resumo conciso (sem gravacao)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARCHIVE=docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md
+          GUIDE=docs/GUIA_MESTRE.md
+          test -f "$ARCHIVE" && test -f "$GUIDE"
+          test "$(wc -c < "$ARCHIVE")" -eq 1459814
+          test "$(git hash-object "$ARCHIVE")" = '466a92323dc319720b4ced50caf413a1a2bbef04'
+          test "$(wc -c < "$GUIDE")" -lt 28000
+          grep -Fq 'GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md' "$GUIDE"
+          grep -Fq '0.00.95' "$GUIDE"
+          grep -Fq 'Scrapbook' "$GUIDE"
+          echo "BACKUP_GIT_BLOB=$(git hash-object "$ARCHIVE")"
+          echo "BACKUP_SHA256=$(sha256sum "$ARCHIVE" | awk '{print $1}')"
+          echo "BACKUP_BYTES=$(wc -c < "$ARCHIVE")"
+          echo "RESUMO_BYTES=$(wc -c < "$GUIDE")"
+          test -z "$(git status --porcelain)"
+          echo "PASS: arquivo historico byte-identico; resumo curto; sem APK/merge/write"

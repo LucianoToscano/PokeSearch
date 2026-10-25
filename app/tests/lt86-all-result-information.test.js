@@ -30,7 +30,7 @@ check("result metadata scroll begins at top so rank and time can be reached",()=
  assert.match(dock,/touch-action:pan-y/);
  assert.match(dock,/overflow-y:auto/);
  const src=cut("function resultLines(card,opts,league){","function resultInfoHtml(value,card){");
- assert.match(src,/lines\.unshift\("Despawn TIMER"\)/);
+ assert.match(src,/lines\.unshift\("TIMER"\)/);
 });
 check("all available card information, verified GL, UL, ML ranks and Genderless",()=>{
  const source=cut("function resultLines(card,opts,league){","function resultInfoHtml(value,card){");
@@ -54,7 +54,7 @@ check("all available card information, verified GL, UL, ML ranks and Genderless"
   moves:"Spark / Thunderbolt",location:"City, Brazil",distance:"18 km",
   shiny:true,cp:"635",level:"25",expiresAtMs:301000};
  const lines=sandbox.resultLines(card,opts,"gl");
- assert.equal(lines[0],"Despawn TIMER");
+ assert.equal(lines[0],"TIMER");
  for(const value of ["Voltorb","#100","⚲","XS","Normal","Spark / Thunderbolt",
   "City, Brazil","18 km","✨","PC635 · Nv25","15/15/15","100%",
   "GL RG#12","UL RG#19","ML RG#52",

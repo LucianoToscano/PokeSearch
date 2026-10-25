@@ -18,11 +18,13 @@ checked("native sprite fanout updates all waiting favorites even for one dex",()
  assert.match(picker,/if\(connection\.getResponseCode\(\)!=200\)continue/);
 });
 checked("only known base sprites retry on verified CDN, never forms",()=>{
- assert.match(dock,/img\.dataset\.cdnAttempt/);
+ assert.match(dock,/const spriteRequestCache=new Map\(\)/);
+ assert.match(dock,/pooledBaseSprite\(item\.image\)/);
  assert.match(dock,/https:\/\/cdn\.jsdelivr\.net\/gh\/PokeAPI\/sprites@master\/sprites\/pokemon\//);
  assert.match(dock,/button\.appendChild\(placeholder\)/);
  const api=fs.readFileSync(path.join(dir,"assets/api_android_session.js"),"utf8");
- assert.match(api,/x\.form_name==="Normal"/);
+ assert.match(api,/form===species\+"NORMAL"/);
+ assert.match(api,/baseForm/);
  assert.match(api,/options\.push\(\{label,dex:String\(id\),image\}\)/);
 });
 checked("Genderless ⚲ visible in information with neutral style",()=>{

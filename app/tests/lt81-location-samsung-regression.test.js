@@ -41,7 +41,7 @@ check("last site confirmation retries bounded and reset per search",()=>{
 });
 check("pasted and typed drafts are preserved until native confirmation",()=>{
  for(const p of ['field.oninput=()=>{field.dataset.locationDraft="true";}',
- 'field.dataset.locationDraft="true";\n field.scrollLeft=0;',
+ 'field.value=String(coords);field.dataset.locationDraft="true";field.scrollLeft=0;',
  'coordinates.dataset.locationDraft!=="true"','coordinates.value=locationEnabled?locationCoords:""'])
  assert.ok(dock.includes(p),p);
 });

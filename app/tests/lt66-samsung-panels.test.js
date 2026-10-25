@@ -60,7 +60,8 @@ check("H compact alert three cells avoid useless side margins",()=>{
 });
 check("I location retains inputs and controls while compact",()=>{
  const loc=dock.split("function renderLocationChoices(){")[1]?.split("let requestedInterval=null",1)[0]||"";
- assert.ok(loc.includes('label.append(labelName,paste,radiusWrap)'));
+ assert.ok(loc.includes('label.append(labelName,radiusWrap)'));
+ assert.ok(loc.includes('clipboard.append(paste,copy)'));
  assert.ok(loc.includes('slide.max="1000"'));
  assert.ok(loc.includes('radiusField.max="1000"'));
  assert.ok(loc.includes('makeDockAction("apply","Aplicar localização")'));
