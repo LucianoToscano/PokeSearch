@@ -3,7 +3,10 @@ const assert=require("node:assert/strict");
 const fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
 const dock=fs.readFileSync(path.join(__dirname,"../src/main/assets/dock.html"),"utf8");
 const p=dock.slice(dock.indexOf("function renderLocationChoices(){"),dock.indexOf("let requestedInterval=null"));
-const css=dock.slice(dock.indexOf("/* LT100 Samsung reference FINAL:"));
+const css=dock.slice(dock.indexOf("/* LT99 compact Samsung Location"));
+const finalCss=dock.slice(dock.indexOf("/* LT100 Samsung reference FINAL:"));
+assert.ok(finalCss.includes('height:30px!important'),"final slider row visible");
+assert.ok(finalCss.includes('.locSliderRow>input[type="range"]'),"final slider width matches coordinates");
 assert.ok(css.length>6500,"scoped last-rule Samsung compact layout");
 const expected=[
  'clipboard.append(paste,copy)','title.appendChild(clipboard)',
