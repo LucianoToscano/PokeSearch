@@ -16,7 +16,7 @@ check("second tap is delegated to Android's actual popup state",()=>{
  const src=segment("window.setActiveNativePopupKind=kind=>{","/* Reposition the cascading editor");
  const native={kind:"",taps:[],openPopupMeasured(kind){
   this.taps.push(kind);this.kind=this.kind===kind?"":kind;
-  sandbox.setActiveNativePopupKind(this.kind);
+  sandbox.window.setActiveNativePopupKind(this.kind);
  },closePopup(){throw Error("Old optimistic local close must not be called");}};
  const button={getBoundingClientRect:()=>({left:4,top:0,width:30,height:30})};
  const sandbox={
@@ -29,7 +29,7 @@ check("second tap is delegated to Android's actual popup state",()=>{
  for(const kind of ["mode","filters","location","pokemon","alerts","appearance","more"]){
   sandbox.toggleChoices(kind);assert.equal(native.kind,kind,kind+" opens");
   // Force stale mirror to reproduce the original cross-WebView race.
-  sandbox.setActiveNativePopupKind("");
+  sandbox.window.setActiveNativePopupKind("");
   sandbox.toggleChoices(kind);assert.equal(native.kind,"",kind+" collapses");
   sandbox.toggleChoices(kind);assert.equal(native.kind,kind,kind+" reopens");
   sandbox.toggleChoices(kind);assert.equal(native.kind,"",kind+" collapses again");
@@ -52,7 +52,6 @@ check("Favorites native Dialog closes on second icon tap without affecting selec
 check("all HTML inline scripts still parse",()=>{
  const scripts=[...dock.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
  assert.ok(scripts.length>0);
- for(const [,,] of []){} // no side effects
  scripts.forEach(s=>new vm.Script(s[1]));
 });
 console.log("LT85 popup toggling regression PASS");
