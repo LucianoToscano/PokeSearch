@@ -341,6 +341,7 @@ public class OverlayService extends Service {
     };
     private boolean pickerOpen=false;
     private android.app.Dialog favoritePickerDialog;
+    private android.app.Dialog quickActionDialog;
     private final Runnable queuedRefresh=()->refresh(false);
     private final Runnable filterChangeRefresh=()->refresh(true);
     private void scheduleFilterChangeRefresh(){
@@ -3823,14 +3824,28 @@ public class OverlayService extends Service {
             update();
             alertModeCaption("Pokémon Favoritos",mode);
         });}
+        private int menuActionAnchorY(){
+            if(menuParams==null)return dp(70);
+            return menuParams.y+dp(visualMenuBaseDp()+4);
+        }
+        private void closeQuickActionDialog(){
+            android.app.Dialog current=quickActionDialog;
+            quickActionDialog=null;
+            if(current!=null)try{current.dismiss();}catch(RuntimeException ignored){}
+        }
         private void requestAlertTonePicker(String target){
-            Intent intent=new Intent(OverlayService.this,MainActivity.class);
-            intent.setAction("com.lucianotoscano.pokesearchoverlay.PICK_ALERT_TONE");
-            intent.putExtra("alertToneTarget",target);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP|
-                Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            try{startActivity(intent);}
-            catch(Exception ex){recordFailure("selecionar som de notificação",ex);}
+            if(stopped||root==null)return;
+            if(!"general".equals(target)&&!"favorites".equals(target)){
+                android.widget.Toast.makeText(OverlayService.this,
+                    "Som individual: use a configuração de Favoritos",
+                    android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+            closeQuickActionDialog();
+            try{
+                quickActionDialog=OverlayQuickMenus.showTone(OverlayService.this,
+                    target,menuActionAnchorY(),()->{if(!stopped)update();});
+            }catch(Exception ex){recordFailure("selecionar som de notificação",ex);}
         }
         @JavascriptInterface public void pickAlertTone(String target){handler.post(()->{
             if(!"general".equals(target)&&!"favorites".equals(target)&&
@@ -3922,11 +3937,13 @@ public class OverlayService extends Service {
                 android.widget.Toast.LENGTH_SHORT).show();
         });}
         @JavascriptInterface public void openPix(){handler.post(()->{
-            Intent intent=new Intent(OverlayService.this,MainActivity.class);
-            intent.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_PIX");
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
-                Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            try{startActivity(intent);}catch(Exception e){recordFailure("abrir atalho",e);}
+            if(stopped||root==null)return;
+            if(quickActionDialog!=null&&quickActionDialog.isShowing()){
+                closeQuickActionDialog();return;
+            }
+            try{quickActionDialog=OverlayQuickMenus.showPix(
+                OverlayService.this,menuActionAnchorY());}
+            catch(Exception e){recordFailure("abrir Pix flutuante",e);}
         });}
         @JavascriptInterface public void openSettings(){handler.post(()->{
             Intent intent=new Intent(OverlayService.this,MainActivity.class);
@@ -3949,7 +3966,9 @@ public class OverlayService extends Service {
             }
         });}
         @JavascriptInterface public void openWatchList(){
-            handler.post(()->showFavoritePicker(-1,-1));
+            handler.post(()->showFavoritePicker(menuParams==null?-1:
+                menuParams.x+dp(menuDp()/2),menuParams==null?-1:
+                menuParams.y+dp(visualMenuBaseDp()/2)));
         }
         @JavascriptInterface public void openWatchListAt(int triggerDp,int triggerYDp){
             handler.post(()->{
@@ -4358,6 +4377,7 @@ public class OverlayService extends Service {
         if(favoritePickerDialog!=null){
             favoritePickerDialog.dismiss();favoritePickerDialog=null;
         }
+        closeQuickActionDialog();
         pickerOpen=false;
         ++requestGeneration;
         ++coordinateRequestToken;
