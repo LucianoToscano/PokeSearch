@@ -79,9 +79,9 @@
   async function request(method,url,data,withAuth,timeoutMs){
    if(!originValid()||disposed||!safeMethod(method,url))return fail("invalid-origin");
    let token=null;
-   if(withAuth){
+   if(withAuth===true||withAuth==="optional"){
     token=jwt();
-    if(!token)return fail("login-required");
+    if(withAuth===true&&!token)return fail("login-required");
    }
    const headers={Accept:"application/json"};
    if(method==="POST")headers["Content-Type"]="application/json";
@@ -124,13 +124,34 @@
    reveals.clear(); // old results must never reveal coordinates
    const proposed=d.apiContract.buildPayload(config);
    if(!proposed.ok)return fail("unsupported-filter");
-   const result=await request("POST",SEARCH_URL,proposed.payload,true,10000);
+   const result=await request("POST",SEARCH_URL,proposed.payload,"optional",10000);
    if(generation!==searchVersion||disposed)return fail("superseded-search");
    if(!result.ok)return result;
    const parsed=d.apiContract.normalizeResponse(result.body,{
     nowMs:dateNow(),shiny:config&&config.shiny===true
    });
    if(!parsed.ok)return fail("invalid-results");
+   // PvP cards require per-card league/rank evidence returned by the API.
+   // Never mark arbitrary responses as league-confirmed.
+   const pvp=config&&(config.mode==="gl"||config.mode==="ul");
+   if(pvp){
+    const requested=config.mode==="ul"?"ultra":"great";
+    const maxRank=Number(config.mode==="ul"?config.ulRank:config.glRank);
+    const vetted=[];
+    for(const card of parsed.cards){
+     const candidate=result.body.results[card.sourceIndex];
+     const rank=candidate&&candidate.pvp;
+     if(!rank||rank.league!==requested||!Number.isInteger(rank.rank)||
+        rank.rank<1||rank.rank>maxRank)continue;
+     card.rank=String(rank.rank);
+     card.ivRankSource="api-pvp";
+     card.ivRankLeague=requested;
+     vetted.push(card);
+    }
+    if(parsed.cards.length&&!vetted.length)return fail("pvp-unverified");
+    parsed.cards=vetted;
+    parsed.found=vetted.length;
+   }
    // Store only codes belonging to sanitized, live results.
    const all=result.body.results;
    for(const card of parsed.cards){
@@ -149,7 +170,7 @@
     found:parsed.found,siteCount:parsed.siteCount,
     rejected:parsed.rejected,expired:parsed.expired,
     criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false,
-    source:"experimental-api",requiresIntegrationValidation:true};
+    source:"experimental-api",requiresIntegrationValidation:true,requestValidated:true,pvpVerified:!!pvp};
   }
   async function reveal(requested){
    if(disposed)return fail("disposed");
@@ -170,7 +191,7 @@
    const url=API+"/reveal/"+encodeURIComponent(code);
    // No Bearer for reveal. Its auth requirements remain unverified;
    // 401 or 403 must be respected, never bypassed.
-   const result=await request("GET",url,null,false,6000);
+   const result=await request("GET",url,null,"optional",6000);
    if(q.searchVersion!==searchVersion||disposed)return fail("superseded-search");
    if(!result.ok)return result;
    const parsed=d.revealContract.normalizeRevealResponse(result.body,
