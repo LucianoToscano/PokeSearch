@@ -25,7 +25,7 @@
 
 **Ponte:** manifesto Drive público arquivo ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`, https://drive.google.com/file/d/15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf/view aponta a LT79 (código 54282). Clientes anteriores instalam LT79 e depois entram no fluxo GitHub. Nunca substituir o manifesto antigo inadvertidamente. O instalador Android não é silencioso: depende de confirmação do usuário.
 
-**Código e PRs:** branch `fix/lt83-location-recovery-geometry-20261025`, PR #57, base LT82; há PR #56 de integração histórica LT82 na main antiga. Após a integração, conferir SHA real da `main` e atualizar este documento para apontá-lo. PRs antigos (#34/#49/etc.) não foram automaticamente fundidos. Somente mesclar após testes e revisão de compatibilidade, preservando histórico.
+**Código e PRs:** a [PR #57](https://github.com/LucianoToscano/PokeSearch/pull/57) foi **MERGED em `main`** pelo método merge, commit `f5f97cb6036dfbdd158711780fd68fc1acaa125e`, incluindo toda a evolução anterior preservada. Branch de origem `fix/lt83-location-recovery-geometry-20261025` continua acessível. PR #56 é a integração LT82 supersedida pela #57; histórico preservado. PRs antigos #34/#49/etc. não foram automaticamente mesclados. O HEAD da main pode avançar por ajustes documentais sem afetar a versão oficial ou a assinatura.
 
 ## 3. LT83: o que mudou, sem empobrecimento
 
