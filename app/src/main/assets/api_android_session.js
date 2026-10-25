@@ -70,7 +70,13 @@
      if(options.length>=40)break;
      add(x.species_name,x.pokemon_id,true);
      if(x.costume_id===undefined&&x.form_id!==null&&x.form_name&&
-        x.form_name!==x.species_name)add(x.form_name,x.pokemon_id,false);
+        x.form_name!==x.species_name){
+       // The catalog's SPECIES_NORMAL entry is the verified base species,
+       // not a costume. All other special forms remain placeholder-only.
+       const species=String(x.species_name).replace(/[^a-z0-9]/ig,"").toUpperCase();
+       const form=String(x.form_name).replace(/[^a-z0-9]/ig,"").toUpperCase();
+       add(x.form_name,x.pokemon_id,form===species+"NORMAL");
+     }
     }
     return {ok:true,state:options.length?"ready":"explicit-empty",
      query,options,empty:options.length===0,selectionVerified:false,
