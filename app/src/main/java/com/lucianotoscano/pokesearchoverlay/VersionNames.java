@@ -32,7 +32,7 @@ public final class VersionNames {
      * Only their already-published 100..106 identities may be read from older
      * Drive update manifests; new builds MUST use canonical labels. */
     public static boolean isLegacyPublished(String version){
-        if(version==null||!version.matches("0\\\\.00\\\\.10[0-6]"))return false;
+        if(version==null||!version.matches("0\\.00\\.10[0-6]"))return false;
         return true;
     }
 
