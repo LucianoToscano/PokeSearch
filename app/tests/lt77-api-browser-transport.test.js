@@ -120,6 +120,20 @@ async function suite(){
    assert.equal(t.client&&typeof t.client.search,"function");
   }
  });
+ await check("documented forbidden reasons remain bounded to known codes",async()=>{
+  for(const [kind,expected] of [
+   ["trainer_not_linked","trainer-not-linked"],
+   ["shiny_account_unavailable","shiny-account-unavailable"],
+   ["vip_required","vip-required"],["unexpected","access-denied"]
+  ]){
+   const t=makeClient({fetchImpl:async()=>reply(403,{
+    detail:{error:kind,message:"untrusted arbitrary response content"}
+   })});
+   const result=await t.client.search(filter);
+   assert.deepEqual(result,{ok:false,reason:expected});
+   assert.ok(!JSON.stringify(result).includes("untrusted"));
+  }
+ });
  await check("malformed JSON and oversized response rejected",async()=>{
   const a=makeClient({fetchImpl:async()=>({status:200,headers:{get:()=>null},text:async()=>"{broken"})});
   assert.equal((await a.client.search(filter)).reason,"invalid-json");
