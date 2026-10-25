@@ -79,7 +79,7 @@ test("LT62/LT68 Favorites stay nonmodal and anchored to their star icon",()=>{
  return bridge.includes("pickerOpen=true;")&&bridge.includes("PokemonPicker.show(OverlayService.this")&&
   bridge.includes("pickerOpen=false;")&&bridge.includes("if(!stopped)update();")&&
   bridge.includes("},anchorX,anchorY);")&&
-  publicApi.includes("showFavoritePicker(-1,-1)")&&
+  publicApi.includes("showFavoritePicker(menuParams==null?-1:")&&
   publicApi.includes("showFavoritePicker(anchorX,anchorY)")&&
   !bridge.includes("root.setVisibility(View.GONE)")&&
   !bridge.includes("resultRoot.setVisibility(View.GONE)")&&
@@ -2181,8 +2181,8 @@ test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
 test("UX-LOCATION-FIX-03 explicit clipboard paste is validated and never enables filters",()=>{
  const handler=service.split('@JavascriptInterface public void pasteLocationCoords()')[1]?.split(
  '@JavascriptInterface public void locationEditor(boolean open)')[0]||"";
- const render=dock.split('window.onLocationPaste=coords=>{')[1]?.split('function renderLocationChoices(){')[0]||"";
- return handler.includes('cb.hasPrimaryClip()')&&
+ const render=dock.split('window.onLocationPaste=(coords,reason)=>{')[1]?.split('function renderLocationChoices(){')[0]||"";
+ return handler.includes('cb.getPrimaryClip()')&&
   handler.includes('extractClipboardCoordinates(value==null?"":value.toString())')&&
   handler.includes('window.onLocationPaste&&window.onLocationPaste(')&&
   render.includes('field.value=String(coords);')&&
