@@ -69,8 +69,8 @@ check("0 percent and 100 percent filter requests preserve EXACT values",()=>{
   return r.payload;
  }
  const first=expected(15),second=expected(0);
- assert.deepEqual([first.iv_attack,first.iv_defense,first.iv_stamina],[15,15,15]);
- assert.deepEqual([second.iv_attack,second.iv_defense,second.iv_stamina],[0,0,0]);
+ assert.deepEqual([first.raw_iv_atk,first.raw_iv_def,first.raw_iv_sta],[15,15,15]);
+ assert.deepEqual([second.raw_iv_atk,second.raw_iv_def,second.raw_iv_sta],[0,0,0]);
 });
 check("both result and detail WebViews have identical verified base/shiny assets",()=>{
  for(const dex of [1,25,676,1000,1025]){
