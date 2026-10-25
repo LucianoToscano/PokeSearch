@@ -2,13 +2,17 @@
 
 > **Guia Mestre permanente:** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md). Este README indica o estado verificado; o Guia mantém todo o histórico. Não confundir tags oficiais com commits posteriores de documentos.
 
-## LT85 — Corrigido segundo toque em menus (QA)
+## LT85 — Menus, imagens, filtros e API automática (somente QA)
 
-**Nova versão de QA 0.00.85 / 54288, não publicada oficialmente.** A branch `fix/lt85-menu-repeat-tap-20261025` herda a integração API QA da LT84 sem alterar preferências, login, filtros ou assinatura. O Android agora decide a abertura/fechamento dos menus Modos, Filtros, Localização, Pokémon, Notificações, Aparência e Mais; Favoritos fecha ao tocar novamente em sua estrela. Os dois WebViews deixam de decidir com base em estado local potencialmente defasado.
+**QA 0.00.85 / versionCode 54288 — não publicado.** Branch `fix/lt85-menu-repeat-tap-20261025` e [PR #60 Draft](https://github.com/LucianoToscano/PokeSearch/pull/60) sobre a LT84 QA ([PR #59](https://github.com/LucianoToscano/PokeSearch/pull/59)). A última versão oficial segue LT83; a ponte Google Drive LT79 não foi tocada.
 
-- Teste `app/tests/lt85-menu-repeat-tap.test.js`: abrir/fechar/reabrir cada submenu com callback tardio; Favoritos Dialog; scripts.
-- [Código e diagnóstico LT85](docs/LT85_MENU_REPEAT_TAP_QA.md).
-- [Actions LT85 QA assinado](https://github.com/LucianoToscano/PokeSearch/actions/workflows/lt85-menu-repeat-tap-signed-qa.yml) — verificar status e SHA antes de instalar. A homologação física do Samsung permanece necessária. A LT83 continua a versão oficial.
+O segundo toque no mesmo menu é decidido pelo Android (com proteção de `ACTION_OUTSIDE`); o Dialog de Favoritos fecha ao tocar novamente ⭐. A mensagem recorrente de importar opções do site foi eliminada. No modo API, o filtro Forma vem de `GET /forms`, com escolha de Sexo/Tamanho/Clima/Ordenação, inclusive durante uma pesquisa em andamento. O catálogo de Pokémon pode ser aberto sem digitação e fornece sprites de espécies padrão verificadas, mantendo fallback para formas e trajes sem sprite confirmado.
+
+**A API autorizada agora é a fonte padrão em instalações sem opção anterior salva**, com preferência manual para utilizar DOM; a navegação DOM não é acionada para burlar autenticação ou limites HTTP. Nenhum JWT ou reveal_code passa à ponte Java.
+
+- [Documentação LT85 e pendências Samsung](docs/LT85_MENU_REPEAT_TAP_QA.md).
+- [Build QA protegido e assinado](https://github.com/LucianoToscano/PokeSearch/actions/workflows/lt85-menu-repeat-tap-signed-qa.yml) — consultar a execução e o SHA-256 do APK antes de instalar.
+- Homologação de interfaces, Get coords API real, Shiny e login físico Samsung permanece pendente. **Nenhum merge/release sem autorização.**
 
 ---
 
