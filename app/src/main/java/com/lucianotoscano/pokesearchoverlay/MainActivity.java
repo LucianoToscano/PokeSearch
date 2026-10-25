@@ -78,6 +78,10 @@ public class MainActivity extends Activity {
     private String alertToneSpecies="";
     private android.media.MediaPlayer bundledTonePreview;
     private android.media.Ringtone systemTonePreview;
+    // Shared Google Drive file ID stays stable across explicitly approved APK updates.
+    // No GitHub/release/token link is exposed by the Android share chooser.
+    private static final String SHARE_APK_DRIVE_URL=
+        "https://drive.google.com/file/d/1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P/view";
     private FrameLayout homeRoot;
     private boolean homeLightMode=false;
     // LT72: Home-only update card; does not own or recreate the overlay/WebView.
@@ -546,6 +550,19 @@ public class MainActivity extends Activity {
         stats.addView(installations,secondStat);
         FirebaseStats.bind(this,online,installations);
 
+        // LT88 R7: always-visible Home sharing, without adding a fifth header icon.
+        TextView share=homeText("↗  Compartilhar app",12,
+            homeLightMode?Color.rgb(24,65,78):Color.rgb(205,235,246),true);
+        share.setGravity(Gravity.CENTER);
+        share.setContentDescription("Compartilhar APK PokeSearch pelo Google Drive");
+        share.setBackground(homeSurface(
+            homeLightMode?Color.rgb(235,247,250):Color.rgb(27,49,62),
+            11,homeLightMode?Color.rgb(155,192,204):Color.rgb(72,118,135)));
+        LinearLayout.LayoutParams shareLp=new LinearLayout.LayoutParams(-1,d(36));
+        shareLp.topMargin=d(6);
+        screen.addView(share,shareLp);
+        share.setOnClickListener(v->sharePokeSearch());
+
         // Keep the center open for the user's Pokémon GO wallpaper.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
         // LT73: show the installed APK's real version; no manual version strings.
@@ -768,11 +785,28 @@ public class MainActivity extends Activity {
         addHomeDrawerItem(drawer,"◐","Transparência dos fundos",this::showHomeTransparencyDialog);
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
+        addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
         addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
         addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this));
         addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
         homeRoot.addView(layer,new FrameLayout.LayoutParams(-1,-1));
         homeDrawerLayer=layer;
+    }
+    /** Text-only Android Sharesheet: forwards a verified Drive APK address, never
+     * grants URI access to private app storage or exposes a GitHub API endpoint.
+     * The Drive file is updated in place only after an approved verified build. */
+    private void sharePokeSearch(){
+        Intent send=new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_SUBJECT,"PokeSearch para Android");
+        send.putExtra(Intent.EXTRA_TEXT,
+            "PokeSearch para Android — baixe o APK pelo Google Drive:\n"+SHARE_APK_DRIVE_URL);
+        try {
+            startActivity(Intent.createChooser(send,"Compartilhar PokeSearch"));
+        }catch(android.content.ActivityNotFoundException e){
+            Toast.makeText(this,"Não há aplicativo disponível para compartilhar",
+                Toast.LENGTH_SHORT).show();
+        }
     }
     private void exportHomeData(){
         // Export a fixed whitelist. No cookies, OAuth state, coordinates, trainer
