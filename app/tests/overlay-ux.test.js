@@ -2131,7 +2131,8 @@ test("SITE-POKEMON-02 stale autocomplete requests cannot replace newer site choi
   ?.split('@JavascriptInterface public void setSearchConfig(String payload)')[0]||'';
  return java.includes('pokemonSuggestionSequence')&&java.includes('sequence!=pokemonSuggestionSequence')&&
   java.includes('attempt<20')&&java.includes('response.put("query",query)')&&
-  dock.includes('state==="explicit-empty"&&response.empty===true?"Nenhuma opção oficial encontrada"')&&
+  dock.includes('state==="explicit-empty"&&response.empty===true?')&&
+  dock.includes('pokemonSuggestionSource=response.source==="authorized-api-catalog"?"api":"dom"')&&
   probe.includes("reason:'Aguardando opções oficiais do PoGoCoordinates'");
 });
 test("UX-MENU-ANCHOR-01 popups track their own launcher within native window",()=>{

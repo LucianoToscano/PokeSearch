@@ -93,6 +93,20 @@ final class AuthorizedApiCollector {
             else cb.onResult(response);
         }),350L);
     }
+    void suggest(String query,Callback cb){
+        if(!official()){cb.onResult(failure("invalid-origin"));return;}
+        if(query==null||query.length()>65){cb.onResult(failure("invalid-request"));return;}
+        bootstrap(ready->{
+            if(!ready.optBoolean("ok",false)){cb.onResult(ready);return;}
+            int request=++ticket;
+            js("(function(){return JSON.stringify("+
+                "window.PokeSearchAndroidApi.startSuggestions("+request+","+
+                JSONObject.quote(query)+"));})()",started->{
+                if(!started.optBoolean("ok",false)){cb.onResult(started);return;}
+                poll(request,0,45,cb);
+            });
+        });
+    }
     void search(JSONObject filters,Callback cb){
         if(!official()){cb.onResult(failure("invalid-origin"));return;}
         bootstrap(ready->{

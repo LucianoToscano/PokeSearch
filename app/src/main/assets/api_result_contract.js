@@ -224,8 +224,19 @@
     return {raw:raw,percent:observed};
   }
   function spriteData(item) {
-    // No source-verified sprite URL in the reference response. Never invent one.
-    return "";
+    // The documented API omits sprite URLs. Reuse the existing PokeAPI
+    // community base-sprite convention, but NEVER assign it to a costume
+    // or a different form. These are not official API image URLs.
+    if(!item||!Number.isInteger(item.pokemon_id)||
+       item.pokemon_id<1||item.pokemon_id>10000)return "";
+    const form=clean(item.form,80).toLowerCase();
+    const costume=clean(item.costume,80).toLowerCase();
+    if(form&&form!=="normal"&&form!=="default")return "";
+    if(costume&&costume!=="none"&&costume!=="normal")return "";
+    if(item.costume_id!==null&&item.costume_id!==undefined&&
+       Number(item.costume_id)!==0)return "";
+    return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+
+      (item.shiny===true?"shiny/":"")+item.pokemon_id+".png";
   }
   /* Standalone fixture parser. This is NOT an authentication, Search,
    * freshness, ranking or filter-application attestation.

@@ -27,6 +27,8 @@ check("Home controls light/dark presentation",()=>{
 check("Update Center still reads Drive manifest, without new permissions",()=>{
   assert.ok(main.includes("UpdateCenter.check(this);"));
   assert.ok(center.includes('private static final String SCHEMA="pokesearch-update-v1";'));
-  assert.ok(!manifest.includes("REQUEST_INSTALL_PACKAGES"));
+  // New LT79 native installer requests a dedicated permission; Drive remains unchanged.
+  assert.ok(manifest.includes("REQUEST_INSTALL_PACKAGES"));
+  assert.ok(!center.includes("REQUEST_INSTALL_PACKAGES"));
 });
 console.log("LT73 Home footer regression: "+passed+"/"+passed+" PASS");

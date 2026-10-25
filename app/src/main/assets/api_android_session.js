@@ -32,6 +32,38 @@
    if(!queue.has(ticket))return {pending:true};
    const item=queue.get(ticket);queue.delete(ticket);return item;
   }
+  function startSuggestions(ticket,query){
+   if(!Number.isSafeInteger(ticket)||ticket<=maxTicket||!originOk()||destroyed)
+    return fail("invalid-request");
+   if(typeof query!=="string"||query.length>65||/[\u0000-\u001f\u007f]/.test(query))
+    return fail("invalid-request");
+   maxTicket=ticket;
+   push(ticket,{pending:true});
+   Promise.resolve().then(async()=>{
+    const data=await d.catalog.getCatalog();
+    if(!data.ok)return fail(data.reason);
+    const wanted=query.trim().toLocaleLowerCase();
+    const dex=/^#?0*(\d{1,4})$/.exec(wanted);
+    const options=[],seen=new Set();
+    function add(label,id){
+     if(!label||label.length>90||seen.has(label.toLocaleLowerCase()))return;
+     if(wanted&&!(label.toLocaleLowerCase().includes(wanted)||
+       (dex&&String(id)===String(Number(dex[1])))))return;
+     seen.add(label.toLocaleLowerCase());
+     options.push({label,dex:String(id),image:""});
+    }
+    if(wanted)for(const x of data.catalogSpeciesForms){
+     if(options.length>=40)break;
+     add(x.species_name,x.pokemon_id);
+     if(x.costume_id===undefined&&x.form_id!==null&&x.form_name&&
+        x.form_name!==x.species_name)add(x.form_name,x.pokemon_id);
+    }
+    return {ok:true,state:options.length?"ready":"explicit-empty",
+     query,options,empty:options.length===0,selectionVerified:false,
+     source:"authorized-api-catalog"};
+   }).then(result=>push(ticket,result)).catch(()=>push(ticket,fail("catalog-unavailable")));
+   return {ok:true,pending:true};
+  }
   function startSearch(ticket,config){
    if(!Number.isSafeInteger(ticket)||ticket<=maxTicket||!originOk()||destroyed)
     return fail("invalid-request");
@@ -82,7 +114,7 @@
    if(destroyed)return;destroyed=true;queue.clear();
    d.transport.dispose();d.catalog.dispose();
   }
-  return Object.freeze({startSearch,startReveal,take,dispose});
+  return Object.freeze({startSearch,startSuggestions,startReveal,take,dispose});
  }
  function createBrowserSession(){
   if(typeof window==="undefined"||window.location.origin!==ORIGIN||

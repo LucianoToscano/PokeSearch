@@ -53,7 +53,9 @@ check("HTML/browser download only after validated eligibility",()=>{
  'Intent.CATEGORY_BROWSABLE','activity.startActivity(intent);']);
  assert.ok(!center.includes("REQUEST_INSTALL_PACKAGES"));
  assert.ok(!center.includes("PackageInstaller"));
- assert.ok(!manifest.includes("REQUEST_INSTALL_PACKAGES"));
+ // LT79 adds a separate native updater; Drive itself still only opens a browser.
+ assert.ok(manifest.includes("REQUEST_INSTALL_PACKAGES"));
+ assert.ok(manifest.includes("androidx.core.content.FileProvider"));
 });
 
 check("Home notice above Firebase counters and absent if disabled",()=>{
