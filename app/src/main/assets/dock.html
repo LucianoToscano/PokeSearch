@@ -5581,7 +5581,8 @@ function renderLocationChoices(){
   field.style.setProperty("font-size",count>26?"6.9px":count>21?"7.8px":"9px","important");
  };
  fitCoordinateGlyphs();
- field.oninput=()=>{field.dataset.locationDraft="true";fitCoordinateGlyphs();};
+ field.oninput=()=>{field.dataset.locationDraft="true";};
+ field.addEventListener("input",fitCoordinateGlyphs);
  const paste=make("button","locPaste");paste.type="button";
  paste.title="Colar coordenadas";paste.setAttribute("aria-label","Colar coordenadas");
  const pasteIcon=document.createElementNS("http://www.w3.org/2000/svg","svg");
