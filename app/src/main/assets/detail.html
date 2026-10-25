@@ -53,6 +53,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button id="watch" onclick="Native.toggleWatch(watchName)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg> <span id="watchLabel">Adicionar aos favoritos</span></button>
  <button id="coords" onclick="requestCoordsUi()">⌖ Get coords</button><button id="copy" onclick="copyCoords()">⧉ Copiar coordenadas</button>
 </div>
+<script src="sprite_offline.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
 let coordsNote="",coordsPending=false,coordsRequestSeq=0;
@@ -214,17 +215,32 @@ window.showDetails=(c,mode,watched)=>{
  document.getElementById("name").textContent=String(c.name||"Pokémon")+(c.shiny?" ✨":"");
  document.getElementById("sub").textContent=[c.number,c.gender,c.size,c.form].filter(Boolean).join(" · ");
  const img=document.getElementById("img"),fallback=document.getElementById("imageFallback");
- const src=String(c.image||"");
+ // The result list and this separately owned detail WebView MUST resolve
+ // identical offline bytes from the APK, without relying on HTTP or a warm
+ // WebView cache. Provider/special-form URLs are not rewritten.
+ const art=window.PokeSearchOfflineSprite?
+   window.PokeSearchOfflineSprite.resolve(c):
+   {src:String(c.image||""),original:String(c.image||""),offline:false};
+ img.onload=null;img.onerror=null;
  img.style.display="none";fallback.style.display="flex";img.removeAttribute("src");
- if(/^https:\/\//.test(src)){
+ let artAttempt=0;
+ const useArt=src=>{
+  if(!src||!(/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/)/i.test(src)))return;
   img.onload=()=>{
-   if(img.src===src&&img.naturalWidth>=8&&img.naturalHeight>=8){
+   if(img.naturalWidth>=8&&img.naturalHeight>=8){
     img.style.display="block";fallback.style.display="none";
    }
   };
-  img.onerror=()=>{if(img.src===src){img.style.display="none";fallback.style.display="flex";}};
+  img.onerror=()=>{
+   // Only retry the verified EXACT original image, never a different form.
+   if(art.offline&&artAttempt++===0&&art.original&&art.original!==src)
+    useArt(art.original);
+   else{img.style.display="none";fallback.style.display="flex";}
+  };
   img.src=src;
- }
+  if(img.complete&&img.naturalWidth>=8&&img.naturalHeight>=8)img.onload();
+ };
+ useArt(art.src);
  const stat=(label,value,css="")=>value?'<span class="'+css+'">'+h(label)+" "+h(value)+"</span>":"";
  const raw=String(c.iv??"").trim();
  const validRaw=/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw);

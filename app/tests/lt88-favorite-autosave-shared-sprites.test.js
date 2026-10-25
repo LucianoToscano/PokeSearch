@@ -38,6 +38,7 @@ test("WebView result image retries the same observed URL or verified equivalent"
  assert.match(html,/SPRITE_FAILURE_RETRY_MS=30000/);
  assert.match(html,/const useMirror=\(\)=>/);
  assert.match(html,/primary\.onerror=useMirror/);
- assert.match(html,/if\(primary\.naturalWidth>=8&&primary\.naturalHeight>=8\)finish\(url\)/);
+ assert.match(html,/if\(primary\.naturalWidth>=8&&primary\.naturalHeight>=8\)finish\(asset\.src\)/);
+  assert.match(html,/PokeSearchOfflineSprite\.resolve\(\{image:url\}\)/);
  assert.match(html,/pooledBaseSprite\(item\.image\)/);
 });
