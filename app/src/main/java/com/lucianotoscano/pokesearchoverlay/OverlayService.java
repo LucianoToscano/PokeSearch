@@ -1126,21 +1126,20 @@ public class OverlayService extends Service {
                         // between the unified Pokébola, its results, and details.
                         int minDx=-startX,maxDx=Math.max(0,d.widthPixels-dockWidth)-startX;
                         int minDy=-startY,maxDy=Math.max(0,d.heightPixels-dockHeight)-startY;
-                        if(resultParams!=null){
-                            minDx=Math.max(minDx,-dragResultStart[0]);
-                            maxDx=Math.min(maxDx,
-                                Math.max(0,d.widthPixels-resultParams.width)-dragResultStart[0]);
-                            minDy=Math.max(minDy,-dragResultStart[1]);
-                            maxDy=Math.min(maxDy,
-                                Math.max(0,d.heightPixels-resultParams.height)-dragResultStart[1]);
-                        }
+                        // LT86: the Pokébola's own screen bounds govern its drag.
+                        // A wide information/result pane must NOT forbid reaching
+                        // the right edge; clamp the pane independently below.
                         int moveX=Math.max(minDx,Math.min(maxDx,dx));
                         int moveY=Math.max(minDy,Math.min(maxDy,dy));
                         params.x=startX+moveX;
                         params.y=startY+moveY;
                         if(resultParams!=null){
-                            resultParams.x=dragResultStart[0]+moveX;
-                            resultParams.y=dragResultStart[1]+moveY;
+                            resultParams.x=Math.max(0,Math.min(
+                                Math.max(0,d.widthPixels-resultParams.width),
+                                dragResultStart[0]+moveX));
+                            resultParams.y=Math.max(0,Math.min(
+                                Math.max(0,d.heightPixels-resultParams.height),
+                                dragResultStart[1]+moveY));
                         }
                         // Throttle both native windows together. Updating the dock
                         // on every MotionEvent while limiting only results made
@@ -1162,6 +1161,10 @@ public class OverlayService extends Service {
                     if(dragged){
                         // Always commit the final position for BOTH windows,
                         // even when ACTION_UP falls between throttled frames.
+                        // Re-anchor to the icon once at the end of the drag.
+                        // Prevent a full-width info strip from leaving the old
+                        // origin when the Pokébola reaches the screen edge.
+                        positionResultsUnderPokeball(false);
                         updateWindow();
                         if(resultParams!=null&&resultRoot!=null&&wm!=null){
                             try{wm.updateViewLayout(resultRoot,resultParams);}
