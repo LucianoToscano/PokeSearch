@@ -6537,3 +6537,18 @@ Fonte canônica: docs/ESTADO_CANONICO_LT85_QA.md. PR #60 Draft.
 Todas as suites Node JS, Java/Android, Gradle assembleRelease R8, checagem de applicationId, assinatura APK v2, certificado fixo e artifact foram SUCCESS no Actions #40165405694 https://github.com/LucianoToscano/PokeSearch/actions/runs/40165405694 . O APK PokeSearch-v0.00.85-LT-API-QA.apk (somente QA) tem 38.605.383 bytes, versão 0.00.85, versionCode 54288, SOURCE_COMMIT 80b5f580533a39dfcbc45fdf65dce1148ca7fbe5, SHA256 9d41afad67e81a2d149774513f8277705d35dc7a73fdbce2b9320e91aa5859b5 confirmado com SHA256SUMS.txt do artifact #12588151967 e certificado permanente SHA256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. Relatórios do artifact contêm SOURCE_COMMIT, SIGNING-REPORT, PACKAGE-VERSION, PROTECTION. O ZIP artifact e o APK têm hashes diferentes.
 Implementações LT85: toque repetido recolhe submenus e Favoritos; correção contra ACTION_OUTSIDE; retirada definitiva do controle recorrente de importar opções; API padrão ON na ausência de escolha salva, DOM ainda selecionável; escolhas do contrato em Sexo/Tamanho/Clima/Sort e GET /forms, inclusive durante Search API; Pokémon listados por catálogo sem digitação, imagens apenas de espécies padrão verificadas com placeholders seguros para variantes. Usuário autorizou API repetidas vezes; isto não autoriza Release pública.
 PR #60 Draft na branch fix/lt85-menu-repeat-tap-20261025 (base LT84 QA, PR #59). Main, GitHub Release latest LT83 e ponte Drive LT79 NÃO foram modificadas. Homologação física Samsung e fluxos API autenticados/reveal permanecem PENDENTES. Detalhes docs/ESTADO_CANONICO_LT85_QA.md, README.md e docs/PROMPT_NOVO_CHAT_LT85_QA.md. Preservar Guia Mestre integral e não substituir por saída truncada.
+
+
+## LT86 QA — Formas completas e nível 50 (25/10/2026)
+Versão 0.00.86, versionCode 54289, somente QA; nenhuma publicação oficial.
+Branch: fix/lt86-api-filter-options-qa-20261025; PR #61 Draft sobre LT85 PR #60. Main e PR #59 preservadas.
+Código: dock.html permite Nível 1–50 e pagina até 500 formas em grupos de 60; api_android_session.js expõe até 500 nomes do catálogo da API.
+Testes históricos Node (exceto preview LT74 legado), Java, Gradle testDebugUnitTest e assembleRelease executados pelo pipeline LT86.
+GitHub Actions: 40166767899
+Build SOURCE_COMMIT: b55869c23769975ca7cfc4ccef9ac4a34db8bbad
+APK QA: PokeSearch-v0.00.86-LT-API-QA.apk
+APK SHA-256: 59f8f0a6ffad8a7867f07bfccfba4e7b18b3c00bd6d971f02afd4da80e36ff42
+Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e
+Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
+Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
+Guia Mestre prévio permaneceu imutável, com adição somente ao final.
