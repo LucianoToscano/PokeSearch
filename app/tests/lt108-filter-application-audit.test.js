@@ -43,7 +43,8 @@ test("distance sorting alone requires coordinates but no other filters do",()=>{
 });
 test("cascade only warns about location when Distance is chosen, never rejects other applies",()=>{
  assert.match(dock,/key==="sortBy"&&value==="Distance \(nearest\)"/);
- const apply=dock.split("apply.onclick=()=>{")[1].split("clear.onclick=",1)[0];
+ const filterMenu=dock.split("function renderFiltersChoices(){")[1].split("function renderInfoChoices(){")[0];
+ const apply=filterMenu.split("apply.onclick=()=>{")[1].split("clear.onclick=",1)[0];
  assert.match(apply,/modeDraft.sortBy="Despawn \(longest\)"/);
  assert.ok(!apply.includes('indicator.textContent="📍 Ordenar por distância'));
  assert.match(apply,/Native.patchSearchFilters\(JSON.stringify\(delta\)\)/);
