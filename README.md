@@ -2,6 +2,18 @@
 
 > **Guia Mestre permanente:** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md). Este README indica o estado verificado; o Guia mantém todo o histórico. Não confundir tags oficiais com commits posteriores de documentos.
 
+## Estado oficial — PokeSearch LT87 (25/10/2026)
+
+**Versão pública atual: 0.00.87 / versionCode 54290.** Atualização oficial publicada mediante autorização expressa do proprietário em [GitHub Releases](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.87-54290), com o APK protegido [PokeSearch-v0.00.87-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.00.87-54290/PokeSearch-v0.00.87-LT.apk). GitHub Actions de publicação [#40170786046](https://github.com/LucianoToscano/PokeSearch/actions/runs/40170786046) **SUCCESS**, última Release estável confirmada pela API GitHub (não Draft nem Prerelease), sha256 `d188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a`, certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, assinatura v2 válida, arquivo 38.607.807 bytes. SOURCE_COMMIT do APK `21d6547e9cb19efe941134d087f2783d6753ee55`; não confundir com commit documental posterior.
+
+**Consolidação:** PR #62 mesclada com método merge em `main`, commit `c35b384a99bd33b5685e8c964d2fdec08b679799`. PR #59 acabou mesclada pelo histórico; #60/#61 encerradas como substituídas; branches e commits preservados. LT84, LT85, LT86 e LT87 estão na `main` sem reinício. O workflow de atualização existente `GitHubUpdateCenter` consulta Releases estáveis e valida SHA-256/assinatura, permitindo exibir o update na Home de instalações antigas compatíveis. Google Drive legado LT79 continua intocado.
+
+**Limitações honestas:** a homologação física mais recente no Samsung está pendente. Os testes CI não comprovam sprites, API com conta vinculada, Despawn, PvP, Get coords, fundos ou arraste no aparelho. As notas **offline** incorporadas ao APK LT87 são as disponíveis quando ele foi compilado, podendo ainda mostrar como última entrada LT83; a notificação da atualização oficial na Home vem independentemente do GitHub Releases e não depende dessas notas offline. Para inserir notas offline LT87 em um APK, será necessário um novo build com versionCode maior. Não republicar um segundo APK diferente sob a mesma tag.
+
+[Checkpoint oficial](docs/ESTADO_CANONICO_LT87_OFICIAL.md) · [Prompt para novo chat](docs/PROMPT_NOVO_CHAT_LT87_OFICIAL.md) · [Checklist Samsung](docs/LT87_CHECKLIST_SAMSUNG.md).
+
+---
+
 ## LT87 — Fundos dos Filtros e perfis salvos (somente QA)
 
 - **QA 0.00.87 / versionCode 54290 — não publicar:** branch `fix/lt87-filter-menu-backgrounds-qa-20261025`, [PR #62](https://github.com/LucianoToscano/PokeSearch/pull/62) Draft sobre LT86, sem mudanças na `main` e sem alterar Release LT83.
