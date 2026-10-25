@@ -27,9 +27,9 @@ check("Filter editors have one unobstructed background and icon-only actions",()
  for(const bit of ['makeDockAction("apply","Aplicar filtros")','makeDockAction("clear","Limpar filtros")','makeDockAction("cancel","Cancelar alterações")'])
   assert.ok(dock.includes(bit),bit);
 });
-check("Compact size, gender, 1-35 level and CP confirmation intact",()=>{
+check("Compact size, gender, 1-50 level and CP confirmation intact",()=>{
  for(const bit of ['repeat(7,23px)','repeat(3,23px)','["XXS","XS","S","M","L","XL","XXL"]','["Male","Female","Genderless"]',
- 'levelMin:[1,35]','levelMax:[1,35]','numericConfirmButton(make,[minKey,maxKey],label)'])
+ 'levelMin:[1,50]','levelMax:[1,50]','numericConfirmButton(make,[minKey,maxKey],label)'])
   assert.ok(dock.includes(bit),bit);
 });
 check("Location has validated 0-1000km, paste and scoped actions",()=>{

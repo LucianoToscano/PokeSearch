@@ -256,7 +256,7 @@ test("UX-INFO-COMPACT-01 requested Pokémon metadata has no verbose labels",()=>
  const rank=["GL RG#12","GL IV#1","GL P100,00%","UL RG#84","UL IV#50",
    "ML RG#35","ML IV#307"];
  return ["Yamask","#562","♂","XXL","Galarian","Astonish / Rock Tomb",
-   "🇹🇼 Tainan City, Taiwan","0.3 km","✨","PC813 · Nv29","15/15/15","100%","TIMER"].every(x=>lines.includes(x))&&
+   "🇹🇼 Tainan City, Taiwan","0.3 km","✨","PC813 · Nv29","15/15/15","100%","Despawn TIMER"].every(x=>lines.includes(x))&&
   rank.every(x=>lines.includes(x))&&
   nameWithForm[0]==="Yamask"&&nameWithForm[1]==="Galarian"&&
   makeLines.resultInfoHtml("0%",zero).includes('ivInfo zero')&&
@@ -1744,7 +1744,7 @@ test("UX-SPRITE-01 missing images remain visible without inventing Pokémon or b
 test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image sources",(()=>{
  const source=dock.split("function attachSpriteFeedback(){")[1]?.split("function attachLongPress(){")[0]||"";
  if(!source.includes("if(img.complete)loaded()")||
-    !source.includes("retries>=2")||!source.includes('data-original-src'))return false;
+    !source.includes("retries>=1")||!source.includes('data-original-src'))return false;
  function makeStage(image){
   const classes=new Set(),listeners={};
   if(image){
@@ -1768,7 +1768,7 @@ test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image source
  attach();
  if(waiting.classes.has("loaded")||waiting.classes.has("failed"))return false;
  waiting.listeners.load();
- // First two failures get a recovery attempt; the third shows fallback.
+ // Unverified images get one bounded retry; the second failure shows fallback.
  broken.listeners.error();broken.listeners.error();
  tiny.listeners.error();tiny.listeners.error();
  return cached.classes.has("loaded")&&waiting.classes.has("loaded")&&
@@ -2738,12 +2738,12 @@ test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menu
   dock.includes('if(kind==="pokemon"){')&&
   dock.includes('["percent","IV%"],["gl","GL"],["ul","UL"]');
 });
-test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()=>{
+test("FILTERS-POGO-02 shows PC and bounded level 1–50 with honest defaults",()=>{
  const filters=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
  return filters.includes('numberPair("PC","cpMin","cpMax");')&&
   filters.includes('numberPair("Nível","levelMin","levelMax",true);')&&
-  filters.includes('input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999"')&&
+  filters.includes('input.step="1";input.min=level?"1":"0";input.max=level?"50":"99999"')&&
   filters.includes('input.type=level?"text":"number";input.inputMode="numeric";')&&
   !filters.includes('make("button","extraStep"')&&
   filters.includes('input.value=String(modeDraft[key]??"")')&&
@@ -3629,13 +3629,13 @@ test("LT62: Shiny pending remains neutral, and site Pokemon import requires a us
   service.includes('"SEARCH_LATENCY"')&&
   service.includes('System.currentTimeMillis()-lastSearchStartMs');
 });
-test("LT62: observed site Sort/Weather/Gender are whitelisted and imported to draft only",()=>{
+test("LT85: site filter values remain whitelisted without manual import banner",()=>{
  return dock.includes('function verifiedSiteSingleFilterValues(){')&&
    dock.includes('sortBy:["Despawn (longest)","CP (highest)')&&
    dock.includes('weather:["Any","Boosted","Sunny"')&&
    dock.includes('gender:["Any","Male","Female","Genderless"]')&&
    dock.includes('if(match)selected[key]=match==="Any"?"":match;')&&
-   dock.includes('for(const [key,value] of changed)modeDraft[key]=value;')&&
+   !dock.includes("Usar opções observadas no site")&&
    dock.includes('filterOptions={}; // Never reuse an old site snapshot')&&
    dock.includes('filterOptions[key]={...(filterOptions[key]||{}),...value};');
 });

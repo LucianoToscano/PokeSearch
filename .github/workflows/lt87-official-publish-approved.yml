@@ -1,0 +1,111 @@
+name: PokeSearch LT87 official - authorized stable publication
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt87-official-publish-approved.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: pokesearch-lt87-official-publish-once
+  cancel-in-progress: false
+jobs:
+  publish-approved:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment:
+      name: official-updates
+    env:
+      GH_TOKEN: ${{ github.token }}
+      QA_RUN: '40168986555'
+      QA_ARTIFACT: 'PokeSearch-v0.00.87-LT-Filter-Fundos-QA-protected-release'
+      EXPECTED_SOURCE: '21d6547e9cb19efe941134d087f2783d6753ee55'
+      EXPECTED_HASH: 'd188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a'
+      EXPECTED_CERT: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      TAG: 'v0.00.87-54290'
+      NAME: '0.00.87'
+      CODE: '54290'
+      SOURCE_APK: 'PokeSearch-v0.00.87-LT-Filter-Fundos-QA.apk'
+      PUBLIC_APK: 'PokeSearch-v0.00.87-LT.apk'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify consolidation, single public source and QA authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'LucianoToscano/PokeSearch'
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QA_RUN" --jq '.conclusion')" = success
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QA_RUN" --jq '.head_sha')" = "$EXPECTED_SOURCE"
+          git merge-base --is-ancestor "$EXPECTED_SOURCE" HEAD ||
+            { echo "::error::The approved source commit is not in main"; exit 1; }
+          # Never overwrite or silently replace a published version.
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo '::notice::Approved LT87 stable release already exists. No second publication.'
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/verified"
+          gh run download "$QA_RUN" --repo "$GITHUB_REPOSITORY" --name "$QA_ARTIFACT" --dir "$RUNNER_TEMP/verified"
+          cd "$RUNNER_TEMP/verified"
+          test -s "$SOURCE_APK"
+          test -s SOURCE_COMMIT.txt
+          test "$(cat SOURCE_COMMIT.txt)" = "$EXPECTED_SOURCE"
+          test -s SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+          test "$(sha256sum "$SOURCE_APK" | cut -d' ' -f1)" = "$EXPECTED_HASH"
+          test -s PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='$CODE'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='$NAME'" PACKAGE-VERSION.txt
+          ! grep -q '^application-debuggable' PACKAGE-VERSION.txt
+          test -s SIGNING-REPORT.txt
+          grep -Fxq "Signer #1 certificate SHA-256 digest: $EXPECTED_CERT" SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          test -s PROTECTION.txt
+          unzip -t "$SOURCE_APK" >/dev/null
+          cp "$SOURCE_APK" "$RUNNER_TEMP/$PUBLIC_APK"
+      - name: Publish exactly approved stable APK for in-app GitHubUpdateCenter
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RUNNER_TEMP/$PUBLIC_APK"
+          cat > "$RUNNER_TEMP/notes.md" <<'RELEASE_NOTES'
+          PokeSearch 0.00.87 LT — atualização oficial aprovada em 25/10/2026.
+
+          Novidades e melhorias:
+          - API direta autorizada padrão para novas instalações, preservando a preferência DOM previamente salva; respeita autenticação e limites da conta.
+          - Menus responsivos; filtros com fundos, bordas e transparência consistentes com o Editor Visual, inclusive nas opções laterais.
+          - Catálogo de Formas ampliado, listas selecionáveis, níveis até 50 e melhor recuperação de sprites padrão (sem inventar imagens de trajes).
+          - 3 perfis salvos de filtros e 3 perfis salvos de Favoritos, mantendo preferências e limite 50.
+          - Sexo Genderless (⚲), informações disponíveis de PvP, IV, Despawn e distância; Get coords com segurança por Pokémon.
+          - Card de detalhe arrastável, Pokébola com posicionamento independente e limpeza de resultados expirados pelo prazo da API.
+          - Build release R8 não depurável, certificado permanente, assinatura v2 e SHA-256 verificados.
+
+          Esta versão foi autorizada para publicação oficial, mas a homologação manual das correções mais recentes no Samsung continua PENDENTE; os testes automatizados e o CI não substituem a validação física. Nenhum valor PvP ou sprite de forma especial é inventado quando não confirmado.
+
+          O app LT79 ou posterior com GitHubUpdateCenter identifica esta versão por GitHub Releases. O Android requer confirmação do usuário para instalar. A ponte Google Drive LT79 continua inalterada.
+
+          SOURCE_COMMIT do APK: 21d6547e9cb19efe941134d087f2783d6753ee55
+          SHA-256: d188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a
+          RELEASE_NOTES
+          gh release create "$TAG" "$RUNNER_TEMP/$PUBLIC_APK" --repo "$GITHUB_REPOSITORY" \
+            --target "$EXPECTED_SOURCE" --title "PokeSearch 0.00.87 LT" \
+            --notes-file "$RUNNER_TEMP/notes.md" --latest
+      - name: Verify stable GitHub Release metadata, asset and digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          ID="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq '.id')"
+          test -n "$ID"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/$ID" --jq '.draft')" = false
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/$ID" --jq '.prerelease')" = false
+          ASSET="$(gh api "repos/$GITHUB_REPOSITORY/releases/$ID/assets" --jq ".[] | select(.name==\"$PUBLIC_APK\") | .id")"
+          test -n "$ASSET"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/assets/$ASSET" --jq '.state')" = uploaded
+          DIGEST="$(gh api "repos/$GITHUB_REPOSITORY/releases/assets/$ASSET" --jq '.digest')"
+          test "$DIGEST" = "sha256:$EXPECTED_HASH"
+          echo "Official LT87 is available for installed app: $TAG"

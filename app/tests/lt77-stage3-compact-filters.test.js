@@ -34,10 +34,10 @@ check("empty minimum and maximum",()=>{
  const {ok,ctx}=applyLevel("","");
  assert.equal(ok,true);assert.equal(ctx.patches.length,0);
 });
-check("min=1 max=35 accepted",()=>{
- const {ok,ctx}=applyLevel("1","35");
+check("min=1 max=50 accepted",()=>{
+ const {ok,ctx}=applyLevel("1","50");
  assert.equal(ok,true);assert.equal(ctx.patches.length,1);
- assert.equal(ctx.patches[0].levelMin,"1");assert.equal(ctx.patches[0].levelMax,"35");
+ assert.equal(ctx.patches[0].levelMin,"1");assert.equal(ctx.patches[0].levelMax,"50");
 });
 check("only minimum or maximum can be provided",()=>{
  assert.equal(applyLevel("","35").ok,true);
@@ -49,16 +49,16 @@ check("Min greater than Max rejected",()=>{
  assert.match(ctx.errors.join(" "),/Min não pode ultrapassar Max/);
 });
 check("out of range and nonnumeric levels rejected",()=>{
- for(const [a,b] of [["0","35"],["1","36"],["-2","35"],["1","2x"]]){
+ for(const [a,b] of [["0","50"],["1","51"],["-2","50"],["1","2x"]]){
   const {ok,ctx}=applyLevel(a,b);
   assert.equal(ok,false,a+","+b);assert.equal(ctx.patches.length,0);
  }
 });
-check("legacy level 50 retained, never silently cleared",()=>{
+check("legacy level 50 accepted, never silently cleared",()=>{
  const {ok,state,ctx}=applyLevel("50","50");
- assert.equal(ok,false);assert.equal(state.levelMin,"50");
- assert.equal(ctx.patches.length,0);
- assert.ok(source.includes("input.value=String(modeDraft[key]??\"\")"));
+ assert.equal(ok,true);assert.equal(state.levelMin,"50");
+ assert.equal(ctx.patches.length,1);
+ assert.ok(source.includes('input.value=String(modeDraft[key]??'));
  assert.ok(!source.includes('input.value="";modeDraft[key]=""'));
 });
 check("two-digit level fields and numeric keyboard",()=>{

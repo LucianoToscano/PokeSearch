@@ -6428,3 +6428,200 @@ Estado atual PRIORITÁRIO docs/ESTADO_CANONICO_LT83.md, README cabeçalho e RELE
 PR #58 mergeada em main depois de Node QA #40162415342 SUCCESS e compilação Java #40162415355 SUCCESS. app/src/main/assets/release_notes.json passa a ter 14 entradas ordenadas, incluindo LT79 54282 (ponte GitHub), LT80 54283 (Get coords), LT82 54285 (menus) e LT83 54286 (Localização Samsung). Teste app/tests/lt83-home-release-notes.test.js integrado à rotina Node QA. ReleaseNotes.java já possuía leitor genérico e a Home Menu -> Novidades; somente os dados do catálogo receberam mais entradas.
 IMPORTANTE: isto ocorreu DEPOIS do APK LT83 0.00.83/54286 ter sido assinado e publicado. O binário oficial permanece idêntico (SOURCE_COMMIT 5cf9adb62efb97a185ec955cab6eb0f49fbb4e88, SHA256 451e4781581122908f014a893f693c8312b36b2c222a8579c499c6c3e2975c1c). As novas notas embutidas entrarão apenas em APK futuro de code >54286; não sugerir que a LT83 instalada recebeu a alteração documental. GitHub Releases latest permanece LT83 e manifesto Drive legado permanece LT79.
 O relatório visual Samsung mais recente é da LT82 defeituosa; validação física LT83 ainda PENDENTE. Nunca declarar geofiltro aplicado sem confirmação do site. Preservar appId, assinatura, preferências, IV/GL/UL, Shiny, Favoritos, alertas e todas as demais funções. Não misturar PvPPokeGo.
+
+
+---
+
+## LT84 API DIRECT QA 20261025 (append intact)
+
+# LT84 — Integração API direta: correções e QA (25/10/2026)
+
+**Estado:** branch isolada de QA; **NÃO** é release oficial, **NÃO** foi homologada no Samsung nem em sessão real da API. A última versão pública permanece **LT83 0.00.83 / 54286**. Nenhuma ação alterou o manifesto legado do Drive ou a tag oficial.
+
+## Base e identidade
+
+- Base exata `main`: `d864a13f31617d1cc268d7dec0ecef38c97912de`.
+- Branch: `fix/lt84-authorized-api-direct-qa-20261025`.
+- Versão de compilação QA proposta: **0.00.84 / 54287**, condicionada ao GitHub Actions e verificação do próprio APK.
+- Application ID: `com.lucianotoscano.pokesearch`; namespace: `com.lucianotoscano.pokesearchoverlay`.
+- API autorizada para uso; autorização **não** inclui publicar automaticamente novo APK.
+
+## Arquitectura existente preservada
+
+O código existente da LT77+ já implementa **WebView oficial → JWT no contexto do site → POST /search → normalização → cartões do overlay**, além de **Get coords por GET /reveal/{reveal_code} sob toque explícito**. Catálogo /forms + /pokemon/catalog usa cache em memória de 300s. Preferência `authorizedApiQaOptIn` permite seleção explícita API/DOM (DOM é default). O código não exporta token/reveal_code para o Java. Permissões e limites do servidor são respeitados. Este ciclo **não recria** fluxos já existentes.
+
+## Correções LT84 efetivamente implementadas
+
+1. `api_browser_transport.js`: estado de backoff por tipo de endpoint após HTTP 429, respeitando Retry-After em segundos (máx. 3600s; fallback conservador de 60s); não tenta repetição automática, não adiciona códigos ou tokens ao retorno.
+2. Transport: cancela requisição Search anterior e Reveal pendente quando uma nova pesquisa **válida** substitui a anterior; também cancela ao encerrar a sessão. Invalidar filtros não apaga os dados transitórios do resultado anterior.
+3. Reveal: rejeita duplo toque simultâneo para o mesmo cartão com erro controlado `reveal-in-progress`; coordenadas continuam sob demanda, na sessão do site.
+4. `api_android_session.js`: evita que a leitura assíncrona de catálogos lance busca antiga após uma pesquisa mais recente; rejeita conclusões de Search atrasadas e não deixa que substituam a identidade ativa.
+5. `api_result_contract.js`: desativar localização (`locationEnabled:false`) zera `center_lat`, `center_lng`, `radius_km`, mesmo diante de dados residuais do editor; raio 0/215/1000 e ranges de latitude/longitude têm testes.
+6. API do filtro Sexo: corrige `⚥`/Any para `gender:null`; `⚲`/Genderless continua distinto.
+
+## Testes e proteção
+
+- Testes históricos LT77–LT83 preservados; novo `app/tests/lt84-direct-api-regressions.test.js` testa limpeza do geofiltro, radius e limites, gênero, HTTP 429, duplicidade de reveal, token não exportado e buscas supersedidas durante catálogo.
+- Workflow isolado `.github/workflows/lt84-direct-api-signed-qa.yml` com suíte Node, compilação Java/Android, release R8, validação aapt, certificado fixo, assinatura v2, SHA-256 e artifact **de QA**. Credenciais são lidas apenas dos GitHub Secrets preexistentes.
+- **CI:** verificar execução mais recente antes de registrar PASS. O arquivo não atesta sucesso antecipadamente.
+- **API real:** ainda não executada pelo proprietário no Samsung nem atestada com sessão legítima nesta branch.
+- **Samsung:** LT83 não homologada fisicamente, LT84 ainda pendente. Testar geofiltro coords 24.9407581,121.1889794 com radius 0/215/1000; limpar; IV 15/15/15 e 0/0/0; GL/UL top 1; Shiny com trainer vinculado; Get coords em spawn não expirado; alternar API/DOM sem misturar cards; verificar notificações, favoritos, sprites e as janelas.
+
+## Problemas ainda não considerados encerrados
+
+- Comparação end-to-end contra os resultados reais da API em conta autorizada; 200 não substitui homologação de filtros.
+- Comportamento na instalação Samsung; alertas automáticos da API seguem suspensos até validação física e deduplicação.
+- Sem publicação em Releases, sem merge na main, sem alteração do Drive antes de aprovação específica.
+
+## Fonte
+
+Spec fornecida pelo proprietário `pogo.md`, seções 1, 4.1, 5 e 8; arquivos de runtime LT77+ citados acima; estado prévio em `docs/ESTADO_CANONICO_LT83.md`. O Guia Mestre integral não pode ser substituído por saída truncada; registrar o histórico por **append** preservando os bytes existentes.
+
+## LT84 PROVA FINAL CI API DIRETA 20261025 — QA isolada
+A integração experimental direta já existia e permaneceu no WebView oficial, opt-in; LT84 fortaleceu cancelamentos de buscas antigas, Retry-After/429, Reveal deduplicado, limpeza real de geofiltro e enum Sexo Any (⚥) distinto de Genderless (⚲). Todos os testes históricos e novos em app/tests/lt84-direct-api-regressions.test.js PASSARAM no GitHub Actions #40163046534, juntamente com Gradle release R8, teste Android e assinatura v2 do certificado permanente. APK privado de QA 0.00.84/versionCode 54287, SOURCE_COMMIT 9796152446d41712464bc309e8ad3bbaafd56c05, artifact #12586524480, nome PokeSearch-v0.00.84-LT-API-QA-protected-release, com APK, SHA256SUMS e relatórios. NÃO foi publicado em Releases.
+Smoke REAL ANÔNIMO API #40163231365 SUCCESS: GET /health, /forms, /pokemon/catalog?costumes=true e um POST /search com IV 15/15/15; sem token, sem reveal automático, sem imprimir resultados. Fluxos autenticados (Google/Trainer/Shiny) e Get coords com sessão física ainda NÃO foram homologados. Acesso à API confirmado pelo proprietário, separado de autorização de distribuição.
+Workflow #40163154255 apendicou o histórico LT84 anterior ao Guia Mestre sem reduzir bytes existentes. PR #59 Draft https://github.com/LucianoToscano/PokeSearch/pull/59; main, última Release LT83 0.00.83/54286, SOURCE_COMMIT oficial 5cf9adb62efb97a185ec955cab6eb0f49fbb4e88 e ponte Google Drive LT79 intactos. Samsung LT83 e LT84 PENDENTES, sobretudo localização e Get coords. Não confundir CI com homologação física. Novo checkpoint docs/PROMPT_NOVO_CHAT_LT84_QA.md. Não dar merge/release sem revisão e autorização correspondente.
+
+
+---
+
+## LT85 MENU API PRIMARY 20261025 APPEND INTACT
+
+# PokeSearch LT85 — Toque repetido nos menus (QA, 25/10/2026)
+
+> **O APK público não foi alterado.** Última versão oficial: LT83 `0.00.83` / `54286`. LT84 é QA de integração API e LT85 corrige comportamento de menus sobre a base LT84. A publicação da LT85 não foi autorizada.
+
+## Sintoma relatado no Samsung
+O proprietário informou: **"Os menus. Quando clico neles novamente.. eles nao estao minimizando"**. A lista de menus usa um WebView de toolbar e outro WebView de popup (WindowManager), enquanto Favoritos é um Dialog nativo não modal.
+
+## Diagnóstico do código
+- `dock.html`: `toggleChoices()` antes escolhia abrir/fechar usando `activeNativePopupKind` mantido no JavaScript do toolbar e modificado de modo otimista, enquanto o estado verdadeiro é `popupKind` em `OverlayService.java`. Um callback atrasado de outro WebView pode desincronizar a escolha do segundo clique. Não afirmar que esse foi o único motivo físico sem nova evidência.
+- `OverlayService.java` já tinha `if(kind.equals(popupKind)){closeIndependentPopup();return;}`; mas a lógica antiga do toolbar podia não invocar o método nativo correto no segundo toque.
+- O tratamento de `MotionEvent.ACTION_OUTSIDE` em janelas separadas pode fechar o popup ao iniciar um toque no ícone, e o `click` daquele mesmo gesto pode abri-lo de novo. Foi adicionada uma proteção limitada a 450 ms para consumir esse clique somente quando o submenu recém-fechado e o ícone acionado são o mesmo, sem bloquear a troca para outro submenu.
+- Favoritos (`PokemonPicker`) é um Dialog separado; `showFavoritePicker()` simplesmente retornava quando `pickerOpen=true` e não tinha referência para fechar no toque repetido.
+
+## Implementação na branch
+- `dock.html`: todos os toques dos menus independentes (Modos, Filtros, Localização, Pokémon, Alertas, Aparência, Mais) vão ao mesmo toggle nativo, sem decisão por estado local possivelmente defasado. Apenas o callback nativo atualiza a indicação de popup ativo e os atributos de acessibilidade `aria-expanded`. O menu anterior permanece fechado na troca para outro.
+- `PokemonPicker.java`: método existente de cinco argumentos passa a retornar `Dialog` sem mudar as chamadas anteriores; `null` sinaliza catálogo vazio, preservando aviso existente.
+- `OverlayService.java`: guardar referência ao dialog de Favoritos para fechá-lo ao tocar novamente ⭐; limpar ponteiro em `onDismiss`, no catálogo vazio e ao destruir o serviço.
+- Sem mudanças nas coordenadas, filtros, interface desenhada, dimensões dos ícones, preferências, API, aplicação, assinatura ou funções preexistentes.
+
+## Testes
+- Novo teste `app/tests/lt85-menu-repeat-tap.test.js` verifica 7 menus com abrir → fechar → reabrir → fechar e estado JavaScript atrasado, além de invariantes do toggle nativo, fechamento do Dialog Favoritos e sintaxe de todos os scripts `dock.html`.
+- Workflow `.github/workflows/lt85-menu-repeat-tap-signed-qa.yml`: JavaScript histórico LT77–LT85, testes Java, `assembleRelease` com R8, aapt package `com.lucianotoscano.pokesearch`, `versionName 0.00.85` e `versionCode 54288`; SHA-256/certificado permanente/v2 e artifact privado de QA. **Verificar resultado e logs antes de declarar PASS.**
+- Último estado oficial LT83; QA no Samsung de LT84/LT85 ainda pendente. Em particular testar mudança e repetição com menus perto das bordas, teclado aberto, popup horizontal e vertical, Favoritos e toque no fundo fora do menu.
+
+## Entrega e autorização
+- Branch: `fix/lt85-menu-repeat-tap-20261025`, criada do HEAD `ba67c59fa9337f4145469f6599ee626eceff990c` da LT84 QA.
+- Build LT85 / 54288 **somente QA**. Não alterar GitHub Release latest, manifesto Drive legado, PR #59, `main` ou certificado de assinatura.
+- Homologação física continua pendente até usuário testar APK no Samsung. Todo registro no Guia Mestre deve ser **append** do arquivo completo de mais de 1,4 MB; não usar retorno vazio/truncado do conector como conteúdo original.
+
+## Complemento LT85 — Pokémon, imagens, filtros e API automática
+
+Solicitação subsequente do proprietário (25/10/2026): faltam sprites/ícones em Pokémon, voltou a aparecer "Usar opções observadas no site", as opções de filtros não estão surgindo para marcar como no site, e API deve funcionar nativamente sem ativação manual.
+
+Mudanças de código reais na mesma branch:
+- `api_android_session.js`: `startSuggestions` exibe espécies oficiais do catálogo antes da digitação, busca por nome/número, gera URL do sprite base PokeAPI já usada pelo projeto exclusivamente para espécies padrão sem costume confirmadas no catálogo. Para variantes/costumes não atribui sprite de base indevidamente; `startForms` lista valores de `GET /forms` com cache via cliente original.
+- `AuthorizedApiCollector.java`: `forms(query,callback)` utiliza a sessão WebView oficial e entrega somente nomes de formas (não JWT nem reveal_code) ao Android.
+- `OverlayService.java`: `requestFilterOptions` no modo API entrega a lista de valores canonizados por contrato para Sort, Clima, Tamanho e Sexo, sem clicar React; pré-carrega formas oficiais no mesmo catálogo. `requestFormOptions` invoca a API via coletor; no modo DOM permanece rotina antiga. Padrão da preferência `authorizedApiQaOptIn` alterado para `true` **somente quando não houver escolha salva**.
+- `MainActivity.java`: apresenta a opção "Pesquisa direta pela API (padrão ON; desmarque para usar DOM)", com default habilitado e preservação de escolha anterior.
+- `dock.html`: removeu o botão/mensagem recorrente de importar opções do site, mantendo campos e confirmação explícita. As opções de Pokémon passam a ser exibidas mesmo antes de digitação, com imagem padrão validada quando disponível e placeholder para sprites sem correspondência ou indisponíveis.
+- `app/tests/lt85-api-native-selectors.test.js`: verifica default/API, ausência da mensagem, imagens padrão, ausência de imagem falsa para Form, escolhas antes de digitação e catálogo de Formas.
+
+O trabalho é **QA e não a versão pública**. Verificar GitHub Actions da branch para evidência de compilação. Mesmo após PASS automatizado, ainda exige demonstração física Samsung e sessões reais autenticadas (Shiny/reveal). Não contornar autenticação, permissões nem rate limits. Não publicar sem autorização distinta.
+
+
+Fonte canônica: docs/ESTADO_CANONICO_LT85_QA.md. PR #60 Draft.
+
+## LT85 SIGNED APK QA #40165405694 VERIFIED — 25/10/2026
+Todas as suites Node JS, Java/Android, Gradle assembleRelease R8, checagem de applicationId, assinatura APK v2, certificado fixo e artifact foram SUCCESS no Actions #40165405694 https://github.com/LucianoToscano/PokeSearch/actions/runs/40165405694 . O APK PokeSearch-v0.00.85-LT-API-QA.apk (somente QA) tem 38.605.383 bytes, versão 0.00.85, versionCode 54288, SOURCE_COMMIT 80b5f580533a39dfcbc45fdf65dce1148ca7fbe5, SHA256 9d41afad67e81a2d149774513f8277705d35dc7a73fdbce2b9320e91aa5859b5 confirmado com SHA256SUMS.txt do artifact #12588151967 e certificado permanente SHA256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. Relatórios do artifact contêm SOURCE_COMMIT, SIGNING-REPORT, PACKAGE-VERSION, PROTECTION. O ZIP artifact e o APK têm hashes diferentes.
+Implementações LT85: toque repetido recolhe submenus e Favoritos; correção contra ACTION_OUTSIDE; retirada definitiva do controle recorrente de importar opções; API padrão ON na ausência de escolha salva, DOM ainda selecionável; escolhas do contrato em Sexo/Tamanho/Clima/Sort e GET /forms, inclusive durante Search API; Pokémon listados por catálogo sem digitação, imagens apenas de espécies padrão verificadas com placeholders seguros para variantes. Usuário autorizou API repetidas vezes; isto não autoriza Release pública.
+PR #60 Draft na branch fix/lt85-menu-repeat-tap-20261025 (base LT84 QA, PR #59). Main, GitHub Release latest LT83 e ponte Drive LT79 NÃO foram modificadas. Homologação física Samsung e fluxos API autenticados/reveal permanecem PENDENTES. Detalhes docs/ESTADO_CANONICO_LT85_QA.md, README.md e docs/PROMPT_NOVO_CHAT_LT85_QA.md. Preservar Guia Mestre integral e não substituir por saída truncada.
+
+
+## LT86 QA — Formas completas e nível 50 (25/10/2026)
+Versão 0.00.86, versionCode 54289, somente QA; nenhuma publicação oficial.
+Branch: fix/lt86-api-filter-options-qa-20261025; PR #61 Draft sobre LT85 PR #60. Main e PR #59 preservadas.
+Código: dock.html permite Nível 1–50 e pagina até 500 formas em grupos de 60; api_android_session.js expõe até 500 nomes do catálogo da API.
+Testes históricos Node (exceto preview LT74 legado), Java, Gradle testDebugUnitTest e assembleRelease executados pelo pipeline LT86.
+GitHub Actions: 40166767899
+Build SOURCE_COMMIT: b55869c23769975ca7cfc4ccef9ac4a34db8bbad
+APK QA: PokeSearch-v0.00.86-LT-API-QA.apk
+APK SHA-256: 59f8f0a6ffad8a7867f07bfccfba4e7b18b3c00bd6d971f02afd4da80e36ff42
+Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e
+Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
+Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
+Guia Mestre prévio permaneceu imutável, com adição somente ao final.
+
+
+## LT86 QA — Formas completas e nível 50 (25/10/2026)
+Versão 0.00.86, versionCode 54289, somente QA; nenhuma publicação oficial.
+Branch: fix/lt86-api-filter-options-qa-20261025; PR #61 Draft sobre LT85 PR #60. Main e PR #59 preservadas.
+Código: dock.html permite Nível 1–50 e pagina até 500 formas em grupos de 60; api_android_session.js expõe até 500 nomes do catálogo da API.
+Testes históricos Node (exceto preview LT74 legado), Java, Gradle testDebugUnitTest e assembleRelease executados pelo pipeline LT86.
+GitHub Actions: 40167518824
+Build SOURCE_COMMIT: e1ca4be3ba109324ac3b62e6eea64b691de3f6a7
+APK QA: PokeSearch-v0.00.86-LT-API-QA.apk
+APK SHA-256: 3d9a0591aebd9ef63867b013af69d6e18a800494304560a46b82788d27714c40
+Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e
+Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
+Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
+Guia Mestre prévio permaneceu imutável, com adição somente ao final.
+
+
+## LT86 QA — Formas completas e nível 50 (25/10/2026)
+Versão 0.00.86, versionCode 54289, somente QA; nenhuma publicação oficial.
+Branch: fix/lt86-api-filter-options-qa-20261025; PR #61 Draft sobre LT85 PR #60. Main e PR #59 preservadas.
+Código: dock.html permite Nível 1–50 e pagina até 500 formas em grupos de 60; api_android_session.js expõe até 500 nomes do catálogo da API.
+Samsung QA: sprites de base com fanout de Bitmap entre células, tentativa CDN de origem PokeAPI, imagem de forma/traje desconhecida segue placeholder.
+Info: Genderless ⚲, Nível 1–50, Mostrar todas as informações, timer Despawn prioritário, GL/UL/ML com rank somente quando verificado, tamanho XS/S/L.
+Expiração: preserva expiresAtMs absoluto da API, remove cards vencidos, evita reinserção e revalida no aviso UI mesmo se alarme nativo foi perdido.
+Arraste: Pokébola chega à borda com painel aberto; detalhe independente pode ser movido pelo cabeçalho, sem bloquear ×/Get coords.
+Perfis: 3 Filtros gerais via ▣ (Usar/Salvar, filtro validado, sem Shiny/Localização) e 3 Favoritos via ▣ (toque usar, segure salvar, máximo 50).
+Testes LT86: lt86-form-catalog-level, lt86-samsung-followup, lt86-all-result-information, lt86-despawn-detail-drag, legados JS e Java.
+Testes históricos Node (exceto preview LT74 legado), Java, Gradle testDebugUnitTest e assembleRelease executados pelo pipeline LT86.
+GitHub Actions: 40168537116
+Build SOURCE_COMMIT: e9466d409ce4cd1255db0095d2058e3f7f5f370c
+APK QA: PokeSearch-v0.00.86-LT-API-QA.apk
+APK SHA-256: f3c0afa9a050130dba33a33f2d342b4aac5b36cfc3bfaf85f55d1ddd2ae3e761
+Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e
+Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
+Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
+Guia Mestre prévio permaneceu imutável, com adição somente ao final.
+
+
+## LT87 QA — fundos dos menus de Filtros (25/10/2026)
+Versão 0.00.87, versionCode 54290, somente QA; nenhuma publicação oficial.
+Branch: fix/lt87-filter-menu-backgrounds-qa-20261025; PR #62 Draft sobre LT86 PR #61. Main e PRs #59/#60/#61 preservadas.
+Código herdado LT86: Nível 1–50 e Formas paginadas, sprites, Despawn, 3+3 perfis, Genderless e arraste de detalhes mantidos.
+LT87: fundos visíveis em rail e editor Filtros, usando --visual-menu-bg e menuTransparency também no popup e nos 3 perfis salvos, claro/escuro.
+LT87: mantém apenas o holder externo transparente para toques de fundo, corrige position:absolute da rail e dimensiona a janela de perfis.
+Samsung QA: sprites de base com fanout de Bitmap entre células, tentativa CDN de origem PokeAPI, imagem de forma/traje desconhecida segue placeholder.
+Info: Genderless ⚲, Nível 1–50, Mostrar todas as informações, timer Despawn prioritário, GL/UL/ML com rank somente quando verificado, tamanho XS/S/L.
+Expiração: preserva expiresAtMs absoluto da API, remove cards vencidos, evita reinserção e revalida no aviso UI mesmo se alarme nativo foi perdido.
+Arraste: Pokébola chega à borda com painel aberto; detalhe independente pode ser movido pelo cabeçalho, sem bloquear ×/Get coords.
+Perfis: 3 Filtros gerais via ▣ (Usar/Salvar, filtro validado, sem Shiny/Localização) e 3 Favoritos via ▣ (toque usar, segure salvar, máximo 50).
+Testes LT86: lt86-form-catalog-level, lt86-samsung-followup, lt86-all-result-information, lt86-despawn-detail-drag, legados JS e Java.
+Testes históricos Node (exceto preview LT74 legado), Java, Gradle testDebugUnitTest e assembleRelease executados pelo pipeline LT86.
+GitHub Actions: 40168986555
+Build SOURCE_COMMIT: 21d6547e9cb19efe941134d087f2783d6753ee55
+APK QA: PokeSearch-v0.00.87-LT-Filter-Fundos-QA.apk
+APK SHA-256: d188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a
+Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e
+Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
+Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
+Guia Mestre prévio permaneceu imutável, com adição somente ao final.
+
+
+## LT87 QA — Fundo dos Filtros (adendo de correção documental)
+Data: 25/10/2026. Somente QA, nenhuma publicação oficial e nenhum merge.
+A anotação LT86 gerada por um workflow herdado no build LT87 trazia rótulo de versão anterior; este ADENDO identifica corretamente o mesmo build como LT87. Preserve ambos os registros históricos sem reescrever.
+Versão e código: 0.00.87 / 54290. Repositório: LucianoToscano/PokeSearch. Branch fix/lt87-filter-menu-backgrounds-qa-20261025, PR #62 Draft sobre LT86 PR #61.
+SOURCE_COMMIT do APK: 21d6547e9cb19efe941134d087f2783d6753ee55 (commits documentais posteriores não estão no APK).
+CI build: https://github.com/LucianoToscano/PokeSearch/actions/runs/40168986555 SUCCESS. Artifact QA ID 12590105916.
+APK: PokeSearch-v0.00.87-LT-Filter-Fundos-QA.apk, 38607807 bytes, SHA-256 d188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a.
+Assinatura v2 TRUE, release R8, applicationId com.lucianotoscano.pokesearch, certificado SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e.
+Modificação: dock.html restaura fundos de Filtros, editor lateral e perfis salvos, respeitando --visual-menu-bg e preferências claro/escuro/transparência; mantém contêiner externo transparente e toques fora.
+Teste específico app/tests/lt87-filter-menu-backgrounds.test.js 5/5 PASS, suíte histórica, Java e Gradle testDebugUnitTest/assembleRelease aprovados pelo CI.
+Pendente: QA real no Samsung de fundos e transparência e das demais correções LT86 (sprites, expiração, PvP, perfis, Get coords). CI não é PASS físico.
+Guia Mestre anterior preservado por append e verificação de prefixo SHA-256. Nenhuma alteração no lançamento oficial LT83 nem Google Drive legado.

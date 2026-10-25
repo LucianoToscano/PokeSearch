@@ -1,0 +1,36 @@
+name: LT85 append intact Guia Mestre
+on:
+  push:
+    branches: [fix/lt85-menu-repeat-tap-20261025]
+    paths:
+      - '.github/workflows/lt85-guide-append.yml'
+permissions:
+  contents: write
+jobs:
+  append-history:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/lt85-menu-repeat-tap-20261025
+          fetch-depth: 1
+      - name: Append LT85 record without replacing full master
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/LT85_MENU_REPEAT_TAP_QA.md
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
+          if grep -Fq 'LT85 MENU API PRIMARY 20261025 APPEND INTACT' docs/GUIA_MESTRE.md; then
+            echo 'LT85 already documented'
+            exit 0
+          fi
+          printf '\n\n---\n\n## LT85 MENU API PRIMARY 20261025 APPEND INTACT\n\n' >> docs/GUIA_MESTRE.md
+          cat docs/LT85_MENU_REPEAT_TAP_QA.md >> docs/GUIA_MESTRE.md
+          printf '\n\nFonte canônica: docs/ESTADO_CANONICO_LT85_QA.md. PR #60 Draft.\n' >> docs/GUIA_MESTRE.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/GUIA_MESTRE.md
+          git commit -m 'docs(LT85): append popup, image, filter and API-primary changes intact'
+          git push origin HEAD:fix/lt85-menu-repeat-tap-20261025

@@ -40,6 +40,9 @@
   let searchVersion=0;
   let reveals=new Map(); // current result set only; in-memory
   let disposed=false;
+  let searchController=null,revealController=null;
+  const pendingReveals=new Set();
+  const retryUntil={search:0,reveal:0};
   const dateNow=()=>d.now();
   function originValid(){
    try{
@@ -78,6 +81,9 @@
   }
   async function request(method,url,data,withAuth,timeoutMs){
    if(!originValid()||disposed||!safeMethod(method,url))return fail("invalid-origin");
+   const kind=method==="POST"?"search":"reveal";
+   // Per-endpoint backoff; no retries or limit bypass when the server says 429.
+   if(dateNow()<retryUntil[kind])return fail("rate-limited");
    let token=null;
    if(withAuth===true||withAuth==="optional"){
     token=jwt();
@@ -90,6 +96,8 @@
    try{
     if(typeof AbortController==="function"){
      controller=new AbortController();
+     if(kind==="search")searchController=controller;
+     else revealController=controller;
      timer=setTimeout(()=>controller.abort(),timeoutMs);
     }
     const response=await d.fetchImpl(url,{
@@ -99,6 +107,13 @@
      ...(controller?{signal:controller.signal}:{})
     });
     if(!response||!Number.isInteger(response.status))return fail("invalid-response");
+    if(response.status===429){
+     const raw=response.headers&&response.headers.get?
+       response.headers.get("Retry-After"):null;
+     const seconds=raw!==null&&raw!==undefined&&raw!==""?Number(raw):NaN;
+     const delay=Number.isFinite(seconds)&&seconds>=1&&seconds<=3600?seconds:60;
+     retryUntil[kind]=Math.max(retryUntil[kind],dateNow()+delay*1000);
+    }
     if(response.status!==200)return await httpFailure(response);
     const len=response.headers&&response.headers.get&&Number(response.headers.get("content-length"));
     if(Number.isFinite(len)&&len>MAX_RESPONSE_BYTES)return fail("response-too-large");
@@ -113,17 +128,23 @@
     return fail(controller&&controller.signal.aborted?"timeout":"network-or-cors-error");
    }finally{
     if(timer!==null)clearTimeout(timer);
+    if(controller&&kind==="search"&&searchController===controller)searchController=null;
+    if(controller&&kind==="reveal"&&revealController===controller)revealController=null;
     token=null;
    }
   }
   async function search(config){
    if(disposed)return fail("disposed");
    if(!originValid())return fail("invalid-origin");
+   const proposed=d.apiContract.buildPayload(config);
+   // Bad filters never erase the verified identity of the prior displayed cards.
+   if(!proposed.ok)return fail("unsupported-filter");
    searchVersion++;
    const generation=searchVersion;
-   reveals.clear(); // old results must never reveal coordinates
-   const proposed=d.apiContract.buildPayload(config);
-   if(!proposed.ok)return fail("unsupported-filter");
+   reveals.clear(); // no reveal may refer to a previous successful search
+   pendingReveals.clear();
+   if(searchController)searchController.abort();
+   if(revealController)revealController.abort();
    const result=await request("POST",SEARCH_URL,proposed.payload,"optional",10000);
    if(generation!==searchVersion||disposed)return fail("superseded-search");
    if(!result.ok)return result;
@@ -188,20 +209,25 @@
    }
    const code=q.code;
    if(!CODE_RE.test(code))return fail("invalid-reveal-code");
-   const url=API+"/reveal/"+encodeURIComponent(code);
-   // No Bearer for reveal. Its auth requirements remain unverified;
-   // 401 or 403 must be respected, never bypassed.
-   const result=await request("GET",url,null,false,6000);
-   if(q.searchVersion!==searchVersion||disposed)return fail("superseded-search");
-   if(!result.ok)return result;
-   const parsed=d.revealContract.normalizeRevealResponse(result.body,
-    {expectedPokemonId:q.pokemonId});
-   if(!parsed.ok)return fail("coordinates-unverified");
-   return {ok:true,latitude:parsed.latitude,longitude:parsed.longitude,
-    coords:parsed.coords,source:"experimental-api-unverified"};
+   if(pendingReveals.has(idx))return fail("reveal-in-progress");
+   pendingReveals.add(idx);
+   try{
+    const url=API+"/reveal/"+encodeURIComponent(code);
+    // The reveal code never enters Android; a failed auth/limit is not bypassed.
+    const result=await request("GET",url,null,false,6000);
+    if(q.searchVersion!==searchVersion||disposed)return fail("superseded-search");
+    if(!result.ok)return result;
+    const parsed=d.revealContract.normalizeRevealResponse(result.body,
+     {expectedPokemonId:q.pokemonId});
+    if(!parsed.ok)return fail("coordinates-unverified");
+    return {ok:true,latitude:parsed.latitude,longitude:parsed.longitude,
+     coords:parsed.coords,source:"experimental-api-unverified"};
+   }finally{pendingReveals.delete(idx);}
   }
   function dispose(){
-   disposed=true;searchVersion++;reveals.clear();
+   disposed=true;searchVersion++;reveals.clear();pendingReveals.clear();
+   if(searchController)searchController.abort();
+   if(revealController)revealController.abort();
   }
   return Object.freeze({search,reveal,dispose});
  }

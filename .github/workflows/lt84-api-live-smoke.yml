@@ -1,0 +1,59 @@
+name: LT84 API read-only live smoke (anonymous)
+on:
+  push:
+    branches: [fix/lt84-authorized-api-direct-qa-20261025]
+    paths: ['.github/workflows/lt84-api-live-smoke.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  anonymous-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verify public API health and catalogs without authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://coordinates-api.pokemongopro.com'
+          TMP="$(mktemp -d)"
+          trap 'rm -rf "$TMP"' EXIT
+          curl --max-time 20 --silent --show-error --fail-with-body "$BASE/health" -o "$TMP/health.json"
+          curl --max-time 20 --silent --show-error --fail-with-body "$BASE/forms" -o "$TMP/forms.json"
+          curl --max-time 20 --silent --show-error --fail-with-body "$BASE/pokemon/catalog?costumes=true" -o "$TMP/catalog.json"
+          python3 - "$TMP" <<'PY'
+          import json, pathlib, sys
+          root = pathlib.Path(sys.argv[1])
+          health = json.loads((root / "health.json").read_text())
+          forms = json.loads((root / "forms.json").read_text())
+          catalog = json.loads((root / "catalog.json").read_text())
+          assert health.get("status") == "ok", "API health mismatch"
+          assert isinstance(forms, list) and all(isinstance(x, str) for x in forms), "forms contract mismatch"
+          assert isinstance(catalog, list) and all(isinstance(x.get("pokemon_id"), int) for x in catalog), "catalog contract mismatch"
+          print("Live anonymous health/forms/catalog contracts PASS (no secrets or species logged)")
+          PY
+      - name: Verify one anonymous POST Search response, without token or reveal
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP="$(mktemp -d)"
+          trap 'rm -rf "$TMP"' EXIT
+          curl --max-time 30 --silent --show-error --fail-with-body \
+            --request POST 'https://coordinates-api.pokemongopro.com/search' \
+            --header 'Content-Type: application/json' \
+            --data '{"iv_mode":"raw","raw_iv_atk":15,"raw_iv_def":15,"raw_iv_sta":15,"sort":"DSP"}' \
+            --output "$TMP/search.json"
+          python3 - "$TMP/search.json" <<'PY'
+          import json, pathlib, sys
+          body = json.loads(pathlib.Path(sys.argv[1]).read_text())
+          assert isinstance(body, dict), "not a JSON object"
+          assert isinstance(body.get("results"), list), "missing results list"
+          assert isinstance(body.get("cap"), int) and 0 <= body["cap"] <= 5, "anonymous cap mismatch"
+          assert len(body["results"]) <= body["cap"], "results exceed anonymous tier"
+          for row in body["results"]:
+              assert isinstance(row.get("pokemon_id"), int), "invalid Pokémon id"
+              assert isinstance(row.get("raw_iv"), str), "invalid IV raw"
+              assert row["raw_iv"] == "15/15/15", "filter not applied"
+              assert isinstance(row.get("reveal_code"), str), "reveal code absent"
+          print("One live anonymous POST /search contract PASS (no results or reveal codes printed)")
+          PY

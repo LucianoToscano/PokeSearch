@@ -1,0 +1,37 @@
+name: LT84 signed QA and live API - final Guia Mestre proof
+on:
+  push:
+    branches: [fix/lt84-authorized-api-direct-qa-20261025]
+    paths: ['.github/workflows/lt84-final-guide-proof.yml']
+permissions:
+  contents: write
+jobs:
+  final-proof:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/lt84-authorized-api-direct-qa-20261025
+      - name: Append only, with verification of previous master size
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
+          if grep -Fq 'LT84 PROVA FINAL CI API DIRETA 20261025' docs/GUIA_MESTRE.md; then
+            echo 'Proof already recorded'
+            exit 0
+          fi
+          cat >> docs/GUIA_MESTRE.md <<'LT84_FINAL'
+          
+          ## LT84 PROVA FINAL CI API DIRETA 20261025 — QA isolada
+          A integração experimental direta já existia e permaneceu no WebView oficial, opt-in; LT84 fortaleceu cancelamentos de buscas antigas, Retry-After/429, Reveal deduplicado, limpeza real de geofiltro e enum Sexo Any (⚥) distinto de Genderless (⚲). Todos os testes históricos e novos em app/tests/lt84-direct-api-regressions.test.js PASSARAM no GitHub Actions #40163046534, juntamente com Gradle release R8, teste Android e assinatura v2 do certificado permanente. APK privado de QA 0.00.84/versionCode 54287, SOURCE_COMMIT 9796152446d41712464bc309e8ad3bbaafd56c05, artifact #12586524480, nome PokeSearch-v0.00.84-LT-API-QA-protected-release, com APK, SHA256SUMS e relatórios. NÃO foi publicado em Releases.
+          Smoke REAL ANÔNIMO API #40163231365 SUCCESS: GET /health, /forms, /pokemon/catalog?costumes=true e um POST /search com IV 15/15/15; sem token, sem reveal automático, sem imprimir resultados. Fluxos autenticados (Google/Trainer/Shiny) e Get coords com sessão física ainda NÃO foram homologados. Acesso à API confirmado pelo proprietário, separado de autorização de distribuição.
+          Workflow #40163154255 apendicou o histórico LT84 anterior ao Guia Mestre sem reduzir bytes existentes. PR #59 Draft https://github.com/LucianoToscano/PokeSearch/pull/59; main, última Release LT83 0.00.83/54286, SOURCE_COMMIT oficial 5cf9adb62efb97a185ec955cab6eb0f49fbb4e88 e ponte Google Drive LT79 intactos. Samsung LT83 e LT84 PENDENTES, sobretudo localização e Get coords. Não confundir CI com homologação física. Novo checkpoint docs/PROMPT_NOVO_CHAT_LT84_QA.md. Não dar merge/release sem revisão e autorização correspondente.
+          LT84_FINAL
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/GUIA_MESTRE.md
+          git commit -m 'docs(LT84): append signed QA and live API proof, no truncation'
+          git push origin HEAD:fix/lt84-authorized-api-direct-qa-20261025

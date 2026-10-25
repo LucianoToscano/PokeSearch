@@ -72,9 +72,14 @@ check("center radius and Apply/Clear with icon-only actions",()=>{
 check("Location re-tap closes native popup, not duplicate a new one",()=>{
  const toggle=between(dock,"let activeNativePopupKind=\"\";","const pokemonFromFilters=");
  for(const s of ['window.setActiveNativePopupKind=kind=>{',
- 'if(activeNativePopupKind===kind){','activeNativePopupKind="";',
- 'if(Native.closePopup)Native.closePopup();','activeNativePopupKind=kind;',
- 'Native.openPopup(kind,Math.round('])assert.ok(toggle.includes(s),s);
+ 'activeNativePopupKind=String(kind||"");',
+ 'Native.openPopup(kind,Math.round(',
+ 'Native.openPopupMeasured(kind,centerX,centerY,Math.round(rect.height))'])
+  assert.ok(toggle.includes(s),s);
+ // Regression LT85: the JavaScript toolbar must NOT independently choose
+ // to close a popup using a stale activeNativePopupKind mirror.
+ assert.ok(!toggle.includes('if(activeNativePopupKind===kind){'));
+ assert.ok(!toggle.includes('activeNativePopupKind=kind;'));
  const open=between(service,"private void openIndependentPopup(","private static boolean validIndependentPopup(");
  const close=between(service,"private void closeIndependentPopup(){","private void openIndependentPopup(");
  assert.ok(open.includes('if(kind.equals(popupKind)){closeIndependentPopup();return;}'));

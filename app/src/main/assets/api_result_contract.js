@@ -35,7 +35,7 @@
   function apiGender(x) {
     if(x==="♂"||x==="Male") return "Male";
     if(x==="♀"||x==="Female") return "Female";
-    if(x==="⚥"||x==="⚲"||x==="Genderless") return "Genderless";
+    if(x==="⚲"||x==="Genderless") return "Genderless";
     throw Error("Unsupported gender");
   }
   function apiArray(input,max,allow) {
@@ -131,6 +131,9 @@
     return {ids,forms};
   }
   function parseLocation(c){
+    // The Android location toggle is authoritative. Old editor/extra-filter
+    // values must never silently reapply coordinates after Clear.
+    if(c.locationEnabled===false)return [null,null,null];
     var lat=optionalNumber(c.centerLat,-90,90,false),
         lng=optionalNumber(c.centerLng,-180,180,false);
     var radius=optionalNumber(c.radiusKm!==undefined?c.radiusKm:c.locationRadius,0,1000,false);
@@ -204,7 +207,8 @@
         iv_mode:mode==="percent"?"percent":"raw",
         iv_percent_min:pct[0],iv_percent_max:pct[1],
         raw_iv_atk:stats[0],raw_iv_def:stats[1],raw_iv_sta:stats[2],
-        sizes,gender:genderList.length?apiGender(genderList[0]):null,
+        sizes,gender:genderList.length&&genderList[0]!=="Any"&&genderList[0]!=="⚥"?
+          apiGender(genderList[0]):null,
         boosted,weather_id:weatherId,min_ttl:optionalNumber(c.minTtl,0,60,true),
         sort,center_lat:geo[0],center_lng:geo[1],radius_km:geo[2],
         blacklist_pokemon_ids:apiArray(c.blacklistPokemonIds||[],200,x=>

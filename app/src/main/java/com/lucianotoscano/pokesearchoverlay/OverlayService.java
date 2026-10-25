@@ -200,6 +200,11 @@ public class OverlayService extends Service {
     private WebView panel,detailPanel,website,menuPanel,resultPanel,popupPanel;
     private boolean popupLoaded=false;
     private String popupKind="";
+    // ACTION_OUTSIDE can arrive BEFORE the toolbar click for the same physical
+    // tap. Without a latch the outside event closes a popup and its launcher
+    // immediately reopens it, making the second tap look broken.
+    private String outsideClosedPopupKind="";
+    private long outsideClosedPopupUptimeMs=0L;
     // One in-flight Get coords request may own the detail/clipboard at a time.
     private long coordinateRequestToken=0L;
     private int popupTriggerDp,popupTriggerYDp,popupTriggerHeightDp,popupWidthDp,popupHeightDp;
@@ -220,7 +225,7 @@ public class OverlayService extends Service {
     private boolean displayedApiResults=false;
     private int displayedApiSearchId=-1;
     private boolean authorizedApiQaSelected(){
-        return getSharedPreferences("prefs",0).getBoolean("authorizedApiQaOptIn",false);
+        return getSharedPreferences("prefs",0).getBoolean("authorizedApiQaOptIn",true);
     }
     private void performAuthorizedApiSearch(int generation,boolean manual){
         if(authorizedApiCollector==null){
@@ -335,6 +340,7 @@ public class OverlayService extends Service {
         searchFailure("⚠ Tempo limite","O navegador não concluiu a consulta. Tente atualizar.");
     };
     private boolean pickerOpen=false;
+    private android.app.Dialog favoritePickerDialog;
     private final Runnable queuedRefresh=()->refresh(false);
     private final Runnable filterChangeRefresh=()->refresh(true);
     private void scheduleFilterChangeRefresh(){
@@ -800,6 +806,12 @@ public class OverlayService extends Service {
         if(popupWidthDp==w&&popupHeightDp==h)return;
         popupWidthDp=w;popupHeightDp=h;positionIndependentPopup();
     }
+    private void closeIndependentPopupFromOutside(){
+        if(popupKind.isEmpty())return;
+        outsideClosedPopupKind=popupKind;
+        outsideClosedPopupUptimeMs=android.os.SystemClock.uptimeMillis();
+        closeIndependentPopup();
+    }
     private void closeIndependentPopup(){
         if(popupKind.isEmpty())return;
         popupKind="";popupWidthDp=popupHeightDp=0;
@@ -829,6 +841,14 @@ public class OverlayService extends Service {
     }
     private void openIndependentPopup(String kind,int x,int y,int triggerHeight){
         if(!validIndependentPopup(kind)||!menuExpanded||loginPaused||stopped||pickerOpen)return;
+        long elapsed=android.os.SystemClock.uptimeMillis()-outsideClosedPopupUptimeMs;
+        boolean wasSameOutsideTap=kind.equals(outsideClosedPopupKind)&&
+            elapsed>=0L&&elapsed<=450L;
+        outsideClosedPopupKind="";
+        outsideClosedPopupUptimeMs=0L;
+        // If an ACTION_OUTSIDE already closed this exact popup on pointer-down,
+        // consume the launcher click from that same gesture instead of reopening.
+        if(wasSameOutsideTap)return;
         if(kind.equals(popupKind)){closeIndependentPopup();return;}
         popupKind=kind;
         // Mirror native state back to the toolbar: tapping Location again closes.
@@ -905,8 +925,19 @@ public class OverlayService extends Service {
         }catch(Exception e){recordFailure("preparar filtro de localização",e);}
         return data.toString();
     }
+    private boolean detailManuallyPositioned=false;
     private void moveDetail(){
         if(detailRoot==null||detailParams==null||params==null)return;
+        if(detailManuallyPositioned){
+            DisplayMetrics bounds=metrics();
+            detailParams.x=Math.max(0,Math.min(
+                Math.max(0,bounds.widthPixels-detailParams.width),detailParams.x));
+            detailParams.y=Math.max(0,Math.min(
+                Math.max(0,bounds.heightPixels-detailParams.height),detailParams.y));
+            try{wm.updateViewLayout(detailRoot,detailParams);}
+            catch(Exception e){recordFailure("limitar cartão movido",e);}
+            return;
+        }
         // LT65 Samsung: do not paint the floating detail card over its
         // originating toolbar. Prefer a position beside the result sprites,
         // then place it below the native dock (or above when near the bottom).
@@ -1106,21 +1137,20 @@ public class OverlayService extends Service {
                         // between the unified Pokébola, its results, and details.
                         int minDx=-startX,maxDx=Math.max(0,d.widthPixels-dockWidth)-startX;
                         int minDy=-startY,maxDy=Math.max(0,d.heightPixels-dockHeight)-startY;
-                        if(resultParams!=null){
-                            minDx=Math.max(minDx,-dragResultStart[0]);
-                            maxDx=Math.min(maxDx,
-                                Math.max(0,d.widthPixels-resultParams.width)-dragResultStart[0]);
-                            minDy=Math.max(minDy,-dragResultStart[1]);
-                            maxDy=Math.min(maxDy,
-                                Math.max(0,d.heightPixels-resultParams.height)-dragResultStart[1]);
-                        }
+                        // LT86: the Pokébola's own screen bounds govern its drag.
+                        // A wide information/result pane must NOT forbid reaching
+                        // the right edge; clamp the pane independently below.
                         int moveX=Math.max(minDx,Math.min(maxDx,dx));
                         int moveY=Math.max(minDy,Math.min(maxDy,dy));
                         params.x=startX+moveX;
                         params.y=startY+moveY;
                         if(resultParams!=null){
-                            resultParams.x=dragResultStart[0]+moveX;
-                            resultParams.y=dragResultStart[1]+moveY;
+                            resultParams.x=Math.max(0,Math.min(
+                                Math.max(0,d.widthPixels-resultParams.width),
+                                dragResultStart[0]+moveX));
+                            resultParams.y=Math.max(0,Math.min(
+                                Math.max(0,d.heightPixels-resultParams.height),
+                                dragResultStart[1]+moveY));
                         }
                         // Throttle both native windows together. Updating the dock
                         // on every MotionEvent while limiting only results made
@@ -1142,6 +1172,10 @@ public class OverlayService extends Service {
                     if(dragged){
                         // Always commit the final position for BOTH windows,
                         // even when ACTION_UP falls between throttled frames.
+                        // Re-anchor to the icon once at the end of the drag.
+                        // Prevent a full-width info strip from leaving the old
+                        // origin when the Pokébola reaches the screen edge.
+                        positionResultsUnderPokeball(false);
                         updateWindow();
                         if(resultParams!=null&&resultRoot!=null&&wm!=null){
                             try{wm.updateViewLayout(resultRoot,resultParams);}
@@ -1211,7 +1245,7 @@ public class OverlayService extends Service {
                 if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
                     if(menuExpanded&&menuLoaded&&menuPanel!=null)
                         js(menuPanel,true,"if(window.closeChoices)window.closeChoices()");
-                    closeIndependentPopup();
+                    closeIndependentPopupFromOutside();
                     return false;
                 }
                 return super.dispatchTouchEvent(event);
@@ -1278,6 +1312,54 @@ public class OverlayService extends Service {
         detailPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
         detailPanel.addJavascriptInterface(new Bridge(),"Native");
         detailRoot.addView(detailPanel,new FrameLayout.LayoutParams(-1,-1));
+        // A narrow transparent header grip lets the *detail card* move
+        // independently of the Pokémon and the Pokébola. It deliberately
+        // excludes the 23dp × close control at the upper right.
+        View detailDragGrip=new View(this);
+        detailDragGrip.setBackgroundColor(Color.TRANSPARENT);
+        detailDragGrip.setContentDescription("Arrastar cartão de informações");
+        FrameLayout.LayoutParams detailGripParams=new FrameLayout.LayoutParams(
+            dp(DETAIL_DP-39),dp(49),Gravity.TOP|Gravity.LEFT);
+        detailRoot.addView(detailDragGrip,detailGripParams);
+        final float[] detailStartTouch=new float[2];
+        final int[] detailStartPosition=new int[2];
+        final long[] detailLastFrame={0L};
+        detailDragGrip.setOnTouchListener((view,event)->{
+            if(detailParams==null||wm==null||detailRoot==null)return false;
+            switch(event.getActionMasked()){
+                case MotionEvent.ACTION_DOWN:
+                    detailStartTouch[0]=event.getRawX();
+                    detailStartTouch[1]=event.getRawY();
+                    detailStartPosition[0]=detailParams.x;
+                    detailStartPosition[1]=detailParams.y;
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                case MotionEvent.ACTION_UP:
+                    int deltaX=Math.round(event.getRawX()-detailStartTouch[0]);
+                    int deltaY=Math.round(event.getRawY()-detailStartTouch[1]);
+                    if(Math.abs(deltaX)+Math.abs(deltaY)>dp(4))
+                        detailManuallyPositioned=true;
+                    if(detailManuallyPositioned){
+                        DisplayMetrics screen=metrics();
+                        detailParams.x=Math.max(0,Math.min(
+                            Math.max(0,screen.widthPixels-detailParams.width),
+                            detailStartPosition[0]+deltaX));
+                        detailParams.y=Math.max(0,Math.min(
+                            Math.max(0,screen.heightPixels-detailParams.height),
+                            detailStartPosition[1]+deltaY));
+                        long tick=android.os.SystemClock.uptimeMillis();
+                        if(event.getActionMasked()==MotionEvent.ACTION_UP||
+                            tick-detailLastFrame[0]>=16L){
+                            detailLastFrame[0]=tick;
+                            try{wm.updateViewLayout(detailRoot,detailParams);}
+                            catch(Exception e){recordFailure("arrastar cartão",e);}
+                        }
+                    }
+                    return true;
+                case MotionEvent.ACTION_CANCEL:return true;
+                default:return false;
+            }
+        });
         detailPanel.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView v,String url){
                 if(url!=null&&url.startsWith("file:///android_asset/")){
@@ -1300,7 +1382,7 @@ public class OverlayService extends Service {
                 if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
                     SupportMissionState.overlayTouch(OverlayService.this);
                 if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
-                    closeIndependentPopup();return false;
+                    closeIndependentPopupFromOutside();return false;
                 }
                 return super.dispatchTouchEvent(event);
             }
@@ -2416,7 +2498,10 @@ public class OverlayService extends Service {
             if(card==null)continue;
             try{
                 card.put("sampledAt",now);
-                long end=expiration(card);
+                // The API sends an authoritative absolute despawn timestamp;
+                // do not replace/ignore it because its legacy MM:SS is empty.
+                long absolute=card.optLong("expiresAtMs",Long.MAX_VALUE);
+                long end=absolute!=Long.MAX_VALUE?absolute:expiration(card);
                 // Even if the site briefly shows an old 0:00 card during
                 // React updates, do not reinsert an expired spawn or notify it.
                 if(end<=now)continue;
@@ -2548,7 +2633,7 @@ public class OverlayService extends Service {
             JSONArray a=new JSONArray(results);
             if(index<0||index>=a.length()){hideDetails();return;}
             // A previous Get coords callback must never update another card.
-            if(selected!=index)coordinateRequestToken++;
+            if(selected!=index){coordinateRequestToken++;detailManuallyPositioned=false;}
             selected=index;
             JSONObject obj=a.getJSONObject(index);
             js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(count()>0?shownMode:mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
@@ -2595,6 +2680,7 @@ public class OverlayService extends Service {
         }catch(Exception e){recordFailure("mostrar detalhes",e);hideDetails();}
     }
     private void hideDetails(){
+        detailManuallyPositioned=false;
         coordinateRequestToken++; // Invalidates pending site callbacks after dismiss.
         selected=-1;
         // UX-DETAIL-TIMER-01: pause JS countdown while detail WebView is hidden.
@@ -2706,19 +2792,27 @@ public class OverlayService extends Service {
     // The regular Favorites picker is not a #choices popup. Give it the same
     // originating icon coordinates while preserving its non-modal native dialog.
     private void showFavoritePicker(int anchorX,int anchorY){
-        if(root==null||loginPaused||pickerOpen)return;
+        if(root==null||loginPaused||stopped)return;
+        // Favorites is a separate non-modal Dialog, not a WebView #choices.
+        // A second tap on its very same toolbar icon must dismiss it.
+        if(pickerOpen){
+            if(favoritePickerDialog!=null)favoritePickerDialog.dismiss();
+            return;
+        }
         closeIndependentPopup();
         pickerOpen=true;
         hideDetails();
         try{
-            PokemonPicker.show(OverlayService.this,()->{
+            favoritePickerDialog=PokemonPicker.show(OverlayService.this,()->{
                 if(!stopped)update();
             },()->{
-                pickerOpen=false;
+                pickerOpen=false;favoritePickerDialog=null;
                 if(!stopped)update();
             },anchorX,anchorY);
+            // Empty catalog: no dialog was created, so don't leave pickerOpen stuck.
+            if(favoritePickerDialog==null)pickerOpen=false;
         }catch(Exception e){
-            pickerOpen=false;
+            pickerOpen=false;favoritePickerDialog=null;
             diagnosticError("Não foi possível abrir favoritos no overlay.");
         }
     }
@@ -2817,7 +2911,49 @@ public class OverlayService extends Service {
             js(popupPanel,popupLoaded,"window.onLocationPaste("+JSONObject.quote(parsed)+")");
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
-        @JavascriptInterface public void requestFilterOptions(){handler.post(()->requestFilterOptionsLater(0));}
+        @JavascriptInterface public void requestFilterOptions(){handler.post(()->{
+            if(stopped||loginPaused||!menuExpanded)return;
+            if(authorizedApiQaSelected()){
+                // API is the primary source. Official contract values are
+                // immediately available; do not click React dropdowns.
+                try{
+                    JSONObject fields=new JSONObject();
+                    String[] keys={"sortBy","weather","size","gender"};
+                    String[][] values={
+                        {"Despawn (longest)","CP (highest)","IV % (highest)",
+                            "Level (highest)","Distance (nearest)"},
+                        {"Any","Boosted","Sunny","Rainy","Partly Cloudy","Cloudy",
+                            "Windy","Snow","Fog"},
+                        {"XXS","XS","S","M","L","XL","XXL"},
+                        {"Male","Female","Genderless"}
+                    };
+                    for(int i=0;i<keys.length;i++){
+                        JSONObject field=new JSONObject();
+                        field.put("present",true).put("options",new JSONArray(values[i]));
+                        fields.put(keys[i],field);
+                    }
+                    JSONObject payload=new JSONObject();
+                    payload.put("ok",true).put("partial",true).put("options",fields);
+                    js(menuPanel,menuLoaded,"window.onFilterOptions("+payload.toString()+")");
+                    js(popupPanel,popupLoaded,"window.onFilterOptions("+payload.toString()+")");
+                }catch(org.json.JSONException ignored){}
+                // Preload official API forms for the checkbox-style Forma picker.
+                // Reuse the existing 300-second catalogue cache; no React DOM.
+                if(authorizedApiCollector==null)
+                    authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+                final int searchGeneration=requestGeneration;
+                authorizedApiCollector.forms("",formResponse->{
+                    if(stopped||loginPaused||searchGeneration!=requestGeneration||
+                        !menuExpanded)return;
+                    try{formResponse.put("key","form").put("query","");}
+                    catch(org.json.JSONException ignored){}
+                    js(menuPanel,menuLoaded,"window.onFormOptions("+formResponse.toString()+")");
+                    js(popupPanel,popupLoaded,"window.onFormOptions("+formResponse.toString()+")");
+                });
+                return;
+            }
+            requestFilterOptionsLater(0);
+        });}
         private void requestFilterOptionsLater(int attempt){
             if(stopped||loginPaused||!menuExpanded)return;
             if(searchInProgress||!loaded){
@@ -2867,10 +3003,26 @@ public class OverlayService extends Service {
         }
         private int formOptionsSequence=0;
         @JavascriptInterface public void requestFormOptions(String query){handler.post(()->{
-            if(stopped||loginPaused||searchInProgress||!menuExpanded||!menuLoaded)return;
+            if(stopped||loginPaused||(!authorizedApiQaSelected()&&searchInProgress)||
+                !menuExpanded||!menuLoaded)return;
             String wanted=query==null?"":query.trim();
             if(wanted.length()>70)return;
             int generation=requestGeneration,sequence=++formOptionsSequence;
+            if(authorizedApiQaSelected()){
+                if(authorizedApiCollector==null)
+                    authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+                authorizedApiCollector.forms(wanted,response->{
+                    if(stopped||loginPaused||generation!=requestGeneration||
+                        sequence!=formOptionsSequence||!menuExpanded)return;
+                    try{
+                        response.put("key","form").put("query",wanted);
+                        if(!response.optBoolean("ok",false))response.put("pending",false);
+                    }catch(org.json.JSONException ignored){}
+                    js(menuPanel,menuLoaded,"window.onFormOptions("+response.toString()+")");
+                    js(popupPanel,popupLoaded,"window.onFormOptions("+response.toString()+")");
+                });
+                return;
+            }
             requestFormOptionsLater(wanted,generation,sequence,0);
         });}
         private void requestFormOptionsLater(String query,int generation,int sequence,int attempt){
@@ -2898,7 +3050,9 @@ public class OverlayService extends Service {
         @JavascriptInterface public void cancelPokemonSuggestions(){handler.post(()->++pokemonSuggestionSequence);}
         @JavascriptInterface public void requestPokemonSuggestions(String query){handler.post(()->{
             if(stopped||loginPaused||!menuExpanded||menuPanel==null||!menuLoaded)return;
-            if(searchInProgress){
+            // API catalogue and choices are read-only, independent of an
+            // active POST /search. Only the DOM picker must wait for React.
+            if(searchInProgress&&!authorizedApiQaSelected()){
                 js(menuPanel,true,"window.onPokemonSuggestions({ok:false,reason:'Aguarde a busca atual terminar'})");
             js(popupPanel,popupLoaded,"window.onPokemonSuggestions({ok:false,reason:'Aguarde a busca atual terminar'})");
                 return;
@@ -2953,6 +3107,53 @@ public class OverlayService extends Service {
         }
         // LT57 single-form bridge: menus submit a DELTA, not a stale copy of
         // all search settings. Pokémon, Raw IV, Shiny and Location are untouched.
+        // Three opt-in general presets. Only search-mode/form fields are stored:
+        // Location, Shiny and existing favorite/notification preferences remain
+        // independent so loading a preset cannot silently change those controls.
+        private String generalPresetKey(int slot){return "generalFilterPresetV1_"+slot;}
+        @JavascriptInterface public void requestGeneralFilterPresets(){handler.post(()->{
+            android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+            JSONArray available=new JSONArray();
+            for(int slot=1;slot<=3;slot++)
+                available.put(p.contains(generalPresetKey(slot)));
+            JSONObject status=new JSONObject();
+            try{status.put("saved",available);}catch(org.json.JSONException ignored){}
+            String script="window.onGeneralPresetStatus&&window.onGeneralPresetStatus("+status.toString()+")";
+            js(menuPanel,menuLoaded,script);
+            js(popupPanel,popupLoaded,script);
+        });}
+        @JavascriptInterface public void saveGeneralFilterPreset(int slot){handler.post(()->{
+            if(slot<1||slot>3||stopped)return;
+            try{
+                JSONObject snapshot=new JSONObject(filterConfigJson());
+                snapshot.put("mode",mode);
+                String value=snapshot.toString();
+                if(value.length()>16000)return;
+                getSharedPreferences("prefs",0).edit()
+                    .putString(generalPresetKey(slot),value).apply();
+                android.widget.Toast.makeText(OverlayService.this,
+                    "✓ Filtro geral "+slot+" salvo",android.widget.Toast.LENGTH_SHORT).show();
+                requestGeneralFilterPresets();
+            }catch(org.json.JSONException ignored){}
+        });}
+        @JavascriptInterface public void loadGeneralFilterPreset(int slot){handler.post(()->{
+            if(slot<1||slot>3||stopped)return;
+            String value=getSharedPreferences("prefs",0).getString(generalPresetKey(slot),"");
+            if(value.length()<10||value.length()>16000)return;
+            try{
+                JSONObject snapshot=new JSONObject(value);
+                String presetMode=snapshot.optString("mode","");
+                if(!("raw".equals(presetMode)||"percent".equals(presetMode)||
+                     "gl".equals(presetMode)||"ul".equals(presetMode)))return;
+                // Use the existing validated, atomic setSearchConfig pathway
+                // instead of introducing a second filter-submission mechanism.
+                new Bridge().setSearchConfig(value);
+                closeIndependentPopup();
+                android.widget.Toast.makeText(OverlayService.this,
+                    "✓ Carregando filtro geral "+slot,
+                    android.widget.Toast.LENGTH_SHORT).show();
+            }catch(org.json.JSONException ignored){}
+        });}
         @JavascriptInterface public void patchSearchFilters(String payload){handler.post(()->{
             try{
                 JSONObject delta=new JSONObject(payload),updated=new JSONObject(extraFiltersJson);
@@ -3141,6 +3342,12 @@ public class OverlayService extends Service {
                 // user explicitly switches it back to Any. Ordinary blank
                 // options must never block Raw IV or GL/UL searches.
                 JSONObject previousExtra=new JSONObject(extraFiltersJson);
+                // A general preset must not delete exclusions from existing users.
+                for(String preservedKey:new String[]{"blacklistPokemonIds",
+                    "blacklistSpeciesForms","blacklistForms"}){
+                    if(previousExtra.has(preservedKey))
+                        extra.put(preservedKey,previousExtra.get(preservedKey));
+                }
                 org.json.JSONArray previouslyCleared=previousExtra.optJSONArray("clearExtraKeys");
                 org.json.JSONArray clearKeys=new org.json.JSONArray();
                 for(String key:strings){
@@ -3280,6 +3487,41 @@ public class OverlayService extends Service {
             getSharedPreferences("prefs",0).edit().putBoolean("showResultText",value).apply();
             update();
         });}
+        // One explicit, atomic visibility action. Never change Search filters,
+        // account limits, rank verification, saved Favorites or coordinates.
+        @JavascriptInterface public void setAllResultDisplayOptions(boolean enabled){
+            handler.post(()->{
+                resultShowCount=enabled;resultShowName=enabled;
+                resultShowNumber=enabled;resultShowGender=enabled;
+                resultShowSize=enabled;resultShowForm=enabled;
+                resultShowMoves=enabled;resultShowLocation=enabled;
+                resultShowDistance=enabled;resultShowShiny=enabled;
+                resultShowCp=enabled;resultShowLevel=enabled;
+                resultShowRawIv=enabled;resultShowOverallRank=enabled;
+                resultShowSpeciesIvRank=enabled;
+                resultShowOverallRankGl=enabled;resultShowOverallRankUl=enabled;
+                resultShowOverallRankMl=enabled;
+                resultShowSpeciesIvRankGl=enabled;resultShowSpeciesIvRankUl=enabled;
+                resultShowSpeciesIvRankMl=enabled;
+                showTimers=enabled;showResultText=enabled;
+                android.content.SharedPreferences.Editor pref=
+                    getSharedPreferences("prefs",0).edit();
+                String[] keys={"resultShowCount","resultShowName","resultShowNumber",
+                    "resultShowGender","resultShowSize","resultShowForm","resultShowMoves",
+                    "resultShowLocation","resultShowDistance","resultShowShiny",
+                    "resultShowCp","resultShowLevel","resultShowRawIv",
+                    "resultShowOverallRank","resultShowSpeciesIvRank",
+                    "resultShowOverallRankGl","resultShowOverallRankUl",
+                    "resultShowOverallRankMl","resultShowSpeciesIvRankGl",
+                    "resultShowSpeciesIvRankUl","resultShowSpeciesIvRankMl",
+                    "showTimers","showResultText"};
+                for(String key:keys)pref.putBoolean(key,enabled);
+                pref.apply();
+                update();
+                status(enabled?"Informações disponíveis ativadas · deslize para ver todos os dados":
+                    "Informações opcionais desativadas");
+            });
+        }
         @JavascriptInterface public void setResultDisplayOption(String key,boolean value){
             handler.post(()->{
                 String pref;
@@ -3558,9 +3800,10 @@ public class OverlayService extends Service {
         @JavascriptInterface public void expiredResults(){handler.post(()->{
             // The WebView timer is a safety net when an Android handler was
             // canceled by an interrupted navigation. Expire only on time.
-            if(!stopped&&armedDespawnMillis>0L&&
-                System.currentTimeMillis()+300L>=armedDespawnMillis)
-                expiryRefresh.run();
+            // A UI timer may reach zero when the handler alarm was lost on
+            // navigation/Doze, or when an API result arrived after arming.
+            // The sweep is idempotent and never removes a future spawn.
+            if(!stopped)expiryRefresh.run();
         });}
         @JavascriptInterface public void longPressCoords(int i){handler.post(()->{
             try{
@@ -3867,6 +4110,10 @@ public class OverlayService extends Service {
         FirebaseStats.setOverlayVisible(this,false);
         stopped=true;
         running=false;
+        if(favoritePickerDialog!=null){
+            favoritePickerDialog.dismiss();favoritePickerDialog=null;
+        }
+        pickerOpen=false;
         ++requestGeneration;
         ++coordinateRequestToken;
         if(authorizedApiCollector!=null){

@@ -1,0 +1,35 @@
+name: LT84 API direct - append intact Guia Mestre
+on:
+  push:
+    branches: [fix/lt84-authorized-api-direct-qa-20261025]
+    paths:
+      - '.github/workflows/lt84-guide-append.yml'
+      - 'docs/LT84_API_DIRECT_QA.md'
+permissions:
+  contents: write
+jobs:
+  guide:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/lt84-authorized-api-direct-qa-20261025
+          fetch-depth: 1
+      - name: Append verified LT84 QA record without truncating original
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
+          if grep -Fq 'LT84 API DIRECT QA 20261025 (append intact)' docs/GUIA_MESTRE.md; then
+            echo 'LT84 already recorded; no duplicate'
+            exit 0
+          fi
+          printf '\n\n---\n\n## LT84 API DIRECT QA 20261025 (append intact)\n\n' >> docs/GUIA_MESTRE.md
+          cat docs/LT84_API_DIRECT_QA.md >> docs/GUIA_MESTRE.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/GUIA_MESTRE.md
+          git commit -m 'docs(LT84): append API direct QA to intact Guia Mestre'
+          git push origin HEAD:fix/lt84-authorized-api-direct-qa-20261025

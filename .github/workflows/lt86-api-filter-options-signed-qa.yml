@@ -1,0 +1,174 @@
+name: PokeSearch LT86 Form Catalog And Levels QA
+on:
+  push:
+    branches: [fix/lt86-api-filter-options-qa-20261025]
+    paths:
+      - '.github/workflows/lt86-api-filter-options-signed-qa.yml'
+      - 'app/build.gradle.kts'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/**'
+      - 'app/src/main/assets/**'
+      - 'app/tests/**'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      POKE_TEST_VERSION_CODE: '54289'
+      POKE_TEST_VERSION_LABEL: '51089'
+      POKE_TEST_PUBLIC_VERSION: '0.00.86'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Restore LT75 persistent signing key
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for var in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$var")" || { echo "::error::Signing secret missing"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pokesearch-v086-forms.p12"
+          chmod 600 "$RUNNER_TEMP/pokesearch-v086-forms.p12"
+          keytool -list -keystore "$RUNNER_TEMP/pokesearch-v086-forms.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" >/dev/null
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/pokesearch-v086-forms.p12" >> "$GITHUB_ENV"
+      - name: Run full LT84 API and historical regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/probe.js
+          node --check app/src/main/assets/api_result_contract.js
+          node --check app/src/main/assets/api_browser_transport.js
+          node --check app/src/main/assets/api_android_session.js
+          node --check app/src/main/assets/api_catalog_cache.js
+          node --check app/src/main/assets/api_integration_router.js
+          node --check app/tests/lt84-direct-api-regressions.test.js
+          node --check app/tests/lt85-menu-repeat-tap.test.js
+          node --check app/tests/lt86-form-catalog-level.test.js
+          for suite in app/tests/*.test.js; do
+            if [ "$suite" = "app/tests/lt74-local-update-preview.test.js" ]; then
+              echo "::notice::Legacy LT74 debug-preview assertion excluded."
+              continue
+            fi
+            echo "::group::$suite"
+            node "$suite"
+            echo "::endgroup::"
+          done
+          mkdir -p "$RUNNER_TEMP/qa"
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/qa" app/src/main/java/com/lucianotoscano/pokesearchoverlay/SupportMissionPolicy.java app/src/main/java/com/lucianotoscano/pokesearchoverlay/UpdatePolicy.java app/src/main/java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java app/tests/SupportMissionPolicyTest.java app/tests/UpdatePolicyTest.java app/tests/PopupTouchGeometryTest.java
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.SupportMissionPolicyTest
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.UpdatePolicyTest
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.PopupTouchGeometryTest
+      - name: Build protected RELEASE APK
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Validate APK package, release status and signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          OUT=PokeSearch-v0.00.86-LT-API-QA.apk
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          test -s app/build/outputs/mapping/release/mapping.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-BADGING.txt
+          PKG="$(grep '^package: ' PACKAGE-BADGING.txt)"
+          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54289'" "versionName='0.00.86'"; do
+            grep -Fq "$expected" <<< "$PKG" || exit 1
+          done
+          ! grep -q '^application-debuggable' PACKAGE-BADGING.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"
+          cp "$APK" "$OUT"
+          sha256sum "$OUT" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          echo "$PKG" > PACKAGE-VERSION.txt
+          echo "release; non-debuggable; R8 mapping present; shrinkResources enabled" > PROTECTION.txt
+      - name: Signed release-candidate artifact (NO AUTOMATIC publication)
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-v0.00.86-LT-API-QA-protected-release
+          path: |
+            PokeSearch-v0.00.86-LT-API-QA.apk
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            SOURCE_COMMIT.txt
+            PACKAGE-VERSION.txt
+            PROTECTION.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Append signed QA proof to complete Guia Mestre
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          GUIDE="docs/GUIA_MESTRE.md"
+          test -f "$GUIDE"
+          BEFORE="$(wc -c < "$GUIDE")"
+          test "$BEFORE" -gt 1400000 || { echo "::error::Guia Mestre is unexpectedly small"; exit 1; }
+          ORIGINAL_SHA="$(sha256sum "$GUIDE" | awk '{print $1}')"
+          {
+            printf '\n\n## LT86 QA — Formas completas e nível 50 (25/10/2026)\n'
+            printf 'Versão 0.00.86, versionCode 54289, somente QA; nenhuma publicação oficial.\n'
+            printf 'Branch: fix/lt86-api-filter-options-qa-20261025; PR #61 Draft sobre LT85 PR #60. Main e PR #59 preservadas.\n'
+            printf 'Código: dock.html permite Nível 1–50 e pagina até 500 formas em grupos de 60; api_android_session.js expõe até 500 nomes do catálogo da API.\n'
+            printf 'Samsung QA: sprites de base com fanout de Bitmap entre células, tentativa CDN de origem PokeAPI, imagem de forma/traje desconhecida segue placeholder.\n'
+            printf 'Info: Genderless ⚲, Nível 1–50, Mostrar todas as informações, timer Despawn prioritário, GL/UL/ML com rank somente quando verificado, tamanho XS/S/L.\n'
+            printf 'Expiração: preserva expiresAtMs absoluto da API, remove cards vencidos, evita reinserção e revalida no aviso UI mesmo se alarme nativo foi perdido.\n'
+            printf 'Arraste: Pokébola chega à borda com painel aberto; detalhe independente pode ser movido pelo cabeçalho, sem bloquear ×/Get coords.\n'
+            printf 'Perfis: 3 Filtros gerais via ▣ (Usar/Salvar, filtro validado, sem Shiny/Localização) e 3 Favoritos via ▣ (toque usar, segure salvar, máximo 50).\n'
+            printf 'Testes LT86: lt86-form-catalog-level, lt86-samsung-followup, lt86-all-result-information, lt86-despawn-detail-drag, legados JS e Java.\n'
+
+            printf 'Testes históricos Node (exceto preview LT74 legado), Java, Gradle testDebugUnitTest e assembleRelease executados pelo pipeline LT86.\n'
+            printf 'GitHub Actions: %s\n' "$GITHUB_RUN_ID"
+            printf 'Build SOURCE_COMMIT: %s\n' "$(cat SOURCE_COMMIT.txt)"
+            printf 'APK QA: PokeSearch-v0.00.86-LT-API-QA.apk\n'
+            printf 'APK SHA-256: %s\n' "$(awk '{print $1}' SHA256SUMS.txt)"
+            printf 'Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e\n'
+            printf 'Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.\n'
+            printf 'Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.\n'
+            printf 'Guia Mestre prévio permaneceu imutável, com adição somente ao final.\n'
+          } >> "$GUIDE"
+          AFTER="$(wc -c < "$GUIDE")"
+          test "$AFTER" -gt "$BEFORE"
+          PREFIX_SHA="$(head -c "$BEFORE" "$GUIDE" | sha256sum | awk '{print $1}')"
+          test "$ORIGINAL_SHA" = "$PREFIX_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$GUIDE"
+          git commit -m "docs(LT86 QA): append protected build proof without replacing Guia Mestre"
+          # Rebase this append-only commit onto the newest branch head, because
+          # unrelated QA documentation may have advanced while Gradle was running.
+          # Never force push; conflict means fail closed, preserving all history.
+          git fetch origin "refs/heads/$GITHUB_REF_NAME:refs/remotes/origin/$GITHUB_REF_NAME"
+          git rebase "origin/$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
+      - name: Cleanup secret key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pokesearch-v086-forms.p12"
