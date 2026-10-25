@@ -1,0 +1,33 @@
+name: LT83 Home history - append post-release change to Guia Mestre
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt83-home-history-guide.yml']
+permissions:
+  contents: write
+jobs:
+  history:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Append immutable post-release notes, preserve full master
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
+          if grep -Fq 'LT83 — histórico de Novidades da Home preparado após release' docs/GUIA_MESTRE.md; then exit 0; fi
+          cat >> docs/GUIA_MESTRE.md <<'LT83_HOME'
+          
+          ## LT83 — histórico de Novidades da Home preparado após release (25/10/2026)
+          PR #58 mergeada em main depois de Node QA #40162415342 SUCCESS e compilação Java #40162415355 SUCCESS. app/src/main/assets/release_notes.json passa a ter 14 entradas ordenadas, incluindo LT79 54282 (ponte GitHub), LT80 54283 (Get coords), LT82 54285 (menus) e LT83 54286 (Localização Samsung). Teste app/tests/lt83-home-release-notes.test.js integrado à rotina Node QA. ReleaseNotes.java já possuía leitor genérico e a Home Menu -> Novidades; somente os dados do catálogo receberam mais entradas.
+          IMPORTANTE: isto ocorreu DEPOIS do APK LT83 0.00.83/54286 ter sido assinado e publicado. O binário oficial permanece idêntico (SOURCE_COMMIT 5cf9adb62efb97a185ec955cab6eb0f49fbb4e88, SHA256 451e4781581122908f014a893f693c8312b36b2c222a8579c499c6c3e2975c1c). As novas notas embutidas entrarão apenas em APK futuro de code >54286; não sugerir que a LT83 instalada recebeu a alteração documental. GitHub Releases latest permanece LT83 e manifesto Drive legado permanece LT79.
+          O relatório visual Samsung mais recente é da LT82 defeituosa; validação física LT83 ainda PENDENTE. Nunca declarar geofiltro aplicado sem confirmação do site. Preservar appId, assinatura, preferências, IV/GL/UL, Shiny, Favoritos, alertas e todas as demais funções. Não misturar PvPPokeGo.
+          LT83_HOME
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GUIA_MESTRE.md
+          git commit -m "docs(LT83): append postrelease Home history with immutable APK caveat"
+          git push origin HEAD:main
