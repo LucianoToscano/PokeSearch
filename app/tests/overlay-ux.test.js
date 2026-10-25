@@ -401,7 +401,7 @@ test("Login launched from overlay returns to gameplay with PokeSearch only on su
  main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
  main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
 test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("×")')&&!picker.includes('.setPositiveButton("Concluído"'));
-test("Favorites use persisted theme and transparency without intercepting outside touches",picker.includes('panelAlpha=Math.round(255*(1-transparency/100f))')&&picker.includes('menuTransparency",50')&&picker.includes('FLAG_NOT_TOUCH_MODAL')&&!picker.includes('window.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND)'));
+test("Favorites use persisted theme and transparency without intercepting outside touches",picker.includes('1-Math.pow(Math.max(0,Math.min(100,transparency))/100.0,2.8)')&&picker.includes('menuTransparency",50')&&picker.includes('FLAG_NOT_TOUCH_MODAL')&&!picker.includes('window.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND)'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
