@@ -3904,6 +3904,40 @@ body.controls-window #quickMenuList .quickFooterAction{
  background:var(--visual-menu-readable-bg,rgba(15,19,26,.86))!important;
 }
 /* No extra width or height for backgrounds: rely on existing intrinsic sizes. */
+
+/* LT88 profiles R5 — compact explicit Save/Delete, no press-and-hold. */
+body.controls-window #choices.filterCascade .generalPresetFlyout{
+ width:190px!important;min-width:190px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetDefault{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;height:26px!important;min-height:26px!important;
+ text-align:left!important;margin:0 0 2px!important;padding:3px 7px!important;
+ background:var(--visual-menu-readable-button-bg,rgba(20,26,35,.8))!important;
+ color:var(--visual-menu-fg,#fff)!important;
+ border-radius:5px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow{
+ display:grid!important;grid-template-columns:minmax(0,1fr) 28px 24px!important;
+ gap:3px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad{
+ width:auto!important;max-width:none!important;min-width:0!important;
+ padding:2px 4px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetSave{
+ width:28px!important;min-width:28px!important;max-width:28px!important;
+ height:25px!important;min-height:25px!important;padding:0!important;
+ font-size:14px!important;
+ color:#c6e6db!important;
+ background:var(--visual-menu-readable-button-bg,rgba(20,26,35,.8))!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetDelete{
+ width:24px!important;min-width:24px!important;height:25px!important;
+}
+/* Location has no legacy named slots, star buttons or '?' controls. */
+body.controls-window #choices.locationPanel .locSavedRow,
+body.controls-window #choices.locationPanel .locSlotTools{display:none!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4094,7 +4128,7 @@ let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin
  sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=true,filterFocus="PC",advancedExpanded=false;
 let generalPresetExpanded=false,generalPresetSaved=[false,false,false];
-let generalPresetNames=["Filtro 1","Filtro 2","Filtro 3"];
+let generalPresetNames=["Perfil 1","Perfil 2","Perfil 3"];
 let formQuery="",formListVisibleCount=60,formOptionsStatus="Aguardando lista oficial de Form do site...";
 let siteFiltersConfirmed=false; // Evidence from Android: same generation, verified Search and accepted results.
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
@@ -4711,60 +4745,57 @@ function filterCascadeEditorWidth(label){
 let generalPresetActive=0;
 function renderGeneralPresetControls(rail,make){
  const heading=rail.querySelector(".filterCascadeHead");
- const toggle=make("button","generalPresetToggle","▣");
+ const toggle=make("button","generalPresetToggle","⊙");
  toggle.type="button";toggle.title="Filtros salvos";
- toggle.setAttribute("aria-label","Abrir Filtro 1, Filtro 2 e Filtro 3");
+ toggle.setAttribute("aria-label","Abrir filtros salvos");
  toggle.onclick=()=>{
   generalPresetExpanded=!generalPresetExpanded;
   if(generalPresetExpanded)filterFocus="";
   renderFiltersChoices();
-  if(Native.requestGeneralFilterPresets)Native.requestGeneralFilterPresets();
+  if(generalPresetExpanded&&Native.requestGeneralFilterPresets)Native.requestGeneralFilterPresets();
  };
  heading.appendChild(toggle);
  if(!generalPresetExpanded)return;
  const menu=make("div","generalPresetFlyout");
  menu.appendChild(make("div","generalPresetTitle","Filtros salvos"));
+ const standard=make("button","generalPresetDefault","Padrão");
+ standard.type="button";
+ standard.title="Limpar campos gerais; não alterar Shiny ou localização";
+ standard.onclick=()=>{
+  generalPresetActive=0;generalPresetExpanded=false;
+  filterFocus="";renderFiltersChoices();
+  if(Native.clearGeneralFilterPreset)Native.clearGeneralFilterPreset();
+ };
+ menu.appendChild(standard);
  for(let slot=1;slot<=3;slot++){
   const row=make("div","generalPresetRow");
-  const button=make("button","generalPresetLoad",
-   (generalPresetActive===slot?"★ ":"☆ ")+(generalPresetNames[slot-1]||"Filtro "+slot));
-  button.dataset.presetLoad=String(slot);button.type="button";
-  button.title="Toque usa; segure para salvar filtros atuais";
-  button.setAttribute("aria-label","Filtro "+slot+": toque usa, segure salva");
-  button.classList.toggle("active",generalPresetActive===slot);
-  let held=false,holdTimer=null,startX=0,startY=0;
-  const cancelHold=()=>{if(holdTimer){clearTimeout(holdTimer);holdTimer=null;}};
-  const save=()=>{cancelHold();held=true;
-   generalPresetActive=slot;button.classList.add("active");
-   if(Native.saveGeneralFilterPreset)Native.saveGeneralFilterPreset(slot);
-  };
-  button.addEventListener("pointerdown",event=>{
-   if(event.button!==0)return;
-   held=false;startX=event.clientX;startY=event.clientY;
-   cancelHold();holdTimer=setTimeout(save,650);
-  });
-  button.addEventListener("pointermove",event=>{
-   if(Math.abs(event.clientX-startX)>10||Math.abs(event.clientY-startY)>10)cancelHold();
-  });
-  ["pointerup","pointercancel","pointerleave"].forEach(kind=>
-   button.addEventListener(kind,cancelHold));
-  button.oncontextmenu=event=>{event.preventDefault();if(!held)save();};
-  button.onclick=()=>{
-   if(held){held=false;return;}
-   if(!generalPresetSaved[slot-1]){
-    menu.querySelector(".generalPresetHint").textContent="Segure Filtro "+slot+" para salvar";
-    return;
-   }
-   generalPresetActive=slot;
+  const name=make("button","generalPresetLoad",
+   (generalPresetActive===slot?"★ ":"☆ ")+(generalPresetNames[slot-1]||"Perfil "+slot));
+  name.type="button";name.dataset.presetLoad=String(slot);
+  name.title="Toque para usar filtro salvo";
+  name.onclick=()=>{
+   if(!generalPresetSaved[slot-1]){menu.querySelector(".generalPresetHint").textContent="Perfil vazio · use 💾 para salvar";return;}
+   generalPresetActive=slot;generalPresetExpanded=false;filterFocus="";
+   renderFiltersChoices();
    if(Native.loadGeneralFilterPreset)Native.loadGeneralFilterPreset(slot);
   };
+  const save=make("button","generalPresetSave","▣");
+  save.type="button";save.title="Salvar filtros atuais no Perfil "+slot;
+  save.setAttribute("aria-label","Salvar perfil "+slot);
+  save.textContent="💾";
+  save.onclick=()=>{
+   generalPresetActive=slot;
+   if(Native.saveGeneralFilterPreset)Native.saveGeneralFilterPreset(slot);
+  };
   const remove=make("button","generalPresetDelete","×");
-  remove.type="button";remove.title="Excluir filtro salvo "+slot;
-  remove.setAttribute("aria-label","Excluir filtro salvo "+slot);
-  remove.onclick=()=>{if(Native.deleteGeneralFilterPreset)Native.deleteGeneralFilterPreset(slot);};
-  row.append(button,remove);menu.appendChild(row);
+  remove.type="button";remove.title="Excluir Perfil "+slot;
+  remove.setAttribute("aria-label","Excluir perfil "+slot);
+  remove.onclick=()=>{
+   if(Native.deleteGeneralFilterPreset)Native.deleteGeneralFilterPreset(slot);
+  };
+  row.append(name,save,remove);menu.appendChild(row);
  }
- menu.appendChild(make("div","generalPresetHint","Toque usa · Segure salva · × exclui"));
+ menu.appendChild(make("div","generalPresetHint","Toque: usar · 💾 salvar · × excluir"));
  rail.parentElement.appendChild(menu);
 }
 if(typeof window!=="undefined")window.onGeneralPresetStatus=response=>{
@@ -5204,21 +5235,6 @@ function sanitizeLocationRadiusDraft(raw){
  const digits=String(raw??"").replace(/\D/g,"").slice(0,4);
  return digits===""?"":String(Math.min(1000,Number(digits)));
 }
-let savedSearchLocations=[
- {slot:1,saved:false,name:"Local 1"},
- {slot:2,saved:false,name:"Local 2"},
- {slot:3,saved:false,name:"Local 3"}];
-if(typeof window!=="undefined")window.onSavedSearchLocations=data=>{
- if(!Array.isArray(data)||data.length!==3)return;
- savedSearchLocations=data.filter(x=>x&&Number.isInteger(x.slot)&&x.slot>=1&&x.slot<=3);
- document.querySelectorAll(".locSlot").forEach(button=>{
-  const item=savedSearchLocations.find(s=>s.slot===Number(button.dataset.slot));
-  if(!item)return;
-  button.textContent=item.active?"★ "+item.slot:"☆ "+item.slot;
-  button.classList.toggle("saved",item.active===true);
-  button.title=(item.name||"Local "+item.slot)+" · toque usar, segure salvar";
- });
-};
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
  panel.replaceChildren();panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen","filterPicker");
@@ -5317,75 +5333,8 @@ function renderLocationChoices(){
  }
  apply.onclick=submit;
  actions.append(apply,clear);label.appendChild(actions);
- const savedRow=make("div","locSavedRow");
- const savedName=make("input","locSavedName");
- savedName.type="text";savedName.placeholder="Nome do local";savedName.maxLength=30;
- savedName.setAttribute("aria-label","Nome ao salvar este local (opcional)");
- savedName.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
- savedName.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
- const saveSlots=make("div","locSavedSlots");
- const tools=make("div","locSlotTools");tools.hidden=true;
- const toolLabel=make("span","locSlotLabel","");
- const slotSave=make("button","locManageSave","Salvar");
- const slotDelete=make("button","locManageDelete","Excluir");
- const slotCancel=make("button","locManageCancel","×");
- let chosenSlot=0;
- const closeTools=()=>{tools.hidden=true;chosenSlot=0;fit();};
- slotCancel.onclick=closeTools;
- const validCoords=()=>{
-  const coords=field.value.trim();
-  const radius=Number(radiusField.value);
-  if(!/^[-+]?\\d{1,2}(?:\\.\\d+)?\\s*[,;]\\s*[-+]?\\d{1,3}(?:\\.\\d+)?$/.test(coords)||
-     !Number.isInteger(radius)||radius<0||radius>1000){
-    message.textContent="⚠ Informe coordenadas e raio válidos";
-    message.hidden=false;fit();return null;
-  }
-  return {coords,radius};
- };
- slotSave.onclick=()=>{
-  const location=validCoords();if(!location||!chosenSlot)return;
-  if(Native.saveSearchLocation)Native.saveSearchLocation(
-   chosenSlot,savedName.value,location.coords,location.radius);
-  closeTools();
- };
- slotDelete.onclick=()=>{
-  if(chosenSlot&&Native.deleteSavedSearchLocation)
-   Native.deleteSavedSearchLocation(chosenSlot);
-  closeTools();
- };
- tools.append(toolLabel,slotSave,slotDelete,slotCancel);
- for(let slot=1;slot<=3;slot++){
-  const button=make("button","locSlot","☆ "+slot);button.type="button";
-  button.dataset.slot=String(slot);
-  button.title="Toque: usar local · Segure: salvar ou excluir";
-  const manage=()=>{chosenSlot=slot;toolLabel.textContent="Local "+slot;
-   tools.hidden=false;fit();};
-  let held=false,timer=null;
-  button.addEventListener("pointerdown",event=>{
-   if(event.button!==0)return;
-   held=false;clearTimeout(timer);
-   timer=setTimeout(()=>{held=true;manage();},650);
-  });
-  ["pointerup","pointercancel","pointerleave"].forEach(type=>
-   button.addEventListener(type,()=>clearTimeout(timer)));
-  button.oncontextmenu=event=>{event.preventDefault();held=true;manage();};
-  button.onclick=()=>{if(held){held=false;return;}
-   if(Native.loadSearchLocation)Native.loadSearchLocation(slot);
-  };
-  saveSlots.appendChild(button);
- }
- const help=make("button","locHelp","?");
- help.type="button";help.title="Como funcionam os locais";
- help.setAttribute("aria-label","Ajuda para salvar e excluir localizações");
- help.onclick=()=>{
-  message.textContent="Toque ☆ para usar; segure para Salvar ou Excluir. Copiar e Colar não pesquisam sozinhos.";
-  message.style.color="";message.hidden=false;fit();
- };
- saveSlots.appendChild(help);
- savedRow.append(savedName,saveSlots);
- panel.append(title,fieldRow,slide,label,savedRow,tools,message);
+ panel.append(title,fieldRow,slide,label,message);
  panel.classList.add("visible");
- if(Native.requestSavedSearchLocations)Native.requestSavedSearchLocations();
  document.getElementById("location").setAttribute("aria-expanded","true");
  locationPanelFeedback();
  fit();
