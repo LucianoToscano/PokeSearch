@@ -30,7 +30,7 @@
 | Testes JS de contrato/regressão | PASS, workflow #40163046534 |
 | Gradle e APK assinado protegido | PASS, workflow #40163046534 |
 | Append integral do Guia Mestre | PASS, workflow #40163154255 |
-| Consulta de API anônima ao vivo | Workflow separado `lt84-api-live-smoke.yml`; verificar execução |
+| Consulta de API anônima ao vivo | PASS, workflow #40163231365: /health, /forms, catálogo e POST /search 15/15/15 sem JWT |
 | Sessão autenticada real / contas vinculadas / reveal real | PENDENTE |
 | QA Samsung (LT83 e LT84) | PENDENTE |
 | Publicação oficial / merge main | NÃO AUTORIZADOS |
