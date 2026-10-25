@@ -385,6 +385,30 @@
           "Homologação visual e sonora no Samsung continua necessária; CI aprovado não substitui o teste no aparelho."
         ]
       }
+    },
+    {
+      "id": "pokesearch-v00107-lt108-furfrou-natural-sprite-20261025",
+      "minVersionCode": 54311,
+      "date": "25/10/2026",
+      "title": "PokeSearch v0.01.07 — Sprite do Furfrou Natural",
+      "sections": {
+        "novidades": [
+          "Sprite Natural do Furfrou #676 exibido diretamente do pacote offline, na lista da Pokébola e na janela de detalhes.",
+          "Tratamento da forma-base Natural tanto normal quanto Shiny, preservando a conta única e as duas Pokébolas."
+        ],
+        "melhorias": [
+          "Reconhecimento exato das formas Furfrou Natural, Natural Form e Natural Trim usadas pela API.",
+          "Testes automáticos impedem que cortes especiais ou outra espécie recebam indevidamente o sprite Natural."
+        ],
+        "correcoes": [
+          "Corrigido símbolo ◇ no cartão do Furfrou Natural, mesmo com sprite #676 existente no APK.",
+          "Mantidas as correções anteriores de áudio dos Pokémon novos e Favoritos, versionamento 0.01.xx e 2.050 sprites-base."
+        ],
+        "emDesenvolvimento": [
+          "Homologar visualmente no Samsung Furfrou Natural normal/Shiny, dois overlays e formas especiais sem substituição incorreta.",
+          "Outras formas especiais sem fonte própria verificada ainda podem mostrar símbolo substituto."
+        ]
+      }
     }
   ]
 }
