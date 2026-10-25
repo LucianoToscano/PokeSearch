@@ -10,9 +10,11 @@ const stats=read("java/com/lucianotoscano/pokesearchoverlay/FirebaseStats.java")
 const results=[];
 const test=(name,run)=>{run();results.push(name);console.log("PASS Scrapbook S1 "+name)};
 test("Feature disabled in public release regardless of old preference",()=>{
- assert.match(home,/return BuildConfig\.DEBUG&&context\.getSharedPreferences/);
- assert.match(main,/if\(BuildConfig\.DEBUG\)\{/);
- assert.match(main,/if\(!BuildConfig\.DEBUG\)return/);
+ assert.match(home,/return BuildConfig\.DEBUG\|\|BuildConfig\.SCRAPBOOK_STAGE1_QA/);
+ assert.match(home,/return isQaPreviewAllowed\(\)&&context\.getSharedPreferences/);
+ assert.match(home,/\.getBoolean\(FLAG,BuildConfig\.SCRAPBOOK_STAGE1_QA\)/);
+ assert.match(main,/if\(CommunityScrapbookStage1\.isQaPreviewAllowed\(\)\)\{/);
+ assert.match(main,/if\(!CommunityScrapbookStage1\.isQaPreviewAllowed\(\)\)return/);
  assert.match(activity,/if\(!CommunityScrapbookStage1\.isEnabled\(this\)\|\|!IntegrityGuard\.verify\(this\)\)/);
  assert.match(main,/if\(scrapbookPreview\)/);
 });
@@ -60,5 +62,13 @@ test("Dark/light themes and compact scroll",()=>{
  assert.match(main,/ScrollView\.LayoutParams\(-1,-2\)/);
  assert.match(home,/light\?0xEAF7FBFF:0xD81C2C41/);
  assert.match(activity,/scroll\.setFillViewport\(false\)/);
+});
+test("QA signed release opt-in is never enabled by a normal Release build",()=>{
+ const gradle=fs.readFileSync(path.join(__dirname,"../build.gradle.kts"),"utf8");
+ assert.match(gradle,/POKE_SCRAPBOOK_STAGE1_QA/);
+ assert.match(gradle,/testSigningRequired && testVersionCode != null && testVersionCode >= 54299/);
+ assert.match(gradle,/buildConfigField\("boolean", "SCRAPBOOK_STAGE1_QA", "false"\)/);
+ assert.match(gradle,/if \(scrapbookStage1Qa\) "true" else "false"/);
+ assert.match(home,/Prévia fictícia · sem publicações reais/);
 });
 console.log("Scrapbook stage1 "+results.length+" static suites PASS; Samsung physical QA pending");
