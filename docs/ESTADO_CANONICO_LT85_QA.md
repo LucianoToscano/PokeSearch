@@ -16,7 +16,7 @@
 
 ## Pipeline
 - Workflow: `.github/workflows/lt85-menu-repeat-tap-signed-qa.yml`.
-- Verificar o último GitHub Actions antes de marcar SUCCESS (a compilação está sujeita ao CI). O artifact de QA, se aprovado, contém APK, `SHA256SUMS.txt`, `SOURCE_COMMIT.txt`, relatórios de assinatura/certificado permanente.
+- **SUCESSO REAL** GitHub Actions [#40165405694](https://github.com/LucianoToscano/PokeSearch/actions/runs/40165405694), Node QA histórico+LT85 e Java/Gradle R8 `assembleRelease`, aapt/signing validation e artifact todos SUCCESS. APK QA `PokeSearch-v0.00.85-LT-API-QA.apk`, SOURCE_COMMIT `80b5f580533a39dfcbc45fdf65dce1148ca7fbe5`, 38.605.383 bytes, SHA256 `9d41afad67e81a2d149774513f8277705d35dc7a73fdbce2b9320e91aa5859b5`, artifact ID `12588151967`. Hash coincide com `SHA256SUMS.txt`; v2 TRUE; certificado SHA256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; applicationId `com.lucianotoscano.pokesearch`, versionName `0.00.85`, versionCode `54288` verificados. Este SHA é do APK, não do ZIP.
 - `main`, applicationId `com.lucianotoscano.pokesearch`, namespace `com.lucianotoscano.pokesearchoverlay`, assinatura, atualização pública LT83, preferências, layouts de resultados e funcionalidade de API/DOM existentes não devem ser sobrescritos.
 - Guia Mestre `docs/GUIA_MESTRE.md`: apendicar **arquivo completo** por workflow com tamanho mínimo, nunca usar fetch truncado.
 
