@@ -40,3 +40,13 @@ Correções de código nesta branch QA:
 - Teste `app/tests/lt86-samsung-followup.test.js`: guardas de identidade do sprite, símbolo, geometria e ambos os perfis. Testes simulados NÃO demonstram que o host de imagens está acessível no telefone.
 
 Não afirmar que todos sprites foram carregados nem que janelas ficaram estáveis no Samsung sem novo teste físico. O número de versão QA permanece **0.00.86/54289** enquanto não existir release público.
+
+
+## Complemento 25/10/2026 — Info, Despawn, sprite lenta e cartão móvel
+- Código `dock.html`: ação explícita ✓ Mostrar todas as informações no Editor Visual > Info Pokémon, mantendo os comandos individuais. Exibição de Dados inicia no topo e rola independentemente, com Despawn primeiro, Iv%, Raw IV, sexo ⚲, tamanho XS/S/L, PvP GL/UL/ML somente se os cálculos e a identificação forem verificados. Corrigido bug lógico de ranks antigos silenciados quando existiam flags de liga todas OFF. Não fabricar ranks indisponíveis.
+- `detail.html`: Despawn de API utiliza `expiresAtMs` absoluto, mesmo sem contador MM:SS do DOM. Ao atingir zero mostra Expirado e avisa a limpeza nativa. A janela ainda permite o menu de ações e botão fechar.
+- `OverlayService.java`: no collector, priorizar `expiresAtMs` para não reinserir um spawn já expirado; segurança contra timer nativo perdido, com `expiredResults()` provocando uma varredura idempotente. Mantém recarga assíncrona conforme limites do servidor.
+- `OverlayService.java`: detalhes com grip transparente dedicado no cabeçalho que arrasta a janela independentemente, sem capturar o × e sem mover o dock. Coordenadas limitadas ao display, reancoragem automática ao selecionar outro Pokémon.
+- Resultados: URL PokeAPI base verificada alterna para CDN espelho após erro ou 1,4 s sem carregar, com apenas uma tentativa adicional à origem. Nunca fabricar sprite para forma especial/traje.
+- Testes incrementais: `lt86-all-result-information.test.js`, `lt86-despawn-detail-drag.test.js`. Atualizadas expectativas LT64/77 para novas proteções, nunca desligadas.
+- Nenhum resultado de Samsung foi afirmado PASS; a API autenticada, temporizadores com aparelho bloqueado e fotos reais das variantes ainda requerem teste físico.
