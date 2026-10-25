@@ -8,7 +8,7 @@ function between(s,a,b){let i=s.indexOf(a),j=s.indexOf(b,i+a.length);assert.ok(i
 let n=0;function check(s,f){f();n++;console.log("PASS LT83 "+s)}
 check("Native location width constant, no CSS feedback-shrink",()=>{
  assert.ok(java.includes('if("location".equals(popupKind))'));
- assert.ok(java.includes("w=Math.max(1,Math.min(286,screenWidthDp()-12))"));
+ assert.ok(java.includes("w=Math.max(1,Math.min(148,screenWidthDp()-12))"));
  assert.ok(dock.includes('Math.min(286,Math.max(1,Math.floor(window.innerWidth||286)))'));
 });
 check("Location input + four actions fit in centered fixed grid",()=>{
