@@ -182,6 +182,10 @@ public final class GitHubUpdateCenter {
                 .matcher(doc.optString("tag_name",""));
             if(!tag.matches())return null;
             String publishedName=tag.group(1);
+            // Read the immutable, already signed 100..106 labels, but never
+            // accept a future malformed release with 3+ patch digits.
+            if(!VersionNames.isCanonical(publishedName)&&
+               !VersionNames.isLegacyPublished(publishedName))return null;
             String name=VersionNames.canonical(publishedName);
             long parsed=Long.parseLong(tag.group(2));
             if(parsed<1||parsed>Integer.MAX_VALUE)return null;
