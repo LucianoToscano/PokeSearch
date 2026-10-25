@@ -3829,6 +3829,81 @@ body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.compactL
 }
 /* Blur support varies between Android WebView/other-app surfaces. The solid
    fallback color stays available if backdrop-filter is unavailable. */
+
+/* LT88-SAMSUNG-LEGIBILITY-02: 50% base stays in Editor Visual, but a
+   matching contrast surface protects text if Android cannot blur another app.
+   Only real sized panels are painted: no overlay-sized rectangle. */
+body.controls-window #choices:not(.modeCascade):not(.filterCascade),
+body.controls-window #choices.modeCascade .modeCascadeRail,
+body.controls-window #choices.modeCascade .modeCascadeEditor,
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor,
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeRail,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout{
+ background:var(--visual-menu-readable-bg,rgba(15,19,26,.86))!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid var(--visual-menu-border,#ffffff38)!important;
+ border-radius:8px!important;
+ box-shadow:0 3px 8px rgba(0,0,0,.4)!important;
+ -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ background-clip:padding-box!important;
+}
+/* Do not reintroduce a massive touch-catching backdrop. */
+body.controls-window #choices.filterCascade,
+body.popup-window.controls-window #choices.filterCascade,
+body.controls-window #choices.modeCascade,
+body.popup-window.controls-window #choices.modeCascade{
+ background:transparent!important;box-shadow:none!important;
+ border:0!important;backdrop-filter:none!important;
+ -webkit-backdrop-filter:none!important;pointer-events:none!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeRail,
+body.controls-window #choices.modeCascade .modeCascadeEditor,
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade .filterCascadeEditor,
+body.controls-window #choices.filterCascade .generalPresetFlyout{
+ pointer-events:auto!important;
+}
+/* Paint all compact option rows, including scrolling Forma and Ordenar,
+   so descendants cannot escape a transparent editor background. */
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList,
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterFormEditor,
+body.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems{
+ box-sizing:border-box!important;
+ background:var(--visual-menu-readable-bg,rgba(15,19,26,.86))!important;
+ border-radius:5px!important;
+ padding:2px!important;margin:0!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionItem,
+body.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems button{
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ background:var(--visual-menu-readable-button-bg,rgba(15,19,26,.70))!important;
+ border:1px solid var(--visual-menu-border,#ffffff30)!important;
+ text-shadow:none!important;
+}
+/* Numeric and PvP controls get exactly the same themed field backing. */
+body.controls-window #choices.filterCascade .filterCascadeEditor input:not([type=checkbox]),
+body.controls-window #choices.modeCascade input.modeCascadeInput,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor input:not([type=checkbox]),
+body.popup-window.controls-window #choices.modeCascade input.modeCascadeInput{
+ background:var(--visual-menu-readable-button-bg,rgba(15,19,26,.70))!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ -webkit-text-fill-color:currentColor!important;
+ border:1px solid var(--visual-menu-border,#ffffff44)!important;
+ border-radius:5px!important;
+}
+body.controls-window #quickMenuList .quickRow,
+body.controls-window #quickMenuList .quickFooterAction{
+ background:var(--visual-menu-readable-bg,rgba(15,19,26,.86))!important;
+}
+/* No extra width or height for backgrounds: rely on existing intrinsic sizes. */
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
