@@ -4,6 +4,16 @@
 >
 > **REGRA DE PRIORIDADE:** verificar sempre o HEAD e as PRs reais. Estado recente comprovado por commits/CI prevalece sobre instruções de versões antigas dentro do backup. *Nenhuma numeração QA comprova a conclusão de uma etapa de roadmap ou teste Samsung.*
 
+## REGRA PERMANENTE — PARIDADE DE CORREÇÕES NAS DUAS POKÉBOLAS (LT112)
+**Obrigatória e prioritária em todas as próximas etapas.** Qualquer correção ou melhoria de API/DOM, filtros, sprites, cartões, localização, favoritos, notificações, sons, resultados, expiração, menus, atualização ou funcionamento deve ser efetiva e verificada na **Pokébola 1 e Pokébola 2** antes de concluir. A segunda Pokébola não pode ficar com bugs antigos enquanto a primeira é corrigida.
+- Código preferencialmente compartilhado por `OverlayService` (herdado por `SecondaryOverlayService`), sem copiar correções isoladas para uma instância. Quando houver comportamento específico, cobrir cada serviço.
+- **Independente em cada instância:** modos, IV 100%/0%, localização, filtros, opções de atualização, sprites/resultados, janela, estado da pesquisa, histórico de spawns e deduplicação de alertas. Preferências `prefs` e `prefs_secondary`. Uma conta autenticada, uma lista global `watchList` com três perfis e sons globais de Favoritos.
+- Validar 0% e 100%, resultado API HTTP verificado, sprites comuns e shiny do APK em lista e card nos dois serviços, Favoritos ativos, novos Pokémon, perfis 1/2/3, canais Android e não alertar Pokémon expirado/desconhecido/duplicado. Se qualquer cenário falhar, registrar como pendente.
+- O botão de **habilitar segunda Pokébola permanece oculto na Home**, sem remover serviço nem dados persistidos. Não criar distinção fixa de cor/numeração entre as Pokébolas.
+- **LT112:** um encontro visto como Pokémon comum pode tornar-se Favorito após salvar/ativar o perfil. Sua notificação específica não pode ser bloqueada apenas pela deduplicação de Pokémon novos. As deduplicações são separadas em cada OverlayService, protegendo contra avisos duplicados a cada refresh.
+- **Checkpoint:** main oficial de partida `726ee2147f7b4e0b37638c23b5665ce80905c1c3`; backup `backup/lt111-before-dual-overlay-parity-20261025`; correção branch `fix/lt112-two-pokeballs-parity-20261025`. Última release pública verificada `v0.01.11-54315`. Status QA de LT112 exige CI e testes Samsung, não publicar como estável antes de ambos.
+- Ver `AGENTS.md` regra 8 e o teste `app/tests/lt112-dual-overlay-parity.test.js`.
+
 ## 1. Checkpoint canônico — NÃO REINICIAR
 - **Repositório:** [LucianoToscano/PokeSearch](https://github.com/LucianoToscano/PokeSearch).
 - **Última release oficial confirmada:** **LT87, v0.00.87 / versionCode 54290**, [release v0.00.87-54290](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.87-54290). **main oficial verificada em 25/10/2026:** `83cf9a693a3672276e01d04e38ed14dce0071cb8`. PR #62 mesclada com histórico LT84–LT87; PR #59 mesclada, #60 e #61 encerradas como substituídas.
