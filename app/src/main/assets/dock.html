@@ -6261,7 +6261,7 @@ function renderFiltersChoices(){
  updateFiltersPanelStatus();
  // Inform about verified external changes; importing never calls native
  // Search until the user explicitly presses the existing ✓ Aplicar button.
- // LT85: no recurring "Usar opções observadas no site" banner.
+ // LT85: no recurring obsolete site-import banner.
  // All filters are editable and explicitly confirmed in this panel.
  // No redundant instructional paragraph: keep the filter popup compacto.
  const actions=make("div","modeAction filterActions filterRailActions");
@@ -6338,8 +6338,7 @@ function renderFiltersChoices(){
  // The ✓ within each numeric editor remains separate and unchanged.
  if(editor){
   editor.appendChild(indicator);
-  for(const child of [...panel.children].filter(child=>child.classList.contains("uxNote")||
-    (child.tagName==="BUTTON"&&child.textContent==="Usar opções observadas no site")))editor.appendChild(child);
+  for(const child of [...panel.children].filter(child=>child.classList.contains("uxNote")))editor.appendChild(child);
  }
  fit();
 }
