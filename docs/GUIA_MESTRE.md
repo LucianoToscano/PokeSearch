@@ -6729,3 +6729,14 @@ Documentacao: README.md, docs/ESTADO_CANONICO_LT87_OFICIAL.md e docs/PROMPT_NOVO
 - QA candidato 0.00.95/54298; não é versão oficial nem homologação Samsung. Exigir CI protegido assinado, hashes e testes Samsung antes de publicação.
 - Drive espelho: https://drive.google.com/drive/folders/1fVw93qUDE0YWp6tlJZaNjRmymyhEAUbR; preservar arquivo com id 1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P nas futuras atualizações consentidas.
 - Checkpoint docs/LT88_R8_FILTROS_AUDIO_LOCALIZACAO_QA.md. Nenhum merge, Release, apaga dados ou credenciais.
+
+## Scrapbook da Comunidade PokeSearch - Etapa 1 (25/10/2026)
+- Novo protótipo local estilo Orkut em um unico feed para Recados, Sugestoes, Bugs e Dicas; Home compacta com tres scraps ficticios, tema escuro/claro e tela propria com filtro de categoria.
+- Base preservada: branch feature/lt88-lt93-evolution-20261025 no commit 352a3bdc048d4b6f7337209ccd1d77939b8ae2bf; PR #63 Draft. Main LT87 83cf9a693a3672276e01d04e38ed14dce0071cb8 intocada.
+- Nova branch feature/pokesearch-community-scrapbook-stage1-20261025; PR Draft separada sem merge ou Release.
+- Controle de seguranca: BuildConfig.DEBUG e preferencia communityScrapbookStage1Preview falsa por padrao. Release distribuida nao pode ativar interface mesmo se preferencia salva for true.
+- Dados ficticios apenas em memoria, postagem, curtida, resposta e denuncia inoperantes; sem Firebase novo, sem gravacoes em scrapbook ou alteracao de stats, sem login PoGoCoordinates/GPS privado.
+- Caminhos Firebase futuros documentados: scrapbook/users/posts/replies/likes/reports/config, regras deny-by-default, autoria UID, moderacao backend, limites confiaveis de frequencia e privacidade, ainda NAO implantados.
+- Java: CommunityScrapbookStage1 e CommunityScrapbookActivity, MainActivity condicional, AndroidManifest activity interna, teste Node scrapbook-stage1.test.js.
+- Doc completo docs/POKESEARCH_SCRAPBOOK_ETAPA1.md. QA automatico e homologacao Samsung precisam de verificacao separada.
+- Nenhum APK publico, compartilhamento novo, Firebase real ou PR mesclada nesta etapa. Historico anterior preservado byte a byte pelo SHA256 do prefixo.
