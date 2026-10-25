@@ -25,3 +25,12 @@
 - Testar no Samsung: duas janelas e respectivos menus sem conflitos de z-index; busca IV 100 da primeira e IV 0 da segunda, alternância de modos sem interferência; 10 resultados independentes; despawn individual; Get coords; logout; reinício; memória/CPU; limite/rate de API; alternância DOM/API.
 - Se o backend proibir buscas simultâneas, **não contornar limites**: precisa serializar/agendar os pedidos e exibir erro legítimo.
 - A presença de código/PR/CI não prova homologação Android nem APK assinado. Não realizar merge ou publicação sem build e testes.
+
+
+### QA assinada LT104 — 25/10/2026
+- **Código com duas Pokébolas:** PR #67 merged (base de funcionalidade), main atual passou a conter os fluxos CI LT104.
+- **APK de teste produzido:** `PokeSearch-v0.00.104-LT-Dual-Pokeballs-QA.apk`, versionName `0.00.104`, versionCode `54307`, tamanho 39.203.925 bytes, SHA-256 `64f5a5bad090486b029cff9eeedcfc55e3645e6313ef91706ebd9f037ad280b7`.
+- **Fonte exata do APK:** `55cee3c34ed9b6bf017f2acebebdc600f6ea54b1`, teste/build assinado [Actions #40217437596](https://github.com/LucianoToscano/PokeSearch/actions/runs/40217437596) SUCCESS. Workflow de publicação de download QA [#40217680586](https://github.com/LucianoToscano/PokeSearch/actions/runs/40217680586) SUCCESS.
+- [**Download direto do APK LT104**](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.00.104-54307-qa/PokeSearch-v0.00.104-LT-Dual-Pokeballs-QA.apk); [release QA](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.104-54307-qa) está marcada como **pré-release, NÃO latest**. Oficial estável permanece LT103 e link Drive não alterado.
+- APK RELEASE não depurável com R8/mapping, assinatura Android v2 e certificado permanente checados pelo CI. **Samsung físico ainda não homologado**. Confirmar duas buscas ao mesmo tempo, ícones dinâmicos, login compartilhado, filtro 100/0, isolamento, rate limits e desempenho em hardware.
+- **Backup de segurança:** `backup/lt103-before-dual-pokeballs-20261025` mantém SHA `97654f3c0ecaf4d3de4e22fe1f3efb6d979f0297`. Nunca sobrescrever.
