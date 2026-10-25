@@ -6625,3 +6625,14 @@ Modificação: dock.html restaura fundos de Filtros, editor lateral e perfis sal
 Teste específico app/tests/lt87-filter-menu-backgrounds.test.js 5/5 PASS, suíte histórica, Java e Gradle testDebugUnitTest/assembleRelease aprovados pelo CI.
 Pendente: QA real no Samsung de fundos e transparência e das demais correções LT86 (sprites, expiração, PvP, perfis, Get coords). CI não é PASS físico.
 Guia Mestre anterior preservado por append e verificação de prefixo SHA-256. Nenhuma alteração no lançamento oficial LT83 nem Google Drive legado.
+
+
+## LT87 OFICIAL — PRs unificadas e atualização no app (25/10/2026)
+Proprietário autorizou em chat a consolidação das PRs e a promoção da versão para oficial.
+Consolidação: PR #62 mesclada na main com merge commit c35b384a99bd33b5685e8c964d2fdec08b679799, mantendo histórico LT84-LT87. PR #59 merged pelo GitHub; PRs #60/#61 fechadas como substituídas, sem deleção de branches. Uma PR ativa por próximo ciclo de desenvolvimento.
+Versão oficial PokeSearch 0.00.87, versionCode 54290. Release pública estável v0.00.87-54290: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.87-54290.
+APK público: PokeSearch-v0.00.87-LT.apk, 38607807 bytes. SHA-256: d188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a. Fonte do binário (QA SOURCE_COMMIT): 21d6547e9cb19efe941134d087f2783d6753ee55.
+Assinatura permanente SHA-256: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. APK release R8, não depurável, v2 verificada, SHA e digest no GitHub Release conferidos.
+CI QA #40168986555 SUCCESS. CI publicação oficial #40170786046 SUCCESS. O atualizador GitHubUpdateCenter já existente na Home detecta stable Releases oficiais e oferece instalação com consentimento do usuário; Google Drive legado LT79 intacto.
+Limites declarados: homologação física Samsung LT84-LT87 pendente; CI nao e teste fisico. O APK oficial LT87 mantem notas offline empacotadas no SOURCE_COMMIT (ate LT83); atualizar notas offline exige versao nova/novo build, jamais substituir binario da mesma tag.
+Documentacao: README.md, docs/ESTADO_CANONICO_LT87_OFICIAL.md e docs/PROMPT_NOVO_CHAT_LT87_OFICIAL.md. Historicidade do Guia preservada por append verificado com SHA do prefixo.
