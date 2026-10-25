@@ -7,3 +7,8 @@ A última versão pública é LT83 0.00.83/54286, GitHub Release `v0.00.83-54286
 Preserve appId `com.lucianotoscano.pokesearch`, namespace, JDK17/Gradle8.11.1, Android compile36/target33/min26, overlay/WebView/probe.js, assinatura, preferências, Google login, Firebase e demais funcionalidades. API autorizada automática em novas instalações, DOM opt-out preservado, sem expor JWT/reveal_code, sem fallback que contorne 401/403/429, 10 resultados no máximo.
 
 Próximos objetivos: homologar filtros e imagens reais; validar passagem dos parâmetros ao POST /search; obter GET /reveal com spawn real; verificar geofiltro 24.9407581,121.1889794 com raios 0/215/1000; pesquisar e corrigir defeitos confirmados; realizar teste físico Samsung. Guia Mestre com >1,4 MB deve ser apenas apendicado no checkout integral. Executar sem solicitar 'continue', sem confundir CI PASS com homologação e sem publicação oficial.
+
+
+## Complemento LT86 — pedidos de 25/10/2026
+
+O proprietário trouxe screenshots Samsung mostrando sprites ainda não carregados e solicitou Genderless ⚲ em Informações, liberdade de arraste da Pokébola com informações ligadas, correção de janelas, três filtros gerais e três conjuntos de Favoritos salvos. Código de QA implementado na branch LT86: fanout de sprites no Android e CDN PokeAPI alternativo limitado a espécies padrão; estilo de ⚲; arraste independente da largura dos resultados; perfis Filtros 1–3 sob `generalFilterPresetV1_*`, sem Shiny/coords; Favoritos 1–3 sob `favoritePresetV1_*` na aba ▣, tap para usar / segurar para salvar. Teste `lt86-samsung-followup.test.js`. Verificar GitHub CI final, instalar QA e validar fisicamente antes de declarar concluído. Não publicar sem autorização.
