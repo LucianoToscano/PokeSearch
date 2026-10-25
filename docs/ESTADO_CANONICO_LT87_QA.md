@@ -30,7 +30,7 @@
 LT86 incluiu suporte a 3 perfis gerais e 3 de Favoritos, ⚲ Genderless, cards móveis, remoção de spawns expirados com `expiresAtMs`, dados PvP válidos, opção Mostrar todas as informações, sprites base com fallback PokeAPI e Formas/Nível 50. Essas funcionalidades NÃO foram alteradas pelo patch visual LT87.
 
 ## Atenção ao Guia Mestre
-`docs/GUIA_MESTRE.md` excede 1,4 MB. O conector GitHub retorna conteúdo vazio/truncado para leitura integral; nunca publicar por `update_file` com esse retorno. O workflow LT87 assinou APK e acrescentou um registro documental em seu checkout integral por append e verificação de hash do prefixo, mas o texto herdado mencionava **LT86** por engano. Um adendo corretivo exclusivamente por append deve identificar LT87, hashes e PR #62 sem apagar nada anterior.
+`docs/GUIA_MESTRE.md` excede 1,4 MB. O conector GitHub retorna conteúdo vazio/truncado para leitura integral; nunca publicar por `update_file` com esse retorno. O workflow LT87 assinou APK e acrescentou um registro documental em seu checkout integral por append e verificação de hash do prefixo, mas o texto herdado mencionava **LT86** por engano. **Adendo corretivo LT87 executado e aprovado:** GitHub Actions #40169916771 = SUCCESS; acrescentou os dados corretos de LT87 ao Guia Mestre completo via append protegido por verificação SHA-256 do prefixo. Preservou a anotação herdada incorreta LT86 como histórico, registrando sua retificação sem sobrescrever conteúdo.
 
 ## Pendências verdadeiras
 - Testar fundos/tema/transparência da LT87 fisicamente no Samsung: editor de cada filtro, painel de 3 perfis, ambos lados/orientações, sem bloco preto nem corte, sem tocar involuntariamente atrás.
