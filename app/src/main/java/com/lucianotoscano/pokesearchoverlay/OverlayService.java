@@ -421,6 +421,16 @@ public class OverlayService extends Service {
                 return size()>256;
             }
         };
+    // LT112 dual-Pokeball parity: New and Favorite discoveries need separate
+    // deduplication. A seen encounter can become a newly enabled Favorite.
+    // Both OverlayService and SecondaryOverlayService own one independent map.
+    // Keys remain exact verified spawn identities and expire with the spawn.
+    private final java.util.LinkedHashMap<String,Long> recentFavoriteAlertExpiries=
+        new java.util.LinkedHashMap<String,Long>(256,0.75f,true){
+            @Override protected boolean removeEldestEntry(java.util.Map.Entry<String,Long> item){
+                return size()>256;
+            }
+        };
     private long armedDespawnMillis=0L;
     private final Runnable expiryRefresh=new Runnable(){
         @Override public void run(){
@@ -2472,6 +2482,7 @@ public class OverlayService extends Service {
         java.util.Set<String> wanted=WatchAlerts.watched(this);
         long now=System.currentTimeMillis();
         recentSpawnExpiries.entrySet().removeIf(entry->entry.getValue()<=now);
+        recentFavoriteAlertExpiries.entrySet().removeIf(entry->entry.getValue()<=now);
         for(int i=0;i<cards.length();i++){
             JSONObject c=cards.optJSONObject(i);
             if(c==null)continue;
@@ -2479,17 +2490,25 @@ public class OverlayService extends Service {
             if(expiry<=now)continue; // expired Pokémon can never notify
             String key=spawnKey(c);
             current.add(key);
-            if(knownSpawns.contains(key)||
-                recentSpawnExpiries.getOrDefault(key,0L)>now)continue;
-            recentSpawnExpiries.put(key,expiry==Long.MAX_VALUE?
-                now+15L*60_000L:expiry);
-            if(firstNew.isEmpty() &&
-                ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) && verifiedTargetCriteria(c))
-                firstNew=c.optString("name","Pokémon");
+            boolean newSpawn=!knownSpawns.contains(key)&&
+                recentSpawnExpiries.getOrDefault(key,0L)<=now;
+            long expireAt=expiry==Long.MAX_VALUE?now+15L*60_000L:expiry;
+            // Never let a previous ordinary sighting suppress a newly enabled
+            // Favorite alert. Its own dedup key prevents duplicate sound on
+            // every refresh. Neither path accepts unverified/expired spawns.
+            if(newSpawn){
+                recentSpawnExpiries.put(key,expireAt);
+                if(firstNew.isEmpty() &&
+                    ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
+                    verifiedTargetCriteria(c))
+                    firstNew=c.optString("name","Pokémon");
+            }
             if(WatchAlerts.enabled(this) &&
+                recentFavoriteAlertExpiries.getOrDefault(key,0L)<=now &&
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
                 verifiedTargetCriteria(c) &&
                 WatchAlerts.matches(c.optString("name",""),wanted)){
+                recentFavoriteAlertExpiries.put(key,expireAt);
                 watchedCount++;
                 if(firstWatched.isEmpty()){
                     firstWatched=c.optString("name","Pokémon");
@@ -2502,6 +2521,7 @@ public class OverlayService extends Service {
                     individualFavorites.put(WatchAlerts.normalized(favoriteName),
                         new String[]{favoriteName,"PC "+c.optString("cp","?")});
             }
+            if(!newSpawn)continue; // history is only for truly new encounters
             JSONObject entry=new JSONObject();
             try{
                 entry.put("name",c.optString("name","Pokémon"));
