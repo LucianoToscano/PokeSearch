@@ -424,42 +424,47 @@ check("Unified Pokébola touch contract: short tap results or closes menu, hold 
  assert.ok(native.includes('putInt("resultsY",'));
 });
 
-check("Unified Pokébola drag moves result window by the same bounded delta",()=>{
+check("Unified Pokébola reaches every screen edge while results stay clamped",()=>{
  const native=fs.readFileSync(path.join(__dirname,
   "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
  const grip=native.split('final boolean[] dockHeld={false};')[1]?.split("root.addView(grip,",1)[0]||"";
  for(const contract of [
   'dragResultStart[0]=resultParams.x;',
   'dragResultStart[1]=resultParams.y;',
-  'minDx=Math.max(minDx,-dragResultStart[0]);',
-  'maxDx=Math.min(maxDx,',
-  'minDy=Math.max(minDy,-dragResultStart[1]);',
-  'maxDy=Math.min(maxDy,',
   'int moveX=Math.max(minDx,Math.min(maxDx,dx));',
   'int moveY=Math.max(minDy,Math.min(maxDy,dy));',
   'params.x=startX+moveX;',
   'params.y=startY+moveY;',
-  'resultParams.x=dragResultStart[0]+moveX;',
-  'resultParams.y=dragResultStart[1]+moveY;',
+  'dragResultStart[0]+moveX',
+  'dragResultStart[1]+moveY',
+  'positionResultsUnderPokeball(false);',
   'now-lastDockFrameAt[0]>=16L',
   'wm.updateViewLayout(resultRoot,resultParams);',
   'updateWindow(); // Includes open toolbar reposition.',
-  'moveDetail();',
+  'moveDetail();'
  ])assert.ok(grip.includes(contract),contract);
+ // The old code intersected the icon and results bounds, stopping the icon
+ // when a wide metadata strip reached the edge. Only the icon can constrain.
+ assert.ok(!grip.includes('minDx=Math.max(minDx,-dragResultStart[0]);'));
+ assert.ok(!grip.includes('maxDx=Math.min(maxDx,'));
+ const clamp=(value,range)=>Math.max(0,Math.min(range,value));
  const simulate=(dock,result,dx,dy,screen)=>{
-  const minDx=Math.max(-dock.x,-result.x);
-  const maxDx=Math.min(screen.w-dock.w-dock.x,screen.w-result.w-result.x);
-  const minDy=Math.max(-dock.y,-result.y);
-  const maxDy=Math.min(screen.h-dock.h-dock.y,screen.h-result.h-result.y);
-  const x=Math.max(minDx,Math.min(maxDx,dx));
-  const y=Math.max(minDy,Math.min(maxDy,dy));
-  return {dock:{x:dock.x+x,y:dock.y+y},result:{x:result.x+x,y:result.y+y}};
+  const moved={
+   x:clamp(dock.x+dx,screen.w-dock.w),
+   y:clamp(dock.y+dy,screen.h-dock.h)
+  };
+  const appliedDx=moved.x-dock.x,appliedDy=moved.y-dock.y;
+  return {dock:moved,result:{
+   x:clamp(result.x+appliedDx,screen.w-result.w),
+   y:clamp(result.y+appliedDy,screen.h-result.h)}};
  };
+ const dock={x:130,y:200,w:53,h:32},result={x:60,y:260,w:330,h:210};
+ const screen={w:390,h:850};
+ const right=simulate(dock,result,500,0,screen);
+ assert.equal(right.dock.x,337,"wide information must not block Pokébola");
+ assert.equal(right.result.x,60,"result stays inside screen");
  for(const [dx,dy] of [[-30,45],[24,-12],[200,400],[-500,-500]]){
-  const dock={x:130,y:200,w:53,h:32},result={x:60,y:260,w:110,h:210};
-  const moved=simulate(dock,result,dx,dy,{w:390,h:850});
-  assert.equal(moved.result.x-moved.dock.x,result.x-dock.x);
-  assert.equal(moved.result.y-moved.dock.y,result.y-dock.y);
+  const moved=simulate(dock,result,dx,dy,screen);
   assert.ok(moved.result.x>=0&&moved.result.y>=0);
   assert.ok(moved.result.x+result.w<=390&&moved.result.y+result.h<=850);
   assert.ok(moved.dock.x>=0&&moved.dock.y>=0);
