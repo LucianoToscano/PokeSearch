@@ -28,3 +28,14 @@ As capturas de 05:47–05:49 mostram o mesmo app com fundos diferentes entre Fil
 - Conferir Copiar/Colar junto ao raio, sem sobreposição nem espaços extras.
 - Revisar checklist LT87 e demais pendências LT88–LT93 sem alegar PASS físico por compilação.
 - Guia Mestre: somente append após leitura integral e verificação do hash do prefixo no checkout. Não sobrescrever histórico com respostas truncadas do conector.
+
+## Build protegido verificado
+- GitHub Actions #40179984614 **SUCCESS**: https://github.com/LucianoToscano/PokeSearch/actions/runs/40179984614
+- SOURCE_COMMIT exato do APK: `c7abc5eb0823fa2d90019b453f903eedc98440a1`.
+- Versão QA `0.00.90`, `versionCode 54293`, appId `com.lucianotoscano.pokesearch`.
+- Arquivo `PokeSearch-v0.00.90-LT-Unified-Menus-QA.apk` (38.612.767 bytes).
+- SHA-256 APK `b861dd1ea6da833d7faeb092c228a3e4d61887eac62cf24e58b4a5b6f79ca17a` verificado contra `SHA256SUMS.txt` extraído.
+- Artefato `PokeSearch-v0.00.90-LT-Unified-Menus-QA-protected-release` ID `12593382799`. ZIP SHA-256 `222846b4177b32f81529c9e0c906175bb62c9c1e71a86bf87eb9bdcd563fa031`.
+- APK signature v2 TRUE; certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` preservado; `debuggable=false` e R8/shrinkResources disponíveis.
+- Guia Mestre append protegido por workflow #40180112891 **SUCCESS**: o prefixo anterior foi validado por SHA-256. Sem alteração da main e sem Release.
+- IMPORTANTE: build automatizado PASS não é homologação Samsung PASS; suporte real a backdrop blur além da janela WebView depende do compositor Android.
