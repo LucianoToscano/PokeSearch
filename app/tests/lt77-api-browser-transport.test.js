@@ -108,6 +108,18 @@ async function suite(){
    assert.ok(!JSON.stringify(r).includes("LEAK_ME"));
   }
  });
+ await check("missing or expired reveal and validation errors are classified",async()=>{
+  for(const [status,expected] of [[400,"invalid-request"],
+   [404,"expired-or-missing-spawn"],[410,"expired-or-missing-spawn"],
+   [422,"invalid-request"],[503,"service-unavailable"]]){
+   const t=makeClient({fetchImpl:async(url,req)=>req.method==="POST"?
+    reply(200,{results:[item()]}):reply(status,{detail:"unavailable"})});
+   const s=await t.client.search(filter);
+   const outcome=await t.client.reveal({sourceIndex:0,searchId:s.searchId,pokemonId:821,cp:438});
+   assert.equal(outcome.reason,expected);
+   assert.equal(t.client&&typeof t.client.search,"function");
+  }
+ });
  await check("malformed JSON and oversized response rejected",async()=>{
   const a=makeClient({fetchImpl:async()=>({status:200,headers:{get:()=>null},text:async()=>"{broken"})});
   assert.equal((await a.client.search(filter)).reason,"invalid-json");
