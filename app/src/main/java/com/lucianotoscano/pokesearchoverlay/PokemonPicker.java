@@ -195,12 +195,12 @@ public final class PokemonPicker {
         show(activity,changed,dismissed,-1,-1);
     }
     /** Native icon anchor is in physical screen pixels; negative means legacy centering. */
-    public static void show(Context activity,Runnable changed,Runnable dismissed,
+    public static Dialog show(Context activity,Runnable changed,Runnable dismissed,
                             int anchorX,int anchorY){
         List<Entry> all=readCatalog(activity);
         if(all.isEmpty()){
             Toast.makeText(activity,"Catálogo de Pokémon indisponível",Toast.LENGTH_LONG).show();
-            return;
+            return null;
         }
 
         // LT62: Show every saved favorite together, at most 10 per row and
@@ -439,5 +439,6 @@ public final class PokemonPicker {
                 });
             }
         }
+        return dialog;
     }
 }
