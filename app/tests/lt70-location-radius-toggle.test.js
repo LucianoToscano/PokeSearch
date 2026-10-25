@@ -26,7 +26,7 @@ check("header Location centered with paste in the bottom action row",()=>{
  for(const s of ['.choiceHeader{','justify-content:center!important;',
  'const title=make("div","choiceHeader")',
  'title.appendChild(make("span","","Localização"))',
- 'label.append(labelName,radiusWrap)'])assert.ok((s.includes("const")||s.includes("title.")||s.includes("label.append(")?location:css).includes(s),s);
+ 'label.append(labelName,paste,copy,radiusWrap)'])assert.ok((s.includes("const")||s.includes("title.")||s.includes("label.append(")?location:css).includes(s),s);
 });
 check("input has exactly four numeric characters and bound 0–1000",()=>{
  for(const s of ['radiusField.type="text"','radiusField.min="0"','radiusField.max="1000"',
@@ -62,7 +62,7 @@ check("[1000]km contiguous with unit outside numeric input border",()=>{
  assert.ok(css.includes('justify-content:center!important;'));
 });
 check("center radius and Apply/Clear with icon-only actions",()=>{
- for(const s of ["label.append(labelName,radiusWrap)","actions.append(apply,clear);label.appendChild(actions)",
+ for(const s of ["label.append(labelName,paste,copy,radiusWrap)","actions.append(apply,clear);label.appendChild(actions)",
  'makeDockAction("apply","Aplicar localização")','makeDockAction("clear","Limpar localização")'])
  assert.ok(location.includes(s),s);
  assert.ok(css.includes("body.controls-window #choices.locationPanel .locRadiusRow{"));

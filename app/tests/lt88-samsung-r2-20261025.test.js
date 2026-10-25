@@ -28,7 +28,7 @@ check("only one active favorite star, hold opens save or delete",()=>{
 check("location clipboard and local slots support explicit copy and deletion",()=>{
  for(const k of ["extractClipboardCoordinates","copyLocationCoords","deleteSavedSearchLocation"])
   assert.ok(native.includes(k+"("));
- assert.ok(dock.includes("title.append(paste,copy)"));
+ assert.ok(dock.includes("label.append(labelName,paste,copy,radiusWrap)"));
  assert.ok(dock.includes("locSlotTools"));
  assert.ok(dock.includes("item.active"));
 });
