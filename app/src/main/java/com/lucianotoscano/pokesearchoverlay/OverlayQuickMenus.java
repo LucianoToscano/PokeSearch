@@ -176,9 +176,14 @@ final class OverlayQuickMenus {
         content.addView(scroll,new LinearLayout.LayoutParams(-1,dp(context,270)));
         // Read the committed sound: both the saved choice and any newly tapped
         // preview remain visibly selected until the user confirms.
-        String saved=context.getSharedPreferences("prefs",0).getString(
-            "favorites".equals(target)?WatchAlerts.PREF_FAVORITE_TONE:
-                WatchAlerts.PREF_GENERAL_TONE,"");
+        android.content.SharedPreferences tonePrefs=context.getSharedPreferences("prefs",0);
+        String toneKey="favorites".equals(target)?WatchAlerts.PREF_FAVORITE_TONE:
+            WatchAlerts.PREF_GENERAL_TONE;
+        // Favoritos without an explicit preference really plays the bundled
+        // Portuguese BR clip, not Android's generic notification ringtone.
+        String saved="favorites".equals(target)&&!tonePrefs.contains(toneKey)?
+            PokeSoundLibrary.favoriteDefaultUri(context).toString():
+            tonePrefs.getString(toneKey,"");
         int savedIndex=-2; // empty preference is Android's default notification
         if(!saved.isEmpty())for(int i=0;i<PokeSoundLibrary.size();i++){
             Uri uri=PokeSoundLibrary.soundUri(context,i);
