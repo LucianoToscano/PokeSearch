@@ -18,3 +18,13 @@ Instalar o APK privado assinado `PokeSearch-v0.00.86-LT-API-QA.apk` **apenas ap�
 | Notificações/Favoritos/Editor Visual/arraste Pokébola | PENDENTE | regressão Samsung |
 
 Nunca converter um PASS automatizado em PASS físico. A imagem dos Pokémon especiais só deve ser exibida quando houver URL validada; placeholder neutro é permitido.
+
+
+## Complemento de verificação física
+
+- [ ] Abrir Pokémon e Favoritos, observar imagens simultâneas da mesma espécie e carregamento alternativo quando houver rede.
+- [ ] Verificar que sprites de trajes/formas especiais sem fonte validada continuam usando placeholder (não imagem incorreta).
+- [ ] Ver ⚲ Genderless nas Informações de Voltorb com dados de sexo confirmados; verificar após ativar a linha Sexo.
+- [ ] Com todas as Informações expandidas, arrastar a Pokébola até as bordas direita e esquerda, testar giro horizontal/vertical, sem travar ícone nem cortar controles; conferir que resultados reancoram.
+- [ ] Em Filtros, ▣ > 1/2/3 > Salvar/Usar; verificar persistência após fechar o app; não modificar Shiny, localização, favoritos nem preferências de outros perfis.
+- [ ] Em Favoritos, ▣ > segurar 1/2/3 salva, tocar carrega; confirmar grade 10×5, limite 50 e independência de notificações/sons.
