@@ -2937,7 +2937,8 @@ public class OverlayService extends Service {
         }
         private int formOptionsSequence=0;
         @JavascriptInterface public void requestFormOptions(String query){handler.post(()->{
-            if(stopped||loginPaused||searchInProgress||!menuExpanded||!menuLoaded)return;
+            if(stopped||loginPaused||(!authorizedApiQaSelected()&&searchInProgress)||
+                !menuExpanded||!menuLoaded)return;
             String wanted=query==null?"":query.trim();
             if(wanted.length()>70)return;
             int generation=requestGeneration,sequence=++formOptionsSequence;
@@ -2983,7 +2984,9 @@ public class OverlayService extends Service {
         @JavascriptInterface public void cancelPokemonSuggestions(){handler.post(()->++pokemonSuggestionSequence);}
         @JavascriptInterface public void requestPokemonSuggestions(String query){handler.post(()->{
             if(stopped||loginPaused||!menuExpanded||menuPanel==null||!menuLoaded)return;
-            if(searchInProgress){
+            // API catalogue and choices are read-only, independent of an
+            // active POST /search. Only the DOM picker must wait for React.
+            if(searchInProgress&&!authorizedApiQaSelected()){
                 js(menuPanel,true,"window.onPokemonSuggestions({ok:false,reason:'Aguarde a busca atual terminar'})");
             js(popupPanel,popupLoaded,"window.onPokemonSuggestions({ok:false,reason:'Aguarde a busca atual terminar'})");
                 return;
