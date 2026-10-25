@@ -1,0 +1,38 @@
+name: LT82 QA - append UI acceptance checkpoint to full Guia Mestre
+on:
+  push:
+    branches: [fix/lt82-samsung-ui-polish-20261025]
+    paths: ['.github/workflows/lt82-document-master.yml']
+permissions:
+  contents: write
+jobs:
+  documentation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/lt82-samsung-ui-polish-20261025
+          fetch-depth: 1
+      - name: Append checkpoint preserving all Guia Mestre history
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/GUIA_MESTRE.md
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
+          if grep -Fq 'LT82 — Samsung UI: Localização compacta, Favoritos, Clima e tutorial' docs/GUIA_MESTRE.md; then exit 0; fi
+          cat >> docs/GUIA_MESTRE.md <<'LT82_GUIDE'
+          
+          ## LT82 — Samsung UI: Localização compacta, Favoritos, Clima e tutorial (25/10/2026)
+          Identidade preservada: appId com.lucianotoscano.pokesearch, namespace com.lucianotoscano.pokesearchoverlay, GitHub LucianoToscano/PokeSearch. Branch fix/lt82-samsung-ui-polish-20261025, PR #55 Draft, sem mudanças à main, assinatura ou lançamento oficial existente.
+          Layout Localização segundo referência visual do usuário: título Localização centralizado; abaixo campo de coordenadas de largura integral, exemplo 24.9407581,121.1889794; barra de raio; por último linha [Colar seta para cima] [1000] km [✓] [Lixeira], todo conteúdo central e compacto. CSS independente limitado a 258px (ou viewport menos 14px); sem espaços laterais inúteis. Mantém provas no site, filtros, raio 0-1000, limpar campo/slider e preferências.
+          Clima: ao clicar seleção, patchSelectedFilterKeys(["weather"]) inicia sincronização real, preservando confirmação do site; banners auxiliares de divergência/"Falta aplicar" não poluem o menu Clima. Falhas de verificação continuam protegidas e diagnosticáveis, não declara sucesso sem correspondência.
+          Favoritos: diálogo nativo ancorado no botão estrela escolhe abrir para baixo se houver espaço, senão para cima, ou lado com mais espaço; grade 10×5, 50 selecionáveis, campo busca abaixo, janela não modal preservados.
+          Tutorial: preferencia persistente gestureHelpV1Shown impede repetição; novas instalações mostram duas dicas curtas sequenciais (Pokébola: toque/segure/arraste; ↻: toque/segure). HTML title nos botões Pokébola, ↻ e intervalos removido para evitar balões longos recorrentes; aria-label de acessibilidade mantida.
+          QA LT82 versionName 0.00.82, versionCode 54285, release protegida R8/ProGuard, certificado permanente; teste dedicado app/tests/lt82-samsung-ux-polish.test.js, teste histórico LT62 e LT70 adaptado ao novo layout, Actions em .github/workflows/lt82-samsung-qa-polish.yml. Para CI final e SHA consultar docs/LT82_UI_SAMSUNG_QA.md.
+          QA física Samsung ainda pendente. NÃO publicar LT82 via GitHub Releases nem atualizar manifesto Drive sem homologação. GitHub Release oficial LT80 v0.00.80-54283 e manifest Drive LT79 54282 mantidos para seus usuários. Nada de PvPPokeGo, GPS físico, proxy ou backend.
+          LT82_GUIDE
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/GUIA_MESTRE.md
+          git commit -m 'docs(LT82): append Samsung compact UI checkpoint preserving history'
+          git push origin HEAD:fix/lt82-samsung-ui-polish-20261025
