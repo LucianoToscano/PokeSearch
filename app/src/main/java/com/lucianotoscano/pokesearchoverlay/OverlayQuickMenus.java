@@ -185,6 +185,7 @@ final class OverlayQuickMenus {
             }
         };
         for(int i=-2;i<PokeSoundLibrary.size();i++){
+            if(i==-1)continue; // -1 is reserved for no selection
             final int index=i;
             final String label=i==-2?"Padrão":PokeSoundLibrary.LABELS[i];
             Button option=button(context,label);
