@@ -2738,12 +2738,12 @@ test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menu
   dock.includes('if(kind==="pokemon"){')&&
   dock.includes('["percent","IV%"],["gl","GL"],["ul","UL"]');
 });
-test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()=>{
+test("FILTERS-POGO-02 shows PC and bounded level 1–50 with honest defaults",()=>{
  const filters=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
  return filters.includes('numberPair("PC","cpMin","cpMax");')&&
   filters.includes('numberPair("Nível","levelMin","levelMax",true);')&&
-  filters.includes('input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999"')&&
+  filters.includes('input.step="1";input.min=level?"1":"0";input.max=level?"50":"99999"')&&
   filters.includes('input.type=level?"text":"number";input.inputMode="numeric";')&&
   !filters.includes('make("button","extraStep"')&&
   filters.includes('input.value=String(modeDraft[key]??"")')&&
