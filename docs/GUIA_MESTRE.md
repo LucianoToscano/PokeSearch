@@ -6329,3 +6329,13 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Estado de proteção: USE_AUTHORIZED_API=false; OverlayService continua DOM/probe; fallback preservado. Nenhum JWT/reveal_code foi lido/logado pela nova correção. Nenhuma publicação Google Drive, merge ou mudança na main.
 - Testes Samsung ainda abertos: Get coords válido, Open in Maps, copiar somente lat/lng verificadas, reordenação, cartões iguais, cooldown, expiração; depois menus, filtros, Shiny/GL/UL, Weather/Form e consumo em sessão longa.
 
+
+## LT77 QA R2 — Continuação segura após fc30f99 (24/10/2026)
+
+- Branch exclusiva: `fix/lt77-post14-maps-coordinates-regex-20261024`; ponto de partida `fc30f9961eb69487a89df5aecb893b48c6f8f1a5`. Main, PR #34/#49, identidade Android, assinatura, preferências existentes e publicação LT76 inalterados.
+- Auditoria do contrato autorizado de `pogo.md` no Google Drive: `api_result_contract.js`, `api_browser_transport.js`, `api_reveal_contract.js` e `api_integration_router.js` são módulos experimentais, sem ligação ao `OverlayService`. `USE_AUTHORIZED_API=false` permanece; busca e coordenadas do APK seguem DOM/`probe.js`.
+- Correção objetiva: quando o catálogo contém várias formas oficiais da mesma espécie, selecionar o nome da espécie gera `pokemon_ids`, sem rejeitar por falsa ambiguidade; selecionar o nome da forma gera `species_forms` somente com correspondência oficial única. Caso ausente/duplicado continua rejeitado; fixtures garantem os dois sentidos.
+- Transporte experimental: HTTP 400/422 = `invalid-request`; 404/410 = `expired-or-missing-spawn`; 503 = `service-unavailable`; 401, 403 e 429 preservados. Resposta de erro nunca é copiada literalmente para UI/Android.
+- **Despawn em Info Pokémon**: valor inicial `showTimers=false`, leitura sem preferência `getBoolean("showTimers", false)`; portanto OFF por padrão; ON explícito persistido deve continuar ON (não sobrescrever configurações). Regressão coberta por teste de fonte. Cronômetro local de expiração de spawn funciona independentemente da preferência visual OFF.
+- Get coords: correção de índice reordenado/regex já presente no QA R2; sem prova em Samsung autenticado, não declarar homologado. Resultado 403 de trainer requer mensagens específicas antes de habilitação; catálogo, origem CORS e filtros efetivos também pendentes.
+- Checklist de aceitação: `docs/LT77_CHECKLIST_ACEITACAO.md`; CI deve ser consultado após últimos commits. Artefato GitHub Actions QA não equivale a publicação no Drive. Não atualizar manifesto `atualizacao.json` nem fazer merge em `main` antes da aceitação física.
