@@ -94,6 +94,16 @@ function settle(f,request,maxCycles=7){
  return result;
 }
 const req={enabled:true,coords:"-23.5505,-46.6333",radius:10};
+// LT83 Samsung: active Coords with no ARIA state and no fixed help text is
+// provable only when BOTH official field placeholders form a unique visible pair.
+let mobile=fixture({active:"coords",unknownState:true,numericPlaceholder:true});
+check("Mobile site Coords numeric pair hydrates without text hint",settle(mobile,req).ok,true);
+check("Mobile pair coordinates verified after controlled React turns",mobile.run("verifyLocation",req).ok,true);
+mobile.coord.value="1,2";
+check("Mobile pair with changed spawn coordinates remains unverified",mobile.run("verifyLocation",req).ok,false);
+let mobileArea=fixture({active:"area",unknownState:false,numericPlaceholder:true});
+check("Known Area tab is never mistaken for Coords",mobileArea.run("verifyLocation",req).ok,false);
+
 let f=fixture();
 let result=f.run("configureLocation",req);
 check("Mode changes must be reported as pending",result.pending,true);
