@@ -21,7 +21,7 @@ check("full coordinates 24.9407581,121.1889794 fit dedicated input",()=>{
  "flex-flow:row nowrap!important","margin:0 0 5px!important"])
  assert.ok(css.includes(wanted),wanted);
  const latitudeLongitude="24.9407581,121.1889794";
- assert.equal(latitudeLongitude.length,23);
+ assert.equal(latitudeLongitude.length,22);
  const parser=section(" function submit(){"," apply.onclick=submit;");
  assert.ok(parser.includes("Native.setLocation(true,wantedCoords,wantedRadius)"));
 });
