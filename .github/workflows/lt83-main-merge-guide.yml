@@ -1,0 +1,38 @@
+name: LT83 main - append verified merged production record to Guia Mestre
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt83-main-merge-guide.yml']
+permissions:
+  contents: write
+jobs:
+  record:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Preserve full Guia and append main merge verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/GUIA_MESTRE.md
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1410000
+          if grep -Fq 'LT83 MAIN MERGE FINAL PR57 verificado' docs/GUIA_MESTRE.md; then exit 0; fi
+          cat >> docs/GUIA_MESTRE.md <<'LT83_MAIN'
+          
+          ## LT83 MAIN MERGE FINAL PR57 verificado — 25/10/2026
+          Merge aprovado pelo proprietário e concluído, sem squash e sem apagar histórico: PR #57 https://github.com/LucianoToscano/PokeSearch/pull/57, merge commit f5f97cb6036dfbdd158711780fd68fc1acaa125e em main. Código e documentação íntegros, Guide Mestre 1.419.058+ bytes, README atualizado e docs/ESTADO_CANONICO_LT83.md passa a ser referência atual. Atualizações documentais posteriores fazem HEAD main avançar, sem alterar o APK distribuído.
+          ÚLTIMA VERSÃO OFICIAL = LT83 0.00.83, versionCode 54286, APK PokeSearch-v0.00.83-LT.apk em GitHub Releases tag v0.00.83-54286 https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.83-54286. SHA256 do asset oficial 451e4781581122908f014a893f693c8312b36b2c222a8579c499c6c3e2975c1c, tamanho 38603587 bytes. Assinatura permanente SHA256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e, R8/release. SOURCE_COMMIT EXATO 5cf9adb62efb97a185ec955cab6eb0f49fbb4e88 (APLICATIVO), CI Actions #40159949347 SUCCESS, publicação #40160258112 SUCCESS.
+          A Home da LT79+ consulta Releases estáveis e aplica validação SHA256, certificado e package antes do instalador Android. Google Drive manifesto público ID 15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf continua ponte da LT79 (0.00.79/54282); não modificar.
+          PR #56 de integração LT82 e PR #55 foram substituídas pela #57, sem excluir branches, recursos ou commits. PRs antigos #34/#49 continuam intocados.
+          Diagnóstico LT83 Samsung: foto LT82 comprovava clipping de coords/botões e "Localização não aplicada"; alterações LT83 estabilizam largura do popup 286dp, grid de quatro controles e detecção segura da aba oficial Coords sem aria-state. QA automatizada = PASS; homologação física na versão LT83 = PENDENTE. Nunca registrar sucesso físico sem teste e evidência. No próximo ciclo LT84 investigar DOM real se aplicação ainda falhar e continuar enriquecendo o app, jamais empobrecer recursos.
+          Estado atual PRIORITÁRIO docs/ESTADO_CANONICO_LT83.md, README cabeçalho e RELEASE GitHub; notas de releases anteriores são históricas.
+          LT83_MAIN
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/GUIA_MESTRE.md
+          git commit -m 'docs(LT83 main): append merged release checkpoint preserving full Guia Mestre'
+          git push origin HEAD:main
