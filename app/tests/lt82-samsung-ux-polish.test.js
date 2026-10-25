@@ -10,7 +10,7 @@ check("compact centered location column, exact child order",()=>{
  const s=section("function renderLocationChoices(){","let requestedInterval=null;");
  assert.ok(s.includes("panel.append(title,fieldRow,label,message)"));
  assert.ok(s.includes("label.append(labelName,paste,copy,radiusWrap)"));
- assert.ok(s.includes("actions.append(apply,clear);label.appendChild(actions)"));
+ assert.ok(s.includes("actions.append(apply,clear);label.append(slide,actions)"));
  assert.ok(!s.includes("title.appendChild(paste)"));
  assert.ok(s.includes('slide.max="1000"'));
 });
