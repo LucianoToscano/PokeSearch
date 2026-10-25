@@ -46,7 +46,8 @@ test("location saved slots and name/help removed without deleting stored data",(
  for(const absent of ["locSavedName","locSavedSlots","locSlotTools","locHelp",
   "requestSavedSearchLocations","saveSearchLocation("])
    assert.ok(!block.includes(absent),absent);
- assert.ok(block.includes("label.append(slide,actions)"));
+ assert.ok(block.includes("label.append(actions)"));
+ assert.ok(block.includes("clipboard.append(paste,copy)"));
  assert.ok(block.includes("panel.append(title,fieldRow,label,message)"));
  assert.ok(block.includes("paste.onclick=()=>Native.pasteLocationCoords()"));
  assert.ok(block.includes("Native.copyLocationCoords(field.value)"));

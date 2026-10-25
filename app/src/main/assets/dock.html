@@ -4084,21 +4084,139 @@ body.popup-window.controls-window #choices.locationPanel #locHint{
 }
 
 
-/* LT88 QA-98 Samsung location recovery: final scoped layout overrides accumulated sizes. */
-body.controls-window #choices.locationPanel,body.popup-window.controls-window #choices.locationPanel{box-sizing:border-box!important;width:min(286px,calc(100vw - 12px))!important;max-width:calc(100vw - 12px)!important;height:auto!important;min-height:0!important;max-height:min(190px,var(--popup-room,400px))!important;padding:5px 4px!important;margin:0!important;overflow-x:hidden!important;overflow-y:auto!important;text-align:center!important}
-body.controls-window #choices.locationPanel .choiceHeader,body.popup-window.controls-window #choices.locationPanel .choiceHeader{display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;height:25px!important;min-height:25px!important;margin:0 0 4px!important;padding:0!important;text-align:center!important}
-body.controls-window #choices.locationPanel .locCoordsRow,body.popup-window.controls-window #choices.locationPanel .locCoordsRow{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;max-width:100%!important;height:32px!important;min-height:32px!important;gap:0!important;margin:0 0 4px!important;padding:0!important}
-body.controls-window #choices.locationPanel .locCoordsRow .locField,body.popup-window.controls-window #choices.locationPanel .locCoordsRow .locField{box-sizing:border-box!important;flex:1 1 auto!important;display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;height:32px!important;min-height:32px!important;padding:4px 7px!important;margin:0!important;font:500 12px/1.2 monospace!important;letter-spacing:0!important;text-align:left!important;text-overflow:clip!important}
-body.controls-window #choices.locationPanel .locRadiusRow,body.popup-window.controls-window #choices.locationPanel .locRadiusRow{display:grid!important;box-sizing:border-box!important;grid-template-columns:29px 29px 68px minmax(65px,1fr)!important;justify-content:center!important;align-items:center!important;width:100%!important;max-width:100%!important;min-width:0!important;gap:4px!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important}
-body.controls-window #choices.locationPanel .locRadiusRow>.locPaste,body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locPaste{grid-column:1!important;position:static!important;top:auto!important;right:auto!important;display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;width:29px!important;min-width:29px!important;max-width:29px!important;height:30px!important;min-height:30px!important;padding:3px!important;margin:0!important;border:1px solid var(--visual-menu-border,#ffffff45)!important;border-radius:6px!important;background:var(--visual-menu-button-bg,#27374b)!important;color:var(--visual-menu-fg,#edf4fc)!important}
-body.controls-window #choices.locationPanel .locRadiusRow>.locCopy,body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locCopy{grid-column:2!important;position:static!important;top:auto!important;right:auto!important;display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;width:29px!important;min-width:29px!important;max-width:29px!important;height:30px!important;min-height:30px!important;padding:3px!important;margin:0!important;border:1px solid var(--visual-menu-border,#ffffff45)!important;border-radius:6px!important;background:var(--visual-menu-button-bg,#27374b)!important;color:var(--visual-menu-fg,#edf4fc)!important}
-body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap,body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap{grid-column:3!important;box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:68px!important;min-width:68px!important;max-width:68px!important;height:30px!important;min-height:30px!important;padding:0!important;margin:0!important}
-body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap .locRadiusNumber,body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap .locRadiusNumber{box-sizing:border-box!important;width:47px!important;min-width:47px!important;max-width:47px!important;height:30px!important;min-height:30px!important;padding:2px 3px!important;text-align:center!important;font-size:11px!important}
-body.controls-window #choices.locationPanel .locRadiusRow>input[type=range],body.popup-window.controls-window #choices.locationPanel .locRadiusRow>input[type=range]{grid-column:4!important;box-sizing:border-box!important;display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;height:22px!important;min-height:22px!important;margin:0!important;padding:0!important;align-self:center!important}
-body.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions,body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions{grid-column:1 / -1!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-width:0!important;max-width:100%!important;height:32px!important;min-height:32px!important;max-height:32px!important;gap:8px!important;padding:0!important;margin:3px 0 0!important;overflow:visible!important}
-body.controls-window #choices.locationPanel .locRadiusRow .compactLocationActions>.psLineAction,body.popup-window.controls-window #choices.locationPanel .locRadiusRow .compactLocationActions>.psLineAction{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:4px!important;flex:0 1 104px!important;width:104px!important;min-width:82px!important;max-width:104px!important;height:30px!important;min-height:30px!important;padding:3px 6px!important;margin:0!important;color:var(--visual-menu-fg,#edf4fc)!important;background:var(--visual-menu-button-bg,#27374b)!important;border:1px solid var(--visual-menu-border,#ffffff45)!important;border-radius:6px!important;font-size:11px!important;line-height:1.2!important;white-space:nowrap!important}
-body.controls-window #choices.locationPanel .locRadiusRow .compactLocationActions>.psLineAction svg,body.popup-window.controls-window #choices.locationPanel .locRadiusRow .compactLocationActions>.psLineAction svg{display:inline-block!important;width:16px!important;height:16px!important;flex:none!important}
-body.controls-window #choices.locationPanel #locHint,body.popup-window.controls-window #choices.locationPanel #locHint{text-align:center!important;margin:3px 0 0!important;padding:0 1px!important;min-height:0!important;line-height:1.2!important}
+/* LT99 compact Samsung Location — EXACT 3-row structure approved on 25/10/2026.
+   (1) Localização [Colar ↓] [Copiar] — (2) coordenadas até 30 caracteres
+   (3) [0000] km [Aplicar ✓] [Limpar □]. No visible slider or extra rows.
+   High-specificity override deliberately supersedes LT70..LT98 location-only rules. */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel,
+body.popup-window.controls-window.popup-above #choices.locationPanel{
+  box-sizing:border-box!important;
+  width:min(286px,calc(100vw - 12px))!important;
+  min-width:0!important;max-width:calc(100vw - 12px)!important;
+  height:auto!important;min-height:0!important;
+  max-height:min(165px,var(--popup-room,400px))!important;
+  margin:0!important;padding:6px 6px 8px!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  text-align:center!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader{
+  box-sizing:border-box!important;display:flex!important;
+  flex-flow:row nowrap!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-height:33px!important;height:33px!important;
+  gap:6px!important;margin:0 0 5px!important;padding:0!important;text-align:center!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader>span:first-child,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader>span:first-child{
+  flex:0 0 auto!important;order:0!important;min-width:0!important;
+  margin:0!important;padding:0!important;white-space:nowrap!important;
+  font:700 16px/1.12 Roboto,Arial,sans-serif!important;letter-spacing:0!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools{
+  box-sizing:border-box!important;display:inline-flex!important;
+  order:1!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 auto!important;gap:4px!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
+  height:31px!important;min-height:31px!important;padding:0!important;margin:0!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locPaste,
+body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locCopy,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locPaste,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locCopy{
+  box-sizing:border-box!important;position:static!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 31px!important;width:31px!important;min-width:31px!important;max-width:31px!important;
+  height:31px!important;min-height:31px!important;max-height:31px!important;
+  padding:4px!important;margin:0!important;transform:none!important;
+  font-size:18px!important;line-height:1!important;border-radius:7px!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locPaste svg,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locPaste svg{
+  display:block!important;width:22px!important;height:22px!important;flex:none!important;
+}
+body.controls-window #choices.locationPanel>.locCoordsRow,
+body.popup-window.controls-window #choices.locationPanel>.locCoordsRow{
+  box-sizing:border-box!important;display:flex!important;flex-flow:row nowrap!important;
+  align-items:center!important;justify-content:center!important;
+  gap:0!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  height:36px!important;min-height:36px!important;margin:0 0 6px!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>.locCoordsRow>input.locField,
+body.popup-window.controls-window #choices.locationPanel>.locCoordsRow>input.locField{
+  box-sizing:border-box!important;display:block!important;flex:1 1 auto!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  height:36px!important;min-height:36px!important;
+  margin:0!important;padding:4px 6px!important;
+  direction:ltr!important;text-align:left!important;
+  font:500 12px/1.16 monospace!important;letter-spacing:-.15px!important;
+  text-overflow:clip!important;border-radius:8px!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow,
+body.popup-window.controls-window.popup-above #choices.locationPanel>.locRadiusRow{
+  box-sizing:border-box!important;display:flex!important;flex-flow:row nowrap!important;
+  align-items:center!important;justify-content:center!important;
+  gap:8px!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  height:35px!important;min-height:35px!important;
+  margin:0!important;padding:0!important;overflow:visible!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusText,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusText{display:none!important}
+body.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap{
+  box-sizing:border-box!important;display:inline-flex!important;order:0!important;
+  flex:0 0 82px!important;width:82px!important;min-width:82px!important;max-width:82px!important;
+  height:35px!important;min-height:35px!important;
+  align-items:center!important;justify-content:center!important;
+  gap:2px!important;margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>input.locRadiusNumber,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>input.locRadiusNumber{
+  box-sizing:border-box!important;flex:0 0 58px!important;display:block!important;
+  width:58px!important;min-width:58px!important;max-width:58px!important;
+  height:35px!important;min-height:35px!important;
+  margin:0!important;padding:2px 4px!important;border-radius:8px!important;
+  font:500 15px/1.15 monospace!important;text-align:center!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>.locRadiusUnit,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>.locRadiusUnit{
+  box-sizing:border-box!important;display:inline!important;position:static!important;
+  flex:0 0 auto!important;width:auto!important;min-width:0!important;
+  margin:0!important;padding:0!important;transform:none!important;
+  font:600 12px/1 Roboto,Arial,sans-serif!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions{
+  box-sizing:border-box!important;display:inline-flex!important;order:1!important;
+  flex:0 0 auto!important;align-items:center!important;justify-content:center!important;
+  width:auto!important;max-width:none!important;min-width:0!important;
+  height:35px!important;min-height:35px!important;gap:6px!important;
+  margin:0!important;padding:0!important;overflow:visible!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction{
+  box-sizing:border-box!important;display:inline-flex!important;
+  align-items:center!important;justify-content:center!important;
+  flex:0 0 35px!important;width:35px!important;min-width:35px!important;max-width:35px!important;
+  height:35px!important;min-height:35px!important;max-height:35px!important;
+  margin:0!important;padding:5px!important;font-size:0!important;line-height:normal!important;
+  border-radius:8px!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction svg,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction svg{
+  display:block!important;flex:none!important;width:22px!important;height:22px!important;
+}
+body.controls-window #choices.locationPanel>#locHint,
+body.popup-window.controls-window #choices.locationPanel>#locHint{
+  box-sizing:border-box!important;min-height:0!important;max-width:100%!important;
+  text-align:center!important;margin:2px 0 0!important;padding:0!important;
+  font-size:10px!important;line-height:1.1!important;
+}
+body.controls-window #choices.locationPanel>#locHint[hidden],
+body.popup-window.controls-window #choices.locationPanel>#locHint[hidden]{display:none!important}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -5435,7 +5553,8 @@ function renderLocationChoices(){
  const field=make("input","locField");field.id="locCoordinateInput";field.type="text";field.inputMode="decimal";
  field.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
  field.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
- field.placeholder="-23.5505,-46.6333";field.setAttribute("aria-label","Coordenadas latitude e longitude");
+ field.placeholder="53.759856,-1.495755";field.maxLength=30;field.setAttribute("maxlength","30");
+ field.setAttribute("aria-label","Coordenadas latitude e longitude, até 30 caracteres");
  field.value=locationCoords;
  field.oninput=()=>{field.dataset.locationDraft="true";};
  const paste=make("button","locPaste");paste.type="button";
@@ -5447,13 +5566,16 @@ function renderLocationChoices(){
  pasteIcon.setAttribute("aria-hidden","true");
  pasteIcon.innerHTML='<path d="M8 4h2a2 2 0 0 1 4 0h2v3H8z"/>'+
   '<path d="M8 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>'+
-  '<path d="M12 19V9m-4 4 4-4 4 4"/>';
+  '<path d="M12 9v10m-4-4 4 4 4-4"/>';
  paste.appendChild(pasteIcon);
  paste.onclick=()=>Native.pasteLocationCoords();
  const copy=make("button","locCopy","⧉");copy.type="button";
  copy.title="Copiar coordenadas";copy.setAttribute("aria-label","Copiar coordenadas digitadas");
  copy.onclick=()=>{if(Native.copyLocationCoords)Native.copyLocationCoords(field.value);};
- // Header stays clean: clipboard buttons return to the radius action row.
+ // Precisely three visible rows: header clipboard, full coordinates, radius/actions.
+ const clipboard=make("div","locClipboardTools");
+ clipboard.append(paste,copy);
+ title.appendChild(clipboard);
  fieldRow.append(field);
  const label=make("div","locLine locRadiusRow");
  const labelName=make("span","locRadiusText","Raio");
@@ -5468,8 +5590,9 @@ function renderLocationChoices(){
  const unit=make("span","locRadiusUnit","km");
  const radiusWrap=make("span","locRadiusInputWrap");
  radiusWrap.append(radiusField,unit);
- label.append(labelName,paste,copy,radiusWrap);
+ label.append(labelName,radiusWrap);
  const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);
+ // Keep the existing range state synchronized internally; the owner requested no visible slider.
  slide.setAttribute("aria-label","Ajustar raio de 0 a 1000");
  slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";};
  radiusField.oninput=()=>{
@@ -5485,9 +5608,7 @@ function renderLocationChoices(){
  const actions=make("div","locLine compactLocationActions");
  const apply=makeDockAction("apply","Aplicar localização");
  const clear=makeDockAction("clear","Limpar localização");
- // Explicit labels restore two visible full-size actions without changing Native contracts.
- apply.appendChild(document.createTextNode(" Aplicar"));
- clear.appendChild(document.createTextNode(" Limpar"));
+ // Icon-only controls as in the approved Samsung reference.
  apply.classList.add("locSave");clear.classList.add("locHide");
  const disable=()=>{
   // Clear the visible editor immediately, then let Android remove persisted
@@ -5523,7 +5644,7 @@ function renderLocationChoices(){
   Native.setLocation(true,wantedCoords,wantedRadius);
  }
  apply.onclick=submit;
- actions.append(apply,clear);label.append(slide,actions);
+ actions.append(apply,clear);label.append(actions);
  panel.append(title,fieldRow,label,message);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");

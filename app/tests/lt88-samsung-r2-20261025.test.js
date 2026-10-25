@@ -29,7 +29,8 @@ check("only one active favorite star; edits autosave, hold clears",()=>{
 check("location clipboard and local slots support explicit copy and deletion",()=>{
  for(const k of ["extractClipboardCoordinates","copyLocationCoords","deleteSavedSearchLocation"])
   assert.ok(native.includes(k+"("));
- assert.ok(dock.includes("label.append(labelName,paste,copy,radiusWrap)"));
+ assert.ok(dock.includes("label.append(labelName,radiusWrap)"));
+ assert.ok(dock.includes("clipboard.append(paste,copy)"));
  assert.ok(dock.includes("locHint"));
  assert.ok(!dock.split("function renderLocationChoices(){")[1].split("let requestedInterval=null")[0].includes("locSavedName"));
 });
