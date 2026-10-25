@@ -666,9 +666,10 @@ check("LT62 refresh menu: all 6 choices reach native and receive confirmed state
 });
 check("LT62 Location: title paste, no close X, inline km and compact panel",()=>{
  const location=dock.split('function renderLocationChoices(){')[1]?.split('function manualRefreshTap(){',1)[0]||"";
- assert.ok(location.includes('label.append(labelName,paste,copy,radiusWrap)'));
-  assert.ok(location.includes('label.append(slide,actions)'));
-  assert.ok(location.includes('panel.append(title,fieldRow,label,message)'));
+ assert.ok(location.includes('label.append(labelName,radiusWrap)'));
+ assert.ok(location.includes('clipboard.append(paste,copy)'));
+  assert.ok(location.includes('label.append(actions)'));
+  assert.ok(location.includes('panel.append(title,fieldRow,sliderRow,label,message)'));
   assert.ok(!location.includes('locSavedName'));
   assert.ok(!location.includes('locSlotTools'));
 

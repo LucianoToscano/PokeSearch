@@ -6,11 +6,15 @@ const native=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearcho
 const favorite=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
 const section=(a,b)=>{const i=dock.indexOf(a),j=dock.indexOf(b,i+a.length);assert(i>=0&&j>i,a);return dock.slice(i,j)};
 let count=0;function check(n,fn){fn();count++;console.log("PASS LT82 "+n);}
-check("compact centered location column, exact child order",()=>{
+check("compact four-row location, clipboard beside heading, and full-width slider",()=>{
  const s=section("function renderLocationChoices(){","let requestedInterval=null;");
- assert.ok(s.includes("panel.append(title,fieldRow,label,message)"));
- assert.ok(s.includes("label.append(labelName,paste,copy,radiusWrap)"));
- assert.ok(s.includes("actions.append(apply,clear);label.append(slide,actions)"));
+ assert.ok(s.includes("panel.append(title,fieldRow,sliderRow,label,message)"));
+ assert.ok(s.includes("label.append(labelName,radiusWrap)"));
+ assert.ok(s.includes("clipboard.append(paste,copy)"));
+ assert.ok(s.includes("title.appendChild(clipboard)"));
+ assert.ok(s.includes("actions.append(apply,clear);label.append(actions)"));
+ assert.ok(!s.includes("label.append(slide,actions)"));
+ assert.ok(s.includes("sliderRow.append(slide)"));
  assert.ok(!s.includes("title.appendChild(paste)"));
  assert.ok(s.includes('slide.max="1000"'));
 });
@@ -25,8 +29,8 @@ check("full coordinates 24.9407581,121.1889794 fit dedicated input",()=>{
  const parser=section(" function submit(){"," apply.onclick=submit;");
  assert.ok(parser.includes("Native.setLocation(true,wantedCoords,wantedRadius)"));
 });
-check("paste arrow points UP, and has accessible description",()=>{
- assert.ok(dock.includes('<path d="M12 19V9m-4 4 4-4 4 4"/>'));
+check("paste arrow points DOWN, and has accessible description",()=>{
+ assert.ok(dock.includes('<path d="M12 9v10m-4-4 4 4 4-4"/>'));
  assert.ok(dock.includes('paste.setAttribute("aria-label","Colar coordenadas")'));
 });
 check("climate patches user choice to website without popup mismatch",()=>{

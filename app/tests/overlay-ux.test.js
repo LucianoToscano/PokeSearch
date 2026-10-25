@@ -406,8 +406,8 @@ test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&requ
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
 test("Single pin control expands the location editor",dock.includes('onclick="toggleChoices(\'location\')"'));
-test("Coords editor uses one Apply and explicit Clear without a second ON/OFF switch",dock.includes('fieldRow.append(field)')&&dock.includes('label.append(labelName,paste,copy,radiusWrap)')&&dock.includes('clear.onclick=disable')&&!dock.includes('fieldRow.append(field,paste,toggle)'));
-test("Location has title paste, no header X, and separate geographic disable",dock.includes('label.append(labelName,paste,copy,radiusWrap)')&&!dock.includes('close.onclick=closeChoices;title.appendChild(close)')&&dock.includes('Native.setLocation(false,"",0)'));
+test("Coords editor uses one Apply and explicit Clear without a second ON/OFF switch",dock.includes('fieldRow.append(field)')&&dock.includes('label.append(labelName,radiusWrap)')&&dock.includes('clear.onclick=disable')&&!dock.includes('fieldRow.append(field,paste,toggle)'));
+test("Location has title paste, no header X, and separate geographic disable",dock.includes('label.append(labelName,radiusWrap)')&&!dock.includes('close.onclick=closeChoices;title.appendChild(close)')&&dock.includes('Native.setLocation(false,"",0)'));
 test("Slider covers inclusive range 0 to 1000",dock.includes('slide.min="0"')&&dock.includes('slide.max="1000"'));
 test("Location enforces valid latitude and longitude",dock.includes('Math.abs(Number(match[1]))>90')&&dock.includes('Math.abs(Number(match[2]))>180'));
 test("Location preference persisted without exposing secrets",service.includes('putBoolean("locationEnabled",locationEnabled)')&&service.includes('prefs.remove("locationCoords").remove("locationRadius")'));
@@ -2173,7 +2173,7 @@ test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
   !body.includes('locationEnabled=true;closeChoices()')&&
   !body.includes('locationCoords=match[1]')&&
   body.includes('message.textContent="⌛ Verificando localização')&&
-  body.includes('label.append(labelName,paste,copy,radiusWrap)')&&
+  body.includes('label.append(labelName,radiusWrap)')&&
   body.includes('Native.setLocation(false,"",0)')&&
   dock.includes('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
   dock.includes('state==="CONFIRMED"?"✓ Localização confirmada');

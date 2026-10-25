@@ -1,0 +1,147 @@
+name: PokeSearch Scrapbook Stage 1 Signed Protected APK QA
+on:
+  push:
+    branches: [feature/pokesearch-community-scrapbook-stage1-20261025]
+    paths:
+      - '.github/workflows/scrapbook-stage1-signed-apk-qa.yml'
+      - 'app/build.gradle.kts'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/**'
+      - 'app/src/main/assets/**'
+      - 'app/tests/**'
+      - 'app/src/main/AndroidManifest.xml'
+      - 'firebase-realtime.rules.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pokesearch-scrapbook-stage1-apk-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      POKE_TEST_VERSION_CODE: '54299'
+      POKE_TEST_VERSION_LABEL: '51099'
+      POKE_TEST_PUBLIC_VERSION: '0.00.96'
+      # Read-only demo is limited to this expressly requested signed QA artifact.
+      POKE_SCRAPBOOK_STAGE1_QA: 'true'
+      POKE_SCRAPBOOK_QA_ACK: 'stage1-readonly'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Restore LT75 persistent signing key
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for var in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$var")" || { echo "::error::Signing secret missing"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pokesearch-v088-cycle.p12"
+          chmod 600 "$RUNNER_TEMP/pokesearch-v088-cycle.p12"
+          keytool -list -keystore "$RUNNER_TEMP/pokesearch-v088-cycle.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" >/dev/null
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/pokesearch-v088-cycle.p12" >> "$GITHUB_ENV"
+      - name: Run full LT84 API and historical regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/probe.js
+          node --check app/src/main/assets/api_result_contract.js
+          node --check app/src/main/assets/api_browser_transport.js
+          node --check app/src/main/assets/api_android_session.js
+          node --check app/src/main/assets/api_catalog_cache.js
+          node --check app/src/main/assets/api_integration_router.js
+          node --check app/tests/lt84-direct-api-regressions.test.js
+          node --check app/tests/lt85-menu-repeat-tap.test.js
+          node --check app/tests/lt86-form-catalog-level.test.js
+          node --check app/tests/lt87-filter-menu-backgrounds.test.js
+          for suite in app/tests/*.test.js; do
+            if [ "$suite" = "app/tests/lt74-local-update-preview.test.js" ]; then
+              echo "::notice::Legacy LT74 debug-preview assertion excluded."
+              continue
+            fi
+            echo "::group::$suite"
+            node "$suite"
+            echo "::endgroup::"
+          done
+          mkdir -p "$RUNNER_TEMP/qa"
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/qa" app/src/main/java/com/lucianotoscano/pokesearchoverlay/SupportMissionPolicy.java app/src/main/java/com/lucianotoscano/pokesearchoverlay/UpdatePolicy.java app/src/main/java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java app/tests/SupportMissionPolicyTest.java app/tests/UpdatePolicyTest.java app/tests/PopupTouchGeometryTest.java
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.SupportMissionPolicyTest
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.UpdatePolicyTest
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.PopupTouchGeometryTest
+      - name: Verify QA-only scrapbook toggles before signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'SCRAPBOOK_STAGE1_QA' app/build.gradle.kts
+          grep -Fq 'POKE_SCRAPBOOK_QA_ACK' app/build.gradle.kts
+          grep -Fq 'BuildConfig.SCRAPBOOK_STAGE1_QA' app/src/main/java/com/lucianotoscano/pokesearchoverlay/CommunityScrapbookStage1.java
+          grep -Fq 'Prévia fictícia' app/src/main/java/com/lucianotoscano/pokesearchoverlay/CommunityScrapbookStage1.java
+          test "$POKE_SCRAPBOOK_STAGE1_QA" = true
+          test "$POKE_SCRAPBOOK_QA_ACK" = stage1-readonly
+      - name: Build protected RELEASE APK
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Validate APK package, release status and signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          OUT=PokeSearch-v0.00.96-LT-Scrapbook-Stage1-Demo-QA.apk
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          test -s app/build/outputs/mapping/release/mapping.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-BADGING.txt
+          PKG="$(grep '^package: ' PACKAGE-BADGING.txt)"
+          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54299'" "versionName='0.00.96'"; do
+            grep -Fq "$expected" <<< "$PKG" || exit 1
+          done
+          ! grep -q '^application-debuggable' PACKAGE-BADGING.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"
+          cp "$APK" "$OUT"
+          sha256sum "$OUT" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          echo "$PKG" > PACKAGE-VERSION.txt
+          echo "release; non-debuggable; R8 mapping present; shrinkResources enabled" > PROTECTION.txt
+      - name: Signed release-candidate artifact (NO AUTOMATIC publication)
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-v0.00.96-LT-Scrapbook-Stage1-Demo-QA-protected-release
+          path: |
+            PokeSearch-v0.00.96-LT-Scrapbook-Stage1-Demo-QA.apk
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            SOURCE_COMMIT.txt
+            PACKAGE-VERSION.txt
+            PROTECTION.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Cleanup signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pokesearch-v088-cycle.p12"

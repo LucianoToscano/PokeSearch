@@ -112,6 +112,9 @@ public class MainActivity extends Activity {
     private ImageView overlayControl;
     private TextView sessionHint;
     private View homeDrawerLayer;
+    private View tributeOverlay, communityHomePanel;
+    private ScrollView communityHomeScroll;
+    private boolean welcomeMissionOpening;
     // Optional mission: never open without an explicit tap.
     private ImageView homeMissionBadge;
     private boolean missionResumed=false;
@@ -136,6 +139,25 @@ public class MainActivity extends Activity {
                 "Nova Missão Especial de Apoio":"Reabrir Missão Especial de Apoio");
         }
     }
+    private void maybeWelcomeMission(){
+        if(welcomeMissionOpening||isFinishing()||isDestroyed()||!missionResumed||
+           !hasWindowFocus()||!SupportMissionState.welcomePending(this)||
+           (tutorialDialog!=null&&tutorialDialog.isShowing())||tributeOverlay!=null)return;
+        welcomeMissionOpening=true;
+        openSupportMission();
+    }
+    private void openTribute(){
+        if(homeRoot==null||tributeOverlay!=null)return;
+        closeHomeMenu();
+        tributeOverlay=CommunityTribute.show(this,homeRoot,homeLightMode,
+            ()->tributeOverlay=null);
+    }
+    private void scrollToCommunity(){
+        if(communityHomePanel==null||communityHomeScroll==null)return;
+        CommunityScrapbookOnline.expandFromMenu(communityHomePanel);
+        communityHomePanel.post(()->communityHomeScroll.smoothScrollTo(0,
+            Math.max(0,communityHomePanel.getTop()-d(12))));
+    }
     private void openSupportMission(){
         int style=SupportMissionState.open(this);
         if(style<0){syncMissionBadge();return;}
@@ -146,7 +168,11 @@ public class MainActivity extends Activity {
         missionHandler.removeCallbacks(missionHeartbeat);
         boolean active=focused&&missionResumed&&!isFinishing();
         SupportMissionState.homeVisibility(this,active);
-        if(active)missionHandler.postDelayed(missionHeartbeat,5000L);
+        if(active){
+            missionHandler.postDelayed(missionHeartbeat,5000L);
+            if(SupportMissionState.welcomePending(this))
+                missionHandler.postDelayed(this::maybeWelcomeMission,1000L);
+        }
         syncMissionBadge();
     }
     @Override public void onWindowFocusChanged(boolean hasFocus){
@@ -194,8 +220,10 @@ public class MainActivity extends Activity {
         // Release notes belong only to a normal Home opening. Never interrupt OAuth,
         // notification permissions or overlay callbacks. The quick guide comes first.
         if(Intent.ACTION_MAIN.equals(getIntent().getAction())&&
-            getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false))
+            getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false)){
             root.post(()->ReleaseNotes.maybeShowAfterUpgrade(this));
+            root.postDelayed(this::maybeWelcomeMission,1500L);
+        }
     }
 
     private TextView homeText(String value,int sp,int color,boolean bold){
@@ -264,7 +292,16 @@ public class MainActivity extends Activity {
         LinearLayout screen=new LinearLayout(this);
         screen.setOrientation(LinearLayout.VERTICAL);
         screen.setPadding(d(14),d(6),d(14),d(12));
-        frame.addView(screen,new FrameLayout.LayoutParams(-1,-1));
+        // Native Home scroll prevents clipping with scrapbook and thank-you card.
+        final boolean scrapbookPreview=CommunityScrapbookStage1.isEnabled(this);
+        ScrollView stage1HomeScroll=new ScrollView(this);
+        stage1HomeScroll.setFillViewport(true);
+        stage1HomeScroll.setClipToPadding(false);
+        stage1HomeScroll.setVerticalScrollBarEnabled(false);
+        stage1HomeScroll.addView(screen,new ScrollView.LayoutParams(-1,-2));
+        frame.addView(stage1HomeScroll,new FrameLayout.LayoutParams(-1,-1));
+        communityHomeScroll=stage1HomeScroll;
+        communityHomePanel=null;
 
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.TOP|Gravity.CENTER_VERTICAL);
@@ -529,6 +566,13 @@ public class MainActivity extends Activity {
         screen.addView(homeUpdateHolder,updateLp);
         renderDriveUpdateBanner();
 
+        // Original approved art, available offline in the same Home window.
+        View thanks=CommunityTribute.homeCard(this,homeLightMode,this::openTribute);
+        LinearLayout.LayoutParams thanksLp=new LinearLayout.LayoutParams(-2,d(48));
+        thanksLp.gravity=Gravity.END;
+        thanksLp.topMargin=d(4);
+        screen.addView(thanks,thanksLp);
+
         // New compact LT54 counters; a dash indicates missing connectivity/rules.
         LinearLayout stats=new LinearLayout(this);
         stats.setOrientation(LinearLayout.HORIZONTAL);
@@ -562,6 +606,13 @@ public class MainActivity extends Activity {
         shareLp.topMargin=d(6);
         screen.addView(share,shareLp);
         share.setOnClickListener(v->sharePokeSearch());
+
+        if(scrapbookPreview){
+            LinearLayout.LayoutParams scrapbookLp=new LinearLayout.LayoutParams(-1,-2);
+            scrapbookLp.topMargin=d(6);
+            communityHomePanel=CommunityScrapbookStage1.homePanel(this,homeLightMode);
+            screen.addView(communityHomePanel,scrapbookLp);
+        }
 
         // Keep the center open for the user's Pokémon GO wallpaper.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
@@ -786,6 +837,15 @@ public class MainActivity extends Activity {
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
         addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
+        addHomeDrawerItem(drawer,"💙","Agradecimentos",this::openTribute);
+        if(CommunityScrapbookStage1.isEnabled(this))
+            addHomeDrawerItem(drawer,"💬","Comunidade PokeSearch",this::scrollToCommunity);
+        // Visible only in local debug or the explicitly signed QA demonstration; not in public release.
+        if(CommunityScrapbookStage1.isQaPreviewAllowed()){
+            boolean preview=CommunityScrapbookStage1.isEnabled(this);
+            addHomeDrawerItem(drawer,"💬",preview?"Ocultar protótipo Mural":"Mostrar protótipo Mural",
+                this::toggleCommunityScrapbookStage1);
+        }
         addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
         addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this));
         addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
@@ -807,6 +867,17 @@ public class MainActivity extends Activity {
             Toast.makeText(this,"Não há aplicativo disponível para compartilhar",
                 Toast.LENGTH_SHORT).show();
         }
+    }
+    private void toggleCommunityScrapbookStage1(){
+        if(!CommunityScrapbookStage1.isQaPreviewAllowed())return;
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        prefs.edit().putBoolean(CommunityScrapbookStage1.FLAG,
+            !CommunityScrapbookStage1.isEnabled(this)).apply();
+        // Presentation-only rebuild: existing filters, login, location, stats,
+        // live overlay and Home preferences are preserved.
+        setContentView(buildHome());
+        refreshSessionSummary();
+        refreshHomeOverlay();
     }
     private void exportHomeData(){
         // Export a fixed whitelist. No cookies, OAuth state, coordinates, trainer
@@ -931,6 +1002,7 @@ public class MainActivity extends Activity {
         tutorialWebView=guide;
         dialog.setOnDismissListener(ignored->{
             releaseTutorialWebView();
+            getWindow().getDecorView().postDelayed(this::maybeWelcomeMission,500L);
             // First-time users read the guide before any pending upgrade notes.
             if(Intent.ACTION_MAIN.equals(getIntent().getAction()))
                 ReleaseNotes.maybeShowAfterUpgrade(this);
@@ -2095,6 +2167,9 @@ public class MainActivity extends Activity {
         }
     }
     @Override public void onBackPressed(){
+        if(tributeOverlay!=null&&homeRoot!=null){
+            homeRoot.removeView(tributeOverlay);tributeOverlay=null;return;
+        }
         if(homeDrawerLayer!=null){closeHomeMenu();return;}
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }

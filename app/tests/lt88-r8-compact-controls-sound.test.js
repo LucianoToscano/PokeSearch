@@ -27,16 +27,19 @@ assertIt("Filtro title toggles just Padrão, Filtro 1 and Filtro 2",()=>{
  assert.match(preset,/Native\.deleteGeneralFilterPreset\(slot\)/);
  assert.match(native,/for\(int slot=1;slot<=3;slot\+\+\)/); // third slot data remains intact
 });
-assertIt("Location uses only 3 rows and preserves copy paste slider and 0–1000",()=>{
- assert.match(location,/label\.append\(slide,actions\)/);
- assert.match(location,/panel\.append\(title,fieldRow,label,message\)/);
+assertIt("Location uses four rows and preserves copy paste slider and 0–1000",()=>{
+ assert.match(location,/label\.append\(actions\)/);
+ assert.match(location,/sliderRow\.append\(slide\)/);
+ assert.match(location,/clipboard\.append\(paste,copy\)/);
+ assert.doesNotMatch(location,/label\.append\(slide,actions\)/);
+ assert.match(location,/panel\.append\(title,fieldRow,sliderRow,label,message\)/);
  assert.doesNotMatch(location,/panel\.append\(title,fieldRow,slide,label,message\)/);
  assert.match(location,/Native\.pasteLocationCoords\(\)/);
  assert.match(location,/Native\.copyLocationCoords\(field\.value\)/);
  assert.match(location,/slide\.max="1000"/);
  assert.match(location,/radiusField\.max="1000"/);
  assert.match(location,/Native\.setLocation\(true,wantedCoords,wantedRadius\)/);
- assert.match(css,/grid-template-columns:25px 25px 70px minmax\(46px,1fr\) 60px!important/);
+ assert.match(css,/LT99 compact Samsung Location/);
 });
 assertIt("Tone submenus reflect saved choice and last preview selection",()=>{
  assert.match(tone,/getString\(/);

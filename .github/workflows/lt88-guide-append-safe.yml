@@ -1,58 +1,30 @@
-name: PokeSearch LT88 R8 Filter Audio Location safe Guia Mestre append
+name: PokeSearch LT88 - auditoria historico e guia resumido
 on:
   push:
     branches: [feature/lt88-lt93-evolution-20261025]
     paths:
       - 'docs/LT88_R8_FILTROS_AUDIO_LOCALIZACAO_QA.md'
       - '.github/workflows/lt88-guide-append-safe.yml'
+  workflow_dispatch:
 permissions:
-  contents: write
-concurrency:
-  group: lt88-guide-append-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
 jobs:
-  append-guide:
+  audit:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: true
-          ref: ${{ github.sha }}
-      - name: Append without replacing entire historical Guia
+          persist-credentials: false
+      - name: Verificar politica atual ou guia legado (sem append)
         shell: bash
         run: |
           set -euo pipefail
-          GUIDE=docs/GUIA_MESTRE.md
-          MARKER='LT88 R8 — Filtro compacto, seleção áudio e localização enxuta'
-          test -f "$GUIDE"
-          BEFORE="$(wc -c < "$GUIDE")"
-          test "$BEFORE" -gt 1400000
-          FIRST_SHA="$(sha256sum "$GUIDE" | awk '{print $1}')"
-          if grep -Fq "$MARKER" "$GUIDE"; then
-            echo "Already appended; no rewrite."
-            exit 0
+          test -f docs/GUIA_MESTRE.md
+          test -f docs/LT88_R8_FILTROS_AUDIO_LOCALIZACAO_QA.md
+          if [ -f docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md ]; then
+            test "$(git hash-object docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md)" = '466a92323dc319720b4ced50caf413a1a2bbef04'
+            grep -Fq 'GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md' docs/GUIA_MESTRE.md
+          else
+            test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
           fi
-          {
-            echo
-            echo
-            echo "## $MARKER (25/10/2026)"
-            echo "- Branch unica feature/lt88-lt93-evolution-20261025; PR #63 Draft; main LT87 inalterada."
-            echo "- Interface geral: palavra Filtro agora abre perfis. Popup Padrão, Filtro 1 salvar/lixeira e Filtro 2 salvar/lixeira, SVG branco fino; sem símbolo circular, título extra ou rodapé. Terceiro perfil existente preservado em preferências, porém oculto."
-            echo "- Sons Novos/Favoritos: ao abrir marcar som salvo, ao tocar marcar a prévia com ✓ e borda; cancelar sem salvar mantém configuração anterior. Lista mostra opção armazenada mesmo quando fora da primeira página."
-            echo "- Localização: controles de coordenadas e colar/copiar/raio/slider/aplicar/limpar em somente três linhas e estado eventual. Raio 0..1000, sem GPS físico, sem interferir Shiny e demais filtros."
-            echo "- Tests: app/tests/lt88-r8-compact-controls-sound.test.js; contratos legados LT62/LT63/R5 adaptados somente para novo arranjo DOM."
-            echo "- QA candidato 0.00.95/54298; não é versão oficial nem homologação Samsung. Exigir CI protegido assinado, hashes e testes Samsung antes de publicação."
-            echo "- Drive espelho: https://drive.google.com/drive/folders/1fVw93qUDE0YWp6tlJZaNjRmymyhEAUbR; preservar arquivo com id 1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P nas futuras atualizações consentidas."
-            echo "- Checkpoint docs/LT88_R8_FILTROS_AUDIO_LOCALIZACAO_QA.md. Nenhum merge, Release, apaga dados ou credenciais."
-          } >> "$GUIDE"
-          AFTER="$(wc -c < "$GUIDE")"
-          test "$AFTER" -gt "$BEFORE"
-          PREFIX_SHA="$(head -c "$BEFORE" "$GUIDE" | sha256sum | awk '{print $1}')"
-          test "$PREFIX_SHA" = "$FIRST_SHA"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "$GUIDE"
-          git commit -m 'docs(LT88 R8): protected append compact Filters Audio Location with SHA256'
-          git fetch origin "refs/heads/$GITHUB_REF_NAME:refs/remotes/origin/$GITHUB_REF_NAME"
-          git rebase "origin/$GITHUB_REF_NAME"
-          git push origin "HEAD:$GITHUB_REF_NAME"
+          echo "PASS historico/guia verificados sem editar arquivos"
