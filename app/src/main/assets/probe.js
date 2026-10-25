@@ -7,8 +7,8 @@ const elements=s=>Array.from(document.querySelectorAll(s));
 const vis=e=>!!(e&&e.getClientRects().length);
 const labels=(root,pattern)=>Array.from(root.querySelectorAll("span,label,strong,small,dt,div,p")).filter(e=>vis(e)&&pattern.test(text(e))&&text(e).length<50).sort((a,b)=>text(a).length-text(b).length);
 function oneButton(label){
- const re=label==="Coords"?/^\\s*(?:Coords|Coordinates)\\s*$/i:
-  label==="Area"?/^\\s*Areas?\\s*$/i:new RegExp("^\\s*"+label+"\\s*$","i");
+ const re=label==="Coords"?/^\s*(?:Coords|Coordinates)\s*$/i:
+  label==="Area"?/^\s*Areas?\s*$/i:new RegExp("^\\s*"+label+"\\s*$","i");
  return elements("button,[role=button]").find(b=>vis(b)&&re.test(text(b)))||null;
 }
 function click(label){let e=oneButton(label);if(e){e.click();return true;}return false;}
@@ -1345,8 +1345,8 @@ function locationFields(){
  return {coords,radius};
 }
 function locationModeControl(label){
- const re=label==="Coords"?/^\\s*(?:Coords|Coordinates)\\s*$/i:
-  label==="Area"?/^\\s*Areas?\\s*$/i:new RegExp("^\\s*"+label+"\\s*$","i");
+ const re=label==="Coords"?/^\s*(?:Coords|Coordinates)\s*$/i:
+  label==="Area"?/^\s*Areas?\s*$/i:new RegExp("^\\s*"+label+"\\s*$","i");
  const candidates=elements('button,[role=button],[role=tab],[role=radio],input[type=radio],label');
  for(const e of candidates){
   if(!vis(e))continue;
