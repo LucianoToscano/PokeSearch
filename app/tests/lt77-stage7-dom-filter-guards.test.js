@@ -7,7 +7,11 @@ const probe=fs.readFileSync(path.join(root,"assets/probe.js"),"utf8");
 let pass=0;function check(name,fn){fn();pass++;console.log("PASS LT77 Stage7 "+name);}
 check("Distance sort requires verified radius in UI",()=>{
  assert.ok(dock.includes('modeDraft.sortBy==="Distance (nearest)"&&!(locationEnabled&&locationVerified)'));
- assert.ok(dock.includes('indicator.textContent="📍 Ordenar por distância exige localização confirmada no site."'));
+ // LT109: stale Distance sort MUST NOT block Tamanho/Sexo/PC. The
+ // explicit Distance option shows contextual location feedback instead.
+ assert.ok(dock.includes('if(Native.filterDistanceNotice)Native.filterDistanceNotice();'));
+ assert.ok(dock.includes('modeDraft.sortBy="Despawn (longest)"'));
+ assert.ok(!dock.includes('indicator.textContent="📍 Ordenar por distância exige localização confirmada no site."'));
 });
 check("all official size choices retained as multiple",()=>{
  assert.ok(dock.includes('["XXS","XS","S","M","L","XL","XXL"]'));
