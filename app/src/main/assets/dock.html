@@ -3730,6 +3730,105 @@ body.controls-window #choices.locationPanel .locSavedSlots>.locHelp{
 /* Hidden legacy comparison text must remain hidden even though generic
    button styles force display:block in the popup. No unverified import action. */
 body.controls-window #choices [hidden]{display:none!important}
+
+/* LT88-STANDARD-MENU-01
+   Single theme for every actual menu surface. The empty parent/window stays
+   transparent and touch pass-through. Theme alpha is controlled by the same
+   Editor Visual slider (50% by default), without stacked opaque islands. */
+body.controls-window #choices:not(.modeCascade):not(.filterCascade),
+body.controls-window #choices.modeCascade .modeCascadeRail,
+body.controls-window #choices.modeCascade .modeCascadeEditor,
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade .filterCascadeEditor,
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeRail,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout{
+ background:var(--visual-menu-bg,rgba(15,19,26,.50))!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid var(--visual-menu-border,rgba(227,233,241,.22))!important;
+ border-radius:8px!important;
+ box-shadow:var(--visual-menu-tile-shadow,0 1px 4px #0004)!important;
+ -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ background-clip:padding-box!important;
+}
+/* Cascade wrappers never paint an oversized background behind the small cards. */
+body.controls-window #choices.modeCascade,
+body.controls-window #choices.filterCascade,
+body.popup-window.controls-window #choices.modeCascade,
+body.popup-window.controls-window #choices.filterCascade{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+/* Do not paint the same alpha twice on children of an already themed editor. */
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList,
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeEditor .extraOptionList{
+ background:transparent!important;border:0!important;
+ box-shadow:none!important;
+}
+/* Light/dark labels derive from exactly the same user setting. */
+body.controls-window #choices.modeCascade .modeCascadeHead,
+body.controls-window #choices.filterCascade .filterCascadeHead,
+body.controls-window #choices.filterCascade .generalPresetTitle{
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ background:transparent!important;
+}
+/* The toolbar remains separate; do not turn the ribbon into one large panel. */
+body.controls-window #menu,body.controls-window #quickMenuList{
+ background:transparent!important;-webkit-backdrop-filter:none!important;
+ backdrop-filter:none!important;
+}
+body.controls-window #quickMenuList .quickRow,
+body.controls-window #quickMenuList .quickFooterAction{
+ background:var(--visual-menu-bg,rgba(15,19,26,.50))!important;
+ border-color:var(--visual-menu-border,rgba(227,233,241,.22))!important;
+ -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+}
+/* LT88-STANDARD-LOCATION-01: put Copy/Paste back by the radius input, NOT
+   alongside the Localização heading. Four compact items stay on a single row. */
+body.controls-window #choices.locationPanel .choiceHeader,
+body.popup-window.controls-window #choices.locationPanel .choiceHeader{
+ padding:2px 4px!important;justify-content:center!important;
+ text-align:center!important;min-height:24px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow{
+ display:grid!important;grid-template-columns:29px 29px 75px 65px!important;
+ justify-content:center!important;align-items:center!important;
+ gap:4px!important;min-height:29px!important;margin:1px 1px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locPaste,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locPaste{
+ position:static!important;grid-column:1!important;top:auto!important;right:auto!important;
+ display:flex!important;min-width:29px!important;width:29px!important;height:29px!important;
+ margin:0!important;padding:3px!important;transform:none!important;
+ background:var(--visual-menu-button-bg,rgba(15,19,26,.50))!important;
+ border:1px solid var(--visual-menu-border,#ffffff40)!important;border-radius:6px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locCopy,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locCopy{
+ position:static!important;grid-column:2!important;top:auto!important;right:auto!important;
+ box-sizing:border-box!important;min-width:29px!important;width:29px!important;
+ height:29px!important;min-height:29px!important;margin:0!important;padding:0!important;
+ font-size:16px!important;text-align:center!important;
+ background:var(--visual-menu-button-bg,rgba(15,19,26,.50))!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid var(--visual-menu-border,#ffffff40)!important;border-radius:6px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap{
+ grid-column:3!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions{
+ grid-column:4!important;
+}
+/* Blur support varies between Android WebView/other-app surfaces. The solid
+   fallback color stays available if backdrop-filter is unavailable. */
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -5075,8 +5174,7 @@ function renderLocationChoices(){
  const copy=make("button","locCopy","⧉");copy.type="button";
  copy.title="Copiar coordenadas";copy.setAttribute("aria-label","Copiar coordenadas digitadas");
  copy.onclick=()=>{if(Native.copyLocationCoords)Native.copyLocationCoords(field.value);};
- title.append(paste,copy);
- // Centered title; field on its own full-width line.
+ // Header stays clean: clipboard buttons return to the radius action row.
  fieldRow.append(field);
  const label=make("div","locLine locRadiusRow");
  const labelName=make("span","locRadiusText","Raio");
@@ -5091,7 +5189,7 @@ function renderLocationChoices(){
  const unit=make("span","locRadiusUnit","km");
  const radiusWrap=make("span","locRadiusInputWrap");
  radiusWrap.append(radiusField,unit);
- label.append(labelName,radiusWrap);
+ label.append(labelName,paste,copy,radiusWrap);
  const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);
  slide.setAttribute("aria-label","Ajustar raio de 0 a 1000");
  slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";};
