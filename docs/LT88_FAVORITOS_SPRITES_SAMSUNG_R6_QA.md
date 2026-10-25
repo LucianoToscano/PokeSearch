@@ -31,3 +31,14 @@ Data: 25/10/2026. Base histórica oficial **LT87** (0.00.87 / 54290), `main` **8
 
 ## Guia Mestre
 Fazer apenas append a `docs/GUIA_MESTRE.md` completo no checkout e verificar prefixo SHA-256; nunca substituir pelo texto parcial devolvido por conectores. 
+
+## Validação final do APK QA R6
+- Workflow assinado #40185260932: **SUCCESS**, https://github.com/LucianoToscano/PokeSearch/actions/runs/40185260932
+- SOURCE_COMMIT gravado no APK: `ce71860a5266e01c7a56505b15bbc3bd7af80d76` (diferente de commits documentais posteriores).
+- Arquivo: `PokeSearch-v0.00.93-LT-Favorites-Sprites-QA.apk`, 38.629.615 bytes.
+- SHA-256 do APK: `5144922c0f714d77af70c0bedf596d56fb2a8f3e7e140364715502b543cf68de`; SHA256SUMS.txt **OK** após extração.
+- Artifact ID GitHub Actions #12595453168, ZIP SHA-256 `f16e3fb4e11196b9b76f215c0f885871fa6e047c9e8b4d5a808833212f4783bb`, integridade ZIP OK.
+- `com.lucianotoscano.pokesearch`, versionCode `54296`, versionName `0.00.93`, assinatura v2 TRUE, certificado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, não depurável, R8 e shrinkResources.
+- Workflow do Guia Mestre R6 #40185354654: SUCCESS, append protegido por hash do prefixo histórico.
+- A main mantém LT87 oficial sem merge; PR #63 permanece Draft.
+- **QA físico Samsung deste APK ainda pendente.** O fato de já existirem usuários usando outra atualização não equivale à homologação da R6.
