@@ -19,8 +19,9 @@ check("LT82 Location coordinates use separate line with compact popup",()=>{
  'body.popup-window.controls-window.popup-above #choices.locationPanel{',
  'width:min(256px,calc(100vw - 12px))!important;',
  '.choiceHeader .locCoordsRow{'])assert.ok(css.includes(s),s);
- assert.ok(location.includes("panel.append(title,fieldRow,label,message)"));
+ assert.ok(location.includes("panel.append(title,fieldRow,sliderRow,label,message)"));
  assert.ok(!location.includes("label.append(slide,actions)"));
+ assert.ok(location.includes("sliderRow.append(slide)"));
  assert.ok(css.includes("width:min(258px,calc(100vw - 14px))!important"));
 });
 check("header Location centered with adjacent paste/copy actions",()=>{

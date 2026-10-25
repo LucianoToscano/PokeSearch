@@ -17,8 +17,8 @@ assert.match(online,/CommunityScrapbookStage1\.EXAMPLES/);
 assert.match(online,/root\.addView\(scroll,grow\)/);
 assert.doesNotMatch(online,/activity\.setContentView\(/);
 assert.match(main,/scrollToCommunity/);
-assert.match(wf,/PokeSearch-v0\.00\.99-LT-Location-Three-Rows-QA/);
-assert.match(wf,/54302/);
+assert.match(wf,/PokeSearch-v0\.00\.100-LT-Location-Four-Rows-QA/);
+assert.match(wf,/54303/);
 assert.equal(rules[".read"],false);assert.equal(rules[".write"],false);
 assert.equal(rules.scrapbook.config.allowDirectPosts[".write"],false);
 assert.match(rules.scrapbook.posts["$postId"][".write"],/!data\.exists\(\)/);
@@ -32,4 +32,4 @@ assert.match(online,/getReference\("scrapbook\/replies"\)\.child\(id\)\.push\(\)
 assert.match(online,/Recado publicado na comunidade/);
 assert.equal(rules.stats.installations[".read"],"auth != null");
 assert.equal(rules.stats.online[".read"],"auth != null");
-console.log("PASS QA 0.00.99: inline Home scrapbook, owner-monitored direct posting, guarded rules");
+console.log("PASS QA 0.00.100: inline Home scrapbook, owner-monitored direct posting, guarded rules");

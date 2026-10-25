@@ -48,7 +48,7 @@ test("location saved slots and name/help removed without deleting stored data",(
    assert.ok(!block.includes(absent),absent);
  assert.ok(block.includes("label.append(actions)"));
  assert.ok(block.includes("clipboard.append(paste,copy)"));
- assert.ok(block.includes("panel.append(title,fieldRow,label,message)"));
+ assert.ok(block.includes("panel.append(title,fieldRow,sliderRow,label,message)"));
  assert.ok(block.includes("paste.onclick=()=>Native.pasteLocationCoords()"));
  assert.ok(block.includes("Native.copyLocationCoords(field.value)"));
  assert.ok(service.includes("savedSearchLocationV1_"));

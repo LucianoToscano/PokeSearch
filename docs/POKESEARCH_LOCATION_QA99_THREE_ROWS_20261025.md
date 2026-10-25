@@ -12,3 +12,6 @@ Referência: últimos dois prints do usuário. Layout alvo final **sem slider vi
 - Ponte `Native.pasteLocationCoords`, `Native.copyLocationCoords`, `Native.setLocation` verdadeira e falsa, regex de latitude/longitude e outros filtros intactos.
 - Distinguir testes Node e Gradle de homologação física. Confirmar via screenshot Samsung antes de merge/Release.
 - Workflow candidato assinado QA `0.00.99/54302` (versão crescente), certificado permanente R8, Release não debug. Não substituir binário QA 0.00.98 ou Drive público automaticamente.
+
+## Retificação LT100
+O usuário enviou nova imagem esclarecendo que o **slider é obrigatório**, com a mesma largura do campo de coordenadas. A exigência 'slider invisível' foi revogada. Veja `POKESEARCH_LOCATION_QA100_FOUR_ROWS_20261025.md`.

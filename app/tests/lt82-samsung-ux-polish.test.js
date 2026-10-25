@@ -6,14 +6,15 @@ const native=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearcho
 const favorite=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
 const section=(a,b)=>{const i=dock.indexOf(a),j=dock.indexOf(b,i+a.length);assert(i>=0&&j>i,a);return dock.slice(i,j)};
 let count=0;function check(n,fn){fn();count++;console.log("PASS LT82 "+n);}
-check("compact three-row location, clipboard beside heading, and no slider in DOM",()=>{
+check("compact four-row location, clipboard beside heading, and full-width slider",()=>{
  const s=section("function renderLocationChoices(){","let requestedInterval=null;");
- assert.ok(s.includes("panel.append(title,fieldRow,label,message)"));
+ assert.ok(s.includes("panel.append(title,fieldRow,sliderRow,label,message)"));
  assert.ok(s.includes("label.append(labelName,radiusWrap)"));
  assert.ok(s.includes("clipboard.append(paste,copy)"));
  assert.ok(s.includes("title.appendChild(clipboard)"));
  assert.ok(s.includes("actions.append(apply,clear);label.append(actions)"));
  assert.ok(!s.includes("label.append(slide,actions)"));
+ assert.ok(s.includes("sliderRow.append(slide)"));
  assert.ok(!s.includes("title.appendChild(paste)"));
  assert.ok(s.includes('slide.max="1000"'));
 });

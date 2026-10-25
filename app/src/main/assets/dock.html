@@ -4217,6 +4217,69 @@ body.popup-window.controls-window #choices.locationPanel>#locHint{
 body.controls-window #choices.locationPanel>#locHint[hidden],
 body.popup-window.controls-window #choices.locationPanel>#locHint[hidden]{display:none!important}
 
+
+/* LT100 Samsung reference FINAL: 4 centered rows with equal-width coordinate+slider.
+   Header [Localização][Colar↓][Copiar]
+   Full coordinates input up to 30 chars
+   Full-width 0–1000 km slider
+   Centered [0000]km [✓] [trash] — no extra spacers */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel,
+body.popup-window.controls-window.popup-above #choices.locationPanel{
+  box-sizing:border-box!important;
+  width:min(286px,calc(100vw - 12px))!important;
+  max-width:calc(100vw - 12px)!important;
+  min-width:0!important;height:auto!important;min-height:0!important;
+  max-height:min(202px,var(--popup-room,400px))!important;
+  margin:0!important;padding:6px 6px 8px!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+}
+body.controls-window #choices.locationPanel>.choiceHeader,
+body.popup-window.controls-window #choices.locationPanel>.choiceHeader{
+  display:flex!important;justify-content:center!important;align-items:center!important;
+  width:100%!important;height:33px!important;min-height:33px!important;
+  gap:6px!important;margin:0 0 5px!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>.locCoordsRow,
+body.popup-window.controls-window #choices.locationPanel>.locCoordsRow{
+  box-sizing:border-box!important;display:flex!important;align-items:center!important;
+  justify-content:center!important;width:100%!important;min-width:0!important;
+  max-width:100%!important;height:36px!important;min-height:36px!important;
+  margin:0 0 3px!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>.locCoordsRow>.locField,
+body.popup-window.controls-window #choices.locationPanel>.locCoordsRow>.locField{
+  box-sizing:border-box!important;display:block!important;flex:1 1 auto!important;
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  height:36px!important;min-height:36px!important;padding:4px 6px!important;
+  text-align:left!important;font:500 12px/1.16 monospace!important;
+  letter-spacing:-.15px!important;
+}
+body.controls-window #choices.locationPanel>.locSliderRow,
+body.popup-window.controls-window #choices.locationPanel>.locSliderRow{
+  box-sizing:border-box!important;display:flex!important;
+  align-items:center!important;justify-content:center!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  height:30px!important;min-height:30px!important;
+  padding:0!important;margin:0 0 3px!important;
+}
+body.controls-window #choices.locationPanel>.locSliderRow>input[type="range"],
+body.popup-window.controls-window #choices.locationPanel>.locSliderRow>input[type="range"]{
+  box-sizing:border-box!important;display:block!important;
+  flex:1 1 auto!important;width:100%!important;min-width:0!important;
+  max-width:100%!important;height:24px!important;min-height:24px!important;
+  margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>.locRadiusRow,
+body.popup-window.controls-window #choices.locationPanel>.locRadiusRow{
+  box-sizing:border-box!important;display:flex!important;flex-flow:row nowrap!important;
+  align-items:center!important;justify-content:center!important;
+  gap:8px!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  height:35px!important;min-height:35px!important;margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel>#locHint[hidden],
+body.popup-window.controls-window #choices.locationPanel>#locHint[hidden]{display:none!important}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -5592,7 +5655,7 @@ function renderLocationChoices(){
  radiusWrap.append(radiusField,unit);
  label.append(labelName,radiusWrap);
  const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);
- // Keep the existing range state synchronized internally; the owner requested no visible slider.
+ // Full-width slider, identical usable width to the coordinate editor.
  slide.setAttribute("aria-label","Ajustar raio de 0 a 1000");
  slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";};
  radiusField.oninput=()=>{
@@ -5645,7 +5708,9 @@ function renderLocationChoices(){
  }
  apply.onclick=submit;
  actions.append(apply,clear);label.append(actions);
- panel.append(title,fieldRow,label,message);
+ const sliderRow=make("div","locSliderRow");
+ sliderRow.append(slide);
+ panel.append(title,fieldRow,sliderRow,label,message);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
  locationPanelFeedback();

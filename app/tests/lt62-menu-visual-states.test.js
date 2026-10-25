@@ -669,7 +669,7 @@ check("LT62 Location: title paste, no close X, inline km and compact panel",()=>
  assert.ok(location.includes('label.append(labelName,radiusWrap)'));
  assert.ok(location.includes('clipboard.append(paste,copy)'));
   assert.ok(location.includes('label.append(actions)'));
-  assert.ok(location.includes('panel.append(title,fieldRow,label,message)'));
+  assert.ok(location.includes('panel.append(title,fieldRow,sliderRow,label,message)'));
   assert.ok(!location.includes('locSavedName'));
   assert.ok(!location.includes('locSlotTools'));
 

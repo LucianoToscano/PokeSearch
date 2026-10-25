@@ -27,8 +27,9 @@ assertIt("Filtro title toggles just Padrão, Filtro 1 and Filtro 2",()=>{
  assert.match(preset,/Native\.deleteGeneralFilterPreset\(slot\)/);
  assert.match(native,/for\(int slot=1;slot<=3;slot\+\+\)/); // third slot data remains intact
 });
-assertIt("Location uses only 3 rows and preserves copy paste slider and 0–1000",()=>{
+assertIt("Location uses four rows and preserves copy paste slider and 0–1000",()=>{
  assert.match(location,/label\.append\(actions\)/);
+ assert.match(location,/sliderRow\.append\(slide\)/);
  assert.match(location,/clipboard\.append\(paste,copy\)/);
  assert.doesNotMatch(location,/label\.append\(slide,actions\)/);
  assert.match(location,/panel\.append\(title,fieldRow,label,message\)/);
