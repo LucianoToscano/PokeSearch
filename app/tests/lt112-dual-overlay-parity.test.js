@@ -44,9 +44,9 @@ check("a previously seen spawn can alert when it becomes favourite, exactly once
  assert.match(body,/boolean newSpawn=!knownSpawns\.contains\(key\)&&/);
  assert.match(body,/if\(newSpawn\)\{/);
  assert.match(body,/recentFavoriteAlertExpiries\.getOrDefault\(key,0L\)<=now/);
- assert.match(body,/pendingFavoriteKeys\\.put\\(key,expireAt\\)/);
- assert.match(body,/recentFavoriteAlertExpiries\\.putAll\\(pendingFavoriteKeys\\)/);
- assert.match(body,/if\\(WatchAlerts\\.match\\(this,firstWatched,watchDetails\\)\\)/);
+ assert.ok(body.includes('pendingFavoriteKeys.put(key,expireAt)'));
+ assert.ok(body.includes('recentFavoriteAlertExpiries.putAll(pendingFavoriteKeys)'));
+ assert.ok(body.includes('if(WatchAlerts.match(this,firstWatched,watchDetails))'));
  assert.ok(body.indexOf("recentFavoriteAlertExpiries.getOrDefault")>body.indexOf("if(newSpawn){"));
  assert.ok(body.indexOf("recentFavoriteAlertExpiries.getOrDefault")<body.indexOf("if(!newSpawn)continue"));
  assert.match(body,/if\(expiry<=now\)continue/);
@@ -99,8 +99,8 @@ check("explicit normal/default form recovers missing image; special forms do NOT
  assert.equal(jsSprite.resolve({...starter,form:"Normal",costume_id:3}).src,"");
 });
 check("general notification IDs never overwrite the other active service",()=>{
- assert.match(service,/isSecondaryOverlay\\(\\)\\?12075:12074/);
- assert.match(service,/isSecondaryOverlay\\(\\)\\?12077:12076/);
+ assert.ok(service.includes('isSecondaryOverlay()?12075:12074'));
+ assert.ok(service.includes('isSecondaryOverlay()?12077:12076'));
  assert.match(watched,/NEXT_ALERT_ID/);
 });
 check("secondary activation stays hidden without wiping its settings or killing it",()=>{
