@@ -1,0 +1,65 @@
+name: PokeSearch LT87 official Guia Mestre append
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt87-official-guide-append.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: pokesearch-lt87-official-guia-append-once
+  cancel-in-progress: false
+jobs:
+  append-official:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+      - name: Verify official GitHub Release before updating complete Guide
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG=v0.00.87-54290
+          RELEASE_ID="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq '.id')"
+          test -n "$RELEASE_ID"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --jq '.draft')" = false
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --jq '.prerelease')" = false
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/assets" --jq 'length' 2>/dev/null || true)" != NA
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --jq '.[] | select(.name=="PokeSearch-v0.00.87-LT.apk") | .digest')" = 'sha256:d188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a'
+      - name: Append verified official version without truncating history
+        shell: bash
+        run: |
+          set -euo pipefail
+          GUIDE=docs/GUIA_MESTRE.md
+          test -f "$GUIDE"
+          BEFORE="$(wc -c < "$GUIDE")"
+          test "$BEFORE" -gt 1400000 || { echo "::error::Incomplete Guia Mestre"; exit 1; }
+          SHA="$(sha256sum "$GUIDE" | awk '{print $1}')"
+          MARKER="## LT87 OFICIAL — PRs unificadas e atualização no app (25/10/2026)"
+          if grep -Fq "$MARKER" "$GUIDE"; then echo '::notice::Official checkpoint already present'; exit 0; fi
+          {
+            printf '\n\n%s\n' "$MARKER"
+            printf 'Proprietário autorizou em chat a consolidação das PRs e a promoção da versão para oficial.\n'
+            printf 'Consolidação: PR #62 mesclada na main com merge commit c35b384a99bd33b5685e8c964d2fdec08b679799, mantendo histórico LT84-LT87. PR #59 merged pelo GitHub; PRs #60/#61 fechadas como substituídas, sem deleção de branches. Uma PR ativa por próximo ciclo de desenvolvimento.\n'
+            printf 'Versão oficial PokeSearch 0.00.87, versionCode 54290. Release pública estável v0.00.87-54290: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.87-54290.\n'
+            printf 'APK público: PokeSearch-v0.00.87-LT.apk, 38607807 bytes. SHA-256: d188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a. Fonte do binário (QA SOURCE_COMMIT): 21d6547e9cb19efe941134d087f2783d6753ee55.\n'
+            printf 'Assinatura permanente SHA-256: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. APK release R8, não depurável, v2 verificada, SHA e digest no GitHub Release conferidos.\n'
+            printf 'CI QA #40168986555 SUCCESS. CI publicação oficial #40170786046 SUCCESS. O atualizador GitHubUpdateCenter já existente na Home detecta stable Releases oficiais e oferece instalação com consentimento do usuário; Google Drive legado LT79 intacto.\n'
+            printf 'Limites declarados: homologação física Samsung LT84-LT87 pendente; CI nao e teste fisico. O APK oficial LT87 mantem notas offline empacotadas no SOURCE_COMMIT (ate LT83); atualizar notas offline exige versao nova/novo build, jamais substituir binario da mesma tag.\n'
+            printf 'Documentacao: README.md, docs/ESTADO_CANONICO_LT87_OFICIAL.md e docs/PROMPT_NOVO_CHAT_LT87_OFICIAL.md. Historicidade do Guia preservada por append verificado com SHA do prefixo.\n'
+          } >> "$GUIDE"
+          test "$(wc -c < "$GUIDE")" -gt "$BEFORE"
+          test "$(head -c "$BEFORE" "$GUIDE" | sha256sum | awk '{print $1}')" = "$SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$GUIDE"
+          git commit -m "docs(LT87 official): append verified stable release to full Guia Mestre"
+          git fetch origin "refs/heads/$GITHUB_REF_NAME:refs/remotes/origin/$GITHUB_REF_NAME"
+          git rebase "origin/$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
