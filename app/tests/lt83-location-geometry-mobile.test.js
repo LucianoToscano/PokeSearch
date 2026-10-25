@@ -20,7 +20,8 @@ check("Location input + four actions fit in centered fixed grid",()=>{
  assert.ok(widths<=286-12);
  const loc=between(dock,"function renderLocationChoices(){","let requestedInterval=null");
  assert.ok(loc.includes("panel.append(title,fieldRow,label,message)"));
- assert.ok(loc.includes("label.append(labelName,paste,copy,radiusWrap)"));
+ assert.ok(loc.includes("label.append(labelName,radiusWrap)"));
+ assert.ok(loc.includes('clipboard.append(paste,copy)'));
  assert.ok(loc.includes("Native.setLocation(false,\"\",0)"));
 });
 check("Coordinate text may include 25+ chars without overflowing popup",()=>{
