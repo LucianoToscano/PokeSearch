@@ -2923,6 +2923,56 @@ public class OverlayService extends Service {
             status(locationEnabled?"📍 Localização solicitada • aguardando confirmação no site":"📍 Localização desligada • busca geral");
             OverlayService.this.refresh(true);
         });}
+        // LT91-A: local-only named hunt locations, no physical GPS or API call
+        // when saving. Applying always uses the existing validated setLocation.
+        private String savedLocationKey(int slot){return "savedSearchLocationV1_"+slot;}
+        @JavascriptInterface public void requestSavedSearchLocations(){handler.post(()->{
+            JSONArray slots=new JSONArray();
+            android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+            for(int slot=1;slot<=3;slot++){
+                JSONObject item=new JSONObject();
+                try{
+                    JSONObject stored=new JSONObject(p.getString(savedLocationKey(slot),"{}"));
+                    item.put("slot",slot)
+                        .put("saved",stored.has("coords")&&stored.has("radius"))
+                        .put("name",stored.optString("name","Local "+slot));
+                }catch(org.json.JSONException ignored){
+                    try{item.put("slot",slot).put("saved",false)
+                        .put("name","Local "+slot);}catch(org.json.JSONException ignoredAgain){}
+                }
+                slots.put(item);
+            }
+            String script="window.onSavedSearchLocations&&window.onSavedSearchLocations("+slots.toString()+")";
+            js(menuPanel,menuLoaded,script);js(popupPanel,popupLoaded,script);
+        });}
+        @JavascriptInterface public void saveSearchLocation(int slot,String label,String coords,int radius){handler.post(()->{
+            if(stopped||slot<1||slot>3||radius<0||radius>1000)return;
+            String clean=extractCoordinates(coords==null?"":coords);
+            if(clean.isEmpty())return;
+            String name=label==null?"":label.trim().replaceAll("[\\r\\n\\t<>]"," ");
+            if(name.isEmpty())name="Local "+slot;
+            if(name.length()>30)return;
+            try{
+                JSONObject data=new JSONObject();
+                data.put("name",name).put("coords",clean).put("radius",radius);
+                getSharedPreferences("prefs",0).edit()
+                    .putString(savedLocationKey(slot),data.toString()).apply();
+                requestSavedSearchLocations();
+                android.widget.Toast.makeText(OverlayService.this,
+                    "✓ Local "+slot+" salvo",android.widget.Toast.LENGTH_SHORT).show();
+            }catch(org.json.JSONException ignored){}
+        });}
+        @JavascriptInterface public void loadSearchLocation(int slot){handler.post(()->{
+            if(stopped||slot<1||slot>3)return;
+            try{
+                JSONObject saved=new JSONObject(getSharedPreferences("prefs",0)
+                    .getString(savedLocationKey(slot),"{}"));
+                String coords=extractCoordinates(saved.optString("coords",""));
+                int radius=saved.optInt("radius",-1);
+                if(coords.isEmpty()||radius<0||radius>1000)return;
+                new Bridge().setLocation(true,coords,radius);
+            }catch(org.json.JSONException ignored){}
+        });}
         @JavascriptInterface public void pasteLocationCoords(){handler.post(()->{
             // Clipboard is read ONLY after a user tap. Never log or persist a
             // clipboard value that was not explicitly applied as a filter.
