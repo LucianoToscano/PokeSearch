@@ -11,7 +11,7 @@ O segundo toque no mesmo menu é decidido pelo Android (com proteção de `ACTIO
 **A API autorizada agora é a fonte padrão em instalações sem opção anterior salva**, com preferência manual para utilizar DOM; a navegação DOM não é acionada para burlar autenticação ou limites HTTP. Nenhum JWT ou reveal_code passa à ponte Java.
 
 - [Documentação LT85 e pendências Samsung](docs/LT85_MENU_REPEAT_TAP_QA.md).
-- [Build QA protegido e assinado](https://github.com/LucianoToscano/PokeSearch/actions/workflows/lt85-menu-repeat-tap-signed-qa.yml) — consultar a execução e o SHA-256 do APK antes de instalar.
+- [Build QA protegido e assinado — SUCCESS #40165405694](https://github.com/LucianoToscano/PokeSearch/actions/runs/40165405694): APK v0.00.85/54288, SHA-256 `9d41afad67e81a2d149774513f8277705d35dc7a73fdbce2b9320e91aa5859b5`, SOURCE_COMMIT `80b5f580533a39dfcbc45fdf65dce1148ca7fbe5`, artifact #12588151967. QA não publicado.
 - Homologação de interfaces, Get coords API real, Shiny e login físico Samsung permanece pendente. **Nenhum merge/release sem autorização.**
 
 ---
