@@ -1,4 +1,4 @@
-/* LT77 QA R4: same-origin WebView API session. Opt-in only, OFF by default.
+/* LT86 QA: same-origin WebView API session. API defaults ON only when no preference was saved.
  * Never returns JWT, reveal_code, raw server JSON or account identifiers to Android.
  * No JavaScriptInterface on the remote website. Native polls sanitized output.
  */
@@ -83,7 +83,7 @@
     if(!data.ok)return fail(data.reason);
     const wanted=query.trim().toLocaleLowerCase();
     return {ok:true,key:"form",query,source:"authorized-api-catalog",
-     options:data.forms.filter(v=>!wanted||v.toLocaleLowerCase().includes(wanted)).slice(0,200)};
+     options:data.forms.filter(v=>!wanted||v.toLocaleLowerCase().includes(wanted)).slice(0,500)};
    }).then(result=>push(ticket,result)).catch(()=>push(ticket,fail("catalog-unavailable")));
    return {ok:true,pending:true};
   }
