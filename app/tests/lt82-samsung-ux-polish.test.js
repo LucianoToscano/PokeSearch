@@ -42,7 +42,7 @@ check("no repeating native WebView tooltip on Pokeball or refresh",()=>{
  assert.ok(dock.includes('gear.removeAttribute("title")'));
  assert.ok(dock.includes('p.removeAttribute("title")'));
  assert.ok(dock.includes('if(renderedId==="period")button.removeAttribute("title")'));
- assert.ok(dock.includes('button.removeAttribute("title"); // Native WebView long-press hint was intrusive.'));
+ assert.ok(dock.includes('button.removeAttribute("title");\n   button.setAttribute("aria-label","Atualizar agora; segure para intervalos")'));
 });
 check("first-ever onboarding persisted and only two short coaching messages",()=>{
  assert.ok(native.includes('initialStart&&!pref.getBoolean("gestureHelpV1Shown",false)'));
