@@ -6659,3 +6659,15 @@ Documentacao: README.md, docs/ESTADO_CANONICO_LT87_OFICIAL.md e docs/PROMPT_NOVO
 - Build de QA candidato 0.00.89/54292, versão numérica não representa LT89 totalmente concluída. Ver docs/LT88_SAMSUNG_R2_QA.md.
 - CI automatizado, instalação física Samsung e interoperabilidade clipboard precisam de comprovação separada; sem PASS físico presumido.
 - Guia anterior preservado integralmente pelo hash do prefixo; só append.
+
+
+## LT88 UI Unificada — 50% Transparência e Blur (25/10/2026)
+- Evidência Samsung: Filtros, Modos, Localização, Favoritos e Pokémon exibiam cores/alphas distintos; Copiar/Colar estavam no cabeçalho ao lado do título.
+- Branch PR #63 Draft: uma única base visual para superfícies dos menus e submenus; invólucro popup externo transparente preserva pass-through e não cria espaços vazios.
+- Transparência inicial 50%, tema claro/escuro e controle menuBlur 0–16 px no Editor Visual. Preferências antigas não são apagadas.
+- Fundo compartilhado via --visual-menu-bg, menu-border e backdrop-filter opcional, com fallback nos Android System WebView que não desfocam outras janelas.
+- Favoritos nativo acompanha tema/alpha e blur quando disponível. Copiar/Colar reposicionados na linha operacional de Localização, junto ao raio.
+- QA candidato 0.00.90/54293 (numeração não significa LT90 funcional completo). Validar SHA-256, assinatura APK v2, certificado, testes Node/Java/R8 antes da entrega.
+- Samsung PASS físico continua pendente: 0/50/100% alpha, blur ON/OFF, clique fora, menus, temas, campos e touch pass-through.
+- Detalhes e estratégia de rollback em docs/LT88_UNIFIED_MENUS_QA.md; main oficial LT87 preservada sem merge/Release.
+- Conteúdo anterior do Guia Mestre validado por hash de prefixo; somente append.
