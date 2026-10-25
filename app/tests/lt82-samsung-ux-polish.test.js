@@ -33,7 +33,8 @@ check("climate patches user choice to website without popup mismatch",()=>{
  const extra=section("function renderExtraFilters(panel,make){","function renderFilterPicker(");
  assert.ok(extra.includes('if(key==="weather")patchSelectedFilterKeys(["weather"])'));
  const filters=section("function renderFiltersChoices(){","function renderInfoChoices(){");
- assert.ok(filters.includes('(filterFocus!=="Clima"||key!=="weather")'));
+ // LT85: removed recurrent import prompt. Filter choices stay directly tappable.
+ assert.ok(!filters.includes("Usar opções observadas no site"));
  assert.ok(dock.includes('if(typeof filterFocus!=="undefined"&&filterFocus==="Clima"){el.textContent="";el.hidden=true;return;}'));
  assert.ok(dock.includes('modeDraft[key]=key==="weather"&&value==="Any"?"":value'));
  assert.ok(native.includes('execute("verifyExtras"')||native.includes('execute("verifyFilters"'));
