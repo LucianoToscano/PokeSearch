@@ -284,6 +284,9 @@ public final class PokemonPicker {
         header.setMinimumHeight(dp(activity,29));
         TextView title=new TextView(activity);
         title.setText("☆ FAVORITOS");
+        title.setOnClickListener(v->Toast.makeText(activity,
+            "★ Toque: usar • Segure: salvar ou excluir perfil",
+            Toast.LENGTH_LONG).show());
         title.setTextColor(Color.rgb(244,247,250));
         title.setTypeface(null,Typeface.BOLD);
         title.setTextSize(11);
@@ -375,7 +378,23 @@ public final class PokemonPicker {
         root.addView(noResults);
 
         final Runnable[] refresh={null};
-        // Short tap loads; long press saves, with isolated SharedPreferences.
+        final TextView[] favoriteTabs=new TextView[3];
+        final Runnable refreshProfileStars=()->{
+            SharedPreferences prefs=activity.getSharedPreferences("prefs",0);
+            int active=prefs.getInt("favoritePresetActiveV1",0);
+            for(int slot=1;slot<=3;slot++){
+                TextView star=favoriteTabs[slot-1];
+                if(star==null)continue;
+                boolean stored=prefs.contains("favoritePresetV1_"+slot);
+                boolean selected=stored&&active==slot;
+                star.setText(selected?"★":"☆");
+                star.setTextColor(selected?Color.rgb(255,212,104):Color.rgb(146,154,169));
+                star.setContentDescription("Perfil "+slot+
+                    (selected?" ativo":stored?" salvo, inativo":" vazio")+
+                    ". Toque para usar; segure para salvar ou excluir");
+            }
+        };
+        // Only the active one is lit, even when all three are saved.
         // An empty saved profile is valid; current favorite list is untouched
         // until a conscious slot tap. No notifications or tones are reset.
         for(int slot=1;slot<=3;slot++){
@@ -383,10 +402,13 @@ public final class PokemonPicker {
             final String key="favoritePresetV1_"+profile;
             TextView tab=new TextView(activity);
             boolean stored=activity.getSharedPreferences("prefs",0).contains(key);
-            tab.setText(stored?"★":"☆");
+            tab.setText(stored&&activity.getSharedPreferences("prefs",0)
+                .getInt("favoritePresetActiveV1",0)==profile?"★":"☆");
             tab.setTextSize(17);tab.setTypeface(null,Typeface.BOLD);
             tab.setGravity(Gravity.CENTER);
-            tab.setTextColor(stored?Color.rgb(255,212,104):Color.rgb(146,154,169));
+            tab.setTextColor(stored&&activity.getSharedPreferences("prefs",0)
+                .getInt("favoritePresetActiveV1",0)==profile?
+                Color.rgb(255,212,104):Color.rgb(146,154,169));
             tab.setContentDescription("Favoritos perfil "+profile+
                 (stored?": salvo; toque para usar, segure para sobrescrever":": vazio; segure para salvar"));
             tab.setBackgroundColor(Color.TRANSPARENT);
@@ -394,15 +416,33 @@ public final class PokemonPicker {
                 dp(activity,23),dp(activity,27));
             tabLp.setMargins(dp(activity,1),0,dp(activity,1),0);
             favoriteProfiles.addView(tab,tabLp);
+            favoriteTabs[profile-1]=tab;
             tab.setOnLongClickListener(v->{
-                SharedPreferences p=activity.getSharedPreferences("prefs",0);
-                String current=WatchAlerts.canonicalList(p.getString(WatchAlerts.PREF_LIST,""));
-                p.edit().putString(key,current).apply();
-                tab.setText("★");
-                tab.setTextColor(Color.rgb(255,212,104));
-                tab.setContentDescription("Perfil "+profile+" salvo: toque para usar, segure para sobrescrever");
-                Toast.makeText(activity,"✓ Perfil de favoritos "+profile+" salvo",
-                    Toast.LENGTH_SHORT).show();
+                // PopupMenu attaches to the already visible overlay Dialog;
+                // no new full-screen Android window or empty spacer.
+                android.widget.PopupMenu actions=new android.widget.PopupMenu(activity,tab);
+                actions.getMenu().add("Salvar favoritos atuais no perfil "+profile);
+                if(activity.getSharedPreferences("prefs",0).contains(key))
+                    actions.getMenu().add("Excluir perfil "+profile);
+                actions.setOnMenuItemClickListener(item->{
+                    SharedPreferences p=activity.getSharedPreferences("prefs",0);
+                    if(item.getTitle().toString().startsWith("Excluir")){
+                        SharedPreferences.Editor editor=p.edit().remove(key);
+                        if(p.getInt("favoritePresetActiveV1",0)==profile)
+                            editor.putInt("favoritePresetActiveV1",0);
+                        editor.apply();
+                        Toast.makeText(activity,"Perfil "+profile+" excluído",Toast.LENGTH_SHORT).show();
+                    }else{
+                        String current=WatchAlerts.canonicalList(p.getString(WatchAlerts.PREF_LIST,""));
+                        p.edit().putString(key,current)
+                            .putInt("favoritePresetActiveV1",profile).apply();
+                        Toast.makeText(activity,"✓ Favoritos salvos no perfil "+profile,
+                            Toast.LENGTH_SHORT).show();
+                    }
+                    refreshProfileStars.run();
+                    return true;
+                });
+                actions.show();
                 return true;
             });
             tab.setOnClickListener(v->{
@@ -415,10 +455,12 @@ public final class PokemonPicker {
                 p.edit().putString(WatchAlerts.PREF_LIST,saved)
                     .putInt("favoritePresetActiveV1",profile).apply();
                 refresh[0].run();
+                refreshProfileStars.run();
                 Toast.makeText(activity,"✓ Favoritos do perfil "+profile+" carregados",
                     Toast.LENGTH_SHORT).show();
             });
         }
+        refreshProfileStars.run();
         Runnable updateSuggestions=()->{
             String term=search.getText().toString().trim();
             results.removeAllViews();
