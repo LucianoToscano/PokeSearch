@@ -6611,3 +6611,17 @@ Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c
 Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
 Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
 Guia Mestre prévio permaneceu imutável, com adição somente ao final.
+
+
+## LT87 QA — Fundo dos Filtros (adendo de correção documental)
+Data: 25/10/2026. Somente QA, nenhuma publicação oficial e nenhum merge.
+A anotação LT86 gerada por um workflow herdado no build LT87 trazia rótulo de versão anterior; este ADENDO identifica corretamente o mesmo build como LT87. Preserve ambos os registros históricos sem reescrever.
+Versão e código: 0.00.87 / 54290. Repositório: LucianoToscano/PokeSearch. Branch fix/lt87-filter-menu-backgrounds-qa-20261025, PR #62 Draft sobre LT86 PR #61.
+SOURCE_COMMIT do APK: 21d6547e9cb19efe941134d087f2783d6753ee55 (commits documentais posteriores não estão no APK).
+CI build: https://github.com/LucianoToscano/PokeSearch/actions/runs/40168986555 SUCCESS. Artifact QA ID 12590105916.
+APK: PokeSearch-v0.00.87-LT-Filter-Fundos-QA.apk, 38607807 bytes, SHA-256 d188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a.
+Assinatura v2 TRUE, release R8, applicationId com.lucianotoscano.pokesearch, certificado SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e.
+Modificação: dock.html restaura fundos de Filtros, editor lateral e perfis salvos, respeitando --visual-menu-bg e preferências claro/escuro/transparência; mantém contêiner externo transparente e toques fora.
+Teste específico app/tests/lt87-filter-menu-backgrounds.test.js 5/5 PASS, suíte histórica, Java e Gradle testDebugUnitTest/assembleRelease aprovados pelo CI.
+Pendente: QA real no Samsung de fundos e transparência e das demais correções LT86 (sprites, expiração, PvP, perfis, Get coords). CI não é PASS físico.
+Guia Mestre anterior preservado por append e verificação de prefixo SHA-256. Nenhuma alteração no lançamento oficial LT83 nem Google Drive legado.
