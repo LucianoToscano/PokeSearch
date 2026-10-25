@@ -1,9 +1,9 @@
-name: PokeSearch LT88 R6 Favorites Sprites safe Guia Mestre append
+name: PokeSearch LT88 R7 Drive Home sharing safe Guia Mestre append
 on:
   push:
     branches: [feature/lt88-lt93-evolution-20261025]
     paths:
-      - 'docs/LT88_FAVORITOS_SPRITES_SAMSUNG_R6_QA.md'
+      - 'docs/LT88_DRIVE_SHARE_R7_QA.md'
       - '.github/workflows/lt88-guide-append-safe.yml'
 permissions:
   contents: write
@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           GUIDE=docs/GUIA_MESTRE.md
-          MARKER='LT88 R6 — Favoritos automáticos e sprites verificadas'
+          MARKER='LT88 R7 — Compartilhamento Android e espelho Drive'
           test -f "$GUIDE"
           BEFORE="$(wc -c < "$GUIDE")"
           test "$BEFORE" -gt 1400000
@@ -36,15 +36,13 @@ jobs:
             echo
             echo
             echo "## $MARKER (25/10/2026)"
-            echo "- Branch feature/lt88-lt93-evolution-20261025, PR #63 Draft. Main LT87 oficial intacta; usuário já distribuiu APK anterior, sem Release nova autorizada."
-            echo "- Favoritos: apenas estrela do perfil ativo acesa; toque ativa/cria slot; seleção é salva automaticamente inclusive por WatchAlerts.toggle fora do seletor, no mesmo commit SharedPreferences."
-            echo "- Segurar estrela de perfil salvo permite limpar todos daquele slot após confirmação; somente lista ativa é limpa quando aplicável. Outros slots preservados."
-            echo "- Sprites: cache nativo compartilhado app-private e cache WebView, apenas URLs exatas de base PokeAPI e Shiny; arquivos distintos por variante, CDN fallback, timeouts, PNG até 256KiB, dimensões limitadas e cooldown 60s."
-            echo "- Menu Pokémon tenta CDN alternativo para base carregada com dimensões inválidas; resultados preservam retry da URL originalmente observada, sem substituir formas ou trajes."
-            echo "- Menus de som/Pix flutuantes e perfis de filtros/Padrão da R5 preservados. Nenhum GPS físico, nenhuma mudança de tokens ou limites da API."
-            echo "- APK QA candidato 0.00.93/54296, assinatura persistente e testes a validar; não alegar PASS Samsung sem evidência física desta build."
-            echo "- Checkpoint completo em docs/LT88_FAVORITOS_SPRITES_SAMSUNG_R6_QA.md. LT89–LT93 pendentes."
-            echo "- Guia Mestre anterior preservado via SHA-256 do prefixo; atualização por append apenas."
+            echo "- PR #63 Draft, branch feature/lt88-lt93-evolution-20261025; main continua LT87 oficial e nenhuma Release nova foi publicada."
+            echo "- APK R6 0.00.93/54296 assinado e íntegro: SHA256 5144922c0f714d77af70c0bedf596d56fb2a8f3e7e140364715502b543cf68de, SOURCE_COMMIT ce71860a5266e01c7a56505b15bbc3bd7af80d76; CI #40185260932 SUCCESS."
+            echo "- Owner criou Google Drive PokeSearch_App: folder 1fVw93qUDE0YWp6tlJZaNjRmymyhEAUbR. O mesmo R6 foi enviado ao arquivo 1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P; metadados Google confirmaram 38629615 bytes."
+            echo "- Home ganha botão visível Compartilhar app e item lateral, Android Sharesheet ACTION_SEND texto, link direto do APK Drive sem exibir link GitHub, credentials, arquivo privado ou bypass de API."
+            echo "- Próximas atualizações autorizadas devem substituir o mesmo arquivo Drive após verificar APK SHA256/assinatura/versão; ID e link permanecem estáveis, sem merge nem Release automáticos."
+            echo "- Candidato R7 0.00.94/54297 é somente QA: CI assinado e Samsung ainda devem ser comprovados. Nenhum teste físico Samsung foi executado pelo CI."
+            echo "- Detalhes e checklist: docs/LT88_DRIVE_SHARE_R7_QA.md. Fluxos LT88-LT93 históricos e R6 preservados. Guia Mestre apendado com verificação de hash integral do prefixo."
           } >> "$GUIDE"
           AFTER="$(wc -c < "$GUIDE")"
           test "$AFTER" -gt "$BEFORE"
@@ -53,7 +51,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$GUIDE"
-          git commit -m 'docs(LT88 R6): protected append Favorites and verified sprites with SHA256'
+          git commit -m 'docs(LT88 R7): protected append stable Drive sharing with SHA256'
           git fetch origin "refs/heads/$GITHUB_REF_NAME:refs/remotes/origin/$GITHUB_REF_NAME"
           git rebase "origin/$GITHUB_REF_NAME"
           git push origin "HEAD:$GITHUB_REF_NAME"
