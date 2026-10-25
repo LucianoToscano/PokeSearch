@@ -6636,3 +6636,14 @@ Assinatura permanente SHA-256: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af5
 CI QA #40168986555 SUCCESS. CI publicação oficial #40170786046 SUCCESS. O atualizador GitHubUpdateCenter já existente na Home detecta stable Releases oficiais e oferece instalação com consentimento do usuário; Google Drive legado LT79 intacto.
 Limites declarados: homologação física Samsung LT84-LT87 pendente; CI nao e teste fisico. O APK oficial LT87 mantem notas offline empacotadas no SOURCE_COMMIT (ate LT83); atualizar notas offline exige versao nova/novo build, jamais substituir binario da mesma tag.
 Documentacao: README.md, docs/ESTADO_CANONICO_LT87_OFICIAL.md e docs/PROMPT_NOVO_CHAT_LT87_OFICIAL.md. Historicidade do Guia preservada por append verificado com SHA do prefixo.
+
+
+## LT88–LT93 QA — evidência Samsung e progresso (25/10/2026)
+- Fonte canônica anterior: main 83cf9a693a3672276e01d04e38ed14dce0071cb8; oficial LT87 0.00.87/54290 preservada.
+- PR #63 Draft, branch feature/lt88-lt93-evolution-20261025. Nenhum merge ou Release automática.
+- QA candidato 0.00.88/54291: Favoritos ☆/★ no cabeçalho entre contador e X; Filtros com rail/editor/flyout sobre fundo real, título central e ▣ à direita com margem.
+- Cache: app-private LRU de PNG base com releitura read-only nos WebViews; sugestões simultâneas deduplicadas; forma NORMAL oficial sem atribuir sprite a trajes especiais.
+- LT89-A: nomes editáveis dos perfis gerais; LT90-A: alerta recente deduplicado, nunca expirado; LT91-A: locais salvos nomeados sem GPS e aplicação via Bridge.setLocation.
+- Não concluídos: LT88 Samsung físico/Despawn, LT89 importar/exportar, LT90 prioridade, LT91 Caçada completa, LT92 Mural Firebase, LT93 administração/métricas; ver docs/ESTADO_CICLO_LT88_LT93_QA.md.
+- CI e build assinado não equivalem a PASS físico. Não habilitar alertas API nem mural sem validação e regras de segurança.
+- Guia Mestre anterior preservado por hash de prefixo e append exclusivamente.
