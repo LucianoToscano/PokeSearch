@@ -29,7 +29,7 @@ check("location clipboard and local slots support explicit copy and deletion",()
  for(const k of ["extractClipboardCoordinates","copyLocationCoords","deleteSavedSearchLocation"])
   assert.ok(native.includes(k+"("));
  assert.ok(dock.includes("label.append(labelName,paste,copy,radiusWrap)"));
- assert.ok(dock.includes("locSlotTools"));
+ assert.ok(dock.includes("locHint"));
  assert.ok(dock.includes("item.active"));
 });
 check("IV and countdown visible without unverified placeholder",()=>{

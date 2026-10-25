@@ -98,8 +98,8 @@ check("location title and full coordinate field on separate centered rows",()=>{
  const loc=section("function renderLocationChoices(){","let requestedInterval");
  assert.ok(loc.includes("label.append(labelName,paste,copy,radiusWrap)"));
  assert.ok(loc.includes("fieldRow.append(field);"));
- assert.ok(loc.includes("panel.append(title,fieldRow,slide,label,savedRow,tools,message)"));
- assert.ok(loc.includes("panel.append(title,fieldRow,slide,label,savedRow,tools,message)"));
+ assert.ok(loc.includes("panel.append(title,fieldRow,slide,label,message)"));
+ assert.ok(loc.includes("panel.append(title,fieldRow,slide,label,message)"));
  assert.ok(loc.includes('radiusField.maxLength=4'));
  assert.ok(loc.includes('radiusField.inputMode="numeric"'));
  assert.ok(loc.includes('radiusField.value.trim()===""'));

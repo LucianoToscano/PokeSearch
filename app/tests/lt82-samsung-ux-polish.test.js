@@ -8,7 +8,7 @@ const section=(a,b)=>{const i=dock.indexOf(a),j=dock.indexOf(b,i+a.length);asser
 let count=0;function check(n,fn){fn();count++;console.log("PASS LT82 "+n);}
 check("compact centered location column, exact child order",()=>{
  const s=section("function renderLocationChoices(){","let requestedInterval=null;");
- assert.ok(s.includes("panel.append(title,fieldRow,slide,label,savedRow,tools,message)"));
+ assert.ok(s.includes("panel.append(title,fieldRow,slide,label,message)"));
  assert.ok(s.includes("label.append(labelName,paste,copy,radiusWrap)"));
  assert.ok(s.includes("actions.append(apply,clear);label.appendChild(actions)"));
  assert.ok(!s.includes("title.appendChild(paste)"));

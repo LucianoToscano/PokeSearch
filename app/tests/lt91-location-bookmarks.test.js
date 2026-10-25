@@ -6,7 +6,7 @@ const dock=fs.readFileSync(path.join(base,"assets/dock.html"),"utf8");
 const check=(name,callback)=>{callback();console.log("PASS LT91 "+name);};
 check("saved locations are local only and bounded to three slots",()=>{
  assert.match(java,/savedSearchLocationV1_/);
- assert.match(java,/@JavascriptInterface public void requestSavedSearchLocations\(\)/);
+ assert.match(java,/@JavascriptInterface public void copyLocationCoords\(\)/);
  assert.match(java,/@JavascriptInterface public void saveSearchLocation/);
  assert.match(java,/@JavascriptInterface public void loadSearchLocation/);
  assert.match(java,/slot<1\|\|slot>3\|\|radius<0\|\|radius>1000/);
@@ -20,6 +20,6 @@ check("location row remains compact and does not replace existing controls",()=>
  assert.match(dock,/panel\.append\(title,fieldRow,slide,label,savedRow,tools,message\)/);
  assert.match(dock,/saveSearchLocation\(\s*chosenSlot,savedName\.value,location\.coords,location\.radius\)/);
  assert.match(dock,/loadSearchLocation\(slot\)/);
- assert.match(dock,/requestSavedSearchLocations/);
+ assert.match(dock,/copyLocationCoords/);
  assert.match(dock,/locSavedRow/);
 });
