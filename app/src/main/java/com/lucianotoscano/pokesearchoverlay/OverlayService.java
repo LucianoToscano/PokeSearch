@@ -4205,6 +4205,13 @@ public class OverlayService extends Service {
             return;
         }
         if(displayedApiResults){
+            // A periodic/API refresh clears the former one-use reveal map
+            // before new results become visible. Reject the old selection
+            // until the new search is confirmed, on BOTH Pokeballs.
+            if(searchInProgress){
+                deliverCoords("","Busca atualizando. Abra o Pokémon no resultado atualizado.");
+                return;
+            }
             revealAuthorizedCoords(target,autoCopy,requestToken);
             return;
         }
