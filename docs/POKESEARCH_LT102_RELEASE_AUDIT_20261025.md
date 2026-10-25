@@ -21,3 +21,10 @@ O usuário informou intermitência de imagens/sprites no Samsung: alguns aparece
  
 ## Registro da publicação
 Preencher abaixo **apenas após confirmação real** de merge, CI, artefato, Drive, GitHub Release e APK publicado. Não repetir informações de versões antigas.
+
+## Evidência da QA assinada
+- [Actions #40199018230](https://github.com/LucianoToscano/PokeSearch/actions/runs/40199018230): SUCCESS.
+- Artifact #12601060845, ZIP SHA-256 `740e7651434a7ccb32a02747bf7825b21ffe3213a2600f2b0ce75032c85ac79e`.
+- SOURCE_COMMIT: `69c4a28684fa0d8f93dbac2f3bb16a73ad3c3f8a`.
+- APK `PokeSearch-v0.00.102-LT-Sprite-Recovery-Community-QA.apk`: 39.203.529 bytes, SHA-256 `2e99d46355ecef4e6046787dce56b9557b039a2cea0e33857947feecf4a9b303`, checksum do artifact OK. package `com.lucianotoscano.pokesearch`, 0.00.102/54305, R8, não depurável, assinatura v2, pin permanente.
+- Compatibilidade do APK com instalação Samsung e sucesso real das fontes especiais de imagens: ainda não homologados. Não foram implantadas regras Firebase nem realizadas publicações online.
