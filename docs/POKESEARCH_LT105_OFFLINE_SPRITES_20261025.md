@@ -25,3 +25,11 @@
 4. Formas especiais, trajes e imagens fornecidas por terceiros não podem ser trocadas por base se identidade divergir.
 5. Limite 10 resultados por Pokébola, despawn e sessão compartilhada seguem intactos.
 6. QA Node, compilação Android, R8, assinatura v2 permanente, certificado SHA-256 e APK instalável sobre LT104 devem passar. A aprovação CI não substitui homologação física.
+
+
+## Resultado comprovado — build e PR
+- **PR #68 MERGED:** `9336d556c63ac02b728de5061b1242d28d3e1c13`, backup intocado.
+- **APK LT105 QA:** versão `0.00.105` / `54308`; source commit `094c23f202c87bf34b99b1ddb3404ea805ef60f7`, Actions `40221698051` SUCCESS (Node regressions, Java/Gradle, R8, assinatura v2).
+- **Cobertura efetiva:** 1025/1025 sprites-base + 1025/1025 shiny PokeAPI no APK; manifest extraído da build e anexo à prerelease.
+- **Arquivo:** [download direto](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.00.105-54308-qa/PokeSearch-v0.00.105-LT-Offline-Sprites-QA.apk), 41.748.462 bytes; SHA-256 `681115fdac97e875c3542bb02fed08d66e97c0043d8d81b8d521a0baaf195066`. Certificado permanente igual ao da LT104/LT103.
+- **Ainda falta:** validação Samsung do menu, sprites-base offline no overlay, shiny exato, posições das duas Pokébolas, formas/trajes e recursos do filtro Shundo. QA não se confunde com lançamento oficial.
