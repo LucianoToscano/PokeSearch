@@ -5911,7 +5911,7 @@ function drawPokemonSuggestions(){
   placeholder.setAttribute("aria-hidden","true");
   if(safeImage){
    const img=document.createElement("img");img.src=item.image;img.alt="";
-   img.loading="lazy";img.onerror=()=>{
+   img.loading="eager";img.onerror=()=>{
     if(!img.dataset.cdnAttempt&&/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/\d{1,4}\.png$/.test(item.image)&&/^\d{1,4}$/.test(String(item.dex||""))){
      img.dataset.cdnAttempt="1";
      img.src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+item.dex+".png";
