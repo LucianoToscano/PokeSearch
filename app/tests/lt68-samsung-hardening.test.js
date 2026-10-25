@@ -61,14 +61,14 @@ check("Disabled Get coords cannot click, user can retry after site unlocks",()=>
  });
  assert.equal(JSON.parse(out).cooldown,true);
 });
-check("Get coords uniquely resolves card and rejects stale identity",()=>{
+check("Get coords uniquely resolves identity even after index reorder",()=>{
  const part=between(probe,"function matchingCoordsCard(query){",'if(action.startsWith("coords:")){');
  const cards=[{node:{id:0},sourceIndex:0},{node:{id:1},sourceIndex:1}];
  const ctx={cardRoots:()=>cards,parseCard:(node)=>({name:"Yamask",cp:"813",number:"#562",location:node.id===0?"Natal":"Recife"}),clean:s=>String(s).trim(),Array,Number,String};
  const match=vm.runInNewContext(part+';matchingCoordsCard({index:1,name:"Yamask",cp:"813",number:"#562",location:"Recife"})',ctx);
  assert.equal(match.node.id,1);
  const wrong=vm.runInNewContext(part+';matchingCoordsCard({index:1,name:"Yamask",cp:"813",number:"#562",location:"Natal"})',ctx);
- assert.equal(wrong,null);
+ assert.equal(wrong.node.id,0);
  const ambiguous=vm.runInNewContext(part+';matchingCoordsCard({name:"Yamask",cp:"813",number:"#562"})',ctx);
  assert.equal(ambiguous,null);
 });
