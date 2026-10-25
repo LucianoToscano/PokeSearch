@@ -74,7 +74,7 @@ check("single weighted drawing per cycle, persisted with anti-repeat",()=>{
  assert.ok(policy.includes("if (i == previousStyle) continue"));
  assert.ok(state.includes("RANDOM.nextInt(total)"));
  assert.ok(state.includes("p.edit().putInt(CURRENT,style).putBoolean(UNREAD,true)"));
- assert.ok(state.includes("p.edit().putBoolean(UNREAD,false).apply()"));
+ assert.ok(state.includes("p.edit().putBoolean(UNREAD,false).putBoolean(WELCOME_PENDING,false).apply()"));
 });
 check("all four styles share real interactions and unchanged originals",()=>{
  const titles=["PESQUISA ESPECIAL — EVOLUA O POKESEARCH!",
