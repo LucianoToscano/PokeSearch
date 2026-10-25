@@ -14,7 +14,7 @@ function segment(begin,end){
 function check(label,fn){fn();console.log("PASS LT85 "+label);}
 check("second tap is delegated to Android's actual popup state",()=>{
  const src=segment("window.setActiveNativePopupKind=kind=>{","/* Reposition the cascading editor");
- const native={kind:"",taps:[],openPopupMeasured(kind){
+ const native={kind:"",taps:[],openPopup(kind){this.openPopupMeasured(kind);},openPopupMeasured(kind){
   this.taps.push(kind);this.kind=this.kind===kind?"":kind;
   sandbox.window.setActiveNativePopupKind(this.kind);
  },closePopup(){throw Error("Old optimistic local close must not be called");}};
