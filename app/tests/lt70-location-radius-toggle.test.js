@@ -13,20 +13,20 @@ function check(label,fn){fn();passes++;console.log("PASS LT70 "+label)}
 const location=between(dock,"function renderLocationChoices(){","function manualRefreshTap(){");
 const css=between(dock,"/* LT77 Stage 3","</style>");
 const sanitizer=between(dock,"function sanitizeLocationRadiusDraft(raw){","function renderLocationChoices(){");
-check("LT77 one-row Location coordinates fit compact 256px popup",()=>{
+check("LT82 Location coordinates use separate line with compact popup",()=>{
  for(const s of ['body.controls-window #choices.locationPanel,',
  'body.popup-window.controls-window #choices.locationPanel,',
  'body.popup-window.controls-window.popup-above #choices.locationPanel{',
  'width:min(256px,calc(100vw - 12px))!important;',
  '.choiceHeader .locCoordsRow{'])assert.ok(css.includes(s),s);
- assert.ok(location.includes("title.appendChild(fieldRow)"));
- assert.ok(location.includes("panel.append(title,slide,label,message)"));
+ assert.ok(location.includes("panel.append(title,fieldRow,slide,label,message)"));
+ assert.ok(css.includes("width:min(258px,calc(100vw - 14px))!important"));
 });
-check("header Location + clipboard centered as one group",()=>{
+check("header Location centered with paste in the bottom action row",()=>{
  for(const s of ['.choiceHeader{','justify-content:center!important;',
  'const title=make("div","choiceHeader")',
  'title.appendChild(make("span","","Localização"))',
- 'title.appendChild(paste)'])assert.ok((s.includes("const")||s.includes("title.")?location:css).includes(s),s);
+ 'label.append(labelName,paste,radiusWrap)'])assert.ok((s.includes("const")||s.includes("title.")?location:css).includes(s),s);
 });
 check("input has exactly four numeric characters and bound 0–1000",()=>{
  for(const s of ['radiusField.type="text"','radiusField.min="0"','radiusField.max="1000"',
@@ -62,7 +62,7 @@ check("[1000]km contiguous with unit outside numeric input border",()=>{
  assert.ok(css.includes('justify-content:center!important;'));
 });
 check("center radius and Apply/Clear with icon-only actions",()=>{
- for(const s of ["label.append(labelName,radiusWrap)","actions.append(apply,clear);label.appendChild(actions)",
+ for(const s of ["label.append(labelName,paste,radiusWrap)","actions.append(apply,clear);label.appendChild(actions)",
  'makeDockAction("apply","Aplicar localização")','makeDockAction("clear","Limpar localização")'])
  assert.ok(location.includes(s),s);
  assert.ok(css.includes("body.controls-window #choices.locationPanel .locRadiusRow{"));
