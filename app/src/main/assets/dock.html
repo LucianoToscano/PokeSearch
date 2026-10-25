@@ -3259,6 +3259,46 @@ body.popup-window.controls-window.visual-menu-vertical.popup-above #choices.more
  overflow-x:hidden!important;overflow-y:auto!important;
 }
 
+
+/* LT81 Samsung: make coordinate entry readable on its own full-width row. */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel,
+body.popup-window.controls-window.popup-above #choices.locationPanel{
+ box-sizing:border-box!important;
+ width:min(296px,calc(100vw - 16px))!important;
+ min-width:0!important;max-width:calc(100vw - 16px)!important;
+ padding:5px 6px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader{
+ display:flex!important;flex-flow:row wrap!important;
+ width:100%!important;min-width:0!important;
+ justify-content:flex-start!important;align-items:center!important;
+ gap:4px!important;margin-bottom:5px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader>span:first-child{
+ order:0!important;flex:1 1 auto!important;
+ font-size:12px!important;white-space:nowrap!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader button.locPaste{
+ order:1!important;flex:0 0 28px!important;
+ width:28px!important;min-width:28px!important;height:28px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader .locCoordsRow{
+ order:2!important;display:flex!important;flex:1 0 100%!important;
+ box-sizing:border-box!important;width:100%!important;
+ min-width:0!important;max-width:100%!important;
+ margin:2px 0 1px!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader .locCoordsRow input.locField,
+body.controls-window #choices.locationPanel .choiceHeader .locCoordsRow input.locField:focus{
+ display:block!important;box-sizing:border-box!important;
+ flex:1 1 100%!important;width:100%!important;
+ min-width:0!important;max-width:100%!important;
+ height:31px!important;min-height:31px!important;
+ padding:4px 7px!important;font:500 12px/1.2 monospace!important;
+ letter-spacing:-.2px!important;direction:ltr!important;
+ text-align:left!important;text-overflow:clip!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4393,6 +4433,17 @@ function locationPanelFeedback(){
  const toggle=panel.querySelector("#locActiveSwitch");
  const radius=panel.querySelector("#locRadiusValue");
  if(!hint||!radius)return;
+ const coordinates=panel.querySelector("#locCoordinateInput");
+ // Reflect native state without destroying a locally edited draft.
+ if(coordinates){
+  if(locationEnabled&&locationVerified&&
+     coordinates.dataset.locationDraft==="true"&&
+     coordinates.value.replace(/\\s/g,"")===locationCoords)
+   delete coordinates.dataset.locationDraft;
+  if(document.activeElement!==coordinates&&
+     coordinates.dataset.locationDraft!=="true")
+   coordinates.value=locationEnabled?locationCoords:"";
+ }
  // Preserve an unsubmitted radius draft across asynchronous native updates.
  // Only release it once the requested radius has been confirmed on the site.
  if(radius.dataset.locationDraft==="true"&&locationEnabled&&locationVerified&&
@@ -4427,6 +4478,8 @@ window.onLocationPaste=coords=>{
  }
  // Paste only into the editor; no activation, network call or background read.
  field.value=String(coords);
+ field.dataset.locationDraft="true";
+ field.scrollLeft=0;
  hint.textContent="✓ Coordenadas coladas";
  hint.style.color="";hint.hidden=false;fit();
 };
@@ -4465,6 +4518,7 @@ function renderLocationChoices(){
  field.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
  field.placeholder="-23.5505,-46.6333";field.setAttribute("aria-label","Coordenadas latitude e longitude");
  field.value=locationCoords;
+ field.oninput=()=>{field.dataset.locationDraft="true";};
  const paste=make("button","locPaste");paste.type="button";
  paste.title="Colar coordenadas";paste.setAttribute("aria-label","Colar coordenadas");
  const pasteIcon=document.createElementNS("http://www.w3.org/2000/svg","svg");
@@ -4513,8 +4567,16 @@ function renderLocationChoices(){
  const clear=makeDockAction("clear","Limpar localização");
  apply.classList.add("locSave");clear.classList.add("locHide");
  const disable=()=>{
-  // OFF is explicit: discard the unsent radius draft, not saved site filters.
+  // Clear the visible editor immediately, then let Android remove persisted
+  // coordinates and verify the site's location form before a new search.
+  field.value="";
+  delete field.dataset.locationDraft;
+  field.scrollLeft=0;
+  if(document.activeElement===field)field.blur();
+  radiusField.value="0";
+  slide.value="0";
   delete radiusField.dataset.locationDraft;
+  message.style.color="";
   message.textContent="⌛ Removendo localização";message.hidden=false;
   Native.setLocation(false,"",0);
  };
