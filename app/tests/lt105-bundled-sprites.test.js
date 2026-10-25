@@ -19,7 +19,7 @@ test("exact 1025 Dex entries, never guessing alternate species or costumes",()=>
 });
 test("bundle validates PNG identity, dimensions and size",()=>{
  assert.match(builder,/verified_png\(data\)/);
- assert.match(builder,/MAX_BYTES = 256 \* 1024/);
+ assert.ok(builder.includes("MAX_DIMENSION, MAX_BYTES = 8, 1024, 256 * 1024"));
  assert.match(builder,/struct\.unpack\(">II", data\[16:24\]\)/);
  assert.match(builder,/sha256\(data\)\.hexdigest\(\)/);
  assert.match(builder,/Insufficient verified base sprites/);
