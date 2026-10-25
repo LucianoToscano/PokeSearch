@@ -4377,7 +4377,10 @@ public class OverlayService extends Service {
         if(favoritePickerDialog!=null){
             favoritePickerDialog.dismiss();favoritePickerDialog=null;
         }
-        closeQuickActionDialog();
+        if(quickActionDialog!=null){
+            try{quickActionDialog.dismiss();}catch(RuntimeException ignored){}
+            quickActionDialog=null;
+        }
         pickerOpen=false;
         ++requestGeneration;
         ++coordinateRequestToken;
