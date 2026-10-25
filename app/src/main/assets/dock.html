@@ -5402,6 +5402,16 @@ function attachSpriteFeedback(){
     img.src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+known[1];
    }
   },1400);
+  // One delayed second-chance request if the host briefly lost network.
+  // Reuse the ORIGINAL, already-observed exact URL only; never show a
+  // different form, costume or Shiny as a supposed substitute.
+  setTimeout(()=>{
+   if(!done&&img.isConnected&&!good()&&retries>=1&&original){
+    retries=2;
+    stage.classList.remove("failed");
+    img.src=original;
+   }
+  },12000);
  });
 }
 function attachLongPress(){
