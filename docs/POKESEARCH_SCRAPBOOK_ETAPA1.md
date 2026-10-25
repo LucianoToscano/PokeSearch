@@ -62,3 +62,7 @@ Etapa 2: modelos, Authentication e operações em ambiente isolado de teste apó
 - **Java/Android:** `gradle :app:compileDebugJavaWithJavac --no-daemon --stacktrace` **BUILD SUCCESSFUL**, sem criar qualquer APK.
 - **Guia Mestre:** workflow https://github.com/LucianoToscano/PokeSearch/actions/runs/40189422785 **SUCCESS**; arquivo integral de 1.458.217 bytes presente no checkout antes do append; SHA-256 do prefixo antigo comparado byte a byte; commit gerado `26473c4e9bd8d35b21c55d3d60b9b12e1692f7ba`.
 - Nenhum teste físico Samsung ou emulador Android foi executado. **Não chamar de homologado**; demo inativa em release.
+
+## Governança documental posterior (25/10/2026) — compactação sem perda de histórico
+A pedido do proprietário, `docs/GUIA_MESTRE.md` tornou-se o **resumo canônico** com links e regras essenciais. O arquivo histórico original, inclusive o registro integral desta Etapa 1, foi copiado sem alterar um byte para `docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md` (Git blob `466a92323dc319720b4ced50caf413a1a2bbef04`, 1.459.814 bytes, SHA-256 `f02d6396a3ae6a4e833f78be8aedbe0b8d0b40254f31203644f3040a30e2a861`).
+**Para retomar:** leia `AGENTS.md` e o novo guia curto; utilize o backup apenas para pesquisa dirigida. Os antigos workflows de append foram convertidos em verificações somente leitura. A conclusão da Etapa 1 não significa que o Mural esteja online ou que as etapas 2–5 tenham sido confirmadas no GitHub.
