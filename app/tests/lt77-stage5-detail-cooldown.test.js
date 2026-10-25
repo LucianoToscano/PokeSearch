@@ -36,7 +36,8 @@ check("site cooldown remains actionable after it ends",()=>{
  assert.ok(detail.includes('coordsPending=false;'));
 });
 check("coords remain scoped to one card and validated",()=>{
- assert.ok(probe.includes('return matches.length===1?matches[0]:null;'));
+ assert.ok(probe.includes('if(matches.length!==1)return null;'));
+ assert.ok(probe.includes('return name&&cp&&number&&location?card:null;'));
  assert.ok(service.includes('currentCoordinateTarget(target)'));
  assert.ok(service.includes('extractCoordinates(result.optString("coords",""))'));
  assert.ok(service.includes('String.format(java.util.Locale.US,"%s,%s"'));
