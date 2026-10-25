@@ -75,7 +75,7 @@
   function startForms(ticket,query){
    if(!Number.isSafeInteger(ticket)||ticket<=maxTicket||!originOk()||destroyed)
     return fail("invalid-request");
-   if(typeof query!=="string"||query.length>70||/[\\u0000-\\u001f\\u007f]/.test(query))
+   if(typeof query!=="string"||query.length>70||/[\u0000-\u001f\u007f]/.test(query))
     return fail("invalid-request");
    maxTicket=ticket;push(ticket,{pending:true});
    Promise.resolve().then(async()=>{
