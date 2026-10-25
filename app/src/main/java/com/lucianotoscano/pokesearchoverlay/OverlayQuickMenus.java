@@ -174,7 +174,38 @@ final class OverlayQuickMenus {
         LinearLayout items=new LinearLayout(context);items.setOrientation(LinearLayout.VERTICAL);
         scroll.addView(items);
         content.addView(scroll,new LinearLayout.LayoutParams(-1,dp(context,270)));
-        final int[] selection={-1};
+        // Read the committed sound: both the saved choice and any newly tapped
+        // preview remain visibly selected until the user confirms.
+        String saved=context.getSharedPreferences("prefs",0).getString(
+            "favorites".equals(target)?WatchAlerts.PREF_FAVORITE_TONE:
+                WatchAlerts.PREF_GENERAL_TONE,"");
+        int savedIndex=-2; // empty preference is Android's default notification
+        if(!saved.isEmpty())for(int i=0;i<PokeSoundLibrary.size();i++){
+            Uri uri=PokeSoundLibrary.soundUri(context,i);
+            if(uri!=null&&saved.equals(uri.toString())){savedIndex=i;break;}
+        }
+        final int[] selection={savedIndex};
+        final java.util.ArrayList<Button> toneButtons=new java.util.ArrayList<>();
+        final java.util.ArrayList<Integer> toneIndices=new java.util.ArrayList<>();
+        final Runnable markSelected=()->{
+            for(int i=0;i<toneButtons.size();i++){
+                Button b=toneButtons.get(i);
+                int index=toneIndices.get(i);
+                boolean checked=index==selection[0];
+                String name=index==-2?"Padrão":PokeSoundLibrary.LABELS[index];
+                b.setSelected(checked);
+                b.setText((checked?"✓  ":"    ")+name);
+                b.setContentDescription(name+(checked?" · selecionado":" · toque para selecionar e ouvir"));
+                b.setTextColor(checked?
+                    (Color.luminance(foreground(context))>.5?0xFFCEFFE0:0xFF17513C):
+                    foreground(context));
+                GradientDrawable bg=new GradientDrawable();
+                bg.setCornerRadius(dp(context,6));
+                bg.setColor(checked?0xAA295E49:0x55394A5C);
+                bg.setStroke(dp(context,checked?2:1),checked?0xFF70E6A6:0x557E91A5);
+                b.setBackground(bg);
+            }
+        };
         final MediaPlayer[] preview={null};
         final Ringtone[] system={null};
         final Runnable stop=()->{
@@ -190,10 +221,12 @@ final class OverlayQuickMenus {
             final String label=i==-2?"Padrão":PokeSoundLibrary.LABELS[i];
             Button option=button(context,label);
             option.setGravity(Gravity.CENTER_VERTICAL|Gravity.LEFT);
+            toneButtons.add(option);toneIndices.add(index);
             LinearLayout.LayoutParams ol=new LinearLayout.LayoutParams(-1,dp(context,33));
             ol.bottomMargin=dp(context,2);items.addView(option,ol);
             option.setOnClickListener(v->{
                 stop.run();selection[0]=index;
+                markSelected.run();
                 help.setText("Selecionado: "+label+" · toque ✓ Usar áudio");
                 if(index==-2){
                     try{
@@ -210,10 +243,20 @@ final class OverlayQuickMenus {
                 }
             });
         }
+        markSelected.run();
+        help.setText("Selecionado: "+(selection[0]==-2?"Padrão":
+            selection[0]>=0?PokeSoundLibrary.LABELS[selection[0]]:"Escolha um som")+
+            " · toque ✓ Usar áudio");
         Button apply=button(context,"✓ Usar áudio");
         LinearLayout.LayoutParams ap=new LinearLayout.LayoutParams(-1,dp(context,34));
         ap.topMargin=dp(context,5);content.addView(apply,ap);
         Dialog d=show(context,content,anchorY,275);
+        // Expose the currently configured sound even among 36 scrollable options.
+        final int selectedRow=selection[0]==-2?0:selection[0]+1;
+        scroll.post(()->{
+            if(selectedRow>=0&&selectedRow<toneButtons.size())
+                scroll.scrollTo(0,Math.max(0,toneButtons.get(selectedRow).getTop()-dp(context,24)));
+        });
         exit.setOnClickListener(v->d.dismiss());
         d.setOnDismissListener(ignore->stop.run());
         apply.setOnClickListener(v->{
