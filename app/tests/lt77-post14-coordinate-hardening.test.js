@@ -20,6 +20,7 @@ const card=(sourceIndex,name="Caterpie",cp="274",location="Kathleen, Florida, Un
 const fingerprint={index:0,name:"Caterpie",cp:"274",number:"#010",location:"Kathleen, Florida, United States"};
 let passed=0;
 function check(title,fn){fn();passed++;console.log("PASS LT77 POST14 "+title);}
+async function checkAsync(title,fn){await fn();passed++;console.log("PASS LT77 POST14 "+title);}
 check("Get coords selects unchanged uniquely identified card",()=>{
  cards=[card(0)];assert.equal(pick(fingerprint),cards[0]);
 });
@@ -39,7 +40,7 @@ check("mismatched location and species cannot be silently accepted",()=>{
  cards=[card(0,"Caterpie","274","Different city")];
  assert.equal(pick(fingerprint),null);
 });
-check("authorized API origin rejects custom ports without reading JWT",async()=>{
+const originCheck=checkAsync("authorized API origin rejects custom ports without reading JWT",async()=>{
  let reads=0,requests=0;
  const t=transport.createClient({
   fetchImpl:async()=>{requests++;throw Error("unexpected");},
@@ -66,7 +67,7 @@ check("normalized API result must have valid future despawn",()=>{
  assert.equal(result.rejected,2);
  assert.equal(result.expired,1);
 });
-Promise.resolve().then(()=>check("sensitive fields never leak through normalized card",()=>{
+originCheck.then(()=>check("sensitive fields never leak through normalized card",()=>{
  const out=api.normalizeResponse({results:[{encounter_id:"1",pokemon_id:10,
   pokemon_name:"Caterpie",cp:274,level:22,raw_iv:"15/15/15",iv_percent:100,
   reveal_code:"NO_LOG_THIS",despawn_at:"2099-01-01T00:00:00Z"}]},{nowMs:0});
