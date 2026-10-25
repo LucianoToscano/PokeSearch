@@ -16,9 +16,12 @@
  const TOKEN_RE=/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
  const CODE_RE=/^[A-Za-z0-9_-]{12,2048}$/;
  function status(code){
+  if(code===400||code===422)return "invalid-request";
   if(code===401)return "login-required";
   if(code===403)return "access-denied";
+  if(code===404||code===410)return "expired-or-missing-spawn";
   if(code===429)return "rate-limited";
+  if(code===503)return "service-unavailable";
   return "http-error";
  }
  function safeMethod(verb,url){
