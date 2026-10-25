@@ -41,6 +41,15 @@ check("Android native popup guard closes same kind and pushes state back",()=>{
  assert.match(service,/window\.setActiveNativePopupKind&&window\.setActiveNativePopupKind/);
  assert.match(service,/popupKind="";popupWidthDp=popupHeightDp=0/);
 });
+check("outside-pointer then same launcher click cannot immediately reopen",()=>{
+ assert.match(service,/private void closeIndependentPopupFromOutside\(\)/);
+ assert.match(service,/outsideClosedPopupKind=popupKind/);
+ assert.match(service,/outsideClosedPopupUptimeMs=android\.os\.SystemClock\.uptimeMillis\(\)/);
+ assert.match(service,/boolean wasSameOutsideTap=kind\.equals\(outsideClosedPopupKind\)/);
+ assert.match(service,/elapsed>=0L&&elapsed<=450L/);
+ assert.match(service,/if\(wasSameOutsideTap\)return;/);
+ assert.ok((service.match(/closeIndependentPopupFromOutside\(\);return false;/g)||[]).length>=1);
+});
 check("Favorites native Dialog closes on second icon tap without affecting selections",()=>{
  assert.match(service,/if\(pickerOpen\)\{\s*if\(favoritePickerDialog!=null\)favoritePickerDialog\.dismiss\(\);\s*return;/);
  assert.match(service,/favoritePickerDialog=PokemonPicker\.show\(/);
