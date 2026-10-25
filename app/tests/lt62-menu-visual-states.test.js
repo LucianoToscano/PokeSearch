@@ -259,7 +259,9 @@ check("LT62 Notificações: 36 MP3 locais, favorito BR por padrão sem alterar p
  assert.ok(resource.includes('R.raw.ps_snorlax'));
  assert.ok(watch.includes('if(favorite&&!p.contains(PREF_FAVORITE_TONE))'));
  assert.ok(watch.includes('PokeSoundLibrary.favoriteDefaultUri(context)'));
- assert.ok(watch.includes('PokeSoundLibrary.favoriteDefaultUri(context).toString()'));
+ // LT106 channels use the already resolved default/custom URI from selectedTone.
+ assert.ok(watch.includes('Uri sound=selectedTone(context,true,species)'));
+ assert.ok(watch.includes('pokesearch_fav_sound_v3_'));
  assert.ok(service.includes('alertModeCaption("Novos Pokémon",value)'));
  assert.ok(service.includes('alertModeCaption("Pokémon Favoritos",mode)'));
 });

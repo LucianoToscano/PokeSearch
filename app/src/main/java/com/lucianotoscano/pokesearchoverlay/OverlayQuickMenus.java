@@ -252,6 +252,22 @@ final class OverlayQuickMenus {
         help.setText("Selecionado: "+(selection[0]==-2?"Padrão":
             selection[0]>=0?PokeSoundLibrary.LABELS[selection[0]]:"Escolha um som")+
             " · toque ✓ Usar áudio");
+        if("favorites".equals(target)){
+            // Preview tests the MP3 only. This explicitly tests the REAL
+            // Android notification channel, permissions and device volume.
+            Button testSound=button(context,"🔔 Testar notificação de favorito");
+            LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(-1,dp(context,35));
+            tp.topMargin=dp(context,4);content.addView(testSound,tp);
+            testSound.setOnClickListener(v->{
+                stop.run();
+                boolean delivered=WatchAlerts.test(context);
+                String diagnostic=WatchAlerts.soundDiagnostic(context);
+                help.setText(delivered?"Teste enviado · "+diagnostic:diagnostic);
+                Toast.makeText(context,
+                    delivered?"Teste enviado · "+diagnostic:diagnostic,
+                    Toast.LENGTH_LONG).show();
+            });
+        }
         Button apply=button(context,"✓ Usar áudio");
         LinearLayout.LayoutParams ap=new LinearLayout.LayoutParams(-1,dp(context,34));
         ap.topMargin=dp(context,5);content.addView(apply,ap);

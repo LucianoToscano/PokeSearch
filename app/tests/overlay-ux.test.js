@@ -2400,7 +2400,9 @@ test("UX-NOTIFY-11 only verified favorites notify if general alerts are OFF",()=
   src.includes('WatchAlerts.match(this,firstWatched,watchDetails)')&&
   src.includes('if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()')&&
   fav.includes('String soundMode=mode(context);')&&
-  fav.includes('if("off".equals(soundMode))return false;')&&
+  fav.includes('if("off".equals(soundMode)){')&&
+  fav.includes('recordAlertProblem(context,"Alertas de Favoritos estão em OFF")')&&
+  fav.includes('return false;')&&
   !fav.includes("alertsMode");
 });
 test("UX-NOTIFY-12 new and favorite audio channels remain separate",()=>{
