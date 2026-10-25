@@ -306,8 +306,21 @@ public class OverlayService extends Service {
                 String coords=extractCoordinates(response.optString("coords",""));
                 if(!response.optBoolean("ok",false)||coords.isEmpty()){
                     String reason=response.optString("reason","indisponível");
-                    if(reason.length()>60)reason="indisponível";
-                    deliverCoords("","Get coords API: "+reason);return;
+                    if("stale-or-ambiguous-selection".equals(reason)||
+                       "superseded-search".equals(reason)){
+                        // A new search invalidates old one-use reveal codes.
+                        // Never guess a different Pokemon's coordinates.
+                        deliverCoords("","Pesquisa atualizada. Abra o Pokémon na lista atual e tente novamente.");
+                    }else if("expired-spawn".equals(reason)||
+                             "expired-or-missing-spawn".equals(reason)){
+                        deliverCoords("","Pokémon expirou. Aguarde um novo resultado.");
+                    }else if("reveal-in-progress".equals(reason)){
+                        deliverCoords("","Coordenadas já estão sendo consultadas.");
+                    }else{
+                        if(reason.length()>60)reason="indisponível";
+                        deliverCoords("","Get coords API: "+reason);
+                    }
+                    return;
                 }
                 try{
                     JSONArray cards=new JSONArray(results);
