@@ -380,6 +380,7 @@ public class OverlayService extends Service {
     private boolean firstStart=true;
     private boolean locationEnabled=false;
     private boolean locationVerified=false; // true only after DOM verification for current search
+    private int locationFinalRetryCount=0; // bound React rebinds before Search
     private String locationCoords="";
     private int locationRadius=0;
     private boolean locationEditorOpen=false;
@@ -1613,6 +1614,7 @@ public class OverlayService extends Service {
         // LT60-LOC-STATE-01: every new Search needs fresh Coords/Radius proof.
         // Prior cards remain untouched; only the CURRENT request loses its proof.
         locationVerified=false;
+        locationFinalRetryCount=0;
         confirmedSubmittedFiltersGeneration=-1;
         submittedSearchGeneration=-1;
         submittingSearchGeneration=-1;
@@ -1983,6 +1985,15 @@ public class OverlayService extends Service {
                     if(stopped||loginPaused||generation!=requestGeneration)return;
                     if(!lastLocation.optBoolean("ok")){
                         locationVerified=false;
+                        // Re-hydration of Shiny/IV widgets can replace the
+                        // coordinates fields after earlier successful checks.
+                        // Rebind no more than twice; never submit blindly.
+                        if(locationFinalRetryCount<2){
+                            locationFinalRetryCount++;
+                            status("📍 Reconfirmando coordenadas e raio no site...");
+                            configureLocationAndVerify(generation,manual,0);
+                            return;
+                        }
                         searchInProgress=false;
                         searchFailure(locationEnabled?"⚠ Localização não aplicada":"⚠ Localização residual",
                             "Busca não enviada: último formulário de localização divergente. "+
