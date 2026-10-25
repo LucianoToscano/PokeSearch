@@ -2816,6 +2816,24 @@ public class OverlayService extends Service {
         }
         return "";
     }
+    // Clipboard may contain coordinates inside a maps link or formatted text.
+    // Fail closed on two different coordinate pairs instead of choosing at random.
+    private String extractClipboardCoordinates(String input){
+        if(input==null||input.length()>512)return "";
+        String exact=extractCoordinates(input.trim());
+        if(!exact.isEmpty())return exact;
+        java.util.regex.Matcher matches=java.util.regex.Pattern.compile(
+            "(?<![0-9.])([-+]?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*([-+]?\\d{1,3}(?:\\.\\d+)?)(?![0-9.])")
+            .matcher(input.replace('−','-'));
+        String found="";
+        while(matches.find()){
+            String candidate=extractCoordinates(matches.group());
+            if(candidate.isEmpty())continue;
+            if(!found.isEmpty()&&!found.equals(candidate))return "";
+            found=candidate;
+        }
+        return found;
+    }
     private void deliverCoords(String coordinates,String message){
         js(detailPanel,detailLoaded,"window.coordsResult("+JSONObject.quote(coordinates)+","+JSONObject.quote(message)+")");
         status(message);
@@ -2929,13 +2947,17 @@ public class OverlayService extends Service {
         @JavascriptInterface public void requestSavedSearchLocations(){handler.post(()->{
             JSONArray slots=new JSONArray();
             android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+            int active=p.getInt("savedSearchLocationActiveV1",0);
             for(int slot=1;slot<=3;slot++){
                 JSONObject item=new JSONObject();
                 try{
                     JSONObject stored=new JSONObject(p.getString(savedLocationKey(slot),"{}"));
                     item.put("slot",slot)
                         .put("saved",stored.has("coords")&&stored.has("radius"))
-                        .put("name",stored.optString("name","Local "+slot));
+                        .put("name",stored.optString("name","Local "+slot))
+                        .put("active",slot==active&&locationEnabled&&
+                            locationCoords.equals(stored.optString("coords",""))&&
+                            locationRadius==stored.optInt("radius",-1));
                 }catch(org.json.JSONException ignored){
                     try{item.put("slot",slot).put("saved",false)
                         .put("name","Local "+slot);}catch(org.json.JSONException ignoredAgain){}
@@ -2956,7 +2978,8 @@ public class OverlayService extends Service {
                 JSONObject data=new JSONObject();
                 data.put("name",name).put("coords",clean).put("radius",radius);
                 getSharedPreferences("prefs",0).edit()
-                    .putString(savedLocationKey(slot),data.toString()).apply();
+                    .putString(savedLocationKey(slot),data.toString())
+                    .putInt("savedSearchLocationActiveV1",slot).apply();
                 requestSavedSearchLocations();
                 android.widget.Toast.makeText(OverlayService.this,
                     "✓ Local "+slot+" salvo",android.widget.Toast.LENGTH_SHORT).show();
@@ -2970,26 +2993,54 @@ public class OverlayService extends Service {
                 String coords=extractCoordinates(saved.optString("coords",""));
                 int radius=saved.optInt("radius",-1);
                 if(coords.isEmpty()||radius<0||radius>1000)return;
+                getSharedPreferences("prefs",0).edit()
+                    .putInt("savedSearchLocationActiveV1",slot).apply();
                 new Bridge().setLocation(true,coords,radius);
+                requestSavedSearchLocations();
             }catch(org.json.JSONException ignored){}
         });}
+        @JavascriptInterface public void deleteSavedSearchLocation(int slot){handler.post(()->{
+            if(stopped||slot<1||slot>3)return;
+            android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+            android.content.SharedPreferences.Editor edit=prefs.edit().remove(savedLocationKey(slot));
+            if(prefs.getInt("savedSearchLocationActiveV1",0)==slot)
+                edit.putInt("savedSearchLocationActiveV1",0);
+            edit.apply();
+            requestSavedSearchLocations();
+            android.widget.Toast.makeText(OverlayService.this,
+                "Local "+slot+" excluído",android.widget.Toast.LENGTH_SHORT).show();
+        });}
         @JavascriptInterface public void pasteLocationCoords(){handler.post(()->{
-            // Clipboard is read ONLY after a user tap. Never log or persist a
-            // clipboard value that was not explicitly applied as a filter.
+            // Only read clipboard on explicit user action; never log the values.
             String parsed="";
             try{
                 ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
                 if(cb!=null&&cb.hasPrimaryClip()){
                     android.content.ClipData clip=cb.getPrimaryClip();
-                    if(clip!=null&&clip.getItemCount()>0){
-                        CharSequence value=clip.getItemAt(0).coerceToText(OverlayService.this);
-                        if(value!=null&&value.length()<=128)
-                            parsed=extractCoordinates(value.toString());
+                    if(clip!=null)for(int i=0;i<Math.min(clip.getItemCount(),5);i++){
+                        CharSequence value=clip.getItemAt(i).coerceToText(OverlayService.this);
+                        String candidate=extractClipboardCoordinates(value==null?"":value.toString());
+                        if(candidate.isEmpty())continue;
+                        if(!parsed.isEmpty()&&!parsed.equals(candidate)){parsed="";break;}
+                        parsed=candidate;
                     }
                 }
             }catch(Exception e){recordFailure("colar coordenadas",e);}
-            js(menuPanel,menuLoaded,"window.onLocationPaste("+JSONObject.quote(parsed)+")");
-            js(popupPanel,popupLoaded,"window.onLocationPaste("+JSONObject.quote(parsed)+")");
+            String callback="window.onLocationPaste&&window.onLocationPaste("+JSONObject.quote(parsed)+")";
+            js(menuPanel,menuLoaded,callback);js(popupPanel,popupLoaded,callback);
+        });}
+        @JavascriptInterface public void copyLocationCoords(String input){handler.post(()->{
+            String valid=extractCoordinates(input==null?"":input.trim());
+            String message="⚠ Informe coordenadas válidas para copiar";
+            if(!valid.isEmpty())try{
+                ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                if(clipboard!=null){
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Coordenadas PokeSearch",valid));
+                    message="✓ Coordenadas copiadas";
+                }
+            }catch(Exception e){recordFailure("copiar localização",e);}
+            String callback="window.onLocationCopy&&window.onLocationCopy("+JSONObject.quote(message)+")";
+            js(menuPanel,menuLoaded,callback);js(popupPanel,popupLoaded,callback);
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
         @JavascriptInterface public void requestFilterOptions(){handler.post(()->{
@@ -3201,7 +3252,8 @@ public class OverlayService extends Service {
                 names.put(p.getString(generalPresetNameKey(slot),"Perfil "+slot));
             }
             JSONObject status=new JSONObject();
-            try{status.put("saved",available).put("names",names);}
+            try{status.put("saved",available).put("names",names)
+                .put("active",p.getInt("generalPresetActiveV1",0));}
             catch(org.json.JSONException ignored){}
             String script="window.onGeneralPresetStatus&&window.onGeneralPresetStatus("+status.toString()+")";
             js(menuPanel,menuLoaded,script);
@@ -3224,7 +3276,8 @@ public class OverlayService extends Service {
                 String value=snapshot.toString();
                 if(value.length()>16000)return;
                 getSharedPreferences("prefs",0).edit()
-                    .putString(generalPresetKey(slot),value).apply();
+                    .putString(generalPresetKey(slot),value)
+                    .putInt("generalPresetActiveV1",slot).apply();
                 android.widget.Toast.makeText(OverlayService.this,
                     "✓ Filtro geral "+slot+" salvo",android.widget.Toast.LENGTH_SHORT).show();
                 requestGeneralFilterPresets();
@@ -3241,6 +3294,7 @@ public class OverlayService extends Service {
                      "gl".equals(presetMode)||"ul".equals(presetMode)))return;
                 // Use the existing validated, atomic setSearchConfig pathway
                 // instead of introducing a second filter-submission mechanism.
+                getSharedPreferences("prefs",0).edit().putInt("generalPresetActiveV1",slot).apply();
                 new Bridge().setSearchConfig(value);
                 closeIndependentPopup();
                 android.widget.Toast.makeText(OverlayService.this,
