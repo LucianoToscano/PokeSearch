@@ -50,7 +50,7 @@
     const defaults=new Set(data.catalogSpeciesForms.filter(x=>
       (x.form_id===0||x.form_id===null)&&
       (x.costume_id===undefined||x.costume_id===0)&&
-      (!x.form_name||x.form_name===x.species_name)).map(x=>x.pokemon_id));
+      (!x.form_name||x.form_name===x.species_name||x.form_name==="Normal")).map(x=>x.pokemon_id));
     function add(label,id,base){
      if(!label||label.length>90||seen.has(label.toLocaleLowerCase()))return;
      if(wanted&&!(label.toLocaleLowerCase().includes(wanted)||
