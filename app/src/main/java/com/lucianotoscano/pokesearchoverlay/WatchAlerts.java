@@ -168,11 +168,10 @@ public final class WatchAlerts {
             }
             return "pokesearch_fav_sound_v3_"+Integer.toHexString(key.hashCode());
         }
-        SharedPreferences prefs=context.getSharedPreferences("prefs",0);
-        String chosen=prefs.getString(PREF_GENERAL_TONE,"");
-        if(!chosen.isEmpty())
-            return "pokesearch_new_custom_v2_"+Integer.toHexString(chosen.hashCode());
-        return "pokesearch_alerts";
+        // Legacy general channel could also be muted permanently by Android.
+        // A chosen new-Pokémon tone must use a fresh channel just like Favorites.
+        Uri sound=selectedTone(context,false,null);
+        return "pokesearch_new_sound_v3_"+Integer.toHexString(sound.toString().hashCode());
     }
     public static void ensureChannel(Context context){ensureChannel(context,null);}
     public static void ensureChannel(Context context,String species){
