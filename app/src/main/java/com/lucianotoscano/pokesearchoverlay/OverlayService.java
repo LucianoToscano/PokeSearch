@@ -3434,6 +3434,11 @@ public class OverlayService extends Service {
                     android.widget.Toast.LENGTH_SHORT).show();
             }catch(org.json.JSONException ignored){}
         });}
+        @JavascriptInterface public void filterDistanceNotice(){handler.post(()->{
+            android.widget.Toast.makeText(OverlayService.this,
+                "Ordenar por distância exige coordenadas e raio ativos. Outros filtros continuam disponíveis.",
+                android.widget.Toast.LENGTH_LONG).show();
+        });}
         @JavascriptInterface public void patchSearchFilters(String payload){handler.post(()->{
             try{
                 JSONObject delta=new JSONObject(payload),updated=new JSONObject(extraFiltersJson);
@@ -3490,6 +3495,17 @@ public class OverlayService extends Service {
                 for(String[] pair:new String[][]{{"cpMin","cpMax"},{"levelMin","levelMax"}}){
                     String low=updated.optString(pair[0]),high=updated.optString(pair[1]);
                     if(!low.isEmpty()&&!high.isEmpty()&&Double.parseDouble(low)>Double.parseDouble(high))return;
+                }
+                // Defensive guard for migrations/older menus: a stale
+                // Distance order with location OFF cannot block unrelated
+                // Gender/Size/Weather/PC edits from reaching the API.
+                if("Distance (nearest)".equals(updated.optString("sortBy"))&&
+                        !(locationEnabled&&locationVerified)){
+                    updated.put("sortBy","Despawn (longest)");
+                    clears.remove("sortBy");
+                    android.widget.Toast.makeText(OverlayService.this,
+                        "Sem localização ativa: ordenação padrão aplicada; demais filtros mantidos.",
+                        android.widget.Toast.LENGTH_SHORT).show();
                 }
                 org.json.JSONArray clear=new org.json.JSONArray();
                 for(String key:clears)clear.put(key);
