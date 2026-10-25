@@ -6339,3 +6339,9 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - **Despawn em Info Pokémon**: valor inicial `showTimers=false`, leitura sem preferência `getBoolean("showTimers", false)`; portanto OFF por padrão; ON explícito persistido deve continuar ON (não sobrescrever configurações). Regressão coberta por teste de fonte. Cronômetro local de expiração de spawn funciona independentemente da preferência visual OFF.
 - Get coords: correção de índice reordenado/regex já presente no QA R2; sem prova em Samsung autenticado, não declarar homologado. Resultado 403 de trainer requer mensagens específicas antes de habilitação; catálogo, origem CORS e filtros efetivos também pendentes.
 - Checklist de aceitação: `docs/LT77_CHECKLIST_ACEITACAO.md`; CI deve ser consultado após últimos commits. Artefato GitHub Actions QA não equivale a publicação no Drive. Não atualizar manifesto `atualizacao.json` nem fazer merge em `main` antes da aceitação física.
+
+### LT77 QA R2 — Catálogo oficial experimental e resposta de erro tipada
+
+- Base do complemento: `fccef433fb3e1e62a3b7708d6726e8a2e752bf79`. Novo `api_catalog_cache.js` e `lt77-api-catalog-cache.test.js`: catálogos de formas e species_forms trazidos exclusivamente pelos endpoints documentados, cache em memória de 300 segundos, validação, origem oficial e sem leitura de credenciais; módulo permanece inerte até ativação explícita.
+- O transporte experimental agora interpreta somente os códigos 403 `trainer_not_linked`, `shiny_account_unavailable` e `vip_required` da resposta JSON limitada, sem repassar dados arbitrários; testes respectivos adicionados.
+- Permanecem pendentes: conexão do catálogo/transport ao Android, serialização de resultados com prova de critérios, API on em sessão autenticada, Get coords real, aceite no Samsung. `USE_AUTHORIZED_API=false` e fallback DOM preservados. Os commits de API não justificam distribuir LT77 ao público.
