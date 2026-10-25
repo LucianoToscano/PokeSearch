@@ -17,6 +17,15 @@ public final class UpdatePolicyTest {
         check("invalid local code hidden",!UpdatePolicy.shouldDisplay(true,54290,0,-1));
         check("valid version and official APK filename",UpdatePolicy.validVersion("0.00.72","PokeSearch-v0.00.72-LT.apk"));
         check("wrong APK filename rejected",!UpdatePolicy.validVersion("0.00.72","other.apk"));
+        check("renamed 100 canonical",VersionNames.canonical("0.00.100").equals("0.01.00"));
+        check("renamed 101 canonical",VersionNames.canonical("0.00.101").equals("0.01.01"));
+        check("renamed 106 canonical",VersionNames.canonical("0.00.106").equals("0.01.06"));
+        check("new 106 accepted",UpdatePolicy.validVersion("0.01.06","PokeSearch-v0.01.06-LT.apk"));
+        check("next 107 canonical",VersionNames.canonical("0.00.107").equals("0.01.07"));
+        check("malformed published label rejected",!UpdatePolicy.validVersion("0.00.106","PokeSearch-v0.00.106-LT.apk"));
+        check("canonical two-digit high group",VersionNames.canonical("0.00.199").equals("0.01.99"));
+        check("canonical rollover 200",VersionNames.canonical("0.00.200").equals("0.02.00"));
+        check("unchanged historical normal",VersionNames.canonical("0.00.99").equals("0.00.99"));
         check("URL matches Drive file id",UpdatePolicy.safeDownloadLink("1K59Jh1jw1Qd6BvAYE-geFdp3Z53dOFej",
            "https://drive.google.com/uc?export=download&id=1K59Jh1jw1Qd6BvAYE-geFdp3Z53dOFej"));
         check("malicious host rejected",!UpdatePolicy.safeDownloadLink("1K59Jh1jw1Qd6BvAYE-geFdp3Z53dOFej",
