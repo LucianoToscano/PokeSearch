@@ -6588,3 +6588,26 @@ Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c
 Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
 Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
 Guia Mestre prévio permaneceu imutável, com adição somente ao final.
+
+
+## LT87 QA — fundos dos menus de Filtros (25/10/2026)
+Versão 0.00.87, versionCode 54290, somente QA; nenhuma publicação oficial.
+Branch: fix/lt87-filter-menu-backgrounds-qa-20261025; PR #62 Draft sobre LT86 PR #61. Main e PRs #59/#60/#61 preservadas.
+Código herdado LT86: Nível 1–50 e Formas paginadas, sprites, Despawn, 3+3 perfis, Genderless e arraste de detalhes mantidos.
+LT87: fundos visíveis em rail e editor Filtros, usando --visual-menu-bg e menuTransparency também no popup e nos 3 perfis salvos, claro/escuro.
+LT87: mantém apenas o holder externo transparente para toques de fundo, corrige position:absolute da rail e dimensiona a janela de perfis.
+Samsung QA: sprites de base com fanout de Bitmap entre células, tentativa CDN de origem PokeAPI, imagem de forma/traje desconhecida segue placeholder.
+Info: Genderless ⚲, Nível 1–50, Mostrar todas as informações, timer Despawn prioritário, GL/UL/ML com rank somente quando verificado, tamanho XS/S/L.
+Expiração: preserva expiresAtMs absoluto da API, remove cards vencidos, evita reinserção e revalida no aviso UI mesmo se alarme nativo foi perdido.
+Arraste: Pokébola chega à borda com painel aberto; detalhe independente pode ser movido pelo cabeçalho, sem bloquear ×/Get coords.
+Perfis: 3 Filtros gerais via ▣ (Usar/Salvar, filtro validado, sem Shiny/Localização) e 3 Favoritos via ▣ (toque usar, segure salvar, máximo 50).
+Testes LT86: lt86-form-catalog-level, lt86-samsung-followup, lt86-all-result-information, lt86-despawn-detail-drag, legados JS e Java.
+Testes históricos Node (exceto preview LT74 legado), Java, Gradle testDebugUnitTest e assembleRelease executados pelo pipeline LT86.
+GitHub Actions: 40168986555
+Build SOURCE_COMMIT: 21d6547e9cb19efe941134d087f2783d6753ee55
+APK QA: PokeSearch-v0.00.87-LT-Filter-Fundos-QA.apk
+APK SHA-256: d188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a
+Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e
+Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
+Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
+Guia Mestre prévio permaneceu imutável, com adição somente ao final.
