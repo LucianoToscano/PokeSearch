@@ -72,35 +72,77 @@ public final class PokemonPicker {
         ImageView picture;
         TextView dex,name,checked;
     }
+    // All visible tiles waiting for the same Pokémon share one verified fetch.
+    // The old LOADING gate updated only the first ImageView, leaving the other
+    // tiles permanently stuck on a placeholder when the same dex appeared twice.
+    private static final java.util.Map<Integer,java.util.List<WeakReference<ImageView>>> WAITING=
+        new java.util.HashMap<>();
+    private static Bitmap fetchVerifiedSprite(int id){
+        final String path="/PokeAPI/sprites/master/sprites/pokemon/"+id+".png";
+        final String[] origins={
+            "https://raw.githubusercontent.com"+path,
+            "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+id+".png"
+        };
+        for(String url:origins){
+            HttpURLConnection connection=null;
+            try{
+                connection=(HttpURLConnection)new URL(url).openConnection();
+                connection.setConnectTimeout(4500);
+                connection.setReadTimeout(4500);
+                connection.setInstanceFollowRedirects(false);
+                if(connection.getResponseCode()!=200)continue;
+                String mime=connection.getContentType();
+                if(mime!=null&&!mime.toLowerCase(java.util.Locale.ROOT).startsWith("image/png"))continue;
+                int size=connection.getContentLength();
+                if(size>256*1024)continue;
+                try(InputStream in=connection.getInputStream()){
+                    // Bound PNG memory and avoid decoding arbitrary server bodies.
+                    ByteArrayOutputStream output=new ByteArrayOutputStream();
+                    byte[] buffer=new byte[4096];int n;
+                    while((n=in.read(buffer))!=-1){
+                        if(output.size()+n>256*1024){output.reset();break;}
+                        output.write(buffer,0,n);
+                    }
+                    byte[] png=output.toByteArray();
+                    if(png.length>=8&&png[0]==(byte)0x89&&png[1]=='P'&&png[2]=='N'&&png[3]=='G')
+                        return BitmapFactory.decodeByteArray(png,0,png.length);
+                }
+            }catch(Exception ignored){
+                // CDN or network unavailable: keep the neutral placeholder.
+            }finally{if(connection!=null)connection.disconnect();}
+        }
+        return null;
+    }
     private static void setImage(Context activity,ImageView image,int id){
         image.setTag(id);
         Bitmap cached;
         synchronized(CACHE){cached=CACHE.get(id);}
         if(cached!=null){image.setImageBitmap(cached);return;}
         image.setImageResource(android.R.drawable.ic_menu_gallery);
-        synchronized(LOADING){if(!LOADING.add(id))return;}
-        WeakReference<ImageView> reference=new WeakReference<>(image);
+        boolean start;
+        synchronized(LOADING){
+            java.util.List<WeakReference<ImageView>> waiting=WAITING.get(id);
+            if(waiting==null){waiting=new ArrayList<>();WAITING.put(id,waiting);}
+            waiting.add(new WeakReference<>(image));
+            start=LOADING.add(id);
+        }
+        if(!start)return;
         IMAGE_POOL.execute(()->{
-            Bitmap bitmap=null;HttpURLConnection connection=null;
-            try{
-                URL url=new URL("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+id+".png");
-                connection=(HttpURLConnection)url.openConnection();
-                connection.setConnectTimeout(4500);connection.setReadTimeout(4500);
-                try(InputStream in=connection.getInputStream()){bitmap=BitmapFactory.decodeStream(in);}
-            }catch(java.io.IOException ignored){
-                // Expected CDN/network failures are routine; avoid log flooding.
-            }catch(Exception e){
-                BugReport.log(activity,"SPRITE","falha inesperada · "+e.getClass().getSimpleName());
-            }finally{
-                if(connection!=null)connection.disconnect();
-            }
-            synchronized(LOADING){LOADING.remove(id);}
+            Bitmap bitmap=fetchVerifiedSprite(id);
             if(bitmap!=null){synchronized(CACHE){CACHE.put(id,bitmap);}}
-            final Bitmap finalBitmap=bitmap;
-            image.post(()->{
-                ImageView view=reference.get();
-                if(view!=null && finalBitmap!=null && view.getTag() instanceof Integer && (int)view.getTag()==id)
-                    view.setImageBitmap(finalBitmap);
+            java.util.List<WeakReference<ImageView>> waiting;
+            synchronized(LOADING){
+                LOADING.remove(id);
+                waiting=WAITING.remove(id);
+            }
+            final Bitmap picture=bitmap;
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(()->{
+                if(picture==null||waiting==null)return;
+                for(WeakReference<ImageView> weak:waiting){
+                    ImageView target=weak.get();
+                    if(target!=null&&target.getTag() instanceof Integer&&(int)target.getTag()==id)
+                        target.setImageBitmap(picture);
+                }
             });
         });
     }
