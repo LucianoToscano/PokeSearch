@@ -20,17 +20,18 @@ check("three general filter profiles are separate from rail and support save/use
   assert.ok(native.includes(method+"(int slot)"));
  }
 });
-check("only one active favorite star, hold opens save or delete",()=>{
+check("only one active favorite star; edits autosave, hold clears",()=>{
  assert.ok(picker.includes("boolean selected=stored&&active==slot"));
  assert.ok(picker.includes("android.widget.PopupMenu"));
- assert.ok(picker.includes("Excluir perfil "));
+ assert.ok(picker.includes("Limpar todos os favoritos do Perfil "));
+ assert.ok(picker.includes('autoPrefs.edit().putString(key,current).apply()'));
 });
 check("location clipboard and local slots support explicit copy and deletion",()=>{
  for(const k of ["extractClipboardCoordinates","copyLocationCoords","deleteSavedSearchLocation"])
   assert.ok(native.includes(k+"("));
  assert.ok(dock.includes("label.append(labelName,paste,copy,radiusWrap)"));
  assert.ok(dock.includes("locHint"));
- assert.ok(dock.includes("item.active"));
+ assert.ok(!dock.split("function renderLocationChoices(){")[1].split("let requestedInterval=null")[0].includes("locSavedName"));
 });
 check("IV and countdown visible without unverified placeholder",()=>{
  assert.ok(detail.includes('stat("A/D/S",showRaw?raw:"","red")'));
