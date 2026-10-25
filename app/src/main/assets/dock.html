@@ -698,7 +698,7 @@ body.result-window .spriteStage .sprite{
 }
 body.result-window .spriteStage .spriteFallback{inset:auto}
 body.result-window .spawnInfo{
- display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+ display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;
  box-sizing:border-box;flex:0 0 96px;width:96px;min-width:0;max-width:96px;
  padding:1px 2px;margin:0;gap:0;height:100%;max-height:100%;overflow:hidden;
  text-align:left;font:700 calc(9px * var(--result-info-scale,1))/
@@ -3483,6 +3483,9 @@ body.controls-window #choices.filterCascade .generalPresetRow{display:flex!impor
 body.controls-window #choices.filterCascade .generalPresetRow span{width:30px!important;min-width:30px!important;font-size:9px!important}
 body.controls-window #choices.filterCascade .generalPresetRow button{font-size:9px!important;min-height:24px!important;flex:1!important;padding:2px!important}
 body.controls-window #choices.filterCascade .generalPresetRow button:disabled{opacity:.42!important}
+/* LT86 INFO: scrolling must begin at first verified line, not center/crop it. */
+body.result-window .spawnInfo{justify-content:flex-start!important;align-content:flex-start!important;scroll-padding-top:0!important}
+body.controls-window #choices.infoCompact .compactInfoAll{width:100%!important;min-height:26px!important;font-size:10px!important;margin:2px 0 3px!important;border:1px solid #6596a9!important;border-radius:6px!important;background:#294050!important;color:#e1eff7!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -5172,8 +5175,8 @@ function resultLines(card,opts,league){
   if(displayName)lines.push(displayName);
  }
  if(opts.number&&safeText(card?.number))lines.push("#"+safeText(card.number,12).replace(/^#/,""));
- if(opts.gender&&["♀","♂"].includes(card?.gender))lines.push(card.gender);
- if(opts.size&&["XXS","XS","M","XL","XXL"].includes(String(card?.size||"").toUpperCase()))
+ if(opts.gender&&["♀","♂","⚲"].includes(card?.gender))lines.push(card.gender);
+ if(opts.size&&["XXS","XS","S","M","L","XL","XXL"].includes(String(card?.size||"").toUpperCase()))
   lines.push(String(card.size).toUpperCase());
  if(opts.form&&safeText(card?.form))lines.push(safeText(card.form,48));
  if(opts.moves&&safeText(card?.moves))lines.push(safeText(card.moves,65));
@@ -5192,8 +5195,7 @@ function resultLines(card,opts,league){
  if(opts.rawIv)lines.push(verifiedSpawnRawIv(card)||"?/?/?");
  const leagues=[["gl","Gl","GL"],["ul","Ul","UL"],["ml","Ml","ML"]];
  const hasLeaguePrefs=leagues.some(([,suffix])=>
-  Object.prototype.hasOwnProperty.call(opts,"overallRank"+suffix)||
-  Object.prototype.hasOwnProperty.call(opts,"speciesIvRank"+suffix));
+  opts["overallRank"+suffix]===true||opts["speciesIvRank"+suffix]===true);
  const pct=opts.iv?verifiedSpawnIvPercent(card):null;
  if(pct!==null&&pct!==undefined)lines.push(pct+"%");
  if(!hasLeaguePrefs&&opts.overallRank){
@@ -5224,7 +5226,7 @@ function resultLines(card,opts,league){
    }
   }
  }
- if(opts.despawn&&Number(card?.expiresAtMs)>0)lines.push("TIMER");
+ if(opts.despawn&&Number(card?.expiresAtMs)>Date.now())lines.unshift("Despawn TIMER");
  return lines;
 }
 function resultInfoHtml(value,card){
@@ -6343,7 +6345,7 @@ function renderFiltersChoices(){
   // A hidden editor is still an active draft: validate all numeric fields.
   const numericBounds=[
    ["cpMin","PC",0,99999],["cpMax","PC",0,99999],
-   ["levelMin","Nível",1,35],["levelMax","Nível",1,35],
+   ["levelMin","Nível",1,50],["levelMax","Nível",1,50],
    ["minPvpCp","PC mínimo PvP",0,99999]
   ];
   const invalidNumber=(key,focus,message)=>{
@@ -6437,6 +6439,16 @@ function renderInfoChoices(){
   button.setAttribute("aria-label",(selected?"Ocultar ":"Mostrar ")+full);
   button.setAttribute("aria-pressed",String(selected));
  }
+ const visibilityKeys=options.map(entry=>entry[0]);
+ const allVisible=visibilityKeys.every(key=>resultDisplayOptions[key]===true);
+ const allButton=document.createElement("button");allButton.type="button";
+ allButton.className="compactInfoAll";
+ allButton.textContent=allVisible?"✓ Informações ativadas · Ocultar":"✓ Mostrar todas as informações";
+ allButton.setAttribute("aria-label",allVisible?"Desativar todas as informações opcionais":
+  "Mostrar todas as informações disponíveis nos cartões");
+ allButton.setAttribute("aria-pressed",String(allVisible));
+ allButton.onclick=()=>{if(Native.setAllResultDisplayOptions)Native.setAllResultDisplayOptions(!allVisible);};
+ panel.appendChild(allButton);
  panel.appendChild(grid);
  // No large explanatory paragraph. Accessibility retains complete descriptions.
  requestAnimationFrame(()=>{if(choiceOpen==="info"&&panel.isConnected)panel.scrollTop=scroll;});
