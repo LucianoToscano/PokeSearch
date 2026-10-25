@@ -4268,6 +4268,7 @@ if(window.location.search.indexOf("results=1")!==-1){
  document.write('<script src="file:///android_asset/pvpoke-iv-gamemaster.js"><\/script>');
 }
 </script>
+<script src="sprite_offline.js"></script>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 const popupWindow=window.location.search.indexOf("popup=1")!==-1;
@@ -6284,13 +6285,16 @@ function draw(){
  if(resultWindow)document.getElementById("spawns").innerHTML=cards.map((c,i)=>{
   const verifiedPercent=verifiedSpawnIvPercent(c);
   const label=[c.name,verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
-  const imageUrl=String(c.image||"");
-  const hasImage=/^(https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(imageUrl);
+  const art=window.PokeSearchOfflineSprite?
+   window.PokeSearchOfflineSprite.resolve(c):
+   {src:String(c.image||""),original:String(c.image||""),offline:false};
+  const imageUrl=art.src,originalUrl=art.original;
+  const hasImage=/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(imageUrl);
   // Fixed-size art box for everyone; extra reduction only for Minior's
   // unusually full artwork. Never alter its species identity or image URL.
   const artFit=/^\s*minior(?:\s|\(|$)/i.test(String(c.name||""))?0.67:0.86;
   const icon='<span class="spriteStage">'+
-   (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" data-original-src="'+esc(imageUrl)+'" alt="" loading="eager" decoding="async">':"")+
+   (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" aria-hidden="true">◉</span></span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const infoLines=preparedLines[i]||[];
@@ -6727,6 +6731,8 @@ const SPRITE_FAILURE_RETRY_MS=30000;
 function pooledBaseSprite(url){
  const valid=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/([0-9]{1,4}\.png)$/.exec(String(url||""));
  if(!valid)return Promise.resolve("");
+ const asset=window.PokeSearchOfflineSprite?
+  window.PokeSearchOfflineSprite.resolve({image:url}):{src:url};
  const now=Date.now(),previous=spriteRequestCache.get(url);
  if(previous&&(!previous.failedAt||now-previous.failedAt<SPRITE_FAILURE_RETRY_MS))
   return previous.promise;
@@ -6757,12 +6763,12 @@ function pooledBaseSprite(url){
   };
   primary.onload=()=>{
    if(settled)return;
-   if(primary.naturalWidth>=8&&primary.naturalHeight>=8)finish(url);
+   if(primary.naturalWidth>=8&&primary.naturalHeight>=8)finish(asset.src);
    else useMirror();
   };
   primary.onerror=useMirror;
   primaryWatch=setTimeout(useMirror,2400);
-  primary.src=url;
+  primary.src=asset.src;
  });
  spriteRequestCache.set(url,entry);
  while(spriteRequestCache.size>96)spriteRequestCache.delete(spriteRequestCache.keys().next().value);
