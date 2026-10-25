@@ -41,7 +41,7 @@
   function originValid(){
    try{
     const u=new URL(d.siteOrigin());
-    return u.protocol==="https:"&&u.hostname===SITE&&u.username===""&&u.password==="";
+    return u.origin==="https://"+SITE&&u.username===""&&u.password==="";
    }catch(_){return false;}
   }
   function fail(code){return {ok:false,reason:code};}
