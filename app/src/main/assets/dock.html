@@ -3932,8 +3932,8 @@ const off=document.createElement("button");off.type="button";
   const button=document.createElement("button");button.type="button";
   button.className="periodCompactValue"+(value===current?" chosen":"");
   button.textContent=String(value);button.dataset.minutes=String(value);
-  button.title="Atualizar automaticamente a cada "+value+" minutos";
-  button.setAttribute("aria-label",button.title);
+  button.removeAttribute("title");
+  button.setAttribute("aria-label","Intervalo automático de "+value+" minutos");
   button.setAttribute("aria-pressed",String(value===current));
   button.onclick=()=>selectInterval(value);
   row.appendChild(button);
@@ -4212,7 +4212,11 @@ function renderExtraFilters(panel,make){
    button.setAttribute("aria-checked",String(saved===value));
    button.classList.toggle("chosen",saved===value);
    if(key==="weather")button.prepend(makeWeatherIcon(value));
-   button.onclick=()=>{modeDraft[key]=key==="weather"&&value==="Any"?"":value;renderFiltersChoices();};
+   button.onclick=()=>{
+    modeDraft[key]=key==="weather"&&value==="Any"?"":value;
+    if(key==="weather")patchSelectedFilterKeys(["weather"]);
+    renderFiltersChoices();
+   };
    list.appendChild(button);
   }
   field(label,list);
@@ -5259,7 +5263,7 @@ function draw(){
  const star=document.getElementById("star");
  star.classList.toggle("favoritesOn",hasFavorites);
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
- const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.title=period===0?"AUTO desligado · atualizar com ↻ ou mudar filtros":"Atualização automática a cada "+period+" minutos · toque para alterar";p.setAttribute("aria-label",p.title);
+ const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.removeAttribute("title");p.setAttribute("aria-label",period===0?"Atualização desligada; segure ↻ para alterar":"Atualização a cada "+period+" minutos; segure ↻ para alterar");
  const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp,
   shownMode,resultDisplayOptions]);
  if(listKey!==lastListKey){lastListKey=listKey;
@@ -5366,10 +5370,8 @@ function draw(){
   count.textContent=resultDisplayOptions.count?String(cards.length):"";
   count.style.display=resultDisplayOptions.count?"inline":"none";
   const gear=document.getElementById("gear");
-  gear.title=selectedIcon.title+(resultsStale?" · resultados anteriores":"")+
-    (menuOpen?" · toque para fechar menu":" · toque para alternar resultados")+
-    " · segure 600 ms para menu · arraste para mover";
-  gear.setAttribute("aria-label",gear.title);
+  gear.removeAttribute("title");
+  gear.setAttribute("aria-label","Pokébola: toque para resultados; segure para menu; arraste para mover");
  }
  // Use central capture pulse rather than spinning the removed gear.
  refreshQuickMenuStates();fit();
@@ -5595,6 +5597,9 @@ function updateFiltersPanelStatus(){
  const count=activeExtraFilterCount(searchSettings,mode);
  const dirty=filterDraftChanged();
  const verified=count>0&&siteFiltersConfirmed&&!searchActive&&!resultsStale;
+ // Weather selection now patches the live site directly. Do not paint
+ // a transient mismatch warning inside the weather tile grid.
+ if(filterFocus==="Clima"){el.textContent="";el.hidden=true;return;}
  el.textContent=dirty?"● Falta aplicar":
   count===0?"":
   verified?"✓ Aplicado no PoGoCoordinates":
@@ -5926,7 +5931,8 @@ function renderQuickMenu(){
    button.setAttribute("aria-haspopup","menu");
    button.setAttribute("aria-expanded",String(choiceOpen==="more"));
   }
-  button.title=name+(quickState(renderedId)?" · "+quickState(renderedId):"");
+  if(renderedId==="period")button.removeAttribute("title");
+  else button.title=name+(quickState(renderedId)?" · "+quickState(renderedId):"");
   button.setAttribute("aria-label",name);
   const glyph=iconForQuick(renderedId,inMore?"⋯":action[1]);
   if(renderedId==="mode"){
@@ -5946,7 +5952,8 @@ function renderQuickMenu(){
   // visual position, not the legacy footer-container grouping.
   rows.appendChild(button);slotCount++;
   if(renderedId==="period"){
-   button.title="Atualizar resultados · segure para ajustar AUTO";
+   button.removeAttribute("title");
+   button.setAttribute("aria-label","Atualizar agora; segure para intervalos");
    button.setAttribute("aria-haspopup","true");
    button.setAttribute("aria-expanded",String(choiceOpen==="period"));
    const badge=document.createElement("span");badge.className="periodBadge";
@@ -6163,6 +6170,7 @@ function renderFiltersChoices(){
  // Search until the user explicitly presses the existing ✓ Aplicar button.
  const websiteSingles=verifiedSiteSingleFilterValues();
  const changed=Object.entries(websiteSingles).filter(([key,value])=>
+   (filterFocus!=="Clima"||key!=="weather")&&
    String(modeDraft[key]??"").toLowerCase()!==String(value).toLowerCase());
  if(changed.length){
   const diff=make("div","uxNote","Site e aplicativo divergem em: "+

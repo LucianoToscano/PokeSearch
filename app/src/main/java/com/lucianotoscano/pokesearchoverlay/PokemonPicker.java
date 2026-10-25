@@ -424,8 +424,13 @@ public final class PokemonPicker {
                     // its bounds; the former 18dp center-gap pushed Favorites down.
                     int below=anchorY+iconHalf+gap;
                     int above=anchorY-iconHalf-actualHeight-gap;
-                    int top=below+actualHeight<=displayH-margin?below:
-                        Math.max(margin,above);
+                    int spaceBelow=Math.max(0,displayH-margin-below);
+                    int spaceAbove=Math.max(0,anchorY-iconHalf-gap-margin);
+                    // Prefer the side with enough space, otherwise choose
+                    // whichever side leaves the least amount obstructed.
+                    boolean placeBelow=spaceBelow>=actualHeight||
+                        (spaceAbove<actualHeight&&spaceBelow>=spaceAbove);
+                    int top=placeBelow?below:Math.max(margin,above);
                     top=Math.max(margin,Math.min(displayH-margin-actualHeight,top));
                     android.view.WindowManager.LayoutParams lp=window.getAttributes();
                     lp.gravity=Gravity.TOP|Gravity.LEFT;

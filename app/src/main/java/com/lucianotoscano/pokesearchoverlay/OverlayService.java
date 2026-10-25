@@ -3776,10 +3776,15 @@ public class OverlayService extends Service {
             handler.postDelayed(()->{
                 if(!stopped&&!loginPaused)
                     android.widget.Toast.makeText(OverlayService.this,
-                        "⚪ Pokébola: toque para resultados, segure 0,6 s para menu.\n"+
-                        "↻ Atualizar: toque para pesquisar, segure 0,6 s para intervalos.",
+                        "👆 Pokébola: toque = resultados · segure = menu · arraste = mover",
                         android.widget.Toast.LENGTH_LONG).show();
-            },1400L);
+            },1100L);
+            handler.postDelayed(()->{
+                if(!stopped&&!loginPaused)
+                    android.widget.Toast.makeText(OverlayService.this,
+                        "👆 ↻: toque = atualizar · segure = escolher intervalo",
+                        android.widget.Toast.LENGTH_LONG).show();
+            },4200L);
         }
         spriteSize=pref.getInt("spriteSize",45);
         if(spriteSize!=35&&spriteSize!=45&&spriteSize!=55)spriteSize=45;
