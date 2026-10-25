@@ -13,8 +13,8 @@ public final class UpdatePolicy {
         // Already signed 0.00.100..106 APKs remain installable; all new
         // 0.00.107+ names are rejected, canonical 0.01.xx is required.
         return versionName!=null &&
-               (versionName.matches("0\\\\.\\\\d{2}\\\\.\\\\d{2}")||
-                versionName.matches("0\\\\.00\\\\.10[0-6]")) &&
+               (versionName.matches("0\\.\\d{2}\\.\\d{2}")||
+                versionName.matches("0\\.00\\.10[0-6]")) &&
                ("PokeSearch-v"+versionName+"-LT.apk").equals(apkName);
     }
     public static boolean validHash(String sha) {
