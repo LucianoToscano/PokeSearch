@@ -21,7 +21,7 @@ import java.util.Locale;
 import java.util.Set;
 
 public final class WatchAlerts {
-    private static final String CHANNEL_ID="pokesearch_watch_sound_v1";
+    private static final String CHANNEL_ID="pokesearch_watch_sound_v1"; // legacy; never reuse its old silent configuration
     private static final java.util.concurrent.atomic.AtomicInteger NEXT_ALERT_ID=
         new java.util.concurrent.atomic.AtomicInteger(13000);
     private static final String SILENT_CHANNEL_ID="pokesearch_watch_silent_v1";
@@ -149,24 +149,21 @@ public final class WatchAlerts {
                 .getString(PREF_SPECIES_TONES,"{}")).length());
         }catch(Exception ignored){return 0;}
     }
+    /** Android notification channel sounds are IMMUTABLE after creation.
+     * LT106 migrates favorites away from stale v1/v2 channels. Future
+     * selections get an independent channel without mutating user-owned
+     * Android settings or overriding DND/silent mode. */
     public static String soundChannelId(Context context,boolean favorite,String species){
-        SharedPreferences prefs=context.getSharedPreferences("prefs",0);
-        String chosen=favorite&&!prefs.contains(PREF_FAVORITE_TONE)?
-            PokeSoundLibrary.favoriteDefaultUri(context).toString():
-            prefs.getString(favorite?PREF_FAVORITE_TONE:PREF_GENERAL_TONE,"");
-        if(favorite&&species!=null){
-            try{
-                String own=new JSONObject(prefs.getString(PREF_SPECIES_TONES,"{}"))
-                    .optString(normalized(species),"");
-                if(!own.isEmpty())
-                    return "pokesearch_fav_species_v2_"+
-                        Integer.toHexString((normalized(species)+"|"+own).hashCode());
-            }catch(Exception ignored){}
+        if(favorite){
+            Uri sound=selectedTone(context,true,species);
+            String key=normalized(species==null?"":species)+"|"+sound;
+            return "pokesearch_fav_sound_v3_"+Integer.toHexString(key.hashCode());
         }
+        SharedPreferences prefs=context.getSharedPreferences("prefs",0);
+        String chosen=prefs.getString(PREF_GENERAL_TONE,"");
         if(!chosen.isEmpty())
-            return (favorite?"pokesearch_fav_custom_v2_":"pokesearch_new_custom_v2_")+
-                Integer.toHexString(chosen.hashCode());
-        return favorite?CHANNEL_ID:"pokesearch_alerts";
+            return "pokesearch_new_custom_v2_"+Integer.toHexString(chosen.hashCode());
+        return "pokesearch_alerts";
     }
     public static void ensureChannel(Context context){ensureChannel(context,null);}
     public static void ensureChannel(Context context,String species){
@@ -174,7 +171,7 @@ public final class WatchAlerts {
         if(manager==null)return;
         String id=soundChannelId(context,true,species);
         NotificationChannel channel=new NotificationChannel(id,
-            id.startsWith("pokesearch_fav_species_v2_")?
+            species!=null&&!species.isEmpty()?
                 "PokeSearch · Favorito "+species:"PokeSearch · Favoritos",
             NotificationManager.IMPORTANCE_HIGH);
         channel.setDescription("Som de favorito independente do aviso geral");
@@ -191,13 +188,20 @@ public final class WatchAlerts {
         manager.createNotificationChannel(channel);
     }
     private static boolean send(Context context,String title,String info,int id,String species){
-        if(!permissionGranted(context))return false;
+        if(!permissionGranted(context)){
+            recordAlertProblem(context,"Permissão de notificações desativada no Android");
+            return false;
+        }
         String soundMode=mode(context);
-        if("off".equals(soundMode))return false;
+        if("off".equals(soundMode)){
+            recordAlertProblem(context,"Alertas de Favoritos estão em OFF");
+            return false;
+        }
         boolean quiet="silent".equals(soundMode);
         try{
             if(quiet)ensureSilentChannel(context);else ensureChannel(context,species);
         }catch(Exception error){
+            recordAlertProblem(context,"Não foi possível preparar o canal de som");
             BugReport.log(context,"NOTIFICATION","Falha ao criar canal favorito");
             return false;
         }
@@ -205,8 +209,13 @@ public final class WatchAlerts {
         if(manager==null)return false;
         String channelId=quiet?SILENT_CHANNEL_ID:soundChannelId(context,true,species);
         NotificationChannel current=manager.getNotificationChannel(channelId);
-        if(current==null||current.getImportance()==NotificationManager.IMPORTANCE_NONE)
+        if(current==null||current.getImportance()==NotificationManager.IMPORTANCE_NONE){
+            recordAlertProblem(context,"Canal de Favoritos bloqueado no Android");
             return false;
+        }
+        if(!quiet&&current.getSound()==null)
+            recordAlertProblem(context,"Canal de Favoritos está sem som nas configurações do Android");
+        else if(!quiet)recordAlertProblem(context,"");
         Intent open=new Intent(context,MainActivity.class);
         PendingIntent intent=PendingIntent.getActivity(context,11,open,
             PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
@@ -216,9 +225,38 @@ public final class WatchAlerts {
             .setStyle(new Notification.BigTextStyle().bigText(info)).setContentIntent(intent).build();
         try{manager.notify(id,note);return true;}
         catch(Exception e){
+            recordAlertProblem(context,"Falha ao enviar notificação de favorito");
             BugReport.log(context,"NOTIFICATION","Alerta favorito · "+e.getClass().getSimpleName());
             return false;
         }
+    }
+    private static void recordAlertProblem(Context context,String reason){
+        context.getSharedPreferences("prefs",0).edit()
+            .putString("lastWatchAlertError",reason).apply();
+    }
+    /** Diagnostics for a user-initiated real notification test (no fake spawn).
+     * This never plays outside Android permission, DND or mute controls. */
+    public static String soundDiagnostic(Context context){
+        if(!permissionGranted(context))
+            return "Permita as notificações do PokeSearch nas configurações do Android.";
+        String chosen=mode(context);
+        if("off".equals(chosen))return "Ative Som em Pokémon Favoritos.";
+        if("silent".equals(chosen))return "Favoritos está em Sem som. Selecione Som.";
+        NotificationManager manager=(NotificationManager)
+            context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if(manager==null)return "Gerenciador de notificações indisponível.";
+        String channelId=soundChannelId(context,true,null);
+        NotificationChannel channel=manager.getNotificationChannel(channelId);
+        if(channel==null)return "Canal de som ainda não foi criado.";
+        if(channel.getImportance()==NotificationManager.IMPORTANCE_NONE)
+            return "Canal de Favoritos bloqueado pelo Android.";
+        if(channel.getSound()==null)
+            return "O canal Favoritos está silenciado no Android. Reative o som nas configurações.";
+        android.media.AudioManager audio=(android.media.AudioManager)
+            context.getSystemService(Context.AUDIO_SERVICE);
+        if(audio!=null&&audio.getStreamVolume(android.media.AudioManager.STREAM_NOTIFICATION)==0)
+            return "Volume de notificações está zerado ou celular está silencioso.";
+        return "Notificação enviada; verifique volume, Não Perturbe e configurações do canal.";
     }
     public static boolean test(Context context){
         return send(context,"🔔 Teste: Pokémon procurado",
