@@ -233,10 +233,19 @@
     // or a different form. These are not official API image URLs.
     if(!item||!Number.isInteger(item.pokemon_id)||
        item.pokemon_id<1||item.pokemon_id>10000)return "";
-    const form=clean(item.form,80).toLowerCase();
-    const costume=clean(item.costume,80).toLowerCase();
-    if(form&&form!=="normal"&&form!=="default")return "";
-    if(costume&&costume!=="none"&&costume!=="normal")return "";
+    // PoGoCoordinates may describe the ordinary species as
+    // SPECIES_NORMAL, SPECIES_DEFAULT or the species name itself. Those
+    // names are base forms, not special costumes; exact verified Dex PNG
+    // is already packaged offline in both overlay WebViews. Never turn
+    // Alolan/Galarian/other forms into the wrong base illustration.
+    const normalKey=text=>clean(text,80).toUpperCase().replace(/[^A-Z0-9]/g,"");
+    const species=normalKey(item.pokemon_name);
+    const form=normalKey(item.form);
+    const costume=normalKey(item.costume);
+    const defaultForm=!form||form==="NORMAL"||form==="DEFAULT"||
+      (species&&(form===species||form===species+"NORMAL"||form===species+"DEFAULT"));
+    if(!defaultForm)return "";
+    if(costume&&costume!=="NONE"&&costume!=="NORMAL"&&costume!=="DEFAULT")return "";
     if(item.costume_id!==null&&item.costume_id!==undefined&&
        Number(item.costume_id)!==0)return "";
     return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+
