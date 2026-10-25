@@ -18,7 +18,7 @@ check("pending state exits on timeout, callback and detail switch",()=>{
  assert.ok(detail.includes('if(seq!==coordsRequestSeq||!coordsPending)return;'));
 });
 check("native callbacks invalidated for changed/hidden details",()=>{
- assert.ok(service.includes('if(selected!=index)coordinateRequestToken++;'));
+ assert.ok(service.includes('if(selected!=index){coordinateRequestToken++;detailManuallyPositioned=false;}'));
  assert.ok(service.includes('coordinateRequestToken++; // Invalidates pending site callbacks after dismiss.'));
  assert.ok(service.includes('requestToken!=coordinateRequestToken'));
 });
