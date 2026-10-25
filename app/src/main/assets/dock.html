@@ -6097,7 +6097,7 @@ function refreshQuickMenuStates(){
    const popupState=typeof activeNativePopupKind==="string"?activeNativePopupKind:"";
    const activeKey={alerts:"bell",visual:"appearance",info:"appearance"}[popupState]||
     popupState;
-   button.setAttribute("aria-expanded",String(activeKey===id));
+   if(typeof button.setAttribute==="function")button.setAttribute("aria-expanded",String(activeKey===id));
   }
   button.classList.toggle("pending",id==="sh"&&shinyPending);
   if(id==="period"){
@@ -6256,21 +6256,8 @@ function renderFiltersChoices(){
  updateFiltersPanelStatus();
  // Inform about verified external changes; importing never calls native
  // Search until the user explicitly presses the existing ✓ Aplicar button.
- const websiteSingles=verifiedSiteSingleFilterValues();
- const changed=Object.entries(websiteSingles).filter(([key,value])=>
-   (filterFocus!=="Clima"||key!=="weather")&&
-   String(modeDraft[key]??"").toLowerCase()!==String(value).toLowerCase());
- if(changed.length&&!(typeof filterFocus!=="undefined"&&filterFocus==="Clima")){
-  const diff=make("div","uxNote","Site e aplicativo divergem em: "+
-   changed.map(([key])=>({sortBy:"Ordenar",weather:"Clima",gender:"Sexo"}[key])).join(", ")+".");
-  const importFromSite=make("button","","Usar opções observadas no site");
-  importFromSite.type="button";
-  importFromSite.onclick=()=>{
-   for(const [key,value] of changed)modeDraft[key]=value;
-   renderFiltersChoices();
-  };
-  panel.append(diff,importFromSite);
- }
+ // LT85: no recurring "Usar opções observadas no site" banner.
+ // All filters are editable and explicitly confirmed in this panel.
  // No redundant instructional paragraph: keep the filter popup compacto.
  const actions=make("div","modeAction filterActions filterRailActions");
  actions.setAttribute("role","group");actions.setAttribute("aria-label","Ações dos filtros");
