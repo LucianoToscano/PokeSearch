@@ -404,6 +404,14 @@ public class OverlayService extends Service {
     private String sort="site"; // Follow the ten results returned by the site, not an inverted local despawn sort.
     private long lastAlertAt=0L;
     private final java.util.Set<String> knownSpawns=new java.util.HashSet<>();
+    // Recent identity TTL protects against duplicate notices when a briefly
+    // missing encounter reappears. It is never persisted or used for API retry.
+    private final java.util.LinkedHashMap<String,Long> recentSpawnExpiries=
+        new java.util.LinkedHashMap<String,Long>(256,0.75f,true){
+            @Override protected boolean removeEldestEntry(java.util.Map.Entry<String,Long> item){
+                return size()>256;
+            }
+        };
     private long armedDespawnMillis=0L;
     private final Runnable expiryRefresh=new Runnable(){
         @Override public void run(){
@@ -2283,8 +2291,13 @@ public class OverlayService extends Service {
         catch(Exception e){recordFailure("interpretar despawn",e);return Long.MAX_VALUE;}
     }
     private String spawnKey(JSONObject c){
-        return mode+"|"+c.optString("name","")+"|"+c.optString("cp","")+"|"+
-            c.optString("level","")+"|"+c.optString("location","");
+        // Never dedupe merely by the same species/CP/location. Different
+        // absolute expiries and verified form/IV can denote different spawns.
+        // Mode deliberately is not part of the encounter identity.
+        return c.optString("number","")+"|"+c.optString("name","")+"|"+
+            c.optString("form","")+"|"+c.optString("cp","")+"|"+
+            c.optString("level","")+"|"+c.optString("location","")+"|"+
+            c.optString("iv","")+"|"+c.optLong("expiresAtMs",0);
     }
     private JSONArray sortItems(JSONArray source){
         java.util.ArrayList<JSONObject> a=new java.util.ArrayList<>();
@@ -2397,12 +2410,18 @@ public class OverlayService extends Service {
         java.util.LinkedHashMap<String,String[]> individualFavorites=new java.util.LinkedHashMap<>();
         java.util.Set<String> wanted=WatchAlerts.watched(this);
         long now=System.currentTimeMillis();
+        recentSpawnExpiries.entrySet().removeIf(entry->entry.getValue()<=now);
         for(int i=0;i<cards.length();i++){
             JSONObject c=cards.optJSONObject(i);
             if(c==null)continue;
+            long expiry=c.optLong("expiresAtMs",Long.MAX_VALUE);
+            if(expiry<=now)continue; // expired Pokémon can never notify
             String key=spawnKey(c);
             current.add(key);
-            if(knownSpawns.contains(key))continue;
+            if(knownSpawns.contains(key)||
+                recentSpawnExpiries.getOrDefault(key,0L)>now)continue;
+            recentSpawnExpiries.put(key,expiry==Long.MAX_VALUE?
+                now+15L*60_000L:expiry);
             if(firstNew.isEmpty() &&
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) && verifiedTargetCriteria(c))
                 firstNew=c.optString("name","Pokémon");
