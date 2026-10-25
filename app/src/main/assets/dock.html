@@ -4883,6 +4883,17 @@ function attachSpriteFeedback(){
   img.addEventListener("load",loaded);
   img.addEventListener("error",failed);
   if(img.complete)loaded();
+  // Some Samsung WebViews leave an Image in "loading" state for seconds,
+  // without firing error. Switch only the verified static PokeAPI base URL
+  // to its equivalent CDN mirror after a bounded grace period.
+  const original=img.getAttribute("data-original-src")||"";
+  const known=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/((?:shiny\/)?[0-9]{1,4}\.png)$/.exec(original);
+  if(known)setTimeout(()=>{
+   if(!done&&img.isConnected&&!mirrorAttempted&&!good()){
+    mirrorAttempted=true;
+    img.src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+known[1];
+   }
+  },1400);
  });
 }
 function attachLongPress(){
