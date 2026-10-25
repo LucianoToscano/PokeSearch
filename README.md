@@ -5,6 +5,11 @@
 ## LT86 — Catálogo completo de Formas e nível 50 (somente QA)
 
 
+**Informações e resultados LT86:** opção ✓ **Mostrar todas as informações** no Editor Visual > Info Pokémon, mantendo a personalização campo a campo. O cartão exibe Despawn primeiro, valores IV, sexo ⚲, distância e ranks GL/UL/ML somente quando confirmados; rolagem do texto preserva o sprite. **O cartão de detalhes pode ser arrastado pelo cabeçalho independentemente da Pokébola.** Despawn usa também o relógio absoluto fornecido pela API e limpa resultados expirados sem depender do contador visual. Sprites base em rede lenta tentam CDN alternativa após 1,4 s, sem trocar arte de formas especiais. Todas essas correções aguardam QA completo e validação física no Samsung.
+
+
+
+
 **Complemento LT86 Samsung QA:** imagens de espécies padrão receberam correção de solicitações simultâneas na grade de Favoritos e tentativa HTTPS alternativa para sprites verificadas; Informações agora reconhece ⚲ Genderless; a Pokébola não fica limitada pela largura do painel de resultados durante o arraste. Foram criados **3 perfis gerais** discretos no menu Filtros (▣ > Usar/Salvar) e **3 perfis de Favoritos** na aba ▣ junto ao contador (toque para usar, segure para salvar). Favoritos continuam limitados a 50; preferências antigas, Shiny e coordenadas são independentes. **Tudo ainda exige build aprovado e teste físico Samsung.** Consulte [checklist LT86](docs/LT86_CHECKLIST_SAMSUNG.md).
 
 
