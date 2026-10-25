@@ -1,4 +1,4 @@
-name: PokeSearch LT108 offline card sprite and Furfrou Natural fix - signed QA
+name: PokeSearch LT108 card sprites offline - signed QA
 on:
   push:
     branches: [fix/lt108-furfrou-card-sprites-20261025]
@@ -9,7 +9,7 @@ on:
       - 'app/src/main/java/**'
       - 'app/src/main/assets/**'
       - 'app/src/main/AndroidManifest.xml'
-      - 'docs/POKESEARCH_LT108_FAVORITE_SOUND_FIX_20261025.md'
+      - 'docs/POKESEARCH_LT108_CARD_SPRITES_20261025.md'
 permissions:
   contents: write
 concurrency:
