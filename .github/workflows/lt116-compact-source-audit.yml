@@ -1,0 +1,158 @@
+name: PokeSearch LT116 compact editable audit under 199MB
+on:
+  push:
+    branches:
+      - fix/lt112-two-pokeballs-parity-20261025
+    paths:
+      - .github/workflows/lt116-compact-source-audit.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+jobs:
+  complete-editable-audit:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_COMMIT: 'dd4c7dcde6404bd5f15a0dc897f873e7ca802d90'
+      QA_RUN: '40243697039'
+      EXPECTED_APK_SHA: '38bf598b5c267f2ad8493de69fae79b836d2e3388a0ac3fd314fcebf39c6b762'
+      EXPECTED_SIGNER: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      ZIP_NAME: 'PokeSearch-LT116-AUDITORIA-EDITAVEL-COM-APK-MENOR199MB.zip'
+    steps:
+      - name: Checkout complete Git history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Collect exact editable APK source and up-to-date documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = '56403a2999fc8037aa020466cf03041b7926ae02'
+          git cat-file -e "$SOURCE_COMMIT^{commit}"
+          mkdir -p pack/sources/APK_LT116_FONTE_EXATA_EDITAVEL \
+                   pack/sources/PR73_ATUAL_EDITAVEL \
+                   pack/binaries/APK_QA_LT116 pack/audit pack/git
+          git archive --format=tar "$SOURCE_COMMIT" |
+            tar -xf - -C pack/sources/APK_LT116_FONTE_EXATA_EDITAVEL
+          git archive --format=tar HEAD |
+            tar -xf - -C pack/sources/PR73_ATUAL_EDITAVEL
+          git diff --binary origin/main HEAD > pack/git/MAIN_VS_PR73_COMPLETO.patch
+          git diff --binary "$SOURCE_COMMIT" HEAD > pack/git/FONTE_APK_VS_PR73_ATUAL.patch
+          gh api "repos/$GITHUB_REPOSITORY/pulls/73" > pack/git/PR73_ESTADO.json
+          gh run download "$QA_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name 'PokeSearch-v0.01.16-LT-Coords-Parity-QA-protected-release' \
+            --dir pack/binaries/APK_QA_LT116
+          cat > pack/LEIA_PRIMEIRO.md <<'EOF'
+          # PokeSearch LT116 — auditoria completa editável (arquivo compacto)
+          - Leia docs/GUIA_MESTRE.md na árvore de código atual.
+          - sources/APK_LT116_FONTE_EXATA_EDITAVEL contém todos os arquivos
+            rastreados, editáveis, e assets correspondentes exatamente ao commit
+            dd4c7dcde6404bd5f15a0dc897f873e7ca802d90, usado no APK 0.01.16/54320.
+          - sources/PR73_ATUAL_EDITAVEL contém o HEAD recente da PR #73, com
+            documentação e auditoria posteriores; não é uma nova build.
+          - binaries/APK_QA_LT116 contém APK, certificado, hash, manifesto de
+            sprites, VERSION/PACKAGE e SOURCE_COMMIT originais do Actions.
+          - audit contém SHA-256 por arquivo; git contém as diferenças
+            completas da main para PR e do APK para a documentação atual.
+          - JDK17, Gradle 8.11.1, SDK36. Compilar exige keystore permanente
+            externo e NÃO está incluído no pacote. NÃO inserir credenciais.
+          - Não publicar nem mesclar sem homologação física no Samsung para
+            as DUAS Pokébolas, 100% e 0%.
+          - Em API indisponível somente transitoriamente o DOM passa a ser
+            fallback após validação da sessão; nunca driblar 401/403/429.
+          - Formas especiais não comprovadas mantêm sprite neutra.
+          EOF
+      - name: Verify original signed artifact, 2050 sprites and backups
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,zipfile,json
+          pack=Path("pack")
+          q=pack/"binaries/APK_QA_LT116"
+          apks=list(q.glob("*.apk"))
+          assert len(apks)==1,apks
+          apk=apks[0]
+          checksum=hashlib.sha256(apk.read_bytes()).hexdigest()
+          assert checksum=="38bf598b5c267f2ad8493de69fae79b836d2e3388a0ac3fd314fcebf39c6b762"
+          assert checksum in (q/"SHA256SUMS.txt").read_text()
+          assert (q/"SOURCE_COMMIT.txt").read_text().strip()=="dd4c7dcde6404bd5f15a0dc897f873e7ca802d90"
+          signature=(q/"SIGNING-REPORT.txt").read_text().lower()
+          assert "34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e" in signature
+          assert "verified using v2 scheme" in signature and "true" in signature
+          badging=(q/"PACKAGE-VERSION.txt").read_text()
+          assert "com.lucianotoscano.pokesearch" in badging
+          assert "versionCode='54320'" in badging and "versionName='0.01.16'" in badging
+          with zipfile.ZipFile(apk) as z:
+           assert z.testzip() is None
+           manifest=json.loads(z.read("assets/pokemon-sprites/manifest.json"))
+           assert manifest["baseCount"]==1025 and manifest["shinyCount"]==1025
+           assert len(manifest["sha256"])==2050
+           for name,expected in manifest["sha256"].items():
+            assert hashlib.sha256(z.read("assets/pokemon-sprites/"+name)).hexdigest()==expected,name
+          backup="docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md"
+          expected="f02d6396a3ae6a4e833f78be8aedbe0b8d0b40254f31203644f3040a30e2a861"
+          for dirname in ("APK_LT116_FONTE_EXATA_EDITAVEL","PR73_ATUAL_EDITAVEL"):
+           base=pack/"sources"/dirname
+           assert (base/"app/src/main/java").is_dir()
+           assert (base/"app/src/main/assets").is_dir()
+           assert hashlib.sha256((base/backup).read_bytes()).hexdigest()==expected
+          (pack/"audit/BUILD_EVIDENCIAS.json").write_text(json.dumps({
+           "apk_sha256":checksum,"source_commit":"dd4c7dcde6404bd5f15a0dc897f873e7ca802d90",
+           "version":"0.01.16","versionCode":54320,
+           "signature_sha256":"34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e",
+           "bundled_normal":1025,"bundled_shiny":1025,
+           "node_java_gradle_build":"PASS_GITHUB_ACTIONS_40243697039",
+           "samsung":"PENDING_P1_AND_P2","official_release":"UNCHANGED_0.01.11"
+          },indent=2)+"\n")
+          print("APK/cert/bundle/backup integrity checked.")
+          PY
+      - name: Assemble ZIP and enforce 199 MB limit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,zipfile,os
+          root=Path("pack")
+          denied={".env",".p12",".jks",".keystore",".pem",".key",".p8"}
+          # Exclude private keystores/credentials if ever accidentally tracked.
+          excluded=[]
+          for f in root.rglob("*"):
+           if not f.is_file():continue
+           if f.is_symlink() or f.name==".env" or f.suffix.lower() in denied:
+            excluded.append(str(f.relative_to(root)));f.unlink()
+          (root/"audit/ARQUIVOS_SENSIVEIS_EXCLUIDOS.txt").write_text("\n".join(excluded)+"\n")
+          files=sorted((p for p in root.rglob("*") if p.is_file()),key=lambda x:x.relative_to(root).as_posix())
+          manifest=[]
+          for p in files:
+           digest=hashlib.sha256(p.read_bytes()).hexdigest()
+           manifest.append(f"{digest}  {p.relative_to(root).as_posix()}")
+          (root/"MANIFESTO_SHA256.txt").write_text("\n".join(manifest)+"\n")
+          output=Path(os.environ["ZIP_NAME"])
+          with zipfile.ZipFile(output,"w",zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
+           for p in sorted((x for x in root.rglob("*") if x.is_file())):
+            z.write(p,p.relative_to(root).as_posix())
+          with zipfile.ZipFile(output) as z:
+           assert z.testzip() is None
+          assert output.stat().st_size < 199_000_000,output.stat().st_size
+          print("ZIP",output,"size",output.stat().st_size,"files",len(files)+1)
+          (Path("ZIP_SHA256SUMS.txt")).write_text(hashlib.sha256(output.read_bytes()).hexdigest()+"  "+output.name+"\n")
+          PY
+      - name: Upload compact audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT116-AUDITORIA-EDITAVEL-MENOR199MB
+          path: |
+            PokeSearch-LT116-AUDITORIA-EDITAVEL-COM-APK-MENOR199MB.zip
+            ZIP_SHA256SUMS.txt
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
