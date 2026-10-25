@@ -32,7 +32,7 @@ assertIt("Location uses four rows and preserves copy paste slider and 0–1000",
  assert.match(location,/sliderRow\.append\(slide\)/);
  assert.match(location,/clipboard\.append\(paste,copy\)/);
  assert.doesNotMatch(location,/label\.append\(slide,actions\)/);
- assert.match(location,/panel\.append\(title,fieldRow,label,message\)/);
+ assert.match(location,/panel\.append\(title,fieldRow,sliderRow,label,message\)/);
  assert.doesNotMatch(location,/panel\.append\(title,fieldRow,slide,label,message\)/);
  assert.match(location,/Native\.pasteLocationCoords\(\)/);
  assert.match(location,/Native\.copyLocationCoords\(field\.value\)/);
