@@ -27,3 +27,10 @@ Data: 25/10/2026 · Nova branch derivada da PR #64 (que deriva da PR #63): `feat
 - Imagens já fazem parte do APK QA, sem exibir/alterar usuário, localização, IV, GL/UL, WebView, overlay, sons ou FirebaseStats.
 - Testar no Samsung: UI e acessibilidade de Home completa, login/overlay, cada categoria, postar/responder de verdade apenas após deploy de regras e ativação da flag; janela localização, copiar/colar com Gboard, compartilhar homenagem, zoom/panorâmica, troca de tema, primeira execução limpa/upgrade e preferências mantidas.
 - Passes CI não substituem Samsung nem Firebase Rules Emulator. Não publicar versão oficial, não alterar APK compartilhado no Drive, não fazer merge.
+
+### Resultado técnico QA 0.00.98 — confirmado 25/10/2026
+- [Actions #40194558819](https://github.com/LucianoToscano/PokeSearch/actions/runs/40194558819) **SUCCESS**: Node regressões, Java compilação/testes, R8/ProGuard, assembleRelease, verificação de assinatura e empacotamento.
+- APK: `PokeSearch-v0.00.98-LT-Community-Home-Thanks-Location-QA.apk`, 39.202.565 bytes, versão `0.00.98/54301`, SOURCE_COMMIT `44cc6fa0cf551edb80e423b070f47cd01aa9ff0e`.
+- **SHA-256:** `08b49f76550f95bc0521dce950b18abadb90034732087eceeebb33f0f1285276`, comparado com `SHA256SUMS.txt` do artifact 12598909133: OK.
+- Certificado SHA-256: `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; v2 true, APK release não depurável, R8 mapping presente e shrinkResources.
+- Teste físico Samsung e Firebase Emulator/Rules deployment **não realizados**: não declarar mural online de fato sem provas. PR #65 Draft, base #64, sem merge/Release/Drive.

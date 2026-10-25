@@ -81,5 +81,9 @@ Este checkpoint **substitui instruções visuais antigas** do arquivo histórico
 - Janela Localização recupera largura ~286dp, botões Aplicar/Limpar visíveis, Colar/Copiar adjacentes, campo coords e raio 0–1000. Missão primeira instalação após guia; posteriores 3 aberturas/10min.
 - **QA candidata 0.00.98/54301**, CI, assinatura e Samsung a validar. Guia detalhado [QA 0.00.98](POKESEARCH_QA98_HOME_COMMUNITY_TRIBUTE_LOCATION.md). Não fazer merge/release/Drive sem autorização.
 
+### Checkpoint CI 0.00.98 — build assinada
+- [PR #65](https://github.com/LucianoToscano/PokeSearch/pull/65) Draft, baseada na PR #64. [Actions #40194558819](https://github.com/LucianoToscano/PokeSearch/actions/runs/40194558819) **SUCCESS**, Android 0.00.98/54301, SOURCE_COMMIT `44cc6fa0cf551edb80e423b070f47cd01aa9ff0e`, SHA-256 APK `08b49f76550f95bc0521dce950b18abadb90034732087eceeebb33f0f1285276`, certificado permanente confirmado, R8/não depurável. Asset ZIP artifact ID 12598909133.
+- **Não** implantadas Rules Firebase, flag `allowDirectPosts` não confirmada true; APK serve para validar Home/Homenagem/Localização e a UI do Mural. Produção e teste Samsung físico pendentes. Detalhes [QA 0.00.98](POKESEARCH_QA98_HOME_COMMUNITY_TRIBUTE_LOCATION.md).
+
 ## 11. Protocolo obrigatório do próximo chat
 Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, preservar todas as mudanças anteriores e escolher a branch correta antes de alterar arquivos. Etapas pequenas, reversíveis e auditáveis, com testes; não apagar preferências, não mexer na assinatura, não ativar Firebase real por inferência. Registrar mudanças neste guia **em poucas linhas** e encaminhar documentos aprofundados para arquivos separados. **Nunca declarar Release, merge, aprovação Samsung ou mural online sem prova real.**
