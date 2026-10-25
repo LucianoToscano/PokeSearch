@@ -2498,7 +2498,10 @@ public class OverlayService extends Service {
             if(card==null)continue;
             try{
                 card.put("sampledAt",now);
-                long end=expiration(card);
+                // The API sends an authoritative absolute despawn timestamp;
+                // do not replace/ignore it because its legacy MM:SS is empty.
+                long absolute=card.optLong("expiresAtMs",Long.MAX_VALUE);
+                long end=absolute!=Long.MAX_VALUE?absolute:expiration(card);
                 // Even if the site briefly shows an old 0:00 card during
                 // React updates, do not reinsert an expired spawn or notify it.
                 if(end<=now)continue;
@@ -3797,9 +3800,10 @@ public class OverlayService extends Service {
         @JavascriptInterface public void expiredResults(){handler.post(()->{
             // The WebView timer is a safety net when an Android handler was
             // canceled by an interrupted navigation. Expire only on time.
-            if(!stopped&&armedDespawnMillis>0L&&
-                System.currentTimeMillis()+300L>=armedDespawnMillis)
-                expiryRefresh.run();
+            // A UI timer may reach zero when the handler alarm was lost on
+            // navigation/Doze, or when an API result arrived after arming.
+            // The sweep is idempotent and never removes a future spawn.
+            if(!stopped)expiryRefresh.run();
         });}
         @JavascriptInterface public void longPressCoords(int i){handler.post(()->{
             try{
