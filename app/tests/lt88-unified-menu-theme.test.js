@@ -50,4 +50,23 @@ test("native favorites use the same 50% alpha, optional blur and nonmodal dialog
  assert.ok(favorites.includes("new int[]{panelColor,panelColor}"));
  assert.ok(favorites.includes("window.setBackgroundBlurRadius(dp(activity,blurRadius))"));
  assert.ok(favorites.includes("FLAG_NOT_TOUCH_MODAL"));
+ assert.ok(favorites.includes("1-Math.pow(Math.max(0,Math.min(100,transparency))/100.0,2.8)"));
+});
+test("Samsung wallpaper cannot defeat reading contrast at base 50% transparency",()=>{
+ assert.match(editor,/Math\.pow\(Math\.max\(0,Math\.min\(100,transparent\)\)\/100,2\.8\)/);
+ assert.match(editor,/set\("menu-readable-bg",readableSurface/);
+ const section=html.slice(html.indexOf("LT88-SAMSUNG-LEGIBILITY-02"));
+ assert.ok(section.length>500);
+ for(const selector of ["#choices.modeCascade .modeCascadeRail",
+  "#choices.modeCascade .modeCascadeEditor",
+  "#choices.filterCascade .filterCascadeRail",
+  "#choices.filterCascade.filterCascadeOpen .filterCascadeEditor",
+  "#choices.filterCascade .generalPresetFlyout",
+  "#officialFormItems", ".extraOptionList",
+  "input.modeCascadeInput"])
+  assert.ok(section.includes(selector),selector);
+ assert.match(section,/background:var\(--visual-menu-readable-bg,rgba\(15,19,26,\.86\)\)!important/);
+ assert.ok(section.includes("pointer-events:none!important"));
+ assert.ok(section.includes("pointer-events:auto!important"));
+
 });
