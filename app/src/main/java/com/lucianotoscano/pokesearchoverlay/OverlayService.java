@@ -4374,7 +4374,20 @@ public class OverlayService extends Service {
             pref.edit().putBoolean("locationEnabled",false).remove("locationCoords").remove("locationRadius").apply();
         }
         extraFiltersJson=pref.getString("extraFiltersJson","{}");
-        try{new JSONObject(extraFiltersJson);}catch(org.json.JSONException ignored){extraFiltersJson="{}";}
+        try{
+            JSONObject savedExtra=new JSONObject(extraFiltersJson);
+            // LT109 migration: an older Distance sort can remain stored after
+            // the user disables/clears Location. Fix ONLY the stale sort on
+            // startup; never erase size, gender, weather, PC, level or presets.
+            if(!locationEnabled&&"Distance (nearest)".equals(
+                    savedExtra.optString("sortBy",""))){
+                savedExtra.put("sortBy","Despawn (longest)");
+                extraFiltersJson=savedExtra.toString();
+                pref.edit().putString("extraFiltersJson",extraFiltersJson).apply();
+                BugReport.log(this,"FILTER_MIGRATION",
+                    "Ordenação por distância inválida sem localização reiniciada; outros filtros mantidos");
+            }
+        }catch(org.json.JSONException ignored){extraFiltersJson="{}";}
         mode=pref.getString("mode",mode);
         boolean migrateLegacyHundo="iv".equals(mode);
         if(migrateLegacyHundo)mode="raw";
