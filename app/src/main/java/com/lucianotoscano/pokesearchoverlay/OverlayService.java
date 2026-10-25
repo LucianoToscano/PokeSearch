@@ -3360,6 +3360,26 @@ public class OverlayService extends Service {
             android.widget.Toast.makeText(OverlayService.this,
                 "Filtro "+slot+" excluído",android.widget.Toast.LENGTH_SHORT).show();
         });}
+        @JavascriptInterface public void clearGeneralFilterPreset(){handler.post(()->{
+            if(stopped)return;
+            // "Padrão" clears the optional search fields without changing
+            // the user's Shiny, location, sound, Favorites or mode preferences.
+            try{
+                JSONObject reset=new JSONObject(filterConfigJson());
+                reset.put("mode",mode);
+                for(String key:new String[]{"pokemon","sortBy","weather","size","gender",
+                    "form","cpMin","cpMax","levelMin","levelMax","minPvpCp"})
+                    reset.put(key,"");
+                for(String key:new String[]{"sizeSelections","genderSelections",
+                    "formSelections","pokemonSelections"})
+                    reset.put(key,new JSONArray());
+                reset.put("clearPokemonSelection",true);
+                reset.put("includePreviousEvolutions",true);
+                getSharedPreferences("prefs",0).edit().putInt("generalPresetActiveV1",0).apply();
+                new Bridge().setSearchConfig(reset.toString());
+                requestGeneralFilterPresets();
+            }catch(org.json.JSONException ignored){}
+        });}
         @JavascriptInterface public void loadGeneralFilterPreset(int slot){handler.post(()->{
             if(slot<1||slot>3||stopped)return;
             String value=getSharedPreferences("prefs",0).getString(generalPresetKey(slot),"");
@@ -3373,7 +3393,7 @@ public class OverlayService extends Service {
                 // instead of introducing a second filter-submission mechanism.
                 getSharedPreferences("prefs",0).edit().putInt("generalPresetActiveV1",slot).apply();
                 new Bridge().setSearchConfig(value);
-                closeIndependentPopup();
+                requestGeneralFilterPresets();
                 android.widget.Toast.makeText(OverlayService.this,
                     "✓ Carregando filtro geral "+slot,
                     android.widget.Toast.LENGTH_SHORT).show();
