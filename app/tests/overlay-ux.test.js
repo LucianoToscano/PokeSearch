@@ -401,7 +401,7 @@ test("Login launched from overlay returns to gameplay with PokeSearch only on su
  main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
  main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
 test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("×")')&&!picker.includes('.setPositiveButton("Concluído"'));
-test("Favorites retain translucent charcoal but allow background touches outside dialog",picker.includes('Color.argb(239,34,38,47)')&&picker.includes('FLAG_NOT_TOUCH_MODAL')&&!picker.includes('setBlurBehindRadius'));
+test("Favorites use persisted theme and transparency without intercepting outside touches",picker.includes('panelAlpha=Math.round(255*(1-transparency/100f))')&&picker.includes('menuTransparency",50')&&picker.includes('FLAG_NOT_TOUCH_MODAL')&&!picker.includes('window.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND)'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
@@ -491,7 +491,7 @@ test("Manual refresh button has touch feedback",dock.includes('onclick="manualRe
  dock.includes('button.classList.add("refreshSpinning")')&&dock.includes('Native.refresh();'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(330,screenWidthDp()-8)"));
-test("Favorites use uniform dark gradient without background dim",picker.includes("Color.argb(238,29,32,39)")&&picker.includes("window.setDimAmount(0.0f)"));
+test("Favorites share one background color and optional local blur without background dim",picker.includes("background.setColors(new int[]{panelColor,panelColor})")&&picker.includes("window.setBackgroundBlurRadius")&&picker.includes("window.setDimAmount(0.0f)"));
 test("HOME-01 has explicit official Google/Discord login and sign-out",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return home.includes('homeAuthButton("◉  Discord"')&&home.includes('homeAuthButton("G  Google"')&&
