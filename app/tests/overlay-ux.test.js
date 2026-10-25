@@ -1535,7 +1535,7 @@ test("Mode emblems preserve historical fallback artwork without Cup alias",()=>{
 test("UX-ICON-02 capture animation reacts to native search state",()=>{
  return service.includes('","+searchInProgress+","+showResultText+')&&
  dock.includes("isSearching=false,textVisible=false")&&dock.includes("searchActive=!!isSearching;")&&
- dock.includes('activeSearchPhase==="searching"&&!shinyPending&&nextQueryAt<=Date.now()')&&
+ dock.includes('activeSearchPhase==="searching"||activeSearchPhase==="filling"')&&
  dock.includes('id="capturePulse"')&&dock.includes('@keyframes psCapturePulse')&&
  dock.includes('prefers-reduced-motion:reduce');
 });
@@ -1745,7 +1745,7 @@ test("UX-SPRITE-01 missing images remain visible without inventing Pokémon or b
 })());
 test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image sources",(()=>{
  const source=dock.split("function attachSpriteFeedback(){")[1]?.split("function attachLongPress(){")[0]||"";
- if(!source.includes("if(img.complete)loaded()")||
+ if(!source.includes("if(img.complete&&good())loaded()")||
     !source.includes("retries>=1")||!source.includes('data-original-src'))return false;
  function makeStage(image){
   const classes=new Set(),listeners={};
