@@ -103,10 +103,21 @@
     var ids=[],forms=[],seen=new Set();
     for(var label of labels){
       if(typeof label!=="string"||!label.trim())throw Error("Invalid Pokémon label");
-      // Exact species_name/form_name labels supplied by GET /pokemon/catalog.
+      // A species name is intentionally broad: all its official forms share
+      // one dex id, and /search pokemon_ids includes every form of that species.
+      // Never confuse a species name with a form-specific label.
+      var speciesMatches=catalog.filter(x=>x&&typeof x==="object"&&x.species_name===label);
+      if(speciesMatches.length){
+       var speciesIds=new Set(speciesMatches.map(x=>requiredInt(x.pokemon_id,1,10000)));
+       if(speciesIds.size!==1)throw Error("Ambiguous species name in official catalog");
+       var speciesId=speciesIds.values().next().value;
+       if(!seen.has(speciesId+":*")){seen.add(speciesId+":*");ids.push(speciesId);}
+       continue;
+      }
+      // A form-specific label must resolve to exactly one official catalog row.
       var matches=catalog.filter(x=>x&&typeof x==="object"&&
-       (x.species_name===label||x.form_name===label||x.label===label));
-      if(matches.length!==1)throw Error("Ambiguous Pokémon catalog selection");
+       (x.form_name===label||x.label===label));
+      if(matches.length!==1)throw Error("Ambiguous Pokémon form selection");
       var item=matches[0],pokemon=requiredInt(item.pokemon_id,1,10000);
       if(item.costume_id!==undefined&&item.costume_id!==null)
        throw Error("Costume-specific filtering unavailable");

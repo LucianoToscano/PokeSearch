@@ -62,6 +62,35 @@ check("do not silently broaden unsupported user filters",()=>{
   {mode:"raw",attack:15,defense:15,stamina:15,genderSelections:["Male","Female"]}
  ]) assert.equal(contract.buildPayload(config).ok,false);
 });
+check("official species names select all forms, named forms stay exact",()=>{
+ const catalog=[
+  {pokemon_id:19,form_id:0,species_name:"Rattata",form_name:"Rattata"},
+  {pokemon_id:19,form_id:46,species_name:"Rattata",form_name:"Alolan Rattata"},
+  {pokemon_id:20,form_id:0,species_name:"Raticate",form_name:"Raticate"}
+ ];
+ const common={mode:"raw",attack:15,defense:15,stamina:15,catalogSpeciesForms:catalog};
+ const broad=contract.buildPayload({...common,pokemonSelections:["Rattata"]});
+ assert.equal(broad.ok,true,JSON.stringify(broad));
+ assert.deepEqual(broad.payload.pokemon_ids,[19]);
+ assert.deepEqual(broad.payload.species_forms,[]);
+ const exact=contract.buildPayload({...common,pokemonSelections:["Alolan Rattata"]});
+ assert.equal(exact.ok,true,JSON.stringify(exact));
+ assert.deepEqual(exact.payload.species_forms,[{pokemon_id:19,form_id:46}]);
+ assert.deepEqual(exact.payload.pokemon_ids,[]);
+ const noGuess=contract.buildPayload({...common,pokemonSelections:["Imaginary Rattata"]});
+ assert.equal(noGuess.ok,false);
+ const ambiguous=contract.buildPayload({...common,catalogSpeciesForms:[
+  ...catalog,{pokemon_id:19,form_id:47,species_name:"Rattata",form_name:"Alolan Rattata"}
+ ],pokemonSelections:["Alolan Rattata"]});
+ assert.equal(ambiguous.ok,false);
+});
+check("Despawn metadata is OFF by default and preserves saved preferences",()=>{
+ const nativeSource=fs.readFileSync(path.join(__dirname,
+  "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ assert.match(nativeSource,/private boolean showTimers=false/);
+ assert.match(nativeSource,/showTimers\s*=\s*prefs\.getBoolean\("showTimers",false\)/);
+ assert.match(nativeSource,/resultShowCount=prefs\.getBoolean\("resultShowCount",false\)/);
+});
 check("numeric validation rejects malformed or reversed selections",()=>{
  assert.equal(contract.buildPayload({mode:"raw",attack:16,defense:15,stamina:15}).ok,false);
  assert.equal(contract.buildPayload({mode:"raw",attack:15,defense:15,stamina:15,cpMin:500,cpMax:100}).ok,false);
