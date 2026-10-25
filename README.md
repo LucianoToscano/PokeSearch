@@ -2,6 +2,16 @@
 
 > **Guia Mestre permanente:** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md). Este README indica o estado verificado; o Guia mantém todo o histórico. Não confundir tags oficiais com commits posteriores de documentos.
 
+## LT85 — Corrigido segundo toque em menus (QA)
+
+**Nova versão de QA 0.00.85 / 54288, não publicada oficialmente.** A branch `fix/lt85-menu-repeat-tap-20261025` herda a integração API QA da LT84 sem alterar preferências, login, filtros ou assinatura. O Android agora decide a abertura/fechamento dos menus Modos, Filtros, Localização, Pokémon, Notificações, Aparência e Mais; Favoritos fecha ao tocar novamente em sua estrela. Os dois WebViews deixam de decidir com base em estado local potencialmente defasado.
+
+- Teste `app/tests/lt85-menu-repeat-tap.test.js`: abrir/fechar/reabrir cada submenu com callback tardio; Favoritos Dialog; scripts.
+- [Código e diagnóstico LT85](docs/LT85_MENU_REPEAT_TAP_QA.md).
+- [Actions LT85 QA assinado](https://github.com/LucianoToscano/PokeSearch/actions/workflows/lt85-menu-repeat-tap-signed-qa.yml) — verificar status e SHA antes de instalar. A homologação física do Samsung permanece necessária. A LT83 continua a versão oficial.
+
+---
+
 ## LT84 API direta — QA isolada, não publicada
 
 A integração autorizada existente foi fortalecida na branch `fix/lt84-authorized-api-direct-qa-20261025`. **LT84 0.00.84 / 54287 é somente QA**, não substitui a LT83 oficial nem altera a ponte Google Drive LT79.
