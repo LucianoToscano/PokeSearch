@@ -138,11 +138,11 @@ function run(action,mode,shinyOnly,opts={}){
   const accountLabels=opts.accountBadge?[element("Shiny for your account TestAccount (123456789012).")]:[];
   const sessionButtons=opts.loggedOut?[element(opts.loginLabel||"Log in")]:opts.logoutVisible?[element("Log out")]:[];
   function querySelectorAll(selector){
-    if(opts.emptyStatus&&selector==='main [role=status],main [aria-live],main p,main h2,main h3'){
-      return [element("No results found",{}, {closest:()=>null})];
+    if((opts.emptyStatus||opts.emptyStatusText)&&selector==='main [role=status],main [aria-live],main p,main h2,main h3'){
+      return [element(opts.emptyStatusText||"No results found",{}, {closest:()=>null})];
     }
-    if(opts.emptyRegion&&selector==='main section,[role=region],[data-testid*=result],[aria-label*=result]'){
-      return [element("No results found",{}, {querySelector:()=>null})];
+    if((opts.emptyRegion||opts.emptyRegionText)&&selector==='main section,[role=region],[data-testid*=result],[aria-label*=result]'){
+      return [element(opts.emptyRegionText||"No results found",{}, {querySelector:()=>null})];
     }
     if(selector==="label,span,strong,div")return labels;
     if(selector==="span,label,strong,small,dt,div,p")return all;
@@ -215,10 +215,14 @@ test("Configurable percentage range passes","verifyFilters","percent",false,
   {iv:["20","80"],config:{percentMin:20,percentMax:80}},true);
 test("Actual IV interval 91–100 passes","verifyFilters","percent",false,
   {iv:["91","100"],config:{percentMin:91,percentMax:100}},true);
-test("Unattainable 90 percent minimum must fail even if form displays 90","verifyFilters","percent",false,
-  {iv:["90","100"],config:{percentMin:90,percentMax:100}},false);
-test("Unattainable 95 percent maximum must fail even if form displays 95","verifyFilters","percent",false,
-  {iv:["91","95"],config:{percentMin:91,percentMax:95}},false);
+test("IV% accepts manual 90% minimum","verifyFilters","percent",false,
+  {iv:["90","100"],config:{percentMin:90,percentMax:100}},true);
+test("IV% accepts manual 95% maximum","verifyFilters","percent",false,
+  {iv:["91","95"],config:{percentMin:91,percentMax:95}},true);
+test("IV% outside 0..100 is rejected","verifyFilters","percent",false,
+  {iv:["91","101"],config:{percentMin:91,percentMax:101}},false);
+test("IV% inverted range is rejected","verifyFilters","percent",false,
+  {iv:["95","90"],config:{percentMin:95,percentMax:90}},false);
 test("Configurable percentage range mismatch fails","verifyFilters","percent",false,
   {iv:["20","80"],config:{percentMin:31,percentMax:80}},false);
 test("Great League top 50 confirmed","verifyFilters","gl",false,
@@ -682,6 +686,32 @@ checked++;
  const busy=run('collect','gl',false,{...form,siteCount:0,emptyRegion:true,loading:true});
  assert.equal(busy.explicitEmpty,false,'Loading UI cannot be confirmed as empty');
  checked+=2;
+}
+// LT62: real PoGoCoordinates empty text, including responsive pages with no count.
+// Never accept the identical old empty notice until the result DOM changes.
+{
+ const shared={};
+ const base={config:{_preSubmitVerified:true},pvp:{rank:"1",league:"Great League",prior:"Yes"},browserWindow:shared};
+ const observed="No spawns match your filter right now.";
+ run("submitSearch","gl",false,{...base,siteCount:6,searchButton:true});
+ const fresh=run("collect","gl",false,{...base,emptyStatusText:observed});
+ assert.equal(fresh.emptySignalFound,true,"Official no-spawns text is evidence within main");
+ assert.equal(fresh.resultChanged,true,"Fresh message replaces the previous result signature");
+ assert.equal(fresh.explicitEmpty,true,"No count label is required when MAIN has explicit no-spawns text");
+ const again=run("collect","gl",false,{...base,emptyStatusText:observed});
+ assert.equal(again.explicitEmpty,true,"Verified empty stays valid in the current generation");
+ checked+=3;
+}
+{
+ const shared={};
+ const base={config:{_preSubmitVerified:true},pvp:{rank:"1",league:"Great League",prior:"Yes"},browserWindow:shared};
+ const observed="No spawns match your filter right now.";
+ run("submitSearch","gl",false,{...base,emptyStatusText:observed,searchButton:true});
+ const stale=run("collect","gl",false,{...base,emptyStatusText:observed});
+ assert.equal(stale.emptySignalFound,true,"The old empty notice remains observable");
+ assert.equal(stale.resultChanged,false,"Unchanged old empty notice is not a new search");
+ assert.equal(stale.explicitEmpty,false,"Old zero must never be accepted");
+ checked+=3;
 }
 // LT60-E9: already visible cards cannot be attributed to the newly submitted mode.
 {

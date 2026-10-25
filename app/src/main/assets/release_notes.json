@@ -122,6 +122,164 @@
           "O site pode devolver a mesma lista sem alteração visível; esse cenário ainda requer validação física."
         ]
       }
+    },
+    {
+      "id": "pokesearch-v062-lt-compact-ui-20261023",
+      "minVersionCode": 54260,
+      "date": "23/10/2026",
+      "title": "PokeSearch v0.00.62 LT Beta — Menus compactos e referências do site",
+      "sections": {
+        "novidades": [
+          "Menus compactos: Sexo agora usa [⚥][♂][♀][⚲], cada opção em seu quadrinho individual.",
+          "Comparação das seleções de Pokémon e filtros simples observadas no PoGoCoordinates, com importação explícita ao rascunho.",
+          "Aplicar, Limpar e Cancelar usam botões compactos com ícones SVG acessíveis.",
+          "Favoritos: até 50 espécies em grade compacta de 10 colunas × 5 linhas, contador no cabeçalho e pesquisa inferior.",
+          "Notificações compactas: Som, Sem som e OFF para Novos e Favoritos; 36 sons, prévia, confirmação e opção Enviar áudio.",
+          "Atualização por duas setas: toque curto para atualizar; toque longo para selecionar OFF ou AUTO 3/5/10/15/20 minutos."
+        ],
+        "melhorias": [
+          "Removidas colunas e margens vazias em Modos, Filtros, Localização, Atualização, Personalização e Informações.",
+          "Campos PC/Nível, botões de Tamanho, raio, filtros e ações ficam próximos do conteúdo, sem esticar os controles à largura total.",
+          "Editor Visual com abas Pokémon/Menu menores; controles P/M/G compactos e botões menos/mais ao lado de cada slider.",
+          "Refresh direto por toque curto, com opções de atualização automática por pressão longa.",
+          "Acompanhamento do tempo das consultas confirmadas, sem registrar dados pessoais.",
+          "PC e Nível agora têm entradas Mín./Máx. lado a lado, sem botões de incremento.",
+          "Ordenar e Clima exibem nomes compactos em português, mantendo os valores técnicos originais em inglês.",
+          "Modos com campos vazios e placeholders A/D/S, Min/Max e #; botão ✓ único e IV% aceitando limites inteiros 0–100.",
+          "Filtros em cascata sem 'Filtros Gerais'; PC/Nível vazios com Min e Max apenas uma vez; símbolos de Sexo maiores.",
+          "Localização mais curta: ícone SVG de colar alinhado, avisos discretos e preservação dos demais filtros.",
+          "Personalização com atalhos Info Pokémon/Editor Visual, P/M/G menores e comandos visíveis organizados com ↑/↓.",
+          "Info Pokémon em grade de duas colunas, 21 opções abreviadas e sem parágrafo explicativo.",
+          "Editor Visual em grupos recolhíveis, sliders compactos com −/+ e prévia visual encerrada ao trocar de menu."
+        ],
+        "correcoes": [
+          "Reconhece a mensagem oficial de nenhum spawn do site, preservando verificação de resposta posterior à pesquisa.",
+          "Shiny pendente não usa a mesma cor da confirmação efetiva.",
+          "Cores dos ícones independentes do fundo dos botões selecionados.",
+          "Preservação da barra de menus fixa, identidade Android, filtros e preferências de autenticação.",
+          "Validação dos filtros PC/Nível mesmo após alternar entre editores e preservação de valores não alterados.",
+          "Ordem dos comandos pula itens protegidos e impede setas sem destino; controles fixos continuam acessíveis.",
+          "Seleção de áudio de Favoritos inicia com 'Quem é esse Pokémon? BR' sem apagar preferências anteriores.",
+          "Proteção contra clique duplo após pressão longa no botão de atualização.",
+          "Favoritos mantêm a Pokébola, resultados e menu acessíveis por trás do diálogo não modal fora dos limites físicos do painel.",
+          "Barra de menu e submenus agora usam janelas Android independentes, com limites compactos e ajustes de posição horizontal/vertical.",
+          "Editor Visual compartilha novamente os botões P/M/G com a Personalização e atualiza preferências confirmadas pelo serviço.",
+          "Notificações distinguem preferência de som selecionada da permissão realmente concedida pelo Android.",
+          "Janelas menores evitam encolhimento sucessivo de largura, grandes áreas vazias e bloqueio desnecessário de toques fora dos painéis."
+        ],
+        "emDesenvolvimento": [
+          "Validação física das dimensões na WebView Samsung e das cascatas GL/UL, IV, filtros e Localização ainda necessária.",
+          "Sincronização bidirecional de todos os controles múltiplos continua em desenvolvimento; teste Node não comprova funcionamento do site autenticado.",
+          "APK compilado para teste deve ser homologado fisicamente no Samsung; aprovação automatizada não confirma alinhamento, toque longo, login, áudio, filtros ou resultados.",
+          "A arquitetura de janelas independentes está no código; a passagem real de toque externo, sons, teclado e posicionamento necessita homologação Samsung Android 16."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-v063-lt-samsung-compact-cascades-20261024",
+      "minVersionCode": 54261,
+      "date": "24/10/2026",
+      "title": "PokeSearch v0.00.63 LT — Cascatas e localização compactas",
+      "sections": {
+        "novidades": [
+          "Ordenar e Clima diretamente nas cascatas de Filtros, sem seletor flutuante secundário.",
+          "Forma com pesquisa e chips dentro da própria cascata lateral."
+        ],
+        "melhorias": [
+          "Cada filtro usa largura compatível com seus controles; Sexo, Tamanho, PC e Nível não herdam áreas vazias.",
+          "Localização em três linhas com controle de raio e ícones SVG delicados de Aplicar/Limpar.",
+          "Ações de Filtros Aplicar, Limpar e Cancelar usam ícones de linha discreta.",
+          "Cabeçalho Favoritos com contador centralizado entre título e fechar."
+        ],
+        "correcoes": [
+          "Menu Atualização ancorado à janela nativa, sem deslocamento CSS adicional.",
+          "Posicionamento nativo de popups evita interseção com a janela de resultados, incluindo após arraste.",
+          "Rascunhos de seleção de filtros preservados até Aplicar; PC e Nível retêm valores ao alternar a cascata."
+        ],
+        "emDesenvolvimento": [
+          "Validar no Samsung toques, recortes, rotação, múltiplas orientações e assinatura de instalação sobre LT62.",
+          "A confirmação de equivalência das opções oficiais e busca pelo site exige teste com PoGoCoordinates ativo."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-v064-lt-result-coords-expiry-20261024",
+      "minVersionCode": 54262,
+      "date": "24/10/2026",
+      "title": "PokeSearch v0.00.64 LT — Coordenadas, sprites e despawn",
+      "sections": {
+        "novidades": [
+          "Get coords tenta copiar as coordenadas do próprio Pokémon ao tocar, como o toque longo na sprite."
+        ],
+        "melhorias": [
+          "Busca por coordenadas verifica espécie e PC mesmo se a ordem dos cards do site mudar.",
+          "Sprites extraídas de URLs reais de carregamento tardio do site; repetição controlada de falhas temporárias sem alterar formas.",
+          "Leitura de coordenadas também aceita endereço confirmado do botão Open in Maps do card correto."
+        ],
+        "correcoes": [
+          "O despawn usa o timestamp absoluto capturado em vez de recalcular um contador relativo potencialmente deslocado.",
+          "Resultados expirados são removidos localmente e solicitam nova busca independentemente de AUTO; relógio visível fornece sinal adicional protegido.",
+          "Agendamento de despawn é rearmado após falha de navegação principal do site."
+        ],
+        "emDesenvolvimento": [
+          "A eficiência da captura de coordenadas depende do site; validar no Samsung card já fechado, conta logada, dois Pokémon iguais e atualização durante clique.",
+          "Testar imagens reais nas diferentes formas/shiny sem substituir sprites oficiais.",
+          "Confirmar atualização automática quando o Pokémon expira, mesmo em AUTO OFF e conexão intermitente."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-v065-lt-samsung-detail-feedback-20261024",
+      "minVersionCode": 54263,
+      "date": "24/10/2026",
+      "title": "PokeSearch v0.00.65 LT — Feedback de coordenadas e card sem sobreposição",
+      "sections": {
+        "novidades": [
+          "O botão de cópia solicita Get coords quando o Pokémon ainda não possui coordenadas, sem deixar ação inerte."
+        ],
+        "melhorias": [
+          "Detalhes indicam 'Obtendo coordenadas' durante a consulta e mantêm a resposta ou o erro no card até mudar de Pokémon.",
+          "Estado de consulta encerra com aviso após prazo limitado, sem ficar preso em aguardando.",
+          "O card de detalhes abre em posição que evita o retângulo de toque da barra flutuante, usando coordenadas nativas da tela."
+        ],
+        "correcoes": [
+          "A atualização de status não apaga mais mensagens de Get coords do mesmo Pokémon.",
+          "Erros do site mostram o motivo informado pelo navegador interno, sem alegar sucesso.",
+          "Card não começa desenhado em cima da toolbar quando ambos dividem a mesma área."
+        ],
+        "emDesenvolvimento": [
+          "Homologar com o Samsung Get coords de Exeggcute e outra espécie sem coordenadas, incluindo caso de site sem resposta.",
+          "Conferir barra e card após arraste e rotação; vídeo de 24/10 não cobre despawn até zero."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-v066-lt-samsung-mode-notifications-scroll-20261024",
+      "minVersionCode": 54264,
+      "date": "24/10/2026",
+      "title": "PokeSearch v0.00.66 LT — Menus compactos e PvP rolável",
+      "sections": {
+        "novidades": [
+          "Card de evoluções PvP agora possui uma única área contínua de rolagem até o último item, com limite de altura de tela.",
+          "Modo usa linha selecionada real para posicionar o editor lateral e conserva números previamente escolhidos."
+        ],
+        "melhorias": [
+          "Símbolos ⚥ ♂ ♀ ⚲ proporcionais à linha Sexo, sem cabeçalho duplicado e editor de largura justa.",
+          "Favoritos: título, contador e × na mesma linha, contador centralizado sobre o cabeçalho inteiro.",
+          "Notificações: título centralizado, X redundante removido, largura definida pelos três controles e laterais reduzidas.",
+          "Localização: margens externas menores, caixa 0–1000km compacta, botões SVG preservados.",
+          "Abertura de Modo no lado direito respeita cascata voltada para dentro da tela."
+        ],
+        "correcoes": [
+          "Removido deslocamento adicional de 34px do menu Modo no popup nativo.",
+          "Card PvP deixa de disputar toques em dois contêineres roláveis e preserva a posição ao receber atualizações do status.",
+          "Limite nativo do card ajustado de 310dp para no máximo 440dp, respeitando espaço útil da tela."
+        ],
+        "emDesenvolvimento": [
+          "A narração do vídeo Samsung está presente no MP4, mas não foi transcrita de maneira verificável; comparados os toques visuais e as observações escritas pelo proprietário.",
+          "Validar no Samsung ícones Sexo, menu Modo nas duas bordas, alinhamento Favoritos, Notificações e rolagem completa PvP."
+        ]
+      }
     }
   ]
 }

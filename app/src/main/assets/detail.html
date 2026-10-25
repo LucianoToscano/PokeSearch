@@ -25,13 +25,18 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #evolutions{margin-top:6px;border:1px solid #ffffff28;border-radius:7px;overflow:hidden}
 #evoToggle{width:100%;text-align:left;background:#24425699;color:#d5ecff;
  padding:6px 7px;font-size:10px;font-weight:800;display:flex;justify-content:space-between;gap:4px}
-#evoBody{max-height:165px;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:3px 6px}
+#evoBody{max-height:none;overflow:visible;touch-action:auto;padding:3px 6px}
+#panel{height:auto;max-height:calc(100vh - 2px);overflow-y:auto;overflow-x:hidden;
+ overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;}
 .evoLeague{font-weight:900;color:#cbd8e7;font-size:10px;border-bottom:1px solid #ffffff24;padding:4px 0 2px}
 .evoLeague.gl{color:#68b7ff}.evoLeague.ul{color:#ffd17c}.evoLeague.ml{color:#cda9ff}
 .evoLine{font-size:10px;line-height:1.32;padding:3px 0;border-bottom:1px solid #ffffff12}
 .evoLine b{font-weight:900}.evoLine.best b{color:#83e7bb}
 .evoStats{font-size:9px;color:#c1ced9}.evoState{font-size:9px;color:#ffb3ac;font-weight:800}
 #copy{margin-top:5px;width:100%;border:1px solid #ffffff35;background:#ffffff22;border-radius:7px;padding:7px;font-weight:bold}#coords{margin-top:7px;width:100%;border-radius:7px;padding:7px;background:#eb2850ce;font-weight:bold}
+#coords,#copy{min-height:36px;touch-action:manipulation;position:relative;z-index:1}
+#coords:disabled,#copy:disabled{opacity:.65;cursor:default}
+#coords:focus-visible,#copy:focus-visible{outline:2px solid #8be1cb;outline-offset:1px}
 </style></head><body><div id="panel">
  <div id="header">
   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
@@ -46,13 +51,58 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   <div id="evoBody" hidden></div>
  </section>
  <button id="watch" onclick="Native.toggleWatch(watchName)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg> <span id="watchLabel">Adicionar aos favoritos</span></button>
- <button id="coords" onclick="Native.coords(currentIndex)">⌖ Get coords</button><button id="copy" onclick="copyCoords()">⧉ Copiar coordenadas</button>
+ <button id="coords" onclick="requestCoordsUi()">⌖ Get coords</button><button id="copy" onclick="copyCoords()">⧉ Copiar coordenadas</button>
 </div>
 <script>
-let watchName="";let currentIndex=-1;let expiresAt=0;let ticking=null;let currentCoords="";function copyCoords(){if(currentCoords)Native.copyCoords(currentCoords);else document.getElementById("copy").textContent="Obtenha as coordenadas primeiro";}window.copyFeedback=msg=>{document.getElementById("copy").textContent=msg;};
+let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
+let coordsNote="",coordsPending=false,coordsRequestSeq=0;
+function coordButtons(){
+ const fetch=document.getElementById("coords"),copy=document.getElementById("copy");
+ if(!fetch||!copy)return;
+ fetch.disabled=coordsPending;
+ fetch.textContent=coordsPending?"⌛ Obtendo coordenadas...":"⌖ Get coords";
+ copy.disabled=coordsPending&&!currentCoords;
+ copy.textContent=currentCoords?"⧉ Copiar coordenadas":
+  coordsPending?"⌛ Aguardando coordenadas":"⧉ Obter e copiar";
+}
+function requestCoordsUi(){
+ if(coordsPending||!Number.isInteger(currentIndex)||currentIndex<0)return;
+ coordsPending=true;coordsNote="Consultando coordenadas do Pokémon no site...";
+ const seq=++coordsRequestSeq;
+ setTimeout(()=>{
+  if(seq!==coordsRequestSeq||!coordsPending)return;
+  coordsPending=false;
+  coordsNote="O site não respondeu à solicitação. Toque em Get coords para tentar novamente.";
+  const label=document.getElementById("coordsValue");
+  if(label)label.textContent=coordsNote;
+  coordButtons();
+ },9000);
+ coordButtons();
+ const label=document.getElementById("coordsValue");
+ if(label)label.textContent=coordsNote;
+ Native.coords(currentIndex);
+}
+function copyCoords(){
+ if(currentCoords)Native.copyCoords(currentCoords);
+ else requestCoordsUi();
+}
+window.copyFeedback=msg=>{
+ coordsNote=String(msg||"");
+ const label=document.getElementById("coordsValue");
+ if(label&&coordsNote)label.textContent=coordsNote;
+ coordButtons();
+};
 function fmt(sec){sec=Math.max(0,Math.floor(sec));return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");}
 function updateCountdown(){const e=document.getElementById("timer");if(e&&expiresAt)e.textContent=fmt((expiresAt-Date.now())/1000);}
-window.coordsResult=function(coords,message){if(coords)currentCoords=coords;document.getElementById("copy").textContent=currentCoords?"⧉ Copiar coordenadas":"Obtenha coordenadas";const el=document.getElementById("coordsValue");if(el)el.textContent=coords||message||"Coordenadas indisponíveis";};
+window.coordsResult=function(coords,message){
+ coordsRequestSeq++;
+ coordsPending=false;
+ if(coords){currentCoords=coords;coordsNote="";}
+ else coordsNote=String(message||"Coordenadas indisponíveis");
+ coordButtons();
+ const label=document.getElementById("coordsValue");
+ if(label)label.textContent=currentCoords||coordsNote||"Toque em Get coords";
+};
 const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let detailIdentity="",evolutionExpanded=false;
 const evoIdentity=c=>JSON.stringify([
@@ -107,13 +157,18 @@ window.showEvolutionDetails=payload=>{
   count+=rows.length;
  }
  if(!count){outer.hidden=true;return false;}
- body.innerHTML=html;
+ // LT66: WebView may rerender after each native status tick. Never reset
+ // the reader to the top of a long PvP analysis when its content is unchanged.
+ const panel=document.getElementById("panel");
+ const keepScroll=panel.scrollTop;
+ if(body.innerHTML!==html)body.innerHTML=html;
  outer.hidden=false;
  document.getElementById("evoLabel").textContent="Evoluções PvP · "+count+" análises";
  body.hidden=!evolutionExpanded;
  document.getElementById("evoChevron").textContent=evolutionExpanded?"▴":"▾";
  document.getElementById("evoToggle").setAttribute("aria-expanded",String(evolutionExpanded));
  resizeEvolutionPanel();
+ requestAnimationFrame(()=>{panel.scrollTop=Math.min(keepScroll,Math.max(0,panel.scrollHeight-panel.clientHeight));});
  return true;
 };
 const item=(k,v)=>v?'<div><em>'+h(k)+':</em> '+h(v)+'</div>':"";
@@ -122,15 +177,22 @@ window.watchFeedback=watched=>{
 };
 window.pauseDetailTimer=()=>{if(ticking){clearInterval(ticking);ticking=null;}};
 window.showDetails=(c,mode,watched)=>{
+ const panel=document.getElementById("panel");
+ const keepScroll=panel.scrollTop;
  const nextIdentity=evoIdentity(c);
- if(detailIdentity!==nextIdentity){
+ const changed=detailIdentity!==nextIdentity;
+ if(changed){
   detailIdentity=nextIdentity;evolutionExpanded=false;
+  coordsRequestSeq++;
+  coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
   document.getElementById("evolutions").hidden=true;
   document.getElementById("evoBody").hidden=true;
   document.getElementById("evoBody").innerHTML="";
  }
  watchName=String(c.name||"");window.watchFeedback(!!watched);
- currentIndex=Number(c.sourceIndex);currentCoords=String(c.coords||"");document.getElementById("copy").textContent=currentCoords?"⧉ Copiar coordenadas":"Obtenha coordenadas";
+ currentIndex=Number(c.sourceIndex);
+ if(!currentCoords&&c.coords)currentCoords=String(c.coords);
+ coordButtons();
  const parts=String(c.despawn||"").split(":").map(Number);
  const secs=parts.length===2&&parts.every(Number.isFinite)?parts[0]*60+parts[1]:0;
  expiresAt=secs?(Number(c.sampledAt)||Date.now())+secs*1000:0;
@@ -155,8 +217,11 @@ window.showDetails=(c,mode,watched)=>{
   stat("PC",c.cp)+stat("Nv.",c.level)+stat("IV",c.ivPercent?c.ivPercent+"%"+(c.iv?" ("+c.iv+")":""):c.iv,"red")+
   stat("Rank",c.rank);
  document.getElementById("info").innerHTML=
-  item("Golpes",c.moves)+item("Local",c.location)+item("Distância",c.distance)+(expiresAt?'<div><em>Despawn:</em> <span id="timer"></span></div>':item("Despawn",c.despawn))+'<div><em>Coordenadas:</em> <span id="coordsValue">'+h(c.coords||"Toque em Get coords")+'</span></div>';
+  item("Golpes",c.moves)+item("Local",c.location)+item("Distância",c.distance)+(expiresAt?'<div><em>Despawn:</em> <span id="timer"></span></div>':item("Despawn",c.despawn))+'<div><em>Coordenadas:</em> <span id="coordsValue">'+h(currentCoords||coordsNote||"Toque em Get coords")+'</span></div>';
  updateCountdown();
  resizeEvolutionPanel();
+ if(changed)panel.scrollTop=0;
+ else requestAnimationFrame(()=>{panel.scrollTop=Math.min(keepScroll,
+  Math.max(0,panel.scrollHeight-panel.clientHeight));});
 };
 </script></body></html>

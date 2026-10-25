@@ -4,6 +4,8 @@ plugins { id("com.android.application") }
 // Independent, anonymous LT54 counters; no google-services plugin required
 // because FirebaseStats initializes the named app using public Android config.
 dependencies {
+    implementation("androidx.work:work-runtime:2.10.2")
+    implementation("androidx.core:core:1.15.0")
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-database")

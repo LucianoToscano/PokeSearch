@@ -77,8 +77,13 @@ public class MainActivity extends Activity {
     private String alertToneTarget="";
     private String alertToneSpecies="";
     private android.media.MediaPlayer bundledTonePreview;
+    private android.media.Ringtone systemTonePreview;
     private FrameLayout homeRoot;
     private boolean homeLightMode=false;
+    // LT72: Home-only update card; does not own or recreate the overlay/WebView.
+    private LinearLayout homeUpdateHolder;
+    private UpdateCenter.Manifest currentDriveUpdate;
+    private GitHubUpdateCenter.Release currentGithubUpdate;
 
     // Native Home panels change alpha; the wallpaper never changes transparency.
     private final java.util.List<android.graphics.drawable.GradientDrawable> homeSurfaces=
@@ -103,6 +108,47 @@ public class MainActivity extends Activity {
     private ImageView overlayControl;
     private TextView sessionHint;
     private View homeDrawerLayer;
+    // Optional mission: never open without an explicit tap.
+    private ImageView homeMissionBadge;
+    private boolean missionResumed=false;
+    private final android.os.Handler missionHandler=
+        new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable missionHeartbeat=new Runnable(){
+        @Override public void run(){
+            if(!missionResumed || !hasWindowFocus())return;
+            SupportMissionState.homeTick(MainActivity.this);
+            syncMissionBadge();
+            missionHandler.postDelayed(this,5000L);
+        }
+    };
+    private void syncMissionBadge(){
+        if(homeMissionBadge==null)return;
+        int state=SupportMissionState.badge(this);
+        homeMissionBadge.setVisibility(state==SupportMissionState.HIDDEN?View.GONE:View.VISIBLE);
+        if(state!=SupportMissionState.HIDDEN){
+            homeMissionBadge.setImageResource(state==SupportMissionState.NEW?
+                R.drawable.support_home_new:R.drawable.support_home_seen);
+            homeMissionBadge.setContentDescription(state==SupportMissionState.NEW?
+                "Nova Missão Especial de Apoio":"Reabrir Missão Especial de Apoio");
+        }
+    }
+    private void openSupportMission(){
+        int style=SupportMissionState.open(this);
+        if(style<0){syncMissionBadge();return;}
+        syncMissionBadge();
+        SupportMissionDialog.show(this,style,homeLightMode,this::syncMissionBadge);
+    }
+    private void syncMissionClock(boolean focused){
+        missionHandler.removeCallbacks(missionHeartbeat);
+        boolean active=focused&&missionResumed&&!isFinishing();
+        SupportMissionState.homeVisibility(this,active);
+        if(active)missionHandler.postDelayed(missionHeartbeat,5000L);
+        syncMissionBadge();
+    }
+    @Override public void onWindowFocusChanged(boolean hasFocus){
+        super.onWindowFocusChanged(hasFocus);
+        syncMissionClock(hasFocus);
+    }
     private String pendingExportText="";
     private String preferredLoginProvider="";
     private String observedLoginProvider="";
@@ -114,6 +160,7 @@ public class MainActivity extends Activity {
             finish();
             return;
         }
+        SupportMissionState.onLauncherIntent(this,getIntent(),b);
         // HOME-01: rebuild only the presentation, never discard existing features.
         getWindow().setStatusBarColor(Color.rgb(12,33,67));
         getWindow().setNavigationBarColor(Color.rgb(9,20,37));
@@ -468,6 +515,16 @@ public class MainActivity extends Activity {
         trainerCodeGroup.addView(trainerAction,actionLp);
         trainerAction.setOnClickListener(v->openTrainerManagement());
 
+        // LT72: a zero-height, GONE placeholder unless Drive announces a
+        // valid, enabled and newer version. Never reserve blank Home space.
+        homeUpdateHolder=new LinearLayout(this);
+        homeUpdateHolder.setOrientation(LinearLayout.VERTICAL);
+        homeUpdateHolder.setVisibility(View.GONE);
+        LinearLayout.LayoutParams updateLp=new LinearLayout.LayoutParams(-1,-2);
+        updateLp.topMargin=d(5);
+        screen.addView(homeUpdateHolder,updateLp);
+        renderDriveUpdateBanner();
+
         // New compact LT54 counters; a dash indicates missing connectivity/rules.
         LinearLayout stats=new LinearLayout(this);
         stats.setOrientation(LinearLayout.HORIZONTAL);
@@ -491,7 +548,8 @@ public class MainActivity extends Activity {
 
         // Keep the center open for the user's Pokémon GO wallpaper.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
-        TextView footer=homeText("PokeSearch  •  PoGoCoordinates /search",10,
+        // LT73: show the installed APK's real version; no manual version strings.
+        TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+" LT  •  PoGoCoordinates /search",10,
             homeLightMode?Color.rgb(26,51,72):Color.rgb(185,208,233),false);
         footer.setGravity(Gravity.CENTER);
         footer.setBackground(homeSurface(
@@ -499,8 +557,148 @@ public class MainActivity extends Activity {
             12,homeLightMode?Color.argb(80,33,65,89):Color.argb(75,180,215,247)));
         footer.setPadding(d(9),d(5),d(9),d(5));
         screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));
+        // Mission icon floats above the footer, without stealing space from
+        // header controls, update alerts, counters or trainer details.
+        homeMissionBadge=new ImageView(this);
+        homeMissionBadge.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        homeMissionBadge.setBackgroundColor(Color.TRANSPARENT);
+        homeMissionBadge.setOnClickListener(v->openSupportMission());
+        FrameLayout.LayoutParams missionLp=new FrameLayout.LayoutParams(
+            d(52),d(52),Gravity.RIGHT|Gravity.BOTTOM);
+        missionLp.rightMargin=d(16);
+        missionLp.bottomMargin=d(49);
+        frame.addView(homeMissionBadge,missionLp);
+        syncMissionBadge();
         return frame;
     }
+    /** Callback from UpdateCenter, always on Android's UI thread. */
+    void onDriveUpdateLoaded(UpdateCenter.Manifest manifest) {
+        if(activityClosing||isFinishing()||isDestroyed())return;
+        currentDriveUpdate=manifest;
+        renderDriveUpdateBanner();
+    }
+
+    void onGithubUpdateLoaded(GitHubUpdateCenter.Release info) {
+        if(activityClosing||isFinishing()||isDestroyed())return;
+        currentGithubUpdate=info;renderDriveUpdateBanner();
+    }
+    private void renderDriveUpdateBanner() {
+        LinearLayout holder=homeUpdateHolder;
+        if(holder==null)return;
+        holder.removeAllViews();
+        if(GitHubUpdateCenter.eligible(this,currentGithubUpdate)){
+            renderGithubUpdateBanner(holder,currentGithubUpdate);
+            return;
+        }
+        final UpdateCenter.Manifest info=currentDriveUpdate;
+        if(!UpdateCenter.isEligible(this,info)){
+            holder.setVisibility(View.GONE);
+            return;
+        }
+        boolean light=homeLightMode;
+        int primary=light?Color.rgb(27,48,68):Color.rgb(245,250,255);
+        int secondary=light?Color.rgb(68,89,108):Color.rgb(191,210,229);
+        LinearLayout card=new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(d(9),d(6),d(8),d(7));
+        card.setBackground(homeSurface(
+            light?Color.argb(240,248,252,255):Color.argb(233,24,35,49),
+            11,light?Color.rgb(183,201,214):Color.rgb(69,91,112)));
+        holder.addView(card,new LinearLayout.LayoutParams(-1,-2));
+
+        LinearLayout titleRow=new LinearLayout(this);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        card.addView(titleRow,new LinearLayout.LayoutParams(-1,-2));
+        TextView title=homeText("⬇ "+info.message,12,primary,true);
+        title.setSingleLine(true);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        titleRow.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+
+        TextView close=homeText("✕",15,secondary,true);
+        close.setGravity(Gravity.CENTER);
+        close.setContentDescription("Dispensar atualização "+info.versionName);
+        titleRow.addView(close,new LinearLayout.LayoutParams(d(34),d(29)));
+        close.setOnClickListener(v->{
+            UpdateCenter.dismiss(this,info.versionCode);
+            renderDriveUpdateBanner();
+        });
+
+        LinearLayout bodyRow=new LinearLayout(this);
+        bodyRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams bodyLp=new LinearLayout.LayoutParams(-1,-2);
+        bodyLp.topMargin=d(1);
+        card.addView(bodyRow,bodyLp);
+
+        TextView version=homeText("PokeSearch v"+info.versionName+" LT",12,primary,true);
+        version.setSingleLine(true);
+        version.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        bodyRow.addView(version,new LinearLayout.LayoutParams(0,-2,1));
+
+        TextView download=homeText("Baixar APK",11,
+            light?Color.rgb(11,80,75):Color.rgb(172,246,215),true);
+        download.setGravity(Gravity.CENTER);
+        download.setContentDescription("Baixar APK oficial "+info.apkName+" do Google Drive");
+        download.setPadding(d(9),0,d(9),0);
+        download.setBackground(homeSurface(
+            light?Color.rgb(221,244,237):Color.rgb(23,70,61),
+            8,light?Color.rgb(159,206,193):Color.rgb(68,138,116)));
+        bodyRow.addView(download,new LinearLayout.LayoutParams(-2,d(33)));
+        download.setOnClickListener(v->UpdateCenter.openDownload(this,info));
+
+        if(!info.description.isEmpty()){
+            TextView note=homeText(info.description,10,secondary,false);
+            note.setMaxLines(2);
+            note.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            LinearLayout.LayoutParams noteLp=new LinearLayout.LayoutParams(-1,-2);
+            noteLp.topMargin=d(2);
+            card.addView(note,noteLp);
+        }
+        holder.setVisibility(View.VISIBLE);
+    }
+
+    /** Native update UI; the server address and asset links are never rendered. */
+    private void renderGithubUpdateBanner(LinearLayout holder,GitHubUpdateCenter.Release info){
+        boolean light=homeLightMode;
+        int primary=light?Color.rgb(27,48,68):Color.rgb(245,250,255);
+        int secondary=light?Color.rgb(68,89,108):Color.rgb(191,210,229);
+        LinearLayout card=new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(d(10),d(7),d(10),d(8));
+        card.setBackground(homeSurface(
+            light?Color.argb(240,248,252,255):Color.argb(233,24,35,49),
+            11,light?Color.rgb(183,201,214):Color.rgb(69,91,112)));
+        holder.addView(card,new LinearLayout.LayoutParams(-1,-2));
+        TextView title=homeText("PokeSearch · versão "+info.versionName+" disponível",12,primary,true);
+        card.addView(title);
+        if(!info.notes.isEmpty()){
+            TextView subtitle=homeText(info.notes,10,secondary,false);
+            subtitle.setMaxLines(2);
+            subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            card.addView(subtitle);
+        }
+        LinearLayout actions=new LinearLayout(this);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        card.addView(actions);
+        TextView download=homeText("⬇ Baixar atualização",11,
+            light?Color.rgb(11,80,75):Color.rgb(172,246,215),true);
+        download.setPadding(d(7),d(8),d(7),d(8));
+        actions.addView(download,new LinearLayout.LayoutParams(0,-2,1));
+        download.setOnClickListener(v->GitHubUpdateCenter.showDialog(this,info));
+        TextView later=homeText("Depois",10,secondary,false);
+        later.setPadding(d(8),d(8),d(8),d(8));
+        actions.addView(later);
+        later.setOnClickListener(v->{
+            GitHubUpdateCenter.later(this,info.versionCode);renderDriveUpdateBanner();
+        });
+        TextView ignore=homeText("Ignorar",10,secondary,false);
+        ignore.setPadding(d(8),d(8),0,d(8));
+        actions.addView(ignore);
+        ignore.setOnClickListener(v->{
+            GitHubUpdateCenter.ignore(this,info.versionCode);renderDriveUpdateBanner();
+        });
+        holder.setVisibility(View.VISIBLE);
+    }
+
     private void openTrainerManagement(){
         String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
         if(!code.matches("[0-9]{12}")){
@@ -933,12 +1131,21 @@ public class MainActivity extends Activity {
     }
     @Override protected void onResume(){
         super.onResume();
+        missionResumed=true;
+        syncMissionClock(hasWindowFocus());
         FirebaseStats.setHomeVisible(this,true);
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
+        UpdateCenter.check(this); // Preserve existing Google Drive fallback.
+        GitHubUpdateCenter.schedule(this); // 30 min, Doze-aware; no extra service.
+        GitHubUpdateCenter.check(this); // Official stable Releases only.
+        if(OverlayService.isRunning())
+            serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
     }
     @Override protected void onPause(){
+        missionResumed=false;
+        syncMissionClock(false);
         FirebaseStats.setHomeVisible(this,false);
         super.onPause();
     }
@@ -1347,6 +1554,8 @@ public class MainActivity extends Activity {
     }
     @Override protected void onNewIntent(Intent intent){
         super.onNewIntent(intent);
+        SupportMissionState.onLauncherIntent(this,intent,null);
+        syncMissionBadge();
         setIntent(intent);
         handleShinyLoginIntent(intent);
         if("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST".equals(intent.getAction()))
@@ -1452,6 +1661,31 @@ public class MainActivity extends Activity {
         });
         body.addView(order);
         settingCheckbox(body,prefs,"showTimers","Mostrar tempo individual de despawn",false);
+        // Explicit Samsung QA gate only; existing users remain on the DOM collector.
+        // Use the refresh icon after switching between DOM and API.
+        settingCheckbox(body,prefs,"authorizedApiQaOptIn",
+            "API experimental de QA (padrão seguro: DOM; use ↻ para alternar)",false);
+        // LT79: separate update notifications and explicit user-driven check.
+        CheckBox updateAlerts=new CheckBox(this);
+        updateAlerts.setText("Avisar quando sair nova atualização do PokeSearch");
+        updateAlerts.setTextColor(Color.WHITE);
+        updateAlerts.setChecked(GitHubUpdateCenter.alertsEnabled(this));
+        updateAlerts.setOnCheckedChangeListener((button,enabled)->{
+            GitHubUpdateCenter.setAlerts(this,enabled);
+            if(enabled&&Build.VERSION.SDK_INT>=33&&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=
+                    PackageManager.PERMISSION_GRANTED)
+                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},205);
+        });
+        body.addView(updateAlerts);
+        Button checkUpdates=new Button(this);
+        checkUpdates.setText("↻ Verificar atualizações");
+        checkUpdates.setAllCaps(false);checkUpdates.setTextSize(12);
+        checkUpdates.setOnClickListener(v->{
+            GitHubUpdateCenter.checkManual(this);
+            Toast.makeText(this,"Consultando versões oficiais…",Toast.LENGTH_SHORT).show();
+        });
+        body.addView(checkUpdates,new LinearLayout.LayoutParams(-1,d(42)));
         settingAlertMode(body,prefs);
         settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,
             "Alertar ao encontrar favorito nos filtros confirmados",true);
@@ -1550,7 +1784,7 @@ public class MainActivity extends Activity {
     // Launched only after user interaction with the Notifications menu.
     private void beginAlertToneChoice(String target){
         if("general".equals(target)||"favorites".equals(target)){
-            chooseAlertToneSource(target,"");
+            openBundledAlertTonePicker(target,"");
             return;
         }
         if(!"species".equals(target))return;
@@ -1570,6 +1804,9 @@ public class MainActivity extends Activity {
     // Local preview is triggered only by tapping a sound. No preference
     // is changed until the separate confirmation button is pressed.
     private void stopBundledTonePreview(){
+        android.media.Ringtone oldSystem=systemTonePreview;
+        systemTonePreview=null;
+        if(oldSystem!=null)try{oldSystem.stop();}catch(RuntimeException ignored){}
         android.media.MediaPlayer previous=bundledTonePreview;
         bundledTonePreview=null;
         if(previous!=null){
@@ -1599,16 +1836,39 @@ public class MainActivity extends Activity {
     }
     private void openBundledAlertTonePicker(String target,String pokemon){
         stopBundledTonePreview();
+        // First item is the Android default, next the 36 locally bundled MP3
+        // resources, and the last opens ACTION_OPEN_DOCUMENT to upload audio.
+        final int count=PokeSoundLibrary.size();
+        String[] choices=new String[count+2];
+        choices[0]="Padrão";
+        System.arraycopy(PokeSoundLibrary.LABELS,0,choices,1,count);
+        choices[count+1]="＋ Enviar áudio";
         final int[] selected={-1};
         AlertDialog dialog=new AlertDialog.Builder(this)
-            .setTitle("Toque para ouvir · "+PokeSoundLibrary.size()+" sons")
-            .setSingleChoiceItems(PokeSoundLibrary.LABELS,-1,(opened,which)->{
-                selected[0]=playBundledTonePreview(which)?which:-1;
+            .setTitle("Toque para ouvir · confirme em ✓")
+            .setSingleChoiceItems(choices,-1,(opened,which)->{
+                if(which==count+1){
+                    opened.dismiss();
+                    openAlertAudioFilePicker(target,pokemon);
+                    return;
+                }
+                if(which==0){
+                    stopBundledTonePreview();
+                    selected[0]=-2; // Explicit Android default; no custom URI.
+                    try{
+                        systemTonePreview=RingtoneManager.getRingtone(this,
+                            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+                        if(systemTonePreview!=null)systemTonePreview.play();
+                    }catch(RuntimeException ignored){}
+                }else{
+                    selected[0]=playBundledTonePreview(which-1)?which-1:-1;
+                }
                 ((AlertDialog)opened).getButton(AlertDialog.BUTTON_POSITIVE)
-                    .setEnabled(selected[0]>=0);
+                    .setEnabled(selected[0]!=-1);
             })
-            .setPositiveButton("Usar este som",(opened,which)->{
-                if(selected[0]<0)return;
+            .setPositiveButton("✓ Usar áudio",(opened,which)->{
+                if(selected[0]==-1)return;
+                if(selected[0]==-2){storeAlertTone(target,pokemon,"");return;}
                 Uri chosen=PokeSoundLibrary.soundUri(this,selected[0]);
                 if(chosen!=null)storeAlertTone(target,pokemon,chosen.toString());
             })
@@ -1623,7 +1883,7 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this)
             .setTitle("Som de "+("species".equals(target)?pokemon:
                 "favorites".equals(target)?"favoritos":"novos Pokémon"))
-            .setItems(new String[]{"🎶 Biblioteca PokeSearch (24 sons)","🔔 Toques do Android",
+            .setItems(new String[]{"🎶 Biblioteca PokeSearch ("+PokeSoundLibrary.size()+" sons)","🔔 Toques do Android",
                 "🎵 Escolher áudio (MP3/OGG) do aparelho ou Drive","↩ Restaurar som padrão"},
                 (dialog,which)->{
                     if(which==0)openBundledAlertTonePicker(target,pokemon);
@@ -1663,6 +1923,34 @@ public class MainActivity extends Activity {
             Toast.makeText(this,"Seletor de sons indisponível no Android",Toast.LENGTH_LONG).show();
         }
     }
+    private void confirmUploadedAlertTone(String target,String species,Uri chosen){
+        stopBundledTonePreview();
+        AlertDialog confirm=new AlertDialog.Builder(this)
+            .setTitle("Áudio enviado")
+            .setMessage("Ouça a prévia e confirme para usar nas notificações.")
+            .setNeutralButton("▶ Ouvir",null)
+            .setPositiveButton("✓ Usar áudio",(dialog,which)->
+                storeAlertTone(target,species,chosen.toString()))
+            .setNegativeButton("Cancelar",null).create();
+        confirm.setOnShowListener(shown->
+            confirm.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v->{
+                stopBundledTonePreview();
+                try{
+                    bundledTonePreview=android.media.MediaPlayer.create(this,chosen);
+                    if(bundledTonePreview==null){
+                        Toast.makeText(this,"Prévia indisponível",Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    bundledTonePreview.setOnCompletionListener(done->stopBundledTonePreview());
+                    bundledTonePreview.start();
+                }catch(RuntimeException error){
+                    stopBundledTonePreview();
+                    Toast.makeText(this,"Não foi possível ouvir o arquivo",Toast.LENGTH_SHORT).show();
+                }
+            }));
+        confirm.setOnDismissListener(done->stopBundledTonePreview());
+        confirm.show();
+    }
     private void saveChosenAlertTone(Intent data,boolean document){
         String target=alertToneTarget,species=alertToneSpecies;
         alertToneTarget="";alertToneSpecies="";
@@ -1680,8 +1968,11 @@ public class MainActivity extends Activity {
                 Toast.makeText(this,"O provedor de áudio não concedeu acesso permanente. Baixe o MP3 no aparelho.",Toast.LENGTH_LONG).show();
                 return;
             }
+            // Choosing a file does not persist the tone: preview + confirm first.
+            confirmUploadedAlertTone(target,species,uri);
+            return;
         }
-        String chosen=!document&&uri.equals(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))?
+        String chosen=uri.equals(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))?
             "":uri.toString();
         storeAlertTone(target,species,chosen);
     }
@@ -1752,6 +2043,7 @@ public class MainActivity extends Activity {
         if(requestCode==202)startOverlay();
         if(requestCode==204){
             boolean granted=results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED;
+            serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
             Toast.makeText(this,granted&&WatchAlerts.permissionGranted(this)?
                 "Permissão de notificações concedida":"Permissão negada. Configure as notificações no Android.",
                 Toast.LENGTH_LONG).show();
@@ -1772,6 +2064,9 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        missionResumed=false;
+        missionHandler.removeCallbacks(missionHeartbeat);
+        SupportMissionState.homeVisibility(this,false);
         stopBundledTonePreview();
         activityClosing=true;
         avatarRequestGeneration++;

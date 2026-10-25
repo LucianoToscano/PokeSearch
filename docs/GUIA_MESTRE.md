@@ -4414,3 +4414,2004 @@ No `OverlayService.java`, `requestFormOptions()` e `requestFormOptionsLater()` f
 **Homologação física no Samsung / próximo chat:** instalar `PokeSearch-v0.00.61-LT.apk` **por cima** da LT60, sem desinstalar ou limpar dados; confirmar que o Android aceita atualização e login anterior; verificar `Modos` 100%, 0%, IV A/D/H e IV% mínimo/máximo, GL Top 1/50, UL Top 1/50; ativar Shiny e alternar os Modos, verificando que permaneça solicitado e depois confirmado pelo site; conferir explicitamente o formulário `pogocoordinates.com/search`, `Include previous evolutions=Yes`, resultado verdadeiro vs. antigo/erro de site, Pokémon/Forma/Sexo/Tamanho/Clima, Localização Coords+Radius, até 10 resultados, desempenho com cronômetro, e notas de atualização (Novidades/Melhorias/Correções). Se houver falha, abrir uma branch a partir do HEAD atual, corrigir etapas pequenas e preservar assinatura/dados. Não anunciar homologação física antes dos testes reais.
 
 **Status:** APK LT61 assinado gerado e disponível pelo artefato Actions; PR #33 MERGED; `main` recebeu as correções. Assinatura estável sem troca, pacote inalterado, versão superior a LT60. Esta seção foi adicionada após o merge como registro documental, não faz parte do código-fonte anterior usado para compilar o APK; os arquivos executáveis do APK correspondem ao commit `28b2098`.
+
+### 12.228-LT62-VISUAL-STATES — especificação e implementação parcial do overlay (23/10/2026)
+
+**Base verificada:** `main` contém PR #33 MERGED (LT61), commit de integração `bccc85bf23eb270c5862d7e94eb5781fdcf2a494`. Branch isolada `fix/lt62-menu-visual-states-20261023`. Não gerar APK, não efetuar merge, não declarar homologação física sem validação no Samsung.
+
+**Pedido integral, padrão visual:** Localização desligada = pin branco (tema claro: cor de contraste). Localização efetivamente selecionada/aplicada = **somente traçado externo do pin vermelho** `#ff5264`; círculo interno na cor neutra do tema, sem pintar o corpo do botão, o fundo nem o preenchimento do marcador. Pokémon = silhueta estilo Pikachu neutra quando `Any Pokemon`; **amarela `#ffd64b` quando houver pelo menos uma seleção salva/aplicada**. Enquanto a escolha estiver apenas no rascunho do popup, não anunciar aplicação confirmada. Filtros = badge numérica diminuta sobre o canto superior direito do botão, exibida **somente com critérios adicionais não-padrão** (Sort padrão, Weather Any, Gender Any, Level 1–35 e CP base não contam); Min/Max do mesmo campo contam como um critério. A contagem nunca inclui Pokémon, Localização, Shiny nem modo IV/PvP.
+
+**Pokébola e resultados:** manter a janela nativa de resultados independente da barra de menu. Cabeçalho tocável/arrastável; ícone Pokébola e variantes originais com imagem proporcional, sem corte; toque curto recolhe/expande apenas resultados e arrastar muda sua posição. Até dez spawns com sprites compactos e metadados opcionais; dados verificados do site; IVs com paleta existente (0 azul-ciano, médio verde, alto azul/roxo, perfeito rosa/vermelho); modo 100%=Personalizado.png+100%, 0%=Personalizado.png+0%, Raw=Personalizado.png+combinação A/D/S, IV%=Personalizado.png+faixa, GL=Great League.png+#ranking, UL=Ultra League.png+#ranking, preferindo artes oficiais já presentes em `result-icons/base/` sem substituir PNG original. Shiny segue independente, acrescentando ✨ somente quando confirmado. **Durante `searchPhase=searching` confirmado**, brilho pulsante branco/ciano/azul no centro da Pokébola, sem deformar a arte; interromper após sucesso/erro/colapso. Respeitar `prefers-reduced-motion`. Não simular carregamento quando o site não estiver pesquisando.
+
+**Engrenagem Settings:** ícone neutro fora do estado ativo, giro suave de 90 graus ao abrir/recolher o menu e giro contínuo apenas no estado busy/pesquisa real (regra preexistente); reduzir animação quando o Android solicitar movimento reduzido. Diferenciar engrenagem Settings da engrenagem+lápis do Editor Visual; não alterar filtros ao girar. Modos: `3Star.png` para Hundo, `0Star.png` Nundo, `StarIVRaw.png` com três IVs dentro da área branca para combinações personalizadas, `StarGL.png`/`StarUL.png` com Top N centralizado. Para IV% usar classificação real dos pontos de IV (0–22=0*,23–29=1*,30–36=2*,37–45=3*, perfeitos 45/45 identificados separadamente); intervalos abrangendo classificações distintas usam `StarIVRaw.png` com símbolo `%` e não inventam duas estrelas.
+
+**Demais controles preservados:** Favorites/Star branco ou amarelo, Alertas/Bell branco, amarelo, estrela de favoritos e traço de silenciamento, Refresh/RefreshCw animado só durante ação, Customization/Settings+Pencil, More/Ellipsis em cascata vertical, Report amarelo, Doação/Heart rosa, Fechar/X vermelho. Sincronização bidirecional para todos os filtros reais do PoGoCoordinates: Modos, Shiny, Ordenar, Clima, Tamanho, Sexo, Forma, Nível, CP, Coordenadas/Raio e Pokémon+formas. Preservar estado de login, não recarregar WebView desnecessariamente, não executar buscas em duplicidade. Repositório `LucianoToscano/PokeSearch`; `applicationId=com.lucianotoscano.pokesearch`; sem GPS físico, backend próprio ou proxy.
+
+**Alteração real no branch LT62:** `dock.html` contém CSS para pin vermelho apenas no contorno e círculo neutro; silhueta Pokémon amarela com seleção aplicada; badge de contagem compacto; rotação de engrenagem ao abrir; valores Raw/percentuais no indicador da Pokébola com fonte diminuída; correção do algoritmo para representar intervalos IV% mistos com ícone percentual neutro. `app/tests/lt62-menu-visual-states.test.js` acrescenta verificações de regressão para os contratos acima. Verificação de sintaxe JavaScript realizada na fonte; **teste Node automatizado e validação em Samsung ainda pendentes**, sem APK e sem merge. Recursos `Customização`, sinos, filtros e resultados que já existiam não foram refeitos.
+
+**Critérios pendentes de homologação:** conferir CSS na WebView Samsung em ambos os temas; verificar estados OFF/ON quando seleciona diretamente no site; Badge 0, 1, 2+; testes de Raw IV 0/15/15, GL/UL #1/#50, IV% misto, Pokébola pulso/expiração; testes Node CI e sincronização no PoGoCoordinates real. Só então considerar a mudança concluída.
+
+**LT62 — complemento de QA (23/10/2026):** após atualizar quatro contratos antigos do `overlay-ux.test.js` para os novos indicadores verdadeiros e integrar a nona suíte `lt62-menu-visual-states.test.js` ao workflow Node QA, o run **39957842692** (`PokeSearch Node QA (sem APK)`) foi concluído com **SUCCESS** no commit `f522ade2b94594e35f34983c7dfabec6322849f1`. Sintaxe JS e nove suítes Node aprovadas; builds Android foram ignorados (skipped), portanto **sem APK novo e sem homologação física**. PR #34 permanece Draft, sem merge.
+
+### 12.229-LT62-REF-CORRECTIONS — captura real, busca vazia, Refresh e sprites (23/10/2026)
+
+**Base de trabalho:** PR #34 Draft em `fix/lt62-menu-visual-states-20261023`, continuação de `a06436ecdc8c25107079bf2a03d29dd5c4bd4797`. Main LT61 permanece isolada. Sem APK LT62, sem merge, sem Samsung homologado.
+
+**Referência autenticada pelo usuário:** pasta Drive `Pogocoordinates-Ref` (37 itens), especialmente `Todos_Filtros_Preenchidos_PVP.jpg` que exibe **No spawns match your filter right now.** Os JSON exportados do próprio site possuem `pokemon_ids`, `species_forms` com `pokemon_id/form_id/costume_id`, `forms`, `sizes`, `gender`, `boosted`, `weather_id`, `center_lat/center_lng/radius_km`, `shiny_only` e `pvp_top_rank/pvp_include_pre_evolutions/pvp_min_cp`; não interpretá-los como API pública ou contrato DOM. `pvp_mode=false` significa que valores de ranking salvos não são evidência de modo PvP ativo.
+
+**Ajuste de resultado vazio real:** `probe.js` reconhece o texto de nenhum spawn em elementos semânticos da área principal, inclusive quando a página não exibe `Showing 0 spawns`. Assinatura de resultado inclui apenas marcador de vazio explícito, além de contagem e cartões. Continua obrigatório `resultChanged=true` depois de `submitSearch` e filtros previamente verificados: texto idêntico já visível antes da busca não confirma zero novo. Não marcar erro como zero nem descartar cartões anteriores sem evidência.
+
+**Refresh independente:** toque simples no botão `RefreshCw` aciona `Native.refresh()`, mantendo IV, Shiny, Pokémon, localização, filtros e favoritos; pressão longa (evento contextmenu WebView) abre painel AUTO/OFF/intervalos, reaproveitando as ações existentes. Verificar o gesto no Samsung; não confundir configuração automática com busca manual. Sem novos requests no input.
+
+**Visual e Pokémon:** retirar pintura de todo o botão Location/Shiny/Favorites no estado selecionado, mantendo somente indicadores no símbolo; usar variável de fundo do botão para respeitar tema. Chips Pokémon podem exibir o sprite HTTPS somente quando a própria lista oficial de sugestões do site forneceu um PNG; sem sprite verificado permanecem texto e botão de remoção, sem URLs inventadas. Nenhum catálogo Pokémon estático novo.
+
+**QA:** regressões Node em `probe-smoke.test.js` cobrem a frase observada, ausência de contagem visível, transição de busca e rejeição de zero antigo. Homologar no Samsung: resultado zero após pesquisa vs. texto anterior, Refresh toque curto vs. pressão longa, filtro ativo sem fundo alterado, sprite do chip depois de sugestão real, Shiny autenticado e persistência de sessão. Controles DOM reversos, clima Boosted e espécies com IDs distintos permanecem pendentes de leitura autenticada: não assumir sincronização bidirecional concluída.
+
+**LT62 QA correção de contrato:** primeiro CI do commit `bd5c7be01515beb3a6b0c2e7af51675dfa7d52e6` run `39965577574` falhou exclusivamente na expectativa antiga `LT60-E7-02` que exigia `countLabel==="0"`; teste `probe-smoke` já aprovou 142 casos (incluindo a mensagem real). Atualizado o contrato UX para admitir `No spawns match your filter right now.` semanticamente confirmado, sem relaxar exigência de nova assinatura de resultado. Adicionada checagem de Refresh toque curto/contextmenu AUTO e sprite de chip proveniente de sugestão observada. CI novo ainda por validar.
+
+### 12.230-LT62-SITE-OBSERVATION — estado Shiny, comparação de Pokémon e tempo de busca (23/10/2026)
+
+**Mudanças adicionais (branch PR #34):** Shiny solicitado mas ainda não verificado mantém o ícone neutro e o estado `Pendente`, sem mostrar amarelo de confirmação prematura; sucesso continua condicionado ao DOM do PoGoCoordinates e vínculo do treinador. `pokemonSuggestion` informa `selectionVerified` somente quando conseguiu ler os chips no próprio seletor oficial; a UI apresenta uma comparação entre rascunho e seleção efetivamente observada e oferece botão `Usar seleção observada no site`. Essa ação do usuário altera apenas o rascunho; `✓ Aplicar` continua o único passo que solicita busca. Sem leitura verificada, a UI informa indisponibilidade sem apagar espécies. Isso NÃO é sincronização bidirecional automática completa; leitura externa precisa ser homologada na WebView Samsung.
+
+**Medição de latência:** `OverlayService.pollSearch` registra `SEARCH_LATENCY` apenas após resultados/zero confirmados, com modo, número de tentativas, tempo local transcorrido, quantidade de cartões e sinal `empty`. Nunca incluir coordenadas, nome de treinador, filtros pessoais ou tokens em logs. Usar os números do Samsung para distinguir lentidão real do site vs. detecção/polling sem reduzir falsamente a validação e sem enviar novas requisições extras.
+
+**Qualidade:** novo contrato UX Node de Shiny pendente/importação explícita/métrica. A homologação física permanece pendente. Não houve instalação, APK LT62, merge, backend, proxy nem GPS automático.
+
+### 12.231-LT62-REVERSE-SINGLE-FILTERS — importação segura de seleções observadas (23/10/2026)
+
+**Escopo deliberadamente comprovável:** o `describeFilters` preexistente do PoGoCoordinates lê `value` dos controles reais. Ao abrir Filtros, `dock.html` descarta snapshots obsoletos, aceita apenas valores exatos de Sort by, Weather e Gender presentes na lista oficial e identifica divergências frente ao rascunho. O usuário pode tocar **Usar opções observadas no site** para atualizar **somente o rascunho**; ✓ Aplicar ainda é obrigatório para persistir/solicitar Search. Nenhuma leitura parcial de opções substitui o valor previamente verificado do campo. Um `Any` observado remove apenas a restrição desse critério, sem apagar outros. Valores ambíguos ou ausentes não provocam alterações.
+
+**Limite físico:** isso não realiza sincronização automática bidirecional universal. Multi-seleção de Size, Form, formas específicas Pokémon, números IV/CP/Level/GL/UL, coordenadas e Shiny exigem leituras confiáveis independentes e reconciliação do ciclo React autenticado. A exportação JSON do Drive é evidência do formato salvo, não constitui API de leitura/escrita do DOM do site. Não simular IDs ou submeter filtros em loop.
+
+**CSS:** estados selecionados de Location/Shiny/Favorites restauram borda neutra exata dos botões individuais, inclusive no tema claro, ao invés de herdar uma borda colorida da caixa-mãe. Contrato de regressão Node para leitura simples e importação de rascunho. Sem APK, sem merge, homologação Samsung ainda pendente.
+
+**QA do complemento 12.231:** run `39966988129` falhou apenas porque o contrato UX legado esperava o texto exato `filterOptions=response.partial?`; a lógica foi intencionalmente substituída por merge de opções preservando `value` lido do DOM. Atualizada a verificação para a nova implementação, mantendo os testes de não inventar opções; será exigido novo run SUCCESS no HEAD posterior antes de qualquer entrega.
+
+### 12.232-LT62-GATES-QA-REFERENCIAS-20261023 — fechamento de QA sem APK e sem merge
+
+**Head funcional verificado:** `3d2a29a62b90315ef285cbf7f76bde305c89a343`, branch `fix/lt62-menu-visual-states-20261023`, PR #34 aberta em Draft; base main LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`. O objetivo desta etapa foi melhorar fidelidade com o prompt LT62 e com as referências `Pogocoordinates-Ref`, preservando arquitetura e dados. Atualizada descrição da PR, sem fechar nem mergear.
+
+**GitHub Actions:** workflow `PokeSearch Node QA (sem APK)`, run `39967162384`, job `120459924775`, SUCCESS no head citado. Nove suítes de contrato Node: Localização 68; probe 142; Pokémon 15; login 38; UX 477; editor visual 46; assinatura 14; Firebase 7; visual LT62 6 = **813/813 aprovados**. Compilação Android/Gradle não foi executada nesse workflow; `Build PokeSearch Android APK` e `Secure beta APK` permanecem skipped no PR. Nenhum instalável LT62 foi gerado.
+
+**Escopo real entregue pela fonte:** confirmação mais robusta de zero resultado usando a frase oficial do site e prova de troca do DOM da consulta; toque manual RefreshCw separado de edição AUTO por pressão longa; PNGs/estados e fundos independentes; sprite dos chips originado exclusivamente de sugestão oficial; Shiny pendente neutro; pré-visualização/importação explícita de espécies escolhidas no site e de campos simples `Sort by`, `Weather`, `Gender` para rascunho do app; diagnóstico de tempo local da busca após confirmação. Nenhum desses recursos dispensa teste físico.
+
+**Pendências obrigatórias antes de merge/APK LT62:** homologar atualização LT61→LT62 sem desinstalar e com login preservado (quando houver APK autorizado); testar GL/UL Top 1–50 e Include previous evolutions=Yes, IV 100/0/Raw/IV%, Shiny OFF/ON, CP/Level, Forma e Size múltiplos, localização Radius 0–1000 km, Pokébola pulsante e indicadores, menus H/V e temas; validar reverso automático completo App ⇄ Site por DOM React, IDs de espécies/formas e Weather Boosted conforme exportações. Não declarar concluído algo ainda não observado no Samsung. Nunca copiar `Pokemon Coords.apk` da pasta de referência como artefato PokeSearch ou introduzir uma API não verificada.
+
+**Rollback protegido:** manter LT61 e commit principal intactos; PR #34 continua Draft. O próximo gate é revisão de código da branch, dados reais da WebView autenticada e, somente mediante autorização de build/distribuição, compilação assinada de versãoCode superior a 54259, seguida de homologação em Samsung.
+
+### 12.233 — LT62: compactação física dos menus segundo 10 capturas Samsung com marcação vermelha (23/10/2026)
+
+**Pedido literal:** as marcações vermelhas indicam ESPECIALMENTE ESPAÇOS VAZIOS em botões e áreas entre controles. Não renderizar imagem; modificar aplicativo real, reduzir largura intrínseca dos comandos e manter ícones legíveis. Exemplo essencial: Sexo `[♀]`, e não `[        ♀         ]`. Conservar menus em cascata e barra horizontal flutuante estável, sem retrair, sem alterar modos ou filtros ao abrir controles.
+
+**CSS novo (fonte `dock.html`, marcador `LT62-COMPACT-REDMARKS` ao final do estilo para vencer regras antigas):**
+- Modos: rail de 54dp CSS / conteúdo 52px, linhas 23px, cabeçalho 20px, editor GL/UL/Raw/IV% no offset 54px e altura calculada 164px, sem coluna vazia à direita. Submenus continuam independentes e verificações de React mantidas.
+- Filtros: janela 232px CSS no modo horizontal; botões Ordenar/Clima/Forma com largura do texto; CP mínimo/máximo 72px, Nível mínimo/máximo 37px, `−`/`+` 23px, tamanhos sete quadrinhos 29px alinhados, sexo quatro quadrinhos 29px em uma linha `[⚥][♂][♀][⚲]`, com seleção única, footer `✓ Aplicar`/`Limpar filtros`/`Cancelar` sem `width:33.3%`.
+- Localização: painel 222px, coordenadas até 170px, botão de colagem 26px, raio 48px e três ações com largura real, slider ainda ajustável; mantém inserção manual de coordenadas e raio 0–1000 km.
+- Atualização: painel 153px, sem coluna vazia, mantendo `Atualizar agora`, AUTO OFF / 3 / 5 / 10 / 15 / 20 min.
+- Personalização, Informações e Editor Visual: labels e controles adjacentes; controles reordenáveis `☑ ↑ ↓` sem área vazia intermediária; indicadores de informações mais próximos do nome; `[P][M][G]` de 29px; editor de 268px com abas compactas, botões −/+ colocados lateralmente ao slider na própria linha via CSS grid; blocos/valores e botões sem espaçamentos exagerados. Preservam temas, transparências, movimentação, ajuste em tempo real e editor JSON oculto.
+
+**Tecnologia e segurança:** puramente layout CSS e coordenadas de cascata (JS) usando elementos já existentes; sem alterar `applicationId`, WebView, probe, autenticação, Firebase, GPS, fluxo de Search, assinatura, filtros, notificações ou persistência. Todos os blocos admitem scroll no limite da tela. Testes `lt62-menu-visual-states.test.js` ampliados com cinco contratos para esta compactação; executar CI em PR #34 Draft, sem merge até homologação visual. O APK LT62 ainda precisa de compilação assinada para teste físico, e não é considerado homologado por testes Node.
+
+**CI QA da seção 12.233:** após o commit `6662f888419f077a7849058e1699c8a6f7165aa6`, o run `39976420038` detectou quatro contratos antigos de `overlay-ux.test.js` ainda fixados nos 190px / 27px / 88px do menu e em altura nativa 230px. Atualizados TODOS os contratos visuais citados às medidas aprovadas `164px / 23px / 54px`, preservando as verificações de altura calculada, âncora da barra, painel lateral, orientação vertical, popup scrollHeight e não retração. Nenhum outro comportamento funcional alterado nesse patch de QA; exigir novo SUCCESS.
+
+### 12.234 — LT62: compilação de teste autorizada após correções de compactação (23/10/2026)
+
+**Pedido:** produzir `PokeSearch-v0.00.62-LT.apk` para instalar por cima da LT61, sem desinstalar, sem limpar dados, mesma assinatura persistente, sem merge. Correções de UI feitas a partir das dez capturas com espaços circulados em vermelho na seção 12.233.
+
+**Novo workflow dedicado e restrito:** `.github/workflows/build-v062-compact-preview.yml`, evento push exclusivamente em `fix/lt62-menu-visual-states-20261023`, gate por mensagem exata iniciada com `build: approved v0.00.62 LT signed`, e workflow_dispatch. Java 17, Gradle 8.11.1, SDK36, dezesseis testes de identidade + nove suítes Node, execução `:app:testDebugUnitTest :app:assembleDebug`. Assinatura persistente: keystore restaurado somente com segredos do GitHub Actions; checar fingerprint público `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Produto `applicationId=com.lucianotoscano.pokesearch`, versionCode `54260`, versionName `0.00.62`. Validar aapt, apksigner v2, ZIP, `SOURCE_COMMIT.txt`, `SHA256SUMS.txt`, `PACKAGE_VERSION.txt`, `SIGNING_CERT_SHA256.txt`. Retenção do artefato 30 dias.
+
+**Notas de atualização:** `release_notes.json` ganha a LT62 com novidades, melhorias, correções e em desenvolvimento. Guia Mestre é documentação do projeto, não recurso gravado no APK. GitHub Actions deve confirmar sucesso antes de anunciar APK gerado. A compilação é para teste físico, não aprovação para merge nem homologação Samsung.
+
+### 12.235 — LT62: mínimo/máximo em pares, botões SVG e português de apresentação (23/10/2026)
+
+Referência adicional do Samsung: reduzir PC mínimo/máximo e Nível mínimo/máximo para **um par na mesma linha**, sem botões `+` e `−`. `numberPair("PC",...)` e `numberPair("Nível",...,true)` preservam entradas com `data-filter-number`, `aria-label`, `checkValidity()`, `modeDraft`, limites PC 0–99999 e Level 1–35. `minPvpCp` continua único. Editor Modos IV% usa legendas `Mín/Máx` lado a lado e sem stepper; Raw IV/GL/UL intactos.
+
+Ações Filtros: `Aplicar`, `Limpar`, `Cancelar` agora são botões SVG compactos 31px para ✓, lixeira, X; têm `aria-label`/title para acessibilidade e preservam os callbacks originais, inclusive validação e cancelamento sem gravar rascunho.
+
+Traduções somente visuais: Sort by `Despawn, CP, IV %, Nível, Distância`; Weather `Qualquer, Boosted, Ensolarado/Limpo, Chuvoso, Parcialmente nublado, Nublado, Ventando, Neve, Névoa`. Internamente permanecem `Despawn (longest), CP (highest), IV % (highest), Level (highest), Distance (nearest)` e `Any, Boosted, Sunny, Rainy, Partly Cloudy, Cloudy, Windy, Snow, Fog`. Não traduzir os valores enviados ao DOM, nem alterar ícones PNG ou opções reais.
+
+O primeiro workflow assinado de LT62 `39977603447` falhou por exigir um identificador legado de teste inexistente em `overlay-ux.test.js`. O workflow valida agora a existência da implementação `LT57-RAW-IV-CLIP-01` no próprio dock e o teste real `LT57-DRIVE-ICON-02`, mantendo a guarda funcional. CI Node com contratos adicionais obrigatório antes da entrega; APK anterior às correções fica descartado.
+
+**Gate de versão assinada:** HEAD funcional `67ecd23b042a08057c13e000197a48c85ebcc3e6`, CI Node `39979287327` `SUCCESS`, nova interface de min/máx, legendas portuguesas e botões vetoriais implementados. Usuário autorizou gerar APK de teste. Registrar este commit documental para disparar o workflow fechado `PokeSearch v0.00.62 LT — APK assinado para homologação de menus compactos`. É obrigatório conferir saída do workflow, SHA, assinatura, número de versão e artefato antes de disponibilizar o APK. Sem merge e sem homologação Samsung.
+
+### 12.236 — LT62: APK assinado gerado, hash verificado e entrega para homologação Samsung (23/10/2026)
+
+**Build oficial para teste:** workflow `PokeSearch v0.00.62 LT — APK assinado para homologação de menus compactos`, run `39979420716` (SUCCESS), concluído em 23/10/2026 às 15:36 UTC. Artefato GitHub Actions `PokeSearch-v0.00.62-LT`, ID `12513595315`, arquivo interno `PokeSearch-v0.00.62-LT.apk` de `30.018.586` bytes; ZIP também contém `SHA256SUMS.txt`, `SOURCE_COMMIT.txt`, `PACKAGE_VERSION.txt` e `SIGNING_CERT_SHA256.txt`. Link: https://github.com/LucianoToscano/PokeSearch/actions/runs/39979420716/artifacts/12513595315.
+
+**Proveniência e segurança verificadas:** `SOURCE_COMMIT.txt` aponta para `4e1f6ba89d56d715fa08da37ab7480ab1b3b5748`; `PACKAGE_VERSION.txt` informa `applicationId=com.lucianotoscano.pokesearch`, `versionCode=54260` e `versionName=0.00.62`; `SIGNING_CERT_SHA256.txt` contém o mesmo certificado persistente usado na LT61 (`34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`). SHA-256 exato do APK, conferido na cópia extraída por `sha256sum -c SHA256SUMS.txt`: `789cda35019852ec91a1c67ea727f62abf2603ea9589945ce748533d16fce807`. ZIP passou em `unzip -t`; job de confirmação de assinatura e publicação também passou em GitHub Actions.
+
+**Conteúdo:** compactação de menus conforme as marcações vermelhas; PC e Nível com campos Mín./Máx. em uma linha, sem stepper; filtros de ordenação e clima exibem tradução visual PT-BR e mantêm as chaves em inglês do PoGoCoordinates; ícones SVG acessíveis de ✓/lixeira/X para ações Aplicar/Limpar/Cancelar; release notes da LT62 incluídas. Sem novo backend, proxy ou GPS físico; preservado pacote, WebView e assinatura.
+
+**QA:** Node run `39979426811` SUCCESS para o mesmo source SHA. A compilação assinada foi concluída com Gradle e verificação de versão. **A instalação física, conferência de dimensões e interação no Samsung, Shiny/GL/UL, velocidade, preservação de login e comportamento React do site continuam aguardando homologação real.** Não declarar resultado aprovado em dispositivo somente por CI. `main` continua em `caea98b7b57b9e45d5218e907eb392d76953dd53` LT61; PR #34 segue Draft e SEM MERGE. Para teste de atualização, instalar APK sobre LT61, jamais desinstalar/limpar dados.
+
+### 12.237 — LT62: checkpoint definitivo para iniciar novo chat, aguardando homologação Samsung (23/10/2026)
+
+**Solicitação do proprietário:** registrar TUDO o que foi executado na LT62, produzir prompt autossuficiente para o próximo chat, não reiniciar o projeto e preservar fielmente o estado da PR #34. O prompt de continuidade foi disponibilizado ao proprietário como arquivo TXT anexado à conversa; a documentação técnica persistente de referência permanece exclusivamente neste `docs/GUIA_MESTRE.md`.
+
+#### Checkpoint GitHub e APK validado
+- Repositório: `LucianoToscano/PokeSearch`; PR #34 **OPEN/DRAFT/SEM MERGE**; branch `fix/lt62-menu-visual-states-20261023`.
+- HEAD da PR verificado ANTES deste commit documental: `2d9ada4f757740e40942525c6b91243674efa276`. O próprio commit de documentação para esta seção muda o HEAD da PR; no próximo chat consultar o HEAD real pelo GitHub, não tratar o commit do APK como HEAD da branch.
+- `main` permanece LT61 em `caea98b7b57b9e45d5218e907eb392d76953dd53`. PR #33 anteriormente MERGED. Jamais usar base antiga, misturar com PvPPokeGo ou atualizar `main` sem autorização e testes.
+- APK de homologação: `PokeSearch-v0.00.62-LT.apk`, artefato `PokeSearch-v0.00.62-LT` ID `12513595315`, workflow assinado `39979420716` **SUCCESS**, `SOURCE_COMMIT=4e1f6ba89d56d715fa08da37ab7480ab1b3b5748`; APK de `30.018.586` bytes, SHA-256 `789cda35019852ec91a1c67ea727f62abf2603ea9589945ce748533d16fce807`. `versionName=0.00.62`, `versionCode=54260`, pacote `com.lucianotoscano.pokesearch`. Certificado persistente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; mesmo usado na LT61, compatível com atualização sobreposta sem desinstalação.
+- Artefato: `https://github.com/LucianoToscano/PokeSearch/actions/runs/39979420716/artifacts/12513595315`. A cópia entregue no chat foi extraída e testada pelo SHA-256 do pacote GitHub.
+- Node QA para source exato do APK: run `39979426811` **SUCCESS**, 9 suítes (incluindo os contratos de compactação). Android build, assinatura e metadados verificados no workflow assinado. **NÃO houve validação física no Samsung nem confirmação de manutenção de login.**
+
+#### Funcionalidades LT62 implementadas neste ciclo
+1. `probe.js`: reconhece a frase oficial de resultado vazio `No spawns match your filter right now.`, mas exige transição de assinatura DOM posterior à solicitação; não confunde lista ou zero antigo com busca confirmada.
+2. Controle RefreshCw: toque simples atualiza; pressão longa abre AUTO/OFF e intervalos 3/5/10/15/20 minutos. Confirmar pressão longa em WebView física.
+3. Pokémon: sprites dos chips apenas se retornados pela sugestão real do site, sem URL fictícia; leitura de espécies observadas e botão de importação do site ao rascunho. Não é sync bidirecional integral; aplicar segue explícito.
+4. Ordenar, Clima e Sexo: observação de valores simples do DOM e proposta de importar ao rascunho, sem modificar outros campos; DOM React autenticado e filtros múltiplos ainda exigem auditoria.
+5. Shiny: pedido pendente visualmente distinto de confirmado; estados dos botões não pintam o fundo inteiro; contadores e ícones mantêm padrões aprovados (pin contorno vermelho, Pikachu amarelo, estrelas, engrenagem, medalhas).
+6. Menus segundo as capturas com marcações vermelhas: reduzir espaços internos, mantendo barra superior fixa; Modos rail 54px, 164px de altura; filtros, localização, atualização, personalização, informações e editor visual mais compactos; Sexo `[⚥][♂][♀][⚲]`, Tamanho `[XXS][XS][S][M][L][XL][XXL]`; controles P/M/G e ± do Editor Visual próximos aos seus valores.
+7. PC e Nível agora exibem **dois campos editáveis Mín./Máx. lado a lado**; botões de incremento/decremento removidos, limites PC 0–99999 e nível 1–35; validação min≤max preservada. Editor Modos IV% com legendas `Mín/Máx`; GL/UL exibem o campo de rank e Raw IV os campos A/D/H, com ações ✓/X.
+8. Aplicar/Limpar/Cancelar são três botões compactos com símbolos SVG locais (✓, lixeira, X), `aria-label` e mesmo comportamento funcional prévio.
+9. Rótulos Ordenar: Despawn, CP, IV %, Nível, Distância; valores oficiais enviados ao site: `Despawn (longest)`, `CP (highest)`, `IV % (highest)`, `Level (highest)`, `Distance (nearest)`. Rótulos Clima: Qualquer, Boosted, Ensolarado/Limpo, Chuvoso, Parcialmente nublado, Nublado, Ventando, Neve, Névoa; valores técnicos: `Any`, `Boosted`, `Sunny`, `Rainy`, `Partly Cloudy`, `Cloudy`, `Windy`, `Snow`, `Fog`. Tradução VISUAL, sem alterar o contrato do site.
+10. Diagnóstico `SEARCH_LATENCY` após respostas verificadas sem coordenadas, nomes privados ou credenciais. `release_notes.json` acrescentou LT62 `minVersionCode=54260`.
+
+#### Referências e regras de desenvolvimento
+- Página oficial do site: `https://pogocoordinates.com/search`. Pasta Drive `Pogocoordinates-Ref`: `https://drive.google.com/drive/folders/1xWGIRFNiIUIK8NJbIz4GFh7ChxVTHWV6`, contendo capturas do site real, saved-filters JSON, HTML e imagens. JSONs distinguem `pokemon_id/form_id/costume_id`, `shiny_only`, `weather_id` e `boosted`, `center_lat/center_lng/radius_km`, filtros PvP. Não tratar exportação JSON como API pública do DOM React e não executar APK de referência de terceiros no app.
+- Arquitetura `Android overlay + WebView + evaluateJavascript + probe.js`, sem backend/proxy/GPS físico, sem trocar `applicationId` ou assinatura. Java17, Gradle8.11.1, compileSdk36/targetSdk33/minSdk26. Até 10 resultados. Barra de ícones NÃO retrai ao abrir/fechar menus. Estilos para tema claro/escuro e transparência independentes; sem distorção da Pokébola, dos badges, da engrenagem, StarGL/StarUL/StarIVRaw. Não apagar dados de login nem preferências do usuário.
+- Próximo passo recomendado é HOMOLOGAÇÃO REAL no Samsung da LT62 sobre LT61, SEM desinstalar: confirmar `v0.00.62`, sessão preservada; estabilidade da barra e abertura de cascata Modos/IV/IV%/GL/UL; IV Raw A/D/H, GL/UL rank 1 e 50 e Shiny; PC/Nível lado a lado, ícones de aplicação/limpeza/cancelamento; Sort/Weather em PT-BR aplicando valores oficiais; Forma e Tamanho múltiplos; sexo único; Pokémon por nome, costume, dex; localização manual coordenadas+raio; Refresh curto e pressão longa, FAVORITOS, alertas e atualizações; efeito de busca e resultado zero. Cronometrar consultas, buscar diagnóstico local, conferir até 10 Pokémon, sem exibir resultado anterior como atual.
+- PENDÊNCIAS: homologação física completa, integração reversa automática de todos os filtros, espécie/form/costume por ID no DOM, Weather/Boosted corretamente simultâneos, equivalência integral PvP, sincronização seleção múltipla Size/Form, medir latência real. Node e GitHub Actions PASS ≠ homologação de aparelho.
+- Regras de execução para próximo chat: começar validando HEAD real/PR/CI/Guia Mestre; continuar **uma etapa por resposta** (a menos que o proprietário peça explicitamente todas as etapas sem parar); ao completar etapa usar `✅ Etapa X concluída. Digite continue.`; exibir trechos de `probe.js`, `dock.html` ou `OverlayService.java` quando relevante; criar commits na branch atual, testes antes de qualquer build; documentação exclusiva no Guia Mestre; **não mergear PR #34** sem autorização explícita posterior à homologação; não reconstruir/renomear o APK LT62 sem necessidade; para correções posteriores versionCode monotônico e novo artefato somente após autorização.
+
+
+### 12.238 — LT62: campos Modos com placeholders, botão único e ergonomia de toque (23/10/2026)
+
+**Pedido de design do proprietário (capturas Samsung):** no modo IV% os campos devem iniciar vazios e mostrar internamente `Min %` e `Max %`, no Raw IV somente `A`, `D`, `S`, GL/UL apenas `#`; abolir preenchimento automático, swipe/roda de valores e X Cancelar, mantendo um único ✓ Aplicar. O toque repetido na mesma opção recolhe o editor sem salvar. A aparência deve ser compacta e coerente com o site; campos com borda discreta e fundo transparente.
+
+**Implementação em branch `fix/lt62-menu-visual-states-20261023` (PR #34 Draft):**
+- `dock.html`: editores laterais agora exibem placeholders e `value=""` quando abertos. Campos de texto usam teclado numérico e validação após ✓. IV% aceita limites inteiros 0–100 inclusivos, com mínimo não superior ao máximo; A/D/S preservam 0–15 por atributo; ranking GL/UL preserva 1–50. Rascunhos não são aplicados por mudança, troca de menu ou recolhimento; somente ✓ transmite `setSearchConfig`.
+- `OverlayService.java`: bridge aceita todos os limites 0–100 para pesquisa IV%, sem exigir que limites digitados sejam percentuais fisicamente alcançáveis. Preserva os inteiros salvos após reinício; resultados Pokémon ainda são validados pelos 46 percentuais possíveis de IV. A janela pequena do dock/engrenagem passa a ser anexada **depois** das janelas de menu e resultados para ficar acima da região nativa de popup e manter clique/arraste da engrenagem.
+- `probe.js`: formulário real deve confirmar limites IV% inteiros 0–100 digitados, sem confundir percentuais alcançáveis nos Pokémon com os limites de uma pesquisa; mantém verificação de valores exatos do site antes de afirmar filtro aplicado.
+- `app/tests/overlay-ux.test.js`, `app/tests/probe-smoke.test.js` e `app/tests/lt62-menu-visual-states.test.js`: regressões alinhadas a placeholders, ✓ único, 0–100 e ordem de sobreposição.
+
+**Limite técnico importante de homologação:** `pointer-events:none` faz a área transparente deixar de ser clicável no DOM, mas **NÃO** entrega toques ao Pokémon GO por trás da janela nativa retangular da WebView. A alteração da ordem das janelas visa especificamente restaurar o clique/arraste da engrenagem. Para passagem integral de toques em todos os vazios entre a barra e o submenu será necessário segmentar regiões nativas em janelas próprias. Não marcar essa parte como corrigida antes de teste físico. Não usar hacks de injeção de toque, acessibilidade ou GPS.
+
+**QA confirmado após as correções:** GitHub Actions Node QA `39986843505` — **SUCCESS** no commit `77b50c0835962f5f43e7ea790f67202320ac55a7` (nove suítes, sintaxe JavaScript e regressões); workflows Android de build foram **SKIPPED** como esperado. Nenhuma compilação ou homologação Samsung nova ocorreu. Os testes antigos de percentuais restritos foram corrigidos após duas falhas intermediárias de regressão; commit final de código passou integralmente.
+
+**Entrega:** alterações e testes em branch Draft, `main` LT61 preservada, sem merge, sem novo APK. Homologação física pendente; APK v0.00.62 previamente compilado NÃO inclui estes commits novos. Manter login e preferências ao atualizar; compilação de próxima versão somente com autorização explícita.
+
+
+### 12.239 — LT62: Filtros compactos em cascata, PC/Nível vazios e Sexo legível (23/10/2026)
+
+**Pedido do proprietário:** corrigir a sensação de menu Filtros bagunçado; remover o cabeçalho recolhível “Filtros gerais”, expor os filtros imediatamente, organizar como o menu Modos, deixar o campo Nível limpo, eliminar duplicações de Min/Max em PC e Nível, aumentar caracteres do Sexo e reduzir dimensões sem comprometer a legibilidade.
+
+**Implementado na branch `fix/lt62-menu-visual-states-20261023`, PR #34 ainda Draft:**
+1. `dock.html`: ao abrir Filtros surge uma coluna vertical compacta contendo **Ordenar, PC, Nível, Clima, Tamanho, Sexo e Forma**, sem bloco “Filtros gerais” recolhível. O item tocado destaca-se e abre ao lado seu editor; os outros continuam disponíveis, como em Modos. GL/UL mantêm também opções próprias PC mínimo PvP e Evoluções anteriores quando aplicáveis. Os controles continuam sendo os elementos originais, não cópias visuais; menus oficiais de opções Ordenar, Clima e Forma permanecem funcionais.
+2. PC e Nível: em vez de “Mín.”/“Máx.” como legendas duplicadas, existem somente **dois inputs compactos com placeholder `Min` e `Max`**, inicialmente vazios. Nível mantém o domínio original **1–35**, PC 0–99999. A abertura de Filtros deixa de injetar silenciosamente 1/35 em `modeDraft`. **Valores já salvos ficam preservados no rascunho, mesmo que o editor esteja visualmente vazio**; somente alterações digitadas substituem seus campos, e o patch é aplicado ao clicar ✓ Aplicar.
+3. Sexo: quatro opções `⚥` (Any), `♂`, `♀`, `⚲` com fonte 20px e quadrados de 35px no editor lateral, para contraste e legibilidade. Regra de seleção única, com Any por padrão, preservada; os sete tamanhos continuam com seleção múltipla em grade compacta de quatro colunas.
+4. CSS `.filterCascade` restrito ao próprio menu; limpar classe ao navegar para Modos, seletores de Forma/Clima/Ordenar, Alertas etc., sem contaminar outros popups. Não alterar dimensões/posição permanente da barra de ícones.
+5. `apply.onclick`: percorre todos os números em `modeDraft`, inclusive editores atualmente recolhidos, com limites reais e regra Min≤Max. Caso haja inválido, reabre a seção PC/Nível correspondente e informa o erro antes de transmitir. Continuam **Aplicar, Limpar e Cancelar** no menu Filtros; ✓ envia somente o delta dos campos editados via `Native.patchSearchFilters`, preservando Shiny, Pokémon, IV/GL/UL e Localização.
+6. `app/tests/overlay-ux.test.js` e `app/tests/lt62-menu-visual-states.test.js`: testes atualizados para a nova organização sem acordeão, placeholders, dimensões de sexo, validadores e proteção contra regressões.
+
+**Validação:** GitHub Actions Node QA `39988694333` — **SUCCESS** no source SHA `dc49d508af277daa44a11ca9eca3eec13c911d69`, nove suítes. Workflow de build APK skipped por regra. **Não há APK novo nem teste físico Samsung**; as modificações recentes ainda NÃO estão no APK `PokeSearch-v0.00.62-LT.apk` anteriormente publicado. Não afirmar fidelidade final do layout/áreas de toque da WebView antes de homologação física.
+
+**Controle de mudanças:** `main` LT61 preservada, PR #34 aberta em Draft, sem merge, sem backend/proxy/GPS, `applicationId` e assinatura persistente preservados, documentação exclusiva no Guia Mestre. Próximas mudanças de design devem continuar na mesma PR sem compilação/publicação até autorização expressa.
+
+
+### 12.240 — LT62: Localização compacta, mensagens discretas e ícone de colar alinhado (23/10/2026)
+
+**Solicitação do proprietário:** melhorar o design do submenu Localização no Samsung; remover os textos longos “Coords e raio 0–1000 km. Aplicar pesquisa sem limpar outros filtros.” e “OFF · busca geral, sem coordenadas do aplicativo.”; manter apenas mensagens menores, como avisos discretos, quando houver algo útil a comunicar; corrigir o botão de área de transferência que estava desalinhado e não combinava com os demais controles.
+
+**Mudanças em `app/src/main/assets/dock.html`, branch `fix/lt62-menu-visual-states-20261023`:**
+- Painel com título simples **LOCALIZAÇÃO**, sem emoji nem parágrafo permanente. Campo latitude,longitude continua editável e recebe coordenadas da área de transferência exclusivamente por toque no botão; nada ativa localização automaticamente ao colar.
+- Botão antigo `📋` substituído por **ícone SVG com traço neutro**, 19 px centralizado dentro de botão quadrado 29×29 px, mesma linguagem visual dos demais ícones. Mantido rótulo acessível “Colar coordenadas”.
+- Faixa de raio alinhada em uma linha **Raio [valor] km**, usando campo numérico 0–1000 e o slider existente sincronizado. Interface de aproximadamente 218 px, bordas, espaçamentos e ações compactos. Evita aumento ou retração da barra flutuante.
+- Removido o botão inferior “Fechar”, redundante ao X do cabeçalho. **✓ Aplicar** e **Limpar** permanecem ações distintas. Limpar executa `Native.setLocation(false,"",0)` sem zerar Pokémon/IV/Shiny/filtros extras.
+- Linha `#locHint` passa a usar texto pequeno de 9 px, `role=status`, `aria-live=polite`; não é mostrada quando o estado é OFF, e não exibe mais a longa instrução sobre busca geral. Mensagens curtas: “⌛ Verificando localização”, “✓ Localização confirmada · N km”, “⚠ Localização não aplicada”, “⚠ Coordenadas inválidas”, “⚠ Raio: 0 a 1000 km” e “✓ Coordenadas coladas”. Avisos de erro preservam cor de destaque mesmo em temas diferentes. Opção escolhida foi *texto menor no próprio popup*, e não toast de sistema no centro do aparelho, para manter comportamento previsível em Android Overlay.
+- Mantidas **validação de latitude/longitude**, limites do raio, rascunho de raio enquanto a pessoa digita, verificação real no PoGoCoordinates antes de mostrar localização confirmada, preferência salva e preservação de filtros independentes. Nenhum uso de GPS físico, proxy ou backend.
+- Testes atualizados em `app/tests/overlay-ux.test.js` e `app/tests/lt62-menu-visual-states.test.js` para o novo layout, botão de colar e mensagens. Não confundir testes Node/DOM com homologação física.
+
+**CI:** `PokeSearch Node QA` run `39990432598` **SUCCESS** no commit `6a4301bc233fe34a5a9877d0a6ea124be0e1373b`, nove suítes e validação da sintaxe do `dock.html`/`probe.js`. Workflows de APK ficaram **skipped**. Nenhum APK novo foi compilado/assinado, e o APK LT62 antigo **não inclui** essas alterações. Homologação física no Samsung ainda pendente.
+
+**Regras imutáveis:** manter PR #34 Draft, `main` LT61 sem merge, `applicationId=com.lucianotoscano.pokesearch`, assinatura persistente, WebView+`evaluateJavascript`+`probe.js`, login e demais configurações. As próximas alterações podem continuar nesta mesma branch até autorização para compilar.
+
+
+### 12.241 — LT62: Favoritos minimalistas sem rolagem, grade paginada e busca imediata (23/10/2026)
+
+**Pedido visual do proprietário, confirmado no Samsung por screenshot:** o antigo modal “POKÉMON FAVORITOS” era muito alto e confuso, com cabeçalho “✓ Fechar”, lista vertical de até 3 Pokémon selecionados com scroll, seção “BUSCAR E ADICIONAR”, lista grande com scroll, checkbox Notificar favoritos, botão Testar notificação e nota extensa. Aprovação de um único campo de busca, sprites dos escolhidos com toque para remover e resultados instantâneos, com a restrição adicional **evitar qualquer rolagem dentro do painel**.
+
+**Implementação em `app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java`:**
+1. Modal **“☆ FAVORITOS”** estreito, fundo escuro degradê e borda original preservados, sem cabeçalho ou lista grandes. X compacto no canto superior direito (acessível); campo único “Nome, forma ou nº da Pokédex” imediatamente abaixo.
+2. Contador curto **Selecionados N/50** e grade de sprites clicáveis: até **12 Pokémon por página**, arranjados em **2 linhas × 6 colunas**, centralizados entre setas pequenas ‹ e ›. Não usar `ListView`, `ScrollView` nem arrasto para alternar páginas: as setas permitem alcançar **todos os 50 favoritos**, inclusive ao ter mais de 12. Quando só há uma página, as setas ficam invisíveis; número da página surge apenas se houver várias.
+3. **Ao tocar no sprite salvo, remove-o imediatamente** através de `WatchAlerts.toggle(activity,entry.name)`, usando a mesma lista persistente `watchList`/limite 50. Itens legados fora do catálogo mantêm representação neutra ☆ para que permaneçam removíveis, sem apagar dados.
+4. Busca atualizada a cada letra com `TextWatcher`, começa vazia e exibe **no máximo 3 sugestões simultaneamente** em linhas compactas, sem rolagem. Usa filtro por nome e número da Pokédex; aceita também `#004`, `004` e `4`. Toque na linha adiciona imediatamente, respeita limite 50 e atualiza contador/sprites/resultados sem salvar configuração alheia. Ao não encontrar, mostra apenas aviso pequeno.
+5. **Configurações de som, checkbox “Notificar favoritos”, “Testar notificação” e a nota explicativa saem do seletor**, pois as opções independentes de Favoritos já estão no menu **Alertas**, incluindo som, silêncio, OFF, sons por espécie, autorização e testes. O fluxo de criação de favoritos NÃO altera `WatchAlerts.setMode`, permissões nem alertas de outros Pokémon.
+6. Largura máxima do diálogo passou de 430 dp para **348 dp**, limitada à largura da tela, altura de acordo com 0–3 sugestões e 0–2 linhas de sprites; sem listas que ocupam centenas de pixels, nem barras de scroll. Mantido o `Dialog` com `TYPE_APPLICATION_OVERLAY` quando aberto pelo serviço, sem trocar de aplicativo e preservando login/prefs.
+7. Regressões em `app/tests/overlay-ux.test.js` e `app/tests/lt62-menu-visual-states.test.js` cobrem seleção exclusiva, páginas e setas, remoção por toque, busca imediata com no máximo 3 resultados, digitação de números com zeros à esquerda, ausência de `ListView/ScrollView` e ações de notificação somente em Alertas.
+
+**Validação automática:** workflow `PokeSearch Node QA` **39993487861 SUCCESS** no commit `cb5eb14d7e0608efec32a954a29f0f2510fa6a1f` (nove suítes); workflows Android de build **SKIPPED**, pois não foi autorizada nova compilação. **Homologação física, compilação Java/Gradle e acessibilidade Android ainda pendentes**: CI Node valida contratos/fonte e não prova como fica a UI Samsung. O APK `PokeSearch-v0.00.62-LT.apk` anterior não contém estas mudanças.
+
+**Checkpoint:** permanecer na branch `fix/lt62-menu-visual-states-20261023` e PR #34 **Draft sem merge**. `main` LT61, `applicationId=com.lucianotoscano.pokesearch`, assinatura, arquitetura WebView+`probe.js`, preferências, modos, Shiny e fluxos oficiais preservados. Sem produção de APK até autorização.
+
+
+### 12.242 — LT62: Notificações minimalistas, 36 áudios, prévia confirmada e favorito BR (23/10/2026)
+
+**Referência Samsung e solicitação:** substituir o antigo submenu NOTIFICAÇÕES longo/poluído por um painel muito compacto, com apenas **Novos Pokémon** e **Pokémon Favoritos**. Cada seção deve ter três botões de ícone (alto-falante com ondas = Som, alto-falante riscado = Sem som, alto-falante com X = OFF) e um único botão Padrão/Personalizado. Eliminar do popup o parágrafo de instruções, botões de teste, permissões, configurações avançadas e links secundários; não excluir rotinas funcionais. Mostrar uma legenda curta nativa quando um estado for tocado. Ocultar, mas manter implementado, o som individual por Pokémon.
+
+**Implementado em `app/src/main/assets/dock.html`:**
+- `renderAlertsChoices()` passou a mostrar somente o título NOTIFICAÇÕES com X do cabeçalho e dois blocos verticais, **Novos Pokémon** e **Pokémon Favoritos**.
+- Cada bloco tem três ícones SVG monocromáticos desenhados no mesmo estilo dos menus, contorno fino, área de toque 32 px, estado selecionado marcado com borda/amarelo e rótulos acessíveis `Som`, `Sem som`, `OFF`. Não usa imagens rasterizadas nem emoji/stock. Abaixo, um botão de largura total apresenta **Padrão** ou **Personalizado**, acionando `Native.pickAlertTone("general"|"favorites")` e os fluxos Android reais.
+- Largura planejada do popup cerca de **194 px**, com duas seções, textos de 10–11 px, sem rolagem no painel principal. `SHOW_INDIVIDUAL_FAVORITE_TONES=false` oculta apenas o controle; `Native.pickAlertTone("species")`, `MainActivity.beginAlertToneChoice("species")`, as preferências e a seleção do áudio individual permanecem funcionais no código, habilitáveis em versão futura.
+- Removidos *somente da interface de Notificações* os comandos de teste geral/favoritos, teste de permissão, lista de favoritos, nota longa, configurações Android e atualização de permissão. As APIs Android continuam existentes para a Home/testes e compatibilidade.
+
+**Legendas ao tocar:** `OverlayService.java` passa a usar `alertModeCaption()` após confirmar a alteração no `setAlertMode` ou `setFavoriteAlertMode`, com `Toast.LENGTH_SHORT`: “Novos Pokémon/Favoritos · Som ativado”, “Sem som · apenas aviso” ou “Notificações desativadas”. As duas famílias permanecem independentes e persistidas.
+
+**Biblioteca de 36 opções com arquivos reais, não apenas labels:**
+- Conferida a pasta Google Drive `SoundPokemon` (`1iuC_XLwfU24Yn39FGRl9Wf0YwKG_EdQc`), contendo 36 MP3s em 23/10/2026.
+- Foram importados como blobs Git binários **13 MP3s novos** para `app/src/main/res/raw`: `ps_jigglypuff_evolucao_meme.mp3`, `ps_snorlax.mp3`, `ps_wobbuffet.mp3`, `ps_gardevoir.mp3`, `ps_bulbasaur.mp3`, `ps_equipe_rocket.mp3`, `ps_mew.mp3`, `ps_charmander.mp3`, `ps_pikachu_choque.mp3`, `ps_ditto_triste.mp3`, `ps_togepi.mp3`, `ps_squirtle.mp3`, `ps_jigglypuff.mp3`. Commit binário `ecef6f1f1cb1e3f635259413a2bf176086abaeec`. A trilha antiga `ps_freesound_community_weird_pikachu_101090` foi preservada no repositório para compatibilidade, mas não consta entre as 36 escolhas da interface. Total do diretório raw é 37 MP3s; **biblioteca selecionável = exatamente 36**.
+- `PokeSoundLibrary.java` agora contém `LABELS[36]` e `AUDIO[36]` com recursos locais reais, ofuscáveis com referência estática `R.raw`. Mantido material anterior onde possível e incluídos os novos nomes amigáveis.
+
+**Padrão de Favoritos:**
+- `WatchAlerts.selectedTone(... favorite=true ...)` usa o recurso local **“Quem é esse Pokémon? · BR”** quando a preferência `favoriteSoundUri` nunca foi gravada. `hasCustomTone` mostra Personalizado nessa situação, e `soundChannelId` cria canal compatível com o áudio efetivo, sem modificar outros canais ou prefs. **Valores já escolhidos pelo usuário prevalecem**, inclusive string vazia previamente gravada que significa Padrão do sistema. `general` permanece com o tom padrão do sistema.
+- Preferências de som por espécie já existentes são preservadas e continuam prevalecendo sobre o áudio de favoritos.
+
+**Seletor e UX de escuta:**
+- Tocar em **Padrão** ou **Personalizado** agora abre diretamente o `AlertDialog.setSingleChoiceItems` nativo, com **38 entradas** e rolagem **apenas dentro do seletor**: `Padrão` (primeiro), **36 sons PokeSearch**, `＋ Enviar áudio` (último).
+- Ao tocar no nome de uma das 36 faixas, a prévia toca por `MediaPlayer`; somente após tocar **✓ Usar áudio** a preferência muda. “Padrão” oferece prévia de notificação Android via `RingtoneManager`. Cancelar não salva e, ao fechar, a reprodução é liberada/parada.
+- `＋ Enviar áudio` abre `ACTION_OPEN_DOCUMENT` (`audio/*`) para arquivos/Google Drive, com permissão URI persistente; agora mostra um diálogo de confirmação com **▶ Ouvir**, **✓ Usar áudio** e **Cancelar**, em vez de salvar ao simplesmente selecionar o arquivo. O som anterior permanece se cancelar.
+- A UI da escolha individual por Pokémon continua implementada e escondida no painel público, sem remover JSON/seleções já salvas.
+
+**Validação:** workflow GitHub `PokeSearch Node QA` `39999107398` — **SUCCESS** no código da branch até `c98d7fee252c8eb462846ef832166413ce4b91a1` (nove suítes) e testes específicos do design e biblioteca. A operação de importação verificou metadados e conteúdo dos 13 blobs; arquivos são binários reais. Build APK e secure-beta **skipped**, por orientação de não gerar versão sem autorização. **Não houve compilação Java/Android nem homologação física Samsung desta etapa**, portanto verificar durante futura homologação: renderização de SVG, som BR padrão, confirmação de áudio do Drive, Android channels/permissões e preservação de login.
+
+**Regra de continuidade:** PR #34 permanece em Draft na branch `fix/lt62-menu-visual-states-20261023`, `main` LT61 intacta, sem merge nem APK novo; não alterar applicationId `com.lucianotoscano.pokesearch`, assinatura, WebView+`probe.js`, dados salvos e demais funcionalidades.
+
+
+### 12.243 — LT62: Atualização manual em duas setas e menu AUTO compacto (23/10/2026)
+
+**Solicitação de design (aprovada pelo proprietário):** usar somente o ícone de **duas setas circulares**, no mesmo estilo vetorial dos outros ícones. Toque curto solicita atualização manual; toque longo abre pequeno submenu **OFF | AUTO [3] [5] [10] [15] [20]** em uma única linha. A opção 10 minutos foi expressamente confirmada na solicitação posterior. Remover o comando duplicado “↻ Atualizar agora” de dentro do submenu. Não aumentar, retrair ou distorcer a barra.
+
+**Código alterado:** `app/src/main/assets/dock.html` na branch `fix/lt62-menu-visual-states-20261023`, PR #34 Draft.
+1. `QUICK_SVG.period` substituído por dois arcos SVG opostos com pontas de seta, sem imagens de terceiros nem emoji. O botão existente `data-key="period"` passa a carregar badge visual pequeno `OFF` ou `3m/5m/10m/15m/20m` e realce discreto enquanto a atualização foi solicitada.
+2. `bindRefreshGesture(button)`: `pointerdown` inicia tempo de 600 ms; liberação antes do limite = `manualRefreshTap()` via click (mesma ponte `Native.refresh()`); segurar abre `toggleChoices("period")`; `longTriggered` consome o click sintetizado pelo Android; `contextmenu` é alternativa para desktop/Android; deslocamento maior que 11 px ou cancelamento do gesto elimina o temporizador. O ícone continua acessível e o `quickClick("period")` histórico continua permitindo atualização imediata.
+3. Novo `periodCompactRow`, sem listas nem rolagem: **OFF**, legenda **AUTO**, **3**, **5**, **10**, **15**, **20**. Botões marcados usam borda e realce amarelo, atributos `aria-label` e `aria-pressed` por opção. Largura planejada aproximadamente 247 px e altura total abaixo de 92 px; cabeçalho ATUALIZAÇÃO com X. Sem parágrafo e sem botão “Atualizar agora” no painel.
+4. Cada seleção fecha o submenu e chama `Native.setIntervalMinutes(0|3|5|10|15|20)`; o Android é responsável por salvar a preferência, reiniciar o agendamento e exibir Toast breve (“AUTO desligado” ou “AUTO: N minutos”). O intervalo mostrado no ícone será confirmado pelo `onNativeData`, não aplicado apenas por animação otimista. Os parâmetros de pesquisa, o Shiny, a localização e os demais filtros não são limpos. Com AUTO OFF, a atualização manual ainda funciona normalmente.
+5. `manualRefreshTap()` dá feedback diretamente ao botão visível de duas setas, sem depender do botão legado `#manualRefresh` usado pela compatibilidade. A classe `periodCompact` é removida por `closeChoices()`, impedindo interferência com Filtros, Modos, Localização e Notificações.
+6. Regressões em `app/tests/overlay-ux.test.js`: atualização das verificações antigas do submenu vertical, confirmação das seis escolhas inclusive 10 min, botão único, ícone circular duplo, cancelamento de gesto, supressão de clique após long press, seleção nativa e dimensões compactas.
+
+**Gate:** `main` LT61 preservada; PR #34 não mesclada; versão e assinatura intactas. Nenhum workflow Android foi autorizado a produzir APK. Validar em Samsung após futura autorização de compilação: toque curto, segurar 600 ms, distinção entre ambos, Menu AUTO estreito sem scroll, badge de minuto em tema claro/escuro, troca de intervalo e busca real. Testes automatizados **não** equivalem à homologação física.
+
+
+### 12.244 — LT62: Personalização/Info Pokémon e Editor Visual compactos, correção de classes e ordenação (23/10/2026)
+
+**Relato do proprietário:** painel Personalização/“periodização” visualmente desorganizado, desalinhado e com funções aparentemente inconsistentes; reduzir textos (“Editor visual temporário” → “Editor Visual”; “Informações dos Pokémon” → “Info Pokémon”; “Comandos · mostrar / ocultar / ordenar” → “Menus”), compactar P/M/G, alinhar as setas de ordenação e remover a descrição extensa ao final de Info Pokémon. Melhorar também detalhes do próprio Editor Visual sem retirar seus ajustes reais.
+
+**Correções implantadas exclusivamente em `fix/lt62-menu-visual-states-20261023`, PR #34 Draft:**
+
+1. `app/src/main/assets/dock.html`: Personalização agora inicia com dois atalhos lado a lado **Info Pokémon** e **Editor Visual**; uma única linha **Sprites [P][M][G]** com botões quadrados de 27 px (preservados 35/45/55 px e `Native.setSpriteSize`); título curto **Menus**.
+2. Editor de comandos em linhas de 27 px com quatro colunas consistentes: **nome | visível | ↑ | ↓**. Nomes abreviados (“Local”, “Atualizar” etc.) com `title` e `aria-label` completos. Setas das extremidades desabilitadas; movimentação `moveMenuCommand` troca apenas entradas realmente editáveis, evitando a aparente inoperância ao mover através de comandos protegidos como Shiny, Personalização ou Fechar. Salva preferências nativas, não altera o número de comandos nem esconde atualização automática obrigatória. O olho do botão de atualização aparece travado/desabilitado para não oferecer ação falsa.
+3. **Info Pokémon** abre painel com grade compacta de duas colunas e 21 opções originais abreviadas (nome, nº Dex, sexo, forma, CP, nível, IV A/D/S, IV%, ranks GL/UL/ML etc.), botões ✓/– pequenos e com `aria-pressed`, acessibilidade com rótulo completo. As escolhas continuam independentes e encaminhadas às mesmas bridges `Native.setResultDisplayOption`, `Native.toggleTimers` e `Native.setResultTextVisible`; estados de Despawn/IV% são exibidos a partir das preferências efetivas `showTimers`/`showResultText`. Removido integralmente o parágrafo extenso da parte inferior; permanecem só os controles e o botão curto de voltar.
+4. Corrigida causa de vazamento de estilos: `uxPanel` remove classes de menus anteriores (`visualPanel`, `appearanceCompact`, `infoCompact`, `periodCompact`) antes de iniciar outro painel. Ao navegar de Editor Visual para outro menu, a prévia nativa de área visual é desativada por `Native.previewVisualArea("")`. O retorno para Personalização mantém a barra fixa.
+5. `app/src/main/assets/visual_editor.js`: título **EDITOR VISUAL** sem “TEMPORÁRIO”; abas preservadas **Pokémon / Menu**; todas as ferramentas reais reorganizadas em `details/summary` compactos, apenas uma seção expandida por vez. Na aba Pokémon: **Sprites e espaçamento**, **Pokébola e toque**, **Janela e orientação**, **Cores e guias**. Na aba Menu: **Posição do menu**, **Espaçamento e painéis**, **Cores e guias**. “Presets e ferramentas” é seção recolhível. Alterações continuam ao vivo e persistidas via `saveSoon/Native.saveVisualPrefs`; limites, direções, opacidade, slider fino ±1, JSON (copiar/importação interna), prévias por área e restauro foram mantidos.
+6. CSS novo com largura compacta do editor (268 px), deslizes mais estreitos, valor numérico e botões **–/+** alinhados, tamanhos de fonte de 9–11 px, abas e P/M/G menores, sem longos textos fixos. Avisos de operação do editor aparecem **somente após ações**, não ocupam uma linha permanente. Eventos assíncronos de seções destacadas são ignorados para evitar que um `toggle` de aba antiga altere a aba atual.
+7. Novos contratos Node em `app/tests/lt62-menu-visual-states.test.js` e expectativas atualizadas em `app/tests/overlay-ux.test.js` e `app/tests/visual-editor.test.js` cobrem 21 opções, estados salvos, alinhamento e ordem de menus, atalhos, classes, seções recolhíveis e prévia/ajustes do editor.
+
+**Verificação automatizada:** workflow `PokeSearch Node QA (sem APK)` **40005466378 SUCCESS** no commit `8611bc261bee73f881183f520331c3ef83ba2afd`, todas as nove suítes aprovadas. CI Android build e Secure Beta foram **SKIPPED**. Isso não equivale a compilação Java/Gradle nem homologação física; validar tamanhos, cliques, edição de ordem e deslizamento no Samsung antes de aprovar merge. Nenhum APK novo, nenhuma alteração na main LT61 ou na assinatura/applicationId. Arquitetura WebView+`probe.js`, login, persistência, demais filtros e menus preservados.
+
+**Próxima etapa sugerida:** ajustar outros detalhes visuais somente na PR #34 até autorização explícita para compilar novo APK; quando autorizado, homologar no Samsung primeiro a passagem de toque, o Editor Visual, a ordem dos menus, estados das 21 infos e os temas claro/escuro.
+
+
+### 12.245 — LT62: checkpoint consolidado, prompt de continuidade e autorização explícita do novo APK (23/10/2026)
+
+**Autorização expressa do proprietário:** “Gere o prompt para próximo chat. Registre tudo no arquivo mestre. E gere o apk”. Portanto, a geração de **nova compilação do APK LT62** está autorizada nesta ocasião, sem autorização de merge. Permanecer na branch `fix/lt62-menu-visual-states-20261023`, PR #34 Draft. `main` deve continuar em LT61 (`caea98b7b57b9e45d5218e907eb392d76953dd53`). Não alterar `applicationId=com.lucianotoscano.pokesearch`, certificado, login, arquitetura ou filtros.
+
+**Consolidação das seções 12.238–12.244 (mudanças pós-APK LT62 anterior):** (1) Modos A/D/S e IV% 0–100, GL/UL #, placeholders e ✓ único; (2) Filtros em cascata com PC/Nível sem duplicar Min/Max, Sexo maior, formas e tamanho; (3) Localização compacta, colar SVG e feedback curto; (4) Favoritos com busca instantânea, 3 sugestões, 12 sprites por página e sem scroll; (5) Notificações compactas em duas seções, som/silencioso/OFF, 36 opções de áudio, prévia, importação, som BR inicial de Favoritos e personalização por espécie oculta; (6) botão Atualização com duas setas circulares, toque curto e segurar 600ms, OFF/AUTO 3/5/10/15/20 e badge; (7) Personalização e Info Pokémon com fontes menores, P/M/G compactos, nomes abreviados, setas alinhadas e 21 controles; (8) Editor Visual agrupado e compactado sem perder funcionalidades originais; (9) barra fixa e autenticação preservadas.
+
+**Arquivos de referência:**
+- Prompt completo para novo chat: `docs/PROMPT_CONTINUIDADE_POKESEARCH_LT62_APK_HOMOLOGACAO_PARA_LT63_20261023.txt`.
+- Release notes atualizadas em `app/src/main/assets/release_notes.json`, entrada `minVersionCode=54260` (LT62), contendo novidades, melhorias, correções e homologação pendente.
+- Workflow oficial já instalado: `.github/workflows/build-v062-compact-preview.yml`, que exige mensagem de commit iniciada por `build: approved v0.00.62 LT signed` para compilar por push autorizado nesta branch.
+
+**Contrato de build autorizado:** `PokeSearch-v0.00.62-LT.apk`, `versionName=0.00.62`, `versionCode=54260` (mesmo identificador visual da LT62 de teste anterior, MAS novo binário compilado do commit documentado). Assinar **somente** com chave persistente protegida por secrets; verificar SHA-256 da assinatura `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, APK `com.lucianotoscano.pokesearch`, integridade ZIP e SHA256SUMS. Não distribuir binário de chave debug efêmera. Publicar artefato GitHub Actions e URL verdadeira após status SUCCESS. Nenhum arquivo APK deve ser declarado pronto antes de conferir esse artefato.
+
+**Gate de qualidade:** nove suítes Node passaram no commit `8611bc261bee73f881183f520331c3ef83ba2afd` (workflow `40005466378`). Ao iniciar a compilação autorizada, executar novamente testes Node, `app:testDebugUnitTest`, `app:assembleDebug`, verificação de assinatura e versão. Registrar em seção posterior o ID real do build, SHA de origem, status, hash e falhas/fixes. O resultado não prova homologação física Samsung.
+
+**Homologação Samsung pós-build:** testar reinstalação sobre app atual sem perder login, todos os menus, toque na engrenagem com submenu aberto, toques em áreas transparentes, Modos/GL/UL/IV%/Shiny, filtros reais PoGoCoordinates, busca e resultados, Localização, paginação de Favoritos, 36 áudios, AUTO 10 min e pressão longa, Personalização, Info Pokémon e Editor Visual. Atenção: área transparente nativa pode continuar interceptando toque; não afirmar corrigida até evidência física.
+
+**Entrega:** manter `main` sem merge e PR #34 Draft. Continuar o projeto a partir do último SHA REAL confirmado, sem reiniciar nem misturar outros projetos. Só criar LT63 após novos testes e autorização do proprietário.
+
+
+### 12.246 — LT62: APK assinado gerado e validado com sucesso (23/10/2026)
+
+**Autorização/escopo:** a solicitação expressa “Gere o prompt para próximo chat. Registre tudo no arquivo mestre. E gere o apk” autorizou apenas compilar um novo APK LT62, mantendo `main` LT61 e PR #34 Draft sem merge. A autorização foi materializada no commit de build iniciado por `build: approved v0.00.62 LT signed`.
+
+**Build assinado, concluído:** GitHub Actions `PokeSearch v0.00.62 LT — APK assinado para homologação de menus compactos`, run **40007032664**, status **SUCCESS**, fonte/checkout **878c7aa16918c30b96e0b1b651c16aeedec9927d**. Steps de Java 17, Gradle 8.11.1, Android SDK 36, assinatura privada, contratos de menus e nove suítes Node, `app:testDebugUnitTest`, `app:assembleDebug`, verificação de APK, assinatura e publicação de artefato: todos **SUCCESS**. O arquivo de origem real é verificado em `SOURCE_COMMIT.txt` dentro do artefato, não pela HEAD documental posterior.
+
+**Entrega confirmada:**
+- Artefato GitHub Actions **12524672001** denominado `PokeSearch-v0.00.62-LT` na run `https://github.com/LucianoToscano/PokeSearch/actions/runs/40007032664`.
+- APK oficial `PokeSearch-v0.00.62-LT.apk`, tamanho **33.250.884 bytes** (aprox. 31,7 MiB), conteúdo ZIP íntegro.
+- SHA-256 do APK **8ce4b86457f32c9c618348a7c3a80f8e58b7403279bf67232fbcb894df20bb9c**, confirmado por `sha256sum -c SHA256SUMS.txt`.
+- Assinatura SHA-256 do certificado **34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e**, certificado persistente da LT61/LT62, verificações v2 realizadas no runner Android.
+- Pacote `com.lucianotoscano.pokesearch`, `versionName=0.00.62`, `versionCode=54260`, confirmados por `aapt dump badging` no workflow e `PACKAGE_VERSION.txt`. Mesmo versionCode da LT62 anterior: a nova compilação traz alterações posteriores à LT62 original e deve ser diferenciada pelo SHA/commit.
+- Arquivos entregues junto ao APK: `SHA256SUMS.txt`, `SIGNING_CERT_SHA256.txt`, `SOURCE_COMMIT.txt`, `PACKAGE_VERSION.txt`. Pacote ZIP de artefatos disponível por 30 dias no GitHub Actions, conforme política da run.
+
+**Checkpoint documental posterior ao APK:** atualizações nesta seção e no prompt de continuidade `docs/PROMPT_CONTINUIDADE_POKESEARCH_LT62_APK_HOMOLOGACAO_PARA_LT63_20261023.txt` são **apenas documentação**. Podem fazer a HEAD da branch ser mais recente do que o SHA `878c7aa1` compilado; isso **não significa** que o APK foi recompilado sobre os commits documentais. O conteúdo funcional e release_notes incluídos no APK correspondem ao checkout indicado em `SOURCE_COMMIT.txt`.
+
+**Limitações ainda abertas:** nenhuma homologação física Samsung foi realizada nesta etapa, mesmo com build/testes válidos. Checar instalação sobre LT61/LT62 e persistência de login, overlays, áreas transparentes e eventos de toque, filtros reais PoGoCoordinates, GL/UL/IV%/Shiny, Favoritos, 36 áudios, AUTO 3/5/10/15/20, Editor Visual, Personalização e Info Pokémon; registrar falhas comprovadas antes de gerar LT63.
+
+**Controle:** PR #34 Draft **não mesclada**, `main` LT61 intocada; código, APK, assinatura e docs registradas. Para novo chat, abrir prompt no caminho oficial e conferir HEAD atual sem confundir commit documental com commit do APK.
+
+
+### 12.247 — LT62: ajuste final ícone Atualização e transparência da cascata ••• (23/10/2026)
+
+**Feedback Samsung fornecido pelo proprietário (ainda requer nova compilação para comprovar correção):** o botão Atualização ficou com símbolo excessivamente grande e amarelo, minutos embaixo com fundo, opções em faixa horizontal com cabeçalho “Atualização” e X. O submenu ••• estava funcional/aprovado, porém os itens Reportar, Apoiar e Fechar apareciam sobre um fundo preto extra.
+
+**Correção do código da branch `fix/lt62-menu-visual-states-20261023`, PR #34 Draft:**
+1. Em `app/src/main/assets/dock.html`, SVG RefreshCw restaurado ao tamanho compacto de 16 px (sem amarelo); toque curto executa `Native.refresh()` **uma vez** e anima apenas a rotação SVG por 700 ms, encerrada após 720 ms. O gesto de segurar por 600 ms continua abrindo apenas configuração AUTO e suprimindo o clique/refresh duplicado. `prefers-reduced-motion` suprime a animação.
+2. Badge `periodBadge` ocupa o centro do próprio ícone, texto simples e pequeno de 7 px (`3m`, `5m`, `10m`, `15m`, `20m`); quando AUTO OFF, não há algarismo nem fundo extra. Estado completo permanece no rótulo acessível.
+3. Submenu de Atualização espelha a cascata individual vertical `•••`: sem título nem X; coluna de sete peças `OFF / AUTO / 3 / 5 / 10 / 15 / 20` em tiles independentes de 30 px, largura do botão acionador, borda e transparência do tema, espaçamento igual ao `Mais`; `AUTO` é rótulo visual não clicável; escolhas acionam `Native.setIntervalMinutes(0|3|5|10|15|20)` e persistência já existente. `fit()` usa altura natural de sete tiles para o overlay nativo e preserva a barra fixa; respeita posição acima/abaixo e layout vertical.
+4. Causa técnica do fundo extra em `•••`: regra genérica `#choices:not(.visualPanel):not(.modeCascade)` possuía especificidade superior e pintava uma área opaca por trás da cascata. Excluídos explicitamente `.morePanel` e `.periodCompact` desta regra; seus contêineres ficam transparentes, com fundo só nos tiles individuais. Reforçado que os ícones Reportar/Apoiar/Fechar não têm uma segunda camada; cores originais de aviso/coração/X preservadas.
+5. Navegação entre submenus remove `periodCompact` antes de renderizar outros, sem alterar filtros, Shiny, Auto salvo, conta/login, resultados ou bridges. Nenhum ajuste em `applicationId`, versões ou assinatura.
+6. Contratos ajustados em `app/tests/overlay-ux.test.js` e adicionados em `app/tests/lt62-menu-visual-states.test.js` para tamanho, giro/neutralidade, badge central, coluna sem X, altura automática e fundo do `Mais`.
+
+**Commits:** implementação `b2cab8acfd962e84c5c1da9523f8e263a3f001db`; regressões overlay `012f378bb855496a908b036d39febfe10efb1e4e`; contratos visuais `061a6a3dbfbdd4fa020bc231c8fbe8ebc3ad0772`. Validação GitHub Node/Gradle e aparelho Samsung deverão ser registradas após execuções comprovadas.
+
+**Proteções:** PR #34 permanece Draft, `main` LT61 não mesclada. **Não foi recompilado APK**: o arquivo `PokeSearch-v0.00.62-LT.apk` da run `40007032664` corresponde ao commit antigo `878c7aa16918c30b96e0b1b651c16aeedec9927d` e **não inclui** este ajuste. Sem autorização para novo APK ou LT63; próximo passo é verificar QA e aguardar próxima falha relatada.
+
+
+### 12.248 — LT62: correção QA de refresh e fechamento da etapa sem APK (23/10/2026)
+
+**Origem:** relato visual do Samsung sobre ícone de Atualização aumentado/amarelo, minutos mal posicionados, cabeçalho/X e layout horizontal, e fundo preto extra em Reportar/Apoiar/Fechar dentro da cascata `•••`. Correções permanecem somente na PR #34 Draft.
+
+**Complemento técnico pós-12.247:** `bindRefreshGesture` agora permite fechar a cascata AUTO segurando novamente 600 ms; toque fora da cascata também a fecha, com o mesmo padrão de `•••`. A mudança entre menus e `closeChoices()` eliminam largura/max-width inline obsoletos para impedir herança de um painel anterior. O toque curto continua disparando exatamente uma solicitação `Native.refresh()`; girar é apenas feedback do botão, não evidência de conclusão da busca. AUTO somente muda o intervalo pelo caminho nativo já existente.
+
+**Commits adicionais:** `d3deb303ef85c5e9d405f4fc8eee39fec5f37bc5` (ajustes de testes UX); `c84e0a750452cd13d38de66926a630c28ad22660` (fechamento sem X, geometria inline); `c9e57c0385aa55fef97131af7fe7ff2b77e47c7c` (testes de fechar); `dce100b2b0b44535814e4f16455b58dc88e10b23` (contrato visual do CSS ajustado). Commits iniciais e detalhamento de design estão na 12.247.
+
+**QA automatizado confirmado:** workflow **PokeSearch Node QA (sem APK)** run **40014778615**, commit de código/teste **dce100b2b0b44535814e4f16455b58dc88e10b23**, status **SUCCESS**. Nove suítes, total **843 verificações**: localização 68, probe 144, Pokémon 15, login 38, UX 479, editor visual 46, assinatura 14, Firebase 7 e LT62 32. O JS inline de `dock.html` também passou na checagem sintática. Antes desse sucesso, runs intermediárias falharam por expectativas de testes antigas de cabeçalho/X, animação `requested` e seletor CSS opaco; corrigidas sem reverter a interface aprovada.
+
+**Sem release:** Android build e Secure Beta foram **SKIPPED** para o commit testado. Não há novo APK; a versão LT62 assinada run `40007032664` permanece inalterada e não contém esta correção. `main` LT61 preservada, PR #34 Draft não mesclada. **Não alegar homologação física:** confirmar visual, toque e pass-through no Samsung somente após autorização expressa de nova compilação.
+
+
+### 12.249 — LT62: menu Filtros como Modos + confirmações somente em PC, Nível e PC mínimo PvP (23/10/2026)
+
+**Origem da correção:** evidência visual Samsung (prints 1000843326.jpg / 1000843329.jpg) demonstrou diferença entre o menu **Modos** aprovado (coluna estreita de seis itens, editores laterais) e o menu **Filtros** bugado (título FILTROS/X grandes, painel com largura fixa, enorme área vazia, ações na base). Pedido adicional explícito do proprietário: posicionar ✓ **ao lado de PC Min/Max, Nível Min/Max e PC mínimo de ranking PvP**; demais opções não devem exigir confirmação geral no rodapé.
+
+**Implementação na PR #34 Draft, branch `fix/lt62-menu-visual-states-20261023`:**
+1. `app/src/main/assets/dock.html`: `renderFiltersChoices` mantém os filtros originais e substitui a apresentação pela cascata `filterCascade` semelhante a `modeCascade`. No estado inicial, só a coluna estreita `Filtros` com `Ordenar / PC / Nível / Clima / Tamanho / Sexo / Forma`; sem janela grande, cabeçalho externo/X nem área lateral vazia. Ao tocar uma categoria, seu editor abre ao lado; tocar novamente recolhe. Em Modos GL/UL, o painel mantém os campos PvP pertinentes, incluindo `PC mínimo PvP` e Evoluções. O popup segue a barra fixa e calcula a altura pela coluna e pelo editor lateral, não pela área interna vazia. Estilos de claro/escuro, transparência, bordas e variáveis do Editor Visual são mantidos.
+2. `numericConfirmButton` cria ✓ compacto ao lado de **PC Min/Max**, **Nível Min/Max** e **PC mínimo PvP** (somente quando a opção correspondente está aberta). `confirmNumericFilter` exige valores inteiros dentro dos limites: PC `0–99999`, Nível `1–35` e PC mínimo PvP `0–99999`; para pares, Min ≤ Max. Em falha, informa no campo sem alterar a busca. ✓ envia `Native.patchSearchFilters(JSON.stringify(delta))` restrito ao **par confirmado ou ao PC mínimo PvP**, sem Shiny, IV, ranking GL/UL, coordenadas ou seleção de Pokémon. GL/UL # de ranking continuam confirmados no menu Modos, independentemente.
+3. `patchSelectedFilterKeys` aplica sem ✓ adicional as opções simples e escolhas individuais de Ordenar, Clima, Tamanho (multisseleção), Sexo (seleção exclusiva), Forma (lista oficial e chips), e Evoluções anteriores (GL/UL). Cada evento envia **somente suas próprias chaves** ao bridge nativo, preservando outras preferências/filtros, evitando enviar um rascunho total obsoleto. A lista Forma mantém descoberta oficial; não inventar formas; o botão extra `✓ Confirmar seleção` foi retirado desse seletor.
+4. A fileira de três ações ✓/lixeira/X deixou de ser adicionada ao DOM do painel; os respectivos manipuladores internos legados ficaram por compatibilidade de contratos existentes, **mas não são renderizados**. Esta etapa não implica limpar todos os critérios ao confirmar apenas uma categoria.
+5. Sem qualquer alteração de `applicationId`, namespace, assinatura, versão, `probe.js`, login/autenticação, preferências salvas, localização física ou número máximo de resultados.
+
+**Commits de código:** `adbf1c2dbb44570e00b20700c992481b4434b259` (rail/editores laterais), `6f23cb91b90b205e6d7f7feda67daac7b746de05` (estilos), `97dc5358b37e6eec229221d2e6ff55d1221cb089` (patch por chaves e confirmação), `a1fdc8efe8817ed3ff864e0827cf8b2dc7830e91` (inserção ✓ e aplicação direta), `2291af5df553543e871ed25dd638856f685873fe` (Forma e CSS), `e693329d6d87858940ca13b363502872563c43fd` (atualização contrato Forma), `4f22d82ec96c63bc189d40e5b6208dfeff4253cb` (duas verificações específicas para escopo e validação numérica).
+
+**QA confirmado em GitHub Actions:** `PokeSearch Node QA (sem APK)` run **40017078986**, `SUCCESS` no commit `4f22d82ec96c63bc189d40e5b6208dfeff4253cb`; **845/845 verificações** em nove suítes (68+144+15+38+479+46+14+7+34). Inclui sintaxe JS de `dock.html`, validação de limites, envio somente do par ou do campo confirmado, não envio para dados inválidos e checagens de ausência de rodapé global. Builds Android/Secure beta foram `SKIPPED`.
+
+**Riscos pendentes:** Node não prova tamanho/percepção de popup, foco/teclado e toque da WebView no Samsung; confirmar as opções oficiais e persistência efetiva no PoGoCoordinates; verificar condições de corrida quando mudanças instantâneas são feitas em sequência, posicionamento em ambas as orientações e navegação sem botões de fechamento. Não chamar esta alteração de homologada fisicamente.
+
+**Proteção de release:** PR #34 permanece Draft e main em LT61. Sem merge, sem geração de APK, sem LT63. APK 0.00.62 previamente assinado (commit `878c7aa16918c30b96e0b1b651c16aeedec9927d`, run `40007032664`) **não contém** estas modificações.
+
+
+### 12.250 — LT62: Pokébola única no lugar da engrenagem, toque curto nos resultados e toque longo no menu (23/10/2026)
+
+**Pedido do usuário:** substituir a engrenagem principal pela mesma Pokébola dos resultados, reunindo acesso ao menu e alternância da lista num único ícone; manter toque longo como Atualização; toque curto alterna resultados; com menu já aberto, novo toque curto na Pokébola recolhe o menu. Avaliação de melhorias solicitada, sem autorização para gerar APK, merge ou LT63.
+
+**Implementação técnica na PR #34 Draft (ainda não homologada fisicamente):**
+1. `OverlayService.java`: o `grip` nativo de 53×30dp existente sobre o dock assume a arbitragem de gestos, sem JS click concorrente. Ao `ACTION_DOWN` agenda `dockLongPress` para **600ms**. `ACTION_MOVE` com deslocamento superior a 4dp cancela o longo e preserva arraste nativo. `ACTION_UP` cancela a tarefa pendente e, se não houve longo nem arraste: se `minimized`, restaura; senão, se `menuExpanded`, fecha somente o menu com `menu(false)`; senão, alterna resultados com `toggleResultsCollapsed()`. Se o longo completou, chama `menu(!menuExpanded)` e suprime o clique curto no `UP`; holding novamente fecha o menu. `ACTION_CANCEL` remove a tarefa. Nenhum toque longo realiza refresh nem altera filtros.
+2. A antiga `resultGrip` fica `View.GONE` (sem alvo de toque duplicado). A Pokébola do result WebView `#resultHeader` recebe `display:none!important` e `pointer-events:none`; a lista permanece em seu próprio WebView/overlay, incluindo sprites, até 10 Pokémon, detalhes, timers, posição personalizada `resultsX/resultsY`, orientação, metadados e escala. **Não reposicionar automaticamente os resultados nesta etapa** para não destruir as preferências de localização/Editor Visual anteriormente aprovadas. O ícone principal é único no dock; a lista continua na posição que o usuário salvou.
+3. O estado `resultCollapsed` salvo continua autoritativo. Quando recolhido, o `resultRoot` inteiro fica `GONE` (não há cabeçalho invisível interceptando toques). Expandir revela a janela e deixa o `resultPanel` medir sua própria altura. `minimize`, retorno do login e do seletor de favoritos respeitam `resultCollapsed` e evitam reexibição indevida. A bolha de minimizar agora também mostra a Pokébola, no lugar da engrenagem.
+4. Em `dock.html`, o botão `#gear` mantém seu ID e dimensões para a bridge e editor legado, porém **visualmente é a Pokébola** (`dockModeIcon`), renderizada pelo mesmo `getResultIcon` de `resultModeIcon`, com badge de IV/GL/UL, Shiny, Background comprovado, contador opcional e `capturePulse` central durante busca. Mantida proteção contra imagem inválida com fallback. Sem rotação do antigo SVG de engrenagem. `title` e `aria-label` explicam toque curto, segurar e arrastar; `prefers-reduced-motion` respeitado.
+5. Sem interferir nos ícones da barra fixa, menus Modos/Filtros/Localização, na verificação PoGoCoordinates, credenciais/login, applicationId `com.lucianotoscano.pokesearch`, assinaturas ou versões. `Native.toggleResultsCollapsed`, `Native.menu` e interfaces existentes permanecem disponíveis para compatibilidade; o novo gesto principal fica nativo no grip, para evitar duplo disparo.
+6. **Recomendações para possível futura etapa, ainda não implementadas:** feedback háptico discreto quando o longo completa; configuração opcional para alinhar a lista de resultados diretamente abaixo do novo ícone sem sobrescrever o `resultsX/resultsY` antigo; indicador sutil e não colorido de menu expandido para acessibilidade.
+
+**Commits:** `ef412338d1b1362640012a6a5ab1137e21457b97` (grip e estados nativos), `a2898749182b94e11019ef25e6c779c18c488ad8` (arte e estados da Pokébola), `438d07e8d27f06fa0bd5ce8f1fd1b955a4b720af` (contrato de retorno login), `1baa7cf27ebaec06010b2dc93ac7538fdce946bf` (regressão do gesto/arte).
+
+**Evidência QA:** run `40018723994` **SUCCESS** no HEAD de código e testes `1baa7cf27ebaec06010b2dc93ac7538fdce946bf`, **846/846 verificações** em nove suítes Node: 68 localização, 144 probe, 15 Pokémon, 38 login, 479 UX, 46 editor, 14 assinatura, 7 Firebase e 35 visuais LT62. Parse dos três blocos JS inline de dock.html validado. Android Gradle build, assinatura de APK novo e teste físico Samsung **não executados**; workflows Android/Secure beta **SKIPPED**.
+
+**Riscos de homologação real:** verificar no Samsung pressão de 600ms sob menu aberto/fechado, rotação e cancelamento no arraste, resultados 0–10 com filtros/IV/GL/UL/Shiny e pulso de pesquisa, reabertura preservando `resultsCollapsed`, retorno login/favoritos, tema e Editor Visual; testar áreas transparentes que podem capturar toques; a lista pode permanecer visualmente distante do ícone se antes foi arrastada para outro local, pois isso preserva posição anterior. Não alegar pass-through nem gestos físicos concluídos com base somente em Node.
+
+**Proteção do release:** sem merge; `main` permanece LT61, PR #34 Draft. APK assinado v0.00.62 artefato #12524672001, commit `878c7aa16918c30b96e0b1b651c16aeedec9927d`, **não incorpora esta mudança**. Nova compilação ou LT63 exigem autorização expressa.
+
+
+### 12.251 — LT62: compilação assinada solicitada pelo proprietário (23/10/2026)
+
+**Autorização expressa neste chat:** “Registre no arquivo mestre. E gere o prompt para próximo chat e gere o apk”. Autorizada **somente** uma nova compilação do pacote LT62 para homologação Samsung; não foi autorizado merge da PR #34, modificação da main ou lançamento da LT63.
+
+**Fonte inicial da compilação:** branch `fix/lt62-menu-visual-states-20261023`, PR #34 Draft, com últimas correções até a seção 12.250: refresh compacto 16px (giro neutro, badge central e cascata), transparência do menu Mais, Filtros em cascata como Modos com ✓ apenas em PC/Nível/PC mínimo PvP, demais seleções por campo e Pokébola única no lugar da engrenagem (toque curto alterna resultados, menu aberto + toque curto fecha menu, segurar 600ms alterna menu, arraste cancela toque). A lista de resultados permanece independente e em posição salva; preserve todos os 0–10 sprites, badges, dados e login.
+
+**Gatilho controlado de build:** o commit desta seção começa com `build: approved v0.00.62 LT signed` para autorizar uma execução do workflow original `.github/workflows/build-v062-compact-preview.yml` pela regra de branch. Requisitos esperados: `PokeSearch-v0.00.62-LT.apk`, versionCode `54260`, applicationId `com.lucianotoscano.pokesearch`, certificado SHA256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Não trocar keystore nem usar debug auto-gerada; abortar distribuição se a validação falhar.
+
+**Pendências de verificação do build:** registrar em checkpoint posterior o commit fonte real lido de `SOURCE_COMMIT.txt`, número da run e artefato, `SHA256SUMS.txt`, `PACKAGE_VERSION.txt`, `SIGNING_CERT_SHA256.txt`, tamanho em bytes, teste Gradle e status. Não presumir sucesso nem SHA antes de ler os arquivos do artefato; não substituir APK antigo sem conferir certificado. Após a compilação, continuar homologação real no Samsung, em especial gesto de toque longo sem duplicação, pass-through e alinhamento entre ícone e resultados. Node QA não substitui teste físico.
+
+**Restrições preservadas:** PR #34 Draft, main LT61, sem merge, sem LT63, sem proxy/backend/GPS físico, sem reconfiguração de login e preferências do usuário. Novos APKs devem manter assinatura e versionCode monotônico; esta é uma recompilação da mesma versão de teste LT62 autorizada pelo proprietário.
+
+
+### 12.252 — LT62: APK de homologação emitido e conferido (23/10/2026)
+
+**Solicitação do proprietário:** registrar o Guia Mestre, preparar prompt de continuidade e gerar novo APK assinado sem merge. **Execução concluída:** workflow original `.github/workflows/build-v062-compact-preview.yml`, GitHub Actions **#40019242360**, job `build-lt-62` **SUCCESS**, artefato **#12528779958**, nome `PokeSearch-v0.00.62-LT`, ZIP de comprovantes + APK íntegros (CRC OK). Gatilho: commit documentado na 12.251.
+
+**Provas lidas diretamente do artefato #12528779958:**
+- `SOURCE_COMMIT.txt` = `dd70989c5c01de9170838a3a82010bb10db47c9f` (**código EXATO contido no APK**; commits documentais posteriores não o modificam).
+- `PACKAGE_VERSION.txt` = `package: name='com.lucianotoscano.pokesearch' versionCode='54260' versionName='0.00.62' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'`.
+- `SIGNING_CERT_SHA256.txt` = `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, mesmo certificado estável de LT61/LT62. O workflow exigiu assinatura persistente, validou `apksigner verify` e identidade `aapt`; assinatura desconhecida reprovaria a execução.
+- `SHA256SUMS.txt` = `7e5cedb7f54a2cae17af5a13ad3d5c8eefa18a56ff738378513083cba06e135d  PokeSearch-v0.00.62-LT.apk`.
+- APK final: **33.254.536 bytes**, SHA-256 recalculado localmente = `7e5cedb7f54a2cae17af5a13ad3d5c8eefa18a56ff738378513083cba06e135d`. ZIP do artefato completo: **30.567.683 bytes**, CRC OK; SHA-256 do ZIP = `1c3eaa7999d67e1165745a36c290d07304bc050c6cdbe3fdba760fd339550df3`. APK internamente validado como arquivo ZIP íntegro (215 entradas).
+- Link oficial da execução: `https://github.com/LucianoToscano/PokeSearch/actions/runs/40019242360`. O commit `dd70989...` também teve `PokeSearch Node QA (sem APK)` run **#40019249168** com `SUCCESS`. O workflow de build executou as nove suítes Node, Java 17, Gradle 8.11.1, testes unitários debug e `:app:assembleDebug`, além das verificações de assinatura/versão.
+
+**Conteúdo desta recompilação de LT62:** menus e filtros compactos com melhorias visuais de 12.247–12.249; ícone RefreshCw menor sem amarelar, intervalos centralizados, cascata vertical com OFF/AUTO/3/5/10/15/20 e menu Mais sem fundo preto indevido; Filtros como Modos, ✓ somente ao lado de PC, Nível e PC mínimo PvP, demais critérios individuais; **Pokébola única no lugar da engrenagem** com modos/IV/Shiny/contador/busca, toque curto alterna a lista, toque curto com menu aberto recolhe apenas menu, segurar 600 ms alterna menu, arraste cancela toque. Lista em janela independente de resultados no posicionamento salvo. Preferências, login, dados, applicationId e versões mantidos. Não há backend/proxy/GPS físico.
+
+**Comparação com APK anterior:** o APK inicial da LT62, SHA-256 `8ce4b86457f32c9c618348a7c3a80f8e58b7403279bf67232fbcb894df20bb9c`, build #40007032664, foi substituído como candidato de homologação por este novo arquivo de **mesmo nome e mesma versão**, com fonte e hash distintos. Não confundir; somente o SHA `7e5ced...` incorpora a Pokébola unificada.
+
+**Status de entrega:** PR #34 **aberta em Draft**, `main` LT61 em `caea98b7b57b9e45d5218e907eb392d76953dd53`. Não houve merge, alteração de applicationId, incremento de versionCode ou criação da LT63. **Homologação real Samsung NÃO foi feita pelo assistente**. Orientação: instalar por cima mantendo certificado; conferir sem perda de sessão/permissões, tap/hold/drag, Filtros e Modos, lista 0–10, seleção Shiny/PvP, atualização AUTO, toque em camadas transparentes, layout em horizontal/vertical, alinhamento da lista e persistência após reabrir. Abrir um novo chat usando o prompt de continuidade gerado neste checkpoint.
+
+
+### 12.253 — LT62: arraste conjunto da Pokébola e resultados (23/10/2026)
+
+**Falha comprovada pelo usuário em homologação Samsung do APK LT62 atualizado:** “Os resultados nao estao arrastando junto com a pokebola..”. A etapa 12.250 unificou o controle e ocultou o segundo cabeçalho, mas o `ACTION_MOVE` nativo ainda alterava somente `params.x/y` da Pokébola. A lista permanece em `resultRoot/resultParams` independente e por isso ficava parada.
+
+**Correção realizada na mesma PR #34 Draft, sem merge ou nova versão:**
+1. `OverlayService.java`: no `ACTION_DOWN` do `grip` principal salva `dragResultStart[0/1]` (posição atual da janela de resultados) junto com `startX/Y` da Pokébola. Movimentos com mais de 4dp continuam cancelando o long-press de 600ms, preservando gesto de toque curto/segurar. O `ACTION_MOVE` calcula **uma única translação** `moveX/moveY`, limitada à interseção dos limites da tela de ambas as janelas nativas. Aplica `params.x/y=startX/Y+move` e `resultParams.x/y=dragResultStart+move`. Assim os sprites da lista, mesmo com apresentação horizontal ou vertical, acompanham a Pokébola mantendo a distância personalizada anterior; o menu aberto também segue o dock via `updateWindow()/updateMenuPosition()`. Se os resultados estiverem recolhidos, sua posição nativa oculta também é atualizada, sem reaparecer por acidente.
+2. A janela de resultados recebe `wm.updateViewLayout(resultRoot,resultParams)` no máximo a cada 16ms durante arraste, com uma atualização final incondicional no `ACTION_UP`; `moveDetail()` acompanha a janela. Erros nativos passam por `recordFailure` e não provocam alteração de filtros ou login.
+3. No `ACTION_UP` após arrastar, salva atomically nas preferências `pokeballX`, `pokeballY`, `resultsX` e `resultsY`, respeitando `visualResultsOffsetX/Y` para evitar dupla aplicação do Editor Visual. Na criação do dock, restaura `pokeballX/Y` somente quando presentes, mantendo as coordenadas antigas de inicialização como defaults. `resultsX/Y` continuam usando a mesma restauração anterior. Sem resetar contas, autenticação, filtros, resultados ou aparência.
+4. No `ACTION_CANCEL`, cancela temporizador e garante renderização da posição conjunta; não dispara toque curto ou configuração de menu.
+5. Dois testes adicionados a `app/tests/lt62-menu-visual-states.test.js`: contrato de uma única translação com clamps e preservação do deslocamento relativo em casos positivos/negativos/bordas; persistência/reabertura das duas posições e ausência de conflito com 600ms/tap. Código principal: commit `b9bfeda41c13a0723df803516983ad491d4f4647`. Testes: commit `f2582264cf0c64142e21b139e0e8c915434a979b`.
+
+**CI executado:** `PokeSearch Node QA (sem APK)`, run **40020502490**, **SUCCESS**, commit `f2582264cf0c64142e21b139e0e8c915434a979b`; **848/848 verificações** em nove suítes: localização 68, probe 144, Pokémon 15, login 38, UX 479, editor 46, assinatura 14, Firebase 7 e LT62 37. JS inline de `dock.html` validado. Workflows de build Android e Secure Beta marcados **SKIPPED**, portanto esta correção **não** foi compilada num APK nem validada no aparelho físico; não atribuir status de homologação Samsung por passar Node.
+
+**Próximo teste no Samsung (após autorização para nova compilação):** com menu aberto e fechado, arrastar Pokébola em X e Y e conferir deslocamento conjunto; movimentos próximos às quatro bordas; resultados em 1, 5 e 10 itens, layouts vertical/horizontal, lista recolhida/reexpandida, detalhes de Pokémon e configurações de posição pelo Editor Visual; reabrir PokeSearch e conferir que as posições persistem; garantir que toque curto continue alternando resultados, toque longo de 600ms continue alternando menu sem disparos duplos; verificar transparência/pass-through, pois Node não atesta comportamento nativo do Samsung.
+
+**Proteções:** PR #34 aberta Draft, main LT61, sem merge, sem LT63. APK anterior `PokeSearch-v0.00.62-LT.apk`, fonte `dd70989c5c01de9170838a3a82010bb10db47c9f`, SHA-256 `7e5cedb7f54a2cae17af5a13ad3d5c8eefa18a56ff738378513083cba06e135d`, **não contém** o conserto do arraste. Não disponibilizar o APK antigo como prova desta correção.
+
+
+### 12.254 — LT62: nova compilação assinada do arraste conjunto (23/10/2026)
+
+**Autorização expressa:** “Gere o apk.” Pedido após o relato Samsung de que a lista não acompanhava o arraste da Pokébola e após a correção de código/QA da seção 12.253. Autoriza apenas novo APK assinado para homologação Samsung, **sem merge, sem LT63, sem alteração da main e sem mudança do pacote Android**.
+
+**Origem:** branch `fix/lt62-menu-visual-states-20261023`, PR #34 Draft; correção em `OverlayService.java` (commit `b9bfeda41c13a0723df803516983ad491d4f4647`) e dois testes novos (commit `f2582264cf0c64142e21b139e0e8c915434a979b`); documentação 12.253 em commit `6e660ccb47f2ba078f656de294b20560e10e3aa1`. Node QA #40020502490 concluiu SUCCESS com **848/848** verificações em nove suítes. O gesto agora desloca `params` e `resultParams` por um único vetor limitado ao espaço útil e salva `pokeballX/Y` e `resultsX/Y`, preservando offsets do Editor Visual; toque curto/segurar 600ms/arraste mantidos independentes.
+
+**Construção:** o commit desta seção usa mensagem iniciada por `build: approved v0.00.62 LT signed` para iniciar o workflow protegido `.github/workflows/build-v062-compact-preview.yml` da branch. Requisitos obrigatórios: Gradle 8.11.1 + Java 17 + SDK36; `:app:testDebugUnitTest`, `:app:assembleDebug`; `PokeSearch-v0.00.62-LT.apk`; versionName `0.00.62`, versionCode `54260`; applicationId `com.lucianotoscano.pokesearch`; certificado de assinatura persistente SHA256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, apksigner v2, aapt, SHA256SUMS e SOURCE_COMMIT. **Não distribuir** se qualquer checagem falhar. Não confundir com APK anterior do mesmo nome (build #40019242360 / SHA256 `7e5cedb7f54a2cae17af5a13ad3d5c8eefa18a56ff738378513083cba06e135d`), que não inclui correção do arraste.
+
+**Emissão ainda precisa ser comprovada:** preencher seção seguinte somente depois de obter status SUCCESS, artefato, `SOURCE_COMMIT.txt`, `PACKAGE_VERSION.txt`, `SIGNING_CERT_SHA256.txt` e hash recalculado. Até lá a homologação física não está concluída. Instalar sobre versão existente, sem desinstalar e sem perder sessão, permissões e preferências; testar arraste em X/Y nas bordas, posição relativa lista↔Pokébola, menu aberto, lista recolhida, reinício e detalhes; não chamar testes Node de prova física.
+
+**Proteções:** PR #34 continua Draft, main LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`, sem merge, sem LT63, sem backend/proxy/GPS físico.
+
+
+### 12.255 — LT62: APK do arraste conjunto gerado e assinado, verificação concluída (23/10/2026)
+
+**Nova compilação autorizada, sem merge:** workflow `.github/workflows/build-v062-compact-preview.yml` na branch `fix/lt62-menu-visual-states-20261023`, execução **#40021475526**, job **#120646828760**, conclusão **SUCCESS**. Publicado artefato GitHub Actions **#12530308458** com nome `PokeSearch-v0.00.62-LT`. Link: `https://github.com/LucianoToscano/PokeSearch/actions/runs/40021475526`.
+
+**Comprovantes extraídos do artefato oficial, conferidos contra SHA-256 calculado dos bytes:**
+- `SOURCE_COMMIT.txt` = `af8d2d60b00d892cb3619908b89e0c883acec30e` (**código compilado**, contém ajuste do arraste de 12.253).
+- `PACKAGE_VERSION.txt` = `package: name='com.lucianotoscano.pokesearch' versionCode='54260' versionName='0.00.62' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'`.
+- `SIGNING_CERT_SHA256.txt` = `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; assinatura persistente idêntica à do LT62 anterior. A execução validou `apksigner verify --verbose --print-certs`, assinatura v2 e certificado esperado.
+- `SHA256SUMS.txt` = `2533f0adfb7f750478344407243869a8b2181400dd51179756b53f492c4a09f1  PokeSearch-v0.00.62-LT.apk`.
+- APK `PokeSearch-v0.00.62-LT.apk`: **33.254.536 bytes**. SHA-256 recalculado do APK descompactado = `2533f0adfb7f750478344407243869a8b2181400dd51179756b53f492c4a09f1` (**MATCH**). Arquivo APK validado como ZIP sem erro CRC, **215 entradas**.
+- ZIP de artefato armazenado para entrega como `PokeSearch-v0.00.62-LT-arraste-corrigido.zip`: **30.568.997 bytes**. SHA-256 ZIP `b2f999554de7bac9a078a9531a938c96160e90fd120b4a7877c5fc068a47c0ef`. CRC ZIP OK.
+
+**Verificações no workflow:** nove suítes Node aprovadas (**848/848**: localização 68, probe 144, Pokémon 15, login 38, UX 479, editor visual 46, assinatura 14, Firebase 7, LT62 37). Scripts inline dock.html validados. Java 17 + Gradle 8.11.1 + Android SDK 36; `gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug` finalizado `BUILD SUCCESSFUL` (testDebugUnitTest NO-SOURCE, Node regressões executadas). Versão, pacote e certificado conferidos na execução e novamente nos metadados do artefato.
+
+**Diferença para build LT62 anterior:** arquivo com mesmo nome e número de versão, mas o APK da execução #40019242360 tinha SHA-256 `7e5cedb7f54a2cae17af5a13ad3d5c8eefa18a56ff738378513083cba06e135d` e **não** continha o movimento sincronizado. O novo APK correto possui SHA `2533f0adfb7f750478344407243869a8b2181400dd51179756b53f492c4a09f1`. Substituir apenas por instalação sobre app existente (sem desinstalar), manter dados de login e preferências, respeitar `applicationId` e certificado.
+
+**Pendente — homologação Samsung física:** arrastar Pokébola com lista visível e menu aberto, movimento das duas janelas X/Y simultâneo, limites da tela, distância relativa, lista recolhida, persistência após reinício e detalhes. Com isso não se deve afirmar teste físico já concluído. Melhorias de editor/persistência só após feedback da homologação.
+
+**Estado de segurança:** PR #34 aberta em Draft; `main` ainda LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`. **Sem merge, sem LT63, sem mudança do applicationId, sem backend/proxy/GPS físico.** Esta documentação posterior não altera o código contido no APK (`SOURCE_COMMIT` acima).
+
+
+### 12.256 — LT62: alinhar coluna de resultados diretamente abaixo da Pokébola (23/10/2026)
+
+**Origem:** screenshot de homologação Samsung fornecido pelo usuário após instalar o APK de 12.255. A Pokébola aparece à direita, perto do olho do gato no papel de parede, enquanto a coluna com dez sprites aparece no centro, a centenas de pixels de distância na horizontal. Confirma que **mover as janelas por um vetor único não basta**: a posição base da lista ainda era inicializada usando as preferências antigas `resultsX/resultsY` salvas quando resultados e engrenagem tinham dois ícones independentes.
+
+**Correção feita somente na PR #34 Draft**:
+1. Em `OverlayService.java` adicionar `positionResultsUnderPokeball(boolean applyLayout)` para derivar `resultParams.x/y` de `params.x/y` (Pokébola) e dos deslocamentos **relativos** `visualResultsOffsetX/Y` do Editor Visual. No padrão sem deslocamentos: `x=Pokébola.x` e `y=Pokébola.y+30dp+2dp+visualHeaderAfterGap`. Assim, a lista começa imediatamente abaixo do ícone em vez de nascer em coordenadas históricas independentes. O Editor Visual mantém os controles de ajuste relativo e os respectivos limites.
+2. Quando a lista não cabe abaixo da Pokébola, tentar posicioná-la **acima** se houver espaço; em qualquer caso, limitar `x/y` ao retângulo visível sem alterar o pacote, a quantidade de Pokémon ou os sprites. A janela dos resultados continua independente internamente e é movimentada junto ao dock conforme a seção 12.253; a interface visível passa a ter um único controle.
+3. Executar ancoragem na criação do WebView de resultados (migrando posições antigas sem apagar preferências), em `saveVisualPrefs`, em `updateResultsWidth` (mudança da largura e orientação), em `resizeResults` (mudança de altura/quantidade) e quando resultados recolhidos/expandidos recalculam a geometria. Preservar `resultsX/resultsY` históricos para compatibilidade, mas **não usá-los mais como posição principal** no modo de Pokébola única. Persistência de arrastar (seção 12.253) e touch curto/longo/arrastar são mantidos.
+4. Duas verificações acrescentadas em `app/tests/lt62-menu-visual-states.test.js`: contrato de migração/âncora em abertura, edição e resize; simulação geométrica verificando início abaixo, flip acima, limites de X e offsets relativos. Atualizados os contratos legados em `app/tests/overlay-ux.test.js` e `app/tests/visual-editor.test.js` que exigiam coordenadas independentes.
+5. **Commits:** `09d379efa6da33c4f131b6a70c6a1bfa77947e64` (lógica nativa), `3bbdb6bff25741a910db96a54ee489d59691bf52` (contrato UX), `52df1bc286beb9f29f27cf84cb0d65a508021d93` (regressões específicas), `7b3cf8fa0fae3fb4e8fd28f5fdc322b016504790` (regressão Editor Visual).
+6. **QA:** GitHub Actions `PokeSearch Node QA (sem APK)` run **40022700316** no commit `7b3cf8fa0fae3fb4e8fd28f5fdc322b016504790`, status **SUCCESS**, **850/850 verificações** em nove suítes (68 localização + 144 probe + 15 Pokémon + 38 login + 479 UX + 46 editor + 14 assinatura + 7 Firebase + 39 LT62). Scripts inline de `dock.html` validados. Gradle/APK/Secure Beta permanecem SKIPPED, **não foi emitido novo APK** nesta etapa.
+
+**Homologação Samsung pendente:** após nova compilação AUTORIZADA, com 10 resultados e também 1/5, confirmar que os sprites iniciam diretamente sob a Pokébola, arrastam juntos em X/Y, o conjunto continua alinhado após refresh, alteração de filtros, mudança vertical/horizontal, compactação, controle da distância no Editor Visual e reinício. Confirmar cima/baixo nas bordas e sem área invisível bloqueando toque no jogo. Node não comprova funcionamento visual real no Samsung.
+
+**Proteções:** PR #34 segue Draft, `main` LT61 em `caea98b7b57b9e45d5218e907eb392d76953dd53`, sem merge ou LT63. APK assinado mais recente **antes desta correção** é `PokeSearch-v0.00.62-LT.apk` run #40021475526, SHA256 `2533f0adfb7f750478344407243869a8b2181400dd51179756b53f492c4a09f1`; ainda tem o problema de posições antigas independentes, não o recomendar como prova desta correção.
+
+
+### 12.257 — LT62: build autorizado do alinhamento da Pokébola (23/10/2026)
+
+**Autorização do usuário:** “Continue”, após o encerramento da Etapa 8 que informou a necessidade de recompilar para testar o alinhamento sob a Pokébola. Esta etapa deve emitir APK **LT62** para homologação Samsung, **não** fazer merge, não promover LT63 e não alterar dados nem assinatura.
+
+**Fonte protegida:** branch `fix/lt62-menu-visual-states-20261023`, PR #34 em Draft, main LT61. Contém a correção **12.256** que elimina o posicionamento legado da lista desconectado da Pokébola e recalcula a janela dos resultados a partir de `params.x/y` e dos deslocamentos relativos do Editor Visual. A coluna começa, por padrão, ~2 dp abaixo do ícone após os 30 dp do cabeçalho e pode ficar acima perto da borda inferior para não cortar os sprites. Arraste conjunto e persistência permanecem os da 12.253. Regressões `app/tests/lt62-menu-visual-states.test.js` incluem **39** contratos; nove suítes Node aprovadas **850/850**, run #40022700316.
+
+**Gatilho controlado:** o commit que adiciona esta seção usa a mensagem prefixada `build: approved v0.00.62 LT signed`, requisito do workflow `.github/workflows/build-v062-compact-preview.yml` para build push da branch. Construir `PokeSearch-v0.00.62-LT.apk` com Java17/Gradle8.11.1/Android SDK36, `com.lucianotoscano.pokesearch`, versionCode `54260`, versionName `0.00.62`, assinatura persistente com certificado SHA256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Parar a entrega se build falhar, assinatura/versão divergirem ou se a integridade ZIP/SHA do APK não bater com o artefato. Não usar chaves novas nem substituir a main.
+
+**A preencher somente após publicação do artefato:** ID da run, commit exato do `SOURCE_COMMIT.txt`, ID do artefato, SHA-256 calculado, tamanho real, conteúdo de `PACKAGE_VERSION.txt` e `SIGNING_CERT_SHA256.txt`. O APK anterior do arraste conjunto (run #40021475526; SHA `2533f0adfb7f750478344407243869a8b2181400dd51179756b53f492c4a09f1`) **não possui** o realinhamento 12.256 e não pode ser entregue como sendo o novo.
+
+**Checklist físico pendente:** no Samsung com 1, 5, 10 Pokémon, confirmar que a primeira sprite nasce sob a Pokébola, arrasta junto em ambas as direções e mantém distância ao trocar tamanho, orientação e filtros; verificar posicionamento acima perto da borda inferior, limites da tela, painel de informações, menu aberto, toque curto/longo e persistência após reiniciar. Não afirmar homologação física com base em CI.
+
+
+### 12.258 — LT62: usuário removeu AUTO decorativo do menu Atualização; novo APK de homologação (23/10/2026)
+
+**Interrupção do proprietário durante a geração do APK da seção 12.257:** “Nas atualizações menu pode remove aquela parte AUTO.” O workflow #40023704324 já havia sido concluído com SUCCESS, mas seu APK ainda continha o marcador visual `AUTO` entre `OFF` e as cinco escolhas. Esse artefato foi **supersedido antes da entrega** por este novo pedido.
+
+**Correção pontual:** no `app/src/main/assets/dock.html`, `renderPeriodPanel` deixa de criar o `span.periodCompactLabel` com `AUTO`. O submenu aberto por segurar o ícone `RefreshCw` por 600 ms exibe em cascata, sem cabeçalho nem X, **somente seis opções clicáveis**, na ordem: `OFF`, `3`, `5`, `10`, `15`, `20` (minutos). `OFF` desativa buscas periódicas; os demais aplicam a frequência selecionada sem alterar outros filtros. Não remover o texto `AUTO` da nomenclatura histórica do mecanismo nem mexer no comportamento do toque curto (uma atualização e giro neutro do ícone). O ajuste exclui apenas a placa decorativa interna do submenu, mantendo badge numérico centralizado e menu de Mais inalterados.
+
+**Commits:** `df6400728a621409eca68cf5d94c8299dd22d394` (marcador removido), `0bfc158d8d49d0f1ff28fd540717d51c6b8f3a65` (contrato UI), `3fda5c36624862aad2e7e6766361ca66c27914f1` (regressão LT62). O código também inclui a ancoragem de 12.256: coluna de sprites imediatamente abaixo da Pokébola unificada, preservando arraste conjunto e Editor Visual.
+
+**Novo build solicitado em continuidade:** o commit desta seção será prefixado por `build: approved v0.00.62 LT signed`, autorizando exclusivamente mais uma execução de `.github/workflows/build-v062-compact-preview.yml`. Exigir `PokeSearch-v0.00.62-LT.apk`, applicationId `com.lucianotoscano.pokesearch`, versionName `0.00.62`, versionCode `54260`, Java 17, Gradle 8.11.1, SDK36, assinatura persistente SHA256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, apksigner v2, SHA256SUMS, SOURCE_COMMIT e validação ZIP. Somente distribuir APK se todos os testes e verificações de assinatura aprovarem.
+
+**Proteções:** PR #34 permanece Draft e main LT61, sem merge ou nova versão LT63. Não alterar login, filtros, coords, resultados, preferências, applicationId, assinatura, Firebase, backend ou GPS. Compilação física Samsung continua pendente até o usuário testar.
+
+
+### 12.259 — LT62: entrega assinada da Pokébola alinhada + Atualização sem AUTO (23/10/2026)
+
+**Autorização:** usuário solicitou “Continue” para gerar APK LT62 atualizado com alinhamento da lista sob Pokébola (12.256–12.257), e, durante a etapa, solicitou remover o item visual AUTO do menu de Atualização (12.258). Antes da entrega foi executada nova compilação incorporando **ambas** as correções. A antiga execução de 12.257, `#40023704324`, ficou SUPERSEDIDA porque continha AUTO.
+
+**APK oficial desta etapa:** `PokeSearch-v0.00.62-LT.apk`, **33.254.540 bytes**, SHA-256 `a01a175481567631068834844caf96b53f45862a2d313244625412e47deeb2da`, também calculado diretamente dos bytes extraídos. A integridade ZIP do APK e de todas as cinco entradas do ZIP de artefato foi confirmada (APK interno com 215 entradas válidas). ZIP de comprovantes `PokeSearch-v0.00.62-LT-Sem-AUTO-Alinhado.zip`: 30.568.798 bytes; SHA-256 `04da1ba43b61a1197617208a18e96b6fa9c2f7c170da99d60989d33f0a0d67c9`.
+
+**Rastreabilidade do GitHub Actions:** run **#40024284774**, job **#120656409362** `build-lt-62`, status **SUCCESS**, artefato **#12531263489** (`PokeSearch-v0.00.62-LT`). URL `https://github.com/LucianoToscano/PokeSearch/actions/runs/40024284774`. `SOURCE_COMMIT.txt` = `c52044f1dab4ac15b80e45df5cc709840d742940` (**commit exato compilado**); commits posteriores de documentação não fazem parte do APK.
+
+**Conferência obrigatória de assinatura e identidade a partir do ZIP de artefato original:** `SIGNING_CERT_SHA256.txt` = `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` (certificado persistente compatível com a instalação existente). `PACKAGE_VERSION.txt` = `package: name='com.lucianotoscano.pokesearch' versionCode='54260' versionName='0.00.62' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'`. `SHA256SUMS.txt` = `a01a175481567631068834844caf96b53f45862a2d313244625412e47deeb2da  PokeSearch-v0.00.62-LT.apk`. Coincide com o hash real. Workflow executou `apksigner verify` e validou v2 e certificado fixo; falharia com chave divergente.
+
+**Testes:** workflow executou todas as 9 suítes Node (**850/850**: 68 localização, 144 probe, 15 picker, 38 login, 479 UX, 46 editor visual, 14 assinatura, 7 Firebase, 39 LT62). Scripts JS inline de `dock.html` passaram. Java 17 + Gradle 8.11.1 + Android SDK36. `:app:testDebugUnitTest` foi `NO-SOURCE` (não alegar testes unitários Java inexistentes) e `:app:assembleDebug` terminou `BUILD SUCCESSFUL in 1m 27s`.
+
+**Mudanças contidas no APK:** combinação completa LT62 de menus, filtros, atualização compacta e Pokébola unificada. Nova posição dos resultados recalculada sob a Pokébola (se houver espaço) ou acima perto da borda; arraste em conjunto com persistência; no submenu do ícone de refresh NÃO há placa `AUTO`: só `OFF / 3 / 5 / 10 / 15 / 20`, sem cabeçalho ou X. `OFF` impede atualização periódica; valores 3/5/10/15/20 configuram o intervalo. Toque curto no refresh continua com execução direta e giro neutro (nunca muda para amarelo). Menu Mais mantém transparência e design. Não alterar filtros, login, preferências nem `applicationId`.
+
+**Atenção à instalação:** este APK tem mesmo versionName/code e nome dos APKs LT62 antigos, mas **é arquivo diferente**. Confirmar SHA `a01a175...`; instalar por cima, sem desinstalar, para preservar login e dados. A homologação física Samsung NÃO foi realizada pelo assistente. Testar com 1, 5 e 10 sprites: posição relativa abaixo/ acima da Pokébola, arrastar, posição salva no reinício, popup aberto, troca vertical/horizontal, atualização OFF/3/5 etc, filtros, botão Shiny e proteção de toque fora do overlay.
+
+**Estado protegido:** PR #34 OPEN DRAFT, `main` LT61 no commit `caea98b7b57b9e45d5218e907eb392d76953dd53`. Sem merge, sem LT63, sem backend/proxy/GPS físico, sem chave de assinatura nova.
+
+
+### 12.260 — LT62: Shiny com atualização determinística — busca única, sessão hidratada e estado pendente explícito (23/10/2026)
+
+**Origem:** novo feedback Samsung com screenshot 18:13, mostrando Pokébola/resultados e controles. Usuário relata: “As vezes quando ativo o shiny ele demora para atualizar ou nao atualizar”. Esta etapa **não** foi autorizada a alterar versão, gerar novo APK, fazer merge ou editar a main; foi solicitado corrigir o bug específico na PR #34 Draft.
+
+**Causa identificada no código:** `Bridge.shiny()` ao ativar Shiny executava `execute("session") → prepareImmediateShiny() → execute("session") → applyShinyOnSite() → execute("setShiny") → execute("verifyShiny")`, e **somente após essas chamadas** fazia `refresh(false)`, que repetia `execute("session") → prepareSearch → configureSearch (alterava Shiny novamente se divergente) → configureLocation → verifyShinyAfterLocation → verifyShiny → verifyFilters → verifyLocation → submitSearch → collect`. React podia re-renderizar o switch entre sequências e respostas; retries independentes e timers diferentes provocavam demora e, em alguns casos, falta de confirmação. O `onPageFinished` também iniciava `prepareImmediateShiny()` com atraso de 420ms paralelamente à pesquisa agendada em 2500ms.
+
+**Correção na branch `fix/lt62-menu-visual-states-20261023`:**
+1. No `Bridge.shiny()`, **ON** solicita Shiny com estado neutro *pendente* visível imediatamente, salva a intenção no mesmo `shiny` já existente, invalida pesquisa anterior via `replaceActiveFilterSearch()` (sem duplo request), marca os cards anteriores como `resultsStale`, preserva os Pokémon mostrados até novos confirmados, e usa `startVerifiedShinySearch(generation,0)` no site carregado. **OFF** segue diretamente para `refresh(true)`, sem exigir autenticação/vínculo. Com site ainda carregando, mantém intenção pendente para processamento no `onPageFinished` — não dá o toggle como confirmado por suposição.
+2. Novo `startVerifiedShinySearch` consulta a sessão **real** via `execute("session")` com guarda `requestGeneration` e o estado Shiny. `auth=“não confirmado”` em React incompleto pode ser apenas hidratação transitória: até 6 novas leituras espaçadas por 400ms antes de declarar falha. **Nunca presume login nem treinador**: mantém `siteConfirmsShinyAccount(session)` exigindo autenticação e evidência oficial do vínculo; falta comprovada reverte a intenção e segue para fluxo de login oficial. Com conta validada, dispara **uma única pesquisa** `refresh(true)` contendo Shiny, localização, IV/PvP, Forma e demais filtros. Isso elimina a sequência prévia separada setShiny/verifyShiny antes da pesquisa.
+3. No `WebView.onPageFinished`, um único `pageFinishedRefresh` cancelável assume a sincronização; quando Shiny ON ainda não confirmado, espera brevemente 900ms para hidratação e inicia busca única; fluxo convencional permanece em 2500ms. Não agenda mais um `prepareImmediateShiny` independente a 420ms. `refresh` continua com debounce/cancelamento por geração e submete somente uma busca nativa de cada vez.
+4. **Segurança/resultado:** `verifyShinyAfterLocation` reativa Shiny **após** Coords/Radius, `verifyAndSubmit` lê estado real antes do Search, e `pollSearch` somente aceita cards com confirmação de critérios/atualidade. Shiny **não deve amarelar** antes do site verificar, nem exibir resultados novos não confirmados. Sem proxy, backend, GPS, alteração de `probe.js`, applicationId, login/prefs, prioridade das seleções, versão ou assinatura.
+5. Para não alterar outras rotas legadas aprovadas nesta etapa, as funções auxiliares históricas `applyShinyOnSite` e `prepareImmediateShiny` ainda existem, porém **o toque novo e o callback de carregamento não passam mais por elas**. Limpeza estrutural poderá ocorrer após homologação física e sem regressões.
+6. Commits: `c2d733434781cda9c2972dd9359229cc860ddd0e` (fluxo único + hidratação), `6fb6c34562a2460bb5cbb07e5712a2b6ae405ae1` (marcador de resultados anteriores), `5f94dcaef4aab6dcccbe5fc91811a0bc685e831b` (6 contratos UX adaptados), `c477544a208b78541393f7d96e8fc658ed2d9b52` (3 testes novos: uma busca por toque, retry de sessão e carregamento sem corrida).
+7. **CI:** `PokeSearch Node QA (sem APK)` run **#40025928684**, **SUCCESS**, commit de testes `c477544a208b78541393f7d96e8fc658ed2d9b52`. **853/853 verificações** em nove suítes: localização 68, probe 144, Pokémon 15, login 38, UX 479, Editor 46, assinatura 14, Firebase 7 e LT62 42; scripts JS inline válidos. Android APK/Secure Beta `SKIPPED`.
+
+**Homologação Samsung ainda pendente:** só após novo APK assinado explicitamente autorizado. Em conta com treinador vinculado, tocar Shiny ON uma vez, conferir indicador pendente sem amarelar, busca completa com `Shiny only` verificado, atualização dos sprites 1–10 sem exibir cards antigos como atuais. Repetir com localização ON, modo GL/UL/Raw IV, menu fechado/aberto, Shiny OFF e alternâncias rápidas (última intenção prevalece), página ainda carregando, conexão lenta e após login; confirmar que OFF sempre funciona sem login. Se conta não está validada no PoGoCoordinates, deve oferecer login/vínculo sem falsamente confirmar Shiny. Medir tempo real e coletar relatório de erro se houver falha.
+
+**Proteção:** PR #34 OPEN DRAFT, `main` LT61 commit `caea98b7b57b9e45d5218e907eb392d76953dd53`. **Sem merge, sem LT63, sem APK novo gerado nesta etapa.** O último APK assinado `PokeSearch-v0.00.62-LT.apk`, build #40024284774 com SHA-256 `a01a175481567631068834844caf96b53f45862a2d313244625412e47deeb2da`, **NÃO** contém esta correção Shiny.
+
+
+
+### 12.261 — LT62: auditoria complementar do Shiny e checagem dupla de sessão (23/10/2026)
+
+**Checkpoint antes da intervenção:** PR #34 OPEN DRAFT, branch `fix/lt62-menu-visual-states-20261023`, HEAD `ac648d0cc083e2c70dc9c08ed100747a03062442`, main LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`. A seção 12.260 já eliminou a configuração duplicada na ativação do Shiny, mas a verificação de sessão não era simétrica.
+
+**Falha técnica confirmada por leitura de código:** `startVerifiedShinySearch(generation,attempt)` tolerava a sessão `auth="não confirmado"` durante hidratação React, porém `refresh(true)` fazia nova leitura `execute("session")` e chamava imediatamente `revertUnverifiedShiny` se a resposta transitória viesse desconhecida. Assim uma sessão antes autenticada podia resultar em Shiny OFF silencioso, persistido, antes do `submitSearch`. O comportamento foi constatado no fluxo-fonte; **não** é confirmação de reprodução no Samsung.
+
+**Correção mínima:** extraído o processamento da segunda sessão para `continueVerifiedSearchSession(generation,manual,session,attempt)`. Com Shiny ON e `auth="não confirmado"`, são feitas no máximo seis releituras locais adicionais do DOM (400ms, sem novo Search), todas protegidas por `requestGeneration` e pela sessão WebView existente. Se continuar desconhecido, a busca é interrompida com indicação de sessão pendente; não desliga o Shiny solicitado nem apresenta resultados antigos como atuais. Se autenticação/vínculo forem comprovadamente ausentes, permanece a política de login/vínculo e busca comum histórica. OFF não recebe esse bloqueio. O restante do pipeline de Coords, IV, GL/UL, confirmação e coleta fica inalterado.
+
+**Regressões acrescentadas:** quatro contratos em `app/tests/lt62-menu-visual-states.test.js` verificam: (1) retry e falha segura na segunda sessão; (2) alternância rápida ON/OFF com invalidadores de geração; (3) descarte de callbacks WebView atrasados e rejeição de resultados sem confirmação; (4) preservação da intenção do Shiny ao mudar Modos e Filtros. Os três últimos são **testes de contrato estrutural**, não emulação real de respostas de rede fora de ordem.
+
+**Proteções:** sem alteração de `probe.js`, `dock.html`, `applicationId`, namespace, versão, assinatura, login, favoritos, GPS, backend, main ou PR Draft. **Nenhum APK autorizado/gerado.** Validar funcionamento real somente quando houver APK novo expressamente solicitado e homologação no Samsung. GitHub Actions Node valida contratos, não substitui compilação Java/Gradle nem o teste físico.
+
+**Commits e CI confirmados:** commit de implementação e quatro testes `6560094910fbf35be6924e320edc6c6d1091d473`, ajuste do contrato de teste `93103a2cb0f328e9b0b95d52e5e77ca253485eb3`. GitHub Actions **#40027766127 — SUCCESS** no SHA de testes `93103a2cb0f328e9b0b95d52e5e77ca253485eb3`; **857/857 verificações Node aprovadas** em nove suítes (68 localização, 144 probe, 15 picker, 38 login, 479 UX, 46 Editor, 14 assinatura, 7 Firebase e 46 LT62). Probe e scripts JS inline validaram. Workflows Android/secure beta permaneceram **SKIPPED**; nenhum APK foi gerado e nenhum teste Samsung ou compilação Java/Gradle foi executado nesta alteração. PR #34 continua OPEN/DRAFT; `main` inalterada.
+
+
+### 12.262 — LT62: auditoria visual Samsung — Modos como padrão para Filtros e Notificações (23/10/2026)
+
+**Solicitação:** após três capturas do Samsung (Modos, Notificações e Filtros > Sexo), o proprietário determina: **usar o design de Modos como referência**, mantendo ícones/opções visíveis no tamanho dos botões do menu ou menores. Esta seção é **auditoria e requisitos de correção**, não implementação nem homologação. Imagens recebidas na conversa, sem copiá-las ao repositório.
+
+**Checkpoint de auditoria:** PR #34 OPEN DRAFT, `main` LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`, branch `fix/lt62-menu-visual-states-20261023`, código-base auditado `618f2bc32c1888c51198eb806d2c9f989fd93583`, APK Samsung ainda da compilação anterior `c52044f1dab4ac15b80e45df5cc709840d742940` (não inclui 12.260–12.261).
+
+**Referência aprovada (imagem 1, menu Modos):** faixa estreita, lista vertical compacta, título curto `Modo`, opções `100% / 0% / IV / IV% / GL / UL`, editores somente em cascata na opção tocada, fundo escuro independente, altura dos itens ~23px CSS; estados visuais distinguem edição, seleção e confirmação do site. Ícone principal e barra flutuante não mudam de posição ou tamanho.
+
+**Problemas observados e causa CSS/HTML (imagem 3, Filtros > Sexo):**
+1. **P0 — área vazia escura gigante à direita** da lista estreita, aparentando um painel inteiro aberto apesar de somente Sexo precisar de editor. **Causa estática confirmada:** regra genérica `body.controls-window #choices:not(.visualPanel):not(.modeCascade):not(.morePanel):not(.periodCompact)` (linha ~1142) atribui `background:var(--visual-menu-bg)!important` ao root `#choices.filterCascade`. Sua especificidade supera a exceção com `background:transparent!important` do bloco `LT62-FILTERS-MODES-PARITY-01` (~1762); Modos é explicitamente excluído da regra genérica e Filtros não. O `uxPanel()` também conserva classes `standardPanel` e `modePanel` em Filtros, aumentando colisões potenciais. Corrigir especificamente a exclusão de `.filterCascade` da regra genérica, sem retirar a transparência do Editor Visual ou de outros menus.
+2. **P1 — chips Sexo desproporcionalmente grandes:** `filterCascadeEditor .extraChipRow[data-kind=gender] .extraChip` (~1741) impõe `width:100%`, `height:35px` e `font:700 20px`, sobrescrevendo o contrato anterior `LT62-COMPACT-REDMARKS` (~1457) de 29 × 27px, com símbolo 10px. Os quatro botões expandem para ocupar a caixa. Ajustar tamanho **visual** aproximado a 26–29px de lado e símbolo legível 14–16px, com alvo de toque confortável e opção única `⚥ / ♂ / ♀ / ⚲`; ordem e correspondência com Any/Male/Female/Genderless preservadas.
+3. **P1 — seleção inconsistente:** item Modos selecionado apresenta marca lateral verde/teal; em Filtros, item `Sexo` tem contorno cinza. Uniformizar affordance de `ativo no editor` vs `filtro aplicado` vs `site confirmado`, preservando destaque amarelo/temático somente onde sua semântica já foi aprovada (Shiny/alertas etc.). Não colocar ✓ global em todos os filtros: ✓ somente junto a PC Min/Max, Nível Min/Max e PC mínimo ranking, mantendo opções independentes.
+4. **P1 — dimensões intrínsecas:** root `filterCascadeOpen` usa largura de até 270px CSS, rail 78px e editor até 184px mesmo para quatro símbolos, criando espaço sobrando. Editor lateral deve dimensionar pelo conteúdo, com teto adaptativo e flip direita/esquerda; nenhum contêiner opaco atrás da área vazia. A WebView nativa ainda é janela retangular: `pointer-events:none` em HTML pode não impedir interceptação de toque pelo WindowManager; verificar touch-through nas regiões não ocupadas em teste Samsung, sem prometer correção via CSS isolado.
+
+**Problemas observados e causa CSS/HTML (imagem 2, Notificações):**
+5. **P1 — quadro grande para duas decisões simples:** `#choices.standardPanel.alertsMini` (~1936) reserva 194px de largura CSS; cada grupo usa faixa inteira com 3 botões de 32px de altura, ícones SVG 23px e seletor de áudio `Padrão/Personalizado` de largura 100%. O resultado é muito maior que a apresentação aprovada em Modos. Compactar para duas linhas/grupos consistentes com o rail, botões **visuais** de 26–30px e SVG 15–17px; áudio continua selecionável, com nome/estado acessível sem caixa gigante permanente. Não remover os três estados Som / Sem som / OFF, a independência Novos/Favoritos nem a pré-escuta / seleção de áudio.
+6. **P2 — títulos, controles e semântica visual desuniformes:** `NOTIFICAÇÕES` em maiúsculas com botão X contrasta com `Modo` sem cabeçalho separado; listas exibem alinhamento e divisórias diferentes. Adotar escala única de tipografia, raios, espaçamentos, contornos, cores e mesma ancoragem do Modos; botão Fechar pequeno apenas se necessário, sem criar segundo cabeçalho vazio. Estado selecionado no alerta não é prova de permissão do Android nem notificação efetivamente entregue.
+
+**Risco arquitetural comum:** `dock.html` reúne múltiplos blocos legados `#choices`, `modeCascade`, `filterCascade`, regras gerais com `!important` e edição visual (width/opacidade). Isso cria conflitos por cascata/especificidade mesmo com regras adicionadas no fim. Preferir correções CSS locais, documentar tokens comuns, testar ordem de especificidade, temas claro/escuro, horizontal/vertical, escala e transparência configurável; não reescrever a interface inteira.
+
+**Critérios de aceitação para uma próxima etapa autorizada:** (a) Filtros sem retângulo vazio; (b) Sexo exatamente quatro símbolos discretos/legíveis em uma linha e única seleção; (c) Tamanho com sete opções e, se necessário, distribuição compacta sem estourar a tela; (d) todos os editores ancorados ao respectivo item, sem buracos, distorção, fechamento inesperado ou interceptação indevida; (e) Notificações com duas seções menores e ações intactas; (f) claro/escuro, Editor Visual, gestos da Pokébola, resultados e barra preservados; (g) regressões DOM/CSS, GitHub Actions e homologação Samsung **antes de afirmar correção visual**.
+
+**Escopo desta etapa:** análise de três prints e inspeção estática de `dock.html` na branch. **Nenhuma mudança de layout/Java/probe.js, nenhum APK, nenhum merge, nenhuma promoção LT63, nenhuma execução física.** Não alegar diagnóstico visual de telas não fornecidas; revisá-las progressivamente após novos prints.
+
+
+### 12.263 — LT62: harmonização visual aplicada — Filtros, Atualização, Localização, Favoritos e Notificações (23/10/2026)
+
+**Solicitação:** proprietário autorizou “Corrija. E aplique” os ajustes visuais após auditoria 12.262, relatou opções de Atualização que não mudam, pediu Localização sem X e com Colar ao lado do título e “km” embutido no campo, Favoritos 10 ícones/linha × 5 linhas sem rolagem horizontal e pesquisa abaixo, além de Notificações com escolhas realmente responsivas e aparência não amarela. Manter menus aprovados, ponte WebView, preferências, assinatura, `applicationId` e filtros independentes.
+
+**Base preservada:** branch `fix/lt62-menu-visual-states-20261023`, PR #34 OPEN/DRAFT, HEAD pré-mudança `33404e3206910a535d6864bd9555a1ac7fe7b8af`; main LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`. Nenhum merge, sem LT63, sem APK nesta solicitação (sem autorização expressa de build).
+
+**Implementação em `app/src/main/assets/dock.html`:**
+1. **Filtros:** excluído `.filterCascade` do fundo genérico `#choices:not(...)` que vencia a regra de fundo transparente e produzia o retângulo vazio. Cascata segue rail independente como Modos, editor dimensionado pelo conteúdo; Sexo `⚥ ♂ ♀ ⚲` em 4 células de 29 × 29 CSS px com símbolos 16px, Tamanho até 4 colunas de células 29px com total de 7 opções e sem botão de aplicar indevido. Estados de edição têm contorno discreto sem falsamente afirmar confirmação do site. Manter ✓ inline apenas para números (PC/Nível/PC PvP).
+2. **Atualização:** os seis botões OFF/3/5/10/15/20 chamam um seletor único `selectInterval`, enviam `Native.setIntervalMinutes` uma vez por toque e exibem escolha visual imediatamente. Indicação pontilhada `awaiting` permanece até `onNativeData` reportar o intervalo efetivo; a seleção não é considerada confirmada apenas por toque. Menu continua aberto para comparar/testar opções; toque curto no ícone continua apenas refresh manual, toque longo abre intervalo. Não adicionar AUTO de volta.
+3. **Localização:** removido X do cabeçalho sem remover funções de fechar pelo menu/Pokébola; `Colar` migra para junto de `Localização`, mantendo `Native.pasteLocationCoords`. Campo de coords isolado; unidade “km” passa a sobreposição não clicável dentro do contêiner do input numérico com padding para não sobrepor dígitos. Largura alvo ≤208 CSS px, espessuras e espaçamentos menores. `Native.setLocation` preservado com validação e filtros independentes.
+4. **Notificações:** painel alvo ≤166 CSS px, duas seções independentes (Novos/Favoritos), três botões visuais de 30 × 30 CSS px cada e SVGs 16px; estado escolhido troca amarelo/ouro por contorno verde-acinzentado e fundo neutro. O clique dispara `Native.setAlertMode` ou `Native.setFavoriteAlertMode`, enquanto `pendingAlertChoice` mostra contorno pontilhado até retorno do Android. Não afirmar que permissão Android/áudio foi concedido só porque o toque foi recebido. Escolha de som `Native.pickAlertTone` e os três estados persistem.
+5. **Favoritos `PokemonPicker.java`:** removida paginação de 12 ícones e botões ‹/›, substituída por `GridLayout` de **10 colunas × até 5 linhas, máx. 50 ícones**, dimensionado por largura da janela (23–32dp externamente com margens, sem deslizar lateral). Mantém remoção por toque, catálogo real, sprites, limite 50 e 3 sugestões de busca; move o campo de pesquisa **para depois da grade**. Preserva dados existentes e não mexe em WatchAlerts nem áudios.
+
+**Validação e riscos:** contratos Node LT62 atualizados e cinco novos testes estruturais verificam dimensões, identidade e eventos da cascata, entrega do comando de intervalos, Localização sem X, Notificações com estado pendente e grade 10×5. Contratos legados que fixavam paginação 12/símbolo 20px/click fechar foram atualizados. CSS e Java compilável **precisam** ser confirmados por CI/Gradle e depois por APK no Samsung; auditoria estática não comprova que toques no WebView/WindowManager não serão interceptados ou que o backend PoGoCoordinates aplicou filtros. Não promover como homologado antes de teste real. Não existe verificação de touchscreen física nesta etapa.
+
+**Rastreabilidade de CI e estado final da etapa:** implementação `47ff719460c048afa2922658ae8068c1ea1bf2db`, ajustes de testes `4ff9a05c00020c797199196936ac2d7038b082e4`, `9d848358f523724c35a869582ab7e8e1f4c337d6` e `bd86044447fa0fe929da11543dcbe49d856996cf`. Após atualizar apenas os contratos legados que exigiam X em Localização e o seletor antigo, GitHub Actions **#40030537207 SUCCESS**, SHA exato `bd86044447fa0fe929da11543dcbe49d856996cf`: **862/862 verificações Node** em 9 suítes (68 localização, 144 probe, 15 picker, 38 login, 479 UX, 46 editor, 14 assinatura, 7 Firebase e 51 LT62); JS inline do `dock.html` validado. Android/secure APK SKIPPED conforme autorização. **Não houve Gradle, APK novo ou homologação Samsung**. A seleção de áudio tem chamada direta `Native.pickAlertTone` → `MainActivity.PICK_ALERT_TONE` e seletor nativo, auditada estaticamente, mas somente teste físico poderá confirmar abertura/permissões Android 16.
+
+
+### 12.264 — LT62: Filtros com largura proporcional a Modos, sem painel excedente (23/10/2026)
+
+**Pedido:** “Filtros corrija o visual.” Padrão aprovado: menu Modos com trilho vertical estreito e editor em cascata somente para o item tocado. Reparação exclusiva de `app/src/main/assets/dock.html` e regressões de `app/tests/lt62-menu-visual-states.test.js`, sem backend/proxy/GPS, APK, alterações de versão/assinatura ou `main`.
+
+**Problema confirmado em código:** `renderFiltersChoices()` chamava `uxPanel("FILTROS")` que adicionava simultaneamente `.modePanel` e `.standardPanel`; mesmo depois da transformação para `.filterCascade`, os estilos genéricos de painel largo ainda concorriam por largura, altura e fundos. A regra antiga `.filterCascadeOpen` reservava até **270px CSS** de largura para todos os filtros, mesmo para um editor de Sexo com quatro símbolos pequenos. CSS subsequente tentava compensar usando `width:max-content`, sem reduzir realmente o contêiner. Isso produzia espaçamento inconsistente e área vazia; `pointer-events:none` no HTML não garante transparência da janela Android ao toque.
+
+**Correção localizada:**
+1. Retirar somente `modePanel` e `standardPanel` ao criar o painel Filtros; manter `.filterCascade`, a barra dos ícones e a navegação de estados prévia.
+2. Substituir o bloco `LT62-VISUAL-PARITY-01` por `LT62-FILTER-PARITY-02`: trilho de **78px** com linhas de **23px**, painel-raiz transparente de **80px** fechado; aberto, raiz de `80px + largura necessária do editor`, limitada à tela. O editor permanece uma única caixa independente, com fundo/borda configuráveis pelo tema, do lado da linha selecionada (com suporte a `menu-left`).
+3. Nova função pura `filterCascadeEditorWidth(label)` reserva largura CSS específica para o conteúdo: Sexo/Tamanho **134px**, PC/Nível **168px**, Clima **160px**, Ordenar **156px**, Forma **110px**, PC mínimo PvP **116px**, Evoluções anteriores **92px**; largura responsiva com limite disponível. Sem caixa escura vazia de 270px.
+4. Sexo `⚥ ♂ ♀ ⚲` mantém exclusividade e símbolos **16px** em células **29×29px**; Tamanho mantém os sete `XXS/XS/S/M/L/XL/XXL` em até quatro colunas pequenas. Marcas de seleção usam superfície neutra e contorno discreto teal, mas não afirmam confirmação do site. Campos numéricos mantêm ✓ ao lado apenas de PC Min/Max, Nível Min/Max e PC mínimo PvP. Forma, Clima, Ordenar, Shiny, GL/UL e Localização não têm alterações de lógica.
+5. Preservar tema claro/escuro, opacidade do menu, orientação, controles da Pokébola e resultados (até 10). Não reescrever `probe.js` ou `OverlayService.java`.
+
+**Regressões:** três novos contratos Node LT62 validam trilho/raiz sem fundo, larguras por tipo (incluindo execução da função de cálculo em VM) e exclusividade de Sexo/sete tamanhos/confirmação numérica. Testes Node e HTML inline são verificação **estrutural**, não prova de dimensionamento real do WebView Android nem de passagem de toque pelo WindowManager; conferir na homologação física do próximo APK explicitamente autorizado. **PR #34 mantém OPEN / DRAFT e `main` LT61**, sem merge e sem promover LT63.
+
+**QA/commits:** implementação `49decf6a7283dbd230d026642c0d6f48e7bdae5a`; ajuste do contrato legado de nome CSS `f4c11ae730d074951e69b4a7eba92560770a3e54`. GitHub Actions Node QA **#40031619636 — SUCCESS**, SHA testado `f4c11ae730d074951e69b4a7eba92560770a3e54`. **865/865 verificações Node aprovadas**, nove suítes: 68 localização, 144 probe, 15 picker, 38 login, 479 UX, 46 Editor Visual, 14 assinatura, 7 Firebase e 54 LT62; validação de 3 scripts JS inline em `dock.html` e 1 em `detail.html`. Workflows Android/APK/Secure Beta SKIPPED. A interface ainda não foi homologada no Samsung; sem Gradle, APK novo, alteração da main ou merge.
+
+### 12.265 — LT62: opções Tamanho em uma única linha ao lado da cascata (23/10/2026)
+
+**Solicitação:** “As opções tamanho ficam uma do lado da outra. E do mesmo tamanho da aba [Tamanho >][XXS][XS] ....”. Interpretação aplicada: o item `[Tamanho ›]` permanece na lista vertical estreita de Filtros, enquanto as sete opções `[XXS][XS][S][M][L][XL][XXL]` aparecem **horizontalmente, em uma única linha**, alinhadas à opção aberta e à sua altura visual (**23px CSS**); largura de cada chip **29px CSS** para permitir ler `XXS/XXL`. Não criar uma segunda linha, não usar rolagem horizontal.
+
+**Correção localizada:** em `app/src/main/assets/dock.html`, alterado `filterCascadeEditorWidth("Tamanho")` de 134 para **230px** (80px da lista + 230px editor = 310px CSS, dentro dos 330dp máximos da janela horizontal nativa). Novo bloco `LT62-SIZE-ONE-ROW` de maior especificidade fixa `grid-template-columns:repeat(7,29px)`, uma linha de 23px, `grid-auto-flow:column`, gaps de 3px, `white-space:nowrap` e nenhuma rolagem lateral. Largura intrínseca: 7×29 + 6×3 + ~8px de padding/borda = **229px**. Preservados a seleção múltipla por `patchSelectedFilterKeys`, a busca independente, o tamanho original do rail e os outros seis tipos de filtro. `Sexo` permanece 4 células próprias; nenhuma mudança no modelo, Shiny, PvP, localização ou menu Pokébola.
+
+**Limite físico:** na orientação de barra vertical, o `menuDp()` atual fica em até 198dp; uma linha fixa de 310dp não cabe dentro dessa janela sem alterar a arquitetura de disposição — não afirmar que a linha inteira está visível no modo vertical. O pedido refere a cascata horizontal ilustrada; homologar no Samsung e, se necessário, tratar o modo vertical de forma independente sem regressão de toques e sem alargar a barra original.
+
+**Regressões e CI:** atualizada largura esperada para Tamanho (230px) e acrescidos dois contratos LT62: geometria da linha sem scroll e manutenção das sete opções multi-selecionáveis. GitHub Actions Node QA **#40032304064 — SUCCESS**, SHA testado `5999ab9027b682e35f09206e54e7a3f13989782d`, **867/867 testes** em nove suítes (68 localização, 144 probe, 15 picker, 38 login, 479 UX, 46 editor visual, 14 assinatura, 7 Firebase, 56 LT62). **Não houve compilação Gradle, APK novo, merge, alteração main ou promoção LT63** nesta etapa. A homologação física no Samsung continua pendente.
+
+### 12.266 — LT62: APK de homologação assinado gerado para Samsung (23/10/2026)
+
+**Autorização:** proprietário solicitou repetidamente “Crie o apk” depois de aprovar a cascata Filtros > Tamanho, com sete opções XXS/XS/S/M/L/XL/XXL em uma única linha. **Somente APK LT62**, sem promover LT63, alterar applicationId/namespace/assinatura, mexer em main ou fazer merge da PR #34 (permanece OPEN/DRAFT).
+
+**Compilação e diagnóstico real:** primeiro workflow de build autorizado GitHub Actions **#40034128300** terminou **FAILURE** na etapa Java `:app:compileDebugJavaWithJavac`, devido à chamada ambígua `refresh(true)` na classe interna `OverlayService.Bridge`. A chamada de desligar Shiny foi corrigida localmente para `OverlayService.this.refresh(true)` (mesma lógica, referência à instância nativa externa); foi incluído teste de contrato. O código de Tamanho horizontal e todos os demais filtros permaneceram preservados.
+
+**Build final aprovado:** commit exato de código **`3a6b7371e314e2be6d5d8ec749ecc974174ea507`**, GitHub Actions **#40034358176 — SUCCESS** (workflow `.github/workflows/build-v062-compact-preview.yml`). Execução Java 17 + Gradle 8.11.1 com `:app:testDebugUnitTest :app:assembleDebug`; verificação do APK pelo `aapt`, `unzip -t` e `apksigner` concluída. Artefato GitHub **#12536043425**, nome **`PokeSearch-v0.00.62-LT`**; arquivo interno **`PokeSearch-v0.00.62-LT.apk`**, **33.257.484 bytes**.
+
+**Identidade do APK validada:** applicationId `com.lucianotoscano.pokesearch`, versionName `0.00.62`, versionCode `54260`, certificado de assinatura SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, hash SHA-256 do **APK** `73d9d83dd4e8a537da7328863b0e8e6cfe14a2a34ef8149ae7b1150e268a6616`. Arquivos de verificação incluídos no artefato: `SHA256SUMS.txt`, `SIGNING_CERT_SHA256.txt`, `SOURCE_COMMIT.txt`, `PACKAGE_VERSION.txt`.
+
+**Homologação:** APK entregue para teste físico no Samsung; não afirmar que UX, seleção Tamanho/Atualização/Notificações ou sincronização Shiny foram homologadas fisicamente até confirmação do proprietário. PR #34 continua Draft; main LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`. O commit desta documentação é posterior ao SHA de código empacotado, não representa novo APK.
+
+### 12.267 — LT62: auditoria de UX / menus e correções mínimas (23/10/2026)
+
+**Relato Samsung:** Favoritos e Personalização impedem tocar no app por trás; Favoritos deve mostrar `Selecionados 0/50` junto ao título; Sprites P/M/G não responde; Notificações têm área vazia, cabeçalhos/botão de som desalinhados e Novos Pokémon não atualiza; Filtros precisam de ícones Confirmar/Limpar/Cancelar; cascatas devem seguir altura de cada entrada; Localização deve ocupar menos espaço; auditar Editor Visual.
+
+**Checkpoint:** PR #34 OPEN/DRAFT, branch `fix/lt62-menu-visual-states-20261023`, main LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`. O APK existente é `PokeSearch-v0.00.62-LT.apk`, gerado do commit `3a6b7371e314e2be6d5d8ec749ecc974174ea507`, Actions #40034358176. **Nenhuma mudança desta seção está naquele APK.**
+
+**Defeito funcional crítico encontrado por inspeção de `dock.html`:** em `window.onNativeData`, a linha `shinyPending=!!pending;shiny=!!shi||shinyPending; // ...pending.row=Number(r)...` colocou `row`, `period`, `spriteSize`, `refreshSpriteSizeButtons()`, `generalAlerts`, `hasFavorites` e `alertMode` **dentro do comentário JavaScript**, embora a validação sintática aprovasse. Isso explica descompasso visual de Sprites, Atualização e Novos Pokémon: as ações nativas existiam, mas o retorno da ponte não reconstruía esses estados visuais. Separadas as atribuições em linhas executáveis e com enumeração válida de sprite 35/45/55 e tri-state de alertas on/silent/off; valores continuam recebidos do Android, sem estado ON falso.
+
+**Filtros:** os três botões já eram criados por `actionIcon()` e tinham callbacks/ícones SVG, mas `actions` jamais era anexado ao DOM. Adicionado `rail.appendChild(actions)`, deixando os ícones ✓/lixeira/X visíveis **abaixo da lista** em três células proporcionais de 23px de altura. Confirmar aplica delta, Limpar restaura campos de Filtros e Cancelar fecha; nenhum altera Shiny/Localização/espécie/IV. Os ✓ específicos dos campos numéricos permanecem. Editores em cascata continuam alinhados à opção tocada via `top=22+index*24`; novos CSS não reservam altura fixa, escondem status vazio, não estendem a caixa lateral desnecessariamente. **Limite:** a retangularidade da WebView exige teste físico de overflow e orientação vertical; CSS não muda hit area nativa.
+
+**Favoritos `PokemonPicker.java`:** indicador `Selecionados n/50` movido para o cabeçalho, ao lado de `☆ FAVORITOS`, sem a antiga linha exclusiva. Preservados campo de pesquisa abaixo da grade, sprites 10×5/limite 50, remover/adicionar, catálogo e preferências. Janela `Dialog` passa a usar `FLAG_NOT_TOUCH_MODAL` para não interceptar toques **fora dos limites da janela**; removidos `FLAG_DIM_BEHIND` e `FLAG_BLUR_BEHIND`, que podiam tornar o fundo artificialmente modal. O conteúdo do próprio diálogo continua interativo; não há garantia de passagem de toques no interior de sua superfície. `setCanceledOnTouchOutside(false)` evita fechar a lista por toque fora, mantendo fechar no ×.
+
+**Notificações:** painel-alvo reduzido de 166px para 138px CSS; rótulos Novos Pokémon/Favoritos centralizados acima dos três botões 30px, seletor Padrão/Personalizado centrado e curto (98px); sem preenchimentos amarelos. O controle nativo `setAlertMode` / `setFavoriteAlertMode` e seletor de som nativo continuam. Estado escolhido deve refletir o retorno do Android após a correção no `onNativeData`. Testar no Samsung permissões, emissão real de teste e escolha de som; não alegar notificação entregue.
+
+**Localização:** largura reduzida de 208 para **172px CSS** (mais compacta sem sacrificar a edição de coordenadas latitude/longitude); campos, raio km embutido e botão Colar preservados. Forçar 104px, metade literal, cortaria coordenadas completas: prioridade à legibilidade e à confirmação real no site.
+
+**Personalização e Editor Visual:** auditoria verificou a ponte nativa `setSpriteSize`, painel Sprites P/M/G compartilhado com Editor Visual, persistência de `spriteSize` e slider/tema/orientação em `visual_editor.js`. Falha de confirmação visual resolvida pela linha comentada; resta teste Android. **Pendência arquitetural:** Personalização, Editor Visual e barra usam a mesma janela Android `menuRoot` com WebView `MATCH_PARENT`, largura nativa até 330dp e altura expandida conforme submenu; `FLAG_NOT_TOUCH_MODAL` só permite toque **fora do retângulo nativo**, enquanto `pointer-events:none` CSS não transmite o toque ao aplicativo por trás dentro desse retângulo. Para passagem precisa no interior da janela, são necessárias janelas nativas independentes menores ou uma região de toque nativa calculada; não fingir que um ajuste CSS resolve isso. Preservar toolbar estável; separar janelas apenas como etapa técnica específica com homologação Samsung, para evitar regressões da Pokébola e menus.
+
+**Testes adicionados:** cinco contratos Node para quebra da linha comentada e callback Android, presença efetiva da barra de três ações, favoritos com contador integrado e toque externo passante, dimensões de alertas/localização e integridade das configurações do Editor Visual. Atualizado contrato legado que esperava `spriteSize=Number(sprite)||45` na mesma linha. **Limites:** Node valida estrutura e lógica declarada; compilação Java/Gradle e teste de toque Samsung ainda necessários. Esta alteração **não** faz merge, não altera a `main`, não troca assinatura/versão e **não gera novo APK** sem autorização posterior.
+
+**CI/commits confirmados:** commit de código e documentação `3a504d3b1088ce7a87682caafb0b204bd94d7ff6`, ajustes dos contratos legados `55c20d2fb4585cb09083aec7ee4c0c8ec48256dd` e `e0f4f0477a099ef1275270c6112f84709e94ca7d`. GitHub Actions **#40038423778 SUCCESS**, código testado `e0f4f0477a099ef1275270c6112f84709e94ca7d`: **872/872 verificações Node**, nove suítes (68 localização, 144 probe, 15 picker, 38 login, 479 UX, 46 editor visual, 14 assinatura, 7 Firebase e 61 LT62). Scripts JS inline compilados no Node. Workflows Android/assinatura e APK foram ignorados, pois esta rodada **não** foi autorizada como build. Não houve compilação Gradle desta mudança nem homologação física Samsung. Pendência explícita: passagem real de toques dentro do retângulo nativo compartilhado pela Personalização/Editor Visual exige separação de janelas ou região de toque nativa; requer correção arquitetural isolada e teste Samsung antes de declarar resolvido.
+
+### 12.268 — LT62: fechar popups em toque externo e solicitar permissão de alertas (23/10/2026)
+
+**Complemento UX ao 12.267:** `dock.html` fecha qualquer submenu aberto por `pointerdown` numa região vazia da própria WebView, preservando toques no `#choices` e nos botões do menu. A janela nativa Android ainda é retangular, e o toque que a atingiu **não** é transmitido ao Pokémon GO: passagem integral requer divisão dos overlays em janelas de toque mínimas, etapa futura sujeita a teste físico. O conserto de Favoritos com `FLAG_NOT_TOUCH_MODAL` é separado.
+
+**Avisos de novos Pokémon:** no clique explícito em `Som / ON` com `notificationPermissionGranted=false`, chamar `Native.requestNotificationPermission()` pela MainActivity para exibir a permissão oficial (Android 13+). OFF e arranque automático não disparam solicitação. O estado do ícone continua dependente do retorno `onNativeData` e o envio real requer espécie recém-encontrada validada, canal habilitado e antirrepetição.
+
+**QA:** dois contratos Node LT62 adicionais verificam fechamento de submenu fora do painel e gatilho de permissão somente por toque no ON. Não há APK/Gradle nem Samsung nesta etapa; PR Draft e `main` preservadas.
+
+### 12.269 — LT62: receber toque externo nativo sem manter popup aberto (23/10/2026)
+
+**Motivação:** auditoria complementar da interação do usuário com app sob os painéis Favoritos/Personalização/Editor Visual. Como o menu é uma WebView preenchendo a janela retangular `menuRoot`, `pointer-events:none` e fechamento por `pointerdown` (12.268) **não encaminham um toque que caiu dentro dos limites nativos** ao Pokémon GO. O `FLAG_NOT_TOUCH_MODAL` permite eventos somente fora da janela. A API privada `ViewTreeObserver.OnComputeInternalInsetsListener` não é alternativa estável para apps públicos; Android 12+ ainda restringe passagens através de overlays não confiáveis. Referência: Android `WindowManager.LayoutParams` e `FLAG_NOT_TOUCHABLE`.
+
+**Correção incremental limitada:** ativado `FLAG_WATCH_OUTSIDE_TOUCH` junto a `FLAG_NOT_TOUCH_MODAL` na janela `menuRoot`; um `FrameLayout.dispatchTouchEvent` específico reconhece `MotionEvent.ACTION_OUTSIDE`, solicita `closeChoices()` na WebView existente somente quando a barra está aberta e carregada, e retorna `false`. Assim, toques **fora do retângulo nativo** não precisam ser consumidos para recolher o submenu; a barra continua aberta, evitando popup preso sobre outras apps. Os demais eventos continuam pelo `super.dispatchTouchEvent`; teclado, ponte JS, filtros e posição da Pokébola permanecem inalterados.
+
+**Limite explicitamente mantido:** não se trata de toque-through no espaço transparente **dentro** do menuRoot (janela nativa de até 330dp × altura expandida). Esse problema exige separar menu e barra em janelas nativas com superfícies mínimas, ou redesign equivalente com APIs públicas, realizado em etapa isolada e homologado no Samsung. O comportamento de ACTION_OUTSIDE pode variar por versão de Android/stack de janelas; evitar afirmação de resolução física sem teste. Favoritos já recebeu o `FLAG_NOT_TOUCH_MODAL` em sua janela de diálogo na seção 12.267.
+
+**CI verificado:** implementação `db450e985aec80c719f66608d80befeedf1a8608`; GitHub Actions Node QA **#40041628119 — SUCCESS**, exato SHA anterior com **875/875 verificações** em nove suítes (68 localização, 144 probe, 15 picker, 38 login, 479 UX, 46 Editor Visual, 14 assinatura, 7 Firebase, 64 LT62). Os checks incluem a detecção ACTION_OUTSIDE e as flags de toque não modal. Builds Gradle/APK da branch permanecem SKIPPED; não houve APK novo nem homologação Samsung, merge ou promoção LT63. Este documento não substitui nenhuma aprovação do Editor Visual/tema original.
+
+### 12.270 — LT62: consolidação da auditoria UX/Editor Visual e passagem de toques (23/10/2026)
+
+**Último pedido:** proprietário solicitou continuar até concluir a auditoria de Favoritos, Personalização, Notificações, filtros, Localização e Editor Visual, e preparar prompt de transferência ao próximo chat. **Não houve solicitação de novo APK ou merge nesta rodada.** A PR #34 segue OPEN/DRAFT na branch `fix/lt62-menu-visual-states-20261023`; `main` continua LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`.
+
+**Evidências conferidas na versão de código atual:** 
+- `PokemonPicker.java`: Favoritos mantém cabeçalho `☆ FAVORITOS` ao lado de `Selecionados n/50`, grade 10×5 (máx. 50), pesquisa embaixo, sem paginação horizontal, `Dialog` com `FLAG_NOT_TOUCH_MODAL` e `FLAG_DIM_BEHIND`/blur removidos. Toques **fora da janela nativa** podem atingir o aplicativo de fundo; não afirmamos passagem pelo interior da superfície do diálogo.
+- `dock.html`: retorno da ponte `onNativeData` atribui `row`, `period`, `spriteSize`, `generalAlerts`, `hasFavorites` e `alertMode` como comandos separados e executáveis; P/M/G `35/45/55` reagem a `Native.setSpriteSize`, com estado reconstruído de dados nativos, não do clique. A confirmação real precisa do Samsung.
+- `dock.html`: Notificações tem duas seções centradas e compactas, estados `on/silent/off` independentes com callback nativo, escolha `Padrão/Personalizado` e solicitação de permissão Android quando ON foi escolhido pelo usuário. Permissão concedida, notificação entregue e seleção de áudio **não** são inferidas sem teste físico.
+- `dock.html`: Filtros possui três ações inferiores visíveis ✓/lixeira/X em `rail.appendChild(actions)`, editores ancorados na entrada correspondente; Tamanho sete chips horizontais em uma linha na barra horizontal, Sexo seleção exclusiva; confirmação numérica continua inline. A janela nativa vertical máxima de 198dp não pode mostrar os 310dp exigidos pela linha de Tamanho sem solução específica.
+- `dock.html`: Localização usa painel de 172px CSS, Colar junto ao título, raio com `km` no campo, sem X no cabeçalho. Não reduzir mais a ponto de cortar coordenadas ou área de aplicação.
+- `visual_editor.js`: a interface possui sliders, seções por área, presets, temas separados, escala, orientação, transparência, exportação/importação JSON e salvamento `Native.saveVisualPrefs`; a verificação atual é estrutural, sem confirmação de toque no editor sobre Pokémon GO.
+- `OverlayService.java`: a janela única `menuRoot` usa WebView `MATCH_PARENT`, `FLAG_NOT_TOUCH_MODAL` e `FLAG_WATCH_OUTSIDE_TOUCH`; `ACTION_OUTSIDE` fecha submenus sem consumir explicitamente o evento. Isso cobre apenas o que está **fora do retângulo nativo**. Dentro dele, áreas transparentes continuam recebendo toque pela mesma janela Android, que não o retransmite ao Pokémon GO. Android 12+ ainda tem proteções para pass-through de overlays de terceiros.
+
+**Resultado consolidado:** correções de interface e fluxos descritos acima estão **implementadas em código**. CI Node **#40041719665 SUCCESS**, SHA `355f78479eade1ff5f73bb5cc2dd082dbc4588fd`: **875/875** verificações (9 suítes; 64 verificações LT62). Nenhum build Android desse SHA; o último APK assinado `PokeSearch-v0.00.62-LT.apk` vem de `3a6b7371e314e2be6d5d8ec749ecc974174ea507`, Actions #40034358176, artifact #12536043425. **Não** contém as correções 12.267–12.269.
+
+**Pendente arquitetural e homologação:** a exigência “clicar nas coisas atrás da Personalização/Editor Visual” **dentro da região transparente hoje ocupada pelo retângulo nativo** ainda **não foi solucionada**. Evitar ajustes apenas CSS ou declarar resolvido por `FLAG_NOT_TOUCH_MODAL`. Próxima etapa técnica isolada: projetar separação da barra e do popup em janelas `TYPE_APPLICATION_OVERLAY` independentes, com limites nativos mínimos que não interceptem tela vazia, mantendo foco do teclado, eventos/toggles, alinhamento perto do ícone, drag da Pokébola, escala/opacidade e barra estável; requer build Gradle e homologação Samsung Android 16. Não usar APIs internas ou transferir toques simulados para outro aplicativo. Caso o limite de Android bloqueie pass-through por política do SO, reportar restrição e preservar controles seguros.
+
+**Critérios de próxima homologação:** verificar cliques externos e nas áreas vazias com Favoritos, Personalização, Editor Visual, Filtros e Localização; testar ícones de novos e favoritos (Som, silencioso, OFF), permissão do Android e recepção real de notificação; P/M/G realmente altera sprites e permanece salvo; Filtros abrir/alinhamento/confirmar/limpar/cancelar e Seleções Tamanho/Sexo; temas e linhas-guias no Editor Visual; login/favoritos, Pokébola e 10 resultados sem regressões. Não informar correção física sem evidência de teste Samsung.
+
+**Rastreabilidade:** esta seção é consolidação de auditoria; nenhuma alteração funcional ou de APK/assinatura/versão, sem merge de PR #34 ou mudança da `main`. A entrega ao próximo chat deve indicar claramente o código já corrigido, o problema arquitetural pendente, o APK anterior e a exigência de testes físicos.
+
+### 12.271 — LT62: compactação final em Favoritos sem linha redundante (23/10/2026)
+
+Após auditoria 12.270 e pedido “Continue. Quando terminar gere o prompt para o novo chat”, eliminado em `PokemonPicker.java` o texto visual duplicado `Digite para adicionar ☆` entre a grade e a caixa de pesquisa; o próprio campo já informa como buscar. Assim o usuário vê o título `Favoritos` e `Selecionados n/50`, sprites de 10 colunas × até 5 linhas e busca imediatamente abaixo, sem separador inútil. Permanecem o limite de 50, sons/favoritos, não modalidade do diálogo, histórico, login e sprites. Contrato Node LT62 verifica ausência da linha, contagem no cabeçalho e ordem da grade/busca. **Não** modifica outros menus ou arquitetura de toque; 12.270 documenta a pendência de clique através da região transparente da WebView nativa. GitHub Actions Node QA **#40042631526 SUCCESS**, SHA exato `af429d5ddee76b56ef192c7a9ed1648dc0fb1816`, **876/876 verificações Node** em 9 suítes (68 localização, 144 probe, 15 picker, 38 login, 479 UX, 46 Editor Visual, 14 assinatura, 7 Firebase e 65 LT62). Workflows de APK/Secure Beta **SKIPPED**. Nenhum novo APK/Gradle ou teste físico Samsung nesta etapa. Nenhum APK novo autorizado nesta etapa, PR Draft sem merge e `main` LT61 intacta.
+
+
+### 12.272 — LT62: diagnóstico focado do bloqueio de toques e Editor Visual (23/10/2026)
+
+**Pedido atual:** auditoria e próxima etapa única para Favoritos (contador n/50 no cabeçalho, busca inferior, grade 10×5 e toques externos), Personalização/Editor Visual (toques externos e sprites P/M/G), Notificações (painel, estados e som), Filtros (✓/limpar/cancelar, altura de editor), Localização (painel reduzido), com prompt para o próximo chat. **Não repetir correções existentes** nem afirmar homologação sem APK instalado.
+
+**Checkpoint de leitura:** PR #34 OPEN/DRAFT, branch `fix/lt62-menu-visual-states-20261023`, HEAD `33af7d8aed8e30aed76390905a4ab3fd6111b4e8`, `main` LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`. GitHub Actions Node #40042782243 SUCCESS, 876/876, sem compilação Gradle. Último APK assinado vem de `3a6b7371e314e2be6d5d8ec749ecc974174ea507` (run #40034358176, artefato #12536043425), portanto não contém 12.267–12.271.
+
+**Causa raiz da interceptação visual/nativa:**
+1. `OverlayService.updateMenuPosition()` fixa `menuParams.width=dp(menuDp())` (até 330dp horizontal / 198dp vertical) e `menuParams.height=rowHeight+actualPopup`; `menuPanel` WebView ocupa toda `menuRoot` via `FrameLayout.LayoutParams(-1,-1)`. A janela retangular nativa intercepta áreas vazias mesmo que o HTML/CSS do Editor Visual, Personalização ou Filtros seja transparente ou use `pointer-events:none`.
+2. `FLAG_NOT_TOUCH_MODAL` entrega eventos somente **fora** dos limites da janela; `FLAG_WATCH_OUTSIDE_TOUCH` emite `ACTION_OUTSIDE` ao próprio PokeSearch para fechar submenu sem consumir explicitamente o toque. Esses recursos não convertem regiões internas transparentes da WebView em pass-through. Documentação oficial: https://developer.android.com/reference/android/view/WindowManager.LayoutParams e https://developer.android.com/about/versions/12/behavior-changes-all?hl=pt-BR .
+3. Android 12+ bloqueia situações inseguras de toque através de overlays `TYPE_APPLICATION_OVERLAY`. Não usar APIs privadas, acessibilidade, injeção/simulação de toques, nem alterar segurança do dispositivo como correção. Preferir **duas janelas nativas independentes e mínimas**: barra estável e popup/editor separado com dimensões/posição apenas dos controles visíveis, ambos com flags apropriadas, fechando/ocultando a janela do popup quando recolhida.
+4. `PokemonPicker.show(OverlayService.this,...)` chama Dialog do serviço com `TYPE_APPLICATION_OVERLAY`, `FLAG_NOT_TOUCH_MODAL`, sem dim/blur, largura `<=348dp` e altura `WRAP_CONTENT`. Essa mudança é diferente do menu e já permite passagem de toques **fora** dos limites do diálogo, mas ainda não foi homologada no Samsung. Se aberto via `MainActivity.openPicker()` na Home, a Home estará atrás da caixa, não Pokémon GO.
+5. `visual_editor.js` já implementa sliders, seções, presets, temas, transparência e `Native.saveVisualPrefs`. `window.renderSpriteSizeButtons` de `dock.html` chama `Bridge.setSpriteSize(int)` → `applySpriteSize` no Java; verificar se o toque P/M/G muda efetivamente o sprite, persiste e volta pelo `onNativeData`. O elo existe estaticamente, não há prova de uso físico.
+6. Notificações: estados Novos/Favoritos e pedido de permissão ao tocar ON já estão na branch; Filtros: três ações somente ícones são anexadas a `filterCascadeRail`; Localização: painel de 172px CSS; Favoritos: contador junto ao título e pesquisa inferior; não reimplementar. Precisam de nova versão APK para homologação, não de correção duplicada.
+
+**Etapa seguinte prioritária:** prototipar de forma isolada **separação janela de barra × janela popup** no `OverlayService`, preservando a WebView/bridge e o Editor Visual, sem alterar `applicationId`, assinatura, filtros, favoritos ou `main`. Medir e posicionar a janela popup conforme o conteúdo real e o lado disponível, manter teclado para números, descartar janelas de popup ao fechar, não interferir com arrasto da Pokébola nem escala/opacidade. Criar regressões para cálculo de bounds e retenção das chamadas `Native`. Teste físico Android 16 imprescindível: toque fora e em espaços vazios precisa chegar ao jogo, toque em controles visíveis continuar funcional, mudança P/M/G, permissão e áudio de Notificações, Favoritos, Modos, Filtros, Localização, temas e até 10 resultados. Se limite do SO impedir, registrar restrição.
+
+**Esta etapa foi somente auditoria/documentação:** nenhum código Java/HTML/JS alterado, nenhum novo APK, Gradle, merge ou alteração de `main`. Retornar apenas a próxima etapa na resposta seguinte, por autorização de “continue”.
+
+
+### 12.273 — LT62: primeira implementação segura da separação nativa de janelas (23/10/2026)
+
+**Checkpoint:** PR #34 OPEN/DRAFT, branch `fix/lt62-menu-visual-states-20261023`, HEAD anterior `5c3e33ee79e228419c8a1fdb271c124a39bf5644`, main LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`. Esta é **somente a próxima etapa** pedida depois da auditoria 12.272; não repetiu as correções já implementadas no Favorite Picker, barra, avisos, Filtros ou Localização.
+
+**Causa raiz mantida:** a única janela `menuRoot` de até 330dp de largura herda toda a altura do popup; `menuPanel` ocupa a janela inteira e regiões visualmente transparentes continuam capturando eventos de toque. `pointer-events:none`, `FLAG_NOT_TOUCH_MODAL` e `ACTION_OUTSIDE` não fazem o toque atravessar a porção interna vazia da janela nativa. O diálogo Favoritos já usa `FLAG_NOT_TOUCH_MODAL`, mas nem ele permite atravessar seu próprio retângulo. A Home aberta atrás do diálogo continua sendo a Home, não o jogo.
+
+**Etapa técnica executada:** criado `PopupTouchGeometry.java` como módulo Java puro e independente de Android, calculando `Bounds(x,y,width,height,above)` **somente a partir das dimensões medidas** do futuro popup e barra, com margens, encaixe horizontal, expansão acima/abaixo da barra e zero área clicável quando popup tem dimensão zero. A largura do futuro popup é a largura real do conteúdo; não herda o comprimento da barra. `app/tests/PopupTouchGeometryTest.java` implementa **16 asserções executáveis** para posições, tela estreita, limites e visibilidade. O workflow `pokesearch-node-qa.yml` compila e executa a classe com JDK 17, sem Gradle, SDK Android ou APK. O helper ainda é **inativo** no app, intencionalmente: ligar janela separada sem espelhar a WebView/JavaScript, estados nativos, foco de teclado e âncora visual arriscaria regressões.
+
+**Próxima etapa (12.274):** integrar a janela nativa independente de popup (`TYPE_APPLICATION_OVERLAY`) no `OverlayService`, mantendo `menuRoot` restrita à barra, com WebView/bridge funcional no popup e escopo de toques exatamente igual a `PopupTouchGeometry.Bounds`. Preservar Editor Visual, barra estável, orientação, Shiny, GL/UL, filtro Tamanho em uma linha, Filtros ✓/limpar/cancelar, popup acima/abaixo, teclado dos números, arrasto da Pokébola, resultados e retornos nativos. Sem APIs privadas, injeção de toques, GPS físico, proxy ou backend. Expandir testes de retorno e abrir/fechar, e executar Gradle antes de qualquer APK solicitado.
+
+**Auditoria de design ainda relevante:** `PokemonPicker.java` já dispõe `Selecionados n/50` no cabeçalho, 10×5 sprites e busca abaixo; `dock.html` já contém controles de áudio compactos, três ações de Filtros, Localização de 172px, Editor Visual e seletor P/M/G. Não replicar essas alterações: homologar no Samsung assim que existir build novo. O ícone 'Novos Pokémon' ainda exige teste físico de permissão Android e entrega real. A falta de toque através do retângulo do popup **não está corrigida nesta etapa preparatória**.
+
+**Validação:** classe Java compila localmente com JDK 17 e **16/16 asserções** passam. GitHub Actions **#40046229403 SUCCESS**, SHA `1e0df1a5806a1f0624ba2a54e7df4b54b49fc000`, **876/876 verificações Node** (nove suítes) **e 16/16 verificações Java PopupTouchGeometry** com JDK 17; sem Gradle/Android SDK e sem APK. Nenhuma mudança funcional no overlay existente, nenhuma compilação Android/Gradle, APK, merge ou alteração de main, pacote, assinatura ou versão.
+
+
+### 12.274 — LT62: Favoritos sem ocultar a Pokébola, resultados e menu de fundo (23/10/2026)
+
+**Checkpoint lido antes da mudança:** PR #34 OPEN/DRAFT, branch `fix/lt62-menu-visual-states-20261023` HEAD `37879333a12476deef3017c621d3cbb9c3120343`; `main` permanece LT61 `caea98b7b57b9e45d5218e907eb392d76953dd53`. Último APK assinado LT62 de `3a6b7371e314e2be6d5d8ec749ecc974174ea507`; esta alteração **não** solicita compilação ou publicação de APK.
+
+**Causa verificada de Favoritos:** além da limitação retangular do Android descrita em 12.272–12.273, `Bridge.openWatchList()` em `OverlayService.java` ocultava explicitamente `root` (Pokébola), `resultRoot` e `menuRoot` antes de abrir o `Dialog` de `PokemonPicker.show`. Assim, os elementos por trás deixavam de existir como superfícies tocáveis, mesmo fora dos limites da janela do picker. `PokemonPicker.java` **já** contém diálogo `TYPE_APPLICATION_OVERLAY`, `FLAG_NOT_TOUCH_MODAL`, sem dim/blur, largura limitada e altura `WRAP_CONTENT`. O contador `Selecionados n/50` na mesma linha de `FAVORITOS`, grade 10×5 e pesquisa inferior já foram implementados; não duplicar.
+
+**Correção incremental:** manter `pickerOpen` para bloquear apenas a abertura de outro picker; preservar `root`, `resultRoot` e `menuRoot` visíveis durante Favoritos, sem forçar `VISIBLE` no descarte. Permitir o long press da Pokébola enquanto o picker está aberto, para preservar acesso aos controles do overlay fora do diálogo. Manter `hideDetails()` ao abrir para não sobrepor cartões ao picker. Nenhuma alteração no conteúdo dos favoritos, preferências, pacote, assinatura, filtros ou sessão.
+
+**Teste de regressão:** contrato adicional em `app/tests/overlay-ux.test.js` verifica ausência de ocultação/restauração forçada, conservação do `Dialog` não modal com altura intrínseca e acesso ao long press nativo. O teste é estrutural, não substitui Android/Samsung. **Estado em código:** a passagem de toques *dentro* da área retangular do diálogo ainda é limitada pelo Android; para Personalização e Editor Visual, a janela única `menuRoot` ainda deve ser separada conforme o módulo preparatório `PopupTouchGeometry` da seção 12.273. Sem uso de `pointer-events:none` como solução, sem APIs privadas, sem injeção de toque.
+
+**Próxima etapa:** fazer integração isolada da janela popup independente para Personalização e Editor Visual, mantendo barra nativa estável, foco/teclado, ponte Native, P/M/G, tema/transparência, resultados e arraste. Continuar auditoria de alertas, Filtros e Localização em etapas posteriores, evitando reconstruir funcionalidades existentes. Verificar CI Node/JDK após commit; não afirmar homologação física até haver build autorizado no Samsung. Nenhum merge nem promoção LT63.
+
+
+### 12.275 — LT62: barra e submenus em janelas nativas independentes (23/10/2026)
+
+**Base:** commit `f566acf77f0336ea6de85dc358b672a983b8c05c`, PR #34 OPEN/DRAFT, `main` LT61 preservada. Implementação em dois commits sequenciais, ainda sem APK. `OverlayService` cria uma segunda `popupRoot/popupPanel` somente para o submenu, com `TYPE_APPLICATION_OVERLAY`, `FLAG_NOT_TOUCH_MODAL`, `FLAG_WATCH_OUTSIDE_TOUCH`, dimensões de conteúdo limitadas por `PopupTouchGeometry.place`; a barra `menuRoot` conserva altura original de 34dp (232dp vertical), sem expandir um retângulo transparente sobre o jogo. A janela popup é iniciada `GONE`, exibida após retorno do DOM e instalada após resultados/detalhes para manter ordem de toque do painel visível. Não há injeção de toque nem APIs Android internas.
+
+**Ponte e UI:** `Native.openPopup/resizePopup/closePopup` liga a toolbar ao `dock.html?controls=1&popup=1`, mantendo os renderizadores Modos, Filtros, Localização, Pokémon, Favoritos nativo, Notificações, Personalização, Info e Editor Visual. `onNativeData`, tema/preview visual, sugestões Pokémon, Form, Filtros e Colar coordenadas passam a alcançar a nova WebView. O teclado altera flags de foco somente da janela que efetivamente contém o campo. CSS de janela separada remove a dependência de `100vw` reduzido da barra: a cascata de Tamanho pode crescer até acomodar sete chips em linha; altura do painel lateral é medida pelos controles efetivos, não por um fundo fixo.
+
+**QA/limites:** contratos Node expandidos para duas janelas, lifecycle, ponte Native e conteúdo. Preservados testes de funções isoladas da UI legada com guarda `typeof popupWindow`. Sem prova física Samsung; regiões cobertas pelo próprio painel continuam naturalmente tocáveis, enquanto somente espaço fora de seus limites deve passar ao aplicativo abaixo, sujeito a regras de segurança Android 12+. Sem compilação APK, sem merge/alteração de `main` ou de versão.
+
+
+### 12.276 — LT62: corrigir P/M/G no Editor Visual e feedback real do Android (23/10/2026)
+
+**Causa funcional confirmada:** `visual_editor.js` chamava `window.renderSpriteSizeButtons(panel,true)`, porém `dock.html` expunha apenas uma função lexical `renderSpriteSizeButtons()`. Isso deixava de construir os botões P/M/G no Editor Visual. Corrigido exportando a função já existente para `window`, sem duplicar lógica e preservando `Native.setSpriteSize(35/45/55)`, persistência da preferência `spriteSize`, renderização instantânea e `onNativeData`.
+
+**Notificações:** ao clicar em Som/Silencioso, se o Android ainda não concedeu permissão, o feedback agora descreve corretamente *preferência salva, notificações bloqueadas* e não finge entrega ou áudio confirmado. Após retorno à Activity ou resposta ao diálogo de permissão 204, o serviço recebe `SYNC_NOTIFICATION_PERMISSION` e atualiza o estado visual sem enviar consulta ao site, alterar favoritos ou filtros. Permanecem canais e sons independentes para Novos e Favoritos. Som/entrega real requerem teste Samsung.
+
+**Auditados sem recriação:** Favoritos já conta `Selecionados n/50` na mesma linha e grade 10×5; Notificações possui duas seções compactas e três ícones alinhados; Filtros mantém ✓/lixeira/X, Tamanho de sete opções, Sexo quatro opções, confirmações numéricas; Localização reduzida a 172px e raio dentro do input; Editor Visual mantém presets/temas/escala/orientação e persistência. A separação das janelas 12.275 trata o bloqueio nativo de toques. Não acumular CSS novo desnecessário.
+
+**Cobertura:** duas regressões UX verificam o seletor real do Editor Visual e o retorno de permissão Android. Sem APK, sem main/merge e sem promoção LT63.
+
+
+### 12.277 — LT62: CI de compilação Android somente leitura de código, sem APK (23/10/2026)
+
+**Motivação:** a auditoria estrutural 12.275 introduziu uma segunda WebView e a ponte de popup em `OverlayService.java`. Nove suítes Node e a classe Java de geometria comprovam contratos, mas não compilam classes dependentes do SDK Android. Criado workflow isolado `.github/workflows/pokesearch-android-compile-qa.yml`, acionado por mudanças na PR #34, com JDK 17/Gradle 8.11.1/SDK 36. Executa exclusivamente `gradle :app:compileDebugJavaWithJavac`; não executa `assemble`, `bundle`, assinatura nem publica APK. A própria verificação falha se algum `.apk` surgir no diretório de saída do job.
+
+**Estado:** revisão de código e QA em curso na branch `fix/lt62-menu-visual-states-20261023`, PR Draft e main LT61 mantidas. Último APK assinado LT62 continua sendo o anterior ao trabalho de arquitetura; não afirmar homologação Samsung antes de instalação de build expressamente autorizado. Relatar outcome de compilação e erros reais após a execução.
+
+
+### 12.278 — LT62: CSS responsivo sem regressão de auto-retração do popup (23/10/2026)
+
+**Causa raiz descoberta na nova arquitetura:** regras antigas com `width:min(Npx,calc(100vw - 12px))` foram escritas para a WebView de 330dp fixa. Numa WebView de popup que se ajusta à largura do próprio conteúdo, `100vw` é a largura atual do popup; a próxima medição subtrai outros 12px e encolhe indefinidamente. Isso repetiria exatamente a queixa de menus se retraindo/distorcendo. **Correção estrutural no CSS exclusivo `body.popup-window`:** substituir max-width dependente de viewport por larguras estáveis de conteúdo nas famílias: Personalização 240px, Info Pokémon 248px, Editor Visual 268px, Notificações 138px, Localização 172px, Pokémon 270px, cascatas com dimensões próprias. A janela nativa segue reduzindo/clampando pelas coordenadas reais e tela via `PopupTouchGeometry.place`; altura limitada ao espaço livre com scroll dentro dos controles, não um fundo vazio.
+
+**Faltas já corrigidas na rodada:** retorno de sugestões Pokémon/Form/Filtros para `popupPanel`, o seletor P/M/G do Editor Visual e atualização da UI da permissão de Notificações. QA Node novo verifica as larguras estáveis e os controles não cortados pela antiga dependência de `100vw`.
+
+**Pendência:** comprovar no Samsung a abertura, toque externo, teclado, cascatas, visualização de formas, sons Novos/Favoritos e posição dos resultados em horizontal/vertical. Sem APK novo, sem merge e sem LT63.
+
+
+### 12.279 — LT62: ancoragem da cascata e liberação do teclado no fechamento (23/10/2026)
+
+**Problema geométrico auditado:** centralizar o popup inteiro de Filtros (rail 78px + editor lateral até 230px) sob o ícone deslocava a coluna Filtros para longe da opção selecionada. `PopupTouchGeometry.alignRail()` alinha a **coluna de opções** ao centro do botão que abriu o painel, mantendo o editor lateral no mesmo retângulo nativo compacto, limite de tela, posição acima/abaixo e barra estável. Também se aplica a Modos (rail 52px); demais painéis conservam alinhamento central habitual.
+
+**Fechamento/foco:** `closeIndependentPopup()` esconde o IME usando o token da própria WebView do popup, reseta `locationEditorOpen`, devolve `FLAG_NOT_FOCUSABLE` e deixa a janela `GONE`. Isso cobre o fechamento por `ACTION_OUTSIDE`, que pode chegar antes do retorno JS `locationEditor(false)`, sem bloquear o toque subjacente.
+
+**QA:** ampliada `PopupTouchGeometryTest.java` de 16 para **20 asserções** (posição do rail, altura preservada, clamp direito e zero hitbox). Executar os workflows Node e compilação Java Android (sem APK), depois homologar em Samsung. Sem merge, mudança de identidade/versão ou novo APK.
+
+
+### 12.280 — LT62: orientação vertical da barra com submenu lateral nativo (23/10/2026)
+
+**Falha arquitetural evitada:** a separação nativa 12.275 usava por padrão popup acima/abaixo da barra de 34dp, mas na orientação vertical `menuOrientation=vertical` a barra tem 232dp e cada item precisa abrir o submenu ao **lado** da linha tocada, não abaixo de toda a coluna. Incluído `PopupTouchGeometry.placeBeside`: escolhe a lateral com espaço real, respeita margens da tela, ancora a posição Y ao ícone e reduz a largura/altura quando o espaço é insuficiente. O JS envia a coordenada Y do disparador pela mesma ponte `Native.openPopup(kind,x,y)`; o serviço escolhe `placeBeside` só em vertical e conserva `place/alignRail` em horizontal.
+
+**Contratos:** a classe pura Java passa a verificar também abertura lateral direita, esquerda, alinhamento Y e clamp da tela, somando **25 asserções**. Largura insuficiente em Samsung estreito pode demandar scroll do editor; não criar painel fora da tela nem cobrir a barra. Editor Visual, P/M/G, Pokébola/resultados, filtros e notificações mantêm suas preferências. Nenhum APK, assinatura, main ou PR merge nesta etapa; validação física pendente.
+
+
+### 12.281 — LT62: inicialização sem deadlock da WebView e transição segura de submenus (23/10/2026)
+
+**Causa potencial de bloqueio no Samsung:** o novo popup era mantido `GONE` até `Native.resizePopup`, mas a medição JavaScript acontecia dentro de `requestAnimationFrame` na própria WebView oculta; o Android pode suspender os frames de uma View `GONE`, tornando impossível a primeira medição. A janela agora inicia visível com **apenas 1dp de altura** e largura provisória ancorada à barra, sem bloquear um grande retângulo vazio; após a medição DOM, recebe imediatamente as dimensões nativas calculadas por `PopupTouchGeometry`. Quando fechada, volta a `GONE`.
+
+**Transição:** a troca interna de Mais/Atualização para outro submenu executava `closeChoices()`, que podia emitir `Native.closePopup()` e encerrar o *novo* painel devido ao retorno assíncrono da ponte. Introduzida guarda lexical `popupNativeSwitch` apenas durante `window.showNativePopup`; fechamento real pelo usuário continua chamando o nativo. Se o painel pedido já está renderizado, `fit()` mede novamente em vez de deixar a janela escondida após reiniciar a dimensão.
+
+**QA:** testes Node cobrem bootstrap de 1dp, não uso de `GONE` durante medição e transição entre submenus. Executar nova CI Node e compilação Android sem APK, preservar PR Draft, main LT61, versionCode e assinatura. Teste físico Samsung ainda necessário.
+
+
+### 12.282 — LT62: regressão atualizada para transição assíncrona segura (23/10/2026)
+
+**Resultado de CI em 12.281:** a suíte Node de UI falhou exclusivamente porque a asserção anterior esperava `if(popupWindow&&Native.closePopup)`, enquanto a implementação corrigida utiliza `if(popupWindow&&!popupNativeSwitch&&Native.closePopup)` para impedir que uma troca de submenus envie fechamento ao nativo. A asserção foi atualizada para refletir a nova regra de segurança, sem remover o teste nem alterar sua cobertura dos demais retornos de filtros, sprites, foco e notificações. Reexecutar CI Node e compilação Java/Android no SHA atualizado. Sem APK, merge, alterações da main ou promoção de versão.
+
+
+### 12.283 — LT62: compilação assinada explicitamente autorizada para homologação Samsung (23/10/2026)
+
+**Solicitação expressa:** proprietário escreveu "Gere o apk." Autorizado gerar **somente o APK LT62** a partir desta branch, **sem merge**, mantendo `applicationId=com.lucianotoscano.pokesearch`, `versionName=0.00.62`, `versionCode=54260`, mesmo certificado persistente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Workflow assinado existente: `.github/workflows/build-v062-compact-preview.yml` com proteção por prefixo `build: approved v0.00.62 LT signed`. Commit-fonte das correções `64c292fcde4d09a0de805de814e42795539e0046` (12.274–12.282). Esta gravação de documentação/notas não altera Java, HTML, assinatura, permissões ou preferências.
+
+**Condições de publicação:** Actions só deve disponibilizar `PokeSearch-v0.00.62-LT.apk` se passar nove suítes Node, teste Gradle, validação do pacote e versionCode/versionName, `apksigner verify`, fingerprint do certificado original e SHA256SUMS. Artefato serve **para homologação Samsung**, não é declaração de aprovação física. Caso o workflow falhe, preservar a versão anterior sem apresentar um APK fictício. PR #34 continua OPEN/DRAFT; `main` LT61 permanece intacta.
+
+
+### 12.284 — LT62: APK assinado compilado, auditado e publicado (23/10/2026)
+
+**Autorização e versão:** após solicitação expressa "Gere o apk", a branch `fix/lt62-menu-visual-states-20261023` executou `build-v062-compact-preview.yml` a partir do commit `6a1919e6155e3b4af14feebbad68250fa7800da2` (código funcional do checkpoint `64c292fcde4d09a0de805de814e42795539e0046`; apenas Guia Mestre e Release Notes atualizados entre ambos). `versionName=0.00.62`, `versionCode=54260`, `applicationId=com.lucianotoscano.pokesearch`, nome **PokeSearch-v0.00.62-LT.apk**.
+
+**GitHub Actions #40050484227 — SUCCESS**: https://github.com/LucianoToscano/PokeSearch/actions/runs/40050484227 . Artefato #12543112935 `PokeSearch-v0.00.62-LT` publicado, retenção de 30 dias; ZIP validado e APK individual extraído e verificado contra `SHA256SUMS.txt`.
+
+**SHA-256 do APK:** `c268ecfdca715836224df0d5cc2615daeecf6224637b60f0572718f8f3fc49f1`.
+
+**Certificado de assinatura persistente verificado:** `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. O workflow confirmou assinatura Android v2 via `apksigner`, pacote e versão via `aapt`, integridade `unzip -t`, nove suítes Node e compilação Gradle `:app:testDebugUnitTest :app:assembleDebug`. Não houve troca de chave, nem alteração de identidade, login ou preferências.
+
+**Restrição de homologação:** APK pronto **para teste no Samsung**; sem instalação física ou confirmação de passagem de toques, atualização de Sprites P/M/G, áudio/permissões dos avisos e posição de Filtros/Localização/Editor Visual em hardware. PR #34 permanece OPEN/DRAFT e `main` LT61 intacta; sem merge, sem promoção LT63.
+
+## LT63 — Cascatas compactas e correções Samsung (24/10/2026)
+
+**Origem controlada:** branch `fix/lt63-compact-cascades-samsung-20261024`, derivada de `fix/lt62-menu-visual-states-20261023` no SHA `8babc0bc3d97496d6fa71ff0fa2e89a10af61bc2`; PR #34 da LT62 continua aberto/Draft e a `main` permanece no commit `caea98b7b57b9e45d5218e907eb392d76953dd53`. **Sem autorização para merge.**
+
+**Diagnóstico pelos prints Samsung:** Filtros exibiam retângulos vazios por CSS de popup impondo editor de `230px` e cascata de `320px` independentemente do item; Ordenar/Clima ainda invocavam `renderFilterPicker`; janelas WebView nativas não consideravam a interseção com o retângulo tocável dos resultados. Favoritos alinhava o contador à direita. Atualização somava `top:34px/232px` CSS ao deslocamento do WindowManager.
+
+**Alterações efetivamente implementadas na LT63:**
+- `dock.html`: Ordenar (cinco opções oficiais) e Clima (nove opções de Any a Fog) agora formam lista/grade dentro da cascata selecionada. Forma mostra pesquisa, chips e formas extraídas do site no mesmo editor; sem abrir segundo seletor. Sexo mantém os quatro símbolos `⚥ ♂ ♀ ⚲` com exclusividade; Tamanho preserva multi-seleção de sete tamanhos; PC/Nível retêm seus valores rascunhados, placeholders Min/Max e confirmação limitada a cada grupo. As alterações de chips permanecem rascunho até ação global Aplicar.
+- CSS: larguras por item (Sexo 134, Ordenar 178, Clima 158, Tamanho 230, PC/Nível 139, Forma 216 px) substituem duas larguras fixas do popup; seleção usa acento verde lateral. Ícones Aplicar/Limpar/Cancelar em SVG compartilhado e superfícies leves. Localização em três linhas: cabeçalho+Colar, campo coordenadas, slider e controle de 0–1000 km+ações agrupadas abaixo, com raio sincronizado. Atualização posiciona seu menu em `top:0` dentro do popup nativo.
+- `PokemonPicker.java`: cabeçalho Favoritos com título proporcional, contador expandido e centralizado e botão × discreto; preserva grade 10×5.
+- `PopupTouchGeometry.java` e `OverlayService.java`: a geometria de popup verifica interseção com o retângulo real da janela de resultados e procura outra região tocável, respeitando bordas e arraste; não usa máscara grande transparente. Reavalia a posição após arrastes.
+- `app/src/main/assets/release_notes.json`: nova entrada LT63 `54261`, sem prometer validação Samsung.
+
+**Identidade e assinatura obrigatórias:** `applicationId=com.lucianotoscano.pokesearch`, namespace `com.lucianotoscano.pokesearchoverlay`, Java 17, Gradle 8.11.1, `compileSdk=36`, `targetSdk=33`, `minSdk=26`. Compilação LT63 exige `POKE_TEST_VERSION_CODE=54261`, `POKE_TEST_PUBLIC_VERSION=0.00.63` e SHA-256 do certificado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Não substituir assinatura original por debug aleatório.
+
+**Homologação separada:** verificações estáticas/Node e geometria Java não equivalem a teste no Samsung. Verificar, após APK assinado, cascateamento, toques externos, coordenadas negativas, GL/UL, Shiny, teclado, rotação, atualização de 3/5/10/15/20 min, arraste Pokébola/resultados e atualização em cima da LT62. Registrar a conclusão do Actions e o fingerprint conferido antes de disponibilizar o binário.
+
+
+## LT64 — Homologação Samsung: coordenadas, sprites e despawn (24/10/2026)
+
+**Origem:** screenshots Samsung informam que Get coords não copia e segurar sprite não copia, sprites aparecem como anéis temporários e cartões vencidos não somem nem são repostos. Base LT63 `0fc75219d0c63d7d740f5a5fd9d19d807f6b643d`, PR #36 Draft, main intacta. Branch isolada `fix/lt64-result-coords-sprites-expiry-20261024`, sem merge.
+
+**Diagnóstico de código:** Native `requestCoordinates` usava `sourceIndex` numérico para clicar em um resultado do site, sujeito à reordenação/atualização; o botão Get coords apenas buscava, enquanto copiar acontecia separadamente; a extração das coordenadas procurava texto, sem ler o href `Open in Maps`. `parseCard` usava `img.src` de imagens React que podiam ser 1×1 placeholders ou lazy-loaded; `attachSpriteFeedback` marcava falhas definitivas sem tentativa de recuperação. `updateTimers` mudava apenas uma classe CSS, e `armNextDespawn` recalculava a data a partir do texto MM:SS, sem usar `expiresAtMs` já gravado. Falha de navegação cancelava `expiryRefresh`.
+
+**Correções implementadas em código:** identidade com nome, PC, número e posição como fallback de compatibilidade; recusa explícita de copiar coordenadas de cartão ambíguo; suporte a URL de `Open in Maps` da mesma carta. Toque em Get coords copia ao obter coordenadas e toque longo permanece com cópia. Coordenadas já verificadas são copiadas imediatamente sem nova chamada. Sprite tenta URL original do site via data-src/currentSrc/srcset e faz até duas novas tentativas locais com intervalo limitado; não inventa imagem nem altera Shiny/Form. Despawn passa a agendar `expiresAtMs` absoluto, remover resultados expirados, consultar novos independentemente de AUTO e recebe watchdog limitado dos timers visíveis; reativa agendamento após falha da navegação.
+
+**Limites de homologação:** extração continua dependente da resposta do site; retorno quando formulário muda, lazy load das imagens e refresco de site dependem de teste físico Samsung. Confrontar 0/50 favoritos, GL/UL, Shiny, Localização, nenhuma coordenada errada por Pokémon, AUTO OFF e senha/login persistente. Não distribuir APK sem assinatura original verificada.
+
+
+## LT65 — Vídeo Samsung: feedback de Get coords e detalhes longe do dock (24/10/2026)
+
+**Evidência:** gravação `Screen_Recording_20261024_004951_One UI Home.mp4` (~171 s, 1080×2340). Aos ~149–151 s, Nidoran♂ já tem coordenadas e aparece confirmação Android "Copiado." Ao redor de ~157–164 s, Exeggcute continua sem coordenadas: o usuário toca Get coords e em seguida recebe "Obtenha as coordenadas primeiro" ao tentar copiar. O card detalhado se sobrepõe verticalmente à barra de ferramentas em ~143–163 s. Tamanho, Sexo, Ordenar, Localização, Favoritos e Atualização abriram visualmente. **Não há prova em vídeo de um despawn chegar a zero; não afirmar aprovação disso.**
+
+**Raiz técnica adicional ao LT64:** `OverlayService.update()` chama `showDetails(selected)` a cada alteração de status; em `detail.html`, `showDetails` reatribuía `currentCoords` e `coordsValue` a cada render, escondendo a mensagem de sucesso/erro/pedido pendente exibida por `window.coordsResult`. `copyCoords()` sem coordenadas apenas trocava o texto do botão por uma instrução inerte. `moveDetail()` usava a coordenada Y dos resultados, podendo ocupar a mesma região tocável da toolbar.
+
+**Correções LT65:** `detail.html` agora mantém `coordsNote` e `currentCoords` para a mesma identidade de Pokémon até mudar de card; Get coords mostra "Consultando coordenadas" e o botão de copiar vazio aciona a mesma consulta nativa (com cópia automática). Exibe retorno real do site, evita cliques duplicados e libera estado após 9 s caso o callback seja perdido. `OverlayService.java` coloca card abaixo do dock, ou acima quando necessário, se houver sobreposição física; usa dimensões e limites nativos `WindowManager`. Resposta de Get coords recupera `reason` quando `status` estiver ausente. Sem alteração de API, login, filtros, Shiny, PvP, validade de resultados, assinatura ou applicationId.
+
+**Rastreabilidade:** branch `fix/lt65-samsung-detail-feedback-20261024`, baseada no SHA LT64 `9e3c44c6f3bc15557eacabcd2895c071758c976e`. Não realizar merge ou Ready. Regressão `app/tests/lt65-detail-feedback.test.js`. `versionName=0.00.65` e `versionCode=54263` para APK próprio, somente após build assinado e conferido. Homologação física Samsung permanece pendente.
+
+
+## LT66 — Samsung: menus e rolagem PvP (24/10/2026)
+
+**Origem:** `Screen_Recording_20261024_004951_One UI Home.mp4` (170,876 s, arquivo com trilha AAC) e print adicional da expansão do Shuppet PvP. Usuário sinaliza verbalmente, e repete em texto, que Modo apresenta falha de alinhamento, Sexo tem botões desproporcionais, Favoritos não centraliza o contador, Notificações ainda mostram X e margens laterais grandes, Localização desperdiça largura e a expansão PvP não rola até o fim. A trilha existe, mas não foi obtida transcrição automática confiável: não atribuir ao áudio outras frases não confirmadas. Imagens, toques e relato escrito são evidência direta.
+
+**Base imutável:** LT65 commit `aad116a3fc1ee2b863b61c9ba71629fa9d4875db`; PR #38 Draft, derivada de LT64 PR #37. Branch nova isolada `fix/lt66-samsung-menus-scroll-20261024`; main não alterada, sem merge e sem Ready.
+
+**Raiz técnica:** `dock.html` possuía regras da cascata Modo calculadas com `top:34px` no popup Android cuja posição já é definida pelo `WindowManager`, além de deslocamentos rígidos de GL/UL e seleção vazia mesmo com configuração ativa. Sexo era forçado a 134px e ícones de 29px dentro de linha pai de 23px. `PokemonPicker.java` centralizava o contador apenas no espaço restante após o título, não no cabeçalho inteiro. `renderAlertsChoices` ainda criava `choiceClose` apesar de haver ação de alternância pelo sino, e popup mantinha largura 138–166px para três controles de 30px. Localização acumulava estilos legados impondo 172/225px e margens internas. `detail.html` tinha `#panel` e `#evoBody` com rolagens aninhadas; `resizeDetail` limitava WebView nativo a 310dp e re-renders de PvP podiam reiniciar a rolagem.
+
+**Correções implementadas:** Menu Modo inicia em `top:0` quando independente, posiciona editor por `offsetTop` real do item e clampa ao espaço disponível; conserva valores editáveis e admite dock à esquerda e à direita. Sexo apresenta quatro células em linha, 26×25px, sem título redundante, editor de 116px sem faixa vazia. Favoritos usa `FrameLayout` com título START, contador CENTER absoluto e fechar END na mesma altura; mantém grade 10×5 e limite 50. Notificações remove X apenas desse popup e centraliza título e seções em 112px, sem remover controles de estados ou toques de seleção. Localização restringe bloco a 192px, preserva colagem, validação, slider 0–1000km, aplicar e limpar. `detail.html` passa a usar exclusivamente `#panel` como contêiner rolável do PvP; não limita internamente o `#evoBody`, guarda posição de leitura na atualização e só reinicia em outro Pokémon. `OverlayService.resizeDetail` aceita até 440dp, nunca além da tela disponível, mantendo `moveDetail()` evitando a barra nativa.
+
+**Regressões:** `app/tests/lt66-samsung-panels.test.js` + suítes históricas e geometria Java, build Gradle e inspeção da assinatura original. Versão planejada `0.00.66 / 54264`, certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Não confundir teste automático com aprovação física: verificar scroll até último botão, gesto do dedo no cartão, direita/esquerda, foco, troca de filtros, Shiny, alertas, sprites e despawn.
+
+
+## LT67 — Etapa 2: campos compactos de Nível, IV bruto, Tamanho e Sexo (24/10/2026)
+
+**Evidências:** prints Samsung 1000844487/1000844491 mostram IV Raw com `100` digitado e campos largos; 1000844494 mostra Nível aceitando visualmente `99999`, 1000844498 mostra Sexo desalinhado, e 1000844491 mostra PC com retângulos e aviso ocupando espaço. Outros prints destacam distância do menu Modo, fundo dos subeditores, painel de Localização, rodapé e ⋯ afastado (todos reservados às etapas 3–5, não confundidos com correções já realizadas).
+
+**Branch isolada:** `fix/lt67-level-size-sex-iv-samsung-20261024`, criada do HEAD LT66 `b99345b94df6af0f2a122464735b1a65396d1d64` (PR #39 Draft), sem edição da main, sem merge, sem APK LT67 nesta etapa.
+
+**Mudanças reais:** `dock.html` preserva PC como numérico convencional, mas usa texto com `inputMode=numeric`, `maxLength=2` e normalização imediata de dígitos para Nível Min e Max. A confirmação ✓ mantém faixa 1–35 e Min<=Max; placeholders curtos 1 e 35, nomes de acessibilidade completos. Input bruto IV (Ataque/Defesa/Stamina) e ranking GL/UL limitados visualmente a dois dígitos; IV% mantém 3 para poder exibir 100, todos com a validação de valores original (Raw 0–15). Campos de Nível com 31 CSS px cada e largura de editor 108 px; Tamanho sete células 23×22px em uma linha, editor 182px; Sexo quatro células 23×22px em uma linha, editor 107px, opção Any ⚥ e seleção exclusiva preservadas. Tipografia vetorial de Unicode reduzida, sem PNGs falsificados ou modificação da lista oficial do site. Indicadores de filtros, Shiny, Form, estrutura WebView/probe, assinatura e dados permanecem como antes.
+
+**Regressões:** `app/tests/lt67-compact-fields.test.js` (12 novos contratos), suites históricas atualizadas somente onde exigiam tamanhos legados, e workflow QA exclusivo `.github/workflows/lt67-stage2-qa.yml` — 14 suites Node + Java PopupTouchGeometry, deliberadamente sem gerar APK.
+
+**Pendências das próximas etapas:** eliminar rolagem do Modo e More quando couber; alinhar e dimensionar popup de Pokémon e Favoritos; reduzir rodapé Filtros, status e espaço extra no PC, e margens de Localização; centralizar os demais popups sem engolir toques externos; Get coords sujeito a cooldown do site, com nova tentativa real. Validar no Samsung que dois caracteres cabem e a digitação é acessível, que todas as formas/sexo do site se mantêm corretas e que a cascata não sofre recorte próximo da borda.
+
+## LT68 — Personalização Atualizar editável + ícones Clima em branco/preto (24/10/2026)
+
+**Origem:** captura Samsung do menu PERSONALIZAÇÃO mostra checkbox cinza/desabilitado em `Atualizar`; solicitação explícita de habilitar a opção. Novos PNGs foram localizados em Google Drive na pasta `Icones Climas` (18 arquivos de 24/10/2026, brancos e pretos para nove estados oficiais). Base da implementação: LT67 PR #40 Draft, HEAD `88363d16fdf21abcb1e62c371759379a17f32141`. Branch LT68 isolada `fix/lt68-refresh-visibility-weather-icons-20261024`; sem alterar main, PR anterior ou APK existente.
+
+**Raiz de Atualizar OFF:** `dock.html/renderAppearanceChoices` forçava `locked=["period"].includes(id)`, desabilitando o botão visual. `normalizedQuickPrefs` impedia `period` em `hidden`, e o validador nativo `OverlayService.Bridge.saveMenuPrefs` removia `period` da lista oculta. Assim, ativar o checkbox isoladamente não funcionaria. Agora o usuário pode esconder ou mostrar o comando `Atualizar` voluntariamente via Personalização, sem alterar a periodicidade automática, preservando a função de long press e a ordem, com restauração pelo mesmo menu. Continuam protegidos de ocultação o comando Personalização, Fechar e Shiny. A funcionalidade de atualização periódica continua existindo mesmo que o botão esteja oculto.
+
+**PNG Clima:** 18 PNGs originais do proprietário foram armazenados sem transformação em `app/src/main/assets/weather-icons/v2/`: nove pares `any`, `boosted`, `sunny`, `rainy`, `partly-cloudy`, `cloudy`, `windy`, `snow`, `fog`, sufixos `-white.png` e `-black.png`. Não removidos/sobrescritos os nove arquivos antigos em `weather-icons/`, usados como fallback. `WEATHER_THEME_FILES` mapeia estritamente os mesmos nove valores oficiais `Any, Boosted, Sunny, Rainy, Partly Cloudy, Cloudy, Windy, Snow, Fog`; `Sunny` utiliza o arquivo do Drive nomeado `Ensolarado - Limpo`, que representa a única opção oficial do site, sem criar filtros adicionais. `makeWeatherIcon` exibe PNG branco no tema escuro e preto quando `visual-light-menu` está ativo, via CSS sem converter/recolorir PNG. Texto e valores enviados ao site permanecem intactos.
+
+**QA:** regressão nova `app/tests/lt68-refresh-weather-icons.test.js` (12 verificações) valida nomes, bytes/objetos Git originais, PNG válido, pares, ausência de novos filtros, fallback, troca CSS, persistência e acessibilidade. Pipeline `.github/workflows/lt68-weather-refresh-qa.yml` executa 15 suítes Node, Java e compilação Android sem gerar APK. Validação visual no Samsung ainda necessária para confirmar brilho, dimensão e legibilidade de cada ícone no tema claro e escuro, e ocultar/restaurar Atualizar sem perder o intervalo de 3/5/10/15/20 minutos.
+
+**Restrições:** applicationId `com.lucianotoscano.pokesearch` e namespace, assinatura, backend inexistente, WebView/probe, sprites, favoritos e restante da barra não alterados. Esta etapa não autoriza merge nem transforma PR em Ready. Etapas de alinhamento e cooldown previamente enumeradas continuam pendentes.
+
+## LT68 — Etapa 1: auditoria de divergência LT67/LT68 (24/10/2026)
+
+**Escopo e rastreabilidade:** comparação de leitura de `fix/lt67-level-size-sex-iv-samsung-20261024` (PR #40, HEAD `3f33214783595c468157b78776e6e3bc6b4dc336`) versus `fix/lt68-refresh-visibility-weather-icons-20261024` (PR #41, HEAD antes deste adendo `f5f33a8d563d1011f370dc0f0fbc962fe862d04e`). Ancestral comum `88363d16fdf21abcb1e62c371759379a17f32141`; 3 commits exclusivos LT67 e 7 exclusivos LT68 (divergência de histórico, não só 1 commit). Ambos os PRs abertos e Draft; PR #41 reportava `mergeable=false`. Não foi feito merge em main nem alteração da base, do namespace, do pacote ou do APK.
+
+**Equivalência verificada:** o último commit LT67 `3f332147` remove exatamente a proibição de `period` em `OverlayService.saveMenuPrefs`, já removida na LT68. O código Java `OverlayService.java` tem o MESMO blob SHA nos dois heads (`a72fc7858d195f8ce9d736137d8ca4ea4739e325`). O `dock.html` de ambas permite ocultar `period` em `normalizedQuickPrefs` e no checkbox de Personalização; só os estilos/classe do par de ícones e o mapeamento do nome físico de Sunny diferem. O `probe.js` tem MESMO blob SHA (`39a61492105cd3e3d1f56ce32f558375afbb760c`), sem alterações de comportamento do PoGoCoordinates.
+
+**18 PNGs:** verificação dos blobs SHA de 18 arquivos na LT67 contra os 18 hashes esperados e validados pela suíte `lt68-refresh-weather-icons.test.js`: 18/18 idênticos, nenhuma imagem nova distinta. Os arquivos `sunny-clear-white.png` e `sunny-clear-black.png` da LT67 possuem exatamente o conteúdo binário dos arquivos `sunny-white.png` e `sunny-black.png` da LT68 (SHA Git `454a449525062e3aed5478ab0df3a0e6886b9908` e `5ec58552a40d5eb297b8c760dfee2b98b05c18b4`). Decisão: manter SOMENTE a estratégia `WEATHER_THEME_FILES` + `weatherChoicePair` e nomes `sunny-*.png` da LT68, preservando nove opções oficiais e fallback antigo; não importar paralelamente `WEATHER_ICON_VARIANTS` ou `weatherIconPair` da LT67.
+
+**Estado efetivo e próximo trabalho:** correções LT67 dos campos Nível, IV Raw, IV%, Sexo/Tamanho constam na ancestral comum; o LT68 inclui Mostrar/Ocultar Atualizar e ícones Clima originais. A conciliação **funcional** foi auditada, mas a conciliação **do histórico Git** (3 commits exclusivos em LT67) permanece PENDENTE: integrar as linhas de histórico na LT68 sem duplicar DOM, CSS, lógica de menu ou assets e depois repetir `compare_commits`/status PR. Não repetir implementação já presente. CI #40065513232 pertence ao HEAD LT68 ANTERIOR a este adendo e não valida commits posteriores. Não há APK LT68 assinado nem validação física Samsung. Etapas seguintes: compactação Modo/Filtros/Localização, ancoragem popups, cooldown Get coords, QA no Samsung. Nenhuma ação na main e PR #41 deve continuar Draft.
+
+**Rechecagem após commit da auditoria:** durante esta inspeção o PR #40 LT67 recebeu novos commits e avançou a HEAD `9368f9cfe5ad1ca21182fe38b62f715c190743bd` (antes `3f332147`). A comparação então passou a registrar **8 commits exclusivos em LT67 e 8 exclusivos em LT68**, ancestral comum ainda `88363d16`, `mergeable=false` no PR #41. Os novos arquivos na LT67 incluem `app/tests/lt67-refresh-weather.test.js` (nove checagens) e ajuste da lista de suítes no workflow `.github/workflows/lt67-stage2-qa.yml`. A LT68 possui seu próprio teste `app/tests/lt68-refresh-weather-icons.test.js` (12 checagens, incluindo hashes Git) e workflow adicional com compilação Java Android sem APK. **Não transplantar asserções ligadas aos nomes de classes/weather assets LT67 sem adaptação**, pois criariam falsos negativos após manter a implementação única LT68. A comparação numérica anterior de 3 × 7 é histórico do instante da primeira leitura, não estado atual. A integração estrutural dos ramos segue pendente.
+
+## LT68 — Etapas 2–7: compactação Samsung, ancoragem e segurança Get coords (24/10/2026)
+
+**Reconciliado no GitHub:** commit de mesclagem de histórico `cc21a8d2f3399ae4b56d5b984cb319d80579f29a` tem como pais o HEAD LT68 anterior `bfc2b2fb04a12863d5d638876490f1871f3e4a29` e HEAD LT67 `9368f9cfe5ad1ca21182fe38b62f715c190743bd`, com a árvore de arquivos funcional da LT68 mantida deliberadamente. O GitHub passou a reportar `behind_by=0` comparado à LT67; PR #41 continua OPEN/DRAFT, `mergeable=true`. **Não ocorreu merge na main e nem Ready**. Os 18 PNGs de `weather-icons/v2` permanecem sob nomes canônicos `sunny-*.png` na LT68, sem duplicação de `sunny-clear`; conferência por SHA dos 18 blobs LT67 demonstrou identidade binária com os 18 esperados na LT68.
+
+**Etapa compactação Modos:** `dock.html`, commit `840ae87f`: `positionCascadeEditor` mede `rail.scrollHeight` em vez de limitar sempre a 164px; rolagem só é necessária quando o conteúdo excede o espaço disponível. CSS final específico de popup nativo elimina o fundo duplicado em Raw IV/IV%/GL/UL sem remover input ou botão de confirmação. Altura efetiva dos seis itens continua condicionada por `--popup-room`, inclusive bordas Samsung. O Java `PopupTouchGeometry` ainda controla janela independente e prioriza toques fora dos resultados.
+
+**Etapa Filtros:** editar somente o subpainel selecionado, remover segundo fundo do editor, preservar CP, Nível 1–35, tamanho sete células e sexo `⚥ ♂ ♀ ⚲`, com confirmações individuais e três comandos inferiores apenas em ícones. O indicador de rascunho passou a `● Falta aplicar` com `title` e `aria-label` completos 'Alterações ainda não aplicadas' — sem perder informação de acessibilidade. `app/tests/overlay-ux.test.js` foi atualizado porque ainda exigia literalmente o aviso extenso e porque o mock de status precisava suportar `setAttribute`; histórico mantido.
+
+**Etapa Localização:** `dock.html` com painel de 192 CSS px na WebView de popup, campo coordenadas de largura disponível, botão Colar na linha de título, slider 0–1000 e campo numerado compacto `[1000km]`, com Aplicar/Limpar pequenos e ações preservadas. `Native.setLocation` continua alterando apenas Localização, nunca zerando Shiny, IV, Liga ou Pokémon.
+
+**Etapa Popups:** `PopupTouchGeometry.place/placeBeside/alignRail/avoidResult` e a janela nativa independente permanecem responsáveis por Pokémon, Alertas e Mais; o menu Mais usa rolagem automática apenas sob limitação real de espaço. Favoritos era exceção, pois o `PokemonPicker` abria como Dialog centralizado: agora `quickClick("star")` chama `Native.openWatchListAt(x,y)`, calculando o centro real do ícone; `OverlayService` converte esse ponto usando a mesma origem WebView do menu e `PokemonPicker` posiciona a janela nativa abaixo/acima do ícone com limites da tela e mantém `FLAG_NOT_TOUCH_MODAL`, sem tela escurecida. Compatibilidade com chamada antiga `openWatchList()` foi preservada. **O posicionamento físico não foi homologado no Samsung**; em telas muito pequenas, verificar que a janela não cobre ações úteis do resultado.
+
+**Etapa Get coords:** `probe.js` foi modificado no commit `e343e39d` para buscar `Get coords` e `Open in Maps` exclusivamente dentro do cartão único identificado por `sourceIndex`, nome, PC, número de Pokédex e localização. Se o botão do site estiver `disabled`, `aria-disabled` ou dentro de `fieldset[disabled]`, não é acionado: o usuário vê cooldown e pode tocar de novo quando for habilitado; não existe temporizador inventado. `readCoords` evita varredura global de links Maps e não extrai dados de outros cartões. No Android, commit `1a2916e0`, `coordinateRequestToken` cancela callbacks assíncronos obsoletos, `currentCoordinateTarget` aborta se os resultados mudarem, e a janela de polling é limitada a nove leituras (0–8, com 450ms entre tentativas), sem deixar feedback indefinido. O teste LT64 foi ajustado para exigir a estratégia mais segura. **Site real e cooldown de rede dependem de homologação posterior**.
+
+**Personalização e Clima:** lógica já pronta na LT68, sem reimplementação; `period` pode ficar visível/oculto sem alterar `intervalMinutes` ou os controles obrigatórios. Os 18 PNGs originais brancos/pretos continuam no Drive/Git e o tema alterna apenas a imagem mostrada, sem emoji ou filtros técnicos extras.
+
+**QA e proteção:** criado `app/tests/lt68-samsung-hardening.test.js` (12 contratos de modo, filtros, localização, geometria nativa, favoritos, cooldown, identidade do Pokémon, sprites, limite de dez resultados, sintaxe JS) e registrado em `.github/workflows/lt68-weather-refresh-qa.yml`, agora com **16 suítes Node** + compilação Android Java + PopupTouchGeometry Java, sem APK. Numa execução isolada de testes em V8 usando os blobs exatos obtidos do GitHub (filesystem/VM de Node simulados), as 12 verificações do novo arquivo terminaram `12 PASS / 0 FAIL`; **isso NÃO substitui uma execução genuína do workflow GitHub Actions ou a compilação Android**. O JS inline de `dock.html` e `probe.js` foi analisado sintaticamente por V8 sem erro. O workflow anterior #40065513232 validou somente o HEAD LT68 anterior, **não valida o novo código**. Sem teste físico Samsung, sem verificação de um novo APK assinado; não declarar entrega de APK ou estabilidade definitiva.
+
+**Invariantes verificados por inspeção na branch:** `applicationId = "com.lucianotoscano.pokesearch"`, `namespace = "com.lucianotoscano.pokesearchoverlay"`, compileSdk 36, targetSdk 33. Nenhuma migração de backend, GPS físico ou mudança da conexão WebView/evaluateJavascript/probe.js. Shiny, GL/UL, login persistido, Favoritos e teto de dez resultados preservados; as alterações não usam `main`.
+
+**Checklist físico pendente e não mascarado:** (1) Modos IV/IV%/GL/UL: sem scroll se seis linhas couberem, entrada e confirmação sem recorte. (2) Filtros: editor compacto, três ícones, PC/Nível, sete tamanhos, quatro sexos. (3) Localização: colar, digitar 0 e 1000, aplicar, limpar e reabrir sem perder filtros. (4) Pokémon/Notificações/Mais/Favoritos: cada popup no ícone correspondente, sem tap interception nos resultados em tela Samsung vertical/horizontal. (5) Get coords: esperar cooldown real do site, liberar sem refresh forçado, confirmar PC/nome/identidade antes de copiar. (6) Personalização: ocultar/reexibir Atualizar, reiniciar app e confirmar persistência do intervalo. (7) Clima: PNGs branco/preto legíveis em ambos os temas. (8) Assinatura APK, certificado SHA-256 esperado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, versionName/versionCode e pacote só verificáveis depois de build assinada com o keystore persistente. **Não criar/entregar APK com certificado diferente.**
+
+## LT69 — Corrigir posição da expansão Mais (•••) — homologação Samsung (24/10/2026)
+
+**Origem do relato:** dois prints Samsung da LT68 exibem os ícones **Reportar** (triângulo) e **Apoiar** (coração) em uma coluna à direita, mas separados verticalmente do botão de três pontos por uma faixa vazia; **Fechar** pode ficar cortado porque a janela nativa mede a altura sem reservar esse deslocamento CSS.
+
+**Causa rastreada e corrigida:** `OverlayService.positionIndependentPopup()` calcula a origem do popup independente em `PopupTouchGeometry.place(...)` ou `placeBeside(...)`, já adjacente ao limite inferior/superior/lateral do menu. Porém o estilo legado `body.controls-window #choices.morePanel` definia `top:34px!important`, `body.controls-window.visual-menu-vertical #choices.morePanel` definia `top:232px!important` e as variantes `popup-above` usavam `bottom:34px/232px`. Essas regras também eram aplicadas à segunda WebView `controls=1&popup=1`, duplicando o offset.
+
+**Implementação em `app/src/main/assets/dock.html`:** seletor final de alta especificidade limitado a `body.popup-window.controls-window #choices.morePanel`, incluindo variações `popup-above` e `visual-menu-vertical`, força `top:0!important;bottom:auto!important;left:0!important`, `margin/padding:0`, `transform:none`, altura natural e `max-height:var(--popup-room,440px)` com rolagem apenas se a tela realmente não comportar todas as ações. Não altera `top:34px/232px` na WebView antiga **não independente**, preservando compatibilidade.
+
+**Largura:** `renderMoreChoices` não usa mais a largura `0` do botão ••• oculto na WebView do popup, que antes criava um falso piso de 28px; deixa o fallback original de 30px ou usa largura medida válida no menu.
+
+**Testes:** novo `app/tests/lt69-more-popup-origin.test.js` verifica origem/estilos nas quatro orientações e posições, largura, listagem sem limite artificial de duas ações e sintaxe dos scripts. `app/tests/PopupTouchGeometryTest.java` ganha cinco verificações da borda nativa com popup abaixo/acima/vertical. A versão LT68 e PR #41 permanecem intocados; esta correção reside na branch `fix/lt69-more-native-popup-origin-20261024` derivada de `ee144e8042e321652d0303878e5bb75bf93d8ada`.
+
+**Pendências até aferição:** rodar 17 suítes Node, geometria e compilação Java Android no GitHub Actions; somente se passarem, construir APK estável LT69 com `versionName=0.00.69`, `versionCode=54269`, certificado original com SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, R8 e SHA-256 do APK. A validação física do espaçamento, Reportar/Apoiar/Fechar e toque nos resultados continua dependente de novo print Samsung.
+
+## LT70 — Localização compacta e fechamento por segundo toque (24/10/2026)
+
+**Referência Samsung:** dois prints mostram a versão correta de **largura compacta** do popup de Localização, contrastando com uma versão com largura excessiva quando o campo está em foco. O usuário pediu título `Localização` e ícone **Colar** centralizados como um único grupo; linha das coordenadas e slider sem espaços laterais desnecessários; linha do Radius com entrada de somente 4 dígitos (`0–1000`) no formato **`[1000]km`**, sem grande vazio antes da unidade; confirmar e limpar centralizados na mesma linha; um novo toque no ícone Localização deve recolher o popup.
+
+**Causa técnica e solução:** `dock.html` tinha múltiplas regras de largura 172/192/225px e se comportava diferente durante foco, além de `radiusField.type="number"` (que ignora `maxlength` em Android/WebView) e inseria `km` por `position:absolute;right:4px` em um campo de 62–72px, o que criava uma lacuna visual. CSS final `LT70 LOC-CENTER-01` fixa **192px** (também no `popup-window` e `popup-above`) e `box-sizing:border-box`; centraliza `.choiceHeader`, incluindo Colar; mantém o campo coords em 100% e slider sem margens externas; centraliza `.locRadiusRow` com ações de 26px; `.locRadiusNumber` tem 42px em fonte monoespaçada e `.locRadiusUnit` volta ao fluxo normal, imediatamente ao lado da borda do campo, sem mudar os valores do filtro.
+
+**Entrada e validação:** `radiusField.type="text"; inputMode="numeric"; maxLength=4; pattern="[0-9]{1,4}"`, com `oninput` que descarta símbolos, limita a quatro algarismos e restringe imediatamente `>1000` a `1000`. Slider permanece de `0` a `1000`; `submit()` segue exigindo número inteiro no intervalo, coordenadas válidas e confirmação pelo site. Não alterar filtros anteriores (IV, Shiny, PvP, espécie), não alterar a localização automaticamente enquanto o usuário digita.
+
+**Fechamento:** como menu da barra e popup independente são WebViews diferentes, o `choiceOpen` da barra não acompanha a seleção atual. `OverlayService.openIndependentPopup()/closeIndependentPopup()` agora sincroniza `window.setActiveNativePopupKind` no `menuPanel`; `toggleChoices(kind)` usa esse estado para chamar `Native.closePopup()` quando recebe segundo toque no mesmo botão. O guard nativo `if(kind.equals(popupKind)){closeIndependentPopup();return;}` continua como fallback. Isso preserva troca de menu, foco da caixa, animações, overlay e controles sem segundo popup.
+
+**Verificação inicial:** novo `app/tests/lt70-location-radius-toggle.test.js` com 9 contratos (CSS, centralização, digitação 0/1000, limites e letras, label `[1000]km`, aplicação/limpeza, segundo toque e parse do JS) passou em execução V8 isolada usando o código do GitHub; **ainda precisa ser confirmado na suíte Node do Actions e em Samsung real**. `app/tests/overlay-ux.test.js` atualizada para a entrada de texto numérica estrita. Branch LT70 derivada da LT69, PR de revisão em Draft; sem merge em `main` ou PRs anteriores.
+
+**Próxima homologação:** (1) Popup continua com mesma largura antes/depois de foco. (2) `[0]km`, `[999]km` e `[1000]km` sem espaço interno e não aceita quinto caractere. (3) Título+Colar alinhados ao centro. (4) Clicar Localização abre, clicar novamente fecha, clicar outro ícone troca. (5) Aplicar coordenadas e limpar sem apagar outros filtros. (6) Novo APK protegido LT70, somente se o GitHub Actions compilar com assinatura persistente e comparar o SHA-256 do certificado, código e pacote originais.
+
+
+---
+
+## LT70 — CI, assinatura e checkpoint para homologação Samsung (24/10/2026)
+
+**Origem do APK validado:** branch `fix/lt70-location-radius-center-toggle-20261024`, código no commit `22e0e3151fe4e7885ca0d671095ae0e5127e1110`; PR [#44](https://github.com/LucianoToscano/PokeSearch/pull/44) aberto em **Draft**, base LT69, sem merge em `main`.
+
+**Alterações do código já presentes e auditadas:** em `app/src/main/assets/dock.html`, CSS `LT70 LOC-CENTER-01` dá 192px fixos ao painel Localização, inclusive durante foco, centraliza título+Colar, campo das coordenadas, slider e grupo de raio/Aplicar/Limpar. O Radius usa caixa numérica visual de 42px e texto `km` imediatamente após o campo ([1000]km); `inputMode=numeric`, `maxlength=4`, sanitização exclusiva de dígitos e limite 0–1000. Na `OverlayService.java`, `setActiveNativePopupKind` sincroniza a WebView da barra com o popup nativo; repetir o toque fecha e trocar o menu substitui o popup. O guard nativo `kind.equals(popupKind)` permanece. Ações de Localização usam `Native.setLocation` sem alterar filtros independentes. Não foram refeitos assets ou filtros fora do escopo.
+
+**Validação de CI real:** workflow `.github/workflows/build-v070-lt-location-signed.yml`; [run 40071682037](https://github.com/LucianoToscano/PokeSearch/actions/runs/40071682037) — **SUCCESS**, código de origem exato acima. As **18 suítes Node** declaradas no workflow concluíram; a nova `lt70-location-radius-toggle.test.js` passou **9/9** verificações; `PopupTouchGeometryTest` passou **44/44**; sintaxe de `probe.js`, `visual_editor.js` e JavaScript inline de `dock.html`/`detail.html` aprovada. `gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug --stacktrace` terminou **BUILD SUCCESSFUL**, com tarefa `:app:minifyDebugWithR8`. Na configuração de assinatura persistente, o `app/build.gradle.kts` mantém `isMinifyEnabled=true`, `isShrinkResources=true` e `proguard-rules.pro`. Esta é a variante **debug assinada de testes internos**, e não uma alegação de variante release não depurável.
+
+**Artefato oficial:** `PokeSearch-v0.00.70-LT` (ID `12551990106`) contém `PokeSearch-v0.00.70-LT.apk`. O APK foi baixado do GitHub Actions, extraído e a verificação `sha256sum -c SHA256SUMS.txt` deu **OK**; integridade da estrutura ZIP aprovada. Relatório oficial `apksigner verify --verbose --print-certs` indica assinatura APK v2 válida, um assinante e certificado correspondente ao esperado.
+
+- `applicationId`: `com.lucianotoscano.pokesearch`
+- `versionName`: `0.00.70`
+- `versionCode`: `54270`
+- SHA-256 do **certificado**: `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`
+- SHA-256 do **APK**: `029b7d616f6d661e58d43d06f8a0c037e5b03378eabffea083ba0d5743103f28`
+- Fonte compilada: `22e0e3151fe4e7885ca0d671095ae0e5127e1110`
+
+**Homologação física Samsung ainda pendente:** conferir painel ~192px antes/depois de focar coordenadas e abrir teclado; texto `[0]km`, `[999]km` e `[1000]km` sem lacuna, rejeição de um quinto caractere e acima de 1000; centralização título+Colar, slider e ações; abrir Localização, tocar novamente para fechar com teclado aberto, trocar entre menus sem retrair a barra; painel não intercepta resultados indevidamente; aplicar/limpar coordenadas e raio mantendo Shiny, GL/UL, Favoritos, Clima branco/preto e demais filtros; verificar funcionamento normal com limite de dez resultados. **Nenhum teste físico foi realizado pelo assistente.**
+
+**Restrições mantidas:** não fazer merge na `main`, não converter Draft para Ready, preservar branches/PRs LT68 e LT69, package, namespace, identidade persistente e assets. Este adendo documental é posterior ao build e não modifica os bytes do APK LT70 validado.
+
+
+---
+
+## LT71 — Samsung: remover espaço direito e centralizar Radius (24/10/2026)
+
+**Motivação:** print Samsung posterior à LT70 mostrou espaço vazio à direita da parte inferior do painel Localização e campo Radius+km+✓+Limpar deslocado à esquerda, apesar da largura CSS original de 192px. Auditoria encontrou regra mais específica `body.popup-window.controls-window #choices.locationPanel .locRadiusRow {width:max-content!important}` herdada de LT67/LT68, que tinha precedência sobre a centralização geral LT70. O medidor JS do popup também considerava `scrollWidth` de todos os descendentes e podia aumentar a janela nativa independentemente da largura visual do cartão.
+
+**Correção implementada sem alterar os demais menus:** nova branch `fix/lt71-location-trim-native-center-20261024`, base LT70 `a6a82d8964f790e7fc16d59cf2c981b94839dc6a`; [PR #45](https://github.com/LucianoToscano/PokeSearch/pull/45) Draft (sem merge). Em `dock.html`, bloco `LT71 LOC-NATIVE-TRIM-01` no fim do CSS redefine **somente** o cartão Localização para **160px CSS** (mais estreito que o LT70), substitui `width:max-content` legado por `width:100%` na linha inteira com especificidade popup nativa, aplica `justify-content:center` e mantém o input de Radius e `km` adjacentes. Ajusta fonte das coordenadas para 9px, sem bloquear edição/rolagem horizontal do campo. O JS `fit()` continua dimensionando os demais popups pelo conteúdo, mas para `choiceOpen==="location"` usa precisamente `Math.round(rect.width)` no `Native.resizePopup` para impedir bordas invisíveis ao focar o teclado. Preserva slider, 0–1000, máximo de quatro dígitos, segundo toque fecha, troca de menus e `Native.setLocation` sem limpar outros filtros.
+
+**Testes:** a suíte `overlay-ux.test.js` foi atualizada para assegurar ambos os invariantes de geometria (popups gerais adaptativos; Localização exatamente do tamanho da caixa), não para suprimir falhas. A suíte LT70 passou a conferir **160px** e adicionou duas verificações explícitas de precedência CSS e largura da WebView nativa, total **11/11 PASS**. Na execução completa, **18 suítes Node PASS** (`overlay-ux`: 487 verificações; Localização: 68; probe: 144), `PopupTouchGeometry` **44/44 PASS**, sintaxe JS inline de HTML e `probe.js` validada, `gradle :app:testDebugUnitTest :app:assembleDebug` **BUILD SUCCESSFUL**, minimização R8/ProGuard e shrinkResources preservadas.
+
+**Build/assinatura:** workflow `.github/workflows/build-v071-lt-location-signed.yml`, [GitHub Actions 40073169208](https://github.com/LucianoToscano/PokeSearch/actions/runs/40073169208) **SUCCESS**, artefato oficial `12551703043`; certificado persistente recuperado exclusivamente dos secrets Actions. Arquivo oficial `PokeSearch-v0.00.71-LT.apk` extraído do artefato e `SHA256SUMS.txt` confrontado com SHA-256 calculado localmente: **OK**. Relatório `apksigner verify` comprova esquema v2 verdadeiro e **um assinante**, SHA-256 do certificado original aprovado. Build é variante interna debug assinada com R8/shrinkResources, **não** afirmar release não depurável.
+
+- Application ID: `com.lucianotoscano.pokesearch`
+- `versionCode=54271`; `versionName=0.00.71`
+- **Fonte exata compilada:** `38ef839973fed400518ebc94b5c030d53b084b15`
+- **SHA-256 APK:** `18cfe6d86aecfad9d8a06a3e0a67d7a5663fc0df637f0a0013e21a1de1cd9fcb`
+- **SHA-256 certificado:** `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`
+
+**Homologação Samsung PENDENTE:** comparar LT70 e LT71 no aparelho; confirmar painel reduzido sem coluna preta à direita; texto da coordenada longo visível/editável; título e Colar centrados; Radius [1000]km e ✓/Limpar centralizados; sem crescimento ao focar/teclado; segundo toque fecha e outros menus abrem; não cobrir sprites/resultados; aplicar/limpar Localização sem afetar Shiny, GL/UL, Favoritos, Clima e dez resultados. Não houve teste físico. LT70/PR #44, LT69/PR #43, LT68/PR #41 e main preservados; PR #45 segue Draft.
+
+**Nota de rastreabilidade:** este adendo é posterior ao APK e altera apenas documentação; o binário oficial corresponde ao commit de código mencionado, sem incluir este registro.
+
+
+---
+
+## LT72 — Central de atualizações da Home via Google Drive (24/10/2026)
+
+**Base e escopo:** branch `feature/lt72-drive-update-center-20261024`, PR [#46](https://github.com/LucianoToscano/PokeSearch/pull/46) aberto em Draft sobre LT71 [PR #45](https://github.com/LucianoToscano/PokeSearch/pull/45), cuja base estava no commit `43b2b220750213b36d763a2a628339f2586529f7`. Nenhum merge em `main`. Nada alterado em `OverlayService.java`, `dock.html`, `probe.js`, login PoGoCoordinates, filtros GL/UL, Shiny, favoritos, resultados, Clima e assets de UI.
+
+**Central implementada:** `MainActivity.java` monta card nativo, compacto, oculto por padrão e posicionado **acima** dos contadores Firebase. Temas claro/escuro independentes do overlay; mostra somente quando `enabled:true`, manifesto validado, `versionCode` remoto **superior** ao código instalado e não dispensado. Apresenta mensagem e descrição configuráveis; botão **Baixar APK** abre Google Drive no navegador Android e ✕ persiste a versão dispensada em `prefs/homeDriveUpdateDismissedCode`. Não abre pop-up automaticamente nem instala APK silenciosamente. `ReleaseNotes.java` e o histórico local de novidades continuam intactos.
+
+**Leitura remota:** `UpdateCenter.java` faz HTTPS assíncrono fora da thread principal, em executor único, coalescendo solicitações e evitando leituras repetidas em até cinco minutos. Timeout de conexão/leitura de quatro segundos e tamanho máximo de 16 KiB. Esquema estrito `pokesearch-update-v1`, com `enabled`, `versionName`, `versionCode`, `apkName`, `apkFileId`, `apkUrl`, `apkSha256`, `message`, `description`, `forceUpdate`, `notes`, `status`. `UpdatePolicy.java` valida versão/nome, SHA-256 e identidade exata do endereço Drive; acesso apenas a hosts HTTPS oficiais do Google. Erros, HTML de login/confirmação e JSON inválido não interrompem a Home e não geram notificação. `forceUpdate` é preservado no manifesto, **sem bloquear** ou forçar a atualização. Nenhuma permissão Android foi adicionada.
+
+**Drive existente, sem edição pública:** pasta `Atualizacoes_PokeSearch` ID `1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA-`; manifesto `atualizacao.json` ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`; APK LT62 ID `1K59Jh1jw1Qd6BvAYE-geFdp3Z53dOFej`. A verificação de metadados do Drive confirmou ambos compartilhados como `anyone/reader`; versão remota LT62 `54260`, `enabled:false`, `forceUpdate:false`. **Não alterar `enabled` antes da homologação.** Conferência HTTP pública anônima e comportamento de confirmação dos links de download grande ainda dependem de teste real: acesso via ferramenta autenticada não prova ausência de página HTML em conexões externas.
+
+**Publicação futura:** subir APK homologado ao mesmo diretório, marcar `anyone/reader`, calcular hash do binário oficial, atualizar apenas o mesmo `atualizacao.json` (ID fixo) com nova versão/código/nome/ID/URL/hash/textos/status; publicar com `enabled:true` somente após homologação. Consulte `docs/ATUALIZACOES_GOOGLE_DRIVE.md`. O campo `apkSha256` valida metadados, mas a Home **não verifica o conteúdo binário após a abertura do navegador**; o APK deve ser conferido no fluxo de distribuição. O Drive pode exibir confirmação manual para arquivos grandes.
+
+**Testes e CI (executados):**
+- Workflow `.github/workflows/build-v072-lt-drive-update-signed.yml` — [run #40074205796](https://github.com/LucianoToscano/PokeSearch/actions/runs/40074205796), **SUCCESS**.
+- **19 suítes Node** completadas, incluindo testes novos `lt72-drive-update-center.test.js` **10/10** de contrato de UI/rede/falhas/campos.
+- Teste Java puro `UpdatePolicyTest.java` **14/14** (versão nova/igual/antiga, anúncio desativado, dispensa, novo código, validação nome/hash/URL).
+- `PopupTouchGeometryTest` **44/44**; Gradle `:app:testDebugUnitTest :app:assembleDebug` — **BUILD SUCCESSFUL**; sintaxe do JS e scripts inline verificadas; proteção R8, shrinkResources e assinatura persistente da variante de testes preservados.
+- APK oficial **PokeSearch-v0.00.72-LT.apk**, `versionName=0.00.72`, `versionCode=54272`, `applicationId=com.lucianotoscano.pokesearch`.
+- Commit **exato compilado**: `8a83d6c0b0aeac1368ba7e737ce4074928816b60`. GitHub Actions artifact ID `12552721743`.
+- SHA-256 do **APK**: `c24336fe86c2c4cdac49fdd11f1b17ea1f47e479a71d36413b09d76e6b8abd14` (manifesto `SHA256SUMS.txt` e hash local idênticos; APK ZIP íntegro).
+- Certificado SHA-256 original: `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; `apksigner verify` com assinatura v2 aprovada **no GitHub Actions**. Variante signed debug com R8/redução de recursos; não anunciar como release não depurável.
+
+**Pendente homologação física Samsung:** Home abre normalmente offline e com JSON HTML/ inválido; versão LT62 não é oferecida ao LT72; testar cenário simulado/remoto com `enabled:true` e `versionCode>54272` apenas para APK realmente homologado, depois restaurar `enabled:false` se não for uma publicação; testar X por versão, novidades e download navegador, tema claro/escuro, espaço na Home sem aviso, contadores Firebase e preservação da sessão. Nenhum teste físico foi realizado pelo assistente. Não converter o PR Draft nem fazer merge sem autorização.
+
+---
+
+## LT72 — Auditoria de recuperação de APK e distribuição (24/10/2026)
+
+**Estado GitHub verificado:** PR #46 permaneceu aberto e Draft, head documental pré-auditoria `7c519f91d718725f35d1e7652649bbced7d747e9`, base LT71 PR #45. Artefato do workflow `40074205796`, ID `12552721743`, confirmado não expirado em 24/10/2026 (vencimento informado em 23/11/2026). Commit **do binário**, distinto do HEAD documental: `8a83d6c0b0aeac1368ba7e737ce4074928816b60`.
+
+**Recuperação:** ZIP baixado do GitHub Actions oficial via conector e verificado localmente com `unzip -t`: todos os 6 membros OK. SHA-256 ZIP: `86064b954dea7d899686647e364e473070842dbdd1c103fc767a791c680bc8c4` (igual ao digest informado pelo GitHub). APK extraído: `PokeSearch-v0.00.72-LT.apk`, 34.664.510 bytes; SHA-256 `c24336fe86c2c4cdac49fdd11f1b17ea1f47e479a71d36413b09d76e6b8abd14`, **igual ao SHA256SUMS.txt**. `PACKAGE_VERSION.txt` informa `com.lucianotoscano.pokesearch` / versionName `0.00.72` / versionCode `54272`; `SOURCE_COMMIT.txt` confere com o commit compilado. `SIGNING-REPORT.txt` do CI registra assinatura APK v2 válida e SHA-256 do certificado original `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. APK **interno signed debug**, não release não depurável. Estes metadados são provenientes do relatório e da verificação oficial no GitHub Actions, não de instalação em Samsung.
+
+**Regressão de CI conferida em logs reais:** 19 suítes Node, incluindo LT72 10/10 e UX 487 testes; Java UpdatePolicy 14/14; PopupTouchGeometry 44/44; Gradle `:app:testDebugUnitTest :app:assembleDebug` BUILD SUCCESSFUL; job `signed-lt72` SUCCESS, inclusive publicação de artefato. Auditoria de leitura de `UpdateCenter.java`, `UpdatePolicy.java`, `MainActivity.java`, workflow, testes e `docs/ATUALIZACOES_GOOGLE_DRIVE.md`; não foi evidenciada falha funcional que justifique recompilação ou LT73. A central abre navegador por ação do usuário e **não verifica criptograficamente o conteúdo do APK transferido pelo navegador**; valor SHA do manifesto é validado apenas quanto ao formato, cabendo conferir o arquivo publicado e a assinatura Android antes de anunciar.
+
+**Drive preservado:** pasta oficial ID `1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA-` continua privada; LT62 ID `1K59Jh1jw1Qd6BvAYE-geFdp3Z53dOFej` e `atualizacao.json` ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf` permanecem compartilhados `anyone/reader`, manifesto com `enabled:false`, `versionCode:54260`. Tentativa de transferência direta do ZIP entre conectores GitHub e Drive bloqueada por incompatibilidade do campo `file_uri` no conector; **nenhum novo arquivo foi publicado no Drive e nenhum antigo foi alterado**.
+
+**Entrega de teste:** APK e ZIP extraídos nesta conversa como arquivos novos; falha antiga "Library file not found" não pode ser declarada resolvida sem teste no ChatGPT Android. Caminho alternativo independente do chat: [GitHub Actions LT72 run #40074205796](https://github.com/LucianoToscano/PokeSearch/actions/runs/40074205796) → seção Artifacts → `PokeSearch-v0.00.72-LT` → baixar ZIP no navegador GitHub autenticado → extrair APK. Artefato tem retenção 30 dias e **não** é mecanismo público permanente.
+
+**Homologação pendente:** Samsung físico, download local e instalação, Home em claro/escuro e sem card para manifesto desativado, cenários de versão maior sem publicação pública, offline/HTML/JSON inválido, botão Baixar APK, ✕ e dispensa persistente, Firebase/login/overlay/resultados/menus, sem regressões. Não mesclar `main` nem tornar PR Ready. **LT73 não criada** por ausência de alteração funcional. Este adendo é apenas documentação: não muda a origem do APK nem exige recompilação.
+
+---
+
+## LT73 — Versão real no rodapé compacto da Home (24/10/2026)
+
+**Origem:** LT72 branch `feature/lt72-drive-update-center-20261024` no checkpoint documental `817ba3095257247658e2086770f289568144a31e`; PR #46 permaneceu Draft. Nova branch `feature/lt73-home-footer-version-20261024`, PR [#47](https://github.com/LucianoToscano/PokeSearch/pull/47), também Draft, base LT72. Nenhum merge em main.
+
+**Mudança funcional única:** em `MainActivity.java`, barra inferior da Home usa `BuildConfig.VERSION_NAME` para mostrar `PokeSearch v0.00.73 LT • PoGoCoordinates /search` na build LT73, automaticamente acompanhando a versão de futuros APKs. Conservados tamanho do texto 10sp, altura 30dp, cores e transparência dos temas claro/escuro, localização, login, Firebase, menus, sessão e overlay. A LT72 instalada antes da atualização não mostra esse texto novo, por ser uma funcionalidade introduzida na LT73.
+
+**Compilação rastreável:** `.github/workflows/build-v073-lt-home-footer-signed.yml`, [GitHub Actions #40075950258](https://github.com/LucianoToscano/PokeSearch/actions/runs/40075950258), **SUCCESS**. Commit exato compilado `f9fa6b0140a57e363c4dae6d809bf6cb965a75c0`; artifact ID `12553515677`, disponível como ZIP de GitHub Actions, expiração informada para 23/11/2026. `PokeSearch-v0.00.73-LT.apk` com `versionName=0.00.73`, `versionCode=54273`, `applicationId=com.lucianotoscano.pokesearch`, 34.664.510 bytes. SHA-256 do APK `d24e8f5e9856cdd9faa1ce12a6f70a558a275e891154ef53eef77f35bafaa371`, igual ao relatório SHA256SUMS.txt; ZIP de artefato íntegro (membros testados), hash `2533ebe3942684d2ac7f68521cedb3749d9e087d3303da0df3654ea4f58959d6`, igual ao digest de Actions. Assinatura Android v2 verificada pelo workflow, SHA-256 do certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; **variante interna de testes assinada**, não release não depurável. Segredos somente no GitHub Actions, sem keystore no repositório.
+
+**Regressão real CI:** 20 suítes Node aprovadas, inclusive `lt72-drive-update-center.test.js` 10/10, `lt73-home-footer-version.test.js` 5/5; UpdatePolicy Java 14/14; PopupTouchGeometry 44/44; Gradle testes Android e montagem APK BUILD SUCCESSFUL. Testes estruturais não substituem homologação visual/funcional no Samsung.
+
+**Homologação Samsung:** usuário enviou screenshot da LT72 já instalada mostrando Home, conta Google, treinador vinculado e contadores Firebase visíveis. Isso é comprovação visual parcial, não teste completo do fluxo Drive. O manifesto público `atualizacao.json` permanece `enabled:false` e aponta LT62 `versionCode:54260`; portanto nenhuma versão nova deve ser anunciada em LT72/LT73. Testes físicos pendentes: rodapé LT73 visível, claro/escuro, abertura offline sem travamento, login, contadores, overlay, menus, resultados, limite dez, Shiny, GL/UL, clima, aviso de update com versão superior e válida, download no navegador e dispensa por versão. **Não publicar anúncio remoto, não sobrescrever LT62, não mesclar main, não marcar PR Ready.** O APK de teste foi oferecido como arquivo nesta conversa e o ZIP original está em Actions; confirmar download no ChatGPT Android separadamente.
+
+---
+
+## LT74 — Simulação local da Central de Atualizações, sem publicação (24/10/2026)
+
+**Escopo e base:** branch `feature/lt74-local-update-preview-20261024`, [PR #48 Draft](https://github.com/LucianoToscano/PokeSearch/pull/48), base LT73 [PR #47 Draft](https://github.com/LucianoToscano/PokeSearch/pull/47). Nenhum merge na `main` ou conversão de PR para Ready. O commit **compilado** é `eba8bec85ed8fd86cdddda3e6bae72cfe0fca47c`; commits documentais posteriores não alteram a origem binária.
+
+**Mudança isolada no `MainActivity.java`:** em **variante interna debug somente** (`BuildConfig.DEBUG`), tocar e segurar o rodapé nativo `PokeSearch v0.00.74 LT • PoGoCoordinates /search` alterna a simulação da Home. Ao ativar, mostra o card real com os textos `Atualização de teste`, `v0.00.75 · SIMULAÇÃO` e `Teste local: sem downloads e sem anúncios públicos.`, usando mesmas cores/medidas do card remoto. O botão `Baixar APK` em modo teste mostra Toast `Teste: botão acionado. Nenhum APK foi baixado.`, sem `Intent.ACTION_VIEW` e **sem download real**. O ✕ salva `homeUpdatePreviewDismissed=true` no `prefs`, ocultando a prévia após reiniciar a Home/app; o gesto longo desativa/reativa e reinicia somente a dispensa do teste. Estado de prévia salvo em `homeUpdatePreviewEnabled`. As chaves da prévia são **diferentes** da chave real `homeDriveUpdateDismissedCode`. A prévia **não altera a API, a política, os dados do manifesto, a instalação Android ou o estado de dispensa real**.
+
+**Preservação e segurança:** `UpdateCenter.java` e `UpdatePolicy.java` **não alterados**. Quando a prévia está desligada, segue a elegibilidade original do Drive: `enabled:true`, `versionCode` superior, URL/hash/nome/schema válidos e não dispensado. Não alterar `atualizacao.json` (ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`), deixar `enabled:false` e versão pública de referência LT62; não anunciar LT74/LT75. Simulação da versão `v0.00.75` é somente texto local, **não existe APK LT75 anunciado** e não testa o download externo do Google Drive. O efeito só existe na variante debug assinada usada para homologação; nunca considerar um release depurável adequado para produção.
+
+**Build CI e evidências:** workflow `.github/workflows/build-v074-lt-update-preview-signed.yml`, [GitHub Actions #40076752446](https://github.com/LucianoToscano/PokeSearch/actions/runs/40076752446), job `signed-lt74` SUCCESS, artifact `12553880823` com retenção de 30 dias (até 23/11/2026 segundo GitHub). `PokeSearch-v0.00.74-LT.apk`, 34.664.510 bytes, `com.lucianotoscano.pokesearch`, `versionCode=54274`, `versionName=0.00.74`. SHA-256 APK `3d1bf395dd25f0d5362612f343f318fd07878c3e8a6935b7f2e909140f52443d` igual a `SHA256SUMS.txt` gerado pelo CI; SHA-256 ZIP original `2cc52fa6d6c7e05a1e0dfe985b921c2e048c9dbdf634bec3eadf76f4d2183614` igual ao digest do artifact. ZIP extraído e `unzip -t` OK; `SOURCE_COMMIT.txt` aponta `eba8bec85ed8fd86cdddda3e6bae72cfe0fca47c`; `SIGNING-REPORT.txt` comprova assinatura v2 e certificado original SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. A assinatura foi validada no GitHub Actions com segredos persistentes; nenhum keystore foi exposto.
+
+**Regressão:** 21 suítes Node (incluindo LT74 `8/8`, LT73 `5/5`, LT72 `10/10`), Java `UpdatePolicy 14/14`, `PopupTouchGeometry 44/44`, Gradle `:app:testDebugUnitTest :app:assembleDebug` BUILD SUCCESSFUL. Preserve-se o overlay, sessão, Home, Firebase e filtros existentes por contrato; o funcionamento físico do Samsung **ainda requer homologação**.
+
+**Roteiro Samsung LT74:** instalar por cima da LT72/LT73 sem desinstalar; validar rodapé `v0.00.74`, login/Firebase; tocar e segurar rodapé, ver `SIMULAÇÃO`; alternar claro/escuro, conferir card; tocar `Baixar APK` e verificar apenas Toast, sem navegador/download; tocar ✕ e confirmar desaparecimento; fechar/reabrir o app e garantir que permaneça oculto; tocar e segurar rodapé para desligar e novamente para religar a simulação; confirmar reaparição. Com prévia desligada e manifesto público `enabled:false`, não deve aparecer aviso. Teste do **link externo real** fica pendente de publicação homologada; não afirmar homologação do download real por meio do mock. Não dar merge ou publicar versão no Drive antes da autorização/homologação.
+
+---
+
+### LT74 — Entrega via Drive confirmada após erro do ChatGPT Android (24/10/2026)
+
+**Falha reproduzida:** o usuário enviou screenshot da mensagem `Library file not found` ao abrir o link de anexo do APK LT74 no aplicativo ChatGPT Android. Falha no canal de entrega do chat, não prova falha no APK ou na instalação Android. Evitar reenviar repetidamente links sandbox como única opção.
+
+**Solução Drive efetivada:** upload na pasta oficial `Atualizacoes_PokeSearch`, ID `1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA-`. Foram **criados arquivos novos**, sem substituir os existentes:
+- APK LT74: `PokeSearch-v0.00.74-LT.apk`, ID `18XMbfJOjJI4A-dfmaYK5EZ8p8VLu2sg9`, link de visualização `https://drive.google.com/file/d/18XMbfJOjJI4A-dfmaYK5EZ8p8VLu2sg9/view`, 34.664.510 bytes.
+- Backup ZIP oficial do GitHub Actions: `PokeSearch-v0.00.74-LT-homologacao.zip`, ID `1J0eXfvduFMkJW9ToHTNneZaOyFWF_bPe`, link `https://drive.google.com/file/d/1J0eXfvduFMkJW9ToHTNneZaOyFWF_bPe/view`, 31.891.610 bytes.
+
+**Integridade conferida após upload:** download de leitura autenticada do APK **a partir do próprio Drive**, SHA-256 calculado `3d1bf395dd25f0d5362612f343f318fd07878c3e8a6935b7f2e909140f52443d`, idêntico ao APK oficial do GitHub Actions e ao SHA256SUMS.txt; `unzip -t` sem erros. Assinatura Android v2 e certificado persistente foram validados no workflow assinado #40076752446. Abertura do link/instalação **ainda precisa de teste no Samsung**.
+
+**Visibilidade:** APK LT74 e ZIP de homologação **privados**, acessíveis ao proprietário autenticado (não conceder `anyone/reader` nesta etapa). LT62 permanece público por link, não foi substituído. `atualizacao.json` original com ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf` não foi editado e mantém `enabled:false`; nenhum aviso de atualização real foi publicado. Não converter PR #48 Draft em Ready, não realizar merge na `main`.
+
+**Próximo passo de validação:** no Samsung abrir o link Drive com a conta proprietária, baixar e instalar a LT74 por cima da LT73, testar o long-press no rodapé, card `SIMULAÇÃO`, interação de botão e ✕, persistência de dispensa e alternância claro/escuro. Depois, homologar fluxo remoto real em ambiente controlado sem anúncios prematuros.
+
+---
+
+## LT74 — Homologação visual parcial Samsung (24/10/2026)
+
+**Evidência recebida do usuário:** screenshot de execução no Samsung mostrando a Home com o aviso **"Atualização de teste"**, a linha **"v0.00.75 · SIMULAÇÃO"**, botão **"Baixar APK"**, botão **✕**, descrição de teste local sem downloads/anúncios, e o Toast **"Teste: botão acionado. Nenhum APK foi baixado."**. Rodapé indica **"PokeSearch v0.00.74 LT • PoGoCoordinates /search"**. Conta vinculada e indicadores Firebase aparecem na mesma tela. Screenshot corresponde ao **tema escuro**.
+
+**Aprovado visualmente pelo print:** aviso exibido acima dos contadores, textos legíveis, layout compacto sem cortes aparentes, botão de download desenhado e resposta de Toast, versão real LT74 no rodapé, sessão e contadores visíveis. É **homologação parcial no aparelho**, não verificação programática ou funcional de todas as interações. A presença da mensagem de teste é compatível com a implementação que não faz download; o print isolado não demonstra que nenhum request externo foi feito, embora o código revise esse comportamento.
+
+**Pendente confirmar pelo usuário:** toque no ✕ e desaparecimento do card, fechamento/reabertura com dispensa persistida, reativação por toque longo, modo claro, modo offline, retorno ao manifesto remoto desligado, resultados e filtros do overlay, estabilidade da sessão, e download de APK real no Drive após publicação homologada. O aviso simulado **não** valida entrega HTTP pública, instalação de APK real ou lógica remota com `enabled:true`. Não ativar `atualizacao.json` e não declarar central pública homologada.
+
+**Estado:** LT74 PR #48 permanece Draft, APK assinado original e compartilhamento privado de homologação no Drive preservados, sem merge em main. Esta atualização altera apenas documentação e não exige novo APK.
+
+---
+
+## LT74 — Homologação funcional da simulação Samsung confirmada pelo usuário (24/10/2026)
+
+**Fonte da evidência:** confirmação expressa do usuário, após instalação da LT74 no aparelho Samsung e após envio de screenshot anterior da Home com card de simulação no tema escuro. Três cenários adicionais foram executados pelo usuário e informados como **APROVADOS**:
+
+1. **Dispensa (✕):** tocou no ✕ do aviso "Atualização de teste" e o card desapareceu corretamente da Home.
+2. **Persistência:** fechou o aplicativo e abriu novamente; a simulação dispensada permaneceu oculta, confirmando na experiência relatada o estado persistido entre aberturas.
+3. **Tema claro e reativação:** no tema claro, desativou e reativou a simulação pelo toque longo no rodapé; o card reapareceu corretamente.
+
+**Consolidação da homologação LT74 (escopo local):** screenshot anterior demonstrou card compacto, texto `SIMULAÇÃO`, layout acima dos contadores Firebase, botão `Baixar APK` e o Toast de teste; agora os três casos pendentes de ✕, persistência e reativação no tema claro foram **confirmados pelo usuário**. Considerar **homologada a simulação local da Central de Atualizações no Samsung**, exclusivamente nos cenários exercitados. Esta confirmação não equivale a teste físico realizado pelo assistente nem prova que os demais recursos estejam sem regressões.
+
+**Limites de cobertura / pendências mantidas:** a simulação não baixa APK e não valida publicação remota. Ainda não foram comprovados o comportamento de download externo e confirmação no Google Drive, a recepção de manifesto real com `enabled:true` e versão superior, operação offline, respostas HTML inválidas em dispositivo, regressão completa de filtros/resultados/overlay ou segurança de um APK de produção. Testes CI prévios permanecem registrados em suas seções, sem reexecução nesta etapa.
+
+**Controle de publicação:** preservar `atualizacao.json` (ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`) com `enabled:false` e referência LT62; não anunciar LT74/LT75 nem substituir os binários existentes. APK interno LT74 original e cópias privadas no Google Drive permanecem preservados. PR #48 Draft, sem merge em `main`, sem Ready. **Registro somente documental; não gerar novo APK.**
+
+---
+
+## LT75 — APK real Google Drive preparado, publicação pendente de compartilhamento (24/10/2026)
+
+**Branch:** `feature/lt75-real-drive-update-20261024` de LT74, PR [#49](https://github.com/LucianoToscano/PokeSearch/pull/49) Draft, base `feature/lt74-local-update-preview-20261024`. Mantidos Draft dos PRs anteriores e `main` intocada.
+
+**Código:** `MainActivity.java` volta ao código de Home da LT73 (inclui rodapé dinâmico `BuildConfig.VERSION_NAME`) e remove exclusivamente a simulação `LT74`, flags `homeUpdatePreviewEnabled`/`homeUpdatePreviewDismissed`, gesto longo e Toast de download falso. Isso permite ao `UpdateCenter.java` real manter a exibição por `enabled:true` + `versionCode` remoto maior + versão não dispensada. `UpdateCenter.java`/`UpdatePolicy.java` sem alterações. Teste novo `app/tests/lt75-real-drive-update.test.js` 8/8; arquivo histórico do teste da prévia LT74 permanece no repositório, mas não integra a suíte funcional da LT75.
+
+**Workflow:** `.github/workflows/build-v075-lt-real-drive-signed.yml`, [run #40114373326](https://github.com/LucianoToscano/PokeSearch/actions/runs/40114373326) SUCCESS, commit **exatamente compilado** `c0a587b1f689ead72e3ca9f197182be42297bf5d`, artifact `12567607390`. **21 suítes Node** aprovadas (LT72 10/10, LT73 5/5, LT75 8/8), Java UpdatePolicy 14/14, PopupTouchGeometry 44/44, Gradle `:app:testDebugUnitTest :app:assembleDebug` BUILD SUCCESSFUL. VersionName `0.00.75`, code `54275`, applicationId `com.lucianotoscano.pokesearch`, certificado persistente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; verificação v2 válida. A variante segue **internal signed debug**, nunca descrever como release não depurável.
+
+**APK oficial:** `PokeSearch-v0.00.75-LT.apk` extraído do ZIP Actions (membros íntegros) com 34.664.510 bytes e SHA-256 `5e70793bccea6052f286c629769d1da15f8080ab169c1067eaf28d2dc67a9c5e`. ZIP Actions SHA-256 `878377e6aff68600a81d763e5611e659341f3f10ed66c8878e0124e96cba6b0a`.
+
+**Google Drive:** novo APK criado em `Projetos/PokeSearch/Atualizacoes_PokeSearch`, arquivo ID `1naQMKet-sYzLr40uGNQAVpc364kZCKRy`, link `https://drive.google.com/file/d/1naQMKet-sYzLr40uGNQAVpc364kZCKRy/view`; **download autenticado de volta do Drive** teve mesmo tamanho 34.664.510 e SHA-256 esperado. O original LT62, LT74 e ZIP LT74 foram preservados. Backup do manifesto existente criado como `atualizacao_LT62_backup_antes_LT75.json` ID `1-QvCUJxmA_F1LdfDbnz4w_98Zwn6M0WU`.
+
+**Manifesto preparado sem ativar anúncio:** `atualizacao_LT75_preparado.json` ID `1-ls1dpJJJe31YKc0UG38rHAigfTxCzhY`, 653 bytes, na mesma pasta, schema `pokesearch-update-v1`, `versionName=0.00.75`, `versionCode=54275`, `apkName=PokeSearch-v0.00.75-LT.apk`, `apkFileId=1naQMKet-sYzLr40uGNQAVpc364kZCKRy`, URL canônica `https://drive.google.com/uc?export=download&id=1naQMKet-sYzLr40uGNQAVpc364kZCKRy`, hash real mencionado, `forceUpdate:false`, `enabled:false`.
+
+**BLOQUEIO PARA PUBLICAÇÃO REMOTA:** metadados da nova APK mostraram somente permissão do proprietário (privada). A tentativa de mudar compartilhamento para leitura geral com `mcp__Google_Drive__share_file(anyone_at_company=true)` falhou HTTP 400 `invalid domain` por conta pessoal Gmail. O conector disponível só oferece compartilhamento por usuário ou domínio, não cria permissão Google Drive `type=anyone, role=reader`. É **necessário** ajustar manualmente a APK LT75 para **Acesso geral → Qualquer pessoa com o link → Leitor** e verificar com metadados. **NÃO habilitar o manifesto para outros usuários enquanto a APK estiver privada**, pois mostraria aviso com download inacessível.
+
+**Próximo passo exato:** (1) usuário muda compartilhamento do APK LT75 no Google Drive; (2) verificar permissão `anyone/reader` do ID novo; (3) conferir integridade e resposta pública da URL de APK/manifesto; (4) substituir *conteúdo do arquivo manifesto existente com ID fixo* `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf` pelo preparado e alterar **enabled:true**, sem trocar ID; (5) confirmar readback do manifesto, sem mexer na LT62; (6) na **LT74 já instalada**, desligar a simulação com toque longo até Toast `Simulação desativada` antes de verificar o aviso real; a Home reconsulta com throttle de 5 min; (7) tocar `Baixar APK`, passar eventual confirmação Google, instalar LT75 preservando sessão, e confirmar o aviso desaparece pois versão instalada igual à remota. O anúncio público atinge **todas as instalações elegíveis**, não somente Samsung do usuário; considerar rollout de teste com alerta e possibilidade de desativar `enabled:false` se surgir falha. Homologação física do fluxo real ainda **pendente**. Não fazer merge, Ready ou distribuir como release final sem testes.
+
+---
+
+## LT75 — Ativação remota do manifesto oficial confirmada (24/10/2026)
+
+**Motivo:** após o usuário confirmar ajuste manual do compartilhamento, auditoria de metadados Google Drive confirmou a APK **PokeSearch-v0.00.75-LT.apk**, ID `1naQMKet-sYzLr40uGNQAVpc364kZCKRy`, com permissão `type=anyone`, `role=reader`, não descobrível em busca (`allowFileDiscovery=false`), tamanho `34664510` bytes. APK baixado novamente por conexão autenticada do Drive: SHA-256 `5e70793bccea6052f286c629769d1da15f8080ab169c1067eaf28d2dc67a9c5e`, igual ao artefato do GitHub Actions. Assinatura Android v2 e certificado persistente permanecem comprovados no CI #40114373326.
+
+**PUBLICAÇÃO EXECUTADA:** conteúdo do arquivo `atualizacao.json` **existente**, ID fixo `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`, substituído no Google Drive pelo manifesto LT75 validado. Sua permissão `anyone/reader` foi preservada. Leitura posterior do mesmo ID confirmou:
+- `schema: pokesearch-update-v1`, `enabled: true`, `forceUpdate: false`.
+- `versionName: 0.00.75`, `versionCode: 54275`, `apkName: PokeSearch-v0.00.75-LT.apk`.
+- `apkFileId: 1naQMKet-sYzLr40uGNQAVpc364kZCKRy`.
+- `apkUrl: https://drive.google.com/uc?export=download&id=1naQMKet-sYzLr40uGNQAVpc364kZCKRy`.
+- `apkSha256: 5e70793bccea6052f286c629769d1da15f8080ab169c1067eaf28d2dc67a9c5e`.
+- `message: Nova atualização do PokeSearch disponível!`, `description: LT75: Central de Atualizações Google Drive. Baixe a versão mais recente.`, `notes: []`, `status: lt75_publicado_teste_remoto`.
+
+**Backup e segurança:** `atualizacao_LT62_backup_antes_LT75.json`, ID `1-QvCUJxmA_F1LdfDbnz4w_98Zwn6M0WU`, permanece privado e intacto. Arquivo `atualizacao_LT75_preparado.json` também preservado, ainda `enabled:false`, sem substituir a versão publicada. APKs LT62 e LT74 intactos. LT75 é **variante interna de teste signed debug**, não release não depurável. A ativação do manifesto alcança **todas as instalações elegíveis** — não é exclusiva do aparelho do usuário.
+
+**Limitação de verificação:** o conector autenticado confirmou compartilhamento e conteúdo; tentativa de consulta HTTP pública anônima independente às URLs `uc?export=download` não obteve conteúdo (restrição de acesso/rede da ferramenta). Portanto **não afirmar que o fluxo HTTP anônimo e o download de APK grande estejam homologados**. O Drive pode pedir confirmação manual. A Home valida estrutura do JSON e `versionCode`, mas não verifica binário baixado pelo navegador. O teste Samsung é necessário; nenhuma homologação física adicional foi feita pelo assistente.
+
+**Roteiro imediato no Samsung LT74:** (1) toque longo no rodapé para **desligar** a simulação até exibir Toast `Simulação desativada`; se aparecer `Simulação de atualização ativada`, repetir toque longo; (2) com internet, abrir a Home novamente e aguardar consulta (cache/intervalo cerca de 5 min), confirmar aviso **real LT75 sem SIMULAÇÃO**; (3) botão `Baixar APK` deve abrir URL Google Drive; baixar e instalar LT75 por cima, sem desinstalar; (4) conferir login, dados, Firebase, menus, resultados, Shiny e rodapé versão `v0.00.75 LT`; o aviso deixa de aparecer quando instalada a mesma `versionCode 54275`; (5) avaliar ✕/persistência do aviso real e modo offline. Em caso de erro global, restaurar `enabled:false` no manifesto mantendo ID e backup.
+
+**Git:** PR #49 permanece Draft, branch `feature/lt75-real-drive-update-20261024`, origem binária `c0a587b1f689ead72e3ca9f197182be42297bf5d`, sem merge na main. Registro apenas documental; nenhuma nova APK foi compilada nesta etapa.
+
+---
+
+## LT75 — Homologação física do fluxo remoto LT74 → LT75 no Samsung (24/10/2026)
+
+**Origem da evidência:** três capturas de tela enviadas pelo usuário em 24/10/2026, posteriores à publicação real do manifesto LT75. Trata-se de **homologação visual fornecida pelo usuário**, não de teste físico executado pelo assistente. Preservar a distinção entre fato observado, inferência e ponto ainda não verificado.
+
+### Evidências visuais recebidas
+
+1. **LT74, aviso remoto real exibido.** Na Home do PokeSearch ainda instalado como LT74, surgiu o cartão "Nova atualização do PokeSearch disponível!", com "PokeSearch v0.00.75 LT", descrição da LT75 e botão "Baixar APK"; não havia o rótulo "SIMULAÇÃO". O rodapé seguia informando a LT74 instalada. **Confirmado visualmente:** a leitura remota do manifesto produziu aviso real elegível e a UI distinguiu versão instalada e anunciada. O print sozinho não prova o navegador/URL que eventualmente realizou o download.
+2. **Instalador Android concluiu a atualização.** Outro print no Samsung mostra o ícone PokeSearch e a mensagem nativa **"O app foi atualizado"**, com ações "Concluído" e "Abrir". **Confirmado visualmente:** o Android concluiu a instalação de uma atualização do app. Não é possível reconstruir apenas pelo print todos os toques, telas intermediárias ou eventuais confirmações do Google Drive.
+3. **LT75 aberta após a instalação.** Terceiro print exibe a Home com rodapé **"PokeSearch v0.00.75 LT"**, conta Google ainda conectada, treinador vinculado, contadores Firebase visíveis, aviso de atualização ausente e apresentação da Home preservada. **Confirmado visualmente:** a versão exibida é LT75; sessão/vínculo aparentes preservados; elementos Firebase presentes; aviso deixa de ser exibido quando a versão instalada alcança a versão anunciada. Os prints não constituem auditoria isolada da persistência de todos os dados, nem teste de estabilidade prolongada.
+
+**Resultado do ciclo real:** a sequência de prints é consistente com **LT74 → aviso remoto LT75 → instalação Android concluída → Home LT75 aberta**. Considerar **fluxo básico homologado visualmente no Samsung**, sem extrapolar para regressão funcional geral, integridade em tempo de instalação ou download anônimo automatizado. Não afirmar que o assistente apertou "Baixar APK" ou manipulou o aparelho.
+
+### Auditoria técnica complementar após recebimento dos prints
+
+- GitHub: branch `feature/lt75-real-drive-update-20261024` no checkpoint `d8b29749e54141d70d01455b28d57c344f7c3c9c` antes deste commit documental; PR #49 **open / Draft / not merged**, base LT74, sem tocar a `main`.
+- CI: workflow `40114373326` **SUCCESS**, commit de fonte compilada `c0a587b1f689ead72e3ca9f197182be42297bf5d`; artefato `12567607390` disponível, job `signed-lt75` concluído e passos de assinatura/validação aprovados. Tests LT75 8/8 e contratos LT72 / políticas conforme logs/checkpoint; testes automatizados não equivalem à homologação física.
+- Google Drive: arquivo `PokeSearch-v0.00.75-LT.apk`, ID `1naQMKet-sYzLr40uGNQAVpc364kZCKRy`, **34.664.510 bytes**, permissão `anyone/reader`; manifesto ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`, mesma permissão, `schema=pokesearch-update-v1`, `enabled=true`, `versionCode=54275`, `forceUpdate=false`. Backup LT62, APKs LT62/LT74 e manifesto preparado LT75 permanecem preservados.
+- O APK real foi lido do Drive e seu SHA-256 calculado localmente nesta auditoria: `5e70793bccea6052f286c629769d1da15f8080ab169c1067eaf28d2dc67a9c5e`, **igual** ao manifesto e ao hash registrado no checkpoint. A assinatura v2/certificado persistente são evidenciados pelo CI, sem nova inspeção física do certificado instalado. **Verificação criptográfica independente adicional do APK baixado:** extraído o bloco de assinatura APK Signature Scheme v2, certificado interno SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` (corresponde ao checkpoint), chave pública do certificado consistente, assinatura RSA SHA-512 (`0x0104`) dos dados assinados **VALIDADA** e digest SHA-512 de conteúdo v2 sobre 36 chunks **CORRESPONDENTE**. Essa verificação foi realizada nos bytes baixados do Drive, não no APK instalado no Samsung.
+- Inspeção de código: `UpdateCenter` consulta JSON por HTTPS fora da thread principal, limita tamanho, rejeita páginas HTML e erros de parse, valida `schema`/URLs/versionCode e guarda a dispensa por código de versão. `UpdatePolicy.shouldDisplay` exige remoto maior que instalado e exclui versão dispensada. `openDownload` abre navegador pelo `ACTION_VIEW` com confirmação Google potencialmente manual. Não há instalador silencioso nem checksum do APK no dispositivo pelo fluxo atual.
+
+### Pendências de homologação — NÃO atribuir PASS sem prova no Samsung
+
+- Overlay abre/fecha; Pokébola arrasta junto com resultados; limite de 10 resultados.
+- Modos, Filtros, GL/UL, IV bruto e IV%, Shiny; localização/coordenadas/radius `0–1000 km`; clima branco/preto.
+- Favoritos, Notificações, Editor Visual, menus compactos e cliques fora; temas claro/escuro; persistência prolongada da sessão e estabilidade dos contadores Firebase.
+- Ciclo `✕` e persistência da dispensa **em fluxo remoto real**, modo offline, erro HTTP/HTML/JSON na prática, comportamento após intervalos de cache, instalação/atualização posterior e navegador/etapas de confirmação do Google Drive.
+- Validação criptográfica independente da assinatura e do certificado da **APK instalada** pelo Samsung; o manifesto apenas **declara** SHA-256, não verifica bytes no Android quando o download é delegado ao navegador.
+
+### Decisão operacional e segurança de distribuição
+
+**Estado observado e preservado:** manifesto público continua `enabled:true`, anunciando LT75 para **todas** as instalações com `versionCode < 54275` que ainda não dispensaram essa versão. Essa abrangência excede o Samsung de teste. LT75 é variante **interna** assinada de testes, não um release final não depurável. **Recomendação:** considerar suspender temporariamente o anúncio (`enabled:false`) até concluir a regressão Samsung e validar a política de rollout; isso exigiria decisão operacional explícita, pois altera imediatamente o comportamento para demais usuários elegíveis. **Nenhuma alteração de manifesto foi realizada nesta etapa**, mantendo os arquivos, IDs e histórico remoto intactos.
+
+**Fechamento parcial:** evidência física suficiente para validar o fluxo básico remoto LT74 → LT75; regressão geral ainda aberta. Somente documentação alterada neste commit, sem recompilar APK, sem criar LT76, sem merge, sem marcar PR como Ready e sem modificar `main`.
+
+---
+
+## REGRA PERMANENTE — Publicação de atualizações somente com APK PROTEGIDO (24/10/2026)
+
+**Decisão expressa do proprietário / regra vinculante para todas as futuras publicações:** **A versão que o PokeSearch anunciar na Central de Atualizações para os usuários será SEMPRE um APK PROTEGIDO de distribuição.** Uma APK debug, interna, experimental, de demonstração, de CI de homologação ou somente "signed debug" **nunca substitui** o artefato protegido exigido para publicação definitiva.
+
+### Gatilho e autorização explícita
+
+Quando o proprietário disser **"publicar a atualização"** (ou equivalente inequívoco), executar o fluxo integral abaixo, automaticamente, sem depender de uma segunda autorização para permitir **"Qualquer pessoa com o link — Leitor"** no Google Drive para **a APK protegida especificamente destinada àquela publicação**. Esta autorização vale para o compartilhamento desse APK no momento da publicação solicitada; não significa autorização para publicar agora, divulgar arquivos privados de terceiros, conceder papel de editor, nem alterar unilateralmente versões ainda em teste.
+
+1. **Preparar a versão final protegida.** Compilar uma APK pelo **build type `release`**, não uma variante `debug`; exigir `android:debuggable=false` (confirmar em APK manifest / aapt), R8/ProGuard e `minifyEnabled=true`, `shrinkResources=true`, proteções e verificações de ativos já configuradas. Não remover proteções existentes. Utilizar keystore/credenciais de assinatura exclusivamente via segredos seguros, jamais inserir chaves ou senhas no repositório.
+2. **Garantir atualização por cima sem perda de dados.** Manter o mesmo `applicationId=com.lucianotoscano.pokesearch`, namespace e dados do usuário. Usar **certificado compatível com o da instalação que será atualizada**; assinatura release com certificado diferente da instalada impede atualização por cima no Android, mesmo com `versionCode` superior. Checar continuidade da assinatura ou, caso impossível, **bloquear a publicação e informar o proprietário** para decidir estratégia de migração; nunca sugerir desinstalação automática que elimine sessão/dados. Conferir `versionCode` estritamente crescente, `versionName` e APK `release` não depurável.
+3. **Validar antes de expor ao público.** Rodar testes automatizados/Android, build, verificações de proteções, assinatura APK v2 (ou superior suportada), fingerprint do certificado, tamanho, SHA-256 real e compatibilidade de instalação. Qualquer falha bloqueia publicação. Homologação física Samsung de recursos afetados é requisito quando aplicável, sem declarar testes físicos não realizados.
+4. **Distribuir exclusivamente no Google Drive.** Enviar a APK **protegida e aprovada** à pasta oficial `Atualizacoes_PokeSearch` (ID `1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA-`), **preservando APKs anteriores, backups, manifesto histórico e demais arquivos**. Após confirmar a APK correta no Drive, autoriza-se ajustar a permissão **"Qualquer pessoa com o link — Leitor"** **dessa APK**. Confirmar metadados, tamanho, identidade e SHA-256 do arquivo realmente hospedado. Não permitir edição pública.
+5. **Somente então ativar o anúncio remoto.** Atualizar o manifesto existente `atualizacao.json`, mantendo ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf` e criando/preservando backup pré-publicação. Apontar `apkFileId` e `apkUrl` para **a nova APK protegida verificada**, preencher `versionCode`, `versionName`, `apkSha256` e metadados coerentes; ativar `enabled:true` **apenas após** validar acesso de leitor e compatibilidade de atualização. A regra de anunciar uma versão protegida tem prioridade sobre qualquer convenção anterior de distribuir build interna assinada.
+6. **Pós-publicação e registro.** Verificar o manifesto remoto lido novamente, disponibilidade do link e aviso exibido apenas a instalações elegíveis. Registrar arquivo, IDs, link, commit, workflow, testes, assinatura/certificado, SHA-256 e resultado no `docs/GUIA_MESTRE.md`. Preservar `main`, PRs Draft e histórico até instrução específica contrária. Falha de qualquer etapa: **não anunciar APK de teste como substituta**; manter ou restaurar o estado remoto seguro e reportar o bloqueio.
+
+### Distinção obrigatória: teste remoto LT75 x futuras publicações
+
+A LT75 foi previamente colocada no manifesto para **homologação remota real**, e foi compilada como **variante interna de teste signed/debug**, apesar de assinatura válida e proteções parciais. **LT75 não satisfaz esta nova regra de publicação definitiva.** Na data deste registro, o manifesto LT75 está `enabled:true` e poderá continuar visível para instalações elegíveis enquanto assim permanecer; isso deve ser tratado como **publicação de teste anterior à regra**, não como permissão para repetir o procedimento. **Este commit é exclusivamente documental**: não houve comando de publicar nova versão, não houve nova APK, nem mudança de permissões, URLs ou manifesto do Google Drive. Antes de um lançamento protegido futuro, avaliar desativação/retirada da divulgação de teste conforme a política de segurança, sem destruir histórico.
+
+**Regra-resumo:** `COMANDO PUBLICAR → gerar RELEASE protegido → validar assinatura + continuidade → testar → subir APK no Drive → compartilhar "qualquer pessoa com o link, leitor" → validar bytes → atualizar manifesto remoto → verificar e documentar`. **Nunca publicar primeiro uma APK de testes.**
+
+---
+
+## MISSÃO ESPECIAL DE APOIO V2 — Implementação em branch isolada (24/10/2026)
+
+**Base real auditada:** `feature/lt75-real-drive-update-20261024` HEAD `4aa08d93515ade811d63db4a759acb91dd9aaa6d`, PR #49 Draft, `main` em `caea98b7b57b9e45d5218e907eb392d76953dd53`; PR #34 LT62 continua Draft como referência histórica. Criada branch exclusiva `feature/support-mission-v2-20261024` a partir da LT75 para **não modificar main nem PRs existentes**. Não misturar PvPPokeGo. **Não houve build de APK, publicação Drive ou atualização de manifesto.**
+
+### Alterações concluídas
+
+1. **Assets proprietários originais, sem edição:** cópia binária dos 16 recursos da pasta Google Drive `1exAY1R-Fgfv4VBERc8KxiKHHUaJwzUlb` para `app/src/main/res/drawable-nodpi/support_*` (ícones 02A/02B, QR Pix original 01, botões FUGIR 03 e APOIAR 04, decorações 05–13, Mewtwo 14 e Pikachu meme 15). Ícone antigo 02 legado e avatar opcional 16 **não utilizados**. Arte 14 tem conteúdo JPEG embora o nome no Drive termine em `.png`; incluída em `support_mewtwo_shundo.jpg` sem reencodificar. Hash SHA-256 original do QR: `66bbd986dec0d0102d33642a3a4b425c1fb02f4c284ed74e489b9a5c2b0e2238`; testes comparam os hashes originais dos assets críticos.
+2. **`SupportMissionPolicy.java`:** política pura com 10 aberturas, 100 minutos (=6.000.000 ms), cooldown exato de 15 dias, sorteio original 40/30/20/10 e reponderação automática pela remoção do último estilo. Sorteio por ticket limitado ao peso restante, sem repetir o estilo do ciclo anterior.
+3. **`SupportMissionState.java`:** sete chaves locais em `SharedPreferences("prefs")` — `support_app_open_count`, `support_effective_usage_ms`, `support_current_style_id`, `support_last_style_id`, `support_mission_badge_unread`, `support_mission_dismissed_at_ms`, `support_mission_next_eligible_at_ms`. Conta abertura do launcher MAIN/LAUNCHER apenas quando não há `savedInstanceState` e com proteção de 3 s contra intenções duplicadas. Persistência mantém progresso/estilo através de reinício do processo.
+4. **Tempo efetivo conservador:** Home só conta quando Activity está `resumed`, com foco e `PowerManager.isInteractive`; heartbeat de 5 s com delta limitado a 5,5 s. No overlay, apenas toques reais nas janelas de menu/popup/resultados/detalhes/Pokébola contam intervalos entre interações, limitados a 30 s e com intervalo máximo de 60 s entre toques; serviço ativo sem interação, atualização automática, tela apagada e contexto sem foco **não contabilizam tempo**. `MainActivity.java` chama relógio nos callbacks de lifecycle/foco, `OverlayService.java` registra toques com mínimo acoplamento.
+5. **Ciclo e ícones:** `SupportMissionState.badge` cria tema somente após ambas as condições, sorteia uma vez, preserva até dispensa e mostra 02A com badge rosa quando não lida; `open` muda para 02B branco/teal sem sortear; `dismiss` por FUGIR/X/Voltar oculta ambas imagens e salva próximo ciclo após 15 dias, preservando último estilo para não repetição. Quando elegível de novo, gera novo ciclo e volta a 02A. Ícone flutuante na parte inferior direita da Home acima do rodapé, sem ocupar o cabeçalho nem abrir modal sozinho.
+6. **`SupportMissionDialog.java`:** um único diálogo nativo responsivo com quatro temas e respectivas imagens originais: Pesquisa Especial, Presente Especial, Mewtwo SHUNDO e meme Pikachu. Mensagens e pesos conforme briefing. Mesmos botões originais FUGIR/APOIAR nos quatro estilos; Apoiar abre o Pix real, sem declarar doação concluída ou oferecer Pokémon/recompensa. X/Back/FUGIR dispensam; tocar em APOIAR **não** dispensa.
+7. **`PixSupport.java`:** o PAYLOAD Pix original foi preservado **literalmente**; interface utiliza a imagem original `support_pix_qr_original.jpg` sem redesenhar/cortar, `FIT_CENTER` com margem branca, e mantém a cópia para área de transferência. Exibe só **"PIX • Qualquer valor"** e **"Confira os dados no aplicativo do banco."**, sem nome civil de recebedor e sem referências ao tema de café. Apoio original da Home/menu permanece independente da missão.
+8. **`app/tests/support-mission-v2.test.js`, `SupportMissionPolicyTest.java` e workflow `.github/workflows/support-mission-v2-verify.yml`**: validar origem/hash dos assets, não regressão do Pix, persistência, dois estados, pesos, cooldown, interação real e integração. Workflow só roda Node, Java e `:app:compileDebugJavaWithJavac`, **não usa assemble nem gera APK**.
+
+### Testes executados no GitHub Actions
+
+- **SUCCESS:** workflow [Support Mission V2 — validations only (no APK)](https://github.com/LucianoToscano/PokeSearch/actions/runs/40121342385), commit testado `e031756e56b9ae30242c8d22b94a4f5ae4a4e2d5`. Testes exclusivos V2 **11/11**, política Java **829 asserções**, **21 suítes Node anteriores** completas e compilação de Java Android **sucesso** (sem geração de APK).
+- Execuções anteriores do workflow falharam por `android-actions/setup-android` desatualizada no runner, depois `sdkmanager` fora do PATH, um falso positivo de asserção devido a comentário WebView e uso de `./gradlew` inexistente. Esses pontos foram corrigidos; a execução acima completou todas as etapas com êxito.
+- **Limite honesto:** validação de código/compilação/contratos de assets **não** substitui teste manual em Samsung, scanner bancário de QR Pix e reconexão após matar o processo.
+
+### Pendências de homologação Samsung (NÃO APROVADAS FISICAMENTE)
+
+1. 9 aberturas / 100 min oculto; 10 / 99 oculto; 10 / 100 mostra 02A; validar contagens com histórico real e sem rotação/reload.
+2. Abrir altera 02A→02B; reabrir mantém mesmo estilo; FUGIR/X/Voltar escondem por 15 dias; testar relógio/cooldown e reaparecimento em ciclo seguinte sem repetição.
+3. Conferir diâmetro/posição dos binóculos em Home clara/escura; quatro estilos nativos compactos em Samsung e suas imagens/botões originais funcionais.
+4. Verificar QR original real e copiar Pix num app bancário, sem efetuar pagamento; conferir apenas no banco os dados apresentados.
+5. Testar foco, tela apagada, interação overlay e reinício real do processo; sessões e Firebase, Shiny, GL/UL, filtros, resultados ≤10, localização, clima, favoritos, notificações e Editor Visual sem regressão.
+6. **Não** gerar APK nem publicar esta missão até novo pedido explícito. Conforme regra permanente, futura atualização pública exige APK **Release protegida** com certificado de atualização compatível e homologação; builds internas de teste não são publicação definitiva.
+
+**Status:** funcionalidades codificadas e validação automatizada aprovadas. Homologação física e eventual APK/publicação continuam pendentes. `main`/PR #34/PR #49 preservados.
+
+
+---
+
+## MISSÃO ESPECIAL DE APOIO V2 — QA incremental do tempo efetivo e tela apagada (24/10/2026)
+
+**Escopo autorizado:** continuação das etapas 2–7, exclusivamente na branch `feature/support-mission-v2-20261024`. A implementação V2 já existia no início desta auditoria; não se duplicaram contadores, ícones, temas ou botões. `main`, PR #34 e PR #49 não foram alterados. Não foi gerado APK nem alterado Google Drive.
+
+### Correção preventiva identificada na revisão do código
+
+O serviço de overlay já verificava se a tela estava interativa ao receber um toque, mas preservava o timestamp do toque anterior quando a tela apagava **sem interação**. Se a tela reacendesse em menos de 60 s, o primeiro toque poderia creditar incorretamente parte do intervalo em que ela estivera apagada. A regra de **100 minutos de uso efetivo** exige que isso não ocorra.
+
+- `OverlayService.java`: registro dinâmico e remoção segura de `BroadcastReceiver` exclusivo do evento de sistema `Intent.ACTION_SCREEN_OFF`. Ao apagar a tela, chama `SupportMissionState.overlayStopped()`, que descarta o timestamp anterior. Sem receiver persistente em manifesto e sem permissões, backend ou Firebase novos.
+- `SupportMissionPolicy.java`: cálculo puro e determinístico `overlayTouchCredit(previousAtMs,nowMs,screenInteractive)`. Rejeita o primeiro toque, tela não interativa, relógio monotônico invertido e inatividade acima de 60 s; limita o crédito de uma interação a 30 s.
+- `SupportMissionState.java`: passa a utilizar a função pura, mantendo as sete chaves de preferências, limiares da missão, cooldown, sorteio ponderado e estados da Home inalterados.
+- `SupportMissionPolicyTest.java`: testes adicionais de todos os limites de intervalo, inatividade e tela apagada.
+- `support-mission-v2.test.js`: contrato de registro/liberação do receiver, interrupção do intervalo quando a tela apaga e uso da política pura. Os hashes dos assets Pix e imagens originais continuam obrigatórios.
+
+**Testes de laboratório:** o workflow existente executa contratos Node, política Java, 21 suítes anteriores e `:app:compileDebugJavaWithJavac` sem gerar APK. A execução de uma versão alterada deverá ser atestada por nova conclusão GitHub Actions antes da homologação; nunca confundir código compilado com Samsung físico.
+
+**Pendências externas à verificação automática:** teste no Samsung de tela apagada/retomada; 9/100, 10/99 e 10/100; 02A/02B, FUGIR/X/Voltar e expiração em 15 dias; Pix em leitor bancário **sem pagamento**; quatro artes, responsividade e regressões dos menus/filtros/resultados/Editor Visual. Não anunciar a missão como homologada fisicamente nem publicar APK sem novo pedido.
+
+
+### Evidência de CI após correção (24/10/2026)
+
+**SUCCESS confirmado:** workflow GitHub Actions [Support Mission V2 — validations only (no APK), execução 40125140330](https://github.com/LucianoToscano/PokeSearch/actions/runs/40125140330), HEAD de código `bcfe753ed9c0c3d5da31457d9dcf3b7db86636c2`. Etapas individuais concluídas com sucesso: contrato de assets/integrações da missão (12 verificações específicas), todas as 21 suítes JavaScript históricas, testes da política Java com 7 novas asserções de contagem de tempo e compilação `:app:compileDebugJavaWithJavac`. Nenhum APK produzido pela execução.
+
+**Verificação adicional:** checagem independente do texto Pix EMV existente: prefixo e identificador Pix presentes, campo final de CRC-16 completo e checksum calculado coincide com o registrado. Isto **não substitui** leitura do QR JPEG original em aplicativo bancário no Samsung. O payload não foi alterado, exibido ou registrado no Guia Mestre.
+
+**Estado da homologação:** testes automáticos aprovados; Samsung e testes visuais/funcionais continuam pendentes. Sem autorização para etapa 8, nenhuma geração, upload, compartilhamento ou anúncio de APK da Missão V2. `main`/PR #34/PR #49 preservados.
+
+---
+
+## LT76 — Release protegida e upload Drive com bloqueio de anúncio público (24/10/2026)
+
+**Autorização recebida:** o proprietário solicitou expressamente a etapa 8, envio do APK protegido ao Drive e publicação da atualização. Nesta execução, o build e o envio foram executados; a ativação do anúncio remoto permaneceu BLOQUEADA exclusivamente por falta de permissão pública do arquivo LT76 recém-enviado. Não anunciar link que devolve acesso negado.
+
+### APK release e auditoria CI
+
+- Branch exclusiva: feature/support-mission-v2-20261024; source build commit 6916be5b2d0e13ddcb94f38baa993980cebad854.
+- GitHub Actions 40125870288: SUCCESS; artifact 12573141700; versão 0.00.76, versionCode 54276, applicationId com.lucianotoscano.pokesearch.
+- Arquivo original: PokeSearch-v0.00.76-LT-MissaoV2-release.apk; tamanho 38.443.571 bytes; SHA-256 889e7193b9f2fd87a1a96b2bfb6d3842c3630215e52a93287c6428d50fb7940c. SHA novamente calculado no download feito do Drive, igual ao do ZIP do CI.
+- Release não depurável, R8 mapping presente, isMinifyEnabled e isShrinkResources true, assinatura APK v2 validada, certificado SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e (compatível com LT75). O teste real de instalação no Samsung continua pendente.
+
+### Google Drive — estado REAL verificado
+
+- Pasta oficial Atualizacoes_PokeSearch: ID 1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA-.
+- APK LT76 enviado com sucesso sem sobrescrever arquivos anteriores: ID 1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l, URL https://drive.google.com/file/d/1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l/view. MIME application/vnd.android.package-archive. Tamanho remoto confirmado 38.443.571 bytes; SHA-256 reconferido após baixar os bytes do Drive.
+- Backup anterior ao eventual anúncio: atualizacao_LT75_backup_antes_LT76.json, novo ID 1CkcVLuLiCDliBvxSwDZOBzijAmaG64-N, cópia íntegra do manifesto LT75, 624 bytes.
+- BLOQUEIO: metadados Drive do APK novo indicam shared:false, com permissão somente do owner. A integração de compartilhamento disponível aceita apenas usuário nominal ou domínio Workspace, não o necessário tipo anyone/reader (qualquer pessoa com link). Uma tentativa segura de usar reader sem destinatário retornou erro, sem alterar permissões. Um backup via cópia também nasce privado, então cópia de arquivo público não contorna o bloqueio.
+- MANIFESTO PRINCIPAL NÃO ALTERADO: atualizacao.json ID 15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf continua enabled:true, versionCode 54275, apkFileId LT75 1naQMKet-sYzLr40uGNQAVpc364kZCKRy. Não colocar LT76 no anúncio antes de validar permissão anyone/reader do arquivo novo; isso quebraria a atualização para usuários.
+- Nenhum arquivo LT62/LT74/LT75, backup ou histórico foi deletado. Nenhum merge, alteração de main, Ready ou novo PR.
+
+### Para concluir publicação
+
+1. Tornar o arquivo LT76 ID 1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l público como Qualquer pessoa com o link — Leitor nas configurações de compartilhamento do Google Drive.
+2. Confirmar metadados anyone/reader e acesso anônimo ao download. Somente depois editar o manifesto existente (preservando ID e backup) para versionCode 54276, versionName 0.00.76, apkFileId do LT76, apkSha256 verificado, enabled:true e forceUpdate:false; reler para confirmação.
+3. Fazer o teste real da instalação LT75 → LT76 no Samsung, Pix bancário sem pagamento, os quatro estilos, 02A/02B e regressões. Build CI aprovado não significa homologação física.
+
+**Conclusão operacional:** APK protegido gerado e efetivamente enviado para a pasta oficial, mas anúncio LT76 NÃO ativado devido a controle de acesso ainda privado. Não declarar publicação concluída.
+
+---
+
+## ETAPA 8 — LT76 RELEASE PROTEGIDO E PUBLICAÇÃO REMOTA (24/10/2026)
+
+**Autorização do proprietário:** após solicitar a etapa 8 e a publicação do APK no Drive, confirmou expressamente a operação. A LT76 é distribuída como teste público por Google Drive; a homologação física Samsung ainda é pendente e não deve ser tratada como aprovada.
+
+### Fonte, versão e proteções
+
+- Branch de desenvolvimento: `feature/support-mission-v2-20261024`, preservando `main` e PRs Draft #34 e #49.
+- Fonte exata do APK: commit `6916be5b2d0e13ddcb94f38baa993980cebad854`. Este documento é alterado por commit posterior, sem recompilação do APK.
+- Workflow de release: `.github/workflows/build-v076-support-mission-release.yml`. GitHub Actions [40125870288](https://github.com/LucianoToscano/PokeSearch/actions/runs/40125870288): **SUCCESS**; artefato privado originário `12573141700`.
+- Versão pública instalada: `versionName=0.00.76`, `versionCode=54276`, `applicationId=com.lucianotoscano.pokesearch`, `namespace=com.lucianotoscano.pokesearchoverlay`.
+- Nome original do artefato de CI `PokeSearch-v0.00.76-LT-MissaoV2-release.apk`; nome **público obrigatório** `PokeSearch-v0.00.76-LT.apk` (exigência exata de `UpdatePolicy.validVersion`). Mudança de nome NÃO muda bytes nem assinatura.
+- APK release de `:app:assembleRelease`, não depurável, R8/minify e shrinkResources; SHA-256 `889e7193b9f2fd87a1a96b2bfb6d3842c3630215e52a93287c6428d50fb7940c` e tamanho `38443571` bytes.
+- Certificado persistente LT75 compatível: SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` (verificação automática `apksigner` scheme v2). Nenhum segredo enviado ao repositório, manifesto ou Drive.
+- CI aprovou contratos da Missão V2, 21 suítes históricas JS, políticas Java, testes Android e validação de assinatura do APK.
+
+### Drive oficial — arquivos e distribuição
+
+- Pasta **Atualizacoes_PokeSearch**: https://drive.google.com/drive/folders/1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA-
+- APK LT76 **publicado no Drive e compartilhado para leitura por link**: ID `1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l`, nome `PokeSearch-v0.00.76-LT.apk`, https://drive.google.com/file/d/1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l/view
+- Download esperado pelo app: https://drive.google.com/uc?export=download&id=1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l
+- **Arquivo manifesto estável preservado:** `atualizacao.json`, ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`, no mesmo local e com leitura por link. Modificado in-place sem alterar o ID fixo consultado por `UpdateCenter`.
+- **Manifesto ativo validado por readback após a gravação:** schema `pokesearch-update-v1`, `enabled=true`, `versionName=0.00.76`, `versionCode=54276`, `apkName=PokeSearch-v0.00.76-LT.apk`, `apkFileId` LT76, `apkUrl` exato, `apkSha256` exato, `forceUpdate=false`, `status=lt76_publicado_missao_v2`. O JSON é UTF-8 puro, sem BOM, começa em `{`, tem 857 bytes e satisfaz validações estritas do parser Android.
+- Backup pré-publicação LT75: `atualizacao_LT75_backup_antes_LT76.json`, ID `1CkcVLuLiCDliBvxSwDZOBzijAmaG64-N`, 624 bytes; conferido byte a byte com o manifesto LT75 anterior. LT75 permanece disponível no Drive.
+- A versão LT76 foi baixada novamente **do Google Drive** e seu hash SHA-256 recalculado localmente, coincidindo com o hash do GitHub Actions (não apenas tamanho/metadata).
+- Materiais intermediários temporários usados para transferência do JSON foram apagados do Drive e movidos para lixeira na Biblioteca; pasta oficial e arquivos históricos preservados.
+
+### Comportamento e validações pendentes
+
+- `UpdateCenter` da Home consulta `atualizacao.json` público, respeita `enabled`, só exibe versões com `versionCode` superior à instalada, mantém opção de dispensar aviso e abre explicitamente o link no navegador; não instala automaticamente.
+- Instalação efetiva no Samsung (LT75 -> LT76), preservação de preferências, assinatura em dispositivos físicos, 02A/02B, quatro temas, gatilhos de 10 aberturas/100 minutos, 15 dias de cooldown, Pix em app bancário **sem efetuar pagamento**, overlay/Editor Visual/filtros e resultados continuam **pendentes de homologação física**. Não afirmar que foram verificados por CI.
+- **Publicação remota LT76 finalizada**, com backup para rollback; nenhum merge e nenhuma alteração à `main`, aos PRs #34/#49 ou à chave Pix.
+
+---
+ 
+## CONTINUIDADE LT76 — ARTE ORIGINAL, ARQUIVOS PARA AUDITORIA IA E PRÓXIMO CHAT (24/10/2026)
+
+**Escopo:** o usuário solicitou imagem de anúncio para WhatsApp, pediu correção para CORES e LOGO ORIGINAIS do PokeSearch e determinou que NÃO constassem informações de missões. Depois pediu prompt para novo chat, registro no Guia Mestre e arquivo completo para auditoria IA. Esta etapa é DOCUMENTAL e não altera app, APK ou manifesto.
+
+### Checkpoint GitHub e publicação Drive — confirmado em 24/10/2026
+- Repo: LucianoToscano/PokeSearch; branch de trabalho feature/support-mission-v2-20261024. HEAD antes deste registro: 71fb93794c84a22ac88aadc24de77d432dd2e206. Main: caea98b7b57b9e45d5218e907eb392d76953dd53, intocada.
+- PR #34 e PR #49: abertas Draft, sem merge. Não alterar base nem HEAD sem pedido.
+- APK público PokeSearch-v0.00.76-LT.apk, versionName 0.00.76, versionCode 54276, package com.lucianotoscano.pokesearch; 38.443.571 bytes e SHA-256 889e7193b9f2fd87a1a96b2bfb6d3842c3630215e52a93287c6428d50fb7940c.
+- Fonte BINÁRIA EXATA: commit 6916be5b2d0e13ddcb94f38baa993980cebad854, e NÃO os commits documentais posteriores. GitHub Actions https://github.com/LucianoToscano/PokeSearch/actions/runs/40125870288: SUCCESS, variante release assinada, não depurável, R8 e shrinkResources; certificado persistente SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e, compatível com LT75.
+- Distribuição oficial Google Drive: pasta https://drive.google.com/drive/folders/1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA- ; APK ID 1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l, nome exato PokeSearch-v0.00.76-LT.apk, URL https://drive.google.com/file/d/1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l/view . APK com permissão anyone/reader.
+- Manifesto ativo atualizado no arquivo ORIGINAL atualizacao.json, ID 15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf: schema pokesearch-update-v1, enabled=true, versionName 0.00.76, versionCode 54276, apkName PokeSearch-v0.00.76-LT.apk, arquivo e SHA do APK LT76, forceUpdate=false, 857 bytes, permissão anyone/reader. Atualização opcional, sem instalar automaticamente.
+- Backup privado atualizacao_LT75_backup_antes_LT76.json, ID 1CkcVLuLiCDliBvxSwDZOBzijAmaG64-N, preservado. APKs LT62, LT74 e LT75 mantidos.
+- IMPORTANTE: seção ANTERIOR deste guia ainda relata a etapa intermediária em que a LT76 estava privada e não anunciada. Aquilo é fato HISTÓRICO SUPERADO, não o estado atual. Não eliminar o histórico: o checkpoint posterior da Etapa 8 confirmou publicação pública e o readback atual a ratifica.
+
+### Arte de WhatsApp FINAL — identitária, sem divulgar missões
+- O primeiro cartaz usava identidade visual aproximada e continha textos indesejados; outro rascunho mostrava v0.00.75 (VERSÃO INCORRETA). NÃO reutilizar essas imagens.
+- O pedido definitivo foi usar logo e cores originais do PokeSearch e remover toda referência a Missões de Apoio.
+- Arquivo final: PokeSearch_Atualizacao_LT76_WhatsApp.png, PNG RGB, 1080 x 1350 pixels, SHA-256 a1f9fc1ad1822b548e76141d52c364501e2c6bd57c3179246b1fec791dbe7c42.
+- Identidade: azul-marinho, azul luminoso, ciano e branco; logotipo original preservado sem ser redesenhado. Recursos oficiais do Drive utilizados na composição: PokeSearchLogoShinyBlueEffectAllNameEffect.png, ID 1vFAIh59rpZEpXmtzi0pf6JTAz5oZZZYW; Background PokeSearch Escuro.png, ID 1wEap_p_YahHHmQaR8u8aDwhJ6VcWKrrr.
+- Textos da arte: ATUALIZAÇÃO DISPONÍVEL / NOVA VERSÃO! / v0.00.76 LT / POKÉSEARCH • ANDROID / Melhorias e correções na nova atualização / APK DISPONÍVEL PARA BAIXAR / Baixe e teste a nova versão!
+- Nunca incluir Missão Especial, apoio Pix, sorteios, quatro temas ou mecânicas de gatilho no cartaz. O recurso continua documentado na engenharia do app; não é pauta do anúncio do grupo.
+- A criação dessa arte NÃO muda código Android, APK, assinaturas, app, APK original, Drive ou manifesto.
+
+### Arquivos auxiliares entregues para próximo chat e auditoria
+- PROMPT_CONTINUAR_POKESEARCH_LT76_20261024.txt: instrução integral para novo chat com estado técnico, Drive, hashing, checklist Samsung, Mission V2, decisões de divulgação, proibições de alteração e passos sem exigir a palavra continue.
+- AUDITORIA_IA_POKESEARCH_LT76_20261024.md: relatório de evidências e limitações, fontes, pontos de atenção para outro auditor e checklist.
+- PokeSearch_Atualizacao_LT76_WhatsApp.png: a arte FINAL, original da marca, incluída no pacote de auditoria.
+- GUIA_MESTRE.md: cópia integral do Guia Mestre com mais de 1 milhão de caracteres. É CRÍTICO para auditoria exportar o blob COMPLETO, não a string vazia/truncada que algumas leituras por faixa de linhas retornam.
+- atualizacao.json: snapshot do manifesto LT76 para contraste com a versão remota ao vivo.
+- APK LT76 disponibilizado separadamente e validado por SHA; não duplicar build nem alterar a versão já publicada sem autorização.
+
+### PENDENTE — validações não realizadas fisicamente
+1. Instalar LT76 por cima da LT75 em Samsung e validar assinatura efetiva, permissões, favoritos, sessão e preferências.
+2. Com LT75 ou anterior, verificar anúncio da Home, cache 5 minutos, link Drive, versão dispensada, offline e bloqueio de JSON remoto malformado.
+3. Testar Missão V2: ambas as condições 10 aberturas e 100 minutos de uso EFETIVO, estados do badge 02A/02B, quatro apresentações e pesos, FUGIR/X/Voltar, cooldown 15 dias, desligar/acender tela, persistência.
+4. Conferir leitura do Pix no banco sem efetuar pagamento nem expor dados pessoais do PAYLOAD.
+5. Validar filtros GL/UL/IV/IV%, raio [1000]km, Favoritos 10x5, alertas, shiny, resultados acompanhando Pokébola, menus, Editor Visual, status do overlay e limite 10 resultados.
+6. Separar claramente CI SUCCESS, publicação no Google Drive ATIVA e homologação física Samsung PENDENTE. Não afirmar que print/log/instalação foram confirmados sem evidências.
+7. Em novo chat, consultar GitHub e Google Drive ANTES de qualquer mudança; preservar main, PRs Draft, applicationId, namespace, R8/assinatura e documento mestre; não recomeçar do zero, não misturar PvPPokeGo e não exigir “continue”.
+
+**Fechamento:** arte corrigida para identidade original, nova versão v0.00.76 LT no Drive, arquivos de continuidade/auditoria preparados, próximo objetivo = auditoria independente e homologação Samsung.
+
+
+---
+
+## LT76 — AUDITORIA INDEPENDENTE REMOTA (24/10/2026)
+
+**Escopo desta auditoria:** conferência independente por leitura direta do GitHub e Google Drive, inspeção do arquivo APK remoto baixado, inspeção do manifesto ativo e código Java/JS da missão. Sem emulador Android, acesso ADB, controle do Samsung, instalação, alteração de assinatura, recompilação, merge ou republicação. O pacote adicional de auditoria LT76 anunciado pelo usuário ainda não foi fornecido nesta conversa e não foi presumido como recebido.
+
+### Evidências rastreáveis — fonte, pipeline e preservação
+- Repo GitHub `LucianoToscano/PokeSearch`, branch `feature/support-mission-v2-20261024` existente. Na leitura anterior a este registro, HEAD documental `dfbca87b13482eb6d235a09fb16ceae3cc779b61`; fonte exata do binário release `6916be5b2d0e13ddcb94f38baa993980cebad854` — **não confundir HEAD documental com fonte do APK**.
+- Comparação entre commit do APK e a branch: **cinco commits posteriores, alterando somente `docs/GUIA_MESTRE.md` e adicionando `.github/workflows/export-guia-mestre-auditoria-lt76.yml`**. Nenhuma alteração posterior de app Android foi encontrada.
+- Comparação `main...feature/support-mission-v2-20261024`: `main` em `caea98b7b57b9e45d5218e907eb392d76953dd53`, branch à frente e sem commits ausentes da main; nenhum merge realizado nesta auditoria.
+- PR #34 (`fix/lt62-menu-visual-states-20261023`) e PR #49 (`feature/lt75-real-drive-update-20261024`) permanecem **OPEN/DRAFT/UNMERGED**, verificados por API.
+- **Divergência factual de privacidade:** a API `get_repo` retornou `visibility=public` e o endpoint de workflow retornou `private=false`. Assim, embora o pedido trate o repositório como privado, o estado atual é **público**. Não foi alterada a visibilidade.
+
+### GitHub Actions, APK e assinatura — verificações independentes
+- Run [40125870288](https://github.com/LucianoToscano/PokeSearch/actions/runs/40125870288), job `build-release` `120967014475`: `completed/success`; artifact `12573141700`, originado de `6916be5b2d0e13ddcb94f38baa993980cebad854`.
+- Nos logs: contrato `support-mission-v2.test.js`, 21 suítes JavaScript históricas, `SupportMissionPolicyTest` (**836 asserções**), `UpdatePolicyTest`, `PopupTouchGeometryTest`, testes do Gradle e assembleRelease concluídos. A etapa CI de validação executou `aapt` para pacote/versão e `apksigner verify --verbose --print-certs` para esquema APK v2 e fingerprint.
+- APK `PokeSearch-v0.00.76-LT.apk` efetivamente baixado do Drive com **38.443.571 bytes**, ZIP verificado integralmente (**250 entradas, nenhum CRC inválido**), SHA-256 recalculado:
+  `889e7193b9f2fd87a1a96b2bfb6d3842c3630215e52a93287c6428d50fb7940c`.
+- Assinatura: bloco `APK Sig Block 42` e identificador v2 `0x7109871a` presentes. Certificado DER extraído independentemente do bloco v2: SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, exatamente o configurado pelo CI e documentado para LT75. Extração do certificado local **não substitui** a verificação criptográfica `apksigner` já aprovada no CI nem prova upgrade físico.
+- VersionName `0.00.76`, versionCode `54276`, applicationId `com.lucianotoscano.pokesearch`, namespace `com.lucianotoscano.pokesearchoverlay`, build release não depurável, R8/minify/shrink: comprovados pelas verificações concluídas do workflow e configuração Gradle na origem. **Nenhum novo APK produzido.**
+
+### Google Drive / manifesto ativo — readback
+- Pasta oficial `Atualizacoes_PokeSearch` ID `1qzfJjtR4B4PQb9WCKZDHv-d9p0wMqBA-`.
+- APK `PokeSearch-v0.00.76-LT.apk`: ID `1RS1NbEhzfzzAz3eD87BVbAZYnjn9nl-l`, 38.443.571 bytes, MIME Android APK e permissão verificada `type=anyone,role=reader,allowFileDiscovery=false`.
+- `atualizacao.json` original ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`, 857 bytes, também com `anyone/reader`. Conteúdo baixado e parseado com sucesso: `schema=pokesearch-update-v1`, `enabled=true`, `versionName=0.00.76`, `versionCode=54276`, `apkName=PokeSearch-v0.00.76-LT.apk`, `apkFileId` corresponde ao APK remoto, `apkSha256` corresponde **ao arquivo baixado**, `forceUpdate=false`, `status=lt76_publicado_missao_v2`.
+- Backup anterior `atualizacao_LT75_backup_antes_LT76.json` ID `1CkcVLuLiCDliBvxSwDZOBzijAmaG64-N`, com `shared=false`, apenas owner. Arquivos históricos LT62/LT74/LT75 permanecem listados.
+- `UpdateCenter.java` aponta para o ID estável do manifesto, consulta assíncrona com cache de 5 min, valida schema/código/filename/host/URL/hash e oferece abertura do navegador apenas por clique. Não instala APK automaticamente. A **efetiva navegação/download em Samsung** permanece pendente.
+
+### Missão de Apoio V2 — código e cobertura (não homologação física)
+- `SupportMissionPolicy.java`: gatilhos simultâneos de **10 aberturas + 6.000.000 ms (100 minutos)** de uso efetivo; cooldown de 15 dias; pesos iniciais `40/30/20/10`. Rejeita repetição imediata do tema anterior (os pesos são reponderados ao excluir esse tema).
+- `SupportMissionState.java`: sete chaves locais em `SharedPreferences` para aberturas, uso, tema atual, último tema, não-lido, dispensa e próxima elegibilidade; contagem por Intent `MAIN/LAUNCHER` com debouncing; Home focada/retomada e tela ativa (tick de 5 s); overlay creditado por toques em janelas recentes, limite de 30 s por intervalo, rejeição de gaps maiores que 60 s e tela apagada. Nenhum cronômetro de uso passivo.
+- `OverlayService.java`: registra/desregistra receiver de `ACTION_SCREEN_OFF`, cancela referência temporal do overlay quando tela apaga; entradas de toque do grip, menu, detalhes, popup e resultados registram interação. `MainActivity.java`: badge oculto/novo/visto; missão abre **somente** ao tocar, sem pop-up compulsório.
+- `SupportMissionDialog.java`: quatro temas presentes, layout com `ScrollView`, botão `APOIAR` remete à tela Pix existente; FUGIR/X/Voltar aplicam dispensa. Teste Java da política executou 836 asserções; contratos JS confirmam referências de assets, integração e hash dos recursos.
+- **Limite:** nenhum teste de instalação e UI real em Samsung foi executado nesta auditoria; nenhuma leitura do QR Pix em banco; nenhum pagamento; nenhuma medição do contador em uso físico.
+
+### Matriz de regressão e roteiro obrigatório Samsung
+1. **Upgrade real:** LT75 → LT76 no Samsung, sem limpar dados: verificar assinatura aceita pelo Android, sessão PoGoCoordinates, favoritos e preferências (claro/escuro, alertas, filtros). Confirmar na Home a versão instalada. Registrar versão anterior, versão instalada, prints e resultado.
+2. **Atualização remota:** sob versão LT75 ou anterior, aviso da Home para LT76, cache de 5 min, botão Baixar APK, confirmação eventual Google Drive, dispensa, offline, JSON malformado; com LT76 instalado, aviso deve sumir porque `remoteCode == installedCode`.
+3. **Missão:** observar condições 9/100 e 10/99 (oculta) e 10/100 (elegível); não confundir 100 min com tempo em segundo plano. Testar HOME/overlay, tela apagada, retomada, persistência após fechar/reabrir e toque no badge 02A → 02B.
+4. **Temas e ações:** inspecionar responsividade dos quatro temas, imagens não cortadas, tema sorteado e persistido, não-repetição entre ciclos, FUGIR/X/Voltar e reaparecimento após 15 dias. Não adiantar relógio do aparelho primário nem apagar dados pessoais para simular os limites; preferir ambiente de testes controlado.
+5. **Pix:** validar leitura do QR no banco **sem confirmar pagamento** e sem expor conteúdo integral do payload ou dados do recebedor; acesso independente no menu permanece.
+6. **Regressões de UX:** menus Modos/Filtros/Mais (Reportar/Apoiar/Fechar), local `[1000]km` e coordenadas sem limpar outros filtros, Shiny sincronizado imediatamente, modos GL/UL/IV/IV%, Favoritos 10x5 e clique no fundo, notificações (Novo/Favoritos/áudios), resultados até 10 com arraste da Pokébola, Editor Visual/Sprites e persistência.
+7. **Logs e evidência:** registrar para cada caso PASS/FAIL/BLOQUEADO, versão, passos, gravação de tela quando possível, expectativa vs resultado. Os testes CI atuais não autorizam declarar visual ou funcionalidade física como aprovada.
+
+**Conclusão remota:** **CI PASS, APK do Drive íntegro e hash coincidente, esquema v2/certificado consistente, manifesto LT76 ativado e compartilhamento público verificado. Samsung físico PENDENTE.** Divergência de visibilidade do repositório (GitHub `public`) requer decisão administrativa separada. Nenhum merge, republicação, recompilação ou alteração da main/assinatura/manifesto ocorreu nesta auditoria.
+
+---
+
+## LT76 — INVESTIGAÇÃO PRELIMINAR: API /search do PoGoCoordinates (24/10/2026)
+
+**Origem:** novas capturas e mensagens encaminhadas pelo usuário (rede do Android/Postman/trecho Python). Somente análise e documentação; nenhuma tentativa de acesso à conta, obtenção de token, reprodução de requisição autenticada, modificação do APK, publicação ou mudança da `main`.
+
+### Evidências visíveis nas capturas (não testes do nosso ambiente)
+- Host observado: `coordinates-api.pokemongopro.com`; método `POST`, caminho `/search`, resposta HTTP 200 com objeto JSON `results` contendo dados de Pokémon. Também aparecem `/users/me`, `/pokemon/catalog?costumes=true`, `/backgrounds`, `/forms`, `/filters` e preflights `OPTIONS 200`. O 200 refere-se à sessão fotografada, não prova que o endpoint seja público ou liberado para apps de terceiros.
+- Campos de resultados vistos: `encounter_id`, `pokemon_id`, `pokemon_name`, `form`, `costume_id`, `costume`, `cp`, `level`, `location`, `raw_iv`, `iv_percent`, `gender`, `size`, `weather_boosted`, `weather_id`, `fast_move`, `charge_move`, `despawn_at`, `despawn_verified`, `distance_km`, `pvp`, `shiny`, `background`. O campo `reveal_code` também aparece: não registrar nem divulgar seus valores.
+- Payload exemplar de pesquisa: `shiny_only`, `background_only`, `pvp_mode`, `pvp_league`, `pvp_top_rank`, `pvp_include_pre_evolutions`, `pokemon_ids`, `species_forms`, `location`, `cp_min/max`, `level_min/max`, `iv_mode`, `iv_percent_min/max`, `raw_iv_atk/def/sta`, `sizes`, `forms`, `gender`, `boosted`, `weather_id`, `min_ttl`, `sort`, `center_lat`, `center_lng`, `radius_km`, listas de bloqueio. Valores observados são ilustrativos, não contrato público/estável.
+- Exemplo Python encaminhado tem `Authorization: Bearer ...` e `/auth/google/callback` foi citado por terceiros; NÃO foi demonstrado que a URL de callback possua um Bearer utilizável ou que o token seja legível pelo PokeSearch. Não considerar a frase 'funciona sem login' validada: a captura Postman 200 não prova ausência de autenticação.
+
+### Confronto com arquitetura LT76
+- No código auditado, `MainActivity.java` autentica via WebView oficial, comprova sessão por sondagem limitada e não copia OAuth/cookies para Java; `OverlayService.java` conduz etapas `configure`/`submitSearch`/`collect` via `evaluateJavascript`, invalidando callbacks antigos; `probe.js` extrai dados de cartões DOM, com checagens de IV, fonte e atualização de resultados.
+- **Hipótese de melhoria, não implementação:** quando houver API oficialmente autorizada, usar adaptador de JSON com mapeamento rigoroso e máximo 10 resultados, sem substituir login nem dependências. Preservar os critérios confirmados pelo site, regra de frescor, estados de erro, sincronização de filtros e fallback WebView. Avaliar se respostas possuem todos os campos de sprites/coords/rank usados na UI; prints não demonstram cobertura completa.
+- **Limite técnico de origem:** `localStorage` é separado por host/origem; `pogocoordinates.com` não pode simplesmente acessar armazenamento de `coordinates-api.pokemongopro.com`. Um callback Google pode portar código de autorização, não necessariamente token Bearer da aplicação. Tokens do Google e tokens da sessão da API não são intercambiáveis por suposição.
+
+### Compatibilidade com Termos, segurança e decisão
+- Termos públicos consultados em 24/10/2026: https://pogocoordinates.com/terms (atualizados em 16/05/2026). Proíbem espelhamento ou scraping/redistribuição em massa; contorno de autenticação/rate limits; automação além de uma interação humana normal. A presença da rota não comprova concessão de uso independente. Recomenda-se obter autorização/documentação oficial antes de desenvolver cliente de API direto.
+- Não capturar códigos de callback, ler/mostrar/exportar tokens/cookies de `localStorage` sem um fluxo autorizado e seguro, colocar Bearer nos logs, manifests, screenshots, GitHub ou Drive, contornar controles ou realizar pesquisas automáticas sem consentimento do serviço. Para um fluxo autorizado, usar credenciais próprias e armazenamento protegido, rotação/revogação e limites acordados.
+- **Status:** possibilidade técnica promissora; API e permissão não verificadas oficialmente; dados das capturas são evidência externa; nenhuma mudança funcional feita. LT76 protegida e já publicada fica intocada; homologação Samsung mantém-se pendente. Caso haja consentimento formal, investigar em branch isolada com feature flag desativada, testes com fixtures sintéticas e sem tokens reais.
+
+---
+
+## LT77 — CONTRATO EXPERIMENTAL DE API AUTORIZADA E QA ISOLADO (24/10/2026)
+
+**Declaração do proprietário:** em 24/10/2026, informou expressamente que o PokeSearch possui autorização para usar a API do PoGoCoordinates. Registrada como declaração do proprietário, sem presumir escopo técnico adicional (rate limits, endpoint privado, redistribuição etc.).
+
+### Novas evidências do usuário
+- Capturas de DevTools mostram `localStorage` da origem `https://pogocoordinates.com` com chave **`jwt`**. A existência dessa chave é confirmada visualmente; ela não prova isoladamente validade, vencimento, audience, permissões do token nem sua equivalência com outra credencial OAuth.
+- O usuário também encaminhou comentários sobre a URL `/auth/google/callback`, mas **não se deve coletar códigos de callback** nem divulgar tokens. Um token JWT visto em capturas de tela deve ser tratado como segredo; não registrar, copiar ou incluir seus bytes no repositório, documentação, logs ou resultados.
+- A WebView do PokeSearch já navega dentro da origem `https://pogocoordinates.com`; uma futura integração aprovada deve manter o token exclusivamente no contexto de sessão autorizado, sem transferi-lo ao Android/logs ou a terceiros. Uma busca real dependerá de comportamento de autenticação/CORS e testes na sessão do próprio usuário; não foi realizada agora.
+
+### Implementado em branch isolada, sem conexão de rede
+- Branch: `feature/lt77-authorized-api-contract-20261024`, criada a partir do HEAD documental LT76 `5be159030570cbc4f614d486649caa66d06e0a28`; `main` e branch LT76 publicada preservadas.
+- Arquivo `app/src/main/assets/api_result_contract.js`: biblioteca JS pura, **não importada nem usada pelo aplicativo publicado**, com mapeamento conservador de estrutura de filtros observada nas capturas e normalização de `{results:[...]}` para cartões PokeSearch.
+- Entradas com IV bruto inválido, porcentagem contraditória, identidade inválida, despawn expirado ou duplicatas são rejeitadas. O limite é **10 cartões**, sem inventar sprite, ranking PvP, localização GPS ou estado confirmado do site; nenhum código/token de sessão é retornado. Respostas vazias não são marcadas como busca real confirmada.
+- O construtor de payload **falha de forma explícita** para filtros sem identificador oficial mapeado (formas, Pokémon por texto, clima, ordenações não observadas), impedindo afrouxamento silencioso de buscas e falsos positivos. Integração real dependerá de catálogo/valores oficiais comprovados.
+- Arquivo `app/tests/lt77-api-contract.test.js` e workflow `.github/workflows/lt77-authorized-api-contract-qa.yml`, restrito a Node/fixtures sintéticas, sem `Gradle`, APK ou acesso autenticado à API.
+- CI GitHub Actions [#40132327045](https://github.com/LucianoToscano/PokeSearch/actions/runs/40132327045) **SUCCESS** (`contract-tests`, **12/12 testes aprovados**, etapa final atesta ausência de APK). Fonte do run `339f92431229cb191ea2762e8da529dabb41ee63`.
+
+### Limitações e condição para próxima etapa
+- Ainda **não** existe transporte HTTP autenticado nem leitura de `localStorage.jwt` pelo PokeSearch; não há interceptação de cookies, nem mudanças no login/`probe.js`/`OverlayService.java`. O adaptador é apenas um contrato testado com fixtures.
+- O fluxo atual baseado em WebView/DOM permanece funcional e inalterado. Nenhum build/merge/republicação de APK; LT76 remota segue `versionCode=54276`.
+- Próximo passo técnico: desenhar caminho isolado de comunicação autorizado, com gestão de credencial de sessão sem persistência duplicada e observabilidade sem segredos; verificar formatos reais/erros, permissões, limitação de buscas, migração e fallback do DOM; depois realizar testes com usuário em dispositivo físico antes de ativação. Não acessar ou solicitar ao usuário que cole seu token JWT em chats.
+
+---
+
+## LT77 — ROTA REVEAL DE COORDENADAS: CONTRATO ISOLADO E TESTES (24/10/2026)
+
+### Nova evidência (mensagem do usuário)
+- Captura WhatsApp menciona `https://coordinates-api.pokemongopro.com/reveal/reveal_code_aqui` e afirma que seria possível obter coordenadas sem Bearer token. A captura NÃO mostra corpo de resposta, método HTTP nem teste 200/401/403, portanto **não comprova acesso anônimo**. A documentação pública indexada não forneceu schema verificável da rota.
+- `/search` na evidência anterior devolve `reveal_code`, `encounter_id`, `despawn_at`, entre outros campos. O código de revelação é um identificador opaco potencialmente sensível: NUNCA registrar valores reais, não procurar códigos de terceiros, não exportar para relatório ou publicar URL completa com valor real.
+- A autorização de uso da API foi informada pelo proprietário em 24/10/2026; qualquer implementação de transporte ao vivo deve respeitar o contrato de autorização e o comportamento efetivo do servidor, sem pressupor que rota e CORS são públicos.
+
+### Implementação segura de pesquisa futura
+- Branch experimental apenas: `feature/lt77-authorized-api-contract-20261024`. Arquivo **novo** `app/src/main/assets/api_reveal_contract.js` com biblioteca JavaScript pura, desativada na aplicação (não importada no runtime de `OverlayService` / `probe.js`). Não executa `fetch`, leitura de `localStorage`, cookies, persistência, JWT ou ponte Android.
+- `planForSpawn()` só monta GET **hipotético** em `https://coordinates-api.pokemongopro.com/reveal/<codigo>` quando a entrada possui `pokemon_id` inteiro válido, `despawn_at` futuro e `reveal_code` opaco seguro `[A-Za-z0-9_-]{12,2048}`. Método GET não foi confirmado externamente; é apenas hipótese para contrato interno e não foi enviado ao servidor.
+- `normalizeRevealResponse()` trata como hipóteses estruturas JSON com pares numéricos `{lat,lng}`, `{latitude,longitude}` ou equivalentes aninhados em `coordinates`, `coords` e `data`, com lat [-90,90], lng [-180,180]; dados inconsistentes/contraditórios ou ausentes rejeitados. Retorna somente latitude/longitude/coords, jamais JWT/reveal_code/resposta bruta.
+- **Atenção**: formatos de resposta não foram observados; o contrato de parsing está preparado para revisão mediante amostra sanitizada. Sem resposta real, não ativar a função nem afirmar coordenadas validadas. Evitar uso de código expirado, cache persistente, exposição em URL/logs, envio de dados a terceiros ou tentativa de burlar controles do serviço.
+- Arquivo novo `app/tests/lt77-api-reveal.test.js`, agora executado pelo workflow `.github/workflows/lt77-authorized-api-contract-qa.yml` junto ao teste de busca JSON. O teste garante URL com código sintético, rejeição de entradas malformadas/expiradas, faixas geográficas, resposta sem segredos e ausência de rede/token.
+- GitHub Actions [40132916646](https://github.com/LucianoToscano/PokeSearch/actions/runs/40132916646): **SUCCESS**, 12/12 contratos anteriores de pesquisa + 12/12 de revelação = **24/24**; checkout e Node 22, sem Android build, sem acesso remoto real, sem produzir/publicar APK. Fonte do CI `445fc95596f1c9ca4d01b6d863f86e5ad6f64031`.
+
+### Preservações e próximo passo
+- LT76 publicada, assinatura, versionCode 54276, manifesto Google Drive, main e PRs Draft intocados. A branch LT77 contém só protótipos isolados, testes, workflow e registro.
+- Antes do código de transporte e ligação ao botão `Get coords`/`Copiar`, validar em ambiente autorizado um *exemplo sanitizado do corpo da resposta* com método HTTP e status (sem token, sem reveal_code verdadeiro). Ajustar parser ao formato observado. Em seguida habilitar caminho de teste explicitamente opt-in com rate limit, tratamento 401/403/429, timeout, geração de consulta e proibição de reutilizar coordenadas de cartão errado. Manter fallback WebView e homologação física separada.
+
+---
+
+## LT77 — TRANSPORTE EXPERIMENTAL DA API NO NAVEGADOR / QA 38-38 (24/10/2026)
+
+### Checkpoint real e escopo
+- Branch experimental isolada `feature/lt77-authorized-api-contract-20261024`, fonte antes deste registro `81553a7b62d7109675f3059cab3db3816f06de75`. LT76 publicada no Google Drive continua intocada; não houve merge, novo APK, alteração de assinatura/applicationId/main, manifesto nem PRs Draft.
+- Confirmação do proprietário na conversa anterior: há autorização para usar API PoGoCoordinates. Os detalhes de credenciais, scopes, endpoints e limites reais deverão ser observados em ambiente autenticado; prints não provam o formato completo de resposta do `/reveal` nem operação sem JWT.
+- Verificação pública complementar: `https://pogocoordinates.com/vip` menciona diferenças por plano para *Pokesearch limits* e *Coords reveal limits*; o aplicativo deverá respeitar status 401/403/429 e não contornar limites do serviço.
+
+### Implementação nova — não conectada ao serviço Android
+- `app/src/main/assets/api_browser_transport.js`: módulo JavaScript experimental para ser executado futuramente **dentro da origem HTTPS `pogocoordinates.com`** na WebView oficial. Não é importado pelo app em execução e **não inicia requisições sozinho**.
+- `createBrowserClient()` usa `window.fetch`, `window.localStorage`, `window.location.origin` apenas após futura invocação explícita. `search(config)` valida a origem exata, cria payload com `api_result_contract.js`, lê **temporariamente** a chave `jwt` da própria origem e a usa somente como Bearer em POST para o endpoint literal `https://coordinates-api.pokemongopro.com/search`. JWT não é salvo em SharedPreferences, não retorna ao Android, não entra em logs/JSON públicos e não vai no querystring.
+- Requisição de pesquisa exige sessão válida, não faz retry automático para falhas de sessão/limite e usa `mode=cors`, `redirect=error`, `credentials=omit`, `referrerPolicy=no-referrer`, `cache=no-store`, timeout (10s) e leitura limitada a 1 MiB. Erros 401/403/429, CORS/rede, timeout e payload inválido viram **códigos genéricos sem credenciais**.
+- Depois da busca, normaliza somente até 10 cartões com IV e dados estruturados já validados; guarda `reveal_code` unicamente em mapa **temporário, em memória**, associado a índice, ID de Pokémon, PC, expiração e geração da pesquisa. Nunca devolve o código opaco à interface/Android, nem grava em disco; descarta ao iniciar nova pesquisa ou encerrar cliente.
+- `reveal({sourceIndex,searchId,pokemonId,cp})` exige equivalência estrita à pesquisa corrente, Pokémon não expirado e código previamente recebido em resposta atual; prepara GET para `/reveal/{code}` sem cabeçalho Bearer por hipótese informada nas capturas, mas **não considera acesso anônimo confirmado**. 401/403/429 são respeitados; 200 é submetido ao parser conservador `api_reveal_contract.js`, retornando somente latitude/longitude/coords sem token/código. Não pesquisa códigos arbitrários fornecidos por usuários.
+- **Aviso de qualidade:** `search` devolve `criteriaConfirmed=false`, `resultChanged=false`, `leagueConfirmed=false` e `requiresIntegrationValidation=true`; respostas do mock NÃO são consideradas prova de pesquisa no site nem estão ligadas aos resultados/alertas nativos. CORS, formato real, filtro oficial, ordenação e endpoint GET sem JWT ainda não foram homologados.
+
+### QA no GitHub Actions, erros corrigidos
+- `app/tests/lt77-api-browser-transport.test.js` contém 14 verificações de transporte com mocks Node: ausência de efeito colateral/token na importação; POST autenticado no host exato; reveal sem Bearer; modo convidado; origens inseguras; filtros inválidos; 401/403/429; JSON/tamanho; CORS; identidade/generation; concorrência; dispose; expiração; proibição de vazamentos.
+- Workflow `lt77-authorized-api-contract-qa.yml` estendido com terceiro arquivo de testes. Execução inicial [40133471790](https://github.com/LucianoToscano/PokeSearch/actions/runs/40133471790) **FAIL** por sintaxe do mock JS (`||async` sem parênteses); nenhuma falha nos 24 testes anteriores. Corrigido no commit `81553a7b62d7109675f3059cab3db3816f06de75`.
+- Reexecução [40133524298](https://github.com/LucianoToscano/PokeSearch/actions/runs/40133524298) **SUCCESS** em commit `81553a7b62d7109675f3059cab3db3816f06de75`: `api_result_contract 12/12`, `api_reveal_contract 12/12` e `api_browser_transport 14/14` = **38/38 testes automatizados aprovados**. A etapa final confirmou **sem APK e sem requisições reais à API**, apenas mocks Node. Não confundir QA do transporte com homologação da WebView Samsung.
+
+### Próximas verificações, sem presumir êxito
+1. Confirmar em dispositivo de testes autorizado o comportamento do JWT **sem expor seu valor** e se `fetch` iniciado da origem do site aceita CORS e o Bearer. Não registrar/colar/copiar JWT no chat, log ou GitHub.
+2. Obter resposta redigida/sanitizada de `/reveal` para determinar método, campos reais, auth, erros; não publicar `reveal_code` real nem URLs com segredo.
+3. Integrar primeiro via opt-in/feature flag **desligada por padrão**, com isolamento de geração de requisição, renderização apenas após validação de filtros/identidade e fallback ao mecanismo DOM sem duplicar buscas nem ultrapassar rate limits.
+4. Em etapa separada, homologar em Samsung resultados, coordenadas, menus, Shiny, favoritados, notificações e compatibilidade com sessão existente; somente após aprovação produzir APK protegido e distribuí-lo mediante autorização.
+
+---
+
+## LT77 — CONSOLIDAÇÃO FORMAL PARA AUDITORIA E EXPORTAÇÃO INTEGRAL (24/10/2026)
+
+### Escopo e fonte da auditoria
+- **Pedido do usuário:** registrar toda a investigação e implementação LT77, manter o histórico integral do projeto e fornecer um arquivo completo para auditoria independente.
+- **Documento de auditoria complementar:** `docs/auditoria/LT77_AUDITORIA_CONSOLIDADA_20261024.md` (criado na mesma branch), que detalha LT76 publicada, evidências da API, JWT/localStorage, rota /search, hipótese /reveal, arquitetura, código, 38 testes, segurança, commits, pendências e homologação Samsung. Faz parte obrigatória do pacote entregue.
+- O presente `docs/GUIA_MESTRE.md` continua sendo a **documentação oficial única e histórica do PokeSearch**. Os registros LT76/LT77 anteriores foram **preservados integralmente**, e esta seção é um índice complementar de auditoria, não substituição de conteúdo.
+- Branch de trabalho: `feature/lt77-authorized-api-contract-20261024`; `main` permaneceu em `caea98b7b57b9e45d5218e907eb392d76953dd53` durante as verificações. PR #34 e PR #49 permaneceram abertos e Draft, sem merge. Branch e código da LT76 publicada não foram alterados neste trabalho.
+- A API é objeto de autorização afirmada expressamente pelo proprietário, mas o escopo técnico formal, limites contratuais e a homologação de chamadas ao vivo **não** foram apresentados. Não extrapolar essa declaração para afirmar que /reveal funciona sem autenticação.
+
+### Matriz LT77 consolidada com fonte rastreável
+| Componente / fato | Evidência efetivamente confirmada | O que ainda falta |
+|---|---|---|
+| `POST https://coordinates-api.pokemongopro.com/search` | Screenshots de HTTP 200 / `results` JSON fornecidos pelo usuário | Execução direta real pelo PokeSearch, CORS e contrato estável |
+| Filtros e metadados | Campos visíveis nos request/response bodies; mapeador JS com fail-closed | IDs oficiais de Form/Pokémon/Clima, ordenação e demais filtros |
+| Sessão | Chave `jwt` em localStorage da origem do site observada nas capturas | Verificação de escopo, renovação, consentimento e WebView real sem divulgar valor |
+| `/auth/google/callback` | Endereço comentado por terceiros | Não é comprovante de token Bearer extraível da URL |
+| `/reveal/{reveal_code}` | Padrão de URL encaminhado pelo usuário | HTTP 200, método, schema, autenticação, limites e CORS |
+| `api_result_contract.js` | Contrato e testes com mocks, 12/12 | Validação de JSON real, filtros e integração Android |
+| `api_reveal_contract.js` | Parser conservador de lat/lng; 12/12 | Resposta real, correlação de identidade e segurança de URL |
+| `api_browser_transport.js` | Protótipo sob demanda na origem do site; 14/14 mocks | Integração opt-in com WebView e tratamento real dos ciclos de vida |
+| `probe.js`, `OverlayService.java` e app publicado | Permaneceram sem alteração na etapa LT77 | Estratégia de fallback e migração sem regressões |
+| Resultados / interface | Regras de IV/dedup/despawn e máximo dez representadas em contratos | Provar sprites, GL/UL, Shiny, Favoritos, Pokébola, coordenadas e alertas no Samsung |
+| Publicação LT76 | Run release #40125870288 SUCCESS; APK, assinatura e manifesto auditados remotamente no Guia | Homologação física LT76 e qualquer upgrade LT77 |
+| CI LT77 final | [Actions #40133524298](https://github.com/LucianoToscano/PokeSearch/actions/runs/40133524298): **38/38 PASS** | Não equivale a testes HTTP reais, Android ou APK |
+
+### Histórico dos testes (não apagar tentativas falhas)
+1. [#40132327045](https://github.com/LucianoToscano/PokeSearch/actions/runs/40132327045): **SUCCESS — 12/12**, contrato de pesquisa em Node.
+2. [#40132916646](https://github.com/LucianoToscano/PokeSearch/actions/runs/40132916646): **SUCCESS — 24/24**, pesquisa + reveal em Node.
+3. [#40133471790](https://github.com/LucianoToscano/PokeSearch/actions/runs/40133471790): **FAILURE**, problema sintático no teste `lt77-api-browser-transport.test.js` (função `||async` sem parênteses); contratos anteriores 24/24 continuam PASS. O erro foi corrigido.
+4. [#40133524298](https://github.com/LucianoToscano/PokeSearch/actions/runs/40133524298): **SUCCESS — 38/38** (12+12+14), código-fonte dos testes no commit `81553a7b62d7109675f3059cab3db3816f06de75`. O número correto é **38**, não 40. Nenhuma chamada real à API, APK ou atualização do Google Drive ocorreu nessa bateria.
+
+### Proteções de credenciais e de resultados
+- JWT e `reveal_code` são segredos/sessão e **não** devem ser incluídos no relatório de auditoria, exportação, logs, screenshot ou código versionado. Os testes usam strings sintéticas; os arquivos de código do contrato/exportação não possuem JWT verdadeiro.
+- O protótipo `createBrowserClient()` prevê ler `localStorage.jwt` **somente** dentro da origem HTTPS oficial e mantê-lo na requisição de pesquisa; nenhum retorno em JSON ao Android nem `SharedPreferences`. Isso não foi executado no Samsung.
+- `reveal()` supõe GET sem Bearer baseado no print e armazena código opaco em memória apenas por pesquisa, exigindo índice, ID, PC e validade temporal; a efetividade dessa hipótese permanece PENDENTE.
+- A rota /reveal usa código opaco no segmento de URL e pode gerar rastros no servidor remoto; proibir registros locais e revisão de segurança antes de habilitar. Rejeitar 401/403/429; não contornar limites.
+- A normalização de `results` não confirma automaticamente filtros/site e não libera alertas até nova verificação por integração. Nenhum resultado inventado nem captura de GPS físico.
+
+### Arquivos obrigatórios do pacote para auditoria
+- Este arquivo **integral** `docs/GUIA_MESTRE.md` (sem truncamento), incluindo os registros anteriores e esta consolidação.
+- `docs/auditoria/LT77_AUDITORIA_CONSOLIDADA_20261024.md` (relatório independente com rastreabilidade).
+- `app/src/main/assets/api_result_contract.js`, `api_reveal_contract.js`, `api_browser_transport.js`.
+- `app/tests/lt77-api-contract.test.js`, `lt77-api-reveal.test.js`, `lt77-api-browser-transport.test.js`.
+- `.github/workflows/lt77-authorized-api-contract-qa.yml` e workflow específico de exportação de auditoria, com `MANIFESTO_SHA256.txt` e `ORIGEM_GIT.txt`.
+- **Verificação de integridade:** o pacote deve ser gerado a partir de um único commit da branch, com hashes SHA-256 por arquivo, sem usar conteúdo misturado de commits distintos. Não incluir tokens/capturas de credenciais.
+- O arquivo integral sempre pode ser conferido no GitHub no caminho oficial da branch; o ZIP automatizado é um arquivo de transporte para auditoria, não substituto do controle de versão.
+
+### Estado de encerramento documental
+**Comprovado:** documentação histórica cumulativa, código experimental isolado, 38/38 testes Node, rastreabilidade do release LT76, nenhuma republicação nem merge. **Não comprovado:** pesquisa API ao vivo no Samsung, método/resposta/anonimato /reveal, CORS real, homologação física ou APK LT77. **Exportação inicialmente comprovada:** [GitHub Actions #40134328745](https://github.com/LucianoToscano/PokeSearch/actions/runs/40134328745) — SUCCESS para o commit `0f2c43a1f0f4d76beb7bf3eb5ac7846e049b9382`, contendo `PokeSearch_LT77_Auditoria_Completa` (artefato ID `12576795992`, 495.385 bytes compactados, SHA-256 do ZIP `865b5c2786485b90736316df044d58e96b151c973c595dceae7dcb43bead0b81`). A execução registrou 1.346.918 bytes do `docs/GUIA_MESTRE.md`, 12 arquivos exportados, hashes internos verificados e os 38 testes Node novamente aprovados, sem build de APK.
+
+**Fechamento de auditoria:** este parágrafo registra a primeira exportação integral confirmada. A atualização documental deste fechamento deve iniciar automaticamente nova exportação, a ser usada como pacote final entregue ao usuário, de modo que ela também contenha este registro. A versão exata da documentação entregue é identificada por `ORIGEM_GIT.txt` e os hashes internos são enumerados no `MANIFESTO_SHA256.txt`. A expiração de downloads de GitHub Actions não altera a cópia permanente versionada no GitHub.
+
+---
+
+## LT77 — REFERÊNCIA DETALHADA DE API RECEBIDA E AUDITORIA DOCUMENTAL (24/10/2026)
+
+### Recebimento, autorização informada e procedência
+- Em 24/10/2026 o proprietário enviou arquivo `pogo.md` (~36,4 KB, 631 linhas), com título *API Spec — PoGo Coordinates*, informando que recebeu autorização para o uso da API. O arquivo afirma ter sido elaborado em 14/10/2026 a partir da leitura dos bundles JS do site e testes com `curl` realizados pelo autor do anexo. **Não é possível afirmar, apenas com o anexo, que o documento foi formalmente emitido pelo operador da API.** Tratar como **especificação recebida e testes reportados por terceiros**, não como contrato certificado ou homologação em Samsung.
+- **Informações protegidas:** o arquivo original contém exemplos de JWT, identificação de conta Google de teste e trainer codes. A versão bruta NÃO foi publicada no GitHub, NÃO será embutida no ZIP de auditoria compartilhável, e seus valores não foram transferidos ao app. Permanece acessível apenas como anexo da conversa original. Qualquer JWT potencialmente não expirável deve ser tratado como segredo e revogado/rotacionado pelo titular se tiver sido exposto.
+- Documento derivado **sanitizado e rastreável**: `docs/auditoria/LT77_CONTRATO_API_POGO_REFERENCIA_RECEBIDA_20261024.md`, incluído no histórico oficial e nos futuros ZIPs de código-fonte; contém nomes de endpoints, campos, diferenças, segurança e plano, sem dados pessoais nem código de autenticação.
+
+### Achados técnicos relevantes segundo `pogo.md`
+- `POST https://coordinates-api.pokemongopro.com/search`: Bearer descrito como opcional; conta anônima com `cap=5`, free logada com `cap=10`; planos superiores possuem cap maior, mas a UI PokeSearch mantém limite próprio de **10**. Resposta com `results`, `tier`, `cap` e `total_matches`; não há paginação no endpoint conforme anexo.
+- `GET /reveal/{reveal_code}`: Bearer opcional segundo o anexo; resposta alegada `{coords:"latitude,longitude",lat:Number,lng:Number}`; código derivado apenas de um spawn atual, sem exposição em resultados, preferências, logs ou documentação. HTTP live e limites reais não testados pelo PokeSearch nesta etapa.
+- `/search` lista IDs oficiais de Pokémon e formas, faixas de CP/nível, `iv_mode` raw/percent, `iv_percent_min/max` com décimos, 7 tamanhos, 3 valores de sexo, IDs 1–7 de clima, sorts `DSP/CP/IV/LEVEL/DISTANCE`, rank GL/UL, `min_ttl`, exclusões e dados Shiny específicos por conta. O anexo observa enums inválidos aceitos com comportamento silencioso: validar o payload estritamente.
+- `shiny_only`, `background_only` e `shiny_account` requerem sessão/treinador ativo segundo testes reportados; erros 403 `trainer_not_linked` e `shiny_account_unavailable`. **Nunca invocar `/trainer/confirm` automaticamente:** o documento afirma vínculo permanente.
+- A autenticação é indicada por `localStorage['jwt']` da origem do site. O anexo afirma JWT de teste sem `exp`, logo não se deve pressupor que limpar armazenamento local revogue o token servidor. Não registrar nem copiar tokens; não modificar fluxo OAuth publicado antes de homologação.
+- CORS relatado para origem `https://pogocoordinates.com` e cabeçalhos `authorization,content-type`. Respeitar status 400/401/403/404/410/422/429/503, `Retry-After`, limites e estado de sessão; não contornar permissões ou tiers.
+- Metadados descritos em `/pokemon/catalog?costumes=true`, `/forms`, `/backgrounds`. Modos adicionais da API: raids, quests, weather, rocket, powerspots, feeds e mapa; nenhum deles deve ser ativado por surpresa no app existente. Mapa retorna coordenadas aproximadas em Pokémon, exatas somente em `/reveal`, segundo o material recebido.
+
+### Divergências e pendências da implementação LT77
+- O protótipo `api_browser_transport.js` exige JWT para toda busca; o documento sugere modo anônimo permitido, com cota 5. Requer modo visitante explícito e compatibilidade sem degradar login.
+- O protótipo `api_result_contract.js` bloqueia algumas seleções de formas, Pokémon, clima e sort por falta de IDs verificados anteriormente; agora existe mapa documental para preparar novos testes com códigos oficiais, sem ligar funções ainda. `levelMin/Max` precisa usar limite documental 1–50, e `iv_percent` pode ser decimal: rejeição baseada somente em `Math.round` exige revisão.
+- O parser `api_reveal_contract.js` já valida campos `lat/lng` numéricos; falta conferir também `coords` textual e consistência do par. `reveal_code` deve permanecer protegido contra vazamento para UI/Android/logs.
+- O transporte deve distinguir erros de `trainer_not_linked`, conta Shiny não vinculada, VIP, códigos inválidos, spawns expirados e rate limit 429 com `Retry-After`. O fluxo atual baseado no DOM permanece a única integração Android publicada.
+- **Estado:** nenhuma edição adicional ao código de runtime, nenhum HTTP live com JWT, nenhuma chamada a endpoints destrutivos, nenhum APK LT77, nenhum merge/republicação. QA 38/38 de LT77 anterior segue como referência, mas não validou este material novo nem a compatibilidade real no Samsung.
+- **Próxima ação técnica:** ampliar testes de contrato com fixtures redigidas, ajustar adaptadores com flags desligadas, e somente então homologar em sessão real autorizada no Samsung, sem coletar credenciais no app nativo ou publicar dados pessoais.
+
+---
+
+## LT77 — ETAPA 2: ESPAÇAMENTO DOS RESULTADOS E ARRASTE DA POKÉBOLA (24/10/2026)
+
+### Objetivo, revisão e preservações
+- Continuação do prompt de 14 etapas: **somente Etapa 2**, corrigindo o gap Pokébola → resultados, o espaçamento de cartões e a sincronização de arraste em até 60 atualizações/segundo. Os próximos popups/filtros/API NÃO foram modificados. O diagnóstico da Etapa 1 foi realizado sem mudanças.
+- Base: branch `feature/lt77-authorized-api-contract-20261024` em `b5cb5019c59633dd0c1b0e095f6f18e8d68c8c56`. Correção isolada: `fix/lt77-stage2-results-spacing-20261024`. Fonte validada pelo CI: `ab1ea0f8718dde6f02a2ce1ca84df94972a94b2a` (o commit documental posterior será diferente).
+- `main` permanece `caea98b7b57b9e45d5218e907eb392d76953dd53`. APK LT76 assinado e manifesto de atualizações Drive permanecem intocados; PRs Draft não mescladas. **Nenhum APK novo ou distribuição, assinatura ou alteração de applicationId/namespace**.
+
+### Correções reais (código)
+- `OverlayService.java`: `positionResultsUnderPokeball()` usa `ResultsSpacingPolicy.DEFAULT_TOP_GAP_PX` igual a **2 pixels físicos**, em vez de `dp(2)`, evitando que densidade Samsung transforme 2 dp em uma folga maior. `visualHeaderAfterGap` e `visualResultsOffsetY` continuam sendo offsets explícitos do Editor Visual e podem elevar/alterar a distância se personalizados; **o compromisso de 0–2 px é para a configuração padrão**, não a override voluntária. Preservadas regras de inversão acima da Pokébola quando não cabe abaixo, clamp da tela, ancoragem X e todos os dados salvos.
+- `ResultsSpacingPolicy.java` (novo helper puro): `DEFAULT_TOP_GAP_PX=2`, preferência antiga de distância entre cartões com ponto neutro `31`, e `additionalRowGapPx()` com transformação `max(0,min(34,valor-31))`. Esta conversão evita usar o valor legado `31` como **31 px de gap horizontal**. `resultWidthDp()` passa a reservar exatamente o gap extra real; não altera slider nem preferências salvas.
+- `dock.html`: `computeResultLayout()` agora usa `size + additionalResultGapPx(resultGapBetween)` para o tamanho da linha vertical; ponto neutro 31 e valores anteriores menores não geram espaço automático. Linhas horizontais não reservam os antigos 3 px extras. O CSS horizontal usa a mesma conversão para `column-gap` e `row-gap`; padrão `0px`. O cabeçalho antigo de resultados está oculto: removido o `padding-top:var(--visual-header-y)` que estava empurrando a lista, deixando `padding-top:0`. Removido padding automático superior/inferior de sprite. **Mantido** `margin-top:var(--visual-top-gap,0px)` para o controle manual `resultGapTop` do Editor Visual; o valor padrão é 0, a personalização explícita permanece.
+- `OverlayService.java` touch handler principal: um **único limite de 16 ms** por quadro agora governa as chamadas nativas que movem a Pokébola (`updateWindow()`, incluindo menu) e a lista (`wm.updateViewLayout(resultRoot,...)`), sem deixar a Pokébola avançar separadamente enquanto resultados aguardam. `ACTION_UP` sempre confirma posição final de ambas as janelas mesmo se ocorrer entre quadros. O grip antigo de resultados conserva limite de 16 ms e commit final.
+- Ícones PNG, formas, Shiny, ranking, menus, resultado máximo 10 e módulos `api_*.js` **não foram alterados**. Nenhuma leitura ou persistência de token/JWT; feature flag da API permanece desativada.
+
+### Arquivos alterados/criados
+- Modificados: `app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java`, `app/src/main/assets/dock.html`, `app/tests/lt62-menu-visual-states.test.js`, `app/tests/overlay-ux.test.js`, `app/tests/visual-editor.test.js` (expectativas antigas de spacing, sem exclusão de funcionalidades).
+- Novos: `app/src/main/java/com/lucianotoscano/pokesearchoverlay/ResultsSpacingPolicy.java`, `app/tests/ResultsSpacingPolicyTest.java`, `app/tests/lt77-stage2-results-layout.test.js`, `.github/workflows/lt77-stage2-results-qa.yml`.
+
+### Execução CI — evidência final
+- **GitHub Actions [#40139004204](https://github.com/LucianoToscano/PokeSearch/actions/runs/40139004204): COMPLETED / SUCCESS** para código `ab1ea0f8718dde6f02a2ce1ca84df94972a94b2a`; suites JavaScript existentes passaram (com **exclusão explícita** do teste legado de LT74 `lt74-local-update-preview.test.js`, dependente de controle DEBUG removido no release protegido), as três suítes LT77 API tiveram **38/38 PASS** e o teste novo LT77 Etapa 2 teve **10/10 PASS**.
+- `ResultsSpacingPolicyTest.java`: **9/9 PASS** e teste legado `PopupTouchGeometryTest.java` também passou com JDK17 puro. Sintaxe do JS embutido `dock.html`/`detail.html` validada. `gradle :app:compileDebugJavaWithJavac`: **BUILD SUCCESSFUL**, com Android SDK 36, JDK 17 e Gradle 8.11.1. O job não produziu APK.
+- Workflow de desenvolvimento inicialmente apresentou falsos positivos de testes que buscavam literalmente os nomes/fórmulas antigas `lastResultMoveAt`, `dp(2+visualHeaderAfterGap)`, `Math.round(size*.32)+31` e CSS removido. As expectativas foram atualizadas para o comportamento correto. A primeira compilação teve **BUILD SUCCESSFUL** mas uma checagem `git status` inadequada marcou o run como falho por artefatos de geração `:app:createRoundIcon` no runner. A verificação foi ajustada para apenas registrar geração local; o run final ficou **SUCCESS**. Esses eventos não foram ocultados.
+
+### Critérios de aceitação / Samsung físico pendente
+- [x] Política nativa para **2 px físicos** de espaço padrão Pokébola → painel; acima disso somente por override visual ou necessidade de reancoragem perto das bordas.
+- [x] Política de **gap automático 0** entre cartões padrão na vertical e horizontal; espaçamento extra manual acima do ponto neutro ainda existe.
+- [x] Nenhum padding fantasma do antigo cabeçalho; personalização manual top-gap preservada.
+- [x] `updateViewLayout` do dock e resultados compartilhando throttle de 16 ms, com flush no `ACTION_UP`; compilação Android passou.
+- [ ] Teste real no Samsung: com Editor Visual zerado, medir borda da Pokébola até primeiro cartão em pixels físicos, e entre primeiro/segundo cartões, em orientação vertical/horizontal e tamanhos P/M/G.
+- [ ] Arrastar a Pokébola com 1, 5 e 10 resultados, inclusive perto do limite superior/inferior, com menu aberto, confirmar que lista e detalhes acompanham sem saltos ou cortes. Tocar brevemente para mostrar/recolher resultados, segurar 600 ms para menu.
+- [ ] Alterar manualmente `resultGapTop`, `resultGapBetween`, `headerAfterGap`, `resultsOffsetY` no Editor Visual e reabrir overlay: os offsets devem continuar respeitados; retornar ao preset padrão restaura o espaço mínimo.
+- **Status:** implementação e CI concluídos; homologação visual/funcional física ainda não executada. Não declarar Etapa 2 aprovada no Samsung sem prints/vídeo e medidas.
+
+
+
+---
+
+## LT77 — ETAPA 3: NÍVEL, TAMANHO, SEXO E LOCALIZAÇÃO (24/10/2026)
+
+### Origem e escopo controlado
+- HEAD-base lido novamente do GitHub: `fix/lt77-stage2-results-spacing-20261024` em `a5ac1e148a9bb69905dab50b1ae169d462dde0bf`. Criada sem rebase ou merge a branch isolada `fix/lt77-stage3-level-size-gender-location-20261024`.
+- Somente correções visuais e validação local dos editores `dock.html`. Etapa 2 (espaçamento e arraste) intacta; `main`, LT76 assinada, APK, assinatura e manifesto Drive intactos.
+- **Nível Min/Max:** inputs de texto com teclado numérico Android, `maxLength=2`, placeholders literais `Min` e `Max`, células estreitas de 31 px, cor/cursor legíveis, aplicação exclusivamente pelo botão ✓; validação já existente rejeita 0, acima de 35, caracteres não numéricos e Min > Max. A conversão de UI continua **1–35** conforme decisão anterior, enquanto o contrato **1–50** informado pela API fica reservado para etapa futura. Removida a limpeza silenciosa de drafts legados ao abrir o painel: valores antigos não são apagados; se excederem o limite da UI atual, serão rejeitados no Aplicar até correção explícita.
+- **Sexo:** exibir somente três botões compactos `♂` (Male), `♀` (Female), `⚲` (Genderless), com uma única seleção; segundo toque na opção ativa limpa a seleção e corresponde a **Any**. O quarto botão `Any` foi removido apenas da interface; o estado vazio `genderSelections=[]` e o fallback de valor oficial no site são preservados. O menu Forma continua usando `filterOptions.form`, distinto do menu Sexo, que usa `filterOptions.gender`; carregar/validar catálogo oficial permanece na Etapa 6.
+- **Tamanho:** sete chips `XXS XS S M L XL XXL`, sem quebra de linha, 23×23 px, múltipla seleção preservada. CSS final com especificidade maior que regras legadas da cascata; editor Sexo passa de 107 para 80 px sem faixa vazia. PC, Ordenar e Clima mantêm fontes/opções/código e foram conferidos contra as regras de compactação existentes; sem mudança na lógica de pesquisa.
+- **Localização:** a linha superior foi reorganizada para `Localização [Colar] [Coordenadas]`; slider compacto na linha seguinte; rodapé central `[1000]km [Aplicar] [Limpar]`. Painel com largura responsiva máxima de 256 px para tornar coordenadas editáveis na mesma linha; raio `type=text`, `inputMode=numeric`, quatro caracteres, normalização 0–1000, campo de 42 px e `km` adjacente sem espaço extra. Campo de raio vazio agora é invalidado, não convertido implicitamente a zero. `Native.setLocation(true,wantedCoords,wantedRadius)` e `Native.setLocation(false,"",0)` permanecem intactos, sem apagar os demais filtros ou antecipar o refactor da pesquisa na Etapa 7.
+- Resultados continuam limitados a 10; o Editor Visual, preferências, localização previamente salva, recursos oficiais, arquitetura `OverlayService`/`WebView`, feature-flag desligada da API e protocolos de JWT/reveal não foram tocados.
+
+### Arquivos e testes
+- Runtime modificado: `app/src/main/assets/dock.html` (CSS localizado, editor numérico, três chips de sexo, cabeçalho/raio da Localização).
+- Asserções históricas de UX ajustadas para refletir o novo contrato solicitado, sem suprimir suas suítes: `app/tests/lt62-menu-visual-states.test.js`, `lt63-compact-cascades.test.js`, `lt66-samsung-panels.test.js`, `lt67-compact-fields.test.js`, `lt68-samsung-hardening.test.js`, `lt70-location-radius-toggle.test.js`.
+- Nova suíte `app/tests/lt77-stage3-compact-filters.test.js`: sintaxe JS inline, Nível vazio/válido/inválido/legado, Min>Max, preservação de drafts, Sexo/Any, Tamanho multi, raio 0/1/999/1000/limites/vazio, DOM de localização e CSS de popup.
+- Novo workflow `.github/workflows/lt77-stage3-compact-filters-qa.yml`: executa as suites Node do app (com exclusão declarada da antiga prévia DEBUG LT74 já obsoleta, exatamente como Etapa 2), javac 17 de espaçamento e geometria, `:app:compileDebugJavaWithJavac` com SDK 36, sem `assemble` e sem APK.
+- **Rastreabilidade:** primeira alteração `5abae5f3c601664a46ef32af0f7b18f55b4a5f9e`, guarda de especificidade CSS `2b1ca97644e3ccb57f41a30ff0df81c3a3f63d1e`, ajustes de teste até `d1291d119514fefa575f8a8e4c12bd160efc4e3f`. O HEAD final será maior após este registro documental. Primeiras execuções CI falharam em asserções históricas de tamanho/sexo desatualizadas; falhas registradas e correções versionadas. **Status do último workflow: conferir GitHub Actions antes de declarar PASS.**
+- **Homologação física Samsung:** pendente; não afirmar que o layout, popups, teclado ou persistência foram conferidos em aparelho real.
+
+### Checklist para Samsung (pendente)
+1. Abrir Filtros → Nível: teclas numéricas; Min/Max vazios, 1/35 e 25/20, verificando que ✓ bloqueia inválidos e não apaga valores salvos ao reabrir.
+2. Abrir Tamanho: todos os 7 chips na mesma linha, multi-seleção, sem corte, rolagem lateral ou tocar no resultado por trás inadvertidamente.
+3. Abrir Sexo: 3 chips menores; segundo toque limpa a seleção (Any); verificar que Forma continua independente.
+4. Abrir Localização: coordenadas visíveis/editáveis ao lado do título e de Colar; raio 0, 1, 999, 1000 e vazio; `km` junto ao campo; slider e botões alcançáveis; aplicar não limpa PC, Nível, Clima ou Pokémon ativos.
+5. Verificar Ordenar, PC, Clima em tema claro/escuro, popup perto das bordas, orientação vertical/horizontal e teclado aberto; avaliar sem regressão do arraste Pokébola/resultados da Etapa 2.
+6. Não instalar nem atualizar a LT76 como consequência desta etapa, pois nenhum APK LT77 foi gerado; a homologação física dependerá de um APK de teste autorizado.
+
+
+
+### Fechamento do CI de implementação (24/10/2026)
+- **GitHub Actions [#40140600351](https://github.com/LucianoToscano/PokeSearch/actions/runs/40140600351): COMPLETED / SUCCESS**, no commit de código e testes `079f0dd9c53e12f8a170da99e118fb2ca31055f3`. Todas as etapas do job concluíram com sucesso, inclusive JavaScript inline, todas as suítes Node elegíveis, testes Java e Android SDK 36/Gradle.
+- **Etapa 3:** `lt77-stage3-compact-filters.test.js` **13/13 PASS**; **Etapa 2:** `lt77-stage2-results-layout.test.js` **10/10 PASS**, `ResultsSpacingPolicyTest.java` **9/9 PASS**, `PopupTouchGeometryTest.java` PASS. Contratos experimentais LT77 API: **38/38 PASS** no conjunto de três suítes (transport 14, search 12, reveal 12). Todas as demais suítes Node executadas pelo workflow ficaram PASS. O teste legado de preview LT74 permanece excluído explicitamente por depender de DEBUG removido, assim como na Etapa 2.
+- Compilação `gradle :app:compileDebugJavaWithJavac`: **BUILD SUCCESSFUL**; o job verificou que **não gerou APK**. Nenhum deploy, manifesto Drive, assinatura, distribuição, `main` ou feature flag de API foi alterado.
+- Runs anteriores da Etapa 3 falharam por verificações históricas que ainda exigiam quatro chips de Sexo/largura 107px e um caso de teste novo que procurava o catálogo de Forma no escopo incorreto. Todas as falhas tiveram ajustes rastreáveis; não foram desativadas suites para mascará-las.
+- **Pendência real:** nenhum Samsung foi homologado fisicamente. Critérios visuais, toque, teclado e persistência devem ser aferidos no aparelho quando houver build de teste autorizado. A Etapa 3 está concluída quanto a implementação, regressão automatizada e compilação, mas não equivale a homologação física.
+
+
+---
+
+## LT77 — ETAPA 4: ANCORAGEM DOS POPUPS (24/10/2026)
+
+- Branch isolada: `fix/lt77-stage4-popup-anchor-20261024`, derivada do checkpoint aprovado da Etapa 3 `a4afa8b6915883cfac0deeeeaa1a5d853aed0c0a`. `main`, LT76, APK, assinatura, Drive e API experimental preservados.
+- `PopupTouchGeometry.java`: `placeBesideMeasured` ancora o submenu vertical ao topo do ícone verdadeiro (centro − metade da altura física), em vez de deslocamento fixo de 16px. Mantidos os métodos históricos e os limites físicos.
+- `OverlayService.java`: quando a barra nativa reserva espaço acima dos botões, a origem real passa a ser `menuParams.y + dp(popupOffsetDp)`; passagem de altura do botão em novo bridge `openPopupMeasured`, mantendo o bridge anterior compatível. Proteção contra sobreposição com resultados permanece.
+- `dock.html`: mede o alvo real no WebView e envia centro/altura à geometria nativa; Mais (•••) rola apenas quando o conteúdo excede a altura fornecida pela janela. Não há mudanças na barra principal, nos filtros ou na API.
+- `PokemonPicker.java`: Favoritos agora inicia próximo à borda do ícone estrela (12dp meia-altura + 2dp intervalo), com clamp à tela e sem bloquear toques externos.
+- Testes novos: `app/tests/PopupAnchorGeometryTest.java` e `app/tests/lt77-stage4-popup-anchor.test.js`. Workflow novo: `.github/workflows/lt77-stage4-popup-anchor-qa.yml`; sem geração ou publicação de APK.
+- Histórico CI: execução [#40141563515](https://github.com/LucianoToscano/PokeSearch/actions/runs/40141563515) falhou em expectativa inválida do novo teste de tela pequena (497 ultrapassava a tela; posição correta com clamp 474). Corrigida em commit `50c1bd712d42dc66433a0924964e6c01b8352e46`; nenhuma suíte desativada. Execução seguinte [#40141616065](https://github.com/LucianoToscano/PokeSearch/actions/runs/40141616065): **SUCCESS**, validação JS/Node, testes Java de geometria, SDK 36 e compilação Android sem APK.
+- **Pendente homologação Samsung:** bordas superior/inferior, barra horizontal/vertical, Modos/Filtros/Pokémon/Notificações/More, Favoritos alinhado à estrela, scroll só quando necessário, toque fora e proteção contra resultados. O CI não comprova essas interações físicas.
+
+
+---
+
+## LT77 — ETAPA 5: GET COORDS, COOLDOWN E DETALHE (24/10/2026)
+
+- Branch isolada `fix/lt77-stage5-detail-cooldown-20261024`, derivada da Etapa 4 no commit `7cb507fd6210fe49ab4f1a15f92236f551900771`. Não modificados `main`, distribuição LT76, preferências, site/API autorizada ou recursos PNG.
+- `OverlayService.java`: ao trocar a ficha do Pokémon (`showDetails`) ou fechá-la (`hideDetails`), incrementa-se o `coordinateRequestToken` para invalidar respostas antigas; impede Get coords de outro cartão aparecer/copiar na ficha atual. Polling de `readCoords` limitado a 10 consultas (tentativas 0–9), 750 ms entre tentativas, sem novo `Get coords` ou requisição de autenticação. Identidade do cartão e ranges de coordenadas permanecem exigidos, com intervalo/cooldown do site respeitados: se o botão oficial está desabilitado, mostra feedback e permite nova tentativa **manual** quando liberar.
+- `detail.html`: área de toque dos botões Get coords/Copiar aumentada para pelo menos 36px, `touch-action:manipulation`, foco visível, bloqueio de índice inválido/NaN antes de chamar o bridge. Estado pending continua com timeout finito de 9s e finaliza em callbacks, sem spinner permanente; sem perda de detalhes PvP e timer.
+- `probe.js` não foi alterado nesta etapa: mantém a verificação de um único cartão identificável e da disponibilidade do botão oficial; retorno `cooldown:true` quando desabilitado e extração de latitude/longitude somente do cartão oficial correspondente.
+- Novos testes `app/tests/lt77-stage5-detail-cooldown.test.js`; workflow `.github/workflows/lt77-stage5-detail-cooldown-qa.yml`, executando Node, sintaxe dos assets, geometria Java e compilação Android com JDK17/SDK36 sem gerar APK.
+- Execução de GitHub Actions [#40141873620](https://github.com/LucianoToscano/PokeSearch/actions/runs/40141873620) — verificar resultado final antes de declarar sucesso. Testes automatizados não substituem homologação Samsung.
+- Homologação física pendente: clicar e segurar Get coords, alternar de cartão durante loading, fechar ficha durante polling, aguardar cooldown acabar, ver feedback e cópia válida, verificar site com login real e observar que não há toque perdido nem resultado antigo.
+
+
+---
+
+## LT77 — ETAPA 6: FONTES DISTINTAS DE FORMA E SEXO (24/10/2026)
+
+- Branch `fix/lt77-stage6-form-gender-source-20261024`, derivada da Etapa 5 `9e39b80cd8301e04fc4afec9cf70af956acab8ce`. `main`, APK LT76, preferências e fonte de resultados não modificados.
+- Revisado o `dock.html`: **Forma** lê apenas `filterOptions.form.options` e mantém multi-seleção em `formSelections`; **Sexo** usa `filterOptions.gender.options`, seleção única (Male/Female/Genderless) e vazio = Any. Controles, search/chips e lógica separados já existiam e foram preservados.
+- Corrigido `app/src/main/assets/probe.js`: um portal `Form` que só apresente 2 ou mais entradas `Any/Male/Female/Genderless/Unknown` é considerado ambíguo, inclusive com carregamento parcial de React, e não é apresentado como catálogo oficial de Forma. A mesma proteção cobre o caminho `<select>`. Em caso ambíguo, o probe retorna pending/sem opções, **sem inventar formas**.
+- Testes específicos: `app/tests/lt77-stage6-form-gender-source.test.js`, cobrindo menu completo/parcial de Sexo, Form legítimo, IDs textuais oficiais, seletor independente e compatibilidade com seleção múltipla. Workflow isolado `.github/workflows/lt77-stage6-form-gender-qa.yml` roda demais regressões Node, Java e compilação sem APK.
+- Fonte `pogo.md` (Biblioteca pessoal), seções 4.1 e 8, conferida: API `GET /forms` devolve lista de nomes oficiais e `GET /pokemon/catalog?costumes=true` entrega pares `pokemon_id/form_id`. **Sem execução de GET real** ou integração API nesta etapa: catálogo completo e migração aguardam ativação controlada da API após homologação. O app ainda depende do catálogo observável no site via DOM.
+- GitHub Actions [#40142110424](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142110424): conferir fechamento antes de declarar sucesso. Teste Samsung de busca, lista completa e opções oficiais segue pendente.
+
+
+---
+
+## LT77 — ETAPA 7: LOCALIZAÇÃO, CLIMA, NÍVEL, PC, TAMANHO E ORDENAR (24/10/2026)
+
+- Branch `fix/lt77-stage7-geo-sort-guard-20261024`, derivada da Etapa 6 `b3c46c2dcffcf0592857ddce5399def9bbd40c9b`.
+- Código existente auditado e preservado: `OverlayService.configureLocationAndVerify` verifica Coords/Radius no DOM antes de Search; `setLocation` altera apenas o geofiltro e preserva os outros parâmetros; `probe.js` usa os controles reais de Weather, Level, CP, Size e Sort, exige confirmação do site e múltipla seleção para Size. Sem substituição por opções inventadas.
+- Correção concreta de `app/src/main/assets/dock.html`: `Distance (nearest)` só pode ser aplicado no painel de Filtros quando `locationEnabled && locationVerified`; do contrário mostra feedback e mantém todos os valores salvos, pois a API também exige centro/raio para a ordenação DISTANCE.
+- Novo teste de regressão `app/tests/lt77-stage7-dom-filter-guards.test.js` mais workflow `.github/workflows/lt77-stage7-dom-filter-qa.yml`, sem APK.
+- **Limite de evidência:** essa etapa faz ajuste defensivo e regressão automatizada, mas NÃO comprova a operação dos filtros no React real logado. A equivalência completa DOM/site, incluindo diferentes opções Weather e resultado de busca, continua pendente de homologação autenticada e Samsung. A API experimental segue OFF.
+
+
+---
+
+## LT77 — ETAPA 8: AUDITORIA DOS MODOS IV, GL/UL E SHINY (24/10/2026)
+
+- Branch `fix/lt77-stage8-pvp-shiny-regression-20261024`, derivada de `fix/lt77-stage7-geo-sort-guard-20261024` no checkpoint `76512779787206f78a4c50070c439244e737810f`.
+- Inspecionados e preservados os fluxos anteriores em `OverlayService.java`, `dock.html` e `probe.js`: ataque/defesa/stamina de 0–15, IV% de 0–100, rank GL/UL de 1–50, input numérico em Modos, personalização dos ícones oficiais; Shiny distingue solicitado/pending/confirmado e exige verificação explícita no DOM.
+- `verifyShinyAfterLocation` reaplica/valida a seleção após o React trocar geofiltro, com controles por `requestGeneration`; falhas de login/treinador/site não fabricam resultado. Não mexer em latência/retries sem evidência, porque redução arbitrária pode voltar a quebrar a seleção.
+- Adicionado teste `app/tests/lt77-stage8-iv-pvp-shiny-regression.test.js` e workflow `.github/workflows/lt77-stage8-pvp-shiny-qa.yml` para proteger os contratos existentes. **Nenhuma alteração de runtime** nesta etapa. GitHub Actions [#40142426181](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142426181): verificar término.
+- Equivalência real com GL/UL do site, ícones visíveis e Shiny sem demora NÃO pode ser confirmada só por testes estáticos; requer login/treinador vinculado e Samsung. Manter como pendência aberta de homologação, não como correção funcional comprovada.
+
+
+---
+
+## LT77 — ETAPA 9: COMPLETAR CONTRATOS DE BUSCA NA API AUTORIZADA (24/10/2026)
+
+- Branch experimental isolada `feature/lt77-stage9-api-contract-completion-20261024` derivada da Etapa 8 no commit `885f05ac36a7fa23aa6c4e5949d45bb85bbc39e3`. Leitura da especificação pessoal `pogo.md` de 14/10/2026, especialmente 4.1/5/8; nenhum JWT real foi acessado.
+- `app/src/main/assets/api_result_contract.js`: ampliado `buildPayload` com espécies/pares de forma somente se presentes em catálogos explicitamente fornecidos; Forms do catálogo exato; `weather_id` 1–7, `boosted`, `sort` DSP/CP/IV/LEVEL/DISTANCE, localização textual ou coordenadas+raio completos, Level 1–50 do contrato API, TTL 0–60, blacklists, shiny_account estritamente 12 dígitos, pvp e IV. Rótulos de espécie ambíguos ou costumes não representáveis falham fechados — nunca converter por suposição.
+- `normalizeResponse`: cap 0–10 respeitado, validação de IV percentual com uma casa decimal quando consistente com Raw IV, Level 1–50, gênero Genderless com ícone `⚲`; preserva `sourceIndex` e omite JWT, `reveal_code` e `encounter_id`. Resultado ainda é PROVISÓRIO e não atesta busca aplicada.
+- `app/tests/lt77-api-contract.test.js` mantém testes de rejeição de filtros não suportados, trocando apenas o exemplo de clima desconhecido para `Thunderstorm`, pois `Rainy` (id 2) é válido no `pogo.md`.
+- Nova suíte `app/tests/lt77-stage9-authorized-search-contract.test.js`: catálogo oficial, gênero, 7 climas, DISTANCE+raio, 0–1000 km, Level1–50, TTL, listas negras, IV decimal e limite de 10. Novo workflow `.github/workflows/lt77-stage9-authorized-api-qa.yml`; só testes e compilação Java/Android, sem APK.
+- **Não integrar ainda em produção.** `api_browser_transport.js` e `api_reveal_contract.js` permanecem sem import na WebView de produção e sem chamadas automáticas. JWT de usuário deve ser lido somente dentro da origem oficial `https://pogocoordinates.com` após opt-in/homologação. Nenhum token/reveal foi logado ou persistido.
+- GitHub Actions [#40142716370](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142716370): conferir resultado final antes de declarar PASS. A compilação/testes com mock não comprovam autorização funcional, sessão autenticada nem catálogo atual ao vivo.
+
+
+---
+
+## LT77 — ETAPA 10: ROTEADOR EXPERIMENTAL DOM → API COM FLAG OFF (24/10/2026)
+
+- Branch isolada `feature/lt77-stage10-disabled-api-router-20261024`, da Etapa 9 `b87310aa2ed406c64c745fbc2ef4ed1124d450a7`. Não tocar em `main`, LT76, arquivo manifesto do Drive ou assinatura.
+- Criado `app/src/main/assets/api_integration_router.js` — módulo *experimental e não carregado pelo OverlayService Android*. Possui constante `USE_AUTHORIZED_API=false` e exige simultaneamente `useAuthorizedApi===true`, `homologated===true`, origem HTTPS exata do site oficial e transporte provido explicitamente para qualquer rota API. Sem isso usa o callback DOM de pesquisa/reveal. Uma origem inválida não tem fallback silencioso para API.
+- Pesquisa/Reveal escolhem uma única fonte por execução, sem mistura de cartões ou coordenadas DOM/API. `dispose()` cancela futuras execuções. Módulo não lê nem persiste tokens, cookies ou códigos de reveal. A validação de origem e JWT permanece sob o transporte experimental original.
+- Testes novos `app/tests/lt77-stage10-api-router-off.test.js` e workflow `.github/workflows/lt77-stage10-api-router-qa.yml` cobrindo OFF por padrão, isolamento, origem, opt-in, descarte e ausência de import no APK atual. Run [#40142917426](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142917426): conferir CI.
+- **Limite explícito:** isto conclui a preparação/roteamento puro, NÃO a integração Java→WebView, a autenticação live, renderização real de cartões API nem fallback de release. O aplicativo continua integralmente DOM; nenhuma chamada à API acontece por este roteador até existir homologação e conexão ao WebView, que permanece PENDENTE. Não declarar migração funcional em produção.
+
+
+---
+
+## LT77 — ETAPA 11: VALIDAR REVEAL E DESPAWN SEM EXPOR CÓDIGOS (24/10/2026)
+
+- Branch `feature/lt77-stage11-reveal-validation-20261024`, derivada da Etapa 10 `9106e97459dea4e70a970378a1c9be2e0d66049d`.
+- `app/src/main/assets/api_reveal_contract.js`: interpretador `GET /reveal/{code}` aceita também campo `coords` textual no formato estrito `lat,lng` previsto em `pogo.md`, validando limites -90..90/-180..180. Se o mesmo JSON fornece `lat/lng` numéricos ou `coordinates` aninhado, todos os pares devem ser **idênticos**; divergências bloqueiam o uso das coordenadas em vez de escolher uma fonte arbitrária.
+- Continuam intactos: `planForSpawn` só permite reveal de código opaco vindo de spawn com identidade/expiração verificáveis; tratamento de 400/404/410/429 pelo transporte sem retry cego; exclusão de JWT, reveal_code, encounter_id, resposta bruta e URLs sensíveis da saída.
+- Novo teste `app/tests/lt77-stage11-reveal-validation.test.js`; workflow `.github/workflows/lt77-stage11-reveal-qa.yml`. Execução [#40143066929](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143066929): conferir sucesso do CI.
+- O roteador API permanece desconectado do serviço Android e OFF por padrão. **Sem reveal real, sem dados sensíveis acessados e sem APK**. Homologação real de expiração/cooldown no Samsung segue pendente.
+- Durante a Etapa 10 o CI inicial [#40142917426](https://github.com/LucianoToscano/PokeSearch/actions/runs/40142917426) falhou por falso positivo do teste de segurança que inspecionava a palavra `JWT` em comentários; a asserção foi corrigida em `352069f4a0f37a58206911e51339f5923a041e69` e propagada nesta branch. Run de reexecução [#40143042368](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143042368): conferir CI antes de declarar.
+
+
+---
+
+## LT77 — ETAPA 12: LIMPEZA DE CALLBACKS E RECURSOS (24/10/2026)
+
+- Branch `fix/lt77-stage12-overlay-lifecycle-20261024`, da Etapa 11 `88c9d3cb57284c1dd8e8eb07de5b618aee950d1d`.
+- Auditoria do ciclo de vida: `OverlayService.onDestroy` já possui `stopped=true`, `handler.removeCallbacksAndMessages(null)`, desmontagem das cinco janelas flutuantes, `destroyWebView` para as cinco WebViews locais e a WebView oficial, remoção das interfaces JS e `unregisterReceiver` protegido do receiver de screen-off. Não há `LocationListener` nem requestLocationUpdates físico neste serviço.
+- Correção defensiva de `OverlayService.java`: no `onDestroy`, invalidar explicitamente `coordinateRequestToken`, `formOptionsSequence`, `pokemonSuggestionSequence` junto com `requestGeneration`, antes de remover callbacks. Assim respostas tardias nunca devem carregar resultados de sessões fechadas.
+- Novo teste `app/tests/lt77-stage12-overlay-lifecycle.test.js`; workflow `.github/workflows/lt77-stage12-lifecycle-qa.yml`, sem APK. GitHub Actions: verificar execução da branch antes de declarar PASS.
+- A política já implementada de arraste limitado a 16ms permanece; esta etapa não comprova velocidade real ou consumo de memória do Samsung. Profiling de Android, leaks em atividade real e fluxo prolongado aguardam homologação física.
+- Todas as proteções de credenciais/reveal, DOM e feature-flag API OFF permanecem.
+
+
+---
+
+## LT77 — ETAPA 13: AUDITORIA DE CÓDIGO, PROGUARD E RECURSOS (24/10/2026)
+
+- Branch `fix/lt77-stage13-proguard-audit-20261024` derivada da Etapa 12. GitHub `main`, assinatura e LT76 inalterados.
+- Verificadas regras `app/proguard-rules.pro`: preservação de `@android.webkit.JavascriptInterface`, `MainActivity`, `OverlayService`, metadados de anotações e `org.json`. `app/build.gradle.kts` já configura R8/`isMinifyEnabled` e `isShrinkResources`; `applicationId` e `namespace` preservados.
+- Confirmada presença dos assets oficiais `dock.html`, `overlay.html`, `detail.html`, `probe.js`. Os quatro scripts API LT77 permanecem experimentais e NÃO são importados pelo `OverlayService` em produção; a API segue OFF.
+- Não foram encontrados trechos cuja remoção fosse **comprovadamente** segura pela auditoria estática; por isso nenhum asset, preferência, PNG, componente ou teste foi apagado. A remoção de código morto só será possível com medição/tracing de execução em dispositivo.
+- Adicionado `app/tests/lt77-stage13-proguard-audit.test.js`, com teste de identidade da aplicação, regras R8, WebViews, assets e isolamento dos scripts experimentais; workflow `.github/workflows/lt77-stage13-proguard-qa.yml`. Sem APK.
+- Falha real herdada da Etapa 12: o primeiro run [#40143185582](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143185582) não compilou: `onDestroy` referenciava contadores `formOptionsSequence` e `pokemonSuggestionSequence` pertencentes à classe interna `Bridge`. Corrigido em ambas as branches: manter invalidação de `coordinateRequestToken` e checagem existente de `stopped/requestGeneration` nos callbacks internos. A alteração e o teste foram registrados, sem ocultar a falha. Conferir novos Actions da Etapa 12 e 13 antes de atestar PASS.
+- **Pendências:** homologação Samsung, teste R8/ProGuard efetivo de um build release assinado (nenhum APK nesta fase), execução da API autorizada em origem real e confirmação de ausência de leaks sob carga.
+
+
+---
+
+## LT77 — ETAPA 14: CHECKLIST DE ACEITAÇÃO E FECHAMENTO DA AUDITORIA (24/10/2026)
+
+- Branch isolada `fix/lt77-stage14-acceptance-audit-20261024` derivada da Etapa 13 `01c0793003ef2fc3791bf552e1e9ec66926a7694`. `main`, assinatura, distribuição e manifesto LT76 inalterados.
+- Entregue `docs/LT77_CHECKLIST_ACEITACAO.md`: cada requisito da implantação foi classificado por **evidência automatizada** versus **homologação física/API real**, sem converter CI em aprovação Samsung. Itens não testados continuam [ ]; includes regressão de CSS/layout, Modos, More, Forma/Sexo, Localização, Weather, Get coords, Shiny, Performance, ProGuard, JWT, cap10, reveal, feature flag OFF.
+- Teste novo `app/tests/lt77-stage14-acceptance-audit.test.js`, protegendo artefato e fluxos críticos; workflow final `.github/workflows/lt77-stage14-acceptance-qa.yml` roda suítes Node e testes Java/compilação SDK36 sem APK.
+- Etapa 12: o CI inicial [#40143185582](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143185582) apontou erro de compilação por referência a contadores internos do Bridge; corrigido em Stage12 e propagado a Stage13/14 sem descartar invalidação de `coordinateRequestToken`. **Rerun [#40143457214](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143457214): SUCCESS.**
+- Etapa 13: **[#40143490838](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143490838): SUCCESS.**
+- Etapa 10: **[#40143042368](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143042368): SUCCESS** após corrigir falso positivo em teste de comentários; Etapa 11: **[#40143066929](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143066929): SUCCESS**.
+- Etapa 14: run [#40143616481](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143616481) ainda deve ser conferido no CI antes de declarar a regressão final aprovada.
+- **Não homologado:** Samsung físico em todas as posições/orientações, acesso autenticado e disponibilidade real do PoGoCoordinates, integração REST real dentro da WebView, catálogo completo ao vivo, equivalência Weather/GL/UL/Shiny, perfis de consumo, R8 de APK release assinado e cenário de release. O módulo de roteamento API continua desligado e desconectado do app Android. NÃO gerar APK, NÃO fazer merge, NÃO publicar nem alterar manifesto sem nova autorização e provas de homologação. Nenhuma dessas verificações foi efetuada nesta execução.
+- O checklist é o ponto de retomada para homologação, não atestado de prontidão para distribuição.
+
+
+---
+
+## LT77 — AUDITORIA PÓS-ETAPA 14 / GET COORDS E QA SAMSUNG (24/10/2026)
+
+**Origem da branch:** `fix/lt77-stage14-acceptance-audit-20261024` em `51803f38f1eb570388fec987779b8e90fba884c6`. Branch isolada `fix/lt77-post14-coordinate-hardening-20261024`. `main` `caea98b7b57b9e45d5218e907eb392d76953dd53`; PR #34 e #49 continuam abertas/Draft, sem merge. LT76 pública e `atualizacao.json` do Drive preservados.
+
+**CI herdado comprovado:** Etapa 14, [#40143616481](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143616481) COMPLETED/SUCCESS, testou commit `4de57f2c5379acd0790bb4b6fb83d8a7cbc8e8ae`; o HEAD `51803f38...` adicionou somente documentação.
+
+**Evidência externa (capturas Samsung e relatos do testador):**
+- Caterpie ✨, `#010`, PC 274, Nv.22, IV 15/15/15, Kathleen/Florida: a janela Get coords apresentou “Pokémon não encontrado ou identificação ambígua nos resultados atuais”.
+- Slakoth ✨, `#287`, PC 198, Nv.9, IV 0/0/0, McKinney/Texas: painel mostrou “Obtendo coordenadas” e “Aguardando coordenadas”; usuário relatou que não consegue obter coordenadas.
+- Essas capturas documentam um defeito percebido por testadores, **não** comprovam a causa exata nem que a correção funciona no site real.
+
+**Causa demonstrável no código:** em `probe.js`, `cardRoots()` renumera `sourceIndex` conforme a ordem atual do React; `matchingCoordsCard()` exigia simultaneamente o índice guardado anteriormente e o fingerprint (nome, CP, número e localização). Após reordenação, um cartão legítimo poderia ser rejeitado mesmo quando fosse o único de identidade correspondente. O serviço Android `OverlayService.java` continua protegendo `coordinateRequestToken`, `currentCoordinateTarget`, cooldown e expiração.
+
+**Correções implementadas:**
+1. `app/src/main/assets/probe.js` — cálculo de identidade em todos os cartões do resultado atual, sem confiar cegamente no índice. Só permite reencontro por nome, CP, número e local quando o fingerprint for completo e **único**; recusado se houver duplicidade, ou apenas identidade parcial fora do índice. O clique segue estritamente no próprio cartão correspondente; nenhuma leitura global de Maps.
+2. `app/src/main/assets/api_browser_transport.js` — origin guard exige `https://pogocoordinates.com` canônico, rejeita outras portas, e testa a origem antes de acessar `localStorage.jwt`.
+3. `app/src/main/assets/api_result_contract.js` — item sem `despawn_at` válido deixa de ser aceito como cartão vivo (anteriormente timestamp inválido passava). Expirados e inconsistências já eram excluídos.
+4. `app/tests/lt77-post14-coordinate-hardening.test.js` — teste dinâmico do trecho real de `matchingCoordsCard` contra reordenação, ambiguidade, identidade parcial, cidade errada; teste de origem com porta não canônica e exclusão de resultados com data inválida. Atualizados testes históricos Stage 5, LT64 e LT68 para a nova semântica, sem retirar as verificações de unicidade.
+5. `docs/LT77_CHECKLIST_ACEITACAO.md` — evidências Samsung e pendências registradas.
+6. `.github/workflows/lt77-post14-samsung-signed.yml` — pipeline isolado de QA e release para `0.00.77`, versionCode `54277`, JDK17/Gradle8.11.1/SDK36, todas as suítes Node (exceto assertiva LT74 obsoleta já excluída na Etapa14), assinatura via secrets protegidos já existentes, R8, apksigner/certificado/manifesto, sem publicação Drive. Artefato somente em GitHub Actions se todas as verificações terminarem com sucesso; nunca confundir pipeline iniciado com APK verificado.
+
+**Falhas intermediárias do CI sem omissão:** [#40145979790](https://github.com/LucianoToscano/PokeSearch/actions/runs/40145979790) falhou na asserção textual antiga da Etapa 5; [#40146043021](https://github.com/LucianoToscano/PokeSearch/actions/runs/40146043021) e [#40146070768](https://github.com/LucianoToscano/PokeSearch/actions/runs/40146070768) falharam no teste histórico LT68 que proibia o novo reordenamento por fingerprint único. Os testes históricos foram adaptados ao requisito novo, mantendo rejeição de ambiguidade. Conferir o CI mais recente antes de declarar release.
+
+**Separação obrigatória de estados:** testes com fixtures não provam acesso autenticado ao PoGoCoordinates. `api_integration_router.js` permanece com `USE_AUTHORIZED_API=false`, ainda não carregado pelo `OverlayService`; API e catálogo oficial não foram ligados, e o fallback DOM permanece. Nenhum JWT/reveal_code de usuário foi coletado, impresso, persistido ou enviado à ponte Android. **NÃO declarar migração REST completa, app homologado no Samsung ou LT77 publicada** só pelo pipeline.
+
+**Checklist físico pendente:** medir gap entre Pokébola/resultados e fluidez de arraste; popups em posições extremas/orientação; filtros Nível, CP, 7 tamanhos, sexo, Forma/costumes oficiais, clima, raio 0–1000, GL/UL, IV e Shiny com conta válida; Get coords para spawn único, reordenado, duplicado, expirado, botão em cooldown e retorno em Maps com cópia; memória por sessão longa e R8 release. Registre novos prints e estado do site sem dados secretos. PR #34/#49 sem merge, LT76 e Drive intactos.
+
+
+
+### Verificação final do pipeline pós-Etapa 14 (24/10/2026, horário Brasil)
+
+- [GitHub Actions #40146111436](https://github.com/LucianoToscano/PokeSearch/actions/runs/40146111436): **COMPLETED/SUCCESS**, commit de código/workflow testado `3d9069900d2bb57615dc45945056acf61bd3e226`. Os testes Node, a tarefa Gradle `:app:assembleRelease`, validação de certificado, R8, versionCode/Name, não depurável e upload de artefato terminaram com SUCCESS.
+- Artefato exclusivo para homologação, **não publicado no Drive**: `PokeSearch-v0.00.77-LT-Samsung-QA-protected-release`, artifact ID `12580991636`. O ZIP contém `PokeSearch-v0.00.77-LT-Samsung-QA.apk`, `SOURCE_COMMIT.txt`, `SHA256SUMS.txt`, `SIGNING-REPORT.txt`, `PACKAGE-VERSION.txt`, `PROTECTION.txt`. Fonte exata do APK: `3d9069900d2bb57615dc45945056acf61bd3e226` (após correções e antes deste registro documental).
+- Versão técnica de QA: `0.00.77` / versionCode `54277`, release R8 com a mesma assinatura persistente validada em CI (fingerprint `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`), para instalação de teste em Samsung. **Não é LT77 homologada, nem rollout/publicação**.
+- Não houve integração da API no `OverlayService`; o fluxo efetivo continua DOM/probe. Get coords na UI foi corrigido para um caso reprodutível por fixture, mas o relatório de falha recebido ainda exige confirmação física. A necessidade de autenticação e teste de API sob origem oficial permanece.
+- Arquivos `docs/GUIA_MESTRE.md` e `docs/LT77_CHECKLIST_ACEITACAO.md` atualizados documentalmente depois do CI; o APK permanece vinculado ao commit de código `3d906...`, não aos commits de documentação. `main`, PR #34/#49, LT76, APK oficial, assinatura e manifesto do Drive não foram modificados.
+
+---
+## LT77 — QA r2: CORREÇÃO DE PARSER OPEN IN MAPS (24/10/2026)
+
+- Branch isolada: fix/lt77-post14-maps-coordinates-regex-20261024, derivada do HEAD a8bc7c1e8efaae5d25f7006e72b66387ab098664. Main, PR #34/#49 Draft, LT76 pública e atualizacao.json no Drive não modificados.
+- Causa comprovada em app/src/main/assets/probe.js, ação readCoords: RegExp literal de latitude/longitude com barras invertidas duplicadas. O parser não reconhecia os dígitos e separadores do link Open in Maps, podendo causar "Aguardando coordenadas" mesmo com um link válido. Não comprova a causa específica em cada aparelho até homologação.
+- Correção mínima: expressões reais para dígitos e separadores no literal RegExp, mantendo limites -90..90/-180..180. Sem qualquer GPS, proxy, coleta de credenciais, scan global ou remoção da validação do cartão único.
+- Testes: app/tests/lt77-post14-maps-coordinates-regex.test.js executa o trecho real readCoords do probe.js em VM e cobre Maps, coordenadas negativas, etiqueta do cartão, inválidas, cartão ausente e ausência de botão. Testes históricos preservados.
+- Workflow de build e QA privada: .github/workflows/lt77-post14-maps-qa-r2.yml; código testado 013bc4e43752c4eb38419acccfe807820995b0dc. GitHub Actions https://github.com/LucianoToscano/PokeSearch/actions/runs/40147137124 COMPLETED/SUCCESS; regressões, assembleRelease, R8, assinatura v2 e artefato SUCCESS.
+- Artefato GitHub Actions 12580543567: PokeSearch-v0.00.77-LT-Samsung-QA-r2-protected-release, APK interno PokeSearch-v0.00.77-LT-Samsung-QA-r2.apk. versionName 0.00.77, versionCode 54278 (QA r1 54277). Certificado SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. ZIP e SHA256SUMS verificados: APK SHA-256 788226bb430591fd09fce3af5890166bf78b38feb0baceb3d3f0b23bf8bfca0a, SOURCE_COMMIT.txt confirma 013bc4e43752c4eb38419acccfe807820995b0dc.
+- Limite de evidência: nenhuma homologação física Samsung, site real autenticado, captura de coordenadas real ou integração REST final foi executada. Os prints de Caterpie/Slakoth anteriores demonstram relatos de falha, não prova de sucesso da QA r2.
+- Estado de proteção: USE_AUTHORIZED_API=false; OverlayService continua DOM/probe; fallback preservado. Nenhum JWT/reveal_code foi lido/logado pela nova correção. Nenhuma publicação Google Drive, merge ou mudança na main.
+- Testes Samsung ainda abertos: Get coords válido, Open in Maps, copiar somente lat/lng verificadas, reordenação, cartões iguais, cooldown, expiração; depois menus, filtros, Shiny/GL/UL, Weather/Form e consumo em sessão longa.
+
+
+## LT77 QA R2 — Continuação segura após fc30f99 (24/10/2026)
+
+- Branch exclusiva: `fix/lt77-post14-maps-coordinates-regex-20261024`; ponto de partida `fc30f9961eb69487a89df5aecb893b48c6f8f1a5`. Main, PR #34/#49, identidade Android, assinatura, preferências existentes e publicação LT76 inalterados.
+- Auditoria do contrato autorizado de `pogo.md` no Google Drive: `api_result_contract.js`, `api_browser_transport.js`, `api_reveal_contract.js` e `api_integration_router.js` são módulos experimentais, sem ligação ao `OverlayService`. `USE_AUTHORIZED_API=false` permanece; busca e coordenadas do APK seguem DOM/`probe.js`.
+- Correção objetiva: quando o catálogo contém várias formas oficiais da mesma espécie, selecionar o nome da espécie gera `pokemon_ids`, sem rejeitar por falsa ambiguidade; selecionar o nome da forma gera `species_forms` somente com correspondência oficial única. Caso ausente/duplicado continua rejeitado; fixtures garantem os dois sentidos.
+- Transporte experimental: HTTP 400/422 = `invalid-request`; 404/410 = `expired-or-missing-spawn`; 503 = `service-unavailable`; 401, 403 e 429 preservados. Resposta de erro nunca é copiada literalmente para UI/Android.
+- **Despawn em Info Pokémon**: valor inicial `showTimers=false`, leitura sem preferência `getBoolean("showTimers", false)`; portanto OFF por padrão; ON explícito persistido deve continuar ON (não sobrescrever configurações). Regressão coberta por teste de fonte. Cronômetro local de expiração de spawn funciona independentemente da preferência visual OFF.
+- Get coords: correção de índice reordenado/regex já presente no QA R2; sem prova em Samsung autenticado, não declarar homologado. Resultado 403 de trainer requer mensagens específicas antes de habilitação; catálogo, origem CORS e filtros efetivos também pendentes.
+- Checklist de aceitação: `docs/LT77_CHECKLIST_ACEITACAO.md`; CI deve ser consultado após últimos commits. Artefato GitHub Actions QA não equivale a publicação no Drive. Não atualizar manifesto `atualizacao.json` nem fazer merge em `main` antes da aceitação física.
+
+### LT77 QA R2 — Catálogo oficial experimental e resposta de erro tipada
+
+- Base do complemento: `fccef433fb3e1e62a3b7708d6726e8a2e752bf79`. Novo `api_catalog_cache.js` e `lt77-api-catalog-cache.test.js`: catálogos de formas e species_forms trazidos exclusivamente pelos endpoints documentados, cache em memória de 300 segundos, validação, origem oficial e sem leitura de credenciais; módulo permanece inerte até ativação explícita.
+- O transporte experimental agora interpreta somente os códigos 403 `trainer_not_linked`, `shiny_account_unavailable` e `vip_required` da resposta JSON limitada, sem repassar dados arbitrários; testes respectivos adicionados.
+- Permanecem pendentes: conexão do catálogo/transport ao Android, serialização de resultados com prova de critérios, API on em sessão autenticada, Get coords real, aceite no Samsung. `USE_AUTHORIZED_API=false` e fallback DOM preservados. Os commits de API não justificam distribuir LT77 ao público.
+
+### LT77 QA R3 — Build protegido, merge experimental e staging no Google Drive
+
+- Workflow `lt77-post14-samsung-qa-r3.yml`, execução [#40148610888](https://github.com/LucianoToscano/PokeSearch/actions/runs/40148610888) **SUCCESS**. HEAD de compilação `23bbbf9c09a0b2e642687173ed245fc097000627`, `versionName=0.00.77`, `versionCode=54279`. R8, APK release não depurável, assinatura v2 e `com.lucianotoscano.pokesearch` verificados. Assinatura SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. SHA-256 APK `1727f2fb2973b4b8af22510bd55d70baa4fcd711cb04f96abbe56ae73dd8e49f`.
+- Artefato #12582335381 extraído, checksum verificado. APK e ZIP de auditoria copiados para a pasta privada de teste [QA_LT77_NAO_PUBLICADO](https://drive.google.com/drive/folders/17FYoysgtoqGF5lw8MkENq6ModIp3ZOCN) em `Atualizacoes_PokeSearch`; arquivos não compartilhados ao público, não publicados no manifesto.
+- `feature/lt77-authorized-api-contract-20261024` recebeu fast-forward do ramo QA até o HEAD de build, mantendo `main=caea98b7b57b9e45d5218e907eb392d76953dd53`. PR #34 e #49 continuam abertas em Draft. Nenhum merge em produção.
+- O arquivo público `atualizacao.json` ainda aponta para LT76 `0.00.76/54276`; não foi alterado. Não confundir QA R3 com atualização disponível na Home.
+- Evidências pendentes: Galaxy Samsung (Get coords e cooldown, Despawn visual OFF padrão, filtros reais), autenticação e API conectada ao `OverlayService`, catálogo oficial renderizado no menu e `/reveal` real. A flag API segue OFF, fallback DOM preservado. Sem aceite físico, não liberar LT77 ao público.
+
+## LT79 QA — Sprites Pikachu e atualizações GitHub — checkpoint verificável (24/10/2026)
+Branch isolada: fix/lt79-sprites-catalog-updates-qa-20261024; PR #51 Draft (base feature/lt78-android-api-wiring-20261024). Main, PR #34 e PR #49, distribuição LT76 preservadas.
+Causa sprites: api_result_contract.js/spriteData retornava string vazia. Corrigido para usar sprite comunitário da espécie base de URL já existente no app, mantendo fallback seguro em formas e fantasias sem associação verificada.
+Causa Pikachu: menu no modo QA API ainda dependia da leitura do listbox React pelo probe.js (timeout 20x300ms); agora usa catálogo GET /forms e GET /pokemon/catalog?costumes=true via sessão WebView já autorizada e cache, preservando DOM como opção e os demais filtros locais.
+Gestos: orientação mostrada uma vez, com SharedPreferences, Pokébola curto para resultados / segurar 600ms para menu; ↻ curto atualiza / segurar 600ms configura intervalo.
+Atualizações: novo GitHubUpdateCenter + WorkManager/30min, canal Android separado, apenas Releases estáveis, verificação por versionCode, download nativo HTTPS com barra/cancelamento, SHA-256 e certificado SHA-256 pinado, pacote correto, APK não depurável, FileProvider e confirmação de instalação do Android. GitHub não aparece na interface; URL pública não é tratada como segredo. Drive UpdateCenter anterior mantido.
+Proteção QA: PokeSearch-v0.00.78-LT-Samsung-QA-LT79.apk, versionCode 54281, applicationId com.lucianotoscano.pokesearch, R8 + shrinkResources, APK release assinado.
+Prova CI: https://github.com/LucianoToscano/PokeSearch/actions/runs/40152506605 — SUCCESS — SOURCE_COMMIT d54643af8e0a5084d0c7645e7f6b1e7381733a62.
+APK SHA-256: 392a30e2021bf25a97c6fe5879dfc83fcd06efca519ba1a45a0a8e975779eb7d.
+Assinatura certificado SHA-256: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. Assinatura v2 verificada; release não depurável.
+Artefato QA privado no GitHub Actions, e ZIP de auditoria/instalação em Google Drive pasta QA_LT77_NAO_PUBLICADO. Nenhuma publicação GitHub Releases oficial, versão pública LT76 e manifesto atualizacao.json intocados.
+Publicação oficial: workflow pokesearch-official-release-manual.yml EXCLUSIVAMENTE workflow_dispatch, environment official-updates obrigatório (configurar proteção por revisor antes do uso), verificação hash/pacote/assinatura. Não executar antes de homologar no Samsung.
+Pendente teste físico: sprites nos resultados reais, Pikachu, formas/costumes, todas as combinações de filtros, Get coords, Android notificações/Doze, instalação na versão anterior, persistência de preferências, fallback quando sem rede.
+Limitações: a versão atual LT76 ainda não contém o novo detector de Releases, logo não poderá notificar sobre QA LT79 sem instalar um APK com este código; não fingir atualização OTA da própria LT76. Sprite oficial de variantes sem fonte comprovada não é inferido. O Drive fallback ainda usa seu fluxo legado no navegador.
+Arquivos, critérios de aceite e arquitetura em docs/LT79_SPRITES_CATALOGO_ATUALIZACOES_QA.md e docs/LT77_CHECKLIST_ACEITACAO.md. O histórico original deste Guia permanece integral.
+
+## LT79 — distribuição de transição Drive-GitHub — checkpoint (24/10/2026)
+Branch release/lt79-drive-bridge-github-20261024 (PR #52 Draft). App com.lucianotoscano.pokesearch; versão 0.00.79; versionCode 54282; SOURCE_COMMIT acacf8bcd9c485bee2458ab1e2e80f3dcc13a83b.
+CI https://github.com/LucianoToscano/PokeSearch/actions/runs/40153642575 — SUCCESS. APK release protegido R8, não depurável, assinatura v2 verificada, certificado SHA256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. Hash APK 72fbd2b34495c30939db3fff971c68dcf8f923f8d7d8c0c6aba01872f7cb1ece, tamanho 38601587 bytes.
+Drive destino PokeSearch-v0.00.79-LT.apk, ID 16qC01Sy5DPydPGFm75a9ss1dleY3yFIs (rebaixado de QA para publicação gradual). Arquivo enviado e verificado bit a bit, porém ACL privado (owner only); NÃO ativar manifesto LT79 até permitir leitura por qualquer pessoa com link.
+Live atualizacao.json Drive ID 15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf permanece LT76/54276, com permissões anyone/reader. JSON LT79 preparado em arquivo separado: 1-xa93QIl47Obe69sSfssusnwKvs-faXJ. Backup LT76 criado e original antigo preservado.
+Depois do compartilhamento público do APK, substituir bytes do manifesto EXISTENTE mantendo o ID, status enabled true para LT79 e comprovar leitura, versão, nome, hash, link e acessibilidade. Então usuários de LT76 verão o aviso ao retornar à Home (cache de 5 minutos). Não há push novo na LT76; notificações WorkManager/GitHub só passam a funcionar depois da instalação 0.00.79.
+GitHubUpdateCenter usa releases oficiais estáveis e comparação por versionCode, verifica APK nativamente (SHA-256, pacote, assinatura pinada). Publicação seguinte >54282 somente após workflow manual protegido e autorização do proprietário. Drive legado permanece fallback. API experimental QA defaults OFF para novas instalações, com preferências antigas preservadas e DOM como padrão.
+Samsung: instalação e atualização real, menu Pikachu, sprites/formas, filtros, opções, Get coords e alertas nativos ainda aguardam homologação física. Sem afirmação de dispositivo aprovado.
+Detalhes, riscos e pendências: docs/LT79_PUBLIC_DRIVE_BRIDGE.md e docs/LT79_DRIVE_RELEASE_STATUS.md. Main e PRs anteriores não alterados.
+
+## LT80 — Get coords React rebind — Samsung (24/10/2026)
+Print físico: Swablu Shiny #333, ♀, tamanho M, PC 494, nível 21, IV 100% 15/15/15, local Ostend/West Flanders/Belgium. Ao executar Get coords, detalhamento mostrou "Pokémon alterado nos resultados; coordenadas não copiadas".
+Diagnóstico: erro literal emitido em probe.js/readCoords quando matchingCoordsCard retorna null após clicar; o código anterior marcava pending=false e interrompia o polling. Não há prova ainda se o site causou re-render transitório, duplicidade de spawn, ou alguma diferença de DOM.
+Branch fix/lt80-coords-react-rebind-samsung-20261024, PR #53 Draft; alteração em probe.js e OverlayService.java. Quando o cartão some temporariamente, readCoords retorna pending=true; Android reconsulta por até 10 tentativas de 750 ms, sem clicar duas vezes ou buscar links Maps de outros cartões. Quando reidentifica, exige nome, número, CP, local e também IV, sexo e nível não vazios. Mesmo nome, PC e local com IDs distintos nunca pode gerar cópia errada. Sem reidentificação inequívoca, retorna mensagem clara e nenhuma coordenada copiada. Java invalida callbacks ao trocar de seleção.
+Teste JS dedicado app/tests/lt80-coords-react-rebind.test.js, atualização de regressão LT77; workflow assinado LT80 (0.00.80, 54283) para QA no Samsung, SEM publicação pública. APK público LT79 0.00.79/54282 no Google Drive continua inalterado, GitHub Releases não usado sem aprovação. Main e outros PRs preservados. Homologação física de Get coords e Open in Maps ainda pendente.
+Documento detalhado: docs/LT80_GET_COORDS_REACT_QA.md.
+
+## LT80 — GitHub Release oficial publicada para LT79 (24/10/2026, Fortaleza)
+Publicação expressamente autorizada pelo proprietário em novo turno. Versão PokeSearch 0.00.80, versionCode 54283, APK PokeSearch-v0.00.80-LT.apk. Tag estável v0.00.80-54283: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.80-54283 (latest=true, draft=false, prerelease=false).
+CI QA assinado #40154892844 SUCCESS, SOURCE_COMMIT f97aa19a2ee2d6d0917c4eab0b9cd61f77209605. Workflow de publicação aprovadora #40155214318 SUCCESS. Hash SHA256 14eedd2d181f1d09437b3985f88ac5a5c758463772dfce50f3d97a34f136b317, 38601751 bytes; GitHub Releases asset uploaded com digest SHA-256 idêntico. Assinatura permanente SHA256 certificado 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e; appId com.lucianotoscano.pokesearch, não depurável, R8.
+Usuários LT79 já têm GitHubUpdateCenter: busca o Release estável na Home e via WorkManager 30 minutos sujeito a Doze, notificação mediante autorização, download nativo e validação antes do instalador Android. Google Drive mantém LT79/54282 para clientes legados e para migração, sem alterar o ID do manifesto nem main. Nenhum merge automático de PRs #34, #49, #51, #52, #53.
+Correção do Get coords contra re-render transitório/ambiguidade no probe.js; testes automatizados passaram, porém confirmação do usuário em Samsung físico na LT80 ainda é pendência. Ver docs/LT80_GITHUB_UPDATE_PUBLICADO.md e docs/LT80_GET_COORDS_REACT_QA.md.
+
+## LT81 — Localização Samsung corrigir aplicação, corte e limpeza (24/10/2026)
+Evidência Samsung: print do app com coordenadas longas em linha estreita, raio 1000 km, "⚠ Localização não aplicada", lixeira que aparentemente não apagava coordenadas. Diagnóstico: input fazia parte do mesmo cabeçalho título+colar, reduzido por flex; lixeira chamava Native.setLocation(false,"",0) sem zerar o campo/raio/slider em HTML; resultado final não reconfigurava Coords/Radius após divergência do React no limite de envio.
+Branch fix/lt81-location-apply-clear-wide-samsung-20261024, PR #54 Draft, versão de teste 0.00.81, versionCode 54284, appId com.lucianotoscano.pokesearch. CSS Localização tem limite 296 px e campo monoespaçado 100% na segunda linha. Limpar zera editor, slider e raio e delega ao nativo remoção de prefs e verificação de formulário OFF; sincroniza com estado Native preservando rascunho não submetido. Pré-Search faz duas tentativas adicionais de reconfigurar par site Coords+Radius se verificação final divergir, nunca permite Search não verificado. Demais filtros e resultados antigos preservados.
+Testes app/tests/lt81-location-samsung-regression.test.js e regressões históricos acionados no GitHub Actions CI #40156253334. CI/build protegido e assinatura devem ser verificados antes de compartilhar APK de teste; nenhuma homologação física desta correção ainda recebida.
+NÃO publicar LT81 via Releases/Drive antes de QA Samsung. Release GitHub LT80/54283, Drive LT79/54282, main e PRs anteriores não alterados. Ver docs/LT81_LOCATION_SAMSUNG_QA.md.
+
+## LT82 — Samsung UI: Localização compacta, Favoritos, Clima e tutorial (25/10/2026)
+Identidade preservada: appId com.lucianotoscano.pokesearch, namespace com.lucianotoscano.pokesearchoverlay, GitHub LucianoToscano/PokeSearch. Branch fix/lt82-samsung-ui-polish-20261025, PR #55 Draft, sem mudanças à main, assinatura ou lançamento oficial existente.
+Layout Localização segundo referência visual do usuário: título Localização centralizado; abaixo campo de coordenadas de largura integral, exemplo 24.9407581,121.1889794; barra de raio; por último linha [Colar seta para cima] [1000] km [✓] [Lixeira], todo conteúdo central e compacto. CSS independente limitado a 258px (ou viewport menos 14px); sem espaços laterais inúteis. Mantém provas no site, filtros, raio 0-1000, limpar campo/slider e preferências.
+Clima: ao clicar seleção, patchSelectedFilterKeys(["weather"]) inicia sincronização real, preservando confirmação do site; banners auxiliares de divergência/"Falta aplicar" não poluem o menu Clima. Falhas de verificação continuam protegidas e diagnosticáveis, não declara sucesso sem correspondência.
+Favoritos: diálogo nativo ancorado no botão estrela escolhe abrir para baixo se houver espaço, senão para cima, ou lado com mais espaço; grade 10×5, 50 selecionáveis, campo busca abaixo, janela não modal preservados.
+Tutorial: preferencia persistente gestureHelpV1Shown impede repetição; novas instalações mostram duas dicas curtas sequenciais (Pokébola: toque/segure/arraste; ↻: toque/segure). HTML title nos botões Pokébola, ↻ e intervalos removido para evitar balões longos recorrentes; aria-label de acessibilidade mantida.
+QA LT82 versionName 0.00.82, versionCode 54285, release protegida R8/ProGuard, certificado permanente; teste dedicado app/tests/lt82-samsung-ux-polish.test.js, teste histórico LT62 e LT70 adaptado ao novo layout, Actions em .github/workflows/lt82-samsung-qa-polish.yml. Para CI final e SHA consultar docs/LT82_UI_SAMSUNG_QA.md.
+QA física Samsung ainda pendente. NÃO publicar LT82 via GitHub Releases nem atualizar manifesto Drive sem homologação. GitHub Release oficial LT80 v0.00.80-54283 e manifest Drive LT79 54282 mantidos para seus usuários. Nada de PvPPokeGo, GPS físico, proxy ou backend.
+
+## LT83 — publicação oficial e correção Localização Samsung (25/10/2026)
+ÚLTIMA VERSÃO PÚBLICA verificável neste checkpoint: LT83, versionName 0.00.83, versionCode 54286. Release oficial GitHub latest estável https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.83-54286 ; APK PokeSearch-v0.00.83-LT.apk; 38603587 bytes; SHA256 451e4781581122908f014a893f693c8312b36b2c222a8579c499c6c3e2975c1c (GitHub asset digest confirmado); certificado permanente sha256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e; assinatura v2 true, R8, não depurável. Código fonte compilado (imutável para este APK): 5cf9adb62efb97a185ec955cab6eb0f49fbb4e88. GitHub Actions QA completo 40159949347 SUCCESS, publicação 40160258112 SUCCESS. Commits futuros de documentação/merge diferem do SOURCE_COMMIT sem alterar APK.
+Distribuição a clientes LT79+: atualizador nativo GitHub Releases, checksum+cert+package+versionCode, confirmação do instalador pelo usuário. Google Drive legado ID 15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf continua na LT79 0.00.79 / 54282 como ponte a instalações antigas, não é release latest.
+Evidência: captura Samsung da LT82 mostra coordenada truncada, Colar parcialmente fora à esquerda, Lixeira extrapolando à direita, popup encolhendo e "Localização não aplicada". Usuário relatou LT79 funcional. Corrigido LT83: largura nativa Location 286dp (limitada tela), CSS 286px no fim do estilo, fila com grid centralizado e controles de tamanhos fixos, input monoespaçado sem overflow. Probe.js do site aceita rótulos Coords/Coordinates, e apenas quando necessário identifica modo Coords pela presença de par único de placeholders oficiais coords+radius visíveis e Area inativo, sem afirmar sucesso baseado no clique; cliques repetitivos no React limitados por 1500ms. Valores latitude/longitude e raio continuam exigindo correspondência exata antes de submitSearch, com falha fechada e sem geolocalização física.
+Nenhuma funcionalidade removida: IV/GL/UL, Shiny, Clima, Favoritos até 50 em grid 10x5, sons/alertas, sprites/formas, Get coords vinculado ao mesmo Pokémon, Editor Visual, atualização GitHub, dados e preferências, 10 resultados, R8/assinatura. Não misturar PvPPokeGo. Branch fix/lt83-location-recovery-geometry-20261025 PR #57 Draft na escrita deste registro; solicitar/realizar merge canônico em main após testes e conferir HEAD posterior. PR #56 da LT82 é histórico supersedível após merge. Outras PRs não devem ser mescladas cegamente.
+**Homologação Samsung LT83 ainda PENDENTE**: aprovado CI/testes e assinatura, mas NÃO aprovada execução física. Confirmar coordenadas completas, centralização, Colar/✓/Lixeira, raio, reabrir e encolhimento, confirmação de site, filtros e limpeza. Se falha persistir, LT84 corrigir com diagnóstico real sem alegar sucesso.
+Referência priorizada: docs/ESTADO_CANONICO_LT83.md e cabeçalho do README; versões anteriores de ESTADO_CANONICO e texto antigo de README são HISTÓRICOS. Preservar GUIA_MESTRE.md integral (não sobrescrever via API truncada). Próximo monotonic code >=54287.

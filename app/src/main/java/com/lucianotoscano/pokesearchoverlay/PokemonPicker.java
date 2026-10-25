@@ -18,7 +18,8 @@ import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
+import android.widget.GridLayout;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONArray;
@@ -114,26 +115,32 @@ public final class PokemonPicker {
         }
         void filter(String term){
             String key=WatchAlerts.normalized(term);
+            // Dex text accepts #004, 004 or 4 without guessing other species.
+            String dexInput=term==null?"":term.trim().replaceFirst("^#","").trim();
+            boolean dexSearch=dexInput.matches("[0-9]{1,4}");
             visible.clear();
             Set<String> selected=WatchAlerts.watched(activity);
             if(selectedOnly){
                 for(Entry e:full)if(selected.contains(e.normalized))visible.add(e);
             }else{
-                // Results are distinct from favorites, so you can always
-                // see WHAT IS ALREADY SELECTED above the search suggestions.
-                for(Entry e:full){
-                    if(selected.contains(e.normalized))continue;
-                    if(key.isEmpty()||e.normalized.startsWith(key)||
-                       String.valueOf(e.id).startsWith(key)){
-                        visible.add(e);
-                        if(visible.size()>=80)break;
-                    }
-                }
-                if(!key.isEmpty()&&visible.size()<80){
+                // Empty query never populates a large list. Max three visible
+                // suggestions; type more characters to narrow results, no scroll.
+                if(!key.isEmpty()){
                     for(Entry e:full){
-                        if(selected.contains(e.normalized)||visible.contains(e))continue;
-                        if(e.normalized.contains(key))visible.add(e);
-                        if(visible.size()>=80)break;
+                        if(selected.contains(e.normalized))continue;
+                        if(e.normalized.startsWith(key)||
+                           (dexSearch&&(String.valueOf(e.id).startsWith(dexInput)||
+                            String.format(Locale.US,"%03d",e.id).startsWith(dexInput)))){
+                            visible.add(e);if(visible.size()==3)break;
+                        }
+                    }
+                    if(visible.size()<3){
+                        for(Entry e:full){
+                            if(selected.contains(e.normalized)||visible.contains(e))continue;
+                            if(e.normalized.contains(key)){
+                                visible.add(e);if(visible.size()==3)break;
+                            }
+                        }
                     }
                 }
             }
@@ -149,7 +156,7 @@ public final class PokemonPicker {
                 LinearLayout row=new LinearLayout(activity);
                 row.setGravity(Gravity.CENTER_VERTICAL);
                 row.setOrientation(LinearLayout.HORIZONTAL);
-                row.setPadding(dp(activity,10),dp(activity,5),dp(activity,10),dp(activity,5));
+                row.setPadding(dp(activity,6),dp(activity,2),dp(activity,6),dp(activity,2));
                 android.graphics.drawable.GradientDrawable rowBg=new android.graphics.drawable.GradientDrawable();
                 rowBg.setColor(Color.argb(225,43,48,57));
                 rowBg.setCornerRadius(dp(activity,7));
@@ -157,19 +164,19 @@ public final class PokemonPicker {
                 row.setBackground(rowBg);
                 holder.picture=new ImageView(activity);
                 holder.picture.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                row.addView(holder.picture,new LinearLayout.LayoutParams(dp(activity,43),dp(activity,43)));
+                row.addView(holder.picture,new LinearLayout.LayoutParams(dp(activity,36),dp(activity,36)));
                 holder.dex=new TextView(activity);
-                holder.dex.setTextColor(Color.rgb(153,161,177));holder.dex.setTextSize(12);
+                holder.dex.setTextColor(Color.rgb(153,161,177));holder.dex.setTextSize(10);
                 holder.dex.setPadding(dp(activity,9),0,dp(activity,9),0);
                 row.addView(holder.dex);
                 holder.name=new TextView(activity);
-                holder.name.setTextColor(Color.WHITE);holder.name.setTextSize(15);
+                holder.name.setTextColor(Color.WHITE);holder.name.setTextSize(12);
                 row.addView(holder.name,new LinearLayout.LayoutParams(0,-2,1));
                 holder.checked=new TextView(activity);
                 holder.checked.setTextColor(Color.rgb(255,214,116));
-                holder.checked.setTextSize(18);holder.checked.setTypeface(null,Typeface.BOLD);
+                holder.checked.setTextSize(16);holder.checked.setTypeface(null,Typeface.BOLD);
                 holder.checked.setGravity(Gravity.CENTER);
-                row.addView(holder.checked,new LinearLayout.LayoutParams(dp(activity,26),dp(activity,43)));
+                row.addView(holder.checked,new LinearLayout.LayoutParams(dp(activity,26),dp(activity,36)));
                 row.setTag(holder);recycled=row;
             }else holder=(Holder)recycled.getTag();
             Entry e=visible.get(position);
@@ -185,163 +192,188 @@ public final class PokemonPicker {
     }
     /** Works from MainActivity and directly from OverlayService without changing apps. */
     public static void show(Context activity,Runnable changed,Runnable dismissed){
+        show(activity,changed,dismissed,-1,-1);
+    }
+    /** Native icon anchor is in physical screen pixels; negative means legacy centering. */
+    public static void show(Context activity,Runnable changed,Runnable dismissed,
+                            int anchorX,int anchorY){
         List<Entry> all=readCatalog(activity);
         if(all.isEmpty()){
             Toast.makeText(activity,"Catálogo de Pokémon indisponível",Toast.LENGTH_LONG).show();
             return;
         }
+
+        // LT62: Show every saved favorite together, at most 10 per row and
+        // five rows (50). Search below sprites, no horizontal paging/swiping.
+        // No ListView, ScrollView or hidden off-screen controls.
         LinearLayout root=new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(activity,13),dp(activity,10),dp(activity,13),dp(activity,12));
+        root.setPadding(dp(activity,10),dp(activity,6),dp(activity,10),dp(activity,9));
 
-        LinearLayout header=new LinearLayout(activity);
-        header.setGravity(Gravity.CENTER_VERTICAL);
+        // LT66: independently center the count in the entire row rather
+        // than the remaining width after the variable-length title.
+        FrameLayout header=new FrameLayout(activity);
+        header.setMinimumHeight(dp(activity,29));
         TextView title=new TextView(activity);
-        title.setText("☆  POKÉMON FAVORITOS");
+        title.setText("☆ FAVORITOS");
         title.setTextColor(Color.rgb(244,247,250));
         title.setTypeface(null,Typeface.BOLD);
-        title.setTextSize(15);
-        header.addView(title,new LinearLayout.LayoutParams(0,dp(activity,43),1));
+        title.setTextSize(11);
+        title.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);
+        title.setSingleLine(true);
+        title.setMaxWidth(dp(activity,99));
+        FrameLayout.LayoutParams titleLp=new FrameLayout.LayoutParams(
+            -2,dp(activity,29),Gravity.START|Gravity.CENTER_VERTICAL);
+        header.addView(title,titleLp);
+        TextView count=new TextView(activity);
+        count.setTextColor(Color.rgb(197,213,230));
+        count.setTextSize(10);
+        count.setTypeface(null,Typeface.BOLD);
+        count.setGravity(Gravity.CENTER);
+        count.setSingleLine(true);
+        FrameLayout.LayoutParams countLp=new FrameLayout.LayoutParams(
+            -2,dp(activity,29),Gravity.CENTER);
+        header.addView(count,countLp);
         TextView finish=new TextView(activity);
-        finish.setText("✓ Fechar");
+        finish.setText("×");
+        finish.setContentDescription("Fechar Favoritos");
         finish.setGravity(Gravity.CENTER);
-        finish.setTextColor(Color.rgb(237,241,247));
-        finish.setTextSize(14);
-        finish.setTypeface(null,Typeface.BOLD);
-        android.graphics.drawable.GradientDrawable finishBg=new android.graphics.drawable.GradientDrawable();
-        finishBg.setColor(Color.argb(225,48,53,63));
-        finishBg.setStroke(dp(activity,1),Color.argb(100,194,202,218));
-        finishBg.setCornerRadius(dp(activity,9));
-        finish.setBackground(finishBg);
-        header.addView(finish,new LinearLayout.LayoutParams(dp(activity,87),dp(activity,34)));
+        finish.setTextColor(Color.rgb(231,237,246));
+        finish.setTextSize(19);
+        finish.setBackgroundColor(Color.TRANSPARENT);
+        FrameLayout.LayoutParams finishLp=new FrameLayout.LayoutParams(
+            dp(activity,27),dp(activity,29),Gravity.END|Gravity.CENTER_VERTICAL);
+        header.addView(finish,finishLp);
         root.addView(header);
-
-        TextView selectedTitle=new TextView(activity);
-        selectedTitle.setTextColor(Color.rgb(230,233,239));
-        selectedTitle.setTypeface(null,Typeface.BOLD);
-        selectedTitle.setTextSize(14);
-        selectedTitle.setPadding(dp(activity,3),dp(activity,3),0,dp(activity,6));
-        root.addView(selectedTitle);
-
-        TextView selectedEmpty=new TextView(activity);
-        selectedEmpty.setText("Nenhum favorito escolhido. Pesquise e toque numa estrela ☆ abaixo.");
-        selectedEmpty.setTextColor(Color.rgb(156,167,183));
-        selectedEmpty.setTextSize(12);
-        selectedEmpty.setPadding(dp(activity,6),dp(activity,4),0,dp(activity,12));
-        root.addView(selectedEmpty);
-
-        // Separate, clearly labeled list: selected Pokémon stay here
-        // even when the user types a different species into the search.
-        ListView selectedList=new ListView(activity);
-        selectedList.setDividerHeight(0);
-        selectedList.setCacheColorHint(Color.TRANSPARENT);
-        root.addView(selectedList,new LinearLayout.LayoutParams(-1,0));
-        Adapter selectedAdapter=new Adapter(activity,all,true);
-        selectedList.setAdapter(selectedAdapter);
-
-        View divider=new View(activity);
-        divider.setBackgroundColor(Color.rgb(55,61,73));
-        LinearLayout.LayoutParams dividerParams=new LinearLayout.LayoutParams(-1,dp(activity,1));
-        dividerParams.setMargins(0,dp(activity,4),0,dp(activity,12));
-        root.addView(divider,dividerParams);
-
-        TextView searchTitle=new TextView(activity);
-        searchTitle.setText("BUSCAR E ADICIONAR");
-        searchTitle.setTextColor(Color.WHITE);
-        searchTitle.setTextSize(14);
-        searchTitle.setTypeface(null,Typeface.BOLD);
-        searchTitle.setPadding(dp(activity,3),0,0,dp(activity,3));
-        root.addView(searchTitle);
 
         EditText search=new EditText(activity);
         search.setSingleLine(true);
         search.setTextColor(Color.WHITE);
-        search.setHintTextColor(Color.rgb(146,154,168));
-        search.setHint("⌕  Nome ou número da Pokédex");
-        search.setTextSize(14);
-        root.addView(search,new LinearLayout.LayoutParams(-1,dp(activity,49)));
+        search.setHintTextColor(Color.rgb(157,170,187));
+        search.setHint("Nome, forma ou nº da Pokédex");
+        search.setTextSize(12);
+        search.setPadding(dp(activity,8),0,dp(activity,8),0);
+        search.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
+        android.graphics.drawable.GradientDrawable inputBg=new android.graphics.drawable.GradientDrawable();
+        inputBg.setColor(Color.argb(92,16,23,33));
+        inputBg.setStroke(dp(activity,1),Color.argb(100,161,176,194));
+        inputBg.setCornerRadius(dp(activity,7));
+        search.setBackground(inputBg);
+        LinearLayout.LayoutParams searchParams=new LinearLayout.LayoutParams(-1,dp(activity,37));
+        searchParams.setMargins(0,dp(activity,5),0,dp(activity,6));
+        LinearLayout selectedRow=new LinearLayout(activity);
+        selectedRow.setGravity(Gravity.CENTER);
+        GridLayout sprites=new GridLayout(activity);
+        sprites.setColumnCount(10);
+        sprites.setRowCount(5);
+        // Fit 10 sprites even in a narrow 320dp Android window; outer tile
+        // width includes 1dp margins on both sides.
+        int screenDp=(int)(activity.getResources().getDisplayMetrics().widthPixels/
+            activity.getResources().getDisplayMetrics().density);
+        final int tileOuterDp=Math.max(23,Math.min(32,(Math.min(screenDp-22,348)-22)/10));
+        LinearLayout centeredSprites=new LinearLayout(activity);
+        centeredSprites.setGravity(Gravity.CENTER);
+        centeredSprites.addView(sprites,new LinearLayout.LayoutParams(-2,-2));
+        selectedRow.addView(centeredSprites,new LinearLayout.LayoutParams(-1,-2));
+        root.addView(selectedRow);
 
-        ListView results=new ListView(activity);
-        results.setDividerHeight(0);
-        results.setCacheColorHint(Color.TRANSPARENT);
-        root.addView(results,new LinearLayout.LayoutParams(-1,dp(activity,243)));
+        // Avoid an extra "Digite" text row: the search field already has its hint.
+        // Search and three native suggestions are BELOW the five sprite rows.
+        root.addView(search,searchParams);
+
+        // Suggestions are capped, unscrollable views. Search is empty by default.
+        LinearLayout results=new LinearLayout(activity);
+        results.setOrientation(LinearLayout.VERTICAL);
+        root.addView(results);
         Adapter suggestions=new Adapter(activity,all,false);
-        results.setAdapter(suggestions);
+        TextView noResults=new TextView(activity);
+        noResults.setText("Nenhum Pokémon encontrado");
+        noResults.setTextColor(Color.rgb(156,173,190));
+        noResults.setTextSize(11);
+        noResults.setPadding(dp(activity,4),dp(activity,7),0,dp(activity,3));
+        root.addView(noResults);
 
-        android.widget.CheckBox sound=new android.widget.CheckBox(activity);
-        sound.setText("Notificar favoritos (som definido no sino 🔔)");
-        sound.setTextColor(Color.WHITE);
-        sound.setTextSize(12);
-        sound.setChecked(WatchAlerts.enabled(activity));
-        sound.setOnCheckedChangeListener((button,enabled)->{
-            // PREF_MODE is authoritative. Changing only the old boolean
-            // leaves previous OFF/SILENT states active after reopening.
-            WatchAlerts.setMode(activity,enabled?"on":"off");
-            if(changed!=null)changed.run();
-        });
-        root.addView(sound);
+        final Runnable[] refresh={null};
+        Runnable updateSuggestions=()->{
+            String term=search.getText().toString().trim();
+            results.removeAllViews();
+            noResults.setVisibility(View.GONE);
+            if(term.isEmpty())return;
+            suggestions.filter(term);
+            for(int i=0;i<suggestions.getCount();i++){
+                Entry entry=(Entry)suggestions.getItem(i);
+                View row=suggestions.getView(i,null,results);
+                LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,dp(activity,45));
+                params.setMargins(0,0,0,dp(activity,2));
+                results.addView(row,params);
+                row.setContentDescription("Adicionar "+entry.name+" aos favoritos");
+                row.setOnClickListener(v->{
+                    if(WatchAlerts.watched(activity).size()>=50){
+                        Toast.makeText(activity,"Limite de 50 favoritos atingido",Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    WatchAlerts.toggle(activity,entry.name);
+                    refresh[0].run();
+                });
+            }
+            if(suggestions.getCount()==0)noResults.setVisibility(View.VISIBLE);
+        };
 
-        android.widget.Button testNotification=new android.widget.Button(activity);
-        testNotification.setText("🔔 Testar notificação");
-        testNotification.setAllCaps(false);
-        testNotification.setTextSize(12);
-        testNotification.setTextColor(Color.rgb(218,247,239));
-        android.graphics.drawable.GradientDrawable testBg=new android.graphics.drawable.GradientDrawable();
-        testBg.setColor(Color.argb(208,47,57,69));
-        testBg.setCornerRadius(dp(activity,8));
-        testBg.setStroke(dp(activity,1),Color.argb(100,185,202,218));
-        testNotification.setBackground(testBg);
-        LinearLayout.LayoutParams testParams=new LinearLayout.LayoutParams(-1,dp(activity,38));
-        testParams.setMargins(0,0,0,dp(activity,5));
-        root.addView(testNotification,testParams);
-        testNotification.setOnClickListener(v->{
-            boolean allowed=WatchAlerts.permissionGranted(activity);
-            boolean sent=allowed&&WatchAlerts.test(activity);
-            String message=!allowed
-                ?"Conceda notificações na tela inicial do PokeSearch ou nas Configurações do Android"
-                :sent?"Notificação de teste enviada":"Não foi possível enviar a notificação de teste";
-            Toast.makeText(activity,message,Toast.LENGTH_LONG).show();
-        });
-
-        TextView note=new TextView(activity);
-        note.setText("Somente IV100, Grande Liga #1 ou Ultra Liga #1, no filtro ativo.");
-        note.setTextColor(Color.rgb(161,171,184));
-        note.setTextSize(11);
-        note.setPadding(dp(activity,4),0,0,dp(activity,4));
-        root.addView(note);
-
-        Runnable refresh=()->{
-            int total=WatchAlerts.watched(activity).size();
-            selectedTitle.setText("Selecionados ("+total+"/50)");
-            selectedAdapter.filter("");
-            int listHeight=dp(activity,Math.min(total,3)*52);
-            LinearLayout.LayoutParams lp=(LinearLayout.LayoutParams)selectedList.getLayoutParams();
-            lp.height=listHeight;
-            selectedList.setLayoutParams(lp);
-            selectedEmpty.setVisibility(total==0?View.VISIBLE:View.GONE);
-            selectedList.setVisibility(total>0?View.VISIBLE:View.GONE);
-            suggestions.filter(search.getText().toString());
+        refresh[0]=()->{
+            // All 50 favorites remain reachable, including legacy catalog entries.
+            java.util.LinkedHashMap<String,String> chosen=WatchAlerts.names(
+                activity.getSharedPreferences("prefs",0).getString(WatchAlerts.PREF_LIST,""));
+            List<Entry> selected=new ArrayList<>();
+            for(java.util.Map.Entry<String,String> favorite:chosen.entrySet()){
+                Entry found=null;
+                for(Entry item:all)if(item.normalized.equals(favorite.getKey())){found=item;break;}
+                selected.add(found!=null?found:new Entry(0,favorite.getValue()));
+            }
+            int size=selected.size();
+            count.setText("Selecionados "+size+"/50");
+            sprites.removeAllViews();
+            for(int i=0;i<Math.min(size,50);i++){
+                Entry entry=selected.get(i);
+                FrameLayout tile=new FrameLayout(activity);
+                android.graphics.drawable.GradientDrawable border=new android.graphics.drawable.GradientDrawable();
+                border.setColor(Color.argb(72,52,64,77));
+                border.setStroke(dp(activity,1),Color.argb(125,238,191,108));
+                border.setCornerRadius(dp(activity,6));
+                tile.setBackground(border);
+                tile.setContentDescription("Remover "+entry.name);
+                tile.setOnClickListener(v->{WatchAlerts.toggle(activity,entry.name);refresh[0].run();});
+                if(entry.id>0){
+                    ImageView picture=new ImageView(activity);
+                    picture.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    FrameLayout.LayoutParams pp=new FrameLayout.LayoutParams(-1,-1);
+                    pp.setMargins(dp(activity,2),dp(activity,2),dp(activity,2),dp(activity,2));
+                    tile.addView(picture,pp);
+                    setImage(activity,picture,entry.id);
+                }else{
+                    TextView fallback=new TextView(activity);
+                    fallback.setText("☆");fallback.setTextColor(Color.rgb(236,200,116));
+                    fallback.setTextSize(20);fallback.setGravity(Gravity.CENTER);
+                    tile.addView(fallback,new FrameLayout.LayoutParams(-1,-1));
+                }
+                GridLayout.LayoutParams tileParams=new GridLayout.LayoutParams(
+                    GridLayout.spec(i/10),GridLayout.spec(i%10));
+                tileParams.width=dp(activity,tileOuterDp-2);
+                tileParams.height=dp(activity,tileOuterDp-2);
+                tileParams.setMargins(dp(activity,1),dp(activity,1),dp(activity,1),dp(activity,1));
+                sprites.addView(tile,tileParams);
+            }
+            selectedRow.setVisibility(size>0?View.VISIBLE:View.GONE);
+            updateSuggestions.run();
             if(changed!=null)changed.run();
         };
         search.addTextChangedListener(new TextWatcher(){
-            @Override public void beforeTextChanged(CharSequence txt,int start,int count,int after){}
-            @Override public void onTextChanged(CharSequence txt,int start,int before,int count){
-                suggestions.filter(txt.toString());
+            @Override public void beforeTextChanged(CharSequence text,int start,int count,int after){}
+            @Override public void onTextChanged(CharSequence text,int start,int before,int count){
+                updateSuggestions.run();
             }
-            @Override public void afterTextChanged(Editable txt){}
+            @Override public void afterTextChanged(Editable text){}
         });
-        selectedList.setOnItemClickListener((parent,view,index,id)->{
-            Entry e=(Entry)selectedAdapter.getItem(index);
-            WatchAlerts.toggle(activity,e.name);
-            refresh.run();
-        });
-        results.setOnItemClickListener((parent,view,index,id)->{
-            Entry e=(Entry)suggestions.getItem(index);
-            boolean added=WatchAlerts.toggle(activity,e.name);
-            if(!added)Toast.makeText(activity,"Limite de 50 favoritos atingido",Toast.LENGTH_SHORT).show();
-            refresh.run();
-        });
-        refresh.run();
+        refresh[0].run();
         // Single translucent charcoal panel: no duplicate platform title,
         // no separate grey footer, and Concluir belongs inside the panel.
         android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable();
@@ -355,6 +387,7 @@ public final class PokemonPicker {
         Dialog dialog=new Dialog(context,android.R.style.Theme_Material_NoActionBar);
         dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         dialog.setContentView(root);
+        dialog.setCanceledOnTouchOutside(false);
         finish.setOnClickListener(v->dialog.dismiss());
         if(!(activity instanceof Activity)&&dialog.getWindow()!=null)
             dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
@@ -364,17 +397,47 @@ public final class PokemonPicker {
             android.view.Window window=dialog.getWindow();
             window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
             window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            // A floating picker must not swallow taps OUTSIDE its own bounds.
+            // FLAG_NOT_TOUCH_MODAL passes external taps to the app underneath,
+            // unlike the former modal Dialog; internal tiles remain clickable.
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND |
+                android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
             window.setDimAmount(0.0f);
-            if(android.os.Build.VERSION.SDK_INT>=31){
-                window.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
-                android.view.WindowManager.LayoutParams params=window.getAttributes();
-                params.setBlurBehindRadius(dp(activity,12));
-                window.setAttributes(params);
-            }
             int screen=activity.getResources().getDisplayMetrics().widthPixels;
-            window.setLayout(Math.min(screen-dp(activity,16),dp(activity,430)),
+            int preferredWidth=Math.min(screen-dp(activity,22),dp(activity,348));
+            window.setLayout(preferredWidth,
                 android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+            if(anchorX>=0&&anchorY>=0){
+                // Align the picker to the tapped Favorites icon, not screen center.
+                // Keep the native touch rectangle content-sized. Other overlays
+                // remain responsive via FLAG_NOT_TOUCH_MODAL.
+                window.getDecorView().post(()->{
+                    if(!window.getDecorView().isAttachedToWindow())return;
+                    int displayH=activity.getResources().getDisplayMetrics().heightPixels;
+                    int actualHeight=window.getDecorView().getHeight();
+                    if(actualHeight<=0)return;
+                    int margin=dp(activity,8),gap=dp(activity,2),iconHalf=dp(activity,12);
+                    int left=Math.max(margin,Math.min(screen-margin-preferredWidth,
+                        anchorX-preferredWidth/2));
+                    // anchorY is the tapped star's CENTER. Start just outside
+                    // its bounds; the former 18dp center-gap pushed Favorites down.
+                    int below=anchorY+iconHalf+gap;
+                    int above=anchorY-iconHalf-actualHeight-gap;
+                    int spaceBelow=Math.max(0,displayH-margin-below);
+                    int spaceAbove=Math.max(0,anchorY-iconHalf-gap-margin);
+                    // Prefer the side with enough space, otherwise choose
+                    // whichever side leaves the least amount obstructed.
+                    boolean placeBelow=spaceBelow>=actualHeight||
+                        (spaceAbove<actualHeight&&spaceBelow>=spaceAbove);
+                    int top=placeBelow?below:Math.max(margin,above);
+                    top=Math.max(margin,Math.min(displayH-margin-actualHeight,top));
+                    android.view.WindowManager.LayoutParams lp=window.getAttributes();
+                    lp.gravity=Gravity.TOP|Gravity.LEFT;
+                    lp.x=left;lp.y=top;
+                    window.setAttributes(lp);
+                });
+            }
         }
     }
 }

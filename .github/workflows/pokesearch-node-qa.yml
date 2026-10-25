@@ -75,15 +75,30 @@ jobs:
             console.log(file+': '+count+' blocos JS validados');
           }
           NODE
-      - name: Executar todas as oito suítes Node
+      - name: Executar todas as nove suítes Node
         shell: bash
         run: |
           set -euo pipefail
-          for suite in             app/tests/location-probe.test.js             app/tests/probe-smoke.test.js             app/tests/pokemon-picker.test.js             app/tests/login-entry.test.js             app/tests/overlay-ux.test.js             app/tests/visual-editor.test.js             app/tests/signing-contract.test.js             app/tests/firebase-stats.test.js; do
+          for suite in             app/tests/location-probe.test.js             app/tests/probe-smoke.test.js             app/tests/pokemon-picker.test.js             app/tests/login-entry.test.js             app/tests/overlay-ux.test.js             app/tests/visual-editor.test.js             app/tests/signing-contract.test.js             app/tests/firebase-stats.test.js             app/tests/lt62-menu-visual-states.test.js; do
             echo "::group::$suite"
             node "$suite"
             echo "::endgroup::"
           done
+      - name: Validar geometria Java de janela popup isolada sem Gradle
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Testar limites de toque sem Android nem APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pokesearch-popup-geometry"
+          javac --release 17 -d "$RUNNER_TEMP/pokesearch-popup-geometry" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java \
+            app/tests/PopupTouchGeometryTest.java
+          java -cp "$RUNNER_TEMP/pokesearch-popup-geometry" \
+            com.lucianotoscano.pokesearchoverlay.PopupTouchGeometryTest
       - name: Verificar checkout somente leitura
         shell: bash
         run: |

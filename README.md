@@ -1,8 +1,24 @@
 # PokeSearch — Android Overlay
 
-> **Guia Mestre oficial e permanente:** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md). Documento central de todas as versões, histórico, diário, metas, decisões, bugs e backlogs. O README é uma apresentação resumida; para continuidade do desenvolvimento, consultar o Guia Mestre e o HEAD da branch ativa.
+> **Guia Mestre permanente:** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md). Este README indica o estado verificado; o Guia mantém todo o histórico. Não confundir tags oficiais com commits posteriores de documentos.
 
-**Versão de desenvolvimento: v0.50-beta (versionCode 50).** Aplicativo Android independente, dedicado exclusivamente à pesquisa e visualização flutuante de Pokémon, para testes privados de desenvolvimento. Package ID: com.lucianotoscano.pokesearch; minSdk 26, compileSdk 36, Java 17, Gradle 8.11.1.
+## Estado oficial verificado — 25/10/2026
+
+**Última versão pública: LT83 — `0.00.83` / `versionCode 54286`.** GitHub Releases [v0.00.83-54286](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.83-54286), APK `PokeSearch-v0.00.83-LT.apk`, **38.603.587 bytes**, SHA-256 `451e4781581122908f014a893f693c8312b36b2c222a8579c499c6c3e2975c1c`. Certificado de assinatura permanente SHA256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. APK release R8 não depurável, assinatura v2 confirmada; build [#40159949347](https://github.com/LucianoToscano/PokeSearch/actions/runs/40159949347) SUCCESS, publicação [#40160258112](https://github.com/LucianoToscano/PokeSearch/actions/runs/40160258112) SUCCESS. **Commit exato do APK:** `5cf9adb62efb97a185ec955cab6eb0f49fbb4e88`.
+
+**Motivo LT83:** o usuário apresentou foto física do Samsung na LT82 com coordenadas parcialmente ocultas, controles fora do painel, encolhimento e filtro geográfico não confirmado. LT83 inclui janela Location 286dp estável, elementos alinhados em grid sem overflow e reconhecimento mais robusto do formulário móvel oficial, mas **QA no Samsung com LT83 ainda está pendente**; não afirmar correção física definitiva sem novo teste.
+
+**Atualização de usuários:** instalações LT79+ consultam o GitHub Releases pelo atualizador do próprio app, verificam hash e assinatura e requerem confirmação do instalador Android. A Home das versões antigas ainda usa [manifesto Google Drive](https://drive.google.com/file/d/15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf/view) para migrar inicialmente à **LT79 `0.00.79` / 54282**; o Drive **não** aponta para a última versão. GitHub é a fonte atual das versões oficiais. Respeitar WorkManager/Doze/permissões.
+
+**Controle de código:** implementação em `fix/lt83-location-recovery-geometry-20261025` / [PR #57](https://github.com/LucianoToscano/PokeSearch/pull/57); sincronização de `main` deve ser conferida pelo HEAD real após merge, e PRs Draft históricos não se mesclam automaticamente. Referência atual detalhada: [docs/ESTADO_CANONICO_LT83.md](docs/ESTADO_CANONICO_LT83.md). O documento [LT82](docs/ESTADO_CANONICO_LT82.md) torna-se apenas histórico, não a versão mais recente.
+
+**Invariantes:** `applicationId com.lucianotoscano.pokesearch`, namespace `com.lucianotoscano.pokesearchoverlay`, JDK 17, Gradle 8.11.1, compileSdk 36, targetSdk 33, minSdk 26, Android Overlay + WebView + `probe.js`, sem backend/proxy/GPS físico, máximo dez resultados. **Enriquecer, nunca empobrecer o app:** preservar Pokémon, formas, IV/PvP, Shiny, Clima, Favoritos, alertas, sons, Editor Visual, atualizações assinadas, preferências e histórico; não misturar PvPPokeGo.
+
+---
+
+## Histórico anterior (preservado)
+
+**Histórico de desenvolvimento inicial: v0.50-beta (versionCode 50).** Aplicativo Android independente, dedicado exclusivamente à pesquisa e visualização flutuante de Pokémon, para testes privados de desenvolvimento. Package ID: com.lucianotoscano.pokesearch; minSdk 26, compileSdk 36, Java 17, Gradle 8.11.1.
 
 ## Interface e funcionamento
 - Sobreposição compacta sobre Pokémon GO com engrenagem arrastável. Toque na engrenagem para expandir/recolher somente as opções; sprites permanecem visíveis e deslocam-se para baixo quando as opções estão abertas.

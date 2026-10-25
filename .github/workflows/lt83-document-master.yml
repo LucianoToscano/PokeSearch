@@ -1,0 +1,37 @@
+name: LT83 - append official release to historical Guia Mestre
+on:
+  push:
+    branches: [fix/lt83-location-recovery-geometry-20261025]
+    paths: ['.github/workflows/lt83-document-master.yml']
+permissions:
+  contents: write
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/lt83-location-recovery-geometry-20261025
+          fetch-depth: 1
+      - name: Append verified LT83 release without truncating history
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/GUIA_MESTRE.md
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
+          if grep -Fq "LT83 — publicação oficial e correção Localização Samsung" docs/GUIA_MESTRE.md; then exit 0; fi
+          cat >> docs/GUIA_MESTRE.md <<'LT83_DOC'
+          
+          ## LT83 — publicação oficial e correção Localização Samsung (25/10/2026)
+          ÚLTIMA VERSÃO PÚBLICA verificável neste checkpoint: LT83, versionName 0.00.83, versionCode 54286. Release oficial GitHub latest estável https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.83-54286 ; APK PokeSearch-v0.00.83-LT.apk; 38603587 bytes; SHA256 451e4781581122908f014a893f693c8312b36b2c222a8579c499c6c3e2975c1c (GitHub asset digest confirmado); certificado permanente sha256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e; assinatura v2 true, R8, não depurável. Código fonte compilado (imutável para este APK): 5cf9adb62efb97a185ec955cab6eb0f49fbb4e88. GitHub Actions QA completo 40159949347 SUCCESS, publicação 40160258112 SUCCESS. Commits futuros de documentação/merge diferem do SOURCE_COMMIT sem alterar APK.
+          Distribuição a clientes LT79+: atualizador nativo GitHub Releases, checksum+cert+package+versionCode, confirmação do instalador pelo usuário. Google Drive legado ID 15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf continua na LT79 0.00.79 / 54282 como ponte a instalações antigas, não é release latest.
+          Evidência: captura Samsung da LT82 mostra coordenada truncada, Colar parcialmente fora à esquerda, Lixeira extrapolando à direita, popup encolhendo e "Localização não aplicada". Usuário relatou LT79 funcional. Corrigido LT83: largura nativa Location 286dp (limitada tela), CSS 286px no fim do estilo, fila com grid centralizado e controles de tamanhos fixos, input monoespaçado sem overflow. Probe.js do site aceita rótulos Coords/Coordinates, e apenas quando necessário identifica modo Coords pela presença de par único de placeholders oficiais coords+radius visíveis e Area inativo, sem afirmar sucesso baseado no clique; cliques repetitivos no React limitados por 1500ms. Valores latitude/longitude e raio continuam exigindo correspondência exata antes de submitSearch, com falha fechada e sem geolocalização física.
+          Nenhuma funcionalidade removida: IV/GL/UL, Shiny, Clima, Favoritos até 50 em grid 10x5, sons/alertas, sprites/formas, Get coords vinculado ao mesmo Pokémon, Editor Visual, atualização GitHub, dados e preferências, 10 resultados, R8/assinatura. Não misturar PvPPokeGo. Branch fix/lt83-location-recovery-geometry-20261025 PR #57 Draft na escrita deste registro; solicitar/realizar merge canônico em main após testes e conferir HEAD posterior. PR #56 da LT82 é histórico supersedível após merge. Outras PRs não devem ser mescladas cegamente.
+          **Homologação Samsung LT83 ainda PENDENTE**: aprovado CI/testes e assinatura, mas NÃO aprovada execução física. Confirmar coordenadas completas, centralização, Colar/✓/Lixeira, raio, reabrir e encolhimento, confirmação de site, filtros e limpeza. Se falha persistir, LT84 corrigir com diagnóstico real sem alegar sucesso.
+          Referência priorizada: docs/ESTADO_CANONICO_LT83.md e cabeçalho do README; versões anteriores de ESTADO_CANONICO e texto antigo de README são HISTÓRICOS. Preservar GUIA_MESTRE.md integral (não sobrescrever via API truncada). Próximo monotonic code >=54287.
+          LT83_DOC
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GUIA_MESTRE.md
+          git commit -m "docs(LT83): append official version 0.00.83 and real Samsung pending QA"
+          git push origin HEAD:fix/lt83-location-recovery-geometry-20261025

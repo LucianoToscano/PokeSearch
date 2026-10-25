@@ -28,15 +28,67 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
  b.includes('["percent","IV%"],["gl","GL"],["ul","UL"]')&&
  b.includes('applyExact(15)')&&b.includes('applyExact(0)')&&
  !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
-test("AUTO offers OFF, 3, 5, 10, 15 and 20 minutes",["Auto · OFF","Auto · 3 min","Auto · 5 min","Auto · 10 min","Auto · 15 min","Auto · 20 min"].every(v=>dock.includes(v)));
+test("Atualização offers OFF, 3, 5, 10, 15 and 20 minutes without AUTO decoration",dock.includes('off.textContent="OFF"')&&!dock.includes('label.textContent="AUTO"')&&dock.includes('for(const value of [3,5,10,15,20])')&&dock.includes('row.className="periodCompactRow"'));
 test("Cascade uses current toolbar height even after clipping or vertical rotation",
- dock.includes('h=Math.max(h,baseHeight+190+6);')&&
+ dock.includes('h=Math.max(h,baseHeight+164+6);')&&
  dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;')&&
  dock.includes("Native.resizeMenu(h)")&&service.includes("menuRequestedHeightDp=visualMenuBaseDp();"));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
 test("Favorites remain in overlay",service.includes("PokemonPicker.show(OverlayService.this")&&!service.includes('intent.setAction("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST")'));
+
+test("LT62 split popup preserves toolbar, content-sized hitbox and page lifecycle",()=>{
+ const measured=service.split("private void positionIndependentPopup(){")[1]?.split("private void locationEditor(boolean open)")[0]||"";
+ return service.includes("PopupTouchGeometry.place(")&&
+  measured.includes("popupParams.width=b.width;popupParams.height=b.height;")&&
+  measured.includes("FLAG_NOT_TOUCH_MODAL")&&
+  measured.includes("FLAG_NOT_FOCUSABLE")&&
+  service.includes('dock.html?controls=1&popup=1')&&
+  service.includes('popupPanel.addJavascriptInterface(new Bridge(),"Native")')&&
+  service.includes("destroyWebView(popupPanel,true")&&
+  dock.includes('const popupWindow=window.location.search.indexOf("popup=1")!==-1')&&
+  // Other popups stay content-sized; Location uses its exact compact DOM card
+  // to prevent the native touch window expanding after keyboard focus.
+  dock.includes('const measuredWidth=Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2);')&&
+  dock.includes('Math.min(286,Math.max(1,Math.floor(window.innerWidth||286)))')&&
+  dock.includes("Native.resizePopup(exactWidth,")&&
+  dock.includes("window.showNativePopup=kind=>")&&
+  dock.includes("Native.openPopup(kind,Math.round(");
+});
+test("LT62 popup receives picker/filter events, focus and P/M/G state updates",()=>{
+ for(const code of ["window.onLocationPaste(","window.onFilterOptions(",
+   "window.onFormOptions(","window.onPokemonSuggestions("])
+  if(!service.includes("js(popupPanel,popupLoaded,\""+code))return false;
+ return service.includes("WebView web=inPopup?popupPanel:menuPanel;")&&
+  service.includes("js(popupPanel,popupLoaded,data);")&&
+  service.includes("js(popupPanel,popupLoaded,jsCode);")&&
+  dock.includes("refreshSpriteSizeButtons();")&&
+  dock.includes("if(popupWindow&&!popupNativeSwitch&&Native.closePopup)Native.closePopup();")&&
+  dock.includes("body.popup-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor");
+});
+
 test("Favorites picker is service-safe and focusable",picker.includes("TYPE_APPLICATION_OVERLAY")&&picker.includes("Runnable dismissed"));
+
+test("LT62/LT68 Favorites stay nonmodal and anchored to their star icon",()=>{
+ const bridge=service.split("private void showFavoritePicker(int anchorX,int anchorY)")[1]
+   ?.split("public class Bridge{")[0]||"";
+ const publicApi=service.split("@JavascriptInterface public void openWatchList()")[1]
+   ?.split("@JavascriptInterface public void setIntervalMinutes(")[0]||"";
+ const longPress=service.split("final Runnable dockLongPress=()->{")[1]?.split("};")[0]||"";
+ return bridge.includes("pickerOpen=true;")&&bridge.includes("PokemonPicker.show(OverlayService.this")&&
+  bridge.includes("pickerOpen=false;")&&bridge.includes("if(!stopped)update();")&&
+  bridge.includes("},anchorX,anchorY);")&&
+  publicApi.includes("showFavoritePicker(-1,-1)")&&
+  publicApi.includes("showFavoritePicker(anchorX,anchorY)")&&
+  !bridge.includes("root.setVisibility(View.GONE)")&&
+  !bridge.includes("resultRoot.setVisibility(View.GONE)")&&
+  !bridge.includes("menuRoot.setVisibility(View.GONE)")&&
+  !bridge.includes("setVisibility(View.VISIBLE)")&&
+  !longPress.includes("pickerOpen")&&
+  picker.includes("window.addFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)")&&
+  picker.includes("android.view.WindowManager.LayoutParams.WRAP_CONTENT");
+});
+
 test("Login has one top toolbar and no native footer buttons",main.includes('done.setText("✓ PokeSearch")')&&main.includes('loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)')&&main.includes('MATCH_PARENT,\n                android.view.WindowManager.LayoutParams.MATCH_PARENT'));
 test("Shiny remains separate from the chosen filter",service.includes('shiny=!shiny;')&&dock.includes('onclick="Native.shiny()"')&&service.includes('mode.equals(selected)'));
 test("A changed mode immediately reaches refresh without a 60s queue",!service.includes('handler.postDelayed(queuedRefresh,remaining*1000L+300L)')&&service.includes('filterChangeRefresh=()->refresh(true)'));
@@ -59,7 +111,8 @@ test("Native passes full display height and preserves up to ten card slots",
  service.includes("Math.min(rowDp()*10,screenHeightDp()-52)")&&
  service.includes('screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)')&&
  service.includes("screenHeightDp()-16")&&
- service.includes("resultParams.y=fittedY;")&&
+ service.includes("positionResultsUnderPokeball(false);")&&
+ service.includes("int maxY=Math.max(0,display.heightPixels-resultParams.height);")&&
  dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
@@ -87,7 +140,7 @@ test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
    helpers.resultHasVisibleInfo(withInfo[1],false,true)===false;
 });
 test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten-card limit",
- dock.includes('["count","Quantidade de spawns"]')&&
+ dock.includes('["count","Spawns","Quantidade de spawns"]')&&
  dock.includes('id="resultSpawnCount"')&&
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
@@ -98,7 +151,7 @@ test("UX-INFO-10 visibility toggles report confirmed Android state without scrol
  dock.includes('JSON.stringify(resultDisplayOptions)!==previousDisplayPrefs)renderInfoChoices();')&&
  dock.includes('const scroll=previous.dataset.panelKind==="info"?previous.scrollTop:0;')&&
  dock.includes('if(choiceOpen==="info"&&panel.isConnected)panel.scrollTop=scroll;')&&
- dock.includes('resultDisplayOptions[key]?"✓":"–"')&&
+ dock.includes('selected?"✓":"–"')&&
  dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
  !dock.includes('resultDisplayOptions[key]=!resultDisplayOptions[key];'));
 test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overriding saved choices",()=>{
@@ -125,9 +178,9 @@ test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overri
   !nativeBlock.includes('resultCountUxV2')&&
   nativeBlock.includes('resultShowCount=prefs.getBoolean("resultShowCount",false)')&&
   nativeBlock.includes('resultShowRawIv=prefs.getBoolean("resultShowRawIv",false)')&&
-  dock.includes('resultDisplayOptions[key]?"✓":"–"')&&
+  dock.includes('selected?"✓":"–"')&&
   dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
-  dock.includes('As 21 informações começam ocultas por padrão');
+  !dock.includes('As 21 informações começam ocultas por padrão');
 });
 test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
@@ -136,10 +189,10 @@ test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  !dock.includes("count.textContent=resultDisplayOptions.count&&cards.length")&&
  !service.includes("setSpawnLimit"));
 test("UX-INFO-02 legacy and new IV/rank display choices persist independently",()=>{
- const labels=["Quantidade de spawns","Tempo de despawn","Nível (Lv)",
-  "Poder de Combate (PC)","IV do Pokémon · A/D/H","IV% do Pokémon",
-  "Rank Geral · Grande Liga","Rank Geral · Ultra Liga","Rank Geral · Liga Mestre",
-  "Rank IV · Grande Liga","Rank IV · Ultra Liga","Rank IV · Liga Mestre"];
+ const labels=["Quantidade de spawns","Tempo até desaparecer","Nível",
+  "Poder de Combate","IV bruto","Porcentagem de IV",
+  "Rank geral Grande Liga","Rank geral Ultra Liga","Rank geral Liga Mestre",
+  "Rank IV Grande Liga","Rank IV Ultra Liga","Rank IV Liga Mestre"];
  return labels.every(label=>dock.includes('"'+label+'"'))&&
   dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
   dock.includes('Native.toggleTimers()')&&
@@ -233,7 +286,7 @@ test("UX-INFO-04 sprite column stays under the movable full Pokébola hitbox",
  service.includes('private void updateResultHeaderGrip()')&&
  service.includes('hit.leftMargin=dp(left)')===false&&
  service.includes('box.leftMargin=dp(left)')&&
- service.includes('int right=dockPos+resultWidthDp()+gap;')&&
+ service.includes('int right=anchorX+railWidth+margin;')&&
  service.includes('int safe=Math.max(0,Math.min(100,widthDp))'));
 test("UX-INFO-05 verified metadata never creates results or a scrollable list",
  dock.includes('function resultLines(card,opts,league)')&&
@@ -298,7 +351,7 @@ test("UX-RESULT-10 P/M/G pitch tracks slider and fits short displays",()=>{
  const ten=Array.from({length:10},(_,i)=>({name:"Pokémon "+i,expiresAtMs:0}));
  for(const size of [35,45,55]){
   const full=helpers.computeResultLayout(ten,size,900,false,false);
-  const pitch=Math.max(size,8,Math.round(size*.32)+31);
+  const pitch=size; // LT77 E2: neutral Editor pitch must never create empty rows
   if(full.sprite!==size||full.rows.some(row=>row!==pitch)||full.visibleCount!==10)return false;
   const short=helpers.computeResultLayout(ten,size,330,false,false);
   if(short.visibleCount!==10||short.total+54>330)return false;
@@ -346,14 +399,14 @@ test("Login launched from overlay returns to gameplay with PokeSearch only on su
  main.includes('if(authenticatedNow&&fromOverlay&&OverlayService.isRunning())')&&
  main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
  main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
-test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("✓ Fechar")')&&!picker.includes('.setPositiveButton("Concluído"'));
-test("Favorites retain translucent dark styling with optional background blur",picker.includes('Color.argb(239,34,38,47)')&&picker.includes('setBlurBehindRadius'));
+test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("×")')&&!picker.includes('.setPositiveButton("Concluído"'));
+test("Favorites retain translucent charcoal but allow background touches outside dialog",picker.includes('Color.argb(239,34,38,47)')&&picker.includes('FLAG_NOT_TOUCH_MODAL')&&!picker.includes('setBlurBehindRadius'));
 test("Tutorial matches actual icon artwork",main.includes('tutorial.html')&&require('node:fs').readFileSync(require('node:path').join(root,'assets/tutorial.html'),'utf8').includes('Guia rápido · PokeSearch'));
 test("Toolbar hides during login and favorite editing",service.includes('if(menuRoot!=null)menuRoot.setVisibility(View.GONE)'));
 test("Only one pin control appears in toolbar",(dock.match(/id="location"/g)||[]).length===1);
 test("Single pin control expands the location editor",dock.includes('onclick="toggleChoices(\'location\')"'));
-test("Coords editor uses one Apply and explicit Clear without a second ON/OFF switch",dock.includes('fieldRow.append(field,paste)')&&dock.includes('clear.onclick=disable')&&!dock.includes('fieldRow.append(field,paste,toggle)'));
-test("Location supports independent hide and disable",dock.includes('hide.onclick=closeChoices')&&dock.includes('Native.setLocation(false,"",0)'));
+test("Coords editor uses one Apply and explicit Clear without a second ON/OFF switch",dock.includes('fieldRow.append(field)')&&dock.includes('label.append(labelName,paste,radiusWrap)')&&dock.includes('clear.onclick=disable')&&!dock.includes('fieldRow.append(field,paste,toggle)'));
+test("Location has title paste, no header X, and separate geographic disable",dock.includes('label.append(labelName,paste,radiusWrap)')&&!dock.includes('close.onclick=closeChoices;title.appendChild(close)')&&dock.includes('Native.setLocation(false,"",0)'));
 test("Slider covers inclusive range 0 to 1000",dock.includes('slide.min="0"')&&dock.includes('slide.max="1000"'));
 test("Location enforces valid latitude and longitude",dock.includes('Math.abs(Number(match[1]))>90')&&dock.includes('Math.abs(Number(match[2]))>180'));
 test("Location preference persisted without exposing secrets",service.includes('putBoolean("locationEnabled",locationEnabled)')&&service.includes('prefs.remove("locationCoords").remove("locationRadius")'));
@@ -431,8 +484,9 @@ test("Menus are never clipped by the HTML viewport",dock.includes("html.controls
 test("Mode AUTO and location work before delayed native menu sync",dock.includes("if(controlsWindow&&!menuOpen)setMenuOpen(true"));
 test("Mode applies one atomic native configuration and AUTO retains direct selection",
   dock.includes("Native.setSearchConfig(JSON.stringify(next))")&&
-  dock.includes("period=Number(value);draw();Native.setIntervalMinutes(period)"));
-test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&dock.includes('button.classList.add("requested")'));
+  dock.includes('button.onclick=()=>selectInterval(value)'));
+test("Manual refresh button has touch feedback",dock.includes('onclick="manualRefreshTap()"')&&
+ dock.includes('button.classList.add("refreshSpinning")')&&dock.includes('Native.refresh();'));
 test("Gear has a visible touch target",dock.includes("#gear{width:35px;height:30px;background:transparent!important"));
 test("Toolbar menu responds in narrow and wide sizes",service.includes("Math.min(330,screenWidthDp()-8)"));
 test("Favorites use uniform dark gradient without background dim",picker.includes("Color.argb(238,29,32,39)")&&picker.includes("window.setDimAmount(0.0f)"));
@@ -503,7 +557,11 @@ test("PL-02 page navigation independent of mutable filter generation",
  pageBlock.includes('pendingPageRefreshGeneration=searchInProgress?-1:requestGeneration;')&&
  !pageBlock.includes('pageLoadGeneration!=requestGeneration')&&
  service.includes('pendingPageRefreshGeneration==requestGeneration)refresh(false)'));
-test("B06 page finish 2500ms handler is cancelable",pageBlock.includes('handler.removeCallbacks(pageFinishedRefresh);')&&pageBlock.includes('handler.postDelayed(pageFinishedRefresh,2500L)')&&!pageBlock.includes('handler.postDelayed(()->{if(!stopped&&!loginPaused)refresh();}'));
+test("B06 page finish schedules one cancellable refresh, 900ms Shiny or 2500ms standard",
+ pageBlock.includes('handler.removeCallbacks(pageFinishedRefresh);')&&
+ pageBlock.includes('handler.postDelayed(pageFinishedRefresh,')&&
+ pageBlock.includes('shiny&&!shinyVerified?900L:2500L')&&
+ !pageBlock.includes('handler.postDelayed(()->{if(!stopped&&!loginPaused)refresh();}'));
 test("B06 REFRESH_LOGIN cancels callbacks before cookie flush",reloadBlock.includes('++requestGeneration;')&&reloadBlock.indexOf('cancelSessionCallbacks();')<reloadBlock.indexOf('CookieManager.getInstance().flush();'));
 test("B06 reload occurs after 350ms with generation guard",reloadBlock.includes('handler.postDelayed(deferredSessionReload,350L)')&&service.includes('pendingReloadGeneration!=requestGeneration'));
 test("B06 delayed search stages verify pause/generation",(service.match(/if\(stopped\|\|loginPaused\|\|generation!=requestGeneration\)return;/g)||[]).length>=8);
@@ -511,8 +569,9 @@ test("B06 destruction cancels callbacks and removes windows before WebViews",des
 test("B06 privacy of errors unchanged",service.includes('error.getClass().getSimpleName()')&&!service.includes('error.getMessage()'));
 test("B06 Android SDK and manifest unchanged",manifest.includes('<service android:name=".OverlayService" android:exported="false" />')&&gradleBuild.includes('targetSdk = 33')&&gradleBuild.includes('compileSdk = 36'));
 // PS-075–PS-080 regression contracts
-test("PS-075 Favorites provides accessible test notification action",picker.includes('testNotification.setText("🔔 Testar notificação")')&&picker.includes('WatchAlerts.test(activity)')&&picker.includes('WatchAlerts.permissionGranted(activity)'));
-test("PS-075 Home Preferences provides both toggles and test action",main.includes("settingAlertMode(body,prefs);")&&main.includes('settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,')&&main.includes('WatchAlerts.test(this)'));
+test("PS-075 favorite tests remain in native code, hidden from compact notifications", 
+ service.includes('void testNotification()')&&
+ !dock.split("function renderAlertsChoices(){")[1].split("// Site -> App")[0].includes('testNotification"]'));test("PS-075 Home Preferences provides both toggles and test action",main.includes("settingAlertMode(body,prefs);")&&main.includes('settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,')&&main.includes('WatchAlerts.test(this)'));
 test("PS-076 Android Back returns within OAuth dialog history",main.includes('loginDialog.setOnKeyListener(')&&main.includes('android.view.KeyEvent.KEYCODE_BACK')&&main.includes('website.canGoBack()')&&main.includes('website.goBack()'));
 test("PS-077 loginEndRefresh is cancelable across all transitions",service.includes('private final Runnable loginEndRefresh=')&&cancelBlock.includes('handler.removeCallbacks(loginEndRefresh)')&&beginBlock.includes('cancelSessionCallbacks();')&&endBlock.includes('cancelSessionCallbacks();')&&reloadBlock.includes('cancelSessionCallbacks();'));
 const javaSignedLat='[-+]?'+String.fromCharCode(92,92)+'d{1,2}';
@@ -529,8 +588,9 @@ const prefSync=service.split('private void syncPreferencesWithoutSearch(){')[1]?
 const startCommand=service.split('    @Override public int onStartCommand(')[1]?.split('    private void destroyWebView(')[0]||'';
 test("PS-081 home requests POST_NOTIFICATIONS from test action",main.includes('requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},203)'));
 test("PS-081 callback runs notification test only after permission granted",main.includes('if(requestCode==203)')&&main.includes('results[0]==PackageManager.PERMISSION_GRANTED')&&main.includes('granted&&WatchAlerts.permissionGranted(this)')&&main.includes('WatchAlerts.test(this)'));
-test("PS-081 picker provides permission directions without requesting service permission",picker.includes('Conceda notificações na tela inicial do PokeSearch ou nas Configurações do Android')&&!picker.includes('requestPermissions('));
-test("PS-082 sync action from Home requires running overlay",main.includes('OverlayService.isRunning()')&&main.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS")'));
+test("PS-081 notification permission stays available outside compact picker",
+ !picker.includes('requestPermissions(')&&service.includes('void requestNotificationPermission()')&&
+ main.includes('requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},204)'));test("PS-082 sync action from Home requires running overlay",main.includes('OverlayService.isRunning()')&&main.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS")'));
 test("PS-082 Home syncs on spinner, checkbox and dismiss",main.includes('syncOverlayPreferences();')&&main.includes('dialog.setOnDismissListener(d->syncOverlayPreferences())')&&main.includes('check.setOnCheckedChangeListener'));
 test("PS-082 Overlay handles SYNC_PREFS without network refresh",startCommand.includes('com.lucianotoscano.pokesearchoverlay.SYNC_PREFS')&&startCommand.includes('syncPreferencesWithoutSearch();')&&!prefSync.includes('refresh(')&&!prefSync.includes('execute(')&&!prefSync.includes('loadUrl('));
 test("PS-082 re-sorts current results and updates dock",prefSync.includes('sortItems(items)')&&prefSync.includes('params.width=dp(minimized?BUBBLE_DP:dockDp())')&&prefSync.includes('update();'));
@@ -545,7 +605,7 @@ test("v0.50 no phantom gap when toolbar is beside dock",
 test("v0.50 transparent floating collapse arrow",
     dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("v0.50 AUTO OFF in UI and service, with no periodic posts",
-    dock.includes('[[0,"Auto · OFF')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
+    dock.includes('off.textContent="OFF"')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
     service.includes('if(minutes!=0&&minutes!=3&&minutes!=5')&&
     service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(periodic,'));
 test("General notifications still cycle off/on/silent while bell indicates both sources",
@@ -589,10 +649,12 @@ test("Shiny tap waits for LIVE authenticated trainer proof instead of stale loca
   service.includes('if(!siteConfirmsShinyAccount(session)){')&&
   service.includes('openShinyLogin();')&&
   service.includes('if(!loaded||website==null){'));
-test("Shiny off works without forced login",
-  service.includes('if(!shiny){')&&
-  service.includes('prepareImmediateShiny(generation);')&&
-  read("assets/probe.js").includes('if(action==="setShiny")return JSON.stringify(setShiny(shinyOnly))'));
+test("Shiny OFF uses immediate verified Search without login",(()=>{
+ const bridge=service.split('@JavascriptInterface public void shiny()')[1]?.split('@JavascriptInterface public void refresh()')[0]||"";
+ return bridge.includes('if(!shiny){')&&bridge.includes('refresh(true);')&&
+  bridge.includes('startVerifiedShinySearch(generation,0);')&&
+  read("assets/probe.js").includes('if(action==="setShiny")return JSON.stringify(setShiny(shinyOnly))');
+})());
 test("Shiny is only verified after reading site state",
   service.includes('execute("verifyShiny",verified->')&&
   service.includes('shinyVerified=shiny;')&&
@@ -620,10 +682,12 @@ test("Login session detection substitutes all probe placeholders and reads mobil
  main.includes('JSONObject.quote("session")')&&
  main.includes('.replace("__FILTERS__","{}")')&&
  read("assets/probe.js").includes('const accountBadge=badgeText.test('));
-test("Shiny state sync starts on site load independently of Search cooldown",
-  service.includes('if(shiny&&!shinyVerified){')&&
-  service.includes('prepareImmediateShiny(generation);')&&
-  service.includes('},420L);'));
+test("Shiny state sync on page hydration has one Search, no duplicate setShiny",(()=>{
+ const nav=service.split('pendingPageRefreshGeneration=searchInProgress?-1:requestGeneration;')[1]?.split('@Override public void onReceivedError',1)[0]||"";
+ return nav.includes('handler.postDelayed(pageFinishedRefresh,')&&
+  nav.includes('shiny&&!shinyVerified?900L:2500L')&&
+  !nav.includes('prepareImmediateShiny(generation);');
+})());
 test("After login, authenticated site missing switch never restarts login loop",
   service.includes('"autenticada".equals(auth)')&&
   service.includes('Conta conectada; controle Shiny não encontrado no site.'));
@@ -710,7 +774,7 @@ test("v0.51 header selects exact bundled original league art",
         dock.includes(name))&&dock.includes('result-icons/'));
 test("v0.51 opening favorites or login hides independent results window",
     service.includes('if(resultRoot!=null)resultRoot.setVisibility(View.GONE)')&&
-    service.includes('if(resultRoot!=null&&!pickerOpen&&!minimized)resultRoot.setVisibility(View.VISIBLE)'));
+    service.includes('if(resultRoot!=null&&!pickerOpen&&!minimized&&!resultCollapsed)resultRoot.setVisibility(View.VISIBLE)'));
 test("v0.51 original single search and toolbar remain unchanged",
     dock.includes('grid-template-columns:34fr 22fr 41fr')&&
     service.includes('private String mode="raw"')&&
@@ -741,21 +805,21 @@ test("Mode popup keeps one stable row while expanding upward or downward",
  dock.includes('body.controls-window.popup-above #choices{top:auto!important;bottom:34px!important}')&&
  dock.includes('body.controls-window.popup-above #menu{top:var(--popup-offset,0px)!important}'));
 test("Cascade popup uses 27px rail rows and small lateral settings",
- dock.includes('width:88px!important;height:190px!important')&&
- dock.includes('height:27px!important;min-height:27px!important')&&
+ dock.includes('width:54px!important;height:164px!important')&&
+ dock.includes('height:23px!important;min-height:23px!important')&&
  dock.includes('modeCascadeEditor')&&
- dock.includes('max-width:calc(100% - 88px)')&&
+ dock.includes('max-width:calc(100% - 54px)')&&
  service.includes('int roomDp=requestedPopup==0?420:'));
-test("Cascade numeric input supports touch swipe, keyboard typing and percentage stepping",
- dock.includes('input.type="number";input.inputMode="numeric"')&&
- dock.includes('input.addEventListener("touchend"')&&
- dock.includes('input.addEventListener("wheel"')&&
- dock.includes('input.addEventListener("change"')&&
- dock.includes('kind==="percent"?IV_PERCENT_VALUES'));
+test("Cascade input uses placeholders and keyboard entry",
+ dock.includes('input.type="text";input.inputMode="numeric"')&&
+ dock.includes('input.value=String(modeDraft[key]??searchSettings[key]??"")')&&
+ dock.includes('input.addEventListener("keydown"')&&
+ dock.includes('input.addEventListener("input"')&&
+ dock.includes('kind==="percent"?[0,100]'));
 test("Four editable cascade modes keep raw, percent and rank numeric bounds",(()=>{const b=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
- return b.includes('kind==="iv"?16:50')&&b.includes('kind==="rank"?1:0')&&
+ return b.includes('kind==="iv"?[0,15]:[1,50]')&&b.includes('limitsFor=kind')&&
  ["attack","defense","stamina","percentMin","percentMax","glRank","ulRank"].every(k=>b.includes('"'+k+'"'))&&
- b.includes('input.min=String(allowed[0])')&&b.includes('input.max=String(allowed[allowed.length-1])');})());
+ b.includes('input.value=String(modeDraft[key]??searchSettings[key]??"")')&&b.includes('input.maxLength=kind==="percent"?3:2');})());
 test("Automatic Hundo recognition uses Raw IV 15/15/15 icon and persists legacy migration",
  dock.includes('if([attack,defense,stamina].every(v=>Number(v)===15))family="hundo"')&&
  dock.includes('if(min===100&&max===100)family="hundo"')&&
@@ -770,16 +834,16 @@ test("Cascade replaces wheels and popup Shiny without losing the independent ✨
 test("Direct extremes and explicit ✓ are the only cascade save paths",
  dock.includes('const next={...searchSettings,mode:"raw",attack:value,defense:value,stamina:value}')&&
  dock.includes('const next={...modeDraft};closeChoices();Native.setSearchConfig(JSON.stringify(next));')&&
- dock.includes('cancel.onclick=()=>{if(controlsWindow)Native.locationEditor(false);')&&toolbarButtons.length===12);
+ !dock.includes('cancel.className="modeCascadeCancel"')&&toolbarButtons.length===12);
 test("Cascade percent MIN/MAX are kept in valid order on edit",
- dock.includes('key==="percentMin"&&modeDraft.percentMax<value')&&
- dock.includes('key==="percentMax"&&modeDraft.percentMin>value')&&
- dock.includes('modeDraft.percentMin>modeDraft.percentMax'));
+ dock.includes('if(cascadeMode==="percent"&&values.percentMin>values.percentMax)')&&
+ dock.includes('Object.assign(modeDraft,values)')&&
+ dock.includes('values.percentMin>values.percentMax'));
 test("Native bridge validates all requested IV, PvP ranking and percent bounds",
  service.includes("public void setSearchConfig(String payload)")&&
  service.includes("within(a,0,15)")&&service.includes("within(gl,1,50)")&&
- service.includes("isAllowedIvPercent(min)")&&
-  service.includes("isAllowedIvPercent(max)")&&service.includes("min>max"));
+ service.includes("within(min,0,100)")&&
+  service.includes("within(max,0,100)")&&service.includes("min>max"));
 test("Native mode and filter options persist through service restarts",
  ["rawAttack","rawDefense","rawStamina","glRank","ulRank","ivPercentMin","ivPercentMax"].every(k=>
   service.includes('putInt("'+k+'"')&&service.includes('pref.getInt("'+k+'"')));
@@ -802,11 +866,10 @@ test("Raw zero/percent extremes retain the historical result badges and menu med
   dock.includes('nundo:{normal:"nundo.png",shiny:"shnundo.png"')&&
   dock.includes('hundo:{normal:"hundo.png",shiny:"shundo.png"');
 })());
-test("Cascade IV% accepts only 46 attainable percentages",
- dock.includes('const allowed=allowedFor(kind);')&&
- dock.includes('kind==="percent"?IV_PERCENT_VALUES')&&
- dock.includes('entry.allowed.includes(value)')&&
- dock.includes('input.reportValidity()'));
+test("Cascade IV% accepts all 0-100 typed values with explicit bounds",
+ dock.includes('const limitsFor=kind=>kind==="percent"?[0,100]:kind==="iv"?[0,15]:[1,50]')&&
+ dock.includes('value<entry.min||value>entry.max')&&
+ dock.includes('entry.input.reportValidity();return;'));
 test("Cascade rows highlight the open submenu and preserve the 0/100 header badge",
  dock.includes('button.classList.toggle("chosen",cascadeMode===id)')&&
  dock.includes('button.setAttribute("aria-expanded",String(cascadeMode===id))')&&
@@ -852,21 +915,21 @@ test("Exactly 46 attainable IV percentages are offered with 91 and 100 included"
   !actual.includes(90)&&!actual.includes(92)&&!actual.includes(95);
 })());
 test("Cascade IV% and league rank limits stay independent and site validated",(()=>{const b=dock.split('function renderModeChoices()')[1]?.split('function renderExtraFilters(')[0]||"";
- return b.includes('kind==="percent"?IV_PERCENT_VALUES')&&
- b.includes('kind==="iv"?16:50')&&
- b.includes('modeDraft[key]=value')&&
- read("assets/probe.js").includes('ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMin)')&&
+ return b.includes('kind==="percent"?[0,100]')&&
+ b.includes('kind==="iv"?[0,15]:[1,50]')&&
+ b.includes('Object.assign(modeDraft,values)')&&
+ read("assets/probe.js").includes('filters.percentMin>=0&&filters.percentMax<=100')&&
  read("assets/probe.js").includes('configuredRank()');})());
 test("Native validation prevents invalid IV percentages including on saved requests",
  service.includes('private static boolean isAllowedIvPercent(int value)')&&
  service.includes('if(ivPercentageForSum(total)==value)return true;')&&
- service.includes('!isAllowedIvPercent(min)||!isAllowedIvPercent(max)||min>max')&&
+ service.includes('!within(min,0,100)||!within(max,0,100)||min>max')&&
  service.includes('!within(gl,1,50)||!within(ul,1,50)'));
 test("Legacy IV percent migration expands only as necessary without trimming Pokémon",
- service.includes('ivPercentMin=floorIvPercent(previousMin)')&&
- service.includes('ivPercentMax=Math.max(ivPercentMin,ceilIvPercent(previousMax))')&&
- service.includes('putInt("ivPercentMin",ivPercentMin)')&&
- service.includes('putInt("ivPercentMax",ivPercentMax)'));
+ service.includes('ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)))')&&
+ service.includes('ivPercentMax=Math.max(ivPercentMin,')&&
+ !service.includes('ivPercentMin=floorIvPercent(previousMin)')&&
+ service.includes('Math.min(100,pref.getInt("ivPercentMax",100))'));
 
 
 test("UX-MENU-01 keeps original 12 commands but navigates with compact contextual menu",
@@ -912,7 +975,7 @@ test("UX-MENU-02 Pokémon silhouette opens the official multi-species/form picke
 test("UX-SHINY-01 restores Shiny ✨ next to Modos using the existing native toggle",
  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"]')&&
  dock.includes('case "sh":Native.shiny();break;')&&
- dock.includes('id==="sh"?shiny:')&&dock.includes('shinyPending=!!pending;shiny=!!shi||shinyPending;')&&
+ dock.includes('id==="sh"?shiny:')&&dock.includes('shinyPending=!!pending;\n shiny=!!shi||shinyPending;')&&
  !dock.includes('shinyButton.onclick=()=>Native.shiny()'));
 test("UX-MENU-04 restores twelve small icons in the old thin row while migrating saved menu",
  dock.includes('id="quickUtilities"')&&
@@ -933,7 +996,7 @@ test("PL-04 OFF does not force Area when default Coords are blank",
 test("UX-MENU-03 keeps one tiny toolbar, cascade and independent other menus",
  dock.includes('body.controls-window #quickHead{display:none!important}')&&
  dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important')&&
- dock.includes('width:88px!important;height:190px!important')&&
+ dock.includes('width:54px!important;height:164px!important')&&
  dock.includes('width:220px!important')&&dock.includes('width:306px!important'));
 test("UX-MENU-04 keeps twelve icon-first entry points in one thin row",
   dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])')&&
@@ -962,7 +1025,7 @@ test("UX-MENU-04 exposes exactly the approved twelve icons in order",(()=>{
 test("UX-MENU-04 keeps Informações in Ajustes and restores Atualização beside Alertas",(()=>{
  const body=dock.split('function renderAppearanceChoices()')[1]?.split('if(controlsWindow){')[0]||"";
  return body.includes('uxPanel("PERSONALIZAÇÃO")')&&
-  body.includes('uxOption(panel,"Informações dos Pokémon","Configurar ›",()=>toggleChoices("info"))')&&
+  body.includes('link("Info Pokémon","info")')&&body.includes('link("Editor Visual","visual")')&&
   dock.includes('["period","↻","Atualização","period"]')&&
   dock.includes('back.onclick=()=>{choiceOpen="appearance";renderAppearanceChoices();}')&&
   dock.includes('function renderInfoChoices()')&&
@@ -998,7 +1061,7 @@ test("UX-SHINY-02 keeps Shiny beside Modos through saved preferences and native 
  const state=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(")[0]||"";
  const click=dock.split("function quickClick(id){")[1]?.split("const QUICK_SVG=")[0]||"";
  return prefs.includes('order.splice(modeIndex+1,0,"sh")')&&
-  prefs.includes('"period","sh"')&&
+  prefs.includes('"appearance","sh"')&&
   click.includes('case "sh":Native.shiny();break;')&&
   dock.includes('if(id==="sh")button.setAttribute("aria-pressed",String(shiny))')&&
   state.includes('button.classList.toggle("pending",id==="sh"&&shinyPending)')&&
@@ -1022,11 +1085,13 @@ test("Guest public search continues even if stale Shiny preference was ON",
  service.includes('revertUnverifiedShiny("✨ Shiny exige login e treinador vinculado · busca comum liberada")')&&
  service.includes('execute("prepareSearch",prepared->{')&&
  service.includes('private void refresh(boolean manual)'));
-test("Shiny OFF and normal search never depend on login or trainer linkage",
- service.includes('if(!shiny){applyShinyOnSite(generation,0);return;}')&&
- service.includes('if(!shiny){\n                // Coords, Shiny and other filters belong to one site form.')&&
- service.includes('if(locationEnabled){OverlayService.this.refresh(true);return;}')&&
- !service.includes('if(!hasConfirmedTrainerLink())return;\n        execute("session"'));
+test("Shiny OFF and normal search use same site form, without trainer gate",(()=>{
+ const bridge=service.split('@JavascriptInterface public void shiny()')[1]?.split('@JavascriptInterface public void refresh()')[0]||"";
+ const off=bridge.split('if(!shiny){')[1]?.split('startVerifiedShinySearch(generation,0);')[0]||"";
+ return off.includes('refresh(true);')&&!off.includes('execute("session"')&&
+  service.includes('verifyShinyAfterLocation(generation,manual,0);')&&
+  !service.includes('if(!hasConfirmedTrainerLink())return;\n        execute("session"');
+})());
 test("Authenticated profile cannot inherit previous trainer link",
  main.includes('.putString("profileTrainerState","unknown")')&&
  main.includes('a newly confirmed OAuth session may belong to another account'.replace(/^a/,"A"))&&
@@ -1071,8 +1136,8 @@ test("UX-MENU-06 refresh directly after Alertas and personalization before Repor
   ids.indexOf("period")===ids.indexOf("bell")+1&&
   ids.indexOf("appearance")===ids.indexOf("report")-1&&
   dock.includes('case "bell":toggleChoices("alerts")')&&
-  dock.includes('now.textContent="↻ Atualizar agora"')&&
-  dock.includes('btn.className=value===current?"chosen":""')&&
+  !dock.includes('now.textContent="↻ Atualizar agora"')&&
+  dock.includes('button.className="periodCompactValue"+(value===current?" chosen":"")')&&
   dock.includes('rows.appendChild(button)')&&
   service.includes('"bell","period","appearance","report","donate","close"');
 });
@@ -1112,8 +1177,8 @@ test("Modos chooses exact Drive PNGs across 0–3 stars and GL/UL",()=>{
  const gl=get("gl",{glRank:1}),ul=get("ul",{ulRank:12});
  const cases=[
   [0,0,"0Star.png"],[100,100,"3Star.png"],
-  [0,98,"2Star.png"],[2,100,"2Star.png"],[2,98,"2Star.png"],[0,100,"2Star.png"],
-  [0,50,"1Star.png"],[0,49,"1Star.png"],
+  [0,98,"StarIVRaw.png"],[2,100,"StarIVRaw.png"],[2,98,"StarIVRaw.png"],[0,100,"StarIVRaw.png"],
+  [0,50,"0Star.png"],[0,49,"0Star.png"],
   [49,49,"0Star.png"],[51,51,"1Star.png"],[64,64,"1Star.png"],
   [67,67,"2Star.png"],[80,80,"2Star.png"],[82,82,"3Star.png"],
   [51,64,"1Star.png"],[67,80,"2Star.png"],[82,98,"3Star.png"],[82,100,"3Star.png"]
@@ -1127,9 +1192,9 @@ test("Modos chooses exact Drive PNGs across 0–3 stars and GL/UL",()=>{
    });
 });
 test("Only refresh actions appear in Atualização: no path to Ajustes",()=>{
- const code=dock.split('title.textContent="ATUALIZAÇÃO"')[1]?.split("function renderModeChoices()")[0]||"";
+ const code=dock.split('const current=period;')[1]?.split("function positionCascadeEditor()")[0]||"";
  return !code.includes("‹ Ajustes")&&!code.includes('choiceOpen="appearance"')&&
-  code.includes('manualRefreshTap()')&&code.includes('Native.setIntervalMinutes(period)');
+  !code.includes('now.textContent=')&&code.includes('Native.setIntervalMinutes(value)')&&code.includes('off.onclick=()=>selectInterval(0)');
 });
 test("Modos changes UL result base only; menu rank overlays centered",(()=>{const menu=dock.split("function getModeMenuIcon(")[1]?.split("// Historical result icons")[0]||"";
  const result=dock.split("function getResultIcon(")[1]?.split("let locationEnabled=")[0]||"";
@@ -1198,18 +1263,18 @@ test("Duplicate popup Shiny removed: only independent toolbar ✨ remains",
 test("UX-MODOS-CASCADE-03 uses classic 6-row menu, no oversized wheels",(()=>{const b=dock.split("function renderModeChoices(){")[1]?.split("function renderExtraFilters(")[0]||"";
  return dock.includes('modeCascadeRail')&&
  dock.includes('modeCascadeEditor')&&
- dock.includes('width:88px!important;height:190px!important')&&
- dock.includes('height:27px!important;min-height:27px!important')&&
- b.includes('const offsets={raw:76,percent:103,gl:130,ul:154}')&&
- b.includes('editor.append(confirm,cancel)')&&
+ dock.includes('width:54px!important;height:164px!important')&&
+ dock.includes('height:23px!important;min-height:23px!important')&&
+ b.includes('const offsets={raw:67,percent:90,gl:113,ul:136}')&&
+ b.includes('editor.appendChild(confirm);panel.appendChild(editor)')&&
  !b.includes('modeWheel')&&
  !b.includes('Native.shiny()');})());
 test("UX-MODOS-CASCADE-04 confirms or cancels only the chosen lateral editor",
  dock.includes('confirm.className="modeCascadeConfirm"')&&
- dock.includes('cancel.className="modeCascadeCancel"')&&
+ !dock.includes('cancel.className="modeCascadeCancel"')&&
  dock.includes('confirm.onclick=()=>')&&
- dock.includes('cancel.onclick=()=>{if(controlsWindow)Native.locationEditor(false);')&&
- dock.includes('input.setCustomValidity("Escolha um valor permitido")')&&
+ dock.includes('input.value=String(modeDraft[key]??searchSettings[key]??"")')&&
+ dock.includes('entry.input.setCustomValidity("Digite um número de "')&&
  dock.includes('Native.setSearchConfig(JSON.stringify(next))'));
 test("Existing toolbar Shiny remains next to mode, with exactly twelve actions",
   dock.indexOf('id="sh"')>dock.indexOf('id="cycle"')&&
@@ -1232,8 +1297,9 @@ test("UX-OTHER-02 all submenus close explicitly without changing their saved set
  dock.includes('close.setAttribute("aria-label","Fechar "+title)')&&
  dock.includes('close.onclick=closeChoices')&&
  dock.includes('const panel=uxPanel(label);panel.dataset.panelKind="filters";panel.classList.add("filterPicker")')&&
- dock.includes('panel.classList.add("standardPanel","visible");panel.dataset.panelKind="period"')&&
- dock.includes('close.onclick=closeChoices;title.appendChild(close);')&&
+ dock.includes('panel.classList.add("periodCompact","visible")')&&
+ dock.includes('if(choiceOpen==="period")closeChoices();')&&
+ dock.includes('[...row.children].forEach(tile=>panel.appendChild(tile))')&&
  dock.includes('delete document.getElementById("choices").dataset.panelKind'));
 test("UX-OTHER-03 neither Filters nor Location force keyboard without field focus",
  dock.includes('if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();')&&
@@ -1246,11 +1312,16 @@ test("UX-OTHER-04 scroll position remains reachable on toggles and popup switchi
  dock.includes('modeScrollTop=panel.scrollTop')&&
  dock.includes('position:sticky;top:0;z-index:5')&&
  dock.includes('position:sticky;bottom:0;z-index:5'));
-test("Filters remain independent of cascade and retain their popup dimensions",
- dock.includes('section("Filtros gerais"')&&!dock.includes('section("Filtros avançados"')&&
- dock.includes('#choices.modePanel{width:232px')&&dock.includes('function renderExtraFilters('));
+test("Filters use compact Modos-like rail without collapsed general section",
+ dock.includes('const rows=[...panel.querySelectorAll(":scope > .extraField")]')&&
+ dock.includes('classList.toggle("chosen",label===selected)')&&
+ dock.includes('panel.append(rail,editor)')&&
+ dock.includes("panel.classList.add('filterCascade')")&&
+ !dock.includes('section("Filtros gerais",generalExpanded')&&
+ dock.includes('grid-template-columns:77px minmax(0,1fr)'));
 test("Site dropdown options are discovered instead of inventing weather/form values",
-  dock.includes('filterOptions=response.partial?')&&
+  dock.includes('for(const [key,value] of Object.entries(response.options||{}))')&&
+  dock.includes('filterOptions[key]={...(filterOptions[key]||{}),...value};')&&
   dock.includes('Native.requestFilterOptions()')&&
   !dock.includes('option("weather","Sunny")'));
 test("Mode popup allows keyboard focus for optional numeric and Pokémon inputs",
@@ -1330,7 +1401,8 @@ test("UX-ICON-01 keeps 35x30 touch area and badges strictly within 21px",
  ["modeIndicatorValue","modeIndicatorShiny","modeIndicatorBackground"].every(x=>dock.includes('id="'+x+'"')));
 test("Results preserve original IV badges, with Shiny and Background as separate effects",
  dock.includes('function getResultIcon(searchMode,shinyActive,settings=searchSettings)')&&
- dock.includes('const badge=family==="hundo"?"100%":family==="nundo"?"0":family==="percent"?"%":rankLabel||(baseFamily==="cup"?"CUP":"");')&&
+ dock.includes('const rawLabel=')&&dock.includes('const percentLabel=')&&
+ dock.includes('const badge=family==="hundo"?"100%":family==="nundo"?"0%":rawLabel')&&
  dock.includes('shinyBadge:shining')&&
  dock.includes('backgroundOnly===true&&settings.backgroundVerified===true'));
 test("UX-ICON-01 does not silently introduce unimplemented searches",
@@ -1423,9 +1495,9 @@ test("UX-CASCADE retains requested popup height while visual editor changes orie
  service.includes("Math.max(0,dp(menuRequestedHeightDp)-rowHeight)")&&
  service.includes("menuRequestedHeightDp=Math.max(visualMenuBaseDp(),Math.min(maxMenuHeight,desiredDp))")&&
  !service.includes("int requestedPopup=Math.max(0,menuParams.height-rowHeight)")&&
- dock.includes('h=Math.max(h,baseHeight+190+6);')&&
+ dock.includes('h=Math.max(h,baseHeight+164+6);')&&
  dock.includes("function positionCascadeEditor()")&&
- dock.includes("rail.scrollTop=Math.max(0,requested+36-visible)")&&
+ dock.includes("rail.scrollTop=Math.max(0,wanted+selected.offsetHeight-visibleRail)")&&
  dock.includes('if(choiceOpen==="mode")positionCascadeEditor()')&&
  service.includes("if(menuParams.width!=width)menuParams.width=width;")&&
  service.includes("menuParams.x=Math.max(0,Math.min(Math.max(0,screen-width),")&&
@@ -1446,8 +1518,8 @@ test("RESULT-RESTORE GL/UL still preserve result effects; UL now uses correct Ul
  return gl.path.endsWith("/base-gl.png")&&gl.ivBadge==="#1"&&
   ul.path.endsWith("/ultra-league.png")&&ul.ivBadge==="#12"&&
   perfect.path.endsWith("/base-custom.png")&&perfect.ivBadge==="100%"&&
-  zero.path.endsWith("/base-custom.png")&&zero.ivBadge==="0"&&
-  range.path.endsWith("/base-custom.png")&&range.ivBadge==="%"&&all.ivBadge==="%"&&
+  zero.path.endsWith("/base-custom.png")&&zero.ivBadge==="0%"&&
+  range.path.endsWith("/base-custom.png")&&range.ivBadge==="2–98%"&&all.ivBadge==="0–100%"&&
   get("ul",true).shinyBadge===true&&
   get("ul",false,{backgroundOnly:true,backgroundVerified:true}).backgroundBadge===true;
 });
@@ -1551,13 +1623,14 @@ test("PS-009 Android Java inner Bridge invokes outer refresh(boolean) explicitly
   service.includes('status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");\n                scheduleFilterChangeRefresh();')&&
   service.includes('private void scheduleFilterChangeRefresh()');
 });
-test("PL-02 navigation recovery survives a filter change while loading",()=>{
+test("PL-02 navigation recovery survives filter change while loading",()=>{
  const nav=service.split("website.setWebViewClient(new WebViewClient(){")[1]?.split("    @Override public void onCreate()")[0]||"";
  return nav.includes("pageLoadGeneration++")&&
   !nav.includes("pageLoadGeneration!=requestGeneration")&&
   nav.includes("url.equals(view.getUrl())")&&
   nav.includes("view.getProgress()==100")&&
-  nav.includes("if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,2500L);");
+  nav.includes("if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,")&&
+  nav.includes("shiny&&!shinyVerified?900L:2500L");
 });
 test("PL-02 only the newest selection starts after debounce",()=>{
  return service.includes("private final Runnable filterChangeRefresh=()->refresh(true);")&&
@@ -1670,12 +1743,17 @@ test("UX-SPRITE-01 missing images remain visible without inventing Pokémon or b
 })());
 test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image sources",(()=>{
  const source=dock.split("function attachSpriteFeedback(){")[1]?.split("function attachLongPress(){")[0]||"";
- if(!source.includes("if(img.complete)confirmLoaded()"))return false;
+ if(!source.includes("if(img.complete)loaded()")||
+    !source.includes("retries>=2")||!source.includes('data-original-src'))return false;
  function makeStage(image){
   const classes=new Set(),listeners={};
-  if(image)image.addEventListener=(name,fn)=>{listeners[name]=fn;};
-  return {image,classes,listeners,classList:{add:name=>classes.add(name)},
-   querySelector:()=>image};
+  if(image){
+   image.isConnected=true;
+   image.addEventListener=(name,fn)=>{listeners[name]=fn;};
+   image.getAttribute=()=>image.src||"https://example.test/sprite.png";
+  }
+  return {image,classes,listeners,classList:{add:name=>classes.add(name),
+   remove:name=>classes.delete(name)},querySelector:()=>image};
  }
  const cached=makeStage({naturalWidth:128,naturalHeight:128,complete:true});
  const waiting=makeStage({naturalWidth:128,naturalHeight:128,complete:false});
@@ -1683,13 +1761,18 @@ test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image source
  const tiny=makeStage({naturalWidth:1,naturalHeight:1,complete:true});
  const absent=makeStage(null);
  const stages=[cached,waiting,broken,tiny,absent];
- const mockDoc={querySelectorAll:(sel)=>sel===".spawn .spriteStage"?stages:[]};
- const attach=(new Function("document","return function attachSpriteFeedback(){"+source))(mockDoc);
+ const mockDoc={querySelectorAll:sel=>sel===".spawn .spriteStage"?stages:[]};
+ const attach=(new Function("document","setTimeout","return function attachSpriteFeedback(){"+source))(
+  mockDoc,()=>{} // no timers after tests; simulate exhausted onerror manually
+ );
  attach();
  if(waiting.classes.has("loaded")||waiting.classes.has("failed"))return false;
  waiting.listeners.load();
+ // First two failures get a recovery attempt; the third shows fallback.
+ broken.listeners.error();broken.listeners.error();
+ tiny.listeners.error();tiny.listeners.error();
  return cached.classes.has("loaded")&&waiting.classes.has("loaded")&&
-  broken.classes.has("failed")&&tiny.classes.has("failed")&&absent.classes.has("failed");
+   broken.classes.has("failed")&&tiny.classes.has("failed")&&absent.classes.has("failed");
 })());
 
 test("HOME-03 authenticates using official profile only after session proof",(()=>{
@@ -1910,7 +1993,7 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
   api.verifiedSpawnRawIv({...alt,ivPercent:"100"})===null&&
   api.verifiedSpeciesIvRank(falseForm,"gl")===null&&
   api.resultInfoHtml("0/14/15",alt).includes("ivInfo medium")&&
-  dock.includes('["stamina","H","iv","H"]')&&
+  dock.includes('["stamina","S","iv","Stamina"]')&&
   countStartsHidden&&
   service.includes('case "speciesIvRankMl":resultShowSpeciesIvRankMl=value')&&
   service.includes('case "overallRankMl":resultShowOverallRankMl=value')&&
@@ -1920,26 +2003,18 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
 
 // UX-NOTIFY-01: the bell in the compact ribbon opens the real alert panel.
 // Notification permission and sound preferences are never a fake visual toggle.
-test("UX-NOTIFY-01 bell opens live notification panel with full controls",()=>{
+test("UX-NOTIFY-01 bell shows only six SVG states and two audio selectors",()=>{
  const block=dock.split("function quickClick(id){")[1]?.split("const QUICK_SVG=")[0]||"";
- const panel=dock.split("function renderAlertsChoices(){")[1]?.split("function renderFiltersChoices(){")[0]||"";
+ const panel=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
  return block.includes('case "bell":toggleChoices("alerts")')&&
-  dock.includes('onclick="toggleChoices(\'alerts\')"')&&
-  !block.includes('case "bell":Native.toggleGeneralAlerts()')&&
-  panel.includes('Native.setAlertMode(id)')&&
-  panel.includes('Native.setFavoriteAlertMode(id)')&&
-   panel.includes('Native.pickAlertTone("general")')&&
-   panel.includes('Native.pickAlertTone("favorites")')&&
-   panel.includes('Native.pickAlertTone("species")')&&
-  panel.includes('"testGeneralNotification"')&&
-  panel.includes('"testNotification"')&&
-  panel.includes('"requestNotificationPermission"')&&
-  panel.includes('"openNotificationSettings"')&&
-  panel.includes('"refreshNotificationStatus"')&&
-  service.includes('void testGeneralNotification()')&&
-  service.includes('void requestNotificationPermission()')&&
-  service.includes('void openNotificationSettings()')&&
-  main.includes('REQUEST_NOTIFICATION_PERMISSION');
+  dock.includes(`onclick="toggleChoices('alerts')"`)&&
+  panel.includes('Native.setAlertMode(id)')&&panel.includes('Native.setFavoriteAlertMode(id)')&&
+  panel.includes('const symbols={')&&panel.includes('for(const id of ["on","silent","off"])')&&
+  panel.includes('section("Novos Pokémon","general"')&&
+  panel.includes('section("Pokémon Favoritos","favorites"')&&
+  panel.includes('select.onclick=()=>Native.pickAlertTone(target)')&&
+  panel.includes('SHOW_INDIVIDUAL_FAVORITE_TONES')&&
+  panel.includes('Native.requestNotificationPermission()')&&!panel.includes('testGeneralNotification');
 });
 test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay independent",
  dock.includes('notificationPermissionGranted=!!permissionGranted')&&
@@ -1962,13 +2037,14 @@ test("UX-NOTIFY-03 keep native Android channel sound and explicitly separate two
  service.includes('nm.getNotificationChannel(channelId).getImportance()==NotificationManager.IMPORTANCE_NONE'));
 
 
-test("UX-NOTIFY-04 favorites sound and silence never inherit general alert mode",()=>{
+test("UX-NOTIFY-04 favorites and general retain separate tri-state controls",()=>{
+ const panel=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
  return watch.includes('String soundMode=mode(context);')&&
   !watch.includes('getString("alertsMode","off")')&&
   watch.includes('boolean quiet="silent".equals(soundMode);')&&
   service.includes('WatchAlerts.setMode(OverlayService.this,mode);')&&
   service.includes('WatchAlerts.setMode(OverlayService.this,enabled?"on":"off");')&&
-  dock.includes('button.classList.toggle("chosen",favoriteAlertMode===id)');
+  panel.includes('Native.setFavoriteAlertMode(id)')&&panel.includes('Native.setAlertMode(id)');
 });
 test("UX-NOTIFY-05 independent system tones and individual Pokémon overrides",()=>{
  return watch.includes('public static final String PREF_GENERAL_TONE=')&&
@@ -1982,13 +2058,10 @@ test("UX-NOTIFY-05 independent system tones and individual Pokémon overrides",(
   main.includes('WatchAlerts.PREF_SPECIES_TONES')&&
   main.includes('setItems(options,(dialog,which)->');
 });
-test("UX-NOTIFY-06 ringtone options never fetch or ship copyrighted cries",()=>{
- const panel=dock.split('function renderAlertsChoices(){')[1]?.split('function renderFiltersChoices(){')[0]||"";
- return panel.includes('Native.pickAlertTone("general")')&&
-  panel.includes('Native.pickAlertTone("favorites")')&&
-  panel.includes('Native.pickAlertTone("species")')&&
-  !watch.includes('pokemonshowdown.com')&&
-  !watch.includes('soundlibrary.pokemon.co.jp')&&
+test("UX-NOTIFY-06 audio selection is native, persisted and never fetched by JavaScript",()=>{
+ const panel=dock.split('function renderAlertsChoices(){')[1]?.split('// Site -> App')[0]||"";
+ return panel.includes('Native.pickAlertTone(target)')&&
+  !panel.includes('fetch(')&&!watch.includes('pokemonshowdown.com')&&
   main.includes('RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT,false')&&
   main.includes('"content".equals(scheme)&&!"android.resource".equals(scheme)');
 });
@@ -2058,7 +2131,8 @@ test("SITE-POKEMON-02 stale autocomplete requests cannot replace newer site choi
   ?.split('@JavascriptInterface public void setSearchConfig(String payload)')[0]||'';
  return java.includes('pokemonSuggestionSequence')&&java.includes('sequence!=pokemonSuggestionSequence')&&
   java.includes('attempt<20')&&java.includes('response.put("query",query)')&&
-  dock.includes('state==="explicit-empty"&&response.empty===true?"Nenhuma opção oficial encontrada"')&&
+  dock.includes('state==="explicit-empty"&&response.empty===true?')&&
+  dock.includes('pokemonSuggestionSource=response.source==="authorized-api-catalog"?"api":"dom"')&&
   probe.includes("reason:'Aguardando opções oficiais do PoGoCoordinates'");
 });
 test("UX-MENU-ANCHOR-01 popups track their own launcher within native window",()=>{
@@ -2096,8 +2170,8 @@ test("UX-LOCATION-FIX-02 panel stays open until native/site confirmation",()=>{
  return body.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&
   !body.includes('locationEnabled=true;closeChoices()')&&
   !body.includes('locationCoords=match[1]')&&
-  body.includes('message.textContent="⌛ Aplicando coordenadas')&&
-  body.includes('hide.onclick=closeChoices')&&
+  body.includes('message.textContent="⌛ Verificando localização')&&
+  body.includes('label.append(labelName,paste,radiusWrap)')&&
   body.includes('Native.setLocation(false,"",0)')&&
   dock.includes('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
   dock.includes('state==="CONFIRMED"?"✓ Localização confirmada');
@@ -2115,7 +2189,7 @@ test("UX-LOCATION-FIX-03 explicit clipboard paste is validated and never enables
   !handler.includes('locationEnabled=true')&&
   !handler.includes('putString("locationCoords"')&&
   dock.includes('paste.onclick=()=>Native.pasteLocationCoords()')&&
-  dock.includes('aria-label",paste.title');
+  dock.includes('paste.setAttribute("aria-label","Colar coordenadas")');
 });
 test("UX-LOCATION-FIX-04 retains 12 toolbar controls, stale protection and site verification",()=>{
  const serviceMethod=service.split('private void configureLocationAndVerify(')[1]
@@ -2181,7 +2255,7 @@ test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()
   source.includes('location:place,distance,despawn:')&&
   detail.includes('item("Distância",c.distance)')&&
   !source.includes('navigator.geolocation')&&
-  dock.includes('"Distância do local informado"');
+  dock.includes('["distance","Dist.","Distância"]');
 });
 test("UX-INFO-ALL-03 optional metadata respects the compact row dimensions",()=>{
  const win={};new Function("window",read("assets/pvpoke-overall-ranks.js"))(win);
@@ -2251,12 +2325,15 @@ test("SITE-POKEMON-05 12-icon toolbar & no personal GPS remain intact",()=>
  !probe.includes('navigator.geolocation')&&
  dock.includes('items.slice(0,10)')&&
  service.includes('"locationCoords"'));
-test("NOTIFY-02 two independent three-state controls and audible streams",()=>{
- const panel=dock.split("function renderAlertsChoices(){")[1]?.split("function renderFiltersChoices(){")[0]||"";
- return panel.includes('const generalModes=document.createElement("div")')&&
-  panel.includes('const favoriteModes=document.createElement("div")')&&
+test("NOTIFY-02 compact grouped speaker icons still drive two distinct native modes",()=>{
+ const panel=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
+ return panel.includes('const symbols={')&&
+  panel.includes('const labels={on:"Som",silent:"Sem som",off:"OFF"}')&&
+  panel.includes('section("Novos Pokémon","general",alertMode,generalCustomTone)')&&
+  panel.includes('section("Pokémon Favoritos","favorites",favoriteAlertMode,favoriteCustomTone)')&&
   panel.includes('Native.setAlertMode(id)')&&panel.includes('Native.setFavoriteAlertMode(id)')&&
-  panel.includes('["silent","🔇 Sem som"]')&&panel.includes('Novos em OFF e Favoritos em Som');
+  service.includes('alertModeCaption("Novos Pokémon",value)')&&
+  service.includes('alertModeCaption("Pokémon Favoritos",mode)');
 });
 test("NOTIFY-03 silent notifications and blocked Android are visually distinguished",()=>{
  const states=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(",1)[0]||"";
@@ -2276,15 +2353,17 @@ test("NOTIFY-04 choose MP3 or OGG from Files or Drive with persistent access",()
   main.includes('saveChosenAlertTone(data,req==306)')&&
   main.includes('storeAlertTone(target,species,chosen)');
 });
-test("NOTIFY-05 favorites dialog uses authoritative mode and styled cards",()=>{
+test("NOTIFY-05 Favorites remains selection-only; audio settings reside in mini Alerts",()=>{
  const picker=read("java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java");
- return picker.includes('WatchAlerts.setMode(activity,enabled?"on":"off")')&&
-  picker.includes('POKÉMON FAVORITOS')&&
-  picker.includes('row.setBackground(rowBg)')&&
-  picker.includes('background.setCornerRadius(dp(activity,12))');
+ const alerts=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
+ return !picker.includes('WatchAlerts.setMode(')&&
+  picker.includes('FAVORITOS')&&picker.includes('row.setBackground(rowBg)')&&
+  picker.includes('background.setCornerRadius(dp(activity,12))')&&
+  alerts.includes('Native.setFavoriteAlertMode(id)');
 });
 test("COORDS-06 typed radius still requires actual site two-field confirmation",()=>{
- return dock.includes('radiusField.type="number"')&&
+ return dock.includes('radiusField.type="text"')&&
+   dock.includes('radiusField.maxLength=4')&&
   dock.includes('wantedRadius=Number(radiusField.value)')&&
   dock.includes('radiusField.oninput=()=>')&&
   service.includes('if(configured.optBoolean("pending",false)&&attempt<16)')&&
@@ -2333,44 +2412,47 @@ test("UX-NOTIFY-12 new and favorite audio channels remain separate",()=>{
   watch.includes('selectedTone(context,true,species)')&&
   watch.includes('pokesearch_watch_silent_v1');
 });
-test("UX-NOTIFY-13 bundled user sounds include 24 Android resource references and category/species picker",()=>{
- const library=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
- return (library.match(/R\.raw\.ps_[a-z0-9_]+/g)||[]).length===24&&
-  main.includes("openBundledAlertTonePicker(")&&
-  main.includes("PokeSoundLibrary.soundUri(this,selected[0])")&&
-  main.includes("openAlertAudioFilePicker(target,pokemon)")&&
+test("UX-NOTIFY-13 audio selector includes 36 local tones, default and upload",()=>{
+ const lib=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
+ const audio=lib.split("private static final int[] AUDIO={")[1]?.split("};")[0]||"";
+ return (audio.match(/R\.raw\.ps_[a-z0-9_]+/g)||[]).length===36&&
+  main.includes('String[] choices=new String[count+2]')&&
+  main.includes('choices[0]="Padrão"')&&
+  main.includes('choices[count+1]="＋ Enviar áudio"')&&
+  main.includes('System.arraycopy(PokeSoundLibrary.LABELS,0,choices,1,count)')&&
   watch.includes('"android.resource".equals(uri.getScheme())')&&
-  dock.includes("Biblioteca PokeSearch (24 sons)")&&
-  !library.includes("ps_freesound_community_jigglypuff_evolves_into_wigglytuff_then_the_world_implodes_24177")&&
-  watch.includes("context.getResources().getIdentifier(");
+  watch.includes('context.getResources().getIdentifier(');
 });
-test("UX-NOTIFY-15 all 24 bundled sounds have user-readable labels and original files",()=>{
- const library=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
- const labels=(library.split('static final String[] LABELS={')[1]||"").split('};')[0];
- const entries=(labels.match(/^\s*"[^"]+",?$/gm)||[]);
- return entries.length===24&&
-  library.match(/R\.raw\.ps_[a-z0-9_]+/g).length===24&&
-  labels.includes('"Aipom · Grito"')&&labels.includes('"Pokémon brilhante · Shiny"')&&
+test("UX-NOTIFY-15 all 36 audio labels match bundled Android raw entries",()=>{
+ const lib=read("java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java");
+ const labels=lib.split('static final String[] LABELS={')[1]?.split('};')[0]||"";
+ const audio=lib.split('private static final int[] AUDIO={')[1]?.split('};')[0]||"";
+ return (labels.match(/^\s*"[^"]+",?$/gm)||[]).length===36&&
+  (audio.match(/R\.raw\.ps_[a-z0-9_]+/g)||[]).length===36&&
+  labels.includes('"Quem é esse Pokémon? · BR"')&&
+  labels.includes('"Jigglypuff · Evolução meme"')&&labels.includes('"Snorlax"')&&
   !labels.includes('freesound community')&&!labels.includes('ps_')&&
-  !library.includes('jigglypuff');
+  lib.includes('static Uri favoriteDefaultUri(Context context)');
 });
-test("UX-NOTIFY-16 sound preview is separate from saving, cancellable and released",()=>{
- const picker=main.slice(main.indexOf('private void openBundledAlertTonePicker('),
+test("UX-NOTIFY-16 tapping previews before ✓; default and uploaded file require confirmation",()=>{
+ const selector=main.slice(main.indexOf('private void openBundledAlertTonePicker('),
   main.indexOf('private void chooseAlertToneSource('));
  const preview=main.slice(main.indexOf('private void stopBundledTonePreview('),
   main.indexOf('private void openBundledAlertTonePicker('));
- const tap=picker.split('.setSingleChoiceItems(')[1]?.split('.setPositiveButton(')[0]||"";
- return picker.includes('setSingleChoiceItems(PokeSoundLibrary.LABELS,-1,')&&
-  tap.includes('playBundledTonePreview(which)')&&
+ const tap=selector.split('.setSingleChoiceItems(')[1]?.split('.setPositiveButton(')[0]||"";
+ return selector.includes('setSingleChoiceItems(choices,-1,')&&
+  tap.includes('playBundledTonePreview(which-1)')&&
   !tap.includes('storeAlertTone(')&&
-  picker.includes('setPositiveButton("Usar este som"')&&
-  picker.includes('if(selected[0]<0)return;')&&
-  picker.includes('storeAlertTone(target,pokemon,chosen.toString())')&&
-  picker.includes('setNegativeButton("Cancelar",null)')&&
-  picker.includes('setOnDismissListener(closed->stopBundledTonePreview())')&&
-  picker.includes('setEnabled(false)')&&
+  selector.includes('setPositiveButton("✓ Usar áudio"')&&
+  selector.includes('if(selected[0]==-1)return;')&&
+  selector.includes('storeAlertTone(target,pokemon,chosen.toString())')&&
+  selector.includes('setNegativeButton("Cancelar",null)')&&
+  selector.includes('setOnDismissListener(closed->stopBundledTonePreview())')&&
   preview.includes('android.media.MediaPlayer.create(this,source)')&&
   preview.includes('previous.release()')&&
+  main.includes('private void confirmUploadedAlertTone(')&&
+  main.includes('setNeutralButton("▶ Ouvir",null)')&&
+  main.includes('confirmUploadedAlertTone(target,species,uri)')&&
   main.includes('stopBundledTonePreview();\n        activityClosing=true;');
 });
 test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=>{
@@ -2559,7 +2641,7 @@ test("RANK-EVO-DETAIL-03 native async bridge rejects old or mismatched results",
   method.includes('payload.optJSONArray("leagues").length()!=3')&&
   method.includes('window.showEvolutionDetails(')&&
   detail.includes("evoIdentity(payload)!==detailIdentity")&&
-  detail.includes("max-height:165px;overflow-y:auto")&&
+  detail.includes("#evoBody{max-height:none;overflow:visible")&&
   !service.includes("setAllowUniversalAccessFromFileURLs(true)")&&
   !dock.includes('name:"Rookidee"')&&
   dock.includes('window.pvpEvolutionDetails=function(index)')&&
@@ -2649,7 +2731,7 @@ test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menu
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
  return filters.includes('option("sortBy","Ordenar")')&&
   filters.includes('option("weather","Clima")')&&
-  filters.includes('field("Forma",formButton)')&&
+  filters.includes('field("Forma",formEditor)')&&
   filters.includes('chips("size","Tamanho")')&&
   filters.includes('chips("gender","Sexo")')&&
   !filters.includes('field("Pokémon",pick)')&&
@@ -2659,12 +2741,14 @@ test("FILTERS-POGO-01 keeps species, IV and PvP in their existing dedicated menu
 test("FILTERS-POGO-02 shows PC and bounded level 1–35 with honest defaults",()=>{
  const filters=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
- return filters.includes('number("cpMin","PC mínimo");number("cpMax","PC máximo");')&&
-  filters.includes('number("levelMin","Nível mínimo",true);number("levelMax","Nível máximo",true);')&&
-  filters.includes('input.min=level?"1":"0";input.max=level?"35":"99999"')&&
-  filters.includes('input.type="number";input.inputMode="numeric";input.step="1"')&&
-  dock.includes('modeDraft.levelMin="1"')&&
-  dock.includes('modeDraft.levelMax="35"')&&
+ return filters.includes('numberPair("PC","cpMin","cpMax");')&&
+  filters.includes('numberPair("Nível","levelMin","levelMax",true);')&&
+  filters.includes('input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999"')&&
+  filters.includes('input.type=level?"text":"number";input.inputMode="numeric";')&&
+  !filters.includes('make("button","extraStep"')&&
+  filters.includes('input.value=String(modeDraft[key]??"")')&&
+  filters.includes('[[minKey,"Min","mínimo"],[maxKey,"Max","máximo"]]')&&
+  !filters.includes('cell.append(cap,input)')&&
   dock.includes('input.checkValidity()')&&
   dock.includes('field.setCustomValidity("Mínimo maior que máximo")')===false&&
   service.includes('{"cpMin","cpMax"}')&&service.includes('{"levelMin","levelMax"}');
@@ -2674,7 +2758,7 @@ test("FILTERS-POGO-03 size and gender buttons never invent site-supported option
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
  const probe=read("assets/probe.js");
  return filters.includes('["XXS","XS","S","M","L","XL","XXL"]')&&
-  filters.includes('["Any","Male","Female","Genderless"]')&&
+  filters.includes('["Male","Female","Genderless"]')&&
   !filters.includes('button.disabled=!actual&&!selected.has(resolved)')&&
   filters.includes('modeDraft[multiKey]=[...selected]')&&
   !filters.includes('extraChip","Qualquer"')&&
@@ -2700,7 +2784,7 @@ test("FILTERS-POGO-04 location Apply submits same saved criteria through live DO
  const probe=read("assets/probe.js");
  return dock.includes('Native.setLocation(true,wantedCoords,wantedRadius)')&&
   dock.includes('slide.min="0";slide.max="1000"')&&
-  dock.includes('Aplicar pesquisa sem limpar outros filtros')&&
+  !dock.includes('make("p","locText","Coords e raio')&&
   dock.includes('clear.onclick=disable')&&
   !dock.includes('fieldRow.append(field,paste,toggle)')&&
   service.includes('OverlayService.this.refresh(true);')&&
@@ -2739,7 +2823,7 @@ test("FILTERS-POGO-07 Applied requires native verified submission and accepted c
   dock.includes("filtersConfirmed=false)=>{")&&
   dock.includes("siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale")&&
   phase.includes("verified?\"✓ Aplicado no PoGoCoordinates\"")&&
-  phase.includes("dirty?\"● Alterações ainda não aplicadas\"")&&
+  phase.includes("dirty?\"● Falta aplicar\"")&&
   dock.includes('button.classList.toggle("site-filters-applied",count>0&&siteFiltersConfirmed');
 });
 test("FILTERS-POGO-08 scoped Clear preserves species, IV, Shiny and coordinates",()=>{
@@ -2785,7 +2869,7 @@ test("FILTERS-POGO-10 simulated UI never claims Applied for pending/stale/dirty 
  const saved={mode:"raw",sortBy:"Despawn (longest)",cpMin:"500",cpMax:"",
   levelMin:"1",levelMax:"35",includePreviousEvolutions:true};
  const result=(proof,active,stale,draft)=>{
-  const badge={textContent:"",classList:{toggle(_key,_value){}}};
+  const badge={textContent:"",title:"",setAttribute(_key,_value){},classList:{toggle(_key,_value){}}};
   compiled(saved,"raw",draft,true,"filters",
    {getElementById:()=>badge},proof,active,stale)();
   return badge.textContent;
@@ -2794,7 +2878,7 @@ test("FILTERS-POGO-10 simulated UI never claims Applied for pending/stale/dirty 
   result(true,false,false,saved)==="✓ Aplicado no PoGoCoordinates"&&
   result(true,true,false,saved).includes("Aguardando confirmação")&&
   result(true,false,true,saved).includes("Aguardando confirmação")&&
-  result(true,false,false,{...saved,weather:"Rainy"}).includes("Alterações ainda não aplicadas");
+  result(true,false,false,{...saved,weather:"Rainy"}).includes("Falta aplicar");
 });
 
 test("LT57-ONEFORM-01 patch only Weather with no loss of species IV or location",()=>{
@@ -2833,8 +2917,8 @@ test("LT57-ONEFORM-03 Size multi and Gender single radio preserve Any",()=>{
  return filters.includes('const selected=new Set(existing.filter(')&&
   filters.includes('if(selected.has(resolved))selected.delete(resolved);else selected.add(resolved);')&&
   filters.includes('modeDraft[multiKey]=[...selected]')&&
-  filters.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}')&&
-  filters.includes('v==="Any"?"⚥"')&&
+  filters.includes('if(isGender){modeDraft[multiKey]=checked?[]:[resolved];}')&&
+  filters.includes('v==="Male"?"♂"')&&
   filters.includes('group.setAttribute("role","radiogroup")')&&
   !filters.includes('button.disabled=!actual&&!selected.has(resolved)')&&
   probe.includes('function extraMulti(key,desired,operation)')&&
@@ -2858,8 +2942,8 @@ test("LT57-ONEFORM-05 Weather uses site Any and only screenshot-supported choice
   ?.split("window.onFilterOptions=function")[0]||"";
  const expected=["Boosted","Sunny","Rainy","Partly Cloudy","Cloudy","Windy","Snow","Fog"];
  return expected.every(v=>picker.includes('"'+v+'"'))&&
-  picker.includes('neutral.textContent="Any"')&&
-  dock.includes('key==="weather"?"Any":"—"')&&
+  picker.includes('neutral.textContent=filterDisplayLabel(key,"Any")')&&
+  dock.includes('key==="sortBy"?official[0]:"Any"')&&
   read("assets/probe.js").includes('function comparableOption(value)');
 });
 test("LT57-ONEFORM-06 compact menu and launcher safe area preserved",()=>{
@@ -2871,20 +2955,19 @@ test("LT57-ONEFORM-06 compact menu and launcher safe area preserved",()=>{
   iconGenerator.includes("int artworkSize = 288")&&
   iconGenerator.includes("int padding = 8");
 });
-test("LT57-ONEFORM-07 coordinate + Shiny share verified submit, no separate reset",()=>{
- const shiny=service.split('@JavascriptInterface public void shiny()')[1]
-  ?.split('@JavascriptInterface public void refresh()')[0]||"";
- return shiny.includes('if(locationEnabled){OverlayService.this.refresh(true);return;}')&&
-  shiny.includes('Sincronizando Shiny e localização na mesma pesquisa')&&
+test("LT62 one-pass Shiny + location share verified Search with no reset",()=>{
+ const bridge=service.split('@JavascriptInterface public void shiny()')[1]?.split('@JavascriptInterface public void refresh()')[0]||"";
+ const helper=service.split('private void startVerifiedShinySearch(int generation,int attempt){')[1]?.split('private void prepareImmediateShiny(',1)[0]||"";
+ return bridge.includes('startVerifiedShinySearch(generation,0);')&&
+  bridge.includes('refresh(true);')&&
+  helper.includes('Verificando Shiny e localização na mesma busca')&&
   service.includes('verifyShinyAfterLocation(generation,manual,0)')&&
   service.includes('execute("verifyLocation:"+data')&&
   service.includes('execute("verifyShiny",verified->')&&
-  !shiny.includes('locationEnabled=false')&&
-  !shiny.includes('locationCoords=""')&&
+  !bridge.includes('locationEnabled=false')&&!bridge.includes('locationCoords=""')&&
   dock.includes('clear.onclick=disable')&&
   !dock.includes('fieldRow.append(field,paste,toggle)');
 });
-
 test("LT57-DRIVE-ICON-01 exact replacement StarGL, StarUL and StarIVRaw PNGs",()=>{
  const crypto=require("node:crypto");
  const icons={
@@ -2916,7 +2999,7 @@ test("LT57-DRIVE-ICON-02 Raw IV text follows A D H and updates on changes",()=>{
   dock.includes('svg.quickIvValues text{')&&
   !dock.includes('body.controls-window #quickMenuList .quickIvValues{');
 });
-test("LT57-RAW-IV-CLIP-01 only personalized Raw IV has bounded text in the medal",()=>{
+test("LT62 raw IV and neutral mixed IV% keep bounded text inside the medal",()=>{
  const vm=require("node:vm");
  const start=dock.indexOf("const RESULT_ICONS=Object.freeze("),end=dock.indexOf("let locationEnabled=",start);
  if(start<0||end<start)return false;
@@ -2929,7 +3012,7 @@ test("LT57-RAW-IV-CLIP-01 only personalized Raw IV has bounded text in the medal
   get("raw",{attack:0,defense:0,stamina:0}).ivText===""&&
   get("raw",{attack:15,defense:15,stamina:15}).ivText===""&&
   get("hundo",{}).ivText===""&&get("nundo",{}).ivText===""&&
-  get("percent",{percentMin:0,percentMax:100}).ivText===""&&
+  get("percent",{percentMin:0,percentMax:100}).ivText==="%"&&
   get("gl",{}).ivText===""&&get("ul",{}).ivText==="";
 });
 test("LT57-WEATHER-ICONS-01 exact nine weather Drive PNGs embedded",()=>{
@@ -3030,9 +3113,10 @@ test("UX-QUICK-MORE-04 original colors and bridges stay unchanged",()=>{
 });
 test("UX-QUICK-MORE-05 close on outside tap and ordinary preferences survive",()=>{
  return dock.includes('document.addEventListener("pointerdown",event=>{')&&
-  dock.includes('if(choiceOpen!=="more")return;')&&
-  dock.includes('event.target.closest("#choices.morePanel")')&&
-  dock.includes('event.target.closest(\'#quickMenuList button[data-key="more"]\')')&&
+  dock.includes('if(!choiceOpen)return;')&&
+  dock.includes('event.target.closest("#choices")')&&
+  dock.includes('event.target.closest("#choices")')&&
+  dock.includes('event.target.closest(\'#quickMenuList button[data-key]\')')&&
   dock.includes('document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker","morePanel"')&&
   dock.includes('if(!menuOpen){closeChoices();')&&
   dock.includes('const hidden=legacy?[]:Array.isArray(p.hidden)')&&
@@ -3081,9 +3165,9 @@ test("LT58-SITE-SELECT-02 Gender exclusive; Form directly below; redundant text 
  const f=dock.split("function renderExtraFilters(panel,make){")[1]
   ?.split("function renderFilterPicker(key,label,options){")[0]||"";
  const p=read("assets/probe.js");
- return f.includes('chips("gender","Sexo");\n  const formSelected=')&&f.includes('field("Forma",formButton)')&&
+ return f.includes('chips("gender","Sexo");\n  const formSelected=')&&f.includes('field("Forma",formEditor)')&&
   f.includes('group.setAttribute("role","radiogroup")')&&
-  f.includes('if(isGender){modeDraft[multiKey]=value==="Any"?[]:[resolved];}')&&
+  f.includes('if(isGender){modeDraft[multiKey]=checked?[]:[resolved];}')&&
   p.includes('if(key==="gender"&&Array.isArray(filters.genderSelections))')&&
   p.includes('extraMatches("gender",wanted[0]||"")')&&
   service.includes('key.equals("genderSelections")?1:')&&
@@ -3131,7 +3215,7 @@ test("LT58-ALL-POPUPS-STABLE-02 intrinsic popup height ignores Android clipping"
   run("location",150,340)===305&&
   run("filters",80,420)===355&&
   run("filters",200,420)===355&&
-  run("mode",50,320)===230&&
+  run("mode",50,320)===204&&
   run("more",34,130)===136;
 });
 
@@ -3223,7 +3307,7 @@ test("LT60-LOC-STATE-03 native feedback observes updated error status",()=>{
  return bridge.indexOf('activeSearchPhase=String(searchPhase||"idle");')<
   bridge.indexOf('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
   dock.includes('state==="NOT_APPLIED"?"⚠ Localização não aplicada')&&
-  dock.includes('state==="REQUESTED"?"⌛ Coordenadas solicitadas')&&
+  dock.includes('state==="REQUESTED"?"⌛ Verificando localização')&&
   service.includes('prefs.remove("locationCoords").remove("locationRadius")');
 });
 
@@ -3260,7 +3344,7 @@ test("LT62-MORE-ABOVE obeys native popup placement without moving toolbar",()=>{
   dock.includes("panel.style.setProperty(\"max-width\",Math.floor(width)+\"px\",\"important\")");
 });
 test("LT63-SPRITE-PITCH never overlaps adjacent sprites with zero visual gap",()=>{
- const begin=dock.indexOf("function computeResultLayout(");
+ const begin=dock.indexOf("function additionalResultGapPx(");
  const end=dock.indexOf('let lastListKey=""',begin);
  if(begin<0||end<begin)return false;
  const run=new Function("window",dock.slice(begin,end)+"return computeResultLayout;");
@@ -3353,12 +3437,14 @@ test("LT70-FORM-MULTI uses official DOM checkboxes, not hardcoded form names",()
   probe.includes('!extraMulti("form",wanted,"verify")')&&
   probe.includes('slice(0,key==="form"?500:80)');
 });
-test("LT71-FORM-EDITOR searches official forms with chips but applies only on final Filters confirm",()=>{
+test("LT62-FORM-EDITOR searches official forms and only Form is patched on each choice",()=>{
  const block=dock.split("function renderFormPicker(){")[1]?.split("window.onFormOptions=response=>",1)[0]||"";
- return block.includes("input.placeholder=\"Buscar forma no PoGoCoordinates\"")&&
+ const picker=dock.split("function refreshOfficialFormList(){")[1]?.split("function renderFormPicker()",1)[0]||"";
+ return block.includes('input.placeholder="Buscar forma no PoGoCoordinates"')&&
   block.includes("Native.requestFormOptions(formQuery)")&&
-  block.includes("renderFiltersChoices();")&&
-  dock.includes('formButton.onclick=()=>{modeScrollTop=panel.scrollTop;formQuery="";renderFormPicker();}')&&
+  !block.includes('done.textContent="✓ Confirmar seleção"')&&
+  picker.includes('updateFiltersPanelStatus()')&&
+  dock.includes('field("Forma",formEditor)')&&
   dock.includes('filterOptions.form={present:true,options:[...new Set([...previous,...options])].slice(0,500)}')&&
   dock.includes('Native.patchSearchFilters(JSON.stringify(delta))');
 });
@@ -3493,9 +3579,65 @@ test("LT60-E7-02 empty result needs a fresh site signal, not a generic zero",()=
  return probe.includes('function visibleResultSignature(){')&&
    probe.includes('window.__pokeSearchSubmission={before:visibleResultSignature(),observedUpdate:false};')&&
    probe.includes('const explicitEmpty=found.length===0&&!loading&&explicitEmptySignal&&resultChanged;')&&
-   probe.includes('const zeroInResults=countLabel==="0"&&mainEmptyMessage();')&&
+   probe.includes('const zeroInResults=emptyInMain&&(countLabel==="0"||countLabel===undefined);')&&
+   probe.includes('const empty=mainEmptyMessage()?"verified-empty-element":"";')&&
    probe.includes('emptySignalFound:explicitEmptySignal,resultChanged,')&&
    service.includes('"estado vazio anterior sem atualização"');
+});
+// LT62 reference: Refresh direct tap + AUTO long-press preserve two behaviors.
+test("LT62: direct refresh, long press AUTO and official sprite-only chips",()=>{
+ return dock.includes('if(id==="period"){manualRefreshTap();return;}')&&
+   dock.includes('button.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();open();})')&&
+   dock.includes('if(choiceOpen==="period")closeChoices();else toggleChoices("period")')&&
+   dock.includes('pokemonSuggestionSpriteCache.set(label.toLowerCase(),src);')&&
+   dock.includes('pokemonSuggestionSpriteCache.get(String(name).toLowerCase())');
+});
+test("LT62 AUTO refresh icon and long press must never double trigger a search",()=>{
+ const body=dock.split('function bindRefreshGesture(button){')[1]?.split('function renderQuickMenu(){')[0]||"";
+ const menu=dock.split('const current=period;')[1]?.split('function positionCascadeEditor()')[0]||"";
+ return dock.includes('period:\'<path d="M27 12A11 11 0 0 0 8 5"')&&
+  dock.includes('bindRefreshGesture(button);')&&
+  body.includes('hold=setTimeout(open,600)')&&
+  body.includes('if(longTriggered){e.preventDefault();e.stopPropagation();longTriggered=false;return;}')&&
+  body.includes('manualRefreshTap();')&&body.includes('pointermove')&&
+  body.includes('pointercancel')&&
+  !menu.includes('now.textContent=')&&
+  dock.includes('badge.textContent=period===0?"":period+"m"')&&
+  dock.includes('button.classList.add("refreshSpinning")')&&
+  dock.includes('animation:psRefreshSpin .7s linear 1!important');
+});
+test("LT62 AUTO compact six-choice menu is usable without scrolling",()=>{
+ const menu=dock.split('const current=period;')[1]?.split('function positionCascadeEditor()')[0]||"";
+ return menu.includes('off.setAttribute("aria-pressed",String(current===0))')&&
+  menu.includes('button.setAttribute("aria-pressed",String(value===current))')&&
+  menu.includes('off.onclick=()=>selectInterval(0)')&&menu.includes('Native.setIntervalMinutes(value)')&&
+  menu.includes('[...row.children].forEach(tile=>panel.appendChild(tile))')&&
+  menu.includes('panel.setAttribute("aria-label","Atualização automática")')&&
+  !menu.includes('title.textContent="ATUALIZAÇÃO"')&&
+  !menu.includes('close.className="choiceClose"')&&
+  dock.includes('body.controls-window #choices.periodCompact[data-panel-kind="period"]')&&
+  dock.includes('max-height:none!important')&&
+  dock.includes('const periodHeight=tiles*30+Math.max(0,tiles-1)*gap;');
+});
+test("LT62: Shiny pending remains neutral, and site Pokemon import requires a user action",()=>{
+ return dock.includes('button[data-key="sh"].pending .quickGlyph')&&
+  dock.includes('if(response.selectionVerified===true&&Array.isArray(response.selected))')&&
+  dock.includes('importButton.onclick=()=>{')&&
+  dock.includes('pokemonDraft=[...pokemonSiteSelections];')&&
+  dock.includes('importButton.hidden=!differs;')&&
+  probe.includes('selectionVerified:chips!==null')&&
+  service.includes('"SEARCH_LATENCY"')&&
+  service.includes('System.currentTimeMillis()-lastSearchStartMs');
+});
+test("LT62: observed site Sort/Weather/Gender are whitelisted and imported to draft only",()=>{
+ return dock.includes('function verifiedSiteSingleFilterValues(){')&&
+   dock.includes('sortBy:["Despawn (longest)","CP (highest)')&&
+   dock.includes('weather:["Any","Boosted","Sunny"')&&
+   dock.includes('gender:["Any","Male","Female","Genderless"]')&&
+   dock.includes('if(match)selected[key]=match==="Any"?"":match;')&&
+   dock.includes('for(const [key,value] of changed)modeDraft[key]=value;')&&
+   dock.includes('filterOptions={}; // Never reuse an old site snapshot')&&
+   dock.includes('filterOptions[key]={...(filterOptions[key]||{}),...value};');
 });
 // LT60-E8: saved mode, editable submenu and actual site confirmation are separate.
 test("LT60-E8-01 reopened menu identifies persisted GL/UL and raw extremes",()=>{
@@ -3570,7 +3712,7 @@ test("LT61-SHINY-MODE-01 native mode changes do not rewrite the saved Shiny togg
 });
 test("LT61-SHINY-MODE-02 dock preserves requested Shiny during verification",()=>{
  const statement="shinyPending=!!pending;shiny=!!shi||shinyPending;";
- if(!dock.includes(statement))return false;
+ if(!dock.includes('shinyPending=!!pending;\n shiny=!!shi||shinyPending;'))return false;
  const fn=require("node:vm").runInNewContext("((shi,pending)=>{let shiny,shinyPending;"+statement+"return [shiny,shinyPending]})",{});
  return JSON.stringify(fn(false,true))==="[true,true]"&&
   JSON.stringify(fn(true,false))==="[true,false]"&&
@@ -3586,6 +3728,55 @@ test("LT61-SHINY-MODE-03 pending Shiny is not presented as an applied site filte
   service.includes("(shiny&&!shinyVerified)+\"")&&
   service.includes("shinyVerified=shiny;")&&
   service.includes('execute("verifyShiny",verified->{');
+});
+
+test("LT62 P/M/G selector shared by Personalização and Editor Visual",()=>{
+ const visual=read("assets/visual_editor.js");
+ return dock.includes("window.renderSpriteSizeButtons=renderSpriteSizeButtons;")&&
+  visual.includes("window.renderSpriteSizeButtons(panel,true)")&&
+  dock.includes("if(Native.setSpriteSize)Native.setSpriteSize(size)")&&
+  dock.includes("refreshSpriteSizeButtons();")&&
+  service.includes("@JavascriptInterface public void setSpriteSize(int size)")&&
+  service.includes('putInt("spriteSize",size).apply()');
+});
+test("LT62 Android notifications are confirmed from permission callbacks",()=>{
+ return service.includes("SYNC_NOTIFICATION_PERMISSION")&&
+  main.includes("SYNC_NOTIFICATION_PERMISSION")&&
+  main.includes("if(requestCode==204)")&&
+  service.includes("preferência salva; libere as notificações no Android")&&
+  dock.includes("heading.title=notificationPermissionGranted");
+});
+
+test("LT62 independent popup widths are stable after WebView shrink and have no empty tail",()=>{
+ const css=dock.split("/* Split native overlay window:")[1]?.split("</style>")[0]||"";
+ return css.includes("width:240px!important;max-width:none!important")&&
+  css.includes("width:248px!important;max-width:none!important")&&
+  css.includes("width:268px!important;max-width:none!important")&&
+  css.includes("width:138px!important;max-width:none!important")&&
+  css.includes("width:172px!important;max-width:none!important")&&
+  css.includes("width:270px!important;max-width:none!important")&&
+  css.includes("modeCascade.modeCascadeOpen .modeCascadeEditor")&&
+  css.includes("height:0!important;min-height:0!important;overflow:visible!important")&&
+  css.includes("max-height:var(--popup-room,440px)!important;overflow-y:auto!important")&&
+  css.includes("max-width:none!important;");
+});
+
+test("LT62 popup first paint is 1dp touch strip, not a GONE rAF deadlock",()=>{
+ const open=service.split("private void openIndependentPopup(String kind,int x,int y){")[1]
+  ?.split("private static boolean validIndependentPopup(",1)[0]||"";
+ return open.includes("popupParams.height=Math.max(1,dp(1))")&&
+  open.includes("popupRoot.setVisibility(View.VISIBLE)")&&
+  open.includes("wm.updateViewLayout(popupRoot,popupParams)")&&
+  !open.includes("popupRoot.setVisibility(View.GONE)")&&
+  open.includes("if(popupLoaded)js(popupPanel,true,");
+});
+test("LT62 internal submenu switches do not close native popup before its resize",()=>{
+ const js=dock.split("let popupNativeSwitch=false;")[1]
+   ?.split("function toggleChoices(kind){",1)[0]||"";
+ return js.includes("if(popupWindow&&!popupNativeSwitch&&Native.closePopup)")&&
+  js.includes("popupNativeSwitch=true;")&&
+  js.includes("finally{popupNativeSwitch=false;}")&&
+  js.includes("if(choiceOpen===kind){fit();return;}");
 });
 if(failures.length){console.error("UX CONTRACT FAILURES ("+failures.length+"):\\n"+failures.join("\\n"));process.exitCode=1;}
 else console.log("PokeSearch UX contract: "+count+" tests passed");

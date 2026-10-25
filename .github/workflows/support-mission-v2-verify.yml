@@ -1,0 +1,69 @@
+name: Support Mission V2 - validations only (no APK)
+on:
+  push:
+    branches:
+      - feature/support-mission-v2-20261024
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Android SDK 36 via runner preinstalled tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Support mission asset and integration contracts
+        run: node app/tests/support-mission-v2.test.js
+      - name: Existing 21 JavaScript regression suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          for suite in \
+            app/tests/location-probe.test.js \
+            app/tests/probe-smoke.test.js \
+            app/tests/pokemon-picker.test.js \
+            app/tests/login-entry.test.js \
+            app/tests/overlay-ux.test.js \
+            app/tests/visual-editor.test.js \
+            app/tests/signing-contract.test.js \
+            app/tests/firebase-stats.test.js \
+            app/tests/lt62-menu-visual-states.test.js \
+            app/tests/lt63-compact-cascades.test.js \
+            app/tests/lt64-results-lifecycle.test.js \
+            app/tests/lt65-detail-feedback.test.js \
+            app/tests/lt66-samsung-panels.test.js \
+            app/tests/lt67-compact-fields.test.js \
+            app/tests/lt68-refresh-weather-icons.test.js \
+            app/tests/lt68-samsung-hardening.test.js \
+            app/tests/lt69-more-popup-origin.test.js \
+            app/tests/lt70-location-radius-toggle.test.js \
+            app/tests/lt72-drive-update-center.test.js \
+            app/tests/lt73-home-footer-version.test.js \
+            app/tests/lt75-real-drive-update.test.js; do
+            node "$suite"
+          done
+      - name: Pure Java weighted policy tests
+        run: |
+          mkdir -p /tmp/supportmission
+          javac -encoding UTF-8 -d /tmp/supportmission \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/SupportMissionPolicy.java \
+            app/tests/SupportMissionPolicyTest.java
+          java -cp /tmp/supportmission com.lucianotoscano.pokesearchoverlay.SupportMissionPolicyTest
+      - name: Compile Android Java only - DO NOT package an APK
+        run: gradle --no-daemon :app:compileDebugJavaWithJavac

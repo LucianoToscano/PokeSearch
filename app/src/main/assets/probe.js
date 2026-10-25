@@ -7,7 +7,8 @@ const elements=s=>Array.from(document.querySelectorAll(s));
 const vis=e=>!!(e&&e.getClientRects().length);
 const labels=(root,pattern)=>Array.from(root.querySelectorAll("span,label,strong,small,dt,div,p")).filter(e=>vis(e)&&pattern.test(text(e))&&text(e).length<50).sort((a,b)=>text(a).length-text(b).length);
 function oneButton(label){
- const re=new RegExp("^\\s*"+label+"\\s*$","i");
+ const re=label==="Coords"?/^\s*(?:Coords|Coordinates)\s*$/i:
+  label==="Area"?/^\s*Areas?\s*$/i:new RegExp("^\\s*"+label+"\\s*$","i");
  return elements("button,[role=button]").find(b=>vis(b)&&re.test(text(b)))||null;
 }
 function click(label){let e=oneButton(label);if(e){e.click();return true;}return false;}
@@ -283,13 +284,13 @@ function verifyRaw(){
  const percent=percentageIVInputs();
  return percent.length===2&&percent.every(input=>confirmedNumber(input,100,0,100));
 }
-// Defense-in-depth: the UI and Android bridge reject unattainable IV values,
-// and the site automation independently verifies the same 46-value domain.
+// LT62: numeric thresholds can be any integer between 0 and 100.
+// Results still have the 46 physically attainable rounded IV percentages.
+// The website must confirm the exact typed bounds before searching.
 const ATTAINABLE_IV_PERCENTAGES=Array.from({length:46},(_,sum)=>Math.round(sum*100/45));
 function validPercentRange(){
  return Number.isInteger(filters.percentMin)&&Number.isInteger(filters.percentMax)&&
-  ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMin)&&
-  ATTAINABLE_IV_PERCENTAGES.includes(filters.percentMax)&&
+  filters.percentMin>=0&&filters.percentMax<=100&&
   filters.percentMin<=filters.percentMax;
 }
 function applyPercent(){
@@ -505,10 +506,10 @@ function pokemonSuggestion(query){
   if(!explicitEmpty)return {ok:false,pending:true,state:'pending',query:originalQuery,
    reason:'Aguardando opções oficiais do PoGoCoordinates'};
   return {ok:true,state:'explicit-empty',empty:true,query:originalQuery,options:[],
-   selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
+   selected:chips?chips.map(c=>c.label):[],selectionVerified:chips!==null,source:'PoGoCoordinates'};
  }
  return {ok:true,state:'ready',query:originalQuery,options,
-  selected:chips?chips.map(c=>c.label):[],source:'PoGoCoordinates'};
+  selected:chips?chips.map(c=>c.label):[],selectionVerified:chips!==null,source:'PoGoCoordinates'};
 }
 if(action.startsWith('pokemonSuggest:')){
  try{return JSON.stringify(pokemonSuggestion(JSON.parse(action.slice('pokemonSuggest:'.length))));}
@@ -585,9 +586,10 @@ function extraPopupMatchesKey(key,popup){
   .filter(vis).map(e=>clean(text(e))).filter(Boolean);
  if(key==='form'){
   const distinct=[...new Set(values.map(v=>v.toLowerCase()))];
-  // Reject the complete Gender menu; Male/Female ALONE can be real Form labels.
-  if(distinct.length>=3&&distinct.includes('any')&&
-   distinct.includes('male')&&distinct.includes('female')&&
+  // A popup consisting solely of Gender options cannot prove it belongs
+  // to Form. Reject even partially hydrated Gender lists (2+ choices);
+  // the user may retry once the official Form portal is identifiable.
+  if(distinct.length>=2&&
    distinct.every(v=>/^(?:any|male|female|genderless|unknown)$/.test(v)))
    return false;
  }
@@ -621,9 +623,17 @@ function formOptionRows(control){
 function siteOptions(key){
  const control=extraControl(EXTRA_LABELS[key]);
  if(!control)return {ok:false,pending:false,options:[]};
- if(control.matches("select"))
-  return {ok:true,pending:false,options:[...control.options].map(text).map(clean).filter(Boolean)
-   .slice(0,key==="form"?500:80)};
+ if(control.matches("select")){
+  const choices=[...control.options].map(text).map(clean).filter(Boolean);
+  // Do not label a Gender <select> as Form if its options are ambiguous.
+  if(key==="form"){
+   const distinct=[...new Set(choices.map(v=>v.toLowerCase()))];
+   if(distinct.length>=2&&distinct.every(v=>
+    /^(?:any|male|female|genderless|unknown)$/.test(v)))
+    return {ok:false,pending:true,options:[]};
+  }
+  return {ok:true,pending:false,options:choices.slice(0,key==="form"?500:80)};
+ }
  const popup=(key==="form"||key==="gender")?
   extraOptionPopup(key,control):activeOptionPopup(control);
  if(!popup)return {ok:false,pending:true,options:[]};
@@ -1000,10 +1010,15 @@ function visibleResultSignature(){
  const body=text(document.body);
  const count=(body.match(/\bShowing\s+\d+\s+spawns?\b/i)||[])[0]||"";
  const cards=cardRoots().map(item=>text(item.node).slice(0,700)).join("\u001e");
- return count+"\u001f"+cards;
+ // A real no-spawns message may replace cards without a "Showing 0" label.
+ // Record only its presence, not the surrounding account/location text.
+ const empty=mainEmptyMessage()?"verified-empty-element":"";
+ return count+"\u001f"+cards+"\u001f"+empty;
 }
 function mainEmptyMessage(){
- const empty=/^(?:no results(?: found)?|no matches(?: found)?|nenhum(?:a|s)? resultado(?:s)?|sem resultados)[.!]?$/i;
+ // Exact text observed in Pogocoordinates-Ref/Todos_Filtros_Preenchidos_PVP.jpg.
+ // A previously visible identical message does not prove a fresh submission.
+ const empty=/^(?:no spawns match your filters?(?: right now)?|no spawns found|no results(?: found)?|no matches(?: found)?|nenhum(?:a|s)? resultado(?:s)?|sem resultados)[.!]?$/i;
  return elements('main [role=status],main [aria-live],main p,main h2,main h3')
   .filter(vis).some(node=>!node.closest?.('[role=listbox],[role=dialog],[cmdk-list],[data-radix-popper-content-wrapper]')&&
    empty.test(text(node)));
@@ -1050,14 +1065,29 @@ function parseCard(box,sourceIndex){
  // The site's LOCATION container can include its own separate distance line.
  // Strip it from the place name so Location and Distance can be toggled independently.
  const place=clean(loc).replace(/\s*\d+(?:[.,]\d+)?\s*(?:km|m|mi)\s+(?:away|de\s+dist[âa]ncia)\s*$/i,"").trim();
- const candidates=Array.from(box.querySelectorAll("img[src]")).filter(e=>/^https?:/.test(e.src)||e.src.startsWith("data:image/"));
+ // LT64: lazy images may expose a 1px data: placeholder in src while
+ // data-src/currentSrc/srcset already contains the real Pokémon sprite.
+ // Prefer the verified card image URL, never synthesize a generic species.
+ const imageCandidates=Array.from(box.querySelectorAll("img"));
+ const candidateImageUrl=e=>{
+  const srcset=e.getAttribute("data-srcset")||e.getAttribute("srcset")||"";
+  const fromSet=srcset.split(",").map(x=>x.trim().split(/\s+/)[0]).find(Boolean)||"";
+  const options=[
+   e.getAttribute("data-src"),e.getAttribute("data-original"),
+   e.getAttribute("data-lazy-src"),e.currentSrc,
+   e.src,fromSet
+  ].filter(Boolean);
+  return options.find(v=>/^https:\/\//i.test(v))||
+   options.find(v=>/^data:image\/(?:png|webp|gif|jpeg);base64,/i.test(v)&&v.length>150)||"";
+ };
+ const candidates=imageCandidates.filter(e=>!!candidateImageUrl(e));
  const image=candidates.sort((a,b)=>{
   const score=e=>{
-   const alt=String(e.alt||"").toLowerCase(),src=String(e.src||"").toLowerCase();
+   const alt=String(e.alt||"").toLowerCase(),src=candidateImageUrl(e).toLowerCase();
    const name=String(title||"").replace(/✨/g,"").trim().toLowerCase();
    return (name&&alt.includes(name)?80:0)+(/pokemon|pok[eé]mon|sprite|pogo|pokeapi/.test(src)?18:0)+
     (/sprite|pokemon|pok[eé]mon/.test(alt)?12:0)+
-    (e.naturalWidth>0&&e.naturalWidth===e.naturalHeight?7:0)-
+    (e.naturalWidth>=8&&e.naturalHeight>=8?25:0)-
     (/logo|avatar|icon-user|profile/.test(src)?35:0);
   };
   return score(b)-score(a);
@@ -1075,7 +1105,7 @@ function parseCard(box,sourceIndex){
   (rankLeagueHint!=="gl"&&rankLeagueHint!=="ul"||rankLeagueHint===mode);
  const isShiny=/✨/.test(title);
  return {
-  sourceIndex,name:title.replace(/✨/g,"").trim(),image:image?image.src:"",
+  sourceIndex,name:title.replace(/✨/g,"").trim(),image:image?candidateImageUrl(image):"",
   number:(meta.match(/#\d{1,4}/)||[])[0]||"",
   gender:/\bFemale\b|♀/i.test(meta)?"♀":/\bMale\b|♂/i.test(meta)?"♂":"",
   size:size,moves:move,location:place,distance,despawn:(desp.match(/\d{1,2}:\d{2}/)||[])[0]||"",
@@ -1142,7 +1172,7 @@ function collect(){
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
- const emptyMessage=/\b(?:no results found|no results|nenhum resultado|sem resultados)\b/i;
+ const emptyMessage=/\b(?:no spawns match your filters?(?: right now)?|no spawns found|no results found|no results|nenhum resultado|sem resultados)\b/i;
  const regions=elements('main section,[role=region],[data-testid*=result],[aria-label*=result]').filter(vis);
  const regionEmpty=found.length===0&&regions.some(region=>{
   const body=text(region);
@@ -1160,7 +1190,11 @@ function collect(){
  // A still-visible card from the previous query is not proof of this Search.
  // Identical legitimate result sets may require a new site DOM transition.
  const resultFreshnessPending=found.length>0&&!resultChanged;
- const zeroInResults=countLabel==="0"&&mainEmptyMessage();
+ // Some responsive result pages show the exact no-spawns message with no
+ // numerical "Showing 0 spawns" header. Require a MAIN status element, not
+ // arbitrary body/dropdown text, and a post-submit signature transition.
+ const emptyInMain=mainEmptyMessage();
+ const zeroInResults=emptyInMain&&(countLabel==="0"||countLabel===undefined);
  const explicitEmptySignal=regionEmpty||zeroInResults;
  const explicitEmpty=found.length===0&&!loading&&explicitEmptySignal&&resultChanged;
  // If the site advertises more visible cards than we could parse, retry.
@@ -1173,19 +1207,68 @@ function collect(){
   leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }
 if(action==="collect")return collect();
+// LT64: resolve a card by its stable identity rather than a changing row.
+/* LT68 Samsung: every read/click is scoped to ONE uniquely identified card.
+   Never scan page-wide Open in Maps buttons, even when two names/CPs match. */
+function matchingCoordsCard(query){
+ const roots=cardRoots(),name=String(query.name||"").replace(/✨/g,"").trim().toLowerCase();
+ const cp=String(query.cp||"").trim(),number=String(query.number||"").trim();
+ const location=clean(query.location||"").toLowerCase();
+ const iv=clean(query.iv||"");
+ const gender=clean(query.gender||"");
+ const level=clean(query.level||"");
+ const index=Number(query.index);
+ // React can reorder rows between a verified Search and a Get coords tap.
+ // Never trust an old row index if its identity no longer matches; also
+ // never click a different spawn when two rows share the same fingerprint.
+ const matches=roots.filter(card=>{
+  const parsed=parseCard(card.node,card.sourceIndex);
+  if(name&&parsed.name.replace(/✨/g,"").trim().toLowerCase()!==name)return false;
+  if(cp&&String(parsed.cp||"").trim()!==cp)return false;
+  if(number&&parsed.number!==number)return false;
+  if(location&&clean(parsed.location||"").toLowerCase()!==location)return false;
+  // An identical species/CP/city may refer to another encounter.
+  if(iv&&clean(parsed.iv||"")!==iv)return false;
+  if(gender&&clean(parsed.gender||"")!==gender)return false;
+  if(level&&clean(parsed.level||"")!==level)return false;
+  return true;
+ });
+ if(matches.length!==1)return null;
+ const card=matches[0];
+ if(Number.isInteger(index)&&index>=0&&card.sourceIndex===index)return card;
+ // Reidentification after row reorder requires every non-secret field from
+ // the native fingerprint. Partial identifiers cannot bypass the index.
+ return name&&cp&&number&&location?card:null;
+}
+function cardCoordsControls(card){
+ return Array.from(card.node.querySelectorAll("button,a,[role=button]")).filter(vis);
+}
 if(action.startsWith("coords:")){
- const index=Number(action.slice(7));
- const card=cardRoots().find(c=>c.sourceIndex===index);
- const btn=card&&Array.from(card.node.querySelectorAll("button,[role=button]")).find(e=>vis(e)&&/^Get coords$/i.test(text(e)));
- if(!btn){
-  const opened=card&&Array.from(card.node.querySelectorAll("button,a,[role=button]")).some(e=>vis(e)&&/^Open in Maps$/i.test(text(e)));
-  return JSON.stringify({ok:!!opened,status:opened?"Coordenadas já abertas":"Botão Get coords não localizado"});
- }
+ const raw=action.slice(7);
+ let query;try{query=JSON.parse(raw)}catch(_){query={index:Number(raw)}}
+ const card=matchingCoordsCard(query);
+ if(!card)return JSON.stringify({ok:false,status:"Pokémon não encontrado ou identificação ambígua nos resultados atuais"});
+ const buttons=cardCoordsControls(card);
+ const available=buttons.find(e=>/^Open in Maps$/i.test(text(e)));
+ if(available)return JSON.stringify({ok:true,alreadyAvailable:true,status:"Coordenadas disponíveis no site"});
+ const btn=buttons.find(e=>/^Get coords$/i.test(text(e)));
+ if(!btn)return JSON.stringify({ok:false,status:"Get coords indisponível neste Pokémon"});
+ if(btn.disabled||btn.getAttribute("aria-disabled")==="true"||
+    btn.closest("fieldset[disabled]"))
+  return JSON.stringify({ok:false,cooldown:true,status:"Get coords em espera no site; tente novamente quando o botão liberar"});
  btn.click();
- return JSON.stringify({ok:true,status:"Solicitando coordenadas no site"});
+ return JSON.stringify({ok:true,status:"Solicitando coordenadas do Pokémon confirmado"});
 }
 if(action.startsWith("readCoords:")){
  const query=JSON.parse(action.slice("readCoords:".length));
+ const target=matchingCoordsCard(query);
+ // React may temporarily hide the clicked card or its controls after Get coords.
+ // Wait only for the EXACT selected fingerprint; never use page-wide links.
+ if(!target)return JSON.stringify({ok:false,pending:true,status:"Aguardando reidentificação do Pokémon após atualização dos resultados"});
+ const controls=cardCoordsControls(target);
+ const button=controls.find(e=>/^Open in Maps$/i.test(text(e)));
+ if(!button)
+  return JSON.stringify({ok:false,pending:true,status:"Aguardando coordenadas deste Pokémon no site"});
  const latlong=/(-?\d{1,2}(?:\.\d{1,12})?)\s*[,;]\s*(-?\d{1,3}(?:\.\d{1,12})?)/g;
  function coordinate(s){
   for(const m of String(s||"").matchAll(latlong)){
@@ -1194,28 +1277,13 @@ if(action.startsWith("readCoords:")){
   }
   return "";
  }
- // The website replaces Get coords with "Open in Maps" and puts coordinates beneath.
- const buttons=elements('button,a,[role=button]').filter(x=>vis(x)&&/Open in Maps|Get coords/i.test(text(x)));
- for(const b of buttons){
-  if(!/Open in Maps/i.test(text(b)))continue;
-  let card=b.parentElement;
-  for(let i=0;i<9&&card;i++,card=card.parentElement){
-   const t=text(card);
-   if(!/\bLOCATION\b/i.test(t)||!/\bDESPAWN\b/i.test(t)||t.length>3500)continue;
-   const name=String(query.name||"").toLowerCase();
-   if(name&&!t.toLowerCase().includes(name))continue;
-   const cp=String(query.cp||"").trim();
-   if(cp){
-    const measured=nextLabelValue(card,"CP")||(t.match(/\bCP\s*:?\s*(\d{1,5})\b/i)||[])[1]||"";
-    if(!measured||Number((measured.match(/\d{1,5}/)||[])[0])!==Number(cp))continue;
-   }
-   const m=coordinate(t);
-   if(m)return JSON.stringify({ok:true,coords:m,status:"Coordenadas obtidas"});
-   // Matching card reached, avoid reading another Pokémon's coords.
-   break;
-  }
- }
- return JSON.stringify({ok:false,status:"O site ainda não exibiu coordenadas"});
+ const href=button.getAttribute("href")||"";
+ let decoded=href;try{decoded=decodeURIComponent(href)}catch(_){}
+ // Only parse the matched card's own LOCATION context or its own maps link.
+ const locationText=nextLabelValue(target.node,"LOCATION");
+ const m=coordinate(locationText)||coordinate(decoded);
+ return m?JSON.stringify({ok:true,coords:m,status:"Coordenadas obtidas"}):
+  JSON.stringify({ok:false,pending:true,status:"O site ainda não exibiu coordenadas deste Pokémon"});
 }
 
 // PL-04: resolve the actual Coords form after React hydration. Avoid picking
@@ -1277,7 +1345,8 @@ function locationFields(){
  return {coords,radius};
 }
 function locationModeControl(label){
- const re=new RegExp("^\\s*"+label+"\\s*$","i");
+ const re=label==="Coords"?/^\s*(?:Coords|Coordinates)\s*$/i:
+  label==="Area"?/^\s*Areas?\s*$/i:new RegExp("^\\s*"+label+"\\s*$","i");
  const candidates=elements('button,[role=button],[role=tab],[role=radio],input[type=radio],label');
  for(const e of candidates){
   if(!vis(e))continue;
@@ -1304,6 +1373,17 @@ function coordsModeSelected(){
  const visibleText=String(document.body&&document.body.innerText||"");
  if(coordButton&&fields.coords&&fields.radius&&
     /paste coordinates\s*\(\s*lat\s*[,;]\s*lng\s*\)\s*and\s*a\s*radius/i.test(visibleText))
+   return true;
+ // React mobile may omit aria-selected and the help sentence. This
+ // fallback requires both UNIQUE provider placeholders, currently visible,
+ // and never accepts a confirmed Area tab or a generic Distance field.
+ const pair=elements('input:not([type=hidden]):not([type=checkbox]):not([type=radio])').filter(vis);
+ const coordPattern=/^\s*[-+]?\d{1,2}(?:\.\d+)?\s*[,;]\s*[-+]?\d{1,3}(?:\.\d+)?\s*$/;
+ const providerCoords=pair.filter(e=>coordPattern.test(e.getAttribute("placeholder")||""));
+ const providerRadius=pair.filter(e=>/^\s*radius\s*\(\s*km\b/i.test(e.getAttribute("placeholder")||""));
+ if(coordButton&&!active(areaButton)&&fields.coords&&fields.radius&&
+    providerCoords.length===1&&providerRadius.length===1&&
+    fields.coords===providerCoords[0]&&fields.radius===providerRadius[0])
    return true;
  return null;
 }
@@ -1361,10 +1441,20 @@ function configureLocation(req){
     return JSON.stringify({ok:false,reason:"Parâmetros de localização inválidos"});
  const coords=locationModeControl("Coords");
  if(!coords)return JSON.stringify({ok:false,pending:true,reason:"Aguardando opção Coords"});
- if(coordsModeSelected()!==true){
-  if(!coords.disabled)coords.click();
+ const selected=coordsModeSelected();
+ if(selected!==true){
+  if(!coords.disabled&&selected===false)coords.click();
+  else if(!coords.disabled&&selected===null){
+   // Avoid repeatedly remounting React's controlled fields on every retry.
+   const root=document.body;
+   if(root&&(!root.__psCoordsModeClickAt||
+      Date.now()-root.__psCoordsModeClickAt>1500)){
+    root.__psCoordsModeClickAt=Date.now();coords.click();
+   }
+  }
   return JSON.stringify({ok:false,pending:true,reason:"Aguardando confirmação do modo Coords"});
  }
+ if(document.body)document.body.__psCoordsModeClickAt=0;
  const fields=locationFields();
  if(!fields.coords||!fields.radius)return JSON.stringify({ok:false,pending:true,reason:"Aguardando campos de coordenadas/raio"});
   if(fields.coords.disabled||fields.radius.disabled)

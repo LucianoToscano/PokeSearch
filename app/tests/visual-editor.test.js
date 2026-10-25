@@ -36,7 +36,7 @@ test("defaults preserve original orientation and unclipped renderer",()=>{
  assert.equal(v.menuItemGap,3);
 });
 test("packed preset keeps zero visual gap without sprite overlap",()=>{
- assert.match(dock,/const pitch=Math\.max\(8,Math\.round\(size\*\.32\)/);
+ assert.match(dock,/const pitch=size\+additionalResultGapPx\(v\.resultGapBetween\)/);
  assert.match(dock,/return Math\.max\(size,pitch\); \/\/ No sprite-overlap/);
  assert.match(dock,/const sprite=Math\.max\(10,Math\.floor\(size\*factor\)\)/);
  assert.match(script,/compact:\{resultGapTop:-6,resultGapBetween:0/);
@@ -56,7 +56,7 @@ test("invalid imported JSON is ignored and values are clamped",()=>{
  assert.equal(JSON.stringify(window.visualEditorCurrent()),before);
 });
 test("editor includes preset, live preview, JSON copy/import and reset",()=>{
- for(const term of ["compact:","balanced:","readable:","Copiar JSON","Restaurar padrão original",
+ for(const term of ["compact:","balanced:","readable:","Copiar JSON",'btn(actions,"Restaurar"',
   "Importar JSON digitado","JSON.stringify","renderVisualEditor","saveSoon","applyVisual","setTimeout"]){
   assert.ok(script.includes(term),term);
  }
@@ -83,7 +83,7 @@ test("rendered results remain an independent WebView and retain old filters",()=
  assert.ok(dock.includes("Native.setSearchConfig"));
  assert.ok(dock.includes("Native.resizeResultsMetadata"));
  assert.ok(dock.includes('visual_editor.js'));
- assert.ok(dock.includes('🎛 Editor visual temporário'));
+ assert.ok(dock.includes('link("Editor Visual","visual")'));
 });
 test("light theme changes foreground and actual button backgrounds",()=>{
  const {window,styles,classes}=fixture();
@@ -132,9 +132,10 @@ test("slider edits are not reverted by stale service state",()=>{
  assert.equal(window.visualEditorCurrent().menuTransparency,17,
   "After the matching save acknowledgement, later external updates are accepted");
 });
-test("large header gap is included in native window height",()=>{
+test("hidden results header adds no invisible top margin",()=>{
  assert.ok(dock.includes('Math.ceil(end-shellTop)+1'));
  assert.ok(dock.includes('margin-top:var(--visual-top-gap,0px)!important'));
+ assert.ok(dock.includes('body.result-window #shell{padding-top:0!important}'));
 });
 test("styling changes don't need reload of all Pokemon images",()=>{
  assert.ok(script.includes('if(window.__visualGeometry!==signature)'));
@@ -142,21 +143,20 @@ test("styling changes don't need reload of all Pokemon images",()=>{
 });
 test("horizontal native width includes the live CSS inter-card spacing",()=>{
  assert.match(java,/visualResultGapBetween=o\.optInt\("resultGapBetween",31\)/);
- assert.match(java,/perCard\*columns\+visualResultGapBetween\*\(columns-1\)\+2/);
+ assert.match(java,/ResultsSpacingPolicy\.additionalRowGapPx\(visualResultGapBetween\)\*\(columns-1\)\+2/);
  assert.ok(java.includes("resultParams.width=dp(resultWidthDp())"));
- assert.ok(dock.includes("column-gap:var(--visual-result-spacing,4px)!important"));
+ assert.ok(dock.includes("column-gap:var(--visual-result-spacing,0px)!important"));
  const width=(count,card,gap)=>card*count+gap*(count-1)+2;
- assert.equal(width(2,149,31),331);
+ assert.equal(width(2,149,0),300);
  assert.equal(width(5,53,0),267);
 });
-test("packed sprite pitch reserves symmetrical first and last art space",()=>{
- assert.ok(dock.includes('padding-top:max(0px,calc((var(--sprite) - var(--visual-row-pitch,46px))/2))!important'));
- assert.ok(dock.includes('padding-bottom:max(0px,calc((var(--sprite) - var(--visual-row-pitch,46px))/2))!important'));
- const sprite=45,pitch=Math.max(8,Math.round(sprite*.32));
- assert.equal((sprite-pitch)/2,15.5);
+test("packed sprite rows have no phantom top or bottom padding",()=>{
+ assert.ok(dock.includes("padding-top:0!important;padding-bottom:0!important;"));
+ assert.ok(dock.includes("const pitch=size+additionalResultGapPx(v.resultGapBetween);"));
+ assert.equal(45+Math.max(0,31-31),45);
 });
 test("visual position sliders keep the currently open detail window in sync",()=>{
- assert.match(java,/recordFailure\("editor posição resultados",e\);\}\s*moveDetail\(\);/);
+ assert.match(java,/positionResultsUnderPokeball\(true\); \/\/ Editor offsets now relative to the unified icon\.\s*moveDetail\(\);/);
 });
 test("sparkle is vector white by default, yellow when site-verified",()=>{
  assert.ok(dock.includes('const QUICK_SOURCE_ICONS={sh:"sh"'));
@@ -260,7 +260,9 @@ test("Visual Editor Pokémon tab has direct P M G size buttons without restartin
  assert.ok(script.includes('if(window.renderSpriteSizeButtons)window.renderSpriteSizeButtons(panel,true);'));
  assert.ok(dock.includes('className="spriteSizeChoices"'));
  assert.ok(dock.includes('function refreshSpriteSizeButtons(){'));
- assert.ok(dock.includes('spriteSize=Number(sprite)||45;refreshSpriteSizeButtons();'));
+ assert.ok(dock.includes('spriteSize=[35,45,55].includes(Number(sprite))?Number(sprite):45;'));
+ assert.ok(dock.includes('refreshSpriteSizeButtons();'));
+ assert.ok(!dock.includes('pending.row=Number(r)'));
  assert.ok(dock.includes('button.onclick=()=>{if(Native.setSpriteSize)Native.setSpriteSize(size);}'));
 });
 test("editor dark light and vertical horizontal work without native select dialogs",()=>{
@@ -340,7 +342,7 @@ test("Pokebola Y starts at 0 and button artwork tracks Android's native drag gri
  assert.equal(styles["--visual-header-touch-height"],"40px");
  assert.ok(java.includes("box.topMargin=dp(visualHeaderY)"));
  assert.ok(java.includes("dp(width),dp(visualHeaderTouchHeight)"));
- assert.ok(dock.includes("body.result-window #shell{padding-top:var(--visual-header-y,0px)!important}"));
+ assert.ok(dock.includes("body.result-window #shell{padding-top:0!important}"));
  assert.ok(dock.includes("body.result-window #resultHeader .resultModeStack{transform:none!important}"));
 });
 test("Pokebola rectangle X width height and after-gap are controlled together",()=>{
@@ -356,8 +358,8 @@ test("Pokebola rectangle X width height and after-gap are controlled together",(
  assert.ok(java.includes("box.leftMargin=dp(left)"));
 });
 test("Editor supports precise one-unit adjustments and touch-area guides",()=>{
- for(const label of ["Botão + toque: posição Y (0 = topo)","Botão + toque: posição X",
-  "Área clicável: largura","Área clicável: altura","Espaço abaixo do botão"])
+ for(const label of ["Posição Y","Posição X",
+  "Área de toque · largura","Área de toque · altura","Espaço abaixo"])
   assert.ok(script.includes(label),label);
  assert.ok(script.includes('className="visualFineTune"'));
  assert.ok(script.includes('minus.onclick=()=>step(-1);plus.onclick=()=>step(1)'));
@@ -451,11 +453,18 @@ test("Modos rail and inline editor inherit the only menu transparency slider",()
 });
 test("single transparency controls ordinary submenus without residual band or border",()=>{
  const tail=dock.split("/* VISUAL-MENU-ALPHA-02:")[1]?.split("</style>")[0]||"";
- assert.ok(tail.includes("body.controls-window #choices:not(.visualPanel):not(.modeCascade){"));
+ assert.ok(tail.includes("body.controls-window #choices:not(.visualPanel):not(.modeCascade):not(.filterCascade):not(.morePanel):not(.periodCompact){"));
  assert.ok(tail.includes("background:var(--visual-menu-bg,rgba(15,19,26,.65))!important;"));
  assert.ok(tail.includes("border:0!important;box-shadow:none!important;"));
  assert.ok(dock.includes("/* VISUAL-MENU-ALPHA-01:"));
- assert.ok(!tail.includes("body.controls-window #choices.visualPanel{"));
+ // Geometric compactness of Visual Editor is allowed. This contract only
+ // forbids transparency/background overrides that would desync the theme.
+ const visualLayoutRules=[...tail.matchAll(/body\.controls-window #choices\.visualPanel\{([^}]*)\}/g)]
+  .map(match=>match[1]);
+ assert.ok(visualLayoutRules.length>0);
+ assert.ok(visualLayoutRules.every(rule=>
+  !/(?:^|;)\s*(?:background(?:-color)?|color|border|box-shadow)\s*:/.test(rule)));
+ assert.ok(visualLayoutRules.some(rule=>rule.includes("width:min(268px,calc(100vw - 14px))!important;")));
  const {window,styles}=fixture();
  for(const transparency of [0,50,100]){
   window.onVisualPrefs({menuTransparency:transparency});

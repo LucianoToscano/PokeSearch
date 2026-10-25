@@ -1,0 +1,109 @@
+name: PokeSearch official release - approval required
+on:
+  workflow_dispatch:
+    inputs:
+      qa_run_id:
+        description: "ID of a successful QA build run"
+        required: true
+        type: string
+      qa_artifact_name:
+        description: "Exact private QA artifact name"
+        required: true
+        type: string
+      version_name:
+        description: "Approved version, e.g. 0.00.78"
+        required: true
+        type: string
+      version_code:
+        description: "Approved Android versionCode"
+        required: true
+        type: string
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: pokesearch-approved-public-release
+  cancel-in-progress: false
+jobs:
+  approve-and-release:
+    if: github.actor == 'LucianoToscano'
+    runs-on: ubuntu-24.04
+    environment:
+      name: official-updates
+    timeout-minutes: 25
+    steps:
+      - name: Validate explicit manual dispatch
+        env:
+          NAME: ${{ inputs.version_name }}
+          CODE: ${{ inputs.version_code }}
+          RUN_ID: ${{ inputs.qa_run_id }}
+          ARTIFACT: ${{ inputs.qa_artifact_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$NAME" =~ ^0\.[0-9]{2}\.[0-9]{2,}$ ]] || exit 1
+          [[ "$CODE" =~ ^[0-9]{5,10}$ ]] || exit 1
+          [[ "$RUN_ID" =~ ^[0-9]{7,15}$ ]] || exit 1
+          [[ "$ARTIFACT" =~ ^PokeSearch-v[0-9a-zA-Z.\-]+-protected-release$ ]] || exit 1
+          test "$CODE" -gt 54280
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch approved private QA archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.qa_run_id }}
+          ARTIFACT: ${{ inputs.qa_artifact_name }}
+        run: |
+          set -euo pipefail
+          test "$(gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --json conclusion --jq .conclusion)" = success
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT" --dir "$RUNNER_TEMP/approved"
+      - name: Validate signed, nondebuggable, versioned APK against QA attestations
+        env:
+          NAME: ${{ inputs.version_name }}
+          CODE: ${{ inputs.version_code }}
+        run: |
+          set -euo pipefail
+          mapfile -t apks < <(find "$RUNNER_TEMP/approved" -maxdepth 2 -type f -name '*.apk')
+          test "${#apks[@]}" -eq 1
+          APK="${apks[0]}"
+          cd "$RUNNER_TEMP/approved"
+          test -s SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+          test -s SOURCE_COMMIT.txt
+          grep -Eq '^[0-9a-f]{40}$' SOURCE_COMMIT.txt
+          git -C "$GITHUB_WORKSPACE" cat-file -e "$(cat SOURCE_COMMIT.txt)^{commit}" || true
+          unzip -t "$APK" >/dev/null
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -type d | sort -V | tail -1)"
+          "$BUILD_TOOLS/aapt" dump badging "$APK" > "$RUNNER_TEMP/badging.txt"
+          grep -Fq "name='com.lucianotoscano.pokesearch'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionCode='$CODE'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionName='$NAME'" "$RUNNER_TEMP/badging.txt"
+          ! grep -q '^application-debuggable' "$RUNNER_TEMP/badging.txt"
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/signing.txt"
+          grep -Eq '^Verified using v2 scheme.*: true$' "$RUNNER_TEMP/signing.txt"
+          CERT="$(grep 'Signer #1 certificate SHA-256 digest:' "$RUNNER_TEMP/signing.txt" | awk '{print $NF}')"
+          test "$CERT" = '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+          cp "$APK" "$RUNNER_TEMP/PokeSearch-v${NAME}-LT.apk"
+      - name: Publish approved GitHub Release (manual action ONLY)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ inputs.version_name }}
+          CODE: ${{ inputs.version_code }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="v${NAME}-${CODE}"
+          test -f "$RUNNER_TEMP/PokeSearch-v${NAME}-LT.apk"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Version already exists; no replacement is allowed"
+            exit 1
+          fi
+          SOURCE="$(cat "$RUNNER_TEMP/approved/SOURCE_COMMIT.txt")"
+          printf "Atualização oficial do PokeSearch.\nVersão: %s (code %s).\nFonte QA: %s.\n" "$NAME" "$CODE" "$SOURCE" > "$RUNNER_TEMP/release-notes.txt"
+          gh release create "$TAG" "$RUNNER_TEMP/PokeSearch-v${NAME}-LT.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$SOURCE" \
+            --title "PokeSearch $NAME" \
+            --notes-file "$RUNNER_TEMP/release-notes.txt" \
+            --latest

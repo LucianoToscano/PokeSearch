@@ -32,6 +32,15 @@ import java.io.InputStream;
 import java.util.function.Consumer;
 
 public class OverlayService extends Service {
+    // Screen-off is a real system transition, not a touch. Never credit a gap across it.
+    private final android.content.BroadcastReceiver missionScreenOffReceiver =
+        new android.content.BroadcastReceiver() {
+            @Override public void onReceive(android.content.Context context, Intent intent) {
+                if (intent != null && Intent.ACTION_SCREEN_OFF.equals(intent.getAction()))
+                    SupportMissionState.overlayStopped();
+            }
+        };
+    private boolean missionScreenOffRegistered = false;
     private static volatile boolean running=false;
     public static boolean isRunning(){return running;}
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
@@ -99,6 +108,7 @@ public class OverlayService extends Service {
         String jsCode="window.onVisualPrefs&&window.onVisualPrefs("+visualPrefsJson+")";
         js(panel,panelLoaded,jsCode);
         js(menuPanel,menuLoaded,jsCode);
+        js(popupPanel,popupLoaded,jsCode);
         js(resultPanel,resultLoaded,jsCode);
         broadcastVisualPreview();
     }
@@ -114,7 +124,6 @@ public class OverlayService extends Service {
                 broadcastVisualPrefs();
                 return;
             }
-            int oldX=visualResultsOffsetX,oldY=visualResultsOffsetY;
             int oldMenuBase=visualMenuBaseDp();
             visualPrefsJson=next;
             readVisualRuntime();
@@ -124,13 +133,7 @@ public class OverlayService extends Service {
                 updateResultHeaderGrip();
                 resultParams.height=Math.max(resultParams.height,dp(minResultsHeaderHeightDp()));
                 resultParams.width=dp(resultWidthDp());
-                resultParams.x+=dp(visualResultsOffsetX-oldX);
-                resultParams.y+=dp(visualResultsOffsetY-oldY);
-                DisplayMetrics m=metrics();
-                resultParams.x=Math.max(0,Math.min(Math.max(0,m.widthPixels-resultParams.width),resultParams.x));
-                resultParams.y=Math.max(0,Math.min(Math.max(0,m.heightPixels-resultParams.height),resultParams.y));
-                try{wm.updateViewLayout(resultRoot,resultParams);}
-                catch(Exception e){recordFailure("editor posição resultados",e);}
+                positionResultsUnderPokeball(true); // Editor offsets now relative to the unified icon.
                 moveDetail();
             }
             if(menuExpanded&&menuParams!=null){
@@ -153,7 +156,7 @@ public class OverlayService extends Service {
     }
     private void broadcastVisualPreview(){
         String code="window.onVisualEditorPreview&&window.onVisualEditorPreview('"+visualEditorPreview+"')";
-        js(panel,panelLoaded,code);js(menuPanel,menuLoaded,code);js(resultPanel,resultLoaded,code);
+        js(panel,panelLoaded,code);js(menuPanel,menuLoaded,code);js(popupPanel,popupLoaded,code);js(resultPanel,resultLoaded,code);
     }
     private int dockDp(){return spriteSize+8;}
     private int resultWidthDp(){
@@ -164,7 +167,8 @@ public class OverlayService extends Service {
             int perCard=dockDp()+resultMetadataWidthDp;
             // CSS flex gap occupies additional real width between cards.
             // Reserve 2dp for fractional WebView measurement/rounding.
-            int width=perCard*columns+visualResultGapBetween*(columns-1)+2;
+            int width=perCard*columns+
+                ResultsSpacingPolicy.additionalRowGapPx(visualResultGapBetween)*(columns-1)+2;
             return Math.max(dockDp(),Math.min(screenWidthDp()-16,width));
         }
         return dockDp()+resultMetadataWidthDp;
@@ -190,10 +194,16 @@ public class OverlayService extends Service {
         Math.max(1,Math.min(330,screenWidthDp()-8));} // twelve compact icons, single-row thin menu
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
-    private WindowManager.LayoutParams params,detailParams,menuParams,resultParams;
-    private FrameLayout root,detailRoot,menuRoot,resultRoot;
+    private WindowManager.LayoutParams params,detailParams,menuParams,resultParams,popupParams;
+    private FrameLayout root,detailRoot,menuRoot,resultRoot,popupRoot;
     private View grip;
-    private WebView panel,detailPanel,website,menuPanel,resultPanel;
+    private WebView panel,detailPanel,website,menuPanel,resultPanel,popupPanel;
+    private boolean popupLoaded=false;
+    private String popupKind="";
+    // One in-flight Get coords request may own the detail/clipboard at a time.
+    private long coordinateRequestToken=0L;
+    private int popupTriggerDp,popupTriggerYDp,popupTriggerHeightDp,popupWidthDp,popupHeightDp;
+    private int lastPopupX=Integer.MIN_VALUE,lastPopupY=Integer.MIN_VALUE,lastPopupW=-1,lastPopupH=-1;
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
     private int height=32,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
@@ -205,6 +215,107 @@ public class OverlayService extends Service {
     private boolean popupAbove=false;
     private int popupOffsetDp=-1,popupRoomDp=-1;
     private String probeScriptCache;
+    // Experimental API: local explicit opt-in. All installations default to DOM.
+    private AuthorizedApiCollector authorizedApiCollector;
+    private boolean displayedApiResults=false;
+    private int displayedApiSearchId=-1;
+    private boolean authorizedApiQaSelected(){
+        return getSharedPreferences("prefs",0).getBoolean("authorizedApiQaOptIn",false);
+    }
+    private void performAuthorizedApiSearch(int generation,boolean manual){
+        if(authorizedApiCollector==null){
+            authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+        }
+        try{
+            JSONObject config=new JSONObject(filterConfigJson());
+            config.put("mode",mode);
+            config.put("shiny",shiny);
+            config.put("locationEnabled",locationEnabled);
+            config.put("locationCoords",locationEnabled?locationCoords:"");
+            if(locationEnabled)config.put("locationRadius",locationRadius);
+            status(manual?"API QA: busca manual...":"API QA: pesquisando...");
+            authorizedApiCollector.search(config,response->{
+                if(stopped||loginPaused||generation!=requestGeneration)return;
+                if(!response.optBoolean("ok",false)){
+                    searchInProgress=false;
+                    String reason=response.optString("reason","api-unavailable");
+                    if(reason.length()>50)reason="api-unavailable";
+                    searchFailure("⚠ API: "+reason,
+                        "Consulta API não validada ("+reason+"). Resultados anteriores preservados.");
+                    return;
+                }
+                JSONArray cards=response.optJSONArray("cards");
+                if(!"authorized-api-qa".equals(response.optString("source"))||
+                    !response.optBoolean("criteriaConfirmed",false)||
+                    cards==null||cards.length()>10||
+                    response.optInt("searchId",-1)<0||
+                    (shiny&&!response.optBoolean("siteShiny",false))||
+                    (("gl".equals(mode)||"ul".equals(mode))&&
+                     !response.optBoolean("leagueConfirmed",false))){
+                    searchInProgress=false;
+                    searchFailure("⚠ API: resultado não validado",
+                        "A resposta não confirmou os filtros atuais.");return;
+                }
+                shinyVerified=shiny;
+                applyCollectedResults(response);
+                // Mark the active API request applied only if native IV checks
+                // also accepted the response. Failed QA searches retain old cards.
+                if(!searchInProgress&&displayedApiResults&&
+                    ("updated".equals(searchPhase)||"empty".equals(searchPhase))){
+                    displayedApiSearchId=response.optInt("searchId",-1);
+                    locationVerified=locationEnabled;
+                    confirmedSubmittedFiltersGeneration=generation;
+                    submittedSearchGeneration=generation;
+                    update();
+                }
+            });
+        }catch(Exception ignored){
+            searchInProgress=false;
+            searchFailure("⚠ API: filtros inválidos","Falha ao converter filtros para a API.");
+        }
+    }
+    private void revealAuthorizedCoords(JSONObject target,boolean autoCopy,long requestToken){
+        if(authorizedApiCollector==null||displayedApiSearchId<0){
+            deliverCoords("","Sessão API indisponível. Atualize a busca.");return;
+        }
+        try{
+            JSONObject selection=new JSONObject();
+            selection.put("searchId",displayedApiSearchId);
+            selection.put("sourceIndex",target.optInt("sourceIndex",-1));
+            selection.put("pokemonId",Integer.parseInt(
+                target.optString("number","").replace("#","")));
+            selection.put("cp",Integer.parseInt(target.optString("cp","")));
+            authorizedApiCollector.reveal(selection,response->{
+                if(stopped||loginPaused||requestToken!=coordinateRequestToken)return;
+                if(!currentCoordinateTarget(target)){
+                    deliverCoords("","Resultados mudaram; coordenadas não copiadas.");return;
+                }
+                String coords=extractCoordinates(response.optString("coords",""));
+                if(!response.optBoolean("ok",false)||coords.isEmpty()){
+                    String reason=response.optString("reason","indisponível");
+                    if(reason.length()>60)reason="indisponível";
+                    deliverCoords("","Get coords API: "+reason);return;
+                }
+                try{
+                    JSONArray cards=new JSONArray(results);
+                    for(int i=0;i<cards.length();i++){
+                        JSONObject card=cards.getJSONObject(i);
+                        if(card.optInt("sourceIndex",-1)==target.optInt("sourceIndex",-2)){
+                            card.put("coords",coords);break;
+                        }
+                    }
+                    results=cards.toString();
+                }catch(Exception ignored){
+                    deliverCoords("","Erro ao guardar coordenadas.");return;
+                }
+                if(autoCopy)copyCoordinatesInternal(coords);
+                deliverCoords(coords,autoCopy?"✓ Coordenadas API copiadas":
+                    "Coordenadas API disponíveis");
+            });
+        }catch(Exception ignored){
+            deliverCoords("","Get coords API: identidade inválida.");
+        }
+    }
     private boolean searchInProgress=false;
     private boolean loginPaused=false;
     // PL-02: a UI selection and an already submitted query are distinct.
@@ -269,6 +380,7 @@ public class OverlayService extends Service {
     private boolean firstStart=true;
     private boolean locationEnabled=false;
     private boolean locationVerified=false; // true only after DOM verification for current search
+    private int locationFinalRetryCount=0; // bound React rebinds before Search
     private String locationCoords="";
     private int locationRadius=0;
     private boolean locationEditorOpen=false;
@@ -321,28 +433,24 @@ public class OverlayService extends Service {
             }catch(Exception e){recordFailure("limpar vencidos",e);}
         }
     };
+    // LT64: expiry uses the immutable absolute timestamp captured at Search.
+    // The old code recalculated from a moving MM:SS, which could rearm an
+    // already expired spawn indefinitely if the site updated its timer.
     private void armNextDespawn(JSONArray cards){
         handler.removeCallbacks(expiryRefresh);
         armedDespawnMillis=0L;
+        if(cards==null||cards.length()==0||stopped)return;
         long now=System.currentTimeMillis(),next=Long.MAX_VALUE;
-        if(cards==null)return;
         for(int i=0;i<cards.length();i++){
             JSONObject card=cards.optJSONObject(i);
             if(card==null)continue;
-            String timer=card.optString("despawn","");
-            String[] parts=timer.split(":");
-            if(parts.length!=2)continue;
-            try{
-                long seconds=Long.parseLong(parts[0])*60L+Long.parseLong(parts[1]);
-                if(seconds<=0||seconds>86400)continue;
-                long readAt=card.optLong("sampledAt",now);
-                long deadline=readAt+seconds*1000L;
-                if(deadline>now&&deadline<next)next=deadline;
-            }catch(NumberFormatException ignored){}
+            long absolute=card.optLong("expiresAtMs",Long.MAX_VALUE);
+            if(absolute==Long.MAX_VALUE)absolute=expiration(card);
+            if(absolute<next)next=absolute;
         }
         if(next==Long.MAX_VALUE)return;
         armedDespawnMillis=next;
-        handler.postDelayed(expiryRefresh,Math.max(250L,next-now+150L));
+        handler.postDelayed(expiryRefresh,Math.max(150L,next-now+150L));
     }
     private String mode="raw",results="[]",status="Conectando...",searchPhase="idle";
     // Provenance of the last site-confirmed result set, not the pending filter.
@@ -501,6 +609,7 @@ public class OverlayService extends Service {
                  ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
+        js(popupPanel,popupLoaded,data);
         js(resultPanel,resultLoaded,data);
         broadcastVisualPrefs();
         if(selected>=0)showDetails(selected);
@@ -622,6 +731,7 @@ public class OverlayService extends Service {
             js(menuPanel,menuLoaded,"window.setMenuPopupPlacement("+
                 abovePopup+","+offsetDp+","+roomDp+")");
         }
+        positionIndependentPopup();
         if((priorPad!=menuPadDp||priorLeft!=menuLeft)&&!deferMenuSync){
             String edge=JSONObject.quote(menuLeft?"left":"right");
             js(panel,panelLoaded,"window.syncMenu(true,"+edge+","+menuPadDp+")");
@@ -637,30 +747,154 @@ public class OverlayService extends Service {
         // or switching between a tall cascade and a short settings strip.
         updateMenuPosition();
     }
+    // Two separate TYPE_APPLICATION_OVERLAY hit rectangles: the menu stays
+    // exactly its original toolbar height. The popup is content-sized.
+    private void positionIndependentPopup(){
+        if(popupRoot==null||popupParams==null||menuParams==null||wm==null||
+                !menuExpanded||popupKind.isEmpty()||popupWidthDp<1||popupHeightDp<1)return;
+        DisplayMetrics m=metrics();
+        // menuParams.y can include a reserved native popup ABOVE the toolbar.
+        // Position from the real visible row, never the expanded window top.
+        int toolbarTop=menuParams.y+dp(popupOffsetDp);
+        PopupTouchGeometry.Bounds b=visualMenuVertical?
+            (popupTriggerHeightDp>0?
+                PopupTouchGeometry.placeBesideMeasured(m.widthPixels,m.heightPixels,
+                    menuParams.x,toolbarTop,menuParams.width,dp(visualMenuBaseDp()),
+                    dp(popupTriggerYDp),dp(popupTriggerHeightDp),
+                    dp(popupWidthDp),dp(popupHeightDp),dp(6)):
+                PopupTouchGeometry.placeBeside(m.widthPixels,m.heightPixels,
+                    menuParams.x,toolbarTop,menuParams.width,dp(visualMenuBaseDp()),
+                    dp(popupTriggerYDp),dp(popupWidthDp),dp(popupHeightDp),dp(6))):
+            PopupTouchGeometry.place(m.widthPixels,m.heightPixels,menuParams.x,toolbarTop,
+                menuParams.width,dp(visualMenuBaseDp()),dp(popupTriggerDp),
+                dp(popupWidthDp),dp(popupHeightDp),dp(6));
+        if(!visualMenuVertical&&("filters".equals(popupKind)||"mode".equals(popupKind)))
+            b=PopupTouchGeometry.alignRail(b,m.widthPixels,menuParams.x,menuParams.width,
+                dp(popupTriggerDp),dp("filters".equals(popupKind)?78:52),dp(6));
+        // LT63: the results WebView is another native overlay rectangle. A CSS
+        // transparent area cannot pass Android touches through another window.
+        if(resultParams!=null&&resultRoot!=null&&!resultCollapsed&&!minimized&&
+                resultRoot.getVisibility()==View.VISIBLE)
+            b=PopupTouchGeometry.avoidResult(b,new PopupTouchGeometry.Bounds(
+                resultParams.x,resultParams.y,resultParams.width,resultParams.height,false),
+                m.widthPixels,m.heightPixels,dp(6));
+        if(!b.visible()){popupRoot.setVisibility(View.GONE);return;}
+        if(lastPopupX!=b.x||lastPopupY!=b.y||lastPopupW!=b.width||lastPopupH!=b.height){
+            popupParams.x=b.x;popupParams.y=b.y;
+            popupParams.width=b.width;popupParams.height=b.height;
+            try{wm.updateViewLayout(popupRoot,popupParams);}
+            catch(Exception ex){recordFailure("posicionar popup independente",ex);return;}
+            lastPopupX=b.x;lastPopupY=b.y;lastPopupW=b.width;lastPopupH=b.height;
+        }
+        if(popupRoot.getVisibility()!=View.VISIBLE)popupRoot.setVisibility(View.VISIBLE);
+        js(popupPanel,popupLoaded,"window.setNativePopupRoom&&window.setNativePopupRoom("+
+            Math.max(30,Math.round(b.height/m.density))+")");
+    }
+    private void resizeIndependentPopup(int width,int height){
+        if(popupKind.isEmpty()||!popupLoaded||!menuExpanded)return;
+        int w=Math.max(1,Math.min(330,width)),h=Math.max(1,Math.min(450,height));
+        // The Location popup must never feed a transient shrinking WebView
+        // width back to WindowManager after keyboard focus or React updates.
+        if("location".equals(popupKind))
+            w=Math.max(1,Math.min(286,screenWidthDp()-12));
+        if(popupWidthDp==w&&popupHeightDp==h)return;
+        popupWidthDp=w;popupHeightDp=h;positionIndependentPopup();
+    }
+    private void closeIndependentPopup(){
+        if(popupKind.isEmpty())return;
+        popupKind="";popupWidthDp=popupHeightDp=0;
+        // The toolbar is a separate WebView; notify it when native closes.
+        js(menuPanel,menuLoaded,"window.setActiveNativePopupKind&&window.setActiveNativePopupKind(\"\")");
+        locationEditorOpen=false;
+        if(popupPanel!=null){
+            android.view.inputmethod.InputMethodManager keyboard=
+                (android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
+            if(keyboard!=null)keyboard.hideSoftInputFromWindow(popupPanel.getWindowToken(),0);
+        }
+        if(popupRoot!=null)popupRoot.setVisibility(View.GONE);
+        if(popupParams!=null&&popupRoot!=null&&wm!=null){
+            popupParams.flags|=WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+            popupParams.softInputMode=0;
+            try{wm.updateViewLayout(popupRoot,popupParams);}
+            catch(Exception ex){recordFailure("recolher popup",ex);}
+        }
+        if(popupPanel!=null){
+            popupPanel.clearFocus();
+            js(popupPanel,popupLoaded,"window.hideNativePopup&&window.hideNativePopup()");
+        }
+    }
+    private void openIndependentPopup(String kind,int x,int y){
+        openIndependentPopup(kind,x,y,0);
+    }
+    private void openIndependentPopup(String kind,int x,int y,int triggerHeight){
+        if(!validIndependentPopup(kind)||!menuExpanded||loginPaused||stopped||pickerOpen)return;
+        if(kind.equals(popupKind)){closeIndependentPopup();return;}
+        popupKind=kind;
+        // Mirror native state back to the toolbar: tapping Location again closes.
+        js(menuPanel,menuLoaded,"window.setActiveNativePopupKind&&window.setActiveNativePopupKind("+JSONObject.quote(kind)+")");
+        popupTriggerDp=Math.max(0,Math.min(menuDp(),x));
+        popupTriggerYDp=Math.max(0,Math.min(visualMenuBaseDp(),y));
+        popupTriggerHeightDp=Math.max(0,Math.min(visualMenuBaseDp(),triggerHeight));
+        popupWidthDp=popupHeightDp=0;
+        lastPopupX=Integer.MIN_VALUE;lastPopupY=Integer.MIN_VALUE;
+        // A GONE WebView may suspend requestAnimationFrame on Samsung, so
+        // its JS cannot measure the popup and would never make itself visible.
+        // Boot with a ONE-PIXEL-HIGH visible strip; native geometry replaces
+        // the hitbox as soon as the real DOM height arrives.
+        if(popupRoot!=null&&popupParams!=null&&wm!=null){
+            DisplayMetrics m=metrics();
+            popupParams.width=dp(Math.max(1,Math.min(330,screenWidthDp()-12)));
+            popupParams.height=Math.max(1,dp(1));
+            popupParams.x=Math.max(0,Math.min(m.widthPixels-popupParams.width,
+                menuParams!=null?menuParams.x:0));
+            int anchorY=menuParams==null?0:
+                menuParams.y+dp(popupOffsetDp)+
+                (visualMenuVertical?dp(popupTriggerYDp)-dp(popupTriggerHeightDp)/2:
+                    dp(visualMenuBaseDp()));
+            popupParams.y=Math.max(0,Math.min(m.heightPixels-popupParams.height,anchorY));
+            try{
+                wm.updateViewLayout(popupRoot,popupParams);
+                popupRoot.setVisibility(View.VISIBLE);
+            }catch(Exception ex){recordFailure("medir popup inicial",ex);return;}
+        }
+        if(popupLoaded)js(popupPanel,true,
+            "window.showNativePopup&&window.showNativePopup("+JSONObject.quote(kind)+")");
+    }
+    private static boolean validIndependentPopup(String kind){
+        if(kind==null)return false;
+        switch(kind){
+            case "mode":case "filters":case "location":case "pokemon":
+            case "alerts":case "appearance":case "visual":case "info":
+            case "period":case "more":return true;
+            default:return false;
+        }
+    }
     private void locationEditor(boolean open){
         locationEditorOpen=open;
         if(menuParams==null||menuRoot==null||wm==null)return;
+        boolean inPopup=!popupKind.isEmpty()&&popupParams!=null&&popupRoot!=null;
+        WindowManager.LayoutParams target=inPopup?popupParams:menuParams;
+        FrameLayout surface=inPopup?popupRoot:menuRoot;
+        WebView web=inPopup?popupPanel:menuPanel;
         final int base=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
         final int unfocusable=WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         if(open){
-            menuParams.flags=(menuParams.flags|base)&~unfocusable;
-            menuParams.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+            target.flags=(target.flags|base)&~unfocusable;
+            target.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
         }else{
-            menuParams.flags|=unfocusable|base;
-            menuParams.softInputMode=0;
-            if(menuPanel!=null){
+            target.flags|=unfocusable|base;
+            target.softInputMode=0;
+            if(web!=null){
                 android.view.inputmethod.InputMethodManager keyboard=
                     (android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
-                if(keyboard!=null)keyboard.hideSoftInputFromWindow(menuPanel.getWindowToken(),0);
-                menuPanel.clearFocus();
+                if(keyboard!=null)keyboard.hideSoftInputFromWindow(web.getWindowToken(),0);
+                web.clearFocus();
             }
         }
-        try{wm.updateViewLayout(menuRoot,menuParams);}catch(Exception e){recordFailure("atualizar menu",e);}
-        updateMenuPosition(); // a keyboard/focus transition must not leave controls clipped
-        if(open&&menuPanel!=null){
-            menuPanel.setFocusableInTouchMode(true);
-            menuPanel.requestFocus();
-        }
+        try{wm.updateViewLayout(surface,target);}catch(Exception e){recordFailure("atualizar foco popup",e);}
+        updateMenuPosition();
+        if(open&&web!=null){web.setFocusableInTouchMode(true);web.requestFocus();}
     }
     private String locationPayload(){
         JSONObject data=new JSONObject();
@@ -673,16 +907,43 @@ public class OverlayService extends Service {
     }
     private void moveDetail(){
         if(detailRoot==null||detailParams==null||params==null)return;
-        int w=screenWidthDp(),h=screenHeightDp(),gap=5;
-        // The details card follows the independently positioned result layer.
-        int dockPos=(resultParams!=null?resultParams.x:params.x)/dp(1);
-        int right=dockPos+resultWidthDp()+gap;
-        int left=dockPos-DETAIL_DP-gap;
-        int preferred=right+DETAIL_DP<=w-4?right:left;
-        detailParams.x=dp(Math.max(0,Math.min(w-DETAIL_DP,preferred)));
-        int dockY=(resultParams!=null?resultParams.y:params.y)/dp(1)+RESULTS_HEADER_DP;
-        detailParams.y=dp(Math.max(0,Math.min(h-detailHeight-45,dockY+18)));
-        try{wm.updateViewLayout(detailRoot,detailParams);}catch(Exception e){recordFailure("reposicionar detalhes",e);}
+        // LT65 Samsung: do not paint the floating detail card over its
+        // originating toolbar. Prefer a position beside the result sprites,
+        // then place it below the native dock (or above when near the bottom).
+        // Native WindowManager rectangles, not transparent CSS dimensions,
+        // determine the areas able to intercept touches.
+        DisplayMetrics screen=metrics();
+        int margin=dp(6),cardWidth=detailParams.width;
+        int cardHeight=detailParams.height;
+        int anchorX=resultParams!=null?resultParams.x:params.x;
+        int railWidth=resultParams!=null?resultParams.width:dp(resultWidthDp());
+        int right=anchorX+railWidth+margin;
+        int left=anchorX-cardWidth-margin;
+        int x=right+cardWidth<=screen.widthPixels-margin?right:left;
+        x=Math.max(margin,Math.min(Math.max(margin,screen.widthPixels-cardWidth-margin),x));
+        int rowY=(resultParams!=null?resultParams.y:params.y)+dp(RESULTS_HEADER_DP+18);
+        int minY=margin,maxY=Math.max(margin,screen.heightPixels-cardHeight-margin);
+        int y=Math.max(minY,Math.min(maxY,rowY));
+        int toolbarHeight=Math.max(params.height,dp(TOOLBAR_DP));
+        boolean crossesToolbar=x<params.x+params.width&&params.x<x+cardWidth&&
+            y<params.y+toolbarHeight&&params.y<y+cardHeight;
+        if(crossesToolbar){
+            int below=params.y+toolbarHeight+margin;
+            int above=params.y-cardHeight-margin;
+            if(below<=maxY)y=below;
+            else if(above>=minY)y=above;
+            else{
+                // Last resort: prefer the side with more usable height,
+                // without allowing a native touch rectangle over the tools.
+                int spaceBelow=screen.heightPixels-(params.y+toolbarHeight);
+                int spaceAbove=params.y;
+                y=Math.max(minY,Math.min(maxY,
+                    spaceAbove>spaceBelow?above:below));
+            }
+        }
+        detailParams.x=x;detailParams.y=y;
+        try{wm.updateViewLayout(detailRoot,detailParams);}
+        catch(Exception e){recordFailure("reposicionar detalhes",e);}
     }
     private void newWebsite(){
         website=new WebView(this);
@@ -724,17 +985,11 @@ public class OverlayService extends Service {
                     loaded=true;
                     handler.removeCallbacks(pageFinishedRefresh);
                     pendingPageRefreshGeneration=searchInProgress?-1:requestGeneration;
-                    if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,2500L);
-                    if(shiny&&!shinyVerified){
-                        // The site is visible to JS now. Confirm the Shiny state
-                        // as soon as the tab is hydrated, not after a new Search.
-                        final int generation=requestGeneration;
-                        handler.postDelayed(()->{
-                            if(!stopped&&!loginPaused&&loaded&&!searchInProgress&&
-                               shiny&&!shinyVerified&&generation==requestGeneration)
-                                prepareImmediateShiny(generation);
-                        },420L);
-                    }
+                    // A single verified Search now owns Shiny and all filters.
+                    // Avoid starting a concurrent setShiny/verifyShiny sequence
+                    // before the deferred page-finished Search (race on React).
+                    if(!searchInProgress)handler.postDelayed(pageFinishedRefresh,
+                        shiny&&!shinyVerified?900L:2500L);
                 }
             }
             @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){
@@ -745,6 +1000,10 @@ public class OverlayService extends Service {
                 queuedManualRefresh=false;
                 ++requestGeneration;
                 cancelSessionCallbacks();
+                // A navigation failure must not strand previously confirmed
+                // spawn deadlines; local expiration is independent of Search.
+                try{armNextDespawn(new JSONArray(results));}
+                catch(org.json.JSONException ex){recordFailure("rearmar despawn após rede",ex);}
                 BugReport.log(OverlayService.this,"NETWORK","Falha de navegação principal; código="+error.getErrorCode());
                 status("Não foi possível carregar PoGoCoordinates. Confira conexão e tente ↻.");
             }
@@ -757,6 +1016,13 @@ public class OverlayService extends Service {
             android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
             stopSelf();
             return;
+        }
+        try {
+            registerReceiver(missionScreenOffReceiver,
+                new android.content.IntentFilter(Intent.ACTION_SCREEN_OFF));
+            missionScreenOffRegistered = true;
+        } catch (RuntimeException e) {
+            recordFailure("escuta de tela apagada",e);
         }
         NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel("pokesearch","PokeSearch",
@@ -797,33 +1063,121 @@ public class OverlayService extends Service {
         });
         grip=new View(this);
         grip.setBackgroundColor(Color.TRANSPARENT);
+        // LT62-ONE-POKEBALL: native grip owns taps/holds/drags. The dock WebView
+        // is only a renderer, avoiding click+contextmenu double dispatch.
+        final boolean[] dockHeld={false};
+        final int[] dragResultStart={0,0};
+        // One 16ms frame budget for BOTH native windows (Pokébola and list).
+        final long[] lastDockFrameAt={0L};
+        final Runnable dockLongPress=()->{
+            if(dragged||params==null||stopped||loginPaused)return;
+            dockHeld[0]=true;
+            if(minimized)minimize(false);
+            menu(!menuExpanded);
+        };
         grip.setOnTouchListener((v,event)->{
+            if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
+                SupportMissionState.overlayTouch(OverlayService.this);
             if(params==null)return true;
             switch(event.getActionMasked()){
                 case MotionEvent.ACTION_DOWN:
                     startRawX=event.getRawX();startRawY=event.getRawY();
-                    startX=params.x;startY=params.y;dragged=false;return true;
+                    startX=params.x;startY=params.y;dragged=false;dockHeld[0]=false;
+                    if(resultParams!=null){
+                        dragResultStart[0]=resultParams.x;
+                        dragResultStart[1]=resultParams.y;
+                    }
+                    lastDockFrameAt[0]=0L;
+                    handler.removeCallbacks(dockLongPress);
+                    handler.postDelayed(dockLongPress,600L);
+                    return true;
                 case MotionEvent.ACTION_MOVE:
                     int dx=Math.round(event.getRawX()-startRawX);
                     int dy=Math.round(event.getRawY()-startRawY);
-                    if(Math.abs(dx)+Math.abs(dy)>dp(4))dragged=true;
+                    if(Math.abs(dx)+Math.abs(dy)>dp(4)){
+                        dragged=true;handler.removeCallbacks(dockLongPress);
+                    }
                     if(dragged){
                         DisplayMetrics d=metrics();
-                        int winWidth=dp(minimized?BUBBLE_DP:dockDp());
-                        int winHeight=dp(minimized?BUBBLE_DP:height);
-                        params.x=Math.max(0,Math.min(d.widthPixels-winWidth,startX+dx));
-                        params.y=Math.max(0,Math.min(d.heightPixels-winHeight,startY+dy));
-                        updateWindow();moveDetail();
+                        int dockWidth=dp(minimized?BUBBLE_DP:dockDp());
+                        int dockHeight=dp(minimized?BUBBLE_DP:height);
+                        // Share one clamped translation, not two independently
+                        // clamped coordinates: preserve the saved relative spacing
+                        // between the unified Pokébola, its results, and details.
+                        int minDx=-startX,maxDx=Math.max(0,d.widthPixels-dockWidth)-startX;
+                        int minDy=-startY,maxDy=Math.max(0,d.heightPixels-dockHeight)-startY;
+                        if(resultParams!=null){
+                            minDx=Math.max(minDx,-dragResultStart[0]);
+                            maxDx=Math.min(maxDx,
+                                Math.max(0,d.widthPixels-resultParams.width)-dragResultStart[0]);
+                            minDy=Math.max(minDy,-dragResultStart[1]);
+                            maxDy=Math.min(maxDy,
+                                Math.max(0,d.heightPixels-resultParams.height)-dragResultStart[1]);
+                        }
+                        int moveX=Math.max(minDx,Math.min(maxDx,dx));
+                        int moveY=Math.max(minDy,Math.min(maxDy,dy));
+                        params.x=startX+moveX;
+                        params.y=startY+moveY;
+                        if(resultParams!=null){
+                            resultParams.x=dragResultStart[0]+moveX;
+                            resultParams.y=dragResultStart[1]+moveY;
+                        }
+                        // Throttle both native windows together. Updating the dock
+                        // on every MotionEvent while limiting only results made
+                        // their relative positions appear to drift during fast drags.
+                        long now=android.os.SystemClock.uptimeMillis();
+                        if(now-lastDockFrameAt[0]>=16L){
+                            lastDockFrameAt[0]=now;
+                            updateWindow(); // Includes open toolbar reposition.
+                            if(resultParams!=null&&resultRoot!=null&&wm!=null){
+                                try{wm.updateViewLayout(resultRoot,resultParams);}
+                                catch(Exception e){recordFailure("arrastar resultados com Pokébola",e);}
+                            }
+                            moveDetail();
+                        }
                     }
                     return true;
                 case MotionEvent.ACTION_UP:
-                    // The same gear is the drag handle and menu toggle.
-                    if(!dragged){
+                    handler.removeCallbacks(dockLongPress);
+                    if(dragged){
+                        // Always commit the final position for BOTH windows,
+                        // even when ACTION_UP falls between throttled frames.
+                        updateWindow();
+                        if(resultParams!=null&&resultRoot!=null&&wm!=null){
+                            try{wm.updateViewLayout(resultRoot,resultParams);}
+                            catch(Exception e){recordFailure("finalizar arraste conjunto",e);}
+                        }
+                        moveDetail();
+                        positionIndependentPopup(); // Re-evaluate against new results bounds.
+                        float density=getResources().getDisplayMetrics().density;
+                        android.content.SharedPreferences.Editor saved=
+                            getSharedPreferences("prefs",0).edit()
+                                .putInt("pokeballX",Math.round(params.x/density))
+                                .putInt("pokeballY",Math.round(params.y/density));
+                        if(resultParams!=null){
+                            saved.putInt("resultsX",Math.round(resultParams.x/density)-visualResultsOffsetX)
+                                .putInt("resultsY",Math.round(resultParams.y/density)-visualResultsOffsetY);
+                        }
+                        saved.apply();
+                    }
+                    if(!dragged&&!dockHeld[0]){
                         if(minimized)minimize(false);
-                        else menu(!menuExpanded);
+                        else if(menuExpanded)menu(false); // Short tap always closes open menu.
+                        else toggleResultsCollapsed();  // Otherwise short tap toggles results.
+                    }
+                    // Long press or drag never triggers a second short-tap action.
+                    return true;
+                case MotionEvent.ACTION_CANCEL:
+                    handler.removeCallbacks(dockLongPress);
+                    if(dragged){
+                        // A canceled gesture still leaves the two windows together.
+                        if(resultParams!=null&&resultRoot!=null&&wm!=null){
+                            try{wm.updateViewLayout(resultRoot,resultParams);}
+                            catch(Exception e){recordFailure("encerrar arraste conjunto",e);}
+                        }
+                        moveDetail();
                     }
                     return true;
-                case MotionEvent.ACTION_CANCEL:return true;
             }
             return true;
         });
@@ -834,13 +1188,35 @@ public class OverlayService extends Service {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT);
         params.gravity=Gravity.TOP|Gravity.LEFT;
-        params.x=dp(Math.max(0,screenWidthDp()-dockDp()-7));params.y=dp(120);
-        try{wm.addView(root,params);}catch(Exception e){recordFailure("abrir dock",e);stopSelf();return;}
+        android.content.SharedPreferences dockPrefs=getSharedPreferences("prefs",0);
+        int oldDefaultX=Math.max(0,screenWidthDp()-dockDp()-7);
+        int savedPokeballX=dockPrefs.getInt("pokeballX",oldDefaultX);
+        int savedPokeballY=dockPrefs.getInt("pokeballY",120);
+        params.x=dp(Math.max(0,Math.min(screenWidthDp()-dockDp(),savedPokeballX)));
+        params.y=dp(Math.max(0,Math.min(screenHeightDp()-height,savedPokeballY)));
+        // The dock is attached AFTER the menu and results overlays, so its
+        // independent 53x32dp gear/grip stays above any transparent popup
+        // rectangle. Reordering avoids removing/readding an active WebView.
 
         // Dedicated 308dp-by-29dp touchable window for the toolbar.
         // Transparent regions outside this rectangle belong to Pokémon GO:
         // a single expanded WebView used to intercept every tap underneath.
-        menuRoot=new FrameLayout(this);
+        // FLAG_WATCH_OUTSIDE_TOUCH delivers ACTION_OUTSIDE when the user
+        // touches beyond the native window; do not consume the underlying tap.
+        // Transparent pixels *inside* this window are still not pass-through.
+        menuRoot=new FrameLayout(this){
+            @Override public boolean dispatchTouchEvent(MotionEvent event){
+                if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
+                    SupportMissionState.overlayTouch(OverlayService.this);
+                if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
+                    if(menuExpanded&&menuLoaded&&menuPanel!=null)
+                        js(menuPanel,true,"if(window.closeChoices)window.closeChoices()");
+                    closeIndependentPopup();
+                    return false;
+                }
+                return super.dispatchTouchEvent(event);
+            }
+        };
         menuRoot.setBackgroundColor(Color.TRANSPARENT);
         menuPanel=new WebView(this);
         menuPanel.setBackgroundColor(Color.TRANSPARENT);
@@ -869,19 +1245,30 @@ public class OverlayService extends Service {
         menuParams=new WindowManager.LayoutParams(dp(menuDp()),dp(visualMenuBaseDp()),
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT);
         menuParams.gravity=Gravity.TOP|Gravity.LEFT;
         menuParams.x=0;menuParams.y=params.y;
         menuRoot.setVisibility(View.GONE);
         try{wm.addView(menuRoot,menuParams);}catch(Exception e){recordFailure("abrir controles",e);menuRoot=null;menuPanel=null;}
         if(menuPanel!=null)menuPanel.loadUrl("file:///android_asset/dock.html?controls=1");
-
         // The Pokémon list is always its OWN Android overlay. The gear remains
         // a small independent control even if there is only one active search.
         createResultsWindow();
+        // LT62: topmost small dock receives taps/drags even if Modos is open.
+        // Only this small dock can pass through the native menu hit rectangle;
+        // arbitrary touches behind a popup require separate native touch windows.
+        try{wm.addView(root,params);}
+        catch(Exception e){recordFailure("abrir dock",e);stopSelf();return;}
 
-        detailRoot=new FrameLayout(this);
+        detailRoot=new FrameLayout(this){
+            @Override public boolean dispatchTouchEvent(MotionEvent event){
+                if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
+                    SupportMissionState.overlayTouch(OverlayService.this);
+                return super.dispatchTouchEvent(event);
+            }
+        };
         detailRoot.setBackgroundColor(Color.TRANSPARENT);
         detailPanel=new WebView(this);
         detailPanel.setBackgroundColor(Color.TRANSPARENT);
@@ -907,6 +1294,51 @@ public class OverlayService extends Service {
         detailParams.x=dp(15);detailParams.y=dp(135);
         detailRoot.setVisibility(View.GONE);
         try{wm.addView(detailRoot,detailParams);}catch(Exception e){recordFailure("abrir detalhes",e);detailRoot=null;}
+        // A second hidden WebView owns the submenu hitbox; the toolbar never stretches.
+        popupRoot=new FrameLayout(this){
+            @Override public boolean dispatchTouchEvent(MotionEvent event){
+                if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
+                    SupportMissionState.overlayTouch(OverlayService.this);
+                if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
+                    closeIndependentPopup();return false;
+                }
+                return super.dispatchTouchEvent(event);
+            }
+        };
+        popupRoot.setBackgroundColor(Color.TRANSPARENT);
+        popupPanel=new WebView(this);
+        popupPanel.setBackgroundColor(Color.TRANSPARENT);
+        popupPanel.getSettings().setJavaScriptEnabled(true);
+        popupPanel.getSettings().setUseWideViewPort(true);
+        popupPanel.getSettings().setLoadWithOverviewMode(false);
+        popupPanel.getSettings().setAllowContentAccess(false);
+        popupPanel.getSettings().setAllowFileAccessFromFileURLs(false);
+        popupPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
+        popupPanel.addJavascriptInterface(new Bridge(),"Native");
+        popupRoot.addView(popupPanel,new FrameLayout.LayoutParams(-1,-1));
+        popupPanel.setWebViewClient(new WebViewClient(){
+            @Override public void onPageFinished(WebView web,String url){
+                if(url!=null&&url.startsWith("file:///android_asset/")){
+                    popupLoaded=true;update();
+                    if(menuExpanded&&!popupKind.isEmpty())
+                        js(popupPanel,true,"window.showNativePopup&&window.showNativePopup("+
+                            JSONObject.quote(popupKind)+")");
+                }
+            }
+        });
+        popupParams=new WindowManager.LayoutParams(dp(Math.max(1,Math.min(330,screenWidthDp()-12))),dp(450),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            PixelFormat.TRANSLUCENT);
+        popupParams.gravity=Gravity.TOP|Gravity.LEFT;
+        popupRoot.setVisibility(View.GONE);
+        try{wm.addView(popupRoot,popupParams);}
+        catch(Exception ex){recordFailure("criar popup independente",ex);
+            popupRoot=null;popupPanel=null;popupParams=null;}
+        if(popupPanel!=null)popupPanel.loadUrl("file:///android_asset/dock.html?controls=1&popup=1");
+
         panel.loadUrl("file:///android_asset/dock.html");
         if(detailRoot!=null)detailPanel.loadUrl("file:///android_asset/detail.html");
         // Initial navigation is scheduled after cookie flush in onStartCommand.
@@ -915,7 +1347,13 @@ public class OverlayService extends Service {
     private void createResultsWindow(){
         android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
         resultCollapsed=prefs.getBoolean("resultsCollapsed",false);
-        resultRoot=new FrameLayout(this);
+        resultRoot=new FrameLayout(this){
+            @Override public boolean dispatchTouchEvent(MotionEvent event){
+                if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
+                    SupportMissionState.overlayTouch(OverlayService.this);
+                return super.dispatchTouchEvent(event);
+            }
+        };
         resultRoot.setBackgroundColor(Color.TRANSPARENT);
         resultRoot.setClipChildren(true);
         resultPanel=new WebView(this);
@@ -970,6 +1408,7 @@ public class OverlayService extends Service {
                         try{wm.updateViewLayout(resultRoot,resultParams);}
                         catch(Exception e){recordFailure("finalizar arraste",e);}
                         moveDetail();
+                        positionIndependentPopup(); // Re-evaluate against new results bounds.
                         float density=getResources().getDisplayMetrics().density;
                         getSharedPreferences("prefs",0).edit()
                             .putInt("resultsX",Math.round(resultParams.x/density)-visualResultsOffsetX)
@@ -980,8 +1419,11 @@ public class OverlayService extends Service {
             }
             return true;
         });
+        // The Pokébola lives ONLY in the native dock grip. Disable the old
+        // results-header hit area; the result list remains a separate WebView.
         resultRoot.addView(resultGrip,new FrameLayout.LayoutParams(
             dp(35),dp(RESULTS_HEADER_DP),Gravity.TOP|Gravity.LEFT));
+        resultGrip.setVisibility(View.GONE);
         updateResultHeaderGrip();
 
         int preferredX=Math.max(0,screenWidthDp()-2*dockDp()-35);
@@ -1015,6 +1457,8 @@ public class OverlayService extends Service {
             }
         });
         resultPanel.loadUrl("file:///android_asset/dock.html?results=1");
+        positionResultsUnderPokeball(true); // Migrate legacy independently saved list coordinates.
+        if(resultCollapsed)resultRoot.setVisibility(View.GONE);
     }
     private int minResultsHeaderHeightDp(){
         return Math.max(RESULTS_HEADER_DP,visualHeaderY+visualHeaderTouchHeight);
@@ -1032,10 +1476,45 @@ public class OverlayService extends Service {
         box.topMargin=dp(visualHeaderY);
         resultGrip.setLayoutParams(box);
     }
+    // LT62-RESULTS-ANCHOR-01: The result list belongs visually to the
+    // unified Pokébola, not to the old separately draggable result header.
+    // Always derive its absolute position from the native dock and the Editor's
+    // RELATIVE resultsOffsetX/Y; legacy resultsX/Y are kept only as fallback.
+    // Never move a live user's login, filters, or poke search state.
+    private void positionResultsUnderPokeball(boolean applyLayout){
+        if(params==null||resultParams==null)return;
+        DisplayMetrics display=metrics();
+        // The old independent results header is hidden. Keep the NORMAL gap
+        // exactly 2 physical pixels, not 2dp (which grows with density).
+        // Only an explicit Editor Visual after-header offset adds to it.
+        int gap=ResultsSpacingPolicy.DEFAULT_TOP_GAP_PX+dp(visualHeaderAfterGap);
+        int x=params.x+dp(visualResultsOffsetX);
+        int below=params.y+dp(30)+gap+dp(visualResultsOffsetY);
+        int above=params.y-resultParams.height-gap+dp(visualResultsOffsetY);
+        int y=below;
+        // When the list cannot fit below the icon, prefer ABOVE over clipping
+        // 10 Pokémon or silently shifting the whole icon away from the finger.
+        if(below+resultParams.height>display.heightPixels&&above>=0)
+            y=above;
+        int maxX=Math.max(0,display.widthPixels-resultParams.width);
+        int maxY=Math.max(0,display.heightPixels-resultParams.height);
+        int desiredX=Math.max(0,Math.min(maxX,x));
+        int desiredY=Math.max(0,Math.min(maxY,y));
+        if(resultParams.x==desiredX&&resultParams.y==desiredY)return;
+        resultParams.x=desiredX;
+        resultParams.y=desiredY;
+        if(applyLayout&&resultRoot!=null&&wm!=null&&resultRoot.isAttachedToWindow()){
+            try{wm.updateViewLayout(resultRoot,resultParams);}
+            catch(Exception e){recordFailure("alinhar resultados com Pokébola",e);}
+        }
+        moveDetail();
+    }
     private void updateResultsWidth(){
         if(resultParams==null||resultRoot==null)return;
         resultParams.width=dp(resultWidthDp());
-        resultParams.x=Math.max(0,Math.min(metrics().widthPixels-resultParams.width,resultParams.x));
+        // Width/orientation changes may invalidate the old X clamp.
+        // Re-anchor under the same Pokébola instead of leaving a detached list.
+        positionResultsUnderPokeball(false);
         updateResultHeaderGrip();
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar largura dos resultados",e);}
@@ -1139,6 +1618,7 @@ public class OverlayService extends Service {
         // LT60-LOC-STATE-01: every new Search needs fresh Coords/Radius proof.
         // Prior cards remain untouched; only the CURRENT request loses its proof.
         locationVerified=false;
+        locationFinalRetryCount=0;
         confirmedSubmittedFiltersGeneration=-1;
         submittedSearchGeneration=-1;
         submittingSearchGeneration=-1;
@@ -1146,9 +1626,40 @@ public class OverlayService extends Service {
         handler.removeCallbacks(searchWatchdog);
         handler.postDelayed(searchWatchdog,SEARCH_WATCHDOG_MS);
         status(manual?"Busca manual iniciada...":"Atualizando...");
-        execute("session",session->{
+        if(authorizedApiQaSelected()){
+            // No DOM Search is also dispatched: each generation uses one source.
+            if(authorizedApiCollector==null)
+                authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+            performAuthorizedApiSearch(generation,manual);
+            return;
+        }
+        execute("session",session->continueVerifiedSearchSession(generation,manual,session,0));
+    }
+    // Keep the second (in-search) auth proof as careful as the Shiny tap.
+    // React hydration may temporarily report "não confirmado" even after
+    // the first session gate returned an authenticated trainer.
+    private void continueVerifiedSearchSession(int generation,boolean manual,JSONObject session,int attempt){
             if(stopped||loginPaused||generation!=requestGeneration)return;
             final String auth=session.optString("auth","não confirmado");
+            if(shiny&&"não confirmado".equals(auth)){
+                if(attempt<6){
+                    if(attempt==0)status("✨ Confirmando sessão Shiny antes da busca...");
+                    handler.postDelayed(()->{
+                        if(stopped||loginPaused||generation!=requestGeneration)return;
+                        execute("session",nextSession->
+                            continueVerifiedSearchSession(generation,manual,nextSession,attempt+1));
+                    },400L);
+                    return;
+                }
+                // No proof of logout: keep the user's ON intent and reject
+                // this search rather than silently submitting an OFF query.
+                searchInProgress=false;
+                shinyVerified=false;
+                searchFailure("⚠ Sessão Shiny pendente",
+                    "O site não confirmou a sessão Shiny após novas leituras. "+
+                    "Shiny solicitado permanece pendente; nenhuma busca foi enviada.");
+                return;
+            }
             // A partially hydrated mobile page is not proof that the stored
             // authentication expired. Do not turn a verified session into
             // "login necessary" merely because the DOM is temporarily empty.
@@ -1175,7 +1686,6 @@ public class OverlayService extends Service {
                     configureSearchWithRetry(generation,manual,0);
                 },600L);
             });
-        });
     }
     // React dropdowns are asynchronous: opening and selecting an option cannot
     // reliably happen in a single evaluateJavascript() call.
@@ -1367,6 +1877,37 @@ public class OverlayService extends Service {
             },240L);
         });
     }
+    // LT62-SHINY-ONE-PASS: no duplicated setShiny -> verify -> Search.
+    // On a half-hydrated page, "não confirmado" is not proof of logout.
+    // Retry the SITE session briefly before showing an account-link prompt.
+    private void startVerifiedShinySearch(int generation,int attempt){
+        if(stopped||loginPaused||generation!=requestGeneration||!shiny)return;
+        if(!loaded||website==null){
+            status("✨ Site ainda carregando; Shiny será conferido no próximo carregamento.");
+            return;
+        }
+        execute("session",session->{
+            if(stopped||loginPaused||generation!=requestGeneration||!shiny)return;
+            String auth=session.optString("auth","não confirmado");
+            if("não confirmado".equals(auth)&&attempt<6){
+                if(attempt==0)status("✨ Aguardando confirmação da sessão no site...");
+                handler.postDelayed(()->startVerifiedShinySearch(generation,attempt+1),400L);
+                return;
+            }
+            getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
+            if(!siteConfirmsShinyAccount(session)){
+                revertUnverifiedShiny("✨ Conta logada e treinador confirmado são obrigatórios para Shiny.");
+                openShinyLogin();
+                return;
+            }
+            // One site search applies and verifies all active filters, including
+            // Shiny after Coords, before submitting Search. A single generation
+            // prevents stale answers from replacing the selected state.
+            status(locationEnabled?"✨ Verificando Shiny e localização na mesma busca...":
+                "✨ Verificando Shiny e pesquisando...");
+            refresh(true);
+        });
+    }
     private void prepareImmediateShiny(int generation){
         if(stopped||loginPaused||generation!=requestGeneration)return;
         // OFF never requires login or a linked trainer.
@@ -1448,6 +1989,15 @@ public class OverlayService extends Service {
                     if(stopped||loginPaused||generation!=requestGeneration)return;
                     if(!lastLocation.optBoolean("ok")){
                         locationVerified=false;
+                        // Re-hydration of Shiny/IV widgets can replace the
+                        // coordinates fields after earlier successful checks.
+                        // Rebind no more than twice; never submit blindly.
+                        if(locationFinalRetryCount<2){
+                            locationFinalRetryCount++;
+                            status("📍 Reconfirmando coordenadas e raio no site...");
+                            configureLocationAndVerify(generation,manual,0);
+                            return;
+                        }
                         searchInProgress=false;
                         searchFailure(locationEnabled?"⚠ Localização não aplicada":"⚠ Localização residual",
                             "Busca não enviada: último formulário de localização divergente. "+
@@ -1617,6 +2167,12 @@ public class OverlayService extends Service {
                     "Tempo limite: "+evidence+". Resultados anteriores preservados.");
                 return;
             }
+            // Diagnostic only: record bounded local DOM polling latency, not
+            // user coordinates, trainer code, cookies or full query details.
+            if(lastSearchStartMs>0L)BugReport.log(this,"SEARCH_LATENCY",
+                "mode="+mode+" attempts="+attempt+
+                " elapsedMs="+Math.max(0L,System.currentTimeMillis()-lastSearchStartMs)+
+                " cards="+found+" empty="+empty);
             applyCollectedResults(r);
             });
         }, resultPollDelayMs(attempt));
@@ -1869,7 +2425,10 @@ public class OverlayService extends Service {
             unexpired.put(card);
         }
         JSONArray sorted=sortItems(unexpired);
-        recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
+        // QA data is shown for visual homologation but cannot send notifications.
+        boolean authorizedApiQa="authorized-api-qa".equals(r.optString("source",""));
+        if(!authorizedApiQa)recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
+        displayedApiResults=authorizedApiQa;
         results=sorted.toString();
         searchPhase=sorted.length()==0?"empty":"updated";
         // Criteria were verified before Search and rechecked during collection.
@@ -1896,7 +2455,8 @@ public class OverlayService extends Service {
             status(("raw".equals(mode)||"percent".equals(mode)||"iv".equals(mode))
                 ?"Alguns IVs não comprovados foram ignorados.":"Alguns rankings PvP não confirmados.");
         else if(sorted.length()==0)status("Sem resultados confirmados");
-        else status(sorted.length()+" Pokémon atualizados");
+        else status(sorted.length()+(authorizedApiQa?
+            " Pokémon da API (QA; alertas suspensos)":" Pokémon atualizados"));
     }
     private void resize(int h){
         // The gear window never expands with the Pokémon results.
@@ -1916,10 +2476,13 @@ public class OverlayService extends Service {
             Math.max(min,Math.min(max,desiredDp));
         int pixels=dp(desired);
         int screenPixels=metrics().heightPixels;
-        int fittedY=Math.max(0,Math.min(Math.max(0,screenPixels-pixels),resultParams.y));
-        if(Math.abs(resultParams.height-pixels)<dp(2)&&resultParams.y==fittedY)return;
+        if(Math.abs(resultParams.height-pixels)<dp(2)){
+            // E.g. changing visual Y offset while the list height is unchanged.
+            positionResultsUnderPokeball(true);
+            return;
+        }
         resultParams.height=pixels;
-        resultParams.y=fittedY;
+        positionResultsUnderPokeball(false);
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar resultados",e);}
         moveDetail();
@@ -1930,6 +2493,8 @@ public class OverlayService extends Service {
         getSharedPreferences("prefs",0).edit()
             .putBoolean("resultsCollapsed",resultCollapsed).apply();
         js(resultPanel,resultLoaded,"window.setResultsCollapsed("+resultCollapsed+")");
+        if(resultRoot!=null)resultRoot.setVisibility(
+            resultCollapsed||minimized||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
         updateResultsWidth();
         if(resultCollapsed){
             hideDetails();
@@ -1939,7 +2504,7 @@ public class OverlayService extends Service {
     private void menu(boolean show){
         if(params==null||minimized)return;
         if(show==menuExpanded)return;
-        if(!show&&locationEditorOpen)locationEditor(false);
+        if(!show){if(locationEditorOpen)locationEditor(false);closeIndependentPopup();}
         menuExpanded=show;
         menuPadDp=0; // Only the measured overlap may shift the sprite list.
         if(show){
@@ -1974,7 +2539,7 @@ public class OverlayService extends Service {
         // Hidden result WebView must not keep its 1-second despawn ticker active.
         js(resultPanel,resultLoaded,"window.setResultsPaused("+yes+")");
         if(resultRoot!=null)resultRoot.setVisibility(
-            yes||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
+            yes||resultCollapsed||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
         updateWindow();
     }
     private void showDetails(int index){
@@ -1982,6 +2547,8 @@ public class OverlayService extends Service {
         try{
             JSONArray a=new JSONArray(results);
             if(index<0||index>=a.length()){hideDetails();return;}
+            // A previous Get coords callback must never update another card.
+            if(selected!=index)coordinateRequestToken++;
             selected=index;
             JSONObject obj=a.getJSONObject(index);
             js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(count()>0?shownMode:mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
@@ -2028,6 +2595,7 @@ public class OverlayService extends Service {
         }catch(Exception e){recordFailure("mostrar detalhes",e);hideDetails();}
     }
     private void hideDetails(){
+        coordinateRequestToken++; // Invalidates pending site callbacks after dismiss.
         selected=-1;
         // UX-DETAIL-TIMER-01: pause JS countdown while detail WebView is hidden.
         js(detailPanel,detailLoaded,"window.pauseDetailTimer()");
@@ -2035,28 +2603,60 @@ public class OverlayService extends Service {
         js(resultPanel,resultLoaded,"window.highlight(-1)");
     }
     private void resizeDetail(int heightDp){
-        detailHeight=Math.max(90,Math.min(310,heightDp));
+        // LT66: 310dp clipped expanded PvP leagues on Samsung. Keep a
+        // screen-bounded native window and let #panel scroll all content.
+        int available=Math.max(90,screenHeightDp()-68);
+        detailHeight=Math.max(90,Math.min(Math.min(440,available),heightDp));
         if(detailParams!=null&&detailRoot!=null){
             detailParams.height=dp(detailHeight);moveDetail();
         }
     }
-    private void pollCoordinates(JSONObject target,int attempt,boolean autoCopy){
-        if(stopped||loginPaused)return;
+    private boolean currentCoordinateTarget(JSONObject target){
+        try{
+            JSONArray a=new JSONArray(results);
+            for(int i=0;i<a.length();i++){
+                JSONObject card=a.getJSONObject(i);
+                if(card.optInt("sourceIndex",-1)!=target.optInt("sourceIndex",-2))continue;
+                return card.optString("name","").equals(target.optString("name",""))&&
+                    card.optString("cp","").equals(target.optString("cp",""))&&
+                    card.optString("number","").equals(target.optString("number",""))&&
+                    card.optString("location","").equals(target.optString("location",""))&&
+                    card.optString("iv","").equals(target.optString("iv",""))&&
+                    card.optString("gender","").equals(target.optString("gender",""))&&
+                    card.optString("level","").equals(target.optString("level",""));
+            }
+        }catch(Exception e){recordFailure("verificar identidade Get coords",e);}
+        return false;
+    }
+    private void pollCoordinates(JSONObject target,int attempt,boolean autoCopy,long requestToken){
+        if(stopped||loginPaused||requestToken!=coordinateRequestToken)return;
+        if(!currentCoordinateTarget(target)){
+            deliverCoords("","Resultados mudaram; selecione o Pokémon novamente.");return;
+        }
         JSONObject query=new JSONObject();
         try{
+            query.put("index",target.optInt("sourceIndex",-1));
             query.put("name",target.optString("name",""));
             query.put("cp",target.optString("cp",""));
+            query.put("number",target.optString("number",""));
+            query.put("location",target.optString("location",""));
+            query.put("iv",target.optString("iv",""));
+            query.put("gender",target.optString("gender",""));
+            query.put("level",target.optString("level",""));
         }catch(Exception e){recordFailure("preparar consulta de coordenadas",e);}
         execute("readCoords:"+query.toString(),result->{
-            String coords=result.optString("coords","");
+            if(stopped||loginPaused||requestToken!=coordinateRequestToken)return;
+            if(!currentCoordinateTarget(target)){
+                deliverCoords("","Resultados mudaram; coordenadas não copiadas.");return;
+            }
+            String coords=extractCoordinates(result.optString("coords",""));
             if(result.optBoolean("ok")&&!coords.isEmpty()){
                 try{
                     JSONArray existing=new JSONArray(results);
                     for(int i=0;i<existing.length();i++){
                         JSONObject card=existing.getJSONObject(i);
                         if(card.optInt("sourceIndex",-1)==target.optInt("sourceIndex",-2)){
-                            card.put("coords",coords);
-                            break;
+                            card.put("coords",coords);break;
                         }
                     }
                     results=existing.toString();
@@ -2064,12 +2664,21 @@ public class OverlayService extends Service {
                 if(autoCopy)copyCoordinatesInternal(coords);
                 deliverCoords(coords,autoCopy?"Coordenadas copiadas":"Coordenadas obtidas");return;
             }
-            if(attempt<8){
+            if(result.optBoolean("pending",false)&&attempt<9){
+                // Bounded polling of this one verified card, never a second
+                // Get coords click. Give slow React hydration time to settle.
                 handler.postDelayed(()->{
-                    if(!stopped&&!loginPaused)pollCoordinates(target,attempt+1,autoCopy);
-                },450L);
+                    if(!stopped&&!loginPaused&&requestToken==coordinateRequestToken)
+                        pollCoordinates(target,attempt+1,autoCopy,requestToken);
+                },750L);
             }else{
-                deliverCoords("","O site não retornou coordenadas. Confira no navegador interno.");
+                String reason=result.optString("status","");
+                if(reason.startsWith("Aguardando reidentificação")){
+                    deliverCoords("","Não foi possível confirmar o mesmo Pokémon no site; nenhuma coordenada copiada.");
+                }else{
+                    deliverCoords("",reason.isEmpty()?
+                        "O site ainda não liberou Get coords; tente novamente mais tarde.":reason);
+                }
             }
         });
     }
@@ -2093,6 +2702,25 @@ public class OverlayService extends Service {
     private void deliverCoords(String coordinates,String message){
         js(detailPanel,detailLoaded,"window.coordsResult("+JSONObject.quote(coordinates)+","+JSONObject.quote(message)+")");
         status(message);
+    }
+    // The regular Favorites picker is not a #choices popup. Give it the same
+    // originating icon coordinates while preserving its non-modal native dialog.
+    private void showFavoritePicker(int anchorX,int anchorY){
+        if(root==null||loginPaused||pickerOpen)return;
+        closeIndependentPopup();
+        pickerOpen=true;
+        hideDetails();
+        try{
+            PokemonPicker.show(OverlayService.this,()->{
+                if(!stopped)update();
+            },()->{
+                pickerOpen=false;
+                if(!stopped)update();
+            },anchorX,anchorY);
+        }catch(Exception e){
+            pickerOpen=false;
+            diagnosticError("Não foi possível abrir favoritos no overlay.");
+        }
     }
     public class Bridge{
         @JavascriptInterface public void previewVisualArea(String area){
@@ -2186,6 +2814,7 @@ public class OverlayService extends Service {
                 }
             }catch(Exception e){recordFailure("colar coordenadas",e);}
             js(menuPanel,menuLoaded,"window.onLocationPaste("+JSONObject.quote(parsed)+")");
+            js(popupPanel,popupLoaded,"window.onLocationPaste("+JSONObject.quote(parsed)+")");
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
         @JavascriptInterface public void requestFilterOptions(){handler.post(()->requestFilterOptionsLater(0));}
@@ -2201,6 +2830,7 @@ public class OverlayService extends Service {
             execute("describeFilters",found->{
                 if(stopped||generation!=requestGeneration||menuPanel==null||!menuLoaded)return;
                 js(menuPanel,true,"window.onFilterOptions("+found.toString()+")");
+            js(popupPanel,popupLoaded,"window.onFilterOptions("+found.toString()+")");
                 discoverFilterMenu(0,generation);
             });
         }
@@ -2229,6 +2859,7 @@ public class OverlayService extends Service {
                             message.put("partial",true);
                         }catch(org.json.JSONException ignored){}
                         js(menuPanel,true,"window.onFilterOptions("+message.toString()+")");
+            js(popupPanel,popupLoaded,"window.onFilterOptions("+message.toString()+")");
                     }
                     execute("closeFilterOptions:"+key,closed->discoverFilterMenu(position+1,generation));
                 }),"form".equals(key)?500L:210L);
@@ -2260,6 +2891,7 @@ public class OverlayService extends Service {
                     }
                 }catch(org.json.JSONException ignored){}
                 js(menuPanel,true,"window.onFormOptions("+result.toString()+")");
+            js(popupPanel,popupLoaded,"window.onFormOptions("+result.toString()+")");
             });
         }
         private int pokemonSuggestionSequence=0;
@@ -2268,12 +2900,32 @@ public class OverlayService extends Service {
             if(stopped||loginPaused||!menuExpanded||menuPanel==null||!menuLoaded)return;
             if(searchInProgress){
                 js(menuPanel,true,"window.onPokemonSuggestions({ok:false,reason:'Aguarde a busca atual terminar'})");
+            js(popupPanel,popupLoaded,"window.onPokemonSuggestions({ok:false,reason:'Aguarde a busca atual terminar'})");
                 return;
             }
             final String wanted=query==null?"":query.trim();
             if(wanted.length()>65)return;
             final int generation=requestGeneration;
             final int sequence=++pokemonSuggestionSequence;
+            if(authorizedApiQaSelected()){
+                if(authorizedApiCollector==null)
+                    authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+                authorizedApiCollector.suggest(wanted,response->{
+                    if(stopped||loginPaused||generation!=requestGeneration||
+                       sequence!=pokemonSuggestionSequence||!menuExpanded||!menuLoaded)return;
+                    try{
+                        response.put("query",wanted);
+                        if(!response.optBoolean("ok",false)){
+                            response.put("state","failed").put("pending",false);
+                            response.put("reason","Catálogo da API indisponível ("+
+                                response.optString("reason","erro")+"). Selecione DOM nas configurações.");
+                        }
+                    }catch(org.json.JSONException ignored){}
+                    js(menuPanel,menuLoaded,"window.onPokemonSuggestions("+response.toString()+")");
+                    js(popupPanel,popupLoaded,"window.onPokemonSuggestions("+response.toString()+")");
+                });
+                return;
+            }
             requestPokemonSuggestionsLater(wanted,generation,sequence,0);
         });}
         private void requestPokemonSuggestionsLater(String query,int generation,int sequence,int attempt){
@@ -2296,6 +2948,7 @@ public class OverlayService extends Service {
                     }
                 }catch(org.json.JSONException ignored){}
                 js(menuPanel,true,"window.onPokemonSuggestions("+response.toString()+")");
+            js(popupPanel,popupLoaded,"window.onPokemonSuggestions("+response.toString()+")");
             });
         }
         // LT57 single-form bridge: menus submit a DELTA, not a stale copy of
@@ -2426,7 +3079,7 @@ public class OverlayService extends Service {
                 int min=input.getInt("percentMin"),max=input.getInt("percentMax");
                 if(!within(a,0,15)||!within(d,0,15)||!within(st,0,15)||
                     !within(gl,1,50)||!within(ul,1,50)||
-                    !isAllowedIvPercent(min)||!isAllowedIvPercent(max)||min>max)return;
+                    !within(min,0,100)||!within(max,0,100)||min>max)return;
                 JSONObject extra=new JSONObject();
                 String[] strings={"sortBy","pokemon","form","size","gender","weather","cpMin","cpMax","levelMin","levelMax","minPvpCp"};
                 for(String key:strings){
@@ -2658,17 +3311,30 @@ public class OverlayService extends Service {
                 update();
             });
         }
+        private void alertModeCaption(String group,String choice){
+            String label="on".equals(choice)?"Som ativado":
+                "silent".equals(choice)?"Sem som · apenas aviso":"Notificações desativadas";
+            // Android system text toast: a short transient caption outside the panel.
+            boolean systemBlocked=!"off".equals(choice)&&
+                !WatchAlerts.permissionGranted(OverlayService.this);
+            android.widget.Toast.makeText(OverlayService.this,
+                group+" · "+(systemBlocked?
+                    "preferência salva; libere as notificações no Android":label),
+                android.widget.Toast.LENGTH_SHORT).show();
+        }
         @JavascriptInterface public void setAlertMode(String value){handler.post(()->{
             if(!"on".equals(value)&&!"silent".equals(value)&&!"off".equals(value))return;
             alertsMode=value;alerts=!"off".equals(value);
             getSharedPreferences("prefs",0).edit().putString("alertsMode",value)
                 .putBoolean("alerts",alerts).apply();
             update();
+            alertModeCaption("Novos Pokémon",value);
         });}
         @JavascriptInterface public void setFavoriteAlertMode(String mode){handler.post(()->{
             if(!"on".equals(mode)&&!"silent".equals(mode)&&!"off".equals(mode))return;
             WatchAlerts.setMode(OverlayService.this,mode);
             update();
+            alertModeCaption("Pokémon Favoritos",mode);
         });}
         private void requestAlertTonePicker(String target){
             Intent intent=new Intent(OverlayService.this,MainActivity.class);
@@ -2735,7 +3401,7 @@ public class OverlayService extends Service {
                     java.util.Set<String> seen=new java.util.HashSet<>();
                     if(items!=null)for(int i=0;i<items.length()&&i<12;i++){
                         String id=items.optString(i,"");
-                        if(valid.contains(id)&&seen.add(id)&&(!"hidden".equals(key)||(!"close".equals(id)&&!"appearance".equals(id)&&!"period".equals(id)&&!"sh".equals(id))))
+                        if(valid.contains(id)&&seen.add(id)&&(!"hidden".equals(key)||(!"close".equals(id)&&!"appearance".equals(id)&&!"sh".equals(id))))
                             safe.put(id);
                     }
                     clean.put(key,safe);
@@ -2795,33 +3461,18 @@ public class OverlayService extends Service {
                 diagnosticError("Não foi possível abrir o relatório de bugs.");
             }
         });}
-        @JavascriptInterface public void openWatchList(){handler.post(()->{
-            if(root==null||loginPaused||pickerOpen)return;
-            pickerOpen=true;
-            hideDetails();
-            root.setVisibility(View.GONE);
-            if(resultRoot!=null)resultRoot.setVisibility(View.GONE);
-            if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
-            try{
-                PokemonPicker.show(OverlayService.this,()->{
-                    if(!stopped)update();
-                },()->{
-                    pickerOpen=false;
-                    if(!stopped&&!loginPaused&&root!=null)root.setVisibility(View.VISIBLE);
-                    if(!stopped&&!loginPaused&&!minimized&&resultRoot!=null)
-                        resultRoot.setVisibility(View.VISIBLE);
-                    if(!stopped&&!loginPaused&&menuExpanded&&menuRoot!=null)menuRoot.setVisibility(View.VISIBLE);
-                    update();
-                });
-            }catch(Exception e){
-                pickerOpen=false;
-                if(root!=null&&!loginPaused)root.setVisibility(View.VISIBLE);
-                if(resultRoot!=null&&!loginPaused&&!minimized)
-                    resultRoot.setVisibility(View.VISIBLE);
-                if(menuRoot!=null&&!loginPaused&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
-                diagnosticError("Não foi possível abrir favoritos no overlay.");
-            }
-        });}
+        @JavascriptInterface public void openWatchList(){
+            handler.post(()->showFavoritePicker(-1,-1));
+        }
+        @JavascriptInterface public void openWatchListAt(int triggerDp,int triggerYDp){
+            handler.post(()->{
+                int anchorX=menuParams==null?-1:
+                    menuParams.x+dp(Math.max(0,Math.min(menuDp(),triggerDp)));
+                int anchorY=menuParams==null?-1:
+                    menuParams.y+dp(Math.max(0,Math.min(visualMenuBaseDp(),triggerYDp)));
+                showFavoritePicker(anchorX,anchorY);
+            });
+        }
         @JavascriptInterface public void setIntervalMinutes(int minutes){handler.post(()->{
             if(minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
             if(intervalMinutes==minutes)return;
@@ -2846,47 +3497,32 @@ public class OverlayService extends Service {
         @JavascriptInterface public void shiny(){handler.post(()->{
             if(stopped||loginPaused)return;
             shiny=!shiny;
-            android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
-            prefs.edit().putBoolean("shiny",shiny).apply();
+            getSharedPreferences("prefs",0).edit().putBoolean("shiny",shiny).apply();
             replaceActiveFilterSearch();
             final int generation=requestGeneration;
             shinyVerified=false;
             shinyLoginWindowOpened=false;
             shinyLoginPromptRequested=shiny;
-            // Keep existing results visible while the new site state is pending.
-            status(shiny?"✨ Verificando acesso ao Shiny...":"✨ Desativando Shiny no site...");
+            // Existing cards were collected under the prior Shiny selection.
+            // Keep them visible but clearly stale until the site confirms new ones.
+            resultsStale=count()>0;
+            hideDetails();
+            // Show the neutral pending state immediately; it becomes yellow
+            // only after the actual website confirms the active Shiny filter.
+            status(shiny?"✨ Shiny solicitado · verificando no site...":
+                "✨ Shiny OFF · aplicando na busca...");
             if(!loaded||website==null){
-                if(shiny){
-                    status("✨ Abrindo login; pesquisa ainda não carregada.");
-                    openShinyLogin();
-                }else status("✨ Shiny desligado; sincronização no próximo carregamento.");
+                if(shiny)status("✨ Site carregando; Shiny aguardando confirmação.");
+                else status("✨ Shiny desligado; sincronização no próximo carregamento.");
                 return;
             }
             if(!shiny){
-                // Coords, Shiny and other filters belong to one site form.
-                // Refresh fills only changed fields and verifies all selections.
-                if(locationEnabled){OverlayService.this.refresh(true);return;}
-                prepareImmediateShiny(generation);
+                // No login is required for OFF. Reconfigure Shiny plus all
+                // existing filters in ONE verified request (even with Coords).
+                OverlayService.this.refresh(true);
                 return;
             }
-            execute("session",session->{
-                if(stopped||loginPaused||generation!=requestGeneration)return;
-                String auth=session.optString("auth","não confirmado");
-                prefs.edit().putString("sessionStatus",auth).apply();
-                if(!siteConfirmsShinyAccount(session)){
-                    revertUnverifiedShiny("✨ Conta logada e treinador confirmado são obrigatórios para Shiny.");
-                    openShinyLogin();
-                    return;
-                }
-                if(locationEnabled){
-                    // Re-enter the unified form so the site does not discard
-                    // active Coords when switching Shiny.
-                    status("✨ Sincronizando Shiny e localização na mesma pesquisa...");
-                    OverlayService.this.refresh(true);
-                    return;
-                }
-                prepareImmediateShiny(generation);
-            });
+            startVerifiedShinySearch(generation,0);
         });}
         @JavascriptInterface public void refresh(){handler.post(()->{
             android.widget.Toast.makeText(OverlayService.this,
@@ -2903,20 +3539,39 @@ public class OverlayService extends Service {
         }
         @JavascriptInterface public void toggleResultsCollapsed(){handler.post(OverlayService.this::toggleResultsCollapsed);}
         @JavascriptInterface public void resizeMenu(int size){handler.post(()->OverlayService.this.resizeMenu(size));}
+        @JavascriptInterface public void openPopup(String kind,int triggerDp,int triggerYDp){
+            handler.post(()->openIndependentPopup(kind,triggerDp,triggerYDp));
+        }
+        @JavascriptInterface public void openPopupMeasured(String kind,int triggerDp,
+                                                            int triggerYDp,int triggerHeightDp){
+            handler.post(()->openIndependentPopup(kind,triggerDp,triggerYDp,triggerHeightDp));
+        }
+        @JavascriptInterface public void closePopup(){handler.post(OverlayService.this::closeIndependentPopup);}
+        @JavascriptInterface public void resizePopup(int width,int height){
+            handler.post(()->resizeIndependentPopup(width,height));
+        }
         @JavascriptInterface public void resizeDetail(int size){handler.post(()->OverlayService.this.resizeDetail(size));}
         @JavascriptInterface public void toggleDetail(int index){handler.post(()->{
             if(selected==index)hideDetails();else showDetails(index);
         });}
         @JavascriptInterface public void hideDetail(){handler.post(OverlayService.this::hideDetails);}
+        @JavascriptInterface public void expiredResults(){handler.post(()->{
+            // The WebView timer is a safety net when an Android handler was
+            // canceled by an interrupted navigation. Expire only on time.
+            if(!stopped&&armedDespawnMillis>0L&&
+                System.currentTimeMillis()+300L>=armedDespawnMillis)
+                expiryRefresh.run();
+        });}
         @JavascriptInterface public void longPressCoords(int i){handler.post(()->{
             try{
                 JSONArray a=new JSONArray(results);
                 if(i>=0&&i<a.length())requestCoordinates(a.getJSONObject(i).optInt("sourceIndex",-1),true);
             }catch(Exception e){recordFailure("detalhes coordenadas",e);}
         });}
-        @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,false));}
+        @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,true));}
     }
     private void requestCoordinates(int sourceIndex,boolean autoCopy){
+        final long requestToken=++coordinateRequestToken;
         JSONObject chosen=null;
         try{
             JSONArray a=new JSONArray(results);
@@ -2927,11 +3582,39 @@ public class OverlayService extends Service {
         }catch(Exception e){recordFailure("ler cartão coordenadas",e);}
         if(chosen==null){deliverCoords("","Pokémon indisponível");return;}
         JSONObject target=chosen;
-        execute("coords:"+sourceIndex,response->{
-            if(!response.optBoolean("ok")){
-                deliverCoords("",response.optString("status","Get coords indisponível"));return;
+        // Reuse a previously verified coordinate without another site click.
+        String saved=extractCoordinates(target.optString("coords",""));
+        if(!saved.isEmpty()){
+            if(autoCopy)copyCoordinatesInternal(saved);
+            deliverCoords(saved,autoCopy?"✓ Coordenadas copiadas":"Coordenadas disponíveis");
+            return;
+        }
+        if(displayedApiResults){
+            revealAuthorizedCoords(target,autoCopy,requestToken);
+            return;
+        }
+        JSONObject fingerprint=new JSONObject();
+        try{
+            fingerprint.put("index",sourceIndex);
+            fingerprint.put("name",target.optString("name",""));
+            fingerprint.put("cp",target.optString("cp",""));
+            fingerprint.put("number",target.optString("number",""));
+            fingerprint.put("location",target.optString("location",""));
+        }catch(org.json.JSONException e){recordFailure("identificar cartão coordenadas",e);}
+        execute("coords:"+fingerprint.toString(),response->{
+            if(stopped||loginPaused||requestToken!=coordinateRequestToken)return;
+            if(!currentCoordinateTarget(target)){
+                deliverCoords("","Resultados mudaram; selecione o Pokémon novamente.");return;
             }
-            pollCoordinates(target,0,autoCopy);
+            if(!response.optBoolean("ok")){
+                // A transient page refresh may return only "reason". Surface
+                // the actual bounded reason in the detail, never clear it via
+                // a generic status refresh or pretend the coords were copied.
+                String why=response.optString("status",
+                    response.optString("reason","Get coords indisponível"));
+                deliverCoords("",why);return;
+            }
+            pollCoordinates(target,0,autoCopy,requestToken);
         });
     }
     private void syncPreferencesWithoutSearch(){
@@ -3002,11 +3685,17 @@ public class OverlayService extends Service {
             syncPreferencesWithoutSearch();
             return START_STICKY;
         }
+        if("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION".equals(action)){
+            // Refresh only UI evidence from Android, never remote search filters.
+            update();
+            return START_STICKY;
+        }
         if("com.lucianotoscano.pokesearchoverlay.SYNC_HOME_THEME".equals(action)){
             syncHomeThemeVisual(true);
             return START_STICKY;
         }
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN".equals(action)){
+            closeIndependentPopup();
             loginPaused=true;
             guardSubmittedSearchBeforeReplacement();
             ++requestGeneration;
@@ -3027,7 +3716,7 @@ public class OverlayService extends Service {
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_END".equals(action)){
             loginPaused=false;
             if(root!=null&&!pickerOpen)root.setVisibility(View.VISIBLE);
-            if(resultRoot!=null&&!pickerOpen&&!minimized)resultRoot.setVisibility(View.VISIBLE);
+            if(resultRoot!=null&&!pickerOpen&&!minimized&&!resultCollapsed)resultRoot.setVisibility(View.VISIBLE);
             if(menuRoot!=null&&!pickerOpen&&menuExpanded)menuRoot.setVisibility(View.VISIBLE);
             if(detailRoot!=null&&selected>=0&&!pickerOpen)detailRoot.setVisibility(View.VISIBLE);
             cancelSessionCallbacks();
@@ -3086,6 +3775,21 @@ public class OverlayService extends Service {
         if(intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&
            intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=5;
         schedulePeriodic();
+        if(initialStart&&!pref.getBoolean("gestureHelpV1Shown",false)){
+            pref.edit().putBoolean("gestureHelpV1Shown",true).apply();
+            handler.postDelayed(()->{
+                if(!stopped&&!loginPaused)
+                    android.widget.Toast.makeText(OverlayService.this,
+                        "👆 Pokébola: toque = resultados · segure = menu · arraste = mover",
+                        android.widget.Toast.LENGTH_LONG).show();
+            },1100L);
+            handler.postDelayed(()->{
+                if(!stopped&&!loginPaused)
+                    android.widget.Toast.makeText(OverlayService.this,
+                        "👆 ↻: toque = atualizar · segure = escolher intervalo",
+                        android.widget.Toast.LENGTH_LONG).show();
+            },4200L);
+        }
         spriteSize=pref.getInt("spriteSize",45);
         if(spriteSize!=35&&spriteSize!=45&&spriteSize!=55)spriteSize=45;
         showTimers=pref.getBoolean("showTimers",false);
@@ -3128,15 +3832,12 @@ public class OverlayService extends Service {
         }
         glRank=Math.max(1,Math.min(50,pref.getInt("glRank",1)));
         ulRank=Math.max(1,Math.min(50,pref.getInt("ulRank",1)));
-        // Existing installations may have saved unattainable values such as 90%.
-        // Round Min DOWN and Max UP, preserving the intended inclusive range.
-        int previousMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
-        int previousMax=Math.max(previousMin,Math.min(100,pref.getInt("ivPercentMax",100)));
-        ivPercentMin=floorIvPercent(previousMin);
-        ivPercentMax=Math.max(ivPercentMin,ceilIvPercent(previousMax));
-        if(ivPercentMin!=previousMin||ivPercentMax!=previousMax)
-            pref.edit().putInt("ivPercentMin",ivPercentMin)
-                .putInt("ivPercentMax",ivPercentMax).apply();
+        // LT62: accept any typed integer 0..100 and preserve it across restarts.
+        // Spawn values remain physically attainable IV sums; thresholds can be
+        // any integer and the site receives the exact requested min/max.
+        ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
+        ivPercentMax=Math.max(ivPercentMin,
+            Math.min(100,pref.getInt("ivPercentMax",100)));
         shiny=getSharedPreferences("prefs",0).getBoolean("shiny",false);
         if(!shiny)shinyVerified=false;
         update();
@@ -3157,22 +3858,37 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
+        SupportMissionState.overlayStopped();
+        if (missionScreenOffRegistered) {
+            try { unregisterReceiver(missionScreenOffReceiver); }
+            catch (IllegalArgumentException ignored) {}
+            missionScreenOffRegistered = false;
+        }
         FirebaseStats.setOverlayVisible(this,false);
         stopped=true;
         running=false;
         ++requestGeneration;
+        ++coordinateRequestToken;
+        if(authorizedApiCollector!=null){
+            authorizedApiCollector.dispose();authorizedApiCollector=null;
+        }
+        // Form/Pokémon sequences belong to Bridge and their callbacks already
+        // check stopped/requestGeneration before touching any live WebView.
         searchInProgress=false;
+        // Cancels periodic refresh, timers, popup retries and all delayed polls.
         handler.removeCallbacksAndMessages(null);
         if(wm!=null&&root!=null){try{wm.removeView(root);}catch(Exception e){recordFailure("remover dock",e);}}
         if(wm!=null&&menuRoot!=null){try{wm.removeView(menuRoot);}catch(Exception e){recordFailure("remover menu",e);}}
+        if(wm!=null&&popupRoot!=null){try{wm.removeView(popupRoot);}catch(Exception e){recordFailure("remover popup",e);}}
         if(wm!=null&&resultRoot!=null){try{wm.removeView(resultRoot);}catch(Exception e){recordFailure("remover resultados",e);}}
         if(wm!=null&&detailRoot!=null){try{wm.removeView(detailRoot);}catch(Exception e){recordFailure("remover detalhes",e);}}
         destroyWebView(panel,true,"painel");panel=null;
         destroyWebView(menuPanel,true,"menu");menuPanel=null;
+        destroyWebView(popupPanel,true,"popup");popupPanel=null;popupLoaded=false;
         destroyWebView(resultPanel,true,"resultados");resultPanel=null;
         destroyWebView(detailPanel,true,"detalhes");detailPanel=null;
         destroyWebView(website,false,"site");website=null;
-        root=null;menuRoot=null;detailRoot=null;resultRoot=null;resultGrip=null;resultParams=null;
+        root=null;menuRoot=null;popupRoot=null;popupParams=null;detailRoot=null;resultRoot=null;resultGrip=null;resultParams=null;
         super.onDestroy();
     }
     @Override public IBinder onBind(Intent intent){return null;}
