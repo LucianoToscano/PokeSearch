@@ -714,6 +714,7 @@ body.result-window .spawnInfo::-webkit-scrollbar{display:none}
 body.result-window .genderInfo{font-weight:900;font-size:calc(11px * var(--result-info-scale,1))}
 body.result-window .genderInfo.male{color:#59a9ff}
 body.result-window .genderInfo.female{color:#ff83bb}
+body.result-window .genderInfo.genderless{color:#c5d2de}
 body.result-window .statPrefix{font-size:.78em;font-weight:800;vertical-align:baseline;opacity:.9;margin-right:1px}
 body.result-window .leaguePrefix{font-size:.85em;font-weight:900;margin-right:2px}
 body.result-window .leaguePrefix.gl{color:#67b6ff}
@@ -5191,6 +5192,7 @@ function resultInfoHtml(value,card){
  if(raw.startsWith("↳ "))return '<span class="evolutionInfo'+(raw.includes('IV#1')&&!raw.includes('Não elegível')&&!raw.includes('PC?')?' best':'')+'">'+safe+'</span>';
  if(raw==="♂")return '<span class="genderInfo male">♂</span>';
  if(raw==="♀")return '<span class="genderInfo female">♀</span>';
+ if(raw==="⚲"||raw==="Genderless")return '<span class="genderInfo genderless">⚲</span>';
  const valid=verifiedSpawnIvPercent(card);
  if(valid!==null&&(raw===String(valid)+"%"||raw===verifiedSpawnRawIv(card)))
   return '<span class="ivInfo '+ivPaletteClass(valid)+'">'+safe+'</span>';
@@ -5868,7 +5870,12 @@ function drawPokemonSuggestions(){
   placeholder.setAttribute("aria-hidden","true");
   if(safeImage){
    const img=document.createElement("img");img.src=item.image;img.alt="";
-   img.loading="lazy";img.onerror=()=>{img.replaceWith(placeholder);};
+   img.loading="lazy";img.onerror=()=>{
+    if(!img.dataset.cdnAttempt&&/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/\d{1,4}\.png$/.test(item.image)&&/^\d{1,4}$/.test(String(item.dex||""))){
+     img.dataset.cdnAttempt="1";
+     img.src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+item.dex+".png";
+    }else img.replaceWith(placeholder);
+   };
    button.appendChild(img);
   }else button.appendChild(placeholder);
   const text=document.createElement("span");text.textContent=(item.dex?"#"+item.dex+"  ":"")+label;
