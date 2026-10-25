@@ -1,62 +1,39 @@
-name: PokeSearch Scrapbook Stage 1 protected Guia Mestre append
+name: PokeSearch Guia Mestre resumido - integridade do backup
 on:
   push:
     branches:
       - feature/pokesearch-community-scrapbook-stage1-20261025
     paths:
+      - 'docs/GUIA_MESTRE.md'
+      - 'docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md'
       - 'docs/POKESEARCH_SCRAPBOOK_ETAPA1.md'
       - '.github/workflows/scrapbook-stage1-append-guide.yml'
+  workflow_dispatch:
 permissions:
-  contents: write
-concurrency:
-  group: scrapbook-stage1-guide-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
 jobs:
-  append-guide:
+  verify-guide-archive:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: true
-          ref: ${{ github.sha }}
-      - name: Append only; prove entire old Guia Mestre prefix remains byte-identical
+          persist-credentials: false
+      - name: Provar identidade do backup e resumo conciso (sem gravacao)
         shell: bash
         run: |
           set -euo pipefail
+          ARCHIVE=docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md
           GUIDE=docs/GUIA_MESTRE.md
-          MARKER='Scrapbook da Comunidade PokeSearch - Etapa 1 (25/10/2026)'
-          test -f "$GUIDE"
-          test -f docs/POKESEARCH_SCRAPBOOK_ETAPA1.md
-          BEFORE="$(wc -c < "$GUIDE")"
-          test "$BEFORE" -ge 1400000
-          ORIGINAL_SHA="$(sha256sum "$GUIDE" | awk '{print $1}')"
-          # Scan the complete checked-out historical file, not connector snippets.
-          cat "$GUIDE" > /dev/null
-          if grep -Fq "$MARKER" "$GUIDE"; then
-            echo "Already appended: no historical rewrite"
-            exit 0
-          fi
-          cat >> "$GUIDE" <<'EOF'
-
-          ## Scrapbook da Comunidade PokeSearch - Etapa 1 (25/10/2026)
-          - Novo protótipo local estilo Orkut em um unico feed para Recados, Sugestoes, Bugs e Dicas; Home compacta com tres scraps ficticios, tema escuro/claro e tela propria com filtro de categoria.
-          - Base preservada: branch feature/lt88-lt93-evolution-20261025 no commit 352a3bdc048d4b6f7337209ccd1d77939b8ae2bf; PR #63 Draft. Main LT87 83cf9a693a3672276e01d04e38ed14dce0071cb8 intocada.
-          - Nova branch feature/pokesearch-community-scrapbook-stage1-20261025; PR Draft separada sem merge ou Release.
-          - Controle de seguranca: BuildConfig.DEBUG e preferencia communityScrapbookStage1Preview falsa por padrao. Release distribuida nao pode ativar interface mesmo se preferencia salva for true.
-          - Dados ficticios apenas em memoria, postagem, curtida, resposta e denuncia inoperantes; sem Firebase novo, sem gravacoes em scrapbook ou alteracao de stats, sem login PoGoCoordinates/GPS privado.
-          - Caminhos Firebase futuros documentados: scrapbook/users/posts/replies/likes/reports/config, regras deny-by-default, autoria UID, moderacao backend, limites confiaveis de frequencia e privacidade, ainda NAO implantados.
-          - Java: CommunityScrapbookStage1 e CommunityScrapbookActivity, MainActivity condicional, AndroidManifest activity interna, teste Node scrapbook-stage1.test.js.
-          - Doc completo docs/POKESEARCH_SCRAPBOOK_ETAPA1.md. QA automatico e homologacao Samsung precisam de verificacao separada.
-          - Nenhum APK publico, compartilhamento novo, Firebase real ou PR mesclada nesta etapa. Historico anterior preservado byte a byte pelo SHA256 do prefixo.
-          EOF
-          AFTER="$(wc -c < "$GUIDE")"
-          test "$AFTER" -gt "$BEFORE"
-          PREFIX_SHA="$(head -c "$BEFORE" "$GUIDE" | sha256sum | awk '{print $1}')"
-          test "$PREFIX_SHA" = "$ORIGINAL_SHA"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "$GUIDE"
-          git commit -m 'docs(scrapbook stage1): SHA256-protected append to Guia Mestre'
-          git fetch origin "refs/heads/$GITHUB_REF_NAME:refs/remotes/origin/$GITHUB_REF_NAME"
-          git rebase "origin/$GITHUB_REF_NAME"
-          git push origin "HEAD:$GITHUB_REF_NAME"
+          test -f "$ARCHIVE" && test -f "$GUIDE"
+          test "$(wc -c < "$ARCHIVE")" -eq 1459814
+          test "$(git hash-object "$ARCHIVE")" = '466a92323dc319720b4ced50caf413a1a2bbef04'
+          test "$(wc -c < "$GUIDE")" -lt 28000
+          grep -Fq 'GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md' "$GUIDE"
+          grep -Fq '0.00.95' "$GUIDE"
+          grep -Fq 'Scrapbook' "$GUIDE"
+          echo "BACKUP_GIT_BLOB=$(git hash-object "$ARCHIVE")"
+          echo "BACKUP_SHA256=$(sha256sum "$ARCHIVE" | awk '{print $1}')"
+          echo "BACKUP_BYTES=$(wc -c < "$ARCHIVE")"
+          echo "RESUMO_BYTES=$(wc -c < "$GUIDE")"
+          test -z "$(git status --porcelain)"
+          echo "PASS: arquivo historico byte-identico; resumo curto; sem APK/merge/write"
