@@ -4,6 +4,11 @@
 
 ## LT86 — Catálogo completo de Formas e nível 50 (somente QA)
 
+
+**Complemento LT86 Samsung QA:** imagens de espécies padrão receberam correção de solicitações simultâneas na grade de Favoritos e tentativa HTTPS alternativa para sprites verificadas; Informações agora reconhece ⚲ Genderless; a Pokébola não fica limitada pela largura do painel de resultados durante o arraste. Foram criados **3 perfis gerais** discretos no menu Filtros (▣ > Usar/Salvar) e **3 perfis de Favoritos** na aba ▣ junto ao contador (toque para usar, segure para salvar). Favoritos continuam limitados a 50; preferências antigas, Shiny e coordenadas são independentes. **Tudo ainda exige build aprovado e teste físico Samsung.** Consulte [checklist LT86](docs/LT86_CHECKLIST_SAMSUNG.md).
+
+
+
 **QA 0.00.86 / versionCode 54289 — não publicado.** Branch `fix/lt86-api-filter-options-qa-20261025`, derivada do checkpoint LT85 PR #60 Draft; PR #59 e main preservadas.
 
 - **Corrigido no código:** Nível Min/Max permite 1–50 na interface (antes terminava em 35); o catálogo de Formas agora fornece até 500 valores (em vez de 200) e permite mostrar mais opções em páginas de 60, preservando chips marcados e a busca por nome.
