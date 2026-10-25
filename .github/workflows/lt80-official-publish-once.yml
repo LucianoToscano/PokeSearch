@@ -1,0 +1,100 @@
+name: LT80 approved - publish official GitHub update once
+on:
+  push:
+    branches:
+      - fix/lt80-coords-react-rebind-samsung-20261024
+    paths:
+      - '.github/workflows/lt80-official-publish-once.yml'
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: official-release-pokesearch-v0.00.80-54283
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment:
+      name: official-updates
+    env:
+      GH_TOKEN: ${{ github.token }}
+      QA_RUN: '40154892844'
+      QA_ARTIFACT: 'PokeSearch-v0.00.80-LT-Samsung-QA-protected-release'
+      EXPECTED_SOURCE: 'f97aa19a2ee2d6d0917c4eab0b9cd61f77209605'
+      EXPECTED_CERT: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      PUBLIC_NAME: '0.00.80'
+      PUBLIC_CODE: '54283'
+      TAG: 'v0.00.80-54283'
+    steps:
+      - name: Checkout release candidate (do not merge main)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: fix/lt80-coords-react-rebind-samsung-20261024
+      - name: Verify approved CI run and artifact identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'LucianoToscano/PokeSearch'
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QA_RUN" --jq '.conclusion')" = success
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QA_RUN" --jq '.head_sha')" = "$EXPECTED_SOURCE"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Version already published; refusing overwrite."
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/verified"
+          gh run download "$QA_RUN" --repo "$GITHUB_REPOSITORY" --name "$QA_ARTIFACT" --dir "$RUNNER_TEMP/verified"
+          cd "$RUNNER_TEMP/verified"
+          test "$(cat SOURCE_COMMIT.txt)" = "$EXPECTED_SOURCE"
+          test -s SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+          test -s PROTECTION.txt
+          APK=PokeSearch-v0.00.80-LT-Samsung-QA.apk
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='$PUBLIC_CODE'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='$PUBLIC_NAME'" PACKAGE-VERSION.txt
+          ! grep -q '^application-debuggable' PACKAGE-VERSION.txt
+          grep -Fxq "Signer #1 certificate SHA-256 digest: $EXPECTED_CERT" SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          cp "$APK" "$RUNNER_TEMP/PokeSearch-v${PUBLIC_NAME}-LT.apk"
+          sha256sum "$RUNNER_TEMP/PokeSearch-v${PUBLIC_NAME}-LT.apk" > "$RUNNER_TEMP/PUBLISHED-SHA256SUMS.txt"
+      - name: Publish new stable version for LT79 GitHubUpdateCenter
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/notes.md" <<'NOTES'
+          PokeSearch 0.00.80 LT — correção do Get coords após atualização dos cartões de resultado.
+          
+          Novidades:
+          - Nova tentativa limitada ao mesmo Pokémon quando o site atualiza os cartões após Get coords.
+          - Reidentificação exige dados coincidentes; dois resultados indistinguíveis continuam bloqueados para evitar copiar coordenadas erradas.
+          - Filtros, favoritos e configurações preservados.
+          - APK original protegido com R8, assinado com o certificado permanente, não depurável.
+          
+          Distribuição: atualização oficial pelo próprio aplicativo PokeSearch 0.00.79 LT, com download nativo e verificação de integridade/assinatura. O usuário confirma a instalação Android. Testes automatizados aprovados; validação física Samsung continua aberta.
+          
+          Esta versão não altera o manifesto legado público do Google Drive nem o branch main.
+          NOTES
+          gh release create "$TAG" "$RUNNER_TEMP/PokeSearch-v${PUBLIC_NAME}-LT.apk" \
+            --repo "$GITHUB_REPOSITORY" --target "$EXPECTED_SOURCE" \
+            --title "PokeSearch 0.00.80 LT" --notes-file "$RUNNER_TEMP/notes.md" --latest
+      - name: Verify GitHub Release metadata and asset digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          ID="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq '.id')"
+          test -n "$ID"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/$ID" --jq '.draft')" = false
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/$ID" --jq '.prerelease')" = false
+          APKNAME="PokeSearch-v${PUBLIC_NAME}-LT.apk"
+          ASSET="$(gh api "repos/$GITHUB_REPOSITORY/releases/$ID/assets" --jq ".[] | select(.name==\"$APKNAME\") | .id")"
+          test -n "$ASSET"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/assets/$ASSET" --jq '.state')" = uploaded
+          DIGEST="$(gh api "repos/$GITHUB_REPOSITORY/releases/assets/$ASSET" --jq '.digest')"
+          SHA="$(cut -d' ' -f1 "$RUNNER_TEMP/PUBLISHED-SHA256SUMS.txt")"
+          test "$DIGEST" = "sha256:$SHA"
+          echo "Official update available for LT79: $TAG / $APKNAME"

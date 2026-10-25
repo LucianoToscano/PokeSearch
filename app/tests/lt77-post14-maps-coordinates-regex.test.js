@@ -50,7 +50,8 @@ check("rejects invalid coordinate range without falling back to wrong card",()=>
 check("cannot retrieve coordinates when selected card is missing",()=>{
  const r=runRead({target:false,href:"https://www.google.com/maps?q=28.17,-81.95"});
  assert.equal(r.ok,false);
- assert.equal(r.pending,false);
+ assert.equal(r.pending,true);
+ assert.match(r.status,/Aguardando reidentificação/);
 });
 check("must wait for scoped Open in Maps control, no page-wide search",()=>{
  const r=runRead({button:false});

@@ -1,0 +1,36 @@
+name: LT80 QA - append Get coords diagnostic to Guia Mestre
+on:
+  push:
+    branches: [fix/lt80-coords-react-rebind-samsung-20261024]
+    paths: ['.github/workflows/lt80-document-master.yml']
+permissions:
+  contents: write
+jobs:
+  document:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/lt80-coords-react-rebind-samsung-20261024
+          fetch-depth: 1
+      - name: Preserve historical Guia and append LT80 status
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/GUIA_MESTRE.md
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
+          if grep -Fq "LT80 — Get coords React rebind — Samsung" docs/GUIA_MESTRE.md; then exit 0; fi
+          cat >> docs/GUIA_MESTRE.md <<'LT80_GUIDE'
+          
+          ## LT80 — Get coords React rebind — Samsung (24/10/2026)
+          Print físico: Swablu Shiny #333, ♀, tamanho M, PC 494, nível 21, IV 100% 15/15/15, local Ostend/West Flanders/Belgium. Ao executar Get coords, detalhamento mostrou "Pokémon alterado nos resultados; coordenadas não copiadas".
+          Diagnóstico: erro literal emitido em probe.js/readCoords quando matchingCoordsCard retorna null após clicar; o código anterior marcava pending=false e interrompia o polling. Não há prova ainda se o site causou re-render transitório, duplicidade de spawn, ou alguma diferença de DOM.
+          Branch fix/lt80-coords-react-rebind-samsung-20261024, PR #53 Draft; alteração em probe.js e OverlayService.java. Quando o cartão some temporariamente, readCoords retorna pending=true; Android reconsulta por até 10 tentativas de 750 ms, sem clicar duas vezes ou buscar links Maps de outros cartões. Quando reidentifica, exige nome, número, CP, local e também IV, sexo e nível não vazios. Mesmo nome, PC e local com IDs distintos nunca pode gerar cópia errada. Sem reidentificação inequívoca, retorna mensagem clara e nenhuma coordenada copiada. Java invalida callbacks ao trocar de seleção.
+          Teste JS dedicado app/tests/lt80-coords-react-rebind.test.js, atualização de regressão LT77; workflow assinado LT80 (0.00.80, 54283) para QA no Samsung, SEM publicação pública. APK público LT79 0.00.79/54282 no Google Drive continua inalterado, GitHub Releases não usado sem aprovação. Main e outros PRs preservados. Homologação física de Get coords e Open in Maps ainda pendente.
+          Documento detalhado: docs/LT80_GET_COORDS_REACT_QA.md.
+          LT80_GUIDE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GUIA_MESTRE.md
+          git commit -m "docs(LT80): append bounded Get coords React QA checkpoint"
+          git push origin HEAD:fix/lt80-coords-react-rebind-samsung-20261024
