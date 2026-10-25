@@ -38,7 +38,7 @@ test("One local feed, four categories, local filter and pinned official demo",()
  assert.match(home,/Collections\.unmodifiableList\(Arrays\.asList/);
  assert.match(activity,/if\(filter>=0&&!p\.category\.equals\(CommunityScrapbookStage1\.CATEGORIES\[filter\]\)\)continue/);
  assert.match(home,/Fixo \(teste\)/);
- assert.match(activity,/startActivity/);
+ assert.match(home,/activity\.startActivity\(new Intent\(activity,CommunityScrapbookActivity\.class\)\)/);
 });
 test("No ability to post, reply, like, report or delete; 300 chars",()=>{
  assert.match(activity,/new InputFilter\.LengthFilter\(300\)/);
