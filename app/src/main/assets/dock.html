@@ -6173,7 +6173,7 @@ function renderFiltersChoices(){
  const changed=Object.entries(websiteSingles).filter(([key,value])=>
    (filterFocus!=="Clima"||key!=="weather")&&
    String(modeDraft[key]??"").toLowerCase()!==String(value).toLowerCase());
- if(changed.length){
+ if(changed.length&&!(typeof filterFocus!=="undefined"&&filterFocus==="Clima")){
   const diff=make("div","uxNote","Site e aplicativo divergem em: "+
    changed.map(([key])=>({sortBy:"Ordenar",weather:"Clima",gender:"Sexo"}[key])).join(", ")+".");
   const importFromSite=make("button","","Usar opções observadas no site");
