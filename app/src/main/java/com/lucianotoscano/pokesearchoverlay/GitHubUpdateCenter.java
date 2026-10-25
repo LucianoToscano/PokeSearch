@@ -74,7 +74,10 @@ public final class GitHubUpdateCenter {
     }
     public static boolean eligible(Context context,Release r) {
         if(r==null||r.versionCode<=BuildConfig.VERSION_CODE)return false;
-        return context.getSharedPreferences(PREFS,0).getInt("githubUpdateIgnoredCode",-1)!=r.versionCode;
+        android.content.SharedPreferences prefs=context.getSharedPreferences(PREFS,0);
+        if(prefs.getInt("githubUpdateIgnoredCode",-1)==r.versionCode)return false;
+        return prefs.getInt("githubUpdateLaterCode",-1)!=r.versionCode ||
+            System.currentTimeMillis()-prefs.getLong("githubUpdateLaterAt",0L)>=86_400_000L;
     }
     public static void ignore(Context context,int code){
         if(code>0)context.getSharedPreferences(PREFS,0).edit()
@@ -82,7 +85,8 @@ public final class GitHubUpdateCenter {
     }
     public static void later(Context context,int code){
         if(code>0)context.getSharedPreferences(PREFS,0).edit()
-            .putInt("githubUpdateLaterCode",code).apply();
+            .putInt("githubUpdateLaterCode",code)
+            .putLong("githubUpdateLaterAt",System.currentTimeMillis()).apply();
     }
     public static boolean alertsEnabled(Context c) {
         return c.getSharedPreferences(PREFS,0).getBoolean("githubUpdateAlertsEnabled",true);
@@ -208,8 +212,7 @@ public final class GitHubUpdateCenter {
         if(Build.VERSION.SDK_INT>=33&&c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=
             PackageManager.PERMISSION_GRANTED)return;
         android.content.SharedPreferences prefs=c.getSharedPreferences(PREFS,0);
-        if(prefs.getInt("githubUpdateLastNotified",-1)==r.versionCode||
-           prefs.getInt("githubUpdateLaterCode",-1)==r.versionCode)return;
+        if(prefs.getInt("githubUpdateLastNotified",-1)==r.versionCode)return;
         try{
             NotificationManager manager=(NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
             if(manager==null)return;

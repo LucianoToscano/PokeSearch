@@ -83,6 +83,7 @@ public class MainActivity extends Activity {
     // LT72: Home-only update card; does not own or recreate the overlay/WebView.
     private LinearLayout homeUpdateHolder;
     private UpdateCenter.Manifest currentDriveUpdate;
+    private GitHubUpdateCenter.Release currentGithubUpdate;
 
     // Native Home panels change alpha; the wallpaper never changes transparency.
     private final java.util.List<android.graphics.drawable.GradientDrawable> homeSurfaces=
@@ -577,10 +578,18 @@ public class MainActivity extends Activity {
         renderDriveUpdateBanner();
     }
 
+    void onGithubUpdateLoaded(GitHubUpdateCenter.Release info) {
+        if(activityClosing||isFinishing()||isDestroyed())return;
+        currentGithubUpdate=info;renderDriveUpdateBanner();
+    }
     private void renderDriveUpdateBanner() {
         LinearLayout holder=homeUpdateHolder;
         if(holder==null)return;
         holder.removeAllViews();
+        if(GitHubUpdateCenter.eligible(this,currentGithubUpdate)){
+            renderGithubUpdateBanner(holder,currentGithubUpdate);
+            return;
+        }
         final UpdateCenter.Manifest info=currentDriveUpdate;
         if(!UpdateCenter.isEligible(this,info)){
             holder.setVisibility(View.GONE);
@@ -644,6 +653,49 @@ public class MainActivity extends Activity {
             noteLp.topMargin=d(2);
             card.addView(note,noteLp);
         }
+        holder.setVisibility(View.VISIBLE);
+    }
+
+    /** Native update UI; the server address and asset links are never rendered. */
+    private void renderGithubUpdateBanner(LinearLayout holder,GitHubUpdateCenter.Release info){
+        boolean light=homeLightMode;
+        int primary=light?Color.rgb(27,48,68):Color.rgb(245,250,255);
+        int secondary=light?Color.rgb(68,89,108):Color.rgb(191,210,229);
+        LinearLayout card=new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(d(10),d(7),d(10),d(8));
+        card.setBackground(homeSurface(
+            light?Color.argb(240,248,252,255):Color.argb(233,24,35,49),
+            11,light?Color.rgb(183,201,214):Color.rgb(69,91,112)));
+        holder.addView(card,new LinearLayout.LayoutParams(-1,-2));
+        TextView title=homeText("PokeSearch · versão "+info.versionName+" disponível",12,primary,true);
+        card.addView(title);
+        if(!info.notes.isEmpty()){
+            TextView subtitle=homeText(info.notes,10,secondary,false);
+            subtitle.setMaxLines(2);
+            subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            card.addView(subtitle);
+        }
+        LinearLayout actions=new LinearLayout(this);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        card.addView(actions);
+        TextView download=homeText("⬇ Baixar atualização",11,
+            light?Color.rgb(11,80,75):Color.rgb(172,246,215),true);
+        download.setPadding(d(7),d(8),d(7),d(8));
+        actions.addView(download,new LinearLayout.LayoutParams(0,-2,1));
+        download.setOnClickListener(v->GitHubUpdateCenter.showDialog(this,info));
+        TextView later=homeText("Depois",10,secondary,false);
+        later.setPadding(d(8),d(8),d(8),d(8));
+        actions.addView(later);
+        later.setOnClickListener(v->{
+            GitHubUpdateCenter.later(this,info.versionCode);renderDriveUpdateBanner();
+        });
+        TextView ignore=homeText("Ignorar",10,secondary,false);
+        ignore.setPadding(d(8),d(8),0,d(8));
+        actions.addView(ignore);
+        ignore.setOnClickListener(v->{
+            GitHubUpdateCenter.ignore(this,info.versionCode);renderDriveUpdateBanner();
+        });
         holder.setVisibility(View.VISIBLE);
     }
 
@@ -1085,7 +1137,9 @@ public class MainActivity extends Activity {
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
-        UpdateCenter.check(this); // Async, throttled; never blocks Home startup.
+        UpdateCenter.check(this); // Preserve existing Google Drive fallback.
+        GitHubUpdateCenter.schedule(this); // 30 min, Doze-aware; no extra service.
+        GitHubUpdateCenter.check(this); // Official stable Releases only.
         if(OverlayService.isRunning())
             serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
     }
