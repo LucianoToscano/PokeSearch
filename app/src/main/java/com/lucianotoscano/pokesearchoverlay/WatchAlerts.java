@@ -156,7 +156,16 @@ public final class WatchAlerts {
     public static String soundChannelId(Context context,boolean favorite,String species){
         if(favorite){
             Uri sound=selectedTone(context,true,species);
-            String key=normalized(species==null?"":species)+"|"+sound;
+            String key=sound.toString();
+            // Share a single channel unless this species has its own selected
+            // cry. Do not create fifty duplicate system channels for a list.
+            if(species!=null&&!species.isEmpty()){
+                try{
+                    String own=new JSONObject(context.getSharedPreferences("prefs",0)
+                        .getString(PREF_SPECIES_TONES,"{}")).optString(normalized(species),"");
+                    if(!own.isEmpty())key=normalized(species)+"|"+key;
+                }catch(Exception ignored){}
+            }
             return "pokesearch_fav_sound_v3_"+Integer.toHexString(key.hashCode());
         }
         SharedPreferences prefs=context.getSharedPreferences("prefs",0);
