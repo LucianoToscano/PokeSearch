@@ -6,7 +6,7 @@
 
 A integração autorizada existente foi fortalecida na branch `fix/lt84-authorized-api-direct-qa-20261025`. **LT84 0.00.84 / 54287 é somente QA**, não substitui a LT83 oficial nem altera a ponte Google Drive LT79.
 
-- **Build Android assinado, R8 e regressões:** [Actions #40163046534](https://github.com/LucianoToscano/PokeSearch/actions/runs/40163046534) — SUCCESS, artifact `PokeSearch-v0.00.84-LT-API-QA-protected-release` (contém APK + SHA256SUMS + relatório de certificado).
+- **Build Android assinado, R8 e regressões:** [Actions #40163046534](https://github.com/LucianoToscano/PokeSearch/actions/runs/40163046534) — SUCCESS. APK QA `PokeSearch-v0.00.84-LT-API-QA.apk`, **38.604.999 bytes**, SHA-256 `bdd5fcd32099d2724f528e42e6e0436d70451065751d42048ea735dd6317e351`, extraído do artifact e verificado contra SHA256SUMS. Não é versão pública.
 - **Teste real anônimo da API:** [Actions #40163231365](https://github.com/LucianoToscano/PokeSearch/actions/runs/40163231365) — SUCCESS para /health, /forms, catálogo e um POST /search 15/15/15 sem JWT ou reveal. Não equivale a teste com treinador autenticado.
 - **Guia Mestre preservado e apendicado:** [Actions #40163154255](https://github.com/LucianoToscano/PokeSearch/actions/runs/40163154255) — SUCCESS.
 - Corrigidos Retry-After/429, busca antiga após espera por catálogo, reveal repetido, limpeza efetiva de coords e `Any` versus `Genderless`; preservar o DOM independente e a preferência API opt-in desligada por padrão.
