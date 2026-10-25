@@ -1267,6 +1267,10 @@ public class OverlayService extends Service {
         menuPanel.addJavascriptInterface(new Bridge(),"Native");
         menuRoot.addView(menuPanel,new FrameLayout.LayoutParams(-1,-1));
         menuPanel.setWebViewClient(new WebViewClient(){
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+            }
             @Override public void onPageFinished(WebView view,String url){
                 if(url!=null&&url.startsWith("file:///android_asset/")){
                     menuLoaded=true;
@@ -1399,6 +1403,10 @@ public class OverlayService extends Service {
         popupPanel.addJavascriptInterface(new Bridge(),"Native");
         popupRoot.addView(popupPanel,new FrameLayout.LayoutParams(-1,-1));
         popupPanel.setWebViewClient(new WebViewClient(){
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+            }
             @Override public void onPageFinished(WebView web,String url){
                 if(url!=null&&url.startsWith("file:///android_asset/")){
                     popupLoaded=true;update();
@@ -1530,6 +1538,10 @@ public class OverlayService extends Service {
             resultPanel=null;resultGrip=null;return;
         }
         resultPanel.setWebViewClient(new WebViewClient(){
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+            }
             @Override public void onPageFinished(WebView web,String url){
                 if(url!=null&&url.startsWith("file:///android_asset/")){
                     resultLoaded=true;
