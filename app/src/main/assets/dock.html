@@ -4438,7 +4438,7 @@ function locationPanelFeedback(){
  if(coordinates){
   if(locationEnabled&&locationVerified&&
      coordinates.dataset.locationDraft==="true"&&
-     coordinates.value.replace(/\\s/g,"")===locationCoords)
+     coordinates.value.replace(/\s/g,"")===locationCoords)
    delete coordinates.dataset.locationDraft;
   if(document.activeElement!==coordinates&&
      coordinates.dataset.locationDraft!=="true")
