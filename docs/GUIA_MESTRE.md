@@ -178,3 +178,12 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - **QA automática:** [Node QA do HEAD original da PR](https://github.com/LucianoToscano/PokeSearch/actions/runs/40228142893) SUCCESS e [compilação Java Android](https://github.com/LucianoToscano/PokeSearch/actions/runs/40228142900) SUCCESS. Testes `lt108-detail-offline-sprites.test.js` e `lt108-filter-application-audit.test.js` protegem estes cenários.
 - **Nova build QA:** `0.01.10`/`versionCode 54314` usando certificado de release permanente e R8; [GitHub Actions build](https://github.com/LucianoToscano/PokeSearch/actions/runs/40228138666). Registrar sha do APK e status de upload depois de sucesso; este código não deve ser confundido com as versões QA imutáveis 0.01.07/08/09.
 - **Status:** PR integrada, teste Samsung de sprites/menus/filtros ainda **pendente**. Não alterar APK oficial estável nem link no Google Drive sem teste/distribuição expressos. Ver [auditoria detalhada LT108/LT110](POKESEARCH_LT108_CARD_SPRITES_20261025.md).
+
+
+### APK LT110 0.01.10 QA — assinatura confirmada
+- **Arquivo:** [`PokeSearch-v0.01.10-LT-Sprites-Filters-Migration-QA.apk`](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.10-54314-qa/PokeSearch-v0.01.10-LT-Sprites-Filters-Migration-QA.apk); `versionName=0.01.10`, `versionCode=54314`, 41.751.324 bytes.
+- **SHA-256:** `3caf3f5831f5e5e230eba4b3acd13c9b6c67fffe7a9469e7290a30b0cac70a63`.
+- **SOURCE_COMMIT assinado:** `c34437f6f25d9e0ea8cf7d2e2279986e1dea998a` (branch de QA antes do squash), distinto do commit `6e1fb7af50a7a92738b5bff1dd9c856ed15fe60f` mesclado à main e de alterações documentais posteriores.
+- [**GitHub Actions #40228138666**](https://github.com/LucianoToscano/PokeSearch/actions/runs/40228138666) **SUCCESS**: Node/Java QA; 1.025 sprites normais e 1.025 shiny no APK; Android release não depurável, R8, assinatura v2 permanente, verificação pacote/versão/assinatura e upload.
+- [**Release QA**](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.10-54314-qa) marcada como `prerelease=true`, **não** substitui a release pública estável, nem o arquivo Drive. APKs QA 0.01.07/08/09 preservados e não sobrescritos.
+- **QA físico Samsung ainda pendente** para confirmação visual de Furfrou Natural, sprites em todos os detalhes, 2 overlays, filtros Tamanho/Sexo/PC/Nível, reset de Distance residual e atualizações de favoritos/notificações.
