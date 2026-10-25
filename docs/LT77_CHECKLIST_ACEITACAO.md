@@ -79,3 +79,20 @@
 - Etapa 14: conferir execução final de todos os testes antes de atestar regressão automatizada.
 
 **Conclusão:** auditoria de implementação e CI são separadas da aceitação em campo. **LT77 não pode ser declarada homologada nem publicada** enquanto existirem itens [ ] críticos.
+
+
+## Auditoria pós-Etapa 14 — evidência recebida em 24/10/2026
+
+**Branch de correção:** `fix/lt77-post14-coordinate-hardening-20261024`, derivada de `51803f38f1eb570388fec987779b8e90fba884c6`.
+
+- [x] Revisado o código real de `probe.js`, `OverlayService.java`, `detail.html` e os contratos experimentais; o runtime Android continua no DOM. `USE_AUTHORIZED_API=false`.
+- [x] Get coords: quando o React reordena os cartões, o índice `sourceIndex` pode mudar. O matcher agora busca identidade única por nome, PC, número e localização, sem clicar se houver dois resultados indistinguíveis. Evidência: teste sintético de reordenação e ambiguidade; **não é prova de correção do site autenticado**.
+- [x] O transporte da API experimental exige a origem HTTPS canônica, sem porta personalizada, antes de ler JWT. Não existe requisição automática ao carregar o módulo.
+- [x] `normalizeResponse` rejeita resultados da API com `despawn_at` ausente ou inválido; evita cartões cujo prazo não pode ser verificado.
+- [ ] Screenshot do Caterpie mostrou "Pokémon não encontrado ou identificação ambígua"; o relatório de outro testador mostra "Aguardando coordenadas" e ausência de coordenadas. **Causa física específica e sucesso real não verificados**. Reproduzir Get coords antes/depois da atualização do React; validar expiração e botão desabilitado/cooldown.
+- [ ] Homologação Samsung: toque, drag, menus, orientação, favoritados, Editor Visual, áudio, 0–1000 km e botões compactos. As capturas servem como relatos, não como instrumentação.
+- [ ] Integração real da API: ainda não existe conexão no `OverlayService` nem chamada autenticada a `/search`, `/forms`, `/pokemon/catalog?costumes=true` ou `/reveal`. Preservado fallback DOM; **NÃO declarar implementação concluída**.
+- [ ] APK LT77 de QA: verificar assinatura permanente, versionCode 54277, R8 release, origem do commit e SUCCESS de GitHub Actions antes de compartilhar ou instalar. Nenhuma publicação automática no Drive.
+- [ ] Perfil de memória e stress prolongado do Samsung, testes reais de Shiny/GL/UL/Form/Weather com treinador vinculado.
+
+Para cada nova captura de erro de Get coords, registrar nome, número, PC, cidade, horário do spawn, botão do site e se o cartão foi reordenado; **nunca** enviar JWT nem `reveal_code`.
