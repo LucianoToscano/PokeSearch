@@ -3477,7 +3477,7 @@ body.popup-window.controls-window #choices.locationPanel #locHint[hidden]{
  display:none!important;
 }
 /* LT86 saved profiles: small flyout, not an expanded dialog. */
-body.controls-window #choices.filterCascade .filterCascadeRail{position:relative!important}
+body.controls-window #choices.filterCascade .filterCascadeRail{position:absolute!important}
 body.controls-window #choices.filterCascade .filterCascadeHead{display:flex!important;align-items:center!important;justify-content:space-between!important}
 body.controls-window #choices.filterCascade .generalPresetToggle{font-size:12px!important;min-width:20px!important;height:20px!important;padding:0!important}
 body.controls-window #choices.filterCascade .generalPresetFlyout{position:absolute!important;left:calc(100% + 4px)!important;top:22px!important;z-index:60!important;width:164px!important;padding:5px!important;display:grid!important;gap:3px!important;background:#26313f!important;border:1px solid #8893a5!important;border-radius:7px!important}
@@ -3486,6 +3486,50 @@ body.controls-window #choices.filterCascade .generalPresetRow{display:flex!impor
 body.controls-window #choices.filterCascade .generalPresetRow span{width:30px!important;min-width:30px!important;font-size:9px!important}
 body.controls-window #choices.filterCascade .generalPresetRow button{font-size:9px!important;min-height:24px!important;flex:1!important;padding:2px!important}
 body.controls-window #choices.filterCascade .generalPresetRow button:disabled{opacity:.42!important}
+/* LT87 FILTER SURFACES: a later LT68 rule made the entire filter editor
+   transparent in the separate Android popup. The rail and editor must each
+   paint their own theme-colored background; the outer hit-area stays CLEAR.
+   The single Visual Editor menu alpha remains the source of both surfaces. */
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade .filterCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor {
+ background:var(--visual-menu-bg,rgba(15,19,26,.65))!important;
+ background-clip:padding-box!important;
+ border:1px solid var(--visual-menu-border,#ffffff48)!important;
+ border-radius:7px!important;
+ box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0006)!important;
+}
+/* Reaffirm native popup's tiny transparent holder; never paint a broad
+   rectangle that steals useful taps outside the selected filter. */
+body.popup-window.controls-window #choices.filterCascade[data-panel-kind="filters"]{
+ background:transparent!important;
+ border:0!important;box-shadow:none!important;pointer-events:none!important;
+}
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade.filterCascadeOpen .filterCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout {
+ pointer-events:auto!important;
+}
+/* The saved-profile flyout was previously painted a hardcoded dark box,
+   breaking light theme, custom backgrounds and the opacity slider. */
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout{
+ background:var(--visual-menu-bg,rgba(15,19,26,.65))!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid var(--visual-menu-border,#ffffff48)!important;
+ box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0006)!important;
+ border-radius:7px!important;
+}
+/* Saved-profile rail always remains anchored exactly like Modos; its
+   native width grows only while the compact flyout is deliberately opened. */
+body.controls-window #choices.filterCascade .filterCascadeRail{position:absolute!important}
+body.popup-window.controls-window #choices.filterCascade.filterPresetOpen[data-panel-kind="filters"]:not(.filterCascadeOpen){
+ width:248px!important;max-width:none!important;
+}
+body.controls-window.visual-light-menu #choices.filterCascade .generalPresetFlyout button{
+ color:var(--visual-menu-fg,#172533)!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4291,7 +4335,9 @@ function filterCascadeEditorWidth(label){
 function renderGeneralPresetControls(rail,make){
  const heading=rail.querySelector(".filterCascadeHead"),toggle=make("button","generalPresetToggle","▣");
  toggle.type="button";toggle.title="Três filtros salvos";toggle.setAttribute("aria-label","Filtros salvos");
- toggle.onclick=()=>{generalPresetExpanded=!generalPresetExpanded;renderFiltersChoices();
+ toggle.onclick=()=>{generalPresetExpanded=!generalPresetExpanded;
+  if(generalPresetExpanded)filterFocus=""; // Never overlay a second editor behind saved profiles.
+  renderFiltersChoices();
   if(Native.requestGeneralFilterPresets)Native.requestGeneralFilterPresets();};
  heading.appendChild(toggle);
  if(!generalPresetExpanded)return;
@@ -4491,6 +4537,7 @@ function renderExtraFilters(panel,make){
  // numeric editor's width or leave a large dead rectangle to the right.
  panel.style.setProperty("--filter-editor-width",filterCascadeEditorWidth(selected)+"px");
  panel.classList.toggle("filterCascadeOpen",!!selected);
+  panel.classList.toggle("filterPresetOpen",generalPresetExpanded);
  rows.forEach((row,index)=>{
   const label=row.querySelector("label")?.textContent||"Filtro";
   const short=label==="Evoluções anteriores"?"Evoluções":label==="PC mínimo PvP"?"PC PvP":label;
@@ -4502,7 +4549,7 @@ function renderExtraFilters(panel,make){
   entry.setAttribute("aria-expanded",String(label===selected));
   entry.onclick=()=>{if(controlsWindow)Native.locationEditor(false);
    const opening=filterFocus!==label;filterFocus=opening?label:"";
-    modeScrollTop=0;renderFiltersChoices();
+    generalPresetExpanded=false;modeScrollTop=0;renderFiltersChoices();
     if(opening&&label==="Forma"&&Native.requestFormOptions)Native.requestFormOptions(formQuery);};
   rail.appendChild(entry);
   row.remove();
