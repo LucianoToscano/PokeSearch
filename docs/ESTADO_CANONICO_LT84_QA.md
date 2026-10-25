@@ -9,6 +9,7 @@
 - Workflow de build `lt84-direct-api-signed-qa.yml` — [#40163046534](https://github.com/LucianoToscano/PokeSearch/actions/runs/40163046534) **SUCCESS**.
 - Build executado a partir de `9796152446d41712464bc309e8ad3bbaafd56c05` (head do workflow, não da branch após atualizações documentais).
 - **APK QA** `PokeSearch-v0.00.84-LT-API-QA.apk`, `versionName 0.00.84`, `versionCode 54287`, dentro do artifact de QA [ID 12586524480](https://github.com/LucianoToscano/PokeSearch/actions/runs/40163046534#artifacts). O ZIP de artifact é diferente dos bytes do APK; consultar `SHA256SUMS.txt` para o SHA-256 do APK antes de instalá-lo.
+- **SHA-256 APK extraído do artifact e conferido com SHA256SUMS:** `bdd5fcd32099d2724f528e42e6e0436d70451065751d42048ea735dd6317e351`; **38.604.999 bytes**. Não confundir com SHA do ZIP.
 - Gradle `assembleRelease`, Android unit tests, todas as suítes Node, verificação v2 do certificado permanente e release R8: **PASS no workflow**. Relatórios `SIGNING-REPORT.txt`, `PACKAGE-VERSION.txt` e `SOURCE_COMMIT.txt` foram anexados ao artifact.
 - **Assinatura de produção esperada, validada pelo workflow:** SHA-256 de certificado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
 - Checkpoint oficial da LT83: [docs/ESTADO_CANONICO_LT83.md](ESTADO_CANONICO_LT83.md). Não alterar o APK da LT83 nem reinterpretar a lista de Novidades incorporadas depois de sua compilação.
