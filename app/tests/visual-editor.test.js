@@ -32,7 +32,8 @@ test("defaults preserve original orientation and unclipped renderer",()=>{
  assert.equal(v.resultsOrientation,"vertical");
  assert.equal(v.menuOrientation,"horizontal");
  assert.equal(v.resultsTransparency,100);
- assert.equal(v.menuTransparency,35);
+ assert.equal(v.menuTransparency,50);
+ assert.equal(v.menuBlur,4);
  assert.equal(v.menuItemGap,3);
 });
 test("packed preset keeps zero visual gap without sprite overlap",()=>{
