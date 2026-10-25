@@ -1,4 +1,4 @@
-name: PokeSearch LT112 two Pokeballs parity - protected QA APK
+name: PokeSearch LT113 Get coords dual Pokeball - protected QA APK
 on:
   push:
     branches: [fix/lt112-two-pokeballs-parity-20261025]
@@ -21,9 +21,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
-      POKE_TEST_VERSION_CODE: '54316'
-      POKE_TEST_VERSION_LABEL: '51116'
-      POKE_TEST_PUBLIC_VERSION: '0.01.12'
+      POKE_TEST_VERSION_CODE: '54317'
+      POKE_TEST_VERSION_LABEL: '51117'
+      POKE_TEST_PUBLIC_VERSION: '0.01.13'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
       POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
       POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
@@ -34,8 +34,8 @@ jobs:
       POKE_SCRAPBOOK_ONLINE_QA: 'true'
       POKE_SCRAPBOOK_ONLINE_ACK: 'direct-posting-owner-monitored'
       GH_TOKEN: ${{ github.token }}
-      QA_APK: PokeSearch-v0.01.12-LT-Dual-Parity-QA.apk
-      QA_TAG: v0.01.12-54316-qa
+      QA_APK: PokeSearch-v0.01.13-LT-Coords-Parity-QA.apk
+      QA_TAG: v0.01.13-54317-qa
     steps:
       - name: Checkout exact feature commit
         uses: actions/checkout@v4
@@ -111,7 +111,7 @@ jobs:
           assert len(report['sha256'])==report['baseCount']+report['shinyCount']
           print('Bundled offline sprite coverage:',report['baseCount'],'base,',report['shinyCount'],'shiny')
           PY
-      - name: Compile protected and signed LT112 APK
+      - name: Compile protected and signed LT113 APK
         shell: bash
         run: |
           set -euo pipefail
@@ -129,8 +129,8 @@ jobs:
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/manifest.json'
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
-          grep -Fq "versionCode='54316'" PACKAGE-VERSION.txt
-          grep -Fq "versionName='0.01.12'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54317'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.13'" PACKAGE-VERSION.txt
           ! grep -q '^application-debuggable' PACKAGE-VERSION.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
           grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
@@ -143,9 +143,9 @@ jobs:
       - name: Upload protected APK artifact and coverage
         uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-v0.01.12-LT-Dual-Parity-QA-protected-release
+          name: PokeSearch-v0.01.13-LT-Coords-Parity-QA-protected-release
           path: |
-            PokeSearch-v0.01.12-LT-Dual-Parity-QA.apk
+            PokeSearch-v0.01.13-LT-Coords-Parity-QA.apk
             SHA256SUMS.txt
             SIGNING-REPORT.txt
             SOURCE_COMMIT.txt
