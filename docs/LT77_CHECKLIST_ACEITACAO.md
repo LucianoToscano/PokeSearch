@@ -137,3 +137,15 @@ Para cada nova captura de erro de Get coords, registrar nome, número, PC, cidad
 - [x] `api_browser_transport.js` diferencia os códigos documentados `trainer_not_linked`, `shiny_account_unavailable` e `vip_required` quando recebidos no objeto `detail.error` de um HTTP 403; caso desconhecido fica `access-denied`, sem retornar mensagens do servidor.
 - [ ] Carregamento do catálogo e API conectados à interface do Android: NÃO implementados; nem a UI nem a rede real foram homologadas. `USE_AUTHORIZED_API=false`.
 - [ ] Confirmar certificado e artefato do último workflow após o commit `fccef433fb3e1e62a3b7708d6726e8a2e752bf79`, sem confundir teste automatizado com aprovação em Samsung.
+
+### Entrega QA R3 assinada — sem publicação pública
+
+- [x] GitHub Actions [#40148610888](https://github.com/LucianoToscano/PokeSearch/actions/runs/40148610888) terminou SUCCESS. Fonte `23bbbf9c09a0b2e642687173ed245fc097000627`, versão `0.00.77`, versionCode `54279`.
+- [x] Pacote `com.lucianotoscano.pokesearch`; release não depurável, R8 e assinatura v2 conferidos. Certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- [x] APK `PokeSearch-v0.00.77-LT-Samsung-QA-r3.apk` extraído do artefato #12582335381 e comparado ao SHA256SUMS: `1727f2fb2973b4b8af22510bd55d70baa4fcd711cb04f96abbe56ae73dd8e49f`.
+- [x] Drive: armazenado somente para teste, **sem compartilhamento público**, na pasta [QA_LT77_NAO_PUBLICADO](https://drive.google.com/drive/folders/17FYoysgtoqGF5lw8MkENq6ModIp3ZOCN): [APK QA R3](https://drive.google.com/file/d/1RNtvM-_byQbw5uMCR44Dpiaus7LDbS84/view) e [ZIP de auditoria](https://drive.google.com/file/d/1DBbxfY8cVuwk23mPHnqEFxPa_71PvAik/view).
+- [x] Merge fast-forward de código LT77 para `feature/lt77-authorized-api-contract-20261024` realizado sem modificar main; PR #34 e #49 continuam Draft.
+- [x] Manifesto público `atualizacao.json` observado no Drive com `versionName 0.00.76` e `versionCode 54276`; não alterado. LT76 publicada preservada.
+- [ ] Samsung homologado fisicamente (Get coords, Despawn, sexo, forma, clima, filtros): NÃO.
+- [ ] `OverlayService` chama API real autenticada, carrega catálogo para menus e usa `/reveal`: NÃO. `USE_AUTHORIZED_API=false`; fallback DOM mantido.
+- [ ] Alterar manifesto remoto/publicar LT77 como atualização geral: BLOQUEADO até aceitação física e ponta a ponta.
