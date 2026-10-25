@@ -22,17 +22,17 @@ import java.util.regex.Pattern;
  * costumes, tokens or substitute another species. */
 final class VerifiedSpriteCache {
     private static final Pattern RAW=Pattern.compile(
-        "^https://raw\\.githubusercontent\\.com/PokeAPI/sprites/master/sprites/pokemon/([0-9]{1,4})\\.png$");
+        "^https://raw\\.githubusercontent\\.com/PokeAPI/sprites/master/sprites/pokemon/(shiny/)?([0-9]{1,4})\\.png$");
     private static final Pattern MIRROR=Pattern.compile(
-        "^https://cdn\\.jsdelivr\\.net/gh/PokeAPI/sprites@master/sprites/pokemon/([0-9]{1,4})\\.png$");
+        "^https://cdn\\.jsdelivr\\.net/gh/PokeAPI/sprites@master/sprites/pokemon/(shiny/)?([0-9]{1,4})\\.png$");
     private static final Object[] STRIPES=new Object[32];
     private static final Map<Integer,Long> FAILURES=new ConcurrentHashMap<>();
     static{
         for(int i=0;i<STRIPES.length;i++)STRIPES[i]=new Object();
     }
     private VerifiedSpriteCache(){}
-    private static File verifiedDisk(Context context,int dex){
-        return new File(new File(context.getCacheDir(),"verified-base-sprites-v1"),dex+".png");
+    private static File verifiedDisk(Context context,int dex,boolean shiny){
+        return new File(new File(context.getCacheDir(),"verified-base-sprites-v1"),(shiny?"shiny-":"")+dex+".png");
     }
     private static boolean validPng(File f){
         if(!f.isFile()||f.length()<8||f.length()>256*1024)return false;
@@ -40,13 +40,13 @@ final class VerifiedSpriteCache {
             return in.read()==0x89&&in.read()=='P'&&in.read()=='N'&&in.read()=='G';
         }catch(IOException e){return false;}
     }
-    private static WebResourceResponse cached(Context context,int dex){
-        File f=verifiedDisk(context,dex);
+    private static WebResourceResponse cached(Context context,int dex,boolean shiny){
+        File f=verifiedDisk(context,dex,shiny);
         if(!validPng(f))return null;
         try{return new WebResourceResponse("image/png",null,new FileInputStream(f));}
         catch(IOException ignored){return null;}
     }
-    private static boolean prefetch(Context context,int dex,String suffix){
+    private static boolean prefetch(Context context,int dex,boolean shiny,String suffix){
         final String[] urls={
             "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+suffix,
             "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+suffix
@@ -72,9 +72,9 @@ final class VerifiedSpriteCache {
                 byte[] png=bytes.toByteArray();
                 if(png.length<8||png[0]!=(byte)0x89||png[1]!='P'||
                    png[2]!='N'||png[3]!='G')continue;
-                File file=verifiedDisk(context,dex),dir=file.getParentFile();
+                File file=verifiedDisk(context,dex,shiny),dir=file.getParentFile();
                 if(dir==null||!(dir.isDirectory()||dir.mkdirs()))continue;
-                File tmp=new File(dir,dex+".tmp");
+                File tmp=new File(dir,(shiny?"shiny-":"")+dex+".tmp");
                 try(FileOutputStream output=new FileOutputStream(tmp)){
                     output.write(png);output.flush();
                 }
@@ -96,29 +96,31 @@ final class VerifiedSpriteCache {
         String url=requestUrl.toString();
         Matcher raw=RAW.matcher(url),mirror=MIRROR.matcher(url);
         if(!raw.matches()&&!mirror.matches())return null;
-        String number=raw.matches()?raw.group(1):mirror.group(1);
+        boolean shiny="shiny/".equals(raw.matches()?raw.group(1):mirror.group(1));
+        String number=raw.matches()?raw.group(2):mirror.group(2);
         int dex;
         try{dex=Integer.parseInt(number);}catch(NumberFormatException ignored){return null;}
         if(dex<1||dex>10000)return null;
-        WebResourceResponse fromCache=cached(context,dex);
+        WebResourceResponse fromCache=cached(context,dex,shiny);
         if(fromCache!=null)return fromCache;
-        Long failedAt=FAILURES.get(dex);
+        int key=shiny?dex+10001:dex;
+        Long failedAt=FAILURES.get(key);
         long now=System.currentTimeMillis();
         if(failedAt!=null&&now-failedAt<60000L)return null;
-        synchronized(STRIPES[dex%STRIPES.length]){
-            fromCache=cached(context,dex);
+        synchronized(STRIPES[key%STRIPES.length]){
+            fromCache=cached(context,dex,shiny);
             if(fromCache!=null)return fromCache;
             // No main-thread I/O: shouldInterceptRequest already runs on a
             // WebView worker. A failed fetch falls back to the WebView's
             // normal network handling and is throttled for 60 seconds.
-            boolean ok=prefetch(context,dex,number+".png");
+            boolean ok=prefetch(context,dex,shiny,(shiny?"shiny/":"")+number+".png");
             if(!ok){
-                FAILURES.put(dex,now);
+                FAILURES.put(key,now);
                 if(FAILURES.size()>128)FAILURES.clear();
                 return null;
             }
-            FAILURES.remove(dex);
-            return cached(context,dex);
+            FAILURES.remove(key);
+            return cached(context,dex,shiny);
         }
     }
 }
