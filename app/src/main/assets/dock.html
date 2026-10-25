@@ -3661,7 +3661,7 @@ let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activ
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=true,filterFocus="PC",advancedExpanded=false;
-let formQuery="",formOptionsStatus="Aguardando lista oficial de Form do site...";
+let formQuery="",formListVisibleCount=60,formOptionsStatus="Aguardando lista oficial de Form do site...";
 let siteFiltersConfirmed=false; // Evidence from Android: same generation, verified Search and accepted results.
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
 // Math.round(total / 45 * 100) produces exactly 46 possible shown percentages.
@@ -4233,7 +4233,7 @@ function patchSelectedFilterKeys(keys){
  if(Object.keys(delta).length)Native.patchSearchFilters(JSON.stringify(delta));
 }
 function confirmNumericFilter(keys,label){
- const bounds={cpMin:[0,99999],cpMax:[0,99999],levelMin:[1,35],levelMax:[1,35],minPvpCp:[0,99999]};
+ const bounds={cpMin:[0,99999],cpMax:[0,99999],levelMin:[1,50],levelMax:[1,50],minPvpCp:[0,99999]};
  for(const key of keys){
   const raw=String(modeDraft[key]??"").trim();
   const [min,max]=bounds[key];
@@ -4303,7 +4303,7 @@ function renderExtraFilters(panel,make){
  };
  const numericInput=(key,label,level=false)=>{
   const input=make("input");input.type=level?"text":"number";input.inputMode="numeric";
-  input.step="1";input.min=level?"1":"0";input.max=level?"35":"99999";
+  input.step="1";input.min=level?"1":"0";input.max=level?"50":"99999";
   if(level){
    input.maxLength=2;input.pattern="[0-9]{1,2}";
    input.classList.add("levelCompactInput");
@@ -4420,7 +4420,7 @@ function renderExtraFilters(panel,make){
   const formSearch=make("input");formSearch.id="officialFormSearch";formSearch.type="search";
   formSearch.placeholder="Buscar forma";formSearch.value=formQuery;
   formSearch.setAttribute("aria-label","Buscar formas oficiais");
-  formSearch.oninput=()=>{formQuery=formSearch.value;refreshOfficialFormList();
+  formSearch.oninput=()=>{formQuery=formSearch.value;formListVisibleCount=60;refreshOfficialFormList();
    if(Native.requestFormOptions)Native.requestFormOptions(formQuery);};
   formSearch.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
   formSearch.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
@@ -4505,7 +4505,8 @@ function refreshOfficialFormList(){
  const source=Array.isArray(filterOptions.form?.options)?filterOptions.form.options:[];
  const values=[...new Set(source.map(x=>String(x||"").trim()).filter(Boolean))];
  const term=formQuery.trim().toLowerCase();
- const matches=values.filter(x=>!term||x.toLowerCase().includes(term)).slice(0,60);
+ const filtered=values.filter(x=>!term||x.toLowerCase().includes(term));
+ const matches=filtered.slice(0,formListVisibleCount);
  target.replaceChildren();chips.replaceChildren();
  if(!values.length){const status=document.createElement("p");status.className="uxNote";
    status.textContent="Aguardando formas oficiais";target.appendChild(status);}
@@ -4528,6 +4529,13 @@ function refreshOfficialFormList(){
   };
   target.appendChild(button);
  }
+ if(filtered.length>matches.length){
+  const more=document.createElement("button");more.type="button";
+  more.className="extraOptionMore";
+  more.textContent="Mostrar mais formas ("+(filtered.length-matches.length)+")";
+  more.onclick=()=>{formListVisibleCount=Math.min(filtered.length,formListVisibleCount+60);refreshOfficialFormList();};
+  target.appendChild(more);
+ }
  for(const value of wanted){
   const chip=document.createElement("button");chip.className="pokemonChip";chip.type="button";
   chip.textContent=value+" ×";chip.onclick=()=>{
@@ -4546,7 +4554,7 @@ function renderFormPicker(){
  input.id="officialFormSearch";input.placeholder="Buscar forma no PoGoCoordinates";
  input.value=formQuery;input.setAttribute("aria-label","Pesquisar Form oficial do site");
  input.oninput=()=>{
-  formQuery=input.value;
+  formQuery=input.value;formListVisibleCount=60;
   formOptionsStatus="Pesquisando formas no site...";
   refreshOfficialFormList();
   if(Native.requestFormOptions)Native.requestFormOptions(formQuery);
