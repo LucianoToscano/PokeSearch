@@ -2,6 +2,19 @@
 
 > **Guia Mestre permanente:** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md). Este README indica o estado verificado; o Guia mantém todo o histórico. Não confundir tags oficiais com commits posteriores de documentos.
 
+## LT84 API direta — QA isolada, não publicada
+
+A integração autorizada existente foi fortalecida na branch `fix/lt84-authorized-api-direct-qa-20261025`. **LT84 0.00.84 / 54287 é somente QA**, não substitui a LT83 oficial nem altera a ponte Google Drive LT79.
+
+- **Build Android assinado, R8 e regressões:** [Actions #40163046534](https://github.com/LucianoToscano/PokeSearch/actions/runs/40163046534) — SUCCESS, artifact `PokeSearch-v0.00.84-LT-API-QA-protected-release` (contém APK + SHA256SUMS + relatório de certificado).
+- **Teste real anônimo da API:** [Actions #40163231365](https://github.com/LucianoToscano/PokeSearch/actions/runs/40163231365) — SUCCESS para /health, /forms, catálogo e um POST /search 15/15/15 sem JWT ou reveal. Não equivale a teste com treinador autenticado.
+- **Guia Mestre preservado e apendicado:** [Actions #40163154255](https://github.com/LucianoToscano/PokeSearch/actions/runs/40163154255) — SUCCESS.
+- Corrigidos Retry-After/429, busca antiga após espera por catálogo, reveal repetido, limpeza efetiva de coords e `Any` versus `Genderless`; preservar o DOM independente e a preferência API opt-in desligada por padrão.
+- **Ainda pendente:** testes de login e Shiny com treinador real, Get coords por reveal real, comparação integral de filtros e homologação física Samsung. Alertas dos resultados API continuam suspensos em QA. **Sem merge ou publicação oficial.**
+- Referência: [estado LT84 QA](docs/ESTADO_CANONICO_LT84_QA.md) e [diário técnico LT84](docs/LT84_API_DIRECT_QA.md).
+
+---
+
 ## Estado oficial verificado — 25/10/2026
 
 **Última versão pública: LT83 — `0.00.83` / `versionCode 54286`.** GitHub Releases [v0.00.83-54286](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.83-54286), APK `PokeSearch-v0.00.83-LT.apk`, **38.603.587 bytes**, SHA-256 `451e4781581122908f014a893f693c8312b36b2c222a8579c499c6c3e2975c1c`. Certificado de assinatura permanente SHA256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. APK release R8 não depurável, assinatura v2 confirmada; build [#40159949347](https://github.com/LucianoToscano/PokeSearch/actions/runs/40159949347) SUCCESS, publicação [#40160258112](https://github.com/LucianoToscano/PokeSearch/actions/runs/40160258112) SUCCESS. **Commit exato do APK:** `5cf9adb62efb97a185ec955cab6eb0f49fbb4e88`.
