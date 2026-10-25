@@ -22,7 +22,9 @@ assert.match(app,/if\(tributeOverlay!=null&&homeRoot!=null\)/);
 assert.match(tribute,/ZoomView extends ImageView/);
 assert.match(tribute,/chip\.setMinimumHeight\(dp\(a,48\)\)/);
 assert.match(tribute,/thumbnail\.setImageResource\(R\.drawable\.pokesearch_agradecimento_miniatura\)/);
-assert.match(app,/thanksLp\.gravity=Gravity\.END/);
+assert.match(app,/shareActions\.addView\(thanks,thanksLp\)/);
+assert.match(app,/shareActions\.addView\(share,shareLp\)/);
+assert.doesNotMatch(app,/screen\.addView\(thanks,thanksLp\)/);
 assert.doesNotMatch(tribute,/Conheça quem ajuda o PokeSearch a acontecer\./);
 
 assert.match(tribute,/R\.drawable\.pokesearch_agradecimento_comunidade/);

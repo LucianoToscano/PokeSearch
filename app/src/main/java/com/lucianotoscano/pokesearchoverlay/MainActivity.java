@@ -566,13 +566,6 @@ public class MainActivity extends Activity {
         screen.addView(homeUpdateHolder,updateLp);
         renderDriveUpdateBanner();
 
-        // Original approved art, available offline in the same Home window.
-        View thanks=CommunityTribute.homeCard(this,homeLightMode,this::openTribute);
-        LinearLayout.LayoutParams thanksLp=new LinearLayout.LayoutParams(-2,d(48));
-        thanksLp.gravity=Gravity.END;
-        thanksLp.topMargin=d(4);
-        screen.addView(thanks,thanksLp);
-
         // New compact LT54 counters; a dash indicates missing connectivity/rules.
         LinearLayout stats=new LinearLayout(this);
         stats.setOrientation(LinearLayout.HORIZONTAL);
@@ -602,10 +595,21 @@ public class MainActivity extends Activity {
         share.setBackground(homeSurface(
             homeLightMode?Color.rgb(235,247,250):Color.rgb(27,49,62),
             11,homeLightMode?Color.rgb(155,192,204):Color.rgb(72,118,135)));
-        LinearLayout.LayoutParams shareLp=new LinearLayout.LayoutParams(-1,d(36));
-        shareLp.topMargin=d(6);
-        screen.addView(share,shareLp);
+        // LT103: integrate the small thank-you shortcut into an existing
+        // Home action row, not as a floating banner stranded between sections.
+        LinearLayout shareActions=new LinearLayout(this);
+        shareActions.setOrientation(LinearLayout.HORIZONTAL);
+        shareActions.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams shareRowLp=new LinearLayout.LayoutParams(-1,d(48));
+        shareRowLp.topMargin=d(6);
+        screen.addView(shareActions,shareRowLp);
+        LinearLayout.LayoutParams shareLp=new LinearLayout.LayoutParams(0,-1,1);
+        shareActions.addView(share,shareLp);
         share.setOnClickListener(v->sharePokeSearch());
+        View thanks=CommunityTribute.homeCard(this,homeLightMode,this::openTribute);
+        LinearLayout.LayoutParams thanksLp=new LinearLayout.LayoutParams(d(164),-1);
+        thanksLp.leftMargin=d(6);
+        shareActions.addView(thanks,thanksLp);
 
         if(scrapbookPreview){
             LinearLayout.LayoutParams scrapbookLp=new LinearLayout.LayoutParams(-1,-2);
