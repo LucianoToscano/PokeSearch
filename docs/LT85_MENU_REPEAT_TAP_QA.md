@@ -8,6 +8,7 @@ O proprietário informou: **"Os menus. Quando clico neles novamente.. eles nao e
 ## Diagnóstico do código
 - `dock.html`: `toggleChoices()` antes escolhia abrir/fechar usando `activeNativePopupKind` mantido no JavaScript do toolbar e modificado de modo otimista, enquanto o estado verdadeiro é `popupKind` em `OverlayService.java`. Um callback atrasado de outro WebView pode desincronizar a escolha do segundo clique. Não afirmar que esse foi o único motivo físico sem nova evidência.
 - `OverlayService.java` já tinha `if(kind.equals(popupKind)){closeIndependentPopup();return;}`; mas a lógica antiga do toolbar podia não invocar o método nativo correto no segundo toque.
+- O tratamento de `MotionEvent.ACTION_OUTSIDE` em janelas separadas pode fechar o popup ao iniciar um toque no ícone, e o `click` daquele mesmo gesto pode abri-lo de novo. Foi adicionada uma proteção limitada a 450 ms para consumir esse clique somente quando o submenu recém-fechado e o ícone acionado são o mesmo, sem bloquear a troca para outro submenu.
 - Favoritos (`PokemonPicker`) é um Dialog separado; `showFavoritePicker()` simplesmente retornava quando `pickerOpen=true` e não tinha referência para fechar no toque repetido.
 
 ## Implementação na branch
