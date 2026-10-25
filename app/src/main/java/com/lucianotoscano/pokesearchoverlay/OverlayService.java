@@ -2479,6 +2479,11 @@ public class OverlayService extends Service {
         String watchDetails="";
         int watchedCount=0;
         java.util.LinkedHashMap<String,String[]> individualFavorites=new java.util.LinkedHashMap<>();
+        // Commit Favorite TTL ONLY after Android accepts the actual notice.
+        // Missing permission, OFF, blocked channels and retries cannot silently
+        // consume an encounter without a delivered alert.
+        java.util.LinkedHashMap<String,Long> pendingFavoriteKeys=new java.util.LinkedHashMap<>();
+        java.util.LinkedHashMap<String,String> pendingFavoriteSpecies=new java.util.LinkedHashMap<>();
         java.util.Set<String> wanted=WatchAlerts.watched(this);
         long now=System.currentTimeMillis();
         recentSpawnExpiries.entrySet().removeIf(entry->entry.getValue()<=now);
@@ -2508,7 +2513,8 @@ public class OverlayService extends Service {
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
                 verifiedTargetCriteria(c) &&
                 WatchAlerts.matches(c.optString("name",""),wanted)){
-                recentFavoriteAlertExpiries.put(key,expireAt);
+                pendingFavoriteKeys.put(key,expireAt);
+                pendingFavoriteSpecies.put(key,WatchAlerts.normalized(c.optString("name","")));
                 watchedCount++;
                 if(firstWatched.isEmpty()){
                     firstWatched=c.optString("name","Pokémon");
@@ -2537,21 +2543,36 @@ public class OverlayService extends Service {
         for(int i=Math.max(0,history.length()-40);i<history.length();i++)limited.put(history.opt(i));
         preferences.edit().putString("history",limited.toString()).apply();
         if(watchedCount>0&&!firstWatched.isEmpty()){
+            int delivered=0;
             if(WatchAlerts.speciesToneCount(this)>0){
-                // Distinct custom cries are meaningful only if every matching
-                // species gets its own channel. Cap each refresh to 5 notices.
+                // Retain per-species audio; only mark successfully notified
+                // encounters, each independently within this Pokeball.
                 int count=0;
                 for(String[] info:individualFavorites.values()){
                     if(count++>=5)break;
-                    WatchAlerts.match(this,info[0],
-                        "Busca "+mode.toUpperCase(java.util.Locale.ROOT)+" · "+info[1]);
+                    if(WatchAlerts.match(this,info[0],
+                            "Busca "+mode.toUpperCase(java.util.Locale.ROOT)+" · "+info[1])){
+                        delivered++;
+                        String species=WatchAlerts.normalized(info[0]);
+                        for(java.util.Map.Entry<String,String> entry:pendingFavoriteSpecies.entrySet())
+                            if(species.equals(entry.getValue()))
+                                recentFavoriteAlertExpiries.put(entry.getKey(),
+                                    pendingFavoriteKeys.get(entry.getKey()));
+                    }
                 }
             }else{
                 if(watchedCount>1)watchDetails+=" · +"+(watchedCount-1)+" Pokémon da lista";
-                WatchAlerts.match(this,firstWatched,watchDetails);
+                if(WatchAlerts.match(this,firstWatched,watchDetails)){
+                    delivered++;
+                    recentFavoriteAlertExpiries.putAll(pendingFavoriteKeys);
+                }
             }
+            BugReport.log(this,"FAVORITE_ALERT_PARITY",
+                (isSecondaryOverlay()?"P2":"P1")+" candidatos="+watchedCount+
+                " avisos="+delivered+" perfil="+preferences.getInt("favoritePresetActiveV1",0)+
+                " modo="+WatchAlerts.mode(this)+" permissão="+WatchAlerts.permissionGranted(this));
             if(!WatchAlerts.permissionGranted(this))
-                preferences.edit().putString("lastWatchAlertError",
+                getSharedPreferences("prefs",0).edit().putString("lastWatchAlertError",
                     "Permissão de notificações não concedida").apply();
         }
         if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()&&now-lastAlertAt>60000L){
