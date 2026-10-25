@@ -29,6 +29,96 @@
           }
         }
       }
+    },
+    "scrapbook": {
+      "config": {
+        "acceptSubmissions": {
+          ".read": "auth != null",
+          ".write": false,
+          ".validate": "newData.isBoolean()"
+        }
+      },
+      "posts": {
+        ".read": "auth != null",
+        ".write": false,
+        "$postId": {
+          ".validate": "newData.hasChildren(['authorUid','nickname','category','text','createdAt','status'])",
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "submissions": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && root.child('scrapbook/config/acceptSubmissions').val() === true",
+          ".validate": "newData.hasChildren(['nickname','category','text','createdAt'])",
+          "nickname": {
+            ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 24"
+          },
+          "category": {
+            ".validate": "newData.isString() && newData.val().matches(/^(recados|sugestoes|bugs|dicas)$/)"
+          },
+          "text": {
+            ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 300"
+          },
+          "createdAt": {
+            ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 60000"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "likes": {
+        ".read": "auth != null",
+        "$postId": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.val() === true && root.child('scrapbook/posts').child($postId).child('status').val() === 'published'",
+            ".validate": "newData.isBoolean() && newData.val() === true"
+          }
+        }
+      },
+      "replySubmissions": {
+        "$postId": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && root.child('scrapbook/config/acceptSubmissions').val() === true && root.child('scrapbook/posts').child($postId).child('status').val() === 'published'",
+            ".validate": "newData.hasChildren(['text','createdAt'])",
+            "text": {
+              ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 200"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 60000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      },
+      "replies": {
+        ".read": "auth != null",
+        ".write": false
+      },
+      "reports": {
+        "$postId": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && root.child('scrapbook/posts').child($postId).child('status').val() === 'published'",
+            ".validate": "newData.hasChildren(['reason','createdAt'])",
+            "reason": {
+              ".validate": "newData.val() === 'inappropriate'"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 60000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -70,5 +70,9 @@ Este checkpoint **substitui instruções visuais antigas** do arquivo histórico
 5. **Regra nova de manutenção:** manter `docs/GUIA_MESTRE.md` **resumido e atualizado por edição pontual** com HEAD/versão/testes/decisões; criar detalhes de cada etapa em documentos próprios; **não voltar ao append indiscriminado de 1,46 MB**, não modificar o backup imutável, não substituir guia com retorno truncado de conector. Validar backup por `git hash-object docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md` = SHA acima.
 6. **GitHub Actions antigos de append** foram feitos para guia gigante; no ciclo atual precisam funcionar como auditoria somente leitura, sem tentar acrescentar texto ao arquivo de backup ou exigir guia resumido com mais de 1,4 MB.
 
-## 9. Protocolo obrigatório do próximo chat
+## 9. Scrapbook moderado — preparação online QA 0.00.97
+- Em 25/10/2026, evolução da PR #64 prepara `CommunityScrapbookOnline.java` e `firebase-realtime.rules.json`: feed de posts aprovados, envio para moderação, curtida e denúncias, com gate exclusivo do APK QA 0.00.97/54300. **Não afirmar Firebase online** sem inspeção e deploy de regras, App Check, moderação e homologação; em QA inicialmente fechado. Detalhes e critérios: [Scrapbook Online QA](POKESEARCH_SCRAPBOOK_ONLINE_QA_20261025.md).
+- Ações documentais e CI devem manter main LT87, PR #63 e PR #64 sem merge e o mesmo certificado; APK atual no Drive permanece intocado.
+
+## 10. Protocolo obrigatório do próximo chat
 Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, preservar todas as mudanças anteriores e escolher a branch correta antes de alterar arquivos. Etapas pequenas, reversíveis e auditáveis, com testes; não apagar preferências, não mexer na assinatura, não ativar Firebase real por inferência. Registrar mudanças neste guia **em poucas linhas** e encaminhar documentos aprofundados para arquivos separados. **Nunca declarar Release, merge, aprovação Samsung ou mural online sem prova real.**

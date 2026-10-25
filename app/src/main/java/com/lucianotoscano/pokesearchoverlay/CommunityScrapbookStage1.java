@@ -112,6 +112,8 @@ final class CommunityScrapbookStage1 {
         activity.startActivity(new Intent(activity,CommunityScrapbookActivity.class));
     }
     static View homePanel(Activity activity,boolean light){
+        if(CommunityScrapbookOnline.isQaAllowed())
+            return CommunityScrapbookOnline.homePanel(activity,light);
         LinearLayout root=new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(activity,8),dp(activity,7),dp(activity,8),dp(activity,8));
