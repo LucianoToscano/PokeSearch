@@ -1259,7 +1259,7 @@ if(action.startsWith("readCoords:")){
  const button=controls.find(e=>/^Open in Maps$/i.test(text(e)));
  if(!button)
   return JSON.stringify({ok:false,pending:true,status:"Aguardando coordenadas deste Pokémon no site"});
- const latlong=/(-?\\d{1,2}(?:\\.\\d{1,12})?)\\s*[,;]\\s*(-?\\d{1,3}(?:\\.\\d{1,12})?)/g;
+ const latlong=/(-?\d{1,2}(?:\.\d{1,12})?)\s*[,;]\s*(-?\d{1,3}(?:\.\d{1,12})?)/g;
  function coordinate(s){
   for(const m of String(s||"").matchAll(latlong)){
    const lat=Number(m[1]),lon=Number(m[2]);
