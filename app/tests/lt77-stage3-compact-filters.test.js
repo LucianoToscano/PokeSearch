@@ -94,12 +94,12 @@ check("radius 0, 1, 999, 1000, boundary and empty",()=>{
   assert.equal(ctx.sanitizeLocationRadiusDraft(input),expected,input);
  }
 });
-check("location in one row, no extra latitude section",()=>{
+check("location title and full coordinate field on separate centered rows",()=>{
  const loc=section("function renderLocationChoices(){","let requestedInterval");
- assert.ok(loc.includes("title.appendChild(paste)"));
+ assert.ok(loc.includes("label.append(labelName,paste,radiusWrap)"));
  assert.ok(loc.includes("fieldRow.append(field);"));
- assert.ok(loc.includes("title.appendChild(fieldRow)"));
- assert.ok(loc.includes("panel.append(title,slide,label,message)"));
+ assert.ok(loc.includes("panel.append(title,fieldRow,slide,label,message)"));
+ assert.ok(loc.includes("panel.append(title,fieldRow,slide,label,message)"));
  assert.ok(loc.includes('radiusField.maxLength=4'));
  assert.ok(loc.includes('radiusField.inputMode="numeric"'));
  assert.ok(loc.includes('radiusField.value.trim()===""'));
