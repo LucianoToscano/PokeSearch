@@ -1,4 +1,4 @@
-name: PokeSearch LT109 sprites and filter behavior - signed QA
+name: PokeSearch LT110 final sprites and filter behavior - signed QA
 on:
   push:
     branches: [fix/lt108-furfrou-card-sprites-20261025]
@@ -21,9 +21,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
-      POKE_TEST_VERSION_CODE: '54313'
-      POKE_TEST_VERSION_LABEL: '51113'
-      POKE_TEST_PUBLIC_VERSION: '0.01.09'
+      POKE_TEST_VERSION_CODE: '54314'
+      POKE_TEST_VERSION_LABEL: '51114'
+      POKE_TEST_PUBLIC_VERSION: '0.01.10'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
       POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
       POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
@@ -34,8 +34,8 @@ jobs:
       POKE_SCRAPBOOK_ONLINE_QA: 'true'
       POKE_SCRAPBOOK_ONLINE_ACK: 'direct-posting-owner-monitored'
       GH_TOKEN: ${{ github.token }}
-      QA_APK: PokeSearch-v0.01.09-LT-Sprites-Filters-QA.apk
-      QA_TAG: v0.01.09-54313-qa
+      QA_APK: PokeSearch-v0.01.10-LT-Sprites-Filters-Migration-QA.apk
+      QA_TAG: v0.01.10-54314-qa
     steps:
       - name: Checkout exact feature commit
         uses: actions/checkout@v4
@@ -111,7 +111,7 @@ jobs:
           assert len(report['sha256'])==report['baseCount']+report['shinyCount']
           print('Bundled offline sprite coverage:',report['baseCount'],'base,',report['shinyCount'],'shiny')
           PY
-      - name: Compile protected and signed LT109 APK
+      - name: Compile protected and signed LT110 APK
         shell: bash
         run: |
           set -euo pipefail
@@ -129,8 +129,8 @@ jobs:
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/manifest.json'
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
-          grep -Fq "versionCode='54313'" PACKAGE-VERSION.txt
-          grep -Fq "versionName='0.01.09'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54314'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.10'" PACKAGE-VERSION.txt
           ! grep -q '^application-debuggable' PACKAGE-VERSION.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
           grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
@@ -143,9 +143,9 @@ jobs:
       - name: Upload protected APK artifact and coverage
         uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-v0.01.09-LT-Sprites-Filters-QA-protected-release
+          name: PokeSearch-v0.01.10-LT-Sprites-Filters-Migration-QA-protected-release
           path: |
-            PokeSearch-v0.01.09-LT-Sprites-Filters-QA.apk
+            PokeSearch-v0.01.10-LT-Sprites-Filters-Migration-QA.apk
             SHA256SUMS.txt
             SIGNING-REPORT.txt
             SOURCE_COMMIT.txt
@@ -163,8 +163,8 @@ jobs:
           fi
           BASE="$(python3 -c "import json;print(json.load(open('SPRITE-MANIFEST.json'))['baseCount'])")"
           SHINY="$(python3 -c "import json;print(json.load(open('SPRITE-MANIFEST.json'))['shinyCount'])")"
-          printf '## PokeSearch 0.01.09 LT109 — sprites de detalhes e filtros corrigidos\\n\\n- Furfrou Natural #676 recebe sprite base normal/shiny; cortes especiais permanecem específicos.\\n- Resultados, menu Pokémon e TODOS os cards de detalhe das duas Pokébolas priorizam imagens-base locais do APK.\\n- Filtros Tamanho/Sexo/PC/Nível/Clima aplicam normalmente sem bloqueio de ordenação por distância residual; localização só é exigida para ordenar por distância.\\n- Mantém alertas API e sons recuperados, 3 perfis Favoritos, 2050 sprites e filtros independentes.\\n- APK R8 assinado com certificado permanente; versão Android 54313 atualizável sobre 54310.\\n- QA Samsung pendente; pré-release não substitui a versão oficial estável/Drive.\\n' > release-notes.txt
-          gh release create "$QA_TAG" "$QA_APK" SPRITE-MANIFEST.json SHA256SUMS.txt             -R "$GITHUB_REPOSITORY" --target "$(cat SOURCE_COMMIT.txt)"             --title "PokeSearch 0.01.09 · sprites e filtros corrigidos (QA)"             --notes-file release-notes.txt --prerelease --latest=false
+          printf '## PokeSearch 0.01.10 LT110 — sprites de detalhes e filtros corrigidos\\n\\n- Furfrou Natural #676 recebe sprite base normal/shiny; cortes especiais permanecem específicos.\\n- Resultados, menu Pokémon e TODOS os cards de detalhe das duas Pokébolas priorizam imagens-base locais do APK.\\n- Filtros Tamanho/Sexo/PC/Nível/Clima aplicam normalmente sem bloqueio de ordenação por distância residual; localização só é exigida para ordenar por distância.\\n- Mantém alertas API e sons recuperados, 3 perfis Favoritos, 2050 sprites e filtros independentes.\\n- APK R8 assinado com certificado permanente; versão Android 54314 atualizável sobre 54310.\\n- QA Samsung pendente; pré-release não substitui a versão oficial estável/Drive.\\n' > release-notes.txt
+          gh release create "$QA_TAG" "$QA_APK" SPRITE-MANIFEST.json SHA256SUMS.txt             -R "$GITHUB_REPOSITORY" --target "$(cat SOURCE_COMMIT.txt)"             --title "PokeSearch 0.01.10 · sprites e filtros corrigidos (QA)"             --notes-file release-notes.txt --prerelease --latest=false
       - name: Cleanup signing material
         if: always()
         run: rm -f "$RUNNER_TEMP/pokesearch-lt108-signing.p12"
