@@ -115,6 +115,10 @@ public final class GitHubUpdateCenter {
             }catch(Exception ignored){return Result.retry();}
         }
     }
+    public static void checkManual(MainActivity activity) {
+        lastCheck=0L;
+        check(activity);
+    }
     public static void check(MainActivity activity) {
         long now=android.os.SystemClock.elapsedRealtime();
         if(lastCheck!=0&&now>=lastCheck&&now-lastCheck<MIN_INTERVAL_MS){

@@ -1665,6 +1665,27 @@ public class MainActivity extends Activity {
         // Use the refresh icon after switching between DOM and API.
         settingCheckbox(body,prefs,"authorizedApiQaOptIn",
             "QA LT77: API autorizada ativa (desmarque para DOM; use ↻)",true);
+        // LT79: separate update notifications and explicit user-driven check.
+        CheckBox updateAlerts=new CheckBox(this);
+        updateAlerts.setText("Avisar quando sair nova atualização do PokeSearch");
+        updateAlerts.setTextColor(Color.WHITE);
+        updateAlerts.setChecked(GitHubUpdateCenter.alertsEnabled(this));
+        updateAlerts.setOnCheckedChangeListener((button,enabled)->{
+            GitHubUpdateCenter.setAlerts(this,enabled);
+            if(enabled&&Build.VERSION.SDK_INT>=33&&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=
+                    PackageManager.PERMISSION_GRANTED)
+                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},205);
+        });
+        body.addView(updateAlerts);
+        Button checkUpdates=new Button(this);
+        checkUpdates.setText("↻ Verificar atualizações");
+        checkUpdates.setAllCaps(false);checkUpdates.setTextSize(12);
+        checkUpdates.setOnClickListener(v->{
+            GitHubUpdateCenter.checkManual(this);
+            Toast.makeText(this,"Consultando versões oficiais…",Toast.LENGTH_SHORT).show();
+        });
+        body.addView(checkUpdates,new LinearLayout.LayoutParams(-1,d(42)));
         settingAlertMode(body,prefs);
         settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,
             "Alertar ao encontrar favorito nos filtros confirmados",true);
