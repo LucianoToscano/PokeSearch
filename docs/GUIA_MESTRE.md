@@ -6306,3 +6306,12 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 
 **Checklist físico pendente:** medir gap entre Pokébola/resultados e fluidez de arraste; popups em posições extremas/orientação; filtros Nível, CP, 7 tamanhos, sexo, Forma/costumes oficiais, clima, raio 0–1000, GL/UL, IV e Shiny com conta válida; Get coords para spawn único, reordenado, duplicado, expirado, botão em cooldown e retorno em Maps com cópia; memória por sessão longa e R8 release. Registre novos prints e estado do site sem dados secretos. PR #34/#49 sem merge, LT76 e Drive intactos.
 
+
+
+### Verificação final do pipeline pós-Etapa 14 (24/10/2026, horário Brasil)
+
+- [GitHub Actions #40146111436](https://github.com/LucianoToscano/PokeSearch/actions/runs/40146111436): **COMPLETED/SUCCESS**, commit de código/workflow testado `3d9069900d2bb57615dc45945056acf61bd3e226`. Os testes Node, a tarefa Gradle `:app:assembleRelease`, validação de certificado, R8, versionCode/Name, não depurável e upload de artefato terminaram com SUCCESS.
+- Artefato exclusivo para homologação, **não publicado no Drive**: `PokeSearch-v0.00.77-LT-Samsung-QA-protected-release`, artifact ID `12580991636`. O ZIP contém `PokeSearch-v0.00.77-LT-Samsung-QA.apk`, `SOURCE_COMMIT.txt`, `SHA256SUMS.txt`, `SIGNING-REPORT.txt`, `PACKAGE-VERSION.txt`, `PROTECTION.txt`. Fonte exata do APK: `3d9069900d2bb57615dc45945056acf61bd3e226` (após correções e antes deste registro documental).
+- Versão técnica de QA: `0.00.77` / versionCode `54277`, release R8 com a mesma assinatura persistente validada em CI (fingerprint `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`), para instalação de teste em Samsung. **Não é LT77 homologada, nem rollout/publicação**.
+- Não houve integração da API no `OverlayService`; o fluxo efetivo continua DOM/probe. Get coords na UI foi corrigido para um caso reprodutível por fixture, mas o relatório de falha recebido ainda exige confirmação física. A necessidade de autenticação e teste de API sob origem oficial permanece.
+- Arquivos `docs/GUIA_MESTRE.md` e `docs/LT77_CHECKLIST_ACEITACAO.md` atualizados documentalmente depois do CI; o APK permanece vinculado ao commit de código `3d906...`, não aos commits de documentação. `main`, PR #34/#49, LT76, APK oficial, assinatura e manifesto do Drive não foram modificados.

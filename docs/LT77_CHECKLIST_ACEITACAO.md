@@ -96,3 +96,12 @@
 - [ ] Perfil de memória e stress prolongado do Samsung, testes reais de Shiny/GL/UL/Form/Weather com treinador vinculado.
 
 Para cada nova captura de erro de Get coords, registrar nome, número, PC, cidade, horário do spawn, botão do site e se o cartão foi reordenado; **nunca** enviar JWT nem `reveal_code`.
+
+
+### Resultado final do CI de QA pós-14
+
+- [x] Pipeline #40146111436: `COMPLETED/SUCCESS` sobre `3d9069900d2bb57615dc45945056acf61bd3e226`, com testes, `assembleRelease`, R8, pacote `0.00.77/54277`, certificado e APK não depurável validados.
+- [x] Artefato de homologação produzido: `PokeSearch-v0.00.77-LT-Samsung-QA-protected-release` (GitHub Actions artifact ID `12580991636`, ZIP com APK, checksum, origem, assinatura e metadados).
+- [ ] Instalação/observação real no Samsung, obtenção de coordenadas do Caterpie/Slakoth e demais cenários de `Get coords`: não executadas aqui.
+- [ ] API oficial integrada no `OverlayService` e verificada com conta/treinador autorizado: NÃO realizada; flag continua OFF.
+- [ ] Publicação LT77: NÃO autorizada/não realizada. A LT76 no Google Drive segue protegida.
