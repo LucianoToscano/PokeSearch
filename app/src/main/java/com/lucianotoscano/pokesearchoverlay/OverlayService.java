@@ -200,6 +200,11 @@ public class OverlayService extends Service {
     private WebView panel,detailPanel,website,menuPanel,resultPanel,popupPanel;
     private boolean popupLoaded=false;
     private String popupKind="";
+    // ACTION_OUTSIDE can arrive BEFORE the toolbar click for the same physical
+    // tap. Without a latch the outside event closes a popup and its launcher
+    // immediately reopens it, making the second tap look broken.
+    private String outsideClosedPopupKind="";
+    private long outsideClosedPopupUptimeMs=0L;
     // One in-flight Get coords request may own the detail/clipboard at a time.
     private long coordinateRequestToken=0L;
     private int popupTriggerDp,popupTriggerYDp,popupTriggerHeightDp,popupWidthDp,popupHeightDp;
@@ -801,6 +806,12 @@ public class OverlayService extends Service {
         if(popupWidthDp==w&&popupHeightDp==h)return;
         popupWidthDp=w;popupHeightDp=h;positionIndependentPopup();
     }
+    private void closeIndependentPopupFromOutside(){
+        if(popupKind.isEmpty())return;
+        outsideClosedPopupKind=popupKind;
+        outsideClosedPopupUptimeMs=android.os.SystemClock.uptimeMillis();
+        closeIndependentPopup();
+    }
     private void closeIndependentPopup(){
         if(popupKind.isEmpty())return;
         popupKind="";popupWidthDp=popupHeightDp=0;
@@ -830,6 +841,14 @@ public class OverlayService extends Service {
     }
     private void openIndependentPopup(String kind,int x,int y,int triggerHeight){
         if(!validIndependentPopup(kind)||!menuExpanded||loginPaused||stopped||pickerOpen)return;
+        long elapsed=android.os.SystemClock.uptimeMillis()-outsideClosedPopupUptimeMs;
+        boolean wasSameOutsideTap=kind.equals(outsideClosedPopupKind)&&
+            elapsed>=0L&&elapsed<=450L;
+        outsideClosedPopupKind="";
+        outsideClosedPopupUptimeMs=0L;
+        // If an ACTION_OUTSIDE already closed this exact popup on pointer-down,
+        // consume the launcher click from that same gesture instead of reopening.
+        if(wasSameOutsideTap)return;
         if(kind.equals(popupKind)){closeIndependentPopup();return;}
         popupKind=kind;
         // Mirror native state back to the toolbar: tapping Location again closes.
@@ -1212,7 +1231,7 @@ public class OverlayService extends Service {
                 if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
                     if(menuExpanded&&menuLoaded&&menuPanel!=null)
                         js(menuPanel,true,"if(window.closeChoices)window.closeChoices()");
-                    closeIndependentPopup();
+                    closeIndependentPopupFromOutside();
                     return false;
                 }
                 return super.dispatchTouchEvent(event);
@@ -1301,7 +1320,7 @@ public class OverlayService extends Service {
                 if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
                     SupportMissionState.overlayTouch(OverlayService.this);
                 if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
-                    closeIndependentPopup();return false;
+                    closeIndependentPopupFromOutside();return false;
                 }
                 return super.dispatchTouchEvent(event);
             }
