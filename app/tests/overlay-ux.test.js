@@ -499,7 +499,7 @@ test("HOME-01 has explicit official Google/Discord login and sign-out",(()=>{
   home.includes('google.setOnClickListener(v->openProviderLogin("google"))')&&
   home.includes('logout.setOnClickListener(v->askLogout())');
 })());
-test("Login does not start overlay if none is running",main.includes("if(!OverlayService.isRunning())return;"));
+test("Login does not start a stopped overlay",main.includes("if(!enabled)return;")&&main.includes("OverlayService.isSecondaryRunning()")&&main.includes("OverlayService.isRunning()"));
 test("Logout clears local cookies and web storage only",main.includes("removeAllCookies")&&main.includes("WebStorage.getInstance().deleteAllData()"));
 test("Home login does not force Shiny",main.includes("openLoginDialog(false)")&&
     !main.includes('view.evaluateJavascript(readAsset("shiny_login.js"),null)')&&
@@ -2906,7 +2906,8 @@ test("LT57-ONEFORM-02 native patch keeps independent search modes and Shiny",()=
   ?.split('@JavascriptInterface public void setSearchConfig(String payload)')[0]||"";
  return patch.includes('JSONObject delta=new JSONObject(payload),updated=new JSONObject(extraFiltersJson)')&&
   patch.includes('if(!delta.has(key))continue;')&&
-  patch.includes('getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",serialized).apply()')&&
+  patch.includes('overlayPrefs().edit().putString("extraFiltersJson",serialized).apply()')&&
+   service.includes('getSharedPreferences(isSecondaryOverlay()?"prefs_secondary":"prefs",0)')&&
   !patch.includes('mode=')&&!patch.includes('shiny=')&&!patch.includes('locationEnabled=')&&
   !patch.includes('rawAttack=')&&!patch.includes('locationCoords=')&&
   patch.includes('replaceActiveFilterSearch();');
@@ -3368,7 +3369,8 @@ test("LT64-FILTER-DELTA species selection preserves unrelated search configurati
   native.includes('new JSONObject(extraFiltersJson)')&&
   native.includes('extra.put("pokemonSelections",cleaned)')&&
   native.includes('extra.put("clearExtraKeys",reset)')&&
-  native.includes('getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",next).apply()')&&
+  native.includes('overlayPrefs().edit().putString("extraFiltersJson",next).apply()')&&
+   service.includes('getSharedPreferences(isSecondaryOverlay()?"prefs_secondary":"prefs",0)')&&
   !native.includes('mode=nextMode')&&!native.includes('locationCoords=')&&!native.includes('shiny=');
 });
 test("LT64-FILTER-SIZE recognizes accessible button state and still verifies the site",()=>{

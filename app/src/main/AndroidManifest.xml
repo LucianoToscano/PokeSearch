@@ -13,6 +13,7 @@
         </activity>
         <activity android:name=".CommunityScrapbookActivity" android:exported="false" />
         <service android:name=".OverlayService" android:exported="false" />
+        <service android:name=".SecondaryOverlayService" android:exported="false" />
         <provider android:name="androidx.core.content.FileProvider"
             android:authorities="com.lucianotoscano.pokesearch.updates"
             android:exported="false" android:grantUriPermissions="true">

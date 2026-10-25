@@ -109,7 +109,7 @@ public class MainActivity extends Activity {
     private Button trainerAction;
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
-    private ImageView overlayControl;
+    private ImageView overlayControl,secondaryOverlayControl;
     private TextView sessionHint;
     private View homeDrawerLayer;
     private View tributeOverlay, communityHomePanel;
@@ -308,6 +308,24 @@ public class MainActivity extends Activity {
         header.setOrientation(LinearLayout.HORIZONTAL);
         // 3:1 wordmark should have natural height, without crowding toolbar.
         screen.addView(header,new LinearLayout.LayoutParams(-1,d(70)));
+        // Segunda busca sem alterar o desenho dinâmico das Pokébolas.
+        LinearLayout dualOverlayRow=new LinearLayout(this);
+        dualOverlayRow.setGravity(Gravity.CENTER_VERTICAL);
+        dualOverlayRow.setPadding(d(12),0,d(12),0);
+        dualOverlayRow.setBackground(homeSurface(
+            homeLightMode?Color.rgb(243,248,251):Color.rgb(24,31,46),11,0));
+        TextView secondaryLabel=homeText("Segunda Pokébola · filtro independente",11,
+            homeLightMode?Color.rgb(34,51,69):Color.rgb(233,240,252),false);
+        dualOverlayRow.addView(secondaryLabel,new LinearLayout.LayoutParams(0,-1,1));
+        secondaryOverlayControl=makeIcon(R.drawable.ic_overlay_off,"Ativar segunda Pokébola");
+        secondaryOverlayControl.setPadding(d(5),d(5),d(5),d(5));
+        secondaryOverlayControl.setBackground(homeSurface(
+            homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
+        dualOverlayRow.addView(secondaryOverlayControl,new LinearLayout.LayoutParams(d(34),d(34)));
+        secondaryOverlayControl.setOnClickListener(v->toggleSecondaryOverlay());
+        LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(42));
+        dualLp.leftMargin=d(8);dualLp.rightMargin=d(8);dualLp.bottomMargin=d(4);
+        screen.addView(dualOverlayRow,dualLp);
 
         // HOME-02: icon only at top left; compact actions on the right.
         ImageView brand=new ImageView(this);
@@ -928,6 +946,47 @@ public class MainActivity extends Activity {
         startOverlay();
         if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,750);
     }
+    private void initializeSecondaryFilterDefaults(){
+        SharedPreferences secondary=getSharedPreferences("prefs_secondary",0);
+        if(secondary.getBoolean("secondaryInitializedV1",false))return;
+        SharedPreferences primary=getSharedPreferences("prefs",0);
+        SharedPreferences.Editor editor=secondary.edit();
+        // Somente a aparência é herdada. Nada de copiar filtros, sessão ou localização.
+        editor.putString("visualPrefsJson",primary.getString("visualPrefsJson","{}"));
+        editor.putInt("spriteSize",primary.getInt("spriteSize",45));
+        editor.putBoolean("showResultText",primary.getBoolean("showResultText",false));
+        editor.putBoolean("showTimers",primary.getBoolean("showTimers",false));
+        for(java.util.Map.Entry<String,?> entry:primary.getAll().entrySet()){
+            String key=entry.getKey();
+            Object value=entry.getValue();
+            if(key.startsWith("resultShow")&&value instanceof Boolean)
+                editor.putBoolean(key,(Boolean)value);
+        }
+        editor.putString("mode","raw")
+            .putInt("rawAttack",0).putInt("rawDefense",0).putInt("rawStamina",0)
+            .putString("extraFiltersJson","{}").putBoolean("shiny",false)
+            .putBoolean("shinyOptInV32",true)
+            .putBoolean("alerts",false).putString("alertsMode","off")
+            .putBoolean("secondaryInitializedV1",true).apply();
+    }
+    private void toggleSecondaryOverlay(){
+        if(OverlayService.isSecondaryRunning()){
+            stopService(new Intent(this,SecondaryOverlayService.class));
+            Toast.makeText(this,"Segunda Pokébola desativada",Toast.LENGTH_SHORT).show();
+            refreshHomeOverlay();
+            return;
+        }
+        if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
+            startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:"+getPackageName())),101);
+            return;
+        }
+        initializeSecondaryFilterDefaults();
+        CookieManager.getInstance().flush();
+        Intent intent=new Intent(this,SecondaryOverlayService.class);
+        if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
+        if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,750);
+    }
     private void refreshHomeOverlay(){
         if(overlayControl==null)return;
         boolean on=OverlayService.isRunning();
@@ -935,6 +994,14 @@ public class MainActivity extends Activity {
         overlayControl.setContentDescription(on?"Desativar overlay":"Ativar overlay");
         overlayControl.setBackground(homeSurface(on?Color.rgb(18,94,82):
             homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
+        if(secondaryOverlayControl!=null){
+            boolean secondaryOn=OverlayService.isSecondaryRunning();
+            secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.ic_overlay_on:R.drawable.ic_overlay_off);
+            secondaryOverlayControl.setContentDescription(secondaryOn?
+                "Desativar segunda Pokébola":"Ativar segunda Pokébola");
+            secondaryOverlayControl.setBackground(homeSurface(secondaryOn?Color.rgb(18,94,82):
+                homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
+        }
     }
     private void openProviderLogin(String provider){
         preferredLoginProvider=provider;
@@ -1210,6 +1277,7 @@ public class MainActivity extends Activity {
     private void logoutLocalSession(){
         // Do not start a service for sign-out. Stop the collector before revoking cookies.
         stopService(new Intent(this,OverlayService.class));
+        stopService(new Intent(this,SecondaryOverlayService.class));
         if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
         getSharedPreferences("prefs",0).edit()
             .putString("sessionStatus","desconectado")
@@ -1263,20 +1331,23 @@ public class MainActivity extends Activity {
         if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
             getWindow().getDecorView().post(this::openLoginDialog);
     }
-    private void serviceAction(String action){serviceAction(action,false);}
-    private void serviceAction(String action,boolean authConfirmed){
-        Intent intent=new Intent(this,OverlayService.class);
+    private void sendActionToRunningOverlay(Class<?> serviceType,String action,boolean authConfirmed){
+        boolean enabled=serviceType==OverlayService.class?
+            OverlayService.isRunning():OverlayService.isSecondaryRunning();
+        if(!enabled)return;
+        Intent intent=new Intent(this,serviceType);
         intent.setAction(action);
         intent.putExtra("authConfirmed",authConfirmed);
-        if(!OverlayService.isRunning())return;
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
+    }
+    private void serviceAction(String action){serviceAction(action,false);}
+    private void serviceAction(String action,boolean authConfirmed){
+        sendActionToRunningOverlay(OverlayService.class,action,authConfirmed);
+        sendActionToRunningOverlay(SecondaryOverlayService.class,action,authConfirmed);
     }
     private void notifyOverlaySessionReady(){
         CookieManager.getInstance().flush();
-        if(!OverlayService.isRunning())return;
-        Intent intent=new Intent(this,OverlayService.class);
-        intent.setAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
-        if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
+        serviceAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
     }
     // Checking only Logout fails on mobile where it sits inside the hamburger.
     // Use the same sanitized session probe as the collector. Never read/log the
