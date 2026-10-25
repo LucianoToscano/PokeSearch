@@ -1345,7 +1345,8 @@ function locationFields(){
  return {coords,radius};
 }
 function locationModeControl(label){
- const re=new RegExp("^\\s*"+label+"\\s*$","i");
+ const re=label==="Coords"?/^\\s*(?:Coords|Coordinates)\\s*$/i:
+  label==="Area"?/^\\s*Areas?\\s*$/i:new RegExp("^\\s*"+label+"\\s*$","i");
  const candidates=elements('button,[role=button],[role=tab],[role=radio],input[type=radio],label');
  for(const e of candidates){
   if(!vis(e))continue;
@@ -1446,13 +1447,14 @@ function configureLocation(req){
   else if(!coords.disabled&&selected===null){
    // Avoid repeatedly remounting React's controlled fields on every retry.
    const root=document.body;
-   if(root&&!root.__psCoordsModeClickPending){
-    root.__psCoordsModeClickPending=true;coords.click();
+   if(root&&(!root.__psCoordsModeClickAt||
+      Date.now()-root.__psCoordsModeClickAt>1500)){
+    root.__psCoordsModeClickAt=Date.now();coords.click();
    }
   }
   return JSON.stringify({ok:false,pending:true,reason:"Aguardando confirmação do modo Coords"});
  }
- if(document.body)document.body.__psCoordsModeClickPending=false;
+ if(document.body)document.body.__psCoordsModeClickAt=0;
  const fields=locationFields();
  if(!fields.coords||!fields.radius)return JSON.stringify({ok:false,pending:true,reason:"Aguardando campos de coordenadas/raio"});
   if(fields.coords.disabled||fields.radius.disabled)
