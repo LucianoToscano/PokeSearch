@@ -106,11 +106,11 @@ check("LT71: popup-specific CSS overrides legacy max-content left-alignment",()=
   'text-align:center!important;max-width:100%!important;'
  ])assert.ok(css71.includes(term),term);
 });
-check("LT71: native popup width follows fixed card, not overflowing input or scrollWidth",()=>{
+check("LT83: native Location popup width is fixed against CSS viewport shrink",()=>{
  const fit=between(dock,"function fit(){","let popupNativeSwitch=false;");
  for(const token of [
   'const measuredWidth=Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2);',
-  'const exactWidth=choiceOpen==="location"?Math.round(rect.width):measuredWidth;',
+  'Math.min(286,Math.max(1,Math.floor(window.innerWidth||286)))',
   'Native.resizePopup(exactWidth,'
  ])assert.ok(fit.includes(token),token);
 });
