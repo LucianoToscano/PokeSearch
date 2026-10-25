@@ -793,6 +793,10 @@ public class OverlayService extends Service {
     private void resizeIndependentPopup(int width,int height){
         if(popupKind.isEmpty()||!popupLoaded||!menuExpanded)return;
         int w=Math.max(1,Math.min(330,width)),h=Math.max(1,Math.min(450,height));
+        // The Location popup must never feed a transient shrinking WebView
+        // width back to WindowManager after keyboard focus or React updates.
+        if("location".equals(popupKind))
+            w=Math.max(1,Math.min(286,screenWidthDp()-12));
         if(popupWidthDp==w&&popupHeightDp==h)return;
         popupWidthDp=w;popupHeightDp=h;positionIndependentPopup();
     }

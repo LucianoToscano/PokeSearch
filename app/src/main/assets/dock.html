@@ -3389,6 +3389,89 @@ body.controls-window #choices.locationPanel #locHint{
  font-size:9px!important;line-height:1.2!important;
  max-width:100%!important;overflow-wrap:anywhere!important;
 }
+
+/* LT83 Samsung: stable, centered location layout; no child can enlarge popup. */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel,
+body.popup-window.controls-window.popup-above #choices.locationPanel{
+ box-sizing:border-box!important;width:min(286px,calc(100vw - 12px))!important;
+ min-width:0!important;max-width:calc(100vw - 12px)!important;
+ margin:0!important;padding:5px 6px!important;
+ overflow-x:hidden!important;overflow-y:visible!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow,
+body.popup-window.controls-window.popup-above #choices.locationPanel .locRadiusRow{
+ display:grid!important;grid-template-columns:29px 75px 65px!important;
+ box-sizing:border-box!important;justify-content:center!important;align-items:center!important;
+ gap:5px!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;padding:0!important;margin:0!important;
+ overflow:hidden!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusText,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusText{
+ display:none!important;min-width:0!important;width:0!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locPaste,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locPaste{
+ display:flex!important;box-sizing:border-box!important;grid-column:1!important;
+ align-items:center!important;justify-content:center!important;
+ flex:none!important;width:29px!important;min-width:29px!important;max-width:29px!important;
+ height:29px!important;min-height:29px!important;
+ margin:0!important;padding:3px!important;transform:none!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap{
+ box-sizing:border-box!important;display:flex!important;grid-column:2!important;
+ position:static!important;align-items:center!important;
+ flex:none!important;width:75px!important;min-width:75px!important;max-width:75px!important;
+ height:29px!important;margin:0!important;padding:0!important;gap:1px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap input.locRadiusNumber,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap input.locRadiusNumber{
+ box-sizing:border-box!important;position:static!important;flex:0 0 52px!important;
+ width:52px!important;min-width:52px!important;max-width:52px!important;
+ height:29px!important;min-height:29px!important;margin:0!important;
+ padding:2px 3px!important;font:500 11px/1.2 monospace!important;text-align:center!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap .locRadiusUnit,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap .locRadiusUnit{
+ display:block!important;position:static!important;inset:auto!important;transform:none!important;
+ flex:0 0 auto!important;min-width:0!important;width:auto!important;
+ margin:0!important;padding:0!important;font:500 11px/1.2 Roboto,Arial,sans-serif!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions{
+ display:flex!important;grid-column:3!important;box-sizing:border-box!important;
+ align-items:center!important;justify-content:center!important;
+ flex:none!important;width:65px!important;min-width:65px!important;max-width:65px!important;
+ height:29px!important;margin:0!important;padding:0!important;gap:5px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions>.psLineAction,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions>.psLineAction{
+ box-sizing:border-box!important;flex:0 0 30px!important;
+ width:30px!important;min-width:30px!important;max-width:30px!important;
+ height:29px!important;min-height:29px!important;max-height:29px!important;
+ padding:3px!important;margin:0!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow .locField,
+body.popup-window.controls-window #choices.locationPanel .locCoordsRow .locField{
+ box-sizing:border-box!important;display:block!important;flex:1 1 auto!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ height:31px!important;min-height:31px!important;padding:2px 3px!important;
+ font:500 10px/1.15 monospace!important;letter-spacing:-.35px!important;
+ -webkit-text-size-adjust:none!important;text-align:center!important;direction:ltr!important;
+}
+body.controls-window #choices.locationPanel #locHint,
+body.popup-window.controls-window #choices.locationPanel #locHint{
+ box-sizing:border-box!important;text-align:center!important;max-width:100%!important;
+ margin:3px 0 0!important;padding:0!important;overflow-wrap:anywhere!important;
+ font:400 10px/1.2 Roboto,Arial,sans-serif!important;
+}
+body.controls-window #choices.locationPanel #locHint[hidden],
+body.popup-window.controls-window #choices.locationPanel #locHint[hidden]{
+ display:none!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3708,7 +3791,8 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
    // LT71: Location is a fixed-width compact popup. Overflowing descendants,
    // text focus, and transient scrollWidth must not grow its native hitbox.
    const measuredWidth=Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2);
-   const exactWidth=choiceOpen==="location"?Math.round(rect.width):measuredWidth;
+   const exactWidth=choiceOpen==="location"?
+      Math.min(286,Math.max(1,Math.floor(window.innerWidth||286))):measuredWidth;
    Native.resizePopup(exactWidth,
     Math.min(450,Math.ceil(Math.max(rect.height,pane.scrollHeight,bottom-rect.top))+2));
   }

@@ -7,7 +7,8 @@ const elements=s=>Array.from(document.querySelectorAll(s));
 const vis=e=>!!(e&&e.getClientRects().length);
 const labels=(root,pattern)=>Array.from(root.querySelectorAll("span,label,strong,small,dt,div,p")).filter(e=>vis(e)&&pattern.test(text(e))&&text(e).length<50).sort((a,b)=>text(a).length-text(b).length);
 function oneButton(label){
- const re=new RegExp("^\\s*"+label+"\\s*$","i");
+ const re=label==="Coords"?/^\\s*(?:Coords|Coordinates)\\s*$/i:
+  label==="Area"?/^\\s*Areas?\\s*$/i:new RegExp("^\\s*"+label+"\\s*$","i");
  return elements("button,[role=button]").find(b=>vis(b)&&re.test(text(b)))||null;
 }
 function click(label){let e=oneButton(label);if(e){e.click();return true;}return false;}
@@ -1372,6 +1373,17 @@ function coordsModeSelected(){
  if(coordButton&&fields.coords&&fields.radius&&
     /paste coordinates\s*\(\s*lat\s*[,;]\s*lng\s*\)\s*and\s*a\s*radius/i.test(visibleText))
    return true;
+ // React mobile may omit aria-selected and the help sentence. This
+ // fallback requires both UNIQUE provider placeholders, currently visible,
+ // and never accepts a confirmed Area tab or a generic Distance field.
+ const pair=elements('input:not([type=hidden]):not([type=checkbox]):not([type=radio])').filter(vis);
+ const coordPattern=/^\s*[-+]?\d{1,2}(?:\.\d+)?\s*[,;]\s*[-+]?\d{1,3}(?:\.\d+)?\s*$/;
+ const providerCoords=pair.filter(e=>coordPattern.test(e.getAttribute("placeholder")||""));
+ const providerRadius=pair.filter(e=>/^\s*radius\s*\(\s*km\b/i.test(e.getAttribute("placeholder")||""));
+ if(coordButton&&!active(areaButton)&&fields.coords&&fields.radius&&
+    providerCoords.length===1&&providerRadius.length===1&&
+    fields.coords===providerCoords[0]&&fields.radius===providerRadius[0])
+   return true;
  return null;
 }
 function locationValue(field){return field?String(field.value||"").trim():"";}
@@ -1428,10 +1440,19 @@ function configureLocation(req){
     return JSON.stringify({ok:false,reason:"Parâmetros de localização inválidos"});
  const coords=locationModeControl("Coords");
  if(!coords)return JSON.stringify({ok:false,pending:true,reason:"Aguardando opção Coords"});
- if(coordsModeSelected()!==true){
-  if(!coords.disabled)coords.click();
+ const selected=coordsModeSelected();
+ if(selected!==true){
+  if(!coords.disabled&&selected===false)coords.click();
+  else if(!coords.disabled&&selected===null){
+   // Avoid repeatedly remounting React's controlled fields on every retry.
+   const root=document.body;
+   if(root&&!root.__psCoordsModeClickPending){
+    root.__psCoordsModeClickPending=true;coords.click();
+   }
+  }
   return JSON.stringify({ok:false,pending:true,reason:"Aguardando confirmação do modo Coords"});
  }
+ if(document.body)document.body.__psCoordsModeClickPending=false;
  const fields=locationFields();
  if(!fields.coords||!fields.radius)return JSON.stringify({ok:false,pending:true,reason:"Aguardando campos de coordenadas/raio"});
   if(fields.coords.disabled||fields.radius.disabled)
