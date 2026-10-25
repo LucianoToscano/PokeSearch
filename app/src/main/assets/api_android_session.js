@@ -129,6 +129,9 @@
      ok:true,cards:r.cards,found:r.found,siteCount:r.siteCount,
      rejected:r.rejected,expired:r.expired,searchId:r.searchId,
      criteriaConfirmed:true,resultChanged:true,leagueConfirmed:pvp,
+     // The transport accepted the exact signed-in HTTP search payload,
+     // not a fixture or DOM-derived visual-only result.
+     requestValidated:r.requestValidated===true,
      explicitEmpty:r.cards.length===0,siteShiny:filters.shiny===true,
      confirmationSource:"api-http-200",source:"authorized-api-qa"
     };
