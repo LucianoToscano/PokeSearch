@@ -4857,7 +4857,7 @@ function attachSpriteFeedback(){
  document.querySelectorAll(".spawn .spriteStage").forEach(stage=>{
   const img=stage.querySelector("img.sprite");
   if(!img){stage.classList.add("failed");return;}
-  let retries=0,done=false;
+  let retries=0,done=false,mirrorAttempted=false;
   const good=()=>img.naturalWidth>=8&&img.naturalHeight>=8;
   const loaded=()=>{
    if(good()){done=true;stage.classList.remove("failed");stage.classList.add("loaded");}
@@ -4865,14 +4865,20 @@ function attachSpriteFeedback(){
   };
   const failed=()=>{
    if(done||!img.isConnected)return;
-   if(retries>=2){stage.classList.remove("loaded");stage.classList.add("failed");return;}
-   const delay=retries===0?550:1600;retries++;
+   const original=img.getAttribute("data-original-src")||"";
+   // Exact, verified PokeAPI base sprite path only. Never guess a different
+   // sprite for forms, shadows, costumes or a provider-supplied image URL.
+   const match=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/((?:shiny\/)?[0-9]{1,4}\.png)$/.exec(original);
+   if(match&&!mirrorAttempted){
+    mirrorAttempted=true;
+    img.src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+match[1];
+    return;
+   }
+   if(retries>=1){stage.classList.remove("loaded");stage.classList.add("failed");return;}
+   retries++;
    setTimeout(()=>{
-    if(!done&&img.isConnected){
-     const original=img.getAttribute("data-original-src");
-     if(original)img.src=original; // same verified URL; never fabricate sprite paths
-    }
-   },delay);
+    if(!done&&img.isConnected&&original)img.src=original;
+   },650);
   };
   img.addEventListener("load",loaded);
   img.addEventListener("error",failed);
