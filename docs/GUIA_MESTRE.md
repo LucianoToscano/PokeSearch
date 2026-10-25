@@ -4,6 +4,15 @@
 >
 > **REGRA DE PRIORIDADE:** verificar sempre o HEAD e as PRs reais. Estado recente comprovado por commits/CI prevalece sobre instruções de versões antigas dentro do backup. *Nenhuma numeração QA comprova a conclusão de uma etapa de roadmap ou teste Samsung.*
 
+## LT113 — Get coords API com comparação incorreta e pesquisa obsoleta (25/10/2026)
+- Print do Samsung: **Audino shiny #531, PC 1538, 15/15/15**, card exibiu `Get coords API: stale-or-ambiguous-selection`.
+- API e UI usavam representações diferentes do mesmo PC: `"1538"` na resposta bruta e `1538` na seleção Android, o que era rejeitado no `api_browser_transport.js` por comparação estrita de tipos. Normalizar somente PC decimal canônico para inteiro, mantendo índice, espécie, ID exato da busca, despawn e código efêmero autenticado.
+- `OverlayService.requestCoordinates`: não consultar coordenadas de cards antigos enquanto a API atualiza; impedir seleção obsoleta. Mensagens claras em Português para busca atualizada, expirada ou já consultando.
+- Tudo na `OverlayService` compartilhada: Pokébola 1 e 2 obrigatoriamente testadas (15/15/15 e 0/0/0).
+- Teste `app/tests/lt113-get-coords-canonical-dual.test.js` obrigatório no Node QA; inclui formatos ambíguos, índices/PC de outro encontro, tentativa após refresh e proteção contra vazamento do `reveal_code`.
+- Backup `backup/lt112-before-get-coords-fix-20261025` = `c8e1c2eb7c394b4aec516a7013a1d919dee9b5ad`. Branch/PR #73 Draft; **QA 0.01.13 / versionCode 54317**, apenas arquivo de Actions, ainda não release estável.
+- Detalhes e roteiro físico Samsung: [LT113 Get coords dual](POKESEARCH_LT113_GET_COORDS_DUAL_PARITY_20261025.md).
+
 ## REGRA PERMANENTE — PARIDADE DE CORREÇÕES NAS DUAS POKÉBOLAS (LT112)
 **Obrigatória e prioritária em todas as próximas etapas.** Qualquer correção ou melhoria de API/DOM, filtros, sprites, cartões, localização, favoritos, notificações, sons, resultados, expiração, menus, atualização ou funcionamento deve ser efetiva e verificada na **Pokébola 1 e Pokébola 2** antes de concluir. A segunda Pokébola não pode ficar com bugs antigos enquanto a primeira é corrigida.
 - Código preferencialmente compartilhado por `OverlayService` (herdado por `SecondaryOverlayService`), sem copiar correções isoladas para uma instância. Quando houver comportamento específico, cobrir cada serviço.
