@@ -10,7 +10,7 @@ on:
       - 'app/tests/**'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   build-release:
     runs-on: ubuntu-24.04
@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          persist-credentials: true
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -123,6 +123,41 @@ jobs:
             PROTECTION.txt
           if-no-files-found: error
           retention-days: 30
+      - name: Append signed QA proof to complete Guia Mestre
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          GUIDE="docs/GUIA_MESTRE.md"
+          test -f "$GUIDE"
+          BEFORE="$(wc -c < "$GUIDE")"
+          test "$BEFORE" -gt 1400000 || { echo "::error::Guia Mestre is unexpectedly small"; exit 1; }
+          ORIGINAL_SHA="$(sha256sum "$GUIDE" | awk '{print $1}')"
+          {
+            printf '\n\n## LT86 QA — Formas completas e nível 50 (25/10/2026)\n'
+            printf 'Versão 0.00.86, versionCode 54289, somente QA; nenhuma publicação oficial.\n'
+            printf 'Branch: fix/lt86-api-filter-options-qa-20261025; PR #61 Draft sobre LT85 PR #60. Main e PR #59 preservadas.\n'
+            printf 'Código: dock.html permite Nível 1–50 e pagina até 500 formas em grupos de 60; api_android_session.js expõe até 500 nomes do catálogo da API.\n'
+            printf 'Testes históricos Node (exceto preview LT74 legado), Java, Gradle testDebugUnitTest e assembleRelease executados pelo pipeline LT86.\n'
+            printf 'GitHub Actions: %s\n' "$GITHUB_RUN_ID"
+            printf 'Build SOURCE_COMMIT: %s\n' "$(cat SOURCE_COMMIT.txt)"
+            printf 'APK QA: PokeSearch-v0.00.86-LT-API-QA.apk\n'
+            printf 'APK SHA-256: %s\n' "$(awk '{print $1}' SHA256SUMS.txt)"
+            printf 'Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e\n'
+            printf 'Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.\n'
+            printf 'Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.\n'
+            printf 'Guia Mestre prévio permaneceu imutável, com adição somente ao final.\n'
+          } >> "$GUIDE"
+          AFTER="$(wc -c < "$GUIDE")"
+          test "$AFTER" -gt "$BEFORE"
+          PREFIX_SHA="$(head -c "$BEFORE" "$GUIDE" | sha256sum | awk '{print $1}')"
+          test "$ORIGINAL_SHA" = "$PREFIX_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$GUIDE"
+          git commit -m "docs(LT86 QA): append protected build proof without replacing Guia Mestre"
+          # Reject concurrent HEAD changes; never force push or overwrite project history.
+          git push origin "HEAD:$GITHUB_REF_NAME"
       - name: Cleanup secret key
         if: always()
         run: rm -f "$RUNNER_TEMP/pokesearch-v086-forms.p12"
