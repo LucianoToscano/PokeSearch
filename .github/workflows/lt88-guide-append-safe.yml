@@ -1,9 +1,9 @@
-name: PokeSearch LT88 cycle safe Guia Mestre append
+name: PokeSearch LT88 R2 safe Guia Mestre append
 on:
   push:
     branches: [feature/lt88-lt93-evolution-20261025]
     paths:
-      - 'docs/ESTADO_CICLO_LT88_LT93_QA.md'
+      - 'docs/LT88_SAMSUNG_R2_QA.md'
       - '.github/workflows/lt88-guide-append-safe.yml'
 permissions:
   contents: write
@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           GUIDE=docs/GUIA_MESTRE.md
-          MARKER='LT88–LT93 QA — evidência Samsung e progresso'
+          MARKER='LT88 Samsung R2 QA — retornos físicos e correções'
           test -f "$GUIDE"
           BEFORE="$(wc -c < "$GUIDE")"
           test "$BEFORE" -gt 1400000
@@ -36,14 +36,15 @@ jobs:
             echo
             echo
             echo "## $MARKER (25/10/2026)"
-            echo "- Fonte canônica anterior: main 83cf9a693a3672276e01d04e38ed14dce0071cb8; oficial LT87 0.00.87/54290 preservada."
-            echo "- PR #63 Draft, branch feature/lt88-lt93-evolution-20261025. Nenhum merge ou Release automática."
-            echo "- QA candidato 0.00.88/54291: Favoritos ☆/★ no cabeçalho entre contador e X; Filtros com rail/editor/flyout sobre fundo real, título central e ▣ à direita com margem."
-            echo "- Cache: app-private LRU de PNG base com releitura read-only nos WebViews; sugestões simultâneas deduplicadas; forma NORMAL oficial sem atribuir sprite a trajes especiais."
-            echo "- LT89-A: nomes editáveis dos perfis gerais; LT90-A: alerta recente deduplicado, nunca expirado; LT91-A: locais salvos nomeados sem GPS e aplicação via Bridge.setLocation."
-            echo "- Não concluídos: LT88 Samsung físico/Despawn, LT89 importar/exportar, LT90 prioridade, LT91 Caçada completa, LT92 Mural Firebase, LT93 administração/métricas; ver docs/ESTADO_CICLO_LT88_LT93_QA.md."
-            echo "- CI e build assinado não equivalem a PASS físico. Não habilitar alertas API nem mural sem validação e regras de segurança."
-            echo "- Guia Mestre anterior preservado por hash de prefixo e append exclusivamente."
+            echo "- main oficial LT87/54290 sem alterações; PR #63 Draft permanece sem merge e sem Release."
+            echo "- Evidência Samsung LT88/54291: Modos/Filtros transparentes, Colar sem sucesso, ausência de Copiar, formulário perfis salvo sobreposto, sprites NORMAL incompletas, IV/PvP e cronômetro somem em parte das ordenações."
+            echo "- Correção R2: fundos sólidos no rail/editor Modos/Filtros, lista salva em flyout lateral compacta Filtro 1–3 (toque usar, segure salvar, × excluir), sem áreas vazias."
+            echo "- Favoritos: somente perfil ativo acende; segurar oferece Salvar/Excluir. Localização: Colar aceita texto único ou link válido, Copiar explícito, locais salvos com estrela ativa, ajuda e exclusão."
+            echo "- Sprites NORMAL do catálogo verificadas; formas especiais sem correspondência continuam placeholder. Em detalhes: IV A/D/S + IV% verificados, cronômetro sem o rótulo Despawn."
+            echo "- Ordenação Distância: metadados reaproveitados somente para encontro idêntico ainda ativo, com mesmo timestamp absoluto, jamais inventando IV/rank."
+            echo "- Build de QA candidato 0.00.89/54292, versão numérica não representa LT89 totalmente concluída. Ver docs/LT88_SAMSUNG_R2_QA.md."
+            echo "- CI automatizado, instalação física Samsung e interoperabilidade clipboard precisam de comprovação separada; sem PASS físico presumido."
+            echo "- Guia anterior preservado integralmente pelo hash do prefixo; só append."
           } >> "$GUIDE"
           AFTER="$(wc -c < "$GUIDE")"
           test "$AFTER" -gt "$BEFORE"
@@ -52,7 +53,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$GUIDE"
-          git commit -m 'docs(LT88 QA): safely append protected cycle checkpoint to full Guia'
+          git commit -m 'docs(LT88 R2 QA): safely append Samsung proof without altering Guide history'
           git fetch origin "refs/heads/$GITHUB_REF_NAME:refs/remotes/origin/$GITHUB_REF_NAME"
           git rebase "origin/$GITHUB_REF_NAME"
           git push origin "HEAD:$GITHUB_REF_NAME"
