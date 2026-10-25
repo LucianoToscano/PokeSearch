@@ -3938,6 +3938,151 @@ body.controls-window #choices.filterCascade .generalPresetRow .generalPresetDele
 /* Location has no legacy named slots, star buttons or '?' controls. */
 body.controls-window #choices.locationPanel .locSavedRow,
 body.controls-window #choices.locationPanel .locSlotTools{display:none!important}
+
+/* LT88 R8: label-only saved preset button, with two compact rows. */
+body.controls-window #choices.filterCascade .filterCascadeHead{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  min-height:21px!important;height:21px!important;padding:0!important;
+}
+body.controls-window #choices.filterCascade .filterHeaderTitle{
+  display:block!important;box-sizing:border-box!important;width:100%!important;
+  min-height:21px!important;height:21px!important;margin:0!important;padding:0 2px!important;
+  background:transparent!important;border:0!important;border-radius:4px!important;
+  color:var(--visual-menu-fg,#edf4ff)!important;font:700 11px/21px Roboto,Arial,sans-serif!important;
+  text-align:center!important;cursor:pointer!important;pointer-events:auto!important;
+}
+body.controls-window #choices.filterCascade .filterHeaderTitle[aria-expanded="true"]{
+  background:var(--visual-menu-button-bg,#33465a)!important;
+}
+body.controls-window #choices.filterCascade .generalPresetToggle,
+body.controls-window #choices.filterCascade .generalPresetTitle,
+body.controls-window #choices.filterCascade .generalPresetHint{display:none!important}
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout{
+  box-sizing:border-box!important;position:absolute!important;left:82px!important;right:auto!important;
+  top:0!important;width:162px!important;min-width:162px!important;max-width:162px!important;
+  min-height:0!important;height:max-content!important;max-height:none!important;
+  margin:0!important;padding:4px!important;display:flex!important;flex-direction:column!important;
+  gap:2px!important;overflow:visible!important;
+}
+body.menu-left.controls-window #choices.filterCascade .generalPresetFlyout{
+  left:auto!important;right:calc(100% + 4px)!important;
+}
+body.controls-window #choices.filterCascade .generalPresetDefault{
+  width:100%!important;min-height:27px!important;height:27px!important;
+  padding:1px 6px!important;text-align:left!important;font:600 11px/23px Roboto,Arial,sans-serif!important;
+  color:var(--visual-menu-fg,#edf4ff)!important;
+  background:var(--visual-menu-button-bg,#293747)!important;border-radius:5px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetDefault.active{
+  border-color:var(--visual-menu-fg,#d4eff9)!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow{
+  box-sizing:border-box!important;display:flex!important;align-items:center!important;
+  width:100%!important;min-height:27px!important;height:27px!important;gap:2px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad{
+  box-sizing:border-box!important;flex:1 1 auto!important;min-width:0!important;width:0!important;
+  height:27px!important;min-height:27px!important;padding:2px 6px!important;
+  background:var(--visual-menu-button-bg,#293747)!important;
+  color:var(--visual-menu-fg,#edf4ff)!important;font:600 11px/21px Roboto,Arial,sans-serif!important;
+  border:1px solid var(--visual-menu-border,#ffffff48)!important;border-radius:5px!important;
+  text-align:left!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad.active{
+  border-color:#eec55b!important;color:#eec55b!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad.empty{opacity:.68!important}
+body.controls-window #choices.filterCascade .generalPresetRow>button.generalPresetSave,
+body.controls-window #choices.filterCascade .generalPresetRow>button.generalPresetDelete{
+  box-sizing:border-box!important;display:flex!important;align-items:center!important;
+  justify-content:center!important;flex:0 0 26px!important;width:26px!important;min-width:26px!important;
+  max-width:26px!important;height:27px!important;min-height:27px!important;
+  margin:0!important;padding:3px!important;border-radius:5px!important;
+  background:transparent!important;border:1px solid var(--visual-menu-border,#ffffff48)!important;
+  color:#fff!important;box-shadow:none!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow>button svg{
+  display:block!important;width:18px!important;height:18px!important;
+  stroke:#fff!important;stroke-width:1.65!important;fill:none!important;pointer-events:none!important;
+}
+/* Location: same coordinate width, roughly half the old height (3 rows),
+   keeping separate paste, copy, 0–1000km slider, apply, and reset actions. */
+body.controls-window #choices.locationPanel,
+body.popup-window.controls-window #choices.locationPanel{
+  box-sizing:border-box!important;width:min(286px,calc(100vw - 12px))!important;
+  min-width:0!important;max-width:calc(100vw - 12px)!important;
+  height:max-content!important;min-height:0!important;max-height:fit-content!important;
+  padding:3px 5px!important;margin:0!important;overflow-x:hidden!important;overflow-y:visible!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader,
+body.popup-window.controls-window #choices.locationPanel .choiceHeader{
+  box-sizing:border-box!important;height:21px!important;min-height:21px!important;
+  margin:0 0 1px!important;padding:0 2px!important;line-height:20px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow,
+body.popup-window.controls-window #choices.locationPanel .locCoordsRow{
+  box-sizing:border-box!important;margin:0 0 2px!important;padding:0!important;gap:0!important;
+  height:28px!important;min-height:28px!important;
+}
+body.controls-window #choices.locationPanel .locCoordsRow .locField,
+body.popup-window.controls-window #choices.locationPanel .locCoordsRow .locField{
+  height:28px!important;min-height:28px!important;font-size:11px!important;
+  padding:3px 6px!important;text-align:left!important;letter-spacing:-.2px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow{
+  display:grid!important;box-sizing:border-box!important;
+  grid-template-columns:25px 25px 70px minmax(46px,1fr) 60px!important;
+  align-items:center!important;justify-content:stretch!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  gap:3px!important;margin:0!important;padding:0!important;
+  height:28px!important;min-height:28px!important;overflow:hidden!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locPaste,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locPaste{
+  grid-column:1!important;width:25px!important;min-width:25px!important;
+  max-width:25px!important;height:26px!important;min-height:26px!important;padding:3px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locCopy,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locCopy{
+  grid-column:2!important;position:static!important;width:25px!important;min-width:25px!important;
+  max-width:25px!important;height:26px!important;min-height:26px!important;padding:0!important;
+  margin:0!important;font-size:16px!important;transform:none!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap{
+  grid-column:3!important;box-sizing:border-box!important;width:70px!important;
+  min-width:70px!important;max-width:70px!important;height:26px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap .locRadiusNumber,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.locRadiusInputWrap .locRadiusNumber{
+  width:48px!important;min-width:48px!important;max-width:48px!important;
+  height:26px!important;min-height:26px!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>input[type=range],
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>input[type=range]{
+  grid-column:4!important;box-sizing:border-box!important;width:100%!important;
+  min-width:0!important;max-width:100%!important;height:22px!important;
+  margin:0!important;padding:0!important;align-self:center!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.compactLocationActions{
+  grid-column:5!important;display:flex!important;gap:2px!important;width:60px!important;
+  min-width:60px!important;max-width:60px!important;height:26px!important;
+  margin:0!important;padding:0!important;
+}
+body.controls-window #choices.locationPanel .locRadiusRow .compactLocationActions>.psLineAction,
+body.popup-window.controls-window #choices.locationPanel .locRadiusRow .compactLocationActions>.psLineAction{
+  flex:0 0 29px!important;width:29px!important;min-width:29px!important;
+  max-width:29px!important;height:26px!important;min-height:26px!important;
+}
+body.controls-window #choices.locationPanel #locHint,
+body.popup-window.controls-window #choices.locationPanel #locHint{
+  margin:1px 0 0!important;padding:0!important;min-height:0!important;
+  font-size:9px!important;line-height:1.15!important;
+}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4741,61 +4886,83 @@ function filterCascadeEditorWidth(label){
   Sexo:80,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
  return width[label]||134;
 }
-// LT88 Samsung: small flyout adjacent to the filter rail.
+// LT88 R8: the word "Filtro" IS the saved-presets toggle.
+// Historical preset slot 3 stays in SharedPreferences but is not shown.
 let generalPresetActive=0;
+function presetGlyph(kind){
+ const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+ svg.setAttribute("viewBox","0 0 24 24");
+ svg.setAttribute("fill","none");svg.setAttribute("stroke","currentColor");
+ svg.setAttribute("stroke-width","1.65");svg.setAttribute("stroke-linecap","round");
+ svg.setAttribute("stroke-linejoin","round");svg.setAttribute("aria-hidden","true");
+ svg.innerHTML=kind==="save"?
+  '<path d="M5 3h12l4 4v14H3V3h2zM7 3v6h10V3M7 21v-9h10v9M14 4v4"/>':
+  '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/>';
+ return svg;
+}
 function renderGeneralPresetControls(rail,make){
- const heading=rail.querySelector(".filterCascadeHead");
- const toggle=make("button","generalPresetToggle","⊙");
- toggle.type="button";toggle.title="Filtros salvos";
- toggle.setAttribute("aria-label","Abrir filtros salvos");
- toggle.onclick=()=>{
+ const heading=rail.querySelector(".filterHeaderTitle");
+ heading.type="button";
+ heading.title="Filtro · perfis salvos";
+ heading.setAttribute("aria-label","Filtro · abrir ou fechar perfis salvos");
+ heading.setAttribute("aria-expanded",String(generalPresetExpanded));
+ heading.setAttribute("aria-controls","generalPresetFlyout");
+ heading.onclick=()=>{
   generalPresetExpanded=!generalPresetExpanded;
   if(generalPresetExpanded)filterFocus="";
   renderFiltersChoices();
   if(generalPresetExpanded&&Native.requestGeneralFilterPresets)Native.requestGeneralFilterPresets();
  };
- heading.appendChild(toggle);
  if(!generalPresetExpanded)return;
  const menu=make("div","generalPresetFlyout");
- menu.appendChild(make("div","generalPresetTitle","Filtros salvos"));
+ menu.id="generalPresetFlyout";menu.setAttribute("role","group");
+ menu.setAttribute("aria-label","Padrão e filtros salvos");
  const standard=make("button","generalPresetDefault","Padrão");
  standard.type="button";
- standard.title="Limpar campos gerais; não alterar Shiny ou localização";
+ standard.title="Limpar filtros gerais sem alterar Shiny ou localização";
+ standard.classList.toggle("active",generalPresetActive===0);
+ standard.setAttribute("aria-pressed",String(generalPresetActive===0));
  standard.onclick=()=>{
   generalPresetActive=0;generalPresetExpanded=false;
   filterFocus="";renderFiltersChoices();
   if(Native.clearGeneralFilterPreset)Native.clearGeneralFilterPreset();
  };
  menu.appendChild(standard);
- for(let slot=1;slot<=3;slot++){
+ for(let slot=1;slot<=2;slot++){
   const row=make("div","generalPresetRow");
-  const name=make("button","generalPresetLoad",
-   (generalPresetActive===slot?"★ ":"☆ ")+(generalPresetNames[slot-1]||"Perfil "+slot));
+  const name=make("button","generalPresetLoad","Filtro "+slot);
   name.type="button";name.dataset.presetLoad=String(slot);
-  name.title="Toque para usar filtro salvo";
+  name.title="Tocar para aplicar Filtro "+slot;
+  name.setAttribute("aria-label","Usar Filtro "+slot);
+  name.classList.toggle("active",generalPresetActive===slot&&generalPresetSaved[slot-1]);
+  name.classList.toggle("empty",!generalPresetSaved[slot-1]);
+  name.setAttribute("aria-pressed",String(generalPresetActive===slot&&generalPresetSaved[slot-1]));
   name.onclick=()=>{
-   if(!generalPresetSaved[slot-1]){menu.querySelector(".generalPresetHint").textContent="Perfil vazio · use 💾 para salvar";return;}
+   if(!generalPresetSaved[slot-1]){
+    name.title="Filtro "+slot+" vazio · toque no disquete para salvar";
+    return;
+   }
    generalPresetActive=slot;generalPresetExpanded=false;filterFocus="";
    renderFiltersChoices();
    if(Native.loadGeneralFilterPreset)Native.loadGeneralFilterPreset(slot);
   };
-  const save=make("button","generalPresetSave","▣");
-  save.type="button";save.title="Salvar filtros atuais no Perfil "+slot;
-  save.setAttribute("aria-label","Salvar perfil "+slot);
-  save.textContent="💾";
+  const save=make("button","generalPresetSave");
+  save.type="button";save.appendChild(presetGlyph("save"));
+  save.title="Salvar filtros atuais no Filtro "+slot;
+  save.setAttribute("aria-label","Salvar Filtro "+slot);
   save.onclick=()=>{
    generalPresetActive=slot;
    if(Native.saveGeneralFilterPreset)Native.saveGeneralFilterPreset(slot);
   };
-  const remove=make("button","generalPresetDelete","×");
-  remove.type="button";remove.title="Excluir Perfil "+slot;
-  remove.setAttribute("aria-label","Excluir perfil "+slot);
+  const remove=make("button","generalPresetDelete");
+  remove.type="button";remove.appendChild(presetGlyph("delete"));
+  remove.title="Excluir somente Filtro "+slot;
+  remove.setAttribute("aria-label","Limpar Filtro "+slot);
   remove.onclick=()=>{
    if(Native.deleteGeneralFilterPreset)Native.deleteGeneralFilterPreset(slot);
   };
   row.append(name,save,remove);menu.appendChild(row);
  }
- menu.appendChild(make("div","generalPresetHint","Toque: usar · 💾 salvar · × excluir"));
  rail.parentElement.appendChild(menu);
 }
 if(typeof window!=="undefined")window.onGeneralPresetStatus=response=>{
@@ -4805,11 +4972,15 @@ if(typeof window!=="undefined")window.onGeneralPresetStatus=response=>{
  if(Array.isArray(response.names)&&response.names.length===3)
   generalPresetNames=response.names.map((name,index)=>String(name||"Filtro "+(index+1)).slice(0,20));
  document.querySelectorAll(".generalPresetLoad").forEach(button=>{
-  const i=Number(button.dataset.presetLoad);
-  button.textContent=(generalPresetActive===i?"★ ":"☆ ")+
-   (generalPresetNames[i-1]||"Filtro "+i);
-  button.classList.toggle("active",generalPresetActive===i&&generalPresetSaved[i-1]);
+  const slot=Number(button.dataset.presetLoad),available=generalPresetSaved[slot-1];
+  button.textContent="Filtro "+slot;
+  button.classList.toggle("active",generalPresetActive===slot&&available);
+  button.classList.toggle("empty",!available);
+  button.setAttribute("aria-pressed",String(generalPresetActive===slot&&available));
+  button.title=available?"Tocar para aplicar Filtro "+slot:
+   "Filtro "+slot+" vazio · use o disquete para salvar";
  });
+ document.querySelector(".generalPresetDefault")?.classList.toggle("active",generalPresetActive===0);
 };
 function renderExtraFilters(panel,make){
  const divider=()=>panel.appendChild(make("div","extraDivider"));
@@ -4980,7 +5151,7 @@ function renderExtraFilters(panel,make){
  rail.setAttribute("role","menu");editor.setAttribute("role","group");
  editor.setAttribute("aria-label","Filtro selecionado");
  const heading=make("div","filterCascadeHead");
- heading.appendChild(make("span","filterHeaderTitle","Filtros"));
+ heading.appendChild(make("button","filterHeaderTitle","Filtro"));
  rail.appendChild(heading);
  const selected=rows.some(row=>row.querySelector("label")?.textContent===filterFocus)?filterFocus:"";
  filterFocus=selected;
@@ -5333,8 +5504,8 @@ function renderLocationChoices(){
   Native.setLocation(true,wantedCoords,wantedRadius);
  }
  apply.onclick=submit;
- actions.append(apply,clear);label.appendChild(actions);
- panel.append(title,fieldRow,slide,label,message);
+ actions.append(apply,clear);label.append(slide,actions);
+ panel.append(title,fieldRow,label,message);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
  locationPanelFeedback();
