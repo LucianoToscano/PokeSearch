@@ -125,3 +125,10 @@ Este checkpoint **substitui instruções visuais antigas** do arquivo histórico
 
 ## 11. Protocolo obrigatório do próximo chat
 Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, preservar todas as mudanças anteriores e escolher a branch correta antes de alterar arquivos. Etapas pequenas, reversíveis e auditáveis, com testes; não apagar preferências, não mexer na assinatura, não ativar Firebase real por inferência. Registrar mudanças neste guia **em poucas linhas** e encaminhar documentos aprofundados para arquivos separados. **Nunca declarar Release, merge, aprovação Samsung ou mural online sem prova real.**
+
+
+## 14. Desenvolvimento seguro — Duas Pokébolas, filtros separados (25/10/2026)
+- **Backup antes da alteração:** `backup/lt103-before-dual-pokeballs-20261025` -> HEAD original `97654f3c0ecaf4d3de4e22fe1f3efb6d979f0297` (sem modificações). Branch de implementação isolada `feature/dual-pokeballs-100-0-20261025`.
+- **UX solicitada:** dois overlays simultâneos com uma única conta, **sem diferenciação artificial de cor/número/ícone**; ícones mudam com filtros de cada Pokébola. Padrão da primeira IV 15/15/15 (100%) e da segunda IV 0/0/0 (0%); filtros subsequentes persistem por instância.
+- Implementação: componente `SecondaryOverlayService` reaproveita `OverlayService` com `prefs_secondary` para seus filtros/posições e ID 74 de notificação; primário usa `prefs` e ID 73. WebView/CookieManager compartilha autenticação, não resultados/filtros em memória. Botão independente na Home, login/logout propagados, resultados até 10 por instância.
+- **Status: em desenvolvimento / QA, não homologado em Samsung, sem merge/release APK.** Ver [documento detalhado](POKESEARCH_DUAL_POKEBALLS_20261025.md) para limitações, testes, segurança, origem e rollback. QA obrigatória antes de publicar.
