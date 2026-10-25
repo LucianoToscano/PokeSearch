@@ -1,0 +1,58 @@
+name: PokeSearch LT88 cycle safe Guia Mestre append
+on:
+  push:
+    branches: [feature/lt88-lt93-evolution-20261025]
+    paths:
+      - 'docs/ESTADO_CICLO_LT88_LT93_QA.md'
+      - '.github/workflows/lt88-guide-append-safe.yml'
+permissions:
+  contents: write
+concurrency:
+  group: lt88-guide-append-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  append-guide:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          ref: ${{ github.sha }}
+      - name: Append without replacing entire historical Guia
+        shell: bash
+        run: |
+          set -euo pipefail
+          GUIDE=docs/GUIA_MESTRE.md
+          MARKER='LT88–LT93 QA — evidência Samsung e progresso'
+          test -f "$GUIDE"
+          BEFORE="$(wc -c < "$GUIDE")"
+          test "$BEFORE" -gt 1400000
+          FIRST_SHA="$(sha256sum "$GUIDE" | awk '{print $1}')"
+          if grep -Fq "$MARKER" "$GUIDE"; then
+            echo "Already appended; no rewrite."
+            exit 0
+          fi
+          {
+            echo
+            echo
+            echo "## $MARKER (25/10/2026)"
+            echo "- Fonte canônica anterior: main 83cf9a693a3672276e01d04e38ed14dce0071cb8; oficial LT87 0.00.87/54290 preservada."
+            echo "- PR #63 Draft, branch feature/lt88-lt93-evolution-20261025. Nenhum merge ou Release automática."
+            echo "- QA candidato 0.00.88/54291: Favoritos ☆/★ no cabeçalho entre contador e X; Filtros com rail/editor/flyout sobre fundo real, título central e ▣ à direita com margem."
+            echo "- Cache: app-private LRU de PNG base com releitura read-only nos WebViews; sugestões simultâneas deduplicadas; forma NORMAL oficial sem atribuir sprite a trajes especiais."
+            echo "- LT89-A: nomes editáveis dos perfis gerais; LT90-A: alerta recente deduplicado, nunca expirado; LT91-A: locais salvos nomeados sem GPS e aplicação via Bridge.setLocation."
+            echo "- Não concluídos: LT88 Samsung físico/Despawn, LT89 importar/exportar, LT90 prioridade, LT91 Caçada completa, LT92 Mural Firebase, LT93 administração/métricas; ver docs/ESTADO_CICLO_LT88_LT93_QA.md."
+            echo "- CI e build assinado não equivalem a PASS físico. Não habilitar alertas API nem mural sem validação e regras de segurança."
+            echo "- Guia Mestre anterior preservado por hash de prefixo e append exclusivamente."
+          } >> "$GUIDE"
+          AFTER="$(wc -c < "$GUIDE")"
+          test "$AFTER" -gt "$BEFORE"
+          PREFIX_SHA="$(head -c "$BEFORE" "$GUIDE" | sha256sum | awk '{print $1}')"
+          test "$PREFIX_SHA" = "$FIRST_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$GUIDE"
+          git commit -m 'docs(LT88 QA): safely append protected cycle checkpoint to full Guia'
+          git fetch origin "refs/heads/$GITHUB_REF_NAME:refs/remotes/origin/$GITHUB_REF_NAME"
+          git rebase "origin/$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
