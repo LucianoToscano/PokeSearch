@@ -1,6 +1,6 @@
 # PokeSearch — Android Overlay
 
-> **Guia Mestre permanente:** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md). Este README indica o estado verificado; o Guia mantém todo o histórico. Não confundir tags oficiais com commits posteriores de documentos.
+> **Guia Mestre atual (curto):** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md) — leia primeiro para versões, PRs, arquitetura, QA e últimas decisões. **Arquivo histórico integral (backup imutável):** [docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md](docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md), SHA-256 `f02d6396a3ae6a4e833f78be8aedbe0b8d0b40254f31203644f3040a30e2a861`. Pesquise nesse backup apenas quando houver dúvida histórica; ele não é mais o guia de edição diária.
 
 ## Estado oficial — PokeSearch LT87 (25/10/2026)
 
