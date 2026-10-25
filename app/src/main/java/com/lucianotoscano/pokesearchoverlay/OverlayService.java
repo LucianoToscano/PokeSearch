@@ -215,6 +215,98 @@ public class OverlayService extends Service {
     private boolean popupAbove=false;
     private int popupOffsetDp=-1,popupRoomDp=-1;
     private String probeScriptCache;
+    // Experimental API: local explicit opt-in. All installations default to DOM.
+    private AuthorizedApiCollector authorizedApiCollector;
+    private boolean displayedApiResults=false;
+    private int displayedApiSearchId=-1;
+    private boolean authorizedApiQaSelected(){
+        return getSharedPreferences("prefs",0).getBoolean("authorizedApiQaOptIn",false);
+    }
+    private void performAuthorizedApiSearch(int generation,boolean manual){
+        if(authorizedApiCollector==null){
+            authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+        }
+        try{
+            JSONObject config=new JSONObject(filterConfigJson());
+            config.put("mode",mode);
+            config.put("shiny",shiny);
+            config.put("locationEnabled",locationEnabled);
+            config.put("locationCoords",locationEnabled?locationCoords:"");
+            if(locationEnabled)config.put("locationRadius",locationRadius);
+            status(manual?"API QA: busca manual...":"API QA: pesquisando...");
+            authorizedApiCollector.search(config,response->{
+                if(stopped||loginPaused||generation!=requestGeneration)return;
+                if(!response.optBoolean("ok",false)){
+                    searchInProgress=false;
+                    String reason=response.optString("reason","api-unavailable");
+                    if(reason.length()>50)reason="api-unavailable";
+                    searchFailure("⚠ API: "+reason,
+                        "Consulta API não validada ("+reason+"). Resultados anteriores preservados.");
+                    return;
+                }
+                JSONArray cards=response.optJSONArray("cards");
+                if(!"authorized-api-qa".equals(response.optString("source"))||
+                    !response.optBoolean("criteriaConfirmed",false)||
+                    cards==null||cards.length()>10||
+                    response.optInt("searchId",-1)<0||
+                    (shiny&&!response.optBoolean("siteShiny",false))||
+                    (("gl".equals(mode)||"ul".equals(mode))&&
+                     !response.optBoolean("leagueConfirmed",false))){
+                    searchInProgress=false;
+                    searchFailure("⚠ API: resultado não validado",
+                        "A resposta não confirmou os filtros atuais.");return;
+                }
+                shinyVerified=shiny;
+                displayedApiSearchId=response.optInt("searchId",-1);
+                applyCollectedResults(response);
+            });
+        }catch(Exception ignored){
+            searchInProgress=false;
+            searchFailure("⚠ API: filtros inválidos","Falha ao converter filtros para a API.");
+        }
+    }
+    private void revealAuthorizedCoords(JSONObject target,boolean autoCopy,long requestToken){
+        if(authorizedApiCollector==null||displayedApiSearchId<0){
+            deliverCoords("","Sessão API indisponível. Atualize a busca.");return;
+        }
+        try{
+            JSONObject selection=new JSONObject();
+            selection.put("searchId",displayedApiSearchId);
+            selection.put("sourceIndex",target.optInt("sourceIndex",-1));
+            selection.put("pokemonId",Integer.parseInt(
+                target.optString("number","").replace("#","")));
+            selection.put("cp",Integer.parseInt(target.optString("cp","")));
+            authorizedApiCollector.reveal(selection,response->{
+                if(stopped||loginPaused||requestToken!=coordinateRequestToken)return;
+                if(!currentCoordinateTarget(target)){
+                    deliverCoords("","Resultados mudaram; coordenadas não copiadas.");return;
+                }
+                String coords=extractCoordinates(response.optString("coords",""));
+                if(!response.optBoolean("ok",false)||coords.isEmpty()){
+                    String reason=response.optString("reason","indisponível");
+                    if(reason.length()>60)reason="indisponível";
+                    deliverCoords("","Get coords API: "+reason);return;
+                }
+                try{
+                    JSONArray cards=new JSONArray(results);
+                    for(int i=0;i<cards.length();i++){
+                        JSONObject card=cards.getJSONObject(i);
+                        if(card.optInt("sourceIndex",-1)==target.optInt("sourceIndex",-2)){
+                            card.put("coords",coords);break;
+                        }
+                    }
+                    results=cards.toString();
+                }catch(Exception ignored){
+                    deliverCoords("","Erro ao guardar coordenadas.");return;
+                }
+                if(autoCopy)copyCoordinatesInternal(coords);
+                deliverCoords(coords,autoCopy?"✓ Coordenadas API copiadas":
+                    "Coordenadas API disponíveis");
+            });
+        }catch(Exception ignored){
+            deliverCoords("","Get coords API: identidade inválida.");
+        }
+    }
     private boolean searchInProgress=false;
     private boolean loginPaused=false;
     // PL-02: a UI selection and an already submitted query are distinct.
@@ -1519,6 +1611,13 @@ public class OverlayService extends Service {
         handler.removeCallbacks(searchWatchdog);
         handler.postDelayed(searchWatchdog,SEARCH_WATCHDOG_MS);
         status(manual?"Busca manual iniciada...":"Atualizando...");
+        if(authorizedApiQaSelected()){
+            // No DOM Search is also dispatched: each generation uses one source.
+            if(authorizedApiCollector==null)
+                authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+            performAuthorizedApiSearch(generation,manual);
+            return;
+        }
         execute("session",session->continueVerifiedSearchSession(generation,manual,session,0));
     }
     // Keep the second (in-search) auth proof as careful as the Shiny tap.
@@ -2302,7 +2401,10 @@ public class OverlayService extends Service {
             unexpired.put(card);
         }
         JSONArray sorted=sortItems(unexpired);
-        recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
+        // QA data is shown for visual homologation but cannot send notifications.
+        boolean authorizedApiQa="authorized-api-qa".equals(r.optString("source",""));
+        if(!authorizedApiQa)recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
+        displayedApiResults=authorizedApiQa;
         results=sorted.toString();
         searchPhase=sorted.length()==0?"empty":"updated";
         // Criteria were verified before Search and rechecked during collection.
@@ -2329,7 +2431,8 @@ public class OverlayService extends Service {
             status(("raw".equals(mode)||"percent".equals(mode)||"iv".equals(mode))
                 ?"Alguns IVs não comprovados foram ignorados.":"Alguns rankings PvP não confirmados.");
         else if(sorted.length()==0)status("Sem resultados confirmados");
-        else status(sorted.length()+" Pokémon atualizados");
+        else status(sorted.length()+(authorizedApiQa?
+            " Pokémon da API (QA; alertas suspensos)":" Pokémon atualizados"));
     }
     private void resize(int h){
         // The gear window never expands with the Pokémon results.
@@ -3433,6 +3536,10 @@ public class OverlayService extends Service {
             deliverCoords(saved,autoCopy?"✓ Coordenadas copiadas":"Coordenadas disponíveis");
             return;
         }
+        if(displayedApiResults){
+            revealAuthorizedCoords(target,autoCopy,requestToken);
+            return;
+        }
         JSONObject fingerprint=new JSONObject();
         try{
             fingerprint.put("index",sourceIndex);
@@ -3694,6 +3801,9 @@ public class OverlayService extends Service {
         running=false;
         ++requestGeneration;
         ++coordinateRequestToken;
+        if(authorizedApiCollector!=null){
+            authorizedApiCollector.dispose();authorizedApiCollector=null;
+        }
         // Form/Pokémon sequences belong to Bridge and their callbacks already
         // check stopped/requestGeneration before touching any live WebView.
         searchInProgress=false;
