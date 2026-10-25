@@ -35,7 +35,7 @@
   function startSuggestions(ticket,query){
    if(!Number.isSafeInteger(ticket)||ticket<=maxTicket||!originOk()||destroyed)
     return fail("invalid-request");
-   if(typeof query!=="string"||query.length>65||/[\\u0000-\\u001f\\u007f]/.test(query))
+   if(typeof query!=="string"||query.length>65||/[\u0000-\u001f\u007f]/.test(query))
     return fail("invalid-request");
    maxTicket=ticket;
    push(ticket,{pending:true});
@@ -43,7 +43,7 @@
     const data=await d.catalog.getCatalog();
     if(!data.ok)return fail(data.reason);
     const wanted=query.trim().toLocaleLowerCase();
-    const dex=/^#?0*(\\d{1,4})$/.exec(wanted);
+    const dex=/^#?0*(\d{1,4})$/.exec(wanted);
     const options=[],seen=new Set();
     function add(label,id){
      if(!label||label.length>90||seen.has(label.toLocaleLowerCase()))return;

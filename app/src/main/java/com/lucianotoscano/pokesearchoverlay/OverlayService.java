@@ -3755,7 +3755,7 @@ public class OverlayService extends Service {
             handler.postDelayed(()->{
                 if(!stopped&&!loginPaused)
                     android.widget.Toast.makeText(OverlayService.this,
-                        "⚪ Pokébola: toque para resultados, segure 0,6 s para menu.\\n"+
+                        "⚪ Pokébola: toque para resultados, segure 0,6 s para menu.\n"+
                         "↻ Atualizar: toque para pesquisar, segure 0,6 s para intervalos.",
                         android.widget.Toast.LENGTH_LONG).show();
             },1400L);
