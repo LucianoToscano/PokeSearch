@@ -3283,6 +3283,17 @@ public class OverlayService extends Service {
                 requestGeneralFilterPresets();
             }catch(org.json.JSONException ignored){}
         });}
+        @JavascriptInterface public void deleteGeneralFilterPreset(int slot){handler.post(()->{
+            if(stopped||slot<1||slot>3)return;
+            android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+            android.content.SharedPreferences.Editor edit=p.edit().remove(generalPresetKey(slot));
+            if(p.getInt("generalPresetActiveV1",0)==slot)
+                edit.putInt("generalPresetActiveV1",0);
+            edit.apply();
+            requestGeneralFilterPresets();
+            android.widget.Toast.makeText(OverlayService.this,
+                "Filtro "+slot+" excluído",android.widget.Toast.LENGTH_SHORT).show();
+        });}
         @JavascriptInterface public void loadGeneralFilterPreset(int slot){handler.post(()->{
             if(slot<1||slot>3||stopped)return;
             String value=getSharedPreferences("prefs",0).getString(generalPresetKey(slot),"");
