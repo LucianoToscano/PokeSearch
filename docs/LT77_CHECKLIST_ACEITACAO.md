@@ -130,3 +130,10 @@ Para cada nova captura de erro de Get coords, registrar nome, número, PC, cidad
 - [ ] Aceitação para atualização pública: NÃO concedida. Não mudar `atualizacao.json` ou substituir LT76 sem aceitação física e checagem de segurança.
 
 **Fonte do contrato:** `pogo.md` no Google Drive; dados de conta e tokens do documento não são reproduzidos no GitHub.
+
+### Complemento: catálogo cacheado e erro 403 tipado
+
+- [x] `api_catalog_cache.js` criado com `GET /forms` e `GET /pokemon/catalog?costumes=true` via origem oficial, sem JWT, cookies, bridge ou requisição ao carregar script. Cache somente em memória (TTL 300 s), resultado em cópia defensiva, limite de tamanho de resposta e bloqueio de origem. Testes artificiais em `lt77-api-catalog-cache.test.js`.
+- [x] `api_browser_transport.js` diferencia os códigos documentados `trainer_not_linked`, `shiny_account_unavailable` e `vip_required` quando recebidos no objeto `detail.error` de um HTTP 403; caso desconhecido fica `access-denied`, sem retornar mensagens do servidor.
+- [ ] Carregamento do catálogo e API conectados à interface do Android: NÃO implementados; nem a UI nem a rede real foram homologadas. `USE_AUTHORIZED_API=false`.
+- [ ] Confirmar certificado e artefato do último workflow após o commit `fccef433fb3e1e62a3b7708d6726e8a2e752bf79`, sem confundir teste automatizado com aprovação em Samsung.
