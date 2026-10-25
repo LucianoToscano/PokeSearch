@@ -3629,13 +3629,13 @@ test("LT62: Shiny pending remains neutral, and site Pokemon import requires a us
   service.includes('"SEARCH_LATENCY"')&&
   service.includes('System.currentTimeMillis()-lastSearchStartMs');
 });
-test("LT62: observed site Sort/Weather/Gender are whitelisted and imported to draft only",()=>{
+test("LT85: site filter values remain whitelisted without manual import banner",()=>{
  return dock.includes('function verifiedSiteSingleFilterValues(){')&&
    dock.includes('sortBy:["Despawn (longest)","CP (highest)')&&
    dock.includes('weather:["Any","Boosted","Sunny"')&&
    dock.includes('gender:["Any","Male","Female","Genderless"]')&&
    dock.includes('if(match)selected[key]=match==="Any"?"":match;')&&
-   dock.includes('for(const [key,value] of changed)modeDraft[key]=value;')&&
+   !dock.includes("Usar opções observadas no site")&&
    dock.includes('filterOptions={}; // Never reuse an old site snapshot')&&
    dock.includes('filterOptions[key]={...(filterOptions[key]||{}),...value};');
 });
