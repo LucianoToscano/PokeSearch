@@ -158,8 +158,8 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view "$QA_TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "::error::QA version tag already exists; never overwrite a signed APK."
-            exit 1
+            echo "::notice::This verified QA version was already published; preserve the immutable signed APK, do not overwrite."
+            exit 0
           fi
           BASE="$(python3 -c "import json;print(json.load(open('SPRITE-MANIFEST.json'))['baseCount'])")"
           SHINY="$(python3 -c "import json;print(json.load(open('SPRITE-MANIFEST.json'))['shinyCount'])")"
