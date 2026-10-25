@@ -280,6 +280,86 @@
           "Validar no Samsung ícones Sexo, menu Modo nas duas bordas, alinhamento Favoritos, Notificações e rolagem completa PvP."
         ]
       }
+    },
+    {
+      "id": "pokesearch-v079-lt-update-bridge-20261025",
+      "minVersionCode": 54282,
+      "date": "25/10/2026",
+      "title": "PokeSearch LT79 — Ponte de atualização GitHub",
+      "sections": {
+        "novidades": [
+          "Atualizador do PokeSearch integrado ao GitHub Releases para futuras versões oficiais."
+        ],
+        "melhorias": [
+          "Notificações de atualização separadas dos alertas de Pokémon; download validado e instalação autorizada pelo Android."
+        ],
+        "correcoes": [
+          "Verificações de integridade e identidade do pacote antes de oferecer instalação."
+        ],
+        "emDesenvolvimento": [
+          "Instalações muito antigas continuam a usar inicialmente a ponte Google Drive LT79."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-v080-lt-coords-identity-20261025",
+      "minVersionCode": 54283,
+      "date": "25/10/2026",
+      "title": "PokeSearch LT80 — Get coords e resultados protegidos",
+      "sections": {
+        "novidades": [
+          "Aprimoramentos para obter coordenadas do Pokémon selecionado."
+        ],
+        "melhorias": [
+          "Tentativas limitadas após a atualização assíncrona dos resultados do site."
+        ],
+        "correcoes": [
+          "Identificação mais rigorosa do cartão de Pokémon antes de copiar coordenadas; evita copiar coordenadas de outro cartão."
+        ],
+        "emDesenvolvimento": [
+          "Validar Get coords ao vivo no Samsung, sem assumir sucesso apenas pelos testes automatizados."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-v082-lt-samsung-ui-20261025",
+      "minVersionCode": 54285,
+      "date": "25/10/2026",
+      "title": "PokeSearch LT82 — Menus compactos e gestos",
+      "sections": {
+        "novidades": [
+          "Localização com título e controles centralizados; dicas iniciais dos gestos da Pokébola e do botão ↻."
+        ],
+        "melhorias": [
+          "Favoritos pode abrir acima ou abaixo da estrela conforme espaço disponível; Clima com menos avisos técnicos na tela."
+        ],
+        "correcoes": [
+          "Mensagens de ajuda repetitivas foram reduzidas para não interromper a navegação."
+        ],
+        "emDesenvolvimento": [
+          "O teste físico da LT82 identificou clipping e falha de aplicação da localização; a revisão LT83 trata esses defeitos."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-v083-lt-location-recovery-20261025",
+      "minVersionCode": 54286,
+      "date": "25/10/2026",
+      "title": "PokeSearch LT83 — Localização e painel Samsung",
+      "sections": {
+        "novidades": [
+          "Janela de Localização redesenhada para manter coordenadas, raio e ações centralizados."
+        ],
+        "melhorias": [
+          "Largura da janela protegida contra encolhimento após digitação ou atualização do WebView; reconhecimento do formulário Coords em layouts móveis."
+        ],
+        "correcoes": [
+          "Controles Colar, Aplicar e Limpar posicionados dentro do painel, sem perda de funcionalidades; confirmação de coordenadas e raio continua obrigatória no site."
+        ],
+        "emDesenvolvimento": [
+          "Homologação física da LT83 no Samsung ainda pendente. A publicação e o CI não comprovam, por si só, a aplicação correta do geofiltro em aparelho real."
+        ]
+      }
     }
   ]
 }
