@@ -235,7 +235,8 @@
       if(cp===null||lv===null) {rejected++;continue;}
       if(options.shiny===true&&x.shiny!==true) continue;
       var end=typeof x.despawn_at==="string"?Date.parse(x.despawn_at):NaN;
-      if(Number.isFinite(end)&&end<=now) {expired++;continue;}
+      if(!Number.isFinite(end)) {rejected++;continue;}
+      if(end<=now) {expired++;continue;}
       var encounter=clean(x.encounter_id,100);
       var fingerprint=encounter||[id,cp,iv.raw,x.location,x.despawn_at].join(":");
       if(seen.has(fingerprint)) continue;
