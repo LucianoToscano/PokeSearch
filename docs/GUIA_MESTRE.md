@@ -6567,3 +6567,24 @@ Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c
 Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
 Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
 Guia Mestre prévio permaneceu imutável, com adição somente ao final.
+
+
+## LT86 QA — Formas completas e nível 50 (25/10/2026)
+Versão 0.00.86, versionCode 54289, somente QA; nenhuma publicação oficial.
+Branch: fix/lt86-api-filter-options-qa-20261025; PR #61 Draft sobre LT85 PR #60. Main e PR #59 preservadas.
+Código: dock.html permite Nível 1–50 e pagina até 500 formas em grupos de 60; api_android_session.js expõe até 500 nomes do catálogo da API.
+Samsung QA: sprites de base com fanout de Bitmap entre células, tentativa CDN de origem PokeAPI, imagem de forma/traje desconhecida segue placeholder.
+Info: Genderless ⚲, Nível 1–50, Mostrar todas as informações, timer Despawn prioritário, GL/UL/ML com rank somente quando verificado, tamanho XS/S/L.
+Expiração: preserva expiresAtMs absoluto da API, remove cards vencidos, evita reinserção e revalida no aviso UI mesmo se alarme nativo foi perdido.
+Arraste: Pokébola chega à borda com painel aberto; detalhe independente pode ser movido pelo cabeçalho, sem bloquear ×/Get coords.
+Perfis: 3 Filtros gerais via ▣ (Usar/Salvar, filtro validado, sem Shiny/Localização) e 3 Favoritos via ▣ (toque usar, segure salvar, máximo 50).
+Testes LT86: lt86-form-catalog-level, lt86-samsung-followup, lt86-all-result-information, lt86-despawn-detail-drag, legados JS e Java.
+Testes históricos Node (exceto preview LT74 legado), Java, Gradle testDebugUnitTest e assembleRelease executados pelo pipeline LT86.
+GitHub Actions: 40168537116
+Build SOURCE_COMMIT: e9466d409ce4cd1255db0095d2058e3f7f5f370c
+APK QA: PokeSearch-v0.00.86-LT-API-QA.apk
+APK SHA-256: f3c0afa9a050130dba33a33f2d342b4aac5b36cfc3bfaf85f55d1ddd2ae3e761
+Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e
+Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
+Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
+Guia Mestre prévio permaneceu imutável, com adição somente ao final.
