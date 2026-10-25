@@ -2,6 +2,16 @@
 
 > **Guia Mestre permanente:** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md). Este README indica o estado verificado; o Guia mantém todo o histórico. Não confundir tags oficiais com commits posteriores de documentos.
 
+## LT87 — Fundos dos Filtros e perfis salvos (somente QA)
+
+- **QA 0.00.87 / versionCode 54290 — não publicar:** branch `fix/lt87-filter-menu-backgrounds-qa-20261025`, [PR #62](https://github.com/LucianoToscano/PokeSearch/pull/62) Draft sobre LT86, sem mudanças na `main` e sem alterar Release LT83.
+- **Fundo corrigido:** coluna principal de Filtros, editor lateral de Ordenar/PC/Nível/Clima/Tamanho/Sexo/Forma/etc. e janela ▣ dos três perfis salvos seguem as cores, transparência, bordas e sombras do Editor Visual, também no popup independente. Holder invisível mantém toques no fundo; selecionar filtro recolhe perfis abertos.
+- **APK QA protegido assinado:** `PokeSearch-v0.00.87-LT-Filter-Fundos-QA.apk`, Actions [#40168986555 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40168986555), artifact `12590105916`; SOURCE_COMMIT `21d6547e9cb19efe941134d087f2783d6753ee55`; SHA-256 `d188bff20191900cc9976fb9b12bca3720a5c0318bf39f75e0d5d9202927617a`, assinatura permanente v2. Commits documentais posteriores não mudam o binário.
+- **Verificação automatizada:** `app/tests/lt87-filter-menu-backgrounds.test.js` (5/5) e suíte histórica aprovada no workflow. **Pendente** confirmação visual Samsung para claro/escuro, transparência, orientação, clique fora e demais regressões LT86.
+- **Documentos:** [estado LT87](docs/ESTADO_CANONICO_LT87_QA.md), [checklist Samsung LT87](docs/LT87_CHECKLIST_SAMSUNG.md) e [prompt de continuidade](docs/PROMPT_NOVO_CHAT_LT87_QA.md). Guia Mestre preservado por append no checkout integral; não substituí-lo com retorno truncado de conector.
+
+---
+
 ## LT86 — Catálogo completo de Formas e nível 50 (somente QA)
 
 
