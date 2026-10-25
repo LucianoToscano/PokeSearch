@@ -1,0 +1,41 @@
+name: LT79 bridge - append verified checkpoint to Guia Mestre
+on:
+  push:
+    branches: [release/lt79-drive-bridge-github-20261024]
+    paths: ['.github/workflows/lt79-bridge-document-master.yml']
+permissions:
+  contents: write
+jobs:
+  documentation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/lt79-drive-bridge-github-20261024
+          fetch-depth: 1
+      - name: Append without replacing historical guide
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/GUIA_MESTRE.md
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
+          if grep -Fq "LT79 — distribuição de transição Drive-GitHub — checkpoint" docs/GUIA_MESTRE.md; then
+            exit 0
+          fi
+          cat >> docs/GUIA_MESTRE.md <<'LT79_BRIDGE_GUIDE'
+          
+          ## LT79 — distribuição de transição Drive-GitHub — checkpoint (24/10/2026)
+          Branch release/lt79-drive-bridge-github-20261024 (PR #52 Draft). App com.lucianotoscano.pokesearch; versão 0.00.79; versionCode 54282; SOURCE_COMMIT acacf8bcd9c485bee2458ab1e2e80f3dcc13a83b.
+          CI https://github.com/LucianoToscano/PokeSearch/actions/runs/40153642575 — SUCCESS. APK release protegido R8, não depurável, assinatura v2 verificada, certificado SHA256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. Hash APK 72fbd2b34495c30939db3fff971c68dcf8f923f8d7d8c0c6aba01872f7cb1ece, tamanho 38601587 bytes.
+          Drive destino PokeSearch-v0.00.79-LT.apk, ID 16qC01Sy5DPydPGFm75a9ss1dleY3yFIs (rebaixado de QA para publicação gradual). Arquivo enviado e verificado bit a bit, porém ACL privado (owner only); NÃO ativar manifesto LT79 até permitir leitura por qualquer pessoa com link.
+          Live atualizacao.json Drive ID 15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf permanece LT76/54276, com permissões anyone/reader. JSON LT79 preparado em arquivo separado: 1-xa93QIl47Obe69sSfssusnwKvs-faXJ. Backup LT76 criado e original antigo preservado.
+          Depois do compartilhamento público do APK, substituir bytes do manifesto EXISTENTE mantendo o ID, status enabled true para LT79 e comprovar leitura, versão, nome, hash, link e acessibilidade. Então usuários de LT76 verão o aviso ao retornar à Home (cache de 5 minutos). Não há push novo na LT76; notificações WorkManager/GitHub só passam a funcionar depois da instalação 0.00.79.
+          GitHubUpdateCenter usa releases oficiais estáveis e comparação por versionCode, verifica APK nativamente (SHA-256, pacote, assinatura pinada). Publicação seguinte >54282 somente após workflow manual protegido e autorização do proprietário. Drive legado permanece fallback. API experimental QA defaults OFF para novas instalações, com preferências antigas preservadas e DOM como padrão.
+          Samsung: instalação e atualização real, menu Pikachu, sprites/formas, filtros, opções, Get coords e alertas nativos ainda aguardam homologação física. Sem afirmação de dispositivo aprovado.
+          Detalhes, riscos e pendências: docs/LT79_PUBLIC_DRIVE_BRIDGE.md e docs/LT79_DRIVE_RELEASE_STATUS.md. Main e PRs anteriores não alterados.
+          LT79_BRIDGE_GUIDE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GUIA_MESTRE.md
+          git commit -m "docs(LT79): append Drive-GitHub bridge and publication gate to Guia Mestre"
+          git push origin HEAD:release/lt79-drive-bridge-github-20261024
