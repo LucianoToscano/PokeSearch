@@ -1,0 +1,125 @@
+name: PokeSearch LT111 official - user-approved promotion
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt111-official-approved-publish.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: pokesearch-approved-public-release
+  cancel-in-progress: false
+jobs:
+  promote-lt111:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment:
+      name: official-updates
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      QA_RUN: '40229950113'
+      QA_ARTIFACT: 'PokeSearch-v0.01.11-LT-Home-QA-protected-release'
+      QA_APK: 'PokeSearch-v0.01.11-LT-Home-QA.apk'
+      QA_SOURCE: 'f3dd2ba2286a84cbb5f4cd43da328339afe92a80'
+      QA_HASH: '4e5aa5bd9710df28b00545c3496f58f203a05053268fab0b60185942c3bacc64'
+      CERT: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      VERSION: '0.01.11'
+      VERSION_CODE: '54315'
+      TAG: 'v0.01.11-54315'
+      OFFICIAL_APK: 'PokeSearch-v0.01.11-LT.apk'
+    steps:
+      - name: Checkout immutable official source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify merged application equals signed QA source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/main
+          git fetch origin refs/heads/fix/lt111-hide-second-pokeball-home-20261025
+          git cat-file -e "$QA_SOURCE^{commit}"
+          # Documentation/workflows may differ. The installed app code must NOT.
+          git diff --quiet "$QA_SOURCE" HEAD -- app/src/main app/build.gradle.kts firebase-realtime.rules.json
+          test "$(gh run view "$QA_RUN" -R "$GITHUB_REPOSITORY" --json conclusion --jq .conclusion)" = success
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::Official release already exists; never overwrite signed APK."
+            exit 0
+          fi
+      - name: Retrieve precisely the successful signed QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/approved"
+          gh run download "$QA_RUN" -R "$GITHUB_REPOSITORY" --name "$QA_ARTIFACT" --dir "$RUNNER_TEMP/approved"
+          test -s "$RUNNER_TEMP/approved/$QA_APK"
+          test -s "$RUNNER_TEMP/approved/SHA256SUMS.txt"
+          test "$(tr -d '\r\n' < "$RUNNER_TEMP/approved/SOURCE_COMMIT.txt")" = "$QA_SOURCE"
+          cd "$RUNNER_TEMP/approved"
+          sha256sum -c SHA256SUMS.txt
+          test "$(sha256sum "$QA_APK" | cut -d' ' -f1)" = "$QA_HASH"
+      - name: Install Android verification tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'build-tools;36.0.0'
+      - name: Verify package version source and permanent signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$RUNNER_TEMP/approved/$QA_APK"
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          "$BT/aapt" dump badging "$APK" > "$RUNNER_TEMP/badging.txt"
+          grep -Fq "name='com.lucianotoscano.pokesearch'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionCode='54315'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionName='0.01.11'" "$RUNNER_TEMP/badging.txt"
+          ! grep -q '^application-debuggable' "$RUNNER_TEMP/badging.txt"
+          "$BT/apksigner" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/signing.txt"
+          grep -Eq '^Verified using v2 scheme.*: true$' "$RUNNER_TEMP/signing.txt"
+          FINGERPRINT="$(grep 'Signer #1 certificate SHA-256 digest:' "$RUNNER_TEMP/signing.txt" | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$FINGERPRINT" = "$CERT"
+          unzip -Z1 "$APK" | grep -Fxq 'assets/pokemon-sprites/manifest.json'
+          cp "$APK" "$RUNNER_TEMP/$OFFICIAL_APK"
+          sha256sum "$RUNNER_TEMP/$OFFICIAL_APK"
+      - name: Publish official stable latest GitHub release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::Approved stable release already exists. No overwrite."
+            exit 0
+          fi
+          cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
+          # PokeSearch 0.01.11 LT111 — Atualização oficial
+          - **Home:** opção de ativar a segunda Pokébola oculta, sem deixar espaço vazio. Dados e filtros salvos da segunda instância preservados; uma instância já ativa não é encerrada pela ocultação.
+          - **Imagens:** sprites-base normais e Shiny embutidos no APK (1.025 + 1.025); imagens recuperadas na lista e dentro dos cards de detalhe, incluindo Furfrou Natural.
+          - **Filtros:** Tamanho, Sexo, PC, Nível, Clima e Forma podem ser aplicados sem localização. Ordenação por distância precisa de coordenadas/raio; preferência antiga inválida é corrigida sem apagar outros filtros.
+          - **Notificações:** recuperação dos alertas de Pokémon novos e favoritos após resultados reais/confirmados da API; canais de som atualizados.
+          - **Preservação:** mesma conta, IV/GL/UL/Shiny, mural da comunidade, três perfis de Favoritos, menus e configurações.
+          - **Segurança:** APK não depurável, R8, assinatura Android v2 e certificado permanente verificados. Versão 0.01.11, Android versionCode 54315; atualização instalável sem desinstalação.
+          - **Testes:** Node/Java Android e auditoria do APK aprovados. Homologação física das alterações mais recentes no Samsung ainda não foi concluída.
+          NOTES
+          gh release create "$TAG" "$RUNNER_TEMP/$OFFICIAL_APK" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$QA_SOURCE" \
+            --title "PokeSearch 0.01.11 LT — Atualização oficial" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --latest
+      - name: Verify update discovery and stable APK checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          DATA="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest")"
+          test "$(echo "$DATA" | jq -r .tag_name)" = "$TAG"
+          test "$(echo "$DATA" | jq -r .draft)" = false
+          test "$(echo "$DATA" | jq -r .prerelease)" = false
+          NAME="$(echo "$DATA" | jq -r --arg n "$OFFICIAL_APK" '.assets[] | select(.name == $n) | .name')"
+          test "$NAME" = "$OFFICIAL_APK"
+          HASH="$(echo "$DATA" | jq -r --arg n "$OFFICIAL_APK" '.assets[] | select(.name == $n) | .digest')"
+          test "$HASH" = "sha256:$QA_HASH"
