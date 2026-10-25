@@ -6275,3 +6275,34 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Etapa 14: run [#40143616481](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143616481) ainda deve ser conferido no CI antes de declarar a regressão final aprovada.
 - **Não homologado:** Samsung físico em todas as posições/orientações, acesso autenticado e disponibilidade real do PoGoCoordinates, integração REST real dentro da WebView, catálogo completo ao vivo, equivalência Weather/GL/UL/Shiny, perfis de consumo, R8 de APK release assinado e cenário de release. O módulo de roteamento API continua desligado e desconectado do app Android. NÃO gerar APK, NÃO fazer merge, NÃO publicar nem alterar manifesto sem nova autorização e provas de homologação. Nenhuma dessas verificações foi efetuada nesta execução.
 - O checklist é o ponto de retomada para homologação, não atestado de prontidão para distribuição.
+
+
+---
+
+## LT77 — AUDITORIA PÓS-ETAPA 14 / GET COORDS E QA SAMSUNG (24/10/2026)
+
+**Origem da branch:** `fix/lt77-stage14-acceptance-audit-20261024` em `51803f38f1eb570388fec987779b8e90fba884c6`. Branch isolada `fix/lt77-post14-coordinate-hardening-20261024`. `main` `caea98b7b57b9e45d5218e907eb392d76953dd53`; PR #34 e #49 continuam abertas/Draft, sem merge. LT76 pública e `atualizacao.json` do Drive preservados.
+
+**CI herdado comprovado:** Etapa 14, [#40143616481](https://github.com/LucianoToscano/PokeSearch/actions/runs/40143616481) COMPLETED/SUCCESS, testou commit `4de57f2c5379acd0790bb4b6fb83d8a7cbc8e8ae`; o HEAD `51803f38...` adicionou somente documentação.
+
+**Evidência externa (capturas Samsung e relatos do testador):**
+- Caterpie ✨, `#010`, PC 274, Nv.22, IV 15/15/15, Kathleen/Florida: a janela Get coords apresentou “Pokémon não encontrado ou identificação ambígua nos resultados atuais”.
+- Slakoth ✨, `#287`, PC 198, Nv.9, IV 0/0/0, McKinney/Texas: painel mostrou “Obtendo coordenadas” e “Aguardando coordenadas”; usuário relatou que não consegue obter coordenadas.
+- Essas capturas documentam um defeito percebido por testadores, **não** comprovam a causa exata nem que a correção funciona no site real.
+
+**Causa demonstrável no código:** em `probe.js`, `cardRoots()` renumera `sourceIndex` conforme a ordem atual do React; `matchingCoordsCard()` exigia simultaneamente o índice guardado anteriormente e o fingerprint (nome, CP, número e localização). Após reordenação, um cartão legítimo poderia ser rejeitado mesmo quando fosse o único de identidade correspondente. O serviço Android `OverlayService.java` continua protegendo `coordinateRequestToken`, `currentCoordinateTarget`, cooldown e expiração.
+
+**Correções implementadas:**
+1. `app/src/main/assets/probe.js` — cálculo de identidade em todos os cartões do resultado atual, sem confiar cegamente no índice. Só permite reencontro por nome, CP, número e local quando o fingerprint for completo e **único**; recusado se houver duplicidade, ou apenas identidade parcial fora do índice. O clique segue estritamente no próprio cartão correspondente; nenhuma leitura global de Maps.
+2. `app/src/main/assets/api_browser_transport.js` — origin guard exige `https://pogocoordinates.com` canônico, rejeita outras portas, e testa a origem antes de acessar `localStorage.jwt`.
+3. `app/src/main/assets/api_result_contract.js` — item sem `despawn_at` válido deixa de ser aceito como cartão vivo (anteriormente timestamp inválido passava). Expirados e inconsistências já eram excluídos.
+4. `app/tests/lt77-post14-coordinate-hardening.test.js` — teste dinâmico do trecho real de `matchingCoordsCard` contra reordenação, ambiguidade, identidade parcial, cidade errada; teste de origem com porta não canônica e exclusão de resultados com data inválida. Atualizados testes históricos Stage 5, LT64 e LT68 para a nova semântica, sem retirar as verificações de unicidade.
+5. `docs/LT77_CHECKLIST_ACEITACAO.md` — evidências Samsung e pendências registradas.
+6. `.github/workflows/lt77-post14-samsung-signed.yml` — pipeline isolado de QA e release para `0.00.77`, versionCode `54277`, JDK17/Gradle8.11.1/SDK36, todas as suítes Node (exceto assertiva LT74 obsoleta já excluída na Etapa14), assinatura via secrets protegidos já existentes, R8, apksigner/certificado/manifesto, sem publicação Drive. Artefato somente em GitHub Actions se todas as verificações terminarem com sucesso; nunca confundir pipeline iniciado com APK verificado.
+
+**Falhas intermediárias do CI sem omissão:** [#40145979790](https://github.com/LucianoToscano/PokeSearch/actions/runs/40145979790) falhou na asserção textual antiga da Etapa 5; [#40146043021](https://github.com/LucianoToscano/PokeSearch/actions/runs/40146043021) e [#40146070768](https://github.com/LucianoToscano/PokeSearch/actions/runs/40146070768) falharam no teste histórico LT68 que proibia o novo reordenamento por fingerprint único. Os testes históricos foram adaptados ao requisito novo, mantendo rejeição de ambiguidade. Conferir o CI mais recente antes de declarar release.
+
+**Separação obrigatória de estados:** testes com fixtures não provam acesso autenticado ao PoGoCoordinates. `api_integration_router.js` permanece com `USE_AUTHORIZED_API=false`, ainda não carregado pelo `OverlayService`; API e catálogo oficial não foram ligados, e o fallback DOM permanece. Nenhum JWT/reveal_code de usuário foi coletado, impresso, persistido ou enviado à ponte Android. **NÃO declarar migração REST completa, app homologado no Samsung ou LT77 publicada** só pelo pipeline.
+
+**Checklist físico pendente:** medir gap entre Pokébola/resultados e fluidez de arraste; popups em posições extremas/orientação; filtros Nível, CP, 7 tamanhos, sexo, Forma/costumes oficiais, clima, raio 0–1000, GL/UL, IV e Shiny com conta válida; Get coords para spawn único, reordenado, duplicado, expirado, botão em cooldown e retorno em Maps com cópia; memória por sessão longa e R8 release. Registre novos prints e estado do site sem dados secretos. PR #34/#49 sem merge, LT76 e Drive intactos.
+
