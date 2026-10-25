@@ -66,7 +66,9 @@ test("Dark/light themes and compact scroll",()=>{
 test("QA signed release opt-in is never enabled by a normal Release build",()=>{
  const gradle=fs.readFileSync(path.join(__dirname,"../build.gradle.kts"),"utf8");
  assert.match(gradle,/POKE_SCRAPBOOK_STAGE1_QA/);
- assert.match(gradle,/testSigningRequired && testVersionCode != null && testVersionCode >= 54299/);
+ assert.match(gradle,/POKE_SCRAPBOOK_QA_ACK/);
+ assert.match(gradle,/releaseCertificateSha256 == officialTestCertificateSha256/);
+ assert.match(gradle,/testVersionCode != null && testVersionCode >= 54299/);
  assert.match(gradle,/buildConfigField\("boolean", "SCRAPBOOK_STAGE1_QA", "false"\)/);
  assert.match(gradle,/if \(scrapbookStage1Qa\) "true" else "false"/);
  assert.match(home,/Prévia fictícia · sem publicações reais/);
