@@ -20,7 +20,7 @@ check("special form and costume never masquerade as base sprite",()=>{
  for(const form of ["ALOLAN","TRIM_DANDY"]){assert.equal(card({form}).image,"");}
  assert.equal(card({costume_id:8}).image,"");});
 check("API and DOM both animate actual active Pokeball searches",()=>{
- assert.equal((dock.match(/classList\.toggle\("search-active",searchActive\s*&&\(activeSearchPhase==="searching"\|\|activeSearchPhase==="filling"\)\)/g)||[]).length,2);
+ assert.equal((dock.match(/classList\.toggle\("search-active",searchActive\s*&&\s*\(activeSearchPhase==="searching"\|\|activeSearchPhase==="filling"\)\)/g)||[]).length,2);
  assert.match(java,/searchPhase="searching";\s*status\(manual\?"API: busca manual/);
  assert.match(dock,/body\.dock-window\.search-active #gear \.capturePulse/);});
 check("offline sprite grace period and same detail interceptor",()=>{
