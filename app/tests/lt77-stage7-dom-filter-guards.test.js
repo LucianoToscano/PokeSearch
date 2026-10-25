@@ -16,7 +16,7 @@ check("all official size choices retained as multiple",()=>{
 check("CP/Level updates remain atomic and bounded",()=>{
  assert.ok(dock.includes('Number(low)>Number(high)'));
  assert.ok(service.includes('for(String[] pair:new String[][]{{"cpMin","cpMax"},{"levelMin","levelMax"}})'));
- assert.ok(dock.includes('levelMin:[1,35]'));
+ assert.ok(dock.includes('levelMin:[1,50]'));
 });
 check("Weather and sorting require verified site controls",()=>{
  assert.ok(probe.includes('const EXTRA_LABELS={sortBy:"Sort by"'));
