@@ -6671,3 +6671,15 @@ Documentacao: README.md, docs/ESTADO_CANONICO_LT87_OFICIAL.md e docs/PROMPT_NOVO
 - Samsung PASS físico continua pendente: 0/50/100% alpha, blur ON/OFF, clique fora, menus, temas, campos e touch pass-through.
 - Detalhes e estratégia de rollback em docs/LT88_UNIFIED_MENUS_QA.md; main oficial LT87 preservada sem merge/Release.
 - Conteúdo anterior do Guia Mestre validado por hash de prefixo; somente append.
+
+
+## LT88 Samsung R3 — contraste legível Filtros e Modos (25/10/2026)
+- Três capturas Samsung 0.00.90/54293 comprovam regressão: Filtros Nível e Forma (00–04), Modos IV% seguem transparentes sobre papel de parede. QA visual antigo NÃO passou.
+- Causa: backdrop-filter no WebView de overlay não consegue garantir blur de outra janela; 50% alpha puro não oferece leitura estável.
+- Correção: preservar transparência BASE inicial 50%, menuBlur padrão 4 px, temas/preferências anteriores; criar camada de legibilidade derivada do MESMO controle (alpha final=1-(transparência/100)^2.8).
+- Em 50% BASE a superfície de leitura fica cerca de 86% opaca; 100% transparência mantém opacidade 0. O Editor Visual explica claramente essa diferença.
+- CSS aplica fundo padronizado aos rail/editor de Filtros/Modos, listas Forma/Ordenar/Clima, inputs e Favoritos nativos. Não alargar janelas nem bloquear toques atrás.
+- QA candidato 0.00.91/54294; numeração NÃO significa LT91 roadmap concluída. Autenticação/API/token/assinatura preservados.
+- Provas de build e Samsung separadas; teste físico R3 pendente, confira docs/LT88_SAMSUNG_LEGIBILITY_R3_QA.md.
+- A main LT87 continua preservada, PR #63 Draft, sem merge, sem Release.
+- Guia anterior preservado com verificação SHA-256 de todo prefixo após append.
