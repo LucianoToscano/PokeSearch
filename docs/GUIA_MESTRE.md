@@ -4,6 +4,9 @@
 >
 > **REGRA DE PRIORIDADE:** verificar sempre o HEAD e as PRs reais. Estado recente comprovado por commits/CI prevalece sobre instruções de versões antigas dentro do backup. *Nenhuma numeração QA comprova a conclusão de uma etapa de roadmap ou teste Samsung.*
 
+## LT114 — status de QA e instalação
+- [GitHub Actions LT114 #40240634152](https://github.com/LucianoToscano/PokeSearch/actions/runs/40240634152) SUCCESS; APK QA **0.01.14 / 54318**, origem **4734b6ce877961eff3bdaf7e5c05c69d33e86151**, SHA-256 **df04ad96591e2019181f49d9fb322f706807b2ceb568cea1987510da00e13b85**, certificado v2 SHA-256 **34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e**. 8/8 regressões Get coords, 10/10 paridade LT112, 2.050 PNGs verificados. PR #73 Draft com conflito de merge; main ainda **56403a2999fc8037aa020466cf03041b7926ae02**. Samsung P1/P2 pendente. [Evidências](POKESEARCH_LT113_GET_COORDS_DUAL_PARITY_20261025.md).
+
 ## LT114 — Get coords: expiração durante requisição (25/10/2026)
 - Auditoria adicional do transporte compartilhado identificou risco de GET iniciado antes do despawn e concluído depois: revalidar `q.expiry` **após** HTTP e antes de entregar/copy coords; nunca reutilizar seleção vencida. Cobre o mesmo código compartilhado P1/P2 e adiciona teste de simultaneidade 100%/0%.
 - Versão QA sequencial prevista `0.01.14 / 54318`, preservando intacto `0.01.13 / 54317` (SHA-256 APK `e69fec269ba5613d71d1b55abd7705742553ed97edbd1a1ab671564dc7cf9614`; certificado v2 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`). 2.050 PNGs normais/shiny do APK anterior conferidos byte a byte com manifesto.
