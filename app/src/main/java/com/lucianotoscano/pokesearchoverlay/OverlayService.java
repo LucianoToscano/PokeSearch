@@ -3060,23 +3060,40 @@ public class OverlayService extends Service {
                 "Local "+slot+" excluído",android.widget.Toast.LENGTH_SHORT).show();
         });}
         @JavascriptInterface public void pasteLocationCoords(){handler.post(()->{
-            // Only read clipboard on explicit user action; never log the values.
-            String parsed="";
-            try{
-                ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-                if(cb!=null&&cb.hasPrimaryClip()){
-                    android.content.ClipData clip=cb.getPrimaryClip();
-                    if(clip!=null)for(int i=0;i<Math.min(clip.getItemCount(),5);i++){
-                        CharSequence value=clip.getItemAt(i).coerceToText(OverlayService.this);
-                        String candidate=extractClipboardCoordinates(value==null?"":value.toString());
-                        if(candidate.isEmpty())continue;
-                        if(!parsed.isEmpty()&&!parsed.equals(candidate)){parsed="";break;}
-                        parsed=candidate;
+            if(stopped)return;
+            // Android 10+ restricts clipboard reads to the focused app/IME.
+            // The menu overlay is normally FLAG_NOT_FOCUSABLE. Focus only after
+            // the explicit Colar tap, then read once after WindowManager updates.
+            OverlayService.this.locationEditor(true);
+            WebView editor=!popupKind.isEmpty()&&popupPanel!=null?popupPanel:menuPanel;
+            if(editor!=null)editor.requestFocus();
+            handler.postDelayed(()->{
+                if(stopped)return;
+                String parsed="",reason="unavailable";
+                try{
+                    ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                    android.content.ClipData clip=cb==null?null:cb.getPrimaryClip();
+                    if(clip!=null&&clip.getItemCount()>0){
+                        reason="invalid";
+                        boolean conflict=false;
+                        for(int i=0;i<Math.min(clip.getItemCount(),5);i++){
+                            CharSequence value=clip.getItemAt(i).coerceToText(OverlayService.this);
+                            String candidate=extractClipboardCoordinates(value==null?"":value.toString());
+                            if(candidate.isEmpty())continue;
+                            if(!parsed.isEmpty()&&!parsed.equals(candidate)){conflict=true;break;}
+                            parsed=candidate;
+                        }
+                        if(conflict){parsed="";reason="ambiguous";}
                     }
-                }
-            }catch(Exception e){recordFailure("colar coordenadas",e);}
-            String callback="window.onLocationPaste&&window.onLocationPaste("+JSONObject.quote(parsed)+")";
-            js(menuPanel,menuLoaded,callback);js(popupPanel,popupLoaded,callback);
+                }catch(SecurityException denied){
+                    reason="unavailable"; // OS restriction, not a bad coordinate
+                }catch(Exception e){reason="unavailable";recordFailure("colar coordenadas",e);}
+                // No clipboard contents are logged, saved or sent to the API.
+                String callback="window.onLocationPaste&&window.onLocationPaste("+
+                    JSONObject.quote(parsed)+","+JSONObject.quote(reason)+")";
+                js(menuPanel,menuLoaded,callback);
+                js(popupPanel,popupLoaded,callback);
+            },180L);
         });}
         @JavascriptInterface public void copyLocationCoords(String input){handler.post(()->{
             String valid=extractCoordinates(input==null?"":input.trim());
