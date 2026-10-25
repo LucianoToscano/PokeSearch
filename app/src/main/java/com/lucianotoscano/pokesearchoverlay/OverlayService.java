@@ -3367,7 +3367,10 @@ public class OverlayService extends Service {
             // the user's Shiny, location, sound, Favorites or mode preferences.
             try{
                 JSONObject reset=new JSONObject(filterConfigJson());
-                reset.put("mode",mode);
+                // A neutral search uses IV% 0..100 (no IV restriction). It
+                // avoids implicitly retaining a prior 15/15/15 or GL rank.
+                reset.put("mode","percent");
+                reset.put("percentMin",0).put("percentMax",100);
                 for(String key:new String[]{"pokemon","sortBy","weather","size","gender",
                     "form","cpMin","cpMax","levelMin","levelMax","minPvpCp"})
                     reset.put(key,"");
