@@ -388,11 +388,11 @@ check("LT62 Filtros: numeric ✓ patches only its own bounded fields",()=>{
  assert.equal(closes,1);
  sandbox.patch(["genderSelections"]);
  assert.equal(JSON.stringify(requests[1]),JSON.stringify({genderSelections:["Male"]}));
- draft.levelMin="36";
+ draft.levelMin="51";
  assert.equal(sandbox.confirm(["levelMin","levelMax"],"Nível"),false);
  assert.equal(requests.length,2);
  assert.equal(closes,1);
- assert.ok(errors.some(x=>x.includes("1 a 35")));
+ assert.ok(errors.some(x=>x.includes("1 a 50")));
  draft.levelMin="20";draft.levelMax="10";
  assert.equal(sandbox.confirm(["levelMin","levelMax"],"Nível"),false);
  assert.ok(errors.some(x=>x.includes("Min não pode ultrapassar Max")));
