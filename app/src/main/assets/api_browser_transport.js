@@ -50,6 +50,14 @@
     return u.origin==="https://"+SITE&&u.username===""&&u.password==="";
    }catch(_){return false;}
   }
+  function positiveInteger(value,min,max){
+   // API CP may be 1538 or "1538"; reject all other representations.
+   if(typeof value==="string"){
+    if(!/^(?:0|[1-9][0-9]*)$/.test(value))return null;
+    value=Number(value);
+   }
+   return Number.isSafeInteger(value)&&value>=min&&value<=max?value:null;
+  }
   function fail(code){return {ok:false,reason:code};}
   async function httpFailure(response){
    if(response.status!==403||typeof response.text!=="function")
@@ -181,8 +189,15 @@
     const planned=d.revealContract.planForSpawn(raw,{nowMs:dateNow()});
     if(!planned.ok||!safeMethod(planned.method,planned.url))continue;
     const expiry=Date.parse(raw.despawn_at);
+    const verifiedId=positiveInteger(raw.pokemon_id,1,10000);
+    const verifiedCp=positiveInteger(raw.cp,0,100000);
+    // A reveal code can only reference the exact displayed server row.
+    if(verifiedId===null||verifiedCp===null||
+       verifiedId!==positiveInteger(card.number.slice(1),1,10000)||
+       verifiedCp!==positiveInteger(card.cp,0,100000)||
+       !(expiry>dateNow()))continue;
     reveals.set(card.sourceIndex,{
-     code:raw.reveal_code,pokemonId:raw.pokemon_id,cp:raw.cp,expiry,
+     code:raw.reveal_code,pokemonId:verifiedId,cp:verifiedCp,expiry,
      searchVersion:generation
     });
    }
@@ -199,11 +214,14 @@
    if(!requested||typeof requested!=="object")return fail("invalid-selection");
    const idx=requested.sourceIndex;
    const q=Number.isInteger(idx)?reveals.get(idx):null;
-   if(!q||!Number.isInteger(requested.searchId)||
+   const requestedId=positiveInteger(requested.pokemonId,1,10000);
+    const requestedCp=positiveInteger(requested.cp,0,100000);
+    if(!q||!Number.isInteger(requested.searchId)||
       q.searchVersion!==requested.searchId||
       q.searchVersion!==searchVersion||
-      requested.pokemonId!==q.pokemonId||
-      requested.cp!==q.cp)return fail("stale-or-ambiguous-selection");
+      requestedId===null||requestedCp===null||
+       requestedId!==q.pokemonId||
+       requestedCp!==q.cp)return fail("stale-or-ambiguous-selection");
    if(!(q.expiry>dateNow())){
     reveals.delete(idx);return fail("expired-spawn");
    }
