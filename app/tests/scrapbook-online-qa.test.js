@@ -8,7 +8,7 @@ const gradle=fs.readFileSync(path.join(__dirname,"../build.gradle.kts"),"utf8");
 const rules=JSON.parse(fs.readFileSync(path.join(__dirname,"../../firebase-realtime.rules.json"),"utf8")).rules;
 const wf=fs.readFileSync(path.join(__dirname,"../../.github/workflows/scrapbook-online-signed-apk-qa.yml"),"utf8");
 assert.match(online,/BuildConfig\.SCRAPBOOK_ONLINE_QA/);
-assert.match(gradle,/direct-posting-owner-monitored/);assert.match(gradle,/54302/);
+assert.match(gradle,/direct-posting-owner-monitored/);assert.match(gradle,/54301/);
 assert.match(stage,/CommunityScrapbookOnline\.homePanel/);
 assert.match(online,/View buildHomePanel\(\)/);
 assert.match(online,/expandFromMenu/);
