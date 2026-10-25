@@ -56,9 +56,10 @@ test("LT62 split popup preserves toolbar, content-sized hitbox and page lifecycl
   dock.includes("Native.openPopup(kind,Math.round(");
 });
 test("LT62 popup receives picker/filter events, focus and P/M/G state updates",()=>{
- for(const code of ["window.onLocationPaste(","window.onFilterOptions(",
-   "window.onFormOptions(","window.onPokemonSuggestions("])
+ for(const code of ["window.onFilterOptions(","window.onFormOptions(",
+   "window.onPokemonSuggestions("])
   if(!service.includes("js(popupPanel,popupLoaded,\""+code))return false;
+ if(!service.includes("js(popupPanel,popupLoaded,callback);"))return false;
  return service.includes("WebView web=inPopup?popupPanel:menuPanel;")&&
   service.includes("js(popupPanel,popupLoaded,data);")&&
   service.includes("js(popupPanel,popupLoaded,jsCode);")&&
@@ -451,8 +452,9 @@ test("Despawn removes expired sprites then reloads the site even when AUTO is OF
 test("Expired 0:00 cards are never restored or announced as live",()=>{
  return service.includes('if(secs<0||secs>86400)return Long.MAX_VALUE;')&&
   service.includes('if(end<=now)continue;')&&
-  service.includes('JSONArray sorted=sortItems(unexpired);')&&
-  service.indexOf('JSONArray sorted=sortItems(unexpired);')<service.indexOf('recordNewResults(sorted,');
+  service.includes('JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));')&&
+  service.indexOf('JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));')<
+   service.indexOf('recordNewResults(sorted,');
 });
 test("Reopening menu immediately re-applies active visual states to recreated buttons",()=>{
  const block=dock.split('function renderQuickMenu(){')[1]?.split('function audibleAlertState(')[0]||"";
@@ -1988,7 +1990,7 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
   lines.includes("UL RG#275")&&lines.includes("UL IV#1460")&&lines.includes("UL P89,97%")&&
   master.includes("ML RG#1")&&master.includes("ML IV#1")&&master.includes("ML P100,00%")&&
   api.pvpIvClassPercent(1460,alt,"ul")==="89,97"&&
-  unknown.includes("?/?/?")&&
+  !unknown.includes("?/?/?")&&
   !unknown.some(v=>v.includes("RG#")||v.includes("IV#"))&&
   api.verifiedSpawnRawIv({...alt,ivPercent:"100"})===null&&
   api.verifiedSpeciesIvRank(falseForm,"gl")===null&&
@@ -2181,9 +2183,8 @@ test("UX-LOCATION-FIX-03 explicit clipboard paste is validated and never enables
  '@JavascriptInterface public void locationEditor(boolean open)')[0]||"";
  const render=dock.split('window.onLocationPaste=coords=>{')[1]?.split('function renderLocationChoices(){')[0]||"";
  return handler.includes('cb.hasPrimaryClip()')&&
-  handler.includes('value.length()<=128')&&
-  handler.includes('parsed=extractCoordinates(value.toString())')&&
-  handler.includes('window.onLocationPaste(')&&
+  handler.includes('extractClipboardCoordinates(value==null?"":value.toString())')&&
+  handler.includes('window.onLocationPaste&&window.onLocationPaste(')&&
   render.includes('field.value=String(coords);')&&
   !render.includes('Native.setLocation(')&&
   !handler.includes('locationEnabled=true')&&
