@@ -3,7 +3,7 @@
 ## Ponto de restauração
 - Base real: main `97654f3c0ecaf4d3de4e22fe1f3efb6d979f0297` (release pública observada LT103, 0.00.103/54306).
 - Backup remoto imutável por convenção: `backup/lt103-before-dual-pokeballs-20261025`, apontando para o commit original. **Nunca escrever nessa branch**.
-- Desenvolvimento: `feature/dual-pokeballs-100-0-20261025`, sem tocar na main durante QA.
+- Desenvolvimento: `feature/dual-pokeballs-100-0-20261025`. PR #67 integrada por squash à main, merge SHA `54fc1274c0fac62c1827071d8e6cf6361219dfca` em 25/10/2026. Testes Node #40216822416 SUCCESS (7/7 contratos próprios) e Java compile #40216822421 SUCCESS. Sem APK novo e sem QA Samsung.
 
 ## Pedido funcional
 - Ativar duas Pokébolas em dois overlays com uma só conta PoGoCoordinates.
