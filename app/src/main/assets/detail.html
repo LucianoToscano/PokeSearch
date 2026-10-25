@@ -233,10 +233,11 @@ window.showDetails=(c,mode,watched)=>{
  const rawPct=validRaw?Math.round(raw.split("/").map(Number)
   .reduce((sum,n)=>sum+n,0)*100/45):null;
  const showPct=validPct&&(rawPct===null||rawPct===Number(percent));
+ const showRaw=validRaw&&(!validPct||rawPct===Number(percent));
  document.getElementById("major").innerHTML=
   stat("PC",c.cp)+stat("Nv.",c.level)+
   stat("IV%",showPct?percent+"%":"","red")+
-  stat("A/D/S",validRaw?raw:"","red")+stat("Rank",c.rank);
+  stat("A/D/S",showRaw?raw:"","red")+stat("Rank",c.rank);
  document.getElementById("info").innerHTML=
   item("Golpes",c.moves)+item("Local",c.location)+item("Distância",c.distance)+
   (expiresAt?'<div><span id="timer" aria-label="Tempo até desaparecer"></span></div>':

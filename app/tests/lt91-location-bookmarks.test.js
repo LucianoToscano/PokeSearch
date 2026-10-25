@@ -17,8 +17,8 @@ check("loading locations preserves prior API search path",()=>{
  assert.match(java,/if\(coords\.isEmpty\(\)\|\|radius<0\|\|radius>1000\)return/);
 });
 check("location row remains compact and does not replace existing controls",()=>{
- assert.match(dock,/panel\.append\(title,fieldRow,slide,label,savedRow,message\)/);
- assert.match(dock,/saveSearchLocation\(slot,savedName\.value,coords,radius\)/);
+ assert.match(dock,/panel\.append\(title,fieldRow,slide,label,savedRow,tools,message\)/);
+ assert.match(dock,/saveSearchLocation\(\s*chosenSlot,savedName\.value,location\.coords,location\.radius\)/);
  assert.match(dock,/loadSearchLocation\(slot\)/);
  assert.match(dock,/requestSavedSearchLocations/);
  assert.match(dock,/locSavedRow/);
