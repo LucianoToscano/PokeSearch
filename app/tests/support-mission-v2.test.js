@@ -24,9 +24,9 @@ check("all seven local persistence keys present; no server and no Firebase",()=>
    assert.ok(state.includes(key),key);
  assert.ok(!/import\s+.*(?:Firebase|HttpURLConnection|Socket|Retrofit|WebView)/.test(state));
 });
-check("ten opens + 100 effective minutes both required",()=>{
- assert.ok(policy.includes("REQUIRED_OPENS = 10"));
- assert.ok(policy.includes("REQUIRED_USAGE_MS = 100L * 60L * 1000L"));
+check("three opens + ten effective minutes for subsequent cycles",()=>{
+ assert.ok(policy.includes("REQUIRED_OPENS = 3"));
+ assert.ok(policy.includes("REQUIRED_USAGE_MS = 10L * 60L * 1000L"));
  assert.ok(policy.includes("opens >= REQUIRED_OPENS && effectiveUsageMs >= REQUIRED_USAGE_MS"));
 });
 check("exclude recreated Activity, reload and nonlauncher callbacks",()=>{
@@ -52,11 +52,15 @@ check("screen-off resets overlay touch timestamp and unhooks receiver on service
  assert.ok(overlay.includes("unregisterReceiver(missionScreenOffReceiver)"));
  assert.ok(overlay.includes("SupportMissionState.overlayStopped();"));
 });
-check("badge only on eligibility and no popup until user taps",()=>{
+check("welcome mission is shown once on first installation, later cycles remain gated",()=>{
  assert.ok(main.includes("homeMissionBadge.setOnClickListener(v->openSupportMission())"));
  assert.ok(main.includes("R.drawable.support_home_new:R.drawable.support_home_seen"));
  assert.ok(state.includes("SupportMissionPolicy.eligible"));
- assert.ok(!main.includes("post(this::openSupportMission)"));
+ assert.ok(main.includes("missionHandler.postDelayed(this::maybeWelcomeMission"));
+ assert.ok(state.includes("support_mission_first_install_welcome_pending"));
+ assert.ok(state.includes("public static synchronized boolean welcomePending"));
+ assert.ok(state.includes("!p.contains(OPENS)"));
+ assert.ok(state.includes("putBoolean(WELCOME_PENDING,false)"));
 });
 check("dismissal and 15-day cooldown are local",()=>{
  assert.ok(state.includes(".putLong(DISMISSED,now)"));

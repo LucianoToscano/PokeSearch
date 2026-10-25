@@ -1,13 +1,15 @@
-name: PokeSearch Scrapbook Moderated Online Scrapbook Signed QA
+name: PokeSearch Home Community Direct Posting & Thanks Signed QA
 on:
   push:
-    branches: [feature/pokesearch-community-scrapbook-stage1-20261025]
+    branches: [feature/pokesearch-home-scrapbook-thanks-qa98-20261025]
     paths:
       - '.github/workflows/scrapbook-online-signed-apk-qa.yml'
       - 'app/build.gradle.kts'
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/**'
       - 'app/src/main/assets/**'
       - 'app/tests/**'
+      - 'app/src/main/res/drawable-nodpi/**'
+      - 'app/src/main/res/xml/update_file_paths.xml'
       - 'app/src/main/AndroidManifest.xml'
       - 'firebase-realtime.rules.json'
       - '.github/workflows/scrapbook-online-signed-apk-qa.yml'
@@ -15,21 +17,21 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: pokesearch-scrapbook-moderated-apk-${{ github.ref }}
+  group: pokesearch-home-community-qa98-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build-release:
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     env:
-      POKE_TEST_VERSION_CODE: '54300'
-      POKE_TEST_VERSION_LABEL: '51100'
-      POKE_TEST_PUBLIC_VERSION: '0.00.97'
+      POKE_TEST_VERSION_CODE: '54301'
+      POKE_TEST_VERSION_LABEL: '51101'
+      POKE_TEST_PUBLIC_VERSION: '0.00.98'
       # Read-only demo is limited to this expressly requested signed QA artifact.
       POKE_SCRAPBOOK_STAGE1_QA: 'true'
       POKE_SCRAPBOOK_QA_ACK: 'stage1-readonly'
       POKE_SCRAPBOOK_ONLINE_QA: 'true'
-      POKE_SCRAPBOOK_ONLINE_ACK: 'moderated-private-qa'
+      POKE_SCRAPBOOK_ONLINE_ACK: 'direct-posting-owner-monitored'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
       POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
       POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
@@ -108,7 +110,7 @@ jobs:
           test "$POKE_SCRAPBOOK_QA_ACK" = stage1-readonly
           test "$POKE_SCRAPBOOK_ONLINE_QA" = true
           grep -Fq 'SCRAPBOOK_ONLINE_QA' app/build.gradle.kts
-          grep -Fq 'moderated-private-qa' app/build.gradle.kts
+          grep -Fq 'direct-posting-owner-monitored' app/build.gradle.kts
       - name: Build protected RELEASE APK
         run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
       - name: Validate APK package, release status and signature
@@ -116,13 +118,13 @@ jobs:
         run: |
           set -euo pipefail
           APK=app/build/outputs/apk/release/app-release.apk
-          OUT=PokeSearch-v0.00.97-LT-Scrapbook-Moderated-Online-QA.apk
+          OUT=PokeSearch-v0.00.98-LT-Community-Home-Thanks-Location-QA.apk
           test -s "$APK"
           unzip -t "$APK" >/dev/null
           test -s app/build/outputs/mapping/release/mapping.txt
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-BADGING.txt
           PKG="$(grep '^package: ' PACKAGE-BADGING.txt)"
-          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54300'" "versionName='0.00.97'"; do
+          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54301'" "versionName='0.00.98'"; do
             grep -Fq "$expected" <<< "$PKG" || exit 1
           done
           ! grep -q '^application-debuggable' PACKAGE-BADGING.txt
@@ -138,9 +140,9 @@ jobs:
       - name: Signed release-candidate artifact (NO AUTOMATIC publication)
         uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-v0.00.97-LT-Scrapbook-Moderated-Online-QA-protected-release
+          name: PokeSearch-v0.00.98-LT-Community-Home-Thanks-Location-QA-protected-release
           path: |
-            PokeSearch-v0.00.97-LT-Scrapbook-Moderated-Online-QA.apk
+            PokeSearch-v0.00.98-LT-Community-Home-Thanks-Location-QA.apk
             SHA256SUMS.txt
             SIGNING-REPORT.txt
             SOURCE_COMMIT.txt

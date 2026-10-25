@@ -18,10 +18,12 @@ test("Feature disabled in public release regardless of old preference",()=>{
  assert.match(activity,/if\(!CommunityScrapbookStage1\.isEnabled\(this\)\|\|!IntegrityGuard\.verify\(this\)\)/);
  assert.match(main,/if\(scrapbookPreview\)/);
 });
-test("Public Home and wallpaper remain on the original branch of the condition",()=>{
+test("Home is always scrollable for offline tribute and inline community",()=>{
  assert.match(main,/pageBackground\.setAlpha\(1f\)/);
- assert.match(main,/if\(scrapbookPreview\)[\s\S]*?ScrollView stage1HomeScroll[\s\S]*?else\{[\s\S]*?frame\.addView\(screen,new FrameLayout\.LayoutParams\(-1,-1\)\)/);
- assert.match(main,/screen\.addView\(CommunityScrapbookStage1\.homePanel\(this,homeLightMode\)/);
+ assert.match(main,/ScrollView stage1HomeScroll=new ScrollView\(this\)/);
+ assert.match(main,/stage1HomeScroll\.setFillViewport\(true\)/);
+ assert.match(main,/frame\.addView\(stage1HomeScroll/);
+ assert.match(main,/CommunityTribute\.homeCard/);
  assert.match(main,/screen\.addView\(footer,new LinearLayout\.LayoutParams\(-1,d\(30\)\)\)/);
  assert.match(main,/FirebaseStats\.bind\(this,online,installations\)/);
  assert.match(main,/share\.setOnClickListener\(v->sharePokeSearch\(\)\)/);

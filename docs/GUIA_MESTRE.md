@@ -74,5 +74,12 @@ Este checkpoint **substitui instruções visuais antigas** do arquivo histórico
 - Em 25/10/2026, evolução da PR #64 prepara `CommunityScrapbookOnline.java` e `firebase-realtime.rules.json`: feed de posts aprovados, envio para moderação, curtida e denúncias, com gate exclusivo do APK QA 0.00.97/54300. **Não afirmar Firebase online** sem inspeção e deploy de regras, App Check, moderação e homologação; em QA inicialmente fechado. Detalhes e critérios: [Scrapbook Online QA](POKESEARCH_SCRAPBOOK_ONLINE_QA_20261025.md).
 - Ações documentais e CI devem manter main LT87, PR #63 e PR #64 sem merge e o mesmo certificado; APK atual no Drive permanece intocado.
 
-## 10. Protocolo obrigatório do próximo chat
+## 10. QA 0.00.98 — Home com Scrapbook, Agradecimentos e Localização
+- Branch nova `feature/pokesearch-home-scrapbook-thanks-qa98-20261025` derivada do HEAD `e02475fcfebcd64b74300fd8ab5e8ac29a35b8a6` da PR #64, mantendo #63 e main LT87 intactas.
+- Proprietário autorizou posts/respostas diretos (sem aprovação), porém **não declarar Online funcional** sem Security Rules implantadas, flag `allowDirectPosts=true` e validação. Mural na própria Home com exemplos **fictícios identificados**, categorias e editor inline.
+- Dois WebP originais aprovados são recursos offline em `drawable-nodpi`; cartão 💙 Agradecimentos na Home e menu, visualizador sobre Home, zoom e compartilhamento via FileProvider.
+- Janela Localização recupera largura ~286dp, botões Aplicar/Limpar visíveis, Colar/Copiar adjacentes, campo coords e raio 0–1000. Missão primeira instalação após guia; posteriores 3 aberturas/10min.
+- **QA candidata 0.00.98/54301**, CI, assinatura e Samsung a validar. Guia detalhado [QA 0.00.98](POKESEARCH_QA98_HOME_COMMUNITY_TRIBUTE_LOCATION.md). Não fazer merge/release/Drive sem autorização.
+
+## 11. Protocolo obrigatório do próximo chat
 Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, preservar todas as mudanças anteriores e escolher a branch correta antes de alterar arquivos. Etapas pequenas, reversíveis e auditáveis, com testes; não apagar preferências, não mexer na assinatura, não ativar Firebase real por inferência. Registrar mudanças neste guia **em poucas linhas** e encaminhar documentos aprofundados para arquivos separados. **Nunca declarar Release, merge, aprovação Samsung ou mural online sem prova real.**

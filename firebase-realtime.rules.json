@@ -32,7 +32,7 @@
     },
     "scrapbook": {
       "config": {
-        "acceptSubmissions": {
+        "allowDirectPosts": {
           ".read": "auth != null",
           ".write": false,
           ".validate": "newData.isBoolean()"
@@ -40,19 +40,12 @@
       },
       "posts": {
         ".read": "auth != null",
-        ".write": false,
         "$postId": {
-          ".validate": "newData.hasChildren(['authorUid','nickname','category','text','createdAt','status'])",
-          "$other": {
-            ".validate": false
-          }
-        }
-      },
-      "submissions": {
-        "$uid": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && root.child('scrapbook/config/acceptSubmissions').val() === true",
-          ".validate": "newData.hasChildren(['nickname','category','text','createdAt'])",
+          ".write": "auth != null && !data.exists() && newData.exists() && root.child('scrapbook/config/allowDirectPosts').val() === true && newData.child('authorUid').val() === auth.uid",
+          ".validate": "newData.hasChildren(['authorUid','nickname','category','text','createdAt','status','pinned'])",
+          "authorUid": {
+            ".validate": "newData.isString() && newData.val() === auth.uid"
+          },
           "nickname": {
             ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 24"
           },
@@ -64,6 +57,12 @@
           },
           "createdAt": {
             ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 60000"
+          },
+          "status": {
+            ".validate": "newData.val() === 'published'"
+          },
+          "pinned": {
+            ".validate": "newData.val() === false"
           },
           "$other": {
             ".validate": false
@@ -79,12 +78,18 @@
           }
         }
       },
-      "replySubmissions": {
+      "replies": {
+        ".read": "auth != null",
         "$postId": {
-          "$uid": {
-            ".read": "auth != null && auth.uid === $uid",
-            ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && root.child('scrapbook/config/acceptSubmissions').val() === true && root.child('scrapbook/posts').child($postId).child('status').val() === 'published'",
-            ".validate": "newData.hasChildren(['text','createdAt'])",
+          "$replyId": {
+            ".write": "auth != null && !data.exists() && newData.exists() && root.child('scrapbook/config/allowDirectPosts').val() === true && root.child('scrapbook/posts').child($postId).child('status').val() === 'published' && newData.child('authorUid').val() === auth.uid",
+            ".validate": "newData.hasChildren(['authorUid','nickname','text','createdAt'])",
+            "authorUid": {
+              ".validate": "newData.isString() && newData.val() === auth.uid"
+            },
+            "nickname": {
+              ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 24"
+            },
             "text": {
               ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 200"
             },
@@ -96,10 +101,6 @@
             }
           }
         }
-      },
-      "replies": {
-        ".read": "auth != null",
-        ".write": false
       },
       "reports": {
         "$postId": {
