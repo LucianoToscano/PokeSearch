@@ -74,14 +74,15 @@ async function suite(){
   assert.equal(t.reads.length,1);
   assert.ok(!JSON.stringify(r).includes(CODE));
  });
- await check("guest session blocks Search and reveal never becomes a discovery endpoint",async()=>{
+ await check("anonymous Search sends no JWT; reveal identity remains protected",async()=>{
   const t=makeClient({jwt:null});
   const s=await t.client.search(filter);
-  assert.deepEqual(s,{ok:false,reason:"login-required"});
-  assert.equal(t.calls.length,0);
-  const r=await t.client.reveal({sourceIndex:0,searchId:1,pokemonId:821,cp:438});
+  assert.equal(s.ok,true);
+  assert.equal(t.calls.length,1);
+  assert.equal(Object.hasOwn(t.calls[0].req.headers,"Authorization"),false);
+  const r=await t.client.reveal({sourceIndex:0,searchId:999,pokemonId:821,cp:438});
   assert.equal(r.reason,"stale-or-ambiguous-selection");
-  assert.equal(t.calls.length,0);
+  assert.equal(t.calls.length,1);
  });
  await check("external or insecure origins fail before reading JWT",async()=>{
   for(const origin of ["http://pogocoordinates.com","https://evil.com",
@@ -97,6 +98,23 @@ async function suite(){
   assert.equal((await t.client.search({mode:"raw",attack:16,defense:15,stamina:15})).reason,"unsupported-filter");
   assert.equal((await t.client.search({...filter,formSelections:["Alola"]})).reason,"unsupported-filter");
   assert.equal(t.calls.length,0);
+ });
+ await check("PvP ranks require per-spawn league and rank attestation",async()=>{
+  const t=makeClient({fetchImpl:async()=>reply(200,{results:[
+   item(1,{pvp:{league:"great",rank:1}}),
+   item(2,{pvp:{league:"ultra",rank:1}}),
+   item(3,{pvp:{league:"great",rank:45}})
+  ]})});
+  const r=await t.client.search({mode:"gl",glRank:10});
+  assert.equal(r.ok,true,JSON.stringify(r));
+  assert.equal(r.cards.length,1);
+  assert.equal(r.cards[0].rank,"1");
+  assert.equal(r.pvpVerified,true);
+ });
+ await check("unverified PvP-only response fails closed",async()=>{
+  const t=makeClient({fetchImpl:async()=>reply(200,{results:[item()]})});
+  const r=await t.client.search({mode:"ul",ulRank:10});
+  assert.deepEqual(r,{ok:false,reason:"pvp-unverified"});
  });
  await check("401 403 and 429 propagated without retries or data",async()=>{
   for(const [status,reason] of [[401,"login-required"],[403,"access-denied"],[429,"rate-limited"]]){
