@@ -28,8 +28,8 @@ check("full coordinates 24.9407581,121.1889794 fit dedicated input",()=>{
  const parser=section(" function submit(){"," apply.onclick=submit;");
  assert.ok(parser.includes("Native.setLocation(true,wantedCoords,wantedRadius)"));
 });
-check("paste arrow points UP, and has accessible description",()=>{
- assert.ok(dock.includes('<path d="M12 19V9m-4 4 4-4 4 4"/>'));
+check("paste arrow points DOWN, and has accessible description",()=>{
+ assert.ok(dock.includes('<path d="M12 9v10m-4-4 4 4 4-4"/>'));
  assert.ok(dock.includes('paste.setAttribute("aria-label","Colar coordenadas")'));
 });
 check("climate patches user choice to website without popup mismatch",()=>{
