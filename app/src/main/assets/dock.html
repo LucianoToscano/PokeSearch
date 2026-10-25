@@ -3617,6 +3617,77 @@ body.controls-window #choices.locationPanel .locSavedSlots button.locSlot{
 body.controls-window #choices.locationPanel .locSavedSlots button.locSlot.saved{
  color:#ffda77!important;border:1px solid #ffda7766!important;
 }
+
+/* LT88 Samsung physical QA: paint each visible panel at high contrast,
+   not the transparent outer pass-through hitbox. No extra empty rectangle. */
+body.controls-window #choices.modeCascade .modeCascadeRail,
+body.controls-window #choices.modeCascade .modeCascadeEditor,
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade .filterCascadeEditor,
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeRail,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout{
+ background:#1b2533!important;color:#edf4ff!important;
+ border:1px solid #607085!important;border-radius:7px!important;
+ box-shadow:0 3px 10px #0009!important;
+ background-clip:padding-box!important;
+}
+body.controls-window.visual-light-menu #choices.modeCascade .modeCascadeRail,
+body.controls-window.visual-light-menu #choices.modeCascade .modeCascadeEditor,
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeRail,
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeEditor,
+body.controls-window.visual-light-menu #choices.filterCascade .generalPresetFlyout{
+ background:#edf2f8!important;color:#1b3047!important;
+ border-color:#8fa2b7!important;
+}
+body.controls-window #choices.filterCascade .generalPresetFlyout{
+ box-sizing:border-box!important;position:absolute!important;left:82px!important;
+ right:auto!important;top:0!important;z-index:40!important;
+ width:149px!important;min-width:149px!important;max-height:none!important;
+ padding:5px!important;margin:0!important;display:flex!important;
+ flex-direction:column!important;gap:3px!important;pointer-events:auto!important;
+}
+body.controls-window #choices.filterCascade .generalPresetTitle{
+ font:700 10px/16px Roboto,Arial,sans-serif!important;padding:0 3px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow{
+ box-sizing:border-box!important;display:flex!important;gap:3px!important;
+ min-height:25px!important;height:25px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad{
+ box-sizing:border-box!important;flex:1 1 0!important;width:115px!important;
+ min-width:0!important;height:25px!important;min-height:25px!important;
+ padding:3px 5px!important;margin:0!important;text-align:left!important;
+ white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ background:var(--visual-menu-button-bg,#344254)!important;
+ color:var(--visual-menu-fg,#fff)!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad.active{
+ color:#ffd56b!important;border:1px solid #b6904e!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetDelete{
+ flex:0 0 22px!important;width:22px!important;min-width:22px!important;
+ height:25px!important;min-height:25px!important;margin:0!important;padding:0!important;
+ text-align:center!important;font-size:15px!important;
+ background:#4a2e39!important;color:#ffc2c2!important;
+}
+body.controls-window #choices.filterCascade .generalPresetHint{
+ font:400 8px/12px Roboto,Arial,sans-serif!important;padding:1px 2px!important;
+ color:inherit!important;opacity:.83!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList{
+ background:#1b2533!important;border-radius:6px!important;padding:2px!important;
+}
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeEditor .extraOptionList{
+ background:#edf2f8!important;
+}
+body.controls-window #choices.modeCascade .modeCascadeEntry,
+body.controls-window #choices.filterCascade .filterCascadeEntry{
+ color:var(--visual-menu-fg,#eef5ff)!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3807,7 +3878,7 @@ let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin
  sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=true,filterFocus="PC",advancedExpanded=false;
 let generalPresetExpanded=false,generalPresetSaved=[false,false,false];
-let generalPresetNames=["Perfil 1","Perfil 2","Perfil 3"];
+let generalPresetNames=["Filtro 1","Filtro 2","Filtro 3"];
 let formQuery="",formListVisibleCount=60,formOptionsStatus="Aguardando lista oficial de Form do site...";
 let siteFiltersConfirmed=false; // Evidence from Android: same generation, verified Search and accepted results.
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
@@ -4420,56 +4491,77 @@ function filterCascadeEditorWidth(label){
   Sexo:80,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
  return width[label]||134;
 }
+// LT88 Samsung: small flyout adjacent to the filter rail.
+let generalPresetActive=0;
 function renderGeneralPresetControls(rail,make){
- const heading=rail.querySelector(".filterCascadeHead"),toggle=make("button","generalPresetToggle","▣");
- toggle.type="button";toggle.title="Três filtros salvos";toggle.setAttribute("aria-label","Filtros salvos");
- toggle.onclick=()=>{generalPresetExpanded=!generalPresetExpanded;
-  if(generalPresetExpanded)filterFocus=""; // Never overlay a second editor behind saved profiles.
+ const heading=rail.querySelector(".filterCascadeHead");
+ const toggle=make("button","generalPresetToggle","▣");
+ toggle.type="button";toggle.title="Filtros salvos";
+ toggle.setAttribute("aria-label","Abrir Filtro 1, Filtro 2 e Filtro 3");
+ toggle.onclick=()=>{
+  generalPresetExpanded=!generalPresetExpanded;
+  if(generalPresetExpanded)filterFocus="";
   renderFiltersChoices();
-  if(Native.requestGeneralFilterPresets)Native.requestGeneralFilterPresets();};
+  if(Native.requestGeneralFilterPresets)Native.requestGeneralFilterPresets();
+ };
  heading.appendChild(toggle);
  if(!generalPresetExpanded)return;
  const menu=make("div","generalPresetFlyout");
- menu.appendChild(make("div","generalPresetTitle","Perfis salvos"));
+ menu.appendChild(make("div","generalPresetTitle","Filtros salvos"));
  for(let slot=1;slot<=3;slot++){
   const row=make("div","generalPresetRow");
-  const name=make("button","generalPresetName",generalPresetNames[slot-1]||"Perfil "+slot);
-  name.type="button";name.title="Renomear o perfil "+slot;
-  name.setAttribute("aria-label","Renomear o perfil "+slot);
-  name.onclick=()=>{
-   const input=make("input","generalPresetRename");input.type="text";
-   input.maxLength=20;input.value=generalPresetNames[slot-1]||"Perfil "+slot;
-   const save=()=>{
-    const value=input.value.trim();
-    if(value&&value.length<=20&&Native.renameGeneralFilterPreset)
-     Native.renameGeneralFilterPreset(slot,value);
-    else renderFiltersChoices();
-   };
-   input.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();input.blur();}});
-   input.addEventListener("blur",save,{once:true});
-   name.replaceWith(input);input.focus();input.select();
+  const button=make("button","generalPresetLoad",
+   (generalPresetActive===slot?"★ ":"☆ ")+(generalPresetNames[slot-1]||"Filtro "+slot));
+  button.dataset.presetLoad=String(slot);button.type="button";
+  button.title="Toque usa; segure para salvar filtros atuais";
+  button.setAttribute("aria-label","Filtro "+slot+": toque usa, segure salva");
+  button.classList.toggle("active",generalPresetActive===slot);
+  let held=false,holdTimer=null,startX=0,startY=0;
+  const cancelHold=()=>{if(holdTimer){clearTimeout(holdTimer);holdTimer=null;}};
+  const save=()=>{cancelHold();held=true;
+   generalPresetActive=slot;button.classList.add("active");
+   if(Native.saveGeneralFilterPreset)Native.saveGeneralFilterPreset(slot);
   };
-  const load=make("button","generalPresetLoad","Usar");
-  load.type="button";load.dataset.presetLoad=String(slot);load.disabled=!generalPresetSaved[slot-1];
-  load.title="Aplicar perfil "+slot;load.onclick=()=>Native.loadGeneralFilterPreset(slot);
-  const save=make("button","generalPresetSave","Salvar");
-  save.type="button";save.title="Salvar perfil "+slot;save.onclick=()=>Native.saveGeneralFilterPreset(slot);
-  row.append(name,load,save);menu.appendChild(row);
+  button.addEventListener("pointerdown",event=>{
+   if(event.button!==0)return;
+   held=false;startX=event.clientX;startY=event.clientY;
+   cancelHold();holdTimer=setTimeout(save,650);
+  });
+  button.addEventListener("pointermove",event=>{
+   if(Math.abs(event.clientX-startX)>10||Math.abs(event.clientY-startY)>10)cancelHold();
+  });
+  ["pointerup","pointercancel","pointerleave"].forEach(kind=>
+   button.addEventListener(kind,cancelHold));
+  button.oncontextmenu=event=>{event.preventDefault();if(!held)save();};
+  button.onclick=()=>{
+   if(held){held=false;return;}
+   if(!generalPresetSaved[slot-1]){
+    menu.querySelector(".generalPresetHint").textContent="Segure Filtro "+slot+" para salvar";
+    return;
+   }
+   generalPresetActive=slot;
+   if(Native.loadGeneralFilterPreset)Native.loadGeneralFilterPreset(slot);
+  };
+  const remove=make("button","generalPresetDelete","×");
+  remove.type="button";remove.title="Excluir filtro salvo "+slot;
+  remove.setAttribute("aria-label","Excluir filtro salvo "+slot);
+  remove.onclick=()=>{if(Native.deleteGeneralFilterPreset)Native.deleteGeneralFilterPreset(slot);};
+  row.append(button,remove);menu.appendChild(row);
  }
- rail.insertBefore(menu,rail.children[1]||null);
+ menu.appendChild(make("div","generalPresetHint","Toque usa · Segure salva · × exclui"));
+ rail.parentElement.appendChild(menu);
 }
 if(typeof window!=="undefined")window.onGeneralPresetStatus=response=>{
  if(!Array.isArray(response?.saved)||response.saved.length!==3)return;
- generalPresetSaved=response.saved.map(v=>v===true);
- if(Array.isArray(response.names)&&response.names.length===3){
-  generalPresetNames=response.names.map((name,index)=>String(name||"Perfil "+(index+1)).slice(0,20));
-  document.querySelectorAll(".generalPresetName").forEach((name,index)=>{
-   name.textContent=generalPresetNames[index];
-  });
- }
+ generalPresetSaved=response.saved.map(value=>value===true);
+ generalPresetActive=Number.isInteger(response.active)?response.active:0;
+ if(Array.isArray(response.names)&&response.names.length===3)
+  generalPresetNames=response.names.map((name,index)=>String(name||"Filtro "+(index+1)).slice(0,20));
  document.querySelectorAll(".generalPresetLoad").forEach(button=>{
   const i=Number(button.dataset.presetLoad);
-  button.disabled=!Number.isInteger(i)||!generalPresetSaved[i-1];
+  button.textContent=(generalPresetActive===i?"★ ":"☆ ")+
+   (generalPresetNames[i-1]||"Filtro "+i);
+  button.classList.toggle("active",generalPresetActive===i&&generalPresetSaved[i-1]);
  });
 };
 function renderExtraFilters(panel,make){
