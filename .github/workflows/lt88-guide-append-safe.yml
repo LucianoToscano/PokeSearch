@@ -1,9 +1,9 @@
-name: PokeSearch LT88 Samsung R3 safe Guia Mestre append
+name: PokeSearch LT88 Floating Menus R5 safe Guia Mestre append
 on:
   push:
     branches: [feature/lt88-lt93-evolution-20261025]
     paths:
-      - 'docs/LT88_SAMSUNG_LEGIBILITY_R3_QA.md'
+      - 'docs/LT88_FLOATING_MENUS_R5_QA.md'
       - '.github/workflows/lt88-guide-append-safe.yml'
 permissions:
   contents: write
@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           GUIDE=docs/GUIA_MESTRE.md
-          MARKER='LT88 Samsung R3 — contraste legível Filtros e Modos'
+          MARKER='LT88 R5 — perfis Padrão, menu som Pix e Favoritos'
           test -f "$GUIDE"
           BEFORE="$(wc -c < "$GUIDE")"
           test "$BEFORE" -gt 1400000
@@ -36,15 +36,16 @@ jobs:
             echo
             echo
             echo "## $MARKER (25/10/2026)"
-            echo "- Três capturas Samsung 0.00.90/54293 comprovam regressão: Filtros Nível e Forma (00–04), Modos IV% seguem transparentes sobre papel de parede. QA visual antigo NÃO passou."
-            echo "- Causa: backdrop-filter no WebView de overlay não consegue garantir blur de outra janela; 50% alpha puro não oferece leitura estável."
-            echo "- Correção: preservar transparência BASE inicial 50%, menuBlur padrão 4 px, temas/preferências anteriores; criar camada de legibilidade derivada do MESMO controle (alpha final=1-(transparência/100)^2.8)."
-            echo "- Em 50% BASE a superfície de leitura fica cerca de 86% opaca; 100% transparência mantém opacidade 0. O Editor Visual explica claramente essa diferença."
-            echo "- CSS aplica fundo padronizado aos rail/editor de Filtros/Modos, listas Forma/Ordenar/Clima, inputs e Favoritos nativos. Não alargar janelas nem bloquear toques atrás."
-            echo "- QA candidato 0.00.91/54294; numeração NÃO significa LT91 roadmap concluída. Autenticação/API/token/assinatura preservados."
-            echo "- Provas de build e Samsung separadas; teste físico R3 pendente, confira docs/LT88_SAMSUNG_LEGIBILITY_R3_QA.md."
-            echo "- A main LT87 continua preservada, PR #63 Draft, sem merge, sem Release."
-            echo "- Guia anterior preservado com verificação SHA-256 de todo prefixo após append."
+            echo "- Origem: branch feature/lt88-lt93-evolution-20261025, PR #63 Draft, main LT87 oficial preservada."
+            echo "- UI Filtros: ⊙ abre Padrão (sem ícone e X) e Perfis 1–3 com toque para usar, 💾 salvar e × excluir; sem long press."
+            echo "- Padrão zera campos e restrições IV por pesquisa neutra 0–100%, preserva Shiny e localização. Usar perfil fecha somente lista de salvos."
+            echo "- Localização não mostra mais Nome do local, locais 1–3 nem botão ?. Dados já persistidos preservados. Campos, Copiar/Colar, raio e ações mantidos."
+            echo "- Favoritos dialog nativo posiciona acima/abaixo do menu flutuante, mantendo não modal."
+            echo "- Notificações: som de Novos/Favoritos abre diálogo overlay, lista 36 áudios e Padrão; tocar ouve, ✓ confirma, fechar interrompe prévia; não volta à Home."
+            echo "- Pix: diálogo overlay com mesmo tema/alpha/blur, QR original não alterado e opção explícita de copiar; sem redirecionamento Home."
+            echo "- Importação de áudio continua no fluxo legado; não habilitada no novo selector overlay sem workflow de arquivos homologado."
+            echo "- APK QA candidato 0.00.92/54295; testes e assinatura devem ser conferidos, sem PASS físico presumido."
+            echo "- Docs: docs/LT88_FLOATING_MENUS_R5_QA.md. Guia Mestre anterior validado por hash de prefixo, somente append."
           } >> "$GUIDE"
           AFTER="$(wc -c < "$GUIDE")"
           test "$AFTER" -gt "$BEFORE"
@@ -53,7 +54,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$GUIDE"
-          git commit -m 'docs(LT88 R3): safely append legibility audit with prefix SHA256 protection'
+          git commit -m 'docs(LT88 R5): protected append of saved profiles and overlay menus'
           git fetch origin "refs/heads/$GITHUB_REF_NAME:refs/remotes/origin/$GITHUB_REF_NAME"
           git rebase "origin/$GITHUB_REF_NAME"
           git push origin "HEAD:$GITHUB_REF_NAME"
