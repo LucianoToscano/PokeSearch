@@ -156,7 +156,11 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$GUIDE"
           git commit -m "docs(LT86 QA): append protected build proof without replacing Guia Mestre"
-          # Reject concurrent HEAD changes; never force push or overwrite project history.
+          # Rebase this append-only commit onto the newest branch head, because
+          # unrelated QA documentation may have advanced while Gradle was running.
+          # Never force push; conflict means fail closed, preserving all history.
+          git fetch origin "refs/heads/$GITHUB_REF_NAME:refs/remotes/origin/$GITHUB_REF_NAME"
+          git rebase "origin/$GITHUB_REF_NAME"
           git push origin "HEAD:$GITHUB_REF_NAME"
       - name: Cleanup secret key
         if: always()
