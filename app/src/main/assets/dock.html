@@ -4305,7 +4305,7 @@ function renderGeneralPresetControls(rail,make){
  }
  rail.insertBefore(menu,rail.children[1]||null);
 }
-window.onGeneralPresetStatus=response=>{
+if(typeof window!=="undefined")window.onGeneralPresetStatus=response=>{
  if(!Array.isArray(response?.saved)||response.saved.length!==3)return;
  generalPresetSaved=response.saved.map(v=>v===true);
  document.querySelectorAll(".generalPresetLoad").forEach(button=>{
