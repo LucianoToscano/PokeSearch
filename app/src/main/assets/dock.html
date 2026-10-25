@@ -6369,24 +6369,32 @@ let pokemonDraft=[],pokemonSuggestions=[],pokemonQuery="",pokemonSuggestionStatu
 // Shared, bounded decoded Image pool across Pokémon suggestions in the menu.
 // Fetch only the official verified BASE image paths; never guess costumes.
 const spriteRequestCache=new Map();
+const SPRITE_FAILURE_RETRY_MS=30000;
 function pooledBaseSprite(url){
  const valid=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/([0-9]{1,4}\.png)$/.exec(String(url||""));
  if(!valid)return Promise.resolve("");
- if(spriteRequestCache.has(url))return spriteRequestCache.get(url);
- const promise=new Promise(resolve=>{
+ const now=Date.now(),previous=spriteRequestCache.get(url);
+ if(previous&&(!previous.failedAt||now-previous.failedAt<SPRITE_FAILURE_RETRY_MS))
+  return previous.promise;
+ if(previous)spriteRequestCache.delete(url);
+ // Cache the in-flight promise, not only the completed image: the same base
+ // species requested in multiple chips shares one network operation.
+ const entry={promise:null,failedAt:0};
+ entry.promise=new Promise(resolve=>{
   const primary=new Image(),mirror=new Image();
-  primary.onload=()=>resolve(primary.naturalWidth>=8?url:"");
+  const finish=src=>{if(!src)entry.failedAt=Date.now();resolve(src);};
+  const alternative="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+valid[1];
+  primary.onload=()=>finish(primary.naturalWidth>=8&&primary.naturalHeight>=8?url:"");
   primary.onerror=()=>{
-   const alternative="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+valid[1];
-   mirror.onload=()=>resolve(mirror.naturalWidth>=8?alternative:"");
-   mirror.onerror=()=>resolve("");
+   mirror.onload=()=>finish(mirror.naturalWidth>=8&&mirror.naturalHeight>=8?alternative:"");
+   mirror.onerror=()=>finish("");
    mirror.src=alternative;
   };
   primary.src=url;
  });
- spriteRequestCache.set(url,promise);
- if(spriteRequestCache.size>96)spriteRequestCache.delete(spriteRequestCache.keys().next().value);
- return promise;
+ spriteRequestCache.set(url,entry);
+ while(spriteRequestCache.size>96)spriteRequestCache.delete(spriteRequestCache.keys().next().value);
+ return entry.promise;
 }
 // Saved chips reuse official sprite URLs, never synthetic form IDs.
 const pokemonSuggestionSpriteCache=new Map();
@@ -6470,7 +6478,11 @@ function drawPokemonSuggestions(){
     if(!src||!button.isConnected||!placeholder.isConnected)return;
     const img=document.createElement("img");img.src=src;img.alt="";
     img.loading="eager";img.decoding="async";
-    img.onerror=()=>{if(img.isConnected)img.replaceWith(placeholder);};
+    img.onerror=()=>{
+     // A failed WebView load is transient, not a permanent "no sprite" fact.
+     spriteRequestCache.delete(item.image);
+     if(img.isConnected)img.replaceWith(placeholder);
+    };
     placeholder.replaceWith(img);
    });
   }else button.appendChild(placeholder);
