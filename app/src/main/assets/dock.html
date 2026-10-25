@@ -3726,6 +3726,10 @@ body.controls-window #choices.locationPanel .locSavedSlots>.locHelp{
  margin:0!important;padding:0!important;font-size:11px!important;
  background:transparent!important;
 }
+
+/* Hidden legacy comparison text must remain hidden even though generic
+   button styles force display:block in the popup. No unverified import action. */
+body.controls-window #choices [hidden]{display:none!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -5590,7 +5594,7 @@ function resultLines(card,opts,league){
  if(opts.cp&&/^[0-9]{1,5}$/.test(cp)&&Number(cp)>0&&Number(cp)<=10000)compact.push("PC"+cp);
  if(opts.level&&/^\d{1,2}(?:\.5)?$/.test(lvl)&&Number(lvl)>=1&&Number(lvl)<=55)compact.push("Nv"+lvl);
  if(compact.length)lines.push(compact.join(" · "));
- if(opts.rawIv)lines.push(verifiedSpawnRawIv(card)||"?/?/?");
+ if(opts.rawIv){const raw=verifiedSpawnRawIv(card);if(raw!==null)lines.push(raw);}
  const leagues=[["gl","Gl","GL"],["ul","Ul","UL"],["ml","Ml","ML"]];
  const hasLeaguePrefs=leagues.some(([,suffix])=>
   opts["overallRank"+suffix]===true||opts["speciesIvRank"+suffix]===true);
@@ -5624,7 +5628,7 @@ function resultLines(card,opts,league){
    }
   }
  }
- if(opts.despawn&&Number(card?.expiresAtMs)>0)lines.unshift("Despawn TIMER");
+ if(opts.despawn&&Number(card?.expiresAtMs)>0)lines.unshift("TIMER");
  return lines;
 }
 function resultInfoHtml(value,card){
