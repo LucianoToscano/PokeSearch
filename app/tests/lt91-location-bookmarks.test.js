@@ -21,5 +21,5 @@ check("location row remains compact and does not replace existing controls",()=>
  assert.match(dock,/saveSearchLocation\(\s*chosenSlot,savedName\.value,location\.coords,location\.radius\)/);
  assert.match(dock,/loadSearchLocation\(slot\)/);
  assert.match(dock,/copyLocationCoords/);
- assert.match(dock,/locSavedRow/);
+ assert.doesNotMatch(dock.split("function renderLocationChoices(){")[1].split("let requestedInterval=null")[0],/locSavedRow/);
 });
