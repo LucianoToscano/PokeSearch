@@ -282,7 +282,10 @@ public final class PokemonPicker {
             blurRadius=Math.max(0,Math.min(16,prefs.optInt("menuBlur",4)));
             lightMenu="light".equals(prefs.optString("menuBgMode","dark"));
         }catch(org.json.JSONException ignored){}
-        final int panelAlpha=Math.round(255*(1-transparency/100f));
+        // Same legibility-aware surface as visual_editor.js: 50% BASE still
+        // reads clearly when external-window blur is unavailable on Android.
+        final int panelAlpha=(int)Math.round(255*
+            (1-Math.pow(Math.max(0,Math.min(100,transparency))/100.0,2.8)));
         final int panelColor=lightMenu?Color.argb(panelAlpha,255,255,255):
             Color.argb(panelAlpha,15,19,26);
         final int panelFg=lightMenu?Color.rgb(21,34,49):Color.rgb(242,247,252);
