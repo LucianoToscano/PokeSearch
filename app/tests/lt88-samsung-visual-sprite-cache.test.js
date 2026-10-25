@@ -9,7 +9,8 @@ const cache=load("java/com/lucianotoscano/pokesearchoverlay/VerifiedSpriteCache.
 const api=load("assets/api_android_session.js");
 const test=(name,fn)=>{fn();console.log("PASS LT88 "+name);};
 test("favorite 3 stars are between counter and close without second row",()=>{
- assert.match(picker,/favoritePresetActiveV1/);\n assert.match(picker,/refreshProfileStars\.run\(\)/);
+ assert.match(picker,/favoritePresetActiveV1/);
+ assert.match(picker,/refreshProfileStars\.run\(\)/);
  assert.match(picker,/root\.addView\(header\)/);
  assert.doesNotMatch(picker,/root\.addView\(favoriteProfiles\)/);
  assert.match(picker,/profilesLp\.rightMargin=dp\(activity,29\)/);
