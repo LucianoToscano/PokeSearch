@@ -2602,9 +2602,29 @@ public class OverlayService extends Service {
             unexpired.put(card);
         }
         JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));
-        // QA data is shown for visual homologation but cannot send notifications.
+        // An authenticated, criteria-verified API search is a REAL search,
+        // not synthetic QA fixture data. Previously all API-backed encounters
+        // skipped recordNewResults, so neither New nor Favorites ever alerted.
+        // Never alert an untrusted API response or an invalid/stale filter.
         boolean authorizedApiQa="authorized-api-qa".equals(r.optString("source",""));
-        if(!authorizedApiQa)recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
+        boolean apiConfirmed=authorizedApiQa&&
+            r.optBoolean("criteriaConfirmed",false)&&
+            r.optBoolean("resultChanged",false)&&
+            r.optBoolean("requestValidated",false)&&
+            "api-http-200".equals(r.optString("confirmationSource",""))&&
+            (!("gl".equals(mode)||"ul".equals(mode))||
+                r.optBoolean("leagueConfirmed",false));
+        if(!authorizedApiQa||apiConfirmed)
+            recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
+        else BugReport.log(this,"ALERT_AUDIT","API não confirmada, alertas bloqueados");
+        if(!authorizedApiQa||apiConfirmed){
+            BugReport.log(this,"ALERT_AUDIT",
+                "fonte="+(authorizedApiQa?"api-confirmada":"site-confirmado")+
+                " • encontrados="+sorted.length()+" • favoritos="+
+                WatchAlerts.watched(this).size()+" • modo-favoritos="+WatchAlerts.mode(this)+
+                " • modo-novos="+alertsMode+" • permissão="+
+                WatchAlerts.permissionGranted(this));
+        }
         displayedApiResults=authorizedApiQa;
         results=sorted.toString();
         searchPhase=sorted.length()==0?"empty":"updated";
@@ -2633,7 +2653,7 @@ public class OverlayService extends Service {
                 ?"Alguns IVs não comprovados foram ignorados.":"Alguns rankings PvP não confirmados.");
         else if(sorted.length()==0)status("Sem resultados confirmados");
         else status(sorted.length()+(authorizedApiQa?
-            " Pokémon da API (QA; alertas suspensos)":" Pokémon atualizados"));
+            " Pokémon da API atualizados":" Pokémon atualizados"));
     }
     private void resize(int h){
         // The gear window never expands with the Pokémon results.
