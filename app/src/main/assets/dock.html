@@ -3530,6 +3530,47 @@ body.popup-window.controls-window #choices.filterCascade.filterPresetOpen[data-p
 body.controls-window.visual-light-menu #choices.filterCascade .generalPresetFlyout button{
  color:var(--visual-menu-fg,#172533)!important;
 }
+
+/* LT88 Samsung: the filter holder stays click-through, but every actual
+   interactive filter surface has a real dark/light backing like other menus.
+   Layered base prevents a zero-alpha inherited custom value from revealing
+   the wallpaper. Only the small rail, editor and saved-slot flyout are painted. */
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade .filterCascadeEditor,
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout {
+ background:linear-gradient(var(--visual-menu-bg,rgba(22,30,42,.94)),var(--visual-menu-bg,rgba(22,30,42,.94))),#17202c!important;
+ background-clip:padding-box!important;
+ border:1px solid var(--visual-menu-border,#9daeb24a)!important;
+ box-shadow:0 3px 11px #0009!important;
+}
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeRail,
+body.controls-window.visual-light-menu #choices.filterCascade .filterCascadeEditor,
+body.controls-window.visual-light-menu #choices.filterCascade .generalPresetFlyout {
+ background:linear-gradient(var(--visual-menu-bg,rgba(245,249,253,.90)),var(--visual-menu-bg,rgba(245,249,253,.90))),#eaf0f6!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeHead {
+ display:block!important;position:relative!important;text-align:center!important;
+ height:23px!important;min-height:23px!important;line-height:23px!important;
+ padding:0 2px!important;white-space:nowrap!important;
+}
+body.controls-window #choices.filterCascade .filterHeaderTitle {
+ display:block!important;width:100%!important;font-size:10px!important;
+ font-weight:700!important;pointer-events:none!important;
+}
+body.controls-window #choices.filterCascade .generalPresetToggle {
+ position:absolute!important;right:3px!important;top:2px!important;
+ width:17px!important;min-width:17px!important;height:18px!important;
+ margin:0!important;padding:0!important;z-index:2!important;
+ color:var(--visual-menu-fg,#e6edf7)!important;
+ background:transparent!important;font-size:13px!important;
+}
+body.controls-window #choices.filterCascade .generalPresetFlyout{
+ height:max-content!important;min-height:0!important;max-height:none!important;
+ grid-auto-rows:min-content!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4530,7 +4571,9 @@ function renderExtraFilters(panel,make){
  const rail=make("div","filterCascadeRail"),editor=make("div","filterCascadeEditor");
  rail.setAttribute("role","menu");editor.setAttribute("role","group");
  editor.setAttribute("aria-label","Filtro selecionado");
- const heading=make("div","filterCascadeHead","Filtros");rail.appendChild(heading);
+ const heading=make("div","filterCascadeHead");
+ heading.appendChild(make("span","filterHeaderTitle","Filtros"));
+ rail.appendChild(heading);
  const selected=rows.some(row=>row.querySelector("label")?.textContent===filterFocus)?filterFocus:"";
  filterFocus=selected;
  // CSS uses a content-specific width so Sexo/Tamanho do not inherit the
@@ -5905,7 +5948,29 @@ function iconForQuick(id, fallback){
 // SITE-POKEMON-01: Match the website's multi-species + form picker, without
 // inventing unreleased costumes, IDs, event forms, or site-only selections.
 let pokemonDraft=[],pokemonSuggestions=[],pokemonQuery="",pokemonSuggestionStatus="",pokemonPickerBase=null,pokemonForceClear=false;
-// Temporary official sprite cache: presentation only; no invented URLs/IDs.
+// Shared, bounded decoded Image pool across Pokémon suggestions in the menu.
+// Fetch only the official verified BASE image paths; never guess costumes.
+const spriteRequestCache=new Map();
+function pooledBaseSprite(url){
+ const valid=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/([0-9]{1,4}\.png)$/.exec(String(url||""));
+ if(!valid)return Promise.resolve("");
+ if(spriteRequestCache.has(url))return spriteRequestCache.get(url);
+ const promise=new Promise(resolve=>{
+  const primary=new Image(),mirror=new Image();
+  primary.onload=()=>resolve(primary.naturalWidth>=8?url:"");
+  primary.onerror=()=>{
+   const alternative="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+valid[1];
+   mirror.onload=()=>resolve(mirror.naturalWidth>=8?alternative:"");
+   mirror.onerror=()=>resolve("");
+   mirror.src=alternative;
+  };
+  primary.src=url;
+ });
+ spriteRequestCache.set(url,promise);
+ if(spriteRequestCache.size>96)spriteRequestCache.delete(spriteRequestCache.keys().next().value);
+ return promise;
+}
+// Saved chips reuse official sprite URLs, never synthetic form IDs.
 const pokemonSuggestionSpriteCache=new Map();
 let pokemonSiteSelections=[],pokemonSiteSelectionVerified=false,pokemonSuggestionSource="dom";
 function updatePokemonSiteComparison(){
@@ -5913,6 +5978,10 @@ function updatePokemonSiteComparison(){
  const box=document.getElementById("pokemonSiteComparison"),
   importButton=document.getElementById("pokemonSiteImport");
  if(!box||!importButton)return;
+ if(pokemonSuggestionSource==="api"){
+  box.hidden=true;importButton.hidden=true;return;
+ }
+ box.hidden=false;
  if(!pokemonSiteSelectionVerified){
   box.textContent=pokemonSuggestionSource==="api"?
     "Catálogo da API · seleção local será aplicada na próxima busca.":
@@ -5976,14 +6045,16 @@ function drawPokemonSuggestions(){
   placeholder.className="pokemonChipSprite";placeholder.textContent="◉";
   placeholder.setAttribute("aria-hidden","true");
   if(safeImage){
-   const img=document.createElement("img");img.src=item.image;img.alt="";
-   img.loading="eager";img.onerror=()=>{
-    if(!img.dataset.cdnAttempt&&/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/\d{1,4}\.png$/.test(item.image)&&/^\d{1,4}$/.test(String(item.dex||""))){
-     img.dataset.cdnAttempt="1";
-     img.src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+item.dex+".png";
-    }else img.replaceWith(placeholder);
-   };
-   button.appendChild(img);
+   button.appendChild(placeholder);
+   // One shared request for repeated base species inside this WebView.
+   // The response is cached in decoded memory by Image; no forms are guessed.
+   pooledBaseSprite(item.image).then(src=>{
+    if(!src||!button.isConnected||!placeholder.isConnected)return;
+    const img=document.createElement("img");img.src=src;img.alt="";
+    img.loading="eager";img.decoding="async";
+    img.onerror=()=>{if(img.isConnected)img.replaceWith(placeholder);};
+    placeholder.replaceWith(img);
+   });
   }else button.appendChild(placeholder);
   const text=document.createElement("span");text.textContent=(item.dex?"#"+item.dex+"  ":"")+label;
   button.appendChild(text);
