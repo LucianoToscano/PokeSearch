@@ -6315,3 +6315,17 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - Versão técnica de QA: `0.00.77` / versionCode `54277`, release R8 com a mesma assinatura persistente validada em CI (fingerprint `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`), para instalação de teste em Samsung. **Não é LT77 homologada, nem rollout/publicação**.
 - Não houve integração da API no `OverlayService`; o fluxo efetivo continua DOM/probe. Get coords na UI foi corrigido para um caso reprodutível por fixture, mas o relatório de falha recebido ainda exige confirmação física. A necessidade de autenticação e teste de API sob origem oficial permanece.
 - Arquivos `docs/GUIA_MESTRE.md` e `docs/LT77_CHECKLIST_ACEITACAO.md` atualizados documentalmente depois do CI; o APK permanece vinculado ao commit de código `3d906...`, não aos commits de documentação. `main`, PR #34/#49, LT76, APK oficial, assinatura e manifesto do Drive não foram modificados.
+
+---
+## LT77 — QA r2: CORREÇÃO DE PARSER OPEN IN MAPS (24/10/2026)
+
+- Branch isolada: fix/lt77-post14-maps-coordinates-regex-20261024, derivada do HEAD a8bc7c1e8efaae5d25f7006e72b66387ab098664. Main, PR #34/#49 Draft, LT76 pública e atualizacao.json no Drive não modificados.
+- Causa comprovada em app/src/main/assets/probe.js, ação readCoords: RegExp literal de latitude/longitude com barras invertidas duplicadas. O parser não reconhecia os dígitos e separadores do link Open in Maps, podendo causar "Aguardando coordenadas" mesmo com um link válido. Não comprova a causa específica em cada aparelho até homologação.
+- Correção mínima: expressões reais para dígitos e separadores no literal RegExp, mantendo limites -90..90/-180..180. Sem qualquer GPS, proxy, coleta de credenciais, scan global ou remoção da validação do cartão único.
+- Testes: app/tests/lt77-post14-maps-coordinates-regex.test.js executa o trecho real readCoords do probe.js em VM e cobre Maps, coordenadas negativas, etiqueta do cartão, inválidas, cartão ausente e ausência de botão. Testes históricos preservados.
+- Workflow de build e QA privada: .github/workflows/lt77-post14-maps-qa-r2.yml; código testado 013bc4e43752c4eb38419acccfe807820995b0dc. GitHub Actions https://github.com/LucianoToscano/PokeSearch/actions/runs/40147137124 COMPLETED/SUCCESS; regressões, assembleRelease, R8, assinatura v2 e artefato SUCCESS.
+- Artefato GitHub Actions 12580543567: PokeSearch-v0.00.77-LT-Samsung-QA-r2-protected-release, APK interno PokeSearch-v0.00.77-LT-Samsung-QA-r2.apk. versionName 0.00.77, versionCode 54278 (QA r1 54277). Certificado SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. ZIP e SHA256SUMS verificados: APK SHA-256 788226bb430591fd09fce3af5890166bf78b38feb0baceb3d3f0b23bf8bfca0a, SOURCE_COMMIT.txt confirma 013bc4e43752c4eb38419acccfe807820995b0dc.
+- Limite de evidência: nenhuma homologação física Samsung, site real autenticado, captura de coordenadas real ou integração REST final foi executada. Os prints de Caterpie/Slakoth anteriores demonstram relatos de falha, não prova de sucesso da QA r2.
+- Estado de proteção: USE_AUTHORIZED_API=false; OverlayService continua DOM/probe; fallback preservado. Nenhum JWT/reveal_code foi lido/logado pela nova correção. Nenhuma publicação Google Drive, merge ou mudança na main.
+- Testes Samsung ainda abertos: Get coords válido, Open in Maps, copiar somente lat/lng verificadas, reordenação, cartões iguais, cooldown, expiração; depois menus, filtros, Shiny/GL/UL, Weather/Form e consumo em sessão longa.
+

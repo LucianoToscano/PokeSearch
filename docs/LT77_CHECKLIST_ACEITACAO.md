@@ -105,3 +105,13 @@ Para cada nova captura de erro de Get coords, registrar nome, número, PC, cidad
 - [ ] Instalação/observação real no Samsung, obtenção de coordenadas do Caterpie/Slakoth e demais cenários de `Get coords`: não executadas aqui.
 - [ ] API oficial integrada no `OverlayService` e verificada com conta/treinador autorizado: NÃO realizada; flag continua OFF.
 - [ ] Publicação LT77: NÃO autorizada/não realizada. A LT76 no Google Drive segue protegida.
+
+### QA r2 — recuperação de coordenadas do Open in Maps
+
+- [x] Expressão regular de readCoords corrigida; testes dinâmicos no código real com link Maps e rejeição segura.
+- [x] CI #40147137124 COMPLETED/SUCCESS, código SHA 013bc4e43752c4eb38419acccfe807820995b0dc, testes, R8 release, apksigner v2, SHA-256 e APK não depurável.
+- [x] Artifact privado 12580543567, versionCode 54278, versionName 0.00.77, pacote PokeSearch-v0.00.77-LT-Samsung-QA-r2.apk. ZIP e SHA conferidos.
+- [ ] Reproduzir solução real no Samsung com site autenticado (Caterpie, Slakoth, cooldown/expiração).
+- [ ] Migração API no OverlayService (segue desligada); homologação UI/UX completa.
+- [ ] Distribuição pública LT77 (não realizada, LT76 preservada).
+
