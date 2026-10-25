@@ -26,7 +26,7 @@ check("header Location centered with paste in the bottom action row",()=>{
  for(const s of ['.choiceHeader{','justify-content:center!important;',
  'const title=make("div","choiceHeader")',
  'title.appendChild(make("span","","Localização"))',
- 'label.append(labelName,paste,radiusWrap)'])assert.ok((s.includes("const")||s.includes("title.")?location:css).includes(s),s);
+ 'label.append(labelName,paste,radiusWrap)'])assert.ok((s.includes("const")||s.includes("title.")||s.includes("label.append(")?location:css).includes(s),s);
 });
 check("input has exactly four numeric characters and bound 0–1000",()=>{
  for(const s of ['radiusField.type="text"','radiusField.min="0"','radiusField.max="1000"',
