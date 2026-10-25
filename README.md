@@ -2,7 +2,24 @@
 
 > **Guia Mestre oficial e permanente:** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md). Documento central de todas as versões, histórico, diário, metas, decisões, bugs e backlogs. O README é uma apresentação resumida; para continuidade do desenvolvimento, consultar o Guia Mestre e o HEAD da branch ativa.
 
-**Versão de desenvolvimento: v0.50-beta (versionCode 50).** Aplicativo Android independente, dedicado exclusivamente à pesquisa e visualização flutuante de Pokémon, para testes privados de desenvolvimento. Package ID: com.lucianotoscano.pokesearch; minSdk 26, compileSdk 36, Java 17, Gradle 8.11.1.
+## Estado oficial verificado — 25/10/2026
+
+**Versão pública mais recente: PokeSearch LT82 — `0.00.82` / `versionCode 54285`.**
+Distribuição oficial a partir da LT79/LT80: [GitHub Releases v0.00.82-54285](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.82-54285), APK `PokeSearch-v0.00.82-LT.apk` (38.602.691 bytes, SHA-256 `4c1acdb6ac45c718eb98825fbe4e389208fda0543b860def062f0c32ab3c5f2e`). **Assinatura permanente certificada** SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, release R8 não depurável. Build/testes Actions [#40158722313](https://github.com/LucianoToscano/PokeSearch/actions/runs/40158722313) SUCCESS; publicação oficial [#40159075690](https://github.com/LucianoToscano/PokeSearch/actions/runs/40159075690) SUCCESS; `SOURCE_COMMIT` do APK `0d7019d62704af560c44c7b7549a2614062fb5d9`.
+
+**Ponte legada:** a Home das versões anteriores à LT79 ainda lê [o manifesto público Google Drive](https://drive.google.com/file/d/15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf/view) que aponta para a LT79 `0.00.79`/`54282`. Depois de instalar LT79, o atualizador GitHub passa a detectar versões mais recentes (incluindo LT82). Não confundir esta ponte com a versão oficial mais nova.
+
+**Integração e homologação:** a branch de desenvolvimento da LT82 é `fix/lt82-samsung-ui-polish-20261025` e os arquivos estão sendo consolidados na `main` por PR #56, mantendo histórico. A confirmação **física** no Samsung para clima, localização, dicas e Favoritos da LT82 ainda está pendente — testes CI não substituem teste no aparelho. O código local sem variáveis de CI em `app/build.gradle.kts` ainda contém valores de fallback de desenvolvimento antigos; a versão instalada é a do PackageManager, produzida pelo workflow protegido. Próxima versão monotônica reservada: `0.00.83` / `54286`, somente após novo build verificado.
+
+**Identidade imutável:** `applicationId com.lucianotoscano.pokesearch`, namespace `com.lucianotoscano.pokesearchoverlay`, minSdk 26, compileSdk 36, targetSdk 33, JDK 17, Gradle 8.11.1. Android Overlay, WebView, JS `probe.js`, sem GPS físico, sem backend/proxy; até 10 resultados. Não confundir com PvPPokeGo. Preservar filtros, favoritos, alertas, atualização OTA, editor, preferências, assinatura e opções existentes — **nunca remover melhorias**.
+
+**Documento de estado com fontes, diferenças de versão e pendências:** [docs/ESTADO_CANONICO_LT82.md](docs/ESTADO_CANONICO_LT82.md). O conteúdo antigo do README abaixo permanece como histórico, não como especificação vigente.
+
+---
+
+## Histórico anterior (preservado)
+
+**Histórico de desenvolvimento inicial: v0.50-beta (versionCode 50).** Aplicativo Android independente, dedicado exclusivamente à pesquisa e visualização flutuante de Pokémon, para testes privados de desenvolvimento. Package ID: com.lucianotoscano.pokesearch; minSdk 26, compileSdk 36, Java 17, Gradle 8.11.1.
 
 ## Interface e funcionamento
 - Sobreposição compacta sobre Pokémon GO com engrenagem arrastável. Toque na engrenagem para expandir/recolher somente as opções; sprites permanecem visíveis e deslocam-se para baixo quando as opções estão abertas.
