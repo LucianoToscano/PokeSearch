@@ -3688,6 +3688,44 @@ body.controls-window #choices.modeCascade .modeCascadeEntry,
 body.controls-window #choices.filterCascade .filterCascadeEntry{
  color:var(--visual-menu-fg,#eef5ff)!important;
 }
+
+/* LT88 Samsung: clipboard actions in the title, not crushing the radius field. */
+body.controls-window #choices.locationPanel .choiceHeader{position:relative!important;
+ display:flex!important;justify-content:center!important;align-items:center!important;
+ padding:0 52px 0 3px!important;min-height:26px!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader>.locPaste{
+ position:absolute!important;top:0!important;right:27px!important;
+ min-width:24px!important;width:24px!important;height:24px!important;margin:0!important;
+}
+body.controls-window #choices.locationPanel .choiceHeader>.locCopy{
+ position:absolute!important;top:0!important;right:1px!important;
+ min-width:24px!important;width:24px!important;height:24px!important;
+ margin:0!important;padding:0!important;text-align:center!important;
+ background:var(--visual-menu-button-bg,#293444)!important;
+ color:var(--visual-menu-fg,#eef4fb)!important;font-size:17px!important;
+ border:1px solid #ffffff45!important;border-radius:5px!important;
+}
+body.controls-window #choices.locationPanel .locSlotTools[hidden]{display:none!important}
+body.controls-window #choices.locationPanel .locSlotTools:not([hidden]){
+ display:flex!important;flex-wrap:nowrap!important;gap:2px!important;
+ align-items:center!important;margin:3px 0 0!important;min-height:24px!important;
+}
+body.controls-window #choices.locationPanel .locSlotTools>span{font-size:9px!important}
+body.controls-window #choices.locationPanel .locSlotTools>button{
+ min-width:0!important;flex:1 1 0!important;width:auto!important;
+ font-size:9px!important;height:24px!important;min-height:24px!important;
+ margin:0!important;padding:1px 2px!important;
+ background:var(--visual-menu-button-bg,#293647)!important;
+}
+body.controls-window #choices.locationPanel .locSlotTools>.locManageCancel{
+ flex:0 0 20px!important;width:20px!important;
+}
+body.controls-window #choices.locationPanel .locSavedSlots>.locHelp{
+ width:18px!important;min-width:18px!important;height:24px!important;
+ margin:0!important;padding:0!important;font-size:11px!important;
+ background:transparent!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4945,6 +4983,12 @@ function locationPanelFeedback(){
  hint.hidden=state==="OFF"||state==="CONFIRMED";
  hint.style.color=state==="NOT_APPLIED"?"#ffbf8f":"";
 }
+window.onLocationCopy=feedback=>{
+ if(!controlsWindow||choiceOpen!=="location")return;
+ const hint=document.getElementById("locHint");if(!hint)return;
+ hint.textContent=String(feedback||"");hint.hidden=false;
+ hint.style.color=String(feedback||"").startsWith("✓")?"":"#ffbf8f";fit();
+};
 window.onLocationPaste=coords=>{
  if(!controlsWindow||choiceOpen!=="location")return;
  const field=document.getElementById("locCoordinateInput");
@@ -4992,8 +5036,8 @@ if(typeof window!=="undefined")window.onSavedSearchLocations=data=>{
  document.querySelectorAll(".locSlot").forEach(button=>{
   const item=savedSearchLocations.find(s=>s.slot===Number(button.dataset.slot));
   if(!item)return;
-  button.textContent=item.saved?"★ "+item.slot:"☆ "+item.slot;
-  button.classList.toggle("saved",item.saved===true);
+  button.textContent=item.active?"★ "+item.slot:"☆ "+item.slot;
+  button.classList.toggle("saved",item.active===true);
   button.title=(item.name||"Local "+item.slot)+" · toque usar, segure salvar";
  });
 };
@@ -5024,6 +5068,10 @@ function renderLocationChoices(){
   '<path d="M12 19V9m-4 4 4-4 4 4"/>';
  paste.appendChild(pasteIcon);
  paste.onclick=()=>Native.pasteLocationCoords();
+ const copy=make("button","locCopy","⧉");copy.type="button";
+ copy.title="Copiar coordenadas";copy.setAttribute("aria-label","Copiar coordenadas digitadas");
+ copy.onclick=()=>{if(Native.copyLocationCoords)Native.copyLocationCoords(field.value);};
+ title.append(paste,copy);
  // Centered title; field on its own full-width line.
  fieldRow.append(field);
  const label=make("div","locLine locRadiusRow");
@@ -5039,7 +5087,7 @@ function renderLocationChoices(){
  const unit=make("span","locRadiusUnit","km");
  const radiusWrap=make("span","locRadiusInputWrap");
  radiusWrap.append(radiusField,unit);
- label.append(labelName,paste,radiusWrap);
+ label.append(labelName,radiusWrap);
  const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);
  slide.setAttribute("aria-label","Ajustar raio de 0 a 1000");
  slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";};
@@ -5099,30 +5147,66 @@ function renderLocationChoices(){
  savedName.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
  savedName.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
  const saveSlots=make("div","locSavedSlots");
+ const tools=make("div","locSlotTools");tools.hidden=true;
+ const toolLabel=make("span","locSlotLabel","");
+ const slotSave=make("button","locManageSave","Salvar");
+ const slotDelete=make("button","locManageDelete","Excluir");
+ const slotCancel=make("button","locManageCancel","×");
+ let chosenSlot=0;
+ const closeTools=()=>{tools.hidden=true;chosenSlot=0;fit();};
+ slotCancel.onclick=closeTools;
+ const validCoords=()=>{
+  const coords=field.value.trim();
+  const radius=Number(radiusField.value);
+  if(!/^[-+]?\\d{1,2}(?:\\.\\d+)?\\s*[,;]\\s*[-+]?\\d{1,3}(?:\\.\\d+)?$/.test(coords)||
+     !Number.isInteger(radius)||radius<0||radius>1000){
+    message.textContent="⚠ Informe coordenadas e raio válidos";
+    message.hidden=false;fit();return null;
+  }
+  return {coords,radius};
+ };
+ slotSave.onclick=()=>{
+  const location=validCoords();if(!location||!chosenSlot)return;
+  if(Native.saveSearchLocation)Native.saveSearchLocation(
+   chosenSlot,savedName.value,location.coords,location.radius);
+  closeTools();
+ };
+ slotDelete.onclick=()=>{
+  if(chosenSlot&&Native.deleteSavedSearchLocation)
+   Native.deleteSavedSearchLocation(chosenSlot);
+  closeTools();
+ };
+ tools.append(toolLabel,slotSave,slotDelete,slotCancel);
  for(let slot=1;slot<=3;slot++){
   const button=make("button","locSlot","☆ "+slot);button.type="button";
   button.dataset.slot=String(slot);
-  const save=()=>{
-   if(!Native.saveSearchLocation)return;
-   const coords=field.value.trim(),radius=Number(radiusField.value);
-   if(!/^[-+]?\d{1,2}(?:\.\d+)?\s*[,;]\s*[-+]?\d{1,3}(?:\.\d+)?$/.test(coords)||
-       !Number.isInteger(radius)||radius<0||radius>1000){
-    message.textContent="⚠ Informe coordenadas e raio válidos para salvar";message.hidden=false;return;
-   }
-   Native.saveSearchLocation(slot,savedName.value,coords,radius);
-  };
+  button.title="Toque: usar local · Segure: salvar ou excluir";
+  const manage=()=>{chosenSlot=slot;toolLabel.textContent="Local "+slot;
+   tools.hidden=false;fit();};
   let held=false,timer=null;
-  button.addEventListener("touchstart",()=>{held=false;timer=setTimeout(()=>{held=true;save();},650);},{passive:true});
-  ["touchend","touchmove","touchcancel"].forEach(type=>
-   button.addEventListener(type,()=>clearTimeout(timer),{passive:true}));
-  button.oncontextmenu=event=>{event.preventDefault();held=true;save();};
+  button.addEventListener("pointerdown",event=>{
+   if(event.button!==0)return;
+   held=false;clearTimeout(timer);
+   timer=setTimeout(()=>{held=true;manage();},650);
+  });
+  ["pointerup","pointercancel","pointerleave"].forEach(type=>
+   button.addEventListener(type,()=>clearTimeout(timer)));
+  button.oncontextmenu=event=>{event.preventDefault();held=true;manage();};
   button.onclick=()=>{if(held){held=false;return;}
    if(Native.loadSearchLocation)Native.loadSearchLocation(slot);
   };
   saveSlots.appendChild(button);
  }
+ const help=make("button","locHelp","?");
+ help.type="button";help.title="Como funcionam os locais";
+ help.setAttribute("aria-label","Ajuda para salvar e excluir localizações");
+ help.onclick=()=>{
+  message.textContent="Toque ☆ para usar; segure para Salvar ou Excluir. Copiar e Colar não pesquisam sozinhos.";
+  message.style.color="";message.hidden=false;fit();
+ };
+ saveSlots.appendChild(help);
  savedRow.append(savedName,saveSlots);
- panel.append(title,fieldRow,slide,label,savedRow,message);
+ panel.append(title,fieldRow,slide,label,savedRow,tools,message);
  panel.classList.add("visible");
  if(Native.requestSavedSearchLocations)Native.requestSavedSearchLocations();
  document.getElementById("location").setAttribute("aria-expanded","true");
