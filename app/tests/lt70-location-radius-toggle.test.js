@@ -113,11 +113,11 @@ check("LT71: popup-specific CSS overrides legacy max-content left-alignment",()=
   'text-align:center!important;max-width:100%!important;'
  ])assert.ok(css71.includes(term),term);
 });
-check("LT83: native Location popup width is fixed against CSS viewport shrink",()=>{
+check("LT83: native Location popup width is bounded to four menu buttons",()=>{
  const fit=between(dock,"function fit(){","let popupNativeSwitch=false;");
  for(const token of [
   'const measuredWidth=Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2);',
-  'Math.min(286,Math.max(1,Math.floor(window.innerWidth||286)))',
+  'Math.min(148,Math.max(1,Math.floor(window.innerWidth||148)))',
   'Native.resizePopup(exactWidth,'
  ])assert.ok(fit.includes(token),token);
 });

@@ -50,7 +50,7 @@ test("LT62 split popup preserves toolbar, content-sized hitbox and page lifecycl
   // Other popups stay content-sized; Location uses its exact compact DOM card
   // to prevent the native touch window expanding after keyboard focus.
   dock.includes('const measuredWidth=Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2);')&&
-  dock.includes('Math.min(286,Math.max(1,Math.floor(window.innerWidth||286)))')&&
+  dock.includes('Math.min(148,Math.max(1,Math.floor(window.innerWidth||148)))')&&
   dock.includes("Native.resizePopup(exactWidth,")&&
   dock.includes("window.showNativePopup=kind=>")&&
   dock.includes("Native.openPopup(kind,Math.round(");

@@ -1,7 +1,7 @@
 name: PokeSearch Home Community Direct Posting & Thanks Signed QA
 on:
   push:
-    branches: [feature/pokesearch-home-scrapbook-thanks-qa98-20261025]
+    branches: [fix/lt103-compact-location-home-20261025]
     paths:
       - '.github/workflows/scrapbook-online-signed-apk-qa.yml'
       - 'app/build.gradle.kts'
@@ -17,16 +17,16 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: pokesearch-home-community-qa102-${{ github.ref }}
+  group: pokesearch-home-community-qa103-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build-release:
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     env:
-      POKE_TEST_VERSION_CODE: '54305'
-      POKE_TEST_VERSION_LABEL: '51105'
-      POKE_TEST_PUBLIC_VERSION: '0.00.102'
+      POKE_TEST_VERSION_CODE: '54306'
+      POKE_TEST_VERSION_LABEL: '51106'
+      POKE_TEST_PUBLIC_VERSION: '0.00.103'
       # Read-only demo is limited to this expressly requested signed QA artifact.
       POKE_SCRAPBOOK_STAGE1_QA: 'true'
       POKE_SCRAPBOOK_QA_ACK: 'stage1-readonly'
@@ -118,13 +118,13 @@ jobs:
         run: |
           set -euo pipefail
           APK=app/build/outputs/apk/release/app-release.apk
-          OUT=PokeSearch-v0.00.102-LT-Sprite-Recovery-Community-QA.apk
+          OUT=PokeSearch-v0.00.103-LT-Compact-Location-Integrated-Thanks-QA.apk
           test -s "$APK"
           unzip -t "$APK" >/dev/null
           test -s app/build/outputs/mapping/release/mapping.txt
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-BADGING.txt
           PKG="$(grep '^package: ' PACKAGE-BADGING.txt)"
-          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54305'" "versionName='0.00.102'"; do
+          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54306'" "versionName='0.00.103'"; do
             grep -Fq "$expected" <<< "$PKG" || exit 1
           done
           ! grep -q '^application-debuggable' PACKAGE-BADGING.txt
@@ -140,9 +140,9 @@ jobs:
       - name: Signed release-candidate artifact (NO AUTOMATIC publication)
         uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-v0.00.102-LT-Sprite-Recovery-Community-QA-protected-release
+          name: PokeSearch-v0.00.103-LT-Compact-Location-Integrated-Thanks-QA-protected-release
           path: |
-            PokeSearch-v0.00.102-LT-Sprite-Recovery-Community-QA.apk
+            PokeSearch-v0.00.103-LT-Compact-Location-Integrated-Thanks-QA.apk
             SHA256SUMS.txt
             SIGNING-REPORT.txt
             SOURCE_COMMIT.txt

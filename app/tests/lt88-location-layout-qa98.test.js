@@ -3,9 +3,9 @@ const assert=require("node:assert/strict");
 const fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
 const dock=fs.readFileSync(path.join(__dirname,"../src/main/assets/dock.html"),"utf8");
 const p=dock.slice(dock.indexOf("function renderLocationChoices(){"),dock.indexOf("let requestedInterval=null"));
-const css=dock.slice(dock.indexOf("/* LT99 compact Samsung Location"));
-const finalCss=dock.slice(dock.indexOf("/* LT100 Samsung reference FINAL:"));
-assert.ok(finalCss.includes('height:30px!important'),"final slider row visible");
+const css=dock.slice(dock.indexOf("/* LT103 Samsung compact location:"));
+const finalCss=dock.slice(dock.indexOf("/* LT103 Samsung compact location:"));
+assert.ok(finalCss.includes('height:24px!important') || finalCss.includes('height:24px!important'),"final slider row visible");
 assert.ok(finalCss.includes('.locSliderRow>input[type="range"]'),"final slider width matches coordinates");
 assert.ok(css.length>6500,"scoped last-rule Samsung compact layout");
 const expected=[
@@ -26,11 +26,16 @@ const excluded=[
 ];
 for(const t of excluded)assert.ok(!p.includes(t),"unexpected visible row/control "+t);
 assert.ok(p.indexOf("sliderRow.append(slide)")<p.indexOf("panel.append(title,fieldRow,sliderRow,label,message)"),"full-width slider is mounted between coordinates and radius");
-const cssExpect=['width:min(286px,calc(100vw - 12px))','max-height:min(202px',
+const cssExpect=[
+ 'width:min(148px,calc(100vw - 8px))',
+ 'max-height:min(145px',
  '.locClipboardTools>.locPaste','.locClipboardTools>.locCopy',
- 'min-height:33px!important','min-height:36px!important','height:30px!important','.locSliderRow>input[type="range"]',
+ 'height:26px!important','height:32px!important',
+ 'height:24px!important','height:29px!important',
+ '.locSliderRow>input[type="range"]',
  '.locRadiusRow>.locRadiusInputWrap','.locRadiusRow>.compactLocationActions',
- 'flex-flow:row nowrap!important','font-size:0!important'];
+ 'flex-flow:row nowrap!important','font-size:0!important'
+];
 for(const t of cssExpect)assert.ok(css.includes(t),"missing layout rule "+t);
 const sample="53.759856,-1.495755";
 assert.ok(sample.length<=30);

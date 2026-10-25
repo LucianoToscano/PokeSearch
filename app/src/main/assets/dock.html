@@ -4218,68 +4218,25 @@ body.controls-window #choices.locationPanel>#locHint[hidden],
 body.popup-window.controls-window #choices.locationPanel>#locHint[hidden]{display:none!important}
 
 
-/* LT100 Samsung reference FINAL: 4 centered rows with equal-width coordinate+slider.
-   Header [Localização][Colar↓][Copiar]
-   Full coordinates input up to 30 chars
-   Full-width 0–1000 km slider
-   Centered [0000]km [✓] [trash] — no extra spacers */
-body.controls-window #choices.locationPanel,
-body.popup-window.controls-window #choices.locationPanel,
-body.popup-window.controls-window.popup-above #choices.locationPanel{
-  box-sizing:border-box!important;
-  width:min(286px,calc(100vw - 12px))!important;
-  max-width:calc(100vw - 12px)!important;
-  min-width:0!important;height:auto!important;min-height:0!important;
-  max-height:min(202px,var(--popup-room,400px))!important;
-  margin:0!important;padding:6px 6px 8px!important;
-  overflow-x:hidden!important;overflow-y:auto!important;
-}
-body.controls-window #choices.locationPanel>.choiceHeader,
-body.popup-window.controls-window #choices.locationPanel>.choiceHeader{
-  display:flex!important;justify-content:center!important;align-items:center!important;
-  width:100%!important;height:33px!important;min-height:33px!important;
-  gap:6px!important;margin:0 0 5px!important;padding:0!important;
-}
-body.controls-window #choices.locationPanel>.locCoordsRow,
-body.popup-window.controls-window #choices.locationPanel>.locCoordsRow{
-  box-sizing:border-box!important;display:flex!important;align-items:center!important;
-  justify-content:center!important;width:100%!important;min-width:0!important;
-  max-width:100%!important;height:36px!important;min-height:36px!important;
-  margin:0 0 3px!important;padding:0!important;
-}
-body.controls-window #choices.locationPanel>.locCoordsRow>.locField,
-body.popup-window.controls-window #choices.locationPanel>.locCoordsRow>.locField{
-  box-sizing:border-box!important;display:block!important;flex:1 1 auto!important;
-  width:100%!important;max-width:100%!important;min-width:0!important;
-  height:36px!important;min-height:36px!important;padding:4px 6px!important;
-  text-align:left!important;font:500 12px/1.16 monospace!important;
-  letter-spacing:-.15px!important;
-}
-body.controls-window #choices.locationPanel>.locSliderRow,
-body.popup-window.controls-window #choices.locationPanel>.locSliderRow{
-  box-sizing:border-box!important;display:flex!important;
-  align-items:center!important;justify-content:center!important;
-  width:100%!important;min-width:0!important;max-width:100%!important;
-  height:30px!important;min-height:30px!important;
-  padding:0!important;margin:0 0 3px!important;
-}
-body.controls-window #choices.locationPanel>.locSliderRow>input[type="range"],
-body.popup-window.controls-window #choices.locationPanel>.locSliderRow>input[type="range"]{
-  box-sizing:border-box!important;display:block!important;
-  flex:1 1 auto!important;width:100%!important;min-width:0!important;
-  max-width:100%!important;height:24px!important;min-height:24px!important;
-  margin:0!important;padding:0!important;
-}
-body.controls-window #choices.locationPanel>.locRadiusRow,
-body.popup-window.controls-window #choices.locationPanel>.locRadiusRow{
-  box-sizing:border-box!important;display:flex!important;flex-flow:row nowrap!important;
-  align-items:center!important;justify-content:center!important;
-  gap:8px!important;width:100%!important;min-width:0!important;max-width:100%!important;
-  height:35px!important;min-height:35px!important;margin:0!important;padding:0!important;
-}
-body.controls-window #choices.locationPanel>#locHint[hidden],
-body.popup-window.controls-window #choices.locationPanel>#locHint[hidden]{display:none!important}
-
+/* LT103 Samsung compact location: native hitbox and CSS width 148dp (~four menu tiles). */
+body.controls-window #choices.locationPanel,body.popup-window.controls-window #choices.locationPanel{width:min(148px,calc(100vw - 8px))!important;max-width:calc(100vw - 8px)!important;min-width:0!important;min-height:0!important;height:auto!important;max-height:min(145px,var(--popup-room,400px))!important;padding:4px 5px 5px!important;margin:0!important;overflow-x:hidden!important;overflow-y:auto!important}
+body.controls-window #choices.locationPanel>.choiceHeader,body.popup-window.controls-window #choices.locationPanel>.choiceHeader{box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-flow:row nowrap!important;gap:3px!important;width:100%!important;height:26px!important;min-height:26px!important;padding:0!important;margin:0 0 4px!important}
+body.controls-window #choices.locationPanel>.choiceHeader>span:first-child,body.popup-window.controls-window #choices.locationPanel>.choiceHeader>span:first-child{flex:0 0 auto!important;min-width:0!important;font:700 11.5px/1.12 Roboto,Arial,sans-serif!important;letter-spacing:-.25px!important;white-space:nowrap!important}
+body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools,body.popup-window.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:3px!important;flex:0 0 auto!important;min-width:0!important;width:auto!important;height:25px!important;min-height:25px!important;padding:0!important;margin:0!important}
+body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locPaste,body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locCopy{box-sizing:border-box!important;position:static!important;display:inline-flex!important;justify-content:center!important;align-items:center!important;flex:0 0 25px!important;width:25px!important;min-width:25px!important;max-width:25px!important;height:25px!important;min-height:25px!important;max-height:25px!important;padding:3px!important;margin:0!important;font-size:14px!important;transform:none!important}
+body.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locPaste svg,body.popup-window.controls-window #choices.locationPanel>.choiceHeader>.locClipboardTools>.locPaste svg{width:18px!important;height:18px!important;display:block!important}
+body.controls-window #choices.locationPanel>.locCoordsRow,body.popup-window.controls-window #choices.locationPanel>.locCoordsRow{box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;max-width:100%!important;min-width:0!important;height:32px!important;min-height:32px!important;margin:0 0 3px!important;padding:0!important}
+body.controls-window #choices.locationPanel>.locCoordsRow>input.locField,body.popup-window.controls-window #choices.locationPanel>.locCoordsRow>input.locField{box-sizing:border-box!important;flex:1 1 auto!important;display:block!important;min-width:0!important;width:100%!important;max-width:100%!important;height:32px!important;min-height:32px!important;margin:0!important;padding:3px 4px!important;font:500 8px/1.15 monospace!important;letter-spacing:-.2px!important;text-align:left!important;direction:ltr!important}
+body.controls-window #choices.locationPanel>.locSliderRow,body.popup-window.controls-window #choices.locationPanel>.locSliderRow{box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;min-width:0!important;width:100%!important;max-width:100%!important;height:24px!important;min-height:24px!important;margin:0 0 3px!important;padding:0!important}
+body.controls-window #choices.locationPanel>.locSliderRow>input[type="range"],body.popup-window.controls-window #choices.locationPanel>.locSliderRow>input[type="range"]{box-sizing:border-box!important;display:block!important;flex:1 1 auto!important;min-width:0!important;width:100%!important;max-width:100%!important;height:22px!important;min-height:22px!important;margin:0!important;padding:0!important}
+body.controls-window #choices.locationPanel>.locRadiusRow,body.popup-window.controls-window #choices.locationPanel>.locRadiusRow{box-sizing:border-box!important;display:flex!important;flex-flow:row nowrap!important;align-items:center!important;justify-content:center!important;gap:4px!important;min-width:0!important;width:100%!important;max-width:100%!important;height:29px!important;min-height:29px!important;padding:0!important;margin:0!important}
+body.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap,body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:1px!important;flex:0 0 65px!important;width:65px!important;min-width:65px!important;max-width:65px!important;height:29px!important;min-height:29px!important;margin:0!important;padding:0!important}
+body.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>input.locRadiusNumber,body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>input.locRadiusNumber{box-sizing:border-box!important;flex:0 0 46px!important;width:46px!important;min-width:46px!important;max-width:46px!important;height:29px!important;min-height:29px!important;margin:0!important;padding:2px!important;font:500 12px/1.1 monospace!important;text-align:center!important}
+body.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>.locRadiusUnit,body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>.locRadiusUnit{display:inline!important;position:static!important;transform:none!important;min-width:0!important;width:auto!important;margin:0!important;padding:0!important;font-size:10px!important}
+body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions,body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:3px!important;flex:0 0 auto!important;width:auto!important;min-width:0!important;max-width:none!important;height:29px!important;min-height:29px!important;margin:0!important;padding:0!important}
+body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction,body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 29px!important;width:29px!important;min-width:29px!important;max-width:29px!important;height:29px!important;min-height:29px!important;max-height:29px!important;padding:4px!important;margin:0!important;font-size:0!important}
+body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction svg,body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction svg{display:block!important;flex:none!important;width:19px!important;height:19px!important}
+body.controls-window #choices.locationPanel#locHint[hidden],body.popup-window.controls-window #choices.locationPanel#locHint[hidden]{display:none!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4602,7 +4559,7 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
    // text focus, and transient scrollWidth must not grow its native hitbox.
    const measuredWidth=Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2);
    const exactWidth=choiceOpen==="location"?
-      Math.min(286,Math.max(1,Math.floor(window.innerWidth||286))):measuredWidth;
+      Math.min(148,Math.max(1,Math.floor(window.innerWidth||148))):measuredWidth;
    Native.resizePopup(exactWidth,
     Math.min(450,Math.ceil(Math.max(rect.height,pane.scrollHeight,bottom-rect.top))+2));
   }
@@ -5619,7 +5576,13 @@ function renderLocationChoices(){
  field.placeholder="53.759856,-1.495755";field.maxLength=30;field.setAttribute("maxlength","30");
  field.setAttribute("aria-label","Coordenadas latitude e longitude, até 30 caracteres");
  field.value=locationCoords;
+ const fitCoordinateGlyphs=()=>{
+  const count=String(field.value||"").length;
+  field.style.setProperty("font-size",count>26?"6.9px":count>21?"7.8px":"9px","important");
+ };
+ fitCoordinateGlyphs();
  field.oninput=()=>{field.dataset.locationDraft="true";};
+ field.addEventListener("input",fitCoordinateGlyphs);
  const paste=make("button","locPaste");paste.type="button";
  paste.title="Colar coordenadas";paste.setAttribute("aria-label","Colar coordenadas");
  const pasteIcon=document.createElementNS("http://www.w3.org/2000/svg","svg");

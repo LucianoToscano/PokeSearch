@@ -810,8 +810,10 @@ public class OverlayService extends Service {
         int w=Math.max(1,Math.min(330,width)),h=Math.max(1,Math.min(450,height));
         // The Location popup must never feed a transient shrinking WebView
         // width back to WindowManager after keyboard focus or React updates.
+        // LT103: the LOCATION native window was hard-clamped to 286dp even
+        // after the WebView CSS was reduced. Its actual hitbox must also shrink.
         if("location".equals(popupKind))
-            w=Math.max(1,Math.min(286,screenWidthDp()-12));
+            w=Math.max(1,Math.min(148,screenWidthDp()-12));
         if(popupWidthDp==w&&popupHeightDp==h)return;
         popupWidthDp=w;popupHeightDp=h;positionIndependentPopup();
     }
