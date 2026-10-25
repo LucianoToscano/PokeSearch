@@ -78,6 +78,14 @@ public final class PokemonPicker {
     private static final java.util.Map<Integer,java.util.List<WeakReference<ImageView>>> WAITING=
         new java.util.HashMap<>();
     private static Bitmap fetchVerifiedSprite(Context context,int id){
+        // Bundled verified Dex sprite always wins. Disk cache can be evicted
+        // by Android; packaged assets survive upgrades and offline sessions.
+        try(InputStream packaged=VerifiedSpriteCache.bundledSprite(context,id,false)){
+            if(packaged!=null){
+                Bitmap local=BitmapFactory.decodeStream(packaged);
+                if(local!=null)return local;
+            }
+        }catch(java.io.IOException ignored){}
         // App-private bounded cache persists across picker sessions. File names
         // are dex numbers only; costumes/forms never use this base-sprite cache.
         java.io.File disk=new java.io.File(context.getCacheDir(),"verified-base-sprites-v1");

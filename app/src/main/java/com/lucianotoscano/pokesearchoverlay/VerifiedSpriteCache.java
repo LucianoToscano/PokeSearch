@@ -40,6 +40,21 @@ final class VerifiedSpriteCache {
             return in.read()==0x89&&in.read()=='P'&&in.read()=='N'&&in.read()=='G';
         }catch(IOException e){return false;}
     }
+    /** First choice: exact verified sprite packaged into the APK at build time.
+     * This remains available even after Android clears disk cache and with no network.
+     * Never map a costume, variant or unknown species to this base image. */
+    static InputStream bundledSprite(Context context,int dex,boolean shiny){
+        if(context==null||dex<1||dex>1025)return null;
+        try{
+            return context.getAssets().open(
+                "pokemon-sprites/"+(shiny?"shiny/":"base/")+dex+".png");
+        }catch(IOException ignored){return null;}
+    }
+    private static WebResourceResponse bundledResponse(Context context,int dex,boolean shiny){
+        InputStream sprite=bundledSprite(context,dex,shiny);
+        return sprite==null?null:new WebResourceResponse("image/png",null,sprite);
+    }
+
     private static WebResourceResponse cached(Context context,int dex,boolean shiny){
         File f=verifiedDisk(context,dex,shiny);
         if(!validPng(f))return null;
@@ -107,6 +122,9 @@ final class VerifiedSpriteCache {
         int dex;
         try{dex=Integer.parseInt(number);}catch(NumberFormatException ignored){return null;}
         if(dex<1||dex>10000)return null;
+        // Offline-first: serve packaged bytes before mutable disk cache/network.
+        WebResourceResponse fromBundle=bundledResponse(context,dex,shiny);
+        if(fromBundle!=null)return fromBundle;
         WebResourceResponse fromCache=cached(context,dex,shiny);
         if(fromCache!=null)return fromCache;
         int key=shiny?dex+10001:dex;
