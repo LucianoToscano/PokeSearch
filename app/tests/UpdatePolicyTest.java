@@ -22,7 +22,8 @@ public final class UpdatePolicyTest {
         check("renamed 106 canonical",VersionNames.canonical("0.00.106").equals("0.01.06"));
         check("new 106 accepted",UpdatePolicy.validVersion("0.01.06","PokeSearch-v0.01.06-LT.apk"));
         check("next 107 canonical",VersionNames.canonical("0.00.107").equals("0.01.07"));
-        check("malformed published label rejected",!UpdatePolicy.validVersion("0.00.106","PokeSearch-v0.00.106-LT.apk"));
+        check("historically signed LT106 stays installable",UpdatePolicy.validVersion("0.00.106","PokeSearch-v0.00.106-LT.apk"));
+        check("future incorrect 0.00.107 rejected",!UpdatePolicy.validVersion("0.00.107","PokeSearch-v0.00.107-LT.apk"));
         check("canonical two-digit high group",VersionNames.canonical("0.00.199").equals("0.01.99"));
         check("canonical rollover 200",VersionNames.canonical("0.00.200").equals("0.02.00"));
         check("unchanged historical normal",VersionNames.canonical("0.00.99").equals("0.00.99"));
