@@ -7,18 +7,22 @@ const service=read("java/com/lucianotoscano/pokesearchoverlay/OverlayService.jav
 const quick=read("java/com/lucianotoscano/pokesearchoverlay/OverlayQuickMenus.java");
 const favorite=read("java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java");
 const test=(name,fn)=>{fn();console.log("PASS LT88 R5 "+name)};
-test("filters saved: target circle, Padrão without actions, explicit disk and delete",()=>{
+test("filters saved: Filtro title is the toggle, two slots and thin SVG icon actions",()=>{
  const ui=dock.slice(dock.indexOf("function renderGeneralPresetControls("),
   dock.indexOf("if(typeof window!==\"undefined\")window.onGeneralPresetStatus="));
- assert.ok(ui.includes('generalPresetToggle","⊙"'));
+ assert.ok(dock.includes('heading.appendChild(make("button","filterHeaderTitle","Filtro"))'));
+ assert.ok(ui.includes('heading.setAttribute("aria-expanded",String(generalPresetExpanded))'));
+ assert.ok(ui.includes('heading.onclick=()=>'));
  assert.ok(ui.includes('generalPresetDefault","Padrão"'));
+ assert.ok(ui.includes('for(let slot=1;slot<=2;slot++)'));
+ assert.ok(ui.includes('generalPresetSave'));
+ assert.ok(ui.includes('save.appendChild(presetGlyph("save"))'));
+ assert.ok(ui.includes('remove.appendChild(presetGlyph("delete"))'));
  assert.ok(ui.includes('Native.clearGeneralFilterPreset()'));
- assert.ok(ui.includes('generalPresetSave","▣"'));
- assert.ok(ui.includes('save.textContent="💾"'));
- assert.ok(ui.includes('generalPresetDelete","×"'));
  assert.ok(ui.includes("Native.saveGeneralFilterPreset(slot)"));
  assert.ok(ui.includes("Native.deleteGeneralFilterPreset(slot)"));
  assert.ok(!ui.includes("setTimeout(save,650)"));
+ assert.ok(!ui.includes("generalPresetHint"));
 });
 test("using a profile hides the saved pane but keeps the general Filters menu",()=>{
  assert.ok(dock.includes("generalPresetExpanded=false;filterFocus=\"\";"));
@@ -42,7 +46,8 @@ test("location saved slots and name/help removed without deleting stored data",(
  for(const absent of ["locSavedName","locSavedSlots","locSlotTools","locHelp",
   "requestSavedSearchLocations","saveSearchLocation("])
    assert.ok(!block.includes(absent),absent);
- assert.ok(block.includes("panel.append(title,fieldRow,slide,label,message)"));
+ assert.ok(block.includes("label.append(slide,actions)"));
+ assert.ok(block.includes("panel.append(title,fieldRow,label,message)"));
  assert.ok(block.includes("paste.onclick=()=>Native.pasteLocationCoords()"));
  assert.ok(block.includes("Native.copyLocationCoords(field.value)"));
  assert.ok(service.includes("savedSearchLocationV1_"));
