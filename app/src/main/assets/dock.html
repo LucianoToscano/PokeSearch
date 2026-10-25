@@ -3391,12 +3391,12 @@ body.controls-window #choices.locationPanel #locHint{
 }
 </style></head><body>
 <div id="shell">
- <button id="gear" title="Toque: resultados · segure: menu · arraste: mover" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
+ <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
  <div id="menu"><div id="quickHead"><strong>⚙ PokeSearch</strong><button id="quickBack" type="button" aria-label="Voltar ou recolher">✕</button></div><div id="quickMenuList"><div id="quickRows"></div><div id="quickUtilities"></div><div id="quickFooter"></div></div><div id="controls">
   <button id="cycle" title="Modos · Raw IV, % IV, Grande Liga e Ultra Liga" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('mode')">100%</button>
   <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14 3.2c.65 3.8 2.7 7 6.8 8.3-4.2 1.3-6.15 4.6-6.8 8.6-.8-4-2.8-7.3-6.9-8.6 4.15-1.3 6.1-4.5 6.9-8.3Z"/><path d="M5.2 3c.35 1.8 1.1 2.7 2.8 3.2-1.7.55-2.45 1.55-2.8 3.2-.4-1.65-1.15-2.65-2.8-3.2C4.05 5.7 4.8 4.8 5.2 3Z"/><path d="M4.3 11.8c.38 2 1.5 3.2 3.5 3.8-2 .6-3.1 1.8-3.5 3.8-.45-2-1.6-3.2-3.6-3.8 2-.6 3.15-1.8 3.6-3.8Z"/><path d="M19.9 17.5c.4 1.6 1.2 2.5 2.8 3-1.6.5-2.4 1.4-2.8 3-.4-1.6-1.2-2.5-2.8-3 1.6-.5 2.4-1.4 2.8-3Z"/></svg></button>
-  <button id="period" title="Atualização automática ou OFF" aria-label="Atualização automática, 5 minutos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">5m</span></button>
-  <button id="manualRefresh" title="Atualizar resultados agora" aria-label="Atualizar resultados agora" onclick="manualRefreshTap()">↻</button>
+  <button id="period" aria-label="Atualização automática, 5 minutos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">5m</span></button>
+  <button id="manualRefresh" aria-label="Atualizar resultados agora" onclick="manualRefreshTap()">↻</button>
   <button id="size" title="Tamanho P / M / G" onclick="Native.cycleSpriteSize()">M</button>
   <button id="clock" title="Mostrar ou ocultar tempo de despawn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button id="bell" title="Notificações: desligadas / ligadas / silenciosas" aria-pressed="false" onclick="toggleChoices('alerts')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
@@ -5999,7 +5999,8 @@ function refreshQuickMenuStates(){
  document.querySelectorAll("#quickMenuList button[data-key]").forEach(button=>{
   const id=button.dataset.key, current=quickState(id), state=button.querySelector(".quickState");
   if(state)state.textContent=current;
-  button.title=button.getAttribute("aria-label")+(current?" · "+current:"");
+  if(id==="period")button.removeAttribute("title");
+  else button.title=button.getAttribute("aria-label")+(current?" · "+current:"");
   if(id==="mode"){
    const art=getModeMenuIcon(mode,false,searchSettings);
    const key=art.path+"|"+art.ivBadge+"|"+art.ivText;
