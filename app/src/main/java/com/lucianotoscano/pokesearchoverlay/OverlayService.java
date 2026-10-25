@@ -3142,16 +3142,29 @@ public class OverlayService extends Service {
         // Location, Shiny and existing favorite/notification preferences remain
         // independent so loading a preset cannot silently change those controls.
         private String generalPresetKey(int slot){return "generalFilterPresetV1_"+slot;}
+        private String generalPresetNameKey(int slot){return "generalPresetNameV1_"+slot;}
         @JavascriptInterface public void requestGeneralFilterPresets(){handler.post(()->{
             android.content.SharedPreferences p=getSharedPreferences("prefs",0);
-            JSONArray available=new JSONArray();
-            for(int slot=1;slot<=3;slot++)
+            JSONArray available=new JSONArray(),names=new JSONArray();
+            for(int slot=1;slot<=3;slot++){
                 available.put(p.contains(generalPresetKey(slot)));
+                names.put(p.getString(generalPresetNameKey(slot),"Perfil "+slot));
+            }
             JSONObject status=new JSONObject();
-            try{status.put("saved",available);}catch(org.json.JSONException ignored){}
+            try{status.put("saved",available).put("names",names);}
+            catch(org.json.JSONException ignored){}
             String script="window.onGeneralPresetStatus&&window.onGeneralPresetStatus("+status.toString()+")";
             js(menuPanel,menuLoaded,script);
             js(popupPanel,popupLoaded,script);
+        });}
+        @JavascriptInterface public void renameGeneralFilterPreset(int slot,String requested){handler.post(()->{
+            if(slot<1||slot>3||stopped||requested==null)return;
+            String clean=requested.trim().replaceAll("[\\r\\n\\t<>]"," ");
+            clean=clean.replaceAll(" +"," ");
+            if(clean.isEmpty()||clean.length()>20)return;
+            getSharedPreferences("prefs",0).edit()
+                .putString(generalPresetNameKey(slot),clean).apply();
+            requestGeneralFilterPresets();
         });}
         @JavascriptInterface public void saveGeneralFilterPreset(int slot){handler.post(()->{
             if(slot<1||slot>3||stopped)return;
