@@ -13,6 +13,6 @@ Solicitação visual: Localização centralizado em painel compacto e sem espaç
 
 **Tutorial:** pref `gestureHelpV1Shown` era persistente desde LT79. Mantida para impedir repetição aos usuários existentes. Novas instalações recebem duas mensagens curtas e separadas, primeiro Pokébola (toque/segurar/arrastar), depois ↻ (toque/segurar). Removidos `title` HTML repetitivos do botão Pokébola, ↻ e opções de intervalo, preservadas labels para acessibilidade.
 
-**Favoritos:** `PokemonPicker` escolhe acima ou abaixo do ícone estrela conforme espaço real em pixels; сохраня? não — layout intacto (10×5 ícones, selecionados 0/50, busca abaixo, `FLAG_NOT_TOUCH_MODAL`).
+**Favoritos:** `PokemonPicker` escolhe acima ou abaixo do ícone estrela conforme espaço real em pixels; layout intacto (10×5 ícones, selecionados 0/50, busca abaixo, `FLAG_NOT_TOUCH_MODAL`).
 
 **Status:** branch `fix/lt82-samsung-ui-polish-20261025`, PR Draft; versão QA 0.00.82/versionCode 54285. GitHub Release público continua LT80 e manifesto Drive legado LT79, main não alterada. Testes automatizados não substituem teste físico no Samsung; validar posições/gestos, filtros clima e aplicação real. Somente liberar atualização oficial se aprovado pelo proprietário após homologação.
