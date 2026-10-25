@@ -271,6 +271,22 @@ public final class PokemonPicker {
             return null;
         }
 
+        // Match the exact same visual preference used by WebView menus.
+        // Saved custom transparency wins; new installs default to 50%.
+        int transparency=50,blurRadius=4;
+        boolean lightMenu=false;
+        try{
+            org.json.JSONObject prefs=new org.json.JSONObject(activity
+                .getSharedPreferences("prefs",0).getString("visualPrefsJson","{}"));
+            transparency=Math.max(0,Math.min(100,prefs.optInt("menuTransparency",50)));
+            blurRadius=Math.max(0,Math.min(16,prefs.optInt("menuBlur",4)));
+            lightMenu="light".equals(prefs.optString("menuBgMode","dark"));
+        }catch(org.json.JSONException ignored){}
+        final int panelAlpha=Math.round(255*(1-transparency/100f));
+        final int panelColor=lightMenu?Color.argb(panelAlpha,255,255,255):
+            Color.argb(panelAlpha,15,19,26);
+        final int panelFg=lightMenu?Color.rgb(21,34,49):Color.rgb(242,247,252);
+
         // LT62: Show every saved favorite together, at most 10 per row and
         // five rows (50). Search below sprites, no horizontal paging/swiping.
         // No ListView, ScrollView or hidden off-screen controls.
@@ -287,7 +303,7 @@ public final class PokemonPicker {
         title.setOnClickListener(v->Toast.makeText(activity,
             "★ Toque: usar • Segure: salvar ou excluir perfil",
             Toast.LENGTH_LONG).show());
-        title.setTextColor(Color.rgb(244,247,250));
+        title.setTextColor(panelFg);
         title.setTypeface(null,Typeface.BOLD);
         title.setTextSize(11);
         title.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);
@@ -297,7 +313,7 @@ public final class PokemonPicker {
             -2,dp(activity,29),Gravity.START|Gravity.CENTER_VERTICAL);
         header.addView(title,titleLp);
         TextView count=new TextView(activity);
-        count.setTextColor(Color.rgb(197,213,230));
+        count.setTextColor(panelFg);
         count.setTextSize(10);
         count.setTypeface(null,Typeface.BOLD);
         count.setGravity(Gravity.CENTER);
@@ -309,7 +325,7 @@ public final class PokemonPicker {
         finish.setText("×");
         finish.setContentDescription("Fechar Favoritos");
         finish.setGravity(Gravity.CENTER);
-        finish.setTextColor(Color.rgb(231,237,246));
+        finish.setTextColor(panelFg);
         finish.setTextSize(19);
         finish.setBackgroundColor(Color.TRANSPARENT);
         FrameLayout.LayoutParams finishLp=new FrameLayout.LayoutParams(
@@ -332,7 +348,7 @@ public final class PokemonPicker {
 
         EditText search=new EditText(activity);
         search.setSingleLine(true);
-        search.setTextColor(Color.WHITE);
+        search.setTextColor(panelFg);
         search.setHintTextColor(Color.rgb(157,170,187));
         search.setHint("Nome, forma ou nº da Pokédex");
         search.setTextSize(12);
@@ -544,9 +560,10 @@ public final class PokemonPicker {
         // Single translucent charcoal panel: no duplicate platform title,
         // no separate grey footer, and Concluir belongs inside the panel.
         android.graphics.drawable.GradientDrawable background=new android.graphics.drawable.GradientDrawable();
-        background.setColors(new int[]{Color.argb(239,34,38,47),Color.argb(238,29,32,39)});
+        background.setColors(new int[]{panelColor,panelColor});
         background.setOrientation(android.graphics.drawable.GradientDrawable.Orientation.TL_BR);
-        background.setStroke(dp(activity,1),Color.argb(109,170,183,202));
+        background.setStroke(dp(activity,1),lightMenu?
+            Color.argb(105,49,69,91):Color.argb(109,170,183,202));
         background.setCornerRadius(dp(activity,12));
         root.setBackground(background);
         Context context=(activity instanceof Activity)?activity:
@@ -571,6 +588,13 @@ public final class PokemonPicker {
             window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND |
                 android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
             window.setDimAmount(0.0f);
+            // Optional blur is restricted to this nonmodal dialog bounds; on
+            // Android versions without cross-window blur support we retain
+            // the same translucent background without changing overlay flags.
+            if(android.os.Build.VERSION.SDK_INT>=31){
+                try{window.setBackgroundBlurRadius(dp(activity,blurRadius));}
+                catch(RuntimeException ignored){}
+            }
             int screen=activity.getResources().getDisplayMetrics().widthPixels;
             int preferredWidth=Math.min(screen-dp(activity,22),dp(activity,348));
             window.setLayout(preferredWidth,
