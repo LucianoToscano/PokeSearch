@@ -5599,7 +5599,7 @@ function updateFiltersPanelStatus(){
  const verified=count>0&&siteFiltersConfirmed&&!searchActive&&!resultsStale;
  // Weather selection now patches the live site directly. Do not paint
  // a transient mismatch warning inside the weather tile grid.
- if(filterFocus==="Clima"){el.textContent="";el.hidden=true;return;}
+ if(typeof filterFocus!=="undefined"&&filterFocus==="Clima"){el.textContent="";el.hidden=true;return;}
  el.textContent=dirty?"● Falta aplicar":
   count===0?"":
   verified?"✓ Aplicado no PoGoCoordinates":
