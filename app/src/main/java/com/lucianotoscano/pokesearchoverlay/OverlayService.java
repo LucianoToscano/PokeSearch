@@ -925,8 +925,19 @@ public class OverlayService extends Service {
         }catch(Exception e){recordFailure("preparar filtro de localização",e);}
         return data.toString();
     }
+    private boolean detailManuallyPositioned=false;
     private void moveDetail(){
         if(detailRoot==null||detailParams==null||params==null)return;
+        if(detailManuallyPositioned){
+            DisplayMetrics bounds=metrics();
+            detailParams.x=Math.max(0,Math.min(
+                Math.max(0,bounds.widthPixels-detailParams.width),detailParams.x));
+            detailParams.y=Math.max(0,Math.min(
+                Math.max(0,bounds.heightPixels-detailParams.height),detailParams.y));
+            try{wm.updateViewLayout(detailRoot,detailParams);}
+            catch(Exception e){recordFailure("limitar cartão movido",e);}
+            return;
+        }
         // LT65 Samsung: do not paint the floating detail card over its
         // originating toolbar. Prefer a position beside the result sprites,
         // then place it below the native dock (or above when near the bottom).
@@ -1301,6 +1312,54 @@ public class OverlayService extends Service {
         detailPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
         detailPanel.addJavascriptInterface(new Bridge(),"Native");
         detailRoot.addView(detailPanel,new FrameLayout.LayoutParams(-1,-1));
+        // A narrow transparent header grip lets the *detail card* move
+        // independently of the Pokémon and the Pokébola. It deliberately
+        // excludes the 23dp × close control at the upper right.
+        View detailDragGrip=new View(this);
+        detailDragGrip.setBackgroundColor(Color.TRANSPARENT);
+        detailDragGrip.setContentDescription("Arrastar cartão de informações");
+        FrameLayout.LayoutParams detailGripParams=new FrameLayout.LayoutParams(
+            dp(DETAIL_DP-39),dp(49),Gravity.TOP|Gravity.LEFT);
+        detailRoot.addView(detailDragGrip,detailGripParams);
+        final float[] detailStartTouch=new float[2];
+        final int[] detailStartPosition=new int[2];
+        final long[] detailLastFrame={0L};
+        detailDragGrip.setOnTouchListener((view,event)->{
+            if(detailParams==null||wm==null||detailRoot==null)return false;
+            switch(event.getActionMasked()){
+                case MotionEvent.ACTION_DOWN:
+                    detailStartTouch[0]=event.getRawX();
+                    detailStartTouch[1]=event.getRawY();
+                    detailStartPosition[0]=detailParams.x;
+                    detailStartPosition[1]=detailParams.y;
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                case MotionEvent.ACTION_UP:
+                    int deltaX=Math.round(event.getRawX()-detailStartTouch[0]);
+                    int deltaY=Math.round(event.getRawY()-detailStartTouch[1]);
+                    if(Math.abs(deltaX)+Math.abs(deltaY)>dp(4))
+                        detailManuallyPositioned=true;
+                    if(detailManuallyPositioned){
+                        DisplayMetrics screen=metrics();
+                        detailParams.x=Math.max(0,Math.min(
+                            Math.max(0,screen.widthPixels-detailParams.width),
+                            detailStartPosition[0]+deltaX));
+                        detailParams.y=Math.max(0,Math.min(
+                            Math.max(0,screen.heightPixels-detailParams.height),
+                            detailStartPosition[1]+deltaY));
+                        long tick=android.os.SystemClock.uptimeMillis();
+                        if(event.getActionMasked()==MotionEvent.ACTION_UP||
+                            tick-detailLastFrame[0]>=16L){
+                            detailLastFrame[0]=tick;
+                            try{wm.updateViewLayout(detailRoot,detailParams);}
+                            catch(Exception e){recordFailure("arrastar cartão",e);}
+                        }
+                    }
+                    return true;
+                case MotionEvent.ACTION_CANCEL:return true;
+                default:return false;
+            }
+        });
         detailPanel.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView v,String url){
                 if(url!=null&&url.startsWith("file:///android_asset/")){
@@ -2571,7 +2630,7 @@ public class OverlayService extends Service {
             JSONArray a=new JSONArray(results);
             if(index<0||index>=a.length()){hideDetails();return;}
             // A previous Get coords callback must never update another card.
-            if(selected!=index)coordinateRequestToken++;
+            if(selected!=index){coordinateRequestToken++;detailManuallyPositioned=false;}
             selected=index;
             JSONObject obj=a.getJSONObject(index);
             js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(count()>0?shownMode:mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
@@ -2618,6 +2677,7 @@ public class OverlayService extends Service {
         }catch(Exception e){recordFailure("mostrar detalhes",e);hideDetails();}
     }
     private void hideDetails(){
+        detailManuallyPositioned=false;
         coordinateRequestToken++; // Invalidates pending site callbacks after dismiss.
         selected=-1;
         // UX-DETAIL-TIMER-01: pause JS countdown while detail WebView is hidden.
