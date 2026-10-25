@@ -6647,3 +6647,15 @@ Documentacao: README.md, docs/ESTADO_CANONICO_LT87_OFICIAL.md e docs/PROMPT_NOVO
 - Não concluídos: LT88 Samsung físico/Despawn, LT89 importar/exportar, LT90 prioridade, LT91 Caçada completa, LT92 Mural Firebase, LT93 administração/métricas; ver docs/ESTADO_CICLO_LT88_LT93_QA.md.
 - CI e build assinado não equivalem a PASS físico. Não habilitar alertas API nem mural sem validação e regras de segurança.
 - Guia Mestre anterior preservado por hash de prefixo e append exclusivamente.
+
+
+## LT88 Samsung R2 QA — retornos físicos e correções (25/10/2026)
+- main oficial LT87/54290 sem alterações; PR #63 Draft permanece sem merge e sem Release.
+- Evidência Samsung LT88/54291: Modos/Filtros transparentes, Colar sem sucesso, ausência de Copiar, formulário perfis salvo sobreposto, sprites NORMAL incompletas, IV/PvP e cronômetro somem em parte das ordenações.
+- Correção R2: fundos sólidos no rail/editor Modos/Filtros, lista salva em flyout lateral compacta Filtro 1–3 (toque usar, segure salvar, × excluir), sem áreas vazias.
+- Favoritos: somente perfil ativo acende; segurar oferece Salvar/Excluir. Localização: Colar aceita texto único ou link válido, Copiar explícito, locais salvos com estrela ativa, ajuda e exclusão.
+- Sprites NORMAL do catálogo verificadas; formas especiais sem correspondência continuam placeholder. Em detalhes: IV A/D/S + IV% verificados, cronômetro sem o rótulo Despawn.
+- Ordenação Distância: metadados reaproveitados somente para encontro idêntico ainda ativo, com mesmo timestamp absoluto, jamais inventando IV/rank.
+- Build de QA candidato 0.00.89/54292, versão numérica não representa LT89 totalmente concluída. Ver docs/LT88_SAMSUNG_R2_QA.md.
+- CI automatizado, instalação física Samsung e interoperabilidade clipboard precisam de comprovação separada; sem PASS físico presumido.
+- Guia anterior preservado integralmente pelo hash do prefixo; só append.
