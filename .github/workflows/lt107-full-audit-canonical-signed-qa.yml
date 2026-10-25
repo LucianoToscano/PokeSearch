@@ -1,0 +1,170 @@
+name: PokeSearch LT107 audited API alert and sprite recovery - signed QA
+on:
+  push:
+    branches: [fix/lt107-version-scheme-00100-20261025]
+    paths:
+      - '.github/workflows/lt107-full-audit-canonical-signed-qa.yml'
+      - 'app/scripts/build_sprite_bundle.py'
+      - 'app/tests/**'
+      - 'app/src/main/java/**'
+      - 'app/src/main/assets/**'
+      - 'app/src/main/AndroidManifest.xml'
+      - 'docs/POKESEARCH_LT107_FAVORITE_SOUND_FIX_20261025.md'
+permissions:
+  contents: write
+concurrency:
+  group: pokesearch-lt107-favorite-sounds-qa
+  cancel-in-progress: false
+jobs:
+  signed-favorite-alert-sounds:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      POKE_TEST_VERSION_CODE: '54310'
+      POKE_TEST_VERSION_LABEL: '51110'
+      POKE_TEST_PUBLIC_VERSION: '0.01.06'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      # Identical existing LT104 opt-in QA visibility, not new scrapbook actions.
+      POKE_SCRAPBOOK_STAGE1_QA: 'true'
+      POKE_SCRAPBOOK_QA_ACK: 'stage1-readonly'
+      POKE_SCRAPBOOK_ONLINE_QA: 'true'
+      POKE_SCRAPBOOK_ONLINE_ACK: 'direct-posting-owner-monitored'
+      GH_TOKEN: ${{ github.token }}
+      QA_APK: PokeSearch-v0.01.06-LT-Alerts-Sprites-QA.apk
+      QA_TAG: v0.01.06-54310-qa
+    steps:
+      - name: Checkout exact feature commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Restore permanent keystore
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for key in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$key")" || { echo "::error::Missing protected signing secret"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pokesearch-lt107-signing.p12"
+          chmod 600 "$RUNNER_TEMP/pokesearch-lt107-signing.p12"
+          keytool -list -keystore "$RUNNER_TEMP/pokesearch-lt107-signing.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" >/dev/null
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/pokesearch-lt107-signing.p12" >> "$GITHUB_ENV"
+      - name: Validate all code and QA tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile app/scripts/build_sprite_bundle.py
+          for js in probe.js api_result_contract.js api_browser_transport.js api_android_session.js api_catalog_cache.js api_integration_router.js; do
+            node --check "app/src/main/assets/$js"
+          done
+          for suite in app/tests/*.test.js; do
+            if [ "$suite" = "app/tests/lt74-local-update-preview.test.js" ]; then
+              echo "::notice::Deprecated LT74 debug preview intentionally excluded, same as LT104"
+              continue
+            fi
+            echo "::group::$suite"
+            node "$suite"
+            echo "::endgroup::"
+          done
+          mkdir -p "$RUNNER_TEMP/qa"
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/qa" app/src/main/java/com/lucianotoscano/pokesearchoverlay/SupportMissionPolicy.java app/src/main/java/com/lucianotoscano/pokesearchoverlay/UpdatePolicy.java app/src/main/java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java app/tests/SupportMissionPolicyTest.java app/tests/UpdatePolicyTest.java app/tests/PopupTouchGeometryTest.java
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.SupportMissionPolicyTest
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.UpdatePolicyTest
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.PopupTouchGeometryTest
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/qa" app/src/main/java/com/lucianotoscano/pokesearchoverlay/VersionNames.java app/tests/VersionNamesTest.java
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.VersionNamesTest
+      - name: Package verified offline normal and shiny sprites into Android assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_sprite_bundle.py --workers 12 --minimum-normal 950
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('app/src/main/assets/pokemon-sprites')
+          report=json.loads((root / 'manifest.json').read_text())
+          assert report['dexCount']==1025
+          assert report['baseCount']>=950
+          assert report['shinyCount']>=500
+          assert len(report['sha256'])==report['baseCount']+report['shinyCount']
+          print('Bundled offline sprite coverage:',report['baseCount'],'base,',report['shinyCount'],'shiny')
+          PY
+      - name: Compile protected and signed LT107 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Audit APK certificate, R8, build version and offline manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/release/app-release.apk'
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/base/25.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/shiny/25.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/manifest.json'
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54310'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.06'" PACKAGE-VERSION.txt
+          ! grep -q '^application-debuggable' PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"
+          cp "$APK" "$QA_APK"
+          sha256sum "$QA_APK" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          cp app/src/main/assets/pokemon-sprites/manifest.json SPRITE-MANIFEST.json
+      - name: Upload protected APK artifact and coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-v0.01.06-LT-Favorite-Sounds-QA-protected-release
+          path: |
+            PokeSearch-v0.01.06-LT-Alerts-Sprites-QA.apk
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            SOURCE_COMMIT.txt
+            PACKAGE-VERSION.txt
+            SPRITE-MANIFEST.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish NON-LATEST QA prerelease with direct APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$QA_TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::QA version tag already exists; never overwrite a signed APK."
+            exit 1
+          fi
+          BASE="$(python3 -c "import json;print(json.load(open('SPRITE-MANIFEST.json'))['baseCount'])")"
+          SHINY="$(python3 -c "import json;print(json.load(open('SPRITE-MANIFEST.json'))['shinyCount'])")"
+          printf '## PokeSearch v0.01.06 (LT107 QA) — auditoria da API, sprites e notificações\\n\\n- API autenticada: alertas de novos e favoritos liberados apenas após resultados verificados; sem alertas para resultados falsos ou vencidos.\\n- Sprites offline normal/shiny (2050) disponíveis para formas-base verificadas, inclusive na segunda Pokébola.\\n- Correção de versão: 0.00.99 para 0.01.00; 0.00.106 para 0.01.06, versionCode crescente 54310.\\n- Três perfis de Favoritos preservados; somente o perfil ativo envia alertas.\\n- APK protegido, R8, certificado permanente, dois overlays e configurações mantidos.\\n- QA Samsung pendente: ative Permissão Android, Som de novos/favoritos e teste o encontro real.\\n' > release-notes.txt
+          gh release create "$QA_TAG" "$QA_APK" SPRITE-MANIFEST.json SHA256SUMS.txt             -R "$GITHUB_REPOSITORY" --target "$(cat SOURCE_COMMIT.txt)"             --title "PokeSearch 0.01.06 · API alertas/sprites corrigidos (QA)"             --notes-file release-notes.txt --prerelease --latest=false
+      - name: Cleanup signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pokesearch-lt107-signing.p12"
