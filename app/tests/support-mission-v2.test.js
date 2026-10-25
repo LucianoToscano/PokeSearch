@@ -111,7 +111,7 @@ check("two new Home PNGs and two original functional buttons match source SHA-25
 check("original support remains reachable outside mission",()=>{
  assert.ok(main.includes("heart.setOnClickListener(v->PixSupport.show(this))"));
  assert.ok(main.includes('OPEN_PIX'));
- assert.ok(overlay.includes('OPEN_PIX'));
+ assert.ok(overlay.includes('OverlayQuickMenus.showPix('));
  assert.ok(main.includes("UpdateCenter.check(this)"));
  assert.ok(overlay.includes("PopupTouchGeometry."));
 });
