@@ -335,6 +335,7 @@ public class OverlayService extends Service {
         searchFailure("⚠ Tempo limite","O navegador não concluiu a consulta. Tente atualizar.");
     };
     private boolean pickerOpen=false;
+    private android.app.Dialog favoritePickerDialog;
     private final Runnable queuedRefresh=()->refresh(false);
     private final Runnable filterChangeRefresh=()->refresh(true);
     private void scheduleFilterChangeRefresh(){
@@ -2706,19 +2707,27 @@ public class OverlayService extends Service {
     // The regular Favorites picker is not a #choices popup. Give it the same
     // originating icon coordinates while preserving its non-modal native dialog.
     private void showFavoritePicker(int anchorX,int anchorY){
-        if(root==null||loginPaused||pickerOpen)return;
+        if(root==null||loginPaused||stopped)return;
+        // Favorites is a separate non-modal Dialog, not a WebView #choices.
+        // A second tap on its very same toolbar icon must dismiss it.
+        if(pickerOpen){
+            if(favoritePickerDialog!=null)favoritePickerDialog.dismiss();
+            return;
+        }
         closeIndependentPopup();
         pickerOpen=true;
         hideDetails();
         try{
-            PokemonPicker.show(OverlayService.this,()->{
+            favoritePickerDialog=PokemonPicker.show(OverlayService.this,()->{
                 if(!stopped)update();
             },()->{
-                pickerOpen=false;
+                pickerOpen=false;favoritePickerDialog=null;
                 if(!stopped)update();
             },anchorX,anchorY);
+            // Empty catalog: no dialog was created, so don't leave pickerOpen stuck.
+            if(favoritePickerDialog==null)pickerOpen=false;
         }catch(Exception e){
-            pickerOpen=false;
+            pickerOpen=false;favoritePickerDialog=null;
             diagnosticError("Não foi possível abrir favoritos no overlay.");
         }
     }
@@ -3867,6 +3876,10 @@ public class OverlayService extends Service {
         FirebaseStats.setOverlayVisible(this,false);
         stopped=true;
         running=false;
+        if(favoritePickerDialog!=null){
+            favoritePickerDialog.dismiss();favoritePickerDialog=null;
+        }
+        pickerOpen=false;
         ++requestGeneration;
         ++coordinateRequestToken;
         if(authorizedApiCollector!=null){
