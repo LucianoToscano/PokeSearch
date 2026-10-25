@@ -5778,16 +5778,21 @@ function attachSpriteFeedback(){
     img.src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+known[1];
    }
   },1400);
-  // One delayed second-chance request if the host briefly lost network.
-  // Reuse the ORIGINAL, already-observed exact URL only; never show a
-  // different form, costume or Shiny as a supposed substitute.
+  // An unanswered CDN request must not leave a blank sprite forever.
+  // Final retry uses ONLY this card's original verified/provider URL.
   setTimeout(()=>{
-   if(!done&&img.isConnected&&!good()&&retries>=1&&original){
-    retries=2;
-    stage.classList.remove("failed");
-    img.src=original;
-   }
+   if(done||!img.isConnected)return;
+   if(good()){loaded();return;}
+   if(retries>=2||!original){stage.classList.add("failed");return;}
+   retries=2;stage.classList.remove("failed");
+   img.src=original;
   },12000);
+  // After all bounded attempts, make the existing neutral placeholder visible.
+  setTimeout(()=>{
+   if(!done&&img.isConnected&&!good()){
+    stage.classList.remove("loaded");stage.classList.add("failed");
+   }
+  },18500);
  });
 }
 function attachLongPress(){
@@ -6768,16 +6773,32 @@ function pooledBaseSprite(url){
  const entry={promise:null,failedAt:0};
  entry.promise=new Promise(resolve=>{
   const primary=new Image(),mirror=new Image();
-  const finish=src=>{if(!src)entry.failedAt=Date.now();resolve(src);};
+  let settled=false,mirrorStarted=false;
+  let primaryWatch=null,mirrorWatch=null;
+  const finish=src=>{
+   if(settled)return;settled=true;
+   clearTimeout(primaryWatch);clearTimeout(mirrorWatch);
+   primary.onload=null;primary.onerror=null;mirror.onload=null;mirror.onerror=null;
+   if(!src)entry.failedAt=Date.now();
+   resolve(src);
+  };
   const alternative="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+valid[1];
   const useMirror=()=>{
+   if(settled||mirrorStarted)return;
+   mirrorStarted=true;clearTimeout(primaryWatch);
    mirror.onload=()=>finish(mirror.naturalWidth>=8&&mirror.naturalHeight>=8?alternative:"");
    mirror.onerror=()=>finish("");
+   // Android WebView can leave remote Image.pending forever without events.
+   mirrorWatch=setTimeout(()=>finish(""),3500);
    mirror.src=alternative;
   };
-  primary.onload=()=>{if(primary.naturalWidth>=8&&primary.naturalHeight>=8)finish(url);
-   else useMirror();};
+  primary.onload=()=>{
+   if(settled)return;
+   if(primary.naturalWidth>=8&&primary.naturalHeight>=8)finish(url);
+   else useMirror();
+  };
   primary.onerror=useMirror;
+  primaryWatch=setTimeout(useMirror,2400);
   primary.src=url;
  });
  spriteRequestCache.set(url,entry);

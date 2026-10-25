@@ -29,6 +29,9 @@ check("PokeAPI cache deduplicates in-flight fetches and retries failed cache",()
  assert.ok(dock.includes("if(!src)entry.failedAt=Date.now()"));
  assert.ok(dock.includes("spriteRequestCache.delete(item.image)"));
  assert.ok(dock.includes("spriteRequestCache.size>96"));
+ assert.ok(dock.includes("primaryWatch=setTimeout(useMirror,2400)"));
+ assert.ok(dock.includes("mirrorWatch=setTimeout(()=>finish(\"\"),3500)"));
+ assert.ok(dock.includes("if(settled)return;settled=true"));
 });
 check("spawn failure retries exact provided URL; never fabricates costumes or forms",()=>{
  const sec=dock.split("function attachSpriteFeedback(){")[1]?.split("function attachLongPress(){")[0]||"";
