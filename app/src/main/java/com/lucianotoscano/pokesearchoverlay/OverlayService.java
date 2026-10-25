@@ -235,6 +235,15 @@ public class OverlayService extends Service {
     private boolean authorizedApiQaSelected(){
         return overlayPrefs().getBoolean("authorizedApiQaOptIn",true);
     }
+    // LT115: API first, verified DOM fallback only on transient failures.
+    // Never bypass access denial, login requirements or server rate limiting.
+    // Both Pokeballs inherit this policy with independent state and filters.
+    private static boolean allowDomAfterApiFailure(String reason){
+        return "network-or-cors-error".equals(reason)||"timeout".equals(reason)||
+            "service-unavailable".equals(reason)||"invalid-results".equals(reason)||
+            "api-unavailable".equals(reason)||"catalog-unavailable".equals(reason)||
+            "pvp-unverified".equals(reason);
+    }
     private void performAuthorizedApiSearch(int generation,boolean manual){
         if(authorizedApiCollector==null){
             authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
@@ -246,13 +255,24 @@ public class OverlayService extends Service {
             config.put("locationEnabled",locationEnabled);
             config.put("locationCoords",locationEnabled?locationCoords:"");
             if(locationEnabled)config.put("locationRadius",locationRadius);
-            status(manual?"API QA: busca manual...":"API QA: pesquisando...");
+            // Restore the beloved Pokeball capture pulse for API searches.
+            searchPhase="searching";
+            status(manual?"API: busca manual...":"API: pesquisando...");
             authorizedApiCollector.search(config,response->{
                 if(stopped||loginPaused||generation!=requestGeneration)return;
                 if(!response.optBoolean("ok",false)){
-                    searchInProgress=false;
                     String reason=response.optString("reason","api-unavailable");
                     if(reason.length()>50)reason="api-unavailable";
+                    if(allowDomAfterApiFailure(reason)){
+                        // A single active generation uses exactly one verified
+                        // source at a time; never merge unverified API and DOM rows.
+                        searchPhase="searching";
+                        status("API temporariamente indisponível; conferindo no site...");
+                        execute("session",session->
+                            continueVerifiedSearchSession(generation,manual,session,0));
+                        return;
+                    }
+                    searchInProgress=false;
                     searchFailure("⚠ API: "+reason,
                         "Consulta API não validada ("+reason+"). Resultados anteriores preservados.");
                     return;
@@ -1356,6 +1376,13 @@ public class OverlayService extends Service {
         detailPanel.getSettings().setAllowContentAccess(false);
         detailPanel.getSettings().setAllowFileAccessFromFileURLs(false);
         detailPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
+        // Same verified offline PokeAPI sprites in details and results.
+        detailPanel.setWebViewClient(new WebViewClient(){
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+            }
+        });
         detailPanel.addJavascriptInterface(new Bridge(),"Native");
         detailRoot.addView(detailPanel,new FrameLayout.LayoutParams(-1,-1));
         // A narrow transparent header grip lets the *detail card* move

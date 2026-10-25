@@ -4,6 +4,13 @@
 >
 > **REGRA DE PRIORIDADE:** verificar sempre o HEAD e as PRs reais. Estado recente comprovado por commits/CI prevalece sobre instruções de versões antigas dentro do backup. *Nenhuma numeração QA comprova a conclusão de uma etapa de roadmap ou teste Samsung.*
 
+## LT115 — API e DOM integrados, sprites e pulso da Pokébola (25/10/2026)
+- **Causa confirmada por código:** a API ficava em searchPhase="filling" em vez de "searching", enquanto o CSS só pulsava durante searching; shinyPending também suprimia o efeito. A UI agora usa busca realmente ativa (filling/searching), incluindo API e DOM, na Pokébola 1 e 2.
+- **Sprites:** o parser aceitava pokemon_id numérico/textual, mas spriteData exigia número — corrigido com ID normalizado já validado; o carregamento não considera img.complete de dimensões zero como imagem boa, nem abandona a cópia offline em apenas 1,4 s; card de detalhes intercepta o mesmo recurso PokeAPI verificado do APK que a lista.
+- **API + site:** API primeira fonte. Falhas transitórias permitidas fazem fallback DOM através de session + verificações oficiais; sem misturar linhas ou coordenadas entre fontes. **Sem fallback para** 401,403,429, login, VIP, trainer não vinculado, erro de filtro; sem burlar limites. Resultados e filtros por serviço seguem independentes, mesma conta autenticada.
+- **QA LT115:** 0.01.15/versionCode 54319; build de teste, não release. Testes 100%/0%, imagens base/shiny e UI, regressões de coords, filtros, preferências/alertas. **CI e Samsung devem ser verificados; nenhuma promoção automática.**
+- PR #73 Draft; main oficial permanece 0.01.11/54315; backups imutáveis.
+
 ## LT114 — status de QA e instalação
 - [GitHub Actions LT114 #40240634152](https://github.com/LucianoToscano/PokeSearch/actions/runs/40240634152) SUCCESS; APK QA **0.01.14 / 54318**, origem **4734b6ce877961eff3bdaf7e5c05c69d33e86151**, SHA-256 **df04ad96591e2019181f49d9fb322f706807b2ceb568cea1987510da00e13b85**, certificado v2 SHA-256 **34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e**. 8/8 regressões Get coords, 10/10 paridade LT112, 2.050 PNGs verificados. PR #73 Draft com conflito de merge; main ainda **56403a2999fc8037aa020466cf03041b7926ae02**. Samsung P1/P2 pendente. [Evidências](POKESEARCH_LT113_GET_COORDS_DUAL_PARITY_20261025.md).
 

@@ -286,7 +286,7 @@
       var fast=clean(x.fast_move,65),charge=clean(x.charge_move,65);
       var distance=optionalNumberSafe(x.distance_km,0,100000,false);
       var entry={
-        sourceIndex:i,name:name,number:"#"+id,image:spriteData(x),gender:gender,size:size,
+        sourceIndex:i,name:name,number:"#"+id,image:spriteData({...x,pokemon_id:id}),gender:gender,size:size,
         moves:fast&&charge?fast+" / "+charge:fast||charge,
         location:clean(x.location,140),distance:distance===null?"":distance+" km",
         despawn:"",cp:String(cp),level:String(lv),

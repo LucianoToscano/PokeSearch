@@ -5737,7 +5737,7 @@ function attachSpriteFeedback(){
   };
   img.addEventListener("load",loaded);
   img.addEventListener("error",failed);
-  if(img.complete)loaded();
+  if(img.complete&&good())loaded();
   // Some Samsung WebViews leave an Image in "loading" state for seconds,
   // without firing error. Switch only the verified static PokeAPI base URL
   // to its equivalent CDN mirror after a bounded grace period.
@@ -5748,7 +5748,7 @@ function attachSpriteFeedback(){
     mirrorAttempted=true;
     img.src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+known[1];
    }
-  },1400);
+  },4500);
   // An unanswered CDN request must not leave a blank sprite forever.
   // Final retry uses ONLY this card's original verified/provider URL.
   setTimeout(()=>{
@@ -6335,7 +6335,8 @@ function draw(){
   const iconSettings=hasHistory?shownSettings:searchSettings;
   const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings);
   document.body.classList.toggle("results-stale",hasHistory&&resultsStale);
-  document.body.classList.toggle("search-active",activeSearchPhase==="searching"&&!shinyPending&&nextQueryAt<=Date.now());
+  document.body.classList.toggle("search-active",searchActive&&
+   (activeSearchPhase==="searching"||activeSearchPhase==="filling"));
   const header=document.getElementById("resultHeader");
   const count=document.getElementById("resultSpawnCount");
   count.textContent=resultDisplayOptions.count?String(cards.length):"";
@@ -6369,7 +6370,8 @@ function draw(){
   const history=cards.length>0;
   const selectedIcon=getResultIcon(history?shownMode:mode,history?shownShiny:shiny,
     history?shownSettings:searchSettings);
-  document.body.classList.toggle("search-active",activeSearchPhase==="searching"&&!shinyPending&&nextQueryAt<=Date.now());
+  document.body.classList.toggle("search-active",searchActive&&
+   (activeSearchPhase==="searching"||activeSearchPhase==="filling"));
   document.body.classList.toggle("results-stale",history&&resultsStale);
   for(const id of ["dockModeIcon","bubbleModeIcon"]){
    const img=document.getElementById(id);
