@@ -72,6 +72,12 @@ final class VerifiedSpriteCache {
                 byte[] png=bytes.toByteArray();
                 if(png.length<8||png[0]!=(byte)0x89||png[1]!='P'||
                    png[2]!='N'||png[3]!='G')continue;
+                android.graphics.BitmapFactory.Options bounds=
+                    new android.graphics.BitmapFactory.Options();
+                bounds.inJustDecodeBounds=true;
+                android.graphics.BitmapFactory.decodeByteArray(png,0,png.length,bounds);
+                if(bounds.outWidth<8||bounds.outHeight<8||
+                   bounds.outWidth>1024||bounds.outHeight>1024)continue;
                 File file=verifiedDisk(context,dex,shiny),dir=file.getParentFile();
                 if(dir==null||!(dir.isDirectory()||dir.mkdirs()))continue;
                 File tmp=new File(dir,(shiny?"shiny-":"")+dex+".tmp");
