@@ -9,7 +9,12 @@ public final class UpdatePolicy {
                remoteCode>installedCode && remoteCode!=dismissedCode;
     }
     public static boolean validVersion(String versionName,String apkName) {
-        return (VersionNames.isCanonical(versionName)||VersionNames.isLegacyPublished(versionName)) &&
+        // Keep this standalone for historical plain javac QA runners.
+        // Already signed 0.00.100..106 APKs remain installable; all new
+        // 0.00.107+ names are rejected, canonical 0.01.xx is required.
+        return versionName!=null &&
+               (versionName.matches("0\\\\.\\\\d{2}\\\\.\\\\d{2}")||
+                versionName.matches("0\\\\.00\\\\.10[0-6]")) &&
                ("PokeSearch-v"+versionName+"-LT.apk").equals(apkName);
     }
     public static boolean validHash(String sha) {
