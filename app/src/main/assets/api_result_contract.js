@@ -242,8 +242,17 @@
     const species=normalKey(item.pokemon_name);
     const form=normalKey(item.form);
     const costume=normalKey(item.costume);
+    // Furfrou #676 uses NATURAL (Natural Form / Natural Trim) as its
+    // BASE appearance, not an alternate groomed trim. Other Pokémon with
+    // a form called "Natural" must not be guessed as their default.
+    // Verified against Furfrou's recognized Natural Form/Trim identity.
+    const furfrouNatural=item.pokemon_id===676&&species==="FURFROU"&&
+      (form==="NATURAL"||form==="NATURALFORM"||form==="NATURALTRIM"||
+       form==="FURFROUNATURAL"||form==="FURFROUNATURALFORM"||
+       form==="FURFROUNATURALTRIM");
     const defaultForm=!form||form==="NORMAL"||form==="DEFAULT"||
-      (species&&(form===species||form===species+"NORMAL"||form===species+"DEFAULT"));
+      (species&&(form===species||form===species+"NORMAL"||form===species+"DEFAULT"))||
+      furfrouNatural;
     if(!defaultForm)return "";
     if(costume&&costume!=="NONE"&&costume!=="NORMAL"&&costume!=="DEFAULT")return "";
     if(item.costume_id!==null&&item.costume_id!==undefined&&
