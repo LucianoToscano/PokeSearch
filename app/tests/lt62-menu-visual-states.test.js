@@ -480,8 +480,8 @@ check("Unified Pokébola drag persists both windows and restores without overrid
  assert.ok(grip.includes('putInt("resultsX",Math.round(resultParams.x/density)-visualResultsOffsetX)'));
  assert.ok(grip.includes('putInt("resultsY",Math.round(resultParams.y/density)-visualResultsOffsetY)'));
  assert.ok(grip.includes('saved.apply();'));
- assert.ok(native.includes('dockPrefs.getInt("pokeballX",oldDefaultX)'));
- assert.ok(native.includes('dockPrefs.getInt("pokeballY",120)'));
+ assert.ok(native.includes('dockPrefs.getInt("pokeballX",isSecondaryOverlay()?12:oldDefaultX)'));
+ assert.ok(native.includes('dockPrefs.getInt("pokeballY",isSecondaryOverlay()?220:120)'));
  assert.ok(native.includes('prefs.getInt("resultsX",preferredX)'));
  assert.ok(native.includes('prefs.getInt("resultsY",preferredY)'));
  assert.ok(grip.includes('handler.removeCallbacks(dockLongPress);'));
