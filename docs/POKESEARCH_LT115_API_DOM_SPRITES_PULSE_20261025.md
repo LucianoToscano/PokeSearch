@@ -28,3 +28,11 @@ LT115 QA 0.01.15/versionCode 54319, sem lançamento oficial até aprovação do 
 - Durante o review foi identificado que `detailPanel.setWebViewClient` já estava configurado mais adiante no ciclo da Activity, contendo `onPageFinished`; a primeira alteração colocava outro interceptor antes, que seria sobrescrito. Foi consolidado **um único cliente**, mantendo simultaneamente `shouldInterceptRequest` e `onPageFinished`.
 - O APK preliminar `0.01.15/54319` não é candidato de instalação. Use somente a QA corrigida `0.01.16/54320`, se todos os testes de CI e assinatura passarem. Ambos continuam NÃO oficiais.
 - A suíte LT115 foi reforçada para falhar se houver dois `setWebViewClient` no painel de detalhes.
+
+## QA LT116 final, sem publicação oficial — 25/10/2026
+- **GitHub Actions #40243697039 SUCCESS:** https://github.com/LucianoToscano/PokeSearch/actions/runs/40243697039. SOURCE_COMMIT do binário: `dd4c7dcde6404bd5f15a0dc897f873e7ca802d90`.
+- **APK assinado:** `PokeSearch-v0.01.16-LT-Coords-Parity-QA.apk`, `versionName=0.01.16`, `versionCode=54320`, applicationId `com.lucianotoscano.pokesearch`.
+- **SHA-256 binário:** `38bf598b5c267f2ad8493de69fae79b836d2e3388a0ac3fd314fcebf39c6b762`; **certificado v2:** `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- ZIP APK íntegro; 2.050 sprites com SHA-256 conferidos contra manifesto de cada arquivo (1.025 normais, 1.025 shiny). Node QA, Java, Gradle/R8 e assinatura concluídos com sucesso no workflow. Semelhante a builds anteriores, `testDebugUnitTest NO-SOURCE` não é execução de testes instrumentados no aparelho.
+- **Não instalar os candidatos 0.01.15/54319:** builds de desenvolvimento abortaram antes da criação de APK. Somente 0.01.16/54320 possui binário assinado aprovado nesta etapa.
+- **Samsung pendente:** P1 100%/P2 0% no mesmo momento, sprite lista + detalhe normal/shiny, pulso durante API e DOM, fallback transitório (sem burlar 401/403/429), preferências/sons/alertas/Favoritos, instalação preservando dados e Get coords. PR #73 segue Draft e main estável não pode ser modificada sem autorização.
