@@ -5854,10 +5854,15 @@ function drawPokemonSuggestions(){
   const button=document.createElement("button");button.type="button";
   button.className="pokemonCandidate"+(exists?" chosen":"");
   button.title=label;button.setAttribute("aria-pressed",String(exists));
-  if(/^https:\/\//.test(String(item.image||""))){
+  const safeImage=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/\d{1,4}\.png$/.test(String(item.image||""));
+  const placeholder=document.createElement("span");
+  placeholder.className="pokemonChipSprite";placeholder.textContent="◉";
+  placeholder.setAttribute("aria-hidden","true");
+  if(safeImage){
    const img=document.createElement("img");img.src=item.image;img.alt="";
-   img.loading="lazy";button.appendChild(img);
-  }
+   img.loading="lazy";img.onerror=()=>{img.replaceWith(placeholder);};
+   button.appendChild(img);
+  }else button.appendChild(placeholder);
   const text=document.createElement("span");text.textContent=(item.dex?"#"+item.dex+"  ":"")+label;
   button.appendChild(text);
   if(exists){const mark=document.createElement("span");mark.textContent="✓";button.appendChild(mark);}
