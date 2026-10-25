@@ -42,7 +42,15 @@ public class OverlayService extends Service {
         };
     private boolean missionScreenOffRegistered = false;
     private static volatile boolean running=false;
+    private static volatile boolean secondaryRunning=false;
     public static boolean isRunning(){return running;}
+    public static boolean isSecondaryRunning(){return secondaryRunning;}
+    // A segunda instância mantém TODA a pesquisa, filtros e posições isolados.
+    // Cookies WebView continuam compartilhados automaticamente pelo app Android.
+    protected boolean isSecondaryOverlay(){return false;}
+    private android.content.SharedPreferences overlayPrefs(){
+        return getSharedPreferences(isSecondaryOverlay()?"prefs_secondary":"prefs",0);
+    }
     private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
     private static final int RESULTS_HEADER_DP=30;
     private int spriteSize=45;
@@ -127,7 +135,7 @@ public class OverlayService extends Service {
             int oldMenuBase=visualMenuBaseDp();
             visualPrefsJson=next;
             readVisualRuntime();
-            getSharedPreferences("prefs",0).edit()
+            overlayPrefs().edit()
                 .putString("visualPrefsJson",visualPrefsJson).apply();
             if(resultParams!=null&&resultRoot!=null&&wm!=null){
                 updateResultHeaderGrip();
@@ -225,7 +233,7 @@ public class OverlayService extends Service {
     private boolean displayedApiResults=false;
     private int displayedApiSearchId=-1;
     private boolean authorizedApiQaSelected(){
-        return getSharedPreferences("prefs",0).getBoolean("authorizedApiQaOptIn",true);
+        return overlayPrefs().getBoolean("authorizedApiQaOptIn",true);
     }
     private void performAuthorizedApiSearch(int generation,boolean manual){
         if(authorizedApiCollector==null){
@@ -611,7 +619,7 @@ public class OverlayService extends Service {
         if(visualResultsHorizontal&&resultParams!=null&&resultParams.width!=dp(resultWidthDp()))
             updateResultsWidth();
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+getSharedPreferences("prefs",0).getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+","+
+                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+overlayPrefs().getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+","+
                 JSONObject.quote(WatchAlerts.mode(this))+","+
                 WatchAlerts.hasCustomTone(this,false)+","+
                 WatchAlerts.hasCustomTone(this,true)+","+
@@ -631,7 +639,7 @@ public class OverlayService extends Service {
     }
     private void status(String s){
         status=s;
-        getSharedPreferences("prefs",0).edit().putString("lastStatus",s).apply();
+        overlayPrefs().edit().putString("lastStatus",s).apply();
         update();
         // Only one manual retry survives an in-progress search. Dispatch it
         // after the search ends, never concurrently with remote submission.
@@ -665,14 +673,14 @@ public class OverlayService extends Service {
         handler.removeCallbacks(filterChangeRefresh);
     }
     private void diagnosticError(String s){
-        getSharedPreferences("prefs",0).edit().putString("lastError",s).apply();
+        overlayPrefs().edit().putString("lastError",s).apply();
         BugReport.log(this,"ERROR",s);
         status(s);
     }
     private void searchFailure(String shortReason,String detail){
         searchPhase="error";
         // Show one concise message; keep the detailed diagnosis for the ⚠ report.
-        getSharedPreferences("prefs",0).edit().putString("lastError",detail).apply();
+        overlayPrefs().edit().putString("lastError",detail).apply();
         BugReport.log(this,"FILTER",detail);
         if(count()>0)resultsStale=true;
         status(shortReason+(count()>0?" · resultados anteriores":""));
@@ -1076,11 +1084,11 @@ public class OverlayService extends Service {
                 .setContentTitle("PokeSearch ativo")
                 .setContentText("Toque para abrir PokeSearch")
                 .setContentIntent(pi).setOngoing(true).build();
-        startForeground(73,note);
+        startForeground(isSecondaryOverlay()?74:73,note);
         FirebaseStats.setOverlayVisible(this,true);
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         try{visualPrefsJson=normalizeVisualPrefs(
-            getSharedPreferences("prefs",0).getString("visualPrefsJson","{}")).toString();}
+            overlayPrefs().getString("visualPrefsJson","{}")).toString();}
         catch(org.json.JSONException ignored){visualPrefsJson="{}";}
         syncHomeThemeVisual(false);
         readVisualRuntime();
@@ -1196,7 +1204,7 @@ public class OverlayService extends Service {
                         positionIndependentPopup(); // Re-evaluate against new results bounds.
                         float density=getResources().getDisplayMetrics().density;
                         android.content.SharedPreferences.Editor saved=
-                            getSharedPreferences("prefs",0).edit()
+                            overlayPrefs().edit()
                                 .putInt("pokeballX",Math.round(params.x/density))
                                 .putInt("pokeballY",Math.round(params.y/density));
                         if(resultParams!=null){
@@ -1233,10 +1241,10 @@ public class OverlayService extends Service {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT);
         params.gravity=Gravity.TOP|Gravity.LEFT;
-        android.content.SharedPreferences dockPrefs=getSharedPreferences("prefs",0);
+        android.content.SharedPreferences dockPrefs=overlayPrefs();
         int oldDefaultX=Math.max(0,screenWidthDp()-dockDp()-7);
-        int savedPokeballX=dockPrefs.getInt("pokeballX",oldDefaultX);
-        int savedPokeballY=dockPrefs.getInt("pokeballY",120);
+        int savedPokeballX=dockPrefs.getInt("pokeballX",isSecondaryOverlay()?12:oldDefaultX);
+        int savedPokeballY=dockPrefs.getInt("pokeballY",isSecondaryOverlay()?220:120);
         params.x=dp(Math.max(0,Math.min(screenWidthDp()-dockDp(),savedPokeballX)));
         params.y=dp(Math.max(0,Math.min(screenHeightDp()-height,savedPokeballY)));
         // The dock is attached AFTER the menu and results overlays, so its
@@ -1443,10 +1451,11 @@ public class OverlayService extends Service {
         panel.loadUrl("file:///android_asset/dock.html");
         if(detailRoot!=null)detailPanel.loadUrl("file:///android_asset/detail.html");
         // Initial navigation is scheduled after cookie flush in onStartCommand.
-        running=true;
+        if(isSecondaryOverlay())secondaryRunning=true;
+        else running=true;
     }
     private void createResultsWindow(){
-        android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+        android.content.SharedPreferences prefs=overlayPrefs();
         resultCollapsed=prefs.getBoolean("resultsCollapsed",false);
         resultRoot=new FrameLayout(this){
             @Override public boolean dispatchTouchEvent(MotionEvent event){
@@ -1511,7 +1520,7 @@ public class OverlayService extends Service {
                         moveDetail();
                         positionIndependentPopup(); // Re-evaluate against new results bounds.
                         float density=getResources().getDisplayMetrics().density;
-                        getSharedPreferences("prefs",0).edit()
+                        overlayPrefs().edit()
                             .putInt("resultsX",Math.round(resultParams.x/density)-visualResultsOffsetX)
                             .putInt("resultsY",Math.round(resultParams.y/density)-visualResultsOffsetY).apply();
                     }
@@ -1527,8 +1536,8 @@ public class OverlayService extends Service {
         resultGrip.setVisibility(View.GONE);
         updateResultHeaderGrip();
 
-        int preferredX=Math.max(0,screenWidthDp()-2*dockDp()-35);
-        int preferredY=165;
+        int preferredX=isSecondaryOverlay()?12:Math.max(0,screenWidthDp()-2*dockDp()-35);
+        int preferredY=isSecondaryOverlay()?260:165;
         int savedX=prefs.getInt("resultsX",preferredX);
         int savedY=prefs.getInt("resultsY",preferredY);
         resultParams=new WindowManager.LayoutParams(dp(resultWidthDp()),dp(minResultsHeaderHeightDp()),
@@ -1769,7 +1778,7 @@ public class OverlayService extends Service {
             // authentication expired. Do not turn a verified session into
             // "login necessary" merely because the DOM is temporarily empty.
             if(!"não confirmado".equals(auth))
-                getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
+                overlayPrefs().edit().putString("sessionStatus",auth).apply();
             // Only record a coarse authentication state, never cookies, codes or tokens.
             BugReport.log(this,"SESSION","Shiny="+shiny+" autenticação="+auth);
             if(shiny&&!siteConfirmsShinyAccount(session)){
@@ -1912,7 +1921,7 @@ public class OverlayService extends Service {
     // cookie, Shiny switch or stored login status alone. The trainer fields
     // originate only from the verified official /profile card (HOME-04).
     private boolean hasConfirmedTrainerLink(){
-        android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+        android.content.SharedPreferences p=overlayPrefs();
         return "linked".equals(p.getString("profileTrainerState","unknown"))&&
             !p.getString("profileTrainerName","").trim().isEmpty()&&
             p.getString("profileTrainerCode","").matches("[0-9]{12}");
@@ -1925,7 +1934,7 @@ public class OverlayService extends Service {
         shiny=false;
         shinyVerified=false;
         // Keep a user-initiated login prompt pending until it is opened.
-        getSharedPreferences("prefs",0).edit().putBoolean("shiny",false).apply();
+        overlayPrefs().edit().putBoolean("shiny",false).apply();
         status(reason);
     }
     // Shiny control and the following search never wait for a local 60s timer.
@@ -1999,7 +2008,7 @@ public class OverlayService extends Service {
                 handler.postDelayed(()->startVerifiedShinySearch(generation,attempt+1),400L);
                 return;
             }
-            getSharedPreferences("prefs",0).edit().putString("sessionStatus",auth).apply();
+            overlayPrefs().edit().putString("sessionStatus",auth).apply();
             if(!siteConfirmsShinyAccount(session)){
                 revertUnverifiedShiny("✨ Conta logada e treinador confirmado são obrigatórios para Shiny.");
                 openShinyLogin();
@@ -2134,7 +2143,7 @@ public class OverlayService extends Service {
                         // This means the exact values were still present when
                         // Search was pressed, not merely selected in our UI.
                         locationVerified=locationEnabled;
-                        getSharedPreferences("prefs",0).edit()
+                        overlayPrefs().edit()
                             .putLong("lastNetworkSearchAt",submittedAt).apply();
                         BugReport.log(this,"SUBMIT","Busca "+mode+" Shiny="+shiny+
                             " geofiltro="+(locationEnabled?"confirmado":"OFF"));
@@ -2450,7 +2459,7 @@ public class OverlayService extends Service {
         catch(Exception e){recordFailure("notificação geral",e);return false;}
     }
     private void recordNewResults(JSONArray cards,boolean leagueConfirmed){
-        android.content.SharedPreferences preferences=getSharedPreferences("prefs",0);
+        android.content.SharedPreferences preferences=overlayPrefs();
         JSONArray history;
         try{history=new JSONArray(preferences.getString("history","[]"));}
         catch(Exception e){recordFailure("ler histórico",e);history=new JSONArray();}
@@ -2541,7 +2550,7 @@ public class OverlayService extends Service {
             if(pending==null||pending.length()==0)return;
             updated.remove("clearExtraKeys");
             extraFiltersJson=updated.toString();
-            getSharedPreferences("prefs",0).edit()
+            overlayPrefs().edit()
                 .putString("extraFiltersJson",extraFiltersJson).apply();
         }catch(org.json.JSONException error){
             recordFailure("confirmar limpeza de filtros",error);
@@ -2608,7 +2617,7 @@ public class OverlayService extends Service {
         searchInProgress=false;
         armNextDespawn(sorted);
         if(selected>=0)hideDetails();
-        getSharedPreferences("prefs",0).edit()
+        overlayPrefs().edit()
             .putLong("lastSearchAt",now).putString("lastError","Nenhum").apply();
         if(r.optBoolean("siteIncomplete",false)){
             // Show independently verified matches, but never label a visibly
@@ -2658,7 +2667,7 @@ public class OverlayService extends Service {
     private void toggleResultsCollapsed(){
         if(minimized||resultRoot==null)return;
         resultCollapsed=!resultCollapsed;
-        getSharedPreferences("prefs",0).edit()
+        overlayPrefs().edit()
             .putBoolean("resultsCollapsed",resultCollapsed).apply();
         js(resultPanel,resultLoaded,"window.setResultsCollapsed("+resultCollapsed+")");
         if(resultRoot!=null)resultRoot.setVisibility(
@@ -2978,7 +2987,7 @@ public class OverlayService extends Service {
             locationEnabled=enabled;
             locationCoords=enabled?valid:"";
             locationRadius=enabled?radius:0;
-            android.content.SharedPreferences.Editor prefs=getSharedPreferences("prefs",0).edit();
+            android.content.SharedPreferences.Editor prefs=overlayPrefs().edit();
             prefs.putBoolean("locationEnabled",locationEnabled);
             if(locationEnabled)prefs.putString("locationCoords",locationCoords).putInt("locationRadius",locationRadius);
             else prefs.remove("locationCoords").remove("locationRadius");
@@ -2998,7 +3007,7 @@ public class OverlayService extends Service {
         private String savedLocationKey(int slot){return "savedSearchLocationV1_"+slot;}
         @JavascriptInterface public void requestSavedSearchLocations(){handler.post(()->{
             JSONArray slots=new JSONArray();
-            android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+            android.content.SharedPreferences p=overlayPrefs();
             int active=p.getInt("savedSearchLocationActiveV1",0);
             for(int slot=1;slot<=3;slot++){
                 JSONObject item=new JSONObject();
@@ -3029,7 +3038,7 @@ public class OverlayService extends Service {
             try{
                 JSONObject data=new JSONObject();
                 data.put("name",name).put("coords",clean).put("radius",radius);
-                getSharedPreferences("prefs",0).edit()
+                overlayPrefs().edit()
                     .putString(savedLocationKey(slot),data.toString())
                     .putInt("savedSearchLocationActiveV1",slot).apply();
                 requestSavedSearchLocations();
@@ -3040,12 +3049,12 @@ public class OverlayService extends Service {
         @JavascriptInterface public void loadSearchLocation(int slot){handler.post(()->{
             if(stopped||slot<1||slot>3)return;
             try{
-                JSONObject saved=new JSONObject(getSharedPreferences("prefs",0)
+                JSONObject saved=new JSONObject(overlayPrefs()
                     .getString(savedLocationKey(slot),"{}"));
                 String coords=extractCoordinates(saved.optString("coords",""));
                 int radius=saved.optInt("radius",-1);
                 if(coords.isEmpty()||radius<0||radius>1000)return;
-                getSharedPreferences("prefs",0).edit()
+                overlayPrefs().edit()
                     .putInt("savedSearchLocationActiveV1",slot).apply();
                 new Bridge().setLocation(true,coords,radius);
                 requestSavedSearchLocations();
@@ -3053,7 +3062,7 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void deleteSavedSearchLocation(int slot){handler.post(()->{
             if(stopped||slot<1||slot>3)return;
-            android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+            android.content.SharedPreferences prefs=overlayPrefs();
             android.content.SharedPreferences.Editor edit=prefs.edit().remove(savedLocationKey(slot));
             if(prefs.getInt("savedSearchLocationActiveV1",0)==slot)
                 edit.putInt("savedSearchLocationActiveV1",0);
@@ -3314,7 +3323,7 @@ public class OverlayService extends Service {
         private String generalPresetKey(int slot){return "generalFilterPresetV1_"+slot;}
         private String generalPresetNameKey(int slot){return "generalPresetNameV1_"+slot;}
         @JavascriptInterface public void requestGeneralFilterPresets(){handler.post(()->{
-            android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+            android.content.SharedPreferences p=overlayPrefs();
             JSONArray available=new JSONArray(),names=new JSONArray();
             for(int slot=1;slot<=3;slot++){
                 available.put(p.contains(generalPresetKey(slot)));
@@ -3333,7 +3342,7 @@ public class OverlayService extends Service {
             String clean=requested.trim().replaceAll("[\\r\\n\\t<>]"," ");
             clean=clean.replaceAll(" +"," ");
             if(clean.isEmpty()||clean.length()>20)return;
-            getSharedPreferences("prefs",0).edit()
+            overlayPrefs().edit()
                 .putString(generalPresetNameKey(slot),clean).apply();
             requestGeneralFilterPresets();
         });}
@@ -3344,7 +3353,7 @@ public class OverlayService extends Service {
                 snapshot.put("mode",mode);
                 String value=snapshot.toString();
                 if(value.length()>16000)return;
-                getSharedPreferences("prefs",0).edit()
+                overlayPrefs().edit()
                     .putString(generalPresetKey(slot),value)
                     .putInt("generalPresetActiveV1",slot).apply();
                 android.widget.Toast.makeText(OverlayService.this,
@@ -3354,7 +3363,7 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void deleteGeneralFilterPreset(int slot){handler.post(()->{
             if(stopped||slot<1||slot>3)return;
-            android.content.SharedPreferences p=getSharedPreferences("prefs",0);
+            android.content.SharedPreferences p=overlayPrefs();
             android.content.SharedPreferences.Editor edit=p.edit().remove(generalPresetKey(slot));
             if(p.getInt("generalPresetActiveV1",0)==slot)
                 edit.putInt("generalPresetActiveV1",0);
@@ -3381,14 +3390,14 @@ public class OverlayService extends Service {
                     reset.put(key,new JSONArray());
                 reset.put("clearPokemonSelection",true);
                 reset.put("includePreviousEvolutions",true);
-                getSharedPreferences("prefs",0).edit().putInt("generalPresetActiveV1",0).apply();
+                overlayPrefs().edit().putInt("generalPresetActiveV1",0).apply();
                 new Bridge().setSearchConfig(reset.toString());
                 requestGeneralFilterPresets();
             }catch(org.json.JSONException ignored){}
         });}
         @JavascriptInterface public void loadGeneralFilterPreset(int slot){handler.post(()->{
             if(slot<1||slot>3||stopped)return;
-            String value=getSharedPreferences("prefs",0).getString(generalPresetKey(slot),"");
+            String value=overlayPrefs().getString(generalPresetKey(slot),"");
             if(value.length()<10||value.length()>16000)return;
             try{
                 JSONObject snapshot=new JSONObject(value);
@@ -3397,7 +3406,7 @@ public class OverlayService extends Service {
                      "gl".equals(presetMode)||"ul".equals(presetMode)))return;
                 // Use the existing validated, atomic setSearchConfig pathway
                 // instead of introducing a second filter-submission mechanism.
-                getSharedPreferences("prefs",0).edit().putInt("generalPresetActiveV1",slot).apply();
+                overlayPrefs().edit().putInt("generalPresetActiveV1",slot).apply();
                 new Bridge().setSearchConfig(value);
                 requestGeneralFilterPresets();
                 android.widget.Toast.makeText(OverlayService.this,
@@ -3470,7 +3479,7 @@ public class OverlayService extends Service {
                     OverlayService.this.refresh(true);return;
                 }
                 extraFiltersJson=serialized;
-                getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",serialized).apply();
+                overlayPrefs().edit().putString("extraFiltersJson",serialized).apply();
                 replaceActiveFilterSearch(); // Preserve shiny, mode, Pokémon, coords.
                 resultsStale=count()>0;
                 status("Filtro atualizado • pesquisando com os demais campos preservados");
@@ -3510,7 +3519,7 @@ public class OverlayService extends Service {
                 String next=extra.toString();
                 if(extraFiltersJson.equals(next)){OverlayService.this.refresh(true);return;}
                 extraFiltersJson=next;
-                getSharedPreferences("prefs",0).edit().putString("extraFiltersJson",next).apply();
+                overlayPrefs().edit().putString("extraFiltersJson",next).apply();
                 replaceActiveFilterSearch();
                 resultsStale=count()>0;
                 hideDetails();
@@ -3648,7 +3657,7 @@ public class OverlayService extends Service {
                 mode=nextMode;rawAttack=a;rawDefense=d;rawStamina=st;
                 glRank=gl;ulRank=ul;ivPercentMin=min;ivPercentMax=max;
                 extraFiltersJson=updatedExtras;
-                getSharedPreferences("prefs",0).edit()
+                overlayPrefs().edit()
                     .putString("mode",mode).putInt("rawAttack",a).putInt("rawDefense",d)
                     .putInt("rawStamina",st).putInt("glRank",gl).putInt("ulRank",ul)
                     .putInt("ivPercentMin",min).putInt("ivPercentMax",max)
@@ -3674,7 +3683,7 @@ public class OverlayService extends Service {
             mode=selected;
             // Legacy IV100 calls mean Raw IV 15/15/15; no separate selector is exposed.
             if(s.equals("iv")){rawAttack=15;rawDefense=15;rawStamina=15;}
-            android.content.SharedPreferences.Editor changed=getSharedPreferences("prefs",0).edit().putString("mode",selected);
+            android.content.SharedPreferences.Editor changed=overlayPrefs().edit().putString("mode",selected);
             if(s.equals("iv"))changed.putInt("rawAttack",15).putInt("rawDefense",15).putInt("rawStamina",15);
             changed.apply();
             android.widget.Toast.makeText(OverlayService.this,
@@ -3690,7 +3699,7 @@ public class OverlayService extends Service {
         @JavascriptInterface public void menu(boolean open){handler.post(()->OverlayService.this.menu(open));}
         @JavascriptInterface public void cycleMode(){handler.post(()->{
             mode=mode.equals("raw")?"percent":mode.equals("percent")?"gl":mode.equals("gl")?"ul":"raw";
-            getSharedPreferences("prefs",0).edit().putString("mode",mode).apply();
+            overlayPrefs().edit().putString("mode",mode).apply();
             replaceActiveFilterSearch();shinyVerified=false;
             boolean preview=restoreFilterPreview();
             if(!preview)resultsStale=count()>0;
@@ -3702,7 +3711,7 @@ public class OverlayService extends Service {
             if(size!=35&&size!=45&&size!=55)return;
             if(size==spriteSize){update();return;}
             spriteSize=size;
-            getSharedPreferences("prefs",0).edit().putInt("spriteSize",size).apply();
+            overlayPrefs().edit().putInt("spriteSize",size).apply();
             if(params!=null){
                 params.width=dp(minimized?BUBBLE_DP:dockDp());
                 params.x=Math.max(0,Math.min(metrics().widthPixels-params.width,params.x));
@@ -3735,7 +3744,7 @@ public class OverlayService extends Service {
         // never alter search criteria or the official PoGoCoordinates session.
         @JavascriptInterface public void setResultTextVisible(boolean value){handler.post(()->{
             showResultText=value;
-            getSharedPreferences("prefs",0).edit().putBoolean("showResultText",value).apply();
+            overlayPrefs().edit().putBoolean("showResultText",value).apply();
             update();
         });}
         // One explicit, atomic visibility action. Never change Search filters,
@@ -3756,7 +3765,7 @@ public class OverlayService extends Service {
                 resultShowSpeciesIvRankMl=enabled;
                 showTimers=enabled;showResultText=enabled;
                 android.content.SharedPreferences.Editor pref=
-                    getSharedPreferences("prefs",0).edit();
+                    overlayPrefs().edit();
                 String[] keys={"resultShowCount","resultShowName","resultShowNumber",
                     "resultShowGender","resultShowSize","resultShowForm","resultShowMoves",
                     "resultShowLocation","resultShowDistance","resultShowShiny",
@@ -3800,7 +3809,7 @@ public class OverlayService extends Service {
                     case "speciesIvRank":resultShowSpeciesIvRank=value;pref="resultShowSpeciesIvRank";break;
                     default:return; // Timers/IV keep their original separate controls.
                 }
-                getSharedPreferences("prefs",0).edit().putBoolean(pref,value).apply();
+                overlayPrefs().edit().putBoolean(pref,value).apply();
                 update();
             });
         }
@@ -3818,7 +3827,7 @@ public class OverlayService extends Service {
         @JavascriptInterface public void setAlertMode(String value){handler.post(()->{
             if(!"on".equals(value)&&!"silent".equals(value)&&!"off".equals(value))return;
             alertsMode=value;alerts=!"off".equals(value);
-            getSharedPreferences("prefs",0).edit().putString("alertsMode",value)
+            overlayPrefs().edit().putString("alertsMode",value)
                 .putBoolean("alerts",alerts).apply();
             update();
             alertModeCaption("Novos Pokémon",value);
@@ -3913,20 +3922,20 @@ public class OverlayService extends Service {
                     }
                     clean.put(key,safe);
                 }
-                getSharedPreferences("prefs",0).edit()
+                overlayPrefs().edit()
                     .putString("menuUiPrefs",clean.toString()).apply();
                 update();
             }catch(Exception ignored){}
         });}
         @JavascriptInterface public void toggleTimers(){handler.post(()->{
             showTimers=!showTimers;
-            getSharedPreferences("prefs",0).edit().putBoolean("showTimers",showTimers).apply();
+            overlayPrefs().edit().putBoolean("showTimers",showTimers).apply();
             update();
         });}
         @JavascriptInterface public void toggleGeneralAlerts(){handler.post(()->{
             alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off";
             alerts=!"off".equals(alertsMode);
-            getSharedPreferences("prefs",0).edit().putString("alertsMode",alertsMode)
+            overlayPrefs().edit().putString("alertsMode",alertsMode)
                 .putBoolean("alerts",alerts).apply();
             update();
             android.widget.Toast.makeText(OverlayService.this,
@@ -3988,7 +3997,7 @@ public class OverlayService extends Service {
             if(minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
             if(intervalMinutes==minutes)return;
             intervalMinutes=minutes;
-            getSharedPreferences("prefs",0).edit()
+            overlayPrefs().edit()
                 .putInt("intervalMinutes",intervalMinutes).putBoolean("intervalExplicit",true).apply();
             schedulePeriodic();
             update();
@@ -4002,13 +4011,13 @@ public class OverlayService extends Service {
                 if(options[j]==intervalMinutes){next=(j+1)%options.length;break;}
             }
             intervalMinutes=options[next];
-            getSharedPreferences("prefs",0).edit().putInt("intervalMinutes",intervalMinutes).putBoolean("intervalExplicit",true).apply();
+            overlayPrefs().edit().putInt("intervalMinutes",intervalMinutes).putBoolean("intervalExplicit",true).apply();
             schedulePeriodic();update();
         });}
         @JavascriptInterface public void shiny(){handler.post(()->{
             if(stopped||loginPaused)return;
             shiny=!shiny;
-            getSharedPreferences("prefs",0).edit().putBoolean("shiny",shiny).apply();
+            overlayPrefs().edit().putBoolean("shiny",shiny).apply();
             replaceActiveFilterSearch();
             final int generation=requestGeneration;
             shinyVerified=false;
@@ -4131,7 +4140,7 @@ public class OverlayService extends Service {
     }
     private void syncPreferencesWithoutSearch(){
         if(stopped)return;
-        android.content.SharedPreferences prefs=getSharedPreferences("prefs",0);
+        android.content.SharedPreferences prefs=overlayPrefs();
         int wanted=prefs.getInt("spriteSize",45);
         spriteSize=(wanted==35||wanted==45||wanted==55)?wanted:45;
         showTimers=prefs.getBoolean("showTimers",false);
@@ -4273,7 +4282,7 @@ public class OverlayService extends Service {
             // Keep knownSpawns on session reload to prevent duplicate notifications.
         }
         // v0.20 saved 10 as the implicit default; only keep a rate the user explicitly chose.
-        android.content.SharedPreferences pref=getSharedPreferences("prefs",0);
+        android.content.SharedPreferences pref=overlayPrefs();
         if(!pref.getBoolean("shinyOptInV32",false)){
             pref.edit().putBoolean("shiny",false).putBoolean("shinyOptInV32",true).apply();
             shiny=false;
@@ -4350,7 +4359,7 @@ public class OverlayService extends Service {
         ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
         ivPercentMax=Math.max(ivPercentMin,
             Math.min(100,pref.getInt("ivPercentMax",100)));
-        shiny=getSharedPreferences("prefs",0).getBoolean("shiny",false);
+        shiny=overlayPrefs().getBoolean("shiny",false);
         if(!shiny)shinyVerified=false;
         update();
         return START_STICKY;
@@ -4370,15 +4379,19 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
-        SupportMissionState.overlayStopped();
+        if(!running&&!secondaryRunning)SupportMissionState.overlayStopped();
         if (missionScreenOffRegistered) {
             try { unregisterReceiver(missionScreenOffReceiver); }
             catch (IllegalArgumentException ignored) {}
             missionScreenOffRegistered = false;
         }
-        FirebaseStats.setOverlayVisible(this,false);
         stopped=true;
-        running=false;
+        if(isSecondaryOverlay())secondaryRunning=false;
+        else running=false;
+        if(!running&&!secondaryRunning){
+            SupportMissionState.overlayStopped();
+            FirebaseStats.setOverlayVisible(this,false);
+        }
         if(favoritePickerDialog!=null){
             favoritePickerDialog.dismiss();favoritePickerDialog=null;
         }
