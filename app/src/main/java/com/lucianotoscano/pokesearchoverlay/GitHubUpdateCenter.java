@@ -181,10 +181,13 @@ public final class GitHubUpdateCenter {
                 .compile("^v(0\\.\\d{2}\\.\\d{2,})-(\\d{5,10})$")
                 .matcher(doc.optString("tag_name",""));
             if(!tag.matches())return null;
-            String name=tag.group(1);long parsed=Long.parseLong(tag.group(2));
+            String publishedName=tag.group(1);
+            String name=VersionNames.canonical(publishedName);
+            long parsed=Long.parseLong(tag.group(2));
             if(parsed<1||parsed>Integer.MAX_VALUE)return null;
             int code=(int)parsed;
-            String wanted="PokeSearch-v"+name+"-LT.apk";
+            // Integrity and remote URL MUST keep the real published legacy filename.
+            String wanted="PokeSearch-v"+publishedName+"-LT.apk";
             JSONArray assets=doc.optJSONArray("assets");
             if(assets==null||assets.length()>100)return null;
             for(int i=0;i<assets.length();i++){
