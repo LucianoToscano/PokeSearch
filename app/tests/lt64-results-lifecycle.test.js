@@ -19,7 +19,14 @@ check("10 already obtained coords reuse without remote request",()=>{let block=s
 check("11 expiry is scheduled from absolute expiresAtMs",()=>{let block=service.split('private void armNextDespawn(JSONArray cards){')[1]?.split('private String mode=',1)[0]||"";assert.ok(block.includes('card.optLong("expiresAtMs",Long.MAX_VALUE)'));assert.ok(block.includes('handler.postDelayed(expiryRefresh'));assert.ok(block.includes('handler.removeCallbacks(expiryRefresh)'))});
 check("12 expiry independently removes cards and refreshes even AUTO OFF",()=>{let block=service.split('private final Runnable expiryRefresh=')[1]?.split('private void armNextDespawn(',1)[0]||"";assert.ok(block.includes('results=active.toString()'));assert.ok(block.includes('refresh(true)'));assert.ok(!block.includes('intervalMinutes>0'))});
 check("13 watch regains expiry timer after main-frame error",()=>{let block=service.split('onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){')[1]?.split('});',1)[0]||"";assert.ok(block.includes('armNextDespawn(new JSONArray(results))'))});
-check("14 native expiry watchdog ignores early zero and duplicate posts",()=>{assert.ok(service.includes('armedDespawnMillis>0L'));assert.ok(service.includes('System.currentTimeMillis()+300L>=armedDespawnMillis'))});
+check("14 native expiry watchdog sweeps exact expired timestamps even when handler alarm was lost",()=>{
+ const callback=service.split('@JavascriptInterface public void expiredResults()')[1]?.split('@JavascriptInterface public void longPressCoords',1)[0]||"";
+ const runner=service.split('private final Runnable expiryRefresh=new Runnable()')[1]?.split('private void armNextDespawn(',1)[0]||"";
+ assert.ok(callback.includes('if(!stopped)expiryRefresh.run();'));
+ assert.ok(runner.includes('if(expiry>now)active.put(card)'));
+ assert.ok(runner.includes('armNextDespawn(active)'));
+ assert.ok(runner.includes('if(searchInProgress)queuedManualRefresh=true;'));
+});
 check("15 existing identities and security remain intact",()=>{let gradle=fs.readFileSync(path.join(base,"../../build.gradle.kts"),"utf8");assert.ok(gradle.includes('applicationId = "com.lucianotoscano.pokesearch"'));assert.ok(gradle.includes('namespace = "com.lucianotoscano.pokesearchoverlay"'));assert.ok(service.includes('IntegrityGuard.verify(this)'))});
 check("16 inline scripts parse and original detail controls remain",()=>{for(const html of [dock,detail]){for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);}assert.ok(detail.includes('id="copy" onclick="copyCoords()"'))});
 console.log("LT64: "+ok+" PASS / "+failed+" FAIL");if(failed)process.exitCode=1;
