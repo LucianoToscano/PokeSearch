@@ -6353,3 +6353,19 @@ O serviço de overlay já verificava se a tela estava interativa ao receber um t
 - `feature/lt77-authorized-api-contract-20261024` recebeu fast-forward do ramo QA até o HEAD de build, mantendo `main=caea98b7b57b9e45d5218e907eb392d76953dd53`. PR #34 e #49 continuam abertas em Draft. Nenhum merge em produção.
 - O arquivo público `atualizacao.json` ainda aponta para LT76 `0.00.76/54276`; não foi alterado. Não confundir QA R3 com atualização disponível na Home.
 - Evidências pendentes: Galaxy Samsung (Get coords e cooldown, Despawn visual OFF padrão, filtros reais), autenticação e API conectada ao `OverlayService`, catálogo oficial renderizado no menu e `/reveal` real. A flag API segue OFF, fallback DOM preservado. Sem aceite físico, não liberar LT77 ao público.
+
+## LT79 QA — Sprites Pikachu e atualizações GitHub — checkpoint verificável (24/10/2026)
+Branch isolada: fix/lt79-sprites-catalog-updates-qa-20261024; PR #51 Draft (base feature/lt78-android-api-wiring-20261024). Main, PR #34 e PR #49, distribuição LT76 preservadas.
+Causa sprites: api_result_contract.js/spriteData retornava string vazia. Corrigido para usar sprite comunitário da espécie base de URL já existente no app, mantendo fallback seguro em formas e fantasias sem associação verificada.
+Causa Pikachu: menu no modo QA API ainda dependia da leitura do listbox React pelo probe.js (timeout 20x300ms); agora usa catálogo GET /forms e GET /pokemon/catalog?costumes=true via sessão WebView já autorizada e cache, preservando DOM como opção e os demais filtros locais.
+Gestos: orientação mostrada uma vez, com SharedPreferences, Pokébola curto para resultados / segurar 600ms para menu; ↻ curto atualiza / segurar 600ms configura intervalo.
+Atualizações: novo GitHubUpdateCenter + WorkManager/30min, canal Android separado, apenas Releases estáveis, verificação por versionCode, download nativo HTTPS com barra/cancelamento, SHA-256 e certificado SHA-256 pinado, pacote correto, APK não depurável, FileProvider e confirmação de instalação do Android. GitHub não aparece na interface; URL pública não é tratada como segredo. Drive UpdateCenter anterior mantido.
+Proteção QA: PokeSearch-v0.00.78-LT-Samsung-QA-LT79.apk, versionCode 54281, applicationId com.lucianotoscano.pokesearch, R8 + shrinkResources, APK release assinado.
+Prova CI: https://github.com/LucianoToscano/PokeSearch/actions/runs/40152506605 — SUCCESS — SOURCE_COMMIT d54643af8e0a5084d0c7645e7f6b1e7381733a62.
+APK SHA-256: 392a30e2021bf25a97c6fe5879dfc83fcd06efca519ba1a45a0a8e975779eb7d.
+Assinatura certificado SHA-256: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. Assinatura v2 verificada; release não depurável.
+Artefato QA privado no GitHub Actions, e ZIP de auditoria/instalação em Google Drive pasta QA_LT77_NAO_PUBLICADO. Nenhuma publicação GitHub Releases oficial, versão pública LT76 e manifesto atualizacao.json intocados.
+Publicação oficial: workflow pokesearch-official-release-manual.yml EXCLUSIVAMENTE workflow_dispatch, environment official-updates obrigatório (configurar proteção por revisor antes do uso), verificação hash/pacote/assinatura. Não executar antes de homologar no Samsung.
+Pendente teste físico: sprites nos resultados reais, Pikachu, formas/costumes, todas as combinações de filtros, Get coords, Android notificações/Doze, instalação na versão anterior, persistência de preferências, fallback quando sem rede.
+Limitações: a versão atual LT76 ainda não contém o novo detector de Releases, logo não poderá notificar sobre QA LT79 sem instalar um APK com este código; não fingir atualização OTA da própria LT76. Sprite oficial de variantes sem fonte comprovada não é inferido. O Drive fallback ainda usa seu fluxo legado no navegador.
+Arquivos, critérios de aceite e arquitetura em docs/LT79_SPRITES_CATALOGO_ATUALIZACOES_QA.md e docs/LT77_CHECKLIST_ACEITACAO.md. O histórico original deste Guia permanece integral.
