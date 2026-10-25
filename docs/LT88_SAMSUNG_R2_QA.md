@@ -29,3 +29,14 @@ Modos, Filtros, Clima, Ordenar, altura sem espaços vazios; Filtros 1/2/3 usar/s
 LT88 homologação completa Samsung; LT89 importação/exportação e filtros; LT90 otimização avançada; LT91 Caçada; LT92 Mural Firebase; LT93 administração/métricas. Nenhuma dessas etapas é declarada completa por esta correção.
 
 Nota: a versão de pacote 0.00.89 é apenas sequência numérica do APK QA 54292; não significa que LT89 inteira foi homologada.
+
+## Prova automatizada do APK QA R2
+- GitHub Actions protegido #40177146234: SUCCESS, `https://github.com/LucianoToscano/PokeSearch/actions/runs/40177146234`.
+- SOURCE_COMMIT do APK: `03f22968b25cb3668e3f5b3eadde74a420d3ebc1` (não confundir com commits documentais posteriores).
+- APK: `PokeSearch-v0.00.89-LT-Samsung-R2-QA.apk`, 38611955 bytes.
+- SHA-256 do APK: `685fed288b895d220510ac5a893dc0eb58acc5a3ed7b46b4a041f1f317a5439b`.
+- Artefato Actions #12592712470: ZIP SHA-256 `39afebda37911bc640bd828d2d2e22838f049076eb8f56473350464e78d34954`.
+- Pacote `com.lucianotoscano.pokesearch`, versão `0.00.89`, versionCode `54292`. Gradle unit tests e assembleRelease PASS; R8/shrinkResources; APK ZIP íntegro e não depurável.
+- apksigner v2 TRUE, certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` igual ao anterior.
+- Workflow Guia Mestre #40177311565 SUCCESS: prefixo histórico preservado por SHA-256, registro R2 anexado, sem truncar.
+- Não há PASS Samsung R2 nem publicação oficial; segurança da conta/API e pesquisas continuam protegidas.
