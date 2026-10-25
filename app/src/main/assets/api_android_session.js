@@ -60,7 +60,7 @@
        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+id+".png":"";
      options.push({label,dex:String(id),image});
     }
-    if(wanted)for(const x of data.catalogSpeciesForms){
+    for(const x of data.catalogSpeciesForms){
      if(options.length>=40)break;
      add(x.species_name,x.pokemon_id,true);
      if(x.costume_id===undefined&&x.form_id!==null&&x.form_name&&
