@@ -49,11 +49,16 @@ final class CommunityScrapbookStage1 {
             "exemplo · 35 min",8,2,false)
     ));
 
-    /** BuildConfig.DEBUG is an uncompromisable release gate even if old prefs
-     * contain true. The pref can be toggled only from the debug Home drawer. */
+    /** QA demo is visible only in debug or a specially signed QA release.
+     * Normal public releases ALWAYS deny, even if an old preference is true.
+     * No Firebase writes, regardless of this flag.
+     */
+    static boolean isQaPreviewAllowed(){
+        return BuildConfig.DEBUG||BuildConfig.SCRAPBOOK_STAGE1_QA;
+    }
     static boolean isEnabled(Context context){
-        return BuildConfig.DEBUG&&context.getSharedPreferences("prefs",0)
-            .getBoolean(FLAG,false);
+        return isQaPreviewAllowed()&&context.getSharedPreferences("prefs",0)
+            .getBoolean(FLAG,BuildConfig.SCRAPBOOK_STAGE1_QA);
     }
     static int dp(Context c,int n){return Math.round(c.getResources().getDisplayMetrics().density*n);}
     static int primary(boolean light){return light?Color.rgb(23,45,68):Color.rgb(235,246,255);}
