@@ -53,6 +53,15 @@ jobs:
           test "$(gh run view "$QA_RUN_ID" --repo "$GITHUB_REPOSITORY" --json conclusion --jq '.conclusion')" = success
           mkdir -p "$RUNNER_TEMP/approved"
           gh run download "$QA_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "$QA_ARTIFACT" --dir "$RUNNER_TEMP/approved"
+      - name: Ensure Android 36 build tools for APK verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          test -x "$SDKMANAGER"
+          "$SDKMANAGER" --install 'build-tools;36.0.0'
+          test -x "$ANDROID_HOME/build-tools/36.0.0/aapt"
+          test -x "$ANDROID_HOME/build-tools/36.0.0/apksigner"
       - name: Check exact APK hash, original source, release identity and signature
         shell: bash
         run: |
@@ -64,15 +73,18 @@ jobs:
           test "$(tr -d '\r\n' < SOURCE_COMMIT.txt)" = "$QA_SOURCE"
           sha256sum -c SHA256SUMS.txt
           unzip -t "$QA_APK" >/dev/null
-          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -type d | sort -V | tail -1)"
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+          echo "Checking signed APK with Android Build Tools 36"
           test -x "$BUILD_TOOLS/aapt"
           test -x "$BUILD_TOOLS/apksigner"
           "$BUILD_TOOLS/aapt" dump badging "$QA_APK" > "$RUNNER_TEMP/badging.txt"
+          grep '^package: ' "$RUNNER_TEMP/badging.txt"
           grep -Fq "name='com.lucianotoscano.pokesearch'" "$RUNNER_TEMP/badging.txt"
           grep -Fq "versionCode='$VERSION_CODE'" "$RUNNER_TEMP/badging.txt"
           grep -Fq "versionName='$VERSION'" "$RUNNER_TEMP/badging.txt"
           ! grep -q '^application-debuggable' "$RUNNER_TEMP/badging.txt"
           "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$QA_APK" > "$RUNNER_TEMP/signing.txt"
+          grep -E 'Verified using v2 scheme|Signer #1 certificate SHA-256 digest:' "$RUNNER_TEMP/signing.txt"
           grep -Eq '^Verified using v2 scheme.*: true$' "$RUNNER_TEMP/signing.txt"
           FINGERPRINT="$(grep 'Signer #1 certificate SHA-256 digest:' "$RUNNER_TEMP/signing.txt" | awk '{print $NF}')"
           test "$FINGERPRINT" = "$CERT"
