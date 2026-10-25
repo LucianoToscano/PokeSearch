@@ -23,7 +23,7 @@ jobs:
     env:
       POKE_TEST_VERSION_CODE: '54292'
       POKE_TEST_VERSION_LABEL: '51092'
-      POKE_TEST_PUBLIC_VERSION: '0.00.88.2'
+      POKE_TEST_PUBLIC_VERSION: '0.00.89'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
       POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
       POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
@@ -97,13 +97,13 @@ jobs:
         run: |
           set -euo pipefail
           APK=app/build/outputs/apk/release/app-release.apk
-          OUT=PokeSearch-v0.00.88.2-LT-Samsung-R2-QA.apk
+          OUT=PokeSearch-v0.00.89-LT-Samsung-R2-QA.apk
           test -s "$APK"
           unzip -t "$APK" >/dev/null
           test -s app/build/outputs/mapping/release/mapping.txt
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-BADGING.txt
           PKG="$(grep '^package: ' PACKAGE-BADGING.txt)"
-          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54292'" "versionName='0.00.88.2'"; do
+          for expected in "name='com.lucianotoscano.pokesearch'" "versionCode='54292'" "versionName='0.00.89'"; do
             grep -Fq "$expected" <<< "$PKG" || exit 1
           done
           ! grep -q '^application-debuggable' PACKAGE-BADGING.txt
@@ -119,9 +119,9 @@ jobs:
       - name: Signed release-candidate artifact (NO AUTOMATIC publication)
         uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-v0.00.88.2-LT-Samsung-R2-QA-protected-release
+          name: PokeSearch-v0.00.89-LT-Samsung-R2-QA-protected-release
           path: |
-            PokeSearch-v0.00.88.2-LT-Samsung-R2-QA.apk
+            PokeSearch-v0.00.89-LT-Samsung-R2-QA.apk
             SHA256SUMS.txt
             SIGNING-REPORT.txt
             SOURCE_COMMIT.txt
