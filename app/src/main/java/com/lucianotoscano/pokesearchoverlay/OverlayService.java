@@ -2605,7 +2605,10 @@ public class OverlayService extends Service {
                 return card.optString("name","").equals(target.optString("name",""))&&
                     card.optString("cp","").equals(target.optString("cp",""))&&
                     card.optString("number","").equals(target.optString("number",""))&&
-                    card.optString("location","").equals(target.optString("location",""));
+                    card.optString("location","").equals(target.optString("location",""))&&
+                    card.optString("iv","").equals(target.optString("iv",""))&&
+                    card.optString("gender","").equals(target.optString("gender",""))&&
+                    card.optString("level","").equals(target.optString("level",""));
             }
         }catch(Exception e){recordFailure("verificar identidade Get coords",e);}
         return false;
@@ -2622,6 +2625,9 @@ public class OverlayService extends Service {
             query.put("cp",target.optString("cp",""));
             query.put("number",target.optString("number",""));
             query.put("location",target.optString("location",""));
+            query.put("iv",target.optString("iv",""));
+            query.put("gender",target.optString("gender",""));
+            query.put("level",target.optString("level",""));
         }catch(Exception e){recordFailure("preparar consulta de coordenadas",e);}
         execute("readCoords:"+query.toString(),result->{
             if(stopped||loginPaused||requestToken!=coordinateRequestToken)return;
@@ -2652,8 +2658,12 @@ public class OverlayService extends Service {
                 },750L);
             }else{
                 String reason=result.optString("status","");
-                deliverCoords("",reason.isEmpty()?
-                    "O site ainda não liberou Get coords; tente novamente mais tarde.":reason);
+                if(reason.startsWith("Aguardando reidentificação")){
+                    deliverCoords("","Não foi possível confirmar o mesmo Pokémon no site; nenhuma coordenada copiada.");
+                }else{
+                    deliverCoords("",reason.isEmpty()?
+                        "O site ainda não liberou Get coords; tente novamente mais tarde.":reason);
+                }
             }
         });
     }

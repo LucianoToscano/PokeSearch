@@ -1213,6 +1213,9 @@ function matchingCoordsCard(query){
  const roots=cardRoots(),name=String(query.name||"").replace(/✨/g,"").trim().toLowerCase();
  const cp=String(query.cp||"").trim(),number=String(query.number||"").trim();
  const location=clean(query.location||"").toLowerCase();
+ const iv=clean(query.iv||"");
+ const gender=clean(query.gender||"");
+ const level=clean(query.level||"");
  const index=Number(query.index);
  // React can reorder rows between a verified Search and a Get coords tap.
  // Never trust an old row index if its identity no longer matches; also
@@ -1223,6 +1226,10 @@ function matchingCoordsCard(query){
   if(cp&&String(parsed.cp||"").trim()!==cp)return false;
   if(number&&parsed.number!==number)return false;
   if(location&&clean(parsed.location||"").toLowerCase()!==location)return false;
+  // An identical species/CP/city may refer to another encounter.
+  if(iv&&clean(parsed.iv||"")!==iv)return false;
+  if(gender&&clean(parsed.gender||"")!==gender)return false;
+  if(level&&clean(parsed.level||"")!==level)return false;
   return true;
  });
  if(matches.length!==1)return null;
@@ -1254,7 +1261,9 @@ if(action.startsWith("coords:")){
 if(action.startsWith("readCoords:")){
  const query=JSON.parse(action.slice("readCoords:".length));
  const target=matchingCoordsCard(query);
- if(!target)return JSON.stringify({ok:false,pending:false,status:"Pokémon alterado nos resultados; coordenadas não copiadas"});
+ // React may temporarily hide the clicked card or its controls after Get coords.
+ // Wait only for the EXACT selected fingerprint; never use page-wide links.
+ if(!target)return JSON.stringify({ok:false,pending:true,status:"Aguardando reidentificação do Pokémon após atualização dos resultados"});
  const controls=cardCoordsControls(target);
  const button=controls.find(e=>/^Open in Maps$/i.test(text(e)));
  if(!button)
