@@ -41,7 +41,7 @@ test("menu sprites deduplicate verified base requests and never invent costumes"
  assert.match(html,/pooledBaseSprite\(item\.image\)/);
  assert.match(api,/form===species\+"NORMAL"/);
  assert.match(api,/x\.costume_id===undefined\|\|x\.costume_id===null\|\|x\.costume_id===0/);
- assert.match(html,/if\(!valid\)return Promise\.resolve\("")/);
+ assert.ok(html.includes('if(!valid)return Promise.resolve("");'));
 });
 test("expired results are filtered before notifying",()=>{
  assert.match(native,/if\(expiry<=now\)continue/);
