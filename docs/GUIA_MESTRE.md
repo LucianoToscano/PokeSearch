@@ -6552,3 +6552,18 @@ Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c
 Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
 Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
 Guia Mestre prévio permaneceu imutável, com adição somente ao final.
+
+
+## LT86 QA — Formas completas e nível 50 (25/10/2026)
+Versão 0.00.86, versionCode 54289, somente QA; nenhuma publicação oficial.
+Branch: fix/lt86-api-filter-options-qa-20261025; PR #61 Draft sobre LT85 PR #60. Main e PR #59 preservadas.
+Código: dock.html permite Nível 1–50 e pagina até 500 formas em grupos de 60; api_android_session.js expõe até 500 nomes do catálogo da API.
+Testes históricos Node (exceto preview LT74 legado), Java, Gradle testDebugUnitTest e assembleRelease executados pelo pipeline LT86.
+GitHub Actions: 40167518824
+Build SOURCE_COMMIT: e1ca4be3ba109324ac3b62e6eea64b691de3f6a7
+APK QA: PokeSearch-v0.00.86-LT-API-QA.apk
+APK SHA-256: 3d9a0591aebd9ef63867b013af69d6e18a800494304560a46b82788d27714c40
+Certificado permanente verificado pelo apksigner: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e
+Proteção: release não depurável, R8, assinatura v2 TRUE, pacote com.lucianotoscano.pokesearch.
+Pendentes: homologação física Samsung, API autenticada com treinador, sprites de variantes, Get coords real, paridade dos filtros e consentimento para merge/release.
+Guia Mestre prévio permaneceu imutável, com adição somente ao final.
