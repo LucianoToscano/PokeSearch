@@ -3571,6 +3571,24 @@ body.controls-window #choices.filterCascade .generalPresetFlyout{
  height:max-content!important;min-height:0!important;max-height:none!important;
  grid-auto-rows:min-content!important;
 }
+
+/* LT89 names: profiles remain a compact three-row flyout, no giant empty box. */
+body.controls-window #choices.filterCascade .generalPresetFlyout{width:185px!important}
+body.controls-window #choices.filterCascade .generalPresetRow>.generalPresetName{
+ min-width:0!important;width:72px!important;max-width:72px!important;
+ flex:0 0 72px!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ white-space:nowrap!important;text-align:left!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow>.generalPresetRename{
+ box-sizing:border-box!important;flex:0 0 72px!important;width:72px!important;
+ min-width:72px!important;height:24px!important;font-size:10px!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;background:transparent!important;
+ border:1px solid #79aeaf!important;
+}
+body.controls-window #choices.filterCascade .generalPresetRow>button.generalPresetLoad,
+body.controls-window #choices.filterCascade .generalPresetRow>button.generalPresetSave{
+ width:41px!important;min-width:0!important;flex:1 1 0!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3761,6 +3779,7 @@ let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin
  sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=true,filterFocus="PC",advancedExpanded=false;
 let generalPresetExpanded=false,generalPresetSaved=[false,false,false];
+let generalPresetNames=["Perfil 1","Perfil 2","Perfil 3"];
 let formQuery="",formListVisibleCount=60,formOptionsStatus="Aguardando lista oficial de Form do site...";
 let siteFiltersConfirmed=false; // Evidence from Android: same generation, verified Search and accepted results.
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
@@ -4385,7 +4404,23 @@ function renderGeneralPresetControls(rail,make){
  const menu=make("div","generalPresetFlyout");
  menu.appendChild(make("div","generalPresetTitle","Perfis salvos"));
  for(let slot=1;slot<=3;slot++){
-  const row=make("div","generalPresetRow"),name=make("span","",String(slot));
+  const row=make("div","generalPresetRow");
+  const name=make("button","generalPresetName",generalPresetNames[slot-1]||"Perfil "+slot);
+  name.type="button";name.title="Renomear o perfil "+slot;
+  name.setAttribute("aria-label","Renomear o perfil "+slot);
+  name.onclick=()=>{
+   const input=make("input","generalPresetRename");input.type="text";
+   input.maxLength=20;input.value=generalPresetNames[slot-1]||"Perfil "+slot;
+   const save=()=>{
+    const value=input.value.trim();
+    if(value&&value.length<=20&&Native.renameGeneralFilterPreset)
+     Native.renameGeneralFilterPreset(slot,value);
+    else renderFiltersChoices();
+   };
+   input.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();input.blur();}});
+   input.addEventListener("blur",save,{once:true});
+   name.replaceWith(input);input.focus();input.select();
+  };
   const load=make("button","generalPresetLoad","Usar");
   load.type="button";load.dataset.presetLoad=String(slot);load.disabled=!generalPresetSaved[slot-1];
   load.title="Aplicar perfil "+slot;load.onclick=()=>Native.loadGeneralFilterPreset(slot);
@@ -4398,6 +4433,12 @@ function renderGeneralPresetControls(rail,make){
 if(typeof window!=="undefined")window.onGeneralPresetStatus=response=>{
  if(!Array.isArray(response?.saved)||response.saved.length!==3)return;
  generalPresetSaved=response.saved.map(v=>v===true);
+ if(Array.isArray(response.names)&&response.names.length===3){
+  generalPresetNames=response.names.map((name,index)=>String(name||"Perfil "+(index+1)).slice(0,20));
+  document.querySelectorAll(".generalPresetName").forEach((name,index)=>{
+   name.textContent=generalPresetNames[index];
+  });
+ }
  document.querySelectorAll(".generalPresetLoad").forEach(button=>{
   const i=Number(button.dataset.presetLoad);
   button.disabled=!Number.isInteger(i)||!generalPresetSaved[i-1];
