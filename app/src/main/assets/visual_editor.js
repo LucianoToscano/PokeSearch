@@ -9,7 +9,7 @@ const DEFAULTS=Object.freeze({
  popupWidth:232,popupHeight:390,
  resultsOrientation:"vertical",menuOrientation:"horizontal",
  resultsBgMode:"dark",resultsTransparency:100,
- menuBgMode:"dark",menuTransparency:35,showGuides:false,menuGuides:false,resultsGuides:false
+ menuBgMode:"dark",menuTransparency:50,menuBlur:4,showGuides:false,menuGuides:false,resultsGuides:false
 });
 const RANGES={
  resultGapTop:[-80,80],resultGapBetween:[0,65],resultSpriteScale:[70,160],headerIconY:[0,72],
@@ -17,7 +17,7 @@ const RANGES={
  resultsOffsetX:[-200,200],resultsOffsetY:[-350,350],
  menuOffsetX:[-200,200],menuOffsetY:[-350,350],
  gearMenuGap:[0,80],menuItemGap:[0,16],popupWidth:[160,330],popupHeight:[140,420],
- resultsTransparency:[0,100],menuTransparency:[0,100]
+ resultsTransparency:[0,100],menuTransparency:[0,100],menuBlur:[0,16]
 };
 const PRESETS={
  compact:{resultGapTop:-6,resultGapBetween:0,resultSpriteScale:130,menuItemGap:0},
@@ -55,6 +55,7 @@ function applyVisual(){
  set("menu-gap",current.menuItemGap+"px");
  set("results-bg",rgba(current.resultsBgMode,current.resultsTransparency));
  set("menu-bg",rgba(current.menuBgMode,current.menuTransparency));
+ set("menu-blur",current.menuBlur+"px");
  set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency));
  // One opacity slider controls fill, border and shadow of each tile.
  // At 100% transparency, no ghost outline/shadow remains.
@@ -245,6 +246,7 @@ function renderVisualEditor(){
   visualGroup(panel,"theme","Cores e guias",panel=>{
    addSegment(panel,"menuBgMode","Tema",[["dark","Escuro"],["light","Claro"]]);
    addSlider(panel,"menuTransparency","Transparência única dos menus","%");
+   addSlider(panel,"menuBlur","Desfoque dos painéis"," px");
    btn(panel,"Linhas-guia menu: "+(current.menuGuides?"ON":"OFF"),()=>{
     change("menuGuides",!current.menuGuides);renderVisualEditor();
    });
