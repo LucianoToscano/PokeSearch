@@ -220,7 +220,7 @@ public class OverlayService extends Service {
     private boolean displayedApiResults=false;
     private int displayedApiSearchId=-1;
     private boolean authorizedApiQaSelected(){
-        return getSharedPreferences("prefs",0).getBoolean("authorizedApiQaOptIn",false);
+        return getSharedPreferences("prefs",0).getBoolean("authorizedApiQaOptIn",true);
     }
     private void performAuthorizedApiSearch(int generation,boolean manual){
         if(authorizedApiCollector==null){
