@@ -2871,6 +2871,19 @@ public class OverlayService extends Service {
                     js(menuPanel,menuLoaded,"window.onFilterOptions("+payload.toString()+")");
                     js(popupPanel,popupLoaded,"window.onFilterOptions("+payload.toString()+")");
                 }catch(org.json.JSONException ignored){}
+                // Preload official API forms for the checkbox-style Forma picker.
+                // Reuse the existing 300-second catalogue cache; no React DOM.
+                if(authorizedApiCollector==null)
+                    authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+                final int searchGeneration=requestGeneration;
+                authorizedApiCollector.forms("",formResponse->{
+                    if(stopped||loginPaused||searchGeneration!=requestGeneration||
+                        !menuExpanded)return;
+                    try{formResponse.put("key","form").put("query","");}
+                    catch(org.json.JSONException ignored){}
+                    js(menuPanel,menuLoaded,"window.onFormOptions("+formResponse.toString()+")");
+                    js(popupPanel,popupLoaded,"window.onFormOptions("+formResponse.toString()+")");
+                });
                 return;
             }
             requestFilterOptionsLater(0);
