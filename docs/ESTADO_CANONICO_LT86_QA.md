@@ -24,3 +24,19 @@
 - Testes simulados não demonstram API autenticada, rede atual nem resultado físico no Samsung.
 - Guia Mestre `docs/GUIA_MESTRE.md` tem mais de 1,4 MB: somente append no checkout real com verificação de tamanho, nunca `update_file` usando resposta vazia/truncada do conector.
 - **Sem publicação ou merge antes de autorização expressa.**
+
+
+## Complemento Samsung — sprites, Genderless, arraste e filtros salvos
+
+Nova evidência visual do proprietário no Samsung (25/10/2026): sprites ainda ausentes, falta do símbolo neutro Genderless ⚲ nas Informações, impossibilidade de arrastar a Pokébola até a direita com metadados expandidos e problemas de janelas. Pede também até três perfis salvos independentes para filtros gerais e Favoritos.
+
+Correções de código nesta branch QA:
+- `PokemonPicker.java`: corrigido o gate global de download em que dois ImageViews com mesmo Pokémon só atualizavam o primeiro. Todos os interessados pelo mesmo dex aguardam o único download, que é entregue pela main thread e tem cache; fallback HTTPS a CDN espelho do repositório PokeAPI somente para sprite padrão, limitado a 256 KiB e PNG.
+- `api_android_session.js`: espécie padrão sem traje pode reconhecer rótulo de forma `Normal` no catálogo; formas especiais continuam sem sprite suposto.
+- `dock.html`: sprite padrão com tentativa controlada de CDN alternativo após falha do GitHub raw, depois placeholder; `Genderless`/⚲ como símbolo neutro em Informações.
+- `OverlayService.java`: a largura da janela de resultados deixa de limitar o movimento da Pokébola; as janelas são limitadas independentemente e os resultados reancorados no fim do arraste. Nenhum aumento da área transparente de toque.
+- Perfis gerais 1–3 em menu discreto ▣ de Filtros, com ações Usar/Salvar e persistência sob `generalFilterPresetV1_*`; carregamento reaproveita `setSearchConfig` validado. Perfis NÃO modificam Shiny ou localização, que têm controles próprios; excluídos preexistentes preservados.
+- Perfis de Favoritos 1–3 em aba ▣ posicionada entre título e contador; toque no número carrega, pressionar prolongado salva; armazena sob `favoritePresetV1_*`, deixando `watchList` anterior intacta até carregar explicitamente. Até 50 Pokémon, áudio e notificações não modificados.
+- Teste `app/tests/lt86-samsung-followup.test.js`: guardas de identidade do sprite, símbolo, geometria e ambos os perfis. Testes simulados NÃO demonstram que o host de imagens está acessível no telefone.
+
+Não afirmar que todos sprites foram carregados nem que janelas ficaram estáveis no Samsung sem novo teste físico. O número de versão QA permanece **0.00.86/54289** enquanto não existir release público.
