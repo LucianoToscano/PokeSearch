@@ -72,7 +72,15 @@ public final class WatchAlerts {
         if(list.containsKey(key)){list.remove(key);added=false;}
         else if(list.size()<50){list.put(key,name.trim());added=true;}
         else return false;
-        p.edit().putString(PREF_LIST,String.join("\n",list.values())).apply();
+        String updated=String.join("\n",list.values());
+        SharedPreferences.Editor editor=p.edit().putString(PREF_LIST,updated);
+        // The highlighted Favorites slot is a live profile. Save every
+        // change atomically, including changes outside the native picker.
+        // Do not overwrite the other two stored profiles.
+        int active=p.getInt("favoritePresetActiveV1",0);
+        if(active>=1&&active<=3)
+            editor.putString("favoritePresetV1_"+active,updated);
+        editor.apply();
         return added;
     }
     public static String mode(Context context){
