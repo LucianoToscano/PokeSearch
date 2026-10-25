@@ -23,3 +23,11 @@
 - CI LT106 reconstrói os 2.050 sprites verificáveis da PokeAPI e assina APK de teste `0.00.106` / `54309`, com certificado permanente, R8, APK não depurável e verificação SHA-256. Pré-release de QA apenas; não sobrescreve LT103 oficial nem arquivo compartilhado no Drive.
 - **Critérios de aceite no Samsung:** favoritar um Pokémon, deixar Som ON em Pokémon Favoritos, selecionar áudio e confirmar; usar botão de teste, verificar canal de som do Android; aguardar resultado novo de favorito confirmado nas duas Pokébolas; confirmar áudio no modo Som, notificação silenciosa no modo Sem som e ausência de alerta no modo OFF. Confirmar 36 faixas e volume / DND.
 - CI passou != teste físico homologado.
+
+
+## Evidência final — revisão LT106
+- PR [#69](https://github.com/LucianoToscano/PokeSearch/pull/69) integrada em main (squash `4a86932ba512cb6508c013519efc893d37f00ef2`). Backup anterior preservado.
+- Build [#40223078604](https://github.com/LucianoToscano/PokeSearch/actions/runs/40223078604) SUCCESS: testes Node e Java, 2.050 sprites offline, assinatura Android v2, R8 e certificado permanente aprovados.
+- **Versão QA:** `0.00.106`, `versionCode=54309`; SOURCE_COMMIT `0a87a6be8dc4d2b11febe7e77d4f3a39d8c341a6`.
+- [Download APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.00.106-54309-qa/PokeSearch-v0.00.106-LT-Favorite-Sounds-QA.apk) · tamanho 41.748.462 bytes · SHA-256 `87af989a86e9f8c373c91a4e6ae3c0111a26aebc3ac398bd15174bf994b8d4c8`.
+- **Status:** pré-release de QA, teste físico pendente; não substituir automaticamente o canal oficial. Se o áudio não tocar após abrir o teste real, consultar diagnóstico exibido na tela e as configurações do canal do Android.
