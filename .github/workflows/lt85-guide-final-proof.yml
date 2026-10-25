@@ -1,0 +1,38 @@
+name: LT85 append final signed QA proof to full Guia Mestre
+on:
+  push:
+    branches: [fix/lt85-menu-repeat-tap-20261025]
+    paths:
+      - '.github/workflows/lt85-guide-final-proof.yml'
+permissions:
+  contents: write
+jobs:
+  append-proof:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/lt85-menu-repeat-tap-20261025
+      - name: Append immutable LT85 QA proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < docs/GUIA_MESTRE.md)" -gt 1400000
+          if grep -Fq 'LT85 SIGNED APK QA #40165405694 VERIFIED' docs/GUIA_MESTRE.md; then
+            echo 'LT85 QA proof already present'
+            exit 0
+          fi
+          cat >> docs/GUIA_MESTRE.md <<'LT85_SHA'
+          
+          ## LT85 SIGNED APK QA #40165405694 VERIFIED — 25/10/2026
+          Todas as suites Node JS, Java/Android, Gradle assembleRelease R8, checagem de applicationId, assinatura APK v2, certificado fixo e artifact foram SUCCESS no Actions #40165405694 https://github.com/LucianoToscano/PokeSearch/actions/runs/40165405694 . O APK PokeSearch-v0.00.85-LT-API-QA.apk (somente QA) tem 38.605.383 bytes, versão 0.00.85, versionCode 54288, SOURCE_COMMIT 80b5f580533a39dfcbc45fdf65dce1148ca7fbe5, SHA256 9d41afad67e81a2d149774513f8277705d35dc7a73fdbce2b9320e91aa5859b5 confirmado com SHA256SUMS.txt do artifact #12588151967 e certificado permanente SHA256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. Relatórios do artifact contêm SOURCE_COMMIT, SIGNING-REPORT, PACKAGE-VERSION, PROTECTION. O ZIP artifact e o APK têm hashes diferentes.
+          Implementações LT85: toque repetido recolhe submenus e Favoritos; correção contra ACTION_OUTSIDE; retirada definitiva do controle recorrente de importar opções; API padrão ON na ausência de escolha salva, DOM ainda selecionável; escolhas do contrato em Sexo/Tamanho/Clima/Sort e GET /forms, inclusive durante Search API; Pokémon listados por catálogo sem digitação, imagens apenas de espécies padrão verificadas com placeholders seguros para variantes. Usuário autorizou API repetidas vezes; isto não autoriza Release pública.
+          PR #60 Draft na branch fix/lt85-menu-repeat-tap-20261025 (base LT84 QA, PR #59). Main, GitHub Release latest LT83 e ponte Drive LT79 NÃO foram modificadas. Homologação física Samsung e fluxos API autenticados/reveal permanecem PENDENTES. Detalhes docs/ESTADO_CANONICO_LT85_QA.md, README.md e docs/PROMPT_NOVO_CHAT_LT85_QA.md. Preservar Guia Mestre integral e não substituir por saída truncada.
+          LT85_SHA
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/GUIA_MESTRE.md
+          git commit -m 'docs(LT85): append verified signed QA APK proof to intact guide'
+          git push origin HEAD:fix/lt85-menu-repeat-tap-20261025
