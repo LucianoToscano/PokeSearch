@@ -256,7 +256,7 @@ test("UX-INFO-COMPACT-01 requested Pokémon metadata has no verbose labels",()=>
  const rank=["GL RG#12","GL IV#1","GL P100,00%","UL RG#84","UL IV#50",
    "ML RG#35","ML IV#307"];
  return ["Yamask","#562","♂","XXL","Galarian","Astonish / Rock Tomb",
-   "🇹🇼 Tainan City, Taiwan","0.3 km","✨","PC813 · Nv29","15/15/15","100%","TIMER"].every(x=>lines.includes(x))&&
+   "🇹🇼 Tainan City, Taiwan","0.3 km","✨","PC813 · Nv29","15/15/15","100%","Despawn TIMER"].every(x=>lines.includes(x))&&
   rank.every(x=>lines.includes(x))&&
   nameWithForm[0]==="Yamask"&&nameWithForm[1]==="Galarian"&&
   makeLines.resultInfoHtml("0%",zero).includes('ivInfo zero')&&
