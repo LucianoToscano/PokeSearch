@@ -5226,7 +5226,7 @@ function resultLines(card,opts,league){
    }
   }
  }
- if(opts.despawn&&Number(card?.expiresAtMs)>Date.now())lines.unshift("Despawn TIMER");
+ if(opts.despawn&&Number(card?.expiresAtMs)>0)lines.unshift("Despawn TIMER");
  return lines;
 }
 function resultInfoHtml(value,card){
