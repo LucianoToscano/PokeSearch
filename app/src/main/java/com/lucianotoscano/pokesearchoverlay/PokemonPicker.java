@@ -286,7 +286,27 @@ public final class PokemonPicker {
         FrameLayout.LayoutParams finishLp=new FrameLayout.LayoutParams(
             dp(activity,27),dp(activity,29),Gravity.END|Gravity.CENTER_VERTICAL);
         header.addView(finish,finishLp);
+        // The tiny icon sits between the title and "Selecionados 0/50".
+        // It reveals three opt-in favorite profiles without growing the panel
+        // until explicitly tapped.
+        LinearLayout favoriteProfiles=new LinearLayout(activity);
+        favoriteProfiles.setGravity(Gravity.CENTER_VERTICAL|Gravity.CENTER_HORIZONTAL);
+        favoriteProfiles.setOrientation(LinearLayout.HORIZONTAL);
+        favoriteProfiles.setVisibility(View.GONE);
+        TextView profilesTab=new TextView(activity);
+        profilesTab.setText("▣");
+        profilesTab.setContentDescription("Perfis de favoritos salvos");
+        profilesTab.setTextColor(Color.rgb(166,201,241));
+        profilesTab.setTextSize(16);
+        profilesTab.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams profilesLp=new FrameLayout.LayoutParams(
+            dp(activity,23),dp(activity,28),Gravity.START|Gravity.CENTER_VERTICAL);
+        profilesLp.leftMargin=dp(activity,94);
+        header.addView(profilesTab,profilesLp);
+        profilesTab.setOnClickListener(v->favoriteProfiles.setVisibility(
+            favoriteProfiles.getVisibility()==View.VISIBLE?View.GONE:View.VISIBLE));
         root.addView(header);
+        root.addView(favoriteProfiles);
 
         EditText search=new EditText(activity);
         search.setSingleLine(true);
@@ -336,6 +356,53 @@ public final class PokemonPicker {
         root.addView(noResults);
 
         final Runnable[] refresh={null};
+        // Short tap loads; long press saves, with isolated SharedPreferences.
+        // An empty saved profile is valid; current favorite list is untouched
+        // until a conscious slot tap. No notifications or tones are reset.
+        for(int slot=1;slot<=3;slot++){
+            final int profile=slot;
+            final String key="favoritePresetV1_"+profile;
+            TextView tab=new TextView(activity);
+            tab.setText(String.valueOf(profile));
+            tab.setTextSize(12);tab.setTypeface(null,Typeface.BOLD);
+            tab.setGravity(Gravity.CENTER);
+            tab.setTextColor(Color.rgb(228,236,245));
+            tab.setContentDescription("Favoritos perfil "+profile+
+                ": toque para usar, segure para salvar");
+            tab.setBackgroundColor(activity.getSharedPreferences("prefs",0)
+                .contains(key)?Color.argb(100,69,107,92):Color.argb(65,72,81,95));
+            LinearLayout.LayoutParams tabLp=new LinearLayout.LayoutParams(
+                dp(activity,42),dp(activity,27));
+            tabLp.setMargins(dp(activity,3),0,dp(activity,3),0);
+            favoriteProfiles.addView(tab,tabLp);
+            tab.setOnLongClickListener(v->{
+                SharedPreferences p=activity.getSharedPreferences("prefs",0);
+                String current=WatchAlerts.canonicalList(p.getString(WatchAlerts.PREF_LIST,""));
+                p.edit().putString(key,current).apply();
+                tab.setBackgroundColor(Color.argb(100,69,107,92));
+                Toast.makeText(activity,"✓ Perfil de favoritos "+profile+" salvo",
+                    Toast.LENGTH_SHORT).show();
+                return true;
+            });
+            tab.setOnClickListener(v->{
+                SharedPreferences p=activity.getSharedPreferences("prefs",0);
+                if(!p.contains(key)){
+                    Toast.makeText(activity,"Segure "+profile+" para salvar os favoritos",
+                        Toast.LENGTH_SHORT).show();return;
+                }
+                String saved=WatchAlerts.canonicalList(p.getString(key,""));
+                p.edit().putString(WatchAlerts.PREF_LIST,saved).apply();
+                refresh[0].run();
+                Toast.makeText(activity,"✓ Favoritos do perfil "+profile+" carregados",
+                    Toast.LENGTH_SHORT).show();
+            });
+        }
+        TextView hint=new TextView(activity);
+        hint.setText("Toque: usar  •  Segure: salvar");
+        hint.setGravity(Gravity.CENTER_VERTICAL);
+        hint.setTextSize(9);
+        hint.setTextColor(Color.rgb(177,190,207));
+        favoriteProfiles.addView(hint);
         Runnable updateSuggestions=()->{
             String term=search.getText().toString().trim();
             results.removeAllViews();
