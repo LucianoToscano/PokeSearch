@@ -18,7 +18,7 @@ Capturas 04:54–05:07 no Samsung da versão 0.00.88/54291:
 
 ## Segurança
 - Main permanece LT87/54290, sem merge ou Release.
-- Nova candidata de APK de teste: 0.00.88.2 / 54292, mesmo pacote e certificado permanente; este documento não atesta o build até GitHub Actions concluir SUCCESS.
+- Nova candidata de APK de teste: 0.00.89 / 54292, mesmo pacote e certificado permanente; este documento não atesta o build até GitHub Actions concluir SUCCESS.
 - Sem leitura de clipboard em segundo plano, sem GPS físico, sem contorno de códigos API 401/403/429.
 - A compatibilidade com o sistema Android de clipboard e popups exige TESTE FÍSICO; CI não substitui Samsung.
 
@@ -27,3 +27,5 @@ Modos, Filtros, Clima, Ordenar, altura sem espaços vazios; Filtros 1/2/3 usar/s
 
 ## Escopo do ciclo ainda pendente
 LT88 homologação completa Samsung; LT89 importação/exportação e filtros; LT90 otimização avançada; LT91 Caçada; LT92 Mural Firebase; LT93 administração/métricas. Nenhuma dessas etapas é declarada completa por esta correção.
+
+Nota: a versão de pacote 0.00.89 é apenas sequência numérica do APK QA 54292; não significa que LT89 inteira foi homologada.
