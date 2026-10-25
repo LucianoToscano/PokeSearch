@@ -187,3 +187,13 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - [**GitHub Actions #40228138666**](https://github.com/LucianoToscano/PokeSearch/actions/runs/40228138666) **SUCCESS**: Node/Java QA; 1.025 sprites normais e 1.025 shiny no APK; Android release não depurável, R8, assinatura v2 permanente, verificação pacote/versão/assinatura e upload.
 - [**Release QA**](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.10-54314-qa) marcada como `prerelease=true`, **não** substitui a release pública estável, nem o arquivo Drive. APKs QA 0.01.07/08/09 preservados e não sobrescritos.
 - **QA físico Samsung ainda pendente** para confirmação visual de Furfrou Natural, sprites em todos os detalhes, 2 overlays, filtros Tamanho/Sexo/PC/Nível, reset de Distance residual e atualizações de favoritos/notificações.
+
+
+## LT111 — Ocultar ativação da segunda Pokébola na Home (25/10/2026)
+- **Backup pré-LT111:** `backup/lt110-before-hide-second-pokeball-home-20261025`, SHA `e20f4c0469787edef1a4489159d44036dbc24bf0` (não sobrescrever).
+- **PR #72:** [ocultar segunda Pokébola na Home](https://github.com/LucianoToscano/PokeSearch/pull/72); branch `fix/lt111-hide-second-pokeball-home-20261025`.
+- **Interface:** `MainActivity.buildHome()` mantém o controle interno antigo, mas não exibe a linha `Segunda Pokébola · filtro independente` porque `dualOverlayRow.setVisibility(View.GONE)` é aplicado antes de anexar a linha. Zero espaço visual, sem botão de ativação tocável/acessível.
+- **Preservação:** Pokébola principal e seus botões continuam normais; `SecondaryOverlayService`, filtros e posição `prefs_secondary` não são apagados, som, API, sprites, 3 favoritos e sessão permanecem. Uma instância secundária já ativa não é parada apenas porque a opção de habilitar foi ocultada.
+- **Teste/QA:** `lt111-hide-second-pokeball-home.test.js`; workflow [LT111 signed QA](https://github.com/LucianoToscano/PokeSearch/actions/workflows/lt111-hide-second-pokeball-signed-qa.yml), gera candidato `0.01.11`/`versionCode 54315` com assinatura permanente, Android release R8, testes e sprites locais.
+- **Status:** antes de declarar estabilidade: conferir no Samsung ausência da opção e do espaçamento extra, botão principal, continuidade de eventuais instâncias secundárias e preservação dos dados. Manter release oficial/Drive intactos.
+- Detalhes em [LT111](POKESEARCH_LT111_HIDE_SECOND_POKEBALL_HOME_20261025.md).
