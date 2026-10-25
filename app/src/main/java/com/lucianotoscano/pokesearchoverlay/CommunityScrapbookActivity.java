@@ -16,7 +16,6 @@ import android.widget.TextView;
  * Nothing here reads or writes Firebase or requests overlay permissions. */
 public final class CommunityScrapbookActivity extends Activity {
     private boolean light;
-    private CommunityScrapbookOnline.Controller onlineController;
     private int filter=-1;
     private LinearLayout posts;
     private LinearLayout filters;
@@ -26,11 +25,8 @@ public final class CommunityScrapbookActivity extends Activity {
             finish();return;
         }
         light=getSharedPreferences("prefs",0).getBoolean("homeLightMode",false);
-        if(CommunityScrapbookOnline.isQaAllowed()){
-            onlineController=new CommunityScrapbookOnline.Controller(this,light);
-            onlineController.show();
-            return;
-        }
+        // Online QA lives exclusively inside the Home panel; never open a second page.
+        if(CommunityScrapbookOnline.isQaAllowed()){finish();return;}
         getWindow().setStatusBarColor(light?0xFFECF3F8:0xFF0B182A);
         getWindow().setNavigationBarColor(light?0xFFECF3F8:0xFF0B182A);
         final int foreground=CommunityScrapbookStage1.primary(light);
@@ -118,9 +114,5 @@ public final class CommunityScrapbookActivity extends Activity {
             inactive.setEnabled(false);inactive.setPadding(dp(8),0,dp(8),dp(7));
             card.addView(inactive);
         }
-    }
-    @Override protected void onDestroy(){
-        if(onlineController!=null)onlineController.detach();
-        super.onDestroy();
     }
 }

@@ -7,9 +7,9 @@ public final class SupportMissionPolicyTest {
         tests++;
     }
     public static void main(String[] args){
-        check(!SupportMissionPolicy.eligible(9,6_000_000L),"9 opens and 100 minutes hidden");
-        check(!SupportMissionPolicy.eligible(10,5_940_000L),"10 opens 99 minutes hidden");
-        check(SupportMissionPolicy.eligible(10,6_000_000L),"10 opens 100 minutes eligible");
+        check(!SupportMissionPolicy.eligible(2,600_000L),"2 opens and 10 minutes hidden");
+        check(!SupportMissionPolicy.eligible(3,540_000L),"3 opens 9 minutes hidden");
+        check(SupportMissionPolicy.eligible(3,600_000L),"3 opens 10 minutes eligible");
         check(!SupportMissionPolicy.coolingDown(100L,0L),"no cooldown initially");
         check(SupportMissionPolicy.overlayTouchCredit(-1L,1000L,true)==0L,
             "first overlay touch never credits earlier time");

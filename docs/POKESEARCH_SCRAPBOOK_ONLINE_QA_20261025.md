@@ -23,3 +23,6 @@
 - Na QA com regras aplicadas, testar login anônimo, receber post aprovado em tempo real, enviar pendente, negar segundo pendente, curtida por UID, resposta pendente, denúncia privada, negar leitura de denúncias alheias.
 - Depois da moderação e App Check/limites servidor revisados, mudar a flag administrativamente em ambiente QA.
 - Registrar SHA, Actions, certificado e aceite físico separadamente.
+
+## Evolução 0.00.98 — substituição de UX
+Em `feature/pokesearch-home-scrapbook-thanks-qa98-20261025`, o mural passa a compor a própria Home, com publicações/respostas diretas condicionadas às regras servidor e chave de emergência. A versão moderada 0.00.97 é histórico. Detalhes: `docs/POKESEARCH_QA98_HOME_COMMUNITY_TRIBUTE_LOCATION.md`.

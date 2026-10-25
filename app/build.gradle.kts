@@ -62,8 +62,8 @@ val scrapbookStage1Qa = System.getenv("POKE_SCRAPBOOK_STAGE1_QA") == "true" &&
     testVersionCode != null && testVersionCode >= 54299
 val scrapbookOnlineQa = scrapbookStage1Qa &&
     System.getenv("POKE_SCRAPBOOK_ONLINE_QA") == "true" &&
-    System.getenv("POKE_SCRAPBOOK_ONLINE_ACK") == "moderated-private-qa" &&
-    testVersionCode != null && testVersionCode >= 54300
+    System.getenv("POKE_SCRAPBOOK_ONLINE_ACK") == "direct-posting-owner-monitored" &&
+    testVersionCode != null && testVersionCode >= 54301
 if ((testSigningRequired || testSigningFields.any { !it.isNullOrBlank() }) && !testSigningComplete)
     throw org.gradle.api.GradleException("Stable test signing is incomplete; configure the protected CI secrets")
 if (testSigningRequired && testVersionLabel == null)

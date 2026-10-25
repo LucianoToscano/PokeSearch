@@ -19,6 +19,7 @@ public final class SupportMissionState {
     public static final String UNREAD = "support_mission_badge_unread";
     public static final String DISMISSED = "support_mission_dismissed_at_ms";
     public static final String NEXT = "support_mission_next_eligible_at_ms";
+    public static final String WELCOME_PENDING = "support_mission_first_install_welcome_pending";
 
     public static final int HIDDEN = 0, NEW = 1, SEEN = 2;
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -50,7 +51,13 @@ public final class SupportMissionState {
         lastLauncherAt = now;
         SharedPreferences p = pref(activity);
         int n = p.getInt(OPENS, 0);
-        if (n < Integer.MAX_VALUE) p.edit().putInt(OPENS, n + 1).apply();
+        SharedPreferences.Editor edit=p.edit();
+        // Only a genuinely fresh installation receives the first-run mission.
+        // Migrating existing users never resets their saved progress/cooldown.
+        if(!p.contains(OPENS)&&!p.contains(CURRENT)&&!p.contains(DISMISSED))
+            edit.putBoolean(WELCOME_PENDING,true);
+        if (n < Integer.MAX_VALUE)edit.putInt(OPENS,n+1);
+        edit.apply();
     }
     private static void credit(Context c, long millis) {
         if (millis <= 0) return;
@@ -92,10 +99,14 @@ public final class SupportMissionState {
     }
     public static synchronized void overlayStopped() { lastOverlayInteractionAt = -1; }
 
+    public static synchronized boolean welcomePending(Context context){
+        return pref(context).getBoolean(WELCOME_PENDING,false);
+    }
     /** Returns HIDDEN, NEW or SEEN, and creates exactly one persisted cycle when due. */
     public static synchronized int badge(Context context) {
         SharedPreferences p = pref(context);
-        if (!SupportMissionPolicy.eligible(p.getInt(OPENS, 0),p.getLong(USAGE,0))) return HIDDEN;
+        if (!welcomePending(context) &&
+            !SupportMissionPolicy.eligible(p.getInt(OPENS, 0),p.getLong(USAGE,0))) return HIDDEN;
         long now = System.currentTimeMillis();
         long next = p.getLong(NEXT, 0);
         if (SupportMissionPolicy.coolingDown(now, next)) return HIDDEN;
@@ -114,7 +125,7 @@ public final class SupportMissionState {
         if (badge(context) == HIDDEN) return -1;
         SharedPreferences p = pref(context);
         int style = p.getInt(CURRENT,-1);
-        p.edit().putBoolean(UNREAD,false).apply();
+        p.edit().putBoolean(UNREAD,false).putBoolean(WELCOME_PENDING,false).apply();
         return style;
     }
     /** User-controlled FUGIR, X or Back: hide both icons for 15 days. */
@@ -125,6 +136,7 @@ public final class SupportMissionState {
         long now = System.currentTimeMillis();
         p.edit().putInt(LAST,style).putInt(CURRENT,-1).putBoolean(UNREAD,false)
             .putLong(DISMISSED,now)
-            .putLong(NEXT,SupportMissionPolicy.nextEligibleAt(now)).apply();
+            .putLong(NEXT,SupportMissionPolicy.nextEligibleAt(now))
+            .putBoolean(WELCOME_PENDING,false).apply();
     }
 }

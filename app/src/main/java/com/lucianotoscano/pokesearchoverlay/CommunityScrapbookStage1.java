@@ -36,16 +36,16 @@ final class CommunityScrapbookStage1 {
     // Names, times, counts and content are fictional mock data. Not synced.
     static final List<Post> EXAMPLES=java.util.Collections.unmodifiableList(Arrays.asList(
         new Post("Equipe PokeSearch","P","💬 Recados",
-            "Bem-vindo ao protótipo do Mural! Nenhum recado é enviado nesta etapa.",
+            "Bom dia, treinadores! 💙 Que a comunidade cresça e a gente encontre muitos Pokémon juntos!",
             "exemplo · agora",12,3,true),
-        new Post("Treinadora Demo","T","💡 Sugestões",
-            "Seria legal ter filtros por categoria quando o mural estiver disponível.",
+        new Post("Treinadora Aurora","A","💡 Sugestões",
+            "Eu adoraria uma aba para avisar sobre eventos e encontros. O que vocês acham?",
             "exemplo · 8 min",4,1,false),
-        new Post("Explorador Demo","E","🐞 Bugs",
-            "Exemplo de relatório: um botão pode precisar de ajuste no tema claro.",
+        new Post("Caçador Shiny","C","🐞 Bugs",
+            "Encontrei uma dificuldade para copiar coordenadas no celular. Vou testar outra vez!",
             "exemplo · 20 min",2,0,false),
-        new Post("Guia Demo","G","🎓 Dicas",
-            "Dica fictícia: confira os filtros antes de iniciar uma pesquisa.",
+        new Post("Mestre das Raids","M","🎓 Dicas",
+            "Dica: confira os filtros de IV e Shiny antes de começar a caçada!",
             "exemplo · 35 min",8,2,false)
     ));
 

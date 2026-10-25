@@ -74,5 +74,38 @@ Este checkpoint **substitui instruções visuais antigas** do arquivo histórico
 - Em 25/10/2026, evolução da PR #64 prepara `CommunityScrapbookOnline.java` e `firebase-realtime.rules.json`: feed de posts aprovados, envio para moderação, curtida e denúncias, com gate exclusivo do APK QA 0.00.97/54300. **Não afirmar Firebase online** sem inspeção e deploy de regras, App Check, moderação e homologação; em QA inicialmente fechado. Detalhes e critérios: [Scrapbook Online QA](POKESEARCH_SCRAPBOOK_ONLINE_QA_20261025.md).
 - Ações documentais e CI devem manter main LT87, PR #63 e PR #64 sem merge e o mesmo certificado; APK atual no Drive permanece intocado.
 
-## 10. Protocolo obrigatório do próximo chat
+## 10. QA 0.00.98 — Home com Scrapbook, Agradecimentos e Localização
+- Branch nova `feature/pokesearch-home-scrapbook-thanks-qa98-20261025` derivada do HEAD `e02475fcfebcd64b74300fd8ab5e8ac29a35b8a6` da PR #64, mantendo #63 e main LT87 intactas.
+- Proprietário autorizou posts/respostas diretos (sem aprovação), porém **não declarar Online funcional** sem Security Rules implantadas, flag `allowDirectPosts=true` e validação. Mural na própria Home com exemplos **fictícios identificados**, categorias e editor inline.
+- Dois WebP originais aprovados são recursos offline em `drawable-nodpi`; cartão 💙 Agradecimentos na Home e menu, visualizador sobre Home, zoom e compartilhamento via FileProvider.
+- Janela Localização recupera largura ~286dp, botões Aplicar/Limpar visíveis, Colar/Copiar adjacentes, campo coords e raio 0–1000. Missão primeira instalação após guia; posteriores 3 aberturas/10min.
+- **QA candidata 0.00.98/54301**, CI, assinatura e Samsung a validar. Guia detalhado [QA 0.00.98](POKESEARCH_QA98_HOME_COMMUNITY_TRIBUTE_LOCATION.md). Não fazer merge/release/Drive sem autorização.
+
+### Checkpoint CI 0.00.98 — build assinada
+- [PR #65](https://github.com/LucianoToscano/PokeSearch/pull/65) Draft, baseada na PR #64. [Actions #40194558819](https://github.com/LucianoToscano/PokeSearch/actions/runs/40194558819) **SUCCESS**, Android 0.00.98/54301, SOURCE_COMMIT `44cc6fa0cf551edb80e423b070f47cd01aa9ff0e`, SHA-256 APK `08b49f76550f95bc0521dce950b18abadb90034732087eceeebb33f0f1285276`, certificado permanente confirmado, R8/não depurável. Asset ZIP artifact ID 12598909133.
+- **Não** implantadas Rules Firebase, flag `allowDirectPosts` não confirmada true; APK serve para validar Home/Homenagem/Localização e a UI do Mural. Produção e teste Samsung físico pendentes. Detalhes [QA 0.00.98](POKESEARCH_QA98_HOME_COMMUNITY_TRIBUTE_LOCATION.md).
+
+### LT99 — localização Samsung de três linhas (25/10/2026)
+- Após prints reais, ajuste visual na PR #65: `dock.html` com exatamente 3 linhas em Localização: **Localização [Colar ↓] [Copiar] / [coordenadas até 30 caracteres] / [0–1000]km [Aplicar ✓] [Limpar 🗑]**. Slider mantido apenas como estado JS sincronizado, fora do DOM visível. Botões somente ícones, janela 286dp máx sem vazios; funções Native de colar/copiar/aplicar/limpar preservadas.
+- Candidato QA `0.00.99/54302`, CI e APK ainda a validar. Documento especializado: [Localização três linhas](POKESEARCH_LOCATION_QA99_THREE_ROWS_20261025.md). Não publicar Release, merge ou substituir APK público sem autorização.
+
+### LT100 — slider alinhado com campo de coordenadas (25/10/2026)
+- O usuário esclareceu pelo print: Localização ocupa **quatro linhas compactas**. (1) título, colar ↓ e copiar; (2) campo latitude/longitude até 30 caracteres (ex.: `53.759856,-1.495755`); (3) barra 0–1000 km com **a mesma largura do campo**, sem recuo; (4) `[0000]km [✓] [🗑]`, centralizados. Substitui exigência LT99 de não exibir slider.
+- HTML `dock.html` inclui `locSliderRow` entre `locCoordsRow` e `locRadiusRow`, sem alterar contrato da ponte Native, API, assinatura, preferências. Candidato QA `0.00.100/54303`. Detalhes [LT100 Localização](POKESEARCH_LOCATION_QA100_FOUR_ROWS_20261025.md). PR #65 Draft; sem merge, Release, distribuição pública ou alteração do Drive público.
+
+### QA LT101 — Agradecimentos compacto e Mural em estilo Scrapbook (25/10/2026)
+- Após feedback visual Samsung, o cartão largo de Agradecimentos foi substituído por **atalho cápsula 48dp**, discreto à direita após atualizações; tocar abre a mesma arte original offline sobre a Home, zoom/compartilhar/Voltar preservados.
+- Mural único na Home ganhou **balões de recados estilo Orkut**, avatar redondo, autor/categoria, cores sutis por categoria e ações pequenas. Os três exemplos seguem com identificação explícita como fictícios. Em expansão: categorias, feed real em ordem decrescente (até 20) e composer compacto, sem ScrollView dentro de ScrollView. Firebase segue bloqueado até implantação de regras segura e flag admin.
+- QA protegida candidata `0.00.101/54304`, PR #65 (sem merge), CI/assinatura/Samsung a validar. Detalhes [QA LT101 Home](POKESEARCH_HOME_QA101_SCRAPBOOK_MINI_TRIBUTE.md). Imagens originais `.webp` intactas e assinatura preservada.
+
+### LT102 — revisão final de sprites + promoção autorizada (25/10/2026)
+- Proprietário relatou imagens intermitentes no menu Pokémon e nos resultados. Em `dock.html` foi adicionado **watchdog finito** no pool de sprite-base PokeAPI (origem → CDN exata), impedindo promessa pendente infinita; retorno neutro quando não existe URL válida. Resultados mostram fallback neutro após tentativas limitadas; não atribuir forma/skin/Shiny incorreto.
+- Auditoria incremental: manter `VerifiedSpriteCache.java` (PNG, forma base, HTTPS, limite/cache), `probe.js`, login, API, filtros, localização LT100, IV/PvP, Home, Agradecimentos, notificações, sons, Pix e assinatura; comparar PRs #63/#64/#65 antes da promoção.
+- Usuário autorizou **merge e publicação oficial** e envio de APK ao Drive. QA candidata `0.00.102/54305`, com R8, assinatura permanente e testes integrais. **Firebase RTDB não tem regras publicadas confirmadas**: não anunciar publicação de recados ativa. Detalhes no documento [LT102 Publicação/Auditoria](POKESEARCH_LT102_RELEASE_AUDIT_20261025.md).
+
+### LT102 — evidência do APK aprovado para promoção
+- GitHub Actions #40199018230: **SUCCESS**; artifact #12601060845 `PokeSearch-v0.00.102-LT-Sprite-Recovery-Community-QA-protected-release`. APK extraído 39.203.529 bytes, SOURCE_COMMIT `69c4a28684fa0d8f93dbac2f3bb16a73ad3c3f8a`; SHA-256 `2e99d46355ecef4e6046787dce56b9557b039a2cea0e33857947feecf4a9b303`. versionName `0.00.102`, versionCode `54305`, certificado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, v2 true, R8 e não depurável.
+- Proprietário autorizou merge/release neste turno. Pipeline de promoção de uso único `lt102-official-approved-on-merge.yml` confere SOURCE_COMMIT, ancestralidade de main, integridade e certificado antes de publicar GitHub Release. Até confirmação da execução **não afirmar Release publicada**. Firebase Rules não alteradas; teste Samsung físico desta versão pendente.
+
+## 11. Protocolo obrigatório do próximo chat
 Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, preservar todas as mudanças anteriores e escolher a branch correta antes de alterar arquivos. Etapas pequenas, reversíveis e auditáveis, com testes; não apagar preferências, não mexer na assinatura, não ativar Firebase real por inferência. Registrar mudanças neste guia **em poucas linhas** e encaminhar documentos aprofundados para arquivos separados. **Nunca declarar Release, merge, aprovação Samsung ou mural online sem prova real.**
