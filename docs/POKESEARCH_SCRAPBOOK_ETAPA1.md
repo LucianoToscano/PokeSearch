@@ -55,3 +55,10 @@ Espaço futuro **isolado** no mesmo RTDB:
 Etapa 2: modelos, Authentication e operações em ambiente isolado de teste após revisão de Rules. Etapa 3: criar/curtir/responder/filtros/paginação. Etapa 4: denúncias, moderação e limitações confiáveis no servidor. Etapa 5: homologar em Samsung, custos, APK protegido, aprovação de distribuição.
 
 **Governança:** não fazer merge, release nem enviar APK ao Drive; não executar escrita no Firebase; não criar quatro feeds. Manter toda a PR #63 e preferências/assinatura.
+
+## Resultado real do CI — execução 25/10/2026
+- **Workflow da Etapa 1 (Node e Java, sem APK):** https://github.com/LucianoToscano/PokeSearch/actions/runs/40189621731 — **SUCCESS**, `SOURCE_COMMIT=431090ec8ef8274cc6146f3456529199eacae744`.
+- **Node:** regressões históricas e `app/tests/scrapbook-stage1.test.js` **PASS**, sete verificações específicas (feature gate release, Home/tema, três recados demo, categorias/filtro, nenhuma gravação Firebase, Activity não exportada, limite 300 e ações desabilitadas). `lt74-local-update-preview.test.js` foi excluído **por já ser excluído no workflow de referência LT88 R8**, pois exige um recurso debug legado não presente no checkpoint; não é teste da comunidade e não foi alterado.
+- **Java/Android:** `gradle :app:compileDebugJavaWithJavac --no-daemon --stacktrace` **BUILD SUCCESSFUL**, sem criar qualquer APK.
+- **Guia Mestre:** workflow https://github.com/LucianoToscano/PokeSearch/actions/runs/40189422785 **SUCCESS**; arquivo integral de 1.458.217 bytes presente no checkout antes do append; SHA-256 do prefixo antigo comparado byte a byte; commit gerado `26473c4e9bd8d35b21c55d3d60b9b12e1692f7ba`.
+- Nenhum teste físico Samsung ou emulador Android foi executado. **Não chamar de homologado**; demo inativa em release.
