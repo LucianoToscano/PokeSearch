@@ -115,3 +115,18 @@ Para cada nova captura de erro de Get coords, registrar nome, número, PC, cidad
 - [ ] Migração API no OverlayService (segue desligada); homologação UI/UX completa.
 - [ ] Distribuição pública LT77 (não realizada, LT76 preservada).
 
+
+### Continuação QA R2 — contrato experimental e preferência Despawn
+
+**Base verificada:** 44fa0e7fc1c4386d11d7f6e18d33539b4a442f4b; alterações só na branch de QA, sem mudança em main, PR #34/#49 ou manifesto LT76.
+
+- [x] `api_result_contract.js`: seleção textual pelo nome oficial da espécie agora resulta em um único `pokemon_ids`, mesmo que o catálogo contenha várias formas da mesma espécie; forma explicitamente selecionada usa `species_forms` e continua exigindo identificação única. Teste sintético adicional.
+- [x] Despawn em **Info Pokémon**: padrão confirmado OFF no código Java (`showTimers=false` e `prefs.getBoolean("showTimers", false)`). Preferência ON já salva permanece ON; nenhuma preferência de usuário foi apagada ou forçada. Teste de regressão estático.
+- [x] `api_browser_transport.js`: classifica 400/422 (`invalid-request`), 404/410 (`expired-or-missing-spawn`) e 503 (`service-unavailable`), mantendo 401/403/429, sem devolver corpo bruto, autenticação ou código opaco. Testes sintéticos adicionais.
+- [ ] Subtipos 403 (`trainer_not_linked`, `shiny_account_unavailable`, `vip_required`) ainda não são expostos separadamente; erro é genérico, sem vazamento de detalhes.
+- [ ] Catálogos oficiais ainda não são baixados pelo Android; nenhuma forma ou ID foi inferido de texto local.
+- [ ] Conexão `OverlayService` ↔ API ainda OFF; DOM permanece única fonte em runtime.
+- [ ] Get coords, filtros de clima/forma/sexo e preferência Despawn visualmente confirmados no Samsung; capturas e testes de rede necessários.
+- [ ] Aceitação para atualização pública: NÃO concedida. Não mudar `atualizacao.json` ou substituir LT76 sem aceitação física e checagem de segurança.
+
+**Fonte do contrato:** `pogo.md` no Google Drive; dados de conta e tokens do documento não são reproduzidos no GitHub.
