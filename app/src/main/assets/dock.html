@@ -3900,18 +3900,14 @@ window.setNativePopupRoom=height=>{
 };
 let activeNativePopupKind="";
 window.setActiveNativePopupKind=kind=>{
+ // WindowManager is authoritative: the toolbar and popup are separate WebViews.
  activeNativePopupKind=String(kind||"");
+ if(controlsWindow&&!popupWindow)refreshQuickMenuStates();
 };
 function toggleChoices(kind){
  if(controlsWindow&&!popupWindow&&Native.openPopup){
-  // Toolbar and independent WebView have DIFFERENT choiceOpen values.
-  // Repeat tap closes the native popup explicitly, even with keyboard focus.
-  if(activeNativePopupKind===kind){
-   activeNativePopupKind="";
-   if(Native.closePopup)Native.closePopup();
-   return;
-  }
-  activeNativePopupKind=kind;
+  // Every tap goes to the native toggle (kind == popupKind means close).
+  // Never decide from a possibly stale WebView mirror or optimistic state.
   const key={alerts:"bell",visual:"appearance",info:"appearance"}[kind]||kind;
   const button=document.querySelector('#quickMenuList button[data-key="'+key+'"]');
   const rect=button?.getBoundingClientRect(),host=document.getElementById("menu").getBoundingClientRect();
@@ -6095,13 +6091,17 @@ function refreshQuickMenuStates(){
    }
   }
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny));
-  if(id==="more")button.setAttribute("aria-expanded",String(choiceOpen==="more"));
+  if(["mode","filters","location","pokemon","bell","appearance","more"].includes(id)){
+   const activeKey={alerts:"bell",visual:"appearance",info:"appearance"}[activeNativePopupKind]||
+    activeNativePopupKind;
+   button.setAttribute("aria-expanded",String(activeKey===id));
+  }
   button.classList.toggle("pending",id==="sh"&&shinyPending);
   if(id==="period"){
    const badge=button.querySelector(".periodBadge");
    if(badge)badge.textContent=period===0?"":period+"m";
    button.classList.toggle("autoOff",period===0);
-   button.setAttribute("aria-expanded",String(choiceOpen==="period"));
+   button.setAttribute("aria-expanded",String(activeNativePopupKind==="period"||choiceOpen==="period"));
    button.setAttribute("aria-label",period===0?
     "Atualizar agora · automático desligado · segure para configurar":
     "Atualizar agora · automático a cada "+period+" minutos · segure para configurar");
