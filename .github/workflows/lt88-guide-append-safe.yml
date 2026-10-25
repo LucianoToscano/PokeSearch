@@ -1,9 +1,9 @@
-name: PokeSearch LT88 unified menus safe Guia Mestre append
+name: PokeSearch LT88 Samsung R3 safe Guia Mestre append
 on:
   push:
     branches: [feature/lt88-lt93-evolution-20261025]
     paths:
-      - 'docs/LT88_UNIFIED_MENUS_QA.md'
+      - 'docs/LT88_SAMSUNG_LEGIBILITY_R3_QA.md'
       - '.github/workflows/lt88-guide-append-safe.yml'
 permissions:
   contents: write
@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           GUIDE=docs/GUIA_MESTRE.md
-          MARKER='LT88 UI Unificada — 50% Transparência e Blur'
+          MARKER='LT88 Samsung R3 — contraste legível Filtros e Modos'
           test -f "$GUIDE"
           BEFORE="$(wc -c < "$GUIDE")"
           test "$BEFORE" -gt 1400000
@@ -36,15 +36,15 @@ jobs:
             echo
             echo
             echo "## $MARKER (25/10/2026)"
-            echo "- Evidência Samsung: Filtros, Modos, Localização, Favoritos e Pokémon exibiam cores/alphas distintos; Copiar/Colar estavam no cabeçalho ao lado do título."
-            echo "- Branch PR #63 Draft: uma única base visual para superfícies dos menus e submenus; invólucro popup externo transparente preserva pass-through e não cria espaços vazios."
-            echo "- Transparência inicial 50%, tema claro/escuro e controle menuBlur 0–16 px no Editor Visual. Preferências antigas não são apagadas."
-            echo "- Fundo compartilhado via --visual-menu-bg, menu-border e backdrop-filter opcional, com fallback nos Android System WebView que não desfocam outras janelas."
-            echo "- Favoritos nativo acompanha tema/alpha e blur quando disponível. Copiar/Colar reposicionados na linha operacional de Localização, junto ao raio."
-            echo "- QA candidato 0.00.90/54293 (numeração não significa LT90 funcional completo). Validar SHA-256, assinatura APK v2, certificado, testes Node/Java/R8 antes da entrega."
-            echo "- Samsung PASS físico continua pendente: 0/50/100% alpha, blur ON/OFF, clique fora, menus, temas, campos e touch pass-through."
-            echo "- Detalhes e estratégia de rollback em docs/LT88_UNIFIED_MENUS_QA.md; main oficial LT87 preservada sem merge/Release."
-            echo "- Conteúdo anterior do Guia Mestre validado por hash de prefixo; somente append."
+            echo "- Três capturas Samsung 0.00.90/54293 comprovam regressão: Filtros Nível e Forma (00–04), Modos IV% seguem transparentes sobre papel de parede. QA visual antigo NÃO passou."
+            echo "- Causa: backdrop-filter no WebView de overlay não consegue garantir blur de outra janela; 50% alpha puro não oferece leitura estável."
+            echo "- Correção: preservar transparência BASE inicial 50%, menuBlur padrão 4 px, temas/preferências anteriores; criar camada de legibilidade derivada do MESMO controle (alpha final=1-(transparência/100)^2.8)."
+            echo "- Em 50% BASE a superfície de leitura fica cerca de 86% opaca; 100% transparência mantém opacidade 0. O Editor Visual explica claramente essa diferença."
+            echo "- CSS aplica fundo padronizado aos rail/editor de Filtros/Modos, listas Forma/Ordenar/Clima, inputs e Favoritos nativos. Não alargar janelas nem bloquear toques atrás."
+            echo "- QA candidato 0.00.91/54294; numeração NÃO significa LT91 roadmap concluída. Autenticação/API/token/assinatura preservados."
+            echo "- Provas de build e Samsung separadas; teste físico R3 pendente, confira docs/LT88_SAMSUNG_LEGIBILITY_R3_QA.md."
+            echo "- A main LT87 continua preservada, PR #63 Draft, sem merge, sem Release."
+            echo "- Guia anterior preservado com verificação SHA-256 de todo prefixo após append."
           } >> "$GUIDE"
           AFTER="$(wc -c < "$GUIDE")"
           test "$AFTER" -gt "$BEFORE"
@@ -53,7 +53,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$GUIDE"
-          git commit -m 'docs(LT88): append unified menu design with prefix checksum protected'
+          git commit -m 'docs(LT88 R3): safely append legibility audit with prefix SHA256 protection'
           git fetch origin "refs/heads/$GITHUB_REF_NAME:refs/remotes/origin/$GITHUB_REF_NAME"
           git rebase "origin/$GITHUB_REF_NAME"
           git push origin "HEAD:$GITHUB_REF_NAME"
