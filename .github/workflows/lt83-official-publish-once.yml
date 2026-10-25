@@ -2,7 +2,7 @@ name: LT83 approved - publish verified GitHub update once
 on:
   push:
     branches:
-      - fix/lt83-samsung-ui-polish-20261025
+      - fix/lt83-location-recovery-geometry-20261025
     paths:
       - '.github/workflows/lt83-official-publish-once.yml'
 permissions:
@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          ref: fix/lt83-samsung-ui-polish-20261025
+          ref: fix/lt83-location-recovery-geometry-20261025
       - name: Verify approved CI run and artifact identity
         shell: bash
         run: |
