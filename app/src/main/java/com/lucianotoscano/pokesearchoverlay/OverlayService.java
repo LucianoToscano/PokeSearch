@@ -225,7 +225,7 @@ public class OverlayService extends Service {
     private boolean displayedApiResults=false;
     private int displayedApiSearchId=-1;
     private boolean authorizedApiQaSelected(){
-        return getSharedPreferences("prefs",0).getBoolean("authorizedApiQaOptIn",false);
+        return getSharedPreferences("prefs",0).getBoolean("authorizedApiQaOptIn",true);
     }
     private void performAuthorizedApiSearch(int generation,boolean manual){
         if(authorizedApiCollector==null){
@@ -2845,7 +2845,36 @@ public class OverlayService extends Service {
             js(popupPanel,popupLoaded,"window.onLocationPaste("+JSONObject.quote(parsed)+")");
         });}
         @JavascriptInterface public void locationEditor(boolean open){handler.post(()->OverlayService.this.locationEditor(open));}
-        @JavascriptInterface public void requestFilterOptions(){handler.post(()->requestFilterOptionsLater(0));}
+        @JavascriptInterface public void requestFilterOptions(){handler.post(()->{
+            if(stopped||loginPaused||!menuExpanded)return;
+            if(authorizedApiQaSelected()){
+                // API is the primary source. Official contract values are
+                // immediately available; do not click React dropdowns.
+                try{
+                    JSONObject fields=new JSONObject();
+                    String[] keys={"sortBy","weather","size","gender"};
+                    String[][] values={
+                        {"Despawn (longest)","CP (highest)","IV % (highest)",
+                            "Level (highest)","Distance (nearest)"},
+                        {"Any","Boosted","Sunny","Rainy","Partly Cloudy","Cloudy",
+                            "Windy","Snow","Fog"},
+                        {"XXS","XS","S","M","L","XL","XXL"},
+                        {"Male","Female","Genderless"}
+                    };
+                    for(int i=0;i<keys.length;i++){
+                        JSONObject field=new JSONObject();
+                        field.put("present",true).put("options",new JSONArray(values[i]));
+                        fields.put(keys[i],field);
+                    }
+                    JSONObject payload=new JSONObject();
+                    payload.put("ok",true).put("partial",true).put("options",fields);
+                    js(menuPanel,menuLoaded,"window.onFilterOptions("+payload.toString()+")");
+                    js(popupPanel,popupLoaded,"window.onFilterOptions("+payload.toString()+")");
+                }catch(org.json.JSONException ignored){}
+                return;
+            }
+            requestFilterOptionsLater(0);
+        });}
         private void requestFilterOptionsLater(int attempt){
             if(stopped||loginPaused||!menuExpanded)return;
             if(searchInProgress||!loaded){
@@ -2899,6 +2928,21 @@ public class OverlayService extends Service {
             String wanted=query==null?"":query.trim();
             if(wanted.length()>70)return;
             int generation=requestGeneration,sequence=++formOptionsSequence;
+            if(authorizedApiQaSelected()){
+                if(authorizedApiCollector==null)
+                    authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+                authorizedApiCollector.forms(wanted,response->{
+                    if(stopped||loginPaused||generation!=requestGeneration||
+                        sequence!=formOptionsSequence||!menuExpanded)return;
+                    try{
+                        response.put("key","form").put("query",wanted);
+                        if(!response.optBoolean("ok",false))response.put("pending",false);
+                    }catch(org.json.JSONException ignored){}
+                    js(menuPanel,menuLoaded,"window.onFormOptions("+response.toString()+")");
+                    js(popupPanel,popupLoaded,"window.onFormOptions("+response.toString()+")");
+                });
+                return;
+            }
             requestFormOptionsLater(wanted,generation,sequence,0);
         });}
         private void requestFormOptionsLater(String query,int generation,int sequence,int attempt){
