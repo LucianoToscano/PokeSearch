@@ -20,7 +20,11 @@ check("two separate native services and notifications, one application",()=>{
  assert.match(service,/private static volatile boolean secondaryRunning=false/);
  assert.match(service,/isSecondaryRunning\(\)/);
  assert.match(service,/getSharedPreferences\(isSecondaryOverlay\(\)\?"prefs_secondary":"prefs",0\)/);
- assert.equal((service.match(/getSharedPreferences\("prefs",0\)/g)||[]).length,0);
+ // Explicit primary prefs are allowed ONLY for intentionally global
+ // Favorite profiles/diagnostics, never for per-Pokeball filters/state.
+ const globalReferences=(service.match(/getSharedPreferences\("prefs",0\)/g)||[]).length;
+ assert.ok(globalReferences<=2);
+ assert.match(service,/overlayPrefs\(\)\.edit\(\)/);
 });
 check("default independent filters are explicitly 100 and 0 percent in raw IV",()=>{
  assert.match(service,/private String mode="raw"/);
