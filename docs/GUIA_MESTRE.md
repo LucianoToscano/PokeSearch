@@ -4,6 +4,11 @@
 >
 > **REGRA DE PRIORIDADE:** verificar sempre o HEAD e as PRs reais. Estado recente comprovado por commits/CI prevalece sobre instruções de versões antigas dentro do backup. *Nenhuma numeração QA comprova a conclusão de uma etapa de roadmap ou teste Samsung.*
 
+## LT114 — Get coords: expiração durante requisição (25/10/2026)
+- Auditoria adicional do transporte compartilhado identificou risco de GET iniciado antes do despawn e concluído depois: revalidar `q.expiry` **após** HTTP e antes de entregar/copy coords; nunca reutilizar seleção vencida. Cobre o mesmo código compartilhado P1/P2 e adiciona teste de simultaneidade 100%/0%.
+- Versão QA sequencial prevista `0.01.14 / 54318`, preservando intacto `0.01.13 / 54317` (SHA-256 APK `e69fec269ba5613d71d1b55abd7705742553ed97edbd1a1ab671564dc7cf9614`; certificado v2 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`). 2.050 PNGs normais/shiny do APK anterior conferidos byte a byte com manifesto.
+- PR #73 segue Draft, não mesclar; branch divergente da main por três commits e resolução de conflitos requer avaliação separada, sem descartar funcionalidades. Samsung P1 e P2 ainda pendentes. Detalhes [LT113 Get coords dual](POKESEARCH_LT113_GET_COORDS_DUAL_PARITY_20261025.md).
+
 ## LT113 — Get coords API com comparação incorreta e pesquisa obsoleta (25/10/2026)
 - Print do Samsung: **Audino shiny #531, PC 1538, 15/15/15**, card exibiu `Get coords API: stale-or-ambiguous-selection`.
 - API e UI usavam representações diferentes do mesmo PC: `"1538"` na resposta bruta e `1538` na seleção Android, o que era rejeitado no `api_browser_transport.js` por comparação estrita de tipos. Normalizar somente PC decimal canônico para inteiro, mantendo índice, espécie, ID exato da busca, despawn e código efêmero autenticado.

@@ -92,6 +92,58 @@ async function run(){
    s.client.dispose();
   }
  });
+
+ await check("P1 refresh does not invalidate P2 live reveal or mix 100% and 0%",async()=>{
+  const p1=make("1538","15/15/15"),p2=make(1538,"0/0/0");
+  const [first,second]=await Promise.all([
+   p1.client.search(FILTER_100),p2.client.search(FILTER_0)
+  ]);
+  await p1.client.search(FILTER_100);
+  const old=await p1.client.reveal({
+   searchId:first.searchId,sourceIndex:0,pokemonId:531,cp:1538
+  });
+  const current=await p2.client.reveal({
+   searchId:second.searchId,sourceIndex:0,pokemonId:531,cp:1538
+  });
+  assert.equal(old.reason,"stale-or-ambiguous-selection");
+  assert.equal(current.ok,true,JSON.stringify(current));
+  assert.deepEqual(p1.calls.map(c=>c.method),["POST","POST"]);
+  assert.deepEqual(p2.calls.map(c=>c.method),["POST","GET"]);
+  p1.client.dispose();p2.client.dispose();
+ });
+ await check("delayed GET finishing after despawn never returns or copies coords",async()=>{
+  const clock={value:NOW};
+  let finishGet=null,startGet=null;
+  const getStarted=new Promise(resolve=>{startGet=resolve;});
+  const client=transport.createClient({
+   now:()=>clock.value,siteOrigin:()=>"https://pogocoordinates.com",
+   storage:{getItem:()=>null},apiContract:contract,revealContract,
+   fetchImpl:async(_url,request)=>{
+    if(request.method==="POST"){
+     return http({results:[{...encounter(1538,"15/15/15"),
+      despawn_at:new Date(NOW+1000).toISOString()}],cap:10});
+    }
+    startGet();
+    return new Promise(resolve=>{finishGet=resolve;});
+   }
+  });
+  const search=await client.search(FILTER_100);
+  assert.equal(search.ok,true);
+  const pending=client.reveal({
+   searchId:search.searchId,sourceIndex:0,pokemonId:531,cp:1538
+  });
+  await getStarted;
+  clock.value=NOW+1001;
+  finishGet(http({lat:47.36,lng:8.55}));
+  const expired=await pending;
+  assert.equal(expired.ok,false);
+  assert.equal(expired.reason,"expired-spawn");
+  assert.equal("coords" in expired,false);
+  assert.equal((await client.reveal({
+   searchId:search.searchId,sourceIndex:0,pokemonId:531,cp:1538
+  })).ok,false);
+  client.dispose();
+ });
  const java=require("node:fs").readFileSync(require("node:path").join(
   __dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
  await check("same native Get coords error handling inherited by both services",()=>{

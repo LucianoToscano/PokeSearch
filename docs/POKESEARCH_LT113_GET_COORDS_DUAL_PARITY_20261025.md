@@ -27,3 +27,10 @@ Data: 25/10/2026. Contexto: screenshot Samsung mostrando Audino shiny #531, PC 1
 - Fazer refresh automático/manual enquanto card antigo está visível: bloquear a consulta obsoleta, explicar a atualização e permitir nova seleção após confirmação; não copiar coordenadas velhas.
 - Quando Pokémon despawn expirou ou resposta não tem `reveal_code` válido, manter indisponível (nunca inventar coordenadas). Validar permissão de favoritos, sprites e notificações em ambas.
 - Candidato QA assinado v0.01.13 / versionCode 54317; execução Android/Node e certificado serão registrados após verificar o workflow. Não promover como estável sem homologação e aprovação explícita.
+
+## LT114 — auditoria pós-GET, separação simultânea P1/P2
+- Encontrado um caso adicional em `api_browser_transport.js`: a validação de `despawn_at` ocorria antes de `await request(GET)`, mas uma resposta tardia podia chegar após a expiração. Agora o TTL é revalidado imediatamente após o GET, antes de retornar as coordenadas; se vencido, elimina a seleção e retorna `expired-spawn`, sem coordenadas.
+- Testes adicionados à suíte LT113: P1 atualizada enquanto P2 conserva seleção 0% válida, sem cruzamento de estado; GET iniciado vivo e concluído após despawn deve falhar fechado.
+- Novo candidato QA reservado: `0.01.14 / versionCode 54318`, workflow protegido LT114. O APK anterior `0.01.13/54317` mantém SHA-256 `e69fec269ba5613d71d1b55abd7705742553ed97edbd1a1ab671564dc7cf9614`, origem `141ec637e60565591f6fe445da661b2a26eb6a79`, certificado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- Auditoria independente do APK LT113: 2.050 PNGs com SHA-256 igual ao manifesto embarcado, sem erros ZIP; `applicationId com.lucianotoscano.pokesearch`, versão e certificado v2 confirmados.
+- Não publicar como versão estável nem mesclar PR #73 sem validação Samsung nas duas Pokébolas. A PR está divergente de `main` por três commits no checkpoint de 25/10; resolver de modo não destrutivo antes de qualquer merge.

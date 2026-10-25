@@ -234,6 +234,12 @@
     // The reveal code never enters Android; a failed auth/limit is not bypassed.
     const result=await request("GET",url,null,false,6000);
     if(q.searchVersion!==searchVersion||disposed)return fail("superseded-search");
+    // A spawn can expire during a slow GET. A valid request at dispatch
+    // is NOT permission to return or copy coordinates after despawn.
+    if(!(q.expiry>dateNow())){
+     reveals.delete(idx);
+     return fail("expired-spawn");
+    }
     if(!result.ok)return result;
     const parsed=d.revealContract.normalizeRevealResponse(result.body,
      {expectedPokemonId:q.pokemonId});
