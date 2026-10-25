@@ -26,11 +26,16 @@ const excluded=[
 ];
 for(const t of excluded)assert.ok(!p.includes(t),"unexpected visible row/control "+t);
 assert.ok(p.indexOf("sliderRow.append(slide)")<p.indexOf("panel.append(title,fieldRow,sliderRow,label,message)"),"full-width slider is mounted between coordinates and radius");
-const cssExpect=['width:min(148px,calc(100vw - 8px))','max-height:min(145px',
+const cssExpect=[
+ 'width:min(148px,calc(100vw - 8px))',
+ 'max-height:min(145px',
  '.locClipboardTools>.locPaste','.locClipboardTools>.locCopy',
- 'height:26px!important','height:32px!important','height:30px!important','.locSliderRow>input[type="range"]',
+ 'height:26px!important','height:32px!important',
+ 'height:24px!important','height:29px!important',
+ '.locSliderRow>input[type="range"]',
  '.locRadiusRow>.locRadiusInputWrap','.locRadiusRow>.compactLocationActions',
- 'flex-flow:row nowrap!important','font-size:0!important'];
+ 'flex-flow:row nowrap!important','font-size:0!important'
+];
 for(const t of cssExpect)assert.ok(css.includes(t),"missing layout rule "+t);
 const sample="53.759856,-1.495755";
 assert.ok(sample.length<=30);
