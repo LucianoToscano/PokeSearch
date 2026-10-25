@@ -1744,7 +1744,7 @@ test("UX-SPRITE-01 missing images remain visible without inventing Pokémon or b
 test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image sources",(()=>{
  const source=dock.split("function attachSpriteFeedback(){")[1]?.split("function attachLongPress(){")[0]||"";
  if(!source.includes("if(img.complete)loaded()")||
-    !source.includes("retries>=2")||!source.includes('data-original-src'))return false;
+    !source.includes("retries>=1")||!source.includes('data-original-src'))return false;
  function makeStage(image){
   const classes=new Set(),listeners={};
   if(image){
@@ -1768,7 +1768,7 @@ test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image source
  attach();
  if(waiting.classes.has("loaded")||waiting.classes.has("failed"))return false;
  waiting.listeners.load();
- // First two failures get a recovery attempt; the third shows fallback.
+ // Unverified images get one bounded retry; the second failure shows fallback.
  broken.listeners.error();broken.listeners.error();
  tiny.listeners.error();tiny.listeners.error();
  return cached.classes.has("loaded")&&waiting.classes.has("loaded")&&
