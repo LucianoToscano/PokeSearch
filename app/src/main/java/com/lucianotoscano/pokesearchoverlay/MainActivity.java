@@ -1661,10 +1661,11 @@ public class MainActivity extends Activity {
         });
         body.addView(order);
         settingCheckbox(body,prefs,"showTimers","Mostrar tempo individual de despawn",false);
-        // Explicit Samsung QA gate only; existing users remain on the DOM collector.
-        // Use the refresh icon after switching between DOM and API.
+        // API is the primary built-in source for new installs. Preserve an
+        // explicit stored DOM opt-out and never bypass authorization failures.
+        // The refresh icon re-runs Search using only the selected source.
         settingCheckbox(body,prefs,"authorizedApiQaOptIn",
-            "API experimental de QA (padrão seguro: DOM; use ↻ para alternar)",false);
+            "Pesquisa direta pela API (padrão ON; desmarque para usar DOM)",true);
         // LT79: separate update notifications and explicit user-driven check.
         CheckBox updateAlerts=new CheckBox(this);
         updateAlerts.setText("Avisar quando sair nova atualização do PokeSearch");
