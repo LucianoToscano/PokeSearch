@@ -1214,8 +1214,10 @@ function matchingCoordsCard(query){
  const cp=String(query.cp||"").trim(),number=String(query.number||"").trim();
  const location=clean(query.location||"").toLowerCase();
  const index=Number(query.index);
+ // React can reorder rows between a verified Search and a Get coords tap.
+ // Never trust an old row index if its identity no longer matches; also
+ // never click a different spawn when two rows share the same fingerprint.
  const matches=roots.filter(card=>{
-  if(Number.isInteger(index)&&index>=0&&card.sourceIndex!==index)return false;
   const parsed=parseCard(card.node,card.sourceIndex);
   if(name&&parsed.name.replace(/✨/g,"").trim().toLowerCase()!==name)return false;
   if(cp&&String(parsed.cp||"").trim()!==cp)return false;
@@ -1223,7 +1225,12 @@ function matchingCoordsCard(query){
   if(location&&clean(parsed.location||"").toLowerCase()!==location)return false;
   return true;
  });
- return matches.length===1?matches[0]:null;
+ if(matches.length!==1)return null;
+ const card=matches[0];
+ if(Number.isInteger(index)&&index>=0&&card.sourceIndex===index)return card;
+ // Reidentification after row reorder requires every non-secret field from
+ // the native fingerprint. Partial identifiers cannot bypass the index.
+ return name&&cp&&number&&location?card:null;
 }
 function cardCoordsControls(card){
  return Array.from(card.node.querySelectorAll("button,a,[role=button]")).filter(vis);
