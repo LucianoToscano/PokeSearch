@@ -923,6 +923,9 @@ body.visual-guides.result-window .spriteStage .spriteFallback{
 }
 body.visual-guides.result-window #resultHeader{outline:none!important}
 body.visual-guides.result-window #resultHeader .resultModeStack{outline:1px dashed #ffce4ca8;outline-offset:0}
+/* LT86 INFO: scrolling must begin at first verified line, not center/crop it. */
+body.result-window .spawnInfo{justify-content:flex-start!important;align-content:flex-start!important;scroll-padding-top:0!important}
+body.controls-window #choices.infoCompact .compactInfoAll{width:100%!important;min-height:26px!important;font-size:10px!important;margin:2px 0 3px!important;border:1px solid #6596a9!important;border-radius:6px!important;background:#294050!important;color:#e1eff7!important}
 /* UX-ICONS-STATE: preserve neutral button backgrounds; color only outlines. */
 body.controls-window #quickMenuList button[data-key="sh"],
 body.controls-window #quickMenuList button[data-key="star"],
@@ -3483,9 +3486,6 @@ body.controls-window #choices.filterCascade .generalPresetRow{display:flex!impor
 body.controls-window #choices.filterCascade .generalPresetRow span{width:30px!important;min-width:30px!important;font-size:9px!important}
 body.controls-window #choices.filterCascade .generalPresetRow button{font-size:9px!important;min-height:24px!important;flex:1!important;padding:2px!important}
 body.controls-window #choices.filterCascade .generalPresetRow button:disabled{opacity:.42!important}
-/* LT86 INFO: scrolling must begin at first verified line, not center/crop it. */
-body.result-window .spawnInfo{justify-content:flex-start!important;align-content:flex-start!important;scroll-padding-top:0!important}
-body.controls-window #choices.infoCompact .compactInfoAll{width:100%!important;min-height:26px!important;font-size:10px!important;margin:2px 0 3px!important;border:1px solid #6596a9!important;border-radius:6px!important;background:#294050!important;color:#e1eff7!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
