@@ -16,7 +16,7 @@
   const d=deps||{};
   if(typeof d.siteOrigin!=="function"||!d.transport||!d.catalog)
    throw Error("Missing session dependencies");
-  let destroyed=false,queue=new Map(),maxTicket=0,activeSearchId=-1;
+  let destroyed=false,queue=new Map(),maxTicket=0,activeSearchId=-1,activeSearchTicket=0;
   const originOk=()=>{try{
    const u=new URL(d.siteOrigin());
    return u.origin===ORIGIN&&!u.username&&!u.password;
@@ -67,7 +67,7 @@
   function startSearch(ticket,config){
    if(!Number.isSafeInteger(ticket)||ticket<=maxTicket||!originOk()||destroyed)
     return fail("invalid-request");
-   maxTicket=ticket;activeSearchId=-1;
+   maxTicket=ticket;activeSearchId=-1;activeSearchTicket=ticket;
    const c=config&&typeof config==="object"&&!Array.isArray(config)?config:null;
    if(!c)return fail("invalid-request");
    push(ticket,{pending:true});
@@ -81,7 +81,11 @@
      filters.catalogForms=data.forms;
      filters.catalogSpeciesForms=data.catalogSpeciesForms;
     }
+    // Catalog promises can resolve out of order. Do not even send an older
+    // request after a newer Search was requested.
+    if(destroyed||activeSearchTicket!==ticket)return fail("superseded-search");
     const r=await d.transport.search(filters);
+    if(destroyed||activeSearchTicket!==ticket)return fail("superseded-search");
     if(!r.ok)return fail(r.reason);
     const pvp=filters.mode==="gl"||filters.mode==="ul";
     if(pvp&&!r.pvpVerified)return fail("pvp-unverified");
@@ -112,6 +116,7 @@
   }
   function dispose(){
    if(destroyed)return;destroyed=true;queue.clear();
+   activeSearchTicket=0;activeSearchId=-1;
    d.transport.dispose();d.catalog.dispose();
   }
   return Object.freeze({startSearch,startSuggestions,startReveal,take,dispose});
