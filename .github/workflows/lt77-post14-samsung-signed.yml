@@ -7,9 +7,7 @@ on:
       - 'app/build.gradle.kts'
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/**'
       - 'app/src/main/assets/**'
-      - 'docs/GUIA_MESTRE.md'
       - 'app/tests/**'
-      - 'docs/LT77_CHECKLIST_ACEITACAO.md'
   workflow_dispatch:
 permissions:
   contents: read
