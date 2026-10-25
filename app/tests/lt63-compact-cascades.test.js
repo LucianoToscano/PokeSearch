@@ -51,10 +51,10 @@ check("E icon-only reusable actions and subtle selected rail",()=>{
  assert.ok(dock.includes('box-shadow:inset 2px 0 #7ccea3!important'));
 });
 check("F Location paste, slider, radius and SVG actions",()=>{
- for(const s of ['label.append(labelName,paste,radiusWrap)','fieldRow.append(field)','slide.min="0"','slide.max="1000"',
+ for(const s of ['label.append(labelName,radiusWrap)','fieldRow.append(field)','slide.min="0"','slide.max="1000"',
   'radiusField.min="0"','radiusField.max="1000"','radiusField.dataset.locationDraft="true"',
   'makeDockAction("apply","Aplicar localização")','makeDockAction("clear","Limpar localização")',
-  'panel.append(title,fieldRow,slide,label,savedRow,message)'])
+  'panel.append(title,fieldRow,slide,label,savedRow,tools,message)'])
   assert.ok(location.includes(s),s);
  assert.ok(location.includes('Native.setLocation(true,wantedCoords,wantedRadius)'));
 });
