@@ -77,5 +77,14 @@ nesta etapa. Nunca afirmar homologação Samsung antes de receber evidências.
 
 ### Atualização de configuração e CI R4
 - Requisito novo: API selecionada **por padrão apenas nesta build QA**. `main`/LT76 não alteradas; fallback DOM preservado na caixa de seleção.
-- Execução de CI: https://github.com/LucianoToscano/PokeSearch/actions/runs/40150000064 (validar resultado e SHA após conclusão).
+- Execução de CI: https://github.com/LucianoToscano/PokeSearch/actions/runs/40150000064 — **SUCCESS**; código fonte `ab79cd8f8560fea8d80c3fb0bfccdf5fe8341ee3`.
 - Não liberar manifesto público antes da evidência Samsung; em erros CORS/HTTP manter os dados anteriores e o status como não homologado.
+
+### Resultado efetivamente validado: build QA R4
+- GitHub Actions #40150000064: **completed / SUCCESS**, testes JavaScript/Java, build release, validação do pacote e assinatura passaram.
+- APK `PokeSearch-v0.00.77-LT-Samsung-QA-r4.apk`: 38.477.088 bytes; SHA256 `66bb242c9f0254184d03aaf38ca63091320c4c495a9d79b5bd6109e7c694ef7e`; versionCode `54280`; versionName `0.00.77`; `com.lucianotoscano.pokesearch`.
+- Assinatura v2 verificada, mesmo certificado release já usado: `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; R8 release não depurável.
+- Artefato Actions id 12581712496; ZIP com comprovantes de assinatura e hash.
+- Drive QA privado (sem permissão pública): [APK R4](https://drive.google.com/file/d/1TYWzwYmaL8L2nT2Y-SRhxGtO5YL8Z3m_/view) e [ZIP R4](https://drive.google.com/file/d/11cMFUwdRCpxQGpUS-TyAIFyL2jZLPP_0/view), ambos em `QA_LT77_NAO_PUBLICADO`.
+- A publicação oficial `atualizacao.json` continua LT76 `0.00.76` / `54276`. Sem alteração na `main`, PR #34 ou #49.
+- Não homologado fisicamente: Get coords, autenticação/CORS, filtros, tempo e interface dependem de teste real no Samsung.
