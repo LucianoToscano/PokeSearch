@@ -7,7 +7,7 @@ const endMarker='// PL-04: resolve the actual Coords form';
 const start=probe.indexOf(marker),end=probe.indexOf(endMarker,start);
 assert.ok(start>=0&&end>start,"Real readCoords action exists");
 const actionSource=probe.slice(start,end);
-new vm.Script(actionSource,{filename:"probe.js/readCoords"});
+new vm.Script("(function(){"+actionSource+"})()",{filename:"probe.js/readCoords"});
 const query={index:0,name:"Caterpie",cp:"274",number:"#010",location:"Kathleen, Florida, United States"};
 let checks=0;
 function check(title,run){run();checks++;console.log("PASS LT77 MAPS "+title);}
