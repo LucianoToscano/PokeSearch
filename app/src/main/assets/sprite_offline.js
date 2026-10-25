@@ -27,6 +27,11 @@
   if(dex<1||dex>1025||!species)return false;
   if(costume&&costume!=="NONE"&&costume!=="NORMAL"&&costume!=="DEFAULT")return false;
   if(card.costume_id!==undefined&&card.costume_id!==null&&Number(card.costume_id)!==0)return false;
+  // Provider/DOM paths can omit image even when an explicit default form
+  // is confirmed. Recover its exact 1..1025 packaged Dex sprite locally in
+  // BOTH results and detail WebViews. Never guess a regional/costume form.
+  if(form==="NORMAL"||form==="DEFAULT"||
+     form===species||form===species+"NORMAL"||form===species+"DEFAULT")return true;
   // Furfrou Natural (#676) is its official base coat. Not the other trims.
   if(dex===676&&species==="FURFROU"&&
      (form==="NATURAL"||form==="FURFROUNATURAL"))return true;
