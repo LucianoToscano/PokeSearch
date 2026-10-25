@@ -1,0 +1,27 @@
+name: Emergency hold LT102 until visually corrected LT103
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/lt103-emergency-hold.yml'
+permissions:
+  contents: write
+jobs:
+  demote-visual-regression:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: official-updates
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Temporarily remove LT102 from latest stable channel
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v0.00.103-54306 -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "LT103 is already published; no hold necessary"
+            exit 0
+          fi
+          gh release edit v0.00.102-54305 -R "$GITHUB_REPOSITORY" --prerelease --latest=false
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/v0.00.102-54305" --jq .prerelease)" = true
+          echo "LT102 retained for provenance but removed from the stable latest channel"
