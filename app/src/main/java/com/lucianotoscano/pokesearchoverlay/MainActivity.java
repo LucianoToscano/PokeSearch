@@ -1607,6 +1607,10 @@ public class MainActivity extends Activity {
         });
         body.addView(order);
         settingCheckbox(body,prefs,"showTimers","Mostrar tempo individual de despawn",false);
+        // Explicit Samsung QA gate only; existing users remain on the DOM collector.
+        // Use the refresh icon after switching between DOM and API.
+        settingCheckbox(body,prefs,"authorizedApiQaOptIn",
+            "QA LT77: testar API autorizada (experimental; OFF por padrão; use ↻)",false);
         settingAlertMode(body,prefs);
         settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,
             "Alertar ao encontrar favorito nos filtros confirmados",true);
