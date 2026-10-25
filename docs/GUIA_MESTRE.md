@@ -6708,3 +6708,13 @@ Documentacao: README.md, docs/ESTADO_CANONICO_LT87_OFICIAL.md e docs/PROMPT_NOVO
 - APK QA candidato 0.00.93/54296, assinatura persistente e testes a validar; não alegar PASS Samsung sem evidência física desta build.
 - Checkpoint completo em docs/LT88_FAVORITOS_SPRITES_SAMSUNG_R6_QA.md. LT89–LT93 pendentes.
 - Guia Mestre anterior preservado via SHA-256 do prefixo; atualização por append apenas.
+
+
+## LT88 R7 — Compartilhamento Android e espelho Drive (25/10/2026)
+- PR #63 Draft, branch feature/lt88-lt93-evolution-20261025; main continua LT87 oficial e nenhuma Release nova foi publicada.
+- APK R6 0.00.93/54296 assinado e íntegro: SHA256 5144922c0f714d77af70c0bedf596d56fb2a8f3e7e140364715502b543cf68de, SOURCE_COMMIT ce71860a5266e01c7a56505b15bbc3bd7af80d76; CI #40185260932 SUCCESS.
+- Owner criou Google Drive PokeSearch_App: folder 1fVw93qUDE0YWp6tlJZaNjRmymyhEAUbR. O mesmo R6 foi enviado ao arquivo 1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P; metadados Google confirmaram 38629615 bytes.
+- Home ganha botão visível Compartilhar app e item lateral, Android Sharesheet ACTION_SEND texto, link direto do APK Drive sem exibir link GitHub, credentials, arquivo privado ou bypass de API.
+- Próximas atualizações autorizadas devem substituir o mesmo arquivo Drive após verificar APK SHA256/assinatura/versão; ID e link permanecem estáveis, sem merge nem Release automáticos.
+- Candidato R7 0.00.94/54297 é somente QA: CI assinado e Samsung ainda devem ser comprovados. Nenhum teste físico Samsung foi executado pelo CI.
+- Detalhes e checklist: docs/LT88_DRIVE_SHARE_R7_QA.md. Fluxos LT88-LT93 históricos e R6 preservados. Guia Mestre apendado com verificação de hash integral do prefixo.
