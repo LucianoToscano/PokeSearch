@@ -3473,6 +3473,16 @@ body.controls-window #choices.locationPanel #locHint[hidden],
 body.popup-window.controls-window #choices.locationPanel #locHint[hidden]{
  display:none!important;
 }
+/* LT86 saved profiles: small flyout, not an expanded dialog. */
+body.controls-window #choices.filterCascade .filterCascadeRail{position:relative!important}
+body.controls-window #choices.filterCascade .filterCascadeHead{display:flex!important;align-items:center!important;justify-content:space-between!important}
+body.controls-window #choices.filterCascade .generalPresetToggle{font-size:12px!important;min-width:20px!important;height:20px!important;padding:0!important}
+body.controls-window #choices.filterCascade .generalPresetFlyout{position:absolute!important;left:calc(100% + 4px)!important;top:22px!important;z-index:60!important;width:164px!important;padding:5px!important;display:grid!important;gap:3px!important;background:#26313f!important;border:1px solid #8893a5!important;border-radius:7px!important}
+body.menu-left.controls-window #choices.filterCascade .generalPresetFlyout{left:auto!important;right:calc(100% + 4px)!important}
+body.controls-window #choices.filterCascade .generalPresetRow{display:flex!important;gap:3px!important;align-items:center!important}
+body.controls-window #choices.filterCascade .generalPresetRow span{width:30px!important;min-width:30px!important;font-size:9px!important}
+body.controls-window #choices.filterCascade .generalPresetRow button{font-size:9px!important;min-height:24px!important;flex:1!important;padding:2px!important}
+body.controls-window #choices.filterCascade .generalPresetRow button:disabled{opacity:.42!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -3662,6 +3672,7 @@ let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activ
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=true,filterFocus="PC",advancedExpanded=false;
+let generalPresetExpanded=false,generalPresetSaved=[false,false,false];
 let formQuery="",formListVisibleCount=60,formOptionsStatus="Aguardando lista oficial de Form do site...";
 let siteFiltersConfirmed=false; // Evidence from Android: same generation, verified Search and accepted results.
 // Pokémon GO IVs are the integer sum of three 0–15 stats (0..45):
@@ -3958,6 +3969,7 @@ function toggleChoices(kind){
   filterFocus="";
   renderFiltersChoices();
   if(controlsWindow&&Native.requestFilterOptions)Native.requestFilterOptions();
+  if(controlsWindow&&Native.requestGeneralFilterPresets)Native.requestGeneralFilterPresets();
   return;
  }
   if(kind==="location"){renderLocationChoices();return;}
@@ -4273,6 +4285,34 @@ function filterCascadeEditorWidth(label){
   Sexo:80,Forma:216,"PC mínimo PvP":116,"Evoluções anteriores":92};
  return width[label]||134;
 }
+function renderGeneralPresetControls(rail,make){
+ const heading=rail.querySelector(".filterCascadeHead"),toggle=make("button","generalPresetToggle","▣");
+ toggle.type="button";toggle.title="Três filtros salvos";toggle.setAttribute("aria-label","Filtros salvos");
+ toggle.onclick=()=>{generalPresetExpanded=!generalPresetExpanded;renderFiltersChoices();
+  if(Native.requestGeneralFilterPresets)Native.requestGeneralFilterPresets();};
+ heading.appendChild(toggle);
+ if(!generalPresetExpanded)return;
+ const menu=make("div","generalPresetFlyout");
+ menu.appendChild(make("div","generalPresetTitle","Perfis salvos"));
+ for(let slot=1;slot<=3;slot++){
+  const row=make("div","generalPresetRow"),name=make("span","",String(slot));
+  const load=make("button","generalPresetLoad","Usar");
+  load.type="button";load.dataset.presetLoad=String(slot);load.disabled=!generalPresetSaved[slot-1];
+  load.title="Aplicar perfil "+slot;load.onclick=()=>Native.loadGeneralFilterPreset(slot);
+  const save=make("button","generalPresetSave","Salvar");
+  save.type="button";save.title="Salvar perfil "+slot;save.onclick=()=>Native.saveGeneralFilterPreset(slot);
+  row.append(name,load,save);menu.appendChild(row);
+ }
+ rail.insertBefore(menu,rail.children[1]||null);
+}
+window.onGeneralPresetStatus=response=>{
+ if(!Array.isArray(response?.saved)||response.saved.length!==3)return;
+ generalPresetSaved=response.saved.map(v=>v===true);
+ document.querySelectorAll(".generalPresetLoad").forEach(button=>{
+  const i=Number(button.dataset.presetLoad);
+  button.disabled=!Number.isInteger(i)||!generalPresetSaved[i-1];
+ });
+};
 function renderExtraFilters(panel,make){
  const divider=()=>panel.appendChild(make("div","extraDivider"));
  const field=(label,control)=>{
@@ -4467,6 +4507,7 @@ function renderExtraFilters(panel,make){
  });
  panel.querySelectorAll(":scope > .extraDivider,:scope > .extraHead").forEach(e=>e.remove());
  panel.append(rail,editor);
+ renderGeneralPresetControls(rail,make);
  if(selected==="Forma")refreshOfficialFormList();
 }
 function renderFilterPicker(key,label,options){
