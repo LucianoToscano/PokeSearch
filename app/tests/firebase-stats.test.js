@@ -15,11 +15,11 @@ test("Firebase uses isolated named app and anonymous auth",()=>{
  assert.match(firebase,/signInAnonymously\(\)/);
  assert.doesNotMatch(firebase,/CookieManager|trainerCode|locationRadius/);
 });
-test("Home and overlay both maintain activity",()=>{
+test("Home and independent P1/P2 overlays maintain activity",()=>{
  assert.match(main,/FirebaseStats\.setHomeVisible\(this,true\)/);
  assert.match(main,/FirebaseStats\.setHomeVisible\(this,false\)/);
- assert.match(overlay,/FirebaseStats\.setOverlayVisible\(this,true\)/);
- assert.match(overlay,/FirebaseStats\.setOverlayVisible\(this,false\)/);
+ assert.match(overlay,/FirebaseStats\.setOverlayVisible\(this,true,isSecondaryOverlay\(\)\)/);
+ assert.match(overlay,/FirebaseStats\.setOverlayVisible\(this,false,isSecondaryOverlay\(\)\)/);
  assert.match(firebase,/onDisconnect\(\)\.removeValue/);
 });
 test("Counters do not invent numbers when offline",()=>{
