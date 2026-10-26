@@ -866,13 +866,11 @@ public class MainActivity extends Activity {
         addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
         addHomeDrawerItem(drawer,"💙","Agradecimentos",this::openTribute);
         if(CommunityScrapbookStage1.isEnabled(this))
-            addHomeDrawerItem(drawer,"💬","Comunidade PokeSearch",this::scrollToCommunity);
-        // Visible only in local debug or the explicitly signed QA demonstration; not in public release.
-        if(CommunityScrapbookStage1.isQaPreviewAllowed()){
-            boolean preview=CommunityScrapbookStage1.isEnabled(this);
-            addHomeDrawerItem(drawer,"💬",preview?"Ocultar protótipo Mural":"Mostrar protótipo Mural",
-                this::toggleCommunityScrapbookStage1);
-        }
+            addHomeDrawerItem(drawer,"💬","Chat ao vivo",this::scrollToCommunity);
+        // Users can collapse the chat without affecting P1/P2 overlays or login.
+        boolean chatVisible=CommunityScrapbookStage1.isEnabled(this);
+        addHomeDrawerItem(drawer,"💬",chatVisible?"Ocultar Chat":"Mostrar Chat",
+            this::toggleCommunityScrapbookStage1);
         addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
         addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this));
         addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
@@ -896,9 +894,8 @@ public class MainActivity extends Activity {
         }
     }
     private void toggleCommunityScrapbookStage1(){
-        if(!CommunityScrapbookStage1.isQaPreviewAllowed())return;
         SharedPreferences prefs=getSharedPreferences("prefs",0);
-        prefs.edit().putBoolean(CommunityScrapbookStage1.FLAG,
+        prefs.edit().putBoolean("communityLiveChatVisible",
             !CommunityScrapbookStage1.isEnabled(this)).apply();
         // Presentation-only rebuild: existing filters, login, location, stats,
         // live overlay and Home preferences are preserved.

@@ -57,8 +57,10 @@ final class CommunityScrapbookStage1 {
         return BuildConfig.DEBUG||BuildConfig.SCRAPBOOK_STAGE1_QA;
     }
     static boolean isEnabled(Context context){
-        return isQaPreviewAllowed()&&context.getSharedPreferences("prefs",0)
-            .getBoolean(FLAG,BuildConfig.SCRAPBOOK_STAGE1_QA);
+        // LT122 is no longer a gated fictional prototype. New chat defaults ON,
+        // old hidden/prototype prefs are intentionally not migrated.
+        return context.getSharedPreferences("prefs",0)
+            .getBoolean("communityLiveChatVisible",true);
     }
     static int dp(Context c,int n){return Math.round(c.getResources().getDisplayMetrics().density*n);}
     static int primary(boolean light){return light?Color.rgb(23,45,68):Color.rgb(235,246,255);}
@@ -112,7 +114,7 @@ final class CommunityScrapbookStage1 {
         activity.startActivity(new Intent(activity,CommunityScrapbookActivity.class));
     }
     static View homePanel(Activity activity,boolean light){
-        if(CommunityScrapbookOnline.isQaAllowed())
+        if(isEnabled(activity))
             return CommunityScrapbookOnline.homePanel(activity,light);
         LinearLayout root=new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
