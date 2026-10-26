@@ -37,11 +37,13 @@ test("0% normal Galarian Zigzagoon resolves distinct local regional sprite",()=>
   "file:///android_asset/pokemon-sprites/forms/zigzagoon-galar.png");
 });
 test("unknown regional Pokémon, unverified forms, and costumes do not borrow artwork",()=>{
- for(const form of ["Alolan","Hisuian","Normal","Galarian Hat"]){
+ for(const form of ["Alolan","Hisuian","Galarian Hat"]){
   const x={name:"Zigzagoon",number:"#263",form,image:"",shiny:true};
   assert.equal(sprites.resolve(x).src,"",form);
  }
  assert.equal(sprites.resolve({name:"Linoone",number:"#264",form:"Galarian",image:""}).src,"");
+ assert.equal(sprites.resolve({name:"Zigzagoon",number:"#263",form:"Normal",shiny:false,image:""}).src,
+  "file:///android_asset/pokemon-sprites/base/263.png");
  assert.equal(sprites.resolve({name:"Zigzagoon",number:"#263",form:"Galarian",costume_id:2,image:""}).src,"");
 });
 test("source commit pinned and both exact PNGs mandatory in APK build",()=>{
