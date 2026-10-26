@@ -1,3 +1,5 @@
+# PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
+
 ## LT119 — Print Samsung: sprite regional ausente no card (26/10/2026)
 - Evidência enviada: duas Pokébolas 0% e 100% simultâneas, card de Zigzagoon #263 forma Galarian Shiny 15/15/15 exibe losango ◇ em vez de sprite. O print confirma a lacuna visual, não confirma funcionamento de notificações/filtros/Get coords.
 - Causa observada no código LT118: parser de API deixa `image=""` corretamente quando forma regional não é padrão, mas `sprite_offline.js` recupera somente formas-base; tanto lista quanto detalhe usam o mesmo resolvedor. Assim, falta mapeamento explícito exato da variedade 10174.
@@ -5,7 +7,13 @@
 - Incluídos testes LT119 API raw 100%/0%, máscara de forma/tra​​je, mesma resolução `dock.html`/`detail.html`, e auditoria de dois assets extras além dos 2.050 base já existentes. Versão QA prevista `0.01.19/54323`; NÃO afirmar build pronto até Actions SUCCESS e artefato assinado.
 - Preservar `prefs`/`prefs_secondary`, filtros independentes, som, Get coords, assinatura e limite 10. Testes físicos Samsung, Firebase e bloqueios pendentes LT118 continuam abertos.
 
-# PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
+- **CI final:** [GitHub Actions LT119 #40406601954 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40406601954). Testes Node/Java/R8, PNGs de forma regional e assinatura Android v2 passaram. QA assinada `0.01.19` / `versionCode 54323`.
+- **APK verificado:** `PokeSearch-v0.01.19-LT-Galarian-Sprites-QA.apk`, 41.754.630 bytes, SHA-256 `b649dee85e84e879ff34125d154d91d46ebd380d459ed54c0774ba30a096db66`. `SOURCE_COMMIT=b9a3e494dc63a4561b211dc052f79015e1916938`. Certificado de release v2 SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. [Artefato protegido #12690744356](https://github.com/LucianoToscano/PokeSearch/actions/runs/40406601954/artifacts/12690744356).
+- **Merge concluído:** [PR #74](https://github.com/LucianoToscano/PokeSearch/pull/74) integrada à `main` por commit `0c3ce05470c6b5857fc4d8c1aad665eb64f5e1ad`; versão pública estável 0.01.11 não substituída. **Validação visual Samsung da LT119 ainda pendente**; observar se losango desaparece no card do Zigzagoon de Galar Shiny e manter duas Pokébolas 0%/100%.
+- **Assets confirmados:** além de 1.025 base + 1.025 shiny, pacote inclui dois PNGs regionais 10174: normal SHA-256 `649b21a22030afdfd17c88e22224a2200dc871b16e7da21798e1bdc34ca78cbb` e shiny `9ef64df9b5802f94056e890ba3576dac7ae74a31f85414b76da41f42122942bf`. Imagens visualmente verificadas contra forma exata, sem substituição genérica.
+- **Documento especializado:** [LT119 Zigzagoon de Galar](POKESEARCH_LT119_ZIGZAGOON_GALAR_SPRITES_20261026.md). Demais formas e problemas da auditoria LT116 seguem pendentes.
+
+
 > **PONTO DE ENTRADA OBRIGATÓRIO • 25/10/2026**  
 > Este documento substitui o *uso diário* do antigo guia de ~1,46 MB. **O histórico integral não foi excluído.** Ele está arquivado, byte por byte, em **[GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md](GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md)**. Consulte o backup apenas para tirar dúvidas históricas, conferir requisitos antigos, versões, decisões, evidências e regressões.
 >
