@@ -241,8 +241,7 @@ public class OverlayService extends Service {
     private static boolean allowDomAfterApiFailure(String reason){
         return "network-or-cors-error".equals(reason)||"timeout".equals(reason)||
             "service-unavailable".equals(reason)||"invalid-results".equals(reason)||
-            "api-unavailable".equals(reason)||"catalog-unavailable".equals(reason)||
-            "pvp-unverified".equals(reason);
+            "api-unavailable".equals(reason)||"catalog-unavailable".equals(reason);
     }
     private void performAuthorizedApiSearch(int generation,boolean manual){
         if(authorizedApiCollector==null){
@@ -282,7 +281,10 @@ public class OverlayService extends Service {
                     !response.optBoolean("criteriaConfirmed",false)||
                     cards==null||cards.length()>10||
                     response.optInt("searchId",-1)<0||
-                    (shiny&&!response.optBoolean("siteShiny",false))||
+                    (response.optBoolean("requestedShiny",false)!=shiny)||
+                     (shiny&&(!response.optBoolean("apiFilterAccepted",false)||
+                      (!response.optBoolean("explicitEmpty",false)&&
+                       !response.optBoolean("apiReturnedShiny",false))))||
                     (("gl".equals(mode)||"ul".equals(mode))&&
                      !response.optBoolean("leagueConfirmed",false))){
                     searchInProgress=false;

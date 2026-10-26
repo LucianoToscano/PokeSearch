@@ -5,6 +5,16 @@
 > **REGRA DE PRIORIDADE:** verificar sempre o HEAD e as PRs reais. Estado recente comprovado por commits/CI prevalece sobre instruções de versões antigas dentro do backup. *Nenhuma numeração QA comprova a conclusão de uma etapa de roadmap ou teste Samsung.*
 
 
+- **Última release oficial comprovada em 25/10/2026:** **PokeSearch LT111, v0.01.11 / versionCode 54315**, [GitHub Release estável e latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.11-54315). Fonte QA assinada `f3dd2ba2286a84cbb5f4cd43da328339afe92a80`; PR #72 squash MERGED. **LT87/PR #62** foram checkpoints históricos, não a versão atual. O HEAD real e os PRs devem ser consultados novamente antes de editar.
+
+## LT118 — Segunda Pokébola reativada e autorização integral (26/10/2026)
+- Usuário autorizou expressamente aplicar correções, melhorias, merge e gerar APK; controle da segunda Pokébola deve voltar à Home, sem apagar `prefs_secondary` ou alterar a Pokébola primária.
+- `MainActivity.buildHome()` muda somente a visibilidade do controle; ambas permanecem independentes em filtros, resultados, posições, modo e preferências. Login e lista de Favoritos seguem compartilhados quando previsto.
+- Corrigidos os testes estáticos LT111/LT112 para a nova interface visível. Persistem as correções de notificações, fila de favoritos, FirebaseStats e Mural de leitura da LT117.
+- Origem: quatro documentos DOCX LT116 da auditoria, incluindo Plano Mestre. Nova QA prevista: **0.01.18 / 54322**; deve haver confirmação de CI, assinatura e aparelho Samsung antes de chamar resultado de estável.
+- Pendências abertas e não ocultáveis: Functions/regras em produção, moderação de servidor, pin dos sprites, WebView allowlist, bateria, versões Android, testes instrumentados, 110 cenários Samsung. Merge foi autorizado, mas build/merge não equivalem à homologação física.
+- Consultar [relatório LT118](POKESEARCH_LT118_VALIDACAO_E_PENDENCIAS_20261026.md) e [backup integral](GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md). Nenhuma credencial é registrada.
+
 ## QA LT116 final, sem publicação oficial — 25/10/2026
 - **GitHub Actions #40243697039 SUCCESS:** https://github.com/LucianoToscano/PokeSearch/actions/runs/40243697039. SOURCE_COMMIT do binário: `dd4c7dcde6404bd5f15a0dc897f873e7ca802d90`.
 - **APK assinado:** `PokeSearch-v0.01.16-LT-Coords-Parity-QA.apk`, `versionName=0.01.16`, `versionCode=54320`, applicationId `com.lucianotoscano.pokesearch`.

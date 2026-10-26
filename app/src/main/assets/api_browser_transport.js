@@ -119,8 +119,15 @@
      const raw=response.headers&&response.headers.get?
        response.headers.get("Retry-After"):null;
      const seconds=raw!==null&&raw!==undefined&&raw!==""?Number(raw):NaN;
-     const delay=Number.isFinite(seconds)&&seconds>=1&&seconds<=3600?seconds:60;
+     const parsedDate=typeof raw==="string"?Date.parse(raw):NaN;
+     const byDate=Number.isFinite(parsedDate)?Math.ceil((parsedDate-dateNow())/1000):NaN;
+     const requestedDelay=Number.isFinite(seconds)?seconds:byDate;
+     const delay=Number.isFinite(requestedDelay)&&requestedDelay>=1&&requestedDelay<=3600?requestedDelay:60;
      retryUntil[kind]=Math.max(retryUntil[kind],dateNow()+delay*1000);
+    }
+    if(response.status===401){
+     // Invalid site JWT: clear it on the authenticated site origin; never bypass the denial.
+     try{if(d.storage&&typeof d.storage.removeItem==="function")d.storage.removeItem("jwt");}catch(_){}
     }
     if(response.status!==200)return await httpFailure(response);
     const len=response.headers&&response.headers.get&&Number(response.headers.get("content-length"));
@@ -205,6 +212,7 @@
    return {ok:true,searchId:generation,cards:parsed.cards,
     found:parsed.found,siteCount:parsed.siteCount,
     rejected:parsed.rejected,expired:parsed.expired,
+    serverCap:parsed.serverCap,displayCap:parsed.displayCap,
     criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false,
     source:"experimental-api",requiresIntegrationValidation:true,requestValidated:true,pvpVerified:!!pvp};
   }

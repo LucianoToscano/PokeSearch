@@ -1,4 +1,4 @@
-name: PokeSearch LT117 Audit P1 remediations - protected QA APK
+name: PokeSearch LT118 Dual Pokébola + API safeguards - protected QA APK
 on:
   push:
     branches: [fix/lt112-two-pokeballs-parity-20261025]
@@ -25,9 +25,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
-      POKE_TEST_VERSION_CODE: '54321'
-      POKE_TEST_VERSION_LABEL: '51121'
-      POKE_TEST_PUBLIC_VERSION: '0.01.17'
+      POKE_TEST_VERSION_CODE: '54322'
+      POKE_TEST_VERSION_LABEL: '51122'
+      POKE_TEST_PUBLIC_VERSION: '0.01.18'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
       POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
       POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
@@ -38,8 +38,8 @@ jobs:
       POKE_SCRAPBOOK_ONLINE_QA: 'true'
       POKE_SCRAPBOOK_ONLINE_ACK: 'read-only-moderation-pending'
       GH_TOKEN: ${{ github.token }}
-      QA_APK: PokeSearch-v0.01.17-LT-Audit-Fixes-QA.apk
-      QA_TAG: v0.01.17-54321-qa
+      QA_APK: PokeSearch-v0.01.18-LT-Audit-Fixes-QA.apk
+      QA_TAG: v0.01.18-54322-qa
     steps:
       - name: Checkout exact feature commit
         uses: actions/checkout@v4
@@ -133,8 +133,8 @@ jobs:
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/manifest.json'
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
-          grep -Fq "versionCode='54321'" PACKAGE-VERSION.txt
-          grep -Fq "versionName='0.01.17'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54322'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.18'" PACKAGE-VERSION.txt
           ! grep -q '^application-debuggable' PACKAGE-VERSION.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
           grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
@@ -147,9 +147,9 @@ jobs:
       - name: Upload protected APK artifact and coverage
         uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-v0.01.17-LT-Audit-Fixes-QA-protected-release
+          name: PokeSearch-v0.01.18-LT-Audit-Fixes-QA-protected-release
           path: |
-            PokeSearch-v0.01.17-LT-Audit-Fixes-QA.apk
+            PokeSearch-v0.01.18-LT-Audit-Fixes-QA.apk
             SHA256SUMS.txt
             SIGNING-REPORT.txt
             SOURCE_COMMIT.txt

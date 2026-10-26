@@ -132,7 +132,12 @@
      // The transport accepted the exact signed-in HTTP search payload,
      // not a fixture or DOM-derived visual-only result.
      requestValidated:r.requestValidated===true,
-     explicitEmpty:r.cards.length===0,siteShiny:filters.shiny===true,
+     explicitEmpty:r.cards.length===0,
+     requestedShiny:filters.shiny===true,
+     apiReturnedShiny:r.cards.length>0&&r.cards.every(card=>card.shiny===true),
+     apiFilterAccepted:r.requestValidated===true&&
+       (!filters.shiny||r.cards.every(card=>card.shiny===true)),
+     apiPlanCap:r.serverCap,apiDisplayCap:r.displayCap,
      confirmationSource:"api-http-200",source:"authorized-api-qa"
     };
    }).then(r=>push(ticket,r)).catch(()=>push(ticket,fail("api-unavailable")));

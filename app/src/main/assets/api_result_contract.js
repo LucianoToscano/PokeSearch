@@ -264,8 +264,9 @@
     if(!response||typeof response!=="object"||!Array.isArray(response.results)||
       response.results.length>MAX_SOURCE_RESULTS) return {ok:false,reason:"Invalid API results"};
     var cards=[],seen=new Set(),rejected=0,expired=0;
-    var cap=Number.isInteger(response.cap)&&response.cap>=0?Math.min(MAX_RESULTS,response.cap):MAX_RESULTS;
-    if(cap===0)return {ok:true,cards:[],found:0,siteCount:response.results.length,rejected:0,expired:0,source:"api-fixture",criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
+    var serverCap=Number.isInteger(response.cap)&&response.cap>=0?response.cap:MAX_RESULTS;
+    var cap=Math.min(MAX_RESULTS,serverCap); // UX still shows ten cards; plan cap is separate.
+    if(cap===0)return {ok:true,cards:[],found:0,siteCount:response.results.length,rejected:0,expired:0,serverCap:serverCap,displayCap:cap,source:"api-fixture",criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
     for(var i=0;i<response.results.length;i++) {
       var x=response.results[i];
       if(!x||typeof x!=="object") {rejected++;continue;}
@@ -299,7 +300,7 @@
       if(cards.length>=cap) break;
     }
     return {ok:true,cards:cards,found:cards.length,siteCount:response.results.length,
-      rejected:rejected,expired:expired,source:"api-fixture",
+      rejected:rejected,expired:expired,serverCap:serverCap,displayCap:cap,source:"api-fixture",
       // The native collector must confirm the actual requested filters
       // and fresh response independently before showing results or alerts.
       criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};

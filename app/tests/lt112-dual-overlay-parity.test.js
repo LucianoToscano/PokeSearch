@@ -103,8 +103,8 @@ check("general notification IDs never overwrite the other active service",()=>{
  assert.ok(service.includes('isSecondaryOverlay()?12077:12076'));
  assert.match(watched,/NEXT_ALERT_ID/);
 });
-check("secondary activation stays hidden without wiping its settings or killing it",()=>{
- assert.match(main,/dualOverlayRow\.setVisibility\(View\.GONE\)/);
+check("secondary activation is visible without wiping its settings or killing it",()=>{
+ assert.match(main,/dualOverlayRow\.setVisibility\(View\.VISIBLE\)/);
  assert.match(main,/getSharedPreferences\("prefs_secondary",0\)/);
  assert.match(main,/putInt\("rawAttack",0\)/);
  assert.match(service,/startForeground\(isSecondaryOverlay\(\)\?74:73,note\)/);
