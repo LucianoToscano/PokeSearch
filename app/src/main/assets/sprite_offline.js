@@ -37,8 +37,26 @@
      (form==="NATURAL"||form==="FURFROUNATURAL"))return true;
   return false;
  }
+ // LT119: verified PokeAPI variety 10174 = Zigzagoon de Galar.
+ // The form is NOT interchangeable with ordinary Zigzagoon #263.
+ function verifiedGalarianZigzagoon(card){
+  if(!card||dexOf(card)!==263)return false;
+  const name=nameKey(card.name),form=nameKey(card.form),costume=nameKey(card.costume);
+  if(name!=="ZIGZAGOON"&&name!=="GALARIANZIGZAGOON"&&name!=="ZIGZAGOONGALARIAN")return false;
+  if(!["GALAR","GALARIAN","ZIGZAGOONGALAR","ZIGZAGOONGALARIAN",
+      "GALARZIGZAGOON","GALARIANZIGZAGOON"].includes(form))return false;
+  if(costume&&costume!=="NONE"&&costume!=="NORMAL"&&costume!=="DEFAULT")return false;
+  if(card.costume_id!==undefined&&card.costume_id!==null&&Number(card.costume_id)!==0)return false;
+  return true;
+ }
  function resolve(card){
   const image=String(card?.image||"");
+  // Prefer explicit source-provided artwork if one exists, otherwise use the
+  // exact, offline bundled regional variant (normal OR shiny).
+  if(!image&&verifiedGalarianZigzagoon(card)){
+   const suffix=card.shiny===true?"zigzagoon-galar-shiny.png":"zigzagoon-galar.png";
+   return {src:LOCAL+"forms/"+suffix,original:"",offline:true};
+  }
   const candidate=rawRegex.exec(image)||mirrorRegex.exec(image);
   if(candidate){
    const dex=Number(candidate[2]);
@@ -56,5 +74,5 @@
   // Preserve provider URLs, data images and unknown special forms untouched.
   return {src:image,original:image,offline:false};
  }
- return Object.freeze({resolve,verifiedBase});
+ return Object.freeze({resolve,verifiedBase,verifiedGalarianZigzagoon});
 });

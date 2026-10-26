@@ -1,3 +1,10 @@
+## LT119 — Print Samsung: sprite regional ausente no card (26/10/2026)
+- Evidência enviada: duas Pokébolas 0% e 100% simultâneas, card de Zigzagoon #263 forma Galarian Shiny 15/15/15 exibe losango ◇ em vez de sprite. O print confirma a lacuna visual, não confirma funcionamento de notificações/filtros/Get coords.
+- Causa observada no código LT118: parser de API deixa `image=""` corretamente quando forma regional não é padrão, mas `sprite_offline.js` recupera somente formas-base; tanto lista quanto detalhe usam o mesmo resolvedor. Assim, falta mapeamento explícito exato da variedade 10174.
+- Correção LT119 em branch: resolver apenas Zigzagoon #263, forma GALARIAN/GALAR validada e sem traje para os assets locais `forms/zigzagoon-galar.png` e `forms/zigzagoon-galar-shiny.png`. Sem reciclar o sprite Zigzagoon padrão. Base do fornecedor fixada por commit `d8c2fb78563e28ad7b3abe938cf6e79998d04e90`, nomes varietais `10174.png` e `shiny/10174.png`; build falha se qualquer arquivo estiver ausente ou PNG for inválido.
+- Incluídos testes LT119 API raw 100%/0%, máscara de forma/tra​​je, mesma resolução `dock.html`/`detail.html`, e auditoria de dois assets extras além dos 2.050 base já existentes. Versão QA prevista `0.01.19/54323`; NÃO afirmar build pronto até Actions SUCCESS e artefato assinado.
+- Preservar `prefs`/`prefs_secondary`, filtros independentes, som, Get coords, assinatura e limite 10. Testes físicos Samsung, Firebase e bloqueios pendentes LT118 continuam abertos.
+
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 > **PONTO DE ENTRADA OBRIGATÓRIO • 25/10/2026**  
 > Este documento substitui o *uso diário* do antigo guia de ~1,46 MB. **O histórico integral não foi excluído.** Ele está arquivado, byte por byte, em **[GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md](GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md)**. Consulte o backup apenas para tirar dúvidas históricas, conferir requisitos antigos, versões, decisões, evidências e regressões.

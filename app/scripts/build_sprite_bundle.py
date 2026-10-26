@@ -18,6 +18,15 @@ import urllib.request
 RAW = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
 MIRROR = "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"
 MIN_DIMENSION, MAX_DIMENSION, MAX_BYTES = 8, 1024, 256 * 1024
+# Verified Pokémon variety ID 10174 from PokéAPI. Pin the source commit:
+# never use a mutable branch for regional-form identity or shiny color.
+FORM_SOURCE_COMMIT = "d8c2fb78563e28ad7b3abe938cf6e79998d04e90"
+FORM_SOURCE_ROOT = ("https://raw.githubusercontent.com/PokeAPI/sprites/"
+                    + FORM_SOURCE_COMMIT + "/sprites/pokemon/")
+FORM_FILES = {
+    "forms/zigzagoon-galar.png": "10174.png",
+    "forms/zigzagoon-galar-shiny.png": "shiny/10174.png",
+}
 
 
 def verified_png(data):
@@ -106,8 +115,34 @@ def main():
                 hashes[f"{category}/{dex}.png"] = hashlib.sha256(data).hexdigest()
             if index % 200 == 0:
                 print(f"Offline sprites verified: {index}/{len(jobs)}", flush=True)
+    # Exact extra form sprites. Fail the QA build on missing/bad bytes rather
+    # than silently shipping the diamond placeholder or the wrong base form.
+    form_hashes = {}
+    for output, relative in FORM_FILES.items():
+        url = FORM_SOURCE_ROOT + relative
+        request = urllib.request.Request(
+            url, headers={"User-Agent": "PokeSearch-LT119-exact-regional-sprite/1"})
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                if response.status != 200:
+                    raise RuntimeError("non-200 form sprite response")
+                content_type = response.headers.get("Content-Type", "").lower()
+                if content_type and "image/png" not in content_type:
+                    raise RuntimeError("form sprite has non-PNG content type")
+                data = response.read(MAX_BYTES + 1)
+        except (urllib.error.URLError, TimeoutError, OSError) as err:
+            raise SystemExit(f"Cannot build exact regional form {output}: {type(err).__name__}")
+        if not verified_png(data):
+            raise SystemExit(f"Invalid regional form sprite: {output}")
+        target = dest / output
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        form_hashes[output] = hashlib.sha256(data).hexdigest()
+
     summary = {
         "schema": "pokesearch-offline-sprites-v1",
+        "formSourceCommit": FORM_SOURCE_COMMIT,
+        "forms": dict(sorted(form_hashes.items())),
         "source": "PokeAPI/sprites master - exact Dex/variant PNG only",
         "dexCount": len(ids),
         "baseCount": len(ids) - len(misses["base"]),
