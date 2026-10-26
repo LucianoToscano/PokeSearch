@@ -264,6 +264,14 @@
     if(!response||typeof response!=="object"||!Array.isArray(response.results)||
       response.results.length>MAX_SOURCE_RESULTS) return {ok:false,reason:"Invalid API results"};
     var cards=[],seen=new Set(),rejected=0,expired=0;
+    // PvP selection must be checked against the entire signed-in server result
+    // BEFORE the visible ten-card cap. Validate the exact configured league/rank.
+    var pvpLeague=options.pvpLeague;
+    var pvpRequired=pvpLeague!==undefined&&pvpLeague!==null;
+    if(pvpRequired&&(!["great","ultra"].includes(pvpLeague)||
+      !Number.isInteger(options.pvpMaxRank)||options.pvpMaxRank<1||
+      options.pvpMaxRank>50))
+      return {ok:false,reason:"Invalid PvP filters"};
     var serverCap=Number.isInteger(response.cap)&&response.cap>=0?response.cap:MAX_RESULTS;
     var cap=Math.min(MAX_RESULTS,serverCap); // UX still shows ten cards; plan cap is separate.
     if(cap===0)return {ok:true,cards:[],found:0,siteCount:response.results.length,rejected:0,expired:0,serverCap:serverCap,displayCap:cap,source:"api-fixture",criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
@@ -275,6 +283,16 @@
       var cp=optionalNumberSafe(x.cp,0,100000,true),lv=optionalNumberSafe(x.level,1,50,false);
       if(cp===null||lv===null) {rejected++;continue;}
       if(options.shiny===true&&x.shiny!==true) continue;
+      const pvp=x.pvp&&typeof x.pvp==="object"?x.pvp:null;
+      if(pvpRequired&&(!pvp||pvp.league!==pvpLeague||
+        !Number.isInteger(pvp.rank)||pvp.rank<1||
+        pvp.rank>options.pvpMaxRank))continue;
+      // Keep costume evidence when crossing the API->Android->WebView bridge.
+      // If it is omitted, the detail WebView incorrectly substitutes a
+      // normal base sprite for a verified costumed Pokémon.
+      var costumeId=x.costume_id===undefined||x.costume_id===null?null:
+        optionalNumberSafe(x.costume_id,0,100000,true);
+      if(x.costume_id!=null&&costumeId===null){rejected++;continue;}
       var end=typeof x.despawn_at==="string"?Date.parse(x.despawn_at):NaN;
       if(!Number.isFinite(end)) {rejected++;continue;}
       if(end<=now) {expired++;continue;}
@@ -291,9 +309,12 @@
         moves:fast&&charge?fast+" / "+charge:fast||charge,
         location:clean(x.location,140),distance:distance===null?"":distance+" km",
         despawn:"",cp:String(cp),level:String(lv),
-        iv:iv.raw,ivPercent:String(iv.percent),rank:"",ivRank:null,
-        ivRankSource:"",ivRankLeague:"",shiny:x.shiny===true,
-        form:clean(x.form,70)
+        iv:iv.raw,ivPercent:String(iv.percent),
+        rank:pvpRequired?String(pvp.rank):"",ivRank:null,
+        ivRankSource:pvpRequired?"api-pvp":"",ivRankLeague:pvpRequired?pvpLeague:"",
+        shiny:x.shiny===true,
+        form:clean(x.form,70),costume:clean(x.costume,70),
+        costume_id:costumeId
       };
       if(Number.isFinite(end)) entry.expiresAtMs=end;
       cards.push(entry);
