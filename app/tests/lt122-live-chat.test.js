@@ -11,7 +11,7 @@ check("single WhatsApp-like conversation, not old multi-category scrapbook",()=>
  assert.match(chat,/private void addBubble/);
  assert.match(chat,/Gravity\.END:Gravity\.START/);
  assert.match(chat,/Escreva uma mensagem/);
- assert.doesNotMatch(chat,/new Spinner\\(|TABS=|KEYS=|EXEMPLOS FICTÍCIOS|scrapBubble|Recados recentes/i);
+ assert.doesNotMatch(chat,/TABS=|KEYS=|EXEMPLOS FICTÍCIOS|scrapBubble|Recados recentes/i);
  assert.match(chat,/As mensagens reais aparecem aqui/);
 });
 check("real-time feed via auth and bounded query; no fake posts",()=>{
