@@ -1,0 +1,96 @@
+name: PokeSearch LT117 - editable audit source and signed QA under 199MB
+on:
+  push:
+    branches: [fix/lt112-two-pokeballs-parity-20261025]
+    paths: ['.github/workflows/lt117-source-and-qa-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  package:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: '5c14d3a67d63ceb61b7dad5cdc947763ec0af05b'
+      RUN_ID: '40402057720'
+      APK_SHA: '15af7e7a436e351ce74d2032d1f084f495c088e9b29520d8fd2c8d30b7320fab'
+      ROOT: 'PokeSearch-LT117-Auditoria-Fonte-e-QA'
+      OUT: 'PokeSearch-LT117-AUDITORIA-EDITAVEL-COM-APK-MENOR199MB.zip'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download exact QA and exact editable source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$SOURCE_SHA^{commit}"
+          mkdir -p "pack/$ROOT/binaries"
+          git archive --format=tar "$SOURCE_SHA" | tar -xf - -C "pack/$ROOT"
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name 'PokeSearch-v0.01.17-LT-Audit-Fixes-QA-protected-release' \
+            --dir "pack/$ROOT/binaries"
+          test "$(cat "pack/$ROOT/binaries/SOURCE_COMMIT.txt")" = "$SOURCE_SHA"
+          echo "$APK_SHA  pack/$ROOT/binaries/PokeSearch-v0.01.17-LT-Audit-Fixes-QA.apk" | sha256sum -c -
+          cp docs/GUIA_MESTRE.md "pack/$ROOT/GUIA_MESTRE_CHECKPOINT_ATUALIZADO.md"
+          cat > "pack/$ROOT/LEIA-PRIMEIRO.md" <<'EOF'
+          # PokeSearch LT117 — Fonte exata do APK e auditoria QA
+          Código editável da revisão única SHA 5c14d3a67d63ceb61b7dad5cdc947763ec0af05b.
+          APK QA (não oficial) 0.01.17 / versionCode 54321 da mesma revisão.
+          Os relatórios em docs/ explicam a correção P1-01/P1-04 e o estado
+          P1-02/P1-03, cujo backend Firebase ainda NÃO foi implantado.
+          O Guia Mestre original está em docs/GUIA_MESTRE.md; cópia
+          documental de QA posterior separada na raiz do pacote.
+          Sem chaves, keystores ou tokens, sem deploy nem release.
+          QA Samsung para duas Pokébolas e 110 cenários continua pendente.
+          EOF
+      - name: Verify integrity, avoid private material and create ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, zipfile
+          root=pathlib.Path("pack")/os.environ["ROOT"]
+          blocked={".jks",".keystore",".p12",".pfx",".pem",".key"}
+          for p in list(root.rglob("*")):
+              if p.is_file() and (p.is_symlink() or p.suffix.lower() in blocked or p.name.startswith(".env")):
+                  raise SystemExit("Potential private key/secret file in source: "+str(p.relative_to(root)))
+          apk=root/"binaries"/"PokeSearch-v0.01.17-LT-Audit-Fixes-QA.apk"
+          with zipfile.ZipFile(apk) as z:
+              if z.testzip() is not None:raise SystemExit("APK CRC failed")
+              manifest=json.loads(z.read("assets/pokemon-sprites/manifest.json"))
+              hashes=manifest["sha256"]
+              if len(hashes)!=2050:raise SystemExit("Sprite manifest count invalid")
+              for name,digest in hashes.items():
+                  if hashlib.sha256(z.read("assets/pokemon-sprites/"+name)).hexdigest()!=digest:
+                      raise SystemExit("Sprite hash mismatch "+name)
+          listfiles=sorted(p for p in root.rglob("*") if p.is_file())
+          lines=[]
+          for p in listfiles:
+              lines.append(hashlib.sha256(p.read_bytes()).hexdigest()+"  "+p.relative_to(root).as_posix())
+          (root/"SHA256-ARQUIVOS.txt").write_text("\n".join(lines)+"\n",encoding="utf-8")
+          result=pathlib.Path(os.environ["OUT"])
+          with zipfile.ZipFile(result,"w",zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
+              for p in sorted(root.rglob("*")):
+                  if p.is_file():z.write(p,p.relative_to(root.parent).as_posix())
+          if result.stat().st_size>=199_000_000:raise SystemExit("ZIP exceeds 199MB")
+          with zipfile.ZipFile(result) as z:
+              if z.testzip() is not None:raise SystemExit("ZIP CRC mismatch")
+          sha=hashlib.sha256(result.read_bytes()).hexdigest()
+          pathlib.Path("SHA256-ZIP.txt").write_text(sha+"  "+result.name+"\n",encoding="utf-8")
+          print("ZIP OK",result.stat().st_size,"bytes",len(listfiles)+1,"files, sha",sha)
+          PY
+      - name: Upload verified private QA audit, no GitHub Release
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT117-Auditoria-Editavel-Menos199MB
+          path: |
+            PokeSearch-LT117-AUDITORIA-EDITAVEL-COM-APK-MENOR199MB.zip
+            SHA256-ZIP.txt
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error

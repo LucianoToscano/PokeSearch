@@ -1,0 +1,31 @@
+CONTINUAR POKESEARCH — AUDITORIA FORENSE COMPLETA LT113/LT114 — AMBAS POKÉBOLAS
+Data: 25/10/2026. Repositório: LucianoToscano/PokeSearch. PR #73, em Draft, sem merge.
+
+Você é Engenheiro Android Sênior responsável por analisar o projeto REAL contido neste arquivo compactado. Não reinicie desenvolvimento; não misture com PvPPokeGo. Não solicite nova autorização de API, já concedida. Não peça para digitar continue. NÃO publicar oficial, NÃO mesclar nem destruir preferências.
+
+ARQUIVOS DISPONÍVEIS
+- sources/MAIN_OFICIAL_EDITAVEL: main oficial 56403a2999fc8037aa020466cf03041b7926ae02; APK estável 0.01.11/54315.
+- sources/LT113_FONTE_EXATA_EDITAVEL: commit 141ec637e60565591f6fe445da661b2a26eb6a79; APK QA 0.01.13/54317.
+- sources/LT114_BRANCH_COMPLETA_EDITAVEL: última branch da PR #73, contendo correção de código de 4734b6ce877961eff3bdaf7e5c05c69d33e86151; QA 0.01.14/54318; commits posteriores documentais.
+- binaries: APKs da release e QA (se downloads confirmados), report de certificado, SOURCE_COMMIT, PACKAGE-VERSION, hash SHA-256 e 2.050 sprites dentro do APK.
+- git: logs, patch de mudanças, referências e estado PR; audit: hashes e resultados verificáveis.
+- docs/GUIA_MESTRE.md resumido e seu backup integral preservado nos snapshots.
+
+OBJETIVO PRINCIPAL
+Auditar COMPLETAMENTE, arquivo por arquivo, código-fonte Java/JS/Python, atividades, assets, testes, build, R8, assinatura, permissões, API, WebView, sessão, Firebase, home, modais, menus, filtros, localização, som, sprites, notificações e resultados, usando ambos os overlays. Produzir relatório fiel indicando PASSOU / FALHOU / NÃO VERIFICADO, com caminhos e trechos de código, impacto, gravidade e correção mínima segura.
+
+1. Get coords: reproduzir Audino shiny #531, CP/PC 1538, nível 34, 100%, A/D/S 15/15/15, Zürich. Normalizar PC 1538/"1538" estritamente; comparar ID de espécie, CP, índice, ID de busca e encontro; código efêmero não reutilizado nem exposto; rejeitar seleção antiga após refresh. Novo LT114 bloqueia resposta GET recebida DEPOIS do despawn. Nunca copiar coordenada errada ou expirada. Simular resposta atrasada, requests simultâneas de P1 e P2, limites 401/403/429, troca de filtros e carregamento de resultados.
+2. Paridade: mesma correção em todas as funções de P1 e P2; verificar herança OverlayService/SecondaryOverlayService, isolated SharedPreferences prefs/prefs_secondary e estado instância, mesma sessão WebView, filtros 100% e 0%, fonte API/DOM, sorteio/atualização, armazenamento, elementos visuais, posições e itens expirados. Botão Home da segunda Pokébola oculto SEM desligar serviço ou apagar configuração.
+3. Filtros: IV 15/15/15, 0/0/0, IV %, GL/UL rankings 1–50, PC, nível, Shiny, clima, forma Furfrou Natural, sexo incluindo genderless, tamanho, espécies, distância, raio 0–1000 km, localização e ordenação. Confirmar request real em API e ausência de fuga entre Pokébolas. Não declarar APROVADO a partir de teste de código sem API confirmada.
+4. Sprites: conferir integridade SHA-256 de 1.025 normais e 1.025 shiny incluídos no APK, lista E detalhes nos dois overlays, forma/costume especial preservado sem substituir incorretamente, cache e resolução file:///android_asset, comportamento offline e fallback.
+5. Alertas: novos e Favoritos em cada Pokébola, deduplicação separada, notificações não entregues se permissão/canal bloqueado, Android notification IDs separados e sobrevivência de filtros e perfis. Testar áudio de Favoritos, áudio de novos Pokémon, canais e ringtone por espécie, modo sem som. Nenhum aviso expirado/duplicado.
+6. Favoritos: três perfis persistentes, seleção única ativa por vez, autosave, limite 50, troca e recuperação sem apagar slots, lista compartilhada intencionalmente, preferências individuais de cada busca.
+7. Android: classe principal, Manifest, nomes de pacote/applicationId, namespace, min/target/compile SDK, services, permissões, overlay touch bounds, anti-clique acidental, posições e tema, onDestroy/restauração, autenticação/session, Android 16/Samsung e instalação sobre a oficial. Comparar assinatura da release oficial e QA, R8, versionCode crescente, assinatura v2.
+8. Segurança: contrato API, origin policy, JWT só dentro WebView, ausência de logs de segredo, código de reveal não exposto, sem bypass rate-limit/401/403/429, sandbox, WebView JavaScriptInterface, Firebase stats e mural. Não alterar chaves, senhas ou permissões fora do escopo. Verificar compartilhamento e backup do Guia Mestre.
+9. Git: rastrear HEADs, commits de origem de cada APK, PR #73 e diferenças main...branch; verificar conflitos em vez de mesclar automaticamente. Manter backups intactos; nenhuma release oficial sem autorização.
+10. Testes reproduzíveis: execute Node app/tests/*.test.js (respeitando exclusão histórica documentada), Java testes autocontidos, Gradle testDebugUnitTest e assembleRelease, R8, integridade ZIP, apksigner, compare source SHA e APK SHA. Não confundir NO-SOURCE com testes executados. Escrever evidências separadas por overlay P1/P2 e distinguir unitário/CI de Samsung.
+11. Homologação Samsung: instalar LT114 0.01.14/54318 SEM limpar dados sobre 0.01.11/54315; confirmar assinatura e manutenção de dados. Testar todas as linhas do governance/CHECKLIST_SAMSUNG.csv. Qualquer linha pendente impede afirmar validação física completa.
+12. Entrega: relatório extenso em Markdown, plano de correções por prioridade P0/P1/P2, lista de arquivos editados (antes/depois), novas regressões, diffs, hashes, versão, paths do APK e recomendação GO/NO-GO. Não declarar testes não executados. Nunca reescrever backups ou descartar features.
+
+CONDIÇÃO DE ACEITE
+Get coords deve recuperar APENAS a seleção exata ainda válida. Os dois overlays devem aplicar os próprios filtros independentemente e compartilhar SOMENTE aquilo previsto. Não publicar oficial antes de duas validações Samsung e autorização expressa.

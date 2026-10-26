@@ -278,15 +278,12 @@ final class CommunityScrapbookOnline {
         }
         private void start(FirebaseUser user){
             if(destroyed)return;
-            db.getReference("scrapbook/config/allowDirectPosts").get()
-                .addOnSuccessListener(snapshot->{
-                    if(destroyed)return;
-                    accepting=Boolean.TRUE.equals(snapshot.getValue(Boolean.class));
-                    send.setEnabled(accepting);
-                    status.setText(accepting
-                        ?"Mural online · mensagens publicadas sem aprovação"
-                        :"Mural em leitura · publicação desativada na configuração do Firebase");
-                }).addOnFailureListener(e->offline("Sem acesso às regras/configuração do Mural."));
+            // LT117 fail closed: user-generated content remains read-only
+            // until moderation and server-side rate limiting are deployed.
+            // Never trust an externally toggled allowDirectPosts flag.
+            accepting=false;
+            send.setEnabled(false);
+            status.setText("Mural em leitura · aguardando moderação segura");
             postsQuery=db.getReference("scrapbook/posts").limitToLast(20);
             postsListener=postsQuery.addValueEventListener(new ValueEventListener(){
                 @Override public void onDataChange(DataSnapshot snapshot){

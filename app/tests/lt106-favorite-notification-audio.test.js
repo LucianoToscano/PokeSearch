@@ -52,7 +52,7 @@ test("favorites send real confirmed spawn alerts without bypassing verification"
 });
 test("secondary foreground ID 74 no longer collides with general notification ID",()=>{
  assert.match(service,/startForeground\(isSecondaryOverlay\(\)\?74:73,note\)/);
- assert.match(service,/Encontrado nos filtros confirmados · "\+mode\.toUpperCase\(java\.util\.Locale\.ROOT\),12074\)/);
+ assert.ok(service.includes('isSecondaryOverlay()?12075:12074'));
  assert.match(service,/sent\?"Teste de Favoritos enviado · "\+diagnostic:diagnostic/);
 });
 console.log("LT106 Favorites audio "+checks+"/"+checks+" PASS");

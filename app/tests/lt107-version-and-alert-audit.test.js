@@ -44,7 +44,7 @@ check("shiny has its own packaged sprite and never uses normal sprite",()=>{
 });
 check("both native WebViews reuse exact 2050 packaged Dex resources",()=>{
  assert.match(java,/isSecondaryOverlay\(\)\?74:73/);
- assert.equal((java.match(/VerifiedSpriteCache\.fromDisk\(OverlayService\.this,request\.getUrl\(\)\)/g)||[]).length,3);
+ assert.equal((java.match(/VerifiedSpriteCache\.fromDisk\(OverlayService\.this,request\.getUrl\(\)\)/g)||[]).length,4);
  assert.match(spriteCache,/bundledSprite\(context,dex,shiny\)/);
  assert.match(spriteCache,/pokemon-sprites\//);
  assert.match(picker,/VerifiedSpriteCache\.bundledSprite\(context,id,false\)/);

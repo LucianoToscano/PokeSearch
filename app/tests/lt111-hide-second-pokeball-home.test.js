@@ -8,13 +8,13 @@ const second=read("java/com/lucianotoscano/pokesearchoverlay/SecondaryOverlaySer
 const overlay=read("java/com/lucianotoscano/pokesearchoverlay/OverlayService.java");
 const manifest=read("AndroidManifest.xml");
 let pass=0;const test=(name,fn)=>{fn();pass++;console.log("PASS LT111 "+name);};
-test("secondary enable row in Home is GONE, not INVISIBLE or occupying height",()=>{
+test("secondary Pokébola toggle appears in Home and occupies its original row",()=>{
  const start=main.indexOf("LinearLayout dualOverlayRow=new LinearLayout(this)");
  const end=main.indexOf("// HOME-02:",start);
  assert.ok(start>=0&&end>start);
  const row=main.slice(start,end);
- assert.ok(row.includes("dualOverlayRow.setVisibility(View.GONE);"));
- assert.ok(row.indexOf("dualOverlayRow.setVisibility(View.GONE);")<row.indexOf("screen.addView(dualOverlayRow,dualLp);"));
+ assert.ok(row.includes("dualOverlayRow.setVisibility(View.VISIBLE);"));
+ assert.ok(row.indexOf("dualOverlayRow.setVisibility(View.VISIBLE);")<row.indexOf("screen.addView(dualOverlayRow,dualLp);"));
  assert.ok(!row.includes("setVisibility(View.INVISIBLE)"));
 });
 test("primary Pokeball switch remains in Home and is not hidden",()=>{
@@ -30,12 +30,12 @@ test("secondary service and 0 percent configuration remain present, no preferenc
  assert.match(manifest,/<service android:name="\.SecondaryOverlayService" android:exported="false"/);
  assert.match(overlay,/getSharedPreferences\(isSecondaryOverlay\(\)\?"prefs_secondary":"prefs",0\)/);
 });
-test("Home hides rather than stopping second service, and refresh stays safe",()=>{
+test("Home displays second control without stopping its service or wiping state",()=>{
  const start=main.indexOf("private FrameLayout buildHome(");
  const end=main.indexOf("private void toggleSecondaryOverlay(");
  assert.ok(main.includes("if(secondaryOverlayControl!=null){"));
  assert.ok(main.includes("stopService(new Intent(this,SecondaryOverlayService.class))"));
- const hideContext=main.slice(main.indexOf("dualOverlayRow.setVisibility(View.GONE);")-120,main.indexOf("dualOverlayRow.setVisibility(View.GONE);")+100);
+ const hideContext=main.slice(main.indexOf("dualOverlayRow.setVisibility(View.VISIBLE);")-120,main.indexOf("dualOverlayRow.setVisibility(View.VISIBLE);")+100);
  assert.ok(!hideContext.includes("stopService("));
  assert.ok(!hideContext.includes('getSharedPreferences("prefs_secondary"'));
 });

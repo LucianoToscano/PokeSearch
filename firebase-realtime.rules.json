@@ -4,7 +4,7 @@
     ".write": false,
     "stats": {
       "installations": {
-        ".read": "auth != null",
+        ".read": false,
         "$uid": {
           ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists()",
           ".validate": "newData.hasChildren(['installedAt'])",
@@ -13,11 +13,12 @@
           },
           "$other": {
             ".validate": false
-          }
+          },
+          ".read": "auth != null && auth.uid === $uid"
         }
       },
       "online": {
-        ".read": "auth != null",
+        ".read": false,
         "$uid": {
           ".write": "auth != null && auth.uid === $uid",
           ".validate": "newData.hasChildren(['connectedAt'])",
@@ -26,7 +27,21 @@
           },
           "$other": {
             ".validate": false
-          }
+          },
+          ".read": "auth != null && auth.uid === $uid"
+        }
+      },
+      "public": {
+        ".read": "auth != null",
+        ".write": false,
+        "installCount": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "onlineCount": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "$other": {
+          ".validate": false
         }
       }
     },
@@ -41,7 +56,7 @@
       "posts": {
         ".read": "auth != null",
         "$postId": {
-          ".write": "auth != null && !data.exists() && newData.exists() && root.child('scrapbook/config/allowDirectPosts').val() === true && newData.child('authorUid').val() === auth.uid",
+          ".write": false,
           ".validate": "newData.hasChildren(['authorUid','nickname','category','text','createdAt','status','pinned'])",
           "authorUid": {
             ".validate": "newData.isString() && newData.val() === auth.uid"
@@ -82,7 +97,7 @@
         ".read": "auth != null",
         "$postId": {
           "$replyId": {
-            ".write": "auth != null && !data.exists() && newData.exists() && root.child('scrapbook/config/allowDirectPosts').val() === true && root.child('scrapbook/posts').child($postId).child('status').val() === 'published' && newData.child('authorUid').val() === auth.uid",
+            ".write": false,
             ".validate": "newData.hasChildren(['authorUid','nickname','text','createdAt'])",
             "authorUid": {
               ".validate": "newData.isString() && newData.val() === auth.uid"

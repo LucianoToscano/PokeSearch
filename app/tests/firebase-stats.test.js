@@ -24,7 +24,9 @@ test("Home and overlay both maintain activity",()=>{
 });
 test("Counters do not invent numbers when offline",()=>{
  assert.match(firebase,/onlineCount=-1,installCount=-1/);
- assert.match(firebase,/getChildrenCount\(\)/);
+ assert.doesNotMatch(firebase,/getChildrenCount\(\)/);
+ assert.match(firebase,/child\("public"\)\.child\("installCount"\)/);
+ assert.match(firebase,/child\("public"\)\.child\("onlineCount"\)/);
 });
 test("Home transparency affects panels, never artwork",()=>{
  assert.match(main,/homePanelsTransparency/);

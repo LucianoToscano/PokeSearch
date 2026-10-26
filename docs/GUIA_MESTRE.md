@@ -4,6 +4,49 @@
 >
 > **REGRA DE PRIORIDADE:** verificar sempre o HEAD e as PRs reais. Estado recente comprovado por commits/CI prevalece sobre instruções de versões antigas dentro do backup. *Nenhuma numeração QA comprova a conclusão de uma etapa de roadmap ou teste Samsung.*
 
+
+- **Última release oficial comprovada em 25/10/2026:** **PokeSearch LT111, v0.01.11 / versionCode 54315**, [GitHub Release estável e latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.11-54315). Fonte QA assinada `f3dd2ba2286a84cbb5f4cd43da328339afe92a80`; PR #72 squash MERGED. **LT87/PR #62** foram checkpoints históricos, não a versão atual. O HEAD real e os PRs devem ser consultados novamente antes de editar.
+
+## LT118 — Segunda Pokébola reativada e autorização integral (26/10/2026)
+- Usuário autorizou expressamente aplicar correções, melhorias, merge e gerar APK; controle da segunda Pokébola deve voltar à Home, sem apagar `prefs_secondary` ou alterar a Pokébola primária.
+- `MainActivity.buildHome()` muda somente a visibilidade do controle; ambas permanecem independentes em filtros, resultados, posições, modo e preferências. Login e lista de Favoritos seguem compartilhados quando previsto.
+- Corrigidos os testes estáticos LT111/LT112 para a nova interface visível. Persistem as correções de notificações, fila de favoritos, FirebaseStats e Mural de leitura da LT117.
+- Origem: quatro documentos DOCX LT116 da auditoria, incluindo Plano Mestre. Nova QA prevista: **0.01.18 / 54322**; deve haver confirmação de CI, assinatura e aparelho Samsung antes de chamar resultado de estável.
+- Pendências abertas e não ocultáveis: Functions/regras em produção, moderação de servidor, pin dos sprites, WebView allowlist, bateria, versões Android, testes instrumentados, 110 cenários Samsung. Merge foi autorizado, mas build/merge não equivalem à homologação física.
+- Consultar [relatório LT118](POKESEARCH_LT118_VALIDACAO_E_PENDENCIAS_20261026.md) e [backup integral](GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md). Nenhuma credencial é registrada.
+
+## QA LT116 final, sem publicação oficial — 25/10/2026
+- **GitHub Actions #40243697039 SUCCESS:** https://github.com/LucianoToscano/PokeSearch/actions/runs/40243697039. SOURCE_COMMIT do binário: `dd4c7dcde6404bd5f15a0dc897f873e7ca802d90`.
+- **APK assinado:** `PokeSearch-v0.01.16-LT-Coords-Parity-QA.apk`, `versionName=0.01.16`, `versionCode=54320`, applicationId `com.lucianotoscano.pokesearch`.
+- **SHA-256 binário:** `38bf598b5c267f2ad8493de69fae79b836d2e3388a0ac3fd314fcebf39c6b762`; **certificado v2:** `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- ZIP APK íntegro; 2.050 sprites com SHA-256 conferidos contra manifesto de cada arquivo (1.025 normais, 1.025 shiny). Node QA, Java, Gradle/R8 e assinatura concluídos com sucesso no workflow. Semelhante a builds anteriores, `testDebugUnitTest NO-SOURCE` não é execução de testes instrumentados no aparelho.
+- **Não instalar os candidatos 0.01.15/54319:** builds de desenvolvimento abortaram antes da criação de APK. Somente 0.01.16/54320 possui binário assinado aprovado nesta etapa.
+- **Samsung pendente:** P1 100%/P2 0% no mesmo momento, sprite lista + detalhe normal/shiny, pulso durante API e DOM, fallback transitório (sem burlar 401/403/429), preferências/sons/alertas/Favoritos, instalação preservando dados e Get coords. PR #73 segue Draft e main estável não pode ser modificada sem autorização.
+
+## LT115 — API e DOM integrados, sprites e pulso da Pokébola (25/10/2026)
+- **Causa confirmada por código:** a API ficava em searchPhase="filling" em vez de "searching", enquanto o CSS só pulsava durante searching; shinyPending também suprimia o efeito. A UI agora usa busca realmente ativa (filling/searching), incluindo API e DOM, na Pokébola 1 e 2.
+- **Sprites:** o parser aceitava pokemon_id numérico/textual, mas spriteData exigia número — corrigido com ID normalizado já validado; o carregamento não considera img.complete de dimensões zero como imagem boa, nem abandona a cópia offline em apenas 1,4 s; card de detalhes intercepta o mesmo recurso PokeAPI verificado do APK que a lista.
+- **API + site:** API primeira fonte. Falhas transitórias permitidas fazem fallback DOM através de session + verificações oficiais; sem misturar linhas ou coordenadas entre fontes. **Sem fallback para** 401,403,429, login, VIP, trainer não vinculado, erro de filtro; sem burlar limites. Resultados e filtros por serviço seguem independentes, mesma conta autenticada.
+- **QA LT115 preliminar:** 0.01.15/versionCode 54319 não deve ser instalado: a primeira revisão adicionou um WebViewClient extra que seria substituído pelo cliente posterior do card. **QA corrigido LT116:** 0.01.16/versionCode 54320, com interceptação de sprites e onPageFinished no MESMO cliente. Build de teste, não release. Testes 100%/0%, imagens base/shiny e UI, regressões de coords, filtros, preferências/alertas. **CI e Samsung devem ser verificados; nenhuma promoção automática.**
+- PR #73 Draft; main oficial permanece 0.01.11/54315; backups imutáveis.
+
+## LT114 — status de QA e instalação
+- [GitHub Actions LT114 #40240634152](https://github.com/LucianoToscano/PokeSearch/actions/runs/40240634152) SUCCESS; APK QA **0.01.14 / 54318**, origem **4734b6ce877961eff3bdaf7e5c05c69d33e86151**, SHA-256 **df04ad96591e2019181f49d9fb322f706807b2ceb568cea1987510da00e13b85**, certificado v2 SHA-256 **34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e**. 8/8 regressões Get coords, 10/10 paridade LT112, 2.050 PNGs verificados. PR #73 Draft com conflito de merge; main ainda **56403a2999fc8037aa020466cf03041b7926ae02**. Samsung P1/P2 pendente. [Evidências](POKESEARCH_LT113_GET_COORDS_DUAL_PARITY_20261025.md).
+
+## LT114 — Get coords: expiração durante requisição (25/10/2026)
+- Auditoria adicional do transporte compartilhado identificou risco de GET iniciado antes do despawn e concluído depois: revalidar `q.expiry` **após** HTTP e antes de entregar/copy coords; nunca reutilizar seleção vencida. Cobre o mesmo código compartilhado P1/P2 e adiciona teste de simultaneidade 100%/0%.
+- Versão QA sequencial prevista `0.01.14 / 54318`, preservando intacto `0.01.13 / 54317` (SHA-256 APK `e69fec269ba5613d71d1b55abd7705742553ed97edbd1a1ab671564dc7cf9614`; certificado v2 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`). 2.050 PNGs normais/shiny do APK anterior conferidos byte a byte com manifesto.
+- PR #73 segue Draft, não mesclar; branch divergente da main por três commits e resolução de conflitos requer avaliação separada, sem descartar funcionalidades. Samsung P1 e P2 ainda pendentes. Detalhes [LT113 Get coords dual](POKESEARCH_LT113_GET_COORDS_DUAL_PARITY_20261025.md).
+
+## LT113 — Get coords API com comparação incorreta e pesquisa obsoleta (25/10/2026)
+- Print do Samsung: **Audino shiny #531, PC 1538, 15/15/15**, card exibiu `Get coords API: stale-or-ambiguous-selection`.
+- API e UI usavam representações diferentes do mesmo PC: `"1538"` na resposta bruta e `1538` na seleção Android, o que era rejeitado no `api_browser_transport.js` por comparação estrita de tipos. Normalizar somente PC decimal canônico para inteiro, mantendo índice, espécie, ID exato da busca, despawn e código efêmero autenticado.
+- `OverlayService.requestCoordinates`: não consultar coordenadas de cards antigos enquanto a API atualiza; impedir seleção obsoleta. Mensagens claras em Português para busca atualizada, expirada ou já consultando.
+- Tudo na `OverlayService` compartilhada: Pokébola 1 e 2 obrigatoriamente testadas (15/15/15 e 0/0/0).
+- Teste `app/tests/lt113-get-coords-canonical-dual.test.js` obrigatório no Node QA; inclui formatos ambíguos, índices/PC de outro encontro, tentativa após refresh e proteção contra vazamento do `reveal_code`.
+- Backup `backup/lt112-before-get-coords-fix-20261025` = `c8e1c2eb7c394b4aec516a7013a1d919dee9b5ad`. Branch/PR #73 Draft; **QA 0.01.13 / versionCode 54317**, apenas arquivo de Actions, ainda não release estável.
+- Detalhes e roteiro físico Samsung: [LT113 Get coords dual](POKESEARCH_LT113_GET_COORDS_DUAL_PARITY_20261025.md).
+
 ## REGRA PERMANENTE — PARIDADE DE CORREÇÕES NAS DUAS POKÉBOLAS (LT112)
 **Obrigatória e prioritária em todas as próximas etapas.** Qualquer correção ou melhoria de API/DOM, filtros, sprites, cartões, localização, favoritos, notificações, sons, resultados, expiração, menus, atualização ou funcionamento deve ser efetiva e verificada na **Pokébola 1 e Pokébola 2** antes de concluir. A segunda Pokébola não pode ficar com bugs antigos enquanto a primeira é corrigida.
 - Código preferencialmente compartilhado por `OverlayService` (herdado por `SecondaryOverlayService`), sem copiar correções isoladas para uma instância. Quando houver comportamento específico, cobrir cada serviço.
@@ -16,7 +59,7 @@
 
 ## 1. Checkpoint canônico — NÃO REINICIAR
 - **Repositório:** [LucianoToscano/PokeSearch](https://github.com/LucianoToscano/PokeSearch).
-- **Última release oficial comprovada em 25/10/2026:** **PokeSearch LT111, v0.01.11 / versionCode 54315**, [GitHub Release estável e latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.11-54315). Fonte QA assinada `f3dd2ba2286a84cbb5f4cd43da328339afe92a80`; PR #72 squash MERGED. **LT87/PR #62** foram checkpoints históricos, não a versão atual. O HEAD real e os PRs devem ser consultados novamente antes de editar.
+- **Última release oficial confirmada:** **LT87, v0.00.87 / versionCode 54290**, [release v0.00.87-54290](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.00.87-54290). **main oficial verificada em 25/10/2026:** `83cf9a693a3672276e01d04e38ed14dce0071cb8`. PR #62 mesclada com histórico LT84–LT87; PR #59 mesclada, #60 e #61 encerradas como substituídas.
 - **Linha de desenvolvimento preservada:** [PR #63](https://github.com/LucianoToscano/PokeSearch/pull/63), Draft, branch `feature/lt88-lt93-evolution-20261025`, último HEAD confirmado para a origem desta reorganização: `352a3bdc048d4b6f7337209ccd1d77939b8ae2bf`. **Não voltar à LT83 ou à LT86.**
 - **Scrapbook / Mural da Comunidade:** [PR #64](https://github.com/LucianoToscano/PokeSearch/pull/64), Draft **baseada na PR #63**, branch `feature/pokesearch-community-scrapbook-stage1-20261025`. Estado imediatamente anterior à reorganização documental: `40440b1f510f9c2b6b1977985e3d550debaa0927`. Alterações deste guia ficam nessa branch, **sem merge e sem Release**.
 - **Importante:** o usuário informou ter realizado etapas adicionais, mas **o último estado GitHub tecnicamente comprovado do Mural contém apenas a Etapa 1 demonstrativa**. Etapas Firebase 2–5 não devem ser declaradas concluídas/online sem novos commits, regras, evidências e homologação.
@@ -217,3 +260,20 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - **Canal de atualização GitHub do app:** consulta `/repos/LucianoToscano/PokeSearch/releases/latest`, exige `prerelease=false`, `draft=false`, pacote/versão/código/assinatura/digest verificados antes de instalar. Agora retorna oficialmente `v0.01.11-54315`.
 - **Google Drive:** o manifesto `atualizacao.json` (ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`) **não foi alterado** nesta publicação, pois não existe upload de novo APK LT111 verificado nesse Drive. Não anunciar Drive como atualizado. A release GitHub já fornece download e mecanismo de atualização automáticos.
 - **Backup de segurança:** `backup/lt110-before-hide-second-pokeball-home-20261025` aponta para `e20f4c0469787edef1a4489159d44036dbc24bf0`, intacto. Homologação visual no Samsung continua a ser verificada em campo; código e assinatura auditados.
+
+## LT117 — Aplicação do Plano LT116 em QA (26/10/2026)
+- Documentação: [POKESEARCH_LT117_EXECUCAO_PLANO_CORRECOES_20261026.md](POKESEARCH_LT117_EXECUCAO_PLANO_CORRECOES_20261026.md), derivado do DOCX de auditoria do usuário.
+- P1-01: alerta geral por encontro com deduplicação **após** Android aceitar notificação; histórico e avisos separados, TTL, P1/P2 independentes.
+- P1-04: fila de Favoritos em lotes de até cinco espécies a cada 12s; respeita som, canal, TTL, novas tentativas e estado por Pokébola.
+- P1-02: FirebaseStats usa escalares `stats/public`; regras versionadas ocultam UIDs, Cloud Functions de agregados NÃO implantadas, exigem deduplicação de eventos/backfill e permissão explícita.
+- P1-03: Mural somente leitura no app e regras versionadas de post/reply negadas. Moderação e rate-limit backend pendentes; nenhuma regra foi implantada.
+- P2-01/P2-03: comentário da fonte API alinhado; removida leitura de árvore inteira.
+- QA candidata 0.01.17/54321 apenas; nenhuma publicação oficial/merge/alteração na main. Samsung P1/P2 e backend ainda **NO-GO**.
+
+
+### LT117 QA 0.01.17 — build protegido validado (26/10/2026)
+- [GitHub Actions #40402057720](https://github.com/LucianoToscano/PokeSearch/actions/runs/40402057720) **SUCCESS**: 82 suítes Node ativas (teste LT74 DEBUG antigo excluído), Java independente, Gradle `:app:testDebugUnitTest` (verificar resultado NO-SOURCE), `:app:assembleRelease`, R8 e assinatura.
+- APK: `PokeSearch-v0.01.17-LT-Audit-Fixes-QA.apk`, **source commit** `5c14d3a67d63ceb61b7dad5cdc947763ec0af05b`, `versionName=0.01.17` / `versionCode=54321`, 41.751.812 bytes.
+- APK SHA-256: `15af7e7a436e351ce74d2032d1f084f495c088e9b29520d8fd2c8d30b7320fab`; certificado v2 SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- APK ZIP íntegro; 1.025 PNG base e 1.025 PNG shiny com hashes 2.050/2.050. **Zero hash alterado** em comparação ao QA LT116.
+- **No-go:** o código Firebase/Functions foi somente versionado, sem deploy/regras em produção. Contadores agregados ainda exigem idempotência/servidor/migração; Mural sem escrita até moderação segura. Não mesclar/lançar sem homologar 110 cenários Samsung nas duas Pokébolas e obter aprovação.

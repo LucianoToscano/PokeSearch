@@ -50,6 +50,14 @@
     return u.origin==="https://"+SITE&&u.username===""&&u.password==="";
    }catch(_){return false;}
   }
+  function positiveInteger(value,min,max){
+   // API CP may be 1538 or "1538"; reject all other representations.
+   if(typeof value==="string"){
+    if(!/^(?:0|[1-9][0-9]*)$/.test(value))return null;
+    value=Number(value);
+   }
+   return Number.isSafeInteger(value)&&value>=min&&value<=max?value:null;
+  }
   function fail(code){return {ok:false,reason:code};}
   async function httpFailure(response){
    if(response.status!==403||typeof response.text!=="function")
@@ -111,8 +119,15 @@
      const raw=response.headers&&response.headers.get?
        response.headers.get("Retry-After"):null;
      const seconds=raw!==null&&raw!==undefined&&raw!==""?Number(raw):NaN;
-     const delay=Number.isFinite(seconds)&&seconds>=1&&seconds<=3600?seconds:60;
+     const parsedDate=typeof raw==="string"?Date.parse(raw):NaN;
+     const byDate=Number.isFinite(parsedDate)?Math.ceil((parsedDate-dateNow())/1000):NaN;
+     const requestedDelay=Number.isFinite(seconds)?seconds:byDate;
+     const delay=Number.isFinite(requestedDelay)&&requestedDelay>=1&&requestedDelay<=3600?requestedDelay:60;
      retryUntil[kind]=Math.max(retryUntil[kind],dateNow()+delay*1000);
+    }
+    if(response.status===401){
+     // Invalid site JWT: clear it on the authenticated site origin; never bypass the denial.
+     try{if(d.storage&&typeof d.storage.removeItem==="function")d.storage.removeItem("jwt");}catch(_){}
     }
     if(response.status!==200)return await httpFailure(response);
     const len=response.headers&&response.headers.get&&Number(response.headers.get("content-length"));
@@ -181,8 +196,15 @@
     const planned=d.revealContract.planForSpawn(raw,{nowMs:dateNow()});
     if(!planned.ok||!safeMethod(planned.method,planned.url))continue;
     const expiry=Date.parse(raw.despawn_at);
+    const verifiedId=positiveInteger(raw.pokemon_id,1,10000);
+    const verifiedCp=positiveInteger(raw.cp,0,100000);
+    // A reveal code can only reference the exact displayed server row.
+    if(verifiedId===null||verifiedCp===null||
+       verifiedId!==positiveInteger(card.number.slice(1),1,10000)||
+       verifiedCp!==positiveInteger(card.cp,0,100000)||
+       !(expiry>dateNow()))continue;
     reveals.set(card.sourceIndex,{
-     code:raw.reveal_code,pokemonId:raw.pokemon_id,cp:raw.cp,expiry,
+     code:raw.reveal_code,pokemonId:verifiedId,cp:verifiedCp,expiry,
      searchVersion:generation
     });
    }
@@ -190,6 +212,7 @@
    return {ok:true,searchId:generation,cards:parsed.cards,
     found:parsed.found,siteCount:parsed.siteCount,
     rejected:parsed.rejected,expired:parsed.expired,
+    serverCap:parsed.serverCap,displayCap:parsed.displayCap,
     criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false,
     source:"experimental-api",requiresIntegrationValidation:true,requestValidated:true,pvpVerified:!!pvp};
   }
@@ -199,11 +222,14 @@
    if(!requested||typeof requested!=="object")return fail("invalid-selection");
    const idx=requested.sourceIndex;
    const q=Number.isInteger(idx)?reveals.get(idx):null;
-   if(!q||!Number.isInteger(requested.searchId)||
+   const requestedId=positiveInteger(requested.pokemonId,1,10000);
+    const requestedCp=positiveInteger(requested.cp,0,100000);
+    if(!q||!Number.isInteger(requested.searchId)||
       q.searchVersion!==requested.searchId||
       q.searchVersion!==searchVersion||
-      requested.pokemonId!==q.pokemonId||
-      requested.cp!==q.cp)return fail("stale-or-ambiguous-selection");
+      requestedId===null||requestedCp===null||
+       requestedId!==q.pokemonId||
+       requestedCp!==q.cp)return fail("stale-or-ambiguous-selection");
    if(!(q.expiry>dateNow())){
     reveals.delete(idx);return fail("expired-spawn");
    }
@@ -216,6 +242,12 @@
     // The reveal code never enters Android; a failed auth/limit is not bypassed.
     const result=await request("GET",url,null,false,6000);
     if(q.searchVersion!==searchVersion||disposed)return fail("superseded-search");
+    // A spawn can expire during a slow GET. A valid request at dispatch
+    // is NOT permission to return or copy coordinates after despawn.
+    if(!(q.expiry>dateNow())){
+     reveals.delete(idx);
+     return fail("expired-spawn");
+    }
     if(!result.ok)return result;
     const parsed=d.revealContract.normalizeRevealResponse(result.body,
      {expectedPokemonId:q.pokemonId});
