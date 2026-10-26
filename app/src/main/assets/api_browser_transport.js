@@ -163,31 +163,18 @@
    const result=await request("POST",SEARCH_URL,proposed.payload,"optional",10000);
    if(generation!==searchVersion||disposed)return fail("superseded-search");
    if(!result.ok)return result;
+   const pvp=config&&(config.mode==="gl"||config.mode==="ul");
    const parsed=d.apiContract.normalizeResponse(result.body,{
-    nowMs:dateNow(),shiny:config&&config.shiny===true
+    nowMs:dateNow(),shiny:config&&config.shiny===true,
+    pvpLeague:pvp?proposed.payload.pvp_league:null,
+    pvpMaxRank:pvp?proposed.payload.pvp_top_rank:null
    });
    if(!parsed.ok)return fail("invalid-results");
-   // PvP cards require per-card league/rank evidence returned by the API.
-   // Never mark arbitrary responses as league-confirmed.
-   const pvp=config&&(config.mode==="gl"||config.mode==="ul");
-   if(pvp){
-    const requested=config.mode==="ul"?"ultra":"great";
-    const maxRank=Number(config.mode==="ul"?config.ulRank:config.glRank);
-    const vetted=[];
-    for(const card of parsed.cards){
-     const candidate=result.body.results[card.sourceIndex];
-     const rank=candidate&&candidate.pvp;
-     if(!rank||rank.league!==requested||!Number.isInteger(rank.rank)||
-        rank.rank<1||rank.rank>maxRank)continue;
-     card.rank=String(rank.rank);
-     card.ivRankSource="api-pvp";
-     card.ivRankLeague=requested;
-     vetted.push(card);
-    }
-    if(parsed.cards.length&&!vetted.length)return fail("pvp-unverified");
-    parsed.cards=vetted;
-    parsed.found=vetted.length;
-   }
+   // Only ranked, league-matched, unexpired rows can enter the ten-card
+   // display. A nonempty HTTP response with NO verified PvP row is not
+   // proof of zero matching spawns; preserve old results instead.
+   if(pvp&&result.body.results.length>0&&parsed.cards.length===0)
+    return fail("pvp-unverified");
    // Store only codes belonging to sanitized, live results.
    const all=result.body.results;
    for(const card of parsed.cards){
@@ -214,7 +201,8 @@
     rejected:parsed.rejected,expired:parsed.expired,
     serverCap:parsed.serverCap,displayCap:parsed.displayCap,
     criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false,
-    source:"experimental-api",requiresIntegrationValidation:true,requestValidated:true,pvpVerified:!!pvp};
+    source:"experimental-api",requiresIntegrationValidation:true,requestValidated:true,
+    pvpVerified:!!pvp&&(parsed.cards.length>0||result.body.results.length===0)};
   }
   async function reveal(requested){
    if(disposed)return fail("disposed");

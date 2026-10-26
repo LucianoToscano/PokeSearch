@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT120 — API: trajes preservados e rank PvP antes de cap de 10 (26/10/2026)
+- Auditoria estática identificou dois defeitos: (`api_result_contract.js`) descartava `costume_id`/`costume` dos cards sanitizados, permitindo que `sprite_offline.js` substituísse sem segurança um sprite normal em fantasia; (`api_browser_transport.js`) só validava rank GL/UL **depois** de truncar os dez candidatos preliminares, ocultando spawns válidos com `sourceIndex` posterior.
+- Correção candidata: preservar `costume_id` inteiro e `costume` textual limitado no contrato entregue ao Android; rejeitar ID inválido. O resolvedor compartilhado dos dois WebViews recebe a evidência e impede a substituição de imagem de traje por espécie normal.
+- Ranking: apenas candidatos da liga exata, rank inteiro 1–50 e até o limite configurado entram no conjunto de até dez; validação feita antes de cap/deduplicação; `sourceIndex` ORIGINAL preservado para Get coords. Não aceitar uma resposta HTTP com linhas não confirmadas como zero PvP verdadeiro.
+- Testes LT120 incluem trajes com ID e texto, forma padrão sem traje, GL e UL, posições posteriores a dez, dados inválidos, transporte HTTP simulado e duas Pokébolas compartilhando o código.
+- Destino QA assinado **0.01.20/54324**. Merge/relatórios condicionados ao CI; Samsung P1/P2, Firebase, restante dos 110 cenários, segurança WebViews, bateria, sprites extras continuam pendentes.
+
+
+
 ## LT119 — Print Samsung: sprite regional ausente no card (26/10/2026)
 - Evidência enviada: duas Pokébolas 0% e 100% simultâneas, card de Zigzagoon #263 forma Galarian Shiny 15/15/15 exibe losango ◇ em vez de sprite. O print confirma a lacuna visual, não confirma funcionamento de notificações/filtros/Get coords.
 - Causa observada no código LT118: parser de API deixa `image=""` corretamente quando forma regional não é padrão, mas `sprite_offline.js` recupera somente formas-base; tanto lista quanto detalhe usam o mesmo resolvedor. Assim, falta mapeamento explícito exato da variedade 10174.
