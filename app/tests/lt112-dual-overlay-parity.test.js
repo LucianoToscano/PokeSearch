@@ -94,7 +94,11 @@ check("explicit normal/default form recovers missing image; special forms do NOT
   assert.equal(resolved.src,"file:///android_asset/pokemon-sprites/base/25.png",form);
  }
  for(const form of ["Alolan","Galarian","Cosplay","PIKACHU_HAT"]){
-  assert.equal(jsSprite.resolve({...starter,form}).src,"",form);
+  const resolved=jsSprite.resolve({...starter,form}).src;
+  const key="25:"+String(form).toUpperCase().replace(/[^A-Z0-9]/g,"");
+  const verified=jsSprite.FORM_VARIANTS[key];
+  if(verified)assert.match(resolved,/d8c2fb78563e28ad7b3abe938cf6e79998d04e90/,form);
+  else assert.equal(resolved,"",form);
  }
  assert.equal(jsSprite.resolve({...starter,form:"Normal",costume_id:3}).src,"");
 });
