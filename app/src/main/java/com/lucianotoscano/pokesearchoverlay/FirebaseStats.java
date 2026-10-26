@@ -16,7 +16,7 @@ final class FirebaseStats {
     private static FirebaseAuth auth;
     private static DatabaseReference online,connection;
     private static String uid="";
-    private static boolean initialized,homeVisible,overlayVisible,connected,presenceScheduled;
+    private static boolean initialized,homeVisible,primaryOverlayVisible,secondaryOverlayVisible,connected,presenceScheduled;
     private static long onlineCount=-1,installCount=-1;
     private static WeakReference<TextView> onlineLabel=new WeakReference<>(null);
     private static WeakReference<TextView> installLabel=new WeakReference<>(null);
@@ -29,8 +29,14 @@ final class FirebaseStats {
     static synchronized void setHomeVisible(Context context,boolean visible){
         homeVisible=visible;init(context);refreshPresence();
     }
-    static synchronized void setOverlayVisible(Context context,boolean visible){
-        overlayVisible=visible;init(context);refreshPresence();
+    static synchronized void setOverlayVisible(Context context,boolean visible,boolean secondary){
+        if(secondary)secondaryOverlayVisible=visible;
+        else primaryOverlayVisible=visible;
+        init(context);refreshPresence();
+    }
+    private static boolean anyWindowVisible(){
+        return PresenceWindowState.isActive(
+            homeVisible,primaryOverlayVisible,secondaryOverlayVisible);
     }
     private static synchronized void init(Context context){
         if(initialized)return;
@@ -96,14 +102,14 @@ final class FirebaseStats {
     }
     private static synchronized void refreshPresence(){
         if(online==null||!connected)return;
-        if(homeVisible||overlayVisible){
+        if(anyWindowVisible()){
             if(presenceScheduled)return;
             presenceScheduled=true;
             // The disconnection operation is registered on the SERVER first.
             online.onDisconnect().removeValue((error,reference)->{
                 synchronized(FirebaseStats.class){
                     if(error!=null){presenceScheduled=false;return;}
-                    if(homeVisible||overlayVisible)
+                    if(anyWindowVisible())
                         online.child("connectedAt").setValue(ServerValue.TIMESTAMP);
                     else {presenceScheduled=false;online.removeValue();}
                 }

@@ -1202,7 +1202,7 @@ public class OverlayService extends Service {
                 .setContentText("Toque para abrir PokeSearch")
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(isSecondaryOverlay()?74:73,note);
-        FirebaseStats.setOverlayVisible(this,true);
+        FirebaseStats.setOverlayVisible(this,true,isSecondaryOverlay());
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         try{visualPrefsJson=normalizeVisualPrefs(
             overlayPrefs().getString("visualPrefsJson","{}")).toString();}
@@ -1222,8 +1222,17 @@ public class OverlayService extends Service {
         panel.addJavascriptInterface(new Bridge(),"Native");
         root.addView(panel,new FrameLayout.LayoutParams(-1,-1));
         panel.setWebViewClient(new WebViewClient(){
+            // Never expose the Native bridge to a navigated remote document.
+            @Override public boolean shouldOverrideUrlLoading(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return !LocalBridgePagePolicy.allows(
+                    request.getUrl().toString(),"dock.html");
+            }
+            @Override public boolean shouldOverrideUrlLoading(WebView view,String url){
+                return !LocalBridgePagePolicy.allows(url,"dock.html");
+            }
             @Override public void onPageFinished(WebView v,String url){
-                if(url!=null&&url.startsWith("file:///android_asset/")){
+                if(LocalBridgePagePolicy.allows(url,"dock.html")){
                     panelLoaded=true;update();
                 }
             }
@@ -1403,12 +1412,21 @@ public class OverlayService extends Service {
         menuPanel.addJavascriptInterface(new Bridge(),"Native");
         menuRoot.addView(menuPanel,new FrameLayout.LayoutParams(-1,-1));
         menuPanel.setWebViewClient(new WebViewClient(){
+            // Never expose the Native bridge to a navigated remote document.
+            @Override public boolean shouldOverrideUrlLoading(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return !LocalBridgePagePolicy.allows(
+                    request.getUrl().toString(),"dock.html");
+            }
+            @Override public boolean shouldOverrideUrlLoading(WebView view,String url){
+                return !LocalBridgePagePolicy.allows(url,"dock.html");
+            }
             @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
                     WebView view,android.webkit.WebResourceRequest request){
                 return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
             }
             @Override public void onPageFinished(WebView view,String url){
-                if(url!=null&&url.startsWith("file:///android_asset/")){
+                if(LocalBridgePagePolicy.allows(url,"dock.html")){
                     menuLoaded=true;
                     update();
                     if(menuExpanded)js(menuPanel,true,"window.syncMenu(true,"+
@@ -1501,6 +1519,15 @@ public class OverlayService extends Service {
             }
         });
         detailPanel.setWebViewClient(new WebViewClient(){
+            // Never expose the Native bridge to a navigated remote document.
+            @Override public boolean shouldOverrideUrlLoading(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return !LocalBridgePagePolicy.allows(
+                    request.getUrl().toString(),"detail.html");
+            }
+            @Override public boolean shouldOverrideUrlLoading(WebView view,String url){
+                return !LocalBridgePagePolicy.allows(url,"detail.html");
+            }
             // Preserve native card initialization and its offline sprites.
             // Two separate setWebViewClient calls would cancel one another.
             @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
@@ -1508,7 +1535,7 @@ public class OverlayService extends Service {
                 return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
             }
             @Override public void onPageFinished(WebView v,String url){
-                if(url!=null&&url.startsWith("file:///android_asset/")){
+                if(LocalBridgePagePolicy.allows(url,"detail.html")){
                     detailLoaded=true;
                     if(selected>=0)showDetails(selected);
                 }
@@ -1545,12 +1572,21 @@ public class OverlayService extends Service {
         popupPanel.addJavascriptInterface(new Bridge(),"Native");
         popupRoot.addView(popupPanel,new FrameLayout.LayoutParams(-1,-1));
         popupPanel.setWebViewClient(new WebViewClient(){
+            // Never expose the Native bridge to a navigated remote document.
+            @Override public boolean shouldOverrideUrlLoading(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return !LocalBridgePagePolicy.allows(
+                    request.getUrl().toString(),"dock.html");
+            }
+            @Override public boolean shouldOverrideUrlLoading(WebView view,String url){
+                return !LocalBridgePagePolicy.allows(url,"dock.html");
+            }
             @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
                     WebView view,android.webkit.WebResourceRequest request){
                 return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
             }
             @Override public void onPageFinished(WebView web,String url){
-                if(url!=null&&url.startsWith("file:///android_asset/")){
+                if(LocalBridgePagePolicy.allows(url,"dock.html")){
                     popupLoaded=true;update();
                     if(menuExpanded&&!popupKind.isEmpty())
                         js(popupPanel,true,"window.showNativePopup&&window.showNativePopup("+
@@ -1681,12 +1717,21 @@ public class OverlayService extends Service {
             resultPanel=null;resultGrip=null;return;
         }
         resultPanel.setWebViewClient(new WebViewClient(){
+            // Never expose the Native bridge to a navigated remote document.
+            @Override public boolean shouldOverrideUrlLoading(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return !LocalBridgePagePolicy.allows(
+                    request.getUrl().toString(),"dock.html");
+            }
+            @Override public boolean shouldOverrideUrlLoading(WebView view,String url){
+                return !LocalBridgePagePolicy.allows(url,"dock.html");
+            }
             @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
                     WebView view,android.webkit.WebResourceRequest request){
                 return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
             }
             @Override public void onPageFinished(WebView web,String url){
-                if(url!=null&&url.startsWith("file:///android_asset/")){
+                if(LocalBridgePagePolicy.allows(url,"dock.html")){
                     resultLoaded=true;
                     js(resultPanel,true,"window.setResultsCollapsed("+resultCollapsed+")");
                     update();
@@ -4618,7 +4663,7 @@ public class OverlayService extends Service {
         else running=false;
         if(!running&&!secondaryRunning){
             SupportMissionState.overlayStopped();
-            FirebaseStats.setOverlayVisible(this,false);
+            FirebaseStats.setOverlayVisible(this,false,isSecondaryOverlay());
         }
         if(favoritePickerDialog!=null){
             favoritePickerDialog.dismiss();favoritePickerDialog=null;

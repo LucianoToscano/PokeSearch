@@ -61,6 +61,6 @@ check("two positions, two result lists, no forced colored labels",()=>{
 check("closing one service does not mark both offline",()=>{
  assert.match(service,/if\(isSecondaryOverlay\(\)\)secondaryRunning=false/);
  assert.match(service,/if\(!running&&!secondaryRunning\)\{/);
- assert.match(service,/FirebaseStats.setOverlayVisible\(this,false\)/);
+ assert.match(service,/FirebaseStats\.setOverlayVisible\(this,false,isSecondaryOverlay\(\)\)/);
 });
 console.log("DUAL-OVERLAY "+count+"/"+count+" PASS");

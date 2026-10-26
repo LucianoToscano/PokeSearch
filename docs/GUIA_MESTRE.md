@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT121 — Segurança dos WebViews locais + presença das duas Pokébolas (26/10/2026)
+- **Causa confirmada em código:** cinco WebViews internos expõem `Native` via `addJavascriptInterface` mas seus `WebViewClient` não restringiam navegação de documento principal. `onPageFinished` aceitaria qualquer arquivo com prefixo `file:///android_asset/`. Corrigido com política de URLs exatas local `dock.html` e `detail.html` (somente parâmetros conhecidos), rejeitando HTTP(S), `data:`, `content:` e arquivos extras para os cinco; clientes continuam interceptando sprites offline e preservam seu callback de inicialização. O WebView remoto autenticado não recebe `Native` e não sofre mudança de navegação nesta etapa.
+- **Causa confirmada nos contadores:** `FirebaseStats.overlayVisible` era booleano global alimentado por dois serviços independentes. Ao parar P1, era marcado falso mesmo com P2 ativo. Estado separado P1/P2 e Home; `PresenceWindowState.isActive` agrega os três com teste Java da matriz de oito combinações.
+- **QA candidata:** 0.01.21 / versionCode 54325, testes estáticos + Java e APK assinado no CI. Não declarar sucesso até assinar/verificar artefato. Nenhum deploy Firebase.
+- **Limites:** ainda falta revisão de subframes/cross-origin, Content Security Policy, instrumentação Samsung, agregados Firebase idempotentes em backend, mural/moderação, pins restantes dos 2.050 sprites e compatibilidade Doze/target SDK.
+
+
+
 ## LT120 — Correções adicionais verificadas, integradas e APK QA assinado (26/10/2026)
 - **Problemas confirmados por auditoria de código:** (a) dados `costume_id`/`costume` eram descartados por `api_result_contract.js`, podendo converter uma forma com traje numa imagem comum no WebView, apesar de a API recusar a URL genérica; (b) `api_browser_transport.js` truncava os resultados antes de validar rank PvP GL/UL, ocultando Pokémon válidos após o décimo candidato. Nos dois casos, P1 e P2 compartilhavam a falha.
 - **Correções:** preservação sanitizada de evidência de traje e bloqueio de sprite-base para fantasia; validação prévia de liga e rank inteiros usando todos os candidatos da resposta original, preservando `sourceIndex` para Get coords; limite visual de dez continua. PvP não comprovado em resposta não vazia não vira resultado vazio falsamente certificado. Resultados anteriores preservados em falhas de contrato.
