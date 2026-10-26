@@ -24,7 +24,8 @@ assert.match(online,/root\.addView\(feed,new LinearLayout\.LayoutParams\(-1,-2\)
 assert.doesNotMatch(online,/activity\.setContentView\(/);
 assert.doesNotMatch(online,/root\.addView\(scroll,grow\)/);
 assert.match(online,/BuildConfig\.SCRAPBOOK_ONLINE_QA/);
-assert.match(online,/accepting=Boolean\.TRUE\.equals/);
+assert.match(online,/accepting=false;/);
+assert.match(online,/Mural em leitura/);
 assert.match(dock,/panel\.append\(title,fieldRow,sliderRow,label,message\)/);
 assert.match(dock,/field\.maxLength=30/);
 console.log("PASS QA101: compact original tribute, scrapbook cards, single scroll and unchanged Location/Firebase gates");

@@ -58,8 +58,10 @@ final class FirebaseStats {
         myInstall.get().addOnSuccessListener(snapshot->{
             if(!snapshot.exists())myInstall.child("installedAt").setValue(ServerValue.TIMESTAMP);
         });
-        root.child("installations").addValueEventListener(counter(false));
-        root.child("online").addValueEventListener(counter(true));
+        // Only public aggregate scalars may be read across installations.
+        // Individual UIDs/presence are protected by Firebase rules.
+        root.child("public").child("installCount").addValueEventListener(counter(false));
+        root.child("public").child("onlineCount").addValueEventListener(counter(true));
         online=root.child("online").child(uid);
         connection=db.getReference(".info/connected");
         connection.addValueEventListener(new ValueEventListener(){
@@ -77,8 +79,10 @@ final class FirebaseStats {
         return new ValueEventListener(){
             @Override public void onDataChange(DataSnapshot snapshot){
                 synchronized(FirebaseStats.class){
-                    if(isOnline)onlineCount=snapshot.getChildrenCount();
-                    else installCount=snapshot.getChildrenCount();
+                    Long count=snapshot.getValue(Long.class);
+                    long checked=count!=null&&count>=0?count:-1;
+                    if(isOnline)onlineCount=checked;
+                    else installCount=checked;
                     render();
                 }
             }

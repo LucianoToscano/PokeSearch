@@ -2078,8 +2078,9 @@ test("UX-NOTIFY-07 Home favorites toggle migrates safely to tri-state preference
 test("UX-NOTIFY-08 personalized matching favorites use separate notifications and distinct IDs",()=>{
  return service.includes('java.util.LinkedHashMap<String,String[]> individualFavorites')&&
   service.includes('if(WatchAlerts.speciesToneCount(this)>0)')&&
-  service.includes('WatchAlerts.match(this,info[0]')&&
-  service.includes('if(count++>=5)break')&&
+  service.includes('drainFavoriteAlertQueue()')&&
+  service.includes('FAVORITE_ALERT_BATCH_SIZE=5')&&
+  service.includes('WatchAlerts.match(this,representative.name,representative.details)')&&
   watch.includes('java.util.concurrent.atomic.AtomicInteger NEXT_ALERT_ID')&&
   watch.includes('NEXT_ALERT_ID.updateAndGet');
 });

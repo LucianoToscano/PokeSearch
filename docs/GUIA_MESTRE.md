@@ -250,3 +250,12 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - **Canal de atualização GitHub do app:** consulta `/repos/LucianoToscano/PokeSearch/releases/latest`, exige `prerelease=false`, `draft=false`, pacote/versão/código/assinatura/digest verificados antes de instalar. Agora retorna oficialmente `v0.01.11-54315`.
 - **Google Drive:** o manifesto `atualizacao.json` (ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`) **não foi alterado** nesta publicação, pois não existe upload de novo APK LT111 verificado nesse Drive. Não anunciar Drive como atualizado. A release GitHub já fornece download e mecanismo de atualização automáticos.
 - **Backup de segurança:** `backup/lt110-before-hide-second-pokeball-home-20261025` aponta para `e20f4c0469787edef1a4489159d44036dbc24bf0`, intacto. Homologação visual no Samsung continua a ser verificada em campo; código e assinatura auditados.
+
+## LT117 — Aplicação do Plano LT116 em QA (26/10/2026)
+- Documentação: [POKESEARCH_LT117_EXECUCAO_PLANO_CORRECOES_20261026.md](POKESEARCH_LT117_EXECUCAO_PLANO_CORRECOES_20261026.md), derivado do DOCX de auditoria do usuário.
+- P1-01: alerta geral por encontro com deduplicação **após** Android aceitar notificação; histórico e avisos separados, TTL, P1/P2 independentes.
+- P1-04: fila de Favoritos em lotes de até cinco espécies a cada 12s; respeita som, canal, TTL, novas tentativas e estado por Pokébola.
+- P1-02: FirebaseStats usa escalares `stats/public`; regras versionadas ocultam UIDs, Cloud Functions de agregados NÃO implantadas, exigem deduplicação de eventos/backfill e permissão explícita.
+- P1-03: Mural somente leitura no app e regras versionadas de post/reply negadas. Moderação e rate-limit backend pendentes; nenhuma regra foi implantada.
+- P2-01/P2-03: comentário da fonte API alinhado; removida leitura de árvore inteira.
+- QA candidata 0.01.17/54321 apenas; nenhuma publicação oficial/merge/alteração na main. Samsung P1/P2 e backend ainda **NO-GO**.

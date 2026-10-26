@@ -228,7 +228,7 @@ public class OverlayService extends Service {
     private boolean popupAbove=false;
     private int popupOffsetDp=-1,popupRoomDp=-1;
     private String probeScriptCache;
-    // Experimental API: local explicit opt-in. All installations default to DOM.
+    // User preference controls API/DOM source; current default is API ON, not DOM.
     private AuthorizedApiCollector authorizedApiCollector;
     private boolean displayedApiResults=false;
     private int displayedApiSearchId=-1;
@@ -416,6 +416,7 @@ public class OverlayService extends Service {
         handler.removeCallbacks(pageFinishedRefresh);
         handler.removeCallbacks(loginEndRefresh);
         handler.removeCallbacks(deferredSessionReload);
+        handler.removeCallbacks(drainFavoriteAlerts);
     }
     // Never enforce an artificial minimum interval after changing IV / GL / UL.
     // One active native request and upstream policy remain authoritative.
@@ -448,6 +449,15 @@ public class OverlayService extends Service {
     private final java.util.Set<String> knownSpawns=new java.util.HashSet<>();
     // Recent identity TTL protects against duplicate notices when a briefly
     // missing encounter reappears. It is never persisted or used for API retry.
+    // Discovery history is distinct from actual notification delivery.
+    // Only notify() success can consume a general-alert identity; P1 and P2
+    // each own one map because SecondaryOverlayService inherits this service.
+    private final java.util.LinkedHashMap<String,Long> successfullyNotifiedGeneralSpawns=
+        new java.util.LinkedHashMap<String,Long>(256,0.75f,true){
+            @Override protected boolean removeEldestEntry(java.util.Map.Entry<String,Long> item){
+                return size()>256;
+            }
+        };
     private final java.util.LinkedHashMap<String,Long> recentSpawnExpiries=
         new java.util.LinkedHashMap<String,Long>(256,0.75f,true){
             @Override protected boolean removeEldestEntry(java.util.Map.Entry<String,Long> item){
@@ -464,6 +474,68 @@ public class OverlayService extends Service {
                 return size()>256;
             }
         };
+
+    private static final int FAVORITE_ALERT_BATCH_SIZE=5;
+    private static final long FAVORITE_ALERT_BATCH_INTERVAL_MS=12_000L;
+    private static final long FAVORITE_ALERT_RETRY_DELAY_MS=60_000L;
+    private static final int MAX_QUEUED_FAVORITES=100;
+    private static final class QueuedFavoriteAlert{
+        final String key,name,details;
+        final long expiry;
+        QueuedFavoriteAlert(String key,String name,String details,long expiry){
+            this.key=key;this.name=name;this.details=details;this.expiry=expiry;
+        }
+    }
+    private final java.util.LinkedHashMap<String,QueuedFavoriteAlert> queuedFavoriteAlerts=
+        new java.util.LinkedHashMap<>();
+    private final Runnable drainFavoriteAlerts=()->drainFavoriteAlertQueue();
+    private void scheduleFavoriteAlertDrain(long delay){
+        handler.removeCallbacks(drainFavoriteAlerts);
+        if(!stopped&&!queuedFavoriteAlerts.isEmpty())
+            handler.postDelayed(drainFavoriteAlerts,delay);
+    }
+    private void drainFavoriteAlertQueue(){
+        if(stopped){queuedFavoriteAlerts.clear();return;}
+        long now=System.currentTimeMillis();
+        queuedFavoriteAlerts.entrySet().removeIf(entry->entry.getValue().expiry<=now ||
+            recentFavoriteAlertExpiries.getOrDefault(entry.getKey(),0L)>now);
+        if(queuedFavoriteAlerts.isEmpty())return;
+        if(!WatchAlerts.enabled(this)||"off".equals(WatchAlerts.mode(this))){
+            queuedFavoriteAlerts.clear();return; // explicit user OFF is authoritative
+        }
+        if(!WatchAlerts.permissionGranted(this)){
+            scheduleFavoriteAlertDrain(FAVORITE_ALERT_RETRY_DELAY_MS);return;
+        }
+        java.util.Set<String> wanted=WatchAlerts.watched(this);
+        java.util.LinkedHashMap<String,java.util.ArrayList<QueuedFavoriteAlert>> bySpecies=
+            new java.util.LinkedHashMap<>();
+        for(QueuedFavoriteAlert pending:new java.util.ArrayList<>(queuedFavoriteAlerts.values())){
+            if(!WatchAlerts.matches(pending.name,wanted)){
+                queuedFavoriteAlerts.remove(pending.key);continue;
+            }
+            String species=WatchAlerts.normalized(pending.name);
+            if(!bySpecies.containsKey(species)&&bySpecies.size()>=FAVORITE_ALERT_BATCH_SIZE)
+                continue; // backpressure, not loss: leave remaining in queue
+            bySpecies.computeIfAbsent(species,k->new java.util.ArrayList<>()).add(pending);
+        }
+        int delivered=0;
+        for(java.util.ArrayList<QueuedFavoriteAlert> group:bySpecies.values()){
+            QueuedFavoriteAlert representative=group.get(0);
+            if(WatchAlerts.match(this,representative.name,representative.details)){
+                delivered++;
+                for(QueuedFavoriteAlert success:group){
+                    recentFavoriteAlertExpiries.put(success.key,success.expiry);
+                    queuedFavoriteAlerts.remove(success.key);
+                }
+            }
+        }
+        if(!queuedFavoriteAlerts.isEmpty())
+            scheduleFavoriteAlertDrain(delivered==0?FAVORITE_ALERT_RETRY_DELAY_MS:
+                FAVORITE_ALERT_BATCH_INTERVAL_MS);
+        BugReport.log(this,"FAVORITE_ALERT_BATCH",
+            (isSecondaryOverlay()?"P2":"P1")+" grupos="+bySpecies.size()+
+            " entregues="+delivered+" pendentes="+queuedFavoriteAlerts.size());
+    }
     private long armedDespawnMillis=0L;
     private final Runnable expiryRefresh=new Runnable(){
         @Override public void run(){
@@ -2514,6 +2586,8 @@ public class OverlayService extends Service {
         catch(Exception e){recordFailure("ler histórico",e);history=new JSONArray();}
         java.util.Set<String> current=new java.util.HashSet<>();
         String firstNew="";
+        String firstGeneralKey="";
+        long firstGeneralExpiry=0L;
         String firstWatched="";
         String watchDetails="";
         int watchedCount=0;
@@ -2526,6 +2600,7 @@ public class OverlayService extends Service {
         java.util.Set<String> wanted=WatchAlerts.watched(this);
         long now=System.currentTimeMillis();
         recentSpawnExpiries.entrySet().removeIf(entry->entry.getValue()<=now);
+        successfullyNotifiedGeneralSpawns.entrySet().removeIf(entry->entry.getValue()<=now);
         recentFavoriteAlertExpiries.entrySet().removeIf(entry->entry.getValue()<=now);
         for(int i=0;i<cards.length();i++){
             JSONObject c=cards.optJSONObject(i);
@@ -2540,12 +2615,16 @@ public class OverlayService extends Service {
             // Never let a previous ordinary sighting suppress a newly enabled
             // Favorite alert. Its own dedup key prevents duplicate sound on
             // every refresh. Neither path accepts unverified/expired spawns.
-            if(newSpawn){
-                recentSpawnExpiries.put(key,expireAt);
-                if(firstNew.isEmpty() &&
-                    ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
-                    verifiedTargetCriteria(c))
-                    firstNew=c.optString("name","Pokémon");
+            if(newSpawn)recentSpawnExpiries.put(key,expireAt);
+            // A discovery can be seen while Android notifications are OFF.
+            // Retain eligibility until an actual accepted notification or TTL.
+            if(firstNew.isEmpty() &&
+                successfullyNotifiedGeneralSpawns.getOrDefault(key,0L)<=now &&
+                ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
+                verifiedTargetCriteria(c)){
+                firstNew=c.optString("name","Pokémon");
+                firstGeneralKey=key;
+                firstGeneralExpiry=expireAt;
             }
             if(WatchAlerts.enabled(this) &&
                 recentFavoriteAlertExpiries.getOrDefault(key,0L)<=now &&
@@ -2566,6 +2645,19 @@ public class OverlayService extends Service {
                     individualFavorites.put(WatchAlerts.normalized(favoriteName),
                         new String[]{favoriteName,"PC "+c.optString("cp","?")});
             }
+            if(pendingFavoriteKeys.containsKey(key)&&WatchAlerts.speciesToneCount(this)>0 &&
+                !queuedFavoriteAlerts.containsKey(key)){
+                if(queuedFavoriteAlerts.size()>=MAX_QUEUED_FAVORITES){
+                    // Prefer expiry over insertion order; never silently evict
+                    // an unexpired candidate just to store another one.
+                    queuedFavoriteAlerts.entrySet().removeIf(entry->entry.getValue().expiry<=now);
+                }
+                if(queuedFavoriteAlerts.size()<MAX_QUEUED_FAVORITES)
+                    queuedFavoriteAlerts.put(key,new QueuedFavoriteAlert(key,
+                        c.optString("name","Pokémon"),
+                        "Busca "+mode.toUpperCase(java.util.Locale.ROOT)+" · PC "+c.optString("cp","?"),
+                        expireAt));
+            }
             if(!newSpawn)continue; // history is only for truly new encounters
             JSONObject entry=new JSONObject();
             try{
@@ -2584,21 +2676,12 @@ public class OverlayService extends Service {
         if(watchedCount>0&&!firstWatched.isEmpty()){
             int delivered=0;
             if(WatchAlerts.speciesToneCount(this)>0){
-                // Retain per-species audio; only mark successfully notified
-                // encounters, each independently within this Pokeball.
-                int count=0;
-                for(String[] info:individualFavorites.values()){
-                    if(count++>=5)break;
-                    if(WatchAlerts.match(this,info[0],
-                            "Busca "+mode.toUpperCase(java.util.Locale.ROOT)+" · "+info[1])){
-                        delivered++;
-                        String species=WatchAlerts.normalized(info[0]);
-                        for(java.util.Map.Entry<String,String> entry:pendingFavoriteSpecies.entrySet())
-                            if(species.equals(entry.getValue()))
-                                recentFavoriteAlertExpiries.put(entry.getKey(),
-                                    pendingFavoriteKeys.get(entry.getKey()));
-                    }
-                }
+                // LT117: max five species per 12-second batch, then drain
+                // remaining verified encounter identities. No species after
+                // #5 disappears merely because the search returned 10 cards.
+                int before=queuedFavoriteAlerts.size();
+                drainFavoriteAlertQueue();
+                delivered=before-queuedFavoriteAlerts.size();
             }else{
                 if(watchedCount>1)watchDetails+=" · +"+(watchedCount-1)+" Pokémon da lista";
                 if(WatchAlerts.match(this,firstWatched,watchDetails)){
@@ -2619,7 +2702,10 @@ public class OverlayService extends Service {
             if(sendGeneralNotification("Novo Pokémon: "+firstNew,
                 "Encontrado nos filtros confirmados · "+mode.toUpperCase(java.util.Locale.ROOT),
                 isSecondaryOverlay()?12075:12074))
-                lastAlertAt=now;
+                {
+                    lastAlertAt=now;
+                    successfullyNotifiedGeneralSpawns.put(firstGeneralKey,firstGeneralExpiry);
+                }
         }
     }
     // A reset request is pending until a real Search is submitted and its

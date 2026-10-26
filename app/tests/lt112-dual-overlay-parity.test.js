@@ -42,12 +42,12 @@ check("a previously seen spawn can alert when it becomes favourite, exactly once
  const body=service.slice(start,end);
  assert.match(service,/private final java\.util\.LinkedHashMap<String,Long> recentFavoriteAlertExpiries=/);
  assert.match(body,/boolean newSpawn=!knownSpawns\.contains\(key\)&&/);
- assert.match(body,/if\(newSpawn\)\{/);
+ assert.match(body,/if\(newSpawn\)recentSpawnExpiries\.put\(key,expireAt\)/);
  assert.match(body,/recentFavoriteAlertExpiries\.getOrDefault\(key,0L\)<=now/);
  assert.ok(body.includes('pendingFavoriteKeys.put(key,expireAt)'));
  assert.ok(body.includes('recentFavoriteAlertExpiries.putAll(pendingFavoriteKeys)'));
  assert.ok(body.includes('if(WatchAlerts.match(this,firstWatched,watchDetails))'));
- assert.ok(body.indexOf("recentFavoriteAlertExpiries.getOrDefault")>body.indexOf("if(newSpawn){"));
+ assert.ok(body.indexOf("recentFavoriteAlertExpiries.getOrDefault")>body.indexOf("if(newSpawn)recentSpawnExpiries.put"));
  assert.ok(body.indexOf("recentFavoriteAlertExpiries.getOrDefault")<body.indexOf("if(!newSpawn)continue"));
  assert.match(body,/if\(expiry<=now\)continue/);
  assert.match(body,/WatchAlerts\.matches\(c\.optString\("name",""\),wanted\)/);
