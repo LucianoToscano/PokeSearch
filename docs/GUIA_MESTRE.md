@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT123 — Screenshot Samsung: contadores, sprites e botões duplos (26/10/2026)
+- Problemas reportados: `Ativos agora` e `Instalações` não mostram números; ausências de sprites nos resultados e buscas com formas/variações; P1 e P2 devem ficar lado a lado no topo, com as imagens do Drive Sem Filtro.png OFF / Personalizado.png ON. Persistência das preferências, dois serviços, sons e assinatura mantidas.
+- Frontend: controle P1/P2 lado a lado na Home, usando PNGs fornecidos, sem biblioteca Android nova. Cada toque controla somente o serviço correspondente.
+- Auditoria oficial PokéAPI: CSV 326 variedades alternativas, cruzadas com tree de sprites fixado; **317** têm PNG normal e shiny, gerando 742 aliases verificadas. Corrigido resolvedor compartilhado lista/detalhes com URL exata de variedade em commit imutável e cache nativo local. 9 variedades e alguns trajes GO não têm imagens comprovadas nesta fonte, evitar sprite errada.
+- Estatísticas: app lê `stats/public`, mas Functions de publicação não têm implantação comprovada. Código de atualização idempotente por ID de evento e reconciliação servidor hora-a-hora preparado; não afirmar valores restaurados até deploy real e leitura no Firebase em produção. Sem expor UIDs nos clientes.
+- Chat LT122 permanece simples e público, sem divisões. Regras RTDB do chat também exigem deploy para envio/recebimento. Testes de regressão e build com versão QA **0.01.23/54327**, mantendo Firebase BoM e libs Android atuais.
+- Pendências: deploy Firebase, 9 variações sem PNG, trajes GO exclusivos, Samsung físico e auditoria geral LT116. [Relatório](POKESEARCH_LT123_CHAT_STATS_SPRITES_DUAL_TOP_20261026.md).
+
+
+
 ## LT122 — Substituição do Mural pelo Chat PokeSearch (26/10/2026)
 - Solicitação: **um único chat ao vivo estilo WhatsApp**, sem divisões Recados/Sugestões/Bugs/Dicas, cartões Orkut, telas adicionais, mensagens fictícias, aprovação prévia ou moderação neste estágio. O usuário confirmou aceitar conversa sem moderação e priorizou simplicidade.
 - UI na mesma Home: título Chat PokeSearch, bolhas à esquerda e direita, nome, hora, campo de mensagem e botão enviar, últimos 60 recados ao vivo via Firebase Auth anônimo e Realtime Database, sem abrir Activity secundária. Apelido editável, tema claro/escuro; chat visível por padrão em builds elegíveis e opção Ocultar/Mostrar Chat, sem migrar antiga preferência de protótipo.

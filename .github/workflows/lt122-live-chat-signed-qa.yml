@@ -1,4 +1,4 @@
-name: PokeSearch LT122 Community live chat, no categories - protected QA APK
+name: PokeSearch LT123 Chat + sprites + stats + dual top controls - protected QA APK
 on:
   push:
     branches: [feature/lt122-community-live-chat-20261026]
@@ -25,9 +25,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
-      POKE_TEST_VERSION_CODE: '54326'
-      POKE_TEST_VERSION_LABEL: '51126'
-      POKE_TEST_PUBLIC_VERSION: '0.01.22'
+      POKE_TEST_VERSION_CODE: '54327'
+      POKE_TEST_VERSION_LABEL: '51127'
+      POKE_TEST_PUBLIC_VERSION: '0.01.23'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
       POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
       POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
@@ -38,8 +38,8 @@ jobs:
       POKE_SCRAPBOOK_ONLINE_QA: 'true'
       POKE_SCRAPBOOK_ONLINE_ACK: 'read-only-moderation-pending'
       GH_TOKEN: ${{ github.token }}
-      QA_APK: PokeSearch-v0.01.22-LT-Live-Chat-QA.apk
-      QA_TAG: v0.01.22-54326-qa
+      QA_APK: PokeSearch-v0.01.23-LT-Chat-Sprites-Stats-QA.apk
+      QA_TAG: v0.01.23-54327-qa
     steps:
       - name: Checkout exact feature commit
         uses: actions/checkout@v4
@@ -143,8 +143,8 @@ jobs:
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/zigzagoon-galar-shiny.png'
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
-          grep -Fq "versionCode='54326'" PACKAGE-VERSION.txt
-          grep -Fq "versionName='0.01.22'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54327'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.23'" PACKAGE-VERSION.txt
           ! grep -q '^application-debuggable' PACKAGE-VERSION.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
           grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
@@ -157,9 +157,9 @@ jobs:
       - name: Upload protected APK artifact and coverage
         uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-v0.01.22-LT-Live-Chat-QA-protected-release
+          name: PokeSearch-v0.01.23-LT-Chat-Sprites-Stats-QA-protected-release
           path: |
-            PokeSearch-v0.01.22-LT-Live-Chat-QA.apk
+            PokeSearch-v0.01.23-LT-Chat-Sprites-Stats-QA.apk
             SHA256SUMS.txt
             SIGNING-REPORT.txt
             SOURCE_COMMIT.txt

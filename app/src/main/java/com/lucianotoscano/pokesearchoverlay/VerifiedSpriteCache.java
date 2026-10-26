@@ -25,6 +25,10 @@ final class VerifiedSpriteCache {
         "^https://raw\\.githubusercontent\\.com/PokeAPI/sprites/master/sprites/pokemon/(shiny/)?([0-9]{1,4})\\.png$");
     private static final Pattern MIRROR=Pattern.compile(
         "^https://cdn\\.jsdelivr\\.net/gh/PokeAPI/sprites@master/sprites/pokemon/(shiny/)?([0-9]{1,4})\\.png$");
+    private static final Pattern PINNED_FORM=Pattern.compile(
+        "^https://raw\\.githubusercontent\\.com/PokeAPI/sprites/d8c2fb78563e28ad7b3abe938cf6e79998d04e90/sprites/pokemon/(shiny/)?(10[0-9]{3})\\.png$");
+    private static final String FORM_ORIGIN=
+        "https://raw.githubusercontent.com/PokeAPI/sprites/d8c2fb78563e28ad7b3abe938cf6e79998d04e90/sprites/pokemon/";
     private static final Object[] STRIPES=new Object[32];
     private static final Map<Integer,Long> FAILURES=new ConcurrentHashMap<>();
     static{
@@ -61,11 +65,13 @@ final class VerifiedSpriteCache {
         try{return new WebResourceResponse("image/png",null,new FileInputStream(f));}
         catch(IOException ignored){return null;}
     }
-    private static boolean prefetch(Context context,int dex,boolean shiny,String suffix){
-        final String[] urls={
-            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+suffix,
-            "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+suffix
-        };
+    private static boolean prefetch(Context context,int dex,boolean shiny,String suffix,boolean form){
+        final String[] urls=form?
+            new String[]{FORM_ORIGIN+suffix}:
+            new String[]{
+                "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+suffix,
+                "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+suffix
+            };
         for(String url:urls){
             HttpURLConnection conn=null;
             try{
@@ -115,10 +121,12 @@ final class VerifiedSpriteCache {
     static WebResourceResponse fromDisk(Context context,Uri requestUrl){
         if(context==null||requestUrl==null)return null;
         String url=requestUrl.toString();
-        Matcher raw=RAW.matcher(url),mirror=MIRROR.matcher(url);
-        if(!raw.matches()&&!mirror.matches())return null;
-        boolean shiny="shiny/".equals(raw.matches()?raw.group(1):mirror.group(1));
-        String number=raw.matches()?raw.group(2):mirror.group(2);
+        Matcher raw=RAW.matcher(url),mirror=MIRROR.matcher(url),variety=PINNED_FORM.matcher(url);
+        boolean baseRaw=raw.matches(),baseMirror=mirror.matches(),form=variety.matches();
+        if(!baseRaw&&!baseMirror&&!form)return null;
+        boolean shiny="shiny/".equals(baseRaw?raw.group(1):
+            baseMirror?mirror.group(1):variety.group(1));
+        String number=baseRaw?raw.group(2):baseMirror?mirror.group(2):variety.group(2);
         int dex;
         try{dex=Integer.parseInt(number);}catch(NumberFormatException ignored){return null;}
         if(dex<1||dex>10000)return null;
@@ -137,7 +145,7 @@ final class VerifiedSpriteCache {
             // No main-thread I/O: shouldInterceptRequest already runs on a
             // WebView worker. A failed fetch falls back to the WebView's
             // normal network handling and is throttled for 60 seconds.
-            boolean ok=prefetch(context,dex,shiny,(shiny?"shiny/":"")+number+".png");
+            boolean ok=prefetch(context,dex,shiny,(shiny?"shiny/":"")+number+".png",form);
             if(!ok){
                 FAILURES.put(key,now);
                 if(FAILURES.size()>128)FAILURES.clear();

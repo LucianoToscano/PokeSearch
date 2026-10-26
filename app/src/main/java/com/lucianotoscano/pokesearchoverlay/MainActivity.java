@@ -308,28 +308,42 @@ public class MainActivity extends Activity {
         header.setOrientation(LinearLayout.HORIZONTAL);
         // 3:1 wordmark should have natural height, without crowding toolbar.
         screen.addView(header,new LinearLayout.LayoutParams(-1,d(70)));
-        // Segunda busca sem alterar o desenho dinâmico das Pokébolas.
+        // Header directly precedes paired controls, so neither Pokébola
+        // is hidden among the unrelated theme/support actions.
         LinearLayout dualOverlayRow=new LinearLayout(this);
-        dualOverlayRow.setGravity(Gravity.CENTER_VERTICAL);
-        dualOverlayRow.setPadding(d(12),0,d(12),0);
+        dualOverlayRow.setGravity(Gravity.CENTER);
+        dualOverlayRow.setOrientation(LinearLayout.HORIZONTAL);
         dualOverlayRow.setBackground(homeSurface(
             homeLightMode?Color.rgb(243,248,251):Color.rgb(24,31,46),11,0));
-        TextView secondaryLabel=homeText("Segunda Pokébola · filtro independente",11,
-            homeLightMode?Color.rgb(34,51,69):Color.rgb(233,240,252),false);
-        dualOverlayRow.addView(secondaryLabel,new LinearLayout.LayoutParams(0,-1,1));
-        secondaryOverlayControl=makeIcon(R.drawable.ic_overlay_off,"Ativar segunda Pokébola");
-        secondaryOverlayControl.setPadding(d(5),d(5),d(5),d(5));
-        secondaryOverlayControl.setBackground(homeSurface(
-            homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
-        dualOverlayRow.addView(secondaryOverlayControl,new LinearLayout.LayoutParams(d(34),d(34)));
-        secondaryOverlayControl.setOnClickListener(v->toggleSecondaryOverlay());
-        LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(42));
-        dualLp.leftMargin=d(8);dualLp.rightMargin=d(8);dualLp.bottomMargin=d(4);
-        // LT118: user-approved restoration of the secondary Pokébola control in Home.
-        // GONE leaves no blank row and removes this control from accessibility
-        // navigation. Keep secondary service, saved filters and running state.
-        // Do not reset secondary preferences or stop either foreground service.
+        dualOverlayRow.setPadding(d(7),d(4),d(7),d(4));
+        overlayControl=makeIcon(R.drawable.sem_filtro,"Ativar Pokébola 1");
+        secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,"Ativar Pokébola 2");
+        ImageView[] paired={overlayControl,secondaryOverlayControl};
+        for(int i=0;i<paired.length;i++){
+            final int which=i;
+            LinearLayout item=new LinearLayout(this);
+            item.setGravity(Gravity.CENTER_VERTICAL|Gravity.CENTER_HORIZONTAL);
+            item.setOrientation(LinearLayout.HORIZONTAL);
+            item.setPadding(d(5),0,d(5),0);
+            ImageView icon=paired[i];
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            icon.setPadding(d(2),d(2),d(2),d(2));
+            item.addView(icon,new LinearLayout.LayoutParams(d(41),d(41)));
+            TextView title=homeText(i==0?"Pokébola 1":"Pokébola 2",12,
+                homeLightMode?Color.rgb(34,51,69):Color.rgb(233,240,252),true);
+            LinearLayout.LayoutParams nameLp=new LinearLayout.LayoutParams(-2,-2);
+            nameLp.leftMargin=d(5);
+            item.addView(title,nameLp);
+            dualOverlayRow.addView(item,new LinearLayout.LayoutParams(0,d(46),1));
+            item.setOnClickListener(v->{
+                if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
+            });
+        }
+        LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(54));
+        dualLp.leftMargin=d(4);dualLp.rightMargin=d(4);
+        dualLp.bottomMargin=d(6);
         dualOverlayRow.setVisibility(View.VISIBLE);
+        // Insert after header, preserving top toolbar space.
         screen.addView(dualOverlayRow,dualLp);
 
         // HOME-02: icon only at top left; compact actions on the right.
@@ -350,7 +364,7 @@ public class MainActivity extends Activity {
         // Original wordmark: 2172 × 724 (3:1). Avoid fixed 118×36 squeezing.
         // Reserve the four native 34dp action targets (plus 5dp margins).
         int availableBrandWidth=getResources().getDisplayMetrics().widthPixels
-            -d(28)-d(38)-d(6)-(d(34)*4+d(5)*3)-d(3);
+            -d(28)-d(38)-d(6)-(d(34)*3+d(5)*2)-d(3);
         int wordmarkWidth=Math.max(d(90),Math.min(d(156),availableBrandWidth));
         int wordmarkHeight=Math.round(wordmarkWidth/3f);
         brandTitle.setAdjustViewBounds(false);
@@ -374,14 +388,6 @@ public class MainActivity extends Activity {
             homeLightMode?Color.argb(110,67,98,128):Color.argb(90,180,221,255)));
         controls.addView(homeThemeButton,new LinearLayout.LayoutParams(d(34),d(34)));
         homeThemeButton.setOnClickListener(v->toggleHomeTheme());
-
-        overlayControl=makeIcon(R.drawable.ic_overlay_off,"Ativar overlay");
-        overlayControl.setPadding(d(5),d(5),d(5),d(5));
-        overlayControl.setBackground(homeSurface(homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
-        LinearLayout.LayoutParams overlayLp=new LinearLayout.LayoutParams(d(34),d(34));
-        overlayLp.leftMargin=d(5);
-        controls.addView(overlayControl,overlayLp);
-        overlayControl.setOnClickListener(v->toggleHomeOverlay());
 
         ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
         heart.setPadding(d(6),d(6),d(6),d(6));
@@ -992,13 +998,13 @@ public class MainActivity extends Activity {
     private void refreshHomeOverlay(){
         if(overlayControl==null)return;
         boolean on=OverlayService.isRunning();
-        overlayControl.setImageResource(on?R.drawable.ic_overlay_on:R.drawable.ic_overlay_off);
-        overlayControl.setContentDescription(on?"Desativar overlay":"Ativar overlay");
+        overlayControl.setImageResource(on?R.drawable.personalizado:R.drawable.sem_filtro);
+        overlayControl.setContentDescription(on?"Desativar Pokébola 1":"Ativar Pokébola 1");
         overlayControl.setBackground(homeSurface(on?Color.rgb(18,94,82):
             homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
         if(secondaryOverlayControl!=null){
             boolean secondaryOn=OverlayService.isSecondaryRunning();
-            secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.ic_overlay_on:R.drawable.ic_overlay_off);
+            secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.personalizado:R.drawable.sem_filtro);
             secondaryOverlayControl.setContentDescription(secondaryOn?
                 "Desativar segunda Pokébola":"Ativar segunda Pokébola");
             secondaryOverlayControl.setBackground(homeSurface(secondaryOn?Color.rgb(18,94,82):
