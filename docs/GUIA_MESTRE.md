@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT121 — Correção dual de presença e segurança Native WebView (26/10/2026)
+- **Merge confirmado:** [PR #76](https://github.com/LucianoToscano/PokeSearch/pull/76) MERGED na `main`; commit de integração `82d6b5b2ae09aaf3b3fa8bed919bbf9c9d02adfc`. Código do APK QA `5d4482d608b3060b704228f454dbe46b42f4f204`.
+- **APK QA assinado confirmado:** `PokeSearch-v0.01.21-LT-Bridge-Presence-QA.apk`, versionName `0.01.21`, versionCode `54325`, 41.754.958 bytes; SHA-256 `32bf812bff45450a67fa8ddd68b52d0efadc8c29bd8176046aee73f476bd0374` validado contra `SHA256SUMS.txt`. Certificado v2 SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. [Build protegida #40418117890 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40418117890), [artefato #12697580015](https://github.com/LucianoToscano/PokeSearch/actions/runs/40418117890/artifacts/12697580015).
+- **WebViews com ponte Native:** corrigidos os cinco WebViewClient locais sem allowlist de navegação por `LocalBridgePagePolicy` (documento exato `dock.html`/`detail.html`, queries conhecidas), preservando sprites; risco de documento remoto com interface Android mitigado. A navegação do WebView remoto PoGoCoordinates não foi alterada.
+- **Presença de usuários com duas Pokébolas:** booleano único `FirebaseStats.overlayVisible` substituído pelos estados P1/P2; a desconexão de qualquer Pokébola não desliga a presença da outra quando ativa. Testes de oito estados e URLs maliciosas em Java/Node passaram, além dos demais testes e compilação.
+- **Limites:** sem deploy Firebase, sem backend idempotente de agregados, mural continua somente leitura, sem matriz Samsung, subframes/CSP e 2.050 sprites-base pinados ainda pendentes. APK **QA**, não release oficial. [Relatório técnico LT121](POKESEARCH_LT121_SEGURANCA_E_PRESENCA_DUAL_20261026.md). Backup imutável preservado.
+
+
+
 ## LT121 — Segurança dos WebViews locais + presença das duas Pokébolas (26/10/2026)
 - **Causa confirmada em código:** cinco WebViews internos expõem `Native` via `addJavascriptInterface` mas seus `WebViewClient` não restringiam navegação de documento principal. `onPageFinished` aceitaria qualquer arquivo com prefixo `file:///android_asset/`. Corrigido com política de URLs exatas local `dock.html` e `detail.html` (somente parâmetros conhecidos), rejeitando HTTP(S), `data:`, `content:` e arquivos extras para os cinco; clientes continuam interceptando sprites offline e preservam seu callback de inicialização. O WebView remoto autenticado não recebe `Native` e não sofre mudança de navegação nesta etapa.
 - **Causa confirmada nos contadores:** `FirebaseStats.overlayVisible` era booleano global alimentado por dois serviços independentes. Ao parar P1, era marcado falso mesmo com P2 ativo. Estado separado P1/P2 e Home; `PresenceWindowState.isActive` agrega os três com teste Java da matriz de oito combinações.
