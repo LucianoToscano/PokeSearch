@@ -259,3 +259,11 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - P1-03: Mural somente leitura no app e regras versionadas de post/reply negadas. Moderação e rate-limit backend pendentes; nenhuma regra foi implantada.
 - P2-01/P2-03: comentário da fonte API alinhado; removida leitura de árvore inteira.
 - QA candidata 0.01.17/54321 apenas; nenhuma publicação oficial/merge/alteração na main. Samsung P1/P2 e backend ainda **NO-GO**.
+
+
+### LT117 QA 0.01.17 — build protegido validado (26/10/2026)
+- [GitHub Actions #40402057720](https://github.com/LucianoToscano/PokeSearch/actions/runs/40402057720) **SUCCESS**: 82 suítes Node ativas (teste LT74 DEBUG antigo excluído), Java independente, Gradle `:app:testDebugUnitTest` (verificar resultado NO-SOURCE), `:app:assembleRelease`, R8 e assinatura.
+- APK: `PokeSearch-v0.01.17-LT-Audit-Fixes-QA.apk`, **source commit** `5c14d3a67d63ceb61b7dad5cdc947763ec0af05b`, `versionName=0.01.17` / `versionCode=54321`, 41.751.812 bytes.
+- APK SHA-256: `15af7e7a436e351ce74d2032d1f084f495c088e9b29520d8fd2c8d30b7320fab`; certificado v2 SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- APK ZIP íntegro; 1.025 PNG base e 1.025 PNG shiny com hashes 2.050/2.050. **Zero hash alterado** em comparação ao QA LT116.
+- **No-go:** o código Firebase/Functions foi somente versionado, sem deploy/regras em produção. Contadores agregados ainda exigem idempotência/servidor/migração; Mural sem escrita até moderação segura. Não mesclar/lançar sem homologar 110 cenários Samsung nas duas Pokébolas e obter aprovação.
