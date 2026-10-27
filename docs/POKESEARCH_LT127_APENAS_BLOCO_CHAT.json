@@ -34,6 +34,15 @@
         ".write": "auth != null && auth.uid === $uid && (newData.exists() || data.exists())",
         ".validate": "newData.isString() && newData.val().length <= 24000 && newData.val().beginsWith('data:image/jpeg;base64,')"
       }
+    },
+    "reactions": {
+      ".read": "auth != null",
+      "$messageId": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && root.child('chat/messages').child($messageId).exists()",
+          ".validate": "newData.isString() && (newData.val() === '❤️' || newData.val() === '👍' || newData.val() === '🎉')"
+        }
+      }
     }
   }
 }
