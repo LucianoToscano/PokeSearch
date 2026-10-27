@@ -102,10 +102,14 @@
     <small>O relógio no aplicativo só aparecerá se você definir um fim real. Ao vencer, o preço volta automaticamente ao normal. Não há contagem artificial.</small>
     <small>Você pode ligar ou desligar a promoção e alterar os preços abaixo. Valores já cobrados não são alterados.</small>
     <label class="label" for="regular-price-input">Preço normal (R$)</label>
-    <input class="maintenance-note" id="regular-price-input" inputmode="decimal" type="text" placeholder="10,00">
+    <input class="maintenance-note" id="regular-price-input" inputmode="decimal" type="text" placeholder="20,00">
     <label class="label" for="promotion-price-input">Preço promocional (R$)</label>
-    <input class="maintenance-note" id="promotion-price-input" inputmode="decimal" type="text" placeholder="5,00">
-    <div class="actions"><button id="save-prices" class="secondary">Salvar valores</button></div>
+    <input class="maintenance-note" id="promotion-price-input" inputmode="decimal" type="text" placeholder="10,00">
+    <div class="actions">
+      <button id="save-prices" class="secondary">Salvar valores personalizados</button>
+      <button id="apply-pricing-preset" class="secondary">Aplicar R$ 20,00 → R$ 10,00 (50% OFF)</button>
+    </div>
+    <small>O preço personalizado pode ser alterado a qualquer momento. A tabela sugerida só altera o Firebase quando você confirmar. Cupons de 10%, 25% e 50% incidem sobre o preço vigente.</small>
     <div class="actions"><button id="refresh" class="secondary">Verificar novamente</button></div>
   </section>
   <section class="panel" id="licensing" hidden>
@@ -203,7 +207,7 @@
 
   <section class="panel" id="partners-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">🎟️ Cupons e divulgadores</h2>
-    <p>Crie um código para cada parceiro. O comprador recebe 10% ou 50% de desconto e o divulgador acumula <strong>50% do valor realmente pago</strong>.</p>
+    <p>Crie um código para cada parceiro. O comprador recebe 10%, 25% ou 50% de desconto e o divulgador acumula <strong>50% do valor realmente pago</strong>.</p>
     <small>O desconto é calculado sobre o preço vigente no checkout, inclusive quando existe promoção de R$ 5. Nada é cobrado até o cliente confirmar o Pix; o parceiro só acumula após aprovação.</small>
     <label class="label" for="partner-coupon-code">Cupom (4 a 24 caracteres)</label>
     <input class="maintenance-note" id="partner-coupon-code" placeholder="YOUTUBE10" maxlength="24" autocapitalize="characters">
@@ -214,6 +218,7 @@
     <label class="label" for="partner-discount">Desconto para comprador</label>
     <select id="partner-discount" class="maintenance-note">
       <option value="10">10% de desconto</option>
+      <option value="25">25% de desconto</option>
       <option value="50">50% de desconto</option>
     </select>
     <label class="label" for="partner-end">Vencimento do cupom (opcional)</label>
@@ -690,6 +695,18 @@
     const parts=value.replace(",",".").split(".");
     return Number(parts[0])*100+Number((parts[1]||"").padEnd(2,"0"));
   };
+  el("apply-pricing-preset").addEventListener("click",async()=>{
+    if(busy)return;
+    if(!window.confirm("Definir preço normal R$ 20,00 e promocional R$ 10,00 com promoção ATIVA para novas compras? Pedidos já gerados não mudam."))return;
+    const button=el("apply-pricing-preset");
+    button.disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"pricingPreset"});
+      await overview();
+      setStatus("Tabela R$ 20,00 / R$ 10,00 aplicada no Firebase. Promoção ativa; novos cupons são calculados sobre o valor vigente.","ok");
+    }catch(e){setStatus(e.message||"Falha ao aplicar a tabela.","error");}
+    finally{button.disabled=false;}
+  });
   el("save-prices").addEventListener("click",async()=>{
     if(busy)return;
     let regular,discount;
@@ -1010,8 +1027,8 @@
   async function savePartnerCoupon(values){
     if(!values.code.match(/^[A-Z0-9][A-Z0-9_-]{2,22}[A-Z0-9]$/))
       throw Error("Cupom deve ter 4 a 24 caracteres: letras, números, - ou _.");
-    if(values.partnerName.length<2||![10,50].includes(values.discountPercent))
-      throw Error("Informe o divulgador e escolha 10% ou 50%.");
+    if(values.partnerName.length<2||![10,25,50].includes(values.discountPercent))
+      throw Error("Informe o divulgador e escolha 10%, 25% ou 50%.");
     const x=await call("adminSavePartnerCoupon",values);
     setStatus("Cupom "+x.code+" atualizado.","ok");
     await loadPartnerCoupons(true);
