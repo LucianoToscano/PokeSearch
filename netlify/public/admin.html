@@ -250,6 +250,7 @@
     <input class="maintenance-note" id="welcome-trial-days" type="number" min="1" max="30" step="1" inputmode="numeric" value="5">
     <div class="row"><span class="label">Situação</span><strong id="welcome-trial-status">Desativado</strong></div>
     <div class="actions">
+      <button id="welcome-trial-save" class="secondary">Salvar dias</button>
       <button id="welcome-trial-toggle" class="secondary">Ativar teste automático</button>
     </div>
     <small>O teste começa no primeiro cadastro Google elegível realizado após a ativação. A quantidade de dias pode ser alterada para novos cadastros; testes concedidos não são estendidos.</small>
@@ -1295,7 +1296,25 @@
   el("refresh-partner-commissions").addEventListener("click",()=>loadPartnerCommissions(true));
   el("more-partner-commissions").addEventListener("click",()=>loadPartnerCommissions());
 
-  el("welcome-trial-toggle").addEventListener("click",async()=>{
+  el("welcome-trial-save").addEventListener("click",async()=>{
+    const button=el("welcome-trial-save");
+    const enabled=el("welcome-trial-toggle").dataset.enabled==="true";
+    const days=Number(el("welcome-trial-days").value);
+    if(!Number.isInteger(days)||days<1||days>30){
+      setStatus("Informe de 1 a 30 dias.","error");return;
+    }
+    button.disabled=true;
+    try{
+      // Changes future grants only; existing accounts preserve their expiry.
+      await call("adminPremiumSettings",{action:"welcomeTrial",enabled,days});
+      await overview();
+      setStatus(enabled?
+        "Duração salva. Novos cadastros receberão "+days+" dias.":
+        "Duração salva. Ative o teste para começar a conceder dias.","ok");
+    }catch(e){setStatus(e.message||"Erro ao salvar dias.","error");}
+    finally{button.disabled=false;}
+  });
+    el("welcome-trial-toggle").addEventListener("click",async()=>{
     const button=el("welcome-trial-toggle");
     const enabled=button.dataset.enabled!=="true";
     const days=Number(el("welcome-trial-days").value);
