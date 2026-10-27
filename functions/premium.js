@@ -430,7 +430,7 @@ exports.premiumSessionInfo=onCall({region:REGION},async request=>{
 exports.adminListPremiumDevices=onCall({region:REGION},async request=>{
  await requireAdmin(request);
  const cursor=String(request.data?.cursor||"");
- if(cursor&&!/^[A-Za-z0-9_-]{6,128}$/.test(cursor))
+ if(cursor&&!/^[A-Za-z0-9_-]{1,128}$/.test(cursor))
    throw new HttpsError("invalid-argument","Cursor inválido.");
  let query=root().child("deviceBindings").orderByKey();
  if(cursor)query=query.startAt(cursor);
@@ -456,7 +456,7 @@ exports.adminListPremiumDevices=onCall({region:REGION},async request=>{
 /** Disconnect immediately; license validity, coupons, Pix and P1 untouched. */
 exports.adminDisconnectPremiumDevice=onCall({region:REGION},async request=>{
  const actor=await requireAdmin(request),uid=String(request.data?.uid||"");
- if(!/^[A-Za-z0-9_-]{6,128}$/.test(uid))
+ if(!/^[A-Za-z0-9_-]{1,128}$/.test(uid))
    throw new HttpsError("invalid-argument","UID inválido.");
  const ref=premiumDeviceRef(uid),old=(await ref.get()).val()||{};
  const tx=await ref.transaction(v=>adminDisconnectBinding(v,{now:Date.now()}),
@@ -468,7 +468,7 @@ exports.adminDisconnectPremiumDevice=onCall({region:REGION},async request=>{
 /** Clears only the handover cooldown, not the currently authorized phone. */
 exports.adminReleasePremiumDevice=onCall({region:REGION},async request=>{
  const actor=await requireAdmin(request),uid=String(request.data?.uid||"");
- if(!/^[A-Za-z0-9_-]{6,128}$/.test(uid))
+ if(!/^[A-Za-z0-9_-]{1,128}$/.test(uid))
    throw new HttpsError("invalid-argument","UID inválido.");
  const tx=await premiumDeviceRef(uid).transaction(
    v=>adminAllowTransferBinding(v),undefined,false);
