@@ -23,10 +23,10 @@ assert.match(card,/if\(item\.has\("boosted"\) && item\.optBoolean\("boosted",fal
 assert.match(chat,/result-icons\/modes\/StarIVRaw\.png/);
 assert.match(chat,/result-icons\/modes\/StarGL\.png/);
 assert.match(chat,/result-icons\/modes\/StarUL\.png/);
-assert.match(chat,/addBadge\(secondaryRow,null,c\.size,secondary\)/);
+assert.match(chat,/addBadge\(badges,null,c\.size,secondary\)/);
 assert.match(chat,/if\(!c\.gender\.isEmpty\(\)\)/);
-assert.match(chat,/String rare=c\.rarity\(\)/);
-assert.match(chat,/expandedCaptureDetails\.contains\(id\)/);
+assert.match(chat,/String rarity=c\.rarity\(\)/);
+assert.ok(!chat.includes("toggle.setOnClickListener"),"capture details removed");
 assert.match(chat,/CaptureChatCard\.parse\(rawMessage\)!=null/);
 assert.match(chat,/rawMessage:clean\(rawMessage,240\)/);
 assert.match(chat,/getAssets\(\)\.open\(path\)/);

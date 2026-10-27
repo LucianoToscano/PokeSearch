@@ -31,8 +31,8 @@ assert.match(service,/currentCoordinateTarget\(offer\)/);
 assert.match(chat,/CaptureChatFormat\.parse\(message\)/);
 assert.match(chat,/VerifiedSpriteCache\.bundledSprite\(/);
 assert.match(chat,/activity,dex,shiny/);
-assert.match(chat,/lp\.rightMargin=dp\(activity,6\)/);
-assert.match(chat,/legacy\.display\(nickname\)/);
+assert.match(chat,/lp\.rightMargin=dp\(activity,2\)/);
+assert.match(chat,/legacy\.name,legacy\.shiny,legacy\.iv/);
 assert.match(chat,/for\(String emoji:new String\[\]\{"❤️","👍","🎉","✨️"\}\)/);
 assert.ok(!/payload\.put\("(?:iv|form|lat|lng|coords|location|pokemonId)/.test(pub),
   "no new Firebase database keys or sensitive location shared");

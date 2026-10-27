@@ -57,6 +57,23 @@ final class CaptureChatFormat {
         String iv=m.group(3)==null?"":m.group(3);
         return new Capture(name,iv,"✨".equals(m.group(1)));
     }
+    /** Exact 2021 GO costume from pinned PokeMiners assets. A year, form,
+     * species or shiny mismatch MUST fail closed instead of using base artwork. */
+    static String exactCostumeAsset(String pokemon,boolean shiny){
+        if(pokemon==null)return "";
+        Matcher m=Pattern.compile(
+            "^(Pikachu|Piplup|Drifblim)\\s*\\((?:Halloween 2021 Costume|HALLOWEEN_2021_NOEVOLVE|Halloween Mischief 2021|Traje Halloween 2021)\\)$",
+            Pattern.CASE_INSENSITIVE).matcher(pokemon.trim());
+        if(!m.matches())return "";
+        String dex="Pikachu".equalsIgnoreCase(m.group(1))?"25":
+                   "Piplup".equalsIgnoreCase(m.group(1))?"393":"426";
+        return "pokemon-sprites/costumes/"+dex+"-halloween-2021"+
+            (shiny?"-shiny":"")+".png";
+    }
+    static String compactName(String pokemon){
+        if(exactCostumeAsset(pokemon,false).isEmpty())return pokemon;
+        return pokemon.substring(0,pokemon.indexOf('(')).trim();
+    }
     static synchronized int speciesDex(Context context,String name){
         // If a form/costume was announced, never substitute the base species sprite.
         if(name==null||name.contains("(")||name.contains(")")||
