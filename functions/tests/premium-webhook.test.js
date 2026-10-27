@@ -67,6 +67,7 @@ const mocks={
      "campaignLifetime":"lifetime@example.org"
    })[uid]||uid+"@example.org",
    emailVerified:uid!=="unverifiedCampaign",
+   metadata:{creationTime:new Date(Date.now()+(uid==="brandNewTrial"?120000:-86400000)).toISOString()},
    providerData:uid==="anonymousUser"?[]:[{providerId:"google.com"}]
  })})},
  "firebase-admin/app":{getApps:()=>[{}],initializeApp:()=>{}}
@@ -584,7 +585,51 @@ async function run(){
    action:"prices",regularPriceCents:1000,promotionalPriceCents:500}});
  console.log("PASS preset normal R$20, promotion R$10, stacked 25/50 coupons, previously issued Pix unchanged");
  console.log("PASS influencer coupon: exact discount, partner binding, verified Pix, replay, refund and manual repasse");
- // Admin inventory uses hashes as IDs, never plaintext; newly issued codes are sealed.
+ // LT138: zero-Pix gifts with an atomic quota, one per verified Google account.
+ await premium.adminSavePartnerCoupon({...adminLive,data:{
+   code:"GRATIS100",partnerName:"PokeSearch",discountPercent:100,
+   commissionPercent:0,maxClaims:2,giftDuration:"15d",enabled:true}});
+ const giftQuote=await premium.getPremiumOffer({auth:{uid:"giftOne"},
+   data:{couponCode:"GRATIS100"}});
+ assert.equal(giftQuote.priceCents,0);
+ assert.equal(giftQuote.coupon.discountPercent,100);
+ const giftOne=await premium.redeemFullCoupon({
+   auth:{uid:"giftOne"},data:{versionCode:54328,couponCode:"GRATIS100"}});
+ assert.equal(giftOne.activated,true);
+ assert.equal(read("premium/coupons/GRATIS100/claimCount"),1);
+ assert.equal(await premium.getPremiumOffer({auth:{uid:"giftTwo"},data:{couponCode:"GRATIS100"}})
+   .then(v=>v.priceCents),0);
+ let repeatBlocked=false;
+ try{await premium.redeemFullCoupon({
+   auth:{uid:"giftOne"},data:{versionCode:54328,couponCode:"GRATIS100"}});}
+ catch(e){repeatBlocked=e.code==="failed-precondition";}
+ assert.equal(repeatBlocked,true);
+ assert.equal(read("premium/coupons/GRATIS100/claimCount"),1);
+ await premium.adminPremiumSettings({...adminLive,data:{action:"welcomeTrial",enabled:true,days:5}});
+ assert.equal((await premium.claimWelcomeTrial({
+   auth:{uid:"oldGoogleUser"},data:{versionCode:54328}})).activated,false);
+ const trial=await premium.claimWelcomeTrial({
+   auth:{uid:"brandNewTrial"},data:{versionCode:54328}});
+ assert.equal(trial.activated,true);
+ assert.equal(trial.days,5);
+ assert.equal((await premium.claimWelcomeTrial({
+   auth:{uid:"brandNewTrial"},data:{versionCode:54328}})).activated,false);
+ const baseTrialExpiry=Number(read("premium/entitlements/brandNewTrial/expiresAt"));
+ const upgrade=await premium.redeemFullCoupon({
+   auth:{uid:"brandNewTrial"},data:{versionCode:54328,couponCode:"GRATIS100"}});
+ assert.equal(upgrade.activated,true);
+ assert.equal(read("premium/coupons/GRATIS100/claimCount"),2);
+ assert.ok(Number(read("premium/entitlements/brandNewTrial/expiresAt"))>baseTrialExpiry);
+ let quotaBlocked=false;
+ try{await premium.redeemFullCoupon({
+   auth:{uid:"giftThree"},data:{versionCode:54328,couponCode:"GRATIS100"}});}
+ catch(e){quotaBlocked=e.code==="failed-precondition";}
+ assert.equal(quotaBlocked,true);
+ await premium.adminPremiumSettings({...adminLive,data:{action:"welcomeTrial",enabled:false,days:4}});
+ assert.equal((await premium.claimWelcomeTrial({
+   auth:{uid:"trialDisabled"},data:{versionCode:54328}})).activated,false);
+ console.log("PASS LT138: 100-percent quota, repeated account rejection, 5-day automatic trial and no regrant");
+  // Admin inventory uses hashes as IDs, never plaintext; newly issued codes are sealed.
  const inventory=await premium.adminListPremiumKeys({...adminLive,data:{limit:20}});
  assert.ok(inventory.keys.length>0);
  assert.ok(inventory.keys.every(k=>!Object.hasOwn(k,"licenseKey")));
