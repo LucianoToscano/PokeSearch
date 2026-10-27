@@ -22,7 +22,7 @@ const checks=[
   gradle.includes('val controlledDistribution = System.getenv("POKE_CONTROLLED_DISTRIBUTION") == "true"')&&
   gradle.includes('buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "false")')],
  ["Correct isolated Deus Ivern endpoint",
-  gradle.includes('https://pokesearch-premium-ivern.netlify.app/api/premium')],
+  gradle.includes('https://pokesearch-premium-lcst.netlify.app/api/premium')],
  ["Correct LT133 public Google OAuth client reused or overridden",
   gradle.includes('POKE_GOOGLE_WEB_CLIENT_ID')&&
   gradle.includes('CHAT_GOOGLE_WEB_CLIENT_ID')],
@@ -86,6 +86,12 @@ const checks=[
    dialog.includes('PremiumAccess.order(activity,activeOrder[0]')],
  ["Premium purchase disabled without server config",dialog.includes("salesEnabled")&&
   dialog.includes("create.setEnabled(signed&&canSell[0])")],
+ ["Creator vouchers require remote quote before Pix and preserve payment amount",
+   access.includes('static void offerWithCoupon(')&&
+   access.includes('data.put("couponCode"')&&
+   dialog.includes('PremiumAccess.offerWithCoupon(activity,requested')&&
+   dialog.includes('PremiumAccess.createPix(activity,mail,"",appliedCoupon[0]')&&
+   dialog.includes('if(!typedCoupon.equals(appliedCoupon[0]))')],
  ["No payment keys embedded in app",!access.includes("POKE_MP_ACCESS_TOKEN")&&
   !dialog.includes("POKE_PREMIUM_KEY_SECRET")],
  ["Permanent signing required by controlled build",gradle.includes("Controlled QA requires the verified permanent PokeSearch signer")]
