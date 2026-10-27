@@ -90,9 +90,18 @@
   if(dex<1||dex>1025||!species||species!==BASE_SPECIES[dex])return false;
   if(costume&&costume!=="NONE"&&costume!=="NORMAL"&&costume!=="DEFAULT")return false;
   if(card.costume_id!==undefined&&card.costume_id!==null&&Number(card.costume_id)!==0)return false;
-  // Unknown independent form/costume metadata must fail closed, not assume base.
-  if(card.form_id!=null&&Number(card.form_id)!==0)return false;
-  if(card.formId!=null&&Number(card.formId)!==0)return false;
+  // A non-zero GO form ID is only ordinary if the pinned Game Master
+  // explicitly links this species to a NORMAL form. No ID/name guesswork.
+  const reported=card.form_id!=null?card.form_id:card.formId;
+  if(reported!=null&&Number(reported)!==0){
+   const cat=typeof globalThis!=="undefined"?globalThis.PokeSearchWWMCatalog:null;
+   const spec=cat&&cat.species&&cat.species[String(dex)];
+   const entry=cat&&cat.forms&&cat.forms[String(reported)];
+   const p=nameKey(entry&&entry.proto);
+   if(!entry||!spec||!Array.isArray(spec.formIds)||
+      !spec.formIds.includes(Number(reported))||
+      p!==species+"NORMAL")return false;
+  }
   if(card.isCostume===true||nameKey(card.variant)||nameKey(card.region))return false;
   // DOM results often omit Form for ordinary Pokémon (Noibat #714).
   // A BLANK form is safe only when Dex + catalogue species agree exactly.
