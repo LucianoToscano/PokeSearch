@@ -223,6 +223,7 @@ final class PremiumPurchaseDialog {
                 !identityUid.equals(pending.getString("latestOrderUid",""))?""
                 :pending.getString("latestOrderId","");
         final String[] activeOrder={pendingId},pix={""},key={""};
+        final boolean[] canSell={false},canFree={false};
         final Handler handler=new Handler(Looper.getMainLooper());
         final long[] expiresAt={0L},timeOffset={0L};
         final Runnable[] promoClock={null};
@@ -263,7 +264,6 @@ final class PremiumPurchaseDialog {
             polling[0]=false;
             if(scheduled[0]!=null)handler.removeCallbacks(scheduled[0]);
         };
-        final boolean[] canSell={false},canFree={false};
         Runnable refreshIdentity=()->{
             boolean signed=PremiumGoogleLogin.isGoogleSignedIn(activity);
             String account=PremiumGoogleLogin.email(activity);
