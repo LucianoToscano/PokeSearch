@@ -30,14 +30,14 @@ function releaseBinding(current,{hash,now}){
   const old=obj(current);
   if(!old.deviceHash||old.deviceHash!==hash)return undefined;
   return {...old,deviceHash:"",deviceName:"",releasedAt:now,
-    sessionExpiresAt:0,updatedAt:now,switchedAt:0,
-    revokedDeviceHash:old.deviceHash};
+    sessionExpiresAt:0,updatedAt:now,switchedAt:0,revokedDeviceHash:""};
 }
 function adminDisconnectBinding(current,{now}){
   const old=obj(current);
   if(!old.deviceHash)return undefined;
   return {...old,deviceHash:"",deviceName:"",releasedAt:now,
-    sessionExpiresAt:0,updatedAt:now,switchedAt:0};
+    sessionExpiresAt:0,updatedAt:now,switchedAt:0,
+    revokedDeviceHash:old.deviceHash};
 }
 function adminAllowTransferBinding(current){
   const old=obj(current);
