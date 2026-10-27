@@ -348,6 +348,37 @@ exports.adminIssuePremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async r
    assigned:!!targetUid,uid:targetUid||null,serverNow:Date.now()};
 });
 
+/** Administrator can invalidate a manually issued key when it was exposed or
+ * issued by mistake. The hashed key is stored server-side and can never be reused.
+ * If previously claimed, its current entitlement is also revoked conditionally.
+ * Never accept client-supplied UID when revoking a code.
+ */
+exports.adminRevokePremiumKey=onCall({region:REGION},async request=>{
+ const actor=await requireAdmin(request);
+ const code=String(request.data?.licenseKey||"").trim().toUpperCase();
+ if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(code))
+   throw new HttpsError("invalid-argument","Formato de chave inválido.");
+ const hash=sha(code),keyRef=root().child("keys").child(hash);
+ const timestamp=Date.now();
+ const revoked=await keyRef.transaction(value=>{
+   if(!value||value.kind!=="manual"||value.revoked===true)return;
+   return {...value,revoked:true,revokedAt:timestamp,
+     revokedBy:actor,revocationReason:"admin"};
+ },undefined,false);
+ if(!revoked.committed)
+   throw new HttpsError("not-found","Chave manual inexistente ou já bloqueada.");
+ const assignedUid=String(revoked.snapshot.val()?.uid||"");
+ if(assignedUid){
+   const entRef=root().child("entitlements").child(assignedUid);
+   await entRef.transaction(value=>{
+     if(!value||value.currentKeyHash!==hash)return;
+     return {...value,revoked:true,revokedAt:timestamp,
+       revocationReason:"admin"};
+   },undefined,false);
+ }
+ return {revoked:true,wasAssigned:!!assignedUid,serverNow:Date.now()};
+});
+
 /** Redeem user-held code once, except paid-code recovery which supports one transfer.
  * Manual keys do not expire before first use. Expiry begins at redemption.
  */
