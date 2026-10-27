@@ -149,7 +149,11 @@ jobs:
           assert 'forms/555-galar-zen-shiny.png' in report['forms']
           assert 'forms/585-spring.png' in report['forms']
           assert report['formSourceCommit']=='d8c2fb78563e28ad7b3abe938cf6e79998d04e90'
-          assert len(report['costumes'])==16\n          for dex in (25,393,426):\n              for suffix in ('','-shiny'):\n                  key=f'costumes/{dex}-halloween-2021{suffix}.png'\n                  assert key in report['costumes'],key
+          assert len(report['costumes'])==16
+          for dex in (25,393,426):
+              for suffix in ('','-shiny'):
+                  key=f'costumes/{dex}-halloween-2021{suffix}.png'
+                  assert key in report['costumes'],key
           assert report['costumeSourceCommit']=='c2a686eb08ace6e890d8fe3d2134c76988db87b5'
           assert all((root / key).is_file() for key in report['costumes'])
           print('Exact GO costume PNGs:', sorted(report['costumes']))
