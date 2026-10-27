@@ -64,6 +64,12 @@ test("Admin remote disconnect preserves caller's license state externally",()=>{
  assert.equal(released.deviceHash,"");
  assert.equal(adminDisconnectBinding(released,{now:181000}),undefined);
 });
+test("Admin disconnected phone cannot silently rebind on heartbeat",()=>{
+ const disconnected=adminDisconnectBinding(transferred,{now:181000});
+ assert.equal(disconnected.revokedDeviceHash,B);
+ assert.equal(claimBinding(disconnected,create(B,"Moto",181100)),undefined);
+ assert.equal(transferBinding(disconnected,create(B,"Moto",181200)).deviceHash,B);
+});
 test("Admin may lift handover cooldown without disconnect",()=>{
  const unlocked=adminAllowTransferBinding(transferred);
  assert.equal(unlocked.deviceHash,B);assert.equal(unlocked.switchedAt,0);
