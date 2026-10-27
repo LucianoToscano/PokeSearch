@@ -3,10 +3,13 @@ const assert=require("node:assert/strict"),Module=require("node:module"),crypto=
 const SECRET={POKE_MP_ACCESS_TOKEN:"mock-live-token",POKE_MP_TEST_ACCESS_TOKEN:"mock-test-token",
  POKE_MP_WEBHOOK_SECRET:"test-webhook-key",POKE_MP_LIVE_WEBHOOK_SECRET:"live-webhook-key",
  POKE_PREMIUM_KEY_SECRET:"test-key-secret"};
+const DEVICE_A="7e1ae258-9d37-45df-8b17-34fb167ee001";
+const DEVICE_B="7e1ae258-9d37-45df-8b17-34fb167ee002";
+const DEVICE_C="7e1ae258-9d37-45df-8b17-34fb167ee003";
 const orderId="123e4567-e89b-12d3-a456-426614174000",now=Date.now();
 const store={distribution:{globalEnabled:true,versions:{"54328":true}},
  premium:{config:{salesEnabled:true,regularPriceCents:1000,promotionalPriceCents:500,priceCents:500},orders:{
-  [orderId]:{uid:"buyer",paymentId:"123",priceCents:500,versionCode:54328,status:"pending",createdAt:now-1000}
+  [orderId]:{uid:"buyer",paymentId:"123",priceCents:500,versionCode:54328,deviceId:DEVICE_A,status:"pending",createdAt:now-1000}
  }}};
 const coldCacheTransactions=new Set();
 function clone(v){return v===undefined?undefined:JSON.parse(JSON.stringify(v))}
@@ -146,9 +149,56 @@ async function run(){
  assert.equal(res.code,200);
  assert.equal(read("premium/entitlements/buyer").expiresAt,first);
  console.log("PASS webhook replay does not extend deadline");
- const owner={auth:{uid:"buyer"},data:{versionCode:54328}};
+ const owner={auth:{uid:"buyer"},data:{versionCode:54328,deviceId:DEVICE_A}};
  let grant=await premium.checkDistributionAccess(owner);
  assert.equal(grant.allowed,true);assert.equal(grant.premium,true);
+
+ // A paid Google UID owns exactly one active installation.
+ assert.equal(read("premium/deviceBindings/buyer").deviceHash.length,64);
+ assert.equal(JSON.stringify(read("premium/deviceBindings/buyer")).includes(DEVICE_A),false);
+ const differentPhone=await premium.checkDistributionAccess({
+   auth:{uid:"buyer"},data:{versionCode:54328,deviceId:DEVICE_B,
+     deviceName:"Samsung secondary"}});
+ assert.equal(differentPhone.allowed,true);
+ assert.equal(differentPhone.hasPremiumLicense,true);
+ assert.equal(differentPhone.premium,false);
+ assert.equal(differentPhone.deviceConflict,true);
+ let invalidTransfer=false;
+ try{await premium.transferPremiumDevice({auth:{uid:"buyer"},
+   data:{versionCode:54328,deviceId:DEVICE_B,confirm:false}})}
+ catch(error){invalidTransfer=error.code==="invalid-argument";}
+ assert.equal(invalidTransfer,true);
+ let nonSubscriberTransfer=false;
+ try{await premium.transferPremiumDevice({auth:{uid:"unknown"},
+   data:{versionCode:54328,deviceId:DEVICE_B,confirm:true}})}
+ catch(error){nonSubscriberTransfer=error.code==="failed-precondition";}
+ assert.equal(nonSubscriberTransfer,true);
+ const transferred=await premium.transferPremiumDevice({auth:{uid:"buyer"},
+   data:{versionCode:54328,deviceId:DEVICE_B,
+     deviceName:"Samsung secondary",confirm:true}});
+ assert.equal(transferred.transferred,true);
+ const afterSwap=await premium.checkDistributionAccess({
+   auth:{uid:"buyer"},data:{versionCode:54328,deviceId:DEVICE_B}});
+ assert.equal(afterSwap.premium,true);
+ const oldPhone=await premium.checkDistributionAccess(owner);
+ assert.equal(oldPhone.premium,false);
+ assert.equal(oldPhone.deviceConflict,true);
+ let cooldown=false;
+ try{await premium.transferPremiumDevice({auth:{uid:"buyer"},
+   data:{versionCode:54328,deviceId:DEVICE_C,confirm:true}})}
+ catch(error){cooldown=error.code==="resource-exhausted";}
+ assert.equal(cooldown,true);
+ const missingId=await premium.checkDistributionAccess({
+   auth:{uid:"buyer"},data:{versionCode:54328}});
+ assert.equal(missingId.deviceUpdateRequired,true);
+ assert.equal(missingId.premium,false);
+ // Return the paid buyer to the initial mocked device without violating the
+ // one-minute transfer throttle by moving the simulated server clock only.
+ write("premium/deviceBindings/buyer/switchedAt",Date.now()-61000);
+ await premium.transferPremiumDevice({auth:{uid:"buyer"},
+   data:{versionCode:54328,deviceId:DEVICE_A,confirm:true}});
+ assert.equal((await premium.checkDistributionAccess(owner)).premium,true);
+ console.log("PASS one active Google installation, confirmed transfer, old-device denial and cooldown");
  const order=await premium.getPremiumOrder({auth:{uid:"buyer"},data:{orderId}});
  assert.equal(order.status,"approved");assert.match(order.licenseKey,/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/);
  console.log("PASS authenticated purchaser gets redeemable key");
@@ -160,22 +210,22 @@ async function run(){
  grant=await premium.checkDistributionAccess(owner);assert.equal(grant.allowed,false);assert.equal(grant.premium,false);
  console.log("PASS owner-only global remote kill switch");
  await premium.adminDistributionControl({auth:{uid:"owner"},data:{scope:"global",enabled:true}});
- await premium.adminDistributionControl({auth:{uid:"owner"},data:{scope:"version",enabled:false,versionCode:54328}});
+ await premium.adminDistributionControl({auth:{uid:"owner"},data:{scope:"version",enabled:false,versionCode:54328,deviceId:DEVICE_A}});
  grant=await premium.checkDistributionAccess(owner);assert.equal(grant.allowed,false);
  console.log("PASS version kill switch");
- await premium.adminDistributionControl({auth:{uid:"owner"},data:{scope:"version",enabled:true,versionCode:54328}});
+ await premium.adminDistributionControl({auth:{uid:"owner"},data:{scope:"version",enabled:true,versionCode:54328,deviceId:DEVICE_A}});
  // A valid key transfers once, and immediately removes the old owner's entitlement.
  const transferred=await premium.redeemPremiumKey({auth:{uid:"newBuyer"},data:{licenseKey:order.licenseKey}});
  assert.equal(transferred.activated,true);
  grant=await premium.checkDistributionAccess(owner);assert.equal(grant.premium,false);
- const newGrant=await premium.checkDistributionAccess({auth:{uid:"newBuyer"},data:{versionCode:54328}});
+ const newGrant=await premium.checkDistributionAccess({auth:{uid:"newBuyer"},data:{versionCode:54328,deviceId:DEVICE_A}});
  assert.equal(newGrant.premium,true);
  console.log("PASS one-time recovery key transfer");
  payment.status="refunded";
  res=response();await premium.premiumPixWebhook(req(valid),res);
  assert.equal(read("premium/entitlements/buyer").revoked,true);
  assert.equal(read("premium/entitlements/newBuyer").revoked,true);
- const denied=await premium.checkDistributionAccess({auth:{uid:"newBuyer"},data:{versionCode:54328}});
+ const denied=await premium.checkDistributionAccess({auth:{uid:"newBuyer"},data:{versionCode:54328,deviceId:DEVICE_A}});
  assert.equal(denied.premium,false);
  console.log("PASS refund revokes original buyer and transferred key holder");
  assert.equal(fetchCalls,3,"one API fetch per valid webhook; unsigned webhook never calls provider");
@@ -202,7 +252,7 @@ async function run(){
    });
    assert.equal(redeemed.activated,true);
    const state=await premium.checkDistributionAccess({
-     auth:{uid:friend},data:{versionCode:54328}
+     auth:{uid:friend},data:{versionCode:54328,deviceId:DEVICE_A}
    });
    assert.equal(state.premium,true);
    if(duration==="lifetime"){
@@ -281,7 +331,7 @@ async function run(){
  assert.equal(revClaimed.wasAssigned,true);
  assert.equal(read("premium/entitlements/claimant").revoked,true);
  assert.equal((await premium.checkDistributionAccess({
-   auth:{uid:"claimant"},data:{versionCode:54328}
+   auth:{uid:"claimant"},data:{versionCode:54328,deviceId:DEVICE_A}
  })).premium,false,"revoking a claimed gift removes premium");
  console.log("PASS admin-only revocation of exposed and claimed manual keys");
  console.log("PASS individually chosen 15d/30d/1m/3m/6m/12m/lifetime gifts");
@@ -295,7 +345,7 @@ async function run(){
  });
  assert.equal(existing.assigned,true);
  let state=await premium.checkDistributionAccess({
-   auth:{uid:"namedFriend"},data:{versionCode:54328}
+   auth:{uid:"namedFriend"},data:{versionCode:54328,deviceId:DEVICE_A}
  });
  assert.equal(state.premium,true);
  const extended=await premium.adminIssuePremiumKey({
@@ -306,7 +356,7 @@ async function run(){
    ...admin,data:{duration:"lifetime",uid:"namedFriend",extend:false}
  });
  state=await premium.checkDistributionAccess({
-   auth:{uid:"namedFriend"},data:{versionCode:54328}
+   auth:{uid:"namedFriend"},data:{versionCode:54328,deviceId:DEVICE_A}
  });
  assert.equal(state.premium,true);
  assert.equal(read("premium/entitlements/namedFriend").lifetime,true);
@@ -314,7 +364,7 @@ async function run(){
  // Payments API uses numeric payment IDs, not Orders IDs.
  // A valid signed but pending Pix must not activate P2.
  const pixOrder=await premium.createPremiumPix({auth:{uid:"payerPix"},
-   data:{versionCode:54328,email:"buyer@example.org"}});
+   data:{versionCode:54328,deviceId:DEVICE_A,email:"buyer@example.org"}});
  assert.equal(pixOrder.status,"pending");
  assert.equal(pixOrder.pixCode,"000201010212-PIX-TEST");
  const pixTs=String(Date.now()),pixManifest="id:"+pixPaymentId.toLowerCase()+";request-id:request-P;ts:"+pixTs+";";
@@ -404,7 +454,7 @@ async function run(){
 
  const commissionPix=await premium.createPremiumPix({
    auth:{uid:"couponBuyer"},
-   data:{versionCode:54328,email:"coupon@example.org",couponCode:"youtube10"}});
+   data:{versionCode:54328,deviceId:DEVICE_A,email:"coupon@example.org",couponCode:"youtube10"}});
  assert.equal(commissionPix.priceCents,450);
  assert.equal(commissionPix.couponCode,"YOUTUBE10");
  let affiliateRecord=read("premium/orders/"+commissionPix.orderId);
@@ -556,15 +606,15 @@ async function run(){
  await premium.redeemPremiumKey({auth:{uid:"deleteTester"},
    data:{licenseKey:deleteIssue.licenseKey}});
  assert.equal((await premium.checkDistributionAccess({
-   auth:{uid:"deleteTester"},data:{versionCode:54328}})).premium,true);
+   auth:{uid:"deleteTester"},data:{versionCode:54328,deviceId:DEVICE_A}})).premium,true);
  await premium.adminSetPremiumKeyEnabled({
    ...adminLive,data:{id:deleteHash,enabled:false}});
  assert.equal((await premium.checkDistributionAccess({
-   auth:{uid:"deleteTester"},data:{versionCode:54328}})).premium,false);
+   auth:{uid:"deleteTester"},data:{versionCode:54328,deviceId:DEVICE_A}})).premium,false);
  await premium.adminSetPremiumKeyEnabled({
    ...adminLive,data:{id:deleteHash,enabled:true}});
  assert.equal((await premium.checkDistributionAccess({
-   auth:{uid:"deleteTester"},data:{versionCode:54328}})).premium,true);
+   auth:{uid:"deleteTester"},data:{versionCode:54328,deviceId:DEVICE_A}})).premium,true);
  let confirmationDenied=false;
  try{await premium.adminDeletePremiumKey({
    ...adminLive,data:{id:deleteHash,confirm:"SIM"}});}
@@ -583,7 +633,7 @@ async function run(){
  assert.equal(read("premium/keys/"+deleteHash).revoked,true);
  assert.equal(read("premium/entitlements/deleteTester").revoked,true);
  assert.equal((await premium.checkDistributionAccess({
-   auth:{uid:"deleteTester"},data:{versionCode:54328}})).premium,false);
+   auth:{uid:"deleteTester"},data:{versionCode:54328,deviceId:DEVICE_A}})).premium,false);
  const activeKeys=await premium.adminListPremiumKeys({
    ...adminLive,data:{limit:50,archived:false}});
  const archivedKeys=await premium.adminListPremiumKeys({
@@ -612,10 +662,10 @@ async function run(){
     data:{enabled:true,message:"Atualização temporária"}});
  assert.equal((await premium.adminPremiumOverview(adminLive)).appMaintenanceEnabled,true);
  assert.equal((await premium.checkDistributionAccess({auth:{uid:"namedFriend"},
-    data:{versionCode:54328}})).allowed,false);
+    data:{versionCode:54328,deviceId:DEVICE_A}})).allowed,false);
  let paymentPrevented=false;
  try{await premium.createPremiumPix({auth:{uid:"anotherBuyer"},
-   data:{versionCode:54328,email:"someone@example.org"}});}
+   data:{versionCode:54328,deviceId:DEVICE_A,email:"someone@example.org"}});}
  catch(error){paymentPrevented=error.code==="failed-precondition";}
  assert.equal(paymentPrevented,true);
  assert.deepEqual(read("premium/entitlements/namedFriend"),beforeMaintenance);
@@ -684,7 +734,7 @@ async function run(){
 
  // FREE campaign is off by default and its duration is chosen by the owner.
  let freeNotEnabled=false;
- try{await premium.claimFreeYear({auth:{uid:"campaignOne"},data:{versionCode:54328}})}
+ try{await premium.claimFreeYear({auth:{uid:"campaignOne"},data:{versionCode:54328,deviceId:DEVICE_A}})}
  catch(error){freeNotEnabled=error.code==="failed-precondition";}
  assert.equal(freeNotEnabled,true);
  const startsAt=Date.now(),endsAt=startsAt+3*86400000;
@@ -694,20 +744,20 @@ async function run(){
  promoOffer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
  assert.equal(promoOffer.freeYearCampaign.duration,"1m");
  assert.equal(promoOffer.freeYearCampaign.active,true);
- const firstFree=await premium.claimFreeYear({auth:{uid:"campaignOne"},data:{versionCode:54328}});
+ const firstFree=await premium.claimFreeYear({auth:{uid:"campaignOne"},data:{versionCode:54328,deviceId:DEVICE_A}});
  assert.equal(firstFree.activated,true);
  assert.equal(firstFree.duration,"1m");
  const freeOneExpiry=read("premium/entitlements/campaignOne").expiresAt;
  assert.ok(freeOneExpiry>Date.now()+27*86400000);
- const secondFree=await premium.claimFreeYear({auth:{uid:"campaignTwo"},data:{versionCode:54328}});
+ const secondFree=await premium.claimFreeYear({auth:{uid:"campaignTwo"},data:{versionCode:54328,deviceId:DEVICE_A}});
  assert.equal(secondFree.activated,true);
  assert.equal((await premium.getPremiumOffer({auth:{uid:"campaignTwo"}})).freeYearCampaign.active,false);
  let quotaEnforced=false;
- try{await premium.claimFreeYear({auth:{uid:"campaignThree"},data:{versionCode:54328}})}
+ try{await premium.claimFreeYear({auth:{uid:"campaignThree"},data:{versionCode:54328,deviceId:DEVICE_A}})}
  catch(error){quotaEnforced=error.code==="failed-precondition";}
  assert.equal(quotaEnforced,true);
  let repeatClaimBlocked=false;
- try{await premium.claimFreeYear({auth:{uid:"campaignOne"},data:{versionCode:54328}})}
+ try{await premium.claimFreeYear({auth:{uid:"campaignOne"},data:{versionCode:54328,deviceId:DEVICE_A}})}
  catch(error){repeatClaimBlocked=error.code==="failed-precondition";}
  assert.equal(repeatClaimBlocked,true);
  assert.equal(read("premium/entitlements/campaignOne").expiresAt,freeOneExpiry);
@@ -715,7 +765,7 @@ async function run(){
  assert.equal((await premium.getPremiumOffer({auth:{uid:"campaignTwo"}})).freeYearCampaign.active,false);
  // Existing gifts survive the campaign ending.
  assert.equal((await premium.checkDistributionAccess({
-   auth:{uid:"campaignOne"},data:{versionCode:54328}
+   auth:{uid:"campaignOne"},data:{versionCode:54328,deviceId:DEVICE_A}
  })).premium,true);
  // Separate campaign with lifetime benefit, but no effect until manually enabled.
  await premium.adminPremiumSettings({...adminLive,data:{
@@ -723,7 +773,7 @@ async function run(){
    startsAt:Date.now(),endsAt:Date.now()+86400000,maxClaims:1
  }});
  const lifetimeFree=await premium.claimFreeYear({auth:{uid:"campaignLifetime"},
-   data:{versionCode:54328}});
+   data:{versionCode:54328,deviceId:DEVICE_A}});
  assert.equal(lifetimeFree.activated,true);
  assert.equal(lifetimeFree.lifetime,true);
  assert.equal(read("premium/entitlements/campaignLifetime").lifetime,true);
