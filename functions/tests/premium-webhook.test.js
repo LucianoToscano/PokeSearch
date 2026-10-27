@@ -15,11 +15,23 @@ function write(path,value){const keys=path.split("/").filter(Boolean);
  let p=store;for(const k of keys.slice(0,-1))p=p[k]??(p[k]={});
  p[keys[keys.length-1]]=clone(value);
 }
-function ref(path){
+function ref(path,query={}){
  const full=path||"";
  return {
   child(key){return ref(full+"/"+key)},
-  async get(){return {val:()=>clone(read(full))}},
+  orderByKey(){return ref(full,{...query,ordered:true})},
+  startAt(cursor){return ref(full,{...query,start:cursor})},
+  limitToFirst(limit){return ref(full,{...query,limit})},
+  async get(){
+    let data=clone(read(full));
+    if(query.ordered){
+      let items=Object.entries(data||{}).sort(([a],[b])=>a.localeCompare(b));
+      if(query.start)items=items.filter(([key])=>key>=query.start);
+      if(query.limit)items=items.slice(0,query.limit);
+      data=Object.fromEntries(items);
+    }
+    return {val:()=>data};
+  },
   async set(v){write(full,v)},
   async update(next){const old=read(full)||{};write(full,{...old,...next})},
   async transaction(fn){
@@ -327,6 +339,70 @@ async function run(){
  res=response();await premium.premiumPixWebhook(wrongEnvironment,res);
  assert.equal(res.code,200);
  assert.deepEqual(read("premium/entitlements/payerPix"),savedEnt);
+
+ // Admin inventory uses hashes as IDs, never plaintext; newly issued codes are sealed.
+ const inventory=await premium.adminListPremiumKeys({...adminLive,data:{limit:20}});
+ assert.ok(inventory.keys.length>0);
+ assert.ok(inventory.keys.every(k=>!Object.hasOwn(k,"licenseKey")));
+ const separateIssue=await premium.adminIssuePremiumKey({...adminLive,data:{duration:"30d"}});
+ const separateHash=crypto.createHash("sha256").update(separateIssue.licenseKey).digest("hex");
+ const inventory2=await premium.adminListPremiumKeys({...adminLive,data:{limit:50}});
+ assert.ok(inventory2.keys.some(k=>k.id===separateHash&&k.copyAvailable));
+ const revealed=await premium.adminRevealPremiumKey({...adminLive,data:{id:separateHash}});
+ assert.equal(revealed.licenseKey,separateIssue.licenseKey);
+ await premium.adminSetPremiumKeyEnabled({...adminLive,data:{id:separateHash,enabled:false}});
+ assert.equal(read("premium/keys/"+separateHash).suspended,true);
+ let suspendedBlocked=false;
+ try{await premium.redeemPremiumKey({auth:{uid:"suspendedTester"},
+    data:{licenseKey:separateIssue.licenseKey}});}
+ catch(error){suspendedBlocked=error.code==="not-found";}
+ assert.equal(suspendedBlocked,true);
+ await premium.adminSetPremiumKeyEnabled({...adminLive,data:{id:separateHash,enabled:true}});
+ await premium.adminChangePremiumKeyDuration({...adminLive,
+    data:{id:separateHash,action:"duration",duration:"15d"}});
+ assert.equal(read("premium/keys/"+separateHash).duration,"15d");
+ assert.equal(read("premium/keys/"+separateHash).suspended,false);
+ const oldCode="PS-AAAAAA-BBBBBB-CCCCCC-DDDDDD";
+ const oldHash=crypto.createHash("sha256").update(oldCode).digest("hex");
+ write("premium/keys/"+oldHash,{kind:"manual",duration:"15d",createdAt:Date.now()});
+ let oldNotRecovered=false;
+ try{await premium.adminRevealPremiumKey({...adminLive,data:{id:oldHash}});}
+ catch(error){oldNotRecovered=error.code==="failed-precondition";}
+ assert.equal(oldNotRecovered,true);
+ const page1=await premium.adminListPremiumKeys({...adminLive,data:{limit:3}});
+ assert.equal(page1.keys.length,3);
+ assert.equal(page1.hasMore,true);
+ const page2=await premium.adminListPremiumKeys({...adminLive,
+   data:{limit:3,cursor:page1.nextCursor}});
+ assert.equal(page2.keys.length,3);
+ assert.notEqual(page2.keys[0].id,page1.keys[2].id);
+ console.log("PASS admin key inventory pagination, reveal vault, old hash restriction, reversible suspension and duration");
+
+ // Maintenance is a separate global switch, and never changes an entitlement.
+ const beforeMaintenance=clone(read("premium/entitlements/namedFriend"));
+ await premium.adminSetAppMaintenance({...adminLive,
+    data:{enabled:true,message:"Atualização temporária"}});
+ assert.equal((await premium.adminPremiumOverview(adminLive)).appMaintenanceEnabled,true);
+ assert.equal((await premium.checkDistributionAccess({auth:{uid:"namedFriend"},
+    data:{versionCode:54328}})).allowed,false);
+ let paymentPrevented=false;
+ try{await premium.createPremiumPix({auth:{uid:"anotherBuyer"},
+   data:{versionCode:54328,email:"someone@example.org"}});}
+ catch(error){paymentPrevented=error.code==="failed-precondition";}
+ assert.equal(paymentPrevented,true);
+ assert.deepEqual(read("premium/entitlements/namedFriend"),beforeMaintenance);
+ await premium.adminSetAppMaintenance({...adminLive,data:{enabled:false}});
+ assert.equal((await premium.adminPremiumOverview(adminLive)).appMaintenanceEnabled,false);
+ await premium.adminSetAppVersionAccess({...adminLive,
+  data:{scope:"version",versionCode:54339,versionName:"PokeSearch LT134",enabled:false}});
+ let versionState=await premium.adminPremiumOverview(adminLive);
+ assert.equal(versionState.appVersions["54339"].enabled,false);
+ await premium.adminSetAppVersionAccess({...adminLive,data:{scope:"global",enabled:false}});
+ versionState=await premium.adminPremiumOverview(adminLive);
+ assert.equal(versionState.appVersionGlobalEnabled,false);
+ await premium.adminSetAppVersionAccess({...adminLive,data:{scope:"global",enabled:true}});
+ assert.equal((await premium.adminPremiumOverview(adminLive)).appVersionGlobalEnabled,true);
+ console.log("PASS separate maintenance, no new payments, unchanged licenses, version and global APK controls");
  console.log("PASS production toggle and signed webhook mode separation"); 
  console.log("PASS premium server integration mock scenarios");
 }
