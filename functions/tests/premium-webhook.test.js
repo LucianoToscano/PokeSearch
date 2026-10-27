@@ -207,6 +207,12 @@ async function run(){
   const info=await premium.premiumSessionInfo({auth:{uid:"buyer"},data:{deviceId:DEVICE_A}});
   assert.equal(info.licenseActive,true);
   assert.equal(info.authorizedHere,true);
+  assert.equal(info.lifetime,false);
+  assert.equal(info.licenseKind,"paid");
+  assert.ok(Number.isSafeInteger(info.expiresAt)&&info.expiresAt>Date.now());
+  assert.ok(info.remainingDays>0&&info.remainingSeconds>0);
+  assert.ok(info.remainingDays===Math.ceil(info.remainingSeconds/86400));
+  assert.ok(info.serverNow>0);
   const adminDisconnect=await premium.adminDisconnectPremiumDevice({
     auth:{uid:"owner"},data:{uid:"buyer"}});
   assert.equal(adminDisconnect.disconnected,true);
@@ -637,6 +643,12 @@ async function run(){
    auth:{uid:"brandNewTrial"},data:{versionCode:54328}});
  assert.equal(trial.activated,true);
  assert.equal(trial.days,5);
+ const trialInfo=await premium.premiumSessionInfo({
+   auth:{uid:"brandNewTrial"},data:{deviceId:DEVICE_A}});
+ assert.equal(trialInfo.licenseSource,"welcomeTrial");
+ assert.equal(trialInfo.licenseKind,"trial");
+ assert.equal(trialInfo.lifetime,false);
+ assert.equal(trialInfo.remainingDays,5);
  assert.equal((await premium.claimWelcomeTrial({
    auth:{uid:"brandNewTrial"},data:{versionCode:54328}})).activated,false);
  const baseTrialExpiry=Number(read("premium/entitlements/brandNewTrial/expiresAt"));
@@ -704,6 +716,11 @@ async function run(){
    data:{id:lifetimeHash,action:"setLifetime"}});
  assert.equal(read("premium/keys/"+lifetimeHash).duration,"lifetime");
  assert.equal(read("premium/entitlements/lifetimeEditor").lifetime,true);
+ const unlimitedInfo=await premium.premiumSessionInfo({
+   auth:{uid:"lifetimeEditor"},data:{deviceId:DEVICE_A}});
+ assert.equal(unlimitedInfo.lifetime,true);
+ assert.equal(unlimitedInfo.expiresAt,0);
+ assert.equal(unlimitedInfo.remainingDays,0);
  assert.equal(read("premium/entitlements/lifetimeEditor").expiresAt,null);
  await premium.adminChangePremiumKeyDuration({...adminLive,
    data:{id:lifetimeHash,action:"setFinite",duration:"30d"}});
