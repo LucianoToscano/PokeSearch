@@ -5,6 +5,8 @@
  * No CPF, buyer email, or MP access token is stored in RTDB.
  */
 const crypto=require("node:crypto");
+const {claimBinding,transferBinding,releaseBinding,adminDisconnectBinding,
+ adminAllowTransferBinding,sessionState}=require("./premium-device-state.cjs");
 const useNetlify=process.env.POKE_RUNTIME_TARGET==="netlify";
 const {onCall,onRequest,HttpsError}=useNetlify?
   require("../netlify/lib/cloud-compat.cjs"):require("firebase-functions/v2/https");
@@ -335,27 +337,37 @@ const premiumDeviceHash=(uid,id)=>sha("pokesearch-p2-install-v1:"+uid+":"+id.toL
 const premiumDeviceName=value=>String(value||"Aparelho Android").trim()
  .replace(/[\u0000-\u001f<>]/g,"").slice(0,58)||"Aparelho Android";
 const premiumDeviceRef=uid=>root().child("deviceBindings").child(uid);
+async function recordDeviceEvent(uid,event){
+ // The atomic binding is authoritative; an audit-write failure never restores
+ // an older session, nor blocks a legitimate transfer after it committed.
+ try{
+   await root().child("deviceHistory").child(uid).push().set({
+     ...event,at:Date.now()
+   });
+ }catch(error){
+   console.error("Premium device audit write unavailable:",error?.message||"unknown");
+ }
+}
 async function premiumDeviceCheck(uid,id,name){
  if(!validPremiumDevice(id))return {
    premium:false,deviceUpdateRequired:true,deviceConflict:false
  };
- const hash=premiumDeviceHash(uid,id),ref=premiumDeviceRef(uid);
- const now=Date.now();
- // First authenticated P2 check creates a binding atomically. Concurrent
- // different devices can never both win the first claim.
- const result=await ref.transaction(previous=>{
-   if(previous&&previous.deviceHash)return;
-   return {deviceHash:hash,deviceName:premiumDeviceName(name),
-     boundAt:now,switchedAt:0,updatedAt:now};
- },undefined,false);
- const current=result.snapshot.val()||{};
+ const hash=premiumDeviceHash(uid,id),ref=premiumDeviceRef(uid),now=Date.now();
+ const tx=await ref.transaction(previous=>
+   claimBinding(previous,{hash,name:premiumDeviceName(name),now}),undefined,false);
+ const current=tx.snapshot.val()||{};
  const same=current.deviceHash===hash;
+ if(same&&tx.committed&&!current.auditCreatedAt){
+   // Records that predate this update simply continue working.
+ }
  return {premium:same,deviceConflict:!same,deviceUpdateRequired:false,
-   activeDeviceName:same?"":String(current.deviceName||"Outro aparelho"),
-   deviceBoundAt:Number(current.boundAt||0)};
+   activeDeviceName:same?String(current.deviceName||""):String(current.deviceName||"Outro aparelho"),
+   deviceBoundAt:Number(current.boundAt||0),
+   deviceLastSeen:Number(current.updatedAt||0),
+   sessionExpiresAt:Number(current.sessionExpiresAt||0)};
 }
-/** Explicit transfer from the other Google-authenticated phone.
- * Never bypass a disabled/revoked entitlement or a blocked APK.
+/** Transfer is explicit, UID-authenticated, entitlement-gated and atomic.
+ * Replayed requests from a displaced installation cannot reclaim P2.
  */
 exports.transferPremiumDevice=onCall({region:REGION},async request=>{
  const uid=requireUser(request),input=request.data||{};
@@ -368,20 +380,92 @@ exports.transferPremiumDevice=onCall({region:REGION},async request=>{
    throw new HttpsError("failed-precondition",
      "Sua licença Premium está indisponível, expirada ou esta versão foi bloqueada.");
  const hash=premiumDeviceHash(uid,id),now=Date.now();
- const ref=premiumDeviceRef(uid);
- const tx=await ref.transaction(current=>{
-   const old=current&&typeof current==="object"?current:{};
-   if(old.deviceHash===hash)return old; // reentrant transfer, no second handover
-   if(Number(old.switchedAt||0)>now-60000)return;
-   return {deviceHash:hash,deviceName:premiumDeviceName(input.deviceName),
-     boundAt:now,switchedAt:old.deviceHash?now:0,
-     updatedAt:now};
- },undefined,false);
+ const ref=premiumDeviceRef(uid),name=premiumDeviceName(input.deviceName);
+ const before=(await ref.get()).val()||{};
+ const tx=await ref.transaction(old=>transferBinding(old,{hash,name,now}),
+   undefined,false);
  if(!tx.committed)
    throw new HttpsError("resource-exhausted",
-     "Você já trocou de aparelho recentemente. Tente novamente após 1 minuto.");
- return {transferred:true,deviceName:premiumDeviceName(input.deviceName),
-   serverNow:Date.now()};
+     "Troca recente detectada. Aguarde um minuto e tente novamente.");
+ if(before.deviceHash!==hash)
+   await recordDeviceEvent(uid,{type:"transfer",fromDevice:String(before.deviceName||""),
+     toDevice:name,actor:"account"});
+ return {transferred:true,deviceName:name,serverNow:Date.now()};
+});
+/** Logout closes only the calling installation's P2 lease.
+ * An old phone cannot disconnect a newer phone after a transfer.
+ */
+exports.releasePremiumDevice=onCall({region:REGION},async request=>{
+ const uid=requireUser(request),id=String(request.data?.deviceId||"");
+ if(!validPremiumDevice(id))
+   throw new HttpsError("invalid-argument","Instalação inválida.");
+ const hash=premiumDeviceHash(uid,id),ref=premiumDeviceRef(uid),now=Date.now();
+ const previous=(await ref.get()).val()||{};
+ const tx=await ref.transaction(old=>releaseBinding(old,{hash,now}),undefined,false);
+ if(tx.committed)
+   await recordDeviceEvent(uid,{type:"logout",fromDevice:String(previous.deviceName||""),
+     toDevice:"",actor:"account"});
+ return {released:tx.committed===true,serverNow:Date.now()};
+});
+/** Read-only account diagnostics: never binds a device or issues an entitlement. */
+exports.premiumSessionInfo=onCall({region:REGION},async request=>{
+ const uid=requireUser(request),id=String(request.data?.deviceId||"");
+ const value=(await premiumDeviceRef(uid).get()).val()||{};
+ const own=validPremiumDevice(id)&&value.deviceHash===premiumDeviceHash(uid,id);
+ return {licenseActive:await userEntitlement(uid),authorizedHere:!!own,
+   deviceName:String(value.deviceName||""),boundAt:Number(value.boundAt||0),
+   lastActivity:Number(value.updatedAt||0),
+   status:sessionState(value,Date.now())};
+});
+/** Owner-only, paginated device inventory with restrained account metadata. */
+exports.adminListPremiumDevices=onCall({region:REGION},async request=>{
+ await requireAdmin(request);
+ const cursor=String(request.data?.cursor||"");
+ if(cursor&&!/^[A-Za-z0-9_-]{6,128}$/.test(cursor))
+   throw new HttpsError("invalid-argument","Cursor inválido.");
+ let query=root().child("deviceBindings").orderByKey();
+ if(cursor)query=query.startAt(cursor);
+ const limit=20,entries=Object.entries(
+   (await query.limitToFirst(limit+2).get()).val()||{})
+   .sort(([a],[b])=>a.localeCompare(b)).filter(([uid])=>uid!==cursor);
+ const rows=await Promise.all(entries.slice(0,limit).map(async([uid,value])=>{
+   let email="";
+   try{const user=await getAuth().getUser(uid);email=String(user.email||"");}
+   catch{ /* Account may have been deleted. */ }
+   const history=(await root().child("deviceHistory").child(uid)
+      .limitToLast(12).get()).val()||{};
+   return {uid,googleEmail:email,
+     deviceName:String(value.deviceName||""),
+     boundAt:Number(value.boundAt||0),lastActivity:Number(value.updatedAt||0),
+     status:sessionState(value,Date.now()),
+     history:Object.values(history).sort((a,b)=>Number(b.at||0)-Number(a.at||0))
+       .map(h=>({type:String(h.type||""),at:Number(h.at||0),
+         fromDevice:String(h.fromDevice||""),toDevice:String(h.toDevice||"")}))};
+ }));
+ return {items:rows,nextCursor:entries.length>limit?entries[limit-1][0]:""};
+});
+/** Disconnect immediately; license validity, coupons, Pix and P1 untouched. */
+exports.adminDisconnectPremiumDevice=onCall({region:REGION},async request=>{
+ const actor=await requireAdmin(request),uid=String(request.data?.uid||"");
+ if(!/^[A-Za-z0-9_-]{6,128}$/.test(uid))
+   throw new HttpsError("invalid-argument","UID inválido.");
+ const ref=premiumDeviceRef(uid),old=(await ref.get()).val()||{};
+ const tx=await ref.transaction(v=>adminDisconnectBinding(v,{now:Date.now()}),
+   undefined,false);
+ if(tx.committed)await recordDeviceEvent(uid,{type:"admin-disconnect",
+   fromDevice:String(old.deviceName||""),toDevice:"",actor});
+ return {disconnected:tx.committed===true};
+});
+/** Clears only the handover cooldown, not the currently authorized phone. */
+exports.adminReleasePremiumDevice=onCall({region:REGION},async request=>{
+ const actor=await requireAdmin(request),uid=String(request.data?.uid||"");
+ if(!/^[A-Za-z0-9_-]{6,128}$/.test(uid))
+   throw new HttpsError("invalid-argument","UID inválido.");
+ const tx=await premiumDeviceRef(uid).transaction(
+   v=>adminAllowTransferBinding(v),undefined,false);
+ if(tx.committed)await recordDeviceEvent(uid,{type:"admin-allow-transfer",
+   fromDevice:"",toDevice:"",actor});
+ return {unlocked:tx.committed===true};
 });
 
 exports.checkDistributionAccess=onCall({region:REGION},async request=>{
@@ -395,6 +479,10 @@ exports.checkDistributionAccess=onCall({region:REGION},async request=>{
  return {allowed:enabled,premium:active&&device.premium,
    hasPremiumLicense:active,deviceConflict:device.deviceConflict===true,
    activeDeviceName:device.activeDeviceName||"",
+   authorizedDeviceName:device.premium?device.activeDeviceName||"": "",
+   deviceLastSeen:Number(device.deviceLastSeen||0),
+   deviceBoundAt:Number(device.deviceBoundAt||0),
+   sessionExpiresAt:Number(device.sessionExpiresAt||0),
    deviceUpdateRequired:device.deviceUpdateRequired===true,
    serverNow:Date.now()};
 });
