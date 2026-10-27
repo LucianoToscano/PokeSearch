@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+### LT132 — Card compacto de captura e correção do chat rolável (27/10/2026)
+
+- PR [#91](https://github.com/LucianoToscano/PokeSearch/pull/91), branch `feature/lt132-capture-card-badges-sex-last-20261027` empilhada na LT131 #90. QA `0.01.32 / 54337` com assinatura permanente. Main/release estável preservados.
+- **Conquistas:** mini sprite + `🎉 Luciano capturou um Quagsire!` sem repetir IV no título. Selos usam os **ícones dos menus** (`StarIVRaw`, `StarGL`, `StarUL`); Hundo/Shundo/Nundo/Shnundo usam ícones existentes. Tamanho embaixo; **sexo é SEMPRE o último atributo**, com ♂ azul e ♀ rosa; valores ausentes são omitidos. Apenas rank PvP que existe no card com fonte `api-pvp` ou `explicit-species-iv` e liga associada. `Detalhes ▾` revela PC, nível, golpes e boost confirmados.
+- **Firebase:** nenhuma alteração de regra ou estrutura: as conquistas via confirmação dupla são apenas `chat/messages/text` (até 240 caracteres, com metadados compactos), mantendo posts LT131, reações ❤️ 👍 🎉 ✨️ e privacidade sem coordenadas. P1/P2 usam `OverlayService` compartilhado.
+- **Bug crítico da Home/chat:** `MainActivity` usa `stage1HomeScroll`; `CommunityScrapbookOnline` usa `timeline` aninhado. Novo detector de limite repassa o arraste para Home quando timeline está no topo/fim e **libera imediatamente no ACTION_DOWN se chat curto não pode rolar**, restaurando o acesso à parte inferior e ao campo de digitação. Novas mensagens fazem autoscroll somente se já estava perto do fim ou na primeira carga; reações/detalhes não alteram a posição de leitura.
+- **QA:** `app/tests/lt132-capture-badges-nested-scroll.test.js` + regressões Node e Android CI `.github/workflows/lt132-capture-badges-scroll-signed-qa.yml`. Exigir ZIP GitHub com APK assinado e hash; `Library file not found` do sandbox não é falha Android. Ainda precisa validar scroll e dados em Samsung físico, sem afirmar sucesso de QA física.
+- Documento técnico: [POKESEARCH_LT132_CAPTURE_BADGES_CHAT_SCROLL_20261027.md](POKESEARCH_LT132_CAPTURE_BADGES_CHAT_SCROLL_20261027.md).
+
+
 
 ### LT131 — Sprite + IV nos anúncios de captura (27/10/2026)
 
