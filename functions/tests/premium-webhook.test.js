@@ -455,7 +455,7 @@ async function run(){
  let duplicatePayoutDenied=false;
  try{await premium.adminMarkPartnerCommissionPaid({
    ...adminLive,data:{orderId:accountingOrderId,reference:"Pix-REPASSE-ABC",
-     confirm:"REGISTRAR REPASSE"});}
+     confirm:"REGISTRAR REPASSE"}});}
  catch(e){duplicatePayoutDenied=e.code==="failed-precondition";}
  assert.equal(duplicatePayoutDenied,true);
  await premium.adminSavePartnerCoupon({
