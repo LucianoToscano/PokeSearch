@@ -1178,9 +1178,8 @@ public class OverlayService extends Service {
     }
     @Override public void onCreate(){
         super.onCreate();
-        // Both P1 and P2 must receive a fresh authenticated server lease in
-        // controlled QA, before any WebView or floating window is created.
-        if(PremiumAccess.controlled()&&!PremiumAccess.permitted(isSecondaryOverlay())){
+        // Only P2 needs a Premium lease. P1 remains free and works offline.
+        if(isSecondaryOverlay()&&PremiumAccess.controlled()&&!PremiumAccess.permitted(true)){
             stopSelf();
             return;
         }
@@ -1209,8 +1208,8 @@ public class OverlayService extends Service {
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(isSecondaryOverlay()?74:73,note);
         FirebaseStats.setOverlayVisible(this,true,isSecondaryOverlay());
-        if(PremiumAccess.controlled()){
-            // A revoked version/expired P2 license is enforced on BOTH overlays.
+        if(isSecondaryOverlay()&&PremiumAccess.controlled()){
+            // A revoked or expired P2 lease stops only the secondary overlay.
             handler.postDelayed(new Runnable(){
                 @Override public void run(){
                     if(stopped)return;
