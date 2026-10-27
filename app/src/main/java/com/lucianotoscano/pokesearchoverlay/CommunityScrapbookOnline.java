@@ -75,6 +75,9 @@ final class CommunityScrapbookOnline {
         private FirebaseAuth auth;
         private Query messagesQuery;
         private DatabaseReference avatarsRef;
+        private DatabaseReference reactionsRef;
+        private ValueEventListener reactionsListener;
+        private DataSnapshot lastReactions;
         private ValueEventListener avatarsListener;
         private DataSnapshot lastMessages;
         private final Map<String,Bitmap> avatars=new LinkedHashMap<>();
@@ -272,6 +275,20 @@ final class CommunityScrapbookOnline {
                 messagesQuery.removeEventListener(messagesListener);
             if(avatarsRef!=null && avatarsListener!=null)
                 avatarsRef.removeEventListener(avatarsListener);
+            if(reactionsRef!=null && reactionsListener!=null)
+                reactionsRef.removeEventListener(reactionsListener);
+            reactionsRef=database.getReference("chat/reactions");
+            reactionsListener=reactionsRef.addValueEventListener(new ValueEventListener(){
+                @Override public void onDataChange(DataSnapshot snapshot){
+                    if(destroyed)return;
+                    lastReactions=snapshot;
+                    if(lastMessages!=null)renderMessages(lastMessages,false);
+                }
+                @Override public void onCancelled(DatabaseError error){
+                    if(destroyed)return;
+                    lastReactions=null; // missing rules must not break normal messages
+                }
+            });
             // The shared per-user public avatar index only stores optional
             // photos that were explicitly chosen via the Android gallery.
             avatarsRef=database.getReference("chat/avatars");
@@ -288,7 +305,7 @@ final class CommunityScrapbookOnline {
                         if(decoded!=null)avatars.put(entry.getKey(),decoded);
                     }
                     refreshOwnAvatar();
-                    if(lastMessages!=null)renderMessages(lastMessages);
+                    if(lastMessages!=null)renderMessages(lastMessages,false);
                 }
                 @Override public void onCancelled(DatabaseError error){
                     if(!destroyed)toast("Fotos indisponíveis no Firebase.");
@@ -303,7 +320,7 @@ final class CommunityScrapbookOnline {
                     chatReadable=true;
                     setStatus("● Conversa ao vivo");
                     refreshSend();
-                    renderMessages(snapshot);
+                    renderMessages(snapshot,true);
                 }
                 @Override public void onCancelled(DatabaseError error){
                     if(destroyed)return;
@@ -338,7 +355,7 @@ final class CommunityScrapbookOnline {
             empty.setPadding(0,dp(activity,52),0,dp(activity,35));
             bubbles.addView(empty,new LinearLayout.LayoutParams(-1,-2));
         }
-        private void renderMessages(DataSnapshot snapshot){
+        private void renderMessages(DataSnapshot snapshot,boolean scrollToBottom){
             if(bubbles==null||destroyed)return;
             bubbles.removeAllViews();
             int shown=0;
@@ -356,7 +373,7 @@ final class CommunityScrapbookOnline {
                 shown++;
             }
             if(shown==0)showEmpty("Ainda não há mensagens.\nSeja o primeiro a conversar!");
-            else timeline.post(()->{
+            else if(scrollToBottom)timeline.post(()->{
                 if(!destroyed)timeline.fullScroll(View.FOCUS_DOWN);
             });
         }
@@ -410,6 +427,44 @@ final class CommunityScrapbookOnline {
             meta.setGravity(Gravity.END);meta.setTextColor(secondary);
             bubble.addView(meta);
             if(!mine)bubble.setContentDescription("Mensagem de "+nickname);
+            // Discreet single-choice emoji reactions; one value per Firebase UID.
+            LinearLayout reactionsBar=new LinearLayout(activity);
+            reactionsBar.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
+            reactionsBar.setPadding(0,dp(activity,2),0,0);
+            DataSnapshot reactions=lastReactions==null?null:lastReactions.child(id);
+            for(String emoji:new String[]{"❤️","👍","🎉"}){
+                int total=0;boolean chosen=false;
+                if(reactions!=null)for(DataSnapshot vote:reactions.getChildren()){
+                    String selected=vote.getValue(String.class);
+                    if(emoji.equals(selected)){
+                        total++;
+                        if(currentUid.equals(vote.getKey()))chosen=true;
+                    }
+                }
+                final String chosenReaction=emoji;
+                TextView choice=text(emoji+(total>0?" "+total:""),10,chosen);
+                choice.setTextColor(chosen?(light?0xFF0C7662:0xFF8DECD5):secondary);
+                choice.setPadding(dp(activity,6),dp(activity,3),dp(activity,6),dp(activity,3));
+                choice.setContentDescription("Reagir com "+emoji+", "+total+" reações");
+                choice.setOnClickListener(v->react(id,chosenReaction));
+                reactionsBar.addView(choice);
+            }
+            bubble.addView(reactionsBar);
+        }
+        private void react(String messageId,String emoji){
+            if(destroyed||database==null||!authenticated||
+               currentUid.isEmpty()||!messageId.matches("[A-Za-z0-9_-]{12,180}"))return;
+            if(!("❤️".equals(emoji)||"👍".equals(emoji)||"🎉".equals(emoji)))return;
+            String prior=null;
+            if(lastReactions!=null){
+                prior=lastReactions.child(messageId).child(currentUid).getValue(String.class);
+            }
+            DatabaseReference own=database.getReference("chat/reactions")
+                .child(messageId).child(currentUid);
+            Object desired=emoji.equals(prior)?null:emoji;
+            own.setValue(desired,(error,reference)->{
+                if(!destroyed&&error!=null)toast("Não foi possível registrar a reação. Confira as regras do chat.");
+            });
         }
         private static boolean verifiedAdmin(FirebaseUser user){
             if(user==null || !user.isEmailVerified() ||
@@ -591,6 +646,8 @@ final class CommunityScrapbookOnline {
                 messagesQuery.removeEventListener(messagesListener);
             if(avatarsRef!=null&&avatarsListener!=null)
                 avatarsRef.removeEventListener(avatarsListener);
+            if(reactionsRef!=null&&reactionsListener!=null)
+                reactionsRef.removeEventListener(reactionsListener);
             for(Bitmap bmp:avatars.values())if(bmp!=null&&!bmp.isRecycled())bmp.recycle();
             avatars.clear();
         }
