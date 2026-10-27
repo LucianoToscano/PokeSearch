@@ -1064,51 +1064,82 @@ public class MainActivity extends Activity {
         }
         startSecondaryOverlayAuthorized();
     }
+    private void logoutPremiumAccount(boolean switchAccount){
+        // Never touch the free overlay, its filters, or its saved settings.
+        stopService(new Intent(this,SecondaryOverlayService.class));
+        PremiumAccess.invalidateLease();
+        // Best effort release while the verified Google JWT still exists.
+        // Even with no network, local P2 closes immediately.
+        PremiumAccess.releaseDevice(this,(result,error)->{
+            PremiumGoogleLogin.signOut(this,()->{
+                if(switchAccount){
+                    PremiumGoogleLogin.signIn(this,(success,message)->{
+                        Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+                        refreshHomeOverlay();
+                    });
+                }else{
+                    Toast.makeText(this,error==null?
+                        "Premium desconectado. Sua licença foi preservada.":
+                        "Saiu neste aparelho. Liberação remota pendente de internet.",
+                        Toast.LENGTH_LONG).show();
+                    refreshHomeOverlay();
+                }
+            });
+        });
+        refreshHomeOverlay();
+    }
     private void showPremiumAccountOptions(){
         if(!PremiumAccess.controlled())return;
-        boolean signed=PremiumGoogleLogin.isGoogleSignedIn(this);
-        if(!signed){
+        if(!PremiumGoogleLogin.isGoogleSignedIn(this)){
             new AlertDialog.Builder(this)
                 .setTitle("Conta Premium")
-                .setMessage("Entre com Google para ativar a licença da Pokébola 2. "+
+                .setMessage("Entre com Google para gerenciar a Pokébola 2. "+
                     "A Pokébola 1 continua gratuita.")
                 .setPositiveButton("Entrar com Google",(dialog,which)->
                     PremiumGoogleLogin.signIn(this,(success,message)->{
                         Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+                        refreshHomeOverlay();
                     }))
                 .setNegativeButton("Cancelar",null).show();
             return;
         }
-        String mail=PremiumGoogleLogin.email(this);
-        new AlertDialog.Builder(this)
-            .setTitle("Conta Premium")
-            .setMessage("Conectada: "+mail+"\n\n"+
-                "Sair neste celular não cancela nem exclui a licença. "+
-                "A segunda Pokébola será desligada; a primeira permanece funcionando.")
-            .setPositiveButton("Sair da conta",(dialog,which)->{
-                // Stop P2 immediately: a disconnected device must never
-                // keep an already-running paid overlay alive.
-                stopService(new Intent(this,SecondaryOverlayService.class));
-                PremiumAccess.invalidateLease();
-                PremiumGoogleLogin.signOut(this,()->{
-                    Toast.makeText(this,
-                        "Conta Premium desconectada deste celular. Sua licença foi preservada.",
-                        Toast.LENGTH_LONG).show();
-                    refreshHomeOverlay();
-                });
-                refreshHomeOverlay();
-            })
-            .setNeutralButton("Trocar conta",(dialog,which)->{
-                stopService(new Intent(this,SecondaryOverlayService.class));
-                PremiumAccess.invalidateLease();
-                PremiumGoogleLogin.signOut(this,()->
-                    PremiumGoogleLogin.signIn(this,(success,message)->{
-                        Toast.makeText(this,message,Toast.LENGTH_LONG).show();
-                        refreshHomeOverlay();
-                    }));
-                refreshHomeOverlay();
-            })
-            .setNegativeButton("Cancelar",null).show();
+        final String mail=PremiumGoogleLogin.email(this);
+        PremiumAccess.sessionInfo(this,(state,error)->{
+            if(isFinishing()||isDestroyed())return;
+            String license=error!=null?"Não foi possível consultar":
+                Boolean.TRUE.equals(state.get("licenseActive"))?"Ativa":"Inativa ou vencida";
+            String device=error!=null?"Verificação indisponível":
+                String.valueOf(state.getOrDefault("deviceName",""));
+            if(device.trim().isEmpty())device="Nenhum dispositivo autorizado";
+            String status=error!=null?"Offline":
+                Boolean.TRUE.equals(state.get("authorizedHere"))?
+                    "Este aparelho autorizado":"Outro aparelho autorizado";
+            String details="Google: "+mail+"\nLicença: "+license+
+                "\nAparelho: "+device+"\nSessão: "+status+
+                "\n\nSua licença não é cancelada ao sair ou trocar de aparelho. "+
+                "A Pokébola 1 e suas configurações permanecem gratuitas.";
+            String[] choices={"Sair da conta","Trocar conta Google",
+                "Transferir Premium para outro aparelho"};
+            new AlertDialog.Builder(this)
+                .setTitle("Conta Premium · Gerenciar")
+                .setMessage(details)
+                .setItems(choices,(dialog,which)->{
+                    if(which==0)logoutPremiumAccount(false);
+                    else if(which==1)logoutPremiumAccount(true);
+                    else new AlertDialog.Builder(this)
+                        .setTitle("Transferir Premium")
+                        .setMessage("No novo celular, entre com a mesma conta Google "+
+                            "e toque em 'Usar neste aparelho' quando solicitado. "+
+                            "A Pokébola 2 do celular anterior será encerrada "+
+                            "na próxima validação. Você também pode sair neste aparelho.")
+                        .setPositiveButton("Entendi",null)
+                        .setNegativeButton("Sair deste aparelho",(d,w)->
+                            logoutPremiumAccount(false))
+                        .show();
+                })
+                .setNegativeButton("Fechar",null)
+                .show();
+        });
     }
     /**
      * Only the owner of the verified Google session can replace an existing P2
