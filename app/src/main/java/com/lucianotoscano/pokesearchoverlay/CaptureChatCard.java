@@ -52,7 +52,7 @@ final class CaptureChatCard {
     }
     private static String clean(String value,int limit){
         if(value==null)return "";
-        String out=value.replace('\\n',' ').replace('\\r',' ').replace('|',' ')
+        String out=value.replace('\n',' ').replace('\r',' ').replace('|',' ')
             .replace('·',' ').trim();
         if(out.length()>limit)out=out.substring(0,limit).trim();
         return out;
@@ -119,13 +119,13 @@ final class CaptureChatCard {
         if(!moves.isEmpty())details.add("Golpes:"+moves);
         if(item.has("boosted") && item.optBoolean("boosted",false))details.add("Boost:Sim");
         String text=head;
-        if(!badges.isEmpty())text=suffix(text,"\\n"+String.join(SEP,badges),240);
-        if(!details.isEmpty())text=suffix(text,"\\n"+String.join(SEP,details),240);
+        if(!badges.isEmpty())text=suffix(text,"\n"+String.join(SEP,badges),240);
+        if(!details.isEmpty())text=suffix(text,"\n"+String.join(SEP,details),240);
         return text;
     }
     static Card parse(String value){
         if(value==null||value.length()>240)return null;
-        String[] lines=value.split("\\n",-1);
+        String[] lines=value.split("\n",-1);
         if(lines.length>3 || lines.length==0)return null;
         Matcher match=HEAD.matcher(lines[0]);
         if(!match.matches())return null;
