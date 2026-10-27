@@ -518,7 +518,7 @@ final class CommunityScrapbookOnline {
                 body.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 announcement.addView(body,new LinearLayout.LayoutParams(0,-2,1));
                 bubble.addView(announcement);
-                addCaptureBadges(bubble,captureCard,mine?clock+" ✓":clock);
+                addCaptureBadges(bubble,captureCard,clock);
             }else{
                 TextView body=text(message,13,false);
                 body.setTextColor(ink);body.setMaxLines(8);
