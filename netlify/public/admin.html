@@ -221,6 +221,10 @@
       <option value="25">25% de desconto</option>
       <option value="50">50% de desconto</option>
     </select>
+    <label class="label" for="partner-commission">Comissão ao divulgador (%)</label>
+    <input id="partner-commission" class="maintenance-note" type="number"
+      min="0" max="100" step="1" value="50" inputmode="numeric">
+    <small>50% por padrão. Pode ser alterado por cupom; vendas anteriores não mudam.</small>
     <label class="label" for="partner-end">Vencimento do cupom (opcional)</label>
     <input class="maintenance-note" id="partner-end" type="datetime-local">
     <label class="label" for="partner-enabled">Situação</label>
@@ -1016,6 +1020,7 @@
     el("partner-name").value=item.partnerName||"";
     el("partner-uid").value=item.partnerUid||"";
     el("partner-discount").value=String(item.discountPercent||10);
+    el("partner-commission").value=String(item.commissionPercent??50);
     el("partner-enabled").value=item.enabled?"active":"inactive";
     if(item.expiresAt){
       const date=new Date(item.expiresAt);
@@ -1029,6 +1034,9 @@
       throw Error("Cupom deve ter 4 a 24 caracteres: letras, números, - ou _.");
     if(values.partnerName.length<2||![10,25,50].includes(values.discountPercent))
       throw Error("Informe o divulgador e escolha 10%, 25% ou 50%.");
+    if(!Number.isSafeInteger(values.commissionPercent)||
+       values.commissionPercent<0||values.commissionPercent>100)
+      throw Error("Comissão deve estar entre 0% e 100%.");
     const x=await call("adminSavePartnerCoupon",values);
     setStatus("Cupom "+x.code+" atualizado.","ok");
     await loadPartnerCoupons(true);
@@ -1039,12 +1047,13 @@
     const partnerName=el("partner-name").value.trim();
     const partnerUid=el("partner-uid").value.trim();
     const discountPercent=Number(el("partner-discount").value);
+    const commissionPercent=Number(el("partner-commission").value);
     const date=el("partner-end").value;
     const expiresAt=date?Date.parse(date):0;
     if(!Number.isSafeInteger(expiresAt)){setStatus("Validade do cupom inválida.","error");return;}
     couponBusy=true;el("save-partner-coupon").disabled=true;
     try{await savePartnerCoupon({code,partnerName,partnerUid,discountPercent,
-      expiresAt,enabled:el("partner-enabled").value==="active"});}
+      commissionPercent,expiresAt,enabled:el("partner-enabled").value==="active"});}
     catch(e){setStatus(e.message||"Falha ao salvar cupom.","error");}
     finally{couponBusy=false;el("save-partner-coupon").disabled=false;}
   });
@@ -1057,7 +1066,8 @@
       for(const item of page.items||[]){
         const card=pCard();
         addLine(card,item.code+" · "+item.partnerName,true);
-        addLine(card,item.discountPercent+"% OFF · "+(item.enabled?"Ativo":"Desativado")+
+        addLine(card,item.discountPercent+"% OFF · comissão "+(item.commissionPercent??50)+"% · "+
+          (item.enabled?"Ativo":"Desativado")+
           (item.expiresAt?" · Até "+new Date(item.expiresAt).toLocaleDateString("pt-BR"):""));
         card.append(partnerButton("Editar",()=>populatePartnerFields(item)));
         card.append(partnerButton("Copiar cupom",()=>navigator.clipboard.writeText(item.code)));
