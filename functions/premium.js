@@ -1201,21 +1201,28 @@ exports.adminDeletePremiumKey=onCall({region:REGION},async request=>{
  if(!record)throw new HttpsError("not-found","Licença não encontrada.");
  if(record.archived===true)return {deleted:true,archived:true,revoked:true,
    alreadyDeleted:true,wasAssigned:!!record.uid,serverNow:now};
- // Targeted update avoids repeated RTDB transaction aborts in Netlify.
- // Preserve the historic hash, Pix order, encrypted vault and audit trail.
- await ref.update({revoked:true,archived:true,archivedAt:now,
-   archivedBy:actor,revokedAt:Number(record.revokedAt||now),
-   revokedBy:record.revokedBy||actor,
-   revocationReason:record.revocationReason||"admin-deleted",suspended:true});
+ // One RTDB multi-path update avoids transaction aborts and partial revocation.
+ // It never deletes Pix receipts, audit events, vault fields or the hash key.
  const uid=typeof record.uid==="string"?record.uid:"";
+ const change={
+   ["premium/keys/"+id+"/revoked"]:true,
+   ["premium/keys/"+id+"/archived"]:true,
+   ["premium/keys/"+id+"/archivedAt"]:now,
+   ["premium/keys/"+id+"/archivedBy"]:actor,
+   ["premium/keys/"+id+"/revokedAt"]:Number(record.revokedAt||now),
+   ["premium/keys/"+id+"/revokedBy"]:record.revokedBy||actor,
+   ["premium/keys/"+id+"/revocationReason"]:record.revocationReason||"admin-deleted",
+   ["premium/keys/"+id+"/suspended"]:true
+ };
  if(uid){
-   const entitlement=root().child("entitlements").child(uid);
-   const current=(await entitlement.get()).val()||{};
+   const current=(await root().child("entitlements").child(uid).get()).val()||{};
    if(current.currentKeyHash===id){
-     await entitlement.update({revoked:true,revokedAt:now,
-       revocationReason:"admin-deleted"});
+     change["premium/entitlements/"+uid+"/revoked"]=true;
+     change["premium/entitlements/"+uid+"/revokedAt"]=now;
+     change["premium/entitlements/"+uid+"/revocationReason"]="admin-deleted";
    }
  }
+ await getDatabase().ref().update(change);
  return {deleted:true,archived:true,revoked:true,wasAssigned:!!uid,serverNow:now};
 });
 
