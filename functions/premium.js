@@ -323,12 +323,80 @@ function signatureValid(req){
  const calculated=crypto.createHmac("sha256",secret).update(manifest).digest();
  return crypto.timingSafeEqual(calculated,Buffer.from(hash,"hex"));
 }
+/**
+ * One active P2 installation per Firebase UID. Installation ID is randomly
+ * generated locally (not IMEI, Android ID or advertising ID), SHA-256 bound to
+ * UID in RTDB. Plain installation IDs are never saved on the server.
+ * This is not an anti-root/hardware attestation system.
+ */
+const validPremiumDevice=value=>typeof value==="string"&&
+ /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+const premiumDeviceHash=(uid,id)=>sha("pokesearch-p2-install-v1:"+uid+":"+id.toLowerCase());
+const premiumDeviceName=value=>String(value||"Aparelho Android").trim()
+ .replace(/[\u0000-\u001f<>]/g,"").slice(0,58)||"Aparelho Android";
+const premiumDeviceRef=uid=>root().child("deviceBindings").child(uid);
+async function premiumDeviceCheck(uid,id,name){
+ if(!validPremiumDevice(id))return {
+   premium:false,deviceUpdateRequired:true,deviceConflict:false
+ };
+ const hash=premiumDeviceHash(uid,id),ref=premiumDeviceRef(uid);
+ const now=Date.now();
+ // First authenticated P2 check creates a binding atomically. Concurrent
+ // different devices can never both win the first claim.
+ const result=await ref.transaction(previous=>{
+   if(previous&&previous.deviceHash)return;
+   return {deviceHash:hash,deviceName:premiumDeviceName(name),
+     boundAt:now,switchedAt:0,updatedAt:now};
+ },undefined,false);
+ const current=result.snapshot.val()||{};
+ const same=current.deviceHash===hash;
+ return {premium:same,deviceConflict:!same,deviceUpdateRequired:false,
+   activeDeviceName:same?"":String(current.deviceName||"Outro aparelho"),
+   deviceBoundAt:Number(current.boundAt||0)};
+}
+/** Explicit transfer from the other Google-authenticated phone.
+ * Never bypass a disabled/revoked entitlement or a blocked APK.
+ */
+exports.transferPremiumDevice=onCall({region:REGION},async request=>{
+ const uid=requireUser(request),input=request.data||{};
+ const id=String(input.deviceId||"");
+ if(!validPremiumDevice(id)||input.confirm!==true)
+   throw new HttpsError("invalid-argument","Confirme a troca de aparelho.");
+ const code=Number(input.versionCode);
+ if(!isValidCode(code)||await appMaintenance()||
+    !await currentPolicy(code)||!await userEntitlement(uid))
+   throw new HttpsError("failed-precondition",
+     "Sua licença Premium está indisponível, expirada ou esta versão foi bloqueada.");
+ const hash=premiumDeviceHash(uid,id),now=Date.now();
+ const ref=premiumDeviceRef(uid);
+ const tx=await ref.transaction(current=>{
+   const old=current&&typeof current==="object"?current:{};
+   if(old.deviceHash===hash)return old; // reentrant transfer, no second handover
+   if(Number(old.switchedAt||0)>now-60000)return;
+   return {deviceHash:hash,deviceName:premiumDeviceName(input.deviceName),
+     boundAt:now,switchedAt:old.deviceHash?now:0,
+     updatedAt:now};
+ },undefined,false);
+ if(!tx.committed)
+   throw new HttpsError("resource-exhausted",
+     "Você já trocou de aparelho recentemente. Tente novamente após 1 minuto.");
+ return {transferred:true,deviceName:premiumDeviceName(input.deviceName),
+   serverNow:Date.now()};
+});
+
 exports.checkDistributionAccess=onCall({region:REGION},async request=>{
  const uid=requireUser(request),code=Number(request.data?.versionCode);
  if(!isValidCode(code))throw new HttpsError("invalid-argument","Versão inválida.");
  const enabled=!await appMaintenance()&&await currentPolicy(code);
- const premium=enabled&&await userEntitlement(uid);
- return {allowed:enabled,premium,serverNow:Date.now()};
+ const active=enabled&&await userEntitlement(uid);
+ const device=active?await premiumDeviceCheck(uid,request.data?.deviceId,
+     request.data?.deviceName):{premium:false,deviceConflict:false,
+       deviceUpdateRequired:false};
+ return {allowed:enabled,premium:active&&device.premium,
+   hasPremiumLicense:active,deviceConflict:device.deviceConflict===true,
+   activeDeviceName:device.activeDeviceName||"",
+   deviceUpdateRequired:device.deviceUpdateRequired===true,
+   serverNow:Date.now()};
 });
 exports.createPremiumPix=onCall({region:REGION,
  secrets:[MP_TOKEN,MP_TEST_TOKEN]},async request=>{
