@@ -95,7 +95,7 @@ android {
         buildConfigField("String", "EXPECTED_ASSET_SHA256", "\"$assetChecksums\"")
         buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA", "false")
         buildConfigField("boolean", "SCRAPBOOK_ONLINE_QA", "false")
-        buildConfigField("String", "CHAT_GOOGLE_WEB_CLIENT_ID", "\\\"$chatGoogleClientId\\\"")
+        buildConfigField("String", "CHAT_GOOGLE_WEB_CLIENT_ID", "\"$chatGoogleClientId\"")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
     }
