@@ -182,6 +182,36 @@ public class MainActivity extends Activity {
     private String pendingExportText="";
     private String preferredLoginProvider="";
     private String observedLoginProvider="";
+    private final android.os.Handler availabilityHandler=
+        new android.os.Handler(android.os.Looper.getMainLooper());
+    private android.app.AlertDialog availabilityDialog;
+    private final Runnable availabilityTick=new Runnable(){
+        @Override public void run(){
+            if(activityClosing)return;
+            AppAvailability.refresh(MainActivity.this,MainActivity.this::applyAppAvailability);
+            availabilityHandler.postDelayed(this,90000L);
+        }
+    };
+    private void applyAppAvailability(AppAvailability.State state){
+        if(activityClosing||isFinishing())return;
+        if(!state.allowed){
+            stopService(new Intent(this,OverlayService.class));
+            stopService(new Intent(this,SecondaryOverlayService.class));
+            refreshHomeOverlay();
+            if(availabilityDialog==null||!availabilityDialog.isShowing()){
+                availabilityDialog=new AlertDialog.Builder(this)
+                    .setTitle(state.maintenance?"PokeSearch em manutenção":"Versão desativada")
+                    .setMessage(state.reason())
+                    .setCancelable(false)
+                    .setPositiveButton("Fechar",(dialog,which)->finish())
+                    .create();
+                availabilityDialog.show();
+            }
+        }else if(availabilityDialog!=null&&availabilityDialog.isShowing()){
+            availabilityDialog.dismiss();
+            availabilityDialog=null;
+        }
+    }
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         if (!IntegrityGuard.verify(this)) {
@@ -988,6 +1018,9 @@ public class MainActivity extends Activity {
             .putBoolean("secondaryInitializedV1",true).apply();
     }
     private void toggleSecondaryOverlay(){
+        if(!AppAvailability.isAllowed(this)){
+            applyAppAvailability(AppAvailability.cached(this));return;
+        }
         if(OverlayService.isSecondaryRunning()){
             stopService(new Intent(this,SecondaryOverlayService.class));
             Toast.makeText(this,"Segunda Pokébola desativada",Toast.LENGTH_SHORT).show();
@@ -1353,6 +1386,9 @@ public class MainActivity extends Activity {
         missionResumed=true;
         syncMissionClock(hasWindowFocus());
         FirebaseStats.setHomeVisible(this,true);
+        applyAppAvailability(AppAvailability.cached(this));
+        availabilityHandler.removeCallbacks(availabilityTick);
+        availabilityHandler.post(availabilityTick);
         if(PremiumAccess.controlled())PremiumAccess.verify(this,(allowed,premium)->{
             if(!allowed){
                 stopService(new Intent(this,OverlayService.class));
@@ -1370,6 +1406,7 @@ public class MainActivity extends Activity {
             serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
     }
     @Override protected void onPause(){
+        availabilityHandler.removeCallbacks(availabilityTick);
         missionResumed=false;
         syncMissionClock(false);
         FirebaseStats.setHomeVisible(this,false);
@@ -1989,7 +2026,10 @@ public class MainActivity extends Activity {
         }
     }
     private void startOverlay(){
-        // Pokebola 1 is always free: no Premium login, lease or server gate.
+        // P1 is always free when this APK is enabled and not in maintenance.
+        if(!AppAvailability.isAllowed(this)){
+            applyAppAvailability(AppAvailability.cached(this));return;
+        }
         CookieManager.getInstance().flush();
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -2301,6 +2341,10 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        availabilityHandler.removeCallbacks(availabilityTick);
+        if(availabilityDialog!=null){
+            availabilityDialog.dismiss();availabilityDialog=null;
+        }
         missionResumed=false;
         missionHandler.removeCallbacks(missionHeartbeat);
         SupportMissionState.homeVisibility(this,false);
