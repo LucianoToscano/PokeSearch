@@ -111,7 +111,15 @@ final class PremiumGoogleLogin {
                             return;
                         }
                         PremiumAccess.invalidateLease();
-                        callback.done(true,"Conta Google conectada ao Premium.");
+                        // Server checks Firebase Auth creation time and never grants
+                        // an existing or previously rewarded account a second trial.
+                        PremiumAccess.claimWelcomeTrial(activity,(grant,error)->{
+                            if(error==null&&Boolean.TRUE.equals(grant.get("activated"))){
+                                String days=String.valueOf(grant.getOrDefault("days",5));
+                                callback.done(true,"Conta Google conectada · "+days+
+                                    " dias de teste Premium ativados!");
+                            }else callback.done(true,"Conta Google conectada ao Premium.");
+                        });
                     });
                 }
                 @Override public void onError(GetCredentialException error){
