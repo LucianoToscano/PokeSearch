@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## ALERTA PERMANENTE — Falha recorrente de entrega `Library file not found` (27/10/2026)
+
+- O usuário relatou e demonstrou repetidas vezes o toast **`Library file not found`** ao acessar anexos de APK/ZIP entregues pelo ChatGPT no Android. Classificação: **falha de distribuição de arquivos pelo ChatGPT (não confundir com Gradle/assinatura)**.
+- **Regra mandatória em `AGENTS.md` #9** e procedimento completo em [PROTOCOLO_ENTREGA_APK_SEM_LIBRARY_NOT_FOUND.md](PROTOCOLO_ENTREGA_APK_SEM_LIBRARY_NOT_FOUND.md).
+- **NUNCA** fornecer link `sandbox:` como único download nem declarar o APK disponível ao usuário apenas com a existência do arquivo no container. Primeiro fornecer URL verificada de **GitHub Actions artifact**, indicar login/expiração; link interno opcional. Em caso de falha no ChatGPT, direcionar imediatamente ao GitHub sem recompilar.
+- Conferir SHA-256, bytes, arquivo ZIP (CRC), certificado, SOURCE_COMMIT, versionCode e limite de 199 MB; não criar Release estável ou fazer merge sem autorização específica.
+- LT126 referência: [QA artifact #12708327476](https://github.com/LucianoToscano/PokeSearch/actions/runs/40446596976/artifacts/12708327476), SHA-256 APK `ba9e8b0ce32111567233646c31250b659e91985fb5d9da0d01d83d23a0c9bd0b`. Artifact GitHub existe no checkpoint consultado e é uma alternativa ao link defeituoso do ChatGPT. Isso não garante que o serviço externo nunca falhe.
+
+
 ## LT126 — Chat Firebase + primeiro catálogo GO WatWowMap (27/10/2026)
 
 - Branch `fix/lt126-chat-wwm-catalog-sprite-audit-20261027`, PR #83 Draft **baseada na PR #80 LT125**. `main` permanece LT124, sem merge e sem release oficial.
