@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT128 — OAuth Google administrador do chat (27/10/2026)
+
+- **Origem verificada:** arquivo `google-services (2).json` enviado pelo usuário (configuração **cliente** do Firebase, sem chave privada). Projeto `pokesearch-lt`, pacote `com.lucianotoscano.pokesearch`, OAuth tipo 1 Android com SHA-1 `dd7bf665e1d47a257fc557b51cb5a57dfd13cb96`, OAuth tipo 3 **Web Client ID** `1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com`.
+- **Implementado:** `app/build.gradle.kts` adota o Web Client ID **público e verificado** como default de `CHAT_GOOGLE_WEB_CLIENT_ID`; `app/chat-google-oauth-public.json` mantém proveniência (somente identificadores públicos, sem API key ou Firebase Admin SDK). CI assinado usa o mesmo ID e executa `lt128-google-admin-oauth.test.js` para garantir versão, SHA-1, pacote, isolamento de Firebase Admin e rules restritas. Não misturar OAuth Android client com client Web. Código LT127 que autentica `FirebaseAuth.signInWithCredential(GoogleAuthProvider.getCredential(...))` passa a alcançar escolha de conta Google em vez de mensagem de cliente ausente.
+- **Versão QA planejada:** `0.01.28 / 54333`, branch `fix/lt128-google-admin-oauth-20261027` **base LT127/PR #86**, assinatura permanente e artefato GitHub principal. Preservar `main` e versões anteriores, não publicar release estável nem fazer merge automaticamente.
+- **GO/NO-GO:** nenhum token Google foi usado pelo assistant; autenticação real no Samsung e privilégios de exclusão no Firebase devem ser demonstrados após instalação. A tela do Firebase mostrada pelo usuário tem Google e Anônimo ativos; não comprova o sucesso OAuth no aplicativo. As regras de produção foram editadas manualmente pelo usuário nas etapas anteriores; não fazer deploy automatizado sem ler o estado real e preservar `stats/online` e `stats/installations`.
+- **Segurança:** `firebase-adminsdk-...json` enviado anteriormente contém uma chave privada de serviço. **Nunca** incluir em GitHub, APK, CI ou logs. Recomendação de revogação/rotação já comunicada; isso não é necessário para configurar OAuth cliente.
+- Para detalhes técnicos ver `docs/POKESEARCH_LT128_OAUTH_ADMIN_20261027.md`.
+
+
 ## LT127 — Foto opcional e administração do Chat (27/10/2026)
 
 - Nova PR [#86](https://github.com/LucianoToscano/PokeSearch/pull/86) Draft, baseada na LT126 PR #83; `main` preservada. Escopo exclusivamente Chat, sem tocar em P1/P2, API/DOM ou stats.
