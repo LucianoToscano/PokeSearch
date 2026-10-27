@@ -8,13 +8,14 @@ const TRANSFER_COOLDOWN_MS=60_000;
 const obj=value=>value&&typeof value==="object"&&!Array.isArray(value)?value:{};
 function claimBinding(current,{hash,name,now}){
   const old=obj(current);
-  if(old.deviceHash&&old.deviceHash!==hash)return undefined;
+  if((old.deviceHash&&old.deviceHash!==hash)||old.revokedDeviceHash===hash)
+    return undefined;
   const fresh=!old.deviceHash;
   return {...old,deviceHash:hash,deviceName:name,
     boundAt:fresh?now:Number(old.boundAt||now),
     switchedAt:fresh?0:Number(old.switchedAt||0),
     updatedAt:now,sessionExpiresAt:now+LEASE_MS,
-    releasedAt:0};
+    releasedAt:0,revokedDeviceHash:""};
 }
 function transferBinding(current,{hash,name,now}){
   const old=obj(current);
@@ -23,13 +24,14 @@ function transferBinding(current,{hash,name,now}){
     return undefined;
   return {...old,deviceHash:hash,deviceName:name,boundAt:now,
     switchedAt:old.deviceHash?now:0,updatedAt:now,
-    sessionExpiresAt:now+LEASE_MS,releasedAt:0};
+    sessionExpiresAt:now+LEASE_MS,releasedAt:0,revokedDeviceHash:""};
 }
 function releaseBinding(current,{hash,now}){
   const old=obj(current);
   if(!old.deviceHash||old.deviceHash!==hash)return undefined;
   return {...old,deviceHash:"",deviceName:"",releasedAt:now,
-    sessionExpiresAt:0,updatedAt:now,switchedAt:0};
+    sessionExpiresAt:0,updatedAt:now,switchedAt:0,
+    revokedDeviceHash:old.deviceHash};
 }
 function adminDisconnectBinding(current,{now}){
   const old=obj(current);
