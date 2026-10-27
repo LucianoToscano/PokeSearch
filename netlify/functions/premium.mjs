@@ -4,6 +4,7 @@ const require=createRequire(import.meta.url);
 const allowedActions=new Set([
  "checkDistributionAccess","createPremiumPix","getPremiumOrder","getPremiumOffer",
  "redeemPremiumKey","adminDistributionControl","adminPremiumSettings",
+ "adminRevokePremiumKey",
  "adminPremiumOverview","adminIssuePremiumKey","adminAdjustPremiumExpiry"
 ]);
 const httpStatus={
