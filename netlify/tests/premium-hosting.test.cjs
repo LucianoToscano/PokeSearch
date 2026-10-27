@@ -48,6 +48,15 @@ const checks=[
    logic.includes('exports.claimFreeYear=onCall')&&
    logic.includes('duration==="lifetime"')&&
    http.includes('"claimFreeYear"')],
+ ["Key deletion is owner-only, revokes current entitlement and preserves transaction history",
+   logic.includes("exports.adminDeletePremiumKey=onCall")&&
+   logic.includes('confirmation!=="EXCLUIR LICENÇA"')&&
+   logic.includes("revoked:true,archived:true")&&
+   logic.includes("currentKeyHash!==id")&&
+   http.includes('"adminDeletePremiumKey"')&&
+   adminHtml.includes('id="license-list-view"')&&
+   adminHtml.includes('call("adminDeletePremiumKey"')&&
+   adminHtml.includes('item.suspended?"Habilitar":"Desabilitar"')],
  ["Premium backup endpoints are owner-authenticated, bounded and never overwrite existing",
    logic.includes("exports.adminExportPremiumBackupPage=onCall")&&
    logic.includes("exports.adminRestorePremiumBackup=onCall")&&
