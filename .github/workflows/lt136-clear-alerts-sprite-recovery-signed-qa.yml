@@ -46,7 +46,7 @@ jobs:
       # PUBLIC OAuth Web client ID from the user's refreshed Firebase Android configuration.
       # This is NOT a private key, Firebase Admin SDK, or service-account credential.
       POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
-      QA_APK: PokeSearch-v0.01.38-LT138-Cupom100-Teste-Google-Zubat.apk
+      QA_APK: PokeSearch-v0.01.38-LT.apk
       QA_TAG: v0.01.38-54343
     steps:
       - name: Checkout exact feature commit
@@ -265,7 +265,10 @@ jobs:
           sha256sum --check SHA256SUMS.txt
           test "$(tr -d '\\r\\n' < SOURCE_COMMIT.txt)" = "$GITHUB_SHA"
           if gh release view "$QA_TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Existing release detected; never overwrite."
+            echo "Release already exists; add the canonical installer filename if missing."
+            if ! gh api "repos/$GITHUB_REPOSITORY/releases/tags/$QA_TAG" --jq '.assets[].name' | grep -Fxq "$QA_APK"; then
+              gh release upload "$QA_TAG" "$QA_APK" --repo "$GITHUB_REPOSITORY"
+            fi
           else
             cat > RELEASE-NOTES.txt <<'NOTES'
           PokeSearch 0.01.38 — LT138
