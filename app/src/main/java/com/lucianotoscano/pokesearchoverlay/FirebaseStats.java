@@ -40,19 +40,24 @@ final class FirebaseStats {
         return PresenceWindowState.isActive(
             homeVisible,primaryOverlayVisible,secondaryOverlayVisible);
     }
-    private static synchronized void init(Context context){
-        if(initialized)return;
-        initialized=true;
-        try {
+    // Chat Home and statistics use the SAME named Firebase app and anonymous
+    // identity. The chat must not depend on Home counters initializing first.
+    static synchronized FirebaseApp ensureApp(Context context){
+        try{return FirebaseApp.getInstance("PokeSearchStats");}
+        catch(IllegalStateException notInitialized){
             FirebaseOptions options=new FirebaseOptions.Builder()
                 .setApplicationId("1:1007816617051:android:bc055b81b3bdfaceaa637e")
                 .setApiKey("AIzaSyDxCp0f4c_xrrlJ6EGGg9HKPQPIiutCQkM")
                 .setProjectId("pokesearch-lt").setDatabaseUrl(DB_URL).build();
-            FirebaseApp app;
-            try{app=FirebaseApp.getInstance("PokeSearchStats");}
-            catch(IllegalStateException notInitialized){
-                app=FirebaseApp.initializeApp(context.getApplicationContext(),options,"PokeSearchStats");
-            }
+            return FirebaseApp.initializeApp(context.getApplicationContext(),options,
+                "PokeSearchStats");
+        }
+    }
+    private static synchronized void init(Context context){
+        if(initialized)return;
+        initialized=true;
+        try {
+            FirebaseApp app=ensureApp(context);
             if(app==null)throw new IllegalStateException("Firebase Stats unavailable");
             auth=FirebaseAuth.getInstance(app);
             db=FirebaseDatabase.getInstance(app,DB_URL);

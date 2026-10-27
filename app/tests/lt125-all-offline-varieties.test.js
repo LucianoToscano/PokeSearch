@@ -21,7 +21,11 @@ for(const [id,key] of byId){
   assert.equal(art.offline,true,key);
   assert.ok(art.src.startsWith("file:///android_asset/pokemon-sprites/forms/"),key);
   assert.ok(art.src.endsWith(".png"),key);
-  assert.ok(art.original.endsWith("/"+(shiny?"shiny/":"")+id+".png"),key);
+  // LT126: these four previously remote PokeAPI varieties now have an
+  // independently checked exact GO form-ID WWM sprite (normal and Shiny).
+  const wwm=Number(dex)===710 && /^PUMPKABOO(?:SMALL|AVERAGE|LARGE|SUPER)$/.test(form);
+  if(wwm)assert.equal(art.source,"wwm-uicons",key);
+  else assert.ok(art.original.endsWith("/"+(shiny?"shiny/":"")+id+".png"),key);
  }
 }
 assert.match(script,/len\(result\) != 634/);

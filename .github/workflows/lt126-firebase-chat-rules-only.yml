@@ -1,0 +1,59 @@
+name: LT126 Chat PokeSearch — RTDB rules-only manual activation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pokesearch-lt-firebase-production
+  cancel-in-progress: false
+jobs:
+  rules-only:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/pokesearch-chat-sa.json
+      FIREBASE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POKESEARCH_LT }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate append-only chat rules (fail closed)
+        run: |
+          set -euo pipefail
+          node - <<'JS'
+          const fs=require('fs');
+          const rules=JSON.parse(fs.readFileSync('firebase-realtime.rules.json','utf8')).rules;
+          const data=rules.chat.messages;
+          if(rules['.read']!==false||rules['.write']!==false ||
+             rules.chat['.write']!==false||rules.chat['.read']!==false ||
+             !data['.read'].includes('auth != null') ||
+             !data['.read'].includes("orderByChild === 'createdAt'") ||
+             !data['$messageId']['.write'].includes('!data.exists()') ||
+             data['$messageId']['$other']['.validate']!==false)
+            throw Error('Unsafe Chat Rules; refuse Firebase deployment');
+          const rc=JSON.parse(fs.readFileSync('.firebaserc','utf8'));
+          if(rc.projects.default!=='pokesearch-lt'||
+             rc.targets['pokesearch-lt'].database.live[0]!=='pokesearch-lt-default-rtdb')
+            throw Error('Unexpected RTDB target');
+          JS
+      - name: Restore authorized Firebase service account
+        run: |
+          set -euo pipefail
+          test -n "$FIREBASE_ACCOUNT" || { echo "::error::Firebase service account secret missing; no deployment."; exit 1; }
+          umask 077
+          printf '%s' "$FIREBASE_ACCOUNT" > "$GOOGLE_APPLICATION_CREDENTIALS"
+      - name: Install pinned Firebase CLI
+        run: |
+          npm install --no-audit --no-fund --prefix "$RUNNER_TEMP/firebase-cli" firebase-tools@14.17.0
+          echo "$RUNNER_TEMP/firebase-cli/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Deploy only RTDB rules, never Functions, UI or user data
+        run: |
+          set -euo pipefail
+          firebase deploy --project pokesearch-lt --only database --non-interactive
+      - name: Remove credentials
+        if: always()
+        run: rm -f "$GOOGLE_APPLICATION_CREDENTIALS"

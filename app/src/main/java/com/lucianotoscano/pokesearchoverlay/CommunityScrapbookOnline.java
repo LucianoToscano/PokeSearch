@@ -55,7 +55,7 @@ final class CommunityScrapbookOnline {
         private TextView status,nicknameButton;
         private EditText input;
         private Button send;
-        private boolean destroyed=false,sending=false,authenticated=false;
+        private boolean destroyed=false,sending=false,authenticated=false,chatReadable=false;
         private String currentUid="";
         private long lastLocalSend=0L;
         Controller(Activity activity,boolean light){
@@ -97,6 +97,8 @@ final class CommunityScrapbookOnline {
             headings.addView(text("Chat PokeSearch",15,true));
             status=text("Conectando…",10,false);
             status.setTextColor(secondary);headings.addView(status);
+            status.setContentDescription("Status do chat. Toque para reconectar.");
+            status.setOnClickListener(v->retryConnect());
             nicknameButton=text("✎  Apelido",11,true);
             nicknameButton.setGravity(Gravity.CENTER);
             nicknameButton.setPadding(dp(activity,8),0,dp(activity,8),0);
@@ -193,15 +195,18 @@ final class CommunityScrapbookOnline {
             if(!destroyed&&status!=null)status.setText(label);
         }
         private void refreshSend(){
-            if(send!=null)send.setEnabled(!destroyed&&authenticated&&!sending);
+            if(send!=null)send.setEnabled(!destroyed&&authenticated&&chatReadable&&!sending);
         }
         private void connect(){
             try{
-                FirebaseApp app=FirebaseApp.getInstance("PokeSearchStats");
+                FirebaseApp app=FirebaseStats.ensureApp(activity);
                 auth=FirebaseAuth.getInstance(app);
                 database=FirebaseDatabase.getInstance(app,
                     "https://pokesearch-lt-default-rtdb.firebaseio.com/");
-            }catch(RuntimeException error){setStatus("Chat indisponível • Firebase não conectado");return;}
+            }catch(RuntimeException error){
+                chatReadable=false;refreshSend();
+                setStatus("Chat indisponível • Toque para tentar conectar");return;
+            }
             FirebaseUser user=auth.getCurrentUser();
             if(user!=null){start(user);return;}
             auth.signInAnonymously().addOnSuccessListener(result->{
@@ -215,21 +220,40 @@ final class CommunityScrapbookOnline {
             if(destroyed)return;
             currentUid=user.getUid();
             authenticated=true;refreshNickname();
-            setStatus("Conectando ao chat…");
-            setStatus("● Conversa ao vivo");
+            chatReadable=false;
+            setStatus("Verificando acesso ao chat…");
             refreshSend();
             messagesQuery=database.getReference("chat/messages").orderByChild("createdAt")
                 .limitToLast(60);
             messagesListener=messagesQuery.addValueEventListener(new ValueEventListener(){
                 @Override public void onDataChange(DataSnapshot snapshot){
                     if(destroyed)return;
+                    chatReadable=true;refreshSend();setStatus("● Conversa ao vivo");
                     renderMessages(snapshot);
                 }
                 @Override public void onCancelled(DatabaseError error){
                     if(destroyed)return;
-                    showEmpty("Não foi possível carregar o chat. Confira a conexão.");
+                    chatReadable=false;refreshSend();
+                    if(error.getCode()==DatabaseError.PERMISSION_DENIED){
+                        setStatus("Acesso negado • Toque para tentar novamente");
+                        showEmpty("O Firebase recusou a leitura. Verifique as regras do chat.");
+                    }else{
+                        setStatus("Falha de conexão • Toque para reconectar");
+                        showEmpty("Não foi possível carregar o chat. Verifique a conexão.");
+                    }
                 }
             });
+        }
+        // Reattach only on explicit user interaction; no rapid automatic
+        // retries on permanent rules/auth errors. The draft is retained.
+        private void retryConnect(){
+            if(destroyed||sending)return;
+            if(messagesQuery!=null&&messagesListener!=null)
+                messagesQuery.removeEventListener(messagesListener);
+            messagesQuery=null;messagesListener=null;
+            authenticated=false;chatReadable=false;refreshSend();
+            setStatus("Reconectando…");
+            connect();
         }
         private void showEmpty(String message){
             if(bubbles==null||destroyed)return;
@@ -295,7 +319,7 @@ final class CommunityScrapbookOnline {
             if(!mine)bubble.setContentDescription("Mensagem de "+nickname);
         }
         private void submit(){
-            if(destroyed||!authenticated||sending||database==null){
+            if(destroyed||!authenticated||!chatReadable||sending||database==null){
                 toast("Chat ainda não está disponível para envio.");return;
             }
             long now=System.currentTimeMillis();
@@ -321,7 +345,9 @@ final class CommunityScrapbookOnline {
                     if(original.equals(input.getText().toString()))input.setText("");
                     setStatus("● Conversa ao vivo");
                 }else{
-                    setStatus("Não foi possível enviar • Verifique o acesso ao chat");
+                    setStatus(error.getCode()==DatabaseError.PERMISSION_DENIED?
+                        "Envio negado pelo Firebase • Verifique as regras":
+                        "Falha no envio • Toque no status para reconectar");
                     toast("Falha no envio da mensagem.");
                 }
             });

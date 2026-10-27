@@ -153,10 +153,38 @@
   }
   return null;
  }
+ // Explicit WatWowMap GO form IDs checked against immutable pogo-data-api
+ // and the corresponding WWM UIcons PNG blobs. Only Pumpkaboo variants are
+ // promoted in the first integration; no guessed generic artwork.
+ const WWM_PUMPKABOO_FORMS=Object.freeze({
+   SMALL:2641,AVERAGE:2642,LARGE:2643,SUPER:2644
+ });
+ function exactWwmPumpkaboo(card){
+  if(!card||dexOf(card)!==710)return null;
+  const species=nameKey(card.name);
+  if(species&&species!=="PUMPKABOO")return null;
+  const costume=nameKey(card.costume);
+  if((costume&&costume!=="NONE"&&costume!=="NORMAL"&&costume!=="DEFAULT")||
+     (card.costume_id!=null&&Number(card.costume_id)!==0)||
+     card.isCostume===true||nameKey(card.variant)||nameKey(card.region))return null;
+  const rawForm=nameKey(card.form);
+  const id=card.form_id??card.formId;
+  const form=Object.keys(WWM_PUMPKABOO_FORMS).find(key=>
+    rawForm===key||rawForm==="PUMPKABOO"+key||
+    (!rawForm&&id!=null&&Number(id)===WWM_PUMPKABOO_FORMS[key]));
+  if(!form)return null;
+  if(id!=null&&Number(id)!==0&&Number(id)!==WWM_PUMPKABOO_FORMS[form])
+    return {src:"",original:"",offline:false,missingExact:true};
+  const slug=form.toLowerCase()+(card.shiny===true?"-shiny":"");
+  return {src:LOCAL+"forms/wwm-710-"+slug+".png",
+    original:"",offline:true,officialForm:true,exactForm:true,source:"wwm-uicons"};
+ }
  function resolve(card){
   const image=String(card?.image||"");
   const costumeArt=exactCostume(card);
   if(costumeArt)return costumeArt;
+  const wwmArt=exactWwmPumpkaboo(card);
+  if(wwmArt)return wwmArt;
   // Prefer explicit source-provided artwork if one exists, otherwise use the
   // exact, offline bundled regional variant (normal OR shiny).
   if(!image&&verifiedGalarianZigzagoon(card)){
