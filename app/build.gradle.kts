@@ -8,6 +8,9 @@ dependencies {
     implementation("androidx.core:core:1.15.0")
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-auth")
+    implementation("androidx.credentials:credentials:1.6.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
     implementation("com.google.firebase:firebase-database")
     implementation("com.google.android.gms:play-services-auth:21.3.0")
 }
@@ -66,6 +69,14 @@ val testKeyPassword = System.getenv("POKE_TEST_KEY_PASSWORD")
 val testSigningFields = listOf(testKeyFile, testStorePassword, testKeyAlias, testKeyPassword)
 val testSigningComplete = testSigningFields.all { !it.isNullOrBlank() }
 val testSigningRequired = System.getenv("POKE_TEST_SIGNING_REQUIRED") == "true"
+val controlledDistribution = System.getenv("POKE_CONTROLLED_DISTRIBUTION") == "true"
+val premiumGoogleWebClientId = System.getenv("POKE_GOOGLE_WEB_CLIENT_ID")?.trim()
+    ?.takeIf { it.isNotEmpty() } ?: chatGoogleClientId
+if (!Regex("[0-9]+-[A-Za-z0-9_-]+\\.apps\\.googleusercontent\\.com").matches(premiumGoogleWebClientId))
+    throw org.gradle.api.GradleException("Invalid Premium Google OAuth Web Client ID")
+if (controlledDistribution && (System.getenv("POKE_RELEASE_KEYSTORE").isNullOrBlank() ||
+        releaseCertificateSha256 != officialTestCertificateSha256))
+    throw org.gradle.api.GradleException("Controlled QA requires the verified permanent PokeSearch signer")
 // A local, read-only scrapbook demo may be visible in the explicitly signed QA
 // candidate only. Ordinary Release builds default to false, regardless of prefs.
 // Moderated online QA is a distinct opt-in; no ordinary release receives these writes.
@@ -101,6 +112,9 @@ android {
         buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA", "false")
         buildConfigField("boolean", "SCRAPBOOK_ONLINE_QA", "false")
         buildConfigField("String", "CHAT_GOOGLE_WEB_CLIENT_ID", "\"$chatGoogleClientId\"")
+        buildConfigField("String", "PREMIUM_GOOGLE_WEB_CLIENT_ID", "\"$premiumGoogleWebClientId\"")
+        buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-ivern.netlify.app/api/premium\"")
+        buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "false")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
     }
@@ -139,6 +153,8 @@ android {
             }
         }
         getByName("release") {
+            // Off by default, even for official releases; only isolated signed QA can opt in.
+            buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "$controlledDistribution")
             // True ONLY in this isolated signed QA workflow. Never on public Releases.
             buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA",
                 if (scrapbookStage1Qa) "true" else "false")
