@@ -113,13 +113,21 @@ check("response mapping is structured, capped and secrets stripped",()=>{
  assert.ok(!JSON.stringify(r).includes("NEVER_EXPORT_ME"));
  assert.ok(!JSON.stringify(r).includes("encounter_id"));
 });
-check("ten-result cap and dedup across arbitrary source rows",()=>{
- const data=Array.from({length:50},(_,i)=>fixture(i+1));
- const r=contract.normalizeResponse({results:data},{nowMs:0});
- assert.equal(r.cards.length,10);
- assert.equal(r.siteCount,50);
- assert.equal(new Set(r.cards.map(x=>x.sourceIndex)).size,10);
- const dup=contract.normalizeResponse({results:[fixture(1),fixture(1),fixture(2)]},{nowMs:0});
+check("provider-authorized tiers: free 10, VIP 25, VIP+ 50; dedup",()=>{
+ const data=Array.from({length:60},(_,i)=>fixture(i+1));
+ const free=contract.normalizeResponse({results:data,cap:10},{nowMs:0});
+ assert.equal(free.cards.length,10);
+ assert.equal(free.serverCap,10);
+ const vip=contract.normalizeResponse({results:data,cap:25},{nowMs:0});
+ assert.equal(vip.cards.length,25);
+ assert.equal(vip.displayCap,25);
+ assert.equal(new Set(vip.cards.map(x=>x.sourceIndex)).size,25);
+ const plus=contract.normalizeResponse({results:data,cap:50},{nowMs:0});
+ assert.equal(plus.cards.length,50);
+ // No synthetic tier: if the provider omits cap, only returned rows count.
+ const returned=contract.normalizeResponse({results:data.slice(0,25)},{nowMs:0});
+ assert.equal(returned.cards.length,25);
+ const dup=contract.normalizeResponse({results:[fixture(1),fixture(1),fixture(2)],cap:25},{nowMs:0});
  assert.equal(dup.cards.length,2);
 });
 check("expired, inconsistent IV, unknown identity and shiny mismatches rejected",()=>{
