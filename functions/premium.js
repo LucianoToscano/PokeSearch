@@ -723,6 +723,9 @@ exports.adminIssuePremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async r
  const actor=await requireAdmin(request),args=request.data||{};
  const duration=String(args.duration||"").trim(),targetUid=String(args.uid||"").trim();
  const email=cleanEmail(args.recipientEmail||"");
+ const recipientName=String(args.recipientName||"").trim();
+ if(recipientName.length>80||/[\u0000-\u001f<>]/.test(recipientName))
+   throw new HttpsError("invalid-argument","Nome do beneficiário inválido.");
  if(email&&!validEmail(email))
    throw new HttpsError("invalid-argument","E-mail Google inválido.");
  if(email&&targetUid)
@@ -743,7 +746,9 @@ exports.adminIssuePremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async r
  const base=args.extend===true&&targetUid?
    Math.max(now,Number(oldEnt.expiresAt||0)):now;
  const expiry=periodExpiry(base,duration);
- await ref.set({kind:"manual",duration,uid:targetUid||null,createdBy:actor,vault:sealCode(plain),
+ await ref.set({kind:"manual",duration,uid:targetUid||null,
+   ...(recipientName?{recipientName}:{}),
+   createdBy:actor,vault:sealCode(plain),
    ...(email?{recipientEmailHash:recipientHash(email),
        recipientEmailHint:maskedEmail(email)}:{}),
    createdAt:now,revoked:false,...(targetUid?
@@ -990,6 +995,7 @@ exports.adminListPremiumKeys=onCall({region:REGION},async request=>{
    return {id:hash,kind:String(record.kind||"desconhecido"),
      source:String(record.source||""),
      recipientEmailHint:String(record.recipientEmailHint||""),
+     recipientName:String(record.recipientName||""),
      duration:String(record.duration|| (record.kind==="paid"?"30d":"")),
      uid:typeof record.uid==="string"?record.uid:"",
      createdAt:Number(record.createdAt||0),claimedAt:Number(record.claimedAt||0),
@@ -998,7 +1004,21 @@ exports.adminListPremiumKeys=onCall({region:REGION},async request=>{
      copyAvailable:!revoked&&!archived&&(!!record.vault||(record.kind==="paid"&&!!record.orderId)),
      editable:!revoked&&!archived};
  });
- return {keys,hasMore:entries.length>pageSize,
+ // Google identity is resolved ONLY on the protected admin endpoint. Do not
+ // duplicate user's full e-mail or display name in Realtime Database.
+ const resolved=await Promise.all(keys.map(async item=>{
+   if(!item.uid)return item;
+   try{
+     const profile=await getAuth().getUser(item.uid);
+     return {...item,googleName:String(profile.displayName||"").slice(0,80),
+       googleEmail:String(profile.email||"").slice(0,254),
+       googleEmailVerified:profile.emailVerified===true};
+   }catch(error){
+     // Deleted accounts keep the historical UID. Never replace it with a guess.
+     return {...item,googleName:"",googleEmail:""};
+   }
+ }));
+ return {keys:resolved,hasMore:entries.length>pageSize,
    nextCursor:page.length?page[page.length-1][0]:"",serverNow:Date.now()};
 });
 /** Copy requires an explicit owner request; old manual keys are NOT recoverable. */
@@ -1047,7 +1067,7 @@ exports.adminDeletePremiumKey=onCall({region:REGION},async request=>{
  const actor=await requireAdmin(request);
  const id=String(request.data?.id||"");
  const confirmation=String(request.data?.confirm||"");
- if(!/^[0-9a-f]{64}$/.test(id)||confirmation!=="EXCLUIR LICENÇA")
+ if(!/^[0-9a-f]{64}$/.test(id)||confirmation!=="EXCLUIR")
    throw new HttpsError("invalid-argument","Confirmação de exclusão inválida.");
  const ref=root().child("keys").child(id);
  const now=Date.now();
