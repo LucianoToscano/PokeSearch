@@ -97,6 +97,9 @@ final class CommunityScrapbookOnline {
             headings.addView(text("Chat PokeSearch",15,true));
             status=text("Conectando…",10,false);
             status.setTextColor(secondary);headings.addView(status);
+            // Retry only on a real user tap, no silent request storm if RTDB rules deny.
+            status.setContentDescription("Status do chat. Toque para reconectar");
+            status.setOnClickListener(v->retryConnection());
             nicknameButton=text("✎  Apelido",11,true);
             nicknameButton.setGravity(Gravity.CENTER);
             nicknameButton.setPadding(dp(activity,8),0,dp(activity,8),0);
@@ -211,8 +214,20 @@ final class CommunityScrapbookOnline {
                 refreshSend();
             });
         }
+        private void retryConnection(){
+            if(destroyed)return;
+            if(messagesQuery!=null&&messagesListener!=null)
+                messagesQuery.removeEventListener(messagesListener);
+            messagesListener=null;messagesQuery=null;authenticated=false;refreshSend();
+            setStatus("Reconectando ao chat…");
+            if(auth!=null&&auth.getCurrentUser()!=null)start(auth.getCurrentUser());
+            else connect();
+        }
         private void start(FirebaseUser user){
             if(destroyed)return;
+            if(messagesQuery!=null&&messagesListener!=null)
+                messagesQuery.removeEventListener(messagesListener);
+            messagesListener=null;messagesQuery=null;
             currentUid=user.getUid();
             authenticated=true;refreshNickname();
             setStatus("Conectando ao chat…");
