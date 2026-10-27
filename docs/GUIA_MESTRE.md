@@ -1,6 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 ## LT124 — Correção de sprites no picker + Firebase retry (26/10/2026)
+### LT124 — QA assinada e merge verificados
+- **PR #79 MERGED** em `main`: [ver PR](https://github.com/LucianoToscano/PokeSearch/pull/79), merge commit `bc4b1883f6744f738c83a44c6103e2fe40423234`. Fonte binária exata `2e92c07266ebf0bce1dcbde53948e2e467993c39`.
+- **GitHub Actions assinado #40426146549 SUCCESS**: [workflow](https://github.com/LucianoToscano/PokeSearch/actions/runs/40426146549), [artifact #12700590080](https://github.com/LucianoToscano/PokeSearch/actions/runs/40426146549/artifacts/12700590080). Node QA, sprites, Android Gradle/R8, assinatura v2 e upload concluídos. Testes LT124 6/6 PASS.
+- **APK QA:** `PokeSearch-v0.01.24-LT-Sprite-Picker-Stats-QA.apk`, versionName `0.01.24`, versionCode `54328`, applicationId `com.lucianotoscano.pokesearch`, 41.838.110 bytes. SHA-256 `4f8c11ce6558acc87f295f4ec3776de46a9a2d1ead9df7c8645e3d3e0e3c98a5` verificado ao extrair do ZIP usando `sha256sum -c`. Certificado Android v2 SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; ZIP ~39,7 MB (menor que 199 MB). O manifesto do APK confirma 1.025 base + 1.025 shiny + 2 regionais, nenhum desses arquivos ausente.
+- **Restrição permanente:** QA não é homologação Samsung. Contadores ainda dependem de implantação Functions/regras no Firebase remoto; formas GO sem arte verificada continuam sem sprite exata. Não anunciar restauração real de contagens ou cobertura 100% do catálogo GO.
+
+
 - Base LT123 `ed712bfe716257b27c7937bb3a97c8f53382f5bb`: botões P1/P2 no topo com ícones `sem_filtro.png` OFF e `personalizado.png` ON já estavam implementados, mantidos.
 - Aliases oficiais confirmados: `DARMANITAN_GALARIAN_STANDARD` 10177, `DARMANITAN_GALARIAN_ZEN` 10178 e `Squawkabilly White` 10262 (Blue 10260 / Yellow 10261). Pesquisa Pokémon usa resolvedor de sprite exata já compartilhado por cards/resultados, sem atribuir sprite comum a trajes `GOGGLES_2026`, `COPY_2019`. Busca rola ao primeiro candidato novo.
 - `FirebaseStats`: recupera nova tentativa de inicialização/autenticação após falha e reutiliza app nomeado sem erro de inicialização repetida. Contadores públicos **não podem apresentar números reais sem RTDB rules e Functions efetivamente implantadas**; nenhuma implantação remota foi confirmada.
