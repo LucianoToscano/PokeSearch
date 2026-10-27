@@ -33,7 +33,7 @@ final class PremiumGoogleLogin {
         try{app=FirebaseApp.getInstance(FIREBASE_APP_NAME);}
         catch(IllegalStateException missing){
             // Reuse ONLY public Firebase project settings, not anonymous auth state.
-            FirebaseApp stats=FirebaseStats.getNamedApp(context.getApplicationContext());
+            FirebaseApp stats=FirebaseStats.ensureApp(context.getApplicationContext());
             app=FirebaseApp.initializeApp(context.getApplicationContext(),
                     stats.getOptions(),FIREBASE_APP_NAME);
         }
