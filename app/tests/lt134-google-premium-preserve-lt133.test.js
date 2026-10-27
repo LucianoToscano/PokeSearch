@@ -16,7 +16,7 @@ const all=[
  ["Chat Google Admin login preserved",online.includes("GoogleSignInOptions")&&online.includes("CHAT_GOOGLE_WEB_CLIENT_ID")],
  ["Only LT134 QA Premium login; no default remote lockouts",gradle.includes("val controlledDistribution = false")&&access.includes("if(!controlled())return true")],
  ["Same original package and signer checks",gradle.includes('applicationId = "com.lucianotoscano.pokesearch"')&&gradle.includes("officialTestCertificateSha256")],
- ["Same Firebase LT config shared without losing anonymous stats",login.includes('FIREBASE_APP_NAME="PokeSearchPremiumIdentity"')&&login.includes("FirebaseStats.getNamedApp(")],
+ ["Same Firebase LT config shared without losing anonymous stats",login.includes('FIREBASE_APP_NAME="PokeSearchPremiumIdentity"')&&login.includes("FirebaseStats.ensureApp(")],
  ["Google auth native (not in PoGoCoordinates)",login.includes("GetSignInWithGoogleOption")&&login.includes("signInWithCredential(")&&!login.includes("new WebView(")],
  ["Google session logout invalidates cached authorization",login.includes("PremiumAccess.invalidateLease()")&&login.includes("auth(activity).signOut()")],
  ["Backend points to verified Deus Ivern, without Netlify source deployment",gradle.includes("https://pokesearch-premium-ivern.netlify.app/api/premium")],
