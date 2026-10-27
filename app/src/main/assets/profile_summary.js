@@ -50,17 +50,37 @@
  const trainerCards=nodes.map(e=>text(e)).filter(t=>t.length<1300&&
    /\bTrainer code\s*[\d\s]{12,24}/i.test(t)).sort((a,b)=>a.length-b.length);
  let parsed=null;
+ const trainers=[];
+ const seenCodes=new Set();
  for(const card of trainerCards){
   // A name + team + level + numeric code must all belong to one bounded card.
   const m=card.match(/(?:^|\s)([A-Za-z][A-Za-z0-9_.-]{2,39})\s+(Mystic|Valor|Instinct)\s*[·•-]\s*Level\s*(\d{1,2})\s+Trainer\s*code\s*([\d ]{12,22})\b/i);
   if(m){
    const code=m[4].replace(/\D/g,"");
    if(/^\d{12}$/.test(code)&&+m[3]>=1&&+m[3]<=80){
-    parsed={name:m[1],team:m[2],level:m[3],code};break;
+    if(!seenCodes.has(code)){
+     seenCodes.add(code);
+     trainers.push({name:m[1],team:m[2],level:m[3],code});
+     if(!parsed)parsed=trainers[trainers.length-1];
+    }
    }
   }
  }
- const trainerState=parsed?"linked":explicitZero?"unlinked":"unknown";
+ // A larger section can contain more than one trainer card. Extract each
+ // verified name/team/level/code tuple, never guess profiles from arbitrary text.
+ const cardPattern=/(?:^|\s)([A-Za-z][A-Za-z0-9_.-]{2,39})\s+(Mystic|Valor|Instinct)\s*[·•-]\s*Level\s*(\d{1,2})\s+Trainer\s*code\s*([\d ]{12,22})\b/gi;
+ for(const card of trainerCards){
+  cardPattern.lastIndex=0;
+  for(const m of card.matchAll(cardPattern)){
+   const code=m[4].replace(/\D/g,"");
+   if(!/^\d{12}$/.test(code)||+m[3]<1||+m[3]>80||seenCodes.has(code))continue;
+   seenCodes.add(code);
+   trainers.push({name:m[1],team:m[2],level:m[3],code});
+  }
+ }
+ // One site user can have multiple approved Pokemon GO trainers. Do not
+ // discard the additional profiles or choose a different account silently.
+ const trainerState=trainers.length?"linked":explicitZero?"unlinked":"unknown";
  // Only use a provider picture actually rendered on the official profile.
  // Exclude team/GO images, do not read cookies or OAuth user metadata.
  const trustedGoogleUrl=value=>{
@@ -121,5 +141,5 @@
  }
  return JSON.stringify({ok:true,page:"profile",displayName,provider,trainerState,
    trainerName:parsed?parsed.name:"",trainerCode:parsed?parsed.code:"",
-   team:parsed?parsed.team:"",level:parsed?parsed.level:"",avatarUrl});
+   team:parsed?parsed.team:"",level:parsed?parsed.level:"",trainers:trainers.slice(0,20),avatarUrl});
 })()
