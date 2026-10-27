@@ -171,6 +171,11 @@ async function run(){
    });
  }catch(error){unauthorizedRevoke=error.code==="permission-denied";}
  assert.equal(unauthorizedRevoke,true,"non-admin must not revoke keys");
+ const activeState=await premium.adminPremiumKeyStatus({
+   ...admin,data:{licenseKey:exposed.licenseKey}
+ });
+ assert.equal(activeState.status,"active");
+ assert.equal(activeState.assigned,false);
  const invalidated=await premium.adminRevokePremiumKey({
    ...admin,data:{licenseKey:exposed.licenseKey}
  });
@@ -178,6 +183,24 @@ async function run(){
  assert.equal(invalidated.wasAssigned,false);
  const exposedHash=crypto.createHash("sha256").update(exposed.licenseKey).digest("hex");
  assert.equal(read("premium/keys/"+exposedHash).revoked,true);
+ const cancelledState=await premium.adminPremiumKeyStatus({
+   ...admin,data:{licenseKey:exposed.licenseKey}
+ });
+ assert.equal(cancelledState.status,"revoked");
+ const repeated=await premium.adminRevokePremiumKey({
+   ...admin,data:{licenseKey:exposed.licenseKey}
+ });
+ assert.equal(repeated.alreadyRevoked,true,"second cancellation reports safe already-revoked");
+ const missing=await premium.adminPremiumKeyStatus({
+   ...admin,data:{licenseKey:"PS-FFFFFF-FFFFFF-FFFFFF-FFFFFF"}
+ });
+ assert.equal(missing.status,"notFound");
+ let unknownCancel=false;
+ try{await premium.adminRevokePremiumKey({
+   ...admin,data:{licenseKey:"PS-FFFFFF-FFFFFF-FFFFFF-FFFFFF"}
+ });}catch(error){unknownCancel=error.code==="not-found"}
+ assert.equal(unknownCancel,true,"never claim unknown key was cancelled");
+
  let blocked=false;
  try{
    await premium.redeemPremiumKey({
