@@ -251,6 +251,14 @@ public class OverlayService extends Service {
             JSONObject config=new JSONObject(filterConfigJson());
             config.put("mode",mode);
             config.put("shiny",shiny);
+            if(shiny){
+                String selected=getSharedPreferences("prefs",0)
+                    .getString("profileTrainerCode","");
+                if(selected.matches("[0-9]{12}")&&
+                    "linked".equals(getSharedPreferences("prefs",0)
+                    .getString("profileTrainerState","unknown")))
+                    config.put("shinyAccount",selected);
+            }
             config.put("locationEnabled",locationEnabled);
             config.put("locationCoords",locationEnabled?locationCoords:"");
             if(locationEnabled)config.put("locationRadius",locationRadius);
@@ -279,7 +287,8 @@ public class OverlayService extends Service {
                 JSONArray cards=response.optJSONArray("cards");
                 if(!"authorized-api-qa".equals(response.optString("source"))||
                     !response.optBoolean("criteriaConfirmed",false)||
-                    cards==null||cards.length()>10||
+                    cards==null||cards.length()>100||
+                    cards.length()>response.optInt("apiDisplayCap",10)||
                     response.optInt("searchId",-1)<0||
                     (response.optBoolean("requestedShiny",false)!=shiny)||
                      (shiny&&(!response.optBoolean("apiFilterAccepted",false)||
