@@ -36,3 +36,13 @@ A assinatura da primeira QA LT127 informa:
 - APK Android Signature Scheme v2 validado. Não enviar nem publicar o arquivo de keystore.
 
 **Limitação explícita:** na build atual, caso `POKE_CHAT_GOOGLE_WEB_CLIENT_ID` não exista nas secrets do GitHub Actions, o login de administrador exibe instrução de configuração e permanece indisponível; o chat comum continua normal. Mesmo com secret, é necessário ativar Google Auth e implantar as regras RTDB de chat mescladas com o banco atual. A leitura da Home PoGoCoordinates jamais concede admin por mera igualdade do e-mail apresentado.
+
+## Pacote de regras pronto para integração segura
+
+Arquivo `docs/POKESEARCH_LT127_APENAS_BLOCO_CHAT.json` contém **somente** `{ "chat": { ... } }`, extraído das regras versionadas desta PR. Não colar isso como substituto de todo o editor do Firebase. No console existente:
+
+- Fazer backup/exportar as regras de produção atuais, que já fazem contagem de ativos/instalações.
+- Dentro de `rules`, **substituir unicamente o nó `chat` atual** pelo nó `chat` do arquivo; preservar todos os demais irmãos (sobretudo `stats`) sem alterações.
+- Usar o simulador de regras com uma conta anônima: escrita própria em `chat/messages/$id` permitida, exclusão negada, gravação `chat/avatars/$uid` permitida somente para o UID próprio.
+- Validar autenticação do admin como Google autenticado no mesmo Firebase, com `email_verified` e e-mail específico. Só então confirmar leitura e exclusão de mensagem pelo admin, limpeza do feed e recebimento em outro dispositivo.
+- Publicar após esses testes, reabrir LT127, conferir que `Ativos agora` e `Instalações` permanecem com dados verdadeiros. **Este arquivo não foi implantado no Firebase por esta PR**.
