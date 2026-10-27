@@ -37,6 +37,10 @@ final class PremiumAccess {
             callback.done(global,premium);
         });
     }
+    static void redeem(Context context,String licenseKey,ResultCallback cb){
+        Map<String,Object> data=new HashMap<>();data.put("licenseKey",licenseKey);
+        call(context,"redeemPremiumKey",data,cb);
+    }
     static void createPix(Context context,String email,String cpf,ResultCallback cb){
         Map<String,Object> data=new HashMap<>();
         data.put("versionCode",BuildConfig.VERSION_CODE);
