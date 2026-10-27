@@ -1178,6 +1178,12 @@ public class OverlayService extends Service {
     }
     @Override public void onCreate(){
         super.onCreate();
+        // Both P1 and P2 must receive a fresh authenticated server lease in
+        // controlled QA, before any WebView or floating window is created.
+        if(PremiumAccess.controlled()&&!PremiumAccess.permitted(isSecondaryOverlay())){
+            stopSelf();
+            return;
+        }
         if (!IntegrityGuard.verify(this)) {
             BugReport.log(this,"SECURITY","Falha de integridade do pacote");
             android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
@@ -1203,6 +1209,25 @@ public class OverlayService extends Service {
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(isSecondaryOverlay()?74:73,note);
         FirebaseStats.setOverlayVisible(this,true,isSecondaryOverlay());
+        if(PremiumAccess.controlled()){
+            // A revoked version/expired P2 license is enforced on BOTH overlays.
+            handler.postDelayed(new Runnable(){
+                @Override public void run(){
+                    if(stopped)return;
+                    if(!PremiumAccess.permitted(isSecondaryOverlay())){stopSelf();return;}
+                    handler.postDelayed(this,5000L);
+                }
+            },5000L);
+            handler.postDelayed(new Runnable(){
+                @Override public void run(){
+                    if(stopped)return;
+                    PremiumAccess.verify(OverlayService.this,(allowed,premium)->{
+                        if(!allowed||(isSecondaryOverlay()&&!premium))stopSelf();
+                    });
+                    if(!stopped)handler.postDelayed(this,45000L);
+                }
+            },45000L);
+        }
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         try{visualPrefsJson=normalizeVisualPrefs(
             overlayPrefs().getString("visualPrefsJson","{}")).toString();}
