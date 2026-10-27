@@ -69,8 +69,8 @@
     <p>Emita um código gratuito de <strong>15 dias</strong>, ainda sem usuário associado. O prazo começa no resgate. Esta ação cria um registro de teste no Firebase, sem cobrança.</p>
     <button id="issue" class="secondary">Gerar código de teste de 15 dias</button>
     <div id="issued" hidden>
-      <div id="license" aria-label="Código de licença"></div>
-      <button id="copy" class="secondary">Copiar código</button>
+      <div id="license" aria-label="Código de licença (oculto por padrão)"></div>
+      <div class="actions"><button id="copy" class="secondary">Copiar código</button><button id="reveal" class="secondary">Mostrar código</button></div>
       <small>Guarde este código. Ele é exibido apenas nesta sessão e não deve ser compartilhado em prints. O resgate será testado separadamente.</small>
     </div>
   </section>
@@ -78,7 +78,7 @@
     <h2 style="font-size:1.08rem;margin-top:0">Testar ou cancelar um código</h2>
     <p>Cole o código aqui. <strong>Cancelar</strong> invalida o código manual permanentemente; <strong>resgatar</strong> ativa a licença na sua conta conectada. Nenhuma das ações gera cobrança.</p>
     <label for="key-entry" class="label">Código PS-…</label>
-    <input id="key-entry" maxlength="36" placeholder="PS-XXXXXX-XXXXXX-XXXXXX-XXXXXX"
+    <input id="key-entry" type="password" maxlength="36" placeholder="PS-XXXXXX-XXXXXX-XXXXXX-XXXXXX"
       autocomplete="off" spellcheck="false" autocapitalize="characters"
       style="display:block;margin:9px 0 15px;width:100%;padding:13px;background:#0d1725;color:#f3f5f8;border:1px solid #36445a;border-radius:10px;font-size:.9rem">
     <div class="actions">
@@ -99,7 +99,7 @@
   });
   const auth=getAuth(app);
   const el=id=>document.getElementById(id);
-  let lastKey="",busy=false;
+  let lastKey="",revealed=false,busy=false;
   const setStatus=(message,kind="")=>{el("status").textContent=message;el("status").className=kind};
   const money=cents=>(Number(cents)/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   async function call(name,data={}){
@@ -157,7 +157,7 @@
   });
   el("logout").addEventListener("click",async()=>{
     await signOut(auth);
-    lastKey="";el("license").textContent="";el("issued").hidden=true;
+    lastKey="";revealed=false;el("license").textContent="";el("issued").hidden=true;
     el("admin").hidden=true;el("licensing").hidden=true;el("key-management").hidden=true;
     el("key-entry").value="";
     setStatus("Sessão encerrada.");
@@ -173,7 +173,7 @@
       if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(x.licenseKey||""))throw new Error("Código gerado em formato inesperado.");
       lastKey=x.licenseKey;
       el("key-entry").value=lastKey;
-      el("license").textContent=lastKey;el("issued").hidden=false;
+      revealed=false;el("license").textContent="PS-••••••-••••••-••••••-••••••";el("reveal").textContent="Mostrar código";el("issued").hidden=false;
       setStatus("Código de teste criado no Firebase, sem cobrança.","ok");
     }catch(e){setStatus(e.message||"Falha ao emitir licença.","error");}
     finally{busy=false;el("issue").disabled=false;}
@@ -196,7 +196,7 @@
       const result=await call("adminRevokePremiumKey",{licenseKey});
       if(result.revoked!==true)throw new Error("Servidor não confirmou o cancelamento.");
       if(lastKey===licenseKey){
-        lastKey="";el("license").textContent="";el("issued").hidden=true;
+        lastKey="";revealed=false;el("license").textContent="";el("issued").hidden=true;
       }
       el("key-entry").value="";
       setStatus("Código cancelado no Firebase. Não poderá ser resgatado.","ok");
@@ -217,6 +217,12 @@
       setStatus("Licença ativada no Firebase. Validade: "+expiry+". A distribuição dos APKs segue desativada.","ok");
     }catch(e){setStatus(e.message||"Não foi possível resgatar.","error");}
     finally{busy=false;el("redeem").disabled=false;el("revoke").disabled=false;}
+  });
+  el("reveal").addEventListener("click",()=>{
+    if(!lastKey)return;
+    revealed=!revealed;
+    el("license").textContent=revealed?lastKey:"PS-••••••-••••••-••••••-••••••";
+    el("reveal").textContent=revealed?"Ocultar código":"Mostrar código";
   });
   el("copy").addEventListener("click",async()=>{
     if(!lastKey)return;
