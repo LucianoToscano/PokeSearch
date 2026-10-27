@@ -163,7 +163,13 @@ jobs:
           assert 'forms/555-galar-zen-shiny.png' in report['forms']
           assert 'forms/585-spring.png' in report['forms']
           assert report['formSourceCommit']=='d8c2fb78563e28ad7b3abe938cf6e79998d04e90'
-          assert len(report['costumes'])==16
+          assert len(report['costumes'])==102  # 16 existing + 86 pinned GO Halloween/FALL2022 variants
+          for file in ("pm37.cFALL_2022.icon.png",
+                       "pm37.cFALL_2022.s.icon.png",
+                       "pm714.cHALLOWEEN_2025.icon.png",
+                       "pm714.cHALLOWEEN_2025.s.icon.png",
+                       "pm710.fAVERAGE.cFALL_2022.icon.png"):
+              assert "costumes/"+file in report['costumes'], file
           for dex in (25,393,426):
               for suffix in ('','-shiny'):
                   key=f'costumes/{dex}-halloween-2021{suffix}.png'
@@ -195,6 +201,8 @@ jobs:
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/555-galar-zen-shiny.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/585-spring.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/variety-10262-shiny.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm37.cFALL_2022.icon.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm714.cHALLOWEEN_2025.s.icon.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/4-goggles-2026.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/4-goggles-2026-shiny.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/3-copy-2019.png'
