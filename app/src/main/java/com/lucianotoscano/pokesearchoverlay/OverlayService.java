@@ -659,6 +659,33 @@ public class OverlayService extends Service {
             config.put("stamina",rawStamina);config.put("glRank",glRank);
             config.put("ulRank",ulRank);config.put("percentMin",ivPercentMin);
             config.put("percentMax",ivPercentMax);
+            // Trainer selection belongs to the PoGoCoordinates session, not
+            // either Pokébola's editable IV/GL/UL preset. The two overlays read
+            // the same owner-confirmed linked trainer from Home.
+            android.content.SharedPreferences session=getSharedPreferences("prefs",0);
+            if(shiny&&"linked".equals(session.getString("profileTrainerState",""))){
+                String selected=session.getString("profileTrainerSelectedCode","");
+                if(!session.getBoolean("profileTrainerAll",false)&&
+                   selected.matches("[0-9]{12}")){
+                    try{
+                        org.json.JSONArray accounts=new org.json.JSONArray(
+                            session.getString("profileTrainerAccounts","[]"));
+                        for(int i=0;i<accounts.length();i++){
+                            JSONObject account=accounts.optJSONObject(i);
+                            if(account!=null&&selected.equals(account.optString("code",""))){
+                                config.put("shinyAccount",selected);
+                                config.put("shinyAccountLabel",account.optString("name",""));
+                                break;
+                            }
+                        }
+                    }catch(org.json.JSONException ignored){}
+                }else if(session.getBoolean("profileTrainerAll",false)){
+                    config.put("shinyAccountAll",true);
+                    try{config.put("shinyAccountCount",new org.json.JSONArray(
+                        session.getString("profileTrainerAccounts","[]")).length());}
+                    catch(org.json.JSONException ignored){}
+                }
+            }
             JSONObject extra=new JSONObject(extraFiltersJson);
             java.util.Iterator<String> keys=extra.keys();
             while(keys.hasNext()){String key=keys.next();config.put(key,extra.get(key));}
