@@ -70,24 +70,42 @@ final class CaptureChatCard {
         if(text.isEmpty())return current;
         return current.length()+text.length()<=max?current+text:current;
     }
+    private static boolean isHalloween2021(String input){
+        if(input==null)return false;
+        String code=input.replaceAll("[^A-Za-z0-9]","").toUpperCase(Locale.ROOT);
+        return "HALLOWEEN2021COSTUME".equals(code) ||
+            "HALLOWEEN2021NOEVOLVE".equals(code) ||
+            "HALLOWEEN2021".equals(code) ||
+            "HALLOWEENMISCHIEF2021".equals(code);
+    }
     static String fromResult(JSONObject item){
         if(item==null)return "";
         String name=clean(item.optString("name",""),60);
         if(name.isEmpty())return "";
         String form=clean(item.optString("form",""),28);
-        if(!form.isEmpty() && !form.equalsIgnoreCase("Normal") &&
-           !form.equalsIgnoreCase("Default") && !form.equalsIgnoreCase("None") &&
-           !name.toLowerCase(Locale.ROOT).contains(form.toLowerCase(Locale.ROOT))){
-            name=suffix(name," ("+form+")",95);
+        String costume=clean(item.optString("costume",""),38);
+        // The live site may supply the costume in both form and costume
+        // fields, or inside the species title. Canonicalize only the exact
+        // verified 2021 variants so the tiny sprite resolver still matches.
+        String base=name.replaceFirst("\\s*\\([^)]*\\).*$","").trim();
+        boolean halloween2021=base.matches("(?i)^(Pikachu|Piplup|Drifblim)$") &&
+            (CaptureChatFormat.exactCostumeAsset(name,false).length()>0 ||
+             isHalloween2021(form) || isHalloween2021(costume));
+        if(halloween2021){
+            name=base+" (Halloween 2021 Costume)";
+        }else{
+            if(!form.isEmpty() && !form.equalsIgnoreCase("Normal") &&
+               !form.equalsIgnoreCase("Default") && !form.equalsIgnoreCase("None") &&
+               !name.toLowerCase(Locale.ROOT).contains(form.toLowerCase(Locale.ROOT)))
+                name=suffix(name," ("+form+")",95);
+            if(!costume.isEmpty() && !name.toLowerCase(Locale.ROOT)
+                    .contains(costume.toLowerCase(Locale.ROOT)))
+                name=suffix(name," (Traje "+costume+")",95);
+            else if(item.optInt("costume_id",0)>0 && costume.isEmpty())
+                name=suffix(name," (Traje)",95);
+            if(item.optInt("form_id",0)>0 && form.isEmpty())
+                name=suffix(name," (Forma especial)",95);
         }
-        String costume=clean(item.optString("costume",""),23);
-        if(!costume.isEmpty() && !name.toLowerCase(Locale.ROOT)
-                .contains(costume.toLowerCase(Locale.ROOT))){
-            name=suffix(name," (Traje "+costume+")",95);
-        }else if(item.optInt("costume_id",0)>0 && costume.isEmpty())
-            name=suffix(name," (Traje)",95);
-        if(item.optInt("form_id",0)>0 && form.isEmpty())
-            name=suffix(name," (Forma especial)",95);
         boolean shiny=item.optBoolean("shiny",false);
         String head=(shiny?"✨":"🎉")+" Capturou um "+name+"!";
         List<String> badges=new ArrayList<>();
