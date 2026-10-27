@@ -78,7 +78,22 @@ final class PremiumPurchaseDialog {
         identity.addView(googleLogin,new LinearLayout.LayoutParams(-2,dp(activity,39)));
         Button googleLogout=button(activity,"Trocar",false,0xFF253F5C);
         identity.addView(googleLogout,new LinearLayout.LayoutParams(-2,dp(activity,39)));
-        col.addView(identity,space(activity,0,0,0,dp(activity,13)));
+        col.addView(identity,space(activity,0,0,0,dp(activity,6)));
+        TextView adminLink=label(activity,"⚙  Central Premium · licenças e valores  ›",
+            12,0xFF8FC6FF,true);
+        adminLink.setGravity(android.view.Gravity.END|android.view.Gravity.CENTER_VERTICAL);
+        adminLink.setMinHeight(dp(activity,34));
+        adminLink.setVisibility(View.GONE);
+        adminLink.setOnClickListener(v->{
+            android.content.Intent browser=new android.content.Intent(
+                android.content.Intent.ACTION_VIEW,
+                android.net.Uri.parse("https://pokesearch-premium-ivern.netlify.app/admin.html"));
+            try{activity.startActivity(browser);}
+            catch(android.content.ActivityNotFoundException ignored){
+                statusMessage(activity,"Não há navegador para abrir o painel Premium.");
+            }
+        });
+        col.addView(adminLink,space(activity,0,0,0,dp(activity,8)));
 
         LinearLayout plan=new LinearLayout(activity);
         plan.setOrientation(LinearLayout.VERTICAL);
@@ -242,6 +257,7 @@ final class PremiumPurchaseDialog {
                             pricePreview.setText(String.format(Locale.forLanguageTag("pt-BR"),
                                 "R$ %.2f",cents/100.0));
                             promoBadge.setVisibility(View.GONE);
+                            normalPrice.setVisibility(View.GONE);
                             discountCopy.setVisibility(View.GONE);
                             canSell[0]=Boolean.TRUE.equals(current.get("salesEnabled"))&&cents>=100;
                             create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&canSell[0]);
@@ -268,6 +284,9 @@ final class PremiumPurchaseDialog {
             boolean signed=PremiumGoogleLogin.isGoogleSignedIn(activity);
             String account=PremiumGoogleLogin.email(activity);
             googleAccount.setText(signed?account:"Entre para continuar");
+            adminLink.setVisibility(signed&&
+                "lucianotoscano@gmail.com".equalsIgnoreCase(account)?
+                View.VISIBLE:View.GONE);
             googleLogin.setVisibility(signed?View.GONE:View.VISIBLE);
             googleLogout.setVisibility(signed?View.VISIBLE:View.GONE);
             activate.setEnabled(signed);
@@ -452,8 +471,11 @@ final class PremiumPurchaseDialog {
                 normalPrice.getPaintFlags()&~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
             String priceLabel=String.format(Locale.forLanguageTag("pt-BR"),
                 "R$ %.2f",cents/100.0);
-            discountCopy.setText(percent+"% de desconto por tempo limitado");
+            discountCopy.setText(promo&&deadline>serverNow?
+                percent+"% de desconto · oferta com prazo definido":
+                percent+"% de desconto promocional");
             discountCopy.setVisibility(percent>0?View.VISIBLE:View.GONE);
+            normalPrice.setVisibility(percent>0?View.VISIBLE:View.GONE);
             expiresAt[0]=promo&&deadline>serverNow?deadline:0L;
             handler.removeCallbacks(promoClock[0]);
             if(expiresAt[0]>0L)promoClock[0].run();
@@ -489,6 +511,9 @@ final class PremiumPurchaseDialog {
             scheduled[0]=poll[0];
             handler.postDelayed(scheduled[0],1000L);
         }
+    }
+    private static void statusMessage(Context context,String value){
+        android.widget.Toast.makeText(context,value,android.widget.Toast.LENGTH_SHORT).show();
     }
     private static int dp(Context context,float value){
         return Math.round(context.getResources().getDisplayMetrics().density*value);
