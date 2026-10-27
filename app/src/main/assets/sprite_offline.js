@@ -90,9 +90,19 @@
   if(dex<1||dex>1025||!species||species!==BASE_SPECIES[dex])return false;
   if(costume&&costume!=="NONE"&&costume!=="NORMAL"&&costume!=="DEFAULT")return false;
   if(card.costume_id!==undefined&&card.costume_id!==null&&Number(card.costume_id)!==0)return false;
-  // Unknown independent form/costume metadata must fail closed, not assume base.
-  if(card.form_id!=null&&Number(card.form_id)!==0)return false;
-  if(card.formId!=null&&Number(card.formId)!==0)return false;
+  // LT126: independent GO catalog is bundled at build time and may prove
+  // the *default* form ID. An unknown/nondefault numeric form never uses base.
+  const wwm=typeof globalThis!=="undefined"?globalThis.PokeSearchWWMCatalog:null;
+  const metadata=wwm&&wwm.species&&wwm.species[dex];
+  // These two defaults were independently checked against PokeAPI #710/#711
+  // and the pinned WatWowMap defaultFormId 2641/2645, even without the
+  // optional catalog bundle in older WebViews.
+  const auditedAverageId=dex===710?2641:dex===711?2645:0;
+  const defaultId=metadata&&nameKey(metadata[0])===species?
+    Number(metadata[1]):auditedAverageId;
+  const formId=card.form_id!=null?Number(card.form_id):card.formId!=null?Number(card.formId):0;
+  if(!Number.isInteger(formId)||formId<0)return false;
+  if(formId!==0&&(!defaultId||formId!==defaultId))return false;
   if(card.isCostume===true||nameKey(card.variant)||nameKey(card.region))return false;
   // DOM results often omit Form for ordinary Pokémon (Noibat #714).
   // A BLANK form is safe only when Dex + catalogue species agree exactly.
@@ -102,6 +112,13 @@
   // BOTH results and detail WebViews. Never guess a regional/costume form.
   if(form==="NORMAL"||form==="DEFAULT"||
      form===species||form===species+"NORMAL"||form===species+"DEFAULT")return true;
+  // Exact default Average varieties: WatWowMap GO forms 2641 / 2645
+  // and PokeAPI base #710/#711 refer to the same named Average variety.
+  // This repairs Pumpkaboo's explicit "Average" from DOM/API without
+  // borrowing any Small/Large/Super artwork.
+  if((dex===710||dex===711)&&
+     (form==="AVERAGE"||form===species+"AVERAGE")&&
+     (formId===0||formId===(dex===710?2641:2645)))return true;
   // Furfrou Natural (#676) is its official base coat. Not the other trims.
   if(dex===676&&species==="FURFROU"&&
      (form==="NATURAL"||form==="FURFROUNATURAL"))return true;

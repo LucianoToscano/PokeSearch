@@ -40,20 +40,26 @@ final class FirebaseStats {
         return PresenceWindowState.isActive(
             homeVisible,primaryOverlayVisible,secondaryOverlayVisible);
     }
-    private static synchronized void init(Context context){
-        if(initialized)return;
-        initialized=true;
-        try {
+    /** Shared bootstrap: the Home chat may mount BEFORE statistics binds.
+     * FirebaseApp.getInstance(name) by itself throws on that fresh install. */
+    static synchronized FirebaseApp ensureApp(Context context){
+        try{return FirebaseApp.getInstance("PokeSearchStats");}
+        catch(IllegalStateException notInitialized){
             FirebaseOptions options=new FirebaseOptions.Builder()
                 .setApplicationId("1:1007816617051:android:bc055b81b3bdfaceaa637e")
                 .setApiKey("AIzaSyDxCp0f4c_xrrlJ6EGGg9HKPQPIiutCQkM")
                 .setProjectId("pokesearch-lt").setDatabaseUrl(DB_URL).build();
-            FirebaseApp app;
-            try{app=FirebaseApp.getInstance("PokeSearchStats");}
-            catch(IllegalStateException notInitialized){
-                app=FirebaseApp.initializeApp(context.getApplicationContext(),options,"PokeSearchStats");
-            }
+            FirebaseApp app=FirebaseApp.initializeApp(
+                context.getApplicationContext(),options,"PokeSearchStats");
             if(app==null)throw new IllegalStateException("Firebase Stats unavailable");
+            return app;
+        }
+    }
+    private static synchronized void init(Context context){
+        if(initialized)return;
+        initialized=true;
+        try {
+            FirebaseApp app=ensureApp(context);
             auth=FirebaseAuth.getInstance(app);
             db=FirebaseDatabase.getInstance(app,DB_URL);
             if(auth.getCurrentUser()!=null)attach(auth.getCurrentUser().getUid());
