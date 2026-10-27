@@ -15,6 +15,7 @@ final class PremiumAccess {
     private static final long LEASE_MS=65000L;
     private static long leaseElapsed=-1L;
     private static boolean globallyAllowed=false,secondAllowed=false;
+    private static long lastRequest=0L;
     private PremiumAccess(){}
     static boolean controlled(){return BuildConfig.CONTROLLED_DISTRIBUTION;}
     static synchronized boolean permitted(boolean secondary){
@@ -27,7 +28,15 @@ final class PremiumAccess {
         if(!controlled()){callback.done(true,true);return;}
         Map<String,Object> payload=new HashMap<>();
         payload.put("versionCode",BuildConfig.VERSION_CODE);
+        final long seq;
+        synchronized(PremiumAccess.class){seq=++lastRequest;}
         call(context,"checkDistributionAccess",payload,(response,error)->{
+            synchronized(PremiumAccess.class){
+                if(seq!=lastRequest){
+                    callback.done(permitted(false),permitted(true));
+                    return;
+                }
+            }
             boolean global=error==null&&Boolean.TRUE.equals(response.get("allowed"));
             boolean premium=global&&Boolean.TRUE.equals(response.get("premium"));
             synchronized(PremiumAccess.class){
