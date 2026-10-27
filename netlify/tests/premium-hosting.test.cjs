@@ -10,12 +10,12 @@ const gradle=source("app/build.gradle.kts");
 const checks=[
  ["Firebase ID token authenticated server-side",http.includes("verifyIdToken(authorization.slice(7),true)")],
  ["only whitelisted actions are publicly routed",http.includes("allowedActions.has(action)")],
- ["webhook accepts the Orders simulator body only with verified HMAC",
-   http.includes('const queryTopic=url.searchParams.get("type")')&&
-   http.includes('event.type!=="order"')&&
-   http.includes('query["data.id"]=event.data.id')&&
+ ["webhook routes Payments and legacy Orders with HMAC validation",
+   http.includes('topic!=="payment"&&topic!=="order"')&&
+   http.includes('liveModeWebhook:action==="webhook-live"')&&
+   http.includes('query["data.id"]=String(event.data.id)')&&
    http.includes('backend.premiumPixWebhook(request,answer)')],
- ["webhook delegated to existing HMAC-verified code",http.includes("backend.premiumPixWebhook")&&logic.includes("crypto.timingSafeEqual")],
+  ["webhook delegated to existing HMAC-verified code",http.includes("backend.premiumPixWebhook")&&logic.includes("crypto.timingSafeEqual")],
  ["backend uses Firebase LT only",http.includes('POKE_FIREBASE_PROJECT_ID!=="pokesearch-lt"')&&http.includes('databaseURL:"https://pokesearch-lt-default-rtdb.firebaseio.com/"')],
  ["firebase credentials from protected runtime",http.includes("POKE_FIREBASE_PRIVATE_KEY")&&http.includes("POKE_FIREBASE_CLIENT_EMAIL")],
  ["credentials never logged",!http.includes("console.log(")&&!android.includes("Log.d(")],
