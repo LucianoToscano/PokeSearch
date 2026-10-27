@@ -29,6 +29,10 @@ assert.ok(app.includes('setSingleChoiceItems(labels.toArray(new String[0]),selec
 assert.ok(app.includes('profileSelectedTrainerCode'));
 assert.ok(app.includes('profileTrainerList'));
 assert.ok(service.includes('config.put("shinyAccount",selected)'));
+assert.ok(service.includes('trainerChangedReceiver'));
+assert.ok(service.includes('ACTION_TRAINER_CHANGED'));
+assert.ok(service.includes('refresh(true);'));
+assert.ok(app.includes('sendBroadcast(new Intent("com.lucianotoscano.pokesearchoverlay.TRAINER_CHANGED")'));
 assert.ok(service.includes('cards==null||cards.length()>100'));
 const dock=asset("dock.html"),probe=asset("probe.js");
 assert.ok(dock.includes('a.slice(0,100)'));
