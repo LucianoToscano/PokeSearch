@@ -162,7 +162,12 @@ final class CommunityScrapbookOnline {
                     switch(event.getActionMasked()){
                         case MotionEvent.ACTION_DOWN:
                             priorY=event.getY();
-                            v.getParent().requestDisallowInterceptTouchEvent(true);
+                            // With only one or two messages the timeline may
+                            // not scroll at all. The parent Home MUST receive
+                            // the very first swipe on the blank chat area.
+                            boolean scrollable=timeline.canScrollVertically(-1)||
+                                timeline.canScrollVertically(1);
+                            v.getParent().requestDisallowInterceptTouchEvent(scrollable);
                             break;
                         case MotionEvent.ACTION_MOVE:
                             float diff=event.getY()-priorY;
