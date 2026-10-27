@@ -1210,6 +1210,16 @@ public class OverlayService extends Service {
         startForeground(isSecondaryOverlay()?74:73,note);
         FirebaseStats.setOverlayVisible(this,true,isSecondaryOverlay());
         if(PremiumAccess.controlled()){
+            // A watchdog also denies offline use when a network callback stalls.
+            handler.postDelayed(new Runnable(){
+                @Override public void run(){
+                    if(stopped)return;
+                    if(!PremiumAccess.permitted(isSecondaryOverlay())){
+                        stopSelf();return;
+                    }
+                    handler.postDelayed(this,5000L);
+                }
+            },5000L);
             // A revoked global build or expired Premium grant shuts down P1/P2
             // without relying on the user's date or stored local permissions.
             handler.postDelayed(new Runnable(){
