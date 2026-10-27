@@ -79,6 +79,14 @@
     <div class="row"><span class="label">Preço normal</span><span class="value" id="regular">—</span></div>
     <hr class="sep">
     <div class="row"><span class="label">Preço promocional</span><span class="value" id="promo">—</span></div>
+    <div class="row"><span class="label">Promoção</span><strong id="promotion-status">—</strong></div>
+    <div class="actions"><button id="promotion-toggle" class="secondary" disabled>Verificar promoção</button></div>
+    <small>Você pode ligar ou desligar a promoção e alterar os preços abaixo. Valores já cobrados não são alterados.</small>
+    <label class="label" for="regular-price-input">Preço normal (R$)</label>
+    <input class="maintenance-note" id="regular-price-input" inputmode="decimal" type="text" placeholder="10,00">
+    <label class="label" for="promotion-price-input">Preço promocional (R$)</label>
+    <input class="maintenance-note" id="promotion-price-input" inputmode="decimal" type="text" placeholder="5,00">
+    <div class="actions"><button id="save-prices" class="secondary">Salvar valores</button></div>
     <div class="actions"><button id="refresh" class="secondary">Verificar novamente</button></div>
   </section>
   <section class="panel" id="licensing" hidden>
@@ -92,12 +100,42 @@
       <option value="12m">12 meses</option>
       <option value="lifetime">Vitalícia</option>
     </select>
-    <button id="issue" class="secondary">Gerar licença manual</button>
+    <label class="label" for="recipient-email">E-mail Google do beneficiário (opcional)</label>
+    <input class="maintenance-note" id="recipient-email" type="email" spellcheck="false"
+      autocomplete="off" placeholder="treinador@gmail.com">
+    <small>Preencha o e-mail para reservar a licença àquela conta Google verificada. Deixe vazio para a primeira conta que resgatar.</small>
+    <div class="actions"><button id="issue" class="secondary">Gerar licença manual</button></div>
     <div id="issued" hidden>
       <div id="license" aria-label="Código de licença (oculto por padrão)"></div>
       <div class="actions"><button id="copy" class="secondary">Copiar código</button><button id="reveal" class="secondary">Mostrar código</button></div>
       <small>Guarde este código. Ele é exibido apenas nesta sessão e não deve ser compartilhado em prints. O resgate será testado separadamente.</small>
     </div>
+  </section>
+  <section class="panel" id="free-campaign-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">FREE! · Premium por tempo limitado</h2>
+    <p>Defina duração do benefício, período da campanha e limite de resgates. Cada conta Google verificada pode receber uma licença gratuita.</p>
+    <div class="row"><span class="label">Situação</span><strong id="free-campaign-status">Desativada</strong></div>
+    <label class="label" for="free-duration">Duração da licença oferecida</label>
+    <select id="free-duration" class="maintenance-note" style="display:block">
+      <option value="15d">15 dias</option>
+      <option value="30d">30 dias</option>
+      <option value="1m">1 mês</option>
+      <option value="3m">3 meses</option>
+      <option value="6m">6 meses</option>
+      <option value="12m" selected>12 meses</option>
+      <option value="lifetime">Vitalícia</option>
+    </select>
+    <label class="label" for="free-start">Começa em (horário local)</label>
+    <input id="free-start" class="maintenance-note" type="datetime-local">
+    <label class="label" for="free-end">Termina em (horário local)</label>
+    <input id="free-end" class="maintenance-note" type="datetime-local">
+    <label class="label" for="free-limit">Máximo de beneficiários</label>
+    <input id="free-limit" class="maintenance-note" type="number" min="1" max="10000" value="20">
+    <div class="actions">
+      <button id="free-activate" class="secondary">Ativar ou programar</button>
+      <button id="free-disable" class="secondary danger-action">Encerrar campanha</button>
+    </div>
+    <small>O benefício é gratuito e a campanha é independente da promoção de R$ 5. Encerrá-la impede novos resgates, mas mantém as licenças já concedidas. Nada é ativado automaticamente neste painel.</small>
   </section>
   <section class="panel" id="app-version-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Administração de APKs</h2>
@@ -167,6 +205,7 @@
   const LT134_VERSION_CODE=54339;
   let lastKey="",revealed=false,busy=false,keyBusy=false,keyCursor="",keyCount=0;
   let maintenanceEnabled=false,appVersionsEnabled=true,managedVersions={};
+  let promotionEnabled=false,freeCampaign={};
   let configState={salesEnabled:false,paymentsLiveEnabled:false,
     globalEnabled:false,lt134Enabled:false,otherVersionsActive:[]};
   const setStatus=(message,kind="")=>{el("status").textContent=message;el("status").className=kind};
@@ -221,8 +260,24 @@
       el("toggle-live").textContent=configState.paymentsLiveEnabled?"Desativar Pix real":"Habilitar Pix real";
       el("regular").textContent=money(data.regularPriceCents);
       el("promo").textContent=money(data.promotionalPriceCents);
+      promotionEnabled=data.promotionEnabled===true;
+      el("promotion-status").textContent=promotionEnabled?"Ativa":"Desativada";
+      el("promotion-toggle").textContent=promotionEnabled?"Desativar promoção":"Ativar promoção";
+      el("promotion-toggle").disabled=false;
+      if(document.activeElement!==el("regular-price-input"))
+        el("regular-price-input").value=(Number(data.regularPriceCents)/100).toFixed(2).replace(".",",");
+      if(document.activeElement!==el("promotion-price-input"))
+        el("promotion-price-input").value=(Number(data.promotionalPriceCents)/100).toFixed(2).replace(".",",");
+      freeCampaign=data.freeYearCampaign||{};
+      const available=freeCampaign.active===true;
+      el("free-campaign-status").textContent=available?
+        "Ativa · "+freeCampaign.remaining+" vagas":freeCampaign.enabled?
+        "Programada, encerrada ou esgotada":"Desativada";
+      el("free-duration").value=freeCampaign.duration||"12m";
+      el("free-disable").disabled=freeCampaign.enabled!==true;
       el("admin").hidden=false;
       el("licensing").hidden=false;
+      el("free-campaign-panel").hidden=false;
       el("key-management").hidden=false;
       el("maintenance-panel").hidden=false;
       el("app-version-panel").hidden=false;
@@ -233,6 +288,7 @@
     }catch(e){
       el("admin").hidden=true;
       el("licensing").hidden=true;
+      el("free-campaign-panel").hidden=true;
       el("key-management").hidden=true;
       el("maintenance-panel").hidden=true;
       el("app-version-panel").hidden=true;
@@ -302,6 +358,7 @@
     await signOut(auth);
     lastKey="";revealed=false;el("license").textContent="";el("issued").hidden=true;
     el("admin").hidden=true;el("licensing").hidden=true;el("key-management").hidden=true;
+    el("free-campaign-panel").hidden=true;
     el("maintenance-panel").hidden=true;el("app-version-panel").hidden=true;el("keys-panel").hidden=true;
     el("premium-keys-list").replaceChildren();keyCursor="";keyCount=0;
     el("key-entry").value="";
@@ -496,21 +553,91 @@
     }catch(e){setStatus(e.message||"Falha ao alterar manutenção.","error");}
     finally{busy=false;el("toggle-maintenance").disabled=false;await overview();}
   });
+  const parseBRL=str=>{
+    const value=String(str||"").trim();
+    if(!/^\d{1,4}([,.]\d{1,2})?$/.test(value))throw Error("Informe um valor válido (ex.: 5,00).");
+    const parts=value.replace(",",".").split(".");
+    return Number(parts[0])*100+Number((parts[1]||"").padEnd(2,"0"));
+  };
+  el("save-prices").addEventListener("click",async()=>{
+    if(busy)return;
+    let regular,discount;
+    try{regular=parseBRL(el("regular-price-input").value);
+        discount=parseBRL(el("promotion-price-input").value);}
+    catch(e){setStatus(e.message,"error");return;}
+    if(regular<100||regular>100000||discount<100||discount>regular){
+      setStatus("Os valores devem ser de R$ 1 a R$ 1.000, e a promoção não pode superar o preço normal.","error");return;
+    }
+    if(!window.confirm("Atualizar para normal "+money(regular)+" e promocional "+money(discount)+"?"))return;
+    el("save-prices").disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"prices",regularPriceCents:regular,promotionalPriceCents:discount});
+      await overview();setStatus("Novos valores salvos. Cobranças anteriores permanecem iguais.","ok");
+    }catch(e){setStatus(e.message||"Erro ao salvar valores.","error");}
+    finally{el("save-prices").disabled=false;}
+  });
+  el("promotion-toggle").addEventListener("click",async()=>{
+    const enabled=!promotionEnabled;
+    if(!window.confirm((enabled?"Ativar":"Desativar")+" a promoção? Isso altera o valor das PRÓXIMAS cobranças Pix."))return;
+    el("promotion-toggle").disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"promotion",enabled});
+      await overview();setStatus(enabled?"Promoção ativada.":"Promoção desativada: preço normal em vigor.","ok");
+    }catch(e){setStatus(e.message||"Falha ao alterar promoção.","error");}
+    finally{el("promotion-toggle").disabled=false;}
+  });
+  el("free-activate").addEventListener("click",async()=>{
+    const duration=el("free-duration").value;
+    const start=Date.parse(el("free-start").value),end=Date.parse(el("free-end").value);
+    const maxClaims=Number(el("free-limit").value);
+    if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||end<=start||end<=Date.now()||
+       !Number.isInteger(maxClaims)||maxClaims<1||maxClaims>10000){
+      setStatus("Informe início, encerramento futuro e número de vagas válidos.","error");return;
+    }
+    if(!window.confirm("Ativar campanha FREE! "+el("free-duration").selectedOptions[0].textContent+
+       ", válida de "+new Date(start).toLocaleString("pt-BR")+" até "+
+       new Date(end).toLocaleString("pt-BR")+", com "+maxClaims+
+       " vagas? Isso poderá conceder Premium gratuito a usuários elegíveis."))return;
+    el("free-activate").disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"freeYearCampaign",
+        enabled:true,duration,startsAt:start,endsAt:end,maxClaims});
+      await overview();setStatus("Campanha gratuita configurada. Nenhuma licença foi criada por esta ação.","ok");
+    }catch(e){setStatus(e.message||"Falha ao configurar campanha.","error");}
+    finally{el("free-activate").disabled=false;}
+  });
+  el("free-disable").addEventListener("click",async()=>{
+    if(!window.confirm("Encerrar a campanha FREE? Isso impede novos resgates, sem revogar benefícios já concedidos."))return;
+    el("free-disable").disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"freeYearCampaign",enabled:false});
+      await overview();setStatus("Campanha FREE encerrada. Licenças emitidas foram preservadas.","ok");
+    }catch(e){setStatus(e.message||"Não foi possível encerrar.","error");}
+    finally{el("free-disable").disabled=false;}
+  });
   el("refresh").addEventListener("click",overview);
   el("issue").addEventListener("click",async()=>{
     if(busy)return;
     const duration=el("license-duration").value;
     const title=el("license-duration").selectedOptions[0].textContent;
-    const agreed=window.confirm("Criar uma licença Premium "+title+", sem usuário associado e sem cobrança? O código só será exibido nesta tela.");
+    const recipientEmail=el("recipient-email").value.trim().toLowerCase();
+    if(recipientEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)){
+      setStatus("Informe um e-mail válido ou deixe o campo vazio.","error");return;
+    }
+    const agreed=window.confirm("Criar licença de "+title+
+      (recipientEmail?" reservada ao Google "+recipientEmail:
+        " livre para a primeira conta Google que a resgatar")+"? Sem cobrança.");
     if(!agreed)return;
     busy=true;el("issue").disabled=true;
     try{
-      const x=await call("adminIssuePremiumKey",{duration});
+      const x=await call("adminIssuePremiumKey",{duration,recipientEmail});
       if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(x.licenseKey||""))throw new Error("Código gerado em formato inesperado.");
       lastKey=x.licenseKey;
       el("key-entry").value=lastKey;
       revealed=false;el("license").textContent="PS-••••••-••••••-••••••-••••••";el("reveal").textContent="Mostrar código";el("issued").hidden=false;
-      setStatus("Código de teste criado no Firebase, sem cobrança.","ok");
+      setStatus(recipientEmail?
+        "Licença gratuita criada e reservada ao e-mail informado. A duração começa no resgate.":
+        "Licença gratuita criada. A primeira conta Google que resgatar será vinculada.","ok");
     }catch(e){setStatus(e.message||"Falha ao emitir licença.","error");}
     finally{busy=false;el("issue").disabled=false;}
   });
