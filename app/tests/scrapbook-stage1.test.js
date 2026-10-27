@@ -9,12 +9,12 @@ const manifest=read("AndroidManifest.xml");
 const stats=read("java/com/lucianotoscano/pokesearchoverlay/FirebaseStats.java");
 const results=[];
 const test=(name,run)=>{run();results.push(name);console.log("PASS Scrapbook S1 "+name)};
-test("Feature disabled in public release regardless of old preference",()=>{
+test("Live chat visible by default, old prototype remains isolated",()=>{
  assert.match(home,/return BuildConfig\.DEBUG\|\|BuildConfig\.SCRAPBOOK_STAGE1_QA/);
- assert.match(home,/return isQaPreviewAllowed\(\)&&context\.getSharedPreferences/);
- assert.match(home,/\.getBoolean\(FLAG,BuildConfig\.SCRAPBOOK_STAGE1_QA\)/);
- assert.match(main,/if\(CommunityScrapbookStage1\.isQaPreviewAllowed\(\)\)\{/);
- assert.match(main,/if\(!CommunityScrapbookStage1\.isQaPreviewAllowed\(\)\)return/);
+ assert.match(home,/getBoolean\("communityLiveChatVisible",true\)/);
+ assert.match(home,/CommunityScrapbookOnline\.homePanel/);
+ assert.match(main,/chatVisible\?"Ocultar Chat":"Mostrar Chat"/);
+ assert.match(main,/putBoolean\("communityLiveChatVisible"/);
  assert.match(activity,/if\(!CommunityScrapbookStage1\.isEnabled\(this\)\|\|!IntegrityGuard\.verify\(this\)\)/);
  assert.match(main,/if\(scrapbookPreview\)/);
 });

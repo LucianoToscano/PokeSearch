@@ -18,7 +18,7 @@ test("secondary Pokébola toggle appears in Home and occupies its original row",
  assert.ok(!row.includes("setVisibility(View.INVISIBLE)"));
 });
 test("primary Pokeball switch remains in Home and is not hidden",()=>{
- assert.match(main,/overlayControl\.setOnClickListener\(v->toggleHomeOverlay\(\)\)/);
+ assert.match(main,/if\(which==0\)toggleHomeOverlay\(\);else toggleSecondaryOverlay\(\)/);
  assert.match(main,/private void toggleHomeOverlay\(\)/);
  assert.match(main,/startOverlay\(\)/);
 });

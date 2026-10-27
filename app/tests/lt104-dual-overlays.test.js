@@ -36,7 +36,7 @@ check("default independent filters are explicitly 100 and 0 percent in raw IV",(
  assert.match(main,/if\(secondary.getBoolean\("secondaryInitializedV1",false\)\)return/);
 });
 check("new Home control enables each instance separately",()=>{
- assert.match(main,/secondaryOverlayControl\.setOnClickListener\(v->toggleSecondaryOverlay\(\)\)/);
+ assert.match(main,/if\(which==0\)toggleHomeOverlay\(\);else toggleSecondaryOverlay\(\)/);
  assert.match(main,/new Intent\(this,SecondaryOverlayService.class\)/);
  assert.match(main,/OverlayService.isSecondaryRunning\(\)/);
  assert.match(main,/stopService\(new Intent\(this,SecondaryOverlayService.class\)\)/);

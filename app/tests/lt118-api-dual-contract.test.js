@@ -12,7 +12,7 @@ const manifest=read("AndroidManifest.xml");
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS LT118 "+name);}
 test("P2 toggle restored, retains secondary preferences",()=>{
  assert.match(main,/dualOverlayRow\.setVisibility\(View\.VISIBLE\)/);
- assert.match(main,/secondaryOverlayControl\.setOnClickListener\(v->toggleSecondaryOverlay\(\)\)/);
+ assert.match(main,/if\(which==0\)toggleHomeOverlay\(\);else toggleSecondaryOverlay\(\)/);
  assert.match(overlay,/getSharedPreferences\(isSecondaryOverlay\(\)\?"prefs_secondary":"prefs",0\)/);
 });
 test("API shiny request distinct from returned shiny evidence",()=>{

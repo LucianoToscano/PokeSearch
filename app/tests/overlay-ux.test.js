@@ -1800,7 +1800,7 @@ test("HOME-04 keeps transparent brand left, controls right and plain outside bac
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return home.includes("R.drawable.ps_home_brand_transparent")&&
   home.includes("Gravity.RIGHT|Gravity.CENTER_VERTICAL")&&
-  home.includes("overlayControl=makeIcon(R.drawable.ic_overlay_off")&&
+  home.includes("overlayControl=makeIcon(R.drawable.sem_filtro")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
   home.includes("R.drawable.ps_home_official_wordmark")&&
@@ -1901,7 +1901,7 @@ test("HOME-02 has visible ON/OFF resources and drawer with safe export",(()=>{
  const status=main.split("private void refreshHomeOverlay(){")[1]?.split("private void openProviderLogin(")[0]||"";
  const menu=main.split("private void showHomeMenu(){")[1]?.split("private void toggleHomeOverlay(){")[0]||"";
  const exportCode=main.split("private void exportHomeData(){")[1]?.split("private void toggleHomeOverlay(){")[0]||"";
- return status.includes("R.drawable.ic_overlay_on")&&status.includes("R.drawable.ic_overlay_off")&&
+ return status.includes("R.drawable.personalizado")&&status.includes("R.drawable.sem_filtro")&&
   menu.includes("homeRoot.addView(layer")&&menu.includes("Exportar dados")&&
   exportCode.includes("Intent.ACTION_CREATE_DOCUMENT")&&
   exportCode.includes("WatchAlerts.watched(this)")&&

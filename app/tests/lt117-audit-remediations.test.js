@@ -40,10 +40,11 @@ test("Firebase statistics never download other users' IDs",()=>{
  assert.match(stats,/child\("public"\)\.child\("installCount"\)/);
  assert.match(stats,/child\("public"\)\.child\("onlineCount"\)/);
 });
-test("community posting stays disabled regardless of config",()=>{
+test("legacy scrapbook remains read-only while new live chat is separate",()=>{
  assert.equal(rules.scrapbook.posts["$postId"][".write"],false);
  assert.equal(rules.scrapbook.replies["$postId"]["$replyId"][".write"],false);
- assert.match(mural,/accepting=false;/);
- assert.match(mural,/Mural em leitura · aguardando moderação segura/);
+ assert.doesNotMatch(mural,/getReference\("scrapbook\/posts"\)\.push\(\)/);
+ assert.match(mural,/getReference\("chat\/messages"\)\.push\(\)/);
+ assert.match(mural,/message\.setValue\(payload/);
 });
 console.log("LT117 AUDIT REMEDIATIONS "+passed+"/"+passed+" PASS");
