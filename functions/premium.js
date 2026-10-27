@@ -80,7 +80,7 @@ const offer=config=>{
    priceCents:promotionEnabled?promotional:regular};
 };
 
-/** Affiliate voucher: 10%, 25%, or 50% off the currently active sale price.
+/** Affiliate discount or limited 100% gift voucher; server owns quota and redemption.
  * A code is optional; client totals and commissions are NEVER trusted.
  * Owner pays partners manually after actual settlement.
  */
@@ -100,10 +100,15 @@ async function couponQuote(rawCode,basePrice,uid){
    throw new HttpsError("failed-precondition","Não é permitido usar seu próprio cupom.");
  const discount=Number(coupon.discountPercent);
  const commissionPercent=Number(coupon.commissionPercent??AFFILIATE_COMMISSION_PCT);
- if(![10,25,50].includes(discount)||
+ if(![10,25,50,100].includes(discount)||
     !Number.isSafeInteger(commissionPercent)||commissionPercent<0||commissionPercent>100)
    throw new HttpsError("failed-precondition","Cupom inválido.");
  const discounted=basePrice-Math.round(basePrice*discount/100);
+ if(discount===100){
+   const used=Number(coupon.claimCount||0),limit=Number(coupon.maxClaims||0);
+   if(limit<1||used>=limit)throw new HttpsError("failed-precondition","Cupom gratuito esgotado.");
+   return {priceCents:0,coupon:{code,discountPercent:100,partnerName:String(coupon.partnerName||"Cortesia").slice(0,80),remaining:limit-used}};
+ }
  if(discounted<100)throw new HttpsError("failed-precondition",
    "O valor com desconto é menor que o mínimo aceito para Pix.");
  return {priceCents:discounted,coupon:{
@@ -609,8 +614,12 @@ exports.adminSavePartnerCoupon=onCall({region:REGION},async request=>{
  const discountPercent=Number(input.discountPercent);
  const commissionPercent=Number(input.commissionPercent??AFFILIATE_COMMISSION_PCT);
  const expiresAt=Number(input.expiresAt||0);
+ const maxClaims=Number(input.maxClaims||0);
+ const giftDuration=String(input.giftDuration||"30d");
  if(!validCoupon(code)||partnerName.length<2||partnerName.length>80||
-    ![10,25,50].includes(discountPercent)||
+    ![10,25,50,100].includes(discountPercent)||
+    (discountPercent===100&&(!Number.isSafeInteger(maxClaims)||maxClaims<1||maxClaims>10000||
+       !ADMIN_DURATIONS.includes(giftDuration)))||
     !Number.isSafeInteger(commissionPercent)||commissionPercent<0||commissionPercent>100||
     (partnerUid&&!validUid(partnerUid))||
     !Number.isSafeInteger(expiresAt)||expiresAt<0||
@@ -619,7 +628,15 @@ exports.adminSavePartnerCoupon=onCall({region:REGION},async request=>{
  const ref=root().child("coupons").child(code);
  const tx=await ref.transaction(old=>{
    if(old&&old.partnerUid&&old.partnerUid!==partnerUid)return;
-   return {code,partnerName,partnerUid,discountPercent,commissionPercent,expiresAt,
+   const claimed=Number(old?.claimCount||0);
+   if(discountPercent===100&&maxClaims<claimed)return;
+   if(old&&Number(old.discountPercent||0)===100&&discountPercent!==100)return;
+   if(old&&Number(old.discountPercent||0)!==100&&claimed>0)return;
+   return {code,partnerName,partnerUid,discountPercent,
+     commissionPercent:discountPercent===100?0:commissionPercent,expiresAt,
+     giftDuration:discountPercent===100?giftDuration:null,
+     maxClaims:discountPercent===100?maxClaims:0,
+     claimCount:claimed,claimRefs:old?.claimRefs||{},
      enabled:input.enabled!==false,
      createdAt:Number(old?.createdAt||Date.now()),updatedAt:Date.now()};
  },undefined,false);
@@ -640,7 +657,9 @@ exports.adminListPartnerCoupons=onCall({region:REGION},async request=>{
    code,partnerName:v.partnerName,partnerUid:v.partnerUid||"",
    enabled:v.enabled===true,discountPercent:v.discountPercent,
    commissionPercent:Number(v.commissionPercent??AFFILIATE_COMMISSION_PCT),
-   expiresAt:Number(v.expiresAt||0)})),
+   expiresAt:Number(v.expiresAt||0),
+   maxClaims:Number(v.maxClaims||0),claimCount:Number(v.claimCount||0),
+   giftDuration:String(v.giftDuration||"30d")})),
    nextCursor:entries.length>limit?entries[limit-1][0]:""};
 });
 /** All commissions are derived from verified Pix orders, never clicks or QR generation. */
@@ -723,6 +742,14 @@ exports.adminPremiumSettings=onCall({region:REGION},async request=>{
  }else if(input.action==="promotion"){
    if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Promoção inválida.");
    await root().child("config").child("promotionEnabled").set(input.enabled);
+ }else if(input.action==="welcomeTrial"){
+   const days=Number(input.days),enabled=input.enabled;
+   if(typeof enabled!=="boolean"||!Number.isInteger(days)||days<1||days>30)
+     throw new HttpsError("invalid-argument","Selecione de 1 a 30 dias e ative ou desative.");
+   const ref=root().child("config/welcomeTrial");
+   const old=(await ref.get()).val()||{};
+   await ref.set({enabled,days,enabledAt:enabled&&!old.enabled?Date.now():
+     Number(old.enabledAt||0),updatedAt:Date.now()});
  }else if(input.action==="promotionDeadline"){
    const endsAt=Number(input.endsAt);
    if(!Number.isSafeInteger(endsAt)||endsAt<0||
@@ -783,6 +810,8 @@ exports.adminPremiumOverview=onCall({region:REGION},async request=>{
    appMaintenanceEnabled:m.enabled===true,appMaintenanceMessage:String(m.message||""),
    appVersionGlobalEnabled:av.globalEnabled!==false,appVersions:av.versions||{},
    ...offer(c),freeYearCampaign:campaignOffer(c),
+   welcomeTrial:{enabled:c.welcomeTrial?.enabled===true,
+     days:Number(c.welcomeTrial?.days||5),enabledAt:Number(c.welcomeTrial?.enabledAt||0)},
    durationOptions:ADMIN_DURATIONS};
 });
 
@@ -795,10 +824,102 @@ exports.getPremiumOffer=onCall({region:REGION},async request=>{
  const quoted=await couponQuote(request.data?.couponCode,base.priceCents,request.auth?.uid||"");
  return {...base,priceCents:quoted.priceCents,
    coupon:quoted.coupon?{code:quoted.coupon.code,partnerName:quoted.coupon.partnerName,
-     discountPercent:quoted.coupon.discountPercent}:null,
+     discountPercent:quoted.coupon.discountPercent,remaining:quoted.coupon.remaining||0}:null,
    freeYearCampaign:campaignOffer(cfg),
    salesEnabled:cfg.salesEnabled===true&&!await appMaintenance(),
    serverNow:Date.now()};
+});
+
+/** Grant a limited 100% coupon with zero Pix and one claim per verified Google UID.
+ * Atomic reservation is server-side. Quota survives edits and retries.
+ * The gifted entitlement remains bound to the same account.
+ */
+exports.redeemFullCoupon=onCall({region:REGION},async request=>{
+ const uid=await requireGoogle(request),input=request.data||{};
+ const code=normaliseCoupon(input.couponCode),versionCode=Number(input.versionCode);
+ if(!validCoupon(code)||!isValidCode(versionCode)||await appMaintenance()||
+    !await currentPolicy(versionCode))
+   throw new HttpsError("failed-precondition","Cupom inválido ou aplicativo indisponível.");
+ const couponRef=root().child("coupons").child(code);
+ const uidKey=sha("gift100-uid:"+uid),now=Date.now();
+ const entRef=root().child("entitlements").child(uid);
+ const existing=(await entRef.get()).val()||{};
+ if(existing.revoked===true)throw new HttpsError("failed-precondition","Conta bloqueada.");
+ if(existing.currentKeyHash)throw new HttpsError("failed-precondition",
+   "Esta conta já utilizou Premium. O cupom gratuito é exclusivo para primeiro resgate.");
+ const reservation=await couponRef.transaction(old=>{
+   if(!old||old.enabled!==true||old.discountPercent!==100||
+      !Number.isSafeInteger(old.maxClaims)||old.maxClaims<1||
+      (old.expiresAt&&now>=Number(old.expiresAt)))return;
+   const refs=old.claimRefs||{};
+   if(refs[uidKey])return old;
+   if(Number(old.claimCount||0)>=Number(old.maxClaims))return;
+   return {...old,claimCount:Number(old.claimCount||0)+1,
+     claimRefs:{...refs,[uidKey]:now}};
+ },undefined,false);
+ if(!reservation.committed)
+   throw new HttpsError("failed-precondition","Cupom esgotado, expirado ou desativado.");
+ const c=reservation.snapshot.val();
+ const duration=ADMIN_DURATIONS.includes(c.giftDuration)?c.giftDuration:"30d";
+ const keyHash=sha("gift100-license:"+code+":"+uid);
+ const deadline=periodExpiry(now,duration);
+ const keyRef=root().child("keys").child(keyHash);
+ const keyTx=await keyRef.transaction(v=>v||{
+   kind:"manual",source:"coupon100",duration,uid,createdAt:now,claimedAt:now,
+   ...(deadline===null?{}:{expiresAt:deadline}),revoked:false
+ },undefined,false);
+ const key=keyTx.snapshot.val()||{};
+ if(key.uid!==uid||key.revoked===true)
+   throw new HttpsError("failed-precondition","Benefício indisponível.");
+ const applied=await entRef.transaction(old=>{
+   const v=old||{};
+   if(v.revoked===true||v.currentKeyHash)return;
+   return {...v,kind:"manual",currentKeyHash:keyHash,
+     lifetime:duration==="lifetime",expiresAt:duration==="lifetime"?null:key.expiresAt};
+ },undefined,false);
+ if(!applied.committed||applied.snapshot.val()?.currentKeyHash!==keyHash)
+   throw new HttpsError("failed-precondition","Esta conta já possui Premium.");
+ return {activated:true,duration,expiresAt:deadline,serverNow:Date.now()};
+});
+/** Opt-in welcome trial for genuinely new Firebase Google accounts only.
+ * Creation date is checked by Firebase Admin, never device time. No re-grants.
+ */
+exports.claimWelcomeTrial=onCall({region:REGION},async request=>{
+ const uid=await requireGoogle(request),code=Number(request.data?.versionCode);
+ if(!isValidCode(code)||await appMaintenance()||!await currentPolicy(code))
+   return {activated:false,reason:"unavailable"};
+ const cfg=(await root().child("config/welcomeTrial").get()).val()||{};
+ const days=Number(cfg.days),enabledAt=Number(cfg.enabledAt||0);
+ if(cfg.enabled!==true||!Number.isInteger(days)||days<1||days>30||enabledAt<1)
+   return {activated:false,reason:"disabled"};
+ const user=await getAuth().getUser(uid);
+ const creation=Date.parse(user.metadata?.creationTime||"");
+ if(!Number.isFinite(creation)||creation<enabledAt)
+   return {activated:false,reason:"existing-account"};
+ const entRef=root().child("entitlements").child(uid);
+ const existing=(await entRef.get()).val()||{};
+ if(existing.currentKeyHash||existing.revoked===true)
+   return {activated:false,reason:"already-licensed"};
+ const keyHash=sha("welcome-trial-v1:"+uid);
+ const now=Date.now(),deadline=now+days*86400000;
+ const trialRef=root().child("trialClaims").child(uid);
+ const reserved=await trialRef.transaction(v=>{
+   if(v)return;
+   return {claimedAt:now,expiresAt:deadline,days,keyHash};
+ },undefined,false);
+ if(!reserved.committed)return {activated:false,reason:"already-claimed"};
+ await root().child("keys").child(keyHash).set({
+   kind:"trial",source:"welcomeTrial",uid,createdAt:now,claimedAt:now,
+   duration:days+"d",expiresAt:deadline,revoked:false});
+ const applied=await entRef.transaction(old=>{
+   const v=old||{};
+   if(v.revoked===true||v.currentKeyHash)return;
+   return {...v,kind:"trial",lifetime:false,currentKeyHash:keyHash,
+     expiresAt:deadline};
+ },undefined,false);
+ if(!applied.committed||applied.snapshot.val()?.currentKeyHash!==keyHash)
+   return {activated:false,reason:"already-licensed"};
+ return {activated:true,days,expiresAt:deadline,serverNow:Date.now()};
 });
 
 /** Each individually chosen license is controlled only by its administrator.
