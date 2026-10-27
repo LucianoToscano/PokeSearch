@@ -567,7 +567,7 @@ async function run(){
  assert.equal(resumed.sessionId,preparation.sessionId);
  let wrongResume=false;
  try{await premium.adminRestorePremiumBackup({
-   auth:{uid:"owner"},data:{phase:"resume",backupSha256:"0".repeat(64)}})
+   auth:{uid:"owner"},data:{phase:"resume",backupSha256:"0".repeat(64)}});}
  catch(e){wrongResume=e.code==="failed-precondition";}
  assert.equal(wrongResume,true);
  for(const section of sections){
