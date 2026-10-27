@@ -196,6 +196,10 @@ public final class WatchAlerts {
         manager.createNotificationChannel(channel);
     }
     private static boolean send(Context context,String title,String info,int id,String species){
+        return send(context,title,info,id,species,null);
+    }
+    private static boolean send(Context context,String title,String info,int id,
+                                String species,android.graphics.Bitmap artwork){
         if(!permissionGranted(context)){
             recordAlertProblem(context,"Permissão de notificações desativada no Android");
             return false;
@@ -227,10 +231,13 @@ public final class WatchAlerts {
         Intent open=new Intent(context,MainActivity.class);
         PendingIntent intent=PendingIntent.getActivity(context,11,open,
             PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
-        Notification note=new Notification.Builder(context,channelId)
+        Notification.Builder builder=new Notification.Builder(context,channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title).setContentText(info).setAutoCancel(true)
-            .setStyle(new Notification.BigTextStyle().bigText(info)).setContentIntent(intent).build();
+            .setSubText("PokeSearch · Favorito")
+            .setStyle(new Notification.BigTextStyle().bigText(info)).setContentIntent(intent);
+        if(artwork!=null)builder.setLargeIcon(artwork);
+        Notification note=builder.build();
         try{manager.notify(id,note);return true;}
         catch(Exception e){
             recordAlertProblem(context,"Falha ao enviar notificação de favorito");
@@ -269,6 +276,15 @@ public final class WatchAlerts {
     public static boolean test(Context context){
         return send(context,"🔔 Teste: Pokémon procurado",
             "Teste do canal Favoritos. Alertas reais exigem favorito cadastrado e resultado confirmado nos filtros.",11999,null);
+    }
+    /** Exact encounter title supplied by native verified-result formatting.
+     * Never merge Hundo, Shundo, league ranks or different CP encounters.
+     */
+    public static boolean match(Context context,String pokemon,String title,
+                                String info,android.graphics.Bitmap artwork){
+        return send(context,title,info,
+            NEXT_ALERT_ID.updateAndGet(previous->previous>=22999?13000:previous+1),
+            pokemon,artwork);
     }
     public static boolean match(Context context,String pokemon,String info){
         return send(context,"🔔 Encontrado: "+pokemon,info,
