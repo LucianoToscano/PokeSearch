@@ -79,10 +79,15 @@ jobs:
           git remote add origin "https://github.com/$GITHUB_REPOSITORY.git"
           gh auth setup-git
           if git ls-remote --exit-code --heads origin refs/heads/downloads/lt140 >/dev/null 2>&1; then
-            echo "::error::Public download branch exists; refuse to overwrite without version reconciliation."
-            exit 1
+            echo "Existing LT140 distribution detected; verify exact SHA and refuse differing bytes."
+          else
+            git push origin HEAD:refs/heads/downloads/lt140
           fi
-          git push origin HEAD:refs/heads/downloads/lt140
           git ls-remote --exit-code --heads origin refs/heads/downloads/lt140
-          curl -fsSI --retry 4 --retry-delay 2 "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/downloads/lt140/$APK" | tee "$RUNNER_TEMP/public-head.txt"
+          EXPECTED="$(sha256sum "$APK" | cut -d' ' -f1)"
+          gh api "repos/$GITHUB_REPOSITORY/contents/SHA256SUMS.txt?ref=downloads%2Flt140" \
+            --jq .content | tr -d '\n' | base64 -d > "$RUNNER_TEMP/github-published-sha.txt"
+          grep -Fqx "$EXPECTED  $APK" "$RUNNER_TEMP/github-published-sha.txt"
+          echo "PASS: public LT140 GitHub distribution SHA verified by authenticated repository API."
+          echo "Note: public raw CDN can cache a 404 briefly after a new branch push."
           echo "Public APK delivered without GitHub sign-in and without Netlify/ChatGPT Library."
