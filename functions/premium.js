@@ -371,13 +371,15 @@ exports.adminPremiumSettings=onCall({region:REGION},async request=>{
 });
 exports.adminPremiumOverview=onCall({region:REGION},async request=>{
  await requireAdmin(request);
- const [dist,cfg,maintenance]=await Promise.all([
-   policy().get(),root().child("config").get(),getDatabase().ref("appControl/maintenance").get()
+ const [dist,cfg,maintenance,appVersions]=await Promise.all([
+   policy().get(),root().child("config").get(),getDatabase().ref("appControl/maintenance").get(),
+   getDatabase().ref("appControl/versionAccess").get()
  ]);
- const p=dist.val()||{},c=cfg.val()||{},m=maintenance.val()||{};
+ const p=dist.val()||{},c=cfg.val()||{},m=maintenance.val()||{},av=appVersions.val()||{};
  return {globalEnabled:p.globalEnabled===true,versions:p.versions||{},
    salesEnabled:c.salesEnabled===true,paymentsLiveEnabled:c.paymentsLiveEnabled===true,
    appMaintenanceEnabled:m.enabled===true,appMaintenanceMessage:String(m.message||""),
+   appVersionGlobalEnabled:av.globalEnabled!==false,appVersions:av.versions||{},
    ...offer(c),durationOptions:ADMIN_DURATIONS};
 });
 
@@ -776,4 +778,28 @@ exports.adminSetAppMaintenance=onCall({region:REGION},async request=>{
    enabled,message:reason,updatedAt:Date.now(),updatedBy:actor
  });
  return {updated:true,enabled,serverNow:Date.now()};
+});
+
+
+/** Independent APK availability controls; not the Premium distribution entitlement.
+ * Empty policy allows installed versions, and maintenance overrides everything.
+ */
+exports.adminSetAppVersionAccess=onCall({region:REGION},async request=>{
+ const actor=await requireAdmin(request),data=request.data||{};
+ if(typeof data.enabled!=="boolean"||!["global","version"].includes(data.scope))
+   throw new HttpsError("invalid-argument","Controle de versão inválido.");
+ const access=getDatabase().ref("appControl/versionAccess");
+ if(data.scope==="global"){
+   await access.child("globalEnabled").set(data.enabled);
+ }else{
+   const versionCode=Number(data.versionCode);
+   if(!isValidCode(versionCode))
+     throw new HttpsError("invalid-argument","Código da versão inválido.");
+   const versionName=String(data.versionName||"").trim().slice(0,50);
+   await access.child("versions").child(String(versionCode)).update({
+     enabled:data.enabled,versionName:versionName||"Versão "+versionCode,
+     updatedAt:Date.now(),updatedBy:actor
+   });
+ }
+ return {updated:true,enabled:data.enabled,serverNow:Date.now()};
 });
