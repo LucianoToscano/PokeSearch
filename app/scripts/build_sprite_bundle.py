@@ -198,6 +198,14 @@ def main():
     from fetch_all_verified_varieties import fetch_varieties
     form_hashes.update(fetch_varieties(dest))
 
+    # LT126: WWM catalog + exactly eight GO Pumpkaboo form images.
+    # No other external image is silently accepted or used for encounters.
+    from import_wwm_catalog import produce as import_wwm_catalog
+    from fetch_wwm_pumpkaboo import fetch_pumpkaboo, WWM_COMMIT
+    external_catalog=import_wwm_catalog(dest)
+    external_form_hashes=fetch_pumpkaboo(dest)
+    form_hashes.update(external_form_hashes)
+
     # Pin exact GO costume icons by repository commit + Git object SHA1.
     # Reject redirected HTML, mismatched bytes and missing normal/shiny art.
     costume_hashes = {}
@@ -232,6 +240,9 @@ def main():
         "formSourceCommit": FORM_SOURCE_COMMIT,
         "costumeSourceCommit": COSTUME_SOURCE_COMMIT,
         "costumes": dict(sorted(costume_hashes.items())),
+        "externalCatalog":external_catalog,
+        "externalFormCount":len(external_form_hashes),
+        "externalSpriteCommit":WWM_COMMIT,
         "forms": dict(sorted(form_hashes.items())),
         "source": "PokeAPI/sprites master - exact Dex/variant PNG only",
         "dexCount": len(ids),
