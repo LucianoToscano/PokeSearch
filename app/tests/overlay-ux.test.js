@@ -1667,7 +1667,7 @@ test("PL-02 watchdog can release stalled generation without false success",()=>{
 });
 test("RESULTS-ALL-MODES partial site counts wait for complete card extraction",()=>{
  const probe=read("assets/probe.js");
- return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,10):0;')&&
+ return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,100):0;')&&
   probe.includes('const siteIncomplete=expectedVisible>found.length;')&&
   probe.includes('siteCount,siteIncomplete,expectedVisible,parseFailure')&&
   service.includes('if(r.optBoolean("siteIncomplete",false)&&attempt<24)')&&
@@ -1794,7 +1794,7 @@ test("HOME-03 opens the Home drawer on right and uses original transparent PNG",
  const menu=main.split("private void showHomeMenu(){")[1]?.split("private void exportHomeData(){")[0]||"";
  return menu.includes("Gravity.RIGHT|Gravity.TOP")&&
   main.includes("R.drawable.ps_home_brand_transparent")&&
-  main.includes('openLoginDialog(false,"manage")');
+  main.includes('openLoginDialog(false,"login")');
 })());
 test("HOME-04 keeps transparent brand left, controls right and plain outside background",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
@@ -1892,8 +1892,9 @@ test("HOME-04 shows genuine trainer data and the four transparent team assets",(
 })());
 test("HOME-04 keeps the official link and a management option without a linked trainer",(()=>{
  const r=main.split("private void openTrainerManagement(){")[1]?.split("private int homeTeamIcon(")[0]||"";
- return r.includes('if(!code.matches("[0-9]{12}"))')&&
-  r.includes('openLoginDialog(false,"manage")')&&
+ return r.includes('linkedTrainers()')&&
+  r.includes('openLoginDialog(false,"login")')&&
+  r.includes('setSingleChoiceItems(names,checked')&&
   main.includes('"unlinked".equals(state)?"unlinked":"unknown"')&&
   main.includes('.remove("profileTrainerTeam").remove("profileTrainerLevel")');
 })());
@@ -1941,7 +1942,8 @@ test("HOME-01 never invents trainer data or changes remote account on local remo
  return update.includes('code.matches("[0-9]{12}")')&&
   update.includes('trainerPanel.setVisibility(logged?View.VISIBLE:View.GONE)')&&
   update.includes('prefs.getString("profileDisplayName","Conta conectada")')&&
-  main.includes("A remoção precisa ser confirmada no perfil oficial")&&
+  main.includes("Atualizar perfis do site")&&
+  main.includes('verifiedTrainer(t)')&&
   main.includes('readAsset("profile_summary.js")')&&
   main.includes('.remove("profileTrainerName").remove("profileTrainerCode")');
 })());
