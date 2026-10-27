@@ -51,7 +51,7 @@ def produce(dest="app/src/main/assets/pokemon-sprites"):
     species=_records(mons,"pokedexId","pokemonName")
     form_by_id=_records(forms,"formId","proto")
     costume_by_id=_records(costumes,"id","proto")
-    if len(species)!=1025 or len(form_by_id)!=1478 or len(costume_by_id)!=87:
+    if len(species)!=1025 or len(form_by_id)!=1506 or len(costume_by_id)!=87:
         raise ValueError("Pinned WWM catalog version/coverage changed")
     for dex in range(1,1026):
         if dex not in species:
