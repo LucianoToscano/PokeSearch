@@ -101,6 +101,27 @@ const checks=[
    adminHtml.includes('iterations:310000')&&
    adminHtml.includes('name:"AES-GCM"')&&
    adminHtml.includes('"IMPORTAR EM BASE VAZIA"')],
+ ["Single-P2 session grants use server UID and atomic RTDB reducers",
+   logic.includes("claimBinding(previous,{hash")&&
+   logic.includes("transferBinding(old,{hash")&&
+   logic.includes("releaseBinding(old,{hash")&&
+   logic.includes("await userEntitlement(uid)")&&
+   logic.includes("sessionExpiresAt")&&
+   logic.includes("deviceHistory")],
+ ["Admin device inventory and disconnection require owner claim",
+   logic.includes("exports.adminListPremiumDevices=onCall")&&
+   logic.includes("exports.adminDisconnectPremiumDevice=onCall")&&
+   logic.includes("exports.adminReleasePremiumDevice=onCall")&&
+   http.includes('"adminListPremiumDevices"')&&
+   http.includes('"adminDisconnectPremiumDevice"')&&
+   http.includes('"adminReleasePremiumDevice"')&&
+   adminHtml.includes('id="device-panel"')&&
+   adminHtml.includes('call("adminListPremiumDevices"')],
+ ["Logout authenticated and never revokes a paid license",
+   logic.includes("exports.releasePremiumDevice=onCall")&&
+   http.includes('"releasePremiumDevice"')&&
+   http.includes('"premiumSessionInfo"')&&
+   !logic.slice(logic.indexOf("exports.releasePremiumDevice="),logic.indexOf("exports.premiumSessionInfo=")).includes("entitlements")],
  ["Firebase ID token authenticated server-side",http.includes("verifyIdToken(authorization.slice(7),true)")],
  ["only whitelisted actions are publicly routed",http.includes("allowedActions.has(action)")],
  ["webhook routes Payments and legacy Orders with HMAC validation",
