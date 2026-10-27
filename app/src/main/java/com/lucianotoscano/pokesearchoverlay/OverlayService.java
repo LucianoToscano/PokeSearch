@@ -41,6 +41,27 @@ public class OverlayService extends Service {
             }
         };
     private boolean missionScreenOffRegistered = false;
+    private static final String ACTION_TRAINER_CHANGED =
+        "com.lucianotoscano.pokesearchoverlay.TRAINER_CHANGED";
+    private final android.content.BroadcastReceiver trainerChangedReceiver =
+        new android.content.BroadcastReceiver(){
+            @Override public void onReceive(android.content.Context ctx, Intent intent){
+                if(intent==null||!ACTION_TRAINER_CHANGED.equals(intent.getAction())||stopped)return;
+                // The selected trainer must be reflected in BOTH independent
+                // Pokeball searches. Revalidate the official login and Shiny
+                // before emitting new cards/alerts; never mix cached results.
+                ++requestGeneration;
+                searchInProgress=false;
+                queuedManualRefresh=false;
+                results="[]";resultsStale=false;
+                displayedApiResults=false;displayedApiSearchId=-1;
+                selected=-1;shinyVerified=false;
+                status("Treinador alterado · sincronizando resultados...");
+                update();
+                refresh(true);
+            }
+        };
+    private boolean trainerChangedReceiverRegistered=false;
     private static volatile boolean running=false;
     private static volatile boolean secondaryRunning=false;
     public static boolean isRunning(){return running;}
@@ -1214,6 +1235,17 @@ public class OverlayService extends Service {
             missionScreenOffRegistered = true;
         } catch (RuntimeException e) {
             recordFailure("escuta de tela apagada",e);
+        }
+        try{
+            android.content.IntentFilter trainerFilter=
+                new android.content.IntentFilter(ACTION_TRAINER_CHANGED);
+            if(android.os.Build.VERSION.SDK_INT>=33)
+                registerReceiver(trainerChangedReceiver,trainerFilter,
+                    android.content.Context.RECEIVER_NOT_EXPORTED);
+            else registerReceiver(trainerChangedReceiver,trainerFilter);
+            trainerChangedReceiverRegistered=true;
+        }catch(RuntimeException error){
+            recordFailure("sincronizar treinador",error);
         }
         NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel("pokesearch","PokeSearch",
@@ -4789,6 +4821,11 @@ public class OverlayService extends Service {
     }
     @Override public void onDestroy(){
         if(!running&&!secondaryRunning)SupportMissionState.overlayStopped();
+        if(trainerChangedReceiverRegistered){
+            try{unregisterReceiver(trainerChangedReceiver);}
+            catch(IllegalArgumentException ignored){}
+            trainerChangedReceiverRegistered=false;
+        }
         if (missionScreenOffRegistered) {
             try { unregisterReceiver(missionScreenOffReceiver); }
             catch (IllegalArgumentException ignored) {}
