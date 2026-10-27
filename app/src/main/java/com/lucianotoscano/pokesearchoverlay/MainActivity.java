@@ -1053,7 +1053,9 @@ public class MainActivity extends Activity {
                     Toast.makeText(this,"Esta versão de testes ainda não foi liberada ou está offline.",
                         Toast.LENGTH_LONG).show();
                 }else if(!premium){
-                    PremiumPurchaseDialog.show(this,()->{
+                    if(PremiumAccess.deviceConflict()){
+                        promptPremiumDeviceTransfer(this::startSecondaryOverlayAuthorized);
+                    }else PremiumPurchaseDialog.show(this,()->{
                         if(PremiumAccess.permitted(true))startSecondaryOverlayAuthorized();
                     });
                 }else startSecondaryOverlayAuthorized();
@@ -1107,6 +1109,39 @@ public class MainActivity extends Activity {
                 refreshHomeOverlay();
             })
             .setNegativeButton("Cancelar",null).show();
+    }
+    /**
+     * Only the owner of the verified Google session can replace an existing P2
+     * installation. The server decides; client text cannot grant Premium.
+     */
+    void promptPremiumDeviceTransfer(Runnable onActivated){
+        if(!PremiumGoogleLogin.isGoogleSignedIn(this))return;
+        String current=PremiumAccess.activeDeviceName();
+        String message="Sua licença está ativa em "+current+".\\n\\n"+
+            "Deseja usar a Pokébola 2 neste aparelho? O anterior perderá acesso "+
+            "quando renovar sua autorização (normalmente em até 1 minuto). "+
+            "Sua licença e a Pokébola 1 não serão alteradas.";
+        new AlertDialog.Builder(this)
+            .setTitle("Trocar aparelho Premium")
+            .setMessage(message)
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Usar neste aparelho",(dialog,which)->
+                PremiumAccess.transferDevice(this,(result,error)->{
+                    if(error!=null){
+                        Toast.makeText(this,error,Toast.LENGTH_LONG).show();return;
+                    }
+                    PremiumAccess.invalidateLease();
+                    PremiumAccess.verify(this,(allowed,premium)->{
+                        if(premium){
+                            Toast.makeText(this,"Este aparelho agora está autorizado.",
+                                Toast.LENGTH_LONG).show();
+                            if(onActivated!=null)onActivated.run();
+                        }else Toast.makeText(this,
+                            "Não foi possível confirmar a troca. Verifique sua conexão.",
+                            Toast.LENGTH_LONG).show();
+                    });
+                }))
+            .show();
     }
     private void startSecondaryOverlayAuthorized(){
         if(PremiumAccess.controlled()&&!PremiumAccess.permitted(true))return;
