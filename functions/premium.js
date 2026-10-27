@@ -49,7 +49,7 @@ const userEntitlement=async uid=>{
  const value=(await root().child("entitlements").child(uid).get()).val()||{};
  if(value.revoked===true||!/^[0-9a-f]{64}$/.test(String(value.currentKeyHash||"")))return false;
  const key=(await root().child("keys").child(value.currentKeyHash).get()).val();
- if(key?.uid!==uid||key.revoked===true)return false;
+ if(key?.uid!==uid||key.revoked===true||key.suspended===true)return false;
  if(value.lifetime===true)return key.kind==="manual"||key.kind==="lifetime";
  return Number(value.expiresAt||0)>Date.now()&&Number(key.expiresAt||0)>Date.now();
 };
@@ -69,6 +69,32 @@ const formatKey=(orderId)=>{
  const hex=crypto.createHmac("sha256",KEY_SECRET.value()).update(orderId).digest("hex").slice(0,24).toUpperCase();
  return "PS-"+hex.match(/.{1,6}/g).join("-");
 };
+/** Admin-only key vault for NEW manually issued codes.
+ * Previous manual plaintext was deliberately never stored and cannot be recovered.
+ * Purpose-separated AES key derived from the existing protected signing secret.
+ */
+const codePattern=/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/;
+const vaultKey=()=>crypto.createHash("sha256").update("pokesearch-manual-key-vault-v1:")
+ .update(KEY_SECRET.value()).digest();
+function sealCode(code){
+ if(!codePattern.test(code))throw new Error("Invalid license format");
+ const iv=crypto.randomBytes(12);
+ const cipher=crypto.createCipheriv("aes-256-gcm",vaultKey(),iv);
+ const encrypted=Buffer.concat([cipher.update(code,"utf8"),cipher.final()]);
+ return {v:1,iv:iv.toString("base64"),ct:encrypted.toString("base64"),
+   tag:cipher.getAuthTag().toString("base64")};
+}
+function unsealCode(sealed){
+ if(!sealed||sealed.v!==1)throw new Error("Key was not backed up");
+ const decipher=crypto.createDecipheriv("aes-256-gcm",vaultKey(),
+   Buffer.from(sealed.iv,"base64"));
+ decipher.setAuthTag(Buffer.from(sealed.tag,"base64"));
+ const plain=Buffer.concat([decipher.update(Buffer.from(sealed.ct,"base64")),decipher.final()])
+   .toString("utf8");
+ if(!codePattern.test(plain))throw new Error("Invalid stored code");
+ return plain;
+}
+
 const requestPayment=async(endpoint,liveMode,options={})=>{
  const token=liveMode?MP_TOKEN.value():MP_TEST_TOKEN.value();
  if(!token)throw new Error("Mercado Pago credentials missing");
@@ -341,10 +367,13 @@ exports.adminPremiumSettings=onCall({region:REGION},async request=>{
 });
 exports.adminPremiumOverview=onCall({region:REGION},async request=>{
  await requireAdmin(request);
- const [dist,cfg]=await Promise.all([policy().get(),root().child("config").get()]);
- const p=dist.val()||{},c=cfg.val()||{};
+ const [dist,cfg,maintenance]=await Promise.all([
+   policy().get(),root().child("config").get(),getDatabase().ref("appControl/maintenance").get()
+ ]);
+ const p=dist.val()||{},c=cfg.val()||{},m=maintenance.val()||{};
  return {globalEnabled:p.globalEnabled===true,versions:p.versions||{},
    salesEnabled:c.salesEnabled===true,paymentsLiveEnabled:c.paymentsLiveEnabled===true,
+   appMaintenanceEnabled:m.enabled===true,appMaintenanceMessage:String(m.message||""),
    ...offer(c),durationOptions:ADMIN_DURATIONS};
 });
 
@@ -397,7 +426,7 @@ exports.adminIssuePremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async r
  const base=args.extend===true&&targetUid?
    Math.max(now,Number(oldEnt.expiresAt||0)):now;
  const expiry=periodExpiry(base,duration);
- await ref.set({kind:"manual",duration,uid:targetUid||null,createdBy:actor,
+ await ref.set({kind:"manual",duration,uid:targetUid||null,createdBy:actor,vault:sealCode(plain),
    createdAt:now,revoked:false,...(targetUid?
    {claimedAt:now,...(expiry===null?{}:{expiresAt:expiry})}:{})});
  if(targetUid){
@@ -601,4 +630,145 @@ exports.adminAdjustPremiumExpiry=onCall({region:REGION},async request=>{
  },undefined,false);
  if(!await userEntitlement(uid))throw new HttpsError("failed-precondition","Licença não confirmada.");
  return {updated:true,expiresAt:target,serverNow:Date.now()};
+});
+
+
+/** Owner-only paginated inventory; returns no plaintext code or encryption material. */
+exports.adminListPremiumKeys=onCall({region:REGION},async request=>{
+ await requireAdmin(request);
+ const pageSize=Number(request.data?.limit||40);
+ if(!Number.isInteger(pageSize)||pageSize<1||pageSize>50)
+   throw new HttpsError("invalid-argument","Limite inválido.");
+ const cursor=String(request.data?.cursor||"").trim();
+ if(cursor&&!/^[0-9a-f]{64}$/.test(cursor))
+   throw new HttpsError("invalid-argument","Marcador inválido.");
+ let query=root().child("keys").orderByKey();
+ if(cursor)query=query.startAt(cursor);
+ const snap=await query.limitToFirst(pageSize+2).get();
+ const entries=Object.entries(snap.val()||{}).sort(([a],[b])=>a.localeCompare(b))
+   .filter(([hash])=>hash!==cursor);
+ const page=entries.slice(0,pageSize);
+ const keys=page.map(([hash,k])=>{
+   const record=k&&typeof k==="object"?k:{};
+   const revoked=record.revoked===true, suspended=record.suspended===true;
+   const expires=Number(record.expiresAt||0);
+   const status=revoked?"revogada":suspended?"suspensa":
+     record.kind==="manual"&&!record.uid?"não ativada":
+     record.duration==="lifetime"?"vitalícia":
+     (expires&&expires<=Date.now()?"vencida":"ativa");
+   return {id:hash,kind:String(record.kind||"desconhecido"),
+     duration:String(record.duration|| (record.kind==="paid"?"30d":"")),
+     uid:typeof record.uid==="string"?record.uid:"",
+     createdAt:Number(record.createdAt||0),claimedAt:Number(record.claimedAt||0),
+     expiresAt:expires,revoked,suspended,status,
+     copyAvailable:!revoked&&(!!record.vault||(record.kind==="paid"&&!!record.orderId)),
+     editable:!revoked};
+ });
+ return {keys,hasMore:entries.length>pageSize,
+   nextCursor:page.length?page[page.length-1][0]:"",serverNow:Date.now()};
+});
+/** Copy requires an explicit owner request; old manual keys are NOT recoverable. */
+exports.adminRevealPremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
+ await requireAdmin(request);
+ const id=String(request.data?.id||"");
+ if(!/^[0-9a-f]{64}$/.test(id))
+   throw new HttpsError("invalid-argument","Licença inválida.");
+ const record=(await root().child("keys").child(id).get()).val();
+ if(!record||record.revoked===true)
+   throw new HttpsError("not-found","Licença inexistente ou revogada.");
+ let plain;
+ try{
+   if(record.vault)plain=unsealCode(record.vault);
+   else if(record.kind==="paid"&&/^[0-9a-f-]{36}$/.test(record.orderId||""))
+     plain=formatKey(record.orderId);
+   else throw new HttpsError("failed-precondition",
+     "O código manual antigo foi armazenado somente como hash. Reemita um novo código se necessário.");
+ }catch(e){
+   if(e instanceof HttpsError)throw e;
+   throw new HttpsError("failed-precondition","Código armazenado indisponível.");
+ }
+ if(sha(plain)!==id)throw new HttpsError("failed-precondition","Integridade da licença inválida.");
+ return {licenseKey:plain,serverNow:Date.now()};
+});
+/** Reversible administrative suspension, distinct from irreversible revocation. */
+exports.adminSetPremiumKeyEnabled=onCall({region:REGION},async request=>{
+ const actor=await requireAdmin(request);
+ const id=String(request.data?.id||""),enabled=request.data?.enabled;
+ if(!/^[0-9a-f]{64}$/.test(id)||typeof enabled!=="boolean")
+   throw new HttpsError("invalid-argument","Parâmetros inválidos.");
+ const ref=root().child("keys").child(id);
+ const tx=await ref.transaction(v=>{
+   if(!v||v.revoked===true)return;
+   return {...v,suspended:!enabled,suspensionUpdatedAt:Date.now(),suspensionBy:actor};
+ },undefined,false);
+ if(!tx.committed)
+   throw new HttpsError("failed-precondition","Licença revogada ou inexistente; não pode ser reativada.");
+ return {updated:true,enabled,serverNow:Date.now()};
+});
+/** Edit a key's finite expiry (+/- days or exact timestamp), including reductions.
+ * For an unassigned manual code change its duration before the first redemption.
+ */
+exports.adminChangePremiumKeyDuration=onCall({region:REGION},async request=>{
+ await requireAdmin(request);
+ const input=request.data||{},id=String(input.id||""),action=String(input.action||"");
+ if(!/^[0-9a-f]{64}$/.test(id))throw new HttpsError("invalid-argument","Licença inválida.");
+ const ref=root().child("keys").child(id),entry=(await ref.get()).val();
+ if(!entry||entry.revoked===true)throw new HttpsError("failed-precondition","Licença revogada ou inexistente.");
+ if(!entry.uid){
+   const duration=String(input.duration||"");
+   if(entry.kind!=="manual"||!ADMIN_DURATIONS.includes(duration)||action!=="duration")
+     throw new HttpsError("invalid-argument","Escolha uma duração válida para a licença não ativada.");
+   const changed=await ref.transaction(v=>{
+     if(!v||v.uid||v.revoked===true)return;
+     return {...v,duration};
+   },undefined,false);
+   if(!changed.committed)throw new HttpsError("aborted","Licença ativada durante a alteração.");
+   return {updated:true,duration,serverNow:Date.now()};
+ }
+ if(entry.duration==="lifetime"||entry.kind==="lifetime")
+   throw new HttpsError("failed-precondition","Licença vitalícia: suspenda se desejar bloquear.");
+ const now=Date.now(),uid=String(entry.uid||"");
+ const entRef=root().child("entitlements").child(uid);
+ const existing=(await entRef.get()).val();
+ if(existing?.currentKeyHash!==id||existing.revoked===true||existing.lifetime===true)
+   throw new HttpsError("failed-precondition","Licença não corresponde ao benefício atual.");
+ let deadline;
+ if(action==="adjustDays"){
+   const days=Number(input.days);
+   if(!Number.isInteger(days)||days===0||Math.abs(days)>3650)
+     throw new HttpsError("invalid-argument","Use dias inteiros entre -3650 e +3650.");
+   deadline=Math.max(now,Number(existing.expiresAt||0)+days*86400000);
+ }else if(action==="setExpiresAt"){
+   deadline=Number(input.expiresAt);
+   if(!Number.isSafeInteger(deadline)||deadline<now||
+      deadline>now+36500*86400000)
+     throw new HttpsError("invalid-argument","Data inválida. Use uma data futura.");
+ }else throw new HttpsError("invalid-argument","Operação inválida.");
+ // First edit key, then entitlement. A partial failure denies (rather than extends) access.
+ const keyUpdated=await ref.transaction(v=>{
+   if(!v||v.revoked===true||v.uid!==uid)return;
+   return {...v,expiresAt:deadline};
+ },undefined,false);
+ if(!keyUpdated.committed)throw new HttpsError("aborted","Chave alterada por outra operação.");
+ const entUpdated=await entRef.transaction(v=>{
+   if(!v||v.revoked===true||v.currentKeyHash!==id||v.lifetime===true)return;
+   return {...v,expiresAt:deadline};
+ },undefined,false);
+ if(!entUpdated.committed)
+   throw new HttpsError("aborted","Benefício alterado por outra operação. Verifique novamente.");
+ return {updated:true,expiresAt:deadline,serverNow:Date.now()};
+});
+/** App-wide maintenance policy. New Android clients check this on launch/periodically.
+ * No mass Firebase Auth revocation, no changes to user data or license state.
+ */
+exports.adminSetAppMaintenance=onCall({region:REGION},async request=>{
+ const actor=await requireAdmin(request);
+ const enabled=request.data?.enabled;
+ if(typeof enabled!=="boolean")throw new HttpsError("invalid-argument","Estado inválido.");
+ const reason=String(request.data?.message||"PokeSearch temporariamente em manutenção.")
+   .replace(/[\r\n]+/g," ").trim().slice(0,180);
+ await getDatabase().ref("appControl/maintenance").set({
+   enabled,message:reason,updatedAt:Date.now(),updatedBy:actor
+ });
+ return {updated:true,enabled,serverNow:Date.now()};
 });
