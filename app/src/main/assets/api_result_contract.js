@@ -293,6 +293,10 @@
       var costumeId=x.costume_id===undefined||x.costume_id===null?null:
         optionalNumberSafe(x.costume_id,0,100000,true);
       if(x.costume_id!=null&&costumeId===null){rejected++;continue;}
+      // Optional GO form ID is encounter metadata, NEVER a synthesized image.
+      var sourceFormId=x.form_id===undefined||x.form_id===null?null:
+        optionalNumberSafe(x.form_id,0,100000,true);
+      if(x.form_id!=null&&sourceFormId===null){rejected++;continue;}
       var end=typeof x.despawn_at==="string"?Date.parse(x.despawn_at):NaN;
       if(!Number.isFinite(end)) {rejected++;continue;}
       if(end<=now) {expired++;continue;}
@@ -316,6 +320,7 @@
         form:clean(x.form,70),costume:clean(x.costume,70),
         costume_id:costumeId
       };
+      if(sourceFormId!==null)entry.form_id=sourceFormId;
       if(Number.isFinite(end)) entry.expiresAtMs=end;
       cards.push(entry);
       if(cards.length>=cap) break;
