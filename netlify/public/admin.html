@@ -123,6 +123,9 @@
       <option value="12m">12 meses</option>
       <option value="lifetime">Vitalícia</option>
     </select>
+    <label class="label" for="recipient-name">Nome do beneficiário / identificação (opcional)</label>
+    <input class="maintenance-note" id="recipient-name" type="text" maxlength="80"
+      autocomplete="off" placeholder="Ex.: João Silva · Canal Pokémon">
     <label class="label" for="recipient-email">E-mail Google do beneficiário (opcional)</label>
     <input class="maintenance-note" id="recipient-email" type="email" spellcheck="false"
       autocomplete="off" placeholder="treinador@gmail.com">
@@ -544,16 +547,20 @@
   function renderPremiumKey(item){
     const article=document.createElement("div");article.className="key-card";
     const heading=document.createElement("strong");
+    const identifiedName=item.googleName||item.recipientName||"";
     heading.textContent=(item.source==="freeYearCampaign"?"🎁 FREE!":
       item.kind==="paid"?"💳 Pagamento":"🔑 Licença manual")+
-      " · "+item.id.slice(0,10)+"…";
+      (identifiedName?" · "+identifiedName:" · "+item.id.slice(0,10)+"…");
     article.appendChild(heading);
     const info=document.createElement("div");info.className="key-meta";
     const rows=[
       "Situação: "+item.status+(item.suspended?" (pode ser reativada)":""),
       "Período: "+(item.duration||"não informado"),
-      "Usuário: "+(item.uid||"Ainda não vinculada"),
+      "Titular: "+(item.googleName||item.recipientName||
+        (item.uid?"Conta Google vinculada":"Ainda não vinculada")),
+      ...(item.googleEmail?["Google: "+item.googleEmail]:[]),
       ...(item.recipientEmailHint?["E-mail reservado: "+item.recipientEmailHint]:[]),
+      ...(item.uid?["UID: "+item.uid]:[]),
       "Criada: "+ptDate(item.createdAt),
       "Validade: "+(item.duration==="lifetime"?"Vitalícia":ptDate(item.expiresAt))
     ];
@@ -634,9 +641,9 @@
           "EXCLUSÃO DEFINITIVA: revogará o acesso da Pokébola 2 relacionado a este "+
           description+" e ocultará a licença da lista atual. O histórico Pix "+
           "será preservado e esta chave NÃO poderá ser reativada. "+
-          "Para confirmar, digite EXCLUIR LICENÇA:",
+          "Para confirmar, digite EXCLUIR:",
           "");
-        if(confirmation!=="EXCLUIR LICENÇA")return;
+        if(confirmation!=="EXCLUIR")return;
         remove.disabled=true;
         try{
           await call("adminDeletePremiumKey",{id:item.id,confirm:confirmation});
@@ -1135,6 +1142,7 @@
     const duration=el("license-duration").value;
     const title=el("license-duration").selectedOptions[0].textContent;
     const recipientEmail=el("recipient-email").value.trim().toLowerCase();
+    const recipientName=el("recipient-name").value.trim();
     if(recipientEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)){
       setStatus("Informe um e-mail válido ou deixe o campo vazio.","error");return;
     }
@@ -1144,7 +1152,7 @@
     if(!agreed)return;
     busy=true;el("issue").disabled=true;
     try{
-      const x=await call("adminIssuePremiumKey",{duration,recipientEmail});
+      const x=await call("adminIssuePremiumKey",{duration,recipientEmail,recipientName});
       if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(x.licenseKey||""))throw new Error("Código gerado em formato inesperado.");
       lastKey=x.licenseKey;
       el("key-entry").value=lastKey;
