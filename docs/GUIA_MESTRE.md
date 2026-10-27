@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+### LT126 — Resultado final QA assinado (26/10/2026)
+- GitHub Actions [#40438741099](https://github.com/LucianoToscano/PokeSearch/actions/runs/40438741099) **SUCCESS**: testes Node, Java, Gradle/R8, pacote de sprites e assinatura v2. [Artefato #12705386466](https://github.com/LucianoToscano/PokeSearch/actions/runs/40438741099/artifacts/12705386466).
+- APK **0.01.26/54331**, `PokeSearch-v0.01.26-LT126-Chat-WWM-Sprites-QA.apk`, **43.463.027 bytes**; SOURCE_COMMIT `dfc7a0733a4e9e247fc6ac5062c0898956da3082`. **SHA-256 `fb1f6aedb035f804d8c54dc5109e274fc7e9dd9fad8a67c8b0cb0844569146fd`**; certificado permanente v2 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- ZIP QA com APK e auditorias: 40.914.309 bytes; SHA-256 `147c03956fafd3ef8d594fc408eb3212aea3a4c90a193947623982bd437cf3b1`.
+- Conteúdo verificado diretamente no APK: **2.784/2.784 sprites com hash correto, zero arquivo ausente**: 1.025 base, 1.025 shiny, 724 formas (716 anteriores + 8 WWM), 10 trajes. Metadata WatWowMap em `catalog_wwm_verified.json`: 1.025 espécies, **1.506** formas e 87 trajes. Todos os bytes adicionais fixados por upstream SHA do blob. Não comprova 100% das variantes GO.
+- **NO-GO produção:** chat não homologado entre dois UIDs nem regras/Anonymous Auth confirmadas implantadas; contadores Firebase ainda pendentes; Samsung não testado; PR #81 Draft baseada na PR #80, main preservada. O screenshot exibiu `v0.01.24`, não esta QA.
+
+
 ## LT126 QA — Chat e primeira integração WatWowMap (26/10/2026)
 
 - Checkpoint: `main=65c9b4219744bad180e435faa23739e08e7d183f` (LT124); continuidade real da LT125 R2 `e9c4c6ede886b518d2fd7c7aa934f069f83df479` na branch `fix/lt126-chat-catalog-sprites-20261026` / PR #81 Draft, base PR #80. Nenhum merge, release estável ou substituição dos backups.
