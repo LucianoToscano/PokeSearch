@@ -46,15 +46,26 @@ final class FirebaseStats {
                 .setApplicationId("1:1007816617051:android:bc055b81b3bdfaceaa637e")
                 .setApiKey("AIzaSyDxCp0f4c_xrrlJ6EGGg9HKPQPIiutCQkM")
                 .setProjectId("pokesearch-lt").setDatabaseUrl(DB_URL).build();
-            FirebaseApp app=FirebaseApp.initializeApp(context.getApplicationContext(),options,"PokeSearchStats");
-            if(app==null)app=FirebaseApp.getInstance("PokeSearchStats");
+            FirebaseApp app;
+            try{app=FirebaseApp.getInstance("PokeSearchStats");}
+            catch(IllegalStateException notInitialized){
+                app=FirebaseApp.initializeApp(context.getApplicationContext(),options,"PokeSearchStats");
+            }
+            if(app==null)throw new IllegalStateException("Firebase Stats unavailable");
             auth=FirebaseAuth.getInstance(app);
             db=FirebaseDatabase.getInstance(app,DB_URL);
             if(auth.getCurrentUser()!=null)attach(auth.getCurrentUser().getUid());
             else auth.signInAnonymously().addOnSuccessListener(result->{
                 if(result.getUser()!=null)attach(result.getUser().getUid());
-            }).addOnFailureListener(error->render());
-        } catch(RuntimeException ignored){render();}
+                else {synchronized(FirebaseStats.class){initialized=false;}render();}
+            }).addOnFailureListener(error->{
+                synchronized(FirebaseStats.class){initialized=false;}
+                render();
+            });
+        } catch(RuntimeException ignored){
+            // Failed init is retryable when Home is reopened; never fake counts.
+            initialized=false;render();
+        }
     }
     private static synchronized void attach(String currentUid){
         if(db==null||!uid.isEmpty())return;
