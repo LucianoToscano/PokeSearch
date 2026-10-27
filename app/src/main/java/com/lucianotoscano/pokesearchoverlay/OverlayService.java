@@ -670,7 +670,9 @@ public class OverlayService extends Service {
                     try{
                         org.json.JSONArray accounts=new org.json.JSONArray(
                             session.getString("profileTrainerAccounts","[]"));
-                        for(int i=0;i<accounts.length();i++){
+                        // Single-account sites have no trainer dropdown: do not
+                        // require a control that the provider does not render.
+                        for(int i=0;accounts.length()>1&&i<accounts.length();i++){
                             JSONObject account=accounts.optJSONObject(i);
                             if(account!=null&&selected.equals(account.optString("code",""))){
                                 config.put("shinyAccount",selected);
