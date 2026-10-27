@@ -5,7 +5,9 @@ const allowedActions=new Set([
  "checkDistributionAccess","createPremiumPix","getPremiumOrder","getPremiumOffer",
  "redeemPremiumKey","adminDistributionControl","adminPremiumSettings",
  "adminRevokePremiumKey","adminPremiumKeyStatus",
- "adminPremiumOverview","adminIssuePremiumKey","adminAdjustPremiumExpiry"
+ "adminPremiumOverview","adminIssuePremiumKey","adminAdjustPremiumExpiry",
+ "adminListPremiumKeys","adminRevealPremiumKey","adminSetPremiumKeyEnabled",
+ "adminChangePremiumKeyDuration","adminSetAppMaintenance"
 ]);
 const httpStatus={
  unauthenticated:401,"permission-denied":403,"invalid-argument":400,
@@ -64,6 +66,20 @@ export default async function handler(req,context){
      console.error("PokeSearch Firebase health check failed:",error?.message||"unknown");
      return response({service:"PokeSearch Premium",status:"setup",
        firebase:"unavailable",livePayments:false},503);
+   }
+ }
+ if(action==="appStatus"&&method==="GET"){
+   try{
+     initialize();
+     const {getDatabase}=require("firebase-admin/database");
+     const snap=await getDatabase().ref("appControl/maintenance").get();
+     const state=snap.val()||{};
+     return response({maintenance:state.enabled===true,
+       message:state.enabled===true?String(state.message||"PokeSearch em manutenção.").slice(0,180):"",
+       updatedAt:Number(state.updatedAt||0)});
+   }catch(error){
+     console.error("PokeSearch maintenance lookup failed:",error?.message||"unknown");
+     return response({error:"Estado de manutenção indisponível."},503);
    }
  }
  if(method!=="POST")return response({error:"Method not allowed"},405);
