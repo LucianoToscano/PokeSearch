@@ -6,6 +6,8 @@ plugins { id("com.android.application") }
 dependencies {
     implementation("androidx.work:work-runtime:2.10.2")
     implementation("androidx.core:core:1.15.0")
+    // Offline QR generation from Mercado Pago Pix payload; no third-party service.
+    implementation("com.google.zxing:core:3.5.3")
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("androidx.credentials:credentials:1.6.0")
