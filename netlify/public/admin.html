@@ -77,6 +77,8 @@
     <hr class="sep">
     <div class="row"><span class="label">Pokébola 2 · LT134 (54339)</span><span class="value" id="lt134-status">—</span></div>
     <div class="actions"><button id="toggle-lt134" class="secondary" disabled>Verificar LT134</button></div>
+    <div class="row"><span class="label">Pokébola 2 · LT135 (54340)</span><span class="value" id="lt135-status">—</span></div>
+    <div class="actions"><button id="toggle-lt135" class="secondary" disabled>Verificar LT135</button></div>
     <small>Este controle regula a liberação Premium da LT134. O bloqueio do aplicativo inteiro e o controle de versões ficam na seção Administração de APKs abaixo. A Pokébola 1 continua gratuita fora da manutenção.</small>
     <hr class="sep">
     <div class="row"><span class="label">Vendas Premium</span><span class="value" id="sales">—</span></div>
@@ -312,11 +314,12 @@
   const auth=getAuth(app);
   const el=id=>document.getElementById(id);
   const LT134_VERSION_CODE=54339;
+  const LT135_VERSION_CODE=54340;
   let lastKey="",revealed=false,busy=false,keyBusy=false,keyCursor="",keyCount=0;
   let maintenanceEnabled=false,appVersionsEnabled=true,managedVersions={};
   let promotionEnabled=false,freeCampaign={};
   let configState={salesEnabled:false,paymentsLiveEnabled:false,
-    globalEnabled:false,lt134Enabled:false,otherVersionsActive:[]};
+    globalEnabled:false,lt134Enabled:false,lt135Enabled:false,otherVersionsActive:[]};
   const setStatus=(message,kind="")=>{el("status").textContent=message;el("status").className=kind};
   const money=cents=>(Number(cents)/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   // Device management remains server-authorized on EVERY operation.
@@ -424,16 +427,21 @@
       el("toggle-maintenance").textContent=maintenanceEnabled?"Desativar manutenção":"Ativar manutenção";
       const enabledVersions=data.versions&&typeof data.versions==="object"?data.versions:{};
       const others=Object.entries(enabledVersions).filter(([code,enabled])=>
-        code!==String(LT134_VERSION_CODE)&&enabled===true).map(([code])=>code);
+        code!==String(LT134_VERSION_CODE)&&code!==String(LT135_VERSION_CODE)&&enabled===true).map(([code])=>code);
       configState={salesEnabled:data.salesEnabled===true,paymentsLiveEnabled:data.paymentsLiveEnabled===true,
         globalEnabled:data.globalEnabled===true,
         lt134Enabled:enabledVersions[String(LT134_VERSION_CODE)]===true,
+        lt135Enabled:enabledVersions[String(LT135_VERSION_CODE)]===true,
         otherVersionsActive:others};
       el("distribution").textContent=configState.globalEnabled?"Habilitado":"Desativado";
       const lt134Ready=configState.globalEnabled&&configState.lt134Enabled;
       el("lt134-status").textContent=lt134Ready?"Validação Premium liberada":"Premium não liberado";
       el("toggle-lt134").textContent=lt134Ready?"Bloquear teste Premium LT134":"Liberar teste Premium LT134";
       el("toggle-lt134").disabled=false;
+      const lt135Ready=configState.globalEnabled&&configState.lt135Enabled;
+      el("lt135-status").textContent=lt135Ready?"Validação Premium liberada":"Premium não liberado";
+      el("toggle-lt135").textContent=lt135Ready?"Bloquear teste Premium LT135":"Liberar teste Premium LT135";
+      el("toggle-lt135").disabled=false;
       el("sales").textContent=configState.salesEnabled?"Habilitadas":"Desativadas";
       el("live-status").textContent=configState.paymentsLiveEnabled?"Habilitado":"Desativado";
       el("toggle-sales").disabled=false;
@@ -528,7 +536,7 @@
     try{
       if(active){
         await call("adminDistributionControl",{scope:"version",versionCode:LT134_VERSION_CODE,enabled:false});
-        if(configState.otherVersionsActive.length===0)
+        if(configState.otherVersionsActive.length===0&&!configState.lt135Enabled)
           await call("adminDistributionControl",{scope:"global",enabled:false});
       }else{
         await call("adminDistributionControl",{scope:"version",versionCode:LT134_VERSION_CODE,enabled:true});
@@ -537,6 +545,25 @@
       setStatus(active?"LT134 bloqueada no servidor.":"LT134 autorizada para homologação. Pix real disponível apenas após autenticação no aplicativo.","ok");
     }catch(e){setStatus((e.message||"Erro de controle da versão.")+" Verifique o estado antes de tentar novamente.","error");}
     finally{busy=false;el("toggle-lt134").disabled=false;await overview();}
+  });
+  el("toggle-lt135").addEventListener("click",async()=>{
+    if(busy)return;
+    const active=configState.globalEnabled&&configState.lt135Enabled;
+    const prompt=active?
+      "Bloquear somente a Pokébola 2 Premium da LT135? A licença continuará válida e a Pokébola 1 continuará gratuita.":
+      "Liberar a Pokébola 2 Premium da LT135 (54340) para homologação? Confirme que deseja testar o acesso real por conta Google.";
+    if(!window.confirm(prompt))return;
+    busy=true;el("toggle-lt135").disabled=true;
+    try{
+      await call("adminDistributionControl",{scope:"version",versionCode:LT135_VERSION_CODE,enabled:!active});
+      if(!active&&!configState.globalEnabled)
+        await call("adminDistributionControl",{scope:"global",enabled:true});
+      else if(active&&!configState.lt134Enabled&&configState.otherVersionsActive.length===0)
+        await call("adminDistributionControl",{scope:"global",enabled:false});
+      setStatus(active?"LT135 bloqueada para novas validações.":
+        "LT135 habilitada para homologação, sujeita a conta Google e licença.", "ok");
+    }catch(e){setStatus(e.message||"Não foi possível atualizar LT135.","error");}
+    finally{busy=false;el("toggle-lt135").disabled=false;await overview();}
   });
   el("login").addEventListener("click",async()=>{
     el("login").disabled=true;
@@ -571,6 +598,8 @@
     const existing={...managedVersions};
     if(!existing[String(LT134_VERSION_CODE)])
       existing[String(LT134_VERSION_CODE)]={enabled:true,versionName:"PokeSearch 0.01.34 · LT134"};
+    if(!existing[String(LT135_VERSION_CODE)])
+      existing[String(LT135_VERSION_CODE)]={enabled:true,versionName:"PokeSearch 0.01.35 · LT135"};
     for(const [code,item] of Object.entries(existing).sort((a,b)=>Number(b[0])-Number(a[0]))){
       if(!/^\d+$/.test(code))continue;
       const div=document.createElement("div");
