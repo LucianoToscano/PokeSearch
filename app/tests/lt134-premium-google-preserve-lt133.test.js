@@ -55,6 +55,15 @@ const checks=[
   overlay.indexOf("PremiumAccess.permitted(true)")<overlay.indexOf("newWebsite();")&&
   overlay.includes("if(isSecondaryOverlay()&&PremiumAccess.controlled())")],
  ["Shared OverlayService continues both Pokeballs",overlay.includes("isSecondaryOverlay()")],
+ ["Premium user can sign out or switch account from Home, even with active P2",
+   ui.includes('"Conta Premium  ·  Gerenciar / Sair"')&&
+   ui.includes('accountPremium.setOnClickListener(v->showPremiumAccountOptions())')&&
+   ui.includes('setPositiveButton("Sair da conta"')&&
+   ui.includes('setNeutralButton("Trocar conta"')&&
+   ui.includes('stopService(new Intent(this,SecondaryOverlayService.class));')&&
+   ui.includes('PremiumAccess.invalidateLease();')&&
+   ui.includes('PremiumGoogleLogin.signOut(this,')&&
+   ui.includes('A Pokébola 1 continua gratuita.')],
  ["Compact Premium dialog is a bounded dark popup, not a full-screen page",
    dialog.includes('new AlertDialog.Builder(activity).setView(scroller).create()')&&
    dialog.includes('getDisplayMetrics().heightPixels*0.78f')&&
