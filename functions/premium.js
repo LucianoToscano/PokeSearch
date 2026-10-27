@@ -1112,17 +1112,23 @@ exports.adminListPremiumKeys=onCall({region:REGION},async request=>{
  // Google identity is resolved ONLY on the protected admin endpoint. Do not
  // duplicate user's full e-mail or display name in Realtime Database.
  const resolved=await Promise.all(keys.map(async item=>{
-   if(!item.uid)return item;
+   if(!item.uid)return {...item,current:!item.archived&&!item.revoked,
+     editable:!item.archived&&!item.revoked};
+   const ent=(await root().child("entitlements").child(item.uid).get()).val()||{};
+   const current=ent.currentKeyHash===item.id;
+   const detail={...item,current,
+     status:!item.archived&&!item.revoked&&!current?"substituída":item.status,
+     editable:current&&!item.revoked&&!item.archived};
    try{
      const profile=await getAuth().getUser(item.uid);
-     return {...item,googleName:String(profile.displayName||"").slice(0,80),
+     return {...detail,googleName:String(profile.displayName||"").slice(0,80),
        googleEmail:String(profile.email||"").slice(0,254),
        googleEmailVerified:profile.emailVerified===true};
    }catch(error){
-     // Deleted accounts keep the historical UID. Never replace it with a guess.
-     return {...item,googleName:"",googleEmail:""};
+     return {...detail,googleName:"",googleEmail:""};
    }
  }));
+
  return {keys:resolved,hasMore:entries.length>pageSize,
    nextCursor:page.length?page[page.length-1][0]:"",serverNow:Date.now()};
 });
@@ -1136,13 +1142,13 @@ exports.adminLabelPremiumKey=onCall({region:REGION},async request=>{
     /[\u0000-\u001f<>]/.test(label))
    throw new HttpsError("invalid-argument","Identificação de licença inválida.");
  const ref=root().child("keys").child(id),now=Date.now();
- const tx=await ref.transaction(record=>{
-   if(!record)return;
-   return {...record,adminLabel:label,labelUpdatedAt:now,labelUpdatedBy:actor};
- },undefined,false);
- if(!tx.committed)throw new HttpsError("not-found","Licença não encontrada.");
+ const record=(await ref.get()).val();
+ if(!record)throw new HttpsError("not-found","Licença não encontrada.");
+ // A targeted update does not depend on an RTDB transaction to edit a note.
+ await ref.update({adminLabel:label,labelUpdatedAt:now,labelUpdatedBy:actor});
  return {updated:true,label,serverNow:Date.now()};
 });
+
 /** Copy requires an explicit owner request; old manual keys are NOT recoverable. */
 exports.adminRevealPremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
  await requireAdmin(request);
@@ -1173,14 +1179,13 @@ exports.adminSetPremiumKeyEnabled=onCall({region:REGION},async request=>{
  if(!/^[0-9a-f]{64}$/.test(id)||typeof enabled!=="boolean")
    throw new HttpsError("invalid-argument","Parâmetros inválidos.");
  const ref=root().child("keys").child(id);
- const tx=await ref.transaction(v=>{
-   if(!v||v.revoked===true||v.archived===true)return;
-   return {...v,suspended:!enabled,suspensionUpdatedAt:Date.now(),suspensionBy:actor};
- },undefined,false);
- if(!tx.committed)
-   throw new HttpsError("failed-precondition","Licença excluída, revogada ou inexistente; não pode ser reativada.");
+ const entry=(await ref.get()).val();
+ if(!entry||entry.revoked===true||entry.archived===true)
+   throw new HttpsError("failed-precondition","Licença excluída ou revogada; não pode ser reativada.");
+ await ref.update({suspended:!enabled,suspensionUpdatedAt:Date.now(),suspensionBy:actor});
  return {updated:true,enabled,serverNow:Date.now()};
 });
+
 /**
  * Delete archives an individual license AND permanently revokes its access.
  * Never erase payment receipts, license audit history or the original hash.
@@ -1191,30 +1196,27 @@ exports.adminDeletePremiumKey=onCall({region:REGION},async request=>{
  const confirmation=String(request.data?.confirm||"");
  if(!/^[0-9a-f]{64}$/.test(id)||confirmation!=="EXCLUIR")
    throw new HttpsError("invalid-argument","Confirmação de exclusão inválida.");
- const ref=root().child("keys").child(id);
- const now=Date.now();
- const tx=await ref.transaction(value=>{
-   if(!value||value.archived===true)return;
-   return {...value,revoked:true,archived:true,archivedAt:now,
-     archivedBy:actor,revokedAt:Number(value.revokedAt||now),
-     revokedBy:value.revokedBy||actor,
-     revocationReason:value.revocationReason||"admin-deleted",
-     suspended:true};
- },undefined,false);
- if(!tx.committed)
-   throw new HttpsError("failed-precondition","Licença já excluída ou não encontrada.");
- const record=tx.snapshot.val()||{};
+ const ref=root().child("keys").child(id),now=Date.now();
+ const record=(await ref.get()).val();
+ if(!record)throw new HttpsError("not-found","Licença não encontrada.");
+ if(record.archived===true)return {deleted:true,archived:true,revoked:true,
+   alreadyDeleted:true,wasAssigned:!!record.uid,serverNow:now};
+ // Targeted update avoids repeated RTDB transaction aborts in Netlify.
+ // Preserve the historic hash, Pix order, encrypted vault and audit trail.
+ await ref.update({revoked:true,archived:true,archivedAt:now,
+   archivedBy:actor,revokedAt:Number(record.revokedAt||now),
+   revokedBy:record.revokedBy||actor,
+   revocationReason:record.revocationReason||"admin-deleted",suspended:true});
  const uid=typeof record.uid==="string"?record.uid:"";
  if(uid){
    const entitlement=root().child("entitlements").child(uid);
-   await entitlement.transaction(value=>{
-     if(!value||value.currentKeyHash!==id)return;
-     return {...value,revoked:true,revokedAt:now,
-       revocationReason:"admin-deleted"};
-   },undefined,false);
+   const current=(await entitlement.get()).val()||{};
+   if(current.currentKeyHash===id){
+     await entitlement.update({revoked:true,revokedAt:now,
+       revocationReason:"admin-deleted"});
+   }
  }
- return {deleted:true,archived:true,revoked:true,wasAssigned:!!uid,
-   serverNow:Date.now()};
+ return {deleted:true,archived:true,revoked:true,wasAssigned:!!uid,serverNow:now};
 });
 
 /** Edit a key's finite expiry (+/- days or exact timestamp), including reductions.
@@ -1225,51 +1227,56 @@ exports.adminChangePremiumKeyDuration=onCall({region:REGION},async request=>{
  const input=request.data||{},id=String(input.id||""),action=String(input.action||"");
  if(!/^[0-9a-f]{64}$/.test(id))throw new HttpsError("invalid-argument","Licença inválida.");
  const ref=root().child("keys").child(id),entry=(await ref.get()).val();
- if(!entry||entry.revoked===true)throw new HttpsError("failed-precondition","Licença revogada ou inexistente.");
+ if(!entry||entry.revoked===true||entry.archived===true)
+   throw new HttpsError("failed-precondition","Licença excluída, revogada ou inexistente.");
  if(!entry.uid){
    const duration=String(input.duration||"");
    if(entry.kind!=="manual"||!ADMIN_DURATIONS.includes(duration)||action!=="duration")
-     throw new HttpsError("invalid-argument","Escolha uma duração válida para a licença não ativada.");
-   const changed=await ref.transaction(v=>{
-     if(!v||v.uid||v.revoked===true)return;
-     return {...v,duration};
-   },undefined,false);
-   if(!changed.committed)throw new HttpsError("aborted","Licença ativada durante a alteração.");
+     throw new HttpsError("invalid-argument","Selecione uma duração válida para a licença não resgatada.");
+   await ref.update({duration});
    return {updated:true,duration,serverNow:Date.now()};
  }
- if(entry.duration==="lifetime"||entry.kind==="lifetime")
-   throw new HttpsError("failed-precondition","Licença vitalícia: suspenda se desejar bloquear.");
- const now=Date.now(),uid=String(entry.uid||"");
- const entRef=root().child("entitlements").child(uid);
- const existing=(await entRef.get()).val();
- if(existing?.currentKeyHash!==id||existing.revoked===true||existing.lifetime===true)
-   throw new HttpsError("failed-precondition","Licença não corresponde ao benefício atual.");
- let deadline;
- if(action==="adjustDays"){
-   const days=Number(input.days);
-   if(!Number.isInteger(days)||days===0||Math.abs(days)>3650)
-     throw new HttpsError("invalid-argument","Use dias inteiros entre -3650 e +3650.");
-   deadline=Math.max(now,Number(existing.expiresAt||0)+days*86400000);
- }else if(action==="setExpiresAt"){
-   deadline=Number(input.expiresAt);
-   if(!Number.isSafeInteger(deadline)||deadline<now||
-      deadline>now+36500*86400000)
-     throw new HttpsError("invalid-argument","Data inválida. Use uma data futura.");
+ const uid=String(entry.uid);
+ const ent=(await root().child("entitlements").child(uid).get()).val()||{};
+ if(ent.currentKeyHash!==id||ent.revoked===true)
+   throw new HttpsError("failed-precondition",
+      "Esta chave não controla o Premium atual da conta. Abra a licença vigente.");
+ const now=Date.now();
+ let deadline=null,duration=String(entry.duration||"30d"),lifetime=false;
+ if(action==="setLifetime"){
+   duration="lifetime";lifetime=true;
+ }else if(action==="setFinite"){
+   duration=String(input.duration||"");
+   if(!ADMIN_DURATIONS.includes(duration)||duration==="lifetime")
+     throw new HttpsError("invalid-argument","Selecione 15 ou 30 dias, 1, 3, 6 ou 12 meses.");
+   deadline=periodExpiry(now,duration);
+ }else if(action==="adjustDays"||action==="setExpiresAt"){
+   if(entry.duration==="lifetime"||ent.lifetime===true)
+     throw new HttpsError("failed-precondition",
+       "Escolha primeiro um período para voltar de vitalícia a prazo definido.");
+   if(action==="adjustDays"){
+     const days=Number(input.days);
+     if(!Number.isInteger(days)||days===0||Math.abs(days)>3650)
+       throw new HttpsError("invalid-argument","Informe dias inteiros entre -3650 e +3650.");
+     deadline=Math.max(now,Number(ent.expiresAt||0)+days*86400000);
+   }else{
+     deadline=Number(input.expiresAt);
+     if(!Number.isSafeInteger(deadline)||deadline<now||deadline>now+36500*86400000)
+       throw new HttpsError("invalid-argument","Informe uma data futura válida.");
+   }
  }else throw new HttpsError("invalid-argument","Operação inválida.");
- // First edit key, then entitlement. A partial failure denies (rather than extends) access.
- const keyUpdated=await ref.transaction(v=>{
-   if(!v||v.revoked===true||v.uid!==uid)return;
-   return {...v,expiresAt:deadline};
- },undefined,false);
- if(!keyUpdated.committed)throw new HttpsError("aborted","Chave alterada por outra operação.");
- const entUpdated=await entRef.transaction(v=>{
-   if(!v||v.revoked===true||v.currentKeyHash!==id||v.lifetime===true)return;
-   return {...v,expiresAt:deadline};
- },undefined,false);
- if(!entUpdated.committed)
-   throw new HttpsError("aborted","Benefício alterado por outra operação. Verifique novamente.");
- return {updated:true,expiresAt:deadline,serverNow:Date.now()};
+ // One atomic multi-path update keeps both the key and its current entitlement
+ // in sync. Only the active, nonrevoked UID/key pair can reach this operation.
+ const fields={
+   ["premium/keys/"+id+"/expiresAt"]:deadline,
+   ["premium/entitlements/"+uid+"/expiresAt"]:deadline,
+   ["premium/keys/"+id+"/duration"]:duration,
+   ["premium/entitlements/"+uid+"/lifetime"]:lifetime
+ };
+ await getDatabase().ref().update(fields);
+ return {updated:true,duration,lifetime,expiresAt:deadline,serverNow:Date.now()};
 });
+
 /** App-wide maintenance policy. New Android clients check this on launch/periodically.
  * No mass Firebase Auth revocation, no changes to user data or license state.
  */
