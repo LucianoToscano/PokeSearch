@@ -243,6 +243,17 @@
     <small id="keys-count"></small>
   </section>
 
+  <section class="panel" id="welcome-trial-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">🎁 Teste Premium para novos cadastros</h2>
+    <p>Novas contas Google recebem Premium automaticamente após o primeiro login, somente se esta opção estiver ativa. Contas antigas não recebem novamente.</p>
+    <label class="label" for="welcome-trial-days">Duração do teste (1 a 30 dias)</label>
+    <input class="maintenance-note" id="welcome-trial-days" type="number" min="1" max="30" step="1" inputmode="numeric" value="5">
+    <div class="row"><span class="label">Situação</span><strong id="welcome-trial-status">Desativado</strong></div>
+    <div class="actions">
+      <button id="welcome-trial-toggle" class="secondary">Ativar teste automático</button>
+    </div>
+    <small>O teste começa no primeiro cadastro Google elegível realizado após a ativação. A quantidade de dias pode ser alterada para novos cadastros; testes concedidos não são estendidos.</small>
+  </section>
   <section class="panel" id="partners-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">🎟️ Cupons e divulgadores</h2>
     <details class="advanced"><summary>Gerenciar cupons e comissões</summary>
@@ -259,7 +270,18 @@
       <option value="10">10% de desconto</option>
       <option value="25">25% de desconto</option>
       <option value="50">50% de desconto</option>
+      <option value="100">100% · Premium grátis (limite de usos)</option>
     </select>
+    <label class="label" for="coupon-max-claims">Limite de resgates do cupom 100%</label>
+    <input id="coupon-max-claims" class="maintenance-note" type="number" min="1" max="10000" step="1" value="10">
+    <label class="label" for="coupon-gift-duration">Período concedido pelo cupom 100%</label>
+    <select id="coupon-gift-duration" class="maintenance-note">
+      <option value="15d">15 dias</option><option value="30d" selected>30 dias</option>
+      <option value="1m">1 mês</option><option value="3m">3 meses</option>
+      <option value="6m">6 meses</option><option value="12m">12 meses</option>
+      <option value="lifetime">Vitalício</option>
+    </select>
+    <small>100% não gera Pix e nunca gera comissão. Cada conta Google só pode usar um cupom grátis uma vez. O limite é controlado pelo servidor.</small>
     <label class="label" for="partner-commission">Comissão ao divulgador (%)</label>
     <input id="partner-commission" class="maintenance-note" type="number"
       min="0" max="100" step="1" value="50" inputmode="numeric">
@@ -348,7 +370,7 @@
   let configState={salesEnabled:false,paymentsLiveEnabled:false,globalEnabled:false};
   let currentScreen="home",adminAuthenticated=false;
   const screenPanels={home:["admin","maintenance-panel"],licenses:["licensing","keys-panel","key-management"],
-    devices:["device-panel"],finance:["sales-panel","pricing-panel"],campaign:["free-campaign-panel"],
+    devices:["device-panel"],finance:["sales-panel","pricing-panel"],campaign:["welcome-trial-panel","free-campaign-panel"],
     more:["partners-panel","app-version-panel","backup-panel"]};
   const allAdminPanels=[...new Set(Object.values(screenPanels).flat())];
   function selectScreen(screen){
@@ -511,6 +533,12 @@
         el("regular-price-input").value=(Number(data.regularPriceCents)/100).toFixed(2).replace(".",",");
       if(document.activeElement!==el("promotion-price-input"))
         el("promotion-price-input").value=(Number(data.promotionalPriceCents)/100).toFixed(2).replace(".",",");
+      const trial=data.welcomeTrial||{};
+      el("welcome-trial-days").value=String(trial.days||5);
+      el("welcome-trial-status").textContent=trial.enabled?"Ativado · "+trial.days+" dias":"Desativado";
+      el("welcome-trial-toggle").textContent=trial.enabled?
+        "Desativar teste automático":"Ativar teste automático";
+      el("welcome-trial-toggle").dataset.enabled=trial.enabled?"true":"false";
       freeCampaign=data.freeYearCampaign||{};
       const available=freeCampaign.active===true;
       el("free-campaign-status").textContent=available?
@@ -1146,6 +1174,8 @@
     el("partner-uid").value=item.partnerUid||"";
     el("partner-discount").value=String(item.discountPercent||10);
     el("partner-commission").value=String(item.commissionPercent??50);
+    el("coupon-max-claims").value=String(item.maxClaims||10);
+    el("coupon-gift-duration").value=item.giftDuration||"30d";
     el("partner-enabled").value=item.enabled?"active":"inactive";
     if(item.expiresAt){
       const date=new Date(item.expiresAt);
@@ -1157,7 +1187,7 @@
   async function savePartnerCoupon(values){
     if(!values.code.match(/^[A-Z0-9][A-Z0-9_-]{2,22}[A-Z0-9]$/))
       throw Error("Cupom deve ter 4 a 24 caracteres: letras, números, - ou _.");
-    if(values.partnerName.length<2||![10,25,50].includes(values.discountPercent))
+    if(values.partnerName.length<2||![10,25,50,100].includes(values.discountPercent))
       throw Error("Informe o divulgador e escolha 10%, 25% ou 50%.");
     if(!Number.isSafeInteger(values.commissionPercent)||
        values.commissionPercent<0||values.commissionPercent>100)
@@ -1172,13 +1202,15 @@
     const partnerName=el("partner-name").value.trim();
     const partnerUid=el("partner-uid").value.trim();
     const discountPercent=Number(el("partner-discount").value);
-    const commissionPercent=Number(el("partner-commission").value);
+    const commissionPercent=discountPercent===100?0:Number(el("partner-commission").value);
+    const maxClaims=Number(el("coupon-max-claims").value);
+    const giftDuration=el("coupon-gift-duration").value;
     const date=el("partner-end").value;
     const expiresAt=date?Date.parse(date):0;
     if(!Number.isSafeInteger(expiresAt)){setStatus("Validade do cupom inválida.","error");return;}
     couponBusy=true;el("save-partner-coupon").disabled=true;
     try{await savePartnerCoupon({code,partnerName,partnerUid,discountPercent,
-      commissionPercent,expiresAt,enabled:el("partner-enabled").value==="active"});}
+      commissionPercent,expiresAt,maxClaims,giftDuration,enabled:el("partner-enabled").value==="active"});}
     catch(e){setStatus(e.message||"Falha ao salvar cupom.","error");}
     finally{couponBusy=false;el("save-partner-coupon").disabled=false;}
   });
@@ -1191,7 +1223,9 @@
       for(const item of page.items||[]){
         const card=pCard();
         addLine(card,item.code+" · "+item.partnerName,true);
-        addLine(card,item.discountPercent+"% OFF · comissão "+(item.commissionPercent??50)+"% · "+
+        addLine(card,item.discountPercent===100?
+          "100% grátis · "+(item.claimCount||0)+"/"+(item.maxClaims||0)+" resgates · "+(item.giftDuration||"30d"):
+          item.discountPercent+"% OFF · comissão "+(item.commissionPercent??50)+"% · "+
           (item.enabled?"Ativo":"Desativado")+
           (item.expiresAt?" · Até "+new Date(item.expiresAt).toLocaleDateString("pt-BR"):""));
         card.append(partnerButton("Editar",()=>populatePartnerFields(item)));
@@ -1254,7 +1288,25 @@
   el("refresh-partner-commissions").addEventListener("click",()=>loadPartnerCommissions(true));
   el("more-partner-commissions").addEventListener("click",()=>loadPartnerCommissions());
 
-  el("refresh").addEventListener("click",overview);
+  el("welcome-trial-toggle").addEventListener("click",async()=>{
+    const button=el("welcome-trial-toggle");
+    const enabled=button.dataset.enabled!=="true";
+    const days=Number(el("welcome-trial-days").value);
+    if(!Number.isInteger(days)||days<1||days>30){
+      setStatus("Informe entre 1 e 30 dias.","error");return;
+    }
+    if(!window.confirm(enabled?
+      "Ativar "+days+" dias gratuitos automaticamente para CADA nova conta Google cadastrada após a ativação?":
+      "Desativar novos testes Premium? Licenças já concedidas serão preservadas."))return;
+    button.disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"welcomeTrial",enabled,days});
+      await overview();
+      setStatus(enabled?"Teste de boas-vindas ativado.":"Novos testes desativados.","ok");
+    }catch(error){setStatus(error.message||"Falha ao configurar teste.","error");}
+    finally{button.disabled=false;}
+  });
+    el("refresh").addEventListener("click",overview);
   el("issue").addEventListener("click",async()=>{
     if(busy)return;
     const duration=el("license-duration").value;
