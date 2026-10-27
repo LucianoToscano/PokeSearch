@@ -114,7 +114,7 @@ test("Native passes full display height and preserves up to ten card slots",
  service.includes("screenHeightDp()-16")&&
  service.includes("positionResultsUnderPokeball(false);")&&
  service.includes("int maxY=Math.max(0,display.heightPixels-resultParams.height);")&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,100):[]")&&
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
 test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
@@ -144,7 +144,7 @@ test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten
  dock.includes('["count","Spawns","Quantidade de spawns"]')&&
  dock.includes('id="resultSpawnCount"')&&
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
- dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
+ dock.includes('cards=Array.isArray(a)?a.slice(0,100):[]')&&
  service.includes('case "count":resultShowCount=value;pref="resultShowCount"')&&
  !service.includes('setSpawnLimit'));
 test("UX-INFO-10 visibility toggles report confirmed Android state without scrolling to top",
@@ -186,7 +186,7 @@ test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overri
 test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
  dock.includes('count.style.display=resultDisplayOptions.count?"inline":"none"')&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,100):[]")&&
  !dock.includes("count.textContent=resultDisplayOptions.count&&cards.length")&&
  !service.includes("setSpawnLimit"));
 test("UX-INFO-02 legacy and new IV/rank display choices persist independently",()=>{
@@ -1667,7 +1667,7 @@ test("PL-02 watchdog can release stalled generation without false success",()=>{
 });
 test("RESULTS-ALL-MODES partial site counts wait for complete card extraction",()=>{
  const probe=read("assets/probe.js");
- return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,10):0;')&&
+ return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,100):0;')&&
   probe.includes('const siteIncomplete=expectedVisible>found.length;')&&
   probe.includes('siteCount,siteIncomplete,expectedVisible,parseFailure')&&
   service.includes('if(r.optBoolean("siteIncomplete",false)&&attempt<24)')&&
@@ -2249,7 +2249,7 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
   keys.every(key=>dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:0;')&&
   dock.includes("return Math.max(size,pitch); // No sprite-overlap")&&
-  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
+  dock.includes('cards=Array.isArray(a)?a.slice(0,100):[]');
 });
 test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
  const source=read("assets/probe.js"),detail=read("assets/detail.html");
@@ -2325,7 +2325,7 @@ test("SITE-POKEMON-04 site filter uses selected chips and exact official options
 test("SITE-POKEMON-05 12-icon toolbar & no personal GPS remain intact",()=>
  dock.includes('grid-template-columns:34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr')&&
  !probe.includes('navigator.geolocation')&&
- dock.includes('items.slice(0,10)')&&
+ dock.includes('items.slice(0,100)')&&
  service.includes('"locationCoords"'));
 test("NOTIFY-02 compact grouped speaker icons still drive two distinct native modes",()=>{
  const panel=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
