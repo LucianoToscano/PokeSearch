@@ -144,6 +144,8 @@ async function run(){
    const gift=await premium.adminIssuePremiumKey({...admin,data:{duration}});
    assert.equal(gift.assigned,false);
    assert.match(gift.licenseKey,/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/);
+   const giftHash=crypto.createHash("sha256").update(gift.licenseKey).digest("hex");
+   coldCacheTransactions.add("premium/keys/"+giftHash);
    const friend="friend_"+duration;
    const redeemed=await premium.redeemPremiumKey({
      auth:{uid:friend},data:{licenseKey:gift.licenseKey}
