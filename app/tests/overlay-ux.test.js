@@ -1745,7 +1745,7 @@ test("UX-SPRITE-01 missing images remain visible without inventing Pokémon or b
 })());
 test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image sources",(()=>{
  const source=dock.split("function attachSpriteFeedback(){")[1]?.split("function attachLongPress(){")[0]||"";
- if(!source.includes("if(img.complete&&good())loaded()")||
+ if(!source.includes("if(img.complete){if(good())loaded();else failed();}")||
     !source.includes("retries>=1")||!source.includes('data-original-src'))return false;
  function makeStage(image){
   const classes=new Set(),listeners={};
