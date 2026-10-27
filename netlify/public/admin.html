@@ -17,9 +17,17 @@
     h1{font-size:1.6rem;letter-spacing:-.04em;margin:.5rem 0}
     p{color:#b8c1d1;line-height:1.55}
     .panel{background:#151d2b;border:1px solid #2d3a4b;border-radius:18px;padding:20px;margin:12px 0;box-shadow:0 8px 18px #0002}
-    .screen-nav{position:sticky;top:0;z-index:10;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:10px 0;background:#0b1019f2;backdrop-filter:blur(12px)}
+    .screen-nav{position:sticky;top:0;z-index:10;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:10px 0;background:#0b1019f2;backdrop-filter:blur(12px)}
     .screen-nav button{background:#223249;color:#d8e7f6;font-size:.83rem;padding:10px 5px;min-height:40px}
     .screen-nav button[aria-current="page"]{background:#83e0ef;color:#11202b}
+    .screen-nav button.signout{background:#503040;color:#ffdfe2}
+    .license-editor{border-top:1px solid #304157;margin-top:10px;padding-top:12px}
+    .license-editor label{display:block;font-size:.78rem;color:#bed0de;margin-bottom:4px}
+    .license-editor select,.license-editor input{width:100%;min-height:42px;border-radius:9px;margin-bottom:9px;background:#101e2c;color:#f7f9fb;border:1px solid #42536b;padding:9px}
+    .license-editor .actions{margin-top:4px}
+    .key-card{padding:12px}
+    .key-card>strong{font-size:.96rem}
+    .key-card details summary{color:#a6bfd4;font-size:.78rem;margin-top:7px;cursor:pointer}
     .stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}
     .stat{background:#101a29;border:1px solid #2d3a4b;border-radius:13px;padding:12px 9px;min-width:0}
     .stat span{display:block;color:#9daec4;font-size:.73rem;margin-bottom:6px}
@@ -30,7 +38,7 @@
     details.advanced{margin:14px 0 4px;border-top:1px solid #2d3a4b;padding-top:12px}
     details.advanced summary{cursor:pointer;font-size:.88rem;color:#cbdcf0}
     .page-hint{margin:5px 0 8px}
-    @media(min-width:600px){.screen-nav{grid-template-columns:repeat(6,minmax(0,1fr))}}
+    @media(min-width:600px){.screen-nav{grid-template-columns:repeat(7,minmax(0,1fr))}}
     .quick-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
     .quick-nav a{padding:12px 8px;text-align:center;border:1px solid #3e5b78;
       border-radius:12px;text-decoration:none;color:#d7eaff;background:#20334c;font-size:.85rem;font-weight:700}
@@ -81,6 +89,7 @@
     <button type="button" data-screen="finance">Vendas</button>
     <button type="button" data-screen="campaign">Campanha</button>
     <button type="button" data-screen="more">Mais</button>
+    <button type="button" class="signout" id="quick-logout">Sair</button>
   </nav>
   <section class="panel" id="admin" hidden>
     <h2 style="margin-top:0;font-size:1.15rem">Visão geral</h2>
@@ -221,11 +230,11 @@
   </section>
   <section class="panel" id="keys-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Todas as licenças Premium</h2>
-    <p>Administre cada licença: habilite ou desabilite, altere a validade ou exclua da lista. A exclusão cancela definitivamente o acesso, preservando o histórico Pix.</p>
+    <p>Gerencie a licença vigente, ajuste seus dias, transforme-a em vitalícia ou arquive códigos antigos. Licenças substituídas não controlam a conta.</p>
     <small>Por segurança, antigas chaves manuais foram salvas apenas como hash e <strong>não podem ser copiadas novamente</strong>. As novas chaves manuais ficam em cofre criptografado; licenças pagas podem ser recuperadas pelo administrador.</small>
     <label class="label" for="license-list-view">Visualizar licenças</label>
     <select id="license-list-view" class="maintenance-note" style="margin-top:8px">
-      <option value="current">Atuais (ativas, suspensas e revogadas)</option>
+      <option value="current">Todas, exceto excluídas</option>
       <option value="archived">Excluídas (histórico)</option>
     </select>
     <div class="actions"><button class="secondary" id="refresh-keys">Atualizar lista</button></div>
@@ -357,6 +366,7 @@
   }
   document.querySelectorAll("#admin-nav button[data-screen]").forEach(b=>
     b.addEventListener("click",()=>selectScreen(b.dataset.screen)));
+  el("quick-logout").addEventListener("click",()=>el("logout").click());
   const setStatus=(message,kind="")=>{el("status").textContent=message;el("status").className=kind};
   const money=cents=>(Number(cents)/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   // Device management remains server-authorized on EVERY operation.
@@ -626,133 +636,146 @@
   function renderPremiumKey(item){
     const article=document.createElement("div");article.className="key-card";
     const heading=document.createElement("strong");
-    const identifiedName=item.adminLabel||item.googleName||item.recipientName||"";
+    const name=item.adminLabel||item.googleName||item.recipientName||"";
     heading.textContent=(item.source==="freeYearCampaign"?"🎁 FREE!":
       item.kind==="paid"?"💳 Pagamento":"🔑 Licença manual")+
-      (identifiedName?" · "+identifiedName:" · "+item.id.slice(0,10)+"…");
+      (name?" · "+name:" · "+item.id.slice(0,10)+"…");
     article.appendChild(heading);
-    const info=document.createElement("div");info.className="key-meta";
-    const rows=[
-      "Situação: "+item.status+(item.suspended?" (pode ser reativada)":""),
-      "Período: "+(item.duration||"não informado"),
-      "Titular: "+(item.googleName||item.recipientName||
-        (item.uid?"Conta Google vinculada":"Ainda não vinculada")),
-      ...(item.adminLabel?["Identificação: "+item.adminLabel]:[]),
-      ...(item.googleEmail?["Google: "+item.googleEmail]:[]),
-      ...(item.recipientEmailHint?["E-mail reservado: "+item.recipientEmailHint]:[]),
-      ...(item.uid?["UID: "+item.uid]:[]),
+    const state=document.createElement("div");state.className="key-meta";
+    const duration=item.duration==="lifetime"?"Vitalícia":
+      ({"15d":"15 dias","30d":"30 dias","1m":"1 mês","3m":"3 meses","6m":"6 meses","12m":"12 meses"}[item.duration]||item.duration||"—");
+    const validity=item.archived?"Excluída":item.revoked?"Revogada":
+      !item.uid?"Começa no resgate":item.duration==="lifetime"?"Sem vencimento":
+      "Até "+ptDate(item.expiresAt);
+    state.textContent=item.status.toUpperCase()+" · "+duration+" · "+validity;
+    article.appendChild(state);
+    if(item.googleEmail){
+      article.appendChild(textNode("div",item.googleEmail,"key-meta"));
+    }
+    const details=document.createElement("details");
+    details.appendChild(textNode("summary","Ver informações"));
+    const fields=[
+      "Titular: "+(item.googleName||item.recipientName||"Não vinculado"),
       "Criada: "+ptDate(item.createdAt),
-      "Validade: "+(item.duration==="lifetime"?"Vitalícia":ptDate(item.expiresAt))
+      ...(item.adminLabel?["Identificação: "+item.adminLabel]:[]),
+      ...(item.recipientEmailHint?["Reservada para: "+item.recipientEmailHint]:[]),
+      ...(item.uid?["UID: "+item.uid]:[]),
+      ...(item.copyAvailable?[]:["Código antigo ou revogado: cópia indisponível"])
     ];
-    info.textContent=rows.join(" · ");
-    article.appendChild(info);
+    details.appendChild(textNode("div",fields.join(" · "),"key-meta"));
+    article.appendChild(details);
     const actions=document.createElement("div");actions.className="actions";
-    const editName=actionButton("Editar identificação",async()=>{
-      const name=window.prompt(
-        "Nome ou identificação interna desta licença (máximo 80 caracteres):",
-        item.adminLabel||item.recipientName||item.googleName||"");
-      if(name===null)return;
-      const label=name.trim();
-      if(label.length>80){setStatus("Identificação muito longa.","error");return;}
-      editName.disabled=true;
+    const edit=actionButton("Nome",async()=>{
+      const entered=window.prompt("Identificação desta licença:",item.adminLabel||name||"");
+      if(entered===null)return;
+      const label=entered.trim();
+      if(label.length>80){setStatus("Use até 80 caracteres.","error");return;}
+      edit.disabled=true;
       try{
         await call("adminLabelPremiumKey",{id:item.id,label});
-        setStatus("Identificação atualizada. A conta Google não foi alterada.","ok");
-        await loadPremiumKeys(true);
-      }catch(e){setStatus(e.message||"Erro ao identificar licença.","error");}
-      finally{editName.disabled=false;}
+        await loadPremiumKeys(true);setStatus("Nome atualizado.","ok");
+      }catch(error){setStatus(error.message||"Falha ao editar nome.","error");}
+      finally{edit.disabled=false;}
     });
-    actions.appendChild(editName);
-    const copy=actionButton(item.copyAvailable?"Copiar chave":"Cópia indisponível",async()=>{
-      if(!window.confirm("Revelar esta chave Premium e copiar para a área de transferência?"))
-        return;
-      copy.disabled=true;
-      try{
-        const result=await call("adminRevealPremiumKey",{id:item.id});
-        if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(result.licenseKey||""))
-          throw new Error("Código inválido.");
-        if(navigator.clipboard?.writeText){
-          await navigator.clipboard.writeText(result.licenseKey);
-          setStatus("Chave copiada. Não a compartilhe em capturas de tela.","ok");
-        }else{
-          window.prompt("Copie a chave (ela só aparecerá nesta janela):",result.licenseKey);
-          setStatus("Código exibido para cópia segura.","ok");
-        }
-      }catch(e){setStatus(e.message||"Não foi possível copiar.","error");}
-      finally{copy.disabled=false;}
-    });
-    copy.disabled=!item.copyAvailable;
-    actions.appendChild(copy);
+    actions.append(edit);
+    if(item.copyAvailable){
+      const copy=actionButton("Copiar",async()=>{
+        copy.disabled=true;
+        try{
+          const result=await call("adminRevealPremiumKey",{id:item.id});
+          const key=String(result.licenseKey||"");
+          if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(key))
+            throw new Error("Formato de chave inválido.");
+          if(navigator.clipboard?.writeText){
+            try{await navigator.clipboard.writeText(key);}
+            catch{window.prompt("Copie a chave Premium:",key);}
+          }else window.prompt("Copie a chave Premium:",key);
+          setStatus("Código disponibilizado para cópia.","ok");
+        }catch(error){setStatus(error.message||"Falha ao copiar.","error");}
+        finally{copy.disabled=false;}
+      });
+      actions.append(copy);
+    }
     if(item.editable){
-      const toggle=actionButton(item.suspended?"Habilitar":"Desabilitar",async()=>{
+      const toggle=actionButton(item.suspended?"Reativar":"Suspender",async()=>{
         const enabled=item.suspended;
-        if(!window.confirm((enabled?"Reativar":"Suspender")+
-           " esta licença? O acesso Premium será atualizado na próxima verificação."))return;
+        if(!window.confirm((enabled?"Reativar":"Suspender")+" esta licença?"))return;
         toggle.disabled=true;
         try{
           await call("adminSetPremiumKeyEnabled",{id:item.id,enabled});
-          setStatus(enabled?"Licença reativada.":"Licença suspensa.","ok");
-          await loadPremiumKeys(true);
-        }catch(e){setStatus(e.message||"Falha ao alterar licença.","error");}
+          await loadPremiumKeys(true);setStatus(enabled?"Reativada.":"Suspensa.","ok");
+        }catch(error){setStatus(error.message||"Falha ao atualizar licença.","error");}
         finally{toggle.disabled=false;}
       });
-      actions.appendChild(toggle);
-      const adjust=actionButton(item.uid?"Ajustar dias":"Alterar período",async()=>{
-        let payload={id:item.id};
-        if(!item.uid){
-          const duration=window.prompt("Duração: 15d, 30d, 1m, 3m, 6m, 12m ou lifetime",
-            item.duration||"30d");
-          if(duration===null)return;
-          if(!["15d","30d","1m","3m","6m","12m","lifetime"].includes(duration.trim())){
-            setStatus("Duração inválida.","error");return;
-          }
-          payload={...payload,action:"duration",duration:duration.trim()};
-        }else{
-          if(item.duration==="lifetime"){
-            setStatus("Licenças vitalícias não têm prazo finito. Use Desabilitar.","error");return;
-          }
-          const days=window.prompt("Digite dias para somar (+) ou retirar (-). Ex.: +30 ou -15",
-            "+30");
-          if(days===null)return;
-          if(!/^[+-]?\d+$/.test(days.trim())||Number(days)===0||Math.abs(Number(days))>3650){
-            setStatus("Informe um número inteiro de -3650 a +3650, diferente de zero.","error");return;
-          }
-          payload={...payload,action:"adjustDays",days:Number(days)};
-        }
-        if(!window.confirm("Confirmar alteração do prazo desta licença?"))return;
-        adjust.disabled=true;
+      actions.append(toggle);
+      const period=actionButton("Validade",()=>{editor.hidden=!editor.hidden;});
+      actions.append(period);
+      const editor=document.createElement("div");editor.className="license-editor";editor.hidden=true;
+      const label=textNode("label",item.uid?
+        "Definir validade a partir de hoje":"Definir duração no primeiro resgate");
+      const select=document.createElement("select");
+      for(const [value,title] of [["15d","15 dias"],["30d","30 dias"],["1m","1 mês"],
+        ["3m","3 meses"],["6m","6 meses"],["12m","12 meses"],["lifetime","Vitalícia · ilimitada"]]){
+        const option=new Option(title,value);
+        if(value===item.duration)option.selected=true;
+        select.add(option);
+      }
+      label.appendChild(select);editor.appendChild(label);
+      const save=actionButton("Salvar validade",async()=>{
+        if(!window.confirm("Atualizar a validade desta licença?"))return;
+        save.disabled=true;
         try{
-          await call("adminChangePremiumKeyDuration",payload);
-          setStatus("Prazo atualizado no Firebase.","ok");
+          const duration=select.value;
+          const data=!item.uid?{id:item.id,action:"duration",duration}:
+            duration==="lifetime"?{id:item.id,action:"setLifetime"}:
+            {id:item.id,action:"setFinite",duration};
+          await call("adminChangePremiumKeyDuration",data);
           await loadPremiumKeys(true);
-        }catch(e){setStatus(e.message||"Não foi possível alterar o prazo.","error");}
-        finally{adjust.disabled=false;}
+          setStatus(duration==="lifetime"?"Licença vitalícia ativada.":"Validade alterada.","ok");
+        }catch(error){setStatus(error.message||"Falha ao alterar validade.","error");}
+        finally{save.disabled=false;}
       });
-      actions.appendChild(adjust);
-    }
+      editor.appendChild(save);
+      if(item.uid&&item.duration!=="lifetime"){
+        const note=textNode("label","Somar ou retirar dias da validade atual (ex.: 30 ou -7)");
+        const days=document.createElement("input");days.type="number";days.min="-3650";days.max="3650";days.step="1";days.placeholder="+30";days.inputMode="numeric";
+        note.appendChild(days);editor.appendChild(note);
+        const adjust=actionButton("Aplicar dias",async()=>{
+          const count=Number(days.value);
+          if(!days.value||!Number.isInteger(count)||count===0||Math.abs(count)>3650){
+            setStatus("Digite um número inteiro de -3650 a +3650, exceto zero.","error");return;
+          }
+          if(!window.confirm((count>0?"Adicionar ":"Retirar ")+Math.abs(count)+" dias desta licença?"))return;
+          adjust.disabled=true;
+          try{
+            await call("adminChangePremiumKeyDuration",{id:item.id,action:"adjustDays",days:count});
+            await loadPremiumKeys(true);setStatus("Dias atualizados.","ok");
+          }catch(error){setStatus(error.message||"Falha ao ajustar dias.","error");}
+          finally{adjust.disabled=false;}
+        });
+        editor.appendChild(adjust);
+      }
+      article.appendChild(actions);article.appendChild(editor);
+    }else article.appendChild(actions);
     if(!item.archived){
       const remove=actionButton("Excluir",async()=>{
-        const description=item.kind==="paid"?"pagamento":"licença manual";
         const confirmation=window.prompt(
-          "EXCLUSÃO DEFINITIVA: revogará o acesso da Pokébola 2 relacionado a este "+
-          description+" e ocultará a licença da lista atual. O histórico Pix "+
-          "será preservado e esta chave NÃO poderá ser reativada. "+
-          "Para confirmar, digite EXCLUIR:",
-          "");
-        if(confirmation!=="EXCLUIR")return;
+          "Excluir esta licença da lista? O acesso da Pokébola 2 será revogado se ainda estiver ativo. O histórico de pagamentos será preservado. Digite EXCLUIR:", "");
+        if(confirmation===null)return;
+        if(confirmation.trim().toUpperCase()!=="EXCLUIR"){
+          setStatus("Exclusão cancelada. Digite EXCLUIR para confirmar.","error");return;
+        }
         remove.disabled=true;
         try{
-          await call("adminDeletePremiumKey",{id:item.id,confirm:confirmation});
-          setStatus("Licença excluída da lista e acesso revogado. "+
-            "O histórico foi preservado na aba Excluídas.","ok");
+          await call("adminDeletePremiumKey",{id:item.id,confirm:"EXCLUIR"});
           await loadPremiumKeys(true);
-        }catch(e){setStatus(e.message||"Não foi possível excluir licença.","error");}
+          setStatus("Licença excluída da lista. Histórico preservado na aba Excluídas.","ok");
+        }catch(error){setStatus(error.message||"Falha ao excluir licença.","error");}
         finally{remove.disabled=false;}
       });
       remove.classList.add("danger-action");
-      actions.appendChild(remove);
+      actions.append(remove);
     }
-    article.appendChild(actions);
     return article;
   }
   async function loadPremiumKeys(reset=false){
