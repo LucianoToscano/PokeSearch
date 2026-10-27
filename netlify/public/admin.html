@@ -64,6 +64,7 @@
     <h2 style="font-size:1.08rem;margin-top:0">Administração verificada</h2>
     <nav class="quick-nav" aria-label="Acesso rápido à administração">
       <a href="#keys-panel">🔑 Licenças ativas</a>
+      <a href="#device-panel">📱 Dispositivos Premium</a>
       <a href="#pricing-settings">💰 Valores e promoção</a>
       <a href="#free-campaign-panel">🎁 Campanha FREE</a>
       <a href="#app-version-panel">🛡️ APKs e manutenção</a>
@@ -193,6 +194,15 @@
     </div>
     <small>Somente o administrador pode mudar o estado. Alterações são registradas no Firebase. É necessário que o usuário esteja online para receber o novo estado.</small>
   </section>
+  <section class="panel" id="device-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Dispositivos Premium</h2>
+    <p>Uma conta Google Premium pode manter somente um aparelho autorizado de cada vez. Desconectar desativa a Pokébola 2 na próxima validação; a Pokébola 1 e a licença não são alteradas.</p>
+    <div class="actions"><button id="refresh-devices" class="secondary">Atualizar aparelhos</button></div>
+    <small id="device-count"></small>
+    <div id="device-list" aria-live="polite"></div>
+    <div class="actions"><button id="more-devices" class="secondary" hidden>Carregar mais contas</button></div>
+    <small>Os nomes dos aparelhos são informativos, não uma prova de identidade. O acesso é decidido no Firebase pelo UID, licença e vínculo atômico da instalação. Histórico limitado às 12 ações mais recentes por conta nesta visualização.</small>
+  </section>
   <section class="panel" id="keys-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Todas as licenças Premium</h2>
     <p>Administre cada licença: habilite ou desabilite, altere a validade ou exclua da lista. A exclusão cancela definitivamente o acesso, preservando o histórico Pix.</p>
@@ -309,6 +319,79 @@
     globalEnabled:false,lt134Enabled:false,otherVersionsActive:[]};
   const setStatus=(message,kind="")=>{el("status").textContent=message;el("status").className=kind};
   const money=cents=>(Number(cents)/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  // Device management remains server-authorized on EVERY operation.
+  let deviceCursor="",deviceTotal=0,deviceBusy=false;
+  const timestamp=value=>value?new Date(Number(value)).toLocaleString("pt-BR"):"—";
+  const textNode=(tag,text,cls)=>{
+    const node=document.createElement(tag);node.textContent=String(text);
+    if(cls)node.className=cls;return node;
+  };
+  function displayDevice(item){
+    const card=document.createElement("div");card.className="key-card";
+    const title=textNode("strong",item.googleEmail||"Conta sem e-mail registrado");
+    card.append(title,textNode("div","UID Firebase: "+item.uid,"key-meta"));
+    card.append(textNode("div","Aparelho: "+(item.deviceName||"Nenhum autorizado"),"key-meta"));
+    card.append(textNode("div","Sessão: "+
+      (item.status==="active"?"Ativa":item.status==="idle"?"Sem atividade recente":"Desconectada"),"key-meta"));
+    card.append(textNode("div","Ativação: "+timestamp(item.boundAt)+
+      " · Última atividade: "+timestamp(item.lastActivity),"key-meta"));
+    const actions=document.createElement("div");actions.className="actions";
+    for(const [label,action,confirmation] of [
+      ["Desconectar aparelho","adminDisconnectPremiumDevice","DESCONectar"],
+      ["Liberar troca","adminReleasePremiumDevice","LIBERAR"]]){
+      const btn=textNode("button",label,"secondary");
+      if(action==="adminDisconnectPremiumDevice")btn.classList.add("danger-action");
+      btn.disabled=item.status==="unbound"||
+        (action==="adminDisconnectPremiumDevice"&&item.status==="unbound");
+      btn.addEventListener("click",async()=>{
+        const text=action==="adminDisconnectPremiumDevice"?
+          "Desconectar agora a Pokébola 2 de "+(item.deviceName||item.uid)+
+          "? A licença e a Pokébola 1 serão preservadas.":
+          "Liberar a troca para outro aparelho sem desligar o atual imediatamente?";
+        if(!window.confirm(text))return;
+        btn.disabled=true;
+        try{
+          await call(action,{uid:item.uid});
+          setStatus("Dispositivo atualizado no servidor.","ok");
+          await loadPremiumDevices(true);
+        }catch(error){setStatus(error.message||"Operação recusada.","error");
+          btn.disabled=false;}
+      });
+      actions.append(btn);
+    }
+    card.append(actions);
+    const details=document.createElement("details");
+    const summary=textNode("summary","Histórico de transferências e desconexões");
+    details.append(summary);
+    for(const event of item.history||[]){
+      details.append(textNode("div",timestamp(event.at)+" · "+event.type+
+        " · "+(event.fromDevice||"Sem aparelho")+" → "+
+        (event.toDevice||"Sem aparelho"),"key-meta"));
+    }
+    if(!(item.history||[]).length)details.append(textNode("small","Sem histórico ainda."));
+    card.append(details);
+    return card;
+  }
+  async function loadPremiumDevices(reset=false){
+    if(deviceBusy)return;
+    deviceBusy=true;el("refresh-devices").disabled=true;
+    el("more-devices").disabled=true;
+    if(reset){deviceCursor="";deviceTotal=0;el("device-list").replaceChildren();}
+    try{
+      const data=await call("adminListPremiumDevices",{cursor:deviceCursor});
+      for(const item of data.items||[]){
+        el("device-list").append(displayDevice(item));deviceTotal++;
+      }
+      deviceCursor=data.nextCursor||"";
+      el("more-devices").hidden=!deviceCursor;
+      el("device-count").textContent=deviceTotal+
+        " contas exibidas"+(deviceCursor?" · mais disponíveis":"");
+    }catch(error){setStatus(error.message||"Falha ao consultar aparelhos.","error");}
+    finally{deviceBusy=false;el("refresh-devices").disabled=false;
+      el("more-devices").disabled=false;}
+  }
+  el("refresh-devices").addEventListener("click",()=>loadPremiumDevices(true));
+  el("more-devices").addEventListener("click",()=>loadPremiumDevices(false));
   async function call(name,data={}){
     const user=auth.currentUser;
     if(!user)throw new Error("Faça login novamente.");
@@ -391,6 +474,8 @@
       el("maintenance-panel").hidden=false;
       el("app-version-panel").hidden=false;
       el("keys-panel").hidden=false;
+      el("device-panel").hidden=false;
+      loadPremiumDevices(true);
       if(!keyBusy)loadPremiumKeys(true);
       loadPartnerCoupons(true);
       loadPartnerCommissions(true);
@@ -406,6 +491,7 @@
       el("maintenance-panel").hidden=true;
       el("app-version-panel").hidden=true;
       el("keys-panel").hidden=true;
+      el("device-panel").hidden=true;
       setStatus(e.message||"Não foi possível confirmar seu acesso.","error");
     }finally{busy=false;el("refresh").disabled=false;}
   }
