@@ -3,8 +3,19 @@ package com.lucianotoscano.pokesearchoverlay;
 import android.content.Context;
 import android.os.SystemClock;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.functions.FirebaseFunctions;
-import com.google.firebase.functions.HttpsCallableResult;
+import com.google.firebase.auth.FirebaseUser;
+import org.json.JSONObject;
+import org.json.JSONArray;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import android.os.Handler;
+import android.os.Looper;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -101,19 +112,87 @@ final class PremiumAccess {
             com.google.firebase.FirebaseApp firebase=FirebaseStats.getNamedApp(appContext);
             FirebaseAuth auth=FirebaseAuth.getInstance(firebase);
             if(auth.getCurrentUser()==null){
-                auth.signInAnonymously().addOnSuccessListener(x->invoke(firebase,name,data,cb))
-                   .addOnFailureListener(e->cb.done(new HashMap<>(),"Autenticação indisponível."));
-            }else invoke(firebase,name,data,cb);
+                auth.signInAnonymously()
+                    .addOnSuccessListener(x->invoke(auth,name,data,cb))
+                    .addOnFailureListener(e->cb.done(new HashMap<>(),"Autenticação indisponível."));
+            }else invoke(auth,name,data,cb);
         }catch(RuntimeException ex){cb.done(new HashMap<>(),"Firebase indisponível.");}
     }
-    @SuppressWarnings("unchecked")
-    private static void invoke(com.google.firebase.FirebaseApp app,String name,
-                               Map<String,Object> data,ResultCallback cb){
-        FirebaseFunctions.getInstance(app,"us-central1").getHttpsCallable(name)
-            .call(data).addOnSuccessListener((HttpsCallableResult task)->{
-                Object value=task.getData();
-                if(value instanceof Map)cb.done((Map<String,Object>)value,null);
-                else cb.done(new HashMap<>(),"Resposta inválida do servidor.");
-            }).addOnFailureListener(e->cb.done(new HashMap<>(),"Falha na validação online."));
+    private static void invoke(FirebaseAuth auth,String name,Map<String,Object> data,
+                               ResultCallback cb){
+        final FirebaseUser user=auth.getCurrentUser();
+        if(user==null){cb.done(new HashMap<>(),"Usuário não autenticado.");return;}
+        user.getIdToken(false).addOnSuccessListener(token->{
+            String jwt=token.getToken();
+            if(jwt==null||jwt.isEmpty()){
+                cb.done(new HashMap<>(),"Token de autenticação indisponível.");return;
+            }
+            new Thread(()->httpRequest(name,data,jwt,cb),"PS-Premium-HTTPS").start();
+        }).addOnFailureListener(e->cb.done(new HashMap<>(),"Falha no login Firebase."));
+    }
+    private static void httpRequest(String name,Map<String,Object> data,String jwt,
+                                    ResultCallback cb){
+        HttpURLConnection connection=null;
+        final Handler main=new Handler(Looper.getMainLooper());
+        try{
+            // HTTPS backend on Netlify; all grants and payment decisions stay server-side.
+            URL url=new URL(BuildConfig.PREMIUM_BACKEND_URL+"/"+name);
+            if(!"https".equalsIgnoreCase(url.getProtocol()))
+                throw new IllegalStateException("HTTPS required");
+            connection=(HttpURLConnection)url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(12000);
+            connection.setDoOutput(true);
+            connection.setRequestProperty("Content-Type","application/json; charset=utf-8");
+            connection.setRequestProperty("Accept","application/json");
+            connection.setRequestProperty("Authorization","Bearer "+jwt);
+            byte[] bytes=new JSONObject(data).toString().getBytes(StandardCharsets.UTF_8);
+            if(bytes.length>12000)throw new IllegalArgumentException("Pedido muito grande");
+            try(java.io.OutputStream stream=connection.getOutputStream()){stream.write(bytes);}
+            int status=connection.getResponseCode();
+            InputStream response=status>=400?connection.getErrorStream():connection.getInputStream();
+            if(response==null)throw new IllegalStateException("Sem resposta");
+            ByteArrayOutputStream output=new ByteArrayOutputStream();
+            byte[] chunk=new byte[4096];int n;
+            try(InputStream source=response){
+                while((n=source.read(chunk))!=-1){
+                    if(output.size()+n>65536)throw new IllegalStateException("Resposta muito grande");
+                    output.write(chunk,0,n);
+                }
+            }
+            JSONObject parsed=new JSONObject(output.toString("UTF-8"));
+            if(status>=200&&status<300){
+                final Map<String,Object> mapped=toMap(parsed);
+                main.post(()->cb.done(mapped,null));
+            }else{
+                final String message=parsed.optString("error","Servidor Premium indisponível.");
+                main.post(()->cb.done(new HashMap<>(),message));
+            }
+        }catch(Exception ignored){
+            main.post(()->cb.done(new HashMap<>(),"Falha no servidor Premium."));
+        }finally{
+            if(connection!=null)connection.disconnect();
+        }
+    }
+    private static Object fromJson(Object value){
+        if(value==null||value==JSONObject.NULL)return null;
+        if(value instanceof JSONObject)return toMap((JSONObject)value);
+        if(value instanceof JSONArray){
+            JSONArray a=(JSONArray)value;
+            List<Object> out=new ArrayList<>();
+            for(int i=0;i<a.length();i++)out.add(fromJson(a.opt(i)));
+            return out;
+        }
+        return value;
+    }
+    private static Map<String,Object> toMap(JSONObject json){
+        Map<String,Object> out=new HashMap<>();
+        Iterator<String> keys=json.keys();
+        while(keys.hasNext()){
+            String key=keys.next();
+            out.put(key,fromJson(json.opt(key)));
+        }
+        return out;
     }
 }
