@@ -48,9 +48,16 @@ const checks=[
    logic.includes('exports.claimFreeYear=onCall')&&
    logic.includes('duration==="lifetime"')&&
    http.includes('"claimFreeYear"')],
+ ["License inventory resolves Google name/email only after admin auth and optional manual recipient name",
+   logic.includes('await getAuth().getUser(item.uid)')&&
+   logic.includes('googleEmail:String(profile.email||"")')&&
+   logic.includes('recipientName:String(record.recipientName||"")')&&
+   adminHtml.includes('id="recipient-name"')&&
+   adminHtml.includes('item.googleEmail')&&
+   adminHtml.includes('if(confirmation!=="EXCLUIR")')],
  ["Key deletion is owner-only, revokes current entitlement and preserves transaction history",
    logic.includes("exports.adminDeletePremiumKey=onCall")&&
-   logic.includes('confirmation!=="EXCLUIR LICENÇA"')&&
+   logic.includes('confirmation!=="EXCLUIR"')&&
    logic.includes("revoked:true,archived:true")&&
    logic.includes("currentKeyHash!==id")&&
    http.includes('"adminDeletePremiumKey"')&&
