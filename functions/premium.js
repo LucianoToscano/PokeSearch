@@ -323,6 +323,11 @@ exports.adminPremiumSettings=onCall({region:REGION},async request=>{
  }else if(input.action==="sales"){
    if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Valor inválido.");
    await root().child("config").child("salesEnabled").set(input.enabled);
+ }else if(input.action==="paymentsLive"){
+   if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Valor inválido.");
+   if(input.enabled&&(!MP_TOKEN.value()||!MP_LIVE_WEBHOOK_SECRET.value()))
+     throw new HttpsError("failed-precondition","Configure Access Token e Webhook de produção no servidor.");
+   await root().child("config").child("paymentsLiveEnabled").set(input.enabled);
  }else if(input.action==="revoke"){
    const uid=String(input.uid||"");
    if(!/^[A-Za-z0-9_-]{8,128}$/.test(uid))throw new HttpsError("invalid-argument","UID inválido.");
@@ -337,7 +342,8 @@ exports.adminPremiumOverview=onCall({region:REGION},async request=>{
  const [dist,cfg]=await Promise.all([policy().get(),root().child("config").get()]);
  const p=dist.val()||{},c=cfg.val()||{};
  return {globalEnabled:p.globalEnabled===true,versions:p.versions||{},
-   salesEnabled:c.salesEnabled===true,...offer(c),durationOptions:ADMIN_DURATIONS};
+   salesEnabled:c.salesEnabled===true,paymentsLiveEnabled:c.paymentsLiveEnabled===true,
+   ...offer(c),durationOptions:ADMIN_DURATIONS};
 });
 
 
