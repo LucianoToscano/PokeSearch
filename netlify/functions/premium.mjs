@@ -3,6 +3,8 @@ const require=createRequire(import.meta.url);
 
 const allowedActions=new Set([
  "checkDistributionAccess","createPremiumPix","getPremiumOrder","getPremiumOffer",
+ "adminSavePartnerCoupon","adminListPartnerCoupons",
+ "adminListPartnerCommissions","adminMarkPartnerCommissionPaid",
  "redeemPremiumKey","adminDistributionControl","adminPremiumSettings",
  "adminRevokePremiumKey","adminPremiumKeyStatus",
  "adminPremiumOverview","adminIssuePremiumKey","adminAdjustPremiumExpiry",
