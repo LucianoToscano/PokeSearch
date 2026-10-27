@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT126 — Chat Firebase + primeira fonte externa (27/10/2026)
+- Branch `fix/lt126-firebase-chat-wwm-catalog-20261027`, PR #82 Draft empilhada sobre a PR #80. `main` LT124 preservada; backup integral intocado.
+- Chat: inicialização Firebase nomeada agora compartilhada e independente da ordem Home/contadores; status real só após primeiro evento; PERMISSION_DENIED diferenciado de falha de rede; reconexão manual pelo status. Não foram criadas mensagens fictícias.
+- Produção: `chat/messages` requer regras RTDB implantadas. Preparados `functions/scripts/repair-chat-rules-only.js` e workflow `lt126-chat-rules-scoped-deploy.yml` para reparo manual que preserve seções atuais (incluindo stats); deploy/2 usuários **NÃO verificados**.
+- Primeira integração: `app/scripts/import_wwm_catalog.py` usa commits fixos WatWowMap data `42b315f317ca8cee8e178249328eab5173e5ca70` e WWM UIcons `998bf635194a11078b6375c79d1494d5eb999b39` para catálogo de 1.025 espécies + formulários/trajes + PT-BR, importação build-only e 2 sprites oficiais indexados Pumpkaboo Average (#710, formId 2642, normal/Shiny), caminhos `pokemon-sprites/external/`. Catálogos não geram spawns.
+- `sprite_offline.js` e `wwm_catalog_snapshot.js` compartilham resolução exata entre dock/detail e P1/P2; API passa `form_id` quando fornecido. Placeholder neutro permanece para variantes ausentes, preservadas as 2.776 sprites offline da LT125 R2.
+- QA LT126 planejada `0.01.26/54331`, JDK17/Gradle8.11.1, assinatura permanente, limite ZIP 199 MiB. Novos testes `lt126-wwm-sprites-chat.test.js` e regressões antigas. **Só declarar APK concluído após CI sucesso, SHA256 e artefato verificado.**
+- Relatório especializado: [POKESEARCH_LT126_CHAT_WWM_QA_20261027.md](POKESEARCH_LT126_CHAT_WWM_QA_20261027.md). Capturas fornecidas pelo usuário ainda mostram `v0.01.24` instalada, não o APK R2/LT126; não declarar correção visual física antes de teste Samsung.
+
+
 ## LT125 QA-R2 — APK assinado com recuperação Noibat e 317 variedades offline (26/10/2026)
 
 - **Build QA R2 comprovada:** [GitHub Actions #40437190589](https://github.com/LucianoToscano/PokeSearch/actions/runs/40437190589) SUCCESS, [artifact #12704732660](https://github.com/LucianoToscano/PokeSearch/actions/runs/40437190589/artifacts/12704732660). Commit-fonte do APK `3aabc5450aaa057417a77d6f9db3ea24a2fb7b6c`; `versionName 0.01.25` / `versionCode 54330`; APK `PokeSearch-v0.01.25-LT125-Samsung-Sprites-QA-R2.apk` de **43.289.081 bytes**, SHA-256 `f9c5beeafdb8fbd413488a5f3283f02f770a6317a9ac6aa7f091b2dc39cebea1`. Assinatura Android v2 e certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` verificados pelo CI e relatório extraído do artefato.
