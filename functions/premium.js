@@ -62,6 +62,19 @@ const offer=config=>{
  return {regularPriceCents:regular,promotionalPriceCents:promotional,promotionEnabled,
    priceCents:promotionEnabled?promotional:regular};
 };
+const cleanEmail=value=>String(value||"").trim().toLowerCase();
+const validEmail=email=>/^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,30}$/.test(email)&&email.length<=254;
+const recipientHash=email=>crypto.createHmac("sha256",KEY_SECRET.value())
+ .update("pokesearch-email-recipient-v1:"+cleanEmail(email)).digest("hex");
+const campaignOffer=(config,now=Date.now())=>{
+ const c=config?.freeYearCampaign||{};
+ const startsAt=Number(c.startsAt||0),endsAt=Number(c.endsAt||0),
+       maxClaims=Number(c.maxClaims||0),claimCount=Number(c.claimCount||0);
+ return {enabled:c.enabled===true,active:c.enabled===true&&now>=startsAt&&
+         now<endsAt&&claimCount<maxClaims,
+    startsAt,endsAt,maxClaims,claimCount,remaining:Math.max(0,maxClaims-claimCount),
+    label:"FREE! 12 meses por tempo limitado"};
+};
 const grantYearFrom=ms=>{
  const date=new Date(ms);
  date.setUTCFullYear(date.getUTCFullYear()+1);
@@ -352,6 +365,26 @@ exports.adminPremiumSettings=onCall({region:REGION},async request=>{
  }else if(input.action==="promotion"){
    if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Promoção inválida.");
    await root().child("config").child("promotionEnabled").set(input.enabled);
+ }else if(input.action==="freeYearCampaign"){
+   const enabled=input.enabled===true;
+   if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Estado inválido.");
+   const campaignRef=root().child("config").child("freeYearCampaign");
+   if(!enabled){
+     await campaignRef.child("enabled").set(false);
+   }else{
+     const startsAt=Number(input.startsAt),endsAt=Number(input.endsAt);
+     const maxClaims=Number(input.maxClaims);
+     const now=Date.now();
+     if(!Number.isSafeInteger(startsAt)||!Number.isSafeInteger(endsAt)||
+        startsAt<now-60000||endsAt<=Math.max(startsAt,now)||
+        endsAt>now+366*86400000||
+        !Number.isSafeInteger(maxClaims)||maxClaims<1||maxClaims>10000)
+       throw new HttpsError("invalid-argument",
+         "Informe início, encerramento futuro e limite de 1 a 10.000 resgates.");
+     // A new campaign gets a new ID. It never reopens claims from an old campaign.
+     await campaignRef.set({id:crypto.randomUUID(),enabled:true,startsAt,endsAt,
+       maxClaims,claimCount:0,claimRefs:{},createdAt:now});
+   }
  }else if(input.action==="sales"){
    if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Valor inválido.");
    await root().child("config").child("salesEnabled").set(input.enabled);
@@ -380,7 +413,8 @@ exports.adminPremiumOverview=onCall({region:REGION},async request=>{
    salesEnabled:c.salesEnabled===true,paymentsLiveEnabled:c.paymentsLiveEnabled===true,
    appMaintenanceEnabled:m.enabled===true,appMaintenanceMessage:String(m.message||""),
    appVersionGlobalEnabled:av.globalEnabled!==false,appVersions:av.versions||{},
-   ...offer(c),durationOptions:ADMIN_DURATIONS};
+   ...offer(c),freeYearCampaign:campaignOffer(c),
+   durationOptions:ADMIN_DURATIONS};
 });
 
 
@@ -388,7 +422,8 @@ exports.adminPremiumOverview=onCall({region:REGION},async request=>{
 exports.getPremiumOffer=onCall({region:REGION},async request=>{
  requireUser(request);
  const cfg=(await root().child("config").get()).val()||{};
- return {...offer(cfg),salesEnabled:cfg.salesEnabled===true&&!await appMaintenance(),
+ return {...offer(cfg),freeYearCampaign:campaignOffer(cfg),
+   salesEnabled:cfg.salesEnabled===true&&!await appMaintenance(),
    serverNow:Date.now()};
 });
 
@@ -417,6 +452,11 @@ const validUid=uid=>/^[A-Za-z0-9_-]{5,128}$/.test(uid);
 exports.adminIssuePremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
  const actor=await requireAdmin(request),args=request.data||{};
  const duration=String(args.duration||"").trim(),targetUid=String(args.uid||"").trim();
+ const email=cleanEmail(args.recipientEmail||"");
+ if(email&&!validEmail(email))
+   throw new HttpsError("invalid-argument","E-mail Google inválido.");
+ if(email&&targetUid)
+   throw new HttpsError("invalid-argument","Escolha UID ou e-mail, não ambos.");
  if(!ADMIN_DURATIONS.includes(duration))
    throw new HttpsError("invalid-argument","Selecione 15 ou 30 dias, 1, 3, 6, 12 meses ou vitalícia.");
  if(targetUid&&!validUid(targetUid))
@@ -434,6 +474,8 @@ exports.adminIssuePremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async r
    Math.max(now,Number(oldEnt.expiresAt||0)):now;
  const expiry=periodExpiry(base,duration);
  await ref.set({kind:"manual",duration,uid:targetUid||null,createdBy:actor,vault:sealCode(plain),
+   ...(email?{recipientEmailHash:recipientHash(email),
+       recipientEmailHint:email.replace(/^(.{1,2}).*(@.*)$/,"$1***$2")}:{}),
    createdAt:now,revoked:false,...(targetUid?
    {claimedAt:now,...(expiry===null?{}:{expiresAt:expiry})}:{})});
  if(targetUid){
@@ -454,7 +496,7 @@ exports.adminIssuePremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async r
    }
  }
  return {licenseKey:plain,duration,lifetime:expiry===null,expiresAt:expiry,
-   assigned:!!targetUid,uid:targetUid||null,serverNow:Date.now()};
+   assigned:!!targetUid,restrictedToEmail:!!email,uid:targetUid||null,serverNow:Date.now()};
 });
 
 /** Read-only, admin-only state for a user-pasted license code.
@@ -517,7 +559,7 @@ exports.adminRevokePremiumKey=onCall({region:REGION},async request=>{
 /** Redeem user-held code once, except paid-code recovery which supports one transfer.
  * Manual keys do not expire before first use. Expiry begins at redemption.
  */
-exports.redeemPremiumKey=onCall({region:REGION},async request=>{
+exports.redeemPremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
  const uid=requireUser(request),code=String(request.data?.licenseKey||"").trim().toUpperCase();
  if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(code))
    throw new HttpsError("invalid-argument","Formato de chave inválido.");
@@ -526,6 +568,13 @@ exports.redeemPremiumKey=onCall({region:REGION},async request=>{
  if(!entry||entry.revoked===true||entry.suspended===true)
    throw new HttpsError("not-found","Chave inexistente, suspensa ou revogada.");
  if(entry.kind==="manual"){
+   if(entry.recipientEmailHash){
+     const profile=await getAuth().getUser(uid),account=cleanEmail(profile.email);
+     if(profile.emailVerified!==true||!validEmail(account)||
+        recipientHash(account)!==entry.recipientEmailHash)
+       throw new HttpsError("permission-denied",
+         "Esta chave foi reservada para outro e-mail Google verificado.");
+   }
    if(entry.uid&&entry.uid!==uid)
      throw new HttpsError("permission-denied","Esta chave já foi ativada em outra conta.");
    const before=(await root().child("entitlements").child(uid).get()).val()||{};
@@ -538,7 +587,9 @@ exports.redeemPremiumKey=onCall({region:REGION},async request=>{
    const now=Date.now(),start=Math.max(now,Number(before.expiresAt||0));
    const claimed=await keyRef.transaction(value=>{
      const current=value===null?entry:value;
-     if(!current||current.revoked===true||current.kind!=="manual"||
+     if(!current||current.revoked===true||current.suspended===true||
+        current.kind!=="manual"||
+        current.recipientEmailHash!==entry.recipientEmailHash||
         current.uid&&current.uid!==uid)return;
      if(current.uid===uid)return current;
      const expiry=periodExpiry(start,current.duration);
@@ -664,6 +715,7 @@ exports.adminListPremiumKeys=onCall({region:REGION},async request=>{
      record.duration==="lifetime"?"vitalícia":
      (expires&&expires<=Date.now()?"vencida":"ativa");
    return {id:hash,kind:String(record.kind||"desconhecido"),
+     recipientEmailHint:String(record.recipientEmailHint||""),
      duration:String(record.duration|| (record.kind==="paid"?"30d":"")),
      uid:typeof record.uid==="string"?record.uid:"",
      createdAt:Number(record.createdAt||0),claimedAt:Number(record.claimedAt||0),
@@ -802,4 +854,58 @@ exports.adminSetAppVersionAccess=onCall({region:REGION},async request=>{
    });
  }
  return {updated:true,enabled:data.enabled,serverNow:Date.now()};
+});
+
+
+/** One verified Google account, one free campaign claim. Server-owned period,
+ * counter, campaign ID and entitlement; never trust the Android clock/UID.
+ * Claim reservation is idempotent and retriable after partial network failures.
+ */
+exports.claimFreeYear=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
+ const uid=requireUser(request),code=Number(request.data?.versionCode);
+ if(!isValidCode(code)||!await currentPolicy(code)||await appMaintenance())
+   throw new HttpsError("failed-precondition","Versão não liberada ou manutenção ativa.");
+ const profile=await getAuth().getUser(uid);
+ if(profile.emailVerified!==true||!validEmail(cleanEmail(profile.email)))
+   throw new HttpsError("failed-precondition","Entre com uma conta Google de e-mail verificado.");
+ const entRef=root().child("entitlements").child(uid);
+ const before=(await entRef.get()).val()||{};
+ if(before.revoked===true||before.lifetime===true||await userEntitlement(uid))
+   throw new HttpsError("failed-precondition","A conta já possui Premium ativo ou está bloqueada.");
+ const campRef=root().child("config").child("freeYearCampaign");
+ const uidKey=sha("campaign-claim-uid:"+uid);
+ const now=Date.now();
+ const reservation=await campRef.transaction(old=>{
+   const c=old&&typeof old==="object"?old:null;
+   if(!c||c.enabled!==true||now<Number(c.startsAt||0)||
+      now>=Number(c.endsAt||0))return;
+   const refs=c.claimRefs&&typeof c.claimRefs==="object"?c.claimRefs:{};
+   if(refs[uidKey]===c.id)return c;
+   if(Number(c.claimCount||0)>=Number(c.maxClaims||0))return;
+   return {...c,claimRefs:{...refs,[uidKey]:c.id},claimCount:Number(c.claimCount||0)+1};
+ },undefined,false);
+ if(!reservation.committed)
+   throw new HttpsError("failed-precondition","Campanha encerrada, indisponível ou esgotada.");
+ const campaign=reservation.snapshot.val();
+ const plain=formatKey("free12:"+campaign.id+":"+uid),hash=sha(plain),keyRef=root().child("keys").child(hash);
+ const expiry=periodExpiry(now,"12m");
+ // The same claimant always receives the same key within this campaign.
+ const k=await keyRef.transaction(old=>old||{
+   kind:"manual",source:"freeYearCampaign",campaignId:campaign.id,duration:"12m",
+   uid,createdAt:now,claimedAt:now,expiresAt:expiry,revoked:false,vault:sealCode(plain)
+ },undefined,false);
+ const key=k.snapshot.val();
+ if(!key||key.uid!==uid||key.revoked===true)
+   throw new HttpsError("failed-precondition","Não foi possível criar a licença promocional.");
+ const granted=await entRef.transaction(old=>{
+   const v=old&&typeof old==="object"?old:{};
+   if(v.revoked===true||v.lifetime===true)return;
+   if(v.currentKeyHash===hash)return v;
+   if(v.currentKeyHash&&Number(v.expiresAt||0)>now)return;
+   return {...v,kind:"manual",lifetime:false,currentKeyHash:hash,
+     expiresAt:Number(key.expiresAt)};
+ },undefined,false);
+ if(!granted.committed||granted.snapshot.val()?.currentKeyHash!==hash)
+   throw new HttpsError("failed-precondition","Conta já possui licença ou não foi possível concluir.");
+ return {activated:true,duration:"12m",expiresAt:Number(key.expiresAt),serverNow:Date.now()};
 });
