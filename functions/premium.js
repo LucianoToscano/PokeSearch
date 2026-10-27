@@ -66,6 +66,54 @@ const offer=config=>{
      Math.round(100*(regular-promotional)/regular):0,
    priceCents:promotionEnabled?promotional:regular};
 };
+
+/** Affiliate voucher: 10% or 50% off the currently active sale price.
+ * A code is optional; client totals and commissions are NEVER trusted.
+ * Owner pays partners manually after actual settlement.
+ */
+const AFFILIATE_COMMISSION_PCT=50;
+const couponPattern=/^[A-Z0-9][A-Z0-9_-]{2,22}[A-Z0-9]$/;
+const normaliseCoupon=value=>String(value||"").trim().toUpperCase();
+const validCoupon=value=>couponPattern.test(value);
+async function couponQuote(rawCode,basePrice,uid){
+ const code=normaliseCoupon(rawCode);
+ if(!code)return {priceCents:basePrice,coupon:null};
+ if(!validCoupon(code))throw new HttpsError("invalid-argument","Cupom inválido.");
+ const coupon=(await root().child("coupons").child(code).get()).val();
+ if(!coupon||coupon.enabled!==true||
+    (coupon.expiresAt&&Date.now()>=Number(coupon.expiresAt)))
+   throw new HttpsError("failed-precondition","Cupom inexistente, desativado ou vencido.");
+ if(coupon.partnerUid&&coupon.partnerUid===uid)
+   throw new HttpsError("failed-precondition","Não é permitido usar seu próprio cupom.");
+ const discount=Number(coupon.discountPercent);
+ if(![10,50].includes(discount))throw new HttpsError("failed-precondition","Cupom inválido.");
+ const discounted=basePrice-Math.round(basePrice*discount/100);
+ if(discounted<100)throw new HttpsError("failed-precondition",
+   "O valor com desconto é menor que o mínimo aceito para Pix.");
+ return {priceCents:discounted,coupon:{
+   code,partnerName:String(coupon.partnerName||"").slice(0,80),
+   partnerUid:String(coupon.partnerUid||""),discountPercent:discount,
+   commissionPercent:AFFILIATE_COMMISSION_PCT,
+   commissionCents:Math.round(discounted*AFFILIATE_COMMISSION_PCT/100),
+   basePriceCents:basePrice
+ }};
+}
+async function affiliateEarned(ref){
+ await ref.child("referral").transaction(value=>{
+   if(!value||!value.code||!Number.isSafeInteger(value.commissionCents))return;
+   if(["pending","paid","reversed","reversed_paid"].includes(value.status))return value;
+   return {...value,status:"pending",approvedAt:Date.now()};
+ },undefined,false);
+}
+async function affiliateReversed(ref){
+ await ref.child("referral").transaction(value=>{
+   if(!value)return;
+   if(value.status==="paid")return {...value,status:"reversed_paid",reversedAt:Date.now()};
+   if(value.status==="reversed"||value.status==="reversed_paid")return value;
+   return {...value,status:"reversed",reversedAt:Date.now()};
+ },undefined,false);
+}
+
 const cleanEmail=value=>String(value||"").trim().toLowerCase();
 const validEmail=email=>/^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,30}$/.test(email)&&email.length<=254;
 const recipientHash=email=>crypto.createHmac("sha256",KEY_SECRET.value())
@@ -161,6 +209,7 @@ async function settleOrderPayment(mpOrderId){
    transaction.status_detail==="partially_refunded";
  if(reversed){
    await ref.update({status:marketOrder.status});
+   await affiliateReversed(ref);
    const hash=sha(formatKey(orderId)),keyRef=root().child("keys").child(hash);
    const key=(await keyRef.get()).val();
    if(key)await keyRef.update({revoked:true,revokedAt:Date.now()});
@@ -193,6 +242,7 @@ async function settleOrderPayment(mpOrderId){
    value||{kind:"paid",orderId,uid:stored.uid,expiresAt:ent.expiresAt,
      createdAt:now,transferred:false},undefined,false);
  await ref.update({status:"approved",licensed:true,approvedAt:now});
+ await affiliateEarned(ref);
  return true;
 }
 
@@ -216,6 +266,7 @@ async function settlePixPayment(mpPaymentId,expectedLiveMode=null){
     Math.round(Number(payment.transaction_amount)*100)!==stored.priceCents)return false;
  if(["refunded","charged_back"].includes(payment.status)){
    await ref.update({status:payment.status});
+   await affiliateReversed(ref);
    const hash=sha(formatKey(orderId)),keyRef=root().child("keys").child(hash);
    const key=(await keyRef.get()).val();
    if(key)await keyRef.update({revoked:true,revokedAt:Date.now()});
@@ -246,6 +297,7 @@ async function settlePixPayment(mpPaymentId,expectedLiveMode=null){
    v||{kind:"paid",orderId,uid:stored.uid,expiresAt:ent.expiresAt,createdAt:now,transferred:false},
    undefined,false);
  await ref.update({status:"approved",licensed:true,approvedAt:now});
+ await affiliateEarned(ref);
  return true;
 }
 async function settlePayment(id,expectedLiveMode=null){
@@ -286,7 +338,9 @@ exports.createPremiumPix=onCall({region:REGION,
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>120)
    throw new HttpsError("invalid-argument","Informe um e-mail válido.");
  const config=(await root().child("config").get()).val()||{};
- const price=offer(config).priceCents;
+ const basePriceCents=offer(config).priceCents;
+ const quoted=await couponQuote(request.data?.couponCode,basePriceCents,uid);
+ const price=quoted.priceCents;
  // Separate test/production tokens: production cannot be selected by the app.
  const liveMode=config.paymentsLiveEnabled===true;
  if(liveMode&&(!MP_TOKEN.value()||!MP_LIVE_WEBHOOK_SECRET.value()))
@@ -302,7 +356,9 @@ exports.createPremiumPix=onCall({region:REGION,
    throw new HttpsError("resource-exhausted","Aguarde um minuto antes de gerar outro Pix.");
  const orderId=crypto.randomUUID();
  const ref=root().child("orders").child(orderId);
- await ref.set({uid,priceCents:price,versionCode:code,status:"creating",createdAt,liveMode});
+ await ref.set({uid,priceCents:price,basePriceCents,
+   ...(quoted.coupon?{referral:{...quoted.coupon,status:"unearned"}}:{}),
+   versionCode:code,status:"creating",createdAt,liveMode});
  try{
    const amount=(price/100).toFixed(2);
    const mpPayment=await requestPayment("/v1/payments",liveMode,{
@@ -318,7 +374,9 @@ exports.createPremiumPix=onCall({region:REGION,
      throw new Error("Mercado Pago payment has no Pix");
    await ref.update({mpPaymentId,processor:"payments",status:"pending"});
    await root().child("paymentIndex").child(mpPaymentId).set({orderId});
-   return {orderId,pixCode:qr,priceCents:price,status:"pending"};
+   return {orderId,pixCode:qr,priceCents:price,
+     basePriceCents,discountPercent:quoted.coupon?.discountPercent||0,
+     couponCode:quoted.coupon?.code||"",status:"pending"};
  }catch(error){
    await ref.update({status:"error"});
    throw new HttpsError("unavailable","Não foi possível gerar o Pix. Tente novamente.");
@@ -362,6 +420,101 @@ exports.adminDistributionControl=onCall({region:REGION},async request=>{
  if(data.scope==="global")await policy().child("globalEnabled").set(data.enabled);
  else await policy().child("versions").child(String(code)).set(data.enabled);
  return {updated:true,serverNow:Date.now()};
+});
+
+
+/** The admin can create and update coupons. A voucher only alters future quotes.
+ * Existing paid-order snapshots and commission figures are immutable.
+ */
+exports.adminSavePartnerCoupon=onCall({region:REGION},async request=>{
+ await requireAdmin(request);
+ const input=request.data||{},code=normaliseCoupon(input.code);
+ const partnerName=String(input.partnerName||"").trim();
+ const partnerUid=String(input.partnerUid||"").trim();
+ const discountPercent=Number(input.discountPercent);
+ const expiresAt=Number(input.expiresAt||0);
+ if(!validCoupon(code)||partnerName.length<2||partnerName.length>80||
+    ![10,50].includes(discountPercent)||
+    (partnerUid&&!validUid(partnerUid))||
+    !Number.isSafeInteger(expiresAt)||expiresAt<0||
+    (expiresAt!==0&&expiresAt<Date.now()))
+   throw new HttpsError("invalid-argument","Revise nome, código, desconto e prazo do cupom.");
+ const ref=root().child("coupons").child(code);
+ const tx=await ref.transaction(old=>{
+   if(old&&old.partnerUid&&old.partnerUid!==partnerUid)return;
+   return {code,partnerName,partnerUid,discountPercent,expiresAt,
+     enabled:input.enabled!==false,
+     createdAt:Number(old?.createdAt||Date.now()),updatedAt:Date.now()};
+ },undefined,false);
+ if(!tx.committed)throw new HttpsError("failed-precondition",
+   "Este cupom já pertence a outro parceiro. Use um código novo.");
+ return {saved:true,code};
+});
+exports.adminListPartnerCoupons=onCall({region:REGION},async request=>{
+ await requireAdmin(request);
+ const cursor=normaliseCoupon(request.data?.cursor||"");
+ if(cursor&&!validCoupon(cursor))throw new HttpsError("invalid-argument","Marcador inválido.");
+ const limit=30;
+ let q=root().child("coupons").orderByKey();
+ if(cursor)q=q.startAt(cursor);
+ const entries=Object.entries((await q.limitToFirst(limit+2).get()).val()||{})
+   .sort(([a],[b])=>a.localeCompare(b)).filter(([id])=>id!==cursor);
+ return {items:entries.slice(0,limit).map(([code,v])=>({
+   code,partnerName:v.partnerName,partnerUid:v.partnerUid||"",
+   enabled:v.enabled===true,discountPercent:v.discountPercent,
+   expiresAt:Number(v.expiresAt||0)})),
+   nextCursor:entries.length>limit?entries[limit-1][0]:""};
+});
+/** All commissions are derived from verified Pix orders, never clicks or QR generation. */
+exports.adminListPartnerCommissions=onCall({region:REGION},async request=>{
+ await requireAdmin(request);
+ const cursor=String(request.data?.cursor||"");
+ if(cursor&&!/^[0-9a-f-]{36}$/.test(cursor))
+   throw new HttpsError("invalid-argument","Marcador inválido.");
+ const limit=50;
+ let q=root().child("orders").orderByKey();
+ if(cursor)q=q.startAt(cursor);
+ const entries=Object.entries((await q.limitToFirst(limit+2).get()).val()||{})
+   .sort(([a],[b])=>a.localeCompare(b)).filter(([id])=>id!==cursor);
+ const rows=entries.slice(0,limit);
+ return {items:rows.filter(([,v])=>v?.referral?.code).map(([orderId,v])=>({
+   orderId,code:v.referral.code,
+   partnerName:v.referral.partnerName,
+   paidPriceCents:Number(v.priceCents||0),
+   commissionCents:Number(v.referral.commissionCents||0),
+   commissionStatus:String(v.referral.status||"unearned"),
+   orderStatus:String(v.status||""),
+   liveMode:v.liveMode===true,
+   createdAt:Number(v.createdAt||0),approvedAt:Number(v.approvedAt||0),
+   partnerPaymentReference:String(v.referral.paymentReference||""),
+   partnerPaidAt:Number(v.referral.partnerPaidAt||0)
+ })),
+ nextCursor:entries.length>limit?rows[rows.length-1][0]:""};
+});
+/** Manual accounting only. No automatic transfer, split, or third-party wallet.
+ * Explicit confirmation + external payment reference required for settlement.
+ */
+exports.adminMarkPartnerCommissionPaid=onCall({region:REGION},async request=>{
+ const actor=await requireAdmin(request),data=request.data||{};
+ const orderId=String(data.orderId||""),reference=String(data.reference||"").trim();
+ if(!/^[0-9a-f-]{36}$/.test(orderId)||reference.length<6||reference.length>140||
+    !/^[\p{L}\p{N} .:_\/#-]+$/u.test(reference)||
+    data.confirm!=="REGISTRAR REPASSE")
+   throw new HttpsError("invalid-argument","Informe a referência real do repasse e confirme.");
+ const orderRef=root().child("orders").child(orderId);
+ const order=(await orderRef.get()).val();
+ if(!order||order.status!=="approved"||order.licensed!==true||
+    order.liveMode!==true||order.referral?.status!=="pending")
+   throw new HttpsError("failed-precondition",
+     "Comissão não elegível. Verifique aprovação, modo real e estornos.");
+ const tx=await orderRef.transaction(v=>{
+   if(!v||v.status!=="approved"||v.licensed!==true||v.liveMode!==true||
+      v.referral?.status!=="pending")return;
+   return {...v,referral:{...v.referral,status:"paid",
+     partnerPaidAt:Date.now(),partnerPaidBy:actor,paymentReference:reference}};
+ },undefined,false);
+ if(!tx.committed)throw new HttpsError("aborted","Comissão já liquidada ou alterada.");
+ return {recorded:true,orderId,commissionCents:tx.snapshot.val().referral.commissionCents};
 });
 
 exports.adminPremiumSettings=onCall({region:REGION},async request=>{
@@ -450,7 +603,12 @@ exports.adminPremiumOverview=onCall({region:REGION},async request=>{
 exports.getPremiumOffer=onCall({region:REGION},async request=>{
  requireUser(request);
  const cfg=(await root().child("config").get()).val()||{};
- return {...offer(cfg),freeYearCampaign:campaignOffer(cfg),
+ const base=offer(cfg);
+ const quoted=await couponQuote(request.data?.couponCode,base.priceCents,request.auth?.uid||"");
+ return {...base,priceCents:quoted.priceCents,
+   coupon:quoted.coupon?{code:quoted.coupon.code,partnerName:quoted.coupon.partnerName,
+     discountPercent:quoted.coupon.discountPercent}:null,
+   freeYearCampaign:campaignOffer(cfg),
    salesEnabled:cfg.salesEnabled===true&&!await appMaintenance(),
    serverNow:Date.now()};
 });
@@ -992,7 +1150,7 @@ exports.claimFreeYear=onCall({region:REGION,secrets:[KEY_SECRET]},async request=
  * Payments credentials and Firebase service accounts are never exported.
  */
 const BACKUP_COLLECTIONS=Object.freeze([
- "keys","entitlements","orders","orderIndex","paymentIndex","paymentThrottle"
+ "keys","entitlements","orders","orderIndex","paymentIndex","paymentThrottle","coupons"
 ]);
 const BACKUP_SINGLETONS=Object.freeze(["config","distribution","appControl"]);
 const BACKUP_ALL=Object.freeze([...BACKUP_COLLECTIONS,...BACKUP_SINGLETONS]);
