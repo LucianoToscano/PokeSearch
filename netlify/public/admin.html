@@ -17,6 +17,9 @@
     h1{font-size:1.6rem;letter-spacing:-.04em;margin:.5rem 0}
     p{color:#b8c1d1;line-height:1.55}
     .panel{background:#151d2b;border:1px solid #2d3a4b;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 8px 18px #0002}
+    .quick-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+    .quick-nav a{padding:12px 8px;text-align:center;border:1px solid #3e5b78;
+      border-radius:12px;text-decoration:none;color:#d7eaff;background:#20334c;font-size:.85rem;font-weight:700}
     .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .label{color:#aab7c7;font-size:.88rem}
     .value{font-weight:650;text-align:right}
@@ -59,6 +62,12 @@
   </section>
   <section class="panel" id="admin" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Administração verificada</h2>
+    <nav class="quick-nav" aria-label="Acesso rápido à administração">
+      <a href="#keys-panel">🔑 Licenças ativas</a>
+      <a href="#pricing-settings">💰 Valores e promoção</a>
+      <a href="#free-campaign-panel">🎁 Campanha FREE</a>
+      <a href="#app-version-panel">🛡️ APKs e manutenção</a>
+    </nav>
     <div class="row"><span class="label">Conta</span><span class="value" id="account"></span></div>
     <hr class="sep">
     <div class="row"><span class="label">Licenciamento Premium da homologação</span><span class="value" id="distribution">—</span></div>
@@ -76,6 +85,7 @@
     </div>
     <small>A ativação é independente. Um Pix real só poderá ser criado após configurar os dois segredos de produção, habilitar o modo real e habilitar vendas. A conta Google continua obrigatória para a Pokébola 2.</small>
     <hr class="sep">
+    <h3 id="pricing-settings" style="font-size:1rem">Valores e promoções</h3>
     <div class="row"><span class="label">Preço normal</span><span class="value" id="regular">—</span></div>
     <hr class="sep">
     <div class="row"><span class="label">Preço promocional</span><span class="value" id="promo">—</span></div>
