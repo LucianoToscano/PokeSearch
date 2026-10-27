@@ -206,8 +206,8 @@ async function run(){
   const adminDisconnect=await premium.adminDisconnectPremiumDevice({
     auth:{uid:"owner"},data:{uid:"buyer"}});
   assert.equal(adminDisconnect.disconnected,true);
-  const blocked=await premium.checkDistributionAccess(owner);
-  assert.equal(blocked.premium,false,"admin disconnected phone must not auto-reclaim");
+  const adminBlocked=await premium.checkDistributionAccess(owner);
+  assert.equal(adminBlocked.premium,false,"admin disconnected phone must not auto-reclaim");
   const again=await premium.transferPremiumDevice({auth:{uid:"buyer"},
     data:{versionCode:54328,deviceId:DEVICE_A,confirm:true}});
   assert.equal(again.transferred,true);
