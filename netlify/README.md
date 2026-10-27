@@ -1,6 +1,6 @@
 # PokeSearch Premium — Netlify Free e Firebase Spark
 
-Status em 27/10/2026: QA; sem deploy da API; sem cobranças reais.
+Status em 27/10/2026: QA implantado no Netlify; Firebase Admin em diagnóstico; sem cobranças reais.
 
 ## Destinos confirmados
 - Netlify: https://app.netlify.com/projects/pokesearch-premium-api
@@ -8,11 +8,11 @@ Status em 27/10/2026: QA; sem deploy da API; sem cobranças reais.
 - GitHub: LucianoToscano/PokeSearch, branch feature/premium-pix-remote-control-qa-20261027, PR #85 DRAFT.
 - NÃO usar o Firebase pokesearch-qa nem substituir google-services.json do aplicativo.
 
-## Próxima etapa: conectar o GitHub ao Netlify
-Abra o projeto Netlify e conecte o repositório LucianoToscano/PokeSearch.
-Selecione a branch feature/premium-pix-remote-control-qa-20261027 enquanto o sistema estiver em homologação.
-O repositório contém netlify.toml, package.json e netlify/functions/premium.mjs.
-Não há ainda deploy ativo e o endereço da API não responde até concluir o primeiro deploy.
+## Estado atual do deploy e diagnóstico
+GitHub já conectado à branch feature/premium-pix-remote-control-qa-20261027; Netlify publica netlify/functions/premium.mjs.
+GET /api/premium/health testa Firebase Auth e RTDB de forma somente leitura; `firebase: connected` confirma ambos, `firebase: unavailable` indica falha.
+Após alterar qualquer variável de ambiente, é indispensável publicar novo deploy; não inferir que o teste mudou até esse deploy.
+A verificação de saúde não habilita pagamentos e não concede licenças.
 
 ## Variáveis Netlify (Environment variables, escopo Functions)
 - POKE_FIREBASE_PROJECT_ID = pokesearch-lt — já configurado, valor público.
