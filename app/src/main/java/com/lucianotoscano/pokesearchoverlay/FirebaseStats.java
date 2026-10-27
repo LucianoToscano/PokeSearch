@@ -21,6 +21,17 @@ final class FirebaseStats {
     private static WeakReference<TextView> onlineLabel=new WeakReference<>(null);
     private static WeakReference<TextView> installLabel=new WeakReference<>(null);
     private FirebaseStats(){}
+    static synchronized FirebaseApp getNamedApp(Context context){
+        try{return FirebaseApp.getInstance("PokeSearchStats");}
+        catch(IllegalStateException ignored){}
+        FirebaseOptions options=new FirebaseOptions.Builder()
+            .setApplicationId("1:1007816617051:android:bc055b81b3bdfaceaa637e")
+            .setApiKey("AIzaSyDxCp0f4c_xrrlJ6EGGg9HKPQPIiutCQkM")
+            .setProjectId("pokesearch-lt").setDatabaseUrl(DB_URL).build();
+        FirebaseApp app=FirebaseApp.initializeApp(context.getApplicationContext(),options,"PokeSearchStats");
+        if(app==null)throw new IllegalStateException("PokeSearch Firebase unavailable");
+        return app;
+    }
     static synchronized void bind(Context context,TextView onlineText,TextView installsText){
         onlineLabel=new WeakReference<>(onlineText);
         installLabel=new WeakReference<>(installsText);
@@ -42,16 +53,7 @@ final class FirebaseStats {
         if(initialized)return;
         initialized=true;
         try {
-            FirebaseOptions options=new FirebaseOptions.Builder()
-                .setApplicationId("1:1007816617051:android:bc055b81b3bdfaceaa637e")
-                .setApiKey("AIzaSyDxCp0f4c_xrrlJ6EGGg9HKPQPIiutCQkM")
-                .setProjectId("pokesearch-lt").setDatabaseUrl(DB_URL).build();
-            FirebaseApp app;
-            try{app=FirebaseApp.getInstance("PokeSearchStats");}
-            catch(IllegalStateException notInitialized){
-                app=FirebaseApp.initializeApp(context.getApplicationContext(),options,"PokeSearchStats");
-            }
-            if(app==null)throw new IllegalStateException("Firebase Stats unavailable");
+            FirebaseApp app=getNamedApp(context);
             auth=FirebaseAuth.getInstance(app);
             db=FirebaseDatabase.getInstance(app,DB_URL);
             if(auth.getCurrentUser()!=null)attach(auth.getCurrentUser().getUid());
