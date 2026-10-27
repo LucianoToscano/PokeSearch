@@ -359,7 +359,13 @@ exports.adminDistributionControl=onCall({region:REGION},async request=>{
 exports.adminPremiumSettings=onCall({region:REGION},async request=>{
  await requireAdmin(request);
  const input=request.data||{};
- if(input.action==="price"||input.action==="regularPrice"||input.action==="promotionalPrice"){
+ if(input.action==="prices"){
+   const regular=Number(input.regularPriceCents),promotional=Number(input.promotionalPriceCents);
+   if(!Number.isSafeInteger(regular)||regular<100||regular>100000||
+      !Number.isSafeInteger(promotional)||promotional<100||promotional>regular)
+     throw new HttpsError("invalid-argument","Preços inválidos. A promoção não pode superar o preço normal.");
+   await root().child("config").update({regularPriceCents:regular,promotionalPriceCents:promotional});
+ }else if(input.action==="price"||input.action==="regularPrice"||input.action==="promotionalPrice"){
    const cents=Number(input.priceCents);
    if(!Number.isSafeInteger(cents)||cents<100||cents>100000)
      throw new HttpsError("invalid-argument","Preço inválido.");
