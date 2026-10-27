@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+
+### LT134 — Premium Google sobre base LT133, sem regressão (27/10/2026)
+
+- **Base real preservada:** LT133 / PR #92; branch LT134 `feature/lt134-google-premium-preserve-lt133-20261027`, PR #95 **Draft** para LT133, não main. QA `0.01.34 / 54339`; NÃO usar a LT125 antiga como atualização.
+- **Google Premium:** instância Firebase própria `PokeSearchPremiumIdentity`, Credential Manager, mesmo projeto `pokesearch-lt` e UID da conta do painel Deus Ivern. `PokeSearchStats` anônimo, admin Google do chat e login PoGoCoordinates preservados. `PremiumAccess` valida token/lease no servidor sem persistir privilégios; P1/P2 usam `OverlayService` compartilhado e flags somente em build QA protegido.
+- **Sprites/chat LT133 mantidos:** assets de 1025 base, 1025 shiny, 716 formas, 16 trajes; Halloween 2021 Pikachu/Piplup/Drifblim normais/Shiny; capturas compactas em duas linhas, rolagem e reações. Testes estáticos LT134 e suíte completa LT133 passaram.
+- **CI e APK QA:** [GitHub Actions SUCCESS #40509063977](https://github.com/LucianoToscano/PokeSearch/actions/runs/40509063977), [Artifact #12735304713](https://github.com/LucianoToscano/PokeSearch/actions/runs/40509063977/artifacts/12735304713), SOURCE_COMMIT `6084f354c9053d0e98be34b61af4958e5c2aa68d`. APK `PokeSearch-v0.01.34-LT134-Halloween-Chat-Gmail-Premium-QA.apk` **46.426.701 bytes**, SHA-256 `613c3cf77315b15074639b2c0cd317886f04d595822b316a03a161a637d7a8e9`. ZIP **43.772.922 bytes**, SHA-256 `a229f66d558f02392dbff90c29113ba0122f885cc5fa7f2e47e8229591981706`, CRC OK. Certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; SHA-1 `dd7bf665e1d47a257fc557b51cb5a57dfd13cb96`; v2 confirmado.
+- **Segurança:** build LT134 QA controlado usa Netlify Deus Ivern, pagamentos desativados; sem alteração nas Rules RTDB nem no site Netlify. Firebase `distribution/globalEnabled` e `versions/54339` continuam desabilitados por padrão. Assim **P1/P2 não funcionarão até que a versão QA seja liberada expressamente**; login Google na Home pode ser testado, mas instalação sobre aparelho principal não é recomendada sem plano de retorno. APKs normais mantêm controle OFF.
+- **Pendências:** teste Samsung real Gmail/Premium, P1/P2, login chat, costumes, filtros/notificações, revogação, recuperação após reinstalação; não marcar como homologação física. Seguir [doc LT134](POKESEARCH_LT134_PREMIUM_GMAIL_PRESERVE_LT133_20261027.md) e entrega GitHub primeiro (evitar `Library file not found`).
+
+
 ### LT133 — Halloween 2021 e chat de capturas compacto (27/10/2026)
 
 - Branch `feature/lt133-halloween-sprites-compact-chat-20261027` sobre LT132, PR [#92](https://github.com/LucianoToscano/PokeSearch/pull/92), **QA versionName 0.01.33 / versionCode 54338**, não mesclar main nem publicar release estável sem QA física.
