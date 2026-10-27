@@ -528,10 +528,14 @@ exports.adminPremiumSettings=onCall({region:REGION},async request=>{
  const input=request.data||{};
  if(input.action==="pricingPreset"){
    // Explicit owner action only. No automatic mutation to the live Firebase.
-   await root().child("config").update({
-     regularPriceCents:2000,promotionalPriceCents:1000,
-     promotionEnabled:true
-   });
+   await root().child("config").transaction(old=>{
+     const config=old&&typeof old==="object"?old:{};
+     const deadline=Number(config.promotionEndsAt||0);
+     return {...config,regularPriceCents:2000,promotionalPriceCents:1000,
+       promotionEnabled:true,
+       // Keep a genuinely future deadline; clear a previously expired one.
+       promotionEndsAt:deadline>Date.now()?deadline:0};
+   },undefined,false);
  }else if(input.action==="prices"){
    const regular=Number(input.regularPriceCents),promotional=Number(input.promotionalPriceCents);
    if(!Number.isSafeInteger(regular)||regular<100||regular>100000||
