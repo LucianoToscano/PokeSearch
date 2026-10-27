@@ -1,6 +1,22 @@
 # PokeSearch — distribuição controlada + Premium Pix automático
 Checkpoint: 27/10/2026. **Somente branch QA, não implantado em produção.**
 
+## Firebase de destino — confirmação do proprietário (27/10/2026)
+O proprietário optou expressamente por usar **o projeto Firebase já existente**
+`pokesearch-lt` para pagamentos, licenças, mural e métricas, visto que o app
+ainda não possui usuários significativos. O projeto descartável `pokesearch-qa`
+não será usado para implantar nem testar esta funcionalidade. **QA** continua sendo
+o nome da branch/etapa de homologação, não um projeto Firebase separado.
+
+- Firebase Auth e Realtime Database devem permanecer vinculados a `pokesearch-lt`.
+- Não instalar o `google-services.json` gerado anteriormente pelo `pokesearch-qa`.
+- As Functions e segredos devem ser configurados no `pokesearch-lt` apenas.
+- Validar plano Blaze, autorização do dono, regras e sem vendas reais (`salesEnabled`
+  e `paymentsLiveEnabled` desabilitados) durante testes.
+- Registrar/capturar um backup das regras e dados da RTDB antes de implantar.
+- A escolha de usar um único projeto NÃO autoriza mesclar o código de QA na main
+  nem iniciar pagamentos reais sem homologação da API Orders.
+
 ## Identidade e compatibilidade
 Base imutável: main LT124 no commit 65c9b4219744bad180e435faa23739e08e7d183f.
 Não altera as branches LT125/LT126, o applicationId, o fluxo PoGoCoordinates, cookies, modos GL/UL,
