@@ -1000,7 +1000,7 @@ function cardRoots(){
   if(!chosen||seen.has(chosen))continue;
   seen.add(chosen);
   cards.push({node:chosen,sourceIndex:cards.length});
-  if(cards.length===10)break;
+  if(cards.length===100)break; // Server-owned plan cap: Free 10, VIP 25/50/75/100.
  }
  return cards;
 }
