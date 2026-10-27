@@ -24,7 +24,8 @@ check("API and DOM both animate actual active Pokeball searches",()=>{
  assert.match(java,/searchPhase="searching";\s*status\(manual\?"API: busca manual/);
  assert.match(dock,/body\.dock-window\.search-active #gear \.capturePulse/);});
 check("offline sprite grace period and same detail interceptor",()=>{
- assert.match(dock,/if\(img\.complete&&good\(\)\)loaded\(\)/);assert.match(dock,/\},4500\);/);
+ assert.match(dock,/if\(img\.complete\)\{if\(good\(\)\)loaded\(\);else failed\(\);\}/);
+ assert.match(dock,/\},4500\);/);
  assert.match(java,/detailPanel\.setWebViewClient\(new WebViewClient\(\)/);
  assert.equal((java.match(/detailPanel\.setWebViewClient\(new WebViewClient\(\)/g)||[]).length,1);
  assert.match(java,/detailPanel\.setWebViewClient\(new WebViewClient\(\)\{[\s\S]*?shouldInterceptRequest[\s\S]*?onPageFinished/);
