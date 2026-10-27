@@ -130,7 +130,14 @@ exports.createPremiumPix=onCall({region:REGION,
  const price=Number(config.priceCents);
  if(config.salesEnabled!==true||!Number.isSafeInteger(price)||price<100||price>100000)
    throw new HttpsError("failed-precondition","Vendas desativadas ou preço não configurado.");
- const orderId=crypto.randomUUID(),createdAt=Date.now();
+ const createdAt=Date.now();
+ const throttle=await root().child("paymentThrottle").child(uid).transaction(value=>{
+   if(value&&Number(value.lastAt||0)>createdAt-60000)return;
+   return {lastAt:createdAt};
+ },undefined,false);
+ if(!throttle.committed)
+   throw new HttpsError("resource-exhausted","Aguarde um minuto antes de gerar outro Pix.");
+ const orderId=crypto.randomUUID();
  const ref=root().child("orders").child(orderId);
  await ref.set({uid,priceCents:price,versionCode:code,status:"creating",createdAt});
  try{
