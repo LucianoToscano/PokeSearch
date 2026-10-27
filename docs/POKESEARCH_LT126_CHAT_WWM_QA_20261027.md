@@ -37,3 +37,10 @@
 - Instalar QA 0.01.26/54331 por cima de LT124/125 preservando dados; confirmar versão no rodapé, assinatura e P1/P2 simultâneas.
 - Com Pokébolas independentes, verificar Drifblim #426, Pumpkaboo Average normal e Shiny, Pumpkaboo Small/Large/Super sem substituição, Noibat, trajes GOGGLES_2026/COPY_2019, carregamento local após limpeza de cache e sem rede.
 - Abrir Chat com dois dispositivos autenticados por Firebase distinto, primeiro após implantação de regras realmente confirmada; validar leitura em tempo real, envio, ordem, horário, reconexão e negação para usuário sem auth. Testar contadores sem confundir instalação com usuário ativo.
+
+### LT126 — Evidência final QA assinada (27/10/2026)
+- **GitHub Actions SUCCESS:** [#40443151567](https://github.com/LucianoToscano/PokeSearch/actions/runs/40443151567) e [artefato #12707272862](https://github.com/LucianoToscano/PokeSearch/actions/runs/40443151567/artifacts/12707272862). `SOURCE_COMMIT 17f9d0a0a7cc2a967f8fa0397dffcbdb24d42197`, versão `0.01.26 / 54331`, `applicationId com.lucianotoscano.pokesearch`.
+- **APK** `PokeSearch-v0.01.26-LT126-Chat-WWM-Sprites-QA.apk` 43.373.629 bytes; **SHA256** `8c688d661a51021841d6e74975f565f5f20c024a22f096625e9728d3e40e5b13`. Assinatura Android v2 válida, certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **APK auditado diretamente:** 1.025 imagens normais, 1.025 shiny, 716 variantes offline anteriores, 10 trajes já incorporados, 2 novas artes WatWowMap/wwm-uicons para Pumpkaboo Average (normal/shiny). **2.778/2.778 hashes SHA256 validados, zero faltas.** Cobertura nova de imagens +2 versus LT125 R2.
+- **Catálogo novo empacotado:** 1.025 espécies; 1.506 formas; 87 trajes; 1.025 rótulos de espécies PT-BR e 1.506 rótulos de formas PT-BR — o que NÃO significa imagens para todas as formas.
+- **Backend NO-GO:** nenhuma autenticação real dupla ou RTDB Rules em produção foram verificadas/implantadas, nenhum teste físico Samsung, contadores reais e chat online seguem pendentes. Workflow de correção de regras MANUAL preparado, não executado. PR #82 Draft empilhada na PR #80; main não mesclada, nenhuma Release oficial.
