@@ -29,6 +29,12 @@ final class PremiumAccess {
     private static long lastRequest=0L;
     private PremiumAccess(){}
     static boolean controlled(){return BuildConfig.CONTROLLED_DISTRIBUTION;}
+    static synchronized void invalidateLease(){
+        ++lastRequest; // A response started under an old account must not restore access.
+        globallyAllowed=false;
+        secondAllowed=false;
+        leaseElapsed=-1L;
+    }
     static synchronized boolean permitted(boolean secondary){
         if(!controlled())return true; // Normal, non-distribution app stays untouched.
         return leaseElapsed>=0&&SystemClock.elapsedRealtime()>=leaseElapsed&&
@@ -109,8 +115,15 @@ final class PremiumAccess {
     private static void call(Context context,String name,Map<String,Object> data,ResultCallback cb){
         final Context appContext=context.getApplicationContext();
         try{
-            com.google.firebase.FirebaseApp firebase=FirebaseStats.getNamedApp(appContext);
-            FirebaseAuth auth=FirebaseAuth.getInstance(firebase);
+            // Premium uses a different named FirebaseAuth instance; the Stats app
+            // remains anonymous so installs/online counts are not re-registered.
+            FirebaseAuth auth=PremiumGoogleLogin.auth(appContext);
+            boolean anonymousAllowed="checkDistributionAccess".equals(name)||
+                    "getPremiumOffer".equals(name);
+            if(!anonymousAllowed&&!PremiumGoogleLogin.isGoogleSignedIn(appContext)){
+                cb.done(new HashMap<>(),"Entre com sua conta Google para usar o Premium.");
+                return;
+            }
             if(auth.getCurrentUser()==null){
                 auth.signInAnonymously()
                     .addOnSuccessListener(x->invoke(auth,name,data,cb))
