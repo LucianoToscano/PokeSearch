@@ -51,7 +51,16 @@ const mocks={
  "firebase-functions/params":{defineSecret:name=>({value:()=>SECRET[name]})},
  "firebase-admin/database":{getDatabase:()=>({ref})},
  "firebase-admin/auth":{getAuth:()=>({getUser:async uid=>({
-   customClaims:uid==="owner"?{pokesearchAdmin:true}:{}
+   customClaims:uid==="owner"?{pokesearchAdmin:true}:{},
+   email:({
+     "recipientUser":"recipient@example.org",
+     "wrongRecipient":"wrong@example.org",
+     "campaignOne":"one@example.org",
+     "campaignTwo":"two@example.org",
+     "campaignThree":"three@example.org",
+     "campaignLifetime":"lifetime@example.org"
+   })[uid]||uid+"@example.org",
+   emailVerified:uid!=="unverifiedCampaign"
  })})},
  "firebase-admin/app":{getApps:()=>[{}],initializeApp:()=>{}}
 };
@@ -403,6 +412,93 @@ async function run(){
  await premium.adminSetAppVersionAccess({...adminLive,data:{scope:"global",enabled:true}});
  assert.equal((await premium.adminPremiumOverview(adminLive)).appVersionGlobalEnabled,true);
  console.log("PASS separate maintenance, no new payments, unchanged licenses, version and global APK controls");
+
+ // Manual license optional Google email restriction, without storing plaintext.
+ const reserved=await premium.adminIssuePremiumKey({
+   ...adminLive,data:{duration:"1m",recipientEmail:"Recipient@Example.org"}
+ });
+ assert.equal(reserved.assigned,false);
+ assert.equal(reserved.restrictedToEmail,true);
+ const reservedHash=crypto.createHash("sha256").update(reserved.licenseKey).digest("hex");
+ const storedReserved=read("premium/keys/"+reservedHash);
+ assert.ok(/^[a-f0-9]{64}$/.test(storedReserved.recipientEmailHash));
+ assert.equal(storedReserved.recipientEmailHint,"re***@example.org");
+ assert.equal(JSON.stringify(storedReserved).includes("recipient@example.org"),false);
+ let wrongDenied=false;
+ try{await premium.redeemPremiumKey({auth:{uid:"wrongRecipient"},data:{licenseKey:reserved.licenseKey}})}
+ catch(error){wrongDenied=error.code==="permission-denied";}
+ assert.equal(wrongDenied,true);
+ assert.equal(read("premium/keys/"+reservedHash).uid,null);
+ const redeemedReserved=await premium.redeemPremiumKey({
+   auth:{uid:"recipientUser"},data:{licenseKey:reserved.licenseKey}
+ });
+ assert.equal(redeemedReserved.activated,true);
+ assert.equal(read("premium/keys/"+reservedHash).uid,"recipientUser");
+ console.log("PASS manual license reserved for verified Google email, first redemption UID binding");
+
+ // Editable normal/promo prices are server owned and do not mutate prior payment.
+ await premium.adminPremiumSettings({...adminLive,data:{
+   action:"prices",regularPriceCents:1200,promotionalPriceCents:500
+ }});
+ let offer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
+ assert.equal(offer.priceCents,500);
+ await premium.adminPremiumSettings({...adminLive,data:{action:"promotion",enabled:false}});
+ offer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
+ assert.equal(offer.priceCents,1200);
+ await premium.adminPremiumSettings({...adminLive,data:{action:"promotion",enabled:true}});
+ offer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
+ assert.equal(offer.priceCents,500);
+ console.log("PASS editable prices and independent R$5 promotion enable/disable");
+
+ // FREE campaign is off by default and its duration is chosen by the owner.
+ let freeNotEnabled=false;
+ try{await premium.claimFreeYear({auth:{uid:"campaignOne"},data:{versionCode:54328}})}
+ catch(error){freeNotEnabled=error.code==="failed-precondition";}
+ assert.equal(freeNotEnabled,true);
+ const startsAt=Date.now(),endsAt=startsAt+3*86400000;
+ await premium.adminPremiumSettings({...adminLive,data:{
+   action:"freeYearCampaign",enabled:true,duration:"1m",startsAt,endsAt,maxClaims:2
+ }});
+ offer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
+ assert.equal(offer.freeYearCampaign.duration,"1m");
+ assert.equal(offer.freeYearCampaign.active,true);
+ const firstFree=await premium.claimFreeYear({auth:{uid:"campaignOne"},data:{versionCode:54328}});
+ assert.equal(firstFree.activated,true);
+ assert.equal(firstFree.duration,"1m");
+ const freeOneExpiry=read("premium/entitlements/campaignOne").expiresAt;
+ assert.ok(freeOneExpiry>Date.now()+27*86400000);
+ const secondFree=await premium.claimFreeYear({auth:{uid:"campaignTwo"},data:{versionCode:54328}});
+ assert.equal(secondFree.activated,true);
+ assert.equal((await premium.getPremiumOffer({auth:{uid:"campaignTwo"}})).freeYearCampaign.active,false);
+ let quotaEnforced=false;
+ try{await premium.claimFreeYear({auth:{uid:"campaignThree"},data:{versionCode:54328}})}
+ catch(error){quotaEnforced=error.code==="failed-precondition";}
+ assert.equal(quotaEnforced,true);
+ let repeated=false;
+ try{await premium.claimFreeYear({auth:{uid:"campaignOne"},data:{versionCode:54328}})}
+ catch(error){repeated=error.code==="failed-precondition";}
+ assert.equal(repeated,true);
+ assert.equal(read("premium/entitlements/campaignOne").expiresAt,freeOneExpiry);
+ await premium.adminPremiumSettings({...adminLive,data:{action:"freeYearCampaign",enabled:false}});
+ assert.equal((await premium.getPremiumOffer({auth:{uid:"campaignTwo"}})).freeYearCampaign.active,false);
+ // Existing gifts survive the campaign ending.
+ assert.equal((await premium.checkDistributionAccess({
+   auth:{uid:"campaignOne"},data:{versionCode:54328}
+ })).premium,true);
+ // Separate campaign with lifetime benefit, but no effect until manually enabled.
+ await premium.adminPremiumSettings({...adminLive,data:{
+   action:"freeYearCampaign",enabled:true,duration:"lifetime",
+   startsAt:Date.now(),endsAt:Date.now()+86400000,maxClaims:1
+ }});
+ const lifetimeFree=await premium.claimFreeYear({auth:{uid:"campaignLifetime"},
+   data:{versionCode:54328}});
+ assert.equal(lifetimeFree.activated,true);
+ assert.equal(lifetimeFree.lifetime,true);
+ assert.equal(read("premium/entitlements/campaignLifetime").lifetime,true);
+ assert.equal(read("premium/entitlements/campaignLifetime").expiresAt,null);
+ await premium.adminPremiumSettings({...adminLive,data:{action:"freeYearCampaign",enabled:false}});
+ console.log("PASS time-bounded quota FREE campaigns with 1m/lifetime, default off and safe shutdown");
+
  console.log("PASS production toggle and signed webhook mode separation"); 
  console.log("PASS premium server integration mock scenarios");
 }
