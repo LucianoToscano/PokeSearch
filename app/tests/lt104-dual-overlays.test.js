@@ -20,10 +20,11 @@ check("two separate native services and notifications, one application",()=>{
  assert.match(service,/private static volatile boolean secondaryRunning=false/);
  assert.match(service,/isSecondaryRunning\(\)/);
  assert.match(service,/getSharedPreferences\(isSecondaryOverlay\(\)\?"prefs_secondary":"prefs",0\)/);
- // Explicit primary prefs are allowed ONLY for intentionally global
- // Favorite profiles/diagnostics, never for per-Pokeball filters/state.
+ // Primary prefs are allowed for session-wide linked trainer identity,
+ // favorites and diagnostics; each Pokébola retains independent search presets.
  const globalReferences=(service.match(/getSharedPreferences\("prefs",0\)/g)||[]).length;
- assert.ok(globalReferences<=2);
+ assert.ok(globalReferences<=3);
+ assert.match(service,/session\.getString\("profileTrainerSelectedCode",""\)/);
  assert.match(service,/overlayPrefs\(\)\.edit\(\)/);
 });
 check("default independent filters are explicitly 100 and 0 percent in raw IV",()=>{
