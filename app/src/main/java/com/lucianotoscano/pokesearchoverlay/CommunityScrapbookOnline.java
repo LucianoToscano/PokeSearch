@@ -474,48 +474,58 @@ final class CommunityScrapbookOnline {
                 by.setTextColor(light?0xFF166C65:0xFF83DED1);
                 bubble.addView(by);
             }
-            if(structured!=null||legacy!=null){
-                String species=structured!=null?structured.name:legacy.name;
-                boolean shiny=structured!=null?structured.shiny:legacy.shiny;
+            String clock=android.text.format.DateFormat.format("HH:mm",timestamp).toString();
+            // Even old LT131 announcements are rendered with the same two-line
+            // layout. A capture is voluntary, never proof that it was caught.
+            CaptureChatCard.Card captureCard=structured;
+            if(captureCard==null&&legacy!=null)
+                captureCard=new CaptureChatCard.Card(legacy.name,legacy.shiny,legacy.iv,
+                    "","","","","","","",false);
+            if(captureCard!=null){
+                String species=captureCard.name;
+                boolean shiny=captureCard.shiny;
                 LinearLayout announcement=new LinearLayout(activity);
+                announcement.setOrientation(LinearLayout.HORIZONTAL);
                 announcement.setGravity(Gravity.CENTER_VERTICAL);
-                // Never substitute the base image for a costume/ambiguous form.
-                int dex=CaptureChatFormat.speciesDex(activity,species);
-                if(dex>0){
-                    try(java.io.InputStream in=VerifiedSpriteCache.bundledSprite(
-                        activity,dex,shiny)){
-                        if(in!=null){
-                            android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(in);
-                            if(bitmap!=null){
-                                ImageView sprite=new ImageView(activity);
-                                sprite.setImageBitmap(bitmap);
-                                sprite.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                                sprite.setContentDescription("Sprite "+
-                                    (shiny?"Shiny ":"")+"de "+species);
-                                LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(
-                                    dp(activity,38),dp(activity,38));
-                                lp.rightMargin=dp(activity,6);
-                                announcement.addView(sprite,lp);
-                            }
+                // Prefer exact pinned costume pixels. NEVER substitute base for
+                // an unrecognized costume or special form.
+                String costumeAsset=CaptureChatFormat.exactCostumeAsset(species,shiny);
+                int dex=costumeAsset.isEmpty()?
+                    CaptureChatFormat.speciesDex(activity,species):0;
+                try(java.io.InputStream in=!costumeAsset.isEmpty()?
+                    activity.getAssets().open(costumeAsset):
+                    VerifiedSpriteCache.bundledSprite(activity,dex,shiny)){
+                    if(in!=null){
+                        Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(in);
+                        if(bitmap!=null){
+                            ImageView sprite=new ImageView(activity);
+                            sprite.setImageBitmap(bitmap);
+                            sprite.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                            sprite.setContentDescription("Sprite "+
+                                (shiny?"Shiny ":"")+"de "+species);
+                            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(
+                                dp(activity,27),dp(activity,27));
+                            lp.rightMargin=dp(activity,2);
+                            announcement.addView(sprite,lp);
                         }
-                    }catch(java.io.IOException ignored){}
-                }
-                String headline=structured!=null?structured.headline(nickname):
-                    legacy.display(nickname);
-                TextView body=text(headline,13,false);
-                body.setTextColor(ink);body.setMaxLines(6);
+                    }
+                }catch(java.io.IOException ignored){}
+                String headline=captureCard.headline(nickname);
+                TextView body=text(headline,11,false);
+                body.setTextColor(ink);
+                body.setSingleLine(true);
+                body.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 announcement.addView(body,new LinearLayout.LayoutParams(0,-2,1));
                 bubble.addView(announcement);
-                if(structured!=null)addCaptureBadges(bubble,id,structured);
+                addCaptureBadges(bubble,captureCard,mine?clock+" ✓":clock);
             }else{
                 TextView body=text(message,13,false);
                 body.setTextColor(ink);body.setMaxLines(8);
                 bubble.addView(body);
+                TextView meta=text(mine?clock+"  ✓":clock,9,false);
+                meta.setGravity(Gravity.END);meta.setTextColor(secondary);
+                bubble.addView(meta);
             }
-            String time=android.text.format.DateFormat.format("HH:mm",timestamp).toString();
-            TextView meta=text(mine?time+"  ✓":time,9,false);
-            meta.setGravity(Gravity.END);meta.setTextColor(secondary);
-            bubble.addView(meta);
             if(!mine)bubble.setContentDescription("Mensagem de "+nickname);
             // Discreet single-choice emoji reactions; one value per Firebase UID.
             LinearLayout reactionsBar=new LinearLayout(activity);
@@ -554,8 +564,8 @@ final class CommunityScrapbookOnline {
         private void addBadge(LinearLayout bar,String path,String label,int tone){
             LinearLayout chip=new LinearLayout(activity);
             chip.setGravity(Gravity.CENTER_VERTICAL);
-            chip.setPadding(dp(activity,5),dp(activity,4),dp(activity,7),dp(activity,4));
-            chip.setBackground(bg(light?0xFFF0F3F4:0xFF304047,20,
+            chip.setPadding(dp(activity,3),dp(activity,2),dp(activity,3),dp(activity,2));
+            chip.setBackground(bg(light?0xFFF0F3F4:0xFF304047,12,
                                   light?0xFFD5DDE1:0xFF47565E));
             if(path!=null){
                 Bitmap icon=modeIcon(path);
@@ -564,60 +574,63 @@ final class CommunityScrapbookOnline {
                     view.setImageBitmap(icon);
                     view.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     LinearLayout.LayoutParams ilp=new LinearLayout.LayoutParams(
-                        dp(activity,16),dp(activity,16));
-                    ilp.rightMargin=dp(activity,4);chip.addView(view,ilp);
+                        dp(activity,12),dp(activity,12));
+                    ilp.rightMargin=dp(activity,2);
+                    chip.addView(view,ilp);
                 }
             }
-            TextView txt=text(label,10,true);
+            TextView txt=text(label,9,false);
+            txt.setSingleLine(true);
             txt.setTextColor(tone);
             chip.addView(txt);
             LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-2,-2);
-            cp.rightMargin=dp(activity,5);cp.bottomMargin=dp(activity,3);
+            cp.leftMargin=dp(activity,2);
             bar.addView(chip,cp);
         }
-        private void addCaptureBadges(LinearLayout bubble,String id,CaptureChatCard.Card c){
-            LinearLayout primary=new LinearLayout(activity);
-            primary.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
-            primary.setPadding(0,dp(activity,4),0,0);
-            String rare=c.rarity();
-            if(!rare.isEmpty()){
-                String icon="result-icons/"+rare.toLowerCase(java.util.Locale.ROOT)+".png";
-                addBadge(primary,icon,rare,ink);
+        private void addCaptureBadges(LinearLayout bubble,CaptureChatCard.Card c,
+                                      String time){
+            // EXACTLY ONE attribute row after the headline. Never add an
+            // expandable Details block, extra size/sex row or duplicate IV.
+            LinearLayout line=new LinearLayout(activity);
+            line.setOrientation(LinearLayout.HORIZONTAL);
+            line.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
+            line.setPadding(0,dp(activity,1),0,0);
+            android.widget.HorizontalScrollView horizontal=
+                new android.widget.HorizontalScrollView(activity);
+            horizontal.setFillViewport(true);
+            horizontal.setHorizontalScrollBarEnabled(false);
+            LinearLayout badges=new LinearLayout(activity);
+            badges.setOrientation(LinearLayout.HORIZONTAL);
+            badges.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
+            horizontal.addView(badges,new android.widget.HorizontalScrollView.LayoutParams(-2,-2));
+            String rarity=c.rarity();
+            if(!rarity.isEmpty()){
+                String icon="result-icons/"+rarity.toLowerCase(java.util.Locale.ROOT)+".png";
+                addBadge(badges,icon,rarity,ink);
             }else if(!c.iv.isEmpty()){
-                addBadge(primary,"result-icons/modes/StarIVRaw.png",c.iv,ink);
+                addBadge(badges,"result-icons/modes/StarIVRaw.png",c.iv,ink);
             }
             if(!c.rank.isEmpty()){
                 String icon="GL".equals(c.league)?
                     "result-icons/modes/StarGL.png":"result-icons/modes/StarUL.png";
-                addBadge(primary,icon,c.league+" #"+c.rank,ink);
+                addBadge(badges,icon,c.league+" #"+c.rank,ink);
             }
-            if(primary.getChildCount()>0)bubble.addView(primary);
-            LinearLayout secondaryRow=new LinearLayout(activity);
-            secondaryRow.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
-            if(!c.size.isEmpty())addBadge(secondaryRow,null,c.size,secondary);
-            // Keep sex strictly LAST after IV, GL/UL, rarity, and size.
+            if(!c.size.isEmpty())addBadge(badges,null,c.size,secondary);
+            // Sex remains the LAST attribute, immediately before the clock.
             if(!c.gender.isEmpty()){
                 int tint="♂".equals(c.gender)?0xFF65B8FF:
                          "♀".equals(c.gender)?0xFFFF8CB6:secondary;
-                addBadge(secondaryRow,null,c.gender,tint);
+                addBadge(badges,null,c.gender,tint);
             }
-            if(secondaryRow.getChildCount()>0)bubble.addView(secondaryRow);
-            if(c.hasDetails()){
-                TextView toggle=text(expandedCaptureDetails.contains(id)?
-                    "Detalhes ▴":"Detalhes ▾",10,false);
-                toggle.setTextColor(secondary);
-                toggle.setPadding(0,dp(activity,3),0,dp(activity,2));
-                bubble.addView(toggle);
-                if(expandedCaptureDetails.contains(id)){
-                    TextView detail=text(c.details(),10,false);
-                    detail.setTextColor(secondary);
-                    detail.setMaxLines(6);bubble.addView(detail);
-                }
-                toggle.setOnClickListener(v->{
-                    if(!expandedCaptureDetails.add(id))expandedCaptureDetails.remove(id);
-                    if(lastMessages!=null)renderMessages(lastMessages,false);
-                });
-            }
+            line.addView(horizontal,new LinearLayout.LayoutParams(0,-2,1));
+            TextView meta=text(time,9,false);
+            meta.setSingleLine(true);
+            meta.setTextColor(secondary);
+            meta.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
+            LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(-2,-2);
+            mp.leftMargin=dp(activity,3);
+            line.addView(meta,mp);
+            bubble.addView(line,new LinearLayout.LayoutParams(-1,-2));
         }
         private void react(String messageId,String emoji){
             if(destroyed||database==null||!authenticated||
