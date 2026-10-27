@@ -115,7 +115,7 @@ android {
         buildConfigField("boolean", "SCRAPBOOK_ONLINE_QA", "false")
         buildConfigField("String", "CHAT_GOOGLE_WEB_CLIENT_ID", "\"$chatGoogleClientId\"")
         buildConfigField("String", "PREMIUM_GOOGLE_WEB_CLIENT_ID", "\"$premiumGoogleWebClientId\"")
-        buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-ivern.netlify.app/api/premium\"")
+        buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-lcst.netlify.app/api/premium\"")
         buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "false")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
