@@ -19,7 +19,8 @@ check("Squawkabilly white/yellow/blue alternate names have correct shiny variety
  for(const [form,id] of [["White",10262],["Squawkabilly White",10262],["Yellow",10261],["Blue",10260]]){
   const art=sprites.resolve({number:"#931",name:"Squawkabilly",form,shiny:true,image:""});
   assert.equal(art.officialForm,true,form);
-  assert.ok(art.src.endsWith("/shiny/"+id+".png"),form);
+  assert.equal(art.src,"file:///android_asset/pokemon-sprites/forms/variety-"+id+"-shiny.png",form);
+  assert.ok(art.original.endsWith("/shiny/"+id+".png"),form);
  }
 });
 check("GO 2026 Goggles and 2019 Copy now use exact offline icons",()=>{
