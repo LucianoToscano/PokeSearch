@@ -8,7 +8,7 @@ const allowedActions=new Set([
  "redeemPremiumKey","adminDistributionControl","adminPremiumSettings",
  "adminRevokePremiumKey","adminPremiumKeyStatus",
  "adminPremiumOverview","adminIssuePremiumKey","adminAdjustPremiumExpiry",
- "adminListPremiumKeys","adminRevealPremiumKey","adminSetPremiumKeyEnabled",
+ "adminListPremiumKeys","adminLabelPremiumKey","adminRevealPremiumKey","adminSetPremiumKeyEnabled",
  "adminDeletePremiumKey",
  "adminChangePremiumKeyDuration","adminSetAppMaintenance","adminSetAppVersionAccess",
  "claimFreeYear","adminExportPremiumBackupPage","adminRestorePremiumBackup"
