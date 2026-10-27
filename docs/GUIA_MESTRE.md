@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+### LT130 — Reação ✨️ no Chat (27/10/2026)
+
+- PR [#89](https://github.com/LucianoToscano/PokeSearch/pull/89), Draft empilhada na LT129 PR #88, branch `feature/lt130-sparkle-reaction-20261027`; versão QA `0.01.30` / `54335`. Não mesclar/release oficial sem QA físico.
+- Quatro reações disponíveis para mensagens: ❤️ 👍 🎉 **✨️** (U+2728 + FE0F), todas compactas no mesmo conjunto, uma escolha por UID/mensagem; toque alterna/remove sem criar notificações.
+- Firebase: novo valor exato `✨️` permitido em `chat/reactions/$messageId/$uid`; gravação apenas pelo próprio UID, exige mensagem existente; nenhuma modificação em messages, avatars, admin, P1/P2 ou estatísticas.
+- Regras **atuais fornecidas pelo usuário** incluem `premium` e `distribution` bloqueados; template completo fiel em [POKESEARCH_LT130_FIREBASE_RULES_PRODUCAO_COMPLETAS.json](POKESEARCH_LT130_FIREBASE_RULES_PRODUCAO_COMPLETAS.json). **Não foi implantado** automaticamente; backup e colar no Console preservando as regras exatas de produção.
+- Teste Node `app/tests/lt130-sparkle-reaction.test.js`, CI Android v2/R8 assinado e conferência do artefato GitHub. Faltam teste real Samsung e Firebase RTDB em produção. A função discutida de edição em até 30 min permanece fora do escopo da LT130.
+
+
 
 ### LT129 — Capturas voluntárias e reações no Chat (27/10/2026)
 

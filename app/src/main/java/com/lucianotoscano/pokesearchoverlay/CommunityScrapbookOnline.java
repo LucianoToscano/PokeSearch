@@ -432,7 +432,7 @@ final class CommunityScrapbookOnline {
             reactionsBar.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
             reactionsBar.setPadding(0,dp(activity,2),0,0);
             DataSnapshot reactions=lastReactions==null?null:lastReactions.child(id);
-            for(String emoji:new String[]{"❤️","👍","🎉"}){
+            for(String emoji:new String[]{"❤️","👍","🎉","✨️"}){
                 int total=0;boolean chosen=false;
                 if(reactions!=null)for(DataSnapshot vote:reactions.getChildren()){
                     String selected=vote.getValue(String.class);
@@ -444,17 +444,18 @@ final class CommunityScrapbookOnline {
                 final String chosenReaction=emoji;
                 TextView choice=text(emoji+(total>0?" "+total:""),10,chosen);
                 choice.setTextColor(chosen?(light?0xFF0C7662:0xFF8DECD5):secondary);
-                choice.setPadding(dp(activity,6),dp(activity,3),dp(activity,6),dp(activity,3));
+                choice.setGravity(Gravity.CENTER);
+                choice.setPadding(dp(activity,3),dp(activity,3),dp(activity,3),dp(activity,3));
                 choice.setContentDescription("Reagir com "+emoji+", "+total+" reações");
                 choice.setOnClickListener(v->react(id,chosenReaction));
-                reactionsBar.addView(choice);
+                reactionsBar.addView(choice,new LinearLayout.LayoutParams(0,-2,1));
             }
             bubble.addView(reactionsBar);
         }
         private void react(String messageId,String emoji){
             if(destroyed||database==null||!authenticated||
                currentUid.isEmpty()||!messageId.matches("[A-Za-z0-9_-]{12,180}"))return;
-            if(!("❤️".equals(emoji)||"👍".equals(emoji)||"🎉".equals(emoji)))return;
+            if(!("❤️".equals(emoji)||"👍".equals(emoji)||"🎉".equals(emoji)||"✨️".equals(emoji)))return;
             String prior=null;
             if(lastReactions!=null){
                 prior=lastReactions.child(messageId).child(currentUid).getValue(String.class);

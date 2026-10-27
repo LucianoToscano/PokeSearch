@@ -40,7 +40,7 @@
       "$messageId": {
         "$uid": {
           ".write": "auth != null && auth.uid === $uid && root.child('chat/messages').child($messageId).exists()",
-          ".validate": "newData.isString() && (newData.val() === '❤️' || newData.val() === '👍' || newData.val() === '🎉')"
+          ".validate": "newData.isString() && (newData.val() === '❤️' || newData.val() === '👍' || newData.val() === '🎉' || newData.val() === '✨️')"
         }
       }
     }
