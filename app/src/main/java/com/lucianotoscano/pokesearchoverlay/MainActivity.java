@@ -338,6 +338,11 @@ public class MainActivity extends Activity {
             item.setOnClickListener(v->{
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
+            if(which==1)item.setOnLongClickListener(v->{
+                // QA LT134: a long press opens Google Premium without changing P1/P2.
+                PremiumPurchaseDialog.show(this,()->refreshHomeOverlay());
+                return true;
+            });
         }
         LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(54));
         dualLp.leftMargin=d(4);dualLp.rightMargin=d(4);
@@ -345,6 +350,15 @@ public class MainActivity extends Activity {
         dualOverlayRow.setVisibility(View.VISIBLE);
         // Insert after header, preserving top toolbar space.
         screen.addView(dualOverlayRow,dualLp);
+        // QA-only Gmail entry. Both Pokeballs remain active as in LT133.
+        TextView premiumGoogleShortcut=homeText("Google Premium · entrar / minha conta",11,
+            homeLightMode?Color.rgb(43,81,99):Color.rgb(154,219,239),true);
+        premiumGoogleShortcut.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        premiumGoogleShortcut.setPadding(d(8),0,d(11),d(3));
+        premiumGoogleShortcut.setContentDescription("Entrar ou sair da conta Google Premium");
+        premiumGoogleShortcut.setOnClickListener(v->
+            PremiumPurchaseDialog.show(this,()->refreshHomeOverlay()));
+        screen.addView(premiumGoogleShortcut,new LinearLayout.LayoutParams(-1,d(23)));
 
         // HOME-02: icon only at top left; compact actions on the right.
         ImageView brand=new ImageView(this);
