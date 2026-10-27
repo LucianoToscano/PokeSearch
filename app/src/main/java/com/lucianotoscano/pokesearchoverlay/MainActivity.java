@@ -587,7 +587,14 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams chooseLp=new LinearLayout.LayoutParams(d(96),d(33));
         trainerHeader.addView(trainerSelectButton,chooseLp);
         trainerSelectButton.setVisibility(View.GONE);
-        trainerSelectButton.setOnClickListener(v->showTrainerSelector());
+        trainerSelectButton.setOnClickListener(v->{
+            int count=0;
+            try{count=new JSONArray(getSharedPreferences("prefs",0)
+                .getString("profileTrainerList","[]")).length();}
+            catch(Exception ignored){}
+            if(count>1)showTrainerSelector();
+            else openLoginDialog(false,"manage");
+        });
         trainerPanel.addView(trainerHeader,sectionLp);
 
         LinearLayout trainerRow=new LinearLayout(this);
@@ -1604,8 +1611,8 @@ public class MainActivity extends Activity {
             int profiles=0;
             try{profiles=new JSONArray(prefs.getString("profileTrainerList","[]")).length();}
             catch(org.json.JSONException ignored){}
-            trainerSelectButton.setVisibility(linked&&profiles>1?View.VISIBLE:View.GONE);
-            trainerSelectButton.setText(profiles>1?"Escolher ("+profiles+")":"Escolher");
+            trainerSelectButton.setVisibility(logged?View.VISIBLE:View.GONE);
+            trainerSelectButton.setText(profiles>1?"Escolher ("+profiles+")":"Perfis");
         }
         if(linked&&trainerCode!=null)
             trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
@@ -1797,7 +1804,8 @@ public class MainActivity extends Activity {
     }
     private void captureOfficialProfile(WebView view,int generation){
         if(view!=website||loginDialog==null||!loginDialog.isShowing()||
-           !loginAutoReturnQueued||!profileCaptureInProgress)return;
+           !("manage".equals(loginPurpose)||loginAutoReturnQueued)||
+           !profileCaptureInProgress)return;
         Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
         String host=current.getHost();
         if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
@@ -1913,7 +1921,8 @@ public class MainActivity extends Activity {
             }
             profileCaptureInProgress=false;
             refreshSessionSummary();
-            if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
+            if(!"manage".equals(loginPurpose)&&
+               loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
         });
     }
     // Site controls may hydrate after onPageFinished. Retry briefly instead
@@ -1959,7 +1968,7 @@ public class MainActivity extends Activity {
         if(loginDialog!=null&&loginDialog.isShowing())return;
         loginPurpose="manage".equals(purpose)?"manage":"login";
         loginStartedForShiny=shinyRequest;
-        profileCaptureInProgress=false;
+        profileCaptureInProgress="manage".equals(loginPurpose);
         profileDiscoveryAttempted=false;
         if(shinyRequest)preferredLoginProvider="";
         observedLoginProvider="";
@@ -2010,8 +2019,11 @@ public class MainActivity extends Activity {
                     return;
                 }
                 if("manage".equals(loginPurpose)){
-                    // Profile management is an intentional official-site view.
+                    // A pre-existing signed-in session can refresh all linked
+                    // trainers without forcing the user to log out and back in.
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    if("/profile".equals(Uri.parse(url).getPath()))
+                        view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                     return;
                 }
                 checkLoginSession(view,14,generation);
