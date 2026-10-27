@@ -132,14 +132,27 @@ final class PremiumGoogleLogin {
     }
 
     static void signOut(Activity activity,Runnable done){
+        // Local FirebaseAuth sign-out is synchronous and authoritative.
+        // ClearCredentialState is only cleanup and may hang on some devices:
+        // always deliver the completion callback within a bounded interval.
         auth(activity).signOut();
         PremiumAccess.invalidateLease();
-        // Clear Credential Manager provider state after explicit sign-out.
-        CredentialManager.create(activity).clearCredentialStateAsync(
+        java.util.concurrent.atomic.AtomicBoolean completed=
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+        android.os.Handler main=new android.os.Handler(android.os.Looper.getMainLooper());
+        Runnable finish=()->{
+            if(completed.compareAndSet(false,true))done.run();
+        };
+        main.postDelayed(finish,1200L);
+        try{
+            CredentialManager.create(activity).clearCredentialStateAsync(
                 new ClearCredentialStateRequest(),null,activity.getMainExecutor(),
                 new CredentialManagerCallback<Void,ClearCredentialException>(){
-                    @Override public void onResult(Void ignored){done.run();}
-                    @Override public void onError(ClearCredentialException error){done.run();}
+                    @Override public void onResult(Void ignored){main.post(finish);}
+                    @Override public void onError(ClearCredentialException error){main.post(finish);}
                 });
+        }catch(RuntimeException failure){
+            main.post(finish);
+        }
     }
 }
