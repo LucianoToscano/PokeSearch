@@ -4,7 +4,7 @@ on:
     branches: [fix/lt126-chat-catalog-sprites-20261026]
     paths:
       - '.github/workflows/lt126-chat-wwm-sprites-signed-qa.yml'
-      - 'app/scripts/build_sprite_bundle.py'
+      - 'app/scripts/**'
       - 'app/scripts/sprite-sha256.lock.json'
       - 'firebase-realtime.rules.json'
       - 'functions/**'
