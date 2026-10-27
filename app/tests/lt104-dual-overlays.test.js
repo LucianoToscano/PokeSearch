@@ -20,10 +20,12 @@ check("two separate native services and notifications, one application",()=>{
  assert.match(service,/private static volatile boolean secondaryRunning=false/);
  assert.match(service,/isSecondaryRunning\(\)/);
  assert.match(service,/getSharedPreferences\(isSecondaryOverlay\(\)\?"prefs_secondary":"prefs",0\)/);
- // Explicit primary prefs are allowed ONLY for intentionally global
- // Favorite profiles/diagnostics, never for per-Pokeball filters/state.
+ // Primary preferences are intentional only for shared favorites,
+ // diagnostics and the selected official PoGoCoordinates trainer. Both P1
+ // and P2 must use the *same* trainer; their own filters remain separate.
  const globalReferences=(service.match(/getSharedPreferences\("prefs",0\)/g)||[]).length;
- assert.ok(globalReferences<=2);
+ assert.ok(globalReferences<=4);
+ assert.ok(service.includes('config.put("shinyAccount",selected)'));
  assert.match(service,/overlayPrefs\(\)\.edit\(\)/);
 });
 check("default independent filters are explicitly 100 and 0 percent in raw IV",()=>{
