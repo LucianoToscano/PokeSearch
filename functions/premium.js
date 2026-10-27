@@ -86,15 +86,18 @@ async function couponQuote(rawCode,basePrice,uid){
  if(coupon.partnerUid&&coupon.partnerUid===uid)
    throw new HttpsError("failed-precondition","Não é permitido usar seu próprio cupom.");
  const discount=Number(coupon.discountPercent);
- if(![10,25,50].includes(discount))throw new HttpsError("failed-precondition","Cupom inválido.");
+ const commissionPercent=Number(coupon.commissionPercent??AFFILIATE_COMMISSION_PCT);
+ if(![10,25,50].includes(discount)||
+    !Number.isSafeInteger(commissionPercent)||commissionPercent<0||commissionPercent>100)
+   throw new HttpsError("failed-precondition","Cupom inválido.");
  const discounted=basePrice-Math.round(basePrice*discount/100);
  if(discounted<100)throw new HttpsError("failed-precondition",
    "O valor com desconto é menor que o mínimo aceito para Pix.");
  return {priceCents:discounted,coupon:{
    code,partnerName:String(coupon.partnerName||"").slice(0,80),
    partnerUid:String(coupon.partnerUid||""),discountPercent:discount,
-   commissionPercent:AFFILIATE_COMMISSION_PCT,
-   commissionCents:Math.round(discounted*AFFILIATE_COMMISSION_PCT/100),
+   commissionPercent,
+   commissionCents:Math.round(discounted*commissionPercent/100),
    basePriceCents:basePrice
  }};
 }
@@ -432,9 +435,11 @@ exports.adminSavePartnerCoupon=onCall({region:REGION},async request=>{
  const partnerName=String(input.partnerName||"").trim();
  const partnerUid=String(input.partnerUid||"").trim();
  const discountPercent=Number(input.discountPercent);
+ const commissionPercent=Number(input.commissionPercent??AFFILIATE_COMMISSION_PCT);
  const expiresAt=Number(input.expiresAt||0);
  if(!validCoupon(code)||partnerName.length<2||partnerName.length>80||
     ![10,25,50].includes(discountPercent)||
+    !Number.isSafeInteger(commissionPercent)||commissionPercent<0||commissionPercent>100||
     (partnerUid&&!validUid(partnerUid))||
     !Number.isSafeInteger(expiresAt)||expiresAt<0||
     (expiresAt!==0&&expiresAt<Date.now()))
@@ -442,7 +447,7 @@ exports.adminSavePartnerCoupon=onCall({region:REGION},async request=>{
  const ref=root().child("coupons").child(code);
  const tx=await ref.transaction(old=>{
    if(old&&old.partnerUid&&old.partnerUid!==partnerUid)return;
-   return {code,partnerName,partnerUid,discountPercent,expiresAt,
+   return {code,partnerName,partnerUid,discountPercent,commissionPercent,expiresAt,
      enabled:input.enabled!==false,
      createdAt:Number(old?.createdAt||Date.now()),updatedAt:Date.now()};
  },undefined,false);
@@ -462,6 +467,7 @@ exports.adminListPartnerCoupons=onCall({region:REGION},async request=>{
  return {items:entries.slice(0,limit).map(([code,v])=>({
    code,partnerName:v.partnerName,partnerUid:v.partnerUid||"",
    enabled:v.enabled===true,discountPercent:v.discountPercent,
+   commissionPercent:Number(v.commissionPercent??AFFILIATE_COMMISSION_PCT),
    expiresAt:Number(v.expiresAt||0)})),
    nextCursor:entries.length>limit?entries[limit-1][0]:""};
 });
