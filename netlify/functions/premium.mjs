@@ -53,8 +53,12 @@ export default async function handler(req,context){
        auth.listUsers(1),
        getDatabase().ref("distribution/globalEnabled").get()
      ]);
+     // Expose only a readiness flag; never return or log the secret itself.
+     const licenseSigningReady=/^[0-9a-f]{64}$/i.test(process.env.POKE_PREMIUM_KEY_SECRET||"");
      return response({service:"PokeSearch Premium",status:"setup",
-       firebase:"connected",livePayments:false});
+       firebase:"connected",
+       licenseSigning:licenseSigningReady?"ready":"unconfigured",
+       livePayments:false});
    }catch(error){
      console.error("PokeSearch Firebase health check failed:",error?.message||"unknown");
      return response({service:"PokeSearch Premium",status:"setup",
