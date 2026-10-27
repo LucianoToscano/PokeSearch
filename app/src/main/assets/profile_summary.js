@@ -47,19 +47,26 @@
  const section=accounts[0]?accounts[0].s:"";
  const explicitZero=/Pokemon GO accounts\s*0\s*\/\s*\d+/i.test(section)||
    /Pokemon GO accounts.*?\bLink my account\b/i.test(section);
- const trainerCards=nodes.map(e=>text(e)).filter(t=>t.length<1300&&
-   /\bTrainer code\s*[\d\s]{12,24}/i.test(t)).sort((a,b)=>a.length-b.length);
- let parsed=null;
+ // Official public visible profile can contain 1..N linked trainers.
+ // Deduplicate nested React card text by the official 12-digit code, never
+ // invent accounts from unrelated page text or stored cookies.
+ const trainerCards=nodes.map(e=>text(e)).filter(t=>t.length<1800&&
+   /\bTrainer code\s*[\d\s]{12,24}/i.test(t))
+   .sort((a,b)=>a.length-b.length);
+ const trainers=[],seenTrainers=new Set();
+ const pattern=/(?:^|\s)([A-Za-z][A-Za-z0-9_.-]{2,39})\s+(Mystic|Valor|Instinct)\s*[·•-]\s*Level\s*(\d{1,2})\s+Trainer\s*code\s*([\d ]{12,22})\b/gi;
  for(const card of trainerCards){
-  // A name + team + level + numeric code must all belong to one bounded card.
-  const m=card.match(/(?:^|\s)([A-Za-z][A-Za-z0-9_.-]{2,39})\s+(Mystic|Valor|Instinct)\s*[·•-]\s*Level\s*(\d{1,2})\s+Trainer\s*code\s*([\d ]{12,22})\b/i);
-  if(m){
-   const code=m[4].replace(/\D/g,"");
-   if(/^\d{12}$/.test(code)&&+m[3]>=1&&+m[3]<=80){
-    parsed={name:m[1],team:m[2],level:m[3],code};break;
-   }
+  pattern.lastIndex=0;let match;
+  while((match=pattern.exec(card))!==null){
+   const code=match[4].replace(/\D/g,""),level=Number(match[3]);
+   if(!/^\d{12}$/.test(code)||level<1||level>80||seenTrainers.has(code))continue;
+   seenTrainers.add(code);
+   trainers.push({name:match[1],team:match[2],level:String(level),code});
+   if(trainers.length>=10)break;
   }
+  if(trainers.length>=10)break;
  }
+ const parsed=trainers[0]||null;
  const trainerState=parsed?"linked":explicitZero?"unlinked":"unknown";
  // Only use a provider picture actually rendered on the official profile.
  // Exclude team/GO images, do not read cookies or OAuth user metadata.
@@ -120,6 +127,7 @@
   }
  }
  return JSON.stringify({ok:true,page:"profile",displayName,provider,trainerState,
+   trainers,trainerCount:trainers.length,
    trainerName:parsed?parsed.name:"",trainerCode:parsed?parsed.code:"",
    team:parsed?parsed.team:"",level:parsed?parsed.level:"",avatarUrl});
 })()
