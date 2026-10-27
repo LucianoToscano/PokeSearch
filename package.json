@@ -9,6 +9,7 @@
     "test:premium": "node app/tests/premium-controlled-distribution.test.js && node functions/tests/premium-webhook.test.js"
   },
   "dependencies": {
-    "firebase-admin": "^13.0.0"
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.3.0"
   }
 }
