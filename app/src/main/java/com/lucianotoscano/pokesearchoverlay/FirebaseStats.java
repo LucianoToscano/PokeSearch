@@ -23,6 +23,12 @@ final class FirebaseStats {
     private static WeakReference<TextView> onlineLabel=new WeakReference<>(null);
     private static WeakReference<TextView> installLabel=new WeakReference<>(null);
     private FirebaseStats(){}
+    // Chat and counters MUST share the same named Firebase app and anonymous session.
+    // Chat initialization may precede Home counters on a cold process start.
+    static synchronized FirebaseApp chatApp(Context context){
+        init(context.getApplicationContext());
+        return FirebaseApp.getInstance("PokeSearchStats");
+    }
     static synchronized void bind(Context context,TextView onlineText,TextView installsText){
         onlineLabel=new WeakReference<>(onlineText);
         installLabel=new WeakReference<>(installsText);
