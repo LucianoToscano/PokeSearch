@@ -17,6 +17,7 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.UserInfo;
 import android.text.InputFilter;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -92,6 +93,7 @@ final class CommunityScrapbookOnline {
         private EditText input;
         private Button send;
         private boolean destroyed=false,sending=false,authenticated=false,chatReadable=false;
+        private boolean hasRenderedMessages=false;
         private String currentUid="";
         private long lastLocalSend=0L;
         Controller(Activity activity,boolean light){
@@ -148,7 +150,35 @@ final class CommunityScrapbookOnline {
             header.addView(chatMenu,new LinearLayout.LayoutParams(dp(activity,38),dp(activity,40)));
             timeline=new ScrollView(activity);
             timeline.setFillViewport(true);
-            timeline.setVerticalScrollBarEnabled(false);
+            timeline.setNestedScrollingEnabled(true);
+            timeline.setVerticalScrollBarEnabled(true);
+            timeline.setSmoothScrollingEnabled(true);
+            // LT132: the Home is itself a ScrollView. Allow the timeline to
+            // consume a drag only while it can scroll in that direction;
+            // at either edge, return the gesture to the outer Home.
+            timeline.setOnTouchListener(new View.OnTouchListener(){
+                private float priorY;
+                @Override public boolean onTouch(View v,MotionEvent event){
+                    switch(event.getActionMasked()){
+                        case MotionEvent.ACTION_DOWN:
+                            priorY=event.getY();
+                            v.getParent().requestDisallowInterceptTouchEvent(true);
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            float diff=event.getY()-priorY;
+                            priorY=event.getY();
+                            boolean canScroll=diff>0?timeline.canScrollVertically(-1):
+                                diff<0?timeline.canScrollVertically(1):true;
+                            v.getParent().requestDisallowInterceptTouchEvent(canScroll);
+                            break;
+                        case MotionEvent.ACTION_UP:
+                        case MotionEvent.ACTION_CANCEL:
+                            v.getParent().requestDisallowInterceptTouchEvent(false);
+                            break;
+                    }
+                    return false; // Keep native fling, long-press and reactions.
+                }
+            });
             timeline.setBackground(bg(light?0xFFE9F0ED:0xFF122C2E,12,
                                       light?0xFFD2E1DB:0xFF29504A));
             LinearLayout.LayoutParams tlp=new LinearLayout.LayoutParams(-1,dp(activity,265));
@@ -318,11 +348,13 @@ final class CommunityScrapbookOnline {
             messagesListener=messagesQuery.addValueEventListener(new ValueEventListener(){
                 @Override public void onDataChange(DataSnapshot snapshot){
                     if(destroyed)return;
+                    boolean scrollToLatest=!hasRenderedMessages||timelineIsNearBottom();
                     lastMessages=snapshot;
                     chatReadable=true;
                     setStatus("● Conversa ao vivo");
                     refreshSend();
-                    renderMessages(snapshot,true);
+                    renderMessages(snapshot,scrollToLatest);
+                    hasRenderedMessages=true;
                 }
                 @Override public void onCancelled(DatabaseError error){
                     if(destroyed)return;
@@ -344,7 +376,7 @@ final class CommunityScrapbookOnline {
                 messagesQuery.removeEventListener(messagesListener);
                 messagesQuery=null;messagesListener=null;
             }
-            authenticated=false;chatReadable=false;refreshSend();
+            authenticated=false;chatReadable=false;hasRenderedMessages=false;refreshSend();
             setStatus("Reconectando…");
             connect();
         }
@@ -357,8 +389,14 @@ final class CommunityScrapbookOnline {
             empty.setPadding(0,dp(activity,52),0,dp(activity,35));
             bubbles.addView(empty,new LinearLayout.LayoutParams(-1,-2));
         }
+        private boolean timelineIsNearBottom(){
+            if(timeline==null||bubbles==null)return true;
+            return timeline.getScrollY()+timeline.getHeight()>=
+                bubbles.getHeight()-dp(activity,42);
+        }
         private void renderMessages(DataSnapshot snapshot,boolean scrollToBottom){
             if(bubbles==null||destroyed)return;
+            final int previousScrollY=timeline==null?0:timeline.getScrollY();
             bubbles.removeAllViews();
             int shown=0;
             for(DataSnapshot entry:snapshot.getChildren()){
@@ -379,8 +417,11 @@ final class CommunityScrapbookOnline {
                 shown++;
             }
             if(shown==0)showEmpty("Ainda não há mensagens.\nSeja o primeiro a conversar!");
-            else if(scrollToBottom)timeline.post(()->{
-                if(!destroyed)timeline.fullScroll(View.FOCUS_DOWN);
+            else timeline.post(()->{
+                if(destroyed)return;
+                if(scrollToBottom)timeline.fullScroll(View.FOCUS_DOWN);
+                else timeline.scrollTo(0,Math.min(previousScrollY,
+                    Math.max(0,bubbles.getHeight()-timeline.getHeight())));
             });
         }
         private void addBubble(String id,boolean mine,String authorUid,String nickname,
