@@ -6,7 +6,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "test:premium": "node app/tests/premium-controlled-distribution.test.js && node functions/tests/premium-webhook.test.js"
+    "test:premium": "node app/tests/premium-controlled-distribution.test.js && node functions/tests/premium-webhook.test.js && node netlify/tests/premium-hosting.test.cjs"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",
