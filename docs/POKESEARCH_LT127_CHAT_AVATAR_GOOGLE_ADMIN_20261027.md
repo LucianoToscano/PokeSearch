@@ -27,3 +27,12 @@ O `google-services.json` atual do projeto `pokesearch-lt` inspecionado **não in
 Testes automatizados criados em `app/tests/lt127-chat-avatar-google-admin.test.js`: regras fail-closed, token verificado, isolamento de apps Firebase, tamanho JPEG, botão de galeria e operações de moderação. Necessário ainda build Android protegido e teste físico com dois usuários e OAuth Google configurado. Não considerar admin *operacional* em produção antes de publicar rules e comprovar autenticação Firebase real.
 
 **Governança:** branch separada baseada na PR #83, main preservada. QA no GitHub Actions; não publicar release oficial nem mesclar automaticamente. Fonte PokeSearch Java+Firebase existente; nenhum scraper ou outra fonte externa envolvida.
+
+## Certificado da QA (comprovação independente de GitHub Actions)
+
+A assinatura da primeira QA LT127 informa:
+- SHA-256 do certificado Android: `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`;
+- **SHA-1 do certificado Android: `dd7bf665e1d47a257fc557b51cb5a57dfd13cb96`** (para registro da credencial OAuth Android no Google Cloud/Firebase);
+- APK Android Signature Scheme v2 validado. Não enviar nem publicar o arquivo de keystore.
+
+**Limitação explícita:** na build atual, caso `POKE_CHAT_GOOGLE_WEB_CLIENT_ID` não exista nas secrets do GitHub Actions, o login de administrador exibe instrução de configuração e permanece indisponível; o chat comum continua normal. Mesmo com secret, é necessário ativar Google Auth e implantar as regras RTDB de chat mescladas com o banco atual. A leitura da Home PoGoCoordinates jamais concede admin por mera igualdade do e-mail apresentado.
