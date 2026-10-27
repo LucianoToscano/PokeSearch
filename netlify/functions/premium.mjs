@@ -7,7 +7,7 @@ const allowedActions=new Set([
  "adminRevokePremiumKey","adminPremiumKeyStatus",
  "adminPremiumOverview","adminIssuePremiumKey","adminAdjustPremiumExpiry",
  "adminListPremiumKeys","adminRevealPremiumKey","adminSetPremiumKeyEnabled",
- "adminChangePremiumKeyDuration","adminSetAppMaintenance"
+ "adminChangePremiumKeyDuration","adminSetAppMaintenance","adminSetAppVersionAccess"
 ]);
 const httpStatus={
  unauthenticated:401,"permission-denied":403,"invalid-argument":400,
@@ -72,11 +72,20 @@ export default async function handler(req,context){
    try{
      initialize();
      const {getDatabase}=require("firebase-admin/database");
-     const snap=await getDatabase().ref("appControl/maintenance").get();
-     const state=snap.val()||{};
+     const versionCode=Number(new URL(req.url).searchParams.get("versionCode"));
+     if(!Number.isInteger(versionCode)||versionCode<1||versionCode>2100000000)
+       return response({error:"Invalid versionCode"},400);
+     const [maintenance,access]=await Promise.all([
+       getDatabase().ref("appControl/maintenance").get(),
+       getDatabase().ref("appControl/versionAccess").get()
+     ]);
+     const state=maintenance.val()||{},versions=access.val()||{};
+     const version=versions.versions?.[String(versionCode)]||{};
      return response({maintenance:state.enabled===true,
        message:state.enabled===true?String(state.message||"PokeSearch em manutenção.").slice(0,180):"",
-       updatedAt:Number(state.updatedAt||0)});
+       globalEnabled:versions.globalEnabled!==false,versionEnabled:version.enabled!==false,
+       allowed:state.enabled!==true&&versions.globalEnabled!==false&&version.enabled!==false,
+       updatedAt:Math.max(Number(state.updatedAt||0),Number(version.updatedAt||0))});
    }catch(error){
      console.error("PokeSearch maintenance lookup failed:",error?.message||"unknown");
      return response({error:"Estado de manutenção indisponível."},503);
