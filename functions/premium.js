@@ -342,7 +342,11 @@ exports.redeemPremiumKey=onCall({region:REGION},async request=>{
    const before=(await root().child("entitlements").child(uid).get()).val()||{};
    if(before.revoked===true)
      throw new HttpsError("failed-precondition","Sua conta está bloqueada pelo administrador.");
-   const now=Date.now(),start=now;
+   if(before.lifetime===true&&entry.duration!=="lifetime")
+     throw new HttpsError("failed-precondition","Esta conta já tem uma licença vitalícia.");
+   if(entry.uid===uid&&before.currentKeyHash!==hash)
+     throw new HttpsError("failed-precondition","Esta chave foi substituída por outra licença.");
+   const now=Date.now(),start=Math.max(now,Number(before.expiresAt||0));
    const claimed=await keyRef.transaction(value=>{
      if(!value||value.revoked===true||value.kind!=="manual"||
         value.uid&&value.uid!==uid)return;
