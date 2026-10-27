@@ -103,7 +103,7 @@ check("explicit normal/default form recovers missing image; special forms do NOT
  assert.equal(jsSprite.resolve({...starter,form:"Normal",costume_id:3}).src,"");
 });
 check("general notification IDs never overwrite the other active service",()=>{
- assert.ok(service.includes('isSecondaryOverlay()?12075:12074'));
+ assert.match(service,/NEXT_GENERAL_ALERT_ID\.updateAndGet/);
  assert.ok(service.includes('isSecondaryOverlay()?12077:12076'));
  assert.match(watched,/NEXT_ALERT_ID/);
 });
