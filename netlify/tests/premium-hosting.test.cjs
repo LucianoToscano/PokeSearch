@@ -83,7 +83,7 @@ const checks=[
  ["Key deletion is owner-only, revokes current entitlement and preserves transaction history",
    logic.includes("exports.adminDeletePremiumKey=onCall")&&
    logic.includes('confirmation!=="EXCLUIR"')&&
-   logic.includes("revoked:true,archived:true")&&
+   logic.includes('["premium/keys/"+id+"/revoked"]:true')&&
    logic.includes("ent.currentKeyHash!==id")&&
    http.includes('"adminDeletePremiumKey"')&&
    adminHtml.includes('id="license-list-view"')&&
@@ -102,7 +102,7 @@ const checks=[
  ["Admin shows replaced keys as read-only and keeps deletion as an archive",
    logic.includes('status:!item.archived&&!item.revoked&&!current?"substituída"')&&
    logic.includes('editable:current&&!item.revoked&&!item.archived')&&
-   logic.includes('await ref.update({revoked:true,archived:true')&&
+   logic.includes('await getDatabase().ref().update(change)')&&
    adminHtml.includes('item.status.toUpperCase()')],
  ["Partner coupons and manual commissions require server validation and provider-approved Pix",
    logic.includes("exports.adminSavePartnerCoupon=onCall")&&
