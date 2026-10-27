@@ -19,7 +19,7 @@ Três prints: card Drifblim #426 e Pumpkaboo #710 forma Average sem sprite, vár
 
 **WatWowMap/pogo-data-api**, HEAD observado `42b315f317ca8cee8e178249328eab5173e5ca70` (26/10/2026), readme publicado:
 - JSON `data/v1/pokemon.json`: 1.025 registros com `pokedexId,pokemonName,defaultFormId,forms`.
-- `data/v1/forms.json`: 1.478 registros com `formId,proto,formName`.
+- `data/v1/forms.json`: 1.506 registros com `formId,proto,formName`.
 - `data/v1/costumes.json`: 87 registros com `id,proto`. Metadados *não* são sprites nem eventos.
 - Exemplo confirmado: Drifblim 426 default `1748 DRIFBLIM_NORMAL`; Pumpkaboo 710 default `2641 PUMPKABOO_SMALL`; `2642 PUMPKABOO_AVERAGE`, `2643 PUMPKABOO_LARGE`, `2644 PUMPKABOO_SUPER`. A forma Average exibida no print é `2642`.
 - Novo script `app/scripts/import_wwm_catalog.py` lê dados JSON estáticos diretamente do commit fixado, valida IDs únicos e cruzamento com espécies e formas, e gera `pokemon-sprites/catalog_wwm_verified.json` pequeno. Nenhuma chamada de catálogo ocorre durante pesquisas nem substitui a API PoGoCoordinates.
