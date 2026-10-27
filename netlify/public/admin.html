@@ -74,6 +74,19 @@
       <small>Guarde este código. Ele é exibido apenas nesta sessão e não deve ser compartilhado em prints. O resgate será testado separadamente.</small>
     </div>
   </section>
+  <section class="panel" id="key-management" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Testar ou cancelar um código</h2>
+    <p>Cole o código aqui. <strong>Cancelar</strong> invalida o código manual permanentemente; <strong>resgatar</strong> ativa a licença na sua conta conectada. Nenhuma das ações gera cobrança.</p>
+    <label for="key-entry" class="label">Código PS-…</label>
+    <input id="key-entry" maxlength="36" placeholder="PS-XXXXXX-XXXXXX-XXXXXX-XXXXXX"
+      autocomplete="off" spellcheck="false" autocapitalize="characters"
+      style="display:block;margin:9px 0 15px;width:100%;padding:13px;background:#0d1725;color:#f3f5f8;border:1px solid #36445a;border-radius:10px;font-size:.9rem">
+    <div class="actions">
+      <button id="revoke" class="secondary">Cancelar código exposto</button>
+      <button id="redeem" class="secondary">Resgatar nesta conta</button>
+    </div>
+    <small style="margin-top:12px">Um código compartilhado em prints deve ser cancelado, mesmo que ninguém tenha utilizado.</small>
+  </section>
   <small>QA · Nenhum Pix é criado nesta página. Nenhum token de login ou segredo do servidor é exibido. Os APKs atuais não são alterados.</small>
 </main>
 <script type="module">
@@ -118,10 +131,12 @@
       el("promo").textContent=money(data.promotionalPriceCents);
       el("admin").hidden=false;
       el("licensing").hidden=false;
+      el("key-management").hidden=false;
       setStatus("Administrador confirmado pelo servidor. Pronto para testes sem cobrança.","ok");
     }catch(e){
       el("admin").hidden=true;
       el("licensing").hidden=true;
+      el("key-management").hidden=true;
       setStatus(e.message||"Não foi possível confirmar seu acesso.","error");
     }finally{busy=false;el("refresh").disabled=false;}
   }
@@ -143,7 +158,8 @@
   el("logout").addEventListener("click",async()=>{
     await signOut(auth);
     lastKey="";el("license").textContent="";el("issued").hidden=true;
-    el("admin").hidden=true;el("licensing").hidden=true;
+    el("admin").hidden=true;el("licensing").hidden=true;el("key-management").hidden=true;
+    el("key-entry").value="";
     setStatus("Sessão encerrada.");
   });
   el("refresh").addEventListener("click",overview);
@@ -156,10 +172,51 @@
       const x=await call("adminIssuePremiumKey",{duration:"15d"});
       if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(x.licenseKey||""))throw new Error("Código gerado em formato inesperado.");
       lastKey=x.licenseKey;
+      el("key-entry").value=lastKey;
       el("license").textContent=lastKey;el("issued").hidden=false;
       setStatus("Código de teste criado no Firebase, sem cobrança.","ok");
     }catch(e){setStatus(e.message||"Falha ao emitir licença.","error");}
     finally{busy=false;el("issue").disabled=false;}
+  });
+  const getKey=()=>{
+    const code=el("key-entry").value.trim().toUpperCase();
+    if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(code)){
+      setStatus("Cole um código válido começando por PS-.","error");
+      return "";
+    }
+    return code;
+  };
+  el("revoke").addEventListener("click",async()=>{
+    if(busy)return;
+    const licenseKey=getKey();
+    if(!licenseKey)return;
+    if(!window.confirm("Cancelar definitivamente este código manual? Esta ação não poderá ser desfeita."))return;
+    busy=true;el("revoke").disabled=true;el("redeem").disabled=true;
+    try{
+      const result=await call("adminRevokePremiumKey",{licenseKey});
+      if(result.revoked!==true)throw new Error("Servidor não confirmou o cancelamento.");
+      if(lastKey===licenseKey){
+        lastKey="";el("license").textContent="";el("issued").hidden=true;
+      }
+      el("key-entry").value="";
+      setStatus("Código cancelado no Firebase. Não poderá ser resgatado.","ok");
+    }catch(e){setStatus(e.message||"Erro ao cancelar código.","error");}
+    finally{busy=false;el("revoke").disabled=false;el("redeem").disabled=false;}
+  });
+  el("redeem").addEventListener("click",async()=>{
+    if(busy)return;
+    const licenseKey=getKey();
+    if(!licenseKey)return;
+    if(!window.confirm("Resgatar este código na sua conta Google conectada? O prazo começará agora."))return;
+    busy=true;el("redeem").disabled=true;el("revoke").disabled=true;
+    try{
+      const result=await call("redeemPremiumKey",{licenseKey});
+      if(result.activated!==true)throw new Error("Resgate não confirmado pelo servidor.");
+      const expiry=result.lifetime?"vitalício":new Date(result.expiresAt).toLocaleString("pt-BR",{dateStyle:"medium",timeStyle:"short"});
+      el("key-entry").value="";
+      setStatus("Licença ativada no Firebase. Validade: "+expiry+". A distribuição dos APKs segue desativada.","ok");
+    }catch(e){setStatus(e.message||"Não foi possível resgatar.","error");}
+    finally{busy=false;el("redeem").disabled=false;el("revoke").disabled=false;}
   });
   el("copy").addEventListener("click",async()=>{
     if(!lastKey)return;
@@ -170,7 +227,7 @@
     el("login").hidden=!!user;
     el("logout").hidden=!user;
     if(user){overview();}
-    else{el("admin").hidden=true;el("licensing").hidden=true;}
+    else{el("admin").hidden=true;el("licensing").hidden=true;el("key-management").hidden=true;}
   });
 </script>
 </body>
