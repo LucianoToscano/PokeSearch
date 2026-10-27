@@ -69,7 +69,8 @@ async function settlePayment(paymentId){
  if(!/^[0-9a-f-]{36}$/.test(orderId))return false;
  const ref=root().child("orders").child(orderId),s=await ref.get(),order=s.val();
  if(!order||order.paymentId!==String(payment.id)||!order.uid)return false;
- if(payment.payment_method_id!=="pix"||Number(payment.transaction_amount)!==order.priceCents/100)return false;
+ if(payment.live_mode!==true||payment.payment_method_id!=="pix"||
+    Math.round(Number(payment.transaction_amount)*100)!==order.priceCents)return false;
  if(payment.status==="refunded"||payment.status==="charged_back"){
    await ref.update({status:payment.status});
    // Fail closed on chargeback; owner can review and restore via admin action.
@@ -80,7 +81,10 @@ async function settlePayment(paymentId){
  }
  if(payment.status!=="approved")return false;
  const entRef=root().child("entitlements").child(order.uid);
- const now=Date.now(),key=formatKey(orderId),hash=sha(key);
+ const now=Date.now(),approvedAt=Date.parse(String(payment.date_approved||""));
+ const billingStart=Number.isFinite(approvedAt)&&approvedAt>=order.createdAt?
+   Math.min(now,approvedAt):now;
+ const key=formatKey(orderId),hash=sha(key);
  // Idempotent across webhook retries and polling: one order adds exactly 30 days.
  const transaction=await entRef.transaction(old=>{
    const v=old&&typeof old==="object"?old:{};
@@ -88,7 +92,7 @@ async function settlePayment(paymentId){
    if(paid[orderId])return; // already applied, no duplicate extension
    if(v.revoked===true)return; // admin revocation takes precedence
    paid[orderId]=true;
-   return {...v,paidOrders:paid,expiresAt:Math.max(now,Number(v.expiresAt)||0)+MONTH,
+   return {...v,paidOrders:paid,expiresAt:Math.max(billingStart,Number(v.expiresAt)||0)+MONTH,
      currentKeyHash:hash};
  },undefined,false);
  const ent=(transaction.snapshot&&transaction.snapshot.val())||{};
