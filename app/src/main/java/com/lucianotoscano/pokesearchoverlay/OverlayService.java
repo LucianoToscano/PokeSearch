@@ -1178,6 +1178,12 @@ public class OverlayService extends Service {
     }
     @Override public void onCreate(){
         super.onCreate();
+        // Controlled builds must first receive a fresh server-authenticated lease.
+        // This check runs BEFORE creating either WebView or any overlay window.
+        if(PremiumAccess.controlled()&&!PremiumAccess.permitted(isSecondaryOverlay())){
+            stopSelf();
+            return;
+        }
         if (!IntegrityGuard.verify(this)) {
             BugReport.log(this,"SECURITY","Falha de integridade do pacote");
             android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
@@ -1203,6 +1209,19 @@ public class OverlayService extends Service {
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(isSecondaryOverlay()?74:73,note);
         FirebaseStats.setOverlayVisible(this,true,isSecondaryOverlay());
+        if(PremiumAccess.controlled()){
+            // A revoked global build or expired Premium grant shuts down P1/P2
+            // without relying on the user's date or stored local permissions.
+            handler.postDelayed(new Runnable(){
+                @Override public void run(){
+                    if(stopped)return;
+                    PremiumAccess.verify(OverlayService.this,(allowed,premium)->{
+                        if(!allowed||(isSecondaryOverlay()&&!premium))stopSelf();
+                    });
+                    if(!stopped)handler.postDelayed(this,45000L);
+                }
+            },45000L);
+        }
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         try{visualPrefsJson=normalizeVisualPrefs(
             overlayPrefs().getString("visualPrefsJson","{}")).toString();}
@@ -4461,6 +4480,10 @@ public class OverlayService extends Service {
         update(); // Local UI only; does not call refresh or navigate the website.
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
+        if(PremiumAccess.controlled()&&!PremiumAccess.permitted(isSecondaryOverlay())){
+            stopSelf();
+            return START_NOT_STICKY;
+        }
         String action=i==null||i.getAction()==null?"":i.getAction();
         if("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS".equals(action)){
             syncPreferencesWithoutSearch();
