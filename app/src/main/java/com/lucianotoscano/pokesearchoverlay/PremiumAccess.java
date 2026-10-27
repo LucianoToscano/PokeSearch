@@ -67,6 +67,25 @@ final class PremiumAccess {
         if(!global)data.put("versionCode",versionCode);
         call(context,"adminDistributionControl",data,cb);
     }
+    static void offer(Context context,ResultCallback cb){
+        call(context,"getPremiumOffer",new HashMap<>(),cb);
+    }
+    static void lifetimePool(Context context,ResultCallback cb){
+        call(context,"adminLifetimePool",new HashMap<>(),cb);
+    }
+    static void lifetimeGifts(Context context,ResultCallback cb){
+        call(context,"getLifetimeGiftKeys",new HashMap<>(),cb);
+    }
+    static void adjustExpiry(Context context,String uid,int days,ResultCallback cb){
+        Map<String,Object> values=new HashMap<>();
+        values.put("uid",uid);values.put("action","extendDays");values.put("days",days);
+        call(context,"adminAdjustPremiumExpiry",values,cb);
+    }
+    static void setExpiry(Context context,String uid,long utcMs,ResultCallback cb){
+        Map<String,Object> values=new HashMap<>();
+        values.put("uid",uid);values.put("action","setExpiresAt");values.put("expiresAt",utcMs);
+        call(context,"adminAdjustPremiumExpiry",values,cb);
+    }
     static void adminSettings(Context context,Map<String,Object> values,ResultCallback cb){
         call(context,"adminPremiumSettings",values,cb);
     }
