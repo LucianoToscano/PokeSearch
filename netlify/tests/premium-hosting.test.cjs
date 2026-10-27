@@ -33,7 +33,7 @@ const checks=[
    logic.includes("crypto.timingSafeEqual")],
  ["Owner controls manual license recipient email and displays only a masked hint",
    adminHtml.includes('id="recipient-email"')&&
-   adminHtml.includes('recipientEmail}')&&
+   adminHtml.includes('recipientEmail,recipientName}')&&
    logic.includes('recipientEmailHash:recipientHash(email)')&&
    logic.includes('profile.emailVerified!==true')],
  ["Owner controls normal price, promotional price and promotion switch",
