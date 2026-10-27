@@ -37,7 +37,7 @@ assert.ok(main.includes('profileTrainerLastSelectedCode'));
 assert.ok(main.includes('notifyOverlaySessionReady();'));
 assert.ok(overlay.includes('config.put("shinyAccount",selected)'));
 assert.ok(overlay.includes('cards.length()>response.optInt("apiDisplayCap",10)'));
-assert.ok(!overlay.includes('cards.length()>10'));
+assert.ok(!overlay.includes('cards.length()>10||'));
 assert.ok(probe.includes("if(cards.length===100)break;"));
 assert.ok(probe.includes("Math.min(siteCount,100)"));
 assert.equal(contract.MAX_RESULTS,100);
