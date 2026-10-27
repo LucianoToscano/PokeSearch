@@ -6169,7 +6169,7 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  const v=window.visualPrefs||{};
  const pitch=size+additionalResultGapPx(v.resultGapBetween);
  const horizontal=v.resultsOrientation==="horizontal";
- const natural=items.slice(0,10).map((card,index)=>{
+ const natural=items.slice(0,100).map((card,index)=>{
    const lines=preparedLines?preparedLines[index]:(opts?resultLines(card,opts,league):[]);
   // UX-SPRITE-GAP-02: metadata is independently scrollable inside the side strip.
   // Never stretch the Pokemon's vertical slot to fit all enabled rank lines.
@@ -6436,7 +6436,7 @@ window.addEventListener("pagehide",releaseUiTimers);
 window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount]);
- cards=Array.isArray(a)?a.slice(0,10):[];
+ cards=Array.isArray(a)?a.slice(0,100):[];
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
   {count:!!displayPrefs.count,name:!!displayPrefs.name,number:!!displayPrefs.number,
