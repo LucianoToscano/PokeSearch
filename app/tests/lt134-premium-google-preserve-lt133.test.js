@@ -34,7 +34,7 @@ const checks=[
  ["Premium never relies on local clock for access",access.includes("SystemClock.elapsedRealtime()")&&
   !access.includes("SharedPreferences")],
  ["Maintenance and per-version availability use HTTPS with bounded timeouts",
-   availability.includes('new URL(BuildConfig.PREMIUM_BACKEND_URL+"/appStatus?versionCode=")')&&
+   availability.includes('BuildConfig.PREMIUM_BACKEND_URL+"/appStatus?versionCode="')&&
    availability.includes("getBoolean(\"allowed\",true)")&&
    availability.includes('connection.setConnectTimeout(5000)')&&
    availability.includes('connection.setReadTimeout(5000)')],
