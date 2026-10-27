@@ -513,6 +513,8 @@ async function run(){
  console.log("PASS time-bounded quota FREE campaigns with 1m/lifetime, default off and safe shutdown");
 
 
+ const backupFileHash=crypto.createHash("sha256")
+  .update("known-encrypted-test-backup-content").digest("hex");
  // Export ALL Premium sections as paginated, owner-only records. License
  // codes stay sealed; payment history and entitlements keep their identity.
  const sections=["keys","entitlements","orders","orderIndex",
@@ -548,7 +550,7 @@ async function run(){
  try{await premium.adminRestorePremiumBackup({
    auth:{uid:"owner"},data:{phase:"prepare",format:check.format,
      projectId:check.projectId,vaultFingerprint:check.vaultFingerprint,
-     confirm:"IMPORTAR EM BASE VAZIA"}})}
+     backupSha256:backupFileHash,confirm:"IMPORTAR EM BASE VAZIA"}})}
  catch(e){refusedExisting=e.code==="failed-precondition";}
  assert.equal(refusedExisting,true,"Restore must never overwrite existing users");
  console.log("PASS protected full Premium backup, sealed keys, restore refuses live database");
@@ -558,8 +560,16 @@ async function run(){
  const preparation=await premium.adminRestorePremiumBackup({
    auth:{uid:"owner"},data:{phase:"prepare",format:check.format,
      projectId:check.projectId,vaultFingerprint:check.vaultFingerprint,
-     confirm:"IMPORTAR EM BASE VAZIA"}});
+     backupSha256:backupFileHash,confirm:"IMPORTAR EM BASE VAZIA"}});
  assert.ok(/^[0-9a-f-]{36}$/.test(preparation.sessionId));
+ const resumed=await premium.adminRestorePremiumBackup({
+   auth:{uid:"owner"},data:{phase:"resume",backupSha256:backupFileHash}});
+ assert.equal(resumed.sessionId,preparation.sessionId);
+ let wrongResume=false;
+ try{await premium.adminRestorePremiumBackup({
+   auth:{uid:"owner"},data:{phase:"resume",backupSha256:"0".repeat(64)})}
+ catch(e){wrongResume=e.code==="failed-precondition";}
+ assert.equal(wrongResume,true);
  for(const section of sections){
    const records=snapshot[section];
    if(["config","distribution","appControl"].includes(section)){
