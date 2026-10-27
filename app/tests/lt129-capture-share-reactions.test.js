@@ -14,7 +14,7 @@ assert.match(service,/offerCaptureAfterCopy\(\)/);
 assert.match(service,/confirmCaptureShare\(int sourceIndex\)/);
 assert.match(service,/currentCoordinateTarget\(offer\)/);
 assert.match(service,/requestGeneration==offeredGeneration/);
-assert.match(service,/CaptureSharePublisher\.publish\(this,name,shiny,/);
+assert.match(service,/CaptureSharePublisher\.publish\(this,offer,/);
 assert.match(detail,/id="captureShare" hidden/);
 assert.match(detail,/id="captureConfirm" hidden/);
 assert.match(detail,/Capturou mesmo\?/);
