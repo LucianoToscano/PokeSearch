@@ -512,6 +512,81 @@ async function run(){
  await premium.adminPremiumSettings({...adminLive,data:{action:"freeYearCampaign",enabled:false}});
  console.log("PASS time-bounded quota FREE campaigns with 1m/lifetime, default off and safe shutdown");
 
+
+ // Export ALL Premium sections as paginated, owner-only records. License
+ // codes stay sealed; payment history and entitlements keep their identity.
+ const sections=["keys","entitlements","orders","orderIndex",
+   "paymentIndex","paymentThrottle","config","distribution","appControl"];
+ const snapshot={};
+ for(const section of sections){
+   let cursor="",pages=0;const combined={};
+   do{
+     const page=await premium.adminExportPremiumBackupPage({
+       auth:{uid:"owner"},data:{section,cursor}});
+     assert.equal(page.format,"PokeSearch-Premium-Backup-v1");
+     assert.equal(page.projectId,"pokesearch-lt");
+     assert.ok(/^[0-9a-f]{64}$/.test(page.vaultFingerprint));
+     for(const [key,value] of Object.entries(page.records))
+       combined[key]=value;
+     cursor=page.nextCursor;
+     if(++pages>100)throw Error("Unexpected pagination");
+   }while(cursor);
+   snapshot[section]=combined;
+ }
+ assert.ok(Object.keys(snapshot.keys).length>0);
+ assert.equal(snapshot.keys[reservedHash].uid,"recipientUser");
+ assert.equal(snapshot.keys[reservedHash].vault.ct,storedReserved.vault.ct);
+ assert.ok(!JSON.stringify(snapshot).includes(reserved.licenseKey));
+ let unauthorizedBackup=false;
+ try{await premium.adminExportPremiumBackupPage({
+   auth:{uid:"buyer"},data:{section:"keys"}})}
+ catch(e){unauthorizedBackup=e.code==="permission-denied";}
+ assert.equal(unauthorizedBackup,true);
+ const check=await premium.adminExportPremiumBackupPage({
+   auth:{uid:"owner"},data:{section:"keys"}});
+ let refusedExisting=false;
+ try{await premium.adminRestorePremiumBackup({
+   auth:{uid:"owner"},data:{phase:"prepare",format:check.format,
+     projectId:check.projectId,vaultFingerprint:check.vaultFingerprint,
+     confirm:"IMPORTAR EM BASE VAZIA"}})}
+ catch(e){refusedExisting=e.code==="failed-precondition";}
+ assert.equal(refusedExisting,true,"Restore must never overwrite existing users");
+ console.log("PASS protected full Premium backup, sealed keys, restore refuses live database");
+
+ // Isolated empty database restore at end of test. Preserve key and UID mappings.
+ delete store.premium;delete store.distribution;delete store.appControl;
+ const preparation=await premium.adminRestorePremiumBackup({
+   auth:{uid:"owner"},data:{phase:"prepare",format:check.format,
+     projectId:check.projectId,vaultFingerprint:check.vaultFingerprint,
+     confirm:"IMPORTAR EM BASE VAZIA"}});
+ assert.ok(/^[0-9a-f-]{36}$/.test(preparation.sessionId));
+ for(const section of sections){
+   const records=snapshot[section];
+   if(["config","distribution","appControl"].includes(section)){
+     await premium.adminRestorePremiumBackup({auth:{uid:"owner"},data:{
+       phase:"write",sessionId:preparation.sessionId,section,records
+     }});
+   }else{
+     for(const [key,value] of Object.entries(records))
+       await premium.adminRestorePremiumBackup({auth:{uid:"owner"},data:{
+         phase:"write",sessionId:preparation.sessionId,section,
+         records:{[key]:value}
+       }});
+   }
+ }
+ const finish=await premium.adminRestorePremiumBackup({
+   auth:{uid:"owner"},data:{phase:"finish",sessionId:preparation.sessionId}});
+ assert.equal(finish.completed,true);
+ assert.equal(read("premium/keys/"+reservedHash).uid,"recipientUser");
+ assert.equal(read("premium/config/paymentsLiveEnabled"),false);
+ assert.equal(read("premium/config/salesEnabled"),false);
+ let rejectedMutation=false;
+ try{await premium.adminRestorePremiumBackup({
+   auth:{uid:"owner"},data:{phase:"write",sessionId:preparation.sessionId,
+     section:"keys",records:{[reservedHash]:{revoked:false}}}})}
+ catch(e){rejectedMutation=e.code==="failed-precondition";}
+ assert.equal(rejectedMutation,true);
+ console.log("PASS safe owner-only restore into empty Firebase, no reactivation of payments");
  console.log("PASS production toggle and signed webhook mode separation"); 
  console.log("PASS premium server integration mock scenarios");
 }
