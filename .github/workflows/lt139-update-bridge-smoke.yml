@@ -1,0 +1,39 @@
+name: PokeSearch LT139 — public legacy Drive update bridge smoke test
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt139-update-bridge-smoke.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Verify that already-installed Android clients can read the public update manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          ID='15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf'
+          curl -fL --retry 3 --retry-delay 2 --max-time 35 -H 'Accept: application/json,text/plain;q=0.9,*/*;q=0.1' \
+            -H 'User-Agent: PokeSearch-Android-UpdateBridge-Smoke' \
+            -D "$RUNNER_TEMP/headers" -o "$RUNNER_TEMP/manifest.json" \
+            "https://drive.google.com/uc?export=download&id=$ID"
+          head -c 1 "$RUNNER_TEMP/manifest.json" | grep -q '{'
+          jq -e '.schema == "pokesearch-update-v1" and .enabled == true and
+                 .versionName == "0.01.39" and .versionCode == 54344 and
+                 .apkName == "PokeSearch-v0.01.39-LT.apk" and
+                 .apkFileId == "1qzjBJNQM51cLGcrfMpn2TbBUO7pRLsxK" and
+                 .apkUrl == "https://drive.google.com/uc?export=download&id=1qzjBJNQM51cLGcrfMpn2TbBUO7pRLsxK" and
+                 .apkSha256 == "5e64361a42c57b1a63440bd23f3813f8d11fe6ae892d12fad082143fcd8e70d4" and
+                 .forceUpdate == false' "$RUNNER_TEMP/manifest.json" >/dev/null
+          test "$(wc -c < "$RUNNER_TEMP/manifest.json")" -lt 16384
+          echo 'PASS: legacy Android update channel advertises LT139 without OAuth.'
+      - name: Verify public signed APK is still present on GitHub
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://raw.githubusercontent.com/LucianoToscano/PokeSearch/downloads/lt139/PokeSearch-v0.01.39-LT.apk"
+          curl -fLI --retry 3 --retry-delay 2 --max-time 40 "$URL" > "$RUNNER_TEMP/apk.headers"
+          grep -qi '^HTTP/.*200' "$RUNNER_TEMP/apk.headers"
+          echo 'PASS: GitHub APK fallback is reachable.'
