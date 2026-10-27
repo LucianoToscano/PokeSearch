@@ -123,6 +123,7 @@ final class CommunityScrapbookOnline {
             avatarButton.setContentDescription("Escolher minha foto no chat");
             avatarButton.setBackground(bg(light?0xFFE7F3F3:0xFF23504D,24,
                                            light?0xFFBCD7D6:0xFF3B867B));
+            avatarButton.setClipToOutline(true);
             avatarButton.setOnClickListener(v->choosePhoto());
             LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(dp(activity,39),dp(activity,39));
             bp.rightMargin=dp(activity,9);header.addView(avatarButton,bp);
@@ -384,6 +385,9 @@ final class CommunityScrapbookOnline {
             }else{
                 authorPhoto.setImageResource(android.R.drawable.ic_menu_myplaces);
             }
+            authorPhoto.setBackground(bg(light?0xFFE7F3F3:0xFF23504D,24,
+                light?0xFFBCD7D6:0xFF3B867B));
+            authorPhoto.setClipToOutline(true);
             LinearLayout.LayoutParams imgLp=new LinearLayout.LayoutParams(
                 dp(activity,28),dp(activity,28));
             if(!mine){imgLp.rightMargin=dp(activity,5);outer.addView(authorPhoto,imgLp);}
