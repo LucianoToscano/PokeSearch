@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+
+### LT131 — Sprite + IV nos anúncios de captura (27/10/2026)
+
+- **Branch:** `feature/lt131-capture-sprites-ivs-20261027` na LT130; PR [#90](https://github.com/LucianoToscano/PokeSearch/pull/90), Draft, sem merge main.
+- **Visual aprovado:** [sprite normal Beldum] `🎉 Luciano capturou um Beldum 0/15/14!`; [sprite Shiny Ditto] `✨ Luciano capturou um Ditto 15/15/15!`. Mini sprite **38dp** dentro da bolha, nickname correto, reação e horário preservados; conversas comuns inalteradas.
+- **Origem real:** IV A/D/S `0..15/0..15/0..15` é lido do resultado já selecionado no `OverlayService` compartilhado por P1/P2; quando IV inválido/ausente, omitir em vez de inventar. Nome/forma vêm do card. Sprite da espécie obtida por correspondência exata em `pokemon_catalog.json` (Ditto #132, Beldum #374) com sprites offline base/shiny da QA. Nunca inventar sprite de costume/forma desconhecida.
+- **Firebase:** anúncio usa somente `chat/messages` (quatro campos anteriores), sem alteração nas regras públicas/reactions/stats/premium/distribution, sem compartilhar coordenadas, CP, GPS, token ou reveal. Não declara captura verificada pelo jogo: o usuário confirma voluntariamente num botão discreto inline após copiar Get coords, como na LT129.
+- **Build planejada:** `0.01.31 / 54336` APK QA assinado e auditado via `.github/workflows/lt131-capture-sprites-ivs-signed-qa.yml`; GitHub Actions primeiro por Issue #84. Testes em Samsung e com duas contas necessários, não declarar homologação sem os mesmos.
+- Docs: [POKESEARCH_LT131_CAPTURE_SPRITES_IV_20261027.md](POKESEARCH_LT131_CAPTURE_SPRITES_IV_20261027.md).
+
+
 ### LT130 — Reação ✨️ no Chat (27/10/2026)
 
 - PR [#89](https://github.com/LucianoToscano/PokeSearch/pull/89), Draft empilhada na LT129 PR #88, branch `feature/lt130-sparkle-reaction-20261027`; versão QA `0.01.30` / `54335`. Não mesclar/release oficial sem QA físico.
