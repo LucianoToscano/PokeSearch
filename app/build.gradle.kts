@@ -14,7 +14,12 @@ dependencies {
 
 // OAuth web client ID is public but must originate from the Firebase project configuration.
 // Empty disables admin sign-in safely; never derive identity from PoGoCoordinates WebView text.
-val chatGoogleClientId = System.getenv("POKE_CHAT_GOOGLE_WEB_CLIENT_ID")?.trim() ?: ""
+// Firebase OAuth PUBLIC Web client, verified from the Android app's refreshed
+// google-services.json (project pokesearch-lt, Android cert SHA-1
+// dd7bf665e1d47a257fc557b51cb5a57dfd13cb96). Not a service-account key.
+// CI can override only for a deliberately reconfigured Firebase project.
+val chatGoogleClientId = System.getenv("POKE_CHAT_GOOGLE_WEB_CLIENT_ID")?.trim()?.takeIf { it.isNotEmpty() }
+    ?: "1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com"
 if (chatGoogleClientId.isNotEmpty() && !Regex("[0-9]+-[A-Za-z0-9_-]+\\.apps\\.googleusercontent\\.com").matches(chatGoogleClientId))
     throw org.gradle.api.GradleException("Invalid Firebase chat Google web OAuth client ID")
 
