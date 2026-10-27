@@ -227,11 +227,21 @@ def main():
         target.write_bytes(image)
         costume_hashes[output] = hashlib.sha256(image).hexdigest()
 
+    # LT126: build-only catalogue snapshot; no extra traffic on phone.
+    # Source data/icon commit IDs fixed; exact GO form ID and shiny identity validated.
+    from import_wwm_catalog import sync as import_wwm
+    wwm = import_wwm(dest)
+    if wwm["speciesCount"] != 1025 or wwm["formCount"] < 1400 or wwm["iconCount"] != 2:
+        raise SystemExit("WWM catalogue failed minimum coverage")
+    external_hashes = wwm["hashes"]
+
     summary = {
         "schema": "pokesearch-offline-sprites-v1",
         "formSourceCommit": FORM_SOURCE_COMMIT,
         "costumeSourceCommit": COSTUME_SOURCE_COMMIT,
         "costumes": dict(sorted(costume_hashes.items())),
+        "external": dict(sorted(external_hashes.items())),
+        "externalCatalog": {k:v for k,v in wwm.items() if k != "hashes"},
         "forms": dict(sorted(form_hashes.items())),
         "source": "PokeAPI/sprites master - exact Dex/variant PNG only",
         "dexCount": len(ids),
