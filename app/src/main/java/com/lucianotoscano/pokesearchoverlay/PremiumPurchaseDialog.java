@@ -100,6 +100,19 @@ final class PremiumPurchaseDialog {
             space(activity,0,dp(activity,3),0,0));
         col.addView(plan,space(activity,0,0,0,dp(activity,13)));
 
+        LinearLayout freeOffer=new LinearLayout(activity);
+        freeOffer.setOrientation(LinearLayout.VERTICAL);
+        freeOffer.setPadding(dp(activity,12),dp(activity,10),dp(activity,12),dp(activity,10));
+        freeOffer.setBackground(round(activity,0xFF183B35,15,0xFF398C70));
+        freeOffer.setVisibility(View.GONE);
+        TextView freeHeadline=label(activity,"FREE! · Premium por tempo limitado",15,0xFFB8FFE5,true);
+        freeOffer.addView(freeHeadline);
+        TextView freeDetail=label(activity,"Oferta gratuita por tempo limitado",12,subtext,false);
+        freeOffer.addView(freeDetail,space(activity,0,dp(activity,4),0,dp(activity,9)));
+        Button freeClaim=button(activity,"Ativar Premium grátis",true,0xFF15785B);
+        freeOffer.addView(freeClaim,new LinearLayout.LayoutParams(-1,dp(activity,44)));
+        col.addView(freeOffer,space(activity,0,0,0,dp(activity,11)));
+
         TextView mailLabel=label(activity,"E-mail para o Pix",11,subtext,true);
         col.addView(mailLabel,space(activity,0,0,0,dp(activity,4)));
         EditText email=input(activity,"Seu e-mail");
@@ -211,7 +224,7 @@ final class PremiumPurchaseDialog {
             polling[0]=false;
             if(scheduled[0]!=null)handler.removeCallbacks(scheduled[0]);
         };
-        final boolean[] canSell={false};
+        final boolean[] canSell={false},canFree={false};
         Runnable refreshIdentity=()->{
             boolean signed=PremiumGoogleLogin.isGoogleSignedIn(activity);
             String account=PremiumGoogleLogin.email(activity);
@@ -220,6 +233,7 @@ final class PremiumPurchaseDialog {
             googleLogout.setVisibility(signed?View.VISIBLE:View.GONE);
             activate.setEnabled(signed);
             create.setEnabled(signed&&canSell[0]);
+            freeClaim.setEnabled(signed&&canFree[0]);
         };
         refreshIdentity.run();
         googleLogin.setOnClickListener(v->{
@@ -294,6 +308,30 @@ final class PremiumPurchaseDialog {
                 });
             });
         });
+        freeClaim.setOnClickListener(v->{
+            if(!PremiumGoogleLogin.isGoogleSignedIn(activity)){
+                status.setText("Entre com uma conta Google para participar da campanha.");return;
+            }
+            freeClaim.setEnabled(false);
+            status.setText("Verificando sua elegibilidade para o Premium grátis...");
+            PremiumAccess.claimFreePremium(activity,(result,error)->{
+                if(!dialog.isShowing())return;
+                freeClaim.setEnabled(canFree[0]);
+                if(error!=null){status.setText(error);return;}
+                if(!Boolean.TRUE.equals(result.get("activated"))){
+                    status.setText("Não foi possível confirmar a licença gratuita.");return;
+                }
+                status.setText("Premium grátis ativado na sua conta Google!");
+                freeOffer.setVisibility(View.GONE);
+                fitPopup.run();
+                PremiumAccess.verify(activity,(allowed,premium)->{
+                    if(dialog.isShowing()&&premium){
+                        dialog.dismiss();
+                        if(whenActivated!=null)whenActivated.run();
+                    }
+                });
+            });
+        });
         create.setOnClickListener(v->{
             String mail=email.getText().toString().trim();
             if(!mail.contains("@")||!mail.contains(".")){
@@ -351,14 +389,35 @@ final class PremiumPurchaseDialog {
             Object regular=result.get("regularPriceCents");
             long usual=regular instanceof Number?((Number)regular).longValue():0L;
             boolean promo=Boolean.TRUE.equals(result.get("promotionEnabled"));
-            String label=String.format(Locale.forLanguageTag("pt-BR"),
-                "Premium 30 dias: R$ %.2f",cents/100.0);
-            if(promo&&usual>cents)label+=String.format(Locale.forLanguageTag("pt-BR"),
-                " (promoção, antes R$ %.2f)",usual/100.0);
+            promoBadge.setVisibility(promo?View.VISIBLE:View.GONE);
+            String priceLabel=String.format(Locale.forLanguageTag("pt-BR"),
+                "R$ %.2f",cents/100.0);
+            if(promo&&usual>cents)priceLabel+=String.format(Locale.forLanguageTag("pt-BR"),
+                " · antes R$ %.2f",usual/100.0);
             boolean enabled=Boolean.TRUE.equals(result.get("salesEnabled"))&&cents>=100;
-            pricePreview.setText(enabled?label:label+" · Pagamentos indisponíveis");
+            pricePreview.setText(enabled?priceLabel:priceLabel+" · Pagamentos indisponíveis");
             canSell[0]=enabled;
+            Object rawCampaign=result.get("freeYearCampaign");
+            Map<?,?> campaign=rawCampaign instanceof Map?(Map<?,?>)rawCampaign:null;
+            boolean active=campaign!=null&&Boolean.TRUE.equals(campaign.get("active"));
+            canFree[0]=active;
+            freeOffer.setVisibility(active?View.VISIBLE:View.GONE);
+            if(active){
+                String duration=String.valueOf(campaign.get("duration"));
+                String durationName="12 meses";
+                if("lifetime".equals(duration))durationName="vitalícia";
+                else if("1m".equals(duration))durationName="1 mês";
+                else if("3m".equals(duration))durationName="3 meses";
+                else if("6m".equals(duration))durationName="6 meses";
+                else if("15d".equals(duration))durationName="15 dias";
+                else if("30d".equals(duration))durationName="30 dias";
+                Number remaining=campaign.get("remaining") instanceof Number?
+                    (Number)campaign.get("remaining"):0;
+                freeDetail.setText(durationName+" grátis · "+remaining.intValue()+
+                    " vagas restantes · somente 1 resgate por conta");
+            }
             refreshIdentity.run();
+            fitPopup.run();
         });
         if(!activeOrder[0].isEmpty()){
             status.setText("Pagamento anterior encontrado. Verificando confirmação.");
