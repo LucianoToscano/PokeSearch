@@ -1612,7 +1612,8 @@ public class MainActivity extends Activity {
             .putString("sessionStatus","desconectado")
             .remove("profileDisplayName").remove("profileProvider").remove("profileAvatarUrl")
             .remove("profileTrainerName").remove("profileTrainerCode")
-            .remove("profileTrainerListJson").remove("profileTrainerDetails").remove("profileTrainerState")
+            .remove("profileTrainerListJson").remove("profileTrainerLastSelectedCode")
+            .remove("profileTrainerDetails").remove("profileTrainerState")
             .remove("profileTrainerTeam").remove("profileTrainerLevel")
             .putBoolean("shiny",false)
             .putString("lastStatus","Sessão local desconectada")
@@ -1722,6 +1723,7 @@ public class MainActivity extends Activity {
                 getSharedPreferences("prefs",0).edit()
                     .putString("sessionStatus","autenticada")
                     .putString("profileTrainerState","unknown")
+                    .putString("profileTrainerLastSelectedCode",getSharedPreferences("prefs",0).getString("profileTrainerCode",""))
                     .remove("profileAvatarUrl")
                     .remove("profileTrainerName").remove("profileTrainerCode")
                     .remove("profileTrainerListJson").remove("profileTrainerDetails").remove("profileTrainerTeam")
@@ -1828,7 +1830,7 @@ public class MainActivity extends Activity {
                     }
                     if(verified.length()>0){
                         String oldSelection=getSharedPreferences("prefs",0)
-                            .getString("profileTrainerCode","");
+                            .getString("profileTrainerLastSelectedCode","");
                         org.json.JSONObject selected=verified.optJSONObject(0);
                         for(int i=0;i<verified.length();i++){
                             org.json.JSONObject t=verified.optJSONObject(i);
@@ -1839,6 +1841,7 @@ public class MainActivity extends Activity {
                         String level=String.valueOf(selected.optInt("level"));
                         String team=selected.optString("team");
                         edit.putString("profileTrainerListJson",verified.toString())
+                            .remove("profileTrainerLastSelectedCode")
                             .putString("profileTrainerState","linked")
                             .putString("profileTrainerName",selected.optString("name"))
                             .putString("profileTrainerCode",selected.optString("code"))
