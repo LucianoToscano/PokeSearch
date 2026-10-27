@@ -43,7 +43,9 @@ jobs:
           sha256sum --check SHA256SUMS.txt
           unzip -t "$APK" >/dev/null
           test "$(stat -c%s "$APK")" -gt 30000000
-          sdkmanager --install 'build-tools;36.0.0' >/dev/null
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          test -x "$SDKMANAGER"
+          "$SDKMANAGER" --install 'build-tools;36.0.0' >/dev/null
           BT="$ANDROID_HOME/build-tools/36.0.0"
           "$BT/aapt" dump badging "$APK" > metadata.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" metadata.txt
