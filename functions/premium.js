@@ -17,7 +17,8 @@ const MP_WEBHOOK_SECRET=defineSecret("POKE_MP_WEBHOOK_SECRET");
 const MP_WEBHOOK_URL=defineSecret("POKE_MP_WEBHOOK_URL");
 const KEY_SECRET=defineSecret("POKE_PREMIUM_KEY_SECRET");
 const REGION="us-central1", MONTH=30*24*60*60*1000;
-const NORMAL_CENTS=1000, PROMO_CENTS=500, LIFETIME_LIMIT=10, GIFTS_PER_LIFETIME=2;
+const NORMAL_CENTS=1000, PROMO_CENTS=500;
+const ADMIN_DURATIONS=Object.freeze(["15d","1m","3m","6m","12m","lifetime"]);
 const root=()=>getDatabase().ref("premium");
 const policy=()=>getDatabase().ref("distribution");
 const sha=value=>crypto.createHash("sha256").update(value).digest("hex");
@@ -43,7 +44,7 @@ const userEntitlement=async uid=>{
  if(value.revoked===true||!/^[0-9a-f]{64}$/.test(String(value.currentKeyHash||"")))return false;
  const key=(await root().child("keys").child(value.currentKeyHash).get()).val();
  if(key?.uid!==uid||key.revoked===true)return false;
- if(value.lifetime===true)return key.kind==="lifetime";
+ if(value.lifetime===true)return key.kind==="manual"||key.kind==="lifetime";
  return Number(value.expiresAt||0)>Date.now()&&Number(key.expiresAt||0)>Date.now();
 };
 const offer=config=>{
@@ -249,8 +250,7 @@ exports.adminPremiumOverview=onCall({region:REGION},async request=>{
  const [dist,cfg]=await Promise.all([policy().get(),root().child("config").get()]);
  const p=dist.val()||{},c=cfg.val()||{};
  return {globalEnabled:p.globalEnabled===true,versions:p.versions||{},
-   salesEnabled:c.salesEnabled===true,...offer(c),lifetimeLimit:LIFETIME_LIMIT,
-   giftsPerLifetime:GIFTS_PER_LIFETIME};
+   salesEnabled:c.salesEnabled===true,...offer(c),durationOptions:ADMIN_DURATIONS};
 });
 
 
@@ -261,95 +261,115 @@ exports.getPremiumOffer=onCall({region:REGION},async request=>{
  return {...offer(cfg),salesEnabled:cfg.salesEnabled===true,serverNow:Date.now()};
 });
 
-/** Only the owner can provision the 10 lifetime keys. Repeated requests are idempotent.
- * Never persist plaintext keys; HMAC derivation depends on Secret Manager.
+/** Each individually chosen license is controlled only by its administrator.
+ * 15 days, 1/3/6/12 calendar months and lifetime; NO quantity or sponsor quota.
  */
-exports.adminLifetimePool=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
- await requireAdmin(request);
- const keys=[];
- for(let slot=1;slot<=LIFETIME_LIMIT;slot++){
-   const plain=formatKey("lifetime:slot:"+slot),hash=sha(plain);
-   const ref=root().child("keys").child(hash);
-   const claimed=await ref.transaction(value=>value||{
-     kind:"lifetime",slot,uid:null,createdAt:Date.now(),revoked:false
-   },undefined,false);
-   const entry=claimed.snapshot.val()||{};
-   keys.push({slot,licenseKey:plain,claimed:!!entry.uid,revoked:entry.revoked===true});
+function periodExpiry(start,duration){
+ if(duration==="lifetime")return null;
+ if(duration==="15d")return start+15*86400000;
+ const months={"1m":1,"3m":3,"6m":6,"12m":12}[duration];
+ if(!months)throw new HttpsError("invalid-argument","Duração desconhecida.");
+ const date=new Date(start),day=date.getUTCDate();
+ const firstOfTarget=new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth()+months,1,
+   date.getUTCHours(),date.getUTCMinutes(),date.getUTCSeconds(),date.getUTCMilliseconds()));
+ const endOfMonth=new Date(Date.UTC(firstOfTarget.getUTCFullYear(),
+   firstOfTarget.getUTCMonth()+1,0)).getUTCDate();
+ firstOfTarget.setUTCDate(Math.min(day,endOfMonth));
+ return firstOfTarget.getTime();
+}
+const validUid=uid=>/^[A-Za-z0-9_-]{5,128}$/.test(uid);
+/** Only admin can create a license. Unassigned codes start when recipient redeems.
+ * Providing uid assigns immediately; extend=true adds time to current expiry.
+ * Plaintext is returned ONCE and never stored on Firebase. Treat it like a password.
+ */
+exports.adminIssuePremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
+ const actor=await requireAdmin(request),args=request.data||{};
+ const duration=String(args.duration||"").trim(),targetUid=String(args.uid||"").trim();
+ if(!ADMIN_DURATIONS.includes(duration))
+   throw new HttpsError("invalid-argument","Selecione 15 dias, 1, 3, 6, 12 meses ou vitalícia.");
+ if(targetUid&&!validUid(targetUid))
+   throw new HttpsError("invalid-argument","UID do beneficiário inválido.");
+ const now=Date.now(),plain=formatKey("admin:"+crypto.randomUUID());
+ const hash=sha(plain),ref=root().child("keys").child(hash);
+ const entRef=targetUid?root().child("entitlements").child(targetUid):null;
+ let oldEnt={};
+ if(entRef){
+   oldEnt=(await entRef.get()).val()||{};
+   if(oldEnt.revoked===true)
+     throw new HttpsError("failed-precondition","Esta licença está bloqueada. Reative o usuário primeiro.");
  }
- return {keys,limit:LIFETIME_LIMIT,serverNow:Date.now()};
+ const base=args.extend===true&&targetUid?
+   Math.max(now,Number(oldEnt.expiresAt||0)):now;
+ const expiry=periodExpiry(base,duration);
+ await ref.set({kind:"manual",duration,uid:targetUid||null,createdBy:actor,
+   createdAt:now,revoked:false,...(targetUid?
+   {claimedAt:now,...(expiry===null?{}:{expiresAt:expiry})}:{})});
+ if(targetUid){
+   const result=await entRef.transaction(old=>{
+     const value=old&&typeof old==="object"?old:{};
+     if(value.revoked===true)return;
+     // Extending an existing lifetime remains lifetime until explicitly replaced.
+     if(args.extend===true&&value.lifetime===true)return;
+     return {...value,kind:"manual",lifetime:duration==="lifetime",
+       currentKeyHash:hash,expiresAt:expiry};
+   },undefined,false);
+   if(!result.committed||result.snapshot.val()?.currentKeyHash!==hash){
+     await ref.update({revoked:true});
+     throw new HttpsError("failed-precondition","Licença não alterada.");
+   }
+   if(oldEnt.currentKeyHash&&oldEnt.currentKeyHash!==hash){
+     await root().child("keys").child(oldEnt.currentKeyHash).update({revoked:true,replacedBy:hash});
+   }
+ }
+ return {licenseKey:plain,duration,lifetime:expiry===null,expiresAt:expiry,
+   assigned:!!targetUid,uid:targetUid||null,serverNow:Date.now()};
 });
 
-/** Exactly two gift keys per activated lifetime friend: 10 friends * 2 = 20 gifts.
- * Gift validity begins at first redemption (12 calendar months), not issuance.
- */
-exports.getLifetimeGiftKeys=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
- const uid=requireUser(request);
- const entitlement=(await root().child("entitlements").child(uid).get()).val()||{};
- if(entitlement.lifetime!==true||!await userEntitlement(uid))
-   throw new HttpsError("permission-denied","Apenas amigos com licença vitalícia podem presentear.");
- const keys=[];
- for(let slot=1;slot<=GIFTS_PER_LIFETIME;slot++){
-   const plain=formatKey("gift:"+uid+":slot:"+slot),hash=sha(plain);
-   const ref=root().child("keys").child(hash);
-   const result=await ref.transaction(value=>value||{
-      kind:"gift",issuerUid:uid,slot,uid:null,createdAt:Date.now(),revoked:false
-   },undefined,false);
-   const entry=result.snapshot.val()||{};
-   keys.push({slot,licenseKey:plain,claimed:!!entry.uid,expiresAt:Number(entry.expiresAt||0)});
- }
- return {keys,giftsPerLifetime:GIFTS_PER_LIFETIME,serverNow:Date.now()};
-});
-
-/** Paid recovery remains backward-compatible. Lifetime and gift keys are single-use.
- * Gift recipient gets 12 calendar months from redemption; owner cannot self-redeem.
+/** Redeem user-held code once, except paid-code recovery which supports one transfer.
+ * Manual keys do not expire before first use. Expiry begins at redemption.
  */
 exports.redeemPremiumKey=onCall({region:REGION},async request=>{
- const uid=requireUser(request);
- const code=String(request.data?.licenseKey||"").trim().toUpperCase();
+ const uid=requireUser(request),code=String(request.data?.licenseKey||"").trim().toUpperCase();
  if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(code))
    throw new HttpsError("invalid-argument","Formato de chave inválido.");
  const hash=sha(code),keyRef=root().child("keys").child(hash);
  let entry=(await keyRef.get()).val();
  if(!entry||entry.revoked===true)
-   throw new HttpsError("not-found","Chave inexistente ou revogada.");
- const kind=entry.kind||"paid";
- if(kind==="lifetime"||kind==="gift"){
-   if(kind==="gift"){
-     if(uid===entry.issuerUid)
-       throw new HttpsError("permission-denied","Presente deve ser utilizado por outro amigo.");
-     // The gift must be backed by a genuine, active lifetime sponsor.
-     if(!await userEntitlement(String(entry.issuerUid||"")))
-       throw new HttpsError("failed-precondition","A licença que originou este presente não está ativa.");
-   }
-   const existingEnt=(await root().child("entitlements").child(uid).get()).val()||{};
-   if(existingEnt.lifetime===true&&kind==="gift")
-     throw new HttpsError("failed-precondition","Esta conta já tem licença vitalícia.");
-   const now=Date.now();
-   const moved=await keyRef.transaction(value=>{
-     if(!value||value.revoked===true||value.kind!==kind||value.uid&&value.uid!==uid)return;
+   throw new HttpsError("not-found","Chave inexistente ou bloqueada.");
+ if(entry.kind==="manual"){
+   if(entry.uid&&entry.uid!==uid)
+     throw new HttpsError("permission-denied","Esta chave já foi ativada em outra conta.");
+   const before=(await root().child("entitlements").child(uid).get()).val()||{};
+   if(before.revoked===true)
+     throw new HttpsError("failed-precondition","Sua conta está bloqueada pelo administrador.");
+   const now=Date.now(),start=now;
+   const claimed=await keyRef.transaction(value=>{
+     if(!value||value.revoked===true||value.kind!=="manual"||
+        value.uid&&value.uid!==uid)return;
      if(value.uid===uid)return value;
-     const expiry=kind==="gift"?
-       grantYearFrom(Math.max(now,Number(existingEnt.expiresAt)||0)):null;
-     return {...value,uid,claimedAt:now,...(kind==="gift"?{expiresAt:expiry}:{})};
+     const expiry=periodExpiry(start,value.duration);
+     return {...value,uid,claimedAt:now,...(expiry===null?{}:{expiresAt:expiry})};
    },undefined,false);
-   entry=moved.snapshot.val();
-   if(!moved.committed||entry?.uid!==uid)
-     throw new HttpsError("permission-denied","Chave já ativada em outra conta.");
-   const target=root().child("entitlements").child(uid);
-   await target.transaction(value=>{
-     const old=value&&typeof value==="object"?value:{};
-     if(old.revoked===true||kind==="gift"&&old.lifetime===true)return;
-     if(kind==="lifetime")
-       return {...old,kind:"lifetime",lifetime:true,currentKeyHash:hash,expiresAt:null};
-     return {...old,kind:"gift",lifetime:false,
-       expiresAt:Math.max(Number(old.expiresAt)||0,Number(entry.expiresAt)||0),
+   entry=claimed.snapshot.val();
+   if(!claimed.committed||entry?.uid!==uid)
+     throw new HttpsError("permission-denied","Chave já utilizada.");
+   const lifetime=entry.duration==="lifetime";
+   const entRef=root().child("entitlements").child(uid);
+   const applied=await entRef.transaction(old=>{
+     const v=old&&typeof old==="object"?old:{};
+     if(v.revoked===true)return;
+     if(v.lifetime===true&& !lifetime)return v;
+     return {...v,kind:"manual",lifetime,
+       expiresAt:lifetime?null:Math.max(Number(v.expiresAt||0),Number(entry.expiresAt||0)),
        currentKeyHash:hash};
    },undefined,false);
-   if(!await userEntitlement(uid))
-     throw new HttpsError("failed-precondition","A licença está bloqueada.");
-   return {activated:true,lifetime:kind==="lifetime",
-     expiresAt:kind==="lifetime"?null:Number(entry.expiresAt)};
+   if(!applied.committed||!await userEntitlement(uid))
+     throw new HttpsError("failed-precondition","Não foi possível ativar a licença.");
+   if(before.currentKeyHash&&before.currentKeyHash!==hash)
+     await root().child("keys").child(before.currentKeyHash).update({revoked:true,replacedBy:hash});
+   return {activated:true,duration:entry.duration,lifetime,expiresAt:lifetime?null:entry.expiresAt};
  }
+ // Paid keys stay redeemable for renewal/recovery of the same purchase.
  if(Number(entry.expiresAt||0)<=Date.now())
    throw new HttpsError("not-found","Chave vencida.");
  const oldUid=String(entry.uid||"");
@@ -363,16 +383,17 @@ exports.redeemPremiumKey=onCall({region:REGION},async request=>{
         value.revoked===true||value.expiresAt<=Date.now())return;
      return {...value,uid,transferred:true,transferredAt:Date.now()};
    },undefined,false);
-   if(!moved.snapshot.val()||moved.snapshot.val().uid!==uid)
-     throw new HttpsError("aborted","Chave em processamento. Tente novamente.");
+   if(!moved.committed||moved.snapshot.val()?.uid!==uid)
+     throw new HttpsError("aborted","Chave em processamento.");
  }
  entry=(await keyRef.get()).val();
  if(entry?.uid!==uid)throw new HttpsError("permission-denied","Chave inválida.");
- await root().child("entitlements").child(uid).transaction(v=>{
+ const target=root().child("entitlements").child(uid);
+ await target.transaction(v=>{
    const current=v&&typeof v==="object"?v:{};
    if(current.revoked===true)return;
    if(current.lifetime===true)return current;
-   return {...current,kind:"paid",
+   return {...current,kind:"paid",lifetime:false,
      expiresAt:Math.max(Number(current.expiresAt)||0,Number(entry.expiresAt)||0),
      currentKeyHash:hash};
  },undefined,false);
@@ -382,7 +403,7 @@ exports.redeemPremiumKey=onCall({region:REGION},async request=>{
 });
 
 /** Admin can extend by days or set an exact UTC expiry, without issuing a new key.
- * Lifetime grants remain deliberately separate and capped at 10.
+ * Lifetime grants remain permanent until revoked by the administrator.
  */
 exports.adminAdjustPremiumExpiry=onCall({region:REGION},async request=>{
  await requireAdmin(request);
