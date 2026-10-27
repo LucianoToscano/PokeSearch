@@ -21,8 +21,8 @@ const checks=[
  ["Controlled build is opt-in and normal APK unaffected",
   gradle.includes('val controlledDistribution = System.getenv("POKE_CONTROLLED_DISTRIBUTION") == "true"')&&
   gradle.includes('buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "false")')],
- ["Correct isolated Deus Ivern endpoint",
-  gradle.includes('https://pokesearch-premium-lcst.netlify.app/api/premium')],
+ ["Correct new PokeSearch Premium Netlify endpoint",
+  gradle.includes('https://pokesearch-premium-luc.netlify.app/api/premium')],
  ["Correct LT133 public Google OAuth client reused or overridden",
   gradle.includes('POKE_GOOGLE_WEB_CLIENT_ID')&&
   gradle.includes('CHAT_GOOGLE_WEB_CLIENT_ID')],
