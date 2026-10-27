@@ -160,7 +160,7 @@ exports.checkDistributionAccess=onCall({region:REGION},async request=>{
  return {allowed:enabled,premium,serverNow:Date.now()};
 });
 exports.createPremiumPix=onCall({region:REGION,
- secrets:[MP_TOKEN,MP_TEST_TOKEN,MP_WEBHOOK_URL]},async request=>{
+ secrets:[MP_TOKEN,MP_TEST_TOKEN]},async request=>{
  const uid=requireUser(request),email=String(request.data?.email||"").trim().toLowerCase();
  const code=Number(request.data?.versionCode);
  if(!isValidCode(code)||!await currentPolicy(code))
