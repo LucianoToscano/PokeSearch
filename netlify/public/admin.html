@@ -713,7 +713,13 @@
     el("login").hidden=!!user;
     el("logout").hidden=!user;
     if(user){overview();}
-    else{el("admin").hidden=true;el("licensing").hidden=true;el("key-management").hidden=true;}
+    else{
+      for(const id of ["admin","licensing","key-management","free-campaign-panel",
+        "app-version-panel","maintenance-panel","keys-panel"])
+        el(id).hidden=true;
+      lastKey="";revealed=false;el("premium-keys-list").replaceChildren();
+      keyCursor="";keyCount=0;
+    }
   });
 </script>
 </body>
