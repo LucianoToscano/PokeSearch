@@ -27,6 +27,10 @@ final class PremiumPurchaseDialog {
         TextView description=new TextView(activity);
         description.setText("Pokébola 1: gratuita. Pokébola 2: Premium por 30 dias após confirmação do Pix.");
         col.addView(description);
+        TextView pricePreview=new TextView(activity);
+        pricePreview.setText("Consultando preço no servidor...");
+        pricePreview.setTextSize(16);
+        col.addView(pricePreview);
         EditText email=new EditText(activity);
         email.setHint("Seu e-mail para o Pix");
         email.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
@@ -51,6 +55,7 @@ final class PremiumPurchaseDialog {
         col.addView(note);
         Button create=new Button(activity);
         create.setAllCaps(false);create.setText("Gerar Pix");
+        create.setEnabled(false);
         col.addView(create);
         TextView status=new TextView(activity);
         status.setText("Nenhum pagamento iniciado.");
@@ -147,6 +152,25 @@ final class PremiumPurchaseDialog {
         check.setOnClickListener(v->poll[0].run());
         dialog.setOnDismissListener(v->stop.run());
         dialog.show();
+        PremiumAccess.offer(activity,(result,error)->{
+            if(!dialog.isShowing())return;
+            if(error!=null){
+                pricePreview.setText("Não foi possível consultar o preço.");
+                create.setEnabled(false);return;
+            }
+            Object current=result.get("priceCents");
+            long cents=current instanceof Number?((Number)current).longValue():0L;
+            Object regular=result.get("regularPriceCents");
+            long usual=regular instanceof Number?((Number)regular).longValue():0L;
+            boolean promo=Boolean.TRUE.equals(result.get("promotionEnabled"));
+            String label=String.format(Locale.forLanguageTag("pt-BR"),
+                "Premium 30 dias: R$ %.2f",cents/100.0);
+            if(promo&&usual>cents)label+=String.format(Locale.forLanguageTag("pt-BR"),
+                " (promoção, antes R$ %.2f)",usual/100.0);
+            boolean enabled=Boolean.TRUE.equals(result.get("salesEnabled"))&&cents>=100;
+            pricePreview.setText(enabled?label:label+" · Pagamentos indisponíveis");
+            create.setEnabled(enabled);
+        });
         if(!activeOrder[0].isEmpty()){
             polling[0]=true;
             scheduled[0]=poll[0];
