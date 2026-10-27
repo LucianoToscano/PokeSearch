@@ -33,6 +33,12 @@
     #license{overflow-wrap:anywhere;font-family:ui-monospace,monospace;font-size:.98rem;padding:12px;background:#0d1725;border:1px solid #36445a;border-radius:10px;margin:12px 0}
     [hidden]{display:none!important}
     small{color:#a5afbe;line-height:1.55;display:block}
+    .key-card{background:#0e1928;border:1px solid #314153;border-radius:12px;padding:13px;margin:9px 0}
+    .key-card .actions button{font-size:.82rem;padding:10px;min-height:38px}
+    .key-meta{font-size:.8rem;color:#b0c1d2;line-height:1.5;overflow-wrap:anywhere}
+    .key-meta strong{color:#f3f5f8}
+    input.maintenance-note{background:#0d1725;color:#f3f5f8;border:1px solid #36445a;border-radius:10px;padding:12px;width:100%}
+    .danger-action{background:#613842!important;color:#fff!important}
   </style>
 </head>
 <body>
@@ -93,6 +99,26 @@
       <small>Guarde este código. Ele é exibido apenas nesta sessão e não deve ser compartilhado em prints. O resgate será testado separadamente.</small>
     </div>
   </section>
+  <section class="panel" id="maintenance-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Modo de manutenção · Aplicativo inteiro</h2>
+    <p>A manutenção fecha as duas Pokébolas e impede novas consultas nos APKs que tenham a verificação remota. Versões antigas sem essa função não podem ser desligadas retroativamente.</p>
+    <div class="row"><span class="label">Estado atual</span><strong id="maintenance-status">—</strong></div>
+    <label class="label" for="maintenance-message">Mensagem para os treinadores</label>
+    <input class="maintenance-note" id="maintenance-message" maxlength="180" value="PokeSearch temporariamente em manutenção.">
+    <div class="actions">
+      <button id="toggle-maintenance" class="secondary" disabled>Verificar manutenção</button>
+    </div>
+    <small>Somente o administrador pode mudar o estado. Alterações são registradas no Firebase. É necessário que o usuário esteja online para receber o novo estado.</small>
+  </section>
+  <section class="panel" id="keys-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Todas as licenças Premium</h2>
+    <p>Consulte as chaves em páginas de 30, copie as recuperáveis, suspenda/reative e altere vencimentos sem remover o histórico.</p>
+    <small>Por segurança, antigas chaves manuais foram salvas apenas como hash e <strong>não podem ser copiadas novamente</strong>. As novas chaves manuais ficam em cofre criptografado; licenças pagas podem ser recuperadas pelo administrador.</small>
+    <div class="actions"><button class="secondary" id="refresh-keys">Atualizar lista</button></div>
+    <div id="premium-keys-list" aria-live="polite"></div>
+    <div class="actions"><button class="secondary" id="load-more-keys" hidden>Carregar mais</button></div>
+    <small id="keys-count"></small>
+  </section>
   <section class="panel" id="key-management" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Testar ou cancelar um código</h2>
     <p>Cole o código aqui. <strong>Cancelar</strong> invalida o código manual permanentemente; <strong>resgatar</strong> ativa a licença na sua conta conectada. Nenhuma das ações gera cobrança.</p>
@@ -120,7 +146,8 @@
   const auth=getAuth(app);
   const el=id=>document.getElementById(id);
   const LT134_VERSION_CODE=54339;
-  let lastKey="",revealed=false,busy=false;
+  let lastKey="",revealed=false,busy=false,keyBusy=false,keyCursor="",keyCount=0;
+  let maintenanceEnabled=false;
   let configState={salesEnabled:false,paymentsLiveEnabled:false,
     globalEnabled:false,lt134Enabled:false,otherVersionsActive:[]};
   const setStatus=(message,kind="")=>{el("status").textContent=message;el("status").className=kind};
@@ -148,6 +175,10 @@
       setStatus("Verificando permissão administrativa no servidor…");
       const data=await call("adminPremiumOverview");
       el("account").textContent=auth.currentUser?.email||"Conta autenticada";
+      maintenanceEnabled=data.appMaintenanceEnabled===true;
+      el("maintenance-status").textContent=maintenanceEnabled?"ATIVA — aplicativo bloqueado":"Desativada — aplicativo liberado";
+      el("toggle-maintenance").disabled=false;
+      el("toggle-maintenance").textContent=maintenanceEnabled?"Desativar manutenção":"Ativar manutenção";
       const enabledVersions=data.versions&&typeof data.versions==="object"?data.versions:{};
       const others=Object.entries(enabledVersions).filter(([code,enabled])=>
         code!==String(LT134_VERSION_CODE)&&enabled===true).map(([code])=>code);
@@ -171,12 +202,17 @@
       el("admin").hidden=false;
       el("licensing").hidden=false;
       el("key-management").hidden=false;
+      el("maintenance-panel").hidden=false;
+      el("keys-panel").hidden=false;
+      if(!keyBusy)loadPremiumKeys(true);
       setStatus(configState.salesEnabled&&configState.paymentsLiveEnabled?
         "Administrador confirmado. Atenção: vendas e Pix real estão habilitados.":"Administrador confirmado pelo servidor.","ok");
     }catch(e){
       el("admin").hidden=true;
       el("licensing").hidden=true;
       el("key-management").hidden=true;
+      el("maintenance-panel").hidden=true;
+      el("keys-panel").hidden=true;
       setStatus(e.message||"Não foi possível confirmar seu acesso.","error");
     }finally{busy=false;el("refresh").disabled=false;}
   }
@@ -242,8 +278,139 @@
     await signOut(auth);
     lastKey="";revealed=false;el("license").textContent="";el("issued").hidden=true;
     el("admin").hidden=true;el("licensing").hidden=true;el("key-management").hidden=true;
+    el("maintenance-panel").hidden=true;el("keys-panel").hidden=true;
+    el("premium-keys-list").replaceChildren();keyCursor="";keyCount=0;
     el("key-entry").value="";
     setStatus("Sessão encerrada.");
+  });
+
+  const ptDate=value=>value>0?new Date(value).toLocaleString("pt-BR"):"Sem vencimento";
+  const actionButton=(title,handler)=>{
+    const btn=document.createElement("button");
+    btn.className="secondary";btn.type="button";btn.textContent=title;
+    btn.addEventListener("click",handler);return btn;
+  };
+  function renderPremiumKey(item){
+    const article=document.createElement("div");article.className="key-card";
+    const heading=document.createElement("strong");
+    heading.textContent=(item.kind==="paid"?"💳 Pagamento":"🔑 Licença manual")+
+      " · "+item.id.slice(0,10)+"…";
+    article.appendChild(heading);
+    const info=document.createElement("div");info.className="key-meta";
+    const rows=[
+      "Situação: "+item.status+(item.suspended?" (pode ser reativada)":""),
+      "Período: "+(item.duration||"não informado"),
+      "Usuário: "+(item.uid||"Ainda não vinculada"),
+      "Criada: "+ptDate(item.createdAt),
+      "Validade: "+(item.duration==="lifetime"?"Vitalícia":ptDate(item.expiresAt))
+    ];
+    info.textContent=rows.join(" · ");
+    article.appendChild(info);
+    const actions=document.createElement("div");actions.className="actions";
+    const copy=actionButton(item.copyAvailable?"Copiar chave":"Cópia indisponível",async()=>{
+      if(!window.confirm("Revelar esta chave Premium e copiar para a área de transferência?"))
+        return;
+      copy.disabled=true;
+      try{
+        const result=await call("adminRevealPremiumKey",{id:item.id});
+        if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(result.licenseKey||""))
+          throw new Error("Código inválido.");
+        if(navigator.clipboard?.writeText){
+          await navigator.clipboard.writeText(result.licenseKey);
+          setStatus("Chave copiada. Não a compartilhe em capturas de tela.","ok");
+        }else{
+          window.prompt("Copie a chave (ela só aparecerá nesta janela):",result.licenseKey);
+          setStatus("Código exibido para cópia segura.","ok");
+        }
+      }catch(e){setStatus(e.message||"Não foi possível copiar.","error");}
+      finally{copy.disabled=false;}
+    });
+    copy.disabled=!item.copyAvailable;
+    actions.appendChild(copy);
+    if(item.editable){
+      const toggle=actionButton(item.suspended?"Habilitar":"Desabilitar",async()=>{
+        const enabled=item.suspended;
+        if(!window.confirm((enabled?"Reativar":"Suspender")+
+           " esta licença? O acesso Premium será atualizado na próxima verificação."))return;
+        toggle.disabled=true;
+        try{
+          await call("adminSetPremiumKeyEnabled",{id:item.id,enabled});
+          setStatus(enabled?"Licença reativada.":"Licença suspensa.","ok");
+          await loadPremiumKeys(true);
+        }catch(e){setStatus(e.message||"Falha ao alterar licença.","error");}
+        finally{toggle.disabled=false;}
+      });
+      actions.appendChild(toggle);
+      const adjust=actionButton(item.uid?"Ajustar dias":"Alterar período",async()=>{
+        let payload={id:item.id};
+        if(!item.uid){
+          const duration=window.prompt("Duração: 15d, 30d, 1m, 3m, 6m, 12m ou lifetime",
+            item.duration||"30d");
+          if(duration===null)return;
+          if(!["15d","30d","1m","3m","6m","12m","lifetime"].includes(duration.trim())){
+            setStatus("Duração inválida.","error");return;
+          }
+          payload={...payload,action:"duration",duration:duration.trim()};
+        }else{
+          if(item.duration==="lifetime"){
+            setStatus("Licenças vitalícias não têm prazo finito. Use Desabilitar.","error");return;
+          }
+          const days=window.prompt("Digite dias para somar (+) ou retirar (-). Ex.: +30 ou -15",
+            "+30");
+          if(days===null)return;
+          if(!/^[+-]?\d+$/.test(days.trim())||Number(days)===0||Math.abs(Number(days))>3650){
+            setStatus("Informe um número inteiro de -3650 a +3650, diferente de zero.","error");return;
+          }
+          payload={...payload,action:"adjustDays",days:Number(days)};
+        }
+        if(!window.confirm("Confirmar alteração do prazo desta licença?"))return;
+        adjust.disabled=true;
+        try{
+          await call("adminChangePremiumKeyDuration",payload);
+          setStatus("Prazo atualizado no Firebase.","ok");
+          await loadPremiumKeys(true);
+        }catch(e){setStatus(e.message||"Não foi possível alterar o prazo.","error");}
+        finally{adjust.disabled=false;}
+      });
+      actions.appendChild(adjust);
+    }
+    article.appendChild(actions);
+    return article;
+  }
+  async function loadPremiumKeys(reset=false){
+    if(keyBusy)return;
+    keyBusy=true;
+    el("refresh-keys").disabled=true;el("load-more-keys").disabled=true;
+    if(reset){keyCursor="";keyCount=0;el("premium-keys-list").replaceChildren();}
+    try{
+      const result=await call("adminListPremiumKeys",{cursor:keyCursor,limit:30});
+      for(const item of result.keys||[]){
+        el("premium-keys-list").appendChild(renderPremiumKey(item));
+        keyCount++;
+      }
+      keyCursor=result.nextCursor||"";
+      el("load-more-keys").hidden=result.hasMore!==true;
+      el("keys-count").textContent=keyCount+" licenças exibidas"+
+        (result.hasMore?". Há mais licenças para carregar.":".");
+      if(keyCount===0)el("keys-count").textContent="Nenhuma licença registrada.";
+    }catch(e){setStatus(e.message||"Falha ao consultar licenças.","error");}
+    finally{keyBusy=false;el("refresh-keys").disabled=false;el("load-more-keys").disabled=false;}
+  }
+  el("refresh-keys").addEventListener("click",()=>loadPremiumKeys(true));
+  el("load-more-keys").addEventListener("click",()=>loadPremiumKeys(false));
+  el("toggle-maintenance").addEventListener("click",async()=>{
+    if(busy)return;
+    const enabled=!maintenanceEnabled;
+    const prompt=enabled?
+      "ATIVAR MANUTENÇÃO PARA TODOS? Os aplicativos LT134 com controle remoto fecharão as duas Pokébolas, e novas cobranças serão bloqueadas até a reativação.":
+      "ENCERRAR MANUTENÇÃO? O aplicativo voltará a funcionar após confirmar o novo estado no servidor.";
+    if(!window.confirm(prompt))return;
+    busy=true;el("toggle-maintenance").disabled=true;
+    try{
+      await call("adminSetAppMaintenance",{enabled,message:el("maintenance-message").value});
+      setStatus(enabled?"Manutenção ativada no servidor.":"Manutenção desativada no servidor.","ok");
+    }catch(e){setStatus(e.message||"Falha ao alterar manutenção.","error");}
+    finally{busy=false;el("toggle-maintenance").disabled=false;await overview();}
   });
   el("refresh").addEventListener("click",overview);
   el("issue").addEventListener("click",async()=>{
