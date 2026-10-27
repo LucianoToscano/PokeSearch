@@ -33,7 +33,8 @@ const checks=[
   oauth.includes("GoogleAuthProvider.getCredential")],
  ["Premium access lease uses elapsed time, install ID is never treated as license",
    access.includes("SystemClock.elapsedRealtime()")&&
-   access.includes('getSharedPreferences("premium_install_identity"')&&
+   access.includes('getNoBackupFilesDir()')&&
+   access.includes('p2-install-id-v1')&&
    access.includes('java.util.UUID.randomUUID().toString()')&&
    !access.includes("android.provider.Settings.Secure.ANDROID_ID")],
  ["Maintenance and per-version availability use HTTPS with bounded timeouts",
@@ -61,8 +62,11 @@ const checks=[
  ["Premium user can sign out or switch account from Home, even with active P2",
    ui.includes('"Conta Premium  ·  Gerenciar / Sair"')&&
    ui.includes('accountPremium.setOnClickListener(v->showPremiumAccountOptions())')&&
-   ui.includes('setPositiveButton("Sair da conta"')&&
-   ui.includes('setNeutralButton("Trocar conta"')&&
+   ui.includes('"Sair da conta","Trocar conta Google"')&&
+   ui.includes('logoutPremiumAccount(boolean switchAccount)')&&
+   ui.includes('PremiumAccess.releaseDevice(this,')&&
+   ui.includes('PremiumAccess.sessionInfo(this,')&&
+   ui.includes('"Transferir Premium para outro aparelho"')&&
    ui.includes('stopService(new Intent(this,SecondaryOverlayService.class));')&&
    ui.includes('PremiumAccess.invalidateLease();')&&
    ui.includes('PremiumGoogleLogin.signOut(this,')&&
