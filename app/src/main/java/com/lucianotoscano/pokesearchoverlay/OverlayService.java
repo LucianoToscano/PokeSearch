@@ -3010,6 +3010,7 @@ public class OverlayService extends Service {
         detailManuallyPositioned=false;
         coordinateRequestToken++; // Invalidates pending site callbacks after dismiss.
         selected=-1;
+        offeredCapture=null;offeredGeneration=-1;
         // UX-DETAIL-TIMER-01: pause JS countdown while detail WebView is hidden.
         js(detailPanel,detailLoaded,"window.pauseDetailTimer()");
         if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
@@ -3095,10 +3096,59 @@ public class OverlayService extends Service {
             }
         });
     }
+    // LT129: one optional, nonblocking inline action in the currently open
+    // detail card. Silent long-press copies NEVER open a modal or steal game focus.
+    private JSONObject offeredCapture;
+    private int offeredGeneration=-1;
+    private final java.util.Set<String> sharedCaptureKeys=new java.util.HashSet<>();
+    private String captureKey(JSONObject item){
+        return requestGeneration+"|"+item.optString("sourceIndex","")+"|"+
+            item.optString("number","")+"|"+item.optString("name","")+"|"+
+            item.optString("cp","")+"|"+item.optString("iv","");
+    }
+    private void offerCaptureAfterCopy(){
+        if(stopped||selected<0||detailRoot==null||
+           detailRoot.getVisibility()!=View.VISIBLE||!detailLoaded)return;
+        try{
+            JSONArray array=new JSONArray(results);
+            if(selected>=array.length())return;
+            JSONObject card=array.getJSONObject(selected);
+            if(card.optString("name","").isEmpty()||sharedCaptureKeys.contains(captureKey(card)))return;
+            offeredCapture=new JSONObject(card.toString());
+            offeredGeneration=requestGeneration;
+            js(detailPanel,detailLoaded,"window.offerCaptureShare()");
+        }catch(Exception ignored){}
+    }
+    private void confirmCaptureShare(int sourceIndex){
+        JSONObject offer=offeredCapture;
+        if(offer==null||offeredGeneration!=requestGeneration||stopped||loginPaused||
+           !currentCoordinateTarget(offer)||selected<0||
+           detailRoot==null||detailRoot.getVisibility()!=View.VISIBLE||
+           offer.optInt("sourceIndex",-99)!=sourceIndex)return;
+        // No coordinates, location, Trainer ID, IV or encounter data is posted.
+        String key=captureKey(offer);
+        if(sharedCaptureKeys.contains(key))return;
+        offeredCapture=null; // one in-flight submission per confirmed tap
+        String name=offer.optString("name","");
+        boolean shiny=offer.optBoolean("shiny",false);
+        CaptureSharePublisher.publish(this,name,shiny,(success,message)->handler.post(()->{
+            if(stopped)return;
+            if(success)sharedCaptureKeys.add(key);
+            else if(selected>=0&&requestGeneration==offeredGeneration)
+                offeredCapture=offer;
+            if(selected>=0&&detailRoot!=null&&detailRoot.getVisibility()==View.VISIBLE
+               &&requestGeneration==offeredGeneration)
+                js(detailPanel,detailLoaded,"window.captureShareFeedback("+success+","+
+                   JSONObject.quote(message)+")");
+        }));
+    }
     private void copyCoordinatesInternal(String value){
         String coords=extractCoordinates(value);
         ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-        if(cb!=null&&!coords.isEmpty())cb.setPrimaryClip(ClipData.newPlainText("Pokémon coordinates",coords));
+        if(cb!=null&&!coords.isEmpty()){
+            cb.setPrimaryClip(ClipData.newPlainText("Pokémon coordinates",coords));
+            offerCaptureAfterCopy();
+        }
     }
     private String extractCoordinates(String input){
         java.util.regex.Matcher m=java.util.regex.Pattern.compile("^\\s*([-+]?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*([-+]?\\d{1,3}(?:\\.\\d+)?)\\s*$").matcher(input==null?"":input);
@@ -3191,9 +3241,16 @@ public class OverlayService extends Service {
             String valid=extractCoordinates(coords);
             if(valid.isEmpty()){js(detailPanel,detailLoaded,"window.copyFeedback("+JSONObject.quote("Coordenadas inválidas")+")");return;}
             ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-            if(clipboard!=null){clipboard.setPrimaryClip(ClipData.newPlainText("Coordenadas Pokémon",valid));js(detailPanel,detailLoaded,"window.copyFeedback("+JSONObject.quote("✓ Copiado!")+ ")");}
+            if(clipboard!=null){
+                clipboard.setPrimaryClip(ClipData.newPlainText("Coordenadas Pokémon",valid));
+                js(detailPanel,detailLoaded,"window.copyFeedback("+JSONObject.quote("✓ Copiado!")+ ")");
+                offerCaptureAfterCopy();
+            }
         });}
 
+        @JavascriptInterface public void confirmCaptureShare(int sourceIndex){
+            handler.post(()->OverlayService.this.confirmCaptureShare(sourceIndex));
+        }
         @JavascriptInterface public void setLocation(boolean enabled,String coords,int radius){handler.post(()->{
             // Validate BEFORE mutating even the confirmed-state flag. An invalid
             // clipboard or hand-typed coordinate must not discard a proven filter.
