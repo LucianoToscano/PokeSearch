@@ -38,9 +38,11 @@ jobs:
         run: |
           node --check functions/index.js
           node --check functions/premium.js
+          node --check functions/premium-device-state.cjs
           node --check netlify/functions/premium.mjs
           node --check netlify/lib/cloud-compat.cjs
           node netlify/tests/premium-hosting.test.cjs
+          node functions/tests/premium-device-state.test.js
           node app/tests/premium-controlled-distribution.test.js
           node functions/tests/premium-webhook.test.js
       - name: Preserve existing dual overlay regressions
