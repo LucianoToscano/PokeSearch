@@ -292,6 +292,8 @@
       // normal base sprite for a verified costumed Pokémon.
       var costumeId=x.costume_id===undefined||x.costume_id===null?null:
         optionalNumberSafe(x.costume_id,0,100000,true);
+      var formId=x.form_id==null?null:optionalNumberSafe(x.form_id,0,100000,true);
+      if(x.form_id!=null&&formId===null){rejected++;continue;}
       if(x.costume_id!=null&&costumeId===null){rejected++;continue;}
       var end=typeof x.despawn_at==="string"?Date.parse(x.despawn_at):NaN;
       if(!Number.isFinite(end)) {rejected++;continue;}
@@ -316,6 +318,8 @@
         form:clean(x.form,70),costume:clean(x.costume,70),
         costume_id:costumeId
       };
+      // Preserve upstream form ID for exact sprite matching, never guess it.
+      if(formId!==null) entry.form_id=formId;
       if(Number.isFinite(end)) entry.expiresAtMs=end;
       cards.push(entry);
       if(cards.length>=cap) break;
