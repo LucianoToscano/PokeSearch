@@ -942,3 +942,158 @@ exports.claimFreeYear=onCall({region:REGION,secrets:[KEY_SECRET]},async request=
  return {activated:true,duration,lifetime:duration==="lifetime",
    expiresAt:duration==="lifetime"?null:Number(key.expiresAt),serverNow:Date.now()};
 });
+
+
+/**
+ * Owner-only portable RTDB backup, independent of Netlify deployments.
+ * License codes remain stored as AES-GCM vault records (not plaintext).
+ * The new host MUST retain the same 64-hex POKE_PREMIUM_KEY_SECRET to decrypt
+ * manual license vaults and validate reserved recipient e-mail HMACs.
+ * Payments credentials and Firebase service accounts are never exported.
+ */
+const BACKUP_COLLECTIONS=Object.freeze([
+ "keys","entitlements","orders","orderIndex","paymentIndex","paymentThrottle"
+]);
+const BACKUP_SINGLETONS=Object.freeze(["config","distribution","appControl"]);
+const BACKUP_ALL=Object.freeze([...BACKUP_COLLECTIONS,...BACKUP_SINGLETONS]);
+const BACKUP_FORMAT="PokeSearch-Premium-Backup-v1";
+const BACKUP_LIMIT=20;
+const backupFingerprint=()=>crypto.createHash("sha256")
+ .update("POKESEARCH-VAULT-COMPATIBILITY-V1:"+KEY_SECRET.value()).digest("hex");
+const backupRef=section=>section==="distribution"?policy():
+ section==="appControl"?getDatabase().ref("appControl"):root().child(section);
+const validBackupKey=key=>typeof key==="string"&&key.length>=1&&key.length<=150&&
+ !/[.#$\[\]\/\u0000-\u001F\u007F]/.test(key)&&key!=="__proto__"&&
+ key!=="prototype"&&key!=="constructor";
+const checkBackupObject=(value,maximumBytes=48000)=>{
+ if(!value||typeof value!=="object"||Array.isArray(value))
+   throw new HttpsError("invalid-argument","Dados de backup inválidos.");
+ const raw=JSON.stringify(value);
+ if(!raw||Buffer.byteLength(raw,"utf8")>maximumBytes)
+   throw new HttpsError("invalid-argument","Lote de backup grande demais.");
+ const traverse=(node,depth)=>{
+   if(depth>24)throw new HttpsError("invalid-argument","Profundidade inválida.");
+   if(node&&typeof node==="object"){
+     if(Array.isArray(node)){
+       if(node.length>500)throw new HttpsError("invalid-argument","Lista inválida.");
+       node.forEach(x=>traverse(x,depth+1));
+     }else{
+       for(const [key,x] of Object.entries(node)){
+         if(!validBackupKey(key))throw new HttpsError("invalid-argument","Campo de backup inválido.");
+         traverse(x,depth+1);
+       }
+     }
+   }else if(typeof node==="string"&&node.length>15000)
+     throw new HttpsError("invalid-argument","Valor de backup inválido.");
+ };
+ traverse(value,0);return value;
+};
+exports.adminExportPremiumBackupPage=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
+ await requireAdmin(request);
+ const section=String(request.data?.section||"");
+ if(!BACKUP_ALL.includes(section))throw new HttpsError("invalid-argument","Seção inválida.");
+ const cursor=String(request.data?.cursor||"");
+ if(cursor&&!validBackupKey(cursor))throw new HttpsError("invalid-argument","Marcador inválido.");
+ const metadata={format:BACKUP_FORMAT,projectId:"pokesearch-lt",
+   vaultFingerprint:backupFingerprint(),serverNow:Date.now()};
+ if(BACKUP_SINGLETONS.includes(section)){
+   if(cursor)throw new HttpsError("invalid-argument","Marcador inesperado.");
+   const data=(await backupRef(section).get()).val()||{};
+   checkBackupObject(data,150000);
+   return {...metadata,section,records:data,nextCursor:"",complete:true};
+ }
+ let query=backupRef(section).orderByKey();
+ if(cursor)query=query.startAt(cursor);
+ const snap=await query.limitToFirst(BACKUP_LIMIT+2).get();
+ const rows=Object.entries(snap.val()||{}).sort(([a],[b])=>a.localeCompare(b))
+   .filter(([key])=>key!==cursor);
+ const page=rows.slice(0,BACKUP_LIMIT),records=Object.fromEntries(page);
+ checkBackupObject(records,150000);
+ return {...metadata,section,records,complete:rows.length<=BACKUP_LIMIT,
+   nextCursor:rows.length>BACKUP_LIMIT?page[page.length-1][0]:""};
+});
+/**
+ * Import is deliberately allowed ONLY into a genuinely empty Premium target.
+ * A Netlify hostname change pointing at the SAME Firebase requires no restore.
+ * Session lives outside user records; writes are idempotent and never overwrite
+ * a different license, order, user entitlement or administrative policy.
+ */
+exports.adminRestorePremiumBackup=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
+ const uid=await requireAdmin(request),input=request.data||{};
+ const phase=String(input.phase||"");
+ const sessionRef=getDatabase().ref("premiumBackupImports/active");
+ const importedSections=BACKUP_ALL;
+ if(phase==="prepare"){
+   if(input.format!==BACKUP_FORMAT||input.projectId!=="pokesearch-lt"||
+      input.vaultFingerprint!==backupFingerprint())
+     throw new HttpsError("failed-precondition",
+       "Backup incompatível: mantenha o mesmo Firebase e POKE_PREMIUM_KEY_SECRET.");
+   if(input.confirm!=="IMPORTAR EM BASE VAZIA")
+     throw new HttpsError("failed-precondition","Confirmação de restauração inválida.");
+   const checks=await Promise.all(importedSections.map(async section=>
+     (await backupRef(section).get()).val()));
+   if(checks.some(v=>v!==null&&v!==undefined&&
+       (typeof v!=="object"||Object.keys(v).length>0)))
+     throw new HttpsError("failed-precondition",
+       "O Firebase já possui dados Premium/controle. Não importe sobre dados existentes. Ao trocar somente o Netlify, basta apontar ao Firebase atual.");
+   const session={id:crypto.randomUUID(),uid,format:BACKUP_FORMAT,
+     createdAt:Date.now(),expiresAt:Date.now()+45*60000,
+     vaultFingerprint:backupFingerprint(),state:"restoring"};
+   const created=await sessionRef.transaction(old=>{
+     if(old&&old.state==="restoring"&&old.expiresAt>Date.now())return;
+     return session;
+   },undefined,false);
+   if(!created.committed)
+     throw new HttpsError("aborted","Já existe restauração em andamento.");
+   return {sessionId:session.id,ready:true,expiresAt:session.expiresAt};
+ }
+ const sessionId=String(input.sessionId||"");
+ if(!/^[0-9a-f-]{36}$/i.test(sessionId))
+   throw new HttpsError("invalid-argument","Sessão de importação inválida.");
+ const session=(await sessionRef.get()).val();
+ if(!session||session.id!==sessionId||session.uid!==uid||
+    session.state!=="restoring"||session.expiresAt<Date.now())
+   throw new HttpsError("failed-precondition","Sessão inexistente, encerrada ou expirada.");
+ if(phase==="write"){
+   const section=String(input.section||""),data=checkBackupObject(input.records);
+   if(!importedSections.includes(section))
+     throw new HttpsError("invalid-argument","Seção inválida.");
+   if(BACKUP_COLLECTIONS.includes(section)&&
+      Object.keys(data).length>BACKUP_LIMIT)
+     throw new HttpsError("invalid-argument","Muitos registros no lote.");
+   if(BACKUP_SINGLETONS.includes(section)&&
+      Buffer.byteLength(JSON.stringify(data),"utf8")>48000)
+     throw new HttpsError("invalid-argument","Configuração grande demais.");
+   // Require valid Firebase keys; no path injection and no overwrite of
+   // records that may have been created by a user in the meantime.
+   const ref=backupRef(section);
+   const update=BACKUP_SINGLETONS.includes(section)?
+      (section==="config"?{...data,salesEnabled:false,paymentsLiveEnabled:false,
+        ...(data.freeYearCampaign?{freeYearCampaign:{
+          ...data.freeYearCampaign,enabled:false}}:{})}:data):data;
+   const result=await ref.transaction(existing=>{
+     if(BACKUP_SINGLETONS.includes(section)){
+       if(existing&&Object.keys(existing).length>0)return;
+       return update;
+     }
+     const current=existing&&typeof existing==="object"?existing:{};
+     for(const [key,record] of Object.entries(data)){
+       if(!validBackupKey(key))return;
+       if(Object.prototype.hasOwnProperty.call(current,key)&&
+           JSON.stringify(current[key])!==JSON.stringify(record))return;
+     }
+     return {...current,...data};
+   },undefined,false);
+   if(!result.committed)
+     throw new HttpsError("aborted","Conflito de dados. Nenhum registro existente foi substituído.");
+   return {imported:Object.keys(data).length,section};
+ }
+ if(phase==="finish"){
+   const result=await sessionRef.transaction(old=>
+     old&&old.id===sessionId&&old.uid===uid&&old.state==="restoring"?
+       {...old,state:"completed",completedAt:Date.now()}:undefined,undefined,false);
+   if(!result.committed)throw new HttpsError("aborted","Falha ao finalizar restauração.");
+   return {completed:true,paymentsLiveEnabled:false,salesEnabled:false};
+ }
+ throw new HttpsError("invalid-argument","Operação de backup inválida.");
+});
