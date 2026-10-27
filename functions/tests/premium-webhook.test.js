@@ -56,6 +56,11 @@ let payment={id:mpOrderId,type:"online",external_reference:orderId,live_mode:fal
  transactions:{payments:[{id:"PAY01JP84C939T20S0P1DN6FCMWQC",amount:"5.00",
    status:"processed",status_detail:"accredited",
    payment_method:{id:"pix",type:"bank_transfer"}}]}};
+const pixPaymentId="987654321098";
+let pixPayment={
+ id:Number(pixPaymentId),external_reference:"",status:"pending",status_detail:"pending_waiting_transfer",
+ payment_method_id:"pix",currency_id:"BRL",live_mode:false,transaction_amount:5.00
+};
 let fetchCalls=0;
 global.fetch=async(url,options)=>{
  fetchCalls++;
@@ -66,6 +71,20 @@ global.fetch=async(url,options)=>{
  if(url.endsWith("/v1/orders")&&options?.method==="POST")return {
   ok:true,text:async()=>JSON.stringify({id:"ORD01JP84C939T20S0P1DN6FCMWQC",
    transactions:{payments:[{payment_method:{qr_code:"000201010212-FAKE-PIX"}}]}})
+ };
+ if(url.endsWith("/v1/payments")&&options?.method==="POST"){
+   const request=JSON.parse(options.body);
+   assert.equal(request.transaction_amount,5);
+   assert.equal(request.payment_method_id,"pix");
+   assert.equal(request.description,"PokeSearch Premium - Pokebola 2 - 30 dias");
+   assert.ok(options.headers["X-Idempotency-Key"]);
+   pixPayment.external_reference=request.external_reference;
+   return {ok:true,text:async()=>JSON.stringify({
+     id:Number(pixPaymentId),
+     point_of_interaction:{transaction_data:{qr_code:"000201010212-PIX-TEST"}}})};
+ }
+ if(url.endsWith("/v1/payments/"+pixPaymentId))return {
+   ok:true,text:async()=>JSON.stringify(pixPayment)
  };
  throw Error("Unexpected Orders API call "+url);
 };
@@ -261,6 +280,39 @@ async function run(){
  assert.equal(state.premium,true);
  assert.equal(read("premium/entitlements/namedFriend").lifetime,true);
  console.log("PASS owner can assign/extend/convert individual licenses to lifetime");
+ // Payments API uses numeric payment IDs, not Orders IDs.
+ // A valid signed but pending Pix must not activate P2.
+ const pixOrder=await premium.createPremiumPix({auth:{uid:"payerPix"},
+   data:{versionCode:54328,email:"buyer@example.org"}});
+ assert.equal(pixOrder.status,"pending");
+ assert.equal(pixOrder.pixCode,"000201010212-PIX-TEST");
+ const pixTs=String(Date.now()),pixManifest="id:"+pixPaymentId.toLowerCase()+";request-id:request-P;ts:"+pixTs+";";
+ const pixMac=crypto.createHmac("sha256",SECRET.POKE_MP_WEBHOOK_SECRET).update(pixManifest).digest("hex");
+ const pixReq=signature=>({method:"POST",query:{"data.id":pixPaymentId,type:"payment"},
+   get:key=>({"x-signature":signature,"x-request-id":"request-P"}[key])});
+ res=response();await premium.premiumPixWebhook(pixReq("bad"),res);
+ assert.equal(res.code,401);
+ assert.equal(read("premium/entitlements/payerPix"),undefined);
+ res=response();await premium.premiumPixWebhook(pixReq("ts="+pixTs+",v1="+pixMac),res);
+ assert.equal(res.code,200);
+ assert.equal(read("premium/entitlements/payerPix"),undefined,"pending Pix must not grant license");
+ pixPayment.status="approved";pixPayment.status_detail="accredited";
+ res=response();await premium.premiumPixWebhook(pixReq("ts="+pixTs+",v1="+pixMac),res);
+ assert.equal(res.code,200);
+ let pixEnt=read("premium/entitlements/payerPix");
+ assert.equal(pixEnt.paidOrders[pixOrder.orderId],true);
+ const originalPixExpiry=pixEnt.expiresAt;
+ const pixOrderStatus=await premium.getPremiumOrder({auth:{uid:"payerPix"},
+   data:{orderId:pixOrder.orderId}});
+ assert.equal(pixOrderStatus.status,"approved");
+ res=response();await premium.premiumPixWebhook(pixReq("ts="+pixTs+",v1="+pixMac),res);
+ assert.equal(res.code,200);
+ assert.equal(read("premium/entitlements/payerPix").expiresAt,originalPixExpiry);
+ pixPayment.status="refunded";pixPayment.status_detail="refunded";
+ res=response();await premium.premiumPixWebhook(pixReq("ts="+pixTs+",v1="+pixMac),res);
+ assert.equal(res.code,200);
+ assert.equal(read("premium/entitlements/payerPix").revoked,true);
+ console.log("PASS Payments API signed Pix webhook, pending, approved, replay, refund"); 
  console.log("PASS premium server integration mock scenarios");
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});
