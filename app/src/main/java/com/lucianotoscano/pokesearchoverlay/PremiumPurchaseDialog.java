@@ -87,17 +87,23 @@ final class PremiumPurchaseDialog {
         LinearLayout planTop=new LinearLayout(activity);
         planTop.setOrientation(LinearLayout.HORIZONTAL);
         planTop.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        TextView planTitle=label(activity,"30 dias de Premium",17,text,true);
+        TextView planTitle=label(activity,"Premium · 30 dias",17,text,true);
         planTop.addView(planTitle,new LinearLayout.LayoutParams(0,-2,1));
-        TextView promoBadge=label(activity,"PROMOÇÃO",10,0xFF0C2537,true);
+        TextView promoBadge=label(activity,"50% OFF",11,0xFF0C2537,true);
         promoBadge.setPadding(dp(activity,9),dp(activity,5),dp(activity,9),dp(activity,5));
         promoBadge.setBackground(round(activity,teal,20,teal));
         planTop.addView(promoBadge);
         plan.addView(planTop);
-        TextView pricePreview=label(activity,"Consultando preço...",19,0xFF83C5FF,true);
-        plan.addView(pricePreview,space(activity,0,dp(activity,5),0,0));
-        plan.addView(label(activity,"Outras durações: ativação por chave Premium",11,subtext,false),
-            space(activity,0,dp(activity,3),0,0));
+        TextView normalPrice=label(activity,"Preço normal: R$ 10,00",12,subtext,false);
+        plan.addView(normalPrice,space(activity,0,dp(activity,5),0,0));
+        TextView pricePreview=label(activity,"Consultando preço...",24,0xFF83C5FF,true);
+        plan.addView(pricePreview,space(activity,0,dp(activity,3),0,0));
+        TextView discountCopy=label(activity,"",12,teal,true);
+        discountCopy.setVisibility(View.GONE);
+        plan.addView(discountCopy,space(activity,0,dp(activity,2),0,0));
+        TextView promoCountdown=label(activity,"",12,0xFFE3D7A4,true);
+        promoCountdown.setVisibility(View.GONE);
+        plan.addView(promoCountdown,space(activity,0,dp(activity,4),0,0));
         col.addView(plan,space(activity,0,0,0,dp(activity,13)));
 
         LinearLayout freeOffer=new LinearLayout(activity);
@@ -218,6 +224,39 @@ final class PremiumPurchaseDialog {
                 :pending.getString("latestOrderId","");
         final String[] activeOrder={pendingId},pix={""},key={""};
         final Handler handler=new Handler(Looper.getMainLooper());
+        final long[] expiresAt={0L},timeOffset={0L};
+        final Runnable[] promoClock={null};
+        promoClock[0]=new Runnable(){
+            @Override public void run(){
+                if(!dialog.isShowing())return;
+                long left=expiresAt[0]-(System.currentTimeMillis()+timeOffset[0]);
+                if(expiresAt[0]<=0L||left<=0L){
+                    promoCountdown.setVisibility(View.GONE);
+                    if(expiresAt[0]>0L){
+                        expiresAt[0]=0L;canSell[0]=false;create.setEnabled(false);
+                        PremiumAccess.offer(activity,(current,error)->{
+                            if(!dialog.isShowing()||error!=null)return;
+                            long cents=current.get("priceCents") instanceof Number?
+                                ((Number)current.get("priceCents")).longValue():0;
+                            pricePreview.setText(String.format(Locale.forLanguageTag("pt-BR"),
+                                "R$ %.2f",cents/100.0));
+                            promoBadge.setVisibility(View.GONE);
+                            discountCopy.setVisibility(View.GONE);
+                            canSell[0]=Boolean.TRUE.equals(current.get("salesEnabled"))&&cents>=100;
+                            create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&canSell[0]);
+                        });
+                    }
+                    return;
+                }
+                long seconds=(left+999L)/1000L;
+                long days=seconds/86400L,hours=(seconds%86400L)/3600L,
+                    minutes=(seconds%3600L)/60L,sec=seconds%60L;
+                promoCountdown.setText(String.format(Locale.forLanguageTag("pt-BR"),
+                    "Oferta termina em %02dd %02dh %02dm %02ds",days,hours,minutes,sec));
+                promoCountdown.setVisibility(View.VISIBLE);
+                handler.postDelayed(this,1000L);
+            }
+        };
         final boolean[] polling={false};
         final Runnable[] scheduled={null};
         Runnable stop=()->{
@@ -282,7 +321,10 @@ final class PremiumPurchaseDialog {
                     pixPanel.setVisibility(View.GONE);
                     fitPopup.run();
                     PremiumAccess.verify(activity,(allowed,premium)->{
-                        if(dialog.isShowing()&&premium&&whenActivated!=null)whenActivated.run();
+                        if(dialog.isShowing()&&premium){
+                        dialog.dismiss();
+                        if(whenActivated!=null)whenActivated.run();
+                    }
                     });
                 }else if("pending".equals(state)){
                     status.setText("Aguardando confirmação do Pix. A verificação é automática.");
@@ -304,7 +346,10 @@ final class PremiumPurchaseDialog {
                 if(error!=null){status.setText(error);return;}
                 status.setText("Chave ativada! Segunda Pokébola liberada.");
                 PremiumAccess.verify(activity,(allowed,premium)->{
-                    if(dialog.isShowing()&&premium&&whenActivated!=null)whenActivated.run();
+                    if(dialog.isShowing()&&premium){
+                        dialog.dismiss();
+                        if(whenActivated!=null)whenActivated.run();
+                    }
                 });
             });
         });
@@ -367,7 +412,10 @@ final class PremiumPurchaseDialog {
         copyPix.setOnClickListener(v->copy(activity,"Pix copia e cola",pix[0]));
         keyCopy.setOnClickListener(v->copy(activity,"Chave Premium",key[0]));
         check.setOnClickListener(v->poll[0].run());
-        dialog.setOnDismissListener(v->stop.run());
+        dialog.setOnDismissListener(v->{
+            stop.run();
+            handler.removeCallbacks(promoClock[0]);
+        });
         dialog.show();
         if(dialog.getWindow()!=null){
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
@@ -389,11 +437,27 @@ final class PremiumPurchaseDialog {
             Object regular=result.get("regularPriceCents");
             long usual=regular instanceof Number?((Number)regular).longValue():0L;
             boolean promo=Boolean.TRUE.equals(result.get("promotionEnabled"));
-            promoBadge.setVisibility(promo?View.VISIBLE:View.GONE);
+            long deadline=result.get("promotionEndsAt") instanceof Number?
+                ((Number)result.get("promotionEndsAt")).longValue():0L;
+            long serverNow=result.get("serverNow") instanceof Number?
+                ((Number)result.get("serverNow")).longValue():System.currentTimeMillis();
+            timeOffset[0]=serverNow-System.currentTimeMillis();
+            int percent=promo&&usual>cents?(int)Math.round(100.0*(usual-cents)/usual):0;
+            promoBadge.setVisibility(percent>0?View.VISIBLE:View.GONE);
+            promoBadge.setText(percent+"% OFF");
+            normalPrice.setText(String.format(Locale.forLanguageTag("pt-BR"),
+                "Preço normal  R$ %.2f",usual/100.0));
+            normalPrice.setPaintFlags(percent>0?
+                normalPrice.getPaintFlags()|android.graphics.Paint.STRIKE_THRU_TEXT_FLAG:
+                normalPrice.getPaintFlags()&~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
             String priceLabel=String.format(Locale.forLanguageTag("pt-BR"),
                 "R$ %.2f",cents/100.0);
-            if(promo&&usual>cents)priceLabel+=String.format(Locale.forLanguageTag("pt-BR"),
-                " · antes R$ %.2f",usual/100.0);
+            discountCopy.setText(percent+"% de desconto por tempo limitado");
+            discountCopy.setVisibility(percent>0?View.VISIBLE:View.GONE);
+            expiresAt[0]=promo&&deadline>serverNow?deadline:0L;
+            handler.removeCallbacks(promoClock[0]);
+            if(expiresAt[0]>0L)promoClock[0].run();
+            else promoCountdown.setVisibility(View.GONE);
             boolean enabled=Boolean.TRUE.equals(result.get("salesEnabled"))&&cents>=100;
             pricePreview.setText(enabled?priceLabel:priceLabel+" · Pagamentos indisponíveis");
             canSell[0]=enabled;
