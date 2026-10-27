@@ -53,3 +53,6 @@ exports.reconcileCounters=onSchedule({
    undefined,false);
  await db.ref("stats/public").update(counts);
 });
+
+// Separate premium billing/control from legacy presence counters.
+Object.assign(exports,require("./premium"));
