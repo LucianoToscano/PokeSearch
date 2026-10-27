@@ -9,7 +9,14 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-database")
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
 }
+
+// OAuth web client ID is public but must originate from the Firebase project configuration.
+// Empty disables admin sign-in safely; never derive identity from PoGoCoordinates WebView text.
+val chatGoogleClientId = System.getenv("POKE_CHAT_GOOGLE_WEB_CLIENT_ID")?.trim() ?: ""
+if (chatGoogleClientId.isNotEmpty() && !Regex("[0-9]+-[A-Za-z0-9_-]+\\.apps\\.googleusercontent\\.com").matches(chatGoogleClientId))
+    throw org.gradle.api.GradleException("Invalid Firebase chat Google web OAuth client ID")
 
 // Stable internal-test signing is optional for local development, but mandatory
 // for the CI distribution workflow. Never store the keystore or passwords in Git.
@@ -88,6 +95,7 @@ android {
         buildConfigField("String", "EXPECTED_ASSET_SHA256", "\"$assetChecksums\"")
         buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA", "false")
         buildConfigField("boolean", "SCRAPBOOK_ONLINE_QA", "false")
+        buildConfigField("String", "CHAT_GOOGLE_WEB_CLIENT_ID", "\\\"$chatGoogleClientId\\\"")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
     }
