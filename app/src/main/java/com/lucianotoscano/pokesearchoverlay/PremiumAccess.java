@@ -27,12 +27,49 @@ final class PremiumAccess {
     private static long leaseElapsed=-1L;
     private static boolean globallyAllowed=false,secondAllowed=false;
     private static long lastRequest=0L;
+    private static boolean conflict=false;
+    private static String anotherDevice="";
     private PremiumAccess(){}
+    /**
+     * Random local installation identifier: no Android ID/IMEI or permissions.
+     * Firebase stores only a UID-scoped SHA-256, never this identifier.
+     */
+    private static String deviceId(Context context){
+        android.content.SharedPreferences prefs=context.getApplicationContext()
+            .getSharedPreferences("premium_install_identity",Context.MODE_PRIVATE);
+        String id=prefs.getString("install_id","");
+        if(id.matches("(?i)^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"))
+            return id;
+        id=java.util.UUID.randomUUID().toString();
+        if(!prefs.edit().putString("install_id",id).commit())
+            throw new IllegalStateException("Não foi possível salvar o identificador deste aparelho.");
+        return id;
+    }
+    private static String deviceName(){
+        return (android.os.Build.MANUFACTURER+" "+android.os.Build.MODEL).trim();
+    }
+    static synchronized boolean deviceConflict(){return conflict;}
+    static synchronized String activeDeviceName(){return anotherDevice;}
+    static void transferDevice(Context context,ResultCallback callback){
+        Map<String,Object> data=new HashMap<>();
+        try{
+            data.put("deviceId",deviceId(context));
+            data.put("deviceName",deviceName());
+            data.put("versionCode",BuildConfig.VERSION_CODE);
+            data.put("confirm",true);
+        }catch(RuntimeException error){
+            callback.done(new HashMap<>(),"Não foi possível identificar esta instalação.");
+            return;
+        }
+        call(context,"transferPremiumDevice",data,callback);
+    }
     static boolean controlled(){return BuildConfig.CONTROLLED_DISTRIBUTION;}
     static synchronized void invalidateLease(){
         ++lastRequest; // A response started under an old account must not restore access.
         globallyAllowed=false;
         secondAllowed=false;
+        conflict=false;
+        anotherDevice="";
         leaseElapsed=-1L;
     }
     static synchronized boolean permitted(boolean secondary){
@@ -47,6 +84,13 @@ final class PremiumAccess {
         if(!controlled()){callback.done(true,true);return;}
         Map<String,Object> payload=new HashMap<>();
         payload.put("versionCode",BuildConfig.VERSION_CODE);
+        try{
+            payload.put("deviceId",deviceId(context));
+            payload.put("deviceName",deviceName());
+        }catch(RuntimeException error){
+            callback.done(true,false);
+            return;
+        }
         final long seq;
         synchronized(PremiumAccess.class){seq=++lastRequest;}
         call(context,"checkDistributionAccess",payload,(response,error)->{
@@ -60,6 +104,8 @@ final class PremiumAccess {
             boolean premium=global&&Boolean.TRUE.equals(response.get("premium"));
             synchronized(PremiumAccess.class){
                 globallyAllowed=global;secondAllowed=premium;
+                conflict=error==null&&Boolean.TRUE.equals(response.get("deviceConflict"));
+                anotherDevice=conflict?String.valueOf(response.get("activeDeviceName")):"";
                 leaseElapsed=error==null?SystemClock.elapsedRealtime():-1L;
             }
             callback.done(global,premium);
