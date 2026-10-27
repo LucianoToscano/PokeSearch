@@ -9,7 +9,6 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-database")
-    implementation("com.google.firebase:firebase-functions")
 }
 
 // Stable internal-test signing is optional for local development, but mandatory
@@ -94,6 +93,7 @@ android {
         buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA", "false")
         buildConfigField("boolean", "SCRAPBOOK_ONLINE_QA", "false")
         buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "false")
+        buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-api.netlify.app/api/premium\"")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
     }
