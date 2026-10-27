@@ -251,6 +251,24 @@ public class OverlayService extends Service {
             JSONObject config=new JSONObject(filterConfigJson());
             config.put("mode",mode);
             config.put("shiny",shiny);
+            // Only a trainer previously verified from this site's own profile
+            // may be selected for account-specific Shiny results.
+            if(shiny){
+                android.content.SharedPreferences prefs=getSharedPreferences("prefs",MODE_PRIVATE);
+                String selected=prefs.getString("profileTrainerCode","");
+                boolean valid=false;
+                try{
+                    JSONArray list=new JSONArray(prefs.getString("profileTrainerList","[]"));
+                    for(int i=0;i<list.length();i++){
+                        JSONObject account=list.optJSONObject(i);
+                        if(account!=null&&selected.equals(account.optString("code"))){
+                            valid=true;break;
+                        }
+                    }
+                }catch(Exception ignored){}
+                if(valid&&selected.matches("[0-9]{12}"))
+                    config.put("shinyAccount",selected);
+            }
             config.put("locationEnabled",locationEnabled);
             config.put("locationCoords",locationEnabled?locationCoords:"");
             if(locationEnabled)config.put("locationRadius",locationRadius);
