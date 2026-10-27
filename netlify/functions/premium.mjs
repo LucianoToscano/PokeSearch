@@ -67,33 +67,34 @@ export default async function handler(req,context){
    }
  }
  if(method!=="POST")return response({error:"Method not allowed"},405);
- if(!allowedActions.has(action)&&action!=="webhook")
+ if(!allowedActions.has(action)&&action!=="webhook"&&action!=="webhook-live")
    return response({error:"Not found"},404);
  if(Number(req.headers.get("content-length")||0)>12000)
    return response({error:"Payload too large"},413);
  try{
    const {backend,auth}=initialize();
-   if(action==="webhook"){
+   if(action==="webhook"||action==="webhook-live"){
      const url=new URL(req.url);
      const query=Object.fromEntries(url.searchParams.entries());
-     // Mercado Pago's Orders simulator may provide topic/id only in its JSON body.
-     // Treat those as routing hints ONLY; the HMAC signature below must still
-     // authenticate the exact order id before any reconciliation.
+     // Signed payment events from Payments API, plus old Orders notifications.
+     // JSON is only an optional routing hint, never proof of payment.
      let event={};
      try{
        const parsed=await req.json();
        if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed))event=parsed;
-     }catch{ /* A missing body can never bypass HMAC validation. */ }
+     }catch{ /* Reconciliation remains HMAC-authenticated. */ }
      const queryTopic=url.searchParams.get("type");
-     if((queryTopic&&queryTopic!=="order")||
-        (event.type&&event.type!=="order")||
-        (!queryTopic&&event.type!=="order"))
+     const eventTopic=typeof event.type==="string"?event.type:"";
+     const topic=queryTopic||eventTopic;
+     if((topic!=="payment"&&topic!=="order")||
+        (queryTopic&&eventTopic&&queryTopic!==eventTopic))
        return response({error:"Unsupported webhook topic"},400);
-     if(!query["data.id"]&&typeof event.data?.id==="string")
-       query["data.id"]=event.data.id;
+     query.type=topic;
+     if(!query["data.id"]&&event.data&&event.data.id!=null)
+       query["data.id"]=String(event.data.id);
      let outStatus=200,outBody="ok";
-     // Verified business logic calls Mercado Pago GET; webhook body cannot issue a license.
-     const request={method,query,get:header=>req.headers.get(header)};
+     const request={method,query,liveModeWebhook:action==="webhook-live",
+       get:header=>req.headers.get(header)};
      const answer={
        status(code){outStatus=code;return this;},
        send(body){outBody=body;return this;}
