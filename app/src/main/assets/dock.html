@@ -6783,6 +6783,35 @@ function pooledBaseSprite(url){
  while(spriteRequestCache.size>96)spriteRequestCache.delete(spriteRequestCache.keys().next().value);
  return entry.promise;
 }
+// LT124: share exact official form resolver with results and detail.
+// Unverified costumes continue to display a neutral placeholder, never base art.
+function exactSuggestionSprite(item){
+ const dex=Number(item&&item.dex),label=String(item&&item.label||"");
+ const engine=window.PokeSearchOfflineSprite;
+ if(!engine||!Number.isInteger(dex)||dex<1||!label)return "";
+ const art=engine.resolve({number:"#"+dex,form:label,name:"",image:"",shiny:false});
+ return art.officialForm||art.offline&&/\/forms\//.test(art.src)?art.src:"";
+}
+function pooledExactSprite(url){
+ const valid=/^(?:file:\/\/\/android_asset\/pokemon-sprites\/forms\/[a-z0-9-]+\.png|https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/[a-f0-9]{40}\/sprites\/pokemon\/(?:shiny\/)?10[0-9]{3}\.png)$/.test(url);
+ if(!valid)return Promise.resolve("");
+ const previous=spriteRequestCache.get(url),now=Date.now();
+ if(previous&&(!previous.failedAt||now-previous.failedAt<SPRITE_FAILURE_RETRY_MS))return previous.promise;
+ const entry={promise:null,failedAt:0};
+ entry.promise=new Promise(resolve=>{
+  const image=new Image();let finished=false;
+  const timer=setTimeout(()=>{if(!finished){finished=true;entry.failedAt=Date.now();resolve("");}},6000);
+  image.onload=()=>{if(finished)return;finished=true;clearTimeout(timer);
+   if(image.naturalWidth>=8&&image.naturalHeight>=8)resolve(url);
+   else{entry.failedAt=Date.now();resolve("");}};
+  image.onerror=()=>{if(finished)return;finished=true;clearTimeout(timer);
+   entry.failedAt=Date.now();resolve("");};
+  image.src=url;
+ });
+ spriteRequestCache.set(url,entry);
+ while(spriteRequestCache.size>96)spriteRequestCache.delete(spriteRequestCache.keys().next().value);
+ return entry.promise;
+}
 // Saved chips reuse official sprite URLs, never synthetic form IDs.
 const pokemonSuggestionSpriteCache=new Map();
 let pokemonSiteSelections=[],pokemonSiteSelectionVerified=false,pokemonSuggestionSource="dom";
@@ -6827,7 +6856,9 @@ window.onPokemonSuggestions=response=>{
  for(const option of pokemonSuggestions){
   const label=String(option?.label||"").trim();
   const src=String(option?.image||"");
-  if(label&&/^https:\/\//.test(src))pokemonSuggestionSpriteCache.set(label.toLowerCase(),src);
+  const exact=exactSuggestionSprite(option);
+  if(label&&(exact||/^https:\/\//.test(src)))
+   pokemonSuggestionSpriteCache.set(label.toLowerCase(),exact||src);
  }
  const state=String(response.state||"");
  pokemonSuggestionStatus=state==="ready"&&pokemonSuggestions.length?"":
@@ -6853,7 +6884,11 @@ function drawPokemonSuggestions(){
   const button=document.createElement("button");button.type="button";
   button.className="pokemonCandidate"+(exists?" chosen":"");
   button.title=label;button.setAttribute("aria-pressed",String(exists));
-  const safeImage=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/\d{1,4}\.png$/.test(String(item.image||""));
+  const exactSource=exactSuggestionSprite(item);
+  const safeBase=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/\d{1,4}\.png$/.test(String(item.image||""))&&
+   !/(?:COPY|GOGGLES|COSTUME|HAT|EVENT|SPECIAL|SHADOW)/i.test(label)&&
+   (!label.includes("_")||/_NORMAL$/i.test(label));
+  const safeImage=Boolean(exactSource)||safeBase;
   const placeholder=document.createElement("span");
   placeholder.className="pokemonChipSprite";placeholder.textContent="◉";
   placeholder.setAttribute("aria-hidden","true");
@@ -6861,13 +6896,13 @@ function drawPokemonSuggestions(){
    button.appendChild(placeholder);
    // One shared request for repeated base species inside this WebView.
    // The response is cached in decoded memory by Image; no forms are guessed.
-   pooledBaseSprite(item.image).then(src=>{
+   (exactSource?pooledExactSprite(exactSource):pooledBaseSprite(item.image)).then(src=>{
     if(!src||!button.isConnected||!placeholder.isConnected)return;
     const img=document.createElement("img");img.src=src;img.alt="";
     img.loading="eager";img.decoding="async";
     img.onerror=()=>{
      // A failed WebView load is transient, not a permanent "no sprite" fact.
-     spriteRequestCache.delete(item.image);
+     spriteRequestCache.delete(exactSource||item.image);
      if(img.isConnected)img.replaceWith(placeholder);
     };
     placeholder.replaceWith(img);
@@ -6918,6 +6953,7 @@ function renderPokemonChoices(){
  input.type="search";input.autocomplete="off";input.placeholder="Nome, forma ou número #";
  input.value=pokemonQuery;input.maxLength=65;input.setAttribute("aria-label","Pesquisar espécies e formas oficiais");
  input.oninput=()=>{pokemonQuery=input.value.trim();pokemonSuggestions=[];
+  const list=document.getElementById("pokemonCandidates");if(list)list.scrollTop=0;
   pokemonSuggestionStatus="Pesquisando no PoGoCoordinates...";
   drawPokemonSuggestions();requestPokemonSuggestions(pokemonQuery);};
  input.onfocus=()=>{if(Native.locationEditor)Native.locationEditor(true);};

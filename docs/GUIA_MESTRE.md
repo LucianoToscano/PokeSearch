@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT124 — Correção de sprites no picker + Firebase retry (26/10/2026)
+- Base LT123 `ed712bfe716257b27c7937bb3a97c8f53382f5bb`: botões P1/P2 no topo com ícones `sem_filtro.png` OFF e `personalizado.png` ON já estavam implementados, mantidos.
+- Aliases oficiais confirmados: `DARMANITAN_GALARIAN_STANDARD` 10177, `DARMANITAN_GALARIAN_ZEN` 10178 e `Squawkabilly White` 10262 (Blue 10260 / Yellow 10261). Pesquisa Pokémon usa resolvedor de sprite exata já compartilhado por cards/resultados, sem atribuir sprite comum a trajes `GOGGLES_2026`, `COPY_2019`. Busca rola ao primeiro candidato novo.
+- `FirebaseStats`: recupera nova tentativa de inicialização/autenticação após falha e reutiliza app nomeado sem erro de inicialização repetida. Contadores públicos **não podem apresentar números reais sem RTDB rules e Functions efetivamente implantadas**; nenhuma implantação remota foi confirmada.
+- Testes LT124 em Node, compilar Android/R8, conferência de ícones/assinatura no APK QA `0.01.24/54328` por workflow. Detalhes em [LT124](POKESEARCH_LT124_SPRITES_PICKER_FIREBASE_20261026.md). É QA, não release estável. Testes Samsung e formas GO ainda pendentes.
+
+
+
 ## LT123 — Merge + APK QA assinado (26/10/2026)
 - [PR #78](https://github.com/LucianoToscano/PokeSearch/pull/78) **MERGED**, commit `5365ce277c171a1b4055ca433dd7bca7169c74ba`. PR #77 ficou superada pela integração cumulativa LT122/123. SOURCE_COMMIT APK `6a15743b6c26b72b5ef57f6a5de40093dc430883`.
 - **Build assinada SUCCESS:** [GitHub Actions #40423724854](https://github.com/LucianoToscano/PokeSearch/actions/runs/40423724854), artifact [#12698283902](https://github.com/LucianoToscano/PokeSearch/actions/runs/40423724854/artifacts/12698283902). Versão QA `0.01.23` / `54327`, pacote inalterado `com.lucianotoscano.pokesearch`, APK `PokeSearch-v0.01.23-LT-Chat-Sprites-Stats-QA.apk`, **41.837.342 bytes**, SHA-256 `d810f13097113f818ca99e55d533855296fd7602747c888727eb291fd59fc493` (confere `SHA256SUMS.txt`). Assinatura Android v2 válida com certificado original SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.

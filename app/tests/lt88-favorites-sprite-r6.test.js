@@ -27,7 +27,7 @@ check("PokeAPI cache deduplicates in-flight fetches and retries failed cache",()
  assert.ok(dock.includes("const SPRITE_FAILURE_RETRY_MS=30000"));
  assert.ok(dock.includes("spriteRequestCache.set(url,entry)"));
  assert.ok(dock.includes("if(!src)entry.failedAt=Date.now()"));
- assert.ok(dock.includes("spriteRequestCache.delete(item.image)"));
+ assert.ok(dock.includes("spriteRequestCache.delete(exactSource||item.image)"));
  assert.ok(dock.includes("spriteRequestCache.size>96"));
  assert.ok(dock.includes("primaryWatch=setTimeout(useMirror,2400)"));
  assert.ok(dock.includes("mirrorWatch=setTimeout(()=>finish(\"\"),3500)"));

@@ -3595,7 +3595,7 @@ test("LT62: direct refresh, long press AUTO and official sprite-only chips",()=>
  return dock.includes('if(id==="period"){manualRefreshTap();return;}')&&
    dock.includes('button.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();open();})')&&
    dock.includes('if(choiceOpen==="period")closeChoices();else toggleChoices("period")')&&
-   dock.includes('pokemonSuggestionSpriteCache.set(label.toLowerCase(),src);')&&
+   dock.includes('pokemonSuggestionSpriteCache.set(label.toLowerCase(),exact||src);')&&
    dock.includes('pokemonSuggestionSpriteCache.get(String(name).toLowerCase())');
 });
 test("LT62 AUTO refresh icon and long press must never double trigger a search",()=>{
