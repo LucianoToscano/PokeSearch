@@ -13,8 +13,18 @@ usa a nova checagem. Não lançar este candidato sem implantar as funções.
 - APK de distribuição: **sem prazo de expiração**. Controle remoto global e individual por versionCode.
 - P1: gratuita enquanto a edição for autorizada online.
 - P2: requer licença Premium ativa no servidor, obtida com Pix ou chave de recuperação.
-- Premium: cada pagamento aprovado e distinto soma exatamente 30 dias ao vencimento vigente
+- Premium comprado: R$ 10,00 por 30 dias, com promoção de R$ 5,00 inicialmente ativada por
+  tempo indeterminado até o proprietário desligar ou alterar os preços no painel.
+- Cada pagamento aprovado e distinto soma exatamente 30 dias ao vencimento vigente
   (se já vencido, soma a partir do momento da aprovação).
+- Licenças manuais/presente: o proprietário escolhe individualmente 15 dias, 1 mês,
+  3 meses, 6 meses, 12 meses ou vitalícia; NÃO há limite de 10 amigos nem de presentes.
+  Chaves não atribuídas começam a contar apenas na ativação pelo destinatário.
+  Chaves diretamente vinculadas a um UID começam a contar na concessão pelo administrador.
+- O proprietário pode ampliar a licença existente, escolher outro período ou convertê-la
+  em vitalícia; os prazos de meses são de calendário, não 30 dias multiplicados.
+- Chaves manuais são emitidas pelo servidor e só são exibidas UMA vez ao administrador;
+  salvar/compartilhar com cuidado. São vinculadas a um UID na primeira ativação.
 - A chave PS-... gerada por pedido fica vinculada a um UID Firebase, permite no máximo uma
   migração mediante posse da chave e respeita o vencimento original. Guarde-a com segurança.
 - Alterar data ou limpar dados Android não renova um direito de acesso. O cliente usa lease
@@ -41,6 +51,7 @@ usa a nova checagem. Não lançar este candidato sem implantar as funções.
 O projeto Android já usa Firebase Auth anônimo + RTDB com FirebaseApp nomeado PokeSearchStats.
 Novas callables HTTPS (região us-central1):
 checkDistributionAccess, createPremiumPix, getPremiumOrder, redeemPremiumKey,
+getPremiumOffer, adminIssuePremiumKey, adminAdjustPremiumExpiry,
 adminDistributionControl, adminPremiumSettings, adminPremiumOverview.
 Nova função HTTPS para webhook: premiumPixWebhook.
 
@@ -58,8 +69,10 @@ O botão Admin fica no toque longo na marca PokeSearch na Home, apenas na ediç�
 cada operação revalida a claim no servidor, mesmo se alguém reproduzir a interface.
 
 Configurar a primeira versão controlada em distribution/versions/<versionCode>=true,
-distribution/globalEnabled=true, premium/config/priceCents=<preço em centavos>,
-premium/config/salesEnabled=true. Estes caminhos não têm leitura/escrita pública.
+distribution/globalEnabled=true, premium/config/regularPriceCents=1000,
+premium/config/promotionalPriceCents=500, premium/config/promotionEnabled=true,
+premium/config/salesEnabled=true APENAS após checkout homologado.
+Esses caminhos não têm leitura/escrita pública.
 Também testar que o projeto e a instância RTDB correspondem ao deploy real, configurar
 App Check/Play Integrity para APK sideloaded e avaliar faturamento Cloud Functions v2.
 NÃO ligar vendas antes da homologação de pagamento TESTE, estorno e renovação.
@@ -82,9 +95,17 @@ NÃO ligar vendas antes da homologação de pagamento TESTE, estorno e renovaç�
 
 ## Observações e limites
 - A versão normal NÃO passa a cobrar pela Pokébola 2 automaticamente.
+- Novas modalidades manuais dependem do administrador, nunca de pagamentos falsos.
 - O webhook/ativação em produção, cobrança real, Firebase App Check e APK assinado distribuível
   **ainda não foram executados**. CI verde não prova aprovação do Mercado Pago ou Samsung.
 - O certificado e o código instalado podem ser adulterados em dispositivos sob controle de
   terceiros. Nenhum mecanismo somente Android é inviolável; esta solução conserva as decisões
   e os segredos no servidor, valida e expira autorizações breves.
 - Não usar nem expor o token PoGoCoordinates neste sistema de pagamentos.
+
+## Revisão de requisitos — 27/10/2026
+A solicitação de 10 amigos vitalícios + 20 presentes foi **substituída** por administração
+sem quotas: uma licença por emissão, período individual (15d/1m/3m/6m/12m/vitalícia)
+e escolha explícita do destinatário. O proprietário pode gerar quantas licenças
+vitalícias ou temporárias quiser. As chaves manuais gratuitas não alteram o
+checkout Pix padrão de 30 dias; o preço da oferta é determinado pelo servidor.
