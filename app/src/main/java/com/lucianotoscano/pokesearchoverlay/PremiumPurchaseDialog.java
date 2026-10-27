@@ -69,7 +69,9 @@ final class PremiumPurchaseDialog {
         ScrollView scroller=new ScrollView(activity);scroller.addView(col);
         AlertDialog dialog=new AlertDialog.Builder(activity).setTitle("Pokébola 2 · Premium")
                 .setView(scroller).setNegativeButton("Fechar",null).create();
-        final String[] activeOrder={""},pix={""},key={""};
+        // This local order ID is only a bookmark; the SERVER still verifies ownership.
+        android.content.SharedPreferences pending=activity.getSharedPreferences("premium_order_reference",0);
+        final String[] activeOrder={pending.getString("latestOrderId","")},pix={""},key={""};
         final Handler handler=new Handler(Looper.getMainLooper());
         final boolean[] polling={false};
         final Runnable[] scheduled={null};
@@ -128,6 +130,7 @@ final class PremiumPurchaseDialog {
                 create.setEnabled(true);
                 if(error!=null){status.setText(error);return;}
                 activeOrder[0]=String.valueOf(result.get("orderId"));
+                pending.edit().putString("latestOrderId",activeOrder[0]).apply();
                 pix[0]=String.valueOf(result.get("pixCode"));
                 Object cents=result.get("priceCents");
                 long amount=cents instanceof Number?((Number)cents).longValue():0;
@@ -144,6 +147,11 @@ final class PremiumPurchaseDialog {
         check.setOnClickListener(v->poll[0].run());
         dialog.setOnDismissListener(v->stop.run());
         dialog.show();
+        if(!activeOrder[0].isEmpty()){
+            polling[0]=true;
+            scheduled[0]=poll[0];
+            handler.postDelayed(scheduled[0],1000L);
+        }
     }
     private static void copy(Context ctx,String label,String data){
         if(data==null||data.isEmpty())return;
