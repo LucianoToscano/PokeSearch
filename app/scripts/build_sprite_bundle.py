@@ -189,6 +189,11 @@ def main():
         target.write_bytes(data)
         form_hashes[output] = hashlib.sha256(data).hexdigest()
 
+    # LT125: recover all 80 exact regional/seasonal PNGs from the uploaded
+    # LT116 pack, but do not overwrite newer application JS/HTML or protections.
+    from fetch_form_sprites import fetch_verified_forms
+    form_hashes.update(fetch_verified_forms(dest))
+
     # Pin exact GO costume icons by repository commit + Git object SHA1.
     # Reject redirected HTML, mismatched bytes and missing normal/shiny art.
     costume_hashes = {}
