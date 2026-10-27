@@ -134,6 +134,7 @@
   </section>
   <section class="panel" id="licensing" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Licenças Premium manuais</h2>
+    <details class="advanced"><summary>Gerar uma licença manual</summary>
     <p>Emita uma licença gratuita de homologação ou cortesia. O prazo começa no resgate; nenhuma cobrança é efetuada.</p>
     <label class="label" for="license-duration">Duração da licença</label>
     <select id="license-duration" style="display:block;margin:9px 0 14px;width:100%;padding:13px;background:#0d1725;color:#f3f5f8;border:1px solid #36445a;border-radius:10px">
@@ -156,6 +157,7 @@
       <div class="actions"><button id="copy" class="secondary">Copiar código</button><button id="reveal" class="secondary">Mostrar código</button></div>
       <small>Guarde este código. Ele é exibido apenas nesta sessão e não deve ser compartilhado em prints. O resgate será testado separadamente.</small>
     </div>
+      </details>
   </section>
   <section class="panel" id="free-campaign-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">FREE! · Premium por tempo limitado</h2>
@@ -234,6 +236,7 @@
 
   <section class="panel" id="partners-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">🎟️ Cupons e divulgadores</h2>
+    <details class="advanced"><summary>Gerenciar cupons e comissões</summary>
     <p>Crie um código para cada parceiro. O comprador recebe 10%, 25% ou 50% de desconto e o divulgador acumula <strong>50% do valor realmente pago</strong>.</p>
     <small>O desconto é calculado sobre o preço vigente no checkout, inclusive quando existe promoção de R$ 5. Nada é cobrado até o cliente confirmar o Pix; o parceiro só acumula após aprovação.</small>
     <label class="label" for="partner-coupon-code">Cupom (4 a 24 caracteres)</label>
@@ -272,9 +275,11 @@
     <div id="partner-commissions-list" aria-live="polite"></div>
     <button id="more-partner-commissions" class="secondary" hidden>Carregar mais comissões</button>
     <small>Reembolso ou contestação cancela a comissão pendente. Se já tiver sido paga, o histórico marcará a necessidade de conciliação. A plataforma não realiza repasses automáticos.</small>
+      </details>
   </section>
   <section class="panel" id="backup-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">💾 Backup e restauração</h2>
+    <details class="advanced"><summary>Exportar ou restaurar backup</summary>
     <p>Exporte as licenças, chaves, histórico de pagamentos Pix, validade, campanhas, preços e regras dos APKs. O arquivo é <strong>criptografado no navegador</strong> com a senha que você escolher.</p>
     <small>Importante: ao trocar somente de Netlify, mantendo o Firebase pokesearch-lt, os registros já continuam disponíveis. Nesse caso, NÃO importe: use o mesmo Firebase e a mesma chave POKE_PREMIUM_KEY_SECRET. Esta área serve como cópia de segurança ou recuperação de um banco vazio.</small>
     <label class="label" for="backup-password">Senha do arquivo (mínimo de 12 caracteres)</label>
@@ -298,9 +303,11 @@
     </div>
     <p id="backup-progress" role="status" aria-live="polite"></p>
     <small>Importação nunca substitui licenças, pagamentos ou validades existentes. Vendas e Pix real permanecem desativados após a restauração para revisão. Tokens Mercado Pago, chaves privadas Firebase e senha do backup não são exportados.</small>
+      </details>
   </section>
   <section class="panel" id="key-management" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Testar ou cancelar um código</h2>
+    <details class="advanced"><summary>Verificar ou cancelar um código</summary>
     <p>Cole o código aqui. <strong>Cancelar</strong> invalida o código manual permanentemente; <strong>resgatar</strong> ativa a licença na sua conta conectada. Nenhuma das ações gera cobrança.</p>
     <label for="key-entry" class="label">Código PS-…</label>
     <input id="key-entry" type="password" maxlength="36" placeholder="PS-XXXXXX-XXXXXX-XXXXXX-XXXXXX"
@@ -312,6 +319,7 @@
       <button id="redeem" class="secondary">Resgatar nesta conta</button>
     </div>
     <small style="margin-top:12px">Um código compartilhado em prints deve ser cancelado, mesmo que ninguém tenha utilizado.</small>
+      </details>
   </section>
   <small>Segurança: somente sua conta autorizada altera os controles. Operações de cobrança exigem confirmação específica.</small>
 </main>
