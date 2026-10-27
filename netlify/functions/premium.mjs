@@ -7,7 +7,8 @@ const allowedActions=new Set([
  "adminRevokePremiumKey","adminPremiumKeyStatus",
  "adminPremiumOverview","adminIssuePremiumKey","adminAdjustPremiumExpiry",
  "adminListPremiumKeys","adminRevealPremiumKey","adminSetPremiumKeyEnabled",
- "adminChangePremiumKeyDuration","adminSetAppMaintenance","adminSetAppVersionAccess"
+ "adminChangePremiumKeyDuration","adminSetAppMaintenance","adminSetAppVersionAccess",
+ "claimFreeYear"
 ]);
 const httpStatus={
  unauthenticated:401,"permission-denied":403,"invalid-argument":400,
