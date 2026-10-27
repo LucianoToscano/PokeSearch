@@ -23,7 +23,7 @@ const logout=main.slice(a,b);
 assert.ok(logout.includes('main.postDelayed(localLogout,1500L)'),"Network cannot keep user signed in indefinitely");
 assert.ok(logout.includes('PremiumGoogleLogin.signOut('),"Must sign out Firebase");
 assert.ok(logout.includes('stopService(new Intent(this,SecondaryOverlayService.class))'),"Must stop P2");
-assert.ok(!logout.includes('OverlayService.class);'),"Must not stop free P1");
+assert.ok(!logout.includes("new Intent(this,OverlayService.class)"),"Must not stop free P1");
 assert.ok(google.includes('main.postDelayed(finish,1200L)'),"CredentialManager cannot indefinitely block sign-out");
 assert.ok(google.includes('auth(activity).signOut();'),"Firebase local sign-out must be immediate");
 console.log("PASS LT139: visible Premium account buttons, bounded logout, P1 preserved");
