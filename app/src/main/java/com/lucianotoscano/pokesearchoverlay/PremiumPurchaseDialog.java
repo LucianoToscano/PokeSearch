@@ -87,7 +87,7 @@ final class PremiumPurchaseDialog {
         adminLink.setOnClickListener(v->{
             android.content.Intent browser=new android.content.Intent(
                 android.content.Intent.ACTION_VIEW,
-                android.net.Uri.parse("https://pokesearch-premium-lcst.netlify.app/admin.html"));
+                android.net.Uri.parse("https://pokesearch-premium-luc.netlify.app/admin.html"));
             try{activity.startActivity(browser);}
             catch(android.content.ActivityNotFoundException ignored){
                 statusMessage(activity,"Não há navegador para abrir o painel Premium.");
@@ -137,6 +137,9 @@ final class PremiumPurchaseDialog {
         TextView couponMessage=label(activity,"",11,teal,false);
         couponMessage.setVisibility(View.GONE);
         col.addView(couponMessage,space(activity,0,0,0,dp(activity,9)));
+        Button freeCouponClaim=button(activity,"🎁  Resgatar cupom 100% grátis",true,0xFF15785B);
+        freeCouponClaim.setVisibility(View.GONE);
+        col.addView(freeCouponClaim,space(activity,0,0,0,dp(activity,7)));
 
         LinearLayout freeOffer=new LinearLayout(activity);
         freeOffer.setOrientation(LinearLayout.VERTICAL);
@@ -436,6 +439,7 @@ final class PremiumPurchaseDialog {
                     .toUpperCase(java.util.Locale.ROOT)))return;
                 if(error!=null){
                     appliedCoupon[0]="";
+                    freeCouponClaim.setVisibility(View.GONE);
                     couponMessage.setText(error+" · Corrija e aplique novamente.");
                     create.setEnabled(false);return;
                 }
@@ -453,9 +457,35 @@ final class PremiumPurchaseDialog {
                 }else{
                     couponMessage.setText("Cupom removido. Preço normal ou promoção vigente.");
                 }
+                boolean gift=coupon!=null&&cents==0L&&
+                    Number.class.isInstance(coupon.get("discountPercent"))&&
+                    ((Number)coupon.get("discountPercent")).intValue()==100;
+                freeCouponClaim.setVisibility(gift?View.VISIBLE:View.GONE);
+                freeCouponClaim.setEnabled(gift&&PremiumGoogleLogin.isGoogleSignedIn(activity));
                 canSell[0]=Boolean.TRUE.equals(quote.get("salesEnabled"))&&cents>=100;
                 create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&canSell[0]);
                 fitPopup.run();
+            });
+        });
+        freeCouponClaim.setOnClickListener(v->{
+            String code=couponInput.getText().toString().trim().toUpperCase(Locale.ROOT);
+            if(code.isEmpty()||!code.equals(appliedCoupon[0])||
+                !PremiumGoogleLogin.isGoogleSignedIn(activity)){
+                status.setText("Entre com Google e aplique o cupom antes de resgatar.");return;
+            }
+            freeCouponClaim.setEnabled(false);
+            status.setText("Confirmando o cupom grátis no Firebase...");
+            PremiumAccess.redeemFullCoupon(activity,code,(result,error)->{
+                if(!dialog.isShowing())return;
+                freeCouponClaim.setEnabled(true);
+                if(error!=null){status.setText(error);return;}
+                status.setText("Premium grátis ativado! Sem Pix.");
+                PremiumAccess.verify(activity,(allowed,premium)->{
+                    if(dialog.isShowing()&&premium){
+                        dialog.dismiss();
+                        if(whenActivated!=null)whenActivated.run();
+                    }
+                });
             });
         });
         create.setOnClickListener(v->{
