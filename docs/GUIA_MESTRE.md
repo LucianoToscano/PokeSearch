@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT127 — Foto opcional e administração do Chat (27/10/2026)
+
+- Nova PR [#86](https://github.com/LucianoToscano/PokeSearch/pull/86) Draft, baseada na LT126 PR #83; `main` preservada. Escopo exclusivamente Chat, sem tocar em P1/P2, API/DOM ou stats.
+- Foto escolhida da galeria com autorização explícita; imagem JPEG 96×96 comprimida, máximo 24.000 caracteres, armazenada em `chat/avatars/$uid` (RTDB); foto Google **não importada automaticamente**. Miniaturas dos autores nas mensagens; foto opcional/removível.
+- Apelido editável por lápis no cabeçalho, substitui `Chat PokeSearch`; mantém limite de 24 caracteres e timestamp nas mensagens.
+- Admin exclusivo validado pelo **token Firebase Auth `google.com` + `email_verified=true` + `lucianotoscano@gmail.com`** nas Rules; opções de apagar mensagem e limpar chat sob confirmação. O login WebView PoGoCoordinates Google é separado e não concede admin. Para não trocar o UID anônimo de contadores, conta admin usa FirebaseApp nomeado `PokeSearchChatAdmin`, sem alterar `PokeSearchStats`.
+- Dependência real ainda pendente: o `google-services.json` disponível não possui `oauth_client`; requer ativar Google em Firebase Authentication, registrar Android OAuth com SHA-1 do certificado permanente `dd7bf665e1d47a257fc557b51cb5a57dfd13cb96`, fornecer Web OAuth Client ID válido em secret GitHub `POKE_CHAT_GOOGLE_WEB_CLIENT_ID` e compilar nova QA. Sem ID, o administrador **não é ativado**; a foto e o chat normal seguem utilizáveis.
+- Rules versionadas só alteram `chat`, mas **não publicar arquivo inteiro** sobre a produção atual: o console exibia `stats/online` e `stats/installations` com leitura autenticada, diferente de rules antigas do repositório; integrar somente o bloco `chat` e preservar o resto.
+- Guia detalhado em [POKESEARCH_LT127_CHAT_AVATAR_GOOGLE_ADMIN_20261027.md](POKESEARCH_LT127_CHAT_AVATAR_GOOGLE_ADMIN_20261027.md); testar duas contas, avatar, troca de apelido, exclusão bloqueada anonimamente, exclusão admin após OAuth e preservação dos contadores.
+- Entrega: aplicar `AGENTS.md` regra contra `Library file not found`; usar GitHub Actions artifact como link principal, registrar SHA-256 real e source commit depois do CI; sem APK estável nem deploy em produção.
+
+
 ## ALERTA PERMANENTE — Falha recorrente de entrega `Library file not found` (27/10/2026)
 
 - O usuário relatou e demonstrou repetidas vezes o toast **`Library file not found`** ao acessar anexos de APK/ZIP entregues pelo ChatGPT no Android. Classificação: **falha de distribuição de arquivos pelo ChatGPT (não confundir com Gradle/assinatura)**.
