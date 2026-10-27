@@ -27,6 +27,18 @@ final class PremiumPurchaseDialog {
         TextView description=new TextView(activity);
         description.setText("Pokébola 1: gratuita. Pokébola 2: Premium por 30 dias após confirmação do Pix.");
         col.addView(description);
+        TextView googleAccount=new TextView(activity);
+        googleAccount.setTextSize(13);
+        googleAccount.setPadding(0,p/2,0,p/2);
+        col.addView(googleAccount);
+        Button googleLogin=new Button(activity);
+        googleLogin.setText("Entrar com Google para Premium");
+        googleLogin.setAllCaps(false);
+        col.addView(googleLogin);
+        Button googleLogout=new Button(activity);
+        googleLogout.setText("Sair da conta Premium");
+        googleLogout.setAllCaps(false);
+        col.addView(googleLogout);
         TextView pricePreview=new TextView(activity);
         pricePreview.setText("Consultando preço no servidor...");
         pricePreview.setTextSize(16);
@@ -44,8 +56,8 @@ final class PremiumPurchaseDialog {
         activate.setText("Ativar minha chave");activate.setAllCaps(false);
         col.addView(activate);
         TextView note=new TextView(activity);
-        note.setText("O Pix usa apenas e-mail na API de Orders. A licença fica vinculada "+
-                     "à identificação Firebase desta instalação.");
+        note.setText("O Pix usa apenas e-mail na API de Orders. A licença Premium "+
+                     "fica vinculada à sua conta Google no Firebase, inclusive após reinstalar.");
         note.setTextSize(11);
         col.addView(note);
         Button create=new Button(activity);
@@ -71,7 +83,12 @@ final class PremiumPurchaseDialog {
                 .setView(scroller).setNegativeButton("Fechar",null).create();
         // This local order ID is only a bookmark; the SERVER still verifies ownership.
         android.content.SharedPreferences pending=activity.getSharedPreferences("premium_order_reference",0);
-        final String[] activeOrder={pending.getString("latestOrderId","")},pix={""},key={""};
+        final String identityUid=PremiumGoogleLogin.uid(activity);
+        // A pending payment belongs only to the Firebase UID that created it.
+        final String pendingId=identityUid.isEmpty()||
+                !identityUid.equals(pending.getString("latestOrderUid",""))?""
+                :pending.getString("latestOrderId","");
+        final String[] activeOrder={pendingId},pix={""},key={""};
         final Handler handler=new Handler(Looper.getMainLooper());
         final boolean[] polling={false};
         final Runnable[] scheduled={null};
@@ -79,6 +96,46 @@ final class PremiumPurchaseDialog {
             polling[0]=false;
             if(scheduled[0]!=null)handler.removeCallbacks(scheduled[0]);
         };
+        final boolean[] canSell={false};
+        Runnable refreshIdentity=()->{
+            boolean signed=PremiumGoogleLogin.isGoogleSignedIn(activity);
+            String account=PremiumGoogleLogin.email(activity);
+            googleAccount.setText(signed?"Premium conectado: "+account:
+                    "Entre com Google para ativar ou recuperar sua licença Premium.");
+            googleLogin.setVisibility(signed?View.GONE:View.VISIBLE);
+            googleLogout.setVisibility(signed?View.VISIBLE:View.GONE);
+            activate.setEnabled(signed);
+            create.setEnabled(signed&&canSell[0]);
+        };
+        refreshIdentity.run();
+        googleLogin.setOnClickListener(v->{
+            googleLogin.setEnabled(false);
+            PremiumGoogleLogin.signIn(activity,(ok,message)->{
+                googleLogin.setEnabled(true);
+                if(!dialog.isShowing())return;
+                status.setText(message);
+                if(ok){
+                    // Do not adopt a pending order from an anonymous/previous account.
+                    activeOrder[0]="";
+                    stop.run();
+                    email.setText(PremiumGoogleLogin.email(activity));
+                    PremiumAccess.verify(activity,(allowed,premium)->{
+                        if(dialog.isShowing()&&premium){
+                            dialog.dismiss();
+                            if(whenActivated!=null)whenActivated.run();
+                        }
+                    });
+                }
+                refreshIdentity.run();
+            });
+        });
+        googleLogout.setOnClickListener(v->PremiumGoogleLogin.signOut(activity,()->{
+            if(!dialog.isShowing())return;
+            activeOrder[0]="";
+            stop.run();
+            status.setText("Conta Premium desconectada. Sua licença permanece no Firebase.");
+            refreshIdentity.run();
+        }));
         Runnable[] poll={null};
         poll[0]=()->{
             if(!dialog.isShowing()||activeOrder[0].isEmpty()){stop.run();return;}
@@ -130,7 +187,8 @@ final class PremiumPurchaseDialog {
                 create.setEnabled(true);
                 if(error!=null){status.setText(error);return;}
                 activeOrder[0]=String.valueOf(result.get("orderId"));
-                pending.edit().putString("latestOrderId",activeOrder[0]).apply();
+                pending.edit().putString("latestOrderId",activeOrder[0])
+                        .putString("latestOrderUid",PremiumGoogleLogin.uid(activity)).apply();
                 pix[0]=String.valueOf(result.get("pixCode"));
                 Object cents=result.get("priceCents");
                 long amount=cents instanceof Number?((Number)cents).longValue():0;
@@ -164,7 +222,8 @@ final class PremiumPurchaseDialog {
                 " (promoção, antes R$ %.2f)",usual/100.0);
             boolean enabled=Boolean.TRUE.equals(result.get("salesEnabled"))&&cents>=100;
             pricePreview.setText(enabled?label:label+" · Pagamentos indisponíveis");
-            create.setEnabled(enabled);
+            canSell[0]=enabled;
+            refreshIdentity.run();
         });
         if(!activeOrder[0].isEmpty()){
             polling[0]=true;
