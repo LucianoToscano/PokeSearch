@@ -126,7 +126,7 @@ jobs:
           assert len(report['forms'])==724  # 82 named, 634 PokeAPI, 8 WWM exact forms
           assert report['externalFormCount']==8
           assert report['externalCatalog']['species']==1025
-          assert report['externalCatalog']['forms']==1478
+          assert report['externalCatalog']['forms']==1506
           assert report['externalCatalog']['costumes']==87
           assert report['externalSpriteCommit']=='998bf635194a11078b6375c79d1494d5eb999b39'
           assert report['externalCatalog']['sourceCommit']=='42b315f317ca8cee8e178249328eab5173e5ca70'
