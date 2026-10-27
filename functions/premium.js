@@ -726,6 +726,7 @@ exports.adminListPremiumKeys=onCall({region:REGION},async request=>{
  if(!Number.isInteger(pageSize)||pageSize<1||pageSize>50)
    throw new HttpsError("invalid-argument","Limite inválido.");
  const cursor=String(request.data?.cursor||"").trim();
+ const includeArchived=request.data?.archived===true;
  if(cursor&&!/^[0-9a-f]{64}$/.test(cursor))
    throw new HttpsError("invalid-argument","Marcador inválido.");
  let query=root().child("keys").orderByKey();
@@ -734,11 +735,13 @@ exports.adminListPremiumKeys=onCall({region:REGION},async request=>{
  const entries=Object.entries(snap.val()||{}).sort(([a],[b])=>a.localeCompare(b))
    .filter(([hash])=>hash!==cursor);
  const page=entries.slice(0,pageSize);
- const keys=page.map(([hash,k])=>{
+ const keys=page.filter(([,entry])=>(entry?.archived===true)===includeArchived)
+   .map(([hash,k])=>{
    const record=k&&typeof k==="object"?k:{};
    const revoked=record.revoked===true, suspended=record.suspended===true;
    const expires=Number(record.expiresAt||0);
-   const status=revoked?"revogada":suspended?"suspensa":
+   const archived=record.archived===true;
+   const status=archived?"excluída":revoked?"revogada":suspended?"suspensa":
      record.kind==="manual"&&!record.uid?"não ativada":
      record.duration==="lifetime"?"vitalícia":
      (expires&&expires<=Date.now()?"vencida":"ativa");
@@ -748,9 +751,10 @@ exports.adminListPremiumKeys=onCall({region:REGION},async request=>{
      duration:String(record.duration|| (record.kind==="paid"?"30d":"")),
      uid:typeof record.uid==="string"?record.uid:"",
      createdAt:Number(record.createdAt||0),claimedAt:Number(record.claimedAt||0),
-     expiresAt:expires,revoked,suspended,status,
-     copyAvailable:!revoked&&(!!record.vault||(record.kind==="paid"&&!!record.orderId)),
-     editable:!revoked};
+     expiresAt:expires,revoked,suspended,archived,status,
+     archivedAt:Number(record.archivedAt||0),
+     copyAvailable:!revoked&&!archived&&(!!record.vault||(record.kind==="paid"&&!!record.orderId)),
+     editable:!revoked&&!archived};
  });
  return {keys,hasMore:entries.length>pageSize,
    nextCursor:page.length?page[page.length-1][0]:"",serverNow:Date.now()};
@@ -786,13 +790,49 @@ exports.adminSetPremiumKeyEnabled=onCall({region:REGION},async request=>{
    throw new HttpsError("invalid-argument","Parâmetros inválidos.");
  const ref=root().child("keys").child(id);
  const tx=await ref.transaction(v=>{
-   if(!v||v.revoked===true)return;
+   if(!v||v.revoked===true||v.archived===true)return;
    return {...v,suspended:!enabled,suspensionUpdatedAt:Date.now(),suspensionBy:actor};
  },undefined,false);
  if(!tx.committed)
-   throw new HttpsError("failed-precondition","Licença revogada ou inexistente; não pode ser reativada.");
+   throw new HttpsError("failed-precondition","Licença excluída, revogada ou inexistente; não pode ser reativada.");
  return {updated:true,enabled,serverNow:Date.now()};
 });
+/**
+ * Delete archives an individual license AND permanently revokes its access.
+ * Never erase payment receipts, license audit history or the original hash.
+ */
+exports.adminDeletePremiumKey=onCall({region:REGION},async request=>{
+ const actor=await requireAdmin(request);
+ const id=String(request.data?.id||"");
+ const confirmation=String(request.data?.confirm||"");
+ if(!/^[0-9a-f]{64}$/.test(id)||confirmation!=="EXCLUIR LICENÇA")
+   throw new HttpsError("invalid-argument","Confirmação de exclusão inválida.");
+ const ref=root().child("keys").child(id);
+ const now=Date.now();
+ const tx=await ref.transaction(value=>{
+   if(!value||value.archived===true)return;
+   return {...value,revoked:true,archived:true,archivedAt:now,
+     archivedBy:actor,revokedAt:Number(value.revokedAt||now),
+     revokedBy:value.revokedBy||actor,
+     revocationReason:value.revocationReason||"admin-deleted",
+     suspended:true};
+ },undefined,false);
+ if(!tx.committed)
+   throw new HttpsError("failed-precondition","Licença já excluída ou não encontrada.");
+ const record=tx.snapshot.val()||{};
+ const uid=typeof record.uid==="string"?record.uid:"";
+ if(uid){
+   const entitlement=root().child("entitlements").child(uid);
+   await entitlement.transaction(value=>{
+     if(!value||value.currentKeyHash!==id)return;
+     return {...value,revoked:true,revokedAt:now,
+       revocationReason:"admin-deleted"};
+   },undefined,false);
+ }
+ return {deleted:true,archived:true,revoked:true,wasAssigned:!!uid,
+   serverNow:Date.now()};
+});
+
 /** Edit a key's finite expiry (+/- days or exact timestamp), including reductions.
  * For an unassigned manual code change its duration before the first redemption.
  */
