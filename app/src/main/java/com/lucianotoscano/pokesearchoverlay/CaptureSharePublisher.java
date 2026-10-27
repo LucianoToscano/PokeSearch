@@ -1,7 +1,6 @@
 package com.lucianotoscano.pokesearchoverlay;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -27,8 +26,9 @@ final class CaptureSharePublisher {
         if(name.isEmpty())return "";
         return "🎉 Capturou um "+name+(shiny?" ✨":"")+"!";
     }
-    static void publish(Context context,String pokemon,boolean shiny,Completion callback){
-        String message=buildAnnouncement(pokemon,shiny);
+    static void publish(Context context,String pokemon,boolean shiny,
+                        String rawIv,String form,Completion callback){
+        String message=CaptureChatFormat.build(pokemon,shiny,rawIv,form);
         if(message.isEmpty()){callback.complete(false,"Pokémon inválido");return;}
         try{
             FirebaseApp app=FirebaseStats.ensureApp(context);
