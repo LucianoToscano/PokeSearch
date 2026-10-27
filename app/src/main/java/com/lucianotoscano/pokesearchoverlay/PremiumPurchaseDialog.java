@@ -37,6 +37,13 @@ final class PremiumPurchaseDialog {
         cpf.setInputType(InputType.TYPE_CLASS_NUMBER);
         cpf.setSingleLine(true);
         col.addView(cpf);
+        EditText restore=new EditText(activity);
+        restore.setHint("Já tenho chave Premium (PS-...)");
+        restore.setSingleLine(true);
+        col.addView(restore);
+        Button activate=new Button(activity);
+        activate.setText("Ativar minha chave");activate.setAllCaps(false);
+        col.addView(activate);
         TextView note=new TextView(activity);
         note.setText("O CPF vai diretamente para o Mercado Pago, sem armazenamento no PokeSearch. "+
                      "A licença fica vinculada à identificação Firebase desta instalação.");
@@ -93,6 +100,22 @@ final class PremiumPurchaseDialog {
                 scheduled[0]=poll[0];handler.postDelayed(scheduled[0],12000L);
             }
         };
+        activate.setOnClickListener(v->{
+            String input=restore.getText().toString().trim();
+            if(!input.matches("(?i)^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$")){
+                status.setText("Confira o formato da chave Premium.");return;
+            }
+            activate.setEnabled(false);
+            PremiumAccess.redeem(activity,input,(result,error)->{
+                if(!dialog.isShowing())return;
+                activate.setEnabled(true);
+                if(error!=null){status.setText(error);return;}
+                status.setText("Chave ativada! Segunda Pokébola liberada.");
+                PremiumAccess.verify(activity,(allowed,premium)->{
+                    if(dialog.isShowing()&&premium&&whenActivated!=null)whenActivated.run();
+                });
+            });
+        });
         create.setOnClickListener(v->{
             String mail=email.getText().toString().trim(),document=cpf.getText().toString().trim();
             if(mail.isEmpty()||!document.matches("\\d{11}")){
