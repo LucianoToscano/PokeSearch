@@ -43,6 +43,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #captureConfirm{margin-top:4px;display:flex;align-items:center;gap:4px;font-size:10px}
 #captureConfirm>span{flex:1}
 #captureConfirm>button{background:#ffffff26;border-radius:5px;padding:5px 8px}
+#captureStatus[hidden]{display:none}#captureStatus{display:block;margin-top:3px;color:#a7eac7;font-size:10px}
 </style></head><body><div id="panel">
  <div id="header">
   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
@@ -62,6 +63,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <div id="captureConfirm" hidden><span>Capturou mesmo?</span>
  <button onclick="captureShareCancel()">Não</button>
  <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
+ <small id="captureStatus" hidden></small>
 </div>
 <script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script>
 <script>
@@ -97,7 +99,9 @@ window.captureShareFeedback=(ok,message)=>{
  sharePending=false;if(ok){shareSent=true;shareReady=false;}
  else shareReady=true;
  shareUi();
- window.copyFeedback(message||"");
+ const status=document.getElementById("captureStatus");
+ status.textContent=String(message||"");
+ status.hidden=!status.textContent;
  resizeEvolutionPanel();
 };
 function coordButtons(){
@@ -239,6 +243,7 @@ window.showDetails=(c,mode,watched)=>{
   coordsRequestSeq++;
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
   shareReady=false;shareSent=false;sharePending=false;shareUi();
+  document.getElementById("captureStatus").hidden=true;
   document.getElementById("evolutions").hidden=true;
   document.getElementById("evoBody").hidden=true;
   document.getElementById("evoBody").innerHTML="";
