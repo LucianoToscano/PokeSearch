@@ -1989,14 +1989,7 @@ public class MainActivity extends Activity {
         }
     }
     private void startOverlay(){
-        if(PremiumAccess.controlled()&&!PremiumAccess.permitted(false)){
-            PremiumAccess.verify(this,(allowed,premium)->{
-                if(allowed)startOverlay();
-                else Toast.makeText(this,"Versão LT134 controlada ainda não liberada ou sem validação online.",
-                    Toast.LENGTH_LONG).show();
-            });
-            return;
-        }
+        // Pokebola 1 is always free: no Premium login, lease or server gate.
         CookieManager.getInstance().flush();
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
