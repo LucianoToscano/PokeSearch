@@ -67,6 +67,7 @@
       <a href="#pricing-settings">💰 Valores e promoção</a>
       <a href="#free-campaign-panel">🎁 Campanha FREE</a>
       <a href="#app-version-panel">🛡️ APKs e manutenção</a>
+      <a href="#backup-panel">💾 Backup e restauração</a>
     </nav>
     <div class="row"><span class="label">Conta</span><span class="value" id="account"></span></div>
     <hr class="sep">
@@ -193,6 +194,32 @@
     <div class="actions"><button class="secondary" id="load-more-keys" hidden>Carregar mais</button></div>
     <small id="keys-count"></small>
   </section>
+  <section class="panel" id="backup-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">💾 Backup e restauração</h2>
+    <p>Exporte as licenças, chaves, histórico de pagamentos Pix, validade, campanhas, preços e regras dos APKs. O arquivo é <strong>criptografado no navegador</strong> com a senha que você escolher.</p>
+    <small>Importante: ao trocar somente de Netlify, mantendo o Firebase pokesearch-lt, os registros já continuam disponíveis. Nesse caso, NÃO importe: use o mesmo Firebase e a mesma chave POKE_PREMIUM_KEY_SECRET. Esta área serve como cópia de segurança ou recuperação de um banco vazio.</small>
+    <label class="label" for="backup-password">Senha do arquivo (mínimo de 12 caracteres)</label>
+    <input id="backup-password" class="maintenance-note" type="password" autocomplete="new-password"
+      minlength="12" placeholder="Defina uma senha forte para proteger o backup">
+    <div class="actions">
+      <button id="backup-export" class="secondary">Exportar backup criptografado</button>
+    </div>
+    <hr class="sep">
+    <label class="label" for="backup-file">Importar arquivo .psbackup</label>
+    <input id="backup-file" class="maintenance-note" type="file" accept=".psbackup,application/json">
+    <div class="actions">
+      <button id="backup-preview" class="secondary">Analisar arquivo sem alterar dados</button>
+    </div>
+    <div id="backup-preview-details" aria-live="polite"></div>
+    <label class="label" for="backup-confirm">Para restaurar em Firebase vazio, escreva IMPORTAR EM BASE VAZIA</label>
+    <input id="backup-confirm" class="maintenance-note" type="text" autocomplete="off"
+      placeholder="IMPORTAR EM BASE VAZIA">
+    <div class="actions">
+      <button id="backup-import" class="secondary danger-action" disabled>Restaurar backup</button>
+    </div>
+    <p id="backup-progress" role="status" aria-live="polite"></p>
+    <small>Importação nunca substitui licenças, pagamentos ou validades existentes. Vendas e Pix real permanecem desativados após a restauração para revisão. Tokens Mercado Pago, chaves privadas Firebase e senha do backup não são exportados.</small>
+  </section>
   <section class="panel" id="key-management" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Testar ou cancelar um código</h2>
     <p>Cole o código aqui. <strong>Cancelar</strong> invalida o código manual permanentemente; <strong>resgatar</strong> ativa a licença na sua conta conectada. Nenhuma das ações gera cobrança.</p>
@@ -303,6 +330,7 @@
       el("admin").hidden=false;
       el("licensing").hidden=false;
       el("free-campaign-panel").hidden=false;
+      el("backup-panel").hidden=false;
       el("key-management").hidden=false;
       el("maintenance-panel").hidden=false;
       el("app-version-panel").hidden=false;
@@ -314,6 +342,7 @@
       el("admin").hidden=true;
       el("licensing").hidden=true;
       el("free-campaign-panel").hidden=true;
+      el("backup-panel").hidden=true;
       el("key-management").hidden=true;
       el("maintenance-panel").hidden=true;
       el("app-version-panel").hidden=true;
@@ -662,6 +691,195 @@
     }catch(e){setStatus(e.message||"Não foi possível encerrar.","error");}
     finally{el("free-disable").disabled=false;}
   });
+
+  // Browser-only AES-GCM envelope; neither the password nor the decoded backup
+  // is saved to localStorage, Firebase, logs or any third-party service.
+  const BACKUP_PARTS=["keys","entitlements","orders","orderIndex",
+    "paymentIndex","paymentThrottle","config","distribution","appControl"];
+  const BACKUP_FORMAT="PokeSearch-Premium-Backup-v1";
+  let unlockedBackup=null,backupBusy=false;
+  const utf8=new TextEncoder(),decodeUtf8=new TextDecoder();
+  const bytes64=bytes=>{
+    let output="";
+    for(let i=0;i<bytes.length;i+=8192)
+      output+=String.fromCharCode(...bytes.subarray(i,i+8192));
+    return btoa(output);
+  };
+  const from64=value=>{
+    if(typeof value!=="string"||value.length>22000000)throw Error("Codificação inválida.");
+    const binary=atob(value);
+    return Uint8Array.from(binary,ch=>ch.charCodeAt(0));
+  };
+  const deriveBackupKey=async(passphrase,salt)=>{
+    if(typeof passphrase!=="string"||passphrase.length<12)
+      throw Error("Digite uma senha forte, com pelo menos 12 caracteres.");
+    const material=await crypto.subtle.importKey("raw",utf8.encode(passphrase),
+      "PBKDF2",false,["deriveKey"]);
+    return crypto.subtle.deriveKey({name:"PBKDF2",hash:"SHA-256",
+      salt,iterations:310000},material,{name:"AES-GCM",length:256},false,
+      ["encrypt","decrypt"]);
+  };
+  const encryptBackup=async(value,passphrase)=>{
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const key=await deriveBackupKey(passphrase,salt);
+    const content=utf8.encode(JSON.stringify(value));
+    if(content.byteLength>10_000_000)throw Error("Backup maior que 10 MB. Exporte em um momento com menos histórico.");
+    const ciphertext=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,content);
+    return {fileFormat:"PokeSearch-Encrypted-Backup-v1",kdf:"PBKDF2-SHA256",
+      iterations:310000,salt:bytes64(salt),iv:bytes64(iv),
+      ciphertext:bytes64(new Uint8Array(ciphertext))};
+  };
+  const decryptBackup=async(envelope,passphrase)=>{
+    if(envelope?.fileFormat!=="PokeSearch-Encrypted-Backup-v1"||
+      envelope.kdf!=="PBKDF2-SHA256"||envelope.iterations!==310000)
+      throw Error("Formato de arquivo incompatível.");
+    const salt=from64(envelope.salt),iv=from64(envelope.iv);
+    if(salt.length!==16||iv.length!==12)throw Error("Cabeçalho do arquivo inválido.");
+    const key=await deriveBackupKey(passphrase,salt);
+    let plain;
+    try{
+      plain=await crypto.subtle.decrypt({name:"AES-GCM",iv},
+        key,from64(envelope.ciphertext));
+    }catch{throw Error("Senha incorreta ou arquivo alterado.");}
+    const payload=JSON.parse(decodeUtf8.decode(plain));
+    if(payload.format!==BACKUP_FORMAT||payload.projectId!=="pokesearch-lt"||
+       !/^[0-9a-f]{64}$/.test(payload.vaultFingerprint||"")||
+       !payload.sections||typeof payload.sections!=="object"||
+       BACKUP_PARTS.some(part=>!payload.sections[part]||
+         typeof payload.sections[part]!=="object"||
+         Array.isArray(payload.sections[part])))
+      throw Error("Arquivo não pertence ao formato Premium do PokeSearch.");
+    return payload;
+  };
+  const setBackupProgress=message=>{el("backup-progress").textContent=message};
+  const backupCounts=sections=>BACKUP_PARTS.map(x=>x+": "+
+    Object.keys(sections[x]||{}).length+" registros").join(" · ");
+  const setBackupBusy=value=>{
+    backupBusy=value;
+    for(const id of ["backup-export","backup-preview","backup-file","backup-password",
+      "backup-confirm"])el(id).disabled=value;
+    el("backup-import").disabled=value||!unlockedBackup;
+  };
+  el("backup-export").addEventListener("click",async()=>{
+    if(backupBusy)return;
+    const password=el("backup-password").value;
+    if(password.length<12){setBackupProgress("Digite uma senha com pelo menos 12 caracteres.");return;}
+    setBackupBusy(true);unlockedBackup=null;
+    try{
+      const sections={};let identity=null;
+      for(let idx=0;idx<BACKUP_PARTS.length;idx++){
+        const section=BACKUP_PARTS[idx];
+        sections[section]={};
+        let cursor="",pages=0;
+        do{
+          if(++pages>20000)throw Error("Limite de páginas excedido.");
+          setBackupProgress("Exportando "+section+" · página "+pages+"...");
+          const page=await call("adminExportPremiumBackupPage",{section,cursor});
+          if(page.format!==BACKUP_FORMAT||page.projectId!=="pokesearch-lt")
+            throw Error("Servidor Premium incompatível.");
+          if(identity&&identity!==page.vaultFingerprint)
+            throw Error("A chave do servidor mudou durante a exportação.");
+          identity=page.vaultFingerprint;
+          for(const [key,value] of Object.entries(page.records||{})){
+            if(Object.prototype.hasOwnProperty.call(sections[section],key))
+              throw Error("Registro duplicado na exportação.");
+            sections[section][key]=value;
+          }
+          if(page.complete!==true&&(!page.nextCursor||page.nextCursor===cursor))
+            throw Error("Paginação incompleta: backup interrompido.");
+          cursor=page.complete?"":page.nextCursor;
+        }while(cursor);
+      }
+      const payload={format:BACKUP_FORMAT,version:1,projectId:"pokesearch-lt",
+        vaultFingerprint:identity,createdAt:new Date().toISOString(),sections};
+      setBackupProgress("Criptografando e preparando o arquivo...");
+      const envelope=await encryptBackup(payload,password);
+      const blob=new Blob([JSON.stringify(envelope)],{type:"application/json"});
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement("a");
+      link.href=url;link.download="PokeSearch-Premium-"+new Date().toISOString().slice(0,10)+".psbackup";
+      document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      setBackupProgress("Backup criptografado exportado. "+backupCounts(sections)+
+        ". Guarde o arquivo e a senha separados, em local seguro.");
+      setStatus("Backup gerado localmente no navegador.","ok");
+    }catch(error){setBackupProgress(error.message||"Falha ao exportar. Nenhum arquivo incompleto foi salvo.");}
+    finally{setBackupBusy(false);}
+  });
+  el("backup-preview").addEventListener("click",async()=>{
+    if(backupBusy)return;
+    unlockedBackup=null;el("backup-import").disabled=true;
+    const file=el("backup-file").files?.[0];
+    if(!file||file.size>15_000_000){
+      setBackupProgress("Selecione um arquivo .psbackup com até 15 MB.");return;
+    }
+    setBackupBusy(true);
+    try{
+      const envelope=JSON.parse(await file.text());
+      const payload=await decryptBackup(envelope,el("backup-password").value);
+      unlockedBackup=payload;
+      el("backup-preview-details").textContent=
+        "Backup de "+payload.createdAt+". "+backupCounts(payload.sections)+
+        ". Os dados atuais NÃO foram modificados.";
+      setBackupProgress("Arquivo validado localmente. Confirme apenas se o Firebase destino está vazio.");
+    }catch(error){setBackupProgress(error.message||"Arquivo inválido.");}
+    finally{setBackupBusy(false);}
+  });
+  el("backup-import").addEventListener("click",async()=>{
+    if(backupBusy||!unlockedBackup)return;
+    if(el("backup-confirm").value.trim()!=="IMPORTAR EM BASE VAZIA"){
+      setBackupProgress("Digite exatamente IMPORTAR EM BASE VAZIA.");return;
+    }
+    const backup=unlockedBackup;
+    const approved=window.confirm("RESTAURAÇÃO SENSÍVEL: somente em Firebase vazio, "+
+      "sem sobrescrever licenças. Vendas e Pix ficarão desligados. Continuar?");
+    if(!approved)return;
+    setBackupBusy(true);
+    let sessionId="";
+    try{
+      const start=await call("adminRestorePremiumBackup",{
+        phase:"prepare",format:backup.format,projectId:backup.projectId,
+        vaultFingerprint:backup.vaultFingerprint,confirm:"IMPORTAR EM BASE VAZIA"
+      });
+      sessionId=start.sessionId;
+      for(let i=0;i<BACKUP_PARTS.length;i++){
+        const section=BACKUP_PARTS[i],source=backup.sections[section];
+        const entries=Object.entries(source);
+        const chunks=[];
+        if(["config","distribution","appControl"].includes(section)){
+          if(JSON.stringify(source).length>46000)throw Error("Seção "+section+" muito grande.");
+          chunks.push(source);
+        }else{
+          let pending={};
+          for(const [key,value] of entries){
+            const next={...pending,[key]:value};
+            if(Object.keys(next).length>20||utf8.encode(JSON.stringify(next)).byteLength>25000){
+              if(!Object.keys(pending).length)throw Error("Registro excede o limite de segurança.");
+              chunks.push(pending);pending={[key]:value};
+            }else pending=next;
+          }
+          if(Object.keys(pending).length)chunks.push(pending);
+        }
+        for(let j=0;j<chunks.length;j++){
+          setBackupProgress("Restaurando "+section+" · lote "+(j+1)+"/"+chunks.length);
+          await call("adminRestorePremiumBackup",{
+            phase:"write",sessionId,section,records:chunks[j]});
+        }
+      }
+      await call("adminRestorePremiumBackup",{phase:"finish",sessionId});
+      setBackupProgress("Restauração concluída. Revise cada licença, preços e "+
+        "webhooks antes de reativar vendas. Pix real permanece DESLIGADO.");
+      setStatus("Backup restaurado no Firebase vazio.","ok");
+      unlockedBackup=null;
+      el("backup-import").disabled=true;
+      await overview();
+    }catch(error){
+      setBackupProgress((error.message||"Erro na importação.")+
+        (sessionId?" Nenhum registro existente foi sobrescrito; a restauração pode ter ficado PARCIAL.":""));
+    }finally{setBackupBusy(false);}
+  });
+
   el("refresh").addEventListener("click",overview);
   el("issue").addEventListener("click",async()=>{
     if(busy)return;
@@ -762,7 +980,7 @@
     if(user){overview();}
     else{
       for(const id of ["admin","licensing","key-management","free-campaign-panel",
-        "app-version-panel","maintenance-panel","keys-panel"])
+        "app-version-panel","maintenance-panel","keys-panel","backup-panel"])
         el(id).hidden=true;
       lastKey="";revealed=false;el("premium-keys-list").replaceChildren();
       keyCursor="";keyCount=0;
