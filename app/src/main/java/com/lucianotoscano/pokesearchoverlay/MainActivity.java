@@ -106,7 +106,7 @@ public class MainActivity extends Activity {
     private View trainerCopyButton;
     private View guestHeading;
     private ImageView teamBadge, accountAvatar, accountAvatarFrame;
-    private Button trainerAction;
+    private Button trainerAction,trainerSelectButton;
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
     private ImageView overlayControl,secondaryOverlayControl;
@@ -580,7 +580,15 @@ public class MainActivity extends Activity {
             homeLightMode?Color.rgb(72,92,111):Color.rgb(171,188,215),false);
         LinearLayout.LayoutParams sectionLp=new LinearLayout.LayoutParams(-1,-2);
         sectionLp.bottomMargin=d(7);
-        trainerPanel.addView(trainerSectionTitle,sectionLp);
+        LinearLayout trainerHeader=new LinearLayout(this);
+        trainerHeader.setGravity(Gravity.CENTER_VERTICAL);
+        trainerHeader.addView(trainerSectionTitle,new LinearLayout.LayoutParams(0,-2,1));
+        trainerSelectButton=homeAuthButton("Escolher",Color.rgb(33,61,93),Color.WHITE);
+        LinearLayout.LayoutParams chooseLp=new LinearLayout.LayoutParams(d(96),d(33));
+        trainerHeader.addView(trainerSelectButton,chooseLp);
+        trainerSelectButton.setVisibility(View.GONE);
+        trainerSelectButton.setOnClickListener(v->showTrainerSelector());
+        trainerPanel.addView(trainerHeader,sectionLp);
 
         LinearLayout trainerRow=new LinearLayout(this);
         trainerRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -1285,6 +1293,60 @@ public class MainActivity extends Activity {
         preferredLoginProvider=provider;
         openLoginDialog(false);
     }
+    private void showTrainerSelector(){
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        JSONArray profiles;
+        try{profiles=new JSONArray(prefs.getString("profileTrainerList","[]"));}
+        catch(org.json.JSONException e){return;}
+        if(profiles.length()<2)return;
+        final java.util.ArrayList<JSONObject> valid=new java.util.ArrayList<>();
+        final java.util.ArrayList<String> labels=new java.util.ArrayList<>();
+        String selected=prefs.getString("profileTrainerCode","");
+        int selectedIndex=-1;
+        for(int i=0;i<profiles.length();i++){
+            JSONObject item=profiles.optJSONObject(i);
+            if(item==null)continue;
+            String code=item.optString("code","");
+            String name=item.optString("name","");
+            String team=item.optString("team","");
+            if(!code.matches("[0-9]{12}")||
+                !name.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}"))continue;
+            if(code.equals(selected))selectedIndex=valid.size();
+            valid.add(item);
+            labels.add(name+" · "+team+" · ••••"+code.substring(8));
+        }
+        if(valid.size()<2)return;
+        new AlertDialog.Builder(this)
+            .setTitle("Escolher treinador PoGoCoordinates")
+            .setSingleChoiceItems(labels.toArray(new String[0]),selectedIndex,
+                (dialog,which)->{
+                    if(which<0||which>=valid.size())return;
+                    JSONObject item=valid.get(which);
+                    String name=item.optString("name","");
+                    String code=item.optString("code","");
+                    String team=item.optString("team","");
+                    String level=item.optString("level","");
+                    String details=(level.matches("[0-9]{1,2}")?"Nível "+level:"")+
+                        (team.matches("Mystic|Valor|Instinct")?
+                          (level.isEmpty()?"":" · ")+team:"");
+                    prefs.edit().putString("profileTrainerCode",code)
+                        .putString("profileSelectedTrainerCode",code)
+                        .putString("profileTrainerName",name)
+                        .putString("profileTrainerTeam",team)
+                        .putString("profileTrainerLevel",level)
+                        .putString("profileTrainerDetails",details)
+                        .putString("profileTrainerState","linked").apply();
+                    refreshSessionSummary();
+                    dialog.dismiss();
+                    Toast.makeText(this,"Treinador selecionado: "+name,Toast.LENGTH_SHORT).show();
+                    // The search owner stays the original signed-in site account.
+                    // Shiny selections are reverified against the official site.
+                    sendBroadcast(new Intent("com.lucianotoscano.pokesearchoverlay.TRAINER_CHANGED")
+                        .setPackage(getPackageName()));
+                })
+            .setNegativeButton("Cancelar",null)
+            .show();
+    }
     private void copyTrainerCode(){
         String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
         if(!code.matches("[0-9]{12}"))return;
@@ -1538,6 +1600,13 @@ public class MainActivity extends Activity {
                 "Instinct".equals(team)?Color.rgb(255,211,99):
                 Color.rgb(165,185,214));
         }
+        if(trainerSelectButton!=null){
+            int profiles=0;
+            try{profiles=new JSONArray(prefs.getString("profileTrainerList","[]")).length();}
+            catch(org.json.JSONException ignored){}
+            trainerSelectButton.setVisibility(linked&&profiles>1?View.VISIBLE:View.GONE);
+            trainerSelectButton.setText(profiles>1?"Escolher ("+profiles+")":"Escolher");
+        }
         if(linked&&trainerCode!=null)
             trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
         if(trainerAction!=null)trainerAction.setText(linked?"Remover":"Gerenciar");
@@ -1562,6 +1631,7 @@ public class MainActivity extends Activity {
             .remove("profileDisplayName").remove("profileProvider").remove("profileAvatarUrl")
             .remove("profileTrainerName").remove("profileTrainerCode")
             .remove("profileTrainerDetails").remove("profileTrainerState")
+            .remove("profileTrainerList").remove("profileSelectedTrainerCode")
             .remove("profileTrainerTeam").remove("profileTrainerLevel")
             .putBoolean("shiny",false)
             .putString("lastStatus","Sessão local desconectada")
@@ -1674,6 +1744,7 @@ public class MainActivity extends Activity {
                     .remove("profileAvatarUrl")
                     .remove("profileTrainerName").remove("profileTrainerCode")
                     .remove("profileTrainerDetails").remove("profileTrainerTeam")
+                    .remove("profileTrainerList").remove("profileSelectedTrainerCode")
                     .remove("profileTrainerLevel").apply();
                 CookieManager.getInstance().flush();
                 if("manage".equals(loginPurpose)){
@@ -1767,14 +1838,45 @@ public class MainActivity extends Activity {
                     String state=profile.optString("trainerState","unknown");
                     String trainer=profile.optString("trainerName","");
                     String code=profile.optString("trainerCode","");
+                    JSONArray accountList=profile.optJSONArray("trainers");
+                    JSONArray verified=new JSONArray();
+                    JSONObject chosen=null;
+                    String selection=getSharedPreferences("prefs",0)
+                        .getString("profileSelectedTrainerCode","");
+                    if(accountList!=null)for(int i=0;i<Math.min(20,accountList.length());i++){
+                        JSONObject item=accountList.optJSONObject(i);
+                        if(item==null)continue;
+                        String c=item.optString("code","");
+                        String n=item.optString("name","");
+                        String t=item.optString("team","");
+                        String lv=item.optString("level","");
+                        if(!c.matches("[0-9]{12}")||
+                           !n.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}")||
+                           !t.matches("Mystic|Valor|Instinct")||
+                           !lv.matches("[0-9]{1,2}"))continue;
+                        verified.put(item);
+                        if(chosen==null||c.equals(selection))chosen=item;
+                    }
+                    // Never allow a code from the previous login to remain
+                    // selected if this newly authenticated account lacks it.
+                    if(chosen!=null){
+                        trainer=chosen.optString("name","");
+                        code=chosen.optString("code","");
+                        edit.putString("profileTrainerList",verified.toString());
+                    }else edit.remove("profileTrainerList")
+                        .remove("profileSelectedTrainerCode");
+
                     if("linked".equals(state)&&trainer.length()>0&&
                        trainer.length()<=40&&code.matches("[0-9]{12}")){
-                        String level=profile.optString("level","");
-                        String team=profile.optString("team","");
+                        String level=chosen!=null?chosen.optString("level",""):
+                            profile.optString("level","");
+                        String team=chosen!=null?chosen.optString("team",""):
+                            profile.optString("team","");
                         String details=(level.matches("[0-9]{1,2}")?"Nível "+level:"")+
                             (team.matches("Mystic|Valor|Instinct")?
                              (level.isEmpty()?"":" · ")+team:"");
                         edit.putString("profileTrainerState","linked")
+                            .putString("profileSelectedTrainerCode",code)
                             .putString("profileTrainerName",trainer)
                             .putString("profileTrainerCode",code)
                             .putString("profileTrainerDetails",details)
@@ -1787,7 +1889,8 @@ public class MainActivity extends Activity {
                                 "unlinked".equals(state)?"unlinked":"unknown")
                             .remove("profileTrainerName").remove("profileTrainerCode")
                             .remove("profileTrainerDetails")
-                            .remove("profileTrainerTeam").remove("profileTrainerLevel");
+                            .remove("profileTrainerTeam").remove("profileTrainerLevel")
+                            .remove("profileTrainerList").remove("profileSelectedTrainerCode");
                     }
                     edit.apply();
                     parsed=true;
