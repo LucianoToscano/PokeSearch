@@ -136,6 +136,32 @@
   if(card.costume_id!==undefined&&card.costume_id!==null&&Number(card.costume_id)!==0)return false;
   return true;
  }
+ // Exact source retries for the same verified costume after a missing
+ // local asset. These are NOT substitutes: each filename comes from the pinned
+ // asset-manifest SHA1 contract used in the signed build.
+ const GO_COSTUME_ROOT="https://raw.githubusercontent.com/PokeMiners/pogo_assets/"+
+   "c2a686eb08ace6e890d8fe3d2134c76988db87b5/"+
+   "Images/Pokemon%20-%20256x256/Addressable%20Assets/";
+ const GO_COSTUME_SOURCES=Object.freeze({
+   "3-copy-2019.png":"pm3.fCOPY_2019.icon.png",
+   "3-copy-2019-female.png":"pm3.fCOPY_2019.g2.icon.png",
+   "6-copy-2019.png":"pm6.fCOPY_2019.icon.png",
+   "9-copy-2019.png":"pm9.fCOPY_2019.icon.png",
+   "4-goggles-2026.png":"pm4.fGOGGLES_2026.icon.png",
+   "4-goggles-2026-shiny.png":"pm4.fGOGGLES_2026.s.icon.png",
+   "5-goggles-2026.png":"pm5.fGOGGLES_2026.icon.png",
+   "5-goggles-2026-shiny.png":"pm5.fGOGGLES_2026.s.icon.png",
+   "6-goggles-2026.png":"pm6.fGOGGLES_2026.icon.png",
+   "6-goggles-2026-shiny.png":"pm6.fGOGGLES_2026.s.icon.png",
+   "25-halloween-2021.png":"pm25.cHALLOWEEN_2021_NOEVOLVE.icon.png",
+   "25-halloween-2021-shiny.png":"pm25.cHALLOWEEN_2021_NOEVOLVE.s.icon.png",
+   "393-halloween-2021.png":"pm393.cHALLOWEEN_2021_NOEVOLVE.icon.png",
+   "393-halloween-2021-shiny.png":"pm393.cHALLOWEEN_2021_NOEVOLVE.s.icon.png",
+   "426-halloween-2021.png":"pm426.cHALLOWEEN_2021_NOEVOLVE.icon.png",
+   "426-halloween-2021-shiny.png":"pm426.cHALLOWEEN_2021_NOEVOLVE.s.icon.png"
+ });
+ const exactCostumeOrigin=file=>GO_COSTUME_ROOT+
+   (GO_COSTUME_SOURCES[file]||(/^pm[0-9]+\./.test(file)?file:""));
  // Explicitly verified Pokémon GO costume sprites, pinned inside the APK.
  // The copy/clone 2019 costumes have NO proven shiny image in this source.
  const COSTUME_FILES=Object.freeze({
@@ -258,7 +284,7 @@
   const selected=possible.length?possible[0]:
     formCandidates.find(x=>x[3]===0);
   if(!selected)return null;
-  return {src:LOCAL+"costumes/"+selected[5],original:"",offline:true,
+  return {src:LOCAL+"costumes/"+selected[5],original:exactCostumeOrigin(selected[5]),offline:true,
     officialForm:true,officialCostume:true,exactCostume:true};
  }
  function exactCostume(card){
@@ -294,7 +320,7 @@
    if(dex===3&&tag==="COPY2019"&&(gender==="FEMALE"||gender==="F"||
       gender==="2"||String(card.gender)==="♀"))file="3-copy-2019-female.png";
    if(shiny)file=file.replace(".png","-shiny.png");
-   return {src:LOCAL+"costumes/"+file,original:"",offline:true,officialForm:true,officialCostume:true};
+   return {src:LOCAL+"costumes/"+file,original:exactCostumeOrigin(file),offline:true,officialForm:true,officialCostume:true};
   }
   return archived||null;
  }
