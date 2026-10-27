@@ -1,7 +1,7 @@
 "use strict";
 const assert=require("node:assert/strict"),Module=require("node:module"),crypto=require("node:crypto");
-const SECRET={POKE_MP_ACCESS_TOKEN:"mock-token",POKE_MP_WEBHOOK_SECRET:"test-webhook-key",
- POKE_MP_WEBHOOK_URL:"https://example.invalid/webhook",POKE_PREMIUM_KEY_SECRET:"test-key-secret"};
+const SECRET={POKE_MP_ACCESS_TOKEN:"mock-live-token",POKE_MP_TEST_ACCESS_TOKEN:"mock-test-token",
+ POKE_MP_WEBHOOK_SECRET:"test-webhook-key",POKE_PREMIUM_KEY_SECRET:"test-key-secret"};
 const orderId="123e4567-e89b-12d3-a456-426614174000",now=Date.now();
 const store={distribution:{globalEnabled:true,versions:{"54328":true}},
  premium:{config:{salesEnabled:true,priceCents:500},orders:{
@@ -42,26 +42,33 @@ Module._load=function(id,parent,isMain){
  return Object.hasOwn(mocks,id)?mocks[id]:orig.call(this,id,parent,isMain);
 };
 const premium=require("../premium.js");Module._load=orig;
-let payment={id:123,external_reference:orderId,live_mode:true,
- payment_method_id:"pix",transaction_amount:5,
- date_approved:new Date(now).toISOString(),status:"approved"};
+const mpOrderId="ORD01JP84C939T20S0P1DN6FCMWQC";
+store.premium.orders[orderId].mpOrderId=mpOrderId;
+store.premium.orders[orderId].liveMode=false;
+store.premium.orderIndex={[mpOrderId]:{orderId}};
+let payment={id:mpOrderId,type:"online",external_reference:orderId,live_mode:false,
+ total_amount:"5.00",status:"processed",status_detail:"accredited",
+ transactions:{payments:[{id:"PAY01JP84C939T20S0P1DN6FCMWQC",amount:"5.00",
+   status:"processed",status_detail:"accredited",
+   payment_method:{id:"pix",type:"bank_transfer"}}]}};
 let fetchCalls=0;
 global.fetch=async(url,options)=>{
  fetchCalls++;
- if(url.endsWith("/v1/payments/123"))return {
+ assert.ok(options.headers.Authorization.startsWith("Bearer mock-test-token"));
+ if(url.endsWith("/v1/orders/"+mpOrderId))return {
   ok:true,text:async()=>JSON.stringify(payment)
  };
- if(url.endsWith("/v1/payments")&&options?.method==="POST")return {
-  ok:true,text:async()=>JSON.stringify({id:999,
-   point_of_interaction:{transaction_data:{qr_code:"000201010212-FAKE-PIX"}}})
+ if(url.endsWith("/v1/orders")&&options?.method==="POST")return {
+  ok:true,text:async()=>JSON.stringify({id:"ORD01JP84C939T20S0P1DN6FCMWQC",
+   transactions:{payments:[{payment_method:{qr_code:"000201010212-FAKE-PIX"}}]}})
  };
- throw Error("Unexpected payment API call "+url);
+ throw Error("Unexpected Orders API call "+url);
 };
-const req=(sig)=>({
- method:"POST",query:{"data.id":"123"},
+const req=sig=>({
+ method:"POST",query:{"data.id":mpOrderId,type:"order"},
  get:key=>({"x-signature":sig,"x-request-id":"request-A"}[key])
 });
-const ts=String(Date.now()),manifest="id:123;request-id:request-A;ts:"+ts+";";
+const ts=String(Date.now()),manifest="id:"+mpOrderId.toLowerCase()+";request-id:request-A;ts:"+ts+";";
 const mac=crypto.createHmac("sha256",SECRET.POKE_MP_WEBHOOK_SECRET).update(manifest).digest("hex");
 const valid="ts="+ts+",v1="+mac;
 function response(){return {code:200,body:"",
