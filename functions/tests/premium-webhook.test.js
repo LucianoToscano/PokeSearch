@@ -440,14 +440,14 @@ async function run(){
  await premium.adminPremiumSettings({...adminLive,data:{
    action:"prices",regularPriceCents:1200,promotionalPriceCents:500
  }});
- let offer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
- assert.equal(offer.priceCents,500);
+ let promoOffer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
+ assert.equal(promoOffer.priceCents,500);
  await premium.adminPremiumSettings({...adminLive,data:{action:"promotion",enabled:false}});
- offer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
- assert.equal(offer.priceCents,1200);
+ promoOffer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
+ assert.equal(promoOffer.priceCents,1200);
  await premium.adminPremiumSettings({...adminLive,data:{action:"promotion",enabled:true}});
- offer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
- assert.equal(offer.priceCents,500);
+ promoOffer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
+ assert.equal(promoOffer.priceCents,500);
  console.log("PASS editable prices and independent R$5 promotion enable/disable");
 
  // FREE campaign is off by default and its duration is chosen by the owner.
@@ -459,9 +459,9 @@ async function run(){
  await premium.adminPremiumSettings({...adminLive,data:{
    action:"freeYearCampaign",enabled:true,duration:"1m",startsAt,endsAt,maxClaims:2
  }});
- offer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
- assert.equal(offer.freeYearCampaign.duration,"1m");
- assert.equal(offer.freeYearCampaign.active,true);
+ promoOffer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
+ assert.equal(promoOffer.freeYearCampaign.duration,"1m");
+ assert.equal(promoOffer.freeYearCampaign.active,true);
  const firstFree=await premium.claimFreeYear({auth:{uid:"campaignOne"},data:{versionCode:54328}});
  assert.equal(firstFree.activated,true);
  assert.equal(firstFree.duration,"1m");
