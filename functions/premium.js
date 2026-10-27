@@ -845,8 +845,8 @@ exports.redeemFullCoupon=onCall({region:REGION},async request=>{
  const entRef=root().child("entitlements").child(uid);
  const existing=(await entRef.get()).val()||{};
  if(existing.revoked===true)throw new HttpsError("failed-precondition","Conta bloqueada.");
- if(existing.currentKeyHash)throw new HttpsError("failed-precondition",
-   "Esta conta já utilizou Premium. O cupom gratuito é exclusivo para primeiro resgate.");
+ if(existing.currentKeyHash&&existing.kind!=="trial")throw new HttpsError("failed-precondition",
+   "Este cupom é exclusivo para contas sem Premium pago ou manual anterior.");
  const reservation=await couponRef.transaction(old=>{
    if(!old||old.enabled!==true||old.discountPercent!==100||
       !Number.isSafeInteger(old.maxClaims)||old.maxClaims<1||
@@ -862,7 +862,7 @@ exports.redeemFullCoupon=onCall({region:REGION},async request=>{
  const c=reservation.snapshot.val();
  const duration=ADMIN_DURATIONS.includes(c.giftDuration)?c.giftDuration:"30d";
  const keyHash=sha("gift100-license:"+code+":"+uid);
- const deadline=periodExpiry(now,duration);
+ const deadline=periodExpiry(Math.max(now,Number(existing.expiresAt||0)),duration);
  const keyRef=root().child("keys").child(keyHash);
  const keyTx=await keyRef.transaction(v=>v||{
    kind:"manual",source:"coupon100",duration,uid,createdAt:now,claimedAt:now,
@@ -873,7 +873,7 @@ exports.redeemFullCoupon=onCall({region:REGION},async request=>{
    throw new HttpsError("failed-precondition","Benefício indisponível.");
  const applied=await entRef.transaction(old=>{
    const v=old||{};
-   if(v.revoked===true||v.currentKeyHash)return;
+   if(v.revoked===true||(v.currentKeyHash&&v.kind!=="trial"))return;
    return {...v,kind:"manual",currentKeyHash:keyHash,
      lifetime:duration==="lifetime",expiresAt:duration==="lifetime"?null:key.expiresAt};
  },undefined,false);
