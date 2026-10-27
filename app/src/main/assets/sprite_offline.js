@@ -167,10 +167,10 @@
   [25,"HALLOWEEN2017","",1,1,"pm25.cHALLOWEEN_2017.g2.s.icon.png"],
   [25,"HALLOWEEN2017","",0,0,"pm25.cHALLOWEEN_2017.icon.png"],
   [25,"HALLOWEEN2017","",0,1,"pm25.cHALLOWEEN_2017.s.icon.png"],
-  [25,"HALLOWEEN2021NOEVOLVE","",1,0,"pm25.cHALLOWEEN_2021_NOEVOLVE.g2.icon.png"],
-  [25,"HALLOWEEN2021NOEVOLVE","",1,1,"pm25.cHALLOWEEN_2021_NOEVOLVE.g2.s.icon.png"],
-  [25,"HALLOWEEN2021NOEVOLVE","",0,0,"pm25.cHALLOWEEN_2021_NOEVOLVE.icon.png"],
-  [25,"HALLOWEEN2021NOEVOLVE","",0,1,"pm25.cHALLOWEEN_2021_NOEVOLVE.s.icon.png"],
+  [25,"HALLOWEEN2021","",1,0,"pm25.cHALLOWEEN_2021_NOEVOLVE.g2.icon.png"],
+  [25,"HALLOWEEN2021","",1,1,"pm25.cHALLOWEEN_2021_NOEVOLVE.g2.s.icon.png"],
+  [25,"HALLOWEEN2021","",0,0,"pm25.cHALLOWEEN_2021_NOEVOLVE.icon.png"],
+  [25,"HALLOWEEN2021","",0,1,"pm25.cHALLOWEEN_2021_NOEVOLVE.s.icon.png"],
   [25,"COSTUME2020","",1,0,"pm25.fCOSTUME_2020.g2.icon.png"],
   [25,"COSTUME2020","",1,1,"pm25.fCOSTUME_2020.g2.s.icon.png"],
   [25,"COSTUME2020","",0,0,"pm25.fCOSTUME_2020.icon.png"],
@@ -185,22 +185,22 @@
   [26,"HALLOWEEN2017","",0,1,"pm26.cHALLOWEEN_2017.s.icon.png"],
   [302,"COSTUME2020","",0,0,"pm302.fCOSTUME_2020.icon.png"],
   [302,"COSTUME2020","",0,1,"pm302.fCOSTUME_2020.s.icon.png"],
-  [355,"FALL2022NOEVOLVE","",0,0,"pm355.cFALL_2022_NOEVOLVE.icon.png"],
-  [355,"FALL2022NOEVOLVE","",0,1,"pm355.cFALL_2022_NOEVOLVE.s.icon.png"],
-  [356,"FALL2022NOEVOLVE","",0,0,"pm356.cFALL_2022_NOEVOLVE.icon.png"],
-  [356,"FALL2022NOEVOLVE","",0,1,"pm356.cFALL_2022_NOEVOLVE.s.icon.png"],
-  [359,"FALL2022NOEVOLVE","",0,0,"pm359.cFALL_2022_NOEVOLVE.icon.png"],
-  [359,"FALL2022NOEVOLVE","",0,1,"pm359.cFALL_2022_NOEVOLVE.s.icon.png"],
+  [355,"FALL2022","",0,0,"pm355.cFALL_2022_NOEVOLVE.icon.png"],
+  [355,"FALL2022","",0,1,"pm355.cFALL_2022_NOEVOLVE.s.icon.png"],
+  [356,"FALL2022","",0,0,"pm356.cFALL_2022_NOEVOLVE.icon.png"],
+  [356,"FALL2022","",0,1,"pm356.cFALL_2022_NOEVOLVE.s.icon.png"],
+  [359,"FALL2022","",0,0,"pm359.cFALL_2022_NOEVOLVE.icon.png"],
+  [359,"FALL2022","",0,1,"pm359.cFALL_2022_NOEVOLVE.s.icon.png"],
   [37,"FALL2022","",0,0,"pm37.cFALL_2022.icon.png"],
   [37,"FALL2022","",0,1,"pm37.cFALL_2022.s.icon.png"],
   [38,"FALL2022","",0,0,"pm38.cFALL_2022.icon.png"],
   [38,"FALL2022","",0,1,"pm38.cFALL_2022.s.icon.png"],
-  [393,"HALLOWEEN2021NOEVOLVE","",0,0,"pm393.cHALLOWEEN_2021_NOEVOLVE.icon.png"],
-  [393,"HALLOWEEN2021NOEVOLVE","",0,1,"pm393.cHALLOWEEN_2021_NOEVOLVE.s.icon.png"],
-  [426,"HALLOWEEN2021NOEVOLVE","",0,0,"pm426.cHALLOWEEN_2021_NOEVOLVE.icon.png"],
-  [426,"HALLOWEEN2021NOEVOLVE","",0,1,"pm426.cHALLOWEEN_2021_NOEVOLVE.s.icon.png"],
-  [477,"FALL2022NOEVOLVE","",0,0,"pm477.cFALL_2022_NOEVOLVE.icon.png"],
-  [477,"FALL2022NOEVOLVE","",0,1,"pm477.cFALL_2022_NOEVOLVE.s.icon.png"],
+  [393,"HALLOWEEN2021","",0,0,"pm393.cHALLOWEEN_2021_NOEVOLVE.icon.png"],
+  [393,"HALLOWEEN2021","",0,1,"pm393.cHALLOWEEN_2021_NOEVOLVE.s.icon.png"],
+  [426,"HALLOWEEN2021","",0,0,"pm426.cHALLOWEEN_2021_NOEVOLVE.icon.png"],
+  [426,"HALLOWEEN2021","",0,1,"pm426.cHALLOWEEN_2021_NOEVOLVE.s.icon.png"],
+  [477,"FALL2022","",0,0,"pm477.cFALL_2022_NOEVOLVE.icon.png"],
+  [477,"FALL2022","",0,1,"pm477.cFALL_2022_NOEVOLVE.s.icon.png"],
   [50,"FALL2022","",0,0,"pm50.cFALL_2022.icon.png"],
   [50,"FALL2022","",0,1,"pm50.cFALL_2022.s.icon.png"],
   [51,"FALL2022","",0,0,"pm51.cFALL_2022.icon.png"],
@@ -235,8 +235,8 @@
   [855,"PHALLOWEEN202601","",0,1,"pm855.fP_HALLOWEEN_2026_01.s.icon.png"],
   [901,"HALLOWEEN2025","",0,0,"pm901.cHALLOWEEN_2025.icon.png"],
   [901,"HALLOWEEN2025","",0,1,"pm901.cHALLOWEEN_2025.s.icon.png"],
-  [94,"FALL2022NOEVOLVE","",0,0,"pm94.cFALL_2022_NOEVOLVE.icon.png"],
-  [94,"FALL2022NOEVOLVE","",0,1,"pm94.cFALL_2022_NOEVOLVE.s.icon.png"],
+  [94,"FALL2022","",0,0,"pm94.cFALL_2022_NOEVOLVE.icon.png"],
+  [94,"FALL2022","",0,1,"pm94.cFALL_2022_NOEVOLVE.s.icon.png"],
   [94,"COSTUME2020","",0,0,"pm94.fCOSTUME_2020.icon.png"],
   [94,"COSTUME2020","",0,1,"pm94.fCOSTUME_2020.s.icon.png"],
  ]);
@@ -253,7 +253,8 @@
   const formCandidates=matches.filter(x=>!x[2]||fm.includes(x[2])||n.includes(x[2]));
   // A size/form-specific costume cannot be chosen without exact evidence.
   if(!formCandidates.length)return null;
-  const possible=formCandidates.filter(x=>x[3]===((gender==="FEMALE"||gender==="F"||gender==="2")?1:0));
+  const possible=formCandidates.filter(x=>x[3]===((gender==="FEMALE"||gender==="F"||gender==="2"||
+    String(card.gender)==="♀"||String(card.sex)==="♀")?1:0));
   const selected=possible.length?possible[0]:
     formCandidates.find(x=>x[3]===0);
   if(!selected)return null;
@@ -270,7 +271,7 @@
   // Provider string "Halloween 2021 Costume" maps ONLY to the pinned 2021 art.
   // Unknown/other-year costumes still must never fall back to base species.
   function alias(key){
-   if(["HALLOWEEN2021COSTUME","HALLOWEEN2021NOEVOLVE",
+   if(["HALLOWEEN2021COSTUME","HALLOWEEN2021",
        "HALLOWEENMISCHIEF2021","HALLOWEEN2021"].includes(key))
      return "HALLOWEEN2021";
    return key;
