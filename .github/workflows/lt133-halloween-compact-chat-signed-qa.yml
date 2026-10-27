@@ -149,7 +149,7 @@ jobs:
           assert 'forms/555-galar-zen-shiny.png' in report['forms']
           assert 'forms/585-spring.png' in report['forms']
           assert report['formSourceCommit']=='d8c2fb78563e28ad7b3abe938cf6e79998d04e90'
-          assert len(report['costumes'])==10
+          assert len(report['costumes'])==16\n          for dex in (25,393,426):\n              for suffix in ('','-shiny'):\n                  key=f'costumes/{dex}-halloween-2021{suffix}.png'\n                  assert key in report['costumes'],key
           assert report['costumeSourceCommit']=='c2a686eb08ace6e890d8fe3d2134c76988db87b5'
           assert all((root / key).is_file() for key in report['costumes'])
           print('Exact GO costume PNGs:', sorted(report['costumes']))
@@ -182,6 +182,10 @@ jobs:
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/3-copy-2019.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/6-copy-2019.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/9-copy-2019.png'
+          for dex in 25 393 426; do
+            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/costumes/${dex}-halloween-2021.png"
+            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/costumes/${dex}-halloween-2021-shiny.png"
+          done
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
           grep -Fq "versionCode='54338'" PACKAGE-VERSION.txt
