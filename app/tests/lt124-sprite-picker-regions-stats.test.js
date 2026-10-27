@@ -20,10 +20,12 @@ check("Squawkabilly white/yellow/blue alternate names have correct shiny variety
   assert.ok(art.src.endsWith("/shiny/"+id+".png"),form);
  }
 });
-check("unverified event costumes do not borrow base art",()=>{
- for(const [number,name,form] of [["#4","Charmander","CHARMANDER_GOGGLES_2026"],["#6","Charizard","CHARIZARD_COPY_2019"]]){
-  assert.equal(sprites.resolve({number,name,form,image:""}).src,"");
- }
+check("GO 2026 Goggles and 2019 Copy now use exact offline icons",()=>{
+ const goggles=sprites.resolve({number:"#4",name:"Charmander",form:"CHARMANDER_GOGGLES_2026",image:""});
+ assert.equal(goggles.src,"file:///android_asset/pokemon-sprites/costumes/4-goggles-2026.png");
+ const clone=sprites.resolve({number:"#6",name:"Charizard",form:"CHARIZARD_COPY_2019",image:""});
+ assert.equal(clone.src,"file:///android_asset/pokemon-sprites/costumes/6-copy-2019.png");
+ assert.equal(sprites.resolve({number:"#6",name:"Charizard",form:"CHARIZARD_COPY_2019",shiny:true,image:""}).src,"");
 });
 check("search picker reuses exact form resolver instead of base sprites for costumes",()=>{
  assert.match(dock,/function exactSuggestionSprite\(item\)/);

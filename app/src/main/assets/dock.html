@@ -6790,10 +6790,10 @@ function exactSuggestionSprite(item){
  const engine=window.PokeSearchOfflineSprite;
  if(!engine||!Number.isInteger(dex)||dex<1||!label)return "";
  const art=engine.resolve({number:"#"+dex,form:label,name:"",image:"",shiny:false});
- return art.officialForm||art.offline&&/\/forms\//.test(art.src)?art.src:"";
+ return art.officialForm||art.officialCostume||art.offline&&/\/(?:forms|costumes)\//.test(art.src)?art.src:"";
 }
 function pooledExactSprite(url){
- const valid=/^(?:file:\/\/\/android_asset\/pokemon-sprites\/forms\/[a-z0-9-]+\.png|https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/[a-f0-9]{40}\/sprites\/pokemon\/(?:shiny\/)?10[0-9]{3}\.png)$/.test(url);
+ const valid=/^(?:file:\/\/\/android_asset\/pokemon-sprites\/(?:forms|costumes)\/[a-z0-9-]+\.png|https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/[a-f0-9]{40}\/sprites\/pokemon\/(?:shiny\/)?10[0-9]{3}\.png)$/.test(url);
  if(!valid)return Promise.resolve("");
  const previous=spriteRequestCache.get(url),now=Date.now();
  if(previous&&(!previous.failedAt||now-previous.failedAt<SPRITE_FAILURE_RETRY_MS))return previous.promise;

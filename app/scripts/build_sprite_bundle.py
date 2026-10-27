@@ -18,6 +18,56 @@ import urllib.request
 RAW = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
 MIRROR = "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"
 MIN_DIMENSION, MAX_DIMENSION, MAX_BYTES = 8, 1024, 256 * 1024
+# PokeMiners is a third-party archive of copyrighted Pokémon GO artwork.
+# Every costume asset is pinned to a fixed upstream commit and its exact Git blob.
+# Unknown forms/variants must NOT be inferred from normal species sprites.
+COSTUME_SOURCE_COMMIT = "c2a686eb08ace6e890d8fe3d2134c76988db87b5"
+COSTUME_ROOT = ("https://raw.githubusercontent.com/PokeMiners/pogo_assets/"
+                + COSTUME_SOURCE_COMMIT
+                + "/Images/Pokemon%20-%20256x256/Addressable%20Assets/")
+COSTUME_FILES = {
+    "costumes/3-copy-2019.png": (
+        "pm3.fCOPY_2019.icon.png",
+        "284009faddef9f1c56119929da3034e29d287840"
+    ),
+    "costumes/3-copy-2019-female.png": (
+        "pm3.fCOPY_2019.g2.icon.png",
+        "a47c0c2534dc99cef70e472fc660aac3e35de8db"
+    ),
+    "costumes/6-copy-2019.png": (
+        "pm6.fCOPY_2019.icon.png",
+        "69ad8ed87a10db18f3c1f85b449ee6d88c30d0bf"
+    ),
+    "costumes/9-copy-2019.png": (
+        "pm9.fCOPY_2019.icon.png",
+        "b8218c6fab6aafc477f0a57aa4168961d668d638"
+    ),
+    "costumes/4-goggles-2026.png": (
+        "pm4.fGOGGLES_2026.icon.png",
+        "747f05715afdc29abeb94470d0dbab17fe16fa48"
+    ),
+    "costumes/4-goggles-2026-shiny.png": (
+        "pm4.fGOGGLES_2026.s.icon.png",
+        "6d2e2b385f927323cc1689f2aad394357d210628"
+    ),
+    "costumes/5-goggles-2026.png": (
+        "pm5.fGOGGLES_2026.icon.png",
+        "aba004495e1716211c19fc9b039ea496d9b52ffa"
+    ),
+    "costumes/5-goggles-2026-shiny.png": (
+        "pm5.fGOGGLES_2026.s.icon.png",
+        "636adf5e6e2030527a4d25b52f2ae891dfac197a"
+    ),
+    "costumes/6-goggles-2026.png": (
+        "pm6.fGOGGLES_2026.icon.png",
+        "12bcd601236b2d74ffb10b09824f64b8c30e73d2"
+    ),
+    "costumes/6-goggles-2026-shiny.png": (
+        "pm6.fGOGGLES_2026.s.icon.png",
+        "4ff140a084be11ab5bab803713eb59e754823083"
+    )
+}
+
 # Verified Pokémon variety ID 10174 from PokéAPI. Pin the source commit:
 # never use a mutable branch for regional-form identity or shiny color.
 FORM_SOURCE_COMMIT = "d8c2fb78563e28ad7b3abe938cf6e79998d04e90"
@@ -139,9 +189,40 @@ def main():
         target.write_bytes(data)
         form_hashes[output] = hashlib.sha256(data).hexdigest()
 
+    # Pin exact GO costume icons by repository commit + Git object SHA1.
+    # Reject redirected HTML, mismatched bytes and missing normal/shiny art.
+    costume_hashes = {}
+    for output, (relative, object_id) in COSTUME_FILES.items():
+        url = COSTUME_ROOT + relative
+        request = urllib.request.Request(
+            url, headers={"User-Agent": "PokeSearch-LT125-costume-pinner/1"})
+        try:
+            with urllib.request.urlopen(request, timeout=25) as response:
+                if response.status != 200:
+                    raise RuntimeError("non-200 costume response")
+                kind = response.headers.get("Content-Type", "").lower()
+                if kind and "image/png" not in kind:
+                    raise RuntimeError("non-PNG costume response")
+                image = response.read(MAX_BYTES + 1)
+        except (urllib.error.URLError, TimeoutError, OSError) as error:
+            raise SystemExit("Missing pinned costume asset: " + output +
+                             " (" + type(error).__name__ + ")")
+        if not verified_png(image):
+            raise SystemExit("Invalid PNG costume asset: " + output)
+        actual = hashlib.sha1(b"blob " + str(len(image)).encode() +
+                              bytes([0]) + image).hexdigest()
+        if actual != object_id:
+            raise SystemExit("Upstream costume asset changed: " + output)
+        target = dest / output
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(image)
+        costume_hashes[output] = hashlib.sha256(image).hexdigest()
+
     summary = {
         "schema": "pokesearch-offline-sprites-v1",
         "formSourceCommit": FORM_SOURCE_COMMIT,
+        "costumeSourceCommit": COSTUME_SOURCE_COMMIT,
+        "costumes": dict(sorted(costume_hashes.items())),
         "forms": dict(sorted(form_hashes.items())),
         "source": "PokeAPI/sprites master - exact Dex/variant PNG only",
         "dexCount": len(ids),

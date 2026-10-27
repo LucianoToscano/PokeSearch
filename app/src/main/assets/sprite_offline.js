@@ -66,8 +66,44 @@
   if(card.costume_id!==undefined&&card.costume_id!==null&&Number(card.costume_id)!==0)return false;
   return true;
  }
+ // Explicitly verified Pokémon GO costume sprites, pinned inside the APK.
+ // The copy/clone 2019 costumes have NO proven shiny image in this source.
+ const COSTUME_FILES=Object.freeze({
+  "3:COPY2019":"3-copy-2019.png",
+  "4:GOGGLES2026":"4-goggles-2026.png",
+  "5:GOGGLES2026":"5-goggles-2026.png",
+  "6:GOGGLES2026":"6-goggles-2026.png",
+  "6:COPY2019":"6-copy-2019.png",
+  "9:COPY2019":"9-copy-2019.png"
+ });
+ function exactCostume(card){
+  if(!card||typeof card!=="object")return null;
+  const dex=dexOf(card),spec=nameKey(card.name)||({3:"VENUSAUR",4:"CHARMANDER",5:"CHARMELEON",6:"CHARIZARD",9:"BLASTOISE"}[dex]||"");
+  // Form may be a composite provider label, or costume can be distinct.
+  const f=nameKey(card.form),costume=nameKey(card.costume);
+  for(const tag of ["COPY2019","GOGGLES2026"]){
+   const stored=COSTUME_FILES[dex+":"+tag];
+   if(!stored)continue;
+   const validNames=[tag,spec+tag];
+   if(!validNames.includes(f)&&!validNames.includes(costume))continue;
+   // A conflicting named costume must not be silently ignored.
+   if(costume&&!["NONE","NORMAL","DEFAULT"].includes(costume)&&
+      !validNames.includes(costume))continue;
+   const shiny=card.shiny===true;
+   if(shiny&&tag==="COPY2019")return {src:"",original:"",offline:false,missingExact:true};
+   let file=stored;
+   const gender=nameKey(card.gender||card.sex);
+   if(dex===3&&tag==="COPY2019"&&(gender==="FEMALE"||gender==="F"||
+      gender==="2"||String(card.gender)==="♀"))file="3-copy-2019-female.png";
+   if(shiny)file=file.replace(".png","-shiny.png");
+   return {src:LOCAL+"costumes/"+file,original:"",offline:true,officialForm:true,officialCostume:true};
+  }
+  return null;
+ }
  function resolve(card){
   const image=String(card?.image||"");
+  const costumeArt=exactCostume(card);
+  if(costumeArt)return costumeArt;
   // Prefer explicit source-provided artwork if one exists, otherwise use the
   // exact, offline bundled regional variant (normal OR shiny).
   if(!image&&verifiedGalarianZigzagoon(card)){
@@ -108,5 +144,5 @@
   // Preserve provider URLs, data images and unknown special forms untouched.
   return {src:image,original:image,offline:false};
  }
- return Object.freeze({resolve,verifiedBase,verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES});
+ return Object.freeze({resolve,verifiedBase,verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume});
 });

@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT125 — Restaurar contagens antigas e sprites oficiais de trajes (26/10/2026)
+- **Correção de diagnóstico por evidência histórica:** LT87 lia diretamente `stats/online` e `stats/installations` e exibia `DataSnapshot.getChildrenCount()` enquanto as regras antigas permitiam; LT117 mudou para agregados `stats/public/*Count` antes de confirmar Functions implantadas. Isso explica a regressão para `—`. LT125 mantém prioridade aos agregados privados em produção e introduz leitura **compatível somente se as regras já permitirem**, sem armazenar IDs no cliente ou abrir regras novas. Se ambos forem bloqueados, exibe `—`, nunca zero inventado.
+- **Backend preparada:** Functions `index.js` passam a utilizar explicitamente `pokesearch-lt-default-rtdb`, com ledger idempotente, trigger e reconciliação periódica já presentes; `functions/scripts/reconcile-once.js` checa contagem real e `stats/public`; `firebase.json`, `.firebaserc`, `.github/workflows/lt125-firebase-live-deploy.yml` indicam alvo exato. **Não declarar deploy concluído até conferir workflow/contagens reais.** Credencial segura de serviço `FIREBASE_SERVICE_ACCOUNT_POKESEARCH_LT` pode estar ausente; funções de Firebase exigem permissões e plano de faturamento elegível.
+- **Artes verificadas:** catálogo PokeMiners do commit imutável `c2a686eb08ace6e890d8fe3d2134c76988db87b5` contém PNGs de trajes `GOGGLES_2026` para Charmander #4, Charmeleon #5 e Charizard #6 (normal e Shiny); `COPY_2019` para Venusaur #3, Charizard #6 e Blastoise #9 (normal, variante fêmea Venusaur). Dez PNGs são verificados pelo Git blob SHA-1 e PNG SHA-256 no build CI e empacotados em `pokemon-sprites/costumes/`. Não inventar sprites Shiny COPY_2019 ausentes. Mesma resolução no card, resultados e picker, ambas as Pokébolas.
+- **QA candidata** `0.01.25` / `54329`, sem mudança de `applicationId`, assinatura, dependências Gradle ou dados pessoais. [Relatório técnico LT125](POKESEARCH_LT125_FIREBASE_E_TRAJES_20261026.md). Samsung e backend ao vivo exigem verificação independente.
+
+
+
 ## LT124 — Correção de sprites no picker + Firebase retry (26/10/2026)
 ### LT124 — QA assinada e merge verificados
 - **PR #79 MERGED** em `main`: [ver PR](https://github.com/LucianoToscano/PokeSearch/pull/79), merge commit `bc4b1883f6744f738c83a44c6103e2fe40423234`. Fonte binária exata `2e92c07266ebf0bce1dcbde53948e2e467993c39`.

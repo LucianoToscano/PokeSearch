@@ -1,9 +1,9 @@
 {
   "name": "pokesearch-private-aggregates",
   "private": true,
-  "description": "Aggregate-only statistics; manual deployment required",
+  "description": "PokeSearch Firebase production presence and installation aggregates",
   "engines": {
-    "node": ">=20"
+    "node": "22"
   },
   "main": "index.js",
   "dependencies": {

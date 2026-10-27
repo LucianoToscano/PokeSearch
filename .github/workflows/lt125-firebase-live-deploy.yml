@@ -1,0 +1,64 @@
+name: LT125 Firebase RTDB rules and presence counters - live deploy
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'firebase.json'
+      - '.firebaserc'
+      - 'firebase-realtime.rules.json'
+      - 'functions/**'
+      - '.github/workflows/lt125-firebase-live-deploy.yml'
+permissions:
+  contents: read
+concurrency:
+  group: pokesearch-lt-firebase-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      FIREBASE_PROJECT: pokesearch-lt
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POKESEARCH_LT }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify service account connection without exposing credentials
+        run: |
+          set -euo pipefail
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::error::Production Firebase deployment blocked: configure FIREBASE_SERVICE_ACCOUNT_POKESEARCH_LT in GitHub Actions secrets."
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/pokesearch-firebase-sa.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/pokesearch-firebase-sa.json" >> "$GITHUB_ENV"
+      - name: Install pinned Firebase CLI and server dependencies
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund --prefix functions
+          npm install --no-audit --no-fund --prefix "$RUNNER_TEMP/firebase-cli" firebase-tools@14.17.0
+          echo "$RUNNER_TEMP/firebase-cli/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Confirm RTDB target and validate JSON
+        run: |
+          set -euo pipefail
+          node -e "let r=require('./firebase-realtime.rules.json');if(r.rules['.read']!==false||r.rules['.write']!==false||r.rules.stats.public['.write']!==false)throw Error('Rules not fail-closed')"
+          node -e "let c=require('./firebase.json');if(c.database[0].target!=='live')throw Error('Wrong RTDB target')"
+          firebase projects:list --json >/dev/null
+      - name: Deploy scoped RTDB rules and Functions
+        run: |
+          set -euo pipefail
+          firebase deploy --project "$FIREBASE_PROJECT" --only database,functions --non-interactive
+      - name: Reconcile actual counts and verify live public aggregate
+        run: |
+          set -euo pipefail
+          node functions/scripts/reconcile-once.js
+      - name: Clean service credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pokesearch-firebase-sa.json"

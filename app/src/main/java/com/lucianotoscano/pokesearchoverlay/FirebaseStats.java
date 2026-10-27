@@ -18,6 +18,8 @@ final class FirebaseStats {
     private static String uid="";
     private static boolean initialized,homeVisible,primaryOverlayVisible,secondaryOverlayVisible,connected,presenceScheduled;
     private static long onlineCount=-1,installCount=-1;
+    private static long legacyOnlineCount=-1,legacyInstallCount=-1;
+    private static boolean publicOnlineAvailable=false,publicInstallAvailable=false;
     private static WeakReference<TextView> onlineLabel=new WeakReference<>(null);
     private static WeakReference<TextView> installLabel=new WeakReference<>(null);
     private FirebaseStats(){}
@@ -79,6 +81,13 @@ final class FirebaseStats {
         // Individual UIDs/presence are protected by Firebase rules.
         root.child("public").child("installCount").addValueEventListener(counter(false));
         root.child("public").child("onlineCount").addValueEventListener(counter(true));
+        // LT125 migration bridge: before LT117 these totals came from the two
+        // live RTDB collections. If server aggregates are not deployed yet,
+        // reuse the legacy counts ONLY while existing rules explicitly allow
+        // reads. No child IDs are retained, logged, or displayed. Once private
+        // RTDB rules are deployed, denied collection reads are quietly ignored.
+        root.child("installations").addValueEventListener(legacyCounter(false));
+        root.child("online").addValueEventListener(legacyCounter(true));
         online=root.child("online").child(uid);
         connection=db.getReference(".info/connected");
         connection.addValueEventListener(new ValueEventListener(){
@@ -98,16 +107,38 @@ final class FirebaseStats {
                 synchronized(FirebaseStats.class){
                     Long count=snapshot.getValue(Long.class);
                     long checked=count!=null&&count>=0?count:-1;
-                    if(isOnline)onlineCount=checked;
-                    else installCount=checked;
+                    if(isOnline){
+                        publicOnlineAvailable=checked>=0;
+                        onlineCount=publicOnlineAvailable?checked:legacyOnlineCount;
+                    }else{
+                        publicInstallAvailable=checked>=0;
+                        installCount=publicInstallAvailable?checked:legacyInstallCount;
+                    }
                     render();
                 }
             }
             @Override public void onCancelled(DatabaseError error){
                 synchronized(FirebaseStats.class){
-                    if(isOnline)onlineCount=-1;else installCount=-1;
+                    if(isOnline){publicOnlineAvailable=false;onlineCount=legacyOnlineCount;}
+                    else{publicInstallAvailable=false;installCount=legacyInstallCount;}
                     render();
                 }
+            }
+        };
+    }
+    private static ValueEventListener legacyCounter(boolean isOnline){
+        return new ValueEventListener(){
+            @Override public void onDataChange(DataSnapshot snapshot){
+                synchronized(FirebaseStats.class){
+                    long total=snapshot.getChildrenCount();
+                    // Public server aggregates take priority when available.
+                    if(isOnline){legacyOnlineCount=total;if(!publicOnlineAvailable)onlineCount=total;}
+                    else{legacyInstallCount=total;if(!publicInstallAvailable)installCount=total;}
+                    render();
+                }
+            }
+            @Override public void onCancelled(DatabaseError error){
+                // New privacy rules deny the legacy read by design; no fake zero.
             }
         };
     }
