@@ -35,7 +35,7 @@ check("pin immutable upstream binary identity and package 10 PNGs",()=>{
  assert.match(build,/hashlib\.sha1/);
  assert.match(build,/costume_hashes/);
  assert.match(build,/verified_png\(image\)/);
- assert.equal((build.match(/"costumes\/[a-z0-9-]+\.png": \(/g)||[]).length,10);
+ assert.equal((build.match(/"costumes\/[a-z0-9-]+\.png": \(/g)||[]).length,16);
 });
 check("picker handles costumes, shared details cards retain resolver",()=>{
  assert.match(dock,/art\.officialCostume/);
