@@ -70,10 +70,21 @@ final class PremiumAccess {
         call(context,"redeemPremiumKey",data,cb);
     }
     static void createPix(Context context,String email,String cpf,ResultCallback cb){
+        createPix(context,email,cpf,"",cb);
+    }
+    static void createPix(Context context,String email,String cpf,String couponCode,ResultCallback cb){
         Map<String,Object> data=new HashMap<>();
         data.put("versionCode",BuildConfig.VERSION_CODE);
         data.put("email",email);data.put("cpf",cpf);
+        if(couponCode!=null&&!couponCode.trim().isEmpty())
+            data.put("couponCode",couponCode.trim().toUpperCase(java.util.Locale.ROOT));
         call(context,"createPremiumPix",data,cb);
+    }
+    static void offerWithCoupon(Context context,String couponCode,ResultCallback cb){
+        Map<String,Object> data=new HashMap<>();
+        if(couponCode!=null&&!couponCode.trim().isEmpty())
+            data.put("couponCode",couponCode.trim().toUpperCase(java.util.Locale.ROOT));
+        call(context,"getPremiumOffer",data,cb);
     }
     static void adminOverview(Context context,ResultCallback cb){
         call(context,"adminPremiumOverview",new HashMap<>(),cb);
