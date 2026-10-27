@@ -24,7 +24,14 @@ test("Home and independent P1/P2 overlays maintain activity",()=>{
 });
 test("Counters do not invent numbers when offline",()=>{
  assert.match(firebase,/onlineCount=-1,installCount=-1/);
- assert.doesNotMatch(firebase,/getChildrenCount\(\)/);
+ // LT125: historical collections are read only as a compatibility fallback.
+ // Aggregates remain authoritative; collection rules continue denying global reads.
+ assert.match(firebase,/legacyCounter\(false\)/);
+ assert.match(firebase,/legacyCounter\(true\)/);
+ assert.match(firebase,/!publicInstallAvailable\)installCount=total/);
+ assert.match(firebase,/!publicOnlineAvailable\)onlineCount=total/);
+ assert.equal(rules.stats.online[".read"],false);
+ assert.equal(rules.stats.installations[".read"],false);
  assert.match(firebase,/child\("public"\)\.child\("installCount"\)/);
  assert.match(firebase,/child\("public"\)\.child\("onlineCount"\)/);
 });
