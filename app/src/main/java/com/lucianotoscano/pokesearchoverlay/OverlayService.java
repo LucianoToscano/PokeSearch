@@ -279,7 +279,7 @@ public class OverlayService extends Service {
                 JSONArray cards=response.optJSONArray("cards");
                 if(!"authorized-api-qa".equals(response.optString("source"))||
                     !response.optBoolean("criteriaConfirmed",false)||
-                    cards==null||cards.length()>10||
+                    cards==null||cards.length()>100||
                     response.optInt("searchId",-1)<0||
                     (response.optBoolean("requestedShiny",false)!=shiny)||
                      (shiny&&(!response.optBoolean("apiFilterAccepted",false)||
@@ -2568,7 +2568,7 @@ public class OverlayService extends Service {
         if(source!=null)for(int i=0;i<source.length();i++){
             JSONObject c=source.optJSONObject(i);if(c!=null)a.add(c);
         }
-        // The site sorts before we read the first ten cards. Preserve that order.
+        // The site sorts before our first verified cards. Preserve that order.
         if("site".equals(sort)){
             JSONArray inSiteOrder=new JSONArray();
             for(JSONObject card:a)inSiteOrder.put(card);
