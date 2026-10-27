@@ -1,0 +1,8 @@
+{
+  "projectId": "pokesearch-lt",
+  "packageName": "com.lucianotoscano.pokesearch",
+  "signingCertificateSha1": "dd7bf665e1d47a257fc557b51cb5a57dfd13cb96",
+  "androidClientId": "1007816617051-83gesa09s86h50jbkcvrrjpp6do46tjg.apps.googleusercontent.com",
+  "webClientId": "1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com",
+  "note": "Public OAuth client identifiers only; derived from refreshed Firebase Android configuration. No admin SDK private key or API key."
+}
