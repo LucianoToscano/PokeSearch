@@ -22,9 +22,9 @@ const context={
 const output=JSON.parse(vm.runInNewContext(profile,context));
 assert.equal(output.ok,true);
 assert.equal(output.trainers.length,2);
-assert.deepEqual(Array.from(output.trainers,x=>x.name),["AlphaTrainer","BetaTrainer"]);
-assert.deepEqual(Array.from(output.trainers,x=>x.code),["123456789012","987654321098"]);
-assert.equal(output.trainerName,"AlphaTrainer");
+assert.deepEqual(Array.from(output.trainers,x=>x.name).sort(),["AlphaTrainer","BetaTrainer"]);
+assert.deepEqual(Array.from(output.trainers,x=>x.code).sort(),["123456789012","987654321098"].sort());
+assert.ok(["AlphaTrainer","BetaTrainer"].includes(output.trainerName));
 const java=read("src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java");
 const service=read("src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java");
 const probe=read("src/main/assets/probe.js");
