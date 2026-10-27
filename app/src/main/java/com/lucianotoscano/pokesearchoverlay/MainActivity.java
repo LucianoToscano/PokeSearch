@@ -360,6 +360,10 @@ public class MainActivity extends Activity {
         brandTitle.setImageResource(R.drawable.ps_home_official_wordmark);
         brandTitle.setScaleType(ImageView.ScaleType.FIT_CENTER);
         brandTitle.setContentDescription("PokeSearch");
+        // Owner-only entry; the Cloud Function checks the admin custom claim.
+        if(PremiumAccess.controlled())brandTitle.setOnLongClickListener(v->{
+            PremiumAdminDialog.show(this);return true;
+        });
         TextView brandSubtitle=homeText("POKÉMON GO",9,
             homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
         // Original wordmark: 2172 × 724 (3:1). Avoid fixed 118×36 squeezing.
