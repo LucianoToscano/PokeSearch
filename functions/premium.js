@@ -27,6 +27,8 @@ const NORMAL_CENTS=1000, PROMO_CENTS=500;
 const ADMIN_DURATIONS=Object.freeze(["15d","30d","1m","3m","6m","12m","lifetime"]);
 const root=()=>getDatabase().ref("premium");
 const policy=()=>getDatabase().ref("distribution");
+const appMaintenance=async()=>
+   (await getDatabase().ref("appControl/maintenance/enabled").get()).val()===true;
 const sha=value=>crypto.createHash("sha256").update(value).digest("hex");
 const digits=value=>String(value||"").replace(/\D/g,"");
 const requireUser=request=>{
@@ -245,7 +247,7 @@ function signatureValid(req){
 exports.checkDistributionAccess=onCall({region:REGION},async request=>{
  const uid=requireUser(request),code=Number(request.data?.versionCode);
  if(!isValidCode(code))throw new HttpsError("invalid-argument","Versão inválida.");
- const enabled=await currentPolicy(code);
+ const enabled=!await appMaintenance()&&await currentPolicy(code);
  const premium=enabled&&await userEntitlement(uid);
  return {allowed:enabled,premium,serverNow:Date.now()};
 });
@@ -253,6 +255,8 @@ exports.createPremiumPix=onCall({region:REGION,
  secrets:[MP_TOKEN,MP_TEST_TOKEN]},async request=>{
  const uid=requireUser(request),email=String(request.data?.email||"").trim().toLowerCase();
  const code=Number(request.data?.versionCode);
+ if(await appMaintenance())
+   throw new HttpsError("failed-precondition","PokeSearch temporariamente em manutenção.");
  if(!isValidCode(code)||!await currentPolicy(code))
    throw new HttpsError("failed-precondition","Esta versão não está liberada.");
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>120)
@@ -382,7 +386,8 @@ exports.adminPremiumOverview=onCall({region:REGION},async request=>{
 exports.getPremiumOffer=onCall({region:REGION},async request=>{
  requireUser(request);
  const cfg=(await root().child("config").get()).val()||{};
- return {...offer(cfg),salesEnabled:cfg.salesEnabled===true,serverNow:Date.now()};
+ return {...offer(cfg),salesEnabled:cfg.salesEnabled===true&&!await appMaintenance(),
+   serverNow:Date.now()};
 });
 
 /** Each individually chosen license is controlled only by its administrator.
