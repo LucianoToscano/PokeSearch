@@ -144,21 +144,32 @@
   "5:GOGGLES2026":"5-goggles-2026.png",
   "6:GOGGLES2026":"6-goggles-2026.png",
   "6:COPY2019":"6-copy-2019.png",
-  "9:COPY2019":"9-copy-2019.png"
+  "9:COPY2019":"9-copy-2019.png",
+  "25:HALLOWEEN2021":"25-halloween-2021.png",
+  "393:HALLOWEEN2021":"393-halloween-2021.png",
+  "426:HALLOWEEN2021":"426-halloween-2021.png"
  });
  function exactCostume(card){
   if(!card||typeof card!=="object")return null;
   const dex=dexOf(card),spec=nameKey(card.name)||({3:"VENUSAUR",4:"CHARMANDER",5:"CHARMELEON",6:"CHARIZARD",9:"BLASTOISE"}[dex]||"");
   // Form may be a composite provider label, or costume can be distinct.
   const f=nameKey(card.form),costume=nameKey(card.costume);
-  for(const tag of ["COPY2019","GOGGLES2026"]){
+  // Provider string "Halloween 2021 Costume" maps ONLY to the pinned 2021 art.
+  // Unknown/other-year costumes still must never fall back to base species.
+  function alias(key){
+   if(["HALLOWEEN2021COSTUME","HALLOWEEN2021NOEVOLVE",
+       "HALLOWEENMISCHIEF2021","HALLOWEEN2021"].includes(key))
+     return "HALLOWEEN2021";
+   return key;
+  }
+  for(const tag of ["COPY2019","GOGGLES2026","HALLOWEEN2021"]){
    const stored=COSTUME_FILES[dex+":"+tag];
    if(!stored)continue;
    const validNames=[tag,spec+tag];
-   if(!validNames.includes(f)&&!validNames.includes(costume))continue;
+   if(!validNames.includes(alias(f))&&!validNames.includes(alias(costume)))continue;
    // A conflicting named costume must not be silently ignored.
    if(costume&&!["NONE","NORMAL","DEFAULT"].includes(costume)&&
-      !validNames.includes(costume))continue;
+      !validNames.includes(alias(costume)))continue;
    const shiny=card.shiny===true;
    if(shiny&&tag==="COPY2019")return {src:"",original:"",offline:false,missingExact:true};
    let file=stored;
