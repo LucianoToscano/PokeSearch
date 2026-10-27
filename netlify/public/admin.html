@@ -81,6 +81,13 @@
     <div class="row"><span class="label">Preço promocional</span><span class="value" id="promo">—</span></div>
     <div class="row"><span class="label">Promoção</span><strong id="promotion-status">—</strong></div>
     <div class="actions"><button id="promotion-toggle" class="secondary" disabled>Verificar promoção</button></div>
+    <label class="label" for="promotion-end">Fim da promoção (horário local)</label>
+    <input class="maintenance-note" id="promotion-end" type="datetime-local">
+    <div class="actions">
+      <button id="save-promotion-end" class="secondary">Salvar contagem regressiva</button>
+      <button id="clear-promotion-end" class="secondary">Sem prazo</button>
+    </div>
+    <small>O relógio no aplicativo só aparecerá se você definir um fim real. Ao vencer, o preço volta automaticamente ao normal. Não há contagem artificial.</small>
     <small>Você pode ligar ou desligar a promoção e alterar os preços abaixo. Valores já cobrados não são alterados.</small>
     <label class="label" for="regular-price-input">Preço normal (R$)</label>
     <input class="maintenance-note" id="regular-price-input" inputmode="decimal" type="text" placeholder="10,00">
@@ -261,7 +268,15 @@
       el("regular").textContent=money(data.regularPriceCents);
       el("promo").textContent=money(data.promotionalPriceCents);
       promotionEnabled=data.promotionEnabled===true;
-      el("promotion-status").textContent=promotionEnabled?"Ativa":"Desativada";
+      el("promotion-status").textContent=promotionEnabled?
+        "Ativa · "+Number(data.discountPercent||0)+"% OFF":"Desativada";
+      if(document.activeElement!==el("promotion-end")){
+        const deadline=Number(data.promotionEndsAt||0);
+        if(deadline>0){
+          const local=new Date(deadline-new Date(deadline).getTimezoneOffset()*60000);
+          el("promotion-end").value=local.toISOString().slice(0,16);
+        }else el("promotion-end").value="";
+      }
       el("promotion-toggle").textContent=promotionEnabled?"Desativar promoção":"Ativar promoção";
       el("promotion-toggle").disabled=false;
       if(document.activeElement!==el("regular-price-input"))
@@ -578,6 +593,26 @@
     }catch(e){setStatus(e.message||"Erro ao salvar valores.","error");}
     finally{el("save-prices").disabled=false;}
   });
+  async function savePromotionDeadline(endsAt){
+    if(!Number.isSafeInteger(endsAt)||endsAt<0){
+      setStatus("Data inválida.","error");return;
+    }
+    if(!window.confirm(endsAt?
+      "Configurar vencimento REAL da promoção em "+new Date(endsAt).toLocaleString("pt-BR")+"?":
+      "Remover a data limite? Sem prazo, o aplicativo não exibirá contagem regressiva."))return;
+    try{
+      await call("adminPremiumSettings",{action:"promotionDeadline",endsAt});
+      await overview();setStatus(endsAt?"Prazo real da promoção salvo.":"Prazo da promoção removido.","ok");
+    }catch(e){setStatus(e.message||"Não foi possível salvar prazo.","error");}
+  }
+  el("save-promotion-end").addEventListener("click",()=>{
+    const value=el("promotion-end").value,endsAt=Date.parse(value);
+    if(!value||!Number.isSafeInteger(endsAt)||endsAt<=Date.now()){
+      setStatus("Escolha uma data de encerramento futura.","error");return;
+    }
+    savePromotionDeadline(endsAt);
+  });
+  el("clear-promotion-end").addEventListener("click",()=>savePromotionDeadline(0));
   el("promotion-toggle").addEventListener("click",async()=>{
     const enabled=!promotionEnabled;
     if(!window.confirm((enabled?"Ativar":"Desativar")+" a promoção? Isso altera o valor das PRÓXIMAS cobranças Pix."))return;
