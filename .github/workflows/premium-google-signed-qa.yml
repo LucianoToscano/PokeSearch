@@ -1,0 +1,146 @@
+name: PokeSearch Premium Gmail LT125 — signed private QA artifact
+on:
+  push:
+    branches:
+      - feature/premium-google-login-qa-20261027
+    paths:
+      - '.github/workflows/premium-google-signed-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pokesearch-premium-gmail-lt125-signed-qa
+  cancel-in-progress: false
+jobs:
+  signed-gmail-premium-qa:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
+      POKE_TEST_VERSION_CODE: '54329'
+      POKE_TEST_VERSION_LABEL: '51129'
+      POKE_TEST_PUBLIC_VERSION: '0.01.25'
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      QA_APK: 'PokeSearch-v0.01.25-LT125-Gmail-Premium-QA.apk'
+    steps:
+      - name: Checkout QA source only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Verify public Google OAuth configuration, without logging its ID
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$POKE_GOOGLE_WEB_CLIENT_ID" =~ ^[a-zA-Z0-9.-]+\.apps\.googleusercontent\.com$ ]]; then
+            echo "::error::Configure a Web OAuth 2.0 Client ID in POKE_GOOGLE_WEB_CLIENT_ID."
+            exit 1
+          fi
+          echo "Google Web OAuth client format verified."
+      - name: Install Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Restore the permanent PokeSearch signer in protected runner
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for key in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$key")" || { echo "::error::The protected permanent signing materials are missing."; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pokesearch-premium-permanent.p12"
+          chmod 600 "$RUNNER_TEMP/pokesearch-premium-permanent.p12"
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/pokesearch-premium-permanent.p12" >> "$GITHUB_ENV"
+      - name: Require exact registered Firebase Android SHA-1 and permanent SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_FIREBASE_SHA1='DD:7B:F6:65:E1:D4:7A:25:7F:C5:57:B5:1C:B5:A5:7D:FD:13:CB:96'
+          ACTUAL_SHA1="$(keytool -exportcert -rfc \
+            -keystore "$POKE_RELEASE_KEYSTORE" \
+            -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" \
+            -alias "$POKE_RELEASE_KEY_ALIAS" |
+            openssl x509 -noout -fingerprint -sha1 | cut -d= -f2 | tr -d '\r')"
+          echo "Android signing certificate SHA-1: $ACTUAL_SHA1"
+          if [ "${ACTUAL_SHA1^^}" != "$EXPECTED_FIREBASE_SHA1" ]; then
+            echo "::error::The Firebase LT Android OAuth SHA-1 does not match the permanent APK signing certificate; add the verified signing SHA-1 to Firebase before distributing."
+            exit 1
+          fi
+          ACTUAL_SHA256="$(keytool -exportcert -rfc \
+            -keystore "$POKE_RELEASE_KEYSTORE" \
+            -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" \
+            -alias "$POKE_RELEASE_KEY_ALIAS" |
+            openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          if [ "$ACTUAL_SHA256" != "$POKE_RELEASE_CERT_SHA256" ]; then
+            echo "::error::Permanent APK SHA-256 signing certificate mismatch."
+            exit 1
+          fi
+          echo "Registered Android OAuth SHA-1 and permanent SHA-256 verified."
+      - name: Run Premium identity, distribution and overlay regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run test:premium
+          node app/tests/lt104-dual-overlays.test.js
+          node app/tests/lt112-dual-overlay-parity.test.js
+          node app/tests/lt113-get-coords-canonical-dual.test.js
+      - name: Compile signed controlled LT125 QA APK (never GitHub Releases)
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Audit APK, Android version, protection and certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/release/app-release.apk'
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54329'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.25'" PACKAGE-VERSION.txt
+          ! grep -q '^application-debuggable' PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          CERT="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
+          cp "$APK" "$QA_APK"
+          sha256sum "$QA_APK" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE-COMMIT.txt
+      - name: Upload protected QA APK — artifact only, no public Release
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-v0.01.25-LT125-Gmail-Premium-QA-protected
+          path: |
+            PokeSearch-v0.01.25-LT125-Gmail-Premium-QA.apk
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            PACKAGE-VERSION.txt
+            SOURCE-COMMIT.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Delete ephemeral signing material
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/pokesearch-premium-permanent.p12"

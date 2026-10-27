@@ -8,6 +8,10 @@ dependencies {
     implementation("androidx.core:core:1.15.0")
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-auth")
+    // Google Credential Manager (stable AndroidX); Premium identity only.
+    implementation("androidx.credentials:credentials:1.6.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
     implementation("com.google.firebase:firebase-database")
 }
 
@@ -55,6 +59,12 @@ val testSigningFields = listOf(testKeyFile, testStorePassword, testKeyAlias, tes
 val testSigningComplete = testSigningFields.all { !it.isNullOrBlank() }
 val testSigningRequired = System.getenv("POKE_TEST_SIGNING_REQUIRED") == "true"
 val controlledDistribution = System.getenv("POKE_CONTROLLED_DISTRIBUTION") == "true"
+val premiumGoogleWebClientId = System.getenv("POKE_GOOGLE_WEB_CLIENT_ID")?.trim().orEmpty()
+if (premiumGoogleWebClientId.isNotEmpty() &&
+    !Regex("[A-Za-z0-9.-]+\\.apps\\.googleusercontent\\.com").matches(premiumGoogleWebClientId))
+    throw org.gradle.api.GradleException("Invalid POKE_GOOGLE_WEB_CLIENT_ID; use the OAuth Web Client ID")
+if (controlledDistribution && premiumGoogleWebClientId.isEmpty())
+    throw org.gradle.api.GradleException("Controlled Premium builds require POKE_GOOGLE_WEB_CLIENT_ID")
 if (controlledDistribution && (System.getenv("POKE_RELEASE_KEYSTORE").isNullOrBlank() ||
         releaseCertificateSha256 != officialTestCertificateSha256))
     throw org.gradle.api.GradleException("Controlled APK requires the verified permanent release signer")
@@ -93,6 +103,7 @@ android {
         buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA", "false")
         buildConfigField("boolean", "SCRAPBOOK_ONLINE_QA", "false")
         buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "false")
+        buildConfigField("String", "PREMIUM_GOOGLE_WEB_CLIENT_ID", "\"$premiumGoogleWebClientId\"")
         buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-api.netlify.app/api/premium\"")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
