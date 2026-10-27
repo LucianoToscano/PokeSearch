@@ -31,8 +31,11 @@ const checks=[
  ["Anonymous stats still use original Firebase instance",stats.includes("PokeSearchStats")],
  ["Google login uses native Credential Manager",oauth.includes("getCredentialAsync(")&&
   oauth.includes("GoogleAuthProvider.getCredential")],
- ["Premium never relies on local clock for access",access.includes("SystemClock.elapsedRealtime()")&&
-  !access.includes("SharedPreferences")],
+ ["Premium access lease uses elapsed time, install ID is never treated as license",
+   access.includes("SystemClock.elapsedRealtime()")&&
+   access.includes('getSharedPreferences("premium_install_identity"')&&
+   access.includes('java.util.UUID.randomUUID().toString()')&&
+   !access.includes("android.provider.Settings.Secure.ANDROID_ID")],
  ["Maintenance and per-version availability use HTTPS with bounded timeouts",
    availability.includes('BuildConfig.PREMIUM_BACKEND_URL+"/appStatus?versionCode="')&&
    availability.includes("getBoolean(\"allowed\",true)")&&
@@ -64,6 +67,14 @@ const checks=[
    ui.includes('PremiumAccess.invalidateLease();')&&
    ui.includes('PremiumGoogleLogin.signOut(this,')&&
    ui.includes('A Pokébola 1 continua gratuita.')],
+ ["One active P2 installation per Google account and explicit handover",
+   access.includes('payload.put("deviceId",deviceId(context))')&&
+   access.includes('call(context,"transferPremiumDevice",data,callback)')&&
+   access.includes('static synchronized boolean deviceConflict()')&&
+   ui.includes('promptPremiumDeviceTransfer(this::startSecondaryOverlayAuthorized)')&&
+   ui.includes('setPositiveButton("Usar neste aparelho"')&&
+   dialog.includes('promptPremiumDeviceTransfer(()->')&&
+   overlay.includes('handler.postDelayed(this,45000L)')],
  ["Compact Premium dialog is a bounded dark popup, not a full-screen page",
    dialog.includes('new AlertDialog.Builder(activity).setView(scroller).create()')&&
    dialog.includes('getDisplayMetrics().heightPixels*0.78f')&&
