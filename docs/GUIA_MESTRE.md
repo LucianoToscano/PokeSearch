@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT123 — Merge + APK QA assinado (26/10/2026)
+- [PR #78](https://github.com/LucianoToscano/PokeSearch/pull/78) **MERGED**, commit `5365ce277c171a1b4055ca433dd7bca7169c74ba`. PR #77 ficou superada pela integração cumulativa LT122/123. SOURCE_COMMIT APK `6a15743b6c26b72b5ef57f6a5de40093dc430883`.
+- **Build assinada SUCCESS:** [GitHub Actions #40423724854](https://github.com/LucianoToscano/PokeSearch/actions/runs/40423724854), artifact [#12698283902](https://github.com/LucianoToscano/PokeSearch/actions/runs/40423724854/artifacts/12698283902). Versão QA `0.01.23` / `54327`, pacote inalterado `com.lucianotoscano.pokesearch`, APK `PokeSearch-v0.01.23-LT-Chat-Sprites-Stats-QA.apk`, **41.837.342 bytes**, SHA-256 `d810f13097113f818ca99e55d533855296fd7602747c888727eb291fd59fc493` (confere `SHA256SUMS.txt`). Assinatura Android v2 válida com certificado original SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **Botões Home P1/P2:** colocados lado a lado sob o cabeçalho; OFF usa `Sem Filtro.png` e ON `Personalizado.png`. Fontes originais verificadas no Drive; ambas as imagens foram conferidas pixel a pixel dentro do APK, embora recursos comprimidos estejam renomeados como `res/uO.png` e `res/FF.png`. Cada botão controla somente a sua Pokébola.
+- **Sprites:** 317 variedades PokeAPI com normal + Shiny disponibilizadas por URL oficial fixada, com cache Android em disco, resolvidas pela mesma biblioteca JS nos resultados, buscas e card. Fonte alterna PokeAPI não inclui 9 variedades nem todas fantasias Pokémon GO; não declarar cobertura universal ou teste físico de todas as imagens. Zigzagoon de Galar continua disponível offline.
+- **Chat:** mural substituído por conversa simples, mensagens em tempo real, sem categorias e sem moderação prévia. `firebase-realtime.rules.json` inclui caminho `chat/messages` e proteção mínima Auth/append-only. **Regras NÃO comprovadamente implantadas**; Chat pode não funcionar em produção até deploy. Nenhuma mensagem fictícia.
+- **Firebase Stats:** ações `onInstallationAdded/Removed`, `onPresenceAdded/Removed` agora têm ledger de idempotência e `reconcileCounters` periódico para preenchimento de `stats/public`. **Somente código commitado**, sem deploy em produção nem números reais atestados. Traços `—` podem persistir até implantação; não substituir por contagens inventadas.
+- **QA restante:** testar no Samsung 110 cenários; API/DOM, sprites regionais GO, sons e notificações P1/P2, chat com dois usuários, instalação incremental, bateria/Doze, regras Firebase em produção. **APK de teste QA, não release pública estável**. Relatório anterior [LT123](POKESEARCH_LT123_CHAT_STATS_SPRITES_DUAL_TOP_20261026.md) e backup integral preservados.
+
+
+
 ## LT123 — Screenshot Samsung: contadores, sprites e botões duplos (26/10/2026)
 - Problemas reportados: `Ativos agora` e `Instalações` não mostram números; ausências de sprites nos resultados e buscas com formas/variações; P1 e P2 devem ficar lado a lado no topo, com as imagens do Drive Sem Filtro.png OFF / Personalizado.png ON. Persistência das preferências, dois serviços, sons e assinatura mantidas.
 - Frontend: controle P1/P2 lado a lado na Home, usando PNGs fornecidos, sem biblioteca Android nova. Cada toque controla somente o serviço correspondente.
