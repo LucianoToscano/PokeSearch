@@ -32,11 +32,14 @@ const checks=[
   oauth.includes("GoogleAuthProvider.getCredential")],
  ["Premium never relies on local clock for access",access.includes("SystemClock.elapsedRealtime()")&&
   !access.includes("SharedPreferences")],
- ["P1 gate only on protected QA",ui.includes("if(PremiumAccess.controlled()&&!PremiumAccess.permitted(false))")],
+ ["P1 remains free without server verification",!ui.includes("if(PremiumAccess.controlled()&&!PremiumAccess.permitted(false))")&&
+   ui.includes("private void startOverlay()")&&
+   access.includes("if(!secondary||!controlled())return true;")],
  ["P2 gate, login and redemption on protected QA",ui.includes("PremiumGoogleLogin.isGoogleSignedIn(this)")&&
   ui.includes("PremiumPurchaseDialog.show(this")],
- ["P1 & P2 server lease checked before overlay WebView",overlay.includes("PremiumAccess.permitted(isSecondaryOverlay())")&&
-  overlay.indexOf("PremiumAccess.permitted(isSecondaryOverlay())")<overlay.indexOf("newWebsite();")],
+ ["Only P2 server lease checked before overlay WebView",overlay.includes("if(isSecondaryOverlay()&&PremiumAccess.controlled()&&!PremiumAccess.permitted(true))")&&
+  overlay.indexOf("PremiumAccess.permitted(true)")<overlay.indexOf("newWebsite();")&&
+  overlay.includes("if(isSecondaryOverlay()&&PremiumAccess.controlled())")],
  ["Shared OverlayService continues both Pokeballs",overlay.includes("isSecondaryOverlay()")],
  ["Premium purchase disabled without server config",dialog.includes("salesEnabled")&&
   dialog.includes("create.setEnabled(signed&&canSell[0])")],
