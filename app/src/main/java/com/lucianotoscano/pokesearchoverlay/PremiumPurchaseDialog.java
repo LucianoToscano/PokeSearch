@@ -25,7 +25,7 @@ final class PremiumPurchaseDialog {
         int p=(int)(activity.getResources().getDisplayMetrics().density*14);
         col.setPadding(p,p,p,p);
         TextView description=new TextView(activity);
-        description.setText("Pokébola 1: gratuita. Pokébola 2: Premium por 30 dias após confirmação do Pix.");
+        description.setText("LT134 · Teste do login Google Premium. As duas Pokébolas continuam como na LT133; cobranças e bloqueios não estão ativados.");
         col.addView(description);
         TextView googleAccount=new TextView(activity);
         googleAccount.setTextSize(13);
@@ -144,7 +144,7 @@ final class PremiumPurchaseDialog {
                 if(error!=null){status.setText(error);return;}
                 String state=String.valueOf(result.get("status"));
                 if("approved".equals(state)){
-                    stop.run();status.setText("Pagamento aprovado! Segunda Pokébola liberada por 30 dias.");
+                    stop.run();status.setText("Pagamento aprovado e registrado. LT134 permanece em homologação.");
                     key[0]=String.valueOf(result.get("licenseKey"));
                     if(!key[0].isEmpty()&&!"null".equals(key[0]))keyCopy.setVisibility(View.VISIBLE);
                     copyPix.setVisibility(View.GONE);check.setVisibility(View.GONE);
@@ -169,7 +169,7 @@ final class PremiumPurchaseDialog {
                 if(!dialog.isShowing())return;
                 activate.setEnabled(true);
                 if(error!=null){status.setText(error);return;}
-                status.setText("Chave ativada! Segunda Pokébola liberada.");
+                status.setText("Chave ativada no Firebase para sua conta Google. LT134 mantém as duas Pokébolas sem bloqueio.");
                 PremiumAccess.verify(activity,(allowed,premium)->{
                     if(dialog.isShowing()&&PremiumAccess.controlled()&&premium&&whenActivated!=null)whenActivated.run();
                 });
