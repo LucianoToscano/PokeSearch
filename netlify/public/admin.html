@@ -72,9 +72,17 @@
     <div class="actions"><button id="refresh" class="secondary">Verificar novamente</button></div>
   </section>
   <section class="panel" id="licensing" hidden>
-    <h2 style="font-size:1.08rem;margin-top:0">Licença de teste</h2>
-    <p>Emita um código gratuito de <strong>15 dias</strong>, ainda sem usuário associado. O prazo começa no resgate. Esta ação cria um registro de teste no Firebase, sem cobrança.</p>
-    <button id="issue" class="secondary">Gerar código de teste de 15 dias</button>
+    <h2 style="font-size:1.08rem;margin-top:0">Licenças Premium manuais</h2>
+    <p>Emita uma licença gratuita de homologação ou cortesia. O prazo começa no resgate; nenhuma cobrança é efetuada.</p>
+    <label class="label" for="license-duration">Duração da licença</label>
+    <select id="license-duration" style="display:block;margin:9px 0 14px;width:100%;padding:13px;background:#0d1725;color:#f3f5f8;border:1px solid #36445a;border-radius:10px">
+      <option value="15d">15 dias</option>
+      <option value="30d">30 dias</option>
+      <option value="6m">6 meses</option>
+      <option value="12m">12 meses</option>
+      <option value="lifetime">Vitalícia</option>
+    </select>
+    <button id="issue" class="secondary">Gerar licença manual</button>
     <div id="issued" hidden>
       <div id="license" aria-label="Código de licença (oculto por padrão)"></div>
       <div class="actions"><button id="copy" class="secondary">Copiar código</button><button id="reveal" class="secondary">Mostrar código</button></div>
@@ -196,11 +204,13 @@
   el("refresh").addEventListener("click",overview);
   el("issue").addEventListener("click",async()=>{
     if(busy)return;
-    const agreed=window.confirm("Criar uma licença de teste de 15 dias, sem usuário associado e sem cobrança? O código só será exibido nesta tela.");
+    const duration=el("license-duration").value;
+    const title=el("license-duration").selectedOptions[0].textContent;
+    const agreed=window.confirm("Criar uma licença Premium "+title+", sem usuário associado e sem cobrança? O código só será exibido nesta tela.");
     if(!agreed)return;
     busy=true;el("issue").disabled=true;
     try{
-      const x=await call("adminIssuePremiumKey",{duration:"15d"});
+      const x=await call("adminIssuePremiumKey",{duration});
       if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(x.licenseKey||""))throw new Error("Código gerado em formato inesperado.");
       lastKey=x.licenseKey;
       el("key-entry").value=lastKey;
