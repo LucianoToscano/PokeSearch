@@ -328,6 +328,13 @@ final class PremiumPurchaseDialog {
                         if(dialog.isShowing()&&premium){
                             dialog.dismiss();
                             if(whenActivated!=null)whenActivated.run();
+                        }else if(dialog.isShowing()&&PremiumAccess.deviceConflict()){
+                            // A purchased license on another phone must not be
+                            // offered a second Pix purchase. Confirm handover.
+                            ((MainActivity)activity).promptPremiumDeviceTransfer(()->{
+                                if(dialog.isShowing())dialog.dismiss();
+                                if(whenActivated!=null)whenActivated.run();
+                            });
                         }
                     });
                 }
