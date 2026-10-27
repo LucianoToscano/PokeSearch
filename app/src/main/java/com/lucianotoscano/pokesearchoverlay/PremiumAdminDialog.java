@@ -132,10 +132,10 @@ final class PremiumAdminDialog {
         if(!(code instanceof String))return;
         String duration=String.valueOf(info.get("duration"));
         boolean assigned=Boolean.TRUE.equals(info.get("assigned"));
-        String details="Duração: "+duration+"\\n"+
+        String details="Duração: "+duration+"\n"+
             (assigned?"Licença já vinculada ao UID informado.":"Ainda não ativada. "+
               "O prazo começa quando o destinatário usar a chave.")+
-            "\\n\nGuarde este código. Ele será mostrado somente agora.";
+            "\n\nGuarde este código. Ele será mostrado somente agora.";
         TextView detailsText=new TextView(activity);
         int d=(int)(14*activity.getResources().getDisplayMetrics().density);
         detailsText.setPadding(d,d,d,d);
