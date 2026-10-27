@@ -70,11 +70,13 @@ final class PremiumAccess {
     static void offer(Context context,ResultCallback cb){
         call(context,"getPremiumOffer",new HashMap<>(),cb);
     }
-    static void lifetimePool(Context context,ResultCallback cb){
-        call(context,"adminLifetimePool",new HashMap<>(),cb);
-    }
-    static void lifetimeGifts(Context context,ResultCallback cb){
-        call(context,"getLifetimeGiftKeys",new HashMap<>(),cb);
+    static void issueLicense(Context context,String duration,String targetUid,
+                             boolean extend,ResultCallback cb){
+        Map<String,Object> data=new HashMap<>();
+        data.put("duration",duration);
+        if(targetUid!=null&&!targetUid.isEmpty())data.put("uid",targetUid);
+        data.put("extend",extend);
+        call(context,"adminIssuePremiumKey",data,cb);
     }
     static void adjustExpiry(Context context,String uid,int days,ResultCallback cb){
         Map<String,Object> values=new HashMap<>();
