@@ -2,7 +2,7 @@ import {createRequire} from "node:module";
 const require=createRequire(import.meta.url);
 
 const allowedActions=new Set([
- "checkDistributionAccess","createPremiumPix","getPremiumOrder","getPremiumOffer",
+ "checkDistributionAccess","transferPremiumDevice","createPremiumPix","getPremiumOrder","getPremiumOffer",
  "adminSavePartnerCoupon","adminListPartnerCoupons",
  "adminListPartnerCommissions","adminMarkPartnerCommissionPaid",
  "redeemPremiumKey","adminDistributionControl","adminPremiumSettings",
