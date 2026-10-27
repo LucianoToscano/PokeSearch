@@ -181,7 +181,8 @@
           return {src:LOCAL+"forms/"+bundled+(shiny?"-shiny":"")+".png",
             original:source,offline:true,officialForm:true,exactForm:true};
         }
-        return {src:source,original:source,offline:false,officialForm:true};
+        return {src:LOCAL+"forms/variety-"+entry[0]+(shiny?"-shiny":"")+".png",
+          original:source,offline:true,officialForm:true,exactForm:true};
       }
     }
   }
