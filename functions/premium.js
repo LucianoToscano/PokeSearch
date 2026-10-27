@@ -428,11 +428,12 @@ exports.redeemPremiumKey=onCall({region:REGION},async request=>{
      throw new HttpsError("failed-precondition","Esta chave foi substituída por outra licença.");
    const now=Date.now(),start=Math.max(now,Number(before.expiresAt||0));
    const claimed=await keyRef.transaction(value=>{
-     if(!value||value.revoked===true||value.kind!=="manual"||
-        value.uid&&value.uid!==uid)return;
-     if(value.uid===uid)return value;
-     const expiry=periodExpiry(start,value.duration);
-     return {...value,uid,claimedAt:now,...(expiry===null?{}:{expiresAt:expiry})};
+     const current=value===null?entry:value;
+     if(!current||current.revoked===true||current.kind!=="manual"||
+        current.uid&&current.uid!==uid)return;
+     if(current.uid===uid)return current;
+     const expiry=periodExpiry(start,current.duration);
+     return {...current,uid,claimedAt:now,...(expiry===null?{}:{expiresAt:expiry})};
    },undefined,false);
    entry=claimed.snapshot.val();
    if(!claimed.committed||entry?.uid!==uid)
