@@ -48,6 +48,11 @@ const checks=[
    logic.includes('exports.claimFreeYear=onCall')&&
    logic.includes('duration==="lifetime"')&&
    http.includes('"claimFreeYear"')],
+ ["Admin can identify existing licenses without changing owner or payment",
+   logic.includes("exports.adminLabelPremiumKey=onCall")&&
+   http.includes('"adminLabelPremiumKey"')&&
+   adminHtml.includes('actionButton("Editar identificação"')&&
+   adminHtml.includes('call("adminLabelPremiumKey"')],
  ["License inventory resolves Google name/email only after admin auth and optional manual recipient name",
    logic.includes('await getAuth().getUser(item.uid)')&&
    logic.includes('googleEmail:String(profile.email||"")')&&
