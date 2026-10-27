@@ -388,6 +388,7 @@ async function run(){
 
  // Habilitar/desabilitar remains reversible; Excluir immediately revokes and
  // hides the key while retaining audit/history and preventing reactivation.
+ const originalPaymentAudit=clone(read("premium/orders/"+orderId));
  const deleteIssue=await premium.adminIssuePremiumKey({
    ...adminLive,data:{duration:"15d"}
  });
@@ -441,7 +442,7 @@ async function run(){
  catch(e){duplicateDeleted=e.code==="failed-precondition";}
  assert.equal(duplicateDeleted,true);
  // Paid order/pix history is never mutated by license deletion.
- assert.equal(read("premium/orders/"+orderId).status,"approved");
+ assert.deepEqual(read("premium/orders/"+orderId),originalPaymentAudit);
  console.log("PASS per-license reversible suspension, owner-only exclusion and Pix history preservation");
  console.log("PASS admin key inventory pagination, reveal vault, old hash restriction, reversible suspension and duration");
 
