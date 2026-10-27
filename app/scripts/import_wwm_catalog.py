@@ -17,7 +17,10 @@ MAX_BYTES = 5 * 1024 * 1024
 def get(kind):
     request=urllib.request.Request(ROOT+kind+".json",headers={"User-Agent":"PokeSearch-LT126-catalog-build/1"})
     with urllib.request.urlopen(request,timeout=30) as response:
-        if response.status!=200 or "json" not in response.headers.get("Content-Type","application/json").lower():
+        # raw.githubusercontent.com serves JSON snapshots as text/plain; validate
+        # parsed schema and immutable commit rather than relying on MIME type.
+        media=response.headers.get("Content-Type","").lower()
+        if response.status!=200 or "text/html" in media:
             raise ValueError("Invalid upstream catalog response: "+kind)
         raw=response.read(MAX_BYTES+1)
     if len(raw)>MAX_BYTES:
