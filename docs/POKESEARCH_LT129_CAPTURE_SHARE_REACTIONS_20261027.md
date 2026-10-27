@@ -49,3 +49,16 @@ Data: 27/10/2026. Branch: `feature/lt129-capture-share-chat-reactions-20261027`.
 
 Seguir `AGENTS.md` e Issue #84: GitHub Actions artifact com APK verdadeiro, bytes/hash/CRC/assinatura e link verificado. Nunca apenas sandbox; nunca declarar build aprovado como teste físico.
 
+
+
+## Resultado verificável da QA assinada — 27/10/2026
+
+- [CI Android/Node aprovado — run #40472467296](https://github.com/LucianoToscano/PokeSearch/actions/runs/40472467296).
+- [Download principal — Artifact #12718609297](https://github.com/LucianoToscano/PokeSearch/actions/runs/40472467296/artifacts/12718609297), validado como ZIP contendo **APK de verdade**, checksums, certificado, source commit, versão e inventário de sprites (CRC íntegro).
+- APK: `PokeSearch-v0.01.29-LT129-Capture-Reactions-QA.apk`; `versionName 0.01.29`; `versionCode 54334`; `applicationId com.lucianotoscano.pokesearch`.
+- Tamanho exato APK: **43.375.725 bytes**, SHA-256 `9f0f59009af20330171769524ae368871d7e71e6999265488e301ac52586e838` conferido com `SHA256SUMS.txt`.
+- SOURCE_COMMIT embutido: `287714827fd80b16911134e895395ffe6424d706` (os commits seguintes são apenas documentação).
+- ZIP GitHub Actions: **40.883.213 bytes** (<199 MB), SHA-256 `6caa397be2d9bd97d7cb20d041b96399af5e6cf929cd8b8076071a670fc4eb0c`, testzip sem corrupção.
+- Assinatura Android v2 `true`, certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, mesma assinatura da LT128. Android SDK 26–33, compile SDK 36.
+- O CI executou a suíte Node e Android/JVM e as auditorias de assets; **não equivale à homologação real com P1/P2 sobre Pokémon GO no Samsung**, nem prova regras RTDB de reações implantadas na produção.
+- **Entrega:** o GitHub é o canal prioritário para evitar `Library file not found`; ZIP já verificado. Nada foi implantado no Firebase nem mesclado na main.
