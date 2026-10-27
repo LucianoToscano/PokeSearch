@@ -2188,6 +2188,9 @@ public class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
+        if((req==CommunityScrapbookOnline.REQUEST_PHOTO ||
+            req==CommunityScrapbookOnline.REQUEST_GOOGLE_ADMIN) &&
+            CommunityScrapbookOnline.onActivityResult(communityHomePanel,req,result,data))return;
         if(req==305||req==306){
             if(result==RESULT_OK)saveChosenAlertTone(data,req==306);
             else{alertToneTarget="";alertToneSpecies="";}

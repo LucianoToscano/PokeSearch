@@ -3,6 +3,18 @@ package com.lucianotoscano.pokesearchoverlay;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.widget.ImageView;
+import android.net.Uri;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.auth.UserInfo;
 import android.text.InputFilter;
 import android.view.Gravity;
 import android.view.View;
@@ -18,11 +30,13 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** LT122: public live chat inside Home. No categories or prior moderation.
@@ -40,6 +54,17 @@ final class CommunityScrapbookOnline {
         if(panel!=null&&panel.getTag() instanceof Controller)
             ((Controller)panel.getTag()).expand();
     }
+    static final int REQUEST_PHOTO=407;
+    static final int REQUEST_GOOGLE_ADMIN=408;
+    static boolean onActivityResult(View panel,int request,int result,Intent data){
+        if(panel==null || !(panel.getTag() instanceof Controller))return false;
+        Controller c=(Controller)panel.getTag();
+        if(request==REQUEST_PHOTO || request==REQUEST_GOOGLE_ADMIN){
+            c.onResult(request,result,data);
+            return true;
+        }
+        return false;
+    }
     static int dp(Context c,int value){return CommunityScrapbookStage1.dp(c,value);}
 
     static final class Controller {
@@ -49,6 +74,12 @@ final class CommunityScrapbookOnline {
         private FirebaseDatabase database;
         private FirebaseAuth auth;
         private Query messagesQuery;
+        private DatabaseReference avatarsRef;
+        private ValueEventListener avatarsListener;
+        private DataSnapshot lastMessages;
+        private final Map<String,Bitmap> avatars=new LinkedHashMap<>();
+        private ImageView avatarButton;
+        private boolean isAdmin=false;
         private ValueEventListener messagesListener;
         private LinearLayout bubbles,card;
         private ScrollView timeline;
@@ -86,25 +117,30 @@ final class CommunityScrapbookOnline {
             LinearLayout header=new LinearLayout(activity);
             header.setGravity(Gravity.CENTER_VERTICAL);
             card.addView(header,new LinearLayout.LayoutParams(-1,dp(activity,47)));
-            TextView badge=text("💬",20,false);
-            badge.setGravity(Gravity.CENTER);
-            badge.setBackground(bg(light?0xFFE7F3F3:0xFF23504D,24,
-                                   light?0xFFBCD7D6:0xFF3B867B));
+            avatarButton=new ImageView(activity);
+            avatarButton.setImageResource(android.R.drawable.ic_menu_gallery);
+            avatarButton.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            avatarButton.setContentDescription("Escolher minha foto no chat");
+            avatarButton.setBackground(bg(light?0xFFE7F3F3:0xFF23504D,24,
+                                           light?0xFFBCD7D6:0xFF3B867B));
+            avatarButton.setClipToOutline(true);
+            avatarButton.setOnClickListener(v->choosePhoto());
             LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(dp(activity,39),dp(activity,39));
-            bp.rightMargin=dp(activity,9);header.addView(badge,bp);
+            bp.rightMargin=dp(activity,9);header.addView(avatarButton,bp);
             LinearLayout headings=column();
             header.addView(headings,new LinearLayout.LayoutParams(0,-2,1));
-            headings.addView(text("Chat PokeSearch",15,true));
+            nicknameButton=text("✎ Apelido",15,true);
+            nicknameButton.setContentDescription("Editar apelido do chat");
+            nicknameButton.setOnClickListener(v->editNickname());
+            headings.addView(nicknameButton);
             status=text("Conectando…",10,false);
             status.setTextColor(secondary);headings.addView(status);
             status.setOnClickListener(v->retryChat());
-            nicknameButton=text("✎  Apelido",11,true);
-            nicknameButton.setGravity(Gravity.CENTER);
-            nicknameButton.setPadding(dp(activity,8),0,dp(activity,8),0);
-            nicknameButton.setBackground(bg(light?0xFFEAF1F7:0xFF31465B,12,
-                                            light?0xFFCADCEB:0xFF56758F));
-            nicknameButton.setOnClickListener(v->editNickname());
-            header.addView(nicknameButton,new LinearLayout.LayoutParams(-2,dp(activity,34)));
+            TextView chatMenu=text("⋮",25,true);
+            chatMenu.setGravity(Gravity.CENTER);
+            chatMenu.setContentDescription("Opções do chat e administração");
+            chatMenu.setOnClickListener(v->openChatMenu());
+            header.addView(chatMenu,new LinearLayout.LayoutParams(dp(activity,38),dp(activity,40)));
             timeline=new ScrollView(activity);
             timeline.setFillViewport(true);
             timeline.setVerticalScrollBarEnabled(false);
@@ -167,7 +203,7 @@ final class CommunityScrapbookOnline {
             return "Treinador "+suffix;
         }
         private void refreshNickname(){
-            if(nicknameButton!=null)nicknameButton.setText("✎ "+currentNickname());
+            if(nicknameButton!=null)nicknameButton.setText(currentNickname()+" ✎");
         }
         private static String clean(String source,int limit){
             if(source==null)return "";
@@ -203,6 +239,19 @@ final class CommunityScrapbookOnline {
                 database=FirebaseDatabase.getInstance(app,
                     "https://pokesearch-lt-default-rtdb.firebaseio.com/");
             }catch(RuntimeException error){setStatus("Chat indisponível • Firebase não conectado");return;}
+            // A separately named FirebaseApp keeps Google admin UID independent
+            // from anonymous stats/presence and their installation identity.
+            try{
+                FirebaseApp adminApp=FirebaseStats.ensureChatAdminApp(activity);
+                FirebaseUser verified=FirebaseAuth.getInstance(adminApp).getCurrentUser();
+                if(verified!=null && verifiedAdmin(verified)){
+                    auth=FirebaseAuth.getInstance(adminApp);
+                    database=FirebaseDatabase.getInstance(adminApp,
+                        "https://pokesearch-lt-default-rtdb.firebaseio.com/");
+                    isAdmin=true;start(verified);return;
+                }
+            }catch(RuntimeException ignored){}
+            isAdmin=false;
             FirebaseUser user=auth.getCurrentUser();
             if(user!=null){start(user);return;}
             auth.signInAnonymously().addOnSuccessListener(result->{
@@ -219,11 +268,38 @@ final class CommunityScrapbookOnline {
             chatReadable=false;
             setStatus("Conectando ao chat…");
             refreshSend();
+            if(messagesQuery!=null && messagesListener!=null)
+                messagesQuery.removeEventListener(messagesListener);
+            if(avatarsRef!=null && avatarsListener!=null)
+                avatarsRef.removeEventListener(avatarsListener);
+            // The shared per-user public avatar index only stores optional
+            // photos that were explicitly chosen via the Android gallery.
+            avatarsRef=database.getReference("chat/avatars");
+            avatarsListener=avatarsRef.addValueEventListener(new ValueEventListener(){
+                @Override public void onDataChange(DataSnapshot snapshot){
+                    if(destroyed)return;
+                    for(Bitmap bmp:avatars.values())if(bmp!=null&&!bmp.isRecycled())bmp.recycle();
+                    avatars.clear();
+                    int count=0;
+                    for(DataSnapshot entry:snapshot.getChildren()){
+                        if(++count>100)break;
+                        String image=entry.getValue(String.class);
+                        Bitmap decoded=ChatAvatarCodec.decode(image);
+                        if(decoded!=null)avatars.put(entry.getKey(),decoded);
+                    }
+                    refreshOwnAvatar();
+                    if(lastMessages!=null)renderMessages(lastMessages);
+                }
+                @Override public void onCancelled(DatabaseError error){
+                    if(!destroyed)toast("Fotos indisponíveis no Firebase.");
+                }
+            });
             messagesQuery=database.getReference("chat/messages").orderByChild("createdAt")
                 .limitToLast(60);
             messagesListener=messagesQuery.addValueEventListener(new ValueEventListener(){
                 @Override public void onDataChange(DataSnapshot snapshot){
                     if(destroyed)return;
+                    lastMessages=snapshot;
                     chatReadable=true;
                     setStatus("● Conversa ao vivo");
                     refreshSend();
@@ -276,7 +352,7 @@ final class CommunityScrapbookOnline {
                     author.length()<2||message.isEmpty()||uid==null||created==null)
                     continue;
                 boolean mine=uid.equals(currentUid);
-                addBubble(id,mine,author,message,created);
+                addBubble(id,mine,uid,author,message,created);
                 shown++;
             }
             if(shown==0)showEmpty("Ainda não há mensagens.\nSeja o primeiro a conversar!");
@@ -284,7 +360,7 @@ final class CommunityScrapbookOnline {
                 if(!destroyed)timeline.fullScroll(View.FOCUS_DOWN);
             });
         }
-        private void addBubble(String id,boolean mine,String nickname,
+        private void addBubble(String id,boolean mine,String authorUid,String nickname,
                                String message,long timestamp){
             LinearLayout outer=new LinearLayout(activity);
             outer.setGravity(mine?Gravity.END:Gravity.START);
@@ -301,7 +377,26 @@ final class CommunityScrapbookOnline {
             LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(-2,-2);
             bp.width=Math.max(dp(activity,125),
                 Math.min(dp(activity,260),activity.getResources().getDisplayMetrics().widthPixels-dp(activity,85)));
+            ImageView authorPhoto=new ImageView(activity);
+            Bitmap authorBitmap=avatars.get(authorUid);
+            if(authorBitmap!=null){
+                authorPhoto.setImageBitmap(authorBitmap);
+                authorPhoto.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            }else{
+                authorPhoto.setImageResource(android.R.drawable.ic_menu_myplaces);
+            }
+            authorPhoto.setBackground(bg(light?0xFFE7F3F3:0xFF23504D,24,
+                light?0xFFBCD7D6:0xFF3B867B));
+            authorPhoto.setClipToOutline(true);
+            LinearLayout.LayoutParams imgLp=new LinearLayout.LayoutParams(
+                dp(activity,28),dp(activity,28));
+            if(!mine){imgLp.rightMargin=dp(activity,5);outer.addView(authorPhoto,imgLp);}
             outer.addView(bubble,bp);
+            if(mine){imgLp.leftMargin=dp(activity,5);outer.addView(authorPhoto,imgLp);}
+            if(isAdmin){
+                bubble.setContentDescription("Segure para excluir a mensagem de "+nickname);
+                bubble.setOnLongClickListener(v->{confirmDeleteMessage(id);return true;});
+            }
             if(!mine){
                 TextView by=text(nickname,11,true);
                 by.setTextColor(light?0xFF166C65:0xFF83DED1);
@@ -315,6 +410,138 @@ final class CommunityScrapbookOnline {
             meta.setGravity(Gravity.END);meta.setTextColor(secondary);
             bubble.addView(meta);
             if(!mine)bubble.setContentDescription("Mensagem de "+nickname);
+        }
+        private static boolean verifiedAdmin(FirebaseUser user){
+            if(user==null || !user.isEmailVerified() ||
+               user.getEmail()==null ||
+               !"lucianotoscano@gmail.com".equalsIgnoreCase(user.getEmail()))return false;
+            for(UserInfo info:user.getProviderData())
+                if("google.com".equals(info.getProviderId()))return true;
+            return false;
+        }
+        private void openChatMenu(){
+            String[] choices=isAdmin?
+                new String[]{"Excluir todas as mensagens","Trocar conta de administrador","Remover minha foto","Cancelar"}:
+                new String[]{"Verificar administrador com Google","Remover minha foto","Cancelar"};
+            new AlertDialog.Builder(activity).setTitle("Chat PokeSearch")
+                .setItems(choices,(dialog,position)->{
+                    String selected=choices[position];
+                    if(selected.startsWith("Excluir"))confirmClearChat();
+                    else if(selected.startsWith("Verificar")||selected.startsWith("Trocar"))
+                        googleAdminLogin();
+                    else if(selected.startsWith("Remover"))removeOwnAvatar();
+                }).show();
+        }
+        private void choosePhoto(){
+            new AlertDialog.Builder(activity)
+                .setTitle("Foto do chat")
+                .setMessage("Sua foto escolhida ficará visível para os participantes do chat. Não usaremos sua foto do Google automaticamente.")
+                .setPositiveButton("Escolher da galeria",(d,w)->{
+                    Intent intent=new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.setType("image/*");
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    try{activity.startActivityForResult(
+                        Intent.createChooser(intent,"Selecionar foto do chat"),REQUEST_PHOTO);
+                    }catch(RuntimeException ex){toast("Galeria indisponível");}
+                })
+                .setNegativeButton("Cancelar",null).show();
+        }
+        private void refreshOwnAvatar(){
+            if(avatarButton==null)return;
+            Bitmap image=avatars.get(currentUid);
+            if(image!=null){
+                avatarButton.setImageBitmap(image);
+                avatarButton.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            }else avatarButton.setImageResource(android.R.drawable.ic_menu_gallery);
+        }
+        private void savePhoto(Uri uri){
+            if(database==null || currentUid.isEmpty()){toast("Conecte ao chat primeiro");return;}
+            try{
+                String encoded=ChatAvatarCodec.fromGallery(activity.getContentResolver(),uri);
+                database.getReference("chat/avatars").child(currentUid)
+                    .setValue(encoded,(error,ref)->toast(error==null?
+                        "Foto atualizada":"Firebase não permitiu salvar a foto"));
+            }catch(Exception err){toast("Não foi possível processar a imagem escolhida");}
+        }
+        private void removeOwnAvatar(){
+            if(database==null||currentUid.isEmpty())return;
+            new AlertDialog.Builder(activity).setTitle("Remover minha foto?")
+                .setPositiveButton("Remover",(d,w)->
+                    database.getReference("chat/avatars").child(currentUid)
+                        .removeValue((error,ref)->{
+                            if(error!=null)toast("Falha ao remover foto");
+                        }))
+                .setNegativeButton("Cancelar",null).show();
+        }
+        private void googleAdminLogin(){
+            if(BuildConfig.CHAT_GOOGLE_WEB_CLIENT_ID.isEmpty()){
+                new AlertDialog.Builder(activity).setTitle("Autenticação do administrador")
+                    .setMessage("A autenticação Google do chat ainda precisa ser configurada no Firebase (OAuth Web Client ID e provedor Google). O login do site não libera exclusão.")
+                    .setPositiveButton("Entendi",null).show();
+                return;
+            }
+            GoogleSignInOptions options=new GoogleSignInOptions.Builder(
+                GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(BuildConfig.CHAT_GOOGLE_WEB_CLIENT_ID)
+                .requestEmail().build();
+            try{activity.startActivityForResult(
+                GoogleSignIn.getClient(activity,options).getSignInIntent(),
+                REQUEST_GOOGLE_ADMIN);
+            }catch(RuntimeException ex){toast("Não foi possível iniciar autenticação Google");}
+        }
+        void onResult(int request,int result,Intent data){
+            if(destroyed)return;
+            if(request==REQUEST_PHOTO){
+                if(result==Activity.RESULT_OK&&data!=null&&data.getData()!=null)
+                    savePhoto(data.getData());
+                return;
+            }
+            if(request!=REQUEST_GOOGLE_ADMIN||result!=Activity.RESULT_OK)return;
+            try{
+                GoogleSignInAccount account=GoogleSignIn.getSignedInAccountFromIntent(data)
+                    .getResult(ApiException.class);
+                if(account==null||account.getIdToken()==null){
+                    toast("Google não forneceu credencial de identidade");return;
+                }
+                FirebaseApp app=FirebaseStats.ensureChatAdminApp(activity);
+                FirebaseAuth adminAuth=FirebaseAuth.getInstance(app);
+                adminAuth.signInWithCredential(GoogleAuthProvider.getCredential(
+                    account.getIdToken(),null)).addOnCompleteListener(activity,task->{
+                    if(destroyed)return;
+                    FirebaseUser user=task.isSuccessful()?adminAuth.getCurrentUser():null;
+                    if(!verifiedAdmin(user)){
+                        toast("Conta não autorizada como administradora");
+                        adminAuth.signOut();return;
+                    }
+                    auth=adminAuth;isAdmin=true;
+                    database=FirebaseDatabase.getInstance(app,
+                        "https://pokesearch-lt-default-rtdb.firebaseio.com/");
+                    retryChat();
+                    toast("Administrador autenticado");
+                });
+            }catch(ApiException|RuntimeException ex){
+                toast("Falha ao verificar conta Google no Firebase");
+            }
+        }
+        private void confirmDeleteMessage(String id){
+            if(!isAdmin || database==null)return;
+            new AlertDialog.Builder(activity).setTitle("Excluir mensagem?")
+                .setMessage("Essa exclusão é permanente para todos os participantes.")
+                .setPositiveButton("Excluir",(d,w)->
+                    database.getReference("chat/messages").child(id)
+                        .removeValue((error,ref)->toast(error==null?
+                            "Mensagem excluída":"Permissão de exclusão negada pelo Firebase")))
+                .setNegativeButton("Cancelar",null).show();
+        }
+        private void confirmClearChat(){
+            if(!isAdmin || database==null)return;
+            new AlertDialog.Builder(activity).setTitle("Limpar todo o chat?")
+                .setMessage("Todas as mensagens serão excluídas permanentemente para todos.")
+                .setPositiveButton("Excluir todas",(d,w)->
+                    database.getReference("chat/messages")
+                        .removeValue((error,ref)->toast(error==null?
+                            "Chat limpo":"Permissão de limpeza negada pelo Firebase")))
+                .setNegativeButton("Cancelar",null).show();
         }
         private void submit(){
             if(destroyed||!authenticated||!chatReadable||sending||database==null){
@@ -362,6 +589,10 @@ final class CommunityScrapbookOnline {
             destroyed=true;
             if(messagesQuery!=null&&messagesListener!=null)
                 messagesQuery.removeEventListener(messagesListener);
+            if(avatarsRef!=null&&avatarsListener!=null)
+                avatarsRef.removeEventListener(avatarsListener);
+            for(Bitmap bmp:avatars.values())if(bmp!=null&&!bmp.isRecycled())bmp.recycle();
+            avatars.clear();
         }
     }
 }

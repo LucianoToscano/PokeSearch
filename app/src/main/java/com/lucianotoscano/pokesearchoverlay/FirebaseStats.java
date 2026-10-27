@@ -55,6 +55,18 @@ final class FirebaseStats {
             return app;
         }
     }
+    /** Separate Google-authenticated chat admin session.
+     * Never alter the anonymous FirebaseStats UID or installation counters. */
+    static synchronized FirebaseApp ensureChatAdminApp(Context context){
+        try{return FirebaseApp.getInstance("PokeSearchChatAdmin");}
+        catch(IllegalStateException notInitialized){
+            FirebaseApp stats=ensureApp(context);
+            FirebaseApp chat=FirebaseApp.initializeApp(
+                context.getApplicationContext(),stats.getOptions(),"PokeSearchChatAdmin");
+            if(chat==null)throw new IllegalStateException("Chat admin Firebase unavailable");
+            return chat;
+        }
+    }
     private static synchronized void init(Context context){
         if(initialized)return;
         initialized=true;
