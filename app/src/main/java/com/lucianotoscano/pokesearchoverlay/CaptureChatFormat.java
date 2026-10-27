@@ -62,7 +62,7 @@ final class CaptureChatFormat {
     static String exactCostumeAsset(String pokemon,boolean shiny){
         if(pokemon==null)return "";
         Matcher m=Pattern.compile(
-            "^(Pikachu|Piplup|Drifblim)\\\\s*\\\\((?:Halloween 2021 Costume|HALLOWEEN_2021_NOEVOLVE|Halloween Mischief 2021|Traje Halloween 2021)\\\\)$",
+            "^(Pikachu|Piplup|Drifblim)\\s*\\((?:Halloween 2021 Costume|HALLOWEEN_2021_NOEVOLVE|Halloween Mischief 2021|Traje Halloween 2021)\\)$",
             Pattern.CASE_INSENSITIVE).matcher(pokemon.trim());
         if(!m.matches())return "";
         String dex="Pikachu".equalsIgnoreCase(m.group(1))?"25":
