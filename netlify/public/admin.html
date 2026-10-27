@@ -99,6 +99,25 @@
       <small>Guarde este código. Ele é exibido apenas nesta sessão e não deve ser compartilhado em prints. O resgate será testado separadamente.</small>
     </div>
   </section>
+  <section class="panel" id="app-version-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Administração de APKs</h2>
+    <p>Bloqueio geral e controle individual por versão, independentemente de assinaturas Premium.</p>
+    <div class="row"><span class="label">Controle geral</span><strong id="app-versions-general">—</strong></div>
+    <div class="actions">
+      <button id="versions-enable-all" class="secondary">Ativar todas</button>
+      <button id="versions-disable-all" class="secondary danger-action">Desativar todas</button>
+    </div>
+    <small>Os comandos alcançam os APKs com verificação remota implementada. Versões antigas sem essa proteção não podem ser bloqueadas retroativamente.</small>
+    <hr class="sep">
+    <h3 style="font-size:1rem">Controle por versão</h3>
+    <div id="app-versions-list"></div>
+    <div class="row" style="margin-top:12px">
+      <input id="app-version-code" class="maintenance-note" type="number" min="1" max="2100000000" placeholder="versionCode adicional" style="width:48%">
+      <input id="app-version-name" class="maintenance-note" maxlength="50" placeholder="Nome da versão" style="width:48%">
+    </div>
+    <div class="actions"><button id="register-app-version" class="secondary">Cadastrar versão</button></div>
+    <small id="version-summary"></small>
+  </section>
   <section class="panel" id="maintenance-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Modo de manutenção · Aplicativo inteiro</h2>
     <p>A manutenção fecha as duas Pokébolas e impede novas consultas nos APKs que tenham a verificação remota. Versões antigas sem essa função não podem ser desligadas retroativamente.</p>
@@ -147,7 +166,7 @@
   const el=id=>document.getElementById(id);
   const LT134_VERSION_CODE=54339;
   let lastKey="",revealed=false,busy=false,keyBusy=false,keyCursor="",keyCount=0;
-  let maintenanceEnabled=false;
+  let maintenanceEnabled=false,appVersionsEnabled=true,managedVersions={};
   let configState={salesEnabled:false,paymentsLiveEnabled:false,
     globalEnabled:false,lt134Enabled:false,otherVersionsActive:[]};
   const setStatus=(message,kind="")=>{el("status").textContent=message;el("status").className=kind};
@@ -176,6 +195,9 @@
       const data=await call("adminPremiumOverview");
       el("account").textContent=auth.currentUser?.email||"Conta autenticada";
       maintenanceEnabled=data.appMaintenanceEnabled===true;
+      appVersionsEnabled=data.appVersionGlobalEnabled!==false;
+      managedVersions=data.appVersions&&typeof data.appVersions==="object"?data.appVersions:{};
+      renderAppVersions();
       el("maintenance-status").textContent=maintenanceEnabled?"ATIVA — aplicativo bloqueado":"Desativada — aplicativo liberado";
       el("toggle-maintenance").disabled=false;
       el("toggle-maintenance").textContent=maintenanceEnabled?"Desativar manutenção":"Ativar manutenção";
@@ -203,6 +225,7 @@
       el("licensing").hidden=false;
       el("key-management").hidden=false;
       el("maintenance-panel").hidden=false;
+      el("app-version-panel").hidden=false;
       el("keys-panel").hidden=false;
       if(!keyBusy)loadPremiumKeys(true);
       setStatus(configState.salesEnabled&&configState.paymentsLiveEnabled?
@@ -212,6 +235,7 @@
       el("licensing").hidden=true;
       el("key-management").hidden=true;
       el("maintenance-panel").hidden=true;
+      el("app-version-panel").hidden=true;
       el("keys-panel").hidden=true;
       setStatus(e.message||"Não foi possível confirmar seu acesso.","error");
     }finally{busy=false;el("refresh").disabled=false;}
@@ -278,12 +302,72 @@
     await signOut(auth);
     lastKey="";revealed=false;el("license").textContent="";el("issued").hidden=true;
     el("admin").hidden=true;el("licensing").hidden=true;el("key-management").hidden=true;
-    el("maintenance-panel").hidden=true;el("keys-panel").hidden=true;
+    el("maintenance-panel").hidden=true;el("app-version-panel").hidden=true;el("keys-panel").hidden=true;
     el("premium-keys-list").replaceChildren();keyCursor="";keyCount=0;
     el("key-entry").value="";
     setStatus("Sessão encerrada.");
   });
 
+
+  function renderAppVersions(){
+    el("app-versions-general").textContent=appVersionsEnabled?"Liberado":"Bloqueado";
+    const list=el("app-versions-list");list.replaceChildren();
+    const existing={...managedVersions};
+    if(!existing[String(LT134_VERSION_CODE)])
+      existing[String(LT134_VERSION_CODE)]={enabled:true,versionName:"PokeSearch 0.01.34 · LT134"};
+    for(const [code,item] of Object.entries(existing).sort((a,b)=>Number(b[0])-Number(a[0]))){
+      if(!/^\d+$/.test(code))continue;
+      const div=document.createElement("div");
+      div.className="row";div.style.margin="12px 0";
+      const textBox=document.createElement("div");
+      const title=document.createElement("strong");
+      title.textContent=(item.versionName||"PokeSearch") +" · "+code;
+      const subtitle=document.createElement("div");subtitle.className="key-meta";
+      subtitle.textContent=item.enabled===false?"Desativada":"Ativada";
+      textBox.append(title,subtitle);
+      const button=actionButton(item.enabled===false?"Ativar":"Desativar",async()=>{
+        const enabled=item.enabled===false;
+        if(!window.confirm((enabled?"Ativar":"Desativar")+" somente a versão "+code+"?"))return;
+        button.disabled=true;
+        try{
+          await call("adminSetAppVersionAccess",{scope:"version",versionCode:Number(code),
+            versionName:item.versionName||"PokeSearch",enabled});
+          await overview();
+          setStatus("Versão "+code+(enabled?" habilitada.":" desativada."),"ok");
+        }catch(e){setStatus(e.message||"Falha ao alterar versão.","error");}
+        finally{button.disabled=false;}
+      });
+      div.append(textBox,button);list.appendChild(div);
+    }
+    el("version-summary").textContent=appVersionsEnabled?
+      "Controle geral liberado, respeitando os bloqueios individuais.":
+      "Controle geral bloqueado para os APKs compatíveis.";
+  }
+  async function changeGlobalVersions(enabled){
+    if(!window.confirm((enabled?"ATIVAR":"DESATIVAR")+
+      " todas as versões compatíveis com controle remoto? Essa ação afetará as duas Pokébolas."))return;
+    el("versions-enable-all").disabled=true;el("versions-disable-all").disabled=true;
+    try{
+      await call("adminSetAppVersionAccess",{scope:"global",enabled});
+      await overview();
+      setStatus(enabled?"Acesso geral liberado.":"Acesso geral bloqueado.","ok");
+    }catch(e){setStatus(e.message||"Falha no controle geral.","error");}
+    finally{el("versions-enable-all").disabled=false;el("versions-disable-all").disabled=false;}
+  }
+  el("versions-enable-all").addEventListener("click",()=>changeGlobalVersions(true));
+  el("versions-disable-all").addEventListener("click",()=>changeGlobalVersions(false));
+  el("register-app-version").addEventListener("click",async()=>{
+    const code=Number(el("app-version-code").value),name=el("app-version-name").value.trim();
+    if(!Number.isInteger(code)||code<1||code>2100000000||name.length<3){
+      setStatus("Informe um versionCode válido e um nome com pelo menos três caracteres.","error");return;
+    }
+    if(!window.confirm("Registrar versão "+name+" ("+code+") como habilitada? Cadastre apenas códigos de APKs reais."))return;
+    try{
+      await call("adminSetAppVersionAccess",{scope:"version",versionCode:code,versionName:name,enabled:true});
+      el("app-version-code").value="";el("app-version-name").value="";
+      await overview();setStatus("Versão registrada.","ok");
+    }catch(e){setStatus(e.message||"Erro ao registrar versão.","error");}
+  });
   const ptDate=value=>value>0?new Date(value).toLocaleString("pt-BR"):"Sem vencimento";
   const actionButton=(title,handler)=>{
     const btn=document.createElement("button");
