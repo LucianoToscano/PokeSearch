@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+### LT133 — Halloween 2021 e chat de capturas compacto (27/10/2026)
+
+- Branch `feature/lt133-halloween-sprites-compact-chat-20261027` sobre LT132, PR [#92](https://github.com/LucianoToscano/PokeSearch/pull/92), **QA versionName 0.01.33 / versionCode 54338**, não mesclar main nem publicar release estável sem QA física.
+- **Problema identificado via screenshots Samsung:** Piplup #393 e Drifblim #426 `Halloween 2021 Costume` sem roupa/sprite no overlay, enquanto PoGoCoordinates mostra a imagem. Resolvido por assets GO **exatos** PokeMiners `cHALLOWEEN_2021_NOEVOLVE`, commit fixo `c2a686eb08ace6e890d8fe3d2134c76988db87b5`; seis PNGs (Pikachu #25, Piplup #393, Drifblim #426 normais/Shiny), SHA1 de blob verificado, 16 trajes no pacote. `sprite_offline.js` usa aliases EXATOS de Halloween 2021 em resultados e detalhes de P1/P2, sem trocar outros anos pelo sprite base.
+- **Chat:** captura com **máximo 2 linhas de conteúdo**: [sprite 27dp margem 2dp] `✨ Luciano capturou um Natu!`; abaixo **faixa única e pequena alinhada à direita**: ícone Hundo/Shundo/Nundo/Shnundo ou IV, GL/UL real, tamanho, sexo **último** e relógio no canto direito. Os atributos deslizam horizontalmente caso a tela seja estreita. Sem `Detalhes ▾`, PC, nível, golpes ou boost na mensagem nova; 4 reações continuam como ações comuns abaixo. Mensagens antigas continuam legíveis.
+- **Sem mudança RTDB:** `chat/messages/text` até 240 caracteres, sem coordenadas, JWT ou campos novos. Ao copiar coordenadas continua normal; publicar exige dois toques com confirmação explícita. Firebase `stats`, `premium`, `distribution` e 4 reações intactos.
+- Testes Node `app/tests/lt133-halloween-costume-compact-chat.test.js`; workflow `.github/workflows/lt133-halloween-compact-chat-signed-qa.yml` compila release R8 e confere APK assinado v2, assets no ZIP e SHA256. Teste Samsung físico ainda obrigatório.
+- Referência: [POKESEARCH_LT133_HALLOWEEN_COMPACT_CHAT_20261027.md](POKESEARCH_LT133_HALLOWEEN_COMPACT_CHAT_20261027.md). Entregar APK pelo GitHub Actions antes de sandbox (Issue #84).
+
+
 ### LT132 — Card compacto de captura e correção do chat rolável (27/10/2026)
 
 - PR [#91](https://github.com/LucianoToscano/PokeSearch/pull/91), branch `feature/lt132-capture-card-badges-sex-last-20261027` empilhada na LT131 #90. QA `0.01.32 / 54337` com assinatura permanente. Main/release estável preservados.
