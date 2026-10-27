@@ -153,10 +153,38 @@
   }
   return null;
  }
+ // External form identities are derived from pinned WWM form+species files
+ // and the exact WWM UIcons filename index. Never infer a costume/shape.
+ function exactExternal(card){
+  if(!card||typeof card!=="object")return null;
+  const cat=typeof globalThis!=="undefined"?globalThis.PokeSearchWWMCatalog:null;
+  if(!cat||cat.schema!=="pokesearch-wwm-catalog-v1"||!Array.isArray(cat.icons))return null;
+  const dex=dexOf(card),name=nameKey(card.name),form=nameKey(card.form);
+  if(!dex||name!==BASE_SPECIES[dex]||!form)return null;
+  const costume=nameKey(card.costume);
+  if(costume&&!["NONE","NORMAL","DEFAULT"].includes(costume))return null;
+  if(card.costume_id!=null&&Number(card.costume_id)!==0)return null;
+  if(card.isCostume===true||nameKey(card.region)||nameKey(card.variant))return null;
+  const id=card.form_id!=null?card.form_id:card.formId;
+  for(const item of cat.icons){
+   if(item.dex!==dex||item.shiny!==(card.shiny===true)||nameKey(item.speciesName)!==name)continue;
+   if(form!==nameKey(item.form)&&form!==nameKey(item.proto))continue;
+   if(id!=null&&Number(id)!==item.formId)continue;
+   const upstream=cat.forms&&cat.forms[String(item.formId)];
+   const p=cat.species&&cat.species[String(dex)];
+   if(!upstream||nameKey(upstream.proto)!==nameKey(item.proto)||!p||
+      !Array.isArray(p.formIds)||!p.formIds.includes(item.formId))continue;
+   if(typeof item.file!=="string"||!/^external\/[0-9]+-f[0-9]+(-shiny)?\.png$/.test(item.file))continue;
+   return {src:LOCAL+item.file,original:"",offline:true,officialForm:true,exactForm:true};
+  }
+  return null;
+ }
  function resolve(card){
   const image=String(card?.image||"");
   const costumeArt=exactCostume(card);
   if(costumeArt)return costumeArt;
+  const externalArt=exactExternal(card);
+  if(externalArt)return externalArt;
   // Prefer explicit source-provided artwork if one exists, otherwise use the
   // exact, offline bundled regional variant (normal OR shiny).
   if(!image&&verifiedGalarianZigzagoon(card)){
