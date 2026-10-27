@@ -376,6 +376,20 @@ public class MainActivity extends Activity {
         dualOverlayRow.setVisibility(View.VISIBLE);
         // Insert after header, preserving top toolbar space.
         screen.addView(dualOverlayRow,dualLp);
+        if(PremiumAccess.controlled()){
+            TextView accountPremium=homeText("Conta Premium  ·  Gerenciar / Sair",11,
+                homeLightMode?Color.rgb(34,87,143):Color.rgb(149,203,255),true);
+            accountPremium.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
+            accountPremium.setContentDescription(
+                "Gerenciar ou sair da conta Google Premium");
+            accountPremium.setMinHeight(d(30));
+            accountPremium.setPadding(d(6),0,d(8),d(3));
+            accountPremium.setOnClickListener(v->showPremiumAccountOptions());
+            LinearLayout.LayoutParams accountLp=new LinearLayout.LayoutParams(-1,d(30));
+            accountLp.leftMargin=d(4);accountLp.rightMargin=d(4);
+            accountLp.bottomMargin=d(4);
+            screen.addView(accountPremium,accountLp);
+        }
 
         // HOME-02: icon only at top left; compact actions on the right.
         ImageView brand=new ImageView(this);
@@ -1047,6 +1061,52 @@ public class MainActivity extends Activity {
             return;
         }
         startSecondaryOverlayAuthorized();
+    }
+    private void showPremiumAccountOptions(){
+        if(!PremiumAccess.controlled())return;
+        boolean signed=PremiumGoogleLogin.isGoogleSignedIn(this);
+        if(!signed){
+            new AlertDialog.Builder(this)
+                .setTitle("Conta Premium")
+                .setMessage("Entre com Google para ativar a licença da Pokébola 2. "+
+                    "A Pokébola 1 continua gratuita.")
+                .setPositiveButton("Entrar com Google",(dialog,which)->
+                    PremiumGoogleLogin.signIn(this,(success,message)->{
+                        Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+                    }))
+                .setNegativeButton("Cancelar",null).show();
+            return;
+        }
+        String mail=PremiumGoogleLogin.email(this);
+        new AlertDialog.Builder(this)
+            .setTitle("Conta Premium")
+            .setMessage("Conectada: "+mail+"\n\n"+
+                "Sair neste celular não cancela nem exclui a licença. "+
+                "A segunda Pokébola será desligada; a primeira permanece funcionando.")
+            .setPositiveButton("Sair da conta",(dialog,which)->{
+                // Stop P2 immediately: a disconnected device must never
+                // keep an already-running paid overlay alive.
+                stopService(new Intent(this,SecondaryOverlayService.class));
+                PremiumAccess.invalidateLease();
+                PremiumGoogleLogin.signOut(this,()->{
+                    Toast.makeText(this,
+                        "Conta Premium desconectada deste celular. Sua licença foi preservada.",
+                        Toast.LENGTH_LONG).show();
+                    refreshHomeOverlay();
+                });
+                refreshHomeOverlay();
+            })
+            .setNeutralButton("Trocar conta",(dialog,which)->{
+                stopService(new Intent(this,SecondaryOverlayService.class));
+                PremiumAccess.invalidateLease();
+                PremiumGoogleLogin.signOut(this,()->
+                    PremiumGoogleLogin.signIn(this,(success,message)->{
+                        Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+                        refreshHomeOverlay();
+                    }));
+                refreshHomeOverlay();
+            })
+            .setNegativeButton("Cancelar",null).show();
     }
     private void startSecondaryOverlayAuthorized(){
         if(PremiumAccess.controlled()&&!PremiumAccess.permitted(true))return;
