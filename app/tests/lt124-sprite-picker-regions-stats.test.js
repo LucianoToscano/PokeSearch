@@ -10,7 +10,9 @@ check("exact Galarian Zen and Standard Darmanitan variants",()=>{
  for(const [form,id] of [["DARMANITAN_GALARIAN_STANDARD",10177],["DARMANITAN_GALARIAN_ZEN",10178]]){
   const art=sprites.resolve({number:"#555",name:"Darmanitan",form,shiny:false,image:""});
   assert.equal(art.officialForm,true,form);
-  assert.ok(art.src.endsWith("/"+id+".png"),form);
+  const exactLocal=form.endsWith("ZEN")?"555-galar-zen.png":"555-galar.png";
+  assert.equal(art.src,"file:///android_asset/pokemon-sprites/forms/"+exactLocal,form);
+  assert.ok(art.original.endsWith("/"+id+".png"),form);
  }
 });
 check("Squawkabilly white/yellow/blue alternate names have correct shiny variety",()=>{
