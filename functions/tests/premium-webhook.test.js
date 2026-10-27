@@ -36,7 +36,10 @@ function ref(path,query={}){
     return {val:()=>data};
   },
   async set(v){write(full,v)},
-  async update(next){const old=read(full)||{};write(full,{...old,...next})},
+  async update(next){
+     // Firebase RTDB update() accepts atomic nested paths.
+     for(const [key,value] of Object.entries(next))write(full+"/"+key,value);
+   },
   async transaction(fn){
     if(coldCacheTransactions.delete(full)){
       const first=fn(null);
@@ -710,7 +713,12 @@ async function run(){
  catch(error){paymentPrevented=error.code==="failed-precondition";}
  assert.equal(paymentPrevented,true);
  assert.deepEqual(read("premium/entitlements/namedFriend"),beforeMaintenance);
- await premium.adminSetAppMaintenance({...adminLive,data:{enabled:false}});
+ await premium.adminSetAppVersionAccess({...adminLive,
+    data:{scope:"version",versionCode:54341,versionName:"LT136",enabled:false}});
+  await premium.adminSetAppVersionAccess({...adminLive,data:{scope:"global",enabled:false}});
+  await premium.adminSetAppMaintenance({...adminLive,data:{enabled:false}});
+  assert.equal(read("appControl/versionAccess/globalEnabled"),true);
+  assert.equal(read("appControl/versionAccess/versions"),null);
  assert.equal((await premium.adminPremiumOverview(adminLive)).appMaintenanceEnabled,false);
  await premium.adminSetAppVersionAccess({...adminLive,
   data:{scope:"version",versionCode:54339,versionName:"PokeSearch LT134",enabled:false}});
@@ -721,7 +729,18 @@ async function run(){
  assert.equal(versionState.appVersionGlobalEnabled,false);
  await premium.adminSetAppVersionAccess({...adminLive,data:{scope:"global",enabled:true}});
  assert.equal((await premium.adminPremiumOverview(adminLive)).appVersionGlobalEnabled,true);
- console.log("PASS separate maintenance, no new payments, unchanged licenses, version and global APK controls");
+ assert.equal((await premium.checkDistributionAccess({auth:{uid:"buyer"},
+    data:{versionCode:54999,deviceId:DEVICE_A}})).allowed,true);
+  await premium.adminDistributionControl({...adminLive,
+    data:{scope:"version",versionCode:54999,enabled:false}});
+  assert.equal((await premium.checkDistributionAccess({auth:{uid:"buyer"},
+    data:{versionCode:54999,deviceId:DEVICE_A}})).allowed,false);
+  await premium.adminDistributionControl({...adminLive,data:{scope:"global",enabled:true}});
+  assert.equal(read("distribution/versions"),null);
+  assert.equal((await premium.checkDistributionAccess({auth:{uid:"buyer"},
+    data:{versionCode:54999,deviceId:DEVICE_A}})).allowed,true);
+  console.log("PASS separate maintenance, no new payments, unchanged licenses, version and global APK controls");
+  console.log("PASS auto-allow future APKs and atomic restore-all maintenance policy");
 
  // Manual license optional Google email restriction, without storing plaintext.
  const reserved=await premium.adminIssuePremiumKey({
