@@ -173,10 +173,10 @@ async function run(){
    data:{versionCode:54328,deviceId:DEVICE_B,confirm:true}})}
  catch(error){nonSubscriberTransfer=error.code==="failed-precondition";}
  assert.equal(nonSubscriberTransfer,true);
- const transferred=await premium.transferPremiumDevice({auth:{uid:"buyer"},
+ const deviceTransfer=await premium.transferPremiumDevice({auth:{uid:"buyer"},
    data:{versionCode:54328,deviceId:DEVICE_B,
      deviceName:"Samsung secondary",confirm:true}});
- assert.equal(transferred.transferred,true);
+ assert.equal(deviceTransfer.transferred,true);
  const afterSwap=await premium.checkDistributionAccess({
    auth:{uid:"buyer"},data:{versionCode:54328,deviceId:DEVICE_B}});
  assert.equal(afterSwap.premium,true);
@@ -622,16 +622,22 @@ async function run(){
  assert.equal(confirmationDenied,true);
  let nonAdminDenied=false;
  try{await premium.adminDeletePremiumKey({
-   auth:{uid:"deleteTester"},data:{id:deleteHash,confirm:"EXCLUIR LICENÇA"}});}
+   auth:{uid:"deleteTester"},data:{id:deleteHash,confirm:"EXCLUIR"}});}
  catch(e){nonAdminDenied=e.code==="permission-denied";}
  assert.equal(nonAdminDenied,true);
  const deleted=await premium.adminDeletePremiumKey({
-   ...adminLive,data:{id:deleteHash,confirm:"EXCLUIR LICENÇA"}});
+   ...adminLive,data:{id:deleteHash,confirm:"EXCLUIR"}});
  assert.equal(deleted.deleted,true);
  assert.equal(deleted.wasAssigned,true);
  assert.equal(read("premium/keys/"+deleteHash).archived,true);
  assert.equal(read("premium/keys/"+deleteHash).revoked,true);
  assert.equal(read("premium/entitlements/deleteTester").revoked,true);
+ const deletedList=await premium.adminListPremiumKeys({
+   ...adminLive,data:{limit:50,archived:true}});
+ const listed=deletedList.keys.find(row=>row.id===deleteHash);
+ assert.equal(listed.googleEmail,"deleteTester@example.org");
+ assert.equal(listed.googleName,"");
+ assert.equal(listed.uid,"deleteTester");
  assert.equal((await premium.checkDistributionAccess({
    auth:{uid:"deleteTester"},data:{versionCode:54328,deviceId:DEVICE_A}})).premium,false);
  const activeKeys=await premium.adminListPremiumKeys({
@@ -648,7 +654,7 @@ async function run(){
  assert.equal(enabledDeleted,true);
  let duplicateDeleted=false;
  try{await premium.adminDeletePremiumKey({
-   ...adminLive,data:{id:deleteHash,confirm:"EXCLUIR LICENÇA"}});}
+   ...adminLive,data:{id:deleteHash,confirm:"EXCLUIR"}});}
  catch(e){duplicateDeleted=e.code==="failed-precondition";}
  assert.equal(duplicateDeleted,true);
  // Paid order/pix history is never mutated by license deletion.
@@ -684,10 +690,13 @@ async function run(){
 
  // Manual license optional Google email restriction, without storing plaintext.
  const reserved=await premium.adminIssuePremiumKey({
-   ...adminLive,data:{duration:"1m",recipientEmail:"Recipient@Example.org"}
+   ...adminLive,data:{duration:"1m",recipientEmail:"Recipient@Example.org",
+     recipientName:"João divulgador"}
  });
  assert.equal(reserved.assigned,false);
  assert.equal(reserved.restrictedToEmail,true);
+ assert.equal(read("premium/keys/"+crypto.createHash("sha256")
+   .update(reserved.licenseKey).digest("hex")).recipientName,"João divulgador");
  const reservedHash=crypto.createHash("sha256").update(reserved.licenseKey).digest("hex");
  const storedReserved=read("premium/keys/"+reservedHash);
  assert.ok(/^[a-f0-9]{64}$/.test(storedReserved.recipientEmailHash));
