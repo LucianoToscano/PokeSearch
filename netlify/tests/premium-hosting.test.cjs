@@ -48,6 +48,23 @@ const checks=[
    logic.includes('exports.claimFreeYear=onCall')&&
    logic.includes('duration==="lifetime"')&&
    http.includes('"claimFreeYear"')],
+ ["Premium backup endpoints are owner-authenticated, bounded and never overwrite existing",
+   logic.includes("exports.adminExportPremiumBackupPage=onCall")&&
+   logic.includes("exports.adminRestorePremiumBackup=onCall")&&
+   logic.includes("await requireAdmin(request)")&&
+   logic.includes("POKESEARCH-VAULT-COMPATIBILITY-V1")&&
+   logic.includes("BACKUP_LIMIT=20")&&
+   logic.includes("Firebase já possui dados Premium/controle")&&
+   http.includes('"adminExportPremiumBackupPage"')&&
+   http.includes('"adminRestorePremiumBackup"')],
+ ["Admin backup is encrypted with PBKDF2 SHA-256 and browser AES-GCM",
+   adminHtml.includes('id="backup-export"')&&
+   adminHtml.includes('id="backup-import"')&&
+   adminHtml.includes('id="backup-preview"')&&
+   adminHtml.includes('fileFormat:"PokeSearch-Encrypted-Backup-v1"')&&
+   adminHtml.includes('iterations:310000')&&
+   adminHtml.includes('name:"AES-GCM"')&&
+   adminHtml.includes('"IMPORTAR EM BASE VAZIA"')],
  ["Firebase ID token authenticated server-side",http.includes("verifyIdToken(authorization.slice(7),true)")],
  ["only whitelisted actions are publicly routed",http.includes("allowedActions.has(action)")],
  ["webhook routes Payments and legacy Orders with HMAC validation",
