@@ -117,6 +117,71 @@ async function run(){
  assert.equal(denied.premium,false);
  console.log("PASS refund revokes original buyer and transferred key holder");
  assert.equal(fetchCalls,3,"one API fetch per valid webhook; unsigned webhook never calls provider");
+ // Owner can choose each gift's duration; no lifetime/gift quantity quotas.
+ const admin={auth:{uid:"owner"}};
+ const offer=await premium.getPremiumOffer({auth:{uid:"friendA"},data:{}});
+ assert.equal(offer.priceCents,500);
+ assert.equal(offer.regularPriceCents,1000);
+ assert.equal(offer.promotionalPriceCents,500);
+ await premium.adminPremiumSettings({...admin,data:{action:"promotion",enabled:false}});
+ assert.equal((await premium.getPremiumOffer({auth:{uid:"friendA"}})).priceCents,1000);
+ await premium.adminPremiumSettings({...admin,data:{action:"promotion",enabled:true}});
+ assert.equal((await premium.getPremiumOffer({auth:{uid:"friendA"}})).priceCents,500);
+ console.log("PASS R$10 regular and R$5 open-ended promotion with owner toggle");
+ for(const duration of ["15d","1m","3m","6m","12m","lifetime"]){
+   const gift=await premium.adminIssuePremiumKey({...admin,data:{duration}});
+   assert.equal(gift.assigned,false);
+   assert.match(gift.licenseKey,/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/);
+   const friend="friend_"+duration;
+   const redeemed=await premium.redeemPremiumKey({
+     auth:{uid:friend},data:{licenseKey:gift.licenseKey}
+   });
+   assert.equal(redeemed.activated,true);
+   const state=await premium.checkDistributionAccess({
+     auth:{uid:friend},data:{versionCode:54328}
+   });
+   assert.equal(state.premium,true);
+   if(duration==="lifetime"){
+     assert.equal(redeemed.lifetime,true);
+     assert.equal(redeemed.expiresAt,null);
+   }else{
+     assert.equal(redeemed.lifetime,false);
+     assert.ok(redeemed.expiresAt>Date.now());
+   }
+   let doubleUse=false;
+   try{
+     await premium.redeemPremiumKey({auth:{uid:"other_"+duration},
+        data:{licenseKey:gift.licenseKey}});
+   }catch(error){doubleUse=error.code==="permission-denied";}
+   assert.equal(doubleUse,true,"gift cannot be claimed by another UID");
+ }
+ console.log("PASS individually chosen 15d/1m/3m/6m/12m/lifetime gifts");
+ for(let i=0;i<12;i++){
+   const more=await premium.adminIssuePremiumKey({...admin,data:{duration:"lifetime"}});
+   assert.equal(more.lifetime,true,"no quota for owner-created lifetime licenses");
+ }
+ console.log("PASS 12 additional lifetime grants without a fixed quota");
+ const existing=await premium.adminIssuePremiumKey({
+   ...admin,data:{duration:"1m",uid:"namedFriend"}
+ });
+ assert.equal(existing.assigned,true);
+ let state=await premium.checkDistributionAccess({
+   auth:{uid:"namedFriend"},data:{versionCode:54328}
+ });
+ assert.equal(state.premium,true);
+ const extended=await premium.adminIssuePremiumKey({
+   ...admin,data:{duration:"6m",uid:"namedFriend",extend:true}
+ });
+ assert.ok(extended.expiresAt>existing.expiresAt);
+ await premium.adminIssuePremiumKey({
+   ...admin,data:{duration:"lifetime",uid:"namedFriend",extend:false}
+ });
+ state=await premium.checkDistributionAccess({
+   auth:{uid:"namedFriend"},data:{versionCode:54328}
+ });
+ assert.equal(state.premium,true);
+ assert.equal(read("premium/entitlements/namedFriend").lifetime,true);
+ console.log("PASS owner can assign/extend/convert individual licenses to lifetime");
  console.log("PASS premium server integration mock scenarios");
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});
