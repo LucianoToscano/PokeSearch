@@ -7,6 +7,7 @@ const store={distribution:{globalEnabled:true,versions:{"54328":true}},
  premium:{config:{salesEnabled:true,priceCents:500},orders:{
   [orderId]:{uid:"buyer",paymentId:"123",priceCents:500,versionCode:54328,status:"pending",createdAt:now-1000}
  }}};
+const coldCacheTransactions=new Set();
 function clone(v){return v===undefined?undefined:JSON.parse(JSON.stringify(v))}
 function read(path){return path.split("/").filter(Boolean).reduce((v,key)=>v?.[key],store);}
 function write(path,value){const keys=path.split("/").filter(Boolean);
@@ -21,6 +22,10 @@ function ref(path){
   async set(v){write(full,v)},
   async update(next){const old=read(full)||{};write(full,{...old,...next})},
   async transaction(fn){
+    if(coldCacheTransactions.delete(full)){
+      const first=fn(null);
+      if(first===undefined)return {committed:false,snapshot:{val:()=>null}};
+    }
     const old=clone(read(full));const v=fn(old);
     if(v===undefined)return {committed:false,snapshot:{val:()=>clone(old)}};
     write(full,v);return {committed:true,snapshot:{val:()=>clone(v)}};
@@ -176,12 +181,14 @@ async function run(){
  });
  assert.equal(activeState.status,"active");
  assert.equal(activeState.assigned,false);
+ const exposedHash=crypto.createHash("sha256").update(exposed.licenseKey).digest("hex");
+ coldCacheTransactions.add("premium/keys/"+exposedHash);
  const invalidated=await premium.adminRevokePremiumKey({
    ...admin,data:{licenseKey:exposed.licenseKey}
  });
  assert.equal(invalidated.revoked,true);
  assert.equal(invalidated.wasAssigned,false);
- const exposedHash=crypto.createHash("sha256").update(exposed.licenseKey).digest("hex");
+
  assert.equal(read("premium/keys/"+exposedHash).revoked,true);
  const cancelledState=await premium.adminPremiumKeyStatus({
    ...admin,data:{licenseKey:exposed.licenseKey}
@@ -212,6 +219,9 @@ async function run(){
  await premium.redeemPremiumKey({
    auth:{uid:"claimant"},data:{licenseKey:claimedGift.licenseKey}
  });
+ const claimedHash=crypto.createHash("sha256").update(claimedGift.licenseKey).digest("hex");
+ coldCacheTransactions.add("premium/keys/"+claimedHash);
+ coldCacheTransactions.add("premium/entitlements/claimant");
  const revClaimed=await premium.adminRevokePremiumKey({
    ...admin,data:{licenseKey:claimedGift.licenseKey}
  });
