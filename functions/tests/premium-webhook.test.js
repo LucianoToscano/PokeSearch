@@ -1,7 +1,8 @@
 "use strict";
 const assert=require("node:assert/strict"),Module=require("node:module"),crypto=require("node:crypto");
 const SECRET={POKE_MP_ACCESS_TOKEN:"mock-live-token",POKE_MP_TEST_ACCESS_TOKEN:"mock-test-token",
- POKE_MP_WEBHOOK_SECRET:"test-webhook-key",POKE_PREMIUM_KEY_SECRET:"test-key-secret"};
+ POKE_MP_WEBHOOK_SECRET:"test-webhook-key",POKE_MP_LIVE_WEBHOOK_SECRET:"live-webhook-key",
+ POKE_PREMIUM_KEY_SECRET:"test-key-secret"};
 const orderId="123e4567-e89b-12d3-a456-426614174000",now=Date.now();
 const store={distribution:{globalEnabled:true,versions:{"54328":true}},
  premium:{config:{salesEnabled:true,priceCents:500},orders:{
@@ -312,7 +313,21 @@ async function run(){
  res=response();await premium.premiumPixWebhook(pixReq("ts="+pixTs+",v1="+pixMac),res);
  assert.equal(res.code,200);
  assert.equal(read("premium/entitlements/payerPix").revoked,true);
- console.log("PASS Payments API signed Pix webhook, pending, approved, replay, refund"); 
+ console.log("PASS Payments API signed Pix webhook, pending, approved, replay, refund");
+ // Live endpoint does not accept the test signature or reconcile a test payment.
+ const adminLive={auth:{uid:"owner"}};
+ await premium.adminPremiumSettings({...adminLive,data:{action:"paymentsLive",enabled:true}});
+ assert.equal((await premium.adminPremiumOverview(adminLive)).paymentsLiveEnabled,true);
+ await premium.adminPremiumSettings({...adminLive,data:{action:"paymentsLive",enabled:false}});
+ assert.equal((await premium.adminPremiumOverview(adminLive)).paymentsLiveEnabled,false);
+ const signedForLive=crypto.createHmac("sha256",SECRET.POKE_MP_LIVE_WEBHOOK_SECRET)
+   .update(pixManifest).digest("hex");
+ const savedEnt=clone(read("premium/entitlements/payerPix"));
+ const wrongEnvironment={...pixReq("ts="+pixTs+",v1="+signedForLive),liveModeWebhook:true};
+ res=response();await premium.premiumPixWebhook(wrongEnvironment,res);
+ assert.equal(res.code,200);
+ assert.deepEqual(read("premium/entitlements/payerPix"),savedEnt);
+ console.log("PASS production toggle and signed webhook mode separation"); 
  console.log("PASS premium server integration mock scenarios");
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});
