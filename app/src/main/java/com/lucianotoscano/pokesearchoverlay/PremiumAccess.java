@@ -184,6 +184,17 @@ final class PremiumAccess {
     static void offer(Context context,ResultCallback cb){
         call(context,"getPremiumOffer",new HashMap<>(),cb);
     }
+    static void claimWelcomeTrial(Context context,ResultCallback cb){
+        Map<String,Object> data=new HashMap<>();
+        data.put("versionCode",BuildConfig.VERSION_CODE);
+        call(context,"claimWelcomeTrial",data,cb);
+    }
+    static void redeemFullCoupon(Context context,String couponCode,ResultCallback cb){
+        Map<String,Object> data=new HashMap<>();
+        data.put("versionCode",BuildConfig.VERSION_CODE);
+        data.put("couponCode",couponCode.trim().toUpperCase(java.util.Locale.ROOT));
+        call(context,"redeemFullCoupon",data,cb);
+    }
     static void claimFreePremium(Context context,ResultCallback cb){
         Map<String,Object> data=new HashMap<>();
         data.put("versionCode",BuildConfig.VERSION_CODE);
