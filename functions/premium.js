@@ -42,7 +42,7 @@ const userEntitlement=async uid=>{
  if(value.revoked===true||Number(value.expiresAt||0)<=Date.now()||
     !/^[0-9a-f]{64}$/.test(String(value.currentKeyHash||"")))return false;
  const key=(await root().child("keys").child(value.currentKeyHash).get()).val();
- return key?.uid===uid&&Number(key.expiresAt||0)>Date.now();
+ return key?.uid===uid&&key?.revoked!==true&&Number(key.expiresAt||0)>Date.now();
 };
 const formatKey=(orderId)=>{
  const hex=crypto.createHmac("sha256",KEY_SECRET.value()).update(orderId).digest("hex").slice(0,24).toUpperCase();
@@ -73,10 +73,15 @@ async function settlePayment(paymentId){
     Math.round(Number(payment.transaction_amount)*100)!==order.priceCents)return false;
  if(payment.status==="refunded"||payment.status==="charged_back"){
    await ref.update({status:payment.status});
-   // Fail closed on chargeback; owner can review and restore via admin action.
-   await root().child("entitlements").child(order.uid).update({
-     revoked:true,revocationReason:"payment_reversed",revokedAt:Date.now()
-   });
+   // A recovered key may belong to another Firebase UID by now. Revoke BOTH
+   // the original buyer and the present key holder on refund/chargeback.
+   const hash=sha(formatKey(orderId)),keyRef=root().child("keys").child(hash);
+   const key=(await keyRef.get()).val();
+   if(key)await keyRef.update({revoked:true,revokedAt:Date.now()});
+   for(const affected of new Set([order.uid,key?.uid].filter(Boolean)))
+     await root().child("entitlements").child(affected).update({
+       revoked:true,revocationReason:"payment_reversed",revokedAt:Date.now()
+     });
    return false;
  }
  if(payment.status!=="approved")return false;
@@ -235,7 +240,7 @@ exports.redeemPremiumKey=onCall({region:REGION},async request=>{
    throw new HttpsError("invalid-argument","Formato de chave inválido.");
  const hash=sha(key),keyRef=root().child("keys").child(hash);
  const snapshot=await keyRef.get(),entry=snapshot.val();
- if(!entry||Number(entry.expiresAt||0)<=Date.now())
+ if(!entry||entry.revoked===true||Number(entry.expiresAt||0)<=Date.now())
    throw new HttpsError("not-found","Chave inexistente ou vencida.");
  const oldUid=String(entry.uid||"");
  if(!oldUid)throw new HttpsError("failed-precondition","Chave indisponível.");
