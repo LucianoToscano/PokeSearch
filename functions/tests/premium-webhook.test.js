@@ -112,7 +112,10 @@ async function run(){
  payment.status="refunded";
  res=response();await premium.premiumPixWebhook(req(valid),res);
  assert.equal(read("premium/entitlements/buyer").revoked,true);
- console.log("PASS refund marks original purchase revoked for admin review");
+ assert.equal(read("premium/entitlements/newBuyer").revoked,true);
+ const denied=await premium.checkDistributionAccess({auth:{uid:"newBuyer"},data:{versionCode:54328}});
+ assert.equal(denied.premium,false);
+ console.log("PASS refund revokes original buyer and transferred key holder");
  assert.ok(fetchCalls>=4);
  console.log("PASS premium server integration mock scenarios");
 }
