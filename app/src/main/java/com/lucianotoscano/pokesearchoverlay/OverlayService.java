@@ -481,11 +481,16 @@ public class OverlayService extends Service {
     private static final long FAVORITE_ALERT_BATCH_INTERVAL_MS=12_000L;
     private static final long FAVORITE_ALERT_RETRY_DELAY_MS=60_000L;
     private static final int MAX_QUEUED_FAVORITES=100;
+    private static final java.util.concurrent.atomic.AtomicInteger NEXT_GENERAL_ALERT_ID=
+        new java.util.concurrent.atomic.AtomicInteger(33000);
     private static final class QueuedFavoriteAlert{
-        final String key,name,details;
+        final String key,name,title,details;
+        final JSONObject encounter;
         final long expiry;
-        QueuedFavoriteAlert(String key,String name,String details,long expiry){
-            this.key=key;this.name=name;this.details=details;this.expiry=expiry;
+        QueuedFavoriteAlert(String key,String name,String title,String details,
+                            long expiry,JSONObject encounter){
+            this.key=key;this.name=name;this.title=title;this.details=details;
+            this.expiry=expiry;this.encounter=encounter;
         }
     }
     private final java.util.LinkedHashMap<String,QueuedFavoriteAlert> queuedFavoriteAlerts=
@@ -509,34 +514,28 @@ public class OverlayService extends Service {
             scheduleFavoriteAlertDrain(FAVORITE_ALERT_RETRY_DELAY_MS);return;
         }
         java.util.Set<String> wanted=WatchAlerts.watched(this);
-        java.util.LinkedHashMap<String,java.util.ArrayList<QueuedFavoriteAlert>> bySpecies=
-            new java.util.LinkedHashMap<>();
-        for(QueuedFavoriteAlert pending:new java.util.ArrayList<>(queuedFavoriteAlerts.values())){
+        int delivered=0;
+        for(QueuedFavoriteAlert pending:
+            new java.util.ArrayList<>(queuedFavoriteAlerts.values())){
+            if(delivered>=FAVORITE_ALERT_BATCH_SIZE)break;
             if(!WatchAlerts.matches(pending.name,wanted)){
                 queuedFavoriteAlerts.remove(pending.key);continue;
             }
-            String species=WatchAlerts.normalized(pending.name);
-            if(!bySpecies.containsKey(species)&&bySpecies.size()>=FAVORITE_ALERT_BATCH_SIZE)
-                continue; // backpressure, not loss: leave remaining in queue
-            bySpecies.computeIfAbsent(species,k->new java.util.ArrayList<>()).add(pending);
-        }
-        int delivered=0;
-        for(java.util.ArrayList<QueuedFavoriteAlert> group:bySpecies.values()){
-            QueuedFavoriteAlert representative=group.get(0);
-            if(WatchAlerts.match(this,representative.name,representative.details)){
+            // Each encounter gets its own title: never hide a Shundo behind a
+            // different Pokémon of the same species, or dismiss unreported hits.
+            if(WatchAlerts.match(this,pending.name,pending.title,pending.details,
+                                notificationArtwork(pending.encounter))){
                 delivered++;
-                for(QueuedFavoriteAlert success:group){
-                    recentFavoriteAlertExpiries.put(success.key,success.expiry);
-                    queuedFavoriteAlerts.remove(success.key);
-                }
+                recentFavoriteAlertExpiries.put(pending.key,pending.expiry);
+                queuedFavoriteAlerts.remove(pending.key);
             }
         }
         if(!queuedFavoriteAlerts.isEmpty())
             scheduleFavoriteAlertDrain(delivered==0?FAVORITE_ALERT_RETRY_DELAY_MS:
                 FAVORITE_ALERT_BATCH_INTERVAL_MS);
         BugReport.log(this,"FAVORITE_ALERT_BATCH",
-            (isSecondaryOverlay()?"P2":"P1")+" grupos="+bySpecies.size()+
-            " entregues="+delivered+" pendentes="+queuedFavoriteAlerts.size());
+            (isSecondaryOverlay()?"P2":"P1")+" avisos="+delivered+
+            " pendentes="+queuedFavoriteAlerts.size());
     }
     private long armedDespawnMillis=0L;
     private final Runnable expiryRefresh=new Runnable(){
@@ -2630,7 +2629,52 @@ public class OverlayService extends Service {
         }
         return false;
     }
+    private String encounterAlertTitle(JSONObject card){
+        return EncounterAlertText.title(card.optString("name","Pokémon"),
+            card.optString("number",""),card.optString("iv",""),
+            card.optString("ivPercent",""),card.optBoolean("shiny",false),
+            mode,card.optString("rank",""));
+    }
+    private String encounterAlertDetails(JSONObject card,boolean favorite){
+        return EncounterAlertText.details(favorite,isSecondaryOverlay(),
+            card.optString("cp",""),card.optString("iv",""),
+            card.optString("ivPercent",""),card.optString("form",""),
+            card.optString("costume",""),card.optString("size",""),
+            card.optString("gender",card.optString("sex","")),
+            card.optString("location",""));
+    }
+    /** Display only the packed, species-exact base picture for ordinary forms.
+     * A missing or unverified costume must NOT borrow a misleading base sprite.
+     */
+    private android.graphics.Bitmap notificationArtwork(JSONObject card){
+        if(card==null||card.optBoolean("isCostume",false)||
+            card.optInt("costume_id",0)!=0)return null;
+        String costume=card.optString("costume","").trim();
+        String form=card.optString("form","").trim();
+        String region=card.optString("region","").trim();
+        String variant=card.optString("variant","").trim();
+        if((!costume.isEmpty()&&!"normal".equalsIgnoreCase(costume)&&
+            !"none".equalsIgnoreCase(costume))||
+            (!form.isEmpty()&&!"normal".equalsIgnoreCase(form)&&
+             !"default".equalsIgnoreCase(form))||
+            !region.isEmpty()||!variant.isEmpty())return null;
+        String id=card.optString("number","").replace("#","").trim();
+        if(!id.matches("[0-9]{1,4}"))return null;
+        int dex=Integer.parseInt(id);
+        if(dex<1||dex>1025)return null;
+        String file="pokemon-sprites/"+
+            (card.optBoolean("shiny",false)?"shiny/":"base/")+dex+".png";
+        try(java.io.InputStream input=getAssets().open(file)){
+            android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(input);
+            if(bitmap==null)return null;
+            return android.graphics.Bitmap.createScaledBitmap(bitmap,96,96,true);
+        }catch(java.io.IOException|RuntimeException ignored){return null;}
+    }
     private boolean sendGeneralNotification(String title,String info,int id){
+        return sendGeneralNotification(title,info,id,null);
+    }
+    private boolean sendGeneralNotification(String title,String info,int id,
+                                            android.graphics.Bitmap artwork){
         // This is a confirmed-result notice or an explicit manual test.
         if(!WatchAlerts.permissionGranted(this))return false;
         NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -2654,11 +2698,14 @@ public class OverlayService extends Service {
         Intent open=new Intent(this,MainActivity.class);
         PendingIntent pending=PendingIntent.getActivity(this,74,open,
             PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
-        Notification note=new Notification.Builder(this,channelId)
+        Notification.Builder builder=new Notification.Builder(this,channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title).setContentText(info).setAutoCancel(true)
+            .setSubText("PokeSearch · Novos Pokémon")
             .setContentIntent(pending)
-            .setStyle(new Notification.BigTextStyle().bigText(info)).build();
+            .setStyle(new Notification.BigTextStyle().bigText(info));
+        if(artwork!=null)builder.setLargeIcon(artwork);
+        Notification note=builder.build();
         try{nm.notify(id,note);return true;}
         catch(Exception e){recordFailure("notificação geral",e);return false;}
     }
@@ -2669,12 +2716,10 @@ public class OverlayService extends Service {
         catch(Exception e){recordFailure("ler histórico",e);history=new JSONArray();}
         java.util.Set<String> current=new java.util.HashSet<>();
         String firstNew="";
+        JSONObject firstNewCard=null;
         String firstGeneralKey="";
         long firstGeneralExpiry=0L;
-        String firstWatched="";
-        String watchDetails="";
         int watchedCount=0;
-        java.util.LinkedHashMap<String,String[]> individualFavorites=new java.util.LinkedHashMap<>();
         // Commit Favorite TTL ONLY after Android accepts the actual notice.
         // Missing permission, OFF, blocked channels and retries cannot silently
         // consume an encounter without a delivered alert.
@@ -2706,6 +2751,7 @@ public class OverlayService extends Service {
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
                 verifiedTargetCriteria(c)){
                 firstNew=c.optString("name","Pokémon");
+                firstNewCard=c;
                 firstGeneralKey=key;
                 firstGeneralExpiry=expireAt;
             }
@@ -2717,29 +2763,18 @@ public class OverlayService extends Service {
                 pendingFavoriteKeys.put(key,expireAt);
                 pendingFavoriteSpecies.put(key,WatchAlerts.normalized(c.optString("name","")));
                 watchedCount++;
-                if(firstWatched.isEmpty()){
-                    firstWatched=c.optString("name","Pokémon");
-                    watchDetails="Busca "+mode.toUpperCase(java.util.Locale.ROOT)+
-                        " · PC "+c.optString("cp","?")+
-                        (c.optString("location","").isEmpty()?"":" · "+c.optString("location",""));
+                // Queue every verified encounter, not just the first species.
+                // Each published alert carries its own exact IV/rank/form/PC.
+                if(!queuedFavoriteAlerts.containsKey(key)){
+                    if(queuedFavoriteAlerts.size()>=MAX_QUEUED_FAVORITES)
+                        queuedFavoriteAlerts.entrySet().removeIf(
+                            entry->entry.getValue().expiry<=now);
+                    if(queuedFavoriteAlerts.size()<MAX_QUEUED_FAVORITES)
+                        queuedFavoriteAlerts.put(key,new QueuedFavoriteAlert(key,
+                            c.optString("name","Pokémon"),
+                            encounterAlertTitle(c),encounterAlertDetails(c,true),
+                            expireAt,c));
                 }
-                String favoriteName=c.optString("name","Pokémon");
-                if(!individualFavorites.containsKey(WatchAlerts.normalized(favoriteName)))
-                    individualFavorites.put(WatchAlerts.normalized(favoriteName),
-                        new String[]{favoriteName,"PC "+c.optString("cp","?")});
-            }
-            if(pendingFavoriteKeys.containsKey(key)&&WatchAlerts.speciesToneCount(this)>0 &&
-                !queuedFavoriteAlerts.containsKey(key)){
-                if(queuedFavoriteAlerts.size()>=MAX_QUEUED_FAVORITES){
-                    // Prefer expiry over insertion order; never silently evict
-                    // an unexpired candidate just to store another one.
-                    queuedFavoriteAlerts.entrySet().removeIf(entry->entry.getValue().expiry<=now);
-                }
-                if(queuedFavoriteAlerts.size()<MAX_QUEUED_FAVORITES)
-                    queuedFavoriteAlerts.put(key,new QueuedFavoriteAlert(key,
-                        c.optString("name","Pokémon"),
-                        "Busca "+mode.toUpperCase(java.util.Locale.ROOT)+" · PC "+c.optString("cp","?"),
-                        expireAt));
             }
             if(!newSpawn)continue; // history is only for truly new encounters
             JSONObject entry=new JSONObject();
@@ -2756,22 +2791,10 @@ public class OverlayService extends Service {
         JSONArray limited=new JSONArray();
         for(int i=Math.max(0,history.length()-40);i<history.length();i++)limited.put(history.opt(i));
         preferences.edit().putString("history",limited.toString()).apply();
-        if(watchedCount>0&&!firstWatched.isEmpty()){
-            int delivered=0;
-            if(WatchAlerts.speciesToneCount(this)>0){
-                // LT117: max five species per 12-second batch, then drain
-                // remaining verified encounter identities. No species after
-                // #5 disappears merely because the search returned 10 cards.
-                int before=queuedFavoriteAlerts.size();
-                drainFavoriteAlertQueue();
-                delivered=before-queuedFavoriteAlerts.size();
-            }else{
-                if(watchedCount>1)watchDetails+=" · +"+(watchedCount-1)+" Pokémon da lista";
-                if(WatchAlerts.match(this,firstWatched,watchDetails)){
-                    delivered++;
-                    recentFavoriteAlertExpiries.putAll(pendingFavoriteKeys);
-                }
-            }
+        if(watchedCount>0){
+            int before=queuedFavoriteAlerts.size();
+            drainFavoriteAlertQueue();
+            int delivered=Math.max(0,before-queuedFavoriteAlerts.size());
             BugReport.log(this,"FAVORITE_ALERT_PARITY",
                 (isSecondaryOverlay()?"P2":"P1")+" candidatos="+watchedCount+
                 " avisos="+delivered+" perfil="+
@@ -2782,9 +2805,10 @@ public class OverlayService extends Service {
                     "Permissão de notificações não concedida").apply();
         }
         if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()&&now-lastAlertAt>60000L){
-            if(sendGeneralNotification("Novo Pokémon: "+firstNew,
-                "Encontrado nos filtros confirmados · "+mode.toUpperCase(java.util.Locale.ROOT),
-                isSecondaryOverlay()?12075:12074))
+            if(firstNewCard!=null&&sendGeneralNotification(
+                encounterAlertTitle(firstNewCard),encounterAlertDetails(firstNewCard,false),
+                NEXT_GENERAL_ALERT_ID.updateAndGet(old->old>=43999?33000:old+1),
+                notificationArtwork(firstNewCard)))
                 {
                     lastAlertAt=now;
                     successfullyNotifiedGeneralSpawns.put(firstGeneralKey,firstGeneralExpiry);
