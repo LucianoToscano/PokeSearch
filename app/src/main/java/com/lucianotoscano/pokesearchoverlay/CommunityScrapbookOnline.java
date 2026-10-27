@@ -364,7 +364,11 @@ final class CommunityScrapbookOnline {
             for(DataSnapshot entry:snapshot.getChildren()){
                 String id=entry.getKey();
                 String author=clean(entry.child("nickname").getValue(String.class),24);
-                String message=clean(entry.child("text").getValue(String.class),240);
+                String rawMessage=entry.child("text").getValue(String.class);
+                // Preserve the compact structured lines only after strict parser
+                // validation; ordinary chat still receives legacy sanitization.
+                String message=rawMessage!=null&&CaptureChatCard.parse(rawMessage)!=null?
+                    rawMessage:clean(rawMessage,240);
                 String uid=entry.child("authorUid").getValue(String.class);
                 Long created=entry.child("createdAt").getValue(Long.class);
                 if(id==null||!id.matches("[A-Za-z0-9_-]{12,180}")||
