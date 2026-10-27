@@ -70,10 +70,13 @@ const campaignOffer=(config,now=Date.now())=>{
  const c=config?.freeYearCampaign||{};
  const startsAt=Number(c.startsAt||0),endsAt=Number(c.endsAt||0),
        maxClaims=Number(c.maxClaims||0),claimCount=Number(c.claimCount||0);
+ const duration=["15d","30d","1m","3m","6m","12m","lifetime"].includes(c.duration)?
+   c.duration:"12m";
  return {enabled:c.enabled===true,active:c.enabled===true&&now>=startsAt&&
          now<endsAt&&claimCount<maxClaims,
-    startsAt,endsAt,maxClaims,claimCount,remaining:Math.max(0,maxClaims-claimCount),
-    label:"FREE! 12 meses por tempo limitado"};
+    duration,startsAt,endsAt,maxClaims,claimCount,
+    remaining:Math.max(0,maxClaims-claimCount),
+    label:"FREE! Premium por tempo limitado"};
 };
 const grantYearFrom=ms=>{
  const date=new Date(ms);
@@ -373,8 +376,10 @@ exports.adminPremiumSettings=onCall({region:REGION},async request=>{
      await campaignRef.child("enabled").set(false);
    }else{
      const startsAt=Number(input.startsAt),endsAt=Number(input.endsAt);
-     const maxClaims=Number(input.maxClaims);
+     const maxClaims=Number(input.maxClaims),duration=String(input.duration||"");
      const now=Date.now();
+     if(!ADMIN_DURATIONS.includes(duration))
+       throw new HttpsError("invalid-argument","Escolha a duração da licença grátis.");
      if(!Number.isSafeInteger(startsAt)||!Number.isSafeInteger(endsAt)||
         startsAt<now-60000||endsAt<=Math.max(startsAt,now)||
         endsAt>now+366*86400000||
@@ -382,8 +387,11 @@ exports.adminPremiumSettings=onCall({region:REGION},async request=>{
        throw new HttpsError("invalid-argument",
          "Informe início, encerramento futuro e limite de 1 a 10.000 resgates.");
      // A new campaign gets a new ID. It never reopens claims from an old campaign.
+     const existing=(await campaignRef.get()).val()||{};
+     if(existing.enabled===true&&existing.claimCount>0)
+       throw new HttpsError("failed-precondition","Encerre a campanha atual antes de criar outra.");
      await campaignRef.set({id:crypto.randomUUID(),enabled:true,startsAt,endsAt,
-       maxClaims,claimCount:0,claimRefs:{},createdAt:now});
+       duration,maxClaims,claimCount:0,claimRefs:{},createdAt:now});
    }
  }else if(input.action==="sales"){
    if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Valor inválido.");
@@ -887,12 +895,15 @@ exports.claimFreeYear=onCall({region:REGION,secrets:[KEY_SECRET]},async request=
  if(!reservation.committed)
    throw new HttpsError("failed-precondition","Campanha encerrada, indisponível ou esgotada.");
  const campaign=reservation.snapshot.val();
+ const duration=ADMIN_DURATIONS.includes(campaign.duration)?campaign.duration:"12m";
  const plain=formatKey("free12:"+campaign.id+":"+uid),hash=sha(plain),keyRef=root().child("keys").child(hash);
- const expiry=periodExpiry(now,"12m");
+ const expiry=periodExpiry(now,duration);
  // The same claimant always receives the same key within this campaign.
  const k=await keyRef.transaction(old=>old||{
-   kind:"manual",source:"freeYearCampaign",campaignId:campaign.id,duration:"12m",
-   uid,createdAt:now,claimedAt:now,expiresAt:expiry,revoked:false,vault:sealCode(plain)
+   kind:"manual",source:"freeYearCampaign",campaignId:campaign.id,duration,
+   uid,createdAt:now,claimedAt:now,
+   ...(expiry===null?{}:{expiresAt:expiry}),
+   revoked:false,vault:sealCode(plain)
  },undefined,false);
  const key=k.snapshot.val();
  if(!key||key.uid!==uid||key.revoked===true)
@@ -902,10 +913,11 @@ exports.claimFreeYear=onCall({region:REGION,secrets:[KEY_SECRET]},async request=
    if(v.revoked===true||v.lifetime===true)return;
    if(v.currentKeyHash===hash)return v;
    if(v.currentKeyHash&&Number(v.expiresAt||0)>now)return;
-   return {...v,kind:"manual",lifetime:false,currentKeyHash:hash,
-     expiresAt:Number(key.expiresAt)};
+   return {...v,kind:"manual",lifetime:duration==="lifetime",currentKeyHash:hash,
+     expiresAt:duration==="lifetime"?null:Number(key.expiresAt)};
  },undefined,false);
  if(!granted.committed||granted.snapshot.val()?.currentKeyHash!==hash)
    throw new HttpsError("failed-precondition","Conta já possui licença ou não foi possível concluir.");
- return {activated:true,duration:"12m",expiresAt:Number(key.expiresAt),serverNow:Date.now()};
+ return {activated:true,duration,lifetime:duration==="lifetime",
+   expiresAt:duration==="lifetime"?null:Number(key.expiresAt),serverNow:Date.now()};
 });
