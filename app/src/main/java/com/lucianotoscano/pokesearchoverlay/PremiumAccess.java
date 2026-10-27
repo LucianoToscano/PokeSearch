@@ -89,6 +89,11 @@ final class PremiumAccess {
     static void offer(Context context,ResultCallback cb){
         call(context,"getPremiumOffer",new HashMap<>(),cb);
     }
+    static void claimFreePremium(Context context,ResultCallback cb){
+        Map<String,Object> data=new HashMap<>();
+        data.put("versionCode",BuildConfig.VERSION_CODE);
+        call(context,"claimFreeYear",data,cb);
+    }
     static void issueLicense(Context context,String duration,String targetUid,
                              boolean extend,ResultCallback cb){
         Map<String,Object> data=new HashMap<>();
