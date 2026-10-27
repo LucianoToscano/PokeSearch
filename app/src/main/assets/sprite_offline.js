@@ -29,6 +29,49 @@
   "931:YELLOW":"931:SQUAWKABILLYYELLOWPLUMAGE",
   "931:SQUAWKABILLYYELLOW":"931:SQUAWKABILLYYELLOWPLUMAGE"
  });
+ // User-supplied LT116 archive: 80 normal/shiny regional sprites verified by Git blob.
+ const EXACT_FORM_FILES=Object.freeze({
+  "10101":"27-alola",
+  "10102":"28-alola",
+  "10103":"37-alola",
+  "10104":"38-alola",
+  "10105":"50-alola",
+  "10106":"51-alola",
+  "10107":"52-alola",
+  "10161":"52-galar",
+  "10108":"53-alola",
+  "10229":"58-hisui",
+  "10230":"59-hisui",
+  "10162":"77-galar",
+  "10163":"78-galar",
+  "10164":"79-galar",
+  "10165":"80-galar",
+  "10166":"83-galar",
+  "10231":"100-hisui",
+  "10232":"101-hisui",
+  "10114":"103-alola",
+  "10115":"105-alola",
+  "10167":"110-galar",
+  "10168":"122-galar",
+  "10169":"144-galar",
+  "10170":"145-galar",
+  "10171":"146-galar",
+  "10172":"199-galar",
+  "10234":"211-hisui",
+  "10235":"215-hisui",
+  "10173":"222-galar",
+  "10174":"263-galar",
+  "10175":"264-galar",
+  "10176":"554-galar",
+  "10177":"555-galar",
+  "10178":"555-galar-zen",
+  "10179":"562-galar",
+  "10180":"618-galar",
+  "10238":"570-hisui",
+  "10239":"571-hisui",
+  "585":"585-spring",
+  "586":"586-spring"
+ });
  const PINNED="https://raw.githubusercontent.com/PokeAPI/sprites/d8c2fb78563e28ad7b3abe938cf6e79998d04e90/sprites/pokemon/";
  const rawRegex=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/(shiny\/)?([0-9]{1,4})\.png$/;
  const mirrorRegex=/^https:\/\/cdn\.jsdelivr\.net\/gh\/PokeAPI\/sprites@master\/sprites\/pokemon\/(shiny\/)?([0-9]{1,4})\.png$/;
@@ -123,9 +166,21 @@
       const shiny=card.shiny===true,exists=shiny?entry[2]===1:entry[1]===1;
       if(exists){
         const source=PINNED+(shiny?"shiny/":"")+entry[0]+".png";
+        const bundled=EXACT_FORM_FILES[entry[0]];
+        if(bundled){
+          return {src:LOCAL+"forms/"+bundled+(shiny?"-shiny":"")+".png",
+            original:source,offline:true,officialForm:true,exactForm:true};
+        }
         return {src:source,original:source,offline:false,officialForm:true};
       }
     }
+  }
+  // Deerling/Sawsbuck spring are the genuine default spring variety sprites.
+  if(safeCostume&&(dex===585||dex===586)&&form==="SPRING"){
+    const shiny=card.shiny===true;
+    const source=PINNED+(shiny?"shiny/":"")+dex+".png";
+    return {src:LOCAL+"forms/"+dex+"-spring"+(shiny?"-shiny":"")+".png",
+      original:source,offline:true,officialForm:true,exactForm:true};
   }
   const candidate=rawRegex.exec(image)||mirrorRegex.exec(image);
   if(candidate&&safeCostume&&(verifiedBase(card)||!card?.form)){
