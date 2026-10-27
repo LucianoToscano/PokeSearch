@@ -80,6 +80,9 @@
  }
  // One site user can have multiple approved Pokemon GO trainers. Do not
  // discard the additional profiles or choose a different account silently.
+ // Preserve the order shown on the official profile, not card length.
+ trainers.sort((a,b)=>body.indexOf(a.name)-body.indexOf(b.name));
+ if(trainers.length)parsed=trainers[0];
  const trainerState=trainers.length?"linked":explicitZero?"unlinked":"unknown";
  // Only use a provider picture actually rendered on the official profile.
  // Exclude team/GO images, do not read cookies or OAuth user metadata.
