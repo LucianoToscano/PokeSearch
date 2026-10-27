@@ -7,8 +7,8 @@ Only verified (dex, form ID, normal/shiny) icons on an explicit allowlist.
 from pathlib import Path
 import hashlib, json, re, struct, urllib.request
 
-DATA_SHA = "998bf635194a11078b6375c79d1494d5eb999b39"
-ICON_SHA = "42b315f317ca8cee8e178249328eab5173e5ca70"
+DATA_SHA = "42b315f317ca8cee8e178249328eab5173e5ca70"
+ICON_SHA = "998bf635194a11078b6375c79d1494d5eb999b39"
 DATA_ROOT = "https://raw.githubusercontent.com/WatWowMap/pogo-data-api/" + DATA_SHA + "/data/v1/"
 ICON_ROOT = "https://raw.githubusercontent.com/WatWowMap/wwm-uicons/" + ICON_SHA + "/pokemon/"
 MAX_JSON = 6*1024*1024
