@@ -366,9 +366,9 @@ async function premiumDeviceCheck(uid,id,name){
    claimBinding(previous,{hash,name:premiumDeviceName(name),now}),undefined,false);
  const current=tx.snapshot.val()||{};
  const same=current.deviceHash===hash;
- if(same&&tx.committed&&!current.auditCreatedAt){
-   // Records that predate this update simply continue working.
- }
+ if(same&&tx.committed&&Number(current.boundAt||0)===now)
+   await recordDeviceEvent(uid,{type:"activation",fromDevice:"",
+     toDevice:premiumDeviceName(name),actor:"account"});
  return {premium:same,deviceConflict:!same,deviceUpdateRequired:false,
    activeDeviceName:same?String(current.deviceName||""):String(current.deviceName||"Outro aparelho"),
    deviceBoundAt:Number(current.boundAt||0),
@@ -418,7 +418,7 @@ exports.releasePremiumDevice=onCall({region:REGION},async request=>{
 });
 /** Read-only account diagnostics: never binds a device or issues an entitlement. */
 exports.premiumSessionInfo=onCall({region:REGION},async request=>{
- const uid=requireUser(request),id=String(request.data?.deviceId||"");
+ const uid=await requireGoogle(request),id=String(request.data?.deviceId||"");
  const value=(await premiumDeviceRef(uid).get()).val()||{};
  const own=validPremiumDevice(id)&&value.deviceHash===premiumDeviceHash(uid,id);
  return {licenseActive:await userEntitlement(uid),authorizedHere:!!own,
