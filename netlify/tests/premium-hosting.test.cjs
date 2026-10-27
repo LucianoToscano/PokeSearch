@@ -7,6 +7,14 @@ const compat=source("netlify/lib/cloud-compat.cjs");
 const logic=source("functions/premium.js");
 const android=source("app/src/main/java/com/lucianotoscano/pokesearchoverlay/PremiumAccess.java");
 const gradle=source("app/build.gradle.kts");
+const adminHtml=source("netlify/public/admin.html");
+const script=adminHtml.match(/<script type="module">([\s\S]*?)<\/script>/);
+assert.ok(script,"Admin JS module exists");
+const {spawnSync}=require("node:child_process");
+const syntax=spawnSync(process.execPath,["--check","--input-type=module"],
+  {input:script[1],encoding:"utf8"});
+assert.equal(syntax.status,0,"Admin panel JS syntax: "+(syntax.stderr||""));
+
 const checks=[
  ["App-wide and per-version endpoint is read-only and fail-closed on lookup errors",
    http.includes('action==="appStatus"&&method==="GET"')&&
@@ -23,6 +31,23 @@ const checks=[
    logic.includes('crypto.createCipheriv("aes-256-gcm"')&&
    logic.includes("Key was not backed up")&&
    logic.includes("crypto.timingSafeEqual")],
+ ["Owner controls manual license recipient email and displays only a masked hint",
+   adminHtml.includes('id="recipient-email"')&&
+   adminHtml.includes('recipientEmail}')&&
+   logic.includes('recipientEmailHash:recipientHash(email)')&&
+   logic.includes('profile.emailVerified!==true')],
+ ["Owner controls normal price, promotional price and promotion switch",
+   adminHtml.includes('id="save-prices"')&&
+   adminHtml.includes('id="promotion-toggle"')&&
+   logic.includes('input.action==="prices"')&&
+   logic.includes('input.action==="promotion"')],
+ ["Free campaign supports duration, schedule and optional lifetime without auto-activation",
+   adminHtml.includes('id="free-duration"')&&
+   adminHtml.includes('id="free-activate"')&&
+   adminHtml.includes('id="free-disable"')&&
+   logic.includes('exports.claimFreeYear=onCall')&&
+   logic.includes('duration==="lifetime"')&&
+   http.includes('"claimFreeYear"')],
  ["Firebase ID token authenticated server-side",http.includes("verifyIdToken(authorization.slice(7),true)")],
  ["only whitelisted actions are publicly routed",http.includes("allowedActions.has(action)")],
  ["webhook routes Payments and legacy Orders with HMAC validation",
