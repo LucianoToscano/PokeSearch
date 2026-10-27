@@ -160,7 +160,7 @@ async function run(){
  await premium.adminPremiumSettings({...admin,data:{action:"promotion",enabled:true}});
  assert.equal((await premium.getPremiumOffer({auth:{uid:"friendA"}})).priceCents,500);
  console.log("PASS R$10 regular and R$5 open-ended promotion with owner toggle");
- for(const duration of ["15d","1m","3m","6m","12m","lifetime"]){
+ for(const duration of ["15d","30d","1m","3m","6m","12m","lifetime"]){
    const gift=await premium.adminIssuePremiumKey({...admin,data:{duration}});
    assert.equal(gift.assigned,false);
    assert.match(gift.licenseKey,/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/);
@@ -254,7 +254,7 @@ async function run(){
    auth:{uid:"claimant"},data:{versionCode:54328}
  })).premium,false,"revoking a claimed gift removes premium");
  console.log("PASS admin-only revocation of exposed and claimed manual keys");
- console.log("PASS individually chosen 15d/1m/3m/6m/12m/lifetime gifts");
+ console.log("PASS individually chosen 15d/30d/1m/3m/6m/12m/lifetime gifts");
  for(let i=0;i<12;i++){
    const more=await premium.adminIssuePremiumKey({...admin,data:{duration:"lifetime"}});
    assert.equal(more.lifetime,true,"no quota for owner-created lifetime licenses");
