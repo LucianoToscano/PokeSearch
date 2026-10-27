@@ -116,7 +116,7 @@ async function run(){
  const denied=await premium.checkDistributionAccess({auth:{uid:"newBuyer"},data:{versionCode:54328}});
  assert.equal(denied.premium,false);
  console.log("PASS refund revokes original buyer and transferred key holder");
- assert.ok(fetchCalls>=4);
+ assert.equal(fetchCalls,3,"one API fetch per valid webhook; unsigned webhook never calls provider");
  console.log("PASS premium server integration mock scenarios");
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});
