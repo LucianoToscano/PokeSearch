@@ -12,7 +12,9 @@ const {getAuth}=require("firebase-admin/auth");
 const {initializeApp,getApps}=require("firebase-admin/app");
 if(!getApps().length)initializeApp();
 
+// The live token cannot be used unless explicitly enabled by server policy.
 const MP_TOKEN=defineSecret("POKE_MP_ACCESS_TOKEN");
+const MP_TEST_TOKEN=defineSecret("POKE_MP_TEST_ACCESS_TOKEN");
 const MP_WEBHOOK_SECRET=defineSecret("POKE_MP_WEBHOOK_SECRET");
 const MP_WEBHOOK_URL=defineSecret("POKE_MP_WEBHOOK_URL");
 const KEY_SECRET=defineSecret("POKE_PREMIUM_KEY_SECRET");
@@ -63,10 +65,12 @@ const formatKey=(orderId)=>{
  const hex=crypto.createHmac("sha256",KEY_SECRET.value()).update(orderId).digest("hex").slice(0,24).toUpperCase();
  return "PS-"+hex.match(/.{1,6}/g).join("-");
 };
-const requestPayment=async(endpoint,options={})=>{
+const requestPayment=async(endpoint,liveMode,options={})=>{
+ const token=liveMode?MP_TOKEN.value():MP_TEST_TOKEN.value();
+ if(!token)throw new Error("Mercado Pago credentials missing");
  const response=await fetch("https://api.mercadopago.com"+endpoint,{
    ...options,
-   headers:{"Authorization":"Bearer "+MP_TOKEN.value(),
+   headers:{"Authorization":"Bearer "+token,
       ...(options.body?{"Content-Type":"application/json"}:{}),
       ...(options.headers||{})},
    signal:AbortSignal.timeout(12000)
@@ -76,24 +80,35 @@ const requestPayment=async(endpoint,options={})=>{
  if(!response.ok)throw new Error("Mercado Pago HTTP "+response.status);
  return value;
 };
-/** Re-read the payment from Mercado Pago; notification body alone never grants access. */
-async function settlePayment(paymentId){
- if(!/^\d{1,24}$/.test(String(paymentId)))return false;
- const payment=await requestPayment("/v1/payments/"+paymentId);
- const orderId=String(payment.external_reference||"");
- if(!/^[0-9a-f-]{36}$/.test(orderId))return false;
- const ref=root().child("orders").child(orderId),s=await ref.get(),order=s.val();
- if(!order||order.paymentId!==String(payment.id)||!order.uid)return false;
- if(payment.live_mode!==true||payment.payment_method_id!=="pix"||
-    Math.round(Number(payment.transaction_amount)*100)!==order.priceCents)return false;
- if(payment.status==="refunded"||payment.status==="charged_back"){
-   await ref.update({status:payment.status});
-   // A recovered key may belong to another Firebase UID by now. Revoke BOTH
-   // the original buyer and the present key holder on refund/chargeback.
+/** Every activation requires a fresh GET /v1/orders/{id}, never webhook body fields. */
+async function settlePayment(mpOrderId){
+ if(!/^ORD[A-Za-z0-9_-]{10,90}$/.test(String(mpOrderId)))return false;
+ const linked=(await root().child("orderIndex").child(mpOrderId).get()).val();
+ if(!linked||!/^[0-9a-f-]{36}$/.test(String(linked.orderId||"")))return false;
+ const orderId=linked.orderId;
+ const ref=root().child("orders").child(orderId),stored=(await ref.get()).val();
+ if(!stored||stored.mpOrderId!==mpOrderId||!stored.uid)return false;
+ const marketOrder=await requestPayment("/v1/orders/"+encodeURIComponent(mpOrderId),stored.liveMode===true);
+ const [transaction]=marketOrder.transactions?.payments||[];
+ const amount=Number(marketOrder.total_amount),paid=Number(transaction?.amount);
+ if(marketOrder.id!==mpOrderId||
+    marketOrder.external_reference!==orderId||
+    marketOrder.type!=="online"||marketOrder.live_mode!==(stored.liveMode===true)||
+    Math.round(amount*100)!==stored.priceCents||
+    Math.round(paid*100)!==stored.priceCents||
+    (marketOrder.transactions?.payments||[]).length!==1||
+    transaction.payment_method?.id!=="pix"||
+    transaction.payment_method?.type!=="bank_transfer")return false;
+ const reversed=["refunded","charged_back"].includes(marketOrder.status)||
+   ["refunded","charged_back"].includes(transaction.status)||
+   marketOrder.status_detail==="partially_refunded"||
+   transaction.status_detail==="partially_refunded";
+ if(reversed){
+   await ref.update({status:marketOrder.status});
    const hash=sha(formatKey(orderId)),keyRef=root().child("keys").child(hash);
    const key=(await keyRef.get()).val();
    if(key)await keyRef.update({revoked:true,revokedAt:Date.now()});
-   for(const affected of new Set([order.uid,key?.uid].filter(Boolean))){
+   for(const affected of new Set([stored.uid,key?.uid].filter(Boolean))){
      const entRef=root().child("entitlements").child(affected);
      await entRef.transaction(value=>{
        if(!value||value.currentKeyHash!==hash||value.lifetime===true)return;
@@ -102,27 +117,25 @@ async function settlePayment(paymentId){
    }
    return false;
  }
- if(payment.status!=="approved")return false;
- const entRef=root().child("entitlements").child(order.uid);
- const now=Date.now(),approvedAt=Date.parse(String(payment.date_approved||""));
- const billingStart=Number.isFinite(approvedAt)&&approvedAt>=order.createdAt?
-   Math.min(now,approvedAt):now;
+ if(marketOrder.status!=="processed"||marketOrder.status_detail!=="accredited"||
+    transaction.status!=="processed"||transaction.status_detail!=="accredited")return false;
+ const entRef=root().child("entitlements").child(stored.uid);
+ const now=Date.now(),billingStart=now;
  const key=formatKey(orderId),hash=sha(key);
- // Idempotent across webhook retries and polling: one order adds exactly 30 days.
- const transaction=await entRef.transaction(old=>{
+ const transactionResult=await entRef.transaction(old=>{
    const v=old&&typeof old==="object"?old:{};
-   const paid=v.paidOrders&&typeof v.paidOrders==="object"?v.paidOrders:{};
-   if(paid[orderId])return; // already applied, no duplicate extension
-   if(v.revoked===true)return; // admin revocation takes precedence
-   paid[orderId]=true;
-   if(v.lifetime===true)return {...v,paidOrders:paid};
-   return {...v,paidOrders:paid,kind:"paid",
+   const paidOrders=v.paidOrders&&typeof v.paidOrders==="object"?v.paidOrders:{};
+   if(paidOrders[orderId]||v.revoked===true)return;
+   paidOrders[orderId]=true;
+   if(v.lifetime===true)return {...v,paidOrders};
+   return {...v,paidOrders,kind:"paid",
      expiresAt:Math.max(billingStart,Number(v.expiresAt)||0)+MONTH,currentKeyHash:hash};
  },undefined,false);
- const ent=(transaction.snapshot&&transaction.snapshot.val())||{};
+ const ent=transactionResult.snapshot?.val()||{};
  if(!ent.paidOrders?.[orderId])return false;
  await root().child("keys").child(hash).transaction(value=>
-   value||{kind:"paid",orderId,uid:order.uid,expiresAt:ent.expiresAt,createdAt:now,transferred:false},undefined,false);
+   value||{kind:"paid",orderId,uid:stored.uid,expiresAt:ent.expiresAt,
+     createdAt:now,transferred:false},undefined,false);
  await ref.update({status:"approved",licensed:true,approvedAt:now});
  return true;
 }
@@ -132,7 +145,7 @@ function signatureValid(req){
  const id=String(req.query["data.id"]||req.query.id||"");
  const ts=(signature.match(/(?:^|,)ts=(\d+)(?:,|$)/)||[])[1];
  const hash=(signature.match(/(?:^|,)v1=([0-9a-f]{64})(?:,|$)/i)||[])[1];
- if(!ts||!hash||!requestId||!/^\d{1,24}$/.test(id))return false;
+ if(!ts||!hash||!requestId||!/^ORD[A-Za-z0-9_-]{10,90}$/.test(id))return false;
  const millis=Number(ts)>1e12?Number(ts):Number(ts)*1000;
  if(!Number.isFinite(millis)||Math.abs(Date.now()-millis)>10*60*1000)return false;
  const manifest="id:"+id.toLowerCase()+";request-id:"+requestId+";ts:"+ts+";";
@@ -147,15 +160,17 @@ exports.checkDistributionAccess=onCall({region:REGION},async request=>{
  return {allowed:enabled,premium,serverNow:Date.now()};
 });
 exports.createPremiumPix=onCall({region:REGION,
- secrets:[MP_TOKEN,MP_WEBHOOK_URL]},async request=>{
+ secrets:[MP_TOKEN,MP_TEST_TOKEN,MP_WEBHOOK_URL]},async request=>{
  const uid=requireUser(request),email=String(request.data?.email||"").trim().toLowerCase();
- const cpf=digits(request.data?.cpf),code=Number(request.data?.versionCode);
+ const code=Number(request.data?.versionCode);
  if(!isValidCode(code)||!await currentPolicy(code))
    throw new HttpsError("failed-precondition","Esta versão não está liberada.");
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>120||cpf.length!==11)
-   throw new HttpsError("invalid-argument","Informe e-mail e CPF válidos.");
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>120)
+   throw new HttpsError("invalid-argument","Informe um e-mail válido.");
  const config=(await root().child("config").get()).val()||{};
  const price=offer(config).priceCents;
+ // Separate test/production tokens: production cannot be selected by the app.
+ const liveMode=config.paymentsLiveEnabled===true;
  if(config.salesEnabled!==true||!Number.isSafeInteger(price)||price<100||price>100000)
    throw new HttpsError("failed-precondition","Vendas desativadas ou preço não configurado.");
  const createdAt=Date.now();
@@ -167,42 +182,47 @@ exports.createPremiumPix=onCall({region:REGION,
    throw new HttpsError("resource-exhausted","Aguarde um minuto antes de gerar outro Pix.");
  const orderId=crypto.randomUUID();
  const ref=root().child("orders").child(orderId);
- await ref.set({uid,priceCents:price,versionCode:code,status:"creating",createdAt});
+ await ref.set({uid,priceCents:price,versionCode:code,status:"creating",createdAt,liveMode});
  try{
-   const payment=await requestPayment("/v1/payments",{
+   const amount=(price/100).toFixed(2);
+   const mpOrder=await requestPayment("/v1/orders",liveMode,{
      method:"POST",headers:{"X-Idempotency-Key":orderId},
      body:JSON.stringify({
-       transaction_amount:price/100,description:"PokeSearch Premium - Pokébola 2 (30 dias)",
-       payment_method_id:"pix",external_reference:orderId,
-       notification_url:MP_WEBHOOK_URL.value(),
-       payer:{email,identification:{type:"CPF",number:cpf}}
+       type:"online",total_amount:amount,external_reference:orderId,
+       processing_mode:"automatic",
+       transactions:{payments:[{amount,payment_method:{id:"pix",type:"bank_transfer"}}]},
+       payer:{email}
      })
    });
-   const qr=payment.point_of_interaction?.transaction_data?.qr_code;
-   if(!payment.id||!qr)throw new Error("Pagamento sem dados Pix");
-   await ref.update({paymentId:String(payment.id),status:"pending"});
+   const qr=mpOrder.transactions?.payments?.[0]?.payment_method?.qr_code;
+   if(!/^ORD[A-Za-z0-9_-]{10,90}$/.test(String(mpOrder.id||""))||!qr)
+      throw new Error("Mercado Pago order has no Pix");
+   const mpOrderId=String(mpOrder.id);
+   await ref.update({mpOrderId,status:"pending"});
+   await root().child("orderIndex").child(mpOrderId).set({orderId});
    return {orderId,pixCode:qr,priceCents:price,status:"pending"};
  }catch(error){
    await ref.update({status:"error"});
    throw new HttpsError("unavailable","Não foi possível gerar o Pix. Tente novamente.");
  }
 });
-exports.premiumPixWebhook=onRequest({region:REGION,secrets:[MP_TOKEN,MP_WEBHOOK_SECRET,KEY_SECRET]},async(req,res)=>{
+exports.premiumPixWebhook=onRequest({region:REGION,
+ secrets:[MP_TOKEN,MP_TEST_TOKEN,MP_WEBHOOK_SECRET,KEY_SECRET]},async(req,res)=>{
  if(req.method!=="POST"){res.status(405).send("method");return;}
  if(!signatureValid(req)){res.status(401).send("signature");return;}
  const paymentId=String(req.query["data.id"]||req.query.id||"");
  try{await settlePayment(paymentId);res.status(200).send("ok");}
  catch(error){console.error("Premium webhook reconciliation failed",error.message);res.status(503).send("retry");}
 });
-exports.getPremiumOrder=onCall({region:REGION,secrets:[MP_TOKEN,KEY_SECRET]},async request=>{
+exports.getPremiumOrder=onCall({region:REGION,secrets:[MP_TOKEN,MP_TEST_TOKEN,KEY_SECRET]},async request=>{
  const uid=requireUser(request),orderId=String(request.data?.orderId||"");
  if(!/^[0-9a-f-]{36}$/.test(orderId))
   throw new HttpsError("invalid-argument","Pedido inválido.");
  const ref=root().child("orders").child(orderId),o=(await ref.get()).val();
  if(!o||o.uid!==uid)throw new HttpsError("permission-denied","Pedido não pertence a esta conta.");
- if(o.status==="pending"&&o.paymentId){
-   // This check also recovers missed webhooks and always verifies at Mercado Pago.
-   await settlePayment(o.paymentId);
+ if(o.status==="pending"&&o.mpOrderId){
+   // Recover missed webhooks by fetching the authoritative order.
+   await settlePayment(o.mpOrderId);
  }
  const current=(await ref.get()).val()||{};
  const status=current.status==="approved"&&current.licensed?"approved":current.status;
