@@ -8,6 +8,21 @@ const logic=source("functions/premium.js");
 const android=source("app/src/main/java/com/lucianotoscano/pokesearchoverlay/PremiumAccess.java");
 const gradle=source("app/build.gradle.kts");
 const checks=[
+ ["App-wide and per-version endpoint is read-only and fail-closed on lookup errors",
+   http.includes('action==="appStatus"&&method==="GET"')&&
+   http.includes('return response({error:"Estado de manutenção indisponível."},503)')&&
+   http.includes('versions.globalEnabled!==false')&&http.includes('version.enabled!==false')],
+ ["Key management and maintenance stay owner-only",
+   logic.includes("exports.adminListPremiumKeys=onCall")&&
+   logic.includes("exports.adminSetPremiumKeyEnabled=onCall")&&
+   logic.includes("exports.adminChangePremiumKeyDuration=onCall")&&
+   logic.includes("exports.adminSetAppMaintenance=onCall")&&
+   logic.includes("exports.adminSetAppVersionAccess=onCall")&&
+   logic.includes("await requireAdmin(request)")],
+ ["Old manual key plaintext remains unrecoverable while new codes use authenticated encryption",
+   logic.includes('crypto.createCipheriv("aes-256-gcm"')&&
+   logic.includes("Key was not backed up")&&
+   logic.includes("crypto.timingSafeEqual")],
  ["Firebase ID token authenticated server-side",http.includes("verifyIdToken(authorization.slice(7),true)")],
  ["only whitelisted actions are publicly routed",http.includes("allowedActions.has(action)")],
  ["webhook routes Payments and legacy Orders with HMAC validation",
