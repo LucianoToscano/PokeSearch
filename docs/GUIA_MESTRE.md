@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+
+### LT129 — Capturas voluntárias e reações no Chat (27/10/2026)
+
+- **Branch:** `feature/lt129-capture-share-chat-reactions-20261027`, partindo da LT128 QA. Versão QA prevista `0.01.29` / `54334`. Sem mexer na main, release estável, Firebase real ou backup integral.
+- **Get coords:** copiar continua inalterado na P1/P2. Somente com cartão aberto e cópia bem-sucedida aparece discretamente `🎉 Capturou? Compartilhar no chat`. O jogador deve tocar, ver a confirmação inline `Capturou mesmo?` e tocar **✓ Sim, compartilhar** para publicar; não é captura detectada pelo app. Tocar longo, ignorar ou fechar não gera popup nem postagem. API/DOM preservados.
+- **Mensagem:** `Apelido: 🎉 Capturou um Pokémon ✨!` conforme nome/shiny confiáveis do resultado, usando `chat/messages` e `ServerValue.TIMESTAMP`. Não enviar coordenadas, localização, IV, CP, reveal_code ou dados individuais.
+- **Reações:** ❤️, 👍, 🎉, até uma por UID/mensagem em `chat/reactions`; tocar novamente desfaz, outro emoji substitui. Contagem em tempo real com UI compacta, sem autoscroll, sons ou notificações.
+- **Segurança:** rules versionadas e modelo de produção acrescentam somente `chat.reactions`, preservando `stats` integralmente. **Não publicado em Firebase produção**: antes de usar reações é necessário mesclar este nó às Rules do RTDB ao lado de messages/avatars, mantendo contadores online/instalações já ativos.
+- **Testes:** `app/tests/lt129-capture-share-reactions.test.js`, CI Android/Node assinado. Prova de funcionamento Samsung/API/DOM/diferentes contas ainda pendente.
+- Detalhes e regras: [POKESEARCH_LT129_CAPTURE_SHARE_REACTIONS_20261027.md](POKESEARCH_LT129_CAPTURE_SHARE_REACTIONS_20261027.md). Entregar GitHub artifact primeiro, nunca só link ChatGPT `sandbox`.
+
+
 ### LT128 — QA final assinada e auditada (27/10/2026)
 
 - **GitHub Actions SUCCESS:** [run #40468096447](https://github.com/LucianoToscano/PokeSearch/actions/runs/40468096447) com [APK e relatórios no artefato #12717366645](https://github.com/LucianoToscano/PokeSearch/actions/runs/40468096447/artifacts/12717366645). Fonte exata do APK: commit `89bedec26f7925325c3020ddee16526cf773c8e4` (posteriormente somente documentação atualizada).
