@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT126 QA — Chat e primeira integração WatWowMap (26/10/2026)
+
+- Checkpoint: `main=65c9b4219744bad180e435faa23739e08e7d183f` (LT124); continuidade real da LT125 R2 `e9c4c6ede886b518d2fd7c7aa934f069f83df479` na branch `fix/lt126-chat-catalog-sprites-20261026` / PR #81 Draft, base PR #80. Nenhum merge, release estável ou substituição dos backups.
+- Samsung: os prints de Drifblim #426 e Pumpkaboo #710 Average sem sprite, Chat indisponível e contadores `—` exibem no rodapé **v0.01.24 LT**, portanto NÃO testam a LT125 R2 `0.01.25`.
+- Chat: `FirebaseStats.ensureApp(Context)` permite ao chat criar/reutilizar a instância Firebase nomeada sem depender da ordem dos contadores Home. `CommunityScrapbookOnline` habilita envio somente após leitura autenticada, diferencia erro RTDB `PERMISSION_DENIED` de falha de rede, remove listener antigo em reconexões e preserva rascunho. Ainda depende de regras efetivamente implantadas/Anonymous Auth no Firebase em produção; dois usuários reais NÃO testados.
+- WatWowMap/pogo-data-api (`42b315f317ca8cee8e178249328eab5173e5ca70`) fornece metadados estáticos de 1.025 espécies, **1.506** formas (catálogo real; README defasado indicava 1.478) e 87 trajes. Importador `app/scripts/import_wwm_catalog.py` executa apenas no build, com IDs/estrutura validados. `catalog_wwm_verified.json` não interfere no ciclo API/DOM.
+- WWM UIcons (`998bf635194a11078b6375c79d1494d5eb999b39`) primeira cobertura exata: Pumpkaboo 710 Small form 2641, Average 2642, Large 2643 e Super 2644, 4 imagens normais e 4 Shiny, bytes pinned por Git blob e PNG validado no build. `sprite_offline.js` resolve no compartilhamento entre P1/P2, resultados, card e picker, recusando conflito de IDs/trajes. Drifblim #426 normal/Shiny continua no pacote base.
+- Alvo do APK QA: `0.01.26` / `54331`, separado da QA LT125 `0.01.25` / `54330`; esperado 2.784 PNGs (2.776 anteriores + 8 novas). **Número, hash, build e assinatura só são conclusivos se confirmados pelo CI/artefato.** Não confundir teste de código com Samsung físico.
+- Fonts UIcons/UIcons, PokeMiners e Nileplumb foram examinados como referência/alternativas; nenhum outro scraper, radar, evento ou RPC ativado. A declaração do responsável de autorização não substitui comprovação de direitos dos provedores; API GitHub não apresentou licença SPDX em WatWowMap/wwm-uicons e pogo-data-api. Não afirmar licença individual verificada documentalmente.
+- Detalhes de esquema, código, provedores e pendências: `docs/POKESEARCH_LT126_CHAT_WWM_CATALOGO_SPRITES_QA.md`. Backend RTDB permanece NO-GO até leitura/gravação com dois UIDs e deploy de Rules autenticado. Código P1/P2, autenticação PoGoCoordinates, proteção R8, assinatura, sons e notificações preservados.
+
+
 ## LT125 QA-R2 — APK assinado com recuperação Noibat e 317 variedades offline (26/10/2026)
 
 - **Build QA R2 comprovada:** [GitHub Actions #40437190589](https://github.com/LucianoToscano/PokeSearch/actions/runs/40437190589) SUCCESS, [artifact #12704732660](https://github.com/LucianoToscano/PokeSearch/actions/runs/40437190589/artifacts/12704732660). Commit-fonte do APK `3aabc5450aaa057417a77d6f9db3ea24a2fb7b6c`; `versionName 0.01.25` / `versionCode 54330`; APK `PokeSearch-v0.01.25-LT125-Samsung-Sprites-QA-R2.apk` de **43.289.081 bytes**, SHA-256 `f9c5beeafdb8fbd413488a5f3283f02f770a6317a9ac6aa7f091b2dc39cebea1`. Assinatura Android v2 e certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` verificados pelo CI e relatório extraído do artefato.
