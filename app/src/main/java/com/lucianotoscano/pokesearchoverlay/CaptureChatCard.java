@@ -29,7 +29,8 @@ final class CaptureChatCard {
             this.cp=cp;this.level=level;this.moves=moves;this.boosted=boosted;
         }
         String headline(String nickname){
-            return (shiny?"✨ ":"🎉 ")+nickname+" capturou um "+name+"!";
+            return (shiny?"✨ ":"🎉 ")+nickname+" capturou um "+
+                CaptureChatFormat.compactName(name)+"!";
         }
         String rarity(){
             if("15/15/15".equals(iv))return shiny?"Shundo":"Hundo";
@@ -120,7 +121,8 @@ final class CaptureChatCard {
         if(item.has("boosted") && item.optBoolean("boosted",false))details.add("Boost:Sim");
         String text=head;
         if(!badges.isEmpty())text=suffix(text,"\n"+String.join(SEP,badges),240);
-        if(!details.isEmpty())text=suffix(text,"\n"+String.join(SEP,details),240);
+        // LT133: never send a third row of PC, level or moves to public chat.
+        // Existing LT132 three-line posts remain readable by parse(...).
         return text;
     }
     static Card parse(String value){
