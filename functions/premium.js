@@ -65,7 +65,7 @@ const userEntitlement=async uid=>{
  if(value.revoked===true||!/^[0-9a-f]{64}$/.test(String(value.currentKeyHash||"")))return false;
  const key=(await root().child("keys").child(value.currentKeyHash).get()).val();
  if(key?.uid!==uid||key.revoked===true||key.suspended===true)return false;
- if(value.lifetime===true)return key.kind==="manual"||key.kind==="lifetime";
+ if(value.lifetime===true)return key.duration==="lifetime";
  return Number(value.expiresAt||0)>Date.now()&&Number(key.expiresAt||0)>Date.now();
 };
 const offer=config=>{
