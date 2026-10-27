@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/pokesearch-chat-sa.json
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/pokesearch-chat-sa.json
       FIREBASE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POKESEARCH_LT }}
     steps:
       - uses: actions/checkout@v4
