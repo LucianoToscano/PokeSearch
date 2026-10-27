@@ -11,7 +11,7 @@ const allowedActions=new Set([
  "adminListPremiumKeys","adminListPremiumDevices","adminDisconnectPremiumDevice","adminReleasePremiumDevice","adminLabelPremiumKey","adminRevealPremiumKey","adminSetPremiumKeyEnabled",
  "adminDeletePremiumKey",
  "adminChangePremiumKeyDuration","adminSetAppMaintenance","adminSetAppVersionAccess",
- "claimFreeYear","adminExportPremiumBackupPage","adminRestorePremiumBackup"
+ "claimFreeYear","claimWelcomeTrial","redeemFullCoupon","adminExportPremiumBackupPage","adminRestorePremiumBackup"
 ]);
 const httpStatus={
  unauthenticated:401,"permission-denied":403,"invalid-argument":400,
