@@ -50,3 +50,13 @@ A rules versionada é restritiva na raiz. Um cliente pode receber `PERMISSION_DE
 - https://github.com/WatWowMap/wwm-uicons
 - https://github.com/PokeMiners/pogo_assets
 - https://github.com/PokeMiners/game_masters
+
+
+## Evidência final QA — validação binária
+
+- Node e build Java/Android protegidos concluídos em SUCCESS no [GitHub Actions #40446596976](https://github.com/LucianoToscano/PokeSearch/actions/runs/40446596976).
+- VersionName `0.01.26`, versionCode `54331`, appId `com.lucianotoscano.pokesearch`. SOURCE_COMMIT binário `4e8475af7c093ffd70be63364f2d1bf64d846bc8`.
+- APK `PokeSearch-v0.01.26-LT126-Chat-WWM-QA.apk` de 43.337.972 bytes; SHA-256 `ba9e8b0ce32111567233646c31250b659e91985fb5d9da0d01d83d23a0c9bd0b`, igual ao arquivo `SHA256SUMS.txt` do workflow. Certificado permanente v2 correto.
+- Inspeção do APK extraído: **2.776/2.776 hashes** de imagens iguais ao manifesto (1.025 normais, 1.025 Shiny, 716 formas e 10 trajes), zero paths quebrados. Os recursos `assets/wwm_catalog.js` e `assets/wwm_catalog_provenance.json` estão fisicamente presentes no APK.
+- `WatWowMap/pogo-data-api`: integrados **1.025 Pokemon, 1.506 forms e 87 costumes**, com traduções PT-BR e hashes SHA-256 de seis JSONs, commit fixo `42b315f317ca8cee8e178249328eab5173e5ca70`. Bundle JS de 152.889 bytes, download exclusivamente durante build.
+- ZIP GitHub de 40.852.206 bytes. [Artefato #12708327476](https://github.com/LucianoToscano/PokeSearch/actions/runs/40446596976/artifacts/12708327476). QA é somente para teste e não equivale a prova de Firebase live ou Samsung.
