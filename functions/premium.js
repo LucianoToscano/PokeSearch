@@ -23,7 +23,7 @@ const MP_LIVE_WEBHOOK_SECRET=defineSecret("POKE_MP_LIVE_WEBHOOK_SECRET");
 const MP_WEBHOOK_URL=defineSecret("POKE_MP_WEBHOOK_URL");
 const KEY_SECRET=defineSecret("POKE_PREMIUM_KEY_SECRET");
 const REGION="us-central1", MONTH=30*24*60*60*1000;
-const NORMAL_CENTS=1000, PROMO_CENTS=500;
+const NORMAL_CENTS=2000, PROMO_CENTS=1000;
 const ADMIN_DURATIONS=Object.freeze(["15d","30d","1m","3m","6m","12m","lifetime"]);
 const root=()=>getDatabase().ref("premium");
 const policy=()=>getDatabase().ref("distribution");
@@ -67,7 +67,7 @@ const offer=config=>{
    priceCents:promotionEnabled?promotional:regular};
 };
 
-/** Affiliate voucher: 10% or 50% off the currently active sale price.
+/** Affiliate voucher: 10%, 25%, or 50% off the currently active sale price.
  * A code is optional; client totals and commissions are NEVER trusted.
  * Owner pays partners manually after actual settlement.
  */
@@ -86,7 +86,7 @@ async function couponQuote(rawCode,basePrice,uid){
  if(coupon.partnerUid&&coupon.partnerUid===uid)
    throw new HttpsError("failed-precondition","Não é permitido usar seu próprio cupom.");
  const discount=Number(coupon.discountPercent);
- if(![10,50].includes(discount))throw new HttpsError("failed-precondition","Cupom inválido.");
+ if(![10,25,50].includes(discount))throw new HttpsError("failed-precondition","Cupom inválido.");
  const discounted=basePrice-Math.round(basePrice*discount/100);
  if(discounted<100)throw new HttpsError("failed-precondition",
    "O valor com desconto é menor que o mínimo aceito para Pix.");
@@ -434,7 +434,7 @@ exports.adminSavePartnerCoupon=onCall({region:REGION},async request=>{
  const discountPercent=Number(input.discountPercent);
  const expiresAt=Number(input.expiresAt||0);
  if(!validCoupon(code)||partnerName.length<2||partnerName.length>80||
-    ![10,50].includes(discountPercent)||
+    ![10,25,50].includes(discountPercent)||
     (partnerUid&&!validUid(partnerUid))||
     !Number.isSafeInteger(expiresAt)||expiresAt<0||
     (expiresAt!==0&&expiresAt<Date.now()))
@@ -520,7 +520,13 @@ exports.adminMarkPartnerCommissionPaid=onCall({region:REGION},async request=>{
 exports.adminPremiumSettings=onCall({region:REGION},async request=>{
  await requireAdmin(request);
  const input=request.data||{};
- if(input.action==="prices"){
+ if(input.action==="pricingPreset"){
+   // Explicit owner action only. No automatic mutation to the live Firebase.
+   await root().child("config").update({
+     regularPriceCents:2000,promotionalPriceCents:1000,
+     promotionEnabled:true
+   });
+ }else if(input.action==="prices"){
    const regular=Number(input.regularPriceCents),promotional=Number(input.promotionalPriceCents);
    if(!Number.isSafeInteger(regular)||regular<100||regular>100000||
       !Number.isSafeInteger(promotional)||promotional<100||promotional>regular)
