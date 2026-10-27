@@ -56,7 +56,7 @@ final class PremiumPurchaseDialog {
         activate.setText("Ativar minha chave");activate.setAllCaps(false);
         col.addView(activate);
         TextView note=new TextView(activity);
-        note.setText("O Pix usa apenas e-mail na API de Orders. A licença Premium "+
+        note.setText("Pix integrado pela API de Payments. A licença Premium "+
                      "fica vinculada à sua conta Google no Firebase, inclusive após reinstalar.");
         note.setTextSize(11);
         col.addView(note);
