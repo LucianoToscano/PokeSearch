@@ -109,7 +109,7 @@ final class PremiumPurchaseDialog {
         promoBadge.setBackground(round(activity,teal,20,teal));
         planTop.addView(promoBadge);
         plan.addView(planTop);
-        TextView normalPrice=label(activity,"Preço normal: R$ 10,00",12,subtext,false);
+        TextView normalPrice=label(activity,"Preço normal: R$ 20,00",12,subtext,false);
         plan.addView(normalPrice,space(activity,0,dp(activity,5),0,0));
         TextView pricePreview=label(activity,"Consultando preço...",24,0xFF83C5FF,true);
         plan.addView(pricePreview,space(activity,0,dp(activity,3),0,0));
