@@ -59,6 +59,13 @@
     <hr class="sep">
     <div class="row"><span class="label">Vendas Premium</span><span class="value" id="sales">—</span></div>
     <hr class="sep">
+    <div class="row"><span class="label">Pix real (Payments API)</span><span class="value" id="live-status">—</span></div>
+    <div class="actions">
+      <button id="toggle-live" class="secondary" disabled>Verificar configuração de produção</button>
+      <button id="toggle-sales" class="secondary" disabled>Verificar vendas</button>
+    </div>
+    <small>A ativação é independente. Um Pix real só poderá ser criado após configurar os dois segredos de produção, habilitar o modo real e habilitar vendas. A conta Google continua obrigatória para a Pokébola 2.</small>
+    <hr class="sep">
     <div class="row"><span class="label">Preço normal</span><span class="value" id="regular">—</span></div>
     <hr class="sep">
     <div class="row"><span class="label">Preço promocional</span><span class="value" id="promo">—</span></div>
@@ -100,7 +107,7 @@
   });
   const auth=getAuth(app);
   const el=id=>document.getElementById(id);
-  let lastKey="",revealed=false,busy=false;
+  let lastKey="",revealed=false,busy=false,configState={salesEnabled:false,paymentsLiveEnabled:false};
   const setStatus=(message,kind="")=>{el("status").textContent=message;el("status").className=kind};
   const money=cents=>(Number(cents)/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   async function call(name,data={}){
@@ -127,7 +134,13 @@
       const data=await call("adminPremiumOverview");
       el("account").textContent=auth.currentUser?.email||"Conta autenticada";
       el("distribution").textContent=data.globalEnabled===true?"Habilitado":"Desativado";
-      el("sales").textContent=data.salesEnabled===true?"Habilitadas":"Desativadas";
+      configState={salesEnabled:data.salesEnabled===true,paymentsLiveEnabled:data.paymentsLiveEnabled===true};
+      el("sales").textContent=configState.salesEnabled?"Habilitadas":"Desativadas";
+      el("live-status").textContent=configState.paymentsLiveEnabled?"Habilitado":"Desativado";
+      el("toggle-sales").disabled=false;
+      el("toggle-live").disabled=false;
+      el("toggle-sales").textContent=configState.salesEnabled?"Desativar vendas":"Habilitar vendas";
+      el("toggle-live").textContent=configState.paymentsLiveEnabled?"Desativar Pix real":"Habilitar Pix real";
       el("regular").textContent=money(data.regularPriceCents);
       el("promo").textContent=money(data.promotionalPriceCents);
       el("admin").hidden=false;
@@ -141,6 +154,23 @@
       setStatus(e.message||"Não foi possível confirmar seu acesso.","error");
     }finally{busy=false;el("refresh").disabled=false;}
   }
+  async function toggleOwnerSetting(action,enabled){
+    const label=action==="sales"?"vendas Premium":"Pix real via Payments API";
+    const warning=enabled?
+      "Confirmar habilitação de "+label+"? Isso pode permitir cobranças reais quando as duas opções estiverem ativas. Verifique sua conta e as credenciais do Mercado Pago.":
+      "Desativar "+label+" para novas cobranças?";
+    if(!window.confirm(warning))return;
+    const button=el(action==="sales"?"toggle-sales":"toggle-live");
+    button.disabled=true;
+    try{
+      await call("adminPremiumSettings",{action,enabled});
+      await overview();
+      setStatus(label+(enabled?" habilitado":" desativado")+" pelo administrador.","ok");
+    }catch(e){setStatus(e.message||"Operação recusada.","error");}
+    finally{button.disabled=false;}
+  }
+  el("toggle-sales").addEventListener("click",()=>toggleOwnerSetting("sales",!configState.salesEnabled));
+  el("toggle-live").addEventListener("click",()=>toggleOwnerSetting("paymentsLive",!configState.paymentsLiveEnabled));
   el("login").addEventListener("click",async()=>{
     el("login").disabled=true;
     try{
