@@ -187,8 +187,13 @@
   </section>
   <section class="panel" id="keys-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Todas as licenças Premium</h2>
-    <p>Consulte as chaves em páginas de 30, copie as recuperáveis, suspenda/reative e altere vencimentos sem remover o histórico.</p>
+    <p>Administre cada licença: habilite ou desabilite, altere a validade ou exclua da lista. A exclusão cancela definitivamente o acesso, preservando o histórico Pix.</p>
     <small>Por segurança, antigas chaves manuais foram salvas apenas como hash e <strong>não podem ser copiadas novamente</strong>. As novas chaves manuais ficam em cofre criptografado; licenças pagas podem ser recuperadas pelo administrador.</small>
+    <label class="label" for="license-list-view">Visualizar licenças</label>
+    <select id="license-list-view" class="maintenance-note" style="margin-top:8px">
+      <option value="current">Atuais (ativas, suspensas e revogadas)</option>
+      <option value="archived">Excluídas (histórico)</option>
+    </select>
     <div class="actions"><button class="secondary" id="refresh-keys">Atualizar lista</button></div>
     <div id="premium-keys-list" aria-live="polite"></div>
     <div class="actions"><button class="secondary" id="load-more-keys" hidden>Carregar mais</button></div>
@@ -571,6 +576,28 @@
       });
       actions.appendChild(adjust);
     }
+    if(!item.archived){
+      const remove=actionButton("Excluir",async()=>{
+        const description=item.kind==="paid"?"pagamento":"licença manual";
+        const confirmation=window.prompt(
+          "EXCLUSÃO DEFINITIVA: revogará o acesso da Pokébola 2 relacionado a este "+
+          description+" e ocultará a licença da lista atual. O histórico Pix "+
+          "será preservado e esta chave NÃO poderá ser reativada. "+
+          "Para confirmar, digite EXCLUIR LICENÇA:",
+          "");
+        if(confirmation!=="EXCLUIR LICENÇA")return;
+        remove.disabled=true;
+        try{
+          await call("adminDeletePremiumKey",{id:item.id,confirm:confirmation});
+          setStatus("Licença excluída da lista e acesso revogado. "+
+            "O histórico foi preservado na aba Excluídas.","ok");
+          await loadPremiumKeys(true);
+        }catch(e){setStatus(e.message||"Não foi possível excluir licença.","error");}
+        finally{remove.disabled=false;}
+      });
+      remove.classList.add("danger-action");
+      actions.appendChild(remove);
+    }
     article.appendChild(actions);
     return article;
   }
@@ -580,7 +607,9 @@
     el("refresh-keys").disabled=true;el("load-more-keys").disabled=true;
     if(reset){keyCursor="";keyCount=0;el("premium-keys-list").replaceChildren();}
     try{
-      const result=await call("adminListPremiumKeys",{cursor:keyCursor,limit:30});
+      const result=await call("adminListPremiumKeys",{
+        cursor:keyCursor,limit:30,archived:el("license-list-view").value==="archived"
+      });
       for(const item of result.keys||[]){
         el("premium-keys-list").appendChild(renderPremiumKey(item));
         keyCount++;
@@ -589,11 +618,15 @@
       el("load-more-keys").hidden=result.hasMore!==true;
       el("keys-count").textContent=keyCount+" licenças exibidas"+
         (result.hasMore?". Há mais licenças para carregar.":".");
-      if(keyCount===0)el("keys-count").textContent="Nenhuma licença registrada.";
+      if(keyCount===0)el("keys-count").textContent=
+        result.hasMore?"Nenhuma licença nesta página; carregue mais para continuar.":
+        (el("license-list-view").value==="archived"?
+          "Nenhuma licença excluída.":"Nenhuma licença na lista atual.");
     }catch(e){setStatus(e.message||"Falha ao consultar licenças.","error");}
     finally{keyBusy=false;el("refresh-keys").disabled=false;el("load-more-keys").disabled=false;}
   }
   el("refresh-keys").addEventListener("click",()=>loadPremiumKeys(true));
+  el("license-list-view").addEventListener("change",()=>loadPremiumKeys(true));
   el("load-more-keys").addEventListener("click",()=>loadPremiumKeys(false));
   el("toggle-maintenance").addEventListener("click",async()=>{
     if(busy)return;
