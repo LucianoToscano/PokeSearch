@@ -14,7 +14,7 @@ const checks=[
  ["server confirms amount and Pix",server.includes('transaction.payment_method?.id!=="pix"')&&server.includes("Math.round(amount*100)")],
  ["one grant per order",server.includes("paidOrders[orderId]")&&server.includes("entRef.transaction(")],
  ["licensing lasts exactly 30 days",server.includes("30*24*60*60*1000")],
- ["control can disable entire distribution and each code",server.includes("p.globalEnabled===true")&&server.includes("p.versions[String(code)]===true")],
+ ["control can disable entire distribution and each code",server.includes("p.globalEnabled===true")&&server.includes("p.versions?.[String(code)]!==false")],
  ["no live sales without salesEnabled",server.includes("salesEnabled!==true")&&server.includes("!Number.isSafeInteger(price)")],
  ["no CPF persisted in payment order",!server.includes("cpf,")&&!server.includes("cpf:")],
  ["server requires admin claim",server.includes("customClaims?.pokesearchAdmin!==true")],
