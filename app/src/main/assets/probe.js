@@ -860,8 +860,65 @@ function extraNumberKeys(){
 }
 // Only EXPLICITLY REQUESTED optional criteria may block a search. A site
 // title, generic Pokemon picker or decorated "Any" must not become mandatory.
+// Select only an official, visible PoGoCoordinates account control.
+ // Never infer a Shiny match for a different linked trainer.
+function trainerAccountChoice(action){
+ if(!shinyOnly)return true;
+ const code=String(filters.shinyAccount||"");
+ const name=String(filters.shinyAccountLabel||"");
+ const all=filters.shinyAccountAll===true;
+ if(!all&&!/^\d{12}$/.test(code))return true;
+ const accountLabels=/^(?:pokemon go account|trainer account|shiny account|account for shiny|pok[eé]mon go account|conta pok[eé]mon go|conta do treinador)$/i;
+ const candidates=elements("label,span,p,small").filter(e=>vis(e)&&
+    accountLabels.test(text(e))&&text(e).length<50);
+ const controls=[];
+ for(const label of candidates){
+  for(let node=label.parentElement,depth=0;node&&depth<4;node=node.parentElement,depth++){
+   const selects=Array.from(node.querySelectorAll('select,[role=combobox],button[aria-haspopup]'))
+     .filter(vis);
+   if(selects.length===1){controls.push(selects[0]);break;}
+  }
+ }
+ if(controls.length!==1)return false;
+ const control=controls[0];
+ const label=all?"All "+Number(filters.shinyAccountCount||0)+" accounts":name;
+ if(control.tagName==="SELECT"){
+   const entry=Array.from(control.options).find(o=>{
+     const t=text(o),digits=t.replace(/\D/g,"");
+     return all?/^all\s+\d+\s+accounts$/i.test(t):
+       (code&&digits.includes(code))||(name&&t.toLowerCase().startsWith(name.toLowerCase()));
+   });
+   if(!entry)return false;
+   if(control.value!==entry.value&&action==="apply"){
+     control.value=entry.value;
+     control.dispatchEvent(new Event("input",{bubbles:true}));
+     control.dispatchEvent(new Event("change",{bubbles:true}));
+     transientPending=true;
+   }
+   return control.value===entry.value;
+ }
+ const shown=text(control).toLowerCase();
+ const selected=all?/\ball\s+\d+\s+accounts\b/.test(shown):
+   name&&shown.includes(name.toLowerCase());
+ if(selected)return true;
+ if(action!=="apply"||control.disabled)return false;
+ const choices=optionElements(control);
+ if(!choices.length){control.click();transientPending=true;return false;}
+ const match=choices.find(e=>{
+  const v=text(e),digits=v.replace(/\D/g,"");
+  return all?/^all\s+\d+\s+accounts$/i.test(v):
+    (code&&digits.includes(code))||(name&&v.toLowerCase().startsWith(name.toLowerCase()));
+ });
+ if(!match)return false;
+ match.click();transientPending=true;
+ return false;
+}
 function extras(action){
  transientPending=false;
+ if(!trainerAccountChoice(action))return {
+   ok:false,pending:action==="apply"&&transientPending,
+   reason:"Seleção do treinador Shiny não confirmada no site"
+ };
  const failed=[];
  const resetKeys=Array.isArray(filters.clearExtraKeys)?filters.clearExtraKeys:[];
  const pokemon=pokemonListSelection(action);
