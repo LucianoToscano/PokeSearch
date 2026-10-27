@@ -89,10 +89,10 @@ final class PremiumPurchaseDialog {
         planTop.setGravity(android.view.Gravity.CENTER_VERTICAL);
         TextView planTitle=label(activity,"30 dias de Premium",17,text,true);
         planTop.addView(planTitle,new LinearLayout.LayoutParams(0,-2,1));
-        TextView promo=label(activity,"PROMOÇÃO",10,0xFF0C2537,true);
-        promo.setPadding(dp(activity,9),dp(activity,5),dp(activity,9),dp(activity,5));
-        promo.setBackground(round(activity,teal,20,teal));
-        planTop.addView(promo);
+        TextView promoBadge=label(activity,"PROMOÇÃO",10,0xFF0C2537,true);
+        promoBadge.setPadding(dp(activity,9),dp(activity,5),dp(activity,9),dp(activity,5));
+        promoBadge.setBackground(round(activity,teal,20,teal));
+        planTop.addView(promoBadge);
         plan.addView(planTop);
         TextView pricePreview=label(activity,"Consultando preço...",19,0xFF83C5FF,true);
         plan.addView(pricePreview,space(activity,0,dp(activity,5),0,0));
