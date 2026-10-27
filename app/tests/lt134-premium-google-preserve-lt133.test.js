@@ -73,8 +73,17 @@ const checks=[
    dialog.includes('PremiumAccess.claimFreePremium(activity')&&
    access.includes('call(context,"claimFreeYear",data,cb)')],
  ["Promotion badge only shows while server-enabled",
-   dialog.includes('promoBadge.setVisibility(promo?View.VISIBLE:View.GONE)')&&
+   dialog.includes('promoBadge.setVisibility(percent>0?View.VISIBLE:View.GONE)')&&
    dialog.includes('Boolean.TRUE.equals(result.get("promotionEnabled"))')],
+ ["Discount countdown is server-owned and never invented without an end date",
+   dialog.includes('result.get("promotionEndsAt")')&&
+   dialog.includes('result.get("serverNow")')&&
+   dialog.includes('if(expiresAt[0]>0L)promoClock[0].run()')&&
+   dialog.includes('handler.removeCallbacks(promoClock[0])')],
+ ["Paid and redeemed Premium dismisses the modal on verified entitlement",
+   dialog.includes('dialog.dismiss();')&&
+   dialog.includes('PremiumAccess.redeem(activity,input')&&
+   dialog.includes('PremiumAccess.order(activity,activeOrder[0]')],
  ["Premium purchase disabled without server config",dialog.includes("salesEnabled")&&
   dialog.includes("create.setEnabled(signed&&canSell[0])")],
  ["No payment keys embedded in app",!access.includes("POKE_MP_ACCESS_TOKEN")&&
