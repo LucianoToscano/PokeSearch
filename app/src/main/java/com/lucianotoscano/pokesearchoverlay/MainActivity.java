@@ -1099,6 +1099,37 @@ public class MainActivity extends Activity {
         });
         refreshHomeOverlay();
     }
+    /** Account detail uses server-confirmed expiry, not the device purchase timestamp. */
+    private static String premiumValidityDetails(java.util.Map<String,Object> state){
+        if(state==null)return "\nValidade: consulta indisponível";
+        String source=String.valueOf(state.getOrDefault("licenseSource",""));
+        String kind=String.valueOf(state.getOrDefault("licenseKind",""));
+        String type="Licença Premium";
+        if("welcomeTrial".equals(source)||"trial".equals(kind))type="Teste grátis";
+        else if("coupon100".equals(source))type="Cupom 100%";
+        else if("paid".equals(kind))type="Premium pago";
+        else if("manual".equals(kind))type="Licença manual";
+        if(Boolean.TRUE.equals(state.get("lifetime")))
+            return "\nPlano: "+type+" · vitalício\nValidade: sem vencimento";
+        Object expiryValue=state.get("expiresAt");
+        long expires=expiryValue instanceof Number?((Number)expiryValue).longValue():0L;
+        if(expires<=0L)return "\nPlano: "+type+"\nValidade: ainda não definida";
+        Object nowValue=state.get("serverNow");
+        long now=nowValue instanceof Number?((Number)nowValue).longValue():
+            System.currentTimeMillis();
+        String date=new java.text.SimpleDateFormat("dd/MM/yyyy 'às' HH:mm",
+            new java.util.Locale("pt","BR")).format(new java.util.Date(expires));
+        if(!Boolean.TRUE.equals(state.get("licenseActive"))||expires<=now)
+            return "\nPlano: "+type+"\nSituação: vencida em "+date;
+        long hours=(expires-now+3599999L)/3600000L;
+        long days=hours/24L,extraHours=hours%24L;
+        String timeLeft=days>0L?
+            days+" "+(days==1?"dia":"dias")+
+                (extraHours>0L?" e "+extraHours+" h":""):
+            hours>0L?hours+" "+(hours==1?"hora":"horas"):"menos de 1 hora";
+        return "\nPlano: "+type+"\nTempo restante: "+timeLeft+
+            "\nVálida até: "+date;
+    }
     private void showPremiumAccountOptions(){
         if(!PremiumAccess.controlled())return;
         if(!PremiumGoogleLogin.isGoogleSignedIn(this)){
@@ -1125,7 +1156,9 @@ public class MainActivity extends Activity {
             String status=error!=null?"Offline":
                 Boolean.TRUE.equals(state.get("authorizedHere"))?
                     "Este aparelho autorizado":"Outro aparelho autorizado";
-            String details="Google: "+mail+"\nLicença: "+license+
+            String validity=error!=null?
+                "\nValidade: consulta indisponível":premiumValidityDetails(state);
+            String details="Google: "+mail+"\nLicença: "+license+validity+
                 "\nAparelho: "+device+"\nSessão: "+status+
                 "\n\nSua licença não é cancelada ao sair ou trocar de aparelho. "+
                 "A Pokébola 1 e suas configurações permanecem gratuitas.";
