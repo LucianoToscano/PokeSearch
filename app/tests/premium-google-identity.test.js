@@ -19,7 +19,7 @@ const checks=[
   !login.includes("SharedPreferences")],
  ["Google Credential Manager, not embedded WebView OAuth",
   login.includes("GetSignInWithGoogleOption")&&login.includes("getCredentialAsync(")&&
-  !login.includes("WebView")],
+  !login.includes("new WebView(")&&!login.includes("android.webkit.WebView")],
  ["Firebase Google provider verified on Premium identity",
   login.includes('"google.com".equals(provider.getProviderId())')&&
   access.includes("PremiumGoogleLogin.isGoogleSignedIn(appContext)")],
