@@ -195,12 +195,27 @@ jobs:
           sha256sum "$QA_APK" > SHA256SUMS.txt
           git rev-parse HEAD > SOURCE_COMMIT.txt
           cp app/src/main/assets/pokemon-sprites/manifest.json SPRITE-MANIFEST.json
+      - name: Verify that the exact signed APK will be included in the artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$QA_APK"
+          apk_size="$(stat -c%s "$QA_APK")"
+          if [ "$apk_size" -lt 30000000 ]; then
+            echo "::error::APK missing or unexpectedly small: $apk_size bytes"
+            exit 1
+          fi
+          sha256sum --check SHA256SUMS.txt
+          unzip -t "$QA_APK" >/dev/null
+          test -f SOURCE_COMMIT.txt
+          test -f SIGNING-REPORT.txt
+          echo "Delivery QA APK ready: $QA_APK ($apk_size bytes)"
       - name: Upload protected APK artifact and coverage
         uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-v0.01.28-LT128-Chat-Admin-QA-protected-release
+          name: PokeSearch-v0.01.28-LT128-Google-Admin-QA-protected-release
           path: |
-            PokeSearch-v0.01.28-LT128-Chat-Admin-QA.apk
+            ${{ env.QA_APK }}
             SHA256SUMS.txt
             SIGNING-REPORT.txt
             SOURCE_COMMIT.txt
