@@ -55,6 +55,18 @@ const checks=[
   overlay.indexOf("PremiumAccess.permitted(true)")<overlay.indexOf("newWebsite();")&&
   overlay.includes("if(isSecondaryOverlay()&&PremiumAccess.controlled())")],
  ["Shared OverlayService continues both Pokeballs",overlay.includes("isSecondaryOverlay()")],
+ ["Compact Premium dialog is a bounded dark popup, not a full-screen page",
+   dialog.includes('new AlertDialog.Builder(activity).setView(scroller).create()')&&
+   dialog.includes('getDisplayMetrics().heightPixels*0.78f')&&
+   dialog.includes('setBackgroundDrawableResource(android.R.color.transparent)')&&
+   dialog.includes('Tenho uma chave Premium  ›')&&
+   dialog.includes('pixPanel.setVisibility(View.GONE)')],
+ ["Pix QR encodes only the backend returned payload (no mock static Pix codes)",
+   gradle.includes('com.google.zxing:core:3.5.3')&&
+   dialog.includes('pix[0]=String.valueOf(result.get("pixCode"))')&&
+   dialog.includes('Bitmap qr=makePixQr(pix[0])')&&
+   dialog.includes('new MultiFormatWriter().encode(payload')&&
+   !dialog.includes('000201010212-FAKE-PIX')],
  ["Premium purchase disabled without server config",dialog.includes("salesEnabled")&&
   dialog.includes("create.setEnabled(signed&&canSell[0])")],
  ["No payment keys embedded in app",!access.includes("POKE_MP_ACCESS_TOKEN")&&
