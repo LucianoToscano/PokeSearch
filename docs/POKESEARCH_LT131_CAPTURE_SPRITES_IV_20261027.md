@@ -26,3 +26,14 @@ As regras atuais de Realtime Database para `chat/messages` permitem apenas os ca
 - Teste real ainda pendente no Samsung: capturas normal/Shiny, caso sem IV, com forma especial sem sprite incorreta, API ON/OFF, paridade P1/P2, reações e estatísticas; não declarar certificação física antecipadamente.
 - Distribuição principal é o **link de artefato real GitHub** (protocolo Issue #84); links sandbox podem falhar com `Library file not found`.
 
+
+## QA assinada e auditada — LT131
+
+- GitHub Actions `SUCCESS`: https://github.com/LucianoToscano/PokeSearch/actions/runs/40476951765
+- Download GitHub principal, APK dentro de ZIP: https://github.com/LucianoToscano/PokeSearch/actions/runs/40476951765/artifacts/12721646113
+- Nome APK: `PokeSearch-v0.01.31-LT131-Capture-Sprites-IVs-QA.apk`; **43.375.725 bytes**, SHA-256 **`dae7719a47738d8cc8b6ad32c241db9f127c8f8d564ea57e563fc0836675be15`**. Confere com `SHA256SUMS.txt`.
+- Arquivo ZIP GitHub: **40.884.676 bytes**, SHA-256 `22ecf0b7b0b071f1c662c80c40c2f1076a2147d92ba6754c360a2566a42713da`; testzip CRC íntegro, relatório de assinatura e versão presentes.
+- SOURCE_COMMIT: `d6f867921960f15c1d161d9fe236617625c89b8a`; commits posteriores são documentação. VersionName `0.01.31`, versionCode `54336`, applicationId `com.lucianotoscano.pokesearch`, targetSdk `33`.
+- Assinatura Android v2 **true** com certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- No ZIP do APK verificados diretamente `assets/pokemon_catalog.json`, `assets/pokemon-sprites/base/374.png` (Beldum), `assets/pokemon-sprites/shiny/132.png` (Ditto) e `assets/pokemon-sprites/base/132.png`.
+- CI passou em testes Node e Gradle Android; **não confirma comportamento em aparelho real nem captura real do jogo**. Não houve mudança no Firebase, merge, Release oficial ou remoção da LT130.
