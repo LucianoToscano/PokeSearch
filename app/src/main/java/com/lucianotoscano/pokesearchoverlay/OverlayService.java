@@ -279,7 +279,7 @@ public class OverlayService extends Service {
                 JSONArray cards=response.optJSONArray("cards");
                 if(!"authorized-api-qa".equals(response.optString("source"))||
                     !response.optBoolean("criteriaConfirmed",false)||
-                    cards==null||cards.length()>10||
+                    cards==null||cards.length()>100||
                     response.optInt("searchId",-1)<0||
                     (response.optBoolean("requestedShiny",false)!=shiny)||
                      (shiny&&(!response.optBoolean("apiFilterAccepted",false)||
