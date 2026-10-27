@@ -45,13 +45,13 @@ check("a previously seen spawn can alert when it becomes favourite, exactly once
  assert.match(body,/if\(newSpawn\)recentSpawnExpiries\.put\(key,expireAt\)/);
  assert.match(body,/recentFavoriteAlertExpiries\.getOrDefault\(key,0L\)<=now/);
  assert.ok(body.includes('pendingFavoriteKeys.put(key,expireAt)'));
- assert.ok(body.includes('recentFavoriteAlertExpiries.putAll(pendingFavoriteKeys)'));
- assert.ok(body.includes('if(WatchAlerts.match(this,firstWatched,watchDetails))'));
+ assert.ok(service.includes('recentFavoriteAlertExpiries.put(pending.key,pending.expiry)'));
+ assert.ok(service.includes('if(WatchAlerts.match(this,pending.name,pending.title,pending.details,'));
  assert.ok(body.indexOf("recentFavoriteAlertExpiries.getOrDefault")>body.indexOf("if(newSpawn)recentSpawnExpiries.put"));
  assert.ok(body.indexOf("recentFavoriteAlertExpiries.getOrDefault")<body.indexOf("if(!newSpawn)continue"));
  assert.match(body,/if\(expiry<=now\)continue/);
  assert.match(body,/WatchAlerts\.matches\(c\.optString\("name",""\),wanted\)/);
- assert.match(body,/WatchAlerts\.match\(this,firstWatched,watchDetails\)/);
+ assert.match(service,/WatchAlerts\.match\(this,pending\.name,pending\.title,pending\.details/);
  assert.match(body,/if\(!newSpawn\)continue; \/\/ history is only for truly new encounters/);
 });
 check("API alerts use identical verified HTTP results for both instances",()=>{
