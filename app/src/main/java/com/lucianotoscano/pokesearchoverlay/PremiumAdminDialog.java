@@ -5,6 +5,8 @@ import android.text.InputType;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import java.util.HashMap;
@@ -25,7 +27,7 @@ final class PremiumAdminDialog {
             int d=(int)(12*activity.getResources().getDisplayMetrics().density);
             box.setPadding(d,d,d,d);
             TextView state=new TextView(activity);
-            state.setText("APKs sem prazo · Premium 30 dias · 10 vitalícias + 20 presentes anuais\n"+
+            state.setText("APKs sem prazo · Premium Pix 30 dias · Licenças livres\n"+
                 "Geral: "+(Boolean.TRUE.equals(overview.get("globalEnabled"))?"ATIVO":"BLOQUEADO")+
                 " · Pix: "+(Boolean.TRUE.equals(overview.get("salesEnabled"))?"ON":"OFF"));
             box.addView(state);
@@ -57,13 +59,40 @@ final class PremiumAdminDialog {
             button(activity,box,"Desativar recebimentos Pix",()->
                 switchValue(activity,"sales",false,state));
 
-            label(activity,box,"Presentes especiais — somente 10 vitalícias");
-            button(activity,box,"Gerar/ver as 10 chaves vitalícias",()->
-                PremiumAccess.lifetimePool(activity,(result,e)->{
-                    if(e!=null)state.setText(e);
-                    else PremiumKeyListDialog.show(activity,
-                        "10 licenças vitalícias — duas chaves de 12 meses por amigo",result);
-                }));
+            label(activity,box,"Gerar chave individual (presente ou uso próprio)");
+            label(activity,box,"Você escolhe a validade de CADA chave, sem limite de quantidade.");
+            Spinner duration=new Spinner(activity);
+            final String[] labels={"15 dias","1 mês","3 meses","6 meses","12 meses","Vitalícia"};
+            final String[] durationIds={"15d","1m","3m","6m","12m","lifetime"};
+            ArrayAdapter<String> adapter=new ArrayAdapter<>(activity,
+                android.R.layout.simple_spinner_item,labels);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            duration.setAdapter(adapter);
+            box.addView(duration);
+            EditText beneficiary=input(activity,box,
+                "UID Firebase (opcional; vazio = chave para presente)",false);
+            beneficiary.setInputType(InputType.TYPE_CLASS_TEXT);
+            button(activity,box,"Gerar licença selecionada",()->{
+                String selected=durationIds[duration.getSelectedItemPosition()];
+                String target=beneficiary.getText().toString().trim();
+                // When a UID is entered, grant immediately; otherwise the key activates on first use.
+                PremiumAccess.issueLicense(activity,selected,target,false,(issued,error)->{
+                    if(error!=null){state.setText(error);return;}
+                    showIssuedKey(activity,issued);
+                    state.setText("Licença "+labels[duration.getSelectedItemPosition()]+
+                        " gerada com sucesso.");
+                });
+            });
+            button(activity,box,"Estender licença desta conta pelo período escolhido",()->{
+                String selected=durationIds[duration.getSelectedItemPosition()];
+                String target=beneficiary.getText().toString().trim();
+                if(target.isEmpty()){state.setText("Informe o UID para estender a licença.");return;}
+                PremiumAccess.issueLicense(activity,selected,target,true,(issued,error)->{
+                    if(error!=null){state.setText(error);return;}
+                    showIssuedKey(activity,issued);
+                    state.setText("Prazo ajustado conforme a opção escolhida.");
+                });
+            });
 
             label(activity,box,"Aumentar duração de uma licença temporária");
             EditText uid=input(activity,box,"UID Firebase do beneficiário",false);
@@ -89,14 +118,39 @@ final class PremiumAdminDialog {
                     state.setText("Data inválida. Use AAAA-MM-DD (UTC).");
                 }
             });
-            label(activity,box,"Vitalícias não vencem. Datas não podem ser reduzidas. "+
-                "Chaves-presente duram 12 meses contados da ativação.");
+            label(activity,box,"A licença vitalícia não tem vencimento. "+
+                "Chaves-presente começam a contar na ativação.");
 
             ScrollView scroller=new ScrollView(activity);
             scroller.addView(box);
             new AlertDialog.Builder(activity).setTitle("PokeSearch · Administração")
                 .setView(scroller).setPositiveButton("Concluir",null).show();
         });
+    }
+    private static void showIssuedKey(MainActivity activity,Map<String,Object> info){
+        Object code=info.get("licenseKey");
+        if(!(code instanceof String))return;
+        String duration=String.valueOf(info.get("duration"));
+        boolean assigned=Boolean.TRUE.equals(info.get("assigned"));
+        String details="Duração: "+duration+"\\n"+
+            (assigned?"Licença já vinculada ao UID informado.":"Ainda não ativada. "+
+              "O prazo começa quando o destinatário usar a chave.")+
+            "\\n\nGuarde este código. Ele será mostrado somente agora.";
+        TextView detailsText=new TextView(activity);
+        int d=(int)(14*activity.getResources().getDisplayMetrics().density);
+        detailsText.setPadding(d,d,d,d);
+        detailsText.setText(details+"\n\n"+code);
+        detailsText.setTextIsSelectable(true);
+        new AlertDialog.Builder(activity).setTitle("Licença Premium gerada")
+            .setView(detailsText)
+            .setPositiveButton("Copiar chave",(dialog,which)->{
+                android.content.ClipboardManager clip=
+                    (android.content.ClipboardManager)activity.getSystemService(
+                         android.content.Context.CLIPBOARD_SERVICE);
+                if(clip!=null)clip.setPrimaryClip(android.content.ClipData.newPlainText(
+                    "Chave Premium",String.valueOf(code)));
+            })
+            .setNegativeButton("Fechar",null).show();
     }
     private static void label(MainActivity activity,LinearLayout box,String title){
         TextView txt=new TextView(activity);
