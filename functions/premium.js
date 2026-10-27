@@ -394,9 +394,11 @@ exports.adminRevokePremiumKey=onCall({region:REGION},async request=>{
  const assignedUid=String(revoked.snapshot.val()?.uid||"");
  if(assignedUid){
    const entRef=root().child("entitlements").child(assignedUid);
+   const cached=(await entRef.get()).val();
    await entRef.transaction(value=>{
-     if(!value||value.currentKeyHash!==hash)return;
-     return {...value,revoked:true,revokedAt:timestamp,
+     const current=value===null?cached:value;
+     if(!current||current.currentKeyHash!==hash)return;
+     return {...current,revoked:true,revokedAt:timestamp,
        revocationReason:"admin"};
    },undefined,false);
  }
