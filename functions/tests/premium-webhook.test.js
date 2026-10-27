@@ -474,10 +474,10 @@ async function run(){
  try{await premium.claimFreeYear({auth:{uid:"campaignThree"},data:{versionCode:54328}})}
  catch(error){quotaEnforced=error.code==="failed-precondition";}
  assert.equal(quotaEnforced,true);
- let repeated=false;
+ let repeatClaimBlocked=false;
  try{await premium.claimFreeYear({auth:{uid:"campaignOne"},data:{versionCode:54328}})}
- catch(error){repeated=error.code==="failed-precondition";}
- assert.equal(repeated,true);
+ catch(error){repeatClaimBlocked=error.code==="failed-precondition";}
+ assert.equal(repeatClaimBlocked,true);
  assert.equal(read("premium/entitlements/campaignOne").expiresAt,freeOneExpiry);
  await premium.adminPremiumSettings({...adminLive,data:{action:"freeYearCampaign",enabled:false}});
  assert.equal((await premium.getPremiumOffer({auth:{uid:"campaignTwo"}})).freeYearCampaign.active,false);
