@@ -488,8 +488,19 @@ exports.checkDistributionAccess=onCall({region:REGION},async request=>{
  const uid=requireUser(request),code=Number(request.data?.versionCode);
  if(!isValidCode(code))throw new HttpsError("invalid-argument","Versão inválida.");
  const enabled=!await appMaintenance()&&await currentPolicy(code);
- const entitled=enabled&&await userEntitlement(uid);
- const active=entitled&&await requireGoogle(request).then(()=>true,()=>false);
+ let entitled=enabled&&await userEntitlement(uid);
+ const google=enabled&&await requireGoogle(request).then(()=>true,()=>false);
+ if(enabled&&google&&!entitled){
+   // A new Google account may be using LT137, which has no trial-claim
+   // client call. Make the authorization endpoint itself self-healing.
+   try{await ensureWelcomeTrial(uid,code);}
+   catch(error){
+     console.error("Welcome-trial authorization grant failed:",
+       error?.message||"unknown");
+   }
+   entitled=await userEntitlement(uid);
+ }
+ const active=entitled&&google;
  const device=active?await premiumDeviceCheck(uid,request.data?.deviceId,
      request.data?.deviceName):{premium:false,deviceConflict:false,
        deviceUpdateRequired:false};
@@ -881,45 +892,64 @@ exports.redeemFullCoupon=onCall({region:REGION},async request=>{
    throw new HttpsError("failed-precondition","Esta conta já possui Premium.");
  return {activated:true,duration,expiresAt:deadline,serverNow:Date.now()};
 });
-/** Opt-in welcome trial for genuinely new Firebase Google accounts only.
- * Creation date is checked by Firebase Admin, never device time. No re-grants.
+/** Welcome grant runs server-side for every supported signed-in Android version.
+ * LT137 did not invoke claimWelcomeTrial after Google login, so the regular
+ * Premium authorization request also calls this helper for new eligible UIDs.
+ * Firebase user creation time and a per-UID RTDB claim lock are authoritative.
  */
-exports.claimWelcomeTrial=onCall({region:REGION},async request=>{
- const uid=await requireGoogle(request),code=Number(request.data?.versionCode);
+async function ensureWelcomeTrial(uid,code){
  if(!isValidCode(code)||await appMaintenance()||!await currentPolicy(code))
    return {activated:false,reason:"unavailable"};
  const cfg=(await root().child("config/welcomeTrial").get()).val()||{};
  const days=Number(cfg.days),enabledAt=Number(cfg.enabledAt||0);
  if(cfg.enabled!==true||!Number.isInteger(days)||days<1||days>30||enabledAt<1)
    return {activated:false,reason:"disabled"};
- const user=await getAuth().getUser(uid);
- const creation=Date.parse(user.metadata?.creationTime||"");
- if(!Number.isFinite(creation)||creation<enabledAt)
-   return {activated:false,reason:"existing-account"};
  const entRef=root().child("entitlements").child(uid);
  const existing=(await entRef.get()).val()||{};
  if(existing.currentKeyHash||existing.revoked===true)
    return {activated:false,reason:"already-licensed"};
- const keyHash=sha("welcome-trial-v1:"+uid);
- const now=Date.now(),deadline=now+days*86400000;
+ const user=await getAuth().getUser(uid);
+ if(!user.providerData?.some(p=>p.providerId==="google.com"))
+   return {activated:false,reason:"google-required"};
+ const creation=Date.parse(user.metadata?.creationTime||"");
+ if(!Number.isFinite(creation)||creation<enabledAt)
+   return {activated:false,reason:"existing-account"};
+ const now=Date.now(),keyHash=sha("welcome-trial-v1:"+uid);
  const trialRef=root().child("trialClaims").child(uid);
- const reserved=await trialRef.transaction(v=>{
-   if(v)return;
-   return {claimedAt:now,expiresAt:deadline,days,keyHash};
+ // Reserving exactly once prevents restarting trial time by signing out,
+ // reinstalling the APK, switching phones, or multiple concurrent requests.
+ const lock=await trialRef.transaction(v=>v||{
+   claimedAt:now,expiresAt:now+days*86400000,days,keyHash
  },undefined,false);
- if(!reserved.committed)return {activated:false,reason:"already-claimed"};
- await root().child("keys").child(keyHash).set({
-   kind:"trial",source:"welcomeTrial",uid,createdAt:now,claimedAt:now,
-   duration:days+"d",expiresAt:deadline,revoked:false});
+ const claim=lock.snapshot?.val()||{};
+ if(claim.keyHash!==keyHash||!Number.isSafeInteger(Number(claim.expiresAt))||
+    Number(claim.expiresAt)<=now||!Number.isInteger(Number(claim.days)))
+   return {activated:false,reason:"already-claimed"};
+ // Repair interrupted grants using the *original* expiry without extending it.
+ const keyRef=root().child("keys").child(keyHash);
+ const issued=await keyRef.transaction(v=>v||{
+   kind:"trial",source:"welcomeTrial",uid,
+   createdAt:Number(claim.claimedAt),claimedAt:Number(claim.claimedAt),
+   duration:Number(claim.days)+"d",expiresAt:Number(claim.expiresAt),revoked:false
+ },undefined,false);
+ const key=issued.snapshot?.val()||{};
+ if(key.uid!==uid||key.revoked===true||key.archived===true||
+    Number(key.expiresAt)!==Number(claim.expiresAt))
+   return {activated:false,reason:"claim-unavailable"};
  const applied=await entRef.transaction(old=>{
    const v=old||{};
    if(v.revoked===true||v.currentKeyHash)return;
    return {...v,kind:"trial",lifetime:false,currentKeyHash:keyHash,
-     expiresAt:deadline};
+     expiresAt:Number(claim.expiresAt)};
  },undefined,false);
- if(!applied.committed||applied.snapshot.val()?.currentKeyHash!==keyHash)
+ if(!applied.committed||applied.snapshot?.val()?.currentKeyHash!==keyHash)
    return {activated:false,reason:"already-licensed"};
- return {activated:true,days,expiresAt:deadline,serverNow:Date.now()};
+ return {activated:true,days:Number(claim.days),
+   expiresAt:Number(claim.expiresAt),serverNow:Date.now()};
+}
+exports.claimWelcomeTrial=onCall({region:REGION},async request=>{
+ const uid=await requireGoogle(request);
+ return ensureWelcomeTrial(uid,Number(request.data?.versionCode));
 });
 
 /** Each individually chosen license is controlled only by its administrator.
