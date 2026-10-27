@@ -2,13 +2,13 @@ import {createRequire} from "node:module";
 const require=createRequire(import.meta.url);
 
 const allowedActions=new Set([
- "checkDistributionAccess","transferPremiumDevice","createPremiumPix","getPremiumOrder","getPremiumOffer",
+ "checkDistributionAccess","transferPremiumDevice","releasePremiumDevice","premiumSessionInfo","createPremiumPix","getPremiumOrder","getPremiumOffer",
  "adminSavePartnerCoupon","adminListPartnerCoupons",
  "adminListPartnerCommissions","adminMarkPartnerCommissionPaid",
  "redeemPremiumKey","adminDistributionControl","adminPremiumSettings",
  "adminRevokePremiumKey","adminPremiumKeyStatus",
  "adminPremiumOverview","adminIssuePremiumKey","adminAdjustPremiumExpiry",
- "adminListPremiumKeys","adminLabelPremiumKey","adminRevealPremiumKey","adminSetPremiumKeyEnabled",
+ "adminListPremiumKeys","adminListPremiumDevices","adminDisconnectPremiumDevice","adminReleasePremiumDevice","adminLabelPremiumKey","adminRevealPremiumKey","adminSetPremiumKeyEnabled",
  "adminDeletePremiumKey",
  "adminChangePremiumKeyDuration","adminSetAppMaintenance","adminSetAppVersionAccess",
  "claimFreeYear","adminExportPremiumBackupPage","adminRestorePremiumBackup"
