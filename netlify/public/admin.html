@@ -1,0 +1,1444 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="dark">
+  <title>PokeSearch · Administração</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f3f5f8;background:#0b1019}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#142238 0%,#0b1019 62%);padding:14px 12px}
+    main{max-width:680px;margin:14px auto 60px}
+    header{margin-bottom:24px}
+    .eyebrow{font-size:.72rem;letter-spacing:.11em;font-weight:700;color:#76d4e5;text-transform:uppercase}
+    h1{font-size:1.6rem;letter-spacing:-.04em;margin:.5rem 0}
+    p{color:#b8c1d1;line-height:1.55}
+    .panel{background:#151d2b;border:1px solid #2d3a4b;border-radius:18px;padding:20px;margin:12px 0;box-shadow:0 8px 18px #0002}
+    .screen-nav{position:sticky;top:0;z-index:10;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:10px 0;background:#0b1019f2;backdrop-filter:blur(12px)}
+    .screen-nav button{background:#223249;color:#d8e7f6;font-size:.83rem;padding:10px 5px;min-height:40px}
+    .screen-nav button[aria-current="page"]{background:#83e0ef;color:#11202b}
+    .screen-nav button.signout{background:#503040;color:#ffdfe2}
+    .license-editor{border-top:1px solid #304157;margin-top:10px;padding-top:12px}
+    .license-editor label{display:block;font-size:.78rem;color:#bed0de;margin-bottom:4px}
+    .license-editor select,.license-editor input{width:100%;min-height:42px;border-radius:9px;margin-bottom:9px;background:#101e2c;color:#f7f9fb;border:1px solid #42536b;padding:9px}
+    .license-editor .actions{margin-top:4px}
+    .key-card{padding:12px}
+    .key-card>strong{font-size:.96rem}
+    .key-card details summary{color:#a6bfd4;font-size:.78rem;margin-top:7px;cursor:pointer}
+    .stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}
+    .stat{background:#101a29;border:1px solid #2d3a4b;border-radius:13px;padding:12px 9px;min-width:0}
+    .stat span{display:block;color:#9daec4;font-size:.73rem;margin-bottom:6px}
+    .stat strong{font-size:.89rem;overflow-wrap:anywhere}
+    .main-state{font-size:1.1rem;font-weight:800;letter-spacing:-.02em}
+    .main-state.off{color:#ffbdbd}.main-state.on{color:#a5e8c6}
+    .maintenance-cta{display:block;width:100%;margin:14px 0;font-size:1rem;min-height:52px}
+    details.advanced{margin:14px 0 4px;border-top:1px solid #2d3a4b;padding-top:12px}
+    details.advanced summary{cursor:pointer;font-size:.88rem;color:#cbdcf0}
+    .page-hint{margin:5px 0 8px}
+    @media(min-width:600px){.screen-nav{grid-template-columns:repeat(7,minmax(0,1fr))}}
+    .quick-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+    .quick-nav a{padding:12px 8px;text-align:center;border:1px solid #3e5b78;
+      border-radius:12px;text-decoration:none;color:#d7eaff;background:#20334c;font-size:.85rem;font-weight:700}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .label{color:#aab7c7;font-size:.88rem}
+    .value{font-weight:650;text-align:right}
+    .sep{border:0;border-top:1px solid #2c3849;margin:16px 0}
+    .pill{display:inline-block;border-radius:99px;background:#27364a;color:#a9e5ec;padding:5px 10px;font-size:.72rem}
+    button{border:0;border-radius:11px;padding:13px 16px;background:#83e0ef;color:#11202b;font-weight:750;font-size:.95rem;cursor:pointer;min-height:44px}
+    button.secondary{background:#303e52;color:#f4f7fb}
+    button:disabled{opacity:.45;cursor:default}
+    .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+    .actions button{flex:1}
+    #status{font-size:.89rem;white-space:pre-wrap;margin:14px 0;color:#b8c1d1}
+    #status.error{color:#ffb5b5}
+    #status.ok{color:#a5e8c6}
+    #license{overflow-wrap:anywhere;font-family:ui-monospace,monospace;font-size:.98rem;padding:12px;background:#0d1725;border:1px solid #36445a;border-radius:10px;margin:12px 0}
+    [hidden]{display:none!important}
+    small{color:#a5afbe;line-height:1.55;display:block}
+    .key-card{background:#0e1928;border:1px solid #314153;border-radius:12px;padding:13px;margin:9px 0}
+    .key-card .actions button{font-size:.82rem;padding:10px;min-height:38px}
+    .key-meta{font-size:.8rem;color:#b0c1d2;line-height:1.5;overflow-wrap:anywhere}
+    .key-meta strong{color:#f3f5f8}
+    input.maintenance-note{background:#0d1725;color:#f3f5f8;border:1px solid #36445a;border-radius:10px;padding:12px;width:100%}
+    .danger-action{background:#613842!important;color:#fff!important}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">PokeSearch · Administração</div>
+    <h1>Central PokeSearch</h1>
+    <p>Controle o aplicativo, as licenças e as vendas em um só lugar.</p>
+  </header>
+  <section class="panel">
+    <div class="row"><strong>Acesso do administrador</strong><span class="pill">Protegido</span></div>
+    <small>Entre com a conta Google administradora autorizada.</small>
+    <div class="actions">
+      <button id="login">Entrar com Google</button>
+      <button id="logout" class="secondary" hidden>Sair</button>
+    </div>
+    <p id="status" role="status" aria-live="polite">Aguardando login seguro.</p>
+  </section>
+  <nav id="admin-nav" class="screen-nav" aria-label="Áreas de administração" hidden>
+    <button type="button" data-screen="home" aria-current="page">Início</button>
+    <button type="button" data-screen="licenses">Licenças</button>
+    <button type="button" data-screen="devices">Aparelhos</button>
+    <button type="button" data-screen="finance">Vendas</button>
+    <button type="button" data-screen="campaign">Campanha</button>
+    <button type="button" data-screen="more">Mais</button>
+    <button type="button" class="signout" id="quick-logout">Sair</button>
+  </nav>
+  <section class="panel" id="admin" hidden>
+    <h2 style="margin-top:0;font-size:1.15rem">Visão geral</h2>
+    <div class="row"><span class="label">Conta Google</span><span class="value" id="account"></span></div>
+    <div class="stat-grid">
+      <div class="stat"><span>Aplicativo</span><strong id="home-app-status">—</strong></div>
+      <div class="stat"><span>Premium</span><strong id="distribution">—</strong></div>
+      <div class="stat"><span>Vendas</span><strong id="sales">—</strong></div>
+    </div>
+    <small>Atualizações novas seguem o controle geral automaticamente. Não é necessário cadastrar LT137, LT138 ou qualquer outra versão.</small>
+    <div class="actions"><button id="refresh" class="secondary">Atualizar informações</button></div>
+  </section>
+  <section class="panel" id="sales-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Acesso Premium e vendas</h2>
+    <div class="row"><span class="label">Pokébola 2 Premium · todas as versões</span><strong id="premium-global-status">—</strong></div>
+    <div class="actions"><button id="toggle-premium-all" class="secondary" disabled>Verificar Premium</button></div>
+    <small>Uma única configuração para a Pokébola 2 de todas as versões atuais e futuras. A Pokébola 1 é gratuita.</small>
+    <hr class="sep">
+    <div class="row"><span class="label">Novas vendas Premium</span><strong id="sales-toggle-state">—</strong></div>
+    <div class="row"><span class="label">Pix real</span><strong id="live-status">—</strong></div>
+    <div class="actions">
+      <button id="toggle-sales" class="secondary" disabled>Verificar vendas</button>
+      <button id="toggle-live" class="secondary" disabled>Verificar Pix real</button>
+    </div>
+    <small>Habilitar vendas e Pix real são ações separadas por segurança. Nenhum botão altera licenças já concedidas.</small>
+  </section>
+  <section class="panel" id="pricing-panel" hidden>
+    <h3 id="pricing-settings" style="font-size:1rem">Valores e promoções</h3>
+    <div class="row"><span class="label">Preço normal</span><span class="value" id="regular">—</span></div>
+    <hr class="sep">
+    <div class="row"><span class="label">Preço promocional</span><span class="value" id="promo">—</span></div>
+    <div class="row"><span class="label">Promoção</span><strong id="promotion-status">—</strong></div>
+    <div class="actions"><button id="promotion-toggle" class="secondary" disabled>Verificar promoção</button></div>
+    <label class="label" for="promotion-end">Fim da promoção (horário local)</label>
+    <input class="maintenance-note" id="promotion-end" type="datetime-local">
+    <div class="actions">
+      <button id="save-promotion-end" class="secondary">Salvar contagem regressiva</button>
+      <button id="clear-promotion-end" class="secondary">Sem prazo</button>
+    </div>
+    <small>O relógio no aplicativo só aparecerá se você definir um fim real. Ao vencer, o preço volta automaticamente ao normal. Não há contagem artificial.</small>
+    <small>Você pode ligar ou desligar a promoção e alterar os preços abaixo. Valores já cobrados não são alterados.</small>
+    <label class="label" for="regular-price-input">Preço normal (R$)</label>
+    <input class="maintenance-note" id="regular-price-input" inputmode="decimal" type="text" placeholder="20,00">
+    <label class="label" for="promotion-price-input">Preço promocional (R$)</label>
+    <input class="maintenance-note" id="promotion-price-input" inputmode="decimal" type="text" placeholder="10,00">
+    <div class="actions">
+      <button id="save-prices" class="secondary">Salvar valores personalizados</button>
+      <button id="apply-pricing-preset" class="secondary">Aplicar R$ 20,00 → R$ 10,00 (50% OFF)</button>
+    </div>
+    <small>O preço personalizado pode ser alterado a qualquer momento. A tabela sugerida só altera o Firebase quando você confirmar. Cupons de 10%, 25% e 50% incidem sobre o preço vigente.</small>
+  </section>
+  <section class="panel" id="licensing" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Licenças Premium manuais</h2>
+    <details class="advanced"><summary>Gerar uma licença manual</summary>
+    <p>Emita uma licença gratuita de homologação ou cortesia. O prazo começa no resgate; nenhuma cobrança é efetuada.</p>
+    <label class="label" for="license-duration">Duração da licença</label>
+    <select id="license-duration" style="display:block;margin:9px 0 14px;width:100%;padding:13px;background:#0d1725;color:#f3f5f8;border:1px solid #36445a;border-radius:10px">
+      <option value="15d">15 dias</option>
+      <option value="30d">30 dias</option>
+      <option value="6m">6 meses</option>
+      <option value="12m">12 meses</option>
+      <option value="lifetime">Vitalícia</option>
+    </select>
+    <label class="label" for="recipient-name">Nome do beneficiário / identificação (opcional)</label>
+    <input class="maintenance-note" id="recipient-name" type="text" maxlength="80"
+      autocomplete="off" placeholder="Ex.: João Silva · Canal Pokémon">
+    <label class="label" for="recipient-email">E-mail Google do beneficiário (opcional)</label>
+    <input class="maintenance-note" id="recipient-email" type="email" spellcheck="false"
+      autocomplete="off" placeholder="treinador@gmail.com">
+    <small>Preencha o e-mail para reservar a licença àquela conta Google verificada. Deixe vazio para a primeira conta que resgatar.</small>
+    <div class="actions"><button id="issue" class="secondary">Gerar licença manual</button></div>
+    <div id="issued" hidden>
+      <div id="license" aria-label="Código de licença (oculto por padrão)"></div>
+      <div class="actions"><button id="copy" class="secondary">Copiar código</button><button id="reveal" class="secondary">Mostrar código</button></div>
+      <small>Guarde este código. Ele é exibido apenas nesta sessão e não deve ser compartilhado em prints. O resgate será testado separadamente.</small>
+    </div>
+      </details>
+  </section>
+  <section class="panel" id="free-campaign-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">FREE! · Premium por tempo limitado</h2>
+    <p>Defina duração do benefício, período da campanha e limite de resgates. Cada conta Google verificada pode receber uma licença gratuita.</p>
+    <div class="row"><span class="label">Situação</span><strong id="free-campaign-status">Desativada</strong></div>
+    <label class="label" for="free-duration">Duração da licença oferecida</label>
+    <select id="free-duration" class="maintenance-note" style="display:block">
+      <option value="15d">15 dias</option>
+      <option value="30d">30 dias</option>
+      <option value="1m">1 mês</option>
+      <option value="3m">3 meses</option>
+      <option value="6m">6 meses</option>
+      <option value="12m" selected>12 meses</option>
+      <option value="lifetime">Vitalícia</option>
+    </select>
+    <label class="label" for="free-start">Começa em (horário local)</label>
+    <input id="free-start" class="maintenance-note" type="datetime-local">
+    <label class="label" for="free-end">Termina em (horário local)</label>
+    <input id="free-end" class="maintenance-note" type="datetime-local">
+    <label class="label" for="free-limit">Máximo de beneficiários</label>
+    <input id="free-limit" class="maintenance-note" type="number" min="1" max="10000" value="20">
+    <div class="actions">
+      <button id="free-activate" class="secondary">Ativar ou programar</button>
+      <button id="free-disable" class="secondary danger-action">Encerrar campanha</button>
+    </div>
+    <small>O benefício é gratuito e a campanha é independente da promoção de R$ 5. Encerrá-la impede novos resgates, mas mantém as licenças já concedidas. Nada é ativado automaticamente neste painel.</small>
+  </section>
+  <section class="panel" id="app-version-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Exceções por versão</h2>
+    <p class="page-hint">Normalmente você não precisa mexer aqui. Use apenas se uma versão apresentar um defeito grave.</p>
+    <small id="version-summary"></small>
+    <details class="advanced">
+      <summary>Bloquear somente uma versão (avançado)</summary>
+      <div id="app-versions-list" aria-live="polite"></div>
+      <label class="label" for="app-version-code">Código da versão problemática</label>
+      <input id="app-version-code" class="maintenance-note" type="number" min="1" max="2100000000" placeholder="Ex.: 54341">
+      <div class="actions"><button id="register-app-version" class="secondary danger-action">Bloquear essa versão</button></div>
+      <small>As outras versões continuam funcionando. Não é necessário informar o nome nem cadastrar novos APKs.</small>
+    </details>
+  </section>
+  <section class="panel" id="maintenance-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Controle geral do aplicativo</h2>
+    <div class="row"><span class="label">Situação agora</span><strong class="main-state" id="maintenance-status">—</strong></div>
+    <p>Um único botão liga ou desliga <strong>as duas Pokébolas em todas as versões compatíveis</strong>, incluindo futuras atualizações.</p>
+    <button id="toggle-maintenance" class="maintenance-cta danger-action" disabled>Verificar estado</button>
+    <details class="advanced">
+      <summary>Mensagem exibida durante a manutenção (opcional)</summary>
+      <label class="label" for="maintenance-message">Aviso para os treinadores</label>
+      <input class="maintenance-note" id="maintenance-message" maxlength="180" value="PokeSearch temporariamente em manutenção.">
+    </details>
+    <small>Ao religar, os bloqueios antigos por versão também são limpos. A mudança chega na próxima verificação online (aproximadamente 90 segundos). APKs antigos sem verificação remota não podem ser desligados retroativamente.</small>
+  </section>
+  <section class="panel" id="device-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Dispositivos Premium</h2>
+    <p>Uma conta Google Premium pode manter somente um aparelho autorizado de cada vez. Desconectar desativa a Pokébola 2 na próxima validação; a Pokébola 1 e a licença não são alteradas.</p>
+    <div class="actions"><button id="refresh-devices" class="secondary">Atualizar aparelhos</button></div>
+    <small id="device-count"></small>
+    <div id="device-list" aria-live="polite"></div>
+    <div class="actions"><button id="more-devices" class="secondary" hidden>Carregar mais contas</button></div>
+    <small>Os nomes dos aparelhos são informativos, não uma prova de identidade. O acesso é decidido no Firebase pelo UID, licença e vínculo atômico da instalação. Histórico limitado às 12 ações mais recentes por conta nesta visualização.</small>
+  </section>
+  <section class="panel" id="keys-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Todas as licenças Premium</h2>
+    <p>Gerencie a licença vigente, ajuste seus dias, transforme-a em vitalícia ou arquive códigos antigos. Licenças substituídas não controlam a conta.</p>
+    <small>Por segurança, antigas chaves manuais foram salvas apenas como hash e <strong>não podem ser copiadas novamente</strong>. As novas chaves manuais ficam em cofre criptografado; licenças pagas podem ser recuperadas pelo administrador.</small>
+    <label class="label" for="license-list-view">Visualizar licenças</label>
+    <select id="license-list-view" class="maintenance-note" style="margin-top:8px">
+      <option value="current">Todas, exceto excluídas</option>
+      <option value="archived">Excluídas (histórico)</option>
+    </select>
+    <div class="actions"><button class="secondary" id="refresh-keys">Atualizar lista</button></div>
+    <div id="premium-keys-list" aria-live="polite"></div>
+    <div class="actions"><button class="secondary" id="load-more-keys" hidden>Carregar mais</button></div>
+    <small id="keys-count"></small>
+  </section>
+
+  <section class="panel" id="welcome-trial-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">🎁 Teste Premium para novos cadastros</h2>
+    <p>Novas contas Google recebem Premium automaticamente após o primeiro login, somente se esta opção estiver ativa. Contas antigas não recebem novamente.</p>
+    <label class="label" for="welcome-trial-days">Duração do teste (1 a 30 dias)</label>
+    <input class="maintenance-note" id="welcome-trial-days" type="number" min="1" max="30" step="1" inputmode="numeric" value="5">
+    <div class="row"><span class="label">Situação</span><strong id="welcome-trial-status">Desativado</strong></div>
+    <div class="actions">
+      <button id="welcome-trial-save" class="secondary">Salvar dias</button>
+      <button id="welcome-trial-toggle" class="secondary">Ativar teste automático</button>
+    </div>
+    <small>O teste começa no primeiro cadastro Google elegível realizado após a ativação. A quantidade de dias pode ser alterada para novos cadastros; testes concedidos não são estendidos.</small>
+  </section>
+  <section class="panel" id="partners-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">🎟️ Cupons e divulgadores</h2>
+    <details class="advanced"><summary>Gerenciar cupons e comissões</summary>
+    <p>Crie um código para cada parceiro. O comprador recebe 10%, 25% ou 50% de desconto e o divulgador acumula <strong>50% do valor realmente pago</strong>.</p>
+    <small>O desconto é calculado sobre o preço vigente no checkout, inclusive quando existe promoção de R$ 5. Nada é cobrado até o cliente confirmar o Pix; o parceiro só acumula após aprovação.</small>
+    <label class="label" for="partner-coupon-code">Cupom (4 a 24 caracteres)</label>
+    <input class="maintenance-note" id="partner-coupon-code" placeholder="YOUTUBE10" maxlength="24" autocapitalize="characters">
+    <label class="label" for="partner-name">Nome do cupom / parceiro</label>
+    <input class="maintenance-note" id="partner-name" placeholder="Canal do YouTube" maxlength="80">
+    <label class="label" for="partner-uid">UID Firebase do divulgador (opcional)</label>
+    <input class="maintenance-note" id="partner-uid" placeholder="Opcional · evita uso do próprio cupom" maxlength="128">
+    <label class="label" for="partner-discount">Desconto para comprador</label>
+    <select id="partner-discount" class="maintenance-note">
+      <option value="10">10% de desconto</option>
+      <option value="25">25% de desconto</option>
+      <option value="50">50% de desconto</option>
+      <option value="100">100% · Premium grátis (limite de usos)</option>
+    </select>
+    <label class="label" for="coupon-max-claims">Limite de resgates do cupom 100%</label>
+    <input id="coupon-max-claims" class="maintenance-note" type="number" min="1" max="10000" step="1" value="10">
+    <label class="label" for="coupon-gift-duration">Período concedido pelo cupom 100%</label>
+    <select id="coupon-gift-duration" class="maintenance-note">
+      <option value="15d">15 dias</option><option value="30d" selected>30 dias</option>
+      <option value="1m">1 mês</option><option value="3m">3 meses</option>
+      <option value="6m">6 meses</option><option value="12m">12 meses</option>
+      <option value="lifetime">Vitalício</option>
+    </select>
+    <small>100% não gera Pix e nunca gera comissão. Cada conta Google só pode usar um cupom grátis uma vez. O limite é controlado pelo servidor.</small>
+    <label class="label" for="partner-commission">Comissão ao divulgador (%)</label>
+    <input id="partner-commission" class="maintenance-note" type="number"
+      min="0" max="100" step="1" value="50" inputmode="numeric">
+    <small>50% por padrão. Pode ser alterado por cupom; vendas anteriores não mudam.</small>
+    <label class="label" for="partner-end">Vencimento do cupom (opcional)</label>
+    <input class="maintenance-note" id="partner-end" type="datetime-local">
+    <label class="label" for="partner-enabled">Situação</label>
+    <select id="partner-enabled" class="maintenance-note">
+      <option value="active">Ativo</option>
+      <option value="inactive">Desativado</option>
+    </select>
+    <div class="actions">
+      <button id="save-partner-coupon" class="secondary">Salvar cupom</button>
+      <button id="refresh-partner-coupons" class="secondary">Atualizar cupons</button>
+    </div>
+    <div id="partner-coupons-list" aria-live="polite"></div>
+    <button id="more-partner-coupons" class="secondary" hidden>Carregar mais cupons</button>
+    <hr class="sep">
+    <h3 style="font-size:1rem">Comissões por venda</h3>
+    <p>Após o pagamento aprovado no Mercado Pago, a comissão fica <strong>pendente de repasse</strong>. Registre como paga somente depois de transferir o valor ao parceiro.</p>
+    <div class="actions"><button id="refresh-partner-commissions" class="secondary">Atualizar comissões</button></div>
+    <div id="partner-commissions-list" aria-live="polite"></div>
+    <button id="more-partner-commissions" class="secondary" hidden>Carregar mais comissões</button>
+    <small>Reembolso ou contestação cancela a comissão pendente. Se já tiver sido paga, o histórico marcará a necessidade de conciliação. A plataforma não realiza repasses automáticos.</small>
+      </details>
+  </section>
+  <section class="panel" id="backup-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">💾 Backup e restauração</h2>
+    <details class="advanced"><summary>Exportar ou restaurar backup</summary>
+    <p>Exporte as licenças, chaves, histórico de pagamentos Pix, validade, campanhas, preços e regras dos APKs. O arquivo é <strong>criptografado no navegador</strong> com a senha que você escolher.</p>
+    <small>Importante: ao trocar somente de Netlify, mantendo o Firebase pokesearch-lt, os registros já continuam disponíveis. Nesse caso, NÃO importe: use o mesmo Firebase e a mesma chave POKE_PREMIUM_KEY_SECRET. Esta área serve como cópia de segurança ou recuperação de um banco vazio.</small>
+    <label class="label" for="backup-password">Senha do arquivo (mínimo de 12 caracteres)</label>
+    <input id="backup-password" class="maintenance-note" type="password" autocomplete="new-password"
+      minlength="12" placeholder="Defina uma senha forte para proteger o backup">
+    <div class="actions">
+      <button id="backup-export" class="secondary">Exportar backup criptografado</button>
+    </div>
+    <hr class="sep">
+    <label class="label" for="backup-file">Importar arquivo .psbackup</label>
+    <input id="backup-file" class="maintenance-note" type="file" accept=".psbackup,application/json">
+    <div class="actions">
+      <button id="backup-preview" class="secondary">Analisar arquivo sem alterar dados</button>
+    </div>
+    <div id="backup-preview-details" aria-live="polite"></div>
+    <label class="label" for="backup-confirm">Para restaurar em Firebase vazio, escreva IMPORTAR EM BASE VAZIA</label>
+    <input id="backup-confirm" class="maintenance-note" type="text" autocomplete="off"
+      placeholder="IMPORTAR EM BASE VAZIA">
+    <div class="actions">
+      <button id="backup-import" class="secondary danger-action" disabled>Restaurar backup</button>
+    </div>
+    <p id="backup-progress" role="status" aria-live="polite"></p>
+    <small>Importação nunca substitui licenças, pagamentos ou validades existentes. Vendas e Pix real permanecem desativados após a restauração para revisão. Tokens Mercado Pago, chaves privadas Firebase e senha do backup não são exportados.</small>
+      </details>
+  </section>
+  <section class="panel" id="key-management" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Testar ou cancelar um código</h2>
+    <details class="advanced"><summary>Verificar ou cancelar um código</summary>
+    <p>Cole o código aqui. <strong>Cancelar</strong> invalida o código manual permanentemente; <strong>resgatar</strong> ativa a licença na sua conta conectada. Nenhuma das ações gera cobrança.</p>
+    <label for="key-entry" class="label">Código PS-…</label>
+    <input id="key-entry" type="password" maxlength="36" placeholder="PS-XXXXXX-XXXXXX-XXXXXX-XXXXXX"
+      autocomplete="off" spellcheck="false" autocapitalize="characters"
+      style="display:block;margin:9px 0 15px;width:100%;padding:13px;background:#0d1725;color:#f3f5f8;border:1px solid #36445a;border-radius:10px;font-size:.9rem">
+    <div class="actions"><button id="check-key" class="secondary">Verificar situação do código</button></div>
+    <div class="actions">
+      <button id="revoke" class="secondary">Cancelar código exposto</button>
+      <button id="redeem" class="secondary">Resgatar nesta conta</button>
+    </div>
+    <small style="margin-top:12px">Um código compartilhado em prints deve ser cancelado, mesmo que ninguém tenha utilizado.</small>
+      </details>
+  </section>
+  <small>Segurança: somente sua conta autorizada altera os controles. Operações de cobrança exigem confirmação específica.</small>
+</main>
+<script type="module">
+  import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  import {getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged,browserSessionPersistence,setPersistence} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+  const app=initializeApp({
+    apiKey:"AIzaSyDxCp0f4c_xrrlJ6EGGg9HKPQPIiutCQkM",
+    authDomain:"pokesearch-lt.firebaseapp.com",
+    projectId:"pokesearch-lt"
+  });
+  const auth=getAuth(app);
+  const el=id=>document.getElementById(id);
+  let lastKey="",revealed=false,busy=false,keyBusy=false,keyCursor="",keyCount=0;
+  let maintenanceEnabled=false,appVersionsEnabled=true,managedVersions={};
+  let promotionEnabled=false,freeCampaign={};
+  let configState={salesEnabled:false,paymentsLiveEnabled:false,globalEnabled:false};
+  let currentScreen="home",adminAuthenticated=false;
+  const screenPanels={home:["admin","maintenance-panel"],licenses:["licensing","keys-panel","key-management"],
+    devices:["device-panel"],finance:["sales-panel","pricing-panel"],campaign:["welcome-trial-panel","free-campaign-panel"],
+    more:["partners-panel","app-version-panel","backup-panel"]};
+  const allAdminPanels=[...new Set(Object.values(screenPanels).flat())];
+  function selectScreen(screen){
+    if(!Object.prototype.hasOwnProperty.call(screenPanels,screen))return;
+    currentScreen=screen;
+    for(const b of document.querySelectorAll("#admin-nav button[data-screen]")){
+      if(b.dataset.screen===screen)b.setAttribute("aria-current","page");
+      else b.removeAttribute("aria-current");
+    }
+    for(const id of allAdminPanels)el(id).hidden=!adminAuthenticated||!screenPanels[screen].includes(id);
+    if(!adminAuthenticated)return;
+    if(screen==="licenses"&&!keyBusy)loadPremiumKeys(true);
+    if(screen==="devices")loadPremiumDevices(true);
+    if(screen==="more"){loadPartnerCoupons(true);loadPartnerCommissions(true);}
+  }
+  document.querySelectorAll("#admin-nav button[data-screen]").forEach(b=>
+    b.addEventListener("click",()=>selectScreen(b.dataset.screen)));
+  el("quick-logout").addEventListener("click",()=>el("logout").click());
+  const setStatus=(message,kind="")=>{el("status").textContent=message;el("status").className=kind};
+  const money=cents=>(Number(cents)/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  // Device management remains server-authorized on EVERY operation.
+  let deviceCursor="",deviceTotal=0,deviceBusy=false;
+  const timestamp=value=>value?new Date(Number(value)).toLocaleString("pt-BR"):"—";
+  const textNode=(tag,text,cls)=>{
+    const node=document.createElement(tag);node.textContent=String(text);
+    if(cls)node.className=cls;return node;
+  };
+  function displayDevice(item){
+    const card=document.createElement("div");card.className="key-card";
+    const title=textNode("strong",item.googleEmail||"Conta sem e-mail registrado");
+    card.append(title,textNode("div","UID Firebase: "+item.uid,"key-meta"));
+    card.append(textNode("div","Aparelho: "+(item.deviceName||"Nenhum autorizado"),"key-meta"));
+    card.append(textNode("div","Sessão: "+
+      (item.status==="active"?"Ativa":item.status==="idle"?"Sem atividade recente":"Desconectada"),"key-meta"));
+    card.append(textNode("div","Ativação: "+timestamp(item.boundAt)+
+      " · Última atividade: "+timestamp(item.lastActivity),"key-meta"));
+    const actions=document.createElement("div");actions.className="actions";
+    for(const [label,action,confirmation] of [
+      ["Desconectar aparelho","adminDisconnectPremiumDevice","DESCONectar"],
+      ["Liberar troca","adminReleasePremiumDevice","LIBERAR"]]){
+      const btn=textNode("button",label,"secondary");
+      if(action==="adminDisconnectPremiumDevice")btn.classList.add("danger-action");
+      btn.disabled=item.status==="unbound"||
+        (action==="adminDisconnectPremiumDevice"&&item.status==="unbound");
+      btn.addEventListener("click",async()=>{
+        const text=action==="adminDisconnectPremiumDevice"?
+          "Desconectar agora a Pokébola 2 de "+(item.deviceName||item.uid)+
+          "? A licença e a Pokébola 1 serão preservadas.":
+          "Liberar a troca para outro aparelho sem desligar o atual imediatamente?";
+        if(!window.confirm(text))return;
+        btn.disabled=true;
+        try{
+          await call(action,{uid:item.uid});
+          setStatus("Dispositivo atualizado no servidor.","ok");
+          await loadPremiumDevices(true);
+        }catch(error){setStatus(error.message||"Operação recusada.","error");
+          btn.disabled=false;}
+      });
+      actions.append(btn);
+    }
+    card.append(actions);
+    const details=document.createElement("details");
+    const summary=textNode("summary","Histórico de transferências e desconexões");
+    details.append(summary);
+    for(const event of item.history||[]){
+      details.append(textNode("div",timestamp(event.at)+" · "+event.type+
+        " · "+(event.fromDevice||"Sem aparelho")+" → "+
+        (event.toDevice||"Sem aparelho"),"key-meta"));
+    }
+    if(!(item.history||[]).length)details.append(textNode("small","Sem histórico ainda."));
+    card.append(details);
+    return card;
+  }
+  async function loadPremiumDevices(reset=false){
+    if(deviceBusy)return;
+    deviceBusy=true;el("refresh-devices").disabled=true;
+    el("more-devices").disabled=true;
+    if(reset){deviceCursor="";deviceTotal=0;el("device-list").replaceChildren();}
+    try{
+      const data=await call("adminListPremiumDevices",{cursor:deviceCursor});
+      for(const item of data.items||[]){
+        el("device-list").append(displayDevice(item));deviceTotal++;
+      }
+      deviceCursor=data.nextCursor||"";
+      el("more-devices").hidden=!deviceCursor;
+      el("device-count").textContent=deviceTotal+
+        " contas exibidas"+(deviceCursor?" · mais disponíveis":"");
+    }catch(error){setStatus(error.message||"Falha ao consultar aparelhos.","error");}
+    finally{deviceBusy=false;el("refresh-devices").disabled=false;
+      el("more-devices").disabled=false;}
+  }
+  el("refresh-devices").addEventListener("click",()=>loadPremiumDevices(true));
+  el("more-devices").addEventListener("click",()=>loadPremiumDevices(false));
+  async function call(name,data={}){
+    const user=auth.currentUser;
+    if(!user)throw new Error("Faça login novamente.");
+    const token=await user.getIdToken(true);
+    const r=await fetch("/api/premium/"+name,{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify(data),
+      cache:"no-store"
+    });
+    let payload;
+    try{payload=await r.json()}catch{throw new Error("Resposta inválida do servidor.");}
+    if(!r.ok)throw new Error(payload?.error||"Ação recusada pelo servidor.");
+    return payload;
+  }
+  async function overview(){
+    if(busy)return;
+    busy=true;
+    el("refresh").disabled=true;
+    try{
+      setStatus("Verificando permissão administrativa no servidor…");
+      const data=await call("adminPremiumOverview");
+      el("account").textContent=auth.currentUser?.email||"Conta autenticada";
+      maintenanceEnabled=data.appMaintenanceEnabled===true;
+       appVersionsEnabled=data.appVersionGlobalEnabled!==false;
+       managedVersions=data.appVersions&&typeof data.appVersions==="object"?data.appVersions:{};
+       renderAppVersions();
+       const online=!maintenanceEnabled&&appVersionsEnabled;
+       el("home-app-status").textContent=online?"Ligado":"Em manutenção";
+       el("maintenance-status").textContent=online?"LIGADO":"DESLIGADO";
+       el("maintenance-status").classList.toggle("on",online);
+       el("maintenance-status").classList.toggle("off",!online);
+       el("toggle-maintenance").disabled=false;
+       el("toggle-maintenance").textContent=online?"Desligar aplicativo · manutenção":"Ligar aplicativo · todas as versões";
+       el("toggle-maintenance").classList.toggle("danger-action",online);
+       if(document.activeElement!==el("maintenance-message")&&data.appMaintenanceMessage)
+         el("maintenance-message").value=data.appMaintenanceMessage;
+       configState={salesEnabled:data.salesEnabled===true,paymentsLiveEnabled:data.paymentsLiveEnabled===true,
+         globalEnabled:data.globalEnabled===true};
+       el("distribution").textContent=configState.globalEnabled?"Liberado":"Desativado";
+       el("premium-global-status").textContent=configState.globalEnabled?"Liberado":"Desativado";
+       el("toggle-premium-all").disabled=false;
+       el("toggle-premium-all").textContent=configState.globalEnabled?
+         "Desativar Premium em todas as versões":"Liberar Premium em todas as versões";
+       el("sales").textContent=configState.salesEnabled?"Habilitadas":"Desativadas";
+       el("sales-toggle-state").textContent=configState.salesEnabled?"Habilitadas":"Desativadas";
+       el("live-status").textContent=configState.paymentsLiveEnabled?"Habilitado":"Desativado";
+       el("toggle-sales").disabled=false;
+      el("toggle-live").disabled=false;
+      el("toggle-sales").textContent=configState.salesEnabled?"Desativar vendas":"Habilitar vendas";
+      el("toggle-live").textContent=configState.paymentsLiveEnabled?"Desativar Pix real":"Habilitar Pix real";
+      el("regular").textContent=money(data.regularPriceCents);
+      el("promo").textContent=money(data.promotionalPriceCents);
+      promotionEnabled=data.promotionEnabled===true;
+      el("promotion-status").textContent=promotionEnabled?
+        "Ativa · "+Number(data.discountPercent||0)+"% OFF":"Desativada";
+      if(document.activeElement!==el("promotion-end")){
+        const deadline=Number(data.promotionEndsAt||0);
+        if(deadline>0){
+          const local=new Date(deadline-new Date(deadline).getTimezoneOffset()*60000);
+          el("promotion-end").value=local.toISOString().slice(0,16);
+        }else el("promotion-end").value="";
+      }
+      el("promotion-toggle").textContent=promotionEnabled?"Desativar promoção":"Ativar promoção";
+      el("promotion-toggle").disabled=false;
+      if(document.activeElement!==el("regular-price-input"))
+        el("regular-price-input").value=(Number(data.regularPriceCents)/100).toFixed(2).replace(".",",");
+      if(document.activeElement!==el("promotion-price-input"))
+        el("promotion-price-input").value=(Number(data.promotionalPriceCents)/100).toFixed(2).replace(".",",");
+      const trial=data.welcomeTrial||{};
+      el("welcome-trial-days").value=String(trial.days||5);
+      el("welcome-trial-status").textContent=trial.enabled?"Ativado · "+trial.days+" dias":"Desativado";
+      el("welcome-trial-toggle").textContent=trial.enabled?
+        "Desativar teste automático":"Ativar teste automático";
+      el("welcome-trial-toggle").dataset.enabled=trial.enabled?"true":"false";
+      freeCampaign=data.freeYearCampaign||{};
+      const available=freeCampaign.active===true;
+      el("free-campaign-status").textContent=available?
+        "Ativa · "+freeCampaign.remaining+" vagas":freeCampaign.enabled?
+        "Programada, encerrada ou esgotada":"Desativada";
+      el("free-duration").value=freeCampaign.duration||"12m";
+      el("free-disable").disabled=freeCampaign.enabled!==true;
+      adminAuthenticated=true;
+       el("admin-nav").hidden=false;
+       selectScreen(currentScreen);
+       setStatus(configState.salesEnabled&&configState.paymentsLiveEnabled?
+        "Administrador confirmado. Atenção: vendas e Pix real estão habilitados.":"Administrador confirmado pelo servidor.","ok");
+    }catch(e){
+      adminAuthenticated=false;
+       el("admin-nav").hidden=true;
+       selectScreen(currentScreen);
+       setStatus(e.message||"Não foi possível confirmar seu acesso.","error");
+    }finally{busy=false;el("refresh").disabled=false;}
+  }
+  async function toggleOwnerSetting(action,enabled){
+    const label=action==="sales"?"vendas Premium":"Pix real via Payments API";
+    const warning=enabled?
+      "Confirmar habilitação de "+label+"? Isso pode permitir cobranças reais quando as duas opções estiverem ativas. Verifique sua conta e as credenciais do Mercado Pago.":
+      "Desativar "+label+" para novas cobranças?";
+    if(!window.confirm(warning))return;
+    const button=el(action==="sales"?"toggle-sales":"toggle-live");
+    button.disabled=true;
+    try{
+      await call("adminPremiumSettings",{action,enabled});
+      await overview();
+      setStatus(label+(enabled?" habilitado":" desativado")+" pelo administrador.","ok");
+    }catch(e){setStatus(e.message||"Operação recusada.","error");}
+    finally{button.disabled=false;}
+  }
+  el("toggle-sales").addEventListener("click",()=>toggleOwnerSetting("sales",!configState.salesEnabled));
+  el("toggle-live").addEventListener("click",()=>toggleOwnerSetting("paymentsLive",!configState.paymentsLiveEnabled));
+  el("toggle-premium-all").addEventListener("click",async()=>{
+     if(busy)return;
+     const enabled=!configState.globalEnabled;
+     if(!window.confirm(enabled?
+       "Liberar Premium em TODAS as versões, inclusive futuras? Cada treinador ainda precisa de licença e login Google.":
+       "Desativar o Premium em TODAS as versões? A Pokébola 1 continua gratuita fora da manutenção."))return;
+     el("toggle-premium-all").disabled=true;
+     try{
+       await call("adminDistributionControl",{scope:"global",enabled});
+       await overview();
+       setStatus(enabled?"Premium liberado globalmente.":"Premium desativado globalmente.","ok");
+     }catch(e){setStatus(e.message||"Não foi possível alterar o Premium.","error");}
+     finally{el("toggle-premium-all").disabled=false;}
+   });
+   el("login").addEventListener("click",async()=>{
+    el("login").disabled=true;
+    try{
+      await setPersistence(auth,browserSessionPersistence);
+      const provider=new GoogleAuthProvider();
+      provider.setCustomParameters({prompt:"select_account"});
+      await signInWithPopup(auth,provider);
+      await overview();
+    }catch(e){
+      let message=e.message||String(e.code||"Falha no login.");
+      if(e.code==="auth/unauthorized-domain")message="Autorize pokesearch-premium-api.netlify.app em Firebase Authentication → Configurações → Domínios autorizados.";
+      if(e.code==="auth/popup-blocked")message="O navegador bloqueou a janela. Abra esta página no Chrome e tente novamente.";
+      setStatus(message,"error");
+    }finally{el("login").disabled=false;}
+  });
+  el("logout").addEventListener("click",async()=>{
+    await signOut(auth);
+    lastKey="";revealed=false;el("license").textContent="";el("issued").hidden=true;
+    el("admin").hidden=true;el("licensing").hidden=true;el("key-management").hidden=true;
+    el("free-campaign-panel").hidden=true;
+    el("admin-nav").hidden=true;adminAuthenticated=false;selectScreen(currentScreen);
+     el("maintenance-panel").hidden=true;el("app-version-panel").hidden=true;el("keys-panel").hidden=true;
+    el("premium-keys-list").replaceChildren();keyCursor="";keyCount=0;
+    el("key-entry").value="";
+    setStatus("Sessão encerrada.");
+  });
+
+
+  function renderAppVersions(){
+     const list=el("app-versions-list");list.replaceChildren();
+     const blocked=Object.entries(managedVersions).filter(([code,v])=>/^\d+$/.test(code)&&v?.enabled===false)
+       .sort((a,b)=>Number(b[0])-Number(a[0]));
+     el("version-summary").textContent=!appVersionsEnabled?
+       "Controle antigo bloqueado. Use Ligar aplicativo na tela Início para liberar tudo.":
+       blocked.length?blocked.length+" versão(ões) bloqueada(s) individualmente.":
+       "Nenhuma exceção ativa. Todas as versões seguem a configuração geral.";
+     for(const [code,item] of blocked){
+       const row=document.createElement("div");row.className="row";row.style.margin="12px 0";
+       const name=item?.versionName||"Versão "+code;
+       row.append(textNode("span",name+" · "+code,"key-meta"));
+       const btn=actionButton("Liberar",async()=>{
+         if(!window.confirm("Liberar a versão "+code+"?"))return;
+         btn.disabled=true;
+         try{
+           await call("adminSetAppVersionAccess",{scope:"version",versionCode:Number(code),versionName:name,enabled:true});
+           await overview();setStatus("Versão "+code+" liberada.","ok");
+         }catch(e){setStatus(e.message||"Falha ao liberar.","error");}
+         finally{btn.disabled=false;}
+       });row.append(btn);list.append(row);
+     }
+   }
+   el("register-app-version").addEventListener("click",async()=>{
+     const code=Number(el("app-version-code").value);
+     if(!Number.isInteger(code)||code<1||code>2100000000){
+       setStatus("Informe somente o código numérico da versão.","error");return;
+     }
+     if(!window.confirm("Bloquear SOMENTE a versão "+code+"? As outras continuam ligadas."))return;
+     const btn=el("register-app-version");btn.disabled=true;
+     try{
+       await call("adminSetAppVersionAccess",{scope:"version",versionCode:code,
+         versionName:"Versão "+code,enabled:false});
+       el("app-version-code").value="";await overview();
+       setStatus("Versão "+code+" bloqueada.","ok");
+     }catch(e){setStatus(e.message||"Falha ao bloquear.","error");}
+     finally{btn.disabled=false;}
+   });
+   const ptDate=value=>value>0?new Date(value).toLocaleString("pt-BR"):"Sem vencimento";
+  const actionButton=(title,handler)=>{
+    const btn=document.createElement("button");
+    btn.className="secondary";btn.type="button";btn.textContent=title;
+    btn.addEventListener("click",handler);return btn;
+  };
+  function renderPremiumKey(item){
+    const article=document.createElement("div");article.className="key-card";
+    const heading=document.createElement("strong");
+    const name=item.adminLabel||item.googleName||item.recipientName||"";
+    heading.textContent=(item.source==="welcomeTrial"?"🎁 Teste automático":
+      item.source==="coupon100"?"🎟️ Cupom 100%":
+      item.source==="freeYearCampaign"?"🎁 FREE!":
+      item.kind==="paid"?"💳 Pagamento":"🔑 Licença manual")+
+      (name?" · "+name:" · "+item.id.slice(0,10)+"…");
+    article.appendChild(heading);
+    const state=document.createElement("div");state.className="key-meta";
+    const duration=item.duration==="lifetime"?"Vitalícia":
+      ({"15d":"15 dias","30d":"30 dias","1m":"1 mês","3m":"3 meses","6m":"6 meses","12m":"12 meses"}[item.duration]||
+       (/^([1-9]|[12][0-9]|30)d$/.test(item.duration)?item.duration.slice(0,-1)+" dias":item.duration)||"—");
+    const validity=item.archived?"Excluída":item.revoked?"Revogada":
+      !item.uid?"Começa no resgate":item.duration==="lifetime"?"Sem vencimento":
+      "Até "+ptDate(item.expiresAt);
+    state.textContent=item.status.toUpperCase()+" · "+duration+" · "+validity;
+    article.appendChild(state);
+    if(item.googleEmail){
+      article.appendChild(textNode("div",item.googleEmail,"key-meta"));
+    }
+    const details=document.createElement("details");
+    details.appendChild(textNode("summary","Ver informações"));
+    const fields=[
+      "Titular: "+(item.googleName||item.recipientName||"Não vinculado"),
+      "Criada: "+ptDate(item.createdAt),
+      ...(item.adminLabel?["Identificação: "+item.adminLabel]:[]),
+      ...(item.recipientEmailHint?["Reservada para: "+item.recipientEmailHint]:[]),
+      ...(item.uid?["UID: "+item.uid]:[]),
+      ...(item.copyAvailable?[]:["Código antigo ou revogado: cópia indisponível"])
+    ];
+    details.appendChild(textNode("div",fields.join(" · "),"key-meta"));
+    article.appendChild(details);
+    const actions=document.createElement("div");actions.className="actions";
+    const edit=actionButton("Nome",async()=>{
+      const entered=window.prompt("Identificação desta licença:",item.adminLabel||name||"");
+      if(entered===null)return;
+      const label=entered.trim();
+      if(label.length>80){setStatus("Use até 80 caracteres.","error");return;}
+      edit.disabled=true;
+      try{
+        await call("adminLabelPremiumKey",{id:item.id,label});
+        await loadPremiumKeys(true);setStatus("Nome atualizado.","ok");
+      }catch(error){setStatus(error.message||"Falha ao editar nome.","error");}
+      finally{edit.disabled=false;}
+    });
+    actions.append(edit);
+    if(item.copyAvailable){
+      const copy=actionButton("Copiar",async()=>{
+        copy.disabled=true;
+        try{
+          const result=await call("adminRevealPremiumKey",{id:item.id});
+          const key=String(result.licenseKey||"");
+          if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(key))
+            throw new Error("Formato de chave inválido.");
+          if(navigator.clipboard?.writeText){
+            try{await navigator.clipboard.writeText(key);}
+            catch{window.prompt("Copie a chave Premium:",key);}
+          }else window.prompt("Copie a chave Premium:",key);
+          setStatus("Código disponibilizado para cópia.","ok");
+        }catch(error){setStatus(error.message||"Falha ao copiar.","error");}
+        finally{copy.disabled=false;}
+      });
+      actions.append(copy);
+    }
+    if(item.editable){
+      const toggle=actionButton(item.suspended?"Reativar":"Suspender",async()=>{
+        const enabled=item.suspended;
+        if(!window.confirm((enabled?"Reativar":"Suspender")+" esta licença?"))return;
+        toggle.disabled=true;
+        try{
+          await call("adminSetPremiumKeyEnabled",{id:item.id,enabled});
+          await loadPremiumKeys(true);setStatus(enabled?"Reativada.":"Suspensa.","ok");
+        }catch(error){setStatus(error.message||"Falha ao atualizar licença.","error");}
+        finally{toggle.disabled=false;}
+      });
+      actions.append(toggle);
+      const period=actionButton("Validade",()=>{editor.hidden=!editor.hidden;});
+      actions.append(period);
+      const editor=document.createElement("div");editor.className="license-editor";editor.hidden=true;
+      const label=textNode("label",item.uid?
+        "Definir validade a partir de hoje":"Definir duração no primeiro resgate");
+      const select=document.createElement("select");
+      for(const [value,title] of [["15d","15 dias"],["30d","30 dias"],["1m","1 mês"],
+        ["3m","3 meses"],["6m","6 meses"],["12m","12 meses"],["lifetime","Vitalícia · ilimitada"]]){
+        const option=new Option(title,value);
+        if(value===item.duration)option.selected=true;
+        select.add(option);
+      }
+      label.appendChild(select);editor.appendChild(label);
+      const save=actionButton("Salvar validade",async()=>{
+        if(!window.confirm("Atualizar a validade desta licença?"))return;
+        save.disabled=true;
+        try{
+          const duration=select.value;
+          const data=!item.uid?{id:item.id,action:"duration",duration}:
+            duration==="lifetime"?{id:item.id,action:"setLifetime"}:
+            {id:item.id,action:"setFinite",duration};
+          await call("adminChangePremiumKeyDuration",data);
+          await loadPremiumKeys(true);
+          setStatus(duration==="lifetime"?"Licença vitalícia ativada.":"Validade alterada.","ok");
+        }catch(error){setStatus(error.message||"Falha ao alterar validade.","error");}
+        finally{save.disabled=false;}
+      });
+      editor.appendChild(save);
+      if(item.uid&&item.duration!=="lifetime"){
+        const note=textNode("label","Somar ou retirar dias da validade atual (ex.: 30 ou -7)");
+        const days=document.createElement("input");days.type="number";days.min="-3650";days.max="3650";days.step="1";days.placeholder="+30";days.inputMode="numeric";
+        note.appendChild(days);editor.appendChild(note);
+        const adjust=actionButton("Aplicar dias",async()=>{
+          const count=Number(days.value);
+          if(!days.value||!Number.isInteger(count)||count===0||Math.abs(count)>3650){
+            setStatus("Digite um número inteiro de -3650 a +3650, exceto zero.","error");return;
+          }
+          if(!window.confirm((count>0?"Adicionar ":"Retirar ")+Math.abs(count)+" dias desta licença?"))return;
+          adjust.disabled=true;
+          try{
+            await call("adminChangePremiumKeyDuration",{id:item.id,action:"adjustDays",days:count});
+            await loadPremiumKeys(true);setStatus("Dias atualizados.","ok");
+          }catch(error){setStatus(error.message||"Falha ao ajustar dias.","error");}
+          finally{adjust.disabled=false;}
+        });
+        editor.appendChild(adjust);
+      }
+      article.appendChild(actions);article.appendChild(editor);
+    }else article.appendChild(actions);
+    if(!item.archived){
+      const remove=actionButton("Excluir",async()=>{
+        const confirmation=window.prompt(
+          "Excluir esta licença da lista? O acesso da Pokébola 2 será revogado se ainda estiver ativo. O histórico de pagamentos será preservado. Digite EXCLUIR:", "");
+        if(confirmation===null)return;
+        if(confirmation.trim().toUpperCase()!=="EXCLUIR"){
+          setStatus("Exclusão cancelada. Digite EXCLUIR para confirmar.","error");return;
+        }
+        remove.disabled=true;
+        try{
+          await call("adminDeletePremiumKey",{id:item.id,confirm:"EXCLUIR"});
+          await loadPremiumKeys(true);
+          setStatus("Licença excluída da lista. Histórico preservado na aba Excluídas.","ok");
+        }catch(error){setStatus(error.message||"Falha ao excluir licença.","error");}
+        finally{remove.disabled=false;}
+      });
+      remove.classList.add("danger-action");
+      actions.append(remove);
+    }
+    return article;
+  }
+  async function loadPremiumKeys(reset=false){
+    if(keyBusy)return;
+    keyBusy=true;
+    el("refresh-keys").disabled=true;el("load-more-keys").disabled=true;
+    if(reset){keyCursor="";keyCount=0;el("premium-keys-list").replaceChildren();}
+    try{
+      const result=await call("adminListPremiumKeys",{
+        cursor:keyCursor,limit:30,archived:el("license-list-view").value==="archived"
+      });
+      for(const item of result.keys||[]){
+        el("premium-keys-list").appendChild(renderPremiumKey(item));
+        keyCount++;
+      }
+      keyCursor=result.nextCursor||"";
+      el("load-more-keys").hidden=result.hasMore!==true;
+      el("keys-count").textContent=keyCount+" licenças exibidas"+
+        (result.hasMore?". Há mais licenças para carregar.":".");
+      if(keyCount===0)el("keys-count").textContent=
+        result.hasMore?"Nenhuma licença nesta página; carregue mais para continuar.":
+        (el("license-list-view").value==="archived"?
+          "Nenhuma licença excluída.":"Nenhuma licença na lista atual.");
+    }catch(e){setStatus(e.message||"Falha ao consultar licenças.","error");}
+    finally{keyBusy=false;el("refresh-keys").disabled=false;el("load-more-keys").disabled=false;}
+  }
+  el("refresh-keys").addEventListener("click",()=>loadPremiumKeys(true));
+  el("license-list-view").addEventListener("change",()=>loadPremiumKeys(true));
+  el("load-more-keys").addEventListener("click",()=>loadPremiumKeys(false));
+  el("toggle-maintenance").addEventListener("click",async()=>{
+     if(busy)return;
+     const enabled=!maintenanceEnabled&&appVersionsEnabled;
+     if(!window.confirm(enabled?
+       "DESLIGAR o PokeSearch inteiro? Todas as versões compatíveis e as duas Pokébolas serão bloqueadas. Novas vendas ficam suspensas.":
+       "LIGAR o PokeSearch em TODAS as versões compatíveis? Bloqueios antigos por versão serão limpos. Vendas e licenças manterão suas próprias configurações."))return;
+     busy=true;el("toggle-maintenance").disabled=true;
+     try{
+       await call("adminSetAppMaintenance",{enabled,message:el("maintenance-message").value});
+       setStatus(enabled?"Aplicativo desligado globalmente.":"Aplicativo ligado em todas as versões compatíveis.","ok");
+     }catch(e){setStatus(e.message||"Falha no controle geral.","error");}
+     finally{busy=false;el("toggle-maintenance").disabled=false;await overview();}
+   });
+   const parseBRL=str=>{
+    const value=String(str||"").trim();
+    if(!/^\d{1,4}([,.]\d{1,2})?$/.test(value))throw Error("Informe um valor válido (ex.: 5,00).");
+    const parts=value.replace(",",".").split(".");
+    return Number(parts[0])*100+Number((parts[1]||"").padEnd(2,"0"));
+  };
+  el("apply-pricing-preset").addEventListener("click",async()=>{
+    if(busy)return;
+    if(!window.confirm("Definir preço normal R$ 20,00 e promocional R$ 10,00 com promoção ATIVA para novas compras? Pedidos já gerados não mudam."))return;
+    const button=el("apply-pricing-preset");
+    button.disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"pricingPreset"});
+      await overview();
+      setStatus("Tabela R$ 20,00 / R$ 10,00 aplicada no Firebase. Promoção ativa; novos cupons são calculados sobre o valor vigente.","ok");
+    }catch(e){setStatus(e.message||"Falha ao aplicar a tabela.","error");}
+    finally{button.disabled=false;}
+  });
+  el("save-prices").addEventListener("click",async()=>{
+    if(busy)return;
+    let regular,discount;
+    try{regular=parseBRL(el("regular-price-input").value);
+        discount=parseBRL(el("promotion-price-input").value);}
+    catch(e){setStatus(e.message,"error");return;}
+    if(regular<100||regular>100000||discount<100||discount>regular){
+      setStatus("Os valores devem ser de R$ 1 a R$ 1.000, e a promoção não pode superar o preço normal.","error");return;
+    }
+    if(!window.confirm("Atualizar para normal "+money(regular)+" e promocional "+money(discount)+"?"))return;
+    el("save-prices").disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"prices",regularPriceCents:regular,promotionalPriceCents:discount});
+      await overview();setStatus("Novos valores salvos. Cobranças anteriores permanecem iguais.","ok");
+    }catch(e){setStatus(e.message||"Erro ao salvar valores.","error");}
+    finally{el("save-prices").disabled=false;}
+  });
+  async function savePromotionDeadline(endsAt){
+    if(!Number.isSafeInteger(endsAt)||endsAt<0){
+      setStatus("Data inválida.","error");return;
+    }
+    if(!window.confirm(endsAt?
+      "Configurar vencimento REAL da promoção em "+new Date(endsAt).toLocaleString("pt-BR")+"?":
+      "Remover a data limite? Sem prazo, o aplicativo não exibirá contagem regressiva."))return;
+    try{
+      await call("adminPremiumSettings",{action:"promotionDeadline",endsAt});
+      await overview();setStatus(endsAt?"Prazo real da promoção salvo.":"Prazo da promoção removido.","ok");
+    }catch(e){setStatus(e.message||"Não foi possível salvar prazo.","error");}
+  }
+  el("save-promotion-end").addEventListener("click",()=>{
+    const value=el("promotion-end").value,endsAt=Date.parse(value);
+    if(!value||!Number.isSafeInteger(endsAt)||endsAt<=Date.now()){
+      setStatus("Escolha uma data de encerramento futura.","error");return;
+    }
+    savePromotionDeadline(endsAt);
+  });
+  el("clear-promotion-end").addEventListener("click",()=>savePromotionDeadline(0));
+  el("promotion-toggle").addEventListener("click",async()=>{
+    const enabled=!promotionEnabled;
+    if(!window.confirm((enabled?"Ativar":"Desativar")+" a promoção? Isso altera o valor das PRÓXIMAS cobranças Pix."))return;
+    el("promotion-toggle").disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"promotion",enabled});
+      await overview();setStatus(enabled?"Promoção ativada.":"Promoção desativada: preço normal em vigor.","ok");
+    }catch(e){setStatus(e.message||"Falha ao alterar promoção.","error");}
+    finally{el("promotion-toggle").disabled=false;}
+  });
+  el("free-activate").addEventListener("click",async()=>{
+    const duration=el("free-duration").value;
+    const start=Date.parse(el("free-start").value),end=Date.parse(el("free-end").value);
+    const maxClaims=Number(el("free-limit").value);
+    if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||end<=start||end<=Date.now()||
+       !Number.isInteger(maxClaims)||maxClaims<1||maxClaims>10000){
+      setStatus("Informe início, encerramento futuro e número de vagas válidos.","error");return;
+    }
+    if(!window.confirm("Ativar campanha FREE! "+el("free-duration").selectedOptions[0].textContent+
+       ", válida de "+new Date(start).toLocaleString("pt-BR")+" até "+
+       new Date(end).toLocaleString("pt-BR")+", com "+maxClaims+
+       " vagas? Isso poderá conceder Premium gratuito a usuários elegíveis."))return;
+    el("free-activate").disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"freeYearCampaign",
+        enabled:true,duration,startsAt:start,endsAt:end,maxClaims});
+      await overview();setStatus("Campanha gratuita configurada. Nenhuma licença foi criada por esta ação.","ok");
+    }catch(e){setStatus(e.message||"Falha ao configurar campanha.","error");}
+    finally{el("free-activate").disabled=false;}
+  });
+  el("free-disable").addEventListener("click",async()=>{
+    if(!window.confirm("Encerrar a campanha FREE? Isso impede novos resgates, sem revogar benefícios já concedidos."))return;
+    el("free-disable").disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"freeYearCampaign",enabled:false});
+      await overview();setStatus("Campanha FREE encerrada. Licenças emitidas foram preservadas.","ok");
+    }catch(e){setStatus(e.message||"Não foi possível encerrar.","error");}
+    finally{el("free-disable").disabled=false;}
+  });
+
+  // Browser-only AES-GCM envelope; neither the password nor the decoded backup
+  // is saved to localStorage, Firebase, logs or any third-party service.
+  const BACKUP_PARTS=["keys","entitlements","orders","orderIndex",
+    "paymentIndex","paymentThrottle","coupons","config","distribution","appControl"];
+  const BACKUP_FORMAT="PokeSearch-Premium-Backup-v1";
+  let unlockedBackup=null,backupBusy=false;
+  const utf8=new TextEncoder(),decodeUtf8=new TextDecoder();
+  const bytes64=bytes=>{
+    let output="";
+    for(let i=0;i<bytes.length;i+=8192)
+      output+=String.fromCharCode(...bytes.subarray(i,i+8192));
+    return btoa(output);
+  };
+  const from64=value=>{
+    if(typeof value!=="string"||value.length>22000000)throw Error("Codificação inválida.");
+    const binary=atob(value);
+    return Uint8Array.from(binary,ch=>ch.charCodeAt(0));
+  };
+  const deriveBackupKey=async(passphrase,salt)=>{
+    if(typeof passphrase!=="string"||passphrase.length<12)
+      throw Error("Digite uma senha forte, com pelo menos 12 caracteres.");
+    const material=await crypto.subtle.importKey("raw",utf8.encode(passphrase),
+      "PBKDF2",false,["deriveKey"]);
+    return crypto.subtle.deriveKey({name:"PBKDF2",hash:"SHA-256",
+      salt,iterations:310000},material,{name:"AES-GCM",length:256},false,
+      ["encrypt","decrypt"]);
+  };
+  const encryptBackup=async(value,passphrase)=>{
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const key=await deriveBackupKey(passphrase,salt);
+    const content=utf8.encode(JSON.stringify(value));
+    if(content.byteLength>10_000_000)throw Error("Backup maior que 10 MB. Exporte em um momento com menos histórico.");
+    const ciphertext=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,content);
+    return {fileFormat:"PokeSearch-Encrypted-Backup-v1",kdf:"PBKDF2-SHA256",
+      iterations:310000,salt:bytes64(salt),iv:bytes64(iv),
+      ciphertext:bytes64(new Uint8Array(ciphertext))};
+  };
+  const decryptBackup=async(envelope,passphrase)=>{
+    if(envelope?.fileFormat!=="PokeSearch-Encrypted-Backup-v1"||
+      envelope.kdf!=="PBKDF2-SHA256"||envelope.iterations!==310000)
+      throw Error("Formato de arquivo incompatível.");
+    const salt=from64(envelope.salt),iv=from64(envelope.iv);
+    if(salt.length!==16||iv.length!==12)throw Error("Cabeçalho do arquivo inválido.");
+    const key=await deriveBackupKey(passphrase,salt);
+    let plain;
+    try{
+      plain=await crypto.subtle.decrypt({name:"AES-GCM",iv},
+        key,from64(envelope.ciphertext));
+    }catch{throw Error("Senha incorreta ou arquivo alterado.");}
+    const payload=JSON.parse(decodeUtf8.decode(plain));
+    if(payload.format!==BACKUP_FORMAT||payload.projectId!=="pokesearch-lt"||
+       !/^[0-9a-f]{64}$/.test(payload.vaultFingerprint||"")||
+       !payload.sections||typeof payload.sections!=="object"||
+       BACKUP_PARTS.some(part=>!payload.sections[part]||
+         typeof payload.sections[part]!=="object"||
+         Array.isArray(payload.sections[part])))
+      throw Error("Arquivo não pertence ao formato Premium do PokeSearch.");
+    return payload;
+  };
+  const backupSha256=async value=>{
+    const bytes=await crypto.subtle.digest("SHA-256",utf8.encode(JSON.stringify(value)));
+    return [...new Uint8Array(bytes)].map(x=>x.toString(16).padStart(2,"0")).join("");
+  };
+  const setBackupProgress=message=>{el("backup-progress").textContent=message};
+  const backupCounts=sections=>BACKUP_PARTS.map(x=>x+": "+
+    Object.keys(sections[x]||{}).length+" registros").join(" · ");
+  const setBackupBusy=value=>{
+    backupBusy=value;
+    for(const id of ["backup-export","backup-preview","backup-file","backup-password",
+      "backup-confirm"])el(id).disabled=value;
+    el("backup-import").disabled=value||!unlockedBackup;
+  };
+  el("backup-export").addEventListener("click",async()=>{
+    if(backupBusy)return;
+    const password=el("backup-password").value;
+    if(password.length<12){setBackupProgress("Digite uma senha com pelo menos 12 caracteres.");return;}
+    setBackupBusy(true);unlockedBackup=null;
+    try{
+      const sections={};let identity=null;
+      for(let idx=0;idx<BACKUP_PARTS.length;idx++){
+        const section=BACKUP_PARTS[idx];
+        sections[section]={};
+        let cursor="",pages=0;
+        do{
+          if(++pages>20000)throw Error("Limite de páginas excedido.");
+          setBackupProgress("Exportando "+section+" · página "+pages+"...");
+          const page=await call("adminExportPremiumBackupPage",{section,cursor});
+          if(page.format!==BACKUP_FORMAT||page.projectId!=="pokesearch-lt")
+            throw Error("Servidor Premium incompatível.");
+          if(identity&&identity!==page.vaultFingerprint)
+            throw Error("A chave do servidor mudou durante a exportação.");
+          identity=page.vaultFingerprint;
+          for(const [key,value] of Object.entries(page.records||{})){
+            if(Object.prototype.hasOwnProperty.call(sections[section],key))
+              throw Error("Registro duplicado na exportação.");
+            sections[section][key]=value;
+          }
+          if(page.complete!==true&&(!page.nextCursor||page.nextCursor===cursor))
+            throw Error("Paginação incompleta: backup interrompido.");
+          cursor=page.complete?"":page.nextCursor;
+        }while(cursor);
+      }
+      const payload={format:BACKUP_FORMAT,version:1,projectId:"pokesearch-lt",
+        vaultFingerprint:identity,createdAt:new Date().toISOString(),sections};
+      setBackupProgress("Criptografando e preparando o arquivo...");
+      const envelope=await encryptBackup(payload,password);
+      const blob=new Blob([JSON.stringify(envelope)],{type:"application/json"});
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement("a");
+      link.href=url;link.download="PokeSearch-Premium-"+new Date().toISOString().slice(0,10)+".psbackup";
+      document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      setBackupProgress("Backup criptografado exportado. "+backupCounts(sections)+
+        ". Guarde o arquivo e a senha separados, em local seguro.");
+      setStatus("Backup gerado localmente no navegador.","ok");
+    }catch(error){setBackupProgress(error.message||"Falha ao exportar. Nenhum arquivo incompleto foi salvo.");}
+    finally{setBackupBusy(false);}
+  });
+  el("backup-preview").addEventListener("click",async()=>{
+    if(backupBusy)return;
+    unlockedBackup=null;el("backup-import").disabled=true;
+    const file=el("backup-file").files?.[0];
+    if(!file||file.size>15_000_000){
+      setBackupProgress("Selecione um arquivo .psbackup com até 15 MB.");return;
+    }
+    setBackupBusy(true);
+    try{
+      const envelope=JSON.parse(await file.text());
+      const payload=await decryptBackup(envelope,el("backup-password").value);
+      unlockedBackup=payload;
+      el("backup-preview-details").textContent=
+        "Backup de "+payload.createdAt+". "+backupCounts(payload.sections)+
+        ". Os dados atuais NÃO foram modificados.";
+      setBackupProgress("Arquivo validado localmente. Confirme apenas se o Firebase destino está vazio.");
+    }catch(error){setBackupProgress(error.message||"Arquivo inválido.");}
+    finally{setBackupBusy(false);}
+  });
+  el("backup-import").addEventListener("click",async()=>{
+    if(backupBusy||!unlockedBackup)return;
+    if(el("backup-confirm").value.trim()!=="IMPORTAR EM BASE VAZIA"){
+      setBackupProgress("Digite exatamente IMPORTAR EM BASE VAZIA.");return;
+    }
+    const backup=unlockedBackup;
+    const approved=window.confirm("RESTAURAÇÃO SENSÍVEL: somente em Firebase vazio, "+
+      "sem sobrescrever licenças. Vendas e Pix ficarão desligados. Continuar?");
+    if(!approved)return;
+    setBackupBusy(true);
+    let sessionId="";
+    try{
+      const digest=await backupSha256(backup);
+      let start;
+      try{
+        start=await call("adminRestorePremiumBackup",{
+          phase:"prepare",format:backup.format,projectId:backup.projectId,
+          backupSha256:digest,
+          vaultFingerprint:backup.vaultFingerprint,confirm:"IMPORTAR EM BASE VAZIA"
+        });
+      }catch(firstError){
+        // Resume only the SAME backup if our own previous import stopped.
+        // A regular live Firebase has no matching session, so remains protected.
+        try{
+          start=await call("adminRestorePremiumBackup",{
+            phase:"resume",backupSha256:digest
+          });
+        }catch{throw firstError;}
+      }
+      sessionId=start.sessionId;
+      if(start.resumed)setBackupProgress("Retomando restauração interrompida...");
+      for(let i=0;i<BACKUP_PARTS.length;i++){
+        const section=BACKUP_PARTS[i],source=backup.sections[section];
+        const entries=Object.entries(source);
+        const chunks=[];
+        if(["config","distribution","appControl"].includes(section)){
+          if(JSON.stringify(source).length>46000)throw Error("Seção "+section+" muito grande.");
+          chunks.push(source);
+        }else{
+          let pending={};
+          for(const [key,value] of entries){
+            const next={...pending,[key]:value};
+            if(Object.keys(next).length>20||utf8.encode(JSON.stringify(next)).byteLength>25000){
+              if(!Object.keys(pending).length)throw Error("Registro excede o limite de segurança.");
+              chunks.push(pending);pending={[key]:value};
+            }else pending=next;
+          }
+          if(Object.keys(pending).length)chunks.push(pending);
+        }
+        for(let j=0;j<chunks.length;j++){
+          setBackupProgress("Restaurando "+section+" · lote "+(j+1)+"/"+chunks.length);
+          await call("adminRestorePremiumBackup",{
+            phase:"write",sessionId,section,records:chunks[j]});
+        }
+      }
+      await call("adminRestorePremiumBackup",{phase:"finish",sessionId});
+      setBackupProgress("Restauração concluída. Revise cada licença, preços e "+
+        "webhooks antes de reativar vendas. Pix real permanece DESLIGADO.");
+      setStatus("Backup restaurado no Firebase vazio.","ok");
+      unlockedBackup=null;
+      el("backup-import").disabled=true;
+      await overview();
+    }catch(error){
+      setBackupProgress((error.message||"Erro na importação.")+
+        (sessionId?" Nenhum registro existente foi sobrescrito; a restauração pode ter ficado PARCIAL.":""));
+    }finally{setBackupBusy(false);}
+  });
+
+
+  let couponCursor="",commissionCursor="",couponBusy=false,commissionBusy=false;
+  const pCard=()=>{
+    const item=document.createElement("div");
+    item.style.cssText="border:1px solid #34465d;border-radius:13px;padding:12px;margin:9px 0;background:#101d2e";
+    return item;
+  };
+  const addLine=(parent,message,emphasis=false)=>{
+    const element=document.createElement("div");
+    element.textContent=message;
+    if(emphasis)element.style.fontWeight="700";
+    element.style.margin="4px 0";
+    parent.append(element);return element;
+  };
+  const partnerButton=(label,callback)=>{
+    const button=document.createElement("button");
+    button.type="button";button.className="secondary";button.textContent=label;
+    button.style.margin="5px 5px 0 0";
+    button.addEventListener("click",callback);
+    return button;
+  };
+  function populatePartnerFields(item){
+    el("partner-coupon-code").value=item.code;
+    el("partner-name").value=item.partnerName||"";
+    el("partner-uid").value=item.partnerUid||"";
+    el("partner-discount").value=String(item.discountPercent||10);
+    el("partner-commission").value=String(item.commissionPercent??50);
+    el("coupon-max-claims").value=String(item.maxClaims||10);
+    el("coupon-gift-duration").value=item.giftDuration||"30d";
+    el("partner-enabled").value=item.enabled?"active":"inactive";
+    if(item.expiresAt){
+      const date=new Date(item.expiresAt);
+      const local=new Date(date.getTime()-date.getTimezoneOffset()*60000);
+      el("partner-end").value=local.toISOString().slice(0,16);
+    }else el("partner-end").value="";
+    el("partner-coupon-code").focus();
+  }
+  async function savePartnerCoupon(values){
+    if(!values.code.match(/^[A-Z0-9][A-Z0-9_-]{2,22}[A-Z0-9]$/))
+      throw Error("Cupom deve ter 4 a 24 caracteres: letras, números, - ou _.");
+    if(values.partnerName.length<2||![10,25,50,100].includes(values.discountPercent))
+      throw Error("Informe o divulgador e escolha 10%, 25% ou 50%.");
+    if(!Number.isSafeInteger(values.commissionPercent)||
+       values.commissionPercent<0||values.commissionPercent>100)
+      throw Error("Comissão deve estar entre 0% e 100%.");
+    const x=await call("adminSavePartnerCoupon",values);
+    setStatus("Cupom "+x.code+" atualizado.","ok");
+    await loadPartnerCoupons(true);
+  }
+  el("partner-discount").addEventListener("change",()=>{
+    if(el("partner-discount").value==="100"&&!el("partner-name").value.trim())
+      el("partner-name").value="PokeSearch";
+  });
+    el("save-partner-coupon").addEventListener("click",async()=>{
+    if(couponBusy)return;
+    const code=el("partner-coupon-code").value.trim().toUpperCase();
+    const partnerName=el("partner-name").value.trim();
+    const partnerUid=el("partner-uid").value.trim();
+    const discountPercent=Number(el("partner-discount").value);
+    const commissionPercent=discountPercent===100?0:Number(el("partner-commission").value);
+    const maxClaims=Number(el("coupon-max-claims").value);
+    const giftDuration=el("coupon-gift-duration").value;
+    const date=el("partner-end").value;
+    const expiresAt=date?Date.parse(date):0;
+    if(!Number.isSafeInteger(expiresAt)){setStatus("Validade do cupom inválida.","error");return;}
+    couponBusy=true;el("save-partner-coupon").disabled=true;
+    try{await savePartnerCoupon({code,partnerName,partnerUid,discountPercent,
+      commissionPercent,expiresAt,maxClaims,giftDuration,enabled:el("partner-enabled").value==="active"});}
+    catch(e){setStatus(e.message||"Falha ao salvar cupom.","error");}
+    finally{couponBusy=false;el("save-partner-coupon").disabled=false;}
+  });
+  async function loadPartnerCoupons(reset=false){
+    if(couponBusy&&!reset)return;
+    if(reset){couponCursor="";el("partner-coupons-list").replaceChildren();}
+    const target=el("partner-coupons-list");
+    try{
+      const page=await call("adminListPartnerCoupons",{cursor:couponCursor});
+      for(const item of page.items||[]){
+        const card=pCard();
+        addLine(card,item.code+" · "+item.partnerName,true);
+        addLine(card,item.discountPercent===100?
+          "100% grátis · "+(item.claimCount||0)+"/"+(item.maxClaims||0)+" resgates · "+(item.giftDuration||"30d"):
+          item.discountPercent+"% OFF · comissão "+(item.commissionPercent??50)+"% · "+
+          (item.enabled?"Ativo":"Desativado")+
+          (item.expiresAt?" · Até "+new Date(item.expiresAt).toLocaleDateString("pt-BR"):""));
+        card.append(partnerButton("Editar",()=>populatePartnerFields(item)));
+        card.append(partnerButton("Copiar cupom",()=>navigator.clipboard.writeText(item.code)));
+        card.append(partnerButton(item.enabled?"Desabilitar":"Habilitar",async()=>{
+          if(!window.confirm((item.enabled?"Desabilitar":"Habilitar")+" "+item.code+"?"))return;
+          try{await savePartnerCoupon({...item,enabled:!item.enabled});}
+          catch(e){setStatus(e.message||"Falha ao mudar situação.","error");}
+        }));
+        target.append(card);
+      }
+      couponCursor=page.nextCursor||"";
+      el("more-partner-coupons").hidden=!couponCursor;
+      if(!target.children.length)addLine(target,"Nenhum cupom cadastrado.");
+    }catch(e){setStatus(e.message||"Falha ao consultar cupons.","error");}
+  }
+  async function loadPartnerCommissions(reset=false){
+    if(commissionBusy)return;
+    commissionBusy=true;
+    if(reset){commissionCursor="";el("partner-commissions-list").replaceChildren();}
+    const target=el("partner-commissions-list");
+    try{
+      const page=await call("adminListPartnerCommissions",{cursor:commissionCursor});
+      for(const item of page.items||[]){
+        const card=pCard();
+        addLine(card,item.partnerName+" · "+item.code,true);
+        addLine(card,"Venda "+item.orderId.slice(0,10)+" · "+money(item.paidPriceCents)+
+          " · Comissão "+money(item.commissionCents));
+        const statusNames={pending:"A repassar",paid:"Paga",unearned:"Aguardando Pix",
+          reversed:"Cancelada / estornada",reversed_paid:"Estorno após repasse"};
+        addLine(card,(statusNames[item.commissionStatus]||item.commissionStatus)+
+          (item.liveMode?" · Pix real":" · Homologação")+
+          (item.partnerPaymentReference?" · Ref. "+item.partnerPaymentReference:""));
+        if(item.commissionStatus==="pending"&&item.liveMode&&item.orderStatus==="approved"){
+          card.append(partnerButton("Registrar repasse",async()=>{
+            const reference=window.prompt("Após transferir "+money(item.commissionCents)+
+              " ao parceiro, informe o ID/comprovante da transferência:");
+            if(!reference||reference.trim().length<6)return;
+            if(!window.confirm("Confirmar repasse de "+money(item.commissionCents)+
+              " ao divulgador "+item.partnerName+"? Isso registra pagamento manual."))return;
+            try{
+              await call("adminMarkPartnerCommissionPaid",{
+                orderId:item.orderId,reference:reference.trim(),
+                confirm:"REGISTRAR REPASSE"});
+              setStatus("Repasse registrado no histórico.","ok");
+              await loadPartnerCommissions(true);
+            }catch(e){setStatus(e.message||"Falha ao registrar repasse.","error");}
+          }));
+        }
+        target.append(card);
+      }
+      commissionCursor=page.nextCursor||"";
+      el("more-partner-commissions").hidden=!commissionCursor;
+      if(!target.children.length)addLine(target,"Nenhuma venda com cupom nesta página.");
+    }catch(e){setStatus(e.message||"Falha ao consultar comissões.","error");}
+    finally{commissionBusy=false;}
+  }
+  el("refresh-partner-coupons").addEventListener("click",()=>loadPartnerCoupons(true));
+  el("more-partner-coupons").addEventListener("click",()=>loadPartnerCoupons());
+  el("refresh-partner-commissions").addEventListener("click",()=>loadPartnerCommissions(true));
+  el("more-partner-commissions").addEventListener("click",()=>loadPartnerCommissions());
+
+  el("welcome-trial-save").addEventListener("click",async()=>{
+    const button=el("welcome-trial-save");
+    const enabled=el("welcome-trial-toggle").dataset.enabled==="true";
+    const days=Number(el("welcome-trial-days").value);
+    if(!Number.isInteger(days)||days<1||days>30){
+      setStatus("Informe de 1 a 30 dias.","error");return;
+    }
+    button.disabled=true;
+    try{
+      // Changes future grants only; existing accounts preserve their expiry.
+      await call("adminPremiumSettings",{action:"welcomeTrial",enabled,days});
+      await overview();
+      setStatus(enabled?
+        "Duração salva. Novos cadastros receberão "+days+" dias.":
+        "Duração salva. Ative o teste para começar a conceder dias.","ok");
+    }catch(e){setStatus(e.message||"Erro ao salvar dias.","error");}
+    finally{button.disabled=false;}
+  });
+    el("welcome-trial-toggle").addEventListener("click",async()=>{
+    const button=el("welcome-trial-toggle");
+    const enabled=button.dataset.enabled!=="true";
+    const days=Number(el("welcome-trial-days").value);
+    if(!Number.isInteger(days)||days<1||days>30){
+      setStatus("Informe entre 1 e 30 dias.","error");return;
+    }
+    if(!window.confirm(enabled?
+      "Ativar "+days+" dias gratuitos automaticamente para CADA nova conta Google cadastrada após a ativação?":
+      "Desativar novos testes Premium? Licenças já concedidas serão preservadas."))return;
+    button.disabled=true;
+    try{
+      await call("adminPremiumSettings",{action:"welcomeTrial",enabled,days});
+      await overview();
+      setStatus(enabled?"Teste de boas-vindas ativado.":"Novos testes desativados.","ok");
+    }catch(error){setStatus(error.message||"Falha ao configurar teste.","error");}
+    finally{button.disabled=false;}
+  });
+    el("refresh").addEventListener("click",overview);
+  el("issue").addEventListener("click",async()=>{
+    if(busy)return;
+    const duration=el("license-duration").value;
+    const title=el("license-duration").selectedOptions[0].textContent;
+    const recipientEmail=el("recipient-email").value.trim().toLowerCase();
+    const recipientName=el("recipient-name").value.trim();
+    if(recipientEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)){
+      setStatus("Informe um e-mail válido ou deixe o campo vazio.","error");return;
+    }
+    const agreed=window.confirm("Criar licença de "+title+
+      (recipientEmail?" reservada ao Google "+recipientEmail:
+        " livre para a primeira conta Google que a resgatar")+"? Sem cobrança.");
+    if(!agreed)return;
+    busy=true;el("issue").disabled=true;
+    try{
+      const x=await call("adminIssuePremiumKey",{duration,recipientEmail,recipientName});
+      if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(x.licenseKey||""))throw new Error("Código gerado em formato inesperado.");
+      lastKey=x.licenseKey;
+      el("key-entry").value=lastKey;
+      revealed=false;el("license").textContent="PS-••••••-••••••-••••••-••••••";el("reveal").textContent="Mostrar código";el("issued").hidden=false;
+      setStatus(recipientEmail?
+        "Licença gratuita criada e reservada ao e-mail informado. A duração começa no resgate.":
+        "Licença gratuita criada. A primeira conta Google que resgatar será vinculada.","ok");
+    }catch(e){setStatus(e.message||"Falha ao emitir licença.","error");}
+    finally{busy=false;el("issue").disabled=false;}
+  });
+  const getKey=()=>{
+    const code=el("key-entry").value.trim().toUpperCase();
+    if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(code)){
+      setStatus("Cole um código válido começando por PS-.","error");
+      return "";
+    }
+    return code;
+  };
+  el("check-key").addEventListener("click",async()=>{
+    if(busy)return;
+    const licenseKey=getKey();if(!licenseKey)return;
+    busy=true;el("check-key").disabled=true;
+    try{
+      const result=await call("adminPremiumKeyStatus",{licenseKey});
+      if(result.status==="revoked")
+        setStatus("CONFIRMADO: este código já está cancelado no Firebase.","ok");
+      else if(result.status==="active")
+        setStatus("CONFIRMADO: este código está ATIVO. Para invalidá-lo, toque em Cancelar código exposto.","error");
+      else if(result.status==="notManual")
+        setStatus("Este código não corresponde a uma licença manual de teste.","error");
+      else
+        setStatus("Código não encontrado no Firebase. Confira se copiou todos os caracteres exatamente. Nada foi alterado.","error");
+    }catch(e){setStatus(e.message||"Não foi possível verificar o código.","error");}
+    finally{busy=false;el("check-key").disabled=false;}
+  });
+  el("revoke").addEventListener("click",async()=>{
+    if(busy)return;
+    const licenseKey=getKey();
+    if(!licenseKey)return;
+    if(!window.confirm("Cancelar definitivamente este código manual? Esta ação não poderá ser desfeita."))return;
+    busy=true;el("revoke").disabled=true;el("redeem").disabled=true;
+    try{
+      const result=await call("adminRevokePremiumKey",{licenseKey});
+      if(result.revoked!==true)throw new Error("Servidor não confirmou o cancelamento.");
+      if(lastKey===licenseKey){
+        lastKey="";revealed=false;el("license").textContent="";el("issued").hidden=true;
+      }
+      el("key-entry").value="";
+      setStatus(result.alreadyRevoked===true?"Código já estava cancelado. Nada mais a fazer.":"Código cancelado no Firebase. Não poderá ser resgatado.","ok");
+    }catch(e){setStatus(e.message||"Erro ao cancelar código.","error");}
+    finally{busy=false;el("revoke").disabled=false;el("redeem").disabled=false;}
+  });
+  el("redeem").addEventListener("click",async()=>{
+    if(busy)return;
+    const licenseKey=getKey();
+    if(!licenseKey)return;
+    if(!window.confirm("Resgatar este código na sua conta Google conectada? O prazo começará agora."))return;
+    busy=true;el("redeem").disabled=true;el("revoke").disabled=true;
+    try{
+      const result=await call("redeemPremiumKey",{licenseKey});
+      if(result.activated!==true)throw new Error("Resgate não confirmado pelo servidor.");
+      const expiry=result.lifetime?"vitalício":new Date(result.expiresAt).toLocaleString("pt-BR",{dateStyle:"medium",timeStyle:"short"});
+      el("key-entry").value="";
+      setStatus("Licença ativada no Firebase. Validade: "+expiry+". A distribuição dos APKs segue desativada.","ok");
+    }catch(e){setStatus(e.message||"Não foi possível resgatar.","error");}
+    finally{busy=false;el("redeem").disabled=false;el("revoke").disabled=false;}
+  });
+  el("reveal").addEventListener("click",()=>{
+    if(!lastKey)return;
+    revealed=!revealed;
+    el("license").textContent=revealed?lastKey:"PS-••••••-••••••-••••••-••••••";
+    el("reveal").textContent=revealed?"Ocultar código":"Mostrar código";
+  });
+  el("copy").addEventListener("click",async()=>{
+    if(!lastKey)return;
+    try{await navigator.clipboard.writeText(lastKey);setStatus("Código copiado. Não o compartilhe publicamente.","ok")}
+    catch{setStatus("Não foi possível copiar automaticamente. Selecione o código exibido.","error")}
+  });
+  onAuthStateChanged(auth,user=>{
+    el("login").hidden=!!user;
+    el("logout").hidden=!user;
+    if(user){overview();}
+    else{
+      adminAuthenticated=false;
+       el("admin-nav").hidden=true;
+       selectScreen(currentScreen);
+       lastKey="";revealed=false;el("premium-keys-list").replaceChildren();
+      keyCursor="";keyCount=0;
+    }
+  });
+</script>
+</body>
+</html>

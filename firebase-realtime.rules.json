@@ -164,6 +164,14 @@
           }
         }
       }
+    },
+    "distribution": {
+      ".read": false,
+      ".write": false
+    },
+    "premium": {
+      ".read": false,
+      ".write": false
     }
   }
 }

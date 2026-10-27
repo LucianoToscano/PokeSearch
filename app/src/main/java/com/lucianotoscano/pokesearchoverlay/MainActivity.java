@@ -317,7 +317,8 @@ public class MainActivity extends Activity {
             homeLightMode?Color.rgb(243,248,251):Color.rgb(24,31,46),11,0));
         dualOverlayRow.setPadding(d(7),d(4),d(7),d(4));
         overlayControl=makeIcon(R.drawable.sem_filtro,"Ativar Pokébola 1");
-        secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,"Ativar Pokébola 2");
+        secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,
+            PremiumAccess.controlled()?"Pokébola 2 Premium - requer licença":"Ativar Pokébola 2");
         ImageView[] paired={overlayControl,secondaryOverlayControl};
         for(int i=0;i<paired.length;i++){
             final int which=i;
@@ -359,6 +360,10 @@ public class MainActivity extends Activity {
         brandTitle.setImageResource(R.drawable.ps_home_official_wordmark);
         brandTitle.setScaleType(ImageView.ScaleType.FIT_CENTER);
         brandTitle.setContentDescription("PokeSearch");
+        // Owner-only entry; the Cloud Function checks the admin custom claim.
+        if(PremiumAccess.controlled())brandTitle.setOnLongClickListener(v->{
+            PremiumAdminDialog.show(this);return true;
+        });
         TextView brandSubtitle=homeText("POKÉMON GO",9,
             homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
         // Original wordmark: 2172 × 724 (3:1). Avoid fixed 118×36 squeezing.
@@ -984,6 +989,23 @@ public class MainActivity extends Activity {
             refreshHomeOverlay();
             return;
         }
+        if(PremiumAccess.controlled()){
+            PremiumAccess.verify(this,(allowed,premium)->{
+                if(!allowed){
+                    Toast.makeText(this,"Esta versão foi desativada pelo administrador ou está offline.",
+                        Toast.LENGTH_LONG).show();
+                }else if(!premium){
+                    PremiumPurchaseDialog.show(this,()->{
+                        if(PremiumAccess.permitted(true))startSecondaryOverlayAuthorized();
+                    });
+                }else startSecondaryOverlayAuthorized();
+            });
+            return;
+        }
+        startSecondaryOverlayAuthorized();
+    }
+    private void startSecondaryOverlayAuthorized(){
+        if(PremiumAccess.controlled()&&!PremiumAccess.permitted(true))return;
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:"+getPackageName())),101);
@@ -1320,6 +1342,13 @@ public class MainActivity extends Activity {
         missionResumed=true;
         syncMissionClock(hasWindowFocus());
         FirebaseStats.setHomeVisible(this,true);
+        if(PremiumAccess.controlled())PremiumAccess.verify(this,(allowed,premium)->{
+            if(!allowed){
+                stopService(new Intent(this,OverlayService.class));
+                stopService(new Intent(this,SecondaryOverlayService.class));
+            }else if(!premium)stopService(new Intent(this,SecondaryOverlayService.class));
+            refreshHomeOverlay();
+        });
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
@@ -1949,6 +1978,14 @@ public class MainActivity extends Activity {
         }
     }
     private void startOverlay(){
+        if(PremiumAccess.controlled()&&!PremiumAccess.permitted(false)){
+            PremiumAccess.verify(this,(allowed,premium)->{
+                if(allowed)startOverlay();
+                else Toast.makeText(this,"Esta versão está bloqueada ou sem validação online.",
+                    Toast.LENGTH_LONG).show();
+            });
+            return;
+        }
         CookieManager.getInstance().flush();
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,

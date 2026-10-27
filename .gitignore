@@ -39,3 +39,13 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Premium private backend / Netlify local state
+node_modules/
+.netlify/
+.env
+.env.*
+*service-account*.json
+*serviceAccount*.json
+firebase-adminsdk-*.json
+*.secret.json

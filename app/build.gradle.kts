@@ -54,6 +54,10 @@ val testKeyPassword = System.getenv("POKE_TEST_KEY_PASSWORD")
 val testSigningFields = listOf(testKeyFile, testStorePassword, testKeyAlias, testKeyPassword)
 val testSigningComplete = testSigningFields.all { !it.isNullOrBlank() }
 val testSigningRequired = System.getenv("POKE_TEST_SIGNING_REQUIRED") == "true"
+val controlledDistribution = System.getenv("POKE_CONTROLLED_DISTRIBUTION") == "true"
+if (controlledDistribution && (System.getenv("POKE_RELEASE_KEYSTORE").isNullOrBlank() ||
+        releaseCertificateSha256 != officialTestCertificateSha256))
+    throw org.gradle.api.GradleException("Controlled APK requires the verified permanent release signer")
 // A local, read-only scrapbook demo may be visible in the explicitly signed QA
 // candidate only. Ordinary Release builds default to false, regardless of prefs.
 // Moderated online QA is a distinct opt-in; no ordinary release receives these writes.
@@ -88,6 +92,8 @@ android {
         buildConfigField("String", "EXPECTED_ASSET_SHA256", "\"$assetChecksums\"")
         buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA", "false")
         buildConfigField("boolean", "SCRAPBOOK_ONLINE_QA", "false")
+        buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "false")
+        buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-api.netlify.app/api/premium\"")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
     }
@@ -126,6 +132,12 @@ android {
             }
         }
         getByName("release") {
+            buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "$controlledDistribution")
+            // Only a verified-signer, explicitly controlled QA build moves to Deus Ivern.
+            // Default/public builds retain the original backend and permissions.
+            if (controlledDistribution) {
+                buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-ivern.netlify.app/api/premium\"")
+            }
             // True ONLY in this isolated signed QA workflow. Never on public Releases.
             buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA",
                 if (scrapbookStage1Qa) "true" else "false")
