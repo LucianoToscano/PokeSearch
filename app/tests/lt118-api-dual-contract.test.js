@@ -28,9 +28,11 @@ test("401 clears JWT; 429 supports seconds and HTTP date",()=>{
  assert.match(browser,/Date.parse\(raw\)/);
  assert.match(overlay,/rate-limited/); // Error is not transient DOM fallback
 });
-test("API plan cap retained while UI renders at most ten",()=>{
+test("API uses provider-authorized cap, Free 10 and VIP 25",()=>{
  const large=contract.normalizeResponse({cap:100,results:[]},{nowMs:Date.now()});
- assert.equal(large.ok,true);assert.equal(large.serverCap,100);assert.equal(large.displayCap,10);
+ assert.equal(large.ok,true);assert.equal(large.serverCap,100);assert.equal(large.displayCap,100);
+ const vip=contract.normalizeResponse({cap:25,results:[]},{nowMs:Date.now()});
+ assert.equal(vip.serverCap,25);assert.equal(vip.displayCap,25);
  const anon=contract.normalizeResponse({cap:5,results:[]},{nowMs:Date.now()});
  assert.equal(anon.serverCap,5);assert.equal(anon.displayCap,5);
 });
