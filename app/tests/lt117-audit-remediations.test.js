@@ -26,7 +26,7 @@ test("ten valid favorites are queued in bounded batches",()=>{
  assert.match(service,/FAVORITE_ALERT_BATCH_INTERVAL_MS=12_000L/);
  assert.match(service,/queuedFavoriteAlerts\.entrySet\(\)\.removeIf/);
  assert.match(service,/if\(!queuedFavoriteAlerts\.isEmpty\(\)\)/);
- assert.match(service,/recentFavoriteAlertExpiries\.put\(success\.key,success\.expiry\)/);
+ assert.match(service,/recentFavoriteAlertExpiries\.put\(pending\.key,pending\.expiry\)/);
  assert.doesNotMatch(service,/if\(count\+\+>=5\)break/);
 });
 test("Firebase private rules protect IDs, with temporary LT125 legacy counting compatibility",()=>{
