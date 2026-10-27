@@ -1024,6 +1024,9 @@ exports.adminRestorePremiumBackup=onCall({region:REGION,secrets:[KEY_SECRET]},as
  const sessionRef=getDatabase().ref("premiumBackupImports/active");
  const importedSections=BACKUP_ALL;
  if(phase==="prepare"){
+   const importHash=String(input.backupSha256||"");
+   if(!/^[0-9a-f]{64}$/.test(importHash))
+     throw new HttpsError("invalid-argument","Identificador do arquivo de backup inválido.");
    if(input.format!==BACKUP_FORMAT||input.projectId!=="pokesearch-lt"||
       input.vaultFingerprint!==backupFingerprint())
      throw new HttpsError("failed-precondition",
@@ -1038,6 +1041,7 @@ exports.adminRestorePremiumBackup=onCall({region:REGION,secrets:[KEY_SECRET]},as
        "O Firebase já possui dados Premium/controle. Não importe sobre dados existentes. Ao trocar somente o Netlify, basta apontar ao Firebase atual.");
    const session={id:crypto.randomUUID(),uid,format:BACKUP_FORMAT,
      createdAt:Date.now(),expiresAt:Date.now()+45*60000,
+     backupSha256:importHash,
      vaultFingerprint:backupFingerprint(),state:"restoring"};
    const created=await sessionRef.transaction(old=>{
      if(old&&old.state==="restoring"&&old.expiresAt>Date.now())return;
@@ -1046,6 +1050,17 @@ exports.adminRestorePremiumBackup=onCall({region:REGION,secrets:[KEY_SECRET]},as
    if(!created.committed)
      throw new HttpsError("aborted","Já existe restauração em andamento.");
    return {sessionId:session.id,ready:true,expiresAt:session.expiresAt};
+ }
+ if(phase==="resume"){
+   const existing=(await sessionRef.get()).val()||{};
+   if(existing.uid!==uid||existing.state!=="restoring"||
+      existing.expiresAt<Date.now()||
+      existing.vaultFingerprint!==backupFingerprint()||
+      existing.backupSha256!==String(input.backupSha256||""))
+     throw new HttpsError("failed-precondition",
+       "Não há restauração retomável para este arquivo e administrador.");
+   return {sessionId:existing.id,ready:true,resumed:true,
+     expiresAt:existing.expiresAt};
  }
  const sessionId=String(input.sessionId||"");
  if(!/^[0-9a-f-]{36}$/i.test(sessionId))
