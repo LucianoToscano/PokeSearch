@@ -133,6 +133,11 @@ android {
         }
         getByName("release") {
             buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "$controlledDistribution")
+            // Only a verified-signer, explicitly controlled QA build moves to Deus Ivern.
+            // Default/public builds retain the original backend and permissions.
+            if (controlledDistribution) {
+                buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-ivern.netlify.app/api/premium\"")
+            }
             // True ONLY in this isolated signed QA workflow. Never on public Releases.
             buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA",
                 if (scrapbookStage1Qa) "true" else "false")
