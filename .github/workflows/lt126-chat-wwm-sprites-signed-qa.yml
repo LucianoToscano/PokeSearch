@@ -3,7 +3,9 @@ on:
   push:
     branches: [fix/lt126-firebase-chat-wwm-catalog-20261027]
     paths:
-      - '.github/workflows/lt125-go-costumes-counts-signed-qa.yml'
+      - '.github/workflows/lt126-chat-wwm-sprites-signed-qa.yml'
+      - 'app/scripts/import_wwm_catalog.py'
+      - 'app/scripts/**'
       - 'app/scripts/build_sprite_bundle.py'
       - 'app/scripts/sprite-sha256.lock.json'
       - 'firebase-realtime.rules.json'
