@@ -75,9 +75,22 @@ export default async function handler(req,context){
    const {backend,auth}=initialize();
    if(action==="webhook"){
      const url=new URL(req.url);
-     if(url.searchParams.get("type")!=="order")
-       return response({error:"Unsupported webhook topic"},400);
      const query=Object.fromEntries(url.searchParams.entries());
+     // Mercado Pago's Orders simulator may provide topic/id only in its JSON body.
+     // Treat those as routing hints ONLY; the HMAC signature below must still
+     // authenticate the exact order id before any reconciliation.
+     let event={};
+     try{
+       const parsed=await req.json();
+       if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed))event=parsed;
+     }catch{ /* A missing body can never bypass HMAC validation. */ }
+     const queryTopic=url.searchParams.get("type");
+     if((queryTopic&&queryTopic!=="order")||
+        (event.type&&event.type!=="order")||
+        (!queryTopic&&event.type!=="order"))
+       return response({error:"Unsupported webhook topic"},400);
+     if(!query["data.id"]&&typeof event.data?.id==="string")
+       query["data.id"]=event.data.id;
      let outStatus=200,outBody="ok";
      // Verified business logic calls Mercado Pago GET; webhook body cannot issue a license.
      const request={method,query,get:header=>req.headers.get(header)};
