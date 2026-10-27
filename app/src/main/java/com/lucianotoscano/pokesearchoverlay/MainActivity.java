@@ -362,7 +362,15 @@ public class MainActivity extends Activity {
         brandTitle.setContentDescription("PokeSearch");
         // Owner-only entry; the Cloud Function checks the admin custom claim.
         if(PremiumAccess.controlled())brandTitle.setOnLongClickListener(v->{
-            PremiumAdminDialog.show(this);return true;
+            if(PremiumGoogleLogin.isGoogleSignedIn(this)){
+                PremiumAdminDialog.show(this);
+            }else{
+                PremiumGoogleLogin.signIn(this,(ok,message)->{
+                    if(ok)PremiumAdminDialog.show(this);
+                    else Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+                });
+            }
+            return true;
         });
         TextView brandSubtitle=homeText("POKÉMON GO",9,
             homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
@@ -990,6 +998,14 @@ public class MainActivity extends Activity {
             return;
         }
         if(PremiumAccess.controlled()){
+            // Explicit Google login is needed to recover Premium licenses across devices.
+            // Free P1 and the PoGoCoordinates session are independent of this identity.
+            if(!PremiumGoogleLogin.isGoogleSignedIn(this)){
+                PremiumPurchaseDialog.show(this,()->{
+                    if(PremiumAccess.permitted(true))startSecondaryOverlayAuthorized();
+                });
+                return;
+            }
             PremiumAccess.verify(this,(allowed,premium)->{
                 if(!allowed){
                     Toast.makeText(this,"Esta versão foi desativada pelo administrador ou está offline.",
