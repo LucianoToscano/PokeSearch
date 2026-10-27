@@ -36,6 +36,7 @@ jobs:
           node --check functions/index.js
           node --check functions/premium.js
           node app/tests/premium-controlled-distribution.test.js
+          node functions/tests/premium-webhook.test.js
       - name: Preserve existing dual overlay regressions
         run: |
           node app/tests/lt104-dual-overlays.test.js
