@@ -66,6 +66,10 @@ const cleanEmail=value=>String(value||"").trim().toLowerCase();
 const validEmail=email=>/^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,30}$/.test(email)&&email.length<=254;
 const recipientHash=email=>crypto.createHmac("sha256",KEY_SECRET.value())
  .update("pokesearch-email-recipient-v1:"+cleanEmail(email)).digest("hex");
+const maskedEmail=email=>{
+ const at=email.indexOf("@");
+ return email.slice(0,Math.min(2,at))+"***@"+email.slice(at+1);
+};
 const campaignOffer=(config,now=Date.now())=>{
  const c=config?.freeYearCampaign||{};
  const startsAt=Number(c.startsAt||0),endsAt=Number(c.endsAt||0),
@@ -489,7 +493,7 @@ exports.adminIssuePremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async r
  const expiry=periodExpiry(base,duration);
  await ref.set({kind:"manual",duration,uid:targetUid||null,createdBy:actor,vault:sealCode(plain),
    ...(email?{recipientEmailHash:recipientHash(email),
-       recipientEmailHint:email.replace(/^(.{1,2}).*(@.*)$/,"$1***$2")}:{}),
+       recipientEmailHint:maskedEmail(email)}:{}),
    createdAt:now,revoked:false,...(targetUid?
    {claimedAt:now,...(expiry===null?{}:{expiresAt:expiry})}:{})});
  if(targetUid){
