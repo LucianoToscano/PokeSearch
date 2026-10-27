@@ -47,7 +47,7 @@ public final class EncounterAlertText {
         if(species.isEmpty())species="Pokémon";
         String dex=clean(number,6).replace("#","");
         String id=dex.matches("[0-9]{1,4}")?" #"+dex:"";
-        return quality(iv,percent,shiny,mode,rank)+" · "+species+id;
+        return species+id+" · "+quality(iv,percent,shiny,mode,rank);
     }
     public static String details(boolean favorite,boolean secondary,String cp,
                                  String iv,String percent,String form,String costume,
