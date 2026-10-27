@@ -94,7 +94,12 @@
   // the *default* form ID. An unknown/nondefault numeric form never uses base.
   const wwm=typeof globalThis!=="undefined"?globalThis.PokeSearchWWMCatalog:null;
   const metadata=wwm&&wwm.species&&wwm.species[dex];
-  const defaultId=metadata&&nameKey(metadata[0])===species?Number(metadata[1]):0;
+  // These two defaults were independently checked against PokeAPI #710/#711
+  // and the pinned WatWowMap defaultFormId 2641/2645, even without the
+  // optional catalog bundle in older WebViews.
+  const auditedAverageId=dex===710?2641:dex===711?2645:0;
+  const defaultId=metadata&&nameKey(metadata[0])===species?
+    Number(metadata[1]):auditedAverageId;
   const formId=card.form_id!=null?Number(card.form_id):card.formId!=null?Number(card.formId):0;
   if(!Number.isInteger(formId)||formId<0)return false;
   if(formId!==0&&(!defaultId||formId!==defaultId))return false;
