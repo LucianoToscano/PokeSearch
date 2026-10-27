@@ -65,6 +65,31 @@ COSTUME_FILES = {
     "costumes/6-goggles-2026-shiny.png": (
         "pm6.fGOGGLES_2026.s.icon.png",
         "4ff140a084be11ab5bab803713eb59e754823083"
+    ),
+    # Halloween Mischief 2021 official GO costumes; immutable upstream blobs.
+    "costumes/25-halloween-2021.png": (
+        "pm25.cHALLOWEEN_2021_NOEVOLVE.icon.png",
+        "5e4e96b15cfe4f0f53b051e2559562befb0e67c2"
+    ),
+    "costumes/25-halloween-2021-shiny.png": (
+        "pm25.cHALLOWEEN_2021_NOEVOLVE.s.icon.png",
+        "b23ab862eee002873d49b4e2e83576064962d553"
+    ),
+    "costumes/393-halloween-2021.png": (
+        "pm393.cHALLOWEEN_2021_NOEVOLVE.icon.png",
+        "8b32f8f2b1fc8a9cc664ad3775664a7b6adaa434"
+    ),
+    "costumes/393-halloween-2021-shiny.png": (
+        "pm393.cHALLOWEEN_2021_NOEVOLVE.s.icon.png",
+        "421f925fd8a0797529a09d6042e46c700d26540c"
+    ),
+    "costumes/426-halloween-2021.png": (
+        "pm426.cHALLOWEEN_2021_NOEVOLVE.icon.png",
+        "24f1d017f85fe429c8ead5b0fc64485f034a47f7"
+    ),
+    "costumes/426-halloween-2021-shiny.png": (
+        "pm426.cHALLOWEEN_2021_NOEVOLVE.s.icon.png",
+        "ac5464c1b4c038569b69b860f9703191de85d872"
     )
 }
 
