@@ -19,6 +19,7 @@ if(!getApps().length&&!useNetlify)initializeApp();
 const MP_TOKEN=defineSecret("POKE_MP_ACCESS_TOKEN");
 const MP_TEST_TOKEN=defineSecret("POKE_MP_TEST_ACCESS_TOKEN");
 const MP_WEBHOOK_SECRET=defineSecret("POKE_MP_WEBHOOK_SECRET");
+const MP_LIVE_WEBHOOK_SECRET=defineSecret("POKE_MP_LIVE_WEBHOOK_SECRET");
 const MP_WEBHOOK_URL=defineSecret("POKE_MP_WEBHOOK_URL");
 const KEY_SECRET=defineSecret("POKE_PREMIUM_KEY_SECRET");
 const REGION="us-central1", MONTH=30*24*60*60*1000;
@@ -84,7 +85,7 @@ const requestPayment=async(endpoint,liveMode,options={})=>{
  return value;
 };
 /** Every activation requires a fresh GET /v1/orders/{id}, never webhook body fields. */
-async function settlePayment(mpOrderId){
+async function settleOrderPayment(mpOrderId){
  if(!/^ORD[A-Za-z0-9_-]{10,90}$/.test(String(mpOrderId)))return false;
  const linked=(await root().child("orderIndex").child(mpOrderId).get()).val();
  if(!linked||!/^[0-9a-f-]{36}$/.test(String(linked.orderId||"")))return false;
@@ -142,17 +143,75 @@ async function settlePayment(mpOrderId){
  await ref.update({status:"approved",licensed:true,approvedAt:now});
  return true;
 }
+
+/** Payments API /v1/payments. Old Orders records remain supported separately.
+ * No license is granted from webhook JSON: always fetch the payment from MP.
+ */
+async function settlePixPayment(mpPaymentId){
+ const id=String(mpPaymentId||"");
+ if(!/^[0-9]{1,24}$/.test(id))return false;
+ const indexed=(await root().child("paymentIndex").child(id).get()).val();
+ if(!indexed||!/^[0-9a-f-]{36}$/.test(String(indexed.orderId||"")))return false;
+ const orderId=indexed.orderId;
+ const ref=root().child("orders").child(orderId),stored=(await ref.get()).val();
+ if(!stored||stored.mpPaymentId!==id||stored.processor!=="payments"||!stored.uid)return false;
+ const payment=await requestPayment("/v1/payments/"+id,stored.liveMode===true);
+ if(String(payment.id)!==id||payment.external_reference!==orderId||
+    payment.payment_method_id!=="pix"||payment.currency_id!=="BRL"||
+    payment.live_mode!==(stored.liveMode===true)||
+    !Number.isFinite(Number(payment.transaction_amount))||
+    Math.round(Number(payment.transaction_amount)*100)!==stored.priceCents)return false;
+ if(["refunded","charged_back"].includes(payment.status)){
+   await ref.update({status:payment.status});
+   const hash=sha(formatKey(orderId)),keyRef=root().child("keys").child(hash);
+   const key=(await keyRef.get()).val();
+   if(key)await keyRef.update({revoked:true,revokedAt:Date.now()});
+   for(const uid of new Set([stored.uid,key?.uid].filter(Boolean))){
+     const entRef=root().child("entitlements").child(uid);
+     await entRef.transaction(v=>{
+       if(!v||v.currentKeyHash!==hash||v.lifetime===true)return;
+       return {...v,revoked:true,revocationReason:"payment_reversed",revokedAt:Date.now()};
+     },undefined,false);
+   }
+   return false;
+ }
+ if(payment.status!=="approved"||payment.status_detail!=="accredited")return false;
+ const now=Date.now(),hash=sha(formatKey(orderId));
+ const entRef=root().child("entitlements").child(stored.uid);
+ const result=await entRef.transaction(old=>{
+   const v=old&&typeof old==="object"?old:{};
+   const paidOrders=v.paidOrders&&typeof v.paidOrders==="object"?v.paidOrders:{};
+   if(paidOrders[orderId]||v.revoked===true)return;
+   paidOrders[orderId]=true;
+   if(v.lifetime===true)return {...v,paidOrders};
+   return {...v,paidOrders,kind:"paid",expiresAt:Math.max(now,Number(v.expiresAt)||0)+MONTH,
+     currentKeyHash:hash};
+ },undefined,false);
+ const ent=result.snapshot?.val()||{};
+ if(!ent.paidOrders?.[orderId])return false;
+ await root().child("keys").child(hash).transaction(v=>
+   v||{kind:"paid",orderId,uid:stored.uid,expiresAt:ent.expiresAt,createdAt:now,transferred:false},
+   undefined,false);
+ await ref.update({status:"approved",licensed:true,approvedAt:now});
+ return true;
+}
+async function settlePayment(id){
+ return /^ORD[A-Za-z0-9_-]{10,90}$/.test(String(id))?
+   settleOrderPayment(id):settlePixPayment(id);
+}
 function signatureValid(req){
  const signature=String(req.get("x-signature")||"");
  const requestId=String(req.get("x-request-id")||"");
  const id=String(req.query["data.id"]||req.query.id||"");
  const ts=(signature.match(/(?:^|,)ts=(\d+)(?:,|$)/)||[])[1];
  const hash=(signature.match(/(?:^|,)v1=([0-9a-f]{64})(?:,|$)/i)||[])[1];
- if(!ts||!hash||!requestId||!/^ORD[A-Za-z0-9_-]{10,90}$/.test(id))return false;
+ if(!ts||!hash||!requestId||!(/^[0-9]{1,24}$/.test(id)||/^ORD[A-Za-z0-9_-]{10,90}$/.test(id)))return false;
  const millis=Number(ts)>1e12?Number(ts):Number(ts)*1000;
  if(!Number.isFinite(millis)||Math.abs(Date.now()-millis)>10*60*1000)return false;
  const manifest="id:"+id.toLowerCase()+";request-id:"+requestId+";ts:"+ts+";";
- const calculated=crypto.createHmac("sha256",MP_WEBHOOK_SECRET.value()).update(manifest).digest();
+ const secret=req.liveModeWebhook===true?MP_LIVE_WEBHOOK_SECRET.value():MP_WEBHOOK_SECRET.value();
+ if(!secret)return false;
+ const calculated=crypto.createHmac("sha256",secret).update(manifest).digest();
  return crypto.timingSafeEqual(calculated,Buffer.from(hash,"hex"));
 }
 exports.checkDistributionAccess=onCall({region:REGION},async request=>{
@@ -174,6 +233,8 @@ exports.createPremiumPix=onCall({region:REGION,
  const price=offer(config).priceCents;
  // Separate test/production tokens: production cannot be selected by the app.
  const liveMode=config.paymentsLiveEnabled===true;
+ if(liveMode&&(!MP_TOKEN.value()||!MP_LIVE_WEBHOOK_SECRET.value()))
+   throw new HttpsError("failed-precondition","Credenciais de produção incompletas.");
  if(config.salesEnabled!==true||!Number.isSafeInteger(price)||price<100||price>100000)
    throw new HttpsError("failed-precondition","Vendas desativadas ou preço não configurado.");
  const createdAt=Date.now();
@@ -188,21 +249,19 @@ exports.createPremiumPix=onCall({region:REGION,
  await ref.set({uid,priceCents:price,versionCode:code,status:"creating",createdAt,liveMode});
  try{
    const amount=(price/100).toFixed(2);
-   const mpOrder=await requestPayment("/v1/orders",liveMode,{
+   const mpPayment=await requestPayment("/v1/payments",liveMode,{
      method:"POST",headers:{"X-Idempotency-Key":orderId},
      body:JSON.stringify({
-       type:"online",total_amount:amount,external_reference:orderId,
-       processing_mode:"automatic",
-       transactions:{payments:[{amount,payment_method:{id:"pix",type:"bank_transfer"}}]},
-       payer:{email}
+       transaction_amount:Number(amount),description:"PokeSearch Premium - Pokebola 2 - 30 dias",
+       payment_method_id:"pix",external_reference:orderId,payer:{email}
      })
    });
-   const qr=mpOrder.transactions?.payments?.[0]?.payment_method?.qr_code;
-   if(!/^ORD[A-Za-z0-9_-]{10,90}$/.test(String(mpOrder.id||""))||!qr)
-      throw new Error("Mercado Pago order has no Pix");
-   const mpOrderId=String(mpOrder.id);
-   await ref.update({mpOrderId,status:"pending"});
-   await root().child("orderIndex").child(mpOrderId).set({orderId});
+   const qr=mpPayment.point_of_interaction?.transaction_data?.qr_code;
+   const mpPaymentId=String(mpPayment.id||"");
+   if(!/^[0-9]{1,24}$/.test(mpPaymentId)||typeof qr!=="string"||!qr)
+     throw new Error("Mercado Pago payment has no Pix");
+   await ref.update({mpPaymentId,processor:"payments",status:"pending"});
+   await root().child("paymentIndex").child(mpPaymentId).set({orderId});
    return {orderId,pixCode:qr,priceCents:price,status:"pending"};
  }catch(error){
    await ref.update({status:"error"});
@@ -210,10 +269,15 @@ exports.createPremiumPix=onCall({region:REGION,
  }
 });
 exports.premiumPixWebhook=onRequest({region:REGION,
- secrets:[MP_TOKEN,MP_TEST_TOKEN,MP_WEBHOOK_SECRET,KEY_SECRET]},async(req,res)=>{
+ secrets:[MP_TOKEN,MP_TEST_TOKEN,MP_WEBHOOK_SECRET,MP_LIVE_WEBHOOK_SECRET,KEY_SECRET]},async(req,res)=>{
  if(req.method!=="POST"){res.status(405).send("method");return;}
  if(!signatureValid(req)){res.status(401).send("signature");return;}
  const paymentId=String(req.query["data.id"]||req.query.id||"");
+ const topic=String(req.query.type||"");
+ if(!((topic==="payment"&&/^[0-9]{1,24}$/.test(paymentId))||
+       (topic==="order"&&/^ORD[A-Za-z0-9_-]{10,90}$/.test(paymentId)))){
+   res.status(400).send("topic");return;
+ }
  try{await settlePayment(paymentId);res.status(200).send("ok");}
  catch(error){console.error("Premium webhook reconciliation failed",error.message);res.status(503).send("retry");}
 });
@@ -223,9 +287,9 @@ exports.getPremiumOrder=onCall({region:REGION,secrets:[MP_TOKEN,MP_TEST_TOKEN,KE
   throw new HttpsError("invalid-argument","Pedido inválido.");
  const ref=root().child("orders").child(orderId),o=(await ref.get()).val();
  if(!o||o.uid!==uid)throw new HttpsError("permission-denied","Pedido não pertence a esta conta.");
- if(o.status==="pending"&&o.mpOrderId){
-   // Recover missed webhooks by fetching the authoritative order.
-   await settlePayment(o.mpOrderId);
+ if(o.status==="pending"&&(o.mpPaymentId||o.mpOrderId)){
+   // Recover missed webhooks by fetching the authoritative payment/order.
+   await settlePayment(o.mpPaymentId||o.mpOrderId);
  }
  const current=(await ref.get()).val()||{};
  const status=current.status==="approved"&&current.licensed?"approved":current.status;
