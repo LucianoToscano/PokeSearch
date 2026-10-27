@@ -34,13 +34,15 @@ usa a nova checagem. Não lançar este candidato sem implantar as funções.
 - APKs antigos **sem este código** não recebem bloqueio remoto retroativo.
 
 ## Fluxo Pix
-1. Comprador informa e-mail e CPF exclusivamente para criar o Pix Mercado Pago; dados não são
-   persistidos na RTDB PokeSearch (o Mercado Pago os processa sob seus próprios termos).
+1. Comprador informa e-mail para criar a order Pix no Mercado Pago. O CPF não é solicitado
+   pelo aplicativo para este checkout e o e-mail não é persistido na RTDB do PokeSearch.
 2. createPremiumPix autentica usuário anon Firebase e aceita preço somente de premium/config.
    Sem configuração explícita (salesEnabled=true e priceCents válido), NÃO há venda.
-3. API POST /v1/payments com X-Idempotency-Key e external_reference de UUID aleatório.
-4. premiumPixWebhook valida HMAC x-signature em tempo constante e consulta pagamento diretamente
-   por GET /v1/payments/{id}. Confere valor, Pix, referência e status=approved.
+3. API POST /v1/orders com processing_mode=automatic, transação Pix, X-Idempotency-Key
+   e external_reference UUID aleatório; lê transactions.payments[0].payment_method.qr_code.
+4. premiumPixWebhook valida HMAC x-signature em tempo constante e consulta a order diretamente
+   por GET /v1/orders/{id}. Confere identificador, live_mode, valor, transação Pix,
+   referência e status=processed/accredited nos níveis da order e do pagamento.
 5. Uma transação sobre a licença registra paidOrders[id] para não adicionar prazo duas vezes.
 6. Cliente consulta getPremiumOrder a cada 12 segundos enquanto checkout está aberto, recuperando
    também eventos de webhook não recebidos. A liberação depende exclusivamente do estado do servidor.
@@ -55,10 +57,15 @@ getPremiumOffer, adminIssuePremiumKey, adminAdjustPremiumExpiry,
 adminDistributionControl, adminPremiumSettings, adminPremiumOverview.
 Nova função HTTPS para webhook: premiumPixWebhook.
 
-Segredos no Google Secret Manager / Firebase Functions:
-- POKE_MP_ACCESS_TOKEN: token privado de API da conta Mercado Pago **produtora**.
+Segredos no Google Secret Manager / Firebase Functions (SEPARAR teste e produção):
+- POKE_MP_TEST_ACCESS_TOKEN: token privado de TESTE, para homologação sem cobrança real.
+- POKE_MP_ACCESS_TOKEN: token privado de PRODUÇÃO, apenas após rotação da credencial
+  exposta e liberação deliberada; não utilizar para testes.
+- premium/config/paymentsLiveEnabled precisa ser true para usar o token de produção.
+  Ausente ou false usa somente o token de teste.
 - POKE_MP_WEBHOOK_SECRET: segredo do webhook da aplicação Mercado Pago.
-- POKE_MP_WEBHOOK_URL: URL **real** do endpoint premiumPixWebhook após deploy.
+- URL pública do webhook (premiumPixWebhook) configurada no painel Mercado Pago,
+  tópico de Orders. Não é necessário armazenar esta URL como segredo.
 - POKE_PREMIUM_KEY_SECRET: segredo longo e aleatório; preservar entre versões e reinicializações.
 
 NUNCA guardar segredos ou CPF em GitHub, aplicativo Android, JSON de regras, logs,
@@ -75,7 +82,10 @@ premium/config/salesEnabled=true APENAS após checkout homologado.
 Esses caminhos não têm leitura/escrita pública.
 Também testar que o projeto e a instância RTDB correspondem ao deploy real, configurar
 App Check/Play Integrity para APK sideloaded e avaliar faturamento Cloud Functions v2.
-NÃO ligar vendas antes da homologação de pagamento TESTE, estorno e renovação.
+NÃO ligar vendas reais antes da homologação de pagamento TESTE, estorno e renovação.
+IMPORTANTE: a Public Key começa com APP_USR e não é suficiente para autenticar
+requisições de Orders no backend. O Access Token de produção compartilhado anteriormente
+em imagem deverá ser renovado/revogado antes de qualquer uso, nunca adicionado ao repositório.
 
 ## Testes e rollout necessários
 1. Node --check de functions/index.js e functions/premium.js; 18 contratos estáticos,
@@ -109,3 +119,11 @@ sem quotas: uma licença por emissão, período individual (15d/1m/3m/6m/12m/vit
 e escolha explícita do destinatário. O proprietário pode gerar quantas licenças
 vitalícias ou temporárias quiser. As chaves manuais gratuitas não alteram o
 checkout Pix padrão de 30 dias; o preço da oferta é determinado pelo servidor.
+
+## Migração Mercado Pago Orders API — 27/10/2026
+A aplicação PokeSearch foi criada pelo proprietário com Checkout Transparente / Orders API.
+Migração em branch de QA: POST/GET /v1/orders, status processed/accredited,
+assinatura HMAC e separação explícita entre token de teste e de produção. Nenhum
+segredo real foi enviado ao GitHub. Public Key não é necessária ao checkout Pix
+executado integralmente pelo backend; não é seguro substituir Access Token por ela.
+Fontes: https://www.mercadopago.com.br/developers/pt/docs/checkout-api-orders/payment-integration/websites/pix
