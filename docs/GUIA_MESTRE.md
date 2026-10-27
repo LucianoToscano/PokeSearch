@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT125 QA-R2 — Recuperação de sprites vazias no Samsung (26/10/2026)
+
+- **Evidência:** screenshot do usuário exibiu Noibat #714 sem sprite no card (◇) e vários círculos (◉) na coluna de resultados.
+- **Causa de código isolada:** `probe.js` fornece `form:""` em espécies comuns sem forma etiquetada; `sprite_offline.js` só recuperava base local se o campo fosse NORMAL/DEFAULT/nome da espécie. Logo Noibat podia não usar o PNG base/shiny já presente no APK. Não inferir que todas as imagens do print têm a mesma causa sem logs físicos.
+- **Correção:** tabela exata 1.025 Dex/nomes do catálogo local, verificação de identidade antes de resolver base/shiny em forma vazia, bloqueio de flags de traje/variante/região e de ID/nome incompatível. Não alterar resolução de formas e trajes especiais, nem API/DOM, Firebase ou P1/P2.
+- **Latência:** `dock.html` inicia fallback verificado quando um IMG `complete` falhou antes de registrar listeners.
+- **Teste:** `app/tests/lt125-samsung-empty-form-sprites.test.js` confere 2.050 rotas (1.025 × normal/shiny), Noibat e bloqueios de substituição falsa.
+- **Novo artefato QA separado:** LT125 R2 — `0.01.25/54330`, nome `PokeSearch-v0.01.25-LT125-Samsung-Sprites-QA-R2.apk`. Não substituir a QA original `0.01.25/54329`; só anunciar se CI/assinatura/sha256 confirmados.
+- **Fontes:** inventário de 95 entradas enviado pelo usuário é referência de pesquisa, não 95 integrações instaladas; detalhes em [LT125 Samsung/Fontes](POKESEARCH_LT125_QA_R2_SPRITES_SAMSUNG_FONTES.md). Direitos de terceiros exigem verificação própria.
+- **Pendente:** homologação Samsung, Firebase live real, Chat entre dois usuários, PR #80 Draft/merge estável. Preservar main LT124 até os testes de produção.
+
+
 ### LT125 — Evidência do APK QA e auditoria dos bytes (26/10/2026)
 - GitHub Actions QA assinado SUCCESS: [workflow #40433868388](https://github.com/LucianoToscano/PokeSearch/actions/runs/40433868388) e [artefato #12703436369](https://github.com/LucianoToscano/PokeSearch/actions/runs/40433868388/artifacts/12703436369). Sucessos dos testes Node/Java, JDK17, Gradle8.11.1, SDK36, R8, Android assinatura v2 e assembleRelease.
 - APK: PokeSearch-v0.01.25-LT-Costumes-Firebase-QA.apk; versionName 0.01.25; versionCode 54329; applicationId com.lucianotoscano.pokesearch; SOURCE_COMMIT d5382398b972b29cbe0b45cf446157a9d0317dcf. APK 42.320.719 bytes, SHA-256 71fb69c82d1ee2c4db8a909d695b557a3f6e6fe71ba7aee9edd772d6ee2618df. Certificado v2 SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e.
