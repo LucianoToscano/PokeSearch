@@ -489,7 +489,8 @@ final class CommunityScrapbookOnline {
                 announcement.setGravity(Gravity.CENTER_VERTICAL);
                 // Prefer exact pinned costume pixels. NEVER substitute base for
                 // an unrecognized costume or special form.
-                String costumeAsset=CaptureChatFormat.exactCostumeAsset(species,shiny);
+                String costumeAsset=CaptureChatFormat.exactCostumeAsset(
+                    species,shiny,captureCard.gender);
                 int dex=costumeAsset.isEmpty()?
                     CaptureChatFormat.speciesDex(activity,species):0;
                 try(java.io.InputStream in=!costumeAsset.isEmpty()?
@@ -504,8 +505,8 @@ final class CommunityScrapbookOnline {
                             sprite.setContentDescription("Sprite "+
                                 (shiny?"Shiny ":"")+"de "+species);
                             LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(
-                                dp(activity,27),dp(activity,27));
-                            lp.rightMargin=dp(activity,2);
+                                dp(activity,36),dp(activity,36));
+                            lp.rightMargin=dp(activity,3);
                             announcement.addView(sprite,lp);
                         }
                     }
@@ -517,7 +518,7 @@ final class CommunityScrapbookOnline {
                 body.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 announcement.addView(body,new LinearLayout.LayoutParams(0,-2,1));
                 bubble.addView(announcement);
-                addCaptureBadges(bubble,captureCard,mine?clock+" ✓":clock);
+                addCaptureBadges(bubble,captureCard,clock);
             }else{
                 TextView body=text(message,13,false);
                 body.setTextColor(ink);body.setMaxLines(8);
@@ -574,7 +575,7 @@ final class CommunityScrapbookOnline {
                     view.setImageBitmap(icon);
                     view.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     LinearLayout.LayoutParams ilp=new LinearLayout.LayoutParams(
-                        dp(activity,12),dp(activity,12));
+                        dp(activity,16),dp(activity,16));
                     ilp.rightMargin=dp(activity,2);
                     chip.addView(view,ilp);
                 }
@@ -593,7 +594,7 @@ final class CommunityScrapbookOnline {
             // expandable Details block, extra size/sex row or duplicate IV.
             LinearLayout line=new LinearLayout(activity);
             line.setOrientation(LinearLayout.HORIZONTAL);
-            line.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
+            line.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
             line.setPadding(0,dp(activity,1),0,0);
             android.widget.HorizontalScrollView horizontal=
                 new android.widget.HorizontalScrollView(activity);
@@ -601,11 +602,13 @@ final class CommunityScrapbookOnline {
             horizontal.setHorizontalScrollBarEnabled(false);
             LinearLayout badges=new LinearLayout(activity);
             badges.setOrientation(LinearLayout.HORIZONTAL);
-            badges.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
+            badges.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
             horizontal.addView(badges,new android.widget.HorizontalScrollView.LayoutParams(-2,-2));
             String rarity=c.rarity();
             if(!rarity.isEmpty()){
-                String icon="result-icons/"+rarity.toLowerCase(java.util.Locale.ROOT)+".png";
+                String icon="result-icons/modes/"+
+                    (rarity.toLowerCase(java.util.Locale.ROOT).contains("nundo")?
+                    "0Star.png":"3Star.png");
                 addBadge(badges,icon,rarity,ink);
             }else if(!c.iv.isEmpty()){
                 addBadge(badges,"result-icons/modes/StarIVRaw.png",c.iv,ink);

@@ -182,6 +182,36 @@ public class MainActivity extends Activity {
     private String pendingExportText="";
     private String preferredLoginProvider="";
     private String observedLoginProvider="";
+    private final android.os.Handler availabilityHandler=
+        new android.os.Handler(android.os.Looper.getMainLooper());
+    private android.app.AlertDialog availabilityDialog;
+    private final Runnable availabilityTick=new Runnable(){
+        @Override public void run(){
+            if(activityClosing)return;
+            AppAvailability.refresh(MainActivity.this,MainActivity.this::applyAppAvailability);
+            availabilityHandler.postDelayed(this,90000L);
+        }
+    };
+    private void applyAppAvailability(AppAvailability.State state){
+        if(activityClosing||isFinishing())return;
+        if(!state.allowed){
+            stopService(new Intent(this,OverlayService.class));
+            stopService(new Intent(this,SecondaryOverlayService.class));
+            refreshHomeOverlay();
+            if(availabilityDialog==null||!availabilityDialog.isShowing()){
+                availabilityDialog=new AlertDialog.Builder(this)
+                    .setTitle(state.maintenance?"PokeSearch em manutenção":"Versão desativada")
+                    .setMessage(state.reason())
+                    .setCancelable(false)
+                    .setPositiveButton("Fechar",(dialog,which)->finish())
+                    .create();
+                availabilityDialog.show();
+            }
+        }else if(availabilityDialog!=null&&availabilityDialog.isShowing()){
+            availabilityDialog.dismiss();
+            availabilityDialog=null;
+        }
+    }
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         if (!IntegrityGuard.verify(this)) {
@@ -317,7 +347,8 @@ public class MainActivity extends Activity {
             homeLightMode?Color.rgb(243,248,251):Color.rgb(24,31,46),11,0));
         dualOverlayRow.setPadding(d(7),d(4),d(7),d(4));
         overlayControl=makeIcon(R.drawable.sem_filtro,"Ativar Pokébola 1");
-        secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,"Ativar Pokébola 2");
+        secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,
+            PremiumAccess.controlled()?"Pokébola 2 Premium - requer licença":"Ativar Pokébola 2");
         ImageView[] paired={overlayControl,secondaryOverlayControl};
         for(int i=0;i<paired.length;i++){
             final int which=i;
@@ -345,6 +376,20 @@ public class MainActivity extends Activity {
         dualOverlayRow.setVisibility(View.VISIBLE);
         // Insert after header, preserving top toolbar space.
         screen.addView(dualOverlayRow,dualLp);
+        if(PremiumAccess.controlled()){
+            TextView accountPremium=homeText("Conta Premium  ·  Gerenciar / Sair",11,
+                homeLightMode?Color.rgb(34,87,143):Color.rgb(149,203,255),true);
+            accountPremium.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
+            accountPremium.setContentDescription(
+                "Gerenciar ou sair da conta Google Premium");
+            accountPremium.setMinHeight(d(30));
+            accountPremium.setPadding(d(6),0,d(8),d(3));
+            accountPremium.setOnClickListener(v->showPremiumAccountOptions());
+            LinearLayout.LayoutParams accountLp=new LinearLayout.LayoutParams(-1,d(30));
+            accountLp.leftMargin=d(4);accountLp.rightMargin=d(4);
+            accountLp.bottomMargin=d(4);
+            screen.addView(accountPremium,accountLp);
+        }
 
         // HOME-02: icon only at top left; compact actions on the right.
         ImageView brand=new ImageView(this);
@@ -359,6 +404,15 @@ public class MainActivity extends Activity {
         brandTitle.setImageResource(R.drawable.ps_home_official_wordmark);
         brandTitle.setScaleType(ImageView.ScaleType.FIT_CENTER);
         brandTitle.setContentDescription("PokeSearch");
+        // Protected builds only; server validates the admin claim, not the display name.
+        if(PremiumAccess.controlled())brandTitle.setOnLongClickListener(v->{
+            if(PremiumGoogleLogin.isGoogleSignedIn(this))PremiumAdminDialog.show(this);
+            else PremiumGoogleLogin.signIn(this,(ok,message)->{
+                if(ok)PremiumAdminDialog.show(this);
+                else Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+            });
+            return true;
+        });
         TextView brandSubtitle=homeText("POKÉMON GO",9,
             homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
         // Original wordmark: 2172 × 724 (3:1). Avoid fixed 118×36 squeezing.
@@ -978,12 +1032,150 @@ public class MainActivity extends Activity {
             .putBoolean("secondaryInitializedV1",true).apply();
     }
     private void toggleSecondaryOverlay(){
+        if(!AppAvailability.isAllowed(this)){
+            applyAppAvailability(AppAvailability.cached(this));return;
+        }
         if(OverlayService.isSecondaryRunning()){
             stopService(new Intent(this,SecondaryOverlayService.class));
             Toast.makeText(this,"Segunda Pokébola desativada",Toast.LENGTH_SHORT).show();
             refreshHomeOverlay();
             return;
         }
+        if(PremiumAccess.controlled()){
+            if(!PremiumGoogleLogin.isGoogleSignedIn(this)){
+                PremiumPurchaseDialog.show(this,()->{
+                    if(PremiumAccess.permitted(true))startSecondaryOverlayAuthorized();
+                });
+                return;
+            }
+            PremiumAccess.verify(this,(allowed,premium)->{
+                if(!allowed){
+                    Toast.makeText(this,"Esta versão de testes ainda não foi liberada ou está offline.",
+                        Toast.LENGTH_LONG).show();
+                }else if(!premium){
+                    if(PremiumAccess.deviceConflict()){
+                        promptPremiumDeviceTransfer(this::startSecondaryOverlayAuthorized);
+                    }else PremiumPurchaseDialog.show(this,()->{
+                        if(PremiumAccess.permitted(true))startSecondaryOverlayAuthorized();
+                    });
+                }else startSecondaryOverlayAuthorized();
+            });
+            return;
+        }
+        startSecondaryOverlayAuthorized();
+    }
+    private void logoutPremiumAccount(boolean switchAccount){
+        // Never touch the free overlay, its filters, or its saved settings.
+        stopService(new Intent(this,SecondaryOverlayService.class));
+        PremiumAccess.invalidateLease();
+        // Best effort release while the verified Google JWT still exists.
+        // Even with no network, local P2 closes immediately.
+        PremiumAccess.releaseDevice(this,(result,error)->{
+            PremiumGoogleLogin.signOut(this,()->{
+                if(switchAccount){
+                    PremiumGoogleLogin.signIn(this,(success,message)->{
+                        Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+                        refreshHomeOverlay();
+                    });
+                }else{
+                    Toast.makeText(this,error==null?
+                        "Premium desconectado. Sua licença foi preservada.":
+                        "Saiu neste aparelho. Liberação remota pendente de internet.",
+                        Toast.LENGTH_LONG).show();
+                    refreshHomeOverlay();
+                }
+            });
+        });
+        refreshHomeOverlay();
+    }
+    private void showPremiumAccountOptions(){
+        if(!PremiumAccess.controlled())return;
+        if(!PremiumGoogleLogin.isGoogleSignedIn(this)){
+            new AlertDialog.Builder(this)
+                .setTitle("Conta Premium")
+                .setMessage("Entre com Google para gerenciar a Pokébola 2. "+
+                    "A Pokébola 1 continua gratuita.")
+                .setPositiveButton("Entrar com Google",(dialog,which)->
+                    PremiumGoogleLogin.signIn(this,(success,message)->{
+                        Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+                        refreshHomeOverlay();
+                    }))
+                .setNegativeButton("Cancelar",null).show();
+            return;
+        }
+        final String mail=PremiumGoogleLogin.email(this);
+        PremiumAccess.sessionInfo(this,(state,error)->{
+            if(isFinishing()||isDestroyed())return;
+            String license=error!=null?"Não foi possível consultar":
+                Boolean.TRUE.equals(state.get("licenseActive"))?"Ativa":"Inativa ou vencida";
+            String device=error!=null?"Verificação indisponível":
+                String.valueOf(state.getOrDefault("deviceName",""));
+            if(device.trim().isEmpty())device="Nenhum dispositivo autorizado";
+            String status=error!=null?"Offline":
+                Boolean.TRUE.equals(state.get("authorizedHere"))?
+                    "Este aparelho autorizado":"Outro aparelho autorizado";
+            String details="Google: "+mail+"\nLicença: "+license+
+                "\nAparelho: "+device+"\nSessão: "+status+
+                "\n\nSua licença não é cancelada ao sair ou trocar de aparelho. "+
+                "A Pokébola 1 e suas configurações permanecem gratuitas.";
+            String[] choices={"Sair da conta","Trocar conta Google",
+                "Transferir Premium para outro aparelho"};
+            new AlertDialog.Builder(this)
+                .setTitle("Conta Premium · Gerenciar")
+                .setMessage(details)
+                .setItems(choices,(dialog,which)->{
+                    if(which==0)logoutPremiumAccount(false);
+                    else if(which==1)logoutPremiumAccount(true);
+                    else new AlertDialog.Builder(this)
+                        .setTitle("Transferir Premium")
+                        .setMessage("No novo celular, entre com a mesma conta Google "+
+                            "e toque em 'Usar neste aparelho' quando solicitado. "+
+                            "A Pokébola 2 do celular anterior será encerrada "+
+                            "na próxima validação. Você também pode sair neste aparelho.")
+                        .setPositiveButton("Entendi",null)
+                        .setNegativeButton("Sair deste aparelho",(d,w)->
+                            logoutPremiumAccount(false))
+                        .show();
+                })
+                .setNegativeButton("Fechar",null)
+                .show();
+        });
+    }
+    /**
+     * Only the owner of the verified Google session can replace an existing P2
+     * installation. The server decides; client text cannot grant Premium.
+     */
+    void promptPremiumDeviceTransfer(Runnable onActivated){
+        if(!PremiumGoogleLogin.isGoogleSignedIn(this))return;
+        String current=PremiumAccess.activeDeviceName();
+        String message="Sua licença está ativa em "+current+".\\n\\n"+
+            "Deseja usar a Pokébola 2 neste aparelho? O anterior perderá acesso "+
+            "quando renovar sua autorização (normalmente em até 1 minuto). "+
+            "Sua licença e a Pokébola 1 não serão alteradas.";
+        new AlertDialog.Builder(this)
+            .setTitle("Trocar aparelho Premium")
+            .setMessage(message)
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Usar neste aparelho",(dialog,which)->
+                PremiumAccess.transferDevice(this,(result,error)->{
+                    if(error!=null){
+                        Toast.makeText(this,error,Toast.LENGTH_LONG).show();return;
+                    }
+                    PremiumAccess.invalidateLease();
+                    PremiumAccess.verify(this,(allowed,premium)->{
+                        if(premium){
+                            Toast.makeText(this,"Este aparelho agora está autorizado.",
+                                Toast.LENGTH_LONG).show();
+                            if(onActivated!=null)onActivated.run();
+                        }else Toast.makeText(this,
+                            "Não foi possível confirmar a troca. Verifique sua conexão.",
+                            Toast.LENGTH_LONG).show();
+                    });
+                }))
+            .show();
+    }
+    private void startSecondaryOverlayAuthorized(){
+        if(PremiumAccess.controlled()&&!PremiumAccess.permitted(true))return;
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:"+getPackageName())),101);
@@ -1320,6 +1512,16 @@ public class MainActivity extends Activity {
         missionResumed=true;
         syncMissionClock(hasWindowFocus());
         FirebaseStats.setHomeVisible(this,true);
+        applyAppAvailability(AppAvailability.cached(this));
+        availabilityHandler.removeCallbacks(availabilityTick);
+        availabilityHandler.post(availabilityTick);
+        if(PremiumAccess.controlled())PremiumAccess.verify(this,(allowed,premium)->{
+            if(!allowed){
+                stopService(new Intent(this,OverlayService.class));
+                stopService(new Intent(this,SecondaryOverlayService.class));
+            }else if(!premium)stopService(new Intent(this,SecondaryOverlayService.class));
+            refreshHomeOverlay();
+        });
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
@@ -1330,6 +1532,7 @@ public class MainActivity extends Activity {
             serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
     }
     @Override protected void onPause(){
+        availabilityHandler.removeCallbacks(availabilityTick);
         missionResumed=false;
         syncMissionClock(false);
         FirebaseStats.setHomeVisible(this,false);
@@ -1949,6 +2152,10 @@ public class MainActivity extends Activity {
         }
     }
     private void startOverlay(){
+        // P1 is always free when this APK is enabled and not in maintenance.
+        if(!AppAvailability.isAllowed(this)){
+            applyAppAvailability(AppAvailability.cached(this));return;
+        }
         CookieManager.getInstance().flush();
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -2260,6 +2467,10 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        availabilityHandler.removeCallbacks(availabilityTick);
+        if(availabilityDialog!=null){
+            availabilityDialog.dismiss();availabilityDialog=null;
+        }
         missionResumed=false;
         missionHandler.removeCallbacks(missionHeartbeat);
         SupportMissionState.homeVisibility(this,false);
