@@ -6,17 +6,31 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="referrer" content="no-referrer">
   <meta name="color-scheme" content="dark">
-  <title>PokeSearch · Painel Premium QA</title>
+  <title>PokeSearch · Administração</title>
   <style>
     :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f3f5f8;background:#0b1019}
     *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#142238 0%,#0b1019 62%);padding:24px 16px}
-    main{max-width:530px;margin:24px auto 70px}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#142238 0%,#0b1019 62%);padding:14px 12px}
+    main{max-width:680px;margin:14px auto 60px}
     header{margin-bottom:24px}
     .eyebrow{font-size:.72rem;letter-spacing:.11em;font-weight:700;color:#76d4e5;text-transform:uppercase}
     h1{font-size:1.6rem;letter-spacing:-.04em;margin:.5rem 0}
     p{color:#b8c1d1;line-height:1.55}
-    .panel{background:#151d2b;border:1px solid #2d3a4b;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 8px 18px #0002}
+    .panel{background:#151d2b;border:1px solid #2d3a4b;border-radius:18px;padding:20px;margin:12px 0;box-shadow:0 8px 18px #0002}
+    .screen-nav{position:sticky;top:0;z-index:10;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:10px 0;background:#0b1019f2;backdrop-filter:blur(12px)}
+    .screen-nav button{background:#223249;color:#d8e7f6;font-size:.83rem;padding:10px 5px;min-height:40px}
+    .screen-nav button[aria-current="page"]{background:#83e0ef;color:#11202b}
+    .stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}
+    .stat{background:#101a29;border:1px solid #2d3a4b;border-radius:13px;padding:12px 9px;min-width:0}
+    .stat span{display:block;color:#9daec4;font-size:.73rem;margin-bottom:6px}
+    .stat strong{font-size:.89rem;overflow-wrap:anywhere}
+    .main-state{font-size:1.1rem;font-weight:800;letter-spacing:-.02em}
+    .main-state.off{color:#ffbdbd}.main-state.on{color:#a5e8c6}
+    .maintenance-cta{display:block;width:100%;margin:14px 0;font-size:1rem;min-height:52px}
+    details.advanced{margin:14px 0 4px;border-top:1px solid #2d3a4b;padding-top:12px}
+    details.advanced summary{cursor:pointer;font-size:.88rem;color:#cbdcf0}
+    .page-hint{margin:5px 0 8px}
+    @media(min-width:600px){.screen-nav{grid-template-columns:repeat(6,minmax(0,1fr))}}
     .quick-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
     .quick-nav a{padding:12px 8px;text-align:center;border:1px solid #3e5b78;
       border-radius:12px;text-decoration:none;color:#d7eaff;background:#20334c;font-size:.85rem;font-weight:700}
@@ -47,49 +61,53 @@
 <body>
 <main>
   <header>
-    <div class="eyebrow">PokeSearch · Homologação</div>
-    <h1>Central Premium</h1>
-    <p>Acesso administrativo protegido. O login Google é validado pelo Firebase e cada operação é autorizada novamente pelo servidor.</p>
+    <div class="eyebrow">PokeSearch · Administração</div>
+    <h1>Central PokeSearch</h1>
+    <p>Controle o aplicativo, as licenças e as vendas em um só lugar.</p>
   </header>
   <section class="panel">
-    <div class="row"><strong>Servidor Firebase LT</strong><span class="pill">Teste seguro</span></div>
-    <p>Use exclusivamente sua conta administradora do projeto <strong>pokesearch-lt</strong>.</p>
+    <div class="row"><strong>Acesso do administrador</strong><span class="pill">Protegido</span></div>
+    <small>Entre com a conta Google administradora autorizada.</small>
     <div class="actions">
       <button id="login">Entrar com Google</button>
       <button id="logout" class="secondary" hidden>Sair</button>
     </div>
     <p id="status" role="status" aria-live="polite">Aguardando login seguro.</p>
   </section>
+  <nav id="admin-nav" class="screen-nav" aria-label="Áreas de administração" hidden>
+    <button type="button" data-screen="home" aria-current="page">Início</button>
+    <button type="button" data-screen="licenses">Licenças</button>
+    <button type="button" data-screen="devices">Aparelhos</button>
+    <button type="button" data-screen="finance">Vendas</button>
+    <button type="button" data-screen="campaign">Campanha</button>
+    <button type="button" data-screen="more">Mais</button>
+  </nav>
   <section class="panel" id="admin" hidden>
-    <h2 style="font-size:1.08rem;margin-top:0">Administração verificada</h2>
-    <nav class="quick-nav" aria-label="Acesso rápido à administração">
-      <a href="#keys-panel">🔑 Licenças ativas</a>
-      <a href="#device-panel">📱 Dispositivos Premium</a>
-      <a href="#pricing-settings">💰 Valores e promoção</a>
-      <a href="#free-campaign-panel">🎁 Campanha FREE</a>
-      <a href="#app-version-panel">🛡️ APKs e manutenção</a>
-      <a href="#backup-panel">💾 Backup e restauração</a>
-      <a href="#partners-panel">🎟️ Cupons e divulgadores</a>
-    </nav>
-    <div class="row"><span class="label">Conta</span><span class="value" id="account"></span></div>
-    <hr class="sep">
-    <div class="row"><span class="label">Licenciamento Premium da homologação</span><span class="value" id="distribution">—</span></div>
-    <hr class="sep">
-    <div class="row"><span class="label">Pokébola 2 · LT134 (54339)</span><span class="value" id="lt134-status">—</span></div>
-    <div class="actions"><button id="toggle-lt134" class="secondary" disabled>Verificar LT134</button></div>
-    <div class="row"><span class="label">Pokébola 2 · LT135 (54340)</span><span class="value" id="lt135-status">—</span></div>
-    <div class="actions"><button id="toggle-lt135" class="secondary" disabled>Verificar LT135</button></div>
-    <small>Este controle regula a liberação Premium da LT134. O bloqueio do aplicativo inteiro e o controle de versões ficam na seção Administração de APKs abaixo. A Pokébola 1 continua gratuita fora da manutenção.</small>
-    <hr class="sep">
-    <div class="row"><span class="label">Vendas Premium</span><span class="value" id="sales">—</span></div>
-    <hr class="sep">
-    <div class="row"><span class="label">Pix real (Payments API)</span><span class="value" id="live-status">—</span></div>
-    <div class="actions">
-      <button id="toggle-live" class="secondary" disabled>Verificar configuração de produção</button>
-      <button id="toggle-sales" class="secondary" disabled>Verificar vendas</button>
+    <h2 style="margin-top:0;font-size:1.15rem">Visão geral</h2>
+    <div class="row"><span class="label">Conta Google</span><span class="value" id="account"></span></div>
+    <div class="stat-grid">
+      <div class="stat"><span>Aplicativo</span><strong id="home-app-status">—</strong></div>
+      <div class="stat"><span>Premium</span><strong id="distribution">—</strong></div>
+      <div class="stat"><span>Vendas</span><strong id="sales">—</strong></div>
     </div>
-    <small>A ativação é independente. Um Pix real só poderá ser criado após configurar os dois segredos de produção, habilitar o modo real e habilitar vendas. A conta Google continua obrigatória para a Pokébola 2.</small>
+    <small>Atualizações novas seguem o controle geral automaticamente. Não é necessário cadastrar LT137, LT138 ou qualquer outra versão.</small>
+    <div class="actions"><button id="refresh" class="secondary">Atualizar informações</button></div>
+  </section>
+  <section class="panel" id="sales-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">Acesso Premium e vendas</h2>
+    <div class="row"><span class="label">Pokébola 2 Premium · todas as versões</span><strong id="premium-global-status">—</strong></div>
+    <div class="actions"><button id="toggle-premium-all" class="secondary" disabled>Verificar Premium</button></div>
+    <small>Uma única configuração para a Pokébola 2 de todas as versões atuais e futuras. A Pokébola 1 é gratuita.</small>
     <hr class="sep">
+    <div class="row"><span class="label">Novas vendas Premium</span><strong id="sales-toggle-state">—</strong></div>
+    <div class="row"><span class="label">Pix real</span><strong id="live-status">—</strong></div>
+    <div class="actions">
+      <button id="toggle-sales" class="secondary" disabled>Verificar vendas</button>
+      <button id="toggle-live" class="secondary" disabled>Verificar Pix real</button>
+    </div>
+    <small>Habilitar vendas e Pix real são ações separadas por segurança. Nenhum botão altera licenças já concedidas.</small>
+  </section>
+  <section class="panel" id="pricing-panel" hidden>
     <h3 id="pricing-settings" style="font-size:1rem">Valores e promoções</h3>
     <div class="row"><span class="label">Preço normal</span><span class="value" id="regular">—</span></div>
     <hr class="sep">
@@ -113,7 +131,6 @@
       <button id="apply-pricing-preset" class="secondary">Aplicar R$ 20,00 → R$ 10,00 (50% OFF)</button>
     </div>
     <small>O preço personalizado pode ser alterado a qualquer momento. A tabela sugerida só altera o Firebase quando você confirmar. Cupons de 10%, 25% e 50% incidem sobre o preço vigente.</small>
-    <div class="actions"><button id="refresh" class="secondary">Verificar novamente</button></div>
   </section>
   <section class="panel" id="licensing" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Licenças Premium manuais</h2>
@@ -167,34 +184,29 @@
     <small>O benefício é gratuito e a campanha é independente da promoção de R$ 5. Encerrá-la impede novos resgates, mas mantém as licenças já concedidas. Nada é ativado automaticamente neste painel.</small>
   </section>
   <section class="panel" id="app-version-panel" hidden>
-    <h2 style="font-size:1.08rem;margin-top:0">Administração de APKs</h2>
-    <p>Bloqueio geral e controle individual por versão, independentemente de assinaturas Premium.</p>
-    <div class="row"><span class="label">Controle geral</span><strong id="app-versions-general">—</strong></div>
-    <div class="actions">
-      <button id="versions-enable-all" class="secondary">Ativar todas</button>
-      <button id="versions-disable-all" class="secondary danger-action">Desativar todas</button>
-    </div>
-    <small>Os comandos alcançam os APKs com verificação remota implementada. Versões antigas sem essa proteção não podem ser bloqueadas retroativamente.</small>
-    <hr class="sep">
-    <h3 style="font-size:1rem">Controle por versão</h3>
-    <div id="app-versions-list"></div>
-    <div class="row" style="margin-top:12px">
-      <input id="app-version-code" class="maintenance-note" type="number" min="1" max="2100000000" placeholder="versionCode adicional" style="width:48%">
-      <input id="app-version-name" class="maintenance-note" maxlength="50" placeholder="Nome da versão" style="width:48%">
-    </div>
-    <div class="actions"><button id="register-app-version" class="secondary">Cadastrar versão</button></div>
+    <h2 style="font-size:1.08rem;margin-top:0">Exceções por versão</h2>
+    <p class="page-hint">Normalmente você não precisa mexer aqui. Use apenas se uma versão apresentar um defeito grave.</p>
     <small id="version-summary"></small>
+    <details class="advanced">
+      <summary>Bloquear somente uma versão (avançado)</summary>
+      <div id="app-versions-list" aria-live="polite"></div>
+      <label class="label" for="app-version-code">Código da versão problemática</label>
+      <input id="app-version-code" class="maintenance-note" type="number" min="1" max="2100000000" placeholder="Ex.: 54341">
+      <div class="actions"><button id="register-app-version" class="secondary danger-action">Bloquear essa versão</button></div>
+      <small>As outras versões continuam funcionando. Não é necessário informar o nome nem cadastrar novos APKs.</small>
+    </details>
   </section>
   <section class="panel" id="maintenance-panel" hidden>
-    <h2 style="font-size:1.08rem;margin-top:0">Modo de manutenção · Aplicativo inteiro</h2>
-    <p>A manutenção fecha as duas Pokébolas e impede novas consultas nos APKs que tenham a verificação remota. Versões antigas sem essa função não podem ser desligadas retroativamente.</p>
-    <div class="row"><span class="label">Estado atual</span><strong id="maintenance-status">—</strong></div>
-    <label class="label" for="maintenance-message">Mensagem para os treinadores</label>
-    <input class="maintenance-note" id="maintenance-message" maxlength="180" value="PokeSearch temporariamente em manutenção.">
-    <div class="actions">
-      <button id="toggle-maintenance" class="secondary" disabled>Verificar manutenção</button>
-    </div>
-    <small>Somente o administrador pode mudar o estado. Alterações são registradas no Firebase. É necessário que o usuário esteja online para receber o novo estado.</small>
+    <h2 style="font-size:1.08rem;margin-top:0">Controle geral do aplicativo</h2>
+    <div class="row"><span class="label">Situação agora</span><strong class="main-state" id="maintenance-status">—</strong></div>
+    <p>Um único botão liga ou desliga <strong>as duas Pokébolas em todas as versões compatíveis</strong>, incluindo futuras atualizações.</p>
+    <button id="toggle-maintenance" class="maintenance-cta danger-action" disabled>Verificar estado</button>
+    <details class="advanced">
+      <summary>Mensagem exibida durante a manutenção (opcional)</summary>
+      <label class="label" for="maintenance-message">Aviso para os treinadores</label>
+      <input class="maintenance-note" id="maintenance-message" maxlength="180" value="PokeSearch temporariamente em manutenção.">
+    </details>
+    <small>Ao religar, os bloqueios antigos por versão também são limpos. A mudança chega na próxima verificação online (aproximadamente 90 segundos). APKs antigos sem verificação remota não podem ser desligados retroativamente.</small>
   </section>
   <section class="panel" id="device-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">Dispositivos Premium</h2>
@@ -301,7 +313,7 @@
     </div>
     <small style="margin-top:12px">Um código compartilhado em prints deve ser cancelado, mesmo que ninguém tenha utilizado.</small>
   </section>
-  <small>QA · Nenhum Pix é criado nesta página. Nenhum token de login ou segredo do servidor é exibido. Os APKs atuais não são alterados.</small>
+  <small>Segurança: somente sua conta autorizada altera os controles. Operações de cobrança exigem confirmação específica.</small>
 </main>
 <script type="module">
   import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
