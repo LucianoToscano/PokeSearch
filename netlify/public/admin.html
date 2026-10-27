@@ -61,11 +61,11 @@
     <h2 style="font-size:1.08rem;margin-top:0">Administração verificada</h2>
     <div class="row"><span class="label">Conta</span><span class="value" id="account"></span></div>
     <hr class="sep">
-    <div class="row"><span class="label">Controle de versões</span><span class="value" id="distribution">—</span></div>
+    <div class="row"><span class="label">Licenciamento Premium da homologação</span><span class="value" id="distribution">—</span></div>
     <hr class="sep">
-    <div class="row"><span class="label">LT134 (versionCode 54339)</span><span class="value" id="lt134-status">—</span></div>
+    <div class="row"><span class="label">Pokébola 2 · LT134 (54339)</span><span class="value" id="lt134-status">—</span></div>
     <div class="actions"><button id="toggle-lt134" class="secondary" disabled>Verificar LT134</button></div>
-    <small>Somente este APK de homologação será liberado. A Pokébola 1 permanece gratuita; a Pokébola 2 exige licença Premium. Se vendas e Pix real estiverem habilitados, poderão ocorrer cobranças reais.</small>
+    <small>Este controle regula a liberação Premium da LT134. O bloqueio do aplicativo inteiro e o controle de versões ficam na seção Administração de APKs abaixo. A Pokébola 1 continua gratuita fora da manutenção.</small>
     <hr class="sep">
     <div class="row"><span class="label">Vendas Premium</span><span class="value" id="sales">—</span></div>
     <hr class="sep">
@@ -210,8 +210,8 @@
         otherVersionsActive:others};
       el("distribution").textContent=configState.globalEnabled?"Habilitado":"Desativado";
       const lt134Ready=configState.globalEnabled&&configState.lt134Enabled;
-      el("lt134-status").textContent=lt134Ready?"Liberada para teste":"Não liberada";
-      el("toggle-lt134").textContent=lt134Ready?"Bloquear LT134":"Liberar LT134 para teste";
+      el("lt134-status").textContent=lt134Ready?"Validação Premium liberada":"Premium não liberado";
+      el("toggle-lt134").textContent=lt134Ready?"Bloquear teste Premium LT134":"Liberar teste Premium LT134";
       el("toggle-lt134").disabled=false;
       el("sales").textContent=configState.salesEnabled?"Habilitadas":"Desativadas";
       el("live-status").textContent=configState.paymentsLiveEnabled?"Habilitado":"Desativado";
