@@ -33,6 +33,8 @@ assert.match(chat,/getAssets\(\)\.open\(path\)/);
 assert.match(chat,/timeline\.setNestedScrollingEnabled\(true\)/);
 assert.match(chat,/timeline\.setOnTouchListener\(new View\.OnTouchListener\(\)/);
 assert.match(chat,/case MotionEvent\.ACTION_MOVE:/);
+assert.match(chat,/boolean scrollable=timeline\.canScrollVertically\(-1\)\|\|/);
+assert.match(chat,/requestDisallowInterceptTouchEvent\(scrollable\)/);
 assert.match(chat,/timeline\.canScrollVertically\(-1\)/);
 assert.match(chat,/timeline\.canScrollVertically\(1\)/);
 assert.match(chat,/requestDisallowInterceptTouchEvent\(canScroll\)/);
