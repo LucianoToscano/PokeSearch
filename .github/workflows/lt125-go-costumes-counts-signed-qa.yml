@@ -79,7 +79,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m py_compile app/scripts/build_sprite_bundle.py
+          python3 -m py_compile app/scripts/build_sprite_bundle.py app/scripts/fetch_form_sprites.py app/scripts/fetch_all_verified_varieties.py
           node --check functions/index.js
           node --check functions/scripts/reconcile-once.js
           node -e "const c=require('./firebase.json');if(c.database[0].target!=='live')throw Error('RTDB target missing')"
@@ -123,7 +123,9 @@ jobs:
           assert len(report['sha256'])==report['baseCount']+report['shinyCount']
           expected={'forms/zigzagoon-galar.png','forms/zigzagoon-galar-shiny.png'}
           assert expected.issubset(set(report['forms']))
-          assert len(report['forms'])==82  # 80 verified LT116 + 2 preserved LT119
+          assert len(report['forms'])==716  # 82 named plus 317 varieties normal/Shiny
+          assert len([x for x in report['forms'] if x.startswith('forms/variety-')])==634
+          assert 'forms/variety-10262-shiny.png' in report['forms']
           assert 'forms/144-galar.png' in report['forms']
           assert 'forms/555-galar-zen-shiny.png' in report['forms']
           assert 'forms/585-spring.png' in report['forms']
@@ -155,6 +157,7 @@ jobs:
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/144-galar.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/555-galar-zen-shiny.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/585-spring.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/variety-10262-shiny.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/4-goggles-2026.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/4-goggles-2026-shiny.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/3-copy-2019.png'
