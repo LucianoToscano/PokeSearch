@@ -5,7 +5,7 @@ const SECRET={POKE_MP_ACCESS_TOKEN:"mock-live-token",POKE_MP_TEST_ACCESS_TOKEN:"
  POKE_PREMIUM_KEY_SECRET:"test-key-secret"};
 const orderId="123e4567-e89b-12d3-a456-426614174000",now=Date.now();
 const store={distribution:{globalEnabled:true,versions:{"54328":true}},
- premium:{config:{salesEnabled:true,priceCents:500},orders:{
+ premium:{config:{salesEnabled:true,regularPriceCents:1000,promotionalPriceCents:500,priceCents:500},orders:{
   [orderId]:{uid:"buyer",paymentId:"123",priceCents:500,versionCode:54328,status:"pending",createdAt:now-1000}
  }}};
 const coldCacheTransactions=new Set();
@@ -372,6 +372,9 @@ async function run(){
  await premium.adminSavePartnerCoupon({
    ...adminLive,data:{code:"CRIADOR50",partnerName:"Criador A",
      discountPercent:50,enabled:true}});
+ await premium.adminSavePartnerCoupon({
+   ...adminLive,data:{code:"CRIADOR25",partnerName:"Canal 25",
+     discountPercent:25,enabled:true}});
  const promoBase=await premium.getPremiumOffer({
    auth:{uid:"couponBuyer"},data:{}});
  assert.equal(promoBase.priceCents,500);
@@ -383,7 +386,11 @@ async function run(){
    auth:{uid:"couponBuyer"},data:{couponCode:"CRIADOR50"}});
  assert.equal(half.priceCents,250);
  const partnerCodes=await premium.adminListPartnerCoupons(adminLive);
- assert.equal(partnerCodes.items.length,2);
+ assert.equal(partnerCodes.items.length,3);
+ const quarter=await premium.getPremiumOffer({
+   auth:{uid:"couponBuyer"},data:{couponCode:"CRIADOR25"}});
+ assert.equal(quarter.priceCents,375);
+ assert.equal(quarter.coupon.discountPercent,25);
  let selfUseDenied=false;
  try{await premium.getPremiumOffer({
    auth:{uid:"influencer123"},data:{couponCode:"YOUTUBE10"}});}
@@ -468,6 +475,24 @@ async function run(){
  assert.equal(disabledRejected,true);
  assert.equal(read("premium/orders/"+commissionPix.orderId).referral.code,"YOUTUBE10",
    "Disabling a coupon never rewrites historical commissions");
+ // Owner-applied preset affects only new orders and supports stacked discounts.
+ await premium.adminPremiumSettings({...adminLive,data:{action:"pricingPreset"}});
+ const table=(await premium.getPremiumOffer({
+   auth:{uid:"couponBuyer"},data:{}}));
+ assert.equal(table.regularPriceCents,2000);
+ assert.equal(table.promotionalPriceCents,1000);
+ assert.equal(table.priceCents,1000);
+ for(const [code,amount] of [["YOUTUBE10",900],["CRIADOR25",750],["CRIADOR50",500]]){
+   if(code==="YOUTUBE10")continue; // disabled above, handled separately
+   const quote=await premium.getPremiumOffer({
+     auth:{uid:"couponBuyer"},data:{couponCode:code}});
+   assert.equal(quote.priceCents,amount);
+ }
+ assert.equal(read("premium/orders/"+commissionPix.orderId).priceCents,450,
+   "Changing prices must not mutate earlier approved charges.");
+ await premium.adminPremiumSettings({...adminLive,data:{
+   action:"prices",regularPriceCents:1000,promotionalPriceCents:500}});
+ console.log("PASS preset normal R$20, promotion R$10, stacked 25/50 coupons, previously issued Pix unchanged");
  console.log("PASS influencer coupon: exact discount, partner binding, verified Pix, replay, refund and manual repasse");
  // Admin inventory uses hashes as IDs, never plaintext; newly issued codes are sealed.
  const inventory=await premium.adminListPremiumKeys({...adminLive,data:{limit:20}});
