@@ -380,8 +380,9 @@ exports.adminRevokePremiumKey=onCall({region:REGION},async request=>{
    return {revoked:true,alreadyRevoked:true,wasAssigned:!!existing.uid};
  const timestamp=Date.now();
  const revoked=await keyRef.transaction(value=>{
-   if(!value||value.kind!=="manual"||value.revoked===true)return;
-   return {...value,revoked:true,revokedAt:timestamp,
+   const current=value===null?existing:value;
+   if(!current||current.kind!=="manual"||current.revoked===true)return;
+   return {...current,revoked:true,revokedAt:timestamp,
      revokedBy:actor,revocationReason:"admin"};
  },undefined,false);
  if(!revoked.committed){
