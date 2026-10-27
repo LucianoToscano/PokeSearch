@@ -264,7 +264,10 @@
  function exactCostume(card){
   if(!card||typeof card!=="object")return null;
   const archived=archivedCostume(card);
-  if(archived)return archived;
+  const genderCode=nameKey(card.gender||card.sex);
+  if(archived&&(genderCode==="FEMALE"||genderCode==="F"||
+    genderCode==="2"||String(card.gender)==="♀")&&
+    archived.src.includes(".g2."))return archived;
   const dex=dexOf(card),spec=nameKey(card.name)||({3:"VENUSAUR",4:"CHARMANDER",5:"CHARMELEON",6:"CHARIZARD",9:"BLASTOISE"}[dex]||"");
   // Form may be a composite provider label, or costume can be distinct.
   const f=nameKey(card.form),costume=nameKey(card.costume);
@@ -293,7 +296,7 @@
    if(shiny)file=file.replace(".png","-shiny.png");
    return {src:LOCAL+"costumes/"+file,original:"",offline:true,officialForm:true,officialCostume:true};
   }
-  return null;
+  return archived||null;
  }
  function resolve(card){
   const image=String(card?.image||"");
