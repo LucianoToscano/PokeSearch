@@ -733,6 +733,7 @@ exports.adminListPremiumKeys=onCall({region:REGION},async request=>{
      record.duration==="lifetime"?"vitalícia":
      (expires&&expires<=Date.now()?"vencida":"ativa");
    return {id:hash,kind:String(record.kind||"desconhecido"),
+     source:String(record.source||""),
      recipientEmailHint:String(record.recipientEmailHint||""),
      duration:String(record.duration|| (record.kind==="paid"?"30d":"")),
      uid:typeof record.uid==="string"?record.uid:"",
