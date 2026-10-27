@@ -147,14 +147,15 @@ async function settleOrderPayment(mpOrderId){
 /** Payments API /v1/payments. Old Orders records remain supported separately.
  * No license is granted from webhook JSON: always fetch the payment from MP.
  */
-async function settlePixPayment(mpPaymentId){
+async function settlePixPayment(mpPaymentId,expectedLiveMode=null){
  const id=String(mpPaymentId||"");
  if(!/^[0-9]{1,24}$/.test(id))return false;
  const indexed=(await root().child("paymentIndex").child(id).get()).val();
  if(!indexed||!/^[0-9a-f-]{36}$/.test(String(indexed.orderId||"")))return false;
  const orderId=indexed.orderId;
  const ref=root().child("orders").child(orderId),stored=(await ref.get()).val();
- if(!stored||stored.mpPaymentId!==id||stored.processor!=="payments"||!stored.uid)return false;
+ if(!stored||stored.mpPaymentId!==id||stored.processor!=="payments"||!stored.uid||
+    (typeof expectedLiveMode==="boolean"&&stored.liveMode!==expectedLiveMode))return false;
  const payment=await requestPayment("/v1/payments/"+id,stored.liveMode===true);
  if(String(payment.id)!==id||payment.external_reference!==orderId||
     payment.payment_method_id!=="pix"||payment.currency_id!=="BRL"||
@@ -195,9 +196,10 @@ async function settlePixPayment(mpPaymentId){
  await ref.update({status:"approved",licensed:true,approvedAt:now});
  return true;
 }
-async function settlePayment(id){
- return /^ORD[A-Za-z0-9_-]{10,90}$/.test(String(id))?
-   settleOrderPayment(id):settlePixPayment(id);
+async function settlePayment(id,expectedLiveMode=null){
+ if(/^ORD[A-Za-z0-9_-]{10,90}$/.test(String(id)))
+   return expectedLiveMode===true?false:settleOrderPayment(id);
+ return settlePixPayment(id,expectedLiveMode);
 }
 function signatureValid(req){
  const signature=String(req.get("x-signature")||"");
@@ -278,7 +280,7 @@ exports.premiumPixWebhook=onRequest({region:REGION,
        (topic==="order"&&/^ORD[A-Za-z0-9_-]{10,90}$/.test(paymentId)))){
    res.status(400).send("topic");return;
  }
- try{await settlePayment(paymentId);res.status(200).send("ok");}
+ try{await settlePayment(paymentId,req.liveModeWebhook===true);res.status(200).send("ok");}
  catch(error){console.error("Premium webhook reconciliation failed",error.message);res.status(503).send("retry");}
 });
 exports.getPremiumOrder=onCall({region:REGION,secrets:[MP_TOKEN,MP_TEST_TOKEN,KEY_SECRET]},async request=>{
