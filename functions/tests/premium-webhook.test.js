@@ -385,6 +385,64 @@ async function run(){
    data:{limit:3,cursor:page1.nextCursor}});
  assert.equal(page2.keys.length,3);
  assert.notEqual(page2.keys[0].id,page1.keys[2].id);
+
+ // Habilitar/desabilitar remains reversible; Excluir immediately revokes and
+ // hides the key while retaining audit/history and preventing reactivation.
+ const deleteIssue=await premium.adminIssuePremiumKey({
+   ...adminLive,data:{duration:"15d"}
+ });
+ const deleteHash=crypto.createHash("sha256").update(deleteIssue.licenseKey).digest("hex");
+ await premium.redeemPremiumKey({auth:{uid:"deleteTester"},
+   data:{licenseKey:deleteIssue.licenseKey}});
+ assert.equal((await premium.checkDistributionAccess({
+   auth:{uid:"deleteTester"},data:{versionCode:54328}})).premium,true);
+ await premium.adminSetPremiumKeyEnabled({
+   ...adminLive,data:{id:deleteHash,enabled:false}});
+ assert.equal((await premium.checkDistributionAccess({
+   auth:{uid:"deleteTester"},data:{versionCode:54328}})).premium,false);
+ await premium.adminSetPremiumKeyEnabled({
+   ...adminLive,data:{id:deleteHash,enabled:true}});
+ assert.equal((await premium.checkDistributionAccess({
+   auth:{uid:"deleteTester"},data:{versionCode:54328}})).premium,true);
+ let confirmationDenied=false;
+ try{await premium.adminDeletePremiumKey({
+   ...adminLive,data:{id:deleteHash,confirm:"SIM"}});}
+ catch(e){confirmationDenied=e.code==="invalid-argument";}
+ assert.equal(confirmationDenied,true);
+ let nonAdminDenied=false;
+ try{await premium.adminDeletePremiumKey({
+   auth:{uid:"deleteTester"},data:{id:deleteHash,confirm:"EXCLUIR LICENÇA"}});}
+ catch(e){nonAdminDenied=e.code==="permission-denied";}
+ assert.equal(nonAdminDenied,true);
+ const deleted=await premium.adminDeletePremiumKey({
+   ...adminLive,data:{id:deleteHash,confirm:"EXCLUIR LICENÇA"}});
+ assert.equal(deleted.deleted,true);
+ assert.equal(deleted.wasAssigned,true);
+ assert.equal(read("premium/keys/"+deleteHash).archived,true);
+ assert.equal(read("premium/keys/"+deleteHash).revoked,true);
+ assert.equal(read("premium/entitlements/deleteTester").revoked,true);
+ assert.equal((await premium.checkDistributionAccess({
+   auth:{uid:"deleteTester"},data:{versionCode:54328}})).premium,false);
+ const activeKeys=await premium.adminListPremiumKeys({
+   ...adminLive,data:{limit:50,archived:false}});
+ const archivedKeys=await premium.adminListPremiumKeys({
+   ...adminLive,data:{limit:50,archived:true}});
+ assert.ok(!activeKeys.keys.some(item=>item.id===deleteHash));
+ assert.ok(archivedKeys.keys.some(item=>item.id===deleteHash&&
+   item.status==="excluída"&&item.editable===false));
+ let enabledDeleted=false;
+ try{await premium.adminSetPremiumKeyEnabled({
+   ...adminLive,data:{id:deleteHash,enabled:true}});}
+ catch(e){enabledDeleted=e.code==="failed-precondition";}
+ assert.equal(enabledDeleted,true);
+ let duplicateDeleted=false;
+ try{await premium.adminDeletePremiumKey({
+   ...adminLive,data:{id:deleteHash,confirm:"EXCLUIR LICENÇA"}});}
+ catch(e){duplicateDeleted=e.code==="failed-precondition";}
+ assert.equal(duplicateDeleted,true);
+ // Paid order/pix history is never mutated by license deletion.
+ assert.equal(read("premium/orders/"+orderId).status,"approved");
+ console.log("PASS per-license reversible suspension, owner-only exclusion and Pix history preservation");
  console.log("PASS admin key inventory pagination, reveal vault, old hash restriction, reversible suspension and duration");
 
  // Maintenance is a separate global switch, and never changes an entitlement.
