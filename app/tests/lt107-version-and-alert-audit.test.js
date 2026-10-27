@@ -67,7 +67,7 @@ check("never notify expired or reused spawn; independently check each alert mode
  assert.match(body,/knownSpawns\.contains\(key\)/);
  assert.match(body,/WatchAlerts\.enabled\(this\)/);
  assert.match(body,/WatchAlerts\.matches\(c\.optString\("name",""\),wanted\)/);
- assert.match(body,/WatchAlerts\.match\(this,firstWatched,watchDetails\)/);
+ assert.match(java,/WatchAlerts\.match\(this,pending\.name,pending\.title,pending\.details/);
  assert.match(body,/!"off"\.equals\(alertsMode\)&&alerts/);
  assert.match(watch,/PREF_LIST="watchList"/);
  assert.match(watch,/getSharedPreferences\("prefs",0\)/);
