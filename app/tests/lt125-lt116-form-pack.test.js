@@ -29,6 +29,6 @@ for(const [key,sourceId,normalSHA,shinySHA] of entries){
 assert.match(pack,/SOURCE_COMMIT = "d8c2fb78563e28ad7b3abe938cf6e79998d04e90"/);
 assert.match(pack,/hashlib\.sha1\(b"blob "/);
 assert.match(builder,/form_hashes\.update\(fetch_verified_forms\(dest\)\)/);
-assert.match(workflow,/len\(report\['forms'\]\)==82/);
+assert.match(workflow,/len\(report\['forms'\]\)==716/);
 assert.match(workflow,/forms\/555-galar-zen-shiny\.png/);
 console.log("LT125: all 80 LT116 sprites map to exact local normal/shiny assets, no unrelated base art.");
