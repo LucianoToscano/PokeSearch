@@ -32,3 +32,13 @@ Data: 27/10/2026. Repositório LucianoToscano/PokeSearch. PR #92, branch `featur
 - `app/tests/lt133-halloween-costume-compact-chat.test.js` verifica os três trajes normal/Shiny, aliases, bloqueio de 2022, 2 linhas, sprite 27/2dp e sexo por último. Tests antigos atualizados para verificar 16 assets e compatibilidade.
 - CI `.github/workflows/lt133-halloween-compact-chat-signed-qa.yml` assina usando o certificado permanente R8/v2 e publica QA com tamanho, versão, CRC e SHA-256. **Não é homologação física:** instalar sobre LT132 e testar resultados/detalhes P1+P2, shinies Halloween, expansão do chat e rolagem da Home, incluindo aparelho de resolução menor.
 - Não fazer merge main/release oficial sem aprovação do usuário. GitHub Actions Artifact é a entrega principal (Issue #84 — sandbox “Library file not found”).
+
+## Resultado do build LT133 verificado
+
+- [GitHub Actions #40487294368 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40487294368), [GitHub Artifact #12724984304](https://github.com/LucianoToscano/PokeSearch/actions/runs/40487294368/artifacts/12724984304), sem release pública nem merge na main.
+- SOURCE_COMMIT: `0e14189a41e66141d88c02b616e0f46243b581b6`; `versionName=0.01.33`, `versionCode=54338`, pacote `com.lucianotoscano.pokesearch`.
+- APK `PokeSearch-v0.01.33-LT133-Halloween-Compact-Chat-QA.apk`: **43.516.597 bytes**, SHA-256 **`d2e080863f97b22c716ca3ed8524fe2c59ef4f1953c707e44b17361409656a01`**, compatível com `SHA256SUMS.txt`.
+- ZIP GitHub: **41.027.323 bytes**, SHA-256 `2170b393ffd28b4ae61ab6e3bfab8f0d33eaa26423d7e673783aa610b1138c97`, CRC íntegro, todos relatórios presentes.
+- Assinatura Android v2 `true`, certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- Auditados **16 trajes** no manifesto e os seis PNGs `{25,393,426}-halloween-2021[-shiny].png` **dentro do próprio APK**, sem nenhum arquivo ausente.
+- **Ainda falta teste físico em Samsung**: checar efeito visual real de Piplup e Drifblim Shiny/normal, resultado com API ON/OFF, e extensão exata do chat em aparelhos estreitos.
