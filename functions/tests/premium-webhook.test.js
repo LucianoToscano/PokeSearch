@@ -63,7 +63,8 @@ const mocks={
      "campaignThree":"three@example.org",
      "campaignLifetime":"lifetime@example.org"
    })[uid]||uid+"@example.org",
-   emailVerified:uid!=="unverifiedCampaign"
+   emailVerified:uid!=="unverifiedCampaign",
+   providerData:uid==="anonymousUser"?[]:[{providerId:"google.com"}]
  })})},
  "firebase-admin/app":{getApps:()=>[{}],initializeApp:()=>{}}
 };
@@ -199,6 +200,27 @@ async function run(){
    data:{versionCode:54328,deviceId:DEVICE_A,confirm:true}});
  assert.equal((await premium.checkDistributionAccess(owner)).premium,true);
  console.log("PASS one active Google installation, confirmed transfer, old-device denial and cooldown");
+  const info=await premium.premiumSessionInfo({auth:{uid:"buyer"},data:{deviceId:DEVICE_A}});
+  assert.equal(info.licenseActive,true);
+  assert.equal(info.authorizedHere,true);
+  const adminDisconnect=await premium.adminDisconnectPremiumDevice({
+    auth:{uid:"owner"},data:{uid:"buyer"}});
+  assert.equal(adminDisconnect.disconnected,true);
+  const blocked=await premium.checkDistributionAccess(owner);
+  assert.equal(blocked.premium,false,"admin disconnected phone must not auto-reclaim");
+  const again=await premium.transferPremiumDevice({auth:{uid:"buyer"},
+    data:{versionCode:54328,deviceId:DEVICE_A,confirm:true}});
+  assert.equal(again.transferred,true);
+  const released=await premium.releasePremiumDevice({
+    auth:{uid:"buyer"},data:{deviceId:DEVICE_A}});
+  assert.equal(released.released,true);
+  assert.equal((await premium.checkDistributionAccess(owner)).premium,true,
+    "same account can sign in again after explicit logout");
+  const anonymous=await premium.checkDistributionAccess({
+    auth:{uid:"anonymousUser"},data:{versionCode:54328,deviceId:DEVICE_A}});
+  assert.equal(anonymous.premium,false);
+  console.log("PASS owner remote disconnect, explicit reauth, logout and session info");
+
  const order=await premium.getPremiumOrder({auth:{uid:"buyer"},data:{orderId}});
  assert.equal(order.status,"approved");assert.match(order.licenseKey,/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/);
  console.log("PASS authenticated purchaser gets redeemable key");
