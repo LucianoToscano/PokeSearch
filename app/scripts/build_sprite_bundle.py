@@ -193,6 +193,10 @@ def main():
     # LT116 pack, but do not overwrite newer application JS/HTML or protections.
     from fetch_form_sprites import fetch_verified_forms
     form_hashes.update(fetch_verified_forms(dest))
+    # All 317 previously verified forms now have exact normal/Shiny artwork
+    # packaged offline as well, with no additional runtime API or permission.
+    from fetch_all_verified_varieties import fetch_varieties
+    form_hashes.update(fetch_varieties(dest))
 
     # Pin exact GO costume icons by repository commit + Git object SHA1.
     # Reject redirected HTML, mismatched bytes and missing normal/shiny art.
