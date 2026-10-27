@@ -3129,11 +3129,9 @@ public class OverlayService extends Service {
         String key=captureKey(offer);
         if(sharedCaptureKeys.contains(key))return;
         offeredCapture=null; // one in-flight submission per confirmed tap
-        String name=offer.optString("name","");
-        boolean shiny=offer.optBoolean("shiny",false);
-        String rawIv=offer.optString("iv","");
-        String form=offer.optString("form","");
-        CaptureSharePublisher.publish(this,name,shiny,rawIv,form,
+        // Produce a public allowlisted text summary from the exact verified card.
+        // The service retains the coordinates locally; publisher never uploads them.
+        CaptureSharePublisher.publish(this,offer,
             (success,message)->handler.post(()->{
             if(stopped)return;
             if(success)sharedCaptureKeys.add(key);

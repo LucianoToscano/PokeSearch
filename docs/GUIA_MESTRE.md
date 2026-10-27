@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+### LT132 — Card compacto de captura e correção do chat rolável (27/10/2026)
+
+- PR [#91](https://github.com/LucianoToscano/PokeSearch/pull/91), branch `feature/lt132-capture-card-badges-sex-last-20261027` empilhada na LT131 #90. QA `0.01.32 / 54337` com assinatura permanente. Main/release estável preservados.
+- **Conquistas:** mini sprite + `🎉 Luciano capturou um Quagsire!` sem repetir IV no título. Selos usam os **ícones dos menus** (`StarIVRaw`, `StarGL`, `StarUL`); Hundo/Shundo/Nundo/Shnundo usam ícones existentes. Tamanho embaixo; **sexo é SEMPRE o último atributo**, com ♂ azul e ♀ rosa; valores ausentes são omitidos. Apenas rank PvP que existe no card com fonte `api-pvp` ou `explicit-species-iv` e liga associada. `Detalhes ▾` revela PC, nível, golpes e boost confirmados.
+- **Firebase:** nenhuma alteração de regra ou estrutura: as conquistas via confirmação dupla são apenas `chat/messages/text` (até 240 caracteres, com metadados compactos), mantendo posts LT131, reações ❤️ 👍 🎉 ✨️ e privacidade sem coordenadas. P1/P2 usam `OverlayService` compartilhado.
+- **Bug crítico da Home/chat:** `MainActivity` usa `stage1HomeScroll`; `CommunityScrapbookOnline` usa `timeline` aninhado. Novo detector de limite repassa o arraste para Home quando timeline está no topo/fim e **libera imediatamente no ACTION_DOWN se chat curto não pode rolar**, restaurando o acesso à parte inferior e ao campo de digitação. Novas mensagens fazem autoscroll somente se já estava perto do fim ou na primeira carga; reações/detalhes não alteram a posição de leitura.
+- **QA assinada confirmada:** CI GitHub Actions [#40482871143](https://github.com/LucianoToscano/PokeSearch/actions/runs/40482871143) SUCCESS e [artifact #12724036682](https://github.com/LucianoToscano/PokeSearch/actions/runs/40482871143/artifacts/12724036682) com APK e relatórios. Fonte compilada `5a47998fddc0bc42077e11442505655e1e459b33`; mudanças posteriores são apenas testes/documentação. APK `PokeSearch-v0.01.32-LT132-Capture-Badges-Scroll-QA.apk`, 43.375.725 bytes, SHA-256 `d9ec2a10d8c64ae106d425030ed8a71c07150b4935d23b841ef5fe8c566d4534`; ZIP 40.889.410 bytes SHA-256 `5cda01b6def945af746a72689042a3bcd6ea4fea46e83328ac4aa3cf0a1552e6`. ZIP/APK CRC OK, SHA256SUMS corresponde, Android v2 assinado com certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; verificados ícones `StarIVRaw`, `StarGL`, `StarUL` e Quagsire #195 no APK. Inclui detector `ACTION_DOWN` que passa gesto à Home quando chat curto não rola. Testes em Samsung físico de Home+chat e em duas contas ainda pendentes.
+- Documento técnico: [POKESEARCH_LT132_CAPTURE_BADGES_CHAT_SCROLL_20261027.md](POKESEARCH_LT132_CAPTURE_BADGES_CHAT_SCROLL_20261027.md).
+
+
 
 ### LT131 — Sprite + IV nos anúncios de captura (27/10/2026)
 
