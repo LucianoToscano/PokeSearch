@@ -132,7 +132,8 @@ jobs:
           assert report['externalCatalog']['speciesCount']==1025
           assert report['externalCatalog']['formCount']>=1400
           assert report['externalCatalog']['costumeCount']>=80
-          assert report['externalCatalog']['uiconsCommit']=='42b315f317ca8cee8e178249328eab5173e5ca70'
+          assert report['externalCatalog']['dataCommit']=='42b315f317ca8cee8e178249328eab5173e5ca70'
+          assert report['externalCatalog']['uiconsCommit']=='998bf635194a11078b6375c79d1494d5eb999b39'
           assert len([x for x in report['forms'] if x.startswith('forms/variety-')])==634
           assert 'forms/variety-10262-shiny.png' in report['forms']
           assert 'forms/144-galar.png' in report['forms']
