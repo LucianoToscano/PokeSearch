@@ -87,7 +87,7 @@ final class PremiumPurchaseDialog {
         adminLink.setOnClickListener(v->{
             android.content.Intent browser=new android.content.Intent(
                 android.content.Intent.ACTION_VIEW,
-                android.net.Uri.parse("https://pokesearch-premium-ivern.netlify.app/admin.html"));
+                android.net.Uri.parse("https://pokesearch-premium-lcst.netlify.app/admin.html"));
             try{activity.startActivity(browser);}
             catch(android.content.ActivityNotFoundException ignored){
                 statusMessage(activity,"Não há navegador para abrir o painel Premium.");
@@ -119,7 +119,24 @@ final class PremiumPurchaseDialog {
         TextView promoCountdown=label(activity,"",12,0xFFE3D7A4,true);
         promoCountdown.setVisibility(View.GONE);
         plan.addView(promoCountdown,space(activity,0,dp(activity,4),0,0));
-        col.addView(plan,space(activity,0,0,0,dp(activity,13)));
+        col.addView(plan,space(activity,0,0,0,dp(activity,8)));
+        // Coupon discount is quoted on the backend before any Pix exists.
+        LinearLayout couponRow=new LinearLayout(activity);
+        couponRow.setOrientation(LinearLayout.HORIZONTAL);
+        couponRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        EditText couponInput=input(activity,"Cupom do divulgador (opcional)");
+        couponInput.setInputType(InputType.TYPE_CLASS_TEXT|
+            InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        couponRow.addView(couponInput,new LinearLayout.LayoutParams(0,dp(activity,44),1));
+        Button couponApply=button(activity,"Aplicar",false,0xFF274564);
+        LinearLayout.LayoutParams applyLp=new LinearLayout.LayoutParams(
+            dp(activity,88),dp(activity,44));
+        applyLp.leftMargin=dp(activity,7);
+        couponRow.addView(couponApply,applyLp);
+        col.addView(couponRow,space(activity,0,0,0,dp(activity,2)));
+        TextView couponMessage=label(activity,"",11,teal,false);
+        couponMessage.setVisibility(View.GONE);
+        col.addView(couponMessage,space(activity,0,0,0,dp(activity,9)));
 
         LinearLayout freeOffer=new LinearLayout(activity);
         freeOffer.setOrientation(LinearLayout.VERTICAL);
@@ -239,6 +256,7 @@ final class PremiumPurchaseDialog {
                 :pending.getString("latestOrderId","");
         final String[] activeOrder={pendingId},pix={""},key={""};
         final boolean[] canSell={false},canFree={false};
+        final String[] appliedCoupon={""};
         final Handler handler=new Handler(Looper.getMainLooper());
         final long[] expiresAt={0L},timeOffset={0L};
         final Runnable[] promoClock={null};
@@ -292,6 +310,7 @@ final class PremiumPurchaseDialog {
             activate.setEnabled(signed);
             create.setEnabled(signed&&canSell[0]);
             freeClaim.setEnabled(signed&&canFree[0]);
+            couponApply.setEnabled(signed);
         };
         refreshIdentity.run();
         googleLogin.setOnClickListener(v->{
@@ -396,14 +415,57 @@ final class PremiumPurchaseDialog {
                 });
             });
         });
+        couponApply.setOnClickListener(v->{
+            final String requested=couponInput.getText().toString()
+                .trim().toUpperCase(java.util.Locale.ROOT);
+            couponApply.setEnabled(false);
+            couponMessage.setVisibility(View.VISIBLE);
+            couponMessage.setText(requested.isEmpty()?
+                "Removendo cupom...":"Verificando cupom no servidor...");
+            PremiumAccess.offerWithCoupon(activity,requested,(quote,error)->{
+                if(!dialog.isShowing())return;
+                couponApply.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity));
+                if(!requested.equals(couponInput.getText().toString().trim()
+                    .toUpperCase(java.util.Locale.ROOT)))return;
+                if(error!=null){
+                    appliedCoupon[0]="";
+                    couponMessage.setText(error+" · Corrija e aplique novamente.");
+                    create.setEnabled(false);return;
+                }
+                Object amount=quote.get("priceCents");
+                long cents=amount instanceof Number?((Number)amount).longValue():0L;
+                Object details=quote.get("coupon");
+                Map<?,?> coupon=details instanceof Map?(Map<?,?>)details:null;
+                appliedCoupon[0]=coupon==null?"":requested;
+                pricePreview.setText(String.format(Locale.forLanguageTag("pt-BR"),
+                    "R$ %.2f",cents/100.0));
+                if(coupon!=null){
+                    couponMessage.setText("✓ "+requested+" · "+
+                        String.valueOf(coupon.get("discountPercent"))+
+                        "% OFF com "+String.valueOf(coupon.get("partnerName")));
+                }else{
+                    couponMessage.setText("Cupom removido. Preço normal ou promoção vigente.");
+                }
+                canSell[0]=Boolean.TRUE.equals(quote.get("salesEnabled"))&&cents>=100;
+                create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&canSell[0]);
+                fitPopup.run();
+            });
+        });
         create.setOnClickListener(v->{
+            String typedCoupon=couponInput.getText().toString().trim()
+                .toUpperCase(java.util.Locale.ROOT);
+            if(!typedCoupon.equals(appliedCoupon[0])){
+                couponMessage.setVisibility(View.VISIBLE);
+                couponMessage.setText("Toque em Aplicar para confirmar o preço com cupom.");
+                return;
+            }
             String mail=email.getText().toString().trim();
             if(!mail.contains("@")||!mail.contains(".")){
                 status.setText("Informe um e-mail válido.");return;
             }
             create.setEnabled(false);
             status.setText("Gerando o Pix no Mercado Pago...");
-            PremiumAccess.createPix(activity,mail,"",(result,error)->{
+            PremiumAccess.createPix(activity,mail,"",appliedCoupon[0],(result,error)->{
                 if(!dialog.isShowing())return;
                 create.setEnabled(true);
                 if(error!=null){status.setText(error);return;}
