@@ -81,6 +81,7 @@
     <input id="key-entry" type="password" maxlength="36" placeholder="PS-XXXXXX-XXXXXX-XXXXXX-XXXXXX"
       autocomplete="off" spellcheck="false" autocapitalize="characters"
       style="display:block;margin:9px 0 15px;width:100%;padding:13px;background:#0d1725;color:#f3f5f8;border:1px solid #36445a;border-radius:10px;font-size:.9rem">
+    <div class="actions"><button id="check-key" class="secondary">Verificar situação do código</button></div>
     <div class="actions">
       <button id="revoke" class="secondary">Cancelar código exposto</button>
       <button id="redeem" class="secondary">Resgatar nesta conta</button>
@@ -186,6 +187,23 @@
     }
     return code;
   };
+  el("check-key").addEventListener("click",async()=>{
+    if(busy)return;
+    const licenseKey=getKey();if(!licenseKey)return;
+    busy=true;el("check-key").disabled=true;
+    try{
+      const result=await call("adminPremiumKeyStatus",{licenseKey});
+      if(result.status==="revoked")
+        setStatus("CONFIRMADO: este código já está cancelado no Firebase.","ok");
+      else if(result.status==="active")
+        setStatus("CONFIRMADO: este código está ATIVO. Para invalidá-lo, toque em Cancelar código exposto.","error");
+      else if(result.status==="notManual")
+        setStatus("Este código não corresponde a uma licença manual de teste.","error");
+      else
+        setStatus("Código não encontrado no Firebase. Confira se copiou todos os caracteres exatamente. Nada foi alterado.","error");
+    }catch(e){setStatus(e.message||"Não foi possível verificar o código.","error");}
+    finally{busy=false;el("check-key").disabled=false;}
+  });
   el("revoke").addEventListener("click",async()=>{
     if(busy)return;
     const licenseKey=getKey();
@@ -199,7 +217,7 @@
         lastKey="";revealed=false;el("license").textContent="";el("issued").hidden=true;
       }
       el("key-entry").value="";
-      setStatus("Código cancelado no Firebase. Não poderá ser resgatado.","ok");
+      setStatus(result.alreadyRevoked===true?"Código já estava cancelado. Nada mais a fazer.":"Código cancelado no Firebase. Não poderá ser resgatado.","ok");
     }catch(e){setStatus(e.message||"Erro ao cancelar código.","error");}
     finally{busy=false;el("revoke").disabled=false;el("redeem").disabled=false;}
   });
