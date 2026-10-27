@@ -62,7 +62,9 @@ const checks=[
  ["Premium user can sign out or switch account from Home, even with active P2",
    ui.includes('"Conta Premium  ·  Gerenciar / Sair"')&&
    ui.includes('accountPremium.setOnClickListener(v->showPremiumAccountOptions())')&&
-   ui.includes('"Sair da conta","Trocar conta Google"')&&
+   ui.includes('homeAuthButton("Sair da conta Google"')&&
+   ui.includes('homeAuthButton("Trocar conta Google"')&&
+   ui.includes('.setView(scroll)')&&
    ui.includes('logoutPremiumAccount(boolean switchAccount)')&&
    ui.includes('PremiumAccess.releaseDevice(this,')&&
    ui.includes('PremiumAccess.sessionInfo(this,')&&
