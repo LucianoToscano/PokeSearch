@@ -482,12 +482,27 @@ async function run(){
  assert.equal(table.regularPriceCents,2000);
  assert.equal(table.promotionalPriceCents,1000);
  assert.equal(table.priceCents,1000);
+ await premium.adminSavePartnerCoupon({
+   ...adminLive,data:{code:"YOUTUBE10",partnerName:"Canal de Vídeos",
+     discountPercent:10,partnerUid:"influencer123",enabled:true}});
  for(const [code,amount] of [["YOUTUBE10",900],["CRIADOR25",750],["CRIADOR50",500]]){
-   if(code==="YOUTUBE10")continue; // disabled above, handled separately
    const quote=await premium.getPremiumOffer({
      auth:{uid:"couponBuyer"},data:{couponCode:code}});
    assert.equal(quote.priceCents,amount);
  }
+ await premium.adminSavePartnerCoupon({
+   ...adminLive,data:{code:"CRIADOR25",partnerName:"Canal 25",
+     discountPercent:25,commissionPercent:40,enabled:true}});
+ const customQuote=await premium.getPremiumOffer({
+   auth:{uid:"couponBuyer"},data:{couponCode:"CRIADOR25"}});
+ assert.equal(customQuote.priceCents,750);
+ const customCoupon=(await premium.adminListPartnerCoupons(adminLive))
+   .items.find(item=>item.code==="CRIADOR25");
+ assert.equal(customCoupon.commissionPercent,40);
+ assert.equal(Math.round(customQuote.priceCents*customCoupon.commissionPercent/100),300);
+ await premium.adminSavePartnerCoupon({
+   ...adminLive,data:{code:"YOUTUBE10",partnerName:"Canal de Vídeos",
+     discountPercent:10,partnerUid:"influencer123",enabled:false}});
  assert.equal(read("premium/orders/"+commissionPix.orderId).priceCents,450,
    "Changing prices must not mutate earlier approved charges.");
  await premium.adminPremiumSettings({...adminLive,data:{
