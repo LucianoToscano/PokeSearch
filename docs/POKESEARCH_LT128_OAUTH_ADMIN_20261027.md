@@ -51,3 +51,15 @@ Seguir `AGENTS.md` e Issue #84: GitHub Actions artifact **primeiro**, verificand
 - PR #87 (Draft, empilhada sobre PR #86): https://github.com/LucianoToscano/PokeSearch/pull/87
 - CI específico para autenticação Google: https://github.com/LucianoToscano/PokeSearch/actions/workflows/lt128-google-admin-oauth-signed-qa.yml
 - Não há implantação de regras Firebase nesta PR. O login real do administrador e exclusão continuam exigindo validação no Samsung.
+
+## Evidência concluída no build QA e no APK real
+
+GitHub Actions [#40468096447](https://github.com/LucianoToscano/PokeSearch/actions/runs/40468096447) SUCCESS. [Artefato #12717366645](https://github.com/LucianoToscano/PokeSearch/actions/runs/40468096447/artifacts/12717366645) contém o APK e 5 relatórios. Verificado:
+
+- APK `PokeSearch-v0.01.28-LT128-Google-Admin-QA.apk` 43.358.837 bytes, SHA-256 `e21cf9757625dc4d0a9922a129260d29542292237d1d46e80f11056df1040164`.
+- ZIP GitHub 40.880.754 bytes, SHA-256 `425630185d26fa7fa533828ebc0a89c89edd4cc6d972d7bd89896de7ea10dcba`, CRC íntegro, tamanho abaixo de 199 MB.
+- Certificado permanente Android v2 válido, SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, SHA-1 `dd7bf665e1d47a257fc557b51cb5a57dfd13cb96`.
+- SOURCE_COMMIT dentro do arquivo `89bedec26f7925325c3020ddee16526cf773c8e4`; pacote `com.lucianotoscano.pokesearch`; versionCode `54333`, versionName `0.01.28`, minSdk 26, targetSdk 33.
+- `Web OAuth Client ID` verificado presente nos arquivos DEX do APK. 2.776/2.776 hashes de sprites verificados diretamente contra o manifesto extraído do APK.
+- O CI anterior havia anexado um nome antigo e publicado ZIP sem APK, mesmo com status SUCCESS. **Corrigido:** o workflow falha antes de upload se `QA_APK` não existir, for menor que 30 MB, falhar SHA-256 ou teste ZIP. O GitHub não é considerado entrega sem verificar o conteúdo real do artefato. Issue #84.
+- **Ainda não realizado:** teste real de login Google no Samsung e teste de exclusão de mensagens por usuário administrador contra regras Firebase de produção. CI não substitui homologação.
