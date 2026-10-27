@@ -68,6 +68,7 @@
       <a href="#free-campaign-panel">🎁 Campanha FREE</a>
       <a href="#app-version-panel">🛡️ APKs e manutenção</a>
       <a href="#backup-panel">💾 Backup e restauração</a>
+      <a href="#partners-panel">🎟️ Cupons e divulgadores</a>
     </nav>
     <div class="row"><span class="label">Conta</span><span class="value" id="account"></span></div>
     <hr class="sep">
@@ -198,6 +199,43 @@
     <div id="premium-keys-list" aria-live="polite"></div>
     <div class="actions"><button class="secondary" id="load-more-keys" hidden>Carregar mais</button></div>
     <small id="keys-count"></small>
+  </section>
+
+  <section class="panel" id="partners-panel" hidden>
+    <h2 style="font-size:1.08rem;margin-top:0">🎟️ Cupons e divulgadores</h2>
+    <p>Crie um código para cada parceiro. O comprador recebe 10% ou 50% de desconto e o divulgador acumula <strong>50% do valor realmente pago</strong>.</p>
+    <small>O desconto é calculado sobre o preço vigente no checkout, inclusive quando existe promoção de R$ 5. Nada é cobrado até o cliente confirmar o Pix; o parceiro só acumula após aprovação.</small>
+    <label class="label" for="partner-coupon-code">Cupom (4 a 24 caracteres)</label>
+    <input class="maintenance-note" id="partner-coupon-code" placeholder="YOUTUBE10" maxlength="24" autocapitalize="characters">
+    <label class="label" for="partner-name">Nome do divulgador</label>
+    <input class="maintenance-note" id="partner-name" placeholder="Canal do YouTube" maxlength="80">
+    <label class="label" for="partner-uid">UID Firebase do divulgador (opcional)</label>
+    <input class="maintenance-note" id="partner-uid" placeholder="Opcional · evita uso do próprio cupom" maxlength="128">
+    <label class="label" for="partner-discount">Desconto para comprador</label>
+    <select id="partner-discount" class="maintenance-note">
+      <option value="10">10% de desconto</option>
+      <option value="50">50% de desconto</option>
+    </select>
+    <label class="label" for="partner-end">Vencimento do cupom (opcional)</label>
+    <input class="maintenance-note" id="partner-end" type="datetime-local">
+    <label class="label" for="partner-enabled">Situação</label>
+    <select id="partner-enabled" class="maintenance-note">
+      <option value="active">Ativo</option>
+      <option value="inactive">Desativado</option>
+    </select>
+    <div class="actions">
+      <button id="save-partner-coupon" class="secondary">Salvar cupom</button>
+      <button id="refresh-partner-coupons" class="secondary">Atualizar cupons</button>
+    </div>
+    <div id="partner-coupons-list" aria-live="polite"></div>
+    <button id="more-partner-coupons" class="secondary" hidden>Carregar mais cupons</button>
+    <hr class="sep">
+    <h3 style="font-size:1rem">Comissões por venda</h3>
+    <p>Após o pagamento aprovado no Mercado Pago, a comissão fica <strong>pendente de repasse</strong>. Registre como paga somente depois de transferir o valor ao parceiro.</p>
+    <div class="actions"><button id="refresh-partner-commissions" class="secondary">Atualizar comissões</button></div>
+    <div id="partner-commissions-list" aria-live="polite"></div>
+    <button id="more-partner-commissions" class="secondary" hidden>Carregar mais comissões</button>
+    <small>Reembolso ou contestação cancela a comissão pendente. Se já tiver sido paga, o histórico marcará a necessidade de conciliação. A plataforma não realiza repasses automáticos.</small>
   </section>
   <section class="panel" id="backup-panel" hidden>
     <h2 style="font-size:1.08rem;margin-top:0">💾 Backup e restauração</h2>
@@ -336,11 +374,14 @@
       el("licensing").hidden=false;
       el("free-campaign-panel").hidden=false;
       el("backup-panel").hidden=false;
+      el("partners-panel").hidden=false;
       el("key-management").hidden=false;
       el("maintenance-panel").hidden=false;
       el("app-version-panel").hidden=false;
       el("keys-panel").hidden=false;
       if(!keyBusy)loadPremiumKeys(true);
+      loadPartnerCoupons(true);
+      loadPartnerCommissions(true);
       setStatus(configState.salesEnabled&&configState.paymentsLiveEnabled?
         "Administrador confirmado. Atenção: vendas e Pix real estão habilitados.":"Administrador confirmado pelo servidor.","ok");
     }catch(e){
@@ -348,6 +389,7 @@
       el("licensing").hidden=true;
       el("free-campaign-panel").hidden=true;
       el("backup-panel").hidden=true;
+      el("partners-panel").hidden=true;
       el("key-management").hidden=true;
       el("maintenance-panel").hidden=true;
       el("app-version-panel").hidden=true;
@@ -728,7 +770,7 @@
   // Browser-only AES-GCM envelope; neither the password nor the decoded backup
   // is saved to localStorage, Firebase, logs or any third-party service.
   const BACKUP_PARTS=["keys","entitlements","orders","orderIndex",
-    "paymentIndex","paymentThrottle","config","distribution","appControl"];
+    "paymentIndex","paymentThrottle","coupons","config","distribution","appControl"];
   const BACKUP_FORMAT="PokeSearch-Premium-Backup-v1";
   let unlockedBackup=null,backupBusy=false;
   const utf8=new TextEncoder(),decodeUtf8=new TextDecoder();
@@ -931,6 +973,135 @@
     }finally{setBackupBusy(false);}
   });
 
+
+  let couponCursor="",commissionCursor="",couponBusy=false,commissionBusy=false;
+  const pCard=()=>{
+    const item=document.createElement("div");
+    item.style.cssText="border:1px solid #34465d;border-radius:13px;padding:12px;margin:9px 0;background:#101d2e";
+    return item;
+  };
+  const addLine=(parent,message,emphasis=false)=>{
+    const element=document.createElement("div");
+    element.textContent=message;
+    if(emphasis)element.style.fontWeight="700";
+    element.style.margin="4px 0";
+    parent.append(element);return element;
+  };
+  const partnerButton=(label,callback)=>{
+    const button=document.createElement("button");
+    button.type="button";button.className="secondary";button.textContent=label;
+    button.style.margin="5px 5px 0 0";
+    button.addEventListener("click",callback);
+    return button;
+  };
+  function populatePartnerFields(item){
+    el("partner-coupon-code").value=item.code;
+    el("partner-name").value=item.partnerName||"";
+    el("partner-uid").value=item.partnerUid||"";
+    el("partner-discount").value=String(item.discountPercent||10);
+    el("partner-enabled").value=item.enabled?"active":"inactive";
+    if(item.expiresAt){
+      const date=new Date(item.expiresAt);
+      const local=new Date(date.getTime()-date.getTimezoneOffset()*60000);
+      el("partner-end").value=local.toISOString().slice(0,16);
+    }else el("partner-end").value="";
+    el("partner-coupon-code").focus();
+  }
+  async function savePartnerCoupon(values){
+    if(!values.code.match(/^[A-Z0-9][A-Z0-9_-]{2,22}[A-Z0-9]$/))
+      throw Error("Cupom deve ter 4 a 24 caracteres: letras, números, - ou _.");
+    if(values.partnerName.length<2||![10,50].includes(values.discountPercent))
+      throw Error("Informe o divulgador e escolha 10% ou 50%.");
+    const x=await call("adminSavePartnerCoupon",values);
+    setStatus("Cupom "+x.code+" atualizado.","ok");
+    await loadPartnerCoupons(true);
+  }
+  el("save-partner-coupon").addEventListener("click",async()=>{
+    if(couponBusy)return;
+    const code=el("partner-coupon-code").value.trim().toUpperCase();
+    const partnerName=el("partner-name").value.trim();
+    const partnerUid=el("partner-uid").value.trim();
+    const discountPercent=Number(el("partner-discount").value);
+    const date=el("partner-end").value;
+    const expiresAt=date?Date.parse(date):0;
+    if(!Number.isSafeInteger(expiresAt)){setStatus("Validade do cupom inválida.","error");return;}
+    couponBusy=true;el("save-partner-coupon").disabled=true;
+    try{await savePartnerCoupon({code,partnerName,partnerUid,discountPercent,
+      expiresAt,enabled:el("partner-enabled").value==="active"});}
+    catch(e){setStatus(e.message||"Falha ao salvar cupom.","error");}
+    finally{couponBusy=false;el("save-partner-coupon").disabled=false;}
+  });
+  async function loadPartnerCoupons(reset=false){
+    if(couponBusy&&!reset)return;
+    if(reset){couponCursor="";el("partner-coupons-list").replaceChildren();}
+    const target=el("partner-coupons-list");
+    try{
+      const page=await call("adminListPartnerCoupons",{cursor:couponCursor});
+      for(const item of page.items||[]){
+        const card=pCard();
+        addLine(card,item.code+" · "+item.partnerName,true);
+        addLine(card,item.discountPercent+"% OFF · "+(item.enabled?"Ativo":"Desativado")+
+          (item.expiresAt?" · Até "+new Date(item.expiresAt).toLocaleDateString("pt-BR"):""));
+        card.append(partnerButton("Editar",()=>populatePartnerFields(item)));
+        card.append(partnerButton("Copiar cupom",()=>navigator.clipboard.writeText(item.code)));
+        card.append(partnerButton(item.enabled?"Desabilitar":"Habilitar",async()=>{
+          if(!window.confirm((item.enabled?"Desabilitar":"Habilitar")+" "+item.code+"?"))return;
+          try{await savePartnerCoupon({...item,enabled:!item.enabled});}
+          catch(e){setStatus(e.message||"Falha ao mudar situação.","error");}
+        }));
+        target.append(card);
+      }
+      couponCursor=page.nextCursor||"";
+      el("more-partner-coupons").hidden=!couponCursor;
+      if(!target.children.length)addLine(target,"Nenhum cupom cadastrado.");
+    }catch(e){setStatus(e.message||"Falha ao consultar cupons.","error");}
+  }
+  async function loadPartnerCommissions(reset=false){
+    if(commissionBusy)return;
+    commissionBusy=true;
+    if(reset){commissionCursor="";el("partner-commissions-list").replaceChildren();}
+    const target=el("partner-commissions-list");
+    try{
+      const page=await call("adminListPartnerCommissions",{cursor:commissionCursor});
+      for(const item of page.items||[]){
+        const card=pCard();
+        addLine(card,item.partnerName+" · "+item.code,true);
+        addLine(card,"Venda "+item.orderId.slice(0,10)+" · "+money(item.paidPriceCents)+
+          " · Comissão "+money(item.commissionCents));
+        const statusNames={pending:"A repassar",paid:"Paga",unearned:"Aguardando Pix",
+          reversed:"Cancelada / estornada",reversed_paid:"Estorno após repasse"};
+        addLine(card,(statusNames[item.commissionStatus]||item.commissionStatus)+
+          (item.liveMode?" · Pix real":" · Homologação")+
+          (item.partnerPaymentReference?" · Ref. "+item.partnerPaymentReference:""));
+        if(item.commissionStatus==="pending"&&item.liveMode&&item.orderStatus==="approved"){
+          card.append(partnerButton("Registrar repasse",async()=>{
+            const reference=window.prompt("Após transferir "+money(item.commissionCents)+
+              " ao parceiro, informe o ID/comprovante da transferência:");
+            if(!reference||reference.trim().length<6)return;
+            if(!window.confirm("Confirmar repasse de "+money(item.commissionCents)+
+              " ao divulgador "+item.partnerName+"? Isso registra pagamento manual."))return;
+            try{
+              await call("adminMarkPartnerCommissionPaid",{
+                orderId:item.orderId,reference:reference.trim(),
+                confirm:"REGISTRAR REPASSE"});
+              setStatus("Repasse registrado no histórico.","ok");
+              await loadPartnerCommissions(true);
+            }catch(e){setStatus(e.message||"Falha ao registrar repasse.","error");}
+          }));
+        }
+        target.append(card);
+      }
+      commissionCursor=page.nextCursor||"";
+      el("more-partner-commissions").hidden=!commissionCursor;
+      if(!target.children.length)addLine(target,"Nenhuma venda com cupom nesta página.");
+    }catch(e){setStatus(e.message||"Falha ao consultar comissões.","error");}
+    finally{commissionBusy=false;}
+  }
+  el("refresh-partner-coupons").addEventListener("click",()=>loadPartnerCoupons(true));
+  el("more-partner-coupons").addEventListener("click",()=>loadPartnerCoupons());
+  el("refresh-partner-commissions").addEventListener("click",()=>loadPartnerCommissions(true));
+  el("more-partner-commissions").addEventListener("click",()=>loadPartnerCommissions());
+
   el("refresh").addEventListener("click",overview);
   el("issue").addEventListener("click",async()=>{
     if(busy)return;
@@ -1031,7 +1202,7 @@
     if(user){overview();}
     else{
       for(const id of ["admin","licensing","key-management","free-campaign-panel",
-        "app-version-panel","maintenance-panel","keys-panel","backup-panel"])
+        "app-version-panel","maintenance-panel","keys-panel","backup-panel","partners-panel"])
         el(id).hidden=true;
       lastKey="";revealed=false;el("premium-keys-list").replaceChildren();
       keyCursor="";keyCount=0;
