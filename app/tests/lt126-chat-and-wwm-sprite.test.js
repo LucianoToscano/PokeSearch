@@ -18,7 +18,7 @@ assert.match(chat,/if\(destroyed\|\|!authenticated\|\|!chatReadable\|\|sending/)
 assert.match(chat,/setOnClickListener\(v->retryConnect\(\)\)/);
 assert.match(rules.chat.messages[".read"],/query\.limitToLast/);
 assert.match(importer,/COMMIT = "42b315f317ca8cee8e178249328eab5173e5ca70"/);
-assert.match(importer,/len\(species\)!=1025 or len\(form_by_id\)!=1478 or len\(costume_by_id\)!=87/);
+assert.match(importer,/len\(species\)!=1025 or len\(form_by_id\)!=1506 or len\(costume_by_id\)!=87/);
 assert.match(builder,/form_hashes\.update\(external_form_hashes\)/);
 assert.match(wwm,/WWM_COMMIT = "998bf635194a11078b6375c79d1494d5eb999b39"/);
 const keys=[["Small",2641],["Average",2642],["Large",2643],["Super",2644]];
