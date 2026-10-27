@@ -35,6 +35,8 @@ def sync(root):
     pokemon=json.loads(fetch(DATA_ROOT+"pokemon.json",MAX_JSON))
     forms=json.loads(fetch(DATA_ROOT+"forms.json",MAX_JSON))
     costumes=json.loads(fetch(DATA_ROOT+"costumes.json",MAX_JSON))
+    pt_species=json.loads(fetch(DATA_ROOT+"translations/pt-br/pokemon.json",MAX_JSON))
+    pt_forms=json.loads(fetch(DATA_ROOT+"translations/pt-br/forms.json",MAX_JSON))
     index=json.loads(fetch(ICON_ROOT+"index.json",MAX_JSON))
     if (not isinstance(pokemon,list) or len(pokemon)<1025 or
         not isinstance(forms,list) or len(forms)<1400 or
@@ -62,6 +64,18 @@ def sync(root):
     for c in costumes:
         if isinstance(c,dict) and type(c.get("id"))==int and isinstance(c.get("proto"),str):
             catalog_costumes[str(c["id"])]={"name":str(c.get("name","")),"proto":c["proto"]}
+    # PT-BR names are stored as provenance-linked labels, never used to
+    # mutate species IDs or the PoGoCoordinates search contract.
+    if not isinstance(pt_species,dict) or not isinstance(pt_forms,dict):
+        raise ValueError("Invalid PT-BR catalogue")
+    names_pt={k[5:]:v for k,v in pt_species.items()
+              if re.fullmatch(r"poke_[0-9]{1,4}",k) and k[5:] in species
+              and isinstance(v,str) and 1<=len(v)<=80}
+    forms_pt={k[5:]:v for k,v in pt_forms.items()
+              if re.fullmatch(r"form_[0-9]{1,5}",k) and k[5:] in catalog_forms
+              and isinstance(v,str) and 1<=len(v)<=80}
+    if len(names_pt)<1000 or len(forms_pt)<1400:
+        raise ValueError("Insufficient PT-BR translation coverage")
     existing=set(index)
     assets={}
     icons=[]
@@ -81,13 +95,14 @@ def sync(root):
             icons.append({"dex":dex,"formId":fid,"form":label,"proto":proto,"shiny":shiny,
                           "file":out,"speciesName":p["name"]})
     snapshot={"schema":"pokesearch-wwm-catalog-v1","dataCommit":DATA_SHA,"uiconsCommit":ICON_SHA,
-              "species":species,"forms":catalog_forms,"costumes":catalog_costumes,"icons":icons}
+              "species":species,"forms":catalog_forms,"costumes":catalog_costumes,"ptBR":{"pokemon":names_pt,"forms":forms_pt},"icons":icons}
     source=root.parent/"wwm_catalog_snapshot.js"
     source.write_text("/* Generated at build from pinned WatWowMap data. No live encounters. */\n"+
                       "(function(r){r.PokeSearchWWMCatalog="+json.dumps(snapshot,ensure_ascii=False,separators=(',',':'))+
                       ";})(typeof window!==\"undefined\"?window:globalThis);\n",encoding="utf-8")
     return {"hashes":assets,"speciesCount":len(species),"formCount":len(catalog_forms),
-            "costumeCount":len(catalog_costumes),"iconCount":len(icons),
+            "costumeCount":len(catalog_costumes),"ptBrPokemonCount":len(names_pt),
+            "ptBrFormCount":len(forms_pt),"iconCount":len(icons),
             "dataCommit":DATA_SHA,"uiconsCommit":ICON_SHA}
 
 if __name__=="__main__":
