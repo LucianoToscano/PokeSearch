@@ -9,7 +9,7 @@
   if (root) root.PokeSearchApiContract=contract;
 })(typeof globalThis !== "undefined" ? globalThis : this, function() {
   "use strict";
-  var MAX_RESULTS=10;
+  var MAX_RESULTS=100; // Official tier upper bound; never invent results.
   var MAX_SOURCE_RESULTS=2000;
   var SIZES=new Set(["XXS","XS","S","M","L","XL","XXL"]);
   var rawPattern=/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/;
@@ -265,15 +265,16 @@
       response.results.length>MAX_SOURCE_RESULTS) return {ok:false,reason:"Invalid API results"};
     var cards=[],seen=new Set(),rejected=0,expired=0;
     // PvP selection must be checked against the entire signed-in server result
-    // BEFORE the visible ten-card cap. Validate the exact configured league/rank.
+    // BEFORE the plan-dependent visible card cap. Validate the exact configured league/rank.
     var pvpLeague=options.pvpLeague;
     var pvpRequired=pvpLeague!==undefined&&pvpLeague!==null;
     if(pvpRequired&&(!["great","ultra"].includes(pvpLeague)||
       !Number.isInteger(options.pvpMaxRank)||options.pvpMaxRank<1||
       options.pvpMaxRank>50))
       return {ok:false,reason:"Invalid PvP filters"};
-    var serverCap=Number.isInteger(response.cap)&&response.cap>=0?response.cap:MAX_RESULTS;
-    var cap=Math.min(MAX_RESULTS,serverCap); // UX still shows ten cards; plan cap is separate.
+    var serverCap=Number.isInteger(response.cap)&&response.cap>=0?
+      response.cap:Math.max(10,Math.min(MAX_RESULTS,response.results.length));
+    var cap=Math.min(MAX_RESULTS,serverCap); // Respect the actual tier returned by the server.
     if(cap===0)return {ok:true,cards:[],found:0,siteCount:response.results.length,rejected:0,expired:0,serverCap:serverCap,displayCap:cap,source:"api-fixture",criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
     for(var i=0;i<response.results.length;i++) {
       var x=response.results[i];
