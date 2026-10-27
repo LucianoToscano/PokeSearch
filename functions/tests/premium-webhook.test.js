@@ -162,6 +162,43 @@ async function run(){
    }catch(error){doubleUse=error.code==="permission-denied";}
    assert.equal(doubleUse,true,"gift cannot be claimed by another UID");
  }
+ // Revoking an exposed, unclaimed manual code is admin-only and permanent.
+ const exposed=await premium.adminIssuePremiumKey({...admin,data:{duration:"15d"}});
+ let unauthorizedRevoke=false;
+ try{
+   await premium.adminRevokePremiumKey({
+     auth:{uid:"stranger"},data:{licenseKey:exposed.licenseKey}
+   });
+ }catch(error){unauthorizedRevoke=error.code==="permission-denied";}
+ assert.equal(unauthorizedRevoke,true,"non-admin must not revoke keys");
+ const invalidated=await premium.adminRevokePremiumKey({
+   ...admin,data:{licenseKey:exposed.licenseKey}
+ });
+ assert.equal(invalidated.revoked,true);
+ assert.equal(invalidated.wasAssigned,false);
+ const exposedHash=crypto.createHash("sha256").update(exposed.licenseKey).digest("hex");
+ assert.equal(read("premium/keys/"+exposedHash).revoked,true);
+ let blocked=false;
+ try{
+   await premium.redeemPremiumKey({
+     auth:{uid:"testOther"},data:{licenseKey:exposed.licenseKey}
+   });
+ }catch(error){blocked=error.code==="not-found";}
+ assert.equal(blocked,true,"revoked unclaimed key cannot be redeemed");
+ const claimedGift=await premium.adminIssuePremiumKey({...admin,data:{duration:"15d"}});
+ await premium.redeemPremiumKey({
+   auth:{uid:"claimant"},data:{licenseKey:claimedGift.licenseKey}
+ });
+ const revClaimed=await premium.adminRevokePremiumKey({
+   ...admin,data:{licenseKey:claimedGift.licenseKey}
+ });
+ assert.equal(revClaimed.revoked,true);
+ assert.equal(revClaimed.wasAssigned,true);
+ assert.equal(read("premium/entitlements/claimant").revoked,true);
+ assert.equal((await premium.checkDistributionAccess({
+   auth:{uid:"claimant"},data:{versionCode:54328}
+ })).premium,false,"revoking a claimed gift removes premium");
+ console.log("PASS admin-only revocation of exposed and claimed manual keys");
  console.log("PASS individually chosen 15d/1m/3m/6m/12m/lifetime gifts");
  for(let i=0;i<12;i++){
    const more=await premium.adminIssuePremiumKey({...admin,data:{duration:"lifetime"}});
