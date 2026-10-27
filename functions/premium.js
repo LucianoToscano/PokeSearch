@@ -39,7 +39,10 @@ const currentPolicy=async(code)=>{
 };
 const userEntitlement=async uid=>{
  const value=(await root().child("entitlements").child(uid).get()).val()||{};
- return value.revoked!==true&&Number(value.expiresAt||0)>Date.now();
+ if(value.revoked===true||Number(value.expiresAt||0)<=Date.now()||
+    !/^[0-9a-f]{64}$/.test(String(value.currentKeyHash||"")))return false;
+ const key=(await root().child("keys").child(value.currentKeyHash).get()).val();
+ return key?.uid===uid&&Number(key.expiresAt||0)>Date.now();
 };
 const formatKey=(orderId)=>{
  const hex=crypto.createHmac("sha256",KEY_SECRET.value()).update(orderId).digest("hex").slice(0,24).toUpperCase();
@@ -77,7 +80,7 @@ async function settlePayment(paymentId){
  }
  if(payment.status!=="approved")return false;
  const entRef=root().child("entitlements").child(order.uid);
- const now=Date.now();
+ const now=Date.now(),key=formatKey(orderId),hash=sha(key);
  // Idempotent across webhook retries and polling: one order adds exactly 30 days.
  const transaction=await entRef.transaction(old=>{
    const v=old&&typeof old==="object"?old:{};
@@ -85,13 +88,13 @@ async function settlePayment(paymentId){
    if(paid[orderId])return; // already applied, no duplicate extension
    if(v.revoked===true)return; // admin revocation takes precedence
    paid[orderId]=true;
-   return {...v,paidOrders:paid,expiresAt:Math.max(now,Number(v.expiresAt)||0)+MONTH};
+   return {...v,paidOrders:paid,expiresAt:Math.max(now,Number(v.expiresAt)||0)+MONTH,
+     currentKeyHash:hash};
  },undefined,false);
  const ent=(transaction.snapshot&&transaction.snapshot.val())||{};
  if(!ent.paidOrders?.[orderId])return false;
- const key=formatKey(orderId),hash=sha(key);
  await root().child("keys").child(hash).transaction(value=>
-   value||{orderId,uid:order.uid,expiresAt:ent.expiresAt,createdAt:now},undefined,false);
+   value||{orderId,uid:order.uid,expiresAt:ent.expiresAt,createdAt:now,transferred:false},undefined,false);
  await ref.update({status:"approved",licensed:true,approvedAt:now});
  return true;
 }
@@ -209,4 +212,42 @@ exports.adminPremiumOverview=onCall({region:REGION},async request=>{
  const p=dist.val()||{},c=cfg.val()||{};
  return {globalEnabled:p.globalEnabled===true,versions:p.versions||{},
    salesEnabled:c.salesEnabled===true,priceCents:Number(c.priceCents||0)};
+});
+
+/** A key is a bearer recovery code, bound to one account at a time.
+ * One server-mediated transfer is allowed; possession of a key must be protected.
+ */
+exports.redeemPremiumKey=onCall({region:REGION},async request=>{
+ const uid=requireUser(request);
+ const key=String(request.data?.licenseKey||"").trim().toUpperCase();
+ if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(key))
+   throw new HttpsError("invalid-argument","Formato de chave inválido.");
+ const hash=sha(key),keyRef=root().child("keys").child(hash);
+ const snapshot=await keyRef.get(),entry=snapshot.val();
+ if(!entry||Number(entry.expiresAt||0)<=Date.now())
+   throw new HttpsError("not-found","Chave inexistente ou vencida.");
+ const oldUid=String(entry.uid||"");
+ if(!oldUid)throw new HttpsError("failed-precondition","Chave indisponível.");
+ if(oldUid!==uid){
+   const oldEnt=(await root().child("entitlements").child(oldUid).get()).val()||{};
+   if(oldEnt.currentKeyHash!==hash||oldEnt.revoked===true||entry.transferred===true)
+     throw new HttpsError("permission-denied","Esta chave já foi transferida ou substituída.");
+   const moved=await keyRef.transaction(v=>{
+     if(!v||v.uid!==oldUid||v.transferred===true||v.expiresAt<=Date.now())return;
+     return {...v,uid,transferred:true,transferredAt:Date.now()};
+   },undefined,false);
+   if(!moved.snapshot.val()||moved.snapshot.val().uid!==uid)
+     throw new HttpsError("aborted","Chave em processamento. Tente novamente.");
+ }
+ const latest=(await keyRef.get()).val();
+ if(latest?.uid!==uid)throw new HttpsError("permission-denied","Chave inválida.");
+ const entitlement=root().child("entitlements").child(uid);
+ await entitlement.transaction(v=>{
+   const current=v&&typeof v==="object"?v:{};
+   if(current.revoked===true)return;
+   return {...current,expiresAt:Math.max(Number(current.expiresAt)||0,Number(latest.expiresAt)||0),
+     currentKeyHash:hash};
+ },undefined,false);
+ if(!await userEntitlement(uid))throw new HttpsError("failed-precondition","Licença bloqueada.");
+ return {activated:true,expiresAt:Number(latest.expiresAt)};
 });
