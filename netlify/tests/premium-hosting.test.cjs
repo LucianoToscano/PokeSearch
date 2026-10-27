@@ -16,6 +16,26 @@ const syntax=spawnSync(process.execPath,["--check","--input-type=module"],
 assert.equal(syntax.status,0,"Admin panel JS syntax: "+(syntax.stderr||""));
 
 const checks=[
+  ["Simple home screen uses one all-version maintenance switch", 
+    adminHtml.includes('id="admin-nav"')&&adminHtml.includes('id="home-app-status"')&&
+    adminHtml.includes('id="toggle-maintenance"')&&adminHtml.includes('id="maintenance-status"')&&
+    adminHtml.includes('id="sales-panel"')&&adminHtml.includes('id="pricing-panel"')&&
+    !adminHtml.includes('id="versions-enable-all"')&&!adminHtml.includes('id="versions-disable-all"')&&
+    !adminHtml.includes('id="app-version-name"')&&!adminHtml.includes('id="toggle-lt134"')&&
+    !adminHtml.includes('id="toggle-lt135"')],
+  ["New versions inherit global Premium, and app restore clears old block overrides",
+    logic.includes('p.versions?.[String(code)]!==false')&&
+    logic.includes('await policy().update({globalEnabled:true,versions:null})')&&
+    logic.includes('"appControl/versionAccess/globalEnabled":true')&&
+    logic.includes('"appControl/versionAccess/versions":null')&&
+    adminHtml.includes('const screenPanels=')&&
+    adminHtml.includes('scope:"global",enabled')&&
+    adminHtml.includes('adminSetAppMaintenance')],
+  ["Every referenced HTML id is unique and exists",(()=>{
+    const ids=[...adminHtml.matchAll(/\\bid="([^"]+)"/g)].map(m=>m[1]);
+    const references=[...adminHtml.matchAll(/\\bel\\("([^"]+)"\\)/g)].map(m=>m[1]);
+    return new Set(ids).size===ids.length&&references.every(id=>ids.includes(id));
+  })()],
  ["App-wide and per-version endpoint is read-only and fail-closed on lookup errors",
    http.includes('action==="appStatus"&&method==="GET"')&&
    http.includes('return response({error:"Estado de manutenção indisponível."},503)')&&
