@@ -17,6 +17,7 @@ const MP_WEBHOOK_SECRET=defineSecret("POKE_MP_WEBHOOK_SECRET");
 const MP_WEBHOOK_URL=defineSecret("POKE_MP_WEBHOOK_URL");
 const KEY_SECRET=defineSecret("POKE_PREMIUM_KEY_SECRET");
 const REGION="us-central1", MONTH=30*24*60*60*1000;
+const NORMAL_CENTS=1000, PROMO_CENTS=500, LIFETIME_LIMIT=10, GIFTS_PER_LIFETIME=2;
 const root=()=>getDatabase().ref("premium");
 const policy=()=>getDatabase().ref("distribution");
 const sha=value=>crypto.createHash("sha256").update(value).digest("hex");
@@ -39,10 +40,23 @@ const currentPolicy=async(code)=>{
 };
 const userEntitlement=async uid=>{
  const value=(await root().child("entitlements").child(uid).get()).val()||{};
- if(value.revoked===true||Number(value.expiresAt||0)<=Date.now()||
-    !/^[0-9a-f]{64}$/.test(String(value.currentKeyHash||"")))return false;
+ if(value.revoked===true||!/^[0-9a-f]{64}$/.test(String(value.currentKeyHash||"")))return false;
  const key=(await root().child("keys").child(value.currentKeyHash).get()).val();
- return key?.uid===uid&&key?.revoked!==true&&Number(key.expiresAt||0)>Date.now();
+ if(key?.uid!==uid||key.revoked===true)return false;
+ if(value.lifetime===true)return key.kind==="lifetime";
+ return Number(value.expiresAt||0)>Date.now()&&Number(key.expiresAt||0)>Date.now();
+};
+const offer=config=>{
+ const regular=Number(config.regularPriceCents??config.priceCents??NORMAL_CENTS);
+ const promotional=Number(config.promotionalPriceCents??PROMO_CENTS);
+ const promotionEnabled=config.promotionEnabled!==false;
+ return {regularPriceCents:regular,promotionalPriceCents:promotional,promotionEnabled,
+   priceCents:promotionEnabled?promotional:regular};
+};
+const grantYearFrom=ms=>{
+ const date=new Date(ms);
+ date.setUTCFullYear(date.getUTCFullYear()+1);
+ return date.getTime();
 };
 const formatKey=(orderId)=>{
  const hex=crypto.createHmac("sha256",KEY_SECRET.value()).update(orderId).digest("hex").slice(0,24).toUpperCase();
@@ -78,10 +92,13 @@ async function settlePayment(paymentId){
    const hash=sha(formatKey(orderId)),keyRef=root().child("keys").child(hash);
    const key=(await keyRef.get()).val();
    if(key)await keyRef.update({revoked:true,revokedAt:Date.now()});
-   for(const affected of new Set([order.uid,key?.uid].filter(Boolean)))
-     await root().child("entitlements").child(affected).update({
-       revoked:true,revocationReason:"payment_reversed",revokedAt:Date.now()
-     });
+   for(const affected of new Set([order.uid,key?.uid].filter(Boolean))){
+     const entRef=root().child("entitlements").child(affected);
+     await entRef.transaction(value=>{
+       if(!value||value.currentKeyHash!==hash||value.lifetime===true)return;
+       return {...value,revoked:true,revocationReason:"payment_reversed",revokedAt:Date.now()};
+     },undefined,false);
+   }
    return false;
  }
  if(payment.status!=="approved")return false;
@@ -97,13 +114,14 @@ async function settlePayment(paymentId){
    if(paid[orderId])return; // already applied, no duplicate extension
    if(v.revoked===true)return; // admin revocation takes precedence
    paid[orderId]=true;
-   return {...v,paidOrders:paid,expiresAt:Math.max(billingStart,Number(v.expiresAt)||0)+MONTH,
-     currentKeyHash:hash};
+   if(v.lifetime===true)return {...v,paidOrders:paid};
+   return {...v,paidOrders:paid,kind:"paid",
+     expiresAt:Math.max(billingStart,Number(v.expiresAt)||0)+MONTH,currentKeyHash:hash};
  },undefined,false);
  const ent=(transaction.snapshot&&transaction.snapshot.val())||{};
  if(!ent.paidOrders?.[orderId])return false;
  await root().child("keys").child(hash).transaction(value=>
-   value||{orderId,uid:order.uid,expiresAt:ent.expiresAt,createdAt:now,transferred:false},undefined,false);
+   value||{kind:"paid",orderId,uid:order.uid,expiresAt:ent.expiresAt,createdAt:now,transferred:false},undefined,false);
  await ref.update({status:"approved",licensed:true,approvedAt:now});
  return true;
 }
@@ -136,7 +154,7 @@ exports.createPremiumPix=onCall({region:REGION,
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>120||cpf.length!==11)
    throw new HttpsError("invalid-argument","Informe e-mail e CPF válidos.");
  const config=(await root().child("config").get()).val()||{};
- const price=Number(config.priceCents);
+ const price=offer(config).priceCents;
  if(config.salesEnabled!==true||!Number.isSafeInteger(price)||price<100||price>100000)
    throw new HttpsError("failed-precondition","Vendas desativadas ou preço não configurado.");
  const createdAt=Date.now();
@@ -205,11 +223,15 @@ exports.adminDistributionControl=onCall({region:REGION},async request=>{
 exports.adminPremiumSettings=onCall({region:REGION},async request=>{
  await requireAdmin(request);
  const input=request.data||{};
- if(input.action==="price"){
+ if(input.action==="price"||input.action==="regularPrice"||input.action==="promotionalPrice"){
    const cents=Number(input.priceCents);
    if(!Number.isSafeInteger(cents)||cents<100||cents>100000)
      throw new HttpsError("invalid-argument","Preço inválido.");
-   await root().child("config").child("priceCents").set(cents);
+   const field=input.action==="promotionalPrice"?"promotionalPriceCents":"regularPriceCents";
+   await root().child("config").child(field).set(cents);
+ }else if(input.action==="promotion"){
+   if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Promoção inválida.");
+   await root().child("config").child("promotionEnabled").set(input.enabled);
  }else if(input.action==="sales"){
    if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Valor inválido.");
    await root().child("config").child("salesEnabled").set(input.enabled);
@@ -227,43 +249,177 @@ exports.adminPremiumOverview=onCall({region:REGION},async request=>{
  const [dist,cfg]=await Promise.all([policy().get(),root().child("config").get()]);
  const p=dist.val()||{},c=cfg.val()||{};
  return {globalEnabled:p.globalEnabled===true,versions:p.versions||{},
-   salesEnabled:c.salesEnabled===true,priceCents:Number(c.priceCents||0)};
+   salesEnabled:c.salesEnabled===true,...offer(c),lifetimeLimit:LIFETIME_LIMIT,
+   giftsPerLifetime:GIFTS_PER_LIFETIME};
 });
 
-/** A key is a bearer recovery code, bound to one account at a time.
- * One server-mediated transfer is allowed; possession of a key must be protected.
+
+/** Price displayed before generating any charge. Client-provided price is NEVER trusted. */
+exports.getPremiumOffer=onCall({region:REGION},async request=>{
+ requireUser(request);
+ const cfg=(await root().child("config").get()).val()||{};
+ return {...offer(cfg),salesEnabled:cfg.salesEnabled===true,serverNow:Date.now()};
+});
+
+/** Only the owner can provision the 10 lifetime keys. Repeated requests are idempotent.
+ * Never persist plaintext keys; HMAC derivation depends on Secret Manager.
+ */
+exports.adminLifetimePool=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
+ await requireAdmin(request);
+ const keys=[];
+ for(let slot=1;slot<=LIFETIME_LIMIT;slot++){
+   const plain=formatKey("lifetime:slot:"+slot),hash=sha(plain);
+   const ref=root().child("keys").child(hash);
+   const claimed=await ref.transaction(value=>value||{
+     kind:"lifetime",slot,uid:null,createdAt:Date.now(),revoked:false
+   },undefined,false);
+   const entry=claimed.snapshot.val()||{};
+   keys.push({slot,licenseKey:plain,claimed:!!entry.uid,revoked:entry.revoked===true});
+ }
+ return {keys,limit:LIFETIME_LIMIT,serverNow:Date.now()};
+});
+
+/** Exactly two gift keys per activated lifetime friend: 10 friends * 2 = 20 gifts.
+ * Gift validity begins at first redemption (12 calendar months), not issuance.
+ */
+exports.getLifetimeGiftKeys=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
+ const uid=requireUser(request);
+ const entitlement=(await root().child("entitlements").child(uid).get()).val()||{};
+ if(entitlement.lifetime!==true||!await userEntitlement(uid))
+   throw new HttpsError("permission-denied","Apenas amigos com licença vitalícia podem presentear.");
+ const keys=[];
+ for(let slot=1;slot<=GIFTS_PER_LIFETIME;slot++){
+   const plain=formatKey("gift:"+uid+":slot:"+slot),hash=sha(plain);
+   const ref=root().child("keys").child(hash);
+   const result=await ref.transaction(value=>value||{
+      kind:"gift",issuerUid:uid,slot,uid:null,createdAt:Date.now(),revoked:false
+   },undefined,false);
+   const entry=result.snapshot.val()||{};
+   keys.push({slot,licenseKey:plain,claimed:!!entry.uid,expiresAt:Number(entry.expiresAt||0)});
+ }
+ return {keys,giftsPerLifetime:GIFTS_PER_LIFETIME,serverNow:Date.now()};
+});
+
+/** Paid recovery remains backward-compatible. Lifetime and gift keys are single-use.
+ * Gift recipient gets 12 calendar months from redemption; owner cannot self-redeem.
  */
 exports.redeemPremiumKey=onCall({region:REGION},async request=>{
  const uid=requireUser(request);
- const key=String(request.data?.licenseKey||"").trim().toUpperCase();
- if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(key))
+ const code=String(request.data?.licenseKey||"").trim().toUpperCase();
+ if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(code))
    throw new HttpsError("invalid-argument","Formato de chave inválido.");
- const hash=sha(key),keyRef=root().child("keys").child(hash);
- const snapshot=await keyRef.get(),entry=snapshot.val();
- if(!entry||entry.revoked===true||Number(entry.expiresAt||0)<=Date.now())
-   throw new HttpsError("not-found","Chave inexistente ou vencida.");
+ const hash=sha(code),keyRef=root().child("keys").child(hash);
+ let entry=(await keyRef.get()).val();
+ if(!entry||entry.revoked===true)
+   throw new HttpsError("not-found","Chave inexistente ou revogada.");
+ const kind=entry.kind||"paid";
+ if(kind==="lifetime"||kind==="gift"){
+   if(kind==="gift"){
+     if(uid===entry.issuerUid)
+       throw new HttpsError("permission-denied","Presente deve ser utilizado por outro amigo.");
+     // The gift must be backed by a genuine, active lifetime sponsor.
+     if(!await userEntitlement(String(entry.issuerUid||"")))
+       throw new HttpsError("failed-precondition","A licença que originou este presente não está ativa.");
+   }
+   const existingEnt=(await root().child("entitlements").child(uid).get()).val()||{};
+   if(existingEnt.lifetime===true&&kind==="gift")
+     throw new HttpsError("failed-precondition","Esta conta já tem licença vitalícia.");
+   const now=Date.now();
+   const moved=await keyRef.transaction(value=>{
+     if(!value||value.revoked===true||value.kind!==kind||value.uid&&value.uid!==uid)return;
+     if(value.uid===uid)return value;
+     const expiry=kind==="gift"?
+       grantYearFrom(Math.max(now,Number(existingEnt.expiresAt)||0)):null;
+     return {...value,uid,claimedAt:now,...(kind==="gift"?{expiresAt:expiry}:{})};
+   },undefined,false);
+   entry=moved.snapshot.val();
+   if(!moved.committed||entry?.uid!==uid)
+     throw new HttpsError("permission-denied","Chave já ativada em outra conta.");
+   const target=root().child("entitlements").child(uid);
+   await target.transaction(value=>{
+     const old=value&&typeof value==="object"?value:{};
+     if(old.revoked===true||kind==="gift"&&old.lifetime===true)return;
+     if(kind==="lifetime")
+       return {...old,kind:"lifetime",lifetime:true,currentKeyHash:hash,expiresAt:null};
+     return {...old,kind:"gift",lifetime:false,
+       expiresAt:Math.max(Number(old.expiresAt)||0,Number(entry.expiresAt)||0),
+       currentKeyHash:hash};
+   },undefined,false);
+   if(!await userEntitlement(uid))
+     throw new HttpsError("failed-precondition","A licença está bloqueada.");
+   return {activated:true,lifetime:kind==="lifetime",
+     expiresAt:kind==="lifetime"?null:Number(entry.expiresAt)};
+ }
+ if(Number(entry.expiresAt||0)<=Date.now())
+   throw new HttpsError("not-found","Chave vencida.");
  const oldUid=String(entry.uid||"");
  if(!oldUid)throw new HttpsError("failed-precondition","Chave indisponível.");
  if(oldUid!==uid){
    const oldEnt=(await root().child("entitlements").child(oldUid).get()).val()||{};
    if(oldEnt.currentKeyHash!==hash||oldEnt.revoked===true||entry.transferred===true)
      throw new HttpsError("permission-denied","Esta chave já foi transferida ou substituída.");
-   const moved=await keyRef.transaction(v=>{
-     if(!v||v.uid!==oldUid||v.transferred===true||v.expiresAt<=Date.now())return;
-     return {...v,uid,transferred:true,transferredAt:Date.now()};
+   const moved=await keyRef.transaction(value=>{
+     if(!value||value.uid!==oldUid||value.transferred===true||
+        value.revoked===true||value.expiresAt<=Date.now())return;
+     return {...value,uid,transferred:true,transferredAt:Date.now()};
    },undefined,false);
    if(!moved.snapshot.val()||moved.snapshot.val().uid!==uid)
      throw new HttpsError("aborted","Chave em processamento. Tente novamente.");
  }
- const latest=(await keyRef.get()).val();
- if(latest?.uid!==uid)throw new HttpsError("permission-denied","Chave inválida.");
- const entitlement=root().child("entitlements").child(uid);
- await entitlement.transaction(v=>{
+ entry=(await keyRef.get()).val();
+ if(entry?.uid!==uid)throw new HttpsError("permission-denied","Chave inválida.");
+ await root().child("entitlements").child(uid).transaction(v=>{
    const current=v&&typeof v==="object"?v:{};
    if(current.revoked===true)return;
-   return {...current,expiresAt:Math.max(Number(current.expiresAt)||0,Number(latest.expiresAt)||0),
+   if(current.lifetime===true)return current;
+   return {...current,kind:"paid",
+     expiresAt:Math.max(Number(current.expiresAt)||0,Number(entry.expiresAt)||0),
      currentKeyHash:hash};
  },undefined,false);
- if(!await userEntitlement(uid))throw new HttpsError("failed-precondition","Licença bloqueada.");
- return {activated:true,expiresAt:Number(latest.expiresAt)};
+ if(!await userEntitlement(uid))
+   throw new HttpsError("failed-precondition","Licença bloqueada.");
+ return {activated:true,lifetime:false,expiresAt:Number(entry.expiresAt)};
+});
+
+/** Admin can extend by days or set an exact UTC expiry, without issuing a new key.
+ * Lifetime grants remain deliberately separate and capped at 10.
+ */
+exports.adminAdjustPremiumExpiry=onCall({region:REGION},async request=>{
+ await requireAdmin(request);
+ const uid=String(request.data?.uid||""),action=String(request.data?.action||"");
+ if(!/^[A-Za-z0-9_-]{5,128}$/.test(uid))
+   throw new HttpsError("invalid-argument","UID inválido.");
+ const entitlement=root().child("entitlements").child(uid);
+ const current=(await entitlement.get()).val()||{};
+ if(current.revoked===true||current.lifetime===true||!current.currentKeyHash)
+   throw new HttpsError("failed-precondition","Licença finita inexistente, bloqueada ou vitalícia.");
+ const key=root().child("keys").child(current.currentKeyHash);
+ const record=(await key.get()).val()||{};
+ if(record.uid!==uid||record.revoked===true)
+   throw new HttpsError("failed-precondition","Chave inválida.");
+ const now=Date.now();let target=0;
+ if(action==="extendDays"){
+   const days=Number(request.data?.days);
+   if(!Number.isInteger(days)||days<1||days>36500)
+     throw new HttpsError("invalid-argument","Informe de 1 a 36500 dias.");
+   target=Math.max(now,Number(current.expiresAt||0))+days*86400000;
+ }else if(action==="setExpiresAt"){
+   target=Number(request.data?.expiresAt);
+   if(!Number.isSafeInteger(target)||target<=now||target>now+36500*86400000)
+     throw new HttpsError("invalid-argument","Data de vencimento inválida.");
+ }else throw new HttpsError("invalid-argument","Ação inválida.");
+ // Do not decrease an existing grant. Update the backing key first, fail closed.
+ if(target<Number(current.expiresAt||0))
+   throw new HttpsError("failed-precondition","A data nova não pode reduzir a licença.");
+ const updated=await key.transaction(v=>{
+   if(!v||v.uid!==uid||v.revoked===true)return;
+   return {...v,expiresAt:Math.max(Number(v.expiresAt||0),target)};
+ },undefined,false);
+ if(!updated.committed)throw new HttpsError("aborted","Chave alterada durante a operação.");
+ await entitlement.transaction(v=>{
+   if(!v||v.currentKeyHash!==current.currentKeyHash||v.revoked===true||v.lifetime===true)return;
+   return {...v,expiresAt:Math.max(Number(v.expiresAt||0),target)};
+ },undefined,false);
+ if(!await userEntitlement(uid))throw new HttpsError("failed-precondition","Licença não confirmada.");
+ return {updated:true,expiresAt:target,serverNow:Date.now()};
 });
