@@ -17,3 +17,9 @@ Data: 26/10/2026. Base de código: LT123 no commit ed712bfe716257b27c7937bb3a97c
 - Testes físicos no Samsung de sprites e carregamento, duas Pokébolas, notificações e chat ainda pendentes.
 - Nenhuma alteração Gradle/dependências foi necessária; JDK 17, Gradle 8.11 e assinatura devem ser verificados na QA.
 - QA alvo 0.01.24 / 54328 apenas após CI, com certificate v2 igual à release anterior.
+
+## Resultado final confirmado no GitHub e artefato
+- PR #79 [MERGED](https://github.com/LucianoToscano/PokeSearch/pull/79), commit `bc4b1883f6744f738c83a44c6103e2fe40423234`; fonte binária `2e92c07266ebf0bce1dcbde53948e2e467993c39`.
+- [Workflow de APK #40426146549](https://github.com/LucianoToscano/PokeSearch/actions/runs/40426146549) **SUCCESS**; [artefato #12700590080](https://github.com/LucianoToscano/PokeSearch/actions/runs/40426146549/artifacts/12700590080).
+- `PokeSearch-v0.01.24-LT-Sprite-Picker-Stats-QA.apk`, 41.838.110 bytes, SHA-256 `4f8c11ce6558acc87f295f4ec3776de46a9a2d1ead9df7c8645e3d3e0e3c98a5` verificado após extração contra `SHA256SUMS.txt`. `0.01.24/54328`, Android v2 assinado com certificado inalterado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- Manifesto extraído: 1025 sprites-base, 1025 Shiny, 2 regionais exatas, nenhum arquivo desses ausente. Formas eventuais GO e contadores de Firebase em produção **não comprovados/corrigidos integralmente**.
