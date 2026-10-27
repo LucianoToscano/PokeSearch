@@ -37,6 +37,15 @@ const requireUser=request=>{
  if(!request.auth?.uid)throw new HttpsError("unauthenticated","É necessário autenticar no PokeSearch.");
  return request.auth.uid;
 };
+const requireGoogle=async request=>{
+ const uid=requireUser(request);
+ // Firebase verifies the ID token at the Netlify entrypoint. Check the
+ // provider against Firebase Admin too: a bare anonymous UID never grants P2.
+ const user=await getAuth().getUser(uid);
+ if(!user.providerData?.some(p=>p.providerId==="google.com"))
+   throw new HttpsError("permission-denied","Entre com uma conta Google verificada.");
+ return uid;
+};
 const requireAdmin=async request=>{
  const uid=requireUser(request);
  const record=await getAuth().getUser(uid);
@@ -370,7 +379,7 @@ async function premiumDeviceCheck(uid,id,name){
  * Replayed requests from a displaced installation cannot reclaim P2.
  */
 exports.transferPremiumDevice=onCall({region:REGION},async request=>{
- const uid=requireUser(request),input=request.data||{};
+ const uid=await requireGoogle(request),input=request.data||{};
  const id=String(input.deviceId||"");
  if(!validPremiumDevice(id)||input.confirm!==true)
    throw new HttpsError("invalid-argument","Confirme a troca de aparelho.");
@@ -396,7 +405,7 @@ exports.transferPremiumDevice=onCall({region:REGION},async request=>{
  * An old phone cannot disconnect a newer phone after a transfer.
  */
 exports.releasePremiumDevice=onCall({region:REGION},async request=>{
- const uid=requireUser(request),id=String(request.data?.deviceId||"");
+ const uid=await requireGoogle(request),id=String(request.data?.deviceId||"");
  if(!validPremiumDevice(id))
    throw new HttpsError("invalid-argument","Instalação inválida.");
  const hash=premiumDeviceHash(uid,id),ref=premiumDeviceRef(uid),now=Date.now();
@@ -472,7 +481,8 @@ exports.checkDistributionAccess=onCall({region:REGION},async request=>{
  const uid=requireUser(request),code=Number(request.data?.versionCode);
  if(!isValidCode(code))throw new HttpsError("invalid-argument","Versão inválida.");
  const enabled=!await appMaintenance()&&await currentPolicy(code);
- const active=enabled&&await userEntitlement(uid);
+ const entitled=enabled&&await userEntitlement(uid);
+ const active=entitled&&await requireGoogle(request).then(()=>true,()=>false);
  const device=active?await premiumDeviceCheck(uid,request.data?.deviceId,
      request.data?.deviceName):{premium:false,deviceConflict:false,
        deviceUpdateRequired:false};
