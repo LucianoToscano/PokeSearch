@@ -559,7 +559,7 @@ public class MainActivity extends Activity {
         accountProvider.setEllipsize(android.text.TextUtils.TruncateAt.END);
         identity.addView(accountDisplay);
         identity.addView(accountProvider);
-        Button logout=homeAuthButton("⇥  Logout",Color.rgb(28,37,54),Color.WHITE);
+        Button logout=homeAuthButton("⇥  Sair site",Color.rgb(28,37,54),Color.WHITE);
         logout.setBackground(homeSurface(Color.rgb(27,36,52),13,Color.rgb(51,67,92)));
         LinearLayout.LayoutParams logoutLp=new LinearLayout.LayoutParams(d(88),d(37));
         logoutLp.leftMargin=d(7);
@@ -1065,26 +1065,37 @@ public class MainActivity extends Activity {
         startSecondaryOverlayAuthorized();
     }
     private void logoutPremiumAccount(boolean switchAccount){
-        // Never touch the free overlay, its filters, or its saved settings.
+        // Sign-out must NEVER depend indefinitely on a network response.
+        // Keep P1, saved filters, chat and PoGoCoordinates session untouched.
         stopService(new Intent(this,SecondaryOverlayService.class));
         PremiumAccess.invalidateLease();
-        // Best effort release while the verified Google JWT still exists.
-        // Even with no network, local P2 closes immediately.
-        PremiumAccess.releaseDevice(this,(result,error)->{
+        final java.util.concurrent.atomic.AtomicBoolean finished=
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+        final android.os.Handler main=new android.os.Handler(android.os.Looper.getMainLooper());
+        final boolean[] remoteReleased={false};
+        Runnable localLogout=()->{
+            if(!finished.compareAndSet(false,true))return;
             PremiumGoogleLogin.signOut(this,()->{
+                if(isFinishing()||isDestroyed())return;
+                refreshHomeOverlay();
                 if(switchAccount){
                     PremiumGoogleLogin.signIn(this,(success,message)->{
+                        if(isFinishing()||isDestroyed())return;
                         Toast.makeText(this,message,Toast.LENGTH_LONG).show();
                         refreshHomeOverlay();
                     });
-                }else{
-                    Toast.makeText(this,error==null?
-                        "Premium desconectado. Sua licença foi preservada.":
-                        "Saiu neste aparelho. Liberação remota pendente de internet.",
-                        Toast.LENGTH_LONG).show();
-                    refreshHomeOverlay();
-                }
+                }else Toast.makeText(this,remoteReleased[0]?
+                    "Conta Google desconectada. Sua licença continua válida.":
+                    "Conta Google desconectada. Liberação remota pendente.",
+                    Toast.LENGTH_LONG).show();
             });
+        };
+        // Start the server release while the Google token still exists.
+        // A slow or offline connection cannot keep the user signed in.
+        main.postDelayed(localLogout,1500L);
+        PremiumAccess.releaseDevice(this,(result,error)->{
+            remoteReleased[0]=error==null;
+            main.post(localLogout);
         });
         refreshHomeOverlay();
     }
@@ -1118,27 +1129,61 @@ public class MainActivity extends Activity {
                 "\nAparelho: "+device+"\nSessão: "+status+
                 "\n\nSua licença não é cancelada ao sair ou trocar de aparelho. "+
                 "A Pokébola 1 e suas configurações permanecem gratuitas.";
-            String[] choices={"Sair da conta","Trocar conta Google",
-                "Transferir Premium para outro aparelho"};
-            new AlertDialog.Builder(this)
+            // Android AlertDialog setMessage() and setItems() both use the
+            // content region: the message hides the action list on Android.
+            // Render explicit visible buttons in a scrollable, accessible view.
+            LinearLayout body=new LinearLayout(this);
+            body.setOrientation(LinearLayout.VERTICAL);
+            body.setPadding(d(18),d(8),d(18),d(8));
+            TextView summary=new TextView(this);
+            summary.setText(details);
+            summary.setTextSize(14);
+            summary.setTextColor(Color.rgb(223,232,246));
+            summary.setPadding(0,0,0,d(10));
+            body.addView(summary,new LinearLayout.LayoutParams(-1,-2));
+            ScrollView scroll=new ScrollView(this);
+            scroll.setFillViewport(false);
+            scroll.addView(body);
+            AlertDialog dialog=new AlertDialog.Builder(this)
                 .setTitle("Conta Premium · Gerenciar")
-                .setMessage(details)
-                .setItems(choices,(dialog,which)->{
-                    if(which==0)logoutPremiumAccount(false);
-                    else if(which==1)logoutPremiumAccount(true);
-                    else new AlertDialog.Builder(this)
-                        .setTitle("Transferir Premium")
-                        .setMessage("No novo celular, entre com a mesma conta Google "+
-                            "e toque em 'Usar neste aparelho' quando solicitado. "+
-                            "A Pokébola 2 do celular anterior será encerrada "+
-                            "na próxima validação. Você também pode sair neste aparelho.")
-                        .setPositiveButton("Entendi",null)
-                        .setNegativeButton("Sair deste aparelho",(d,w)->
-                            logoutPremiumAccount(false))
-                        .show();
-                })
+                .setView(scroll)
                 .setNegativeButton("Fechar",null)
-                .show();
+                .create();
+            Button signOut=homeAuthButton("Sair da conta Google",
+                Color.rgb(157,47,68),Color.WHITE);
+            signOut.setContentDescription("Sair do Premium neste aparelho");
+            body.addView(signOut,new LinearLayout.LayoutParams(-1,d(48)));
+            signOut.setOnClickListener(v->{
+                dialog.dismiss();
+                logoutPremiumAccount(false);
+            });
+            Button change=homeAuthButton("Trocar conta Google",
+                Color.rgb(39,64,96),Color.WHITE);
+            LinearLayout.LayoutParams changeLp=new LinearLayout.LayoutParams(-1,d(44));
+            changeLp.topMargin=d(7);
+            body.addView(change,changeLp);
+            change.setOnClickListener(v->{
+                dialog.dismiss();
+                logoutPremiumAccount(true);
+            });
+            Button transfer=homeAuthButton("Transferir Premium para outro aparelho",
+                Color.rgb(36,51,72),Color.WHITE);
+            LinearLayout.LayoutParams transferLp=new LinearLayout.LayoutParams(-1,d(44));
+            transferLp.topMargin=d(7);
+            body.addView(transfer,transferLp);
+            transfer.setOnClickListener(v->{
+                dialog.dismiss();
+                new AlertDialog.Builder(this)
+                    .setTitle("Transferir Premium")
+                    .setMessage("No novo celular, entre com a mesma conta Google "+
+                        "e toque em 'Usar neste aparelho' quando solicitado. "+
+                        "A Pokébola 2 anterior será encerrada na próxima validação.")
+                    .setPositiveButton("Entendi",null)
+                    .setNegativeButton("Sair deste aparelho",(d,w)->
+                        logoutPremiumAccount(false))
+                    .show();
+            });
+            dialog.show();
         });
     }
     /**
