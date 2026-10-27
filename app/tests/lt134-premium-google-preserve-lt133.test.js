@@ -6,6 +6,7 @@ const gradle=read("app/build.gradle.kts");
 const ui=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java");
 const overlay=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java");
 const access=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/PremiumAccess.java");
+const availability=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/AppAvailability.java");
 const oauth=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/PremiumGoogleLogin.java");
 const dialog=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/PremiumPurchaseDialog.java");
 const stats=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/FirebaseStats.java");
@@ -32,6 +33,19 @@ const checks=[
   oauth.includes("GoogleAuthProvider.getCredential")],
  ["Premium never relies on local clock for access",access.includes("SystemClock.elapsedRealtime()")&&
   !access.includes("SharedPreferences")],
+ ["Maintenance and per-version availability use HTTPS with bounded timeouts",
+   availability.includes('new URL(BuildConfig.PREMIUM_BACKEND_URL+"/appStatus?versionCode=")')&&
+   availability.includes("getBoolean(\"allowed\",true)")&&
+   availability.includes('connection.setConnectTimeout(5000)')&&
+   availability.includes('connection.setReadTimeout(5000)')],
+ ["Both overlays are stopped by Home when administrator blocks this APK",
+   ui.includes('stopService(new Intent(this,OverlayService.class));')&&
+   ui.includes('stopService(new Intent(this,SecondaryOverlayService.class));')&&
+   ui.includes('applyAppAvailability(AppAvailability.cached(this))')],
+ ["Running overlays poll remote administrator policy, with no Premium required for P1",
+   overlay.includes('if(!AppAvailability.isAllowed(this)){stopSelf();return;}')&&
+   overlay.includes('AppAvailability.refresh(OverlayService.this,state->')&&
+   access.includes('if(!secondary||!controlled())return true;')],
  ["P1 remains free without server verification",!ui.includes("if(PremiumAccess.controlled()&&!PremiumAccess.permitted(false))")&&
    ui.includes("private void startOverlay()")&&
    access.includes("if(!secondary||!controlled())return true;")],
