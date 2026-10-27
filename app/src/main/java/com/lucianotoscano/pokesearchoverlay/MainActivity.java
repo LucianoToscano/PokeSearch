@@ -903,8 +903,8 @@ public class MainActivity extends Activity {
                         "Todas as contas selecionadas":"Treinador selecionado",
                         Toast.LENGTH_SHORT).show();
                 })
-                .setNeutralButton("Gerenciar no site",(dialog,which)->
-                    openLoginDialog(false,"manage"))
+                .setNeutralButton("Atualizar perfis",(dialog,which)->
+                    openLoginDialog(false,"login"))
                 .setNegativeButton("Cancelar",null).show();
             return;
         }
@@ -914,11 +914,14 @@ public class MainActivity extends Activity {
             return;
         }
         new AlertDialog.Builder(this)
-            .setTitle("Remover treinador vinculado")
-            .setMessage("A remoção precisa ser confirmada no perfil oficial do PoGoCoordinates. Deseja abrir o gerenciamento?")
+            .setTitle("Treinadores · PoGoCoordinates")
+            .setMessage("Toque em Atualizar perfis para sincronizar todos os "+
+                "treinadores da conta VIP sem remover ou trocar seu login.")
             .setNegativeButton("Cancelar",null)
-            .setPositiveButton("Abrir perfil oficial",(dialog,which)->
+            .setNeutralButton("Gerenciar no site",(dialog,which)->
                 openLoginDialog(false,"manage"))
+            .setPositiveButton("Atualizar perfis",(dialog,which)->
+                openLoginDialog(false,"login"))
             .show();
     }
     private int homeTeamIcon(String team){
@@ -1600,8 +1603,11 @@ public class MainActivity extends Activity {
         if(trainerAction!=null)trainerAction.setText(multi?"Trocar":linked?"Gerenciar":"Vincular");
         if(trainerSectionTitle!=null&&multi)trainerSectionTitle.setText(
             "Treinadores vinculados · "+allTrainers.length());
-        if(trainerDisplay!=null&&multi&&prefs.getBoolean("profileTrainerAll",false))
+        if(trainerDisplay!=null&&multi&&prefs.getBoolean("profileTrainerAll",false)){
             trainerDisplay.setText("Todas as "+allTrainers.length()+" contas");
+            if(trainerCodeTexts!=null)trainerCodeTexts.setVisibility(View.INVISIBLE);
+            if(trainerCopyButton!=null)trainerCopyButton.setVisibility(View.GONE);
+        }
         if(trainerAction!=null)trainerAction.setContentDescription(multi?
             "Escolher treinador Pokémon GO":"Gerenciar treinador Pokémon GO");
         if(sessionSummary!=null)sessionSummary.setText(logged?
