@@ -58,8 +58,12 @@ const userEntitlement=async uid=>{
 const offer=config=>{
  const regular=Number(config.regularPriceCents??NORMAL_CENTS);
  const promotional=Number(config.promotionalPriceCents??PROMO_CENTS);
- const promotionEnabled=config.promotionEnabled!==false;
+ const promotionEndsAt=Number(config.promotionEndsAt||0);
+ const promotionEnabled=config.promotionEnabled!==false&&
+   (!promotionEndsAt||Date.now()<promotionEndsAt);
  return {regularPriceCents:regular,promotionalPriceCents:promotional,promotionEnabled,
+   promotionEndsAt,discountPercent:regular>promotional?
+     Math.round(100*(regular-promotional)/regular):0,
    priceCents:promotionEnabled?promotional:regular};
 };
 const cleanEmail=value=>String(value||"").trim().toLowerCase();
@@ -378,6 +382,12 @@ exports.adminPremiumSettings=onCall({region:REGION},async request=>{
  }else if(input.action==="promotion"){
    if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Promoção inválida.");
    await root().child("config").child("promotionEnabled").set(input.enabled);
+ }else if(input.action==="promotionDeadline"){
+   const endsAt=Number(input.endsAt);
+   if(!Number.isSafeInteger(endsAt)||endsAt<0||
+      (endsAt!==0&&(endsAt<=Date.now()||endsAt>Date.now()+366*86400000)))
+     throw new HttpsError("invalid-argument","Escolha uma data futura até 366 dias, ou 0 para remover o prazo.");
+   await root().child("config").child("promotionEndsAt").set(endsAt);
  }else if(input.action==="freeYearCampaign"){
    const enabled=input.enabled===true;
    if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Estado inválido.");
