@@ -36,11 +36,6 @@ final class PremiumPurchaseDialog {
         email.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
         email.setSingleLine(true);
         col.addView(email);
-        EditText cpf=new EditText(activity);
-        cpf.setHint("CPF para o processamento do Pix");
-        cpf.setInputType(InputType.TYPE_CLASS_NUMBER);
-        cpf.setSingleLine(true);
-        col.addView(cpf);
         EditText restore=new EditText(activity);
         restore.setHint("Já tenho chave Premium (PS-...)");
         restore.setSingleLine(true);
@@ -49,8 +44,8 @@ final class PremiumPurchaseDialog {
         activate.setText("Ativar minha chave");activate.setAllCaps(false);
         col.addView(activate);
         TextView note=new TextView(activity);
-        note.setText("O CPF vai diretamente para o Mercado Pago, sem armazenamento no PokeSearch. "+
-                     "A licença fica vinculada à identificação Firebase desta instalação.");
+        note.setText("O Pix usa apenas e-mail na API de Orders. A licença fica vinculada "+
+                     "à identificação Firebase desta instalação.");
         note.setTextSize(11);
         col.addView(note);
         Button create=new Button(activity);
@@ -124,13 +119,13 @@ final class PremiumPurchaseDialog {
             });
         });
         create.setOnClickListener(v->{
-            String mail=email.getText().toString().trim(),document=cpf.getText().toString().trim();
-            if(mail.isEmpty()||!document.matches("\\d{11}")){
-                status.setText("Informe e-mail e CPF de 11 dígitos.");return;
+            String mail=email.getText().toString().trim();
+            if(!mail.contains("@")||!mail.contains(".")){
+                status.setText("Informe um e-mail válido.");return;
             }
             create.setEnabled(false);
             status.setText("Gerando o Pix no Mercado Pago...");
-            PremiumAccess.createPix(activity,mail,document,(result,error)->{
+            PremiumAccess.createPix(activity,mail,"",(result,error)->{
                 if(!dialog.isShowing())return;
                 create.setEnabled(true);
                 if(error!=null){status.setText(error);return;}
