@@ -32,6 +32,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
+      - name: Check OAuth Web Client ID from GitHub variable
+        shell: bash
+        run: |
+          # Never print the actual ID; it is public, but does not belong in build logs.
+          if [[ ! "$POKE_GOOGLE_WEB_CLIENT_ID" =~ ^[a-zA-Z0-9.-]+\.apps\.googleusercontent\.com$ ]]; then
+            echo "::error::Missing or invalid POKE_GOOGLE_WEB_CLIENT_ID repository variable (OAuth Web client required)."
+            exit 1
+          fi
+          echo "OAuth Web Client ID format: valid"
       - name: Test Premium contracts (no Firebase or Pix writes)
         run: npm run test:premium
       - name: Preserve dual-overlay regression tests
