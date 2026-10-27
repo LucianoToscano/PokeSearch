@@ -279,9 +279,9 @@ jobs:
           - Assinado com certificado permanente v2 e proteção R8. Instala sobre as versões assinadas anteriores.
           - Esta release é publicada para o atualizador GitHub. A instalação requer consentimento do usuário Android.
           NOTES
-            gh release create "$QA_TAG" "$QA_APK" \\
-              --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \\
-              --title "PokeSearch 0.01.38 LT138 — Atualização oficial" \\
+            gh release create "$QA_TAG" "$QA_APK" \
+              --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "PokeSearch 0.01.38 LT138 — Atualização oficial" \
               --notes-file RELEASE-NOTES.txt --latest
           fi
           gh api "repos/$GITHUB_REPOSITORY/releases/latest" > RELEASE-LATEST.json
@@ -290,7 +290,7 @@ jobs:
           test "$(jq -r .prerelease RELEASE-LATEST.json)" = false
           jq -e --arg apk "$QA_APK" '.assets[] | select(.name == $apk and (.size > 30000000))' RELEASE-LATEST.json >/dev/null
           EXPECTED="$(cut -d' ' -f1 SHA256SUMS.txt)"
-          jq -e --arg apk "$QA_APK" --arg hash "sha256:$EXPECTED" \\
+          jq -e --arg apk "$QA_APK" --arg hash "sha256:$EXPECTED" \
             '.assets[] | select(.name == $apk and .digest == $hash)' RELEASE-LATEST.json >/dev/null
           echo "Stable GitHub release published, APK signing and digest verified."
       - name: Cleanup signing material
