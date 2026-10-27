@@ -34,16 +34,36 @@ final class PremiumAccess {
      * Random local installation identifier: no Android ID/IMEI or permissions.
      * Firebase stores only a UID-scoped SHA-256, never this identifier.
      */
-    private static String deviceId(Context context){
-        android.content.SharedPreferences prefs=context.getApplicationContext()
-            .getSharedPreferences("premium_install_identity",Context.MODE_PRIVATE);
-        String id=prefs.getString("install_id","");
-        if(id.matches("(?i)^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"))
+    private static synchronized String deviceId(Context context){
+        // Android noBackupFilesDir is excluded from cloud backup and phone
+        // transfer. The UUID survives app upgrades but not reinstalls.
+        // This avoids two phones inheriting the same copied preference ID.
+        java.io.File file=new java.io.File(
+            context.getApplicationContext().getNoBackupFilesDir(),"p2-install-id-v1");
+        try{
+            if(file.isFile()){
+                byte[] bytes=java.nio.file.Files.readAllBytes(file.toPath());
+                if(bytes.length==36){
+                    String saved=new String(bytes,StandardCharsets.US_ASCII);
+                    if(validInstallationId(saved))return saved;
+                }
+            }
+            String id=java.util.UUID.randomUUID().toString();
+            java.io.File temp=new java.io.File(file.getParentFile(),"p2-install-id.tmp");
+            try(java.io.FileOutputStream out=new java.io.FileOutputStream(temp)){
+                out.write(id.getBytes(StandardCharsets.US_ASCII));
+                out.getFD().sync();
+            }
+            if(!temp.renameTo(file))
+                throw new java.io.IOException("Instalação não persistida");
             return id;
-        id=java.util.UUID.randomUUID().toString();
-        if(!prefs.edit().putString("install_id",id).commit())
-            throw new IllegalStateException("Não foi possível salvar o identificador deste aparelho.");
-        return id;
+        }catch(java.io.IOException e){
+            throw new IllegalStateException("Falha na identidade desta instalação.",e);
+        }
+    }
+    private static boolean validInstallationId(String id){
+        return id!=null&&id.matches(
+          "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$");
     }
     private static String deviceName(){
         return (android.os.Build.MANUFACTURER+" "+android.os.Build.MODEL).trim();
@@ -62,6 +82,24 @@ final class PremiumAccess {
             return;
         }
         call(context,"transferPremiumDevice",data,callback);
+    }
+    static void releaseDevice(Context context,ResultCallback callback){
+        Map<String,Object> payload=new HashMap<>();
+        try{payload.put("deviceId",deviceId(context));}
+        catch(RuntimeException error){
+            callback.done(new HashMap<>(),"Identidade da instalação indisponível.");
+            return;
+        }
+        call(context,"releasePremiumDevice",payload,callback);
+    }
+    static void sessionInfo(Context context,ResultCallback callback){
+        Map<String,Object> payload=new HashMap<>();
+        try{payload.put("deviceId",deviceId(context));}
+        catch(RuntimeException error){
+            callback.done(new HashMap<>(),"Identidade da instalação indisponível.");
+            return;
+        }
+        call(context,"premiumSessionInfo",payload,callback);
     }
     static boolean controlled(){return BuildConfig.CONTROLLED_DISTRIBUTION;}
     static synchronized void invalidateLease(){
