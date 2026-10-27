@@ -1,0 +1,43 @@
+name: LT126 Firebase Chat Rules - scoped manual production repair
+on:
+  workflow_dispatch:
+    inputs:
+      approval:
+        description: 'Type CHAT_RULES_ONLY to repair live chat rules without changing stats'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: pokesearch-lt-firebase-production
+  cancel-in-progress: false
+jobs:
+  scoped-chat-rule-patch:
+    if: github.repository == 'LucianoToscano/PokeSearch' && inputs.approval == 'CHAT_RULES_ONLY'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase Admin dependencies only
+        run: npm install --no-audit --no-fund --prefix functions
+      - name: Configure authorized service credentials
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POKESEARCH_LT }}
+        run: |
+          set -euo pipefail
+          test -n "$SERVICE_ACCOUNT" || { echo "::error::Firebase service account secret unavailable"; exit 1; }
+          umask 077
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/lt126-firebase-key.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/lt126-firebase-key.json" >> "$GITHUB_ENV"
+      - name: Patch live chat rules only and compare all other rules
+        env:
+          POKE_FIREBASE_CHAT_REPAIR: CHAT_RULES_ONLY
+        run: node functions/scripts/repair-chat-rules-only.js
+      - name: Remove credential file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/lt126-firebase-key.json"
