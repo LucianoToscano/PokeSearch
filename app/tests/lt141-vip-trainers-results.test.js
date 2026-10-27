@@ -22,7 +22,9 @@ assert.deepEqual(Array.from(profile.trainers,x=>x.name),["AlphaTrainer","BetaTra
 assert.deepEqual(Array.from(profile.trainers,x=>x.code),["123456789012","987654321098"]);
 assert.equal(new Set(profile.trainers.map(x=>x.code)).size,2);
 const app=java("MainActivity.java"),service=java("OverlayService.java");
-assert.ok(app.includes('trainerSelectButton.setOnClickListener(v->showTrainerSelector())'));
+assert.ok(app.includes('trainerSelectButton.setOnClickListener(v->{'));
+assert.ok(app.includes('if(count>1)showTrainerSelector();'));
+assert.ok(app.includes('else openLoginDialog(false,"manage");'));
 assert.ok(app.includes('setSingleChoiceItems(labels.toArray(new String[0]),selectedIndex'));
 assert.ok(app.includes('profileSelectedTrainerCode'));
 assert.ok(app.includes('profileTrainerList'));
