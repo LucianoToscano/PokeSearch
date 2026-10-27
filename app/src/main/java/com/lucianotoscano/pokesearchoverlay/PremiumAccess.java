@@ -43,6 +43,20 @@ final class PremiumAccess {
         data.put("email",email);data.put("cpf",cpf);
         call(context,"createPremiumPix",data,cb);
     }
+    static void adminOverview(Context context,ResultCallback cb){
+        call(context,"adminPremiumOverview",new HashMap<>(),cb);
+    }
+    static void adminDistribution(Context context,boolean global,int versionCode,
+                                  boolean enabled,ResultCallback cb){
+        Map<String,Object> data=new HashMap<>();
+        data.put("scope",global?"global":"version");
+        data.put("enabled",enabled);
+        if(!global)data.put("versionCode",versionCode);
+        call(context,"adminDistributionControl",data,cb);
+    }
+    static void adminSettings(Context context,Map<String,Object> values,ResultCallback cb){
+        call(context,"adminPremiumSettings",values,cb);
+    }
     static void order(Context context,String orderId,ResultCallback cb){
         Map<String,Object> data=new HashMap<>();data.put("orderId",orderId);
         call(context,"getPremiumOrder",data,cb);
