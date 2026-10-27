@@ -71,7 +71,7 @@ const checks=[
  ["Admin can identify existing licenses without changing owner or payment",
    logic.includes("exports.adminLabelPremiumKey=onCall")&&
    http.includes('"adminLabelPremiumKey"')&&
-   adminHtml.includes('actionButton("Editar identificação"')&&
+   adminHtml.includes('actionButton("Nome"')&&
    adminHtml.includes('call("adminLabelPremiumKey"')],
  ["License inventory resolves Google name/email only after admin auth and optional manual recipient name",
    logic.includes('await getAuth().getUser(item.uid)')&&
@@ -79,16 +79,31 @@ const checks=[
    logic.includes('recipientName:String(record.recipientName||"")')&&
    adminHtml.includes('id="recipient-name"')&&
    adminHtml.includes('item.googleEmail')&&
-   adminHtml.includes('if(confirmation!=="EXCLUIR")')],
+   adminHtml.includes('confirm:"EXCLUIR"')],
  ["Key deletion is owner-only, revokes current entitlement and preserves transaction history",
    logic.includes("exports.adminDeletePremiumKey=onCall")&&
    logic.includes('confirmation!=="EXCLUIR"')&&
    logic.includes("revoked:true,archived:true")&&
-   logic.includes("currentKeyHash!==id")&&
+   logic.includes("ent.currentKeyHash!==id")&&
    http.includes('"adminDeletePremiumKey"')&&
    adminHtml.includes('id="license-list-view"')&&
    adminHtml.includes('call("adminDeletePremiumKey"')&&
-   adminHtml.includes('item.suspended?"Habilitar":"Desabilitar"')],
+   adminHtml.includes('item.suspended?"Reativar":"Suspender"')],
+ ["Mobile license editor supports expiry, lifetime, days and sticky sign-out",
+   adminHtml.includes('id="quick-logout"')&&
+   adminHtml.includes('el("quick-logout").addEventListener("click"')&&
+   adminHtml.includes('actionButton("Validade"')&&
+   adminHtml.includes('"Vitalícia · ilimitada"')&&
+   adminHtml.includes('action:"setLifetime"')&&
+   adminHtml.includes('action:"setFinite"')&&
+   adminHtml.includes('action:"adjustDays"')&&
+   logic.includes('premium/entitlements/')&&
+   logic.includes('getDatabase().ref().update(fields)')],
+ ["Admin shows replaced keys as read-only and keeps deletion as an archive",
+   logic.includes('status:!item.archived&&!item.revoked&&!current?"substituída"')&&
+   logic.includes('editable:current&&!item.revoked&&!item.archived')&&
+   logic.includes('await ref.update({revoked:true,archived:true')&&
+   adminHtml.includes('item.status.toUpperCase()')],
  ["Partner coupons and manual commissions require server validation and provider-approved Pix",
    logic.includes("exports.adminSavePartnerCoupon=onCall")&&
    logic.includes("exports.adminListPartnerCoupons=onCall")&&
