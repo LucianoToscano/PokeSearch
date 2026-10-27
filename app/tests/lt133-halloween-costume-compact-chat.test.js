@@ -61,8 +61,8 @@ for(const archived of [
  "pm714.cHALLOWEEN_2025.s.icon.png",
  "pm710.fAVERAGE.cFALL_2022.icon.png"
 ])assert.ok(pinned.includes('"costumes/'+archived+'"'));
-assert.match(chat,/result-icons\/modes\/.+3Star\.png/);
-assert.match(chat,/result-icons\/modes\/.+0Star\.png/);
+assert.ok(chat.includes('"0Star.png":"3Star.png"'));
+assert.ok(chat.includes('"result-icons/modes/"'));
 assert.match(chat,/line\.setGravity\(Gravity\.START\|Gravity\.CENTER_VERTICAL\)/);
 const stats=JSON.parse(read("../docs/POKESEARCH_LT130_FIREBASE_RULES_PRODUCAO_COMPLETAS.json")).rules;
 assert.equal(stats.stats.online[".read"],"auth != null");
