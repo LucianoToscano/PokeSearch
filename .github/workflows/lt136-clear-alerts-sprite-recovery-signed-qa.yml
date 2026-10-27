@@ -1,7 +1,7 @@
-name: PokeSearch LT136 Halloween chat + Premium Gmail signed QA
+name: PokeSearch LT137 — novo Netlify, notificações e sprites — APK assinado
 on:
   push:
-    branches: [feature/lt136-clear-alerts-sprite-recovery-20261027]
+    branches: [feature/lt137-new-netlify-premium-signed-qa-20261027]
     paths:
       - '.github/workflows/lt136-clear-alerts-sprite-recovery-signed-qa.yml'
       - 'app/scripts/build_sprite_bundle.py'
@@ -18,7 +18,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: pokesearch-lt136-capture-share-chat-reactions-qa
+  group: pokesearch-lt137-new-netlify-premium-qa
   cancel-in-progress: false
 jobs:
   signed-dual-parity:
@@ -26,9 +26,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
-      POKE_TEST_VERSION_CODE: '54341'
-      POKE_TEST_VERSION_LABEL: '51141'
-      POKE_TEST_PUBLIC_VERSION: '0.01.36'
+      POKE_TEST_VERSION_CODE: '54342'
+      POKE_TEST_VERSION_LABEL: '51142'
+      POKE_TEST_PUBLIC_VERSION: '0.01.37'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
       # Firebase LT Web OAuth ID supplied through GitHub Actions repository variables.
       POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
@@ -46,8 +46,8 @@ jobs:
       # PUBLIC OAuth Web client ID from the user's refreshed Firebase Android configuration.
       # This is NOT a private key, Firebase Admin SDK, or service-account credential.
       POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
-      QA_APK: PokeSearch-v0.01.36-LT136-Notificacoes-Sprites-Premium-QA.apk
-      QA_TAG: v0.01.36-54341-qa-alerts-sprites-premium
+      QA_APK: PokeSearch-v0.01.37-LT137-Premium-Netlify-Novo-Assinado.apk
+      QA_TAG: v0.01.37-54342-qa-new-netlify-premium
     steps:
       - name: Checkout exact feature commit
         uses: actions/checkout@v4
@@ -183,7 +183,7 @@ jobs:
           print('Exact GO costume PNGs:', sorted(report['costumes']))
           print('Bundled offline sprite coverage:',report['baseCount'],'base,',report['shinyCount'],'shiny', 'regional:', sorted(expected))
           PY
-      - name: Compile protected and signed LT136 APK
+      - name: Compile protected and signed LT137 APK
         shell: bash
         run: |
           set -euo pipefail
@@ -218,8 +218,8 @@ jobs:
           done
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
-          grep -Fq "versionCode='54341'" PACKAGE-VERSION.txt
-          grep -Fq "versionName='0.01.36'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54342'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.37'" PACKAGE-VERSION.txt
           ! grep -q '^application-debuggable' PACKAGE-VERSION.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
           grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
@@ -247,7 +247,7 @@ jobs:
       - name: Upload protected APK artifact and coverage
         uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-v0.01.36-LT136-Notificacoes-Sprites-Premium-QA-protected-release
+          name: PokeSearch-v0.01.37-LT137-Premium-Netlify-Novo-Assinado-protected-release
           path: |
             ${{ env.QA_APK }}
             SHA256SUMS.txt
