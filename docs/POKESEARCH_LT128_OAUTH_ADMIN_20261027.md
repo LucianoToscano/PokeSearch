@@ -45,3 +45,9 @@ Conferidos os dados técnicos:
 
 Seguir `AGENTS.md` e Issue #84: GitHub Actions artifact **primeiro**, verificando existência, assinatura, tamanho/CRC e SHA-256. `Library file not found` do ChatGPT não é falha do APK e não será resolvido apenas reenviando sandbox.
 
+
+## Controle de mudança
+
+- PR #87 (Draft, empilhada sobre PR #86): https://github.com/LucianoToscano/PokeSearch/pull/87
+- CI específico para autenticação Google: https://github.com/LucianoToscano/PokeSearch/actions/workflows/lt128-google-admin-oauth-signed-qa.yml
+- Não há implantação de regras Firebase nesta PR. O login real do administrador e exclusão continuam exigindo validação no Samsung.
