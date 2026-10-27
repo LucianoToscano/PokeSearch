@@ -5737,7 +5737,9 @@ function attachSpriteFeedback(){
   };
   img.addEventListener("load",loaded);
   img.addEventListener("error",failed);
-  if(img.complete&&good())loaded();
+  // A completed but zero-dimension file:// image may have failed before
+  // listeners were attached. Retry its verified original immediately.
+  if(img.complete){if(good())loaded();else failed();}
   // Some Samsung WebViews leave an Image in "loading" state for seconds,
   // without firing error. Switch only the verified static PokeAPI base URL
   // to its equivalent CDN mirror after a bounded grace period.
