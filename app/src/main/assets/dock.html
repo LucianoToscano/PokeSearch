@@ -269,6 +269,16 @@ body.result-window #spawns{
  overflow-y:visible!important;overflow-x:visible!important;
  scrollbar-width:none!important;touch-action:manipulation!important
 }
+/* Free tier keeps the original 10 compact rows. VIP tier uses the SAME
+   full-size sprites with a scrollable 10-row viewport for 25/50/75/100 rows.
+   No compression of 25 into ten tiny overlapping hit targets. */
+body.result-window.vip-results-scroll #spawns{
+ max-height:var(--result-viewport-height,430px)!important;
+ height:var(--result-viewport-height,430px)!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ overscroll-behavior:contain!important;touch-action:pan-y!important;
+ -webkit-overflow-scrolling:touch;
+}
 /* Preserve the final sprite's overhang without adding gaps between entries. */
 body.result-window #spawns:not(:empty){padding-bottom:0!important}
 body.result-window #empty{margin:0 auto;max-height:18px}
@@ -6169,14 +6179,15 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  const v=window.visualPrefs||{};
  const pitch=size+additionalResultGapPx(v.resultGapBetween);
  const horizontal=v.resultsOrientation==="horizontal";
- const natural=items.slice(0,10).map((card,index)=>{
+ const natural=items.map((card,index)=>{
    const lines=preparedLines?preparedLines[index]:(opts?resultLines(card,opts,league):[]);
   // UX-SPRITE-GAP-02: metadata is independently scrollable inside the side strip.
   // Never stretch the Pokemon's vertical slot to fit all enabled rank lines.
   if(horizontal)return size; // horizontal rows do not reserve invisible 3px each
   return Math.max(size,pitch); // No sprite-overlap or artificial top padding at zero gap.
  });
- const desired=natural.reduce((a,b)=>a+b,0);
+ const maxVisible=items.length>10?10:items.length;
+ const desired=natural.slice(0,maxVisible).reduce((a,b)=>a+b,0);
  const headerArea=(Number(v.headerIconY)||0)+(Number(v.headerTouchHeight)||30)+
   (Number(v.headerAfterGap)||0);
  const room=Math.max(120,(Number(displayHeight)||700)-headerArea-24);
@@ -6185,7 +6196,8 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  // A very short display can reduce a row to 12px: never draw a
  // larger sprite inside it, even when ten results must remain visible.
  const sprite=Math.max(10,Math.floor(size*factor));
- return {rows,sprite,total:rows.reduce((a,b)=>a+b,0),visibleCount:rows.length,
+ return {rows,sprite,total:rows.slice(0,maxVisible).reduce((a,b)=>a+b,0),
+  visibleCount:maxVisible,scrollable:items.length>10,
   infoScale:Math.max(0.86,Math.min(1,factor))};
 }
 let lastListKey="",metadataCacheKey="",metadataCache=[];
@@ -6204,11 +6216,14 @@ function draw(){
   computeResultLayout(cards,spriteSize,resultDisplayHeightDp,showTimers,showResultText,
    resultDisplayOptions,shownMode,preparedLines):null;
  if(resultWindow){
+  document.body.classList.toggle("vip-results-scroll",cards.length>10);
   const vp=window.visualPrefs||{};
   document.documentElement.style.setProperty("--visual-row-pitch",(resultLayout?.rows?.[0]||spriteSize+1)+"px");
   document.documentElement.style.setProperty("--visual-result-spacing",
    additionalResultGapPx(vp.resultGapBetween)+"px");
  }
+ document.documentElement.style.setProperty("--result-viewport-height",
+  String(Math.max(40,resultLayout?.total||0))+"px");
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",(resultLayout?resultLayout.sprite:spriteSize)+"px");
  document.documentElement.style.setProperty("--result-info-scale",String(resultLayout?.infoScale||1));
@@ -6436,7 +6451,7 @@ window.addEventListener("pagehide",releaseUiTimers);
 window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount]);
- cards=Array.isArray(a)?a.slice(0,10):[];
+ cards=Array.isArray(a)?a.slice(0,100):[];
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
   {count:!!displayPrefs.count,name:!!displayPrefs.name,number:!!displayPrefs.number,
