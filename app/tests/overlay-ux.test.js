@@ -1941,7 +1941,8 @@ test("HOME-01 never invents trainer data or changes remote account on local remo
  return update.includes('code.matches("[0-9]{12}")')&&
   update.includes('trainerPanel.setVisibility(logged?View.VISIBLE:View.GONE)')&&
   update.includes('prefs.getString("profileDisplayName","Conta conectada")')&&
-  main.includes("A remoção precisa ser confirmada no perfil oficial")&&
+  main.includes("Atualizar perfis")&&
+  main.includes('setSingleChoiceItems(options,currentChoice')&&
   main.includes('readAsset("profile_summary.js")')&&
   main.includes('.remove("profileTrainerName").remove("profileTrainerCode")');
 })());
