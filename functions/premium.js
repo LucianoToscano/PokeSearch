@@ -69,7 +69,10 @@ async function settlePayment(paymentId){
  if(payment.payment_method_id!=="pix"||Number(payment.transaction_amount)!==order.priceCents/100)return false;
  if(payment.status==="refunded"||payment.status==="charged_back"){
    await ref.update({status:payment.status});
-   // A refund is reviewed by the owner; never silently grant a refunded order.
+   // Fail closed on chargeback; owner can review and restore via admin action.
+   await root().child("entitlements").child(order.uid).update({
+     revoked:true,revocationReason:"payment_reversed",revokedAt:Date.now()
+   });
    return false;
  }
  if(payment.status!=="approved")return false;
@@ -178,4 +181,32 @@ exports.adminDistributionControl=onCall({region:REGION},async request=>{
  if(data.scope==="global")await policy().child("globalEnabled").set(data.enabled);
  else await policy().child("versions").child(String(code)).set(data.enabled);
  return {updated:true,serverNow:Date.now()};
+});
+
+exports.adminPremiumSettings=onCall({region:REGION},async request=>{
+ await requireAdmin(request);
+ const input=request.data||{};
+ if(input.action==="price"){
+   const cents=Number(input.priceCents);
+   if(!Number.isSafeInteger(cents)||cents<100||cents>100000)
+     throw new HttpsError("invalid-argument","Preço inválido.");
+   await root().child("config").child("priceCents").set(cents);
+ }else if(input.action==="sales"){
+   if(typeof input.enabled!=="boolean")throw new HttpsError("invalid-argument","Valor inválido.");
+   await root().child("config").child("salesEnabled").set(input.enabled);
+ }else if(input.action==="revoke"){
+   const uid=String(input.uid||"");
+   if(!/^[A-Za-z0-9_-]{8,128}$/.test(uid))throw new HttpsError("invalid-argument","UID inválido.");
+   await root().child("entitlements").child(uid).update({
+     revoked:input.revoked!==false,revokedAt:Date.now(),revocationReason:"admin"
+   });
+ }else throw new HttpsError("invalid-argument","Ação inválida.");
+ return {updated:true};
+});
+exports.adminPremiumOverview=onCall({region:REGION},async request=>{
+ await requireAdmin(request);
+ const [dist,cfg]=await Promise.all([policy().get(),root().child("config").get()]);
+ const p=dist.val()||{},c=cfg.val()||{};
+ return {globalEnabled:p.globalEnabled===true,versions:p.versions||{},
+   salesEnabled:c.salesEnabled===true,priceCents:Number(c.priceCents||0)};
 });
