@@ -398,7 +398,7 @@ async function run(){
  assert.equal(selfUseDenied,true);
  let invalidDiscountRejected=false;
  try{await premium.adminSavePartnerCoupon({
-   ...adminLive,data:{code:"BAD25",partnerName:"Criador",discountPercent:25}});}
+   ...adminLive,data:{code:"BAD30",partnerName:"Criador",discountPercent:30}});}
  catch(e){invalidDiscountRejected=e.code==="invalid-argument";}
  assert.equal(invalidDiscountRejected,true);
 
