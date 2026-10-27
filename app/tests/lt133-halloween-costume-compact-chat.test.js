@@ -30,7 +30,7 @@ assert.match(chat,/dp\(activity,36\),dp\(activity,36\)/);
 assert.match(chat,/lp\.rightMargin=dp\(activity,3\)/);
 assert.match(chat,/body\.setSingleLine\(true\)/);
 assert.match(chat,/body\.setEllipsize\(android\.text\.TextUtils\.TruncateAt\.END\)/);
-assert.match(chat,/addCaptureBadges\(bubble,captureCard,mine\?clock/);
+assert.match(chat,/addCaptureBadges\(bubble,captureCard,clock/);
 assert.match(chat,/android\.widget\.HorizontalScrollView horizontal/);
 assert.match(chat,/badges\.setGravity\(Gravity\.START\|Gravity\.CENTER_VERTICAL\)/);
 assert.match(chat,/if\(!c\.size\.isEmpty\(\)\)addBadge\(badges,null,c\.size,secondary\)/);
