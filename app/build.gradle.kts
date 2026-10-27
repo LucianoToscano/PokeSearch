@@ -103,7 +103,7 @@ android {
         buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA", "false")
         buildConfigField("boolean", "SCRAPBOOK_ONLINE_QA", "false")
         buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "false")
-        buildConfigField("String", "PREMIUM_GOOGLE_WEB_CLIENT_ID", "\\\"" + premiumGoogleWebClientId + "\\\"")
+        buildConfigField("String", "PREMIUM_GOOGLE_WEB_CLIENT_ID", "\"$premiumGoogleWebClientId\"")
         buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-api.netlify.app/api/premium\"")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
