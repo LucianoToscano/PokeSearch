@@ -36,10 +36,12 @@ final class PremiumAccess {
         leaseElapsed=-1L;
     }
     static synchronized boolean permitted(boolean secondary){
-        if(!controlled())return true; // Normal, non-distribution app stays untouched.
+        // P1 is always free, including offline and when QA distribution is disabled.
+        if(!secondary||!controlled())return true;
+        // P2 requires both the remotely enabled QA version and an active entitlement.
         return leaseElapsed>=0&&SystemClock.elapsedRealtime()>=leaseElapsed&&
           SystemClock.elapsedRealtime()-leaseElapsed<LEASE_MS&&
-          globallyAllowed&&(!secondary||secondAllowed);
+          globallyAllowed&&secondAllowed;
     }
     static void verify(Context context,AccessCallback callback){
         if(!controlled()){callback.done(true,true);return;}
