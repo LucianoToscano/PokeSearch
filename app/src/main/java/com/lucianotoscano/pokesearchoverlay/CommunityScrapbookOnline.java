@@ -489,7 +489,8 @@ final class CommunityScrapbookOnline {
                 announcement.setGravity(Gravity.CENTER_VERTICAL);
                 // Prefer exact pinned costume pixels. NEVER substitute base for
                 // an unrecognized costume or special form.
-                String costumeAsset=CaptureChatFormat.exactCostumeAsset(species,shiny);
+                String costumeAsset=CaptureChatFormat.exactCostumeAsset(
+                    species,shiny,captureCard.gender);
                 int dex=costumeAsset.isEmpty()?
                     CaptureChatFormat.speciesDex(activity,species):0;
                 try(java.io.InputStream in=!costumeAsset.isEmpty()?
