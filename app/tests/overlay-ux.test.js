@@ -2025,7 +2025,7 @@ test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay 
  service.includes('","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+","')&&
   dock.includes('favoriteAlertMode=["on","silent","off"].includes(favoriteMode)')&&
  service.includes('if(!WatchAlerts.permissionGranted(this))return false;')&&
- service.includes('if(sendGeneralNotification("Novo Pokémon: "+firstNew,')&&
+ service.includes('encounterAlertTitle(firstNewCard),encounterAlertDetails(firstNewCard,false)')&&
  service.includes('lastAlertAt=now;')&&
  watch.includes('manager.areNotificationsEnabled()')&&
  !watch.includes('com IV100 ou ranking #1')&&
@@ -2076,11 +2076,11 @@ test("UX-NOTIFY-07 Home favorites toggle migrates safely to tri-state preference
   dock.includes('individualToneCount=Math.max(0,Number(individualTones)||0)');
 });
 test("UX-NOTIFY-08 personalized matching favorites use separate notifications and distinct IDs",()=>{
- return service.includes('java.util.LinkedHashMap<String,String[]> individualFavorites')&&
-  service.includes('if(WatchAlerts.speciesToneCount(this)>0)')&&
+ return service.includes('queuedFavoriteAlerts.put(key,new QueuedFavoriteAlert')&&
+  service.includes('if(delivered>=FAVORITE_ALERT_BATCH_SIZE)break')&&
   service.includes('drainFavoriteAlertQueue()')&&
   service.includes('FAVORITE_ALERT_BATCH_SIZE=5')&&
-  service.includes('WatchAlerts.match(this,representative.name,representative.details)')&&
+  service.includes('WatchAlerts.match(this,pending.name,pending.title,pending.details,')&&
   watch.includes('java.util.concurrent.atomic.AtomicInteger NEXT_ALERT_ID')&&
   watch.includes('NEXT_ALERT_ID.updateAndGet');
 });
@@ -2398,7 +2398,7 @@ test("UX-NOTIFY-11 only verified favorites notify if general alerts are OFF",()=
  const fav=watch.slice(watch.indexOf("private static boolean send("),watch.indexOf("public static boolean test("));
  return begin>0&&finish>begin&&src.includes('if(WatchAlerts.enabled(this) &&')&&
   src.includes('WatchAlerts.matches(c.optString("name",""),wanted)')&&
-  src.includes('WatchAlerts.match(this,firstWatched,watchDetails)')&&
+  service.includes('WatchAlerts.match(this,pending.name,pending.title,pending.details,')&&
   src.includes('if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()')&&
   fav.includes('String soundMode=mode(context);')&&
   fav.includes('if("off".equals(soundMode)){')&&
