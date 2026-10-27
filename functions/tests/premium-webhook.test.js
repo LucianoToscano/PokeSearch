@@ -638,6 +638,19 @@ async function run(){
  assert.equal(listed.googleEmail,"deleteTester@example.org");
  assert.equal(listed.googleName,"");
  assert.equal(listed.uid,"deleteTester");
+ const relabeled=await premium.adminLabelPremiumKey({
+   ...adminLive,data:{id:deleteHash,label:"Assinante YouTube · João"}});
+ assert.equal(relabeled.updated,true);
+ const labeledKeys=await premium.adminListPremiumKeys({
+   ...adminLive,data:{limit:50,archived:true}});
+ const labeledItem=labeledKeys.keys.find(item=>item.id===deleteHash);
+ assert.equal(labeledItem.adminLabel,"Assinante YouTube · João");
+ assert.equal(labeledItem.googleEmail,"deleteTester@example.org");
+ let strangerLabel=false;
+ try{await premium.adminLabelPremiumKey({
+   auth:{uid:"deleteTester"},data:{id:deleteHash,label:"Roubo"}});}
+ catch(error){strangerLabel=error.code==="permission-denied";}
+ assert.equal(strangerLabel,true);
  assert.equal((await premium.checkDistributionAccess({
    auth:{uid:"deleteTester"},data:{versionCode:54328,deviceId:DEVICE_A}})).premium,false);
  const activeKeys=await premium.adminListPremiumKeys({
