@@ -80,10 +80,10 @@ check("Never read Maps coordinates globally or copy stale requests",()=>{
  for(const bit of ["coordinateRequestToken","currentCoordinateTarget(target)","requestToken!=coordinateRequestToken","pollCoordinates(target,0,autoCopy,requestToken)"])
   assert.ok(java.includes(bit),bit);
 });
-check("Shiny, weather PNG theme, favorites and ten results are not removed",()=>{
+check("Shiny, weather PNG theme, favorites and VIP results remain usable",()=>{
  for(const bit of ['WEATHER_THEME_FILES=Object.freeze','weatherChoicePair','visual-light-menu','Native.shiny()','Native.openWatchList()'])
   assert.ok(dock.includes(bit),bit);
- assert.ok(probe.includes("if(cards.length===10)break;"));
+ assert.ok(probe.includes("if(cards.length===100)break;"));
  for(const name of ["any","boosted","sunny","rainy","partly-cloudy","cloudy","windy","snow","fog"])
   for(const theme of ["white","black"])assert.ok(fs.existsSync(path.join(root,"assets/weather-icons/v2",name+"-"+theme+".png")));
 });
