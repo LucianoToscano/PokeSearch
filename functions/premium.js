@@ -24,7 +24,7 @@ const MP_WEBHOOK_URL=defineSecret("POKE_MP_WEBHOOK_URL");
 const KEY_SECRET=defineSecret("POKE_PREMIUM_KEY_SECRET");
 const REGION="us-central1", MONTH=30*24*60*60*1000;
 const NORMAL_CENTS=1000, PROMO_CENTS=500;
-const ADMIN_DURATIONS=Object.freeze(["15d","1m","3m","6m","12m","lifetime"]);
+const ADMIN_DURATIONS=Object.freeze(["15d","30d","1m","3m","6m","12m","lifetime"]);
 const root=()=>getDatabase().ref("premium");
 const policy=()=>getDatabase().ref("distribution");
 const sha=value=>crypto.createHash("sha256").update(value).digest("hex");
@@ -362,6 +362,7 @@ exports.getPremiumOffer=onCall({region:REGION},async request=>{
 function periodExpiry(start,duration){
  if(duration==="lifetime")return null;
  if(duration==="15d")return start+15*86400000;
+ if(duration==="30d")return start+30*86400000;
  const months={"1m":1,"3m":3,"6m":6,"12m":12}[duration];
  if(!months)throw new HttpsError("invalid-argument","Duração desconhecida.");
  const date=new Date(start),day=date.getUTCDate();
@@ -381,7 +382,7 @@ exports.adminIssuePremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async r
  const actor=await requireAdmin(request),args=request.data||{};
  const duration=String(args.duration||"").trim(),targetUid=String(args.uid||"").trim();
  if(!ADMIN_DURATIONS.includes(duration))
-   throw new HttpsError("invalid-argument","Selecione 15 dias, 1, 3, 6, 12 meses ou vitalícia.");
+   throw new HttpsError("invalid-argument","Selecione 15 ou 30 dias, 1, 3, 6, 12 meses ou vitalícia.");
  if(targetUid&&!validUid(targetUid))
    throw new HttpsError("invalid-argument","UID do beneficiário inválido.");
  const now=Date.now(),plain=formatKey("admin:"+crypto.randomUUID());
