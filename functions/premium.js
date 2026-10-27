@@ -996,6 +996,7 @@ exports.adminListPremiumKeys=onCall({region:REGION},async request=>{
      source:String(record.source||""),
      recipientEmailHint:String(record.recipientEmailHint||""),
      recipientName:String(record.recipientName||""),
+     adminLabel:String(record.adminLabel||""),
      duration:String(record.duration|| (record.kind==="paid"?"30d":"")),
      uid:typeof record.uid==="string"?record.uid:"",
      createdAt:Number(record.createdAt||0),claimedAt:Number(record.claimedAt||0),
@@ -1020,6 +1021,23 @@ exports.adminListPremiumKeys=onCall({region:REGION},async request=>{
  }));
  return {keys:resolved,hasMore:entries.length>pageSize,
    nextCursor:page.length?page[page.length-1][0]:"",serverNow:Date.now()};
+});
+/** Owner-only note for identifying paid, manual, and legacy keys. 
+ * Not the Google identity; cannot change entitlement, UID or recipient lock.
+ */
+exports.adminLabelPremiumKey=onCall({region:REGION},async request=>{
+ const actor=await requireAdmin(request),data=request.data||{};
+ const id=String(data.id||""),label=String(data.label||"").trim();
+ if(!/^[0-9a-f]{64}$/.test(id)||label.length>80||
+    /[\u0000-\u001f<>]/.test(label))
+   throw new HttpsError("invalid-argument","Identificação de licença inválida.");
+ const ref=root().child("keys").child(id),now=Date.now();
+ const tx=await ref.transaction(record=>{
+   if(!record)return;
+   return {...record,adminLabel:label,labelUpdatedAt:now,labelUpdatedBy:actor};
+ },undefined,false);
+ if(!tx.committed)throw new HttpsError("not-found","Licença não encontrada.");
+ return {updated:true,label,serverNow:Date.now()};
 });
 /** Copy requires an explicit owner request; old manual keys are NOT recoverable. */
 exports.adminRevealPremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async request=>{
