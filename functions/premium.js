@@ -48,7 +48,7 @@ const userEntitlement=async uid=>{
  return Number(value.expiresAt||0)>Date.now()&&Number(key.expiresAt||0)>Date.now();
 };
 const offer=config=>{
- const regular=Number(config.regularPriceCents??config.priceCents??NORMAL_CENTS);
+ const regular=Number(config.regularPriceCents??NORMAL_CENTS);
  const promotional=Number(config.promotionalPriceCents??PROMO_CENTS);
  const promotionEnabled=config.promotionEnabled!==false;
  return {regularPriceCents:regular,promotionalPriceCents:promotional,promotionEnabled,
