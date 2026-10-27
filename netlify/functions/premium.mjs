@@ -44,8 +44,23 @@ export default async function handler(req,context){
  const method=req.method,segment=context?.params?.action||"";
  const route=new URL(req.url).pathname;
  const action=segment||route.split("/").filter(Boolean).at(-1);
- if(action==="health"&&method==="GET")
-   return response({service:"PokeSearch Premium",status:"setup",livePayments:false});
+ if(action==="health"&&method==="GET"){
+   // Auth + RTDB check. No private data, users, or licensing state is disclosed.
+   try{
+     const {auth}=initialize();
+     const {getDatabase}=require("firebase-admin/database");
+     await Promise.all([
+       auth.listUsers(1),
+       getDatabase().ref("distribution/globalEnabled").get()
+     ]);
+     return response({service:"PokeSearch Premium",status:"setup",
+       firebase:"connected",livePayments:false});
+   }catch(error){
+     console.error("PokeSearch Firebase health check failed:",error?.message||"unknown");
+     return response({service:"PokeSearch Premium",status:"setup",
+       firebase:"unavailable",livePayments:false},503);
+   }
+ }
  if(method!=="POST")return response({error:"Method not allowed"},405);
  if(!allowedActions.has(action)&&action!=="webhook")
    return response({error:"Not found"},404);
