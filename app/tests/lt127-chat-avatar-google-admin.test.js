@@ -12,7 +12,7 @@ assert.equal(rules[".read"],false);assert.equal(rules[".write"],false);
 assert.equal(rules.stats.online[".read"],false);
 assert.equal(rules.stats.installations[".read"],false);
 const admin=rules.chat.messages[".write"];
-for(const fragment of ["auth != null","email_verified === true","email === 'lucianotoscano@gmail.com'","sign_in_provider === 'google.com'","!newData.exists()"])
+for(const fragment of ["auth != null","email_verified === true","email.toLowerCase() === 'lucianotoscano@gmail.com'","sign_in_provider === 'google.com'","!newData.exists()"])
  assert.ok(admin.includes(fragment),"weak admin rule: "+fragment);
 assert.ok(!admin.includes("newData.child('authorUid')"),"root delete must be admin-only");
 const perMessage=rules.chat.messages["$messageId"][".write"];
