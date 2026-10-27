@@ -83,6 +83,10 @@ let pixPayment={
  id:Number(pixPaymentId),external_reference:"",status:"pending",status_detail:"pending_waiting_transfer",
  payment_method_id:"pix",currency_id:"BRL",live_mode:false,transaction_amount:5.00
 };
+const affiliatePaymentId="987654321099";
+let affiliatePayment={id:Number(affiliatePaymentId),external_reference:"",
+  status:"pending",status_detail:"pending_waiting_transfer",payment_method_id:"pix",
+  currency_id:"BRL",live_mode:false,transaction_amount:4.50};
 let fetchCalls=0;
 global.fetch=async(url,options)=>{
  fetchCalls++;
@@ -96,17 +100,22 @@ global.fetch=async(url,options)=>{
  };
  if(url.endsWith("/v1/payments")&&options?.method==="POST"){
    const request=JSON.parse(options.body);
-   assert.equal(request.transaction_amount,5);
+   assert.ok([5,4.5].includes(request.transaction_amount));
    assert.equal(request.payment_method_id,"pix");
    assert.equal(request.description,"PokeSearch Premium - Pokebola 2 - 30 dias");
    assert.ok(options.headers["X-Idempotency-Key"]);
-   pixPayment.external_reference=request.external_reference;
+   const affiliate=request.transaction_amount===4.5;
+   if(affiliate)affiliatePayment.external_reference=request.external_reference;
+   else pixPayment.external_reference=request.external_reference;
    return {ok:true,text:async()=>JSON.stringify({
-     id:Number(pixPaymentId),
+     id:affiliate?Number(affiliatePaymentId):Number(pixPaymentId),
      point_of_interaction:{transaction_data:{qr_code:"000201010212-PIX-TEST"}}})};
  }
  if(url.endsWith("/v1/payments/"+pixPaymentId))return {
    ok:true,text:async()=>JSON.stringify(pixPayment)
+ };
+ if(url.endsWith("/v1/payments/"+affiliatePaymentId))return {
+   ok:true,text:async()=>JSON.stringify(affiliatePayment)
  };
  throw Error("Unexpected Orders API call "+url);
 };
@@ -349,6 +358,117 @@ async function run(){
  assert.equal(res.code,200);
  assert.deepEqual(read("premium/entitlements/payerPix"),savedEnt);
 
+
+ // Influencer coupons are owner-controlled; commission is on the paid amount
+ // and appears only after a provider-approved Pix, never on quote or QR create.
+ let couponDenied=false;
+ try{await premium.adminSavePartnerCoupon({
+   auth:{uid:"stranger"},data:{code:"YOUTUBE10",partnerName:"Canal",discountPercent:10}});}
+ catch(e){couponDenied=e.code==="permission-denied";}
+ assert.equal(couponDenied,true);
+ await premium.adminSavePartnerCoupon({
+   ...adminLive,data:{code:"YOUTUBE10",partnerName:"Canal de Vídeos",
+     discountPercent:10,partnerUid:"influencer123",enabled:true}});
+ await premium.adminSavePartnerCoupon({
+   ...adminLive,data:{code:"CRIADOR50",partnerName:"Criador A",
+     discountPercent:50,enabled:true}});
+ const promoBase=await premium.getPremiumOffer({
+   auth:{uid:"couponBuyer"},data:{}});
+ assert.equal(promoBase.priceCents,500);
+ let quoted=await premium.getPremiumOffer({
+   auth:{uid:"couponBuyer"},data:{couponCode:"youtube10"}});
+ assert.equal(quoted.priceCents,450);
+ assert.equal(quoted.coupon.discountPercent,10);
+ const half=await premium.getPremiumOffer({
+   auth:{uid:"couponBuyer"},data:{couponCode:"CRIADOR50"}});
+ assert.equal(half.priceCents,250);
+ const partnerCodes=await premium.adminListPartnerCoupons(adminLive);
+ assert.equal(partnerCodes.items.length,2);
+ let selfUseDenied=false;
+ try{await premium.getPremiumOffer({
+   auth:{uid:"influencer123"},data:{couponCode:"YOUTUBE10"}});}
+ catch(e){selfUseDenied=e.code==="failed-precondition";}
+ assert.equal(selfUseDenied,true);
+ let invalidDiscountRejected=false;
+ try{await premium.adminSavePartnerCoupon({
+   ...adminLive,data:{code:"BAD25",partnerName:"Criador",discountPercent:25}});}
+ catch(e){invalidDiscountRejected=e.code==="invalid-argument";}
+ assert.equal(invalidDiscountRejected,true);
+
+ const commissionPix=await premium.createPremiumPix({
+   auth:{uid:"couponBuyer"},
+   data:{versionCode:54328,email:"coupon@example.org",couponCode:"youtube10"}});
+ assert.equal(commissionPix.priceCents,450);
+ assert.equal(commissionPix.couponCode,"YOUTUBE10");
+ let affiliateRecord=read("premium/orders/"+commissionPix.orderId);
+ assert.equal(affiliateRecord.referral.commissionCents,225);
+ assert.equal(affiliateRecord.referral.status,"unearned");
+ assert.equal(read("premium/entitlements/couponBuyer"),undefined);
+ const affiliateTs=String(Date.now());
+ const affiliateManifest="id:"+affiliatePaymentId+
+   ";request-id:aff-req;ts:"+affiliateTs+";";
+ const affiliateMac=crypto.createHmac("sha256",SECRET.POKE_MP_WEBHOOK_SECRET)
+   .update(affiliateManifest).digest("hex");
+ const affiliateReq={method:"POST",query:{"data.id":affiliatePaymentId,type:"payment"},
+   get:key=>({"x-signature":"ts="+affiliateTs+",v1="+affiliateMac,
+     "x-request-id":"aff-req"}[key])};
+ res=response();await premium.premiumPixWebhook(affiliateReq,res);
+ assert.equal(res.code,200);
+ assert.equal(read("premium/orders/"+commissionPix.orderId).referral.status,"unearned");
+ affiliatePayment.status="approved";affiliatePayment.status_detail="accredited";
+ res=response();await premium.premiumPixWebhook(affiliateReq,res);
+ assert.equal(res.code,200);
+ affiliateRecord=read("premium/orders/"+commissionPix.orderId);
+ assert.equal(affiliateRecord.status,"approved");
+ assert.equal(affiliateRecord.referral.status,"pending");
+ assert.equal(affiliateRecord.referral.commissionCents,225);
+ res=response();await premium.premiumPixWebhook(affiliateReq,res);
+ assert.equal(res.code,200);
+ assert.equal(read("premium/orders/"+commissionPix.orderId).referral.commissionCents,225);
+ let payoutRejected=false;
+ try{await premium.adminMarkPartnerCommissionPaid({
+   ...adminLive,data:{orderId:commissionPix.orderId,reference:"external123",
+     confirm:"REGISTRAR REPASSE"}});}
+ catch(e){payoutRejected=e.code==="failed-precondition";}
+ assert.equal(payoutRejected,true,"Never mark test-mode payments paid");
+ const commissions=await premium.adminListPartnerCommissions(adminLive);
+ assert.ok(commissions.items.some(x=>x.orderId===commissionPix.orderId&&
+   x.commissionCents===225&&x.commissionStatus==="pending"));
+ affiliatePayment.status="refunded";affiliatePayment.status_detail="refunded";
+ res=response();await premium.premiumPixWebhook(affiliateReq,res);
+ assert.equal(res.code,200);
+ assert.equal(read("premium/orders/"+commissionPix.orderId).referral.status,"reversed");
+
+ // The manual repasse control is audit-only and cannot transfer money.
+ const accountingOrderId="123e4567-e89b-42d3-a456-426614170001";
+ write("premium/orders/"+accountingOrderId,{
+   uid:"legitimateBuyer",status:"approved",licensed:true,liveMode:true,
+   priceCents:500,createdAt:Date.now(),
+   referral:{code:"CRIADOR50",partnerName:"Criador A",commissionCents:250,
+     commissionPercent:50,status:"pending"}});
+ const recorded=await premium.adminMarkPartnerCommissionPaid({
+   ...adminLive,data:{orderId:accountingOrderId,reference:"Pix-REPASSE-ABC",
+     confirm:"REGISTRAR REPASSE"}});
+ assert.equal(recorded.recorded,true);
+ assert.equal(read("premium/orders/"+accountingOrderId).referral.status,"paid");
+ assert.equal(read("premium/orders/"+accountingOrderId).referral.commissionCents,250);
+ let duplicatePayoutDenied=false;
+ try{await premium.adminMarkPartnerCommissionPaid({
+   ...adminLive,data:{orderId:accountingOrderId,reference:"Pix-REPASSE-ABC",
+     confirm:"REGISTRAR REPASSE"});}
+ catch(e){duplicatePayoutDenied=e.code==="failed-precondition";}
+ assert.equal(duplicatePayoutDenied,true);
+ await premium.adminSavePartnerCoupon({
+   ...adminLive,data:{code:"YOUTUBE10",partnerName:"Canal de Vídeos",
+     discountPercent:10,partnerUid:"influencer123",enabled:false}});
+ let disabledRejected=false;
+ try{await premium.getPremiumOffer({
+   auth:{uid:"couponBuyer"},data:{couponCode:"YOUTUBE10"}});}
+ catch(e){disabledRejected=e.code==="failed-precondition";}
+ assert.equal(disabledRejected,true);
+ assert.equal(read("premium/orders/"+commissionPix.orderId).referral.code,"YOUTUBE10",
+   "Disabling a coupon never rewrites historical commissions");
+ console.log("PASS influencer coupon: exact discount, partner binding, verified Pix, replay, refund and manual repasse");
  // Admin inventory uses hashes as IDs, never plaintext; newly issued codes are sealed.
  const inventory=await premium.adminListPremiumKeys({...adminLive,data:{limit:20}});
  assert.ok(inventory.keys.length>0);
@@ -577,7 +697,7 @@ async function run(){
  // Export ALL Premium sections as paginated, owner-only records. License
  // codes stay sealed; payment history and entitlements keep their identity.
  const sections=["keys","entitlements","orders","orderIndex",
-   "paymentIndex","paymentThrottle","config","distribution","appControl"];
+   "paymentIndex","paymentThrottle","coupons","config","distribution","appControl"];
  const snapshot={};
  for(const section of sections){
    let cursor="",pages=0;const combined={};
