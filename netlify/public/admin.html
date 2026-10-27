@@ -752,6 +752,10 @@
       throw Error("Arquivo não pertence ao formato Premium do PokeSearch.");
     return payload;
   };
+  const backupSha256=async value=>{
+    const bytes=await crypto.subtle.digest("SHA-256",utf8.encode(JSON.stringify(value)));
+    return [...new Uint8Array(bytes)].map(x=>x.toString(16).padStart(2,"0")).join("");
+  };
   const setBackupProgress=message=>{el("backup-progress").textContent=message};
   const backupCounts=sections=>BACKUP_PARTS.map(x=>x+": "+
     Object.keys(sections[x]||{}).length+" registros").join(" · ");
@@ -838,11 +842,25 @@
     setBackupBusy(true);
     let sessionId="";
     try{
-      const start=await call("adminRestorePremiumBackup",{
-        phase:"prepare",format:backup.format,projectId:backup.projectId,
-        vaultFingerprint:backup.vaultFingerprint,confirm:"IMPORTAR EM BASE VAZIA"
-      });
+      const digest=await backupSha256(backup);
+      let start;
+      try{
+        start=await call("adminRestorePremiumBackup",{
+          phase:"prepare",format:backup.format,projectId:backup.projectId,
+          backupSha256:digest,
+          vaultFingerprint:backup.vaultFingerprint,confirm:"IMPORTAR EM BASE VAZIA"
+        });
+      }catch(firstError){
+        // Resume only the SAME backup if our own previous import stopped.
+        // A regular live Firebase has no matching session, so remains protected.
+        try{
+          start=await call("adminRestorePremiumBackup",{
+            phase:"resume",backupSha256:digest
+          });
+        }catch{throw firstError;}
+      }
       sessionId=start.sessionId;
+      if(start.resumed)setBackupProgress("Retomando restauração interrompida...");
       for(let i=0;i<BACKUP_PARTS.length;i++){
         const section=BACKUP_PARTS[i],source=backup.sections[section];
         const entries=Object.entries(source);
