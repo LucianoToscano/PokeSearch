@@ -97,6 +97,10 @@ final class PremiumAdminDialog {
             label(activity,box,"Aumentar duração de uma licença temporária");
             EditText uid=input(activity,box,"UID Firebase do beneficiário",false);
             uid.setInputType(InputType.TYPE_CLASS_TEXT);
+            button(activity,box,"Bloquear esta licença",()->
+                accountAccess(activity,uid,true,state));
+            button(activity,box,"Reativar esta licença",()->
+                accountAccess(activity,uid,false,state));
             EditText extra=input(activity,box,"Dias adicionais (ex.: 30, 365)",true);
             button(activity,box,"Acrescentar dias",()->{
                 try{
@@ -170,6 +174,17 @@ final class PremiumAdminDialog {
     private static void button(MainActivity activity,LinearLayout box,String title,Runnable act){
         Button b=new Button(activity);b.setText(title);b.setAllCaps(false);
         box.addView(b);b.setOnClickListener(v->act.run());
+    }
+    private static void accountAccess(MainActivity a,EditText target,
+                                      boolean revoke,TextView status){
+        String uid=target.getText().toString().trim();
+        if(!uid.matches("[A-Za-z0-9_-]{8,128}")){
+            status.setText("Informe um UID Firebase válido.");return;
+        }
+        Map<String,Object> data=new HashMap<>();
+        data.put("action","revoke");data.put("uid",uid);data.put("revoked",revoke);
+        PremiumAccess.adminSettings(a,data,(result,error)->status.setText(
+            error==null?(revoke?"Licença bloqueada.":"Licença reativada."):error));
     }
     private static void global(MainActivity a,boolean allow,TextView status){
         PremiumAccess.adminDistribution(a,true,0,allow,(r,e)->
