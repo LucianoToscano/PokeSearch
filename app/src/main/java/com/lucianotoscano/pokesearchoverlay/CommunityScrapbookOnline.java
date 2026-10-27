@@ -414,14 +414,46 @@ final class CommunityScrapbookOnline {
                 bubble.setContentDescription("Segure para excluir a mensagem de "+nickname);
                 bubble.setOnLongClickListener(v->{confirmDeleteMessage(id);return true;});
             }
-            if(!mine){
+            CaptureChatFormat.Capture capture=CaptureChatFormat.parse(message);
+            if(!mine && capture==null){
                 TextView by=text(nickname,11,true);
                 by.setTextColor(light?0xFF166C65:0xFF83DED1);
                 bubble.addView(by);
             }
-            TextView body=text(message,13,false);
-            body.setTextColor(ink);body.setMaxLines(8);
-            bubble.addView(body);
+            if(capture!=null){
+                // Small offline sprite inside the same bubble, never an image URL
+                // stored in Firebase. A rare form with no exact match gets text only.
+                LinearLayout announcement=new LinearLayout(activity);
+                announcement.setGravity(Gravity.CENTER_VERTICAL);
+                int dex=CaptureChatFormat.speciesDex(activity,capture.name);
+                if(dex>0){
+                    try(java.io.InputStream in=VerifiedSpriteCache.bundledSprite(
+                        activity,dex,capture.shiny)){
+                        if(in!=null){
+                            android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(in);
+                            if(bitmap!=null){
+                                ImageView sprite=new ImageView(activity);
+                                sprite.setImageBitmap(bitmap);
+                                sprite.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                                sprite.setContentDescription("Sprite "+
+                                    (capture.shiny?"Shiny ":"")+"de "+capture.name);
+                                LinearLayout.LayoutParams spriteLp=new LinearLayout.LayoutParams(
+                                    dp(activity,38),dp(activity,38));
+                                spriteLp.rightMargin=dp(activity,6);
+                                announcement.addView(sprite,spriteLp);
+                            }
+                        }
+                    }catch(java.io.IOException ignored){}
+                }
+                TextView body=text(capture.display(nickname),13,false);
+                body.setTextColor(ink);body.setMaxLines(8);
+                announcement.addView(body,new LinearLayout.LayoutParams(0,-2,1));
+                bubble.addView(announcement);
+            }else{
+                TextView body=text(message,13,false);
+                body.setTextColor(ink);body.setMaxLines(8);
+                bubble.addView(body);
+            }
             String time=android.text.format.DateFormat.format("HH:mm",timestamp).toString();
             TextView meta=text(mine?time+"  ✓":time,9,false);
             meta.setGravity(Gravity.END);meta.setTextColor(secondary);

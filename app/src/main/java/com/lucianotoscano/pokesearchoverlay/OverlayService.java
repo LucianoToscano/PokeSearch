@@ -3125,13 +3125,16 @@ public class OverlayService extends Service {
            !currentCoordinateTarget(offer)||selected<0||
            detailRoot==null||detailRoot.getVisibility()!=View.VISIBLE||
            offer.optInt("sourceIndex",-99)!=sourceIndex)return;
-        // No coordinates, location, Trainer ID, IV or encounter data is posted.
+        // No coordinates, location, Trainer ID or encounter data is posted.\n        // Only an existing trusted raw 0..15 IV tuple is included in visible text.
         String key=captureKey(offer);
         if(sharedCaptureKeys.contains(key))return;
         offeredCapture=null; // one in-flight submission per confirmed tap
         String name=offer.optString("name","");
         boolean shiny=offer.optBoolean("shiny",false);
-        CaptureSharePublisher.publish(this,name,shiny,(success,message)->handler.post(()->{
+        String rawIv=offer.optString("iv","");
+        String form=offer.optString("form","");
+        CaptureSharePublisher.publish(this,name,shiny,rawIv,form,
+            (success,message)->handler.post(()->{
             if(stopped)return;
             if(success)sharedCaptureKeys.add(key);
             else if(selected>=0&&requestGeneration==offeredGeneration)

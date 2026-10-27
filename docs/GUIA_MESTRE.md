@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+
+### LT131 — Sprite + IV nos anúncios de captura (27/10/2026)
+
+- **Branch:** `feature/lt131-capture-sprites-ivs-20261027` na LT130; PR [#90](https://github.com/LucianoToscano/PokeSearch/pull/90), Draft, sem merge main.
+- **Visual aprovado:** [sprite normal Beldum] `🎉 Luciano capturou um Beldum 0/15/14!`; [sprite Shiny Ditto] `✨ Luciano capturou um Ditto 15/15/15!`. Mini sprite **38dp** dentro da bolha, nickname correto, reação e horário preservados; conversas comuns inalteradas.
+- **Origem real:** IV A/D/S `0..15/0..15/0..15` é lido do resultado já selecionado no `OverlayService` compartilhado por P1/P2; quando IV inválido/ausente, omitir em vez de inventar. Nome/forma vêm do card. Sprite da espécie obtida por correspondência exata em `pokemon_catalog.json` (Ditto #132, Beldum #374) com sprites offline base/shiny da QA. Nunca inventar sprite de costume/forma desconhecida.
+- **Firebase:** anúncio usa somente `chat/messages` (quatro campos anteriores), sem alteração nas regras públicas/reactions/stats/premium/distribution, sem compartilhar coordenadas, CP, GPS, token ou reveal. Não declara captura verificada pelo jogo: o usuário confirma voluntariamente num botão discreto inline após copiar Get coords, como na LT129.
+- **QA produzida e auditada:** `0.01.31 / 54336`, [CI SUCCESS #40476951765](https://github.com/LucianoToscano/PokeSearch/actions/runs/40476951765), [APK no GitHub Artifact #12721646113](https://github.com/LucianoToscano/PokeSearch/actions/runs/40476951765/artifacts/12721646113). SOURCE_COMMIT `d6f867921960f15c1d161d9fe236617625c89b8a`. APK `PokeSearch-v0.01.31-LT131-Capture-Sprites-IVs-QA.apk`, 43.375.725 bytes, SHA-256 `dae7719a47738d8cc8b6ad32c241db9f127c8f8d564ea57e563fc0836675be15`; ZIP 40.884.676 bytes CRC OK, SHA-256 `22ecf0b7b0b071f1c662c80c40c2f1076a2147d92ba6754c360a2566a42713da`; Android v2 permanente certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Inspecionados sprites normais Beldum #374 e Shiny Ditto #132 dentro do APK. GitHub primeiro por Issue #84. Testes em Samsung e com duas contas necessários; não declarar homologação física sem os mesmos.
+- Docs: [POKESEARCH_LT131_CAPTURE_SPRITES_IV_20261027.md](POKESEARCH_LT131_CAPTURE_SPRITES_IV_20261027.md).
+
+
 ### LT130 — Reação ✨️ no Chat (27/10/2026)
 
 - PR [#89](https://github.com/LucianoToscano/PokeSearch/pull/89), Draft empilhada na LT129 PR #88, branch `feature/lt130-sparkle-reaction-20261027`; versão QA `0.01.30` / `54335`. Não mesclar/release oficial sem QA físico.
