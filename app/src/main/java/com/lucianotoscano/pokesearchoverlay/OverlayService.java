@@ -1178,6 +1178,8 @@ public class OverlayService extends Service {
     }
     @Override public void onCreate(){
         super.onCreate();
+        // Independent app-wide maintenance and per-version stop for both overlays.
+        if(!AppAvailability.isAllowed(this)){stopSelf();return;}
         // Only P2 needs a Premium lease. P1 remains free and works offline.
         if(isSecondaryOverlay()&&PremiumAccess.controlled()&&!PremiumAccess.permitted(true)){
             stopSelf();
@@ -1208,6 +1210,16 @@ public class OverlayService extends Service {
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(isSecondaryOverlay()?74:73,note);
         FirebaseStats.setOverlayVisible(this,true,isSecondaryOverlay());
+        final Runnable availabilityGuard=new Runnable(){
+            @Override public void run(){
+                if(stopped)return;
+                AppAvailability.refresh(OverlayService.this,state->{
+                    if(!state.allowed&&!stopped)stopSelf();
+                });
+                if(!stopped)handler.postDelayed(this,90000L);
+            }
+        };
+        handler.post(availabilityGuard);
         if(isSecondaryOverlay()&&PremiumAccess.controlled()){
             // A revoked or expired P2 lease stops only the secondary overlay.
             handler.postDelayed(new Runnable(){
