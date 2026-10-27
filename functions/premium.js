@@ -56,7 +56,9 @@ const requireAdmin=async request=>{
 const isValidCode=code=>Number.isInteger(code)&&code>0&&code<=2100000000;
 const currentPolicy=async(code)=>{
  const snap=await policy().get(),p=snap.val()||{};
- return p.globalEnabled===true&&p.versions&&p.versions[String(code)]===true;
+ // Future APKs inherit the global Premium policy automatically.
+  // Explicit false remains a targeted emergency block.
+  return p.globalEnabled===true&&p.versions?.[String(code)]!==false;
 };
 const userEntitlement=async uid=>{
  const value=(await root().child("entitlements").child(uid).get()).val()||{};
@@ -586,7 +588,11 @@ exports.adminDistributionControl=onCall({region:REGION},async request=>{
  if(typeof data.enabled!=="boolean"||
    !(data.scope==="global"||(data.scope==="version"&&isValidCode(code))))
    throw new HttpsError("invalid-argument","Parâmetros inválidos.");
- if(data.scope==="global")await policy().child("globalEnabled").set(data.enabled);
+ if(data.scope==="global"){
+    // Enabling Premium releases current/future versions in one action.
+    if(data.enabled)await policy().update({globalEnabled:true,versions:null});
+    else await policy().child("globalEnabled").set(false);
+  }
  else await policy().child("versions").child(String(code)).set(data.enabled);
  return {updated:true,serverNow:Date.now()};
 });
@@ -1273,9 +1279,19 @@ exports.adminSetAppMaintenance=onCall({region:REGION},async request=>{
  if(typeof enabled!=="boolean")throw new HttpsError("invalid-argument","Estado inválido.");
  const reason=String(request.data?.message||"PokeSearch temporariamente em manutenção.")
    .replace(/[\r\n]+/g," ").trim().slice(0,180);
- await getDatabase().ref("appControl/maintenance").set({
-   enabled,message:reason,updatedAt:Date.now(),updatedBy:actor
- });
+ const stamp=Date.now();
+  const state={enabled,message:reason,updatedAt:stamp,updatedBy:actor};
+  if(enabled){
+    await getDatabase().ref("appControl/maintenance").set(state);
+  }else{
+    // Atomic multi-path restore removes legacy/version overrides.
+    // Licenses, sales and payment settings remain untouched.
+    await getDatabase().ref().update({
+      "appControl/maintenance":state,
+      "appControl/versionAccess/globalEnabled":true,
+      "appControl/versionAccess/versions":null
+    });
+  }
  return {updated:true,enabled,serverNow:Date.now()};
 });
 
