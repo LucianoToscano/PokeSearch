@@ -1,0 +1,14 @@
+{
+  "name": "pokesearch-premium-netlify",
+  "private": true,
+  "version": "0.0.0-qa",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test:premium": "node app/tests/premium-controlled-distribution.test.js && node functions/tests/premium-webhook.test.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}
