@@ -67,7 +67,7 @@ const mocks={
      "campaignLifetime":"lifetime@example.org"
    })[uid]||uid+"@example.org",
    emailVerified:uid!=="unverifiedCampaign",
-   metadata:{creationTime:new Date(Date.now()+(uid==="brandNewTrial"?120000:-86400000)).toISOString()},
+   metadata:{creationTime:new Date(Date.now()+(["brandNewTrial","auto137","recover137"].includes(uid)?120000:-86400000)).toISOString()},
    providerData:uid==="anonymousUser"?[]:[{providerId:"google.com"}]
  })})},
  "firebase-admin/app":{getApps:()=>[{}],initializeApp:()=>{}}
@@ -606,6 +606,31 @@ async function run(){
  assert.equal(repeatBlocked,true);
  assert.equal(read("premium/coupons/GRATIS100/claimCount"),1);
  await premium.adminPremiumSettings({...adminLive,data:{action:"welcomeTrial",enabled:true,days:5}});
+ // LT137 signs in and only asks for access; the server must auto-issue without
+ // requiring new Android code or an explicit claimWelcomeTrial request.
+ const firstAuto=await premium.checkDistributionAccess({auth:{uid:"auto137"},
+   data:{versionCode:54342,deviceId:DEVICE_A,deviceName:"Samsung teste"}});
+ assert.equal(firstAuto.premium,true,"LT137 first access auto-activates Premium");
+ assert.equal(firstAuto.hasPremiumLicense,true);
+ const grantedAuto=read("premium/trialClaims/auto137");
+ assert.equal(grantedAuto.days,5);
+ assert.equal(read("premium/entitlements/auto137").expiresAt,grantedAuto.expiresAt);
+ const secondAuto=await premium.checkDistributionAccess({auth:{uid:"auto137"},
+   data:{versionCode:54342,deviceId:DEVICE_A,deviceName:"Samsung teste"}});
+ assert.equal(secondAuto.premium,true);
+ assert.equal(read("premium/trialClaims/auto137").expiresAt,grantedAuto.expiresAt);
+ // Recover a reserved claim after a worker crash without adding extra days.
+ const recoveryExpiry=Date.now()+4*86400000;
+ const recoveryHash=crypto.createHash("sha256").update("welcome-trial-v1:recover137").digest("hex");
+ write("premium/trialClaims/recover137",{claimedAt:Date.now()-86400000,
+   expiresAt:recoveryExpiry,days:5,keyHash:recoveryHash});
+ const recovered=await premium.checkDistributionAccess({auth:{uid:"recover137"},
+   data:{versionCode:54342,deviceId:DEVICE_B,deviceName:"Moto G15"}});
+ assert.equal(recovered.premium,true);
+ assert.equal(read("premium/trialClaims/recover137").expiresAt,recoveryExpiry);
+ assert.equal(read("premium/keys/"+recoveryHash).expiresAt,recoveryExpiry);
+ assert.equal((await premium.checkDistributionAccess({auth:{uid:"oldGoogleUser"},
+   data:{versionCode:54342,deviceId:DEVICE_C}})).premium,false);
  assert.equal((await premium.claimWelcomeTrial({
    auth:{uid:"oldGoogleUser"},data:{versionCode:54328}})).activated,false);
  const trial=await premium.claimWelcomeTrial({
@@ -628,6 +653,7 @@ async function run(){
  await premium.adminPremiumSettings({...adminLive,data:{action:"welcomeTrial",enabled:false,days:4}});
  assert.equal((await premium.claimWelcomeTrial({
    auth:{uid:"trialDisabled"},data:{versionCode:54328}})).activated,false);
+ console.log("PASS LT137 server-side signup grant, crash recovery, no extension, old account blocked");
  console.log("PASS LT138: 100-percent quota, repeated account rejection, 5-day automatic trial and no regrant");
   // Admin inventory uses hashes as IDs, never plaintext; newly issued codes are sealed.
  const inventory=await premium.adminListPremiumKeys({...adminLive,data:{limit:20}});
