@@ -8,7 +8,7 @@ const allowedActions=new Set([
  "adminPremiumOverview","adminIssuePremiumKey","adminAdjustPremiumExpiry",
  "adminListPremiumKeys","adminRevealPremiumKey","adminSetPremiumKeyEnabled",
  "adminChangePremiumKeyDuration","adminSetAppMaintenance","adminSetAppVersionAccess",
- "claimFreeYear"
+ "claimFreeYear","adminExportPremiumBackupPage","adminRestorePremiumBackup"
 ]);
 const httpStatus={
  unauthenticated:401,"permission-denied":403,"invalid-argument":400,
@@ -95,7 +95,10 @@ export default async function handler(req,context){
  if(method!=="POST")return response({error:"Method not allowed"},405);
  if(!allowedActions.has(action)&&action!=="webhook"&&action!=="webhook-live")
    return response({error:"Not found"},404);
- if(Number(req.headers.get("content-length")||0)>12000)
+ // Large backup batches are accepted only through the owner-authenticated
+ // restoration action. All other requests retain the original 12 KB cap.
+ const maxBody=action==="adminRestorePremiumBackup"?64000:12000;
+ if(Number(req.headers.get("content-length")||0)>maxBody)
    return response({error:"Payload too large"},413);
  try{
    const {backend,auth}=initialize();
