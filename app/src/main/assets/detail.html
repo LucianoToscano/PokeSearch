@@ -37,6 +37,13 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #coords,#copy{min-height:36px;touch-action:manipulation;position:relative;z-index:1}
 #coords:disabled,#copy:disabled{opacity:.65;cursor:default}
 #coords:focus-visible,#copy:focus-visible{outline:2px solid #8be1cb;outline-offset:1px}
+#captureShare[hidden],#captureConfirm[hidden]{display:none!important}
+#captureShare{margin-top:5px;display:block;width:100%;padding:5px;border-radius:7px;
+ border:1px solid #e3c96955;background:#d4b65b18;color:#f5dda4;font-size:10px}
+#captureConfirm{margin-top:4px;display:flex;align-items:center;gap:4px;font-size:10px}
+#captureConfirm>span{flex:1}
+#captureConfirm>button{background:#ffffff26;border-radius:5px;padding:5px 8px}
+#captureStatus[hidden]{display:none}#captureStatus{display:block;margin-top:3px;color:#a7eac7;font-size:10px}
 </style></head><body><div id="panel">
  <div id="header">
   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
@@ -52,11 +59,51 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  </section>
  <button id="watch" onclick="Native.toggleWatch(watchName)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg> <span id="watchLabel">Adicionar aos favoritos</span></button>
  <button id="coords" onclick="requestCoordsUi()">⌖ Get coords</button><button id="copy" onclick="copyCoords()">⧉ Copiar coordenadas</button>
+ <button id="captureShare" hidden onclick="captureShareAsk()">🎉 Capturou? Compartilhar no chat</button>
+ <div id="captureConfirm" hidden><span>Capturou mesmo?</span>
+ <button onclick="captureShareCancel()">Não</button>
+ <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
+ <small id="captureStatus" hidden></small>
 </div>
 <script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
 let coordsNote="",coordsPending=false,coordsRequestSeq=0;
+let shareReady=false,shareSent=false,sharePending=false;
+function shareUi(){
+ document.getElementById("captureShare").hidden=!shareReady||shareSent||sharePending;
+ if(!shareReady||shareSent)document.getElementById("captureConfirm").hidden=true;
+}
+window.offerCaptureShare=()=>{
+ if(shareSent)return;
+ shareReady=true;sharePending=false;shareUi();resizeEvolutionPanel();
+};
+function captureShareAsk(){
+ if(!shareReady||shareSent||sharePending)return;
+ document.getElementById("captureShare").hidden=true;
+ document.getElementById("captureConfirm").hidden=false;
+ resizeEvolutionPanel();
+}
+function captureShareCancel(){
+ document.getElementById("captureConfirm").hidden=true;
+ shareUi();resizeEvolutionPanel();
+}
+function captureShareConfirm(){
+ if(!shareReady||shareSent||sharePending||currentIndex<0)return;
+ sharePending=true;
+ document.getElementById("captureConfirm").hidden=true;
+ shareUi();
+ Native.confirmCaptureShare(currentIndex);
+}
+window.captureShareFeedback=(ok,message)=>{
+ sharePending=false;if(ok){shareSent=true;shareReady=false;}
+ else shareReady=true;
+ shareUi();
+ const status=document.getElementById("captureStatus");
+ status.textContent=String(message||"");
+ status.hidden=!status.textContent;
+ resizeEvolutionPanel();
+};
 function coordButtons(){
  const fetch=document.getElementById("coords"),copy=document.getElementById("copy");
  if(!fetch||!copy)return;
@@ -195,6 +242,8 @@ window.showDetails=(c,mode,watched)=>{
   detailIdentity=nextIdentity;evolutionExpanded=false;
   coordsRequestSeq++;
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
+  shareReady=false;shareSent=false;sharePending=false;shareUi();
+  document.getElementById("captureStatus").hidden=true;
   document.getElementById("evolutions").hidden=true;
   document.getElementById("evoBody").hidden=true;
   document.getElementById("evoBody").innerHTML="";
