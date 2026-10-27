@@ -428,10 +428,30 @@ exports.premiumSessionInfo=onCall({region:REGION},async request=>{
  const uid=await requireGoogle(request),id=String(request.data?.deviceId||"");
  const value=(await premiumDeviceRef(uid).get()).val()||{};
  const own=validPremiumDevice(id)&&value.deviceHash===premiumDeviceHash(uid,id);
- return {licenseActive:await userEntitlement(uid),authorizedHere:!!own,
+ // The same verified Google owner may inspect their own expiration. Do not
+ // expose the plaintext key, key hash, UID, paid order or other user's data.
+ const ent=(await root().child("entitlements").child(uid).get()).val()||{};
+ const hash=String(ent.currentKeyHash||"");
+ const key=/^[0-9a-f]{64}$/.test(hash)?
+   (await root().child("keys").child(hash).get()).val()||{}:{};
+ const licenseActive=await userEntitlement(uid);
+ const lifetime=licenseActive&&ent.lifetime===true&&key.duration==="lifetime";
+ const rawExpiry=[Number(ent.expiresAt||0),Number(key.expiresAt||0)]
+   .filter(v=>Number.isSafeInteger(v)&&v>0);
+ // Both key and entitlement must still authorize the account. Report the
+ // earlier deadline, never a later or invented number of paid days.
+ const expiresAt=lifetime?0:(rawExpiry.length?Math.min(...rawExpiry):0);
+ const now=Date.now();
+ const remainingMs=licenseActive&&!lifetime&&expiresAt>now?expiresAt-now:0;
+ return {licenseActive,authorizedHere:!!own,
+   licenseKind:String(key.kind||ent.kind||"").slice(0,30),
+   licenseSource:String(key.source||"").slice(0,40),
+   licenseDuration:String(key.duration||"").slice(0,20),
+   lifetime,expiresAt,remainingSeconds:Math.ceil(remainingMs/1000),
+   remainingDays:Math.ceil(remainingMs/86400000),
    deviceName:String(value.deviceName||""),boundAt:Number(value.boundAt||0),
    lastActivity:Number(value.updatedAt||0),
-   status:sessionState(value,Date.now())};
+   status:sessionState(value,now),serverNow:now};
 });
 /** Owner-only, paginated device inventory with restrained account metadata. */
 exports.adminListPremiumDevices=onCall({region:REGION},async request=>{
