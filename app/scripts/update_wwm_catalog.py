@@ -48,7 +48,7 @@ def build(target):
     target=Path(target)
     target.mkdir(parents=True,exist_ok=True)
     js="/* Pinned build-time metadata only; no runtime HTTP. */\n" + \
-       "(function(g){const d="+json.dumps(result,separators=(",",":"),ensure_ascii=False)+
+       "(function(g){const d="+json.dumps(result,separators=(",",":"),ensure_ascii=False)+\
        ";if(g)g.PokeSearchWWMCatalog=d;if(typeof module==='object'&&module.exports)module.exports=d;})(typeof globalThis!=='undefined'?globalThis:null);\n"
     (target/"wwm_catalog.js").write_text(js,encoding="utf-8")
     manifest={"revision":REV,"sha256":hashes,"pokemon":len(species),
