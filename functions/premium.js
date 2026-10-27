@@ -523,8 +523,8 @@ exports.redeemPremiumKey=onCall({region:REGION},async request=>{
    throw new HttpsError("invalid-argument","Formato de chave inválido.");
  const hash=sha(code),keyRef=root().child("keys").child(hash);
  let entry=(await keyRef.get()).val();
- if(!entry||entry.revoked===true)
-   throw new HttpsError("not-found","Chave inexistente ou bloqueada.");
+ if(!entry||entry.revoked===true||entry.suspended===true)
+   throw new HttpsError("not-found","Chave inexistente, suspensa ou revogada.");
  if(entry.kind==="manual"){
    if(entry.uid&&entry.uid!==uid)
      throw new HttpsError("permission-denied","Esta chave já foi ativada em outra conta.");
