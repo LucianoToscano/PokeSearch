@@ -57,6 +57,21 @@ const checks=[
    adminHtml.includes('id="license-list-view"')&&
    adminHtml.includes('call("adminDeletePremiumKey"')&&
    adminHtml.includes('item.suspended?"Habilitar":"Desabilitar"')],
+ ["Partner coupons and manual commissions require server validation and provider-approved Pix",
+   logic.includes("exports.adminSavePartnerCoupon=onCall")&&
+   logic.includes("exports.adminListPartnerCoupons=onCall")&&
+   logic.includes("exports.adminListPartnerCommissions=onCall")&&
+   logic.includes("exports.adminMarkPartnerCommissionPaid=onCall")&&
+   logic.includes("AFFILIATE_COMMISSION_PCT=50")&&
+   logic.includes("couponQuote(request.data?.couponCode")&&
+   logic.includes("await affiliateEarned(ref)")&&
+   logic.includes("await affiliateReversed(ref)")&&
+   logic.includes('order.status!=="approved"')&&
+   logic.includes('order.liveMode!==true')&&
+   http.includes('"adminMarkPartnerCommissionPaid"')&&
+   adminHtml.includes('id="partners-panel"')&&
+   adminHtml.includes('id="partner-coupon-code"')&&
+   adminHtml.includes('id="partner-commissions-list"')],
  ["Premium backup endpoints are owner-authenticated, bounded and never overwrite existing",
    logic.includes("exports.adminExportPremiumBackupPage=onCall")&&
    logic.includes("exports.adminRestorePremiumBackup=onCall")&&
