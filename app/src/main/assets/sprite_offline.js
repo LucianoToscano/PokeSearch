@@ -289,6 +289,20 @@
  }
  function exactCostume(card){
   if(!card||typeof card!=="object")return null;
+  // Halloween 2026 Zubat has its own official top-hat costume, different
+  // from ordinary Zubat. The first independently verified image is the
+  // exact Leek Duck GO costume icon; do not invent a shiny image.
+  const dexNum=dexOf(card);
+  if(dexNum===41){
+    const evidence=[card.form,card.costume,card.variant,card.name]
+      .map(nameKey).join(" ");
+    if(/HALLOWEEN202601|HALLOWEEN2026|TOPHAT|CARTOLA/.test(evidence)){
+      if(card.shiny===true)return {src:String(card.image||""),original:String(card.image||""),
+        offline:false,officialCostume:true,missingExact:!card.image};
+      const url="https://cdn.leekduck.com/assets/img/pokemon_icons_crop/pm41.fHALLOWEEN_2026_01.icon.png";
+      return {src:url,original:url,offline:false,officialCostume:true,exactCostume:true};
+    }
+  }
   const archived=archivedCostume(card);
   const genderCode=nameKey(card.gender||card.sex);
   if(archived&&(genderCode==="FEMALE"||genderCode==="F"||
