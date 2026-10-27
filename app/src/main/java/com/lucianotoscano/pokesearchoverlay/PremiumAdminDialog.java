@@ -76,8 +76,8 @@ final class PremiumAdminDialog {
                 String selected=durationIds[duration.getSelectedItemPosition()];
                 String target=beneficiary.getText().toString().trim();
                 // When a UID is entered, grant immediately; otherwise the key activates on first use.
-                PremiumAccess.issueLicense(activity,selected,target,false,(issued,error)->{
-                    if(error!=null){state.setText(error);return;}
+                PremiumAccess.issueLicense(activity,selected,target,false,(issued,issueError)->{
+                    if(issueError!=null){state.setText(issueError);return;}
                     showIssuedKey(activity,issued);
                     state.setText("Licença "+labels[duration.getSelectedItemPosition()]+
                         " gerada com sucesso.");
@@ -87,8 +87,8 @@ final class PremiumAdminDialog {
                 String selected=durationIds[duration.getSelectedItemPosition()];
                 String target=beneficiary.getText().toString().trim();
                 if(target.isEmpty()){state.setText("Informe o UID para estender a licença.");return;}
-                PremiumAccess.issueLicense(activity,selected,target,true,(issued,error)->{
-                    if(error!=null){state.setText(error);return;}
+                PremiumAccess.issueLicense(activity,selected,target,true,(issued,issueError)->{
+                    if(issueError!=null){state.setText(issueError);return;}
                     showIssuedKey(activity,issued);
                     state.setText("Prazo ajustado conforme a opção escolhida.");
                 });
