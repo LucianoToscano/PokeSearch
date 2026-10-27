@@ -5,12 +5,15 @@
  * No CPF, buyer email, or MP access token is stored in RTDB.
  */
 const crypto=require("node:crypto");
-const {onCall,onRequest,HttpsError}=require("firebase-functions/v2/https");
-const {defineSecret}=require("firebase-functions/params");
+const useNetlify=process.env.POKE_RUNTIME_TARGET==="netlify";
+const {onCall,onRequest,HttpsError}=useNetlify?
+  require("../netlify/lib/cloud-compat.cjs"):require("firebase-functions/v2/https");
+const {defineSecret}=useNetlify?
+  require("../netlify/lib/cloud-compat.cjs"):require("firebase-functions/params");
 const {getDatabase}=require("firebase-admin/database");
 const {getAuth}=require("firebase-admin/auth");
 const {initializeApp,getApps}=require("firebase-admin/app");
-if(!getApps().length)initializeApp();
+if(!getApps().length&&!useNetlify)initializeApp();
 
 // The live token cannot be used unless explicitly enabled by server policy.
 const MP_TOKEN=defineSecret("POKE_MP_ACCESS_TOKEN");
