@@ -348,6 +348,20 @@ exports.adminIssuePremiumKey=onCall({region:REGION,secrets:[KEY_SECRET]},async r
    assigned:!!targetUid,uid:targetUid||null,serverNow:Date.now()};
 });
 
+/** Read-only, admin-only state for a user-pasted license code.
+ * Never disclose the database hash, claimant UID or any stored key details.
+ */
+exports.adminPremiumKeyStatus=onCall({region:REGION},async request=>{
+ await requireAdmin(request);
+ const code=String(request.data?.licenseKey||"").trim().toUpperCase();
+ if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(code))
+   throw new HttpsError("invalid-argument","Formato de chave inválido.");
+ const entry=(await root().child("keys").child(sha(code)).get()).val();
+ return {status:!entry?"notFound":entry.kind!=="manual"?"notManual":
+     entry.revoked===true?"revoked":"active",
+   assigned:entry?.kind==="manual"&&!!entry?.uid};
+});
+
 /** Administrator can invalidate a manually issued key when it was exposed or
  * issued by mistake. The hashed key is stored server-side and can never be reused.
  * If previously claimed, its current entitlement is also revoked conditionally.
@@ -359,14 +373,23 @@ exports.adminRevokePremiumKey=onCall({region:REGION},async request=>{
  if(!/^PS-([0-9A-F]{6}-){3}[0-9A-F]{6}$/.test(code))
    throw new HttpsError("invalid-argument","Formato de chave inválido.");
  const hash=sha(code),keyRef=root().child("keys").child(hash);
+ const existing=(await keyRef.get()).val();
+ if(!existing||existing.kind!=="manual")
+   throw new HttpsError("not-found","Código não corresponde a uma licença manual registrada.");
+ if(existing.revoked===true)
+   return {revoked:true,alreadyRevoked:true,wasAssigned:!!existing.uid};
  const timestamp=Date.now();
  const revoked=await keyRef.transaction(value=>{
    if(!value||value.kind!=="manual"||value.revoked===true)return;
    return {...value,revoked:true,revokedAt:timestamp,
      revokedBy:actor,revocationReason:"admin"};
  },undefined,false);
- if(!revoked.committed)
-   throw new HttpsError("not-found","Chave manual inexistente ou já bloqueada.");
+ if(!revoked.committed){
+   const now=(await keyRef.get()).val();
+   if(now?.revoked===true)
+     return {revoked:true,alreadyRevoked:true,wasAssigned:!!now.uid};
+   throw new HttpsError("aborted","Código alterado durante o cancelamento. Tente novamente.");
+ }
  const assignedUid=String(revoked.snapshot.val()?.uid||"");
  if(assignedUid){
    const entRef=root().child("entitlements").child(assignedUid);
@@ -376,7 +399,7 @@ exports.adminRevokePremiumKey=onCall({region:REGION},async request=>{
        revocationReason:"admin"};
    },undefined,false);
  }
- return {revoked:true,wasAssigned:!!assignedUid,serverNow:Date.now()};
+ return {revoked:true,alreadyRevoked:false,wasAssigned:!!assignedUid,serverNow:Date.now()};
 });
 
 /** Redeem user-held code once, except paid-code recovery which supports one transfer.
