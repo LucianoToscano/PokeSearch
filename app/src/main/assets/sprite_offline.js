@@ -173,7 +173,8 @@
     rawForm===key||rawForm==="PUMPKABOO"+key||
     (!rawForm&&id!=null&&Number(id)===WWM_PUMPKABOO_FORMS[key]));
   if(!form)return null;
-  if(id!=null&&Number(id)!==0&&Number(id)!==WWM_PUMPKABOO_FORMS[form])return null;
+  if(id!=null&&Number(id)!==0&&Number(id)!==WWM_PUMPKABOO_FORMS[form])
+    return {src:"",original:"",offline:false,missingExact:true};
   const slug=form.toLowerCase()+(card.shiny===true?"-shiny":"");
   return {src:LOCAL+"forms/wwm-710-"+slug+".png",
     original:"",offline:true,officialForm:true,exactForm:true,source:"wwm-uicons"};
