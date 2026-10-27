@@ -261,7 +261,7 @@
     <small>O desconto é calculado sobre o preço vigente no checkout, inclusive quando existe promoção de R$ 5. Nada é cobrado até o cliente confirmar o Pix; o parceiro só acumula após aprovação.</small>
     <label class="label" for="partner-coupon-code">Cupom (4 a 24 caracteres)</label>
     <input class="maintenance-note" id="partner-coupon-code" placeholder="YOUTUBE10" maxlength="24" autocapitalize="characters">
-    <label class="label" for="partner-name">Nome do divulgador</label>
+    <label class="label" for="partner-name">Nome do cupom / parceiro</label>
     <input class="maintenance-note" id="partner-name" placeholder="Canal do YouTube" maxlength="80">
     <label class="label" for="partner-uid">UID Firebase do divulgador (opcional)</label>
     <input class="maintenance-note" id="partner-uid" placeholder="Opcional · evita uso do próprio cupom" maxlength="128">
@@ -1196,7 +1196,11 @@
     setStatus("Cupom "+x.code+" atualizado.","ok");
     await loadPartnerCoupons(true);
   }
-  el("save-partner-coupon").addEventListener("click",async()=>{
+  el("partner-discount").addEventListener("change",()=>{
+    if(el("partner-discount").value==="100"&&!el("partner-name").value.trim())
+      el("partner-name").value="PokeSearch";
+  });
+    el("save-partner-coupon").addEventListener("click",async()=>{
     if(couponBusy)return;
     const code=el("partner-coupon-code").value.trim().toUpperCase();
     const partnerName=el("partner-name").value.trim();
