@@ -1199,7 +1199,7 @@ function collect(){
  const explicitEmpty=found.length===0&&!loading&&explicitEmptySignal&&resultChanged;
  // If the site advertises more visible cards than we could parse, retry.
  // Apply to every search mode, without assuming every site total is <= 10.
- const expectedVisible=siteCount>0?Math.min(siteCount,10):0;
+ const expectedVisible=siteCount>0?Math.min(siteCount,100):0;
  const siteIncomplete=expectedVisible>found.length;
  const parseFailure=siteCount>0&&found.length===0;
  return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,siteCount,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,
