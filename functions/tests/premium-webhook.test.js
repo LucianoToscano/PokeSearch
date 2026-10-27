@@ -448,6 +448,19 @@ async function run(){
  await premium.adminPremiumSettings({...adminLive,data:{action:"promotion",enabled:true}});
  promoOffer=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
  assert.equal(promoOffer.priceCents,500);
+ // A real countdown requires an owner-configured absolute end timestamp.
+ const realEnd=Date.now()+3*86400000;
+ await premium.adminPremiumSettings({...adminLive,data:{
+   action:"promotionDeadline",endsAt:realEnd
+ }});
+ const timed=await premium.getPremiumOffer({auth:{uid:"campaignOne"}});
+ assert.equal(timed.promotionEndsAt,realEnd);
+ assert.equal(timed.discountPercent,Math.round(100*(1200-500)/1200));
+ await premium.adminPremiumSettings({...adminLive,data:{
+   action:"promotionDeadline",endsAt:0
+ }});
+ assert.equal((await premium.getPremiumOffer({
+   auth:{uid:"campaignOne"}})).promotionEndsAt,0);
  console.log("PASS editable prices and independent R$5 promotion enable/disable");
 
  // FREE campaign is off by default and its duration is chosen by the owner.
