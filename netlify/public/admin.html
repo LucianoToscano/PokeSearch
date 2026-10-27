@@ -665,13 +665,16 @@
     const article=document.createElement("div");article.className="key-card";
     const heading=document.createElement("strong");
     const name=item.adminLabel||item.googleName||item.recipientName||"";
-    heading.textContent=(item.source==="freeYearCampaign"?"🎁 FREE!":
+    heading.textContent=(item.source==="welcomeTrial"?"🎁 Teste automático":
+      item.source==="coupon100"?"🎟️ Cupom 100%":
+      item.source==="freeYearCampaign"?"🎁 FREE!":
       item.kind==="paid"?"💳 Pagamento":"🔑 Licença manual")+
       (name?" · "+name:" · "+item.id.slice(0,10)+"…");
     article.appendChild(heading);
     const state=document.createElement("div");state.className="key-meta";
     const duration=item.duration==="lifetime"?"Vitalícia":
-      ({"15d":"15 dias","30d":"30 dias","1m":"1 mês","3m":"3 meses","6m":"6 meses","12m":"12 meses"}[item.duration]||item.duration||"—");
+      ({"15d":"15 dias","30d":"30 dias","1m":"1 mês","3m":"3 meses","6m":"6 meses","12m":"12 meses"}[item.duration]||
+       (/^([1-9]|[12][0-9]|30)d$/.test(item.duration)?item.duration.slice(0,-1)+" dias":item.duration)||"—");
     const validity=item.archived?"Excluída":item.revoked?"Revogada":
       !item.uid?"Começa no resgate":item.duration==="lifetime"?"Sem vencimento":
       "Até "+ptDate(item.expiresAt);
