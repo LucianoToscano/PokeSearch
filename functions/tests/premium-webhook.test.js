@@ -623,6 +623,34 @@ async function run(){
 
  // Habilitar/desabilitar remains reversible; Excluir immediately revokes and
  // hides the key while retaining audit/history and preventing reactivation.
+
+ // Admin can convert a current bound license to unlimited and back, with
+ // exact atomic updates to its key and entitlement. Expiry is adjustable.
+ const lifetimeTest=await premium.adminIssuePremiumKey({...adminLive,
+   data:{duration:"15d",uid:"lifetimeEditor"}});
+ const lifetimeHash=crypto.createHash("sha256").update(lifetimeTest.licenseKey).digest("hex");
+ await premium.adminChangePremiumKeyDuration({...adminLive,
+   data:{id:lifetimeHash,action:"setLifetime"}});
+ assert.equal(read("premium/keys/"+lifetimeHash).duration,"lifetime");
+ assert.equal(read("premium/entitlements/lifetimeEditor").lifetime,true);
+ assert.equal(read("premium/entitlements/lifetimeEditor").expiresAt,null);
+ await premium.adminChangePremiumKeyDuration({...adminLive,
+   data:{id:lifetimeHash,action:"setFinite",duration:"30d"}});
+ assert.equal(read("premium/entitlements/lifetimeEditor").lifetime,false);
+ const beforeDays=read("premium/keys/"+lifetimeHash).expiresAt;
+ await premium.adminChangePremiumKeyDuration({...adminLive,
+   data:{id:lifetimeHash,action:"adjustDays",days:5}});
+ assert.equal(read("premium/keys/"+lifetimeHash).expiresAt,beforeDays+5*86400000);
+ assert.equal(read("premium/entitlements/lifetimeEditor").expiresAt,beforeDays+5*86400000);
+ // A replaced key must not be shown as the live entitlement.
+ const replaced=await premium.adminIssuePremiumKey({...adminLive,
+   data:{duration:"15d",uid:"lifetimeEditor"}});
+ const replacedHash=crypto.createHash("sha256").update(replaced.licenseKey).digest("hex");
+ assert.notEqual(replacedHash,lifetimeHash);
+ const inventoryAfterReplace=await premium.adminListPremiumKeys({...adminLive,data:{limit:50}});
+ const previous=inventoryAfterReplace.keys.find(k=>k.id===lifetimeHash);
+ assert.equal(previous.status,"revogada");
+ console.log("PASS unlimited/finite/day edits and replaced-key safety");
  const originalPaymentAudit=clone(read("premium/orders/"+orderId));
  const deleteIssue=await premium.adminIssuePremiumKey({
    ...adminLive,data:{duration:"15d"}
@@ -690,11 +718,9 @@ async function run(){
    ...adminLive,data:{id:deleteHash,enabled:true}});}
  catch(e){enabledDeleted=e.code==="failed-precondition";}
  assert.equal(enabledDeleted,true);
- let duplicateDeleted=false;
- try{await premium.adminDeletePremiumKey({
-   ...adminLive,data:{id:deleteHash,confirm:"EXCLUIR"}});}
- catch(e){duplicateDeleted=e.code==="failed-precondition";}
- assert.equal(duplicateDeleted,true);
+ const duplicateDeleted=await premium.adminDeletePremiumKey({
+   ...adminLive,data:{id:deleteHash,confirm:"EXCLUIR"}});
+ assert.equal(duplicateDeleted.alreadyDeleted,true);
  // Paid order/pix history is never mutated by license deletion.
  assert.deepEqual(read("premium/orders/"+orderId),originalPaymentAudit);
  console.log("PASS per-license reversible suspension, owner-only exclusion and Pix history preservation");
