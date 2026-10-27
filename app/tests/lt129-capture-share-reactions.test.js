@@ -39,5 +39,6 @@ assert.match(rules.chat.reactions["$messageId"]["$uid"][".validate"],/newData\.i
 assert.equal(rules.chat.avatars[".read"],"auth != null");
 assert.equal(rules.chat.messages[".indexOn"][0],"createdAt");
 for(const n of ["installations","online"])assert.equal(rules.stats[n][".read"],false);
-assert.equal(beforeStats.public[".read"],"auth != null");
+assert.equal(beforeStats.online[".read"],"auth != null");
+assert.equal(beforeStats.installations[".read"],"auth != null");
 console.log("LT129: no-interruption capture confirmation + no coords in chat + dual-ball inheritance + reaction security PASS");
