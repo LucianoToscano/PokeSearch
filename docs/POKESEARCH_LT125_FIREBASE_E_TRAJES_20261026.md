@@ -27,3 +27,11 @@ Fonte: árvore do GitHub PokeMiners/pogo_assets no commit `c2a686eb08ace6e890d8f
 - APK protegido com mesmo certificado e applicationId `com.lucianotoscano.pokesearch`.
 - Firebase real: evidência explícita de deploy, leitura pública autenticada correta e valores vivos, além de testes Samsung. Não marcar tudo como resolvido só por build.
 
+
+## Auditoria adicional LT116 — 80 formas incorporadas ao builder
+- Conferidos **80 arquivos PNG únicos e estruturalmente válidos** no ZIP anexado (40 formas, cada uma com normal/Shiny; sem PNGs vazios ou duplicados).
+- Formas cobertas: Alola, Galar, Hisui, Deerling/Sawsbuck Spring; incluem três aves de Galar, Darmanitan Standard/Zen, Yamask, Darumaka, Mr. Mime, Stunfisk. Seleção de sprites é compartilhada entre busca, cards, P1 e P2.
+- **Hashes do ZIP de origem:** os 80 IDs de blob Git foram calculados do arquivo anexado e incluídos em `app/scripts/fetch_form_sprites.py`. O builder exige identidade do binário baixado, PNG válido e commit PokeAPI imutável; se divergir, o build falha explicitamente, sem inserir arte errada.
+- Não substituir `dock.html`, `detail.html`, `api_result_contract.js`, `api_android_session.js` ou `sprite_offline.js` completos por versões LT116: as versões atuais incorporam regras de autenticação, API/DOM, P1/P2, Chat e trajes LT125. Apenas integrar o comportamento pertinente, preservando os caminhos atuais.
+- Histórico RTDB confirmado: o mesmo blob `a9da533b45de15c2fde945bfebe558bc264ea0ed` das tags LT87 e LT111 contava `stats/online` / `stats/installations`. A mudança direta consta do commit LT117 `5c14d3a67d63ceb61b7dad5cdc947763ec0af05b`. Não há evidência de deploy dos agregados; teste em produção segue aberto.
+- Reinstalações podem gerar novo UID anônimo e duplicidade histórica de registro de instalação. É necessário validar semântica no backend antes de alegar medição exata de dispositivos únicos. Um build bem-sucedido não certifica números reais.
