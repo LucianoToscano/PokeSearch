@@ -57,6 +57,10 @@
     <hr class="sep">
     <div class="row"><span class="label">Controle de versões</span><span class="value" id="distribution">—</span></div>
     <hr class="sep">
+    <div class="row"><span class="label">LT134 (versionCode 54339)</span><span class="value" id="lt134-status">—</span></div>
+    <div class="actions"><button id="toggle-lt134" class="secondary" disabled>Verificar LT134</button></div>
+    <small>Somente este APK de homologação será liberado. A Pokébola 1 permanece gratuita; a Pokébola 2 exige licença Premium. Se vendas e Pix real estiverem habilitados, poderão ocorrer cobranças reais.</small>
+    <hr class="sep">
     <div class="row"><span class="label">Vendas Premium</span><span class="value" id="sales">—</span></div>
     <hr class="sep">
     <div class="row"><span class="label">Pix real (Payments API)</span><span class="value" id="live-status">—</span></div>
@@ -115,7 +119,10 @@
   });
   const auth=getAuth(app);
   const el=id=>document.getElementById(id);
-  let lastKey="",revealed=false,busy=false,configState={salesEnabled:false,paymentsLiveEnabled:false};
+  const LT134_VERSION_CODE=54339;
+  let lastKey="",revealed=false,busy=false;
+  let configState={salesEnabled:false,paymentsLiveEnabled:false,
+    globalEnabled:false,lt134Enabled:false,otherVersionsActive:[]};
   const setStatus=(message,kind="")=>{el("status").textContent=message;el("status").className=kind};
   const money=cents=>(Number(cents)/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   async function call(name,data={}){
@@ -141,8 +148,18 @@
       setStatus("Verificando permissão administrativa no servidor…");
       const data=await call("adminPremiumOverview");
       el("account").textContent=auth.currentUser?.email||"Conta autenticada";
-      el("distribution").textContent=data.globalEnabled===true?"Habilitado":"Desativado";
-      configState={salesEnabled:data.salesEnabled===true,paymentsLiveEnabled:data.paymentsLiveEnabled===true};
+      const enabledVersions=data.versions&&typeof data.versions==="object"?data.versions:{};
+      const others=Object.entries(enabledVersions).filter(([code,enabled])=>
+        code!==String(LT134_VERSION_CODE)&&enabled===true).map(([code])=>code);
+      configState={salesEnabled:data.salesEnabled===true,paymentsLiveEnabled:data.paymentsLiveEnabled===true,
+        globalEnabled:data.globalEnabled===true,
+        lt134Enabled:enabledVersions[String(LT134_VERSION_CODE)]===true,
+        otherVersionsActive:others};
+      el("distribution").textContent=configState.globalEnabled?"Habilitado":"Desativado";
+      const lt134Ready=configState.globalEnabled&&configState.lt134Enabled;
+      el("lt134-status").textContent=lt134Ready?"Liberada para teste":"Não liberada";
+      el("toggle-lt134").textContent=lt134Ready?"Bloquear LT134":"Liberar LT134 para teste";
+      el("toggle-lt134").disabled=false;
       el("sales").textContent=configState.salesEnabled?"Habilitadas":"Desativadas";
       el("live-status").textContent=configState.paymentsLiveEnabled?"Habilitado":"Desativado";
       el("toggle-sales").disabled=false;
@@ -154,7 +171,8 @@
       el("admin").hidden=false;
       el("licensing").hidden=false;
       el("key-management").hidden=false;
-      setStatus("Administrador confirmado pelo servidor. Pronto para testes sem cobrança.","ok");
+      setStatus(configState.salesEnabled&&configState.paymentsLiveEnabled?
+        "Administrador confirmado. Atenção: vendas e Pix real estão habilitados.":"Administrador confirmado pelo servidor.","ok");
     }catch(e){
       el("admin").hidden=true;
       el("licensing").hidden=true;
@@ -179,6 +197,32 @@
   }
   el("toggle-sales").addEventListener("click",()=>toggleOwnerSetting("sales",!configState.salesEnabled));
   el("toggle-live").addEventListener("click",()=>toggleOwnerSetting("paymentsLive",!configState.paymentsLiveEnabled));
+  el("toggle-lt134").addEventListener("click",async()=>{
+    if(busy)return;
+    const active=configState.globalEnabled&&configState.lt134Enabled;
+    if(!active&&configState.otherVersionsActive.length){
+      setStatus("Outras versões estão marcadas como liberadas ("+
+        configState.otherVersionsActive.join(", ")+"). Por segurança, não habilitei a distribuição geral.","error");
+      return;
+    }
+    const prompt=active?
+      "Bloquear apenas a versão LT134 (54339) para novas validações Premium? A Pokébola 1 continuará gratuita.":
+      "LIBERAR somente LT134 (54339) para homologação? Somente a segunda Pokébola exige Premium. ATENÇÃO: vendas e Pix real habilitados permitem cobranças reais. Confirme se pretende realizar o teste pago.";
+    if(!window.confirm(prompt))return;
+    busy=true;el("toggle-lt134").disabled=true;
+    try{
+      if(active){
+        await call("adminDistributionControl",{scope:"version",versionCode:LT134_VERSION_CODE,enabled:false});
+        if(configState.otherVersionsActive.length===0)
+          await call("adminDistributionControl",{scope:"global",enabled:false});
+      }else{
+        await call("adminDistributionControl",{scope:"version",versionCode:LT134_VERSION_CODE,enabled:true});
+        await call("adminDistributionControl",{scope:"global",enabled:true});
+      }
+      setStatus(active?"LT134 bloqueada no servidor.":"LT134 autorizada para homologação. Pix real disponível apenas após autenticação no aplicativo.","ok");
+    }catch(e){setStatus((e.message||"Erro de controle da versão.")+" Verifique o estado antes de tentar novamente.","error");}
+    finally{busy=false;el("toggle-lt134").disabled=false;await overview();}
+  });
   el("login").addEventListener("click",async()=>{
     el("login").disabled=true;
     try{
