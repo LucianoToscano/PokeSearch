@@ -67,6 +67,14 @@ const checks=[
    dialog.includes('Bitmap qr=makePixQr(pix[0])')&&
    dialog.includes('new MultiFormatWriter().encode(payload')&&
    !dialog.includes('000201010212-FAKE-PIX')],
+ ["Server-owned FREE campaign is shown only when active",
+   dialog.includes('result.get("freeYearCampaign")')&&
+   dialog.includes('freeOffer.setVisibility(active?View.VISIBLE:View.GONE)')&&
+   dialog.includes('PremiumAccess.claimFreePremium(activity')&&
+   access.includes('call(context,"claimFreeYear",data,cb)')],
+ ["Promotion badge only shows while server-enabled",
+   dialog.includes('promoBadge.setVisibility(promo?View.VISIBLE:View.GONE)')&&
+   dialog.includes('Boolean.TRUE.equals(result.get("promotionEnabled"))')],
  ["Premium purchase disabled without server config",dialog.includes("salesEnabled")&&
   dialog.includes("create.setEnabled(signed&&canSell[0])")],
  ["No payment keys embedded in app",!access.includes("POKE_MP_ACCESS_TOKEN")&&
