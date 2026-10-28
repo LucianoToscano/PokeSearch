@@ -137,7 +137,7 @@
     if(typeof bodyText!=="string"||bodyText.length>MAX_RESPONSE_BYTES)return fail("response-too-large");
     let obj;
     try{obj=JSON.parse(bodyText);}catch(_){return fail("invalid-json");}
-    return {ok:true,body:obj};
+    return {ok:true,body:obj,quota:kind==="reveal"&&d.quotaPolicy?d.quotaPolicy.fromHeaders(response.headers):null};
    }catch(e){
     // Do not leak exception messages (which may contain URLs or credentials).
     return fail(controller&&controller.signal.aborted?"timeout":"network-or-cors-error");
@@ -228,7 +228,7 @@
    try{
     const url=API+"/reveal/"+encodeURIComponent(code);
     // The reveal code never enters Android; a failed auth/limit is not bypassed.
-    const result=await request("GET",url,null,false,6000);
+    const result=await request("GET",url,null,"optional",6000);
     if(q.searchVersion!==searchVersion||disposed)return fail("superseded-search");
     // A spawn can expire during a slow GET. A valid request at dispatch
     // is NOT permission to return or copy coordinates after despawn.
@@ -241,7 +241,7 @@
      {expectedPokemonId:q.pokemonId});
     if(!parsed.ok)return fail("coordinates-unverified");
     return {ok:true,latitude:parsed.latitude,longitude:parsed.longitude,
-     coords:parsed.coords,source:"experimental-api-unverified"};
+     coords:parsed.coords,quota:result.quota||null,source:"experimental-api-unverified"};
    }finally{pendingReveals.delete(idx);}
   }
   function dispose(){
@@ -260,7 +260,8 @@
    siteOrigin:()=>window.location.origin,
    now:()=>Date.now(),
    apiContract:window.PokeSearchApiContract,
-   revealContract:window.PokeSearchRevealContract
+   revealContract:window.PokeSearchRevealContract,
+   quotaPolicy:window.PokeSearchCoordsQuota||null
   });
  }
  return Object.freeze({createClient,createBrowserClient});
