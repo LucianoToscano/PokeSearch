@@ -292,9 +292,9 @@
   if(!card||typeof card!=="object")return null;
   // LT144: real PNGs fetched and SHA256-pinned in the APK. The names are
   // confirmed by the official GO form catalog, not inferred from Dex alone.
-  const dexNum=dexOf(card),form=nameKey(card.form),costume=nameKey(card.costume);
+  const dexNum=dexOf(card),form=nameKey(card.form),costumeEvidence=nameKey(card.costume);
   const formId=Number(card.form_id??card.formId??0);
-  const evidence=[form,costume,nameKey(card.variant),nameKey(card.name)].join(" ");
+  const evidence=[form,costumeEvidence,nameKey(card.variant),nameKey(card.name)].join(" ");
   const exactEvent=file=>({src:LOCAL+"costumes/"+file,
     original:"https://cdn.leekduck.com/assets/img/pokemon_icons_crop/"+file,
     offline:true,officialCostume:true,exactCostume:true});
@@ -303,12 +303,12 @@
     return exactEvent("pm41.fHALLOWEEN_2026_01."+
        (card.shiny===true?"s.":"")+"icon.png");
   }
-  if(dexNum===10&&(formId===3346||/GOFEST2026/.test(form+" "+costume))){
+  if(dexNum===10&&(formId===3346||/GOFEST2026/.test(form+" "+costumeEvidence))){
     if(card.shiny===true)return {src:"",original:"",offline:false,
       officialCostume:true,missingExact:true};
     return exactEvent("pm10.fGOFEST_2026.icon.png");
   }
-  if(dexNum===25&&(formId===3318||/GOTOUR2026A$/.test(form+" "+costume))){
+  if(dexNum===25&&(formId===3318||/GOTOUR2026A$/.test(form+" "+costumeEvidence))){
     return exactEvent("pm25.fGOTOUR_2026_A."+
       (card.shiny===true?"s.":"")+"icon.png");
   }
