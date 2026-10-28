@@ -35,7 +35,7 @@ check("location clipboard and local slots support explicit copy and deletion",()
  assert.ok(!dock.split("function renderLocationChoices(){")[1].split("let requestedInterval=null")[0].includes("locSavedName"));
 });
 check("IV and countdown visible without unverified placeholder",()=>{
- assert.ok(detail.includes('stat("A/D/S",showRaw?raw:"","red")'));
+ assert.ok(detail.includes('stat("IV",showRaw?raw:"","red")'));
  assert.ok(!detail.includes("<em>Despawn:</em>"));
  assert.ok(dock.includes('lines.unshift("TIMER")'));
  assert.ok(dock.includes('if(raw!==null)lines.push(raw)'));
