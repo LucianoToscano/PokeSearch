@@ -54,5 +54,5 @@ run("opened detail has independent transparent drag handle, excludes close and k
  assert.ok(detailGrip.includes("wm.updateViewLayout(detailRoot,detailParams)"));
  const position=svc.split("private void moveDetail()")[1]?.split("private String locationPayload",1)[0]||"";
  assert.ok(position.includes("if(detailManuallyPositioned)"));
- assert.match(detail,/<button id="x" onclick="Native\.hideDetail\(\)">×<\/button>/);
+ assert.match(detail,/<button id="x" onclick="Native\.hideDetail\(\)" aria-label="Fechar card">×<\/button>/);
 });
