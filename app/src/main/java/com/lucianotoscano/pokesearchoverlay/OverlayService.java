@@ -2610,7 +2610,9 @@ public class OverlayService extends Service {
                     card.optString("gender","").equals(prior.optString("gender",""));
                 if(sameArtIdentity&&card.optString("image","").isEmpty()&&
                     prior.optBoolean("imageFromSite",false)&&
-                    prior.optString("image","").matches("https://[^\\\\s]{5,1500}")){
+                    prior.optString("image","").startsWith("https://")&&
+                    prior.optString("image","").length()<=1600&&
+                    !prior.optString("image","").contains(" ")){
                     card.put("image",prior.getString("image"));
                     card.put("imageFromSite",true);
                 }
