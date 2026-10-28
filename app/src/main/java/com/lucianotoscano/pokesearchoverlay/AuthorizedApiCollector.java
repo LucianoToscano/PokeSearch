@@ -60,7 +60,7 @@ final class AuthorizedApiCollector {
         if(bundle!=null)return bundle;
         StringBuilder content=new StringBuilder();
         String[] files={"api_result_contract.js","api_reveal_contract.js",
-            "api_browser_transport.js","api_catalog_cache.js","api_android_session.js"};
+            "coords_quota.js","api_browser_transport.js","api_catalog_cache.js","api_android_session.js"};
         try {
             for(String name:files){
                 try(InputStream in=assets.open(name)){
