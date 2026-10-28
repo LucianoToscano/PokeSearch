@@ -58,10 +58,53 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #captureConfirm>span{flex:1}
 #captureConfirm>button{background:#ffffff26;border-radius:5px;padding:5px 8px}
 #captureStatus[hidden]{display:none}#captureStatus{display:block;margin-top:3px;color:#a7eac7;font-size:10px}
+/* Card LT145: single interaction zone, type badges, critical despawn. */
+#nameLine{display:flex;align-items:center;gap:4px;min-width:0}
+#nameLine b{flex:0 1 auto;min-width:0}
+#types{display:flex;gap:2px;flex-shrink:0}
+.pkType{display:inline-flex;align-items:center;justify-content:center;
+ width:15px;height:15px;border-radius:50%;color:#fff;font-size:10px;font-weight:900;
+ box-shadow:inset 0 -1px 0 #0003}
+.pkType-normal{background:#989ca5}.pkType-fire{background:#ed7a31}
+.pkType-water{background:#5796df}.pkType-electric{background:#e2b938}
+.pkType-grass{background:#66aa59}.pkType-ice{background:#75c8cf}
+.pkType-fighting{background:#ba5b4b}.pkType-poison{background:#9854b7}
+.pkType-ground{background:#b89a5d}.pkType-flying{background:#8ba6d3}
+.pkType-psychic{background:#dd689b}.pkType-bug{background:#91ac38}
+.pkType-rock{background:#b4a079}.pkType-ghost{background:#7d6db7}
+.pkType-dragon{background:#6565c6}.pkType-dark{background:#65626e}
+.pkType-steel{background:#819cac}.pkType-fairy{background:#d68caf}
+.pkGender{font-size:11px;font-weight:900}
+.pkGender.male{color:#55afff}.pkGender.female{color:#ff87bb}
+.pkGender.genderless{color:#b6c3d1}
+.pkLegacy{font-weight:900;color:#f5d87e;margin-left:1px}
+.moveSlash{opacity:.65}
+#timer{flex:0 0 auto;font-weight:900;font-size:11px;padding:4px 5px;
+ border-radius:7px;white-space:nowrap;border:1px solid #fff4}
+#timer.good{background:#2a785048;color:#a1edb7;border-color:#61c59269}
+#timer.warning{background:#97601c3a;color:#ffcf7c;border-color:#e9ab507a}
+#timer.critical{background:#b72e3e40;color:#ff8f9d;border-color:#ed556975}
+#timer.unknown{color:#c8d1da}#timer[hidden]{display:none!important}
+#watch{flex:0 0 23px;width:23px;height:23px;border-radius:6px;
+ border:1px solid #ffffff34;background:#ffffff13;color:#d6dde7;font-size:19px;
+ display:flex;align-items:center;justify-content:center;padding:0;margin:0}
+#watch.isFav{color:#ffd563;border-color:#f8d76e8c;background:#f0be321b}
+#watch:focus-visible,#x:focus-visible{outline:2px solid #91ddb8;outline-offset:1px}
+#coordRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px;margin-top:5px}
+#coords{width:100%;min-height:30px}
+#copy[hidden]{display:none!important}
+#coordsQuota{display:block;max-width:110px;width:auto;margin:0;padding:3px 5px;
+ border:1px solid #ffffff30;border-radius:6px;background:#ffffff13;
+ min-height:30px;font:600 9px/1.2 Roboto,Arial,sans-serif;text-align:center;
+ white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+#cooldownControls[hidden]{display:none!important}
+#cooldownControls{min-height:26px}
 </style></head><body><div id="panel">
  <div id="header">
   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
-  <div id="names"><b id="name">Pokémon</b><small id="sub"></small></div>
+  <div id="names"><div id="nameLine"><b id="name">Pokémon</b><span id="types"></span></div><small id="sub"></small></div>
+  <span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"></span>
+  <button id="watch" onclick="Native.toggleWatch(watchName)" title="Adicionar aos favoritos" aria-label="Adicionar aos favoritos">☆</button>
   <button id="x" onclick="Native.hideDetail()">×</button>
  </div>
  <div id="major"></div><div id="info"></div>
@@ -71,14 +114,13 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   </button>
   <div id="evoBody" hidden></div>
  </section>
- <button id="watch" onclick="Native.toggleWatch(watchName)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg> <span id="watchLabel">Adicionar aos favoritos</span></button>
+
  <div id="coordRow">
-    <button id="coords" onclick="requestCoordsUi()">⌖ Get coords</button>
-    <button id="copy" onclick="copyCoords()" title="Obter e copiar coordenadas" aria-label="Obter e copiar coordenadas">⧉</button>
+    <button id="coords" onclick="requestCoordsUi()" title="Obter e copiar coordenadas">⌖ Get coords</button>
+    <button id="coordsQuota" type="button" aria-live="polite" onclick="Native.refreshCoordsAccount()" title="Verificar sessão e saldo no PoGoCoordinates">PoGo · ? ⟳</button>
+    <button id="copy" hidden onclick="copyCoords()" aria-label="Copiar coordenadas">⧉</button>
   </div>
-  <button id="coordsQuota" type="button" aria-live="polite" onclick="Native.refreshCoordsAccount()" title="Verificar sessão do PoGoCoordinates sem gastar revelações">PoGo · Saldo ? · ⟳</button>
-  <div id="cooldownControls">
-    <button id="cooldownToggle" onclick="Native.toggleCooldown()" title="Ativar ou ocultar cooldown estimado">⏳ OFF</button>
+  <div id="cooldownControls" hidden>
     <button id="cooldownConfirm" class="primary" onclick="confirmCooldownUi()" title="Registrar captura sem publicar no chat" hidden disabled>✓ Capturei</button>
     <button id="cooldownUndo" onclick="Native.undoCooldown()" title="Desfazer última captura registrada" aria-label="Desfazer última captura" hidden>↶</button>
     <button id="cooldownReset" onclick="resetCooldownUi()" title="Limpar referência de cooldown" aria-label="Limpar referência de cooldown" hidden>×</button>
@@ -90,7 +132,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
  <small id="captureStatus" hidden></small>
 </div>
-<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="cooldown_estimate.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="cooldown_estimate.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
 let coordsNote="",coordsPending=false,coordsRequestSeq=0;
