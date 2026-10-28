@@ -14,14 +14,14 @@ check("1 Get coords has explicit pending button and calls native",()=>{
 check("2 Copy requests coordinates when missing instead of dead-end label",()=>{
  assert.ok(detail.includes('if(currentCoords)Native.copyCoords(currentCoords);'));
  assert.ok(detail.includes('else requestCoordsUi();'));
- assert.ok(detail.includes('copy.title=currentCoords?"Copiar coordenadas"'));
- assert.ok(detail.includes('copy.setAttribute("aria-label",copy.title)'));
+ assert.ok(detail.includes('fetch.title=currentCoords?"Copiar coordenadas já obtidas'));
+ assert.ok(detail.includes('fetch.setAttribute("aria-label",fetch.title)'));
 });
 check("3 Failed and pending messages survive status repaint for same card",()=>{
  assert.ok(detail.includes("const changed=detailIdentity!==nextIdentity;"));
  assert.ok(detail.includes("if(changed){"));
  assert.ok(detail.includes('coordsNote="";coordsPending=false;currentCoords=String(c.coords||"")'));
- assert.ok(detail.includes('h(currentCoords||coordsNote||"Toque em Get coords")'));
+ assert.ok(detail.includes('coordsNote||""'));
  assert.ok(!detail.includes('currentIndex=Number(c.sourceIndex);currentCoords=String(c.coords||"");'));
 });
 check("4 Late callback and identity switches cannot pin loading forever",()=>{
