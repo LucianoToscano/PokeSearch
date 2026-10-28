@@ -61,7 +61,7 @@ async function suite(){
   assert.equal(r.resultChanged,false);
   assert.equal(r.requiresIntegrationValidation,true);
  });
- await check("explicit reveal uses ephemeral identifier and no bearer header",async()=>{
+ await check("explicit reveal keeps account authorization only within the official WebView",async()=>{
   const t=makeClient();
   const s=await t.client.search(filter);
   const r=await t.client.reveal({sourceIndex:0,searchId:s.searchId,pokemonId:821,cp:438});
@@ -70,8 +70,8 @@ async function suite(){
   assert.equal(t.calls.length,2);
   assert.equal(t.calls[1].url,"https://coordinates-api.pokemongopro.com/reveal/"+CODE);
   assert.equal(t.calls[1].req.method,"GET");
-  assert.equal(Object.hasOwn(t.calls[1].req.headers,"Authorization"),false);
-  assert.equal(t.reads.length,1);
+  assert.equal(t.calls[1].req.headers.Authorization,"Bearer "+JWT);
+  assert.equal(t.reads.length,2);
   assert.ok(!JSON.stringify(r).includes(CODE));
  });
  await check("anonymous Search sends no JWT; reveal identity remains protected",async()=>{
@@ -205,7 +205,7 @@ async function suite(){
   assert.equal((await t.client.reveal({sourceIndex:0,searchId:s.searchId,pokemonId:821,cp:438})).reason,"stale-or-ambiguous-selection");
   assert.equal(t.calls.length,1);
  });
- await check("reveal 403 and 429 respected without retry or bearer",async()=>{
+ await check("reveal 403 and 429 respected without retry or credential leaks",async()=>{
   for(const status of [403,429]){
    const captured=[];
    const t=makeClient({fetchImpl:async(url,req)=>{
@@ -217,7 +217,7 @@ async function suite(){
    const r=await t.client.reveal({sourceIndex:0,searchId:s.searchId,pokemonId:821,cp:438});
    assert.equal(r.reason,status===403?"access-denied":"rate-limited");
    assert.equal(captured.length,2);
-   assert.equal(Object.hasOwn(captured[1].req.headers,"Authorization"),false);
+   assert.equal(captured[1].req.headers.Authorization,"Bearer "+JWT);
    assert.ok(!JSON.stringify(r).includes("NO_SHOW"));
   }
  });
