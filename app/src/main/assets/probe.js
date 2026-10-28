@@ -1118,7 +1118,9 @@ function parseCard(box,sourceIndex){
   if(!isSpriteShiny&&shinyEvidence)return false;
   const specificForm=compact(formLabel);
   const special=specificForm&&!["NORMAL","DEFAULT",compact(encounterSpecies+" NORMAL")].includes(specificForm);
-  const urlForm=compact(decodeURIComponent(url).split("/").pop()||"");
+  let urlForm="";
+  try{urlForm=compact(decodeURIComponent(url).split("/").pop()||"");}
+  catch(_){urlForm=compact(url.split("/").pop()||"");}
   if(special){
    // Do not use another year's costume or a default species image.
    const tokens=specificForm.replace(/^(?:ZUBAT|GENGAR|POKEMON)/,"");
