@@ -153,7 +153,7 @@
    Promise.resolve().then(()=>d.transport.reveal(selection))
     .then(r=>push(ticket,r.ok?{
      ok:true,coords:r.coords,latitude:r.latitude,longitude:r.longitude,
-     quota:r.quota||null,source:"authorized-api-qa"
+     ...(r.quota?{quota:r.quota}:{}),source:"authorized-api-qa"
     }:fail(r.reason))).catch(()=>push(ticket,fail("api-unavailable")));
    return {ok:true,pending:true};
   }
