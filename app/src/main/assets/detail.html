@@ -388,7 +388,7 @@ const item=(k,v)=>v?'<div><em>'+h(k)+':</em> '+h(v)+'</div>':"";
 window.watchFeedback=watched=>{
  const star=document.getElementById("watch");
  star.textContent=watched?"★":"☆";
- star.classList.toggle("isFav",watched);
+ star.className=watched?"isFav":"";
  star.title=watched?"Remover dos favoritos":"Adicionar aos favoritos";
  star.setAttribute("aria-label",star.title);
 };
