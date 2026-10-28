@@ -76,7 +76,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .pkType-steel{background:#819cac}.pkType-fairy{background:#d68caf}
 .pkGender{font-size:11px;font-weight:900}
 .pkGender.male{color:#55afff}.pkGender.female{color:#ff87bb}
-.pkGender.genderless{color:#b6c3d1}
+.pkGender.genderless{color:#fff}
+.pkTypeImg{display:block;width:17px;height:17px;object-fit:contain;flex:none}
 .pkLegacy{font-weight:900;color:#f5d87e;margin-left:1px}
 .moveSlash{opacity:.65}
 #timer{flex:0 0 auto;font-weight:900;font-size:11px;padding:4px 5px;
@@ -132,21 +133,20 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
  <small id="captureStatus" hidden></small>
 </div>
-<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="cooldown_estimate.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="cooldown_estimate.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
 let coordsNote="",coordsPending=false,coordsRequestSeq=0;
 let shareReady=false,shareSent=false,sharePending=false;
 let cooldownLinked=false,cooldownActive=false,cooldownReference=null;
 function refreshCooldownButtons(){
- const toggle=document.getElementById("cooldownToggle");
+ const container=document.getElementById("cooldownControls");
  const confirm=document.getElementById("cooldownConfirm");
  const undo=document.getElementById("cooldownUndo");
  const reset=document.getElementById("cooldownReset");
- if(!toggle||!confirm||!undo||!reset)return;
- toggle.textContent="⏳ "+(cooldownActive?"ON":"OFF");
- toggle.disabled=!cooldownLinked;
- toggle.setAttribute("aria-pressed",String(cooldownActive));
+ if(!container||!confirm||!undo||!reset)return;
+ // ON/OFF now lives in Personalização > Info Pokémon.
+ container.hidden=!(cooldownLinked&&cooldownActive);
  const canConfirm=cooldownLinked&&cooldownActive&&!!window.PokeSearchCooldown?.coords(currentCoords)&&currentIndex>=0;
  confirm.hidden=!canConfirm;
  confirm.disabled=!canConfirm;
@@ -214,14 +214,14 @@ function coordButtons(){
  const fetch=document.getElementById("coords"),copy=document.getElementById("copy");
  if(!fetch||!copy)return;
  fetch.disabled=coordsPending;
- fetch.textContent=coordsPending?"⌛ Obtendo coordenadas...":"⌖ Get coords";
- copy.disabled=coordsPending&&!currentCoords;
- copy.textContent=coordsPending&&!currentCoords?"⌛":"⧉";
- copy.title=currentCoords?"Copiar coordenadas":
-  coordsPending?"Aguardando coordenadas":"Obter e copiar coordenadas";
- copy.setAttribute("aria-label",copy.title);
+ fetch.textContent=coordsPending?"⌛ Obtendo...":currentCoords?"⧉ Copiar coords":"⌖ Get coords";
+ fetch.title=currentCoords?"Copiar coordenadas já obtidas; não revela novamente":
+  "Obter coordenadas e copiar uma vez, quando reveladas";
+ fetch.setAttribute("aria-label",fetch.title);
+ copy.hidden=true;
 }
 function requestCoordsUi(){
+ if(currentCoords){Native.copyCoords(currentCoords);return;}
  if(coordsPending||!Number.isInteger(currentIndex)||currentIndex<0)return;
  coordsPending=true;coordsNote="Consultando coordenadas do Pokémon no site...";
  const seq=++coordsRequestSeq;
@@ -231,11 +231,15 @@ function requestCoordsUi(){
   coordsNote="O site não respondeu à solicitação. Toque em Get coords para tentar novamente.";
   const label=document.getElementById("coordsValue");
   if(label)label.textContent=coordsNote;
+  const status=document.getElementById("coordsStatus");
+  if(status)status.hidden=false;
   coordButtons();
  },9000);
  coordButtons();
  const label=document.getElementById("coordsValue");
  if(label)label.textContent=coordsNote;
+ const status=document.getElementById("coordsStatus");
+ if(status)status.hidden=false;
  Native.coords(currentIndex);
 }
 function copyCoords(){
@@ -246,14 +250,21 @@ window.copyFeedback=msg=>{
  coordsNote=String(msg||"");
  const label=document.getElementById("coordsValue");
  if(label&&coordsNote)label.textContent=coordsNote;
+ const status=document.getElementById("coordsStatus");
+ if(status)status.hidden=!coordsNote;
  coordButtons();
 };
 function fmt(sec){sec=Math.max(0,Math.floor(sec));return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");}
 function updateCountdown(){
- const e=document.getElementById("timer");
- if(!e||!expiresAt)return;
- const remaining=(expiresAt-Date.now())/1000;
- e.textContent=remaining>0?fmt(remaining):"Expirado";
+ const e=document.getElementById("timer");if(!e)return;
+ if(!expiresAt){e.hidden=true;return;}
+ const remaining=Math.max(0,Math.ceil((expiresAt-Date.now())/1000));
+ e.hidden=false;
+ e.textContent="⏳ "+(remaining?fmt(remaining):"Expirado");
+ const tone=window.PokeSearchCardPresentation?.despawnTone(remaining)||
+  (remaining<=300?"critical":remaining<=900?"warning":"good");
+ e.className=tone;
+ e.title="Despawn: tempo estimado até desaparecer";
  if(remaining<=0){
   window.pauseDetailTimer();
   if(Native.expiredResults)Native.expiredResults();
@@ -283,9 +294,11 @@ window.coordsQuotaUpdated=function(data){
   coordsAccountState==="limited"?"PoGo limitado":"PoGo ?";
 
  el.classList.toggle("official",authoritative);
- el.textContent=authoritative?
-  account+" · Restam "+data.remaining+"/"+data.limit+" · App "+observed+" ⟳":
-  account+" · Saldo ? · App "+observed+" ⟳";
+ el.textContent=authoritative?"PoGo "+data.remaining+"/"+data.limit+" ⟳":
+  "PoGo "+observed+"* ⟳";
+ el.setAttribute("aria-label",authoritative?
+  "Saldo da última revelação: "+data.remaining+" de "+data.limit+" restantes":
+  "Saldo total desconhecido; "+observed+" revelações neste aparelho");
  el.title=authoritative?
   "Saldo da última revelação autenticada, não sincronizado continuamente. Toque para conferir a sessão.":
   "Contagem local de revelações neste PokeSearch, inclusive outras contas; não inclui usos no site. Toque para conferir a sessão.";
@@ -298,7 +311,9 @@ window.coordsResult=function(coords,message){
  coordButtons();
  refreshCooldownButtons();
  const label=document.getElementById("coordsValue");
- if(label)label.textContent=currentCoords||coordsNote||"Toque em Get coords";
+ if(label)label.textContent=coordsNote||"";
+ const status=document.getElementById("coordsStatus");
+ if(status)status.hidden=!coordsNote;
  resizeEvolutionPanel();
 };
 const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -371,8 +386,11 @@ window.showEvolutionDetails=payload=>{
 };
 const item=(k,v)=>v?'<div><em>'+h(k)+':</em> '+h(v)+'</div>':"";
 window.watchFeedback=watched=>{
- document.getElementById("watchLabel").textContent=watched?"★ Favorito":"☆ Favoritos";
- document.getElementById("watch").title=watched?"Remover dos favoritos":"Adicionar aos favoritos";
+ const star=document.getElementById("watch");
+ star.textContent=watched?"★":"☆";
+ star.classList.toggle("isFav",watched);
+ star.title=watched?"Remover dos favoritos":"Adicionar aos favoritos";
+ star.setAttribute("aria-label",star.title);
 };
 window.pauseDetailTimer=()=>{if(ticking){clearInterval(ticking);ticking=null;}};
 window.showDetails=(c,mode,watched)=>{
@@ -406,7 +424,11 @@ window.showDetails=(c,mode,watched)=>{
  window.pauseDetailTimer();
  if(expiresAt)ticking=setInterval(updateCountdown,1000);
  document.getElementById("name").textContent=String(c.name||"Pokémon")+(c.shiny?" ✨":"");
- document.getElementById("sub").textContent=[c.number,c.gender,c.size,c.form].filter(Boolean).join(" · ");
+ const presenter=window.PokeSearchCardPresentation,metadata=window.PokeSearchCardMetaData;
+ document.getElementById("types").innerHTML=presenter?.types(c,metadata)||"";
+ const gender=presenter?.gender(c.gender)||"";
+ document.getElementById("sub").innerHTML=
+  [h(c.number),gender,h(c.size),h(c.form)].filter(Boolean).join(" · ");
  const img=document.getElementById("img"),fallback=document.getElementById("imageFallback");
  // The result list and this separately owned detail WebView MUST resolve
  // identical offline bytes from the APK, without relying on HTTP or a warm
@@ -470,12 +492,14 @@ window.showDetails=(c,mode,watched)=>{
   stat("PC",c.cp)+stat("Nv.",c.level)+
   stat("IV%",showPct?percent+"%":"","red")+
   stat("A/D/S",showRaw?raw:"","red")+stat("Rank",c.rank);
+ const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"");
+ const locationFlag=presenter?.locationCountryFlag(c.location)||"";
+ const locationText=String(c.location||"");
  document.getElementById("info").innerHTML=
-  item("Golpes",c.moves)+item("Local",c.location)+item("Distância",c.distance)+
-  (expiresAt?'<div><span id="timer" aria-label="Tempo até desaparecer"></span></div>':
-    (c.despawn?'<div>'+h(c.despawn)+'</div>':""))+
-  '<div><em>Coordenadas:</em> <span id="coordsValue">'+
-  h(currentCoords||coordsNote||"Toque em Get coords")+'</span></div>';
+  (c.moves?'<div><em>Golpes:</em> '+movesHtml+'</div>':"")+
+  (c.location?'<div><em>Local:</em> '+h(locationFlag?locationFlag+" "+locationText:locationText)+'</div>':"")+
+  item("Distância",c.distance)+
+  '<div id="coordsStatus" role="status" hidden><span id="coordsValue"></span></div>';
  updateCountdown();
  resizeEvolutionPanel();
  if(changed)panel.scrollTop=0;
