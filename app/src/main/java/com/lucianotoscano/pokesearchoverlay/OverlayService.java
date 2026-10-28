@@ -396,9 +396,10 @@ public class OverlayService extends Service {
                     deliverCoords("","Erro ao guardar coordenadas.");return;
                 }
                 if(autoCopy)copyCoordinatesInternal(coords);
-                CoordsQuotaStore.successfulReveal(this,response.optJSONObject("quota"));
+                CoordsQuotaStore.successfulReveal(this,null);
                 deliverCoords(coords,autoCopy?"✓ Coordenadas API copiadas":
                     "Coordenadas API disponíveis");
+                pushCoordsQuota(response.optJSONObject("quota"));
             });
         }catch(Exception ignored){
             deliverCoords("","Get coords API: identidade inválida.");
@@ -3309,8 +3310,9 @@ public class OverlayService extends Service {
         }
         return found;
     }
-    private void pushCoordsQuota(){
-        js(detailPanel,detailLoaded,"window.coordsQuotaUpdated("+CoordsQuotaStore.snapshot(this).toString()+")");
+    private void pushCoordsQuota(){pushCoordsQuota(null);}
+    private void pushCoordsQuota(JSONObject liveQuota){
+        js(detailPanel,detailLoaded,"window.coordsQuotaUpdated("+CoordsQuotaStore.snapshot(this,liveQuota).toString()+")");
     }
     private void deliverCoords(String coordinates,String message){
         js(detailPanel,detailLoaded,"window.coordsResult("+JSONObject.quote(coordinates)+","+JSONObject.quote(message)+")");
