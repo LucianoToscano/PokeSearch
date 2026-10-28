@@ -186,6 +186,15 @@ COSTUME_FILES.update({
     "costumes/pm94.fCOSTUME_2020.s.icon.png": ("pm94.fCOSTUME_2020.s.icon.png", "404b4259bae47346e6abab069eeb118229c7f807"),
 })
 
+# Official GO Deerling/Sawsbuck Autumn normal and Shiny.
+# Immutable PokeMiners git objects, NOT guessed from the Spring or base form.
+SEASONAL_GO_FORMS = {
+    "forms/585-autumn.png": ("pm585.fAUTUMN.icon.png", "a0e5eeea7cf6102584a49067bfd162e24f79e720"),
+    "forms/585-autumn-shiny.png": ("pm585.fAUTUMN.s.icon.png", "09db1750105959ce9d3813c623ab1e7790ee01c4"),
+    "forms/586-autumn.png": ("pm586.fAUTUMN.icon.png", "fd9f56bbae84413b0570cbe86bc92b1aa8c6f6cd"),
+    "forms/586-autumn-shiny.png": ("pm586.fAUTUMN.s.icon.png", "a72ce32fc199b2cfe3d4d07b711e9a01c9d49adf"),
+}
+
 # Verified Pokémon variety ID 10174 from PokéAPI. Pin the source commit:
 # never use a mutable branch for regional-form identity or shiny color.
 FORM_SOURCE_COMMIT = "d8c2fb78563e28ad7b3abe938cf6e79998d04e90"
@@ -315,6 +324,32 @@ def main():
     # packaged offline as well, with no additional runtime API or permission.
     from fetch_all_verified_varieties import fetch_varieties
     form_hashes.update(fetch_varieties(dest))
+
+    # LT145: Autumn form identity must survive broken lazy images in the
+    # PoGoCoordinates card. Strict PNG + pinned Git blob (normal/Shiny).
+    for output, (filename, object_id) in SEASONAL_GO_FORMS.items():
+        request = urllib.request.Request(
+            COSTUME_ROOT + filename, headers={"User-Agent":"PokeSearch-LT145-autumn-form/1"})
+        try:
+            with urllib.request.urlopen(request, timeout=25) as response:
+                if response.status != 200:
+                    raise RuntimeError("non-200 seasonal form")
+                content_type = response.headers.get("Content-Type", "").lower()
+                if content_type and "image/png" not in content_type:
+                    raise RuntimeError("non-PNG seasonal form")
+                image = response.read(MAX_BYTES + 1)
+        except (urllib.error.URLError, TimeoutError, OSError) as error:
+            raise SystemExit("Cannot verify GO Autumn form "+output+
+                             " ("+type(error).__name__+")")
+        if not verified_png(image):
+            raise SystemExit("Invalid GO Autumn form PNG: "+output)
+        actual = hashlib.sha1(b"blob " + str(len(image)).encode() + bytes([0]) + image).hexdigest()
+        if actual != object_id:
+            raise SystemExit("GO Autumn form Git blob mismatch: "+output)
+        target = dest / output
+        target.parent.mkdir(parents=True,exist_ok=True)
+        target.write_bytes(image)
+        form_hashes[output] = hashlib.sha256(image).hexdigest()
 
     # Pin exact GO costume icons by repository commit + Git object SHA1.
     # Reject redirected HTML, mismatched bytes and missing normal/shiny art.
