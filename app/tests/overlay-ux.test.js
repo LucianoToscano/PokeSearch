@@ -102,19 +102,19 @@ test("UX-RESULT-10 keeps P/M/G sprite stages centred with compact per-card touch
   dock.includes('style="--spawn-row:')&&
   dock.includes("align-items:center;justify-content:center");
 })());
-test("Result list is always non-scrollable and has no eight-row height cap",
+test("Ten ordinary results remain packed; VIP overflow can scroll",
  dock.includes("body.result-window #spawns{")&&
  dock.includes("max-height:none!important;height:auto!important")&&
  dock.includes("overflow-y:visible!important;overflow-x:visible!important")&&
  dock.includes("#spawns:not(:empty){padding-bottom:0!important}")&&
  !service.includes("rowDp()*8"));
-test("Native passes full display height and preserves up to ten card slots",
+test("Native passes full display height and preserves provider-authorized up to 25 cards",
  service.includes("Math.min(rowDp()*10,screenHeightDp()-52)")&&
  service.includes('screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)')&&
  service.includes("screenHeightDp()-16")&&
  service.includes("positionResultsUnderPokeball(false);")&&
  service.includes("int maxY=Math.max(0,display.heightPixels-resultParams.height);")&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,25):[]")&&
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
 test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
@@ -140,11 +140,11 @@ test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
    helpers.resultHasVisibleInfo(withInfo[0],false,true)===true&&
    helpers.resultHasVisibleInfo(withInfo[1],false,true)===false;
 });
-test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten-card limit",
+test("UX-INFO-01 quantity of spawns is visibility-only and does not change provider caps",
  dock.includes('["count","Spawns","Quantidade de spawns"]')&&
  dock.includes('id="resultSpawnCount"')&&
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
- dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
+ dock.includes('cards=Array.isArray(a)?a.slice(0,25):[]')&&
  service.includes('case "count":resultShowCount=value;pref="resultShowCount"')&&
  !service.includes('setSpawnLimit'));
 test("UX-INFO-10 visibility toggles report confirmed Android state without scrolling to top",
@@ -186,7 +186,7 @@ test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overri
 test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
  dock.includes('count.style.display=resultDisplayOptions.count?"inline":"none"')&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,25):[]")&&
  !dock.includes("count.textContent=resultDisplayOptions.count&&cards.length")&&
  !service.includes("setSpawnLimit"));
 test("UX-INFO-02 legacy and new IV/rank display choices persist independently",()=>{
@@ -282,14 +282,14 @@ test("UX-INFO-04 sprite column stays under the movable full Pokébola hitbox",
  dock.includes('margin-left:clamp(0px,')&&
  dock.includes('body.result-window .spriteStage{')&&
  dock.includes('width:var(--dock)!important')&&
- dock.includes('max-width:96px')&&
- dock.includes('metadataVisible?96:0')&&
+ dock.includes('max-width:var(--visual-meta-width,112px)')&&
+ dock.includes('metadataVisible?112:0')&&
  service.includes('private void updateResultHeaderGrip()')&&
  service.includes('hit.leftMargin=dp(left)')===false&&
  service.includes('box.leftMargin=dp(left)')&&
  service.includes('int right=anchorX+railWidth+margin;')&&
  service.includes('int safe=Math.max(0,Math.min(100,widthDp))'));
-test("UX-INFO-05 verified metadata never creates results or a scrollable list",
+test("UX-INFO-05 verified metadata never changes the provider's result count",
  dock.includes('function resultLines(card,opts,league)')&&
  dock.includes('resultDisplayOptions,shownMode,preparedLines):null;')&&
  dock.includes('overflow-y:visible!important;overflow-x:visible!important')&&
@@ -2247,9 +2247,9 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
   keys.every(key=>service.includes('case "'+key+'":')&&
     service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",false)'))&&
   keys.every(key=>dock.includes('opts.'+key+'&&'))&&
-  dock.includes('const metaWidth=metadataVisible?96:0;')&&
+  dock.includes('const metaWidth=metadataVisible?112:0;')&&
   dock.includes("return Math.max(size,pitch); // No sprite-overlap")&&
-  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
+  dock.includes('cards=Array.isArray(a)?a.slice(0,25):[]');
 });
 test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
  const source=read("assets/probe.js"),detail=read("assets/detail.html");
