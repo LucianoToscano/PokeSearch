@@ -127,16 +127,59 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
 #cooldownControls[hidden]{display:none!important}
 #cooldownControls{min-height:26px}
+/* LT145 QA4: one action column, uncolored glass surfaces and inline coords. */
+#header{align-items:flex-start;gap:4px}
+#names{padding-top:2px;min-width:0;flex:1 1 auto}
+#headerActions{width:77px;flex:0 0 77px;display:flex;flex-direction:column;align-items:stretch;gap:2px}
+#headerButtons{display:flex;align-items:center;justify-content:flex-end;gap:4px}
+#headerButtons button{box-sizing:border-box;width:23px;height:23px;min-width:23px;
+ flex:0 0 23px;border-radius:6px;margin:0;padding:0;display:flex;align-items:center;
+ justify-content:center;background:#ffffff12;border:1px solid #ffffff30}
+#headerButtons svg{display:block;width:15px;height:15px;stroke:currentColor;
+ stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;fill:none}
+#watch{color:#dfe7f0;font-size:unset}
+#watch.isFav{color:#ffd563;border-color:#ffffff30;background:#ffffff12}
+#watch.isFav svg{fill:#ffd563}
+#x{font-size:16px;color:#e9ecf1}
+#shareIcon:disabled{opacity:.45}
+#headerActions #timer{display:block;align-self:flex-end;max-width:77px;
+ padding:0;margin:1px 0 0;font-size:10px;line-height:1.35;
+ font-weight:800;white-space:nowrap;text-align:right;background:transparent;
+ border:0;border-radius:0;box-shadow:none}
+#headerActions #timer[hidden]{display:none!important}
+#timer.good,#timer.warning,#timer.critical,#timer.unknown{background:transparent;border:0;box-shadow:none}
+#timer.good{color:#96e5b1}
+#timer.warning{color:#f4c675}
+#timer.critical{color:#f49baa}
+#coordRow{display:block;position:relative;margin-top:6px}
+#coordRow #coords{display:block;width:100%;min-height:30px;padding:4px 13px;
+ border:1px solid #ffffff38;border-radius:7px;background:#ffffff14;color:#f6f7fa;
+ font-size:11px;line-height:1.32;text-align:center;font-weight:700;
+ box-shadow:none;white-space:normal;overflow-wrap:anywhere;word-break:normal}
+#coordRow #coords.hasCoords{font-size:10.5px;font-weight:600;letter-spacing:0;
+ font-family:ui-monospace,SFMono-Regular,Consolas,monospace;user-select:text;-webkit-user-select:text}
+#coordRow #coordsQuota,#coordRow #coordsQuota.official{display:inline;position:absolute;
+ top:-7px;right:5px;width:auto;height:auto;min-width:0;max-width:95px;min-height:0;
+ padding:0 2px;margin:0;border:0;border-radius:0;background:transparent;
+ box-shadow:none;color:#f3f3f4;font-size:9px;line-height:11px;font-weight:800;
+ white-space:nowrap;pointer-events:none}
+#coordRow #coordsQuota.official{color:#a6e5bb}
+#coordsNumbers{display:none!important}
 </style></head><body><div id="panel">
  <div id="header">
   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
   <div id="names">
    <div id="nameLine"><b id="name">Pokémon</b><span id="types"></span></div>
-   <div id="subRow"><small id="sub"></small><span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"></span></div>
+   <div id="subRow"><small id="sub"></small></div>
   </div>
-  <button id="shareIcon" type="button" onclick="captureShareAsk()" title="Copie as coordenadas para habilitar o compartilhamento" aria-label="Compartilhar captura no chat" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.4 11l7.2-4.5M8.4 13l7.2 4.5"/></svg></button>
-  <button id="watch" onclick="Native.toggleWatch(watchName)" title="Adicionar aos favoritos" aria-label="Adicionar aos favoritos">☆</button>
-  <button id="x" onclick="Native.hideDetail()">×</button>
+  <div id="headerActions">
+    <div id="headerButtons">
+      <button id="shareIcon" type="button" onclick="captureShareAsk()" title="Capturei: compartilhar no chat" aria-label="Capturei Pokémon — compartilhar no chat" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.4 11l7.2-4.5M8.4 13l7.2 4.5"/></svg></button>
+      <button id="watch" onclick="Native.toggleWatch(watchName)" title="Adicionar aos favoritos" aria-label="Adicionar aos favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.5 2.93 6.1 6.73.98-4.83 4.7 1.14 6.64L12 17.78l-5.97 3.14 1.14-6.64-4.83-4.7 6.73-.98L12 2.5Z"/></svg></button>
+      <button id="x" onclick="Native.hideDetail()" aria-label="Fechar card">×</button>
+    </div>
+    <span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"></span>
+  </div>
  </div>
  <div id="major"></div><div id="info"></div>
  <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
@@ -148,10 +191,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 
  <div id="coordRow">
     <button id="coords" onclick="requestCoordsUi()" title="Obter e copiar coordenadas">⌖ Get coords</button>
-    <button id="coordsQuota" type="button" aria-live="polite" onclick="Native.refreshCoordsAccount()" title="Usos observados no PokeSearch (não é o saldo total)">?</button>
+    <span id="coordsQuota" role="status" aria-live="polite" title="Usos observados no PokeSearch, não o saldo total">?</span>
     <button id="copy" hidden onclick="copyCoords()" aria-label="Copiar coordenadas">⧉</button>
   </div>
-  <div id="coordsNumbers" role="status" hidden></div>
   <div id="cooldownControls" hidden>
     <button id="cooldownConfirm" class="primary" onclick="confirmCooldownUi()" title="Registrar captura sem publicar no chat" hidden disabled>✓ Capturei</button>
     <button id="cooldownUndo" onclick="Native.undoCooldown()" title="Desfazer última captura registrada" aria-label="Desfazer última captura" hidden>↶</button>
@@ -212,7 +254,7 @@ function shareUi(){
  if(icon){
   const ready=shareReady&&!shareSent&&!sharePending;
   icon.disabled=!ready;
-  icon.title=ready?"Compartilhar captura no chat":"Obtenha e copie as coordenadas antes de compartilhar";
+  icon.title=ready?"Capturei Pokémon — compartilhar no chat":"Obtenha e copie as coordenadas antes de compartilhar";
   icon.setAttribute("aria-label",icon.title);
  }
  document.getElementById("captureShare").hidden=!shareReady||shareSent||sharePending;
@@ -248,28 +290,25 @@ window.captureShareFeedback=(ok,message)=>{
  status.hidden=!status.textContent;
  resizeEvolutionPanel();
 };
-function renderCoordinateNumbers(){
- const box=document.getElementById("coordsNumbers");
- if(!box)return;
- // Only a previously validated latitude,longitude pair can appear.
- const valid=window.PokeSearchCooldown?.coords?.(currentCoords);
- box.hidden=!valid;
- // Preserve every numeric digit supplied by the provider; never round.
- box.textContent=valid?String(currentCoords).trim().replace(";",", "):"";
-}
 function coordButtons(){
  const fetch=document.getElementById("coords"),copy=document.getElementById("copy");
  if(!fetch||!copy)return;
  fetch.disabled=coordsPending;
- fetch.textContent=coordsPending?"⌛ Obtendo...":currentCoords?"⧉ Copiar coords":"⌖ Get coords";
- fetch.title=currentCoords?"Copiar coordenadas já obtidas; não revela novamente":
-  "Obter coordenadas e copiar uma vez, quando reveladas";
+ const valid=window.PokeSearchCooldown?.coords?.(currentCoords);
+ fetch.className=valid?"hasCoords":"";
+ // Exact numeric coordinates replace Get coords in the same button.
+ // Tapping the numbers copies again without a new reveal.
+ fetch.textContent=coordsPending?"⌛ Obtendo...":valid?
+  String(currentCoords).trim().replace(";",", "):"⌖ Get coords";
+ fetch.title=valid?"Toque nas coordenadas para copiar novamente":
+  "Obter e copiar coordenadas";
  fetch.setAttribute("aria-label",fetch.title);
  copy.hidden=true;
- renderCoordinateNumbers();
 }
 function requestCoordsUi(){
- if(currentCoords){Native.copyCoords(currentCoords);return;}
+ if(window.PokeSearchCooldown?.coords?.(currentCoords)){
+  Native.copyCoords(currentCoords);return;
+ }
  if(coordsPending||!Number.isInteger(currentIndex)||currentIndex<0)return;
  coordsPending=true;coordsNote="Consultando coordenadas do Pokémon no site...";
  const seq=++coordsRequestSeq;
@@ -337,7 +376,7 @@ window.coordsQuotaUpdated=function(data){
   Number.isInteger(data.limit)&&data.limit>0&&Number.isInteger(data.remaining)&&
   data.remaining>=0&&data.remaining<=data.limit;
 
- el.classList.toggle("official",authoritative);
+ el.className=authoritative?"official":"";
  // Badge never confuses observed local requests with the full account quota.
  el.textContent=authoritative?String(data.remaining):String(observed);
  el.dataset.scope=authoritative?"official":"local";
@@ -345,8 +384,8 @@ window.coordsQuotaUpdated=function(data){
   "PoGoCoordinates: "+data.remaining+" revelações restantes na última resposta oficial":
   "PoGoCoordinates: "+observed+" revelações observadas neste aparelho; saldo total desconhecido");
  el.title=authoritative?
-  "Saldo da última revelação autenticada, não sincronizado continuamente. Toque para conferir a sessão.":
-  "Contagem local de revelações neste PokeSearch, inclusive outras contas; não inclui usos no site. Toque para conferir a sessão.";
+  "Saldo oficial na última revelação autenticada; pode ter mudado":
+  "Usos observados no PokeSearch; não representa o saldo total da conta.";
 };
 window.coordsResult=function(coords,message){
  coordsRequestSeq++;
@@ -432,7 +471,6 @@ window.showEvolutionDetails=payload=>{
 const item=(k,v)=>v?'<div><em>'+h(k)+':</em> '+h(v)+'</div>':"";
 window.watchFeedback=watched=>{
  const star=document.getElementById("watch");
- star.textContent=watched?"★":"☆";
  star.className=watched?"isFav":"";
  star.title=watched?"Remover dos favoritos":"Adicionar aos favoritos";
  star.setAttribute("aria-label",star.title);
