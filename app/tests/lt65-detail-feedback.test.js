@@ -14,7 +14,8 @@ check("1 Get coords has explicit pending button and calls native",()=>{
 check("2 Copy requests coordinates when missing instead of dead-end label",()=>{
  assert.ok(detail.includes('if(currentCoords)Native.copyCoords(currentCoords);'));
  assert.ok(detail.includes('else requestCoordsUi();'));
- assert.ok(detail.includes('copy.textContent=currentCoords?"⧉ Copiar coordenadas"'));
+ assert.ok(detail.includes('copy.title=currentCoords?"Copiar coordenadas"'));
+ assert.ok(detail.includes('copy.setAttribute("aria-label",copy.title)'));
 });
 check("3 Failed and pending messages survive status repaint for same card",()=>{
  assert.ok(detail.includes("const changed=detailIdentity!==nextIdentity;"));
