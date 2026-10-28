@@ -8,12 +8,14 @@ must not silently substitute another sprite. All data is public PokeAPI/sprites.
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import hashlib
+import io
 import json
 from pathlib import Path
 import struct
 import time
 import urllib.error
 import urllib.request
+import zipfile
 
 RAW = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
 MIRROR = "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"
@@ -352,18 +354,56 @@ def main():
         "pm94.cFALL_2023_NOEVOLVE.icon.png": "522c5edd70a0c55e33e8257859a9469e23f153953805bcdf9d05e9e66e45341d",
         "pm94.cFALL_2023_NOEVOLVE.s.icon.png": "caf3161f54a325adee3ed2e995099519dc8e65586ec604d6bceb9c69ce97b79d",
     }
+    # Stable fallback for artwork CDN drift: use ONLY the 4 exact icons from
+    # the previously distributed, SHA256-pinned LT144 APK, never old app code.
+    # This is an immutable image source, not a rollback of the software.
+    lt144_archive = None
+    def verified_lt144_event(filename, expected_hash):
+        nonlocal lt144_archive
+        if lt144_archive is None:
+            url = ("https://drive.usercontent.google.com/download?"
+                   "id=1Rgp7IeBU4lZ7pCz1fEQDl4x1nIP7Edlx"
+                   "&export=download&confirm=t&v=54349")
+            req = urllib.request.Request(url, headers={"User-Agent":"Mozilla/5.0"})
+            try:
+                with urllib.request.urlopen(req, timeout=180) as response:
+                    if response.status != 200:
+                        raise ValueError("No signed LT144 archive")
+                    raw = response.read(55 * 1024 * 1024)
+            except (urllib.error.URLError, OSError, TimeoutError, ValueError) as e:
+                raise SystemExit("Cannot verify immutable LT144 image backup: " +
+                                 type(e).__name__)
+            if (len(raw) != 48993001 or
+                hashlib.sha256(raw).hexdigest() !=
+                "93ba1c98f9aeaf1d267d3a5bfb558e3272c36173964d929c3ebc5b887bdb6fbf"):
+                raise SystemExit("Public LT144 APK changed: blocked untrusted sprite fallback")
+            lt144_archive = zipfile.ZipFile(io.BytesIO(raw))
+            if lt144_archive.testzip() is not None:
+                raise SystemExit("Damaged public LT144 APK: sprite fallback refused")
+        try:
+            image = lt144_archive.read("assets/pokemon-sprites/costumes/" + filename)
+        except KeyError:
+            raise SystemExit("Missing pinned LT144 image: " + filename)
+        if not verified_png(image) or hashlib.sha256(image).hexdigest() != expected_hash:
+            raise SystemExit("LT144 image differs from exact pinned hash: " + filename)
+        return image
+
     icon_root = "https://cdn.leekduck.com/assets/img/pokemon_icons_crop/"
     for filename, expected_hash in verified_event_pngs.items():
+        image = b""
         request = urllib.request.Request(
-            icon_root + filename, headers={"User-Agent":"PokeSearch-LT144-verified-art/1"})
+            icon_root + filename, headers={"User-Agent":"PokeSearch-LT145-verified-art/1"})
         try:
             with urllib.request.urlopen(request, timeout=25) as response:
-                if response.status != 200:
-                    raise RuntimeError("event art returned non-200")
-                image = response.read(MAX_BYTES + 1)
-        except (urllib.error.URLError, TimeoutError, OSError) as error:
-            raise SystemExit("Exact event art unavailable: " + filename +
-                             " (" + type(error).__name__ + ")")
+                if response.status == 200:
+                    image = response.read(MAX_BYTES + 1)
+        except (urllib.error.URLError, TimeoutError, OSError):
+            pass
+        if not verified_png(image) or hashlib.sha256(image).hexdigest() != expected_hash:
+            print("CDN drift: recovering exact signed LT144 event icon:", filename, flush=True)
+            image = verified_lt144_event(filename, expected_hash)
+        # This remains a hard verification requirement. No generic sprite
+        # or mismatched Shiny can silently enter the signed APK.
         if not verified_png(image) or hashlib.sha256(image).hexdigest() != expected_hash:
             raise SystemExit("Exact GO event sprite changed or invalid: " + filename)
         output = "costumes/" + filename
