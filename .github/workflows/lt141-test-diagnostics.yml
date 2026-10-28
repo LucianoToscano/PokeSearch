@@ -1,0 +1,42 @@
+name: LT141 JS regression isolation
+on:
+  push:
+    branches: [feature/lt141-sprites-trainers-vip25-signed-20261027]
+    paths:
+      - 'app/tests/**'
+      - 'app/src/main/assets/**'
+      - '.github/workflows/lt141-test-diagnostics.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  node-shards:
+    name: Node shard ${{ matrix.shard }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0,1,2,3,4,5,6,7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run isolated test shard
+        shell: bash
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          i=0
+          for suite in app/tests/*.test.js; do
+            if [ "$suite" = 'app/tests/lt74-local-update-preview.test.js' ]; then
+              continue
+            fi
+            if (( i % 8 == SHARD )); then
+              echo "::group::$suite"
+              node "$suite"
+              echo "::endgroup::"
+            fi
+            i=$((i+1))
+          done
