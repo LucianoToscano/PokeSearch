@@ -1126,7 +1126,11 @@ function parseCard(box,sourceIndex){
   catch(_){urlForm=compact(url.split("/").pop()||"");}
   if(special){
    // Do not use another year's costume or a default species image.
-   const tokens=specificForm.replace(/^(?:ZUBAT|GENGAR|POKEMON)/,"");
+   let tokens=specificForm.replace(/^(?:ZUBAT|GENGAR|POKEMON)/,"");
+   // Provider uses "Fall 2023 Costume" while the official PNG is
+   // "cFALL_2023_NOEVOLVE"; name/year must match, never a 2022 image.
+   if(/^FALL2023|^HALLOWEEN2023/.test(tokens))tokens="FALL2023";
+   if(/^HALLOWEEN202601/.test(tokens))tokens="HALLOWEEN202601";
    if(tokens&&!urlForm.includes(tokens)&&!compact(alt).includes(tokens))return false;
   }else if(/(?:HALLOWEEN|COSTUME|COPY2019|GOGGLES2026)/i.test(url+" "+alt))return false;
   return true;

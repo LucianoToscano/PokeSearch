@@ -303,13 +303,10 @@
     return exactEvent("pm41.fHALLOWEEN_2026_01."+
        (card.shiny===true?"s.":"")+"icon.png");
   }
-  if(dexNum===10&&(formId===3346||/GOFEST2026/.test(form+" "+costumeEvidence))){
-    if(card.shiny===true)return {src:"",original:"",offline:false,
-      officialCostume:true,missingExact:true};
-    return exactEvent("pm10.fGOFEST_2026.icon.png");
-  }
-  if(dexNum===25&&(formId===3318||/GOTOUR2026A$/.test(form+" "+costumeEvidence))){
-    return exactEvent("pm25.fGOTOUR_2026_A."+
+  if(dexNum===94&&/(?:FALL2023|HALLOWEEN2023|TRICKSTREATS)/.test(evidence)){
+    // This Halloween 2023 costume is DIFFERENT from 2020 and 2022.
+    // Fall 2023 site label maps to official FALL_2023_NOEVOLVE.
+    return exactEvent("pm94.cFALL_2023_NOEVOLVE."+
       (card.shiny===true?"s.":"")+"icon.png");
   }
   const archived=archivedCostume(card);

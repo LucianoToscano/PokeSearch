@@ -203,9 +203,9 @@ jobs:
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm94.fCOSTUME_2020.icon.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm41.fHALLOWEEN_2026_01.icon.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm41.fHALLOWEEN_2026_01.s.icon.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm10.fGOFEST_2026.icon.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm25.fGOTOUR_2026_A.icon.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm25.fGOTOUR_2026_A.s.icon.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm94.cFALL_2023_NOEVOLVE.icon.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm94.cFALL_2023_NOEVOLVE.s.icon.png'
+
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/shiny/25.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/manifest.json'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/zigzagoon-galar.png'

@@ -349,9 +349,8 @@ def main():
     verified_event_pngs = {
         "pm41.fHALLOWEEN_2026_01.icon.png": "93dace15fb8136fda77c22114ea56063982cf24d7ff1d4066bd7e6c05a6e43c4",
         "pm41.fHALLOWEEN_2026_01.s.icon.png": "56086b8520c662a0d3bd57267482e3e08b2de1f32c74a984db642fb340cb8ce2",
-        "pm10.fGOFEST_2026.icon.png": "77bad215ff9a489e6c653c3fd368dfe6b2f1147c33361908f95e9097006c06cc",
-        "pm25.fGOTOUR_2026_A.icon.png": "7c454ee9facb18e9df3987195a048664f4283127ff82c92c1e23a49130898bb2",
-        "pm25.fGOTOUR_2026_A.s.icon.png": "5b0f8c070ca138a69b08292ee9b8a77e4689c9d5ccf935a0ad34bb4d286d0b28",
+        "pm94.cFALL_2023_NOEVOLVE.icon.png": "522c5edd70a0c55e33e8257859a9469e23f153953805bcdf9d05e9e66e45341d",
+        "pm94.cFALL_2023_NOEVOLVE.s.icon.png": "caf3161f54a325adee3ed2e995099519dc8e65586ec604d6bceb9c69ce97b79d",
     }
     icon_root = "https://cdn.leekduck.com/assets/img/pokemon_icons_crop/"
     for filename, expected_hash in verified_event_pngs.items():

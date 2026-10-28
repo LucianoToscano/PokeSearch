@@ -23,8 +23,15 @@ const zubat={number:"#41",name:"Zubat",form:"ZUBAT_HALLOWEEN_2026_01",
 assert.equal(sprite.resolve(zubat).src,local+"costumes/pm41.fHALLOWEEN_2026_01.s.icon.png");
 const exact="https://cdn.pokemon.example/pm41.fHALLOWEEN_2026_01.s.icon.png";
 assert.equal(sprite.resolve({...zubat,image:exact,imageFromSite:true}).src,exact);
-assert.match(sprite.resolve({number:"#10",name:"Caterpie",form:"CATERPIE_GOFEST_2026",form_id:3346}).src,/costumes\/pm10\.fGOFEST_2026\.icon\.png$/);
-assert.match(sprite.resolve({number:"#25",name:"Pikachu",form:"PIKACHU_GOTOUR_2026_A",form_id:3318,shiny:true}).src,/costumes\/pm25\.fGOTOUR_2026_A\.s\.icon\.png$/);
+const halloween23={number:"#94",name:"Gengar",form:"Fall 2023 Costume",shiny:false};
+assert.equal(sprite.resolve(halloween23).src,
+ local+"costumes/pm94.cFALL_2023_NOEVOLVE.icon.png");
+assert.equal(sprite.resolve({...halloween23,shiny:true}).src,
+ local+"costumes/pm94.cFALL_2023_NOEVOLVE.s.icon.png");
+assert.notEqual(sprite.resolve({...halloween23,shiny:false}).src,
+ sprite.resolve({number:"#94",name:"Gengar",form:"Fall 2022 Costume"}).src);
+assert.equal(sprite.resolve({number:"#94",name:"Gengar",form:"FALL_2023_NOEVOLVE"}).src,
+ local+"costumes/pm94.cFALL_2023_NOEVOLVE.icon.png");
 assert.equal(sprite.resolve({...zubat,image:exact,imageFromSite:false}).src,local+"costumes/pm41.fHALLOWEEN_2026_01.s.icon.png");
 const ordinary="https://cdn.pokemon.example/pm94.icon.png";
 assert.equal(sprite.resolve({number:"#94",name:"Gengar",form:"NORMAL",form_id:1044,
