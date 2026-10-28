@@ -1787,7 +1787,7 @@ test("HOME-03 authenticates using official profile only after session proof",(()
   login.includes('profileDiscoveryAttempted=true')&&
   profile.includes("danger zone")&&
   profile.includes("Member since")&&
-  profile.includes('trainerState=parsed?"linked":explicitZero?"unlinked":"unknown"')&&
+  profile.includes('trainerState=trainers.length?"linked":explicitZero?"unlinked":"unknown"')&&
   !profile.includes("document.cookie");
 })());
 test("HOME-03 opens the Home drawer on right and uses original transparent PNG",(()=>{
