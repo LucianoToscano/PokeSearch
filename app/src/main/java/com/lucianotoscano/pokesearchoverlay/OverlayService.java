@@ -3362,7 +3362,7 @@ public class OverlayService extends Service {
             }
             offeredCapture=new JSONObject(card.toString());
             offeredGeneration=requestGeneration;
-            js(detailPanel,true,"window.offerCaptureShare()");
+            js(detailPanel,true,"window.offerCaptureShare("+card.optInt("sourceIndex",-1)+")");
         }catch(Exception e){
             recordFailure("preparar confirmação de captura",e);
             js(detailPanel,true,"window.captureShareAvailability(false,"+
