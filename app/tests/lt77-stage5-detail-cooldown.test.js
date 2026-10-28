@@ -7,8 +7,8 @@ const probe=fs.readFileSync(path.join(root,"assets/probe.js"),"utf8");
 let pass=0;function check(label,fn){fn();pass++;console.log("PASS LT77 Stage5 "+label)}
 check("detail inline JS parses",()=>{for(const match of detail.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(match[1])});
 check("tap zone remains ≥36px and native Get coords once per tap",()=>{
- assert.ok(detail.includes('#coords,#copy{min-height:30px;touch-action:manipulation'));
- assert.ok(detail.includes('#coordRow{display:grid;grid-template-columns:minmax(0,1fr) 31px'));
+ assert.ok(detail.includes('#coords{min-height:30px;touch-action:manipulation'));
+ assert.ok(detail.includes('#coordRow{display:grid;grid-template-columns:minmax(0,1fr) auto'));
  assert.ok(detail.includes('if(coordsPending||!Number.isInteger(currentIndex)||currentIndex<0)return;'));
  assert.ok(detail.includes('Native.coords(currentIndex)'));
 });
