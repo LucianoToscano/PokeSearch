@@ -10,6 +10,6 @@ assert.equal(policy.fromHeaders(h({"x-coords-reveal-limit":"30","x-coords-reveal
 assert.equal(policy.fromHeaders(h({"x-coords-reveal-limit":"999999999999999","x-coords-reveal-remaining":"2"})),null);
 assert.deepEqual(policy.fromHeaders(h({"x-coords-reveal-limit":"30","x-coords-reveal-remaining":"12"})),
  {kind:"official",limit:30,remaining:12,resetAtUnixSeconds:null});
-assert.deepEqual(policy.fromHeaders(h({"x-reveal-quota-limit":"20","x-reveal-quota-remaining":"0","x-reveal-quota-reset":"900000000"})),
- {kind:"official",limit:20,remaining:0,resetAtUnixSeconds:900000000});
+assert.deepEqual(policy.fromHeaders(h({"x-reveal-quota-limit":"20","x-reveal-quota-remaining":"0","x-reveal-quota-reset":"1790000000"})),
+ {kind:"official",limit:20,remaining:0,resetAtUnixSeconds:1790000000});
 console.log("LT145 coords quota evidence checks passed");
