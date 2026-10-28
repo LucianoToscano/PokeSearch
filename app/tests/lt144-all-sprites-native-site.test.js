@@ -20,10 +20,12 @@ for(const [dex,name,id] of [[94,"Gengar",1044],[41,"Zubat",157],
 }
 const zubat={number:"#41",name:"Zubat",form:"ZUBAT_HALLOWEEN_2026_01",
  form_id:3362,shiny:true};
-assert.equal(sprite.resolve(zubat).src,"","No fabricated Halloween shiny");
+assert.equal(sprite.resolve(zubat).src,local+"costumes/pm41.fHALLOWEEN_2026_01.s.icon.png");
 const exact="https://cdn.pokemon.example/pm41.fHALLOWEEN_2026_01.s.icon.png";
 assert.equal(sprite.resolve({...zubat,image:exact,imageFromSite:true}).src,exact);
-assert.equal(sprite.resolve({...zubat,image:exact,imageFromSite:false}).src,"");
+assert.match(sprite.resolve({number:"#10",name:"Caterpie",form:"CATERPIE_GOFEST_2026",form_id:3346}).src,/costumes\/pm10\.fGOFEST_2026\.icon\.png$/);
+assert.match(sprite.resolve({number:"#25",name:"Pikachu",form:"PIKACHU_GOTOUR_2026_A",form_id:3318,shiny:true}).src,/costumes\/pm25\.fGOTOUR_2026_A\.s\.icon\.png$/);
+assert.equal(sprite.resolve({...zubat,image:exact,imageFromSite:false}).src,local+"costumes/pm41.fHALLOWEEN_2026_01.s.icon.png");
 const ordinary="https://cdn.pokemon.example/pm94.icon.png";
 assert.equal(sprite.resolve({number:"#94",name:"Gengar",form:"NORMAL",form_id:1044,
  image:ordinary,imageFromSite:true}).src,ordinary);
@@ -37,10 +39,14 @@ assert.match(probe,/const byDex=encounterDex/);
 assert.match(probe,/if\(isSpriteShiny&&!shinyEvidence\)return false/);
 assert.match(probe,/if\(!isSpriteShiny&&shinyEvidence\)return false/);
 assert.match(native,/@JavascriptInterface public String bundledBaseSprite\(int dex,boolean shiny\)/);
+assert.match(native,/@JavascriptInterface public String bundledExactSprite\(String relative\)/);
+assert.match(src,/function exactBundledData\(art\)/);
 assert.match(native,/android\.util\.Base64\.encodeToString\(png,android\.util\.Base64\.NO_WRAP\)/);
 assert.match(native,/buffer\.size\(\)\+count>128\*1024/);
 assert.match(dock,/verifiedBundledData\?\.\(sourceCard\)/);
+assert.match(dock,/exactBundledData\?\.\(engine\.resolve\(sourceCard\)\)/);
 assert.match(detail,/verifiedBundledData\?\.\(c\)/);
+assert.match(detail,/exactBundledData\?\.\(art\)/);
 assert.match(dock,/verifiedBundledData\?\.\(exactCard\)/);
 assert.match(secondary,/extends OverlayService/);
 assert.doesNotMatch(native,/bundledBaseSprite\(int dex,boolean shiny\)[\s\S]{0,1800}https:\/\//);
