@@ -6782,8 +6782,12 @@ const SPRITE_FAILURE_RETRY_MS=30000;
 function pooledBaseSprite(url){
  const valid=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/([0-9]{1,4}\.png)$/.exec(String(url||""));
  if(!valid)return Promise.resolve("");
- const asset=window.PokeSearchOfflineSprite?
-  window.PokeSearchOfflineSprite.resolve({image:url}):{src:url};
+ const dex=Number(valid[1].replace(".png",""));
+ const spec=window.PokeSearchWWMCatalog?.species?.[dex];
+ const exactCard=spec&&spec[0]?{number:"#"+dex,name:spec[0],
+   form:"NORMAL",image:url,shiny:false}:null;
+ const asset=exactCard&&window.PokeSearchOfflineSprite?
+  window.PokeSearchOfflineSprite.resolve(exactCard):{src:url};
  const now=Date.now(),previous=spriteRequestCache.get(url);
  if(previous&&(!previous.failedAt||now-previous.failedAt<SPRITE_FAILURE_RETRY_MS))
   return previous.promise;
@@ -6805,6 +6809,9 @@ function pooledBaseSprite(url){
   const alternative="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+valid[1];
   const useMirror=()=>{
    if(settled||mirrorStarted)return;
+   // Browser blocked file://? Only load exact Dex-verified PNG from the APK.
+   const direct=exactCard&&window.PokeSearchOfflineSprite?.verifiedBundledData?.(exactCard)||"";
+   if(direct){finish(direct);return;}
    mirrorStarted=true;clearTimeout(primaryWatch);
    mirror.onload=()=>finish(mirror.naturalWidth>=8&&mirror.naturalHeight>=8?alternative:"");
    mirror.onerror=()=>finish("");
