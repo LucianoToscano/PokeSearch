@@ -1667,7 +1667,7 @@ test("PL-02 watchdog can release stalled generation without false success",()=>{
 });
 test("RESULTS-ALL-MODES partial site counts wait for complete card extraction",()=>{
  const probe=read("assets/probe.js");
- return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,10):0;')&&
+ return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,25):0;')&&
   probe.includes('const siteIncomplete=expectedVisible>found.length;')&&
   probe.includes('siteCount,siteIncomplete,expectedVisible,parseFailure')&&
   service.includes('if(r.optBoolean("siteIncomplete",false)&&attempt<24)')&&
@@ -2325,7 +2325,7 @@ test("SITE-POKEMON-04 site filter uses selected chips and exact official options
 test("SITE-POKEMON-05 12-icon toolbar & no personal GPS remain intact",()=>
  dock.includes('grid-template-columns:34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr')&&
  !probe.includes('navigator.geolocation')&&
- dock.includes('items.slice(0,10)')&&
+ dock.includes('items.slice(0,25)')&&
  service.includes('"locationCoords"'));
 test("NOTIFY-02 compact grouped speaker icons still drive two distinct native modes",()=>{
  const panel=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
