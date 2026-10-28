@@ -177,6 +177,14 @@ body.controls-window.visual-light-menu #choices:not(.visualPanel) .extraNumberRo
 .spawn .ivPct.excellent{color:#c084fc}
 .spawn .ivPct.perfect{color:#f04b70}
 .spawn.expired{opacity:.38}
+/* Cooldown is independent of the despawn ticker. */
+.spawn .cooldownEta{position:absolute;right:0;top:0;z-index:4;max-width:60px;
+ padding:1px 2px;border:1px solid #ffffff45;border-radius:5px;
+ background:#242527c9;color:#d7e3dc;font:600 7.5px/10px Roboto,Arial,sans-serif;
+ white-space:nowrap;text-shadow:0 1px 2px #0008;pointer-events:none}
+.spawn .cooldownEta.estimated{color:#f7d5a1}
+.spawn .cooldownEta.unknown{color:#c2c2c6}
+.spawn .cooldownEta.finished{color:#a9edc5}
 .sprite{display:block;width:var(--sprite);height:var(--sprite);object-fit:contain;flex-shrink:0;pointer-events:none;filter:drop-shadow(0 1px 1px #0006)}
 /* UX-SPRITE-01: same centered, transparent square in every fixed-height row. */
 .spriteStage{position:relative;display:flex;align-items:center;justify-content:center;width:var(--sprite);height:var(--sprite);flex:0 0 var(--sprite);pointer-events:none}
@@ -4288,7 +4296,7 @@ if(window.location.search.indexOf("results=1")!==-1){
  document.write('<script src="file:///android_asset/pvpoke-iv-gamemaster.js"><\/script>');
 }
 </script>
-<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="cooldown_estimate.js"></script>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 const popupWindow=window.location.search.indexOf("popup=1")!==-1;
@@ -6229,6 +6237,15 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
   infoScale:Math.max(0.86,Math.min(1,factor))};
 }
 let lastListKey="",metadataCacheKey="",metadataCache=[];
+let cooldownState={enabled:false,linked:false,reference:null,apiVerified:false,fresh:false,searchCenter:""};
+window.onCooldownState=function(payload){
+ cooldownState=payload&&typeof payload==="object"?
+  {enabled:payload.enabled===true,linked:payload.linked===true,
+   reference:payload.reference||null,apiVerified:payload.apiVerified===true,
+   fresh:payload.fresh===true,searchCenter:String(payload.searchCenter||"")}:
+  {enabled:false,linked:false,reference:null,apiVerified:false,fresh:false,searchCenter:""};
+ if(resultWindow){lastListKey="";draw();}
+};
 function preparedResultLines(){
  if(!resultWindow)return [];
  const key=JSON.stringify([cards,resultDisplayOptions,shownMode]);
@@ -6330,7 +6347,7 @@ function draw(){
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
  const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.removeAttribute("title");p.setAttribute("aria-label",period===0?"Atualização desligada; segure ↻ para alterar":"Atualização a cada "+period+" minutos; segure ↻ para alterar");
  const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp,
-  shownMode,resultDisplayOptions]);
+  shownMode,resultDisplayOptions,cooldownState]);
  if(listKey!==lastListKey){lastListKey=listKey;
  // The gear and menu WebViews never create hidden sprite buttons.
  // Only the independent results WebView owns the Pokémon list and its taps.
@@ -6350,6 +6367,20 @@ function draw(){
    '<span class="spriteFallback fallback" aria-hidden="true">◉</span></span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const infoLines=preparedLines[i]||[];
+  let cooldownMarkup="";
+  if(cooldownState.enabled&&cooldownState.linked&&cooldownState.reference&&window.PokeSearchCooldown){
+   const engine=window.PokeSearchCooldown;
+   const eta=engine.estimate(cooldownState.reference,c,cooldownState);
+   const known=eta.kind==="exact"||eta.kind==="estimated";
+   const left=known?engine.remaining(eta,Date.now()):null;
+   const label=known?(left===0?"✓ 00:00":"⏳ "+engine.format(left)):"⏳ —";
+   const tip=eta.kind==="exact"?"Cooldown estimado entre coordenadas conhecidas; não garante segurança":
+    eta.kind==="estimated"?"Estimativa conservadora da distância da busca; não garante segurança":
+    "Distância entre capturas não comprovada";
+   cooldownMarkup='<span class="cooldownEta '+esc(eta.kind==="estimated"?"estimated":known?"exact":"unknown")+
+    '"'+(known?' data-until="'+Number(eta.until)+'"':"")+
+    ' title="'+esc(tip)+'" aria-label="'+esc(tip)+'">'+esc(label)+'</span>';
+  }
   const inlineTimer=resultDisplayOptions.despawn&&deadline?
    '<span class="timer" data-deadline="'+deadline+'"></span>':"";
   const info=infoLines.length?'<span class="spawnInfo" aria-label="Dados opcionais do Pokémon">'+infoLines.map(text=>
@@ -6361,7 +6392,7 @@ function draw(){
   const ivBadge=!metadataVisible&&showResultText&&verifiedPercent!==null?
    '<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>':"";
   const measuredRow=resultLayout?.rows[i]||row;
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+artFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+info+'</button>';
+  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+artFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+cooldownMarkup+info+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
  if(resultWindow){attachLongPress();attachSpriteFeedback();syncTimerTicker();}
@@ -6456,6 +6487,14 @@ function updateTimers(){
   e.closest(".spawn")?.classList.toggle("expired",seconds===0);
   if(seconds===0&&!e.dataset.expiryReported){e.dataset.expiryReported="1";newlyExpired=true;}
  });
+ document.querySelectorAll(".cooldownEta[data-until]").forEach(el=>{
+  const until=Number(el.dataset.until);
+  if(!Number.isFinite(until))return;
+  const seconds=Math.max(0,Math.ceil((until-Date.now())/1000));
+  const engine=window.PokeSearchCooldown;
+  el.textContent=seconds===0?"✓ 00:00":"⏳ "+(engine?engine.format(seconds):"--:--");
+  el.classList.toggle("finished",seconds===0);
+ });
  if(newlyExpired&&Native.expiredResults)Native.expiredResults();
 }
 let timerTicker=null;
@@ -6463,7 +6502,7 @@ function syncTimerTicker(){
  if(!resultWindow)return;
  const shown=!document.body.classList.contains("results-collapsed")&&
   !document.body.classList.contains("results-paused");
- const hasTimers=!!document.querySelector(".timer");
+ const hasTimers=!!document.querySelector(".timer,.cooldownEta[data-until]");
  if(shown&&hasTimers){
   if(timerTicker===null){updateTimers();timerTicker=setInterval(updateTimers,1000);}
  }else if(timerTicker!==null){
