@@ -2601,6 +2601,19 @@ public class OverlayService extends Service {
                         prior.has(field)&&!prior.isNull(field)&&
                         !prior.optString(field,"").trim().isEmpty())
                         card.put(field,prior.get(field));
+                // Lazy site images may disappear on refresh while their exact
+                // encounter stays visible. Keep the original URL ONLY when
+                // form, costume, Shiny and identity all still match.
+                boolean sameArtIdentity=card.optString("form","").equals(prior.optString("form",""))&&
+                    card.optString("costume","").equals(prior.optString("costume",""))&&
+                    card.optBoolean("shiny",false)==prior.optBoolean("shiny",false)&&
+                    card.optString("gender","").equals(prior.optString("gender",""));
+                if(sameArtIdentity&&card.optString("image","").isEmpty()&&
+                    prior.optBoolean("imageFromSite",false)&&
+                    prior.optString("image","").matches("https://[^\\\\s]{5,1500}")){
+                    card.put("image",prior.getString("image"));
+                    card.put("imageFromSite",true);
+                }
             }catch(org.json.JSONException ignored){}
         }
         return incoming;
