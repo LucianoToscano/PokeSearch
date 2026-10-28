@@ -279,7 +279,9 @@ public class OverlayService extends Service {
                 JSONArray cards=response.optJSONArray("cards");
                 if(!"authorized-api-qa".equals(response.optString("source"))||
                     !response.optBoolean("criteriaConfirmed",false)||
-                    cards==null||cards.length()>10||
+                    cards==null||cards.length()>25||
+                    cards.length()>Math.max(0,Math.min(25,response.optInt("apiPlanCap",10)))||
+                    cards.length()>Math.max(0,Math.min(25,response.optInt("apiDisplayCap",10)))||
                     response.optInt("searchId",-1)<0||
                     (response.optBoolean("requestedShiny",false)!=shiny)||
                      (shiny&&(!response.optBoolean("apiFilterAccepted",false)||
@@ -2837,6 +2839,11 @@ public class OverlayService extends Service {
             " • encontrados "+r.optInt("found",0));
         JSONArray items=r.optJSONArray("cards");
         if(items==null)items=new JSONArray();
+        if(items.length()>25){
+            searchInProgress=false;
+            searchFailure("⚠ Excesso de resultados","Consulta excedeu o limite seguro de 25 cartões.");
+            return;
+        }
         // Defence in depth: JS collection can never be the sole IV gate.
         // Filter BEFORE cache, display, history and any general/watch alert.
         if("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)){
