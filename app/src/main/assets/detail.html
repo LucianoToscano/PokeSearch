@@ -276,7 +276,8 @@ window.showDetails=(c,mode,watched)=>{
  const nativeFallback=()=>{
   if(verifiedNativeTried)return "";
   verifiedNativeTried=true;
-  return window.PokeSearchOfflineSprite?.verifiedBundledData?.(c)||"";
+  const engine=window.PokeSearchOfflineSprite;
+  return engine?.verifiedBundledData?.(c)||engine?.exactBundledData?.(art)||"";
  };
  const useArt=src=>{
   const generation=++loadGeneration;
