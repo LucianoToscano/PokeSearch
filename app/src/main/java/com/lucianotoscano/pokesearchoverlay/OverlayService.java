@@ -96,6 +96,7 @@ public class OverlayService extends Service {
         }catch(Exception ignored){}
         String jsPayload="window.onCooldownState("+data.toString()+")";
         js(resultPanel,resultLoaded,jsPayload);
+        js(menuPanel,menuLoaded,jsPayload);
         js(detailPanel,detailLoaded,"window.cooldownChanged("+data.toString()+")");
     }
     private void cooldownFeedback(String message){
