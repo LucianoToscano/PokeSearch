@@ -12,6 +12,7 @@
  const SITE="pogocoordinates.com";
  const API="https://coordinates-api.pokemongopro.com";
  const SEARCH_URL=API+"/search";
+  const ACCOUNT_URL=API+"/users/me";
  const MAX_RESPONSE_BYTES=1024*1024;
  const TOKEN_RE=/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
  const CODE_RE=/^[A-Za-z0-9_-]{12,2048}$/;
@@ -27,6 +28,7 @@
  function safeMethod(verb,url){
   if(verb==="POST")return url===SEARCH_URL;
   if(verb==="GET"){
+   if(url===ACCOUNT_URL)return true;
    if(!url.startsWith(API+"/reveal/"))return false;
    return CODE_RE.test(url.slice((API+"/reveal/").length));
   }
@@ -40,9 +42,9 @@
   let searchVersion=0;
   let reveals=new Map(); // current result set only; in-memory
   let disposed=false;
-  let searchController=null,revealController=null;
+  let searchController=null,revealController=null,accountController=null;
   const pendingReveals=new Set();
-  const retryUntil={search:0,reveal:0};
+  const retryUntil={search:0,reveal:0,account:0};
   const dateNow=()=>d.now();
   function originValid(){
    try{
@@ -89,7 +91,7 @@
   }
   async function request(method,url,data,withAuth,timeoutMs){
    if(!originValid()||disposed||!safeMethod(method,url))return fail("invalid-origin");
-   const kind=method==="POST"?"search":"reveal";
+   const kind=method==="POST"?"search":url===ACCOUNT_URL?"account":"reveal";
    // Per-endpoint backoff; no retries or limit bypass when the server says 429.
    if(dateNow()<retryUntil[kind])return fail("rate-limited");
    let token=null;
@@ -105,6 +107,7 @@
     if(typeof AbortController==="function"){
      controller=new AbortController();
      if(kind==="search")searchController=controller;
+     else if(kind==="account")accountController=controller;
      else revealController=controller;
      timer=setTimeout(()=>controller.abort(),timeoutMs);
     }
@@ -137,7 +140,7 @@
     if(typeof bodyText!=="string"||bodyText.length>MAX_RESPONSE_BYTES)return fail("response-too-large");
     let obj;
     try{obj=JSON.parse(bodyText);}catch(_){return fail("invalid-json");}
-    return {ok:true,body:obj,quota:kind==="reveal"&&d.quotaPolicy?d.quotaPolicy.fromHeaders(response.headers):null};
+    return {ok:true,body:obj,quota:kind==="reveal"&&token!==null&&d.quotaPolicy?d.quotaPolicy.fromHeaders(response.headers):null};
    }catch(e){
     // Do not leak exception messages (which may contain URLs or credentials).
     return fail(controller&&controller.signal.aborted?"timeout":"network-or-cors-error");
@@ -145,8 +148,23 @@
     if(timer!==null)clearTimeout(timer);
     if(controller&&kind==="search"&&searchController===controller)searchController=null;
     if(controller&&kind==="reveal"&&revealController===controller)revealController=null;
+    if(controller&&kind==="account"&&accountController===controller)accountController=null;
     token=null;
    }
+  }
+  async function accountStatus(){
+   // Only the provider may confirm its own session. No PII or raw JSON crosses
+   // the WebView bridge. This endpoint is READ ONLY and consumes no coords.
+   if(disposed||!originValid())return fail("invalid-origin");
+   if(!jwt())return {ok:true,auth:"login-required"};
+   const result=await request("GET",ACCOUNT_URL,null,true,6000);
+   if(!result.ok){
+    if(result.reason==="login-required")return {ok:true,auth:"login-required"};
+    return fail(result.reason);
+   }
+   if(!result.body||typeof result.body!=="object"||Array.isArray(result.body))
+    return fail("invalid-account-response");
+   return {ok:true,auth:"authenticated"};
   }
   async function search(config){
    if(disposed)return fail("disposed");
@@ -248,8 +266,9 @@
    disposed=true;searchVersion++;reveals.clear();pendingReveals.clear();
    if(searchController)searchController.abort();
    if(revealController)revealController.abort();
+   if(accountController)accountController.abort();
   }
-  return Object.freeze({search,reveal,dispose});
+  return Object.freeze({search,reveal,accountStatus,dispose});
  }
  function createBrowserClient(){
   // For future injection into official site WebView only.
