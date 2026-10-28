@@ -420,7 +420,7 @@
   if(verifiedBase(card)){
    const path=(card.shiny===true?"shiny/":"base/")+dex+".png";
    const origin=RAW+(card.shiny===true?"shiny/":"")+dex+".png";
-   return {src:LOCAL+path,original:origin,offline:true,verifiedBase:true};
+   return {src:LOCAL+path,original:origin,offline:true};
   }
   if(candidate&&safeCostume&&(verifiedBase(card)||!card?.form)){
    const dex=Number(candidate[2]);
