@@ -47,7 +47,7 @@ run("result sprites retry only verified base art, preserving forms and costumes"
 });
 run("opened detail has independent transparent drag handle, excludes close and keeps geometry",()=>{
  const detailGrip=svc.split("View detailDragGrip=new View(this);")[1]?.split("detailPanel.setWebViewClient",1)[0]||"";
- assert.ok(detailGrip.includes("dp(DETAIL_DP-39),dp(49)"));
+ assert.ok(detailGrip.includes("dp(DETAIL_DP-100),dp(49)"));
  assert.ok(detailGrip.includes("detailManuallyPositioned=true"));
  assert.ok(detailGrip.includes("detailParams.x=Math.max(0,Math.min("));
  assert.ok(detailGrip.includes("detailParams.y=Math.max(0,Math.min("));
