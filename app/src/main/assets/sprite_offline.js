@@ -303,7 +303,8 @@
     return exactEvent("pm41.fHALLOWEEN_2026_01."+
        (card.shiny===true?"s.":"")+"icon.png");
   }
-  if(dexNum===94&&/(?:FALL2023|HALLOWEEN2023|TRICKSTREATS)/.test(evidence)){
+  if(dexNum===94&&(Number(card.costume_id)===71||
+     /(?:FALL2023|HALLOWEEN2023|TRICKSTREATS)/.test(evidence))){
     // This Halloween 2023 costume is DIFFERENT from 2020 and 2022.
     // Fall 2023 site label maps to official FALL_2023_NOEVOLVE.
     return exactEvent("pm94.cFALL_2023_NOEVOLVE."+
