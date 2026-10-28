@@ -3,7 +3,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;background:transparent;color:#fff;font:11px Roboto,Arial,sans-serif;overflow:hidden}
 button{font:inherit;color:inherit;border:0;cursor:pointer}
-#panel{max-height:calc(100vh - 2px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;border:1px solid #ffffff50;border-radius:13px;background:rgba(9,13,20,.73);box-shadow:0 5px 18px #0007;padding:9px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+#panel{max-height:calc(100vh - 2px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;border:1px solid #ffffff50;border-radius:13px;background:rgba(9,13,20,.73);box-shadow:0 5px 18px #0007;padding:7px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
 #header{display:flex;align-items:center;gap:5px;min-width:0}
 #img{width:35px;height:35px;object-fit:contain}
 #imageFallback{display:flex;align-items:center;justify-content:center;
@@ -12,19 +12,19 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #names b{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:12px}
 #names small{color:#bfc8d4;font-size:9px}
 #x{border-radius:6px;background:#ffffff22;font-size:13px;width:23px;height:23px}
-#major{font-weight:bold;color:#fff;line-height:1.5;margin-top:5px;display:flex;flex-wrap:wrap;gap:4px}
-#major span{border-radius:5px;background:#ffffff1b;padding:2px 5px;font-size:10px}
+#major{font-weight:bold;color:#fff;line-height:1.25;margin-top:4px;display:flex;flex-wrap:wrap;gap:3px}
+#major span{border-radius:5px;background:#ffffff1b;padding:2px 4px;font-size:10px}
 #major .red{color:#ff9bb0}
-#info{color:#d8e0ea;line-height:1.38;margin-top:5px;font-size:10px;overflow-wrap:anywhere}
-#info div{margin:2px 0}
+#info{color:#d8e0ea;line-height:1.28;margin-top:4px;font-size:10px;overflow-wrap:anywhere}
+#info div{margin:1px 0}
 #info em{color:#afb9c8;font-style:normal}
-#watch{margin-top:6px;width:100%;border:1px solid #edc95778;background:#e8bf3d24;border-radius:7px;padding:6px;font-weight:bold;color:#ffecba;display:flex;align-items:center;justify-content:center;gap:5px}
+#watch{margin-top:4px;width:100%;border:1px solid #edc95778;background:#e8bf3d20;border-radius:6px;padding:4px 6px;min-height:28px;font-weight:700;color:#ffecba;display:flex;align-items:center;justify-content:center;gap:4px}
 #watch svg{width:14px;height:14px;flex-shrink:0}
 /* RANK-EVO-DETAIL-02: folded section; details always scroll inside the same 226dp card. */
 #evolutions[hidden],#evoBody[hidden]{display:none}
-#evolutions{margin-top:6px;border:1px solid #ffffff28;border-radius:7px;overflow:hidden}
+#evolutions{margin-top:4px;border:1px solid #ffffff28;border-radius:7px;overflow:hidden}
 #evoToggle{width:100%;text-align:left;background:#24425699;color:#d5ecff;
- padding:6px 7px;font-size:10px;font-weight:800;display:flex;justify-content:space-between;gap:4px}
+ padding:4px 6px;font-size:10px;font-weight:800;display:flex;justify-content:space-between;gap:4px}
 #evoBody{max-height:none;overflow:visible;touch-action:auto;padding:3px 6px}
 #panel{height:auto;max-height:calc(100vh - 2px);overflow-y:auto;overflow-x:hidden;
  overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;}
@@ -33,18 +33,24 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine{font-size:10px;line-height:1.32;padding:3px 0;border-bottom:1px solid #ffffff12}
 .evoLine b{font-weight:900}.evoLine.best b{color:#83e7bb}
 .evoStats{font-size:9px;color:#c1ced9}.evoState{font-size:9px;color:#ffb3ac;font-weight:800}
-#copy{margin-top:5px;width:100%;border:1px solid #ffffff35;background:#ffffff22;border-radius:7px;padding:7px;font-weight:bold}#coords{margin-top:7px;width:100%;border-radius:7px;padding:7px;background:#eb2850ce;font-weight:bold}
-#coords,#copy{min-height:36px;touch-action:manipulation;position:relative;z-index:1}
+/* LT145 compact card: controls remain readable and accessible, without extra rows. */
+#coordRow{display:grid;grid-template-columns:minmax(0,1fr) 31px;gap:4px;margin-top:4px}
+#coords,#copy{min-height:30px;touch-action:manipulation;position:relative;z-index:1;border-radius:6px;font-weight:700}
+#coords{width:100%;background:#eb2850ce;padding:4px 5px}
+#copy{width:31px;border:1px solid #ffffff40;background:#ffffff1b;padding:3px;font-size:17px}
 #coords:disabled,#copy:disabled{opacity:.65;cursor:default}
-#coords:focus-visible,#copy:focus-visible{outline:2px solid #8be1cb;outline-offset:1px}
-#coordsQuota{margin:4px 1px 0;padding:4px 6px;background:#ffffff13;border:1px solid #ffffff25;border-radius:6px;color:#d6dce4;font:500 9px/1.35 Roboto,Arial,sans-serif;text-align:center;overflow-wrap:break-word}
-#coordsQuota.official{color:#a9f0cf;border-color:#6ad5a549}
-#coordsQuota{display:block;width:100%;min-height:26px;touch-action:manipulation}
-#cooldownControls{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
-#cooldownControls button{border:1px solid #ffffff36;background:#ffffff17;color:#e9edf4;border-radius:6px;padding:5px 6px;min-height:26px;font-size:9px;flex:1 1 auto}
-#cooldownControls button.primary{background:#429b7952;border-color:#a7e3ba70}
-#cooldownControls button:disabled{opacity:.5}
-#cooldownNote{font:9px/1.25 Roboto,Arial,sans-serif;color:#b9c7d7;margin:3px 1px 0}
+#coords:focus-visible,#copy:focus-visible,#coordsQuota:focus-visible,#cooldownControls button:focus-visible{outline:2px solid #8be1cb;outline-offset:1px}
+#coordsQuota{display:block;max-width:100%;width:100%;margin:1px 0 0;padding:1px 3px;border:0;border-radius:4px;background:transparent;color:#b5c4cf;min-height:18px;font:500 9px/1.2 Roboto,Arial,sans-serif;text-align:center;overflow-wrap:normal;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;touch-action:manipulation}
+#coordsQuota.official{color:#a9f0cf}
+#cooldownControls{display:flex;flex-wrap:nowrap;align-items:center;gap:3px;margin-top:3px;min-height:26px}
+#cooldownControls button{border:1px solid #ffffff36;background:#ffffff14;color:#dbe1e9;border-radius:5px;padding:3px 4px;height:26px;min-height:26px;font-size:9px;font-weight:600;white-space:nowrap;touch-action:manipulation}
+#cooldownControls button[hidden],#cooldownNote[hidden]{display:none!important}
+#cooldownToggle{flex:0 0 69px}
+#cooldownConfirm{flex:1 1 auto;min-width:0}
+#cooldownControls #cooldownUndo,#cooldownControls #cooldownReset{flex:0 0 25px;width:25px;font-size:13px;padding:2px}
+#cooldownControls button.primary{background:#429b7936;border-color:#a7e3ba60}
+#cooldownControls button:disabled{opacity:.48}
+#cooldownNote{font:9px/1.25 Roboto,Arial,sans-serif;color:#b9c7d7;margin:2px 1px 0}
 #captureShare[hidden],#captureConfirm[hidden]{display:none!important}
 #captureShare{margin-top:5px;display:block;width:100%;padding:5px;border-radius:7px;
  border:1px solid #e3c96955;background:#d4b65b18;color:#f5dda4;font-size:10px}
@@ -66,16 +72,18 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   <div id="evoBody" hidden></div>
  </section>
  <button id="watch" onclick="Native.toggleWatch(watchName)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg> <span id="watchLabel">Adicionar aos favoritos</span></button>
- <button id="coords" onclick="requestCoordsUi()">⌖ Get coords</button>
-  <button id="coordsQuota" type="button" aria-live="polite" onclick="Native.refreshCoordsAccount()" title="Verificar sessão do PoGoCoordinates sem gastar revelações">⌖ Conta PoGo não verificada · Saldo desconhecido · Atualizar ⟳</button>
-  <button id="copy" onclick="copyCoords()">⧉ Copiar coordenadas</button>
-  <div id="cooldownControls">
-    <button id="cooldownToggle" onclick="Native.toggleCooldown()">⏳ Cooldown OFF</button>
-    <button id="cooldownConfirm" class="primary" onclick="confirmCooldownUi()" disabled>✓ Confirmar captura</button>
-    <button id="cooldownUndo" onclick="Native.undoCooldown()">↶ Desfazer</button>
-    <button id="cooldownReset" onclick="resetCooldownUi()" title="Remover referência de cooldown">×</button>
+ <div id="coordRow">
+    <button id="coords" onclick="requestCoordsUi()">⌖ Get coords</button>
+    <button id="copy" onclick="copyCoords()" title="Obter e copiar coordenadas" aria-label="Obter e copiar coordenadas">⧉</button>
   </div>
-  <div id="cooldownNote" role="status">Estimativa local · nunca garante captura segura</div>
+  <button id="coordsQuota" type="button" aria-live="polite" onclick="Native.refreshCoordsAccount()" title="Verificar sessão do PoGoCoordinates sem gastar revelações">PoGo · Saldo ? · ⟳</button>
+  <div id="cooldownControls">
+    <button id="cooldownToggle" onclick="Native.toggleCooldown()" title="Ativar ou ocultar cooldown estimado">⏳ OFF</button>
+    <button id="cooldownConfirm" class="primary" onclick="confirmCooldownUi()" title="Registrar captura sem publicar no chat" hidden disabled>✓ Capturei</button>
+    <button id="cooldownUndo" onclick="Native.undoCooldown()" title="Desfazer última captura registrada" aria-label="Desfazer última captura" hidden>↶</button>
+    <button id="cooldownReset" onclick="resetCooldownUi()" title="Limpar referência de cooldown" aria-label="Limpar referência de cooldown" hidden>×</button>
+  </div>
+  <div id="cooldownNote" role="status" hidden></div>
  <button id="captureShare" hidden onclick="captureShareAsk()">🎉 Capturou? Compartilhar no chat</button>
  <div id="captureConfirm" hidden><span>Capturou mesmo?</span>
  <button onclick="captureShareCancel()">Não</button>
@@ -91,21 +99,32 @@ let cooldownLinked=false,cooldownActive=false,cooldownReference=null;
 function refreshCooldownButtons(){
  const toggle=document.getElementById("cooldownToggle");
  const confirm=document.getElementById("cooldownConfirm");
- if(!toggle||!confirm)return;
- toggle.textContent="⏳ Cooldown "+(cooldownActive?"ON":"OFF");
+ const undo=document.getElementById("cooldownUndo");
+ const reset=document.getElementById("cooldownReset");
+ if(!toggle||!confirm||!undo||!reset)return;
+ toggle.textContent="⏳ "+(cooldownActive?"ON":"OFF");
  toggle.disabled=!cooldownLinked;
- confirm.disabled=!cooldownLinked||!window.PokeSearchCooldown?.coords(currentCoords)||currentIndex<0;
- document.getElementById("cooldownUndo").disabled=!cooldownLinked||!cooldownReference;
- document.getElementById("cooldownReset").disabled=!cooldownLinked||!cooldownReference;
+ toggle.setAttribute("aria-pressed",String(cooldownActive));
+ const canConfirm=cooldownLinked&&cooldownActive&&!!window.PokeSearchCooldown?.coords(currentCoords)&&currentIndex>=0;
+ confirm.hidden=!canConfirm;
+ confirm.disabled=!canConfirm;
+ undo.hidden=!cooldownLinked||!cooldownActive||!cooldownReference;
+ undo.disabled=undo.hidden;
+ reset.hidden=!cooldownLinked||!cooldownActive||!cooldownReference;
+ reset.disabled=reset.hidden;
 }
 window.cooldownChanged=function(data){
  cooldownLinked=data?.linked===true;
  cooldownActive=data?.enabled===true;
  cooldownReference=data?.reference||null;
  refreshCooldownButtons();
+ resizeEvolutionPanel();
 };
 window.cooldownFeedback=function(message){
- document.getElementById("cooldownNote").textContent=String(message||"Estimativa local · nunca garante captura segura");
+ const note=document.getElementById("cooldownNote");
+ note.textContent=String(message||"");
+ note.hidden=!note.textContent;
+ resizeEvolutionPanel();
 };
 function confirmCooldownUi(){
  if(!cooldownLinked||!window.PokeSearchCooldown?.coords(currentCoords)||currentIndex<0)return;
@@ -155,8 +174,10 @@ function coordButtons(){
  fetch.disabled=coordsPending;
  fetch.textContent=coordsPending?"⌛ Obtendo coordenadas...":"⌖ Get coords";
  copy.disabled=coordsPending&&!currentCoords;
- copy.textContent=currentCoords?"⧉ Copiar coordenadas":
-  coordsPending?"⌛ Aguardando coordenadas":"⧉ Obter e copiar";
+ copy.textContent=coordsPending&&!currentCoords?"⌛":"⧉";
+ copy.title=currentCoords?"Copiar coordenadas":
+  coordsPending?"Aguardando coordenadas":"Obter e copiar coordenadas";
+ copy.setAttribute("aria-label",copy.title);
 }
 function requestCoordsUi(){
  if(coordsPending||!Number.isInteger(currentIndex)||currentIndex<0)return;
@@ -214,14 +235,15 @@ window.coordsQuotaUpdated=function(data){
  const authoritative=coordsAccountState==="authenticated"&&data?.official===true&&
   Number.isInteger(data.limit)&&data.limit>0&&Number.isInteger(data.remaining)&&
   data.remaining>=0&&data.remaining<=data.limit;
- const account=coordsAccountState==="authenticated"?"PoGo conectado":
-  coordsAccountState==="login-required"?"Login PoGo necessário":
-  coordsAccountState==="checking"?"Conferindo sessão PoGo":
-  coordsAccountState==="limited"?"Verificação limitada":"Conta PoGo não verificada";
+ const account=coordsAccountState==="authenticated"?"PoGo ✓":
+  coordsAccountState==="login-required"?"PoGo login":
+  coordsAccountState==="checking"?"PoGo …":
+  coordsAccountState==="limited"?"PoGo limitado":"PoGo ?";
+
  el.classList.toggle("official",authoritative);
  el.textContent=authoritative?
-  account+" · Último saldo: "+data.remaining+"/"+data.limit+" · Usos locais: "+observed+" ⟳":
-  account+" · Saldo desconhecido · Usos locais: "+observed+" ⟳";
+  account+" · Restam "+data.remaining+"/"+data.limit+" · App "+observed+" ⟳":
+  account+" · Saldo ? · App "+observed+" ⟳";
  el.title=authoritative?
   "Saldo da última revelação autenticada, não sincronizado continuamente. Toque para conferir a sessão.":
   "Contagem local de revelações neste PokeSearch, inclusive outras contas; não inclui usos no site. Toque para conferir a sessão.";
@@ -235,6 +257,7 @@ window.coordsResult=function(coords,message){
  refreshCooldownButtons();
  const label=document.getElementById("coordsValue");
  if(label)label.textContent=currentCoords||coordsNote||"Toque em Get coords";
+ resizeEvolutionPanel();
 };
 const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let detailIdentity="",evolutionExpanded=false;
@@ -306,7 +329,8 @@ window.showEvolutionDetails=payload=>{
 };
 const item=(k,v)=>v?'<div><em>'+h(k)+':</em> '+h(v)+'</div>':"";
 window.watchFeedback=watched=>{
- document.getElementById("watchLabel").textContent=watched?"★ Favorito · remover":"☆ Adicionar aos favoritos";
+ document.getElementById("watchLabel").textContent=watched?"★ Favorito":"☆ Favoritos";
+ document.getElementById("watch").title=watched?"Remover dos favoritos":"Adicionar aos favoritos";
 };
 window.pauseDetailTimer=()=>{if(ticking){clearInterval(ticking);ticking=null;}};
 window.showDetails=(c,mode,watched)=>{
@@ -319,6 +343,7 @@ window.showDetails=(c,mode,watched)=>{
   coordsRequestSeq++;
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
   shareReady=false;shareSent=false;sharePending=false;shareUi();
+  const cdNote=document.getElementById("cooldownNote");cdNote.hidden=true;cdNote.textContent="";
   document.getElementById("captureStatus").hidden=true;
   document.getElementById("evolutions").hidden=true;
   document.getElementById("evoBody").hidden=true;
