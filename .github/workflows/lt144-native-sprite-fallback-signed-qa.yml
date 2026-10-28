@@ -167,7 +167,7 @@ jobs:
           assert 'forms/555-galar-zen-shiny.png' in report['forms']
           assert 'forms/585-spring.png' in report['forms']
           assert report['formSourceCommit']=='d8c2fb78563e28ad7b3abe938cf6e79998d04e90'
-          assert len(report['costumes'])==102  # 16 existing + 86 pinned GO Halloween/FALL2022 variants
+          assert len(report['costumes'])==106  # 102 legacy + 4 SHA256-verified Zubat 2026 / Gengar 2023
           for file in ("pm37.cFALL_2022.icon.png",
                        "pm37.cFALL_2022.s.icon.png",
                        "pm714.cHALLOWEEN_2025.icon.png",
