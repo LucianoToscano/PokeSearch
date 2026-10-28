@@ -373,8 +373,7 @@
   if(sourceExact){
    const dex=dexOf(card);
    const backup=costumeArt?.src&&costumeArt.src!==image?costumeArt.src:
-     verifiedBase(card)?verifiedBundledData(card)||
-       LOCAL+(card.shiny===true?"shiny/":"base/")+dex+".png":"";
+     verifiedBase(card)?LOCAL+(card.shiny===true?"shiny/":"base/")+dex+".png":"";
    return {src:image,original:backup,offline:!!backup,
      providerExact:true,officialCostume:!!costumeArt?.officialCostume};
   }
@@ -421,8 +420,7 @@
   if(verifiedBase(card)){
    const path=(card.shiny===true?"shiny/":"base/")+dex+".png";
    const origin=RAW+(card.shiny===true?"shiny/":"")+dex+".png";
-   return {src:verifiedBundledData(card)||LOCAL+path,
-     original:origin,offline:true,verifiedBase:true};
+   return {src:LOCAL+path,original:origin,offline:true,verifiedBase:true};
   }
   if(candidate&&safeCostume&&(verifiedBase(card)||!card?.form)){
    const dex=Number(candidate[2]);
