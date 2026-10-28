@@ -343,6 +343,36 @@ def main():
         target.write_bytes(image)
         costume_hashes[output] = hashlib.sha256(image).hexdigest()
 
+    # LT144: source-verified, hash-pinned GO event art. Never infer a
+    # costume from the generic base species; each URL was independently
+    # fetched and checked as a real PNG, with distinct normal/Shiny hashes.
+    verified_event_pngs = {
+        "pm41.fHALLOWEEN_2026_01.icon.png": "93dace15fb8136fda77c22114ea56063982cf24d7ff1d4066bd7e6c05a6e43c4",
+        "pm41.fHALLOWEEN_2026_01.s.icon.png": "56086b8520c662a0d3bd57267482e3e08b2de1f32c74a984db642fb340cb8ce2",
+        "pm10.fGOFEST_2026.icon.png": "77bad215ff9a489e6c653c3fd368dfe6b2f1147c33361908f95e9097006c06cc",
+        "pm25.fGOTOUR_2026_A.icon.png": "7c454ee9facb18e9df3987195a048664f4283127ff82c92c1e23a49130898bb2",
+        "pm25.fGOTOUR_2026_A.s.icon.png": "5b0f8c070ca138a69b08292ee9b8a77e4689c9d5ccf935a0ad34bb4d286d0b28",
+    }
+    icon_root = "https://cdn.leekduck.com/assets/img/pokemon_icons_crop/"
+    for filename, expected_hash in verified_event_pngs.items():
+        request = urllib.request.Request(
+            icon_root + filename, headers={"User-Agent":"PokeSearch-LT144-verified-art/1"})
+        try:
+            with urllib.request.urlopen(request, timeout=25) as response:
+                if response.status != 200:
+                    raise RuntimeError("event art returned non-200")
+                image = response.read(MAX_BYTES + 1)
+        except (urllib.error.URLError, TimeoutError, OSError) as error:
+            raise SystemExit("Exact event art unavailable: " + filename +
+                             " (" + type(error).__name__ + ")")
+        if not verified_png(image) or hashlib.sha256(image).hexdigest() != expected_hash:
+            raise SystemExit("Exact GO event sprite changed or invalid: " + filename)
+        output = "costumes/" + filename
+        target = dest / output
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(image)
+        costume_hashes[output] = expected_hash
+
     summary = {
         "schema": "pokesearch-offline-sprites-v1",
         "formSourceCommit": FORM_SOURCE_COMMIT,
