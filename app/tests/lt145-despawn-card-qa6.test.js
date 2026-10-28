@@ -41,7 +41,7 @@ assert.ok(html.includes('#timer.pink{color:#ffa4cb}'));
 assert.ok(html.includes('#timer.critical{color:#ff6575}'));
 assert.ok(html.includes('#timer.warning{color:#f3c276}'));
 assert.ok(html.includes('#timer.good{color:#9ce5b9}'));
-assert.ok(html.includes('#headerActions #timer.pulse{animation:psDespawnGentlePulse'));
+assert.ok(html.includes('#subRow #timer.pulse{animation:psDespawnGentlePulse'));
 assert.ok(html.includes('@media(prefers-reduced-motion:reduce)'));
 assert.ok(!html.includes('#panel.pulse'),'whole card must not pulse');
 // Preserve photo, full name, exact Drive icons; size is compact in the top subtitle.
@@ -50,7 +50,8 @@ assert.ok(html.includes('pokemon_type_icons.js'));
 assert.ok(script.includes('[h(c.number),gender,h(c.size),h(c.form)].filter(Boolean)'));
 assert.ok(!script.includes('item("Tamanho",c.size)'),"size must not add an extra row");
 assert.ok(script.includes('item("Distância",c.distance)'));
-assert.ok(html.includes('#headerActions #timer{font-size:9px;line-height:10px;margin:0;'),"clock stays small near header icons");
+assert.ok(html.includes('#subRow #timer{display:inline-flex;align-self:center;'),"clock stays small before Pokedex number");
+assert.ok(html.includes('<div id="subRow"><span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"></span><small id="sub"></small></div>'));
 assert.ok(script.includes('stat("PC",c.cp)+stat("Nv.",c.level)'));
 assert.ok(script.includes('stat("IV",showRaw?raw:"","red")'));
 assert.ok(script.includes('stat("Rank",c.rank)'));

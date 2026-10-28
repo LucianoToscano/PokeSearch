@@ -5,11 +5,12 @@ const html=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html")
 const js=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(js);new vm.Script(js);
 const section=html.match(/<div id="headerActions">([\s\S]*?)<\/div>\s*<\/div>\s*<div id="major"/)?.[1];
-assert.ok(section,"Header icons and clock must share one action group");
+assert.ok(section,"All three header icons must share one action group");
 for(const id of ["shareIcon","watch","x"]){
  assert.ok(section.includes('id="'+id+'"'),id+" in the action group");
 }
-assert.ok(section.indexOf('id="timer"')>section.indexOf('id="x"'),"clock is below the three actions");
+assert.ok(!section.includes('id="timer"'),"clock must not consume an action slot");
+assert.ok(html.includes('<div id="subRow"><span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"></span><small id="sub"></small></div>'),"Despawn must precede Pokedex number");
 assert.ok(html.includes('#headerButtons button{box-sizing:border-box;width:23px;height:23px'));
 assert.ok(html.includes('min-height:23px;max-height:23px;flex:0 0 23px'),"all three button hitboxes have the same height");
 assert.ok(!html.includes('#watch{margin-top:4px;width:100%'),"old 28px favorite background must be removed");
@@ -23,7 +24,7 @@ assert.ok(js.includes('window.offerCaptureShare=sourceIndex=>'),"only the matchi
 assert.ok(js.includes('sourceIndex!==currentIndex'),"ignore stale capture callbacks");
 assert.ok(!html.includes('id="shareIcon" type="button" onclick="captureShareAsk()" disabled'),"share must not be disabled by default");
 assert.ok(js.includes('Native.confirmCaptureShare(currentIndex)'),"header share uses capture-to-chat bridge");
-assert.ok(html.includes('#headerActions #timer{display:block'));
+assert.ok(html.includes('#subRow #timer{display:block'));
 assert.ok(html.includes('#timer.good,#timer.warning,#timer.critical,#timer.unknown{background:transparent;border:0;box-shadow:none}'));
 assert.ok(html.includes('id="coords" onclick="requestCoordsUi()"'));
 assert.ok(html.includes('<span id="coordsQuota" role="status"'),"PoGo counter is NOT an action");
@@ -54,6 +55,9 @@ make(document,{PokeSearchCooldown:api},"-5.123456789, -120.000001234",false)();
 assert.equal(ui.coords.textContent,"-5.123456789, -120.000001234");
 assert.equal(ui.coords.className,"hasCoords");
 make(document,{PokeSearchCooldown:api},"",false)();
-assert.equal(ui.coords.textContent,"⌖ Get coords");
+assert.equal(ui.coords.textContent,"⌖ Pegar Coordenadas");
+make(document,{PokeSearchCooldown:api},"",true)();
+assert.equal(ui.coords.textContent,"⌛ Pegando coordenadas...");
+assert.equal(ui.coords.className,"isPending");
 assert.equal(ui.coords.className,"");
 console.log("LT145 QA5: identical action buttons, pre-copy Capturei flow, PoGo counter inside Get PASS");
