@@ -1,0 +1,61 @@
+name: LT144 Public Home and Share no-login SHA verification
+on:
+  push:
+    branches: [feature/lt144-native-sprite-fallback-20261027]
+    paths:
+      - '.github/workflows/lt144-public-home-share-sha-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Fetch official update manifest WITHOUT authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --retry 2 \
+            --max-time 100 -A 'Mozilla/5.0' \
+            'https://drive.google.com/uc?export=download&id=15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf' \
+            -o manifest.json
+          python3 - <<'PY'
+          import json
+          m=json.load(open('manifest.json'))
+          assert m['schema']=='pokesearch-update-v1'
+          assert m['enabled'] is True
+          assert m['versionName']=='0.01.44' and m['versionCode']==54349
+          assert m['apkName']=='PokeSearch-v0.01.44-LT.apk'
+          assert m['apkFileId']=='1Rgp7IeBU4lZ7pCz1fEQDl4x1nIP7Edlx'
+          assert m['apkSha256']=='93ba1c98f9aeaf1d267d3a5bfb558e3272c36173964d929c3ebc5b887bdb6fbf'
+          assert m['forceUpdate'] is False
+          print('PASS public Home manifest:',m['versionName'])
+          PY
+      - name: Fetch shared APK WITHOUT login and verify exact signed bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --retry 2 \
+            --max-time 240 -A 'Mozilla/5.0' \
+            'https://drive.usercontent.google.com/download?id=1Rgp7IeBU4lZ7pCz1fEQDl4x1nIP7Edlx&export=download&confirm=t&v=54349' \
+            -o public.apk
+          unzip -t public.apk >/dev/null
+          python3 - <<'PY'
+          import hashlib,json,zipfile
+          m=json.load(open('manifest.json'))
+          data=open('public.apk','rb').read()
+          assert len(data)==48993001
+          digest=hashlib.sha256(data).hexdigest()
+          assert digest==m['apkSha256'],f'{digest} != {m["apkSha256"]}'
+          with zipfile.ZipFile('public.apk') as z:
+            for name in (
+                'pm41.fHALLOWEEN_2026_01.icon.png',
+                'pm41.fHALLOWEEN_2026_01.s.icon.png',
+                'pm94.cFALL_2023_NOEVOLVE.icon.png',
+                'pm94.cFALL_2023_NOEVOLVE.s.icon.png'
+            ):
+              assert 'assets/pokemon-sprites/costumes/'+name in z.namelist(),name
+            assert b'Number(card.costume_id)===71' in z.read('assets/sprite_offline.js')
+          print('PASS no-login APK, exact Gengar/Zubat both shiny, costume_id 71, SHA256:',digest)
+          PY
