@@ -5739,7 +5739,8 @@ function attachSpriteFeedback(){
   const tryExactBundled=()=>{
    if(nativeTried)return false;
    nativeTried=true;
-   const exact=window.PokeSearchOfflineSprite?.verifiedBundledData?.(sourceCard)||"";
+   const exact=(typeof window!=="undefined"&&
+     window.PokeSearchOfflineSprite?.verifiedBundledData?.(sourceCard))||"";
    if(exact&&img.src!==exact){img.src=exact;return true;}
    return false;
   };
