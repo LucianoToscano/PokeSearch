@@ -78,10 +78,13 @@ public class MainActivity extends Activity {
     private String alertToneSpecies="";
     private android.media.MediaPlayer bundledTonePreview;
     private android.media.Ringtone systemTonePreview;
-    // Shared Google Drive file ID stays stable across explicitly approved APK updates.
-    // No GitHub/release/token link is exposed by the Android share chooser.
+    // Keep the proven public Google Drive file ID stable: update its contents on every release.
+    // The Download endpoint avoids WhatsApp's cached /file/d/.../view old-APK preview.
+    // Version in the URL is a cache-busting public number, NEVER a credential.
+    private static final String SHARE_APK_FILE_ID="1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P";
     private static final String SHARE_APK_DRIVE_URL=
-        "https://drive.google.com/file/d/1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P/view";
+        "https://drive.usercontent.google.com/download?id="+SHARE_APK_FILE_ID+
+        "&export=download&confirm=t&v="+BuildConfig.VERSION_CODE;
     private FrameLayout homeRoot;
     private boolean homeLightMode=false;
     // LT72: Home-only update card; does not own or recreate the overlay/WebView.
@@ -960,7 +963,9 @@ public class MainActivity extends Activity {
         send.setType("text/plain");
         send.putExtra(Intent.EXTRA_SUBJECT,"PokeSearch para Android");
         send.putExtra(Intent.EXTRA_TEXT,
-            "PokeSearch para Android — baixe o APK pelo Google Drive:\n"+SHARE_APK_DRIVE_URL);
+            "PokeSearch "+BuildConfig.VERSION_NAME+" — Android (APK oficial)\n"+
+            "Download direto no Google Drive:\n"+SHARE_APK_DRIVE_URL+
+            "\nInstale por cima da versão atual, sem desinstalar.");
         try {
             startActivity(Intent.createChooser(send,"Compartilhar PokeSearch"));
         }catch(android.content.ActivityNotFoundException e){

@@ -1,0 +1,16 @@
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const path=require("node:path");
+const main=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java"),"utf8");
+const update=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/UpdateCenter.java"),"utf8");
+const branch="lt143";
+assert.match(main,/SHARE_APK_FILE_ID="1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P"/);
+assert.match(main,/https:\/\/drive\.usercontent\.google\.com\/download\?id=/);
+assert.match(main,/&export=download&confirm=t&v="\+BuildConfig\.VERSION_CODE/);
+assert.match(main,/"PokeSearch "\+BuildConfig\.VERSION_NAME/);
+assert.match(main,/ACTION_SEND/);
+assert.doesNotMatch(main,/https:\/\/drive\.google\.com\/file\/d\/1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P\/view/);
+assert.match(main,/send\.setType\("text\/plain"\)/);
+assert.match(update,/MANIFEST_ID="15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf"/);
+console.log("PASS LT143: versioned no-login Drive share path, stable public file ID, Home bridge unchanged");
