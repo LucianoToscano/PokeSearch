@@ -1071,7 +1071,10 @@ function parseCard(box,sourceIndex){
  const encounterDex=Number((meta.match(/#(\d{1,4})/)||[])[1]||0);
  const encounterSpecies=String(title||"").replace(/✨/g,"").replace(/\s*\([^)]*\)\s*/g," ").trim();
  const isSpriteShiny=/✨/.test(title);
- const formLabel=(title.match(/\(([^)]+)\)/)||[])[1]||"";
+ const labeledForm=nextLabelValue(box,"FORM")||
+    nextLabelValue(box,"POKEMON FORM")||
+    (body.match(/(?:^|\n)\s*(?:FORM|FORMA)\s*:\s*([^\n]{1,70})/i)||[])[1]||"";
+ const formLabel=String(labeledForm||(title.match(/\(([^)]+)\)/)||[])[1]||"").trim();
  const compact=value=>String(value||"").toUpperCase().replace(/[^A-Z0-9]+/g,"");
  const speciesKey=compact(encounterSpecies);
  // The provider may render <img>, <picture> or background-image. Read only
@@ -1161,7 +1164,7 @@ function parseCard(box,sourceIndex){
   ivRank:ivRankValid?ivRankValue:null,
   ivRankSource:ivRankValid?"explicit-species-iv":"",
   ivRankLeague:ivRankValid?mode:"",
-  shiny:isShiny,form:(title.match(/\(([^)]+)\)/)||[])[1]||""
+  shiny:isShiny,form:formLabel
  };
 }
 // IV is evidence about THIS card, not merely proof that Search had a filter.
