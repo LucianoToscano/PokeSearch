@@ -290,25 +290,27 @@
  }
  function exactCostume(card){
   if(!card||typeof card!=="object")return null;
-  // Halloween 2026 Zubat has its own official top-hat costume, different
-  // from ordinary Zubat. The first independently verified image is the
-  // exact Leek Duck GO costume icon; do not invent a shiny image.
-  const dexNum=dexOf(card);
-  if(dexNum===41){
-    const evidence=[card.form,card.costume,card.variant,card.name]
-      .map(nameKey).join(" ");
-    if(/HALLOWEEN202601|HALLOWEEN2026|TOPHAT|CARTOLA/.test(evidence)){
-      if(card.shiny===true){
-        // A generic #41 Shiny image is NOT a Halloween top-hat Shiny sprite.
-        // Trust only the exact image observed in the matching provider card.
-        const exact=card.imageFromSite===true&&/^https:\/\//.test(String(card.image||""))?
-          String(card.image):"";
-        return {src:exact,original:"",offline:false,officialCostume:true,
-          exactCostume:!!exact,missingExact:!exact};
-      }
-      const url="https://cdn.leekduck.com/assets/img/pokemon_icons_crop/pm41.fHALLOWEEN_2026_01.icon.png";
-      return {src:url,original:url,offline:false,officialCostume:true,exactCostume:true};
-    }
+  // LT144: real PNGs fetched and SHA256-pinned in the APK. The names are
+  // confirmed by the official GO form catalog, not inferred from Dex alone.
+  const dexNum=dexOf(card),form=nameKey(card.form),costume=nameKey(card.costume);
+  const formId=Number(card.form_id??card.formId??0);
+  const evidence=[form,costume,nameKey(card.variant),nameKey(card.name)].join(" ");
+  const exactEvent=file=>({src:LOCAL+"costumes/"+file,
+    original:"https://cdn.leekduck.com/assets/img/pokemon_icons_crop/"+file,
+    offline:true,officialCostume:true,exactCostume:true});
+  if(dexNum===41&&(formId===3362||
+     /HALLOWEEN202601|HALLOWEEN2026|TOPHAT|CARTOLA/.test(evidence))){
+    return exactEvent("pm41.fHALLOWEEN_2026_01."+
+       (card.shiny===true?"s.":"")+"icon.png");
+  }
+  if(dexNum===10&&(formId===3346||/GOFEST2026/.test(form+" "+costume))){
+    if(card.shiny===true)return {src:"",original:"",offline:false,
+      officialCostume:true,missingExact:true};
+    return exactEvent("pm10.fGOFEST_2026.icon.png");
+  }
+  if(dexNum===25&&(formId===3318||/GOTOUR2026A$/.test(form+" "+costume))){
+    return exactEvent("pm25.fGOTOUR_2026_A."+
+      (card.shiny===true?"s.":"")+"icon.png");
   }
   const archived=archivedCostume(card);
   const genderCode=nameKey(card.gender||card.sex);
