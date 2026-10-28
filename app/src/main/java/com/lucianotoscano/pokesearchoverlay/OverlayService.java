@@ -396,6 +396,7 @@ public class OverlayService extends Service {
                     deliverCoords("","Erro ao guardar coordenadas.");return;
                 }
                 if(autoCopy)copyCoordinatesInternal(coords);
+                CoordsQuotaStore.successfulReveal(this,response.optJSONObject("quota"));
                 deliverCoords(coords,autoCopy?"✓ Coordenadas API copiadas":
                     "Coordenadas API disponíveis");
             });
@@ -3090,6 +3091,7 @@ public class OverlayService extends Service {
             JSONObject obj=a.getJSONObject(index);
             js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(count()>0?shownMode:mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
             detailRoot.setVisibility(View.VISIBLE);
+            pushCoordsQuota();
             moveDetail();
             js(resultPanel,resultLoaded,"window.highlight("+index+")");
             // RANK-EVO-DETAIL-03: request derived PvP projections only on tap.
@@ -3201,6 +3203,7 @@ public class OverlayService extends Service {
                     results=existing.toString();
                 }catch(Exception e){recordFailure("armazenar coordenadas",e);}
                 if(autoCopy)copyCoordinatesInternal(coords);
+                CoordsQuotaStore.successfulReveal(this,null);
                 deliverCoords(coords,autoCopy?"Coordenadas copiadas":"Coordenadas obtidas");return;
             }
             if(result.optBoolean("pending",false)&&attempt<9){
@@ -3306,8 +3309,12 @@ public class OverlayService extends Service {
         }
         return found;
     }
+    private void pushCoordsQuota(){
+        js(detailPanel,detailLoaded,"window.coordsQuotaUpdated("+CoordsQuotaStore.snapshot(this).toString()+")");
+    }
     private void deliverCoords(String coordinates,String message){
         js(detailPanel,detailLoaded,"window.coordsResult("+JSONObject.quote(coordinates)+","+JSONObject.quote(message)+")");
+        pushCoordsQuota();
         status(message);
     }
     // The regular Favorites picker is not a #choices popup. Give it the same
