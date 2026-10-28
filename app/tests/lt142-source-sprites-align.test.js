@@ -25,7 +25,7 @@ assert.notEqual(costume.src,base+"41.png");
 assert.equal(sprites.resolve({...zubat,shiny:true}).src,"");
 const sameCostume="https://pogocoordinates.com/assets/pokemon/zubat-halloween2026.png";
 assert.equal(sprites.resolve({...zubat,image:sameCostume,imageFromSite:true}).src,sameCostume);
-assert.equal(sprites.resolve({...zubat,image:sameCostume,imageFromSite:true}).original,"");
+assert.match(sprites.resolve({...zubat,image:sameCostume,imageFromSite:true}).original,/pm41\\.fHALLOWEEN_2026_01\\.icon\\.png$/);
 assert.equal(api.MAX_RESULTS,100,"Preserve already published VIP100 ceiling");
 const probe=read("probe.js"),dock=read("dock.html"),detail=read("detail.html");
 new vm.Script(probe);
