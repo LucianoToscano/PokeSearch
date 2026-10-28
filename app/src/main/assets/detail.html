@@ -163,6 +163,42 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  white-space:nowrap;pointer-events:none}
 #coordRow #coordsQuota.official{color:#a6e5bb}
 #coordsNumbers{display:none!important}
+
+/* LT145 QA6 — single hierarchy, compact glass and accessible Despawn states.
+   Only the clock changes color or pulses; icons/cards remain motion-free. */
+#panel{height:auto;min-height:0;max-height:calc(100vh - 6px);
+ padding:6px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+#header{gap:4px}
+#names{flex:1 1 auto;min-width:0}
+#nameLine{gap:3px;flex-wrap:wrap}
+#nameLine b{white-space:normal;overflow:visible;word-break:normal;overflow-wrap:anywhere}
+#types{flex:none;gap:2px}
+.pkTypeImg{width:11px;height:11px}
+#headerButtons button{width:23px;height:23px;min-width:23px;max-width:23px;
+ min-height:23px;max-height:23px}
+#headerButtons svg{width:15px;height:15px}
+#major{margin-top:3px;gap:3px;line-height:1.2}
+#major span{background:#ffffff12}
+#info{margin-top:3px;line-height:1.27}
+#info div{margin:1px 0}
+#evolutions{margin-top:3px}
+#evoToggle{background:#ffffff14;border-color:#ffffff25;color:#dce8f0}
+#coordRow{margin-top:4px}
+#coordRow #coords{min-height:29px;background:#ffffff14;border:1px solid #ffffff36}
+#headerActions #timer{margin:1px 0 0;box-shadow:none;border:0;
+ border-radius:0;background:transparent;transform-origin:right center}
+#timer.good{color:#9ce5b9}
+#timer.warning{color:#f3c276}
+#timer.pink{color:#ffa4cb}
+#timer.critical{color:#ff6575}
+@keyframes psDespawnGentlePulse{
+  0%,100%{opacity:1}
+  50%{opacity:.54}
+}
+#headerActions #timer.pulse{animation:psDespawnGentlePulse 1.6s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){
+ #headerActions #timer.pulse{animation:none;text-decoration:underline;text-underline-offset:2px}
+}
 </style></head><body><div id="panel">
  <div id="header">
   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
@@ -204,7 +240,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
  <small id="captureStatus" hidden></small>
 </div>
-<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="cooldown_estimate.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
 let coordsNote="",coordsPending=false,coordsRequestSeq=0;
@@ -329,7 +365,8 @@ function coordButtons(){
  // Exact numeric coordinates replace Get coords in the same button.
  // Tapping the numbers copies again without a new reveal.
  fetch.textContent=coordsPending?"⌛ Obtendo...":valid?
-  String(currentCoords).trim().replace(";",", "):"⌖ Get coords";
+  String(currentCoords).trim().replace(";",", ")+(window.copyVisualUntil>Date.now()?"  ✓":""):
+  "⌖ Get coords";
  fetch.title=valid?"Toque nas coordenadas para copiar novamente":
   "Obter e copiar coordenadas";
  fetch.setAttribute("aria-label",fetch.title);
@@ -363,8 +400,23 @@ function copyCoords(){
  if(currentCoords)Native.copyCoords(currentCoords);
  else requestCoordsUi();
 }
+function showCopySuccess(){
+ window.copyVisualUntil=Date.now()+1100;
+ const copyIdentity=String(currentCoords||"");
+ const seq=++window.copyVisualGeneration||1;
+ coordButtons();
+ setTimeout(()=>{
+  if(window.copyVisualGeneration!==seq||String(currentCoords||"")!==copyIdentity)return;
+  window.copyVisualUntil=0;
+  coordButtons();
+ },1150);
+}
 window.copyFeedback=msg=>{
- coordsNote=String(msg||"");
+ const message=String(msg||"");
+ const didCopy=message.startsWith("✓")&&
+  !!window.PokeSearchCooldown?.coords?.(currentCoords);
+ coordsNote=didCopy?"":message;
+ if(didCopy)showCopySuccess();
  const label=document.getElementById("coordsValue");
  if(label&&coordsNote)label.textContent=coordsNote;
  const status=document.getElementById("coordsStatus");
@@ -374,14 +426,17 @@ window.copyFeedback=msg=>{
 function fmt(sec){sec=Math.max(0,Math.floor(sec));return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");}
 function updateCountdown(){
  const e=document.getElementById("timer");if(!e)return;
- if(!expiresAt){e.hidden=true;return;}
+ if(!expiresAt){e.hidden=true;e.className="unknown";return;}
  const remaining=Math.max(0,Math.ceil((expiresAt-Date.now())/1000));
+ const state=window.PokeSearchDespawnVisual?.state(remaining)||
+  {tone:remaining>900?"good":remaining>300?"warning":
+   remaining>120?"pink":"critical",pulse:remaining>0&&remaining<=60};
  e.hidden=false;
  e.textContent="⏳ "+(remaining?fmt(remaining):"Expirado");
- const tone=window.PokeSearchCardPresentation?.despawnTone(remaining)||
-  (remaining<=300?"critical":remaining<=900?"warning":"good");
- e.className=tone;
- e.title="Despawn: tempo estimado até desaparecer";
+ e.className=state.tone+(state.pulse?" pulse":"");
+ e.title="Despawn: "+(remaining?fmt(remaining):"expirado")+" · "+
+  (state.tone==="good"?"Mais de 15 min":state.tone==="warning"?"5–15 min":
+   state.tone==="pink"?"2–5 min":"Menos de 2 min");
  if(remaining<=0){
   window.pauseDetailTimer();
   if(Native.expiredResults)Native.expiredResults();
@@ -420,8 +475,11 @@ window.coordsQuotaUpdated=function(data){
 window.coordsResult=function(coords,message){
  coordsRequestSeq++;
  coordsPending=false;
- if(coords){currentCoords=coords;coordsNote="";}
- else coordsNote=String(message||"Coordenadas indisponíveis");
+ if(coords){
+  currentCoords=coords;coordsNote="";
+  if(/copiad/i.test(String(message||""))&&window.PokeSearchCooldown?.coords?.(coords))
+   showCopySuccess();
+ }else coordsNote=String(message||"Coordenadas indisponíveis");
  coordButtons();
  refreshCooldownButtons();
  const label=document.getElementById("coordsValue");
@@ -515,6 +573,7 @@ window.showDetails=(c,mode,watched)=>{
   detailIdentity=nextIdentity;evolutionExpanded=false;
   coordsRequestSeq++;
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
+  window.copyVisualUntil=0;window.copyVisualGeneration=(window.copyVisualGeneration||0)+1;
   shareReady=false;shareSent=false;sharePending=false;shareAwaitingOffer=false;shareUi();
   const cdNote=document.getElementById("cooldownNote");cdNote.hidden=true;cdNote.textContent="";
   document.getElementById("captureStatus").hidden=true;
@@ -542,7 +601,7 @@ window.showDetails=(c,mode,watched)=>{
  document.getElementById("types").innerHTML=presenter?.types(c,metadata)||"";
  const gender=presenter?.gender(c.gender)||"";
  document.getElementById("sub").innerHTML=
-  [h(c.number),gender,h(c.size),h(c.form)].filter(Boolean).join(" · ");
+  [h(c.number),gender,h(c.form)].filter(Boolean).join(" · ");
  const img=document.getElementById("img"),fallback=document.getElementById("imageFallback");
  // The result list and this separately owned detail WebView MUST resolve
  // identical offline bytes from the APK, without relying on HTTP or a warm
@@ -604,15 +663,16 @@ window.showDetails=(c,mode,watched)=>{
  const showRaw=validRaw&&(!validPct||rawPct===Number(percent));
  document.getElementById("major").innerHTML=
   stat("PC",c.cp)+stat("Nv.",c.level)+
-  stat("IV%",showPct?percent+"%":"","red")+
-  stat("IV",showRaw?raw:"","red")+stat("Rank",c.rank);
+  stat("IV",showRaw?raw:"","red")+
+  stat("IV%",showPct?percent+"%":"","red")+stat("Rank",c.rank);
  const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"");
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");
  document.getElementById("info").innerHTML=
   (c.moves?'<div><em>Golpes:</em> '+movesHtml+'</div>':"")+
-  (c.location?'<div><em>Local:</em> '+h(locationFlag?locationFlag+" "+locationText:locationText)+'</div>':"")+
   item("Distância",c.distance)+
+  (c.location?'<div><em>Local:</em> '+h(locationFlag?locationFlag+" "+locationText:locationText)+'</div>':"")+
+  item("Tamanho",c.size)+
   '<div id="coordsStatus" role="status" hidden><span id="coordsValue"></span></div>';
  updateCountdown();
  resizeEvolutionPanel();
