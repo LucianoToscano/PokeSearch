@@ -3344,7 +3344,18 @@ public class OverlayService extends Service {
         // call this read-only bridge. No network, storage path or credentials.
         @JavascriptInterface public String bundledBaseSprite(int dex,boolean shiny){
             if(dex<1||dex>1025)return "";
-            String file="pokemon-sprites/"+(shiny?"shiny/":"base/")+dex+".png";
+            return readBundledPng("pokemon-sprites/"+
+                (shiny?"shiny/":"base/")+dex+".png");
+        }
+        @JavascriptInterface public String bundledExactSprite(String relative){
+            // A known exact costume/form image, never a supplied remote URL or
+            // general file path. Both overlay services share the same assets.
+            if(relative==null||relative.contains("..")||
+               !relative.matches("(?:forms|costumes)/[A-Za-z0-9_.-]{4,140}\\.png"))
+                return "";
+            return readBundledPng("pokemon-sprites/"+relative);
+        }
+        private String readBundledPng(String file){
             try(InputStream stream=getAssets().open(file);
                 ByteArrayOutputStream buffer=new ByteArrayOutputStream()){
                 byte[] chunk=new byte[4096];int count;
