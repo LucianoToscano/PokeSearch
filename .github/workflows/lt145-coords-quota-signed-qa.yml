@@ -160,12 +160,18 @@ jobs:
           assert len(report['sha256'])==report['baseCount']+report['shinyCount']
           expected={'forms/zigzagoon-galar.png','forms/zigzagoon-galar-shiny.png'}
           assert expected.issubset(set(report['forms']))
-          assert len(report['forms'])==716  # 82 named plus 317 varieties normal/Shiny
+          assert len(report['forms'])==720  # 716 retained + 4 exact Autumn GO forms
           assert len([x for x in report['forms'] if x.startswith('forms/variety-')])==634
           assert 'forms/variety-10262-shiny.png' in report['forms']
           assert 'forms/144-galar.png' in report['forms']
           assert 'forms/555-galar-zen-shiny.png' in report['forms']
           assert 'forms/585-spring.png' in report['forms']
+          for dex in (585,586):
+              for variant in ('','-shiny'):
+                  name=f'forms/{dex}-autumn{variant}.png'
+                  assert name in report['forms'],name
+                  import hashlib
+                  assert hashlib.sha256((root/name).read_bytes()).hexdigest()==report['forms'][name]
           assert report['formSourceCommit']=='d8c2fb78563e28ad7b3abe938cf6e79998d04e90'
           assert len(report['costumes'])==106  # 102 legacy + 4 SHA256-verified Zubat 2026 / Gengar 2023
           for file in ("pm37.cFALL_2022.icon.png",
@@ -213,6 +219,10 @@ jobs:
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/144-galar.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/555-galar-zen-shiny.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/585-spring.png'
+          for dex in 585 586; do
+            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/forms/${dex}-autumn.png"
+            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/forms/${dex}-autumn-shiny.png"
+          done
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/variety-10262-shiny.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm37.cFALL_2022.icon.png'
           unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm714.cHALLOWEEN_2025.s.icon.png'
