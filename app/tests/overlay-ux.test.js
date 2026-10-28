@@ -1446,7 +1446,7 @@ test("IV palette follows 46 attainable percentages including both extremes",(()=
 test("Shiny and ordinary IV badges use a single evidence-driven function",
  dock.includes('const verifiedPercent=verifiedSpawnIvPercent(c);')&&
  dock.includes("ivPaletteClass(verifiedPercent)")&&
- dock.includes("'+icon+ivBadge+badge+info+'</button>'")&&
+ dock.includes("'+icon+ivBadge+badge+cooldownMarkup+info+'</button>'")&&
  !dock.includes("shiny?ivPaletteClass")&&
  dock.includes('verifiedPercent===null?"IV não comprovado"'));
 test("Verified IV includes 0%, 100% and raw-derived values but never assumes a missing value",(()=>{
