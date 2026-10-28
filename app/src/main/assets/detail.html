@@ -403,7 +403,7 @@ function copyCoords(){
 function showCopySuccess(){
  window.copyVisualUntil=Date.now()+1100;
  const copyIdentity=String(currentCoords||"");
- const seq=++window.copyVisualGeneration||1;
+ const seq=window.copyVisualGeneration=(Number(window.copyVisualGeneration)||0)+1;
  coordButtons();
  setTimeout(()=>{
   if(window.copyVisualGeneration!==seq||String(currentCoords||"")!==copyIdentity)return;
@@ -573,7 +573,7 @@ window.showDetails=(c,mode,watched)=>{
   detailIdentity=nextIdentity;evolutionExpanded=false;
   coordsRequestSeq++;
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
-  window.copyVisualUntil=0;window.copyVisualGeneration=(window.copyVisualGeneration||0)+1;
+  window.copyVisualUntil=0;window.copyVisualGeneration=(Number(window.copyVisualGeneration)||0)+1;
   shareReady=false;shareSent=false;sharePending=false;shareAwaitingOffer=false;shareUi();
   const cdNote=document.getElementById("cooldownNote");cdNote.hidden=true;cdNote.textContent="";
   document.getElementById("captureStatus").hidden=true;
