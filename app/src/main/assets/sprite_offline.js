@@ -298,8 +298,14 @@
     const evidence=[card.form,card.costume,card.variant,card.name]
       .map(nameKey).join(" ");
     if(/HALLOWEEN202601|HALLOWEEN2026|TOPHAT|CARTOLA/.test(evidence)){
-      if(card.shiny===true)return {src:String(card.image||""),original:String(card.image||""),
-        offline:false,officialCostume:true,missingExact:!card.image};
+      if(card.shiny===true){
+        // A generic #41 Shiny image is NOT a Halloween top-hat Shiny sprite.
+        // Trust only the exact image observed in the matching provider card.
+        const exact=card.imageFromSite===true&&/^https:\/\//.test(String(card.image||""))?
+          String(card.image):"";
+        return {src:exact,original:"",offline:false,officialCostume:true,
+          exactCostume:!!exact,missingExact:!exact};
+      }
       const url="https://cdn.leekduck.com/assets/img/pokemon_icons_crop/pm41.fHALLOWEEN_2026_01.icon.png";
       return {src:url,original:url,offline:false,officialCostume:true,exactCostume:true};
     }
