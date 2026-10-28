@@ -18,8 +18,6 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #info{color:#d8e0ea;line-height:1.28;margin-top:4px;font-size:10px;overflow-wrap:anywhere}
 #info div{margin:1px 0}
 #info em{color:#afb9c8;font-style:normal}
-#watch{margin-top:4px;width:100%;border:1px solid #edc95778;background:#e8bf3d20;border-radius:6px;padding:4px 6px;min-height:28px;font-weight:700;color:#ffecba;display:flex;align-items:center;justify-content:center;gap:4px}
-#watch svg{width:14px;height:14px;flex-shrink:0}
 /* RANK-EVO-DETAIL-02: folded section; details always scroll inside the same 226dp card. */
 #evolutions[hidden],#evoBody[hidden]{display:none}
 #evolutions{margin-top:4px;border:1px solid #ffffff28;border-radius:7px;overflow:hidden}
@@ -132,9 +130,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #names{padding-top:2px;min-width:0;flex:1 1 auto}
 #headerActions{width:77px;flex:0 0 77px;display:flex;flex-direction:column;align-items:stretch;gap:2px}
 #headerButtons{display:flex;align-items:center;justify-content:flex-end;gap:4px}
-#headerButtons button{box-sizing:border-box;width:23px;height:23px;min-width:23px;
- flex:0 0 23px;border-radius:6px;margin:0;padding:0;display:flex;align-items:center;
- justify-content:center;background:#ffffff12;border:1px solid #ffffff30}
+#headerButtons button{box-sizing:border-box;width:23px;height:23px;min-width:23px;max-width:23px;
+ min-height:23px;max-height:23px;flex:0 0 23px;border-radius:6px;margin:0;padding:0;
+ display:flex;align-items:center;justify-content:center;background:#ffffff12;border:1px solid #ffffff30}
 #headerButtons svg{display:block;width:15px;height:15px;stroke:currentColor;
  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;fill:none}
 #watch{color:#dfe7f0;font-size:unset}
@@ -152,16 +150,16 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #timer.warning{color:#f4c675}
 #timer.critical{color:#f49baa}
 #coordRow{display:block;position:relative;margin-top:6px}
-#coordRow #coords{display:block;width:100%;min-height:30px;padding:4px 13px;
+#coordRow #coords{display:block;width:100%;min-height:30px;padding:4px 36px 4px 13px;
  border:1px solid #ffffff38;border-radius:7px;background:#ffffff14;color:#f6f7fa;
  font-size:11px;line-height:1.32;text-align:center;font-weight:700;
  box-shadow:none;white-space:normal;overflow-wrap:anywhere;word-break:normal}
 #coordRow #coords.hasCoords{font-size:10.5px;font-weight:600;letter-spacing:0;
  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;user-select:text;-webkit-user-select:text}
 #coordRow #coordsQuota,#coordRow #coordsQuota.official{display:inline;position:absolute;
- top:-7px;right:5px;width:auto;height:auto;min-width:0;max-width:95px;min-height:0;
- padding:0 2px;margin:0;border:0;border-radius:0;background:transparent;
- box-shadow:none;color:#f3f3f4;font-size:9px;line-height:11px;font-weight:800;
+ top:7px;right:9px;width:auto;height:auto;min-width:0;max-width:50px;min-height:0;
+ padding:0;margin:0;border:0;border-radius:0;background:transparent;
+ box-shadow:none;color:#f3f3f4;font-size:9px;line-height:14px;font-weight:800;
  white-space:nowrap;pointer-events:none}
 #coordRow #coordsQuota.official{color:#a6e5bb}
 #coordsNumbers{display:none!important}
@@ -174,7 +172,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   </div>
   <div id="headerActions">
     <div id="headerButtons">
-      <button id="shareIcon" type="button" onclick="captureShareAsk()" title="Capturei: compartilhar no chat" aria-label="Capturei Pokémon — compartilhar no chat" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.4 11l7.2-4.5M8.4 13l7.2 4.5"/></svg></button>
+      <button id="shareIcon" type="button" onclick="captureShareAsk()" title="Capturei Pokémon — compartilhar no chat" aria-label="Capturei Pokémon — compartilhar no chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.4 11l7.2-4.5M8.4 13l7.2 4.5"/></svg></button>
       <button id="watch" onclick="Native.toggleWatch(watchName)" title="Adicionar aos favoritos" aria-label="Adicionar aos favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.5 2.93 6.1 6.73.98-4.83 4.7 1.14 6.64L12 17.78l-5.97 3.14 1.14-6.64-4.83-4.7 6.73-.98L12 2.5Z"/></svg></button>
       <button id="x" onclick="Native.hideDetail()" aria-label="Fechar card">×</button>
     </div>
@@ -210,7 +208,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
 let coordsNote="",coordsPending=false,coordsRequestSeq=0;
-let shareReady=false,shareSent=false,sharePending=false;
+let shareReady=false,shareSent=false,sharePending=false,shareAwaitingOffer=false;
 let cooldownLinked=false,cooldownActive=false,cooldownReference=null;
 function refreshCooldownButtons(){
  const container=document.getElementById("cooldownControls");
@@ -252,25 +250,57 @@ function resetCooldownUi(){
 function shareUi(){
  const icon=document.getElementById("shareIcon");
  if(icon){
-  const ready=shareReady&&!shareSent&&!sharePending;
-  icon.disabled=!ready;
-  icon.title=ready?"Capturei Pokémon — compartilhar no chat":"Obtenha e copie as coordenadas antes de compartilhar";
+  // A capture report is a manual action; revealing coordinates first is not required.
+  const available=Number.isInteger(currentIndex)&&currentIndex>=0&&!shareSent&&!sharePending;
+  icon.disabled=!available;
+  icon.title=shareSent?"Captura já compartilhada":
+   sharePending?"Enviando captura ao chat":
+   shareAwaitingOffer?"Preparando confirmação da captura":
+   "Capturei Pokémon — compartilhar no chat";
   icon.setAttribute("aria-label",icon.title);
  }
  document.getElementById("captureShare").hidden=!shareReady||shareSent||sharePending;
  if(!shareReady||shareSent)document.getElementById("captureConfirm").hidden=true;
 }
-window.offerCaptureShare=()=>{
- if(shareSent)return;
- shareReady=true;sharePending=false;shareUi();resizeEvolutionPanel();
+window.offerCaptureShare=sourceIndex=>{
+ // Ignore callbacks queued for a different card or an old result.
+ if(sourceIndex!==currentIndex||shareSent)return;
+ shareReady=true;sharePending=false;
+ const requested=shareAwaitingOffer;
+ shareAwaitingOffer=false;
+ shareUi();
+ if(requested)showCaptureConfirmation();
+ resizeEvolutionPanel();
 };
-function captureShareAsk(){
- if(!shareReady||shareSent||sharePending)return;
- document.getElementById("captureShare").hidden=true;
- document.getElementById("captureConfirm").hidden=false;
+window.captureShareAvailability=(ok,message)=>{
+ if(ok)return;
+ shareAwaitingOffer=false;
+ shareUi();
+ const status=document.getElementById("captureStatus");
+ status.textContent=String(message||"Esta captura não está disponível no momento.");
+ status.hidden=false;
+ resizeEvolutionPanel();
+};
+function showCaptureConfirmation(){
+ if(!shareReady||shareSent||sharePending||currentIndex<0)return;
+ const confirmation=document.getElementById("captureConfirm");
+ confirmation.querySelector("span").textContent="Você capturou "+watchName+"?";
+ confirmation.hidden=false;
  resizeEvolutionPanel();
 }
+function captureShareAsk(){
+ if(shareSent||sharePending||shareAwaitingOffer||currentIndex<0)return;
+ if(shareReady){showCaptureConfirmation();return;}
+ shareAwaitingOffer=true;
+ shareUi();
+ if(typeof Native.prepareCaptureShare==="function"){
+  Native.prepareCaptureShare(currentIndex);
+ }else{
+  window.captureShareAvailability(false,"Atualize o aplicativo para compartilhar capturas.");
+ }
+}
 function captureShareCancel(){
+ shareAwaitingOffer=false;
  document.getElementById("captureConfirm").hidden=true;
  shareUi();resizeEvolutionPanel();
 }
@@ -485,7 +515,7 @@ window.showDetails=(c,mode,watched)=>{
   detailIdentity=nextIdentity;evolutionExpanded=false;
   coordsRequestSeq++;
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
-  shareReady=false;shareSent=false;sharePending=false;shareUi();
+  shareReady=false;shareSent=false;sharePending=false;shareAwaitingOffer=false;shareUi();
   const cdNote=document.getElementById("cooldownNote");cdNote.hidden=true;cdNote.textContent="";
   document.getElementById("captureStatus").hidden=true;
   document.getElementById("evolutions").hidden=true;
@@ -494,6 +524,7 @@ window.showDetails=(c,mode,watched)=>{
  }
  watchName=String(c.name||"");window.watchFeedback(!!watched);
  currentIndex=Number(c.sourceIndex);
+ shareUi();
  if(!currentCoords&&c.coords)currentCoords=String(c.coords);
  coordButtons();
  refreshCooldownButtons();
