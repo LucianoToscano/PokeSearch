@@ -3323,6 +3323,27 @@ public class OverlayService extends Service {
         }
     }
     public class Bridge{
+        // The result list and detail card run in separate Android WebViews. On
+        // some devices their file:// image load fails even though the bundled
+        // sprite exists. Only an exact Dex-verified base (normal or shiny) may
+        // call this read-only bridge. No network, storage path or credentials.
+        @JavascriptInterface public String bundledBaseSprite(int dex,boolean shiny){
+            if(dex<1||dex>1025)return "";
+            String file="pokemon-sprites/"+(shiny?"shiny/":"base/")+dex+".png";
+            try(InputStream stream=getAssets().open(file);
+                ByteArrayOutputStream buffer=new ByteArrayOutputStream()){
+                byte[] chunk=new byte[4096];int count;
+                while((count=stream.read(chunk))!=-1){
+                    if(buffer.size()+count>128*1024)return "";
+                    buffer.write(chunk,0,count);
+                }
+                byte[] png=buffer.toByteArray();
+                if(png.length<30||png[0]!=(byte)0x89||png[1]!=0x50||
+                   png[2]!=0x4e||png[3]!=0x47)return "";
+                return "data:image/png;base64,"+
+                    android.util.Base64.encodeToString(png,android.util.Base64.NO_WRAP);
+            }catch(Exception ignored){return "";}
+        }
         @JavascriptInterface public void previewVisualArea(String area){
             handler.post(()->OverlayService.this.setVisualEditorPreview(area));
         }

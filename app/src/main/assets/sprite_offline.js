@@ -97,7 +97,8 @@
   // These two defaults were independently checked against PokeAPI #710/#711
   // and the pinned WatWowMap defaultFormId 2641/2645, even without the
   // optional catalog bundle in older WebViews.
-  const auditedAverageId=dex===710?2641:dex===711?2645:0;
+  const auditedAverageId=dex===710?2641:dex===711?2645:
+    dex===94?1044:dex===41?157:0;
   const defaultId=metadata&&nameKey(metadata[0])===species?
     Number(metadata[1]):auditedAverageId;
   const formId=card.form_id!=null?Number(card.form_id):card.formId!=null?Number(card.formId):0;
@@ -338,6 +339,23 @@
   }
   return archived||null;
  }
+ const trustedBaseData=Object.create(null);
+ function verifiedBundledData(card){
+  if(!verifiedBase(card))return "";
+  const dex=dexOf(card),shiny=card.shiny===true,key=dex+":"+(shiny?"s":"n");
+  if(Object.prototype.hasOwnProperty.call(trustedBaseData,key))return trustedBaseData[key];
+  let result="";
+  try{
+   if(typeof window!=="undefined"&&window.Native&&
+      typeof window.Native.bundledBaseSprite==="function"){
+    result=String(window.Native.bundledBaseSprite(dex,shiny)||"");
+   }
+  }catch(_){}
+  // Only the private Java bridge can return an exact PNG; do not accept web URLs.
+  if(!/^data:image\/png;base64,[A-Za-z0-9+/=]{36,175000}$/.test(result))result="";
+  if(result)trustedBaseData[key]=result;
+  return result;
+ }
  function resolve(card){
   const image=String(card?.image||"");
   const costumeArt=exactCostume(card);
@@ -349,7 +367,8 @@
   if(sourceExact){
    const dex=dexOf(card);
    const backup=costumeArt?.src&&costumeArt.src!==image?costumeArt.src:
-     verifiedBase(card)?LOCAL+(card.shiny===true?"shiny/":"base/")+dex+".png":"";
+     verifiedBase(card)?verifiedBundledData(card)||
+       LOCAL+(card.shiny===true?"shiny/":"base/")+dex+".png":"";
    return {src:image,original:backup,offline:!!backup,
      providerExact:true,officialCostume:!!costumeArt?.officialCostume};
   }
@@ -396,7 +415,8 @@
   if(verifiedBase(card)){
    const path=(card.shiny===true?"shiny/":"base/")+dex+".png";
    const origin=RAW+(card.shiny===true?"shiny/":"")+dex+".png";
-   return {src:LOCAL+path,original:origin,offline:true};
+   return {src:verifiedBundledData(card)||LOCAL+path,
+     original:origin,offline:true,verifiedBase:true};
   }
   if(candidate&&safeCostume&&(verifiedBase(card)||!card?.form)){
    const dex=Number(candidate[2]);
@@ -413,5 +433,6 @@
   // Preserve provider URLs, data images and unknown special forms untouched.
   return {src:image,original:image,offline:false};
  }
- return Object.freeze({resolve,verifiedBase,verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume});
+ return Object.freeze({resolve,verifiedBase,verifiedBundledData,
+  verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume});
 });

@@ -272,24 +272,46 @@ window.showDetails=(c,mode,watched)=>{
    {src:String(c.image||""),original:String(c.image||""),offline:false};
  img.onload=null;img.onerror=null;
  img.style.display="none";fallback.style.display="flex";img.removeAttribute("src");
- let artAttempt=0;
+ let artAttempt=0,displayed=false,verifiedNativeTried=false,loadGeneration=0;
+ const nativeFallback=()=>{
+  if(verifiedNativeTried)return "";
+  verifiedNativeTried=true;
+  return window.PokeSearchOfflineSprite?.verifiedBundledData?.(c)||"";
+ };
  const useArt=src=>{
+  const generation=++loadGeneration;
   if(!src||!(/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/)/i.test(src)))return;
   img.onload=()=>{
+   if(generation!==loadGeneration)return;
    if(img.naturalWidth>=8&&img.naturalHeight>=8){
-    img.style.display="block";fallback.style.display="none";
+    displayed=true;img.style.display="block";fallback.style.display="none";
    }
   };
   img.onerror=()=>{
-   // Only retry the verified EXACT original image, never a different form.
-   if(art.offline&&artAttempt++===0&&art.original&&art.original!==src)
-    useArt(art.original);
-   else{img.style.display="none";fallback.style.display="flex";}
+   if(generation!==loadGeneration)return;
+   // First recover the precise sprite from the APK through the native bridge;
+   // do not substitute a normal variant for an unverified costume/Shiny.
+   const direct=nativeFallback();
+   if(direct&&direct!==src){useArt(direct);return;}
+   if(art.offline&&artAttempt++===0&&art.original&&art.original!==src){
+    useArt(art.original);return;
+   }
+   displayed=false;img.style.display="none";fallback.style.display="flex";
   };
   img.src=src;
   if(img.complete&&img.naturalWidth>=8&&img.naturalHeight>=8)img.onload();
  };
  useArt(art.src);
+ // Android WebView can leave a file/remote image pending forever with no
+ // error; a strict verified base image can still be restored from our APK.
+ const expectedSourceIndex=currentIndex,expectedName=watchName;
+ setTimeout(()=>{
+  if(!displayed&&img.isConnected&&currentIndex===expectedSourceIndex&&
+     watchName===expectedName&&img.naturalWidth<8){
+   const direct=nativeFallback();
+   if(direct&&img.getAttribute("src")!==direct)useArt(direct);
+  }
+ },1800);
  const stat=(label,value,css="")=>value?'<span class="'+css+'">'+h(label)+" "+h(value)+"</span>":"";
  const raw=String(c.iv??"").trim();
  const validRaw=/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw);

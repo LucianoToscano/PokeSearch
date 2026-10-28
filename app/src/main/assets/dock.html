@@ -5732,7 +5732,16 @@ function attachSpriteFeedback(){
  document.querySelectorAll(".spawn .spriteStage").forEach(stage=>{
   const img=stage.querySelector("img.sprite");
   if(!img){stage.classList.add("failed");return;}
-  let retries=0,done=false,mirrorAttempted=false;
+  let retries=0,done=false,mirrorAttempted=false,nativeTried=false;
+  const currentIndex=Number(stage.closest(".spawn")?.getAttribute("data-index"));
+  const sourceCard=Number.isInteger(currentIndex)?cards[currentIndex]:null;
+  const tryExactBundled=()=>{
+   if(nativeTried)return false;
+   nativeTried=true;
+   const exact=window.PokeSearchOfflineSprite?.verifiedBundledData?.(sourceCard)||"";
+   if(exact&&img.src!==exact){img.src=exact;return true;}
+   return false;
+  };
   const good=()=>img.naturalWidth>=8&&img.naturalHeight>=8;
   const loaded=()=>{
    if(good()){done=true;stage.classList.remove("failed");stage.classList.add("loaded");}
@@ -5740,6 +5749,9 @@ function attachSpriteFeedback(){
   };
   const failed=()=>{
    if(done||!img.isConnected)return;
+   // Deterministic identity-checked bytes from the bundled APK beat fragile
+   // Samsung WebView file and remote image retries for ordinary species.
+   if(tryExactBundled())return;
    const original=img.getAttribute("data-original-src")||"";
    // Exact, verified PokeAPI base sprite path only. Never guess a different
    // sprite for forms, shadows, costumes or a provider-supplied image URL.
@@ -5765,6 +5777,9 @@ function attachSpriteFeedback(){
   // to its equivalent CDN mirror after a bounded grace period.
   const original=img.getAttribute("data-original-src")||"";
   const known=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/((?:shiny\/)?[0-9]{1,4}\.png)$/.exec(original);
+  setTimeout(()=>{
+   if(!done&&img.isConnected&&!good())tryExactBundled();
+  },1700);
   if(known)setTimeout(()=>{
    if(!done&&img.isConnected&&!mirrorAttempted&&!good()){
     mirrorAttempted=true;
