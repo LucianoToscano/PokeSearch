@@ -108,9 +108,13 @@ public class OverlayService extends Service {
         if(scope.isEmpty()){cooldownFeedback("Vincule um treinador para registrar a captura.");return;}
         try{
             JSONArray arr=new JSONArray(results);
-            if(index>=arr.length()||selected!=index){cooldownFeedback("Resultado alterado.");return;}
-            JSONObject item=arr.getJSONObject(index);
-            if(!currentCoordinateTarget(item)){cooldownFeedback("Identidade do Pokémon alterada.");return;}
+            // JS passes sourceIndex from the provider, while selected is the
+            // displayed array index. Never confuse them after sorting/filtering.
+            if(selected>=arr.length()){cooldownFeedback("Resultado alterado.");return;}
+            JSONObject item=arr.getJSONObject(selected);
+            if(item.optInt("sourceIndex",-1)!=index||!currentCoordinateTarget(item)){
+                cooldownFeedback("Identidade do Pokémon alterada.");return;
+            }
             String coords=extractCoordinates(item.optString("coords",""));
             if(coords.isEmpty()){cooldownFeedback("Use Get coords antes de confirmar.");return;}
             String fingerprint=coords+"|"+item.optString("number")+"|"+
