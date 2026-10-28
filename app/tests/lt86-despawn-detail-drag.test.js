@@ -13,7 +13,7 @@ run("detail card shows authoritative API absolute despawn even with empty legacy
  assert.match(html,/const absolute=Number\(c\.expiresAtMs\)/);
  assert.match(html,/expiresAt=Number\.isFinite\(absolute\)&&absolute>0\?absolute:/);
  assert.match(detail,/e\.textContent="⏳ "\+\(remaining\?fmt\(remaining\):"Expirado"\)/);
- assert.match(detail,/e\.className=tone/);
+ assert.match(detail,/e\.className=state\.tone\+\(state\.pulse\?" pulse":""\)/);
  assert.match(detail,/if\(Native\.expiredResults\)Native\.expiredResults\(\)/);
 });
 run("API skips expired cards, including before first view or hidden timers",()=>{
