@@ -10,7 +10,7 @@
 })(typeof globalThis!=="undefined"?globalThis:this,function(){
  "use strict";
  function int(value,max){
-  if(typeof value!=="string"||!/^(?:0|[1-9][0-9]{0,8})$/.test(value))return null;
+  if(typeof value!=="string"||!/^(?:0|[1-9][0-9]{0,12})$/.test(value))return null;
   const n=Number(value);
   return Number.isSafeInteger(n)&&n>=0&&n<=max?n:null;
  }
@@ -27,7 +27,7 @@
    const remaining=int(headers.get(group[1]),1000000);
    if(limit===null||limit===0||remaining===null||remaining>limit)continue;
    // Reset is optional and cannot be guessed to mean midnight/local day.
-   const reset=int(headers.get(group[2]),999999999);
+   const reset=int(headers.get(group[2]),999999999999);
    return Object.freeze({kind:"official",limit,remaining,
     resetAtUnixSeconds:reset===null?null:reset});
   }
