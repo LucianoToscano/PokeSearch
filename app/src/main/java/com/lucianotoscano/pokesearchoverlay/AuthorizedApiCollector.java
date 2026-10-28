@@ -135,6 +135,20 @@ final class AuthorizedApiCollector {
             });
         });
     }
+    // Provider session check on the same authenticated WebView only.
+    // Never transfer an email address, account ID, JWT or raw profile to Java.
+    void accountStatus(Callback cb){
+        if(!official()){cb.onResult(failure("invalid-origin"));return;}
+        bootstrap(ready->{
+            if(!ready.optBoolean("ok",false)){cb.onResult(ready);return;}
+            int request=++ticket;
+            js("(function(){return JSON.stringify("+
+                "window.PokeSearchAndroidApi.startAccountStatus("+request+"));})()",started->{
+                if(!started.optBoolean("ok",false)){cb.onResult(started);return;}
+                poll(request,0,26,cb);
+            });
+        });
+    }
     void reveal(JSONObject selection,Callback cb){
         if(!official()){cb.onResult(failure("invalid-origin"));return;}
         int request=++ticket;
