@@ -22,7 +22,7 @@ const zubat={number:"#41",name:"Zubat",form:"HALLOWEEN_2026_01",shiny:false,imag
 const costume=sprites.resolve(zubat);
 assert.match(costume.src,/pm41\.fHALLOWEEN_2026_01\.icon\.png$/);
 assert.notEqual(costume.src,base+"41.png");
-assert.equal(sprites.resolve({...zubat,shiny:true}).src,"");
+assert.match(sprites.resolve({...zubat,shiny:true}).src,/pm41\.fHALLOWEEN_2026_01\.s\.icon\.png$/);
 const sameCostume="https://pogocoordinates.com/assets/pokemon/zubat-halloween2026.png";
 assert.equal(sprites.resolve({...zubat,image:sameCostume,imageFromSite:true}).src,sameCostume);
 assert.match(sprites.resolve({...zubat,image:sameCostume,imageFromSite:true}).original,/pm41\.fHALLOWEEN_2026_01\.icon\.png$/);
