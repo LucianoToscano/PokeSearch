@@ -83,7 +83,7 @@ check("Never read Maps coordinates globally or copy stale requests",()=>{
 check("Shiny, weather PNG theme, favorites and ten results are not removed",()=>{
  for(const bit of ['WEATHER_THEME_FILES=Object.freeze','weatherChoicePair','visual-light-menu','Native.shiny()','Native.openWatchList()'])
   assert.ok(dock.includes(bit),bit);
- assert.ok(probe.includes("if(cards.length===10)break;"));
+ assert.ok(probe.includes("if(cards.length===25)break;"));
  for(const name of ["any","boosted","sunny","rainy","partly-cloudy","cloudy","windy","snow","fog"])
   for(const theme of ["white","black"])assert.ok(fs.existsSync(path.join(root,"assets/weather-icons/v2",name+"-"+theme+".png")));
 });
