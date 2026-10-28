@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       first_failure: ${{ steps.detect.outputs.first_failure }}
+      status_code: ${{ steps.detect.outputs.status_code }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,13 +23,16 @@ jobs:
       - id: detect
         shell: bash
         run: |
-          node app/tests/overlay-ux.test.js > "$RUNNER_TEMP/ux.txt" 2>&1 || true
+          status=0
+          node app/tests/overlay-ux.test.js > "$RUNNER_TEMP/ux.txt" 2>&1 || status=$?
+          echo "status_code=$status" >> "$GITHUB_OUTPUT"
           first="$(sed -n '/^UX CONTRACT FAILURES/{n;p;q;}' "$RUNNER_TEMP/ux.txt" | cut -c1-110)"
-          if [ -z "$first" ]; then first='none'; fi
+          if [ -z "$first" ]; then first="$(tail -n 1 "$RUNNER_TEMP/ux.txt" | cut -c1-110)"; fi
+          if [ -z "$first" ]; then first='no-output'; fi
           first="${first//'%'/'pct'}"
           echo "first_failure=$first" >> "$GITHUB_OUTPUT"
   report:
-    name: "First UX failure: ${{ needs.diagnose.outputs.first_failure }}"
+    name: "UX exit ${{ needs.diagnose.outputs.status_code }}: ${{ needs.diagnose.outputs.first_failure }}"
     needs: diagnose
     runs-on: ubuntu-24.04
     steps:
