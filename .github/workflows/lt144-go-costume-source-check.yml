@@ -1,0 +1,41 @@
+name: LT144 Verify exact GO costume source artwork
+on:
+  push:
+    branches: [feature/lt144-native-sprite-fallback-20261027]
+    paths: ['.github/workflows/lt144-go-costume-source-check.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check-exact:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check provider's exact GO filenames without credentials
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,hashlib
+          root='https://cdn.leekduck.com/assets/img/pokemon_icons_crop/'
+          names=[
+          'pm41.fHALLOWEEN_2026_01.icon.png',
+          'pm41.fHALLOWEEN_2026_01.s.icon.png',
+          'pm42.fHALLOWEEN_2026_01.icon.png',
+          'pm42.fHALLOWEEN_2026_01.s.icon.png',
+          'pm169.fHALLOWEEN_2026_01.icon.png',
+          'pm169.fHALLOWEEN_2026_01.s.icon.png',
+          'pm10.fGOFEST_2026.icon.png',
+          'pm25.fGOTOUR_2026_A.icon.png',
+          'pm25.fGOTOUR_2026_A.s.icon.png',
+          'pm25.fHALLOWEEN_2026.icon.png',
+          'pm25.fHALLOWEEN_2026.s.icon.png'
+          ]
+          for name in names:
+            try:
+              req=urllib.request.Request(root+name,headers={'User-Agent':'Mozilla/5.0'})
+              with urllib.request.urlopen(req,timeout=10) as r:
+                data=r.read(500_000)
+                png=data.startswith(bytes.fromhex('89504e470d0a1a0a'))
+                print(name,'status',r.status,'png',png,'bytes',len(data),'sha256',hashlib.sha256(data).hexdigest() if png else '-')
+            except Exception as e:print(name,'ERROR',str(e)[:135])
+          PY
