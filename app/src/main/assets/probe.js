@@ -1097,7 +1097,7 @@ function parseCard(box,sourceIndex){
  // still be returned as hints but never displace a verified local sprite.
  const siteImageUrl=image?candidateImageUrl(image):"";
  const siteImageLabel=String(image?.alt||image?.getAttribute?.("aria-label")||"").toLowerCase();
- const speciesLabel=String(title||"").replace(/✨/g,"").replace(/\\s*\\([^)]*\\)\\s*/g," ").trim().toLowerCase();
+ const speciesLabel=String(title||"").replace(/✨/g,"").replace(/\s*\([^)]*\)\s*/g," ").trim().toLowerCase();
  const siteImageExact=!!image&&/^https:\\/\\//i.test(siteImageUrl)&&
    !/(?:logo|avatar|profile|icon-user|banner)/i.test(siteImageUrl)&&
    (image.naturalWidth>=8&&image.naturalHeight>=8||
