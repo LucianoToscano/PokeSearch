@@ -28,5 +28,5 @@ check("14 native expiry watchdog sweeps exact expired timestamps even when handl
  assert.ok(runner.includes('if(searchInProgress)queuedManualRefresh=true;'));
 });
 check("15 existing identities and security remain intact",()=>{let gradle=fs.readFileSync(path.join(base,"../../build.gradle.kts"),"utf8");assert.ok(gradle.includes('applicationId = "com.lucianotoscano.pokesearch"'));assert.ok(gradle.includes('namespace = "com.lucianotoscano.pokesearchoverlay"'));assert.ok(service.includes('IntegrityGuard.verify(this)'))});
-check("16 inline scripts parse and original detail controls remain",()=>{for(const html of [dock,detail]){for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);}assert.ok(detail.includes('id="copy" onclick="copyCoords()"'))});
+check("16 inline scripts parse and original detail controls remain",()=>{for(const html of [dock,detail]){for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);}assert.ok(detail.includes('id="coords" onclick="requestCoordsUi()"')&&detail.includes('id="copy" hidden')&&detail.includes('Native.copyCoords(currentCoords)'))});
 console.log("LT64: "+ok+" PASS / "+failed+" FAIL");if(failed)process.exitCode=1;
