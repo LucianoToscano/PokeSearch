@@ -4639,6 +4639,18 @@ public class OverlayService extends Service {
         }
         boolean initialStart=firstStart;
         firstStart=false;
+        if("com.lucianotoscano.pokesearchoverlay.TRAINER_CHANGED".equals(action)){
+            // Never leave a previous trainer's encounters interactive or alertable.
+            ++requestGeneration;
+            results="[]";selected=-1;resultsStale=false;
+            displayedApiResults=false;
+            hideDetails();
+            searchInProgress=false;
+            searchPhase="idle";
+            status("Treinador alterado · nova pesquisa necessária");
+            update();
+            return START_STICKY;
+        }
         if("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN".equals(action)||
            (initialStart&&action.isEmpty())){
             shinyLoginPromptRequested=false;

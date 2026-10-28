@@ -1000,7 +1000,7 @@ function cardRoots(){
   if(!chosen||seen.has(chosen))continue;
   seen.add(chosen);
   cards.push({node:chosen,sourceIndex:cards.length});
-  if(cards.length===25)break;
+  if(cards.length===10)break;
  }
  return cards;
 }
@@ -1106,7 +1106,6 @@ function parseCard(box,sourceIndex){
  const isShiny=/✨/.test(title);
  return {
   sourceIndex,name:title.replace(/✨/g,"").trim(),image:image?candidateImageUrl(image):"",
-  imageFromSite:!!image&&!!candidateImageUrl(image),
   number:(meta.match(/#\d{1,4}/)||[])[0]||"",
   gender:/\bFemale\b|♀/i.test(meta)?"♀":/\bMale\b|♂/i.test(meta)?"♂":"",
   size:size,moves:move,location:place,distance,despawn:(desp.match(/\d{1,2}:\d{2}/)||[])[0]||"",
@@ -1200,7 +1199,7 @@ function collect(){
  const explicitEmpty=found.length===0&&!loading&&explicitEmptySignal&&resultChanged;
  // If the site advertises more visible cards than we could parse, retry.
  // Apply to every search mode, without assuming every site total is <= 10.
- const expectedVisible=siteCount>0?Math.min(siteCount,25):0;
+ const expectedVisible=siteCount>0?Math.min(siteCount,10):0;
  const siteIncomplete=expectedVisible>found.length;
  const parseFailure=siteCount>0&&found.length===0;
  return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,siteCount,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,

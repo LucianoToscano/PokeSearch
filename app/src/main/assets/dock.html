@@ -261,7 +261,7 @@ body.result-window.search-active:not(.results-collapsed) #resultHeader .captureP
  }
 }
 body.result-window #resultHeader:focus-visible{outline:1px solid #fff8}
-/* Results up to 10 remain packed; verified VIP overflow uses touch scrolling. The 0–10 entries fit in this independent
+/* Results never scroll: the 0–10 validated entries all fit in this independent
    window. Each row reserves extra space ONLY when it displays verified metadata. */
 body.result-window #spawns{
  margin:0!important;max-height:none!important;height:auto!important;
@@ -269,15 +269,6 @@ body.result-window #spawns{
  overflow-y:visible!important;overflow-x:visible!important;
  scrollbar-width:none!important;touch-action:manipulation!important
 }
-/* LT141 VIP: keep sprites readable and allow vertical touch-scroll beyond ten rows. */
-body.result-window.results-overflow #spawns{
- max-height:var(--results-scroll-height,380px)!important;
- height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;
- overscroll-behavior:contain!important;touch-action:pan-y!important;
- scrollbar-width:thin!important;scrollbar-color:#a2b5c56b transparent!important;
-}
-body.result-window.results-overflow #spawns::-webkit-scrollbar{width:3px!important;display:block!important}
-body.result-window.results-overflow #spawns::-webkit-scrollbar-thumb{background:#a2b5c56b;border-radius:5px}
 /* Preserve the final sprite's overhang without adding gaps between entries. */
 body.result-window #spawns:not(:empty){padding-bottom:0!important}
 body.result-window #empty{margin:0 auto;max-height:18px}
@@ -741,10 +732,7 @@ body.result-window .ivInfo.excellent{color:#c084fc}
 body.result-window .ivInfo.perfect{color:#f04b70}
 body.result-window .spawnInfoLine{display:block;white-space:nowrap;overflow:hidden;
  text-overflow:ellipsis;max-width:100%;min-height:calc(11px * var(--result-info-scale,1))}
-body.result-window .spawnInfoLine.wrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal;}
-/* LT141: one measured row per datum; no variable-height text shifting IV/CP against sprites. */
-body.result-window .spawnInfo{flex:0 0 var(--visual-meta-width,112px);width:var(--visual-meta-width,112px);max-width:var(--visual-meta-width,112px);align-items:stretch;line-height:12px;font-variant-numeric:tabular-nums;}
-body.result-window .spawnInfoLine{display:block;flex:0 0 auto;width:100%;max-width:100%;min-height:12px;line-height:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;}
+body.result-window .spawnInfoLine.wrap{white-space:normal;overflow:visible;overflow-wrap:anywhere;word-break:break-word;}
 body.result-window .spawnInfo .timer{
  position:static;display:inline;padding:0;margin:0;min-width:0;
  font:700 9px/11px Roboto,Arial,sans-serif;text-align:left;
@@ -6181,7 +6169,7 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  const v=window.visualPrefs||{};
  const pitch=size+additionalResultGapPx(v.resultGapBetween);
  const horizontal=v.resultsOrientation==="horizontal";
- const natural=items.slice(0,25).map((card,index)=>{
+ const natural=items.slice(0,10).map((card,index)=>{
    const lines=preparedLines?preparedLines[index]:(opts?resultLines(card,opts,league):[]);
   // UX-SPRITE-GAP-02: metadata is independently scrollable inside the side strip.
   // Never stretch the Pokemon's vertical slot to fit all enabled rank lines.
@@ -6192,9 +6180,7 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  const headerArea=(Number(v.headerIconY)||0)+(Number(v.headerTouchHeight)||30)+
   (Number(v.headerAfterGap)||0);
  const room=Math.max(120,(Number(displayHeight)||700)-headerArea-24);
- // A validated VIP collection scrolls within a compact native window instead
- // of shrinking 25 Pokemon into illegible 8px rows.
- const factor=items.length>10?1:(desired>0?Math.min(1,room/desired):1);
+ const factor=desired>0?Math.min(1,room/desired):1;
  const rows=natural.map(n=>Math.max(8,Math.floor(n*factor)));
  // A very short display can reduce a row to 12px: never draw a
  // larger sprite inside it, even when ten results must remain visible.
@@ -6226,12 +6212,10 @@ function draw(){
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",(resultLayout?resultLayout.sprite:spriteSize)+"px");
  document.documentElement.style.setProperty("--result-info-scale",String(resultLayout?.infoScale||1));
- document.documentElement.style.setProperty("--results-scroll-height",
-   Math.max(140,Math.min(430,(resultDisplayHeightDp||700)-110))+"px");
  document.documentElement.style.setProperty("--dock",(spriteSize+8)+"px");
  // P/M/G scales the header DOWN, never above its original 21px.
  const metadataVisible=resultWindow&&preparedLines.some(lines=>lines.length>0);
- const metaWidth=metadataVisible?112:0;
+ const metaWidth=metadataVisible?96:0;
  document.documentElement.style.setProperty("--results-width",
   resultWindow&&window.visualPrefs?.resultsOrientation==="horizontal"?"calc(100vw - 2px)":
   (spriteSize+8+metaWidth)+"px");
@@ -6452,8 +6436,7 @@ window.addEventListener("pagehide",releaseUiTimers);
 window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount]);
- cards=Array.isArray(a)?a.slice(0,25):[];
- document.body.classList.toggle("results-overflow",resultWindow&&cards.length>10);
+ cards=Array.isArray(a)?a.slice(0,10):[];
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
   {count:!!displayPrefs.count,name:!!displayPrefs.name,number:!!displayPrefs.number,

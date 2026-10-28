@@ -102,7 +102,7 @@ public class MainActivity extends Activity {
         for(android.graphics.drawable.GradientDrawable bg:homeSurfaces)bg.setAlpha(alpha);
     }
     private TextView homeThemeButton;
-    private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
+    private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts, trainerChoices;
     private View trainerCopyButton;
     private View guestHeading;
     private ImageView teamBadge, accountAvatar, accountAvatarFrame;
@@ -638,6 +638,9 @@ public class MainActivity extends Activity {
         actionLp.leftMargin=d(7);
         trainerCodeGroup.addView(trainerAction,actionLp);
         trainerAction.setOnClickListener(v->openTrainerManagement());
+        trainerChoices=new LinearLayout(this);
+        trainerChoices.setOrientation(LinearLayout.VERTICAL);
+        trainerPanel.addView(trainerChoices,new LinearLayout.LayoutParams(-1,-2));
 
         // LT72: a zero-height, GONE placeholder unless Drive announces a
         // valid, enabled and newer version. Never reserve blank Home space.
@@ -855,6 +858,11 @@ public class MainActivity extends Activity {
     }
 
     private void openTrainerManagement(){
+        String all=getSharedPreferences("prefs",0).getString("profileTrainersJson","[]");
+        if(all.contains("\"code\"")&&all.indexOf("\"code\"")!=all.lastIndexOf("\"code\"")){
+            openLoginDialog(false,"manage");
+            return;
+        }
         String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
         if(!code.matches("[0-9]{12}")){
             openLoginDialog(false,"manage");
@@ -1511,8 +1519,37 @@ public class MainActivity extends Activity {
         if(trainerCodeGroup!=null)trainerCodeGroup.setVisibility(logged?View.VISIBLE:View.GONE);
         if(trainerCodeTexts!=null)trainerCodeTexts.setVisibility(linked?View.VISIBLE:View.INVISIBLE);
         if(trainerCopyButton!=null)trainerCopyButton.setVisibility(linked?View.VISIBLE:View.GONE);
-        if(trainerSectionTitle!=null)trainerSectionTitle.setText(linked?
+        int trainerCount=0;
+        JSONArray savedTrainers=null;
+        try{savedTrainers=new JSONArray(prefs.getString("profileTrainersJson","[]"));
+            trainerCount=Math.min(10,savedTrainers.length());}
+        catch(Exception ignored){trainerCount=0;}
+        if(trainerSectionTitle!=null)trainerSectionTitle.setText(trainerCount>1?
+            "Treinadores vinculados ("+trainerCount+")":linked?
             "Treinador vinculado":"Conta Pokémon GO");
+        if(trainerChoices!=null){
+            trainerChoices.removeAllViews();
+            trainerChoices.setVisibility(logged&&trainerCount>1?View.VISIBLE:View.GONE);
+            String activeCode=prefs.getString("profileTrainerActiveCode","");
+            for(int i=0;logged&&savedTrainers!=null&&i<trainerCount&&trainerCount>1;i++){
+                JSONObject entry=savedTrainers.optJSONObject(i);
+                if(entry==null)continue;
+                String trainerName=entry.optString("name","");
+                String trainerTeam=entry.optString("team","");
+                String trainerLevel=entry.optString("level","");
+                String entryCode=entry.optString("code","");
+                if(!entryCode.matches("[0-9]{12}")||trainerName.isEmpty())continue;
+                boolean officialActive=activeCode.equals(entryCode);
+                TextView choice=homeText((officialActive?"✓ ":"○ ")+trainerName+
+                    " · "+trainerTeam+" · Nv "+trainerLevel+
+                    (officialActive?" · Ativo":" · Selecionar no site"),12,
+                    officialActive?Color.rgb(113,226,188):
+                    homeLightMode?Color.rgb(42,66,89):Color.rgb(211,226,244),officialActive);
+                choice.setPadding(d(8),d(7),d(8),d(7));
+                trainerChoices.addView(choice,new LinearLayout.LayoutParams(-1,-2));
+                choice.setOnClickListener(v->openLoginDialog(false,"manage"));
+            }
+        }
         String team=prefs.getString("profileTrainerTeam","");
         String details=prefs.getString("profileTrainerDetails","");
         if(team.isEmpty()){
@@ -1526,7 +1563,8 @@ public class MainActivity extends Activity {
             teamBadge.setContentDescription(linked&&team.length()>0?
                 "Equipe "+team:"Sem equipe");
         }
-        if(trainerDisplay!=null)trainerDisplay.setText(linked?trainer:
+        if(trainerDisplay!=null)trainerDisplay.setText(trainerCount>1&&!linked?
+            "Escolha o treinador no site":linked?trainer:
             "unlinked".equals(prefs.getString("profileTrainerState","unknown"))?
                 "Nenhum treinador vinculado":"Treinador não confirmado");
         if(trainerDetails!=null){
@@ -1540,7 +1578,7 @@ public class MainActivity extends Activity {
         }
         if(linked&&trainerCode!=null)
             trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
-        if(trainerAction!=null)trainerAction.setText(linked?"Remover":"Gerenciar");
+        if(trainerAction!=null)trainerAction.setText(trainerCount>1?"Trocar":linked?"Remover":"Gerenciar");
         if(sessionSummary!=null)sessionSummary.setText(logged?
             "● Sessão identificada · PoGoCoordinates":"○ Login necessário");
     }
@@ -1563,6 +1601,7 @@ public class MainActivity extends Activity {
             .remove("profileTrainerName").remove("profileTrainerCode")
             .remove("profileTrainerDetails").remove("profileTrainerState")
             .remove("profileTrainerTeam").remove("profileTrainerLevel")
+            .remove("profileTrainersJson").remove("profileTrainerActiveCode")
             .putBoolean("shiny",false)
             .putString("lastStatus","Sessão local desconectada")
             .putString("lastError","Nenhum")
@@ -1674,7 +1713,8 @@ public class MainActivity extends Activity {
                     .remove("profileAvatarUrl")
                     .remove("profileTrainerName").remove("profileTrainerCode")
                     .remove("profileTrainerDetails").remove("profileTrainerTeam")
-                    .remove("profileTrainerLevel").apply();
+                    .remove("profileTrainerLevel")
+                    .remove("profileTrainersJson").remove("profileTrainerActiveCode").apply();
                 CookieManager.getInstance().flush();
                 if("manage".equals(loginPurpose)){
                     // Management must stay open until the user explicitly leaves.
@@ -1765,12 +1805,39 @@ public class MainActivity extends Activity {
                         avatarAwaitingHydration="Google".equals(provider);
                     }
                     String state=profile.optString("trainerState","unknown");
+                    JSONArray trainers=profile.optJSONArray("trainers");
+                    String officialActiveCode=profile.optString("activeTrainerCode","");
+                    if(trainers!=null&&trainers.length()>0&&trainers.length()<=10){
+                        edit.putString("profileTrainersJson",trainers.toString());
+                        edit.putString("profileTrainerActiveCode",
+                            officialActiveCode.matches("[0-9]{12}")?officialActiveCode:"");
+                    }else edit.remove("profileTrainersJson").remove("profileTrainerActiveCode");
                     String trainer=profile.optString("trainerName","");
                     String code=profile.optString("trainerCode","");
+                    if(trainers!=null&&officialActiveCode.matches("[0-9]{12}")){
+                        for(int ti=0;ti<trainers.length();ti++){
+                            JSONObject candidate= trainers.optJSONObject(ti);
+                            if(candidate!=null&&officialActiveCode.equals(candidate.optString("code",""))){
+                                trainer=candidate.optString("name","");
+                                code=officialActiveCode;
+                                break;
+                            }
+                        }
+                    }
                     if("linked".equals(state)&&trainer.length()>0&&
                        trainer.length()<=40&&code.matches("[0-9]{12}")){
                         String level=profile.optString("level","");
                         String team=profile.optString("team","");
+                        if(trainers!=null){
+                            for(int ti=0;ti<trainers.length();ti++){
+                                JSONObject candidate=trainers.optJSONObject(ti);
+                                if(candidate!=null&&code.equals(candidate.optString("code",""))){
+                                    level=candidate.optString("level",level);
+                                    team=candidate.optString("team",team);
+                                    break;
+                                }
+                            }
+                        }
                         String details=(level.matches("[0-9]{1,2}")?"Nível "+level:"")+
                             (team.matches("Mystic|Valor|Instinct")?
                              (level.isEmpty()?"":" · ")+team:"");
@@ -1784,6 +1851,7 @@ public class MainActivity extends Activity {
                         // Unlinked or unverified current account never inherits
                         // a linked trainer from the previous login.
                         edit.putString("profileTrainerState",
+                                "linked".equals(state)?"linked":
                                 "unlinked".equals(state)?"unlinked":"unknown")
                             .remove("profileTrainerName").remove("profileTrainerCode")
                             .remove("profileTrainerDetails")
@@ -1987,7 +2055,29 @@ public class MainActivity extends Activity {
             return event.getAction()==android.view.KeyEvent.ACTION_DOWN||
                    event.getAction()==android.view.KeyEvent.ACTION_UP;
         });
-        done.setOnClickListener(v->loginDialog.dismiss());
+        done.setOnClickListener(v->{
+            if("manage".equals(loginPurpose)&&website!=null&&
+               loginDialog!=null&&loginDialog.isShowing()){
+                loginAutoReturnQueued=true;
+                profileCaptureInProgress=true;
+                avatarReadRetryCount=0;
+                int currentGeneration=loginPageGeneration;
+                Uri location=Uri.parse(website.getUrl()==null?"":website.getUrl());
+                if("/profile".equals(location.getPath()))
+                    captureOfficialProfile(website,currentGeneration);
+                else website.loadUrl("https://pogocoordinates.com/profile");
+                website.postDelayed(()->{
+                    if(loginDialog!=null&&loginDialog.isShowing()&&
+                       profileCaptureInProgress&&currentGeneration==loginPageGeneration){
+                        profileCaptureInProgress=false;
+                        Toast.makeText(this,"Seleção não confirmada pelo site.",Toast.LENGTH_SHORT).show();
+                        loginDialog.dismiss();
+                    }
+                },6500L);
+                return;
+            }
+            loginDialog.dismiss();
+        });
         loginDialog.setOnDismissListener(d->{
             boolean authenticatedNow=loginSessionNotified;
             boolean fromOverlay=loginStartedForShiny;

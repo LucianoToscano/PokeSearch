@@ -341,18 +341,6 @@
  function resolve(card){
   const image=String(card?.image||"");
   const costumeArt=exactCostume(card);
-  // A sprite visibly rendered in the official site's own encounter card
-  // is preferred over independently guessed asset paths in DOM mode.
-  // Keep ONLY an exact verified local image as the failure fallback.
-  const providerImage=card?.imageFromSite===true&&/^https:\/\//i.test(image)&&
-    !/\s/.test(image)&&image.length<1600;
-  if(providerImage){
-    const dex=dexOf(card);
-    const localBackup=costumeArt&&costumeArt.offline?costumeArt.src:
-      verifiedBase(card)?LOCAL+(card.shiny===true?"shiny/":"base/")+dex+".png":"";
-    return {src:image,original:localBackup,offline:!!localBackup,
-      providerExact:true,officialCostume:!!costumeArt?.officialCostume};
-  }
   if(costumeArt)return costumeArt;
   // Prefer explicit source-provided artwork if one exists, otherwise use the
   // exact, offline bundled regional variant (normal OR shiny).
