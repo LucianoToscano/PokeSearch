@@ -1092,6 +1092,17 @@ function parseCard(box,sourceIndex){
   };
   return score(b)-score(a);
  })[0];
+ // Accept an exact source image from THIS result card, not a profile/avatar,
+ // 1-pixel lazy placeholder or decorative image. Non-matching candidates may
+ // still be returned as hints but never displace a verified local sprite.
+ const siteImageUrl=image?candidateImageUrl(image):"";
+ const siteImageLabel=String(image?.alt||image?.getAttribute?.("aria-label")||"").toLowerCase();
+ const speciesLabel=String(title||"").replace(/✨/g,"").replace(/\\s*\\([^)]*\\)\\s*/g," ").trim().toLowerCase();
+ const siteImageExact=!!image&&/^https:\\/\\//i.test(siteImageUrl)&&
+   !/(?:logo|avatar|profile|icon-user|banner)/i.test(siteImageUrl)&&
+   (image.naturalWidth>=8&&image.naturalHeight>=8||
+    (speciesLabel&&siteImageLabel.includes(speciesLabel))||
+    /pokemon|pok[eé]mon|sprite|pogo/i.test(siteImageUrl));
  const rankMatch=body.match(/\b(?:PvP\s*)?(?:Rank|Ranking|Rk)\s*#?\s*(\d+)\b/i);
  // Species-specific IV rank is NOT the Top-N search filter and is not
  // PvPoke's cross-species performance rank. Require a labeled card value.
@@ -1105,7 +1116,8 @@ function parseCard(box,sourceIndex){
   (rankLeagueHint!=="gl"&&rankLeagueHint!=="ul"||rankLeagueHint===mode);
  const isShiny=/✨/.test(title);
  return {
-  sourceIndex,name:title.replace(/✨/g,"").trim(),image:image?candidateImageUrl(image):"",
+  sourceIndex,name:title.replace(/✨/g,"").trim(),image:siteImageUrl,
+  imageFromSite:siteImageExact,
   number:(meta.match(/#\d{1,4}/)||[])[0]||"",
   gender:/\bFemale\b|♀/i.test(meta)?"♀":/\bMale\b|♂/i.test(meta)?"♂":"",
   size:size,moves:move,location:place,distance,despawn:(desp.match(/\d{1,2}:\d{2}/)||[])[0]||"",

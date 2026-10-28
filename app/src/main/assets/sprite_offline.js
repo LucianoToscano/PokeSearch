@@ -341,6 +341,18 @@
  function resolve(card){
   const image=String(card?.image||"");
   const costumeArt=exactCostume(card);
+  // The validated official search card may already show the exact costume,
+  // regional form or normal sprite. Prefer it in DOM mode, preserving a
+  // verified local asset of the SAME variant as the only fallback.
+  const sourceExact=card?.imageFromSite===true&&/^https:\/\//i.test(image)&&
+    !/\s/.test(image)&&image.length<=1600;
+  if(sourceExact){
+   const dex=dexOf(card);
+   const backup=costumeArt?.offline===true?costumeArt.src:
+     verifiedBase(card)?LOCAL+(card.shiny===true?"shiny/":"base/")+dex+".png":"";
+   return {src:image,original:backup,offline:!!backup,
+     providerExact:true,officialCostume:!!costumeArt?.officialCostume};
+  }
   if(costumeArt)return costumeArt;
   // Prefer explicit source-provided artwork if one exists, otherwise use the
   // exact, offline bundled regional variant (normal OR shiny).

@@ -742,7 +742,17 @@ body.result-window .ivInfo.excellent{color:#c084fc}
 body.result-window .ivInfo.perfect{color:#f04b70}
 body.result-window .spawnInfoLine{display:block;white-space:nowrap;overflow:hidden;
  text-overflow:ellipsis;max-width:100%;min-height:calc(11px * var(--result-info-scale,1))}
-body.result-window .spawnInfoLine.wrap{white-space:normal;overflow:visible;overflow-wrap:anywhere;word-break:break-word;}
+body.result-window .spawnInfoLine.wrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal;}
+/* LT142: keep every stat on a fixed baseline beside its own sprite. */
+body.result-window .spawnInfo{
+ font-variant-numeric:tabular-nums;align-items:stretch;
+ line-height:calc(11px * var(--result-info-scale,1));
+}
+body.result-window .spawnInfoLine{
+ display:block;flex:0 0 auto;width:100%;min-height:calc(11px * var(--result-info-scale,1));
+ line-height:calc(11px * var(--result-info-scale,1));text-align:left;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 body.result-window .spawnInfo .timer{
  position:static;display:inline;padding:0;margin:0;min-width:0;
  font:700 9px/11px Roboto,Arial,sans-serif;text-align:left;
