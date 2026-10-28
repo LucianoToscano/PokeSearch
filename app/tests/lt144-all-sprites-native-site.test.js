@@ -12,7 +12,7 @@ globalThis.PokeSearchWWMCatalog=require("../src/main/assets/wwm_catalog.js");
 const sprite=require("../src/main/assets/sprite_offline.js");
 const local="file:///android_asset/pokemon-sprites/";
 for(const [dex,name,id] of [[94,"Gengar",1044],[41,"Zubat",157],
- [25,"Pikachu",862],[6,"Charizard",178]]){
+ [25,"Pikachu",598],[6,"Charizard",178]]){
  const a=sprite.resolve({number:"#"+dex,name,form:"NORMAL",form_id:id,shiny:false});
  assert.equal(a.src,local+"base/"+dex+".png",name+" normal");
  const b=sprite.resolve({number:"#"+dex,name,form:"NORMAL",form_id:id,shiny:true});
