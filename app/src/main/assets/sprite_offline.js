@@ -379,9 +379,25 @@
   if(result)trustedExactData[rel]=result;
   return result;
  }
+ function exactSeasonalForm(card){
+  const dex=dexOf(card);
+  if(dex!==585&&dex!==586)return null;
+  const species=dex===585?"DEERLING":"SAWSBUCK";
+  if(nameKey(card?.name)!==species)return null;
+  const form=nameKey(card?.form);
+  if(form!=="AUTUMN"&&form!==species+"AUTUMN"&&form!=="FAUTUMN"&&
+     form!=="AUTUMNFORM")return null;
+  const costume=nameKey(card?.costume);
+  if((costume&&!["NORMAL","DEFAULT","NONE"].includes(costume))||
+     (card?.costume_id!=null&&Number(card.costume_id)!==0))return null;
+  const shiny=card?.shiny===true,filename=dex+"-autumn"+(shiny?"-shiny":"")+".png";
+  return {src:LOCAL+"forms/"+filename,original:"",offline:true,
+   officialForm:true,exactForm:true};
+ }
  function resolve(card){
   const image=String(card?.image||"");
   const costumeArt=exactCostume(card);
+  const seasonalArt=exactSeasonalForm(card);
   // The validated official search card may already show the exact costume,
   // regional form or normal sprite. Prefer it in DOM mode, preserving a
   // verified local asset of the SAME variant as the only fallback.
@@ -390,11 +406,13 @@
   if(sourceExact){
    const dex=dexOf(card);
    const backup=costumeArt?.src&&costumeArt.src!==image?costumeArt.src:
+     seasonalArt?.src&&seasonalArt.src!==image?seasonalArt.src:
      verifiedBase(card)?LOCAL+(card.shiny===true?"shiny/":"base/")+dex+".png":"";
    return {src:image,original:backup,offline:!!backup,
      providerExact:true,officialCostume:!!costumeArt?.officialCostume};
   }
   if(costumeArt)return costumeArt;
+  if(seasonalArt)return seasonalArt;
   // Prefer explicit source-provided artwork if one exists, otherwise use the
   // exact, offline bundled regional variant (normal OR shiny).
   if(!image&&verifiedGalarianZigzagoon(card)){
@@ -455,5 +473,5 @@
   return {src:image,original:image,offline:false};
  }
  return Object.freeze({resolve,verifiedBase,verifiedBundledData,exactBundledData,
-  verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume});
+  verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume,exactSeasonalForm});
 });
