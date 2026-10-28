@@ -1079,8 +1079,14 @@ function parseCard(box,sourceIndex){
  const candidateNodes=Array.from(box.querySelectorAll("img,source,[style*='background']"))
   .slice(0,64);
  const candidateImageUrl=e=>{
-  const attrs=["data-src","data-original","data-lazy-src","data-background","src","srcset","data-srcset"];
-  const values=attrs.map(k=>e.getAttribute(k)||"").filter(Boolean);
+  // Explicitly prefer lazy-provider attributes, then the browser's real
+  // loaded image; srcset variants are still evaluated within THIS card.
+  const values=[
+   e.getAttribute("data-src"),e.getAttribute("data-original"),
+   e.getAttribute("data-lazy-src"),e.getAttribute("data-background"),
+   e.getAttribute("src"),e.getAttribute("srcset"),
+   e.getAttribute("data-srcset")
+  ].filter(Boolean);
   if(e.currentSrc)values.unshift(e.currentSrc);
   if(e.src)values.push(e.src);
   const style=String(e.style?.backgroundImage||"");
