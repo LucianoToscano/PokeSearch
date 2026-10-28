@@ -40,6 +40,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #coordsQuota{margin:4px 1px 0;padding:4px 6px;background:#ffffff13;border:1px solid #ffffff25;border-radius:6px;color:#d6dce4;font:500 9px/1.35 Roboto,Arial,sans-serif;text-align:center;overflow-wrap:break-word}
 #coordsQuota.official{color:#a9f0cf;border-color:#6ad5a549}
 #coordsQuota{display:block;width:100%;min-height:26px;touch-action:manipulation}
+#cooldownControls{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+#cooldownControls button{border:1px solid #ffffff36;background:#ffffff17;color:#e9edf4;border-radius:6px;padding:5px 6px;min-height:26px;font-size:9px;flex:1 1 auto}
+#cooldownControls button.primary{background:#429b7952;border-color:#a7e3ba70}
+#cooldownControls button:disabled{opacity:.5}
+#cooldownNote{font:9px/1.25 Roboto,Arial,sans-serif;color:#b9c7d7;margin:3px 1px 0}
 #captureShare[hidden],#captureConfirm[hidden]{display:none!important}
 #captureShare{margin-top:5px;display:block;width:100%;padding:5px;border-radius:7px;
  border:1px solid #e3c96955;background:#d4b65b18;color:#f5dda4;font-size:10px}
@@ -64,17 +69,52 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button id="coords" onclick="requestCoordsUi()">⌖ Get coords</button>
   <button id="coordsQuota" type="button" aria-live="polite" onclick="Native.refreshCoordsAccount()" title="Verificar sessão do PoGoCoordinates sem gastar revelações">⌖ Conta PoGo não verificada · Saldo desconhecido · Atualizar ⟳</button>
   <button id="copy" onclick="copyCoords()">⧉ Copiar coordenadas</button>
+  <div id="cooldownControls">
+    <button id="cooldownToggle" onclick="Native.toggleCooldown()">⏳ Cooldown OFF</button>
+    <button id="cooldownConfirm" class="primary" onclick="confirmCooldownUi()" disabled>✓ Confirmar captura</button>
+    <button id="cooldownUndo" onclick="Native.undoCooldown()">↶ Desfazer</button>
+    <button id="cooldownReset" onclick="resetCooldownUi()" title="Remover referência de cooldown">×</button>
+  </div>
+  <div id="cooldownNote" role="status">Estimativa local · nunca garante captura segura</div>
  <button id="captureShare" hidden onclick="captureShareAsk()">🎉 Capturou? Compartilhar no chat</button>
  <div id="captureConfirm" hidden><span>Capturou mesmo?</span>
  <button onclick="captureShareCancel()">Não</button>
  <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
  <small id="captureStatus" hidden></small>
 </div>
-<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="cooldown_estimate.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
 let coordsNote="",coordsPending=false,coordsRequestSeq=0;
 let shareReady=false,shareSent=false,sharePending=false;
+let cooldownLinked=false,cooldownActive=false,cooldownReference=null;
+function refreshCooldownButtons(){
+ const toggle=document.getElementById("cooldownToggle");
+ const confirm=document.getElementById("cooldownConfirm");
+ if(!toggle||!confirm)return;
+ toggle.textContent="⏳ Cooldown "+(cooldownActive?"ON":"OFF");
+ toggle.disabled=!cooldownLinked;
+ confirm.disabled=!cooldownLinked||!window.PokeSearchCooldown?.coords(currentCoords)||currentIndex<0;
+ document.getElementById("cooldownUndo").disabled=!cooldownLinked||!cooldownReference;
+ document.getElementById("cooldownReset").disabled=!cooldownLinked||!cooldownReference;
+}
+window.cooldownChanged=function(data){
+ cooldownLinked=data?.linked===true;
+ cooldownActive=data?.enabled===true;
+ cooldownReference=data?.reference||null;
+ refreshCooldownButtons();
+};
+window.cooldownFeedback=function(message){
+ document.getElementById("cooldownNote").textContent=String(message||"Estimativa local · nunca garante captura segura");
+};
+function confirmCooldownUi(){
+ if(!cooldownLinked||!window.PokeSearchCooldown?.coords(currentCoords)||currentIndex<0)return;
+ Native.confirmCooldownCapture(currentIndex);
+}
+function resetCooldownUi(){
+ if(!cooldownLinked||!cooldownReference)return;
+ Native.resetCooldown();
+}
 function shareUi(){
  document.getElementById("captureShare").hidden=!shareReady||shareSent||sharePending;
  if(!shareReady||shareSent)document.getElementById("captureConfirm").hidden=true;
@@ -192,6 +232,7 @@ window.coordsResult=function(coords,message){
  if(coords){currentCoords=coords;coordsNote="";}
  else coordsNote=String(message||"Coordenadas indisponíveis");
  coordButtons();
+ refreshCooldownButtons();
  const label=document.getElementById("coordsValue");
  if(label)label.textContent=currentCoords||coordsNote||"Toque em Get coords";
 };
@@ -287,6 +328,7 @@ window.showDetails=(c,mode,watched)=>{
  currentIndex=Number(c.sourceIndex);
  if(!currentCoords&&c.coords)currentCoords=String(c.coords);
  coordButtons();
+ refreshCooldownButtons();
  const parts=String(c.despawn||"").split(":").map(Number);
  const secs=parts.length===2&&parts.every(Number.isFinite)?parts[0]*60+parts[1]:0;
  // The authorized API supplies an absolute expiry, NOT a legacy MM:SS.
