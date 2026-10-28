@@ -37,7 +37,10 @@
   const list=entry?.[0];
   if(!Array.isArray(list)||list.length<1||list.length>2)return "";
   return list.filter(t=>Object.prototype.hasOwnProperty.call(TYPES,t))
-   .map(t=>'<span class="pkType pkType-'+t+'" role="img" aria-label="Tipo '+TYPES[t][0]+'" title="'+TYPES[t][0]+'">'+TYPES[t][1]+'</span>').join("");
+   .map(t=>{const src=(typeof window!=="undefined"?window.PokeSearchTypeIcons:globalThis.PokeSearchTypeIcons)?.[t];
+     if(!src)return "";
+     return '<img class="pkTypeImg" alt="Tipo '+TYPES[t][0]+'" title="'+TYPES[t][0]+'" src="'+src+'">';
+   }).join("");
  }
  function gender(value){
   const s=String(value||"").trim().toLowerCase();
