@@ -364,6 +364,23 @@
   if(result)trustedBaseData[key]=result;
   return result;
  }
+ const trustedExactData=Object.create(null);
+ function exactBundledData(art){
+  const src=String(art?.src||"");
+  const prefix=LOCAL,rel=src.startsWith(prefix)?src.slice(prefix.length):"";
+  if(!/^(?:costumes|forms)\/[A-Za-z0-9._-]{4,140}\.png$/.test(rel)||
+     rel.includes(".."))return "";
+  if(Object.prototype.hasOwnProperty.call(trustedExactData,rel))return trustedExactData[rel];
+  let result="";
+  try{
+   if(typeof window!=="undefined"&&window.Native&&
+      typeof window.Native.bundledExactSprite==="function")
+    result=String(window.Native.bundledExactSprite(rel)||"");
+  }catch(_){}
+  if(!/^data:image\/png;base64,[A-Za-z0-9+/=]{36,175000}$/.test(result))result="";
+  if(result)trustedExactData[rel]=result;
+  return result;
+ }
  function resolve(card){
   const image=String(card?.image||"");
   const costumeArt=exactCostume(card);
@@ -439,6 +456,6 @@
   // Preserve provider URLs, data images and unknown special forms untouched.
   return {src:image,original:image,offline:false};
  }
- return Object.freeze({resolve,verifiedBase,verifiedBundledData,
+ return Object.freeze({resolve,verifiedBase,verifiedBundledData,exactBundledData,
   verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume});
 });
