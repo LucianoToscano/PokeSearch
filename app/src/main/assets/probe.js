@@ -1069,6 +1069,8 @@ function parseCard(box,sourceIndex){
  // data-src/currentSrc/srcset already contains the real Pokémon sprite.
  // Prefer the verified card image URL, never synthesize a generic species.
  const imageCandidates=Array.from(box.querySelectorAll("img"));
+ const encounterDex=Number((meta.match(/#(\d{1,4})/)||[])[1]||0);
+ const encounterSpecies=String(title||"").replace(/✨/g,"").replace(/\s*\([^)]*\)\s*/g," ").trim();
  const candidateImageUrl=e=>{
   const srcset=e.getAttribute("data-srcset")||e.getAttribute("srcset")||"";
   const fromSet=srcset.split(",").map(x=>x.trim().split(/\s+/)[0]).find(Boolean)||"";
@@ -1080,29 +1082,40 @@ function parseCard(box,sourceIndex){
   return options.find(v=>/^https:\/\//i.test(v))||
    options.find(v=>/^data:image\/(?:png|webp|gif|jpeg);base64,/i.test(v)&&v.length>150)||"";
  };
- const candidates=imageCandidates.filter(e=>!!candidateImageUrl(e));
+ // Do NOT pick the first image with naturalWidth>8. Cards may contain
+ // avatars, badge backgrounds and a reused lazy placeholder belonging to
+ // a DIFFERENT Pokémon. Only an exact species-label or Dex URL is evidence.
+ const cleanLabel=value=>String(value||"").toLowerCase().replace(/[^a-z0-9]+/g,"");
+ const speciesKey=cleanLabel(encounterSpecies);
+ const matchesIdentity=e=>{
+  const url=candidateImageUrl(e);
+  if(!url)return false;
+  const alt=String(e.alt||e.getAttribute("aria-label")||"");
+  const key=cleanLabel(alt.replace(/\b(?:shiny|normal|sprite|image|pokemon|pokémon)\b/gi," "));
+  const byName=!!speciesKey&&(
+   key===speciesKey||key.startsWith(speciesKey+"shiny")||
+   key.startsWith("shiny"+speciesKey)||
+   key.startsWith(speciesKey+"halloween")||
+   key.startsWith(speciesKey+"costume"));
+  const byDex=encounterDex>=1&&encounterDex<=1025&&
+   new RegExp("(?:^|[/_.-])(?:pm|pokemon)?0*"+encounterDex+"(?=[/_.-]|$)","i").test(url);
+  // A labeled Pokémon is authoritative only when the label actually matches;
+  // a numeric file is exact only when it also agrees with this encounter's Dex.
+  return byName||byDex;
+ };
+ const candidates=imageCandidates.filter(matchesIdentity);
  const image=candidates.sort((a,b)=>{
   const score=e=>{
-   const alt=String(e.alt||"").toLowerCase(),src=candidateImageUrl(e).toLowerCase();
-   const name=String(title||"").replace(/✨/g,"").trim().toLowerCase();
-   return (name&&alt.includes(name)?80:0)+(/pokemon|pok[eé]mon|sprite|pogo|pokeapi/.test(src)?18:0)+
-    (/sprite|pokemon|pok[eé]mon/.test(alt)?12:0)+
-    (e.naturalWidth>=8&&e.naturalHeight>=8?25:0)-
-    (/logo|avatar|icon-user|profile/.test(src)?35:0);
+   const alt=String(e.alt||""),url=candidateImageUrl(e);
+   const name=cleanLabel(alt)===speciesKey;
+   return (name?100:0)+(e.naturalWidth>=8&&e.naturalHeight>=8?15:0)+
+    (/halloween|costume|\.f[A-Z0-9_]+\./i.test(url)?20:0);
   };
   return score(b)-score(a);
  })[0];
- // Accept an exact source image from THIS result card, not a profile/avatar,
- // 1-pixel lazy placeholder or decorative image. Non-matching candidates may
- // still be returned as hints but never displace a verified local sprite.
  const siteImageUrl=image?candidateImageUrl(image):"";
- const siteImageLabel=String(image?.alt||image?.getAttribute?.("aria-label")||"").toLowerCase();
- const speciesLabel=String(title||"").replace(/✨/g,"").replace(/\s*\([^)]*\)\s*/g," ").trim().toLowerCase();
  const siteImageExact=!!image&&/^https:\/\//i.test(siteImageUrl)&&
-   !/(?:logo|avatar|profile|icon-user|banner)/i.test(siteImageUrl)&&
-   (image.naturalWidth>=8&&image.naturalHeight>=8||
-    (speciesLabel&&siteImageLabel.includes(speciesLabel))||
-    /pokemon|pok[eé]mon|sprite|pogo/i.test(siteImageUrl));
+   !/(?:logo|avatar|profile|icon-user|banner)/i.test(siteImageUrl);
  const rankMatch=body.match(/\b(?:PvP\s*)?(?:Rank|Ranking|Rk)\s*#?\s*(\d+)\b/i);
  // Species-specific IV rank is NOT the Top-N search filter and is not
  // PvPoke's cross-species performance rank. Require a labeled card value.
