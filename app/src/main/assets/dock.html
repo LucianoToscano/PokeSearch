@@ -5739,8 +5739,9 @@ function attachSpriteFeedback(){
   const tryExactBundled=()=>{
    if(nativeTried)return false;
    nativeTried=true;
-   const exact=(typeof window!=="undefined"&&
-     window.PokeSearchOfflineSprite?.verifiedBundledData?.(sourceCard))||"";
+   const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
+   const exact=engine?.verifiedBundledData?.(sourceCard)||
+      (sourceCard?engine?.exactBundledData?.(engine.resolve(sourceCard)):"")||"";
    if(exact&&img.src!==exact){img.src=exact;return true;}
    return false;
   };
