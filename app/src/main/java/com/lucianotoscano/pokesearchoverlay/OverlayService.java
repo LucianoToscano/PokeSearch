@@ -3337,17 +3337,37 @@ public class OverlayService extends Service {
             item.optString("cp","")+"|"+item.optString("iv","");
     }
     private void offerCaptureAfterCopy(){
-        if(stopped||selected<0||detailRoot==null||
+        // Copying still enables the capture-share affordance, but never posts.
+        prepareCaptureShare(-1);
+    }
+    private void prepareCaptureShare(int sourceIndex){
+        // An explicit tap on Capturei can prepare the currently selected card
+        // without revealing coordinates or making additional API requests.
+        if(stopped||loginPaused||selected<0||detailRoot==null||
            detailRoot.getVisibility()!=View.VISIBLE||!detailLoaded)return;
         try{
             JSONArray array=new JSONArray(results);
             if(selected>=array.length())return;
             JSONObject card=array.getJSONObject(selected);
-            if(card.optString("name","").isEmpty()||sharedCaptureKeys.contains(captureKey(card)))return;
+            if(sourceIndex>=0&&card.optInt("sourceIndex",-1)!=sourceIndex){
+                js(detailPanel,true,"window.captureShareAvailability(false,"+
+                    JSONObject.quote("Resultado alterado; selecione o Pokémon novamente.")+")");
+                return;
+            }
+            if(card.optString("name","").isEmpty()||!currentCoordinateTarget(card)||
+               sharedCaptureKeys.contains(captureKey(card))){
+                js(detailPanel,true,"window.captureShareAvailability(false,"+
+                    JSONObject.quote("Esta captura não está disponível para compartilhar.")+")");
+                return;
+            }
             offeredCapture=new JSONObject(card.toString());
             offeredGeneration=requestGeneration;
-            js(detailPanel,detailLoaded,"window.offerCaptureShare()");
-        }catch(Exception ignored){}
+            js(detailPanel,true,"window.offerCaptureShare()");
+        }catch(Exception e){
+            recordFailure("preparar confirmação de captura",e);
+            js(detailPanel,true,"window.captureShareAvailability(false,"+
+               JSONObject.quote("Não foi possível preparar a captura.")+")");
+        }
     }
     private void confirmCaptureShare(int sourceIndex){
         JSONObject offer=offeredCapture;
@@ -3358,6 +3378,15 @@ public class OverlayService extends Service {
         // No coordinates, location, Trainer ID or encounter data is posted.\n        // Only an existing trusted raw 0..15 IV tuple is included in visible text.
         String key=captureKey(offer);
         if(sharedCaptureKeys.contains(key))return;
+        try{
+            JSONArray now=new JSONArray(results);
+            if(selected>=now.length()||
+               now.getJSONObject(selected).optInt("sourceIndex",-1)!=sourceIndex){
+                js(detailPanel,true,"window.captureShareFeedback(false,"+
+                   JSONObject.quote("Resultado mudou. Abra o Pokémon novamente.")+")");
+                return;
+            }
+        }catch(Exception ignored){return;}
         offeredCapture=null; // one in-flight submission per confirmed tap
         // Produce a public allowlisted text summary from the exact verified card.
         // The service retains the coordinates locally; publisher never uploads them.
@@ -3536,6 +3565,9 @@ public class OverlayService extends Service {
             }
         });}
 
+        @JavascriptInterface public void prepareCaptureShare(int sourceIndex){
+            handler.post(()->OverlayService.this.prepareCaptureShare(sourceIndex));
+        }
         @JavascriptInterface public void confirmCaptureShare(int sourceIndex){
             handler.post(()->OverlayService.this.confirmCaptureShare(sourceIndex));
         }
