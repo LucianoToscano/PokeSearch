@@ -28,7 +28,8 @@
    const found=data?.forms?.[dex+":"+form];
    if(found)return found;
    // Costume descriptions are cosmetic but not proof of a new type.
-   if(!/(?:costume|halloween|fall20\d\d|hat|cap)/.test(form))return null;
+   if(!["normal","default","standard","base","regular","none"].includes(form)&&
+      !/(?:costume|halloween|fall20\d\d|hat|cap)/.test(form))return null;
   }
   return data?.base?.[dex]||null;
  }
