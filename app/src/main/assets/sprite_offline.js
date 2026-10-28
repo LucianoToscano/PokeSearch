@@ -348,7 +348,7 @@
     !/\s/.test(image)&&image.length<=1600;
   if(sourceExact){
    const dex=dexOf(card);
-   const backup=costumeArt?.offline===true?costumeArt.src:
+   const backup=costumeArt?.src&&costumeArt.src!==image?costumeArt.src:
      verifiedBase(card)?LOCAL+(card.shiny===true?"shiny/":"base/")+dex+".png":"";
    return {src:image,original:backup,offline:!!backup,
      providerExact:true,officialCostume:!!costumeArt?.officialCostume};
