@@ -273,7 +273,7 @@
       options.pvpMaxRank>50))
       return {ok:false,reason:"Invalid PvP filters"};
     var serverCap=Number.isInteger(response.cap)&&response.cap>=0?response.cap:10; // No VIP promotion when cap is absent.
-    var cap=Math.min(MAX_RESULTS,serverCap); // Honor server authorization, never fabricate 25.
+    var cap=Math.min(MAX_RESULTS,serverCap); // Honor the provider's confirmed cap; never fabricate 25.
     if(cap===0)return {ok:true,cards:[],found:0,siteCount:response.results.length,rejected:0,expired:0,serverCap:serverCap,displayCap:cap,source:"api-fixture",criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
     for(var i=0;i<response.results.length;i++) {
       var x=response.results[i];
