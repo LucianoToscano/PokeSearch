@@ -81,7 +81,7 @@ function draw(){
 }
 function pick(i){selected=i===selected?-1:i;draw();}
 window.onNativeData=function(items,status,m,s,c){
- cards=Array.isArray(items)?items.slice(0,10):[];
+ cards=Array.isArray(items)?items.slice(0,25):[];
  info=String(status||'');mode=m;shiny=!!s;compact=!!c;
  if(selected>=cards.length)selected=-1;draw();
 };
