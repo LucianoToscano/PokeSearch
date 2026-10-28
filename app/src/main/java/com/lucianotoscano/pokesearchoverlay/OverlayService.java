@@ -62,6 +62,92 @@ public class OverlayService extends Service {
             }
         };
     private boolean trainerChangedReceiverRegistered=false;
+    private static final String ACTION_COOLDOWN_CHANGED =
+        "com.lucianotoscano.pokesearchoverlay.COOLDOWN_CHANGED";
+    private boolean cooldownChangedReceiverRegistered=false;
+    private final android.content.BroadcastReceiver cooldownChangedReceiver =
+        new android.content.BroadcastReceiver(){
+            @Override public void onReceive(android.content.Context c,Intent intent){
+                if(stopped||intent==null||!ACTION_COOLDOWN_CHANGED.equals(intent.getAction()))return;
+                pushCooldownState();
+            }
+        };
+    private void notifyCooldownChanged(){
+        sendBroadcast(new Intent(ACTION_COOLDOWN_CHANGED).setPackage(getPackageName()));
+    }
+    private String cooldownTrainerScope(){
+        // The active trainer is selected in the shared main profile, not the
+        // secondary overlay's independent filter preferences.
+        return CooldownCaptureStore.trainerScope(getSharedPreferences("prefs",MODE_PRIVATE));
+    }
+    private boolean cooldownEnabled(String scope){
+        return !scope.isEmpty()&&getSharedPreferences("prefs",MODE_PRIVATE)
+            .getBoolean("cooldownEnabled_"+scope,false);
+    }
+    private void pushCooldownState(){
+        String scope=cooldownTrainerScope();
+        JSONObject data=CooldownCaptureStore.ui(this,scope,cooldownEnabled(scope));
+        try{
+            data.put("searchCenter",displayedApiResults&&locationEnabled&&locationVerified?
+                locationCoords:"");
+            data.put("apiVerified",displayedApiResults&&locationVerified&&
+                !resultsStale&&!searchInProgress);
+            data.put("fresh",!resultsStale&&!searchInProgress);
+        }catch(Exception ignored){}
+        String jsPayload="window.onCooldownState("+data.toString()+")";
+        js(resultPanel,resultLoaded,jsPayload);
+        js(detailPanel,detailLoaded,"window.cooldownChanged("+data.toString()+")");
+    }
+    private void cooldownFeedback(String message){
+        js(detailPanel,detailLoaded,"window.cooldownFeedback("+JSONObject.quote(message)+")");
+    }
+    private void confirmCooldownCapture(int index){
+        if(stopped||loginPaused||index<0||selected<0||detailRoot==null||
+            detailRoot.getVisibility()!=View.VISIBLE)return;
+        String scope=cooldownTrainerScope();
+        if(scope.isEmpty()){cooldownFeedback("Vincule um treinador para registrar a captura.");return;}
+        try{
+            JSONArray arr=new JSONArray(results);
+            if(index>=arr.length()||selected!=index){cooldownFeedback("Resultado alterado.");return;}
+            JSONObject item=arr.getJSONObject(index);
+            if(!currentCoordinateTarget(item)){cooldownFeedback("Identidade do Pokémon alterada.");return;}
+            String coords=extractCoordinates(item.optString("coords",""));
+            if(coords.isEmpty()){cooldownFeedback("Use Get coords antes de confirmar.");return;}
+            String fingerprint=coords+"|"+item.optString("number")+"|"+
+                item.optString("cp")+"|"+item.optString("iv")+"|"+
+                item.optString("expiresAtMs",item.optString("despawn",""));
+            boolean saved=CooldownCaptureStore.record(this,scope,coords,fingerprint,
+                System.currentTimeMillis());
+            if(!saved){cooldownFeedback("Captura já registrada. Use Desfazer para corrigir.");return;}
+            getSharedPreferences("prefs",MODE_PRIVATE).edit()
+                .putBoolean("cooldownEnabled_"+scope,true).apply();
+            pushCooldownState();notifyCooldownChanged();
+            cooldownFeedback("✓ Captura registrada localmente, sem publicar no chat.");
+        }catch(Exception ignored){cooldownFeedback("Não foi possível validar esta captura.");}
+    }
+    private void toggleCooldown(){
+        String scope=cooldownTrainerScope();
+        if(scope.isEmpty()){cooldownFeedback("Selecione um treinador vinculado.");return;}
+        boolean now=!cooldownEnabled(scope);
+        getSharedPreferences("prefs",MODE_PRIVATE).edit()
+            .putBoolean("cooldownEnabled_"+scope,now).apply();
+        pushCooldownState();notifyCooldownChanged();
+        cooldownFeedback(now?"Cooldown estimado ativado.":"Cooldown oculto.");
+    }
+    private void undoCooldown(){
+        String scope=cooldownTrainerScope();
+        if(CooldownCaptureStore.undo(this,scope)){
+            pushCooldownState();notifyCooldownChanged();
+            cooldownFeedback("Última confirmação desfeita.");
+        }else cooldownFeedback("Nenhuma confirmação recente para desfazer.");
+    }
+    private void resetCooldown(){
+        String scope=cooldownTrainerScope();
+        if(scope.isEmpty())return;
+        CooldownCaptureStore.reset(this,scope);
+        pushCooldownState();notifyCooldownChanged();
+        cooldownFeedback("Referência de cooldown removida.");
+    }
     private static volatile boolean running=false;
     private static volatile boolean secondaryRunning=false;
     public static boolean isRunning(){return running;}
@@ -792,6 +878,7 @@ public class OverlayService extends Service {
         js(popupPanel,popupLoaded,data);
         js(resultPanel,resultLoaded,data);
         broadcastVisualPrefs();
+        pushCooldownState();
         if(selected>=0)showDetails(selected);
     }
     private void status(String s){
@@ -1249,6 +1336,13 @@ public class OverlayService extends Service {
         }catch(RuntimeException error){
             recordFailure("sincronizar treinador",error);
         }
+        try{
+            android.content.IntentFilter filter=new android.content.IntentFilter(ACTION_COOLDOWN_CHANGED);
+            if(android.os.Build.VERSION.SDK_INT>=33)
+                registerReceiver(cooldownChangedReceiver,filter,android.content.Context.RECEIVER_NOT_EXPORTED);
+            else registerReceiver(cooldownChangedReceiver,filter);
+            cooldownChangedReceiverRegistered=true;
+        }catch(RuntimeException error){recordFailure("sincronizar cooldown",error);}
         NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel("pokesearch","PokeSearch",
                 NotificationManager.IMPORTANCE_LOW));
@@ -4588,6 +4682,10 @@ public class OverlayService extends Service {
             }catch(Exception e){recordFailure("detalhes coordenadas",e);}
         });}
         @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,true));}
+        @JavascriptInterface public void confirmCooldownCapture(int sourceIndex){handler.post(()->OverlayService.this.confirmCooldownCapture(sourceIndex));}
+        @JavascriptInterface public void toggleCooldown(){handler.post(OverlayService.this::toggleCooldown);}
+        @JavascriptInterface public void undoCooldown(){handler.post(OverlayService.this::undoCooldown);}
+        @JavascriptInterface public void resetCooldown(){handler.post(OverlayService.this::resetCooldown);}
         @JavascriptInterface public void refreshCoordsAccount(){handler.post(()->checkCoordsAccount(true));}
     }
     private void requestCoordinates(int sourceIndex,boolean autoCopy){
@@ -4898,6 +4996,10 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
+        if(cooldownChangedReceiverRegistered){
+            try{unregisterReceiver(cooldownChangedReceiver);}catch(IllegalArgumentException ignored){}
+            cooldownChangedReceiverRegistered=false;
+        }
         if(!running&&!secondaryRunning)SupportMissionState.overlayStopped();
         if(trainerChangedReceiverRegistered){
             try{unregisterReceiver(trainerChangedReceiver);}
