@@ -97,11 +97,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m py_compile app/scripts/build_sprite_bundle.py app/scripts/fetch_form_sprites.py app/scripts/fetch_all_verified_varieties.py
+          python3 -m py_compile app/scripts/build_sprite_bundle.py app/scripts/fetch_form_sprites.py app/scripts/fetch_all_verified_varieties.py app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/build_pokemon_card_metadata.py
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm'),src=fs.readFileSync('app/src/main/assets/pokemon_type_icons.js','utf8');
+          const ctx={};vm.runInNewContext(src,ctx);const icons=ctx.PokeSearchTypeIcons;
+          if(Object.keys(icons).length!==18||Object.values(icons).some(src=>!src.startsWith('data:image/png;base64,iVBORw0KGgo')))
+           throw Error('Drive Pokémon type icons not packaged');
+          NODE
           node --check functions/index.js
           node --check functions/scripts/reconcile-once.js
           node -e "const c=require('./firebase.json');if(c.database[0].target!=='live')throw Error('RTDB target missing')"
-          for js in probe.js sprite_offline.js coords_quota.js api_result_contract.js api_browser_transport.js api_android_session.js api_catalog_cache.js api_integration_router.js; do
+          for js in probe.js sprite_offline.js coords_quota.js pokemon_type_icons.js pokemon_card_metadata.js pokemon_card_presentation.js api_result_contract.js api_browser_transport.js api_android_session.js api_catalog_cache.js api_integration_router.js; do
             node --check "app/src/main/assets/$js"
           done
           for suite in app/tests/*.test.js; do
