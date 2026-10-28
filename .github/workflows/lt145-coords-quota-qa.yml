@@ -11,4 +11,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node app/tests/lt145-coords-quota.test.js
+      - name: Validate LT145 sources and tests
+        run: |
+          node --check app/src/main/assets/coords_quota.js
+          node --check app/src/main/assets/api_browser_transport.js
+          node --check app/src/main/assets/api_android_session.js
+          node app/tests/lt145-coords-quota.test.js
+          node app/tests/lt145-account-status.test.js
