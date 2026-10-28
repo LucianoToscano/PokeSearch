@@ -1,0 +1,58 @@
+name: LT142 Drive public no-login distribution QA
+on:
+  push:
+    branches: [feature/lt142-exact-site-sprites-aligned-results-20261028]
+    paths:
+      - '.github/workflows/lt142-drive-public-distribution-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-download:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Download public manifest WITHOUT authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --retry 2 \
+            --max-time 80 --user-agent "Mozilla/5.0" \
+            'https://drive.google.com/uc?export=download&id=15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf' \
+            -o manifest.json
+          python3 - <<'PY'
+          import json
+          m=json.load(open('manifest.json'))
+          assert m['schema']=='pokesearch-update-v1'
+          assert m['versionName']=='0.01.42' and m['versionCode']==54347
+          assert m['apkFileId']=='1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P'
+          assert m['forceUpdate'] is False
+          assert len(m['apkSha256'])==64
+          print('Public update manifest OK:',m['versionName'],m['versionCode'])
+          PY
+      - name: Download APK from app Share button Drive URL WITHOUT authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          ID='1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P'
+          curl --location --silent --show-error --retry 2 \
+            --max-time 240 --user-agent "Mozilla/5.0" \
+            "https://drive.google.com/uc?export=download&id=$ID" \
+            -o public.apk
+          if ! unzip -t public.apk >/dev/null 2>&1; then
+            echo 'Trying public Drive content URL (no cookies or tokens)'
+            curl --fail --location --silent --show-error --retry 2 \
+              --max-time 240 --user-agent "Mozilla/5.0" \
+              "https://drive.usercontent.google.com/download?id=$ID&export=download&confirm=t" \
+              -o public.apk
+          fi
+          unzip -t public.apk >/dev/null
+          python3 - <<'PY'
+          import json,hashlib,os
+          m=json.load(open('manifest.json'))
+          blob=open('public.apk','rb').read()
+          got=hashlib.sha256(blob).hexdigest()
+          assert got==m['apkSha256'],f"Mismatch {got} != {m['apkSha256']}"
+          assert len(blob)>30000000
+          print('Public APK verified without login:',len(blob),'bytes, sha256:',got)
+          PY
