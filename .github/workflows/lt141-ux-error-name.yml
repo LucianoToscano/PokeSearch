@@ -1,0 +1,35 @@
+name: LT141 UX contract failure name
+on:
+  push:
+    branches: [feature/lt141-sprites-trainers-vip25-signed-20261027]
+    paths:
+      - '.github/workflows/lt141-ux-error-name.yml'
+      - 'app/tests/overlay-ux.test.js'
+      - 'app/src/main/assets/dock.html'
+      - 'app/src/main/assets/probe.js'
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    outputs:
+      first_failure: ${{ steps.detect.outputs.first_failure }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - id: detect
+        shell: bash
+        run: |
+          node app/tests/overlay-ux.test.js > "$RUNNER_TEMP/ux.txt" 2>&1 || true
+          first="$(sed -n '/^UX CONTRACT FAILURES/{n;p;q;}' "$RUNNER_TEMP/ux.txt" | cut -c1-110)"
+          if [ -z "$first" ]; then first='none'; fi
+          first="${first//'%'/'pct'}"
+          echo "first_failure=$first" >> "$GITHUB_OUTPUT"
+  report:
+    name: "First UX failure: ${{ needs.diagnose.outputs.first_failure }}"
+    needs: diagnose
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "Read first failure from job title"
