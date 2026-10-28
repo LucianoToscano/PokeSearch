@@ -9,9 +9,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #imageFallback{display:flex;align-items:center;justify-content:center;
  width:35px;height:35px;font-size:23px;color:#d5e3ef;opacity:.75}
 #names{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-#names b{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:12px}
+#names b{white-space:normal;text-overflow:clip;overflow:visible;font-size:12px;line-height:1.22;overflow-wrap:anywhere;word-break:normal}
 #names small{color:#bfc8d4;font-size:9px}
-#x{border-radius:6px;background:#ffffff22;font-size:13px;width:23px;height:23px}
+#x{border-radius:6px;background:#ffffff22;font-size:14px;width:23px;height:23px;flex:0 0 23px}
 #major{font-weight:bold;color:#fff;line-height:1.25;margin-top:4px;display:flex;flex-wrap:wrap;gap:3px}
 #major span{border-radius:5px;background:#ffffff1b;padding:2px 4px;font-size:10px}
 #major .red{color:#ff9bb0}
@@ -59,9 +59,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #captureConfirm>button{background:#ffffff26;border-radius:5px;padding:5px 8px}
 #captureStatus[hidden]{display:none}#captureStatus{display:block;margin-top:3px;color:#a7eac7;font-size:10px}
 /* Card LT145: single interaction zone, type badges, critical despawn. */
-#nameLine{display:flex;align-items:center;gap:4px;min-width:0}
-#nameLine b{flex:0 1 auto;min-width:0}
-#types{display:flex;gap:2px;flex-shrink:0}
+#nameLine{display:flex;flex-wrap:wrap;align-items:center;gap:3px;min-width:0}
+#nameLine b{flex:0 1 auto;min-width:0;max-width:100%}
+#types{display:inline-flex;gap:2px;flex:none;align-items:center}
 .pkType{display:inline-flex;align-items:center;justify-content:center;
  width:15px;height:15px;border-radius:50%;color:#fff;font-size:10px;font-weight:900;
  box-shadow:inset 0 -1px 0 #0003}
@@ -77,7 +77,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .pkGender{font-size:11px;font-weight:900}
 .pkGender.male{color:#55afff}.pkGender.female{color:#ff87bb}
 .pkGender.genderless{color:#fff}
-.pkTypeImg{display:block;width:17px;height:17px;object-fit:contain;flex:none}
+.pkTypeImg{display:block;width:11px;height:11px;object-fit:contain;flex:none}
 .pkLegacy{font-weight:900;color:#f5d87e;margin-left:1px}
 .moveSlash{opacity:.65}
 #timer{flex:0 0 auto;font-weight:900;font-size:11px;padding:4px 5px;
@@ -90,7 +90,34 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  border:1px solid #ffffff34;background:#ffffff13;color:#d6dde7;font-size:19px;
  display:flex;align-items:center;justify-content:center;padding:0;margin:0}
 #watch.isFav{color:#ffd563;border-color:#f8d76e8c;background:#f0be321b}
-#watch:focus-visible,#x:focus-visible{outline:2px solid #91ddb8;outline-offset:1px}
+#watch:focus-visible,#x:focus-visible,#shareIcon:focus-visible{outline:2px solid #91ddb8;outline-offset:1px}
+#shareIcon{width:23px;height:23px;flex:0 0 23px;border-radius:6px;
+ background:#ffffff13;border:1px solid #ffffff34;display:flex;align-items:center;
+ justify-content:center;padding:0;margin:0;color:#e0e8f3}
+#shareIcon svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
+ stroke-linecap:round;stroke-linejoin:round}
+#shareIcon:disabled{opacity:.43;cursor:default}
+#subRow{display:flex;align-items:center;flex-wrap:wrap;gap:3px;min-width:0}
+#subRow small{min-width:0;overflow-wrap:anywhere;white-space:normal;flex:1 1 65px}
+#subRow #timer{margin-left:auto}
+#coordsNumbers[hidden]{display:none!important}
+#coordsNumbers{display:block;margin-top:3px;padding:2px 4px;line-height:1.3;
+ border-radius:5px;color:#d4e9f0;background:#ffffff0d;
+ font:600 10px/1.35 ui-monospace,SFMono-Regular,Consolas,monospace;
+ text-align:center;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text}
+#coordRow{position:relative}
+#coords{padding-right:25px}
+#coordsQuota{position:absolute;top:-7px;right:-3px;z-index:3;
+ min-width:20px;max-width:65px;width:auto;height:17px;min-height:17px;
+ border:1px solid #ffffff52;border-radius:9px;padding:0 4px;background:#353d4c;
+ color:#f5f7ff;font-size:9px;line-height:15px;font-weight:900;
+ text-align:center;box-shadow:0 2px 4px #0006}
+#coordsQuota.official{background:#276748;color:#e2ffe8}
+#cooldownControls{display:none!important}
+#cooldownNote{display:none!important}
+#captureShare{display:none!important}
+#captureConfirm:not([hidden]){font-size:9px}
+#captureConfirm>span{font-size:9px}
 #coordRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px;margin-top:5px}
 #coords{width:100%;min-height:30px}
 #copy[hidden]{display:none!important}
@@ -103,8 +130,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 </style></head><body><div id="panel">
  <div id="header">
   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
-  <div id="names"><div id="nameLine"><b id="name">Pokémon</b><span id="types"></span></div><small id="sub"></small></div>
-  <span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"></span>
+  <div id="names">
+   <div id="nameLine"><b id="name">Pokémon</b><span id="types"></span></div>
+   <div id="subRow"><small id="sub"></small><span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"></span></div>
+  </div>
+  <button id="shareIcon" type="button" onclick="captureShareAsk()" title="Copie as coordenadas para habilitar o compartilhamento" aria-label="Compartilhar captura no chat" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.4 11l7.2-4.5M8.4 13l7.2 4.5"/></svg></button>
   <button id="watch" onclick="Native.toggleWatch(watchName)" title="Adicionar aos favoritos" aria-label="Adicionar aos favoritos">☆</button>
   <button id="x" onclick="Native.hideDetail()">×</button>
  </div>
@@ -118,9 +148,10 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 
  <div id="coordRow">
     <button id="coords" onclick="requestCoordsUi()" title="Obter e copiar coordenadas">⌖ Get coords</button>
-    <button id="coordsQuota" type="button" aria-live="polite" onclick="Native.refreshCoordsAccount()" title="Verificar sessão e saldo no PoGoCoordinates">PoGo · ? ⟳</button>
+    <button id="coordsQuota" type="button" aria-live="polite" onclick="Native.refreshCoordsAccount()" title="Usos observados no PokeSearch (não é o saldo total)">?</button>
     <button id="copy" hidden onclick="copyCoords()" aria-label="Copiar coordenadas">⧉</button>
   </div>
+  <div id="coordsNumbers" role="status" hidden></div>
   <div id="cooldownControls" hidden>
     <button id="cooldownConfirm" class="primary" onclick="confirmCooldownUi()" title="Registrar captura sem publicar no chat" hidden disabled>✓ Capturei</button>
     <button id="cooldownUndo" onclick="Native.undoCooldown()" title="Desfazer última captura registrada" aria-label="Desfazer última captura" hidden>↶</button>
@@ -146,7 +177,7 @@ function refreshCooldownButtons(){
  const reset=document.getElementById("cooldownReset");
  if(!container||!confirm||!undo||!reset)return;
  // ON/OFF now lives in Personalização > Info Pokémon.
- container.hidden=!(cooldownLinked&&cooldownActive);
+ container.hidden=true; // temporary: experimental capture buttons are intentionally hidden
  const canConfirm=cooldownLinked&&cooldownActive&&!!window.PokeSearchCooldown?.coords(currentCoords)&&currentIndex>=0;
  confirm.hidden=!canConfirm;
  confirm.disabled=!canConfirm;
@@ -165,7 +196,7 @@ window.cooldownChanged=function(data){
 window.cooldownFeedback=function(message){
  const note=document.getElementById("cooldownNote");
  note.textContent=String(message||"");
- note.hidden=!note.textContent;
+ note.hidden=true; // retain feedback internally while experimental controls are hidden
  resizeEvolutionPanel();
 };
 function confirmCooldownUi(){
@@ -177,6 +208,13 @@ function resetCooldownUi(){
  Native.resetCooldown();
 }
 function shareUi(){
+ const icon=document.getElementById("shareIcon");
+ if(icon){
+  const ready=shareReady&&!shareSent&&!sharePending;
+  icon.disabled=!ready;
+  icon.title=ready?"Compartilhar captura no chat":"Obtenha e copie as coordenadas antes de compartilhar";
+  icon.setAttribute("aria-label",icon.title);
+ }
  document.getElementById("captureShare").hidden=!shareReady||shareSent||sharePending;
  if(!shareReady||shareSent)document.getElementById("captureConfirm").hidden=true;
 }
@@ -210,6 +248,15 @@ window.captureShareFeedback=(ok,message)=>{
  status.hidden=!status.textContent;
  resizeEvolutionPanel();
 };
+function renderCoordinateNumbers(){
+ const box=document.getElementById("coordsNumbers");
+ if(!box)return;
+ // Only a previously validated latitude,longitude pair can appear.
+ const valid=window.PokeSearchCooldown?.coords?.(currentCoords);
+ const match=String(currentCoords||"").trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)$/);
+ box.hidden=!(valid&&match);
+ box.textContent=box.hidden?"":match[1]+", "+match[2];
+}
 function coordButtons(){
  const fetch=document.getElementById("coords"),copy=document.getElementById("copy");
  if(!fetch||!copy)return;
@@ -219,6 +266,7 @@ function coordButtons(){
   "Obter coordenadas e copiar uma vez, quando reveladas";
  fetch.setAttribute("aria-label",fetch.title);
  copy.hidden=true;
+ renderCoordinateNumbers();
 }
 function requestCoordsUi(){
  if(currentCoords){Native.copyCoords(currentCoords);return;}
@@ -288,17 +336,14 @@ window.coordsQuotaUpdated=function(data){
  const authoritative=coordsAccountState==="authenticated"&&data?.official===true&&
   Number.isInteger(data.limit)&&data.limit>0&&Number.isInteger(data.remaining)&&
   data.remaining>=0&&data.remaining<=data.limit;
- const account=coordsAccountState==="authenticated"?"PoGo ✓":
-  coordsAccountState==="login-required"?"PoGo login":
-  coordsAccountState==="checking"?"PoGo …":
-  coordsAccountState==="limited"?"PoGo limitado":"PoGo ?";
 
  el.classList.toggle("official",authoritative);
- el.textContent=authoritative?"PoGo "+data.remaining+"/"+data.limit+" ⟳":
-  "PoGo "+observed+"* ⟳";
+ // Badge never confuses observed local requests with the full account quota.
+ el.textContent=authoritative?String(data.remaining):String(observed);
+ el.dataset.scope=authoritative?"official":"local";
  el.setAttribute("aria-label",authoritative?
-  "Saldo da última revelação: "+data.remaining+" de "+data.limit+" restantes":
-  "Saldo total desconhecido; "+observed+" revelações neste aparelho");
+  "PoGoCoordinates: "+data.remaining+" revelações restantes na última resposta oficial":
+  "PoGoCoordinates: "+observed+" revelações observadas neste aparelho; saldo total desconhecido");
  el.title=authoritative?
   "Saldo da última revelação autenticada, não sincronizado continuamente. Toque para conferir a sessão.":
   "Contagem local de revelações neste PokeSearch, inclusive outras contas; não inclui usos no site. Toque para conferir a sessão.";
@@ -491,7 +536,7 @@ window.showDetails=(c,mode,watched)=>{
  document.getElementById("major").innerHTML=
   stat("PC",c.cp)+stat("Nv.",c.level)+
   stat("IV%",showPct?percent+"%":"","red")+
-  stat("A/D/S",showRaw?raw:"","red")+stat("Rank",c.rank);
+  stat("IV",showRaw?raw:"","red")+stat("Rank",c.rank);
  const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"");
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");
