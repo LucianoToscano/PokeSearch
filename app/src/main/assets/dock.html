@@ -6245,6 +6245,8 @@ window.onCooldownState=function(payload){
    fresh:payload.fresh===true,searchCenter:String(payload.searchCenter||"")}:
   {enabled:false,linked:false,reference:null,apiVerified:false,fresh:false,searchCenter:""};
  if(resultWindow){lastListKey="";draw();}
+ if(typeof choiceOpen!=="undefined"&&choiceOpen==="info"&&
+    typeof renderInfoChoices==="function")renderInfoChoices();
 };
 function preparedResultLines(){
  if(!resultWindow)return [];
@@ -7519,6 +7521,19 @@ function renderInfoChoices(){
   button.setAttribute("aria-label",(selected?"Ocultar ":"Mostrar ")+full);
   button.setAttribute("aria-pressed",String(selected));
  }
+ // This control belongs to Pokémon information, never in the capture card.
+ const cdLabel=cooldownState.enabled?"⏳ CD ON":"⏳ CD OFF";
+ const cooldownButton=uxOption(grid,cdLabel,cooldownState.enabled?"✓":"–",()=>{
+  if(Native.toggleCooldown)Native.toggleCooldown();
+ });
+ cooldownButton.parentElement.classList.toggle("chosen",cooldownState.enabled);
+ cooldownButton.parentElement.setAttribute("aria-label","Cooldown estimado "+
+  (cooldownState.enabled?"ligado":"desligado"));
+ cooldownButton.setAttribute("aria-pressed",String(cooldownState.enabled));
+ cooldownButton.disabled=!cooldownState.linked;
+ cooldownButton.title=cooldownState.linked?
+  "Mostrar ou ocultar estimativa de cooldown nos resultados":
+  "Vincule um treinador para ativar cooldown";
  const visibilityKeys=options.map(entry=>entry[0]);
  const allVisible=visibilityKeys.every(key=>resultDisplayOptions[key]===true);
  const allButton=document.createElement("button");allButton.type="button";
