@@ -82,9 +82,7 @@ public class MainActivity extends Activity {
     // The Download endpoint avoids WhatsApp's cached /file/d/.../view old-APK preview.
     // Version in the URL is a cache-busting public number, NEVER a credential.
     private static final String SHARE_APK_FILE_ID="1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P";
-    private static final String SHARE_APK_DRIVE_URL=
-        "https://drive.usercontent.google.com/download?id="+SHARE_APK_FILE_ID+
-        "&export=download&confirm=t&v="+BuildConfig.VERSION_CODE;
+    // Only an offline fallback: Home's verified manifest owns newer versions.
     private FrameLayout homeRoot;
     private boolean homeLightMode=false;
     // LT72: Home-only update card; does not own or recreate the overlay/WebView.
@@ -955,16 +953,25 @@ public class MainActivity extends Activity {
         homeRoot.addView(layer,new FrameLayout.LayoutParams(-1,-1));
         homeDrawerLayer=layer;
     }
-    /** Text-only Android Sharesheet: forwards a verified Drive APK address, never
-     * grants URI access to private app storage or exposes a GitHub API endpoint.
-     * The Drive file is updated in place only after an approved verified build. */
+    /** Text-only Android Sharesheet: prefer the verified public update manifest,
+     * so each future release automatically changes both the shared URL and label.
+     * Never expose credentials or accept unverified download hosts/IDs. */
     private void sharePokeSearch(){
+        UpdateCenter.Manifest announced=currentDriveUpdate;
+        boolean current=announced!=null && announced.enabled &&
+            announced.versionCode>=BuildConfig.VERSION_CODE &&
+            UpdatePolicy.safeDownloadLink(announced.apkFileId,announced.apkUrl);
+        String fileId=current?announced.apkFileId:SHARE_APK_FILE_ID;
+        int versionCode=current?announced.versionCode:BuildConfig.VERSION_CODE;
+        String versionName=current?announced.versionName:BuildConfig.VERSION_NAME;
+        String shareUrl="https://drive.usercontent.google.com/download?id="+fileId+
+            "&export=download&confirm=t&v="+versionCode;
         Intent send=new Intent(Intent.ACTION_SEND);
         send.setType("text/plain");
-        send.putExtra(Intent.EXTRA_SUBJECT,"PokeSearch para Android");
+        send.putExtra(Intent.EXTRA_SUBJECT,"PokeSearch "+versionName+" — Android");
         send.putExtra(Intent.EXTRA_TEXT,
-            "PokeSearch "+BuildConfig.VERSION_NAME+" — Android (APK oficial)\n"+
-            "Download direto no Google Drive:\n"+SHARE_APK_DRIVE_URL+
+            "PokeSearch "+versionName+" — Android (APK oficial)\n"+
+            "Download direto no Google Drive:\n"+shareUrl+
             "\nInstale por cima da versão atual, sem desinstalar.");
         try {
             startActivity(Intent.createChooser(send,"Compartilhar PokeSearch"));
