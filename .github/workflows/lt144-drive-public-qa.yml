@@ -26,7 +26,7 @@ jobs:
           assert m['versionName']=='0.01.44' and m['versionCode']==54349
           assert m['apkName']=='PokeSearch-v0.01.44-LT.apk'
           assert m['apkFileId']=='1Rgp7IeBU4lZ7pCz1fEQDl4x1nIP7Edlx'
-          assert m['apkSha256']=='7869f53b5433c91af490a748eb63af7d4664360cf956f6464ac8edf00177294d'
+          assert m['apkSha256']=='93ba1c98f9aeaf1d267d3a5bfb558e3272c36173964d929c3ebc5b887bdb6fbf'
           assert m['forceUpdate'] is False
           print('PUBLIC MANIFEST VERIFIED',m['versionName'],m['versionCode'])
           PY
@@ -42,7 +42,7 @@ jobs:
           import json,hashlib,zipfile
           m=json.load(open('update.json'))
           raw=open('public.apk','rb').read()
-          assert len(raw)==48992993,len(raw)
+          assert len(raw)==48993001,len(raw)
           digest=hashlib.sha256(raw).hexdigest()
           assert digest==m['apkSha256'],(digest,m['apkSha256'])
           with zipfile.ZipFile('public.apk') as z:
