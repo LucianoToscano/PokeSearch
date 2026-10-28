@@ -1,0 +1,53 @@
+name: LT143 Public Share and Home update no-login QA
+on:
+  push:
+    branches: [feature/lt143-compartilhar-download-direto-20261027]
+    paths:
+      - '.github/workflows/lt143-drive-public-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-download:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Fetch official update manifest without Google login
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --retry 2 \
+            --max-time 90 -A 'Mozilla/5.0' \
+            'https://drive.google.com/uc?export=download&id=15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf' \
+            -o update.json
+          python3 - <<'PY'
+          import json
+          m=json.load(open('update.json'))
+          assert m['schema']=='pokesearch-update-v1'
+          assert m['enabled'] is True
+          assert m['versionName']=='0.01.43' and m['versionCode']==54348
+          assert m['apkName']=='PokeSearch-v0.01.43-LT.apk'
+          assert m['apkFileId']=='1qz7GJW-0kFWvFdKFgQiwR1o7iXyK6AOj'
+          assert m['apkUrl']=='https://drive.google.com/uc?export=download&id='+m['apkFileId']
+          assert m['apkSha256']=='f228e959efe8accb87e3ff10b807e8c59763dc0a6a094b85a1d6f7a713656b18'
+          assert m['forceUpdate'] is False
+          print('PUBLIC MANIFEST PASS',m['versionName'],m['versionCode'])
+          PY
+      - name: Download latest shared link directly with no login and compare public SHA256
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --retry 2 \
+            --max-time 240 -A 'Mozilla/5.0' \
+            'https://drive.usercontent.google.com/download?id=1qz7GJW-0kFWvFdKFgQiwR1o7iXyK6AOj&export=download&confirm=t&v=54348' \
+            -o public.apk
+          unzip -t public.apk >/dev/null
+          python3 - <<'PY'
+          import json,hashlib,os
+          m=json.load(open('update.json'))
+          data=open('public.apk','rb').read()
+          assert len(data)>30_000_000
+          digest=hashlib.sha256(data).hexdigest()
+          assert digest==m['apkSha256'],f'{digest} vs {m["apkSha256"]}'
+          print('PUBLIC SHARE PASS',len(data),'bytes',digest)
+          PY
