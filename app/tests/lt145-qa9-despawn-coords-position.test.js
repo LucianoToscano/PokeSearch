@@ -5,12 +5,13 @@ const source=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html
 const code=source.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(code);new vm.Script(code);
 const header=source.slice(source.indexOf('<div id="header">'),source.indexOf('<div id="major">'));
-assert.match(header,/<div id="subRow"><span id="timer"[^>]*><\/span><small id="sub"><\/small><\/div>/);
-assert.ok(header.indexOf('id="timer"') < header.indexOf('id="sub"'),"Despawn is before Pokédex");
+assert.ok(header.includes('id="timeRemaining"'));
+assert.ok(header.includes('id="dexGender" class="metaPair"'));
+assert.ok(header.indexOf('id="timer"') < header.indexOf('id="dexGender"'),"Despawn is before Pokédex");
 assert.equal((header.match(/id="timer"/g)||[]).length,1,"only one Despawn timer");
 assert.ok(!header.slice(header.indexOf('<div id="headerActions">')).includes('id="timer"'),"timer is not in buttons column");
-assert.ok(code.includes('[h(c.number),gender,h(c.size),h(c.form)].filter(Boolean)'),"first subtitle value is Pokédex");
-assert.ok(source.includes('#subRow #timer.pulse{animation:psDespawnGentlePulse'),"only clock pulses");
+assert.ok(code.includes('[h(c.number),gender].filter(Boolean)'),"Pokédex precedes size/form");
+assert.ok(source.includes('#subRow #timer.pulse .timerClock{animation:psDespawnGentlePulse'),"only the clock SVG pulses");
 assert.ok(source.includes('#coordRow #coords:active:not(:disabled),#coordRow #coords.isPending{'),"red when tapped or waiting");
 assert.ok(source.includes('#coordRow #coords.hasCoords{'),"ready green");
 assert.ok(code.includes('fetch.className=coordsPending?"isPending":valid?"hasCoords":"";'));

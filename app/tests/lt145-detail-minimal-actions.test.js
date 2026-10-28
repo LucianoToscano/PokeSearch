@@ -10,7 +10,7 @@ for(const id of ["shareIcon","watch","x"]){
  assert.ok(section.includes('id="'+id+'"'),id+" in the action group");
 }
 assert.ok(!section.includes('id="timer"'),"clock must not consume an action slot");
-assert.ok(html.includes('<div id="subRow"><span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"></span><small id="sub"></small></div>'),"Despawn must precede Pokedex number");
+assert.ok(html.includes('id="dexGender" class="metaPair"'),"Dex metadata follows Despawn");
 assert.ok(html.includes('#headerButtons button{box-sizing:border-box;width:23px;height:23px'));
 assert.ok(html.includes('min-height:23px;max-height:23px;flex:0 0 23px'),"all three button hitboxes have the same height");
 assert.ok(!html.includes('#watch{margin-top:4px;width:100%'),"old 28px favorite background must be removed");

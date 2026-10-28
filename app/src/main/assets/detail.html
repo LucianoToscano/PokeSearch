@@ -218,12 +218,47 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  background:rgba(196,35,57,.85);border-color:#ff8497;color:#fff}
 #coordRow #coords.hasCoords{
  background:rgba(42,126,90,.34);border-color:rgba(113,216,157,.65);color:#e4ffed}
+
+/* QA10 Samsung: deliberate two-row header; metadata spans the icon column. */
+#header{display:grid;grid-template-columns:35px minmax(0,1fr) 77px;
+ grid-template-rows:minmax(23px,auto) auto;gap:2px 4px;align-items:start;min-width:0}
+#img,#imageFallback{grid-column:1;grid-row:1 / span 2;align-self:start}
+#names{display:contents}
+#nameLine{grid-column:2;grid-row:1;display:flex;flex-wrap:nowrap;
+ align-items:center;gap:3px;min-width:0}
+#nameLine b{flex:0 1 auto;min-width:0;max-width:100%;overflow-wrap:anywhere;
+ white-space:normal;line-height:1.18}
+#types{flex:0 0 auto;display:inline-flex;gap:2px;align-items:center}
+#headerActions{grid-column:3;grid-row:1;width:77px;justify-self:end;
+ align-self:start;display:block}
+#headerButtons{width:77px;display:flex;justify-content:flex-end;gap:4px}
+#subRow{grid-column:2 / 4;grid-row:2;display:flex;align-items:center;
+ flex-wrap:wrap;column-gap:5px;row-gap:2px;min-width:0;line-height:1.15;margin:0}
+#subRow .metaPair{flex:0 0 auto;display:inline-flex;align-items:center;
+ white-space:nowrap;font-size:9px;font-weight:500;color:#cbd4e0;line-height:12px}
+#subRow .metaPair:empty{display:none}
+#subRow #timer{flex:0 0 auto;display:inline-flex;align-items:center;
+ gap:3px;font-size:9px;line-height:12px;min-height:12px;max-height:none;
+ margin:0;padding:0;white-space:nowrap;vertical-align:middle}
+#subRow #timer[hidden]{display:none!important}
+#subRow #timer .timerClock{display:block;width:10px;height:10px;
+ flex:0 0 10px;stroke:currentColor;stroke-width:2;fill:none;
+ stroke-linecap:round;stroke-linejoin:round}
+#subRow #timer.pulse{animation:none}
+#subRow #timer.pulse .timerClock{animation:psDespawnGentlePulse 1.6s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){#subRow #timer.pulse .timerClock{animation:none}}
+#major{margin-top:3px;gap:3px;align-items:center}
+#info{display:grid;grid-template-columns:max-content minmax(0,1fr);
+ gap:2px 4px;margin-top:3px;line-height:1.22;align-items:start}
+#info .infoLabel{color:#afb9c8;white-space:nowrap;font-weight:400}
+#info .infoValue{min-width:0;overflow-wrap:anywhere;white-space:normal}
+#info #coordsStatus{grid-column:1/-1}
 </style></head><body><div id="panel">
  <div id="header">
   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
   <div id="names">
    <div id="nameLine"><b id="name">Pokémon</b><span id="types"></span></div>
-   <div id="subRow"><span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"></span><small id="sub"></small></div>
+   <div id="subRow"><span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"><svg class="timerClock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 6v6l4 3"></path></svg><span id="timeRemaining"></span></span><span id="dexGender" class="metaPair"></span><span id="sizeForm" class="metaPair"></span></div>
   </div>
   <div id="headerActions">
     <div id="headerButtons">
@@ -450,7 +485,7 @@ function updateCountdown(){
   {tone:remaining>900?"good":remaining>300?"warning":
    remaining>120?"pink":"critical",pulse:remaining>0&&remaining<=60};
  e.hidden=false;
- e.textContent="⏳ "+(remaining?fmt(remaining):"Expirado");
+ document.getElementById("timeRemaining").textContent=remaining?fmt(remaining):"Expirado";
  e.className=state.tone+(state.pulse?" pulse":"");
  e.title="Despawn: "+(remaining?fmt(remaining):"expirado")+" · "+
   (state.tone==="good"?"Mais de 15 min":state.tone==="warning"?"5–15 min":
@@ -574,7 +609,7 @@ window.showEvolutionDetails=payload=>{
  requestAnimationFrame(()=>{panel.scrollTop=Math.min(keepScroll,Math.max(0,panel.scrollHeight-panel.clientHeight));});
  return true;
 };
-const item=(k,v)=>v?'<div><em>'+h(k)+':</em> '+h(v)+'</div>':"";
+const item=(k,v)=>v?'<span class="infoLabel">'+h(k)+':</span><span class="infoValue">'+h(v)+'</span>':"";
 window.watchFeedback=watched=>{
  const star=document.getElementById("watch");
  star.className=watched?"isFav":"";
@@ -618,8 +653,10 @@ window.showDetails=(c,mode,watched)=>{
  const presenter=window.PokeSearchCardPresentation,metadata=window.PokeSearchCardMetaData;
  document.getElementById("types").innerHTML=presenter?.types(c,metadata)||"";
  const gender=presenter?.gender(c.gender)||"";
- document.getElementById("sub").innerHTML=
-  [h(c.number),gender,h(c.size),h(c.form)].filter(Boolean).join(" · ");
+ document.getElementById("dexGender").innerHTML=
+  [h(c.number),gender].filter(Boolean).join(" · ");
+ document.getElementById("sizeForm").textContent=
+  [c.size,c.form].filter(Boolean).join(" · ");
  const img=document.getElementById("img"),fallback=document.getElementById("imageFallback");
  // The result list and this separately owned detail WebView MUST resolve
  // identical offline bytes from the APK, without relying on HTTP or a warm
@@ -687,9 +724,9 @@ window.showDetails=(c,mode,watched)=>{
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");
  document.getElementById("info").innerHTML=
-  (c.moves?'<div><em>Golpes:</em> '+movesHtml+'</div>':"")+
+  (c.moves?'<span class="infoLabel">Golpes:</span><span class="infoValue">'+movesHtml+'</span>':"")+
   item("Distância",c.distance)+
-  (c.location?'<div><em>Local:</em> '+h(locationFlag?locationFlag+" "+locationText:locationText)+'</div>':"")+
+  (c.location?'<span class="infoLabel">Local:</span><span class="infoValue">'+h(locationFlag?locationFlag+" "+locationText:locationText)+'</span>':"")+
   '<div id="coordsStatus" role="status" hidden><span id="coordsValue"></span></div>';
  updateCountdown();
  resizeEvolutionPanel();
