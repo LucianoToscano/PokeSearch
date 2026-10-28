@@ -20,6 +20,8 @@ jobs:
           names=[
           'pm41.fHALLOWEEN_2026_01.icon.png',
           'pm41.fHALLOWEEN_2026_01.s.icon.png',
+          'pm94.cFALL_2023_NOEVOLVE.icon.png',
+          'pm94.cFALL_2023_NOEVOLVE.s.icon.png',
           'pm42.fHALLOWEEN_2026_01.icon.png',
           'pm42.fHALLOWEEN_2026_01.s.icon.png',
           'pm169.fHALLOWEEN_2026_01.icon.png',
