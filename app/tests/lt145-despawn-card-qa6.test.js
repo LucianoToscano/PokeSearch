@@ -66,7 +66,7 @@ assert.ok(script.includes('if(window.copyVisualGeneration!==seq||String(currentC
 assert.ok(script.includes('if(seq!==coordsRequestSeq||!coordsPending)return'));
 assert.ok(script.includes('Native.copyCoords(currentCoords);return;'));
 // Card size automatically tracks content; no permanent blank placeholder.
-assert.ok(script.includes('Math.ceil(document.getElementById("panel").scrollHeight)+2'));
+assert.ok(script.includes('Math.ceil(document.getElementById("panel").scrollHeight)+10'));
 assert.ok(html.includes('#panel{height:auto;min-height:0'));
 assert.ok(html.includes('window.offerCaptureShare=sourceIndex=>'));
 console.log("LT145 Despawn QA6 threshold/pulse/accessibility and all six refinements PASS");

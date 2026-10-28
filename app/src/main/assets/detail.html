@@ -253,6 +253,19 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #info .infoLabel{color:#afb9c8;white-space:nowrap;font-weight:400}
 #info .infoValue{min-width:0;overflow-wrap:anywhere;white-space:normal}
 #info #coordsStatus{grid-column:1/-1}
+/* QA11 Samsung: standout red CTA at rest; pink-red while loading; green only on verified reveal. */
+#coordRow #coords:not(.hasCoords):not(.isPending){
+ background:linear-gradient(180deg,rgba(231,49,79,.98),rgba(178,26,52,.97));
+ border:1px solid rgba(255,155,173,.72);color:#fff;
+ box-shadow:0 2px 7px rgba(129,12,38,.3)}
+#coordRow #coords.isPending{
+ background:linear-gradient(180deg,#ec4968,#c52345);border-color:#ffb1bd;
+ color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.09)}
+#coordRow #coords.hasCoords{
+ background:rgba(42,126,90,.34);border-color:rgba(113,216,157,.65);
+ color:#e4ffed;box-shadow:none}
+#coordRow #coords{transition:background-color .18s ease,border-color .18s ease,color .18s ease}
+#panel{padding:7px 7px 9px}
 </style></head><body><div id="panel">
  <div id="header">
   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
@@ -547,7 +560,7 @@ const evoIdentity=c=>JSON.stringify([
  Number(c?.sourceIndex??-1),String(c?.name||""),String(c?.iv||""),String(c?.cp??"")]);
 function resizeEvolutionPanel(){
  requestAnimationFrame(()=>Native.resizeDetail(
-  Math.ceil(document.getElementById("panel").scrollHeight)+2));
+  Math.ceil(document.getElementById("panel").scrollHeight)+10));
 }
 function toggleEvolutionDetails(){
  const section=document.getElementById("evolutions");

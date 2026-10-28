@@ -12,7 +12,7 @@ run("detail card shows authoritative API absolute despawn even with empty legacy
  const html=detail.split("window.showDetails=(c,mode,watched)=>")[1]||"";
  assert.match(html,/const absolute=Number\(c\.expiresAtMs\)/);
  assert.match(html,/expiresAt=Number\.isFinite\(absolute\)&&absolute>0\?absolute:/);
- assert.match(detail,/e\.textContent="⏳ "\+\(remaining\?fmt\(remaining\):"Expirado"\)/);
+ assert.match(detail,/document\.getElementById\("timeRemaining"\)\.textContent=remaining\?fmt\(remaining\):"Expirado"/);
  assert.match(detail,/e\.className=state\.tone\+\(state\.pulse\?" pulse":""\)/);
  assert.match(detail,/if\(Native\.expiredResults\)Native\.expiredResults\(\)/);
 });
