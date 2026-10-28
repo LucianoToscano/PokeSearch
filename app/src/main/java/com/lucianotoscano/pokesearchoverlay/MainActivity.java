@@ -1804,6 +1804,8 @@ public class MainActivity extends Activity {
                         // its public Google avatar has finished loading.
                         avatarAwaitingHydration="Google".equals(provider);
                     }
+                    String previousActiveCode=getSharedPreferences("prefs",0)
+                        .getString("profileTrainerActiveCode","");
                     String state=profile.optString("trainerState","unknown");
                     JSONArray trainers=profile.optJSONArray("trainers");
                     String officialActiveCode=profile.optString("activeTrainerCode","");
@@ -1858,6 +1860,13 @@ public class MainActivity extends Activity {
                             .remove("profileTrainerTeam").remove("profileTrainerLevel");
                     }
                     edit.apply();
+                    // A confirmed change of the official active trainer invalidates
+                    // encounter identity and stops old trainer cards on BOTH overlays.
+                    if(!previousActiveCode.equals(officialActiveCode)&&
+                       (!previousActiveCode.isEmpty()||!officialActiveCode.isEmpty())){
+                        serviceAction("com.lucianotoscano.pokesearchoverlay.TRAINER_CHANGED");
+                        notifyOverlaySessionReady();
+                    }
                     parsed=true;
                 }
             }catch(Exception e){
