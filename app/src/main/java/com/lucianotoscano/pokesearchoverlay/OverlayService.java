@@ -1659,12 +1659,12 @@ public class OverlayService extends Service {
         detailRoot.addView(detailPanel,new FrameLayout.LayoutParams(-1,-1));
         // A narrow transparent header grip lets the *detail card* move
         // independently of the Pokémon and the Pokébola. It deliberately
-        // excludes the 23dp × close control at the upper right.
+        // excludes Share, Favorites and Close buttons (3 × 23dp) plus gaps.
         View detailDragGrip=new View(this);
         detailDragGrip.setBackgroundColor(Color.TRANSPARENT);
         detailDragGrip.setContentDescription("Arrastar cartão de informações");
         FrameLayout.LayoutParams detailGripParams=new FrameLayout.LayoutParams(
-            dp(DETAIL_DP-39),dp(49),Gravity.TOP|Gravity.LEFT);
+            dp(DETAIL_DP-100),dp(49),Gravity.TOP|Gravity.LEFT);
         detailRoot.addView(detailDragGrip,detailGripParams);
         final float[] detailStartTouch=new float[2];
         final int[] detailStartPosition=new int[2];
