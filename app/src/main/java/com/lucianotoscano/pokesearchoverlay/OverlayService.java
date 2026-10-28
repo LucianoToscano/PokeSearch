@@ -3093,6 +3093,7 @@ public class OverlayService extends Service {
             js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(count()>0?shownMode:mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
             detailRoot.setVisibility(View.VISIBLE);
             pushCoordsQuota();
+            checkCoordsAccount(false);
             moveDetail();
             js(resultPanel,resultLoaded,"window.highlight("+index+")");
             // RANK-EVO-DETAIL-03: request derived PvP projections only on tap.
@@ -3309,6 +3310,26 @@ public class OverlayService extends Service {
             found=candidate;
         }
         return found;
+    }
+    private long coordsAccountCheckedAt=0L;
+    private void checkCoordsAccount(boolean force){
+        if(stopped||loginPaused||detailPanel==null||!detailLoaded)return;
+        long now=System.currentTimeMillis();
+        if(!force&&now-coordsAccountCheckedAt<45_000L)return;
+        coordsAccountCheckedAt=now;
+        js(detailPanel,true,"window.coordsAccountUpdated({auth:'checking'})");
+        if(authorizedApiCollector==null){
+            authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+        }
+        authorizedApiCollector.accountStatus(response->{
+            if(stopped||loginPaused||!detailLoaded)return;
+            String auth="unknown";
+            if(response.optBoolean("ok",false)){
+                String value=response.optString("auth","");
+                if("authenticated".equals(value)||"login-required".equals(value))auth=value;
+            }else if("rate-limited".equals(response.optString("reason")))auth="limited";
+            js(detailPanel,true,"window.coordsAccountUpdated({auth:"+JSONObject.quote(auth)+"})");
+        });
     }
     private void pushCoordsQuota(){pushCoordsQuota(null);}
     private void pushCoordsQuota(JSONObject liveQuota){
@@ -4567,6 +4588,7 @@ public class OverlayService extends Service {
             }catch(Exception e){recordFailure("detalhes coordenadas",e);}
         });}
         @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,true));}
+        @JavascriptInterface public void refreshCoordsAccount(){handler.post(()->checkCoordsAccount(true));}
     }
     private void requestCoordinates(int sourceIndex,boolean autoCopy){
         final long requestToken=++coordinateRequestToken;
