@@ -58,7 +58,9 @@
   const eligible=new Set(Array.isArray(entry?.[1])?entry[1]:[]);
   return raw.split(/\s+\/\s+/).slice(0,3).map(part=>{
    const original=part.trim().replace(/\s*\*$/,"");
-   const marked=eligible.has(moveId(original))||/\*$/.test(part.trim());
+   // Never trust an unverified "*" supplied as plain card text.
+   // Mark only moves proven by the pinned, form-specific metadata.
+   const marked=eligible.has(moveId(original));
    return '<span class="pkMove"'+(marked?' title="Golpe especial: MT de Elite ou legado"':'')+'>'+
     esc(original)+(marked?'<sup class="pkLegacy">*</sup>':"")+'</span>';
   }).join(" <span class=\"moveSlash\">/</span> ");
