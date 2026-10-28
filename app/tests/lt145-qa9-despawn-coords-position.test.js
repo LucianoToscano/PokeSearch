@@ -11,7 +11,7 @@ assert.ok(header.indexOf('id="timer"') < header.indexOf('id="dexGender"'),"Despa
 assert.equal((header.match(/id="timer"/g)||[]).length,1,"only one Despawn timer");
 assert.ok(!header.slice(header.indexOf('<div id="headerActions">')).includes('id="timer"'),"timer is not in buttons column");
 assert.ok(code.includes('[h(c.number),gender].filter(Boolean)'),"Pokédex precedes size/form");
-assert.ok(source.includes('#subRow #timer.pulse .timerClock{animation:psDespawnGentlePulse'),"only the clock SVG pulses");
+assert.ok(source.includes('#statusRow #timer.pulse .timerClock{animation:psDespawnGentlePulse'),"only the clock SVG pulses");
 assert.ok(source.includes('#coordRow #coords:active:not(:disabled),#coordRow #coords.isPending{'),"red when tapped or waiting");
 assert.ok(source.includes('#coordRow #coords.hasCoords{'),"ready green");
 assert.ok(code.includes('fetch.className=coordsPending?"isPending":valid?"hasCoords":"";'));

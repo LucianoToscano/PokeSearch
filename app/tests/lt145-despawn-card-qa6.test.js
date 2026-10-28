@@ -41,7 +41,7 @@ assert.ok(html.includes('#timer.pink{color:#ffa4cb}'));
 assert.ok(html.includes('#timer.critical{color:#ff6575}'));
 assert.ok(html.includes('#timer.warning{color:#f3c276}'));
 assert.ok(html.includes('#timer.good{color:#9ce5b9}'));
-assert.ok(html.includes('#subRow #timer.pulse .timerClock{animation:psDespawnGentlePulse'));
+assert.ok(html.includes('#statusRow #timer.pulse .timerClock{animation:psDespawnGentlePulse'));
 assert.ok(html.includes('@media(prefers-reduced-motion:reduce)'));
 assert.ok(!html.includes('#panel.pulse'),'whole card must not pulse');
 // Preserve photo, full name, exact Drive icons; size is compact in the top subtitle.
@@ -51,7 +51,7 @@ assert.ok(script.includes('[h(c.number),gender].filter(Boolean)'),"dex+sex group
 assert.ok(script.includes('[c.size,c.form].filter(Boolean)'),"size and form grouped");
 assert.ok(!script.includes('item("Tamanho",c.size)'),"size must not add an extra row");
 assert.ok(script.includes('item("Distância",c.distance)'));
-assert.ok(html.includes('#subRow #timer{display:inline-flex;align-self:center;'),"clock stays small before Pokedex number");
+assert.ok(html.includes('#statusRow #timer{display:inline-flex;align-items:center;'),"clock stays small in status row");
 assert.ok(html.includes('id="timeRemaining"'),"clock value anchored to a fixed-width icon");
 assert.ok(html.includes('id="dexGender" class="metaPair"'));
 assert.ok(html.includes('id="sizeForm" class="metaPair"'));

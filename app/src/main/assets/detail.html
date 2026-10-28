@@ -266,12 +266,44 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  color:#e4ffed;box-shadow:none}
 #coordRow #coords{transition:background-color .18s ease,border-color .18s ease,color .18s ease}
 #panel{padding:7px 7px 9px}
+/* QA12 explicit information rows: name/shiny, despawn/types/percent, dex/sex/size/form. */
+#header{grid-template-rows:minmax(23px,auto) auto auto;align-content:start;row-gap:2px}
+#img,#imageFallback{grid-row:1 / span 3}
+#nameLine{grid-column:2;grid-row:1;min-width:0;display:flex;flex-wrap:nowrap}
+#nameLine b{white-space:normal;overflow-wrap:anywhere;word-break:normal;
+ line-height:1.17;font-size:12px;min-width:0}
+#statusRow{grid-column:2 / 4;grid-row:2;display:flex;align-items:center;
+ justify-content:flex-start;flex-wrap:wrap;column-gap:7px;row-gap:2px;
+ min-width:0;min-height:12px;line-height:12px}
+#statusRow #timer{display:inline-flex;align-items:center;align-self:center;
+ flex:0 0 auto;gap:3px;padding:0;margin:0;min-height:12px;max-height:none;
+ font-weight:800;font-size:9px;line-height:12px;border:0;background:transparent;
+ box-shadow:none;white-space:nowrap}
+#statusRow #timer[hidden]{display:none!important}
+#statusRow #timer .timerClock{width:10px;height:10px;flex:0 0 10px;
+ fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#statusRow #timer.pulse{animation:none}
+#statusRow #timer.pulse .timerClock{animation:psDespawnGentlePulse 1.6s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){#statusRow #timer.pulse .timerClock{animation:none}}
+#statusRow #types{display:inline-flex;align-items:center;gap:3px;flex:0 0 auto}
+#statusRow .pkTypeImg{width:11px;height:11px;object-fit:contain}
+#ivPercentTop{font-size:10px;line-height:12px;font-weight:800;color:#ff9fb5;
+ letter-spacing:0;white-space:nowrap;flex:0 0 auto}
+#ivPercentTop[hidden]{display:none!important}
+#subRow{grid-column:2 / 4;grid-row:3;display:flex;align-items:baseline;
+ justify-content:flex-start;flex-wrap:wrap;column-gap:6px;row-gap:1px;
+ margin:0;min-width:0;min-height:12px}
+#subRow .metaPair{font-size:9px;line-height:12px;flex:0 1 auto;max-width:100%;
+ min-width:0;white-space:normal;overflow-wrap:anywhere;color:#cbd4e0}
+#subRow #dexGender{white-space:nowrap;flex:0 0 auto}
+#major{margin-top:4px;align-items:center;gap:3px}
 </style></head><body><div id="panel">
  <div id="header">
   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
   <div id="names">
-   <div id="nameLine"><b id="name">Pokémon</b><span id="types"></span></div>
-   <div id="subRow"><span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"><svg class="timerClock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 6v6l4 3"></path></svg><span id="timeRemaining"></span></span><span id="dexGender" class="metaPair"></span><span id="sizeForm" class="metaPair"></span></div>
+   <div id="nameLine"><b id="name">Pokémon</b></div>
+   <div id="statusRow"><span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"><svg class="timerClock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 6v6l4 3"></path></svg><span id="timeRemaining"></span></span><span id="types"></span><span id="ivPercentTop" class="ivPercentTop" hidden></span></div>
+   <div id="subRow"><span id="dexGender" class="metaPair"></span><span id="sizeForm" class="metaPair"></span></div>
   </div>
   <div id="headerActions">
     <div id="headerButtons">
@@ -729,10 +761,12 @@ window.showDetails=(c,mode,watched)=>{
   .reduce((sum,n)=>sum+n,0)*100/45):null;
  const showPct=validPct&&(rawPct===null||rawPct===Number(percent));
  const showRaw=validRaw&&(!validPct||rawPct===Number(percent));
+ const percentEl=document.getElementById("ivPercentTop");
+ percentEl.textContent=showPct?percent+"%":"";
+ percentEl.hidden=!showPct;
  document.getElementById("major").innerHTML=
-  stat("PC",c.cp)+stat("Nv.",c.level)+
   stat("IV",showRaw?raw:"","red")+
-  stat("IV%",showPct?percent+"%":"","red")+stat("Rank",c.rank);
+  stat("PC",c.cp)+stat("Nv.",c.level)+stat("Rank",c.rank);
  const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"");
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");

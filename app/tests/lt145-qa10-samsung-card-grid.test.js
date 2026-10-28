@@ -6,12 +6,13 @@ const hdr=html.slice(html.indexOf('<div id="header">'),html.indexOf('<div id="ma
 for(const id of ['nameLine','types','subRow','timer','timeRemaining','dexGender','sizeForm','headerActions','headerButtons','shareIcon','watch','x'])assert.ok(hdr.includes('id="'+id+'"'),id);
 assert.ok(hdr.indexOf('id="timer"')<hdr.indexOf('id="dexGender"'));
 assert.ok(hdr.indexOf('id="dexGender"')<hdr.indexOf('id="sizeForm"'));
-assert.match(html,/#subRow\{grid-column:2 \/ 4;grid-row:2;display:flex/);
+assert.match(html,/#statusRow\{grid-column:2 \/ 4;grid-row:2;display:flex/);
+assert.match(html,/#subRow\{grid-column:2 \/ 4;grid-row:3;display:flex/);
 assert.match(html,/#nameLine\{grid-column:2;grid-row:1;display:flex;flex-wrap:nowrap/);
 assert.match(html,/#headerActions\{grid-column:3;grid-row:1;width:77px/);
 assert.match(html,/#header\{display:grid;grid-template-columns:35px minmax\(0,1fr\) 77px/);
 assert.match(html,/#info\{display:grid;grid-template-columns:max-content minmax\(0,1fr\)/);
-assert.match(html,/#subRow #timer.pulse \.timerClock\{animation:psDespawnGentlePulse/);
+assert.match(html,/#statusRow #timer.pulse \.timerClock\{animation:psDespawnGentlePulse/);
 assert.ok(!script.includes('e.textContent="⏳ "'),"emoji must not distort the small clock row");
 assert.ok(script.includes('document.getElementById("timeRemaining").textContent=remaining?fmt(remaining):"Expirado";'));
 assert.ok(script.includes('[h(c.number),gender].filter(Boolean).join(" · ")'));
