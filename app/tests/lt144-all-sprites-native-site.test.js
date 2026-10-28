@@ -28,6 +28,12 @@ assert.equal(sprite.resolve(halloween23).src,
  local+"costumes/pm94.cFALL_2023_NOEVOLVE.icon.png");
 assert.equal(sprite.resolve({...halloween23,shiny:true}).src,
  local+"costumes/pm94.cFALL_2023_NOEVOLVE.s.icon.png");
+assert.equal(sprite.resolve({number:"#94",name:"Gengar",form:"",form_id:1044,
+ costume_id:71,shiny:false}).src,local+"costumes/pm94.cFALL_2023_NOEVOLVE.icon.png");
+assert.equal(sprite.resolve({number:"#94",name:"Gengar",form:"",form_id:1044,
+ costume_id:71,shiny:true}).src,local+"costumes/pm94.cFALL_2023_NOEVOLVE.s.icon.png");
+assert.notEqual(sprite.resolve({number:"#94",name:"Gengar",form:"",form_id:1044,
+ costume_id:58}).src,local+"costumes/pm94.cFALL_2023_NOEVOLVE.icon.png");
 assert.notEqual(sprite.resolve({...halloween23,shiny:false}).src,
  sprite.resolve({number:"#94",name:"Gengar",form:"Fall 2022 Costume"}).src);
 assert.equal(sprite.resolve({number:"#94",name:"Gengar",form:"FALL_2023_NOEVOLVE"}).src,
