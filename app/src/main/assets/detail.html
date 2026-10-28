@@ -39,6 +39,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #coords:focus-visible,#copy:focus-visible{outline:2px solid #8be1cb;outline-offset:1px}
 #coordsQuota{margin:4px 1px 0;padding:4px 6px;background:#ffffff13;border:1px solid #ffffff25;border-radius:6px;color:#d6dce4;font:500 9px/1.35 Roboto,Arial,sans-serif;text-align:center;overflow-wrap:break-word}
 #coordsQuota.official{color:#a9f0cf;border-color:#6ad5a549}
+#coordsQuota{display:block;width:100%;min-height:26px;touch-action:manipulation}
 #captureShare[hidden],#captureConfirm[hidden]{display:none!important}
 #captureShare{margin-top:5px;display:block;width:100%;padding:5px;border-radius:7px;
  border:1px solid #e3c96955;background:#d4b65b18;color:#f5dda4;font-size:10px}
@@ -61,7 +62,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  </section>
  <button id="watch" onclick="Native.toggleWatch(watchName)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg> <span id="watchLabel">Adicionar aos favoritos</span></button>
  <button id="coords" onclick="requestCoordsUi()">⌖ Get coords</button>
-  <div id="coordsQuota" role="status" aria-live="polite" title="As revelações feitas no site não são contabilizadas pelo aplicativo.">Saldo da conta: não informado · usos neste aparelho: 0</div>
+  <button id="coordsQuota" type="button" aria-live="polite" onclick="Native.refreshCoordsAccount()" title="Verificar sessão do PoGoCoordinates sem gastar revelações">⌖ Conta PoGo não verificada · Saldo desconhecido · Atualizar ⟳</button>
   <button id="copy" onclick="copyCoords()">⧉ Copiar coordenadas</button>
  <button id="captureShare" hidden onclick="captureShareAsk()">🎉 Capturou? Compartilhar no chat</button>
  <div id="captureConfirm" hidden><span>Capturou mesmo?</span>
@@ -155,20 +156,35 @@ function updateCountdown(){
   if(Native.expiredResults)Native.expiredResults();
  }
 }
+let coordsAccountState="unknown",coordsLastQuota={observedOnDevice:0,official:false};
+window.coordsAccountUpdated=function(data){
+ const next=String(data?.auth||"unknown");
+ const allowed=["authenticated","login-required","checking","limited","unknown"];
+ const before=coordsAccountState;
+ coordsAccountState=allowed.includes(next)?next:"unknown";
+ // Never attribute a stale server number to another authenticated account.
+ if(before!==coordsAccountState)coordsLastQuota={...coordsLastQuota,official:false};
+ window.coordsQuotaUpdated(coordsLastQuota);
+};
 window.coordsQuotaUpdated=function(data){
-  const el=document.getElementById("coordsQuota");
-  if(!el)return;
-  const observed=Number.isInteger(data?.observedOnDevice)&&data.observedOnDevice>=0?data.observedOnDevice:0;
-  const authoritative=data?.official===true&&Number.isInteger(data.limit)&&
-   data.limit>0&&Number.isInteger(data.remaining)&&data.remaining>=0&&data.remaining<=data.limit;
-  el.classList.toggle("official",authoritative);
-  el.textContent=authoritative?
-   "PoGoCoordinates · Restantes na última consulta: "+data.remaining+"/"+data.limit+
-    " · Usos neste aparelho: "+observed:
-   "PoGoCoordinates · Saldo não informado · Usos neste aparelho: "+observed;
-  el.title=authoritative?
-   "Saldo informado pelo servidor na última revelação. Pode mudar por uso no site ou por troca de conta.":
-   "Contagem parcial de revelações bem-sucedidas neste aparelho. Não representa o limite da conta Google e não inclui o site.";
+ coordsLastQuota=data&&typeof data==="object"?data:{observedOnDevice:0,official:false};
+ const el=document.getElementById("coordsQuota");
+ if(!el)return;
+ const observed=Number.isInteger(data?.observedOnDevice)&&data.observedOnDevice>=0?data.observedOnDevice:0;
+ const authoritative=coordsAccountState==="authenticated"&&data?.official===true&&
+  Number.isInteger(data.limit)&&data.limit>0&&Number.isInteger(data.remaining)&&
+  data.remaining>=0&&data.remaining<=data.limit;
+ const account=coordsAccountState==="authenticated"?"PoGo conectado":
+  coordsAccountState==="login-required"?"Login PoGo necessário":
+  coordsAccountState==="checking"?"Conferindo sessão PoGo":
+  coordsAccountState==="limited"?"Verificação limitada":"Conta PoGo não verificada";
+ el.classList.toggle("official",authoritative);
+ el.textContent=authoritative?
+  account+" · Último saldo: "+data.remaining+"/"+data.limit+" · Usos locais: "+observed+" ⟳":
+  account+" · Saldo desconhecido · Usos locais: "+observed+" ⟳";
+ el.title=authoritative?
+  "Saldo da última revelação autenticada, não sincronizado continuamente. Toque para conferir a sessão.":
+  "Contagem local de revelações neste PokeSearch, inclusive outras contas; não inclui usos no site. Toque para conferir a sessão.";
 };
 window.coordsResult=function(coords,message){
  coordsRequestSeq++;
