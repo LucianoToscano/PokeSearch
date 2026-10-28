@@ -5733,8 +5733,9 @@ function attachSpriteFeedback(){
   const img=stage.querySelector("img.sprite");
   if(!img){stage.classList.add("failed");return;}
   let retries=0,done=false,mirrorAttempted=false,nativeTried=false;
-  const currentIndex=Number(stage.closest(".spawn")?.getAttribute("data-index"));
-  const sourceCard=Number.isInteger(currentIndex)?cards[currentIndex]:null;
+  const spawnNode=stage.closest?.(".spawn")||stage.parentElement;
+  const currentIndex=Number(spawnNode?.getAttribute?.("data-index")??-1);
+  const sourceCard=Number.isInteger(currentIndex)&&currentIndex>=0?cards[currentIndex]:null;
   const tryExactBundled=()=>{
    if(nativeTried)return false;
    nativeTried=true;
