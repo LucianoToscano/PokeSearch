@@ -1,0 +1,32 @@
+name: Verify Gengar Fall 2023 and Zubat Halloween costumes
+on:
+  push:
+    branches: [feature/lt144-native-sprite-fallback-20261027]
+    paths: ['.github/workflows/lt144-gengar2023-url-probe.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check exact Gengar costumes and SHA256
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,hashlib
+          names = [
+          'pm94.cFALL_2023_NOEVOLVE.icon.png','pm94.cFALL_2023_NOEVOLVE.s.icon.png',
+          'pm94.cFALL_2023.icon.png','pm94.cFALL_2023.s.icon.png',
+          'pm94.fFALL_2023_NOEVOLVE.icon.png','pm94.fFALL_2023_NOEVOLVE.s.icon.png',
+          'pm94.fFALL_2023.icon.png','pm94.fFALL_2023.s.icon.png',
+          'pm94.cFALL_2022_NOEVOLVE.icon.png','pm94.cFALL_2022_NOEVOLVE.s.icon.png',
+          'pm41.fHALLOWEEN_2026_01.icon.png','pm41.fHALLOWEEN_2026_01.s.icon.png'
+          ]
+          for name in names:
+            try:
+              req=urllib.request.Request('https://cdn.leekduck.com/assets/img/pokemon_icons_crop/'+name, headers={'User-Agent':'Mozilla/5.0'})
+              with urllib.request.urlopen(req,timeout=10) as r:
+                data=r.read(120000)
+                print(name,'status',r.status,'png',data[:8].hex()=='89504e470d0a1a0a','bytes',len(data),'sha256',hashlib.sha256(data).hexdigest(),flush=True)
+            except Exception as e:print(name,'ERROR',str(e)[:80],flush=True)
+          PY
