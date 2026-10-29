@@ -290,7 +290,7 @@ jobs:
           test -s APK-ENTRIES.txt
           check_entry() {
             local expected="$1"
-            if ! check_entry "$expected"; then
+            if ! grep -Fq "$expected" APK-ENTRIES.txt; then
               echo "::error::Missing compiled APK entry: $expected"
               exit 1
             fi
