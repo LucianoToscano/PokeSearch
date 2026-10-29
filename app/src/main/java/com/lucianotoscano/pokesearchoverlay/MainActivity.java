@@ -589,12 +589,9 @@ public class MainActivity extends Activity {
         trainerHeader.addView(trainerSelectButton,chooseLp);
         trainerSelectButton.setVisibility(View.GONE);
         trainerSelectButton.setOnClickListener(v->{
-            int count=0;
-            try{count=new JSONArray(getSharedPreferences("prefs",0)
-                .getString("profileTrainerList","[]")).length();}
-            catch(Exception ignored){}
-            if(count>1)showTrainerSelector();
-            else openLoginDialog(false,"manage");
+            // Troca apenas entre dois ou mais treinadores realmente distintos.
+            if(selectableTrainerCount(getSharedPreferences("prefs",0))>1)
+                showTrainerSelector();
         });
         trainerPanel.addView(trainerHeader,sectionLp);
 
@@ -1413,6 +1410,21 @@ public class MainActivity extends Activity {
         preferredLoginProvider=provider;
         openLoginDialog(false);
     }
+    private static int selectableTrainerCount(SharedPreferences prefs){
+        try{
+            JSONArray profiles=new JSONArray(prefs.getString("profileTrainerList","[]"));
+            java.util.HashSet<String> codes=new java.util.HashSet<>();
+            for(int i=0;i<profiles.length();i++){
+                JSONObject item=profiles.optJSONObject(i);
+                if(item==null)continue;
+                String code=item.optString("code","");
+                String name=item.optString("name","");
+                if(code.matches("[0-9]{12}")&&
+                   name.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}"))codes.add(code);
+            }
+            return codes.size();
+        }catch(org.json.JSONException e){return 0;}
+    }
     private void showTrainerSelector(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         JSONArray profiles;
@@ -1421,6 +1433,7 @@ public class MainActivity extends Activity {
         if(profiles.length()<2)return;
         final java.util.ArrayList<JSONObject> valid=new java.util.ArrayList<>();
         final java.util.ArrayList<String> labels=new java.util.ArrayList<>();
+        final java.util.HashSet<String> seenCodes=new java.util.HashSet<>();
         String selected=prefs.getString("profileTrainerCode","");
         int selectedIndex=-1;
         for(int i=0;i<profiles.length();i++){
@@ -1430,7 +1443,8 @@ public class MainActivity extends Activity {
             String name=item.optString("name","");
             String team=item.optString("team","");
             if(!code.matches("[0-9]{12}")||
-                !name.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}"))continue;
+                !name.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}")||
+                !seenCodes.add(code))continue;
             if(code.equals(selected))selectedIndex=valid.size();
             valid.add(item);
             labels.add(name+" · "+team+" · ••••"+code.substring(8));
@@ -1721,11 +1735,10 @@ public class MainActivity extends Activity {
                 Color.rgb(165,185,214));
         }
         if(trainerSelectButton!=null){
-            int profiles=0;
-            try{profiles=new JSONArray(prefs.getString("profileTrainerList","[]")).length();}
-            catch(org.json.JSONException ignored){}
-            trainerSelectButton.setVisibility(logged?View.VISIBLE:View.GONE);
-            trainerSelectButton.setText(profiles>1?"Escolher ("+profiles+")":"Perfis");
+            int profiles=selectableTrainerCount(prefs);
+            // GONE remove o botão e seu espaço quando há zero ou um treinador.
+            trainerSelectButton.setVisibility(linked&&profiles>1?View.VISIBLE:View.GONE);
+            trainerSelectButton.setText("Escolher ("+profiles+")");
         }
         if(linked&&trainerCode!=null)
             trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
