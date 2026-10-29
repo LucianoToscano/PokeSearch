@@ -40,8 +40,8 @@ final class PogoAccountSlots {
         if(account!=1&&account!=2)throw new IllegalArgumentException("account");
         if(account==2&&!supportsSecond())
             throw new IllegalStateException("WebView does not support isolated account 2");
-        if(!loggedIn(context,account))
-            throw new IllegalStateException("Only an authenticated slot can be bound");
+        if(account==2&&!loggedIn(context,account))
+            throw new IllegalStateException("Connect account 2 first");
         String verified=trainer;
         if(verified==null||!verified.matches("[0-9]{12}")||
                 !hasTrainer(context,account,verified))verified="";
