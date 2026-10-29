@@ -2505,6 +2505,7 @@ public class MainActivity extends Activity {
                     return;
                 }
                 if(!"manage".equals(loginPurpose)&&attemptsLeft<=13&&
+                   observedLoginProvider.isEmpty()&&
                    !loginDiscoveryStarted&&!loginLinkAttempted){
                     loginDiscoveryStarted=true;
                     openOfficialLoginControl(view,8);
@@ -2814,9 +2815,13 @@ public class MainActivity extends Activity {
                 String host=current.getHost();
                 if(host!=null){
                     String lower=host.toLowerCase(Locale.ROOT);
-                    if(lower.equals("accounts.google.com"))observedLoginProvider="Google";
-                    else if(lower.equals("discord.com")||lower.endsWith(".discord.com"))
+                    if(lower.equals("accounts.google.com")){
+                        observedLoginProvider="Google";
+                        loginSessionNotified=false;
+                    }else if(lower.equals("discord.com")||lower.endsWith(".discord.com")){
                         observedLoginProvider="Discord";
+                        loginSessionNotified=false;
+                    }
                 }
                 boolean site=host!=null&&(host.equalsIgnoreCase("pogocoordinates.com")||
                     host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"));
