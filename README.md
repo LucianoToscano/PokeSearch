@@ -1,5 +1,16 @@
 # PokeSearch — Android Overlay
 
+## Versão oficial atual — LT168 · 0.01.68 · 54373
+
+**Atualização pública confirmada:** [GitHub Release LT168](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.68-54373) · [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.68-54373/PokeSearch-v0.01.68-LT.apk) · [CI SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40864077543). Merge [PR #112](https://github.com/LucianoToscano/PokeSearch/pull/112), commit do APK `b21bb0aed5f6f919a0a1d0f1d64677f908c2859f`; 49.416.673 bytes; SHA-256 `a331a28b853a23b2bbd0fc02e51d2f483646eac4d21aca717ef7e29faa3ab70f`.
+
+**Conteúdo:** vinculação local e reversível de mensagens antigas no chat, alinhamento e avatar vinculados, tratamento do fundo escuro de ícones de modo compartilhados, e opção de importar backups JSON de preferências/favoritos. Preserva Premium, API, assinatura permanente e P1/P2. **A validação física no Samsung ainda está pendente.**
+
+[Registro canônico LT168](docs/ESTADO_CANONICO_LT168_OFICIAL_20261029.md) · [Guia Mestre](docs/GUIA_MESTRE.md). As seções de LT87 e anteriores abaixo são **históricas**, não definem a versão corrente. Não recomeçar de versões antigas.
+
+---
+
+
 > **Guia Mestre atual (curto):** [docs/GUIA_MESTRE.md](docs/GUIA_MESTRE.md) — leia primeiro para versões, PRs, arquitetura, QA e últimas decisões. **Arquivo histórico integral (backup imutável):** [docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md](docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md), SHA-256 `f02d6396a3ae6a4e833f78be8aedbe0b8d0b40254f31203644f3040a30e2a861`. Pesquise nesse backup apenas quando houver dúvida histórica; ele não é mais o guia de edição diária.
 
 ## Estado oficial — PokeSearch LT87 (25/10/2026)
