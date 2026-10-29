@@ -1495,8 +1495,7 @@ public class MainActivity extends Activity {
                     Toast.makeText(this,"Treinador selecionado: "+name,Toast.LENGTH_SHORT).show();
                     // The search owner stays the original signed-in site account.
                     // Shiny selections are reverified against the official site.
-                    sendBroadcast(new Intent("com.lucianotoscano.pokesearchoverlay.TRAINER_CHANGED")
-                        .setPackage(getPackageName()));
+                    notifyTrainerChanged(1);
                 })
             .setNegativeButton("Cancelar",null)
             .show();
@@ -1974,29 +1973,19 @@ public class MainActivity extends Activity {
             .show();
     }
     private void logoutLocalSession(){
-        // Do not start a service for sign-out. Stop the collector before revoking cookies.
-        stopService(new Intent(this,OverlayService.class));
-        stopService(new Intent(this,SecondaryOverlayService.class));
-        if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
-        getSharedPreferences("prefs",0).edit()
-            .putString("sessionStatus","desconectado")
-            .remove("profileDisplayName").remove("profileProvider").remove("profileAvatarUrl")
-            .remove("profileTrainerName").remove("profileTrainerCode")
-            .remove("profileTrainerDetails").remove("profileTrainerState")
-            .remove("profileTrainerList").remove("profileSelectedTrainerCode")
-            .remove("profileTrainerTeam").remove("profileTrainerLevel")
-            .putBoolean("shiny",false)
-            .putString("lastStatus","Sessão local desconectada")
-            .putString("lastError","Nenhum")
-            .apply();
-        refreshSessionSummary();
-        CookieManager.getInstance().removeAllCookies(cleared->{
-            CookieManager.getInstance().flush();
-            WebStorage.getInstance().deleteAllData();
-            runOnUiThread(()->Toast.makeText(this,
-                "Sessão do PokeSearch desconectada",Toast.LENGTH_SHORT).show());
-        });
-        BugReport.log(this,"SESSION","Desconexão local solicitada");
+        // Preserve the other PoGoCoordinates account, its cookies and overlays.
+        PogoAccountSlots.signOut(this,1,()->runOnUiThread(()->{
+            if(PogoAccountSlots.assigned(this,false)==1){
+                getSharedPreferences("prefs",0).edit().putBoolean("shiny",false).apply();
+                restartAssignedOverlay(false);
+            }
+            if(PogoAccountSlots.assigned(this,true)==1){
+                getSharedPreferences("prefs_secondary",0).edit().putBoolean("shiny",false).apply();
+                restartAssignedOverlay(true);
+            }
+            refreshSessionSummary();refreshDualPogoControls();
+            Toast.makeText(this,"Conta 1 desconectada",Toast.LENGTH_SHORT).show();
+        }));
     }
     private void refreshWatchCount(){
         if(watchSummary==null)return;
@@ -2273,6 +2262,8 @@ public class MainActivity extends Activity {
             }
             profileCaptureInProgress=false;
             refreshSessionSummary();
+            refreshDualPogoControls();
+            notifyOverlaySessionReady();
             if(!"manage".equals(loginPurpose)&&
                loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
         });
