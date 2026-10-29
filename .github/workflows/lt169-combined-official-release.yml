@@ -100,6 +100,11 @@ jobs:
           node app/tests/lt167-chat-capture-uid-avatar-icons.test.js
           node app/tests/lt168-legacy-chat-identity-icon-matte.test.js
           node app/tests/lt168-home-data-import.test.js
+          # LT169 full-suite audit: legacy tests must accept verified GO forms,
+          # never empty art or empty circles when exact source is known.
+          node app/tests/lt108-detail-offline-sprites.test.js
+          node app/tests/lt161-shellos-gastrodon-west-sea-sprites.test.js
+          node app/tests/lt145-qa22-rank-scroll-release.test.js
           node app/tests/lt169-all-go-sprites-api-dom-parity.test.js
           node app/tests/lt169-home-identity-privacy.test.js
           node app/tests/lt169-trainer-profiles-visibility.test.js
