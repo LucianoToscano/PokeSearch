@@ -984,8 +984,15 @@ public class MainActivity extends Activity {
     }
     private void showPokeballAccountChoice(boolean secondary){
         int assigned=PogoAccountSlots.assigned(this,secondary);
-        String[] choices={"Conta 1"+(PogoAccountSlots.loggedIn(this,1)?" · Conectada":" · Padrão"),
-            "Conta 2"+(PogoAccountSlots.loggedIn(this,2)?" · Conectada":" · Entrar primeiro")};
+        int trainers1=selectableTrainerCount(PogoAccountSlots.prefs(this,1));
+        int trainers2=selectableTrainerCount(PogoAccountSlots.prefs(this,2));
+        // Each account carries its own linked trainers. A VIP account may
+        // provide more than one; another account may have only one.
+        String[] choices={
+            "Conta 1 · "+trainers1+" treinador"+(trainers1==1?"":"es"),
+            "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?
+                trainers2+" treinador"+(trainers2==1?"":"es"):"Entrar primeiro")
+        };
         new AlertDialog.Builder(this)
             .setTitle(secondary?"Pokébola 2 · Conta":"Pokébola 1 · Conta")
             .setSingleChoiceItems(choices,assigned-1,(dialog,which)->{
@@ -1012,9 +1019,13 @@ public class MainActivity extends Activity {
             if(item==null)continue;
             String code=item.optString("code","");
             if(!PogoAccountSlots.hasTrainer(this,account,code)||codes.contains(code))continue;
-            names.add(item.optString("name","")+" · ••••"+code.substring(8));
+            int trainerNumber=codes.size();
+            names.add("Treinador "+trainerNumber+" · "+item.optString("name","")+
+                " · ••••"+code.substring(8));
             codes.add(code);
         }
+        // A connected account with no verified trainer must not expose
+        // an imaginary VIP trainer or borrow one from the other account.
         final String[] selection=codes.toArray(new String[0]);
         new AlertDialog.Builder(this)
             .setTitle((secondary?"Pokébola 2":"Pokébola 1")+" · Conta "+account+" · Treinador")
