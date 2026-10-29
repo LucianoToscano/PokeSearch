@@ -27,10 +27,10 @@ const node=id=>elements[id]||(elements[id]={
 let resizes=0;
 const window={};
 const handler=new Function("window","document","evoIdentity","detailIdentity",
- "evolutionRow","resizeEvolutionPanel","requestAnimationFrame","evolutionExpanded",
+ "evolutionRow","resizeEvolutionPanel","requestAnimationFrame","evolutionExpanded","updateVisiblePvPRank",
  js.slice(start,end)+"return window.showEvolutionDetails;"
 )(window,{getElementById:node},p=>p.id,"zubat-41",x=>x?.rank?'<div>Verified rank</div>':"",
- ()=>{resizes++;},fn=>fn(),false);
+ ()=>{resizes++;},fn=>fn(),false,()=>false);
 const empty={id:"zubat-41",leagues:["gl","ul","ml"].map(league=>
  ({league,own:null,evolutions:[]}))};
 assert.equal(handler(empty),false,"empty analysis must not appear");
