@@ -6072,6 +6072,18 @@ function evolutionCandidates(card,league){
 function bestEvolutionRank(card,league){
  return evolutionCandidates(card,league)[0]||null;
 }
+// A costume may share the species' IV mathematics without being allowed
+// to evolve in-game. Offer rank-only comparisons for the SEARCH match, never
+// claim the costumed encounter can evolve or inherit eligibility/CP.
+function cosmeticRankComparisons(card,league){
+ if(!cosmeticPvpIdentity(card)||!window.PokeSearchOfflineSprite?.verifiedSpeciesIdentity?.(card))return [];
+ const ordinary={...card,form:"",costume:"",costume_id:0,costumeId:0,
+  isCostume:false,variant:"",region:""};
+ return evolutionCandidates(ordinary,league).slice(0,24).map(x=>({
+  name:x.name,rank:x.rank,statProductPct:x.statProductPct,
+  referenceOnly:true,eligible:null
+ }));
+}
 // For an encounter lacking A/D/S, species-level overall ranks may still be
 // verified from the pinned PvPoke catalogue. Never infer an IV class/percent.
 function rankedOverallOnlyEvolutions(card,league){
@@ -6115,6 +6127,12 @@ window.pvpEvolutionDetails=function(index){
   iv:String(card.iv||""),
   cp:String(card.cp??""),
   ivUnavailable:missingIv,
+  // Rank threshold belongs to this overlay's confirmed GL/UL search,
+  // not to the IV rank of the unevolved Pokémon.
+  searchLeague:mode==="gl"||mode==="ul"?mode:null,
+  searchRankLimit:(mode==="gl"||mode==="ul")?
+    Number(mode==="gl"?searchSettings.glRank:searchSettings.ulRank):null,
+  includePreviousEvolutions:searchSettings.includePreviousEvolutions!==false,
   leagues:[]
  };
  for(const league of ["gl","ul","ml"]){
@@ -6132,7 +6150,10 @@ window.pvpEvolutionDetails=function(index){
     {rank:null,overallRank:currentRank}:null):
     own?{rank:own.rank,statProductPct:own.statProductPct,
      cp:own.cp,level:own.level,overallRank:currentRank}:null,
-   evolutions:descendants
+   evolutions:descendants,
+   // This list never asserts evolution eligibility for costumes.
+   comparisons:!missingIv&&output.includePreviousEvolutions?
+    cosmeticRankComparisons(card,league):[]
   });
  }
  // No rank may be shown unless it is grounded in the pinned catalogue.
