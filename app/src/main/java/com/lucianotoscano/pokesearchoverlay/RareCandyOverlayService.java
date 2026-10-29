@@ -100,8 +100,8 @@ public final class RareCandyOverlayService extends Service {
             height<0?height:dp(height));
         p.topMargin=dp(top);return p;
     }
-    private Bitmap readIcon(){
-        try(InputStream s=getAssets().open("rare_candy_icon.b64")){
+    static Bitmap loadIcon(Context context){
+        try(InputStream s=context.getAssets().open("rare_candy_icon.b64")){
             byte[] encoded=new byte[s.available()];
             int count=0;while(count<encoded.length){
                 int n=s.read(encoded,count,encoded.length-count);
@@ -143,7 +143,7 @@ public final class RareCandyOverlayService extends Service {
                 if(validCoords(p))copied.add(p);
             }
         }catch(Exception ignored){}
-        icon=readIcon();
+        icon=loadIcon(this);
         running=true;
         NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         manager.createNotificationChannel(new NotificationChannel("pokesearch",
