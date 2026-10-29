@@ -1,0 +1,31 @@
+"use strict";
+const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path");
+const c=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java"),"utf8");
+const alerts=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/WatchAlerts.java"),"utf8");
+assert.match(c,/addHomeDrawerItem\(drawer,"⇩","Exportar dados",this::exportHomeData\)/);
+assert.match(c,/addHomeDrawerItem\(drawer,"⇧","Importar dados",this::importHomeData\)/);
+assert.match(c,/new Intent\(Intent\.ACTION_OPEN_DOCUMENT\)/);
+assert.match(c,/startActivityForResult\(intent,303\)/);
+assert.match(c,/if\(req==303\)/);
+assert.match(c,/readHomeDataBackup\(data\.getData\(\)\)/);
+assert.match(c,/if\(bytes\.size\(\)\+n>131072\)/);
+assert.match(c,/pokesearch-home-export-v1/);
+assert.match(c,/JSONObject settings=backup\.optJSONObject\("filtersAndPreferences"\)/);
+assert.match(c,/JSONArray favorites=backup\.optJSONArray\("favorites"\)/);
+assert.match(c,/favorites\.length\(\)>50/);
+assert.match(c,/textKey&&value instanceof String/);
+assert.match(c,/boolKey&&value instanceof Boolean/);
+assert.match(c,/!textKey&&!boolKey&&value instanceof Number/);
+assert.match(c,/WatchAlerts\.canonicalList\(names\.toString\(\)\)/);
+assert.match(c,/setPositiveButton\("Importar"/);
+assert.match(c,/if\("locationEnabled"\.equals\(key\)\)continue/);
+assert.match(c,/editor\.putString\(WatchAlerts\.PREF_LIST,watched\)/);
+assert.match(c,/editor\.commit\(\)/);
+assert.match(c,/syncOverlayPreferences\(\)/);
+assert.match(alerts,/public static String canonicalList\(String raw\)/);
+const block=c.slice(c.indexOf("private void readHomeDataBackup"),c.indexOf("private void toggleHomeOverlay"));
+for(const key of ["authorUid","refresh_token","access_token","trainerCode","sessionCookie","latitude","longitude"]){
+ assert.ok(!block.includes('putString("'+key+'"'),"never import private "+key);
+}
+assert.ok(!block.includes('getSharedPreferences("prefs_secondary"'),"do not overwrite second ball");
+console.log("LT168: safe export/import roundtrip schema, limits, favorites, no credentials PASS");
