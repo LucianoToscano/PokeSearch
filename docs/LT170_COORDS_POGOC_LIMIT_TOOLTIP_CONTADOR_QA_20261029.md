@@ -12,5 +12,12 @@ Data: 29/10/2026. Base exclusiva LT169 oficial (`0.01.69 / 54374`), sem mudar as
 
 ## QA e limites
 - Teste de regressão: `app/tests/lt170-coords-provider-rate-notice.test.js`: rate confirmado vs falha genérica, modal VIP, cronômetro de 8s apenas com evidência, popup acessível, círculo numérico, rotas Java e ausência de novas chamadas.
-- QA GitHub Node/Java e teste visual com Samsung ainda precisam ser acompanhados após abertura da PR; não declarar homologação física a partir de CI.
+- QA completa GitHub Node e Java/Android **aprovada**; teste visual com Samsung ainda pendente, não declarar homologação física a partir de CI.
 - Não alterar nenhuma quota, não tentar contorná-la, não alterar PoGoCoordinates nem criar servidor. Não distribuir APK ou fazer merge antes de aprovação expressa.
+
+## Resultado do CI nesta revisão
+- [Suíte completa de testes Node](https://github.com/LucianoToscano/PokeSearch/actions/runs/40882200272) — SUCCESS.
+- [Node QA do projeto](https://github.com/LucianoToscano/PokeSearch/actions/runs/40882200326) — SUCCESS.
+- [Compilação Java Android, sem APK](https://github.com/LucianoToscano/PokeSearch/actions/runs/40882200435) — SUCCESS.
+- Regressões históricas de LT68/LT77/LT80 adaptadas com detector simulado **sem restrição**, sem remover checagens reais. A LT170 mantém o mesmo `applicationId`, Java 17, API oficial e duas Pokébolas.
+- **Status: PR #121 Draft, QA aprovada no CI e teste físico pendente. Não mesclada, não gerado APK público. LT169 segue latest.**
