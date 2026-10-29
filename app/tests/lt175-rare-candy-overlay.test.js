@@ -29,7 +29,7 @@ assert(menu.includes("grid-auto-rows:30px"));
 assert(menu.includes("gap:2px"));
 assert(menu.includes("background:#151b26e6"));
 assert(menu.includes("border-radius:5px"));
-assert(menu.includes("requestHeight(265,false)"));
+assert(menu.includes("requestHeight(265,true)"));
 assert(menu.includes("new int[]{1,3,5}")===false);
 for(const part of ["choosePeriod(1)","choosePeriod(3)","choosePeriod(5)"]){
  // Buttons are generated dynamically, not hard-coded; guarded by [1,3,5].
