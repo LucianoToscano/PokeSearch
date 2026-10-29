@@ -72,7 +72,8 @@ final class VerifiedSpriteCache {
     private static boolean matchesBlob(byte[] png,String expected){
         try{
             MessageDigest md=MessageDigest.getInstance("SHA-1");
-            md.update(("blob "+png.length+"\\u0000").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            md.update(("blob "+png.length).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            md.update((byte)0);
             md.update(png);
             byte[] digest=md.digest();
             StringBuilder actual=new StringBuilder(40);
