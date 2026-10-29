@@ -531,6 +531,29 @@
           "A instalação de novas versões depende de confirmação do usuário no Android; não ocorre atualização silenciosa."
         ]
       }
+    },
+    {
+      "id": "lt166-pvp-compact-info-coordinates-header-green-20261029",
+      "minVersionCode": 54371,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT166 — Card PvP compacto e legível",
+      "sections": {
+        "novidades": [
+          "O selo e as evoluções PvP usam ↳ em vez de Ref.; o ⓘ clicável explica as simulações de IV para fantasias sem adicionar uma linha ao card."
+        ],
+        "melhorias": [
+          "Coordenadas reveladas em uma única linha centralizada, sem quebra mesmo em telas menores.",
+          "Título Análise PvP · N avaliações centralizado no botão, com seta de expandir fixa à direita.",
+          "Destaque verde consistente para Rank Classe #1 da combinação de IVs na espécie e liga, inclusive quando a evolução é projetada."
+        ],
+        "correcoes": [
+          "Corrigida a perda do verde em IVs #1 quando a evolução da fantasia não era verificável, sem atribuir classificação competitiva geral indevida.",
+          "Preservados os dados GL/UL/Master, Premium, coordenadas, alertas, filtros e duas Pokébolas."
+        ],
+        "emDesenvolvimento": [
+          "O Android exige confirmação do jogador para instalar atualizações; a publicação não força reinício nem alteração de conta."
+        ]
+      }
     }
   ]
 }

@@ -554,8 +554,41 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 /* When reveal changes the label into coordinates, reserve equal space on
    both sides of the text; the independent quota remains pinned right. */
 #coordRow #coords.hasCoords{padding-left:36px;padding-right:36px;box-sizing:border-box;text-align:center}
-/* The reference marker distinguishes comparisons from legal evolution branches. */
+/* LT166: coordinates stay one centered line without altering button behavior.
+   The quota is an independent right-aligned overlay and never shifts the number. */
+#coordRow #coords.hasCoords{
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  overflow-wrap:normal;word-break:normal;
+  font-size:9.5px;font-variant-numeric:tabular-nums;
+}
+/* Symmetric label insets keep the heading centered even with the chevron. */
+#evoToggle{position:relative;display:block;text-align:center}
+#evoToggle #evoLabel{display:block;min-width:0;max-width:100%;box-sizing:border-box;
+  padding-inline:14px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#evoToggle #evoChevron{position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  pointer-events:none}
+/* Rank #1 highlights the best 0..4095 IV combination in this SPECIES/LEAGUE;
+   it is NOT a claim of #1 strength in the overall metagame. */
+.evoLine.best .evoWho b,.evoLine.best .evoClass{color:#83e7bb}
+/* LT166: inline explanation only for projected costume references; no extra card row. */
 .evoLine.isReference .evoMark{color:#d3c0ff;font-weight:900}
+.evoLine.isReference .evoWho{display:flex;align-items:center;gap:2px}
+.evoLine.isReference .evoWho b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evoLine .evoInfoBtn{display:inline-flex;align-items:center;justify-content:center;flex:0 0 20px;
+ width:20px;height:22px;min-height:22px;line-height:1;border:0;border-radius:5px;
+ background:transparent;color:#c9d9ef;font:700 14px/1 Roboto,Arial,sans-serif;
+ padding:0;touch-action:manipulation;cursor:pointer}
+.evoLine .evoInfoBtn:focus-visible{outline:1px solid #aad7ff;outline-offset:0}
+.rankLineSafe .evoInfoBtn{display:inline-flex;vertical-align:middle;align-items:center;justify-content:center;
+ width:17px;height:17px;margin-left:4px;padding:0;border:0;border-radius:4px;
+ background:transparent;color:#c9d9ef;font:700 13px/1 Roboto,Arial,sans-serif;
+ touch-action:manipulation;cursor:pointer}
+.rankLineSafe .evoInfoBtn:focus-visible{outline:1px solid #aad7ff}
+#pvpRefPopover[hidden]{display:none!important}
+#pvpRefPopover{position:fixed;z-index:1000;width:228px;max-width:calc(100vw - 16px);
+ box-sizing:border-box;border:1px solid #d0e0fc70;border-radius:8px;padding:8px 10px;
+ background:#202c3af0;color:#f0f6ff;font:500 11px/1.38 Roboto,Arial,sans-serif;
+ box-shadow:0 4px 15px #0009;backdrop-filter:blur(10px);pointer-events:auto}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -878,6 +911,44 @@ function toggleEvolutionDetails(){
  document.getElementById("evoToggle").setAttribute("aria-expanded",String(evolutionExpanded));
  resizeEvolutionPanel();
 }
+// LT166: a tap-only explanation, not a permanent fourth line or a native dialog.
+let pvpRefAnchor=null,pvpRefPopover=null;
+function closePvpReferenceInfo(){
+ if(pvpRefAnchor)pvpRefAnchor.setAttribute("aria-expanded","false");
+ pvpRefAnchor=null;
+ if(pvpRefPopover)pvpRefPopover.hidden=true;
+}
+function togglePvpReferenceInfo(event,button){
+ if(event){event.preventDefault();event.stopPropagation();}
+ const wasOpen=pvpRefAnchor===button&&pvpRefPopover&&!pvpRefPopover.hidden;
+ closePvpReferenceInfo();
+ if(wasOpen)return;
+ if(!pvpRefPopover){
+  pvpRefPopover=document.createElement("div");
+  pvpRefPopover.id="pvpRefPopover";
+  pvpRefPopover.setAttribute("role","status");
+  pvpRefPopover.setAttribute("aria-live","polite");
+  pvpRefPopover.textContent="↳ indica uma projeção dos IVs para a evolução. Não confirma que esta fantasia possa evoluir no Pokémon GO.";
+  document.body.appendChild(pvpRefPopover);
+ }
+ pvpRefAnchor=button;
+ button.setAttribute("aria-expanded","true");
+ pvpRefPopover.hidden=false;
+ const rect=button.getBoundingClientRect();
+ const width=pvpRefPopover.offsetWidth,height=pvpRefPopover.offsetHeight;
+ const viewportW=window.innerWidth,viewportH=window.innerHeight;
+ const left=Math.max(8,Math.min(rect.left,viewportW-width-8));
+ const below=rect.bottom+5;
+ const top=below+height<=viewportH-8?below:Math.max(8,rect.top-height-5);
+ pvpRefPopover.style.left=Math.round(left)+"px";
+ pvpRefPopover.style.top=Math.round(top)+"px";
+}
+if(typeof document!=="undefined"&&typeof document.addEventListener==="function"){
+ document.addEventListener("pointerdown",event=>{
+  if(pvpRefAnchor&&!pvpRefAnchor.contains(event.target)&&
+     !pvpRefPopover?.contains(event.target))closePvpReferenceInfo();
+ });
+}
 function evolutionRow(x,first){
  if(!x||typeof x!=="object")return "";
  const rank=Number(x.rank),overall=Number(x.overallRank);
@@ -903,10 +974,10 @@ function evolutionRow(x,first){
  else if(!isReference&&x.eligible===null&&hasClass)state="Elegibilidade não verificada";
  return '<div class="evoLine'+(first?' isCurrent':'')+
   (isReference?' isReference':'')+
-  (hasClass&&rank===1&&x.eligible===true?' best':'')+
-  '"'+(isReference?' title="Referência matemática dos IVs da espécie; não confirma que a fantasia pode evoluir"':'')+
-  '><div class="evoSummary">'+
-  '<span class="evoWho"><span class="evoMark">'+(first?'Atual':isReference?'Ref.':'↳')+'</span> <b>'+h(name)+'</b></span>'+
+  (hasClass&&rank===1&&x.eligible!==false?' best':'')+
+  '"><div class="evoSummary">'+
+  '<span class="evoWho"><span class="evoMark">'+(first?'Atual':'↳')+'</span> <b>'+h(name)+'</b>'+
+  (isReference?'<button type="button" class="evoInfoBtn" aria-label="Informações sobre rank de evolução projetado" aria-expanded="false" onclick="togglePvpReferenceInfo(event,this)">ⓘ</button>':'')+'</span>'+
   (hasClass&&pct?'<span class="evoPct" title="Eficiência relativa de IVs"'+
    (window.PokeSearchIVDisplay?.colorForEfficiency?.(pct)?
     ' style="--ps-rank-percent-color:'+window.PokeSearchIVDisplay.colorForEfficiency(pct)+'"':"")+
@@ -955,8 +1026,18 @@ function updateVisiblePvPRank(payload){
   return false;
  }
  const scope=best.kind==="evolution"?" · ↳ "+best.name:
-  best.kind==="reference"?" · Ref. "+best.name:"";
+  best.kind==="reference"?" · ↳ "+best.name:"";
  rankLine.textContent=label+" · Rank Classe: #"+best.rank+scope;
+ if(best.kind==="reference"&&typeof rankLine.appendChild==="function"){
+  const info=document.createElement("button");
+  info.type="button";
+  info.className="evoInfoBtn";
+  info.textContent="ⓘ";
+  info.setAttribute("aria-label","Explicar IV projetado para a evolução");
+  info.setAttribute("aria-expanded","false");
+  info.onclick=event=>togglePvpReferenceInfo(event,info);
+  rankLine.appendChild(info);
+ }
  const own=candidates.find(x=>x.kind==="current");
  rankLine.title="Rank dos IVs de "+best.name+" na "+
   (activeRankLeague==="gl"?"Grande Liga":"Ultra Liga")+
@@ -1033,6 +1114,7 @@ window.showDetails=(c,mode,watched)=>{
  const changed=detailIdentity!==nextIdentity;
  activeRankLeague=mode==="gl"||mode==="ul"?mode:"";
  if(changed){
+  closePvpReferenceInfo();
   detailIdentity=nextIdentity;evolutionExpanded=false;
   coordsRequestSeq++;
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
