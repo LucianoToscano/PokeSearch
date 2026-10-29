@@ -1,0 +1,60 @@
+name: LT170 — publicar apenas APK QA pré-release (sem atualizar usuários)
+on:
+  push:
+    branches: [feature/lt170-dual-pogo-session-slots-20261029]
+    paths: ['.github/workflows/lt170-dual-accounts-qa-prerelease.yml']
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: lt170-dual-accounts-qa-prerelease-once
+  cancel-in-progress: false
+jobs:
+  publish-qa-only:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: '40895056237'
+      SOURCE_SHA: '91a700c55250ef51e210d30830c55f06c297ba0b'
+      ARTIFACT_NAME: 'PokeSearch-LT170-Dual-Accounts-QA-Signed'
+      FILE: 'PokeSearch-v0.01.70-LT170-DuasContas-QA.apk'
+      TAG: 'v0.01.70-54375-qa-dual-accounts'
+      CERT: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+    steps:
+      - name: Validate signed artifact came from exact tested revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run watch "$SOURCE_RUN" -R "$GITHUB_REPOSITORY" --exit-status
+          ACTUAL="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" --jq '.head_sha')"
+          test "$ACTUAL" = "$SOURCE_SHA"
+          mkdir -p qa
+          gh run download "$SOURCE_RUN" -R "$GITHUB_REPOSITORY" --name "$ARTIFACT_NAME" --dir qa
+          test -s "qa/$FILE"
+          test "$(cat qa/SOURCE_COMMIT.txt)" = "$SOURCE_SHA"
+          (cd qa && sha256sum --check SHA256SUMS.txt)
+          unzip -t "qa/$FILE" >/dev/null
+          grep -Fq "versionCode='54375'" qa/PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.70'" qa/PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" qa/PACKAGE-VERSION.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' qa/SIGNING-REPORT.txt
+          grep -Fq "$CERT" qa/SIGNING-REPORT.txt
+          LATEST="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')"
+          test "$LATEST" = "v0.01.69-54374" || {
+            echo "::error::The stable release advanced; do not publish stale test APK";exit 1;
+          }
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::QA tag already exists; never overwrite signed APK";exit 1;
+          fi
+      - name: Publish QA prerelease, never latest/official
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" "qa/$FILE" "qa/SHA256SUMS.txt" "qa/SIGNING-REPORT.txt" \
+            -R "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" \
+            --title "PokeSearch LT170 QA — duas contas PoGoCoordinates isoladas" \
+            --notes "APK apenas de homologação. Home com dois logins PoGoCoordinates independentes e escolha de conta/treinador em cada Pokébola. Default preserva a sessão antiga e a segunda conta usa WebView MULTI_PROFILE se suportado. Testar Google/Discord, P1/P2, Shiny, logout isolado e permanência dos dados no Samsung antes de distribuição geral. Não é a atualização estável; LT169 continua oficial." \
+            --prerelease --latest=false
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.69-54374'

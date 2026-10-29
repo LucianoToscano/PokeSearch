@@ -53,5 +53,6 @@ assert.match(chooser,/seenCodes\.add\(code\)/);
 assert.match(chooser,/valid\.size\(\)<2\)return;/);
 assert.match(chooser,/setSingleChoiceItems/);
 assert.match(chooser,/profileSelectedTrainerCode/);
-assert.match(chooser,/TRAINER_CHANGED/);
+assert.match(chooser,/notifyTrainerChanged\(1\)/);
+assert.match(code,/private void notifyTrainerChanged\(int slot\)/);
 console.log("LT169: 0/1 treinador sem botao nem espaco; 2+ com troca original PASS");
