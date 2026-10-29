@@ -25,11 +25,23 @@ assert.ok(d.includes('src="sprite_visual_scale.js"')&&k.includes('src="sprite_vi
 assert.ok(css.includes('.gengarHalloween #img{transform:scale(calc(.49 * var(--ps-alpha-scale,1)))'),"Halloween Gengar detail");
 assert.ok(k.includes('const effectiveArtFit=halloweenGengar?0.42:artFit;'),"Halloween Gengar list");
 assert.ok(k.includes('var(--visual-sprite-scale,1) * var(--ps-alpha-scale,1)'),"visual editor scale preserved");
-const env={window:{},document:{createElement(){return {getContext(){return {clearRect(){},drawImage(){},getImageData(){return {data:new Uint8ClampedArray(96*96*4).fill(255)}}}}}}}}};
-vm.runInNewContext(f,env);assert.ok(env.window.PokeSearchSpriteScale);
+const env={window:{}};
+env.document={createElement:()=>({
+ getContext:()=>({
+  clearRect(){},drawImage(){},
+  getImageData:()=>({data:new Uint8ClampedArray(96*96*4).fill(255)})
+ })
+})};
+vm.runInNewContext(f,env);
+assert.ok(env.window.PokeSearchSpriteScale);
 const value=env.window.PokeSearchSpriteScale.factor({naturalWidth:96,naturalHeight:96});
 assert.ok(value>=.76&&value<=.82,"large silhouette shrinks moderately");
-const blocked={window:{},document:{createElement(){return {getContext(){return {clearRect(){},drawImage(){},getImageData(){throw Error("tainted")}}}}}}}};
+const blocked={window:{}};
+blocked.document={createElement:()=>({
+ getContext:()=>({
+  clearRect(){},drawImage(){},getImageData(){throw Error("tainted");}
+ })
+})};
 vm.runInNewContext(f,blocked);
 assert.equal(blocked.window.PokeSearchSpriteScale.factor({naturalWidth:96,naturalHeight:96}),1,"CORS-safe fallback");
 console.log("LT145 QA19 packed entire card shell, readable stats, normalized sprites with CORS fallback PASS");
