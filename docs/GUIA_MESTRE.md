@@ -2,7 +2,7 @@
 
 ## LT170 — DUAS CONTAS POGOC E POKÉBOLAS INDEPENDENTES (29/10/2026)
 
-**Status:** código na branch `feature/lt170-dual-pogo-isolated-logins-20261029`, build de QA assinado `0.01.70 / 54375` e proposta de atualização estável sob validação. **Não confundir com LT169 oficial até release estável confirmada.**
+**STATUS OFICIAL: LT170 0.01.70 / 54375 PUBLICADA PARA TODOS.** PR #126 mesclada na `main`, commit de distribuição `dd39c94c80ed4199a070ba0002a6407b0bf4ccd2`. Release latest: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.70-54375 . APK `PokeSearch-v0.01.70-LT.apk` (49.510.519 bytes), SHA-256 `ebbd4a12e923b9c15ff6cd3abb8c067ee58ad1f05dd8d55ab2c7e23987afad9b`. Certificado Android v2 permanente e R8 verificados. GitHub Actions oficial #40899409701 **SUCCESS**, com publicação e checagem do digest do arquivo na API de Releases. Os usuários veem a atualização pelo fluxo GitHub Releases existente na Home e precisam confirmar a instalação.
 
 - **Duas áreas de login PoGoCoordinates na Home:** Conta 1 mantém cookies e treinador legados, Conta 2 usa Chromium WebView `MULTI_PROFILE` com cookies e armazenamento próprios, Login Google/Discord, Gerenciar e Sair sem afetar Conta 1. Conta 2 fica indisponível quando o WebView do aparelho não suporta perfis separados.
 - **Associação independente por Pokébola:** P1 e P2 escolhem Conta 1 ou 2, depois exclusivamente treinadores verificados no perfil daquela conta. Permite A/A, A/B, B/A e B/B; não altera resultados de uma Pokébola ao trocar a outra. `Sem treinador` explícito não herda outro treinador nem ativa Shiny.
@@ -11,9 +11,17 @@
 - **Outras PRs:** #121 (taxa de coordenadas), #122 (Pokébola 1 e fluxo de vínculo) e #123 (Mais transparente) permanecem independentes para evitar conflitos. Nenhum código dessas PRs é presumido presente na LT170 antes de merge explícito.
 
 
-## VERSÃO OFICIAL ATUAL — LT169 (0.01.69 / versionCode 54374) — 29/10/2026
+### Entrega final LT170 — checklist oficial 29/10/2026
+- QA anterior: [Actions #40898670734](https://github.com/LucianoToscano/PokeSearch/actions/runs/40898670734) **SUCCESS** (incluindo seleção explícita Sem treinador que impede herança de vínculo e Shiny).
+- Merge PR [#126](https://github.com/LucianoToscano/PokeSearch/pull/126): `dd39c94c80ed4199a070ba0002a6407b0bf4ccd2`. O arquivo mestre e as notas de versão acompanham a `main`.
+- Compilação e distribuição oficial: [Actions #40899409701](https://github.com/LucianoToscano/PokeSearch/actions/runs/40899409701) **SUCCESS**; upload Release latest, versão 0.01.70, code 54375, hash e certificado verificados. [Download direto do APK](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.70-54375/PokeSearch-v0.01.70-LT.apk).
+- **Limite de QA:** não houve execução física de OAuth Google/Discord com dois logins simultâneos em Samsung/Moto G15 por este ambiente. Caso o provedor Android WebView não suporte `MULTI_PROFILE`, o aplicativo informa a indisponibilidade da segunda conta em vez de compartilhar cookies.
+- PRs #121–#123 não estão incluídas neste merge. Manter sua revisão separada, sem afirmar que foram distribuídas nesta release.
 
-**LT169 É A BASE CANÔNICA ATUAL.** PRs #113–#119 mescladas na main. APK oficial SOURCE_COMMIT `81503cc6e2ce7e974532503759e2d690af7aedbd`; [Release estável latest v0.01.69-54374](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.69-54374) confirmada por [Actions #40875761778 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40875761778). APK `PokeSearch-v0.01.69-LT.apk` com **49.493.674 bytes**, SHA-256 `58acf4bd0b663149e803daf411d7d0a118b7a0112da87240abda4acdb7e3f4f6`; assinatura Android v2 permanente e R8 verificados.
+
+## HISTÓRICO — LT169 (0.01.69 / versionCode 54374) — 29/10/2026
+
+**LT169 É A BASE HISTÓRICA ANTERIOR À LT170.** PRs #113–#119 mescladas na main. APK oficial SOURCE_COMMIT `81503cc6e2ce7e974532503759e2d690af7aedbd`; [Release estável latest v0.01.69-54374](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.69-54374) confirmada por [Actions #40875761778 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40875761778). APK `PokeSearch-v0.01.69-LT.apk` com **49.493.674 bytes**, SHA-256 `58acf4bd0b663149e803daf411d7d0a118b7a0112da87240abda4acdb7e3f4f6`; assinatura Android v2 permanente e R8 verificados.
 
 - **Sprites:** índice GO exato de 1.679 formas/trajes por variante e Shiny, cache SHA-1 Git, API ON / DOM OFF, Flabébé cinco cores, Floette, Florges, Furfrou trims e Shellos/Gastrodon East Sea. DOM prioriza sua própria URL; API usa a arte GO da mesma forma quando verificada. Falta real vira identificação textual, não círculo.
 - **Home:** ícone discreto de alternância somente com 2+ treinadores válidos; três opções independentes de privacidade em Menu → Preferências para ocultar nome PoGoCoordinates, nome do treinador e código (Anônimo / Anônimo / XXXX XXXX XXXX), apenas na apresentação.
