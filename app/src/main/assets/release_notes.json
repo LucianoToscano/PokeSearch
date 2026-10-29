@@ -618,6 +618,7 @@
         ],
         "correcoes": [
           "Corrigida a ausência de sprites Flabébé Yellow/Red/Blue/Orange/White e outras formas catalogadas quando a API está ligada.",
+          "Coordenadas completas no card, sem reticências: texto volta à esquerda e quebra em outra linha quando necessário, mantendo a função de copiar.",
           "Removidos círculos genéricos vazios nos lugares onde a sprite não pode ser identificada, usando uma identificação textual temporária.",
           "Botão Perfis deixa de ocupar espaço para contas sem múltiplos treinadores; preservadas a troca de treinador e as credenciais originais."
         ],
