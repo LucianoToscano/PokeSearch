@@ -17,7 +17,8 @@ assert.ok(script.includes('if(!count&&!ownCount){'),"no fabricated analysis");
 assert.ok(script.includes('outer.hidden=true;'),"empty analysis must remain hidden instead of showing a blank tab");
 assert.ok(script.includes('"Análise IV PvP · "+ownCount+" ligas"'),"own-only analyses accurately named");
 assert.ok(html.includes('Math.ceil(panel.scrollHeight)+3'),"no phantom-scroll regression");
-const start=script.indexOf(' const rankLine=document.getElementById("rankLine");');
+const start=script.indexOf(' const rankLine=document.getElementById("rankLine");',
+ script.indexOf('window.showDetails=(c,mode,watched)=>{'));
 const end=script.indexOf(' const movesHtml=presenter?',start);
 assert.ok(start>0&&end>start);
 const rankJs=script.slice(start,end);
