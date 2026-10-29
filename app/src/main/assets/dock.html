@@ -6079,8 +6079,11 @@ function cosmeticRankComparisons(card,league){
  if(!cosmeticPvpIdentity(card)||!window.PokeSearchOfflineSprite?.verifiedSpeciesIdentity?.(card))return [];
  const ordinary={...card,form:"",costume:"",costume_id:0,costumeId:0,
   isCostume:false,variant:"",region:""};
+ // Keep every projected number attached to its exact species/league.
+ // This is an IV comparison only: a GO costume may be unable to evolve.
  return evolutionCandidates(ordinary,league).slice(0,24).map(x=>({
   name:x.name,rank:x.rank,statProductPct:x.statProductPct,
+  cp:x.cp,level:x.level,overallRank:verifiedOverallRank({name:x.name},league),
   referenceOnly:true,eligible:null
  }));
 }
