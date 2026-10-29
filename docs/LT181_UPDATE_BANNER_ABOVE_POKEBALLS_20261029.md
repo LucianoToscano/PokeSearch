@@ -15,3 +15,13 @@ Na mesma conversa em que autorizou publicar a LT180 para todos, pediu que **na p
 - Notas LT181 preparadas com `minVersionCode=54386` no arquivo `release_notes.json`.
 - Branch `feature/lt181-update-banner-above-pokeballs-20261029`, derivada da `main` com correção LT180 mesclada; a **LT180 (54385) é a publicação autorizada neste turno**.
 - **A LT181 não deve ser mesclada ou publicada durante a publicação da LT180.** Exigir testes Node/Java e APK com assinatura permanente e validação visual antes de próxima publicação.
+
+
+## Ampliação LT181 — menus uniformes e resultados Candy completos (29/10/2026)
+- O usuário mostrou diferenças de layout entre Localização/Atualização/Informações do Doce Raro e Pokébolas e a aparência isolada dos botões Reportar/Doar/Fechar do menu •••. Os três menus Candy passaram a reutilizar as medidas finais do `dock.html`: Localização **148px**, linhas 26/32/24/29px, intervalo com seis botões **30px**, Informações em **grade compacta 2×2**.
+- Fundo do Doce Raro: CSS com as mesmas variáveis `--visual-menu-*` e a mesma matemática de `visual_editor.js`. O serviço Android lê o **mesmo** `prefs/visualPrefsJson` das Pokébolas (tema claro/escuro, `menuTransparency` 0–100%, desfoque), sincroniza enquanto menu visível e ao recarregar a WebView local.
+- Botões Reportar/Doar/Fechar: eliminada a regra de fundo `--visual-menu-readable-bg` mais escuro; usam **`--visual-menu-button-bg`**, mesmo alpha, borda e sombra do menu principal — também em modo claro.
+- **Relato adicional: resultados dos doces cortados.** A janela Android ainda tinha limite fixo de **460dp**, embora dez linhas ocupem ao menos **470dp**. O corte de parte do décimo doce foi eliminado calculando a altura pelo número de doces realmente ativos, sem cap fixo; escolhe a região acima/abaixo que comporte a lista inteira e habilita rolagem vertical quando a tela não dispõe de altura suficiente. `ScrollView` e contêineres deixam de recortar as sprites; largura compacta do sprite ajustada de 48dp para 50dp, preservando espaço para informações opcionais (228dp).
+- Mantidas a atualização imediata no toque ↻, 3 minutos padrão ou após copiar os dez doces ativos e ficarem cinza, e os limites/TTL oficiais do PoGoCoordinates. Nada de cooldown local extra.
+- Testes: `lt181-candy-menu-parity.test.js`, `lt175-rare-candy-overlay.test.js`, `lt180-candy-cadence-location.test.js`, `lt179-candy-refresh-gestures.test.js`, `lt170-more-tile-unified-transparent.test.js` atualizados; workflow assinado `lt181-menu-parity-signed-qa.yml` recompila candidata `0.01.81 / 54386` a partir do HEAD da PR.
+- **Estado de distribuição:** LT180 é a última pública; LT181 está em QA. Não declarar APK, assinatura ou envio aos usuários sem provas dos testes e do workflow.
