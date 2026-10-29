@@ -2199,7 +2199,10 @@
   // Site imagery (DOM) always wins above. For direct API cards the search
   // response has no image, so exact GO artwork (same species+named variant)
   // resolves first instead of presenting an empty ring for known colours.
-  if(goArt)return goArt;
+  // Existing fully verified and locally packaged BASE art wins when the GO
+  // "named form" is in fact that species' normal/default appearance
+  // (e.g. Furfrou Natural). Do not regress already offline-safe species.
+  if(goArt&&!verifiedBase(card))return goArt;
   // Prefer explicit source-provided artwork if one exists, otherwise use the
   // exact, offline bundled regional variant (normal OR shiny).
   if(!image&&verifiedGalarianZigzagoon(card)){
