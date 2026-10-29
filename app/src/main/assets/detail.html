@@ -553,13 +553,16 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #coordRow #coords:not(.hasCoords){padding-left:25px;padding-right:25px;text-align:center}
 /* When reveal changes the label into coordinates, reserve equal space on
    both sides of the text; the independent quota remains pinned right. */
-#coordRow #coords.hasCoords{padding-left:36px;padding-right:36px;box-sizing:border-box;text-align:center}
-/* LT166: coordinates stay one centered line without altering button behavior.
-   The quota is an independent right-aligned overlay and never shifts the number. */
+#coordRow #coords.hasCoords{box-sizing:border-box;text-align:left}
+/* LT169: show complete coordinates, never replace digits with an ellipsis.
+   Use the left side again, preserving space for the right-hand quota badge.
+   Very long signed coordinates may wrap instead of truncating. */
 #coordRow #coords.hasCoords{
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  overflow-wrap:normal;word-break:normal;
-  font-size:9.5px;font-variant-numeric:tabular-nums;
+  box-sizing:border-box;padding-left:7px;padding-right:33px;
+  text-align:left;white-space:normal;overflow:visible;text-overflow:clip;
+  overflow-wrap:anywhere;word-break:normal;
+  min-height:29px;height:auto;line-height:1.24;
+  font-size:10px;font-variant-numeric:tabular-nums;
 }
 /* Symmetric label insets keep the heading centered even with the chevron. */
 #evoToggle{position:relative;display:block;text-align:center}
