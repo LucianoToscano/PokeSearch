@@ -17,6 +17,7 @@ function runRead({href="",location="",target=true,button=true}={}){
  const ctx={
   action:"readCoords:"+JSON.stringify(query),
   matchingCoordsCard:()=>target?{node:{}}:null,
+  coordsRevealLimit:()=>null, // simulated site has no provider restriction
   cardCoordsControls:()=>controls,
   text:()=> "Open in Maps",
   nextLabelValue:()=>location,

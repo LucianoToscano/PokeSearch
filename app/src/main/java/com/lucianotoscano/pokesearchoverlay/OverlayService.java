@@ -469,6 +469,11 @@ public class OverlayService extends Service {
                         deliverCoords("","Pokémon expirou. Aguarde um novo resultado.");
                     }else if("reveal-in-progress".equals(reason)){
                         deliverCoords("","Coordenadas já estão sendo consultadas.");
+                    }else if("rate-limited".equals(reason)){
+                        // HTTP 429: confirmed provider block. No fabricated countdown.
+                        deliverCoordsRestricted("rate",0);
+                    }else if("vip-required".equals(reason)){
+                        deliverCoordsRestricted("quota",0);
                     }else{
                         if(reason.length()>60)reason="indisponível";
                         deliverCoords("","Get coords API: "+reason);
@@ -3310,6 +3315,11 @@ public class OverlayService extends Service {
                 CoordsQuotaStore.successfulReveal(this,null);
                 deliverCoords(coords,autoCopy?"Coordenadas copiadas":"Coordenadas obtidas");return;
             }
+            String limitType=result.optString("limitType","");
+            if("rate".equals(limitType)||"quota".equals(limitType)){
+                deliverCoordsRestricted(limitType,result.optInt("retrySeconds",0));
+                return;
+            }
             if(result.optBoolean("pending",false)&&attempt<9){
                 // Bounded polling of this one verified card, never a second
                 // Get coords click. Give slow React hydration time to settle.
@@ -3468,6 +3478,22 @@ public class OverlayService extends Service {
     }
     private void deliverCoords(String coordinates,String message){
         js(detailPanel,detailLoaded,"window.coordsResult("+JSONObject.quote(coordinates)+","+JSONObject.quote(message)+")");
+        pushCoordsQuota();
+        status(message);
+    }
+    private void deliverCoordsRestricted(String kind,int reportedSeconds){
+        // Only the matched provider denial or the API's explicit 429/VIP reason
+        // may show this notice. Never emulate/retry around PoGoCoordinates limits.
+        if(!"rate".equals(kind)&&!"quota".equals(kind))return;
+        JSONObject evidence=new JSONObject();
+        try{
+            evidence.put("type",kind);
+            evidence.put("retrySeconds",reportedSeconds>=1&&reportedSeconds<=3600?
+                reportedSeconds:0);
+        }catch(org.json.JSONException ignored){}
+        String message="Taxa Limitada PoGoCoordinates";
+        js(detailPanel,detailLoaded,"window.coordsResult(\"\","+
+            JSONObject.quote(message)+","+evidence.toString()+")");
         pushCoordsQuota();
         status(message);
     }
@@ -4775,6 +4801,11 @@ public class OverlayService extends Service {
                 // A transient page refresh may return only "reason". Surface
                 // the actual bounded reason in the detail, never clear it via
                 // a generic status refresh or pretend the coords were copied.
+                String limitType=response.optString("limitType","");
+                if("rate".equals(limitType)||"quota".equals(limitType)){
+                    deliverCoordsRestricted(limitType,response.optInt("retrySeconds",0));
+                    return;
+                }
                 String why=response.optString("status",
                     response.optString("reason","Get coords indisponível"));
                 deliverCoords("",why);return;
