@@ -38,6 +38,24 @@
   if(pct<100)return "#C084FC";
   return "#F04B70";
  }
+ // The source may supply only IV%; this is useful, but NOT a
+ // three-stat IV spread. Never synthesize A/D/S from a percentage.
+ function percentOnly(card){
+  const raw=String(card?.iv??"").trim();
+  if(raw)return unavailable;
+  const supplied=String(card?.ivPercent??"").trim();
+  if(!percentPattern.test(supplied))return unavailable;
+  const observed=Number(supplied.replace(",","."));
+  for(let sum=0;sum<=45;sum++){
+   const exact=sum*100/45;
+   if(observed===Math.round(exact)||observed===Number(exact.toFixed(1))||
+      observed===Number(exact.toFixed(2))){
+    const percent=Math.round(exact),color=colorFor(percent);
+    return {valid:true,raw:"",percent,color,derived:false,percentOnly:true};
+   }
+  }
+  return unavailable;
+ }
  function fromCard(card){
   const raw=String(card?.iv??"").trim();
   if(!rawPattern.test(raw))return unavailable;
@@ -58,5 +76,5 @@
   }
   return {valid:true,raw,percent,color,derived:!supplied};
  }
- return Object.freeze({colorFor,colorForEfficiency,fromCard});
+ return Object.freeze({colorFor,colorForEfficiency,fromCard,percentOnly});
 });
