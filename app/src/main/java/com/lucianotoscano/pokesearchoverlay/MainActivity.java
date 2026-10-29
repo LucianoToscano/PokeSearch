@@ -939,6 +939,7 @@ public class MainActivity extends Activity {
         addHomeDrawerItem(drawer,"◐","Transparência dos fundos",this::showHomeTransparencyDialog);
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
+        addHomeDrawerItem(drawer,"⇧","Importar dados",this::importHomeData);
         addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
         addHomeDrawerItem(drawer,"💙","Agradecimentos",this::openTribute);
         if(CommunityScrapbookStage1.isEnabled(this))
@@ -1023,6 +1024,100 @@ public class MainActivity extends Activity {
         }catch(Exception e){
             pendingExportText="";
             Toast.makeText(this,"Não foi possível preparar os dados",Toast.LENGTH_SHORT).show();
+        }
+    }
+    /** Imports ONLY the keys supported by the existing v1 exporter.
+     * Does not touch sessions, Premium, Firebase, token data, trainer account,
+     * coordinates, other devices, or independently configured Pokébola 2. */
+    private void importHomeData(){
+        Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try{startActivityForResult(intent,303);}
+        catch(Exception error){
+            Toast.makeText(this,"Não foi possível selecionar o arquivo JSON",
+                           Toast.LENGTH_LONG).show();
+        }
+    }
+    private void readHomeDataBackup(Uri uri){
+        if(uri==null)return;
+        try(java.io.InputStream input=getContentResolver().openInputStream(uri)){
+            if(input==null)throw new java.io.IOException("Arquivo inacessível");
+            ByteArrayOutputStream bytes=new ByteArrayOutputStream();
+            byte[] buf=new byte[4096];int n;
+            while((n=input.read(buf))!=-1){
+                if(bytes.size()+n>131072)throw new java.io.IOException("Backup muito grande");
+                bytes.write(buf,0,n);
+            }
+            JSONObject backup=new JSONObject(bytes.toString("UTF-8"));
+            if(!"pokesearch-home-export-v1".equals(backup.optString("schema","")))
+                throw new IllegalArgumentException("Formato incompatível");
+            JSONObject settings=backup.optJSONObject("filtersAndPreferences");
+            JSONArray favorites=backup.optJSONArray("favorites");
+            if(settings==null||favorites==null||favorites.length()>50)
+                throw new IllegalArgumentException("Conteúdo incompatível");
+            String[] keys={"mode","rawAttack","rawDefense","rawStamina",
+                "ivPercentMin","ivPercentMax","glRank","ulRank","shiny",
+                "sort","intervalMinutes","spriteSize","showTimers",
+                "alertsMode","alerts","locationEnabled","locationRadius"};
+            // Validate the entire allowlist BEFORE changing any settings.
+            final java.util.Map<String,Object> validated=new java.util.LinkedHashMap<>();
+            for(String key:keys){
+                if(!settings.has(key))continue;
+                Object value=settings.opt(key);
+                if(value instanceof Boolean)validated.put(key,value);
+                else if(value instanceof Number){
+                    double v=((Number)value).doubleValue();
+                    if(!Double.isFinite(v)||v!=Math.floor(v)||v < -1||v > 1000)
+                        throw new IllegalArgumentException("Valor numérico inválido");
+                    validated.put(key,((Number)value).intValue());
+                }else if(value instanceof String){
+                    String s=(String)value;
+                    if(s.length()>80||s.contains("\n")||s.contains("\r"))
+                        throw new IllegalArgumentException("Preferência inválida");
+                    validated.put(key,s);
+                }else throw new IllegalArgumentException("Tipo inválido");
+            }
+            // Exact collection only, with the existing 50-favorite/70-char limits.
+            StringBuilder names=new StringBuilder();
+            for(int i=0;i<favorites.length();i++){
+                Object name=favorites.opt(i);
+                if(!(name instanceof String)||((String)name).length()>70)
+                    throw new IllegalArgumentException("Favorito inválido");
+                if(names.length()>0)names.append('\n');
+                names.append((String)name);
+            }
+            final String watched=WatchAlerts.canonicalList(names.toString());
+            new AlertDialog.Builder(this).setTitle("Importar backup do PokeSearch?")
+                .setMessage("Restaurar "+validated.size()+" preferências e "+
+                    WatchAlerts.names(watched).size()+" favoritos desta Pokébola? "+
+                    "O arquivo não contém contas, coordenadas ou senhas. "+
+                    "As configurações independentes da Pokébola 2 permanecem intactas.")
+                .setNegativeButton("Cancelar",null)
+                .setPositiveButton("Importar",(dialog,which)->{
+                    SharedPreferences.Editor editor=getSharedPreferences("prefs",0).edit();
+                    for(java.util.Map.Entry<String,Object> entry:validated.entrySet()){
+                        String key=entry.getKey();Object value=entry.getValue();
+                        // Location must be explicitly re-applied by the user;
+                        // backups intentionally exclude real center coordinates.
+                        if("locationEnabled".equals(key))continue;
+                        if(value instanceof Boolean)editor.putBoolean(key,(Boolean)value);
+                        else if(value instanceof Integer)editor.putInt(key,(Integer)value);
+                        else editor.putString(key,(String)value);
+                    }
+                    editor.putString(WatchAlerts.PREF_LIST,watched);
+                    boolean saved=editor.commit();
+                    if(saved){
+                        syncOverlayPreferences();
+                        Toast.makeText(this,"Dados importados. Reabra os menus para conferir.",
+                                       Toast.LENGTH_LONG).show();
+                    }else Toast.makeText(this,"Não foi possível restaurar os dados",
+                                        Toast.LENGTH_LONG).show();
+                }).show();
+        }catch(Exception error){
+            Toast.makeText(this,"Arquivo inválido ou incompatível com o PokeSearch",
+                           Toast.LENGTH_LONG).show();
         }
     }
     private void toggleHomeOverlay(){
@@ -2609,6 +2704,11 @@ public class MainActivity extends Activity {
             return;
         }
         if(req==101&&Settings.canDrawOverlays(this))startOverlay();
+        if(req==303){
+            if(result==RESULT_OK&&data!=null&&data.getData()!=null)
+                readHomeDataBackup(data.getData());
+            return;
+        }
         if(req==302){
             if(result==RESULT_OK&&data!=null&&data.getData()!=null&&!pendingExportText.isEmpty()){
                 try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){
