@@ -76,9 +76,9 @@ public class OverlayService extends Service {
         sendBroadcast(new Intent(ACTION_COOLDOWN_CHANGED).setPackage(getPackageName()));
     }
     private String cooldownTrainerScope(){
-        // The active trainer is selected in the shared main profile, not the
-        // secondary overlay's independent filter preferences.
-        return CooldownCaptureStore.trainerScope(getSharedPreferences("prefs",MODE_PRIVATE));
+        // Cooldown checkpoints are keyed by the confirmed trainer for
+        // THIS Pokébola, never the other account's global selection.
+        return PogoAccountSlots.trainer(this,isSecondaryOverlay());
     }
     private boolean cooldownEnabled(String scope){
         return !scope.isEmpty()&&getSharedPreferences("prefs",MODE_PRIVATE)
@@ -2269,6 +2269,7 @@ public class OverlayService extends Service {
         shinyLoginWindowOpened=true;
         Intent intent=new Intent(this,MainActivity.class);
         intent.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN");
+        intent.putExtra("pogoAccountSlot",PogoAccountSlots.assigned(this,isSecondaryOverlay()));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
             Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
         try{startActivity(intent);}catch(Exception e){
