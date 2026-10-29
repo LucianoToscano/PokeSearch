@@ -649,6 +649,30 @@
           "Versão QA para testes no Samsung: confirmar logins simultâneos, OAuth, troca de contas, Shiny e reinicialização antes de distribuir atualização estável."
         ]
       }
+    },
+    {
+      "id": "lt171-full-dual-account-cards-vip-20261029",
+      "minVersionCode": 54376,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT171 — Dois cards completos e treinadores VIP",
+      "sections": {
+        "novidades": [
+          "A Conta 2 agora tem card completo como a Conta 1: avatar, login, treinador vinculado, equipe, código, copiar e gerenciamento.",
+          "Cada Pokébola escolhe Conta 1 ou Conta 2 e o treinador válido daquela conta, incluindo Treinador 1 e Treinador 2 em contas VIP."
+        ],
+        "melhorias": [
+          "Trocar treinador por ícone discreto aparece em cada card apenas quando houver dois ou mais treinadores oficiais vinculados.",
+          "As opções de privacidade Anônimo/XXXX também se aplicam ao card da Conta 2.",
+          "Avatar da Conta 2 carrega apenas imagem pública verificada, sem compartilhar cookies ou dados privados."
+        ],
+        "correcoes": [
+          "Contas com dois treinadores exibem ambos no seletor e contas com um treinador não oferecem um segundo treinador inexistente.",
+          "As escolhas P1/P2 continuam independentes e as contas usam perfis WebView isolados quando compatíveis."
+        ],
+        "emDesenvolvimento": [
+          "Validação visual real de dois logins simultâneos, seletores VIP e cartões no Samsung ainda requer teste no aparelho; instalação da atualização depende de aceite Android."
+        ]
+      }
     }
   ]
 }
