@@ -1,0 +1,123 @@
+name: PokeSearch LT164 — publish signed official APK to all
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/lt164-official-public-distribution.yml'
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: pokesearch-lt164-public-once
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    environment:
+      name: official-updates
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      QA_RUN: '40853268314'
+      SOURCE_SHA: 'd63d8e02f275c206d5ffb557b96a27f83a921d4a'
+      QA_TAG: v0.01.64-54369-qa-gl-top5-noibat-evolution
+      QA_APK: PokeSearch-LT164-GL-Rank-Evolucao-QA.apk
+      OFFICIAL_TAG: v0.01.64-54369
+      OFFICIAL_APK: PokeSearch-v0.01.64-LT.apk
+      EXPECTED_SHA256: 496a5771b1380a16ace5595f41966134bf391eb997a0c90143039f3acc2733cf
+      EXPECTED_CERT: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e
+    steps:
+      - name: Checkout merged main and verify registered release notes
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Confirm source commit is merged, QA passed and notes registered
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$SOURCE_SHA" HEAD
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QA_RUN" --jq '.conclusion')" = success
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QA_RUN" --jq '.head_sha')" = "$SOURCE_SHA"
+          node - <<'NODE'
+          const fs=require('fs');
+          const d=JSON.parse(fs.readFileSync('app/src/main/assets/release_notes.json','utf8'));
+          const rows=d.releases.filter(r=>r.minVersionCode===54369);
+          if(rows.length!==1 || !rows[0].title.includes('LT164'))throw Error('LT164 public notes missing');
+          NODE
+          if gh release view "$OFFICIAL_TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Official version already exists; cannot overwrite immutable APK."
+            exit 1
+          fi
+      - name: Fetch exact protected, signed QA APK and attestations
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$QA_TAG" > "$RUNNER_TEMP/qa-release.json"
+          jq -e --arg tag "$QA_TAG" --arg apk "$QA_APK" --arg digest "sha256:$EXPECTED_SHA256" \
+            '.tag_name==$tag and .prerelease==true and ([.assets[]|select(.name==$apk and .digest==$digest and .size>30000000)]|length)==1' \
+            "$RUNNER_TEMP/qa-release.json"
+          mkdir -p "$RUNNER_TEMP/qa"
+          gh release download "$QA_TAG" -R "$GITHUB_REPOSITORY" \
+            --pattern "$QA_APK" --pattern 'SHA256SUMS.txt' \
+            --pattern 'SIGNING-REPORT.txt' --pattern 'PACKAGE-VERSION.txt' \
+            --pattern 'SOURCE_COMMIT.txt' --dir "$RUNNER_TEMP/qa"
+          cd "$RUNNER_TEMP/qa"
+          test "$(tr -d '\r\n' < SOURCE_COMMIT.txt)" = "$SOURCE_SHA"
+          sha256sum --check SHA256SUMS.txt
+          test "$(sha256sum "$QA_APK" | cut -d ' ' -f1)" = "$EXPECTED_SHA256"
+          unzip -t "$QA_APK" >/dev/null
+          test "$(stat -c%s "$QA_APK")" -gt 30000000
+      - name: Verify APK's permanent signing, version, non-debug and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          test -n "$SDKMANAGER"
+          "$SDKMANAGER" --install 'build-tools;36.0.0' >/dev/null
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          APK="$RUNNER_TEMP/qa/$QA_APK"
+          "$BT/aapt" dump badging "$APK" > "$RUNNER_TEMP/badging.txt"
+          grep -Fq "name='com.lucianotoscano.pokesearch'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionCode='54369'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionName='0.01.64'" "$RUNNER_TEMP/badging.txt"
+          ! grep -q '^application-debuggable' "$RUNNER_TEMP/badging.txt"
+          "$BT/apksigner" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/signing.txt"
+          grep -Eq '^Verified using v2 scheme.*: true$' "$RUNNER_TEMP/signing.txt"
+          CERT="$(grep 'Signer #1 certificate SHA-256 digest:' "$RUNNER_TEMP/signing.txt" | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$EXPECTED_CERT"
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/manifest.json'
+          unzip -Z1 "$APK" | grep -Fq 'assets/release_notes.json'
+      - name: Promote exact same binary to public latest release
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp "$RUNNER_TEMP/qa/$QA_APK" "$RUNNER_TEMP/$OFFICIAL_APK"
+          test "$(sha256sum "$RUNNER_TEMP/$OFFICIAL_APK" | cut -d ' ' -f1)" = "$EXPECTED_SHA256"
+          cat > "$RUNNER_TEMP/LT164-RELEASE-NOTES.md" <<'NOTES'
+          # PokeSearch 0.01.64 — LT164 · Atualização oficial para todos
+
+          - Corrigida a busca GL/UL Top #N com inclusão de pré-evoluções. Exemplo: Noibat 0/14/12 é Rank Classe #1600, mas o Noivern é Rank Classe #5 em GL; o card identifica corretamente o Noivern.
+          - Rank Classe da liga pesquisada visível no card; continua separado do limite configurado na Pokébola e do Rank Geral.
+          - Análise PvP compacta com três linhas, cores de IV e nomes claros; aba não é mostrada sem avaliação confirmada.
+          - Coordenadas copiadas centralizadas, IVs decimais validados, sprites do site e fallback exato normal/Shiny.
+          - Fantasias cosméticas usam atributos PvP da espécie-base quando equivalentes; formas regionais continuam separadas.
+          - Preservados Premium, login, alertas, filtros, favoritos, duas Pokébolas e atualizações sem reinício forçado.
+          - APK protegido R8, assinatura Android v2 permanente, SHA-256 `496a5771b1380a16ace5595f41966134bf391eb997a0c90143039f3acc2733cf`.
+          NOTES
+          gh release create "$OFFICIAL_TAG" "$RUNNER_TEMP/$OFFICIAL_APK" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "PokeSearch 0.01.64 LT164 — atualização oficial" \
+            --notes-file "$RUNNER_TEMP/LT164-RELEASE-NOTES.md" --latest
+      - name: Audit published latest-release update feed and exact APK digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases/latest" > "$RUNNER_TEMP/latest.json"
+          jq -e --arg tag "$OFFICIAL_TAG" --arg apk "$OFFICIAL_APK" \
+            --arg digest "sha256:$EXPECTED_SHA256" \
+            '.tag_name==$tag and .draft==false and .prerelease==false and \
+             ([.assets[]|select(.name==$apk and .state=="uploaded" and .digest==$digest and .size>30000000)]|length)==1' \
+            "$RUNNER_TEMP/latest.json"
+          echo "Public latest feed verified: $OFFICIAL_TAG — $OFFICIAL_APK"
