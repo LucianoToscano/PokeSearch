@@ -63,6 +63,9 @@ public class MainActivity extends Activity {
     private boolean loginStartedForShiny=false;
     private boolean loginAutoReturnQueued=false;
     private String loginPurpose="login"; // login | manage
+    private int activeLoginSlot=1;
+    private TextView secondAccountSummary,overlayAccountLabel1,overlayAccountLabel2;
+    private Button secondAccountLogin,secondAccountManage,secondAccountLogout;
     private boolean profileCaptureInProgress=false;
     private int avatarReadRetryCount=0; // bounded retry for lazy official Google image
     private boolean profileDiscoveryAttempted=false;
@@ -378,6 +381,27 @@ public class MainActivity extends Activity {
         dualOverlayRow.setVisibility(View.VISIBLE);
         // Insert after header, preserving top toolbar space.
         screen.addView(dualOverlayRow,dualLp);
+        LinearLayout slotsRow=new LinearLayout(this);
+        slotsRow.setOrientation(LinearLayout.HORIZONTAL);
+        overlayAccountLabel1=homeText("P1 · Conta 1",10,
+            homeLightMode?Color.rgb(34,70,92):Color.rgb(204,228,246),true);
+        overlayAccountLabel2=homeText("P2 · Conta 1",10,
+            homeLightMode?Color.rgb(34,70,92):Color.rgb(204,228,246),true);
+        for(int i=0;i<2;i++){
+            final boolean secondary=i==1;
+            TextView label=secondary?overlayAccountLabel2:overlayAccountLabel1;
+            label.setGravity(Gravity.CENTER);
+            label.setPadding(d(5),d(5),d(5),d(5));
+            label.setBackground(homeSurface(homeLightMode?Color.rgb(238,246,253):
+                Color.argb(170,23,40,61),9,0));
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,d(30),1);
+            if(i==1)lp.leftMargin=d(6);
+            slotsRow.addView(label,lp);
+            label.setOnClickListener(v->showPokeballAccountChoice(secondary));
+        }
+        LinearLayout.LayoutParams slotsLp=new LinearLayout.LayoutParams(-1,-2);
+        slotsLp.leftMargin=d(5);slotsLp.rightMargin=d(5);slotsLp.bottomMargin=d(6);
+        screen.addView(slotsRow,slotsLp);
         if(PremiumAccess.controlled()){
             TextView accountPremium=homeText("Conta Premium  ·  Gerenciar / Sair",11,
                 homeLightMode?Color.rgb(34,87,143):Color.rgb(149,203,255),true);
@@ -665,6 +689,40 @@ public class MainActivity extends Activity {
         actionLp.leftMargin=d(7);
         trainerCodeGroup.addView(trainerAction,actionLp);
         trainerAction.setOnClickListener(v->openTrainerManagement());
+
+        // Second PoGoCoordinates session with a separate persistent Chromium profile.
+        LinearLayout secondAccount=new LinearLayout(this);
+        secondAccount.setOrientation(LinearLayout.VERTICAL);
+        secondAccount.setPadding(d(12),d(9),d(12),d(10));
+        secondAccount.setBackground(homeSurface(homeLightMode?Color.rgb(244,250,254):
+            Color.rgb(22,34,49),15,homeLightMode?Color.rgb(170,197,219):
+            Color.rgb(71,100,127)));
+        LinearLayout.LayoutParams secondLp=new LinearLayout.LayoutParams(-1,-2);
+        secondLp.topMargin=d(6);
+        screen.addView(secondAccount,secondLp);
+        secondAccountSummary=homeText("Conta PoGoCoordinates 2 · Desconectada",12,
+            homeLightMode?Color.rgb(33,52,73):Color.WHITE,true);
+        secondAccount.addView(secondAccountSummary);
+        LinearLayout actionsTwo=new LinearLayout(this);
+        actionsTwo.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams actionRow=new LinearLayout.LayoutParams(-1,d(35));
+        actionRow.topMargin=d(4);
+        secondAccount.addView(actionsTwo,actionRow);
+        secondAccountLogin=homeAuthButton("Entrar Conta 2",Color.rgb(37,72,92),Color.WHITE);
+        secondAccountManage=homeAuthButton("Gerenciar",Color.rgb(37,72,92),Color.WHITE);
+        secondAccountLogout=homeAuthButton("Sair",Color.rgb(53,35,47),Color.rgb(255,167,180));
+        actionsTwo.addView(secondAccountLogin,new LinearLayout.LayoutParams(0,-1,1));
+        LinearLayout.LayoutParams manageLp=new LinearLayout.LayoutParams(0,-1,1);
+        manageLp.leftMargin=d(5);actionsTwo.addView(secondAccountManage,manageLp);
+        LinearLayout.LayoutParams logoutLp2=new LinearLayout.LayoutParams(d(57),-1);
+        logoutLp2.leftMargin=d(5);actionsTwo.addView(secondAccountLogout,logoutLp2);
+        secondAccountLogin.setOnClickListener(v->openLoginDialogForSlot(2,"login"));
+        secondAccountManage.setOnClickListener(v->openLoginDialogForSlot(2,"manage"));
+        secondAccountLogout.setOnClickListener(v->new AlertDialog.Builder(this)
+            .setTitle("Desconectar somente a Conta 2?")
+            .setMessage("A Conta 1 permanecerá conectada.")
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Desconectar",(dialog,which)->logoutSecondAccount()).show());
 
         // LT72: a zero-height, GONE placeholder unless Drive announces a
         // valid, enabled and newer version. Never reserve blank Home space.
@@ -1697,6 +1755,7 @@ public class MainActivity extends Activity {
         return R.drawable.ps_user_frame_neutral;
     }
     private void refreshSessionSummary(){
+        refreshSecondAccountSummary();
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         boolean logged="autenticada".equals(prefs.getString("sessionStatus","não confirmado"));
         if(guestHeading!=null)guestHeading.setVisibility(logged?View.GONE:View.VISIBLE);
