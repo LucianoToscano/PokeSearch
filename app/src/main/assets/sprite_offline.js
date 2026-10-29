@@ -83,6 +83,12 @@
   const m=/^#?([0-9]{1,4})$/.exec(String(card?.number||"").trim());
   return m?Number(m[1]):0;
  }
+ // Independent Dex + species identity proof; intentionally does NOT
+ // assert that an artwork or PvP form matches a default form.
+ function verifiedSpeciesIdentity(card){
+  const dex=dexOf(card);
+  return dex>=1&&dex<=1025&&nameKey(card?.name)===BASE_SPECIES[dex];
+ }
  function verifiedBase(card){
   if(!card||typeof card!=="object")return false;
   const dex=dexOf(card),species=nameKey(card.name),form=nameKey(card.form);
@@ -495,6 +501,6 @@
   // Preserve provider URLs, data images and unknown special forms untouched.
   return {src:image,original:image,offline:false};
  }
- return Object.freeze({resolve,verifiedBase,verifiedBundledData,exactBundledData,
+ return Object.freeze({resolve,verifiedBase,verifiedSpeciesIdentity,verifiedBundledData,exactBundledData,
   verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume,exactSeasonalForm,exactWestSeaForm});
 });
