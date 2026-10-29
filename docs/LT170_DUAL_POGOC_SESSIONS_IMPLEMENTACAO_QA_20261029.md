@@ -15,3 +15,16 @@ Base: LT169 oficial 0.01.69/54374. Branch QA: `feature/lt170-dual-pogo-session-s
 - Regressão completa Node e compilação Java no CI após PR.
 - Teste físico obrigatório no Samsung: login Google Conta 1, segundo Google/Discord Conta 2, per-user OAuth; P1=1/P2=2 e vice-versa; P1=P2=1 e P1=P2=2; treinador associado por Pokébola; logout de Conta 1 não afeta 2; perfil ausente/Premium; Shiny verdadeiro por sessão; troca de conta durante request; segunda conta indisponível em WebView antigo.
 - Não afirmar homologação física apenas por compilação. Assinar APK QA com certificado permanente, sem atualizar release pública até sucesso verificado.
+
+## APK QA assinado gerado — 29/10/2026
+
+- **Build SOURCE_COMMIT**: `91a700c55250ef51e210d30830c55f06c297ba0b` (o registro de documentação posteriormente atualizado não muda esse APK).
+- **Versão de teste**: 0.01.70, `versionCode 54375`. Nome: `PokeSearch-v0.01.70-LT170-DuasContas-QA.apk`.
+- **Pré-release pública QA, NÃO latest**: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.70-54375-qa-dual-accounts
+- **Download APK direto**: https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.70-54375-qa-dual-accounts/PokeSearch-v0.01.70-LT170-DuasContas-QA.apk
+- **49.510.219 bytes**, SHA-256 `896f56998973501f3093478107a2091aec478fe618be1497ba150168a8613612`. Hash declarado pelo asset no GitHub Release.
+- **Assinatura Android v2 permanente** conferida por GitHub Actions, certificado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; mesmo `applicationId com.lucianotoscano.pokesearch` e build com R8 ativo.
+- **Compilação assinada e pacote auditado**: https://github.com/LucianoToscano/PokeSearch/actions/runs/40895056237 — SUCCESS.
+- **Verificação SHA/cert e publicação somente pré-release**: https://github.com/LucianoToscano/PokeSearch/actions/runs/40895413483 — SUCCESS.
+- Teste da suíte completa Node: https://github.com/LucianoToscano/PokeSearch/actions/runs/40895066129 — SUCCESS; compile Java: https://github.com/LucianoToscano/PokeSearch/actions/runs/40895065949 — SUCCESS.
+- **A versão estável latest continua LT169** `v0.01.69-54374`; nenhum update público foi alterado. PR #125 permanece draft até QA físico no Samsung com dois logins reais e ambos overlays.
