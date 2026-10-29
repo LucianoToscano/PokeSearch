@@ -23,17 +23,17 @@ assert(!source.includes("site.setOnTouchListener((v,e)->true)"),"do not steal to
 assert(source.includes("createCandyMenu()"));
 assert(source.includes("candyMenuPanel.loadUrl(\"file:///android_asset/rare_candy_controls.html\")"));
 assert(source.includes("allowedMenuUrl"),"bridge must be confined to local page");
-assert(source.includes("menuParams.width=dp(h>34?240:142)"),"resize pixel-matched menu popups");
+assert(source.includes('menuParams.width=dp(h>34?("period".equals(panel)?142:240):142)'),"resize pixel-matched menu popups");
 assert(menu.includes("grid-template-columns:repeat(4,34px)"));
 assert(menu.includes("grid-auto-rows:30px"));
 assert(menu.includes("gap:2px"));
 assert(menu.includes("background:#151b26e6"));
 assert(menu.includes("border-radius:5px"));
-assert(menu.includes("requestHeight(265,false)"));
+assert(menu.includes("requestHeight(172,false)"));
 assert(menu.includes("new int[]{1,3,5}")===false);
 for(const part of ["choosePeriod(1)","choosePeriod(3)","choosePeriod(5)"]){
- // Buttons are generated dynamically, not hard-coded; guarded by [1,3,5].
- assert(menu.includes("[1,3,5]"));
+ // Pokébola period choices are generated dynamically in the Candy popup.
+ assert(menu.includes("[0,3,5,10,15,20]"));
 }
 assert(menu.includes('setCandyInfo(key,checked)'));
 assert(menu.includes('["name","Nome Doce Raro"]'),"Name visibility checkbox must exist");
@@ -49,9 +49,17 @@ assert(source.includes("spriteCell.addView(distance,distLp)"),"Distance must ove
 assert(!source.includes('row.addView(distance,space(51,40,0))'),"No distant right-side distance column");
 assert(source.includes('if(showName||showLocation)'),"Name and location should not reserve width when hidden");
 assert(source.includes('int contentDp=(showName||showLocation)?228:48'),"Default results must be sprite-column width");
-assert(menu.includes('class="periodChoices"'),"Compact 1/3/5 period row");
+assert(menu.includes('class="periodTile'),"Compact Pokébola OFF/3/5/10/15/20 period tiles");
 
 assert(menu.includes("Native.candyMenuFocus(true)"));
+assert(source.includes('prefs.getInt("period",3)'),"New users start at three-minute auto refresh");
+assert(source.includes('cards.size()==10'),"All-copied auto-refresh requires exactly ten candies");
+assert(!source.includes("now-lastRefresh<15000"),"No extra local 15-second wait");
+assert(menu.includes("candyRadiusSlider"),"P1-style location radius slider is available");
+assert(menu.includes("Native.copyCandyLocation"),"P1-style copy coordinate action exists");
+assert(menu.includes("Native.pasteCandyLocation"),"P1-style paste coordinate action exists");
+assert(menu.includes("requestHeight(172,false)"),"Location popup is compact");
+
 assert(menu.includes('refresh.addEventListener("pointerup"'),"Refresh tap must fire from pointerup");
 assert(menu.includes('if(!refreshHeld)requestRefreshNow();'),"Short press must refresh immediately");
 assert(menu.includes('refresh.addEventListener("click"'),"Click fallback must work when WebView drops pointerup");
@@ -59,7 +67,7 @@ assert(menu.includes('lastRefreshRequestAt'),"Prevent double search from pointer
 assert(menu.includes('refreshHeld=true;')&&menu.includes('openPanel("period")'),"Long hold must open interval menu");
 assert(source.includes('boolean newlyCopied=copied.add(point)'),"Only a newly copied candy can auto-refresh");
 assert(source.includes('lastAllCopiedRefreshGeneration!=generation'),"At most one all-copied auto-refresh per batch");
-assert(source.includes('if(hasVisible&&!hasUncopied)'),"Auto refresh when all visible candies turn gray");
+assert(source.includes('if(visibleCount==10&&!hasUncopied)'),"Auto refresh when all visible candies turn gray");
 assert(source.includes('if(pendingManualRefresh&&!busy&&ready'),"Queued refresh must resume after rate limit");
 assert(source.includes('if(manual)pendingManualRefresh=true'),"Keep manual request during HTTP 429");
 assert(source.includes('new LinkedHashSet<>()'),"Copied candy history must evict oldest entries");
