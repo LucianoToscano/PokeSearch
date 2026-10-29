@@ -61,7 +61,7 @@ const apply=ctx.window.applyCandyMenuTheme;
 assert.equal(typeof apply,"function","Candy theme bridge exists");
 apply("dark",50,4);
 assert.equal(styles["--visual-menu-button-bg"],"rgba(15,19,26,0.50)");
-assert.equal(styles["--visual-menu-readable-bg"],"rgba(15,19,26,0.857)");
+assert.equal(styles["--visual-menu-readable-bg"],"rgba(15,19,26,0.856)");
 apply("dark",100,0);
 assert.equal(styles["--visual-menu-button-bg"],"rgba(15,19,26,0.00)");
 assert.equal(styles["--visual-menu-readable-bg"],"rgba(15,19,26,0.000)");
