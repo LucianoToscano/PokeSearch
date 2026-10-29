@@ -189,7 +189,7 @@ body.controls-window.visual-light-menu #choices:not(.visualPanel) .extraNumberRo
 /* UX-SPRITE-01: same centered, transparent square in every fixed-height row. */
 .spriteStage{position:relative;display:flex;align-items:center;justify-content:center;width:var(--sprite);height:var(--sprite);flex:0 0 var(--sprite);pointer-events:none}
 .spriteStage .sprite{width:100%;height:100%;max-width:100%;max-height:100%;aspect-ratio:1/1;object-fit:contain;object-position:center}
-.spriteFallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#bfcbd5;opacity:.65;pointer-events:none}
+.spriteFallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#bfcbd5;opacity:.65;pointer-events:none;font-size:10px;font-weight:650;letter-spacing:-.3px}
 .spriteStage.loaded .spriteFallback{display:none}
 .spriteStage.failed .sprite{display:none}
 .fallback{font-size:20px}
@@ -5790,6 +5790,11 @@ function attachSpriteFeedback(){
    // Exact, verified PokeAPI base sprite path only. Never guess a different
    // sprite for forms, shadows, costumes or a provider-supplied image URL.
    const match=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/((?:shiny\/)?[0-9]{1,4}\.png)$/.exec(original);
+   // Full species/form GO icon has an immutable mirrored asset. Retry
+   // that exact icon immediately; no generic base or different-colour swap.
+   if(!mirrorAttempted&&/^https:\/\/cdn\.jsdelivr\.net\/gh\/PokeMiners\/pogo_assets@c2a686eb08ace6e890d8fe3d2134c76988db87b5\//.test(original)){
+    mirrorAttempted=true;img.src=original;return;
+   }
    if(match&&!mirrorAttempted){
     mirrorAttempted=true;
     img.src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+match[1];
@@ -6493,7 +6498,8 @@ function draw(){
   const effectiveArtFit=halloweenGengar?0.42:artFit;
   const icon='<span class="spriteStage">'+
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
-   '<span class="spriteFallback fallback" aria-hidden="true">◉</span></span>';
+   '<span class="spriteFallback fallback" aria-hidden="true">'+
+   esc(String(c.name||"").replace(/\s*\([^)]*\)\s*$/,"").trim().slice(0,2).toLocaleUpperCase()||"·")+'</span></span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const infoLines=preparedLines[i]||[];
   let cooldownMarkup="";
