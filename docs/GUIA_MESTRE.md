@@ -1,11 +1,22 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT182 OFICIAL — Discord autenticado, treinador confirmado (29/10/2026)
+
+- **PUBLICAÇÃO E GOOGLE DRIVE CONCLUÍDOS.** [Release estável v0.01.82-54387](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.82-54387) no GitHub Releases/latest, APK `PokeSearch-v0.01.82-LT.apk` `49.546.482` bytes, SHA-256 `c63a42b678ef08cd402244891851b7086c143e79c5ef6d315e70b6e41a3eedc9`, assinatura Android v2 com certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **Arquivo compartilhado no Drive atualizado no MESMO ID**, sem mudar o link: [PokeSearch APK atualizado](https://drive.google.com/file/d/1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P/view). Download posterior foi conferido com o **mesmo SHA-256 da Release GitHub**, tamanho idêntico e permissão pública `anyone` preservada. Staging temporário apagado.
+- **Integração:** PR [#138](https://github.com/LucianoToscano/PokeSearch/pull/138) merge `c1a8849c6e349854e02e3e8598b897246b84d9be`, PR [#139](https://github.com/LucianoToscano/PokeSearch/pull/139) merge `e28c4e8d58f1ea9444cf51e06cdea56038db84b6`. Commit fonte da release `466eaf2ae78e8ff2cd0675fd85885dd3572333cc`.
+- **Action oficial:** [#40966123666 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40966123666), validações Node/Gradle/R8/sprites/certificado v2/apk/hash concluídas. O erro de sintaxe YAML do primeiro acionamento foi corrigido; não confundir com a release final.
+- **Distribuição:** GitHubUpdateCenter oferece esta latest a aparelhos elegíveis ao consultar o feed, sem instalação silenciosa, respeitando o aceite do Android. Vínculo treinador deve ser realizado no PoGoCoordinates. QA físico Discord/Google no Samsung ainda pendente.
+- **Registro completo:** [ESTADO_CANONICO_LT182_OFICIAL_20261029.md](ESTADO_CANONICO_LT182_OFICIAL_20261029.md). **LT181 preservada como release anterior**, sem rollback ou alteração do OTA assinado.
+
+---
+
 ## LT182 — Discord OAuth e confirmação do treinador (29/10/2026)
 
 - **Correção integrada na main:** PR [#138](https://github.com/LucianoToscano/PokeSearch/pull/138) mesclada, commit squash `c1a8849c6e349854e02e3e8598b897246b84d9be`. O vídeo recebido demonstra a autorização Discord reconhecida pela Conta 2, porém sem treinador confirmado; isso não prova bloqueio pelo Discord.
 - `MainActivity.java` deixou de fechar automaticamente o login 6,5 s após OAuth enquanto `/profile` ainda está hidratando. Leitura limitada a 16 tentativas, com perfil oficial liberado para inspeção quando inconclusivo. Estado `unknown` nunca vira `unlinked` por suposição.
 - Se o site confirma `Pokemon GO accounts 0/N`, a Home mostra **Vincular** e informa que autenticar Google/Discord não vincula automaticamente o treinador Pokémon GO. Vínculo continua manual no site; não copiar código da Conta 1 nem atravessar os cookies dos perfis.
-- **CI:** Node QA SUCCESS, LT169 regressão Node SUCCESS, LT62 Android Java compile SUCCESS e LT173 OTA/compilação SUCCESS. O workflow `Secure beta APK (private test)` falhou em `:app:preReleaseBuild` por ausência da configuração `Release signing and POKE_RELEASE_CERT_SHA256`, não por erro de Java/JS; **sem APK assinado LT182 ou distribuição pública nesta etapa**. QA real Discord no Samsung ainda pendente.
+- **Histórico pré-publicação:** a branch inicial passou Node/Java/Gradle. O job privado de testes com assinatura provisória falhou por configuração própria; o workflow **oficial** de release LT182, com certificado permanente, concluiu com sucesso após a correção YAML, conforme seção LT182 OFICIAL acima. QA real Discord no Samsung continua pendente.
 - Documento de diagnóstico, limites e teste: [LT182_DISCORD_OAUTH_PROFILE_RECOVERY_QA_20261029.md](LT182_DISCORD_OAUTH_PROFILE_RECOVERY_QA_20261029.md). LT181 continua último APK estável até nova release oficial.
 
 ---
