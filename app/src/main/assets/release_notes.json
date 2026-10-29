@@ -576,6 +576,30 @@
           "O uso de foto no chat continua opcional e depende da foto selecionada pelo treinador; imagens de perfil Google não são importadas automaticamente."
         ]
       }
+    },
+    {
+      "id": "lt168-chat-legacy-messages-icons-json-import-20261029",
+      "minVersionCode": 54373,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT168 — Chat antigo, ícones e importar dados",
+      "sections": {
+        "novidades": [
+          "Home: agora é possível importar o arquivo JSON produzido em Exportar dados, com confirmação antes de restaurar preferências e favoritos.",
+          "Chat: menu Mensagens antigas permite identificar seus próprios recados de uma conta anterior, associando-os visualmente no aparelho e permitindo desfazer."
+        ],
+        "melhorias": [
+          "Mensagens antigas vinculadas aparecem à direita com sua foto do chat quando disponível, sem alterar autores no Firebase.",
+          "Ícones de modo compartilhados removem pixels escuros de fundo conectados às bordas para evitar quadrados pretos."
+        ],
+        "correcoes": [
+          "Corrigida a impossibilidade de importar um backup anteriormente exportado.",
+          "Preservadas permissões do chat, identidade de autenticação, Premium, filtros, reações e as duas Pokébolas."
+        ],
+        "emDesenvolvimento": [
+          "A associação de mensagens antigas é opcional e depende de selecionar o autor anterior; nomes iguais não comprovam identidade.",
+          "O backup não contém contas, senhas ou coordenadas; a Pokébola 2 mantém configurações independentes."
+        ]
+      }
     }
   ]
 }
