@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT176 EM QA — CORREÇÃO DA BOLHA DO DOCE RARO (29/10/2026)
+
+Após o primeiro teste físico LT175 no Samsung, o proprietário confirmou ícone de Doce Raro grande, com quadrado atrás e sem resposta a toque/arraste. A causa foi a WebView oculta consumir touch antes do listener da janela da bolha. **Corrigido na branch da PR #134:** grip transparente nativo de 45dp acima da WebView, candy visual de 27dp sem fundo, clique/long press/arraste independentes, e reposicionamento dos cards para não cobrir o próprio ícone. Nova versão QA LT176 `0.01.76 / 54381`, APK completo assinado para teste, sem release pública. A LT173 continua estável; testes reais de coleta Rare Candy no WebView e ciclo de despawn permanecem necessários. [Evidências LT176 no registro de QA](LT175_DOCE_RARO_FLUTUANTE_QA_20261029.md).
+
+---
+
 ## LT175 EM QA — DOCE RARO COMO TERCEIRO OVERLAY (29/10/2026)
 
 **LT173 segue sendo a única versão pública estável.** Em branch separada, LT175 integra na Home um ícone Doce Raro ao lado de Clima e acrescenta `RareCandyOverlayService`: bolha independente de 45dp, toque para abrir cards, segurar para menus no estilo das Pokébolas, localização/raio, atualização 1/3/5m, mostrar/ocultar infos, cópia por sprite com estado cinza, despawn e remoção automática com busca controlada. Fonte é a aba Rare Candy do PoGoCoordinates em WebView, usando sessão e acesso oficiais; nenhuma coordenada inventada, máximo 10. **Alterações de Java e Manifest exigem novo APK**, não recurso OTA na LT173. QA CI e físico Samsung/Moto ainda não comprovado; não houve merge nem distribuição. [Registro LT175](LT175_DOCE_RARO_FLUTUANTE_QA_20261029.md). PR LT174 (#133) de segurança OTA segue isolada.
