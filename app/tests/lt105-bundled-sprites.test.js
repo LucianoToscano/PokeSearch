@@ -33,7 +33,7 @@ test("native WebViews use bundled images offline-first, without base fallback fo
  assert.ok(method.indexOf("bundledResponse(context,dex,shiny)")<method.indexOf("cached(context,dex,shiny)"));
  assert.match(cache,/Pattern RAW=Pattern\.compile/);
  assert.match(cache,/Pattern MIRROR=Pattern\.compile/);
- assert.equal((native.match(/VerifiedSpriteCache\.fromDisk\(OverlayService\.this,request\.getUrl\(\)\)/g)||[]).length,4);
+ assert.equal((native.match(/OtaAssets\.intercept\(OverlayService\.this,otaWebLoader,request\.getUrl\(\)\)/g)||[]).length,5);
 });
 test("favorites picker consumes the same bundled images before disk and network",()=>{
  const pickerFetch=picker.split("private static Bitmap fetchVerifiedSprite(")[1]?.split("private static void setImage(")[0];
