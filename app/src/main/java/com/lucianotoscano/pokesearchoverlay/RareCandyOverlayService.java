@@ -138,7 +138,7 @@ public final class RareCandyOverlayService extends Service {
         }
         prefs=getSharedPreferences("rare_candy_overlay",MODE_PRIVATE);
         coords=prefs.getString("coords","");
-        radius=Math.max(0,Math.min(1000,prefs.getInt("radius",1000)));
+        radius=Math.max(1,Math.min(1000000,prefs.getInt("radius",1000)));
         int saved=prefs.getInt("period",1);
         period=saved==3||saved==5?saved:1;
         showInfos=prefs.getBoolean("infos",true);
@@ -389,6 +389,7 @@ public final class RareCandyOverlayService extends Service {
         if(candyMenuVisible){closeCandyMenu();return;}
         candyMenuVisible=true;
         menuParams.height=dp(34);
+        menuParams.width=dp(142);
         candyMenuRoot.setVisibility(View.VISIBLE);
         placeCandyMenu();
         syncCandyMenu();
@@ -398,6 +399,7 @@ public final class RareCandyOverlayService extends Service {
         if(candyMenuRoot!=null)candyMenuRoot.setVisibility(View.GONE);
         if(menuParams!=null){
             menuParams.height=dp(34);
+            menuParams.width=dp(142);
             menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
@@ -415,8 +417,9 @@ public final class RareCandyOverlayService extends Service {
         @android.webkit.JavascriptInterface public void candyMenuHeight(int height,boolean focus){
             main.post(()->{
                 if(!permitted()||menuParams==null||!candyMenuVisible)return;
-                int h=Math.max(34,Math.min(240,height));
+                int h=Math.max(34,Math.min(290,height));
                 menuParams.height=dp(h);
+                menuParams.width=dp(h>34?240:142);
                 menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
                     (focus?0:WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
