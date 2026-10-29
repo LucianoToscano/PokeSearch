@@ -457,6 +457,31 @@
           "Confirmação de pagamento real e testes em aparelhos Samsung continuam sujeitos à homologação."
         ]
       }
+    },
+    {
+      "id": "lt148-pvp-rank-card-height-20261029",
+      "minVersionCode": 54353,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT148 — PvP identificado e card sem rolagem desnecessária",
+      "sections": {
+        "novidades": [
+          "Rank de IV por espécie e liga agora identificado como IV GL ou IV UL somente quando confirmado.",
+          "Pokémon sem evolução podem mostrar análise de IV PvP própria quando há dados confiáveis."
+        ],
+        "melhorias": [
+          "Indicador de ranking com símbolo próprio, diferente da estrela de Favoritos.",
+          "Texto de IV, PC e nível deslocado 1 px para baixo, preservando o tamanho das caixas.",
+          "Card aproveita toda a altura da janela Android, removendo a rolagem residual de poucos pixels."
+        ],
+        "correcoes": [
+          "Ranks genéricos do site são identificados como Rank do site, sem confundir com classificação geral ou de IV.",
+          "Rolagem do card fechado só aparece quando a janela não comporta o conteúdo; deslocamentos residuais voltam ao topo.",
+          "Mantidos os ícones, formas, fantasias, Gengar Halloween, Despawn, coordenadas, segunda Pokébola e Premium LT147."
+        ],
+        "emDesenvolvimento": [
+          "Validar visualmente no Samsung e na segunda Pokébola; instalação de atualizações requer ação do usuário."
+        ]
+      }
     }
   ]
 }

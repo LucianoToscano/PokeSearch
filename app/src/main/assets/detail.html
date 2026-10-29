@@ -515,6 +515,16 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #imageFallback{font-size:0!important;position:relative}
 #imageFallback::after{content:"◉";display:block;font-size:19px;
  line-height:23px;color:#b7c7dc;opacity:.85}
+/* LT148: native card and the CSS panel have identical available height.
+   Previous max-height:calc(100vh - 6px) caused a scroll of 3-6 pixels. */
+#panel{max-height:100vh;max-width:100%;margin:0}
+/* LT148 — ranking ≠ favoritos; shift only IV, PC, level text down 1 pixel. */
+#major .statHeading,#major .statValue{position:relative;top:1px}
+#rankLine{gap:3px;border-color:#8fbfd755;background:linear-gradient(95deg,#74b8d31b,#ffffff09);
+ color:#c2e6f4;text-shadow:none}
+#rankLine::before{content:"▥";font-size:11px;line-height:11px;color:#80cce9}
+#rankLine.isSite{border-color:#ffffff30;color:#d5dce7;background:#ffffff0b}
+#rankLine.isSite::before{color:#abb8c9}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -814,13 +824,16 @@ const evoIdentity=c=>JSON.stringify([
 function resizeEvolutionPanel(){
  requestAnimationFrame(()=>{
   const panel=document.getElementById("panel");
+  // Full scrollHeight plus the 2px border and rounding; not a clipped
+  // max-height minus six pixels as on previous builds.
   const height=Math.ceil(panel.scrollHeight)+3;
   Native.resizeDetail(height);
-  // The native window resizes on its UI thread. Only enable inner scrolling
-  // when expanded evolution data or the physical display forces clipping.
+  // Native WindowManager layout is asynchronous; check afterward.
   const recheck=()=>{
    if(!panel?.classList?.toggle)return;
-   panel.classList.toggle("needsScroll",panel.scrollHeight>panel.clientHeight+3);
+   const clipped=panel.scrollHeight>panel.clientHeight+3;
+   panel.classList.toggle("needsScroll",clipped);
+   if(!clipped)panel.scrollTop=0;
   };
   if(typeof setTimeout==="function")setTimeout(recheck,90);
  });
@@ -859,25 +872,28 @@ window.showEvolutionDetails=payload=>{
  if(!payload||!Array.isArray(payload.leagues)||payload.leagues.length!==3||
     evoIdentity(payload)!==detailIdentity)return false;
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
- let html="",count=0;
+ let html="",count=0,ownCount=0;
  const labels={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Master"};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
   const rows=entries.map(e=>evolutionRow(e,false)).filter(Boolean);
-  if(!rows.length)continue;
   const own=league.own?evolutionRow({...league.own,name:payload.name},true):"";
+  if(!rows.length&&!own)continue;
   html+='<div class="evoLeague '+league.league+'">'+labels[league.league]+'</div>'+own+rows.join("");
   count+=rows.length;
+  if(own)ownCount++;
  }
- if(!count){outer.hidden=true;return false;}
+ if(!count&&!ownCount){outer.hidden=true;return false;}
  // LT66: WebView may rerender after each native status tick. Never reset
  // the reader to the top of a long PvP analysis when its content is unchanged.
  const panel=document.getElementById("panel");
  const keepScroll=panel.scrollTop;
  if(body.innerHTML!==html)body.innerHTML=html;
  outer.hidden=false;
- document.getElementById("evoLabel").textContent="Evoluções PvP · "+count+" análises";
+ document.getElementById("evoLabel").textContent=count?
+  "Evoluções PvP · "+count+" análises":
+  "Análise IV PvP · "+ownCount+" ligas";
  body.hidden=!evolutionExpanded;
  document.getElementById("evoChevron").textContent=evolutionExpanded?"▴":"▾";
  document.getElementById("evoToggle").setAttribute("aria-expanded",String(evolutionExpanded));
@@ -1018,8 +1034,23 @@ window.showDetails=(c,mode,watched)=>{
   '<div class="statValue red">'+h(showRaw?raw:"—")+'</div></div>'+
   statTile("PC",c.cp)+statTile("Nv.",c.level);
  const rankLine=document.getElementById("rankLine");
- rankLine.textContent=c.rank?"Rank "+String(c.rank):"";
- rankLine.hidden=!c.rank;
+ // Never promote a generic site Rank into a species IV or cross-species PvP rank.
+ const league=String(c.ivRankLeague||"").toLowerCase();
+ const ivValue=Number(c.ivRank);
+ const verifiedIvRank=(league==="gl"||league==="ul")&&
+  c.ivRankSource==="explicit-species-iv"&&showRaw&&
+  Number.isInteger(ivValue)&&ivValue>=1&&ivValue<=4096;
+ const siteRank=String(c.rank??"").trim();
+ const rankFromSite=/^[1-9][0-9]{0,3}$/.test(siteRank)&&Number(siteRank)<=4096;
+ const rankText=verifiedIvRank?"IV "+league.toUpperCase()+" #"+ivValue:
+  rankFromSite?"Rank do site #"+siteRank:"";
+ rankLine.textContent=rankText;
+ rankLine.hidden=!rankText;
+ if(rankLine.classList?.toggle)rankLine.classList.toggle("isSite",!verifiedIvRank);
+ rankLine.title=verifiedIvRank?
+  "Posição dos IVs desta espécie na "+(league==="gl"?"Grande Liga":"Ultra Liga")+
+   ". Não representa o ranking geral entre espécies.":
+  rankFromSite?"Rank informado pelo PoGoCoordinates; não há confirmação se é ranking geral, de espécie ou de IVs.":"";
  const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"");
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");
