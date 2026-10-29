@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT183 OFICIAL — Discord OAuth, release pública e Drive (29/10/2026)
+
+- **PUBLICAÇÃO CONCLUÍDA:** [GitHub Releases/latest v0.01.83-54388](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.83-54388). APK `PokeSearch-v0.01.83-LT.apk` 49.546.774 bytes, SHA-256 `2d336d6b7a3da61fb0c0553bb9762cce009189b324c3508fe9d735d4401ce5c4`. Assinatura Android v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **Google Drive confirmado:** mesmo [arquivo público e mesmo ID](https://drive.google.com/file/d/1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P/view), atualizado para LT183. Arquivo lido de volta e comparado byte a byte com o artefato assinado do GitHub; hash idêntico. Permissão `anyone` mantida e staging apagado.
+- **Merge:** PR [#140](https://github.com/LucianoToscano/PokeSearch/pull/140) `a59b44567503eb9f1f6993c434354fbf693fde39`; PR [#141](https://github.com/LucianoToscano/PokeSearch/pull/141) `bb00878c572efc490f338d14eb61dea4f6dd9156` (SOURCE_COMMIT do APK). [Action oficial #40968750617 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40968750617), R8, v2, Node/Gradle e SHA verificados.
+- **Mudança:** após autorizar Discord, WebView não mascara o callback do PoGoCoordinates com `Preparando acesso...`; `/profile` não é aberto prematuramente enquanto OAuth está inconclusivo, `Gerenciar/Vincular` verifica a sessão e falhas da página principal não ficam ocultas. Mantidas duas contas isoladas e treinadores VIP.
+- **Importante:** QA real Discord no aparelho Samsung **ainda não realizado**; CI e assinatura não comprovam que o callback do provedor realmente conclui. O app não inventa sessão caso o OAuth oficial rejeite a autorização. Atualização oferecida pelo GitHubUpdateCenter ao consultar a latest, com instalação sujeita ao aceite Android.
+- **Registro completo:** [ESTADO_CANONICO_LT183_OFICIAL_20261029.md](ESTADO_CANONICO_LT183_OFICIAL_20261029.md); LT182 permanece histórico anterior e APK disponível.
+
+---
+
 ## LT182 OFICIAL — Discord autenticado, treinador confirmado (29/10/2026)
 
 - **PUBLICAÇÃO E GOOGLE DRIVE CONCLUÍDOS.** [Release estável v0.01.82-54387](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.82-54387) no GitHub Releases/latest, APK `PokeSearch-v0.01.82-LT.apk` `49.546.482` bytes, SHA-256 `c63a42b678ef08cd402244891851b7086c143e79c5ef6d315e70b6e41a3eedc9`, assinatura Android v2 com certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
