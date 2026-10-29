@@ -1,8 +1,8 @@
-name: PokeSearch LT148 Premium — build assinado e publicação oficial
+name: PokeSearch LT148 Card PvP — build assinado e publicação oficial
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/lt148-premium-public-release.yml']
+    paths: ['.github/workflows/lt148-pvp-card-official-release.yml']
 permissions:
   contents: write
 concurrency:
