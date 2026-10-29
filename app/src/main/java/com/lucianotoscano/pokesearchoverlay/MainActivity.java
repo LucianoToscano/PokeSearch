@@ -63,6 +63,9 @@ public class MainActivity extends Activity {
     private boolean loginStartedForShiny=false;
     private boolean loginAutoReturnQueued=false;
     private String loginPurpose="login"; // login | manage
+    private int activeLoginSlot=1;
+    private TextView secondAccountSummary,overlayAccountLabel1,overlayAccountLabel2;
+    private Button secondAccountLogin,secondAccountManage,secondAccountLogout;
     private boolean profileCaptureInProgress=false;
     private int avatarReadRetryCount=0; // bounded retry for lazy official Google image
     private boolean profileDiscoveryAttempted=false;
@@ -378,6 +381,27 @@ public class MainActivity extends Activity {
         dualOverlayRow.setVisibility(View.VISIBLE);
         // Insert after header, preserving top toolbar space.
         screen.addView(dualOverlayRow,dualLp);
+        LinearLayout slotsRow=new LinearLayout(this);
+        slotsRow.setOrientation(LinearLayout.HORIZONTAL);
+        overlayAccountLabel1=homeText("P1 · Conta 1",10,
+            homeLightMode?Color.rgb(34,70,92):Color.rgb(204,228,246),true);
+        overlayAccountLabel2=homeText("P2 · Conta 1",10,
+            homeLightMode?Color.rgb(34,70,92):Color.rgb(204,228,246),true);
+        for(int i=0;i<2;i++){
+            final boolean secondary=i==1;
+            TextView label=secondary?overlayAccountLabel2:overlayAccountLabel1;
+            label.setGravity(Gravity.CENTER);
+            label.setPadding(d(5),d(5),d(5),d(5));
+            label.setBackground(homeSurface(homeLightMode?Color.rgb(238,246,253):
+                Color.argb(170,23,40,61),9,0));
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,d(30),1);
+            if(i==1)lp.leftMargin=d(6);
+            slotsRow.addView(label,lp);
+            label.setOnClickListener(v->showPokeballAccountChoice(secondary));
+        }
+        LinearLayout.LayoutParams slotsLp=new LinearLayout.LayoutParams(-1,-2);
+        slotsLp.leftMargin=d(5);slotsLp.rightMargin=d(5);slotsLp.bottomMargin=d(6);
+        screen.addView(slotsRow,slotsLp);
         if(PremiumAccess.controlled()){
             TextView accountPremium=homeText("Conta Premium  ·  Gerenciar / Sair",11,
                 homeLightMode?Color.rgb(34,87,143):Color.rgb(149,203,255),true);
@@ -666,6 +690,49 @@ public class MainActivity extends Activity {
         trainerCodeGroup.addView(trainerAction,actionLp);
         trainerAction.setOnClickListener(v->openTrainerManagement());
 
+        // Second PoGoCoordinates session with a separate persistent Chromium profile.
+        LinearLayout secondAccount=new LinearLayout(this);
+        secondAccount.setOrientation(LinearLayout.VERTICAL);
+        secondAccount.setPadding(d(12),d(9),d(12),d(10));
+        secondAccount.setBackground(homeSurface(homeLightMode?Color.rgb(244,250,254):
+            Color.rgb(22,34,49),15,homeLightMode?Color.rgb(170,197,219):
+            Color.rgb(71,100,127)));
+        LinearLayout.LayoutParams secondLp=new LinearLayout.LayoutParams(-1,-2);
+        secondLp.topMargin=d(6);
+        screen.addView(secondAccount,secondLp);
+        secondAccountSummary=homeText("Conta PoGoCoordinates 2 · Desconectada",12,
+            homeLightMode?Color.rgb(33,52,73):Color.WHITE,true);
+        secondAccount.addView(secondAccountSummary);
+        LinearLayout actionsTwo=new LinearLayout(this);
+        actionsTwo.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams actionRow=new LinearLayout.LayoutParams(-1,d(35));
+        actionRow.topMargin=d(4);
+        secondAccount.addView(actionsTwo,actionRow);
+        secondAccountLogin=homeAuthButton("G  Google",Color.rgb(37,72,92),Color.WHITE);
+        secondAccountManage=homeAuthButton("Gerenciar",Color.rgb(37,72,92),Color.WHITE);
+        secondAccountLogout=homeAuthButton("Sair",Color.rgb(53,35,47),Color.rgb(255,167,180));
+        actionsTwo.addView(secondAccountLogin,new LinearLayout.LayoutParams(0,-1,1));
+        LinearLayout.LayoutParams manageLp=new LinearLayout.LayoutParams(0,-1,1);
+        manageLp.leftMargin=d(5);actionsTwo.addView(secondAccountManage,manageLp);
+        LinearLayout.LayoutParams logoutLp2=new LinearLayout.LayoutParams(d(57),-1);
+        logoutLp2.leftMargin=d(5);actionsTwo.addView(secondAccountLogout,logoutLp2);
+        secondAccountLogin.setOnClickListener(v->{
+            preferredLoginProvider="google";openLoginDialogForSlot(2,"login");
+        });
+        secondAccountManage.setOnClickListener(v->{
+            if(PogoAccountSlots.loggedIn(this,2))
+                openLoginDialogForSlot(2,"manage");
+            else{
+                preferredLoginProvider="discord";
+                openLoginDialogForSlot(2,"login");
+            }
+        });
+        secondAccountLogout.setOnClickListener(v->new AlertDialog.Builder(this)
+            .setTitle("Desconectar somente a Conta 2?")
+            .setMessage("A Conta 1 permanecerá conectada.")
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Desconectar",(dialog,which)->logoutSecondAccount()).show());
+
         // LT72: a zero-height, GONE placeholder unless Drive announces a
         // valid, enabled and newer version. Never reserve blank Home space.
         homeUpdateHolder=new LinearLayout(this);
@@ -881,7 +948,112 @@ public class MainActivity extends Activity {
         holder.setVisibility(View.VISIBLE);
     }
 
+    private void refreshSecondAccountSummary(){
+        boolean available=PogoAccountSlots.supportsSecond();
+        SharedPreferences two=PogoAccountSlots.prefs(this,2);
+        boolean connected=available&&PogoAccountSlots.loggedIn(this,2);
+        String account=two.getString("profileDisplayName","Conta conectada");
+        String trainer=two.getString("profileTrainerName","");
+        boolean showName=getSharedPreferences("prefs",0)
+            .getBoolean("homeShowPogoAccountName",true);
+        boolean showTrainer=getSharedPreferences("prefs",0)
+            .getBoolean("homeShowTrainerName",true);
+        if(secondAccountSummary!=null)secondAccountSummary.setText(!available?
+            "Conta 2 · WebView sem sessões isoladas":
+            connected?"Conta 2 · "+(showName?account:"Anônimo")+
+                (trainer.isEmpty()?"":" · "+(showTrainer?trainer:"Anônimo")):
+            "Conta PoGoCoordinates 2 · Desconectada");
+        if(secondAccountLogin!=null){
+            secondAccountLogin.setVisibility(connected?View.GONE:View.VISIBLE);
+            secondAccountLogin.setEnabled(available);
+        }
+        if(secondAccountManage!=null){
+            secondAccountManage.setVisibility(available?View.VISIBLE:View.GONE);
+            secondAccountManage.setText(connected?"Gerenciar":"◉  Discord");
+        }
+        if(secondAccountLogout!=null)
+            secondAccountLogout.setVisibility(connected?View.VISIBLE:View.GONE);
+        for(boolean secondary:new boolean[]{false,true}){
+            TextView label=secondary?overlayAccountLabel2:overlayAccountLabel1;
+            if(label==null)continue;
+            int slot=PogoAccountSlots.assigned(this,secondary);
+            String code=PogoAccountSlots.trainer(this,secondary);
+            label.setText((secondary?"P2":"P1")+" · Conta "+slot+
+                (code.matches("[0-9]{12}")?" · ••••"+code.substring(8):" · Treinador —"));
+        }
+    }
+    private void showPokeballAccountChoice(boolean secondary){
+        int assigned=PogoAccountSlots.assigned(this,secondary);
+        String[] choices={"Conta 1"+(PogoAccountSlots.loggedIn(this,1)?" · Conectada":" · Padrão"),
+            "Conta 2"+(PogoAccountSlots.loggedIn(this,2)?" · Conectada":" · Entrar primeiro")};
+        new AlertDialog.Builder(this)
+            .setTitle(secondary?"Pokébola 2 · Conta":"Pokébola 1 · Conta")
+            .setSingleChoiceItems(choices,assigned-1,(dialog,which)->{
+                dialog.dismiss();
+                int slot=which+1;
+                if(slot==2&&(!PogoAccountSlots.supportsSecond()||
+                    !PogoAccountSlots.loggedIn(this,2))){
+                    Toast.makeText(this,"Conecte a Conta 2 antes de selecionar",Toast.LENGTH_LONG).show();
+                    return;
+                }
+                choosePokeballTrainer(secondary,slot);
+            }).setNegativeButton("Cancelar",null).show();
+    }
+    private void choosePokeballTrainer(boolean secondary,int account){
+        SharedPreferences prefs=PogoAccountSlots.prefs(this,account);
+        JSONArray list;
+        try{list=new JSONArray(prefs.getString("profileTrainerList","[]"));}
+        catch(Exception ignored){list=new JSONArray();}
+        java.util.ArrayList<String> names=new java.util.ArrayList<>();
+        java.util.ArrayList<String> codes=new java.util.ArrayList<>();
+        names.add("Sem treinador · Shiny indisponível");codes.add("");
+        for(int i=0;i<Math.min(20,list.length());i++){
+            JSONObject item=list.optJSONObject(i);
+            if(item==null)continue;
+            String code=item.optString("code","");
+            if(!PogoAccountSlots.hasTrainer(this,account,code)||codes.contains(code))continue;
+            names.add(item.optString("name","")+" · ••••"+code.substring(8));
+            codes.add(code);
+        }
+        final String[] selection=codes.toArray(new String[0]);
+        new AlertDialog.Builder(this)
+            .setTitle((secondary?"Pokébola 2":"Pokébola 1")+" · Conta "+account+" · Treinador")
+            .setItems(names.toArray(new String[0]),(dialog,which)->{
+                PogoAccountSlots.bind(this,secondary,account,selection[which]);
+                Class<?> service=secondary?SecondaryOverlayService.class:OverlayService.class;
+                boolean running=secondary?OverlayService.isSecondaryRunning():OverlayService.isRunning();
+                if(running){
+                    stopService(new Intent(this,service));
+                    getWindow().getDecorView().postDelayed(()->{
+                        Intent intent=new Intent(this,service);
+                        if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);
+                        else startService(intent);
+                    },350L);
+                }
+                refreshSessionSummary();
+            }).setNegativeButton("Cancelar",null).show();
+    }
+    private void openLoginDialogForSlot(int slot,String purpose){
+        if(slot==2&&!PogoAccountSlots.supportsSecond()){
+            Toast.makeText(this,"Seu Android WebView não suporta duas sessões separadas",
+                Toast.LENGTH_LONG).show();return;
+        }
+        if(loginDialog!=null&&loginDialog.isShowing())return;
+        activeLoginSlot=slot;
+        openLoginDialog(false,purpose);
+    }
+    private void logoutSecondAccount(){
+        if(OverlayService.isRunning()&&PogoAccountSlots.assigned(this,false)==2)
+            stopService(new Intent(this,OverlayService.class));
+        if(OverlayService.isSecondaryRunning()&&PogoAccountSlots.assigned(this,true)==2)
+            stopService(new Intent(this,SecondaryOverlayService.class));
+        PogoAccountSlots.logout(this,2,()->runOnUiThread(()->{
+            refreshSessionSummary();
+            Toast.makeText(this,"Conta 2 desconectada",Toast.LENGTH_SHORT).show();
+        }));
+    }
     private void openTrainerManagement(){
+        activeLoginSlot=1;
         String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
         if(!code.matches("[0-9]{12}")){
             openLoginDialog(false,"manage");
@@ -1399,7 +1571,7 @@ public class MainActivity extends Activity {
             return;
         }
         initializeSecondaryFilterDefaults();
-        CookieManager.getInstance().flush();
+        PogoAccountSlots.cookieManager(PogoAccountSlots.assigned(this,true)).flush();
         Intent intent=new Intent(this,SecondaryOverlayService.class);
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
         if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,750);
@@ -1421,6 +1593,7 @@ public class MainActivity extends Activity {
         }
     }
     private void openProviderLogin(String provider){
+        activeLoginSlot=1;
         preferredLoginProvider=provider;
         openLoginDialog(false);
     }
@@ -1697,6 +1870,7 @@ public class MainActivity extends Activity {
         return R.drawable.ps_user_frame_neutral;
     }
     private void refreshSessionSummary(){
+        refreshSecondAccountSummary();
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         boolean logged="autenticada".equals(prefs.getString("sessionStatus","não confirmado"));
         if(guestHeading!=null)guestHeading.setVisibility(logged?View.GONE:View.VISIBLE);
@@ -1774,29 +1948,18 @@ public class MainActivity extends Activity {
             .show();
     }
     private void logoutLocalSession(){
-        // Do not start a service for sign-out. Stop the collector before revoking cookies.
-        stopService(new Intent(this,OverlayService.class));
-        stopService(new Intent(this,SecondaryOverlayService.class));
+        // The user may be signed into TWO separate providers simultaneously.
+        // Never remove Account 2 cookies or stop its independent Pokébola.
+        if(OverlayService.isRunning()&&PogoAccountSlots.assigned(this,false)==1)
+            stopService(new Intent(this,OverlayService.class));
+        if(OverlayService.isSecondaryRunning()&&PogoAccountSlots.assigned(this,true)==1)
+            stopService(new Intent(this,SecondaryOverlayService.class));
         if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
-        getSharedPreferences("prefs",0).edit()
-            .putString("sessionStatus","desconectado")
-            .remove("profileDisplayName").remove("profileProvider").remove("profileAvatarUrl")
-            .remove("profileTrainerName").remove("profileTrainerCode")
-            .remove("profileTrainerDetails").remove("profileTrainerState")
-            .remove("profileTrainerList").remove("profileSelectedTrainerCode")
-            .remove("profileTrainerTeam").remove("profileTrainerLevel")
-            .putBoolean("shiny",false)
-            .putString("lastStatus","Sessão local desconectada")
-            .putString("lastError","Nenhum")
-            .apply();
-        refreshSessionSummary();
-        CookieManager.getInstance().removeAllCookies(cleared->{
-            CookieManager.getInstance().flush();
-            WebStorage.getInstance().deleteAllData();
-            runOnUiThread(()->Toast.makeText(this,
-                "Sessão do PokeSearch desconectada",Toast.LENGTH_SHORT).show());
-        });
-        BugReport.log(this,"SESSION","Desconexão local solicitada");
+        PogoAccountSlots.logout(this,1,()->runOnUiThread(()->{
+            refreshSessionSummary();
+            Toast.makeText(this,"Conta 1 desconectada",Toast.LENGTH_SHORT).show();
+        }));
+        BugReport.log(this,"SESSION","Desconexão local da Conta 1");
     }
     private void refreshWatchCount(){
         if(watchSummary==null)return;
@@ -1839,8 +2002,14 @@ public class MainActivity extends Activity {
         super.onPause();
     }
     private void handleShinyLoginIntent(Intent intent){
-        if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
-            getWindow().getDecorView().post(this::openLoginDialog);
+        if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction())){
+            final int slot=intent.getIntExtra("pogoAccountSlot",1);
+            getWindow().getDecorView().post(()->{
+                if(slot==2&&PogoAccountSlots.supportsSecond()){
+                    activeLoginSlot=2;openLoginDialog(true,"login");
+                }else openLoginDialog();
+            });
+        }
     }
     private void sendActionToRunningOverlay(Class<?> serviceType,String action,boolean authConfirmed){
         boolean enabled=serviceType==OverlayService.class?
@@ -1857,8 +2026,14 @@ public class MainActivity extends Activity {
         sendActionToRunningOverlay(SecondaryOverlayService.class,action,authConfirmed);
     }
     private void notifyOverlaySessionReady(){
-        CookieManager.getInstance().flush();
-        serviceAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
+        PogoAccountSlots.cookieManager(activeLoginSlot).flush();
+        serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN",false);
+    }
+    private void serviceActionForLoginSlot(String action,boolean confirmed){
+        if(PogoAccountSlots.assigned(this,false)==activeLoginSlot)
+            sendActionToRunningOverlay(OverlayService.class,action,confirmed);
+        if(PogoAccountSlots.assigned(this,true)==activeLoginSlot)
+            sendActionToRunningOverlay(SecondaryOverlayService.class,action,confirmed);
     }
     // Checking only Logout fails on mobile where it sits inside the hamburger.
     // Use the same sanitized session probe as the collector. Never read/log the
@@ -1890,7 +2065,7 @@ public class MainActivity extends Activity {
                 loginSessionNotified=true;
                 // A newly confirmed OAuth session may belong to another account.
                 // Never reuse the prior trainer proof while /profile hydrates.
-                getSharedPreferences("prefs",0).edit()
+                PogoAccountSlots.prefs(this,activeLoginSlot).edit()
                     .putString("sessionStatus","autenticada")
                     .putString("profileTrainerState","unknown")
                     .remove("profileAvatarUrl")
@@ -1898,7 +2073,7 @@ public class MainActivity extends Activity {
                     .remove("profileTrainerDetails").remove("profileTrainerTeam")
                     .remove("profileTrainerList").remove("profileSelectedTrainerCode")
                     .remove("profileTrainerLevel").apply();
-                CookieManager.getInstance().flush();
+                PogoAccountSlots.cookieManager(activeLoginSlot).flush();
                 if("manage".equals(loginPurpose)){
                     // Management must stay open until the user explicitly leaves.
                     refreshSessionSummary();
@@ -1968,7 +2143,7 @@ public class MainActivity extends Activity {
                 JSONObject profile=new JSONObject(payload);
                 if(profile.optBoolean("ok",false)&&
                    "profile".equals(profile.optString("page"))){
-                    SharedPreferences.Editor edit=getSharedPreferences("prefs",0).edit();
+                    SharedPreferences.Editor edit=PogoAccountSlots.prefs(this,activeLoginSlot).edit();
                     String name=profile.optString("displayName","").trim();
                     String provider=profile.optString("provider","");
                     // Linked Google/Discord provider is NOT proof of the
@@ -1994,7 +2169,7 @@ public class MainActivity extends Activity {
                     JSONArray accountList=profile.optJSONArray("trainers");
                     JSONArray verified=new JSONArray();
                     JSONObject chosen=null;
-                    String selection=getSharedPreferences("prefs",0)
+                    String selection=PogoAccountSlots.prefs(this,activeLoginSlot)
                         .getString("profileSelectedTrainerCode","");
                     if(accountList!=null)for(int i=0;i<Math.min(20,accountList.length());i++){
                         JSONObject item=accountList.optJSONObject(i);
@@ -2107,8 +2282,8 @@ public class MainActivity extends Activity {
             }
         });
     }
-    private void openLoginDialog(){openLoginDialog(true,"login");}
-    private void openLoginDialog(boolean shinyRequest){openLoginDialog(shinyRequest,"login");}
+    private void openLoginDialog(){activeLoginSlot=1;openLoginDialog(true,"login");}
+    private void openLoginDialog(boolean shinyRequest){activeLoginSlot=1;openLoginDialog(shinyRequest,"login");}
     private void openLoginDialog(boolean shinyRequest,String purpose){
         if(loginDialog!=null&&loginDialog.isShowing())return;
         loginPurpose="manage".equals(purpose)?"manage":"login";
@@ -2122,6 +2297,7 @@ public class MainActivity extends Activity {
         loginLinkAttempted=false;
         loginDiscoveryStarted=false;
         website=new WebView(this);
+        PogoAccountSlots.attach(website,activeLoginSlot);
         website.setBackgroundColor(Color.rgb(11,13,18));
         website.getSettings().setJavaScriptEnabled(true);
         website.getSettings().setDomStorageEnabled(true);
@@ -2132,8 +2308,9 @@ public class MainActivity extends Activity {
         website.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         website.getSettings().setAllowFileAccess(false);
         website.getSettings().setAllowContentAccess(false);
-        CookieManager.getInstance().setAcceptCookie(true);
-        CookieManager.getInstance().setAcceptThirdPartyCookies(website,true);
+        CookieManager slotCookies=PogoAccountSlots.cookieManager(activeLoginSlot);
+        slotCookies.setAcceptCookie(true);
+        slotCookies.setAcceptThirdPartyCookies(website,true);
         website.setWebChromeClient(new WebChromeClient());
         website.setWebViewClient(new WebViewClient(){
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){
@@ -2185,7 +2362,8 @@ public class MainActivity extends Activity {
         toolbar.setPadding(d(12),0,d(12),0);
         toolbar.setBackgroundColor(Color.rgb(20,24,31));
         TextView loginName=new TextView(this);
-        loginName.setText("manage".equals(loginPurpose)?"PoGoCoordinates · Perfil":"PoGoCoordinates · Login");
+        loginName.setText("PoGoCoordinates · Conta "+activeLoginSlot+
+            ("manage".equals(loginPurpose)?" · Perfil":" · Login"));
         loginName.setTextColor(Color.WHITE);
         loginName.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         loginName.setTextSize(15);
@@ -2258,7 +2436,7 @@ public class MainActivity extends Activity {
             loginFallback=null;
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginDialog=null;
-            serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
+            serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
             // Closing without a confirmed login must not reload the session.
             if(authenticatedNow)notifyOverlaySessionReady();
             refreshSessionSummary();
@@ -2267,7 +2445,7 @@ public class MainActivity extends Activity {
                 getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),220L);
             }
         });
-        serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN");
+        serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN",false);
         loginDialog.show();
         android.view.Window loginWindow=loginDialog.getWindow();
         if(loginWindow!=null){
@@ -2530,7 +2708,7 @@ public class MainActivity extends Activity {
         if(!AppAvailability.isAllowed(this)){
             applyAppAvailability(AppAvailability.cached(this));return;
         }
-        CookieManager.getInstance().flush();
+        PogoAccountSlots.cookieManager(PogoAccountSlots.assigned(this,false)).flush();
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                   Uri.parse("package:"+getPackageName())),101);

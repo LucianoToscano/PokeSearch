@@ -41,14 +41,17 @@ check("new Home control enables each instance separately",()=>{
  assert.match(main,/OverlayService.isSecondaryRunning\(\)/);
  assert.match(main,/stopService\(new Intent\(this,SecondaryOverlayService.class\)\)/);
 });
-check("login remains shared and logout stops both before clearing cookies",()=>{
- assert.match(main,/sendActionToRunningOverlay\(OverlayService.class,action,authConfirmed\)/);
- assert.match(main,/sendActionToRunningOverlay\(SecondaryOverlayService.class,action,authConfirmed\)/);
+check("login and logout are scoped to each PoGoCoordinates profile",()=>{
+ assert.match(main,/private void serviceActionForLoginSlot\(/);
+ assert.match(main,/PogoAccountSlots\.logout\(this,1,/);
+ assert.match(main,/PogoAccountSlots\.logout\(this,2,/);
+ assert.match(service,/PogoAccountSlots\.attach\(website,slot\)/);
+ assert.match(service,/PogoAccountSlots\.cookieManager\(slot\)/);
+ const slots=read("java/com/lucianotoscano/pokesearchoverlay/PogoAccountSlots.java");
+ assert.match(slots,/cookies\.removeAllCookies\(/);
+ assert.match(slots,/WebViewCompat\.setProfile\(web,NAME_2\)/);
  const logout=main.split("private void logoutLocalSession(){")[1].split("private void ",1)[0];
- assert.match(logout,/stopService\(new Intent\(this,OverlayService.class\)\)/);
- assert.match(logout,/stopService\(new Intent\(this,SecondaryOverlayService.class\)\)/);
- assert.match(logout,/removeAllCookies/);
- assert.match(service,/CookieManager.getInstance\(\)\.setAcceptCookie\(true\)/);
+ assert.doesNotMatch(logout,/CookieManager\.getInstance\(\)\.removeAllCookies/);
 });
 check("two positions, two result lists, no forced colored labels",()=>{
  assert.match(service,/isSecondaryOverlay\(\)\?12:oldDefaultX/);
