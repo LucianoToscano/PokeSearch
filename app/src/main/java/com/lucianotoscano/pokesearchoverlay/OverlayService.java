@@ -367,19 +367,9 @@ public class OverlayService extends Service {
             // Only a trainer previously verified from this site's own profile
             // may be selected for account-specific Shiny results.
             if(shiny){
-                android.content.SharedPreferences prefs=getSharedPreferences("prefs",MODE_PRIVATE);
-                String selected=prefs.getString("profileTrainerCode","");
-                boolean valid=false;
-                try{
-                    JSONArray list=new JSONArray(prefs.getString("profileTrainerList","[]"));
-                    for(int i=0;i<list.length();i++){
-                        JSONObject account=list.optJSONObject(i);
-                        if(account!=null&&selected.equals(account.optString("code"))){
-                            valid=true;break;
-                        }
-                    }
-                }catch(Exception ignored){}
-                if(valid&&selected.matches("[0-9]{12}"))
+                int slot=PogoAccountSlots.assigned(this,isSecondaryOverlay());
+                String selected=PogoAccountSlots.trainer(this,isSecondaryOverlay());
+                if(PogoAccountSlots.hasTrainer(this,slot,selected))
                     config.put("shinyAccount",selected);
             }
             config.put("locationEnabled",locationEnabled);
@@ -1247,6 +1237,10 @@ public class OverlayService extends Service {
     }
     private void newWebsite(){
         website=new WebView(this);
+        // Account 1 preserves its current default WebView storage. Account 2
+        // MUST use its own Chromium profile, before any WebSettings access.
+        int slot=PogoAccountSlots.assigned(this,isSecondaryOverlay());
+        PogoAccountSlots.attach(website,slot);
         website.getSettings().setJavaScriptEnabled(true);
         website.getSettings().setDomStorageEnabled(true);
         website.getSettings().setDatabaseEnabled(true);
@@ -1258,8 +1252,9 @@ public class OverlayService extends Service {
         website.getSettings().setAllowFileAccess(false);
         website.getSettings().setAllowFileAccessFromFileURLs(false);
         website.getSettings().setAllowUniversalAccessFromFileURLs(false);
-        CookieManager.getInstance().setAcceptCookie(true);
-        CookieManager.getInstance().setAcceptThirdPartyCookies(website,true);
+        CookieManager cookies=PogoAccountSlots.cookieManager(slot);
+        cookies.setAcceptCookie(true);
+        cookies.setAcceptThirdPartyCookies(website,true);
         root.addView(website,new FrameLayout.LayoutParams(dp(390),dp(690),Gravity.TOP|Gravity.LEFT));
         website.setWebViewClient(new WebViewClient(){
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap favicon){
@@ -1311,6 +1306,15 @@ public class OverlayService extends Service {
     }
     @Override public void onCreate(){
         super.onCreate();
+        // No second account may accidentally use the default cookie profile.
+        final int selectedAccount=PogoAccountSlots.assigned(this,isSecondaryOverlay());
+        if(selectedAccount==2&&(!PogoAccountSlots.supportsSecond()||
+           !PogoAccountSlots.loggedIn(this,2))){
+            android.widget.Toast.makeText(this,
+                "Conecte a Conta 2 antes de usar esta Pokébola",
+                android.widget.Toast.LENGTH_LONG).show();
+            stopSelf();return;
+        }
         // Independent app-wide maintenance and per-version stop for both overlays.
         if(!AppAvailability.isAllowed(this)){stopSelf();return;}
         // Only P2 needs a Premium lease. P1 remains free and works offline.
@@ -2133,7 +2137,8 @@ public class OverlayService extends Service {
             // authentication expired. Do not turn a verified session into
             // "login necessary" merely because the DOM is temporarily empty.
             if(!"não confirmado".equals(auth))
-                overlayPrefs().edit().putString("sessionStatus",auth).apply();
+                PogoAccountSlots.prefs(this,PogoAccountSlots.assigned(this,
+                    isSecondaryOverlay())).edit().putString("sessionStatus",auth).apply();
             // Only record a coarse authentication state, never cookies, codes or tokens.
             BugReport.log(this,"SESSION","Shiny="+shiny+" autenticação="+auth);
             if(shiny&&!siteConfirmsShinyAccount(session)){
@@ -2276,10 +2281,9 @@ public class OverlayService extends Service {
     // cookie, Shiny switch or stored login status alone. The trainer fields
     // originate only from the verified official /profile card (HOME-04).
     private boolean hasConfirmedTrainerLink(){
-        android.content.SharedPreferences p=overlayPrefs();
-        return "linked".equals(p.getString("profileTrainerState","unknown"))&&
-            !p.getString("profileTrainerName","").trim().isEmpty()&&
-            p.getString("profileTrainerCode","").matches("[0-9]{12}");
+        return PogoAccountSlots.hasTrainer(this,
+            PogoAccountSlots.assigned(this,isSecondaryOverlay()),
+            PogoAccountSlots.trainer(this,isSecondaryOverlay()));
     }
     private boolean siteConfirmsShinyAccount(JSONObject session){
         return "autenticada".equals(session.optString("auth","")) &&
@@ -2363,7 +2367,8 @@ public class OverlayService extends Service {
                 handler.postDelayed(()->startVerifiedShinySearch(generation,attempt+1),400L);
                 return;
             }
-            overlayPrefs().edit().putString("sessionStatus",auth).apply();
+            PogoAccountSlots.prefs(this,PogoAccountSlots.assigned(this,
+                isSecondaryOverlay())).edit().putString("sessionStatus",auth).apply();
             if(!siteConfirmsShinyAccount(session)){
                 revertUnverifiedShiny("✨ Conta logada e treinador confirmado são obrigatórios para Shiny.");
                 openShinyLogin();
@@ -4918,7 +4923,8 @@ public class OverlayService extends Service {
                 hideDetails();
                 status("Sincronizando sessão após login...");
             }
-            try{CookieManager.getInstance().flush();}
+            try{PogoAccountSlots.cookieManager(
+                PogoAccountSlots.assigned(this,isSecondaryOverlay())).flush();}
             catch(RuntimeException e){recordFailure("sincronizar cookies",e);}
             pendingReloadGeneration=requestGeneration;
             if(!stopped&&!loginPaused)
