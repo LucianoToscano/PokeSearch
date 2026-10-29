@@ -12,7 +12,7 @@ assert.ok(compact.includes("#major .ivTile .ivTypes{display:inline-flex;"),"type
 assert.ok(compact.includes("#major .ivTile .ivPercent{top:1px;right:3px;"),"100 percent top right");
 assert.ok(compact.includes("#major .ivTile .ivTypes .pkTypeImg{width:9px;height:9px;"),"original png tiny");
 assert.ok(js.includes("document.getElementById(\"types\").innerHTML+'</span>'"),"types are rendered inside IV cell");
-assert.ok(js.includes('document.getElementById("artColumn").classList.toggle("gengarSprite"'),"Gengar detail conditional");
+assert.ok(js.includes('document.getElementById("artColumn")?.classList?.toggle?.("gengarSprite"'),"Gengar detail conditional");
 assert.ok(compact.includes("#artColumn.gengarSprite #img{transform:scale(.78);"),"only Gengar detail art shrinks");
 assert.ok(dock.includes("dexNumber===94?0.67:0.86"),"Gengar in list is 22% smaller");
 assert.ok(dock.includes("const artFit=/^\\s*minior"),"existing Minior rule preserved");

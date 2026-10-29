@@ -777,7 +777,7 @@ window.showDetails=(c,mode,watched)=>{
   [h(c.number),gender].filter(Boolean).join(" · ");
  document.getElementById("sizeForm").textContent=
   [c.size,c.form].filter(Boolean).join(" · ");
- document.getElementById("artColumn").classList.toggle("gengarSprite",
+ document.getElementById("artColumn")?.classList?.toggle?.("gengarSprite",
   Number(String(c.number||c.dex||"").replace("#",""))===94);
  const img=document.getElementById("img"),fallback=document.getElementById("imageFallback");
  // The result list and this separately owned detail WebView MUST resolve
