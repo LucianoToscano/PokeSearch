@@ -1705,7 +1705,8 @@ public class MainActivity extends Activity {
         if(sessionHint!=null)sessionHint.setText(
             "Buscas comuns sem login · Shiny exige treinador vinculado");
         if(accountDisplay!=null)accountDisplay.setText(
-            prefs.getString("profileDisplayName","Conta conectada"));
+            prefs.getBoolean("homeShowPogoAccountName",true)?
+                prefs.getString("profileDisplayName","Conta conectada"):"Anônimo");
         refreshGoogleAvatar(logged?prefs.getString("profileAvatarUrl",""):"");
         if(accountProvider!=null){
             String provider=prefs.getString("profileProvider","");
@@ -1736,7 +1737,8 @@ public class MainActivity extends Activity {
             teamBadge.setContentDescription(linked&&team.length()>0?
                 "Equipe "+team:"Sem equipe");
         }
-        if(trainerDisplay!=null)trainerDisplay.setText(linked?trainer:
+        if(trainerDisplay!=null)trainerDisplay.setText(linked?
+            (prefs.getBoolean("homeShowTrainerName",true)?trainer:"Anônimo"):
             "unlinked".equals(prefs.getString("profileTrainerState","unknown"))?
                 "Nenhum treinador vinculado":"Treinador não confirmado");
         if(trainerDetails!=null){
@@ -1756,7 +1758,9 @@ public class MainActivity extends Activity {
                 "Trocar treinador vinculado ("+profiles+" opções)");
         }
         if(linked&&trainerCode!=null)
-            trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
+            trainerCode.setText(prefs.getBoolean("homeShowTrainerCode",true)?
+                code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8):
+                "XXXX XXXX XXXX");
         if(trainerAction!=null)trainerAction.setText(linked?"Remover":"Gerenciar");
         if(sessionSummary!=null)sessionSummary.setText(logged?
             "● Sessão identificada · PoGoCoordinates":"○ Login necessário");
@@ -2353,6 +2357,27 @@ public class MainActivity extends Activity {
         body.setOrientation(LinearLayout.VERTICAL);
         body.setPadding(d(14),d(10),d(14),d(14));
         sc.addView(body);
+
+        TextView privacyTitle=new TextView(this);
+        privacyTitle.setText("Privacidade na Home");
+        privacyTitle.setTextSize(14);
+        privacyTitle.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        privacyTitle.setTextColor(homeLightMode?Color.rgb(33,53,77):Color.WHITE);
+        body.addView(privacyTitle);
+        settingHomePrivacyCheckbox(body,prefs,"homeShowPogoAccountName",
+            "Mostrar nome da conta PoGoCoordinates");
+        settingHomePrivacyCheckbox(body,prefs,"homeShowTrainerName",
+            "Mostrar nome do treinador");
+        settingHomePrivacyCheckbox(body,prefs,"homeShowTrainerCode",
+            "Mostrar código do treinador");
+        TextView privacyHint=new TextView(this);
+        privacyHint.setText("Ao ocultar: Anônimo ou XXXX XXXX XXXX. Somente nesta Home.");
+        privacyHint.setTextSize(11);
+        privacyHint.setTextColor(homeLightMode?Color.rgb(89,107,125):Color.LTGRAY);
+        LinearLayout.LayoutParams privacyHintLp=new LinearLayout.LayoutParams(-1,-2);
+        privacyHintLp.bottomMargin=d(14);
+        body.addView(privacyHint,privacyHintLp);
+
         android.widget.TextView subtitle=new android.widget.TextView(this);
         subtitle.setText("Tamanho do Pokémon · altere também por P / M / G no overlay");
         subtitle.setTextColor(Color.LTGRAY);body.addView(subtitle);
@@ -2433,6 +2458,21 @@ public class MainActivity extends Activity {
         });
         body.addView(testNotification,new LinearLayout.LayoutParams(-1,d(42)));
         return sc;
+    }
+    private void settingHomePrivacyCheckbox(LinearLayout body,SharedPreferences prefs,
+            String key,String label){
+        CheckBox check=new CheckBox(this);
+        check.setText(label);
+        check.setTextSize(13);
+        check.setTextColor(homeLightMode?Color.rgb(33,53,77):Color.WHITE);
+        check.setChecked(prefs.getBoolean(key,true));
+        check.setOnCheckedChangeListener((button,enabled)->{
+            // Only presentation changes; never overwrite PoGoCoordinates identity,
+            // trainer selection, account credentials, or shared overlay state.
+            prefs.edit().putBoolean(key,enabled).apply();
+            refreshSessionSummary();
+        });
+        body.addView(check);
     }
     private void settingAlertMode(LinearLayout body,SharedPreferences prefs){
         TextView label=new TextView(this);
