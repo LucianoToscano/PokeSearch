@@ -17,12 +17,17 @@ for(const [dex,name] of [[422,"Shellos"],[423,"Gastrodon"]]){
    assert.equal(fromSite.src,remote,"Preserve validated provider's own image");
    assert.equal(fromSite.original,exact.src,"Fallback for same West Sea form and shiny");
   }
-  for(const form of ["East Sea","EAST_SEA","Unknown form"]){
-   const unknown=sprite.resolve({name,number:"#"+dex,form,shiny,image:""});
-   assert.notEqual(unknown.src,prefix+(shiny?"shiny/":"base/")+dex+".png",
-    "Unknown/East must never receive West Sea form");
-   assert.equal(unknown.src,"","Unknown forms fail closed without verified art");
+  for(const form of ["East Sea","EAST_SEA"]){
+   const east=sprite.resolve({name,number:"#"+dex,form,shiny,image:""});
+   assert.notEqual(east.src,prefix+(shiny?"shiny/":"base/")+dex+".png",
+    "East Sea must not borrow West Sea form");
+   assert.ok(east.src.includes("pm"+dex+".fEAST_SEA."+
+    (shiny?"s.":"")+"icon.png"),"East Sea uses its newly verified exact GO image");
+   assert.equal(east.goExact,true,"East Sea form has GO provenance");
   }
+  const unknown=sprite.resolve({name,number:"#"+dex,form:"Unknown form",shiny,image:""});
+  assert.notEqual(unknown.src,prefix+(shiny?"shiny/":"base/")+dex+".png");
+  assert.equal(unknown.src,"","Truly unknown forms fail closed without verified art");
   const wrong=sprite.resolve({name,number:"#"+dex,form:"West Sea",shiny,costume_id:71});
   assert.equal(wrong.src,"","No West Sea base fallback for a costume");
   const swapped=sprite.resolve({name:"Shellos",number:"#423",form:"West Sea",shiny});
@@ -35,4 +40,4 @@ const dock=fs.readFileSync(path.join(base,"dock.html"),"utf8");
 const detail=fs.readFileSync(path.join(base,"detail.html"),"utf8");
 assert.ok(dock.includes("sprite_offline.js")||dock.includes("PokeSearchOfflineSprite"));
 assert.ok(detail.includes("PokeSearchOfflineSprite.resolve(c)"));
-console.log("LT161 Shellos/Gastrodon West Sea exact normal+shiny sprites, no East mismatch PASS");
+console.log("LT169 Shellos/Gastrodon West Sea offline + East Sea exact GO normal/shiny, unknown fail-closed PASS");
