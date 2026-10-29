@@ -529,7 +529,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 
 /* LT153: compact PvP reading hierarchy. No values discarded or inferred. */
 #evoBody{padding:3px 6px 5px}
-.evoHint{font-size:8.5px;line-height:1.28;color:#b6c6d6;padding:2px 1px 5px}
+.evoEmpty{font-size:9px;line-height:1.35;color:#c0cbd7;padding:5px 2px 4px}
 .evoLeague{margin-top:4px;padding:3px 1px 3px;font-size:10px;letter-spacing:.07px}
 .evoLine{padding:5px 2px 5px;margin:0;border-bottom:1px solid #ffffff19;line-height:1.32}
 .evoLine.isCurrent{border-left:2px solid #8ba6c4;padding-left:5px;background:#ffffff08;border-radius:3px}
@@ -871,24 +871,27 @@ function toggleEvolutionDetails(){
 function evolutionRow(x,first){
  if(!x||typeof x!=="object")return "";
  const rank=Number(x.rank),overall=Number(x.overallRank);
- if(!Number.isInteger(rank)||rank<1||rank>4096)return "";
+ const hasClass=Number.isInteger(rank)&&rank>=1&&rank<=4096;
+ const hasOverall=Number.isInteger(overall)&&overall>=1;
+ if(!hasClass&&!hasOverall)return "";
  const name=String(x.name||"").slice(0,90);
  const pct=/^(?:\d{1,3}),\d{2}$/.test(String(x.statProductPct||""))?
   String(x.statProductPct):"";
  const cp=Number(x.cp),level=Number(x.level);
  const data=[];
- if(pct)data.push('<span><b>Eficiência IV:</b> '+h(pct)+'%</span>');
- if(Number.isFinite(cp)&&cp>=10&&cp<=10000)data.push('<span>PC '+Math.floor(cp)+'</span>');
- if(Number.isFinite(level)&&level>=1&&level<=55)data.push('<span>Nv '+level.toFixed(1).replace(".",",")+'</span>');
- if(Number.isInteger(overall)&&overall>0)data.push('<span class="evoOverall">Rank Geral: #'+overall+'</span>');
+ if(pct&&hasClass)data.push('<span><b>Eficiência IV:</b> '+h(pct)+'%</span>');
+ if(hasClass&&Number.isFinite(cp)&&cp>=10&&cp<=10000)data.push('<span>PC '+Math.floor(cp)+'</span>');
+ if(hasClass&&Number.isFinite(level)&&level>=1&&level<=55)data.push('<span>Nv '+level.toFixed(1).replace(".",",")+'</span>');
+ if(hasOverall)data.push('<span class="evoOverall">Rank Geral: #'+overall+'</span>');
  let state="";
- if(x.eligible===false)state="Não elegível no nível atual";
- else if(x.eligible===null)state="Elegibilidade não verificada";
+ if(x.eligible===false&&hasClass)state="Não elegível no nível atual";
+ else if(x.eligible===null&&hasClass)state="Elegibilidade não verificada";
  const mark=first?"Atual":"↳";
  return '<div class="evoLine'+(first?' isCurrent':'')+
-  (rank===1&&x.eligible===true?' best':'')+'"><div class="evoSummary">'+
+  (hasClass&&rank===1&&x.eligible===true?' best':'')+'"><div class="evoSummary">'+
   '<span class="evoWho"><span class="evoMark">'+mark+'</span> · <b>'+h(name)+'</b></span>'+
-  '<span class="evoRank" title="Ranking da combinação de IVs da espécie na liga">Rank Classe: #'+rank+'</span></div>'+
+  '<span class="evoRank" title="'+(hasClass?'Classificação dos IVs desta espécie na liga':'IV não informado')+'">Rank Classe: '+
+  (hasClass?'#'+rank:'—')+'</span></div>'+
   (data.length?'<div class="evoMeta">'+data.join("")+'</div>':"")+
   (state?'<div class="evoState">'+h(state)+'</div>':"")+'</div>';
 }
@@ -896,7 +899,7 @@ window.showEvolutionDetails=payload=>{
  if(!payload||!Array.isArray(payload.leagues)||payload.leagues.length!==3||
     evoIdentity(payload)!==detailIdentity)return false;
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
- let html='<div class="evoHint">Rank Classe = classificação dos IVs da espécie na liga · Eficiência IV = comparação com o melhor IV · Rank Geral = posição da espécie na liga</div>',count=0,ownCount=0;
+ let html="",count=0,ownCount=0;
  const labels={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Master"};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
@@ -908,16 +911,20 @@ window.showEvolutionDetails=payload=>{
   count+=rows.length;
   if(own)ownCount++;
  }
- if(!count&&!ownCount){outer.hidden=true;return false;}
+ if(!count&&!ownCount){
+  // Keep an explicit, compact state instead of silently removing the card.
+  html='<div class="evoEmpty">Ranking indisponível para esta forma.</div>';
+ }
  // LT66: WebView may rerender after each native status tick. Never reset
  // the reader to the top of a long PvP analysis when its content is unchanged.
  const panel=document.getElementById("panel");
  const keepScroll=panel.scrollTop;
  if(body.innerHTML!==html)body.innerHTML=html;
  outer.hidden=false;
- document.getElementById("evoLabel").textContent=count?
-  "Análise PvP · "+count+" avaliações":
-  "Análise IV PvP · "+ownCount+" ligas";
+ document.getElementById("evoLabel").textContent=payload.ivUnavailable?
+  "Análise PvP · Ranks gerais":
+  count?"Análise PvP · "+count+" avaliações":
+  ownCount?"Análise IV PvP · "+ownCount+" ligas":"Análise PvP · Sem dados";
  body.hidden=!evolutionExpanded;
  document.getElementById("evoChevron").textContent=evolutionExpanded?"▴":"▾";
  document.getElementById("evoToggle").setAttribute("aria-expanded",String(evolutionExpanded));
@@ -1045,6 +1052,19 @@ window.showDetails=(c,mode,watched)=>{
  const stat=(label,value,css="")=>value?'<span class="'+css+'">'+h(label)+" "+h(value)+"</span>":"";
  const ivDisplay=window.PokeSearchIVDisplay?.fromCard?.(c);
  const showRaw=ivDisplay?.valid===true;
+ if(changed){
+  const section=document.getElementById("evolutions");
+  const analysis=document.getElementById("evoBody");
+  section.hidden=false;
+  document.getElementById("evoLabel").textContent="Análise PvP";
+  analysis.innerHTML='<div class="evoEmpty">'+
+    (showRaw?'Análise indisponível para esta espécie ou forma.':
+     'IV não informado · Rank Classe indisponível.')+
+    '</div>';
+  analysis.hidden=true;
+  document.getElementById("evoChevron").textContent="▾";
+  document.getElementById("evoToggle").setAttribute("aria-expanded","false");
+ }
  const showPct=showRaw;
  // Both A/D/S and % use the same approved category. When the API omits
  // ivPercent, derive it only from the explicitly returned valid raw triple.
