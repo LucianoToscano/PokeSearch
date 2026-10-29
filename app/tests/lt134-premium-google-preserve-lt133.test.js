@@ -4,6 +4,7 @@ const fs=require("node:fs"),path=require("node:path");
 const read=p=>fs.readFileSync(path.join(__dirname,"../..",p),"utf8");
 const gradle=read("app/build.gradle.kts");
 const ui=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java");
+const homeGlass=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/HomePremiumGlass.java");
 const overlay=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java");
 const access=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/PremiumAccess.java");
 const availability=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/AppAvailability.java");
@@ -60,8 +61,9 @@ const checks=[
   overlay.includes("if(isSecondaryOverlay()&&PremiumAccess.controlled())")],
  ["Shared OverlayService continues both Pokeballs",overlay.includes("isSecondaryOverlay()")],
  ["Premium user can sign out or switch account from Home, even with active P2",
-   ui.includes('"Conta Premium  ·  Gerenciar / Sair"')&&
-   ui.includes('accountPremium.setOnClickListener(v->showPremiumAccountOptions())')&&
+   ui.includes('screen.addView(HomePremiumGlass.create(this,homeLightMode,')&&
+   ui.includes('this::showPremiumAccountOptions')&&
+   homeGlass.includes('account.setOnClickListener(v->onAccount.run())')&&
    ui.includes('homeAuthButton("Sair da conta Google"')&&
    ui.includes('homeAuthButton("Trocar conta Google"')&&
    ui.includes('.setView(scroll)')&&
