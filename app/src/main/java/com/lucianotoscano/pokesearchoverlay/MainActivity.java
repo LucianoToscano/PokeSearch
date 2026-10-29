@@ -1042,6 +1042,7 @@ public class MainActivity extends Activity {
         }));
     }
     private void openTrainerManagement(){
+        activeLoginSlot=1;
         String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
         if(!code.matches("[0-9]{12}")){
             openLoginDialog(false,"manage");
@@ -1559,7 +1560,7 @@ public class MainActivity extends Activity {
             return;
         }
         initializeSecondaryFilterDefaults();
-        CookieManager.getInstance().flush();
+        PogoAccountSlots.cookieManager(PogoAccountSlots.assigned(this,true)).flush();
         Intent intent=new Intent(this,SecondaryOverlayService.class);
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
         if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,750);
@@ -1581,6 +1582,7 @@ public class MainActivity extends Activity {
         }
     }
     private void openProviderLogin(String provider){
+        activeLoginSlot=1;
         preferredLoginProvider=provider;
         openLoginDialog(false);
     }
@@ -2018,8 +2020,14 @@ public class MainActivity extends Activity {
         sendActionToRunningOverlay(SecondaryOverlayService.class,action,authConfirmed);
     }
     private void notifyOverlaySessionReady(){
-        CookieManager.getInstance().flush();
-        serviceAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
+        PogoAccountSlots.cookieManager(activeLoginSlot).flush();
+        serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN",false);
+    }
+    private void serviceActionForLoginSlot(String action,boolean confirmed){
+        if(PogoAccountSlots.assigned(this,false)==activeLoginSlot)
+            sendActionToRunningOverlay(OverlayService.class,action,confirmed);
+        if(PogoAccountSlots.assigned(this,true)==activeLoginSlot)
+            sendActionToRunningOverlay(SecondaryOverlayService.class,action,confirmed);
     }
     // Checking only Logout fails on mobile where it sits inside the hamburger.
     // Use the same sanitized session probe as the collector. Never read/log the
@@ -2051,7 +2059,7 @@ public class MainActivity extends Activity {
                 loginSessionNotified=true;
                 // A newly confirmed OAuth session may belong to another account.
                 // Never reuse the prior trainer proof while /profile hydrates.
-                getSharedPreferences("prefs",0).edit()
+                PogoAccountSlots.prefs(this,activeLoginSlot).edit()
                     .putString("sessionStatus","autenticada")
                     .putString("profileTrainerState","unknown")
                     .remove("profileAvatarUrl")
@@ -2059,7 +2067,7 @@ public class MainActivity extends Activity {
                     .remove("profileTrainerDetails").remove("profileTrainerTeam")
                     .remove("profileTrainerList").remove("profileSelectedTrainerCode")
                     .remove("profileTrainerLevel").apply();
-                CookieManager.getInstance().flush();
+                PogoAccountSlots.cookieManager(activeLoginSlot).flush();
                 if("manage".equals(loginPurpose)){
                     // Management must stay open until the user explicitly leaves.
                     refreshSessionSummary();
@@ -2129,7 +2137,7 @@ public class MainActivity extends Activity {
                 JSONObject profile=new JSONObject(payload);
                 if(profile.optBoolean("ok",false)&&
                    "profile".equals(profile.optString("page"))){
-                    SharedPreferences.Editor edit=getSharedPreferences("prefs",0).edit();
+                    SharedPreferences.Editor edit=PogoAccountSlots.prefs(this,activeLoginSlot).edit();
                     String name=profile.optString("displayName","").trim();
                     String provider=profile.optString("provider","");
                     // Linked Google/Discord provider is NOT proof of the
@@ -2155,7 +2163,7 @@ public class MainActivity extends Activity {
                     JSONArray accountList=profile.optJSONArray("trainers");
                     JSONArray verified=new JSONArray();
                     JSONObject chosen=null;
-                    String selection=getSharedPreferences("prefs",0)
+                    String selection=PogoAccountSlots.prefs(this,activeLoginSlot)
                         .getString("profileSelectedTrainerCode","");
                     if(accountList!=null)for(int i=0;i<Math.min(20,accountList.length());i++){
                         JSONObject item=accountList.optJSONObject(i);
@@ -2268,8 +2276,8 @@ public class MainActivity extends Activity {
             }
         });
     }
-    private void openLoginDialog(){openLoginDialog(true,"login");}
-    private void openLoginDialog(boolean shinyRequest){openLoginDialog(shinyRequest,"login");}
+    private void openLoginDialog(){activeLoginSlot=1;openLoginDialog(true,"login");}
+    private void openLoginDialog(boolean shinyRequest){activeLoginSlot=1;openLoginDialog(shinyRequest,"login");}
     private void openLoginDialog(boolean shinyRequest,String purpose){
         if(loginDialog!=null&&loginDialog.isShowing())return;
         loginPurpose="manage".equals(purpose)?"manage":"login";
@@ -2283,6 +2291,7 @@ public class MainActivity extends Activity {
         loginLinkAttempted=false;
         loginDiscoveryStarted=false;
         website=new WebView(this);
+        PogoAccountSlots.attach(website,activeLoginSlot);
         website.setBackgroundColor(Color.rgb(11,13,18));
         website.getSettings().setJavaScriptEnabled(true);
         website.getSettings().setDomStorageEnabled(true);
@@ -2293,8 +2302,9 @@ public class MainActivity extends Activity {
         website.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         website.getSettings().setAllowFileAccess(false);
         website.getSettings().setAllowContentAccess(false);
-        CookieManager.getInstance().setAcceptCookie(true);
-        CookieManager.getInstance().setAcceptThirdPartyCookies(website,true);
+        CookieManager slotCookies=PogoAccountSlots.cookieManager(activeLoginSlot);
+        slotCookies.setAcceptCookie(true);
+        slotCookies.setAcceptThirdPartyCookies(website,true);
         website.setWebChromeClient(new WebChromeClient());
         website.setWebViewClient(new WebViewClient(){
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){
@@ -2346,7 +2356,8 @@ public class MainActivity extends Activity {
         toolbar.setPadding(d(12),0,d(12),0);
         toolbar.setBackgroundColor(Color.rgb(20,24,31));
         TextView loginName=new TextView(this);
-        loginName.setText("manage".equals(loginPurpose)?"PoGoCoordinates · Perfil":"PoGoCoordinates · Login");
+        loginName.setText("PoGoCoordinates · Conta "+activeLoginSlot+
+            ("manage".equals(loginPurpose)?" · Perfil":" · Login"));
         loginName.setTextColor(Color.WHITE);
         loginName.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         loginName.setTextSize(15);
@@ -2419,7 +2430,7 @@ public class MainActivity extends Activity {
             loginFallback=null;
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginDialog=null;
-            serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
+            serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
             // Closing without a confirmed login must not reload the session.
             if(authenticatedNow)notifyOverlaySessionReady();
             refreshSessionSummary();
@@ -2428,7 +2439,7 @@ public class MainActivity extends Activity {
                 getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),220L);
             }
         });
-        serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN");
+        serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN",false);
         loginDialog.show();
         android.view.Window loginWindow=loginDialog.getWindow();
         if(loginWindow!=null){
