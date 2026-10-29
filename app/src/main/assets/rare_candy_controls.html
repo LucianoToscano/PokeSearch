@@ -64,7 +64,7 @@ body:not(.expanded) #choices{display:none}
 </style></head><body>
 <div id="controls" role="toolbar" aria-label="Controles Doce Raro">
 <button id="location" aria-label="Localização e raio" onclick="openPanel('location')" title="Localização"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></button>
-<button id="refresh" aria-label="Toque: atualizar; segure: intervalo" title="Atualizar · segurar para 1, 3, 5 minutos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 7l2 4M4 13l2 4a7 7 0 0 0 12.5-2"/></svg><span id="period" class="autoTime">3m</span></button>
+<button id="refresh" aria-label="Toque: atualizar; segure: intervalo" title="Atualizar · segurar: OFF, 3, 5, 10, 15 ou 20 minutos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 7l2 4M4 13l2 4a7 7 0 0 0 12.5-2"/></svg><span id="period" class="autoTime">3m</span></button>
 <button id="infos" aria-label="Mostrar ou ocultar informações" onclick="openPanel('infos')" title="Informações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6a9 9 0 0 1 9 6 9 9 0 0 1-18 0 9 9 0 0 1 9-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></button>
 <button id="close" title="Fechar menu" aria-label="Recolher opções" onclick="Native.closeCandyMenu()">×</button>
 </div>
@@ -112,26 +112,28 @@ function kmDisplay(meters){return String(Math.round(Number(meters||1000))/1000)}
 function renderPanel(){
  const el=$("choices");document.body.classList.add("expanded");
  el.className="visible"+(currentPanel==="location"?" locationPanel":
-   currentPanel==="period"?" periodPanel":"");
+   currentPanel==="period"?" periodPanel":" infoPanel");
  if(currentPanel==="period"){
    el.innerHTML=[0,3,5,10,15,20].map(n=>'<button type="button" class="periodTile'+
      (settings.period===n?' chosen':'')+'" onclick="choosePeriod('+n+')">'+
      (n===0?'OFF':n)+'</button>').join("");
-   requestHeight(34+6*34+5*4+4,false);
- }else if(currentPanel==="infos"){
-   el.innerHTML='<div class="choiceHeader">Informações dos doces</div>'+
-    [["name","Nome Doce Raro"],["location","Localização"],["despawn","Despawn"],["distance","Distância"]]
-    .map(([id,label])=>'<label class="checkbox"><span>'+label+'</span><input type="checkbox" data-key="'+id+'" id="v-'+id+'"'+
-    (settings[id]?' checked':'')+' onchange="changeInfo(this.dataset.key,this.checked)"></label>').join("")+
-    '<div class="infoDivider"></div><div class="hint">Padrão: somente Despawn</div>';
-   requestHeight(235,false);
+   requestHeight(34+6*30+5*3+6,false);
+  }else if(currentPanel==="infos"){
+   // Same compact grid as the Pokémon information menu.
+   el.innerHTML='<div class="choiceHeader">Informações</div><div class="infoGrid">'+
+    [["name","Nome"],["location","Local"],["despawn","Despawn"],["distance","Dist."]]
+    .map(([id,label])=>'<button type="button" class="infoTile'+
+      (settings[id]?' chosen':'')+'" data-key="'+id+'" aria-pressed="'+
+      (!!settings[id])+'" onclick="toggleInfo(this.dataset.key)"><span>'+
+      label+'</span><b>'+(settings[id]?'✓':'–')+'</b></button>').join("")+'</div>';
+   requestHeight(116,false);
  }else if(currentPanel==="location"){
    el.innerHTML='<div class="choiceHeader"><span>Localização</span><div class="locClipboardTools">'+
     '<button type="button" onclick="copyCoords()" title="Copiar coordenadas" aria-label="Copiar coordenadas">'+copyGlyph+'</button>'+
     '<button type="button" onclick="pasteCoords()" title="Colar coordenadas" aria-label="Colar coordenadas">'+pasteGlyph+'</button></div></div>'+
-    '<div class="locCoordsRow"><input id="candyCoords" onfocus="Native.candyMenuFocus(true)" placeholder="Latitude,Longitude" inputmode="decimal" maxlength="35" autocomplete="off" spellcheck="false" aria-label="Coordenadas latitude e longitude"></div>'+
+    '<div class="locCoordsRow"><input class="locField" id="candyCoords" onfocus="Native.candyMenuFocus(true)" placeholder="53.759856,-1.495755" inputmode="decimal" maxlength="30" autocomplete="off" spellcheck="false" aria-label="Coordenadas latitude e longitude"></div>'+
     '<div class="locSliderRow"><input id="candyRadiusSlider" aria-label="Raio de 1 a 1000 quilômetros" type="range" min="1" max="1000" step="1" oninput="setRadiusFromSlider(this.value)"></div>'+
-    '<div class="locRadiusRow"><div class="locRadiusInputWrap"><input id="candyRadius" onfocus="Native.candyMenuFocus(true)" type="number" min="0.001" max="1000" step="0.001" oninput="setSliderFromRadius(this.value)" aria-label="Raio em quilômetros"><span class="locRadiusUnit">km</span></div>'+
+    '<div class="locRadiusRow"><div class="locRadiusInputWrap"><input class="locRadiusNumber" id="candyRadius" onfocus="Native.candyMenuFocus(true)" type="number" min="0.001" max="1000" step="0.001" oninput="setSliderFromRadius(this.value)" aria-label="Raio em quilômetros"><span class="locRadiusUnit">km</span></div>'+
     '<div class="compactLocationActions">'+
     '<button type="button" class="locSave" onclick="applyLocation()" aria-label="Aplicar localização" title="Aplicar">'+applyGlyph+'</button>'+
     '<button type="button" onclick="clearLocation()" aria-label="Limpar localização" title="Limpar">'+clearGlyph+'</button></div></div>'+
@@ -139,7 +141,7 @@ function renderPanel(){
    $("candyCoords").value=settings.coords||"";
    $("candyRadius").value=kmDisplay(settings.radius);
    $("candyRadiusSlider").value=String(Math.max(1,Math.min(1000,Math.round(settings.radius/1000))));
-   requestHeight(172,false);
+   requestHeight(141,false);
  }
 }
 function setRadiusFromSlider(km){if($("candyRadius"))$("candyRadius").value=String(km)}
@@ -155,7 +157,9 @@ function choosePeriod(value){
 function changeInfo(key,checked){
  if(!["name","location","despawn","distance"].includes(key))return;
  settings[key]=checked;Native.setCandyInfo(key,checked);
+ if(currentPanel==="infos")renderPanel();
 }
+function toggleInfo(key){changeInfo(key,!settings[key])}
 function applyLocation(){
  const center=$("candyCoords").value.trim(),km=Number($("candyRadius").value);
  const meters=Math.round(km*1000);
