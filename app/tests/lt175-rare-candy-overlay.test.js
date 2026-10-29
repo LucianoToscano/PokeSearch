@@ -23,20 +23,20 @@ assert(!source.includes("site.setOnTouchListener((v,e)->true)"),"do not steal to
 assert(source.includes("createCandyMenu()"));
 assert(source.includes("candyMenuPanel.loadUrl(\"file:///android_asset/rare_candy_controls.html\")"));
 assert(source.includes("allowedMenuUrl"),"bridge must be confined to local page");
-assert(source.includes('menuParams.width=dp(h>34?("period".equals(panel)?142:240):142)'),"resize pixel-matched menu popups");
+assert(source.includes('menuParams.width=dp(h>34?("period".equals(panel)?142:158):142)'),"resize pixel-matched menu popups");
 assert(menu.includes("grid-template-columns:repeat(4,34px)"));
 assert(menu.includes("grid-auto-rows:30px"));
 assert(menu.includes("gap:2px"));
-assert(menu.includes("background:#151b26e6"));
+assert(menu.includes("background:var(--visual-menu-button-bg)"));
 assert(menu.includes("border-radius:5px"));
-assert(menu.includes("requestHeight(172,false)"));
+assert(menu.includes("requestHeight(141,false)"));
 assert(menu.includes("new int[]{1,3,5}")===false);
 for(const part of ["choosePeriod(1)","choosePeriod(3)","choosePeriod(5)"]){
  // Pokébola period choices are generated dynamically in the Candy popup.
  assert(menu.includes("[0,3,5,10,15,20]"));
 }
 assert(menu.includes('setCandyInfo(key,checked)'));
-assert(menu.includes('["name","Nome Doce Raro"]'),"Name visibility checkbox must exist");
+assert(menu.includes('["name","Nome"]'),"Name visibility checkbox must exist");
 assert(menu.includes('name:false,location:false,despawn:true,distance:false'),"Only despawn on by default in menu");
 assert(source.includes('showName=false,showLocation=false,showDespawn=true,showDistance=false'),"Only despawn on by default in Android");
 assert(source.includes('prefs.getBoolean("candyShowName",false)'),"Name checkbox must persist");
@@ -58,7 +58,9 @@ assert(!source.includes("now-lastRefresh<15000"),"No extra local 15-second wait"
 assert(menu.includes("candyRadiusSlider"),"P1-style location radius slider is available");
 assert(menu.includes("Native.copyCandyLocation"),"P1-style copy coordinate action exists");
 assert(menu.includes("Native.pasteCandyLocation"),"P1-style paste coordinate action exists");
-assert(menu.includes("requestHeight(172,false)"),"Location popup is compact");
+assert(menu.includes("requestHeight(141,false)"),"Location popup matches Pokébola 148px");
+assert(menu.includes("requestHeight(116,false)"),"Information popup is compact");
+assert(menu.includes("infoGrid"),"Information options are a compact grid");
 
 assert(menu.includes('refresh.addEventListener("pointerup"'),"Refresh tap must fire from pointerup");
 assert(menu.includes('if(!refreshHeld)requestRefreshNow();'),"Short press must refresh immediately");
