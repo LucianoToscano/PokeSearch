@@ -804,10 +804,7 @@ final class CommunityScrapbookOnline {
                 labels[i]=names.get(uid)+" · "+counts.get(uid)+" mensagens";
             }
             AlertDialog.Builder picker=new AlertDialog.Builder(activity)
-                .setTitle("Minhas mensagens antigas")
-                .setMessage("Selecione o autor das suas mensagens antigas. " +
-                    "A associação vale apenas neste aparelho: não altera o autor " +
-                    "no Firebase e não concede permissão de excluir ou editar.")
+                .setTitle("Vincular minhas mensagens antigas")
                 .setNegativeButton("Cancelar",null);
             if(!ids.isEmpty())picker.setItems(labels,(dialog,which)->
                 confirmLegacyMessageLink(ids.get(which),names.get(ids.get(which))));
@@ -838,8 +835,6 @@ final class CommunityScrapbookOnline {
         }
         private void persistLegacyLinks(){
             if(currentUid.isEmpty())return;
-            java.util.Set<String> previous=new java.util.HashSet<>(localOwnedUids);
-            previous.removeAll(linkedLegacyUids);
             localOwnedUids.clear();
             localOwnedUids.add(currentUid);
             // Preserve any still authenticated anonymous principal.
