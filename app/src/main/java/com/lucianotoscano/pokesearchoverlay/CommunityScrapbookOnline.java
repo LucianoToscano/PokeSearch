@@ -650,7 +650,7 @@ final class CommunityScrapbookOnline {
                 if(!destroyed&&error!=null)toast("Não foi possível registrar a reação. Confira as regras do chat.");
             });
         }
-        private static boolean verifiedAdmin(FirebaseUser user){
+        static boolean verifiedAdmin(FirebaseUser user){
             if(user==null || !user.isEmailVerified() ||
                user.getEmail()==null ||
                !"lucianotoscano@gmail.com".equalsIgnoreCase(user.getEmail()))return false;
