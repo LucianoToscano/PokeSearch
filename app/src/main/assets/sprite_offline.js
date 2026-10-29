@@ -2118,7 +2118,7 @@
  const GO_FILE_BY_ID=Object.create(null);
  for(const file of GO_FILE_LIST){
   const m=/^pm(\d+)\.([fc])([A-Z0-9_]+)(\.g2)?(\.s)?\.icon\.png$/.exec(file);
-  if(m)GO_FILE_BY_ID[Number(m[1])+":"+m[2]+":"+m[3]+":"+
+  if(m)GO_FILE_BY_ID[Number(m[1])+":"+m[2]+":"+m[3].replace(/[^A-Z0-9]/g,"")+":"+
     (m[4]?"female":"any")+":"+(m[5]?"shiny":"normal")]=file;
  }
  const GO_REGION_KEYS=Object.freeze({
@@ -2137,14 +2137,36 @@
   // show an unrelated form, even if the species happens to match.
   if((card.costume_id!=null&&Number(card.costume_id)!==0)&&!specialCostume)return null;
   const type=specialCostume?"c":"f";
-  const name=(specialCostume?costume:form);
-  const key=(GO_REGION_KEYS[name]||name);
-  if(!key)return null;
+  const name=specialCostume?costume:form;
+  if(!name)return null;
+  const species=nameKey(String(card.name||"").replace(/\s*\([^)]*\)\s*$/,""));
+  // The provider labels named forms as YELLOW, FLABEBE_YELLOW,
+  // fYELLOW, or YELLOW_FORM. Reconcile only when the exact GO asset is
+  // indexed under the same validated Pokédex identity.
+  const candidates=[name,GO_REGION_KEYS[name]||name];
+  if(name.startsWith(species)&&name.length>species.length)
+   candidates.push(name.slice(species.length));
+  if(name.startsWith("FORM")&&name.length>4)candidates.push(name.slice(4));
+  if(name.endsWith("FORM")&&name.length>4)candidates.push(name.slice(0,-4));
+  if(dex>=669&&dex<=671&&name.endsWith("FLOWER"))
+   candidates.push(name.slice(0,-6));
   const gender=/^(?:♀|female)$/i.test(String(card.gender||""))?"female":"any";
   const shiny=card.shiny===true?"shiny":"normal";
-  const root=dex+":"+type+":"+key+":";
-  const file=GO_FILE_BY_ID[root+gender+":"+shiny]||
-   GO_FILE_BY_ID[root+"any:"+shiny];
+  let file="";
+  for(const candidate of candidates){
+   if(!candidate)continue;
+   const root=dex+":"+type+":"+(GO_REGION_KEYS[candidate]||candidate)+":";
+   file=GO_FILE_BY_ID[root+gender+":"+shiny]||
+        GO_FILE_BY_ID[root+"any:"+shiny]||"";
+   if(file)break;
+  }
+  // Costumes can be GO form assets (.fCOSTUME_*), but only if their explicit
+  // costume name matches that exact filename. Unknown costume IDs stay blank.
+  if(!file&&specialCostume&&!(card.costume_id!=null&&Number(card.costume_id)!==0)){
+   const root=dex+":f:"+costume+":";
+   file=GO_FILE_BY_ID[root+gender+":"+shiny]||
+        GO_FILE_BY_ID[root+"any:"+shiny]||"";
+  }
   if(!file)return null;
   // Immutable upstream commit; URL built from audited explicit file names.
   return {src:GO_ASSET_ROOT+file,original:GO_ASSET_MIRROR+file,offline:false,
