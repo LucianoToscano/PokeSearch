@@ -12,7 +12,7 @@ assert.match(overlay,/encounterAlertTitle\(firstNewCard\)/);
 assert.match(overlay,/queuedFavoriteAlerts\.put\(key,new QueuedFavoriteAlert/);
 assert.match(overlay,/NEXT_GENERAL_ALERT_ID\.updateAndGet/,"Do not overwrite all new Pokemon with fixed notification id");
 assert.match(overlay,/WatchAlerts\.match\(this,pending\.name,pending\.title,pending\.details/);
-assert.match(overlay,/getAssets\(\)\.open\(file\)/);
+assert.match(overlay,/OtaAssets\.open\(OverlayService\.this,file\)/);
 assert.match(overlay,/if\(watchedCount>0\)/);
 assert.doesNotMatch(overlay,/if\(watchedCount>1\)watchDetails/);
 const costume=(dex,name,form,shiny)=>sprites.resolve({
