@@ -41,7 +41,10 @@ final class CaptureSharePublisher {
     private static void publishText(Context context,String message,Completion callback){
         if(message.isEmpty()){callback.complete(false,"Pokémon inválido");return;}
         try{
-            FirebaseApp app=FirebaseStats.ensureApp(context);
+            // Use the very same verified account selected by the live chat.
+            // Otherwise a Google-admin chat message and an overlay capture
+            // appear as two different senders, losing alignment and avatar.
+            FirebaseApp app=CommunityScrapbookOnline.capturePublisherApp(context);
             FirebaseAuth auth=FirebaseAuth.getInstance(app);
             FirebaseUser user=auth.getCurrentUser();
             if(user!=null){post(context,app,user,message,callback);return;}

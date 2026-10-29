@@ -21,7 +21,7 @@ assert.match(detail,/Capturou mesmo\?/);
 assert.match(detail,/Native\.confirmCaptureShare\(currentIndex\)/);
 assert.match(detail,/shareReady=false,shareSent=false,sharePending=false/);
 assert.ok(!/setTimeout\([^]*?Native\.confirmCaptureShare/.test(detail),"no automatic capture posting");
-assert.match(publish,/FirebaseStats\.ensureApp\(context\)/);
+assert.match(publish,/CommunityScrapbookOnline\.capturePublisherApp\(context\)/);
 assert.match(publish,/FirebaseAuth\.getInstance\(app\)/);
 assert.match(publish,/getReference\("chat\/messages"\)\.push\(\)/);
 assert.match(publish,/ServerValue\.TIMESTAMP/);

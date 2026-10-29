@@ -554,6 +554,28 @@
           "O Android exige confirmação do jogador para instalar atualizações; a publicação não força reinício nem alteração de conta."
         ]
       }
+    },
+    {
+      "id": "lt167-chat-shared-capture-author-avatar-clean-badges-20261029",
+      "minVersionCode": 54372,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT167 — Identidade e foto no chat de capturas",
+      "sections": {
+        "novidades": [
+          "Capturas compartilhadas usam a mesma identidade autenticada do chat, mantendo as mensagens do próprio treinador à direita."
+        ],
+        "melhorias": [
+          "Foto já escolhida no chat associada corretamente à sua mensagem; mensagens antigas do mesmo dispositivo podem usar sua foto e alinhamento corretos.",
+          "Indicadores de IV e liga no compartilhamento sem a borda escura extra; ícones originais preservados."
+        ],
+        "correcoes": [
+          "Corrigida divergência entre conta Google do chat e conta anônima usada para compartilhar capturas.",
+          "Nenhuma mensagem antiga é modificada no Firebase; pessoas diferentes continuam identificadas exclusivamente pelo UID autenticado."
+        ],
+        "emDesenvolvimento": [
+          "O uso de foto no chat continua opcional e depende da foto selecionada pelo treinador; imagens de perfil Google não são importadas automaticamente."
+        ]
+      }
     }
   ]
 }
