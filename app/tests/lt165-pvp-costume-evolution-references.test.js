@@ -78,7 +78,7 @@ const present=new Function("window","document","h","evoIdentity","detailIdentity
  "activeRankLeague","evolutionExpanded","resizeEvolutionPanel","requestAnimationFrame",
  script.slice(start,end)+"return window.showEvolutionDetails;");
 const htmlEscape=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;");
-const show=present(win,{getElementById:node},htmlEscape,()=>"same","same","",false,()=>{},fn=>fn());
+const show=present(win,{getElementById:node,addEventListener(){}},htmlEscape,()=>"same","same","",false,()=>{},fn=>fn());
 for(const [card,evolved] of examples){
  const payload=projected(card);
  assert.equal(show(payload),true);
@@ -141,3 +141,26 @@ assert.equal(trigger.state,"false");
 assert.equal(prevented,3);
 assert.equal(stopped,3);
 console.log("LT166 inline reference info tap, toggle and outside-dismiss PASS");
+const css=detail.slice(0,detail.indexOf("</style>"));
+assert.match(css,/#coordRow #coords\.hasCoords\{[^}]*white-space:nowrap;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;/s,
+ "revealed coordinates must remain on one line");
+assert.match(css,/#evoToggle #evoLabel\{[^}]*text-align:center;white-space:nowrap;/s,
+ "analysis evaluation count stays centered on button");
+assert.match(css,/#evoToggle #evoChevron\{[^}]*position:absolute;/s,
+ "chevron never shifts centered label");
+const data=projected(examples[1][0]);
+for(const league of data.leagues){league.own.rank=1;league.own.eligible=null;}
+data.leagues[0].comparisons[0].rank=1;
+data.leagues[0].comparisons[0].eligible=null;
+assert.equal(show(data),true);
+const bestMarkup=node("evoBody").innerHTML;
+assert.equal((bestMarkup.match(/class="evoLine isCurrent best"/g)||[]).length,3,
+ "best owned IV is green regardless of evolution eligibility");
+assert.equal((bestMarkup.match(/class="evoLine isReference best"/g)||[]).length,1,
+ "projected IV rank #1 receives the same green without claiming evolution");
+const notBest=projected(examples[1][0]);
+notBest.leagues[0].comparisons[0].rank=2;
+assert.equal(show(notBest),true);
+assert.equal((node("evoBody").innerHTML.match(/class="evoLine isReference best"/g)||[]).length,0);
+console.log("LT166 coordinates, centered heading, and consistent green rank #1 PASS");
+
