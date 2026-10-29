@@ -563,6 +563,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  background:transparent;color:#c9d9ef;font:700 14px/1 Roboto,Arial,sans-serif;
  padding:0;touch-action:manipulation;cursor:pointer}
 .evoLine .evoInfoBtn:focus-visible{outline:1px solid #aad7ff;outline-offset:0}
+.rankLineSafe .evoInfoBtn{display:inline-flex;vertical-align:middle;align-items:center;justify-content:center;
+ width:17px;height:17px;margin-left:4px;padding:0;border:0;border-radius:4px;
+ background:transparent;color:#c9d9ef;font:700 13px/1 Roboto,Arial,sans-serif;
+ touch-action:manipulation;cursor:pointer}
+.rankLineSafe .evoInfoBtn:focus-visible{outline:1px solid #aad7ff}
 #pvpRefPopover[hidden]{display:none!important}
 #pvpRefPopover{position:fixed;z-index:1000;width:228px;max-width:calc(100vw - 16px);
  box-sizing:border-box;border:1px solid #d0e0fc70;border-radius:8px;padding:8px 10px;
@@ -1005,6 +1010,16 @@ function updateVisiblePvPRank(payload){
  const scope=best.kind==="evolution"?" · ↳ "+best.name:
   best.kind==="reference"?" · ↳ "+best.name:"";
  rankLine.textContent=label+" · Rank Classe: #"+best.rank+scope;
+ if(best.kind==="reference"&&typeof rankLine.appendChild==="function"){
+  const info=document.createElement("button");
+  info.type="button";
+  info.className="evoInfoBtn";
+  info.textContent="ⓘ";
+  info.setAttribute("aria-label","Explicar IV projetado para a evolução");
+  info.setAttribute("aria-expanded","false");
+  info.onclick=event=>togglePvpReferenceInfo(event,info);
+  rankLine.appendChild(info);
+ }
  const own=candidates.find(x=>x.kind==="current");
  rankLine.title="Rank dos IVs de "+best.name+" na "+
   (activeRankLeague==="gl"?"Grande Liga":"Ultra Liga")+
