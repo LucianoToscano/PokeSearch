@@ -101,11 +101,19 @@ final class OtaAssets {
     }
     static WebResourceResponse intercept(Context c,WebViewAssetLoader loader,Uri uri){
         WebResourceResponse local=loader.shouldInterceptRequest(uri);
-        return local!=null?local:VerifiedSpriteCache.fromDisk(c,uri);
+        if(local!=null)return local;
+        // Reserved appassets origin must NEVER fall through to the network.
+        // Even if a packaged resource is absent, the Native bridge must not
+        // render an external page from this origin.
+        if(uri!=null&&"https".equals(uri.getScheme())&&
+            "appassets.androidplatform.net".equals(uri.getHost()))
+            return new WebResourceResponse(null,null,null);
+        return VerifiedSpriteCache.fromDisk(c,uri);
     }
     private static WebResourceResponse response(Context c,String path){
         if(path==null||path.startsWith("/")||path.contains("..")||
-            !path.matches("[A-Za-z0-9_./-]{1,180}"))return null;
+            !path.matches("[A-Za-z0-9_./-]{1,180}"))
+            return new WebResourceResponse(null,null,null);
         try{
             String mime=path.endsWith(".html")?"text/html":
                 path.endsWith(".js")?"application/javascript":
@@ -120,7 +128,8 @@ final class OtaAssets {
             // URLs to this very same local asset loader. Without this, Chromium
             // blocks file:// sprites requested by an https:// page.
             if(path.endsWith(".html")||path.endsWith(".js")){
-                byte[] original=read(content,MAX_FILE);
+                byte[] original;
+                try(InputStream local=content){ original=read(local,MAX_FILE); }
                 String translated=new String(original,StandardCharsets.UTF_8)
                     .replace("file:///android_asset/",PREFIX);
                 return new WebResourceResponse(mime,"UTF-8",
@@ -128,7 +137,10 @@ final class OtaAssets {
             }
             return new WebResourceResponse(mime,
                 mime.startsWith("image/")?null:"UTF-8",content);
-        }catch(Exception ignored){return null;}
+        }catch(Exception ignored){
+            // Block network fallback for a missing/corrupt local bridge page.
+            return new WebResourceResponse(null,null,null);
+        }
     }
     static InputStream open(Context c,String name)throws java.io.IOException{
         ensureLoaded(c);
