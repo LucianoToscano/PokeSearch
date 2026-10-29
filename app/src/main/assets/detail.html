@@ -523,8 +523,6 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #rankLine{gap:3px;border-color:#8fbfd755;background:linear-gradient(95deg,#74b8d31b,#ffffff09);
  color:#c2e6f4;text-shadow:none}
 #rankLine::before{content:"▥";font-size:11px;line-height:11px;color:#80cce9}
-#rankLine.isSite{border-color:#ffffff30;color:#d5dce7;background:#ffffff0b}
-#rankLine.isSite::before{color:#abb8c9}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1040,17 +1038,14 @@ window.showDetails=(c,mode,watched)=>{
  const verifiedIvRank=(league==="gl"||league==="ul")&&
   c.ivRankSource==="explicit-species-iv"&&showRaw&&
   Number.isInteger(ivValue)&&ivValue>=1&&ivValue<=4096;
- const siteRank=String(c.rank??"").trim();
- const rankFromSite=/^[1-9][0-9]{0,3}$/.test(siteRank)&&Number(siteRank)<=4096;
- const rankText=verifiedIvRank?"IV "+league.toUpperCase()+" #"+ivValue:
-  rankFromSite?"Rank do site #"+siteRank:"";
+ // c.rank is unlabeled provider metadata; never show it as a verified IV/PvP rank.
+ // Render only an explicitly identified species IV rank for a known PvP league.
+ const rankText=verifiedIvRank?league.toUpperCase()+" · IV #"+ivValue:"";
  rankLine.textContent=rankText;
- rankLine.hidden=!rankText;
- if(rankLine.classList?.toggle)rankLine.classList.toggle("isSite",!verifiedIvRank);
+ rankLine.hidden=!verifiedIvRank;
  rankLine.title=verifiedIvRank?
-  "Posição dos IVs desta espécie na "+(league==="gl"?"Grande Liga":"Ultra Liga")+
-   ". Não representa o ranking geral entre espécies.":
-  rankFromSite?"Rank informado pelo PoGoCoordinates; não há confirmação se é ranking geral, de espécie ou de IVs.":"";
+  "Ranking dos IVs desta espécie na "+(league==="gl"?"Grande Liga":"Ultra Liga")+
+   ". Não indica a posição entre espécies nem a força do Pokémon.":"";
  const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"");
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");
