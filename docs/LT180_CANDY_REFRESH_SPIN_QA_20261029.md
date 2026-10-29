@@ -17,3 +17,13 @@ Na LT179 pública (0.01.79 / 54384), o botão de atualizar enviava o pedido mas 
 - Workflow isolado de compilação/assinatura QA `lt180-candy-refresh-spin-signed-qa.yml` em branch `fix/lt180-candy-refresh-spin-20261029`, candidato Android `0.01.80 / 54385`; validar SHA, assinatura v2 e regressões no GitHub Actions.
 - **Não publicar diretamente para usuários sem a autorização da nova LT180; GitHub Releases/latest LT179 e ponte Drive inalterados até validação.** Alteração da classe Java exige APK completo assinado, não apenas OTA de HTML.
 - QA físico Samsung/Moto: tocar ↻ e ver giro; retomar 1/3/5m e após copiar todos; segurar não inicia consulta; parada em sucesso, erro offline e 429; ausência de interferência em P1/P2.
+
+
+## APK de QA assinado confirmado
+- GitHub Actions: https://github.com/LucianoToscano/PokeSearch/actions/runs/40943703228 — **SUCCESS**.
+- Artefato ZIP: https://github.com/LucianoToscano/PokeSearch/actions/runs/40943703228/artifacts/12929110259 — `PokeSearch-LT180-54385-RareCandy-QA-Assinado.zip` (46.599.165 bytes).
+- SHA-256 ZIP calculado pelo workflow: `06293b42d17c4f4c58450d4de0e9a216c6ad96318bfbd018dcc7b8b4b8de5cfd`.
+- APK dentro do ZIP: `PokeSearch-v0.01.80-LT-QA.apk` (49.542.682 bytes), versionName `0.01.80`, versionCode `54385`, source commit `6c9aa7ed8c5164f9058b6cdcb51d8ac718321d62`.
+- Certificado Android v2 permanente conferido no workflow: SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. R8, metadados, assets e `sha256sum --check` do APK aprovados. O **hash SHA-256 específico do APK** consta em `SHA256SUMS.txt` dentro do artefato; não foi extraído do log neste registro, portanto não inventar esse valor nem confundi-lo com o SHA-256 do ZIP.
+- Passaram os testes `lt180-candy-refresh-animation.test.js`, LT179, LT175, P1/P2 e build Android. **Homologação física do giro na WebView Samsung/Moto permanece pendente.**
+- Publicação: **apenas QA**, não `releases/latest`, não Google Drive. LT179 (`v0.01.79-54384`) continua estável e disponível para usuários.
