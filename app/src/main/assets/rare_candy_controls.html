@@ -37,11 +37,34 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulat
 #choices .infoDivider{height:1px;background:#ffffff22;margin:4px 2px}
 #choices .hint{font-size:9px;line-height:1.3;color:#aab9ca;padding:5px 7px 2px}
 #choices input[type=checkbox]{accent-color:#5bba96;width:16px;height:16px}
+
+/* PokeSearch dock compact styling */
+#choices.locationPanel{width:232px;max-width:calc(100vw - 8px);padding:5px;background:#151c27ed;border:1px solid #ffffff38}
+#choices .choiceHeader{height:27px;display:flex;align-items:center;justify-content:space-between;padding:1px 5px 4px;color:#d3d4d6;font-size:11px}
+#choices .locClipboardTools{display:flex;align-items:center;gap:3px}
+#choices .locClipboardTools button{width:25px;min-width:25px;height:25px;padding:2px;border:1px solid #ffffff35;background:#343b49e0;border-radius:6px;color:#e3ecf7;display:flex;align-items:center;justify-content:center}
+#choices .locClipboardTools button svg{display:block;width:17px;height:17px}
+#choices .locCoordsRow{height:32px;margin-bottom:3px;display:flex}
+#choices .locCoordsRow input{min-width:0;width:100%;height:32px;padding:4px 6px;background:#17191bdc;border:1px solid #96999c88;border-radius:7px;color:#f1f5fb;font:500 11px/1.2 monospace}
+#choices .locSliderRow{display:flex;align-items:center;width:100%;height:25px;margin:0 0 3px;padding:0}
+#choices .locSliderRow input{width:100%;height:23px;accent-color:#6ad4b2;margin:0;touch-action:pan-x}
+#choices .locRadiusRow{display:flex;align-items:center;justify-content:space-between;gap:4px;height:30px}
+#choices .locRadiusInputWrap{display:flex;align-items:center;gap:3px}
+#choices .locRadiusInputWrap input{width:58px;height:29px;padding:2px 3px;text-align:center;background:#17191bdc;border:1px solid #96999c88;border-radius:7px;color:#f5f6f8;font:500 11px/1 monospace}
+#choices .locRadiusUnit{font-size:10px;color:#d0d5de}
+#choices .compactLocationActions{display:flex;align-items:center;gap:3px}
+#choices .compactLocationActions button{width:30px;height:29px;min-height:29px;padding:2px;background:#343b49db;color:#e9edf4;border:1px solid #ffffff35;border-radius:7px;display:flex;align-items:center;justify-content:center}
+#choices .compactLocationActions button svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#choices .compactLocationActions button.locSave{color:#a8efd4}
+#choices .locError{font-size:9px;color:#ffaaa9;margin:4px 1px 0}
+#choices.periodPanel{left:36px;width:36px;max-width:36px;padding:0;margin:0;background:transparent;border:0;border-radius:0;box-shadow:none;display:flex;flex-direction:column;gap:4px}
+#choices.periodPanel .periodTile{box-sizing:border-box;width:36px;min-width:36px;height:34px;min-height:34px;flex:0 0 34px;padding:0;background:#151b26e6;border:1px solid #ffffff37;border-radius:6px;color:#e3e8f0;font-size:11px;font-weight:700;text-align:center}
+#choices.periodPanel .periodTile.chosen{border-color:#70d6b1;color:#c3ffe7;background:#265a46ed}
 body:not(.expanded) #choices{display:none}
 </style></head><body>
 <div id="controls" role="toolbar" aria-label="Controles Doce Raro">
 <button id="location" aria-label="Localização e raio" onclick="openPanel('location')" title="Localização"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></button>
-<button id="refresh" aria-label="Toque: atualizar; segure: intervalo" title="Atualizar · segurar para 1, 3, 5 minutos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 7l2 4M4 13l2 4a7 7 0 0 0 12.5-2"/></svg><span id="period" class="autoTime">1m</span></button>
+<button id="refresh" aria-label="Toque: atualizar; segure: intervalo" title="Atualizar · segurar para 1, 3, 5 minutos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 7l2 4M4 13l2 4a7 7 0 0 0 12.5-2"/></svg><span id="period" class="autoTime">3m</span></button>
 <button id="infos" aria-label="Mostrar ou ocultar informações" onclick="openPanel('infos')" title="Informações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6a9 9 0 0 1 9 6 9 9 0 0 1-18 0 9 9 0 0 1 9-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></button>
 <button id="close" title="Fechar menu" aria-label="Recolher opções" onclick="Native.closeCandyMenu()">×</button>
 </div>
@@ -49,7 +72,7 @@ body:not(.expanded) #choices{display:none}
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
-let settings={coords:"",radius:1000,period:1,name:false,location:false,despawn:true,distance:false};
+let settings={coords:"",radius:1000,period:3,name:false,location:false,despawn:true,distance:false};
 let currentPanel="";
 function setCandyRefreshState(state) {
  const refreshing=!!(state&&state.busy);
@@ -64,14 +87,14 @@ function setCandyRefreshState(state) {
 }
 function syncCandy(json) {
  try{settings=Object.assign(settings,JSON.parse(json||"{}"));}catch(e){}
- $("period").textContent=String(settings.period||1)+"m";
+ $("period").textContent=settings.period===0?"OFF":String(settings.period||3)+"m";
  $("location").classList.toggle("locOn",!!settings.coords);
  $("infos").classList.toggle("active",!!(settings.name||settings.location||settings.distance));
  if(currentPanel==="infos"||currentPanel==="period")renderPanel();
  // Do not rebuild the location editor while a user is typing.
 }
 function requestHeight(height,focus) {
- Native.candyMenuHeight(Math.max(34,Math.min(290,height)),!!focus);
+ Native.candyMenuHeight(Math.max(34,Math.min(290,height)),!!focus,currentPanel);
 }
 function closePanel(){
  currentPanel="";$("choices").innerHTML="";$("choices").className="";
