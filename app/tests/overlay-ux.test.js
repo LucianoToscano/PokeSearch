@@ -564,7 +564,7 @@ test("B06 page finish schedules one cancellable refresh, 900ms Shiny or 2500ms s
  pageBlock.includes('handler.postDelayed(pageFinishedRefresh,')&&
  pageBlock.includes('shiny&&!shinyVerified?900L:2500L')&&
  !pageBlock.includes('handler.postDelayed(()->{if(!stopped&&!loginPaused)refresh();}'));
-test("B06 REFRESH_LOGIN cancels callbacks before cookie flush",reloadBlock.includes('++requestGeneration;')&&reloadBlock.indexOf('cancelSessionCallbacks();')<reloadBlock.indexOf('CookieManager.getInstance().flush();'));
+test("B06 REFRESH_LOGIN cancels callbacks before cookie flush",reloadBlock.includes('++requestGeneration;')&&reloadBlock.indexOf('cancelSessionCallbacks();')<reloadBlock.indexOf('PogoAccountSlots.flush(accountSlot());'));
 test("B06 reload occurs after 350ms with generation guard",reloadBlock.includes('handler.postDelayed(deferredSessionReload,350L)')&&service.includes('pendingReloadGeneration!=requestGeneration'));
 test("B06 delayed search stages verify pause/generation",(service.match(/if\(stopped\|\|loginPaused\|\|generation!=requestGeneration\)return;/g)||[]).length>=8);
 test("B06 destruction cancels callbacks and removes windows before WebViews",destroyBlock.indexOf('stopped=true;')<destroyBlock.indexOf('handler.removeCallbacksAndMessages(null)')&&destroyBlock.indexOf('wm.removeView(detailRoot)')<destroyBlock.indexOf('destroyWebView(panel,true'));
@@ -1076,7 +1076,7 @@ test("UX-SHINY-02 keeps Shiny beside Modos through saved preferences and native 
 test("PSC-Shiny requires official linked trainer card plus valid 12-digit code",
  service.includes('private boolean hasConfirmedTrainerLink()')&&
  service.includes('"linked".equals(p.getString("profileTrainerState","unknown"))')&&
- service.includes('p.getString("profileTrainerCode","").matches("[0-9]{12}")')&&
+ service.includes('overlayTrainer().matches("[0-9]{12}")')&&
  service.includes('!p.getString("profileTrainerName","").trim().isEmpty()'));
 test("Shiny switch checks live authentication AND confirmed official badge",
  service.includes('"autenticada".equals(session.optString("auth",""))')&&
