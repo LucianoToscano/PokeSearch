@@ -1,4 +1,4 @@
-# LT169: safely identify legacy chat authors locally, remove black PNG matte, and import exported settings.
+# LT169: combined GO sprite audit, Home privacy and linked trainer switcher.
 name: PokeSearch LT169 — assinatura permanente e distribuição oficial no aplicativo
 on:
   push:
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: pokesearch-lt168-official-once
+  group: pokesearch-lt169-official-once
   cancel-in-progress: false
 jobs:
   signed-chat-backup-official-lt168:
