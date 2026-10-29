@@ -83,9 +83,11 @@ const checks=[
    overlay.includes('handler.postDelayed(this,45000L)')],
  ["Compact Premium dialog is a bounded dark popup, not a full-screen page",
    dialog.includes('new AlertDialog.Builder(activity).setView(scroller).create()')&&
-   dialog.includes('getDisplayMetrics().heightPixels*0.78f')&&
+   dialog.includes('getDisplayMetrics().heightPixels*0.80f')&&
    dialog.includes('setBackgroundDrawableResource(android.R.color.transparent)')&&
-   dialog.includes('Tenho uma chave Premium  ›')&&
+   dialog.includes('Tenho cupom, teste grátis ou chave Premium  ›')&&
+   dialog.includes('advancedArea.setVisibility(View.GONE)')&&
+   dialog.includes('advancedToggle.setOnClickListener')&&
    dialog.includes('pixPanel.setVisibility(View.GONE)')],
  ["Pix QR encodes only the backend returned payload (no mock static Pix codes)",
    gradle.includes('com.google.zxing:core:3.5.3')&&
@@ -109,9 +111,10 @@ const checks=[
  ["Paid and redeemed Premium dismisses the modal on verified entitlement",
    dialog.includes('dialog.dismiss();')&&
    dialog.includes('PremiumAccess.redeem(activity,input')&&
-   dialog.includes('PremiumAccess.order(activity,activeOrder[0]')],
+   dialog.includes('PremiumAccess.order(activity,requestedOrder')&&
+   dialog.includes('!requestedUid.equals(PremiumGoogleLogin.uid(activity))')],
  ["Premium purchase disabled without server config",dialog.includes("salesEnabled")&&
-  dialog.includes("create.setEnabled(signed&&canSell[0])")],
+  dialog.includes("create.setEnabled(signed&&canSell[0]&&activeOrder[0].isEmpty())")],
  ["Creator vouchers require remote quote before Pix and preserve payment amount",
    access.includes('static void offerWithCoupon(')&&
    access.includes('data.put("couponCode"')&&

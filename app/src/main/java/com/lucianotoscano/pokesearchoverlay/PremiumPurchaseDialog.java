@@ -53,14 +53,16 @@ final class PremiumPurchaseDialog {
         headCopy.setOrientation(LinearLayout.VERTICAL);
         TextView heading=label(activity,"Pokébola 2 · Premium",20,text,true);
         headCopy.addView(heading);
-        headCopy.addView(label(activity,"Pokébola 1 sempre gratuita",12,subtext,false));
+        headCopy.addView(label(activity,"Dois filtros simultâneos · P1 gratuita",12,subtext,false));
         header.addView(headCopy,new LinearLayout.LayoutParams(0,-2,1));
         TextView close=label(activity,"✕",18,subtext,false);
         close.setGravity(android.view.Gravity.CENTER);
         close.setContentDescription("Fechar janela Premium");
         close.setBackground(round(activity,elevated,25,0xFF3B516A));
         header.addView(close,new LinearLayout.LayoutParams(dp(activity,36),dp(activity,36)));
-        col.addView(header,space(activity,0,0,0,dp(activity,14)));
+        col.addView(header,space(activity,0,0,0,dp(activity,10)));
+        col.addView(label(activity,"1  Sua conta Premium",14,text,true),
+            space(activity,0,0,0,dp(activity,6)));
 
         LinearLayout identity=new LinearLayout(activity);
         identity.setPadding(dp(activity,12),dp(activity,8),dp(activity,8),dp(activity,8));
@@ -78,7 +80,10 @@ final class PremiumPurchaseDialog {
         identity.addView(googleLogin,new LinearLayout.LayoutParams(-2,dp(activity,39)));
         Button googleLogout=button(activity,"Trocar",false,0xFF253F5C);
         identity.addView(googleLogout,new LinearLayout.LayoutParams(-2,dp(activity,39)));
-        col.addView(identity,space(activity,0,0,0,dp(activity,6)));
+        col.addView(identity,space(activity,0,0,0,dp(activity,4)));
+        col.addView(label(activity,
+            "A Pokébola 2 será vinculada a este Gmail. Não precisa ser o e-mail do Pokémon GO nem entrar no Discord.",
+            11,subtext,false),space(activity,0,0,0,dp(activity,11)));
         TextView adminLink=label(activity,"⚙  Central Premium · licenças e valores  ›",
             12,0xFF8FC6FF,true);
         adminLink.setGravity(android.view.Gravity.END|android.view.Gravity.CENTER_VERTICAL);
@@ -93,8 +98,9 @@ final class PremiumPurchaseDialog {
                 statusMessage(activity,"Não há navegador para abrir o painel Premium.");
             }
         });
-        col.addView(adminLink,space(activity,0,0,0,dp(activity,8)));
 
+        col.addView(label(activity,"2  Seu plano",14,text,true),
+            space(activity,0,0,0,dp(activity,6)));
         LinearLayout plan=new LinearLayout(activity);
         plan.setOrientation(LinearLayout.VERTICAL);
         plan.setPadding(dp(activity,13),dp(activity,12),dp(activity,13),dp(activity,12));
@@ -108,8 +114,10 @@ final class PremiumPurchaseDialog {
         promoBadge.setPadding(dp(activity,9),dp(activity,5),dp(activity,9),dp(activity,5));
         promoBadge.setBackground(round(activity,teal,20,teal));
         planTop.addView(promoBadge);
+        promoBadge.setVisibility(View.GONE); // Await the actual server promotion.
         plan.addView(planTop);
-        TextView normalPrice=label(activity,"Preço normal: R$ 20,00",12,subtext,false);
+        TextView normalPrice=label(activity,"",12,subtext,false);
+        normalPrice.setVisibility(View.GONE);
         plan.addView(normalPrice,space(activity,0,dp(activity,5),0,0));
         TextView pricePreview=label(activity,"Consultando preço...",24,0xFF83C5FF,true);
         plan.addView(pricePreview,space(activity,0,dp(activity,3),0,0));
@@ -119,7 +127,15 @@ final class PremiumPurchaseDialog {
         TextView promoCountdown=label(activity,"",12,0xFFE3D7A4,true);
         promoCountdown.setVisibility(View.GONE);
         plan.addView(promoCountdown,space(activity,0,dp(activity,4),0,0));
-        col.addView(plan,space(activity,0,0,0,dp(activity,8)));
+        col.addView(plan,space(activity,0,0,0,dp(activity,12)));
+        // Advanced offers are opt-in and never clutter the three main steps.
+        LinearLayout advancedArea=new LinearLayout(activity);
+        advancedArea.setOrientation(LinearLayout.VERTICAL);
+        advancedArea.setPadding(dp(activity,10),dp(activity,9),dp(activity,10),dp(activity,10));
+        advancedArea.setBackground(round(activity,elevated,14,0xFF344E69));
+        advancedArea.setVisibility(View.GONE);
+        advancedArea.addView(label(activity,"Cupom de desconto",12,subtext,true),
+            space(activity,0,0,0,dp(activity,5)));
         // Coupon discount is quoted on the backend before any Pix exists.
         LinearLayout couponRow=new LinearLayout(activity);
         couponRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -133,13 +149,13 @@ final class PremiumPurchaseDialog {
             dp(activity,88),dp(activity,44));
         applyLp.leftMargin=dp(activity,7);
         couponRow.addView(couponApply,applyLp);
-        col.addView(couponRow,space(activity,0,0,0,dp(activity,2)));
+        advancedArea.addView(couponRow,space(activity,0,0,0,dp(activity,2)));
         TextView couponMessage=label(activity,"",11,teal,false);
         couponMessage.setVisibility(View.GONE);
-        col.addView(couponMessage,space(activity,0,0,0,dp(activity,9)));
+        advancedArea.addView(couponMessage,space(activity,0,0,0,dp(activity,9)));
         Button freeCouponClaim=button(activity,"🎁  Resgatar cupom 100% grátis",true,0xFF15785B);
         freeCouponClaim.setVisibility(View.GONE);
-        col.addView(freeCouponClaim,space(activity,0,0,0,dp(activity,7)));
+        advancedArea.addView(freeCouponClaim,space(activity,0,0,0,dp(activity,7)));
 
         LinearLayout freeOffer=new LinearLayout(activity);
         freeOffer.setOrientation(LinearLayout.VERTICAL);
@@ -152,21 +168,24 @@ final class PremiumPurchaseDialog {
         freeOffer.addView(freeDetail,space(activity,0,dp(activity,4),0,dp(activity,9)));
         Button freeClaim=button(activity,"Ativar Premium grátis",true,0xFF15785B);
         freeOffer.addView(freeClaim,new LinearLayout.LayoutParams(-1,dp(activity,44)));
-        col.addView(freeOffer,space(activity,0,0,0,dp(activity,11)));
+        advancedArea.addView(freeOffer,space(activity,0,0,0,dp(activity,11)));
 
-        TextView mailLabel=label(activity,"E-mail para o Pix",11,subtext,true);
-        col.addView(mailLabel,space(activity,0,0,0,dp(activity,4)));
-        EditText email=input(activity,"Seu e-mail");
-        email.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-        col.addView(email,space(activity,0,0,0,dp(activity,10)));
-
-        Button create=button(activity,"◇  Gerar Pix",true,0xFF2378E9);
+        col.addView(label(activity,"3  Pague e ative",14,text,true),
+            space(activity,0,0,0,dp(activity,5)));
+        col.addView(label(activity,
+            "Pix seguro pelo Mercado Pago usando o Gmail conectado. Ativação após confirmação no servidor, sem Discord.",
+            11,subtext,false),space(activity,0,0,0,dp(activity,8)));
+        Button create=button(activity,"Gerar Pix de pagamento",true,0xFF2378E9);
         col.addView(create,new LinearLayout.LayoutParams(-1,dp(activity,47)));
         create.setEnabled(false);
-        TextView status=label(activity,"Aguardando geração do Pix",12,subtext,false);
+        create.setVisibility(View.GONE);
+        TextView status=label(activity,"Entre com Google para continuar.",12,subtext,false);
         status.setGravity(android.view.Gravity.CENTER_VERTICAL);
         status.setMinHeight(dp(activity,30));
         col.addView(status,space(activity,0,dp(activity,4),0,0));
+        Button checkPrevious=button(activity,"Já paguei · Verificar pagamento",false,0xFF28466B);
+        checkPrevious.setVisibility(View.GONE);
+        col.addView(checkPrevious,space(activity,0,dp(activity,4),0,dp(activity,4)));
 
         LinearLayout pixPanel=new LinearLayout(activity);
         pixPanel.setOrientation(LinearLayout.VERTICAL);
@@ -200,30 +219,39 @@ final class PremiumPurchaseDialog {
         pixPanel.addView(actions);
         copyPix.setVisibility(View.GONE);check.setVisibility(View.GONE);
         col.addView(pixPanel,space(activity,0,dp(activity,5),0,dp(activity,7)));
+        TextView advancedToggle=label(activity,"Tenho cupom, teste grátis ou chave Premium  ›",
+            12,0xFF8FC6FF,true);
+        advancedToggle.setMinHeight(dp(activity,44));
+        advancedToggle.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        advancedToggle.setContentDescription("Mostrar cupons, testes grátis e chaves Premium");
+        col.addView(advancedToggle,space(activity,0,dp(activity,4),0,dp(activity,4)));
+        advancedArea.addView(adminLink,space(activity,0,0,0,dp(activity,5)));
+        col.addView(advancedArea,space(activity,0,0,0,dp(activity,4)));
+        advancedToggle.setOnClickListener(v->{
+            boolean open=advancedArea.getVisibility()!=View.VISIBLE;
+            advancedArea.setVisibility(open?View.VISIBLE:View.GONE);
+            advancedToggle.setText(open?"Ocultar opções adicionais  ⌃":
+                "Tenho cupom, teste grátis ou chave Premium  ›");
+            advancedToggle.setContentDescription(open?
+                "Ocultar cupons, testes grátis e chaves Premium":
+                "Mostrar cupons, testes grátis e chaves Premium");
+        });
 
-        TextView keyToggle=label(activity,"Tenho uma chave Premium  ›",13,0xFF8FC6FF,true);
-        keyToggle.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        keyToggle.setMinHeight(dp(activity,40));
-        col.addView(keyToggle);
+        advancedArea.addView(label(activity,"Ativar com chave Premium",12,subtext,true),
+            space(activity,0,dp(activity,7),0,dp(activity,4)));
         LinearLayout redeemArea=new LinearLayout(activity);
         redeemArea.setOrientation(LinearLayout.VERTICAL);
-        redeemArea.setVisibility(View.GONE);
         EditText restore=input(activity,"PS-XXXXXX-XXXXXX-XXXXXX-XXXXXX");
         restore.setSingleLine(true);
         redeemArea.addView(restore,space(activity,0,0,0,dp(activity,8)));
         Button activate=button(activity,"Ativar minha chave",false,0xFF28466B);
         redeemArea.addView(activate,new LinearLayout.LayoutParams(-1,dp(activity,44)));
-        col.addView(redeemArea,space(activity,0,0,0,dp(activity,5)));
-        keyToggle.setOnClickListener(v->{
-            boolean show=redeemArea.getVisibility()!=View.VISIBLE;
-            redeemArea.setVisibility(show?View.VISIBLE:View.GONE);
-            keyToggle.setText(show?"Ocultar chave Premium  ⌄":"Tenho uma chave Premium  ›");
-        });
+        advancedArea.addView(redeemArea,space(activity,0,0,0,dp(activity,5)));
         Button keyCopy=button(activity,"Copiar chave ativada",false,0xFF28466B);
         keyCopy.setVisibility(View.GONE);
-        col.addView(keyCopy,space(activity,0,dp(activity,5),0,0));
+        advancedArea.addView(keyCopy,space(activity,0,dp(activity,5),0,0));
         TextView note=label(activity,
-            "Pagamento seguro via Mercado Pago · licença vinculada à sua conta Google.",
+            "Sua conta Google recebe a licença após o Pix. A Pokébola 1 continua gratuita.",
             10,subtext,false);
         note.setGravity(android.view.Gravity.CENTER);
         col.addView(note,space(activity,0,dp(activity,9),0,0));
@@ -236,7 +264,7 @@ final class PremiumPurchaseDialog {
         AlertDialog dialog=new AlertDialog.Builder(activity).setView(scroller).create();
         close.setOnClickListener(v->dialog.dismiss());
         // Keep the popup compact, with scrolling only if the device cannot fit it.
-        final int maxHeight=(int)(activity.getResources().getDisplayMetrics().heightPixels*0.78f);
+        final int maxHeight=(int)(activity.getResources().getDisplayMetrics().heightPixels*0.80f);
         Runnable fitPopup=()->{
             if(!dialog.isShowing())return;
             col.post(()->{
@@ -281,7 +309,8 @@ final class PremiumPurchaseDialog {
                             normalPrice.setVisibility(View.GONE);
                             discountCopy.setVisibility(View.GONE);
                             canSell[0]=Boolean.TRUE.equals(current.get("salesEnabled"))&&cents>=100;
-                            create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&canSell[0]);
+                            create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&
+                                canSell[0]&&activeOrder[0].isEmpty());
                         });
                     }
                     return;
@@ -301,17 +330,23 @@ final class PremiumPurchaseDialog {
             polling[0]=false;
             if(scheduled[0]!=null)handler.removeCallbacks(scheduled[0]);
         };
+        final Runnable[] poll={null};
         Runnable refreshIdentity=()->{
             boolean signed=PremiumGoogleLogin.isGoogleSignedIn(activity);
             String account=PremiumGoogleLogin.email(activity);
-            googleAccount.setText(signed?account:"Entre para continuar");
+            googleAccount.setText(signed?account:"Entre com Google");
+            if(signed&&"Entre com Google para continuar.".contentEquals(status.getText()))
+                status.setText("Conta conectada. Você já pode gerar o Pix.");
+            googleLogin.setText("Entrar com Google");
+            create.setVisibility(signed&&activeOrder[0].isEmpty()?View.VISIBLE:View.GONE);
+            checkPrevious.setVisibility(signed&&!activeOrder[0].isEmpty()?View.VISIBLE:View.GONE);
             adminLink.setVisibility(signed&&
                 "lucianotoscano@gmail.com".equalsIgnoreCase(account)?
                 View.VISIBLE:View.GONE);
             googleLogin.setVisibility(signed?View.GONE:View.VISIBLE);
             googleLogout.setVisibility(signed?View.VISIBLE:View.GONE);
             activate.setEnabled(signed);
-            create.setEnabled(signed&&canSell[0]);
+            create.setEnabled(signed&&canSell[0]&&activeOrder[0].isEmpty());
             freeClaim.setEnabled(signed&&canFree[0]);
             couponApply.setEnabled(signed);
         };
@@ -324,9 +359,15 @@ final class PremiumPurchaseDialog {
                 status.setText(message);
                 if(ok){
                     // Do not adopt a pending order from an anonymous/previous account.
-                    activeOrder[0]="";
                     stop.run();
-                    email.setText(PremiumGoogleLogin.email(activity));
+                    String signedUid=PremiumGoogleLogin.uid(activity);
+                    activeOrder[0]=signedUid.equals(pending.getString("latestOrderUid",""))?
+                        pending.getString("latestOrderId",""):"";
+                    if(!activeOrder[0].isEmpty()){
+                        polling[0]=true;
+                        scheduled[0]=poll[0];
+                        handler.postDelayed(scheduled[0],1000L);
+                    }
                     PremiumAccess.verify(activity,(allowed,premium)->{
                         if(dialog.isShowing()&&premium){
                             dialog.dismiss();
@@ -354,28 +395,53 @@ final class PremiumPurchaseDialog {
             fitPopup.run();
             refreshIdentity.run();
         }));
-        Runnable[] poll={null};
         poll[0]=()->{
             if(!dialog.isShowing()||activeOrder[0].isEmpty()){stop.run();return;}
-            PremiumAccess.order(activity,activeOrder[0],(result,error)->{
-                if(!dialog.isShowing())return;
+            final String requestedUid=PremiumGoogleLogin.uid(activity);
+            final String requestedOrder=activeOrder[0];
+            if(requestedUid.isEmpty()){stop.run();return;}
+            PremiumAccess.order(activity,requestedOrder,(result,error)->{
+                // A response from the old Google account must not alter this session.
+                if(!dialog.isShowing()||
+                   !requestedUid.equals(PremiumGoogleLogin.uid(activity))||
+                   !requestedOrder.equals(activeOrder[0]))return;
                 if(error!=null){status.setText(error);return;}
                 String state=String.valueOf(result.get("status"));
                 if("approved".equals(state)){
-                    stop.run();status.setText("Pagamento aprovado! Segunda Pokébola liberada por 30 dias.");
+                    stop.run();
+                    status.setText("Pix aprovado. Confirmando sua licença Premium...");
                     key[0]=String.valueOf(result.get("licenseKey"));
                     if(!key[0].isEmpty()&&!"null".equals(key[0]))keyCopy.setVisibility(View.VISIBLE);
                     copyPix.setVisibility(View.GONE);check.setVisibility(View.GONE);
                     pixPanel.setVisibility(View.GONE);
                     fitPopup.run();
                     PremiumAccess.verify(activity,(allowed,premium)->{
-                        if(dialog.isShowing()&&premium){
-                        dialog.dismiss();
-                        if(whenActivated!=null)whenActivated.run();
-                    }
+                        if(!dialog.isShowing()||
+                           !requestedUid.equals(PremiumGoogleLogin.uid(activity))||
+                           !requestedOrder.equals(activeOrder[0]))return;
+                        if(premium){
+                            activeOrder[0]="";
+                            pending.edit().remove("latestOrderId").remove("latestOrderUid").apply();
+                            refreshIdentity.run();
+                            status.setText("Premium ativo! Pokébola 2 liberada.");
+                            dialog.dismiss();
+                            if(whenActivated!=null)whenActivated.run();
+                        }else{
+                            // Retain the approved order so the user is not charged twice.
+                            status.setText("Pix aprovado, aguardando confirmação da licença. Toque em Verificar pagamento.");
+                        }
                     });
                 }else if("pending".equals(state)){
-                    status.setText("Aguardando confirmação do Pix. A verificação é automática.");
+                    status.setText("Aguardando confirmação do Pix. Verificação automática a cada 12 segundos.");
+                }else if("cancelled".equals(state)||"canceled".equals(state)||
+                         "expired".equals(state)||"rejected".equals(state)||
+                         "failed".equals(state)||"refunded".equals(state)){
+                    stop.run();
+                    activeOrder[0]="";
+                    pending.edit().remove("latestOrderId").remove("latestOrderUid").apply();
+                    pixPanel.setVisibility(View.GONE);
+                    status.setText("Este Pix não está mais válido. Você pode gerar um novo.");
+                    refreshIdentity.run();
                 }else status.setText("Situação do pedido: "+state);
             });
             if(polling[0]){
@@ -463,7 +529,8 @@ final class PremiumPurchaseDialog {
                 freeCouponClaim.setVisibility(gift?View.VISIBLE:View.GONE);
                 freeCouponClaim.setEnabled(gift&&PremiumGoogleLogin.isGoogleSignedIn(activity));
                 canSell[0]=Boolean.TRUE.equals(quote.get("salesEnabled"))&&cents>=100;
-                create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&canSell[0]);
+                create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&
+                    canSell[0]&&activeOrder[0].isEmpty());
                 fitPopup.run();
             });
         });
@@ -496,10 +563,18 @@ final class PremiumPurchaseDialog {
                 couponMessage.setText("Toque em Aplicar para confirmar o preço com cupom.");
                 return;
             }
-            String mail=email.getText().toString().trim();
-            if(!mail.contains("@")||!mail.contains(".")){
-                status.setText("Informe um e-mail válido.");return;
+            // The Pix email is the signed-in Google account; the license is
+            // independently granted to that account's authenticated Firebase UID.
+            String mail=PremiumGoogleLogin.email(activity).trim();
+            if(!PremiumGoogleLogin.isGoogleSignedIn(activity)||
+               !android.util.Patterns.EMAIL_ADDRESS.matcher(mail).matches()){
+                status.setText("Entre com uma conta Google que tenha e-mail válido.");return;
             }
+            if(!activeOrder[0].isEmpty()){
+                status.setText("Já existe um Pix pendente. Verifique antes de criar outro.");
+                return;
+            }
+            final String checkoutUid=PremiumGoogleLogin.uid(activity);
             create.setEnabled(false);
             status.setText("Gerando o Pix no Mercado Pago...");
             PremiumAccess.createPix(activity,mail,"",appliedCoupon[0],(result,error)->{
@@ -507,8 +582,21 @@ final class PremiumPurchaseDialog {
                 create.setEnabled(true);
                 if(error!=null){status.setText(error);return;}
                 activeOrder[0]=String.valueOf(result.get("orderId"));
+                if(activeOrder[0].isEmpty()||"null".equals(activeOrder[0])){
+                    activeOrder[0]="";
+                    status.setText("O servidor não retornou um pedido válido.");
+                    refreshIdentity.run();
+                    return;
+                }
+                // Bookmark only the account that actually initiated this order.
                 pending.edit().putString("latestOrderId",activeOrder[0])
-                        .putString("latestOrderUid",PremiumGoogleLogin.uid(activity)).apply();
+                        .putString("latestOrderUid",checkoutUid).apply();
+                if(!checkoutUid.equals(PremiumGoogleLogin.uid(activity))){
+                    activeOrder[0]="";
+                    status.setText("Conta alterada. Entre novamente na conta que gerou o Pix.");
+                    refreshIdentity.run();
+                    return;
+                }
                 pix[0]=String.valueOf(result.get("pixCode"));
                 Object cents=result.get("priceCents");
                 long amount=cents instanceof Number?((Number)cents).longValue():0;
@@ -516,6 +604,7 @@ final class PremiumPurchaseDialog {
                 qrImage.setImageBitmap(qr);
                 qrImage.setVisibility(qr==null?View.GONE:View.VISIBLE);
                 pixPanel.setVisibility(View.VISIBLE);
+                refreshIdentity.run(); // Hide new payment while this one is pending.
                 pixAmount.setText(String.format(Locale.forLanguageTag("pt-BR"),
                     "R$ %.2f",amount/100.0));
                 status.setText(qr==null?
@@ -530,6 +619,7 @@ final class PremiumPurchaseDialog {
         copyPix.setOnClickListener(v->copy(activity,"Pix copia e cola",pix[0]));
         keyCopy.setOnClickListener(v->copy(activity,"Chave Premium",key[0]));
         check.setOnClickListener(v->poll[0].run());
+        checkPrevious.setOnClickListener(v->poll[0].run());
         dialog.setOnDismissListener(v->{
             stop.run();
             handler.removeCallbacks(promoClock[0]);
@@ -605,7 +695,7 @@ final class PremiumPurchaseDialog {
             fitPopup.run();
         });
         if(!activeOrder[0].isEmpty()){
-            status.setText("Pagamento anterior encontrado. Verificando confirmação.");
+            status.setText("Pix anterior encontrado. Verificando antes de gerar outro.");
             polling[0]=true;
             scheduled[0]=poll[0];
             handler.postDelayed(scheduled[0],1000L);
