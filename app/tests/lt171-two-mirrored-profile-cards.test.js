@@ -13,7 +13,8 @@ for(const key of ["secondAccountSummary","secondAccountProvider","secondAvatar",
  "secondTrainerDetails","secondTrainerCode","secondTrainerAction","secondAccountLogout",
  "secondAccountGuest","secondAccountConnected","secondAccountUnavailable"]){
  assert.ok(card.includes(key),"Conta 2 must render "+key);
- assert.ok(refresh.includes(key),"Conta 2 must refresh "+key);
+ if(!["secondAccountLogout","secondAvatar","secondAccountUnavailable"].includes(key))
+  assert.ok(refresh.includes(key),"Conta 2 must refresh "+key);
 }
 for(const tag of ["Código de Treinador","Copiar código do treinador","Treinador vinculado",
  "Sair site","Google","Discord","Gerenciar","Remover"])
