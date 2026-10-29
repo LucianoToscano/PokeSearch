@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT180 QA — ícone ↻ de Doce Raro animado (29/10/2026)
+
+**Relato após LT179 pública:** botão ↻ não girava visualmente. Causa encontrada: faltava `@keyframes` no SVG e sincronização da execução nativa. Correção em branch `fix/lt180-candy-refresh-spin-20261029`: giro CSS de 0,8 s apenas enquanto `busy=true` no serviço oficial, feedback instantâneo no toque, parada em resposta/erro/429 e espera com ícone parado; consultas automáticas e após copiar todos seguem o mesmo estado. Abertura tardia do menu sincroniza o indicador; intervalo 1m/3m/5m não gira.
+
+**Candidata QA:** `0.01.80 / 54385`, workflow assinado `lt180-candy-refresh-spin-signed-qa.yml`, testes `lt180-candy-refresh-animation.test.js` e regressão LT179/LT175. **Sem merge/Release/Drive/OTA público autorizados para a LT180 neste relato**; a LT179 permanece a versão pública. Ver [LT180 QA](LT180_CANDY_REFRESH_SPIN_QA_20261029.md).
+
+---
+
 ## LT179 — DISTRIBUIÇÃO GERAL AUTORIZADA (29/10/2026)
 
 O proprietário solicitou explicitamente: **"Envie para atualizar o app de todo mundo"**. Assim, autorizou merge da PR #135, lançamento estável e exposição no atualizador existente do aplicativo. O fluxo da LT179 usa a mesma chave permanente e cria **`v0.01.79-54384`**, sem sobrescrever a LT178. O workflow protegido `.github/workflows/lt179-candy-official-release.yml` só publica após detectar `latest=v0.01.78-54383`, assinar o APK, passar os testes/Android e conferir SHA-256 e tamanho do asset. O canal é GitHub Releases/latest; o Android pede consentimento para instalar. **Google Drive não é sincronizado pelo workflow**, não afirmar upload ao Drive sem evidência.
