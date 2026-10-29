@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!-- Traço leve, baseado no símbolo enviado: dois treinadores e setas de troca. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.75"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M23,4 C24.7,4 26,5.3 26,7 C26,8.7 24.7,10 23,10 C21.3,10 20,8.7 20,7 C20,5.3 21.3,4 23,4 Z
+            M17,15 C17.5,12.5 19.6,11.5 23,11.5 C26.4,11.5 28.5,12.5 29,15
+            M9,20 C10.7,20 12,21.3 12,23 C12,24.7 10.7,26 9,26 C7.3,26 6,24.7 6,23 C6,21.3 7.3,20 9,20 Z
+            M3,31 C3.5,28.5 5.6,27 9,27 C12.4,27 14.5,28.5 15,31
+            M4,18 C4.5,10.8 8.8,5.7 16,4
+            M12.5,1.5 L16.5,4 L13.5,7.5
+            M28,16 C27.5,23 23.2,27.4 16,29
+            M19.5,25.5 L15.5,29 L19.5,31" />
+</vector>

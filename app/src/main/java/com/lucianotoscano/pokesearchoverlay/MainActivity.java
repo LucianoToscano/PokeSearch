@@ -107,7 +107,8 @@ public class MainActivity extends Activity {
     private View trainerCopyButton;
     private View guestHeading;
     private ImageView teamBadge, accountAvatar, accountAvatarFrame;
-    private Button trainerAction,trainerSelectButton;
+    private Button trainerAction;
+    private ImageButton trainerSelectButton;
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
     private ImageView overlayControl,secondaryOverlayControl;
@@ -583,18 +584,28 @@ public class MainActivity extends Activity {
         sectionLp.bottomMargin=d(7);
         LinearLayout trainerHeader=new LinearLayout(this);
         trainerHeader.setGravity(Gravity.CENTER_VERTICAL);
-        trainerHeader.addView(trainerSectionTitle,new LinearLayout.LayoutParams(0,-2,1));
-        trainerSelectButton=homeAuthButton("Escolher",Color.rgb(33,61,93),Color.WHITE);
-        LinearLayout.LayoutParams chooseLp=new LinearLayout.LayoutParams(d(96),d(33));
+        // O ícone fica imediatamente ao lado do título, sem caixa ou texto extra.
+        trainerHeader.addView(trainerSectionTitle,new LinearLayout.LayoutParams(-2,-2));
+        trainerSelectButton=new ImageButton(this);
+        trainerSelectButton.setImageResource(R.drawable.ps_trainer_switch);
+        trainerSelectButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        trainerSelectButton.setColorFilter(homeLightMode?
+            Color.rgb(57,92,128):Color.rgb(174,208,242));
+        trainerSelectButton.setPadding(d(7),d(7),d(7),d(7));
+        android.util.TypedValue tapStyle=new android.util.TypedValue();
+        if(getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless,tapStyle,true)
+                &&tapStyle.resourceId!=0)
+            trainerSelectButton.setBackgroundResource(tapStyle.resourceId);
+        else trainerSelectButton.setBackgroundColor(Color.TRANSPARENT);
+        trainerSelectButton.setContentDescription("Trocar treinador vinculado");
+        LinearLayout.LayoutParams chooseLp=new LinearLayout.LayoutParams(d(36),d(36));
+        chooseLp.leftMargin=d(3);
         trainerHeader.addView(trainerSelectButton,chooseLp);
         trainerSelectButton.setVisibility(View.GONE);
         trainerSelectButton.setOnClickListener(v->{
-            int count=0;
-            try{count=new JSONArray(getSharedPreferences("prefs",0)
-                .getString("profileTrainerList","[]")).length();}
-            catch(Exception ignored){}
-            if(count>1)showTrainerSelector();
-            else openLoginDialog(false,"manage");
+            // Troca apenas entre dois ou mais treinadores realmente distintos.
+            if(selectableTrainerCount(getSharedPreferences("prefs",0))>1)
+                showTrainerSelector();
         });
         trainerPanel.addView(trainerHeader,sectionLp);
 
@@ -1413,6 +1424,21 @@ public class MainActivity extends Activity {
         preferredLoginProvider=provider;
         openLoginDialog(false);
     }
+    private static int selectableTrainerCount(SharedPreferences prefs){
+        try{
+            JSONArray profiles=new JSONArray(prefs.getString("profileTrainerList","[]"));
+            java.util.HashSet<String> codes=new java.util.HashSet<>();
+            for(int i=0;i<profiles.length();i++){
+                JSONObject item=profiles.optJSONObject(i);
+                if(item==null)continue;
+                String code=item.optString("code","");
+                String name=item.optString("name","");
+                if(code.matches("[0-9]{12}")&&
+                   name.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}"))codes.add(code);
+            }
+            return codes.size();
+        }catch(org.json.JSONException e){return 0;}
+    }
     private void showTrainerSelector(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         JSONArray profiles;
@@ -1421,6 +1447,7 @@ public class MainActivity extends Activity {
         if(profiles.length()<2)return;
         final java.util.ArrayList<JSONObject> valid=new java.util.ArrayList<>();
         final java.util.ArrayList<String> labels=new java.util.ArrayList<>();
+        final java.util.HashSet<String> seenCodes=new java.util.HashSet<>();
         String selected=prefs.getString("profileTrainerCode","");
         int selectedIndex=-1;
         for(int i=0;i<profiles.length();i++){
@@ -1430,7 +1457,8 @@ public class MainActivity extends Activity {
             String name=item.optString("name","");
             String team=item.optString("team","");
             if(!code.matches("[0-9]{12}")||
-                !name.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}"))continue;
+                !name.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}")||
+                !seenCodes.add(code))continue;
             if(code.equals(selected))selectedIndex=valid.size();
             valid.add(item);
             labels.add(name+" · "+team+" · ••••"+code.substring(8));
@@ -1677,7 +1705,8 @@ public class MainActivity extends Activity {
         if(sessionHint!=null)sessionHint.setText(
             "Buscas comuns sem login · Shiny exige treinador vinculado");
         if(accountDisplay!=null)accountDisplay.setText(
-            prefs.getString("profileDisplayName","Conta conectada"));
+            prefs.getBoolean("homeShowPogoAccountName",true)?
+                prefs.getString("profileDisplayName","Conta conectada"):"Anônimo");
         refreshGoogleAvatar(logged?prefs.getString("profileAvatarUrl",""):"");
         if(accountProvider!=null){
             String provider=prefs.getString("profileProvider","");
@@ -1708,7 +1737,8 @@ public class MainActivity extends Activity {
             teamBadge.setContentDescription(linked&&team.length()>0?
                 "Equipe "+team:"Sem equipe");
         }
-        if(trainerDisplay!=null)trainerDisplay.setText(linked?trainer:
+        if(trainerDisplay!=null)trainerDisplay.setText(linked?
+            (prefs.getBoolean("homeShowTrainerName",true)?trainer:"Anônimo"):
             "unlinked".equals(prefs.getString("profileTrainerState","unknown"))?
                 "Nenhum treinador vinculado":"Treinador não confirmado");
         if(trainerDetails!=null){
@@ -1721,14 +1751,16 @@ public class MainActivity extends Activity {
                 Color.rgb(165,185,214));
         }
         if(trainerSelectButton!=null){
-            int profiles=0;
-            try{profiles=new JSONArray(prefs.getString("profileTrainerList","[]")).length();}
-            catch(org.json.JSONException ignored){}
-            trainerSelectButton.setVisibility(logged?View.VISIBLE:View.GONE);
-            trainerSelectButton.setText(profiles>1?"Escolher ("+profiles+")":"Perfis");
+            int profiles=selectableTrainerCount(prefs);
+            // GONE remove o botão e seu espaço quando há zero ou um treinador.
+            trainerSelectButton.setVisibility(linked&&profiles>1?View.VISIBLE:View.GONE);
+            trainerSelectButton.setContentDescription(
+                "Trocar treinador vinculado ("+profiles+" opções)");
         }
         if(linked&&trainerCode!=null)
-            trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
+            trainerCode.setText(prefs.getBoolean("homeShowTrainerCode",true)?
+                code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8):
+                "XXXX XXXX XXXX");
         if(trainerAction!=null)trainerAction.setText(linked?"Remover":"Gerenciar");
         if(sessionSummary!=null)sessionSummary.setText(logged?
             "● Sessão identificada · PoGoCoordinates":"○ Login necessário");
@@ -2325,6 +2357,27 @@ public class MainActivity extends Activity {
         body.setOrientation(LinearLayout.VERTICAL);
         body.setPadding(d(14),d(10),d(14),d(14));
         sc.addView(body);
+
+        TextView privacyTitle=new TextView(this);
+        privacyTitle.setText("Privacidade na Home");
+        privacyTitle.setTextSize(14);
+        privacyTitle.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        privacyTitle.setTextColor(homeLightMode?Color.rgb(33,53,77):Color.WHITE);
+        body.addView(privacyTitle);
+        settingHomePrivacyCheckbox(body,prefs,"homeShowPogoAccountName",
+            "Mostrar nome da conta PoGoCoordinates");
+        settingHomePrivacyCheckbox(body,prefs,"homeShowTrainerName",
+            "Mostrar nome do treinador");
+        settingHomePrivacyCheckbox(body,prefs,"homeShowTrainerCode",
+            "Mostrar código do treinador");
+        TextView privacyHint=new TextView(this);
+        privacyHint.setText("Ao ocultar: Anônimo ou XXXX XXXX XXXX. Somente nesta Home.");
+        privacyHint.setTextSize(11);
+        privacyHint.setTextColor(homeLightMode?Color.rgb(89,107,125):Color.LTGRAY);
+        LinearLayout.LayoutParams privacyHintLp=new LinearLayout.LayoutParams(-1,-2);
+        privacyHintLp.bottomMargin=d(14);
+        body.addView(privacyHint,privacyHintLp);
+
         android.widget.TextView subtitle=new android.widget.TextView(this);
         subtitle.setText("Tamanho do Pokémon · altere também por P / M / G no overlay");
         subtitle.setTextColor(Color.LTGRAY);body.addView(subtitle);
@@ -2405,6 +2458,21 @@ public class MainActivity extends Activity {
         });
         body.addView(testNotification,new LinearLayout.LayoutParams(-1,d(42)));
         return sc;
+    }
+    private void settingHomePrivacyCheckbox(LinearLayout body,SharedPreferences prefs,
+            String key,String label){
+        CheckBox check=new CheckBox(this);
+        check.setText(label);
+        check.setTextSize(13);
+        check.setTextColor(homeLightMode?Color.rgb(33,53,77):Color.WHITE);
+        check.setChecked(prefs.getBoolean(key,true));
+        check.setOnCheckedChangeListener((button,enabled)->{
+            // Only presentation changes; never overwrite PoGoCoordinates identity,
+            // trainer selection, account credentials, or shared overlay state.
+            prefs.edit().putBoolean(key,enabled).apply();
+            refreshSessionSummary();
+        });
+        body.addView(check);
     }
     private void settingAlertMode(LinearLayout body,SharedPreferences prefs){
         TextView label=new TextView(this);
