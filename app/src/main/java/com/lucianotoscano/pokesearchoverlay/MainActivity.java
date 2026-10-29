@@ -939,6 +939,108 @@ public class MainActivity extends Activity {
         holder.setVisibility(View.VISIBLE);
     }
 
+    private void refreshSecondAccountSummary(){
+        boolean available=PogoAccountSlots.supportsSecond();
+        SharedPreferences two=PogoAccountSlots.prefs(this,2);
+        boolean connected=available&&PogoAccountSlots.loggedIn(this,2);
+        String account=two.getString("profileDisplayName","Conta conectada");
+        String trainer=two.getString("profileTrainerName","");
+        boolean showName=getSharedPreferences("prefs",0)
+            .getBoolean("homeShowPogoAccountName",true);
+        boolean showTrainer=getSharedPreferences("prefs",0)
+            .getBoolean("homeShowTrainerName",true);
+        if(secondAccountSummary!=null)secondAccountSummary.setText(!available?
+            "Conta 2 · WebView sem sessões isoladas":
+            connected?"Conta 2 · "+(showName?account:"Anônimo")+
+                (trainer.isEmpty()?"":" · "+(showTrainer?trainer:"Anônimo")):
+            "Conta PoGoCoordinates 2 · Desconectada");
+        if(secondAccountLogin!=null){
+            secondAccountLogin.setVisibility(connected?View.GONE:View.VISIBLE);
+            secondAccountLogin.setEnabled(available);
+        }
+        if(secondAccountManage!=null)
+            secondAccountManage.setVisibility(connected?View.VISIBLE:View.GONE);
+        if(secondAccountLogout!=null)
+            secondAccountLogout.setVisibility(connected?View.VISIBLE:View.GONE);
+        for(boolean secondary:new boolean[]{false,true}){
+            TextView label=secondary?overlayAccountLabel2:overlayAccountLabel1;
+            if(label==null)continue;
+            int slot=PogoAccountSlots.assigned(this,secondary);
+            String code=PogoAccountSlots.trainer(this,secondary);
+            label.setText((secondary?"P2":"P1")+" · Conta "+slot+
+                (code.matches("[0-9]{12}")?" · ••••"+code.substring(8):" · Treinador —"));
+        }
+    }
+    private void showPokeballAccountChoice(boolean secondary){
+        int assigned=PogoAccountSlots.assigned(this,secondary);
+        String[] choices={"Conta 1"+(PogoAccountSlots.loggedIn(this,1)?" · Conectada":" · Padrão"),
+            "Conta 2"+(PogoAccountSlots.loggedIn(this,2)?" · Conectada":" · Entrar primeiro")};
+        new AlertDialog.Builder(this)
+            .setTitle(secondary?"Pokébola 2 · Conta":"Pokébola 1 · Conta")
+            .setSingleChoiceItems(choices,assigned-1,(dialog,which)->{
+                dialog.dismiss();
+                int slot=which+1;
+                if(slot==2&&(!PogoAccountSlots.supportsSecond()||
+                    !PogoAccountSlots.loggedIn(this,2))){
+                    Toast.makeText(this,"Conecte a Conta 2 antes de selecionar",Toast.LENGTH_LONG).show();
+                    return;
+                }
+                choosePokeballTrainer(secondary,slot);
+            }).setNegativeButton("Cancelar",null).show();
+    }
+    private void choosePokeballTrainer(boolean secondary,int account){
+        SharedPreferences prefs=PogoAccountSlots.prefs(this,account);
+        JSONArray list;
+        try{list=new JSONArray(prefs.getString("profileTrainerList","[]"));}
+        catch(Exception ignored){list=new JSONArray();}
+        java.util.ArrayList<String> names=new java.util.ArrayList<>();
+        java.util.ArrayList<String> codes=new java.util.ArrayList<>();
+        names.add("Sem treinador · Shiny indisponível");codes.add("");
+        for(int i=0;i<Math.min(20,list.length());i++){
+            JSONObject item=list.optJSONObject(i);
+            if(item==null)continue;
+            String code=item.optString("code","");
+            if(!PogoAccountSlots.hasTrainer(this,account,code)||codes.contains(code))continue;
+            names.add(item.optString("name","")+" · ••••"+code.substring(8));
+            codes.add(code);
+        }
+        final String[] selection=codes.toArray(new String[0]);
+        new AlertDialog.Builder(this)
+            .setTitle((secondary?"Pokébola 2":"Pokébola 1")+" · Conta "+account+" · Treinador")
+            .setItems(names.toArray(new String[0]),(dialog,which)->{
+                PogoAccountSlots.bind(this,secondary,account,selection[which]);
+                Class<?> service=secondary?SecondaryOverlayService.class:OverlayService.class;
+                boolean running=secondary?OverlayService.isSecondaryRunning():OverlayService.isRunning();
+                if(running){
+                    stopService(new Intent(this,service));
+                    getWindow().getDecorView().postDelayed(()->{
+                        Intent intent=new Intent(this,service);
+                        if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);
+                        else startService(intent);
+                    },350L);
+                }
+                refreshSessionSummary();
+            }).setNegativeButton("Cancelar",null).show();
+    }
+    private void openLoginDialogForSlot(int slot,String purpose){
+        if(slot==2&&!PogoAccountSlots.supportsSecond()){
+            Toast.makeText(this,"Seu Android WebView não suporta duas sessões separadas",
+                Toast.LENGTH_LONG).show();return;
+        }
+        if(loginDialog!=null&&loginDialog.isShowing())return;
+        activeLoginSlot=slot;
+        openLoginDialog(false,purpose);
+    }
+    private void logoutSecondAccount(){
+        if(OverlayService.isRunning()&&PogoAccountSlots.assigned(this,false)==2)
+            stopService(new Intent(this,OverlayService.class));
+        if(OverlayService.isSecondaryRunning()&&PogoAccountSlots.assigned(this,true)==2)
+            stopService(new Intent(this,SecondaryOverlayService.class));
+        PogoAccountSlots.logout(this,2,()->runOnUiThread(()->{
+            refreshSessionSummary();
+            Toast.makeText(this,"Conta 2 desconectada",Toast.LENGTH_SHORT).show();
+        }));
+    }
     private void openTrainerManagement(){
         String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
         if(!code.matches("[0-9]{12}")){
