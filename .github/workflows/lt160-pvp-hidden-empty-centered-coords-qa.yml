@@ -1,4 +1,4 @@
-# LT160 signed QA rerun: verified empty-tab regression and centered coordinate test are committed.
+# LT160 QA: use existing LT159 IV-decimal regression and LT160 hide-empty test.
 name: PokeSearch LT160 — análise PvP legível — APK QA assinado
 on:
   push:
@@ -82,7 +82,7 @@ jobs:
           node app/tests/lt148-pvp-analysis-rank-label-stat-centering.test.js
           node app/tests/lt153-pvp-clarity-layout.test.js
           node app/tests/lt160-hide-empty-pvp-center-coords.test.js
-          node app/tests/lt160-iv-decimal-and-three-line-pvp.test.js
+          node app/tests/lt159-iv-decimal-and-three-line-pvp.test.js
           node app/tests/iv-percent-palette-card.test.js
           node app/tests/lt156-overall-rank-without-iv.test.js
           node - <<'NODE'
