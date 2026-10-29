@@ -1,4 +1,4 @@
-# LT169: combined GO sprite audit, Home privacy and linked trainer switcher.
+# LT170: dual isolated PoGoCoordinates sessions, independent Pokeball bindings.
 name: PokeSearch LT170 — duas contas e distribuição oficial
 on:
   push:
@@ -146,7 +146,7 @@ jobs:
           if(rows.length!==1||!rows[0].title.includes('LT148'))throw Error('Missing LT148 release notes');
           NODE
           if gh release view "$OFFICIAL_TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "::error::LT169 release already exists; never overwrite an existing signed APK."
+            echo "::error::LT170 release already exists; never overwrite an existing signed APK."
             exit 1
           fi
           LATEST="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')"
@@ -422,7 +422,7 @@ jobs:
           - Testes de OAuth simultâneo e interface real no Samsung ainda precisam de validação física.
           NOTES
           gh release create "$OFFICIAL_TAG" "$OFFICIAL_APK" --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" --title "PokeSearch 0.01.69 LT169 — atualização oficial" \
+            --target "$GITHUB_SHA" --title "PokeSearch 0.01.70 LT170 — duas contas PoGoCoordinates" \
             --notes-file LT170-RELEASE-NOTES.md --latest
           printf '%s  %s\n' "$SHA" "$OFFICIAL_APK" > OFFICIAL-SHA256SUMS.txt
       - name: Verify official latest release, APK SHA-256 and update-feed eligibility
