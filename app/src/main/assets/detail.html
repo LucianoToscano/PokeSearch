@@ -1046,7 +1046,7 @@ window.showDetails=(c,mode,watched)=>{
   rankFromSite?"Rank do site #"+siteRank:"";
  rankLine.textContent=rankText;
  rankLine.hidden=!rankText;
- rankLine.classList.toggle("isSite",!verifiedIvRank);
+ if(rankLine.classList?.toggle)rankLine.classList.toggle("isSite",!verifiedIvRank);
  rankLine.title=verifiedIvRank?
   "Posição dos IVs desta espécie na "+(league==="gl"?"Grande Liga":"Ultra Liga")+
    ". Não representa o ranking geral entre espécies.":
