@@ -24,6 +24,20 @@
   if(percent===100)return "#F04B70";
   return "";
  }
+ // PvP stat-product efficiency is continuous (e.g. 92,17%, 99,73%).
+ // Use the SAME visual bands as raw IVs, but reserve coral for exactly 100%.
+ function colorForEfficiency(value){
+  const text=String(value??"").trim();
+  if(!/^(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,2})?$/.test(text))return "";
+  const pct=Number(text.replace(",","."));
+  if(!Number.isFinite(pct)||pct<0||pct>100)return "";
+  if(pct===0)return "#00CFE8";
+  if(pct<50)return "#B8BEC8";
+  if(pct<80)return "#28C76F";
+  if(pct<90)return "#388BFF";
+  if(pct<100)return "#C084FC";
+  return "#F04B70";
+ }
  function fromCard(card){
   const raw=String(card?.iv??"").trim();
   if(!rawPattern.test(raw))return unavailable;
@@ -44,5 +58,5 @@
   }
   return {valid:true,raw,percent,color,derived:!supplied};
  }
- return Object.freeze({colorFor,fromCard});
+ return Object.freeze({colorFor,colorForEfficiency,fromCard});
 });
