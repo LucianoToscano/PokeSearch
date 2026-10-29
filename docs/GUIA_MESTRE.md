@@ -1,5 +1,9 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT171 — REVISÃO DOIS CARDS COMPLETOS E SELETORES VIP (29/10/2026)
+
+**EM VALIDAÇÃO.** Nova Home com dois cartões completos idênticos no conjunto de funções, cada um exibindo login, avatar, treinador, equipe, código, copiar, Gerenciar/Remover, Sair e ícone de troca somente quando existem 2+ treinadores. Por Pokébola, escolher Conta 1 ou 2 e Treinador 1 ou 2 conforme lista comprovada pelo site; sessão WebView continua isolada. Privacidade Anônimo/XXXX aplicada aos dois cartões. Versão candidata LT171 `0.01.71/54376`, sem alterar a oficial LT170 enquanto não houver publicação confirmada. QA e contrato: [LT171_DOIS_CARDS_COMPLETOS_TREINADORES_VIP_QA_20261029.md](LT171_DOIS_CARDS_COMPLETOS_TREINADORES_VIP_QA_20261029.md). Workflow de publicação assinado `lt171-full-cards-vip-official-release.yml`. Teste físico Samsung pendente.
+
 ## LT170 — DUAS CONTAS POGOC E POKÉBOLAS INDEPENDENTES (29/10/2026)
 
 **STATUS OFICIAL: LT170 0.01.70 / 54375 PUBLICADA PARA TODOS.** PR #126 mesclada na `main`, commit de distribuição `dd39c94c80ed4199a070ba0002a6407b0bf4ccd2`. Release latest: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.70-54375 . APK `PokeSearch-v0.01.70-LT.apk` (49.510.519 bytes), SHA-256 `ebbd4a12e923b9c15ff6cd3abb8c067ee58ad1f05dd8d55ab2c7e23987afad9b`. Certificado Android v2 permanente e R8 verificados. GitHub Actions oficial #40899409701 **SUCCESS**, com publicação e checagem do digest do arquivo na API de Releases. Os usuários veem a atualização pelo fluxo GitHub Releases existente na Home e precisam confirmar a instalação.
