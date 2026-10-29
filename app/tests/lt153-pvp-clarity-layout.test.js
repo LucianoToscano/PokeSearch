@@ -11,7 +11,7 @@ assert.ok(begin>=0&&end>begin);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({
  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 })[c]);
-const render=new Function("h",script.slice(begin,end)+"return evolutionRow;")(esc);
+const render=new Function("h","window",script.slice(begin,end)+"return evolutionRow;")(esc,{PokeSearchIVDisplay:require("../src/main/assets/iv_display.js")});
 const piplup=render({name:"Piplup",rank:2,statProductPct:"100,00",cp:1215,
  level:50,overallRank:1085,eligible:true},true);
 for(const token of ["Atual","Piplup","Rank Classe: #2","100,00%","PC 1215","Nv. 50,0","Rank Geral: #1085"])
@@ -35,6 +35,11 @@ for(const token of ["PC 2890","Nv. 50,0"])
 for(const token of ["Rank Classe: #2","Rank Geral: #385"])
  assert.ok(thirdRow.includes(token),"third row has "+token);
 assert.ok(!firstRow.includes("PC 2890"),"PC moved below heading");
+assert.ok(firstRow.includes('--ps-rank-percent-color:#C084FC'),"92,17% must be purple");
+assert.ok(piplup.includes('--ps-rank-percent-color:#F04B70'),"100% must be coral");
+const almost=render({name:"Noivern",rank:3,statProductPct:"99,73",overallRank:385},false);
+assert.ok(almost.includes('--ps-rank-percent-color:#C084FC'),"99,73% is NOT 100%");
+
 assert.ok(!secondRow.includes("Rank Classe:"),"ranks in third row only");
 assert.ok(html.includes('.evoLine .evoRankRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);'),
  "two independent equal-width centered rank areas");
