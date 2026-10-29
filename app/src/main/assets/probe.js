@@ -1313,8 +1313,7 @@ function cardCoordsControls(card){
 // Do not confuse a Search 429, unavailable coordinates or a disabled button
 // with an exhausted account reveal allowance. Never invent a retry time.
 function coordsRevealLimit(card){
- if(!card||!card.node)return null;
- const own=text(card.node).slice(0,1800);
+ const own=card&&card.node?text(card.node).slice(0,1800):"";
  const visibleAlerts=Array.from(document.querySelectorAll(
   '[role="alert"],[role="dialog"],[data-sonner-toast],.toast'))
   .filter(vis).slice(0,12).map(el=>text(el).slice(0,900))
@@ -1326,7 +1325,8 @@ function coordsRevealLimit(card){
    kind="quota";evidence=t;break;
   }
   if(/\brate[ -]?limit(?:ed)?\b/i.test(t)&&
-     (t===own||/coord|reveal|retry/i.test(t))){
+     ((t===own&&!!own)||/coord|reveal/i.test(t)||
+      (own&&/\brate[ -]?limit(?:ed)?\b/i.test(own)&&/retry/i.test(t)))){
    kind="rate";evidence=t;
   }
  }
@@ -1358,7 +1358,11 @@ if(action.startsWith("readCoords:")){
  const target=matchingCoordsCard(query);
  // React may temporarily hide the clicked card or its controls after Get coords.
  // Wait only for the EXACT selected fingerprint; never use page-wide links.
- if(!target)return JSON.stringify({ok:false,pending:true,status:"Aguardando reidentificação do Pokémon após atualização dos resultados"});
+ if(!target){
+  const limit=coordsRevealLimit(null);
+  if(limit)return JSON.stringify({ok:false,status:"Taxa Limitada PoGoCoordinates",...limit});
+  return JSON.stringify({ok:false,pending:true,status:"Aguardando reidentificação do Pokémon após atualização dos resultados"});
+ }
  const controls=cardCoordsControls(target);
  const button=controls.find(e=>/^Open in Maps$/i.test(text(e)));
  if(!button){
