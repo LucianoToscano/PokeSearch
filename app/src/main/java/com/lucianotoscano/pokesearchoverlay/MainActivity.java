@@ -344,6 +344,34 @@ public class MainActivity extends Activity {
         // LT152 owner reference: luminous landscape, even when glass mode is dark.
         // Use the bundled official scenic image offline; no remote wallpaper fetch.
         pageBackground.setImageResource(R.drawable.ps_home_background_light);
+        String chosenHomeBackground=getSharedPreferences("prefs",0)
+            .getString("homeWallpaperCustomUri","");
+        if(!chosenHomeBackground.isEmpty()){
+            try{
+                Uri chosenUri=Uri.parse(chosenHomeBackground);
+                android.graphics.BitmapFactory.Options opts=new android.graphics.BitmapFactory.Options();
+                opts.inJustDecodeBounds=true;
+                try(InputStream probe=getContentResolver().openInputStream(chosenUri)){
+                    if(probe==null)throw new java.io.IOException("Imagem indisponível");
+                    android.graphics.BitmapFactory.decodeStream(probe,null,opts);
+                }
+                if(opts.outWidth>0&&opts.outHeight>0){
+                    int downscale=1;
+                    while(opts.outWidth/downscale>1440||opts.outHeight/downscale>2560)
+                        downscale*=2;
+                    opts.inJustDecodeBounds=false;
+                    opts.inSampleSize=downscale;
+                    try(InputStream input=getContentResolver().openInputStream(chosenUri)){
+                        if(input==null)throw new java.io.IOException("Imagem indisponível");
+                        android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(input,null,opts);
+                        if(bitmap!=null)pageBackground.setImageBitmap(bitmap);
+                    }
+                }
+            }catch(Exception error){
+                // Keep the bundled scenic Home when user image permission expires.
+                pageBackground.setImageResource(R.drawable.ps_home_background_light);
+            }
+        }
         pageBackground.setScaleType(ImageView.ScaleType.CENTER_CROP);
         pageBackground.setContentDescription(homeLightMode?"Fundo PokeSearch claro":"Fundo PokeSearch escuro");
         pageBackground.setAlpha(1f); // Slider affects surfaces only.
@@ -988,6 +1016,7 @@ public class MainActivity extends Activity {
         addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
         addHomeDrawerItem(drawer,"◐","Transparência dos fundos",this::showHomeTransparencyDialog);
         addHomeDrawerItem(drawer,"☼","Alternar tema",this::toggleHomeTheme);
+        addHomeDrawerItem(drawer,"▧","Imagem de fundo",this::showHomeWallpaperPicker);
         addHomeDrawerItem(drawer,"♡","Apoiar PokeSearch",()->PixSupport.show(this));
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
@@ -1008,6 +1037,30 @@ public class MainActivity extends Activity {
     /** Text-only Android Sharesheet: prefer the verified public update manifest,
      * so each future release automatically changes both the shared URL and label.
      * Never expose credentials or accept unverified download hosts/IDs. */
+    private void showHomeWallpaperPicker(){
+        new AlertDialog.Builder(this)
+            .setTitle("Imagem de fundo")
+            .setItems(new String[]{"Escolher imagem da galeria","Fundo PokeSearch original"},
+                (dialog,which)->{
+                    if(which==1){
+                        getSharedPreferences("prefs",0).edit()
+                            .remove("homeWallpaperCustomUri").apply();
+                        setContentView(buildHome());
+                        refreshSessionSummary();refreshHomeOverlay();
+                        return;
+                    }
+                    Intent select=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    select.addCategory(Intent.CATEGORY_OPENABLE);
+                    select.setType("image/*");
+                    select.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|
+                        Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                    try{startActivityForResult(select,307);}
+                    catch(android.content.ActivityNotFoundException error){
+                        Toast.makeText(this,"Não foi possível abrir imagens",
+                            Toast.LENGTH_LONG).show();
+                    }
+                }).show();
+    }
     private void sharePokeSearch(){
         UpdateCenter.Manifest announced=currentDriveUpdate;
         boolean current=announced!=null && announced.enabled &&
@@ -2660,6 +2713,23 @@ public class MainActivity extends Activity {
         if(req==305||req==306){
             if(result==RESULT_OK)saveChosenAlertTone(data,req==306);
             else{alertToneTarget="";alertToneSpecies="";}
+            return;
+        }
+        if(req==307){
+            if(result==RESULT_OK&&data!=null&&data.getData()!=null){
+                try{
+                    Uri uri=data.getData();
+                    getContentResolver().takePersistableUriPermission(uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    getSharedPreferences("prefs",0).edit()
+                        .putString("homeWallpaperCustomUri",uri.toString()).apply();
+                    setContentView(buildHome());
+                    refreshSessionSummary();refreshHomeOverlay();
+                }catch(Exception error){
+                    Toast.makeText(this,"Não foi possível aplicar o fundo",
+                        Toast.LENGTH_LONG).show();
+                }
+            }
             return;
         }
         if(req==101&&Settings.canDrawOverlays(this))startOverlay();
