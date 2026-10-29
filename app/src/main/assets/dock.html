@@ -5904,7 +5904,7 @@ function safePvpSpeciesKey(card){
  // A correctly represented named variant (e.g. Vulpix (Alolan))
  // resolves through its OWN gamemaster entry, never Vulpix base.
  if(dangerous&&!/( \((?:alolan|galarian|hisuian|paldean|shadow|purified|mega|primal)\))/.test(key))return null;
- if(!form||key.includes(form))return key;
+ if(!form||["normal","default","base"].includes(form)||key===form||key.includes(form))return key;
  return cosmeticPvpIdentity(card)?key:null;
 }
 function verifiedOverallRank(card,league){
