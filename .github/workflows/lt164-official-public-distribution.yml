@@ -117,7 +117,7 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/releases/latest" > "$RUNNER_TEMP/latest.json"
           jq -e --arg tag "$OFFICIAL_TAG" --arg apk "$OFFICIAL_APK" \
             --arg digest "sha256:$EXPECTED_SHA256" \
-            '.tag_name==$tag and .draft==false and .prerelease==false and \
+            '.tag_name==$tag and .draft==false and .prerelease==false and
              ([.assets[]|select(.name==$apk and .state=="uploaded" and .digest==$digest and .size>30000000)]|length)==1' \
             "$RUNNER_TEMP/latest.json"
           echo "Public latest feed verified: $OFFICIAL_TAG — $OFFICIAL_APK"
