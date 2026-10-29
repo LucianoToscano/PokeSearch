@@ -67,6 +67,7 @@ public final class RareCandyOverlayService extends Service {
     private LinearLayout resultsShell,resultsList;
     private FrameLayout candyMenuRoot;
     private WebView candyMenuPanel;
+    private String lastCandyMenuTheme="";
     private boolean candyMenuVisible=false,candyMenuLoaded=false;
     private WindowManager.LayoutParams bubbleParams,resultsParams,menuParams;
     private WebView site;
@@ -368,6 +369,7 @@ public final class RareCandyOverlayService extends Service {
     }
     private void syncCandyMenu(){
         if(!candyMenuLoaded||candyMenuPanel==null)return;
+        syncCandyMenuTheme();
         JSONObject state=new JSONObject();
         try{
             state.put("coords",coords).put("radius",radius).put("period",period)
@@ -377,6 +379,30 @@ public final class RareCandyOverlayService extends Service {
                 JSONObject.quote(state.toString())+")",null);
         }catch(org.json.JSONException ignored){}
         syncCandyRefreshState();
+    }
+    // Read the SAME P1/P2 visual preferences; no independent Candy alpha
+    // or background settings. The local WebView gets only sanitized colors.
+    private void syncCandyMenuTheme(){
+        if(destroyed||!candyMenuLoaded||candyMenuPanel==null||
+                !allowedMenuUrl(candyMenuPanel.getUrl()))return;
+        String saved=getSharedPreferences("prefs",MODE_PRIVATE)
+            .getString("visualPrefsJson","{}");
+        String mode="dark";
+        int transparency=50,blur=4;
+        try{
+            JSONObject visual=new JSONObject(saved);
+            mode="light".equals(visual.optString("menuBgMode","dark"))?
+                "light":"dark";
+            transparency=Math.max(0,Math.min(100,
+                visual.optInt("menuTransparency",50)));
+            blur=Math.max(0,Math.min(16,visual.optInt("menuBlur",4)));
+        }catch(org.json.JSONException ignored){}
+        String fingerprint=mode+":"+transparency+":"+blur;
+        if(fingerprint.equals(lastCandyMenuTheme))return;
+        lastCandyMenuTheme=fingerprint;
+        candyMenuPanel.evaluateJavascript(
+            "window.applyCandyMenuTheme("+JSONObject.quote(mode)+","+
+            transparency+","+blur+")",null);
     }
     // Only report the native request lifecycle to the trusted local controls
     // WebView; never send account cookies, JWT or remote search data to it.
@@ -448,7 +474,9 @@ public final class RareCandyOverlayService extends Service {
                 if(!permitted()||menuParams==null||!candyMenuVisible)return;
                 int h=Math.max(34,Math.min(290,height));
                 menuParams.height=dp(h);
-                menuParams.width=dp(h>34?("period".equals(panel)?142:240):142);
+                // Pokébola location/info panels are 148px, not 232px.
+                // A transparent 158dp native frame fits the exact CSS card.
+                menuParams.width=dp(h>34?("period".equals(panel)?142:158):142);
                 menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
                     (focus?0:WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
@@ -888,6 +916,7 @@ public final class RareCandyOverlayService extends Service {
                     now-lastRefresh>=period*60000L){
                 refresh(false);
             }
+            if(candyMenuVisible)syncCandyMenuTheme();
             main.postDelayed(this,1000L);
         }
     };
