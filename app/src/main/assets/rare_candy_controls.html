@@ -121,17 +121,39 @@ function pasteCoords(){Native.pasteCandyLocation()}
 function setPastedCoords(value){
  if(currentPanel==="location"&&$("candyCoords"))$("candyCoords").value=value||"";
 }
+// Native WebView pointer events: dispatch on release, never depend on a
+// synthesized click after touch. Long press opens periods only, no refresh.
 const refresh=$("refresh");
-refresh.addEventListener("pointerdown",()=>{
- refreshHeld=false;clearTimeout(refreshHold);
- refreshHold=setTimeout(()=>{refreshHeld=true;openPanel("period")},550);
+let pointerActive=false;
+function cancelRefreshHold(){clearTimeout(refreshHold);refreshHold=null}
+refresh.addEventListener("pointerdown",event=>{
+ if(event.isPrimary===false)return;
+ pointerActive=true;refreshHeld=false;
+ cancelRefreshHold();
+ refreshHold=setTimeout(()=>{
+   if(!pointerActive)return;
+   refreshHeld=true;
+   openPanel("period");
+ },550);
 });
-for(const e of ["pointerup","pointercancel","pointerleave"]){
- refresh.addEventListener(e,()=>clearTimeout(refreshHold));
-}
-refresh.addEventListener("click",()=>{
- if(refreshHeld){refreshHeld=false;return}
- Native.refreshCandy();
+refresh.addEventListener("pointerup",event=>{
+ if(!pointerActive)return;
+ pointerActive=false;cancelRefreshHold();
+ if(!refreshHeld){Native.refreshCandy();}
+ refreshHeld=false;
+ event.preventDefault();
+});
+refresh.addEventListener("pointercancel",()=>{
+ pointerActive=false;refreshHeld=false;cancelRefreshHold();
+});
+refresh.addEventListener("pointerleave",()=>{
+ // Dragging off the icon must not be interpreted as a short tap.
+ pointerActive=false;cancelRefreshHold();
+});
+refresh.addEventListener("click",event=>{
+ // Desktop/keyboard accessibility fallback; pointerup already sent the call.
+ if(event.detail===0)Native.refreshCandy();
+ event.preventDefault();
 });
 window.syncCandy=syncCandy;window.setPastedCoords=setPastedCoords;
 </script></body></html>
