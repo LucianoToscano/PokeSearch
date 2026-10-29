@@ -509,6 +509,28 @@
           "Validação visual final em Samsung e outras marcas após distribuição; poderão existir sprites sem fonte exata disponível."
         ]
       }
+    },
+    {
+      "id": "lt165-costume-pvp-evolution-reference-20261029",
+      "minVersionCode": 54370,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT165 — Análise PvP completa para fantasias",
+      "sections": {
+        "novidades": [
+          "A análise PvP mostra também as referências de Noivern e Ninetales para Noibat/Vulpix com fantasia, nas três ligas."
+        ],
+        "melhorias": [
+          "Cada referência apresenta Rank Classe, eficiência IV, PC, nível e Rank Geral quando disponíveis.",
+          "Referências ficam identificadas como comparação matemática, sem afirmar que a fantasia pode evoluir."
+        ],
+        "correcoes": [
+          "Corrigido o caso em que o selo Ref. mostrava uma evolução, mas ela desaparecia da análise expandida.",
+          "Mantidas distinções de formas regionais e estatísticas próprias, além das duas Pokébolas, filtros, Premium e coordenadas."
+        ],
+        "emDesenvolvimento": [
+          "A instalação de novas versões depende de confirmação do usuário no Android; não ocorre atualização silenciosa."
+        ]
+      }
     }
   ]
 }
