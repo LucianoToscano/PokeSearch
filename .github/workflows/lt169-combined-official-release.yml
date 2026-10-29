@@ -85,6 +85,10 @@ jobs:
           node app/tests/lt148-pvp-analysis-rank-label-stat-centering.test.js
           node app/tests/lt153-pvp-clarity-layout.test.js
           node app/tests/lt160-hide-empty-pvp-center-coords.test.js
+          # These historical layout contracts now assert full GPS numbers,
+          # not the removed centered/ellipsized behavior.
+          node app/tests/lt153-pvp-clarity-layout.test.js
+          node app/tests/lt165-pvp-costume-evolution-references.test.js
           node app/tests/lt161-shellos-gastrodon-west-sea-sprites.test.js
           node app/tests/lt162-cosmetic-pvp-and-source-sprites.test.js
           node app/tests/lt163-search-league-rank-in-collapsed-card.test.js
