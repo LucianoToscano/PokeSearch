@@ -179,7 +179,7 @@ function renderPanel(){
       (settings[id]?' chosen':'')+'" data-key="'+id+'" aria-pressed="'+
       (!!settings[id])+'" onclick="toggleInfo(this.dataset.key)"><span>'+
       label+'</span><b>'+(settings[id]?'✓':'–')+'</b></button>').join("")+'</div>';
-   requestHeight(116,false);
+   requestHeight(142,false);
  }else if(currentPanel==="location"){
    el.innerHTML='<div class="choiceHeader"><span>Localização</span><div class="locClipboardTools">'+
     '<button type="button" onclick="copyCoords()" title="Copiar coordenadas" aria-label="Copiar coordenadas">'+copyGlyph+'</button>'+
@@ -194,7 +194,7 @@ function renderPanel(){
    $("candyCoords").value=settings.coords||"";
    $("candyRadius").value=kmDisplay(settings.radius);
    $("candyRadiusSlider").value=String(Math.max(1,Math.min(1000,Math.round(settings.radius/1000))));
-   requestHeight(141,false);
+   requestHeight(172,false);
  }
 }
 function setRadiusFromSlider(km){if($("candyRadius"))$("candyRadius").value=String(km)}
