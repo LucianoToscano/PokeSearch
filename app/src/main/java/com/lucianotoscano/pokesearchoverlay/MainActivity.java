@@ -101,6 +101,7 @@ public class MainActivity extends Activity {
     private void refreshHomeSurfaceOpacity(){
         int alpha=Math.round(255f*(100-homeSurfacesTransparency())/100f);
         for(android.graphics.drawable.GradientDrawable bg:homeSurfaces)bg.setAlpha(alpha);
+        HomeDashboardV2.refreshOpacity(this,homeSurfacesTransparency());
     }
     private TextView homeThemeButton;
     private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
@@ -732,8 +733,9 @@ public class MainActivity extends Activity {
         screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));
         // Assemble the new Home after all original views/listeners/Firebase
         // bindings exist. Old stacked layout is no longer visible.
+        HomeDashboardV2.begin(this);
         TextView[] searchStates=HomeDashboardV2.restylePokeballs(
-            this,homeLightMode,dualOverlayRow);
+            this,homeLightMode,dualOverlayRow,homeSurfacesTransparency());
         homePrimaryState=searchStates[0];
         homeSecondaryState=searchStates[1];
         HomeDashboardV2.assemble(this,homeLightMode,homeSurfacesTransparency(),
