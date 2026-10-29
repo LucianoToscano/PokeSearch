@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT145 0.01.45 — atualização oficial global via GitHub (29/10/2026)
+
+- **Publicação oficial CONFIRMADA:** https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.45-54350 — estável, não pré-lançamento, disponível em `releases/latest`.
+- **APK oficial:** `PokeSearch-v0.01.45-LT.apk`, 49.405.343 bytes, SHA-256 `72be16d527bfeb977840ef7fef73ff5a38e60be52bbae9ed9f8a577ad75d90dd`; versão 0.01.45 (54350) e certificado Android v2 permanente verificados.
+- **Publicação e validação:** GitHub Actions https://github.com/LucianoToscano/PokeSearch/actions/runs/40810267067 — SUCCESS, merge main preservado, download e assinatura verificados. Fonte exata do APK QA22: `87bd4988b056186d3c8254d021f7df2cb22994b1`.
+- **Atualização no app:** `GitHubUpdateCenter` consulta `releases/latest`; só usuários com `versionCode < 54350` são elegíveis ao aviso e à instalação voluntária. APKs QA com versionCode 54350 exigem instalação manual do APK oficial; a atualização nunca é silenciosa.
+- **Ponte legada Google Drive:** o arquivo público `atualizacao.json` (ID `15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf`) ainda anunciava LT144 no momento da auditoria; não declarar que esse canal foi atualizado. Atualizá-lo exige publicar APK LT145 na pasta Drive e substituir o manifesto com a referência/verificação SHA correta.
+- **Limitações de QA:** validação física específica da QA22 em ambos os overlays ainda pendente; pode haver placeholder para formas especiais sem sprite exata. Não confundir CI SUCCESS com teste Samsung.
+
 ## LT145 QA22 — acabamento do card, Rank e rolagem (29/10/2026)
 
 ### Distribuição e merge QA22 — verificado (29/10/2026)
