@@ -375,6 +375,29 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #major .statTile:nth-child(3) .statValue{font-size:7.5px;letter-spacing:-.2px}
 #major .ivTile .ivTypes{left:1px}
 #major .ivTile .ivPercent{right:1px}
+
+/* QA17 — 30% less initial card-window footprint (248x205 -> 216x165 dp).
+   Preserve adaptive content height and legible controls; remove unused spacing only.
+   Height of IV/PC/Nv. bars: 21 -> 23px (+9.52%). */
+#panel{padding:4px 4px 5px;border-radius:11px}
+#header{grid-template-columns:32px minmax(0,1fr) 77px;column-gap:3px}
+#artColumn #img,#artColumn #imageFallback{width:31px;height:31px;flex-basis:31px}
+#names{gap:1px;padding-top:0}
+#subRow{gap:1px 2px}
+#headerActions{width:77px;gap:1px}
+#headerButtons{width:77px;gap:4px}
+#headerActions #timer{width:77px;max-width:77px;gap:2px}
+#major{margin-top:2px;gap:3px}
+#major .statTile{height:23px;min-height:23px;max-height:23px;
+ padding:0 1px 1px;gap:0}
+#major .statHeading{line-height:9px}
+#major .statValue{line-height:11px}
+#info{margin-top:1px;line-height:1.16}
+#info div{margin:0}
+#evolutions{margin-top:2px}
+#evoToggle{padding:2px 4px}
+#coordRow{margin-top:2px}
+#coordRow #coords{min-height:28px}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">

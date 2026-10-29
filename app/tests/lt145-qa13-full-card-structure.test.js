@@ -18,5 +18,5 @@ assert.ok(html.includes('#major .statValue.red{color:#ff9bb0}'),"old raw IV colo
 assert.ok(code.includes('rankLine.textContent=c.rank?'),"rank preserved");
 assert.ok(html.includes('id="evolutions" hidden'),"PvP preserved");
 assert.ok(html.includes('#coordRow #coords:not(.hasCoords):not(.isPending){'),"red coordinates preserved");
-assert.ok(java.includes('DETAIL_DP=248')&&java.includes('Math.min(520,available)'),"native window proportional");
+assert.ok(java.includes('DETAIL_DP=216')&&java.includes('Math.min(520,available)'),"native window proportional");
 console.log("LT145 QA13 complete card design PASS");

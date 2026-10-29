@@ -164,7 +164,7 @@ public class OverlayService extends Service {
     private android.content.SharedPreferences overlayPrefs(){
         return getSharedPreferences(isSecondaryOverlay()?"prefs_secondary":"prefs",0);
     }
-    private static final int BUBBLE_DP=45, DETAIL_DP=248, TOOLBAR_DP=34, MENU_BASE_DP=34;
+    private static final int BUBBLE_DP=45, DETAIL_DP=216, TOOLBAR_DP=34, MENU_BASE_DP=34;
     private static final int RESULTS_HEADER_DP=30;
     private int spriteSize=45;
     private String visualPrefsJson="{}";
@@ -332,7 +332,7 @@ public class OverlayService extends Service {
     private int lastPopupX=Integer.MIN_VALUE,lastPopupY=Integer.MIN_VALUE,lastPopupW=-1,lastPopupH=-1;
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
-    private int height=32,detailHeight=205,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
+    private int height=32,detailHeight=165,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
     private boolean deferMenuSync=false;
     private boolean resultLoaded=false,resultCollapsed=false;
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
