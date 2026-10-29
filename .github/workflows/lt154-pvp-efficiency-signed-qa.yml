@@ -3,7 +3,7 @@ name: PokeSearch LT154 — análise PvP legível — APK QA assinado
 on:
   push:
     branches: [feature/lt153-pvp-clarity-card-20261029]
-    paths: ['.github/workflows/lt154-pvp-card-signed-qa.yml']
+    paths: ['.github/workflows/lt154-pvp-efficiency-signed-qa.yml']
 permissions:
   contents: write
 concurrency:
