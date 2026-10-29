@@ -82,7 +82,7 @@ function renderPanel(){
    '<div id="locError" class="extraNote"></div>';
   $("candyCoords").value=settings.coords||"";
   $("candyRadius").value=settings.radius||1000;
-  requestHeight(265,false);
+  requestHeight(265,true);
  }
 }
 function choosePeriod(value){settings.period=value;Native.setCandyPeriod(value);closePanel()}
