@@ -5,7 +5,7 @@ const java=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotosc
 const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(script);new vm.Script(script);
 const compact=html.slice(html.indexOf("/* QA14 — restore near-original compact dimensions;"));
 assert.ok(java.includes("DETAIL_DP=200"),"narrower native width");
-assert.ok(java.includes("detailHeight=165"),"smaller first-frame height");
+assert.ok(java.includes("detailHeight=125"),"smaller first-frame height");
 assert.ok(java.includes("Math.min(520,available)"),"full content remains accessible");
 assert.ok(compact.includes("#panel{padding:5px 5px 6px}"));
 assert.ok(compact.includes("#header{grid-template-columns:34px minmax(0,1fr) 89px;"));
@@ -17,7 +17,7 @@ assert.ok(compact.includes("#major .ivTile .ivPercent{top:2px;right:3px;font-siz
 assert.ok(html.includes("#major .statValue.red{color:#ff9bb0}"),"original IV tone");
 assert.ok(html.includes("<span class=\"despawnLabel\">Despawn</span>"));
 assert.ok(html.includes("#coordRow #coords:not(.hasCoords):not(.isPending){"),"red coordinates CTA");
-assert.ok(script.includes('Math.ceil(document.getElementById("panel").scrollHeight)+10'),"adaptive window height retained");
+assert.ok(script.includes('Math.ceil(document.getElementById("panel").scrollHeight)+3'),"adaptive window height retained");
 assert.ok(script.includes('Native.copyCoords(currentCoords);return;'),"second tap copy");
 assert.ok(script.includes('Native.prepareCaptureShare(currentIndex)'),"share confirmation retained");
 console.log("LT145 QA14: all card dimensions compact again; IV percent not styled as inflated pill PASS");

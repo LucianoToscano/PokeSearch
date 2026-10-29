@@ -418,6 +418,40 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #subRow .formChip{font-size:8px;color:#b9c9d7;white-space:nowrap}
 #major{justify-content:flex-start;justify-items:start}
 #artColumn.gengarSprite.gengarHalloween #img{transform:scale(.56);transform-origin:center}
+/* QA19: pack the OUTER card, not its information cells.
+   Preserve 200dp shell and responsive text/buttons, reclaim unused margins. */
+#panel{padding:3px;border-radius:10px;min-height:0;height:auto}
+#header{grid-template-columns:31px minmax(0,1fr) 77px;row-gap:0;column-gap:3px}
+#artColumn #img,#artColumn #imageFallback{width:30px;height:30px;flex-basis:30px}
+#nameLine{padding:0;margin:0}
+#nameLine b{font-size:11px;line-height:1.18;white-space:normal;overflow-wrap:anywhere}
+#subRow{margin:0;padding:0;gap:1px 3px}
+#subRow .metaPair{gap:2px}
+#subRow .sexChip,#subRow .sizeChip{padding:0 2px;min-height:12px}
+#headerActions{gap:1px}
+#major{display:grid;width:100%;max-width:100%;
+ grid-template-columns:minmax(88px,1fr) 42px 38px;
+ justify-content:stretch;justify-items:stretch;align-items:stretch;gap:3px;margin-top:2px}
+#major .statTile{height:23px;min-height:23px;max-height:23px;padding:0 2px 1px;gap:0;min-width:0;overflow:hidden}
+#major .statHeading{font-size:8px;line-height:9px;text-align:center}
+#major .statValue{font-size:10px;line-height:11px;text-align:center}
+#major .statTile:nth-child(2) .statValue{font-size:9px;letter-spacing:-.1px}
+#major .statTile:nth-child(3) .statValue{font-size:8px;letter-spacing:-.1px}
+#major .ivTile .ivTypes{left:2px}
+#major .ivTile .ivPercent{right:2px}
+#rankLine{margin-top:1px}
+#info{margin-top:1px;gap:1px 3px;line-height:1.16;min-width:0}
+#info .infoLabel,#info .infoValue{margin:0;padding:0}
+#evolutions{margin-top:2px}
+#evoToggle{padding:2px 4px}
+#coordRow{margin-top:2px}
+#captureShare{margin-top:2px}
+#captureConfirm{margin-top:2px}
+#captureStatus{margin-top:1px}
+#coordsNumbers{margin-top:1px}
+#artColumn.gengarSprite #img{transform:scale(calc(.78 * var(--ps-alpha-scale,1)));transform-origin:center}
+#artColumn.gengarSprite.gengarHalloween #img{transform:scale(calc(.49 * var(--ps-alpha-scale,1)))}
+#artColumn:not(.gengarSprite) #img{transform:scale(var(--ps-alpha-scale,1))}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -462,7 +496,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
  <small id="captureStatus" hidden></small>
 </div>
-<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
 let coordsNote="",coordsPending=false,coordsRequestSeq=0;
@@ -716,7 +750,7 @@ const evoIdentity=c=>JSON.stringify([
  Number(c?.sourceIndex??-1),String(c?.name||""),String(c?.iv||""),String(c?.cp??"")]);
 function resizeEvolutionPanel(){
  requestAnimationFrame(()=>Native.resizeDetail(
-  Math.ceil(document.getElementById("panel").scrollHeight)+10));
+  Math.ceil(document.getElementById("panel").scrollHeight)+3));
 }
 function toggleEvolutionDetails(){
  const section=document.getElementById("evolutions");
@@ -867,6 +901,7 @@ window.showDetails=(c,mode,watched)=>{
    if(generation!==loadGeneration)return;
    if(img.naturalWidth>=8&&img.naturalHeight>=8){
     displayed=true;img.style.display="block";fallback.style.display="none";
+    window.PokeSearchSpriteScale?.apply?.(img);
    }
   };
   img.onerror=()=>{

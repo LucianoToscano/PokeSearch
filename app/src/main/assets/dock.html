@@ -776,6 +776,11 @@ body.result-window #spawns:not(:empty){
  margin-top:var(--visual-top-gap,0px)!important; /* Explicit Editor Visual override only. */
 }
 body.result-window .spriteStage .sprite{transform:scale(var(--visual-sprite-scale,1));transform-origin:center}
+/* QA19: compose per-sprite alpha correction with Editor Visual scale. */
+body.result-window .spriteStage .sprite{
+ transform:scale(calc(var(--visual-sprite-scale,1) * var(--ps-alpha-scale,1)));
+ transform-origin:center
+}
 body.result-window.visual-results-horizontal #spawns{
  display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
  align-items:flex-start!important;justify-content:flex-start!important;
@@ -4296,7 +4301,7 @@ if(window.location.search.indexOf("results=1")!==-1){
  document.write('<script src="file:///android_asset/pvpoke-iv-gamemaster.js"><\/script>');
 }
 </script>
-<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="cooldown_estimate.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 const popupWindow=window.location.search.indexOf("popup=1")!==-1;
@@ -5755,7 +5760,10 @@ function attachSpriteFeedback(){
   };
   const good=()=>img.naturalWidth>=8&&img.naturalHeight>=8;
   const loaded=()=>{
-   if(good()){done=true;stage.classList.remove("failed");stage.classList.add("loaded");}
+   if(good()){
+    done=true;stage.classList.remove("failed");stage.classList.add("loaded");
+    window.PokeSearchSpriteScale?.apply?.(img);
+   }
    else failed();
   };
   const failed=()=>{
@@ -6375,7 +6383,7 @@ function draw(){
   const halloweenGengar=gengarSpecies&&(c.isCostume===true||
    /halloween|hallowe|costume|fantasia|disfarce|outfit|event/i.test(costumeHint)||
    (c.costume_id!=null&&Number(c.costume_id)>0));
-  const effectiveArtFit=halloweenGengar?0.48:artFit;
+  const effectiveArtFit=halloweenGengar?0.42:artFit;
   const icon='<span class="spriteStage">'+
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" aria-hidden="true">◉</span></span>';
