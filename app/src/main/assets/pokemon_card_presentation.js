@@ -35,7 +35,14 @@
  }
  function types(card,data){
   const entry=meta(card,data);
-  const list=entry?.[0];
+  // Seasonal Deerling/Sawsbuck forms only change appearance, not typing.
+  // PvPoke may not have a form-specific entry. Keep this fallback scoped to
+  // type icons: never use it to infer legacy/Elite moves or unrelated forms.
+  const dex=Number(String(card?.number||card?.dex||"").replace("#",""));
+  const form=clean(card?.form);
+  const seasonal=(dex===585||dex===586)&&
+   /^(spring|summer|autumn|winter)(?:form)?$/.test(form);
+  const list=entry?.[0]||(seasonal?["normal","grass"]:null);
   if(!Array.isArray(list)||list.length<1||list.length>2)return "";
   return list.filter(t=>Object.prototype.hasOwnProperty.call(TYPES,t))
    .map(t=>{const src=(typeof window!=="undefined"?window.PokeSearchTypeIcons:globalThis.PokeSearchTypeIcons)?.[t];
