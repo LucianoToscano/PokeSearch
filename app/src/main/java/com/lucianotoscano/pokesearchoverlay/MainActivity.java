@@ -93,14 +93,16 @@ public class MainActivity extends Activity {
     // Native Home panels change alpha; the wallpaper never changes transparency.
     private final java.util.List<android.graphics.drawable.GradientDrawable> homeSurfaces=
         new java.util.ArrayList<>();
+    private final java.util.List<Integer> homeSurfaceBaseAlpha=new java.util.ArrayList<>();
     private int homeSurfacesTransparency(){
         android.content.SharedPreferences p=getSharedPreferences("prefs",0);
         return Math.max(0,Math.min(100,p.getInt("homePanelsTransparency",
             p.getInt("homeBackgroundTransparency",0))));
     }
     private void refreshHomeSurfaceOpacity(){
-        int alpha=Math.round(255f*(100-homeSurfacesTransparency())/100f);
-        for(android.graphics.drawable.GradientDrawable bg:homeSurfaces)bg.setAlpha(alpha);
+        int strength=100-homeSurfacesTransparency();
+        for(int i=0;i<homeSurfaces.size();i++)
+            homeSurfaces.get(i).setAlpha(Math.round(homeSurfaceBaseAlpha.get(i)*strength/100f));
     }
     private TextView homeThemeButton;
     private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
@@ -268,8 +270,14 @@ public class MainActivity extends Activity {
         android.graphics.drawable.GradientDrawable bg=round(color,radius);
         if(stroke!=0)bg.setStroke(d(1),stroke);
         homeSurfaces.add(bg);
-        bg.setAlpha(Math.round(255f*(100-homeSurfacesTransparency())/100f));
+        homeSurfaceBaseAlpha.add(Color.alpha(color));
+        bg.setAlpha(Math.round(Color.alpha(color)*(100-homeSurfacesTransparency())/100f));
         return bg;
+    }
+    private android.graphics.drawable.GradientDrawable homeGlassPanel(int radius){
+        return homeSurface(homeLightMode?Color.argb(205,249,247,238):
+            Color.argb(181,41,43,44),radius,
+            homeLightMode?Color.argb(123,255,255,255):Color.argb(95,235,228,210));
     }
     private TextView homeMiniButton(String glyph,String description){
         TextView t=homeText(glyph,21,Color.WHITE,true);
@@ -305,9 +313,10 @@ public class MainActivity extends Activity {
         FrameLayout frame=new FrameLayout(this);
         homeRoot=frame;
         homeSurfaces.clear();
+        homeSurfaceBaseAlpha.clear();
         // Owner-supplied backgrounds share the same 941×1672 portrait geometry.
         // CENTER_CROP (one gravity for both) avoids distortion when switching.
-        frame.setBackgroundColor(homeLightMode?Color.rgb(239,245,249):Color.rgb(10,14,23));
+        frame.setBackgroundColor(homeLightMode?Color.rgb(240,240,231):Color.rgb(26,28,29));
         ImageView pageBackground=new ImageView(this);
         // Wallpaper remains an independent, full-opacity decorative image.
         pageBackground.setImageResource(homeLightMode?
@@ -317,7 +326,7 @@ public class MainActivity extends Activity {
         pageBackground.setAlpha(1f); // Slider affects surfaces only.
         frame.addView(pageBackground,new FrameLayout.LayoutParams(-1,-1));
         View dim=new View(this);
-        dim.setBackgroundColor(homeLightMode?Color.argb(8,255,255,255):Color.argb(16,6,12,24));
+        dim.setBackgroundColor(homeLightMode?Color.argb(8,255,250,237):Color.argb(24,40,37,34));
         frame.addView(dim,new FrameLayout.LayoutParams(-1,-1));
 
         LinearLayout screen=new LinearLayout(this);
@@ -344,8 +353,7 @@ public class MainActivity extends Activity {
         LinearLayout dualOverlayRow=new LinearLayout(this);
         dualOverlayRow.setGravity(Gravity.CENTER);
         dualOverlayRow.setOrientation(LinearLayout.HORIZONTAL);
-        dualOverlayRow.setBackground(homeSurface(
-            homeLightMode?Color.rgb(243,248,251):Color.rgb(24,31,46),11,0));
+        dualOverlayRow.setBackground(homeGlassPanel(16));
         dualOverlayRow.setPadding(d(7),d(4),d(7),d(4));
         overlayControl=makeIcon(R.drawable.sem_filtro,"Ativar Pokébola 1");
         secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,
@@ -377,19 +385,15 @@ public class MainActivity extends Activity {
         dualOverlayRow.setVisibility(View.VISIBLE);
         // Insert after header, preserving top toolbar space.
         screen.addView(dualOverlayRow,dualLp);
+        // LT150: Premium glass header directly under the existing Pokébolas.
+        // Keep both buttons, all menu icons and the independent overlay services.
         if(PremiumAccess.controlled()){
-            TextView accountPremium=homeText("Conta Premium  ·  Gerenciar / Sair",11,
-                homeLightMode?Color.rgb(34,87,143):Color.rgb(149,203,255),true);
-            accountPremium.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
-            accountPremium.setContentDescription(
-                "Gerenciar ou sair da conta Google Premium");
-            accountPremium.setMinHeight(d(30));
-            accountPremium.setPadding(d(6),0,d(8),d(3));
-            accountPremium.setOnClickListener(v->showPremiumAccountOptions());
-            LinearLayout.LayoutParams accountLp=new LinearLayout.LayoutParams(-1,d(30));
-            accountLp.leftMargin=d(4);accountLp.rightMargin=d(4);
-            accountLp.bottomMargin=d(4);
-            screen.addView(accountPremium,accountLp);
+            LinearLayout.LayoutParams heroLp=new LinearLayout.LayoutParams(-1,-2);
+            heroLp.leftMargin=d(4);
+            heroLp.rightMargin=d(4);
+            heroLp.bottomMargin=d(10);
+            screen.addView(HomePremiumGlass.create(this,homeLightMode,
+                homeSurfacesTransparency(),this::showPremiumAccountOptions),heroLp);
         }
 
         // HOME-02: icon only at top left; compact actions on the right.
@@ -463,11 +467,9 @@ public class MainActivity extends Activity {
         // HOME-04: compact reference card, fed only by verified profile fields.
         LinearLayout auth=new LinearLayout(this);
         auth.setOrientation(LinearLayout.VERTICAL);
-        auth.setPadding(d(15),d(15),d(15),d(16));
-        auth.setBackground(homeSurface(
-            homeLightMode?Color.rgb(251,253,255):Color.rgb(33,37,44),
-            20,homeLightMode?Color.rgb(175,188,204):Color.rgb(77,84,96)));
-        auth.setElevation(d(5));
+        auth.setPadding(d(13),d(12),d(13),d(13));
+        auth.setBackground(homeGlassPanel(18));
+        auth.setElevation(d(2));
         screen.addView(auth,new LinearLayout.LayoutParams(-1,-2));
 
         LinearLayout accountHeading=new LinearLayout(this);
@@ -676,8 +678,8 @@ public class MainActivity extends Activity {
         TextView installations=homeText("▣  Instalações: —",11,
             homeLightMode?Color.rgb(34,63,80):Color.rgb(224,237,245),true);
         online.setGravity(Gravity.CENTER);installations.setGravity(Gravity.CENTER);
-        online.setBackground(homeSurface(homeLightMode?Color.rgb(251,253,255):Color.rgb(33,37,44),11,0));
-        installations.setBackground(homeSurface(homeLightMode?Color.rgb(251,253,255):Color.rgb(33,37,44),11,0));
+        online.setBackground(homeGlassPanel(12));
+        installations.setBackground(homeGlassPanel(12));
         LinearLayout.LayoutParams firstStat=new LinearLayout.LayoutParams(0,-1,1);
         firstStat.rightMargin=d(5);
         stats.addView(online,firstStat);
@@ -691,9 +693,7 @@ public class MainActivity extends Activity {
             homeLightMode?Color.rgb(24,65,78):Color.rgb(205,235,246),true);
         share.setGravity(Gravity.CENTER);
         share.setContentDescription("Compartilhar APK PokeSearch pelo Google Drive");
-        share.setBackground(homeSurface(
-            homeLightMode?Color.rgb(235,247,250):Color.rgb(27,49,62),
-            11,homeLightMode?Color.rgb(155,192,204):Color.rgb(72,118,135)));
+        share.setBackground(homeGlassPanel(12));
         // LT103: integrate the small thank-you shortcut into an existing
         // Home action row, not as a floating banner stranded between sections.
         LinearLayout shareActions=new LinearLayout(this);
@@ -723,9 +723,7 @@ public class MainActivity extends Activity {
         TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+" LT  •  PoGoCoordinates /search",10,
             homeLightMode?Color.rgb(26,51,72):Color.rgb(185,208,233),false);
         footer.setGravity(Gravity.CENTER);
-        footer.setBackground(homeSurface(
-            homeLightMode?Color.argb(200,248,251,255):Color.argb(135,9,23,42),
-            12,homeLightMode?Color.argb(80,33,65,89):Color.argb(75,180,215,247)));
+        footer.setBackground(homeGlassPanel(12));
         footer.setPadding(d(9),d(5),d(9),d(5));
         screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));
         // Mission icon floats above the footer, without stealing space from
