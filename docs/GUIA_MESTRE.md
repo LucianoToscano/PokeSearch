@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT177 EM QA — API DIRETA DOCE RARO E MENUS VISUAIS DA POKÉBOLA (29/10/2026)
+
+Após comparação de prints físicos no Samsung, corrigida a escala da sprite (20dp) e substituído o menu anterior por **toolbar nativa em WebView local** com o mesmo CSS de tiles 30×34dp, espaçamento 2dp e popups do dock das Pokébolas. Os resultados agora são coluna transparente compacta em vez de cards largos. A coleta passou da extração DOM do site para **POST oficial `/rare-candy/search`** executado dentro da origem PoGoCoordinates: `coords` diretas, `expires_at` UTC, `distance_km`, sem `/reveal`, sem transferência de JWT para Android, rate-limit 429 e raio em **metros** na UI (1000m→1km API). Nova candidata privada **0.01.77 / 54382**, assinada somente para QA, sem nova release pública, sem merge e sem OTA. [Especificação e registro de teste LT177](LT175_DOCE_RARO_FLUTUANTE_QA_20261029.md).
+
+---
+
 ## LT176 EM QA — CORREÇÃO DA BOLHA DO DOCE RARO (29/10/2026)
 
 **QA assinada concluída:** [Actions #40932888221 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40932888221), [artifact privado #12924075960](https://github.com/LucianoToscano/PokeSearch/actions/runs/40932888221/artifacts/12924075960), APK `0.01.76 / 54381` de 49.536.381 bytes, assinatura Android v2 permanente verificada. Publicação pública e testes funcionais Samsung continuam pendentes. 
