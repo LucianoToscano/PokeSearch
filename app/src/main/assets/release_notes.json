@@ -796,23 +796,27 @@
       }
     },
     {
-      "id": "lt181-update-banner-top-pokeballs-20261029",
+      "id": "lt181-top-update-candy-menu-parity-20261029",
       "minVersionCode": 54386,
       "date": "29/10/2026",
-      "title": "PokeSearch LT181 — Aviso de atualização no topo",
+      "title": "PokeSearch LT181 — Menus unificados e doces completos",
       "sections": {
         "novidades": [
-          "Avisos de novas versões agora aparecem no início da Home, acima das Pokébolas 1 e 2."
+          "Aviso de nova versão no topo da Home, entre o nome PokeSearch e os botões das duas Pokébolas.",
+          "Doce Raro com Localização e Atualização seguindo o mesmo tamanho e layout compacto dos menus da Pokébola; Informações em grade 2×2."
         ],
         "melhorias": [
-          "Cartão compacto de atualização aparece somente quando há uma versão mais recente e elegível, sem espaço vazio quando não há atualização.",
-          "Mantidos os botões Baixar atualização, Depois e Ignorar, o verificador de assinatura permanente e o download oficial pelo GitHub."
+          "As sprites e tempos dos dez doces são exibidos inteiros sempre que houver espaço; em telas menores a lista permite rolagem, sem corte.",
+          "Botões Doar, Reportar e Fechar do menu ••• obedecem à mesma transparência, borda e sombra dos demais controles, inclusive no modo claro.",
+          "O Doce Raro acompanha a mesma preferência de tema, transparência e desfoque configurada para os menus das Pokébolas."
         ],
         "correcoes": [
-          "Eliminada a necessidade de rolar a Home para encontrar o aviso de atualização."
+          "Removido o limite local fixo de 460 dp que cortava os últimos doces quando eram exibidos dez resultados.",
+          "Os menus compactos de localização e informações agora reservam espaço correto para a barra de ferramentas e os campos.",
+          "Mantidos atualização a cada três minutos ou após copiar todos os dez doces ativos, além do respeito ao despawn e ao Retry-After oficiais."
         ],
         "emDesenvolvimento": [
-          "O Android continua exigindo confirmação para instalar o APK. Os avisos dependem de conexão e verificação de atualização."
+          "A instalação da atualização requer confirmação do Android; consultas ao PoGoCoordinates permanecem sujeitas aos limites publicados pelo próprio serviço."
         ]
       }
     }
