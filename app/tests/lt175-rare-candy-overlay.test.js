@@ -52,6 +52,14 @@ assert(source.includes('int contentDp=(showName||showLocation)?228:48'),"Default
 assert(menu.includes('class="periodChoices"'),"Compact 1/3/5 period row");
 
 assert(menu.includes("Native.candyMenuFocus(true)"));
+assert(menu.includes('refresh.addEventListener("pointerup"'),"Refresh tap must fire from pointerup");
+assert(menu.includes('if(!refreshHeld){Native.refreshCandy();}'),"Short press must refresh immediately");
+assert(menu.includes('refreshHeld=true;')&&menu.includes('openPanel("period")'),"Long hold must open interval menu");
+assert(!menu.includes('if(refreshHeld){refreshHeld=false;return}\n Native.refreshCandy()'),"No deferred click-only refresh");
+assert(source.includes('pendingManualRefresh'),"Manual taps must survive a busy WebView");
+assert(source.includes('finishPendingManualRefresh()'),"Deferred request must fire after in-flight search");
+assert(source.includes('if(!ready||!isOfficialSearch())'),"Manual refresh must queue during initial loading");
+
 assert(source.includes("expires_at")&&source.includes("java.time.Instant.parse(expiry)"));
 assert(source.includes("Math.round(kilometers*1000)+\" m\""));
 assert(source.includes("setColorFilter(new ColorMatrixColorFilter(m))"));
@@ -67,6 +75,8 @@ assert(workflow.includes("PokeSearch-v0.01.78-LT-QA.apk"));
 
 const png=Buffer.from(read("assets/rare_candy_icon.b64").trim(),"base64");
 assert(png.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));
+assert.equal(png.readUInt32BE(16),96);
+assert.equal(png.readUInt32BE(20),96);
 
 let lastRequest=null, httpStatus=200, retryAfter="61", authorizedToken="test-token";
 let data={
