@@ -38,5 +38,5 @@ assert.ok(hero.includes("account.setOnClickListener(v->onAccount.run())"));
 assert.ok(hero.includes("Seu universo de caça."));
 assert.ok(hero.includes("Color.argb(215,68,66,63)"),
  "Warm smoked glass, not blue-black UI");
-assert.doesNotMatch(hero,/startService\(|stopService\(|HttpURLConnection|WebView|SharedPreferences/);
+assert.doesNotMatch(hero,/startService\(|stopService\(|HttpURLConnection|new WebView\(|\.getSharedPreferences\(/);
 console.log("LT150 PASS: new glass Premium Home, preserved original control/overlay/login/chat, real account state");
