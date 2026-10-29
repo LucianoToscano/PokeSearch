@@ -1,0 +1,156 @@
+name: LT180 — Animação real do ícone ↻ de Doce Raro (QA)
+on:
+  push:
+    branches: [fix/lt180-candy-refresh-spin-20261029]
+    paths:
+      - 'app/**'
+      - 'scripts/**'
+      - 'app/src/main/AndroidManifest.xml'
+      - '.github/workflows/lt180-candy-refresh-spin-signed-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pokesearch-lt180-candy-signed-qa-apk
+  cancel-in-progress: true
+jobs:
+  signed-qa:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    environment:
+      name: official-updates
+    timeout-minutes: 65
+    env:
+      POKE_TEST_VERSION_CODE: '54385'
+      POKE_TEST_VERSION_LABEL: '51185'
+      POKE_TEST_PUBLIC_VERSION: '0.01.80'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
+      POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
+      POKE_SCRAPBOOK_STAGE1_QA: 'true'
+      POKE_SCRAPBOOK_QA_ACK: 'stage1-readonly'
+      POKE_SCRAPBOOK_ONLINE_QA: 'true'
+      POKE_SCRAPBOOK_ONLINE_ACK: 'read-only-moderation-pending'
+      QA_APK: 'PokeSearch-v0.01.80-LT-QA.apk'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Prepare Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Restore permanent signing key (no credentials in artifacts)
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for key in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$key")" || { echo "::error::Missing signing secret"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/lt180-signing.p12"
+          chmod 600 "$RUNNER_TEMP/lt180-signing.p12"
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/lt180-signing.p12" >> "$GITHUB_ENV"
+          CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/lt180-signing.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" |
+            openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256" || { echo "::error::Signer does not match LT172"; exit 1; }
+      - name: Validate OTA contracts, Java origin and dual overlay regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node app/tests/lt173-ota-signed-assets.test.js
+          node --check app/src/main/assets/rare_candy_probe.js
+          node app/tests/lt175-rare-candy-overlay.test.js
+          node app/tests/lt179-candy-refresh-gestures.test.js
+          node app/tests/lt180-candy-refresh-animation.test.js
+          python3 scripts/test_ota_builder.py
+          mkdir -p "$RUNNER_TEMP/qa"
+          javac --release 17 -d "$RUNNER_TEMP/qa" app/src/main/java/com/lucianotoscano/pokesearchoverlay/LocalBridgePagePolicy.java app/tests/OtaLocalBridgePolicyTest.java
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.OtaLocalBridgePolicyTest
+          node app/tests/lt170-dual-pogo-account-slots.test.js
+          node app/tests/lt171-vip-two-trainers-per-account.test.js
+          node app/tests/lt171-two-mirrored-profile-cards.test.js
+          node app/tests/lt169-all-go-sprites-api-dom-parity.test.js
+          node app/tests/lt112-dual-overlay-parity.test.js
+      - name: Restore reproducible asset datasets for signed APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/update_wwm_catalog.py app/src/main/assets
+          python3 app/scripts/build_sprite_bundle.py --workers 12 --minimum-normal 950
+          test -s app/src/main/assets/pokemon-sprites/manifest.json
+          test -s app/src/main/assets/pokemon-sprites/base/25.png
+          test -s app/src/main/assets/pokemon-sprites/shiny/94.png
+      - name: Build protected LT180 QA APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Verify APK metadata, signature, R8, assets and SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/release/app-release.apk'
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          unzip -Z1 "$APK" > APK-ENTRIES.txt
+          grep -Fxq 'assets/dock.html' APK-ENTRIES.txt
+          grep -Fxq 'assets/detail.html' APK-ENTRIES.txt
+          grep -Fxq 'assets/probe.js' APK-ENTRIES.txt
+          grep -Fxq 'assets/rare_candy_probe.js' APK-ENTRIES.txt
+          grep -Fxq 'assets/rare_candy_icon.b64' APK-ENTRIES.txt
+          grep -Fxq 'assets/rare_candy_controls.html' APK-ENTRIES.txt
+          grep -Fxq 'assets/pokemon-sprites/manifest.json' APK-ENTRIES.txt
+          grep -Fxq 'assets/pokemon-sprites/base/25.png' APK-ENTRIES.txt
+          grep -Fxq 'assets/pokemon-sprites/shiny/94.png' APK-ENTRIES.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54385'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.80'" PACKAGE-VERSION.txt
+          ! grep -Fq 'application-debuggable' PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"
+          cp "$APK" "$QA_APK"
+          sha256sum "$QA_APK" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          stat -c '%n %s bytes' "$QA_APK"
+          sha256sum --check SHA256SUMS.txt
+      - name: Upload QA only; no Release, merge or public app update
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT180-54385-RareCandy-QA-Assinado
+          path: |
+            ${{ env.QA_APK }}
+            SHA256SUMS.txt
+            SOURCE_COMMIT.txt
+            SIGNING-REPORT.txt
+            PACKAGE-VERSION.txt
+            APK-ENTRIES.txt
+          if-no-files-found: error
+          retention-days: 90
+      - name: Destroy signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/lt180-signing.p12"
