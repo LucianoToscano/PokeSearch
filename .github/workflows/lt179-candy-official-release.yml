@@ -1,0 +1,193 @@
+name: LT179 — publicação oficial correções de atualização Doce Raro
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/lt179-candy-official-release.yml'
+permissions:
+  contents: write
+concurrency:
+  group: pokesearch-lt179-candy-official-once
+  cancel-in-progress: false
+jobs:
+  official-lt179-candy:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment:
+      name: official-updates
+    timeout-minutes: 80
+    env:
+      POKE_TEST_VERSION_CODE: '54384'
+      POKE_TEST_VERSION_LABEL: '51184'
+      POKE_TEST_PUBLIC_VERSION: '0.01.79'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
+      POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
+      POKE_SCRAPBOOK_STAGE1_QA: 'true'
+      POKE_SCRAPBOOK_QA_ACK: 'stage1-readonly'
+      POKE_SCRAPBOOK_ONLINE_QA: 'true'
+      POKE_SCRAPBOOK_ONLINE_ACK: 'read-only-moderation-pending'
+      OFFICIAL_APK: 'PokeSearch-v0.01.79-LT.apk'
+      OFFICIAL_TAG: 'v0.01.79-54384'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Guarded release baseline, source and official version
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/main'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor v0.01.78-54383 HEAD
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.78-54383'
+          if gh release view "$OFFICIAL_TAG" >/dev/null 2>&1; then
+            echo "::error::LT179 already released; refusing overwrite"; exit 1
+          fi
+          test -s app/src/main/java/com/lucianotoscano/pokesearchoverlay/RareCandyOverlayService.java
+          test -s app/src/main/assets/rare_candy_controls.html
+          test -s app/src/main/assets/rare_candy_icon.b64
+          test -s app/src/main/assets/rare_candy_probe.js
+          test -s app/tests/lt179-candy-refresh-gestures.test.js
+          grep -Fq 'lastAllCopiedRefreshGeneration' app/src/main/java/com/lucianotoscano/pokesearchoverlay/RareCandyOverlayService.java
+          node - <<'NODE'
+          const notes=require('./app/src/main/assets/release_notes.json');
+          const matches=notes.releases.filter(x=>x.minVersionCode===54384&&x.title.includes('LT179'));
+          if(matches.length!==1)throw Error('Missing LT179 official in-app release note');
+          NODE
+      - name: Prepare Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Verify permanent signing key
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for key in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$key")" || { echo "::error::Missing signing secret"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/lt179-official.p12"
+          chmod 600 "$RUNNER_TEMP/lt179-official.p12"
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/lt179-official.p12" >> "$GITHUB_ENV"
+          CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/lt179-official.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256" || { echo "::error::Wrong permanent certificate"; exit 1; }
+      - name: Regression including old P1/P2, Rare Candy tap/hold and OTA
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test in app/tests/*.test.js; do
+            [ "$test" = 'app/tests/lt74-local-update-preview.test.js' ] && continue
+            node "$test"
+          done
+          node --check app/src/main/assets/rare_candy_probe.js
+          node app/tests/lt179-candy-refresh-gestures.test.js
+          python3 -m py_compile scripts/build_ota_pack.py scripts/test_ota_builder.py
+          python3 scripts/test_ota_builder.py
+      - name: Restore official offline sprite and metadata set
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/update_wwm_catalog.py app/src/main/assets
+          python3 app/scripts/build_sprite_bundle.py --workers 12 --minimum-normal 950
+      - name: Compile R8 signed release
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Verify version, v2 signature, APK integrity and Candy assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          unzip -Z1 "$APK" > APK-ENTRIES.txt
+          for asset in assets/dock.html assets/probe.js assets/rare_candy_controls.html \
+              assets/rare_candy_probe.js assets/rare_candy_icon.b64; do
+            grep -Fxq "$asset" APK-ENTRIES.txt
+          done
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54384'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.79'" PACKAGE-VERSION.txt
+          ! grep -Fq 'application-debuggable' PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          SIGNER="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$SIGNER" = "$POKE_RELEASE_CERT_SHA256"
+          cp "$APK" "$OFFICIAL_APK"
+          sha256sum "$OFFICIAL_APK" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          test "$(cat SOURCE_COMMIT.txt)" = "$GITHUB_SHA"
+          sha256sum --check SHA256SUMS.txt
+          stat -c '%n %s bytes' "$OFFICIAL_APK"
+      - name: Upload immutable signed release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT179-54384-Oficial-Assinado
+          path: |
+            ${{ env.OFFICIAL_APK }}
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            SOURCE_COMMIT.txt
+            PACKAGE-VERSION.txt
+            APK-ENTRIES.txt
+          if-no-files-found: error
+          retention-days: 90
+      - name: Publish GitHub Releases/latest for existing in-app updater
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.78-54383'
+          if gh release view "$OFFICIAL_TAG" >/dev/null 2>&1; then
+            echo "::error::Version already exists";exit 1
+          fi
+          gh release create "$OFFICIAL_TAG" "$OFFICIAL_APK" \
+            --target "$GITHUB_SHA" --latest \
+            --title "PokeSearch LT179 — Atualização confiável de Doce Raro" \
+            --notes "Correção do botão ↻ Doce Raro: toque curto atualiza imediatamente, pressionar abre 1/3/5 minutos. Após copiar todos os doces válidos e ficarem cinza, o app solicita nova pesquisa automaticamente, sem ciclos infinitos e respeitando 429 Retry-After. Preserva duas Pokébolas, treinadores, sprite e filtros. APK assinado; Android exige confirmação de instalação."
+      - name: Verify latest asset bytes and digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases/latest" > RELEASE-VERIFIED.json
+          python3 - <<'PY'
+          import json,hashlib,pathlib,os
+          r=json.load(open('RELEASE-VERIFIED.json'))
+          assert r['tag_name']==os.environ['OFFICIAL_TAG']
+          assert not r['draft'] and not r['prerelease']
+          apk=pathlib.Path(os.environ['OFFICIAL_APK']).read_bytes()
+          digest=hashlib.sha256(apk).hexdigest()
+          a=[a for a in r['assets'] if a['name']==os.environ['OFFICIAL_APK']]
+          assert len(a)==1 and a[0]['state']=='uploaded'
+          assert a[0]['size']==len(apk)
+          assert a[0].get('digest')=='sha256:'+digest
+          print('Published LT179 latest:',len(apk),'SHA256:',digest)
+          PY
+      - name: Destroy private signer
+        if: always()
+        run: rm -f "$RUNNER_TEMP/lt179-official.p12"
