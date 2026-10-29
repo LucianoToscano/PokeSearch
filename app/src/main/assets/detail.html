@@ -877,7 +877,7 @@ function evolutionRow(x,first){
   String(x.statProductPct):"";
  const cp=Number(x.cp),level=Number(x.level);
  const data=[];
- if(pct)data.push('<span><b>Produto:</b> '+h(pct)+'%</span>');
+ if(pct)data.push('<span><b>Eficiência IV:</b> '+h(pct)+'%</span>');
  if(Number.isFinite(cp)&&cp>=10&&cp<=10000)data.push('<span>PC '+Math.floor(cp)+'</span>');
  if(Number.isFinite(level)&&level>=1&&level<=55)data.push('<span>Nv '+level.toFixed(1).replace(".",",")+'</span>');
  if(Number.isInteger(overall)&&overall>0)data.push('<span class="evoOverall">Rank Geral: #'+overall+'</span>');
@@ -896,7 +896,7 @@ window.showEvolutionDetails=payload=>{
  if(!payload||!Array.isArray(payload.leagues)||payload.leagues.length!==3||
     evoIdentity(payload)!==detailIdentity)return false;
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
- let html='<div class="evoHint">IV # = posição dos atributos nesta espécie · Produto = eficiência relativa · Rank Geral = posição da espécie na liga</div>',count=0,ownCount=0;
+ let html='<div class="evoHint">IV # = classificação dos IVs · Eficiência IV = comparação com o melhor IV · Rank Geral = posição da espécie na liga</div>',count=0,ownCount=0;
  const labels={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Master"};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
