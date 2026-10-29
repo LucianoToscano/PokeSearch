@@ -157,20 +157,25 @@ function changeInfo(key,checked){
  settings[key]=checked;Native.setCandyInfo(key,checked);
 }
 function applyLocation(){
- const center=$("candyCoords").value.trim(),meters=Number($("candyRadius").value);
- if(!Number.isInteger(meters)||meters<1||meters>1000000||
+ const center=$("candyCoords").value.trim(),km=Number($("candyRadius").value);
+ const meters=Math.round(km*1000);
+ if(!Number.isFinite(km)||km<.001||km>1000||meters<1||meters>1000000||
    (center&&!/^-?\d{1,2}(?:\.\d+)?\s*,\s*-?\d{1,3}(?:\.\d+)?$/.test(center))){
-   $("locError").textContent="Informe coordenadas e raio válidos";return;
+   $("locError").textContent="Coordenadas ou raio inválidos";return;
  }
- if(center){const [a,b]=center.split(",").map(Number);
-   if(Math.abs(a)>90||Math.abs(b)>180){
-    $("locError").textContent="Latitude/longitude fora da faixa";return;
+ if(center){const [lat,lng]=center.split(",").map(Number);
+   if(Math.abs(lat)>90||Math.abs(lng)>180){
+     $("locError").textContent="Latitude/longitude inválidas";return;
    }
  }
- Native.setCandyLocation(center,meters);settings.coords=center;settings.radius=meters;closePanel();
+ Native.setCandyLocation(center,meters);
+ settings.coords=center;settings.radius=meters;closePanel();
 }
-function clearLocation(){settings.coords="";settings.radius=1000;Native.setCandyLocation("",1000);closePanel()}
-function setRadius1000(){$("candyRadius").value="1000"}
+function clearLocation(){
+ settings.coords="";settings.radius=1000;
+ Native.setCandyLocation("",1000);closePanel();
+}
+function copyCoords(){if($("candyCoords"))Native.copyCandyLocation($("candyCoords").value.trim())}
 function pasteCoords(){Native.pasteCandyLocation()}
 function setPastedCoords(value){
  if(currentPanel==="location"&&$("candyCoords"))$("candyCoords").value=value||"";
