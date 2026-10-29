@@ -22,6 +22,29 @@ check("0/0/1",undefined,2,"#B8BEC8",true);
 check("14/15/15",null,98,"#C084FC",true);
 check("12/12/12",null,80,"#388BFF",true);
 check("10/10/10",null,67,"#28C76F",true);
+// Decimal source percentages: no longer erase correct IV triples.
+check("14/15/15","97.8",98,"#C084FC",false);
+check("14/15/15","97,78",98,"#C084FC",false);
+check("1/15/13","64.4",64,"#28C76F",false);
+const sourceOnly=visual.percentOnly({iv:"",ivPercent:"97.8"});
+assert.equal(sourceOnly.valid,true);
+assert.equal(sourceOnly.percent,98);
+assert.equal(sourceOnly.color,"#C084FC");
+assert.equal(sourceOnly.raw,"","percentage must not fabricate attributes");
+for(const bad of [
+ {iv:"15/15/15",ivPercent:"100"},
+ {iv:"",ivPercent:"97.9"},
+ {iv:"",ivPercent:"99.73"},
+ {iv:"",ivPercent:""},
+ {iv:"16/15/15",ivPercent:"100"}
+])assert.equal(visual.percentOnly(bad).valid,false,JSON.stringify(bad));
+for(const [value,color] of [
+ ["0,00","#00CFE8"],["12,30","#B8BEC8"],["60,00","#28C76F"],
+ ["82,04","#388BFF"],["92,17","#C084FC"],["99,73","#C084FC"],
+ ["100,00","#F04B70"]
+])assert.equal(visual.colorForEfficiency(value),color,value);
+for(const invalid of ["-1","100,01","Infinity","foo","", "50,123"])
+ assert.equal(visual.colorForEfficiency(invalid),"",invalid);
 // Every sum is one of exactly 46 representable, rounded values. No
 // missing 50, 79, 90, or 99 should ever be assigned a palette color.
 const percentages=new Set();
@@ -46,7 +69,7 @@ for(const data of [
  {iv:"1/15/13",ivPercent:"60"},
  {iv:"1/15/13",ivPercent:"banana"},
  {iv:"1/15/13",ivPercent:"63"},
- {iv:"1/15/13",ivPercent:"64.4"},
+ {iv:"1/15/13",ivPercent:"64.5"},
  {iv:"1/15/13",ivPercent:"064"},
  {iv:"0/0/0",ivPercent:"100"}
 ]){
@@ -59,7 +82,8 @@ for(const data of [
 // top-left, and the approved color applies identically to IV and IV%.
 assert.ok(html.includes('<script src="iv_display.js"></script>'));
 assert.ok(script.includes('window.PokeSearchIVDisplay?.fromCard?.(c)'));
-assert.ok(script.includes("h(ivDisplay.percent)+'%</span>'"));
+assert.ok(script.includes("h(ivVisual.percent)+'%</span>'"));
+assert.ok(script.includes("PokeSearchIVDisplay?.percentOnly?.(c)"));
 assert.ok(script.includes("h(showRaw?ivDisplay.raw:\"—\")"));
 assert.ok(html.includes('#major .ivTile .statValue.red,#major .ivTile .ivPercent{color:var(--ps-iv-color,#bac6d4)}'));
 assert.ok(html.includes('style="--ps-iv-color:'));
