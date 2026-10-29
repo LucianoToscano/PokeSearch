@@ -1,6 +1,18 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT169 · 0.01.69 · 54374
+## Versão oficial atual — LT171 · 0.01.71 · 54376
+
+**Atualização pública confirmada:** [GitHub Release LT171](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.71-54376) · [Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.71-54376/PokeSearch-v0.01.71-LT.apk) · [CI oficial SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40906715606).
+
+SOURCE_COMMIT `e7570bd169fca569ff4fd2d5f6fd2fce82164080` · **49.510.871 bytes** · SHA-256 `1a00dde87c54f6119b6153cf9be4b7bf7c055233d7923aa5b7a287907e486ede`. Certificado permanente Android v2, R8 e ZIP verificados. Atualização oferecida via GitHub Releases no app, com confirmação de instalação Android.
+
+**Novidades:** dois cards completos (Conta 1 e Conta 2) com avatar, conta, equipe, treinador, nível, código, copiar e gerenciar. Uma conta VIP pode oferecer Treinador 1 e 2 para escolha separada em cada Pokébola; uma conta com somente um vínculo não oferece um segundo treinador fictício. A escolha de conta e treinador de cada Pokébola é independente, com sessões WebView separadas; privacidade Anônimo/XXXX nos dois cards. **QA físico Samsung de dois logins e VIP ainda pendente.**
+
+[Registro canônico LT171](docs/ESTADO_CANONICO_LT171_OFICIAL_20261029.md) · [Guia Mestre](docs/GUIA_MESTRE.md). Entradas anteriores abaixo são histórico e não a versão atual.
+
+---
+
+## Histórico — versão oficial anterior LT169 · 0.01.69 · 54374
 
 **Atualização pública confirmada:** [GitHub Release LT169](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.69-54374) · [Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.69-54374/PokeSearch-v0.01.69-LT.apk) · [CI oficial SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40875761778). SOURCE_COMMIT do APK `81503cc6e2ce7e974532503759e2d690af7aedbd`; **49.493.674 bytes**; SHA-256 `58acf4bd0b663149e803daf411d7d0a118b7a0112da87240abda4acdb7e3f4f6`. Certificado permanente Android v2 e R8 preservados.
 
