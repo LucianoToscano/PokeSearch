@@ -1,4 +1,4 @@
-# LT153: isolated test build; approved permanent certificate and source audits remain unchanged.
+# LT153 retry: legacy IV assertions now target verified IV display; permanent signing unchanged.
 name: PokeSearch LT153 — análise PvP legível — APK QA assinado
 on:
   push:
