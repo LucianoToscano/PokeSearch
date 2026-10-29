@@ -50,3 +50,32 @@ O proprietário testou o artefato LT175 e comprovou pelo screenshot que o ícone
 - Assinatura Android v2 conferida contra identidade permanente, ZIP íntegro, R8, SHA-256 do APK checado por `sha256sum --check`, assets de Doce Raro presentes. ZIP do artifact: SHA-256 `f4977e5fdfe9ae50496312275ec5b0a14a7af986281c13618b2155a866964b83` (não confundir com hash do APK).
 - **Publicação:** apenas Actions Artifact QA. LT173 continua release/latest oficial. Não houve merge, Google Drive, OTA, Firebase nem atualização enviada ao público.
 - Testes funcionais Samsung após a correção ainda pendentes; sucesso de CI não prova funcionamento real da consulta do provedor.
+
+---
+## LT177 — API oficial de Doce Raro e paridade visual dos menus (29/10/2026)
+
+### Evidência de campo
+Screenshots do usuário do Samsung compararam P1 com o Doce Raro da LT176. O doce ainda parecia maior que os sprites da coluna da Pokébola, e o menu do Doce Raro usava componentes diferentes dos controles das Pokébolas. O usuário também disponibilizou o documento `pogo.md`, com contrato testado do endpoint Rare Candy (atualizado em 29/10/2026). O contrato é referência fornecida pelo usuário; a consulta efetiva no Android ainda precisa de validação física.
+
+### Contrato da fonte oficial
+- `POST https://coordinates-api.pokemongopro.com/rare-candy/search`, autenticação opcional, respeitando tier e rate limit.
+- Com centro: `center_lat`, `center_lng` e `radius_km` juntos; sem centro: `{}`.
+- Formulário do site usa **metros**: 1000 metros = `radius_km:1` no POST.
+- Resposta traz `coords`, `location`, `expires_at` UTC, `distance_km`, `tier`, `cap`. Não usar `/reveal` e não inferir coordenadas.
+- Rota de aba oficial: `https://pogocoordinates.com/search?tab=rarecandy`, sem hífen.
+- Autorização e sessão permanecem no WebView do PoGoCoordinates e sob o controle do próprio site; o JWT é usado **dentro do contexto da origem oficial** e nunca retorna pela ponte Java, logs ou armazenamento do PokeSearch.
+- O novo `rare_candy_probe.js` faz `fetch` à API, com limites de resultado do app (10), filtra lat/lng e `expires_at` inválidos e preserva `429 Retry-After` com backoff; lê a resposta assíncrona por `evaluateJavascript`, sem instalar bridge remota.
+
+### Interface fiel ao modelo das Pokébolas
+- `BUBBLE_DP=45` é a área de toque. A arte do doce foi diminuída de 27dp para **20dp**, deixando a sprite visual no patamar das espécies renderizadas na coluna de P1.
+- Não há fundo quadrado atrás da bolha; grip transparente nativo continua por cima do WebView oculto.
+- Resultados agora são uma **coluna vertical de sprites compactos** sob a bolha, transparente, sem cards grandes: doce, despawn abaixo, localização ao lado e distância pequena à direita; copiados tornam-se cinza. Expirados somem no horário real da API, seguido de consulta controlada.
+- `rare_candy_controls.html` incorpora os estilos **exatos de tiles** de `dock.html` da Pokébola: 30dp de altura, largura de 34dp por ícone, gap 2dp, `#151b26e6`, borda `#ffffff23`, raio de 5dp e SVGs equivalentes. Não usa mais os botões nativos de `OverlayQuickMenus.showCandy` como UI ativa.
+- Toolbar com Localização (coordenadas, raio em metros e aplicar/limpar/colar), Atualizar (toque imediato; pressionar por 550ms abre 1/3/5 minutos), Infos (toggles independentes Localização/Despawn/Distância) e Fechar. Popups no mesmo estilo escuro do dock.
+- O menu HTML usa `file:///android_asset/rare_candy_controls.html` com bridge limitada à página local; a pesquisa remota usa WebView distinto **sem bridge**.
+- Preferências próprias em `rare_candy_overlay`; P1/P2, busca Pokémon, contas e filtros anteriores permanecem intactos.
+
+### Distribuição e QA
+- Nova build de teste **LT177 `0.01.77`, versionCode `54382`**, certificado de assinatura permanente; arquivo `PokeSearch-v0.01.77-LT-QA.apk` em artefato privado do GitHub Actions (somente após o workflow finalizar com sucesso).
+- Testes de integração Node e compilação Java Android na PR; exigir validação física de menus, toque/drag, keyboard, resultados reais, rate limit, cópia e expiração no Samsung/Moto.
+- **Não fazer merge ou Release/latest, atualizar Drive, Firebase nem publicar OTA ainda.** Essa evolução mexe em Java, Manifest e assets, portanto precisa de APK completo assinado, não de patch OTA da LT173.
