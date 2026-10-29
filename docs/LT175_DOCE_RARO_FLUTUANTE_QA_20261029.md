@@ -41,3 +41,12 @@ O proprietário testou o artefato LT175 e comprovou pelo screenshot que o ícone
 - Teste automatizado `lt175-rare-candy-overlay.test.js` acrescenta guardas sobre grip transparente, ausência de fundo, ordem de WebView e prevenção de sobreposição dos resultados.
 - Testes reais pendentes: toque/segurar/arrastar Samsung, consulta real Rare Candy pela sessão **do aplicativo** (Chrome pode usar outra sessão), cópia da coordenada, cartão cinza, expiração/refresh, tamanho comparado aos resultados da Pokébola.
 - **Não houve merge/Release/latest/Drive/OTA público**; a LT173 continua oficial. O build LT176 é QA e **exige APK completo** devido a alterações Java.
+
+### LT176 — evidência da compilação QA assinada (29/10/2026)
+- [GitHub Actions #40932888221 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40932888221)
+- [Artifact privado QA #12924075960](https://github.com/LucianoToscano/PokeSearch/actions/runs/40932888221/artifacts/12924075960) — `PokeSearch-LT176-54381-RareCandy-QA-Assinado.zip`
+- Arquivo interno: `PokeSearch-v0.01.76-LT-QA.apk` — **49.536.381 bytes**; build version `0.01.76 / versionCode 54381`.
+- SOURCE_COMMIT exato da Action: `4cb698927b3f5ccef7cd1370c8237338e0bbf3db`.
+- Assinatura Android v2 conferida contra identidade permanente, ZIP íntegro, R8, SHA-256 do APK checado por `sha256sum --check`, assets de Doce Raro presentes. ZIP do artifact: SHA-256 `f4977e5fdfe9ae50496312275ec5b0a14a7af986281c13618b2155a866964b83` (não confundir com hash do APK).
+- **Publicação:** apenas Actions Artifact QA. LT173 continua release/latest oficial. Não houve merge, Google Drive, OTA, Firebase nem atualização enviada ao público.
+- Testes funcionais Samsung após a correção ainda pendentes; sucesso de CI não prova funcionamento real da consulta do provedor.
