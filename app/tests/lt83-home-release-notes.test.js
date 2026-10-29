@@ -25,6 +25,6 @@ assert.ok(lt83.title.includes("LT83"));
 assert.match(lt83.sections.emDesenvolvimento.join(" "),/pendente/i);
 assert.ok(!/Samsung homologa[dn]o/i.test(lt83.sections.emDesenvolvimento.join(" ")));
 const source=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/ReleaseNotes.java"),"utf8");
-assert.ok(source.includes('a.OtaAssets.open(a,ASSET)'));
+assert.ok(source.includes('OtaAssets.open(a,ASSET)'));
 assert.ok(source.includes('item.optInt("minVersionCode",Integer.MAX_VALUE)<=code'));
 console.log("LT83 release notes: "+notes.releases.length+" entries / 4 milestones / PASS");
