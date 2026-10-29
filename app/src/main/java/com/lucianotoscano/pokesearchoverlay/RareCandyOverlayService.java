@@ -255,38 +255,24 @@ public final class RareCandyOverlayService extends Service {
         wm.addView(bubbleWindow,bubbleParams);
     }
     private void createResults(){
+        // A Pokébola-style vertical stack of sprites and short metadata,
+        // not a large card/dialog/website overlay.
         resultsShell=new LinearLayout(this);
         resultsShell.setOrientation(LinearLayout.VERTICAL);
-        resultsShell.setPadding(dp(7),dp(6),dp(7),dp(7));
-        resultsShell.setBackground(background(OverlayQuickMenus.panelColor(this),
-            12,0x887E91A5));
-        LinearLayout title=new LinearLayout(this);
-        title.setGravity(Gravity.CENTER_VERTICAL);
-        TextView name=label("Doce Raro",13,0xFFF4F7FF,true);
-        title.addView(name,new LinearLayout.LayoutParams(0,dp(30),1));
-        TextView refresh=label("↻",24,0xFFCCECFF,true);
-        refresh.setGravity(Gravity.CENTER);
-        title.addView(refresh,space(35,30,0));
-        refresh.setOnClickListener(v->refresh(true));
-        refresh.setOnLongClickListener(v->{
-            OverlayQuickMenus.showCandyPeriod(this,
-                resultsParams==null?bubbleParams.y:resultsParams.y+dp(32),actions);
-            return true;
-        });
-        TextView close=label("×",25,0xFFEEAABB,false);
-        close.setGravity(Gravity.CENTER);
-        title.addView(close,space(30,30,0));
-        close.setOnClickListener(v->toggleResults());
-        resultsShell.addView(title,new LinearLayout.LayoutParams(-1,dp(32)));
-        status=label("Conectando ao PoGoCoordinates…",11,0xFFB3C4DC,false);
-        resultsShell.addView(status,space(-1,25,0));
+        resultsShell.setPadding(0,0,0,0);
+        resultsShell.setBackgroundColor(Color.TRANSPARENT);
+        status=label("Consultando Doce Raro…",10,0xFFB3C4DC,false);
+        status.setMaxLines(2);
+        resultsShell.addView(status,space(-1,35,0));
         ScrollView scroll=new ScrollView(this);
         scroll.setFillViewport(false);
         scroll.setVerticalScrollBarEnabled(false);
-        resultsList=new LinearLayout(this);resultsList.setOrientation(LinearLayout.VERTICAL);
-        scroll.addView(resultsList);
+        resultsList=new LinearLayout(this);
+        resultsList.setOrientation(LinearLayout.VERTICAL);
+        resultsList.setClipToPadding(false);
+        scroll.addView(resultsList,new ScrollView.LayoutParams(-1,-2));
         resultsShell.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        resultsParams=new WindowManager.LayoutParams(dp(292),dp(330),
+        resultsParams=new WindowManager.LayoutParams(dp(236),dp(40),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
@@ -298,47 +284,24 @@ public final class RareCandyOverlayService extends Service {
     }
     private void placeResults(){
         if(resultsParams==null||bubbleParams==null)return;
-        int w=getResources().getDisplayMetrics().widthPixels;
-        int h=getResources().getDisplayMetrics().heightPixels;
-        int gap=dp(6),margin=dp(4);
-        int desiredW=Math.min(dp(292),Math.max(dp(150),w-margin*2));
-        int desiredH=Math.min(dp(330),Math.max(dp(130),h-margin*2));
-        int bubbleX=bubbleParams.x,bubbleY=bubbleParams.y;
-        int diameter=dp(BUBBLE_DP);
-        int rightX=bubbleX+diameter+gap;
-        int leftX=bubbleX-gap-desiredW;
-        resultsParams.width=desiredW;
-        resultsParams.height=desiredH;
-        // Put the native results window BESIDE the bubble when there is room.
-        // Otherwise put it fully BELOW/ABOVE. It must never cover its own
-        // grip, including on 360dp Android devices or after a drag.
-        if(rightX+desiredW<=w-margin){
-            resultsParams.x=rightX;
-            resultsParams.y=Math.max(margin,Math.min(h-desiredH-margin,bubbleY));
-        }else if(leftX>=margin){
-            resultsParams.x=leftX;
-            resultsParams.y=Math.max(margin,Math.min(h-desiredH-margin,bubbleY));
+        int width=getResources().getDisplayMetrics().widthPixels;
+        int height=getResources().getDisplayMetrics().heightPixels;
+        int margin=dp(3);
+        resultsParams.width=Math.min(dp(236),width-margin*2);
+        // The 45dp rows follow the sprite cadence of the Pokébola result list.
+        int wantedHeight=dp(Math.min(440,Math.max(35,cards.size()*46+4)));
+        int belowY=bubbleParams.y+dp(BUBBLE_DP)+dp(1);
+        int roomBelow=height-margin-belowY;
+        int roomAbove=bubbleParams.y-margin;
+        if(roomBelow>=Math.min(wantedHeight,dp(130))||roomBelow>=roomAbove){
+            resultsParams.height=Math.max(dp(1),Math.min(wantedHeight,Math.max(1,roomBelow)));
+            resultsParams.y=Math.max(margin,Math.min(height-margin-resultsParams.height,belowY));
         }else{
-            resultsParams.x=Math.max(margin,Math.min(
-                w-desiredW-margin,bubbleX+diameter/2-desiredW/2));
-            int belowY=bubbleY+diameter+gap;
-            int aboveY=bubbleY-gap-desiredH;
-            if(belowY+desiredH<=h-margin){
-                resultsParams.y=belowY;
-            }else if(aboveY>=margin){
-                resultsParams.y=aboveY;
-            }else{
-                int aboveSpace=Math.max(0,bubbleY-gap-margin);
-                int belowSpace=Math.max(0,h-margin-belowY);
-                if(belowSpace>=aboveSpace){
-                    resultsParams.y=belowY;
-                    resultsParams.height=Math.max(1,Math.min(desiredH,belowSpace));
-                }else{
-                    resultsParams.height=Math.max(1,Math.min(desiredH,aboveSpace));
-                    resultsParams.y=Math.max(margin,bubbleY-gap-resultsParams.height);
-                }
-            }
+            resultsParams.height=Math.max(dp(1),Math.min(wantedHeight,Math.max(1,roomAbove)));
+            resultsParams.y=Math.max(margin,bubbleParams.y-resultsParams.height-dp(1));
         }
+        resultsParams.x=Math.max(margin,Math.min(width-resultsParams.width-margin,
+            bubbleParams.x-dp(6)));
         if(resultsShell!=null&&resultsShell.isAttachedToWindow()){
             try{wm.updateViewLayout(resultsShell,resultsParams);}
             catch(Exception ignored){}
@@ -596,7 +559,10 @@ public final class RareCandyOverlayService extends Service {
         }catch(Exception ignored){return false;}
     }
     private void setStatus(String message){
-        if(status!=null)status.setText(message);
+        if(status!=null){
+            status.setText(message);
+            status.setVisibility(cards.isEmpty()?View.VISIBLE:View.GONE);
+        }
     }
     private void refresh(boolean manual){
         if(destroyed||site==null||!ready||busy||!isOfficialSearch())return;
@@ -721,57 +687,56 @@ public final class RareCandyOverlayService extends Service {
         render();
     }
     private void render(){
-        if(resultsList==null||!visible)return;
+        if(resultsList==null)return;
         resultsList.removeAllViews();
         countdownLabels.clear();
         long now=SystemClock.elapsedRealtime();
         for(Candy card:new ArrayList<>(cards.values())){
-            if(card.deadline>0&&card.deadline<=now)continue;
+            if(card.deadline<=now)continue;
             LinearLayout row=new LinearLayout(this);
             row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(dp(4),dp(5),dp(4),dp(5));
-            row.setBackground(background(0x5530445B,9,0x55788DA8));
+            row.setPadding(0,0,dp(3),0);
+            row.setBackgroundColor(Color.TRANSPARENT);
             LinearLayout left=new LinearLayout(this);
             left.setOrientation(LinearLayout.VERTICAL);
-            left.setGravity(Gravity.CENTER_HORIZONTAL);
-            ImageView image=sprite(43,copied.contains(card.coords));
-            left.addView(image,space(43,43,0));
-            if(showInfos&&card.deadline>0){
+            left.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.TOP);
+            ImageView image=sprite(CANDY_ART_DP,copied.contains(card.coords));
+            left.addView(image,space(CANDY_ART_DP,CANDY_ART_DP,0));
+            if(showDespawn){
                 long seconds=Math.max(0,(card.deadline-now+999)/1000);
-                String value=(seconds/60)+":"+String.format(java.util.Locale.US,
-                    "%02d",seconds%60);
-                int color=seconds<=60?0xFFFF666D:
-                    seconds<=300?0xFFFFC35A:0xFFC0D9EE;
-                TextView countdown=label(value,10,color,true);
+                TextView countdown=label((seconds/60)+":"+String.format(
+                    java.util.Locale.US,"%02d",seconds%60),9,
+                    seconds<=60?0xFFFF666D:seconds<=300?0xFFFFC35A:0xFFC0D9EE,true);
                 countdown.setGravity(Gravity.CENTER);
-                left.addView(countdown,space(-1,18,0));
+                left.addView(countdown,space(42,16,0));
                 countdownLabels.put(card.coords,countdown);
             }
-            row.addView(left,space(49,-2,0));
-            LinearLayout mainText=new LinearLayout(this);
-            mainText.setOrientation(LinearLayout.VERTICAL);
-            if(showInfos&&!card.city.isEmpty()){
-                TextView city=label(card.city,11,0xFFF0F4FF,true);
+            row.addView(left,space(46,-2,0));
+            LinearLayout info=new LinearLayout(this);
+            info.setOrientation(LinearLayout.VERTICAL);
+            info.setGravity(Gravity.CENTER_VERTICAL);
+            TextView title=label(copied.contains(card.coords)?"Doce Raro ✓":"Doce Raro",
+                11,copied.contains(card.coords)?0xFFB1B6C1:0xFFF1F6FF,true);
+            info.addView(title,space(-1,16,0));
+            if(showLocation&&!card.city.isEmpty()){
+                TextView city=label(card.city,10,0xFFCFD9E7,false);
                 city.setMaxLines(2);
-                mainText.addView(city,space(-1,-2,0));
-            }else{
-                mainText.addView(label(copied.contains(card.coords)?"Copiado ✓":"Doce Raro",
-                    12,0xFFE8F2FF,true),space(-1,25,0));
+                info.addView(city,space(-1,-2,0));
             }
-            if(copied.contains(card.coords)){
-                mainText.addView(label("✓ Copiado",10,0xFFB8C8D8,false),
-                    space(-1,18,0));
-            }
-            row.addView(mainText,new LinearLayout.LayoutParams(0,-2,1));
-            if(showInfos&&!card.distance.isEmpty()){
-                TextView distance=label(card.distance,10,0xFFB5CBE6,false);
-                distance.setGravity(Gravity.BOTTOM|Gravity.RIGHT);
-                row.addView(distance,space(53,40,0));
+            row.addView(info,new LinearLayout.LayoutParams(0,-2,1));
+            if(showDistance&&!card.distance.isEmpty()){
+                TextView distance=label(card.distance,9,0xFFB7C8DF,false);
+                distance.setGravity(Gravity.RIGHT|Gravity.BOTTOM);
+                row.addView(distance,space(51,40,0));
             }
             row.setOnClickListener(v->copy(card.coords));
             image.setOnClickListener(v->copy(card.coords));
-            resultsList.addView(row,space(-1,-2,4));
+            resultsList.addView(row,space(-1,43,3));
         }
+        if(status!=null){
+            status.setVisibility(cards.isEmpty()?View.VISIBLE:View.GONE);
+        }
+        placeResults();
     }
     private final Runnable tick=new Runnable(){
         @Override public void run(){
