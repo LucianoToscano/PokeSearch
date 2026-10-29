@@ -29,7 +29,7 @@ assert(menu.includes("grid-auto-rows:30px"));
 assert(menu.includes("gap:2px"));
 assert(menu.includes("background:var(--visual-menu-button-bg)"));
 assert(menu.includes("border-radius:5px"));
-assert(menu.includes("requestHeight(141,false)"));
+assert(menu.includes("requestHeight(172,false)"));
 assert(menu.includes("new int[]{1,3,5}")===false);
 for(const part of ["choosePeriod(1)","choosePeriod(3)","choosePeriod(5)"]){
  // Pokébola period choices are generated dynamically in the Candy popup.
@@ -58,8 +58,8 @@ assert(!source.includes("now-lastRefresh<15000"),"No extra local 15-second wait"
 assert(menu.includes("candyRadiusSlider"),"P1-style location radius slider is available");
 assert(menu.includes("Native.copyCandyLocation"),"P1-style copy coordinate action exists");
 assert(menu.includes("Native.pasteCandyLocation"),"P1-style paste coordinate action exists");
-assert(menu.includes("requestHeight(141,false)"),"Location popup matches Pokébola 148px");
-assert(menu.includes("requestHeight(116,false)"),"Information popup is compact");
+assert(menu.includes("requestHeight(172,false)"),"Location popup matches Pokébola 148px");
+assert(menu.includes("requestHeight(142,false)"),"Information popup is compact");
 assert(menu.includes("infoGrid"),"Information options are a compact grid");
 
 assert(menu.includes('refresh.addEventListener("pointerup"'),"Refresh tap must fire from pointerup");
