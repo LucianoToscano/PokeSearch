@@ -23,3 +23,9 @@ Candidata oficial `0.01.69`, `versionCode 54374`, `v0.01.69-54374`. Pipeline exc
 O resultado de CI não confirma renderização real no Samsung. Testar, após instalar: ambas as Pokébolas; API ON/OFF com Flabébé amarela, vermelha, azul, laranja e branca; outras formas/trajes; Shiny; cache sob falha de rede; coordenadas com 7+ casas decimais (com e sem sinal); identificação curta em sprite sem fonte; 1 ou 2+ treinadores; três preferências de privacidade; login e Premium preservados. Em modo API a arte GO é de mesma variante, não necessariamente o mesmo arquivo literal do PoGoCoordinates.
 
 **Status inicial:** integrado em branch de publicação; considerar a release como publicada somente após workflow e asset validado. O registro final de release (run, hash, bytes, tag e SOURCE_COMMIT) deverá refletir o estado realmente confirmado.
+
+## Execução inicial do workflow oficial e correção da regressão histórica
+
+- GitHub Actions [#40873019165](https://github.com/LucianoToscano/PokeSearch/actions/runs/40873019165) abortou **antes do build e da publicação**: o teste histórico `lt153-pvp-clarity-layout.test.js` ainda exigia margens simétricas com coordenadas centradas, incompatíveis com a correção explícita de reticências pedida pelo usuário.
+- Também localizada verificação antiga em `lt165-pvp-costume-evolution-references.test.js` exigindo `text-overflow:ellipsis`; ambas foram atualizadas para testar que a coordenada completa pode quebrar linha, sem perder dígitos ou mudar o valor da cópia.
+- Workflow oficial alterado para testar explicitamente os dois contratos revisados e gerar nova execução na main após merge autorizado. **Nenhum APK da tentativa inicial foi publicado** e a tag LT168 anterior foi preservada.
