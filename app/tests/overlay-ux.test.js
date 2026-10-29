@@ -500,7 +500,13 @@ test("HOME-01 has explicit official Google/Discord login and sign-out",(()=>{
   home.includes('logout.setOnClickListener(v->askLogout())');
 })());
 test("Login does not start a stopped overlay",main.includes("if(!enabled)return;")&&main.includes("OverlayService.isSecondaryRunning()")&&main.includes("OverlayService.isRunning()"));
-test("Logout clears local cookies and web storage only",main.includes("removeAllCookies")&&main.includes("WebStorage.getInstance().deleteAllData()"));
+test("Logout clears only the assigned PoGo account, no credentials exported",
+ main.includes("PogoAccountSlots.signOut(this,1")&&
+ main.includes("PogoAccountSlots.signOut(this,slot")&&
+ main.includes('PogoAccountSlots.assigned(this,false)==1')&&
+ main.includes('PogoAccountSlots.assigned(this,true)==1')&&
+ !main.slice(main.indexOf('private void logoutLocalSession()'),
+   main.indexOf('private void refreshWatchCount()')).includes('removeAllCookies'));
 test("Home login does not force Shiny",main.includes("openLoginDialog(false)")&&
     !main.includes('view.evaluateJavascript(readAsset("shiny_login.js"),null)')&&
     main.includes('String probe=readAsset("probe.js")'));
@@ -1381,7 +1387,7 @@ test("Session probe executable contains all four template substitutions",
  main.includes('.replace("__FILTERS__","{}")')&&
  main.includes('view.evaluateJavascript(probe,raw->'));
 test("Canceled dialog does not force session refresh or discard sprites",
- main.includes('serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow)')&&
+ main.includes('notifyLoginOnlyAssigned("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow)')&&
  main.includes('if(authenticatedNow)notifyOverlaySessionReady();')&&
  service.includes('if(!"não confirmado".equals(auth))')&&
  service.includes('resultsStale=count()>0;'));
