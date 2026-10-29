@@ -111,6 +111,7 @@ public class MainActivity extends Activity {
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
     private ImageView overlayControl,secondaryOverlayControl;
+    private TextView homePrimaryState,homeSecondaryState;
     private TextView sessionHint;
     private View homeDrawerLayer;
     private View tributeOverlay, communityHomePanel;
@@ -717,8 +718,9 @@ public class MainActivity extends Activity {
             screen.addView(communityHomePanel,scrapbookLp);
         }
 
-        // Keep the center open for the user's Pokémon GO wallpaper.
-        screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
+        // LT151: the old vertical card list is replaced below with a complete
+        // native dashboard. All existing auth, menu, stats and chat views
+        // are rehosted, not recreated; no site/overlay session is touched.
         // LT73: show the installed APK's real version; no manual version strings.
         TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+" LT  •  PoGoCoordinates /search",10,
             homeLightMode?Color.rgb(26,51,72):Color.rgb(185,208,233),false);
@@ -728,6 +730,20 @@ public class MainActivity extends Activity {
             12,homeLightMode?Color.argb(80,33,65,89):Color.argb(75,180,215,247)));
         footer.setPadding(d(9),d(5),d(9),d(5));
         screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));
+        // Assemble the new Home after all original views/listeners/Firebase
+        // bindings exist. Old stacked layout is no longer visible.
+        TextView[] searchStates=HomeDashboardV2.restylePokeballs(
+            this,homeLightMode,dualOverlayRow);
+        homePrimaryState=searchStates[0];
+        homeSecondaryState=searchStates[1];
+        HomeDashboardV2.assemble(this,homeLightMode,homeSurfacesTransparency(),
+            screen,header,dualOverlayRow,auth,homeUpdateHolder,stats,
+            shareActions,communityHomePanel,footer,
+            this::openPicker,this::showPreferencesDialog,
+            ()->{
+                if(CommunityScrapbookStage1.isEnabled(this))scrollToCommunity();
+                else toggleCommunityScrapbookStage1();
+            },this::showPremiumAccountOptions);
         // Mission icon floats above the footer, without stealing space from
         // header controls, update alerts, counters or trainer details.
         homeMissionBadge=new ImageView(this);
@@ -1297,6 +1313,8 @@ public class MainActivity extends Activity {
         boolean on=OverlayService.isRunning();
         overlayControl.setImageResource(on?R.drawable.personalizado:R.drawable.sem_filtro);
         overlayControl.setContentDescription(on?"Desativar Pokébola 1":"Ativar Pokébola 1");
+        if(homePrimaryState!=null)homePrimaryState.setText(
+            on?"●  BUSCA ATIVA":"○  TOQUE PARA ATIVAR");
         overlayControl.setBackground(homeSurface(on?Color.rgb(18,94,82):
             homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
         if(secondaryOverlayControl!=null){
@@ -1304,6 +1322,9 @@ public class MainActivity extends Activity {
             secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.personalizado:R.drawable.sem_filtro);
             secondaryOverlayControl.setContentDescription(secondaryOn?
                 "Desativar segunda Pokébola":"Ativar segunda Pokébola");
+            if(homeSecondaryState!=null)homeSecondaryState.setText(
+                secondaryOn?"●  BUSCA ATIVA":
+                    PremiumAccess.controlled()?"◇  PREMIUM":"○  TOQUE PARA ATIVAR");
             secondaryOverlayControl.setBackground(homeSurface(secondaryOn?Color.rgb(18,94,82):
                 homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
         }
