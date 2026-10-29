@@ -14,7 +14,7 @@ assert.ok(script.includes('never show it as a verified IV/PvP rank'),"unlabeled 
 assert.ok(!script.includes('rankLine.textContent=c.rank?"Rank "+String(c.rank):""'),"unlabeled rank gone");
 assert.ok(script.includes('if(!rows.length&&!own)continue;'),"own analysis allowed without evolution");
 assert.ok(script.includes('if(!count&&!ownCount){'),"no fabricated analysis");
-assert.ok(script.includes('Ranking indisponível para esta forma.'),"clear status instead of blank card");
+assert.ok(script.includes('outer.hidden=true;'),"empty analysis must remain hidden instead of showing a blank tab");
 assert.ok(script.includes('"Análise IV PvP · "+ownCount+" ligas"'),"own-only analyses accurately named");
 assert.ok(html.includes('Math.ceil(panel.scrollHeight)+3'),"no phantom-scroll regression");
 const start=script.indexOf(' const rankLine=document.getElementById("rankLine");');
