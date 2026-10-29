@@ -355,11 +355,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #coordRow{margin-top:3px}
 #coordRow #coords{min-height:28px;padding-top:3px;padding-bottom:3px}
 
-/* QA15 — 50%-footprint stat cells (208px row instead of full 238px;
+/* QA15-16 — narrower stat cells (125px row vs QA15 208px;
    19px high instead of ~32px). Types share top-left of IV with 100% top-right. */
 #artColumn #types{display:none!important}
-#major{grid-template-columns:112px 48px 42px;justify-content:center;gap:3px;margin-top:2px;align-items:center}
-#major .statTile{height:19px;min-height:19px;max-height:19px;padding:0 2px 1px;gap:0;justify-content:center;border-radius:4px}
+#major{grid-template-columns:65px 30px 24px;justify-content:center;gap:3px;margin-top:2px;align-items:center}
+#major .statTile{height:21px;min-height:21px;max-height:21px;padding:0 1px 1px;gap:0;justify-content:center;border-radius:4px}
 #major .statHeading{font-size:7.5px;line-height:8px;font-weight:600}
 #major .statValue{font-size:9px;line-height:10px;font-weight:800}
 #major .ivTile .ivPercent{top:1px;right:3px;font-size:7px;line-height:8px}
@@ -369,6 +369,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #major .ivTile .ivTypes .pkTypeImg{width:9px;height:9px;object-fit:contain}
 #major .ivTile .ivTypes:empty{display:none}
 #artColumn.gengarSprite #img{transform:scale(.78);transform-origin:center}
+
+/* QA16: protect variable PC and level values from overflow in 30px/24px tiles. */
+#major .statTile:nth-child(2) .statValue{font-size:8px;letter-spacing:-.15px}
+#major .statTile:nth-child(3) .statValue{font-size:7.5px;letter-spacing:-.2px}
+#major .ivTile .ivTypes{left:1px}
+#major .ivTile .ivPercent{right:1px}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
