@@ -431,6 +431,32 @@
           "Validação visual final no Samsung permanece necessária."
         ]
       }
+    },
+    {
+      "id": "lt147-premium-simple-checkout-20261029",
+      "minVersionCode": 54352,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT147 — Premium simples em três etapas",
+      "sections": {
+        "novidades": [
+          "Compra da Pokébola 2 em três etapas: conectar o Google, conferir o plano e pagar via Pix.",
+          "Atalho 'Já paguei · Verificar pagamento' recupera pedidos da mesma conta Google."
+        ],
+        "melhorias": [
+          "E-mail do Pix preenchido automaticamente pelo Gmail Premium conectado, sem segundo cadastro.",
+          "Cupons, chaves Premium e campanhas gratuitas ficam em opções adicionais recolhidas.",
+          "Informação clara: o Premium está ligado ao Google utilizado no PokeSearch, sem depender do e-mail Pokémon GO ou do Discord."
+        ],
+        "correcoes": [
+          "Um pedido pendente impede gerar novo Pix até validação do servidor, evitando cobranças duplicadas.",
+          "Trocas de conta durante o pagamento não atribuem pedidos ou licenças a outro UID.",
+          "A liberação somente é confirmada depois da aprovação do pagamento e da verificação da licença no servidor."
+        ],
+        "emDesenvolvimento": [
+          "A versão pública não habilita cobranças por conta própria; disponibilidade de Pix segue as configurações do servidor.",
+          "Confirmação de pagamento real e testes em aparelhos Samsung continuam sujeitos à homologação."
+        ]
+      }
     }
   ]
 }
