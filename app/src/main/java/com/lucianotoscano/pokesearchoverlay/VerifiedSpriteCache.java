@@ -189,7 +189,7 @@ final class VerifiedSpriteCache {
     static InputStream bundledSprite(Context context,int dex,boolean shiny){
         if(context==null||dex<1||dex>1025)return null;
         try{
-            return context.getAssets().open(
+            return OtaAssets.open(context,
                 "pokemon-sprites/"+(shiny?"shiny/":"base/")+dex+".png");
         }catch(IOException ignored){return null;}
     }
