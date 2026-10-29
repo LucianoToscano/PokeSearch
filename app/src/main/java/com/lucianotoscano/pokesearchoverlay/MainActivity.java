@@ -2504,7 +2504,7 @@ public class MainActivity extends Activity {
                     view.loadUrl("https://pogocoordinates.com/profile");
                     return;
                 }
-                if(!"manage".equals(loginPurpose)&&attemptsLeft<=13&&
+                if(!"manage".equals(loginPurpose)&&attemptsLeft<=23&&
                    observedLoginProvider.isEmpty()&&
                    !loginDiscoveryStarted&&!loginLinkAttempted){
                     loginDiscoveryStarted=true;
@@ -2512,7 +2512,7 @@ public class MainActivity extends Activity {
                 }
                 // Do not infinitely retry an unauthenticated or unhydrated page.
                 if(attemptsLeft>1)view.postDelayed(
-                    ()->checkLoginSession(view,attemptsLeft-1,pageGeneration),450L);
+                    ()->checkLoginSession(view,attemptsLeft-1,pageGeneration),600L);
                 else if(loginWaitLabel!=null){
                     loginWaitLabel.setText("Login ainda não confirmado. Confira a página oficial.");
                     if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
@@ -2851,12 +2851,12 @@ public class MainActivity extends Activity {
                     if("/profile".equals(Uri.parse(url).getPath())&&
                        trainerLinkRequested&&!trainerLinkStarted)
                         view.postDelayed(()->openOfficialTrainerLink(view,generation,8),750L);
-                    if(!loginSessionNotified)checkLoginSession(view,14,generation);
+                    if(!loginSessionNotified)checkLoginSession(view,24,generation);
                     else if("/profile".equals(Uri.parse(url).getPath()))
                         view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                     return;
                 }
-                checkLoginSession(view,14,generation);
+                checkLoginSession(view,24,generation);
             }
             @Override public void onReceivedError(WebView view,
                     android.webkit.WebResourceRequest request,
