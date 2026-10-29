@@ -2630,6 +2630,12 @@ test("RANK-EVO-DETAIL-02 card expands and escapes all visible evolution values",
  if(body.hidden||node("evoToggle")["aria-expanded"]!=="true")return false;
  ctx.toggleEvolutionDetails();
  if(!body.hidden||node("evoToggle")["aria-expanded"]!=="false")return false;
+ // For the SAME Pokémon, no verified ranks must remove the entire tab,
+ // not leave a "Sem dados" header or an empty expanded panel.
+ const empty={...detail,leagues:["gl","ul","ml"].map(league=>
+  ({league,own:null,evolutions:[]}))};
+ if(window.showEvolutionDetails(empty)!==false||!section.hidden||
+   body.innerHTML!==""||!body.hidden)return false;
  window.showDetails({...card,name:"Rookidee",sourceIndex:7},"gl",false);
  return section.hidden&&node("evoBody").innerHTML===""&&
   window.showEvolutionDetails(detail)===false&&
