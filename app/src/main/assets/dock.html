@@ -6129,10 +6129,12 @@ window.pvpEvolutionDetails=function(index){
   ivUnavailable:missingIv,
   // Rank threshold belongs to this overlay's confirmed GL/UL search,
   // not to the IV rank of the unevolved Pokémon.
-  searchLeague:mode==="gl"||mode==="ul"?mode:null,
-  searchRankLimit:(mode==="gl"||mode==="ul")?
+  searchLeague:typeof mode==="string"&&(mode==="gl"||mode==="ul")?mode:null,
+  searchRankLimit:typeof mode==="string"&&(mode==="gl"||mode==="ul")&&
+    typeof searchSettings==="object"&&searchSettings?
     Number(mode==="gl"?searchSettings.glRank:searchSettings.ulRank):null,
-  includePreviousEvolutions:searchSettings.includePreviousEvolutions!==false,
+  includePreviousEvolutions:typeof searchSettings==="object"&&searchSettings?
+    searchSettings.includePreviousEvolutions!==false:true,
   leagues:[]
  };
  for(const league of ["gl","ul","ml"]){
