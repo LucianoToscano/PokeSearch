@@ -2,6 +2,16 @@
 
 ## LT145 QA22 — acabamento do card, Rank e rolagem (29/10/2026)
 
+### Distribuição e merge QA22 — verificado (29/10/2026)
+
+- **PR #96 mesclada na main:** https://github.com/LucianoToscano/PokeSearch/pull/96 · merge commit `dd9366268b3c29d3ba34d263d32973307ec911a4`. Conflitos resolvidos preservando os cinco workflows de distribuição que já existiam na main e as regras de entrega em AGENTS.md.
+- **Testes e build:** GitHub Actions regressão [#40807041098](https://github.com/LucianoToscano/PokeSearch/actions/runs/40807041098) e compilação assinada [#40807041234](https://github.com/LucianoToscano/PokeSearch/actions/runs/40807041234) ambos **SUCCESS**; `SOURCE_COMMIT=87bd4988b056186d3c8254d021f7df2cb22994b1`.
+- **Pré-lançamento público QA22 no GitHub:** https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.45-54350-qa22-card. APK `PokeSearch-LT145-QA22-CARD-COMPACTO.apk`, **49.405.343 bytes**, SHA-256 `72be16d527bfeb977840ef7fef73ff5a38e60be52bbae9ed9f8a577ad75d90dd`, Android v2 e certificado permanente validados, `versionName=0.01.45`, `versionCode=54350`.
+- **Limite da distribuição:** Release é **pré-lançamento de teste** para instalação manual; não altera manifest de atualização, Firebase `distribution/globalEnabled` nem faz atualização automática em massa. Homologação no Samsung/P1/P2 **ainda não comprovada** e é requisito anterior à distribuição global estável. Não afirmar que todos receberam atualização automática.
+- **Limitação conhecida:** faltas de sprite exata em determinadas formas (por exemplo Shellos West Sea) recebem fallback neutro; correção do pacote de artes exactas ainda requer verificação.
+
+
+
 - **Branch preservada:** `feature/lt145-coords-quota-account-20261028`. Base QA21 — sem recomeçar e sem descartar Premium, alertas, API, localização, cooldown e duas Pokébolas.
 - **Card:** mantém largura externa de **200 dp**, cabeçalho com número/sexo/tamanho/forma imediatamente sob nome, botões de 23 px e Despawn abaixo da estrela. Espaços verticais aparados. Caixas IV/PC/Nv. com **23 px de altura**, larguras responsivas e conteúdo não sobreposto; tipos originais à esquerda no IV e porcentagem verificada à direita.
 - **Rank:** selo de vidro dourado compacto (★ Rank 1), alinhado à esquerda imediatamente sob IV/PC/Nv.; invisível quando rank não existe.

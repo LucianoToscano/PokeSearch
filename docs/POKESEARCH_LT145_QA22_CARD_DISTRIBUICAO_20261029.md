@@ -21,7 +21,14 @@ Versão: 0.01.45 (versionCode 54350) — homologação
 5. Card comum sem rolagem se conteúdo couber; PvP aberto ou tela baixa ainda permitem rolar.
 6. Repetir na segunda Pokébola e verificar copiar coordenadas e alertas.
 
-## Publicação
-- QA assinado apenas; homologação visual do aparelho ainda pendente.
-- CI e artefato devem ser registrados aqui com SHA/URL somente após confirmação.
-- Merge e distribuição global ficam condicionados à aprovação de regressão real no Samsung.
+## Publicação — resultado confirmado
+- QA22 assinado e disponível publicamente como pré-lançamento: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.45-54350-qa22-card
+- APK: PokeSearch-LT145-QA22-CARD-COMPACTO.apk — 49.405.343 bytes.
+- SHA-256: 72be16d527bfeb977840ef7fef73ff5a38e60be52bbae9ed9f8a577ad75d90dd.
+- Versão 0.01.45 (54350), assinatura Android v2 e certificado permanente conferidos.
+- Source commit exato do APK: 87bd4988b056186d3c8254d021f7df2cb22994b1.
+- GitHub Actions: build assinado SUCCESS #40807041234; regressão SUCCESS #40807041098.
+- PR #96 mesclada na main; commit dd9366268b3c29d3ba34d263d32973307ec911a4; cinco workflows main-only preservados.
+- Distribuição realizada: APK QA público por GitHub Releases (download manual).
+- Distribuição global automática: **não ativada**; homologação Samsung e duas Pokébolas ainda não comprovada.
+- Pendência de arte: Shellos West Sea e demais formas devem ter imagem exata conferida (fallback não substitui asset correto).
