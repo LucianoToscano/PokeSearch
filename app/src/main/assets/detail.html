@@ -398,6 +398,26 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #evoToggle{padding:2px 4px}
 #coordRow{margin-top:2px}
 #coordRow #coords{min-height:28px}
+/* QA18: 200dp card, left-aligned stat cells, separate sex and size chips.
+   #subRow uses a second grid row to avoid a narrow name column wrapping every chip. */
+#header{grid-template-rows:auto auto;row-gap:1px}
+#names{display:contents}
+#nameLine{grid-column:2;grid-row:1;min-width:0;align-self:start}
+#subRow{grid-column:2 / 4;grid-row:2;display:flex;align-items:center;flex-wrap:wrap;
+ gap:2px 4px;min-width:0;margin:0}
+#subRow .metaPair{display:inline-flex;align-items:center;flex-wrap:wrap;gap:3px;
+ flex:0 1 auto;min-width:0;white-space:normal}
+#subRow .dexMeta{font-size:8px;color:#cbd4e0;white-space:nowrap}
+#subRow .sexChip,#subRow .sizeChip{display:inline-flex;align-items:center;
+ justify-content:center;gap:2px;min-height:13px;padding:1px 3px;
+ background:#ffffff12;border:1px solid #ffffff28;border-radius:3px;
+ white-space:nowrap;font-size:8px;line-height:10px}
+#subRow .sexChip .pkGender{font-size:10px;line-height:10px}
+#subRow .sizeChip{border-color:#ffffff34}
+#subRow .metaLabel{font-weight:650;font-size:7.5px;color:#bfcbd8}
+#subRow .formChip{font-size:8px;color:#b9c9d7;white-space:nowrap}
+#major{justify-content:flex-start;justify-items:start}
+#artColumn.gengarSprite.gengarHalloween #img{transform:scale(.56);transform-origin:center}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -806,8 +826,14 @@ window.showDetails=(c,mode,watched)=>{
   [h(c.number),gender].filter(Boolean).join(" · ");
  document.getElementById("sizeForm").textContent=
   [c.size,c.form].filter(Boolean).join(" · ");
- document.getElementById("artColumn")?.classList?.toggle?.("gengarSprite",
-  Number(String(c.number||c.dex||"").replace("#",""))===94);
+ // Accessible discrete indicators: never visually group a sex icon with XXL.
+ document.getElementById("dexGender").innerHTML=
+  (c.number?'<span class="dexMeta">'+h(c.number)+'</span>':"")+
+  (gender?'<span class="sexChip"><span class="metaLabel">Sexo</span>'+gender+'</span>':"");
+ document.getElementById("sizeForm").innerHTML=
+  (c.size?'<span class="sizeChip"><span class="metaLabel">Tam.</span>'+h(c.size)+'</span>':"")+
+  (c.form?'<span class="formChip">'+h(c.form)+'</span>':"");
+
  const img=document.getElementById("img"),fallback=document.getElementById("imageFallback");
  // The result list and this separately owned detail WebView MUST resolve
  // identical offline bytes from the APK, without relying on HTTP or a warm
@@ -815,6 +841,16 @@ window.showDetails=(c,mode,watched)=>{
  const art=window.PokeSearchOfflineSprite?
    window.PokeSearchOfflineSprite.resolve(c):
    {src:String(c.image||""),original:String(c.image||""),offline:false};
+ // Gengar #94 needs an extra reduction for Halloween/costume assets.
+ const gd=Number(String(c.number||c.dex||c.pokemon_id||"").replace("#",""));
+ const isGengar=gd===94||(/\bgengar\b/i.test(String(c.name||""))&&(gd===0||!Number.isFinite(gd)));
+ const fields=[c.costume,c.costume_name,c.costumeName,c.costume_id,c.form,c.form_id,
+   c.variant,c.event,c.name,c.image,art.original,art.src].map(x=>String(x??"").slice(0,220)).join(" ");
+ const halloweenGengar=isGengar&&(c.isCostume===true||
+   /halloween|hallowe|costume|fantasia|disfarce|outfit|event/i.test(fields)||
+   (c.costume_id!=null&&Number(c.costume_id)>0));
+ document.getElementById("artColumn")?.classList?.toggle?.("gengarSprite",isGengar);
+ document.getElementById("artColumn")?.classList?.toggle?.("gengarHalloween",halloweenGengar);
  img.onload=null;img.onerror=null;
  img.style.display="none";fallback.style.display="flex";img.removeAttribute("src");
  let artAttempt=0,displayed=false,verifiedNativeTried=false,loadGeneration=0;

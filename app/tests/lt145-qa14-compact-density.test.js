@@ -4,7 +4,7 @@ const html=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html")
 const java=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
 const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(script);new vm.Script(script);
 const compact=html.slice(html.indexOf("/* QA14 — restore near-original compact dimensions;"));
-assert.ok(java.includes("DETAIL_DP=216"),"narrower native width");
+assert.ok(java.includes("DETAIL_DP=200"),"narrower native width");
 assert.ok(java.includes("detailHeight=165"),"smaller first-frame height");
 assert.ok(java.includes("Math.min(520,available)"),"full content remains accessible");
 assert.ok(compact.includes("#panel{padding:5px 5px 6px}"));

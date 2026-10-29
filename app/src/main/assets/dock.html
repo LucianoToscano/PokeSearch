@@ -6366,6 +6366,16 @@ function draw(){
   const dexNumber=Number(String(c.number||c.dex||"").replace("#",""));
   const artFit=/^\s*minior(?:\s|\(|$)/i.test(String(c.name||""))?0.67:
    dexNumber===94?0.67:0.86; // Gengar needs reduced visual fill; keep original sprite file.
+  // Halloween Gengar costume often fills the entire image unlike regular #94.
+  const gengarName=/\bgengar\b/i.test(String(c.name||""));
+  const gengarSpecies=dexNumber===94||(gengarName&&(dexNumber===0||!Number.isFinite(dexNumber)));
+  const costumeHint=[c.costume,c.costume_name,c.costumeName,c.costume_id,c.form,
+   c.form_id,c.variant,c.event,c.name,c.image,art.original,art.src]
+   .map(x=>String(x??"").slice(0,220)).join(" ");
+  const halloweenGengar=gengarSpecies&&(c.isCostume===true||
+   /halloween|hallowe|costume|fantasia|disfarce|outfit|event/i.test(costumeHint)||
+   (c.costume_id!=null&&Number(c.costume_id)>0));
+  const effectiveArtFit=halloweenGengar?0.48:artFit;
   const icon='<span class="spriteStage">'+
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" aria-hidden="true">◉</span></span>';
@@ -6396,7 +6406,7 @@ function draw(){
   const ivBadge=!metadataVisible&&showResultText&&verifiedPercent!==null?
    '<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>':"";
   const measuredRow=resultLayout?.rows[i]||row;
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+artFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+cooldownMarkup+info+'</button>';
+  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+effectiveArtFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+cooldownMarkup+info+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
  if(resultWindow){attachLongPress();attachSpriteFeedback();syncTimerTicker();}

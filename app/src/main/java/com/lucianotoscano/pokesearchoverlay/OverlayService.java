@@ -164,7 +164,7 @@ public class OverlayService extends Service {
     private android.content.SharedPreferences overlayPrefs(){
         return getSharedPreferences(isSecondaryOverlay()?"prefs_secondary":"prefs",0);
     }
-    private static final int BUBBLE_DP=45, DETAIL_DP=216, TOOLBAR_DP=34, MENU_BASE_DP=34;
+    private static final int BUBBLE_DP=45, DETAIL_DP=200, TOOLBAR_DP=34, MENU_BASE_DP=34;
     private static final int RESULTS_HEADER_DP=30;
     private int spriteSize=45;
     private String visualPrefsJson="{}";
