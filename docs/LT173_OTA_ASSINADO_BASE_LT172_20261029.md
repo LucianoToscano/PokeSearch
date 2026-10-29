@@ -1,5 +1,9 @@
 # LT173 — atualizações inteligentes (OTA) assinadas — 29/10/2026
 
+## Atualização de estado pós-publicação — 29/10/2026
+
+**LT173 FOI PUBLICADA OFICIALMENTE PARA TODOS**, após autorização expressa do proprietário. O status de branch/QA abaixo é histórico e não reflete mais a versão atual. Consultar [ESTADO_CANONICO_LT173_OFICIAL_20261029.md](ESTADO_CANONICO_LT173_OFICIAL_20261029.md) para evidências vigentes: Release `v0.01.73-54378`, APK `PokeSearch-v0.01.73-LT.apk` (49.514.961 bytes), SHA-256 `5d330bafeabe3a24fdfb5ef8864c7ae463743ae4cda362d014fc9c08ef34ade9`; Actions #40921988685 SUCCESS; SOURCE_COMMIT `7d3f7497539af826de491cc6daac2e16e4411758`. O primeiro update para LT173 ainda é o APK completo. O canal OTA de recursos **segue desativado em `packVersion=0`** até publicar um pacote assinado. Homologação física Samsung/Moto ainda pendente.
+
 ## Estado e base canônica
 - **Base oficial preservada:** LT172 `0.01.72 / 54377`; PR #130 e Release `v0.01.72-54377`.
 - **LT173 nesta branch:** implementação de infraestrutura/QA. **Não é uma Release, não há APK compilado nesta etapa, não foi enviada atualização a usuários.** Não declarar homologação física.
