@@ -3563,7 +3563,7 @@ public class OverlayService extends Service {
             return readBundledPng("pokemon-sprites/"+relative);
         }
         private String readBundledPng(String file){
-            try(InputStream stream=OtaAssets.open(this,file);
+            try(InputStream stream=OtaAssets.open(OverlayService.this,file);
                 ByteArrayOutputStream buffer=new ByteArrayOutputStream()){
                 byte[] chunk=new byte[4096];int count;
                 while((count=stream.read(chunk))!=-1){
