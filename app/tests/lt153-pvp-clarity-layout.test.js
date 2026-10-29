@@ -26,15 +26,20 @@ assert.ok(!empoleon.includes("best"),"ineligible candidate not highlighted");
 const noivern=render({name:"Noivern",rank:2,overallRank:385,
  statProductPct:"92,17",cp:2890,level:50,eligible:true},false);
 const firstRow=noivern.match(/<div class="evoSummary">([\s\S]*?)<\/div>/)?.[1]||"";
-const secondRow=noivern.match(/<div class="evoMeta evoRankRow">([\s\S]*?)<\/div>/)?.[1]||"";
-for(const token of ["Noivern","PC 2890","Nv. 50,0","92,17%"])
+const secondRow=noivern.match(/<div class="evoStatsRow">([\s\S]*?)<\/div>/)?.[1]||"";
+const thirdRow=noivern.match(/<div class="evoMeta evoRankRow">([\s\S]*?)<\/div>/)?.[1]||"";
+for(const token of ["Noivern","92,17%"])
  assert.ok(firstRow.includes(token),"first row has "+token);
-for(const token of ["Rank Classe: #2","Rank Geral: #385"])
+for(const token of ["PC 2890","Nv. 50,0"])
  assert.ok(secondRow.includes(token),"second row has "+token);
-assert.ok(!firstRow.includes("Rank Classe:"),"class rank must be below");
-assert.ok(!secondRow.includes("PC 2890"),"PC must stay on first row");
-assert.ok(html.includes('.evoLine .evoRankRow{justify-content:center;column-gap:18px;row-gap:2px;padding-inline:8px;text-align:center}'),
- "both ranks centered with balanced spacing and side insets");
+for(const token of ["Rank Classe: #2","Rank Geral: #385"])
+ assert.ok(thirdRow.includes(token),"third row has "+token);
+assert.ok(!firstRow.includes("PC 2890"),"PC moved below heading");
+assert.ok(!secondRow.includes("Rank Classe:"),"ranks in third row only");
+assert.ok(html.includes('.evoLine .evoRankRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);'),
+ "two independent equal-width centered rank areas");
+assert.ok(html.includes('.evoLine .evoPct{')&&html.includes('var(--ps-rank-percent-color'),
+ "PvP efficiency uses the IV color palette");
 
 assert.ok(!noivern.includes("Eficiência IV:"),"no redundant efficiency label");
 
