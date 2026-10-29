@@ -52,7 +52,7 @@ advance(500);fire("click");assert.equal(Native.count,2,"Click fallback searches"
 // Long press opens interval settings and never submits a search.
 advance(500);fire("pointerdown");fireHold();fire("pointerup");fire("click");
 assert.equal(Native.count,2,"Long press cannot search");
-assert(Native.heights.some(([height])=>height===119),"Long press opens interval menu");
+assert(Native.heights.some(([height])=>height===262),"Long press opens six compact Pokébola interval tiles");
 // A pointerleave can lose pointerup; synth click is enough.
 advance(500);fire("pointerdown");fire("pointerleave");fire("click");
 assert.equal(Native.count,3,"Pointerleave followed by click searches");
