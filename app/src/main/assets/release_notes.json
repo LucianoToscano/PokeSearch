@@ -819,6 +819,30 @@
           "A instalação da atualização requer confirmação do Android; consultas ao PoGoCoordinates permanecem sujeitas aos limites publicados pelo próprio serviço."
         ]
       }
+    },
+    {
+        "id": "lt182-discord-oauth-profile-20261029",
+        "minVersionCode": 54387,
+        "date": "29/10/2026",
+        "title": "PokeSearch LT182 — Login Discord e perfil sincronizado",
+        "sections": {
+            "novidades": [
+                "Conferência mais confiável da conta após autorizar o Discord ou Google no PoGoCoordinates."
+            ],
+            "melhorias": [
+                "Aguarda a página oficial carregar os dados de treinador sem encerrar o login automaticamente.",
+                "Quando o PoGoCoordinates confirma que ainda não existe treinador vinculado, a Home mostra Vincular com orientação clara."
+            ],
+            "correcoes": [
+                "Corrigido o fechamento prematuro da janela de login antes da confirmação do perfil e do treinador.",
+                "Estado temporariamente não confirmado não é mais confundido com ausência definitiva de treinador.",
+                "Contas 1 e 2, treinadores VIP e Pokébolas permanecem independentes."
+            ],
+            "emDesenvolvimento": [
+                "O vínculo de um treinador à conta Discord/Google é realizado pelo usuário no perfil oficial do PoGoCoordinates.",
+                "A autenticação real em aparelhos Samsung e Moto ainda requer confirmação prática."
+            ]
+        }
     }
   ]
 }
