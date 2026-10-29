@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT173 EM DESENVOLVIMENTO — OTA ASSINADO, SEM RELEASE PÚBLICA (29/10/2026)
+
+**Base estável permanece LT172 `0.01.72 / 54377`.** A branch `feature/lt173-ota-signed-resource-packs-20261029` implementa um mecanismo de recursos OTA assinados com a chave permanente do APK: manifesto cumulativo por SHA-256, downloads diferenciais, staging atômico, rollback e fallback aos assets internos. As duas Pokébolas usam o mesmo carregador, preservando suas contas e treinadores independentes. O primeiro APK com OTA exigirá versão >=54378; não há instalação dinâmica de código Android. `ota/channel.json` segue desativado (`packVersion: 0`), sem distribuição ou novo APK oficial. QA Android/Node/Java e teste físico Samsung pendentes. [Registro LT173](LT173_OTA_ASSINADO_BASE_LT172_20261029.md).
+
+---
+
 ## LT172 OFICIAL — COORDENADAS, MENU MAIS E VINCULAÇÃO (29/10/2026)
 
 **VERSÃO ESTÁVEL ATUAL: LT172 `0.01.72 / versionCode 54377`, publicada para todos via GitHub Releases.** PR #130 mesclada; SOURCE_COMMIT imutável do APK `40e94bafe86dfb778be719e0cf1310a7f3085457`; [Release/latest LT172](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.72-54377); APK `PokeSearch-v0.01.72-LT.apk` **49.514.561 bytes**, SHA-256 `5b407116707beacb1c41400c05eceb8d91199496bfb2b7d9ad29b0ebfbd63a2f`. [GitHub Actions #40909102893 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40909102893), R8 e certificado permanente Android v2 verificados.
