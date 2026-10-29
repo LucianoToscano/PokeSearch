@@ -77,6 +77,10 @@ jobs:
             echo "::endgroup::"
           done
           node app/tests/lt170-dual-pogo-sessions.test.js
+          # No test may permit slot 2 to silently use the Default cookie store.
+          grep -Fq 'if(!secondSupported())' app/src/main/java/com/lucianotoscano/pokesearchoverlay/PogoAccountSlots.java
+          grep -Fq 'PogoAccountSlots.bind(website,accountSlot())' app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java
+          grep -Fq 'PogoAccountSlots.bind(website,loginAccountSlot)' app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java
       - name: Prepare offline original Pokémon GO sprite catalogue
         shell: bash
         run: |
