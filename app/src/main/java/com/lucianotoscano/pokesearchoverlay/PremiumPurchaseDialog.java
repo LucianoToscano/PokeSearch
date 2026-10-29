@@ -309,7 +309,8 @@ final class PremiumPurchaseDialog {
                             normalPrice.setVisibility(View.GONE);
                             discountCopy.setVisibility(View.GONE);
                             canSell[0]=Boolean.TRUE.equals(current.get("salesEnabled"))&&cents>=100;
-                            create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&canSell[0]);
+                            create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&
+                                canSell[0]&&activeOrder[0].isEmpty());
                         });
                     }
                     return;
@@ -396,8 +397,14 @@ final class PremiumPurchaseDialog {
         }));
         poll[0]=()->{
             if(!dialog.isShowing()||activeOrder[0].isEmpty()){stop.run();return;}
-            PremiumAccess.order(activity,activeOrder[0],(result,error)->{
-                if(!dialog.isShowing())return;
+            final String requestedUid=PremiumGoogleLogin.uid(activity);
+            final String requestedOrder=activeOrder[0];
+            if(requestedUid.isEmpty()){stop.run();return;}
+            PremiumAccess.order(activity,requestedOrder,(result,error)->{
+                // A response from the old Google account must not alter this session.
+                if(!dialog.isShowing()||
+                   !requestedUid.equals(PremiumGoogleLogin.uid(activity))||
+                   !requestedOrder.equals(activeOrder[0]))return;
                 if(error!=null){status.setText(error);return;}
                 String state=String.valueOf(result.get("status"));
                 if("approved".equals(state)){
@@ -409,7 +416,9 @@ final class PremiumPurchaseDialog {
                     pixPanel.setVisibility(View.GONE);
                     fitPopup.run();
                     PremiumAccess.verify(activity,(allowed,premium)->{
-                        if(!dialog.isShowing())return;
+                        if(!dialog.isShowing()||
+                           !requestedUid.equals(PremiumGoogleLogin.uid(activity))||
+                           !requestedOrder.equals(activeOrder[0]))return;
                         if(premium){
                             activeOrder[0]="";
                             pending.edit().remove("latestOrderId").remove("latestOrderUid").apply();
@@ -520,7 +529,8 @@ final class PremiumPurchaseDialog {
                 freeCouponClaim.setVisibility(gift?View.VISIBLE:View.GONE);
                 freeCouponClaim.setEnabled(gift&&PremiumGoogleLogin.isGoogleSignedIn(activity));
                 canSell[0]=Boolean.TRUE.equals(quote.get("salesEnabled"))&&cents>=100;
-                create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&canSell[0]);
+                create.setEnabled(PremiumGoogleLogin.isGoogleSignedIn(activity)&&
+                    canSell[0]&&activeOrder[0].isEmpty());
                 fitPopup.run();
             });
         });
@@ -564,6 +574,7 @@ final class PremiumPurchaseDialog {
                 status.setText("Já existe um Pix pendente. Verifique antes de criar outro.");
                 return;
             }
+            final String checkoutUid=PremiumGoogleLogin.uid(activity);
             create.setEnabled(false);
             status.setText("Gerando o Pix no Mercado Pago...");
             PremiumAccess.createPix(activity,mail,"",appliedCoupon[0],(result,error)->{
@@ -577,8 +588,15 @@ final class PremiumPurchaseDialog {
                     refreshIdentity.run();
                     return;
                 }
+                // Bookmark only the account that actually initiated this order.
                 pending.edit().putString("latestOrderId",activeOrder[0])
-                        .putString("latestOrderUid",PremiumGoogleLogin.uid(activity)).apply();
+                        .putString("latestOrderUid",checkoutUid).apply();
+                if(!checkoutUid.equals(PremiumGoogleLogin.uid(activity))){
+                    activeOrder[0]="";
+                    status.setText("Conta alterada. Entre novamente na conta que gerou o Pix.");
+                    refreshIdentity.run();
+                    return;
+                }
                 pix[0]=String.valueOf(result.get("pixCode"));
                 Object cents=result.get("priceCents");
                 long amount=cents instanceof Number?((Number)cents).longValue():0;
