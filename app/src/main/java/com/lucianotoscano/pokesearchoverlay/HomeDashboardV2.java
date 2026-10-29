@@ -19,6 +19,25 @@ import android.widget.TextView;
  */
 final class HomeDashboardV2 {
     private HomeDashboardV2(){}
+    // Native Home slider must update the NEW glass without rebuilding WebViews,
+    // losing scroll position or recreating the authenticated account widgets.
+    private static final java.util.WeakHashMap<MainActivity,
+        java.util.ArrayList<GradientDrawable>> liveSurfaces=new java.util.WeakHashMap<>();
+    static void begin(MainActivity a){
+        liveSurfaces.put(a,new java.util.ArrayList<>());
+    }
+    private static GradientDrawable track(MainActivity a,GradientDrawable bg,int transparency){
+        java.util.ArrayList<GradientDrawable> list=liveSurfaces.get(a);
+        if(list!=null)list.add(bg);
+        bg.setAlpha(Math.round(255f*(100-Math.max(0,Math.min(100,transparency)))/100f));
+        return bg;
+    }
+    static void refreshOpacity(MainActivity a,int transparency){
+        java.util.ArrayList<GradientDrawable> list=liveSurfaces.get(a);
+        if(list==null)return;
+        int alpha=Math.round(255f*(100-Math.max(0,Math.min(100,transparency)))/100f);
+        for(GradientDrawable bg:list)bg.setAlpha(alpha);
+    }
     private static int dp(MainActivity a,int value){
         return Math.round(a.getResources().getDisplayMetrics().density*value);
     }
@@ -46,8 +65,7 @@ final class HomeDashboardV2 {
         int base=light?Color.argb(198,248,247,237):Color.argb(181,37,46,43);
         int stroke=light?Color.argb(155,255,255,255):Color.argb(103,237,240,222);
         GradientDrawable bg=round(a,base,stroke,radius);
-        bg.setAlpha(Math.round(strength*255f/100f));
-        return bg;
+        return track(a,bg,alphaPercent);
     }
     private static LinearLayout.LayoutParams block(MainActivity a,int top,int bottom){
         LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);
@@ -70,7 +88,7 @@ final class HomeDashboardV2 {
         backdrop.setCornerRadius(dp(a,24));
         backdrop.setStroke(dp(a,1),light?Color.argb(190,255,255,255):
             Color.argb(125,242,225,190));
-        backdrop.setAlpha(Math.round((100-Math.max(0,Math.min(100,opacity)))*255f/100f));
+        track(a,backdrop,opacity);
         panel.setBackground(backdrop);
         panel.setClipToOutline(true);
         panel.setElevation(dp(a,5));
@@ -153,12 +171,12 @@ final class HomeDashboardV2 {
         return row;
     }
     private static View shortcut(MainActivity a,boolean light,String glyph,String title,
-                                 Runnable action){
+                                 Runnable action,int opacity){
         LinearLayout col=new LinearLayout(a);
         col.setGravity(Gravity.CENTER);
         col.setOrientation(LinearLayout.VERTICAL);
         col.setPadding(dp(a,4),dp(a,9),dp(a,4),dp(a,9));
-        col.setBackground(glass(a,light,16,0));
+        col.setBackground(glass(a,light,16,opacity));
         TextView icon=text(a,glyph,21,gold(light),true);
         icon.setGravity(Gravity.CENTER);
         col.addView(icon);
@@ -171,7 +189,7 @@ final class HomeDashboardV2 {
         col.setOnClickListener(v->action.run());
         return col;
     }
-    static TextView[] restylePokeballs(MainActivity a,boolean light,LinearLayout row){
+    static TextView[] restylePokeballs(MainActivity a,boolean light,LinearLayout row,int opacity){
         row.setPadding(0,0,0,0);
         row.setBackgroundColor(Color.TRANSPARENT);
         TextView[] states=new TextView[2];
@@ -190,6 +208,7 @@ final class HomeDashboardV2 {
                     new int[]{Color.argb(221,48,67,60),Color.argb(206,39,47,49)});
             bg.setCornerRadius(dp(a,20));
             bg.setStroke(dp(a,1),border);
+            track(a,bg,opacity);
             item.setBackground(bg);
             icon.setPadding(dp(a,3),dp(a,3),dp(a,3),dp(a,3));
             item.addView(icon,new LinearLayout.LayoutParams(dp(a,49),dp(a,49)));
@@ -235,7 +254,7 @@ final class HomeDashboardV2 {
         for(int i=0;i<3;i++){
             LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(a,67),1);
             if(i==1){lp.leftMargin=dp(a,6);lp.rightMargin=dp(a,6);}
-            quick.addView(shortcut(a,light,glyphs[i],labels[i],actions[i]),lp);
+            quick.addView(shortcut(a,light,glyphs[i],labels[i],actions[i],opacity),lp);
         }
         if(PremiumAccess.controlled())screen.addView(
             premiumLane(a,light,opacity,premiumAction),block(a,0,12));
