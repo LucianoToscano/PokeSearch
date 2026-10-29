@@ -1223,7 +1223,7 @@ test("VIS team artworks are mapped to existing verified Home assets",()=>{
   main.includes('pageBackground.setScaleType(ImageView.ScaleType.CENTER_CROP)')&&
   main.includes('R.drawable.ps_home_background_light')&&
   fs.existsSync(path.join(root,"res/drawable-nodpi/ps_home_background_light.png"))&&
-  main.includes('dim.setBackgroundColor(homeLightMode?');
+  main.includes('dim.setBackgroundColor(Color.argb(30,5,35,52))');
 });
 test("VIS tiny white Pokemon and pencil-gear are independent SVG toolbar icons",()=>{
  const source=dock.split('const QUICK_SOURCE_ICONS=')[1]?.split('function iconForQuick')[0]||"";
@@ -1802,10 +1802,10 @@ test("HOME-04 keeps transparent brand left, controls right and plain outside bac
   home.includes("Gravity.RIGHT|Gravity.CENTER_VERTICAL")&&
   home.includes("overlayControl=makeIcon(R.drawable.sem_filtro")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
-  home.includes('homeMiniButton("☰"')&&
+  home.includes('homeMiniButton("⚙"')&&
   home.includes("R.drawable.ps_home_official_wordmark")&&
   home.includes('brandTitle.setContentDescription("PokeSearch")')&&
-  home.includes("frame.setBackgroundColor(homeLightMode?")&&
+  home.includes("frame.setBackgroundColor(Color.rgb(28,79,100))")&&
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
 })());
@@ -2466,11 +2466,11 @@ test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=
  return main.includes("private void toggleHomeTheme(){")&&
   main.includes('putBoolean("homeLightMode",homeLightMode)')&&
   main.includes('getBoolean("homeLightMode",false)')&&
-  home.includes("R.drawable.ps_home_background_dark")&&
   home.includes("R.drawable.ps_home_background_light")&&
+  home.includes("pageBackground.setImageResource(R.drawable.ps_home_background_light)")&&
   home.includes("ImageView.ScaleType.CENTER_CROP")&&
-  home.includes('homeMiniButton(homeLightMode?"☾":"☀"')&&
-  home.includes("homeThemeButton.setOnClickListener(v->toggleHomeTheme())")&&
+  home.includes('homeMiniButton("🔔"')&&
+  main.includes('addHomeDrawerItem(drawer,"☼","Alternar tema",this::toggleHomeTheme)')&&
   home.includes("R.drawable.ps_home_brand_transparent")&&
   home.includes("R.drawable.ps_pogocoordinates")&&
   home.includes("auth.setBackground(homeSurface(")&&
