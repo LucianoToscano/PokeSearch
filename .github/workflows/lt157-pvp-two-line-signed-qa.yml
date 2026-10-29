@@ -1,4 +1,4 @@
-# LT157 QA rerun: exact runtime label renders # via concatenation; no extra intro text.
+# LT157 QA retry: preserve LT156 provenance test filename and updated two-line layout checks.
 name: PokeSearch LT157 — análise PvP legível — APK QA assinado
 on:
   push:
@@ -81,7 +81,7 @@ jobs:
           node app/tests/lt148-detail-no-phantom-scroll.test.js
           node app/tests/lt148-pvp-analysis-rank-label-stat-centering.test.js
           node app/tests/lt153-pvp-clarity-layout.test.js
-          node app/tests/lt157-overall-rank-without-iv.test.js
+          node app/tests/lt156-overall-rank-without-iv.test.js
           node - <<'NODE'
           const fs=require('fs'),html=fs.readFileSync('app/src/main/assets/detail.html','utf8');
           if(html.includes('<b>Eficiência IV:</b>')||html.includes('<b>Produto:</b>')||
