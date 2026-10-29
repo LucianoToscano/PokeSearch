@@ -1937,29 +1937,18 @@ public class MainActivity extends Activity {
             .show();
     }
     private void logoutLocalSession(){
-        // Do not start a service for sign-out. Stop the collector before revoking cookies.
-        stopService(new Intent(this,OverlayService.class));
-        stopService(new Intent(this,SecondaryOverlayService.class));
+        // The user may be signed into TWO separate providers simultaneously.
+        // Never remove Account 2 cookies or stop its independent Pokébola.
+        if(OverlayService.isRunning()&&PogoAccountSlots.assigned(this,false)==1)
+            stopService(new Intent(this,OverlayService.class));
+        if(OverlayService.isSecondaryRunning()&&PogoAccountSlots.assigned(this,true)==1)
+            stopService(new Intent(this,SecondaryOverlayService.class));
         if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
-        getSharedPreferences("prefs",0).edit()
-            .putString("sessionStatus","desconectado")
-            .remove("profileDisplayName").remove("profileProvider").remove("profileAvatarUrl")
-            .remove("profileTrainerName").remove("profileTrainerCode")
-            .remove("profileTrainerDetails").remove("profileTrainerState")
-            .remove("profileTrainerList").remove("profileSelectedTrainerCode")
-            .remove("profileTrainerTeam").remove("profileTrainerLevel")
-            .putBoolean("shiny",false)
-            .putString("lastStatus","Sessão local desconectada")
-            .putString("lastError","Nenhum")
-            .apply();
-        refreshSessionSummary();
-        CookieManager.getInstance().removeAllCookies(cleared->{
-            CookieManager.getInstance().flush();
-            WebStorage.getInstance().deleteAllData();
-            runOnUiThread(()->Toast.makeText(this,
-                "Sessão do PokeSearch desconectada",Toast.LENGTH_SHORT).show());
-        });
-        BugReport.log(this,"SESSION","Desconexão local solicitada");
+        PogoAccountSlots.logout(this,1,()->runOnUiThread(()->{
+            refreshSessionSummary();
+            Toast.makeText(this,"Conta 1 desconectada",Toast.LENGTH_SHORT).show();
+        }));
+        BugReport.log(this,"SESSION","Desconexão local da Conta 1");
     }
     private void refreshWatchCount(){
         if(watchSummary==null)return;
@@ -2002,8 +1991,14 @@ public class MainActivity extends Activity {
         super.onPause();
     }
     private void handleShinyLoginIntent(Intent intent){
-        if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
-            getWindow().getDecorView().post(this::openLoginDialog);
+        if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction())){
+            final int slot=intent.getIntExtra("pogoAccountSlot",1);
+            getWindow().getDecorView().post(()->{
+                if(slot==2&&PogoAccountSlots.supportsSecond()){
+                    activeLoginSlot=2;openLoginDialog(true,"login");
+                }else openLoginDialog();
+            });
+        }
     }
     private void sendActionToRunningOverlay(Class<?> serviceType,String action,boolean authConfirmed){
         boolean enabled=serviceType==OverlayService.class?
