@@ -914,24 +914,49 @@ function updateVisiblePvPRank(payload){
  if(activeRankLeague!=="gl"&&activeRankLeague!=="ul")return false;
  const league=payload.leagues.find(x=>x?.league===activeRankLeague);
  if(!league)return false;
+ const rankLine=document.getElementById("rankLine");
+ const limit=payload.searchLeague===activeRankLeague&&
+  Number.isInteger(Number(payload.searchRankLimit))&&
+  Number(payload.searchRankLimit)>=1&&Number(payload.searchRankLimit)<=50?
+  Number(payload.searchRankLimit):null;
  const candidates=[];
- const add=(x,name,isEvolution)=>{
+ const add=(x,name,kind)=>{
   const rank=Number(x?.rank);
   if(!Number.isInteger(rank)||rank<1||rank>4096||x?.eligible===false)return;
-  candidates.push({rank,name:String(name||"").slice(0,90),isEvolution});
+  candidates.push({rank,name:String(name||"").slice(0,90),kind});
  };
- if(league.own)add(league.own,payload.name,false);
- for(const e of Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[])
-  add(e,e.name,true);
+ if(league.own)add(league.own,payload.name,"current");
+ if(payload.includePreviousEvolutions!==false){
+  for(const e of Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[])
+   add(e,e.name,"evolution");
+  for(const e of Array.isArray(league.comparisons)?league.comparisons.slice(0,24):[])
+   if(e?.referenceOnly===true)add(e,e.name,"reference");
+ }
  if(!candidates.length)return false;
- candidates.sort((a,b)=>a.rank-b.rank||Number(a.isEvolution)-Number(b.isEvolution));
- const best=candidates[0],label=activeRankLeague.toUpperCase();
- const rankLine=document.getElementById("rankLine");
- rankLine.textContent=label+" · Rank Classe: #"+best.rank+
-  (best.isEvolution?" · ↳ "+best.name:"");
- rankLine.title="Classificação dos IVs de "+best.name+" na "+
+ candidates.sort((a,b)=>a.rank-b.rank||
+  (a.kind==="current"?-1:b.kind==="current"?1:0));
+ const inSearch=limit===null?candidates:candidates.filter(x=>x.rank<=limit);
+ const best=inSearch[0],label=activeRankLeague.toUpperCase();
+ if(!best){
+  // A Top-N search is NOT evidence that the base species itself is Top-N.
+  const own=candidates.find(x=>x.kind==="current");
+  rankLine.textContent=label+" · Filtro Top #"+limit+
+   (own?" · "+payload.name+" atual #"+own.rank:" · posição não identificada");
+  rankLine.title="A busca pode considerar evoluções ou uma classificação da fonte. "+
+   "Nenhuma combinação correspondente ao Top #"+limit+" foi confirmada no cálculo local.";
+  rankLine.hidden=false;
+  return false;
+ }
+ const scope=best.kind==="evolution"?" · ↳ "+best.name:
+  best.kind==="reference"?" · Ref. "+best.name:"";
+ rankLine.textContent=label+" · Rank Classe: #"+best.rank+scope;
+ const own=candidates.find(x=>x.kind==="current");
+ rankLine.title="Rank dos IVs de "+best.name+" na "+
   (activeRankLeague==="gl"?"Grande Liga":"Ultra Liga")+
-  ". O número na Pokébola é o filtro da pesquisa.";
+  (best.kind==="reference"?
+   ". Referência matemática: não confirma que a fantasia possa evoluir.":"")+
+  (own&&own.name!==best.name?" · "+payload.name+" atual: #"+own.rank:"")+
+  (limit!==null?" · Filtro de pesquisa: Top #"+limit:"");
  rankLine.hidden=false;
  return true;
 }
