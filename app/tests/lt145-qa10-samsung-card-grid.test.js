@@ -4,10 +4,10 @@ const html=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html")
 const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(script);new vm.Script(script);
 const hdr=html.slice(html.indexOf('<div id="header">'),html.indexOf('<div id="major">'));
 for(const id of ['nameLine','types','subRow','timer','timeRemaining','dexGender','sizeForm','headerActions','headerButtons','shareIcon','watch','x'])assert.ok(hdr.includes('id="'+id+'"'),id);
-assert.ok(hdr.indexOf('id="timer"')<hdr.indexOf('id="dexGender"'));
+assert.ok(hdr.indexOf('id="timer"')>hdr.indexOf('id="dexGender"'));
 assert.ok(hdr.indexOf('id="dexGender"')<hdr.indexOf('id="sizeForm"'));
-assert.match(html,/#statusRow\{grid-column:2 \/ 4;grid-row:2;display:flex/);
-assert.match(html,/#subRow\{grid-column:2 \/ 4;grid-row:3;display:flex/);
+assert.match(html,/#artColumn\{grid-column:1;grid-row:1;display:flex/);
+assert.match(html,/#headerActions\{grid-column:3;grid-row:1;display:flex/);
 assert.match(html,/#nameLine\{grid-column:2;grid-row:1;display:flex;flex-wrap:nowrap/);
 assert.match(html,/#headerActions\{grid-column:3;grid-row:1;width:77px/);
 assert.match(html,/#header\{display:grid;grid-template-columns:35px minmax\(0,1fr\) 77px/);
@@ -27,7 +27,7 @@ assert.ok(html.includes('#coordRow #coords.isPending{'),"CTA red while fetching"
 assert.ok(html.includes('#coordRow #coords.hasCoords{'),"verified coordinates green");
 assert.ok(script.includes('Math.ceil(document.getElementById("panel").scrollHeight)+10'),"window adapts to full content");
 const native=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
-assert.ok(native.includes('DETAIL_DP=252'),"slightly wider card");
+assert.ok(native.includes('DETAIL_DP=292'),"slightly wider card");
 assert.ok(native.includes('detailHeight=250'),"slightly larger initial window");
 assert.ok(native.includes('Math.min(520,available)'),"screen-bounded expanded height");
 console.log("LT145 QA11: aligned header, red default coords, responsive larger card and bounded scroll PASS");

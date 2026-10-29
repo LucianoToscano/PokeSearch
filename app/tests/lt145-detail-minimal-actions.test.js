@@ -9,7 +9,8 @@ assert.ok(section,"All three header icons must share one action group");
 for(const id of ["shareIcon","watch","x"]){
  assert.ok(section.includes('id="'+id+'"'),id+" in the action group");
 }
-assert.ok(!section.includes('id="timer"'),"clock must not consume an action slot");
+assert.ok(section.includes('id="timer"'),"clock below share/favorite/close");
+assert.ok(section.indexOf('id="timer"')>section.indexOf('id="headerButtons"'));
 assert.ok(html.includes('id="dexGender" class="metaPair"'),"Dex metadata follows Despawn");
 assert.ok(html.includes('#headerButtons button{box-sizing:border-box;width:23px;height:23px'));
 assert.ok(html.includes('min-height:23px;max-height:23px;flex:0 0 23px'),"all three button hitboxes have the same height");
@@ -24,7 +25,7 @@ assert.ok(js.includes('window.offerCaptureShare=sourceIndex=>'),"only the matchi
 assert.ok(js.includes('sourceIndex!==currentIndex'),"ignore stale capture callbacks");
 assert.ok(!html.includes('id="shareIcon" type="button" onclick="captureShareAsk()" disabled'),"share must not be disabled by default");
 assert.ok(js.includes('Native.confirmCaptureShare(currentIndex)'),"header share uses capture-to-chat bridge");
-assert.ok(html.includes('#subRow #timer{display:block'));
+assert.ok(html.includes('#headerActions #timer{display:inline-flex;align-items:center;'));
 assert.ok(html.includes('#timer.good,#timer.warning,#timer.critical,#timer.unknown{background:transparent;border:0;box-shadow:none}'));
 assert.ok(html.includes('id="coords" onclick="requestCoordsUi()"'));
 assert.ok(html.includes('<span id="coordsQuota" role="status"'),"PoGo counter is NOT an action");
@@ -43,7 +44,7 @@ assert.ok(html.includes('#captureShare{display:none!important}'));
 assert.ok(html.includes('.pkGender.genderless{color:#fff}'));
 assert.ok(html.includes('width:11px;height:11px;object-fit:contain'));
 assert.ok(html.includes('#names b{white-space:normal'));
-assert.ok(html.includes('stat("IV",showRaw?raw:"","red")'));
+assert.ok(html.includes('h(showRaw?raw:"—")'));
 
 const api=require("../src/main/assets/cooldown_estimate.js");
 const ui={coords:{disabled:false,textContent:"",title:"",setAttribute(){},className:""},
