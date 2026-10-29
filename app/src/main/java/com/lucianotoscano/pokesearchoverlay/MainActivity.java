@@ -1061,22 +1061,28 @@ public class MainActivity extends Activity {
                 "ivPercentMin","ivPercentMax","glRank","ulRank","shiny",
                 "sort","intervalMinutes","spriteSize","showTimers",
                 "alertsMode","alerts","locationEnabled","locationRadius"};
-            // Validate the entire allowlist BEFORE changing any settings.
+            // Validate exact types before writing: a tampered backup must
+            // not turn a getString preference into an Integer and crash Home.
             final java.util.Map<String,Object> validated=new java.util.LinkedHashMap<>();
             for(String key:keys){
                 if(!settings.has(key))continue;
                 Object value=settings.opt(key);
-                if(value instanceof Boolean)validated.put(key,value);
-                else if(value instanceof Number){
-                    double v=((Number)value).doubleValue();
-                    if(!Double.isFinite(v)||v!=Math.floor(v)||v < -1||v > 1000)
-                        throw new IllegalArgumentException("Valor numérico inválido");
-                    validated.put(key,((Number)value).intValue());
-                }else if(value instanceof String){
+                boolean textKey="mode".equals(key)||"sort".equals(key)||
+                                "alertsMode".equals(key);
+                boolean boolKey="shiny".equals(key)||"showTimers".equals(key)||
+                                "alerts".equals(key)||"locationEnabled".equals(key);
+                if(textKey&&value instanceof String){
                     String s=(String)value;
                     if(s.length()>80||s.contains("\n")||s.contains("\r"))
                         throw new IllegalArgumentException("Preferência inválida");
                     validated.put(key,s);
+                }else if(boolKey&&value instanceof Boolean){
+                    validated.put(key,value);
+                }else if(!textKey&&!boolKey&&value instanceof Number){
+                    double v=((Number)value).doubleValue();
+                    if(!Double.isFinite(v)||v!=Math.floor(v)||v < -1||v > 1000)
+                        throw new IllegalArgumentException("Valor numérico inválido");
+                    validated.put(key,((Number)value).intValue());
                 }else throw new IllegalArgumentException("Tipo inválido");
             }
             // Exact collection only, with the existing 50-favorite/70-char limits.
