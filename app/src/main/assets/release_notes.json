@@ -747,6 +747,29 @@
           "A atualização depende da confirmação de instalação pelo Android; resultados e autenticação estão sujeitos à disponibilidade e aos limites do PoGoCoordinates."
         ]
       }
+    },
+    {
+      "id": "lt179-candy-manual-refresh-autoreload-copied-20261029",
+      "minVersionCode": 54384,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT179 — Doce Raro: atualização corrigida",
+      "sections": {
+        "novidades": [
+          "Depois de copiar todos os doces da lista e eles ficarem cinza, uma nova pesquisa é solicitada automaticamente, respeitando os limites do PoGoCoordinates."
+        ],
+        "melhorias": [
+          "Toque curto em ↻ com resposta mais confiável no Android; pressionar por 550 ms continua abrindo os intervalos automáticos de 1, 3 e 5 minutos.",
+          "O aplicativo preserva uma pesquisa pendente quando a página ainda carrega, uma consulta está em andamento ou o site solicita aguardar."
+        ],
+        "correcoes": [
+          "O botão de atualização ganhou tratamento alternativo para WebViews que não entregam corretamente o evento de soltar o dedo.",
+          "Copiar repetidamente coordenadas já cinzas não dispara buscas duplicadas nem ciclos infinitos quando o site retorna os mesmos doces.",
+          "As duas Pokébolas, contas/treinadores, filtros e coordenadas permanecem independentes e preservados."
+        ],
+        "emDesenvolvimento": [
+          "A atualização do APK necessita da confirmação de instalação no Android; as consultas dependem da disponibilidade e das cotas oficiais do PoGoCoordinates."
+        ]
+      }
     }
   ]
 }
