@@ -87,3 +87,23 @@ Screenshots do usuário do Samsung compararam P1 com o Doce Raro da LT176. O doc
 - O GitHub Actions confirmou compilação, APK assinado v2 com mesmo certificado permanente, R8, integridade dos assets, SHA-256 do APK por `sha256sum --check` e upload de QA. SHA-256 do ZIP do artifact: `8afb9b654b18108798cbb90609ac54b6b07b8df7b8a0b6310ab20ccd3c357091` (distinto do hash do APK).
 - O artefato compilou o commit de código `366503ce3501465d761b9555c847477e3835bfb0`. Commits documentais posteriores não alteraram o APK.
 - GitHub Releases/latest segue em `v0.01.73-54378`, sem merge ou entrega pública. A leitura real da API e o layout do popup ainda carecem de homologação física no Samsung.
+
+---
+## LT178 — Novo ajuste dos menus/infos e publicação solicitada (29/10/2026)
+
+Relato do usuário após instalar LT177 no Samsung: o nome Doce Raro não tinha controle de ocultação, distância excessivamente afastada da sprite, menus ainda poderiam melhorar e refresh ↻ não reagia ao toque curto. Foi solicitada também imagem mais nítida preservando o mesmo doce, merge e distribuição no aplicativo.
+
+### Implementado na branch da PR #134
+- Exibição independente de **Nome Doce Raro** (`candyShowName`), Localização, Despawn e Distância. Valores iniciais para novos usuários: `false, false, true, false`. Preferências explicitamente salvas em versões anteriores permanecem preservadas.
+- Sprite dos doces e despawn ocupam coluna estreita de 46dp; distância, quando ativada, fica dentro da própria célula transparente `FrameLayout spriteCell`, num rótulo discreto sobreposto na parte inferior. Não há distância em coluna à direita.
+- Largura da lista encolhe para 48dp se Nome e Localização estiverem ocultos, ampliando somente quando o usuário escolher essas infos. Resultados ainda copiam coordenadas ao tocar e ficam acinzentados.
+- Menus refinados: controles 34×30dp no padrão do dock, Popup Infos com Nome/Localização/Despawn/Distância, opções 1/3/5m na mesma linha, campos de coordenadas mais compactos; `syncCandy` não recria o formulário enquanto usuário digita.
+- No refresh, `pointerup` chama `Native.refreshCandy()` imediatamente quando o toque é curto; `pointerdown` por 550ms abre menu de tempo sem disparar refresh. O serviço mantém um único `pendingManualRefresh` ao iniciar/concluir uma busca; mantém rate limit 429.
+- Arte da mesma Rare Candy substituída por versão PNG transparente de **96×96** (anterior 32×32), preservando a identidade e área visual de 20dp. Integridade de chunks PNG/CRC verificada.
+- Nova release note embutida `minVersionCode:54383` e versão QA `0.01.78/54383` assinada com certificado permanente.
+
+### Integração e publicação
+- Workflow de QA: `.github/workflows/lt175-rare-candy-signed-qa.yml` (protegido).
+- Workflow novo de release **apenas depois de merge na main**: `.github/workflows/lt178-official-release.yml`. Recusa publicar se `latest` não for `v0.01.73-54378` ou tag já existir; executa regressões, recompila com assinatura permanente e publica `v0.01.78-54383` no GitHub Releases/latest. O atualizador do app detecta o APK novo ao consultar a release oficial; não força instalação.
+- A ponte Drive tem de ser tratada separadamente, pois o workflow de GitHub não atualiza arquivos no Drive. **Não afirmar sincronização Drive sem confirmação de ID e upload.**
+- Registrar SHA-256, tamanho, sucesso do workflow oficial e URL real da release após a publicação. Testes físicos dos dados da API ainda merecem validação final.
