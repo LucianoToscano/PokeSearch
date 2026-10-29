@@ -65,7 +65,10 @@ jobs:
             --pattern 'SOURCE_COMMIT.txt' --dir "$RUNNER_TEMP/qa"
           cd "$RUNNER_TEMP/qa"
           test "$(tr -d '\r\n' < SOURCE_COMMIT.txt)" = "$SOURCE_SHA"
-          sha256sum --check SHA256SUMS.txt
+          # The QA workflow records its internal build filename in SHA256SUMS;
+          # the published asset has a human-readable name. Compare the
+          # signed bytes directly to both immutable digests without renaming.
+          test "$(awk 'NR==1 {print $1}' SHA256SUMS.txt)" = "$EXPECTED_SHA256"
           test "$(sha256sum "$QA_APK" | cut -d ' ' -f1)" = "$EXPECTED_SHA256"
           unzip -t "$QA_APK" >/dev/null
           test "$(stat -c%s "$QA_APK")" -gt 30000000
