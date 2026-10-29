@@ -1,5 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## VERSÃO OFICIAL ATUAL — LT168 (0.01.68 / versionCode 54373) — 29/10/2026
+
+**LT168 É A BASE CANÔNICA ATUAL.** PR [#112](https://github.com/LucianoToscano/PokeSearch/pull/112) mesclada em `main`, commit `b21bb0aed5f6f919a0a1d0f1d64677f908c2859f`. Release estável oficial `latest` [v0.01.68-54373](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.68-54373) publicado e validado pelo [workflow #40864077543](https://github.com/LucianoToscano/PokeSearch/actions/runs/40864077543) (SUCCESS). APK `PokeSearch-v0.01.68-LT.apk`, 49.416.673 bytes, SHA-256 `a331a28b853a23b2bbd0fc02e51d2f483646eac4d21aca717ef7e29faa3ab70f`. Preserva a assinatura permanente Android v2. O atualizador consulta `releases/latest`; instalação depende de aceite no Android.
+
+- Corrige chat com **vinculação visual local e reversível** do UID de mensagens antigas pelo menu `⋮ → Mensagens antigas`, com foto existente e alinhamento à direita quando confirmada pelo usuário. Não inferir propriedade por nickname nem alterar autoria/regras do Firebase.
+- Remove matte escuro de bordas dos próprios PNGs de modo em compartilhamentos; mantém fallback seguro e cache.
+- Home agora oferece **Importar dados**, lendo o JSON v1 exportado, validando preferências e até 50 favoritos, sem importar contas, tokens, coordenadas, conversa nem alterar a segunda Pokébola.
+- Regressões Node, Java e APK assinado aprovados em CI; **homologação visual Samsung P1/P2 pendente**, especialmente matte, histórico do chat e restauração JSON.
+- [Registro técnico detalhado e ponto de retomada](ESTADO_CANONICO_LT168_OFICIAL_20261029.md). **Não reutilizar LT167/LT145 como base** e não republicar a tag/versão LT168. Se houver nova release posterior, revalidar GitHub HEAD e `releases/latest` antes de atualizar este aviso.
+
+---
+
+
 ## LT145 0.01.45 — atualização oficial global via GitHub (29/10/2026)
 
 - **Publicação oficial CONFIRMADA:** https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.45-54350 — estável, não pré-lançamento, disponível em `releases/latest`.
