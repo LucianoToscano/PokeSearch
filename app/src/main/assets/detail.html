@@ -888,7 +888,7 @@ function evolutionRow(x,first){
  return '<div class="evoLine'+(first?' isCurrent':'')+
   (rank===1&&x.eligible===true?' best':'')+'"><div class="evoSummary">'+
   '<span class="evoWho"><span class="evoMark">'+mark+'</span> · <b>'+h(name)+'</b></span>'+
-  '<span class="evoRank" title="Ranking dos IVs desta espécie nesta liga">IV #'+rank+'</span></div>'+
+  '<span class="evoRank" title="Ranking da combinação de IVs da espécie na liga">Rank Classe: #'+rank+'</span></div>'+
   (data.length?'<div class="evoMeta">'+data.join("")+'</div>':"")+
   (state?'<div class="evoState">'+h(state)+'</div>':"")+'</div>';
 }
@@ -896,7 +896,7 @@ window.showEvolutionDetails=payload=>{
  if(!payload||!Array.isArray(payload.leagues)||payload.leagues.length!==3||
     evoIdentity(payload)!==detailIdentity)return false;
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
- let html='<div class="evoHint">IV # = classificação dos IVs · Eficiência IV = comparação com o melhor IV · Rank Geral = posição da espécie na liga</div>',count=0,ownCount=0;
+ let html='<div class="evoHint">Rank Classe = classificação dos IVs da espécie na liga · Eficiência IV = comparação com o melhor IV · Rank Geral = posição da espécie na liga</div>',count=0,ownCount=0;
  const labels={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Master"};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
