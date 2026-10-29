@@ -945,7 +945,7 @@ window.showEvolutionDetails=payload=>{
  document.getElementById("evoLabel").textContent=payload.ivUnavailable?
   "Análise PvP · Ranks gerais":
   count?"Análise PvP · "+count+" avaliações":
-  ownCount?"Análise IV PvP · "+ownCount+" ligas":"Análise PvP · Sem dados";
+  "Análise IV PvP · "+ownCount+" ligas";
  body.hidden=!evolutionExpanded;
  document.getElementById("evoChevron").textContent=evolutionExpanded?"▴":"▾";
  document.getElementById("evoToggle").setAttribute("aria-expanded",String(evolutionExpanded));
