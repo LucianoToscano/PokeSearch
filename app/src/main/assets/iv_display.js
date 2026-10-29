@@ -9,7 +9,9 @@
 })(typeof globalThis!=="undefined"?globalThis:this,function(){
  "use strict";
  const rawPattern=/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/;
- const percentPattern=/^(?:0|[1-9][0-9]?|100)$/;
+ // Some verified source responses express IV% with 1–2 decimals
+ // (e.g. 44/45 => 97.8 or 97.78), while the badge rounds to 98%.
+ const percentPattern=/^(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,2})?$/;
  const possible=new Set(Array.from({length:46},(_,sum)=>Math.round(sum*100/45)));
  const unavailable=Object.freeze({valid:false,raw:"",percent:null,color:"",derived:false});
  function colorFor(percent){
@@ -32,8 +34,14 @@
   const supplied=String(card?.ivPercent??"").trim();
   // A missing percentage is NOT a missing IV: calculate it from verified A/D/S.
   // A conflicting/non-numeric/impossible supplied percentage is NOT trustworthy.
-  if(supplied&&(!percentPattern.test(supplied)||
-     !possible.has(Number(supplied))||Number(supplied)!==percent))return unavailable;
+  if(supplied){
+   const observed=Number(supplied.replace(",","."));
+   const exact=sum*100/45;
+   const valid=percentPattern.test(supplied)&&observed>=0&&observed<=100&&
+    (observed===percent||observed===Number(exact.toFixed(1))||
+     observed===Number(exact.toFixed(2)));
+   if(!valid)return unavailable;
+  }
   return {valid:true,raw,percent,color,derived:!supplied};
  }
  return Object.freeze({colorFor,fromCard});
