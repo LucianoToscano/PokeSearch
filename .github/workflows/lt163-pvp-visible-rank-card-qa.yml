@@ -1,4 +1,4 @@
-# LT163 QA: show real searched-league PvP Rank Classe on collapsed encounter card.
+# LT163 QA rerun: source-scoped test for compact Rank Classe avoids stale snippet extraction.
 name: PokeSearch LT163 — análise PvP legível — APK QA assinado
 on:
   push:
