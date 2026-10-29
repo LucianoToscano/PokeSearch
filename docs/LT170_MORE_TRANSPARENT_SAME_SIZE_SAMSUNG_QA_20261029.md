@@ -24,6 +24,6 @@ A captura do menu flutuante de PokeSearch apresenta as três ações verticais *
 
 - [Suíte completa de regressões Node #40890107259](https://github.com/LucianoToscano/PokeSearch/actions/runs/40890107259): **SUCCESS**, incluindo o teste novo LT170 e regressões históricas LT69 e overlay UX.
 - [Node QA padrão #40890107373](https://github.com/LucianoToscano/PokeSearch/actions/runs/40890107373): **SUCCESS**.
-- [Compilação Java Android #40890107239](https://github.com/LucianoToscano/PokeSearch/actions/runs/40890107239): conferir status final antes de promover.
+- [Compilação Java Android #40890107239](https://github.com/LucianoToscano/PokeSearch/actions/runs/40890107239): **SUCCESS** — compilação Java Android aprovada, sem APK público.
 - Testes de contrato LT69 e overlay UX foram atualizados para a nova assinatura opcional (tipo/largura). Os callbacks originais de abrir/fechar continuam presentes.
 - QA de renderização real Samsung **ainda pendente**; não houve publicação nem substituição de APK oficial.
