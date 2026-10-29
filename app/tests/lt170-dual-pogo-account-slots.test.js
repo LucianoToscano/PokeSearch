@@ -17,7 +17,7 @@ assert.match(slots,/context\.sendBroadcast\(changed\)/);
 assert.match(slots,/cookies\.removeAllCookies\(/);
 assert.match(slots,/getWebStorage\(\)\.deleteAllData\(\)/);
 assert.match(slots,/WebStorage\.getInstance\(\)\.deleteAllData\(\)/);
-assert.match(main,/secondAccountSummary=homeText\("Conta PoGoCoordinates 2/);
+assert.match(main,/secondAccountSummary=homeText\("Conta 2"/);
 assert.match(main,/secondAccountLogin=homeAuthButton\("G  Google"/);
 assert.match(main,/secondAccountManage\.setText\(connected\?"Gerenciar":"◉  Discord"\)/);
 assert.match(main,/openLoginDialogForSlot\(2,"login"\)/);
