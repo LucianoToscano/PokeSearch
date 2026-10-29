@@ -592,6 +592,32 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  box-sizing:border-box;border:1px solid #d0e0fc70;border-radius:8px;padding:8px 10px;
  background:#202c3af0;color:#f0f6ff;font:500 11px/1.38 Roboto,Arial,sans-serif;
  box-shadow:0 4px 15px #0009;backdrop-filter:blur(10px);pointer-events:auto}
+
+/* LT170: count inside a circle; local uses never become an invented quota. */
+#coordRow #coordsQuota,#coordRow #coordsQuota.official{
+ display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+ position:absolute;top:4px;right:6px;z-index:3;width:22px;height:22px;
+ min-width:22px;max-width:22px;min-height:22px;max-height:22px;
+ padding:0;border-radius:50%;border:1px solid #d9e5f080;
+ background:#263947e8;color:#f5f8ff;
+ font:800 10px/1 Roboto,Arial,sans-serif;
+ text-align:center;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px #0005
+}
+#coordRow #coordsQuota.official{border-color:#8ce5ba;background:#20583d;color:#ecfff1}
+#coordsRateNotice[hidden],#coordsRatePopover[hidden],#coordsRateTimer[hidden]{display:none!important}
+#coordsRateNotice{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+ gap:4px;min-height:22px;margin-top:3px;color:#f4c978;
+ font:650 10px/1.25 Roboto,Arial,sans-serif;text-align:center}
+#coordsRateNotice .coordsRateText{min-width:0}
+#coordsRateTimer{font-size:9px;color:#f5d798;white-space:nowrap}
+#coordsRateInfo{width:22px;height:22px;min-width:22px;padding:0;
+ border:0;border-radius:50%;background:transparent;color:#f6d28a;
+ font:700 16px/22px Roboto,Arial,sans-serif;cursor:pointer}
+#coordsRateInfo:focus-visible{outline:2px solid #f1d083;outline-offset:1px}
+#coordsRatePopover{margin:3px 0 1px;padding:8px 9px;
+ border:1px solid #f4cb7866;border-radius:8px;background:#182b38f2;
+ color:#e9f0f5;font:500 10px/1.45 Roboto,Arial,sans-serif;
+ text-align:left;box-shadow:0 3px 10px #0006}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -624,6 +650,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
     <span id="coordsQuota" role="status" aria-live="polite" title="Usos observados no PokeSearch, não o saldo total">?</span>
     <button id="copy" hidden onclick="copyCoords()" aria-label="Copiar coordenadas">⧉</button>
   </div>
+  <div id="coordsRateNotice" role="status" hidden>
+    <span class="coordsRateText">Taxa Limitada PoGoCoordinates</span>
+    <span id="coordsRateTimer" hidden></span>
+    <button type="button" id="coordsRateInfo" aria-label="Por que o PoGoCoordinates limitou as coordenadas?" aria-expanded="false" aria-controls="coordsRatePopover" onclick="toggleCoordsRateInfo()">ⓘ</button>
+  </div>
+  <div id="coordsRatePopover" role="note" hidden></div>
   <div id="cooldownControls" hidden>
     <button id="cooldownConfirm" class="primary" onclick="confirmCooldownUi()" title="Registrar captura sem publicar no chat" hidden disabled>✓ Capturei</button>
     <button id="cooldownUndo" onclick="Native.undoCooldown()" title="Desfazer última captura registrada" aria-label="Desfazer última captura" hidden>↶</button>
@@ -752,6 +784,50 @@ window.captureShareFeedback=(ok,message)=>{
  status.hidden=!status.textContent;
  resizeEvolutionPanel();
 };
+// The provider rate or quota restriction is NOT a generic network failure.
+// Countdown only appears if the site explicitly displayed a retry interval.
+let coordsRestriction=null,coordsRateUntil=0,coordsRateTick=null;
+function clearCoordsRate(){
+ coordsRestriction=null;coordsRateUntil=0;
+ if(coordsRateTick){clearInterval(coordsRateTick);coordsRateTick=null;}
+ const notice=document.getElementById("coordsRateNotice");
+ const popup=document.getElementById("coordsRatePopover");
+ const info=document.getElementById("coordsRateInfo");
+ const timer=document.getElementById("coordsRateTimer");
+ if(notice)notice.hidden=true;
+ if(popup){popup.hidden=true;popup.textContent="";}
+ if(info)info.setAttribute("aria-expanded","false");
+ if(timer){timer.hidden=true;timer.textContent="";}
+}
+function updateCoordsRateTimer(){
+ const timer=document.getElementById("coordsRateTimer");if(!timer)return;
+ const seconds=coordsRateUntil?Math.max(0,Math.ceil((coordsRateUntil-Date.now())/1000)):0;
+ timer.hidden=!seconds;timer.textContent=seconds?"Tente em "+seconds+"s":"";
+ if(!seconds&&coordsRateTick){clearInterval(coordsRateTick);coordsRateTick=null;}
+}
+function renderCoordsRate(data){
+ clearCoordsRate();
+ const kind=data&&typeof data==="object"?data.type:"";
+ if(kind!=="rate"&&kind!=="quota")return;
+ coordsRestriction=kind;
+ const seconds=kind==="rate"&&Number.isInteger(data.retrySeconds)&&
+  data.retrySeconds>0&&data.retrySeconds<=3600?data.retrySeconds:0;
+ coordsRateUntil=seconds?Date.now()+seconds*1000:0;
+ const notice=document.getElementById("coordsRateNotice");if(notice)notice.hidden=false;
+ updateCoordsRateTimer();if(seconds)coordsRateTick=setInterval(updateCoordsRateTimer,1000);
+}
+function toggleCoordsRateInfo(){
+ if(!coordsRestriction)return;
+ const popup=document.getElementById("coordsRatePopover");
+ const trigger=document.getElementById("coordsRateInfo");
+ if(!popup||!trigger)return;
+ popup.hidden=!popup.hidden;
+ if(!popup.hidden)popup.textContent=coordsRestriction==="quota"?
+  "O PoGoCoordinates informou que esta conta atingiu o limite de revelações. Novas coordenadas dependem das regras e do plano do próprio site. O PokeSearch não pode alterar ou contornar esse limite.":
+  "O PoGoCoordinates limitou temporariamente as consultas. Aguarde a liberação indicada pelo próprio site antes de tentar novamente. O PokeSearch não define esse prazo nem faz tentativas automáticas.";
+ trigger.setAttribute("aria-expanded",String(!popup.hidden));
+ resizeEvolutionPanel();
+}
 function coordButtons(){
  const fetch=document.getElementById("coords"),copy=document.getElementById("copy");
  if(!fetch||!copy)return;
@@ -773,6 +849,7 @@ function requestCoordsUi(){
   Native.copyCoords(currentCoords);return;
  }
  if(coordsPending||!Number.isInteger(currentIndex)||currentIndex<0)return;
+ clearCoordsRate();
  coordsPending=true;coordsNote="Consultando coordenadas do Pokémon no site...";
  const seq=++coordsRequestSeq;
  setTimeout(()=>{
@@ -860,6 +937,8 @@ window.coordsQuotaUpdated=function(data){
  el.className=authoritative?"official":"";
  // Badge never confuses observed local requests with the full account quota.
  el.textContent=authoritative?String(data.remaining):String(observed);
+ el.style.fontSize=el.textContent.length>=5?"6px":
+  el.textContent.length>=4?"7px":el.textContent.length>=3?"8px":"10px";
  el.dataset.scope=authoritative?"official":"local";
  el.setAttribute("aria-label",authoritative?
   "PoGoCoordinates: "+data.remaining+" revelações restantes na última resposta oficial":
@@ -868,14 +947,15 @@ window.coordsQuotaUpdated=function(data){
   "Saldo oficial na última revelação autenticada; pode ter mudado":
   "Usos observados no PokeSearch; não representa o saldo total da conta.";
 };
-window.coordsResult=function(coords,message){
+window.coordsResult=function(coords,message,restriction){
  coordsRequestSeq++;
  coordsPending=false;
+ renderCoordsRate(coords?null:restriction);
  if(coords){
   currentCoords=coords;coordsNote="";
   if(/copiad/i.test(String(message||""))&&window.PokeSearchCooldown?.coords?.(coords))
    showCopySuccess();
- }else coordsNote=String(message||"Coordenadas indisponíveis");
+ }else coordsNote=coordsRestriction?"":String(message||"Coordenadas indisponíveis");
  coordButtons();
  refreshCooldownButtons();
  const label=document.getElementById("coordsValue");
@@ -1120,6 +1200,7 @@ window.showDetails=(c,mode,watched)=>{
   closePvpReferenceInfo();
   detailIdentity=nextIdentity;evolutionExpanded=false;
   coordsRequestSeq++;
+  clearCoordsRate();
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
   window.copyVisualUntil=0;window.copyVisualGeneration=(Number(window.copyVisualGeneration)||0)+1;
   shareReady=false;shareSent=false;sharePending=false;shareAwaitingOffer=false;shareUi();

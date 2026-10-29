@@ -673,6 +673,32 @@
           "Validação visual real de dois logins simultâneos, seletores VIP e cartões no Samsung ainda requer teste no aparelho; instalação da atualização depende de aceite Android."
         ]
       }
+    },
+    {
+      "id": "lt172-pogoc-coords-info-more-trainer-20261029",
+      "minVersionCode": 54377,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT172 — Limites de coordenadas e menus",
+      "sections": {
+        "novidades": [
+          "Pegar Coordenadas agora mostra Taxa Limitada PoGoCoordinates ⓘ somente quando o próprio provedor informa um limite de consulta ou revelações.",
+          "O botão ⓘ abre uma explicação sobre restrições temporárias e limites da conta; quando o site fornece prazo de nova tentativa, o contador aparece."
+        ],
+        "melhorias": [
+          "O número de coordenadas utilizadas fica em um círculo discreto; não é confundido com saldo gratuito oficial.",
+          "Menus ⋯ de Reportar, Apoiar e Fechar ficam separados, sem fundo preto unido, com largura dos botões principais.",
+          "Pokébola 1 abre apenas o overlay flutuante e mantém a Home visível.",
+          "Gerenciar treinador sem vínculo abre o formulário oficial Link my account, sem confirmar a vinculação automaticamente; após vínculo confirmado, volta às buscas do site."
+        ],
+        "correcoes": [
+          "Mantidos dois cards completos de login para Conta 1 e Conta 2 e a escolha independente de conta e Treinador 1/Treinador 2 VIP nas Pokébolas.",
+          "As duas sessões e cookies são isolados; alertas de rede não são apresentados como limite de revelações."
+        ],
+        "emDesenvolvimento": [
+          "A contagem exibida não representa o limite total da conta quando o site não fornecer esse saldo; nenhuma restrição do PoGoCoordinates é contornada.",
+          "Testes em aparelho Samsung e autenticação real Google/Discord com duas contas continuam necessários após a atualização."
+        ]
+      }
     }
   ]
 }

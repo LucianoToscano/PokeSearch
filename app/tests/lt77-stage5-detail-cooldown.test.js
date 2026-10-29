@@ -15,7 +15,7 @@ check("tap zone remains ≥36px and native Get coords once per tap",()=>{
 check("pending state exits on timeout, callback and detail switch",()=>{
  assert.ok(detail.includes('coordsPending=false;'));
  assert.ok(detail.includes('coordsRequestSeq++;'));
- assert.ok(detail.includes('window.coordsResult=function(coords,message)'));
+ assert.ok(detail.includes('window.coordsResult=function(coords,message,restriction)'));
  assert.ok(detail.includes('if(seq!==coordsRequestSeq||!coordsPending)return;'));
 });
 check("native callbacks invalidated for changed/hidden details",()=>{
