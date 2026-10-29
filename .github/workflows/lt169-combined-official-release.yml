@@ -284,41 +284,52 @@ jobs:
           test -s "$APK"
           test -s app/build/outputs/mapping/release/mapping.txt
           unzip -t "$APK" >/dev/null
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/base/25.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/go-exact-sprites.tsv'
-          unzip -Z1 "$APK" | grep -Fq 'res/drawable/ps_trainer_switch'
+          # Persist the full ZIP entry list once. Under pipefail, "unzip -Z1 | grep -q"
+          # can fail with SIGPIPE when grep matches early and closes the pipe.
+          unzip -Z1 "$APK" > APK-ENTRIES.txt
+          test -s APK-ENTRIES.txt
+          check_entry() {
+            local expected="$1"
+            if ! grep -Fq "$expected" APK-ENTRIES.txt; then
+              echo "::error::Missing compiled APK entry: $expected"
+              exit 1
+            fi
+          }
+          check_entry 'assets/pokemon-sprites/base/25.png'
+          check_entry 'assets/go-exact-sprites.tsv'
+          check_entry 'res/drawable/ps_trainer_switch'
 
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/base/94.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/shiny/94.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/variety-10038.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm94.fCOSTUME_2020.icon.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm41.fHALLOWEEN_2026_01.icon.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm41.fHALLOWEEN_2026_01.s.icon.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm94.cFALL_2023_NOEVOLVE.icon.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm94.cFALL_2023_NOEVOLVE.s.icon.png'
+          check_entry 'assets/pokemon-sprites/base/94.png'
+          check_entry 'assets/pokemon-sprites/shiny/94.png'
+          check_entry 'assets/pokemon-sprites/forms/variety-10038.png'
+          check_entry 'assets/pokemon-sprites/costumes/pm94.fCOSTUME_2020.icon.png'
+          check_entry 'assets/pokemon-sprites/costumes/pm41.fHALLOWEEN_2026_01.icon.png'
+          check_entry 'assets/pokemon-sprites/costumes/pm41.fHALLOWEEN_2026_01.s.icon.png'
+          check_entry 'assets/pokemon-sprites/costumes/pm94.cFALL_2023_NOEVOLVE.icon.png'
+          check_entry 'assets/pokemon-sprites/costumes/pm94.cFALL_2023_NOEVOLVE.s.icon.png'
 
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/shiny/25.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/manifest.json'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/zigzagoon-galar.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/zigzagoon-galar-shiny.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/144-galar.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/555-galar-zen-shiny.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/585-spring.png'
+          check_entry 'assets/pokemon-sprites/shiny/25.png'
+          check_entry 'assets/pokemon-sprites/manifest.json'
+          check_entry 'assets/pokemon-sprites/forms/zigzagoon-galar.png'
+          check_entry 'assets/pokemon-sprites/forms/zigzagoon-galar-shiny.png'
+          check_entry 'assets/pokemon-sprites/forms/144-galar.png'
+          check_entry 'assets/pokemon-sprites/forms/555-galar-zen-shiny.png'
+          check_entry 'assets/pokemon-sprites/forms/585-spring.png'
           for dex in 585 586; do
-            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/forms/${dex}-autumn.png"
-            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/forms/${dex}-autumn-shiny.png"
+            check_entry "assets/pokemon-sprites/forms/${dex}-autumn.png"
+            check_entry "assets/pokemon-sprites/forms/${dex}-autumn-shiny.png"
           done
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/variety-10262-shiny.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm37.cFALL_2022.icon.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm714.cHALLOWEEN_2025.s.icon.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/4-goggles-2026.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/4-goggles-2026-shiny.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/3-copy-2019.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/6-copy-2019.png'
-          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/9-copy-2019.png'
+          check_entry 'assets/pokemon-sprites/forms/variety-10262-shiny.png'
+          check_entry 'assets/pokemon-sprites/costumes/pm37.cFALL_2022.icon.png'
+          check_entry 'assets/pokemon-sprites/costumes/pm714.cHALLOWEEN_2025.s.icon.png'
+          check_entry 'assets/pokemon-sprites/costumes/4-goggles-2026.png'
+          check_entry 'assets/pokemon-sprites/costumes/4-goggles-2026-shiny.png'
+          check_entry 'assets/pokemon-sprites/costumes/3-copy-2019.png'
+          check_entry 'assets/pokemon-sprites/costumes/6-copy-2019.png'
+          check_entry 'assets/pokemon-sprites/costumes/9-copy-2019.png'
           for dex in 25 393 426; do
-            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/costumes/${dex}-halloween-2021.png"
-            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/costumes/${dex}-halloween-2021-shiny.png"
+            check_entry "assets/pokemon-sprites/costumes/${dex}-halloween-2021.png"
+            check_entry "assets/pokemon-sprites/costumes/${dex}-halloween-2021-shiny.png"
           done
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
