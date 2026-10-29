@@ -14,20 +14,32 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({
 const render=new Function("h",script.slice(begin,end)+"return evolutionRow;")(esc);
 const piplup=render({name:"Piplup",rank:2,statProductPct:"100,00",cp:1215,
  level:50,overallRank:1085,eligible:true},true);
-for(const token of ["Atual","Piplup","Rank Classe: #2","Eficiência IV:","100,00%","PC 1215","Nv 50,0","Rank Geral: #1085"])
+for(const token of ["Atual","Piplup","Rank Classe: #2","100,00%","PC 1215","Nv. 50,0","Rank Geral: #1085"])
  assert.ok(piplup.includes(token),"missing PvP info "+token);
 assert.ok(piplup.includes("isCurrent"),"current Pokémon visually distinguished");
 const empoleon=render({name:"Empoleon",rank:1927,statProductPct:"96,10",cp:2486,
  level:30,overallRank:7,eligible:false},false);
-for(const token of ["Empoleon","Rank Classe: #1927","Eficiência IV:","96,10%","PC 2486","Nv 30,0","Rank Geral: #7","Não elegível no nível atual"])
+for(const token of ["Empoleon","Rank Classe: #1927","96,10%","PC 2486","Nv. 30,0","Rank Geral: #7","Não elegível no nível atual"])
  assert.ok(empoleon.includes(token),"missing evolution info "+token);
 assert.ok(!empoleon.includes("RG#"),"opaque RG abbreviation removed");
 assert.ok(!empoleon.includes("best"),"ineligible candidate not highlighted");
+const noivern=render({name:"Noivern",rank:2,overallRank:385,
+ statProductPct:"92,17",cp:2890,level:50,eligible:true},false);
+const firstRow=noivern.match(/<div class="evoSummary">([\s\S]*?)<\/div>/)?.[1]||"";
+const secondRow=noivern.match(/<div class="evoMeta evoRankRow">([\s\S]*?)<\/div>/)?.[1]||"";
+for(const token of ["Noivern","PC 2890","Nv. 50,0","92,17%"])
+ assert.ok(firstRow.includes(token),"first row has "+token);
+for(const token of ["Rank Classe: #2","Rank Geral: #385"])
+ assert.ok(secondRow.includes(token),"second row has "+token);
+assert.ok(!firstRow.includes("Rank Classe:"),"class rank must be below");
+assert.ok(!secondRow.includes("PC 2890"),"PC must stay on first row");
+assert.ok(!noivern.includes("Eficiência IV:"),"no redundant efficiency label");
+
 const overallOnly=render({name:"Ninetales",rank:null,overallRank:24},false);
 assert.ok(overallOnly.includes("Rank Classe: —"),"class rank unavailable without raw IV");
 assert.ok(overallOnly.includes("Rank Geral: #24"),"verified overall rank still visible");
-assert.ok(!overallOnly.includes("Eficiência IV:"),"never guess a stat product");
-assert.ok(!overallOnly.includes("Nv "),"never invent a projected level");
+assert.ok(!overallOnly.includes("evoPct"),"never guess an IV efficiency value");
+assert.ok(!overallOnly.includes("Nv. "),"never invent a projected level");
 
 const noRank=render({name:"Unknown",rank:null},false);
 assert.equal(noRank,"","no invented rank");
