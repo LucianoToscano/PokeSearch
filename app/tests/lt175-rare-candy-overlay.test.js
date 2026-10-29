@@ -19,7 +19,7 @@ assert(home.indexOf('controls.addView(rareCandyControl,candyLp)')<
 assert(service.includes("TYPE_APPLICATION_OVERLAY"));
 assert(service.includes("main.postDelayed(longPress,600)"));
 assert(service.includes("OverlayQuickMenus.showCandy"));
-assert(service.includes("new FrameLayout.LayoutParams(dp(1),dp(1))"));
+assert(service.includes("new FrameLayout.LayoutParams(dp(360),dp(640))"));
 assert(service.includes("setAcceptThirdPartyCookies"));
 assert(service.includes("getSharedPreferences(\"rare_candy_overlay\""));
 assert(service.includes("validCoords(point)"));
