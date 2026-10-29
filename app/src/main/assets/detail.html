@@ -1003,7 +1003,7 @@ function updateVisiblePvPRank(payload){
   return false;
  }
  const scope=best.kind==="evolution"?" · ↳ "+best.name:
-  best.kind==="reference"?" · Ref. "+best.name:"";
+  best.kind==="reference"?" · ↳ "+best.name:"";
  rankLine.textContent=label+" · Rank Classe: #"+best.rank+scope;
  const own=candidates.find(x=>x.kind==="current");
  rankLine.title="Rank dos IVs de "+best.name+" na "+
