@@ -1,4 +1,4 @@
-name: LT177 — Doce Raro API oficial e menus Pokébola (somente QA)
+name: LT178 — Doce Raro menus compactos e infos por padrão (QA)
 on:
   push:
     branches: [feature/lt175-rare-candy-floating-overlay-20261029]
@@ -21,9 +21,9 @@ jobs:
       name: official-updates
     timeout-minutes: 65
     env:
-      POKE_TEST_VERSION_CODE: '54382'
-      POKE_TEST_VERSION_LABEL: '51182'
-      POKE_TEST_PUBLIC_VERSION: '0.01.77'
+      POKE_TEST_VERSION_CODE: '54383'
+      POKE_TEST_VERSION_LABEL: '51183'
+      POKE_TEST_PUBLIC_VERSION: '0.01.78'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
       POKE_CONTROLLED_DISTRIBUTION: 'true'
       POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
@@ -35,7 +35,7 @@ jobs:
       POKE_SCRAPBOOK_QA_ACK: 'stage1-readonly'
       POKE_SCRAPBOOK_ONLINE_QA: 'true'
       POKE_SCRAPBOOK_ONLINE_ACK: 'read-only-moderation-pending'
-      QA_APK: 'PokeSearch-v0.01.77-LT-QA.apk'
+      QA_APK: 'PokeSearch-v0.01.78-LT-QA.apk'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -99,7 +99,7 @@ jobs:
           test -s app/src/main/assets/pokemon-sprites/manifest.json
           test -s app/src/main/assets/pokemon-sprites/base/25.png
           test -s app/src/main/assets/pokemon-sprites/shiny/94.png
-      - name: Build protected LT177 QA APK
+      - name: Build protected LT178 QA APK
         shell: bash
         run: |
           set -euo pipefail
@@ -124,8 +124,8 @@ jobs:
           grep -Fxq 'assets/pokemon-sprites/shiny/94.png' APK-ENTRIES.txt
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
-          grep -Fq "versionCode='54382'" PACKAGE-VERSION.txt
-          grep -Fq "versionName='0.01.77'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54383'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.78'" PACKAGE-VERSION.txt
           ! grep -Fq 'application-debuggable' PACKAGE-VERSION.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
           grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
@@ -139,7 +139,7 @@ jobs:
       - name: Upload QA only; no Release, merge or public app update
         uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-LT177-54382-RareCandy-QA-Assinado
+          name: PokeSearch-LT178-54383-RareCandy-QA-Assinado
           path: |
             ${{ env.QA_APK }}
             SHA256SUMS.txt
