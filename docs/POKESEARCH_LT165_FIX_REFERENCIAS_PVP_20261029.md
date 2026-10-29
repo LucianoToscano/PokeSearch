@@ -20,3 +20,14 @@ O motor distinguia evoluções legais (`league.evolutions`) das comparações pu
 
 ## Publicação
 A versão oficial confirmada antes da correção era LT164 (`0.01.64`, versionCode `54369`). **Esta alteração não é um APK novo.** Para distribuição como LT165 (`0.01.65`, versionCode futuro), ainda é necessário workflow oficial com assinatura permanente v2, SHA-256, homologação do APK e validação de `releases/latest`, sem reutilizar o beta legado.
+
+## Autorização de distribuição global — 29/10/2026
+
+- Solicitação explícita: publicar atualização para todos pelo mecanismo instalado no PokeSearch.
+- PR #109, contendo as notas LT165 na Home e workflows de distribuição: **mesclada** em `main`, commit `8822ba3439b33babeed2ecea7d470896745a0b48`.
+- Antes do merge, checks de PR da branch aprovaram as suítes Node e a compilação Java sem APK.
+- Workflow oficial versionado: `.github/workflows/lt165-pvp-reference-official-release.yml`. É acionado por push desse arquivo à `main`, exige ambiente `official-updates`, testa e compila o APK com o certificado permanente, faz auditoria de R8, assinatura v2, versão `0.01.65` / `54370`, integridade ZIP, SHA-256 e só então promove o artefato para `v0.01.65-54370` como Release estável `latest`.
+- O workflow falha se detectar publicação preexistente ou se `releases/latest` não corresponder à LT164 no momento da promoção.
+- A distribuição só pode ser chamada de **confirmada** após workflow oficial concluir com sucesso e apontar `releases/latest` para a LT165 com digest e tamanho correspondentes. Este registro do merge não é evidência de publicação efetiva.
+- Endereço do acompanhamento: https://github.com/LucianoToscano/PokeSearch/actions/workflows/lt165-pvp-reference-official-release.yml
+- Os usuários precisam aceitar a instalação no Android; o atualizador não instala silenciosamente.
