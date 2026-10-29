@@ -378,9 +378,21 @@ public final class RareCandyOverlayService extends Service {
         setStatus("Consultando Doce Raro…");
         final String script=probe+"\nwindow.PokeSearchCandy.runSearch("+
             JSONObject.quote(coords)+","+radius+");";
-        site.evaluateJavascript(script,unused->{
+        site.evaluateJavascript(script,response->{
             if(destroyed||gen!=generation)return;
-            main.postDelayed(()->readResults(gen,0),1600L);
+            String value="";
+            try{value=new JSONArray("["+response+"]").optString(0,"");}
+            catch(Exception ignored){}
+            if("tab-switched".equals(value)){
+                main.postDelayed(()->{
+                    if(destroyed||gen!=generation||!isOfficialSearch())return;
+                    site.evaluateJavascript("window.PokeSearchCandy.runSearch("+
+                        JSONObject.quote(coords)+","+radius+");",ignored->{
+                        if(!destroyed&&gen==generation)
+                            main.postDelayed(()->readResults(gen,0),1800L);
+                    });
+                },1000L);
+            }else main.postDelayed(()->readResults(gen,0),1600L);
         });
     }
     private void readResults(int gen,int attempt){
