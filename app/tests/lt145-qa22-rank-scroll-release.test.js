@@ -15,7 +15,10 @@ assert.ok(html.includes('#rankLine::before{content:"▥";'),"Rank badge uses ran
 assert.ok(html.includes('rankLine.hidden=!verifiedIvRank;'),"badge hidden unless PvP IV rank is verified");
 assert.ok(css.includes('grid-template-columns:minmax(87px,1fr) 42px 38px'),"IV PC Nv readable widths");
 assert.ok(css.includes('#major .statTile{height:23px;min-height:23px;max-height:23px;'),"no tiny boxes");
-assert.ok(css.includes('#imageFallback::after{content:"◉";'),"neutral glyph for unavailable exact image");
+assert.ok(html.includes('#imageFallback::after{content:"";display:none;'),
+ "no generic missing-sprite circle in detail");
+assert.ok(code.includes("fallback.textContent="),
+ "brief species initials replace the blank sprite when exact art is unavailable");
 assert.ok(html.includes('window.PokeSearchSpriteScale?.apply?.(img)'),"alpha-normalized sprite");
 assert.ok(html.includes('#artColumn.gengarSprite.gengarHalloween #img'),"costume Gengar retained");
 assert.ok(html.includes('class="ivTypes"'),"types present in IV");
