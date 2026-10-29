@@ -543,8 +543,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine .evoOverall{white-space:nowrap;color:#dce7f1}
 .evoLine .evoState{font-size:9px;margin-top:2px}
 #major .ivTile .ivPercent{top:2px}
-#coordRow #coords:not(.hasCoords){position:relative}
-#coordRow #coords .coordCentered{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:block;white-space:nowrap;max-width:calc(100% - 16px);font-size:11px;pointer-events:none}
+/* Symmetric insets keep the label truly centered while reserving the
+   right-hand count its own space, without changing the accessible button. */
+#coordRow #coords:not(.hasCoords){padding-left:25px;padding-right:25px;text-align:center}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -713,15 +714,9 @@ function coordButtons(){
  fetch.className=coordsPending?"isPending":valid?"hasCoords":"";
  // Exact numeric coordinates replace Get coords in the same button.
  // Tapping the numbers copies again without a new reveal.
- const label=coordsPending?"⌛ Pegando coordenadas...":"⌖ Pegar Coordenadas";
- // The quota indicator occupies the right edge; center the action itself
- // against the full button width, regardless of that indicator.
- if(valid){
-  fetch.textContent=String(currentCoords).trim().replace(";",", ")+
-   (window.copyVisualUntil>Date.now()?"  ✓":"");
- }else{
-  fetch.innerHTML='<span class="coordCentered">'+h(label)+'</span>';
- }
+ fetch.textContent=coordsPending?"⌛ Pegando coordenadas...":valid?
+  String(currentCoords).trim().replace(";",", ")+(window.copyVisualUntil>Date.now()?"  ✓":""):
+  "⌖ Pegar Coordenadas";
  fetch.title=valid?"Toque nas coordenadas para copiar novamente":
   "Pegar e copiar coordenadas";
  fetch.setAttribute("aria-label",fetch.title);
@@ -883,8 +878,8 @@ function evolutionRow(x,first){
  const cp=Number(x.cp),level=Number(x.level);
  const data=[];
  if(pct)data.push('<span><b>Produto:</b> '+h(pct)+'%</span>');
- if(Number.isFinite(cp)&&cp>=10&&cp<=10000)data.push('<span><b>PC</b> '+Math.floor(cp)+'</span>');
- if(Number.isFinite(level)&&level>=1&&level<=55)data.push('<span><b>Nv.</b> '+level.toFixed(1).replace(".",",")+'</span>');
+ if(Number.isFinite(cp)&&cp>=10&&cp<=10000)data.push('<span>PC '+Math.floor(cp)+'</span>');
+ if(Number.isFinite(level)&&level>=1&&level<=55)data.push('<span>Nv '+level.toFixed(1).replace(".",",")+'</span>');
  if(Number.isInteger(overall)&&overall>0)data.push('<span class="evoOverall">Rank Geral: #'+overall+'</span>');
  let state="";
  if(x.eligible===false)state="Não elegível no nível atual";
