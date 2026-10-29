@@ -62,7 +62,7 @@
       const cap=Number(json.cap)||5;
       // Keep provider's actual cap (including VIP), never request >cap.
       const items=Array.isArray(json.results)?
-        json.results.slice(0,Math.min(100,Math.max(1,cap))).map(sanitize).filter(Boolean):[];
+        json.results.slice(0,Math.min(10,Math.max(1,cap))).map(sanitize).filter(Boolean):[];
       return JSON.stringify({ok:true,status:200,items,
         tier:String(json.tier||"non_logged_in").slice(0,32),cap});
     }catch(e) {
