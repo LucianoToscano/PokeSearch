@@ -22,7 +22,8 @@ check("Gradle uses current installed versionName from signed build",()=>{
 });
 check("Home controls light/dark presentation",()=>{
   assert.ok(main.includes("homeLightMode?Color.rgb(26,51,72):Color.rgb(185,208,233)"));
-  assert.ok(main.includes("homeLightMode?Color.argb(200,248,251,255):Color.argb(135,9,23,42)"));
+  assert.ok(main.includes("footer.setBackground(homeGlassPanel(12))"));
+  assert.ok(main.includes("homeLightMode?Color.argb(205,249,247,238):"));
 });
 check("Update Center still reads Drive manifest, without new permissions",()=>{
   assert.ok(main.includes("UpdateCenter.check(this);"));
