@@ -901,7 +901,7 @@ window.showDetails=(c,mode,watched)=>{
    if(generation!==loadGeneration)return;
    if(img.naturalWidth>=8&&img.naturalHeight>=8){
     displayed=true;img.style.display="block";fallback.style.display="none";
-    window.PokeSearchSpriteScale?.apply?.(img);
+    if(typeof window!=="undefined")window.PokeSearchSpriteScale?.apply?.(img);
    }
   };
   img.onerror=()=>{

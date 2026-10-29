@@ -5762,7 +5762,7 @@ function attachSpriteFeedback(){
   const loaded=()=>{
    if(good()){
     done=true;stage.classList.remove("failed");stage.classList.add("loaded");
-    window.PokeSearchSpriteScale?.apply?.(img);
+    if(typeof window!=="undefined")window.PokeSearchSpriteScale?.apply?.(img);
    }
    else failed();
   };
