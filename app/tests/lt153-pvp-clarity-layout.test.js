@@ -33,6 +33,9 @@ for(const token of ["Rank Classe: #2","Rank Geral: #385"])
  assert.ok(secondRow.includes(token),"second row has "+token);
 assert.ok(!firstRow.includes("Rank Classe:"),"class rank must be below");
 assert.ok(!secondRow.includes("PC 2890"),"PC must stay on first row");
+assert.ok(html.includes('.evoLine .evoRankRow{justify-content:center;column-gap:18px;row-gap:2px;padding-inline:8px;text-align:center}'),
+ "both ranks centered with balanced spacing and side insets");
+
 assert.ok(!noivern.includes("Eficiência IV:"),"no redundant efficiency label");
 
 const overallOnly=render({name:"Ninetales",rank:null,overallRank:24},false);
