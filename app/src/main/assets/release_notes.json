@@ -794,6 +794,31 @@
           "As consultas dependem da disponibilidade e dos limites oficiais do PoGoCoordinates. A instalação de um APK exige aceitação no Android."
         ]
       }
+    },
+    {
+      "id": "lt181-top-update-candy-menu-parity-20261029",
+      "minVersionCode": 54386,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT181 — Menus unificados e doces completos",
+      "sections": {
+        "novidades": [
+          "Aviso de nova versão no topo da Home, entre o nome PokeSearch e os botões das duas Pokébolas.",
+          "Doce Raro com Localização e Atualização seguindo o mesmo tamanho e layout compacto dos menus da Pokébola; Informações em grade 2×2."
+        ],
+        "melhorias": [
+          "As sprites e tempos dos dez doces são exibidos inteiros sempre que houver espaço; em telas menores a lista permite rolagem, sem corte.",
+          "Botões Doar, Reportar e Fechar do menu ••• obedecem à mesma transparência, borda e sombra dos demais controles, inclusive no modo claro.",
+          "O Doce Raro acompanha a mesma preferência de tema, transparência e desfoque configurada para os menus das Pokébolas."
+        ],
+        "correcoes": [
+          "Removido o limite local fixo de 460 dp que cortava os últimos doces quando eram exibidos dez resultados.",
+          "Os menus compactos de localização e informações agora reservam espaço correto para a barra de ferramentas e os campos.",
+          "Mantidos atualização a cada três minutos ou após copiar todos os dez doces ativos, além do respeito ao despawn e ao Retry-After oficiais."
+        ],
+        "emDesenvolvimento": [
+          "A instalação da atualização requer confirmação do Android; consultas ao PoGoCoordinates permanecem sujeitas aos limites publicados pelo próprio serviço."
+        ]
+      }
     }
   ]
 }

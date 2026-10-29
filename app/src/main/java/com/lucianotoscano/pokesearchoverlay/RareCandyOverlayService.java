@@ -67,6 +67,7 @@ public final class RareCandyOverlayService extends Service {
     private LinearLayout resultsShell,resultsList;
     private FrameLayout candyMenuRoot;
     private WebView candyMenuPanel;
+    private String lastCandyMenuTheme="";
     private boolean candyMenuVisible=false,candyMenuLoaded=false;
     private WindowManager.LayoutParams bubbleParams,resultsParams,menuParams;
     private WebView site;
@@ -271,9 +272,14 @@ public final class RareCandyOverlayService extends Service {
         ScrollView scroll=new ScrollView(this);
         scroll.setFillViewport(false);
         scroll.setVerticalScrollBarEnabled(false);
+        scroll.setClipChildren(false);
+        scroll.setClipToPadding(false);
+        scroll.setSmoothScrollingEnabled(true);
+        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
         resultsList=new LinearLayout(this);
         resultsList.setOrientation(LinearLayout.VERTICAL);
         resultsList.setClipToPadding(false);
+        resultsList.setClipChildren(false);
         scroll.addView(resultsList,new ScrollView.LayoutParams(-1,-2));
         resultsShell.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         resultsParams=new WindowManager.LayoutParams(dp(236),dp(40),
@@ -293,14 +299,23 @@ public final class RareCandyOverlayService extends Service {
         int margin=dp(3);
         // Default to only the candy + despawn sprite column. Widen only
         // when the user has explicitly enabled name/location information.
-        int contentDp=(showName||showLocation)?228:48;
+        int contentDp=(showName||showLocation)?228:50;
         resultsParams.width=Math.min(dp(contentDp),width-margin*2);
-        // The 45dp rows follow the sprite cadence of the Pokébola result list.
-        int wantedHeight=dp(Math.min(460,Math.max(35,cards.size()*47+4)));
+        // The original 460dp cap cut the final candy in a full 10-item
+        // search (10 x 47dp = 470dp). Count only live, actually rendered
+        // cards; fit the entire list when room allows, otherwise enable
+        // vertical scrolling in the clipped native viewport.
+        long now=SystemClock.elapsedRealtime();
+        int activeCount=0;
+        for(Candy card:cards.values())if(card.deadline>now)activeCount++;
+        int rowHeight=47;
+        int wantedHeight=dp(activeCount==0?35:activeCount*rowHeight+4);
         int belowY=bubbleParams.y+dp(BUBBLE_DP)+dp(1);
         int roomBelow=height-margin-belowY;
         int roomAbove=bubbleParams.y-margin;
-        if(roomBelow>=Math.min(wantedHeight,dp(130))||roomBelow>=roomAbove){
+        // Prefer the side that fits the entire result list. Only choose a
+        // partial viewport when neither side can contain it fully.
+        if(roomBelow>=wantedHeight||(roomBelow>=roomAbove&&roomAbove<wantedHeight)){
             resultsParams.height=Math.max(dp(1),Math.min(wantedHeight,Math.max(1,roomBelow)));
             resultsParams.y=Math.max(margin,Math.min(height-margin-resultsParams.height,belowY));
         }else{
@@ -348,7 +363,7 @@ public final class RareCandyOverlayService extends Service {
                 return !allowedMenuUrl(request.getUrl().toString());
             }
             @Override public void onPageFinished(WebView view,String url){
-                if(allowedMenuUrl(url)){candyMenuLoaded=true;syncCandyMenu();}
+                if(allowedMenuUrl(url)){candyMenuLoaded=true;lastCandyMenuTheme="";syncCandyMenu();}
             }
         });
         menuParams=new WindowManager.LayoutParams(dp(142),dp(34),
@@ -368,6 +383,7 @@ public final class RareCandyOverlayService extends Service {
     }
     private void syncCandyMenu(){
         if(!candyMenuLoaded||candyMenuPanel==null)return;
+        syncCandyMenuTheme();
         JSONObject state=new JSONObject();
         try{
             state.put("coords",coords).put("radius",radius).put("period",period)
@@ -377,6 +393,30 @@ public final class RareCandyOverlayService extends Service {
                 JSONObject.quote(state.toString())+")",null);
         }catch(org.json.JSONException ignored){}
         syncCandyRefreshState();
+    }
+    // Read the SAME P1/P2 visual preferences; no independent Candy alpha
+    // or background settings. The local WebView gets only sanitized colors.
+    private void syncCandyMenuTheme(){
+        if(destroyed||!candyMenuLoaded||candyMenuPanel==null||
+                !allowedMenuUrl(candyMenuPanel.getUrl()))return;
+        String saved=getSharedPreferences("prefs",MODE_PRIVATE)
+            .getString("visualPrefsJson","{}");
+        String mode="dark";
+        int transparency=50,blur=4;
+        try{
+            JSONObject visual=new JSONObject(saved);
+            mode="light".equals(visual.optString("menuBgMode","dark"))?
+                "light":"dark";
+            transparency=Math.max(0,Math.min(100,
+                visual.optInt("menuTransparency",50)));
+            blur=Math.max(0,Math.min(16,visual.optInt("menuBlur",4)));
+        }catch(org.json.JSONException ignored){}
+        String fingerprint=mode+":"+transparency+":"+blur;
+        if(fingerprint.equals(lastCandyMenuTheme))return;
+        lastCandyMenuTheme=fingerprint;
+        candyMenuPanel.evaluateJavascript(
+            "window.applyCandyMenuTheme("+JSONObject.quote(mode)+","+
+            transparency+","+blur+")",null);
     }
     // Only report the native request lifecycle to the trusted local controls
     // WebView; never send account cookies, JWT or remote search data to it.
@@ -448,7 +488,9 @@ public final class RareCandyOverlayService extends Service {
                 if(!permitted()||menuParams==null||!candyMenuVisible)return;
                 int h=Math.max(34,Math.min(290,height));
                 menuParams.height=dp(h);
-                menuParams.width=dp(h>34?("period".equals(panel)?142:240):142);
+                // Pokébola location/info panels are 148px, not 232px.
+                // A transparent 158dp native frame fits the exact CSS card.
+                menuParams.width=dp(h>34?("period".equals(panel)?142:158):142);
                 menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
                     (focus?0:WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
@@ -852,7 +894,9 @@ public final class RareCandyOverlayService extends Service {
             image.setOnClickListener(v->copy(card.coords));
             resultsList.addView(row,space(-1,45,2));
         }
-        if(status!=null)status.setVisibility(cards.isEmpty()?View.VISIBLE:View.GONE);
+        boolean anyActive=false;
+        for(Candy card:cards.values())if(card.deadline>now){anyActive=true;break;}
+        if(status!=null)status.setVisibility(anyActive?View.GONE:View.VISIBLE);
         placeResults();
     }
     private final Runnable tick=new Runnable(){
@@ -888,6 +932,7 @@ public final class RareCandyOverlayService extends Service {
                     now-lastRefresh>=period*60000L){
                 refresh(false);
             }
+            if(candyMenuVisible)syncCandyMenuTheme();
             main.postDelayed(this,1000L);
         }
     };

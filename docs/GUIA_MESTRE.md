@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT181 — Publicação geral solicitada (29/10/2026)
+
+O proprietário solicitou explicitamente **"Certo aplica para versão pública então."** Referência: [PR #137](https://github.com/LucianoToscano/PokeSearch/pull/137). Código da LT181 reúne aviso de atualização no topo acima das Pokébolas, paridade compacta dos três menus Doce Raro, atualização/cadência oficial, transparência dos botões Reportar/Doar/Fechar no •••, e correção do recorte dos dez doces (removido teto fixo 460dp, área rolável quando necessário). [QA assinado SUCCESS #40952601562](https://github.com/LucianoToscano/PokeSearch/actions/runs/40952601562), versão `0.01.81/54386`; o workflow `lt181-menu-parity-official-release.yml` exige assinatura permanente, integridade SHA-256 e base `Releases/latest=v0.01.80-54385` antes de tornar pública a LT181. **Não declarar concluída a distribuição até a nova Action oficial e Releases/latest confirmarem o APK público.**
+
+---
+
 ## LT180 OFICIAL — Distribuição geral confirmada (29/10/2026)
 
 - Autorização expressa do proprietário para publicar a LT180 para todos. PR [#136](https://github.com/LucianoToscano/PokeSearch/pull/136) mesclada na `main`; SOURCE_COMMIT: `80d3949405880aca4f55ade560fe283a3cbb7667`.

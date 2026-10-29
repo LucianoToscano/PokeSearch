@@ -888,7 +888,13 @@ public class MainActivity extends Activity {
         homeUpdateHolder.setVisibility(View.GONE);
         LinearLayout.LayoutParams updateLp=new LinearLayout.LayoutParams(-1,-2);
         updateLp.topMargin=d(5);
-        screen.addView(homeUpdateHolder,updateLp);
+        updateLp.leftMargin=d(4);updateLp.rightMargin=d(4);
+        updateLp.bottomMargin=d(5);
+        // Keep the verified GitHub/Drive update banner directly ABOVE the
+        // paired Pokébolas, below Home's wordmark/header. GONE takes no room.
+        // Inserting at index 1 works while constructing the existing Home
+        // without rebuilding or moving any authenticated account controls.
+        screen.addView(homeUpdateHolder,1,updateLp);
         renderDriveUpdateBanner();
 
         // New compact LT54 counters; a dash indicates missing connectivity/rules.

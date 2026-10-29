@@ -21,7 +21,7 @@ assert.match(last,/#choices\.morePanel>\.quickMoreAction/);
 assert.match(last,/height:30px!important/);
 assert.match(last,/gap:var\(--visual-menu-gap,3px\)!important/);
 assert.match(last,/border:1px solid var\(--visual-menu-border/);
-assert.match(last,/background:var\(--visual-menu-readable-bg/);
+assert.match(last,/background:var\(--visual-menu-button-bg/,"More tiles share the real toolbar transparency");
 assert.ok(!css.slice(css.indexOf("/* LT170 MORE-FINAL:")).includes("background:#000"),"no black full-column");
 assert.match(css,/#choices:not\(\.modeCascade\):not\(\.filterCascade\):not\(\.morePanel\):not\(\.periodCompact\)/);
 const quick=js.slice(js.indexOf("function renderQuickMenu(){"),js.indexOf("function audibleAlertState("));
