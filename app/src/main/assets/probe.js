@@ -1309,6 +1309,32 @@ function matchingCoordsCard(query){
 function cardCoordsControls(card){
  return Array.from(card.node.querySelectorAll("button,a,[role=button]")).filter(vis);
 }
+// Only actual visible PoGoCoordinates evidence can activate the limit banner.
+// Do not confuse a Search 429, unavailable coordinates or a disabled button
+// with an exhausted account reveal allowance. Never invent a retry time.
+function coordsRevealLimit(card){
+ if(!card||!card.node)return null;
+ const own=text(card.node).slice(0,1800);
+ const visibleAlerts=Array.from(document.querySelectorAll(
+  '[role="alert"],[role="dialog"],[data-sonner-toast],.toast'))
+  .filter(vis).slice(0,12).map(el=>text(el).slice(0,900))
+  .filter(t=>/coord|reveal|rate.limit/i.test(t));
+ const snippets=[own,...visibleAlerts];
+ let kind="",evidence="";
+ for(const t of snippets){
+  if(/\breveal more coords\b|\bcoords reveal limit\b|\bhit the coords reveal limit\b/i.test(t)){
+   kind="quota";evidence=t;break;
+  }
+  if(/\brate[ -]?limit(?:ed)?\b/i.test(t)&&
+     (t===own||/coord|reveal|retry/i.test(t))){
+   kind="rate";evidence=t;
+  }
+ }
+ if(!kind)return null;
+ const match=evidence.match(/\b(?:try again|retry)\s+in\s+(?:(\d{1,3})\s*m(?:in(?:ute)?s?)?\s*)?(?:(\d{1,4})\s*s(?:ec(?:ond)?s?)?)\b/i);
+ const secs=match?(Number(match[1]||0)*60+Number(match[2]||0)):0;
+ return {limitType:kind,retrySeconds:kind==="rate"&&secs>=1&&secs<=3600?secs:0};
+}
 if(action.startsWith("coords:")){
  const raw=action.slice(7);
  let query;try{query=JSON.parse(raw)}catch(_){query={index:Number(raw)}}
@@ -1317,6 +1343,8 @@ if(action.startsWith("coords:")){
  const buttons=cardCoordsControls(card);
  const available=buttons.find(e=>/^Open in Maps$/i.test(text(e)));
  if(available)return JSON.stringify({ok:true,alreadyAvailable:true,status:"Coordenadas disponíveis no site"});
+ const limit=coordsRevealLimit(card);
+ if(limit)return JSON.stringify({ok:false,status:"Taxa Limitada PoGoCoordinates",...limit});
  const btn=buttons.find(e=>/^Get coords$/i.test(text(e)));
  if(!btn)return JSON.stringify({ok:false,status:"Get coords indisponível neste Pokémon"});
  if(btn.disabled||btn.getAttribute("aria-disabled")==="true"||
@@ -1333,8 +1361,11 @@ if(action.startsWith("readCoords:")){
  if(!target)return JSON.stringify({ok:false,pending:true,status:"Aguardando reidentificação do Pokémon após atualização dos resultados"});
  const controls=cardCoordsControls(target);
  const button=controls.find(e=>/^Open in Maps$/i.test(text(e)));
- if(!button)
+ if(!button){
+  const limit=coordsRevealLimit(target);
+  if(limit)return JSON.stringify({ok:false,status:"Taxa Limitada PoGoCoordinates",...limit});
   return JSON.stringify({ok:false,pending:true,status:"Aguardando coordenadas deste Pokémon no site"});
+ }
  const latlong=/(-?\d{1,2}(?:\.\d{1,12})?)\s*[,;]\s*(-?\d{1,3}(?:\.\d{1,12})?)/g;
  function coordinate(s){
   for(const m of String(s||"").matchAll(latlong)){
