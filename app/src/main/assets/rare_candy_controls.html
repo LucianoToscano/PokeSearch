@@ -47,7 +47,7 @@ body:not(.expanded) #choices{display:none}
 "use strict";
 const $=id=>document.getElementById(id);
 let settings={coords:"",radius:1000,period:1,name:false,location:false,despawn:true,distance:false};
-let currentPanel="",refreshHold=null,refreshHeld=false;
+let currentPanel="";
 function syncCandy(json) {
  try{settings=Object.assign(settings,JSON.parse(json||"{}"));}catch(e){}
  $("period").textContent=String(settings.period||1)+"m";
@@ -121,39 +121,58 @@ function pasteCoords(){Native.pasteCandyLocation()}
 function setPastedCoords(value){
  if(currentPanel==="location"&&$("candyCoords"))$("candyCoords").value=value||"";
 }
-// Native WebView pointer events: dispatch on release, never depend on a
-// synthesized click after touch. Long press opens periods only, no refresh.
+// One-shot short tap via pointerup with click fallback for WebViews that
+// drop pointerup after pointerleave. Deduplicate synthetic click after touch.
+// A held press only opens the interval menu: never send a search on release.
 const refresh=$("refresh");
-let pointerActive=false;
+let pointerActive=false,refreshHeld=false,refreshHold=null;
+let lastRefreshRequestAt=-10000;
 function cancelRefreshHold(){clearTimeout(refreshHold);refreshHold=null}
+function requestRefreshNow(){
+  const now=Date.now();
+  if(now-lastRefreshRequestAt<400)return;
+  lastRefreshRequestAt=now;
+  Native.refreshCandy();
+}
 refresh.addEventListener("pointerdown",event=>{
- if(event.isPrimary===false)return;
- pointerActive=true;refreshHeld=false;
- cancelRefreshHold();
- refreshHold=setTimeout(()=>{
-   if(!pointerActive)return;
-   refreshHeld=true;
-   openPanel("period");
- },550);
+  if(event.isPrimary===false)return;
+  pointerActive=true;
+  refreshHeld=false;
+  cancelRefreshHold();
+  refreshHold=setTimeout(()=>{
+    if(!pointerActive)return;
+    refreshHeld=true;
+    openPanel("period");
+  },550);
 });
 refresh.addEventListener("pointerup",event=>{
- if(!pointerActive)return;
- pointerActive=false;cancelRefreshHold();
- if(!refreshHeld){Native.refreshCandy();}
- refreshHeld=false;
- event.preventDefault();
+  if(!pointerActive)return;
+  pointerActive=false;
+  cancelRefreshHold();
+  if(!refreshHeld)requestRefreshNow();
 });
 refresh.addEventListener("pointercancel",()=>{
- pointerActive=false;refreshHeld=false;cancelRefreshHold();
+  pointerActive=false;
+  cancelRefreshHold();
 });
 refresh.addEventListener("pointerleave",()=>{
- // Dragging off the icon must not be interpreted as a short tap.
- pointerActive=false;cancelRefreshHold();
+  // A slight move can cancel pointerup on Android. Let click handle the tap.
+  pointerActive=false;
+  cancelRefreshHold();
+});
+refresh.addEventListener("contextmenu",event=>{
+  event.preventDefault();
+  if(pointerActive&&!refreshHeld){
+    refreshHeld=true;
+    cancelRefreshHold();
+    openPanel("period");
+  }
 });
 refresh.addEventListener("click",event=>{
- // Desktop/keyboard accessibility fallback; pointerup already sent the call.
- if(event.detail===0)Native.refreshCandy();
- event.preventDefault();
+  event.preventDefault();
+  if(refreshHeld){refreshHeld=false;return}
+  // Works for keyboard/assistive technology and missing pointerup.
+  requestRefreshNow();
 });
 window.syncCandy=syncCandy;window.setPastedCoords=setPastedCoords;
 </script></body></html>
