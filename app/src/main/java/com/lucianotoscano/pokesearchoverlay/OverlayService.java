@@ -2292,6 +2292,7 @@ public class OverlayService extends Service {
         shinyLoginWindowOpened=true;
         Intent intent=new Intent(this,MainActivity.class);
         intent.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN");
+        intent.putExtra("pogo_account_slot",accountSlot());
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
             Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
         try{startActivity(intent);}catch(Exception e){
@@ -4946,7 +4947,7 @@ public class OverlayService extends Service {
                 hideDetails();
                 status("Sincronizando sessão após login...");
             }
-            try{CookieManager.getInstance().flush();}
+            try{PogoAccountSlots.flush(accountSlot());}
             catch(RuntimeException e){recordFailure("sincronizar cookies",e);}
             pendingReloadGeneration=requestGeneration;
             if(!stopped&&!loginPaused)
