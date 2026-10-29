@@ -85,9 +85,9 @@ for(const [card,evolved] of examples){
  const markup=node("evoBody").innerHTML;
  assert.equal((markup.match(/class="evoLeague /g)||[]).length,3);
  assert.equal((markup.match(/class="evoLine isReference"/g)||[]).length,3);
- assert.equal((markup.match(/↳<\\/span> <b>/g)||[]).length,3);
+ assert.equal((markup.match(/↳<\/span> <b>/g)||[]).length,3);
  assert.equal((markup.match(/class="evoInfoBtn"/g)||[]).length,3);
- assert.equal((markup.match(/onclick="togglePvpReferenceInfo\\(event,this\\)"/g)||[]).length,3);
+ assert.equal((markup.match(/onclick="togglePvpReferenceInfo\(event,this\)"/g)||[]).length,3);
  assert.ok(!markup.includes("Ref."),"abbreviation removed from visible rows");
  assert.ok(markup.includes("<b>"+evolved+"</b>"));
  assert.ok(markup.includes("Rank Classe: #"));
