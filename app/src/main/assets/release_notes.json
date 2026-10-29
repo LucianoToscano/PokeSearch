@@ -627,6 +627,28 @@
           "Teste visual final no Samsung com API ON/OFF, ambas Pokébolas, formas e Shiny deve ser confirmado na instalação."
         ]
       }
+    },
+    {
+      "id": "lt170-dual-pogo-accounts-qa-20261029",
+      "minVersionCode": 54375,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT170 QA — Duas contas PoGoCoordinates",
+      "sections": {
+        "novidades": [
+          "Duas áreas de login Google/Discord na Home, com Conta 1 preservada e Conta 2 independente.",
+          "Selecionar Conta 1 ou 2 e um treinador vinculado para cada Pokébola separadamente."
+        ],
+        "melhorias": [
+          "WebView, cookies, conta e filtros Shiny vinculados à sessão selecionada por Pokébola.",
+          "Desconectar uma conta não encerra a sessão da outra; sem segunda conta, a busca pública da Conta 1 continua disponível."
+        ],
+        "correcoes": [
+          "Proteção contra mistura de identidade nas duas Pokébolas; quando o WebView não suporta perfis separados, o segundo login é bloqueado em vez de compartilhar cookies."
+        ],
+        "emDesenvolvimento": [
+          "Versão QA para testes no Samsung: confirmar logins simultâneos, OAuth, troca de contas, Shiny e reinicialização antes de distribuir atualização estável."
+        ]
+      }
     }
   ]
 }
