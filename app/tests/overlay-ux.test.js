@@ -679,10 +679,10 @@ test("Official account badge returns immediately to PokeSearch Home",
   main.includes('private void checkLoginSession(WebView view,int attemptsLeft,int pageGeneration)')&&
   main.includes('if("autenticada".equals(auth)){')&&
   main.includes('loginDialog.dismiss();')&&
-  main.includes('checkLoginSession(view,14,generation);'));
+  main.includes('checkLoginSession(view,24,generation);'));
 test("Login retries boundedly and rechecks official page after OAuth navigation",
   main.includes('if(attemptsLeft>1)view.postDelayed(')&&
-  main.includes('checkLoginSession(view,attemptsLeft-1,pageGeneration),450L')&&
+  main.includes('checkLoginSession(view,attemptsLeft-1,pageGeneration),600L')&&
   main.includes('++loginPageGeneration;')&&
   main.includes('profileCaptureInProgress=true;'));
 test("Login session detection substitutes all probe placeholders and reads mobile account text",
@@ -722,11 +722,12 @@ test("Login only reveals official provider dialog and supports Shiny switch tap"
   read("assets/login_entry.js").includes('return "ready";')&&
   read("assets/login_entry.js").includes('candidate.click();'));
 test("Login tests session before opening a fresh login link",
-  main.indexOf("checkLoginSession(view,14,generation);")>=0&&
+  main.indexOf("checkLoginSession(view,24,generation);")>=0&&
   main.includes("!loginDiscoveryStarted&&!loginLinkAttempted")&&
   main.includes("openOfficialLoginControl(view,8);"));
-test("Provider OAuth is visible and return to site is covered until session confirmed",
-  main.includes("loginCover.setVisibility(site?View.VISIBLE:View.GONE);")&&
+test("Provider OAuth and its callback are visible instead of covered",
+  main.includes("boolean returningFromProvider=site&&!observedLoginProvider.isEmpty();")&&
+  main.includes("loginCover.setVisibility(site&&!returningFromProvider?")&&
   main.includes('if("autenticada".equals(auth)){')&&
   main.includes("loginDialog.dismiss();"));
 test("Unknown site login has an accessible explicit fallback, not infinite masking",

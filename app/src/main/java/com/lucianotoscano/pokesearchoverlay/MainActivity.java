@@ -2459,8 +2459,15 @@ public class MainActivity extends Activity {
                     .remove("profileTrainerLevel").apply();
                 PogoAccountSlots.cookieManager(activeLoginSlot).flush();
                 if("manage".equals(loginPurpose)){
-                    // Management must stay open until the user explicitly leaves.
+                    // The management screen may also complete a new Discord OAuth.
+                    // Confirm the session and read the actual first-party profile.
+                    profileCaptureInProgress=true;
+                    profileCaptureRetryCount=0;
+                    avatarReadRetryCount=0;
                     refreshSessionSummary();
+                    if("/profile".equals(current.getPath()))
+                        view.postDelayed(()->captureOfficialProfile(view,pageGeneration),700L);
+                    else view.loadUrl("https://pogocoordinates.com/profile");
                     return;
                 }
                 loginAutoReturnQueued=true;
@@ -2491,22 +2498,27 @@ public class MainActivity extends Activity {
                 // Search does not expose a Shiny badge for unlinked trainers.
                 // On an ambiguous, hydrated page, visit the official profile once.
                 if("não confirmado".equals(auth)&&!profileDiscoveryAttempted&&
+                   observedLoginProvider.isEmpty()&&
                    !"/profile".equals(current.getPath())&&attemptsLeft<=12){
                     profileDiscoveryAttempted=true;
                     view.loadUrl("https://pogocoordinates.com/profile");
                     return;
                 }
-                if(!"manage".equals(loginPurpose)&&attemptsLeft<=13&&
+                if(!"manage".equals(loginPurpose)&&attemptsLeft<=23&&
+                   observedLoginProvider.isEmpty()&&
                    !loginDiscoveryStarted&&!loginLinkAttempted){
                     loginDiscoveryStarted=true;
                     openOfficialLoginControl(view,8);
                 }
                 // Do not infinitely retry an unauthenticated or unhydrated page.
                 if(attemptsLeft>1)view.postDelayed(
-                    ()->checkLoginSession(view,attemptsLeft-1,pageGeneration),450L);
+                    ()->checkLoginSession(view,attemptsLeft-1,pageGeneration),600L);
                 else if(loginWaitLabel!=null){
-                    loginWaitLabel.setText("Login não confirmado. Você pode voltar ou abrir o site.");
+                    loginWaitLabel.setText("Login ainda não confirmado. Confira a página oficial.");
                     if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+                    // Show the site error instead of keeping a blocking spinner.
+                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    BugReport.log(MainActivity.this,"AUTH","OAuth sem confirmação · Conta "+activeLoginSlot);
                 }
             }
         });
@@ -2771,6 +2783,7 @@ public class MainActivity extends Activity {
         loginStartedForShiny=shinyRequest;
         profileCaptureInProgress="manage".equals(loginPurpose);
         profileDiscoveryAttempted=false;
+        profileCaptureRetryCount=0;
         if(shinyRequest)preferredLoginProvider="";
         observedLoginProvider="";
         loginAutoReturnQueued=false;
@@ -2802,13 +2815,23 @@ public class MainActivity extends Activity {
                 String host=current.getHost();
                 if(host!=null){
                     String lower=host.toLowerCase(Locale.ROOT);
-                    if(lower.equals("accounts.google.com"))observedLoginProvider="Google";
-                    else if(lower.equals("discord.com")||lower.endsWith(".discord.com"))
+                    if(lower.equals("accounts.google.com")){
+                        observedLoginProvider="Google";
+                        loginSessionNotified=false;
+                    }else if(lower.equals("discord.com")||lower.endsWith(".discord.com")){
                         observedLoginProvider="Discord";
+                        loginSessionNotified=false;
+                    }
                 }
                 boolean site=host!=null&&(host.equalsIgnoreCase("pogocoordinates.com")||
                     host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"));
-                if(loginCover!=null)loginCover.setVisibility(site?View.VISIBLE:View.GONE);
+                if(loginCover!=null){
+                    // OAuth returns from Discord to PoGoCoordinates itself.
+                    // Do not mask the real callback or an official error page.
+                    boolean returningFromProvider=site&&!observedLoginProvider.isEmpty();
+                    loginCover.setVisibility(site&&!returningFromProvider?
+                        View.VISIBLE:View.GONE);
+                }
             }
             @Override public void onPageFinished(WebView view,String url){
                 if(url==null||view!=website)return;
@@ -2822,17 +2845,36 @@ public class MainActivity extends Activity {
                     return;
                 }
                 if("manage".equals(loginPurpose)){
-                    // Signed-in profile; only open the official Link my account
-                    // form for an unlinked trainer, without auto-confirming.
+                    // Manage can be opened during an expired session. Confirm
+                    // Discord/Google OAuth instead of assuming the cached card.
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
-                    if("/profile".equals(Uri.parse(url).getPath())){
-                        if(trainerLinkRequested&&!trainerLinkStarted)
-                            view.postDelayed(()->openOfficialTrainerLink(view,generation,8),450L);
+                    if("/profile".equals(Uri.parse(url).getPath())&&
+                       trainerLinkRequested&&!trainerLinkStarted)
+                        view.postDelayed(()->openOfficialTrainerLink(view,generation,8),750L);
+                    if(!loginSessionNotified)checkLoginSession(view,24,generation);
+                    else if("/profile".equals(Uri.parse(url).getPath()))
                         view.postDelayed(()->captureOfficialProfile(view,generation),700L);
-                    }
                     return;
                 }
-                checkLoginSession(view,14,generation);
+                checkLoginSession(view,24,generation);
+            }
+            @Override public void onReceivedError(WebView view,
+                    android.webkit.WebResourceRequest request,
+                    android.webkit.WebResourceError error){
+                if(view!=website||request==null||!request.isForMainFrame())return;
+                if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                int code=error==null?0:error.getErrorCode();
+                BugReport.log(MainActivity.this,"AUTH","Navegação principal · erro "+code);
+            }
+            @Override public void onReceivedHttpError(WebView view,
+                    android.webkit.WebResourceRequest request,
+                    android.webkit.WebResourceResponse response){
+                if(view!=website||request==null||!request.isForMainFrame()||response==null)return;
+                int status=response.getStatusCode();
+                if(status>=400){
+                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    BugReport.log(MainActivity.this,"AUTH","Página principal · HTTP "+status);
+                }
             }
         });
         // Single full-screen login surface. No Android alert footer competing
