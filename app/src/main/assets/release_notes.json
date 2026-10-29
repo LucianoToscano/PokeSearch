@@ -600,6 +600,32 @@
           "O backup não contém contas, senhas ou coordenadas; a Pokébola 2 mantém configurações independentes."
         ]
       }
+    },
+    {
+      "id": "lt169-sprites-privacy-trainers-20261029",
+      "minVersionCode": 54374,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT169 — Sprites exatas e privacidade na Home",
+      "sections": {
+        "novidades": [
+          "Home → Preferências → Privacidade na Home: escolha independentemente mostrar ou ocultar nome da conta PoGoCoordinates, nome do treinador e código de treinador.",
+          "Troca entre treinadores por ícone compacto ao lado de Treinador vinculado, visível somente para contas com dois ou mais treinadores vinculados."
+        ],
+        "melhorias": [
+          "Correção geral de sprites de formas e fantasias na pesquisa API e modo site, usando identidade exata de espécie, forma, cor e Shiny.",
+          "Cache Android validado contra manifesto de 1.679 sprites de formas e trajes GO; reutilização nas duas Pokébolas.",
+          "Ocultar nomes exibe Anônimo e ocultar código exibe XXXX XXXX XXXX; todos os campos são visíveis por padrão."
+        ],
+        "correcoes": [
+          "Corrigida a ausência de sprites Flabébé Yellow/Red/Blue/Orange/White e outras formas catalogadas quando a API está ligada.",
+          "Removidos círculos genéricos vazios nos lugares onde a sprite não pode ser identificada, usando uma identificação textual temporária.",
+          "Botão Perfis deixa de ocupar espaço para contas sem múltiplos treinadores; preservadas a troca de treinador e as credenciais originais."
+        ],
+        "emDesenvolvimento": [
+          "Algumas artes GO precisam de Internet no primeiro carregamento; a API não fornece a URL literal das imagens do site.",
+          "Teste visual final no Samsung com API ON/OFF, ambas Pokébolas, formas e Shiny deve ser confirmado na instalação."
+        ]
+      }
     }
   ]
 }
