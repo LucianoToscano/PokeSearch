@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT170 — DUAS CONTAS POGOC E POKÉBOLAS INDEPENDENTES (29/10/2026)
+
+**Status:** código na branch `feature/lt170-dual-pogo-isolated-logins-20261029`, build de QA assinado `0.01.70 / 54375` e proposta de atualização estável sob validação. **Não confundir com LT169 oficial até release estável confirmada.**
+
+- **Duas áreas de login PoGoCoordinates na Home:** Conta 1 mantém cookies e treinador legados, Conta 2 usa Chromium WebView `MULTI_PROFILE` com cookies e armazenamento próprios, Login Google/Discord, Gerenciar e Sair sem afetar Conta 1. Conta 2 fica indisponível quando o WebView do aparelho não suporta perfis separados.
+- **Associação independente por Pokébola:** P1 e P2 escolhem Conta 1 ou 2, depois exclusivamente treinadores verificados no perfil daquela conta. Permite A/A, A/B, B/A e B/B; não altera resultados de uma Pokébola ao trocar a outra. `Sem treinador` explícito não herda outro treinador nem ativa Shiny.
+- **Buscas API/DOM e Shiny:** cada serviço `OverlayService` obtém sua própria WebView e CookieManager da conta atribuída; Shiny exige código verificado da mesma conta. Cooldown e login Shiny seguem o treinador da Pokébola de origem. Alteração de conta reinicia apenas serviço afetado; não há compartilhamento de token entre contas nem benefício artificial de limites.
+- **Segurança e testes:** assinaturas APK v2 permanentes, R8 e teste do cenário de isolamento de sessão no CI; testes reais de Google/Discord, WebView Samsung e Moto G15 continuam importantes. Workflow `.github/workflows/lt170-dual-accounts-signed-qa.yml`. Auditoria `docs/LT170_DUAL_POGOC_INDEPENDENT_LOGIN_BUILD_QA_20261029.md`.
+- **Outras PRs:** #121 (taxa de coordenadas), #122 (Pokébola 1 e fluxo de vínculo) e #123 (Mais transparente) permanecem independentes para evitar conflitos. Nenhum código dessas PRs é presumido presente na LT170 antes de merge explícito.
+
+
 ## VERSÃO OFICIAL ATUAL — LT169 (0.01.69 / versionCode 54374) — 29/10/2026
 
 **LT169 É A BASE CANÔNICA ATUAL.** PRs #113–#119 mescladas na main. APK oficial SOURCE_COMMIT `81503cc6e2ce7e974532503759e2d690af7aedbd`; [Release estável latest v0.01.69-54374](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.69-54374) confirmada por [Actions #40875761778 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40875761778). APK `PokeSearch-v0.01.69-LT.apk` com **49.493.674 bytes**, SHA-256 `58acf4bd0b663149e803daf411d7d0a118b7a0112da87240abda4acdb7e3f4f6`; assinatura Android v2 permanente e R8 verificados.
