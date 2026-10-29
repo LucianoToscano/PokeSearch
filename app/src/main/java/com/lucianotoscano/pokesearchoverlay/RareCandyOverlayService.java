@@ -76,9 +76,9 @@ public final class RareCandyOverlayService extends Service {
     private boolean visible=false,ready=false,destroyed=false,busy=false,showInfos=true;
     private boolean showName=false,showLocation=false,showDespawn=true,showDistance=false;
     private String coords="";
-    private int radius=1000,period=1,generation=0;
+    private int radius=1000,period=3,generation=0;
     private long lastRefresh=0,blockedUntil=0;
-    private boolean expirePending=false,pendingManualRefresh=false;
+    private boolean pendingManualRefresh=false;
     private int lastAllCopiedRefreshGeneration=-1;
 
     private static final class Candy {
@@ -140,8 +140,8 @@ public final class RareCandyOverlayService extends Service {
         prefs=getSharedPreferences("rare_candy_overlay",MODE_PRIVATE);
         coords=prefs.getString("coords","");
         radius=Math.max(1,Math.min(1000000,prefs.getInt("radius",1000)));
-        int saved=prefs.getInt("period",1);
-        period=saved==3||saved==5?saved:1;
+        int saved=prefs.getInt("period",3);
+        period=(saved==0||saved==3||saved==5||saved==10||saved==15||saved==20)?saved:3;
         // LT178: only despawn is enabled by default. Honor explicit choices
         // saved on older versions instead of resetting user preferences.
         showInfos=prefs.getBoolean("infos",false);
@@ -376,6 +376,20 @@ public final class RareCandyOverlayService extends Service {
             candyMenuPanel.evaluateJavascript("window.syncCandy("+
                 JSONObject.quote(state.toString())+")",null);
         }catch(org.json.JSONException ignored){}
+        syncCandyRefreshState();
+    }
+    // Only report the native request lifecycle to the trusted local controls
+    // WebView; never send account cookies, JWT or remote search data to it.
+    private void syncCandyRefreshState(){
+        if(destroyed||!candyMenuLoaded||candyMenuPanel==null||
+                !allowedMenuUrl(candyMenuPanel.getUrl()))return;
+        boolean limited=SystemClock.elapsedRealtime()<blockedUntil;
+        candyMenuPanel.evaluateJavascript("window.setCandyRefreshState({busy:"+
+            busy+",pending:"+pendingManualRefresh+",blocked:"+limited+"})",null);
+    }
+    private void setCandyBusy(boolean value){
+        busy=value;
+        syncCandyRefreshState();
     }
     private void placeCandyMenu(){
         if(menuParams==null||bubbleParams==null||wm==null)return;
@@ -422,18 +436,19 @@ public final class RareCandyOverlayService extends Service {
             main.post(()->{
                 if(!permitted())return;
                 long remaining=blockedUntil-SystemClock.elapsedRealtime();
-                Toast.makeText(RareCandyOverlayService.this,
-                    remaining>0?"Limite do site · atualizar em "+((remaining+999)/1000)+" s":
-                        "Atualizando doces…",Toast.LENGTH_SHORT).show();
+                // No app-side cooldown or countdown Toast. The official
+                // provider's Retry-After is still respected by refresh().
+                if(remaining<=0)Toast.makeText(RareCandyOverlayService.this,
+                    "Atualizando doces…",Toast.LENGTH_SHORT).show();
                 refresh(true);
             });
         }
-        @android.webkit.JavascriptInterface public void candyMenuHeight(int height,boolean focus){
+        @android.webkit.JavascriptInterface public void candyMenuHeight(int height,boolean focus,String panel){
             main.post(()->{
                 if(!permitted()||menuParams==null||!candyMenuVisible)return;
                 int h=Math.max(34,Math.min(290,height));
                 menuParams.height=dp(h);
-                menuParams.width=dp(h>34?240:142);
+                menuParams.width=dp(h>34?("period".equals(panel)?142:240):142);
                 menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
                     (focus?0:WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
@@ -450,7 +465,7 @@ public final class RareCandyOverlayService extends Service {
             });
         }
         @android.webkit.JavascriptInterface public void setCandyPeriod(int selected){
-            if(selected!=1&&selected!=3&&selected!=5)return;
+            if(selected!=0&&selected!=3&&selected!=5&&selected!=10&&selected!=15&&selected!=20)return;
             main.post(()->{
                 if(!permitted())return;
                 period=selected;prefs.edit().putInt("period",selected).apply();
@@ -480,6 +495,19 @@ public final class RareCandyOverlayService extends Service {
                 coords=center.trim();radius=meters;cards.clear();
                 prefs.edit().putString("coords",coords).putInt("radius",meters).apply();
                 render();syncCandyMenu();refresh(true);
+            });
+        }
+        @android.webkit.JavascriptInterface public void copyCandyLocation(String point){
+            main.post(()->{
+                if(!permitted())return;
+                String normalized=point==null?"":point.trim();
+                if(!validCoords(normalized)){
+                    Toast.makeText(RareCandyOverlayService.this,
+                        "Informe coordenadas válidas",Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                ClipboardManager clip=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                if(clip!=null)clip.setPrimaryClip(ClipData.newPlainText("Localização Doce Raro",normalized));
             });
         }
         @android.webkit.JavascriptInterface public void pasteCandyLocation(){
@@ -564,7 +592,7 @@ public final class RareCandyOverlayService extends Service {
                     android.webkit.WebResourceRequest request,
                     android.webkit.WebResourceError error){
                 if(request.isForMainFrame()&&!destroyed){
-                    ready=false;busy=false;
+                    ready=false;setCandyBusy(false);
                     setStatus("Site indisponível · atualize quando houver rede");
                 }
             }
@@ -587,6 +615,7 @@ public final class RareCandyOverlayService extends Service {
             status.setText(message);
             status.setVisibility(cards.isEmpty()?View.VISIBLE:View.GONE);
         }
+        syncCandyRefreshState();
     }
     private void refresh(boolean manual){
         if(destroyed||site==null)return;
@@ -611,11 +640,11 @@ public final class RareCandyOverlayService extends Service {
             // Keep the last explicit tap/all-copied request until the provider
             // permits another call; never bypass 429 Retry-After.
             if(manual)pendingManualRefresh=true;
-            setStatus("Limite do site · repetir em "+((blockedUntil-now+999)/1000)+" s");
+            setStatus("Aguardando liberação do PoGoCoordinates");
             return;
         }
-        if(!manual&&now-lastRefresh<15000)return;
-        busy=true;expirePending=false;lastRefresh=now;
+        // No extra local throttle for manual or all-copied searches.
+        setCandyBusy(true);lastRefresh=now;
         final int gen=++generation;
         setStatus("Consultando Doce Raro…");
         // No DOM scraping, fake time-to-live or /reveal. The source contract
@@ -638,6 +667,7 @@ public final class RareCandyOverlayService extends Service {
     private void finishPendingManualRefresh(){
         if(destroyed||!pendingManualRefresh)return;
         pendingManualRefresh=false;
+        syncCandyRefreshState();
         main.post(()->refresh(true));
     }
     private void readResults(int gen,int attempt){
@@ -651,7 +681,7 @@ public final class RareCandyOverlayService extends Service {
                     if(attempt<24){
                         main.postDelayed(()->readResults(gen,attempt+1),600L);
                     }else{
-                        busy=false;setStatus("Sem resposta do site · tente atualizar");
+                        setCandyBusy(false);setStatus("Sem resposta do site · tente atualizar");
                         finishPendingManualRefresh();
                     }
                     return;
@@ -659,12 +689,12 @@ public final class RareCandyOverlayService extends Service {
                 JSONObject response=state.optJSONObject("response");
                 if(response==null)throw new org.json.JSONException("missing response");
                 if(!response.optBoolean("ok",false)){
-                    busy=false;
+                    setCandyBusy(false);
                     int code=response.optInt("status",0);
                     if(code==429){
-                        int retry=Math.max(60,Math.min(3600,response.optInt("retry_after",60)));
+                        int retry=Math.max(1,Math.min(3600,response.optInt("retry_after",60)));
                         blockedUntil=SystemClock.elapsedRealtime()+retry*1000L;
-                        setStatus("Limite de buscas · "+retry+" s");
+                        setStatus("Aguardando liberação do PoGoCoordinates");
                     }else if(code==401){
                         setStatus("Sessão expirada · entre no PoGoCoordinates");
                     }else setStatus("Busca indisponível · tente novamente");
@@ -702,13 +732,13 @@ public final class RareCandyOverlayService extends Service {
                     accepted.put(point,new Candy(point,city,distance,elapsed+ttl));
                 }
                 cards.clear();cards.putAll(accepted);
-                busy=false;
+                setCandyBusy(false);
                 setStatus(cards.isEmpty()?"Nenhum Doce Raro no momento":
                     cards.size()+" Doce Raro · PoGoCoordinates");
                 render();
                 finishPendingManualRefresh();
             }catch(Exception ex){
-                busy=false;
+                setCandyBusy(false);
                 setStatus("Falha ao ler dados do Doce Raro");
                 finishPendingManualRefresh();
             }
@@ -740,15 +770,16 @@ public final class RareCandyOverlayService extends Service {
         // Trigger once on the transition to ALL visible candies copied. A
         // repeated tap on an already-gray candy must not generate a loop if
         // the provider returns the same ten coordinates in the next response.
-        if(newlyCopied&&lastAllCopiedRefreshGeneration!=generation){
+        if(newlyCopied&&cards.size()==10&&lastAllCopiedRefreshGeneration!=generation){
             long now=SystemClock.elapsedRealtime();
-            boolean hasVisible=false,hasUncopied=false;
+            int visibleCount=0;
+            boolean hasUncopied=false;
             for(Candy candidate:cards.values()){
                 if(candidate.deadline<=now)continue;
-                hasVisible=true;
+                visibleCount++;
                 if(!copied.contains(candidate.coords)){hasUncopied=true;break;}
             }
-            if(hasVisible&&!hasUncopied){
+            if(visibleCount==10&&!hasUncopied){
                 lastAllCopiedRefreshGeneration=generation;
                 refresh(true);
             }
@@ -835,9 +866,7 @@ public final class RareCandyOverlayService extends Service {
                     cards.remove(key);removed=true;
                 }
             }
-            if(removed){
-                render();expirePending=true;
-            }
+            if(removed)render();
             for(Map.Entry<String,TextView> entry:countdownLabels.entrySet()){
                 Candy current=cards.get(entry.getKey());
                 if(current==null||current.deadline<=0)continue;
@@ -848,15 +877,15 @@ public final class RareCandyOverlayService extends Service {
                 label.setTextColor(seconds<=60?0xFFFF666D:
                     seconds<=300?0xFFFFC35A:0xFFC0D9EE);
             }
-            // Immediately request a new batch after expiry, but obey a small
-            // local throttle so simultaneous expirations cannot spam the site.
+            // A new batch is requested only by the chosen interval, a manual
+            // tap, or copying all ten candies. Expiration still removes TTL
+            // cards, but no longer launches an extra local-throttle search.
             if(pendingManualRefresh&&!busy&&ready&&
                     isOfficialSearch()&&now>=blockedUntil){
                 pendingManualRefresh=false;
                 refresh(true);
-            }else if(expirePending&&!busy&&now-lastRefresh>=15000){
-                expirePending=false;refresh(false);
-            }else if(!busy&&ready&&now-lastRefresh>=period*60000L){
+            }else if(period>0&&!busy&&ready&&now>=blockedUntil&&
+                    now-lastRefresh>=period*60000L){
                 refresh(false);
             }
             main.postDelayed(this,1000L);
@@ -876,7 +905,7 @@ public final class RareCandyOverlayService extends Service {
             }
             @Override public void refresh(){RareCandyOverlayService.this.refresh(true);}
             @Override public void updatePeriod(int value){
-                period=value;prefs.edit().putInt("period",value).apply();
+                period=value;prefs.edit().putInt("period",value).apply();syncCandyMenu();
             }
             @Override public void updateInfos(boolean value){
                 showInfos=value;prefs.edit().putBoolean("infos",value).apply();render();

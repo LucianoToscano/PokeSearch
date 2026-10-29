@@ -770,6 +770,30 @@
           "A atualização do APK necessita da confirmação de instalação no Android; as consultas dependem da disponibilidade e das cotas oficiais do PoGoCoordinates."
         ]
       }
+    },
+    {
+      "id": "lt180-candy-refresh-compact-location-20261029",
+      "minVersionCode": 54385,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT180 — Doce Raro com menus da Pokébola",
+      "sections": {
+        "novidades": [
+          "Atualização automática dos doces configurada em 3 minutos por padrão, com OFF, 3, 5, 10, 15 e 20 minutos.",
+          "Ao copiar todos os dez doces ativos, a próxima pesquisa é solicitada automaticamente, sem novos toques."
+        ],
+        "melhorias": [
+          "Ícone ↻ gira durante a pesquisa e para após resposta, erro ou espera autorizada pelo site.",
+          "Menus de Localização e Atualização compactos, com aparência da Pokébola: slider em km, campo de coordenadas, copiar/colar e aplicar/limpar por ícones.",
+          "Removida a espera artificial de 15 segundos do aplicativo; despawn e limite HTTP 429 oficiais do PoGoCoordinates continuam respeitados."
+        ],
+        "correcoes": [
+          "Não são geradas pesquisas extras quando apenas parte dos doces foi copiada, quando uma coordenada cinza é copiada novamente ou quando o despawn termina.",
+          "O intervalo informado pelo provedor em HTTP 429 é respeitado sem acréscimo artificial de 60 segundos quando ele fornece prazo."
+        ],
+        "emDesenvolvimento": [
+          "As consultas dependem da disponibilidade e dos limites oficiais do PoGoCoordinates. A instalação de um APK exige aceitação no Android."
+        ]
+      }
     }
   ]
 }

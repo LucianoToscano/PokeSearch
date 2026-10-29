@@ -53,7 +53,9 @@
       if(!response.ok){
         let retry=Number(response.headers.get("Retry-After")||0);
         if(!Number.isFinite(retry)||retry<0)retry=0;
-        if(response.status===429)retry=Math.max(retry,60);
+        // Honor the provider-specified Retry-After exactly; use 60 s only when
+        // the 429 response supplies no usable delay.
+        if(response.status===429&&retry===0)retry=60;
         return JSON.stringify({ok:false,status:response.status,
           error:response.status===429?"rate-limited":"request-failed",
           retry_after:Math.min(3600,retry)});
