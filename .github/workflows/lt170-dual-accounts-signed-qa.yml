@@ -3,7 +3,6 @@ name: PokeSearch LT170 — APK QA assinado duas contas isoladas
 on:
   push:
     branches: [feature/lt170-dual-pogo-isolated-logins-20261029]
-    paths: ['.github/workflows/lt170-dual-accounts-signed-qa.yml']
 permissions:
   contents: read
 concurrency:
