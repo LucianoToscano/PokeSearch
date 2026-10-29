@@ -42,3 +42,9 @@ Essa validação encontrou e corrigiu três expectativas obsoletas, **sem modifi
 **Suíte Node completa aprovada:** [GitHub Actions #40873960256](https://github.com/LucianoToscano/PokeSearch/actions/runs/40873960256) — SUCCESS, sem exclusões além do teste obsoleto LT74 DEBUG já excluído nos workflows oficiais. O pipeline oficial LT169 foi atualizado para exigir explicitamente essas regressões antes de promover o APK.
 
 A versão pública só será considerada LT169 após build assinado e verificação da release real. O QA físico Samsung continua pendente.
+
+## Terceira execução oficial — proteção do conteúdo APK
+
+O workflow [#40874157619](https://github.com/LucianoToscano/PokeSearch/actions/runs/40874157619) passou em todos os testes, montagem dos sprites e `:app:assembleRelease`, porém parou no estágio **Audit APK certificate, R8, build version and offline manifest**. O script anterior fazia repetidos `unzip -Z1 "$APK" | grep -Fq "entrada"` com `set -o pipefail`, suscetíveis a SIGPIPE (leitura encerrada assim que o grep acha a primeira entrada); o erro não revelava qual arquivo falhou.
+
+A nova checagem gera `APK-ENTRIES.txt` uma única vez, aplica `check_entry` sobre o arquivo completo e identifica explicitamente recursos ausentes. **A verificação de integridade não foi removida**: continuam exigidos manifesto GO, ícone vetorial de troca, sprites normais/Shiny, versão/package, R8, assinatura v2 e certificado permanente. A nova tentativa da pipeline oficial só publica após todos os gates.
