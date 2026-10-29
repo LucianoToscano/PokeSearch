@@ -3768,7 +3768,7 @@ body.controls-window #choices [hidden]{display:none!important}
    Single theme for every actual menu surface. The empty parent/window stays
    transparent and touch pass-through. Theme alpha is controlled by the same
    Editor Visual slider (50% by default), without stacked opaque islands. */
-body.controls-window #choices:not(.modeCascade):not(.filterCascade),
+body.controls-window #choices:not(.modeCascade):not(.filterCascade):not(.morePanel):not(.periodCompact),
 body.controls-window #choices.modeCascade .modeCascadeRail,
 body.controls-window #choices.modeCascade .modeCascadeEditor,
 body.controls-window #choices.filterCascade .filterCascadeRail,
@@ -3866,7 +3866,7 @@ body.popup-window.controls-window #choices.locationPanel .locRadiusRow>.compactL
 /* LT88-SAMSUNG-LEGIBILITY-02: 50% base stays in Editor Visual, but a
    matching contrast surface protects text if Android cannot blur another app.
    Only real sized panels are painted: no overlay-sized rectangle. */
-body.controls-window #choices:not(.modeCascade):not(.filterCascade),
+body.controls-window #choices:not(.modeCascade):not(.filterCascade):not(.morePanel):not(.periodCompact),
 body.controls-window #choices.modeCascade .modeCascadeRail,
 body.controls-window #choices.modeCascade .modeCascadeEditor,
 body.controls-window #choices.filterCascade .filterCascadeRail,
@@ -4270,6 +4270,36 @@ body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationAction
 body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction,body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 29px!important;width:29px!important;min-width:29px!important;max-width:29px!important;height:29px!important;min-height:29px!important;max-height:29px!important;padding:4px!important;margin:0!important;font-size:0!important}
 body.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction svg,body.popup-window.controls-window #choices.locationPanel>.locRadiusRow>.compactLocationActions>.psLineAction svg{display:block!important;flex:none!important;width:19px!important;height:19px!important}
 body.controls-window #choices.locationPanel#locHint[hidden],body.popup-window.controls-window #choices.locationPanel#locHint[hidden]{display:none!important}
+
+/* LT170 MORE-FINAL: the detached vertical utility popup never paints one
+   shared black column. Each button matches the original ⋯ toolbar tile. */
+body.controls-window #choices.morePanel,
+body.popup-window.controls-window #choices.morePanel,
+body.controls-window.popup-above #choices.morePanel,
+body.popup-window.controls-window.popup-above #choices.morePanel,
+body.controls-window.visual-menu-vertical #choices.morePanel,
+body.popup-window.controls-window.visual-menu-vertical #choices.morePanel{
+ box-sizing:border-box!important;width:var(--more-tile-width,30px)!important;
+ min-width:0!important;max-width:var(--more-tile-width,30px)!important;
+ display:flex!important;flex-direction:column!important;gap:var(--visual-menu-gap,3px)!important;
+ padding:0!important;margin:0!important;
+ background:transparent!important;background-color:transparent!important;background-image:none!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+body.controls-window #choices.morePanel>.quickMoreAction,
+body.popup-window.controls-window #choices.morePanel>.quickMoreAction{
+ box-sizing:border-box!important;flex:0 0 30px!important;width:100%!important;
+ min-width:0!important;max-width:100%!important;
+ height:30px!important;min-height:30px!important;max-height:30px!important;
+ padding:0!important;margin:0!important;
+ background:var(--visual-menu-readable-bg,var(--visual-menu-button-bg,#28292cce))!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ border:1px solid var(--visual-menu-border,#ffffff48)!important;
+ border-radius:7px!important;
+ box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0006)!important;
+ background-clip:padding-box!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4694,8 +4724,12 @@ function closeChoices(){
  refreshQuickMenuStates();fit();
  if(popupWindow&&!popupNativeSwitch&&Native.closePopup)Native.closePopup();
 }
-window.showNativePopup=kind=>{
+window.showNativePopup=(kind,measuredTileWidth=0)=>{
  if(!popupWindow)return;
+ if(kind==="more"){
+  const w=Number(measuredTileWidth);
+  window.nativeMoreTileWidth=Number.isFinite(w)&&w>=24&&w<=80?w:0;
+ }
  if(!menuOpen)setMenuOpen(true);
  if(choiceOpen===kind){fit();return;}
  popupNativeSwitch=true;
@@ -4730,7 +4764,9 @@ function toggleChoices(kind){
   const centerX=Math.round(rect?rect.left-host.left+rect.width/2:host.width/2);
   const centerY=Math.round(rect?rect.top-host.top+rect.height/2:host.height/2);
   // Align vertical cascades to the actual clicked icon, not a fixed 16px offset.
-  if(Native.openPopupMeasured&&rect&&rect.height>0)
+  if(kind==="more"&&Native.openPopupMeasuredWidth&&rect&&rect.height>0&&rect.width>0)
+   Native.openPopupMeasuredWidth(kind,centerX,centerY,Math.round(rect.height),Math.round(rect.width));
+  else if(Native.openPopupMeasured&&rect&&rect.height>0)
    Native.openPopupMeasured(kind,centerX,centerY,Math.round(rect.height));
   else Native.openPopup(kind,Math.round(rect?rect.left-host.left+rect.width/2:host.width/2),
    Math.round(rect?rect.top-host.top+rect.height/2:host.height/2));
@@ -7226,8 +7262,9 @@ function renderMoreChoices(){
  const trigger=document.querySelector('#quickMenuList button[data-key="more"]');
  // In the independent popup WebView this toolbar is display:none and reports
  // width=0; preserve the original 30px fallback instead of forcing 28px.
- const tileWidth=trigger?.getBoundingClientRect().width||0;
- if(tileWidth>=28)panel.style.setProperty("--more-tile-width",
+ const tileWidth=Number(window.nativeMoreTileWidth)||
+  trigger?.getBoundingClientRect().width||0;
+ if(tileWidth>=24&&tileWidth<=80)panel.style.setProperty("--more-tile-width",
   Math.round(tileWidth)+"px");
  else panel.style.removeProperty("--more-tile-width");
  for(const id of ids){
