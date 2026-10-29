@@ -349,7 +349,7 @@ public final class RareCandyOverlayService extends Service {
                 return !allowedMenuUrl(request.getUrl().toString());
             }
             @Override public void onPageFinished(WebView view,String url){
-                if(allowedMenuUrl(url)){candyMenuLoaded=true;syncCandyMenu();}
+                if(allowedMenuUrl(url)){candyMenuLoaded=true;lastCandyMenuTheme="";syncCandyMenu();}
             }
         });
         menuParams=new WindowManager.LayoutParams(dp(142),dp(34),
