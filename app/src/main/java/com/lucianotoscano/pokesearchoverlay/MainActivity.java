@@ -65,7 +65,12 @@ public class MainActivity extends Activity {
     private String loginPurpose="login"; // login | manage
     private int activeLoginSlot=1;
     private TextView secondAccountSummary,overlayAccountLabel1,overlayAccountLabel2;
-    private Button secondAccountLogin,secondAccountManage,secondAccountLogout;
+    private TextView secondAccountUnavailable,secondAccountProvider,secondTrainerDisplay,secondTrainerDetails,
+        secondTrainerCode,secondTrainerHeading;
+    private ImageView secondAvatar,secondTeamBadge,secondAvatarFrame;
+    private ImageButton secondTrainerSelectButton;
+    private LinearLayout secondAccountConnected,secondAccountGuest,secondTrainerCodeGroup;
+    private Button secondAccountLogin,secondAccountManage,secondAccountLogout,secondTrainerAction;
     private boolean profileCaptureInProgress=false;
     private int avatarReadRetryCount=0; // bounded retry for lazy official Google image
     private boolean profileDiscoveryAttempted=false;
@@ -693,45 +698,170 @@ public class MainActivity extends Activity {
         // Second PoGoCoordinates session with a separate persistent Chromium profile.
         LinearLayout secondAccount=new LinearLayout(this);
         secondAccount.setOrientation(LinearLayout.VERTICAL);
-        secondAccount.setPadding(d(12),d(9),d(12),d(10));
-        secondAccount.setBackground(homeSurface(homeLightMode?Color.rgb(244,250,254):
-            Color.rgb(22,34,49),15,homeLightMode?Color.rgb(170,197,219):
-            Color.rgb(71,100,127)));
+        secondAccount.setPadding(d(15),d(15),d(15),d(16));
+        secondAccount.setBackground(homeSurface(homeLightMode?Color.rgb(251,253,255):
+            Color.rgb(33,37,44),20,homeLightMode?Color.rgb(175,188,204):
+            Color.rgb(77,84,96)));
+        secondAccount.setElevation(d(5));
         LinearLayout.LayoutParams secondLp=new LinearLayout.LayoutParams(-1,-2);
-        secondLp.topMargin=d(6);
+        secondLp.topMargin=d(10);
         screen.addView(secondAccount,secondLp);
-        secondAccountSummary=homeText("Conta PoGoCoordinates 2 · Desconectada",12,
-            homeLightMode?Color.rgb(33,52,73):Color.WHITE,true);
-        secondAccount.addView(secondAccountSummary);
-        LinearLayout actionsTwo=new LinearLayout(this);
-        actionsTwo.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams actionRow=new LinearLayout.LayoutParams(-1,d(35));
-        actionRow.topMargin=d(4);
-        secondAccount.addView(actionsTwo,actionRow);
-        secondAccountLogin=homeAuthButton("G  Google",Color.rgb(37,72,92),Color.WHITE);
-        secondAccountManage=homeAuthButton("Gerenciar",Color.rgb(37,72,92),Color.WHITE);
-        secondAccountLogout=homeAuthButton("Sair",Color.rgb(53,35,47),Color.rgb(255,167,180));
-        actionsTwo.addView(secondAccountLogin,new LinearLayout.LayoutParams(0,-1,1));
-        LinearLayout.LayoutParams manageLp=new LinearLayout.LayoutParams(0,-1,1);
-        manageLp.leftMargin=d(5);actionsTwo.addView(secondAccountManage,manageLp);
-        LinearLayout.LayoutParams logoutLp2=new LinearLayout.LayoutParams(d(57),-1);
-        logoutLp2.leftMargin=d(5);actionsTwo.addView(secondAccountLogout,logoutLp2);
+        // Full account card mirrors the hierarchy and dimensions of Conta 1.
+        // None of these widgets borrow account-1 profile/identity preferences.
+        TextView secondTitle=homeText("PoGoCoordinates · Conta 2",12,
+            homeLightMode?Color.rgb(62,90,115):Color.rgb(178,204,238),true);
+        LinearLayout.LayoutParams titleLp=new LinearLayout.LayoutParams(-1,-2);
+        titleLp.bottomMargin=d(8);secondAccount.addView(secondTitle,titleLp);
+        secondAccountUnavailable=homeText("O Android WebView não suporta dois logins separados",11,
+            homeLightMode?Color.rgb(111,60,43):Color.rgb(244,192,144),false);
+        secondAccountUnavailable.setVisibility(View.GONE);
+        secondAccount.addView(secondAccountUnavailable);
+        secondAccountGuest=new LinearLayout(this);
+        secondAccountGuest.setGravity(Gravity.CENTER_VERTICAL);
+        secondAccount.addView(secondAccountGuest,new LinearLayout.LayoutParams(-1,d(42)));
+        secondAccountLogin=homeAuthButton("G  Google",Color.WHITE,Color.rgb(27,32,42));
+        secondAccountManage=homeAuthButton("◉  Discord",Color.rgb(80,95,246),Color.WHITE);
+        secondAccountGuest.addView(secondAccountManage,new LinearLayout.LayoutParams(0,-1,1));
+        LinearLayout.LayoutParams secondGoogleLp=new LinearLayout.LayoutParams(0,-1,1);
+        secondGoogleLp.leftMargin=d(8);
+        secondAccountGuest.addView(secondAccountLogin,secondGoogleLp);
         secondAccountLogin.setOnClickListener(v->{
             preferredLoginProvider="google";openLoginDialogForSlot(2,"login");
         });
         secondAccountManage.setOnClickListener(v->{
-            if(PogoAccountSlots.loggedIn(this,2))
-                openLoginDialogForSlot(2,"manage");
-            else{
-                preferredLoginProvider="discord";
-                openLoginDialogForSlot(2,"login");
-            }
+            preferredLoginProvider="discord";openLoginDialogForSlot(2,"login");
         });
+        secondAccountConnected=new LinearLayout(this);
+        secondAccountConnected.setOrientation(LinearLayout.VERTICAL);
+        secondAccount.addView(secondAccountConnected,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout secondIdentityRow=new LinearLayout(this);
+        secondIdentityRow.setGravity(Gravity.CENTER_VERTICAL);
+        secondAccountConnected.addView(secondIdentityRow,new LinearLayout.LayoutParams(-1,-2));
+        FrameLayout secondAvatarShell=new FrameLayout(this);
+        secondAvatarShell.setBackground(homeAvatarOutline(""));
+        secondAvatarShell.setOutlineProvider(android.view.ViewOutlineProvider.BACKGROUND);
+        secondAvatarShell.setClipToOutline(true);
+        secondAvatar=new ImageView(this);
+        shownSecondAvatarUrl="";
+        secondAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+        secondAvatar.setColorFilter(Color.rgb(183,201,229));
+        secondAvatar.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        secondAvatar.setPadding(d(11),d(11),d(11),d(11));
+        FrameLayout.LayoutParams secondPhotoLp=new FrameLayout.LayoutParams(-1,-1);
+        secondPhotoLp.setMargins(d(3),d(3),d(3),d(3));
+        secondAvatarShell.addView(secondAvatar,secondPhotoLp);
+        secondAvatarFrame=new ImageView(this);
+        secondAvatarFrame.setImageDrawable(homeAvatarOutline(""));
+        secondAvatarFrame.setClickable(false);
+        secondAvatarShell.addView(secondAvatarFrame,new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout.LayoutParams secondAvatarLp=new LinearLayout.LayoutParams(d(52),d(52));
+        secondAvatarLp.rightMargin=d(10);
+        secondIdentityRow.addView(secondAvatarShell,secondAvatarLp);
+        LinearLayout secondIdentity=new LinearLayout(this);
+        secondIdentity.setOrientation(LinearLayout.VERTICAL);
+        secondIdentityRow.addView(secondIdentity,new LinearLayout.LayoutParams(0,-2,1));
+        secondAccountSummary=homeText("Conta 2",17,
+            homeLightMode?Color.rgb(19,38,59):Color.WHITE,true);
+        secondAccountSummary.setSingleLine(true);
+        secondAccountSummary.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        secondIdentity.addView(secondAccountSummary);
+        secondAccountProvider=homeText("Conectado ao PoGoCoordinates",11,
+            homeLightMode?Color.rgb(69,88,109):Color.rgb(175,191,224),false);
+        secondIdentity.addView(secondAccountProvider);
+        secondAccountLogout=homeAuthButton("⇥  Sair site",Color.rgb(28,37,54),Color.WHITE);
+        secondAccountLogout.setBackground(homeSurface(Color.rgb(27,36,52),13,
+            Color.rgb(51,67,92)));
+        LinearLayout.LayoutParams secondLogoutLp=new LinearLayout.LayoutParams(d(88),d(37));
+        secondLogoutLp.leftMargin=d(7);
+        secondIdentityRow.addView(secondAccountLogout,secondLogoutLp);
         secondAccountLogout.setOnClickListener(v->new AlertDialog.Builder(this)
             .setTitle("Desconectar somente a Conta 2?")
             .setMessage("A Conta 1 permanecerá conectada.")
             .setNegativeButton("Cancelar",null)
             .setPositiveButton("Desconectar",(dialog,which)->logoutSecondAccount()).show());
+
+        LinearLayout secondTrainerPanel=new LinearLayout(this);
+        LinearLayout.LayoutParams secondTrainerLp=new LinearLayout.LayoutParams(-1,-2);
+        secondTrainerLp.topMargin=d(13);
+        secondAccountConnected.addView(secondTrainerPanel,secondTrainerLp);
+        secondTrainerPanel.setOrientation(LinearLayout.VERTICAL);
+        View secondRule=new View(this);
+        secondRule.setBackgroundColor(homeLightMode?Color.rgb(194,205,218):
+            Color.rgb(62,72,84));
+        LinearLayout.LayoutParams secondRuleLp=new LinearLayout.LayoutParams(-1,d(1));
+        secondRuleLp.bottomMargin=d(10);
+        secondTrainerPanel.addView(secondRule,secondRuleLp);
+        LinearLayout secondTrainerHeader=new LinearLayout(this);
+        secondTrainerHeader.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams secondHeadingLp=new LinearLayout.LayoutParams(-1,-2);
+        secondHeadingLp.bottomMargin=d(7);
+        secondTrainerPanel.addView(secondTrainerHeader,secondHeadingLp);
+        secondTrainerHeading=homeText("Treinador vinculado",12,
+            homeLightMode?Color.rgb(72,92,111):Color.rgb(171,188,215),false);
+        secondTrainerHeader.addView(secondTrainerHeading,new LinearLayout.LayoutParams(-2,-2));
+        secondTrainerSelectButton=new ImageButton(this);
+        secondTrainerSelectButton.setImageResource(R.drawable.ps_trainer_switch);
+        secondTrainerSelectButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        secondTrainerSelectButton.setColorFilter(homeLightMode?Color.rgb(57,92,128):
+            Color.rgb(174,208,242));
+        secondTrainerSelectButton.setPadding(d(7),d(7),d(7),d(7));
+        secondTrainerSelectButton.setBackgroundColor(Color.TRANSPARENT);
+        secondTrainerSelectButton.setContentDescription("Trocar treinador da Conta 2");
+        LinearLayout.LayoutParams secondSelectLp=new LinearLayout.LayoutParams(d(36),d(36));
+        secondSelectLp.leftMargin=d(3);
+        secondTrainerHeader.addView(secondTrainerSelectButton,secondSelectLp);
+        secondTrainerSelectButton.setOnClickListener(v->showAccountTrainerSelector(2));
+        LinearLayout secondTrainerRow=new LinearLayout(this);
+        secondTrainerRow.setGravity(Gravity.CENTER_VERTICAL);
+        secondTrainerPanel.addView(secondTrainerRow,new LinearLayout.LayoutParams(-1,-2));
+        secondTeamBadge=new ImageView(this);
+        secondTeamBadge.setImageResource(R.drawable.ps_team_neutral);
+        secondTeamBadge.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        secondTeamBadge.setBackgroundColor(Color.TRANSPARENT);
+        LinearLayout.LayoutParams secondBadgeLp=new LinearLayout.LayoutParams(d(53),d(53));
+        secondBadgeLp.rightMargin=d(10);
+        secondTrainerRow.addView(secondTeamBadge,secondBadgeLp);
+        LinearLayout secondTrainerIdentity=new LinearLayout(this);
+        secondTrainerIdentity.setOrientation(LinearLayout.VERTICAL);
+        secondTrainerRow.addView(secondTrainerIdentity,new LinearLayout.LayoutParams(0,-2,1));
+        secondTrainerDisplay=homeText("Treinador não confirmado",15,
+            homeLightMode?Color.rgb(19,38,59):Color.WHITE,true);
+        secondTrainerDisplay.setSingleLine(true);
+        secondTrainerDisplay.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        secondTrainerDetails=homeText("",11,
+            homeLightMode?Color.rgb(72,92,111):Color.rgb(177,205,244),false);
+        secondTrainerIdentity.addView(secondTrainerDisplay);
+        secondTrainerIdentity.addView(secondTrainerDetails);
+        secondTrainerCodeGroup=new LinearLayout(this);
+        secondTrainerCodeGroup.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams secondCodeLp=new LinearLayout.LayoutParams(-1,-2);
+        secondCodeLp.topMargin=d(5);
+        secondTrainerPanel.addView(secondTrainerCodeGroup,secondCodeLp);
+        LinearLayout codeGroupText=new LinearLayout(this);
+        codeGroupText.setOrientation(LinearLayout.VERTICAL);
+        secondTrainerCodeGroup.addView(codeGroupText,new LinearLayout.LayoutParams(0,-2,1));
+        TextView secondCodeHeading=homeText("Código de Treinador",10,
+            homeLightMode?Color.rgb(72,92,111):Color.rgb(158,178,207),false);
+        codeGroupText.addView(secondCodeHeading);
+        secondTrainerCode=homeText("",15,
+            homeLightMode?Color.rgb(19,38,59):Color.WHITE,true);
+        secondTrainerCode.setLetterSpacing(.025f);
+        codeGroupText.addView(secondTrainerCode);
+        TextView copySecond=homeMiniButton("⧉","Copiar código do treinador da Conta 2");
+        copySecond.setTextSize(18);
+        copySecond.setBackgroundColor(Color.TRANSPARENT);
+        LinearLayout.LayoutParams secondCopyLp=new LinearLayout.LayoutParams(d(34),d(38));
+        secondCopyLp.leftMargin=d(3);
+        secondTrainerCodeGroup.addView(copySecond,secondCopyLp);
+        copySecond.setOnClickListener(v->copyTrainerCodeForAccount(2));
+        secondTrainerAction=homeAuthButton("Gerenciar",Color.rgb(54,28,39),
+            Color.rgb(255,145,158));
+        secondTrainerAction.setBackground(homeSurface(Color.rgb(52,29,40),12,
+            Color.rgb(94,50,61)));
+        LinearLayout.LayoutParams secondActionLp=new LinearLayout.LayoutParams(d(90),d(38));
+        secondActionLp.leftMargin=d(7);
+        secondTrainerCodeGroup.addView(secondTrainerAction,secondActionLp);
+        secondTrainerAction.setOnClickListener(v->openTrainerManagementForAccount(2));
 
         // LT72: a zero-height, GONE placeholder unless Drive announces a
         // valid, enabled and newer version. Never reserve blank Home space.
@@ -951,41 +1081,90 @@ public class MainActivity extends Activity {
     private void refreshSecondAccountSummary(){
         boolean available=PogoAccountSlots.supportsSecond();
         SharedPreferences two=PogoAccountSlots.prefs(this,2);
+        SharedPreferences privacy=getSharedPreferences("prefs",0);
         boolean connected=available&&PogoAccountSlots.loggedIn(this,2);
+        boolean showName=privacy.getBoolean("homeShowPogoAccountName",true);
+        boolean showTrainer=privacy.getBoolean("homeShowTrainerName",true);
+        boolean showCode=privacy.getBoolean("homeShowTrainerCode",true);
         String account=two.getString("profileDisplayName","Conta conectada");
         String trainer=two.getString("profileTrainerName","");
-        boolean showName=getSharedPreferences("prefs",0)
-            .getBoolean("homeShowPogoAccountName",true);
-        boolean showTrainer=getSharedPreferences("prefs",0)
-            .getBoolean("homeShowTrainerName",true);
-        if(secondAccountSummary!=null)secondAccountSummary.setText(!available?
-            "Conta 2 · WebView sem sessões isoladas":
-            connected?"Conta 2 · "+(showName?account:"Anônimo")+
-                (trainer.isEmpty()?"":" · "+(showTrainer?trainer:"Anônimo")):
-            "Conta PoGoCoordinates 2 · Desconectada");
-        if(secondAccountLogin!=null){
-            secondAccountLogin.setVisibility(connected?View.GONE:View.VISIBLE);
-            secondAccountLogin.setEnabled(available);
+        String code=two.getString("profileTrainerCode","");
+        boolean linked=connected&&code.matches("[0-9]{12}")&&!trainer.isEmpty()&&
+            "linked".equals(two.getString("profileTrainerState","unknown"));
+        String team=two.getString("profileTrainerTeam","");
+        String details=two.getString("profileTrainerDetails","");
+        if(team.isEmpty()){
+            if(details.contains("Mystic"))team="Mystic";
+            else if(details.contains("Valor"))team="Valor";
+            else if(details.contains("Instinct"))team="Instinct";
         }
-        if(secondAccountManage!=null){
-            secondAccountManage.setVisibility(available?View.VISIBLE:View.GONE);
-            secondAccountManage.setText(connected?"Gerenciar":"◉  Discord");
+        if(secondAccountUnavailable!=null)
+            secondAccountUnavailable.setVisibility(available?View.GONE:View.VISIBLE);
+        if(secondAccountGuest!=null)
+            secondAccountGuest.setVisibility(connected||!available?View.GONE:View.VISIBLE);
+        if(secondAccountConnected!=null)
+            secondAccountConnected.setVisibility(connected?View.VISIBLE:View.GONE);
+        if(secondAccountLogin!=null)secondAccountLogin.setEnabled(available);
+        if(secondAccountManage!=null)secondAccountManage.setEnabled(available);
+        if(secondAccountSummary!=null)
+            secondAccountSummary.setText(showName?account:"Anônimo");
+        refreshSecondGoogleAvatar(connected?two.getString("profileAvatarUrl",""):"");
+        if(secondAccountProvider!=null){
+            String provider=two.getString("profileProvider","");
+            secondAccountProvider.setText("Google".equals(provider)?"G  Logado via Google":
+                "Discord".equals(provider)?"◉  Logado via Discord":
+                "Conectado ao PoGoCoordinates");
         }
-        if(secondAccountLogout!=null)
-            secondAccountLogout.setVisibility(connected?View.VISIBLE:View.GONE);
+        if(secondAvatarFrame!=null)
+            secondAvatarFrame.setImageDrawable(homeAvatarOutline(linked?team:""));
+        if(secondTeamBadge!=null)
+            secondTeamBadge.setImageResource(homeTeamIcon(linked?team:""));
+        if(secondTrainerHeading!=null)secondTrainerHeading.setText(linked?
+            "Treinador vinculado":"Conta Pokémon GO");
+        if(secondTrainerDisplay!=null)
+            secondTrainerDisplay.setText(linked?(showTrainer?trainer:"Anônimo"):
+                "unlinked".equals(two.getString("profileTrainerState","unknown"))?
+                "Nenhum treinador vinculado":"Treinador não confirmado");
+        if(secondTrainerDetails!=null){
+            secondTrainerDetails.setText(linked?(details.isEmpty()?
+                (team.isEmpty()?"Sem equipe":team):"★ "+details):
+                "Gerencie seu vínculo no PoGoCoordinates");
+            secondTrainerDetails.setTextColor("Mystic".equals(team)?Color.rgb(104,183,255):
+                "Valor".equals(team)?Color.rgb(255,130,134):
+                "Instinct".equals(team)?Color.rgb(255,211,99):Color.rgb(165,185,214));
+        }
+        if(secondTrainerSelectButton!=null){
+            int count=selectableTrainerCount(two);
+            secondTrainerSelectButton.setVisibility(linked&&count>1?View.VISIBLE:View.GONE);
+            secondTrainerSelectButton.setContentDescription(
+                "Trocar treinador vinculado da Conta 2 ("+count+" opções)");
+        }
+        if(secondTrainerCode!=null)secondTrainerCode.setText(linked?
+            (showCode?code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8):
+                "XXXX XXXX XXXX"):"");
+        if(secondTrainerAction!=null)secondTrainerAction.setText(linked?"Remover":"Gerenciar");
+        if(secondTrainerCodeGroup!=null)
+            secondTrainerCodeGroup.setVisibility(connected?View.VISIBLE:View.GONE);
+        // Each Pokébola may independently use either account and a VIP trainer.
         for(boolean secondary:new boolean[]{false,true}){
             TextView label=secondary?overlayAccountLabel2:overlayAccountLabel1;
             if(label==null)continue;
             int slot=PogoAccountSlots.assigned(this,secondary);
-            String code=PogoAccountSlots.trainer(this,secondary);
+            String chosen=PogoAccountSlots.trainer(this,secondary);
             label.setText((secondary?"P2":"P1")+" · Conta "+slot+
-                (code.matches("[0-9]{12}")?" · ••••"+code.substring(8):" · Treinador —"));
+                (chosen.matches("[0-9]{12}")?
+                    " · "+(showCode?"••••"+chosen.substring(8):"XXXX"):" · Treinador —"));
         }
     }
     private void showPokeballAccountChoice(boolean secondary){
         int assigned=PogoAccountSlots.assigned(this,secondary);
-        String[] choices={"Conta 1"+(PogoAccountSlots.loggedIn(this,1)?" · Conectada":" · Padrão"),
-            "Conta 2"+(PogoAccountSlots.loggedIn(this,2)?" · Conectada":" · Entrar primeiro")};
+        int trainers1=selectableTrainerCount(PogoAccountSlots.prefs(this,1));
+        int trainers2=selectableTrainerCount(PogoAccountSlots.prefs(this,2));
+        String[] choices={
+            "Conta 1 · "+trainers1+" treinador"+(trainers1==1?"":"es"),
+            "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?
+                trainers2+" treinador"+(trainers2==1?"":"es"):"Entrar primeiro")
+        };
         new AlertDialog.Builder(this)
             .setTitle(secondary?"Pokébola 2 · Conta":"Pokébola 1 · Conta")
             .setSingleChoiceItems(choices,assigned-1,(dialog,which)->{
@@ -1012,7 +1191,9 @@ public class MainActivity extends Activity {
             if(item==null)continue;
             String code=item.optString("code","");
             if(!PogoAccountSlots.hasTrainer(this,account,code)||codes.contains(code))continue;
-            names.add(item.optString("name","")+" · ••••"+code.substring(8));
+            int trainerNumber=codes.size();
+            names.add("Treinador "+trainerNumber+" · "+item.optString("name","")+
+                " · ••••"+code.substring(8));
             codes.add(code);
         }
         final String[] selection=codes.toArray(new String[0]);
@@ -1030,6 +1211,68 @@ public class MainActivity extends Activity {
                         else startService(intent);
                     },350L);
                 }
+                refreshSessionSummary();
+            }).setNegativeButton("Cancelar",null).show();
+    }
+    private void copyTrainerCodeForAccount(int slot){
+        String code=PogoAccountSlots.prefs(this,slot).getString("profileTrainerCode","");
+        if(!code.matches("[0-9]{12}"))return;
+        android.content.ClipboardManager clip=(android.content.ClipboardManager)
+            getSystemService(CLIPBOARD_SERVICE);
+        clip.setPrimaryClip(android.content.ClipData.newPlainText("Código de treinador",code));
+        Toast.makeText(this,"Código copiado",Toast.LENGTH_SHORT).show();
+    }
+    private void openTrainerManagementForAccount(int slot){
+        String code=PogoAccountSlots.prefs(this,slot).getString("profileTrainerCode","");
+        if(!code.matches("[0-9]{12}")){
+            openLoginDialogForSlot(slot,"manage");return;
+        }
+        new AlertDialog.Builder(this)
+            .setTitle("Gerenciar treinador · Conta "+slot)
+            .setMessage("O vínculo só pode ser alterado no perfil oficial do PoGoCoordinates.")
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Abrir perfil oficial",(dialog,which)->
+                openLoginDialogForSlot(slot,"manage")).show();
+    }
+    private void showAccountTrainerSelector(int account){
+        SharedPreferences prefs=PogoAccountSlots.prefs(this,account);
+        JSONArray profiles;
+        try{profiles=new JSONArray(prefs.getString("profileTrainerList","[]"));}
+        catch(org.json.JSONException ignored){return;}
+        java.util.ArrayList<JSONObject> valid=new java.util.ArrayList<>();
+        java.util.ArrayList<String> labels=new java.util.ArrayList<>();
+        java.util.HashSet<String> seen=new java.util.HashSet<>();
+        String selected=prefs.getString("profileTrainerCode","");
+        int index=-1;
+        for(int i=0;i<profiles.length();i++){
+            JSONObject item=profiles.optJSONObject(i);
+            if(item==null)continue;
+            String code=item.optString("code",""),name=item.optString("name","");
+            if(!code.matches("[0-9]{12}")||
+                !name.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}")||!seen.add(code))continue;
+            if(code.equals(selected))index=valid.size();
+            valid.add(item);
+            labels.add(name+" · "+item.optString("team","")+" · ••••"+code.substring(8));
+        }
+        if(valid.size()<2)return;
+        new AlertDialog.Builder(this)
+            .setTitle("Conta "+account+" · Escolher treinador")
+            .setSingleChoiceItems(labels.toArray(new String[0]),index,(dialog,which)->{
+                if(which<0||which>=valid.size())return;
+                JSONObject item=valid.get(which);
+                String code=item.optString("code",""),name=item.optString("name","");
+                String team=item.optString("team",""),level=item.optString("level","");
+                String details=(level.matches("[0-9]{1,2}")?"Nível "+level:"")+
+                    (team.matches("Mystic|Valor|Instinct")?(level.isEmpty()?"":" · ")+team:"");
+                prefs.edit().putString("profileTrainerCode",code)
+                    .putString("profileSelectedTrainerCode",code)
+                    .putString("profileTrainerName",name)
+                    .putString("profileTrainerTeam",team)
+                    .putString("profileTrainerLevel",level)
+                    .putString("profileTrainerDetails",details)
+                    .putString("profileTrainerState","linked").apply();
+                // Do not modify either Pokébola's explicitly bound trainer.
+                dialog.dismiss();
                 refreshSessionSummary();
             }).setNegativeButton("Cancelar",null).show();
     }
@@ -1776,6 +2019,8 @@ public class MainActivity extends Activity {
         }catch(Exception ignored){return false;}
     }
     private String shownAvatarUrl="";
+    private String shownSecondAvatarUrl="";
+    private int secondAvatarRequestGeneration=0;
     private void refreshGoogleAvatar(String url){
         if(accountAvatar==null)return;
         final String next=allowedGoogleAvatar(url)?url:"";
@@ -1846,6 +2091,78 @@ public class MainActivity extends Activity {
                 accountAvatar.setImageBitmap(photo);
             });
         },"PokeSearch-Google-Avatar").start();
+    }
+
+    private void refreshSecondGoogleAvatar(String url){
+        if(secondAvatar==null)return;
+        final String next=allowedGoogleAvatar(url)?url:"";
+        if(shownSecondAvatarUrl.equals(next))return;
+        shownSecondAvatarUrl=next;
+        final int avatarRequestId=++secondAvatarRequestGeneration;
+        secondAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+        secondAvatar.setColorFilter(Color.rgb(183,201,229));
+        secondAvatar.setPadding(d(11),d(11),d(11),d(11));
+        if(next.isEmpty())return;
+        new Thread(()->{
+            android.graphics.Bitmap bitmap=null;
+            java.net.HttpURLConnection connection=null;
+            try{
+                // Google public avatar CDN occasionally redirects between
+                // googleusercontent hosts. Follow only a short allowlisted chain,
+                // never forward WebView cookies or bearer credentials.
+                String current=next;
+                boolean ready=false;
+                for(int redirect=0;redirect<4;redirect++){
+                    if(!allowedGoogleAvatar(current))break;
+                    if(connection!=null)connection.disconnect();
+                    connection=(java.net.HttpURLConnection)new java.net.URL(current).openConnection();
+                    connection.setInstanceFollowRedirects(false);
+                    connection.setConnectTimeout(5000);
+                    connection.setReadTimeout(6000);
+                    int code=connection.getResponseCode();
+                    if(code==200){ready=true;break;}
+                    if(code!=301&&code!=302&&code!=303&&code!=307&&code!=308)break;
+                    String location=connection.getHeaderField("Location");
+                    if(location==null)break;
+                    String redirected=new java.net.URL(new java.net.URL(current),location).toExternalForm();
+                    if(!allowedGoogleAvatar(redirected))break;
+                    current=redirected;
+                }
+                if(!ready)return;
+                if(!String.valueOf(connection.getContentType()).startsWith("image/"))return;
+                if(connection.getContentLengthLong()>2_500_000L)return;
+                try(InputStream stream=new java.io.BufferedInputStream(connection.getInputStream())){
+                    ByteArrayOutputStream data=new ByteArrayOutputStream();
+                    byte[] buf=new byte[8192];int n;
+                    while((n=stream.read(buf))!=-1){
+                        if(data.size()+n>2_500_000)return;
+                        data.write(buf,0,n);
+                    }
+                    byte[] bytes=data.toByteArray();
+                    bitmap=android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+                }
+            }catch(Exception ignored){
+                // Network or an unavailable avatar keeps the neutral icon.
+            }finally{
+                if(connection!=null)connection.disconnect();
+                if(bitmap==null)runOnUiThread(()->{
+                    // Includes early returns on HTTP failure/redirect/size.
+                    // Do not permanently cache a failed URL on the new Home.
+                    if(!activityClosing&&!isDestroyed()&&avatarRequestId==secondAvatarRequestGeneration&&next.equals(shownSecondAvatarUrl))shownSecondAvatarUrl="";
+                });
+            }
+            final android.graphics.Bitmap photo=bitmap;
+            if(photo!=null)runOnUiThread(()->{
+                if(activityClosing||isFinishing()||isDestroyed()||avatarRequestId!=secondAvatarRequestGeneration||
+                     secondAvatar==null||!shownSecondAvatarUrl.equals(next)||
+                    !"autenticada".equals(PogoAccountSlots.prefs(this,2)
+                        .getString("sessionStatus","")))return;
+                secondAvatar.clearColorFilter();
+                secondAvatar.setPadding(0,0,0,0);
+                secondAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                secondAvatar.setImageBitmap(photo);
+            });
+        },"PokeSearch-Google-Avatar-2").start();
     }
 
     // Precisely follows the circular photo instead of stretching 1254px ornamental frames.
