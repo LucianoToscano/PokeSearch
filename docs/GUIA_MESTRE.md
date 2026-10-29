@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT174 EM QA — PREFLIGHT DE COMPATIBILIDADE OTA (29/10/2026)
+
+**LT173 continua sendo a versão pública estável.** LT174 é apenas uma etapa de QA em branch, sem APK novo, merge, release ou atualização pública. O preflight `scripts/build_ota_pack.py` passa a bloquear a geração de pacotes de recursos quando há alterações em Java/Manifest, build Gradle, recursos nativos, assets não permitidos ou arquivos de assets excluídos desde o tag LT173. Isso evita enviar HTML/JS incompatível com os APKs já instalados. `scripts/test_ota_builder.py` inclui casos positivos e negativos; a publicação OTA manual exige a regressão antes de assinar. `ota/channel.json` continua `{"packVersion":0}` e o QA físico Samsung/Moto segue pendente. [Registro técnico da LT174](LT174_OTA_PREFLIGHT_COMPATIBILIDADE_QA_20261029.md).
+
+---
+
 ## LT173 OFICIAL — ATUALIZAÇÕES INTELIGENTES ASSINADAS (29/10/2026)
 
 **VERSÃO ESTÁVEL ATUAL: LT173 `0.01.73 / versionCode 54378`, disponível para todos via GitHub Releases/latest.** A PR [#132](https://github.com/LucianoToscano/PokeSearch/pull/132) foi mesclada. SOURCE_COMMIT oficial `7d3f7497539af826de491cc6daac2e16e4411758`. APK `PokeSearch-v0.01.73-LT.apk` **49.514.961 bytes**, SHA-256 `5d330bafeabe3a24fdfb5ef8864c7ae463743ae4cda362d014fc9c08ef34ade9`, R8, certificado Android v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. [Release oficial LT173](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.73-54378) · [Actions #40921988685 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40921988685) · [Registro canônico LT173](ESTADO_CANONICO_LT173_OFICIAL_20261029.md).
