@@ -784,6 +784,50 @@ window.captureShareFeedback=(ok,message)=>{
  status.hidden=!status.textContent;
  resizeEvolutionPanel();
 };
+// The provider rate or quota restriction is NOT a generic network failure.
+// Countdown only appears if the site explicitly displayed a retry interval.
+let coordsRestriction=null,coordsRateUntil=0,coordsRateTick=null;
+function clearCoordsRate(){
+ coordsRestriction=null;coordsRateUntil=0;
+ if(coordsRateTick){clearInterval(coordsRateTick);coordsRateTick=null;}
+ const notice=document.getElementById("coordsRateNotice");
+ const popup=document.getElementById("coordsRatePopover");
+ const info=document.getElementById("coordsRateInfo");
+ const timer=document.getElementById("coordsRateTimer");
+ if(notice)notice.hidden=true;
+ if(popup){popup.hidden=true;popup.textContent="";}
+ if(info)info.setAttribute("aria-expanded","false");
+ if(timer){timer.hidden=true;timer.textContent="";}
+}
+function updateCoordsRateTimer(){
+ const timer=document.getElementById("coordsRateTimer");if(!timer)return;
+ const seconds=coordsRateUntil?Math.max(0,Math.ceil((coordsRateUntil-Date.now())/1000)):0;
+ timer.hidden=!seconds;timer.textContent=seconds?"Tente em "+seconds+"s":"";
+ if(!seconds&&coordsRateTick){clearInterval(coordsRateTick);coordsRateTick=null;}
+}
+function renderCoordsRate(data){
+ clearCoordsRate();
+ const kind=data&&typeof data==="object"?data.type:"";
+ if(kind!=="rate"&&kind!=="quota")return;
+ coordsRestriction=kind;
+ const seconds=kind==="rate"&&Number.isInteger(data.retrySeconds)&&
+  data.retrySeconds>0&&data.retrySeconds<=3600?data.retrySeconds:0;
+ coordsRateUntil=seconds?Date.now()+seconds*1000:0;
+ const notice=document.getElementById("coordsRateNotice");if(notice)notice.hidden=false;
+ updateCoordsRateTimer();if(seconds)coordsRateTick=setInterval(updateCoordsRateTimer,1000);
+}
+function toggleCoordsRateInfo(){
+ if(!coordsRestriction)return;
+ const popup=document.getElementById("coordsRatePopover");
+ const trigger=document.getElementById("coordsRateInfo");
+ if(!popup||!trigger)return;
+ popup.hidden=!popup.hidden;
+ if(!popup.hidden)popup.textContent=coordsRestriction==="quota"?
+  "O PoGoCoordinates informou que esta conta atingiu o limite de revelações. Novas coordenadas dependem das regras e do plano do próprio site. O PokeSearch não pode alterar ou contornar esse limite.":
+  "O PoGoCoordinates limitou temporariamente as consultas. Aguarde a liberação indicada pelo próprio site antes de tentar novamente. O PokeSearch não define esse prazo nem faz tentativas automáticas.";
+ trigger.setAttribute("aria-expanded",String(!popup.hidden));
+ resizeEvolutionPanel();
+}
 function coordButtons(){
  const fetch=document.getElementById("coords"),copy=document.getElementById("copy");
  if(!fetch||!copy)return;
@@ -805,6 +849,7 @@ function requestCoordsUi(){
   Native.copyCoords(currentCoords);return;
  }
  if(coordsPending||!Number.isInteger(currentIndex)||currentIndex<0)return;
+ clearCoordsRate();
  coordsPending=true;coordsNote="Consultando coordenadas do Pokémon no site...";
  const seq=++coordsRequestSeq;
  setTimeout(()=>{
@@ -892,6 +937,8 @@ window.coordsQuotaUpdated=function(data){
  el.className=authoritative?"official":"";
  // Badge never confuses observed local requests with the full account quota.
  el.textContent=authoritative?String(data.remaining):String(observed);
+ el.style.fontSize=el.textContent.length>=5?"6px":
+  el.textContent.length>=4?"7px":el.textContent.length>=3?"8px":"10px";
  el.dataset.scope=authoritative?"official":"local";
  el.setAttribute("aria-label",authoritative?
   "PoGoCoordinates: "+data.remaining+" revelações restantes na última resposta oficial":
@@ -900,14 +947,15 @@ window.coordsQuotaUpdated=function(data){
   "Saldo oficial na última revelação autenticada; pode ter mudado":
   "Usos observados no PokeSearch; não representa o saldo total da conta.";
 };
-window.coordsResult=function(coords,message){
+window.coordsResult=function(coords,message,restriction){
  coordsRequestSeq++;
  coordsPending=false;
+ renderCoordsRate(coords?null:restriction);
  if(coords){
   currentCoords=coords;coordsNote="";
   if(/copiad/i.test(String(message||""))&&window.PokeSearchCooldown?.coords?.(coords))
    showCopySuccess();
- }else coordsNote=String(message||"Coordenadas indisponíveis");
+ }else coordsNote=coordsRestriction?"":String(message||"Coordenadas indisponíveis");
  coordButtons();
  refreshCooldownButtons();
  const label=document.getElementById("coordsValue");
@@ -1152,6 +1200,7 @@ window.showDetails=(c,mode,watched)=>{
   closePvpReferenceInfo();
   detailIdentity=nextIdentity;evolutionExpanded=false;
   coordsRequestSeq++;
+  clearCoordsRate();
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
   window.copyVisualUntil=0;window.copyVisualGeneration=(Number(window.copyVisualGeneration)||0)+1;
   shareReady=false;shareSent=false;sharePending=false;shareAwaitingOffer=false;shareUi();
