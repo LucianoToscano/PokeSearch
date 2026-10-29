@@ -16,7 +16,14 @@
     if (!location.hostname.endsWith("pogocoordinates.com") ||
         !location.pathname.startsWith("/search")) return "wrong-origin";
     const tab = exactButton("rare candy");
-    if (tab && !tab.getAttribute("aria-selected")?.includes("true")) tab.click();
+    const active = tab && (tab.getAttribute("aria-selected") === "true" ||
+      tab.getAttribute("data-state") === "active" ||
+      tab.classList.contains("active"));
+    if (tab && !active && !window.__pokesearchCandyTabOpened) {
+      window.__pokesearchCandyTabOpened = true;
+      tab.click();
+      return "tab-switched";
+    }
     const scope = [...document.querySelectorAll("section,form,div")].find(el => {
       const t = (el.innerText || "").slice(0, 450);
       return t.includes("Location") && /Search/.test(t) &&
@@ -38,7 +45,8 @@
       el.dispatchEvent(new Event("input", { bubbles: true }));
       el.dispatchEvent(new Event("change", { bubbles: true }));
     }
-    if (coords && coordRe.test(coords)) input(loc, coords);
+    // Clear the provider form too when user clears the location menu.
+    if (loc) input(loc, coords && coordRe.test(coords) ? coords : "");
     if (km) input(km, String(radius));
     const search = exactButton("search");
     if (search && !search.disabled) { search.click(); return "submitted"; }
