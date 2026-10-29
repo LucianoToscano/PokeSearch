@@ -48,7 +48,7 @@ assert(source.includes("FrameLayout spriteCell=new FrameLayout(this)"),"Distance
 assert(source.includes("spriteCell.addView(distance,distLp)"),"Distance must overlay sprite");
 assert(!source.includes('row.addView(distance,space(51,40,0))'),"No distant right-side distance column");
 assert(source.includes('if(showName||showLocation)'),"Name and location should not reserve width when hidden");
-assert(source.includes('int contentDp=(showName||showLocation)?228:48'),"Default results must be sprite-column width");
+assert(source.includes('int contentDp=(showName||showLocation)?228:50'),"Default results must be sprite-column width");
 assert(menu.includes('class="periodTile'),"Compact Pokébola OFF/3/5/10/15/20 period tiles");
 
 assert(menu.includes("Native.candyMenuFocus(true)"));
@@ -86,6 +86,11 @@ assert(source.includes("setStatus(\"Aguardando liberação do PoGoCoordinates\""
 assert(source.includes("new LinearLayout.LayoutParams(0,-2,1)"));
 assert(source.includes("row.setBackgroundColor(Color.TRANSPARENT)"));
 assert(source.includes("resultsParams.y="));
+assert(source.includes("activeCount*rowHeight+4"),"Full ten-candy list is no longer cut by a 460dp cap");
+assert(!source.includes("Math.min(460"),"No arbitrary 460dp result height cap");
+assert(source.includes("scroll.setClipChildren(false)"),"Result sprites are not clipped at the child viewport");
+assert(source.includes("roomBelow>=wantedHeight"),"Use the side that fits all candies");
+
 assert(!source.includes("JSONObject.quote(token)"),"JWT must never be passed to Java");
 assert(!source.includes("addJavascriptInterface(new Bridge()"));
 assert(workflow.includes("PokeSearch-v0.01.78-LT-QA.apk"));
