@@ -1,3 +1,4 @@
+# Retry LT148 after migrating obsolete rank-text assertions to sourced rank labels.
 name: PokeSearch LT148 Card PvP — build assinado e publicação oficial
 on:
   push:

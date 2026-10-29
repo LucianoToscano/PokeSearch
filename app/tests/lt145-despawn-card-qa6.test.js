@@ -57,7 +57,7 @@ assert.ok(html.includes('id="dexGender" class="metaPair"'));
 assert.ok(html.includes('id="sizeForm" class="metaPair"'));
 assert.ok(script.includes('statTile("PC",c.cp)+statTile("Nv.",c.level)'));
 assert.ok(script.includes('h(showRaw?raw:"—")'));
-assert.ok(script.includes('rankLine.textContent=c.rank?'));
+assert.ok(script.includes('rankLine.textContent=rankText;'));
 // Copy feedback must follow successful native clipboard confirmation.
 assert.ok(script.includes('const didCopy=message.startsWith("✓")'));
 assert.ok(script.includes('window.copyVisualUntil>Date.now()?"  ✓":""'));

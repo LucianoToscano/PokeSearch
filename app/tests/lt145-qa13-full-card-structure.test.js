@@ -15,7 +15,7 @@ assert.ok(html.includes('#major{display:grid;grid-template-columns:minmax(106px,
 assert.ok(html.includes('#major .ivTile .ivPercent{position:absolute;top:5px;right:4px;'),"100% top-right independent");
 assert.ok(html.includes('#major .statHeading{text-align:center;'),"IV title centered");
 assert.ok(html.includes('#major .statValue.red{color:#ff9bb0}'),"old raw IV color");
-assert.ok(code.includes('rankLine.textContent=c.rank?'),"rank preserved");
+assert.ok(code.includes('rankLine.textContent=rankText;'),"rank preserved");
 assert.ok(html.includes('id="evolutions" hidden'),"PvP preserved");
 assert.ok(html.includes('#coordRow #coords:not(.hasCoords):not(.isPending){'),"red coordinates preserved");
 assert.ok(java.includes('DETAIL_DP=200')&&java.includes('Math.min(520,available)'),"native window proportional");
