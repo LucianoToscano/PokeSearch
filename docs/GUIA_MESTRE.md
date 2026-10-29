@@ -2,7 +2,7 @@
 
 ## LT173 EM DESENVOLVIMENTO — OTA ASSINADO, SEM RELEASE PÚBLICA (29/10/2026)
 
-**Base estável permanece LT172 `0.01.72 / 54377`.** A branch `feature/lt173-ota-signed-resource-packs-20261029` implementa um mecanismo de recursos OTA assinados com a chave permanente do APK: manifesto cumulativo por SHA-256, downloads diferenciais, staging atômico, rollback e fallback aos assets internos. As duas Pokébolas usam o mesmo carregador, preservando suas contas e treinadores independentes. O primeiro APK com OTA exigirá versão >=54378; não há instalação dinâmica de código Android. `ota/channel.json` segue desativado (`packVersion: 0`), sem distribuição ou novo APK oficial. QA Android/Node/Java e teste físico Samsung pendentes. [Registro LT173](LT173_OTA_ASSINADO_BASE_LT172_20261029.md).
+**Base estável permanece LT172 `0.01.72 / 54377`.** A branch `feature/lt173-ota-signed-resource-packs-20261029` implementa um mecanismo de recursos OTA assinados com a chave permanente do APK: manifesto cumulativo por SHA-256, downloads diferenciais, staging atômico, rollback e fallback aos assets internos. As duas Pokébolas usam o mesmo carregador, preservando suas contas e treinadores independentes. O primeiro APK com OTA exigirá versão >=54378; não há instalação dinâmica de código Android. `ota/channel.json` segue desativado (`packVersion: 0`), sem distribuição ou novo APK oficial. QA Node/Java/Android e APK **QA assinado** concluídos (Actions #40920012278, SOURCE_COMMIT edbe6e14462b60a9b1ea4b99154b879b744a8eec, APK 49.514.961 bytes, SHA-256 dc8d688137a2b3b2955c98df2cb7828d22b04dc516d05d2194563f5fb0dcceae). Teste físico Samsung/Moto e merge/release pública ainda pendentes; canal OTA segue desativado. [Registro LT173](LT173_OTA_ASSINADO_BASE_LT172_20261029.md).
 
 ---
 
