@@ -84,7 +84,7 @@ for(const [card,evolved] of examples){
  assert.equal(show(payload),true);
  const markup=node("evoBody").innerHTML;
  assert.equal((markup.match(/class="evoLeague /g)||[]).length,3);
- assert.equal((markup.match(/class="evoLine isReference"/g)||[]).length,3);
+ assert.equal((markup.match(/class="evoLine isReference(?: best)?"/g)||[]).length,3);
  assert.equal((markup.match(/↳<\/span> <b>/g)||[]).length,3);
  assert.equal((markup.match(/class="evoInfoBtn"/g)||[]).length,3);
  assert.equal((markup.match(/onclick="togglePvpReferenceInfo\(event,this\)"/g)||[]).length,3);
