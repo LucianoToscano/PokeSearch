@@ -12,7 +12,8 @@ function scenario({origin="https://pogocoordinates.com",pathname="/profile",
   root="Linked accounts Pokemon GO accounts 0/1 Link my account",
   linkLabel="Link my account",dialogs=[],duplicates=false}={}){
  const container=node(root);
- const wrap=node("Pokemon GO accounts 0/1 Link my account",container);
+ const wrap=node(root.includes("0/1")?"Pokemon GO accounts 0/1 Link my account":
+  "Pokemon GO accounts 1/1 Linked trainer",container);
  const btn=node(linkLabel,wrap);
  const second=node(linkLabel,wrap);
  const list=duplicates?[btn,second]:[btn];
