@@ -46,9 +46,37 @@ def main():
         raise SystemExit("invalid OTA version / APK range")
     subprocess.run(["git", "rev-parse", "--verify", args.baseline + "^{commit}"],
                    check=True, capture_output=True)
+    # An OTA bundle is interpreted by the already-installed APK. If native
+    # code, non-patchable assets, build settings or manifest change since the
+    # LT173 baseline, publishing only part of that revision is not safe.
+    all_changed = subprocess.check_output(
+        ["git", "diff", "--name-only", args.baseline, "HEAD", "--"],
+        text=True).splitlines()
+    incompatible = sorted(path for path in all_changed if (
+        (path.startswith("app/src/main/") and
+         (not path.startswith(ASSET_PREFIX) or
+          not allowed(path.removeprefix(ASSET_PREFIX))))
+        or path in {
+            "app/build.gradle.kts", "app/build.gradle",
+            "app/proguard-rules.pro", "build.gradle.kts", "build.gradle",
+            "settings.gradle.kts", "settings.gradle", "gradle.properties",
+        }
+        or path.startswith("gradle/")
+    ))
+    if incompatible:
+        raise SystemExit(
+            "Full signed APK required: incompatible changes since OTA baseline: "
+            + ", ".join(incompatible[:20]))
+    deleted = subprocess.check_output(
+        ["git", "diff", "--name-only", "--diff-filter=D",
+         args.baseline, "HEAD", "--"], text=True).splitlines()
+    removed = sorted(path for path in deleted if path.startswith(ASSET_PREFIX))
+    if removed:
+        raise SystemExit("Full signed APK required: deleted app assets: "
+                         + ", ".join(removed[:20]))
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", "--diff-filter=ACMRT",
-         args.baseline, "HEAD"], text=True).splitlines()
+         args.baseline, "HEAD", "--"], text=True).splitlines()
     files = sorted(set(path.removeprefix(ASSET_PREFIX) for path in changed
                        if path.startswith(ASSET_PREFIX) and
                           allowed(path.removeprefix(ASSET_PREFIX))))

@@ -39,7 +39,6 @@ with tempfile.TemporaryDirectory() as tmp:
     git(root, "tag", "baseline")
     (assets / "dock.html").write_text("changed menu", encoding="utf-8")
     (forms / "foo.png").write_bytes(b"\x89PNG\r\n\x1a\n" + b"fixture" * 10)
-    (assets / "api_android_session.js").write_text("restricted", encoding="utf-8")
     git(root, "add", ".")
     git(root, "commit", "-m", "changed")
     out = root / "bundle"
@@ -55,4 +54,39 @@ with tempfile.TemporaryDirectory() as tmp:
         assert hashlib.sha256(binary).hexdigest() == item["sha256"]
     assert not (out / "api_android_session.js").exists()
     assert (out / "manifest.json").stat().st_size < 32768
-print("LT173 OTA builder safe changed-only fixture PASS")
+
+    def must_require_apk(label):
+        trial = root / ("blocked-" + label)
+        check = subprocess.run(
+            [sys.executable, str(SCRIPT), "--baseline", "baseline",
+             "--version", "2", "--min-app", "54378", "--max-app", "54378",
+             "--output", str(trial)],
+            cwd=root, capture_output=True, text=True)
+        assert check.returncode != 0, (label, check.stdout)
+        assert "Full signed APK required" in check.stderr, (label, check.stderr)
+        assert not trial.exists(), label
+
+    # A valid editable page cannot be shipped if bundled with a newer
+    # authentication script missing from the LT173 installed APK.
+    (assets / "api_android_session.js").write_text("restricted", encoding="utf-8")
+    git(root, "add", "app/src/main/assets/api_android_session.js")
+    git(root, "commit", "-m", "unpatchable asset")
+    must_require_apk("unpatchable")
+    git(root, "reset", "--hard", "HEAD~1")
+
+    # Native Java changes must force a complete signed APK (not an OTA pack).
+    native = root / "app/src/main/java/example/Native.java"
+    native.parent.mkdir(parents=True)
+    native.write_text("class Native {}\\n", encoding="utf-8")
+    git(root, "add", "app/src/main/java/example/Native.java")
+    git(root, "commit", "-m", "native incompatibility")
+    must_require_apk("native")
+    git(root, "reset", "--hard", "HEAD~1")
+
+    # Removing a previously installed asset is not representable by the
+    # cumulative v1 OTA manifest and must also fail closed.
+    (assets / "dock.html").unlink()
+    git(root, "add", "-u", "app/src/main/assets/dock.html")
+    git(root, "commit", "-m", "deleted bundled page")
+    must_require_apk("deleted")
+print("LT174 OTA builder compatibility and changed-only fixture PASS")
