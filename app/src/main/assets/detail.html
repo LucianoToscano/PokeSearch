@@ -550,6 +550,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 /* Symmetric insets keep the label truly centered while reserving the
    right-hand count its own space, without changing the accessible button. */
 #coordRow #coords:not(.hasCoords){padding-left:25px;padding-right:25px;text-align:center}
+/* When reveal changes the label into coordinates, reserve equal space on
+   both sides of the text; the independent quota remains pinned right. */
+#coordRow #coords.hasCoords{padding-left:36px;padding-right:36px;box-sizing:border-box;text-align:center}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -921,8 +924,17 @@ window.showEvolutionDetails=payload=>{
   if(own)ownCount++;
  }
  if(!count&&!ownCount){
-  // Keep an explicit, compact state instead of silently removing the card.
-  html='<div class="evoEmpty">Ranking indisponível para esta forma.</div>';
+  // A missing/unverified analysis must not occupy vertical card space.
+  // A costume with no catalog mapping does NOT prove this species has no rank.
+  evolutionExpanded=false;
+  body.innerHTML="";
+  body.hidden=true;
+  outer.hidden=true;
+  document.getElementById("evoLabel").textContent="Análise PvP";
+  document.getElementById("evoChevron").textContent="▾";
+  document.getElementById("evoToggle").setAttribute("aria-expanded","false");
+  resizeEvolutionPanel();
+  return false;
  }
  // LT66: WebView may rerender after each native status tick. Never reset
  // the reader to the top of a long PvP analysis when its content is unchanged.
@@ -1063,19 +1075,8 @@ window.showDetails=(c,mode,watched)=>{
  const showRaw=ivDisplay?.valid===true;
  const ivSourcePercent=showRaw?null:window.PokeSearchIVDisplay?.percentOnly?.(c);
  const ivVisual=showRaw?ivDisplay:ivSourcePercent;
- if(changed){
-  const section=document.getElementById("evolutions");
-  const analysis=document.getElementById("evoBody");
-  section.hidden=false;
-  document.getElementById("evoLabel").textContent="Análise PvP";
-  analysis.innerHTML='<div class="evoEmpty">'+
-    (showRaw?'Análise indisponível para esta espécie ou forma.':
-     'IV não informado · Rank Classe indisponível.')+
-    '</div>';
-  analysis.hidden=true;
-  document.getElementById("evoChevron").textContent="▾";
-  document.getElementById("evoToggle").setAttribute("aria-expanded","false");
- }
+ // Keep the section hidden until verified rows are delivered by PvPoke.
+ // The reset above already clears any old card's analysis on identity changes.
  const showPct=ivVisual?.valid===true;
  // A/D/S requires three verified attributes. If the source exposes only a
  // legitimate IV percentage, show ONLY that percentage, never invented IVs.
