@@ -2,6 +2,10 @@
 
 ## LT176 EM QA — CORREÇÃO DA BOLHA DO DOCE RARO (29/10/2026)
 
+**QA assinada concluída:** [Actions #40932888221 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40932888221), [artifact privado #12924075960](https://github.com/LucianoToscano/PokeSearch/actions/runs/40932888221/artifacts/12924075960), APK `0.01.76 / 54381` de 49.536.381 bytes, assinatura Android v2 permanente verificada. Publicação pública e testes funcionais Samsung continuam pendentes. 
+
+
+
 Após o primeiro teste físico LT175 no Samsung, o proprietário confirmou ícone de Doce Raro grande, com quadrado atrás e sem resposta a toque/arraste. A causa foi a WebView oculta consumir touch antes do listener da janela da bolha. **Corrigido na branch da PR #134:** grip transparente nativo de 45dp acima da WebView, candy visual de 27dp sem fundo, clique/long press/arraste independentes, e reposicionamento dos cards para não cobrir o próprio ícone. Nova versão QA LT176 `0.01.76 / 54381`, APK completo assinado para teste, sem release pública. A LT173 continua estável; testes reais de coleta Rare Candy no WebView e ciclo de despawn permanecem necessários. [Evidências LT176 no registro de QA](LT175_DOCE_RARO_FLUTUANTE_QA_20261029.md).
 
 ---
