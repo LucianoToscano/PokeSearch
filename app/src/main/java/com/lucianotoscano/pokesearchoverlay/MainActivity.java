@@ -2029,8 +2029,10 @@ public class MainActivity extends Activity {
         super.onPause();
     }
     private void handleShinyLoginIntent(Intent intent){
-        if(intent!=null && "com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction()))
-            getWindow().getDecorView().post(this::openLoginDialog);
+        if(intent!=null&&"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(intent.getAction())){
+            int slot=intent.getIntExtra("pogo_account_slot",1);
+            getWindow().getDecorView().post(()->openLoginDialog(true,"login",slot));
+        }
     }
     private void sendActionToRunningOverlay(Class<?> serviceType,String action,boolean authConfirmed){
         boolean enabled=serviceType==OverlayService.class?
@@ -2045,6 +2047,12 @@ public class MainActivity extends Activity {
     private void serviceAction(String action,boolean authConfirmed){
         sendActionToRunningOverlay(OverlayService.class,action,authConfirmed);
         sendActionToRunningOverlay(SecondaryOverlayService.class,action,authConfirmed);
+    }
+    private void notifyLoginOnlyAssigned(String action,boolean confirmed){
+        if(PogoAccountSlots.assigned(this,false)==loginAccountSlot)
+            sendActionToRunningOverlay(OverlayService.class,action,confirmed);
+        if(PogoAccountSlots.assigned(this,true)==loginAccountSlot)
+            sendActionToRunningOverlay(SecondaryOverlayService.class,action,confirmed);
     }
     private void notifyOverlaySessionReady(){
         PogoAccountSlots.flush(loginAccountSlot);
@@ -2467,7 +2475,7 @@ public class MainActivity extends Activity {
             loginFallback=null;
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginDialog=null;
-            serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
+            notifyLoginOnlyAssigned("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
             // Closing without a confirmed login must not reload the session.
             if(authenticatedNow)notifyOverlaySessionReady();
             refreshSessionSummary();
@@ -2477,7 +2485,7 @@ public class MainActivity extends Activity {
                 getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),220L);
             }
         });
-        serviceAction("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN");
+        notifyLoginOnlyAssigned("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN",false);
         loginDialog.show();
         android.view.Window loginWindow=loginDialog.getWindow();
         if(loginWindow!=null){
