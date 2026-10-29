@@ -15,7 +15,7 @@ assert.match(slots,/ProfileStore\.getInstance\(\)\.getOrCreateProfile\(PROFILE_T
 assert.match(slots,/if\(slot==1\)WebStorage\.getInstance\(\)\.deleteAllData\(\)/);
 assert.match(slots,/getWebStorage\(\)\.deleteAllData\(\)/);
 assert.match(slots,/if\(!available\(slot\)\)return false;/);
-assert.match(slots,/isSecondaryOverlay\(\)\?"prefs_secondary":"prefs"/);
+assert.match(overlay,/isSecondaryOverlay\(\)\?"prefs_secondary":"prefs"/);
 const newWebsite=overlay.slice(overlay.indexOf("private void newWebsite(){"),
  overlay.indexOf("website.setWebViewClient",overlay.indexOf("private void newWebsite(){")));
 assert.ok(newWebsite.indexOf("PogoAccountSlots.bind(website,accountSlot())")>=0);
