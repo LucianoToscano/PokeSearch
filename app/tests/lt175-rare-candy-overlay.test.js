@@ -17,6 +17,17 @@ assert(home.indexOf('controls.addView(rareCandyControl,candyLp)')>
 assert(home.indexOf('controls.addView(rareCandyControl,candyLp)')<
        home.indexOf('controls.addView(heart,heartLp)'));
 assert(service.includes("TYPE_APPLICATION_OVERLAY"));
+assert(service.includes("bubbleWindow.setBackgroundColor(Color.TRANSPARENT)"),"candy artwork must have no dark tile");
+assert(service.includes("CANDY_ART_DP=27"),"candy artwork must be smaller than the native hitbox");
+assert(service.includes("candyGrip.setOnTouchListener"),"transparent grip must own gestures");
+assert(service.includes("candyGrip.setOnClickListener(v->toggleResults())"),"tap must open results");
+assert(service.includes("bubbleWindow.addView(candyGrip"),"grip must be a real native child");
+assert(service.includes("bubbleWindow.addView(site,0"),"provider must render BEHIND native touch grip");
+assert(!service.includes("bubbleWindow.setOnTouchListener"),"root touch dispatch must not compete with WebView");
+assert(!service.includes("site.setOnTouchListener((v,e)->true)"),"hidden WebView must not consume bubble gestures");
+assert(service.includes("resultsParams.y=belowY"),"result window must avoid covering the bubble");
+assert(service.includes("resultsParams.y=aboveY"),"result window must reanchor above when needed");
+
 assert(service.includes("main.postDelayed(longPress,600)"));
 assert(service.includes("OverlayQuickMenus.showCandy"));
 assert(service.includes("new FrameLayout.LayoutParams(dp(360),dp(640))"));
