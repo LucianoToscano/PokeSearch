@@ -6363,7 +6363,9 @@ function draw(){
   const hasImage=/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(imageUrl);
   // Fixed-size art box for everyone; extra reduction only for Minior's
   // unusually full artwork. Never alter its species identity or image URL.
-  const artFit=/^\s*minior(?:\s|\(|$)/i.test(String(c.name||""))?0.67:0.86;
+  const dexNumber=Number(String(c.number||c.dex||"").replace("#",""));
+  const artFit=/^\s*minior(?:\s|\(|$)/i.test(String(c.name||""))?0.67:
+   dexNumber===94?0.67:0.86; // Gengar needs reduced visual fill; keep original sprite file.
   const icon='<span class="spriteStage">'+
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" aria-hidden="true">◉</span></span>';

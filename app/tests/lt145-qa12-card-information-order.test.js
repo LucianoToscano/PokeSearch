@@ -4,7 +4,8 @@ const html=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html")
 const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(script);new vm.Script(script);
 const hdr=html.slice(html.indexOf('<div id="header">'),html.indexOf('<div id="major">'));
 for(const id of ["artColumn","img","imageFallback","types","names","nameLine","name","subRow","dexGender","sizeForm","headerActions","headerButtons","timer","timeRemaining","shareIcon","watch","x"])assert.ok(hdr.includes('id="'+id+'"'),id);
-assert.ok(hdr.indexOf('id="types"')<hdr.indexOf('id="nameLine"'),"types under sprite");
+assert.ok(hdr.includes('id="types"'),"the original type icons remain data-owned");
+assert.ok(html.includes('#major .ivTile .ivTypes{display:inline-flex'),"type icons appear inside IV cell");
 assert.ok(hdr.indexOf('id="subRow"')<hdr.indexOf('id="headerActions"'),"metadata under name");
 assert.ok(hdr.indexOf('id="headerButtons"')<hdr.indexOf('id="timer"'),"timer below actions");
 assert.ok(script.includes('document.getElementById("name").textContent=String(c.name||"Pokémon")+(c.shiny?" ✨":"")'));

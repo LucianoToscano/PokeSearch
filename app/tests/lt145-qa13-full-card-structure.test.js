@@ -10,7 +10,7 @@ assert.match(hdr,/<div id="headerActions">[\s\S]*?id="headerButtons"[\s\S]*?id="
 assert.ok(hdr.includes('<span class="despawnLabel">Despawn</span>'));
 assert.ok(html.includes('#headerActions #timer{display:inline-flex;align-items:center;justify-content:center;'),"Despawn centered beneath star");
 assert.ok(html.includes('#headerActions #timer.pulse .timerClock{animation:'),"clock-only pulse");
-assert.ok(html.includes('#artColumn #types .pkTypeImg{width:12px;height:12px;'),"original type PNG beneath art");
+assert.ok(html.includes('#major .ivTile .ivTypes .pkTypeImg{width:9px;height:9px;'),"original type PNG inside IV tile");
 assert.ok(html.includes('#major{display:grid;grid-template-columns:minmax(106px,1.6fr)'),"3 stat cells");
 assert.ok(html.includes('#major .ivTile .ivPercent{position:absolute;top:5px;right:4px;'),"100% top-right independent");
 assert.ok(html.includes('#major .statHeading{text-align:center;'),"IV title centered");
