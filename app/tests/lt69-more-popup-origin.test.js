@@ -57,8 +57,8 @@ check("More content is intrinsic, scrollable only on cramped display",()=>{
 });
 check("hidden popup toolbar cannot shrink More tile to 28px",()=>{
  const block=split("function renderMoreChoices(){","function bindRefreshGesture(");
- for(const s of ['const tileWidth=trigger?.getBoundingClientRect().width||0;',
-   'if(tileWidth>=28)panel.style.setProperty("--more-tile-width",',
+ for(const s of ['const tileWidth=Number(window.nativeMoreTileWidth)||',
+   'if(tileWidth>=24&&tileWidth<=80)panel.style.setProperty("--more-tile-width",',
    'else panel.style.removeProperty("--more-tile-width");',
    'panel.appendChild(button);'])
   assert.ok(block.includes(s),s);
