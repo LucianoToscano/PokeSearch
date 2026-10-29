@@ -884,7 +884,8 @@ public final class RareCandyOverlayService extends Service {
                     isOfficialSearch()&&now>=blockedUntil){
                 pendingManualRefresh=false;
                 refresh(true);
-            }else if(period>0&&!busy&&ready&&now-lastRefresh>=period*60000L){
+            }else if(period>0&&!busy&&ready&&now>=blockedUntil&&
+                    now-lastRefresh>=period*60000L){
                 refresh(false);
             }
             main.postDelayed(this,1000L);
