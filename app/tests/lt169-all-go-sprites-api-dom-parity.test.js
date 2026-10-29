@@ -65,4 +65,28 @@ assert.ok(!dock.includes('aria-hidden="true">◉</span>'),"no generic empty ring
 assert.ok(!detail.includes('content:"◉";display:block'),"no generic empty ring in detail");
 assert.match(dock,/esc\(String\(c\.name\|\|""\)/);
 assert.match(detail,/fallback\.textContent=/);
+// Explicit upstream Git-blob manifest and Android caching must agree with
+// every browser-side icon path, or first loads would be unverified.
+const manifest=read("go-exact-sprites.tsv");
+const entries=manifest.split("\n").filter(x=>x&&!x.startsWith("#"));
+assert.equal(entries.length,1679);
+assert.equal(new Set(entries.map(x=>x.split("\t")[0])).size,1679);
+const goList=code.slice(code.indexOf("const GO_FILE_LIST=["),code.indexOf("const GO_FILE_BY_ID="));
+for(const entry of entries){
+ const [file,hash]=entry.split("\t");
+ assert.match(hash,/^[0-9a-f]{40}$/);
+ assert.ok(goList.includes(JSON.stringify(file)),"indexed GO art missing from native allowlist: "+file);
+}
+const native=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/VerifiedSpriteCache.java"),"utf8");
+assert.match(native,/go-exact-sprites\.tsv/);
+assert.match(native,/GO_NAME\.matcher\(name\)\.matches\(\)/);
+assert.match(native,/GO_HASHES\.get\(name\)/);
+assert.match(native,/MessageDigest\.getInstance\("SHA-1"\)/);
+assert.match(native,/md\.update\(\(byte\)0\)/);
+assert.match(native,/matchesBlob\(data,expected\)/);
+assert.match(native,/goCached\(context,name,expected\)/);
+assert.match(native,/return goResponse\(context,url\)/);
+assert.match(native,/GO_FAILURES\.put\(name,now\)/);
+assert.ok(!native.includes('Authorization: Bearer'),"sprites never access JWT");
+
 console.log("LT169: audited 1679 GO form/costume filenames, mode parity, API exact art, no empty rings PASS");
