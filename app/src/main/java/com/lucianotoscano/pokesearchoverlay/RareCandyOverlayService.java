@@ -78,7 +78,7 @@ public final class RareCandyOverlayService extends Service {
     private String coords="";
     private int radius=1000,period=1,generation=0;
     private long lastRefresh=0,blockedUntil=0;
-    private boolean expirePending=false;
+    private boolean expirePending=false,pendingManualRefresh=false;
 
     private static final class Candy {
         String coords,city,distance;
@@ -544,7 +544,12 @@ public final class RareCandyOverlayService extends Service {
             @Override public void onPageFinished(WebView view,String url){
                 if(!destroyed&&isAllowedUrl(url)){
                     ready=true;
-                    main.postDelayed(()->refresh(true),1400L);
+                    // A manual tap while loading must never be silently lost.
+                    main.postDelayed(()->{
+                        if(destroyed)return;
+                        pendingManualRefresh=false;
+                        refresh(true);
+                    },250L);
                 }
             }
             @Override public void onReceivedError(WebView v,
@@ -576,7 +581,23 @@ public final class RareCandyOverlayService extends Service {
         }
     }
     private void refresh(boolean manual){
-        if(destroyed||site==null||!ready||busy||!isOfficialSearch())return;
+        if(destroyed||site==null)return;
+        if(!ready||!isOfficialSearch()){
+            if(manual){
+                pendingManualRefresh=true;
+                setStatus("Conectando à pesquisa Doce Raro…");
+            }
+            return;
+        }
+        if(busy){
+            if(manual){
+                // Send a single subsequent request after the in-flight result.
+                // Do not start simultaneous requests and trigger site 429.
+                pendingManualRefresh=true;
+                setStatus("Atualização solicitada…");
+            }
+            return;
+        }
         long now=SystemClock.elapsedRealtime();
         if(now<blockedUntil){
             setStatus("Limite do site · repetir em "+((blockedUntil-now+999)/1000)+" s");
@@ -603,6 +624,11 @@ public final class RareCandyOverlayService extends Service {
             if(!destroyed&&gen==generation)main.postDelayed(()->readResults(gen,0),600L);
         });
     }
+    private void finishPendingManualRefresh(){
+        if(destroyed||!pendingManualRefresh)return;
+        pendingManualRefresh=false;
+        main.post(()->refresh(true));
+    }
     private void readResults(int gen,int attempt){
         if(destroyed||gen!=generation||site==null||!isOfficialSearch())return;
         site.evaluateJavascript("JSON.stringify(window.__pokesearchCandyState||{})",raw->{
@@ -615,6 +641,7 @@ public final class RareCandyOverlayService extends Service {
                         main.postDelayed(()->readResults(gen,attempt+1),600L);
                     }else{
                         busy=false;setStatus("Sem resposta do site · tente atualizar");
+                        finishPendingManualRefresh();
                     }
                     return;
                 }
@@ -630,6 +657,7 @@ public final class RareCandyOverlayService extends Service {
                     }else if(code==401){
                         setStatus("Sessão expirada · entre no PoGoCoordinates");
                     }else setStatus("Busca indisponível · tente novamente");
+                    finishPendingManualRefresh();
                     return;
                 }
                 JSONArray items=response.optJSONArray("items");
@@ -667,9 +695,11 @@ public final class RareCandyOverlayService extends Service {
                 setStatus(cards.isEmpty()?"Nenhum Doce Raro no momento":
                     cards.size()+" Doce Raro · PoGoCoordinates");
                 render();
+                finishPendingManualRefresh();
             }catch(Exception ex){
                 busy=false;
                 setStatus("Falha ao ler dados do Doce Raro");
+                finishPendingManualRefresh();
             }
         });
     }
