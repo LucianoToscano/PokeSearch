@@ -725,8 +725,9 @@ test("Login tests session before opening a fresh login link",
   main.indexOf("checkLoginSession(view,14,generation);")>=0&&
   main.includes("!loginDiscoveryStarted&&!loginLinkAttempted")&&
   main.includes("openOfficialLoginControl(view,8);"));
-test("Provider OAuth is visible and return to site is covered until session confirmed",
-  main.includes("loginCover.setVisibility(site?View.VISIBLE:View.GONE);")&&
+test("Provider OAuth and its callback are visible instead of covered",
+  main.includes("boolean returningFromProvider=site&&!observedLoginProvider.isEmpty();")&&
+  main.includes("loginCover.setVisibility(site&&!returningFromProvider?")&&
   main.includes('if("autenticada".equals(auth)){')&&
   main.includes("loginDialog.dismiss();"));
 test("Unknown site login has an accessible explicit fallback, not infinite masking",
