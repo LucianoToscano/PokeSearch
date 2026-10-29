@@ -44,7 +44,7 @@ assert.ok(html.includes('#captureShare{display:none!important}'));
 assert.ok(html.includes('.pkGender.genderless{color:#fff}'));
 assert.ok(html.includes('width:11px;height:11px;object-fit:contain'));
 assert.ok(html.includes('#names b{white-space:normal'));
-assert.ok(html.includes('h(showRaw?raw:"—")'));
+assert.ok(html.includes('h(showRaw?ivDisplay.raw:"—")'),"raw IV must use validated presentation data");
 
 const api=require("../src/main/assets/cooldown_estimate.js");
 const ui={coords:{disabled:false,textContent:"",title:"",setAttribute(){},className:""},
