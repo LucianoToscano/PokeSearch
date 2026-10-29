@@ -43,7 +43,7 @@ assert.match(rules.chat.avatars["$uid"][".write"],/auth\.uid === \$uid/);
 assert.match(chat,/if\(path==null\)\s+chip\.setBackground\(bg\(/);
 assert.ok(!/view\.setBackground\(bg\(/.test(chat));
 assert.match(chat,/addBadge\(badges,"result-icons\/modes\/StarIVRaw\.png",c\.iv,ink\)/);
-assert.match(chat,/addBadge\(badges,icon,c\.league\+" #"+c\.rank,ink\)/);
+assert.ok(chat.includes('addBadge(badges,icon,c.league+" #"+c.rank,ink);'));
 
 // Privacy, immutable database rules and two independent Pokébolas preserved.
 assert.match(overlay,/CaptureSharePublisher\.publish\(this,offer,/);
