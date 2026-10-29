@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
     private String loginPurpose="login"; // login | manage
     private int activeLoginSlot=1;
     private TextView secondAccountSummary,overlayAccountLabel1,overlayAccountLabel2;
-    private TextView secondAccountProvider,secondTrainerDisplay,secondTrainerDetails,
+    private TextView secondAccountUnavailable,secondAccountProvider,secondTrainerDisplay,secondTrainerDetails,
         secondTrainerCode,secondTrainerHeading;
     private ImageView secondAvatar,secondTeamBadge,secondAvatarFrame;
     private ImageButton secondTrainerSelectButton;
@@ -712,6 +712,10 @@ public class MainActivity extends Activity {
             homeLightMode?Color.rgb(62,90,115):Color.rgb(178,204,238),true);
         LinearLayout.LayoutParams titleLp=new LinearLayout.LayoutParams(-1,-2);
         titleLp.bottomMargin=d(8);secondAccount.addView(secondTitle,titleLp);
+        secondAccountUnavailable=homeText("O Android WebView não suporta dois logins separados",11,
+            homeLightMode?Color.rgb(111,60,43):Color.rgb(244,192,144),false);
+        secondAccountUnavailable.setVisibility(View.GONE);
+        secondAccount.addView(secondAccountUnavailable);
         secondAccountGuest=new LinearLayout(this);
         secondAccountGuest.setGravity(Gravity.CENTER_VERTICAL);
         secondAccount.addView(secondAccountGuest,new LinearLayout.LayoutParams(-1,d(42)));
@@ -738,6 +742,7 @@ public class MainActivity extends Activity {
         secondAvatarShell.setOutlineProvider(android.view.ViewOutlineProvider.BACKGROUND);
         secondAvatarShell.setClipToOutline(true);
         secondAvatar=new ImageView(this);
+        shownSecondAvatarUrl="";
         secondAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
         secondAvatar.setColorFilter(Color.rgb(183,201,229));
         secondAvatar.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
@@ -1093,6 +1098,8 @@ public class MainActivity extends Activity {
             else if(details.contains("Valor"))team="Valor";
             else if(details.contains("Instinct"))team="Instinct";
         }
+        if(secondAccountUnavailable!=null)
+            secondAccountUnavailable.setVisibility(available?View.GONE:View.VISIBLE);
         if(secondAccountGuest!=null)
             secondAccountGuest.setVisibility(connected||!available?View.GONE:View.VISIBLE);
         if(secondAccountConnected!=null)
@@ -1101,6 +1108,7 @@ public class MainActivity extends Activity {
         if(secondAccountManage!=null)secondAccountManage.setEnabled(available);
         if(secondAccountSummary!=null)
             secondAccountSummary.setText(showName?account:"Anônimo");
+        refreshSecondGoogleAvatar(connected?two.getString("profileAvatarUrl",""):"");
         if(secondAccountProvider!=null){
             String provider=two.getString("profileProvider","");
             secondAccountProvider.setText("Google".equals(provider)?"G  Logado via Google":
@@ -2011,6 +2019,8 @@ public class MainActivity extends Activity {
         }catch(Exception ignored){return false;}
     }
     private String shownAvatarUrl="";
+    private String shownSecondAvatarUrl="";
+    private int secondAvatarRequestGeneration=0;
     private void refreshGoogleAvatar(String url){
         if(accountAvatar==null)return;
         final String next=allowedGoogleAvatar(url)?url:"";
@@ -2081,6 +2091,78 @@ public class MainActivity extends Activity {
                 accountAvatar.setImageBitmap(photo);
             });
         },"PokeSearch-Google-Avatar").start();
+    }
+
+    private void refreshSecondGoogleAvatar(String url){
+        if(secondAvatar==null)return;
+        final String next=allowedGoogleAvatar(url)?url:"";
+        if(shownSecondAvatarUrl.equals(next))return;
+        shownSecondAvatarUrl=next;
+        final int avatarRequestId=++secondAvatarRequestGeneration;
+        secondAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+        secondAvatar.setColorFilter(Color.rgb(183,201,229));
+        secondAvatar.setPadding(d(11),d(11),d(11),d(11));
+        if(next.isEmpty())return;
+        new Thread(()->{
+            android.graphics.Bitmap bitmap=null;
+            java.net.HttpURLConnection connection=null;
+            try{
+                // Google public avatar CDN occasionally redirects between
+                // googleusercontent hosts. Follow only a short allowlisted chain,
+                // never forward WebView cookies or bearer credentials.
+                String current=next;
+                boolean ready=false;
+                for(int redirect=0;redirect<4;redirect++){
+                    if(!allowedGoogleAvatar(current))break;
+                    if(connection!=null)connection.disconnect();
+                    connection=(java.net.HttpURLConnection)new java.net.URL(current).openConnection();
+                    connection.setInstanceFollowRedirects(false);
+                    connection.setConnectTimeout(5000);
+                    connection.setReadTimeout(6000);
+                    int code=connection.getResponseCode();
+                    if(code==200){ready=true;break;}
+                    if(code!=301&&code!=302&&code!=303&&code!=307&&code!=308)break;
+                    String location=connection.getHeaderField("Location");
+                    if(location==null)break;
+                    String redirected=new java.net.URL(new java.net.URL(current),location).toExternalForm();
+                    if(!allowedGoogleAvatar(redirected))break;
+                    current=redirected;
+                }
+                if(!ready)return;
+                if(!String.valueOf(connection.getContentType()).startsWith("image/"))return;
+                if(connection.getContentLengthLong()>2_500_000L)return;
+                try(InputStream stream=new java.io.BufferedInputStream(connection.getInputStream())){
+                    ByteArrayOutputStream data=new ByteArrayOutputStream();
+                    byte[] buf=new byte[8192];int n;
+                    while((n=stream.read(buf))!=-1){
+                        if(data.size()+n>2_500_000)return;
+                        data.write(buf,0,n);
+                    }
+                    byte[] bytes=data.toByteArray();
+                    bitmap=android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+                }
+            }catch(Exception ignored){
+                // Network or an unavailable avatar keeps the neutral icon.
+            }finally{
+                if(connection!=null)connection.disconnect();
+                if(bitmap==null)runOnUiThread(()->{
+                    // Includes early returns on HTTP failure/redirect/size.
+                    // Do not permanently cache a failed URL on the new Home.
+                    if(!activityClosing&&!isDestroyed()&&avatarRequestId==secondAvatarRequestGeneration&&next.equals(shownSecondAvatarUrl))shownSecondAvatarUrl="";
+                });
+            }
+            final android.graphics.Bitmap photo=bitmap;
+            if(photo!=null)runOnUiThread(()->{
+                if(activityClosing||isFinishing()||isDestroyed()||avatarRequestId!=secondAvatarRequestGeneration||
+                     secondAvatar==null||!shownSecondAvatarUrl.equals(next)||
+                    !"autenticada".equals(PogoAccountSlots.prefs(this,2)
+                        .getString("sessionStatus","")))return;
+                secondAvatar.clearColorFilter();
+                secondAvatar.setPadding(0,0,0,0);
+                secondAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                secondAvatar.setImageBitmap(photo);
+            });
+        },"PokeSearch-Google-Avatar-2").start();
     }
 
     // Precisely follows the circular photo instead of stretching 1254px ornamental frames.
