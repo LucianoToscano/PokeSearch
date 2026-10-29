@@ -4,7 +4,7 @@
 
 **Relato após LT179 pública:** botão ↻ não girava visualmente. Causa encontrada: faltava `@keyframes` no SVG e sincronização da execução nativa. Correção em branch `fix/lt180-candy-refresh-spin-20261029`: giro CSS de 0,8 s apenas enquanto `busy=true` no serviço oficial, feedback instantâneo no toque, parada em resposta/erro/429 e espera com ícone parado; consultas automáticas e após copiar todos seguem o mesmo estado. Abertura tardia do menu sincroniza o indicador; intervalo 1m/3m/5m não gira.
 
-**Candidata QA:** `0.01.80 / 54385`, workflow assinado `lt180-candy-refresh-spin-signed-qa.yml`, testes `lt180-candy-refresh-animation.test.js` e regressão LT179/LT175. **Sem merge/Release/Drive/OTA público autorizados para a LT180 neste relato**; a LT179 permanece a versão pública. Ver [LT180 QA](LT180_CANDY_REFRESH_SPIN_QA_20261029.md).
+**QA assinada verificada:** [GitHub Actions #40943703228 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40943703228), [ZIP do artefato #12929110259](https://github.com/LucianoToscano/PokeSearch/actions/runs/40943703228/artifacts/12929110259) de 46.599.165 bytes, SHA-256 do ZIP `06293b42d17c4f4c58450d4de0e9a216c6ad96318bfbd018dcc7b8b4b8de5cfd`. APK interno `PokeSearch-v0.01.80-LT-QA.apk` (49.542.682 bytes), `versionCode=54385`, certificado v2 permanente conferido, SOURCE_COMMIT `6c9aa7ed8c5164f9058b6cdcb51d8ac718321d62`. Passaram o teste de animação LT180, testes LT179/LT175 e build R8; ensaio visual no Samsung ainda pendente. **Sem merge/Release/Drive/OTA público autorizados para a LT180 neste relato**; a LT179 permanece a versão pública. Ver [LT180 QA](LT180_CANDY_REFRESH_SPIN_QA_20261029.md).
 
 ---
 
