@@ -272,9 +272,14 @@ public final class RareCandyOverlayService extends Service {
         ScrollView scroll=new ScrollView(this);
         scroll.setFillViewport(false);
         scroll.setVerticalScrollBarEnabled(false);
+        scroll.setClipChildren(false);
+        scroll.setClipToPadding(false);
+        scroll.setSmoothScrollingEnabled(true);
+        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
         resultsList=new LinearLayout(this);
         resultsList.setOrientation(LinearLayout.VERTICAL);
         resultsList.setClipToPadding(false);
+        resultsList.setClipChildren(false);
         scroll.addView(resultsList,new ScrollView.LayoutParams(-1,-2));
         resultsShell.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         resultsParams=new WindowManager.LayoutParams(dp(236),dp(40),
@@ -294,14 +299,23 @@ public final class RareCandyOverlayService extends Service {
         int margin=dp(3);
         // Default to only the candy + despawn sprite column. Widen only
         // when the user has explicitly enabled name/location information.
-        int contentDp=(showName||showLocation)?228:48;
+        int contentDp=(showName||showLocation)?228:50;
         resultsParams.width=Math.min(dp(contentDp),width-margin*2);
-        // The 45dp rows follow the sprite cadence of the Pokébola result list.
-        int wantedHeight=dp(Math.min(460,Math.max(35,cards.size()*47+4)));
+        // The original 460dp cap cut the final candy in a full 10-item
+        // search (10 x 47dp = 470dp). Count only live, actually rendered
+        // cards; fit the entire list when room allows, otherwise enable
+        // vertical scrolling in the clipped native viewport.
+        long now=SystemClock.elapsedRealtime();
+        int activeCount=0;
+        for(Candy card:cards.values())if(card.deadline>now)activeCount++;
+        int rowHeight=47;
+        int wantedHeight=dp(activeCount==0?35:activeCount*rowHeight+4);
         int belowY=bubbleParams.y+dp(BUBBLE_DP)+dp(1);
         int roomBelow=height-margin-belowY;
         int roomAbove=bubbleParams.y-margin;
-        if(roomBelow>=Math.min(wantedHeight,dp(130))||roomBelow>=roomAbove){
+        // Prefer the side that fits the entire result list. Only choose a
+        // partial viewport when neither side can contain it fully.
+        if(roomBelow>=wantedHeight||(roomBelow>=roomAbove&&roomAbove<wantedHeight)){
             resultsParams.height=Math.max(dp(1),Math.min(wantedHeight,Math.max(1,roomBelow)));
             resultsParams.y=Math.max(margin,Math.min(height-margin-resultsParams.height,belowY));
         }else{
@@ -880,7 +894,9 @@ public final class RareCandyOverlayService extends Service {
             image.setOnClickListener(v->copy(card.coords));
             resultsList.addView(row,space(-1,45,2));
         }
-        if(status!=null)status.setVisibility(cards.isEmpty()?View.VISIBLE:View.GONE);
+        boolean anyActive=false;
+        for(Candy card:cards.values())if(card.deadline>now){anyActive=true;break;}
+        if(status!=null)status.setVisibility(anyActive?View.GONE:View.VISIBLE);
         placeResults();
     }
     private final Runnable tick=new Runnable(){
