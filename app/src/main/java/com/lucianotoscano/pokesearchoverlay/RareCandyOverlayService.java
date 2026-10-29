@@ -55,7 +55,8 @@ public final class RareCandyOverlayService extends Service {
     private static volatile boolean running=false;
     static boolean isRunning(){return running;}
     private static final String SOURCE="https://pogocoordinates.com/search";
-    private static final int BUBBLE_DP=45;
+    // Same compact touch box as the Pokébola dock; candy artwork is smaller.
+    private static final int BUBBLE_DP=45, CANDY_ART_DP=27;
     private final Handler main=new Handler(Looper.getMainLooper());
     private final Map<String,Candy> cards=new LinkedHashMap<>();
     private final Map<String,TextView> countdownLabels=new LinkedHashMap<>();
@@ -166,11 +167,25 @@ public final class RareCandyOverlayService extends Service {
     }
     private void createBubble(){
         bubbleWindow=new FrameLayout(this);
-        bubbleWindow.setBackground(background(0xCC142231,13,0x886785A3));
+        // The candy has NO background. Only its transparent 45dp native hitbox
+        // remains; the art itself matches the compact Pokébola result sprites.
+        bubbleWindow.setBackgroundColor(Color.TRANSPARENT);
         bubbleWindow.setClipChildren(true);
-        ImageView candy=sprite(45,false);
-        candy.setPadding(dp(2),dp(2),dp(2),dp(2));
-        bubbleWindow.addView(candy,new FrameLayout.LayoutParams(-1,-1));
+        bubbleWindow.setClipToPadding(true);
+        ImageView candy=sprite(CANDY_ART_DP,false);
+        candy.setPadding(0,0,0,0);
+        candy.setClickable(false);
+        candy.setFocusable(false);
+        bubbleWindow.addView(candy,new FrameLayout.LayoutParams(
+            dp(CANDY_ART_DP),dp(CANDY_ART_DP),Gravity.CENTER));
+        // An actual touch-grip ABOVE the hidden WebView, identical in principle
+        // to OverlayService.grip. No underlying WebView can swallow drag/tap.
+        View candyGrip=new View(this);
+        candyGrip.setBackgroundColor(Color.TRANSPARENT);
+        candyGrip.setClickable(true);
+        candyGrip.setContentDescription("Doce Raro: toque para resultados; segure para menu; arraste para mover");
+        candyGrip.setOnClickListener(v->toggleResults());
+        bubbleWindow.addView(candyGrip,new FrameLayout.LayoutParams(-1,-1));
         bubbleParams=new WindowManager.LayoutParams(dp(BUBBLE_DP),dp(BUBBLE_DP),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
@@ -183,7 +198,7 @@ public final class RareCandyOverlayService extends Service {
             dp(prefs.getInt("x",88))));
         bubbleParams.y=Math.max(0,Math.min(height-dp(BUBBLE_DP),
             dp(prefs.getInt("y",240))));
-        bubbleWindow.setOnTouchListener(new View.OnTouchListener(){
+        candyGrip.setOnTouchListener(new View.OnTouchListener(){
             float downX,downY;int startX,startY;boolean moved=false,held=false;
             final Runnable longPress=()->{
                 if(destroyed||moved)return;
@@ -223,7 +238,7 @@ public final class RareCandyOverlayService extends Service {
                                 getResources().getDisplayMetrics().density))
                                 .putInt("y",Math.round(bubbleParams.y/
                                 getResources().getDisplayMetrics().density)).apply();
-                        }else if(!held)toggleResults();
+                        }else if(!held)view.performClick();
                         return true;
                     default:return true;
                 }
@@ -325,10 +340,10 @@ public final class RareCandyOverlayService extends Service {
         site.setAlpha(0f);site.setClickable(false);
         site.setFocusable(false);
         site.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
-        site.setOnTouchListener((v,e)->true);
-        // Keep a realistic mobile viewport for site's React/lazy-loaded cards.
-        // The native overlay hitbox is still only the 45dp icon; the hidden
-        // WebView is clipped by bubbleWindow and cannot intercept outside taps.
+        // Rendering the official site requires a mobile-sized viewport, but
+        // its WebView is inserted BEHIND both the image and the input grip.
+        // Do not install a consuming OnTouchListener over the 45dp hitbox.
+        site.setOnTouchListener((v,e)->false);
         bubbleWindow.addView(site,0,new FrameLayout.LayoutParams(dp(360),dp(640)));
         try(InputStream in=getAssets().open("rare_candy_probe.js")){
             byte[] raw=new byte[in.available()];
