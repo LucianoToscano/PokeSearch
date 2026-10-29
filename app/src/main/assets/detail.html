@@ -513,8 +513,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #info{margin-top:2px;row-gap:1px;overflow-wrap:anywhere}
 #evolutions{margin-top:3px}
 #coordRow{margin-top:3px}
-#imageFallback{font-size:0!important;position:relative}
-#imageFallback::after{content:"◉";display:block;font-size:19px;
+#imageFallback{font-size:10px!important;font-weight:650;position:relative}
+#imageFallback::after{content:"";display:none;font-size:19px;
  line-height:23px;color:#b7c7dc;opacity:.85}
 /* LT148: native card and the CSS panel have identical available height.
    Previous max-height:calc(100vh - 6px) caused a scroll of 3-6 pixels. */
@@ -1158,6 +1158,7 @@ window.showDetails=(c,mode,watched)=>{
   (c.form?'<span class="formChip">'+h(c.form)+'</span>':"");
 
  const img=document.getElementById("img"),fallback=document.getElementById("imageFallback");
+ fallback.textContent=String(c.name||"").replace(/\s*\([^)]*\)\s*$/,"").trim().slice(0,2).toLocaleUpperCase()||"·";
  // The result list and this separately owned detail WebView MUST resolve
  // identical offline bytes from the APK, without relying on HTTP or a warm
  // WebView cache. Provider/special-form URLs are not rewritten.
@@ -1199,7 +1200,7 @@ window.showDetails=(c,mode,watched)=>{
    // do not substitute a normal variant for an unverified costume/Shiny.
    const direct=nativeFallback();
    if(direct&&direct!==src){useArt(direct);return;}
-   if(art.offline&&artAttempt++===0&&art.original&&art.original!==src){
+   if((art.offline||art.goExact)&&artAttempt++===0&&art.original&&art.original!==src){
     useArt(art.original);return;
    }
    displayed=false;img.style.display="none";fallback.style.display="flex";
