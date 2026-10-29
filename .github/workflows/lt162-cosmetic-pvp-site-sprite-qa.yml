@@ -1,4 +1,4 @@
-# LT162 QA: verified cosmetic PvP equivalence and exact provider sprite capture.
+# LT162 retry: normal/default form rank equivalence test fixed; permanent signing preserved.
 name: PokeSearch LT162 — análise PvP legível — APK QA assinado
 on:
   push:
