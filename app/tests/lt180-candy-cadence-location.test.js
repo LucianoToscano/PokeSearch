@@ -55,7 +55,7 @@ assert.equal(elements.get("period").textContent,"3m","Default period label");
 vm.runInContext('openPanel("location")',ctx);
 assert.equal(elements.get("candyCoords").value,"-23.573804,-46.648773");
 assert.equal(elements.get("candyRadius").value,"1","Meters converted to km UI");
-assert.equal(calls.height.at(-1)[0],141,"Pokébola-sized location popup");
+assert.equal(calls.height.at(-1)[0],172,"Pokébola-sized location popup including toolbar");
 assert.equal(calls.height.at(-1)[2],"location","Native sees active location panel");
 vm.runInContext('copyCoords()',ctx);
 assert.equal(calls.copy.at(-1),"-23.573804,-46.648773");
