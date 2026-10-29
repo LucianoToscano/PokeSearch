@@ -40,4 +40,11 @@
 5. Em rede indisponível com imagem inédita, não declarar falsamente "carregou"; o card preserva nome e informações e exibe iniciais no lugar de círculo.
 6. Verificar desempenho, uso de rede, ausência de crash, CDN bloqueado e efeito das regras de WebView.
 
-**Estado:** PR de auditoria e correção, aguardando revisão integral do CI e QA física antes de mesclar ou oferecer atualização geral.
+## Resultado automático confirmado — branch LT169 sprites
+
+- **Node QA — SUCCESS:** [workflow 40871185787](https://github.com/LucianoToscano/PokeSearch/actions/runs/40871185787), todas as 17 suítes selecionadas, inclusive integridade da allowlist de 1.679 fontes.
+- **Java Android compile sem APK — SUCCESS:** [workflow 40871185849](https://github.com/LucianoToscano/PokeSearch/actions/runs/40871185849).
+- **Secure beta APK genérico — FAILURE por configuração da assinatura:** [workflow 40871185930](https://github.com/LucianoToscano/PokeSearch/actions/runs/40871185930), task `preReleaseBuild` exige o certificado permanente e `POKE_RELEASE_CERT_SHA256` não disponibilizados ao workflow de beta genérico. **Não significa falha no código das sprites**; não aceitar ou distribuir artefato beta assinado com chave diferente. O release oficial precisa seguir o pipeline com segredos permanentes e hash fixado, após integração aprovada.
+- **QA física Samsung: não realizada.** Nenhum APK foi distribuído nesta PR; **LT168 permanece versão pública estável**.
+
+**Estado:** PR #114 de auditoria e correção pronta para revisão de código/integração, sem merge automático devido à PR #113 LT169 paralela (perfis e Home) e sem publicação de atualização geral antes de coordenar versionCode e assinatura oficial.
