@@ -74,7 +74,7 @@ public final class RareCandyOverlayService extends Service {
     private TextView status;
     private String probe="";
     private boolean visible=false,ready=false,destroyed=false,busy=false,showInfos=true;
-    private boolean showLocation=true,showDespawn=true,showDistance=true;
+    private boolean showName=false,showLocation=false,showDespawn=true,showDistance=false;
     private String coords="";
     private int radius=1000,period=1,generation=0;
     private long lastRefresh=0,blockedUntil=0;
@@ -141,10 +141,13 @@ public final class RareCandyOverlayService extends Service {
         radius=Math.max(1,Math.min(1000000,prefs.getInt("radius",1000)));
         int saved=prefs.getInt("period",1);
         period=saved==3||saved==5?saved:1;
-        showInfos=prefs.getBoolean("infos",true);
-        showLocation=prefs.getBoolean("candyShowLocation",showInfos);
-        showDespawn=prefs.getBoolean("candyShowDespawn",showInfos);
-        showDistance=prefs.getBoolean("candyShowDistance",showInfos);
+        // LT178: only despawn is enabled by default. Honor explicit choices
+        // saved on older versions instead of resetting user preferences.
+        showInfos=prefs.getBoolean("infos",false);
+        showName=prefs.getBoolean("candyShowName",false);
+        showLocation=prefs.getBoolean("candyShowLocation",false);
+        showDespawn=prefs.getBoolean("candyShowDespawn",true);
+        showDistance=prefs.getBoolean("candyShowDistance",false);
         try{
             JSONArray state=new JSONArray(prefs.getString("copied","[]"));
             for(int i=0;i<state.length()&&i<100;i++){
@@ -287,9 +290,12 @@ public final class RareCandyOverlayService extends Service {
         int width=getResources().getDisplayMetrics().widthPixels;
         int height=getResources().getDisplayMetrics().heightPixels;
         int margin=dp(3);
-        resultsParams.width=Math.min(dp(236),width-margin*2);
+        // Default to only the candy + despawn sprite column. Widen only
+        // when the user has explicitly enabled name/location information.
+        int contentDp=(showName||showLocation)?228:48;
+        resultsParams.width=Math.min(dp(contentDp),width-margin*2);
         // The 45dp rows follow the sprite cadence of the Pokébola result list.
-        int wantedHeight=dp(Math.min(440,Math.max(35,cards.size()*46+4)));
+        int wantedHeight=dp(Math.min(460,Math.max(35,cards.size()*47+4)));
         int belowY=bubbleParams.y+dp(BUBBLE_DP)+dp(1);
         int roomBelow=height-margin-belowY;
         int roomAbove=bubbleParams.y-margin;
@@ -364,8 +370,8 @@ public final class RareCandyOverlayService extends Service {
         JSONObject state=new JSONObject();
         try{
             state.put("coords",coords).put("radius",radius).put("period",period)
-                .put("location",showLocation).put("despawn",showDespawn)
-                .put("distance",showDistance);
+                .put("name",showName).put("location",showLocation)
+                .put("despawn",showDespawn).put("distance",showDistance);
             candyMenuPanel.evaluateJavascript("window.syncCandy("+
                 JSONObject.quote(state.toString())+")",null);
         }catch(org.json.JSONException ignored){}
@@ -447,7 +453,9 @@ public final class RareCandyOverlayService extends Service {
             main.post(()->{
                 if(!permitted())return;
                 SharedPreferences.Editor editor=prefs.edit();
-                if("location".equals(field)){
+                if("name".equals(field)){
+                    showName=enabled;editor.putBoolean("candyShowName",enabled);
+                }else if("location".equals(field)){
                     showLocation=enabled;editor.putBoolean("candyShowLocation",enabled);
                 }else if("despawn".equals(field)){
                     showDespawn=enabled;editor.putBoolean("candyShowDespawn",enabled);
@@ -698,47 +706,65 @@ public final class RareCandyOverlayService extends Service {
             if(card.deadline<=now)continue;
             LinearLayout row=new LinearLayout(this);
             row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(0,0,dp(3),0);
+            row.setPadding(0,0,0,0);
             row.setBackgroundColor(Color.TRANSPARENT);
-            LinearLayout left=new LinearLayout(this);
-            left.setOrientation(LinearLayout.VERTICAL);
-            left.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.TOP);
+
+            // Match the narrow sprite column of the existing Pokébola list.
+            // Distance is WITHIN this same transparent sprite cell, not a
+            // separate wide right-hand column that leaves an empty gap.
+            LinearLayout spriteColumn=new LinearLayout(this);
+            spriteColumn.setOrientation(LinearLayout.VERTICAL);
+            spriteColumn.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.TOP);
+            FrameLayout spriteCell=new FrameLayout(this);
             ImageView image=sprite(CANDY_ART_DP,copied.contains(card.coords));
-            left.addView(image,space(CANDY_ART_DP,CANDY_ART_DP,0));
+            FrameLayout.LayoutParams imageLp=new FrameLayout.LayoutParams(
+                dp(CANDY_ART_DP),dp(CANDY_ART_DP),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
+            spriteCell.addView(image,imageLp);
+            if(showDistance&&!card.distance.isEmpty()){
+                TextView distance=label(card.distance,8,0xFFF0F5FF,true);
+                distance.setGravity(Gravity.CENTER);
+                distance.setSingleLine(true);
+                distance.setMaxLines(1);
+                distance.setPadding(dp(2),0,dp(2),0);
+                distance.setBackground(background(0xB8111A26,5,0));
+                FrameLayout.LayoutParams distLp=new FrameLayout.LayoutParams(
+                    -2,dp(13),Gravity.RIGHT|Gravity.BOTTOM);
+                spriteCell.addView(distance,distLp);
+                distance.setOnClickListener(v->copy(card.coords));
+            }
+            spriteColumn.addView(spriteCell,space(46,29,0));
             if(showDespawn){
                 long seconds=Math.max(0,(card.deadline-now+999)/1000);
                 TextView countdown=label((seconds/60)+":"+String.format(
                     java.util.Locale.US,"%02d",seconds%60),9,
                     seconds<=60?0xFFFF666D:seconds<=300?0xFFFFC35A:0xFFC0D9EE,true);
                 countdown.setGravity(Gravity.CENTER);
-                left.addView(countdown,space(42,16,0));
+                spriteColumn.addView(countdown,space(46,15,0));
                 countdownLabels.put(card.coords,countdown);
             }
-            row.addView(left,space(46,-2,0));
-            LinearLayout info=new LinearLayout(this);
-            info.setOrientation(LinearLayout.VERTICAL);
-            info.setGravity(Gravity.CENTER_VERTICAL);
-            TextView title=label(copied.contains(card.coords)?"Doce Raro ✓":"Doce Raro",
-                11,copied.contains(card.coords)?0xFFB1B6C1:0xFFF1F6FF,true);
-            info.addView(title,space(-1,16,0));
-            if(showLocation&&!card.city.isEmpty()){
-                TextView city=label(card.city,10,0xFFCFD9E7,false);
-                city.setMaxLines(2);
-                info.addView(city,space(-1,-2,0));
-            }
-            row.addView(info,new LinearLayout.LayoutParams(0,-2,1));
-            if(showDistance&&!card.distance.isEmpty()){
-                TextView distance=label(card.distance,9,0xFFB7C8DF,false);
-                distance.setGravity(Gravity.RIGHT|Gravity.BOTTOM);
-                row.addView(distance,space(51,40,0));
+            row.addView(spriteColumn,space(46,-2,0));
+
+            if(showName||showLocation){
+                LinearLayout info=new LinearLayout(this);
+                info.setOrientation(LinearLayout.VERTICAL);
+                info.setGravity(Gravity.CENTER_VERTICAL);
+                if(showName){
+                    TextView title=label(copied.contains(card.coords)?"Doce Raro ✓":"Doce Raro",
+                        11,copied.contains(card.coords)?0xFFB1B6C1:0xFFF1F6FF,true);
+                    info.addView(title,space(-1,16,0));
+                }
+                if(showLocation&&!card.city.isEmpty()){
+                    TextView city=label(card.city,10,0xFFCFD9E7,false);
+                    city.setMaxLines(2);
+                    info.addView(city,space(-1,-2,0));
+                }
+                row.addView(info,new LinearLayout.LayoutParams(0,-2,1));
             }
             row.setOnClickListener(v->copy(card.coords));
             image.setOnClickListener(v->copy(card.coords));
-            resultsList.addView(row,space(-1,43,3));
+            resultsList.addView(row,space(-1,45,2));
         }
-        if(status!=null){
-            status.setVisibility(cards.isEmpty()?View.VISIBLE:View.GONE);
-        }
+        if(status!=null)status.setVisibility(cards.isEmpty()?View.VISIBLE:View.GONE);
         placeResults();
     }
     private final Runnable tick=new Runnable(){
