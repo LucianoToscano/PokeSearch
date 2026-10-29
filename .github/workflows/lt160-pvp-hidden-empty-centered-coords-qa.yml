@@ -1,4 +1,4 @@
-# LT160 QA: hide empty PvP tabs and center copied coordinates, preserving signed build.
+# LT160 signed QA rerun: verified empty-tab regression and centered coordinate test are committed.
 name: PokeSearch LT160 — análise PvP legível — APK QA assinado
 on:
   push:
