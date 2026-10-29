@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT179 — DISTRIBUIÇÃO GERAL AUTORIZADA (29/10/2026)
+
+O proprietário solicitou explicitamente: **"Envie para atualizar o app de todo mundo"**. Assim, autorizou merge da PR #135, lançamento estável e exposição no atualizador existente do aplicativo. O fluxo da LT179 usa a mesma chave permanente e cria **`v0.01.79-54384`**, sem sobrescrever a LT178. O workflow protegido `.github/workflows/lt179-candy-official-release.yml` só publica após detectar `latest=v0.01.78-54383`, assinar o APK, passar os testes/Android e conferir SHA-256 e tamanho do asset. O canal é GitHub Releases/latest; o Android pede consentimento para instalar. **Google Drive não é sincronizado pelo workflow**, não afirmar upload ao Drive sem evidência.
+
+Escopo: ↻ Doce Raro com toque simples e segurar distintos, refresh automático quando toda lista válida ficar cinza após cópia, proteção contra busca duplicada/429 e registro da LT179 em `release_notes.json`. Código e PR: [#135](https://github.com/LucianoToscano/PokeSearch/pull/135); escopo de QA [LT179](LT179_DOCE_RARO_REFRESH_APOS_COPIA_20261029.md). A conclusão do merge, do workflow e os hashes exigem comprovação posterior, **não antecipar sucesso**.
+
+---
+
 ## LT178 — NOVA CANDIDATA OFICIAL DOCE RARO (29/10/2026)
 
 **Correções sobre a LT177:** controle de Nome Doce Raro ocultável, distância inserida dentro da célula da sprite (sem coluna lateral), barra e popups refinados, visibilidade inicial `Nome OFF · Localização OFF · Despawn ON · Distância OFF` e sprite de Doce Raro original com transparência em resolução 96×96. Botão ↻: toque curto chama consulta na soltura, pressão longa abre somente opções 1/3/5min, com uma busca pendente durante consulta anterior sem disparos simultâneos. Versão destinada ao APK completo assinado **0.01.78 / versionCode 54383**; novo `release_notes.json` registra novidades para usuários. Ações preservam as duas Pokébolas e contas independentes.
