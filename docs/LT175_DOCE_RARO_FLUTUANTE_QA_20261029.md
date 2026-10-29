@@ -79,3 +79,11 @@ Screenshots do usuário do Samsung compararam P1 com o Doce Raro da LT176. O doc
 - Nova build de teste **LT177 `0.01.77`, versionCode `54382`**, certificado de assinatura permanente; arquivo `PokeSearch-v0.01.77-LT-QA.apk` em artefato privado do GitHub Actions (somente após o workflow finalizar com sucesso).
 - Testes de integração Node e compilação Java Android na PR; exigir validação física de menus, toque/drag, keyboard, resultados reais, rate limit, cópia e expiração no Samsung/Moto.
 - **Não fazer merge ou Release/latest, atualizar Drive, Firebase nem publicar OTA ainda.** Essa evolução mexe em Java, Manifest e assets, portanto precisa de APK completo assinado, não de patch OTA da LT173.
+
+### LT177 — build QA assinado confirmado
+- [Actions LT177 #40936145937 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40936145937)
+- [Baixar artefato ZIP de teste #12923894267](https://github.com/LucianoToscano/PokeSearch/actions/runs/40936145937/artifacts/12923894267): `PokeSearch-LT177-54382-RareCandy-QA-Assinado.zip`
+- Arquivo interno do ZIP: `PokeSearch-v0.01.77-LT-QA.apk`, tamanho **49.539.430 bytes**, `versionName=0.01.77`, `versionCode=54382`.
+- O GitHub Actions confirmou compilação, APK assinado v2 com mesmo certificado permanente, R8, integridade dos assets, SHA-256 do APK por `sha256sum --check` e upload de QA. SHA-256 do ZIP do artifact: `8afb9b654b18108798cbb90609ac54b6b07b8df7b8a0b6310ab20ccd3c357091` (distinto do hash do APK).
+- O artefato compilou o commit de código `366503ce3501465d761b9555c847477e3835bfb0`. Commits documentais posteriores não alteraram o APK.
+- GitHub Releases/latest segue em `v0.01.73-54378`, sem merge ou entrega pública. A leitura real da API e o layout do popup ainda carecem de homologação física no Samsung.
