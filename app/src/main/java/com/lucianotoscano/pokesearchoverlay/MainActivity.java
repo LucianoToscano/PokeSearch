@@ -226,6 +226,7 @@ public class MainActivity extends Activity {
     }
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
+        OtaAssets.checkAsync(this);
         if (!IntegrityGuard.verify(this)) {
             BugReport.log(this,"SECURITY","Falha de integridade do pacote");
             android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
@@ -3083,7 +3084,7 @@ public class MainActivity extends Activity {
         root.addView(check);
     }
     private String readAsset(String path){
-        try(InputStream in=getAssets().open(path)){
+        try(InputStream in=OtaAssets.open(this,path)){
             ByteArrayOutputStream out=new ByteArrayOutputStream();
             byte[] b=new byte[4096];int n;
             while((n=in.read(b))!=-1)out.write(b,0,n);
