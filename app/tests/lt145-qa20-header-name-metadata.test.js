@@ -7,7 +7,10 @@ const code=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(code);new v
 const css=html.slice(html.indexOf("/* QA20: number, sex, size and form"));
 assert.ok(css.includes("#names{grid-column:2;grid-row:1;display:flex;flex-direction:column;"),"metadata belongs inside names cell not new row");
 assert.ok(css.includes("#subRow{grid-column:auto;grid-row:auto;align-self:flex-start;"),"old grid-row 2 explicitly reset");
-assert.ok(css.includes("flex-direction:column;align-items:flex-start;justify-content:flex-start;"),"no reserved vertical space beneath name");
+assert.ok(css.includes("#subRow{grid-column:auto;grid-row:auto;align-self:flex-start;"),"original QA20 layout reset remains");
+const dense=html.slice(html.indexOf("/* QA21: no visible Sexo/Tam."));
+assert.ok(dense.includes("display:flex;flex-flow:row wrap;"),"metadata packs in one row beneath name");
+assert.ok(dense.includes("#subRow .metaPair{display:contents}"),"wrappers cannot force two rows");
 assert.ok(css.includes("#header{grid-template-rows:auto;row-gap:0;"),"header no empty grid row");
 assert.ok(css.includes("#subRow #dexGender{white-space:normal;flex-wrap:wrap}"),"long species and sex do not overflow");
 assert.ok(css.includes("#subRow #sizeForm{white-space:normal;flex-wrap:wrap}"),"size and long event form can wrap");

@@ -469,6 +469,23 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #subRow #dexGender{white-space:normal;flex-wrap:wrap}
 #subRow #sizeForm{white-space:normal;flex-wrap:wrap}
 #subRow .sexChip,#subRow .sizeChip{min-height:12px;line-height:10px}
+/* QA21: no visible Sexo/Tam. words; leave distinct compact, accessible icons.
+   Both metadata wrappers become transparent to layout so number / gender / size /
+   form pack in ONE flex row immediately under the name; wrap only when necessary.
+   Never push metadata into the share/favorite/close tap targets. */
+#names{gap:1px}
+#subRow{grid-column:auto;grid-row:auto;display:flex;flex-flow:row wrap;
+ align-items:center;justify-content:flex-start;align-content:flex-start;
+ gap:2px 3px;width:100%;max-width:100%;min-height:0;line-height:1;margin:0;padding:0}
+#subRow .metaPair{display:contents}
+#subRow .dexMeta{font-size:8px;line-height:11px}
+#subRow .sexChip,#subRow .sizeChip{display:inline-flex;align-items:center;
+ justify-content:center;white-space:nowrap;height:13px;min-height:13px;
+ margin:0;padding:0 3px;line-height:11px;border-radius:4px}
+#subRow .sexChip{border-color:#ff8bbc52;background:#ff8bbc0c}
+#subRow .sizeChip{border-color:#ffffff40;background:#ffffff0c}
+#subRow .formChip{max-width:100%;white-space:normal;overflow-wrap:anywhere;
+ font-size:8px;line-height:11px}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -880,9 +897,9 @@ window.showDetails=(c,mode,watched)=>{
  // Accessible discrete indicators: never visually group a sex icon with XXL.
  document.getElementById("dexGender").innerHTML=
   (c.number?'<span class="dexMeta">'+h(c.number)+'</span>':"")+
-  (gender?'<span class="sexChip"><span class="metaLabel">Sexo</span>'+gender+'</span>':"");
+  (gender?'<span class="sexChip" title="Sexo" aria-label="Sexo do Pokémon">'+gender+'</span>':"");
  document.getElementById("sizeForm").innerHTML=
-  (c.size?'<span class="sizeChip"><span class="metaLabel">Tam.</span>'+h(c.size)+'</span>':"")+
+  (c.size?'<span class="sizeChip" title="Tamanho" aria-label="Tamanho '+h(c.size)+'">'+h(c.size)+'</span>':"")+
   (c.form?'<span class="formChip">'+h(c.form)+'</span>':"");
 
  const img=document.getElementById("img"),fallback=document.getElementById("imageFallback");
