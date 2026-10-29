@@ -1,4 +1,4 @@
-# LT163 signed QA rerun: legacy empty-analysis harness now injects its independent rank summary callback.
+# LT163 QA: verify the new descriptive Rank Classe badge, not obsolete IV # text.
 name: PokeSearch LT163 — análise PvP legível — APK QA assinado
 on:
   push:
@@ -102,7 +102,7 @@ jobs:
           const fs=require('fs');
           const h=fs.readFileSync('app/src/main/assets/detail.html','utf8');
           if(h.includes('Rank do site #'))throw Error('Unverified site rank is still visible');
-          if(!h.includes('league.toUpperCase()+" · IV #"+ivValue'))throw Error('Verified IV rank label missing');
+          if(!h.includes('league.toUpperCase()+" · Rank Classe: #"+ivValue'))throw Error('Verified IV rank label missing');
           NODE
           node app/tests/lt147-premium-checkout-clarity.test.js
           node - <<'NODE'
