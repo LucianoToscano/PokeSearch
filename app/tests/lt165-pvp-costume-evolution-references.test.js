@@ -75,10 +75,10 @@ const node=id=>{
  return elements.get(id);
 };
 const present=new Function("window","document","h","evoIdentity","detailIdentity",
- "activeRankLeague","resizeEvolutionPanel","requestAnimationFrame",
+ "activeRankLeague","evolutionExpanded","resizeEvolutionPanel","requestAnimationFrame",
  script.slice(start,end)+"return window.showEvolutionDetails;");
 const htmlEscape=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;");
-const show=present(win,{getElementById:node},htmlEscape,()=>"same","same","",()=>{},fn=>fn());
+const show=present(win,{getElementById:node},htmlEscape,()=>"same","same","",false,()=>{},fn=>fn());
 for(const [card,evolved] of examples){
  const payload=projected(card);
  assert.equal(show(payload),true);
