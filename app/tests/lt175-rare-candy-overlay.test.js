@@ -50,10 +50,10 @@ const node={innerText:coord,parentElement:card};
 let selected=false,submitted=false,locationValue="old",radiusValue="1000";
 const input1={
     value:locationValue,placeholder:"Paste coordinates (lat,lng)",
-    dispatchEvent() {locationValue=this.value;}
+    dispatchEvent() {locationValue=this.valueHolder;}
 };
 const input2={value:radiusValue,placeholder:"Radius",
-    dispatchEvent() {radiusValue=this.value;}};
+    dispatchEvent() {radiusValue=this.valueHolder;}};
 const tab={
     textContent:"Rare Candy",className:"",classList:{contains:()=>false},
     getAttribute:()=>null,click(){selected=true;}
@@ -86,8 +86,6 @@ Object.defineProperty(sandbox.HTMLInputElement.prototype,"value",{
 });
 Object.setPrototypeOf(input1,sandbox.HTMLInputElement.prototype);
 Object.setPrototypeOf(input2,sandbox.HTMLInputElement.prototype);
-Object.defineProperty(input1,"value",{get(){return locationValue;},set(v){locationValue=v;}});
-Object.defineProperty(input2,"value",{get(){return radiusValue;},set(v){radiusValue=v;}});
 vm.createContext(sandbox);
 vm.runInContext(probe,sandbox);
 let data=JSON.parse(sandbox.window.PokeSearchCandy.read());
