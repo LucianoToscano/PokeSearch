@@ -106,6 +106,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/bridge-qa"
           javac --release 17 -d "$RUNNER_TEMP/bridge-qa" \
             app/src/main/java/com/lucianotoscano/pokesearchoverlay/LocalBridgePagePolicy.java \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PresenceWindowState.java \
             app/tests/LocalBridgePagePolicyTest.java \
             app/tests/OtaLocalBridgePolicyTest.java
           java -cp "$RUNNER_TEMP/bridge-qa" com.lucianotoscano.pokesearchoverlay.LocalBridgePagePolicyTest
