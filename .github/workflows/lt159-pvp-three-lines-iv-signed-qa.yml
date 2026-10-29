@@ -1,4 +1,4 @@
-# LT159 QA retry — updated overlay test for visible compact unavailable state.
+# LT159 QA rerun: corrected safe script extraction in decimal IV regression test.
 name: PokeSearch LT159 — análise PvP legível — APK QA assinado
 on:
   push:
