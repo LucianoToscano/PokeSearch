@@ -12,6 +12,13 @@
 
 ---
 
+### LT169 — Perfis de treinador visíveis somente com 2+ (QA, não publicada)
+
+- Branch `fix/lt169-trainer-profiles-visibility-20261029` derivada de LT168. Na Home, `Perfis/Escolher (N)` fica `GONE` quando há 0 ou 1 treinador confirmado (sem largura vazia), e aparece apenas para dois ou mais treinadores vinculados distintos da conta PoGoCoordinates; selecionador e broadcast de troca preservados.
+- Contagem usa códigos/nome válidos e elimina duplicatas, alinhada ao seletor; entrada normal de gerenciamento do vínculo permanece no card.
+- Testes: `app/tests/lt169-trainer-profiles-visibility.test.js` + atualização da regressão LT141. Validação Samsung 0/1/2+ e CI pendentes no momento deste registro.
+- Registro [LT169 visibilidade de Perfis](POKESEARCH_LT169_PERFIS_TREINADORES_VISIBILIDADE_QA_20261029.md). **Não mesclado/publicado; LT168 permanece a versão oficial**.
+
 
 ## LT145 0.01.45 — atualização oficial global via GitHub (29/10/2026)
 
