@@ -14,8 +14,8 @@ jobs:
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_RUN: '40796902139'
-      SOURCE_COMMIT: '405e606b48abcfb6f84ce266ce2f63879dd59a1a'
+      SOURCE_RUN: '40797034334'
+      SOURCE_COMMIT: '5e804464aa20a7aa78eb23c4393865701c4dc310'
       ARTIFACT: 'PokeSearch-v0.01.45-LT145-CoordsQuota-QA-Assinado'
       PACKAGE_APK: 'PokeSearch-v0.01.45-LT-QA.apk'
       QA_APK: 'PokeSearch-LT145-QA16-COMPACTO.apk'
