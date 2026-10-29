@@ -2198,13 +2198,6 @@
   if(costumeArt)return costumeArt;
   if(seasonalArt)return seasonalArt;
   if(westSeaArt)return westSeaArt;
-  // Site imagery (DOM) always wins above. For direct API cards the search
-  // response has no image, so exact GO artwork (same species+named variant)
-  // resolves first instead of presenting an empty ring for known colours.
-  // Existing fully verified and locally packaged BASE art wins when the GO
-  // "named form" is in fact that species' normal/default appearance
-  // (e.g. Furfrou Natural). Do not regress already offline-safe species.
-  if(goArt&&!verifiedBase(card))return goArt;
   // Prefer explicit source-provided artwork if one exists, otherwise use the
   // exact, offline bundled regional variant (normal OR shiny).
   if(!image&&verifiedGalarianZigzagoon(card)){
@@ -2241,6 +2234,11 @@
     return {src:LOCAL+"forms/"+dex+"-spring"+(shiny?"-shiny":"")+".png",
       original:source,offline:true,officialForm:true,exactForm:true};
   }
+  // An already bundled *exact* form/region continues to work offline.
+  // When older artwork packs lack a named GO form, use a separate pinned GO
+  // sprite index and an integrity-checked native disk cache, never a
+  // different colour, costume, Shiny or species.
+  if(goArt&&!verifiedBase(card))return goArt;
   const candidate=rawRegex.exec(image)||mirrorRegex.exec(image);
   // The local base PNG is preferable to a missing or lazy remote DOM image,
   // but ONLY for Dex+name+form+costume verified as an ordinary species.
